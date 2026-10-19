@@ -761,7 +761,9 @@ class HostLaunchVerifier:
             record["lease"].verify()
             self._read(Path(record["launcher"]["path"]), record["launcher"]["sha256"])
             record["state"] = "claimed"
-            return ([host_argv[0], "-I", "-S", record["launcher"]["path"], "--binding-fd", str(binding_fd)], record["payload"])
+            # Suppress bytecode from interpreter startup, before this retained
+            # script can install its reviewed mapping and Python-level policy.
+            return ([host_argv[0], "-I", "-S", "-B", record["launcher"]["path"], "--binding-fd", str(binding_fd)], record["payload"])
 
     def bind_child(self, result, *, child, identity):
         with self._lock:
@@ -1370,7 +1372,8 @@ def _main():
         if canonical(value) != bytes(payload):
             raise HostLaunchError('action binding is not canonical JSON')
         return launch_action_from_binding(value, context_digest=expected, arguments=arguments)
-    if not sys.flags.isolated or not sys.flags.no_site or len(sys.argv) != 3 or sys.argv[1] != "--binding-fd":
+    if (not sys.flags.isolated or not sys.flags.no_site or not sys.flags.dont_write_bytecode
+            or len(sys.argv) != 3 or sys.argv[1] != "--binding-fd"):
         raise HostLaunchError("launcher requires the exact isolated binding descriptor mode")
     fd = int(sys.argv[2]); payload = bytearray()
     try:

@@ -16,6 +16,20 @@ from banodoco_local.bootstrap import BootstrapError, SourceProfile
 from banodoco_local.runtime_boundary import ADMISSION_TIMEOUT_ENV, LocalRuntimeBoundary
 
 
+def test_custody_trampoline_disables_bytecode_before_script_start(tmp_path):
+    from banodoco_local.custody_broker import custody_wrapper_argv
+    argv = custody_wrapper_argv(sys.executable)
+    assert argv[1:5] == ['-I', '-S', '-B', '-u']
+    # Execute the emitted interpreter options before any Runtime script can
+    # assign sys.dont_write_bytecode. Isolated mode must not rely on the env.
+    result = subprocess.run([*argv[:5], '-c',
+        'import sys; assert sys.flags.dont_write_bytecode == 1; print(sys.dont_write_bytecode)'],
+        cwd=tmp_path, env={**os.environ, 'PYTHONDONTWRITEBYTECODE': '0'},
+        capture_output=True, text=True, check=False, timeout=10)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == 'True'
+
+
 class _Response:
     def __enter__(self):
         return self

@@ -1390,7 +1390,9 @@ class RoleBoundCustodyBroker:
 
 
 def custody_wrapper_argv(executable: str) -> list[str]:
-    return [executable, "-I", "-S", "-u", str(Path(__file__).absolute()), "--custody-exec"]
+    # This applies before the trampoline's Python-level assignment. The
+    # authenticated target argv remains unchanged across exec.
+    return [executable, "-I", "-S", "-B", "-u", str(Path(__file__).absolute()), "--custody-exec"]
 
 
 def child_exec_from_environment() -> int:

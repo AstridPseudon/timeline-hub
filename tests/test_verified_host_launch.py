@@ -478,7 +478,7 @@ def fixture_authority(tmp_path):
 def test_private_retained_result_selects_exact_isolated_launch_once(tmp_path):
     f=fixture_authority(tmp_path);proof=f.verifier.verify(**f.args)
     argv,payload=f.verifier.claim(proof,**f.args,binding_fd=31)
-    assert argv==[f.args['host_argv'][0],'-I','-S',str(f.launcher),'--binding-fd','31']
+    assert argv==[f.args['host_argv'][0],'-I','-S','-B',str(f.launcher),'--binding-fd','31']
     body=json.loads(payload);assert body['host_argv'][-2:]==['--source-closure-digest',f.record['host_protocol']['source_closure_digest']]
     assert body['mapping'][gate.HOST_MODULE]['path']==str(f.source/'astrid/core/execution/generic_host.py')
     assert body['mapping']['astrid.core.execution']['package']
@@ -489,6 +489,69 @@ def test_private_retained_result_selects_exact_isolated_launch_once(tmp_path):
     f.verifier.verify_child(proof,child=child,identity=identity)
     with pytest.raises(gate.HostLaunchError):f.verifier.verify_child(proof,child=SimpleNamespace(pid=41),identity=identity)
     with pytest.raises(gate.HostLaunchError):f.verifier.bind_child(proof,child=child,identity=identity)
+
+
+@pytest.mark.parametrize('bytecode_flag', [True, False])
+def test_claimed_cold_host_entry_disables_bytecode_before_schema_imports(tmp_path, bytecode_flag):
+    """Execute the real descriptor entry, without a Host or native custody.
+
+    The source-only fake authority selects this actual Runtime launcher. The
+    fixture interpreter substitutes for its deliberately nonexecutable fake
+    runtime; native interpreter/custody admission is not claimed by this test.
+    """
+    f = fixture_authority(tmp_path)
+    host = f.source / 'astrid/core/execution/generic_host.py'
+    host.write_text("import sys\n"
+        "assert sys.flags.dont_write_bytecode == 1 and sys.dont_write_bytecode\n"
+        "from banodoco_timeline_schema import generated, materialize, theme, validate\n"
+        "print('COLD_SCHEMA_IMPORTS_WITH_EARLY_BYTECODE_SUPPRESSION')\n")
+    schema = f.source / 'banodoco_timeline_schema'
+    schema.mkdir()
+    for name in ('__init__', 'generated', 'materialize', 'theme', 'validate'):
+        (schema / (name + '.py')).write_text('VALUE = 1\n')
+    runtime = next(value for value in f.record['inventories'].values()
+                   if value['root'] == str(f.runtime))
+    source = gate.installed_inventory(f.source)
+    inventories = {gate.raw_digest(value): value for value in (source, runtime)}
+    profile = f.args['preparation']['profile']
+    protocol = {**profile['host_protocol'],
+        'source_closure_digest': gate.source_checkout_closure(f.source)['digest']}
+    profile.update(host_protocol=protocol)
+    f.record.update(selected_profile_digest=gate.raw_digest(profile), host_protocol=protocol,
+        source_components=gate.source_checkout_closure(f.source)['components'], inventories=inventories)
+    launcher = Path(gate.__file__).resolve(strict=True)
+    f.record['import_binding'].update(
+        launcher={'path': str(launcher), 'sha256': hashlib.sha256(launcher.read_bytes()).hexdigest()},
+        python_runtime_inventory_digest=gate.raw_digest(runtime),
+        import_roots=[{'path': value['root'], 'inventory_digest': gate.raw_digest(value)}
+                      for value in (source, runtime)])
+    before = gate.installed_inventory(f.source)
+    read_fd, write_fd = os.pipe()
+    try:
+        proof = f.verifier.verify(**f.args)
+        argv, payload = f.verifier.claim(proof, **f.args, binding_fd=read_fd)
+        assert argv[:4] == [f.args['host_argv'][0], '-I', '-S', '-B']
+        if not bytecode_flag:
+            argv.remove('-B')
+        os.write(write_fd, payload)
+        os.close(write_fd)
+        write_fd = None
+        result = subprocess.run([sys.executable, *argv[1:]], pass_fds=(read_fd,), cwd=tmp_path,
+            env={**os.environ, 'PYTHONDONTWRITEBYTECODE': '1'},
+            capture_output=True, text=True, timeout=30)
+    finally:
+        os.close(read_fd)
+        if write_fd is not None:
+            os.close(write_fd)
+    if bytecode_flag:
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == 'COLD_SCHEMA_IMPORTS_WITH_EARLY_BYTECODE_SUPPRESSION'
+    else:
+        assert result.returncode != 0
+        assert 'launcher requires the exact isolated binding descriptor mode' in result.stderr
+        assert not result.stdout
+    assert gate.installed_inventory(f.source) == before
+    assert not list(schema.rglob('*.pyc'))
 
 
 def test_no_default_authority_or_manifest_self_authentication(tmp_path):
