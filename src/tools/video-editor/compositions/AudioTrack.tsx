@@ -1,4 +1,4 @@
-import { memo, useContext, useEffect, useMemo, useReducer, useRef, useState, type FC } from 'react';
+import { memo, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type FC } from 'react';
 import { Audio as Html5Audio, Internals, Sequence, useBufferState, useRemotionEnvironment } from 'remotion';
 import { Audio as MediaAudio } from '@remotion/media';
 import {
@@ -9,7 +9,7 @@ import {
   getSanitizedVolume,
   secondsToFrames,
 } from '@/tools/video-editor/lib/config-utils.ts';
-import { audioEnvelopeAt, compileAudioEnvelope } from '@banodoco/timeline-composition/evaluation';
+import { AudioEnvelopeError, audioEnvelopeAt, compileAudioEnvelope } from '@banodoco/timeline-composition/evaluation';
 import { MediaErrorBoundary } from '@/tools/video-editor/compositions/MediaErrorBoundary.tsx';
 import { useOptionalPreviewAudioFailureReporter } from '@/tools/video-editor/compositions/PreviewMediaFailureContext.tsx';
 import type { ResolvedTimelineClip, TrackDefinition } from '@/tools/video-editor/types/index.ts';
@@ -82,6 +82,12 @@ type PreviewAudioProps = {
   volume: number | ((frame: number) => number);
   amplify: boolean;
 };
+
+function isCanonicalAudioEnvelopeError(error: Error): boolean {
+  return error instanceof AudioEnvelopeError
+    || (error as Error & { code?: unknown }).code === 'ENVELOPE_UNRENDERED'
+    || (error as Error & { code?: unknown }).code === 'DUCK_UNRENDERED';
+}
 
 /** Events after which an element's ability to play may have changed. */
 const READINESS_EVENTS = ['loadstart', 'emptied', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'seeking', 'seeked'] as const;
@@ -254,6 +260,10 @@ const AudioTrackComponent: FC<{
 }> = ({ track, clips, fps }) => {
   const environment = useRemotionEnvironment();
   const isRendering = environment.isRendering || environment.isClientSideRendering;
+  const previewFailureReporter = useOptionalPreviewAudioFailureReporter();
+  const reportCanonicalAudioFailure = useCallback((clipId: string, source: string, error: Error) => {
+    if (isCanonicalAudioEnvelopeError(error)) previewFailureReporter?.reportFailure({ clipId, source });
+  }, [previewFailureReporter]);
 
   return (
     <>
@@ -274,6 +284,19 @@ const AudioTrackComponent: FC<{
         const effectiveVolume = track.muted ? 0 : getSanitizedVolume(track.volume) * getSanitizedVolume(renderClip.volume);
         const playbackRate = getSanitizedPlaybackRate(renderClip.speed);
         const trimProps = getSanitizedMediaTrimProps(renderClip, fps);
+        const clipAudio = (source: string) => (
+          <ClipAudio
+            clip={clip}
+            renderClip={renderClip}
+            fps={fps}
+            baseVolume={effectiveVolume}
+            isRendering={isRendering}
+            src={source}
+            trimBefore={trimProps.trimBefore}
+            trimAfter={trimProps.trimAfter}
+            playbackRate={playbackRate}
+          />
+        );
 
         return (
           <Sequence
@@ -284,23 +307,14 @@ const AudioTrackComponent: FC<{
             durationInFrames={getClipDurationInFrames(renderClip, fps)}
             premountFor={Math.ceil(fps * AUDIO_PREMOUNT_SECONDS)}
           >
-            {mediaSrc && isPlayableAudio ? (
+            {mediaSrc && isPlayableAudio ? isRendering ? clipAudio(mediaSrc) : (
               <MediaErrorBoundary
                 clipId={renderClip.id}
                 resetKey={`${renderClip.id}:${mediaSrc}:${trimProps.trimBefore}:${trimProps.trimAfter ?? 'none'}:${playbackRate}:${effectiveVolume}:${fps}:${authoredAudioIdentity(clip)}:audio`}
                 fallback={null}
+                onError={(error) => reportCanonicalAudioFailure(renderClip.id, mediaSrc, error)}
               >
-                <ClipAudio
-                  clip={clip}
-                  renderClip={renderClip}
-                  fps={fps}
-                  baseVolume={effectiveVolume}
-                  isRendering={isRendering}
-                  src={mediaSrc}
-                  trimBefore={trimProps.trimBefore}
-                  trimAfter={trimProps.trimAfter}
-                  playbackRate={playbackRate}
-                />
+                {clipAudio(mediaSrc)}
               </MediaErrorBoundary>
             ) : null}
           </Sequence>

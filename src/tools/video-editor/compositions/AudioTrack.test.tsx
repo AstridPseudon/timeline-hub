@@ -101,6 +101,12 @@ const canonicalClip: ResolvedTimelineClip = {
   app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 160_334 } },
 };
 
+const canonicalAudioFailureCases = [
+  ['an uncompiled duck', { app: { astrid: {}, duck: {} } }, 'DUCK_UNRENDERED'],
+  ['an invalid authored envelope', { audio: { envelope: { keyframes: [] } } }, 'ENVELOPE_UNRENDERED'],
+  ['an unknown authored fade curve', { params: { fadeIn: 1, fadeInCurve: 'unknown' } }, 'ENVELOPE_UNRENDERED'],
+] as const;
+
 function audioElement(): HTMLAudioElement {
   return screen.getByTestId('html5-audio') as HTMLAudioElement;
 }
@@ -450,23 +456,47 @@ describe('AudioTrack', () => {
   });
 
   describe('failures', () => {
-    it.each([
-      ['an uncompiled duck', { app: { astrid: {}, duck: {} } }],
-      ['an invalid authored envelope', { audio: { envelope: { keyframes: [] } } }],
-      ['an unknown authored fade curve', { params: { fadeIn: 1, fadeInCurve: 'unknown' } }],
-    ])('refuses %s and recovers when the authored input is corrected', (_name, invalidFields) => {
+    it.each(canonicalAudioFailureCases)('reports %s in preview and clears after readiness on correction', (_name, invalidFields, code) => {
       const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
       const validClip = { ...clip, app: { astrid: {} } };
-      const view = render(<AudioTrack track={track} clips={[validClip]} fps={30} />);
+      const view = renderPreview([validClip]);
       expect(screen.getByTestId('html5-audio')).toBeInTheDocument();
 
       const invalidClip = { ...validClip, ...invalidFields };
-      view.rerender(<AudioTrack track={track} clips={[invalidClip]} fps={30} />);
+      view.rerender(
+        <PreviewAudioFailureProvider>
+          <div data-testid="composition">
+            <AudioTrack track={track} clips={[invalidClip]} fps={30} />
+          </div>
+          <PreviewAudioFailureNotice />
+        </PreviewAudioFailureProvider>,
+      );
       expect(screen.queryByTestId('html5-audio')).toBeNull();
       expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('MediaErrorBoundary'));
+      expect(consoleError).toHaveBeenCalledWith(expect.stringContaining(code));
+      expect(screen.getByTestId('preview-audio-failure')).toHaveTextContent('Audio unavailable for 1 clip');
 
-      view.rerender(<AudioTrack track={track} clips={[validClip]} fps={30} />);
+      view.rerender(
+        <PreviewAudioFailureProvider>
+          <div data-testid="composition">
+            <AudioTrack track={track} clips={[validClip]} fps={30} />
+          </div>
+          <PreviewAudioFailureNotice />
+        </PreviewAudioFailureProvider>,
+      );
       expect(screen.getByTestId('html5-audio')).toBeInTheDocument();
+      act(() => becomePlayable(audioElement()));
+      expect(screen.queryByTestId('preview-audio-failure')).toBeNull();
+      consoleError.mockRestore();
+    });
+
+    it.each(canonicalAudioFailureCases)('propagates %s during rendering', (_name, invalidFields, code) => {
+      currentEnvironment = { isRendering: true, isClientSideRendering: false };
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const invalidClip = { ...clip, app: { astrid: {} }, ...invalidFields };
+
+      expect(() => render(<AudioTrack track={track} clips={[invalidClip]} fps={30} />)).toThrow(code);
+      expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('The above error occurred in the <ClipAudio> component'));
       consoleError.mockRestore();
     });
 
