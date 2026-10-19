@@ -1,13 +1,14 @@
 """The timelines parser: a positional after the flags still fills the verb's open positional."""
+
 from __future__ import annotations
 
 import argparse
+import sys
 from typing import Any
-
 
 # Verbs whose --project is optional: omitted, it is the workspace runtime's current project.
 CURRENT_PROJECT_VERBS = frozenset(
-    {"checkout", "apply", "assets", "check", "discard", "find", "lines", "publish", "redo", "status", "undo"}
+    {"checkout", "apply", "assets", "check", "discard", "find", "lines", "move", "publish", "redo", "status", "undo"}
 )
 
 
@@ -35,7 +36,12 @@ class TimelinesParser(argparse.ArgumentParser):
     """``show TL --project P c41.mink``: a positional after the flags fills the verb's open positional
     (address, word, query, sheet file, asset key) instead of failing with "unrecognized arguments"."""
 
+    move_parser: TimelinesParser
+
     def parse_args(self, args: Any = None, namespace: Any = None) -> argparse.Namespace:
+        args = list(sys.argv[1:] if args is None else args)
+        if args[:2] == ["edit", "move"] and hasattr(self, "move_parser"):
+            return self.move_parser.parse_args(args[2:], namespace)
         parsed, extras = self.parse_known_args(args, namespace)
         loose = [e for e in extras if not e.startswith("-")]
         if extras and len(loose) == len(extras):
