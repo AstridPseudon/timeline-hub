@@ -914,7 +914,6 @@ export type RenderExportDestination = 'download' | 'project-media';
 export interface EnqueueRenderOptions {
   /** Injected in tests; production constructs the client from the payload. */
   client?: AstridLocalClient;
-  bridgeBaseUrl?: string;
   /** Stable identity for one explicit export intent; reuse it for transport retries. */
   operationId?: string;
   idempotencyKey?: string;
@@ -966,10 +965,7 @@ export async function enqueueAstridRuntimeRenderTimeline(
       && (!Number.isSafeInteger(options.expectedVersion) || options.expectedVersion < 1)) {
       throw new Error('render admission requires a positive acknowledged timeline version');
     }
-    const client = options.client ?? new AstridLocalClient({
-      projectSlug: payload.project_id,
-      baseUrl: options.bridgeBaseUrl,
-    });
+    const client = options.client ?? new AstridLocalClient({ projectSlug: payload.project_id });
     const capability = await client.catalog.get(MANAGED_RENDER_CAPABILITY_ID);
     const destination = options.destination ?? 'download';
     const request: BridgeTaskAdmissionRequest = {

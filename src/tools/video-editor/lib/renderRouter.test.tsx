@@ -75,7 +75,12 @@ function renderTaskMutationResponse(
 
 function canonicalRenderFetch(taskId = 'task-42') {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new URL(input instanceof Request ? input.url : String(input));
+    const url = new URL(input instanceof Request ? input.url : String(input), 'http://localhost');
+    // The default client reaches `/api/astrid` (same-origin) or the door's origin + `/api/astrid`.
+    if (!url.pathname.startsWith('/v1/') && !url.pathname.startsWith('/api/astrid/')) {
+      throw new Error(`render fixture request outside the Astrid bridge: ${url.pathname}`);
+    }
+    url.pathname = url.pathname.replace(/^\/api\/astrid/, '');
     if (url.pathname === '/v1/capabilities') {
       return new Response(JSON.stringify(renderCapabilityPage()), { status: 200 });
     }
@@ -1228,6 +1233,31 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     correlation_id: 'c',
   };
 
+  describe.each([
+    ['same-origin (dev:local)', {}, '/api/astrid'],
+    ['hosted (Runtime door)', { VITE_RUNTIME_ORIGIN: 'http://127.0.0.1:17340' }, 'http://127.0.0.1:17340/api/astrid'],
+  ])('render admission on %s', (_name, env, astridPrefix) => {
+    it('lists capabilities and admits the task under /api/astrid, never the provider /api/runtime base', async () => {
+      vi.resetModules();
+      const { setRuntimeOrigin } = await import('@/integrations/runtime/connection.ts');
+      setRuntimeOrigin(env);
+      const router = await import('@/tools/video-editor/lib/renderRouter');
+      const fetchImpl = canonicalRenderFetch();
+      vi.stubGlobal('fetch', fetchImpl);
+      const result = await router.enqueueAstridRuntimeRenderTimeline(payload, {});
+      expect(result.status).toBe('queued');
+      const urls = fetchImpl.mock.calls.map(([input]) => String(input instanceof Request ? input.url : input));
+      expect(urls.length).toBeGreaterThanOrEqual(2);
+      for (const url of urls) {
+        expect(url.startsWith(`${astridPrefix}/v1/`)).toBe(true);
+        expect(url).not.toContain('/api/runtime');
+      }
+      expect(urls[0].startsWith(`${astridPrefix}/v1/capabilities`)).toBe(true);
+      expect(urls.some((url) => url.startsWith(`${astridPrefix}/v1/tasks`))).toBe(true);
+      vi.unstubAllGlobals();
+    });
+  });
+
   it('selects the existing Three.js route for saved scenes with ordinary audio', async () => {
     const fetchImpl = canonicalRenderFetch();
     vi.stubGlobal('fetch', fetchImpl);
@@ -1822,10 +1852,7 @@ describe('Sprint 8 render pipeline middleware', () => {
     const fetchImpl = canonicalRenderFetch('task-1');
     const originalFetch = globalThis.fetch;
     vi.stubGlobal('fetch', fetchImpl);
-    const workerRuntime = {
-      ...runtime,
-      bridgeBaseUrl: 'http://bridge.fake',
-    };
+    const workerRuntime = runtime;
     const request = {
       timelineId: 'timeline-fixture-worker',
       assetRegistry: {

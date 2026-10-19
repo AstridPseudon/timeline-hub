@@ -107,7 +107,6 @@ async function executeProviderRoute({
       }
 
       const enqueueResult = await enqueueAstridRuntimeRenderTimeline(payload, {
-        bridgeBaseUrl: request.renderRuntime.bridgeBaseUrl,
         destination: request.renderRuntime.destination,
       });
 

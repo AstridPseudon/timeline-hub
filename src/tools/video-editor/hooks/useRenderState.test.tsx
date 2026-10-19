@@ -776,7 +776,7 @@ describe('useRenderState render routing', () => {
     const runtimeValue = {
       project: { projectId: 'demo-project' },
       timelineId: 'timeline-1',
-      provider: { apiBaseUrl: '/api/astrid' },
+      provider: { apiBaseUrl: '/api/runtime' },
       telemetry: { warn: vi.fn() },
     } as unknown as VideoEditorRuntimeContextValue;
     const wrapper = ({ children }: { children: ReactNode }) => (
@@ -797,6 +797,11 @@ describe('useRenderState render routing', () => {
       expect.anything(),
       expect.objectContaining({ expectedVersion: 7, destination: 'download' }),
     );
+    // The provider is the Runtime's (`/api/runtime`); the Astrid-API client must still use `/api/astrid`.
+    const admissionOptions = renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mock.calls[0][1] as {
+      client: { transport: { baseUrl: string } };
+    };
+    expect(admissionOptions.client.transport.baseUrl).toBe('/api/astrid');
     expect(result.current.renderStatus).toBe('rendering');
     expect(result.current.activeRenderTaskId).toBe('render-task-1');
     expect(fetchMock).toHaveBeenCalledTimes(1);
