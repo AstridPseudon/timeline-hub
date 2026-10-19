@@ -25,7 +25,7 @@ FAKE_PID = 4242
 MODULE_ARGS = ["-m", "astrid.core.execution.generic_host", "run", "--support-root"]
 # A leader that optionally keeps one child running, then idles.
 LEADER = ("import subprocess,sys,time;"
-          "c=subprocess.Popen([sys.executable,'-c','import time;time.sleep(300)'],start_new_session=sys.argv[1]=='task') if sys.argv[1] in ('child','task') else None;"
+          "c=subprocess.Popen([sys.executable,'-c','import sys;sys.stdin.buffer.read()'],stdin=sys.stdin,start_new_session=sys.argv[1]=='task') if sys.argv[1] in ('child','task') else None;"
           "open(sys.argv[2],'w').write(str(c.pid if c else 0));"
           "time.sleep(300 if sys.argv[3]=='stay' else 0)")
 
@@ -118,7 +118,7 @@ class Harness:
         """A real process leading its own session that looks like a pack host."""
         record = self.tmp / f"child-{len(self.procs)}.pid"
         proc = subprocess.Popen([sys.executable, "-c", LEADER, child, str(record), "stay" if stay else "go",
-                                 *MODULE_ARGS, str(self.support)], start_new_session=True)
+                                 *MODULE_ARGS, str(self.support)], start_new_session=True, stdin=subprocess.PIPE)
         self.procs.append(proc)
         deadline = time.monotonic() + 10
         while not record.exists() or not record.read_text():
@@ -134,6 +134,8 @@ class Harness:
 
     def cleanup(self) -> None:
         for proc in self.procs:
+            if proc.stdin is not None:
+                proc.stdin.close()
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except OSError:
