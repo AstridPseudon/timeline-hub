@@ -630,6 +630,19 @@ def test_declared_custom_picture_preserves_auxiliary_activation_and_context_boun
     assert evaluate_closure(parent, shots, internal, timeline_id="main")[0]["blocked"]
 
 
+def test_declared_picture_lane_keeps_timeline_scoped_effects_auxiliary():
+    parent, shots, internal = _custom_picture_closure()
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    internal["ir-1"]["payload"]["effects"] = [
+        {"id": "timeline-effect", "type": "opacity", "track": "plate", "hold": 1, "params": {"opacity": 0.5}}]
+    report, metadata = evaluate_closure(parent, shots, internal, timeline_id="main")
+    effect = next(s for s in metadata["spans"] if s["path"][-2:] == ["effect", "timeline-effect"])
+    assert not effect["primary"]
+    assert not report["structuralIssues"]
+    assert report["blocked"]
+    assert any(c["kind"] == "activation" and c["path"][-1] == "timeline-effect" for c in report["cues"])
+
+
 @pytest.mark.parametrize("duration,fps", [(7.366667, 30), (1.000001, 30), (2.041667, 24)])
 @pytest.mark.parametrize("gap_frames", [0, 1])
 def test_fractional_occurrence_bounds_match_render_frames_and_preserve_real_gaps(duration, fps, gap_frames):

@@ -176,7 +176,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         duration = clip_seconds(clip, (bound[1] - offset) * clip["speed"] if bound else 0, speed=clip["speed"])
         track = clip.get("track", inherited_track or "video")
         definition = (track_definitions if track_definitions is not None else tracks).get(track, {})
-        primary = (track in continuity or definition.get("kind") == "visual") and picture_clip(
+        primary = render and (track in continuity or definition.get("kind") == "visual") and picture_clip(
             clip, definition, declared=track in picture_tracks)
         if at < 0 or offset + at < 0:
             structural.append({"code": "boundary/negative-start", "path": path})
