@@ -1,0 +1,10 @@
+{
+  "recorded_utc": "2026-10-15T11:57:10.788026+00:00",
+  "source": "Direct human messages in this chat",
+  "quotes": [
+    "Sorry, but why on earth do we have a two-worker limit? That makes absolutely no sense. Like why do you keep inventing all these things?",
+    "Please stop inventing arbitrary limits. And can you update the hourly execution check thing to just say that, like, we should send check: are we, like, inventing arbitrary limits? Are we stalled for a reason? You know, a silly reason? You know, have we asked Astray, like, what's, you know, if we're stalled, what's, you know, the dirtiest thing we could do to get moving again? You know, have we asked, how could we increase speed, the number of things that are running synchronously, and so on and so forth?"
+  ],
+  "authority": "Remove inherited coordinator-invented fixed worker/project/healthy-worker time ceilings. Use actual resources/platform slots, ready work and integration throughput. Update hourly check to challenge arbitrary limits, silly stalls, pragmatic Astra-led acceleration and additional useful parallelism. Explicit user review/data/human/publication/migration authority remains unchanged.",
+  "automations": "Hourly and three-hour prompts already updated using automation tool."
+}

@@ -1,0 +1,2034 @@
+{
+  "schema": "megado.portfolio.dependencies.v1",
+  "authority": "cards.md; latest amendment amendments/r4-release3-extension-kinds-restored.md; original archive preserved in historical/archive-manifest.json",
+  "projects": [
+    {
+      "id": "A",
+      "folder": "A-integration",
+      "run_id": "timeline-platform-r4-A-integration",
+      "dependencies": []
+    },
+    {
+      "id": "B",
+      "folder": "B-preservation",
+      "run_id": "timeline-platform-r4-B-preservation",
+      "dependencies": [
+        {
+          "on": "A",
+          "gate": "base",
+          "milestone": "base"
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "folder": "C-runtime",
+      "run_id": "timeline-platform-r4-C-runtime",
+      "dependencies": [
+        {
+          "on": "A",
+          "gate": "base",
+          "milestone": "base"
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "folder": "D-semantic-editing",
+      "run_id": "timeline-platform-r4-D-semantic-editing",
+      "dependencies": [
+        {
+          "on": "A",
+          "gate": "base",
+          "milestone": "base"
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "folder": "E-app-saving",
+      "run_id": "timeline-platform-r4-E-app-saving",
+      "dependencies": [
+        {
+          "on": "A",
+          "gate": "contract-command",
+          "milestone": "contract-command"
+        },
+        {
+          "on": "D",
+          "gate": "commit-service",
+          "milestone": "commit-service"
+        },
+        {
+          "on": "D",
+          "gate": "identities",
+          "milestone": "identities"
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "folder": "F-timing",
+      "run_id": "timeline-platform-r4-F-timing",
+      "dependencies": [
+        {
+          "on": "A",
+          "gate": "base",
+          "milestone": "base"
+        }
+      ]
+    },
+    {
+      "id": "G",
+      "folder": "G-rendering",
+      "run_id": "timeline-platform-r4-G-rendering",
+      "dependencies": []
+    },
+    {
+      "id": "H",
+      "folder": "H-hosted-security",
+      "run_id": "timeline-platform-r4-H-hosted-security",
+      "dependencies": [
+        {
+          "on": "A",
+          "gate": "base",
+          "milestone": "base"
+        }
+      ]
+    },
+    {
+      "id": "I",
+      "folder": "I-story-motion-audio",
+      "run_id": "timeline-platform-r4-I-story-motion-audio",
+      "dependencies": [
+        {
+          "on": "D",
+          "gate": "commands",
+          "milestone": "commands"
+        },
+        {
+          "on": "F",
+          "gate": "music-segments",
+          "milestone": "music-segments"
+        }
+      ]
+    },
+    {
+      "id": "J",
+      "folder": "J-extensions",
+      "run_id": "timeline-platform-r4-J-extensions",
+      "dependencies": [
+        {
+          "on": "D",
+          "gate": "commands",
+          "milestone": "commands"
+        },
+        {
+          "on": "G",
+          "gate": "evaluator-film",
+          "milestone": "evaluator-film"
+        }
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "project": "A",
+      "id": "base",
+      "milestone": "base",
+      "title": "A#base merged (BASE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#feature-parity"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "feature-parity",
+      "milestone": "feature-parity",
+      "title": "A#feature-parity merged (FEATURE-PARITY)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md"
+    },
+    {
+      "project": "A",
+      "id": "checkpoint-astrid",
+      "milestone": "checkpoint-astrid",
+      "title": "A#checkpoint-astrid merged (CHECKPOINT-ASTRID)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "checkpoint",
+      "milestone": "checkpoint",
+      "title": "A#checkpoint merged (CHECKPOINT-RUNTIME)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base",
+        "A#golden-baseline"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "green",
+      "milestone": "green",
+      "title": "A#green merged (GREEN)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "x0-editor",
+      "milestone": "x0-editor",
+      "title": "A#x0-editor merged (X0-EDITOR)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "x0-popup",
+      "milestone": "x0-popup",
+      "title": "A#x0-popup merged (X0-POPUP)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base",
+        "A#x0-editor"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "golden-baseline",
+      "milestone": "golden-baseline",
+      "title": "A#golden-baseline merged (GOLDEN)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "gate",
+      "milestone": "gate",
+      "title": "A#gate merged (GATE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base",
+        "A#checkpoint-astrid",
+        "A#checkpoint"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "contract-commit",
+      "milestone": "contract-commit",
+      "title": "A#contract-commit merged (CONTRACT-COMMIT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base",
+        "A#x0-editor"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "contract-command",
+      "milestone": "contract-command",
+      "title": "A#contract-command merged (CONTRACT-COMMAND)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#contract-commit"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "replays",
+      "milestone": "replays",
+      "title": "A#replays merged (REPLAYS)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#rehome",
+        "D#add-layer",
+        "F#compiler",
+        "F#timing-fixes",
+        "F#music-segments",
+        "F#cuts",
+        "G#change-view",
+        "A#gate"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "practice",
+      "milestone": "practice",
+      "title": "A#practice merged (PRACTICE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#skill"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "sec-matrix",
+      "milestone": "sec-matrix",
+      "title": "A#sec-matrix merged (SEC-MATRIX)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "H#transport",
+        "H#grant"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "r1-accepted",
+      "milestone": "r1-accepted",
+      "title": "A#r1-accepted merged (RELEASE-1)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#replays",
+        "A#sec-matrix",
+        "A#green",
+        "C#provider-retry",
+        "D#apply",
+        "D#drafts",
+        "D#sheet-external",
+        "D#skill",
+        "D#skill-0",
+        "D#ux-loop",
+        "E#all-writers",
+        "E#collab-ux",
+        "E#gesture-choices",
+        "G#checks",
+        "G#render-parity",
+        "G#verify-loop",
+        "G#vocab"
+      ]
+    },
+    {
+      "project": "A",
+      "id": "r3-accepted",
+      "milestone": "r3-accepted",
+      "title": "A#r3-accepted merged (FINAL-R3)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#r1-accepted",
+        "I#story",
+        "I#motion-contract",
+        "I#motion",
+        "I#transitions",
+        "I#audio",
+        "I#lint",
+        "I#copy-sync",
+        "I#bed",
+        "I#music-clock",
+        "I#audio-lane",
+        "C#schema-warn",
+        "D#script",
+        "D#retention",
+        "F#repairs",
+        "E#review",
+        "G#full-parity",
+        "J#curves",
+        "J#ext-view",
+        "J#ext-component",
+        "J#proofs"
+      ]
+    },
+    {
+      "project": "B",
+      "id": "compat",
+      "milestone": "compat",
+      "title": "B#compat merged (H-DATA)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "B",
+      "id": "pres-harness",
+      "milestone": "pres-harness",
+      "title": "B#pres-harness merged (PRES-HARNESS)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#x0-editor",
+        "A#x0-popup"
+      ]
+    },
+    {
+      "project": "B",
+      "id": "preservation",
+      "milestone": "preservation",
+      "title": "B#preservation merged (PRES-REPAIRS)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "B#pres-harness"
+      ]
+    },
+    {
+      "project": "C",
+      "id": "acceptance",
+      "milestone": "acceptance",
+      "title": "C#acceptance merged (ACCEPT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#contract-commit"
+      ]
+    },
+    {
+      "project": "C",
+      "id": "history-wire",
+      "milestone": "history-wire",
+      "title": "C#history-wire merged (HISTORY-WIRE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "C",
+      "id": "history",
+      "milestone": "history",
+      "title": "C#history merged (HISTORY)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "C#acceptance",
+        "C#history-wire"
+      ]
+    },
+    {
+      "project": "C",
+      "id": "task-replay",
+      "milestone": "task-replay",
+      "title": "C#task-replay merged (TASK-IDENTITY)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "C",
+      "id": "provider-retry",
+      "milestone": "provider-retry",
+      "title": "C#provider-retry merged (PROVIDER-RETRY)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "C#task-replay"
+      ]
+    },
+    {
+      "project": "C",
+      "id": "schema-warn",
+      "milestone": "schema-warn",
+      "title": "C#schema-warn merged (SCHEMA-WARN)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#contract-command"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "commands",
+      "milestone": "commands",
+      "title": "D#commands merged (RUNNER)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base",
+        "B#compat"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "registry",
+      "milestone": "registry",
+      "title": "D#registry merged (REGISTRY)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "apply",
+      "milestone": "apply",
+      "title": "D#apply merged (APPLY-FILES)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "no-bypass",
+      "milestone": "no-bypass",
+      "title": "D#no-bypass merged (BYPASSES)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "drafts",
+      "milestone": "drafts",
+      "title": "D#drafts merged (DRAFTS)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands",
+        "D#no-bypass"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "identities",
+      "milestone": "identities",
+      "title": "D#identities merged (IDENTITY)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands",
+        "A#x0-editor"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "merge",
+      "milestone": "merge",
+      "title": "D#merge merged (REBASE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands",
+        "A#contract-command"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "sheet-external",
+      "milestone": "sheet-external",
+      "title": "D#sheet-external merged (SHEET-EXTERNAL)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#merge"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "commit-service",
+      "milestone": "commit-service",
+      "title": "D#commit-service merged (COMMIT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#merge",
+        "C#acceptance",
+        "A#contract-commit"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "history",
+      "milestone": "history",
+      "title": "D#history merged (UNDO-REVERT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commit-service",
+        "C#history",
+        "C#history-wire"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "agent-sync",
+      "milestone": "agent-sync",
+      "title": "D#agent-sync merged (AGENT-SYNC)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commit-service",
+        "C#history"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "skill",
+      "milestone": "skill",
+      "title": "D#skill merged (SKILL)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#agent-sync",
+        "G#views"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "add-layer",
+      "milestone": "add-layer",
+      "title": "D#add-layer merged (ADD)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "rehome",
+      "milestone": "rehome",
+      "title": "D#rehome merged (REHOME)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "skill-0",
+      "milestone": "skill-0",
+      "title": "D#skill-0 merged (SKILL-0)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "ux-loop",
+      "milestone": "ux-loop",
+      "title": "D#ux-loop merged (UX-LOOP)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "script-edit",
+      "milestone": "script-edit",
+      "title": "D#script-edit merged (SCRIPT-EDIT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "script",
+      "milestone": "script",
+      "title": "D#script merged (SCRIPT-REFLOW)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#script-edit",
+        "F#timing-fixes"
+      ]
+    },
+    {
+      "project": "D",
+      "id": "retention",
+      "milestone": "retention",
+      "title": "D#retention merged (RETENTION)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#history"
+      ]
+    },
+    {
+      "project": "E",
+      "id": "gestures",
+      "milestone": "gestures",
+      "title": "E#gestures merged (GESTURES)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#contract-command",
+        "D#identities",
+        "D#commit-service"
+      ]
+    },
+    {
+      "project": "E",
+      "id": "gesture-choices",
+      "milestone": "gesture-choices",
+      "title": "E#gesture-choices merged (GESTURE-CHOICES)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "E#gestures"
+      ]
+    },
+    {
+      "project": "E",
+      "id": "all-writers",
+      "milestone": "all-writers",
+      "title": "E#all-writers merged (WRITERS)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "E#gestures"
+      ]
+    },
+    {
+      "project": "E",
+      "id": "save-routing",
+      "milestone": "save-routing",
+      "title": "E#save-routing merged (SAVE-ROUTING)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "E#gestures",
+        "B#preservation"
+      ]
+    },
+    {
+      "project": "E",
+      "id": "save-rebase",
+      "milestone": "save-rebase",
+      "title": "E#save-rebase merged (SUFFIX)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "E#save-routing",
+        "A#contract-commit",
+        "D#commit-service"
+      ]
+    },
+    {
+      "project": "E",
+      "id": "collab-ux",
+      "milestone": "collab-ux",
+      "title": "E#collab-ux merged (COLLAB-UX)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "E#save-rebase",
+        "D#history",
+        "C#history"
+      ]
+    },
+    {
+      "project": "E",
+      "id": "review",
+      "milestone": "review",
+      "title": "E#review merged (REVIEW)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "E#collab-ux"
+      ]
+    },
+    {
+      "project": "F",
+      "id": "characterized",
+      "milestone": "characterized",
+      "title": "F#characterized merged (CHARACTERIZE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "F",
+      "id": "compiler",
+      "milestone": "compiler",
+      "title": "F#compiler merged (COMPILER)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "F#characterized",
+        "B#compat",
+        "A#golden-baseline"
+      ]
+    },
+    {
+      "project": "F",
+      "id": "timing-fixes",
+      "milestone": "timing-fixes",
+      "title": "F#timing-fixes merged (TIMING-FIXES)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "F#compiler"
+      ]
+    },
+    {
+      "project": "F",
+      "id": "music-segments",
+      "milestone": "music-segments",
+      "title": "F#music-segments merged (MUSIC-SEGMENTS)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "F#compiler"
+      ]
+    },
+    {
+      "project": "F",
+      "id": "cuts",
+      "milestone": "cuts",
+      "title": "F#cuts merged (CUTS)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "F#compiler",
+        "D#commands",
+        "D#identities"
+      ]
+    },
+    {
+      "project": "F",
+      "id": "repairs-1",
+      "milestone": "repairs-1",
+      "title": "F#repairs-1 merged (REPAIRS-STRUCT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "F#timing-fixes"
+      ]
+    },
+    {
+      "project": "F",
+      "id": "repairs",
+      "milestone": "repairs",
+      "title": "F#repairs merged (REPAIRS-REST)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "F#repairs-1"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "pins-astrid",
+      "milestone": "pins-astrid",
+      "title": "G#pins-astrid merged (PINS-ASTRID)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base",
+        "A#golden-baseline"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "pins",
+      "milestone": "pins",
+      "title": "G#pins merged (PINS-APP)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#pins-astrid"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "capture",
+      "milestone": "capture",
+      "title": "G#capture merged (CAPTURE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#pins-astrid"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "verify-loop",
+      "milestone": "verify-loop",
+      "title": "G#verify-loop merged (SHARED-CAPTURE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#capture"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "eval",
+      "milestone": "eval",
+      "title": "G#eval merged (EVAL)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#pins-astrid"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "evaluator-film",
+      "milestone": "evaluator-film",
+      "title": "G#evaluator-film merged (PLAYER)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#eval",
+        "G#pins"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "render-parity",
+      "milestone": "render-parity",
+      "title": "G#render-parity merged (RENDER-PARITY)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#evaluator-film"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "change-view",
+      "milestone": "change-view",
+      "title": "G#change-view merged (CHANGE-VIEW)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#eval",
+        "D#commands"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "checks",
+      "milestone": "checks",
+      "title": "G#checks merged (CHECKS)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md"
+    },
+    {
+      "project": "G",
+      "id": "show",
+      "milestone": "show",
+      "title": "G#show merged (SHOW)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands",
+        "F#cuts"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "vocab",
+      "milestone": "vocab",
+      "title": "G#vocab merged (VOCAB)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#registry"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "views",
+      "milestone": "views",
+      "title": "G#views merged (VISUALIZE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#show",
+        "G#eval"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "full-motion",
+      "milestone": "full-motion",
+      "title": "G#full-motion merged (FULL-MOTION)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#render-parity",
+        "I#motion"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "full-audio-ext",
+      "milestone": "full-audio-ext",
+      "title": "G#full-audio-ext merged (FULL-AUDIO-EXT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#render-parity",
+        "I#audio",
+        "J#curves",
+        "J#ext-component"
+      ]
+    },
+    {
+      "project": "G",
+      "id": "full-parity",
+      "milestone": "full-parity",
+      "title": "G#full-parity merged (RETIRE-EVAL)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#full-motion",
+        "G#full-audio-ext"
+      ]
+    },
+    {
+      "project": "H",
+      "id": "route-proof",
+      "milestone": "route-proof",
+      "title": "H#route-proof merged (ROUTES)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "H",
+      "id": "credentials",
+      "milestone": "credentials",
+      "title": "H#credentials merged (CREDENTIALS)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "H#route-proof",
+        "D#commit-service"
+      ]
+    },
+    {
+      "project": "H",
+      "id": "transport",
+      "milestone": "transport",
+      "title": "H#transport merged (TRANSPORT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "H#credentials"
+      ]
+    },
+    {
+      "project": "H",
+      "id": "grant-core",
+      "milestone": "grant-core",
+      "title": "H#grant-core merged (GRANT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "H#route-proof"
+      ]
+    },
+    {
+      "project": "H",
+      "id": "confine-mechanism",
+      "milestone": "confine-mechanism",
+      "title": "H#confine-mechanism merged (CONFINE-SPIKE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "A#base"
+      ]
+    },
+    {
+      "project": "H",
+      "id": "confine",
+      "milestone": "confine",
+      "title": "H#confine merged (CONFINE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "H#grant-core",
+        "H#confine-mechanism"
+      ]
+    },
+    {
+      "project": "H",
+      "id": "grant",
+      "milestone": "grant",
+      "title": "H#grant merged (REVOKE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "H#confine"
+      ]
+    },
+    {
+      "project": "I",
+      "id": "story",
+      "milestone": "story",
+      "title": "I#story merged (STORY)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "F#compiler",
+        "F#cuts",
+        "A#golden-baseline"
+      ]
+    },
+    {
+      "project": "I",
+      "id": "motion-contract",
+      "milestone": "motion-contract",
+      "title": "I#motion-contract merged (MOTION-CONTRACT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "F#compiler",
+        "G#eval"
+      ]
+    },
+    {
+      "project": "I",
+      "id": "motion",
+      "milestone": "motion",
+      "title": "I#motion merged (MOTION)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "I#motion-contract"
+      ]
+    },
+    {
+      "project": "I",
+      "id": "transitions",
+      "milestone": "transitions",
+      "title": "I#transitions merged (TRANSITIONS)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#eval"
+      ]
+    },
+    {
+      "project": "I",
+      "id": "audio",
+      "milestone": "audio",
+      "title": "I#audio merged (ENVELOPE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#evaluator-film",
+        "F#music-segments"
+      ]
+    },
+    {
+      "project": "I",
+      "id": "lint",
+      "milestone": "lint",
+      "title": "I#lint merged (LINT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "G#eval"
+      ]
+    },
+    {
+      "project": "I",
+      "id": "copy-sync",
+      "milestone": "copy-sync",
+      "title": "I#copy-sync merged (COPY-SYNC)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "F#timing-fixes",
+        "G#change-view"
+      ]
+    },
+    {
+      "project": "I",
+      "id": "bed",
+      "milestone": "bed",
+      "title": "I#bed merged (BED-ADOPT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "F#music-segments",
+        "D#commands"
+      ]
+    },
+    {
+      "project": "I",
+      "id": "music-clock",
+      "milestone": "music-clock",
+      "title": "I#music-clock merged (BED-CLOCK)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "I#bed",
+        "I#audio"
+      ]
+    },
+    {
+      "project": "I",
+      "id": "audio-lane",
+      "milestone": "audio-lane",
+      "title": "I#audio-lane merged (AUDIO-LANE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "I#music-clock",
+        "G#views"
+      ]
+    },
+    {
+      "project": "J",
+      "id": "ext-one",
+      "milestone": "ext-one",
+      "title": "J#ext-one merged (EXT-ONE)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "D#commands",
+        "G#evaluator-film"
+      ]
+    },
+    {
+      "project": "J",
+      "id": "curves",
+      "milestone": "curves",
+      "title": "J#curves merged (EXT-CURVES)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "J#ext-one",
+        "I#audio",
+        "I#transitions",
+        "G#render-parity"
+      ]
+    },
+    {
+      "project": "J",
+      "id": "ext-view",
+      "milestone": "ext-view",
+      "title": "J#ext-view merged (EXT-VIEW)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "J#ext-one",
+        "G#views",
+        "I#story"
+      ]
+    },
+    {
+      "project": "J",
+      "id": "ext-component",
+      "milestone": "ext-component",
+      "title": "J#ext-component merged (EXT-COMPONENT)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "J#ext-one",
+        "G#render-parity",
+        "I#motion-contract"
+      ]
+    },
+    {
+      "project": "J",
+      "id": "proofs",
+      "milestone": "proofs",
+      "title": "J#proofs merged (EXT-CHECK-GEN)",
+      "owner": "A (merge manager)",
+      "proof": "cards.md",
+      "depends_on": [
+        "J#ext-one",
+        "J#curves",
+        "G#checks"
+      ]
+    }
+  ],
+  "portfolio": {
+    "name": "timeline-platform",
+    "root_project_id": "timeline-platform-r4",
+    "root": "."
+  },
+  "external_prerequisites": [
+    {
+      "id": "codex-accepts-base",
+      "project": "A",
+      "card": "RELEASE-1",
+      "owner": "orchestrator",
+      "proof": "cards.md",
+      "description": "Codex accepts the base: their film render proof and focused tests pass on their combined tips. Gates RELEASE-1 only.",
+      "gate": "codex-accepts-base",
+      "satisfied": false
+    }
+  ],
+  "execution_readiness": {
+    "decision": "R4-HISTORICAL-IMPLEMENTATION-GATE-001",
+    "authority": "amendments/20261015-human-historical-gate-challenge.json",
+    "recorded_utc": "2026-10-15T11:31:49.135769+00:00",
+    "semantics": "Execution scheduling consumes A-confirmed source/interface/contract/runtime predicates. Original graph fields remain the full acceptance/release graph. No original card acceptance is implied by integration or dependency availability.",
+    "integration_owner": "A",
+    "predicate_rule": "A names admitted revision, exported capability/contract, actual available producer and relevant focused verification before dependent dispatch. Hold only genuinely missing consumed inputs.",
+    "handback_rule": "Adaptive integration feedback under R4-ADAPTIVE-CONCURRENCY-001. A prioritizes integration/defects and reduces admission worsening an observed bottleneck, without a global queue-depth magic number or counting historical-proof-only debt.",
+    "cards": {
+      "A#feature-parity": {
+        "implementation": "implementation_integrated",
+        "source_commit": "8fd1a99fb6bf26290e479a3d0b855f71eb8378b9",
+        "dependency_available": true,
+        "fully_verified_card_accepted": false,
+        "available_candidate": "deterministic source-isolated inventory, removal/import/alias guard and affected-check target",
+        "pending_verification": [
+          "C3 authenticated historical live-line comparison"
+        ],
+        "next_action": "consume exact tested source capability; historical proof remains only at affected criteria/acceptance",
+        "integrated_candidate_commit": "8323bc57435f47b41ca45371604351875d1343be",
+        "A_confirmed": true,
+        "unresolved_code_queue_counted": false
+      },
+      "G#checks": {
+        "implementation": "implementation_integrated",
+        "source_commit": "fda4daf3f6c6a9d7c7bf96d9967f6b2a26aaf2ae",
+        "dependency_available": true,
+        "fully_verified_card_accepted": false,
+        "available_candidate": "typed null validation and change-description implementation; C1/C2/C6 evidence",
+        "pending_verification": [
+          "C3/C4 named-v9 fixture",
+          "C5 named-v8 and integrated parity evidence"
+        ],
+        "next_action": "consume exact tested source capability; historical proof remains only at affected criteria/acceptance",
+        "integrated_candidate_commit": "8323bc57435f47b41ca45371604351875d1343be",
+        "A_confirmed": true,
+        "unresolved_code_queue_counted": false
+      },
+      "A#base": {
+        "implementation": "available_source_ledger_complete",
+        "dependency_available": true,
+        "fully_verified_card_accepted": false,
+        "execution_predicates": [
+          "admitted four frozen source revisions",
+          "tested inventory capability from inspected source",
+          "source/renderer/mount facts explicitly identified"
+        ],
+        "pending_verification": [
+          "exact-v8 identity/effective film closure",
+          "historical base-vs-live diff",
+          "parked-WIP keep/revert evidence where unavailable",
+          "full baseline outcomes where not run"
+        ],
+        "next_action": "consume scoped producer predicates; whole BASE acceptance remains pending",
+        "availability_scope": "four frozen revisions, current inventory guard, renderer/proxy/mount facts and current list/restore/capability-identity producer interfaces for named next tasks",
+        "receipt": "receipts/A-BASE-implementation-001.md",
+        "receipt_sha256": "86b9d1e428f2dd60f420f893f0cbd9e0f5cadf1baca9d8d5d5d3b53d083b5df2",
+        "bounded_baseline": {
+          "selectors": 4,
+          "passed": 3,
+          "failed": 1,
+          "scope": "frozen Astrid/Runtime, not combined candidate",
+          "failed_id": "tests/test_cli_registration_conformance.py::ProductRegistryConformanceTest::test_product_census_is_exactly_five_families",
+          "app_selector": "not run; local Vitest unavailable"
+        }
+      },
+      "C#task-identity": {
+        "implementation": "complete",
+        "manager": "C",
+        "native_handle": "${OLD_OWNER_HANDLE}/task_identity_impl",
+        "route": "xhard:gpt-6.1-sol/high",
+        "input_predicates_available": true,
+        "source_astrid_candidate": "8323bc57435f47b41ca45371604351875d1343be",
+        "source_runtime_pin": "ba348514d0f2dc9431dad49f2f3d6f1a03a9db3e",
+        "dependency_available": true,
+        "fully_verified_card_accepted": true,
+        "acceptance_edges": "original graph unchanged",
+        "A_confirmed": true,
+        "integrated_astrid_commit": "af4362109576adfcc736d6093463fd0bae48e241",
+        "integrated_runtime_commit": "7d5eed5a851933e6ad03262351d5e74523109009",
+        "focused_cohort_unique_ids": 204,
+        "focused_cohort_passed": 204,
+        "bounded_correction": {
+          "outcome": "explicit executable closure; exclude non-executable docs/debris, preserve helpers/resources",
+          "state": "integrated",
+          "manager": "C",
+          "route": "xhard:gpt-6.1-sol/high",
+          "pid": 73730,
+          "supervisor_pid": 73728,
+          "authority": "R4-HIGH-LEVEL-FIX-DIRECTION-001",
+          "source_commit": "3f7e0b0ab9e30cbcf4710b4405557ee896644f7f",
+          "integrated_candidate": "3b8967a862cd9d4f0311e0d940919c79af711c07",
+          "terminal_exit": 0
+        },
+        "closure_receipt": "receipts/root-C-literal-closure-20261015.json",
+        "closure_receipt_sha256": "baca7925148c01e51700db34645d5ff5db7d27ae19e0996a37d580edd35c85c2",
+        "acceptance_source_context": {
+          "Astrid": "fe75288689b3fee06fe2db695a1d626a282e1458",
+          "Runtime": "c86733eac5287befeb75573a12e6e98bde6f9a10",
+          "scope": "Literal criteria on coherent008 source only; later changed sources require affected checks. Historical source fields and reds retained."
+        },
+        "next_action": "consume closed coherent008 exact source/evidence; serially join later changes with affected checks"
+      },
+      "D#skill-0": {
+        "implementation": "implementation_integrated",
+        "manager": "D",
+        "native_handle": "${OLD_OWNER_HANDLE}",
+        "route": "normal:gpt-6-luna/xhigh",
+        "input_predicates_available": true,
+        "source_astrid_candidate": "9d9f936e9097af68c23f3cbfd07db90fd93c80ee",
+        "source_runtime_pin": null,
+        "dependency_available": true,
+        "fully_verified_card_accepted": true,
+        "acceptance_edges": "original graph unchanged",
+        "source_commit": "27fe754fb8f51011e7943010e0c7693750d5af6e",
+        "next_action": "accepted on exact integrated candidate; original dependency and release edges unchanged",
+        "A_confirmed": true,
+        "integrated_astrid_commit": "9d9f936e9097af68c23f3cbfd07db90fd93c80ee",
+        "integration_receipt": "projects/A-integration/receipts/A-D-SKILL-0-literal-closure-001.md",
+        "integration_receipt_sha256": "339573a74c92439a526240f7dd9f56e7eb664995218c50373e173cbba5861a46",
+        "pending_verification": [],
+        "accepted_source_commit": "9d9f936e9097af68c23f3cbfd07db90fd93c80ee",
+        "accepted_source_tree": "aaa8f7344887597fb41fb5dbce3a768129225789"
+      },
+      "C#history-wire": {
+        "implementation": "complete",
+        "manager": "C",
+        "route": "normal:gpt-6-luna/xhigh",
+        "input_predicates_available": true,
+        "brief": "briefs/C-HISTORY-WIRE-002-execution.md",
+        "brief_sha256": "105fd19683911e15f5284b457ceb2e7f0ab4e142ff5a63e3dfa5f8b50ee580af",
+        "next_action": "consume closed actual source and trunk proof",
+        "fully_verified_card_accepted": true,
+        "source_commit": "b76725931974081c85ceb54b06292d8b12bc37be",
+        "dependency_available": true,
+        "A_confirmed": true,
+        "closure_receipt": "projects/A-integration/receipts/A-HISTORY-WIRE-closure-001.md",
+        "closure_receipt_sha256": "7cc1b9dd7a8784100e7ab66920b65aee4796bc94a44694d36b2b06e899df1fff"
+      },
+      "C#provider-retry": {
+        "implementation": "complete",
+        "manager": "C",
+        "route": "xhard:gpt-6.1-sol/high",
+        "input_predicates_available": true,
+        "Astrid_source": "af4362109576adfcc736d6093463fd0bae48e241",
+        "Runtime_source": "7d5eed5a851933e6ad03262351d5e74523109009",
+        "job": "C-PROVIDER-RETRY-001",
+        "pid": 70649,
+        "supervisor_pid": 70624,
+        "fully_verified_card_accepted": true,
+        "worker_turn_completed": true,
+        "os_exit_status": "unrecorded_custom_supervisor_postflight_failure",
+        "source_astrid": "6e54122a9f6b7bbf2e739197b7253bbce3b0c15b",
+        "source_runtime": "bf96561fdd829afd4b23e960bcd77b6a0491b01e",
+        "next_action": "consume closed coherent008 exact source/evidence; serially join later changes with affected checks",
+        "dependency_available": true,
+        "A_confirmed": true,
+        "closure_receipt": "receipts/root-C-literal-closure-20261015.json",
+        "closure_receipt_sha256": "baca7925148c01e51700db34645d5ff5db7d27ae19e0996a37d580edd35c85c2",
+        "acceptance_source_context": {
+          "Astrid": "fe75288689b3fee06fe2db695a1d626a282e1458",
+          "Runtime": "c86733eac5287befeb75573a12e6e98bde6f9a10",
+          "scope": "Literal criteria on coherent008 source only; later changed sources require affected checks. Historical source fields and reds retained."
+        }
+      },
+      "B#compat": {
+        "implementation": "implementation_integrated",
+        "source_commit": "fcbe8eee369d2f68da29864d9e4578ecb68ef6e1",
+        "dependency_available": true,
+        "A_confirmed": true,
+        "fully_verified_card_accepted": false,
+        "next_action": "consume actual scoped source producer; original full acceptance proof remains separate"
+      },
+      "F#characterized": {
+        "implementation": "implementation_integrated",
+        "source_commit": "f2bc87a831a9de2ec576b4e37360a95f0734393f",
+        "dependency_available": true,
+        "A_confirmed": true,
+        "fully_verified_card_accepted": false,
+        "next_action": "consume actual scoped source producer; original full acceptance proof remains separate"
+      },
+      "H#route-proof": {
+        "implementation": "implementation_integrated",
+        "source_commit": "59b8ee4e9a84161b63cfe81993919ba56276d7fc",
+        "dependency_available": true,
+        "A_confirmed": true,
+        "fully_verified_card_accepted": false,
+        "next_action": "consume actual scoped source producer; original full acceptance proof remains separate"
+      },
+      "A#contract-commit": {
+        "implementation": "producer_implementation_integrated",
+        "dependency_available": true,
+        "A_confirmed": true,
+        "fully_verified_card_accepted": false,
+        "schema_frozen": false,
+        "readiness_receipt": "projects/A-integration/receipts/A-CONTRACT-COMMIT-current-candidate-readiness-001.md",
+        "readiness_receipt_sha256": "e2b2945bf364275c4dcff53eb556a5ae0fd37892652d638e9da2d5ecc69cb9d2",
+        "actual_consumer_job": "C-ACCEPT-001",
+        "pending": [
+          "X0 semantics",
+          "configured review within inherited allowance",
+          "schema freeze/full card proof"
+        ]
+      },
+      "E#save-routing": {
+        "implementation": "partial_source_integrated_current_callback_work_active",
+        "job": "E-save-routing-manager-delivery-002",
+        "source_app": "486af3514821934e8466856664b150643253b5c6",
+        "fully_verified_card_accepted": false,
+        "input_predicates_available": true,
+        "A_confirmed": true,
+        "historical_job_state": "client_source_manager_resumed",
+        "current_source_app": "2857f4f57c745578cfae903bcc86f81a0e065923",
+        "next_action": "Continue assigned E022 callbacks against qualified D producer; A serial integration and exact-head proof; all original69 writer rows remain required."
+      },
+      "F#music-segments": {
+        "implementation": "source_manager_resumed",
+        "job": "F-music-segments-manager-delivery-004",
+        "source_astrid": "18d343a523459cbf3d5871d8276e42a3ff69df48",
+        "cycle_source": "5fe353e9a332a6c27edbb89167d89c868f3bb923",
+        "fully_verified_card_accepted": false,
+        "input_predicates_available": true,
+        "A_confirmed": true
+      },
+      "C#schema-warn": {
+        "implementation": "complete",
+        "dependency_available": true,
+        "fully_verified_card_accepted": true,
+        "A_confirmed": true,
+        "source_runtime_commit": "df40119f97a6fcf6038ef0f0236f96845ff6d33b",
+        "source_runtime_tree": "a44e766c91a5fa213749e6f0dd6d4edd9cd2445c",
+        "original_implementation_commit": "26f1389d0c54538fabcba9ce432314a9e3cc7d3e",
+        "source_admission": "A current paired f6705/df401 source, same functions/test blob; existing42 publication tests rerun pass",
+        "closure_receipt": "receipts/root-C-SCHEMA-WARN-literal-closure-20261016.json",
+        "closure_receipt_sha256": "e67f7d0735cbf535f48ef29771dc6f99394b092c765bc3740b1fd40d984446ae",
+        "acceptance_edges": "original graph unchanged",
+        "new_product_reviews_consumed": 0,
+        "later_changes_require_affected_checks": true
+      },
+      "D#apply": {
+        "implementation": "complete",
+        "dependency_available": true,
+        "fully_verified_card_accepted": true,
+        "A_confirmed": true,
+        "source_astrid_commit": "ad0f5457396d1677a20c96f8cdb3e60e1234e3eb",
+        "source_astrid_tree": "fef68630090b2edbac67845988b8cd91e2f426b3",
+        "original_implementation_commit": "8e7dce0bde745194984b04deb921fcd6a7d99558",
+        "closure_receipt": "receipts/root-D-APPLY-FILES-literal-closure-20261016.json",
+        "closure_receipt_sha256": "364701345ad0b6eee8212ab99d8a1059b5b0d74dde8491eaced755d76808af31",
+        "acceptance_edges": "original graph unchanged",
+        "new_product_reviews_consumed": 0,
+        "later_changes_require_affected_checks": true
+      },
+      "J#ext-one": {
+        "implementation": "complete",
+        "dependency_available": true,
+        "fully_verified_card_accepted": true,
+        "A_confirmed": true,
+        "source_astrid_commit": "0db183159581b511dcb73d091312fca02b1362fb",
+        "source_astrid_tree": "3ae55c3cbabdff66ff91aa7df5b8e58ec4d8f6e9",
+        "closure_receipt": "receipts/root-J-EXT-ONE-literal-closure-20261016.json",
+        "closure_receipt_sha256": "a1496e6c23c7fec9878749ca8fb768ab616bdf23985b7420957d57126f1d242a",
+        "A_admission": "projects/A-integration/receipts/A-EXT-ONE-INTEGRATION-001-admission.md",
+        "acceptance_edges": "original graph unchanged",
+        "new_product_reviews_consumed": 0,
+        "later_changes_require_affected_checks": true
+      },
+      "H#credentials": {
+        "implementation": "complete",
+        "dependency_available": true,
+        "fully_verified_card_accepted": true,
+        "A_confirmed": true,
+        "source_app_commit": "2d1bd3083164415c1ac2f85c048ea34b2227b5f3",
+        "source_runtime_commit": "df40119f97a6fcf6038ef0f0236f96845ff6d33b",
+        "source_astrid_commit": "e53759989856e1cbf07682faa2b77bed8a562321",
+        "closure_receipt": "receipts/root-H-CREDENTIALS-literal-closure-20261016.json",
+        "closure_receipt_sha256": "cd22639649db209571fde498554ef55a23455d07faa0fa51f3c3835a4c04d033",
+        "acceptance_edges": "original graph unchanged; actual consumed producer available",
+        "new_product_reviews_consumed": 0,
+        "later_changes_require_affected_checks": true
+      },
+      "H#transport": {
+        "implementation": "complete",
+        "dependency_available": true,
+        "fully_verified_card_accepted": true,
+        "A_confirmed": true,
+        "source_app_commit": "529368d69e19b907808f04470949ba2d0da920cf",
+        "source_astrid_commit": "178b8d4ada3bfba3f7578e7782e0807623cd1c9a",
+        "closure_receipt": "receipts/root-H-TRANSPORT-literal-closure-20261018.json",
+        "closure_receipt_sha256": "b336e5407ef8867bd527ba1c492bc0925a7db84af1a5dd509acd3a280bc7014c",
+        "acceptance_edges": "original graph unchanged; H#credentials accepted",
+        "new_product_reviews_consumed": 0,
+        "later_changes_require_affected_checks": true
+      }
+    },
+    "updated_utc": "2026-10-18T17:49:49.871601+00:00",
+    "candidate": {
+      "repository": "Astrid",
+      "commit": "db4e17a5f6ea7df9b3c70b29a12ceadea38a71b4",
+      "tree": "cdffe40cd68f5df0559a4fbe5fb53adae3176a13",
+      "runtime_commit": "e6f3b792843637cded6d3d1e48dbebd9e4744dcc",
+      "runtime_tree": "036571723213d8894a2dbd5705999f786cef2d51",
+      "app_commit": "2857f4f57c745578cfae903bcc86f81a0e065923",
+      "app_tree": "5ed63620e4b83b72aab7fa6d5ab1c742e2a46ba0",
+      "confirmed_by": "A",
+      "source_receipts": [
+        "projects/A-integration/receipts/A-current-integration-frontier-002.md",
+        "projects/A-integration/receipts/A-APP-E021-INTEGRATION-001-handback.md",
+        "projects/A-integration/receipts/A-APP-E019-QUEUE-CORRECTION-001-handback.md",
+        "projects/A-integration/receipts/A-PARENT-TRACK-CONFIG-001-admission.md"
+      ],
+      "current_scope": "Exact committed source pointers only; first UI edit refused, no card/release acceptance. A worktree newer generated metadata is WIP, not included in committed2857.",
+      "runtime_integration_candidate_pending": {
+        "commit": "22e87c03575768d3579ba9b38ea127b3344000e6",
+        "tree": "d7d9e9f4c9a8c1e399d10b6e2caa9c4aa8c245dd",
+        "parent": "e6f3b792843637cded6d3d1e48dbebd9e4744dcc",
+        "state": "clean candidate diagnostic; focused205pass2skip1startupcontract-mismatch; no live readmission"
+      },
+      "composition": {
+        "commit": "0d748b52f460c2ac5b0865a7316c4c05b73e2555",
+        "tree": "28817f14126afb9d9dd6a1f8b619e906493b4f31",
+        "parent": "df38db31a18ada18d3339959b930e7b6bbbf16ea",
+        "archive_sha256": "02500c55dcdc1883e027d89ab42e2426191fad3ab1fdcd08d3fce1ca51f11032",
+        "archive_bytes": 74276,
+        "state": "source/package custody only; renderer closure proofpending"
+      },
+      "recorded_utc": "2026-10-16T04:44:32.841977+00:00",
+      "parent": "3908cf48d16cd4c81304026747b531a23a91951d"
+    },
+    "implementation_integrated_handbacks": 10,
+    "concurrency_policy": "Adaptive measured resources and ready inputs, no fixed coding/project/time ceilings; actual native toolcap4 and heavy-job coordination retained.",
+    "prior_checkpoint_unresolved_code_handbacks": 0,
+    "current_handback_queue_authority": "projects/A-integration/status.md; dynamic explicit source handbacks, no global numeric stop",
+    "scope_amendments": [
+      "amendments/20261015-compiler-cycle-and-grant-session.md",
+      "amendments/20261015-commit-hosting-seam.md",
+      "amendments/20261015-elegance-execution-followup.md"
+    ],
+    "completion_checkpoint": {
+      "recorded_utc": "2026-10-18T17:49:49.871601+00:00",
+      "closed_cards": 28,
+      "closed_card_ids": [
+        "HISTORY-WIRE",
+        "TASK-IDENTITY",
+        "PROVIDER-RETRY",
+        "SCHEMA-WARN",
+        "RUNNER",
+        "REGISTRY",
+        "APPLY-FILES",
+        "BYPASSES",
+        "DRAFTS",
+        "AGENT-SYNC",
+        "SKILL",
+        "SKILL-0",
+        "UX-LOOP",
+        "SCRIPT-EDIT",
+        "REVIEW",
+        "CHARACTERIZE",
+        "REPAIRS-STRUCT",
+        "REPAIRS-REST",
+        "VOCAB",
+        "VISUALIZE",
+        "CREDENTIALS",
+        "AUDIO-LANE",
+        "EXT-ONE",
+        "EXT-VIEW",
+        "EXT-COMPONENT",
+        "EXT-CHECK-GEN",
+        "EXT-CURVES",
+        "TRANSPORT"
+      ],
+      "accepted_releases": 0,
+      "closure_receipt": "receipts/root-H-TRANSPORT-literal-closure-20261018.json",
+      "closure_receipt_sha256": "b336e5407ef8867bd527ba1c492bc0925a7db84af1a5dd509acd3a280bc7014c",
+      "scope": "Original TRANSPORT C1\u2013C3 only; all original95cards, graph edges, gates, historical test/review counts and source-proof bounds preserved."
+    },
+    "latest_control_checkpoint": "receipts/root-H-TRANSPORT-literal-closure-20261018.json",
+    "criteria_wording_clarification": {
+      "id": "E#gestures criterion3",
+      "old": "3. Clears send only `{\"op\":\"clear\"}`.",
+      "current": "3. Explicit semantic clears use `clip.clear`. Ordinary object values remain ordinary values; absent and present-null expectations use the admitted tagged encoding. Legacy save representations remain characterized compatibility behavior; explicit removal and no resurrection are preserved.",
+      "behavior_change": false,
+      "decision": "R4-MANY-HANDS-ELEGANCE-FOLLOWUP-002"
+    },
+    "historical_candidate_checkpoints": [
+      {
+        "superseded_recorded_utc": "2026-10-16T04:44:32.841977+00:00",
+        "reason": "Astra64 current pointer repair; preserve original evidence",
+        "candidate": {
+          "repository": "Astrid",
+          "commit": "18d343a523459cbf3d5871d8276e42a3ff69df48",
+          "tree": "a472210977005ada196619cd185b2fd2626383e8",
+          "branch": "codex/timeline-r4-candidate",
+          "worktree": "${ASTRID_WORKSPACE}/${ASTRID_EXECUTION_WORKTREE}",
+          "common_database": "${ASTRID_WORKSPACE}/${ASTRID_EXECUTION_CLONE}",
+          "confirmed_by": "A",
+          "receipt": "projects/A-integration/receipts/A-D-RUNNER-F-COMPILER-candidate-integration-004.md",
+          "receipt_sha256": "a7f3badc1fa74718a5cce02d7c894e56dab4cee623b3fdb3104f020580d6085e",
+          "prior_48_test_receipt": "projects/A-integration/receipts/A-candidate-integration-001.result.md",
+          "task_identity_cohort_unique_passes": 204,
+          "runtime_commit": "9e90bbafb236130c200a4b1fdd9d77912c36b1d8",
+          "runtime_tree": "9c85f6e73084e198381d74857980630dd957fb3b",
+          "task_identity_native_regression_receipt": "projects/A-integration/tmp/TASK-IDENTITY-native/receipt.json",
+          "confirmed_utc": "2026-10-15T13:50:33Z",
+          "prior_TASK_IDENTITY_tested_tuple": {
+            "Astrid": "af4362109576adfcc736d6093463fd0bae48e241",
+            "Runtime": "7d5eed5a851933e6ad03262351d5e74523109009",
+            "cohort_unique_passes": 204
+          },
+          "latest_integration_receipt": "projects/A-integration/receipts/A-current-contract-provider-integration-003.md",
+          "latest_integration_receipt_sha256": "e5dd6c847abcb6b90193b9eb0ae8655f5fabc5a1ae015394dcc31e7149324912",
+          "app_commit": "8ac21957424b4e894bd2b8c0617e37ea16effa38",
+          "app_tree": "00a44f24d60be929264f559e910923b0c8ce3184",
+          "state": "clean_confirmed_terminal_integration003"
+        }
+      }
+    ],
+    "current_strategy": {
+      "decision": "R4-STRATEGY-DIRECTION-064",
+      "receipt": "receipts/codex-exec/oracle-R4-STRATEGY-DIRECTION-064.result.md",
+      "sha256": "31ba0145cc17db1c5475abe54596c266ca81f2f23f7275305e8cd9a1c4188085",
+      "completed_advice": 65,
+      "delivery_direction": 60,
+      "strategy": 5,
+      "product_reviews_new": 0
+    },
+    "current_dispatch_rule": "Use current candidate plus the specific A-confirmed producer predicates and current manager handback. Older per-card job/source fields are historical evidence, never proof that those PIDs or assignments remain active. Original acceptance/release graph and counters remain intact.",
+    "current_integration_operator": {
+      "job": "A-RUNTIME-C010-E6F3-JOIN-OP-001",
+      "supervisor_pid": 16389,
+      "manager": "A",
+      "model": "gpt-6-luna",
+      "effort": "xhigh",
+      "source_scope": "Runtime22e87c03575768d3579ba9b38ea127b3344000e6 plus App2857 generated metadata remainsdirty; solewriterterminal",
+      "next_intake": [
+        "D012 parent/tied/composite/D011 plus A common-track fix",
+        "H0440 fixture increment and later custody correction",
+        "D explicit-empty consumer and D022 producer",
+        "E022 and J014 callbacks"
+      ],
+      "state": "firstcohortterminal; next source cohort delegated by A, no permanent-process claim"
+    },
+    "current_next_actions": [
+      "A integrates the saved-publication closure at bd933087 and preserves its five-selector and real-daemon evidence; no card/release acceptance is inferred.",
+      "Continue E020 on the reused App receiver: read authenticated internal_timeline_id for exact child revision requests, then complete the actual public media edit/save/reload/CLI/held-response/newer-edit/exact-retry journey.",
+      "Reconcile the existing G EVAL client/check-consumer implementation on its clean receivers, run affected checks plus the actual strict TypeScript diagnostic comparison and parity, then feed the shared evaluator interface to I#TRANSITIONS when ready."
+    ],
+    "current_contract_decision": {
+      "id": "R4-NARRATION-CHILD-IDENTITY-065",
+      "receipt": "receipts/codex-exec/oracle-R4-NARRATION-CHILD-IDENTITY-065.result.md",
+      "sha256": "5aea02991830d5b4385836e81c0f7284f52828e46e6c69ee6aba48b24360cacc",
+      "action": "C normal adds canonical Runtime selected[].occurrence.internal_timeline_id; D Sol consumes exactchild; absenceofidentityrefuses, onlyvalidatedexactreadwithabsentnarrationpermitslegacy"
+    },
+    "development_flow_candidate": {
+      "Astrid": "db4e17a5f6ea7df9b3c70b29a12ceadea38a71b4",
+      "Runtime": "e6f3b792843637cded6d3d1e48dbebd9e4744dcc",
+      "App": "ad0ad0c20402a21bac5bc3a7b03e8d2107548ecf",
+      "contract": "sha256:1db1dc746ca1a467e052d3a22d13893a4a6e9c784304ef4db2cb959fb9f4257c",
+      "job": "A-BASIC-EDIT-FLOW-002-PARENT-TRACK-RESTART-006",
+      "supervisor_pid": 43052,
+      "state": "restart/rebind/newUIrequest active; noacceptedresultreceivedyet"
+    },
+    "historical_completion_checkpoints": [
+      {
+        "closed_cards": 3,
+        "closed_card_ids": [
+          "HISTORY-WIRE",
+          "TASK-IDENTITY",
+          "PROVIDER-RETRY"
+        ],
+        "accepted_releases": 0,
+        "closure_receipt": "receipts/root-C-literal-closure-20261015.json",
+        "closure_receipt_sha256": "baca7925148c01e51700db34645d5ff5db7d27ae19e0996a37d580edd35c85c2",
+        "scope": "No new tests or product reviews; preserve original reds, unknown provider supervisor exit and changed-candidate affected checks."
+      },
+      {
+        "recorded_utc": "2026-10-16T13:20:16.323792+00:00",
+        "closed_cards": 7,
+        "closed_card_ids": [
+          "HISTORY-WIRE",
+          "TASK-IDENTITY",
+          "PROVIDER-RETRY",
+          "SCHEMA-WARN",
+          "APPLY-FILES",
+          "EXT-ONE",
+          "CREDENTIALS"
+        ],
+        "accepted_releases": 0,
+        "closure_receipt": "receipts/root-H-CREDENTIALS-literal-closure-20261016.json",
+        "closure_receipt_sha256": "cd22639649db209571fde498554ef55a23455d07faa0fa51f3c3835a4c04d033",
+        "scope": "Own CREDENTIALS criteria only; all original counts/gates retained, no new tests/product reviews."
+      }
+    ],
+    "approach_ruling": {
+      "id": "R4-REMAINING-EXECUTION-SIMPLIFICATION-093",
+      "receipt": "receipts/oracle-R4-REMAINING-EXECUTION-SIMPLIFICATION-093.md",
+      "sha256": "49e5787602cb00904d039b2b2294537aff35a9720e545fcc8ce961317180a583",
+      "disposition": "change_approach",
+      "effective_after": "current_approved_cleanup_release_by_root",
+      "scope": "Preserve all original card criteria, acceptance/release edges, IP0-IP8, roles, review budgets, historical-proof boundaries and explicit human/security/data/publication/migration gates.",
+      "execution": "Two logical responsibility lanes inside one project: complete the actual editing journey; continue independent ready capability/proof work. A integrates useful returns promptly. This is not a worker ceiling.",
+      "reuse": "Prefer existing clean exclusive receivers and qualified dependencies. Create additional checkout only for a real concurrent writer, incompatible environment or frozen concurrent execution. Reuse unchanged checks, installs and evidence.",
+      "handoff": "One current status front, existing tasklist, and one compact handback per useful increment. No per-step status/claim mirrors or repeated oracle approval for ordinary engineering.",
+      "validation": "Run focused changed-boundary checks, combined checks after joins, and prescribed release checks; repeat only affected checks after changes. Preserve all named historical and human gates.",
+      "oversight": "Keep explicit user-scheduled cadence and selected models; a scheduled check does not imply another Astra consultation.",
+      "next_ready_work": "Saved-publication source closure is committed at Astrid bd933087 with five selectors and focused daemon/guard evidence passing; it remains below card acceptance. E020 is active on the existing clean App receiver; its actual child GET uses internal_timeline_id, which App must consume instead of timeline_id before the real editing journey can continue. G EVAL client/check-consumer reconciliation is active on the existing clean G receiver and is not yet admitted."
+    },
+    "supplemental_requirements": {
+      "amendment": "Astra098",
+      "scope": "Incremental execution and data predicates for existing card IDs only. These are not formal DAG edges and do not gate unrelated work.",
+      "source_identity_rule": "Record exact commit, tree, and artifact hashes. Source/evidence custody is distinct from runtime compatibility. Do not overwrite the current candidate or source-front records from older reports.",
+      "cards": {
+        "A#checkpoint-astrid": {
+          "owner": "A",
+          "increment_only": true,
+          "predicates": [
+            "A admits exact source tuple and affected Astrid checks; retain accepted base proof."
+          ]
+        },
+        "A#checkpoint": {
+          "owner": "A",
+          "increment_only": true,
+          "predicates": [
+            "A admits exact Runtime source tuple and affected migration/replay checks; preserve current candidate snapshot."
+          ]
+        },
+        "A#contract-commit": {
+          "owner": "A",
+          "increment_only": true,
+          "predicates": [
+            "Combined contract retains R4 operations and admitted upstream changes.",
+            "Generated Runtime, Astrid, and App contract/client surfaces agree."
+          ]
+        },
+        "B#compat": {
+          "owner": "B",
+          "increment_only": true,
+          "predicates": [
+            "Owner namespace/schema versions and unknown-value preservation are proven.",
+            "Preserve the existing hash-bound config.app.transcript declaration and required source_id/source_version/producer/file strings, media with exactly one asset_key or source_id, sha256, optional registry-validated media.sha256, and opaque metadata while adding config.app.transcript.references.",
+            "Round-trip declaration/reference coexistence; explicit top-level transcriptReferences migration compares only .references, and malformed or conflicting bindings preserve both originals and refuse.",
+            "Transcript carrier and legacy track migrations refuse conflicts without data loss."
+          ]
+        },
+        "B#pres-harness": {
+          "owner": "B",
+          "increment_only": true,
+          "predicates": [
+            "Synthetic round trips cover malformed/foreign namespaces, explicit clears, equal migration, conflicts, and opaque track metadata.",
+            "Managed transcript declaration fields and unknown metadata coexist with .references through round-trip and lossless explicit migration."
+          ]
+        },
+        "C#acceptance": {
+          "owner": "C",
+          "increment_only": true,
+          "predicates": [
+            "Generated per-operation finite supported-version sets are checked against feature-scoped exact required profiles; a legacy scalar is a singleton and a higher integer alone does not imply support.",
+            "Test old baseline v1 client against additive [1,2], optional-feature absence with baseline working, baseline denial before realm load/mutation, false newer-version compatibility denial, and existing grants.",
+            "Exact health/handshake Runtime identity and digest agree; generated wrapper admission and existing auth/route/owner/grant checks remain required, and inventory alone does not confer call/write authority."
+          ]
+        },
+        "C#history-wire": {
+          "owner": "C",
+          "increment_only": true,
+          "predicates": [
+            "Task batching is byte-equivalent and event cursor semantics are explicit; treat as supplementary integration evidence."
+          ]
+        },
+        "C#history": {
+          "owner": "C",
+          "increment_only": true,
+          "predicates": [
+            "Document CAS and immutable snapshot readback use existing Runtime storage and identity boundaries."
+          ]
+        },
+        "D#commands": {
+          "owner": "D",
+          "increment_only": true,
+          "predicates": [
+            "Transcript association/import emits existing EditCommands through the runner; timeline documents cannot bypass this path.",
+            "config.app.transcript.references is the media-association/default index; clip.app.transcript.binding pins each immutable occurrence.",
+            "Only the validated semantic import/binding command writes provenance and snapshot fields; generic owner properties cannot forge provenance or rewrite derived timing."
+          ]
+        },
+        "D#commit-service": {
+          "owner": "D",
+          "increment_only": true,
+          "predicates": [
+            "Reference adoption validates pinned snapshot and expected binding; retry/replay/undo remain request-bound and atomic.",
+            "Changing default associations does not retarget existing clip bindings unless the same explicit transaction contains their rebind commands."
+          ]
+        },
+        "D#merge": {
+          "owner": "D",
+          "increment_only": true,
+          "predicates": [
+            "Take mapping, source clocks, chapter storage encoding, and canonical track ownership preserve identity or refuse before mutation."
+          ]
+        },
+        "D#script": {
+          "owner": "D",
+          "increment_only": true,
+          "predicates": [
+            "Script/transcript correction consumes exact approved snapshot; one timeline transaction and one recompile; replay never resolves latest."
+          ]
+        },
+        "E#gestures": {
+          "owner": "E",
+          "increment_only": true,
+          "predicates": [
+            "Current writers continue command-only; caption and association changes do not use TimelinePatch/baseVersion."
+          ]
+        },
+        "E#all-writers": {
+          "owner": "E",
+          "increment_only": true,
+          "predicates": [
+            "Writer census and save routing retain current progress; any new transcript consumer emits EditCommands.",
+            "Transcript correction/association updates are command-only; no hidden refresh occurs after publish."
+          ]
+        },
+        "E#save-routing": {
+          "owner": "E",
+          "increment_only": true,
+          "predicates": [
+            "Facade read/caption flow works; typed writes are enabled only with proven schema, expectedVersion route, and existing grants."
+          ]
+        },
+        "E#review": {
+          "owner": "E",
+          "increment_only": true,
+          "predicates": [
+            "Review proposal pins base revision, ordered commands, and source bindings/digest; accept/reject/retry/ACK semantics remain distinct."
+          ]
+        },
+        "F#timing-fixes": {
+          "owner": "F",
+          "increment_only": true,
+          "predicates": [
+            "A admits actual transcript producer schema and source clock before producer-dependent claims.",
+            "Same-lineage identity is validated; retake mapping is explicit; ambiguity/orphans never rebind ordinally."
+          ]
+        },
+        "F#repairs": {
+          "owner": "F",
+          "increment_only": true,
+          "predicates": [
+            "Source-timed transcript binding is required; trim/speed conversion uses existing compiler functions. Pins remain excluded."
+          ]
+        },
+        "G#pins-astrid": {
+          "owner": "G",
+          "increment_only": true,
+          "predicates": [
+            "Exact source/vendor ancestry obligations remain; synthetic consumer work is not globally blocked."
+          ]
+        },
+        "G#pins": {
+          "owner": "G",
+          "increment_only": true,
+          "predicates": [
+            "App pin is qualified against the same exact artifact/source tuple; keep unresolved upstream merge/tag/ancestry evidence scoped."
+          ]
+        },
+        "G#eval": {
+          "owner": "G",
+          "increment_only": true,
+          "predicates": [
+            "Transcript and track projections are deterministic derived read models with honest dependencies."
+          ]
+        },
+        "G#evaluator-film": {
+          "owner": "G",
+          "increment_only": true,
+          "predicates": [
+            "Preview and export consume the same derived track/transcript evaluation without authored mirrors."
+          ]
+        },
+        "G#render-parity": {
+          "owner": "G",
+          "increment_only": true,
+          "predicates": [
+            "Synthetic chapter/track projection and transcript timing parity extend existing checks only."
+          ]
+        },
+        "H#route-proof": {
+          "owner": "H",
+          "increment_only": true,
+          "predicates": [
+            "Document facade and advertised operation availability do not widen routes or endpoints."
+          ]
+        },
+        "H#credentials": {
+          "owner": "H",
+          "increment_only": true,
+          "predicates": [
+            "Authentication, runtime identity/restart, exact project/actor scope, and request/response validation remain enforced."
+          ]
+        },
+        "H#grant-core": {
+          "owner": "H",
+          "increment_only": true,
+          "predicates": [
+            "An advertised operation or manifest declaration without a matching grant is still denied."
+          ]
+        },
+        "I#story": {
+          "owner": "I",
+          "increment_only": true,
+          "predicates": [
+            "Chapter order, occurrence IDs, and source clocks survive the storage adapter; no live film input."
+          ]
+        },
+        "I#motion-contract": {
+          "owner": "I",
+          "increment_only": true,
+          "predicates": [
+            "Existing trim and keyframe origin semantics remain unchanged when consuming derived chapter/track projections."
+          ]
+        },
+        "I#audio": {
+          "owner": "I",
+          "increment_only": true,
+          "predicates": [
+            "Existing full audio criteria remain unchanged; adapter consumption preserves authored ownership and clocks."
+          ]
+        },
+        "J#proofs": {
+          "owner": "J",
+          "increment_only": true,
+          "predicates": [
+            "EXT-CHECK-GEN adds document facade/schema/namespace and Caption Foundry requirements beside all original five-kind proofs.",
+            "Caption Foundry invokes the admitted transcript host's validated binding operation or owns only separately declared data; a claimed owner name alone does not confer transcript ownership.",
+            "EXT-ONE remains accepted against its original four criteria."
+          ]
+        }
+      }
+    }
+  }
+}

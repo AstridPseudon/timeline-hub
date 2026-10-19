@@ -1,0 +1,22 @@
+point: timeline.component
+id: fresh_vignette_029.vignette
+kind: modifier
+label: Vignette
+description: Darken the outer edge of a clip with a fixed radial falloff.
+params:
+  type: object
+  additionalProperties: false
+  required: [strength]
+  properties:
+    strength:
+      type: number
+      minimum: 0
+      maximum: 1
+      description: Darkening amount at the outer edge; zero preserves the image.
+hosts: [composition, app]
+bounds: preserve
+alpha: preserve
+support: preserve
+implementation:
+  path: extensions/timeline.component/vignette.tsx
+  export: bindVignette

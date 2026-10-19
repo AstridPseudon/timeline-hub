@@ -1,0 +1,67 @@
+ To the timeline-platform-r4 executor: changes under r4 since it was frozen, and three amendments to make before you apply it
+  ▎
+  ▎ 1. Your base moved on 16 Oct. Rebase trunk before you start.
+  ▎ timeline-r4/trunk is behind today's mains: Astrid dd1f79bd, Runtime 569412c, App 670271e93. What landed that touches r4:
+  ▎ - Runtime contract (schema v30, digest 16bb1265…):
+  ▎   - timeline display names (createTimeline takes a name; renameTimeline PATCH);
+  ▎   - listEvents with from=latest;
+  ▎   - the task list is built from batched reads (byte-identical output).
+  ▎   - Every contract change is a lockstep upgrade of Runtime, Astrid's vendored client and the App's generated client. Note that
+  ▎ astrid/sdk/workspace_client.py has a hand-kept operation allowlist that must be updated too.
+  ▎ - Astrid:
+  ▎   - timelines restructure stores chapters as shots. It is opt-in per film: checkout flattens to one flat shot, publish splits
+  ▎ again (astrid/sdk/timeline_restructure.py). This is a storage-shape transform at the checkout/publish boundary, so r4's
+  ▎ RUNNER/COMMIT should own it, not bypass it.
+  ▎   - The owner's film (almost-ready, timeline 01M4GG…) is now 8 chapter shots, named "Almost Ready — chapters". The one-shot
+  ▎ original is timeline almost-ready-one-shot-original.
+  ▎ - App:
+  ▎   - the editor loads the composition once, with placeholder shots;
+  ▎   - live task updates come through the events feed;
+  ▎   - the timeline picker shows names and a rename;
+  ▎   - the built app reads the Runtime identity at runtime (/runtime-config/v1/workspace.json).
+  ▎   - App writes still go through the app-save adapter; GESTURES/WRITERS has not started.
+  ▎
+  ▎ 2. Narration and transcripts: what we're doing now, outside r4.
+  ▎ Found: the transcript panel (Codex, 15 Oct) reads only Runtime media.transcript documents. Astrid never writes or reads them. Its
+  ▎ narration words live on VO clips (app.astrid.words), so the panel shows nothing for agent-made films. Separately,
+  ▎ review_captions and editorial rhythm read the flat app.words, so they get no words from current agent films.
+  ▎
+  ▎ Standard we're implementing now. It adds no timeline write path and no contract change:
+  ▎ - What a recording says, and when: one media.transcript/v1 document per audio file and source, in the file's own source time, 
+  ▎ with stable word ids. Sources are astrid.narration for the agent's takes and whisper for transcribed media.
+  ▎ - What the narration should say: the shot's voiceover_script text binding, unchanged.
+  ▎ - The timeline: VO clips keep their words under app.astrid as the timeline's anchors, unchanged. They are a one-way copy of the 
+  ▎ transcript, never written back.
+  ▎ - Producers:
+  ▎   - the agent writes the document when it creates or replaces a take;
+  ▎   - editorial.transcribe writes one too;
+  ▎   - the App panel defaults to the astrid.narration transcript when no association exists;
+  ▎   - a backfill command creates the documents for existing films.
+  ▎ - Not done now:
+  ▎   - no hidden "refresh clip words on publish";
+  ▎   - no generic extension data API.
+  ▎     Both are yours (see 3).
+  ▎
+  ▎ 3. Proposed amendments to r4 (cards.md is still the source; you haven't applied it):
+  ▎ - F-timing §3.8 / WORD-ID. The "explicit source-timed transcript binding for speed-aware narration edits" is media.transcript. 
+  ▎ WORD-ID should take its word identity from the transcript's word ids, so a reference survives a take swap. A corrected transcript
+  ▎ reaches the clips as an EditCommand (update_words or similar) through the runner, which journals it, makes it undoable and 
+  ▎ recompiles its timing. It must not be a side-channel refresh.
+  ▎ - H-DATA. Today only app.astrid is versioned (app.astrid.v), and other namespaces are merely preserved. Proposal: each extension 
+  ▎ owns app.<extension-id> on the timeline and clips, with its own version integer, the same pattern. That gives extensions a home 
+  ▎ for data that belongs to the edit, inside undo, history and merge.
+  ▎ - J-extensions / EXT-ONE. Add the "reference" kind's data access: an extension declares which Runtime document kinds it reads and
+  ▎ writes and which app.<ext> namespace it owns, and it writes only by emitting commands. Caption Foundry is the natural first real
+  ▎ user: it reads media.transcript and outputs text clips. Its proposal/acknowledgement flow becomes your REVIEW model: (base 
+  ▎ revision, commands).
+  ▎ - Scope note (architecture.md). Shared data outside the timeline document is the Runtime's layer: project documents (by kind, 
+  ▎ e.g. media analysis or beats), shot text bindings, derived content-addressed caches, and comment/review streams outside edit 
+  ▎ history. r4 doesn't need to build these. It must not duplicate them inside the timeline (your "hand-kept mirrors" anti-pattern).
+  ▎
+  ▎ 4. Asks
+  ▎ - Confirm, adjust or reject the amendments above. Flag any conflict with what we're doing now in section 2.
+  ▎ - PINS-ASTRID / PINS-APP need timeline-composition 0.0.7 on banodoco/timeline-composition main. It is PR #2 (the 
+  ▎ fix/element-clip-look branch, 39/39 tests, fast-forward). The only GitHub credential on this machine (AstridPseudon) can't write 
+  ▎ there, so someone with write access must merge it.
+  ▎ - Before dispatching any card: rebase timeline-r4/trunk in all four repos onto the mains above, and re-check every card that 
+  ▎ cites reflow.py, publish.py or the App's save path. All three changed today.

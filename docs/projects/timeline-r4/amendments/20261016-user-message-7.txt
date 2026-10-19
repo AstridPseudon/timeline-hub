@@ -1,0 +1,53 @@
+Third note for the timeline-platform-r4 manager: transcripts as the worked example of extension data, and the conventions to
+  ▎ adopt
+  ▎
+  ▎ What shipped today (on mains; no contract change):
+  ▎ - Astrid 0f817fed:
+  ▎   - the agent publishes a Runtime media.transcript/v1 document per take (source astrid.narration), and editorial.transcribe 
+  ▎ writes one too (source whisper);
+  ▎   - astrid/sdk/media_transcript.py provides id/build/read/write, with id parity checked against the Runtime;
+  ▎   - timelines transcripts sync TL [--dry-run] backfills existing films and never writes the timeline;
+  ▎   - review captions and rhythm now read the nested app.astrid words.
+  ▎ - App d74ea2684: the transcript panel defaults to an asset's narration transcript when the timeline has no association. It never 
+  ▎ writes one.
+  ▎
+  ▎ Why this matters for J-extensions. Transcripts are the first end-to-end instance of the extension data pattern. Please use them 
+  ▎ as the reference when you design EXT-ONE's data access.
+  ▎ - Producers: Astrid packs and SDK write a shared Runtime record of a declared kind (media.transcript) about a subject (a media 
+  ▎ file), identified by (subject, source). They use existing document operations, so no contract change.
+  ▎ - Consumer: an App extension (the transcript panel / Caption Foundry) reads that kind for the selected media. It edits it with
+  ▎ compare-and-swap, and it outputs into the timeline (caption text clips).
+  ▎ - Agents read and write the same record through the SDK.
+  ▎
+  ▎ What is bespoke today, and should become the generic host API in EXT-ONE (otherwise every extension re-implements it):
+  ▎ - The App side is transcript-specific code: a transcript repository, listForMedia, and the association logic in 
+  ▎ project-transcript-host.ts. Extensions need a generic surface instead:
+  ▎   - documents.read/list/write(kind, subject, source) for shared records;
+  ▎   - timelineData(namespace) for edit-owned data, written only by emitting commands;
+  ▎   - a manifest that declares the document kinds an extension reads and writes and the namespace it owns.
+  ▎     Refactor the transcript panel as the first user of that surface.
+  ▎ - The Astrid side: generalise media_transcript.py into a small per-kind document helper (an id rule per kind from subject + 
+  ▎ source, plus a schema check), so a beats or analysis pack is a few lines.
+  ▎ - Move transcriptReferences (a strict top-level field the transcript extension added to the App's timeline model, 
+  ▎ timelineBundle.ts:98) under app.transcript. Today it is invisible to Astrid's schema and needed App model changes. It is the 
+  ▎ anti-pattern below.
+  ▎
+  ▎ The conventions (proposed for H-DATA / registry / F-timing):
+  ▎ 1. Namespace per owner, versioned. Only config.app and clip.app are open in the shared schema (everything else is 
+  ▎ additionalProperties: false). Each owner gets app.<owner-id> with its own version integer, like app.astrid.v. Tools preserve 
+  ▎ namespaces they don't understand.
+  ▎ 2. A small schema per namespace and per document kind, declared in the extension manifest and validated on write. timelines show 
+  ▎ and the SDK can then list and describe them.
+  ▎ 3. Generic set / add / remove commands on namespaced properties, so simple extension data needs no custom handlers and is still 
+  ▎ undoable, journaled and rebased. Custom operations are only for real semantics.
+  ▎ 4. One shared anchor type (word id, clip id + offset, beat, film ends) for anything time-based in a namespace. Never raw seconds.
+  ▎ 5. Reference, don't copy. Big or shared data lives in documents and is linked by id. Derived data is recomputed, not stored. The 
+  ▎ timeline stays lean.
+  ▎
+  ▎ Other producer/consumer pairs this enables, as examples for the recipe:
+  ▎ - a beat-detection pack writing media.beats, plus an extension lane with snapping;
+  ▎ - a vision/analysis pack writing media.analysis, plus a scene-description panel;
+  ▎ - lyrics as media.transcript (source lyrics), reused by the same caption extension.
+  ▎
+  ▎ Ask: fold the generic host surface and the five conventions into J-extensions / H-DATA, with the transcript panel as EXT-ONE's 
+  ▎ data-access first user. Tell me if you'd rather keep it separate.

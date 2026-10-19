@@ -1,0 +1,836 @@
+{
+  "repositories": [
+    {
+      "coverage_sha256": "a97345adf750ea59bcf76e996474c922c0d92a373a92fc4654fd1e11f1116f83",
+      "fresh_ls_remote_verified": true,
+      "published_at_utc": "2026-10-19T14:05:00.653453+00:00",
+      "push_mode": "non-force atomic push",
+      "push_stderr": "remote: This repository moved. Please use the new location:        \nremote:   https://github.com/banodoco/astrid-agent.git",
+      "push_stdout": [
+        "To https://github.com/peteromallet/Astrid-agent.git",
+        "*\t00cd577e19e9be74034784f27eb30257ac24713b:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-00cd577e19e9be74034784f27eb30257ac24713b\t[new branch]",
+        "*\t02f270ba04e04ccc3768c5e5d95e7d92a067149b:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-02f270ba04e04ccc3768c5e5d95e7d92a067149b\t[new branch]",
+        "*\t032f6d51f0bf332d903239362afe29ddd6e1f3f2:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-032f6d51f0bf332d903239362afe29ddd6e1f3f2\t[new branch]",
+        "*\t0368137ac38f3d3005c160e91bb08b2da793f07d:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-0368137ac38f3d3005c160e91bb08b2da793f07d\t[new branch]",
+        "*\t072b1b725e34e51c84bbb3244876ba0bf4f7d3be:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-072b1b725e34e51c84bbb3244876ba0bf4f7d3be\t[new branch]",
+        "*\t081a271c9607f67bd300f01eae6cfe4243edcce9:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-081a271c9607f67bd300f01eae6cfe4243edcce9\t[new branch]",
+        "*\t08eadfb151456c6cd32a1255c5946b4ac112ab42:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-08eadfb151456c6cd32a1255c5946b4ac112ab42\t[new branch]",
+        "*\t0e8e7b1b26df43134981b02f4843234818e4d2ea:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-0e8e7b1b26df43134981b02f4843234818e4d2ea\t[new branch]",
+        "*\t17f3aea34fbaa5aea434ee87b99af0d238f0a911:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-17f3aea34fbaa5aea434ee87b99af0d238f0a911\t[new branch]",
+        "*\t198944bae5c5e3f1fbe5d922fc197dc4269de1c6:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-198944bae5c5e3f1fbe5d922fc197dc4269de1c6\t[new branch]",
+        "*\t19c62a9f869e26a5af5ad6bf79e31cd619f46262:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-19c62a9f869e26a5af5ad6bf79e31cd619f46262\t[new branch]",
+        "*\t21c1febc03b422d6eac92a88bae7a3cdf16fcbd7:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-21c1febc03b422d6eac92a88bae7a3cdf16fcbd7\t[new branch]",
+        "*\t261add61c30dffec852dbdc5a1715a1d4a496cb4:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-261add61c30dffec852dbdc5a1715a1d4a496cb4\t[new branch]",
+        "*\t27fe754fb8f51011e7943010e0c7693750d5af6e:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-27fe754fb8f51011e7943010e0c7693750d5af6e\t[new branch]",
+        "*\t2940433727e5d9ff18aa443421a1a9ec0e49202f:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2940433727e5d9ff18aa443421a1a9ec0e49202f\t[new branch]",
+        "*\t2a26914b390666891f782124f8971135cb772801:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2a26914b390666891f782124f8971135cb772801\t[new branch]",
+        "*\t2a3aeea9ee5e60387fcd9dc2aa5f7a6279c51109:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2a3aeea9ee5e60387fcd9dc2aa5f7a6279c51109\t[new branch]",
+        "*\t2ae0d7ec8104c2fc36f62003338566958f672803:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2ae0d7ec8104c2fc36f62003338566958f672803\t[new branch]",
+        "*\t2d786a210e9d80a7ef00a4ff57e3b15d0bb199b6:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2d786a210e9d80a7ef00a4ff57e3b15d0bb199b6\t[new branch]",
+        "*\t2e04e9a9bd62755a7bc9ae598bbc3692a1d2b7f0:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2e04e9a9bd62755a7bc9ae598bbc3692a1d2b7f0\t[new branch]",
+        "*\t2e57b81ce606a3f2a9f50fe6a5f14f94128c4b62:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2e57b81ce606a3f2a9f50fe6a5f14f94128c4b62\t[new branch]",
+        "*\t30bfec68c31fd4ab7288a177b810d321608d23d1:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-30bfec68c31fd4ab7288a177b810d321608d23d1\t[new branch]",
+        "*\t31321578b7226e8d833802836e6eac098940c2b7:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-31321578b7226e8d833802836e6eac098940c2b7\t[new branch]",
+        "*\t3320b255b7fa7fa563bb7cc77161737b34e6eab5:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3320b255b7fa7fa563bb7cc77161737b34e6eab5\t[new branch]",
+        "*\t398f1e5c44330971809ec54cf0dee04bf7e0c4d3:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-398f1e5c44330971809ec54cf0dee04bf7e0c4d3\t[new branch]",
+        "*\t3bb84f066804760bf28f2b4e54dcf2e94cf2673e:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3bb84f066804760bf28f2b4e54dcf2e94cf2673e\t[new branch]",
+        "*\t3bd9ef8bd57f1422aedbfd2a4a64b3dedaeca5cc:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3bd9ef8bd57f1422aedbfd2a4a64b3dedaeca5cc\t[new branch]",
+        "*\t3e347795fdeac5e3c057118cffba2455cde4d943:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3e347795fdeac5e3c057118cffba2455cde4d943\t[new branch]",
+        "*\t3e8e7b29d66f20626441626ce258e2e9ca558af3:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3e8e7b29d66f20626441626ce258e2e9ca558af3\t[new branch]",
+        "*\t3eb9504b70af930dd5e659435cc038ae204f455b:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3eb9504b70af930dd5e659435cc038ae204f455b\t[new branch]",
+        "*\t4048a43ec42e6af49b02d048d440f08fde6664a4:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-4048a43ec42e6af49b02d048d440f08fde6664a4\t[new branch]",
+        "*\t421626f72f0c1f59edff28c8b01d97eeb4d091f0:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-421626f72f0c1f59edff28c8b01d97eeb4d091f0\t[new branch]",
+        "*\t4304736e5ca733235323d8e8fe8edb612c9fb722:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-4304736e5ca733235323d8e8fe8edb612c9fb722\t[new branch]",
+        "*\t44badd151929499f7e1e3138b43fced5ddb26998:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-44badd151929499f7e1e3138b43fced5ddb26998\t[new branch]",
+        "*\t454c654cfa7dd7e2b340848c2d1250de4c650038:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-454c654cfa7dd7e2b340848c2d1250de4c650038\t[new branch]",
+        "*\t494d5d9f2e35b9d3307ca578ff457ac833c29f98:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-494d5d9f2e35b9d3307ca578ff457ac833c29f98\t[new branch]",
+        "*\t4c91a844e0f337569c9edb201c7c62b17878ede7:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-4c91a844e0f337569c9edb201c7c62b17878ede7\t[new branch]",
+        "*\t4d5d1ec1f32f68a4f959e6758aef7fda13dbf1e4:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-4d5d1ec1f32f68a4f959e6758aef7fda13dbf1e4\t[new branch]",
+        "*\t54633a533e8a37bd42faa7a901579e5b59799a1d:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-54633a533e8a37bd42faa7a901579e5b59799a1d\t[new branch]",
+        "*\t54f0d8c68683e09ca1e7675784024738eb9cb12e:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-54f0d8c68683e09ca1e7675784024738eb9cb12e\t[new branch]",
+        "*\t56f16ad403d19bb48e58ffb55b4e9fa5b29350cf:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-56f16ad403d19bb48e58ffb55b4e9fa5b29350cf\t[new branch]",
+        "*\t5babdfa0864ff7f2aedaa56080e386f6a655f429:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-5babdfa0864ff7f2aedaa56080e386f6a655f429\t[new branch]",
+        "*\t5d6ff3a37784a92b2544f7e0886804b672933400:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-5d6ff3a37784a92b2544f7e0886804b672933400\t[new branch]",
+        "*\t5e5ceeeee9c0920096b1afaeedd67862b6faba98:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-5e5ceeeee9c0920096b1afaeedd67862b6faba98\t[new branch]",
+        "*\t5f6e996138666eddd185264f3e2a6cae89158f0c:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-5f6e996138666eddd185264f3e2a6cae89158f0c\t[new branch]",
+        "*\t5fe353e9a332a6c27edbb89167d89c868f3bb923:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-5fe353e9a332a6c27edbb89167d89c868f3bb923\t[new branch]",
+        "*\t6a2ccef2460a856dbcb9cbc67de289d7c7fd04d1:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-6a2ccef2460a856dbcb9cbc67de289d7c7fd04d1\t[new branch]",
+        "*\t6a9d1aaea5123d55a6c323239eb571edeb87a1af:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-6a9d1aaea5123d55a6c323239eb571edeb87a1af\t[new branch]",
+        "*\t6d8e6f369f3e5bb7efaeda5b99270c925b61e08a:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-6d8e6f369f3e5bb7efaeda5b99270c925b61e08a\t[new branch]",
+        "*\t6ddeb8af692addc9e243c49739844e9b0bb60241:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-6ddeb8af692addc9e243c49739844e9b0bb60241\t[new branch]",
+        "*\t773bd17b0f761a681ba543047a471f3fb83ca429:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-773bd17b0f761a681ba543047a471f3fb83ca429\t[new branch]",
+        "*\t78084151cefbb23e565b66d5b5b36fc91d57a7ec:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-78084151cefbb23e565b66d5b5b36fc91d57a7ec\t[new branch]",
+        "*\t7a80168d5d434fb7734da37a7bb31c6bc06a8f64:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-7a80168d5d434fb7734da37a7bb31c6bc06a8f64\t[new branch]",
+        "*\t82488b58e6ce646f469c398ba2d9f385e89a279c:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-82488b58e6ce646f469c398ba2d9f385e89a279c\t[new branch]",
+        "*\t8a33bef4eeec0771b2d34e77b8c1193a9c457e8a:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-8a33bef4eeec0771b2d34e77b8c1193a9c457e8a\t[new branch]",
+        "*\t8edb68d2b2cd27a89c98e9c3c2a4bac6641b8dba:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-8edb68d2b2cd27a89c98e9c3c2a4bac6641b8dba\t[new branch]",
+        "*\t9138f8b327e460270560d041c4a8155e8969bd9f:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-9138f8b327e460270560d041c4a8155e8969bd9f\t[new branch]",
+        "*\t96921740b20ce4436d10f3e5a976e54f684dba04:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-96921740b20ce4436d10f3e5a976e54f684dba04\t[new branch]",
+        "*\t986fb7537ce8dabb20237475855d8ac48840efab:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-986fb7537ce8dabb20237475855d8ac48840efab\t[new branch]",
+        "*\t98d40d74d70a820eb7078c87f4a9a8ed0bd8e52c:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-98d40d74d70a820eb7078c87f4a9a8ed0bd8e52c\t[new branch]",
+        "*\t9ab89dd715aff46cc3d0fd240e119e3158580151:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-9ab89dd715aff46cc3d0fd240e119e3158580151\t[new branch]",
+        "*\ta42a3464c3a6101f6196c496b05f51dd0ca88882:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-a42a3464c3a6101f6196c496b05f51dd0ca88882\t[new branch]",
+        "*\ta59de62567b245482b7c1db2f4c403fc93b417cb:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-a59de62567b245482b7c1db2f4c403fc93b417cb\t[new branch]",
+        "*\ta8b9d56ad7518545bc6984907fe0499ba76103ff:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-a8b9d56ad7518545bc6984907fe0499ba76103ff\t[new branch]",
+        "*\tae0ab8bb285a92e4338b9ea8884931de0eaa7974:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-ae0ab8bb285a92e4338b9ea8884931de0eaa7974\t[new branch]",
+        "*\taff4fe2ad3ab7ea61dc77c9570d01d919a48ec1c:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-aff4fe2ad3ab7ea61dc77c9570d01d919a48ec1c\t[new branch]",
+        "*\tb011e6761d9bc2be9aff9b1f082ac87652310e2e:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-b011e6761d9bc2be9aff9b1f082ac87652310e2e\t[new branch]",
+        "*\tb6bf602611fc02f384de46cb0f4a1d5593f8f296:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-b6bf602611fc02f384de46cb0f4a1d5593f8f296\t[new branch]",
+        "*\tbb89c190a0eaba8887844511a3df9ad13dd82f02:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-bb89c190a0eaba8887844511a3df9ad13dd82f02\t[new branch]",
+        "*\tc2318471bc4e538f7f8a2bc16ae99d402d7eb1c7:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-c2318471bc4e538f7f8a2bc16ae99d402d7eb1c7\t[new branch]",
+        "*\tc493d4e5c7af7700485e847d4925fc2208c2bfe9:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-c493d4e5c7af7700485e847d4925fc2208c2bfe9\t[new branch]",
+        "*\tc4962c0bf92a7d1d9a0137814609213b83abd197:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-c4962c0bf92a7d1d9a0137814609213b83abd197\t[new branch]",
+        "*\tc4e7902c46906010861f02a7c5ca654dbeae9097:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-c4e7902c46906010861f02a7c5ca654dbeae9097\t[new branch]",
+        "*\tc8b0d06479aef5c3a2d3694ce3a1da4b4d79b5ad:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-c8b0d06479aef5c3a2d3694ce3a1da4b4d79b5ad\t[new branch]",
+        "*\td0415aba197168ca4f42eb6aeece197611b47445:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-d0415aba197168ca4f42eb6aeece197611b47445\t[new branch]",
+        "*\td3168a0432db3263f1b2fa6ffd40457bae8f8c80:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-d3168a0432db3263f1b2fa6ffd40457bae8f8c80\t[new branch]",
+        "*\td8606b53cc4c8dfad9f0d77789062d50fa5aa6c1:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-d8606b53cc4c8dfad9f0d77789062d50fa5aa6c1\t[new branch]",
+        "*\tda1c7c7f675b5b8e02175b800340d1b6c97de3da:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-da1c7c7f675b5b8e02175b800340d1b6c97de3da\t[new branch]",
+        "*\tdc52f1232bfe3eb8da8ac9b6dad7cbd136977151:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-dc52f1232bfe3eb8da8ac9b6dad7cbd136977151\t[new branch]",
+        "*\tdf1d68017acf307bebb18712a0df29863aa9c316:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-df1d68017acf307bebb18712a0df29863aa9c316\t[new branch]",
+        "*\te30f8d27a436299852c536f36bc93abc06d90366:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-e30f8d27a436299852c536f36bc93abc06d90366\t[new branch]",
+        "*\te5da66813eb3665a1655b59bc991538bebc494b0:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-e5da66813eb3665a1655b59bc991538bebc494b0\t[new branch]",
+        "*\te784d9e55efe029602184a26efae52f156bcd406:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-e784d9e55efe029602184a26efae52f156bcd406\t[new branch]",
+        "*\te8139255e57576d4fbe3667a7130d2e471d1c3ee:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-e8139255e57576d4fbe3667a7130d2e471d1c3ee\t[new branch]",
+        "*\tebadf8a2926b53f699d5df9815522d84a68799cc:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-ebadf8a2926b53f699d5df9815522d84a68799cc\t[new branch]",
+        "*\tf042b16e14628dec445f9f7ab111adf3eda8f49c:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-f042b16e14628dec445f9f7ab111adf3eda8f49c\t[new branch]",
+        "*\tf2bc87a831a9de2ec576b4e37360a95f0734393f:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-f2bc87a831a9de2ec576b4e37360a95f0734393f\t[new branch]",
+        "*\tf4d3d79213dcbeb993fab28721052961db708847:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-f4d3d79213dcbeb993fab28721052961db708847\t[new branch]",
+        "*\tf67a681999e41f71043dc845f299baca158e57c6:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-f67a681999e41f71043dc845f299baca158e57c6\t[new branch]",
+        "*\tfa96b8ea88f28924cef3e1e7037be88a0d243009:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-fa96b8ea88f28924cef3e1e7037be88a0d243009\t[new branch]",
+        "*\tfcbe8eee369d2f68da29864d9e4578ecb68ef6e1:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-fcbe8eee369d2f68da29864d9e4578ecb68ef6e1\t[new branch]",
+        "*\tfff68af887b38062a1943ddca061c7d8f44a84aa:refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-fff68af887b38062a1943ddca061c7d8f44a84aa\t[new branch]",
+        "Done"
+      ],
+      "ref_count": 92,
+      "refs": [
+        {
+          "commit": "00cd577e19e9be74034784f27eb30257ac24713b",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-00cd577e19e9be74034784f27eb30257ac24713b"
+        },
+        {
+          "commit": "02f270ba04e04ccc3768c5e5d95e7d92a067149b",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-02f270ba04e04ccc3768c5e5d95e7d92a067149b"
+        },
+        {
+          "commit": "032f6d51f0bf332d903239362afe29ddd6e1f3f2",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-032f6d51f0bf332d903239362afe29ddd6e1f3f2"
+        },
+        {
+          "commit": "0368137ac38f3d3005c160e91bb08b2da793f07d",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-0368137ac38f3d3005c160e91bb08b2da793f07d"
+        },
+        {
+          "commit": "072b1b725e34e51c84bbb3244876ba0bf4f7d3be",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-072b1b725e34e51c84bbb3244876ba0bf4f7d3be"
+        },
+        {
+          "commit": "081a271c9607f67bd300f01eae6cfe4243edcce9",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-081a271c9607f67bd300f01eae6cfe4243edcce9"
+        },
+        {
+          "commit": "08eadfb151456c6cd32a1255c5946b4ac112ab42",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-08eadfb151456c6cd32a1255c5946b4ac112ab42"
+        },
+        {
+          "commit": "0e8e7b1b26df43134981b02f4843234818e4d2ea",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-0e8e7b1b26df43134981b02f4843234818e4d2ea"
+        },
+        {
+          "commit": "17f3aea34fbaa5aea434ee87b99af0d238f0a911",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-17f3aea34fbaa5aea434ee87b99af0d238f0a911"
+        },
+        {
+          "commit": "198944bae5c5e3f1fbe5d922fc197dc4269de1c6",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-198944bae5c5e3f1fbe5d922fc197dc4269de1c6"
+        },
+        {
+          "commit": "19c62a9f869e26a5af5ad6bf79e31cd619f46262",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-19c62a9f869e26a5af5ad6bf79e31cd619f46262"
+        },
+        {
+          "commit": "21c1febc03b422d6eac92a88bae7a3cdf16fcbd7",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-21c1febc03b422d6eac92a88bae7a3cdf16fcbd7"
+        },
+        {
+          "commit": "261add61c30dffec852dbdc5a1715a1d4a496cb4",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-261add61c30dffec852dbdc5a1715a1d4a496cb4"
+        },
+        {
+          "commit": "27fe754fb8f51011e7943010e0c7693750d5af6e",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-27fe754fb8f51011e7943010e0c7693750d5af6e"
+        },
+        {
+          "commit": "2940433727e5d9ff18aa443421a1a9ec0e49202f",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2940433727e5d9ff18aa443421a1a9ec0e49202f"
+        },
+        {
+          "commit": "2a26914b390666891f782124f8971135cb772801",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2a26914b390666891f782124f8971135cb772801"
+        },
+        {
+          "commit": "2a3aeea9ee5e60387fcd9dc2aa5f7a6279c51109",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2a3aeea9ee5e60387fcd9dc2aa5f7a6279c51109"
+        },
+        {
+          "commit": "2ae0d7ec8104c2fc36f62003338566958f672803",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2ae0d7ec8104c2fc36f62003338566958f672803"
+        },
+        {
+          "commit": "2d786a210e9d80a7ef00a4ff57e3b15d0bb199b6",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2d786a210e9d80a7ef00a4ff57e3b15d0bb199b6"
+        },
+        {
+          "commit": "2e04e9a9bd62755a7bc9ae598bbc3692a1d2b7f0",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2e04e9a9bd62755a7bc9ae598bbc3692a1d2b7f0"
+        },
+        {
+          "commit": "2e57b81ce606a3f2a9f50fe6a5f14f94128c4b62",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-2e57b81ce606a3f2a9f50fe6a5f14f94128c4b62"
+        },
+        {
+          "commit": "30bfec68c31fd4ab7288a177b810d321608d23d1",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-30bfec68c31fd4ab7288a177b810d321608d23d1"
+        },
+        {
+          "commit": "31321578b7226e8d833802836e6eac098940c2b7",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-31321578b7226e8d833802836e6eac098940c2b7"
+        },
+        {
+          "commit": "3320b255b7fa7fa563bb7cc77161737b34e6eab5",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3320b255b7fa7fa563bb7cc77161737b34e6eab5"
+        },
+        {
+          "commit": "398f1e5c44330971809ec54cf0dee04bf7e0c4d3",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-398f1e5c44330971809ec54cf0dee04bf7e0c4d3"
+        },
+        {
+          "commit": "3bb84f066804760bf28f2b4e54dcf2e94cf2673e",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3bb84f066804760bf28f2b4e54dcf2e94cf2673e"
+        },
+        {
+          "commit": "3bd9ef8bd57f1422aedbfd2a4a64b3dedaeca5cc",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3bd9ef8bd57f1422aedbfd2a4a64b3dedaeca5cc"
+        },
+        {
+          "commit": "3e347795fdeac5e3c057118cffba2455cde4d943",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3e347795fdeac5e3c057118cffba2455cde4d943"
+        },
+        {
+          "commit": "3e8e7b29d66f20626441626ce258e2e9ca558af3",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3e8e7b29d66f20626441626ce258e2e9ca558af3"
+        },
+        {
+          "commit": "3eb9504b70af930dd5e659435cc038ae204f455b",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-3eb9504b70af930dd5e659435cc038ae204f455b"
+        },
+        {
+          "commit": "4048a43ec42e6af49b02d048d440f08fde6664a4",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-4048a43ec42e6af49b02d048d440f08fde6664a4"
+        },
+        {
+          "commit": "421626f72f0c1f59edff28c8b01d97eeb4d091f0",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-421626f72f0c1f59edff28c8b01d97eeb4d091f0"
+        },
+        {
+          "commit": "4304736e5ca733235323d8e8fe8edb612c9fb722",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-4304736e5ca733235323d8e8fe8edb612c9fb722"
+        },
+        {
+          "commit": "44badd151929499f7e1e3138b43fced5ddb26998",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-44badd151929499f7e1e3138b43fced5ddb26998"
+        },
+        {
+          "commit": "454c654cfa7dd7e2b340848c2d1250de4c650038",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-454c654cfa7dd7e2b340848c2d1250de4c650038"
+        },
+        {
+          "commit": "494d5d9f2e35b9d3307ca578ff457ac833c29f98",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-494d5d9f2e35b9d3307ca578ff457ac833c29f98"
+        },
+        {
+          "commit": "4c91a844e0f337569c9edb201c7c62b17878ede7",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-4c91a844e0f337569c9edb201c7c62b17878ede7"
+        },
+        {
+          "commit": "4d5d1ec1f32f68a4f959e6758aef7fda13dbf1e4",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-4d5d1ec1f32f68a4f959e6758aef7fda13dbf1e4"
+        },
+        {
+          "commit": "54633a533e8a37bd42faa7a901579e5b59799a1d",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-54633a533e8a37bd42faa7a901579e5b59799a1d"
+        },
+        {
+          "commit": "54f0d8c68683e09ca1e7675784024738eb9cb12e",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-54f0d8c68683e09ca1e7675784024738eb9cb12e"
+        },
+        {
+          "commit": "56f16ad403d19bb48e58ffb55b4e9fa5b29350cf",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-56f16ad403d19bb48e58ffb55b4e9fa5b29350cf"
+        },
+        {
+          "commit": "5babdfa0864ff7f2aedaa56080e386f6a655f429",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-5babdfa0864ff7f2aedaa56080e386f6a655f429"
+        },
+        {
+          "commit": "5d6ff3a37784a92b2544f7e0886804b672933400",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-5d6ff3a37784a92b2544f7e0886804b672933400"
+        },
+        {
+          "commit": "5e5ceeeee9c0920096b1afaeedd67862b6faba98",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-5e5ceeeee9c0920096b1afaeedd67862b6faba98"
+        },
+        {
+          "commit": "5f6e996138666eddd185264f3e2a6cae89158f0c",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-5f6e996138666eddd185264f3e2a6cae89158f0c"
+        },
+        {
+          "commit": "5fe353e9a332a6c27edbb89167d89c868f3bb923",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-5fe353e9a332a6c27edbb89167d89c868f3bb923"
+        },
+        {
+          "commit": "6a2ccef2460a856dbcb9cbc67de289d7c7fd04d1",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-6a2ccef2460a856dbcb9cbc67de289d7c7fd04d1"
+        },
+        {
+          "commit": "6a9d1aaea5123d55a6c323239eb571edeb87a1af",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-6a9d1aaea5123d55a6c323239eb571edeb87a1af"
+        },
+        {
+          "commit": "6d8e6f369f3e5bb7efaeda5b99270c925b61e08a",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-6d8e6f369f3e5bb7efaeda5b99270c925b61e08a"
+        },
+        {
+          "commit": "6ddeb8af692addc9e243c49739844e9b0bb60241",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-6ddeb8af692addc9e243c49739844e9b0bb60241"
+        },
+        {
+          "commit": "773bd17b0f761a681ba543047a471f3fb83ca429",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-773bd17b0f761a681ba543047a471f3fb83ca429"
+        },
+        {
+          "commit": "78084151cefbb23e565b66d5b5b36fc91d57a7ec",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-78084151cefbb23e565b66d5b5b36fc91d57a7ec"
+        },
+        {
+          "commit": "7a80168d5d434fb7734da37a7bb31c6bc06a8f64",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-7a80168d5d434fb7734da37a7bb31c6bc06a8f64"
+        },
+        {
+          "commit": "82488b58e6ce646f469c398ba2d9f385e89a279c",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-82488b58e6ce646f469c398ba2d9f385e89a279c"
+        },
+        {
+          "commit": "8a33bef4eeec0771b2d34e77b8c1193a9c457e8a",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-8a33bef4eeec0771b2d34e77b8c1193a9c457e8a"
+        },
+        {
+          "commit": "8edb68d2b2cd27a89c98e9c3c2a4bac6641b8dba",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-8edb68d2b2cd27a89c98e9c3c2a4bac6641b8dba"
+        },
+        {
+          "commit": "9138f8b327e460270560d041c4a8155e8969bd9f",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-9138f8b327e460270560d041c4a8155e8969bd9f"
+        },
+        {
+          "commit": "96921740b20ce4436d10f3e5a976e54f684dba04",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-96921740b20ce4436d10f3e5a976e54f684dba04"
+        },
+        {
+          "commit": "986fb7537ce8dabb20237475855d8ac48840efab",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-986fb7537ce8dabb20237475855d8ac48840efab"
+        },
+        {
+          "commit": "98d40d74d70a820eb7078c87f4a9a8ed0bd8e52c",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-98d40d74d70a820eb7078c87f4a9a8ed0bd8e52c"
+        },
+        {
+          "commit": "9ab89dd715aff46cc3d0fd240e119e3158580151",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-9ab89dd715aff46cc3d0fd240e119e3158580151"
+        },
+        {
+          "commit": "a42a3464c3a6101f6196c496b05f51dd0ca88882",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-a42a3464c3a6101f6196c496b05f51dd0ca88882"
+        },
+        {
+          "commit": "a59de62567b245482b7c1db2f4c403fc93b417cb",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-a59de62567b245482b7c1db2f4c403fc93b417cb"
+        },
+        {
+          "commit": "a8b9d56ad7518545bc6984907fe0499ba76103ff",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-a8b9d56ad7518545bc6984907fe0499ba76103ff"
+        },
+        {
+          "commit": "ae0ab8bb285a92e4338b9ea8884931de0eaa7974",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-ae0ab8bb285a92e4338b9ea8884931de0eaa7974"
+        },
+        {
+          "commit": "aff4fe2ad3ab7ea61dc77c9570d01d919a48ec1c",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-aff4fe2ad3ab7ea61dc77c9570d01d919a48ec1c"
+        },
+        {
+          "commit": "b011e6761d9bc2be9aff9b1f082ac87652310e2e",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-b011e6761d9bc2be9aff9b1f082ac87652310e2e"
+        },
+        {
+          "commit": "b6bf602611fc02f384de46cb0f4a1d5593f8f296",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-b6bf602611fc02f384de46cb0f4a1d5593f8f296"
+        },
+        {
+          "commit": "bb89c190a0eaba8887844511a3df9ad13dd82f02",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-bb89c190a0eaba8887844511a3df9ad13dd82f02"
+        },
+        {
+          "commit": "c2318471bc4e538f7f8a2bc16ae99d402d7eb1c7",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-c2318471bc4e538f7f8a2bc16ae99d402d7eb1c7"
+        },
+        {
+          "commit": "c493d4e5c7af7700485e847d4925fc2208c2bfe9",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-c493d4e5c7af7700485e847d4925fc2208c2bfe9"
+        },
+        {
+          "commit": "c4962c0bf92a7d1d9a0137814609213b83abd197",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-c4962c0bf92a7d1d9a0137814609213b83abd197"
+        },
+        {
+          "commit": "c4e7902c46906010861f02a7c5ca654dbeae9097",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-c4e7902c46906010861f02a7c5ca654dbeae9097"
+        },
+        {
+          "commit": "c8b0d06479aef5c3a2d3694ce3a1da4b4d79b5ad",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-c8b0d06479aef5c3a2d3694ce3a1da4b4d79b5ad"
+        },
+        {
+          "commit": "d0415aba197168ca4f42eb6aeece197611b47445",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-d0415aba197168ca4f42eb6aeece197611b47445"
+        },
+        {
+          "commit": "d3168a0432db3263f1b2fa6ffd40457bae8f8c80",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-d3168a0432db3263f1b2fa6ffd40457bae8f8c80"
+        },
+        {
+          "commit": "d8606b53cc4c8dfad9f0d77789062d50fa5aa6c1",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-d8606b53cc4c8dfad9f0d77789062d50fa5aa6c1"
+        },
+        {
+          "commit": "da1c7c7f675b5b8e02175b800340d1b6c97de3da",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-da1c7c7f675b5b8e02175b800340d1b6c97de3da"
+        },
+        {
+          "commit": "dc52f1232bfe3eb8da8ac9b6dad7cbd136977151",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-dc52f1232bfe3eb8da8ac9b6dad7cbd136977151"
+        },
+        {
+          "commit": "df1d68017acf307bebb18712a0df29863aa9c316",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-df1d68017acf307bebb18712a0df29863aa9c316"
+        },
+        {
+          "commit": "e30f8d27a436299852c536f36bc93abc06d90366",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-e30f8d27a436299852c536f36bc93abc06d90366"
+        },
+        {
+          "commit": "e5da66813eb3665a1655b59bc991538bebc494b0",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-e5da66813eb3665a1655b59bc991538bebc494b0"
+        },
+        {
+          "commit": "e784d9e55efe029602184a26efae52f156bcd406",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-e784d9e55efe029602184a26efae52f156bcd406"
+        },
+        {
+          "commit": "e8139255e57576d4fbe3667a7130d2e471d1c3ee",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-e8139255e57576d4fbe3667a7130d2e471d1c3ee"
+        },
+        {
+          "commit": "ebadf8a2926b53f699d5df9815522d84a68799cc",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-ebadf8a2926b53f699d5df9815522d84a68799cc"
+        },
+        {
+          "commit": "f042b16e14628dec445f9f7ab111adf3eda8f49c",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-f042b16e14628dec445f9f7ab111adf3eda8f49c"
+        },
+        {
+          "commit": "f2bc87a831a9de2ec576b4e37360a95f0734393f",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-f2bc87a831a9de2ec576b4e37360a95f0734393f"
+        },
+        {
+          "commit": "f4d3d79213dcbeb993fab28721052961db708847",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-f4d3d79213dcbeb993fab28721052961db708847"
+        },
+        {
+          "commit": "f67a681999e41f71043dc845f299baca158e57c6",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-f67a681999e41f71043dc845f299baca158e57c6"
+        },
+        {
+          "commit": "fa96b8ea88f28924cef3e1e7037be88a0d243009",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-fa96b8ea88f28924cef3e1e7037be88a0d243009"
+        },
+        {
+          "commit": "fcbe8eee369d2f68da29864d9e4578ecb68ef6e1",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-fcbe8eee369d2f68da29864d9e4578ecb68ef6e1"
+        },
+        {
+          "commit": "fff68af887b38062a1943ddca061c7d8f44a84aa",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-sdk-fff68af887b38062a1943ddca061c7d8f44a84aa"
+        }
+      ],
+      "remote": "https://github.com/peteromallet/Astrid-agent.git",
+      "repo": "astrid-sdk"
+    },
+    {
+      "coverage_sha256": "a97345adf750ea59bcf76e996474c922c0d92a373a92fc4654fd1e11f1116f83",
+      "fresh_ls_remote_verified": true,
+      "published_at_utc": "2026-10-19T14:05:19.697294+00:00",
+      "push_mode": "non-force atomic push",
+      "push_stderr": "remote: This repository moved. Please use the new location:        \nremote:   https://github.com/banodoco/astrid-runtime.git",
+      "push_stdout": [
+        "To https://github.com/banodoco/banodoco-workspace-runtime.git",
+        "*\t161140aa76cbf7868d2eb264893b6ff5723e78c5:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-161140aa76cbf7868d2eb264893b6ff5723e78c5\t[new branch]",
+        "*\t1db8365c48886e2f57ac82ffcbb8d6af527bba35:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-1db8365c48886e2f57ac82ffcbb8d6af527bba35\t[new branch]",
+        "*\t26f1389d0c54538fabcba9ce432314a9e3cc7d3e:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-26f1389d0c54538fabcba9ce432314a9e3cc7d3e\t[new branch]",
+        "*\t2ef7fafad6e938ebc77f992de26e83e4b54bf0cd:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-2ef7fafad6e938ebc77f992de26e83e4b54bf0cd\t[new branch]",
+        "*\t34832a30d714e76f23d853ed683f282694d9dbb0:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-34832a30d714e76f23d853ed683f282694d9dbb0\t[new branch]",
+        "*\t4983af6cb7c9a112824368b2d7d1e4d59a4db9d2:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-4983af6cb7c9a112824368b2d7d1e4d59a4db9d2\t[new branch]",
+        "*\t509403925f05b4f02b958b7ec0445dee87670fc0:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-509403925f05b4f02b958b7ec0445dee87670fc0\t[new branch]",
+        "*\t5c35167859972e5fc00f5003623050598c4a167a:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-5c35167859972e5fc00f5003623050598c4a167a\t[new branch]",
+        "*\t75331899cbf8d2d0168b73e8e6a60baaf25ed933:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-75331899cbf8d2d0168b73e8e6a60baaf25ed933\t[new branch]",
+        "*\t954ad1fe71cdce246fed5ae86bc4dcea38f05783:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-954ad1fe71cdce246fed5ae86bc4dcea38f05783\t[new branch]",
+        "*\t96c115b15baf4d88faaad01b25fd1b10de17f643:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-96c115b15baf4d88faaad01b25fd1b10de17f643\t[new branch]",
+        "*\t9e2060e25d3e9e5509737bdf99f3f055a2c7f337:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-9e2060e25d3e9e5509737bdf99f3f055a2c7f337\t[new branch]",
+        "*\tabd99b6bee52cefeac85ca197cde7e54b2eb6370:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-abd99b6bee52cefeac85ca197cde7e54b2eb6370\t[new branch]",
+        "*\taf5bae647ecf3058fe5762065b0bf1f2c6774ca9:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-af5bae647ecf3058fe5762065b0bf1f2c6774ca9\t[new branch]",
+        "*\tc9e3f844c62991a0ec670929e468ac1e5c0e5b62:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-c9e3f844c62991a0ec670929e468ac1e5c0e5b62\t[new branch]",
+        "*\td0ef378a0a4516eedc1f1cef7cdc2725018acd14:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-d0ef378a0a4516eedc1f1cef7cdc2725018acd14\t[new branch]",
+        "*\td3173d7c41e17b48f8afa1ac7404d183be6f6f3a:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-d3173d7c41e17b48f8afa1ac7404d183be6f6f3a\t[new branch]",
+        "*\td5ff4550e20c08939e2ae0423d970fac29e8a281:refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-d5ff4550e20c08939e2ae0423d970fac29e8a281\t[new branch]",
+        "Done"
+      ],
+      "ref_count": 18,
+      "refs": [
+        {
+          "commit": "161140aa76cbf7868d2eb264893b6ff5723e78c5",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-161140aa76cbf7868d2eb264893b6ff5723e78c5"
+        },
+        {
+          "commit": "1db8365c48886e2f57ac82ffcbb8d6af527bba35",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-1db8365c48886e2f57ac82ffcbb8d6af527bba35"
+        },
+        {
+          "commit": "26f1389d0c54538fabcba9ce432314a9e3cc7d3e",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-26f1389d0c54538fabcba9ce432314a9e3cc7d3e"
+        },
+        {
+          "commit": "2ef7fafad6e938ebc77f992de26e83e4b54bf0cd",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-2ef7fafad6e938ebc77f992de26e83e4b54bf0cd"
+        },
+        {
+          "commit": "34832a30d714e76f23d853ed683f282694d9dbb0",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-34832a30d714e76f23d853ed683f282694d9dbb0"
+        },
+        {
+          "commit": "4983af6cb7c9a112824368b2d7d1e4d59a4db9d2",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-4983af6cb7c9a112824368b2d7d1e4d59a4db9d2"
+        },
+        {
+          "commit": "509403925f05b4f02b958b7ec0445dee87670fc0",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-509403925f05b4f02b958b7ec0445dee87670fc0"
+        },
+        {
+          "commit": "5c35167859972e5fc00f5003623050598c4a167a",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-5c35167859972e5fc00f5003623050598c4a167a"
+        },
+        {
+          "commit": "75331899cbf8d2d0168b73e8e6a60baaf25ed933",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-75331899cbf8d2d0168b73e8e6a60baaf25ed933"
+        },
+        {
+          "commit": "954ad1fe71cdce246fed5ae86bc4dcea38f05783",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-954ad1fe71cdce246fed5ae86bc4dcea38f05783"
+        },
+        {
+          "commit": "96c115b15baf4d88faaad01b25fd1b10de17f643",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-96c115b15baf4d88faaad01b25fd1b10de17f643"
+        },
+        {
+          "commit": "9e2060e25d3e9e5509737bdf99f3f055a2c7f337",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-9e2060e25d3e9e5509737bdf99f3f055a2c7f337"
+        },
+        {
+          "commit": "abd99b6bee52cefeac85ca197cde7e54b2eb6370",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-abd99b6bee52cefeac85ca197cde7e54b2eb6370"
+        },
+        {
+          "commit": "af5bae647ecf3058fe5762065b0bf1f2c6774ca9",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-af5bae647ecf3058fe5762065b0bf1f2c6774ca9"
+        },
+        {
+          "commit": "c9e3f844c62991a0ec670929e468ac1e5c0e5b62",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-c9e3f844c62991a0ec670929e468ac1e5c0e5b62"
+        },
+        {
+          "commit": "d0ef378a0a4516eedc1f1cef7cdc2725018acd14",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-d0ef378a0a4516eedc1f1cef7cdc2725018acd14"
+        },
+        {
+          "commit": "d3173d7c41e17b48f8afa1ac7404d183be6f6f3a",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-d3173d7c41e17b48f8afa1ac7404d183be6f6f3a"
+        },
+        {
+          "commit": "d5ff4550e20c08939e2ae0423d970fac29e8a281",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-runtime-d5ff4550e20c08939e2ae0423d970fac29e8a281"
+        }
+      ],
+      "remote": "https://github.com/banodoco/banodoco-workspace-runtime.git",
+      "repo": "runtime"
+    },
+    {
+      "coverage_sha256": "a97345adf750ea59bcf76e996474c922c0d92a373a92fc4654fd1e11f1116f83",
+      "fresh_ls_remote_verified": true,
+      "notes": [
+        "Historical exact source tips; not qualified candidates. Three absolute local-checkout literals occur in test/fixture blobs only; no credentials or operational store bytes matched, and the original source history is preserved unchanged."
+      ],
+      "published_at_utc": "2026-10-19T14:06:21.577455+00:00",
+      "push_mode": "non-force atomic push",
+      "push_stderr": "remote: This repository moved. Please use the new location:        \nremote:   https://github.com/banodoco/astrid-app.git",
+      "push_stdout": [
+        "To https://github.com/banodoco/reigh-app.git",
+        "*\t07b9f1f0ae7b57352812a5b4d914f6494b2e12a0:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-07b9f1f0ae7b57352812a5b4d914f6494b2e12a0\t[new branch]",
+        "*\t0882d7f3be145fe02402a3167aeac59ef7e45b3f:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-0882d7f3be145fe02402a3167aeac59ef7e45b3f\t[new branch]",
+        "*\t0ea16cc8a0add345d33786a4eac8f7d18add2ae5:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-0ea16cc8a0add345d33786a4eac8f7d18add2ae5\t[new branch]",
+        "*\t0ee77f28475ba1c1222067d3ed292e606e7a239c:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-0ee77f28475ba1c1222067d3ed292e606e7a239c\t[new branch]",
+        "*\t1655aa0885edd847a58bfde2b039aaa5b875e340:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-1655aa0885edd847a58bfde2b039aaa5b875e340\t[new branch]",
+        "*\t18c7dc7e3d84ff84be3dfb24afa44cd6d5f3bb9e:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-18c7dc7e3d84ff84be3dfb24afa44cd6d5f3bb9e\t[new branch]",
+        "*\t19f6c5d7b00d2c50ab470861f6901c315076f982:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-19f6c5d7b00d2c50ab470861f6901c315076f982\t[new branch]",
+        "*\t1e77aa49386ad48143352a987459fe288c51109e:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-1e77aa49386ad48143352a987459fe288c51109e\t[new branch]",
+        "*\t210fc08f301aec60230555dd5584f48c54ddba8b:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-210fc08f301aec60230555dd5584f48c54ddba8b\t[new branch]",
+        "*\t21d7d7caaea8ee1d46c94c0cd0ba33d8553e9b21:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-21d7d7caaea8ee1d46c94c0cd0ba33d8553e9b21\t[new branch]",
+        "*\t22a0dab8c35956f625a93e208164b6c1786d9872:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-22a0dab8c35956f625a93e208164b6c1786d9872\t[new branch]",
+        "*\t245dbf5ea786684555f6db855dfb86bd8bff71a4:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-245dbf5ea786684555f6db855dfb86bd8bff71a4\t[new branch]",
+        "*\t2c92e0b3ac1f6497f54963b9761892c1569d5d0b:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-2c92e0b3ac1f6497f54963b9761892c1569d5d0b\t[new branch]",
+        "*\t2fe80b5c8727ee405d6e787e907c4fdc7cfc7093:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-2fe80b5c8727ee405d6e787e907c4fdc7cfc7093\t[new branch]",
+        "*\t32b4c90c0f0b20009a45a56ffb1521e3a34b5048:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-32b4c90c0f0b20009a45a56ffb1521e3a34b5048\t[new branch]",
+        "*\t39ff5c4be4368c06653e4ebfd071af7da66c4b6a:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-39ff5c4be4368c06653e4ebfd071af7da66c4b6a\t[new branch]",
+        "*\t3b0b4275332e9ca617d86441dd3894a85f0a25e1:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-3b0b4275332e9ca617d86441dd3894a85f0a25e1\t[new branch]",
+        "*\t3b14caaa7688943468505389dd037836a8d5298d:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-3b14caaa7688943468505389dd037836a8d5298d\t[new branch]",
+        "*\t43153a8153afb01bd60382ff0b7abc4cde872ecd:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-43153a8153afb01bd60382ff0b7abc4cde872ecd\t[new branch]",
+        "*\t464cecf97fa10ba4e4fcebee3850de041f3ff7ca:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-464cecf97fa10ba4e4fcebee3850de041f3ff7ca\t[new branch]",
+        "*\t492819bb888caa221a215c2e0a5ae5c9b22a5fba:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-492819bb888caa221a215c2e0a5ae5c9b22a5fba\t[new branch]",
+        "*\t4b469a17a6a7ae7a51bec6df0b60428657d1fe28:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-4b469a17a6a7ae7a51bec6df0b60428657d1fe28\t[new branch]",
+        "*\t52ec7b2dfc6c810fbefe40216844b147f44e6692:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-52ec7b2dfc6c810fbefe40216844b147f44e6692\t[new branch]",
+        "*\t5674aa4be89152efda7decb3bca7643bcf36b6d8:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-5674aa4be89152efda7decb3bca7643bcf36b6d8\t[new branch]",
+        "*\t602f7671a5cb2b5d18ac254948549fa67a65d126:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-602f7671a5cb2b5d18ac254948549fa67a65d126\t[new branch]",
+        "*\t783d81b634ed33b67db419f721c9e823ed62f5db:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-783d81b634ed33b67db419f721c9e823ed62f5db\t[new branch]",
+        "*\t7ccc6a3dbdda9742c5f9b9a48fbe590cf93f8975:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-7ccc6a3dbdda9742c5f9b9a48fbe590cf93f8975\t[new branch]",
+        "*\t8319bafe5e579fc63da62fd21f9d1e449bc7c325:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-8319bafe5e579fc63da62fd21f9d1e449bc7c325\t[new branch]",
+        "*\t897f76d4eb92d9ac176be44ac4ea70eec175d116:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-897f76d4eb92d9ac176be44ac4ea70eec175d116\t[new branch]",
+        "*\t8a02692905aa4cc4df6e9ab3edb4fe87600938c4:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-8a02692905aa4cc4df6e9ab3edb4fe87600938c4\t[new branch]",
+        "*\t8d86e60217562561dc534bb532b084251385c511:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-8d86e60217562561dc534bb532b084251385c511\t[new branch]",
+        "*\t963b61d5bd2e4c359f112b0b5e194e5469dd9cf3:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-963b61d5bd2e4c359f112b0b5e194e5469dd9cf3\t[new branch]",
+        "*\ta20a34e69ac3d8096127a50b1d9a8b42276a97f4:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-a20a34e69ac3d8096127a50b1d9a8b42276a97f4\t[new branch]",
+        "*\ta77c32ccc52a978527c3a0cfd9954fb6fdbd020a:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-a77c32ccc52a978527c3a0cfd9954fb6fdbd020a\t[new branch]",
+        "*\tad01f5bb35cdba4bb8430b6ad34f63105e6a84df:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-ad01f5bb35cdba4bb8430b6ad34f63105e6a84df\t[new branch]",
+        "*\tad0ad0c20402a21bac5bc3a7b03e8d2107548ecf:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-ad0ad0c20402a21bac5bc3a7b03e8d2107548ecf\t[new branch]",
+        "*\tb5b27abbe1e69a6a569fc979e1e449495371024e:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-b5b27abbe1e69a6a569fc979e1e449495371024e\t[new branch]",
+        "*\tbc3399ab113ad7ea3eda75cefdc4f68ad1cd0a5c:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-bc3399ab113ad7ea3eda75cefdc4f68ad1cd0a5c\t[new branch]",
+        "*\tc8c6946569bbe8a186e4cafab25e196b8bf4962c:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-c8c6946569bbe8a186e4cafab25e196b8bf4962c\t[new branch]",
+        "*\tca3214964cab84bd05cebf0e0a25fa6f9a1c9231:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-ca3214964cab84bd05cebf0e0a25fa6f9a1c9231\t[new branch]",
+        "*\td06d730eda411827ee92db8a830267d856f7ebd6:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-d06d730eda411827ee92db8a830267d856f7ebd6\t[new branch]",
+        "*\td12db7877b1f0838352ff7e62e235ab73c96fa82:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-d12db7877b1f0838352ff7e62e235ab73c96fa82\t[new branch]",
+        "*\td658b6d5717bc09bbabc359002a2faef71837ce6:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-d658b6d5717bc09bbabc359002a2faef71837ce6\t[new branch]",
+        "*\tdec696ce9bc1cc7a5c3a498403d26be945d080b9:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-dec696ce9bc1cc7a5c3a498403d26be945d080b9\t[new branch]",
+        "*\te854e947f7db647143d8c346cf56320428ef02c1:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-e854e947f7db647143d8c346cf56320428ef02c1\t[new branch]",
+        "*\teb8759e4e4362895d0796863ad760ce4c455ba4e:refs/heads/codex/handover-timeline-r4-20261019-preserve-app-eb8759e4e4362895d0796863ad760ce4c455ba4e\t[new branch]",
+        "Done"
+      ],
+      "ref_count": 46,
+      "refs": [
+        {
+          "commit": "07b9f1f0ae7b57352812a5b4d914f6494b2e12a0",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-07b9f1f0ae7b57352812a5b4d914f6494b2e12a0"
+        },
+        {
+          "commit": "0882d7f3be145fe02402a3167aeac59ef7e45b3f",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-0882d7f3be145fe02402a3167aeac59ef7e45b3f"
+        },
+        {
+          "commit": "0ea16cc8a0add345d33786a4eac8f7d18add2ae5",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-0ea16cc8a0add345d33786a4eac8f7d18add2ae5"
+        },
+        {
+          "commit": "0ee77f28475ba1c1222067d3ed292e606e7a239c",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-0ee77f28475ba1c1222067d3ed292e606e7a239c"
+        },
+        {
+          "commit": "1655aa0885edd847a58bfde2b039aaa5b875e340",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-1655aa0885edd847a58bfde2b039aaa5b875e340"
+        },
+        {
+          "commit": "18c7dc7e3d84ff84be3dfb24afa44cd6d5f3bb9e",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-18c7dc7e3d84ff84be3dfb24afa44cd6d5f3bb9e"
+        },
+        {
+          "commit": "19f6c5d7b00d2c50ab470861f6901c315076f982",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-19f6c5d7b00d2c50ab470861f6901c315076f982"
+        },
+        {
+          "commit": "1e77aa49386ad48143352a987459fe288c51109e",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-1e77aa49386ad48143352a987459fe288c51109e"
+        },
+        {
+          "commit": "210fc08f301aec60230555dd5584f48c54ddba8b",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-210fc08f301aec60230555dd5584f48c54ddba8b"
+        },
+        {
+          "commit": "21d7d7caaea8ee1d46c94c0cd0ba33d8553e9b21",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-21d7d7caaea8ee1d46c94c0cd0ba33d8553e9b21"
+        },
+        {
+          "commit": "22a0dab8c35956f625a93e208164b6c1786d9872",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-22a0dab8c35956f625a93e208164b6c1786d9872"
+        },
+        {
+          "commit": "245dbf5ea786684555f6db855dfb86bd8bff71a4",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-245dbf5ea786684555f6db855dfb86bd8bff71a4"
+        },
+        {
+          "commit": "2c92e0b3ac1f6497f54963b9761892c1569d5d0b",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-2c92e0b3ac1f6497f54963b9761892c1569d5d0b"
+        },
+        {
+          "commit": "2fe80b5c8727ee405d6e787e907c4fdc7cfc7093",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-2fe80b5c8727ee405d6e787e907c4fdc7cfc7093"
+        },
+        {
+          "commit": "32b4c90c0f0b20009a45a56ffb1521e3a34b5048",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-32b4c90c0f0b20009a45a56ffb1521e3a34b5048"
+        },
+        {
+          "commit": "39ff5c4be4368c06653e4ebfd071af7da66c4b6a",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-39ff5c4be4368c06653e4ebfd071af7da66c4b6a"
+        },
+        {
+          "commit": "3b0b4275332e9ca617d86441dd3894a85f0a25e1",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-3b0b4275332e9ca617d86441dd3894a85f0a25e1"
+        },
+        {
+          "commit": "3b14caaa7688943468505389dd037836a8d5298d",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-3b14caaa7688943468505389dd037836a8d5298d"
+        },
+        {
+          "commit": "43153a8153afb01bd60382ff0b7abc4cde872ecd",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-43153a8153afb01bd60382ff0b7abc4cde872ecd"
+        },
+        {
+          "commit": "464cecf97fa10ba4e4fcebee3850de041f3ff7ca",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-464cecf97fa10ba4e4fcebee3850de041f3ff7ca"
+        },
+        {
+          "commit": "492819bb888caa221a215c2e0a5ae5c9b22a5fba",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-492819bb888caa221a215c2e0a5ae5c9b22a5fba"
+        },
+        {
+          "commit": "4b469a17a6a7ae7a51bec6df0b60428657d1fe28",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-4b469a17a6a7ae7a51bec6df0b60428657d1fe28"
+        },
+        {
+          "commit": "52ec7b2dfc6c810fbefe40216844b147f44e6692",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-52ec7b2dfc6c810fbefe40216844b147f44e6692"
+        },
+        {
+          "commit": "5674aa4be89152efda7decb3bca7643bcf36b6d8",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-5674aa4be89152efda7decb3bca7643bcf36b6d8"
+        },
+        {
+          "commit": "602f7671a5cb2b5d18ac254948549fa67a65d126",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-602f7671a5cb2b5d18ac254948549fa67a65d126"
+        },
+        {
+          "commit": "783d81b634ed33b67db419f721c9e823ed62f5db",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-783d81b634ed33b67db419f721c9e823ed62f5db"
+        },
+        {
+          "commit": "7ccc6a3dbdda9742c5f9b9a48fbe590cf93f8975",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-7ccc6a3dbdda9742c5f9b9a48fbe590cf93f8975"
+        },
+        {
+          "commit": "8319bafe5e579fc63da62fd21f9d1e449bc7c325",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-8319bafe5e579fc63da62fd21f9d1e449bc7c325"
+        },
+        {
+          "commit": "897f76d4eb92d9ac176be44ac4ea70eec175d116",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-897f76d4eb92d9ac176be44ac4ea70eec175d116"
+        },
+        {
+          "commit": "8a02692905aa4cc4df6e9ab3edb4fe87600938c4",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-8a02692905aa4cc4df6e9ab3edb4fe87600938c4"
+        },
+        {
+          "commit": "8d86e60217562561dc534bb532b084251385c511",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-8d86e60217562561dc534bb532b084251385c511"
+        },
+        {
+          "commit": "963b61d5bd2e4c359f112b0b5e194e5469dd9cf3",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-963b61d5bd2e4c359f112b0b5e194e5469dd9cf3"
+        },
+        {
+          "commit": "a20a34e69ac3d8096127a50b1d9a8b42276a97f4",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-a20a34e69ac3d8096127a50b1d9a8b42276a97f4"
+        },
+        {
+          "commit": "a77c32ccc52a978527c3a0cfd9954fb6fdbd020a",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-a77c32ccc52a978527c3a0cfd9954fb6fdbd020a"
+        },
+        {
+          "commit": "ad01f5bb35cdba4bb8430b6ad34f63105e6a84df",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-ad01f5bb35cdba4bb8430b6ad34f63105e6a84df"
+        },
+        {
+          "commit": "ad0ad0c20402a21bac5bc3a7b03e8d2107548ecf",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-ad0ad0c20402a21bac5bc3a7b03e8d2107548ecf"
+        },
+        {
+          "commit": "b5b27abbe1e69a6a569fc979e1e449495371024e",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-b5b27abbe1e69a6a569fc979e1e449495371024e"
+        },
+        {
+          "commit": "bc3399ab113ad7ea3eda75cefdc4f68ad1cd0a5c",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-bc3399ab113ad7ea3eda75cefdc4f68ad1cd0a5c"
+        },
+        {
+          "commit": "c8c6946569bbe8a186e4cafab25e196b8bf4962c",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-c8c6946569bbe8a186e4cafab25e196b8bf4962c"
+        },
+        {
+          "commit": "ca3214964cab84bd05cebf0e0a25fa6f9a1c9231",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-ca3214964cab84bd05cebf0e0a25fa6f9a1c9231"
+        },
+        {
+          "commit": "d06d730eda411827ee92db8a830267d856f7ebd6",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-d06d730eda411827ee92db8a830267d856f7ebd6"
+        },
+        {
+          "commit": "d12db7877b1f0838352ff7e62e235ab73c96fa82",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-d12db7877b1f0838352ff7e62e235ab73c96fa82"
+        },
+        {
+          "commit": "d658b6d5717bc09bbabc359002a2faef71837ce6",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-d658b6d5717bc09bbabc359002a2faef71837ce6"
+        },
+        {
+          "commit": "dec696ce9bc1cc7a5c3a498403d26be945d080b9",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-dec696ce9bc1cc7a5c3a498403d26be945d080b9"
+        },
+        {
+          "commit": "e854e947f7db647143d8c346cf56320428ef02c1",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-e854e947f7db647143d8c346cf56320428ef02c1"
+        },
+        {
+          "commit": "eb8759e4e4362895d0796863ad760ce4c455ba4e",
+          "ref": "refs/heads/codex/handover-timeline-r4-20261019-preserve-app-eb8759e4e4362895d0796863ad760ce4c455ba4e"
+        }
+      ],
+      "remote": "https://github.com/banodoco/reigh-app.git",
+      "repo": "reigh-app"
+    }
+  ],
+  "schema": "handover-historical-publication-progress/v1"
+}

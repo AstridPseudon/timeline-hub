@@ -1,0 +1,1222 @@
+{
+  "control_checkpoint": {
+    "bytes": 2199,
+    "path": "status.md",
+    "sha256": "6e4f75e3c5d6161793fec7a578ccd379e8709ad7bdf398996cdb9ba83d5b0d92"
+  },
+  "counts_as_of_cutoff": {
+    "accepted_original_cards": 29,
+    "accepted_releases": 0,
+    "completed_advisories": 262,
+    "delivery_direction_advisories": 225,
+    "new_product_reviews": 0,
+    "original_cards": 95,
+    "releases": 3,
+    "scheduled_advisories": 37
+  },
+  "exclusions": [
+    {
+      "item": "Source-machine .otto execution tree and private operational history",
+      "reason": "historical provenance stays local; the receiving authority is tracked docs/projects/timeline-r4"
+    },
+    {
+      "item": "Credentials, runtime databases, private identities, leases, process/session handles, owner tokens, and environments",
+      "reason": "not portable and not authorized for transfer"
+    },
+    {
+      "item": "Current dirty primary operational artifacts and protected unsettled Runtime/Host graphs",
+      "reason": "remain on the source machine under existing custody; no settlement or transfer is claimed"
+    },
+    {
+      "item": "Build output, node_modules, dependency caches and raw API captures",
+      "reason": "candidate source is fetched from verified Git refs; no environment or live-state clone is part of the package"
+    }
+  ],
+  "frozen_cutoff_utc": "2026-10-19T14:10:14Z",
+  "host": {
+    "control": {
+      "branch": "codex/handover-timeline-r4-20261019-control",
+      "url": "https://github.com/peteromallet/Astrid-agent.git"
+    },
+    "name": "Astrid",
+    "url": "https://github.com/peteromallet/Astrid-agent.git",
+    "verified_remote_default": {
+      "commit": "e120e6edbbd6c22397a8a1fe617af5b0b2454d6f",
+      "ref": "refs/heads/main",
+      "tree": "6d84797c6914ddb2be8a7e08d5fdd249695f50cd"
+    }
+  },
+  "missing_inputs": [
+    {
+      "item": "Final public control commit/tree and private ZIP pin",
+      "status": "not yet available; prepare the stable public files first, commit the control branch, then finalize against its actual SHA/tree"
+    },
+    {
+      "item": "Fresh final handover audit",
+      "status": "planned after control publication, archive generation and independent portability validation"
+    },
+    {
+      "item": "Outstanding product criteria and releases",
+      "status": "portfolio remains 29/95 accepted and 0/3 releases; see exact current consumer checkpoints"
+    }
+  ],
+  "products": [
+    {
+      "candidate": {
+        "branch": "codex/handover-timeline-r4-20261019-candidate-sdk",
+        "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+        "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"
+      },
+      "current_installed": {
+        "observed_bindings": [
+          "SDK 3d2 installed/qualified in E and F consumer prefixes; SDK b220 remains in EB consumer prefix, as recorded in the corresponding sealed consumer checkpoints"
+        ],
+        "status": "consumer-specific; no portfolio-wide installed version is inferred from the source candidate"
+      },
+      "preservation": [
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-00cd577e19e9be74034784f27eb30257ac24713b",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "00cd577e19e9be74034784f27eb30257ac24713b",
+          "tree": "2ac76eaa0211e9bc577c5ecd19de3586c07fcba4"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-02f270ba04e04ccc3768c5e5d95e7d92a067149b",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "02f270ba04e04ccc3768c5e5d95e7d92a067149b",
+          "tree": "49d9193b44255d382560be84bf69aec3ddecf103"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-032f6d51f0bf332d903239362afe29ddd6e1f3f2",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "032f6d51f0bf332d903239362afe29ddd6e1f3f2",
+          "tree": "cec5ac32177c147066fc884531ef97688bba7108"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-0368137ac38f3d3005c160e91bb08b2da793f07d",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "0368137ac38f3d3005c160e91bb08b2da793f07d",
+          "tree": "b477811acc2b5ea8a8bce312df798100a75b5193"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-072b1b725e34e51c84bbb3244876ba0bf4f7d3be",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "072b1b725e34e51c84bbb3244876ba0bf4f7d3be",
+          "tree": "ccd5a4072837fe3c43a0f4eb7330fff74187d644"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-081a271c9607f67bd300f01eae6cfe4243edcce9",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "081a271c9607f67bd300f01eae6cfe4243edcce9",
+          "tree": "416a8280383a0aea12fa5ae0bf259990a975e7fb"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-08eadfb151456c6cd32a1255c5946b4ac112ab42",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "08eadfb151456c6cd32a1255c5946b4ac112ab42",
+          "tree": "98bbe9557e51c237c2543cae6e697b81e0d61b2a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-0e8e7b1b26df43134981b02f4843234818e4d2ea",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "0e8e7b1b26df43134981b02f4843234818e4d2ea",
+          "tree": "1ca12b9b130f7dc45392a2e51a17e79d122c77b3"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-17f3aea34fbaa5aea434ee87b99af0d238f0a911",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "17f3aea34fbaa5aea434ee87b99af0d238f0a911",
+          "tree": "56b721ceccfc89dd9cc54f62b582c026a32751fb"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-198944bae5c5e3f1fbe5d922fc197dc4269de1c6",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "198944bae5c5e3f1fbe5d922fc197dc4269de1c6",
+          "tree": "e07ddd6f7123e3e1a1c256cfc5d494aca5343769"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-19c62a9f869e26a5af5ad6bf79e31cd619f46262",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "19c62a9f869e26a5af5ad6bf79e31cd619f46262",
+          "tree": "2280c12029d4d2abc007b9fe4996ef758e446ac4"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-21c1febc03b422d6eac92a88bae7a3cdf16fcbd7",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "21c1febc03b422d6eac92a88bae7a3cdf16fcbd7",
+          "tree": "7b6259a4ba1a7b6fddef40f898eee8ba8a5bfc03"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-261add61c30dffec852dbdc5a1715a1d4a496cb4",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "261add61c30dffec852dbdc5a1715a1d4a496cb4",
+          "tree": "b8d3a946e8dc0afec460f9d1265d1a19ba7fb2bc"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-27fe754fb8f51011e7943010e0c7693750d5af6e",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "27fe754fb8f51011e7943010e0c7693750d5af6e",
+          "tree": "b5e6fe66338a039c7098b08ff422503dd09fc7d3"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-2940433727e5d9ff18aa443421a1a9ec0e49202f",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "2940433727e5d9ff18aa443421a1a9ec0e49202f",
+          "tree": "0498b8dbf3a3c64c32e3c3ccd693fb355ee0618d"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-2a26914b390666891f782124f8971135cb772801",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "2a26914b390666891f782124f8971135cb772801",
+          "tree": "b103b7571c4893d561276d13cedaf1812e6b6755"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-2a3aeea9ee5e60387fcd9dc2aa5f7a6279c51109",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "2a3aeea9ee5e60387fcd9dc2aa5f7a6279c51109",
+          "tree": "9555b71f0c11c3a1c6afe70b971b1f280b245a8e"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-2ae0d7ec8104c2fc36f62003338566958f672803",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "2ae0d7ec8104c2fc36f62003338566958f672803",
+          "tree": "6a3c91ba4e09c72407b3f7ca75d8c2ede706b400"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-2d786a210e9d80a7ef00a4ff57e3b15d0bb199b6",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "2d786a210e9d80a7ef00a4ff57e3b15d0bb199b6",
+          "tree": "96747c53fd50e7020af6fe0abfd2cbca19fe429c"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-2e04e9a9bd62755a7bc9ae598bbc3692a1d2b7f0",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "2e04e9a9bd62755a7bc9ae598bbc3692a1d2b7f0",
+          "tree": "e21ff2f0b9f7fb2481e2d8e6e3de5380c7b0a7bb"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-2e57b81ce606a3f2a9f50fe6a5f14f94128c4b62",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "2e57b81ce606a3f2a9f50fe6a5f14f94128c4b62",
+          "tree": "372777ebc274aa7d871e272517a589078d69ba88"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-30bfec68c31fd4ab7288a177b810d321608d23d1",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "30bfec68c31fd4ab7288a177b810d321608d23d1",
+          "tree": "fffa5c9db01461c7c4a149d14318e94e39c283ad"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-31321578b7226e8d833802836e6eac098940c2b7",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "31321578b7226e8d833802836e6eac098940c2b7",
+          "tree": "5d595e131e0be5eea51650b8ab1ef0e9100b700d"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-3320b255b7fa7fa563bb7cc77161737b34e6eab5",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "3320b255b7fa7fa563bb7cc77161737b34e6eab5",
+          "tree": "b550bbdff5b8f9a61b4cb55b49d2006c1d835099"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-398f1e5c44330971809ec54cf0dee04bf7e0c4d3",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "398f1e5c44330971809ec54cf0dee04bf7e0c4d3",
+          "tree": "438a299df104fd63a15cb3eb46e94cbb124d66db"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-3bb84f066804760bf28f2b4e54dcf2e94cf2673e",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "3bb84f066804760bf28f2b4e54dcf2e94cf2673e",
+          "tree": "36c6e45e0cd6d37bfc18810670028cf2c478c6bd"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-3bd9ef8bd57f1422aedbfd2a4a64b3dedaeca5cc",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "3bd9ef8bd57f1422aedbfd2a4a64b3dedaeca5cc",
+          "tree": "4f474a2e70d00ba61d5e8b681eccf8e0ad23eaff"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-3e347795fdeac5e3c057118cffba2455cde4d943",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "3e347795fdeac5e3c057118cffba2455cde4d943",
+          "tree": "5ebfc49a396717cc73b7070bf548e507ba94f15a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-3e8e7b29d66f20626441626ce258e2e9ca558af3",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "3e8e7b29d66f20626441626ce258e2e9ca558af3",
+          "tree": "1f2c55e423f13a218155fb9f4d02b138d768f9b2"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-3eb9504b70af930dd5e659435cc038ae204f455b",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "3eb9504b70af930dd5e659435cc038ae204f455b",
+          "tree": "130d409cb86b98449841f5db5b33f488dc8d4128"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-4048a43ec42e6af49b02d048d440f08fde6664a4",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "4048a43ec42e6af49b02d048d440f08fde6664a4",
+          "tree": "5d6e608ab1f3f88bb3c0284c938157006670eafe"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-421626f72f0c1f59edff28c8b01d97eeb4d091f0",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "421626f72f0c1f59edff28c8b01d97eeb4d091f0",
+          "tree": "1b0221075cf646ace3ba231d205e7d678302967a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-4304736e5ca733235323d8e8fe8edb612c9fb722",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "4304736e5ca733235323d8e8fe8edb612c9fb722",
+          "tree": "f905a4a48a966fd72f230df15b603c95b9f215b7"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-44badd151929499f7e1e3138b43fced5ddb26998",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "44badd151929499f7e1e3138b43fced5ddb26998",
+          "tree": "b2255a03e3a458e4f35bc5eff89af0f05bc77748"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-454c654cfa7dd7e2b340848c2d1250de4c650038",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "454c654cfa7dd7e2b340848c2d1250de4c650038",
+          "tree": "7bddb16e410f4c6b8131b5d71d9aed370c508b8a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-494d5d9f2e35b9d3307ca578ff457ac833c29f98",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "494d5d9f2e35b9d3307ca578ff457ac833c29f98",
+          "tree": "855b99acbdd79f3f179a7176d1aceff66a164220"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-4c91a844e0f337569c9edb201c7c62b17878ede7",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "4c91a844e0f337569c9edb201c7c62b17878ede7",
+          "tree": "141ca6ffdf185c8cb44a6b1950238f40add16bd2"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-4d5d1ec1f32f68a4f959e6758aef7fda13dbf1e4",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "4d5d1ec1f32f68a4f959e6758aef7fda13dbf1e4",
+          "tree": "7268b0be68600661f02b10590310b997886a0e43"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-54633a533e8a37bd42faa7a901579e5b59799a1d",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "54633a533e8a37bd42faa7a901579e5b59799a1d",
+          "tree": "d5b21066ca77c155c29044d12ac103bb62b5a3d6"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-54f0d8c68683e09ca1e7675784024738eb9cb12e",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "54f0d8c68683e09ca1e7675784024738eb9cb12e",
+          "tree": "b07eec618da4776c0c395a4d754ad7a313695775"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-56f16ad403d19bb48e58ffb55b4e9fa5b29350cf",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "56f16ad403d19bb48e58ffb55b4e9fa5b29350cf",
+          "tree": "b14dab43a38693b4a6b15836dcad49c64cc16281"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-5babdfa0864ff7f2aedaa56080e386f6a655f429",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "5babdfa0864ff7f2aedaa56080e386f6a655f429",
+          "tree": "1838f7e9a058c791493294403c6c738d3c603ffb"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-5d6ff3a37784a92b2544f7e0886804b672933400",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "5d6ff3a37784a92b2544f7e0886804b672933400",
+          "tree": "579a4580f5bada5b47b8c5da33394d98971f6c75"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-5e5ceeeee9c0920096b1afaeedd67862b6faba98",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "5e5ceeeee9c0920096b1afaeedd67862b6faba98",
+          "tree": "2b9e5293e5a97bf41954852af913d1d73d20868a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-5f6e996138666eddd185264f3e2a6cae89158f0c",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "5f6e996138666eddd185264f3e2a6cae89158f0c",
+          "tree": "43b888f09addafcffb8fd4313f4110ee50ff89c3"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-5fe353e9a332a6c27edbb89167d89c868f3bb923",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "5fe353e9a332a6c27edbb89167d89c868f3bb923",
+          "tree": "22dd732e50303e79e88ccabc4cd3f9b90895b60b"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-6a2ccef2460a856dbcb9cbc67de289d7c7fd04d1",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "6a2ccef2460a856dbcb9cbc67de289d7c7fd04d1",
+          "tree": "0959b411c3a076f8ffaaeed95ecccbde924107ff"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-6a9d1aaea5123d55a6c323239eb571edeb87a1af",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "6a9d1aaea5123d55a6c323239eb571edeb87a1af",
+          "tree": "d74d8e6b96efb75ce18fed1f12518fcdcba2629b"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-6d8e6f369f3e5bb7efaeda5b99270c925b61e08a",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "6d8e6f369f3e5bb7efaeda5b99270c925b61e08a",
+          "tree": "84f02795908fd59336ee00c13d07a3bdd7752f2b"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-6ddeb8af692addc9e243c49739844e9b0bb60241",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "6ddeb8af692addc9e243c49739844e9b0bb60241",
+          "tree": "a4827e57bbbe45a0baa0811b5ab10ec7c6289ea6"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-773bd17b0f761a681ba543047a471f3fb83ca429",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "773bd17b0f761a681ba543047a471f3fb83ca429",
+          "tree": "bca5f640d36c05bc9037fecbac38e15acddd82ce"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-78084151cefbb23e565b66d5b5b36fc91d57a7ec",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "78084151cefbb23e565b66d5b5b36fc91d57a7ec",
+          "tree": "9cc3357bfc8a4ce00a798493778efd6b18801c0a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-7a80168d5d434fb7734da37a7bb31c6bc06a8f64",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "7a80168d5d434fb7734da37a7bb31c6bc06a8f64",
+          "tree": "92b6cd78a023457d980f1c2ab6c6c2e73c41eaf9"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-82488b58e6ce646f469c398ba2d9f385e89a279c",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "82488b58e6ce646f469c398ba2d9f385e89a279c",
+          "tree": "3b3b11120af9df04cd94d2587a72565383dab218"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-8a33bef4eeec0771b2d34e77b8c1193a9c457e8a",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "8a33bef4eeec0771b2d34e77b8c1193a9c457e8a",
+          "tree": "32687e3d2697fdadc9c40e760422bd7a8dcd71cc"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-8edb68d2b2cd27a89c98e9c3c2a4bac6641b8dba",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "8edb68d2b2cd27a89c98e9c3c2a4bac6641b8dba",
+          "tree": "22a77bdbbc066ed8538f888c8b2e16e1573f3691"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-9138f8b327e460270560d041c4a8155e8969bd9f",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "9138f8b327e460270560d041c4a8155e8969bd9f",
+          "tree": "e2935379d3c397b78459b99c4db744f6a436e89a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-96921740b20ce4436d10f3e5a976e54f684dba04",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "96921740b20ce4436d10f3e5a976e54f684dba04",
+          "tree": "0f8b0e6fbda3eb1345beb36776c960fb2b961f86"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-986fb7537ce8dabb20237475855d8ac48840efab",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "986fb7537ce8dabb20237475855d8ac48840efab",
+          "tree": "c03a83d7793232a1874f1cc4bbc815e53976c2ed"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-98d40d74d70a820eb7078c87f4a9a8ed0bd8e52c",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "98d40d74d70a820eb7078c87f4a9a8ed0bd8e52c",
+          "tree": "1d445155f7ade978554233cbb86208f635a9e16c"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-9ab89dd715aff46cc3d0fd240e119e3158580151",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "9ab89dd715aff46cc3d0fd240e119e3158580151",
+          "tree": "2d9efc93ac23da0e26396a1f4d4aa67640190ddf"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-a42a3464c3a6101f6196c496b05f51dd0ca88882",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "a42a3464c3a6101f6196c496b05f51dd0ca88882",
+          "tree": "b145a2753e4800fb3743e530faeace193a95df79"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-a59de62567b245482b7c1db2f4c403fc93b417cb",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "a59de62567b245482b7c1db2f4c403fc93b417cb",
+          "tree": "fa04232c5d4108272e6c58bc70f1b3e4d0b0ea11"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-a8b9d56ad7518545bc6984907fe0499ba76103ff",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "a8b9d56ad7518545bc6984907fe0499ba76103ff",
+          "tree": "9354acc0ac0c4846ba78401bb164ce2f1c0abd77"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-ae0ab8bb285a92e4338b9ea8884931de0eaa7974",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "ae0ab8bb285a92e4338b9ea8884931de0eaa7974",
+          "tree": "1b88ff7bcb101ca120645996fc07e7396a56bfae"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-aff4fe2ad3ab7ea61dc77c9570d01d919a48ec1c",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "aff4fe2ad3ab7ea61dc77c9570d01d919a48ec1c",
+          "tree": "12fc5a5557c8b7205abcf032c960aafa04c83251"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-b011e6761d9bc2be9aff9b1f082ac87652310e2e",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "b011e6761d9bc2be9aff9b1f082ac87652310e2e",
+          "tree": "fe94375c72dbacb4a9dce3c2444b1cff55105b2a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-b6bf602611fc02f384de46cb0f4a1d5593f8f296",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "b6bf602611fc02f384de46cb0f4a1d5593f8f296",
+          "tree": "c9db8b92a690faf02336c9381b17f1a9a845bfee"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-bb89c190a0eaba8887844511a3df9ad13dd82f02",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "bb89c190a0eaba8887844511a3df9ad13dd82f02",
+          "tree": "99ee8b3a50e72b25f8ebb41c503240c78218d1f7"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-c2318471bc4e538f7f8a2bc16ae99d402d7eb1c7",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "c2318471bc4e538f7f8a2bc16ae99d402d7eb1c7",
+          "tree": "5562fc72fc9e16e5a96570f1b0ecc0179d4aa08a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-c493d4e5c7af7700485e847d4925fc2208c2bfe9",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "c493d4e5c7af7700485e847d4925fc2208c2bfe9",
+          "tree": "b3e488adbe24520ea31a0c99bb13fe791a7e0a8a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-c4962c0bf92a7d1d9a0137814609213b83abd197",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "c4962c0bf92a7d1d9a0137814609213b83abd197",
+          "tree": "239be0122fdf93d71fdfa6c4df4ca71092cf0cfd"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-c4e7902c46906010861f02a7c5ca654dbeae9097",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "c4e7902c46906010861f02a7c5ca654dbeae9097",
+          "tree": "32a142470e11924ca7e0741c26e8a88fa9c17fcf"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-c8b0d06479aef5c3a2d3694ce3a1da4b4d79b5ad",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "c8b0d06479aef5c3a2d3694ce3a1da4b4d79b5ad",
+          "tree": "75bd92fe8a132cc7fcc3417af662cb933361d794"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-d0415aba197168ca4f42eb6aeece197611b47445",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "d0415aba197168ca4f42eb6aeece197611b47445",
+          "tree": "16a4c2393b3e72b84fb51e1492eddd5b521e2a09"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-d3168a0432db3263f1b2fa6ffd40457bae8f8c80",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "d3168a0432db3263f1b2fa6ffd40457bae8f8c80",
+          "tree": "a17523bf9342ca0da657656c1e61a6e484d77a4a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-d8606b53cc4c8dfad9f0d77789062d50fa5aa6c1",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "d8606b53cc4c8dfad9f0d77789062d50fa5aa6c1",
+          "tree": "83c7cdfa5dcf4ae065eb7bd6fd3cc288ada52e09"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-da1c7c7f675b5b8e02175b800340d1b6c97de3da",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "da1c7c7f675b5b8e02175b800340d1b6c97de3da",
+          "tree": "ae141fcd29d58506cdf8214618652cce95101286"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-dc52f1232bfe3eb8da8ac9b6dad7cbd136977151",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "dc52f1232bfe3eb8da8ac9b6dad7cbd136977151",
+          "tree": "9d037585daf4c52ba84d12a914b1c1acb063597b"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-df1d68017acf307bebb18712a0df29863aa9c316",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "df1d68017acf307bebb18712a0df29863aa9c316",
+          "tree": "1d5e8ee9fbd2bf32e9772e935e48ede849579ff7"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-e30f8d27a436299852c536f36bc93abc06d90366",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "e30f8d27a436299852c536f36bc93abc06d90366",
+          "tree": "c0a606a363278db9a15d9d1f1b873a904243aae6"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-e5da66813eb3665a1655b59bc991538bebc494b0",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "e5da66813eb3665a1655b59bc991538bebc494b0",
+          "tree": "3c81b21e777cece5909e59c434c821870a20987d"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-e784d9e55efe029602184a26efae52f156bcd406",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "e784d9e55efe029602184a26efae52f156bcd406",
+          "tree": "c98a8285ca2cbab8d4a6f63dddfcf9d5178fa08e"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-e8139255e57576d4fbe3667a7130d2e471d1c3ee",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "e8139255e57576d4fbe3667a7130d2e471d1c3ee",
+          "tree": "cd89f2e021e87b310c383304d7cecb2032d9e480"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-ebadf8a2926b53f699d5df9815522d84a68799cc",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "ebadf8a2926b53f699d5df9815522d84a68799cc",
+          "tree": "ee41f9fc3ff563dca68d89a5daac86202908e631"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-f042b16e14628dec445f9f7ab111adf3eda8f49c",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "f042b16e14628dec445f9f7ab111adf3eda8f49c",
+          "tree": "8717f1cb4e2259d46cc69a39bc6e345568aaf673"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-f2bc87a831a9de2ec576b4e37360a95f0734393f",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "f2bc87a831a9de2ec576b4e37360a95f0734393f",
+          "tree": "9d336cabc10fe04860b6b1823fb77d906f83d6a9"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-f4d3d79213dcbeb993fab28721052961db708847",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "f4d3d79213dcbeb993fab28721052961db708847",
+          "tree": "408107dbc4f7315afe4eb52cfd2c19a16dcbfc06"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-f67a681999e41f71043dc845f299baca158e57c6",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "f67a681999e41f71043dc845f299baca158e57c6",
+          "tree": "612ba24437a66a7b4811a900819fd7f3d4dc5156"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-fa96b8ea88f28924cef3e1e7037be88a0d243009",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "fa96b8ea88f28924cef3e1e7037be88a0d243009",
+          "tree": "002fd9d563db2c0847f7c5072491d546b9c28fd1"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-fcbe8eee369d2f68da29864d9e4578ecb68ef6e1",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "fcbe8eee369d2f68da29864d9e4578ecb68ef6e1",
+          "tree": "92f9a4255cce4c764cba6fa7ba4d20592acef431"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-sdk-fff68af887b38062a1943ddca061c7d8f44a84aa",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "fff68af887b38062a1943ddca061c7d8f44a84aa",
+          "tree": "9fb3dac6f24ae2e3bb4d4431eabcea055e7a2c28"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-sdk-d-registry",
+          "classification": "unqualified task-owned WIP; preserved separately",
+          "commit": "fbb676423c5f0ce5a19bbb08b7ea50027a1cc415",
+          "tree": "a3f8c40b1d3e47a011744544fa336c925a1d2c05"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-sdk-e-w26",
+          "classification": "unqualified task-owned WIP; preserved separately",
+          "commit": "675d100e41e990f17179f5dcee517b9c31829f93",
+          "tree": "0dba31d82d7187c5c88e56ecb2669a184b617228"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-sdk-easing",
+          "classification": "unqualified task-owned WIP; preserved separately",
+          "commit": "6414097b4aaae00edb0afa3b54b28ce200978472",
+          "tree": "57f7aed439a720233b5c9d0a5660763abc94106b"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-sdk-green-docs",
+          "classification": "unqualified task-owned WIP; preserved separately",
+          "commit": "c8d5d17555dfd9cc50bbef8b42a6d62099431692",
+          "tree": "acece049c1991d77cf1e850c951cc106e698b78d"
+        }
+      ],
+      "publication_remote_url": "https://github.com/peteromallet/Astrid-agent.git",
+      "role": "sdk",
+      "source_origin_url": "https://github.com/peteromallet/Astrid-agent.git"
+    },
+    {
+      "candidate": {
+        "branch": "codex/handover-timeline-r4-20261019-candidate-runtime",
+        "commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+        "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"
+      },
+      "current_installed": {
+        "observed_bindings": [
+          "Runtime 5e80 remains in E/F consumer prefixes",
+          "EB consumer has separately qualified Runtime wheel 78f54 on its retained owner; see EB checkpoint"
+        ],
+        "status": "consumer-specific; no portfolio-wide installed version is inferred from the source candidate"
+      },
+      "preservation": [
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-161140aa76cbf7868d2eb264893b6ff5723e78c5",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "161140aa76cbf7868d2eb264893b6ff5723e78c5",
+          "tree": "3d8f5937824f6dfb987995e1baf88b3bc34e69ff"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-1db8365c48886e2f57ac82ffcbb8d6af527bba35",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "1db8365c48886e2f57ac82ffcbb8d6af527bba35",
+          "tree": "b21ff9e2150484928f786f323540a20d09f50082"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-26f1389d0c54538fabcba9ce432314a9e3cc7d3e",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "26f1389d0c54538fabcba9ce432314a9e3cc7d3e",
+          "tree": "91010307c76a9ca18324ba3b67ed2ae6160b2ee2"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-2ef7fafad6e938ebc77f992de26e83e4b54bf0cd",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "2ef7fafad6e938ebc77f992de26e83e4b54bf0cd",
+          "tree": "c6d584b0b99cda78d4293867856ebdb03fd4d784"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-34832a30d714e76f23d853ed683f282694d9dbb0",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "34832a30d714e76f23d853ed683f282694d9dbb0",
+          "tree": "ae16e6c456ed364bd6e477eac378d65c07677829"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-4983af6cb7c9a112824368b2d7d1e4d59a4db9d2",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "4983af6cb7c9a112824368b2d7d1e4d59a4db9d2",
+          "tree": "4fdede1ab61df6a99b007394f5ba4ecaac14dc47"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-509403925f05b4f02b958b7ec0445dee87670fc0",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "509403925f05b4f02b958b7ec0445dee87670fc0",
+          "tree": "91acc1da828d00ec1c7a3db25674a7afa3abd76a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-5c35167859972e5fc00f5003623050598c4a167a",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "5c35167859972e5fc00f5003623050598c4a167a",
+          "tree": "c025cb6b9fcb2b73b06a9068f09d624d619882e5"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-75331899cbf8d2d0168b73e8e6a60baaf25ed933",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "75331899cbf8d2d0168b73e8e6a60baaf25ed933",
+          "tree": "249fae025a5dda41e29e62f158559ae7e3cef249"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-954ad1fe71cdce246fed5ae86bc4dcea38f05783",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "954ad1fe71cdce246fed5ae86bc4dcea38f05783",
+          "tree": "283fedae35d93569cb01fcb45cb35c1db91efef0"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-96c115b15baf4d88faaad01b25fd1b10de17f643",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "96c115b15baf4d88faaad01b25fd1b10de17f643",
+          "tree": "80f97389262cd998f320210351a475f76aae3d92"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-9e2060e25d3e9e5509737bdf99f3f055a2c7f337",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "9e2060e25d3e9e5509737bdf99f3f055a2c7f337",
+          "tree": "b128a386ddaef760f7ac44c75f5a1ff46fbeb6ec"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-abd99b6bee52cefeac85ca197cde7e54b2eb6370",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "abd99b6bee52cefeac85ca197cde7e54b2eb6370",
+          "tree": "d02f2e69a01d8d542c121ad0e50e0e2dd755f5f2"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-af5bae647ecf3058fe5762065b0bf1f2c6774ca9",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "af5bae647ecf3058fe5762065b0bf1f2c6774ca9",
+          "tree": "f0115a61d1de04a5755a15d8169b523a8bbef977"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-c9e3f844c62991a0ec670929e468ac1e5c0e5b62",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "c9e3f844c62991a0ec670929e468ac1e5c0e5b62",
+          "tree": "64019057a965308300ac8f3a2188ecb3a045ef4d"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-d0ef378a0a4516eedc1f1cef7cdc2725018acd14",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "d0ef378a0a4516eedc1f1cef7cdc2725018acd14",
+          "tree": "dc022feeb3c00905e6493a8bdfeb4d6bb6b068bc"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-d3173d7c41e17b48f8afa1ac7404d183be6f6f3a",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "d3173d7c41e17b48f8afa1ac7404d183be6f6f3a",
+          "tree": "bf85f5c0ca033fa0734c085de9aa226e8167f618"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-runtime-d5ff4550e20c08939e2ae0423d970fac29e8a281",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "d5ff4550e20c08939e2ae0423d970fac29e8a281",
+          "tree": "3596836aea709fbe795a24b93aedeec4a9c0c220"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-runtime-254-followup",
+          "classification": "unqualified diagnostic WIP; preserved separately",
+          "commit": "ea4aac10f9eff342153b74a767e92b61f5859946",
+          "tree": "83056c698317d136045ae8a3597b60cfcaa77756"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-runtime-h-revoke",
+          "classification": "unqualified task-owned WIP; preserved separately",
+          "commit": "e84f2ec01f0c77185d62ba98c4ca3827e555c615",
+          "tree": "8cde8fdf5c6276e32d4d14ab1b5a61d61f437358"
+        }
+      ],
+      "publication_remote_url": "https://github.com/banodoco/banodoco-workspace-runtime.git",
+      "role": "runtime",
+      "source_origin_url": "https://github.com/banodoco/banodoco-workspace-runtime.git"
+    },
+    {
+      "candidate": {
+        "branch": "codex/handover-timeline-r4-20261019-candidate-app-qualified",
+        "commit": "8f0c2484463e9b666d184a744d52e252984e551a",
+        "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178"
+      },
+      "current_installed": {
+        "observed_bindings": [
+          "EB served the admitted 8f0c248 stage with the recorded task-owned launch configuration; no application build artifact is transferred as an installed-state claim"
+        ],
+        "status": "source stage, not a package installation"
+      },
+      "preservation": [
+        {
+          "branch": "codex/handover-timeline-r4-20261019-candidate-app-w46-w47",
+          "classification": "divergent candidate; preserved separately, not merged or qualified",
+          "commit": "1be335b97622949c26e6c759b2563bbcd80f9459",
+          "tree": "29b19434beaced83145e2b253869b4f36ea98a4f"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-07b9f1f0ae7b57352812a5b4d914f6494b2e12a0",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "07b9f1f0ae7b57352812a5b4d914f6494b2e12a0",
+          "tree": "1b3753ca38241319482dd97b37cf2d9ef9a42bb1"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-0882d7f3be145fe02402a3167aeac59ef7e45b3f",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "0882d7f3be145fe02402a3167aeac59ef7e45b3f",
+          "tree": "5cbfaaf9292f7c261a111cf2aa6ca90908219007"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-0ea16cc8a0add345d33786a4eac8f7d18add2ae5",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "0ea16cc8a0add345d33786a4eac8f7d18add2ae5",
+          "tree": "7cb15ed397e07c165070a4cb50c2c60557ef2202"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-0ee77f28475ba1c1222067d3ed292e606e7a239c",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "0ee77f28475ba1c1222067d3ed292e606e7a239c",
+          "tree": "e15bc0d660b06af7c2a07461952b7201df274d8b"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-1655aa0885edd847a58bfde2b039aaa5b875e340",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "1655aa0885edd847a58bfde2b039aaa5b875e340",
+          "tree": "7460f1bed57a931e4a328c062d4443f989a89dab"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-18c7dc7e3d84ff84be3dfb24afa44cd6d5f3bb9e",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "18c7dc7e3d84ff84be3dfb24afa44cd6d5f3bb9e",
+          "tree": "e4536d296ec12b2a709f266c73a2ac0c67ae0240"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-19f6c5d7b00d2c50ab470861f6901c315076f982",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "19f6c5d7b00d2c50ab470861f6901c315076f982",
+          "tree": "98f642d3ed4cf6f14b99c20962e70cf9e8a44328"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-1e77aa49386ad48143352a987459fe288c51109e",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "1e77aa49386ad48143352a987459fe288c51109e",
+          "tree": "0abb23e80a9b6747e3d769f11b4f8710b8694acf"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-210fc08f301aec60230555dd5584f48c54ddba8b",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "210fc08f301aec60230555dd5584f48c54ddba8b",
+          "tree": "56c53660438a31c791bd6e1676d920e722575c3c"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-21d7d7caaea8ee1d46c94c0cd0ba33d8553e9b21",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "21d7d7caaea8ee1d46c94c0cd0ba33d8553e9b21",
+          "tree": "bf46bb1ba299cfc9f14eaf6e6671fa609933551d"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-22a0dab8c35956f625a93e208164b6c1786d9872",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "22a0dab8c35956f625a93e208164b6c1786d9872",
+          "tree": "0667d1546ef373b9bfa9d20cda0e56cb7096f7dd"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-245dbf5ea786684555f6db855dfb86bd8bff71a4",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "245dbf5ea786684555f6db855dfb86bd8bff71a4",
+          "tree": "7d77a06cedc62adc0e36d127411e9a627f513a19"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-2c92e0b3ac1f6497f54963b9761892c1569d5d0b",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "2c92e0b3ac1f6497f54963b9761892c1569d5d0b",
+          "tree": "2e12e5563fdd60294de0b7c0b1ea025a0bc5f389"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-2fe80b5c8727ee405d6e787e907c4fdc7cfc7093",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "2fe80b5c8727ee405d6e787e907c4fdc7cfc7093",
+          "tree": "386c50a6f3b47106710f3909beba2c7aa43f65d8"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-32b4c90c0f0b20009a45a56ffb1521e3a34b5048",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "32b4c90c0f0b20009a45a56ffb1521e3a34b5048",
+          "tree": "13b4c3be17f5d84208ed66e37637af5ee5f4ee36"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-39ff5c4be4368c06653e4ebfd071af7da66c4b6a",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "39ff5c4be4368c06653e4ebfd071af7da66c4b6a",
+          "tree": "1b31d1c1e93f4872d40063fe75b8e4731b5b920e"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-3b0b4275332e9ca617d86441dd3894a85f0a25e1",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "3b0b4275332e9ca617d86441dd3894a85f0a25e1",
+          "tree": "c912c0ba34fb53fe86775c21d46db3d10c30e2ef"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-3b14caaa7688943468505389dd037836a8d5298d",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "3b14caaa7688943468505389dd037836a8d5298d",
+          "tree": "c143d334bba9d10d6ef99b9f8cea01c4acb3bb1f"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-43153a8153afb01bd60382ff0b7abc4cde872ecd",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "43153a8153afb01bd60382ff0b7abc4cde872ecd",
+          "tree": "317b48adcf0c92016f37196cb28db73ef2720492"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-464cecf97fa10ba4e4fcebee3850de041f3ff7ca",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "464cecf97fa10ba4e4fcebee3850de041f3ff7ca",
+          "tree": "3fdd1585f457b282ca4274551faac1e5c8d902a0"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-492819bb888caa221a215c2e0a5ae5c9b22a5fba",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "492819bb888caa221a215c2e0a5ae5c9b22a5fba",
+          "tree": "e367bbd8b02dd274031f10178d0c7d689ac1bff6"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-4b469a17a6a7ae7a51bec6df0b60428657d1fe28",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "4b469a17a6a7ae7a51bec6df0b60428657d1fe28",
+          "tree": "a88f7b69f59204e5f89ca51cca18a0ca82561743"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-52ec7b2dfc6c810fbefe40216844b147f44e6692",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "52ec7b2dfc6c810fbefe40216844b147f44e6692",
+          "tree": "d19af3dee5086a17ea84854a2464e72ed198b146"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-5674aa4be89152efda7decb3bca7643bcf36b6d8",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "5674aa4be89152efda7decb3bca7643bcf36b6d8",
+          "tree": "3afb5ebe48cd8f54b7ae5daf09544c7dd976e4ea"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-602f7671a5cb2b5d18ac254948549fa67a65d126",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "602f7671a5cb2b5d18ac254948549fa67a65d126",
+          "tree": "463a475dd642f1c3a726a3cd780d475bd37c3651"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-783d81b634ed33b67db419f721c9e823ed62f5db",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "783d81b634ed33b67db419f721c9e823ed62f5db",
+          "tree": "672f7f6fc5403dcb7c6a41b8db90bd1a9502cf48"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-7ccc6a3dbdda9742c5f9b9a48fbe590cf93f8975",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "7ccc6a3dbdda9742c5f9b9a48fbe590cf93f8975",
+          "tree": "2dcc05cdedd23b1ef1b1175182ccb19ae7c63825"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-8319bafe5e579fc63da62fd21f9d1e449bc7c325",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "8319bafe5e579fc63da62fd21f9d1e449bc7c325",
+          "tree": "4b13296cf857357406679b8faf9b5692ca9479c1"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-897f76d4eb92d9ac176be44ac4ea70eec175d116",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "897f76d4eb92d9ac176be44ac4ea70eec175d116",
+          "tree": "a9f82f96ee5e30a03378d056d5bf202fefc4cff3"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-8a02692905aa4cc4df6e9ab3edb4fe87600938c4",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "8a02692905aa4cc4df6e9ab3edb4fe87600938c4",
+          "tree": "8d36906290d33b6be228de08a388d090486e7258"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-8d86e60217562561dc534bb532b084251385c511",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "8d86e60217562561dc534bb532b084251385c511",
+          "tree": "cd1c25fedd30cd60b74be6ce77022061b74f9232"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-963b61d5bd2e4c359f112b0b5e194e5469dd9cf3",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "963b61d5bd2e4c359f112b0b5e194e5469dd9cf3",
+          "tree": "d9c730c17a0b30d04730304eb50bb07a0e44541a"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-a20a34e69ac3d8096127a50b1d9a8b42276a97f4",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "a20a34e69ac3d8096127a50b1d9a8b42276a97f4",
+          "tree": "faa6a4647a9f3fcacd25580bcc9de6dbd9cac4a2"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-a77c32ccc52a978527c3a0cfd9954fb6fdbd020a",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "a77c32ccc52a978527c3a0cfd9954fb6fdbd020a",
+          "tree": "9355874297e289e2ad3953ea576cc9f67a9a6b53"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-ad01f5bb35cdba4bb8430b6ad34f63105e6a84df",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "ad01f5bb35cdba4bb8430b6ad34f63105e6a84df",
+          "tree": "e2b05e810a48a591d2f2b7aab03cdbb3aca37c93"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-ad0ad0c20402a21bac5bc3a7b03e8d2107548ecf",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "ad0ad0c20402a21bac5bc3a7b03e8d2107548ecf",
+          "tree": "f1de6a25049ad9b5f0c693b90d0ab69678e3867f"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-b5b27abbe1e69a6a569fc979e1e449495371024e",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "b5b27abbe1e69a6a569fc979e1e449495371024e",
+          "tree": "d1c64290e0745de955ac21b8863f2cf150ee91f2"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-bc3399ab113ad7ea3eda75cefdc4f68ad1cd0a5c",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "bc3399ab113ad7ea3eda75cefdc4f68ad1cd0a5c",
+          "tree": "065199e885b1163cca060da0467d15ab31427143"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-c8c6946569bbe8a186e4cafab25e196b8bf4962c",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "c8c6946569bbe8a186e4cafab25e196b8bf4962c",
+          "tree": "ab1efdba0b5007a4f54a3e39499fd7cf8fea93df"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-ca3214964cab84bd05cebf0e0a25fa6f9a1c9231",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "ca3214964cab84bd05cebf0e0a25fa6f9a1c9231",
+          "tree": "e981f6168c13aaf141ddfff3d0d3e4555b2cf56c"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-d06d730eda411827ee92db8a830267d856f7ebd6",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "d06d730eda411827ee92db8a830267d856f7ebd6",
+          "tree": "ee5db87f4495b282554c79b62dcc1b6c9b8007cb"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-d12db7877b1f0838352ff7e62e235ab73c96fa82",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "d12db7877b1f0838352ff7e62e235ab73c96fa82",
+          "tree": "f963564e96d0396e52bb9ca93a17985b797581d4"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-d658b6d5717bc09bbabc359002a2faef71837ce6",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "d658b6d5717bc09bbabc359002a2faef71837ce6",
+          "tree": "6993984eb087f23552d6347574a514ef57a3a30d"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-dec696ce9bc1cc7a5c3a498403d26be945d080b9",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "dec696ce9bc1cc7a5c3a498403d26be945d080b9",
+          "tree": "31bfb598cf1898b640cab95bb251c147106de9ec"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-e854e947f7db647143d8c346cf56320428ef02c1",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "e854e947f7db647143d8c346cf56320428ef02c1",
+          "tree": "d92b80cc64e4f6e76b2c68c768d513ab9166aae0"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-preserve-app-eb8759e4e4362895d0796863ad760ce4c455ba4e",
+          "classification": "historical/unqualified exact task-tip preservation; not a product candidate",
+          "commit": "eb8759e4e4362895d0796863ad760ce4c455ba4e",
+          "tree": "4bfbec3463a2cb818111075d9543fbb0c69fed42"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-app-w26-w34-w35",
+          "classification": "unqualified task-owned WIP; preserved separately",
+          "commit": "afb236ac06aa4a92ed897349424b63fcecda1856",
+          "tree": "067791e3bdbee123eb4fcbdf80bd20d906dbbfb8"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-app-w44-clip-action",
+          "classification": "unqualified task-owned WIP; preserved separately",
+          "commit": "476dbfb3cb7de7cd87402e8347b4c6e66d76e32b",
+          "tree": "51e0462bb5ba5fd884dcbbd087aeb1edeaee1224"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-app-w47-media-selection",
+          "classification": "unqualified task-owned WIP; preserved separately",
+          "commit": "08442e83ba53f2c931ccfd9d80fc6ded2ba54e44",
+          "tree": "d749892cc1081d3e8f8fb84c6e3624268175c8d2"
+        },
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-app-x0-save-routing",
+          "classification": "unqualified task-owned WIP; preserved separately",
+          "commit": "44ec384e5be4dc8b79c4bddd4a318c24c5c777cd",
+          "tree": "a4aca11ca517eac50d77d9ed36f474862d925a12"
+        }
+      ],
+      "publication_remote_url": "https://github.com/banodoco/reigh-app.git",
+      "role": "app",
+      "source_origin_url": "https://github.com/banodoco/reigh-app.git"
+    },
+    {
+      "candidate": {
+        "branch": "codex/handover-timeline-r4-20261019-candidate-composition",
+        "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+        "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"
+      },
+      "current_installed": {
+        "status": "source repository; no Runtime/package installation claim"
+      },
+      "preservation": [
+        {
+          "branch": "codex/handover-timeline-r4-20261019-wip-composition-i144-source",
+          "classification": "unintegrated source-only WIP; preserved separately",
+          "commit": "0cb53b2fca70a57bdfde4154c1dd8ffef298b858",
+          "tree": "2c3bdda9df1e0e779a5a7a25798750f4c64b2293"
+        }
+      ],
+      "publication_remote_url": "https://github.com/peteromallet/timeline-composition.git",
+      "role": "composition",
+      "source_origin_url": "https://github.com/AstridPseudon/timeline-composition.git"
+    }
+  ],
+  "receiving_clones": [
+    {
+      "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+      "directory": "sdk-candidate",
+      "kind": "candidate",
+      "ref": "codex/handover-timeline-r4-20261019-candidate-sdk",
+      "role": "sdk",
+      "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610",
+      "url": "https://github.com/peteromallet/Astrid-agent.git"
+    },
+    {
+      "commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+      "directory": "runtime-candidate",
+      "kind": "candidate",
+      "ref": "codex/handover-timeline-r4-20261019-candidate-runtime",
+      "role": "runtime",
+      "tree": "73e676f420ba0545b6eebe45870d532344a9e69b",
+      "url": "https://github.com/banodoco/banodoco-workspace-runtime.git"
+    },
+    {
+      "commit": "8f0c2484463e9b666d184a744d52e252984e551a",
+      "directory": "app-candidate",
+      "kind": "candidate",
+      "ref": "codex/handover-timeline-r4-20261019-candidate-app-qualified",
+      "role": "app",
+      "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178",
+      "url": "https://github.com/banodoco/reigh-app.git"
+    },
+    {
+      "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+      "directory": "composition-candidate",
+      "kind": "candidate",
+      "ref": "codex/handover-timeline-r4-20261019-candidate-composition",
+      "role": "composition",
+      "tree": "49975e7a54fd594e1b7fc807681fe28611d57864",
+      "url": "https://github.com/peteromallet/timeline-composition.git"
+    }
+  ],
+  "schema": "timeline-r4-a-publication-reference-v1",
+  "source_receipt": {
+    "bytes": 17601,
+    "path": "transfer/evidence/source-receipts/A-PUBLICATION-REF-MAP-NONPORTABLE.md",
+    "sha256": "599068cb662641ca91dfcb65ecc6bf57e393d77a9745b6d7e4d9480fefcb4314"
+  },
+  "status": {
+    "blockers": [
+      "29 of 95 original cards are accepted; 0 of 3 releases are accepted and there are no new product reviews at this cutoff.",
+      "EB, E, F and G have incomplete product criteria; their exact terminal checkpoints and unresolved states are retained in the source run.",
+      "The fresh independent portability validation and final handover audit have not yet completed."
+    ],
+    "distinctions": [
+      "Historical preservation refs are custody for exact task-owned source history, not qualified candidates.",
+      "The 16 candidate/WIP refs and 156 historical refs are separate from per-consumer installed package/profile state.",
+      "Runtime identities, databases, leases, processes, owner credentials and live/fenced consumer state remain local and are not transferred."
+    ],
+    "next_operations": [
+      "Finish the prepared Astrid control branch from its verified default and publish the exact final source refs/map.",
+      "Finalize and validate the private ZIP against the actual control commit/tree; do not substitute the ZIP for public Git source.",
+      "Run the planned fresh independent handover audit after the code/control package and ZIP are complete."
+    ],
+    "portfolio_state": "The cross-machine handover is being assembled from verified public source refs and a separate private transfer package. Product delivery remains incomplete. Counts and prior UNKNOWN states are preserved; code publication does not establish product acceptance or completion.",
+    "snapshot_read_utc": "2026-10-19T14:10:14Z"
+  },
+  "toolchain": {
+    "dependencies_installed_by_handover": false,
+    "receiving_clones": "exactly four current candidate refs only; preservation refs are fetched on demand",
+    "source_published_as_git_refs": true
+  },
+  "wip_coverage": [
+    {
+      "bytes": 2259,
+      "disposition": "published_preservation_ref",
+      "git_blob": "1c30cecf6037129915da7cb633412d1d435432a0",
+      "id": "composition-wip-2259",
+      "preservation_ref": "refs/heads/codex/handover-timeline-r4-20261019-wip-composition-i144-source",
+      "repository_role": "composition",
+      "sha256": "fd7313bdd51982eb6db793c41205f4f5c10352ba527543cdaf7806cc64134745"
+    }
+  ]
+}

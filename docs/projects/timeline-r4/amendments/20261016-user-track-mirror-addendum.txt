@@ -1,0 +1,6 @@
+Direct human inline addendum, 16 Oct: one more thing for the SAME Astra to consider together with messages(5),(6),(7).
+
+Addendum: a live example of the mirror problem (16 Oct).
+- After restructure, each track definition exists in the film's config and in every chapter shot's internal timeline. An App save annotated the film-level copy of fx (app.scaleAppliesToPositionedClips). Flatten then refused the whole film ("conflicting track 'fx'"), so the agent couldn't check it out.
+- Patched in Astrid b7b895ad: copies merge when they differ only by non-conflicting app keys.
+- In r4's storage adapter, a track definition should exist once (the film), with shots referencing it. Please make that part of absorbing the restructure (point3 of note2).

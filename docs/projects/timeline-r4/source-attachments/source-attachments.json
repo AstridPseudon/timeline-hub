@@ -1,0 +1,169 @@
+{
+  "attachments": [
+    {
+      "attachment_path": "unbound-git-blobs/060022ecd99a9b16873f41ce2607c6c31d8aaf60.source",
+      "description": "App timeline overlay e2e spec variant; original pathname and parent unknown.",
+      "git_blob_oid": "060022ecd99a9b16873f41ce2607c6c31d8aaf60",
+      "sha256": "f71f5efddcb6afa312b41679c60a62b1fa1438bd85da3bd2abc9abe3c48fb09c",
+      "size_bytes": 46527,
+      "status": "unqualified historical variant; pathname and parent unknown"
+    },
+    {
+      "attachment_path": "unbound-git-blobs/0e000d48b2295af37cbc80fd25d424aa820ba2fa.source",
+      "description": "Playwright configuration variant; original pathname and parent unknown.",
+      "git_blob_oid": "0e000d48b2295af37cbc80fd25d424aa820ba2fa",
+      "sha256": "708832501e6810b3e171fbb1a17e6a243a6a543c054849fd13fafc2606ab53a3",
+      "size_bytes": 7165,
+      "status": "unqualified historical variant; pathname and parent unknown"
+    },
+    {
+      "attachment_path": "unbound-git-blobs/0e007645565cc3c428258580adbffaa451be9384.source",
+      "description": "package manifest variant; original pathname and parent unknown.",
+      "git_blob_oid": "0e007645565cc3c428258580adbffaa451be9384",
+      "sha256": "cb810ee0474f3dcd350b65a045de65c72f8371e334edeb8e4962eed760669acd",
+      "size_bytes": 4322,
+      "status": "unqualified historical variant; pathname and parent unknown"
+    }
+  ],
+  "excluded_neighbor_blobs": [
+    {
+      "git_blob_oid": "01007cd2d1136faf72070731fd4b337d71efd904",
+      "reason": "debug log data, not source"
+    },
+    {
+      "git_blob_oid": "0200d6a7a11f5f3907857442fa3e640be05a5560",
+      "reason": "debug log data, not source"
+    },
+    {
+      "git_blob_oid": "0400927dac0b89b956e95c0c9689b1a718f15491",
+      "reason": "audit report, not source"
+    },
+    {
+      "git_blob_oid": "0b002ca5ad4cae2740327e62c5bd27cd340e9ad1",
+      "reason": "verdict/narrative report, not product source"
+    },
+    {
+      "git_blob_oid": "1100f7eed2ba19f11a73d88c5943663d62c8c4eb",
+      "reason": "debug log data, not source"
+    },
+    {
+      "git_blob_oid": "120069905d915c81cf347bf057bea7a401a17b33",
+      "reason": "agent prompt/instructions, not product source"
+    },
+    {
+      "git_blob_oid": "1300f531aa14351452befa2d51cb925dc5494fa5",
+      "reason": "debug log data, not source"
+    },
+    {
+      "git_blob_oid": "1a00862aef8e60c327d79a80c57708f96585d440",
+      "reason": "debug log data, not source"
+    }
+  ],
+  "historical_source_snapshots": [
+    {
+      "archive_sha256": "143c29812b87fd4b34b20858a7f354878d088c876f88d397fd009676e7b054ac",
+      "files": [
+        {
+          "archive_member": "code/external-source/j029-fresh-vignette-029/docs/SKILL.md",
+          "attachment_path": "j029-fresh-vignette-029-historical-snapshot/docs/SKILL.md",
+          "sha256": "77a61b78549e85cbf1cb8c6dd3239dad4d31929e8b5f4fb1dfd8c037eb253795",
+          "size_bytes": 450
+        },
+        {
+          "archive_member": "code/external-source/j029-fresh-vignette-029/extensions/timeline.component/vignette.tsx",
+          "attachment_path": "j029-fresh-vignette-029-historical-snapshot/extensions/timeline.component/vignette.tsx",
+          "sha256": "fcded70fe529fb02aa59d79d1b0845f865950a3060786d073898212e429d0c39",
+          "size_bytes": 4972
+        },
+        {
+          "archive_member": "code/external-source/j029-fresh-vignette-029/extensions/timeline.component/vignette.yaml",
+          "attachment_path": "j029-fresh-vignette-029-historical-snapshot/extensions/timeline.component/vignette.yaml",
+          "sha256": "19c32dd2f6222d2d90204e1bbfc0afa39be677dc04e9600b0f318d5ccf8bf010",
+          "size_bytes": 568
+        },
+        {
+          "archive_member": "code/external-source/j029-fresh-vignette-029/pack.yaml",
+          "attachment_path": "j029-fresh-vignette-029-historical-snapshot/pack.yaml",
+          "sha256": "8029e6e5ec2450f3bf5cdc948cd12d58130a39fe8ab86959c93d6243e154fc28",
+          "size_bytes": 374
+        }
+      ],
+      "source_archive": "timeline-r4-handover-20261017.zip (historical source package)",
+      "status": "historical ZIP snapshot; no current checkout, branch, or newer source identity asserted"
+    }
+  ],
+  "schema": "handover-extra-public-source-v2",
+  "source_patch_snapshots": [
+    {
+      "attachment_path": "primary-app-audio-resume-wip/primary-app-audio-resume-wip.patch",
+      "excluded_adjacent_files": [
+        {
+          "path": ".cursorrules",
+          "reason": "agent instructions, not product source"
+        },
+        {
+          "path": "malformed serialized untracked artifact (Python BytesIO representation)",
+          "reason": "untracked serialized artifact with malformed/non-source path",
+          "sha256": "81153a569f6551bcfefad01c93c66c6912b081378d45fff75a923d243d696d48"
+        },
+        {
+          "path": "working/receipt-hunt-2026-10-06/ghost-recheck.txt",
+          "reason": "operational receipt scratch, not product source",
+          "sha256": "ef181ed20a2764076de2318fc276e06bdb60a41fa88c940c9f6211f8535679e4"
+        }
+      ],
+      "included_files": [
+        {
+          "original_path": "package.json",
+          "sha256": "7bc370e72562937876665dfb55254d3835e712c56a5afe60c11c9d5fd2fca5f0",
+          "size_bytes": 17455,
+          "tracked_at_source_head": true
+        },
+        {
+          "original_path": "src/tools/video-editor/compositions/AudioTrack.tsx",
+          "sha256": "8b3b0053163271dd2140460ae2507d3477c6da10344d3279bce68b26b4af20c5",
+          "size_bytes": 14428,
+          "tracked_at_source_head": true
+        },
+        {
+          "original_path": "src/tools/video-editor/compositions/AudioTrack.test.tsx",
+          "sha256": "0cf4156914848470991211dd0a76f03bd16da9f00f4b7453ea202ba4851a1371",
+          "size_bytes": 21594,
+          "tracked_at_source_head": true
+        },
+        {
+          "original_path": "src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx",
+          "sha256": "0fd8b70cca999082341ee510241d395ae3179865c5c475ebcc25038588e4196c",
+          "size_bytes": 78647,
+          "tracked_at_source_head": true
+        },
+        {
+          "original_path": "scripts/patches/remotion-4.0.503-audio-resume.mjs",
+          "sha256": "8c25821316aa2b279b93ad257ed272ab6708abc1f9a439a4d4d3e8f275ebcf47",
+          "size_bytes": 8323,
+          "tracked_at_source_head": false
+        },
+        {
+          "original_path": "scripts/patches/remotion-4.0.503-audio-resume.semantic.test.mjs",
+          "sha256": "dba4ccb06fc500fa54c09a0056f18c1f95d96b5fadde9a87cb54cd621bf95dff",
+          "size_bytes": 6605,
+          "tracked_at_source_head": false
+        },
+        {
+          "original_path": "scripts/patches/remotion-4.0.503-audio-resume.test.mjs",
+          "sha256": "0ff496832b29e22e785f82ffa03e67352f766c4ca8839a23c968106c723eaef7",
+          "size_bytes": 5210,
+          "tracked_at_source_head": false
+        }
+      ],
+      "note": "Patch preserves the scoped dirty diff exactly, including the package.json removal of the conformance script; no qualification or recommendation is implied.",
+      "sha256": "8ed733833bc578fb088887ab25e82b8cef436576e3fe126fe8ffb5c8769600ee",
+      "size_bytes": 35454,
+      "source_head": "513bf4ea200c1b09c60a4fb30579004c334c2146",
+      "source_repository": "https://github.com/banodoco/reigh-app.git",
+      "status": "unqualified primary-checkout WIP; historical Remotion 4.0.503 variant; do not apply to or treat as candidate source"
+    }
+  ],
+  "source_ref_state": "app-hydrator has no refs; these are exact unreferenced blobs identified by prior bounded audit",
+  "source_store": "private staged Git store (no published URL or refs)"
+}

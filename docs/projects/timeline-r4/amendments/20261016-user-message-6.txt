@@ -1,0 +1,60 @@
+Follow-up for the timeline-platform-r4 executor: a big-picture review of r4's end state, and how our parallel work fits
+  ▎
+  ▎ Overall. The north star is right: one document, one change path, anchored time with one compiler, one evaluation for preview, 
+  ▎ render and checks. Please keep it. Four things would make the end state cleaner. I'd like your view on each before cards are 
+  ▎ dispatched.
+  ▎
+  ▎ 1. Narration as two records plus references, not three copies.
+  ▎ - Today there are three copies: the shot's voiceover_script (intent), the recording's words (now media.transcript, one per audio 
+  ▎ file and source, in source time, with stable word ids), and a copy of the words inside every VO clip (app.astrid.words).
+  ▎ - Proposal for the end state: clips hold a reference (segment and word ids in that transcript, plus trim/speed). The timing
+  ▎ compiler derives word times from the transcript, and any stored word seconds become a cache the compiler rewrites. That is your
+  ▎ own "stored seconds are a cache" rule applied to words.
+  ▎ - This makes WORD-ID trivial, since identity comes from the transcript's word ids and survives take swaps. It also makes a
+  ▎ transcript correction a single command: update the transcript, then recompile.
+  ▎ - Until then, the clip copy stays, and corrections reach clips only through an explicit command, never a side-channel refresh.
+  ▎
+  ▎ 2. Compatibility: additive, not exact-digest lockstep.
+  ▎ - Today App, Runtime and Astrid must match one contract digest exactly, and Astrid also hand-keeps an operation allowlist
+  ▎ (astrid/sdk/workspace_client.py). On 16 Oct three small additive changes (timeline names, listEvents from=latest, transcript-id
+  ▎ use) each forced a three-repo lockstep upgrade.
+  ▎ - Every change also breaks older local Runtimes against the hosted App at astrid.haus.
+  ▎ - Proposal: clients check that the Runtime offers the operations and schema versions they use (capability or minimum version),
+  ▎ not digest equality. Remove the hand-kept allowlist in favour of the generated client.
+  ▎ - I didn't see this in r4. It would sit best in C-runtime, next to CONTRACT-COMMIT.
+  ▎
+  ▎ 3. One home for storage transforms.
+  ▎ - timelines restructure (landed 16 Oct, opt-in per film) flattens chapter shots to one flat shot at checkout and splits them
+  ▎ again at publish (astrid/sdk/timeline_restructure.py).
+  ▎ - In r4 terms that belongs in the authoring-bundle storage adapter ("how a timeline is serialized"), beneath the runner. It
+  ▎ should not be a pre/post step around checkout/publish.
+  ▎ - Please absorb it there when RUNNER/COMMIT land. Until then it stays opt-in and the owner's film uses it.
+  ▎
+  ▎ 4. Sequence by visible payoff; trim the rest.
+  ▎ - The architecture is lean, but 95 cards / ~137 worker-days is heavy for "build each mechanism once".
+  ▎ - Suggest ordering by what the owner sees:
+  ▎   - (a) one change path, with App writers emitting commands, so App edits appear in timelines log;
+  ▎   - (b) anchored timing via the compiler;
+  ▎   - (c) shared evaluation for preview, render and checks.
+  ▎     Cut or defer cards that don't serve those.
+  ▎
+  ▎ How our parallel work is scoped (so we don't collide). Rule: anything that touches how the timeline is written, timed or 
+  ▎ evaluated is r4's. The Runtime shared-data layer, performance, UI and operations proceed outside r4.
+  ▎ - Outside r4, done (rebase onto it):
+  ▎   - App load speed, placeholders, boot/brand motion and the timeline picker;
+  ▎   - the local built app with runtime identity;
+  ▎   - Runtime task-list batching;
+  ▎   - the events feed and live task updates;
+  ▎   - timeline names plus rename / duplicate --revision.
+  ▎ - Outside r4, in progress: media.transcript as the shared standard:
+  ▎   - the agent writes one per take (source astrid.narration), and editorial.transcribe writes one (source whisper);
+  ▎   - the panel defaults to narration;
+  ▎   - a backfill command for existing films;
+  ▎   - a fix for review captions and rhythm reading the wrong namespace.
+  ▎     It adds no timeline write path. It is the foundation for your source-timed transcript binding and WORD-ID.
+  ▎ - Left for r4:
+  ▎   - corrections reaching clips (a command);
+  ▎   - extension data access and per-extension app.<ext> namespaces (J-extensions / H-DATA, with Caption Foundry as the first real
+  ▎ user);
+  ▎   - the restructure move (point 3);
+  ▎   - compatibility (point 2).

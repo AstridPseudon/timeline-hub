@@ -1,0 +1,281 @@
+# Canonical coordinator-readable Megado configuration. This is not a scheduler or launcher.
+# Native/manual hierarchy: root orchestrator -> Luna/xhigh managers -> normal Luna/xhigh or XHARD Sol/high leaves.
+# Blockers route leaf -> manager -> orchestrator; only the orchestrator invokes the Astra/high oracle.
+# Current host model is unestablished (metadata only); these bindings do not switch a running host.
+# Stage invocations remain subject to historical-count reconciliation in status.md; never assume 0 consumed.
+mode: delivery
+source_custody: worktree
+execution_routes:
+  # Later explicit user steering authorizes Codex Exec alongside native agents; no Otto.
+  native_collaboration: {active_slot_limit: 4}
+  codex_exec: {authorized: true, delivery_elapsed_timeout_minutes: null, bounded_fact_timeout: explicit_per_assignment, preserve_manager_ownership: true, delivery_permission_default: danger-full-access, approval_policy: never, explicit_read_only_override: true, permission_authority: direct_human_20261015, permissions_do_not_expand_task_or_data_authority: true}
+oversight:
+  # User-requested coordination checks; these do not change product review stages/counters.
+  hourly_heartbeat: timeline-r4-hourly-execution-check
+  strategy_heartbeat: timeline-r4-three-hour-astra-strategy-check
+  strategy_interval_hours: 3
+  strategy_role: oracle
+  strategy_scope: coordination_direction_due_diligence_and_efficiency
+  retained_speed_advisor: {native_agent: ${OLD_OWNER_HANDLE}, model: gpt-6-astra, reasoning: high, root_only: true}
+  strategy_context_policy: resume_retained_advisor_with_compact_changed_evidence
+  strategy_report_directory: strategy-reports
+  strategy_reporting_policy: strategy-reports/README.md
+  strategy_report_cadence_state: strategy-reports/cadence.json
+  strategy_second_opinion: {every_completed_primary_checks: 2, model: gpt-6-astra, reasoning: high, context: fresh, requested_by_primary: true, primary_disposition_required: true, luna_xhigh_fact_delegation: true}
+  # Direct human authorization: narrow scheduled-strategy delegation exception to root-only delivery oracle invocation.
+  strategy_delegation: {primary_role: strategy_coordinator_oracle, primary_may_dispatch_second_opinion: true, primary_is_actual_second_opinion_invoker: true, root_launches_scheduled_second_opinion: false, secondary_may_delegate_luna_facts: true, root_executes_manager_actions: true, product_review_or_authority_expansion: false}
+  ordinary_engineering_requires_advisor: false
+roles:
+  # Root/orchestrator launch default; not a claim about the current session model.
+  coordinator: {model: gpt-6-luna, reasoning: medium}
+  manager: {model: gpt-6-luna, reasoning: xhigh}
+  worker_normal: {model: gpt-6-luna, reasoning: xhigh}
+  worker_xhard: {model: gpt-6.1-sol, reasoning: high}
+  reviewer_normal: {model: gpt-6-luna, reasoning: xhigh}
+  reviewer_xhard: {model: gpt-6.1-sol, reasoning: high}
+  oracle: {model: gpt-6-astra, reasoning: high}
+  # XHARD final rationale: integrated timing/identity, save/retry/migration, renderer closure, and security interactions can hide silent loss.
+  final_reviewer: {model: gpt-6.1-sol, reasoning: high}
+oracle: {} # Uncapped; root/orchestrator only. No new oracle call is authorized by this planning config.
+resources:
+  # Measured resource admission and actual contention coordination; no fixed coding/project ceilings.
+  coding_workers:
+    admission: adaptive_measured_resources_and_ready_inputs
+    fixed_worker_ceiling: none
+    swap_usage_alone_stops_admission: false
+    assess: [memory_pressure, projected_disk_outputs_temp_and_swap, CPU_IO_contention, test_contention, meaningful_progress, integration_throughput]
+    pressure_response: defer_new_costly_or_conflicting_work_first_then_adjust_affected_scope
+    includes: [PRACTICE agents]
+  active_projects:
+    merge_project: A
+    admission: ready_inputs_and_observed_capacity
+    fixed_project_ceiling: none
+    keep_a_manager_logically_attached: true
+    project_managers: lazy_launch_or_resume
+    require_all_ten_manager_processes: false
+    discover_native_agent_and_nesting_limits_before_dispatch: true
+  handed_back_unmerged:
+    admission_feedback: observed_integration_backlog_and_A_drain_capacity
+    prioritize: integration_and_defect_resolution
+    global_queue_depth_stop: none
+    external_verification_debt_counts_as_unresolved_code: false
+    reduce_work_that_worsens_actual_bottleneck: true
+    unrelated_inexpensive_ready_work_may_continue: true
+  heavy_jobs:
+    owner: project_a_manager
+    maximum_weight_2_or_higher_at_once: 1
+    weights:
+      light_frame_browser_visualize: 1
+      journey_or_full_suite: 2
+      full_film_render: 3
+    # Preserve these legacy keys for launcher compatibility; classify by measured actual workload, not task name.
+    actual_cost_admission:
+      ruling: receipts/oracle-R4-SPEED-ADVISOR-093-FOLLOWUP-003.md
+      ruling_sha256: 451780ad77fe1247e379edf65dc49304e2cc1e86e66a6e6a382ca6f2c20b7363
+      basis: measured_memory_cpu_io_disk_output_and_contention
+      no_host_lease: [source_preparation, focused_selectors, small_private_api_or_cli, bounded_inexpensive_audio_sample]
+      shared_weight_1: [lightweight_browser, single_frame, bounded_render]
+      exclusive_weight_2: [substantial_multiprocess_browser, materially_loaded_full_suite, sustained_expensive_encode]
+      exclusive_weight_3: [full_film_render]
+      task_label_alone_does_not_raise_weight: true
+      reclassify_before_entering_a_more_expensive_phase: true
+    # Scope and real lifecycle/authority checks bound work; elapsed age alone never stops a healthy delivery job.
+    light_frame_browser_timeout_minutes: null
+    lease:
+      required: true
+      mechanism: existing_or_adopted_machine_wide_shared_compatible_lease
+      adopted_protocol: amendments/20261015-pragmatic-heavy-admission.md
+      host_lock_path: ${RECEIVING_HOST_LOCK_PATH}
+      sharing: shared_weight_1_exclusive_weight_2_and_3
+      participation: bound_portfolio_launchers_no_universal_other_session_acknowledgment
+      otto_runtime: false
+      start_new_service: false
+      if_unavailable: hold_heavy_work
+      before_start_record: [lease_identity, owner, weight_time_semantics, sharing, machine_state, input_and_data_custody]
+    slot_exhaustion: route_exact_brief_via_orchestrator_preserving_manager_ownership
+review_stages:
+  # Future allocation only; max_rounds is the total stage cap, not proof of remaining allowance.
+  # The before-acceptance readiness point is coordinator-recognized inside this card; not a new task or review stage.
+  - id: CONTRACT-COMMIT
+    after: "CONTRACT-COMMIT implementation and bounded evidence ready; before card acceptance/schema freeze"
+    reviewer_role: reviewer_xhard
+    lens: completion
+    scope_tasks: [CONTRACT-COMMIT]
+    criteria_source: cards.md
+    criteria: ["A#contract-commit"]
+    max_rounds: 1
+  # Before-acceptance review is the card allocation; IP3 is later integration evidence, not a second call.
+  - id: COMMIT
+    after: "COMMIT rebase/commit diff and bounded evidence ready; before card acceptance and IP3"
+    reviewer_role: reviewer_xhard
+    lens: completion
+    scope_tasks: [COMMIT]
+    criteria_source: cards.md
+    criteria: ["D#commit-service"]
+    max_rounds: 1
+  # Trigger excludes the examiner verdict and owner sign-off to avoid a FINAL-R3 acceptance cycle.
+  - id: FINAL-R3
+    after: "Full capability candidate and applicable proof ready; before FINAL-R3 examiner verdict and owner sign-off"
+    reviewer_role: final_reviewer
+    lens: completion_and_strategy
+    scope_tasks:
+      - "BASE"
+      - "FEATURE-PARITY"
+      - "CHECKPOINT-ASTRID"
+      - "CHECKPOINT-RUNTIME"
+      - "GREEN"
+      - "X0-EDITOR"
+      - "X0-POPUP"
+      - "GOLDEN"
+      - "GATE"
+      - "CONTRACT-COMMIT"
+      - "CONTRACT-COMMAND"
+      - "REPLAYS"
+      - "PRACTICE"
+      - "SEC-MATRIX"
+      - "RELEASE-1"
+      - "H-DATA"
+      - "PRES-HARNESS"
+      - "PRES-REPAIRS"
+      - "ACCEPT"
+      - "HISTORY-WIRE"
+      - "HISTORY"
+      - "TASK-IDENTITY"
+      - "PROVIDER-RETRY"
+      - "RUNNER"
+      - "REGISTRY"
+      - "APPLY-FILES"
+      - "BYPASSES"
+      - "DRAFTS"
+      - "IDENTITY"
+      - "REBASE"
+      - "SHEET-EXTERNAL"
+      - "COMMIT"
+      - "UNDO-REVERT"
+      - "AGENT-SYNC"
+      - "SKILL"
+      - "ADD"
+      - "REHOME"
+      - "SKILL-0"
+      - "UX-LOOP"
+      - "GESTURES"
+      - "GESTURE-CHOICES"
+      - "WRITERS"
+      - "SAVE-ROUTING"
+      - "SUFFIX"
+      - "COLLAB-UX"
+      - "CHARACTERIZE"
+      - "COMPILER"
+      - "TIMING-FIXES"
+      - "MUSIC-SEGMENTS"
+      - "CUTS"
+      - "PINS-ASTRID"
+      - "PINS-APP"
+      - "CAPTURE"
+      - "SHARED-CAPTURE"
+      - "EVAL"
+      - "PLAYER"
+      - "RENDER-PARITY"
+      - "CHANGE-VIEW"
+      - "CHECKS"
+      - "SHOW"
+      - "VOCAB"
+      - "VISUALIZE"
+      - "ROUTES"
+      - "CREDENTIALS"
+      - "TRANSPORT"
+      - "GRANT"
+      - "CONFINE-SPIKE"
+      - "CONFINE"
+      - "REVOKE"
+      - "SCHEMA-WARN"
+      - "SCRIPT-EDIT"
+      - "SCRIPT-REFLOW"
+      - "REPAIRS-STRUCT"
+      - "REPAIRS-REST"
+      - "STORY"
+      - "MOTION-CONTRACT"
+      - "MOTION"
+      - "TRANSITIONS"
+      - "ENVELOPE"
+      - "LINT"
+      - "COPY-SYNC"
+      - "BED-ADOPT"
+      - "BED-CLOCK"
+      - "AUDIO-LANE"
+      - "FINAL-R3"
+      - "RETENTION"
+      - "REVIEW"
+      - "FULL-MOTION"
+      - "FULL-AUDIO-EXT"
+      - "RETIRE-EVAL"
+      - "EXT-ONE"
+      - "EXT-CURVES"
+      - "EXT-VIEW"
+      - "EXT-COMPONENT"
+      - "EXT-CHECK-GEN"
+    criteria_source: release-contract.md
+    criteria: ["A#r3-accepted"]
+    max_rounds: 1
+
+# Direct human challenge to historical-input bureaucracy, adjudicated by root-only Astra.
+# Execution ordering only: original card/release acceptance and all review budgets remain intact.
+execution_readiness_policy:
+  decision: R4-HISTORICAL-IMPLEMENTATION-GATE-001
+  human_direction: amendments/20261015-human-historical-gate-challenge.json
+  ruling: receipts/codex-exec/oracle-R4-HISTORICAL-IMPLEMENTATION-GATE-001.result.md
+  ruling_sha256: 4199027c51b768ca7ca4f49f23c3fc9c1c92ec76e272bc9c3e08deb6090b04e8
+  source_integration_owner: A
+  states: [implementation_integrated, dependency_available, fully_verified_card_accepted]
+  scheduling: concrete_producer_consumer_predicates
+  readiness_table: dependency-graph.json#execution_readiness
+  original_acceptance_and_release_edges: preserved
+  historical_proof_debt: explicit_affected_criteria_only
+  current_source_evidence: implementation_readiness_and_behaviors_actually_exercised
+  historical_equivalence_from_current_tests: forbidden
+  integrate_before_full_verification:
+    allowed: true
+    requires: [A_integration_inspection, admitted_isolated_source, focused_combined_checks]
+    moves_frozen_pins: false
+    accepts_card_or_release: false
+  handback_queue_exception:
+    scope: A_integrated_reviewed_tested_code_with_only_named_external_verification_debt
+    stops_counting_after: code_integration_and_recorded_predicates
+    still_count: [unreviewed_code, failed_tests, conflicts, incomplete_implementation, missing_required_interface]
+    admission_feedback: observed_integration_backlog_and_A_drain_capacity
+  execution_simplification:
+    ruling: receipts/oracle-R4-REMAINING-EXECUTION-SIMPLIFICATION-093.md
+    ruling_sha256: 49e5787602cb00904d039b2b2294537aff35a9720e545fcc8ce961317180a583
+    disposition: change_approach_preserve_full_product_scope
+    effective_after: current_approved_cleanup_release_by_root
+    preserve: [all_95_cards, all_3_releases, original_acceptance_edges, IP0_IP8, roles, review_budgets, human_security_data_publication_migration_gates]
+    working_lanes: [continuous_editing_and_save_reload_retry_journey, remaining_independent_capabilities_and_proof]
+    integration: A_owns_one_evolving_candidate_and_normal_operator; integrate_useful_returns_promptly
+    receiver_policy: reuse_exclusively_owned_receivers_and_compatible_qualified_dependencies; additional_checkout_only_for_actual_conflicting_writer_incompatible_closure_or_required_frozen_execution
+    artifact_lifecycle_ruling: receipts/codex-exec/oracle-R4-PROJECT-STORAGE-GROWTH-PREVENTION-229.result.md
+    artifact_lifecycle_ruling_sha256: eaf6da9a7f47e6890e299968d65388fec8310a19b3ddcbcf38a42fd79dafad1c
+    artifact_reuse: match_source_dependency_lock_interpreter_platform_and_build_options; build_once_per_changed_consumed_identity
+    scratch_lifetime: phase_owned; release_exact_obsolete_derivatives_after_consumers_and_unique_evidence_retained
+    retirement: retained_origin_and_recipe_no_unique_modifications_no_active_or_frozen_path_binding_and_applicable_lifecycle_settlement; no_whole_card_or_successful_wheel_requirement
+    handback_storage_fields: [owned_paths, retained_origin, consumer_release_condition]
+    next_actual_phase_measurement: existing_free_samples_and_owned_staging_output_sizes_at_start_peak_transition_completion; separate_path_counted_size_from_filesystem_delta
+    evidence_policy: current_status_front_plus_existing_tasklist_plus_one_compact_handback_per_useful_increment
+    validation_policy: focused_changed_boundaries_then_combined_joins_then_required_release_checks; reuse_unchanged_evidence
+    prohibited_repetition: [per_step_handoffs, duplicate_history_mirrors, repeated_installs, unchanged_broad_suites, redundant_baseline_discovery, routine_oracle_calls]
+    oversight: preserve_explicit_user_scheduled_cadence_and_selected_models; cadence_does_not_require_an_oracle_call
+  unchanged: [roles, review_stages, review_budgets, actual_platform_constraints, heavy_leases, data_authority, human_gates, publication, live_migration]
+
+# Newer direct human instruction removes arbitrary inherited process ceilings.
+adaptive_concurrency_policy:
+  decision: R4-ADAPTIVE-CONCURRENCY-001
+  human_direction: amendments/20261015-human-no-arbitrary-limits.json
+  ruling: receipts/codex-exec/oracle-R4-ADAPTIVE-CONCURRENCY-001.result.md
+  ruling_sha256: 41b1d67625cfdcc18a516926493006a75e90e85ac35e9c2269f97bf9c413075d
+  initial_observation: receipts/resource-snapshot-adaptive-dispatch-001.json
+  admission_authority: root_and_A_within_human_mandate
+  per_worker_oracle_permission_required: false
+  delivery_elapsed_kill: none
+  bounded_facts: explicit_deadline_preserved
+  timeout_only_restart: forbidden
+  staging: observe_effects_and_continue_useful_admission_without_permanent_numeric_ceiling
+  oracle_return: unresolved_authority_or_consequential_policy_or_unhandled_resource_dependency_contradiction
