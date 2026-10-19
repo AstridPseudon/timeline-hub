@@ -75,6 +75,7 @@ jobs:
       - run: >-
           python -m pytest -q -m ""
           tests/test_platform.py
+          tests/test_platform_signaling.py
           tests/test_platform_windows.py
           tests/test_windows_worker_handoff.py
           tests/test_platform_filesystem.py

@@ -13,6 +13,7 @@ python -m pip install -e '.[test]'
 python -m pip install -e packages/python
 python -m pytest -q -m "" \
   tests/test_platform.py \
+  tests/test_platform_signaling.py \
   tests/test_platform_windows.py \
   tests/test_platform_filesystem.py \
   tests/test_m1_review.py \
@@ -40,7 +41,10 @@ macOS-specific constructor; there is no compatibility alias.
 
 macOS keeps its audit-token owner broker and durable birth-marker spelling.
 Linux uses `/proc` birth ticks and identity-checked pidfds for adopted signals;
-Linux 5.3+ with Python's pidfd support is required for detached stop/restart.
+Linux 5.3+ is required for detached stop/restart. When Python lacks a pidfd
+wrapper, the platform module calls libc `syscall()` on verified Linux ABIs.
+Unverified ABIs fail closed; signaling still pins a pidfd before checking the
+process birth identity, and never falls back to signaling a bare PID.
 Windows uses process creation FILETIMEs and SID-derived numeric user identity,
 identity-checked process handles, and kill-on-close Job Objects. Children start
 suspended until assigned to their Job. A detached owner inherits the Job handle
