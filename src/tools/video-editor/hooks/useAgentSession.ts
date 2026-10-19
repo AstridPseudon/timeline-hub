@@ -527,6 +527,9 @@ export class AstridAgentSessionStore {
   async setMainProjectSession(projectId: string, expectedRevision: number, sessionId: string) {
     return this.client.acp.setMainProjectSession(projectId, expectedRevision, sessionId);
   }
+  async renameProjectSession(projectId: string, expectedRevision: number, sessionId: string, title: string) {
+    return this.client.acp.renameProjectSession(projectId, expectedRevision, sessionId, title);
+  }
   async saveProjectDraft(projectId: string, expectedRevision: number, text: string, queuedMessages: import('@/integrations/astrid/acpRoutes.ts').ProjectChatState['draft']['queued_messages']) {
     return this.client.acp.saveProjectDraft(projectId, expectedRevision, text, queuedMessages);
   }
@@ -1127,6 +1130,17 @@ export function useSetMainProjectSession(projectId: string | null | undefined) {
     mutationFn: async (input: { expectedRevision: number; sessionId: string }) => {
       if (!projectId) throw new Error('projectId is required');
       return agentStore.setMainProjectSession(projectId, input.expectedRevision, input.sessionId);
+    },
+    onSuccess: (chat) => cacheProjectChat(queryClient, chat),
+  });
+}
+
+export function useRenameProjectSession(projectId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { expectedRevision: number; sessionId: string; title: string }) => {
+      if (!projectId) throw new Error('projectId is required');
+      return agentStore.renameProjectSession(projectId, input.expectedRevision, input.sessionId, input.title);
     },
     onSuccess: (chat) => cacheProjectChat(queryClient, chat),
   });

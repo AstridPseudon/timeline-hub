@@ -87,7 +87,7 @@ export async function probeRuntime(
     }
     const body = await readJson(response);
     if ((response.status === 502 || response.status === 503) && typeof body === 'object' && body !== null && 'error' in body) {
-      const kind = typeof body.error === 'string' ? GATEWAY_REFUSAL_OUTCOMES[body.error] : undefined;
+      const kind = Object.entries(GATEWAY_REFUSAL_OUTCOMES).find(([code]) => code === body.error)?.[1];
       if (kind) return { kind };
     }
     if (response.status !== 200) return { kind: 'silent' };

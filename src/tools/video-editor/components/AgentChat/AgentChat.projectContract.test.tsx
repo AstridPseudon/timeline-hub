@@ -40,13 +40,15 @@ class HostTransport {
   disconnected = false;
   expiredConnection: string | null = null;
   private connections = 0;
+  private readonly connectionAgents = new Map<string, string>();
+  private currentModel = 'openai/model-a';
   onPrompt: (() => Promise<void>) | null = null;
   onLoad: (() => Promise<void>) | null = null;
   assistant = 'Done.';
   private sequence = 0;
   chat(project: string) {
     if (!this.chats.has(project)) this.chats.set(project, { project_id: project, scope_key: `realm:${project}`,
-      revision: 0, selected_session_id: null, sessions: [], draft: { text: '', revision: 0, queued_messages: [] } });
+      revision: 0, selected_session_id: null, main_session_id: null, sessions: [], draft: { text: '', revision: 0, queued_messages: [] } });
     return this.chats.get(project)!;
   }
   seed(project: string, id = `session-${project}`) {
@@ -63,9 +65,16 @@ class HostTransport {
     const route = String(url).replace('/api/astrid', '');
     const body = JSON.parse(String(init?.body ?? '{}'));
     this.calls.push({ route, body });
+    if (route === '/acp/agents') return response({ agents: ['astrid', 'codex'].map(id => ({ id, name: id === 'astrid' ? 'Astrid' : 'Codex', state: 'ready', line: null })) });
+    if (route === '/acp/models') return response({ currentModel: this.currentModel, providers: [{ id: 'openai', name: 'OpenAI', signedIn: true,
+      models: [{ id: 'model-a', name: 'Model A' }, { id: 'model-b', name: 'Model B' }] }] });
+    if (route === '/acp/model') { this.currentModel = body.model; return response({ currentModel: this.currentModel }); }
+    if (route.includes('/models?')) return response({ models: { currentModelId: 'codex-default', availableModels: [{ modelId: 'codex-default', name: 'Codex Default' }] } });
     if (route === '/acp/connect') {
       if (this.connectFailure) throw this.connectFailure;
-      return response({ connection_id: `connection-${++this.connections}`, initialize: {} });
+      const id = `connection-${++this.connections}`;
+      this.connectionAgents.set(id, body.agent ?? 'astrid');
+      return response({ connection_id: id, initialize: {} });
     }
     if (this.expiredConnection && route.startsWith(`/acp/${this.expiredConnection}/`)) {
       return response({ error: 'not_found', detail: 'ACP connection is not available; reconnect' }, 404);
@@ -94,8 +103,10 @@ class HostTransport {
       expect(body.operation_id).toEqual(expect.any(String));
       expect(body.operation_id.length).toBeGreaterThan(0);
       if (body.mode === 'new' || !chat.selected_session_id) {
-        const id = `session-${project}-${++this.sequence}`;
+        const prefix = this.connectionAgents.get(body.connection_id) === 'codex' ? 'codex:' : '';
+        const id = `${prefix}session-${project}-${++this.sequence}`;
         this.seed(project, id); chat.revision++;
+        if (body.mode === 'new') chat.main_session_id = id;
       }
       return response({ ...chat, operation_session_id: chat.selected_session_id });
     }
@@ -115,6 +126,12 @@ class HostTransport {
       this.event(body.session_id, 'assistant', assistantReply, transcript.length);
       if (this.acceptedResponseFailure) throw this.acceptedResponseFailure;
       return response({ result: { stopReason: 'end_turn' } });
+    }
+    if (!action && init?.method === 'PATCH') {
+      if (body.expected_revision !== chat.revision) return response({ error: 'chat_conflict', detail: 'Chat changed' }, 409);
+      const session = chat.sessions.find(s => s.id === body.session_id);
+      if (!session) return response({ error: 'session_not_owned', detail: 'Unowned session' }, 403);
+      session.title = body.title.trim(); chat.revision++;
     }
     return response(chat);
   };
@@ -144,7 +161,11 @@ beforeEach(async () => {
   fixture = new HostTransport();
   host.context = context('p1');
   vi.stubGlobal('fetch', fixture.fetch);
+  const storage = new Map<string, string>();
+  vi.stubGlobal('localStorage', { getItem: (key: string) => storage.get(key) ?? null,
+    setItem: (key: string, value: string) => storage.set(key, value), removeItem: (key: string) => storage.delete(key) });
   Object.defineProperty(HTMLElement.prototype, 'scrollTo', { configurable: true, value: vi.fn() });
+  Element.prototype.scrollIntoView ??= vi.fn();
   await freshModules();
 });
 afterEach(async () => {
@@ -156,6 +177,55 @@ afterEach(async () => {
 });
 
 describe('real panel → real hooks → owned ACP transport', () => {
+  it.each(['main', 'agent', 'model'] as const)('New (%s) opens the created Main chat and reopens it after remount', async (choice) => {
+    const firstId = fixture.seed('p1');
+    fixture.chat('p1').main_session_id = firstId;
+    const view = mount();
+    const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
+    if (choice === 'main') {
+      fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
+    } else {
+      fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
+      if (choice === 'agent') fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
+      else {
+        fireEvent.click(await screen.findByRole('button', { name: 'Choose a Astrid model' }));
+        fireEvent.click(await screen.findByRole('option', { name: /Model B/ }));
+      }
+    }
+    await waitFor(() => expect(fixture.chat('p1').selected_session_id).not.toBe(firstId));
+    const newId = fixture.chat('p1').selected_session_id;
+    expect(fixture.chat('p1').main_session_id).toBe(newId);
+    if (choice === 'agent') expect(newId).toMatch(/^codex:/);
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
+    await waitFor(() => expect(fixture.calls.some(c => c.body.params?.sessionId === newId)).toBe(true));
+    if (choice === 'model') await waitFor(() => expect(fixture.calls).toContainEqual({ route: '/acp/model', body: { model: 'openai/model-b' } }));
+    expect(fixture.calls.some(c => c.route.endsWith('/chat/main'))).toBe(false);
+    view.unmount();
+    await freshModules();
+    mount();
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Chat 2'));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Project chat session' }));
+    expect(await screen.findByRole('option', { name: /^Chat 2/ })).toHaveTextContent('Main');
+    expect(fixture.calls.filter(c => c.route.endsWith('/sessions'))).toHaveLength(1);
+  });
+
+  it('renames the current chat through the existing PATCH route and restores the title after remount', async () => {
+    const id = fixture.seed('p1');
+    fixture.chat('p1').main_session_id = id;
+    const view = mount();
+    fireEvent.click(await screen.findByRole('combobox', { name: 'Project chat session' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Rename Chat 1' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Chat name' }), { target: { value: '  Launch plan  ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Launch plan'));
+    expect(fixture.calls).toContainEqual({ route: '/acp/projects/p1/chat', body: { expected_revision: 0, session_id: id, title: 'Launch plan' } });
+    view.unmount();
+    await freshModules();
+    mount();
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Launch plan'));
+  });
+
   it('recovers a restarted bridge while keeping restored messages paused and the draft intact', async () => {
     const id = fixture.seed('p1');
     fixture.chat('p1').draft = { text: 'Keep my draft', revision: 4, queued_messages: [

@@ -1,6 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, renderHook, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/shared/components/ui/tooltip.tsx';
 
@@ -65,7 +66,10 @@ describe('agent chat on the hosted build', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.queryByText("Agent chat isn't on this page yet.")).toBeNull();
     expect(screen.queryByRole('link', { name: 'Open the full editor' })).toBeNull();
-    await waitFor(() => expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid · GPT 5.6 Sol'));
+    await waitFor(() => expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid'));
+    const user = userEvent.setup();
+    await user.hover(screen.getByRole('button', { name: 'Chat model information' }));
+    expect(await screen.findByText('GPT 5.6 Sol', { exact: true })).toBeInTheDocument();
     const urls = fetchSpy.mock.calls.map(([url]) => String(url));
     expect(urls).toContain(`${GATEWAY}/api/astrid/acp/models`);
     expect(urls).toContain(`${GATEWAY}/api/astrid/acp/agents`);

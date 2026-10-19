@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AstridLocalAcpRoutes } from './acpRoutes.ts';
 import { LOCAL_AGENT_TABLE } from './localAgents.ts';
-import type { AstridBridgeTransport } from './transport.ts';
+import { BridgeRouteError, type AstridBridgeTransport } from './transport.ts';
 
 describe('AstridLocalAcpRoutes', () => {
   it('takes over the loaded session and preserves submission identity on prompt requests', async () => {
@@ -84,6 +84,25 @@ describe('AstridLocalAcpRoutes', () => {
       { path: '/acp/projects/project-1/chat/main', method: 'PATCH' },
       { path: '/acp/projects/project-1/chat/prompt', method: 'POST' },
     ]);
+  });
+
+  it('renames a project session through the revisioned project chat route and preserves route errors', async () => {
+    const chat = {
+      project_id: 'project/one', scope_key: 'realm:project/one', revision: 8,
+      selected_session_id: 'opaque:session/1', sessions: [{ id: 'opaque:session/1', title: 'New title' }],
+      draft: { text: '', revision: 0, queued_messages: [] },
+    };
+    const requestJson = vi.fn(async (_path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) => schema.parse(chat));
+    const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
+
+    await expect(routes.renameProjectSession('project/one', 7, 'opaque:session/1', 'New title')).resolves.toEqual(chat);
+    expect(requestJson).toHaveBeenCalledWith('/acp/projects/project%2Fone/chat', {
+      method: 'PATCH', body: { expected_revision: 7, session_id: 'opaque:session/1', title: 'New title' },
+    }, expect.anything(), 'Rename project chat session');
+
+    const conflict = new BridgeRouteError('Rename project chat session', 409, { error: 'revision_conflict', detail: 'Project chat changed' });
+    const rejectingRoutes = new AstridLocalAcpRoutes({ requestJson: vi.fn(async () => { throw conflict; }) } as unknown as AstridBridgeTransport);
+    await expect(rejectingRoutes.renameProjectSession('project/one', 6, 'opaque:session/1', 'Stale title')).rejects.toBe(conflict);
   });
 
   it('keeps browser lifecycle controls on the same-origin ACP transport', async () => {

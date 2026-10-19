@@ -780,6 +780,9 @@ export class AstridAcpBridge {
       } else if (action === 'main') {
         if (typeof body.main_session_id !== 'string' || !body.main_session_id) throw new ChatError(400, 'invalid_body', 'main_session_id is required');
         jsonResponse(response, 200, await registry.setMain(projectId, body.expected_revision as number, body.main_session_id));
+      } else if ('session_id' in body || 'title' in body) {
+        if (typeof body.session_id !== 'string' || !body.session_id || typeof body.title !== 'string') throw new ChatError(400, 'invalid_body', 'session_id and title are required');
+        jsonResponse(response, 200, await registry.rename(projectId, body.expected_revision as number, body.session_id, body.title));
       } else {
         if (body.selected_session_id !== null && typeof body.selected_session_id !== 'string') throw new ChatError(400, 'invalid_body', 'selected_session_id is required');
         jsonResponse(response, 200, await registry.select(projectId, body.expected_revision as number, body.selected_session_id as string | null));

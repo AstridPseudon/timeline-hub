@@ -14,6 +14,7 @@ import {
   useCancelSession,
   useCreateSession,
   useProjectChat,
+  useRenameProjectSession,
   useSaveProjectDraft,
   useSelectProjectSession,
   useSetMainProjectSession,
@@ -669,15 +670,18 @@ describe('timeline agent ACP chat', () => {
       projectChat: vi.fn(async () => chat),
       saveProjectDraft: vi.fn(async () => chat),
       selectProjectSession: vi.fn(async () => chat),
+      renameProjectSession: vi.fn(async () => chat),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
 
     await expect(store.projectChat('project-1')).resolves.toBe(chat);
     await expect(store.saveProjectDraft('project-1', 2, 'new draft', [])).resolves.toBe(chat);
     await expect(store.selectProjectSession('project-1', 4, null)).resolves.toBe(chat);
+    await expect(store.renameProjectSession('project-1', 5, 'session-1', 'Renamed')).resolves.toBe(chat);
     expect(acp.projectChat).toHaveBeenCalledWith('project-1');
     expect(acp.saveProjectDraft).toHaveBeenCalledWith('project-1', 2, 'new draft', []);
     expect(acp.selectProjectSession).toHaveBeenCalledWith('project-1', 4, null);
+    expect(acp.renameProjectSession).toHaveBeenCalledWith('project-1', 5, 'session-1', 'Renamed');
   });
 
   it('keeps chat association order stable when selected and Main pointers change', async () => {
@@ -701,6 +705,23 @@ describe('timeline agent ACP chat', () => {
     await act(async () => result.current.mutateAsync({expectedRevision: 4, sessionId: 'chosen'}));
     expect(assign).toHaveBeenCalledWith('project-1', 4, 'chosen');
     expect(client.getQueryData(projectChatQueryKey('project-1'))).toEqual(chat);
+    unmount();
+    client.clear();
+  });
+
+  it('renames a project session and refreshes the scoped chat cache, while preserving errors', async () => {
+    const chat = {project_id: 'project-1', revision: 6, sessions: [{id: 'session-2', title: 'Renamed'}]} as ProjectChatState;
+    const rename = vi.spyOn(AstridAgentSessionStore.prototype, 'renameProjectSession').mockResolvedValue(chat);
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
+    const {result, unmount} = renderHook(() => useRenameProjectSession('project-1'), {wrapper: wrapperWithClient(client)});
+    await act(async () => result.current.mutateAsync({expectedRevision: 5, sessionId: 'session-2', title: 'Renamed'}));
+    expect(rename).toHaveBeenCalledWith('project-1', 5, 'session-2', 'Renamed');
+    expect(client.getQueryData(projectChatQueryKey('project-1'))).toBe(chat);
+
+    const conflict = new BridgeRouteError('Rename project chat session', 409, {error: 'revision_conflict'});
+    rename.mockRejectedValueOnce(conflict);
+    await expect(act(async () => result.current.mutateAsync({expectedRevision: 4, sessionId: 'session-2', title: 'Stale'}))).rejects.toBe(conflict);
+    expect(client.getQueryData(projectChatQueryKey('project-1'))).toBe(chat);
     unmount();
     client.clear();
   });

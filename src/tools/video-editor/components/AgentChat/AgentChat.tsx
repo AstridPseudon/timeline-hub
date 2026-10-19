@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, Mic, Send, Square, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Info, Loader2, Mic, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { savedLocalAgentModel, sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { isAcpUnavailable } from '@/integrations/astrid/acpRoutes.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
 import { useAgentChatBridge, useAgentChatActionsRegistry, type AgentChatActionsHandlers } from '@/shared/contexts/AgentChatContext.tsx';
 import { composerClearAttachments, composerRemoveAttachment } from '@/shared/state/selectionStore.ts';
 import { useCurrentAttachmentSet } from '@/shared/state/currentAttachmentSet.ts';
@@ -17,6 +18,7 @@ import {
   useSaveProjectDraft,
   useSelectProjectSession,
   useSetMainProjectSession,
+  useRenameProjectSession,
   useUnassignedProjectSessions,
   useAssociateProjectSession,
   useCancelSession,
@@ -267,6 +269,7 @@ function AvailableAgentChatPanel({
   const saveDraft = useSaveProjectDraft(projectId);
   const selectSession = useSelectProjectSession(projectId);
   const setMainSession = useSetMainProjectSession(projectId);
+  const renameSession = useRenameProjectSession(projectId);
   const [showAttachSessions, setShowAttachSessions] = useState(false);
   const unassignedSessions = useUnassignedProjectSessions(projectId, showAttachSessions);
   const associateSession = useAssociateProjectSession(projectId);
@@ -323,7 +326,6 @@ function AvailableAgentChatPanel({
     });
   }, []);
   useEffect(() => { rememberModelList(chatAgent, modelCatalog.data?.localModels?.availableModels); }, [chatAgent, modelCatalog.data, rememberModelList]);
-  const [createdSession, setCreatedSession] = useState<AgentSessionOption | null>(null);
   const [draft, setDraft] = useState('');
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueuedMessage[]>([]);
@@ -361,14 +363,18 @@ function AvailableAgentChatPanel({
   const cancelSession = useCancelSession(activeSessionId);
   const takeOverSession = useTakeOverSession(activeSessionId, projectId);
   const sessionOptions = useMemo(() => {
-    const saved = readAgentSessions(sessions.data);
-    // Creation is an authenticated ownership receipt. Keep that exact session
-    // selectable while inventory queries catch up, so the opening Main default
-    // cannot replace an explicit New choice with the preceding conversation.
-    return createdSession && !saved.some(session => session.id === createdSession.id)
-      ? [...saved, createdSession]
-      : saved;
-  }, [sessions.data, createdSession]);
+    // Membership, selection and Main must share one registry snapshot. The
+    // independently polled sessions query supplies status and drains events;
+    // it can still be stale when New publishes its registry receipt.
+    const statuses = new Map(readAgentSessions(sessions.data).map(session => [session.id, session.status]));
+    return (projectChat.data?.sessions ?? []).flatMap((session, index) => session.missing ? [] : [{
+      id: session.id,
+      title: session.title,
+      status: statuses.get(session.id) ?? 'waiting_user',
+      // Count missing entries too so siblings never renumber.
+      chatNumber: index + 1,
+    }]);
+  }, [sessions.data, projectChat.data?.sessions]);
   const showSessionSelector = sessionOptions.length > 0 && Boolean(projectChat.data) && (sessionOptions.length > 1 || hasMainContract);
   // New chat's submenu: Astrid's catalog is global (the store serves it for any Astrid-scoped key without
   // loading a chat); the other agents list models per session, so read the latest chat of that agent.
@@ -409,9 +415,6 @@ function AvailableAgentChatPanel({
       note: `${agentNames[browseAgent]} lists its models once it has a chat. Start one, then pick a model inside it.`,
     };
   }, [agentModelLists, browseAgent, browseModels.data, browseModels.error, browseModels.isFetching, browseModels.isLoading, browseSessionId]);
-  useEffect(() => {
-    if (createdSession && readAgentSessions(sessions.data).some(session => session.id === createdSession.id)) setCreatedSession(null);
-  }, [createdSession, sessions.data]);
   const hydratedProjectDraftRef = useRef(false);
   const draftPersistenceRef = useRef<ProjectChatDraftPersistence<QueuedMessage> | null>(null);
   const draftScopeRef = useRef<string | null>(null);
@@ -663,12 +666,12 @@ function AvailableAgentChatPanel({
     setQueue((prev) => prev.filter((item) => item.id !== id));
   }, [pausedQueueHeadId]);
 
-  // Main is the opening default. History and the registry resolve independently;
-  // wait for the registry before choosing automatically, retaining explicit choices.
+  // Main is the opening default; retain explicit choices, including a New
+  // selection queued before this render's opening-default updater applies.
   useEffect(() => {
     if (hasProject && !projectChat.data) return;
     setActiveSessionId(current => {
-      if (current && sessionOptions.some(session => session.id === current)) return current;
+      if (current && (current === projectChat.data?.selected_session_id || sessionOptions.some(session => session.id === current))) return current;
       const preferred = projectChat.data?.selected_session_id ?? projectChat.data?.main_session_id;
       if (preferred && sessionOptions.some(session => session.id === preferred)) return preferred;
       return (sessionOptions.find(session => session.status !== 'cancelled') ?? sessionOptions[0])?.id ?? null;
@@ -680,7 +683,7 @@ function AvailableAgentChatPanel({
   const isEngaged = userEngaged || isTasksPaneLocked || voice.isRecording || voice.isProcessing;
   const hasAvailableProjectSession = Boolean(projectChat.data?.sessions.some(session => !session.missing));
   useEffect(() => {
-    if (hasAutoCreatedSessionRef.current || !projectChat.data || projectChat.isLoading || projectChat.isError || sessions.isLoading || sessions.isError
+    if (hasAutoCreatedSessionRef.current || !projectChat.data || projectChat.isLoading || projectChat.isError
       || createSession.isPending || !hasProject
       || hasAvailableProjectSession || !isEngaged) return;
     hasAutoCreatedSessionRef.current = true;
@@ -693,7 +696,7 @@ function AvailableAgentChatPanel({
         if (sessionId) setActiveSessionId(current => current ?? sessionId);
       },
     });
-  }, [createSession, hasProject, hasAvailableProjectSession, sessions.isError, sessions.isLoading, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged]);
+  }, [createSession, hasProject, hasAvailableProjectSession, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged]);
 
   // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
   useEffect(() => {
@@ -926,7 +929,6 @@ function AvailableAgentChatPanel({
     if (sessionId) {
       setPausedQueueHeadId(null);
       setOptimisticMessage(null);
-      setCreatedSession({ id: sessionId, status: 'waiting_user' });
       setActiveSessionId(sessionId);
       setIsTasksPaneOpen?.(true);
       requestAnimationFrame(() => {
@@ -1015,12 +1017,24 @@ function AvailableAgentChatPanel({
       {/* Header */}
       <div data-testid="agent-chat-header" className="@container/agent-header relative flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-2">
         <div className="flex shrink-0 items-center gap-2">
-          {/* The chat's agent and model are fixed when it starts. */}
-          <span className="flex min-w-0 items-center gap-1.5" title="To use another model, start a new chat.">
-            <AgentIcon agent={chatAgent} className="h-3.5 w-3.5 shrink-0 text-foreground/80" />
-            <span data-testid="agent-chat-identity" className="truncate text-sm font-medium normal-case" title="To use another model, start a new chat.">
-              {agentNames[chatAgent]}{chatModelName ? ` · ${chatModelName}` : ''}
+          <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+            <AgentIcon agent={chatAgent} className="h-3.5 w-3.5 shrink-0" />
+            <span data-testid="agent-chat-identity" className="truncate text-xs normal-case">
+              {agentNames[chatAgent]}
             </span>
+            {chatModelName && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" aria-label="Chat model information" className="-m-1 rounded-sm p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <Info className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="text-xs normal-case">
+                  <div>{chatModelName}</div>
+                  <div className="text-muted-foreground">To use another model, start a new chat.</div>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </span>
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </div>
@@ -1040,6 +1054,7 @@ function AvailableAgentChatPanel({
               onSetMainSession={hasMainContract
                 ? (sessionId) => void handleSetMainSession(sessionId).catch(() => undefined)
                 : undefined}
+              onRenameSession={(sessionId, title) => renameSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId, title })}
             />
           )}
           {showKillSwitch && (
