@@ -236,7 +236,9 @@ class WorkspaceClient:
                 "create_project", "get_project", "update_project", "list_projects",
                 "select_project", "current_project", "create_timeline", "rename_timeline",
                 "create_timeline_document", "update_timeline_document", "list_timelines",
-                "get_timeline", "get_project_timeline", "list_timeline_history", "replace_timeline_clip", "diff_timeline", "archive_timeline",
+                "get_timeline", "get_project_timeline", "list_timeline_history",
+                "commit_timeline", "list_timeline_commits", "replace_timeline_clip",
+                "diff_timeline", "archive_timeline",
                 "recover_timeline", "list_project_shots", "create_project_shot",
                 "inspect_timeline", "create_timeline_view",
                 "get_project_shot", "update_project_shot", "archive_project_shot",
@@ -273,10 +275,26 @@ class WorkspaceClient:
             }
             if operation not in operations:
                 raise ValueError(f"unknown generated workspace operation: {operation!r}")
-            generated = getattr(self._generated, operation)
+            try:
+                generated = getattr(self._generated, operation)
+            except AttributeError as exc:
+                raise WorkspaceClientError(
+                    503,
+                    "not_ready",
+                    f"generated Runtime client does not provide {operation!r}",
+                    {
+                        "reason": "runtime_unavailable",
+                        "operation": operation,
+                        "next_action": (
+                            "install the Runtime generated client with Timeline M1 support"
+                        ),
+                    },
+                ) from exc
             if not callable(generated):
                 raise AttributeError(f"generated workspace operation is not callable: {operation!r}")
             value = generated(*args, **kwargs)
+        except WorkspaceClientError:
+            raise
         except Exception as exc:  # generated ApiError has stable fields
             raise WorkspaceClientError(
                 int(getattr(exc, "status", 0)),
@@ -468,6 +486,40 @@ class WorkspaceClient:
 
     def list_timelines(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
         return self._call_generated("list_timelines", project_id, cursor=cursor, limit=limit)
+
+    def commit_timeline(
+        self,
+        project_id: str,
+        timeline_id: str,
+        body: Mapping[str, Any],
+        *,
+        idempotency_key: str,
+    ) -> Any:
+        """Commit one command batch through Runtime's canonical timeline route."""
+        return self._call_generated(
+            "commit_timeline",
+            project_id,
+            timeline_id,
+            body,
+            idempotency_key=idempotency_key,
+        )
+
+    def list_timeline_commits(
+        self,
+        project_id: str,
+        timeline_id: str,
+        *,
+        cursor: str | None = None,
+        limit: int = 50,
+    ) -> Any:
+        """Read the immutable accepted publication history and exact head pair."""
+        return self._call_generated(
+            "list_timeline_commits",
+            project_id,
+            timeline_id,
+            cursor=cursor,
+            limit=limit,
+        )
 
     def get_timeline(self, timeline_id: str, *, project_id: str | None = None) -> Any:
         if hasattr(self._generated, "get_timeline"):

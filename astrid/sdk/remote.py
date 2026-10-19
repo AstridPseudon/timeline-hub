@@ -325,7 +325,7 @@ class _RemoteFamily:
         self._client = client
 
     def _typed(self, operation: str, *args: Any, key: str | None = None, **kwargs: Any) -> DomainResult[Any]:
-        reads = {"get_project", "list_projects", "current_project", "list_timelines", "list_timeline_history", "diff_timeline", "inspect_timeline", "create_timeline_view", "get_shot", "list_project_shots", "get_reference", "list_project_references", "get_object", "head_object", "list_project_objects", "list_media_relations", "get_task", "list_project_tasks", "list_managed_outputs", "get_managed_output", "get_run", "list_project_runs", "list_events", "list_run_events", "list_generations", "get_generation", "list_variants", "get_document", "list_documents", "get_preferences", "list_project_shot_text_bindings", "get_project_shot_text_binding", "get_project_shot_revision", "get_project_timeline_revision", "get_project_parent_composition_revision", "get_source_frame_thumbnail"}
+        reads = {"get_project", "list_projects", "current_project", "list_timelines", "list_timeline_history", "list_timeline_commits", "diff_timeline", "inspect_timeline", "create_timeline_view", "get_shot", "list_project_shots", "get_reference", "list_project_references", "get_object", "head_object", "list_project_objects", "list_media_relations", "get_task", "list_project_tasks", "list_managed_outputs", "get_managed_output", "get_run", "list_project_runs", "list_events", "list_run_events", "list_generations", "get_generation", "list_variants", "get_document", "list_documents", "get_preferences", "list_project_shot_text_bindings", "get_project_shot_text_binding", "get_project_shot_revision", "get_project_timeline_revision", "get_project_parent_composition_revision", "get_source_frame_thumbnail"}
         if key is None and operation not in reads:
             key = uuid.uuid4().hex
         try:
@@ -351,6 +351,7 @@ class _RemoteFamily:
             elif operation == "cancel_run": value = self._client.cancel_run(*args, **kwargs)
             elif operation == "cancel_task": value = self._client.cancel_task(*args, **kwargs)
             elif operation == "claim_task": value = self._client.claim_task(*args, **kwargs)
+            elif operation == "commit_timeline": value = self._client.commit_timeline(*args, **kwargs)
             elif operation == "create_generation": value = self._client.create_generation(*args, **kwargs)
             elif operation == "create_media_relation": value = self._client.create_media_relation(*args, **kwargs)
             elif operation == "create_project": value = self._client.create_project(*args, **kwargs)
@@ -396,6 +397,7 @@ class _RemoteFamily:
             elif operation == "list_managed_outputs": value = self._client.list_managed_outputs(*args, **kwargs)
             elif operation == "list_projects": value = self._client.list_projects(*args, **kwargs)
             elif operation == "list_run_events": value = self._client.list_run_events(*args, **kwargs)
+            elif operation == "list_timeline_commits": value = self._client.list_timeline_commits(*args, **kwargs)
             elif operation == "list_timeline_history": value = self._client.list_timeline_history(*args, **kwargs)
             elif operation == "list_timelines": value = self._client.list_timelines(*args, **kwargs)
             elif operation == "list_variants": value = self._client.list_variants(*args, **kwargs)
@@ -1497,8 +1499,50 @@ class RemoteTimelines(_RemoteFamily):
                 ErrorObject("validation_error", "parent-composition candidate could not be prepared", {"reason": str(exc), "occurrence_id": occurrence_id, "clip_id": clip_id}),
                 idempotency_key=key,
             )
+    def commit(self, project, ref, body: Mapping[str, Any], *, idempotency_key=None):
+        """Commit a scoped command batch without changing its request body."""
+        key = idempotency_key or uuid.uuid4().hex
+        resolved = self._resolve_timeline(project, ref)
+        if not resolved.ok:
+            return DomainResult.failure(resolved.error, idempotency_key=key)
+        scope = resolved.data
+        project_id = scope.get("project_id") if isinstance(scope, Mapping) else None
+        timeline_id = scope.get("timeline_id") if isinstance(scope, Mapping) else None
+        if not isinstance(project_id, str) or not project_id or not isinstance(timeline_id, str) or not timeline_id:
+            return DomainResult.failure(
+                ErrorObject("protocol_error", "timeline scope has no canonical project/timeline identity", {}),
+                idempotency_key=key,
+            )
+        if not isinstance(body, Mapping) or body.get("project_id") != project_id or body.get("timeline_id") != timeline_id:
+            return DomainResult.failure(
+                ErrorObject(
+                    "validation_error",
+                    "commit body does not match the resolved timeline scope",
+                    {"project_id": project_id, "timeline_id": timeline_id},
+                ),
+                idempotency_key=key,
+            )
+        return self._typed(
+            "commit_timeline", project_id, timeline_id, body,
+            key=key, idempotency_key=key,
+        )
+
     def history(self, project, ref, *, cursor=None, limit=50):
-        return self._typed("list_timeline_history", ref, cursor=cursor, limit=limit)
+        """Read scoped immutable commit history, including its exact head pair."""
+        resolved = self._resolve_timeline(project, ref)
+        if not resolved.ok:
+            return resolved
+        scope = resolved.data
+        project_id = scope.get("project_id") if isinstance(scope, Mapping) else None
+        timeline_id = scope.get("timeline_id") if isinstance(scope, Mapping) else None
+        if not isinstance(project_id, str) or not project_id or not isinstance(timeline_id, str) or not timeline_id:
+            return DomainResult.failure(
+                ErrorObject("protocol_error", "timeline scope has no canonical project/timeline identity", {})
+            )
+        return self._typed(
+            "list_timeline_commits", project_id, timeline_id,
+            cursor=cursor, limit=limit,
+        )
     def diff(self, project, ref, *, from_version=None, to_version=None,
              from_revision=None, to_revision=None):
         """Compare two exact canonical closures, or explicit legacy versions."""
