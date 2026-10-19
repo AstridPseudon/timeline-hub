@@ -420,7 +420,6 @@ function InnerProvider({
     projectId: runtime.project.projectId,
     timelineId: runtime.timelineId,
     projectObjects: runtime.provider.projectObjects,
-    catalogUserId: runtime.auth.userId,
     effectsQueryEnabled: !effectCatalog && Boolean(runtime.auth.userId),
     effectCatalog,
     sequenceComponentCatalog,

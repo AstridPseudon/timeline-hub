@@ -7,8 +7,6 @@ const createInitialState = (): ShotEditorState => ({
   uploadProgress: 0,
   fileInputKey: Date.now(),
   deletingVideoId: null,
-  duplicatingImageId: null,
-  duplicateSuccessImageId: null,
   pendingFramePositions: new Map(),
   // REMOVED: localOrderedShotImages
   creatingTaskId: null,
@@ -39,12 +37,6 @@ const shotEditorReducer = (state: ShotEditorState, action: ShotEditorAction): Sh
     case 'SET_DELETING_VIDEO_ID':
       if (action.payload === state.deletingVideoId) return state;
       return { ...state, deletingVideoId: action.payload };
-    case 'SET_DUPLICATING_IMAGE_ID':
-      if (action.payload === state.duplicatingImageId) return state;
-      return { ...state, duplicatingImageId: action.payload };
-    case 'SET_DUPLICATE_SUCCESS_IMAGE_ID':
-      if (action.payload === state.duplicateSuccessImageId) return state;
-      return { ...state, duplicateSuccessImageId: action.payload };
     case 'SET_PENDING_FRAME_POSITIONS':
       // Prevent unnecessary re-renders by checking reference equality for Map
       if (action.payload === state.pendingFramePositions) {
@@ -96,8 +88,6 @@ export interface ShotEditorActions {
   setUploadProgress: (value: number) => void;
   setFileInputKey: (value: number) => void;
   setDeletingVideoId: (value: string | null) => void;
-  setDuplicatingImageId: (value: string | null) => void;
-  setDuplicateSuccessImageId: (value: string | null) => void;
   setPendingFramePositions: (value: Map<string, number>) => void;
   setCreatingTaskId: (value: string | null) => void;
   setSettingsModalOpen: (value: boolean) => void;
@@ -130,12 +120,6 @@ export const useShotEditorState = (): { state: ShotEditorState; actions: ShotEdi
   }, []);
   const setDeletingVideoId = useCallback((value: string | null) => {
     dispatch({ type: 'SET_DELETING_VIDEO_ID', payload: value });
-  }, []);
-  const setDuplicatingImageId = useCallback((value: string | null) => {
-    dispatch({ type: 'SET_DUPLICATING_IMAGE_ID', payload: value });
-  }, []);
-  const setDuplicateSuccessImageId = useCallback((value: string | null) => {
-    dispatch({ type: 'SET_DUPLICATE_SUCCESS_IMAGE_ID', payload: value });
   }, []);
   const setPendingFramePositions = useCallback((value: Map<string, number>) => {
     dispatch({ type: 'SET_PENDING_FRAME_POSITIONS', payload: value });
@@ -182,8 +166,6 @@ export const useShotEditorState = (): { state: ShotEditorState; actions: ShotEdi
     setUploadProgress,
     setFileInputKey,
     setDeletingVideoId,
-    setDuplicatingImageId,
-    setDuplicateSuccessImageId,
     setPendingFramePositions,
     setCreatingTaskId,
     setSettingsModalOpen,
@@ -198,7 +180,7 @@ export const useShotEditorState = (): { state: ShotEditorState; actions: ShotEdi
     setAutoAdjustedAspectRatio,
   }), [
     setUploadingImage, setUploadProgress, setFileInputKey, setDeletingVideoId,
-    setDuplicatingImageId, setDuplicateSuccessImageId, setPendingFramePositions,
+    setPendingFramePositions,
     setCreatingTaskId, setSettingsModalOpen, setModeReady, setSettingsError,
     setEditingName, setEditingNameValue, setTransitioningFromNameEdit,
     setShowStepsNotification, setHasInitializedShot, setHasInitializedUISettings,

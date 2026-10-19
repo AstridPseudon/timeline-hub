@@ -34,7 +34,6 @@ describe('DragLayer', () => {
         dragType={null}
         activePendingFrame={null}
         pendingDropFrame={null}
-        pendingDuplicateFrame={null}
         pendingExternalAddFrame={null}
         isUploadingImage={false}
         isInternalDropProcessing={false}
@@ -63,15 +62,13 @@ describe('DragLayer', () => {
     expect(skeletons[0]).toHaveAttribute('data-frame', '33');
   });
 
-  it('renders duplicate and external-add skeleton markers independently', () => {
+  it('renders the external-add skeleton marker', () => {
     renderLayer({
-      pendingDuplicateFrame: 44,
       pendingExternalAddFrame: 55,
     });
 
     const skeletons = screen.getAllByTestId('timeline-skeleton-item');
-    expect(skeletons).toHaveLength(2);
-    expect(skeletons[0]).toHaveAttribute('data-frame', '44');
-    expect(skeletons[1]).toHaveAttribute('data-frame', '55');
+    expect(skeletons).toHaveLength(1);
+    expect(skeletons[0]).toHaveAttribute('data-frame', '55');
   });
 });

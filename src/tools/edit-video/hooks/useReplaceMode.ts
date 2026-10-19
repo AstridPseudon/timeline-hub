@@ -9,7 +9,8 @@ import { GenerationRow } from '@/domains/generation/types';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useEditVideoSettings } from '@/shared/settings/hooks/useEditVideoSettings';
 import { useLoraManager } from '@/domains/lora/hooks/useLoraManager';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
+import { useCloudBackendNotice } from '@/shared/hooks/async/useCloudBackendNotice';
+import { requireCloudBackend } from '@/shared/lib/cloudBackend';
 import { generateUUID } from '@/shared/lib/taskCreation';
 import { unsupportedLegacyTaskError } from '@/shared/lib/taskCreation/legacyBoundary';
 import type { PortionSelection } from '@/shared/components/VideoPortionTimeline';
@@ -90,9 +91,13 @@ export function useReplaceMode({
   } = editSettings.settings;
 
   // LoRA management
-  const { data: availableLoras } = usePublicLoras();
+  // The LoRA library has no backend yet: the view shows one plain line.
+  const { unavailable: cloudBackendUnavailable, attempt: attemptCloudBackend } = useCloudBackendNotice();
+  useEffect(() => {
+    void attemptCloudBackend(() => requireCloudBackend('edit-video LoRAs'));
+  }, [attemptCloudBackend]);
 
-  const loraManager = useLoraManager(availableLoras, {
+  const loraManager = useLoraManager({
     projectId: selectedProjectId || undefined,
     persistenceScope: 'project',
     enableProjectPersistence: true,
@@ -261,7 +266,7 @@ export function useReplaceMode({
     maxContextFrames,
     editSettings,
     loraManager,
-    availableLoras,
+    cloudBackendUnavailable,
     handleGenerate,
     isGenerating: false,
     showSuccessState,

@@ -372,16 +372,6 @@
         "expiration": "M5"
       }
     ],
-    "src/tools/travel-between-images/hooks/video/useShotFinalVideos.ts": [
-      {
-        "target": "src/tools/video-editor/lib/finalVideoAssets.ts",
-        "classification": "internal",
-        "owner": "travel-between-images",
-        "rationale": "Reads video-editor final video asset metadata.",
-        "removalCondition": "Move asset metadata to a shared domain module.",
-        "expiration": "M5"
-      }
-    ],
     "src/shared/components/SettingsModal/sections/ExtensionsSection.tsx": [
       {
         "target": "src/tools/video-editor/runtime/extensionReferenceReport.ts",

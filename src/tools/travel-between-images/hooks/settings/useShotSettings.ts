@@ -9,13 +9,9 @@ import {
   normalizeVideoTravelSettings,
 } from '../../settings';
 import { STORAGE_KEYS } from '@/shared/lib/storage/storageKeys';
-import { readLastEditedLoraFromLocalStorage, readLastEditedLoraFromProject } from '@/shared/lib/lastEditedLora';
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
-import { toast } from '@/shared/components/ui/runtime/sonner';
+import { readLastEditedLoraFromLocalStorage } from '@/shared/lib/lastEditedLora';
 import { DEFAULT_STEERABLE_MOTION_SETTINGS } from '../../components/ShotEditor/state/types';
 import { useSessionInheritedDefaults } from './inheritedDefaults';
-import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
-import { assertDeferredCloudShotOperation } from '@/shared/hooks/shots/shotAuthority';
 
 export interface UseShotSettingsReturn {
   // State
@@ -35,8 +31,6 @@ export interface UseShotSettingsReturn {
   updateFields: (updates: Partial<VideoTravelSettings>) => void;
   
   // Operations
-  applyShotSettings: (sourceShotId: string) => Promise<void>;
-  applyProjectDefaults: () => Promise<void>;
   resetToDefaults: () => void;
   
   // Saving
@@ -56,8 +50,6 @@ export interface ShotSettingsPersistenceOptions {
  * Adds shot-specific functionality:
  * - Session storage inheritance for new shots
  * - localStorage persistence for cross-shot inheritance
- * - Apply settings from another shot
- * - Apply project defaults
  * - Special handling for advancedMode/phaseConfig initialization
  */
 export const useShotSettings = (
@@ -117,7 +109,6 @@ export const useShotSettings = (
     revert,
   } = autoSave;
   const seededLastEditedLoraShotIdRef = useRef<string | null>(null);
-  const isLocalMode = hasRuntimeDocumentIdentity(typeof window === 'undefined' ? '' : window.location.search);
 
   useEffect(() => {
     seededLastEditedLoraShotIdRef.current = null;
@@ -178,12 +169,7 @@ export const useShotSettings = (
 
     const seedUnopenedShotLoras = async () => {
       try {
-        const localLastEditedLora = readLastEditedLoraFromLocalStorage(projectId);
-        const lastEditedLora = isLocalMode
-          ? localLastEditedLora
-          : localLastEditedLora === undefined
-          ? await readLastEditedLoraFromProject(projectId)
-          : localLastEditedLora;
+        const lastEditedLora = readLastEditedLoraFromLocalStorage(projectId);
         if (cancelled) {
           return;
         }
@@ -212,7 +198,7 @@ export const useShotSettings = (
     return () => {
       cancelled = true;
     };
-  }, [hasShotSettings, inheritedSettings, isLocalMode, options.customLoadSave, projectId, saveImmediate, settings, shotId, status]);
+  }, [hasShotSettings, inheritedSettings, options.customLoadSave, projectId, saveImmediate, settings, shotId, status]);
   
   // Persist settings to localStorage for future inheritance
   useEffect(() => {
@@ -234,10 +220,6 @@ export const useShotSettings = (
   // Refs for callbacks that need latest values without recreation
   const autoSaveSettingsRef = useRef(autoSave.settings);
   autoSaveSettingsRef.current = autoSave.settings;
-  const shotIdRef = useRef(shotId);
-  shotIdRef.current = shotId;
-  const projectIdRef = useRef(projectId);
-  projectIdRef.current = projectId;
 
   // Wrapped updateField with special handling for advancedMode/phaseConfig
   const updateField = useCallback(<K extends keyof VideoTravelSettings>(
@@ -269,69 +251,6 @@ export const useShotSettings = (
     autoSaveUpdateField(key, value);
   }, [autoSaveUpdateField, autoSaveUpdateFields]);
   
-  // Apply settings from another shot
-  const applyShotSettings = useCallback(async (sourceShotId: string) => {
-    if (isLocalMode) {
-      toast.info('Applying settings is unavailable for a local Astrid timeline.');
-      return;
-    }
-    if (!shotIdRef.current || !sourceShotId) {
-      toast.error('Cannot apply settings: missing shot ID');
-      return;
-    }
-
-    try {
-      assertDeferredCloudShotOperation('read settings from another shot');
-      const { data, error: fetchError } = await supabase().from('shots')
-        .select('settings')
-        .eq('id', sourceShotId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const sourceSettingsRaw = (data?.settings as Record<string, unknown>)?.[TOOL_IDS.TRAVEL_BETWEEN_IMAGES];
-
-      if (sourceSettingsRaw) {
-        autoSaveUpdateFields(normalizeVideoTravelSettings(sourceSettingsRaw));
-      } else {
-        toast.error('Source shot has no settings');
-      }
-    } catch (err) {
-      normalizeAndPresentError(err, { context: 'useShotSettings', toastTitle: 'Failed to apply settings' });
-    }
-  }, [autoSaveUpdateFields, isLocalMode]);
-
-  // Apply project defaults
-  const applyProjectDefaults = useCallback(async () => {
-    if (isLocalMode) {
-      toast.info('Project defaults are unavailable for a local Astrid timeline.');
-      return;
-    }
-    if (!projectIdRef.current) {
-      toast.error('Cannot apply defaults: no project selected');
-      return;
-    }
-
-    try {
-      const { data, error: fetchError } = await supabase().from('projects')
-        .select('settings')
-        .eq('id', projectIdRef.current)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const projectDefaultsRaw = (data?.settings as Record<string, unknown>)?.[TOOL_IDS.TRAVEL_BETWEEN_IMAGES];
-
-      if (projectDefaultsRaw) {
-        autoSaveUpdateFields(normalizeVideoTravelSettings(projectDefaultsRaw));
-      } else {
-        toast.error('Project has no default settings');
-      }
-    } catch (err) {
-      normalizeAndPresentError(err, { context: 'useShotSettings', toastTitle: 'Failed to apply defaults' });
-    }
-  }, [autoSaveUpdateFields, isLocalMode]);
-
   // Reset to hardcoded defaults
   const resetToDefaults = useCallback(() => {
     autoSaveUpdateFields(createDefaultVideoTravelSettings());
@@ -346,8 +265,6 @@ export const useShotSettings = (
     error,
     updateField,
     updateFields: autoSaveUpdateFields,
-    applyShotSettings,
-    applyProjectDefaults,
     resetToDefaults,
     save: saveImmediate,
     saveImmediate,
@@ -362,8 +279,6 @@ export const useShotSettings = (
     autoSaveUpdateFields,
     saveImmediate,
     revert,
-    applyShotSettings,
-    applyProjectDefaults,
     resetToDefaults,
   ]);
 };

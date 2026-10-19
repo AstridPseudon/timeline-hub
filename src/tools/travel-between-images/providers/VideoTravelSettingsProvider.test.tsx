@@ -46,8 +46,6 @@ vi.mock('../hooks/settings/useShotSettings', async () => {
           mockProviderUpdateFields(updates);
           setSettings((current) => ({ ...current, ...updates }));
         },
-        applyShotSettings: vi.fn(),
-        applyProjectDefaults: vi.fn(),
         resetToDefaults: vi.fn(),
         save: vi.fn(async () => {}),
         saveImmediate: vi.fn(async () => {}),

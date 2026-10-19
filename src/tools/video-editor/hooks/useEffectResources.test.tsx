@@ -12,39 +12,21 @@ import {
   createVideoEditorEffectCatalog,
   EffectCatalogProvider,
   useCreateEffectResource,
-  useDeleteEffectResource,
   useEffectResources,
   useResolvedEffectCatalog,
   useUpdateEffectResource,
 } from './useEffectResources';
 
 const mocks = vi.hoisted(() => ({
-  useListResources: vi.fn(),
-  useListPublicResources: vi.fn(),
-  useCreateResource: vi.fn(),
-  useUpdateResource: vi.fn(),
-  useDeleteResource: vi.fn(),
   compileEffect: vi.fn(),
 }));
-
-vi.mock('@/features/resources/hooks/useResources', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/resources/hooks/useResources')>();
-  return {
-    ...actual,
-    useListResources: (...args: unknown[]) => mocks.useListResources(...args),
-    useListPublicResources: (...args: unknown[]) => mocks.useListPublicResources(...args),
-    useCreateResource: (...args: unknown[]) => mocks.useCreateResource(...args),
-    useUpdateResource: (...args: unknown[]) => mocks.useUpdateResource(...args),
-    useDeleteResource: (...args: unknown[]) => mocks.useDeleteResource(...args),
-  };
-});
 
 vi.mock('@/tools/video-editor/effects/compileEffect.tsx', () => ({
   compileEffect: mocks.compileEffect,
 }));
 
 function CatalogRegistryProbe() {
-  const catalog = useEffectResources('user-1');
+  const catalog = useEffectResources();
   const { registry } = useEffectRegistryContext();
   const snapshot = useEffectRegistrySnapshot();
 
@@ -85,122 +67,9 @@ describe('useEffectResources', () => {
     mocks.compileEffect.mockReturnValue(({ children }: { children?: ReactNode }) => (
       <div data-testid="compiled-registry-effect">{children}</div>
     ));
-
-    mocks.useListResources.mockReturnValue({
-      data: [],
-      isLoading: false,
-      isFetching: false,
-      error: null,
-      refetch: vi.fn(),
-    });
-    mocks.useListPublicResources.mockReturnValue({
-      data: [],
-      isLoading: false,
-      isFetching: false,
-      error: null,
-      refetch: vi.fn(),
-    });
-    mocks.useCreateResource.mockReturnValue({
-      mutate: vi.fn(),
-      mutateAsync: vi.fn().mockResolvedValue({ id: 'created' }),
-    });
-    mocks.useUpdateResource.mockReturnValue({
-      mutate: vi.fn(),
-      mutateAsync: vi.fn().mockResolvedValue({ id: 'updated' }),
-    });
-    mocks.useDeleteResource.mockReturnValue({
-      mutate: vi.fn(),
-      mutateAsync: vi.fn().mockResolvedValue(undefined),
-    });
   });
 
-  it('deduplicates by resource id and groups effects by category', () => {
-    mocks.useListResources.mockReturnValue({
-      data: [
-        {
-          id: 'effect-1',
-          type: 'effect',
-          metadata: {
-            name: 'Slide In',
-            slug: 'slide-in',
-            code: 'code-1',
-            category: 'entrance',
-            description: 'Slides in',
-            created_by: { is_you: true },
-            is_public: false,
-          },
-        },
-        {
-          id: 'effect-2',
-          type: 'effect',
-          metadata: {
-            name: 'Fade Out',
-            slug: 'fade-out',
-            code: 'code-2-private',
-            category: 'exit',
-            description: 'Fades out',
-            created_by: { is_you: true },
-            is_public: false,
-          },
-        },
-      ],
-      isLoading: false,
-      isFetching: false,
-      error: null,
-      refetch: vi.fn(),
-    });
-
-    mocks.useListPublicResources.mockReturnValue({
-      data: [
-        {
-          id: 'effect-2',
-          type: 'effect',
-          metadata: {
-            name: 'Fade Out Public',
-            slug: 'fade-out-public',
-            code: 'code-2-public',
-            category: 'exit',
-            description: 'Public duplicate',
-            created_by: { is_you: false, username: 'other-user' },
-            is_public: true,
-          },
-        },
-        {
-          id: 'effect-3',
-          type: 'effect',
-          metadata: {
-            name: 'Pulse Loop',
-            slug: 'pulse-loop',
-            code: 'code-3',
-            category: 'continuous',
-            description: 'Loops continuously',
-            created_by: { is_you: false, username: 'other-user' },
-            is_public: true,
-          },
-        },
-      ],
-      isLoading: false,
-      isFetching: false,
-      error: null,
-      refetch: vi.fn(),
-    });
-
-    const { result } = renderHook(() => useEffectResources('user-1'));
-
-    expect(result.current.effects).toHaveLength(3);
-    expect(result.current.entrance.map((effect) => effect.id)).toEqual(['effect-1']);
-    expect(result.current.exit.map((effect) => effect.id)).toEqual(['effect-2']);
-    expect(result.current.continuous.map((effect) => effect.id)).toEqual(['effect-3']);
-    expect(result.current.exit[0]).toMatchObject({
-      id: 'effect-2',
-      name: 'Fade Out Public',
-      category: 'exit',
-    });
-    expect(result.current.canCreateEffect).toBe(false);
-    expect(result.current.canUpdateEffect).toBe(false);
-  });
-
-  it('uses an injected catalog and disables the Supabase resource queries', () => {
+  it('uses an injected catalog and strips its writers', () => {
     const injectedCatalog = createVideoEditorEffectCatalog({
       effects: [{
         id: 'effect-1',
@@ -216,12 +85,10 @@ describe('useEffectResources', () => {
     });
 
     const { result } = renderHook(
-      () => useResolvedEffectCatalog('user-1', injectedCatalog),
+      () => useResolvedEffectCatalog(injectedCatalog),
     );
 
     expect(result.current).toMatchObject({...injectedCatalog,canCreateEffect:false,canUpdateEffect:false,createEffect:undefined,updateEffect:undefined});
-    expect(mocks.useListResources).toHaveBeenCalledWith('effect', { enabled: false });
-    expect(mocks.useListPublicResources).toHaveBeenCalledWith('effect', { enabled: false });
   });
 
   it('prefers the injected catalog from context for consumer hooks', () => {
@@ -245,30 +112,25 @@ describe('useEffectResources', () => {
       </EffectCatalogProvider>
     );
 
-    const { result } = renderHook(() => useEffectResources('user-1'), { wrapper });
+    const { result } = renderHook(() => useEffectResources(), { wrapper });
 
     expect(result.current).toMatchObject({...injectedCatalog,canCreateEffect:false,canUpdateEffect:false,createEffect:undefined,updateEffect:undefined});
-    expect(mocks.useListResources).toHaveBeenCalledWith('effect', { enabled: false });
-    expect(mocks.useListPublicResources).toHaveBeenCalledWith('effect', { enabled: false });
   });
 
-  it('rejects embedded source writers while retaining deletion of legacy data', async () => {
-    const createMutate = vi.fn();
-    const createMutateAsync = vi.fn().mockResolvedValue({ id: 'created' });
-    const updateMutate = vi.fn();
-    const updateMutateAsync = vi.fn().mockResolvedValue({ id: 'updated' });
-    const deleteMutate = vi.fn();
-    const deleteMutateAsync = vi.fn().mockResolvedValue(undefined);
+  it('falls back to an empty catalog, with no backend query, when nothing is injected', () => {
+    const { result } = renderHook(() => useEffectResources());
 
-    mocks.useCreateResource.mockReturnValue({ mutate: createMutate, mutateAsync: createMutateAsync });
-    mocks.useUpdateResource.mockReturnValue({ mutate: updateMutate, mutateAsync: updateMutateAsync });
-    mocks.useDeleteResource.mockReturnValue({ mutate: deleteMutate, mutateAsync: deleteMutateAsync });
+    expect(result.current.effects).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.canCreateEffect).toBe(false);
+    expect(result.current.canDeleteEffect).toBe(false);
+  });
 
+  it('rejects embedded source writers', async () => {
     const client=new QueryClient({defaultOptions:{mutations:{retry:false}}});
     const wrapper=({children}:{children:ReactNode})=><QueryClientProvider client={client}>{children}</QueryClientProvider>;
     const createHook = renderHook(() => useCreateEffectResource(),{wrapper});
     const updateHook = renderHook(() => useUpdateEffectResource(),{wrapper});
-    const deleteHook = renderHook(() => useDeleteEffectResource());
 
     const metadata = {
       name: 'Slide In',
@@ -283,12 +145,7 @@ describe('useEffectResources', () => {
     await act(async () => {
       await expect(createHook.result.current.mutateAsync({ metadata })).rejects.toThrow('project pack');
       await expect(updateHook.result.current.mutateAsync({ id: 'effect-1', metadata })).rejects.toThrow('project pack');
-      await deleteHook.result.current.mutateAsync({ id: 'effect-1' });
     });
-
-    expect(createMutateAsync).not.toHaveBeenCalled();
-    expect(updateMutateAsync).not.toHaveBeenCalled();
-    expect(deleteMutateAsync).toHaveBeenCalledWith({ id: 'effect-1', type: 'effect' }, undefined);
   });
 
   it('mirrors injected catalog resources into the provider registry without replacing catalog APIs', async () => {
@@ -338,8 +195,6 @@ describe('useEffectResources', () => {
     expect(initialCatalog.canUpdateEffect).toBe(true);
     expect(createEffect).not.toHaveBeenCalled();
     expect(updateEffect).not.toHaveBeenCalled();
-    expect(mocks.useListResources).toHaveBeenCalledWith('effect', { enabled: false });
-    expect(mocks.useListPublicResources).toHaveBeenCalledWith('effect', { enabled: false });
 
     rerender(
       <EffectCatalogProvider value={updatedCatalog}>

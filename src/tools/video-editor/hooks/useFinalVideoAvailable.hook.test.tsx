@@ -66,7 +66,7 @@ describe('useFinalVideoAvailable sweep sharing', () => {
       provider: { apiBaseUrl: runtimeApiBase() },
       project: { projectId: 'p' },
       userId: 'owner',
-      shots: { finalVideoMap: new Map(), dismissFinalVideo: vi.fn() },
+      shots: {},
       telemetry: { warn: vi.fn() },
     };
   });

@@ -11,6 +11,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Plus } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { VideoPortionEditor } from '@/shared/components/VideoPortionEditor';
+import { CloudBackendNotice } from '@/shared/components/CloudBackendNotice';
 import { MultiPortionTimeline, type PortionSelection } from '@/shared/components/VideoPortionTimeline';
 import { DEFAULT_VACE_PHASE_CONFIG, BUILTIN_VACE_DEFAULT_ID } from '@/shared/lib/vaceDefaults';
 
@@ -107,7 +108,7 @@ export function ReplacePanelContent({
     maxContextFrames,
     editSettings,
     loraManager,
-    availableLoras,
+    cloudBackendUnavailable,
     handleGenerate,
     isGenerating,
     showSuccessState,
@@ -124,63 +125,69 @@ export function ReplacePanelContent({
   } = replaceState;
 
   return (
-    <VideoPortionEditor
-      settings={{
-        gapFrames: gapFrameCount,
-        setGapFrames: (val) => editSettings.updateField('gapFrameCount', val),
-        contextFrames: contextFrameCount,
-        setContextFrames: (val) => {
-          const maxGap = Math.max(1, 81 - (val * 2));
-          const newGapFrames = gapFrameCount > maxGap ? maxGap : gapFrameCount;
-          editSettings.updateFields({
-            contextFrameCount: val,
-            gapFrameCount: newGapFrames
-          });
-        },
-        maxContextFrames,
-        negativePrompt,
-        setNegativePrompt: (val) => editSettings.updateField('negativePrompt', val),
-        enhancePrompt,
-        setEnhancePrompt: (val) => editSettings.updateField('enhancePrompt', val),
-      }}
-      selections={{
-        selections,
-        onUpdateSelectionSettings: handleUpdateSelectionSettings,
-        onRemoveSelection: handleRemoveSelection,
-        onAddSelection: handleAddSelection,
-        videoUrl: videoUrl ?? '',
-        fps: videoFps,
-      }}
-      lora={{
-        availableLoras,
-        projectId: selectedProjectId ?? null,
-        loraManager,
-      }}
-      motion={{
-        motionMode: motionMode as 'basic' | 'advanced',
-        onMotionModeChange: (mode) => editSettings.updateField('motionMode', mode),
-        phaseConfig: savedPhaseConfig ?? DEFAULT_VACE_PHASE_CONFIG,
-        onPhaseConfigChange: (config) => editSettings.updateField('phaseConfig', config),
-        randomSeed,
-        onRandomSeedChange: (val) => editSettings.updateField('randomSeed', val),
-        selectedPhasePresetId: selectedPhasePresetId ?? BUILTIN_VACE_DEFAULT_ID,
-        onPhasePresetSelect: (presetId, config) => {
-          editSettings.updateFields({
-            selectedPhasePresetId: presetId,
-            phaseConfig: config,
-          });
-        },
-        onPhasePresetRemove: () => {
-          editSettings.updateField('selectedPhasePresetId', null);
-        },
-      }}
-      actions={{
-        onGenerate: handleGenerate,
-        isGenerating,
-        generateSuccess: showSuccessState,
-        isGenerateDisabled: !isValidPortion,
-        validationErrors: portionValidation.errors,
-      }}
-    />
+    <>
+      {cloudBackendUnavailable && (
+        <div className="px-4 pt-4">
+          <CloudBackendNotice toolName="Edit Videos" />
+        </div>
+      )}
+      <VideoPortionEditor
+        settings={{
+          gapFrames: gapFrameCount,
+          setGapFrames: (val) => editSettings.updateField('gapFrameCount', val),
+          contextFrames: contextFrameCount,
+          setContextFrames: (val) => {
+            const maxGap = Math.max(1, 81 - (val * 2));
+            const newGapFrames = gapFrameCount > maxGap ? maxGap : gapFrameCount;
+            editSettings.updateFields({
+              contextFrameCount: val,
+              gapFrameCount: newGapFrames
+            });
+          },
+          maxContextFrames,
+          negativePrompt,
+          setNegativePrompt: (val) => editSettings.updateField('negativePrompt', val),
+          enhancePrompt,
+          setEnhancePrompt: (val) => editSettings.updateField('enhancePrompt', val),
+        }}
+        selections={{
+          selections,
+          onUpdateSelectionSettings: handleUpdateSelectionSettings,
+          onRemoveSelection: handleRemoveSelection,
+          onAddSelection: handleAddSelection,
+          videoUrl: videoUrl ?? '',
+          fps: videoFps,
+        }}
+        lora={{
+          projectId: selectedProjectId ?? null,
+          loraManager,
+        }}
+        motion={{
+          motionMode: motionMode as 'basic' | 'advanced',
+          onMotionModeChange: (mode) => editSettings.updateField('motionMode', mode),
+          phaseConfig: savedPhaseConfig ?? DEFAULT_VACE_PHASE_CONFIG,
+          onPhaseConfigChange: (config) => editSettings.updateField('phaseConfig', config),
+          randomSeed,
+          onRandomSeedChange: (val) => editSettings.updateField('randomSeed', val),
+          selectedPhasePresetId: selectedPhasePresetId ?? BUILTIN_VACE_DEFAULT_ID,
+          onPhasePresetSelect: (presetId, config) => {
+            editSettings.updateFields({
+              selectedPhasePresetId: presetId,
+              phaseConfig: config,
+            });
+          },
+          onPhasePresetRemove: () => {
+            editSettings.updateField('selectedPhasePresetId', null);
+          },
+        }}
+        actions={{
+          onGenerate: handleGenerate,
+          isGenerating,
+          generateSuccess: showSuccessState,
+          isGenerateDisabled: !isValidPortion,
+          validationErrors: portionValidation.errors,
+        }}
+      />
+    </>
   );
 }

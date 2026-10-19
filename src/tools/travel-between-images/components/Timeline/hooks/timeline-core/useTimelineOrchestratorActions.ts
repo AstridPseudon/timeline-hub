@@ -1,12 +1,5 @@
 import { useCallback } from 'react';
 import type { RefObject } from 'react';
-import type { GenerationRow } from '@/domains/generation/types';
-import type { Resource, StructureVideoMetadata } from '@/features/resources/hooks/useResources';
-import type { PrimaryStructureVideo, StructureVideoConfigWithMetadata } from '@/shared/lib/tasks/travelBetweenImages';
-import type { OnPrimaryStructureVideoInputChange } from '@/tools/travel-between-images/types/mediaHandlers';
-import {
-  calculateNewVideoPlacement,
-} from '../../utils/timeline-utils';
 import { useTapToMove } from '../drag/useTapToMove';
 
 interface ImageDropInterceptorArgs {
@@ -32,25 +25,6 @@ interface GenerationDropInterceptorArgs {
   setIsInternalDropProcessing: (value: boolean) => void;
 }
 
-interface DuplicateInterceptorArgs {
-  imageId: string;
-  timelineFrame: number;
-  images: GenerationRow[];
-  onImageDuplicate: (imageId: string, timelineFrame: number, nextTimelineFrame?: number) => void;
-  setPendingDuplicateFrame: (frame: number | null) => void;
-}
-
-interface StructureVideoSelectionArgs {
-  resource: Resource;
-  structureVideos?: StructureVideoConfigWithMetadata[];
-  primaryStructureVideo?: PrimaryStructureVideo;
-  onAddStructureVideo?: (video: StructureVideoConfigWithMetadata) => void;
-  onUpdateStructureVideo?: (index: number, updates: Partial<StructureVideoConfigWithMetadata>) => void;
-  onPrimaryStructureVideoInputChange?: OnPrimaryStructureVideoInputChange;
-  fullMax: number;
-  setShowVideoBrowser: (value: boolean) => void;
-}
-
 interface UseTimelineOrchestratorActionsInput {
   enableTapToMove: boolean;
   framePositions: Map<string, number>;
@@ -62,9 +36,6 @@ interface UseTimelineOrchestratorActionsInput {
   selectedIds: string[];
   clearSelection: () => void;
   containerRef: RefObject<HTMLDivElement>;
-  images: GenerationRow[];
-  onImageDuplicate: (imageId: string, timelineFrame: number, nextTimelineFrame?: number) => void;
-  setPendingDuplicateFrame: (frame: number | null) => void;
   onFileDrop?: (files: File[], targetFrame?: number, handles?: Array<FileSystemFileHandle | null>) => Promise<void>;
   setPendingDropFrame: (frame: number | null) => void;
   onGenerationDrop?: (
@@ -74,12 +45,6 @@ interface UseTimelineOrchestratorActionsInput {
     targetFrame?: number,
   ) => Promise<void>;
   setIsInternalDropProcessing: (value: boolean) => void;
-  structureVideos?: StructureVideoConfigWithMetadata[];
-  primaryStructureVideo?: PrimaryStructureVideo;
-  onAddStructureVideo?: (video: StructureVideoConfigWithMetadata) => void;
-  onUpdateStructureVideo?: (index: number, updates: Partial<StructureVideoConfigWithMetadata>) => void;
-  onPrimaryStructureVideoInputChange?: StructureVideoSelectionArgs['onPrimaryStructureVideoInputChange'];
-  setShowVideoBrowser: (value: boolean) => void;
   maxFrameLimit?: number;
 }
 
@@ -91,11 +56,9 @@ interface TimelineOrchestratorActionsResult {
     thumbUrl: string | undefined,
     targetFrame?: number,
   ) => Promise<void>;
-  handleDuplicateInterceptor: (imageId: string, timelineFrame: number) => void;
   handleTapToMoveAction: (imageId: string, targetFrame: number) => Promise<void>;
   handleTapToMoveMultiAction: (imageIds: string[], targetFrame: number) => Promise<void>;
   handleTimelineTapToMove: (clientX: number) => void;
-  handleVideoBrowserSelect: (resource: Resource) => void;
 }
 
 export async function runImageDropInterceptor({
@@ -136,72 +99,6 @@ export async function runGenerationDropInterceptor({
   }
 }
 
-export function runDuplicateInterceptor({
-  imageId,
-  timelineFrame,
-  images,
-  onImageDuplicate,
-  setPendingDuplicateFrame,
-}: DuplicateInterceptorArgs): void {
-  const sortedImages = [...images]
-    .filter((img) => img.timeline_frame !== undefined && img.timeline_frame !== null)
-    .sort((a, b) => (a.timeline_frame ?? 0) - (b.timeline_frame ?? 0));
-
-  const currentIndex = sortedImages.findIndex((img) => img.timeline_frame === timelineFrame);
-  const nextImage = currentIndex >= 0 && currentIndex < sortedImages.length - 1
-    ? sortedImages[currentIndex + 1]
-    : null;
-  const nextFrame = nextImage?.timeline_frame;
-
-  setPendingDuplicateFrame(timelineFrame);
-  onImageDuplicate(imageId, timelineFrame, nextFrame ?? undefined);
-}
-
-export function handleTimelineStructureVideoSelect({
-  resource,
-  structureVideos,
-  primaryStructureVideo,
-  onAddStructureVideo,
-  onUpdateStructureVideo,
-  onPrimaryStructureVideoInputChange,
-  fullMax,
-  setShowVideoBrowser,
-}: StructureVideoSelectionArgs): void {
-  const metadata = resource.metadata as StructureVideoMetadata;
-  if (onAddStructureVideo && metadata.videoMetadata) {
-    const placement = calculateNewVideoPlacement(
-      metadata.videoMetadata.total_frames,
-      structureVideos,
-      fullMax,
-    );
-
-    if (placement.lastVideoUpdate && onUpdateStructureVideo) {
-      onUpdateStructureVideo(placement.lastVideoUpdate.index, {
-        end_frame: placement.lastVideoUpdate.newEndFrame,
-      });
-    }
-
-    onAddStructureVideo({
-      path: metadata.videoUrl,
-      start_frame: placement.start_frame,
-      end_frame: placement.end_frame,
-      treatment: 'adjust',
-      metadata: metadata.videoMetadata,
-      resource_id: resource.id,
-    });
-  } else if (onPrimaryStructureVideoInputChange) {
-    onPrimaryStructureVideoInputChange({
-      videoPath: metadata.videoUrl,
-      metadata: metadata.videoMetadata,
-      treatment: primaryStructureVideo?.treatment ?? 'adjust',
-      motionStrength: primaryStructureVideo?.motionStrength ?? 1.0,
-      structureType: primaryStructureVideo?.structureType ?? 'flow',
-    });
-  }
-
-  setShowVideoBrowser(false);
-}
-
 export function useTimelineOrchestratorActions({
   enableTapToMove,
   framePositions,
@@ -213,19 +110,10 @@ export function useTimelineOrchestratorActions({
   selectedIds,
   clearSelection,
   containerRef,
-  images,
-  onImageDuplicate,
-  setPendingDuplicateFrame,
   onFileDrop,
   setPendingDropFrame,
   onGenerationDrop,
   setIsInternalDropProcessing,
-  structureVideos,
-  primaryStructureVideo,
-  onAddStructureVideo,
-  onUpdateStructureVideo,
-  onPrimaryStructureVideoInputChange,
-  setShowVideoBrowser,
   maxFrameLimit,
 }: UseTimelineOrchestratorActionsInput): TimelineOrchestratorActionsResult {
   const handleImageDropInterceptor = useCallback(async (files: File[], targetFrame?: number, handles?: Array<FileSystemFileHandle | null>) => {
@@ -273,44 +161,11 @@ export function useTimelineOrchestratorActions({
     maxFrameLimit,
   });
 
-  const handleDuplicateInterceptor = useCallback((imageId: string, timelineFrame: number) => {
-    runDuplicateInterceptor({
-      imageId,
-      timelineFrame,
-      images,
-      onImageDuplicate,
-      setPendingDuplicateFrame,
-    });
-  }, [images, onImageDuplicate, setPendingDuplicateFrame]);
-
-  const handleVideoBrowserSelect = useCallback((resource: Resource) => {
-    handleTimelineStructureVideoSelect({
-      resource,
-      structureVideos,
-      primaryStructureVideo,
-      onAddStructureVideo,
-      onUpdateStructureVideo,
-      onPrimaryStructureVideoInputChange,
-      fullMax,
-      setShowVideoBrowser,
-    });
-  }, [
-    fullMax,
-    onAddStructureVideo,
-    onPrimaryStructureVideoInputChange,
-    onUpdateStructureVideo,
-    primaryStructureVideo,
-    setShowVideoBrowser,
-    structureVideos,
-  ]);
-
   return {
     handleImageDropInterceptor,
     handleGenerationDropInterceptor,
-    handleDuplicateInterceptor,
     handleTapToMoveAction,
     handleTapToMoveMultiAction,
     handleTimelineTapToMove,
-    handleVideoBrowserSelect,
   };
 }

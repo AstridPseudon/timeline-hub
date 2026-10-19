@@ -12,7 +12,6 @@ interface DragLayerProps {
   dragType: 'external-file' | 'gallery-item' | 'internal-reorder' | null;
   activePendingFrame: number | null;
   pendingDropFrame: number | null;
-  pendingDuplicateFrame: number | null;
   pendingExternalAddFrame: number | null;
   isUploadingImage: boolean;
   isInternalDropProcessing: boolean;
@@ -30,7 +29,6 @@ export const DragLayer: React.FC<DragLayerProps> = ({
   dragType,
   activePendingFrame,
   pendingDropFrame,
-  pendingDuplicateFrame,
   pendingExternalAddFrame,
   isUploadingImage,
   isInternalDropProcessing,
@@ -61,16 +59,6 @@ export const DragLayer: React.FC<DragLayerProps> = ({
       {(isUploadingImage || isInternalDropProcessing) && pendingDropFrame !== null && (
         <TimelineSkeletonItem
           framePosition={pendingDropFrame}
-          fullMin={fullMin}
-          fullRange={fullRange}
-          containerWidth={containerWidth}
-          projectAspectRatio={projectAspectRatio}
-        />
-      )}
-
-      {pendingDuplicateFrame !== null && (
-        <TimelineSkeletonItem
-          framePosition={pendingDuplicateFrame}
           fullMin={fullMin}
           fullRange={fullRange}
           containerWidth={containerWidth}

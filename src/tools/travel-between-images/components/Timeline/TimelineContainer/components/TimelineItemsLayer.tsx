@@ -32,11 +32,8 @@ interface TimelineItemsLayerProps {
   };
   actions: {
     onImageDelete: (imageId: string) => void;
-    onImageDuplicate: (imageId: string, timelineFrame: number) => void;
     onVariantDrop?: (params: VariantDropParams) => Promise<void>;
     onVariantDropTargetChange?: (targetId: string | null) => void;
-    duplicatingImageId?: string | null;
-    duplicateSuccessImageId?: string | null;
   };
   selection: {
     isSelected: (id: string) => boolean;
@@ -103,11 +100,8 @@ export const TimelineItemsLayer: React.FC<TimelineItemsLayerProps> = ({
             }}
             actions={{
               onDelete: actions.onImageDelete,
-              onDuplicate: actions.onImageDuplicate,
               onVariantDrop: actions.onVariantDrop,
               onVariantDropTargetChange: actions.onVariantDropTargetChange,
-              duplicatingImageId: actions.duplicatingImageId ?? undefined,
-              duplicateSuccessImageId: actions.duplicateSuccessImageId ?? undefined,
             }}
             selection={{
               isSelected: selection.isSelected(imageKey),

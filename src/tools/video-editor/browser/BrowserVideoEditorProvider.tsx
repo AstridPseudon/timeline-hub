@@ -68,8 +68,8 @@ function createDefaultQueryClient() {
 /** Installed browser adapter: private catalogs stay outside the shared runtime assembly. */
 function BrowserRuntimeWithCatalogs({effectCatalog, userId = null, ...props}: EditorRuntimeProviderProps) {
   const effectsQuery = useEffects(userId, {enabled: !effectCatalog && Boolean(userId)});
-  const resolvedEffectCatalog = useResolvedEffectCatalog(userId, effectCatalog);
-  const sequenceComponentCatalog = useResolvedSequenceComponentCatalog(userId);
+  const resolvedEffectCatalog = useResolvedEffectCatalog(effectCatalog);
+  const sequenceComponentCatalog = useResolvedSequenceComponentCatalog();
   return (
     <EditorRuntimeProvider
       {...props}

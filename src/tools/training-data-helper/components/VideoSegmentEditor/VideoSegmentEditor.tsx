@@ -44,7 +44,7 @@ interface VideoSegmentEditorProps {
 }
 
 export function VideoSegmentEditor({ video, segments, onCreateSegment, onDeleteSegment }: VideoSegmentEditorProps) {
-  const { getVideoUrl, markVideoAsInvalid } = useTrainingData();
+  const { getVideoUrl } = useTrainingData();
   const playback = useVideoPlayback();
 
   const [segmentStartTime, setSegmentStartTime] = useState<number | null>(null);
@@ -259,7 +259,6 @@ export function VideoSegmentEditor({ video, segments, onCreateSegment, onDeleteS
                     readyState: videoElement.readyState
                   }
                 });
-                markVideoAsInvalid(video.id);
                 playback.setVideoReady(false);
               }}
               onLoadStart={() => playback.setVideoReady(false)}

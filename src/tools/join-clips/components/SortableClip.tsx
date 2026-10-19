@@ -5,7 +5,6 @@ import { Textarea } from '@/shared/components/ui/textarea';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Film, GripVertical, Trash2 } from 'lucide-react';
 import { HoverScrubVideo } from '@/shared/components/media/HoverScrubVideo';
-import { cn } from '@/shared/components/ui/contracts/cn';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { VideoClip, TransitionPrompt } from '../clipTypes';
@@ -18,24 +17,12 @@ const VideoContainerSkeleton: React.FC = () => (
   </div>
 );
 
-// Upload loading state
-const UploadingVideoState: React.FC = () => (
-  <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-muted/50 backdrop-blur-sm">
-    <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent mb-3"></div>
-    <p className="text-sm font-medium text-foreground">Uploading video...</p>
-  </div>
-);
-
 interface SortableClipProps {
   clip: VideoClip;
   index: number;
   clips: VideoClip[];
-  uploadingClipId: string | null;
-  draggingOverClipId: string | null;
-  isScrolling: boolean;
   settingsLoaded: boolean;
   videoRefs: React.MutableRefObject<{ [clipId: string]: HTMLVideoElement | null }>;
-  fileInputRefs: React.MutableRefObject<{ [clipId: string]: HTMLInputElement | null }>;
   transitionPrompts: TransitionPrompt[];
   useIndividualPrompts: boolean;
   loopFirstClip: boolean;
@@ -43,11 +30,6 @@ interface SortableClipProps {
   onLoopFirstClipChange: (checked: boolean) => void;
   onRemoveClip: (clipId: string) => void;
   onClearVideo: (clipId: string) => void;
-  onVideoUpload: (e: React.ChangeEvent<HTMLInputElement>, clipId: string) => void;
-  onDragOver: (e: React.DragEvent, clipId: string) => void;
-  onDragEnter: (e: React.DragEvent, clipId: string) => void;
-  onDragLeave: (e: React.DragEvent, clipId: string) => void;
-  onDrop: (e: React.DragEvent, clipId: string) => void;
   onPromptChange: (clipId: string, prompt: string) => void;
   setClips: React.Dispatch<React.SetStateAction<VideoClip[]>>;
   onOpenInLightbox: (clip: VideoClip) => void;
@@ -57,11 +39,7 @@ export const SortableClip: React.FC<SortableClipProps> = ({
   clip,
   index,
   clips,
-  uploadingClipId,
-  draggingOverClipId,
-  isScrolling,
   settingsLoaded,
-  fileInputRefs,
   transitionPrompts,
   useIndividualPrompts,
   loopFirstClip,
@@ -69,11 +47,6 @@ export const SortableClip: React.FC<SortableClipProps> = ({
   onLoopFirstClipChange,
   onRemoveClip,
   onClearVideo,
-  onVideoUpload,
-  onDragOver,
-  onDragEnter,
-  onDragLeave,
-  onDrop,
   onPromptChange,
   setClips,
   onOpenInLightbox,
@@ -159,30 +132,7 @@ export const SortableClip: React.FC<SortableClipProps> = ({
         {/* Video Container */}
         <div className="space-y-2">
           <div
-            className={cn(
-              "aspect-video bg-muted rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden transition-colors relative",
-              draggingOverClipId === clip.id
-                ? 'border-primary bg-primary/10'
-                : 'border-border hover:border-primary/50',
-              !clip.url && uploadingClipId !== clip.id && !(loopFirstClip && index === 1) ? 'cursor-pointer' : ''
-            )}
-            onDragOver={(e) => !(loopFirstClip && index === 1) && onDragOver(e, clip.id)}
-            onDragEnter={(e) => !(loopFirstClip && index === 1) && onDragEnter(e, clip.id)}
-            onDragLeave={(e) => !(loopFirstClip && index === 1) && onDragLeave(e, clip.id)}
-            onDrop={(e) => {
-              if (loopFirstClip && index === 1) {
-                e.preventDefault();
-                return;
-              }
-              onDrop(e, clip.id);
-            }}
-            onClick={() => {
-              // Don't allow upload on second clip when loop mode is enabled
-              const isLoopingSecondSlot = loopFirstClip && index === 1;
-              if (!clip.url && uploadingClipId !== clip.id && !isLoopingSecondSlot) {
-                fileInputRefs.current[clip.id]?.click();
-              }
-            }}
+            className="aspect-video bg-muted rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden transition-colors relative"
             onDoubleClick={() => {
               // Open in lightbox on double-click if clip has video
               if (clip.url) {
@@ -190,9 +140,7 @@ export const SortableClip: React.FC<SortableClipProps> = ({
               }
             }}
           >
-            {uploadingClipId === clip.id ? (
-              <UploadingVideoState />
-            ) : clip.url ? (
+            {clip.url ? (
               <>
                 <HoverScrubVideo
                   src={clip.url}
@@ -218,11 +166,6 @@ export const SortableClip: React.FC<SortableClipProps> = ({
                     />
                   </div>
                 )}
-                {draggingOverClipId === clip.id && !isScrolling && (
-                  <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm flex items-center justify-center pointer-events-none">
-                    <p className="text-sm font-medium text-foreground">Drop to replace</p>
-                  </div>
-                )}
               </>
             ) : !settingsLoaded ? (
               <VideoContainerSkeleton />
@@ -237,22 +180,12 @@ export const SortableClip: React.FC<SortableClipProps> = ({
             ) : (
               <div className="text-center p-4 pointer-events-none">
                 <Film className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-xs text-muted-foreground mb-1">
-                  {draggingOverClipId === clip.id ? 'Drop video here' : 'Click or drop to upload'}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {draggingOverClipId === clip.id ? '' : 'MP4, WebM, MOV'}
+                <p className="text-xs text-muted-foreground">
+                  Send a clip here from the gallery
                 </p>
               </div>
             )}
           </div>
-          <input
-            ref={el => { fileInputRefs.current[clip.id] = el; }}
-            type="file"
-            accept="video/*"
-            className="hidden"
-            onChange={(e) => onVideoUpload(e, clip.id)}
-          />
         </div>
 
         {/* Transition Prompt (if not last clip and individual prompts enabled) */}

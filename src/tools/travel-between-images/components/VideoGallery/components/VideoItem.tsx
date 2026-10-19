@@ -1,15 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 import { GenerationRow } from '@/domains/generation/types';
-import { Layers, Film } from 'lucide-react';
+import { Film } from 'lucide-react';
 import { HoverScrubVideo } from '@/shared/components/media/HoverScrubVideo';
 import { TimeStamp } from '@/shared/components/TimeStamp';
 import { useVideoLoader } from '../hooks/useVideoLoader';
 import { useThumbnailLoader } from '../hooks/useThumbnailLoader';
 import { useVideoElementIntegration } from '../hooks/useVideoElementIntegration';
 import { useMobileVideoPreload } from '../hooks/useMobileVideoPreload';
-import { useVideoItemJoinClips } from '../hooks/useVideoItemJoinClips';
-import { JoinClipsModal } from './JoinClipsModal';
 import { VideoItemActions } from './VideoItemActions';
 import { videoItemPropsAreEqual } from './VideoItemMemo';
 import { determineVideoPhase, createLoadingSummary } from '../utils/video-loading-utils';
@@ -36,7 +34,6 @@ interface VideoItemProps {
   selectedVideoForDetails: GenerationRow | null;
   showTaskDetailsModal: boolean;
   onApplySettingsFromTask: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
-  projectId?: string | null;
   hideActions?: boolean;
   /** Custom tooltip text for the delete button */
   deleteTooltip?: string;
@@ -60,7 +57,6 @@ export const VideoItem = React.memo<VideoItemProps>(({
   onHoverEnd,
   onMobileModalOpen,
   onApplySettingsFromTask,
-  projectId,
   hideActions = false,
   deleteTooltip,
   dataTour
@@ -70,12 +66,6 @@ export const VideoItem = React.memo<VideoItemProps>(({
   const TOUCH_MOVE_THRESHOLD = 10; // px - movement beyond this = drag, not tap
   // Get task mapping for this video to enable Apply Settings button
   const { data: taskMapping } = useGenerationTaskMapping(video.id || '');
-
-  // Join clips feature (child generation fetching, join modal state, join task creation)
-  const {
-    childGenerations, showCollage, isJoiningClips, showJoinModal, setShowJoinModal,
-    handleConfirmJoin, joinSettings,
-  } = useVideoItemJoinClips(video, projectId, projectAspectRatio);
 
   // ===============================================================================
   // HOOKS - Use extracted hooks for cleaner separation of concerns
@@ -217,69 +207,7 @@ export const VideoItem = React.memo<VideoItemProps>(({
         style={aspectRatioStyle}
       >
 
-        {showCollage ? (
-          // COLLAGE MODE: Show grid of segments for parents without output
-          <div
-            className="absolute inset-0 w-full h-full cursor-pointer bg-black/5 grid grid-cols-2 gap-0.5 overflow-hidden"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onLightboxOpen(originalIndex);
-            }}
-            // On mobile/touch devices, use onTouchEnd for immediate response (no double-tap needed)
-            onTouchStart={isMobile ? (e) => {
-              const touch = e.touches[0];
-              touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-            } : undefined}
-            onTouchEnd={isMobile ? (e) => {
-              // Ignore drags/scrolls - only handle taps
-              const touch = e.changedTouches[0];
-              if (touchStartRef.current) {
-                const dx = Math.abs(touch.clientX - touchStartRef.current.x);
-                const dy = Math.abs(touch.clientY - touchStartRef.current.y);
-                if (dx > TOUCH_MOVE_THRESHOLD || dy > TOUCH_MOVE_THRESHOLD) {
-                  touchStartRef.current = null;
-                  return;
-                }
-              }
-              touchStartRef.current = null;
-              e.stopPropagation();
-              e.preventDefault();
-              onLightboxOpen(originalIndex);
-            } : undefined}
-          >
-            {childGenerations.slice(0, 4).map((child, idx) => (
-              <div key={child.id || idx} className="relative w-full h-full overflow-hidden bg-black/20">
-                {(child.thumbUrl || child.imageUrl) && (
-                  <img
-                    src={getDisplayUrl(child.thumbUrl || child.imageUrl || '')}
-                    crossOrigin={mediaCrossOrigin(getDisplayUrl(child.thumbUrl || child.imageUrl || ''))}
-                    className="w-full h-full object-cover transition-opacity duration-300"
-                    alt={`Segment ${idx + 1}`}
-                    loading="lazy"
-                    style={{ opacity: 0 }}
-                    onLoad={(e) => {
-                      (e.target as HTMLImageElement).style.opacity = '0.8';
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.target as HTMLImageElement).style.opacity = '1';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.target as HTMLImageElement).style.opacity = '0.8';
-                    }}
-                  />
-                )}
-              </div>
-            ))}
-            {/* Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/5 transition-colors group-hover:bg-black/20">
-              <div className="bg-black/70 backdrop-blur-md text-white px-2 py-1 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium flex items-center gap-1 md:gap-2 shadow-lg border border-white/10 transform transition-transform group-hover:scale-105">
-                <Layers className="w-3 h-3 md:w-4 md:h-4" />
-                View {childGenerations.length} Segments
-              </div>
-            </div>
-          </div>
-        ) : shouldUsePosterOnMobile ? (
+        {shouldUsePosterOnMobile ? (
           // MOBILE POSTER MODE: Show static image - clickable to open lightbox
           <div
             className="absolute inset-0 w-full h-full cursor-pointer bg-gray-100"
@@ -443,16 +371,6 @@ export const VideoItem = React.memo<VideoItemProps>(({
           </div>
         </div>
         
-        {/* Join Clips Settings Modal */}
-        <JoinClipsModal
-          open={showJoinModal}
-          onOpenChange={setShowJoinModal}
-          segmentCount={childGenerations.length}
-          isJoiningClips={isJoiningClips}
-          onConfirmJoin={handleConfirmJoin}
-          settings={joinSettings}
-        />
-
         {/* Action buttons – positioned directly on the video/poster container */}
         {!hideActions && (
           <VideoItemActions

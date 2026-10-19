@@ -57,13 +57,11 @@ function createInput(overrides: Partial<Parameters<typeof useTimelineViewportCon
   return {
     framePositions: new Map([['img-1', 0], ['img-2', 20]]),
     pendingDropFrame: 12,
-    pendingDuplicateFrame: 24,
     pendingExternalAddFrame: 36,
     imagesCount: 2,
     hasExistingTrailingVideo: true,
     timelineRef: { current: createDiv({ clientWidth: 200, scrollWidth: 320, scrollLeft: 100 }) } as RefObject<HTMLDivElement>,
     containerRef: { current: createDiv({ clientWidth: 480, scrollWidth: 400 }) } as RefObject<HTMLDivElement>,
-    isEndpointDraggingRef: { current: false } as RefObject<boolean>,
     dragState: { isDragging: false, activeId: null },
     shotId: 'shot-1',
     handleMouseMove: vi.fn(),
@@ -99,7 +97,7 @@ describe('useTimelineViewportController', () => {
       imagesCount: 2,
       hasExistingTrailingVideo: true,
     });
-    expect(mocks.getTimelineDimensions).toHaveBeenCalledWith(input.framePositions, [12, 24, 36, 80]);
+    expect(mocks.getTimelineDimensions).toHaveBeenCalledWith(input.framePositions, [12, 36, 80]);
     expect(mocks.useGlobalEvents).toHaveBeenCalledWith(expect.objectContaining({
       isDragging: false,
       activeId: undefined,

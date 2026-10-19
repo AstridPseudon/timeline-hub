@@ -1,4 +1,3 @@
-import type { RefObject } from 'react';
 import type { PairData } from '../../Timeline/TimelineContainer/types';
 import type { GenerationRow } from '@/domains/generation/types';
 import type { SegmentSlot } from '@/shared/hooks/segments';
@@ -41,7 +40,6 @@ export interface UseSegmentSlotModeResolvedProps {
   loadPositions: (options?: { silent?: boolean; reason?: string }) => Promise<void>;
   navigateWithTransition: (doNavigation: () => void) => void;
   addOptimisticPending: (pairShotGenerationId: string) => void;
-  trailingFrameUpdateRef?: RefObject<((endFrame: number) => void) | null>;
   onOpenPreviewDialog?: (startAtPairIndex: number) => void;
 }
 

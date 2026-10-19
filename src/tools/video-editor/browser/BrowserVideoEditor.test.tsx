@@ -23,7 +23,7 @@ function scopedServices(timelineId: string): VideoEditorScopedServices {
   return {
     contract: 'astrid.video-editor.scoped-services.v1',
     scope: { instanceId: 'editor-full', projectId: 'project-1', timelineId },
-    shots: { shots: [], isLoading: false, error: null, refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn() },
+    shots: { shots: [], isLoading: false, error: null, refetchShots: vi.fn() },
     mediaLightbox: { Lightbox: () => null, loadGenerationForLightbox: vi.fn(async () => null) },
     agentChat: { registerTimeline: vi.fn(), unregisterTimeline: vi.fn() },
     toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn(), info: vi.fn() },

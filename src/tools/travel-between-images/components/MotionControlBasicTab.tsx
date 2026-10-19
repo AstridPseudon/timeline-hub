@@ -1,18 +1,14 @@
 import React from 'react';
 import { Info, Settings } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
 import { Switch } from '@/shared/components/ui/switch';
 import { Label } from '@/shared/components/ui/primitives/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { HoverScrubVideo } from '@/shared/components/media/HoverScrubVideo';
 import { ActiveLoRAsDisplay } from '@/domains/lora/components';
 import { MotionPresetSectionHeader } from '@/shared/components/MotionPresetSelector/MotionPresetSectionHeader';
-import { SelectedPresetCard } from './SelectedPresetCard';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { PresetSampleGeneration } from '@/shared/types/presetMetadata';
 import type { ActiveLora } from '@/domains/lora/types/lora';
 import type { TravelGuidanceMode } from '@/shared/lib/tasks/travelGuidance';
-import type { PhaseConfig } from '../settings';
 import {
   getModelSpec,
   resolveGenerationPolicy,
@@ -30,22 +26,15 @@ interface MotionControlBasicTabProps {
   hasStructureVideo?: boolean;
   smoothContinuations?: boolean;
   onSmoothContinuationsChange?: (value: boolean) => void;
-  isSelectedPresetKnown: boolean;
   allPresets: MotionPresetOption[];
   isCustomConfig: boolean;
   selectedPhasePresetId?: string | null;
   builtinDefaultId: string;
   onPresetSelect: (preset: MotionPresetOption) => void;
   onCustomClick: () => void;
-  onOpenPresetModal: () => void;
-  phaseConfig?: PhaseConfig;
-  onSwitchToAdvanced: () => void;
-  onPhasePresetRemove: () => void;
-  onAddLoraClick: () => void;
   selectedLoras: ActiveLora[];
   onRemoveLora: (loraId: string) => void;
   onLoraStrengthChange: (loraId: string, strength: number) => void;
-  availableLoras: LoraModel[];
   onAddTriggerWord?: (trigger: string) => void;
   renderLoraHeaderActions?: () => React.ReactNode;
 }
@@ -57,22 +46,15 @@ export const MotionControlBasicTab: React.FC<MotionControlBasicTabProps> = ({
   hasStructureVideo,
   smoothContinuations,
   onSmoothContinuationsChange,
-  isSelectedPresetKnown,
   allPresets,
   isCustomConfig,
   selectedPhasePresetId,
   builtinDefaultId,
   onPresetSelect,
   onCustomClick,
-  onOpenPresetModal,
-  phaseConfig,
-  onSwitchToAdvanced,
-  onPhasePresetRemove,
-  onAddLoraClick,
   selectedLoras,
   onRemoveLora,
   onLoraStrengthChange,
-  availableLoras,
   onAddTriggerWord,
   renderLoraHeaderActions,
 }) => {
@@ -89,87 +71,74 @@ export const MotionControlBasicTab: React.FC<MotionControlBasicTabProps> = ({
     <div className="space-y-4">
       {spec.ui.motionPresets && (
         <div className="space-y-3">
-          {isSelectedPresetKnown ? (
-            <div className="space-y-3">
-              <MotionPresetSectionHeader
-                tooltipContent={(
-                  <>
-                    Select a motion preset to control how your video moves.
-                    <br />
-                    Model type (I2V/VACE) is auto-determined by structure video.
-                  </>
-                )}
-                onBrowsePresets={onOpenPresetModal}
-              />
+          <MotionPresetSectionHeader
+            tooltipContent={(
+              <>
+                Select a motion preset to control how your video moves.
+                <br />
+                Model type (I2V/VACE) is auto-determined by structure video.
+              </>
+            )}
+          />
 
-              <div className="flex flex-wrap gap-2">
-                {allPresets.map((preset) => {
-                  const isSelected = !isCustomConfig && selectedPhasePresetId === preset.id;
-                  const isBuiltinDefault = preset.id === builtinDefaultId;
-                  const sampleVideo = preset.metadata.sample_generations?.find(
-                    (generation: PresetSampleGeneration) => generation.type === 'video',
-                  );
+          <div className="flex flex-wrap gap-2">
+            {allPresets.map((preset) => {
+              const isSelected = !isCustomConfig && selectedPhasePresetId === preset.id;
+              const isBuiltinDefault = preset.id === builtinDefaultId;
+              const sampleVideo = preset.metadata.sample_generations?.find(
+                (generation: PresetSampleGeneration) => generation.type === 'video',
+              );
 
-                  return (
-                    <button
-                      key={preset.id}
-                      onClick={() => onPresetSelect(preset)}
-                      className={
-                        `relative group flex items-center gap-2 px-3 py-2 rounded-lg border ` +
-                        (isSelected
-                          ? 'bg-blue-500/20 border-blue-500 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30'
-                          : isBuiltinDefault
-                            ? 'bg-muted border-primary/30 hover:border-primary/50 hover:bg-muted/80'
-                            : 'bg-muted/50 border-border hover:border-primary/50 hover:bg-muted')
-                      }
-                    >
-                      {sampleVideo && (
-                        <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0">
-                          <HoverScrubVideo
-                            src={sampleVideo.url}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="flex min-w-0 flex-col items-start">
-                        {isBuiltinDefault ? (
-                          <span className="text-sm font-medium whitespace-nowrap preserve-case">
-                            {preset.metadata.name || 'Preset'}{' '}
-                            <span className="font-normal text-muted-foreground">(default)</span>
-                          </span>
-                        ) : (
-                          <span className="text-sm font-medium truncate preserve-case">
-                            {preset.metadata.name || 'Preset'}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-
+              return (
                 <button
-                  onClick={onCustomClick}
+                  key={preset.id}
+                  onClick={() => onPresetSelect(preset)}
                   className={
                     `relative group flex items-center gap-2 px-3 py-2 rounded-lg border ` +
-                    (isCustomConfig
+                    (isSelected
                       ? 'bg-blue-500/20 border-blue-500 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30'
-                      : 'bg-muted/50 border-border hover:border-primary/50 hover:bg-muted')
+                      : isBuiltinDefault
+                        ? 'bg-muted border-primary/30 hover:border-primary/50 hover:bg-muted/80'
+                        : 'bg-muted/50 border-border hover:border-primary/50 hover:bg-muted')
                   }
                 >
-                  <Settings className="h-4 w-4" />
-                  <span className="text-sm font-medium">Custom</span>
+                  {sampleVideo && (
+                    <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0">
+                      <HoverScrubVideo
+                        src={sampleVideo.url}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex min-w-0 flex-col items-start">
+                    {isBuiltinDefault ? (
+                      <span className="text-sm font-medium whitespace-nowrap preserve-case">
+                        {preset.metadata.name || 'Preset'}{' '}
+                        <span className="font-normal text-muted-foreground">(default)</span>
+                      </span>
+                    ) : (
+                      <span className="text-sm font-medium truncate preserve-case">
+                        {preset.metadata.name || 'Preset'}
+                      </span>
+                    )}
+                  </div>
                 </button>
-              </div>
-            </div>
-          ) : (
-            <SelectedPresetCard
-              presetId={selectedPhasePresetId!}
-              phaseConfig={phaseConfig}
-              onSwitchToAdvanced={onSwitchToAdvanced}
-              onChangePreset={onOpenPresetModal}
-              onRemovePreset={onPhasePresetRemove}
-            />
-          )}
+              );
+            })}
+
+            <button
+              onClick={onCustomClick}
+              className={
+                `relative group flex items-center gap-2 px-3 py-2 rounded-lg border ` +
+                (isCustomConfig
+                  ? 'bg-blue-500/20 border-blue-500 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30'
+                  : 'bg-muted/50 border-border hover:border-primary/50 hover:bg-muted')
+              }
+            >
+              <Settings className="h-4 w-4" />
+              <span className="text-sm font-medium">Custom</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -203,20 +172,10 @@ export const MotionControlBasicTab: React.FC<MotionControlBasicTabProps> = ({
       )}
 
       <div className="space-y-4 pt-4 border-t">
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={onAddLoraClick}
-        >
-          Add or manage LoRAs
-        </Button>
-
         <ActiveLoRAsDisplay
           selectedLoras={selectedLoras}
           onRemoveLora={onRemoveLora}
           onLoraStrengthChange={onLoraStrengthChange}
-          availableLoras={availableLoras}
           className="mt-4"
           onAddTriggerWord={onAddTriggerWord}
           renderHeaderActions={renderLoraHeaderActions}

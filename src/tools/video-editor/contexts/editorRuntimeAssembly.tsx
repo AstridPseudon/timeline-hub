@@ -556,7 +556,6 @@ export interface UseEditorRuntimeSyncOptions {
   projectObjects?: ProjectObjectStorage;
   /** User the effect/sequence catalogs and legacy effects query resolve
    *  against. */
-  catalogUserId: string | null;
   /** Host-specific gating for the legacy effects query (the embed host also
    *  requires a user id). */
   effectsQueryEnabled: boolean;
@@ -607,7 +606,6 @@ export function useEditorRuntimeSync({
   projectId,
   timelineId,
   projectObjects,
-  catalogUserId,
   effectsQueryData,
   timelineServices = PUBLIC_TIMELINE_SERVICE_HOOKS,
   effectCatalog,
@@ -641,11 +639,8 @@ export function useEditorRuntimeSync({
     ? settings?.notificationRegistryRef
     : undefined;
 
-  const effectResources = useResolvedEffectCatalog(catalogUserId, effectCatalog);
-  const sequenceComponentResources = useResolvedSequenceComponentCatalog(
-    catalogUserId,
-    sequenceComponentCatalog,
-  );
+  const effectResources = useResolvedEffectCatalog(effectCatalog);
+  const sequenceComponentResources = useResolvedSequenceComponentCatalog(sequenceComponentCatalog);
 
   const { store, editor, chrome, editorOps } = useTimelineState(timelineServices, initialTimelineData);
   const diagnosticCollection = useVideoEditorRuntime().diagnosticCollection;

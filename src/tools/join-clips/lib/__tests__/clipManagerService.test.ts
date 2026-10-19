@@ -10,26 +10,11 @@ import {
   getClipsNeedingDuration,
   normalizeClipSlots,
   reorderClipsAndPrompts,
-  updateClipInArray,
   clearClipVideo,
 } from '../clipManagerService';
 import type { VideoClip, TransitionPrompt } from '../../clipTypes';
 
 // Mock dependencies that aren't used by the pure functions we're testing
-vi.mock('@/shared/lib/videoUploader', () => ({
-  extractVideoMetadataFromUrl: vi.fn(),
-  uploadVideoToStorage: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/imageUploader', () => ({
-  uploadBlobToStorage: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/videoPosterExtractor', () => ({
-  extractVideoPosterFrame: vi.fn(),
-  extractVideoFinalFrame: vi.fn(),
-}));
-
 vi.mock('@/shared/lib/errorHandling/runtimeError', () => ({
   normalizeAndPresentError: vi.fn(),
 }));
@@ -275,25 +260,6 @@ describe('reorderClipsAndPrompts', () => {
     const clips = [makeClip('a', 'a.mp4'), makeClip('b', 'b.mp4')];
     const result = reorderClipsAndPrompts(clips, [], 'unknown', 'b');
     expect(result.clips).toBe(clips);
-  });
-});
-
-describe('updateClipInArray', () => {
-  it('updates the matching clip', () => {
-    const clips = [
-      makeClip('1', 'a.mp4'),
-      makeClip('2', 'b.mp4'),
-    ];
-
-    const result = updateClipInArray(clips, '2', { url: 'updated.mp4' });
-    expect(result[0].url).toBe('a.mp4');
-    expect(result[1].url).toBe('updated.mp4');
-  });
-
-  it('returns unchanged array when ID not found', () => {
-    const clips = [makeClip('1', 'a.mp4')];
-    const result = updateClipInArray(clips, 'unknown', { url: 'x.mp4' });
-    expect(result[0].url).toBe('a.mp4');
   });
 });
 

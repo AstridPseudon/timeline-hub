@@ -3,14 +3,10 @@
  * Handles the complex logic of shifting subsequent images and compression.
  */
 
-import { useCallback, type RefObject } from 'react';
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
 import type { GenerationRow } from '@/domains/generation/types';
-import {
-  runSerializedTimelineWrite,
-  runTimelineWriteWithTimeout,
-} from '@/shared/lib/timelineWriteQueue';
+import { runSerializedTimelineWrite } from '@/shared/lib/timelineWriteQueue';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { persistTimelineFrameBatch } from '@/shared/lib/timelineFrameBatchPersist';
 
@@ -30,12 +26,6 @@ interface UseFrameCountUpdaterProps {
   maxFrameLimit: number;
   /** Reload positions after update */
   loadPositions: (options?: { silent?: boolean; reason?: string }) => Promise<void>;
-  /**
-   * Ref to a function that updates trailing end frame through the position system.
-   * When set, trailing segment changes get instant optimistic updates on the timeline.
-   * When null/undefined, falls back to direct DB write + loadPositions (slower round-trip).
-   */
-  trailingFrameUpdateRef?: RefObject<((endFrame: number) => void) | null>;
 }
 
 interface UseFrameCountUpdaterReturn {
@@ -47,7 +37,7 @@ interface UseFrameCountUpdaterReturn {
  * Provides a function to update the frame count for a pair.
  *
  * For pairs with an end image: shifts subsequent images forward.
- * For trailing segments (no end image): updates metadata.end_frame on the start image.
+ * Trailing segments (no end image) have no document-native frame count to write, so they are left unchanged.
  *
  * When exceeding maxFrameLimit, compresses subsequent pairs proportionally.
  */
@@ -57,7 +47,6 @@ export function useFrameCountUpdater({
   generationMode,
   maxFrameLimit,
   loadPositions,
-  trailingFrameUpdateRef,
 }: UseFrameCountUpdaterProps): UseFrameCountUpdaterReturn {
   const SEGMENT_FRAME_LOG_PREFIX = '[SegmentFramePersist]';
   const queryClient = useQueryClient();
@@ -129,86 +118,8 @@ export function useFrameCountUpdater({
     // Calculate effective frame count (capped at maxFrameLimit)
     const effectiveNewFrameCount = Math.min(newFrameCount, maxFrameLimit);
 
-    // Handle trailing segment (no end image) - update via position system or fallback to direct DB write
     if (isTrailingSegment) {
-      const newEndFrame = startFrame + effectiveNewFrameCount;
-
-      // Preferred path: update through the position system for instant optimistic updates.
-      // The position system (updatePositions) handles both the visual update and the DB persist.
-      if (trailingFrameUpdateRef?.current) {
-        trailingFrameUpdateRef.current(newEndFrame);
-        return { finalFrameCount: effectiveNewFrameCount };
-      }
-
-      // Fallback: direct DB write + reload (used when position system not connected, e.g. batch mode)
-      await runSerializedTimelineWrite(
-        shotId,
-        'segment-trailing-frame-update',
-        async (signal) => {
-
-          const current = await runTimelineWriteWithTimeout(
-            'segment-trailing-fetch-metadata',
-            async () => {
-              const { data, error } = await supabase().from('shot_generations')
-                .select('metadata')
-                .eq('id', pairShotGenerationId)
-                .single();
-              if (error) throw error;
-              return data;
-            },
-            {
-              upstreamSignal: signal,
-              onTimeout: ({ pendingMs, timeoutMs }) => {
-                log(`${SEGMENT_FRAME_LOG_PREFIX} trailing metadata fetch timed out`, {
-                  shotId: shortId(shotId),
-                  pairShotGenerationId: shortId(pairShotGenerationId),
-                  timeoutMs,
-                  pendingMs,
-                });
-              },
-            },
-          );
-
-          const currentMetadata = (current?.metadata as Record<string, unknown>) || {};
-
-          await runTimelineWriteWithTimeout(
-            'segment-trailing-update-metadata',
-            async (signal) => {
-              const { error } = await supabase().from('shot_generations')
-                .update({
-                  metadata: {
-                    ...currentMetadata,
-                    end_frame: newEndFrame,
-                  },
-                })
-                .eq('id', pairShotGenerationId)
-                .abortSignal(signal);
-              if (error) throw error;
-            },
-            {
-              upstreamSignal: signal,
-              onTimeout: ({ pendingMs, timeoutMs }) => {
-                log(`${SEGMENT_FRAME_LOG_PREFIX} trailing metadata update timed out`, {
-                  shotId: shortId(shotId),
-                  pairShotGenerationId: shortId(pairShotGenerationId),
-                  newEndFrame,
-                  timeoutMs,
-                  pendingMs,
-                });
-              },
-            },
-          );
-
-        },
-        logQueuePhase,
-      );
-
-      if (loadPositions) {
-        await loadPositions({ silent: true, reason: 'end-frame-update' });
-      }
-      queryClient.refetchQueries({ queryKey: queryKeys.segments.liveTimeline(shotId) });
-
-      return { finalFrameCount: effectiveNewFrameCount };
+      return;
     }
 
     // Standard case: pair with end image - shift subsequent images
@@ -315,7 +226,6 @@ export function useFrameCountUpdater({
     generationMode,
     loadPositions,
     maxFrameLimit,
-    trailingFrameUpdateRef,
     logQueuePhase,
     queryClient,
   ]);

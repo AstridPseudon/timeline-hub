@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useShotFinalVideos, type ShotFinalVideo } from '@/tools/travel-between-images/hooks/video/useShotFinalVideos.ts';
 import type { VideoEditorShotsHost, CanonicalShotTimelineDraft, CanonicalShotTimelinePublication, CanonicalShotTimelineScope } from '@/tools/video-editor/runtime/ports.ts';
 import {
   createShotCompositionAdapter,
@@ -11,8 +10,6 @@ import {
 import { isProviderUnavailableError } from '@/tools/video-editor/data/DataProvider.ts';
 import { selectCanonicalShotViewModels } from '@/tools/video-editor/data/canonicalShotViewModel.ts';
 
-const MAX_DISMISSED_FINAL_VIDEOS = 256;
-const dismissedFinalVideoIds = new Set<string>();
 const EMPTY_PENDING_OCCURRENCES: readonly ShotPlacement[] = [];
 
 export function useAstridShotsHost(
@@ -20,8 +17,6 @@ export function useAstridShotsHost(
   parentDocumentId: string,
   shotCompositionPort?: ShotCompositionPort,
 ): VideoEditorShotsHost & { pendingOccurrences: readonly ShotPlacement[] } {
-  const { finalVideoMap } = useShotFinalVideos(projectId);
-  const [, forceRender] = useState(0);
   const shotComposition = useMemo(
     () => shotCompositionPort ? createShotCompositionAdapter(shotCompositionPort) : null,
     [shotCompositionPort],
@@ -292,29 +287,6 @@ export function useAstridShotsHost(
   const shots = useMemo(() => selectCanonicalShotViewModels(scopedComposition), [scopedComposition]);
   const refetchShots = useCallback(() => setReloadToken((value) => value + 1), []);
 
-  const dismissFinalVideo = useCallback((finalVideoId: string) => {
-    dismissedFinalVideoIds.add(finalVideoId);
-    if (dismissedFinalVideoIds.size > MAX_DISMISSED_FINAL_VIDEOS) {
-      const oldest = dismissedFinalVideoIds.values().next().value;
-      if (oldest !== undefined) {
-        dismissedFinalVideoIds.delete(oldest);
-      }
-    }
-    forceRender((count) => count + 1);
-  }, []);
-
-  const visibleFinalVideoMap = useMemo(() => {
-    const filtered = new Map<string, ShotFinalVideo>();
-
-    for (const [shotId, finalVideo] of finalVideoMap.entries()) {
-      if (!dismissedFinalVideoIds.has(finalVideo.id)) {
-        filtered.set(shotId, finalVideo);
-      }
-    }
-
-    return filtered;
-  }, [finalVideoMap]);
-
   return useMemo(() => ({
     shots,
     isLoading: canonicalLoading,
@@ -322,8 +294,6 @@ export function useAstridShotsHost(
     refetchShots,
     allImagesCount: shots.reduce((total, shot) => total + (shot.images?.length ?? 0), 0),
     noShotImagesCount: 0,
-    finalVideoMap: visibleFinalVideoMap,
-    dismissFinalVideo,
     shotComposition,
     canonicalOccurrences: activeCanonicalOccurrences,
     pendingOccurrences: scopedPendingOccurrences,
@@ -338,10 +308,8 @@ export function useAstridShotsHost(
     adoptCanonicalComposition,
   }), [
     canonicalLoading,
-    dismissFinalVideo,
     refetchShots,
     shots,
-    visibleFinalVideoMap,
     shotComposition,
     scopedComposition,
     canonicalCompositionError,

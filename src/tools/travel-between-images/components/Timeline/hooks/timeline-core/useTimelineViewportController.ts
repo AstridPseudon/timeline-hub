@@ -12,13 +12,11 @@ interface TimelineDragStateLike {
 interface UseTimelineViewportControllerInput {
   framePositions: Map<string, number>;
   pendingDropFrame: number | null;
-  pendingDuplicateFrame: number | null;
   pendingExternalAddFrame: number | null;
   imagesCount: number;
   hasExistingTrailingVideo: boolean;
   timelineRef: RefObject<HTMLDivElement>;
   containerRef: RefObject<HTMLDivElement>;
-  isEndpointDraggingRef: RefObject<boolean>;
   dragState: TimelineDragStateLike;
   shotId: string;
   handleMouseMove: (event: MouseEvent) => void;
@@ -141,13 +139,11 @@ export function useTimelineViewportController(
   const {
     framePositions,
     pendingDropFrame,
-    pendingDuplicateFrame,
     pendingExternalAddFrame,
     imagesCount,
     hasExistingTrailingVideo,
     timelineRef,
     containerRef,
-    isEndpointDraggingRef,
     dragState,
     shotId,
     handleMouseMove,
@@ -166,7 +162,6 @@ export function useTimelineViewportController(
     framePositions,
     [
       pendingDropFrame,
-      pendingDuplicateFrame,
       pendingExternalAddFrame,
       trailingEffectiveEnd,
     ],
@@ -190,19 +185,18 @@ export function useTimelineViewportController(
         fullMax: rawDimensions.fullMax,
         fullRange: rawDimensions.fullRange,
       };
-    } else if (!dragState.isDragging && !isEndpointDraggingRef.current && dragStartDimensionsRef.current) {
+    } else if (!dragState.isDragging && dragStartDimensionsRef.current) {
       dragStartDimensionsRef.current = null;
     }
   }, [
     dragState.activeId,
     dragState.isDragging,
-    isEndpointDraggingRef,
     rawDimensions.fullMax,
     rawDimensions.fullMin,
     rawDimensions.fullRange,
   ]);
 
-  const isDraggingAnything = dragState.isDragging || isEndpointDraggingRef.current;
+  const isDraggingAnything = dragState.isDragging;
 
   let fullMin = rawDimensions.fullMin;
   let fullMax = rawDimensions.fullMax;

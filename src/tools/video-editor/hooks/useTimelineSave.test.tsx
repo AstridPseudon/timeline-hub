@@ -96,8 +96,6 @@ function setup(
       isLoading: false,
       error: null,
       refetchShots: vi.fn(),
-      finalVideoMap: new Map(),
-      dismissFinalVideo: vi.fn(),
     },
     timelineEditability,
   } as unknown as VideoEditorRuntimeContextValue;

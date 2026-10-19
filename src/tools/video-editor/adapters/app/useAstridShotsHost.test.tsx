@@ -7,10 +7,6 @@ import { createShotCompositionAdapter, type ShotPlacement } from '@/tools/video-
 import type { CanonicalShotTimelineDraft, CanonicalShotTimelineScope } from '@/tools/video-editor/runtime/ports.ts';
 import { preserveThumbnailMapIdentity, useAstridShotsHost } from './useAstridShotsHost.ts';
 
-vi.mock('@/tools/travel-between-images/hooks/video/useShotFinalVideos.ts', () => ({
-  useShotFinalVideos: () => ({ finalVideoMap: new Map() }),
-}));
-
 const projectId = 'project-001';
 const parentDocumentId = 'document-primary';
 const occurrenceId = 'occ-1';

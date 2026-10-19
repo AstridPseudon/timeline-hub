@@ -1,7 +1,5 @@
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { PresetMetadata, PresetSampleGeneration } from '@/shared/types/presetMetadata';
 import type { ActiveLora } from '@/domains/lora/types/lora';
-import type { CurrentSettings } from '@/shared/components/PhaseConfigSelectorModal/types';
 import type { TravelGuidanceMode } from '@/shared/lib/tasks/travelGuidance';
 import type { PhaseConfig } from '../settings';
 import type { SelectedModel } from '../settings';
@@ -20,8 +18,6 @@ interface MotionControlModeProps {
 
 interface MotionControlLoraProps {
   selectedLoras: ActiveLora[];
-  availableLoras: LoraModel[];
-  onAddLoraClick: () => void;
   onRemoveLora: (loraId: string) => void;
   onLoraStrengthChange: (loraId: string, strength: number) => void;
   onAddTriggerWord?: (trigger: string) => void;
@@ -32,8 +28,6 @@ interface MotionControlPresetProps {
   selectedPhasePresetId?: string | null;
   onPhasePresetSelect: (presetId: string, config: PhaseConfig, presetMetadata?: PresetMetadata) => void;
   onPhasePresetRemove: () => void;
-  currentSettings: CurrentSettings;
-  featuredPresetIds?: string[];
 }
 
 interface MotionControlAdvancedProps {

@@ -69,13 +69,11 @@ describe('useFinalVideoSectionController', () => {
   });
 
   it('uses the preloaded read-only parent path and exposes derived actions/data', () => {
-    const onDelete = vi.fn();
     const { result } = renderHook(() => useFinalVideoSectionController({
       shotId: 'shot-1',
       projectId: 'project-1',
       onApplySettingsFromTask: vi.fn(),
       getFinalVideoCount: () => 0,
-      onDelete,
       readOnly: true,
       preloadedParent: {
         id: 'parent-1',
@@ -102,14 +100,12 @@ describe('useFinalVideoSectionController', () => {
 
     act(() => {
       result.current.handleMarkAllVariantsViewed();
-      result.current.handleDelete();
       result.current.handleLightboxOpen();
       result.current.handleLightboxClose();
     });
 
     expect(mocks.useVariantBadges).toHaveBeenCalledWith(['child-variant-source-1'], true);
     expect(mocks.useMarkVariantViewed.mock.results[0]?.value.markAllViewed).toHaveBeenCalledWith('child-variant-source-1');
-    expect(onDelete).toHaveBeenCalledWith('parent-1');
     expect(result.current.isLightboxOpen).toBe(false);
     expect(result.current.shouldShowSkeleton).toBe(false);
   });

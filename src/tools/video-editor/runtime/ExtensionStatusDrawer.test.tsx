@@ -40,8 +40,6 @@ function buildRuntimeContext(
       isLoading: false,
       error: null,
       refetchShots: () => {},
-      finalVideoMap: new Map(),
-      dismissFinalVideo: () => {},
     },
     mediaLightbox: {
       Lightbox: (() => null) as unknown as VideoEditorRuntimeContextValue['mediaLightbox']['Lightbox'],

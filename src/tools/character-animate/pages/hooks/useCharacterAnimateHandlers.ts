@@ -1,6 +1,6 @@
 import { useCallback, type ChangeEvent } from 'react';
 
-import { uploadImageToStorage } from '@/shared/lib/media/imageUploader';
+import { requireCloudBackend } from '@/shared/lib/cloudBackend';
 import type { CharacterAnimateBaseState } from './useCharacterAnimateBaseState';
 import { uploadVideoWithPoster } from '../uploadMedia';
 import {
@@ -30,6 +30,7 @@ export function useCharacterAnimateHandlers(state: CharacterAnimateBaseState) {
     motionVideo,
     generateModel,
     setPrompt,
+    attemptCloudBackend,
   } = state;
 
   const handleModeChange = useCallback((newMode: 'animate' | 'replace') => {
@@ -39,18 +40,21 @@ export function useCharacterAnimateHandlers(state: CharacterAnimateBaseState) {
 
   const processImageUpload = useCallback(async (file: File) => {
     await imageUpload.execute(async () => {
-      const uploadedUrl = await uploadImageToStorage(file);
+      const uploadedUrl = await attemptCloudBackend<string>(() => requireCloudBackend('character-animate upload'));
+      if (!uploadedUrl) return;
       setCharacterImageLoaded(false);
       setCharacterImage({ url: uploadedUrl, file });
       if (selectedProjectId) {
         updateField('inputImageUrl', uploadedUrl);
       }
     }, { context: 'CharacterAnimate', toastTitle: 'Upload Failed' });
-  }, [imageUpload, selectedProjectId, setCharacterImageLoaded, setCharacterImage, updateField]);
+  }, [imageUpload, attemptCloudBackend, selectedProjectId, setCharacterImageLoaded, setCharacterImage, updateField]);
 
   const processVideoUpload = useCallback(async (file: File) => {
     await videoUpload.execute(async () => {
-      const { videoUrl, posterUrl } = await uploadVideoWithPoster(file);
+      const uploaded = await attemptCloudBackend(() => uploadVideoWithPoster(file));
+      if (!uploaded) return;
+      const { videoUrl, posterUrl } = uploaded;
       setMotionVideoLoaded(false);
       setMotionVideoPlaying(false);
       setMotionVideo({ url: videoUrl, posterUrl, file });
@@ -58,7 +62,7 @@ export function useCharacterAnimateHandlers(state: CharacterAnimateBaseState) {
         updateFields({ inputVideoUrl: videoUrl, inputVideoPosterUrl: posterUrl });
       }
     }, { context: 'CharacterAnimate', toastTitle: 'Upload Failed' });
-  }, [videoUpload, setMotionVideoLoaded, setMotionVideoPlaying, setMotionVideo, selectedProjectId, updateFields]);
+  }, [videoUpload, attemptCloudBackend, setMotionVideoLoaded, setMotionVideoPlaying, setMotionVideo, selectedProjectId, updateFields]);
 
   const handleCharacterImageUpload = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     await withFirstFile(event.target.files, async (file) => {

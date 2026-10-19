@@ -26,7 +26,6 @@ interface AppCustomEvents {
   'shot-pending-upload-failed': { shotId: string; operationId: string };
 
   // --- Timeline ---
-  'timeline:duplicate-complete': { shotId: string; newItemId: string };
   'timeline:pending-add': { frame: number; shotId?: string };
 
   // --- Editor ---

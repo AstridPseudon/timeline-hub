@@ -9,14 +9,10 @@ interface TrailingEndpointLayerProps {
   trailingEndFrame: number | undefined;
   hasCallbackTrailingVideo: boolean;
   hasLiveTrailingVideo: boolean;
-  isEndpointDragging: boolean;
-  endpointDragFrame: number | null;
   containerWidth: number;
   fullMin: number;
   fullRange: number;
-  maxAllowedGap: number;
   readOnly: boolean;
-  onEndpointMouseDown: (e: React.MouseEvent, endpointId: string) => void;
   onPairClick?: (pairIndex: number) => void;
   trailingVideoUrl: string | null;
   onExtractFinalFrame?: () => Promise<void>;
@@ -28,14 +24,10 @@ export const TrailingEndpointLayer: React.FC<TrailingEndpointLayerProps> = ({
   trailingEndFrame,
   hasCallbackTrailingVideo,
   hasLiveTrailingVideo,
-  isEndpointDragging,
-  endpointDragFrame,
   containerWidth,
   fullMin,
   fullRange,
-  maxAllowedGap,
   readOnly,
-  onEndpointMouseDown,
   onPairClick,
   trailingVideoUrl,
   onExtractFinalFrame,
@@ -68,15 +60,10 @@ export const TrailingEndpointLayer: React.FC<TrailingEndpointLayerProps> = ({
     <TrailingEndpoint
       framePosition={effectiveEndFrame}
       imageFramePosition={imageFrame}
-      isDragging={isEndpointDragging}
-      dragOffset={null}
-      onMouseDown={readOnly ? undefined : (e, endpointId) => onEndpointMouseDown(e, endpointId)}
       timelineWidth={containerWidth}
       fullMinFrames={fullMin}
       fullRange={fullRange}
-      currentDragFrame={isEndpointDragging ? endpointDragFrame : null}
       gapToImage={gapToImage}
-      maxAllowedGap={maxAllowedGap}
       readOnly={readOnly}
       compact={isMultiImage}
       onDurationClick={onPairClick ? () => onPairClick(trailingPairIndex) : undefined}

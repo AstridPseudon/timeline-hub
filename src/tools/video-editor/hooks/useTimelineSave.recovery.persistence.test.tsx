@@ -88,8 +88,6 @@ async function mountRecoveryEditor(options?: {
       isLoading: false,
       error: null,
       refetchShots: vi.fn(),
-      finalVideoMap: new Map(),
-      dismissFinalVideo: vi.fn(),
     },
   } as unknown as VideoEditorRuntimeContextValue;
   const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(

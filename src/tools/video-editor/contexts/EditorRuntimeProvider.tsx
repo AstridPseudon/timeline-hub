@@ -132,7 +132,6 @@ function EditorRuntimeProviderInner({
     projectId: hostServices?.scope.projectId ?? null,
     timelineId,
     projectObjects,
-    catalogUserId: userId,
     effectsQueryEnabled: !effectCatalog && Boolean(userId),
     effectCatalog,
     sequenceComponentCatalog,
@@ -411,8 +410,6 @@ function EditorRuntimeProviderInstance({
     isLoading: false,
     error: null,
     refetchShots: () => {},
-    finalVideoMap: new Map(),
-    dismissFinalVideo: () => {},
   }), []);
 
   const stubMediaLightboxHost = useMemo<VideoEditorMediaLightboxHost>(() => ({

@@ -1,6 +1,6 @@
 import React from 'react';
-import { AddAudioButton } from './AddAudioButton';
-import { GuidanceVideoControls, type GuidanceVideoControlsProps } from './GuidanceVideoControls';
+import type { PrimaryStructureVideo } from '@/shared/lib/tasks/travelBetweenImages';
+import type { OnPrimaryStructureVideoInputChange } from '@/tools/travel-between-images/types/mediaHandlers';
 import { TimelineBottomControls, type TimelineBottomControlsProps } from './TimelineBottomControls';
 import { ZoomControls } from './ZoomControls';
 
@@ -11,22 +11,11 @@ interface TimelineControlsProps {
     readOnly: boolean;
     hasNoImages: boolean;
     zoomLevel: number;
-    fullMax: number;
     showDragHint: boolean;
   };
-  audio: {
-    audioUrl?: string | null;
-    onAudioChange?: (audioUrl: string | null, metadata: { duration: number; name?: string } | null) => void;
-  };
   guidance: {
-    primaryStructureVideo: GuidanceVideoControlsProps['primaryStructureVideo'];
-    structureVideos?: GuidanceVideoControlsProps['structureVideos'];
-    onAddStructureVideo?: GuidanceVideoControlsProps['onAddStructureVideo'];
-    onUpdateStructureVideo?: GuidanceVideoControlsProps['onUpdateStructureVideo'];
-    onPrimaryStructureVideoInputChange?: GuidanceVideoControlsProps['onPrimaryStructureVideoInputChange'];
-    onShowVideoBrowser: () => void;
-    isUploadingStructureVideo: boolean;
-    setIsUploadingStructureVideo: (uploading: boolean) => void;
+    primaryStructureVideo: PrimaryStructureVideo;
+    onPrimaryStructureVideoInputChange?: OnPrimaryStructureVideoInputChange;
   };
   zoom: {
     onZoomIn: () => void;
@@ -48,7 +37,6 @@ interface TimelineControlsProps {
 
 export const TimelineControls: React.FC<TimelineControlsProps> = ({
   timeline,
-  audio,
   guidance,
   zoom,
   bottom,
@@ -70,28 +58,6 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
           onZoomToStart={zoom.onZoomToStart}
           hasNoImages={timeline.hasNoImages}
         />
-
-        {!audio.audioUrl && audio.onAudioChange && !timeline.readOnly && (
-          <AddAudioButton projectId={timeline.projectId ?? undefined} shotId={timeline.shotId} onAudioChange={audio.onAudioChange} />
-        )}
-
-        {(guidance.structureVideos ? true : !guidance.primaryStructureVideo.path) && (
-          <GuidanceVideoControls
-            shotId={timeline.shotId}
-            projectId={timeline.projectId ?? undefined}
-            readOnly={timeline.readOnly}
-            hasNoImages={timeline.hasNoImages}
-            primaryStructureVideo={guidance.primaryStructureVideo}
-            structureVideos={guidance.structureVideos}
-            fullMax={timeline.fullMax}
-            onAddStructureVideo={guidance.onAddStructureVideo}
-            onUpdateStructureVideo={guidance.onUpdateStructureVideo}
-            onPrimaryStructureVideoInputChange={guidance.onPrimaryStructureVideoInputChange}
-            onShowVideoBrowser={guidance.onShowVideoBrowser}
-            isUploadingStructureVideo={guidance.isUploadingStructureVideo}
-            setIsUploadingStructureVideo={guidance.setIsUploadingStructureVideo}
-          />
-        )}
       </div>
     )}
 

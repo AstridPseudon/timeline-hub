@@ -436,7 +436,7 @@ const ScenarioCard: FC<{
     assetResolver: { resolveAssetUrl: async (f: string) => f },
     auth: { userId: 'harness' },
     project: { projectId: null },
-    shots: { shots: undefined, isLoading: false, error: null, refetchShots: () => {}, finalVideoMap: new Map(), dismissFinalVideo: () => {} },
+    shots: { shots: undefined, isLoading: false, error: null, refetchShots: () => {} },
     mediaLightbox: { Lightbox: (() => null) as unknown as VideoEditorRuntimeContextValue['mediaLightbox']['Lightbox'], loadGenerationForLightbox: async () => null },
     agentChat: { registerTimeline: () => {}, unregisterTimeline: () => {} },
     toast: { error: () => '', success: () => '', warning: () => '', info: () => '' },

@@ -161,13 +161,6 @@ vi.mock('@/shared/hooks/settings/useToolSettings', () => ({
   }),
 }));
 
-vi.mock('@/tools/travel-between-images/hooks/video/useShotFinalVideos', () => ({
-  useShotFinalVideos: () => ({
-    finalVideoMap: new Map(),
-    isLoading: false,
-  }),
-}));
-
 vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
   useTimelineState: () => {
     const editor = {
@@ -797,7 +790,7 @@ describe('VideoEditorProvider', () => {
     const services: VideoEditorScopedServices = {
       contract: 'astrid.video-editor.scoped-services.v1',
       scope: { instanceId: 'editor-dialog', projectId: 'scoped-project', projectSlug: 'scoped-slug', timelineId: 'scoped-timeline' },
-      shots: { shots: [], isLoading: false, error: null, refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalThumbnailUrls: new Map([['occurrence-1', 'thumbnail.png']]) },
+      shots: { shots: [], isLoading: false, error: null, refetchShots: vi.fn(), canonicalThumbnailUrls: new Map([['occurrence-1', 'thumbnail.png']]) },
       mediaLightbox: { Lightbox: () => null, loadGenerationForLightbox: vi.fn(async () => null) },
       agentChat: { registerTimeline: vi.fn(), unregisterTimeline: vi.fn() },
       toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn(), info: vi.fn() },
@@ -921,7 +914,7 @@ describe('VideoEditorProvider', () => {
     const provider: DataProvider = { loadTimeline: vi.fn(), saveTimeline: vi.fn(), loadAssetRegistry: vi.fn(), resolveAssetUrl: vi.fn() };
     const services = (name: string, load: typeof fullLoad | typeof dialogLoad): VideoEditorScopedServices => ({
       contract: 'astrid.video-editor.scoped-services.v1', scope: { instanceId: name, projectId: 'same-project', timelineId: name },
-      shots: { shots: [], isLoading: false, error: null, refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn() },
+      shots: { shots: [], isLoading: false, error: null, refetchShots: vi.fn() },
       mediaLightbox: { Lightbox: () => null, loadGenerationForLightbox: load },
       agentChat: { registerTimeline: vi.fn(), unregisterTimeline: vi.fn() },
       toast: { error: toastError, success: vi.fn(), warning: vi.fn(), info: vi.fn() },
@@ -1525,7 +1518,7 @@ describe('VideoEditorProvider', () => {
     );
 
     expect(useEffectsMock).toHaveBeenCalledWith('user-1', { enabled: false });
-    expect(useResolvedEffectCatalogMock).toHaveBeenCalledWith('user-1', injectedCatalog);
+    expect(useResolvedEffectCatalogMock).toHaveBeenCalledWith(injectedCatalog);
   });
 
   it('cleans extension-owned effect records and command contributions on removal after HMR replacement', async () => {

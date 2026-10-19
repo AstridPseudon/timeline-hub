@@ -8,7 +8,6 @@ const mocks = vi.hoisted(() => ({
   normalizeAndPresentError: vi.fn(),
   useTimelineFrameUpdates: vi.fn(),
   useTimelineInitialization: vi.fn(),
-  useSegmentPromptMetadata: vi.fn(),
   extractPairPrompts: vi.fn(),
 }));
 
@@ -39,7 +38,6 @@ vi.mock('./useTimelineInitialization', () => ({
 }));
 
 vi.mock('../settings/useSegmentPromptMetadata', () => ({
-  useSegmentPromptMetadata: (...args: unknown[]) => mocks.useSegmentPromptMetadata(...args),
   extractPairPrompts: (...args: unknown[]) => mocks.extractPairPrompts(...args),
 }));
 
@@ -50,7 +48,6 @@ describe('useTimelinePositionUtils', () => {
     mocks.normalizeAndPresentError.mockReset();
     mocks.useTimelineFrameUpdates.mockReset();
     mocks.useTimelineInitialization.mockReset();
-    mocks.useSegmentPromptMetadata.mockReset();
     mocks.extractPairPrompts.mockReset();
   });
 
@@ -66,10 +63,6 @@ describe('useTimelinePositionUtils', () => {
     });
     mocks.useTimelineInitialization.mockReturnValue({
       initializeTimelineFrames: vi.fn().mockResolvedValue(undefined),
-    });
-    mocks.useSegmentPromptMetadata.mockReturnValue({
-      updatePairPrompts: vi.fn(),
-      clearEnhancedPrompt: vi.fn(),
     });
     mocks.extractPairPrompts.mockReturnValue([{ pairId: 'pair-1' }]);
     mocks.refetchQueries.mockResolvedValue(undefined);

@@ -3,10 +3,9 @@ import { Button } from '@/shared/components/ui/button';
 import { Label } from '@/shared/components/ui/primitives/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Slider } from '@/shared/components/ui/slider';
-import { Video, X, Images } from 'lucide-react';
-import { ResourceBrowserModalBase } from '@/features/resources/components/ResourceBrowserModalBase';
+import { X } from 'lucide-react';
 import { useBatchGuidanceVideoController } from './hooks/useBatchGuidanceVideoController';
-import type { AuthoredVideoMetadata, VideoMetadata } from '@/shared/lib/media/videoUploader';
+import type { AuthoredVideoMetadata, VideoMetadata } from '@/shared/lib/media/videoMetadata';
 import type { TravelGuidanceMode } from '@/shared/lib/tasks/travelGuidance';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
@@ -48,97 +47,10 @@ export const BatchGuidanceVideo: React.FC<BatchGuidanceVideoProps> = ({
     treatment,
     timelineFramePositions,
     onVideoUploaded,
-    readOnly,
   });
 
   if (!videoUrl) {
-    if (readOnly) {
-      return null;
-    }
-
-    return (
-      <>
-        <div className="mb-4">
-          <div
-            ref={controller.dropZoneRef}
-            className={`w-full sm:w-2/3 md:w-1/2 lg:w-1/3 p-4 border-2 border-dashed rounded-lg transition-colors ${
-              controller.isDragging
-                ? 'border-primary bg-primary/10'
-                : 'border-border bg-muted/20 hover:border-muted-foreground/50'
-            }`}
-            onDragEnter={controller.handleDragEnter}
-            onDragLeave={controller.handleDragLeave}
-            onDragOver={controller.handleDragOver}
-            onDrop={controller.handleDrop}
-          >
-            <div className="flex flex-col items-center gap-3 text-center">
-              <Video className={`h-8 w-8 ${controller.isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
-              <p className="text-xs text-muted-foreground">
-                {controller.isDragging
-                  ? 'Drop video here'
-                  : 'Add a motion guidance video to control the animation'}
-              </p>
-
-              <input
-                ref={controller.fileInputRef}
-                type="file"
-                accept="video/mp4,video/webm,video/quicktime"
-                onChange={controller.handleFileSelect}
-                disabled={controller.isUploading}
-                className="hidden"
-                id={`batch-video-upload-${shotId}`}
-              />
-
-              <div className="flex gap-2 w-full">
-                <Label htmlFor={`batch-video-upload-${shotId}`} className="m-0 cursor-pointer flex-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={controller.isUploading}
-                    className="w-full"
-                    asChild
-                  >
-                    <span>
-                      {controller.isUploading
-                        ? `Uploading... ${Math.round(controller.uploadProgress)}%`
-                        : 'Upload'}
-                    </span>
-                  </Button>
-                </Label>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={controller.isUploading}
-                  onClick={() => controller.setShowBrowser(true)}
-                  className="flex-1"
-                >
-                  <Images className="h-4 w-4 mr-1" />
-                  Browse
-                </Button>
-              </div>
-
-              {controller.isUploading && (
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className="bg-primary h-2 rounded-full transition-all"
-                    style={{ width: `${Math.round(controller.uploadProgress)}%` }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <ResourceBrowserModalBase
-          isOpen={controller.showBrowser}
-          onOpenChange={controller.setShowBrowser}
-          resourceType="structure-video"
-          title="Browse Guidance Videos"
-          onResourceSelect={controller.handleResourceSelect}
-        />
-      </>
-    );
+    return null;
   }
 
   return (

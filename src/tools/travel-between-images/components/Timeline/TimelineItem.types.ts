@@ -22,11 +22,8 @@ interface TimelineItemInteractionModel {
 
 interface TimelineItemActionModel {
   onDelete?: (imageId: string) => void;
-  onDuplicate?: (imageId: string, timeline_frame: number) => void;
   onVariantDrop?: (params: VariantDropParams) => Promise<void>;
   onVariantDropTargetChange?: (targetId: string | null) => void;
-  duplicatingImageId?: string;
-  duplicateSuccessImageId?: string;
 }
 
 interface TimelineItemSelectionModel {

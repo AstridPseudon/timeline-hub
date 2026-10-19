@@ -42,7 +42,4 @@ export {
   applyStructureVideo,
 } from './applySettings/resourceService';
 
-export {
-  applyFramePositionsToExistingImages,
-  replaceImagesIfRequested,
-} from './applySettings/imageService';
+export { applyFramePositionsToExistingImages } from './applySettings/imageService';

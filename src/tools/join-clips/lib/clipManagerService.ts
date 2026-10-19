@@ -31,14 +31,9 @@ export {
 } from './clipManager/normalization';
 
 export {
-  uploadClipVideo,
-} from './clipManager/upload';
-
-export {
   reorderClipsAndPrompts,
 } from './clipManager/ordering';
 
 export {
-  updateClipInArray,
   clearClipVideo,
 } from './clipManager/updates';
