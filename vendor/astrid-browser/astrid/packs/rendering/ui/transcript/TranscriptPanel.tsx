@@ -189,6 +189,7 @@ const clock = (seconds: number) => {
 /** The whole timeline's words. Canonical document state and mutation authority stay in the host adapter. */
 export function TranscriptPanel(props: TranscriptPanelProps) {
   const adapter = props.video?.transcript;
+  const preview = props.video?.preview;
   const settingsOpen = props.settings?.open ?? false;
   const observing = props.visible;
   const [revision, refresh] = useState(0);
@@ -215,9 +216,26 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
   const savedScrollTop = useRef(0);
   const scrollRestorePending = useRef(false);
   const userScrollIntent = useRef(false);
+  const previewDelay = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previewHandle = useRef<{ dispose(): void } | null>(null);
   const request = useRef(0);
   const mounted = useRef(true);
+  const clearPreview = useCallback(() => {
+    if (previewDelay.current !== null) {
+      clearTimeout(previewDelay.current);
+      previewDelay.current = null;
+    }
+    previewHandle.current?.dispose();
+    previewHandle.current = null;
+  }, []);
   useEffect(() => () => { mounted.current = false; request.current += 1; }, []);
+  useEffect(() => {
+    if (props.visible) return;
+    clearPreview();
+  }, [props.visible, clearPreview]);
+  useEffect(() => () => clearPreview(), [clearPreview]);
+  const snapshot = adapter?.getSnapshot() ?? EMPTY;
+  useEffect(() => clearPreview(), [preview, snapshot, clearPreview]);
   useEffect(() => {
     if (!observing || !adapter) return;
     const documentSubscription = adapter.subscribe(() => refresh((value) => value + 1));
@@ -246,7 +264,6 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
     };
   }, [settingsOpen, props.visible, props.settings]);
 
-  const snapshot = adapter?.getSnapshot() ?? EMPTY;
   const mediaChoices = adapter?.getMediaChoices() ?? [];
   // The generic reader sees inside placed shots; without it, the adapter's own clip projection is used.
   let timeline: TimelineSnapshot | undefined;
@@ -486,7 +503,8 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
         </div>
       </div>}
       <div ref={scroll} data-testid="transcript-reading-area" className="mx-3 mb-3 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-lg border border-border bg-background px-4 py-4" style={READING_AREA_STYLE}
-        onWheel={() => { userScrollIntent.current = true; scrollRestorePending.current = false; setFollowing(false); }} onTouchMove={() => { userScrollIntent.current = true; scrollRestorePending.current = false; setFollowing(false); }} onPointerDown={() => { userScrollIntent.current = true; scrollRestorePending.current = false; }} onKeyDown={(event) => { if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(event.key)) { userScrollIntent.current = true; scrollRestorePending.current = false; } }} onScroll={() => {
+        onWheel={() => { clearPreview(); userScrollIntent.current = true; scrollRestorePending.current = false; setFollowing(false); }} onTouchMove={() => { clearPreview(); userScrollIntent.current = true; scrollRestorePending.current = false; setFollowing(false); }} onPointerDown={() => { userScrollIntent.current = true; scrollRestorePending.current = false; }} onKeyDown={(event) => { if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(event.key)) { userScrollIntent.current = true; scrollRestorePending.current = false; } }} onScroll={() => {
+          clearPreview();
           const container = scroll.current;
           if (!container) return;
           const current = container.scrollTop;
@@ -567,7 +585,18 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
                         {line.parts.map((part, index) => {
                           const key = part.word ? JSON.stringify([line.occurrence.id, part.word.id]) : '';
                           const item = part.word ? targets[targetIndex.get(key) ?? -1] : undefined;
-                          return item ? <span key={index} id={`${props.instanceId}-target-${targetIndex.get(key)}`} data-word-id={part.word!.id} role="button" tabIndex={-1} title={metadata(item)} onClick={() => { if (window.getSelection()?.isCollapsed !== false) seek(item); }} style={{ ...(speaking(line, part.word!.id) ? SPOKEN_WORD_STYLE : WORD_STYLE), ...(detailsOpen && target?.key === item.key ? TARGET_WORD_STYLE : {}) }}
+                          const wordTiming = part.word ? line.timing.get(part.word.id) : undefined;
+                          return item ? <span key={index} id={`${props.instanceId}-target-${targetIndex.get(key)}`} data-word-id={part.word!.id} role="button" tabIndex={-1} title={preview && wordTiming?.timing === 'word' ? undefined : metadata(item)} onMouseEnter={(event) => {
+                            clearPreview();
+                            if (!preview || !props.visible || wordTiming?.timing !== 'word' || !finite(wordTiming.timelineStart) || wordTiming.timelineStart < 0) return;
+                            const element = event.currentTarget;
+                            previewDelay.current = setTimeout(() => {
+                              previewDelay.current = null;
+                              if (!props.visible) return;
+                              const rect = element.getBoundingClientRect();
+                              previewHandle.current = preview.showFrame({ seconds: wordTiming.timelineStart!, anchor: { left: rect.left, top: rect.top, width: rect.width, height: rect.height } });
+                            }, 150);
+                          }} onMouseLeave={clearPreview} onClick={() => { if (window.getSelection()?.isCollapsed !== false) seek(item); }} style={{ ...(speaking(line, part.word!.id) ? SPOKEN_WORD_STYLE : WORD_STYLE), ...(detailsOpen && target?.key === item.key ? TARGET_WORD_STYLE : {}) }}
                             className={`cursor-pointer hover:bg-muted ${speaking(line, part.word!.id) ? 'bg-primary/15 text-foreground' : ''}`}>{part.text}</span> : part.text;
                         })}
                       </span></span>;
