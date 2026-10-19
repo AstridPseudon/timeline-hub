@@ -62,7 +62,28 @@ writers. `createDefaultTimeline.ts:41-71` is explicit setup/bootstrap only.
 `restoreHistory` remains the guarded `timeline.restore` adapter; it is not a
 replacement for ordinary command undo.
 
-## Ordered Next 5 App slices
+## Current priority override — orchestrator AUDIT2216Z, received 22:50Z
+
+M1 now additionally requires command move → ordinary legacy edit → save → reload,
+with either success or a visible refusal plus durable, recoverable local work.
+app-m1-mixed-edit-safety owns that real browser proof/minimal safety fix; no
+Runtime compatibility writer. M2 PRIORITY #1 is every remaining writer converted
+to EditCommands, then deletion of the legacy publisher; the same mixed journey
+must then end in successful accepted reload and guarded undo. This supersedes
+calling group moves the first App implementation item. The group dependency
+sequence below remains valid within that slice, not the current global priority.
+
+Current Next5: (1) ordinary editor track/clip producers, beginning the mixed
+track-rename case, on official Agent operations/capture; (2) popup add/swap with
+immutable media/occurrence pins; (3) placement plus Supabase writer disposition/
+conversion; (4) remaining adapters/registry/transcript/data producers and delete
+the last snapshot publisher once all callers pass; (5) canonical group migration/
+occurrence/retrack/new-track/free-multi sequence and its three original positives.
+Accepted-history and conflict UI/clone branches proceed independently; M2 merges
+still wait for the recorded M1 gate. Missing command schemas are Agent handoff
+dependencies, never permission to invent local wire names.
+
+## Group dependency sequence and popup slice details
 
 Each slice is small enough to branch independently where its Agent artifact
 dependency is available. “Remove” means remove the named old writer after the
