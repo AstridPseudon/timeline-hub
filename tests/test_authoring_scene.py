@@ -15,6 +15,7 @@ from runtime_protocol.errors import (AuthoringInvocationRevocationReason as Reas
                                      AuthorizationError, AuthorizationGuard as Guard)
 from runtime_protocol.timeline_commit import digest
 from test_timeline_accept import wire, acceptance, count
+from test_selected_media_commit import snapshot
 
 
 @pytest.fixture
@@ -194,9 +195,16 @@ def test_atomic_candidate_and_lifecycle_fences(bound, case):
     elif case == 'revoked': port.close()
     elif case == 'source': w.relay.closed = True
     elif case == 'new_retry': port.scene_evaluator({'different post-rebase candidate': True})
-    before = count(w.s, 'parent_composition_publications')
-    with pytest.raises(Exception): port.accept(prepared)
-    assert count(w.s, 'parent_composition_publications') == before
+    before = snapshot(w.s)
+    before_publications = count(w.s, 'parent_composition_publications')
+    if case == 'revoked':
+        with pytest.raises(AuthorizationError) as error: port.accept(prepared)
+        assert error.value._authorization_guard is Guard.AUTHORING_INVOCATION_REVOKED
+        assert error.value._authoring_invocation_reason is Reason.EVALUATION_CANCELLED
+    else:
+        with pytest.raises(Exception): port.accept(prepared)
+    assert snapshot(w.s) == before
+    assert count(w.s, 'parent_composition_publications') == before_publications
     assert w.s.lookup_request(w.p, 'main', body['request_id']) is None
     port.close()
 
@@ -335,7 +343,8 @@ def test_superseded_candidate_cannot_complete_late(bound):
     port.close()
 
 
-def test_authority_loss_after_staged_publication_rolls_back_atomic_accept(bound, monkeypatch):
+@pytest.mark.parametrize('failure', ['credential', 'invocation'])
+def test_authority_loss_after_staged_publication_rolls_back_atomic_accept(bound, monkeypatch, failure):
     w = bound
     body = wire(w.p)
     prepared = acceptance(w.s, w.p, request=body)
@@ -344,11 +353,21 @@ def test_authority_loss_after_staged_publication_rolls_back_atomic_accept(bound,
     original = w.s.publish_parent_composition
     def lose_after_staging(*args, **kwargs):
         result = original(*args, **kwargs)
-        w.credentials.disable_actor(w.identity['actor'])
+        if failure == 'credential':
+            w.credentials.disable_actor(w.identity['actor'])
+        else:
+            # Cancellation after the nested publication reaches the final
+            # request-scoped invocation check inside the outer transaction.
+            port.close()
         return result
     monkeypatch.setattr(w.s, 'publish_parent_composition', lose_after_staging)
     before = count(w.s, 'parent_composition_publications')
-    with pytest.raises(AuthorizationError): port.accept(prepared)
+    full_before = snapshot(w.s)
+    with pytest.raises(AuthorizationError) as error: port.accept(prepared)
+    if failure == 'invocation':
+        assert error.value._authorization_guard is Guard.AUTHORING_INVOCATION_REVOKED
+        assert error.value._authoring_invocation_reason is Reason.EVALUATION_CANCELLED
+    assert snapshot(w.s) == full_before
     assert count(w.s, 'parent_composition_publications') == before
     assert w.s.lookup_request(w.p, 'main', body['request_id']) is None
     port.close()
