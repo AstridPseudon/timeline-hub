@@ -9,7 +9,6 @@ content and reruns checks in the configured child interpreter.
 from __future__ import annotations
 
 import base64
-import fcntl
 import hashlib
 import json
 import os
@@ -19,6 +18,8 @@ import subprocess
 import tempfile
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping, Protocol
+
+from runtime_protocol import platform
 
 
 class WorkerPreparationError(RuntimeError):
@@ -509,7 +510,7 @@ def _locked_journal(path: Path):
             path.parent.mkdir(parents=True, exist_ok=True)
             self.fd = os.open(path.with_suffix(path.suffix + ".lock"), os.O_CREAT | os.O_RDWR, 0o600)
             try:
-                fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                platform.lock_file(self.fd, blocking=False)
             except BlockingIOError as exc:
                 os.close(self.fd)
                 raise PreparationJournalError("another coordinator owns this preparation journal") from exc
@@ -517,7 +518,7 @@ def _locked_journal(path: Path):
 
         def __exit__(self, *_exc):
             try:
-                fcntl.flock(self.fd, fcntl.LOCK_UN)
+                platform.unlock_file(self.fd)
             finally:
                 os.close(self.fd)
 

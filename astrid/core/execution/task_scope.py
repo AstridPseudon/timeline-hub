@@ -1,4 +1,4 @@
-"""Task scopes: containment of an ordinary command by its process group.
+"""Task scopes: native containment of an ordinary command.
 
 The command leader starts a new session, so its process group is its own.
 Nothing observes the tree while the command runs.  Cleanup signals the group
@@ -8,24 +8,27 @@ survivors named.  A census is evidence, never signal authority: a process found
 only by census (e.g. one that left the group with ``setsid``) is reported, not
 signalled.
 
-Accepted limitation: on normal completion ``Popen.poll()`` has already reaped
-the leader before the group kill, so there is a tiny window in which the pgid
-could in principle be recycled.  When the leader is still alive (cancel,
-timeout, shutdown) the group is signalled before it is reaped.
+Runtime retains a Windows Job Object for the whole scope. POSIX cleanup uses
+the unreaped group where available; after a caller reaps its leader, recovery
+binds individual native identities after reconciling the original birth.
 """
 
 from __future__ import annotations
 
-import fcntl
 import json
-import os
-import signal
 import subprocess
+import sys
 import threading
 import time
+import weakref
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
+
+from runtime_protocol import platform
+from runtime_protocol.dirfd import filesystem as os
+
+from .platform_helpers import signal_observed_group
 
 _DARWIN_ZOMBIE = 5
 
@@ -63,6 +66,7 @@ class ScopeReport:
 # scope settles; the next host start kills whatever a dead host left behind.
 _journal: Path | None = None
 _journal_lock = threading.Lock()
+_owners: weakref.WeakValueDictionary[int, subprocess.Popen] = weakref.WeakValueDictionary()
 
 
 def set_orphan_journal(path: Path | str | None) -> None:
@@ -74,9 +78,10 @@ def _journal_edit(path: Path, edit) -> None:
     """Read-modify-write the journal under a lock; never raises."""
     try:
         with _journal_lock:
-            fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+            fd = os.open(path, os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
             with os.fdopen(fd, "r+") as stream:
-                fcntl.flock(stream, fcntl.LOCK_EX)
+                platform.owner_only(stream.fileno())
+                platform.lock_file(stream.fileno())
                 try:
                     entries = json.loads(stream.read() or "[]")
                     entries = entries if isinstance(entries, list) else []
@@ -86,7 +91,7 @@ def _journal_edit(path: Path, edit) -> None:
                 stream.seek(0)
                 stream.truncate()
                 stream.write(json.dumps(entries))
-                os.fchmod(stream.fileno(), 0o600)
+                stream.flush()
     except OSError:
         pass
 
@@ -94,6 +99,8 @@ def _journal_edit(path: Path, edit) -> None:
 def _birth(pid: int) -> str | None:
     from astrid.core.execution import process_group as pg
     try:
+        if sys.platform == "win32":
+            return pg.process_birth_identity(pid) or None
         info = pg._process_snapshot().get(pid)
     except Exception:
         return None
@@ -115,12 +122,39 @@ def reap_orphans(path: Path | str) -> list[str]:
     except (OSError, ValueError):
         return []
     notes: list[str] = []
+    remaining = []
+    if sys.platform == "win32":
+        # The dead host closed its last Job handles. A persisted PID is never
+        # authority to acquire or terminate a replacement Windows process.
+        for entry in entries if isinstance(entries, list) else []:
+            try:
+                pid, birth = int(entry["pid"]), entry.get("start")
+                deadline = time.monotonic() + 3.0
+                while True:
+                    identity = platform.process_identity(pid)
+                    if identity is None or (birth and identity["birth_id"] != birth):
+                        break
+                    if not birth:
+                        remaining.append(entry)
+                        notes.append(f"orphan scope {pid} unchecked: birth unavailable")
+                        break
+                    if time.monotonic() >= deadline:
+                        remaining.append(entry)
+                        notes.append(f"orphan scope {pid} still live after Job owner exit")
+                        break
+                    time.sleep(0.05)
+            except (TypeError, ValueError, KeyError, OSError) as exc:
+                remaining.append(entry)
+                notes.append(f"orphan scope entry {entry!r} unchecked: {exc}")
+        _journal_edit(path, lambda entries: remaining)
+        return notes
     from astrid.core.execution import process_group as pg
     for entry in entries if isinstance(entries, list) else []:
         try:
             pid, pgid, start = int(entry["pid"]), int(entry["pgid"]), entry.get("start")
             census = pg._process_snapshot()
             if not census:
+                remaining.append(entry)
                 notes.append(f"orphan scope {pgid} unchecked: census unavailable")
                 continue
             leader = census.get(pid)
@@ -129,8 +163,8 @@ def reap_orphans(path: Path | str) -> list[str]:
             members = [p for p, i in census.items() if i.pgid == pgid and i.status != _DARWIN_ZOMBIE]
             if not members:
                 continue
-            for sig, wait in ((signal.SIGTERM, 2.0), (signal.SIGKILL, 3.0)):
-                _killpg(pgid, sig)
+            for sig, wait in ((platform.TERM, 2.0), (platform.KILL, 3.0)):
+                signal_observed_group(pgid, sig, leader_birth=start)
                 deadline = time.monotonic() + wait
                 while time.monotonic() < deadline:
                     members = [p for p, i in pg._process_snapshot().items()
@@ -143,21 +177,23 @@ def reap_orphans(path: Path | str) -> list[str]:
             notes.append(f"killed orphan task scope {pgid} ({entry.get('task')}) left by a crashed host"
                          if not members else
                          f"orphan task scope {pgid} ({entry.get('task')}) still running after KILL: {members}")
+            if members:
+                remaining.append(entry)
         except Exception as exc:
+            remaining.append(entry)
             notes.append(f"orphan scope entry {entry!r} unchecked: {exc}")
-    try:
-        path.write_text("[]")
-    except OSError:
-        pass
+    _journal_edit(path, lambda entries: remaining)
     return notes
 
 
 def spawn(argv: Sequence[str], **popen_kwargs: Any) -> subprocess.Popen:
     """Start ``argv`` as the leader of a new session and group."""
-    process = subprocess.Popen(list(argv), **{**popen_kwargs, "start_new_session": True})
+    process = platform.spawn_tree(list(argv), **{**popen_kwargs, "start_new_session": True})
     process._astrid_task_scope = True  # type: ignore[attr-defined]
+    process._astrid_scope_birth = _birth(process.pid)
+    _owners[process.pid] = process
     if _journal is not None:
-        entry = {"pid": process.pid, "pgid": process.pid, "start": _birth(process.pid),
+        entry = {"pid": process.pid, "pgid": process.pid, "start": process._astrid_scope_birth,
                  "task": str(popen_kwargs.get("cwd") or "")}
         _journal_edit(_journal, lambda entries: [*entries, entry])
     return process
@@ -204,11 +240,21 @@ def _alive(pgid: int, known: dict[int, str]) -> dict[int, str]:
 
 def _killpg(pgid: int, sig: int) -> str:
     try:
-        os.killpg(pgid, sig)
+        process = _owners.get(pgid)
+        if process is None:
+            return "process scope lacks its retained owner"
+        try:
+            platform.signal_tree(process, sig)
+        except ProcessLookupError:
+            # Some command callers already reaped the leader. Reconcile the
+            # recorded birth before Runtime binds each remaining member.
+            signal_observed_group(pgid, sig, leader_birth=process._astrid_scope_birth)
     except ProcessLookupError:
         return ""
     except PermissionError as exc:  # a zombie-only group can answer EPERM on macOS
         return f"killpg({int(sig)}): {exc}"
+    except (OSError, ValueError) as exc:
+        return f"scope signal({int(sig)}): {exc}"
     return ""
 
 
@@ -222,13 +268,21 @@ def stop(process: subprocess.Popen, grace: float = 2.0, kill_wait: float = 3.0) 
 
 def _stop(process: subprocess.Popen, grace: float, kill_wait: float) -> ScopeReport:
     pgid = process.pid
+    if sys.platform == "win32":
+        try:
+            if getattr(process, "_runtime_job", None) is None:
+                raise RuntimeError("task scope lacks retained Job custody")
+            platform.stop_tree(process, grace=max(grace, 0.0))
+            return ScopeReport("settled", pgid)
+        except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+            return ScopeReport("unresolved", pgid, detail=str(exc))
     notes: list[str] = []
     try:
         members = _scope_census(pgid, pgid)  # evidence for naming survivors
     except Exception as exc:
         members, _ = {}, notes.append(f"pre-census failed: {exc}")
     # A group member is signalled only through the anchored group.
-    notes.append(_killpg(pgid, signal.SIGTERM))
+    notes.append(_killpg(pgid, platform.TERM))
     escalated = False
     deadline = time.monotonic() + max(grace, 0.0)
     alive: dict[int, str] = dict(members)
@@ -241,7 +295,7 @@ def _stop(process: subprocess.Popen, grace: float, kill_wait: float) -> ScopeRep
             problem = f"census failed: {exc}"
         if (leader_gone and not alive and not problem) or time.monotonic() >= deadline:
             if (alive or problem or not leader_gone) and not escalated:
-                notes.append(_killpg(pgid, signal.SIGKILL))
+                notes.append(_killpg(pgid, platform.KILL))
                 escalated = True
                 deadline = time.monotonic() + kill_wait
             else:
@@ -252,7 +306,7 @@ def _stop(process: subprocess.Popen, grace: float, kill_wait: float) -> ScopeRep
         process.wait(timeout=kill_wait)
     except subprocess.TimeoutExpired:
         try:
-            os.kill(process.pid, signal.SIGKILL)  # we hold the unreaped leader
+            platform.signal_tree(process, platform.KILL)
             process.wait(timeout=kill_wait)
         except (ProcessLookupError, subprocess.TimeoutExpired):
             pass

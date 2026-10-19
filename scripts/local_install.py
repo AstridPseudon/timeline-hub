@@ -6,6 +6,8 @@ Only a new installation root is accepted; existing realms are never upgraded.
 """
 from __future__ import annotations
 
+from runtime_protocol import platform
+
 import argparse
 import hashlib
 import json
@@ -13,7 +15,6 @@ import os
 from pathlib import Path
 import shlex
 import shutil
-import signal
 import socket
 import subprocess
 import sys
@@ -139,18 +140,13 @@ def check_acp(url: str, root: Path) -> None:
 
 
 def owned_group_alive(group: int) -> bool:
-    """Darwin can report EPERM while an exiting group has no signalable member."""
-    try:
-        os.killpg(group, 0)
-        return True
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        # EPERM alone is not evidence of completion. Inspect only group IDs
-        # and process states; zombies cannot execute or hold server sockets.
-        rows = subprocess.check_output(["/bin/ps", "-axo", "pgid=,stat="], text=True)
-        return any(int(fields[0]) == group and not fields[1].startswith("Z")
-                   for line in rows.splitlines() if len(fields := line.split()) == 2)
+    """Observe live group members without sending a numeric-PGID signal."""
+    from astrid.core.execution.process_group import _process_snapshot
+
+    census = _process_snapshot()
+    if not census:
+        raise RuntimeError("app process census is unavailable")
+    return any(info.pgid == group and info.status != 5 for info in census.values())
 
 
 def check_app(argv: list[str], *, cwd: Path, env: dict[str, str], root: Path, url: str,
@@ -158,8 +154,8 @@ def check_app(argv: list[str], *, cwd: Path, env: dict[str, str], root: Path, ur
     """Exercise actual local startup, then retire only this owned process group."""
     log = root / "app-startup.log"
     with log.open("w") as output:
-        process = subprocess.Popen(argv, cwd=cwd, env=env, stdout=output, stderr=subprocess.STDOUT,
-                                   start_new_session=True)
+        process = platform.spawn_tree(argv, cwd=cwd, env=env, stdout=output, stderr=subprocess.STDOUT,
+                                   )
         try:
             deadline = time.monotonic() + timeout
             while time.monotonic() < deadline:
@@ -187,23 +183,7 @@ def check_app(argv: list[str], *, cwd: Path, env: dict[str, str], root: Path, ur
         finally:
             # Every child of dev:local belongs to this new group; the user app
             # and separately managed Runtime do not belong to it.
-            for sig, wait in ((signal.SIGINT, 10), (signal.SIGTERM, 5), (signal.SIGKILL, 5)):
-                try:
-                    os.killpg(process.pid, sig)
-                except ProcessLookupError:
-                    break
-                except PermissionError:
-                    if not owned_group_alive(process.pid):
-                        break
-                    raise
-                try:
-                    process.wait(timeout=wait)
-                except subprocess.TimeoutExpired:
-                    continue
-                if not owned_group_alive(process.pid):
-                    break
-            else:
-                raise RuntimeError("could not retire the proof app process group")
+            platform.stop_tree(process, grace=10)
 
 
 def snapshot(identity: dict[str, str], target: Path, env: dict[str, str]) -> None:

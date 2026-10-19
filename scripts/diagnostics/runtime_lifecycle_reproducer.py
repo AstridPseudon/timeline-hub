@@ -15,6 +15,8 @@ failure.  A separate explicit-client test covers the no-bootstrap path.
 
 from __future__ import annotations
 
+from runtime_protocol import platform
+
 import argparse
 import json
 import os
@@ -239,7 +241,8 @@ def _run(
         owner_pid_alive = False
         if discovered_pid:
             try:
-                os.kill(int(discovered_pid), 0)
+                if platform.process_identity(int(discovered_pid)) is None:
+                    raise ProcessLookupError(int(discovered_pid))
                 owner_pid_alive = True
             except ProcessLookupError:
                 owner_pid_alive = False
@@ -326,16 +329,17 @@ def _run(
         if launcher_mode == "pinned" and owner_metadata.get("pid"):
             pid = int(owner_metadata["pid"])
             try:
-                os.kill(pid, 15)
+                platform.signal_process(platform.process_identity(pid), platform.TERM)
                 deadline = time.monotonic() + 2.0
                 while time.monotonic() < deadline:
                     try:
-                        os.kill(pid, 0)
+                        if platform.process_identity(pid) is None:
+                            raise ProcessLookupError(pid)
                     except ProcessLookupError:
                         break
                     time.sleep(0.05)
                 else:
-                    os.kill(pid, 9)
+                    platform.signal_process(platform.process_identity(pid), platform.KILL)
             except ProcessLookupError:
                 pass
             report["cleanup"] = {"pid": pid, "terminated": True}
@@ -344,18 +348,19 @@ def _run(
 
 def _terminate_pid(pid: int) -> None:
     try:
-        os.kill(pid, 15)
+        platform.signal_process(platform.process_identity(pid), platform.TERM)
     except ProcessLookupError:
         return
     deadline = time.monotonic() + 2.0
     while time.monotonic() < deadline:
         try:
-            os.kill(pid, 0)
+            if platform.process_identity(pid) is None:
+                raise ProcessLookupError(pid)
         except ProcessLookupError:
             return
         time.sleep(0.05)
     try:
-        os.kill(pid, 9)
+        platform.signal_process(platform.process_identity(pid), platform.KILL)
     except ProcessLookupError:
         pass
 
@@ -425,7 +430,8 @@ def _run_recovery_case(case: str, source_manifest: Path | None = None) -> dict[s
         final_alive = False
         if final_pid:
             try:
-                os.kill(final_pid, 0)
+                if platform.process_identity(final_pid) is None:
+                    raise ProcessLookupError(final_pid)
                 final_alive = True
             except ProcessLookupError:
                 final_alive = False

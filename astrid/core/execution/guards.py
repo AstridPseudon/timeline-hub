@@ -12,12 +12,14 @@ import hashlib
 import heapq
 import json
 import os
+import tempfile
 import threading
 import time
-import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
+
+from runtime_protocol import platform
 
 
 class ExecutionGuardError(RuntimeError):
@@ -78,7 +80,8 @@ def read_evidence_status(path: str | Path) -> dict[str, Any] | None:
     alive = False
     if isinstance(pid, int) and pid > 0:
         try:
-            os.kill(pid, 0)
+            if platform.process_identity(pid) is None:
+                raise ProcessLookupError(pid)
             alive = True
         except PermissionError:
             alive = True

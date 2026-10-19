@@ -245,6 +245,14 @@ def _sdk_cpu_session_fixture(tmp_path, monkeypatch):
             return None
         return original_kill(pid, sig)
     monkeypatch.setattr(os, "kill", observed_kill)
+    observed_identity = backend_module.platform.process_identity
+    identity_reads = []
+    def native_identity(pid):
+        if pid in (daemon, child):
+            identity_reads.append(pid)
+            return {"pid": pid, "birth_id": birth if pid == daemon else child_birth}
+        return observed_identity(pid)
+    monkeypatch.setattr(backend_module.platform, "process_identity", native_identity)
     monkeypatch.setenv("ASTRID_VIBECOMFY_ATTESTED_REVISION", revision)
     monkeypatch.setenv("ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST", content)
     class Response(io.BytesIO):
@@ -269,7 +277,7 @@ def _sdk_cpu_session_fixture(tmp_path, monkeypatch):
     assert session_module._session_composite_ownership_verified(session, daemon) is True
     return SimpleNamespace(profile=profile, session=session, daemon=daemon, child=child,
                            observations=observations, ownership_reads=ownership_reads, controls=controls,
-                           signals=signals, http=http, root=root)
+                           signals=signals, identity_reads=identity_reads, http=http, root=root)
 
 
 def _sdk_cpu_handoff_fixture(tmp_path, monkeypatch):
@@ -366,6 +374,7 @@ def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_
     assert f.controls == ["/interrupt", "/queue", "/api/free", "/queue", "/api/free"]
     assert len(f.ownership_reads) > 8  # Real composite verifier ran at admission and both controls.
     assert {p.name: p.read_bytes() for p in f.session.iterdir()} == before
+    assert f.identity_reads and all(pid in (f.daemon, f.child) for pid in f.identity_reads)
     assert all(sig == 0 for _, sig in f.signals)
     assert host._native_engine_graph is None and not host.managed_tool_session.occupied
     assert all(getattr(host, name) is None for name in ("_vibecomfy_warmth_hint", "_vibecomfy_current_warmth_hint", "_vibecomfy_requested_warmth_hint"))
@@ -543,6 +552,7 @@ def test_sdk_cpu_handoff_serializes_real_control_admission_and_shutdown(tmp_path
     assert not any(thread.is_alive() for thread in threads)
     assert sorted(outcomes) == ["admission-rejected", "shutdown-gate", "transition"]
     assert f.controls == ["/interrupt", "/queue", "/api/free", "/queue", "/api/free"]
+    assert f.identity_reads and all(pid in (f.daemon, f.child) for pid in f.identity_reads)
     assert all(sig == 0 for _, sig in f.signals)
 
 

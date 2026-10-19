@@ -5,7 +5,6 @@ no environment discovery, credential access, generic RPC, or admission fallback.
 """
 from __future__ import annotations
 
-import fcntl
 import hashlib
 import json
 import math
@@ -90,28 +89,27 @@ def _write_bridge_io_failure(frame: bytes | None) -> None:
     Pipe backpressure must not hold cleanup. The brief O_NONBLOCK change is
     shared with concurrent writers; they may observe EAGAIN, and restoration
     can overwrite a concurrent flag change. No exclusive-FD claim is made.
-    F_SETFL restores the saved caller flags; kernel-written status such as
-    Darwin FWASWRITTEN is not caller-settable and may change on a write.
+    Only the blocking flag is restored; other descriptor flags are preserved.
     Regular-file writes occur after cleanup; filesystem latency is not bounded.
     Never close fd2, retry, create a sink or leave a diagnostic thread behind.
     """
     if type(frame) is not bytes or not frame or len(frame) > 512:
         return
-    saved_flags = None
+    was_blocking = None
     try:
         mode = os.fstat(2).st_mode
         if stat.S_ISFIFO(mode) or stat.S_ISSOCK(mode):
-            saved_flags = fcntl.fcntl(2, fcntl.F_GETFL)
-            fcntl.fcntl(2, fcntl.F_SETFL, saved_flags | os.O_NONBLOCK)
+            was_blocking = os.get_blocking(2)
+            os.set_blocking(2, False)
             os.write(2, frame)
         elif stat.S_ISREG(mode):
             os.write(2, frame)
     except Exception:
         pass
     finally:
-        if saved_flags is not None:
+        if was_blocking is not None:
             try:
-                fcntl.fcntl(2, fcntl.F_SETFL, saved_flags)
+                os.set_blocking(2, was_blocking)
             except Exception:
                 pass
 

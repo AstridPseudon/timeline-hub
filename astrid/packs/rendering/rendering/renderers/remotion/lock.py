@@ -14,21 +14,10 @@ from contextvars import ContextVar
 from pathlib import Path
 from typing import Any, Iterator
 
+from filelock import Timeout
+from runtime_protocol import platform
+
 from astrid.core.foundation.paths import REPO_ROOT
-
-try:
-    import fcntl
-except ImportError:  # pragma: no cover - filelock is the Windows path.
-    fcntl = None  # type: ignore[assignment]
-
-try:
-    from filelock import FileLock, Timeout
-except ImportError:  # pragma: no cover - exercised only without optional dep.
-    FileLock = None  # type: ignore[assignment]
-
-    class Timeout(Exception):
-        pass
-
 
 REMOTION_LOCK_PATH = REPO_ROOT / "remotion" / ".astrid-registry.lock"
 REMOTION_LOCK_OWNER_ENV = "ASTRID_REMOTION_LOCK_OWNER"
@@ -47,14 +36,12 @@ class _FcntlLock:
         self._handle: Any | None = None
 
     def acquire(self, timeout: float | None = None) -> _FcntlLock:
-        if fcntl is None:  # pragma: no cover - requires Windows without filelock.
-            raise RuntimeError("Remotion rendering requires filelock or fcntl")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._handle = self.path.open("a+b")
         deadline = None if timeout is None or timeout < 0 else time.monotonic() + timeout
         while True:
             try:
-                fcntl.flock(self._handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                platform.lock_file(self._handle.fileno(), blocking=False)
                 return self
             except BlockingIOError as exc:
                 if timeout == 0 or (deadline is not None and time.monotonic() >= deadline):
@@ -66,29 +53,14 @@ class _FcntlLock:
     def release(self) -> None:
         if self._handle is None:
             return
-        if fcntl is None:  # pragma: no cover - guarded by acquire().
-            raise RuntimeError("Remotion rendering requires filelock or fcntl")
-        fcntl.flock(self._handle.fileno(), fcntl.LOCK_UN)
+        platform.unlock_file(self._handle.fileno())
         self._handle.close()
         self._handle = None
 
 
 def _lock_for(path: Path) -> Any:
-    """Return a cross-process lock for the exact path supplied.
-
-    Prefer the local ``fcntl`` implementation on POSIX.  Recent ``filelock``
-    releases unlink a Unix lock file during release; a process already waiting
-    on that inode can then overlap a newcomer that creates and locks a different
-    inode at the same path.  Keeping the file in place gives every contender a
-    stable kernel lock identity.  ``filelock`` remains the Windows path where
-    ``fcntl`` is unavailable.
-    """
-
-    if fcntl is not None:
-        return _FcntlLock(path)
-    if FileLock is not None:  # pragma: no cover - Windows path.
-        return FileLock(str(path))
-    return _FcntlLock(path)  # pragma: no cover - raises a focused error.
+    """Keep a stable lock inode; Runtime supplies the native locking API."""
+    return _FcntlLock(path)
 
 
 def _resolved_lock_path() -> Path:

@@ -14,6 +14,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
+from runtime_protocol import platform
+
 from .autobootstrap import (
     AutoBootstrapError,
     _launcher_command,
@@ -113,8 +115,7 @@ def _pack_host_lock(runtime_support: Path) -> Iterator[None]:
         raise UpgradeError(f"generic Astrid pack host lock is unavailable: {lock_path}") from exc
     try:
         try:
-            import fcntl
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            platform.lock_file(handle.fileno(), blocking=False)
         except BlockingIOError as exc:
             raise UpgradeError("generic Astrid pack host lifecycle is busy") from exc
         except (ImportError, OSError) as exc:
@@ -122,8 +123,7 @@ def _pack_host_lock(runtime_support: Path) -> Iterator[None]:
         yield
     finally:
         try:
-            import fcntl
-            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            platform.unlock_file(handle.fileno())
         except (ImportError, OSError):
             pass
         handle.close()
