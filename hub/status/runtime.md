@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T21:33:29Z | dispatcher heartbeat 15s -->
+<!-- main | 2026-10-19T21:38:40Z | dispatcher heartbeat 10s -->
 # runtime — 2026-10-19T21:28Z
 Milestone: M1 ACTIVE — walking-skeleton proof PASS; closure WAITS App restores two deleted conflict/open-draft restart journeys GREEN per latest orchestrator directive. M0 COMPLETE. No M2 product started.
 Integrated: runtime tl/integration4af7a20; product/contract/artifacts unchanged from browser-tested82df3cf. Durable commit/history/retained inputs, recorder integrity, real bootstrap, generated0.2.1/schema4e52/artifact9b18. Last2merges test-only: authentic pre-v31 fixtures +isolated wheel probe.
