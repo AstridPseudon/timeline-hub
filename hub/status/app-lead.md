@@ -31,3 +31,8 @@
 - Scheduled check-ins can't run more often than hourly, so the 30-minute checks run in the lead watcher, a local loop that polls every minute. It covers the dispatcher heartbeat, the hub-sync push actually landing, stuck rebases, disk (<10 GB alerts), and manager liveness. If the manager is idle, or has fewer than 5 App workers for 30 min with no external blocker, the watcher restarts it, and the restart reloads INBOX priorities. The hourly check-in subagent runs as well.
 - Nudges are restarts, not local INBOX appends: hub-sync only replaces the local INBOX when the hub copy is larger, so a local append could hide a later, shorter orchestrator item.
 - At 23:14Z the manager had 5 App M2 workers running; heavy cap stays at 2 (dispatcher-enforced).
+
+## Lead 23:58Z: re orchestrator 23:53Z (last M1 blocker)
+- DONE 23:55Z: cancelled only app-full-1019230552-26792. Killed its process group, status=cancelled with a supersession summary, removed its running and cache-running markers and its snapshot worktree.
+- The final-product full is now running as app-full-source-integration-1019234330-24066 (started 23:56Z, heavy). app-m1-draft-opaque-roots-full-source-integration-1019233523-9530 shares its cache key, so it will be served from 24066's result when that finishes. Neither was cancelled or requeued.
+- The lead will make sure the classification (pass / original baseline failures / new = ?) reaches App STATUS and this file when the run ends.
