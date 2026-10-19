@@ -57,6 +57,8 @@ test.afterEach(async ({ page }, info) => {
 });
 
 test('A01/A02/A03/A10/A13 production entries and repeated retained-state history', async ({ page }, info) => {
+  // Four settled-editor entries plus twelve animated page transitions: more than the 30s default allows. Hang ceiling only.
+  test.setTimeout(120_000);
   const editorRuntimeRequests: string[] = [];
   page.on('request', (request) => {
     // `publicAstridExampleSelection.ts` is shell-safe metadata, statically used for
@@ -72,12 +74,19 @@ test('A01/A02/A03/A10/A13 production entries and repeated retained-state history
   expect(editorRuntimeRequests).toEqual([]);
   await expect(page.locator('main.astrid-public-site')).toHaveCount(0);
   await shot(page, info, 'direct-vision');
-  for (const route of ['/', '/home', '/home?experience=agent']) {
+  // Agent is the deliberate public landing audience (c9ca234b); App is an explicit `?experience=app` choice.
+  // '/home?experience=agent' stays last so the retained-history trips below return to the agent audience.
+  for (const [route, audience, label] of [
+    ['/', 'agent', 'root'],
+    ['/home', 'agent', 'home'],
+    ['/home?experience=app', 'app', 'app'],
+    ['/home?experience=agent', 'agent', 'agent'],
+  ] as const) {
     await page.goto(route);
     await surface(page, 'home');
-    await expect(page.locator('main.astrid-public-site')).toHaveAttribute('data-audience', route.includes('agent') ? 'agent' : 'app');
-    await expect.soft(page.locator('.astrid-editor-stage')).toHaveAttribute('data-astrid-readiness', 'settled', { timeout: route.includes('agent') ? 5_000 : 30_000 });
-    await shot(page, info, `entry-${route.includes('agent') ? 'agent' : route === '/' ? 'root' : 'home'}`);
+    await expect(page.locator('main.astrid-public-site')).toHaveAttribute('data-audience', audience);
+    await expect.soft(page.locator('.astrid-editor-stage')).toHaveAttribute('data-astrid-readiness', 'settled', { timeout: audience === 'agent' ? 5_000 : 30_000 });
+    await shot(page, info, `entry-${label}`);
   }
   expect(editorRuntimeRequests.some((url) => url.includes('/PublicAstridMountedEditor.tsx'))).toBe(true);
   expect(editorRuntimeRequests.some((url) => url.includes('/content/light-study-v1/public-example.ts'))).toBe(true);
@@ -152,10 +161,16 @@ test('A04/A05/A06/A07/A08 daylight palettes, resize, disclosure and live motion'
 test('A03/A08/A11/A12 native modal focus, route teardown and transition fallback', async ({ page }, info) => {
   await page.addInitScript(() => Object.defineProperty(document, 'startViewTransition', { configurable: true, value: undefined }));
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/vision');
+  // The Install button belongs to the App audience, which is an explicit choice now (c9ca234b): Agent, the
+  // default, hides it. Enter Home as App, leave for Vision and come back through history, which restores App.
+  await page.goto('/home?experience=app');
+  await surface(page, 'home');
+  await expect(page.locator('main.astrid-public-site')).toHaveAttribute('data-audience', 'app');
+  await page.getByRole('link', { name: 'Vision & Issues' }).click();
   await surface(page, 'vision');
   await page.getByRole('link', { name: 'Astrid home' }).click();
   await surface(page, 'home');
+  await expect(page.locator('main.astrid-public-site')).toHaveAttribute('data-audience', 'app');
   await expect(page.locator('.astrid-editor-stage')).toHaveAttribute('data-astrid-readiness', 'settled', { timeout: 30_000 });
   const install = page.getByRole('button', { name: 'Install Astrid', exact: true });
   await install.click();
@@ -166,7 +181,8 @@ test('A03/A08/A11/A12 native modal focus, route teardown and transition fallback
   await expect(page.locator('dialog')).not.toBeVisible();
   await expect(install).toBeFocused();
   await install.click();
-  await page.goBack();
+  await expect(page.locator('dialog')).toBeVisible();
+  await page.goForward();
   await surface(page, 'vision');
   await expect(page.locator('dialog')).not.toBeVisible();
   await expect(page.locator('main.astrid-vision')).toBeFocused();
