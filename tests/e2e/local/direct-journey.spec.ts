@@ -28,7 +28,7 @@
  *   [data-testid="runtime-connection-status"][data-state="connected"]   the status container: nothing visible while connected (screen-reader text only)
  *   [data-testid="runtime-not-connected"]                               the connection panel (permission, blocked, set up, not running, restart needed)
  *   a button named "Connect" in the permission panel                    triggers Chrome's local-network prompt
- *   a button named "Copy setup steps for your agent" / "Copy steps for your agent" inside that panel
+ *   a visible install/update command and a button named "Copy" inside that panel
  *   a button named "Reload" in the "Astrid restarted" card; the "Astrid stopped" card clears by itself
  */
 import { expect, type Page } from '@playwright/test';
@@ -123,7 +123,7 @@ test.describe('zero-click connection (App)', () => {
     expectBareUrl(page, harness);
   });
 
-  test('with Astrid stopped the panel offers agent instructions, then connects by itself once it starts', async ({ page, harness, context }) => {
+  test('with Astrid stopped the panel offers the install line, then connects by itself once it starts', async ({ page, harness, context }) => {
     // grantPermissions replaces the origin's grants, so the local-network permission the fixture context holds is listed again.
     await context.grantPermissions(['clipboard-read', 'clipboard-write', LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
     await harness.stopRuntime(); // the door goes with it
@@ -132,12 +132,11 @@ test.describe('zero-click connection (App)', () => {
       await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
       const panel = page.locator(UI.panel);
       await expect(panel).toBeVisible();
-      await panel.getByRole('button', { name: UI.copySetup }).click();
+      await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
+      await panel.getByRole('button', { name: UI.copy }).click();
       await expect(panel.getByRole('button', { name: 'Copied' })).toBeVisible();
-      await expect(panel.getByText('Now paste them into your agent.')).toBeVisible();
       const copied = await page.evaluate(() => navigator.clipboard.readText());
-      expect(copied).toContain('npm run dev:local');
-      expect(copied).toContain(`prints "Open ${harness.origin}"`);
+      expect(copied).toBe('curl -fsSL https://astrid.haus/install | sh');
       await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
@@ -189,9 +188,8 @@ test.describe('first time and returning panels (App)', () => {
       await openApp(page, harness);
       const panel = page.locator(UI.panel);
       await expect(panel.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeVisible();
-      await expect(panel.getByText('Already installed? Start Astrid')).toBeVisible();
-      await expect(panel.getByRole('link', { name: 'the install guide' })).toBeVisible();
-      await expect(panel.getByRole('button', { name: UI.copySetup })).toBeVisible();
+      await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
+      await expect(panel.getByRole('button', { name: UI.copy })).toBeVisible();
 
       await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
@@ -199,7 +197,8 @@ test.describe('first time and returning panels (App)', () => {
       await harness.stopRuntime();
       await page.reload();
       await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
-      await expect(panel.getByRole('button', { name: UI.copySteps })).toBeVisible();
+      await expect(panel.getByRole('button', { name: UI.copy })).toBeVisible();
+      await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
       await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
     } finally {
       await harness.resetToHealthy();
@@ -644,7 +643,7 @@ test.describe('restarts', () => {
     try {
       await expect(page.getByRole('heading', { name: 'Astrid stopped' })).toBeVisible({ timeout: 20_000 });
       await expect(page.getByText('Start it again on this computer and this page carries on. Your changes are kept.')).toBeVisible();
-      await expect(page.getByRole('button', { name: UI.copySteps })).toBeVisible();
+      await expect(page.getByRole('button', { name: UI.copy })).toBeVisible();
       // The status no longer claims "Connected", and the editor's own technical recovery card is not there.
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'stopped');
       await expect(page.locator(UI.status)).not.toContainText('Connected');

@@ -89,7 +89,7 @@ describe('RuntimeConnectionPill', () => {
     expect(status()).toHaveAttribute('data-state', 'restarted');
   });
 
-  it('Astrid down for two readings in a row: the "Astrid stopped" card with the start steps, and no Connected', async () => {
+  it('Astrid down for two readings in a row: the "Astrid stopped" card with the install line, and no Connected', async () => {
     const writeText = vi.fn(async (_text: string) => undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     const { route, fetchImpl } = switchableRoute(healthy('instance-1'));
@@ -104,10 +104,9 @@ describe('RuntimeConnectionPill', () => {
     expect(screen.getByRole('alert')).toHaveClass('fixed', 'right-4', 'bottom-20', 'sm:bottom-4');
     expect(isRecoveryCardShowing()).toBe(true);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy steps for your agent' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
-      expect(String(writeText.mock.calls[0][0])).toBe(COPY.agent.instructions(window.location.origin, 'start'));
-      expect(String(writeText.mock.calls[0][0])).toContain('<folder>/start');
+    expect(String(writeText.mock.calls[0][0])).toMatch(/^curl -fsSL https:\/\/astrid\.haus\/install \| sh$/);
   });
 
   it('one dropped reading is not a stop', async () => {

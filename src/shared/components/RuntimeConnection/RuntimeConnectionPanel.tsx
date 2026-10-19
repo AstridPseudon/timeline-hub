@@ -6,7 +6,7 @@ import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointe
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { isMobileDevice } from '@/pages/Home/installScenario.ts';
 import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
-import { CopyAgentInstructions } from './CopyAgentInstructions.tsx';
+import { CopyInstallCommand } from './CopyInstallCommand.tsx';
 import { RUNTIME_CONNECTION_COPY as COPY, withBrowser } from './copy.ts';
 
 export interface RuntimeConnectionPanelProps {
@@ -153,52 +153,54 @@ function BlockedPanel() {
 
 /**
  * Nothing answers and this browser has never connected. That is also what a set-up computer looks like from a new
- * browser or a private window, so the screen hedges, and the setup steps find an existing install before installing.
+ * browser or a private window, so the screen uses the same idempotent install line.
  */
-function SetUpPanel({ pageOrigin }: { pageOrigin: string }) {
+function SetUpPanel() {
   const { setUp } = COPY;
   return (
     <PanelFrame
       dataState="set_up"
       title={setUp.title}
       sentence={setUp.sentence}
-      detail={setUp.installed}
-      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copySetup} variant="setup" />}
-      footer={(
-        <>
-          {setUp.footer.before}
-          <a href={COPY.commands.installUrl} target="_blank" rel="noreferrer" className="text-foreground underline underline-offset-2">
-            {setUp.footer.linkText}
-          </a>
-          {setUp.footer.after}
-        </>
-      )}
+      action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
     />
   );
 }
 
 /** Nothing answers on a return visit, or the gateway answered but Astrid is not ready: a person does the same for each. */
-function NotRunningPanel({ pageOrigin }: { pageOrigin: string }) {
+function NotRunningPanel() {
   const { notRunning } = COPY;
   return (
     <PanelFrame
       dataState="not_running"
       title={notRunning.title}
       sentence={notRunning.sentence}
-      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copy} variant="start" />}
+      action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
     />
   );
 }
 
-/** The Astrid running is not the one this page was set up with: only a restart helps, and the agent block says so. */
-function RestartNeededPanel({ pageOrigin }: { pageOrigin: string }) {
+/** Astrid changed while it was running: the same install line repairs and restarts it. */
+function RestartNeededPanel() {
   const { restartNeeded } = COPY;
   return (
     <PanelFrame
       dataState="restart_needed"
       title={restartNeeded.title}
       sentence={restartNeeded.sentence}
-      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copy} variant="start" />}
+      action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
+    />
+  );
+}
+
+function UpdateNeededPanel() {
+  const { updateNeeded } = COPY;
+  return (
+    <PanelFrame
+      dataState="update_needed"
+      title={updateNeeded.title}
+      sentence={updateNeeded.sentence}
+      action={<CopyInstallCommand label={COPY.agent.copy} mode="update" />}
     />
   );
 }
@@ -208,7 +210,6 @@ function RestartNeededPanel({ pageOrigin }: { pageOrigin: string }) {
  * connected: the gate then shows the app. Every word comes from `copy.ts`.
  */
 export function RuntimeConnectionPanel({ connection }: RuntimeConnectionPanelProps) {
-  const pageOrigin = window.location.origin;
   // The landing page's install dialog asks the same question, so the two always agree on who is on a phone.
   const phone = useMemo(isMobileDevice, []);
   const { state } = connection;
@@ -218,12 +219,14 @@ export function RuntimeConnectionPanel({ connection }: RuntimeConnectionPanelPro
     case 'connecting':
       return <ConnectingPanel phone={phone} />;
     case 'set_up':
-      return phone ? <PhonePanel /> : <SetUpPanel pageOrigin={pageOrigin} />;
+      return phone ? <PhonePanel /> : <SetUpPanel />;
     case 'not_running':
-      return phone ? <PhonePanel /> : <NotRunningPanel pageOrigin={pageOrigin} />;
+      return phone ? <PhonePanel /> : <NotRunningPanel />;
     case 'blocked':
       return phone ? <PhonePanel /> : <BlockedPanel />;
     case 'restart_needed':
-      return phone ? <PhonePanel /> : <RestartNeededPanel pageOrigin={pageOrigin} />;
+      return phone ? <PhonePanel /> : <RestartNeededPanel />;
+    case 'update_needed':
+      return phone ? <PhonePanel /> : <UpdateNeededPanel />;
   }
 }

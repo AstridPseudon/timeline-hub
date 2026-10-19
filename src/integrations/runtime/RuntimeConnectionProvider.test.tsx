@@ -11,7 +11,7 @@ import {
 import type { PermissionsLike } from './localNetworkPermission.ts';
 import { autoConnectRequested, requestAutoConnect } from './autoConnectRequest.ts';
 import { RuntimeConnectionPanel } from '@/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx';
-import { SCHEMA_DIGEST } from './generated-contract-metadata.ts';
+import { RUNTIME_SCHEMA_DIGEST } from './contract-metadata.ts';
 
 const REALM = { realm_id: 'realm-1', display_name: 'Direct Journey' };
 const STORAGE_KEY = 'astrid.runtime.connectedBefore';
@@ -26,7 +26,7 @@ function json(body: unknown, status = 200): Response {
 function fakeGateway() {
   const calls: string[] = [];
   const routes: Record<string, Route> = {
-    '/v1/health': () => json({ status: 'ok', protocol: 'workspace.v1', schema_digest: SCHEMA_DIGEST }),
+    '/v1/health': () => json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST }),
     '/v1/realm': () => json(REALM),
   };
   const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
@@ -42,7 +42,7 @@ function fakeGateway() {
     };
   };
   const up = () => {
-    routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1', schema_digest: SCHEMA_DIGEST });
+    routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST });
   };
   const gatewayDown = (error: string, status = 503) => {
     routes['/v1/health'] = () => json({ error }, status);
@@ -113,11 +113,22 @@ describe('granted', () => {
     await waitFor(() => expect(status()).toBe('connected'));
     expect(latest.state).toEqual({ status: 'connected', realm: REALM });
     expect(latest.realmName).toBe('Direct Journey');
-    expect(latest.schemaDigest).toBe(SCHEMA_DIGEST);
+    expect(latest.schemaDigest).toBe(RUNTIME_SCHEMA_DIGEST);
     expect(latest.isBooting).toBe(false);
     expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health', '/v1/realm']);
     expect(onConnected).toHaveBeenCalledTimes(1);
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('1');
+  });
+
+  it.each([
+    ['unknown', 'sha256:unknown'],
+    ['missing', undefined],
+  ])('shows update_needed for a %s health digest', async (_name, digest) => {
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', ...(digest === undefined ? {} : { schema_digest: digest }) });
+    renderProvider(gateway, fakePermissions('granted').permissions);
+    await waitFor(() => expect(status()).toBe('update_needed'));
+    expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health']);
   });
 
   it.each(['focus', 'interval'] as const)('a %s re-check between the probe answering and the connected render starts no second probe', async (trigger) => {
@@ -125,7 +136,7 @@ describe('granted', () => {
     // Plain stub answers: their json() settles in microtasks only, so the test controls exactly where the probe resumes.
     const answer = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
     let releaseRealm: (response: Response) => void = () => {};
-    gateway.routes['/v1/health'] = () => answer({ status: 'ok', protocol: 'workspace.v1' });
+    gateway.routes['/v1/health'] = () => answer({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST });
     gateway.routes['/v1/realm'] = () => new Promise<Response>((resolve) => { releaseRealm = resolve; });
     // Capture the provider's own poll (recognised by its distinctive period) so the test can fire it by hand.
     const POLL_MS = 123_456;
@@ -358,7 +369,7 @@ describe('prompt', () => {
     act(() => latest.connect());
     expect(gateway.fetchImpl).toHaveBeenCalledTimes(1);
 
-    release(json({ status: 'ok' }));
+    release(json({ status: 'ok', schema_digest: RUNTIME_SCHEMA_DIGEST }));
     await waitFor(() => expect(status()).toBe('connected'));
   });
 
@@ -391,7 +402,7 @@ describe('prompt', () => {
     let attempts = 0;
     const signals: (AbortSignal | undefined)[] = [];
     // The first health request is the one Chrome holds open behind its prompt: it settles only when aborted.
-    gateway.routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1' });
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST });
     const base = gateway.fetchImpl;
     const fetchImpl = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       signals.push(init?.signal ?? undefined);
@@ -562,6 +573,17 @@ describe('gate: the landing page already asked to go in', () => {
     expect(screen.queryByTestId('explainer')).toBeNull();
     expect(gateway.fetchImpl).toHaveBeenCalled();
     // One-shot: the flag is used up.
+    expect(autoConnectRequested()).toBe(false);
+  });
+
+  it('consumes ?connect=1 once, preserves other URL parts, and immediately asks for permission', async () => {
+    window.history.replaceState({}, '', '/tools/video-editor?timeline=timeline-7&connect=1#frame-42');
+    const gateway = fakeGateway();
+    renderGate(gateway, 'prompt');
+    await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
+    expect(window.location.href).toContain('/tools/video-editor?timeline=timeline-7#frame-42');
+    expect(window.location.search).not.toContain('connect=1');
+    expect(gateway.fetchImpl).toHaveBeenCalledTimes(2);
     expect(autoConnectRequested()).toBe(false);
   });
 

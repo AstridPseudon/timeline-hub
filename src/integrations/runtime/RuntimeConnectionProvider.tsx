@@ -40,8 +40,9 @@ import {
   runtimeOrigin,
   type RuntimeConnectionState,
 } from './connection.ts';
-import { autoConnectRequested, takeAutoConnectRequest } from './autoConnectRequest.ts';
+import { autoConnectRequested, consumeAutoConnectQuery, takeAutoConnectRequest } from './autoConnectRequest.ts';
 import type { Realm } from './generated.ts';
+import { RUNTIME_ACCEPTED_SCHEMA_DIGESTS } from './contract-metadata.ts';
 
 export const POLL_INTERVAL_MS = 3000;
 const PROBE_TIMEOUT_MS = 5000;
@@ -58,6 +59,7 @@ type RealmSummary = Pick<Realm, 'realm_id' | 'display_name'>;
 export type RuntimeProbeOutcome =
   | { kind: 'connected'; realm: RealmSummary; schemaDigest: string | null }
   | { kind: 'restart' }
+  | { kind: 'update_needed' }
   | { kind: 'down' }
   | { kind: 'silent' };
 
@@ -101,9 +103,10 @@ export async function probeRuntime(
   if (typeof health.body !== 'object' || health.body === null || typeof (health.body as { status?: unknown }).status !== 'string') {
     return { kind: 'silent' };
   }
-  const schemaDigest = typeof (health.body as { schema_digest?: unknown }).schema_digest === 'string'
-    ? (health.body as { schema_digest: string }).schema_digest
-    : null;
+  const schemaDigest = (health.body as { schema_digest?: unknown }).schema_digest;
+  if (typeof schemaDigest !== 'string' || !RUNTIME_ACCEPTED_SCHEMA_DIGESTS.includes(schemaDigest as typeof RUNTIME_ACCEPTED_SCHEMA_DIGESTS[number])) {
+    return { kind: 'update_needed' };
+  }
   const realm = await get('/v1/realm');
   if ('kind' in realm) return realm;
   const { realm_id, display_name } = (realm.body ?? {}) as Partial<RealmSummary>;
@@ -240,7 +243,7 @@ export function RuntimeConnectionProvider({
     if (connectedRef.current) return;
     // Latch the connection now, not on the render that `setOutcome` schedules: `inFlight` is already clear, and an
     // interval tick or focus event that lands before that render would otherwise start a second probe.
-    if (result.kind === 'connected') {
+    if (result.kind === 'connected' || result.kind === 'update_needed') {
       connectedRef.current = true;
     }
     setFailedReadings((previous) => result.kind === 'connected' ? 0 : previous + 1);
@@ -313,6 +316,7 @@ export function RuntimeConnectionProvider({
     if (permission === 'denied') return { ...notConnected, state: { status: 'blocked' }, isBooting: false };
     if (permission === 'prompt') return { ...notConnected, state: { status: 'connecting' }, isBooting: false };
     if (outcome?.kind === 'restart') return { ...notConnected, state: { status: 'restart_needed' }, isBooting: false };
+    if (outcome?.kind === 'update_needed') return { ...notConnected, state: { status: 'update_needed' }, isBooting: false };
     if (failedReadings >= 2) {
       return { ...notConnected, state: { status: connectedBefore || gatewayAnswered ? 'not_running' : 'set_up' }, isBooting: false };
     }
@@ -359,7 +363,10 @@ export function RuntimeConnectionGate({
   const connection = useRuntimeConnection();
   // The landing page's "use it right here" click asked to go in (`autoConnectRequest.ts`): the flag is read once, in the
   // first render, so the explainer is never painted for the frame before the effect below asks Chrome.
-  const [autoConnect, setAutoConnect] = useState(autoConnectRequested);
+  const [autoConnect, setAutoConnect] = useState(() => {
+    consumeAutoConnectQuery();
+    return autoConnectRequested();
+  });
   const { gated, awaitingConnect, isBooting, isConnected, connect } = connection;
   useEffect(() => {
     if (!gated || !autoConnect) return;

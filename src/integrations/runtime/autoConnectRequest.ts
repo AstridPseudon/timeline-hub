@@ -14,6 +14,16 @@ export function requestAutoConnect(): void {
   }
 }
 
+/** Consumes the installer's URL flag once, preserving the rest of the current URL. */
+export function consumeAutoConnectQuery(): boolean {
+  const url = new URL(window.location.href);
+  if (url.searchParams.get('connect') !== '1') return false;
+  url.searchParams.delete('connect');
+  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  requestAutoConnect();
+  return true;
+}
+
 /** Whether the flag is set, without using it up. */
 export function autoConnectRequested(): boolean {
   try {
