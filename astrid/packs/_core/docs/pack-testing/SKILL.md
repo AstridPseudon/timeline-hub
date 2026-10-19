@@ -45,8 +45,8 @@ python -m pytest tests/packs/<pack> -m integration             # that pack's int
 scripts/check-before-push                                       # before every push (R-12)
 ```
 
-Lanes are defined in [tests/lanes.py](../../../../../tests/lanes.py) (R-2).
-The default run deselects four markers. No scheduled job runs them: run them
+Lanes are defined in [tests/lanes.py](../../../../../tests/lanes.py) (R-2), and pytest collection and default lane settings are in
+[pyproject.toml](../../../../../pyproject.toml). The default run deselects four markers. No scheduled job runs them: run them
 yourself, as shown above for one pack or for everything with
 `python -m pytest -m "integration or darwin_native or live or opt_in"`.
 A `-m` on the command line replaces the default deselection.
