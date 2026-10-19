@@ -29,16 +29,41 @@ function catalog(pages: Array<{ items: RuntimeCapability[]; next_cursor: string 
 }
 
 describe('Astrid capability catalog binding', () => {
-  it('rejects a non-ready capability before a producer can admit', async () => {
+  it('includes the unavailable reason when rejecting a non-ready capability', async () => {
     const { routes, requestJson } = catalog([{
       items: [capability({ status: 'unavailable', unavailable_reason: 'model_missing' })],
       next_cursor: null,
     }]);
 
     await expect(routes.get('astrid.image_generation'))
-      .rejects.toThrow('capability is not ready');
+      .rejects.toHaveProperty('message', 'capability is not ready: astrid.image_generation (unavailable): model_missing');
     expect(requestJson).toHaveBeenCalledTimes(1);
   });
+
+  it('includes the missing renderer install and its fix in the render admission error', async () => {
+    const reason = 'remotion:reason=Remotion node_modules is missing: /checkout/remotion/node_modules; '
+      + 'run `npm ci` in /checkout/remotion with Node v20.19.4 on PATH';
+    const { routes } = catalog([{
+      items: [capability({ capability_id: 'rendering.render', status: 'unavailable', unavailable_reason: reason })],
+      next_cursor: null,
+    }]);
+
+    await expect(routes.get('rendering.render'))
+      .rejects.toHaveProperty('message', `capability is not ready: rendering.render (unavailable): ${reason}`);
+  });
+
+  it.each([undefined, null, ''])(
+    'preserves the existing message when unavailable_reason is %s',
+    async (unavailable_reason) => {
+      const { routes } = catalog([{
+        items: [capability({ status: 'unavailable', unavailable_reason })],
+        next_cursor: null,
+      }]);
+
+      await expect(routes.get('astrid.image_generation'))
+        .rejects.toHaveProperty('message', 'capability is not ready: astrid.image_generation (unavailable)');
+    },
+  );
 
   it('rejects duplicate capability IDs across catalog pages', async () => {
     const first = capability();
