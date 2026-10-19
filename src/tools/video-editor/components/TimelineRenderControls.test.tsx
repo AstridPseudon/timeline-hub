@@ -1,14 +1,23 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TimelineRenderControls } from './TimelineRenderControls';
 
 const mocks = vi.hoisted(() => ({
   useTimelineChromeContext: vi.fn(),
+  toastError: vi.fn(),
 }));
 
 vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
   useTimelineChromeContext: mocks.useTimelineChromeContext,
 }));
+
+vi.mock('@/shared/components/ui/toast.tsx', () => ({
+  toast: { error: mocks.toastError },
+}));
+
+const originalSaveFilePickerDescriptor = Object.getOwnPropertyDescriptor(window, 'showSaveFilePicker');
+const originalCreateObjectURLDescriptor = Object.getOwnPropertyDescriptor(URL, 'createObjectURL');
+const originalRevokeObjectURLDescriptor = Object.getOwnPropertyDescriptor(URL, 'revokeObjectURL');
 
 function chrome(overrides: Record<string, unknown> = {}) {
   return {
@@ -29,6 +38,26 @@ function chrome(overrides: Record<string, unknown> = {}) {
 describe('TimelineRenderControls', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    if (originalSaveFilePickerDescriptor) {
+      Object.defineProperty(window, 'showSaveFilePicker', originalSaveFilePickerDescriptor);
+    } else {
+      Reflect.deleteProperty(window, 'showSaveFilePicker');
+    }
+    if (originalCreateObjectURLDescriptor) {
+      Object.defineProperty(URL, 'createObjectURL', originalCreateObjectURLDescriptor);
+    } else {
+      Reflect.deleteProperty(URL, 'createObjectURL');
+    }
+    if (originalRevokeObjectURLDescriptor) {
+      Object.defineProperty(URL, 'revokeObjectURL', originalRevokeObjectURLDescriptor);
+    } else {
+      Reflect.deleteProperty(URL, 'revokeObjectURL');
+    }
   });
 
   it('shows the render error and lets the close button dismiss it without disabling retry', () => {
@@ -109,11 +138,11 @@ describe('TimelineRenderControls', () => {
 
     render(<TimelineRenderControls previewActionButtonClass="" />);
 
-    expect(screen.getByText('Rendered with seam warnings')).toBeTruthy();
+    expect(screen.getByText('Seam warnings')).toBeTruthy();
     expect(document.querySelector('[data-video-editor-render-warning="true"]')?.className).toContain('border-amber');
     expect(document.querySelector<HTMLDetailsElement>('[data-video-editor-render-warning="true"] details')?.open).toBe(false);
     expect(screen.getByRole('button', {name: 'Render'})).not.toBeDisabled();
-    fireEvent.click(screen.getByText('Rendered with seam warnings'));
+    fireEvent.click(screen.getByText('Seam warnings'));
 
     expect(document.querySelector<HTMLDetailsElement>('[data-video-editor-render-warning="true"] details')?.open).toBe(true);
     expect(screen.getByRole('region', {name: 'Visual seam admission report'})).toBeTruthy();
@@ -199,16 +228,114 @@ describe('TimelineRenderControls', () => {
     expect(video.hasAttribute('controls')).toBe(true);
     expect(video.getAttribute('preload')).toBe('metadata');
     expect(screen.getByText(/Timeline version 7/)).toBeTruthy();
-    // Download is an explicit link; nothing was clicked automatically.
-    const link = screen.getByRole('link', { name: /Download/ });
-    expect(link.getAttribute('href')).toBe('/api/astrid/v1/objects/render.mp4');
-    expect(link.getAttribute('download')).toBe('render.mp4');
+    // Download is explicit; nothing was clicked automatically.
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /Download/ })).toBeNull();
     expect(anchorClick).not.toHaveBeenCalled();
 
     act(() => { fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' }); });
     fireEvent.click(screen.getByRole('button', { name: /Play last render/ }));
     expect(screen.getByTestId('timeline-render-player')).toBeTruthy();
     anchorClick.mockRestore();
+  });
+
+  it('fetches the render with CORS and streams it to the save file picker', async () => {
+    const writable = {} as WritableStream;
+    const pipeTo = vi.fn().mockResolvedValue(undefined);
+    const createWritable = vi.fn().mockResolvedValue(writable);
+    let resolvePicker!: (handle: { createWritable: () => Promise<WritableStream> }) => void;
+    const picker = vi.fn(() => new Promise<{ createWritable: () => Promise<WritableStream> }>((resolve) => {
+      resolvePicker = resolve;
+    }));
+    Object.defineProperty(window, 'showSaveFilePicker', { configurable: true, value: picker });
+    const fetchRender = vi.fn().mockResolvedValue({
+      ok: true,
+      body: { pipeTo },
+    } as unknown as Response);
+    vi.stubGlobal('fetch', fetchRender);
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({
+      renderResultInfo: { revision: 7, completedAt: 2000 },
+    }));
+
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+    fireEvent.click(screen.getByRole('button', { name: /Play last render/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Download' }));
+    expect(screen.getByRole('button', { name: 'Downloading…' })).toBeDisabled();
+
+    await act(async () => resolvePicker({ createWritable }));
+
+    await waitFor(() => expect(pipeTo).toHaveBeenCalledWith(writable));
+    expect(picker).toHaveBeenCalledWith({
+      suggestedName: 'render.mp4',
+      types: [{ description: 'MP4 video', accept: { 'video/mp4': ['.mp4'] } }],
+    });
+    expect(fetchRender).toHaveBeenCalledWith('/api/astrid/v1/objects/render.mp4', { mode: 'cors' });
+    expect(createWritable).toHaveBeenCalledOnce();
+  });
+
+  it('falls back to a blob download with the render filename when the picker is unavailable', async () => {
+    const blob = new Blob(['render bytes'], { type: 'video/mp4' });
+    const fetchRender = vi.fn().mockResolvedValue({
+      ok: true,
+      blob: vi.fn().mockResolvedValue(blob),
+    } as unknown as Response);
+    const createObjectURL = vi.fn().mockReturnValue('blob:render-result');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
+    vi.stubGlobal('fetch', fetchRender);
+    const clickedDownloads: Array<{ href: string; download: string }> = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      if (this.download) clickedDownloads.push({ href: this.href, download: this.download });
+    });
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({
+      renderResultInfo: { revision: 7, completedAt: 2000 },
+    }));
+
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+    fireEvent.click(screen.getByRole('button', { name: /Play last render/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    await waitFor(() => expect(clickedDownloads).toEqual([{ href: 'blob:render-result', download: 'render.mp4' }]));
+    await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:render-result'));
+    expect(fetchRender).toHaveBeenCalledWith('/api/astrid/v1/objects/render.mp4', { mode: 'cors' });
+    expect(createObjectURL).toHaveBeenCalledWith(blob);
+  });
+
+  it('shows an error for a failed response without saving the response body', async () => {
+    const blob = vi.fn();
+    const fetchRender = vi.fn().mockResolvedValue({ ok: false, status: 403, blob } as unknown as Response);
+    vi.stubGlobal('fetch', fetchRender);
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({
+      renderResultInfo: { revision: 7, completedAt: 2000 },
+    }));
+
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+    fireEvent.click(screen.getByRole('button', { name: /Play last render/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith("Couldn't download the render (HTTP 403)"));
+    expect(blob).not.toHaveBeenCalled();
+    expect(anchorClick).not.toHaveBeenCalled();
+  });
+
+  it('quietly ignores a cancelled save picker', async () => {
+    const picker = vi.fn().mockRejectedValue(new DOMException('The user cancelled the picker', 'AbortError'));
+    Object.defineProperty(window, 'showSaveFilePicker', { configurable: true, value: picker });
+    const fetchRender = vi.fn();
+    vi.stubGlobal('fetch', fetchRender);
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({
+      renderResultInfo: { revision: 7, completedAt: 2000 },
+    }));
+
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+    fireEvent.click(screen.getByRole('button', { name: /Play last render/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Download' }));
+
+    await waitFor(() => expect(picker).toHaveBeenCalledOnce());
+    expect(fetchRender).not.toHaveBeenCalled();
+    expect(mocks.toastError).not.toHaveBeenCalled();
   });
 
   it('keeps cancellation visible for an active render', () => {

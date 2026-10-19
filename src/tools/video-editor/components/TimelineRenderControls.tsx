@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, ChevronDown, Download, Play, Square, X } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Download, Loader2, Play, Square, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
+import { toast } from '@/shared/components/ui/toast.tsx';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import type { VisualSeamReport } from '@/tools/video-editor/data/visualSeamContract.ts';
@@ -29,6 +30,20 @@ function hasVisualSeamFindings(report: VisualSeamReport | null | undefined): rep
     || report.structuralIssues.length > 0
     || report.opaqueElements.length > 0
   ));
+}
+
+type RenderSaveFilePickerWindow = Window & {
+  showSaveFilePicker?: (options: {
+    suggestedName: string;
+    types: Array<{
+      description: string;
+      accept: Record<string, string[]>;
+    }>;
+  }) => Promise<{ createWritable: () => Promise<WritableStream> }>;
+};
+
+function isAbortError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError';
 }
 
 function VisualBoundaryReport({ report, canDeclareSeamsAsHardCuts, declareSeamsAsHardCuts, canAcknowledgeVisualCues, acknowledgeVisualCuesAsSynchronized }: {
@@ -116,6 +131,7 @@ export function TimelineRenderControls({
 }) {
   const chrome = useTimelineChromeContext();
   const [playerOpen, setPlayerOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [dismissedRenderError, setDismissedRenderError] = useState<string | null>(null);
   const [dismissedSeamWarning, setDismissedSeamWarning] = useState<VisualSeamReport | null>(null);
   const renderButtonRef = useRef<HTMLButtonElement>(null);
@@ -173,6 +189,58 @@ export function TimelineRenderControls({
 
   const hasResult = Boolean(renderResultUrl) && chrome.renderStatus !== 'rendering';
   const filename = chrome.renderResultFilename ?? 'timeline-render.mp4';
+  const downloadRender = async () => {
+    if (!renderResultUrl || isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const pickerWindow = window as RenderSaveFilePickerWindow;
+      const saveFilePicker = pickerWindow.showSaveFilePicker;
+      if (typeof saveFilePicker === 'function') {
+        let fileHandle: Awaited<ReturnType<NonNullable<RenderSaveFilePickerWindow['showSaveFilePicker']>>>;
+        try {
+          fileHandle = await saveFilePicker.call(pickerWindow, {
+            suggestedName: filename,
+            types: [{
+              description: 'MP4 video',
+              accept: { 'video/mp4': ['.mp4'] },
+            }],
+          });
+        } catch (error) {
+          if (isAbortError(error)) return;
+          throw error;
+        }
+
+        const response = await fetch(renderResultUrl, { mode: 'cors' });
+        if (!response.ok) {
+          toast.error(`Couldn't download the render (HTTP ${response.status})`);
+          return;
+        }
+        if (!response.body) throw new Error('The render response had no body');
+        await response.body.pipeTo(await fileHandle.createWritable());
+        return;
+      }
+
+      const response = await fetch(renderResultUrl, { mode: 'cors' });
+      if (!response.ok) {
+        toast.error(`Couldn't download the render (HTTP ${response.status})`);
+        return;
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+    } catch (error) {
+      if (!isAbortError(error)) toast.error("Couldn't download the render");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   const summary = renderResultInfo
     ? [
         renderResultInfo.revision !== null ? `Timeline version ${renderResultInfo.revision}` : null,
@@ -220,16 +288,26 @@ export function TimelineRenderControls({
               src={renderResultUrl}
               crossOrigin={mediaCrossOrigin(renderResultUrl)}
               controls
+              // The browser's own download (⋮ menu, right-click Save) fetches without the Origin the
+              // Runtime door requires, so it saves an error. Download below is the one way to save.
+              controlsList="nodownload"
+              onContextMenu={(event) => event.preventDefault()}
               preload="metadata"
               className="max-h-[60dvh] w-full rounded bg-black"
               data-testid="timeline-render-player"
             />
             <div className="flex justify-end">
-              <Button asChild size="sm" variant="outline" className="gap-1.5">
-                <a href={renderResultUrl} download={filename}>
-                  <Download className="h-3.5 w-3.5" />
-                  Download
-                </a>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => void downloadRender()}
+                disabled={isDownloading}
+              >
+                {isDownloading
+                  ? <><Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />Downloading…</>
+                  : <><Download className="h-3.5 w-3.5" />Download</>}
               </Button>
             </div>
           </DialogContent>
@@ -294,7 +372,7 @@ export function TimelineRenderControls({
           <details className="group">
             <summary className="flex cursor-pointer list-none items-start gap-1 pr-5 [&::-webkit-details-marker]:hidden">
               <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
-              <span>Rendered with seam warnings</span>
+              <span>Seam warnings</span>
               <ChevronDown className="ml-auto mt-0.5 h-3 w-3 shrink-0 transition-transform group-open:rotate-180" />
             </summary>
             <VisualBoundaryReport
