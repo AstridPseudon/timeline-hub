@@ -32,21 +32,22 @@ def _config(clips, tracks=TRACKS):
     return {"tracks": [dict(t) for t in tracks], "clips": clips}
 
 
-# Retain the behavior until the named M3 input/capability requirement is met.
-@pytest.mark.xfail(strict=True, reason='M3 requires declared native opaque support for am-snap-plate/am-footage and immutable media alpha.')
+# Keep the original covered-crossfade requirement; real component support now
+# exposes Composition's different alpha treatment of these legacy clip fades.
+@pytest.mark.xfail(strict=True, reason='M3 requires covered legacy cross-fade semantics; native source-over alpha currently reports DIP during overlap.')
 def test_a_cross_fade_of_two_full_plates_is_covered_not_dip():
     config = _config([
-        _plate("out", asset="P", at=0.0, hold=1.0, effects={"fade_out": 0.5}),
-        _clip("in", "am-footage", "fx", at=0.5, hold=1.0, asset="Q", effects={"fade_in": 0.5}),
+        _plate("out", asset=None, params={"src": "/plate.png"}, at=0.0, hold=1.0, effects={"fade_out": 0.5}),
+        _clip("in", "am-footage", "fx", at=0.5, hold=1.0, params={"src": "/footage.png"}, effects={"fade_in": 0.5}),
     ])
     spans = coverage(config, FPS, CANVAS, ELEMENTS, end_frame=45)
     assert [(s.start_frame, s.end_frame, s.cls, s.content) for s in spans] == [(0, 45, "COVERED", "CONTENT")]
 
 
-# Retain the behavior until the named M3 input/capability requirement is met.
-@pytest.mark.xfail(strict=True, reason='M3 requires declared native am-snap-plate bounds/alpha and legacy fade support.')
+# Keep the continuous DIP expectation across the fully transparent first frame.
+@pytest.mark.xfail(strict=True, reason='M3 requires continuous coverage-class runs; native span encoding currently splits DIP when visible clip membership changes.')
 def test_a_one_sided_fade_is_a_dip_during_the_ramp_then_covered():
-    config = _config([_plate("only", at=0.0, hold=2.0, effects={"fade_in": 0.5})])
+    config = _config([_plate("only", asset=None, params={"src": "/plate.png"}, at=0.0, hold=2.0, effects={"fade_in": 0.5})])
     spans = coverage(config, FPS, CANVAS, ELEMENTS)
     assert [(s.start_frame, s.end_frame, s.cls) for s in spans] == [(0, 15, "DIP"), (15, 60, "COVERED")]
     assert spans[0].content is None
@@ -58,10 +59,9 @@ def test_a_none_element_is_not_listed():
     assert [v.clip_id for v in visible_at(config, 0, FPS, CANVAS, ELEMENTS)] == ["plate"]
 
 
-# Retain the behavior until the named M3 input/capability requirement is met.
-@pytest.mark.xfail(strict=True, reason='M3 requires am-footage prepareSceneCapability for its evaluated layout.')
 def test_an_inset_with_layout_is_declared_and_not_full_frame():
-    config = _config([_clip("fx", "am-footage", "fx", asset="P", params={"x": 1200, "y": 600, "scale": 0.3})])
+    config = _config([_clip("fx", "am-footage", "fx", params={"src": "/footage.png", "background": "transparent",
+        "inset": {"x": 1200, "y": 600, "w": 576, "h": 324, "shadow": False}})])
     (inset,) = visible_at(config, 0, FPS, CANVAS, ELEMENTS)
     assert inset.bounds_source == "declared"
     assert inset.bounds == (1200.0, 600.0, 1200.0 + 1920 * 0.3, 600.0 + 1080 * 0.3)
@@ -179,3 +179,19 @@ def test_a_declared_non_fade_entrance_on_the_picture_is_a_dip_not_a_gap():
 from tests.packs.rendering.test_host_scene import host_project, native_host  # noqa: E402, F401
 
 pytestmark = pytest.mark.usefixtures("native_host")
+
+
+def test_real_am_components_share_draw_helpers_and_public_scene_capabilities(request):
+    import subprocess
+
+    from astrid.core.timeline import scene_answers
+    from tests.packs.rendering import test_host_scene as native_fixtures
+
+    project = request.getfixturevalue("native_host")
+    node = scene_answers.remotion_runtime_status().node_executable
+    assert node is not None
+    script = (native_fixtures.ROOT / "astrid/packs/astrid_motion/rendering/elements/effects"
+              / "am-snap-plate/scene.test.mjs")
+    result = subprocess.run([str(node), str(script), str(project), str(native_fixtures.ROOT)],
+                            text=True, capture_output=True, timeout=60)
+    assert result.returncode == 0, result.stdout + result.stderr

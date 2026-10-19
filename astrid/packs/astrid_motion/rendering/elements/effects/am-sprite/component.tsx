@@ -12,6 +12,8 @@ import {
   type ElementComponentProps,
 } from '../../_shared/am';
 
+import {absentSupport, unknownSupport, withSceneCapability} from '../am-snap-plate/scene';
+
 // am-sprite: a transparent pixel cutout on the logical grid.
 //
 // Each art px is `scale` screen px (6 means one art px per logical px). The
@@ -49,15 +51,8 @@ const ENTERS = ['stamp', 'slideIn', 'cut'] as const;
 const SIDES = ['left', 'right', 'top', 'bottom'] as const;
 const SLIDE_STEPS = 4;
 
-export default function AmSprite(props: ElementComponentProps): ReactElement | null {
-  const frame = useCurrentFrame();
-  const params = narrowParams<Params>(props.params);
-  const url = elementSource(props.assetEntry, params.src);
-  if (!url) {
-    return null;
-  }
-
-  const fps = props.fps;
+const spriteLayout = (params: Params, frame: number, fps: number,
+  assetEntry: ElementComponentProps['assetEntry']) => {
   const scale = integerIn(params.scale, 1, 24, 6);
   const stepFrames = integerIn(params.stepFrames, 2, 3, 2);
   const sf = stepStart(frame, stepFrames);
@@ -153,11 +148,11 @@ export default function AmSprite(props: ElementComponentProps): ReactElement | n
   };
 
   // Sprite size in art px: the strip frame, else the registry resolution.
-  const res = /^(\d+)x(\d+)$/.exec(String((props.assetEntry as {resolution?: string} | undefined)?.resolution ?? ''));
+  const res = /^(\d+)x(\d+)$/.exec(String((assetEntry as {resolution?: string} | undefined)?.resolution ?? ''));
   const artW = frames ? Math.max(1, Math.round(frames.frameWidth)) : res ? Number(res[1]) : 0;
   const artH = frames ? Math.max(1, Math.round(frames.frameHeight)) : res ? Number(res[2]) : 0;
   const shadow = params.shadow && typeof params.shadow === 'object' ? params.shadow : null;
-  let shadowNode: ReactElement | null = null;
+  let shadowRows: CSSProperties[] | null = null;
   if (shadow && visible && artW > 0) {
     // Logical px: sprite width and its feet line.
     const spriteW = (artW * scale) / LOGICAL_PX;
@@ -181,16 +176,28 @@ export default function AmSprite(props: ElementComponentProps): ReactElement | n
         background: shadow.color ?? '#1F1F1F',
       });
     }
-    shadowNode = (
-      <div style={{position: 'absolute', inset: 0, opacity: Math.min(1, Math.max(0, finiteNumber(shadow.opacity, 0.35)))}}>
-        {rows.map((st, i) => <div key={i} style={st} />)}
-      </div>
-    );
+    shadowRows = rows;
   }
 
+  return {outer, flip, artFilter, artW, artH, scale, shadowRows,
+    shadowOpacity: Math.min(1, Math.max(0, finiteNumber(shadow?.opacity, 0.35))), frames, index, visible};
+};
+
+function AmSprite(props: ElementComponentProps): ReactElement | null {
+  const frame = useCurrentFrame();
+  const params = narrowParams<Params>(props.params);
+  const url = elementSource(props.assetEntry, params.src);
+  if (!url) return null;
+  const {outer, flip, artFilter, artW, artH, shadowRows, shadowOpacity, frames, index} = spriteLayout(params, frame, props.fps, props.assetEntry);
+  const shadowNode = shadowRows ? (
+    <div style={{position: 'absolute', inset: 0, opacity: shadowOpacity}}>
+      {shadowRows.map((st, i) => <div key={i} style={st} />)}
+    </div>
+  ) : null;
+
   if (frames) {
-    const fw = Math.max(1, Math.round(frames.frameWidth));
-    const fh = Math.max(1, Math.round(frames.frameHeight));
+    const fw = artW;
+    const fh = artH;
     return (
       <>
       {shadowNode}
@@ -220,3 +227,33 @@ export default function AmSprite(props: ElementComponentProps): ReactElement | n
     </>
   );
 }
+
+export default withSceneCapability(AmSprite, (context) => {
+  const {clip, fps, assetEntry} = context;
+  const params = narrowParams<Params>(clip.params);
+  const sourceKnown = !clip.asset || Object.prototype.hasOwnProperty.call(context, 'assetEntry');
+  const url = elementSource(assetEntry, params.src);
+  return {identity: JSON.stringify([clip.params, clip.asset, assetEntry, fps]), frame: (frame) => {
+    if (sourceKnown && !url) return absentSupport();
+    const layout = spriteLayout(params, frame, fps, assetEntry);
+    if (!layout.visible) return absentSupport();
+    if (!sourceKnown) return unknownSupport('am-sprite needs the selected asset URL, dimensions and alpha');
+    // Strip art and its filters are clipped by the same fixed frame box drawn
+    // above. The separate contact-shadow rows can extend that envelope.
+    if (layout.frames) {
+      const rects = [{x: Number(layout.outer.left), y: Number(layout.outer.top),
+        width: layout.artW * layout.scale, height: layout.artH * layout.scale},
+      ...(layout.shadowOpacity > 0 ? layout.shadowRows ?? [] : []).map(row => ({
+        x: Number(row.left), y: Number(row.top), width: Number(row.width), height: Number(row.height),
+      }))];
+      const x = Math.min(...rects.map(rect => rect.x));
+      const y = Math.min(...rects.map(rect => rect.y));
+      return {presence: 'present', opaqueSupport: 'unknown', bounds: {status: 'known', rect: {
+        x, y, width: Math.max(...rects.map(rect => rect.x + rect.width)) - x,
+        height: Math.max(...rects.map(rect => rect.y + rect.height)) - y,
+      }}};
+    }
+    return {presence: 'present', opaqueSupport: 'unknown', bounds: {status: 'unknown',
+      reason: 'am-sprite needs intrinsic media dimensions/alpha including outline and contact shadow support'}};
+  }};
+});
