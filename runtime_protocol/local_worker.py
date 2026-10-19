@@ -195,19 +195,30 @@ def _digest(value: object) -> str:
 def _report_start_failure(exc: BaseException, *, phase="start", operation_id=None, secondary=False) -> None:
     """Best-effort code-location evidence without exception values or locals."""
     try:
-        frames = []
-        current = exc.__traceback__
-        while current is not None:
-            code = current.tb_frame.f_code
-            frames.append({"file": Path(code.co_filename).name[:80],
-                           "function": code.co_name[:80], "line": current.tb_lineno})
-            frames = frames[-16:]
-            current = current.tb_next
+        def evidence(error):
+            frames = []
+            current = error.__traceback__
+            while current is not None:
+                code = current.tb_frame.f_code
+                frames.append({"file": Path(code.co_filename).name[:80],
+                               "function": code.co_name[:80], "line": current.tb_lineno})
+                frames = frames[-16:]
+                current = current.tb_next
+            return {"exception_type": type(error).__name__[:80], "frames": frames}
         phases = {"start", "prepare", "host_only_prepare", "observation", "activation", "publication", "cleanup", "liveness"}
         if not secondary and not hasattr(exc, "local_worker_start_phase"):
             exc.local_worker_start_phase = phase
         first_phase = getattr(exc, "local_worker_start_phase", phase)
-        row = {"event": "local_worker_start_failed", "exception_type": type(exc).__name__[:80], "frames": frames}
+        row = {"event": "local_worker_start_failed", **evidence(exc)}
+        # Wrappers retain their explicit cause in memory. Preserve its code
+        # locations too, without exception text, filenames from values or locals.
+        causes, seen, cause = [], {id(exc)}, exc.__cause__
+        while cause is not None and id(cause) not in seen and len(causes) < 4:
+            seen.add(id(cause))
+            causes.append(evidence(cause))
+            cause = cause.__cause__
+        if causes:
+            row['causes'] = causes
         if phase != "start" or operation_id is not None or secondary:
             row.update(phase=first_phase if isinstance(first_phase, str) and first_phase in phases else "unknown",
                        secondary=secondary)
