@@ -10,7 +10,8 @@ import { createCommitOutbox } from '../commitOutbox.ts';
 import { createTimelineCommandSession } from '../commitSession.ts';
 import { captureClipMove, submitClipMove } from '../semanticGestures.ts';
 import { authoringBundleFromDocument } from '../authoringBundle.ts';
-import { executeClipMove } from '../clipMoveCapture.ts';
+import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
+import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 
 const projectId = 'project-commit', timelineId = 'timeline-commit';
 export const scope = { projectId, timelineId, realmId: 'realm-1', actorId: 'actor-1' };
@@ -43,7 +44,7 @@ function storage() {
 export async function environment(initialDocument = document()) {
   let serverDocument = structuredClone(initialDocument);
   let serverHead = h0;
-  let fault: 'lost' | 'busy' | 'conflict' | 'unavailable' | null = null;
+  let fault: 'lost' | 'busy' | 'conflict' | 'unavailable' | 'refused' | 'validation' | 'authorization' | null = null;
   let pause: ReturnType<typeof deferred> | null = null;
   const calls: { path: string; method: string; body?: CommitRequest; key?: string }[] = [];
   const accepted = new Map<string, CommitAcceptedMutation>();
@@ -76,13 +77,24 @@ export async function environment(initialDocument = document()) {
         details: { status: fault === 'conflict' ? 'conflict' : 'refused', reason: fault === 'busy' ? 'head_busy' : fault },
       }),
     };
+    if (fault === 'refused' || fault === 'validation' || fault === 'authorization') return {
+      status: fault === 'refused' ? 409 : fault === 'validation' ? 422 : 403, headers: {},
+      body: bytes({ code: fault, message: 'conflict in request',
+        details: fault === 'refused' ? { status: 'refused' } : {} }),
+    };
     let response = accepted.get(key);
     if (!response) {
       const next = `r${accepted.size + 1}`, publication = `p${accepted.size + 1}`;
       response = acceptedCommit({ revision_id: next, publication_id: publication },
         { revision_id: request.base_revision_id, publication_id: request.base_publication_id }, { commands: request.commands });
       if (request.commands[0].op === 'clip.move') {
-        const result = executeClipMove(await authoringBundleFromDocument(serverDocument), request.commands[0]);
+        let result;
+        try { result = executeClipMove(await authoringBundleFromDocument(serverDocument), request.commands[0]); }
+        catch (error) {
+          if (!(error instanceof ClipMoveError) || !['capture_mismatch', 'identity_conflict'].includes(error.kind)) throw error;
+          return { status: 409, headers: {}, body: bytes({ code: 'conflict', message: error.message,
+            details: { status: 'conflict', reason: error.kind } }) };
+        }
         const payload = { ...result.bundle.parent, occurrences: [] };
         const revision = fixtureDigest(payload) === serverDocument.parent_revision.content_digest ? serverDocument.parent_revision.revision_id : next;
         serverDocument = { ...serverDocument, parent_revision: { revision_id: revision, content_digest: fixtureDigest(payload), payload } };
@@ -103,19 +115,21 @@ export async function environment(initialDocument = document()) {
   let current = await buildTimelineData(serverDocument.parent_revision.payload.config as never, { assets: {} }, undefined, 1, undefined,
     { projectId, timelineId, headRevisionId: 'r0', headPublicationId: 'p0' });
   const projected: TimelineCommandBasis[] = [];
+  const projections: { basis: TimelineCommandBasis; previews: TimelinePatch[] }[] = [];
   const previews = vi.fn();
   const { outbox: outboxes, factory } = storage();
   const mount = (basis = initial) => createTimelineCommandSession({ initial: basis, scope, outboxes,
     send: (request, key) => provider.commitTimeline(request, key), preview: previews,
-    project: async (basis) => {
+    project: async (basis, previews) => {
       projected.push(basis);
+      projections.push({ basis, previews });
       const parent = basis.canonicalDocument.parent_revision.payload;
       current = await buildTimelineData({ ...parent.config as object, clips: parent.clips } as never, { assets: {} }, undefined,
         1, undefined, { projectId, timelineId, headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId });
     }, changed: () => {},
   });
   const move = (session: Awaited<ReturnType<typeof mount>>, on: number) => submitClipMove(captureClipMove(session.port, current, 'x'), on);
-  return { provider, initial, outboxes, factory, current: () => current, calls, projected, mount, move, previews,
+  return { provider, initial, outboxes, factory, current: () => current, calls, projected, projections, mount, move, previews,
     setFault: (value: typeof fault) => { fault = value; },
     pause: () => { pause = deferred(); return pause; },
     commits: () => calls.filter((call) => call.path.endsWith('/commit')) };

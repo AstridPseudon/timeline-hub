@@ -62,6 +62,14 @@ export async function createTimelineCommandSession(options: Options) {
       && ((status === 'saved' && !!undos.length) || (status === 'dirty' && !!record?.intents.length && !record.pending)) };
     options.changed(state);
   }
+  function publishRejection() {
+    const outcome = record?.pending?.outcome;
+    const error = outcome?.kind === 'rejected' ? outcome.error : record?.intents[0]?.conflict;
+    if (error === undefined) return false;
+    const typed = error as { kind?: string; message?: string } | null;
+    publish(typed?.kind === 'conflict' ? 'conflict' : 'error', typed?.message ?? 'Timeline command was refused');
+    return true;
+  }
   function assertReady() {
     if (stopped || !box || projecting || projectionPending || persistenceFailed || record?.intents[0]?.conflict !== undefined) {
       throw new Error(state.error ?? 'Timeline command session is unavailable');
@@ -90,12 +98,8 @@ export async function createTimelineCommandSession(options: Options) {
         known = target;
         acceptedBasis = target;
       }
-      if (record.pending?.outcome?.kind === 'rejected') {
-        const error = record.pending.outcome.error as { kind?: string; message?: string };
-        publish(error.kind === 'conflict' ? 'conflict' : 'error', error.message ?? 'Timeline command was refused');
-        return;
-      }
-      while (!stopped && record.intents.length && !record.intents[0].conflict) {
+      if (publishRejection()) return;
+      while (!stopped && record.intents.length && record.intents[0].conflict === undefined) {
         publish('saving');
         const priorAccepted = record.accepted?.intentId;
         record = await box.dispatch((intent, head) => ({
@@ -139,16 +143,17 @@ export async function createTimelineCommandSession(options: Options) {
             }
           }
         }
+        if (publishRejection()) return;
         if (record.pending) {
           const outcome = record.pending.outcome;
-          publish(outcome?.kind === 'rejected' ? ((outcome.error as { kind?: string }).kind === 'conflict' ? 'conflict' : 'error') : 'retry',
+          publish('retry',
             outcome && outcome.kind !== 'accepted' ? String((outcome.error as { message?: string }).message ?? 'Commit outcome is unknown; retry the exact request') : null);
           return;
         }
         await chain;
         record = await box.read();
       }
-      publish(record.intents.length || appendedGeneration !== localGeneration ? 'dirty' : 'saved');
+      if (!publishRejection()) publish(record.intents.length || appendedGeneration !== localGeneration ? 'dirty' : 'saved');
     })().catch((error) => { publish('error', message(error)); }).finally(() => { sending = undefined; });
     return sending;
   }
@@ -241,16 +246,22 @@ export async function createTimelineCommandSession(options: Options) {
         const first = record.intents[0].payload as unknown as Payload;
         const original = first.before.source_mapping as { _runtime_document?: JSON };
         const savedAcceptance = record.accepted?.value as unknown as TimelineCommitResult | undefined;
-        const document = savedAcceptance?.canonicalDocument ?? original?._runtime_document as unknown as TimelineCommandBasis['canonicalDocument'];
-        if (!document) throw new Error('Recovered move has no original raw closure');
-        const originalHead = savedAcceptance?.accepted ?? ('head' in record.intents[0].basis ? record.intents[0].basis.head : record.intents[0].readyBase);
-        if (!originalHead) throw new Error('Recovered move has no verified original head');
+        const basis = record.intents[0].basis;
+        // A's accepted submission base does not repin B's original displayed closure.
+        const displayBasis = first.displayBasis ?? ('head' in basis ? {
+          head: basis.head, canonicalDocument: original?._runtime_document as unknown as TimelineCommandBasis['canonicalDocument'],
+        } : undefined);
+        if (typeof displayBasis?.head?.revisionId !== 'string' || !displayBasis.head.revisionId
+          || typeof displayBasis.head.publicationId !== 'string' || !displayBasis.head.publicationId
+          || displayBasis.canonicalDocument?.parent_revision?.revision_id !== displayBasis.head.revisionId) {
+          throw new Error('Recovered move has no verified original display basis');
+        }
         acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
-          : first.displayBasis ?? { head: originalHead, canonicalDocument: document };
-        await project(acceptedBasis,
+          : displayBasis;
+        await project(displayBasis,
           record.intents.map((intent) => (intent.payload as unknown as Payload).preview).filter((patch): patch is TimelinePatch => patch !== null));
       }
-      publish(record.pending?.outcome?.kind === 'rejected' ? 'conflict' : record.intents.length ? 'dirty' : 'saved');
+      if (!publishRejection()) publish(record.intents.length ? 'dirty' : 'saved');
       ready();
       await new Promise<void>((resolve) => { release = resolve; if (stopped) resolve(); });
     };

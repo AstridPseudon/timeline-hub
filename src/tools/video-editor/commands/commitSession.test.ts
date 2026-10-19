@@ -2,6 +2,30 @@ import { describe, expect, it, vi } from 'vitest';
 import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { captureClipMove, submitClipMove } from './semanticGestures.ts';
 import { environment, scope, document } from './__tests__/commitSessionEnvironment.ts';
+import type { OutboxRecord } from './commitOutbox.ts';
+import { captureClipMove as captureRawMove, finishClipMove } from './clipMoveCapture.ts';
+import { authoringBundleFromDocument } from './authoringBundle.ts';
+
+async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (record: OutboxRecord) => void) {
+  await new Promise<void>((resolve, reject) => {
+    const request = env.factory.open('astrid.command-outbox', 1);
+    request.addEventListener('error', () => reject(request.error));
+    request.addEventListener('success', () => {
+      const db = request.result;
+      const tx = db.transaction('owners', 'readwrite');
+      const store = tx.objectStore('owners');
+      const read = store.getAll();
+      read.addEventListener('success', () => {
+        for (const record of read.result as OutboxRecord[]) {
+          change(record);
+          store.put(record, JSON.stringify([scope.realmId, scope.actorId, scope.projectId, scope.timelineId, record.ownerId]));
+        }
+      });
+      tx.addEventListener('complete', () => { db.close(); resolve(); });
+      tx.addEventListener('abort', () => { db.close(); reject(tx.error); });
+    });
+  });
+}
 
 describe('real clip move session through the Runtime HTTP boundary', () => {
   it('drains a just-submitted gesture on dispose without flushing or starting a request', async () => {
@@ -198,12 +222,124 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     expect(reopened.getState().status).toBe('recovery');
     expect(env.commits()).toHaveLength(1);
     await reopened.recover(owner);
+    expect(env.projections[0]).toEqual({ basis: env.initial, previews: env.previews.mock.calls.map(([patch]) => patch) });
     expect(env.commits()[1]).toEqual(original);
     const b = env.commits()[2];
     expect(b.body?.base_publication_id).toBe('p1');
     expect(b.body?.commands[0].expect?.['parent/clip:x::at']).toEqual({ state: 'present', value: 5 });
     await reopened.dispose();
   });
+  it('recovers retained B at its original display pair after A ACK, keeping its exact guarded request at HA', async () => {
+    const env = await environment();
+    const session = await env.mount();
+    env.setFault('lost');
+    env.move(session, 5);
+    env.move(session, 7);
+    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
+    const [original] = await env.outboxes.list(scope);
+    const b = original.intents[1];
+    await env.provider.undoTimeline({ projectId: scope.projectId, timelineId: scope.timelineId,
+      headRevisionId: 'r1', headPublicationId: 'p1' }, ['p1'], 'independent-c');
+    const c = await env.provider.loadTimelineCommandBasis(scope.timelineId);
+    session.observe(c);
+    await session.retry();
+    expect(env.commits()[2]).toEqual(env.commits()[0]);
+    expect(session.getState()).toMatchObject({ status: 'conflict', error: expect.stringContaining('expect') });
+    const [rejected] = await env.outboxes.list(scope);
+    expect(rejected.intents).toHaveLength(1);
+    expect(rejected.intents[0]).toMatchObject({ id: b.id, payload: b.payload, basis: b.basis,
+      readyBase: { revisionId: 'r1', publicationId: 'p1' } });
+    expect(JSON.parse(rejected.pending!.request.body)).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1',
+      commands: (b.payload as { commands: unknown }).commands });
+    expect(rejected.accepted?.head).toEqual({ revisionId: 'r1', publicationId: 'p1' });
+    await session.dispose();
+    const reopened = await env.mount(c);
+    const count = env.commits().length;
+    await reopened.recover(original.ownerId);
+    expect(env.projections.at(-1)).toEqual({ basis: env.initial, previews: [env.previews.mock.calls[1][0]] });
+    expect(reopened.getState()).toMatchObject({ status: 'conflict', error: session.getState().error, canUndo: false });
+    await reopened.retry();
+    await expect(reopened.flush()).rejects.toThrow(session.getState().error!);
+    expect(env.commits()).toHaveLength(count);
+    const [recovered] = await env.outboxes.list(scope);
+    expect(recovered.intents).toEqual(rejected.intents);
+    expect(recovered.pending).toEqual(rejected.pending);
+    expect(recovered.accepted).toEqual(rejected.accepted);
+    await reopened.dispose();
+  });
+  it.each(['conflict', 'refused', 'validation', 'authorization'] as const)(
+    'preserves typed %s after recovery without resending a rejected head', async (fault) => {
+      const env = await environment();
+      const session = await env.mount();
+      env.setFault(fault);
+      env.move(session, 5);
+      await vi.waitFor(() => expect(session.getState().status).toBe(fault === 'conflict' ? 'conflict' : 'error'));
+      const error = session.getState().error;
+      await session.dispose();
+      // Retained heads also carry the typed rejection independently of the pending request.
+      await editOwner(env, (record) => { delete record.pending; });
+      const reopened = await env.mount();
+      await reopened.recover(session.getState().ownerId!);
+      expect(reopened.getState()).toMatchObject({ status: fault === 'conflict' ? 'conflict' : 'error', error, canUndo: false });
+      await reopened.retry();
+      expect(env.commits()).toHaveLength(1);
+      expect(reopened.getState().error).toBe(error);
+      await reopened.dispose();
+    });
+  it('recovers legacy work only from its stored direct head and matching original document', async () => {
+    const env = await environment();
+    const session = await env.mount();
+    env.setFault('busy');
+    env.move(session, 5);
+    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
+    await session.dispose();
+    await editOwner(env, (record) => {
+      delete (record.intents[0].payload as Record<string, unknown>).displayBasis;
+    });
+    const reopened = await env.mount({ ...env.initial, head: { revisionId: 'r0', publicationId: 'new-publication' } });
+    await reopened.recover(session.getState().ownerId!);
+    expect(env.projections.at(-1)?.basis).toEqual({ head: env.initial.head, canonicalDocument: env.initial.canonicalDocument });
+    expect(reopened.getState().status).toBe('retry');
+    await reopened.dispose();
+  });
+  it.each(['missing dependent display basis', 'missing publication', 'mismatched revision'] as const)(
+    'retains work without projecting or sending when recovery has a %s', async (fault) => {
+      const env = await environment();
+      const session = await env.mount();
+      env.setFault('lost');
+      env.move(session, 5);
+      env.move(session, 7);
+      await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
+      // A's cached ACK must arrive before B's retryable refusal.
+      const send = env.provider.commitTimeline.bind(env.provider);
+      env.setFault(null);
+      vi.spyOn(env.provider, 'commitTimeline').mockImplementation(async (...args) => {
+        const result = await send(...args);
+        env.setFault('busy');
+        return result;
+      });
+      await session.retry();
+      await session.dispose();
+      await editOwner(env, (record) => {
+        const payload = record.intents[0].payload as Record<string, unknown>;
+        if (fault === 'missing dependent display basis') delete payload.displayBasis;
+        else {
+          const basis = payload.displayBasis as { head: { revisionId: string; publicationId?: string } };
+          if (fault === 'missing publication') delete basis.head.publicationId;
+          else basis.head.revisionId = 'another-revision';
+        }
+      });
+      const [saved] = await env.outboxes.list(scope);
+      const count = env.commits().length;
+      const reopened = await env.mount(await env.provider.loadTimelineCommandBasis(scope.timelineId));
+      await expect(reopened.recover(saved.ownerId)).rejects.toThrow('verified original display basis');
+      expect(env.projections).toHaveLength(0);
+      expect(env.commits()).toHaveLength(count);
+      const [retained] = await env.outboxes.list(scope);
+      expect(retained.intents).toEqual(saved.intents);
+      expect(retained.pending).toEqual(saved.pending);
+      await reopened.dispose();
+    });
   it('keeps recovery explicit and permits a later claim after the live owner releases its lock', async () => {
     const env = await environment();
     const first = await env.mount();
@@ -229,6 +365,24 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     gate.resolve();
     await session.flush();
     expect(env.projected.at(-1)?.head.publicationId).toBe('pc');
+    await session.dispose();
+  });
+  it('keeps a newer publication C distinct from late A even when both share a content revision', async () => {
+    const env = await environment();
+    const session = await env.mount();
+    env.setFault('lost');
+    env.move(session, 5);
+    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
+    const a = await env.provider.loadTimelineCommandBasis(scope.timelineId);
+    const { command } = finishClipMove(captureRawMove(await authoringBundleFromDocument(a.canonicalDocument), 'parent/clip:x'), 5);
+    const c = await env.provider.commitTimeline({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+      base_revision_id: a.head.revisionId, base_publication_id: a.head.publicationId, commands: [command], source: { via: 'app' } }, 'independent-c');
+    expect(c.accepted).toEqual({ revisionId: 'r1', publicationId: 'p2' });
+    session.observe({ head: c.accepted, canonicalDocument: c.canonicalDocument, graph: c.graph });
+    await session.retry();
+    expect(env.commits()[2]).toEqual(env.commits()[0]);
+    expect(env.projected.map((basis) => basis.head)).toEqual([c.accepted]);
+    expect(await session.flush()).toEqual(c.accepted);
     await session.dispose();
   });
   it.each(['busy', 'unavailable', 'conflict'] as const)('distinguishes %s from an accepted move and retains its suffix', async (fault) => {
