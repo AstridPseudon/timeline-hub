@@ -2,15 +2,15 @@
 # Astrid's bootstrap. Install policy and recovery live in astrid.installer.
 set -eu
 umask 077
-UV_VERSION=0.8.22
+UV_VERSION=0.11.32
 PYTHON_VERSION=3.11.13
 case "$(uname -s)" in
-    Darwin) log="$HOME/Library/Logs/Astrid Runtime/install.log" ;;
-    Linux) log="${XDG_STATE_HOME:-$HOME/.local/state}/astrid-runtime/logs/install.log" ;;
+    Darwin) data_home="$HOME/.local/share"; log="$HOME/Library/Logs/Astrid Runtime/install.log" ;;
+    Linux) data_home=${XDG_DATA_HOME:-$HOME/.local/share}; log="${XDG_STATE_HOME:-$HOME/.local/state}/astrid-runtime/logs/install.log" ;;
     *) echo 'Use https://astrid.haus/install.ps1 on Windows.' >&2; exit 1 ;; esac
-bootstrap="$HOME/.local/share/astrid/bootstrap"
+bootstrap="$data_home/astrid/bootstrap"
 mkdir -p "$bootstrap" "$(dirname "$log")"
-tmp=$(mktemp -d "$bootstrap/tmp.XXXXXXXX")
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/astrid-install.XXXXXXXX")
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 fetch() {
     if command -v curl >/dev/null 2>&1; then
@@ -20,28 +20,60 @@ fetch() {
     fi
 }
 fail() { echo 'Astrid could not get ready.' >&2; echo "Details: $log" >&2; exit 1; }
-fetch https://astrid.haus/install-manifest.json "$tmp/manifest.json" 2>>"$log" || fail
+manifest_url=${ASTRID_INSTALL_MANIFEST_URL:-https://astrid.haus/install-manifest.json}
+fetch "$manifest_url" "$tmp/manifest.json" 2>>"$log" || fail
 uv="$bootstrap/uv"
-if [ ! -x "$uv" ] || [ "$("$uv" --version 2>>"$log")" != "uv $UV_VERSION" ]; then
+uv_matches=0
+if [ -x "$uv" ]; then
+    uv_found=$("$uv" --version 2>>"$log") || uv_found=
+    case "$uv_found" in
+        "uv $UV_VERSION"|"uv $UV_VERSION "*) uv_matches=1 ;;
+    esac
+fi
+if [ "$uv_matches" -ne 1 ]; then
     fetch "https://astral.sh/uv/$UV_VERSION/install.sh" "$tmp/uv.sh" 2>>"$log" || fail
     UV_UNMANAGED_INSTALL="$bootstrap" UV_NO_MODIFY_PATH=1 sh "$tmp/uv.sh" >>"$log" 2>&1 || fail
 fi
 export UV_PYTHON_INSTALL_DIR="$bootstrap/python"
 export ASTRID_INSTALL_UV="$uv"
-"$uv" python install "$PYTHON_VERSION" >>"$log" 2>&1 || fail
+"$uv" python install "$PYTHON_VERSION" --no-bin >>"$log" 2>&1 || fail
 # This only resolves manifest pins and hands off; the package owns every step.
-"$uv" run --no-project --python "$PYTHON_VERSION" python -I -c '
+if "$uv" run --no-project --python "$PYTHON_VERSION" python -I -c '
 import json, os, re, subprocess, sys
+from pathlib import Path
+from urllib.parse import urlsplit
+from urllib.request import url2pathname
 manifest, *flags = sys.argv[1:]
 with open(manifest, encoding="utf-8") as stream: pins = json.load(stream)
-if pins["tools"]["uv"]["version"] != "0.8.22" or pins["tools"]["python"]["version"] != "3.11.13":
+if pins["tools"]["uv"]["version"] != "0.11.32" or pins["tools"]["python"]["version"] != "3.11.13":
     raise SystemExit("The bootstrap and manifest tool pins disagree.")
+def git_requirement(name):
+    pin = pins[name]
+    sha = pin["sha"]
+    if not isinstance(sha, str) or not re.fullmatch("[0-9a-f]{40}", sha):
+        raise SystemExit("Invalid source pin")
+    if "repo" not in pin:
+        return "https://github.com/banodoco/astrid-" + name + "/archive/" + sha + ".tar.gz"
+    repo = pin["repo"]
+    if not isinstance(repo, str) or not repo:
+        raise SystemExit("Source repo must be an absolute local path or file:// URL")
+    if repo.startswith("file://"):
+        parsed = urlsplit(repo)
+        if parsed.netloc not in ("", "localhost") or parsed.query or parsed.fragment:
+            raise SystemExit("Invalid local source URL")
+        repo = url2pathname(parsed.path)
+    path = Path(repo)
+    if not path.is_absolute(): raise SystemExit("Source repo must be absolute")
+    # uv reads the committed Git tree, never the mutable checkout.
+    return "git+" + path.as_uri() + "@" + sha
 args = [os.environ["ASTRID_INSTALL_UV"], "run", "--no-project", "--python", pins["tools"]["python"]["version"]]
 for name in ("runtime", "agent"):
-    sha = pins[name]["sha"]
-    if not re.fullmatch("[0-9a-f]{40}", sha): raise SystemExit("Invalid source pin")
-    url = "https://github.com/banodoco/astrid-" + name + "/archive/" + sha + ".tar.gz"
-    args += ["--with", url]
+    args += ["--with", git_requirement(name)]
 args += ["python", "-I", "-m", "astrid", "install", "--manifest", manifest, *flags]
 raise SystemExit(subprocess.call(args))
-' "$tmp/manifest.json" "$@" 2>>"$log" || fail
+' "$tmp/manifest.json" "$@" >"$tmp/core.out" 2>>"$log"; then status=0; else status=$?; fi
+cat "$tmp/core.out"
+if [ "$status" -ne 0 ]; then
+    if ! grep -Fq 'Astrid could not finish; your workspace and any update backup have been kept.' "$tmp/core.out"; then fail; fi
+    exit "$status"
+fi
