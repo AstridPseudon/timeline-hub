@@ -37,6 +37,20 @@ _WIN_NOFOLLOW = 0x20000000
 _WIN_NONBLOCK = 0
 
 
+def _retry_windows_sharing_violation(operation, *, clock=time.monotonic, sleep=time.sleep):
+    """Retry only transient Windows sharing/access failures for a short budget."""
+    deadline = clock() + 0.25
+    delay = 0.01
+    while True:
+        try:
+            return operation()
+        except OSError as exc:
+            if getattr(exc, "winerror", None) not in (5, 32, 33) or clock() >= deadline:
+                raise
+            sleep(min(delay, max(0, deadline - clock())))
+            delay = min(delay * 2, 0.05)
+
+
 class _WindowsFilesystem:
     """Bounded Win32/NT implementation of the descriptor operations below.
 
@@ -435,7 +449,8 @@ class _WindowsFilesystem:
     def rmdir(self, path, *, dir_fd=None):
         return self._delete(path, dir_fd=dir_fd, directory=True)
 
-    def _move(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None, link=False, follow_symlinks=False):
+    def _move(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None, link=False, follow_symlinks=False,
+              replace=False):
         with self._parent(src, src_dir_fd) as (source_parent, source_name), self._parent(dst, dst_dir_fd) as (parent, name):
             if source_name == "." or name == ".":
                 raise OSError(errno.EINVAL, "cannot rename or link a retained parent")
@@ -448,18 +463,23 @@ class _WindowsFilesystem:
                 data = name.encode("utf-16-le")
                 buffer = ctypes.create_string_buffer(ctypes.sizeof(_WinNameInformation) + len(data))
                 info = _WinNameInformation.from_buffer(buffer)
-                info.ReplaceIfExists = not link
+                info.ReplaceIfExists = replace
                 info.RootDirectory = self._api()[1].get_osfhandle(int(parent))
                 info.FileNameLength = len(data)
                 ctypes.memmove(ctypes.addressof(buffer) + _WinNameInformation.FileName.offset, data, len(data))
-                self._set_information(fd, buffer, 11 if link else 10)
+                operation = lambda: self._set_information(fd, buffer, 11 if link else 10)
+                if replace and not link:
+                    _retry_windows_sharing_violation(operation)
+                else:
+                    operation()
             finally:
                 _os.close(fd)
 
     def rename(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None):
         return self._move(src, dst, src_dir_fd=src_dir_fd, dst_dir_fd=dst_dir_fd)
 
-    replace = rename
+    def replace(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None):
+        return self._move(src, dst, src_dir_fd=src_dir_fd, dst_dir_fd=dst_dir_fd, replace=True)
 
     def link(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None, follow_symlinks=True):
         return self._move(src, dst, src_dir_fd=src_dir_fd, dst_dir_fd=dst_dir_fd,
@@ -1022,7 +1042,7 @@ def write_bytes_at(directory_fd: int, name: str, data: bytes, *, mode: int = 0o6
         os.fsync(fd)
         os.close(fd)
         fd = -1
-        os.rename(temp_name, name, src_dir_fd=directory_fd, dst_dir_fd=directory_fd)
+        filesystem.replace(temp_name, name, src_dir_fd=directory_fd, dst_dir_fd=directory_fd)
         os.fsync(directory_fd)
     except Exception:
         if fd >= 0:
@@ -1147,7 +1167,7 @@ def atomic_json_write(path: str | Path, encoded: bytes, *, identity: Mapping[str
         # rename remains relative even if a concurrent swap occurs in the
         # monkeypatched syscall itself.
         validate_created_parent(target, identity, base_fd)
-        os.rename(temp_name, name, src_dir_fd=base_fd, dst_dir_fd=base_fd)
+        filesystem.replace(temp_name, name, src_dir_fd=base_fd, dst_dir_fd=base_fd)
         os.fsync(base_fd)
         try:
             # A last lexical check turns an in-flight ordinary replacement into

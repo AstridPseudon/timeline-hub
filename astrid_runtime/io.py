@@ -35,7 +35,7 @@ def atomic_write_json(path: Path, value: dict[str, Any]) -> None:
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary_path, path)
+        platform.durable_replace(temporary_path, path)
         owner_only(path)
         try:
             directory_fd = os.open(path.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))

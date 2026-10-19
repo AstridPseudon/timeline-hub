@@ -315,9 +315,9 @@ def relocate(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCo
         merged_aux: list[Path] = []
         try:
             if new_support.exists():
-                os.replace(new_support, target_aux)
+                platform.durable_replace(new_support, target_aux)
                 target_staged = True
-            os.replace(old_support, new_support)
+            platform.durable_replace(old_support, new_support)
             moved = True
             _fsync_directory(old_support.parent)
             _fsync_directory(new_support.parent)
@@ -331,7 +331,7 @@ def relocate(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCo
             atomic_write_json(new_support / "relocation-handoff.json", {"version": 1, "state": "moved", "realm_id": realm_id, "old_support_root": str(old_support), "new_support_root": str(new_support), "catalog_sha256": hashlib.sha256(target_paths.catalog_path.read_bytes()).hexdigest()})
             if target_staged:
                 for entry in sorted(target_aux.iterdir(), key=lambda item: item.name):
-                    os.replace(entry, new_support / entry.name)
+                    platform.durable_replace(entry, new_support / entry.name)
                     merged_aux.append(entry)
             # The renamed bootstrap.lock is the same inode we already hold.
             # Calling bootstrap() would acquire it again and deadlock.
@@ -365,13 +365,13 @@ def relocate(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCo
                             raise RelocationError("relocation rollback cannot proceed while the candidate owner is live") from stop_exc
                     if target_staged:
                         for entry in reversed(merged_aux):
-                            os.replace(new_support / entry.name, target_aux / entry.name)
-                    os.replace(new_support, old_support)
+                            platform.durable_replace(new_support / entry.name, target_aux / entry.name)
+                    platform.durable_replace(new_support, old_support)
                 # If staging the pre-existing target succeeded but the first
                 # root rename failed, the old root is still in place and the
                 # target auxiliary tree must be put back before restarting.
                 if target_staged and target_aux.exists() and not new_support.exists():
-                    os.replace(target_aux, new_support)
+                    platform.durable_replace(target_aux, new_support)
                     target_staged = False
                 if not old_support.exists():
                     raise OSError("old support root is missing during rollback")

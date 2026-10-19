@@ -20,6 +20,73 @@ from tests.lanes import (
 from runtime_protocol import platform
 
 
+def test_windows_durable_replace_retries_only_transient_sharing_failures(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    attempts = []
+    failures = iter((5, 32, None))
+
+    def move(source, destination):
+        attempts.append((source, destination))
+        code = next(failures)
+        if code is not None:
+            error = OSError("transient Windows replace failure")
+            error.winerror = code
+            raise error
+
+    monkeypatch.setattr(platform, "_move_file_write_through", move)
+    monkeypatch.setattr(platform.time, "sleep", lambda _delay: None)
+    assert platform.durable_replace("temporary", "destination") is None
+    assert attempts == [("temporary", "destination")] * 3
+
+
+def test_windows_durable_replace_does_not_retry_permanent_errors(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    attempts = []
+
+    def move(_source, _destination):
+        attempts.append(1)
+        raise PermissionError("permanent failure")
+
+    monkeypatch.setattr(platform, "_move_file_write_through", move)
+    with pytest.raises(PermissionError):
+        platform.durable_replace("temporary", "destination")
+    assert attempts == [1]
+
+
+def test_windows_move_uses_write_through_replace_flags(monkeypatch):
+    calls = []
+
+    class Move:
+        argtypes = None
+        restype = None
+
+        def __call__(self, source, destination, flags):
+            calls.append((source, destination, flags))
+            return 1
+
+    class Kernel:
+        MoveFileExW = Move()
+
+    monkeypatch.setattr(platform.ctypes, "WinDLL", lambda *_args, **_kwargs: Kernel(), raising=False)
+    platform._move_file_write_through("source", "destination")
+    assert calls == [("source", "destination", 0x1 | 0x8)]
+
+
+def test_posix_durable_replace_fsyncs_both_parent_directories(monkeypatch, tmp_path):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="linux"))
+    calls = []
+    monkeypatch.setattr(platform.os, "replace", lambda _source, _destination: None)
+    monkeypatch.setattr(platform, "fsync_directory", calls.append)
+    platform.durable_replace(tmp_path / "source" / "file", tmp_path / "destination" / "file")
+    assert set(calls) == {tmp_path / "source", tmp_path / "destination"}
+
+
+def test_windows_directory_durability_helper_is_best_effort_noop(monkeypatch, tmp_path):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform.os, "open", lambda *_a, **_k: pytest.fail("Windows must not open directory for fsync"))
+    platform.fsync_directory(tmp_path)
+
+
 @pytest.mark.parametrize("os_name", ["darwin", "linux", "win32"])
 def test_native_data_and_log_roots_use_os_default_and_injected_home(monkeypatch, tmp_path, os_name):
     monkeypatch.setattr(platform, "sys", SimpleNamespace(platform=os_name))

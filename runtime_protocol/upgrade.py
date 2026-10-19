@@ -14,6 +14,7 @@ import json
 import math
 import mimetypes
 from runtime_protocol.dirfd import filesystem as os
+from runtime_protocol import platform
 import re
 import shutil
 import sqlite3
@@ -226,7 +227,7 @@ def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = N
         finally:
             os.close(output_fd)
         try:
-            os.replace(output, db)
+            platform.durable_replace(output, db)
         finally:
             output.unlink(missing_ok=True)
         directory = os.open(root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
@@ -1174,7 +1175,7 @@ def _write_manifest(archive: Path, metadata: dict) -> None:
     temporary.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     platform.owner_only(temporary)
     _fsync_file(temporary)
-    os.replace(temporary, archive / "manifest.json")
+    platform.durable_replace(temporary, archive / "manifest.json")
     _fsync_directory(archive)
 
 
@@ -1289,7 +1290,7 @@ def upgrade_realm(
             platform.owner_only(stage_db)
             _fsync_file(stage_db)
             _fsync_directory(stage_dir)
-            os.replace(stage_db, source_db)
+            platform.durable_replace(stage_db, source_db)
             swapped = True
             _fsync_directory(root)
             archive_meta.update({"state": "activated", "activated_at": now()})
@@ -1320,7 +1321,7 @@ def upgrade_realm(
                     rollback = root.parent / f".{source_db.name}.rollback-{uuid.uuid4().hex}"
                     shutil.copy2(archive / source_db.name, rollback)
                     platform.owner_only(rollback)
-                    os.replace(rollback, source_db)
+                    platform.durable_replace(rollback, source_db)
                     for suffix in ("-wal", "-shm", "-journal"):
                         archived_sidecar = archive / f"{source_db.name}{suffix}"
                         restored_sidecar = root / f"{source_db.name}{suffix}"

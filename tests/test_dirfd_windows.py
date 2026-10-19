@@ -11,11 +11,43 @@ from types import SimpleNamespace
 import pytest
 
 import runtime_protocol.dirfd as dirfd
+from runtime_protocol.dirfd import _retry_windows_sharing_violation
 from runtime_protocol.dirfd import _WindowsFilesystem as WindowsFilesystem
 from runtime_protocol.errors import ConflictError
 from tests.lanes import requires_windows_dirfd_adapter, skip_windows_symlink_creation_unavailable
 
 _PARENT_FD = 1000010
+
+
+def test_windows_replace_is_explicit_and_rename_remains_no_replace(monkeypatch):
+    calls = []
+    monkeypatch.setattr(WindowsFilesystem, "_move", lambda self, *args, **kwargs: calls.append(kwargs))
+    filesystem = WindowsFilesystem()
+    filesystem.rename("source", "destination")
+    filesystem.replace("source", "destination")
+    assert calls == [{"src_dir_fd": None, "dst_dir_fd": None},
+                     {"src_dir_fd": None, "dst_dir_fd": None, "replace": True}]
+
+
+def test_windows_dirfd_replace_retries_sharing_violation(monkeypatch):
+    times = iter((0.0, 0.0, 0.01, 0.01, 0.03, 0.03))
+    sleeps = []
+    attempts = []
+
+    def clock():
+        return next(times, 0.03)
+
+    def operation():
+        attempts.append(1)
+        if len(attempts) < 3:
+            error = PermissionError("sharing violation")
+            error.winerror = 32
+            raise error
+        return "published"
+
+    assert _retry_windows_sharing_violation(operation, clock=clock, sleep=sleeps.append) == "published"
+    assert len(attempts) == 3
+    assert sleeps
 
 
 @pytest.mark.parametrize("value, expected", [
@@ -217,7 +249,10 @@ def test_windows_rename_and_link_information_use_destination_handle(native_calls
     monkeypatch.setattr(WindowsFilesystem, "_parent", classmethod(parent))
     fs = WindowsFilesystem()
     for link in (False, True):
-        fs._move("child", destination, src_dir_fd=_PARENT_FD, dst_dir_fd=20, link=link)
+        if link:
+            fs.link("child", destination, src_dir_fd=_PARENT_FD, dst_dir_fd=20)
+        else:
+            fs.replace("child", destination, src_dir_fd=_PARENT_FD, dst_dir_fd=20)
         handle, data, kind = native_calls.sets[-1]
         assert handle == native_calls.fd + 1000
         assert kind == (11 if link else 10)

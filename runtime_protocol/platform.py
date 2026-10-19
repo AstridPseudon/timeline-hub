@@ -115,6 +115,60 @@ def private_temporary(directory, prefix):
     return tempfile.mkstemp(dir=directory, prefix=prefix)
 
 
+def _retry_windows_sharing_violation(operation, *, clock=time.monotonic, sleep=time.sleep):
+    """Retry AV/reader sharing failures for at most a quarter second."""
+    deadline = clock() + 0.25
+    delay = 0.01
+    while True:
+        try:
+            return operation()
+        except OSError as exc:
+            if getattr(exc, "winerror", None) not in (5, 32, 33) or clock() >= deadline:
+                raise
+            sleep(min(delay, max(0, deadline - clock())))
+            delay = min(delay * 2, 0.05)
+
+
+def _move_file_write_through(source, destination):
+    """Replace a path with Win32's write-through namespace durability."""
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    move = kernel.MoveFileExW
+    move.argtypes = (wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD)
+    move.restype = wintypes.BOOL
+    if not move(os.fspath(source), os.fspath(destination), 0x1 | 0x8):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
+def fsync_directory(path):
+    """Persist a directory entry update on POSIX; Windows has no dir fsync."""
+    if sys.platform == "win32":
+        return
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def durable_replace(source, destination):
+    """Atomically replace a path, with per-OS durability and retry semantics.
+
+    POSIX callers fsync their parent directory after publication. Windows has
+    no portable directory-fsync operation, so MoveFileExW's
+    MOVEFILE_WRITE_THROUGH completes the move before returning. Its sharing
+    and access failures receive a short bounded retry for scanners/readers.
+    """
+    if sys.platform == "win32":
+        return _retry_windows_sharing_violation(
+            lambda: _move_file_write_through(source, destination)
+        )
+    os.replace(source, destination)
+    parents = {Path(source).parent, Path(destination).parent}
+    for parent in parents:
+        fsync_directory(parent)
+
+
 def read_private_file(path):
     if sys.platform == "win32":
         from .windows_security import read_private
