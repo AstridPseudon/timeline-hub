@@ -172,6 +172,90 @@ def test_read_runtime_connection_skips_pack_host_setup(monkeypatch, tmp_path):
     assert seen["command"][:4] == ["/usr/bin/banodoco-local", "up", "--profile", "astrid"]
 
 
+def test_host_free_runtime_ignores_pending_worker_credential(monkeypatch, tmp_path):
+    from astrid.sdk import host_bootstrap
+
+    credential = tmp_path / "astrid.json"
+    credential.write_text("{}", encoding="utf-8")
+    pending_worker = tmp_path / "worker.pending"
+    host_calls: list[bool] = []
+
+    def fake_run(command, **kwargs):
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            json.dumps(
+                {
+                    "status": "started",
+                    "realm_id": "realm-1",
+                    "endpoint": "http://127.0.0.1:1",
+                    "actor_id": "owner",
+                    "credential_file": str(credential),
+                    "worker_credential_file": str(pending_worker),
+                    "worker_credential_pending": True,
+                    "worker_actor": "astrid-pack-host",
+                    "worker_scopes": ["worker:execute"],
+                }
+            ),
+            "",
+        )
+
+    monkeypatch.setenv("BANODOCO_LOCAL_LAUNCHER", "/usr/bin/banodoco-local")
+    monkeypatch.setattr(autobootstrap, "_discovery_present", lambda _root: False)
+    monkeypatch.setattr(autobootstrap.subprocess, "run", fake_run)
+    monkeypatch.setattr(
+        host_bootstrap,
+        "ensure_pack_host",
+        lambda *args, **kwargs: host_calls.append(True),
+    )
+
+    result = autobootstrap.ensure_runtime(start_pack_host=False)
+
+    assert result["status"] == "started"
+    assert result["credential_file"] == str(credential)
+    assert not ({"worker_credential_file", "worker_actor", "worker_scopes"} & result.keys())
+    assert host_calls == []
+
+
+@pytest.mark.parametrize("worker_state", ["missing", "symlink"])
+def test_host_required_runtime_rejects_missing_or_symlink_worker_credential(
+    monkeypatch, tmp_path, worker_state
+):
+    credential = tmp_path / "astrid.json"
+    credential.write_text("{}", encoding="utf-8")
+    worker_target = tmp_path / "worker.token"
+    worker_target.write_text("worker-secret", encoding="utf-8")
+    worker_path = tmp_path / "worker.pending"
+    if worker_state == "symlink":
+        worker_path.symlink_to(worker_target)
+
+    def fake_run(command, **kwargs):
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            json.dumps(
+                {
+                    "status": "started",
+                    "realm_id": "realm-1",
+                    "endpoint": "http://127.0.0.1:1",
+                    "actor_id": "owner",
+                    "credential_file": str(credential),
+                    "worker_credential_file": str(worker_path),
+                    "worker_actor": "astrid-pack-host",
+                    "worker_scopes": ["worker:execute"],
+                }
+            ),
+            "",
+        )
+
+    monkeypatch.setenv("BANODOCO_LOCAL_LAUNCHER", "/usr/bin/banodoco-local")
+    monkeypatch.setattr(autobootstrap, "_discovery_present", lambda _root: False)
+    monkeypatch.setattr(autobootstrap.subprocess, "run", fake_run)
+
+    with pytest.raises(autobootstrap.AutoBootstrapError, match="worker credential"):
+        autobootstrap.ensure_runtime(start_pack_host=True)
+
+
 def test_default_runtime_connection_still_starts_pack_host(monkeypatch, tmp_path):
     from astrid.sdk import host_bootstrap
 

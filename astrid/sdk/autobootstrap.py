@@ -483,7 +483,7 @@ def ensure_runtime(*, start_pack_host: bool = True, data_root: str | Path | None
 
     worker_handoff: dict[str, Any] = {}
     credential_file = value.get("credential_file", "")
-    if value.get("worker_credential_file"):
+    if start_pack_host and value.get("worker_credential_file"):
         worker_file = value.get("worker_credential_file")
         if not isinstance(worker_file, str):
             raise AutoBootstrapError(f"neutral runtime bootstrap returned an invalid worker credential path; {RECONFIGURE_ACTION}")
@@ -503,7 +503,14 @@ def ensure_runtime(*, start_pack_host: bool = True, data_root: str | Path | None
     result = dict(value)
     # The launcher returns only a path to the owner-only credential file;
     # never put the credential value in the subprocess result or logs.
-    result.update(worker_handoff)
+    if start_pack_host:
+        result.update(worker_handoff)
+    else:
+        # Host-free operations use only the Runtime credential. Worker
+        # metadata is neither needed nor necessarily ready until execution is
+        # requested, so do not validate or return a pending worker path here.
+        for field in ("worker_credential_file", "worker_actor", "worker_scopes"):
+            result.pop(field, None)
     if worker_handoff and start_pack_host:
         from astrid.sdk.host_bootstrap import (
             INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS, PackHostBootstrapError,
