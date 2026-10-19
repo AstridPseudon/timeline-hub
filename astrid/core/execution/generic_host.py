@@ -1585,6 +1585,9 @@ def _confined_cwd(
 
 def _preflight_unavailable_reason(record: "CapabilityRecord") -> str:
     """Return a stable, secret-free reason for a failed capability preflight."""
+    gpu = record.preflight.get("gpu")
+    if isinstance(gpu, Mapping) and gpu.get("ok") is False:
+        return str(gpu["reason"])
     failures: list[str] = []
     for check_name in sorted(record.preflight):
         check = record.preflight[check_name]
@@ -6085,11 +6088,18 @@ class GenericPackHost:
         return self._preflight(capability_id, full_remotion=True)
 
     def _preflight(self, capability_id: str | None = None, *, full_remotion: bool) -> tuple[CapabilityRecord, ...]:
+        from astrid.core.generation.gpu_environment import windows_gpu_status
+
         selected = [self.capabilities[capability_id]] if capability_id else list(self.capabilities.values())
         updated: dict[str, CapabilityRecord] = dict(self.capabilities)
+        gpu_detection = None
         remotion_context = self._remotion_idle_context() if any(record.adapter.requires_remotion for record in selected) else None
         for record in selected:
             checks: dict[str, Any] = {"source": record.source_root.is_dir(), "definition": True}
+            gpu = windows_gpu_status(record.id, detection=gpu_detection)
+            if gpu is not None:
+                checks["gpu"] = gpu
+                gpu_detection = gpu["device"]
             adapter = record.adapter
             matrix_binaries = tuple(str(binary) for binary in record.matrix.get("required_binaries", ()))
             binary_requirements = tuple(dict.fromkeys((*record.definition.isolation.binaries, *matrix_binaries, *adapter.required_binaries)))
@@ -6289,6 +6299,13 @@ class GenericPackHost:
             else:
                 status = "ready" if record.ready else "unavailable"
                 unavailable_reason = None if record.ready else _preflight_unavailable_reason(record)
+                gpu = record.preflight.get("gpu")
+                if isinstance(gpu, Mapping) and not gpu.get("qualified"):
+                    label = str(gpu["reason"])
+                    unavailable_reason = (
+                        label + " " + unavailable_reason
+                        if unavailable_reason and unavailable_reason != label else label
+                    )
             executor_capabilities.append(
                 {
                     "capability_id": record.id,
@@ -9771,6 +9788,8 @@ class GenericPackHost:
                 "source_digest": record.source_digest,
                 "dependency_digest": record.dependency_digest,
             }
+            if "gpu" in record.preflight:
+                payload["gpu_qualification"] = dict(record.preflight["gpu"])
             if publication_result is not None:
                 payload["timeline_render_publication"] = dict(publication_result)
             if thumbnail_diagnostics:
@@ -9883,10 +9902,14 @@ class GenericPackHost:
             original_error = exc.execution_error if isinstance(exc, CommandCleanupUnresolved) else exc
             if isinstance(original_error, StorageEnvelopeError):
                 storage_failure_receipt = dict(original_error.diagnostic)
+            failure_message = str(exc)
+            gpu = record.preflight.get("gpu")
+            if isinstance(gpu, Mapping) and not gpu.get("qualified"):
+                failure_message += " " + str(gpu["reason"])
             self._handoff_settlement_call(self.client.fail,
                 task_id,
                 lease_token,
-                str(exc),
+                failure_message,
                 retryable=False,
                 attempt_id=attempt_id,
                 fence=fence,

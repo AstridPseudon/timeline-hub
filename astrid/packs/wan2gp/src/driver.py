@@ -27,8 +27,9 @@ from typing import Any, Mapping
 from .compiler import compile_from_inputs, portable_digest, runner_fingerprint, warmth_identity
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 
-# W1.2 selected the unmodified official Python API candidate.  Installation
-# and device qualification remain an independent owner artifact (C1 HOLD).
+# W1.2 selected the unmodified official Python API candidate. The Windows
+# candidate environment is pinned beside this pack; device qualification
+# remains held until testers confirm it.
 WAN2GP_PIN_SHA = "f3f204e50f6eeb73ce40d1dafc93bc97bfaa61e4"
 WAN2GP_PIN_REF = "deepbeepmeep/Wan2GP"
 
