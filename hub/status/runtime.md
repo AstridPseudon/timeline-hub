@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T20:10:49Z | dispatcher heartbeat 2s -->
+<!-- main | 2026-10-19T20:16:01Z | dispatcher heartbeat 2s -->
 # runtime — 2026-10-19T20:05Z
 Milestone: M1 ACTIVE — real Runtime+Agent CLI/Python renderer-free move/lost-ACK/restart/exact retry/undo/show/native visualize proven. Remaining exit proof: mounted App real mouse recovery/undo. M0 COMPLETE.
 Integrated: runtime tl/integration82df3cf — writer/history/retained inputs/v31 + recorder integrity + create chronology + door/startup + immutable reads + official raw schema0.2.1 + TS receipt tuple + actual integration tests. Schema4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d; final artifact9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d, source182a7dd unchanged.

@@ -23,6 +23,7 @@ case $M in
 esac
 # on a remote machine, home repos count as mine only once the handover arrived
 [ $M != main ] && [ ! -e $ORCH/managers/$AREAS/HANDOVER_DONE ] && HOME_REPOS=""
+exec 8>$ORCH/.hub-sync.lock; flock -w 300 8 || exit 0   # never race hub-syncd
 now=$(date -u +%FT%TZ)
 retry(){ local d=2; for i in 1 2 3 4 5; do "$@" && return 0; sleep $d; d=$((d*2)); done; return 1; }
 

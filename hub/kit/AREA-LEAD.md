@@ -56,3 +56,6 @@ Read `orch/COMMS.md`. In short:
   - Is the hub in sync?
 - Answer nothing yourself. Escalations go to the orchestrator via the hub, and you relay the inbox. Purely local infrastructure fixes are yours.
 - Never push to upstream default branches. Never weaken or skip tests. Never start M5 work.
+
+## Lead notes
+On every hourly check, read `hub/lead/<area>.md` in /home/user/timeline-hub (after a sync). It holds orchestrator instructions for you, the lead: tool updates, machine setup. Act on new items. Manager decisions keep arriving via the INBOX.

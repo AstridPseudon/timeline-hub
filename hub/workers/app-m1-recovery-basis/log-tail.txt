@@ -1,400 +1,400 @@
-  it('reopens exact A before dependent B, then gives B a fresh key/base with original guards and IDs', async () => {
-    const env = environment();
-    const first = env.open();
-    let owner = '';
-    let requestA!: OutboxRequest;
-    let b = '';
-    await first.create(scope, async (box, ownerId) => {
-      owner = ownerId;
-      const a = await box.append(move(5), { head: h0 });
-      await box.dispatch(build, async (request) => {
-        requestA = request;
-        b = await box.append(move(7), { after: a });
-        throw new Error('ACK lost');
-      });
-    });
-    const reopened = env.open();
-    const [recovery] = await reopened.list(scope);
-    expect(recovery.ownerId).toBe(owner);
-    expect(recovery.pending?.request).toEqual(requestA);
-    expect(recovery.intents[1]).toMatchObject({ id: b, payload: move(7) });
-    await reopened.recover(scope, owner, async (box) => {
-      const mustNotBuild = vi.fn(() => { throw new Error('Retry must not be rebuilt'); });
-      const afterA = await box.dispatch(mustNotBuild, async (request) => {
-        expect(request).toEqual(requestA);
-        return accepted();
-      });
-      expect(mustNotBuild).not.toHaveBeenCalled();
-      expect(afterA.intents).toHaveLength(1);
-      expect(afterA.intents[0]).toMatchObject({ id: b, payload: move(7), readyBase: ha });
-      expect(afterA.accepted).toEqual({ intentId: recovery.pending!.intentId, head: ha, value: accepted().value });
-      await box.dispatch(build, async (requestB) => {
-        expect(requestB.key).not.toBe(requestA.key);
-        expect(JSON.parse(requestB.body)).toEqual({
-          base_revision_id: 'RA', base_publication_id: 'PA', proposal: move(7),
-        });
-        return accepted({ revisionId: 'RB', publicationId: 'PB' });
-      });
-      expect((await box.read()).intents).toEqual([]);
-    });
-  });
++publication identity, and incomplete recovery pins through the HTTP fixture.
+diff --git a/src/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts b/src/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts
+index f9785ec8365b2f7a21a978488c2fe50038b63720..d476da3e302245948fa6f16514f9bd7eb6d07d9a
+--- a/src/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts
++++ b/src/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts
+@@ -10,7 +10,8 @@
+ import { createTimelineCommandSession } from '../commitSession.ts';
+ import { captureClipMove, submitClipMove } from '../semanticGestures.ts';
+ import { authoringBundleFromDocument } from '../authoringBundle.ts';
+-import { executeClipMove } from '../clipMoveCapture.ts';
++import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
++import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
+ 
+ const projectId = 'project-commit', timelineId = 'timeline-commit';
+ export const scope = { projectId, timelineId, realmId: 'realm-1', actorId: 'actor-1' };
+@@ -43,7 +44,7 @@
+ export async function environment(initialDocument = document()) {
+   let serverDocument = structuredClone(initialDocument);
+   let serverHead = h0;
+-  let fault: 'lost' | 'busy' | 'conflict' | 'unavailable' | null = null;
++  let fault: 'lost' | 'busy' | 'conflict' | 'unavailable' | 'refused' | 'validation' | 'authorization' | null = null;
+   let pause: ReturnType<typeof deferred> | null = null;
+   const calls: { path: string; method: string; body?: CommitRequest; key?: string }[] = [];
+   const accepted = new Map<string, CommitAcceptedMutation>();
+@@ -76,13 +77,24 @@
+         details: { status: fault === 'conflict' ? 'conflict' : 'refused', reason: fault === 'busy' ? 'head_busy' : fault },
+       }),
+     };
++    if (fault === 'refused' || fault === 'validation' || fault === 'authorization') return {
++      status: fault === 'refused' ? 409 : fault === 'validation' ? 422 : 403, headers: {},
++      body: bytes({ code: fault, message: 'conflict in request',
++        details: fault === 'refused' ? { status: 'refused' } : {} }),
++    };
+     let response = accepted.get(key);
+     if (!response) {
+       const next = `r${accepted.size + 1}`, publication = `p${accepted.size + 1}`;
+       response = acceptedCommit({ revision_id: next, publication_id: publication },
+         { revision_id: request.base_revision_id, publication_id: request.base_publication_id }, { commands: request.commands });
+       if (request.commands[0].op === 'clip.move') {
+-        const result = executeClipMove(await authoringBundleFromDocument(serverDocument), request.commands[0]);
++        let result;
++        try { result = executeClipMove(await authoringBundleFromDocument(serverDocument), request.commands[0]); }
++        catch (error) {
++          if (!(error instanceof ClipMoveError) || !['capture_mismatch', 'identity_conflict'].includes(error.kind)) throw error;
++          return { status: 409, headers: {}, body: bytes({ code: 'conflict', message: error.message,
++            details: { status: 'conflict', reason: error.kind } }) };
++        }
+         const payload = { ...result.bundle.parent, occurrences: [] };
+         const revision = fixtureDigest(payload) === serverDocument.parent_revision.content_digest ? serverDocument.parent_revision.revision_id : next;
+         serverDocument = { ...serverDocument, parent_revision: { revision_id: revision, content_digest: fixtureDigest(payload), payload } };
+@@ -103,19 +115,21 @@
+   let current = await buildTimelineData(serverDocument.parent_revision.payload.config as never, { assets: {} }, undefined, 1, undefined,
+     { projectId, timelineId, headRevisionId: 'r0', headPublicationId: 'p0' });
+   const projected: TimelineCommandBasis[] = [];
++  const projections: { basis: TimelineCommandBasis; previews: TimelinePatch[] }[] = [];
+   const previews = vi.fn();
+   const { outbox: outboxes, factory } = storage();
+   const mount = (basis = initial) => createTimelineCommandSession({ initial: basis, scope, outboxes,
+     send: (request, key) => provider.commitTimeline(request, key), preview: previews,
+-    project: async (basis) => {
++    project: async (basis, previews) => {
+       projected.push(basis);
++      projections.push({ basis, previews });
+       const parent = basis.canonicalDocument.parent_revision.payload;
+       current = await buildTimelineData({ ...parent.config as object, clips: parent.clips } as never, { assets: {} }, undefined,
+         1, undefined, { projectId, timelineId, headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId });
+     }, changed: () => {},
+   });
+   const move = (session: Awaited<ReturnType<typeof mount>>, on: number) => submitClipMove(captureClipMove(session.port, current, 'x'), on);
+-  return { provider, initial, outboxes, factory, current: () => current, calls, projected, mount, move, previews,
++  return { provider, initial, outboxes, factory, current: () => current, calls, projected, projections, mount, move, previews,
+     setFault: (value: typeof fault) => { fault = value; },
+     pause: () => { pause = deferred(); return pause; },
+     commits: () => calls.filter((call) => call.path.endsWith('/commit')) };
+diff --git a/src/tools/video-editor/commands/commitSession.test.ts b/src/tools/video-editor/commands/commitSession.test.ts
+index b710a55709af6cc02875e87044072d4df98d029f..c0a17f252a40793aa38af6e2d2d7efec1a039729
+--- a/src/tools/video-editor/commands/commitSession.test.ts
++++ b/src/tools/video-editor/commands/commitSession.test.ts
+@@ -2,7 +2,31 @@
+ import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+ import { captureClipMove, submitClipMove } from './semanticGestures.ts';
+ import { environment, scope, document } from './__tests__/commitSessionEnvironment.ts';
++import type { OutboxRecord } from './commitOutbox.ts';
++import { captureClipMove as captureRawMove, finishClipMove } from './clipMoveCapture.ts';
++import { authoringBundleFromDocument } from './authoringBundle.ts';
+ 
++async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (record: OutboxRecord) => void) {
++  await new Promise<void>((resolve, reject) => {
++    const request = env.factory.open('astrid.command-outbox', 1);
++    request.addEventListener('error', () => reject(request.error));
++    request.addEventListener('success', () => {
++      const db = request.result;
++      const tx = db.transaction('owners', 'readwrite');
++      const store = tx.objectStore('owners');
++      const read = store.getAll();
++      read.addEventListener('success', () => {
++        for (const record of read.result as OutboxRecord[]) {
++          change(record);
++          store.put(record, JSON.stringify([scope.realmId, scope.actorId, scope.projectId, scope.timelineId, record.ownerId]));
++        }
++      });
++      tx.addEventListener('complete', () => { db.close(); resolve(); });
++      tx.addEventListener('abort', () => { db.close(); reject(tx.error); });
++    });
++  });
++}
++
+ describe('real clip move session through the Runtime HTTP boundary', () => {
+   it('drains a just-submitted gesture on dispose without flushing or starting a request', async () => {
+     const env = await environment();
+@@ -198,12 +222,124 @@
+     expect(reopened.getState().status).toBe('recovery');
+     expect(env.commits()).toHaveLength(1);
+     await reopened.recover(owner);
++    expect(env.projections[0]).toEqual({ basis: env.initial, previews: env.previews.mock.calls.map(([patch]) => patch) });
+     expect(env.commits()[1]).toEqual(original);
+     const b = env.commits()[2];
+     expect(b.body?.base_publication_id).toBe('p1');
+     expect(b.body?.commands[0].expect?.['parent/clip:x::at']).toEqual({ state: 'present', value: 5 });
+     await reopened.dispose();
+   });
++  it('recovers retained B at its original display pair after A ACK, keeping its exact guarded request at HA', async () => {
++    const env = await environment();
++    const session = await env.mount();
++    env.setFault('lost');
++    env.move(session, 5);
++    env.move(session, 7);
++    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
++    const [original] = await env.outboxes.list(scope);
++    const b = original.intents[1];
++    await env.provider.undoTimeline({ projectId: scope.projectId, timelineId: scope.timelineId,
++      headRevisionId: 'r1', headPublicationId: 'p1' }, ['p1'], 'independent-c');
++    const c = await env.provider.loadTimelineCommandBasis(scope.timelineId);
++    session.observe(c);
++    await session.retry();
++    expect(env.commits()[2]).toEqual(env.commits()[0]);
++    expect(session.getState()).toMatchObject({ status: 'conflict', error: expect.stringContaining('expect') });
++    const [rejected] = await env.outboxes.list(scope);
++    expect(rejected.intents).toHaveLength(1);
++    expect(rejected.intents[0]).toMatchObject({ id: b.id, payload: b.payload, basis: b.basis,
++      readyBase: { revisionId: 'r1', publicationId: 'p1' } });
++    expect(JSON.parse(rejected.pending!.request.body)).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1',
++      commands: (b.payload as { commands: unknown }).commands });
++    expect(rejected.accepted?.head).toEqual({ revisionId: 'r1', publicationId: 'p1' });
++    await session.dispose();
++    const reopened = await env.mount(c);
++    const count = env.commits().length;
++    await reopened.recover(original.ownerId);
++    expect(env.projections.at(-1)).toEqual({ basis: env.initial, previews: [env.previews.mock.calls[1][0]] });
++    expect(reopened.getState()).toMatchObject({ status: 'conflict', error: session.getState().error, canUndo: false });
++    await reopened.retry();
++    await expect(reopened.flush()).rejects.toThrow(session.getState().error!);
++    expect(env.commits()).toHaveLength(count);
++    const [recovered] = await env.outboxes.list(scope);
++    expect(recovered.intents).toEqual(rejected.intents);
++    expect(recovered.pending).toEqual(rejected.pending);
++    expect(recovered.accepted).toEqual(rejected.accepted);
++    await reopened.dispose();
++  });
++  it.each(['conflict', 'refused', 'validation', 'authorization'] as const)(
++    'preserves typed %s after recovery without resending a rejected head', async (fault) => {
++      const env = await environment();
++      const session = await env.mount();
++      env.setFault(fault);
++      env.move(session, 5);
++      await vi.waitFor(() => expect(session.getState().status).toBe(fault === 'conflict' ? 'conflict' : 'error'));
++      const error = session.getState().error;
++      await session.dispose();
++      // Retained heads also carry the typed rejection independently of the pending request.
++      await editOwner(env, (record) => { delete record.pending; });
++      const reopened = await env.mount();
++      await reopened.recover(session.getState().ownerId!);
++      expect(reopened.getState()).toMatchObject({ status: fault === 'conflict' ? 'conflict' : 'error', error, canUndo: false });
++      await reopened.retry();
++      expect(env.commits()).toHaveLength(1);
++      expect(reopened.getState().error).toBe(error);
++      await reopened.dispose();
++    });
++  it('recovers legacy work only from its stored direct head and matching original document', async () => {
++    const env = await environment();
++    const session = await env.mount();
++    env.setFault('busy');
++    env.move(session, 5);
++    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
++    await session.dispose();
++    await editOwner(env, (record) => {
++      delete (record.intents[0].payload as Record<string, unknown>).displayBasis;
++    });
++    const reopened = await env.mount({ ...env.initial, head: { revisionId: 'r0', publicationId: 'new-publication' } });
++    await reopened.recover(session.getState().ownerId!);
++    expect(env.projections.at(-1)?.basis).toEqual({ head: env.initial.head, canonicalDocument: env.initial.canonicalDocument });
++    expect(reopened.getState().status).toBe('retry');
++    await reopened.dispose();
++  });
++  it.each(['missing dependent display basis', 'missing publication', 'mismatched revision'] as const)(
++    'retains work without projecting or sending when recovery has a %s', async (fault) => {
++      const env = await environment();
++      const session = await env.mount();
++      env.setFault('lost');
++      env.move(session, 5);
++      env.move(session, 7);
++      await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
++      // A's cached ACK must arrive before B's retryable refusal.
++      const send = env.provider.commitTimeline.bind(env.provider);
++      env.setFault(null);
++      vi.spyOn(env.provider, 'commitTimeline').mockImplementation(async (...args) => {
++        const result = await send(...args);
++        env.setFault('busy');
++        return result;
++      });
++      await session.retry();
++      await session.dispose();
++      await editOwner(env, (record) => {
++        const payload = record.intents[0].payload as Record<string, unknown>;
++        if (fault === 'missing dependent display basis') delete payload.displayBasis;
++        else {
++          const basis = payload.displayBasis as { head: { revisionId: string; publicationId?: string } };
++          if (fault === 'missing publication') delete basis.head.publicationId;
++          else basis.head.revisionId = 'another-revision';
++        }
++      });
++      const [saved] = await env.outboxes.list(scope);
++      const count = env.commits().length;
++      const reopened = await env.mount(await env.provider.loadTimelineCommandBasis(scope.timelineId));
++      await expect(reopened.recover(saved.ownerId)).rejects.toThrow('verified original display basis');
++      expect(env.projections).toHaveLength(0);
++      expect(env.commits()).toHaveLength(count);
++      const [retained] = await env.outboxes.list(scope);
++      expect(retained.intents).toEqual(saved.intents);
++      expect(retained.pending).toEqual(saved.pending);
++      await reopened.dispose();
++    });
+   it('keeps recovery explicit and permits a later claim after the live owner releases its lock', async () => {
+     const env = await environment();
+     const first = await env.mount();
+@@ -231,6 +367,24 @@
+     expect(env.projected.at(-1)?.head.publicationId).toBe('pc');
+     await session.dispose();
+   });
++  it('keeps a newer publication C distinct from late A even when both share a content revision', async () => {
++    const env = await environment();
++    const session = await env.mount();
++    env.setFault('lost');
++    env.move(session, 5);
++    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
++    const a = await env.provider.loadTimelineCommandBasis(scope.timelineId);
++    const { command } = finishClipMove(captureRawMove(await authoringBundleFromDocument(a.canonicalDocument), 'parent/clip:x'), 5);
++    const c = await env.provider.commitTimeline({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
++      base_revision_id: a.head.revisionId, base_publication_id: a.head.publicationId, commands: [command], source: { via: 'app' } }, 'independent-c');
++    expect(c.accepted).toEqual({ revisionId: 'r1', publicationId: 'p2' });
++    session.observe({ head: c.accepted, canonicalDocument: c.canonicalDocument, graph: c.graph });
++    await session.retry();
++    expect(env.commits()[2]).toEqual(env.commits()[0]);
++    expect(env.projected.map((basis) => basis.head)).toEqual([c.accepted]);
++    expect(await session.flush()).toEqual(c.accepted);
++    await session.dispose();
++  });
+   it.each(['busy', 'unavailable', 'conflict'] as const)('distinguishes %s from an accepted move and retains its suffix', async (fault) => {
+     const env = await environment();
+     const session = await env.mount();
+diff --git a/src/tools/video-editor/commands/commitSession.ts b/src/tools/video-editor/commands/commitSession.ts
+index 9308e3fa938f42bc417774ee61700012ad95b8f2..47d3b1b1d3f02cb314878958a4b1a5b8e6753432
+--- a/src/tools/video-editor/commands/commitSession.ts
++++ b/src/tools/video-editor/commands/commitSession.ts
+@@ -62,6 +62,14 @@
+       && ((status === 'saved' && !!undos.length) || (status === 'dirty' && !!record?.intents.length && !record.pending)) };
+     options.changed(state);
+   }
++  function publishRejection() {
++    const outcome = record?.pending?.outcome;
++    const error = outcome?.kind === 'rejected' ? outcome.error : record?.intents[0]?.conflict;
++    if (error === undefined) return false;
++    const typed = error as { kind?: string; message?: string } | null;
++    publish(typed?.kind === 'conflict' ? 'conflict' : 'error', typed?.message ?? 'Timeline command was refused');
++    return true;
++  }
+   function assertReady() {
+     if (stopped || !box || projecting || projectionPending || persistenceFailed || record?.intents[0]?.conflict !== undefined) {
+       throw new Error(state.error ?? 'Timeline command session is unavailable');
+@@ -90,12 +98,8 @@
+         known = target;
+         acceptedBasis = target;
+       }
+-      if (record.pending?.outcome?.kind === 'rejected') {
+-        const error = record.pending.outcome.error as { kind?: string; message?: string };
+-        publish(error.kind === 'conflict' ? 'conflict' : 'error', error.message ?? 'Timeline command was refused');
+-        return;
+-      }
+-      while (!stopped && record.intents.length && !record.intents[0].conflict) {
++      if (publishRejection()) return;
++      while (!stopped && record.intents.length && record.intents[0].conflict === undefined) {
+         publish('saving');
+         const priorAccepted = record.accepted?.intentId;
+         record = await box.dispatch((intent, head) => ({
+@@ -139,16 +143,17 @@
+             }
+           }
+         }
++        if (publishRejection()) return;
+         if (record.pending) {
+           const outcome = record.pending.outcome;
+-          publish(outcome?.kind === 'rejected' ? ((outcome.error as { kind?: string }).kind === 'conflict' ? 'conflict' : 'error') : 'retry',
++          publish('retry',
+             outcome && outcome.kind !== 'accepted' ? String((outcome.error as { message?: string }).message ?? 'Commit outcome is unknown; retry the exact request') : null);
+           return;
+         }
+         await chain;
+         record = await box.read();
+       }
+-      publish(record.intents.length || appendedGeneration !== localGeneration ? 'dirty' : 'saved');
++      if (!publishRejection()) publish(record.intents.length || appendedGeneration !== localGeneration ? 'dirty' : 'saved');
+     })().catch((error) => { publish('error', message(error)); }).finally(() => { sending = undefined; });
+     return sending;
+   }
+@@ -241,16 +246,22 @@
+         const first = record.intents[0].payload as unknown as Payload;
+         const original = first.before.source_mapping as { _runtime_document?: JSON };
+         const savedAcceptance = record.accepted?.value as unknown as TimelineCommitResult | undefined;
+-        const document = savedAcceptance?.canonicalDocument ?? original?._runtime_document as unknown as TimelineCommandBasis['canonicalDocument'];
+-        if (!document) throw new Error('Recovered move has no original raw closure');
+-        const originalHead = savedAcceptance?.accepted ?? ('head' in record.intents[0].basis ? record.intents[0].basis.head : record.intents[0].readyBase);
+-        if (!originalHead) throw new Error('Recovered move has no verified original head');
++        const basis = record.intents[0].basis;
++        // A's accepted submission base does not repin B's original displayed closure.
++        const displayBasis = first.displayBasis ?? ('head' in basis ? {
++          head: basis.head, canonicalDocument: original?._runtime_document as unknown as TimelineCommandBasis['canonicalDocument'],
++        } : undefined);
++        if (typeof displayBasis?.head?.revisionId !== 'string' || !displayBasis.head.revisionId
++          || typeof displayBasis.head.publicationId !== 'string' || !displayBasis.head.publicationId
++          || displayBasis.canonicalDocument?.parent_revision?.revision_id !== displayBasis.head.revisionId) {
++          throw new Error('Recovered move has no verified original display basis');
++        }
+         acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
+-          : first.displayBasis ?? { head: originalHead, canonicalDocument: document };
+-        await project(acceptedBasis,
++          : displayBasis;
++        await project(displayBasis,
+           record.intents.map((intent) => (intent.payload as unknown as Payload).preview).filter((patch): patch is TimelinePatch => patch !== null));
+       }
+-      publish(record.pending?.outcome?.kind === 'rejected' ? 'conflict' : record.intents.length ? 'dirty' : 'saved');
++      if (!publishRejection()) publish(record.intents.length ? 'dirty' : 'saved');
+       ready();
+       await new Promise<void>((resolve) => { release = resolve; if (stopped) resolve(); });
+     };
 
-  it.each(['same claim', 'recovered claim'] as const)(
-    'retains B captured over A when A ACK commits before B append in the %s', async (claim) => {
-      const env = environment();
-      let owner = '';
-      let requestA!: OutboxRequest;
-      let basis!: { after: string };
-      let payload!: ReturnType<typeof move>;
-      let b = '';
-      const appendCaptured = async (box: ClaimedOutbox) => {
-        b = await box.append(payload, basis);
-        expect((await box.read()).intents).toEqual([{ id: b, basis, payload: move(7), readyBase: ha }]);
-      };
-      await env.open().create(scope, async (box, ownerId) => {
-        owner = ownerId;
-        const a = await box.append(move(5), { head: h0 });
-        const started = deferred<void>();
-        const response = deferred<OutboxOutcome>();
-        const sending = box.dispatch(build, async (request) => {
-}
+codex
+Implemented within the three owned files.
 
-export interface TimelineRecoveryIdentity {
-  actorId: string;
-  realmId: string;
-}
+- Recovery projects original R0 plus B’s persisted preview, while retaining HA for submission and B’s exact payload/key.
+- Incomplete display pins fail closed and retain work.
+- Typed conflicts/refusals survive recovery without resending rejected work. Dispose/drain behavior is unchanged.
 
-export interface TimelineCommandBasis {
-  head: TimelineAcceptedIdentity;
-  canonicalDocument: CanonicalDocument;
-  graph?: Record<string, unknown>;
-  history?: HistoryPage;
-}
+Validation:
 
-export interface TimelineCommitResult {
-  response: CommitAcceptedMutation;
-  accepted: TimelineAcceptedIdentity;
-  canonicalDocument: CanonicalDocument;
-  /** The existing graph contract, projected from the accepted closure. */
-  graph: Record<string, unknown>;
-  /** Explicit enumerable copy; generated mutation receipts are non-enumerable elsewhere. */
-  receipt: MutationReceipt;
-}
+```bash
+./node_modules/.bin/vitest run --config config/testing/vitest.config.ts src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/commands/commitOutbox.test.ts src/tools/video-editor/commands/clipMoveCapture.test.ts src/tools/video-editor/commands/authoringBundle.test.ts src/tools/video-editor/commands/semanticGestures.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+```
 
-export interface TimelineSaveReceipt {
-  configVersion: number;
-70:export class ApiError extends Error { constructor(public status: number, public code: string, message: string, public request_id = "", public details: Record<string, unknown> = {}) { super(`${code}: ${message}`); this.name = "ApiError" } }
-import js from "@eslint/js";
-import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
-import tseslint from "typescript-eslint";
-import { dialogEarlyReturnRestrictedSyntax } from "./eslint-rules/dialogEarlyReturnRule.js";
-import { strictLintDebtFiles } from "./eslint.strict-debt.js";
-import { supabaseFacadeAllowlist } from "./eslint.supabase-facade-allowlist.js";
-import { sharedLayerAllowlist } from "./eslint.shared-layer-allowlist.js";
+**180 passed**, including the existing 25 session/hook cases.
 
-// Plan A (F1): the Runtime's path prefixes come from src/integrations/runtime/connection.ts, which
-// picks the same-origin base or the loopback gateway's. A literal elsewhere would bypass that choice
-// and fail on the hosted origin. Matches a string literal, or the text of a template literal.
-const runtimePathPrefix = "/^\\/api\\/(runtime|astrid)(\\/|$)/";
-const runtimePathRestrictedSyntax = {
-  selector: `Literal[value=${runtimePathPrefix}], TemplateElement[value.cooked=${runtimePathPrefix}]`,
-  message: "Build Runtime and Astrid paths from connection.ts (runtimeApiBase(), astridBase()) instead of a literal '/api/runtime' or '/api/astrid' path. A literal bypasses the hosted origin.",
-};
+```bash
+./node_modules/.bin/eslint src/tools/video-editor/commands/commitSession.ts src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts --max-warnings 0
+git diff --check
+```
 
-const strictRefreshFiles = [
-  "src/app/**/*.{ts,tsx}",
-  "src/integrations/supabase/bootstrap/**/*.{ts,tsx}",
-  "src/shared/lib/debugPolling.ts",
-  "src/shared/lib/mobileProjectDebug.ts",
-  "src/shared/components/MediaGallery/hooks/useMediaGalleryDebugTools.ts",
-  "src/shared/components/MediaLightbox/hooks/useVideoLightboxEnvironment.ts",
-  "src/shared/components/MediaLightbox/hooks/useVideoLightboxRenderModel.tsx",
-  "src/tools/travel-between-images/components/ShotImagesEditor/hooks/useShotImagesEditorCallbacks.ts",
-  "src/tools/travel-between-images/components/ShotImagesEditor/hooks/useShotImagesEditorModel.ts",
-];
+Both passed. No full/browser suites or installs.
 
-export default tseslint.config(
-  { ignores: ["dist", "eslint-rules/__fixtures__/**", "vendor/**"] },
-  {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ["**/*.{ts,tsx}"],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
-    plugins: {
-      "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
-    },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-      "react-hooks/exhaustive-deps": "error",
-      "react-refresh/only-export-components": [
-        "off",
-        { allowConstantExport: true },
-      ],
-      "@typescript-eslint/no-unused-vars": ["error", {
-        argsIgnorePattern: "^_",
-        varsIgnorePattern: "^_",
-        ignoreRestSiblings: true,
-      }],
-      "no-restricted-syntax": ["error", dialogEarlyReturnRestrictedSyntax],
-    },
-  },
-  {
-    files: strictRefreshFiles,
-    rules: {
-      "react-refresh/only-export-components": [
-        "error",
-        { allowConstantExport: true },
-      ],
-    },
-  },
-  // Runtime path boundary: only connection.ts (and tests, dev tooling) may spell /api/runtime or
-  // /api/astrid. Repeats the dialog selector, since a block that sets no-restricted-syntax replaces it.
-81:    const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial, snapshotWriteBlockedRef });
-95:  it('clears command ownership and the snapshot block on provider cleanup, fencing an old ACK', async () => {
-116:  it('fences an in-progress async projection across a timeline switch', async () => {
-153:  it('leaves clean legacy undo available until an actual command owns history', async () => {
-160:      hook.result.current.history.onBeforeCommit(original, {});
-172:  it('moves through the actual command service with save:false and hydrates the accepted raw closure', async () => {
-193:  it('uses the real pointerdown capture and drag release path with the mounted port', async () => {
-214:  it('keeps A5/B7 visible after a lost ACK and blocks snapshot history from saving the move', async () => {
-Implemented the atomic `editProjection` producer and published the Viewing contract.
+Decision: legacy recovery uses only a stored direct head with a matching raw document; a dependent submission base cannot establish the display pair.
 
-- Focused Vitest: **421 passed, 1 failed**. Retained regression proves recovery after A’s ACK replaces B’s original basis incorrectly; session-core owner must fix it.
-- ESLint and `git diff --check`: passed.
-- App tsc: four errors—two baseline errors plus separately owned client/lifecycle fixes.
-- No full/browser suites or git mutations performed.
+Composition remains unverified: run the producer regression after its field lands. The fixture now returns typed conflicts for actual guard clashes, so its separate producer `retry` assertion needs review. The required r0/p0 assertion is untouched.
 
-Compose lifecycle/client fixes first, then resolve the recovery regression before acceptance. Commit message written.
+[Commit message written](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-recovery-basis/commit-msg). No git mutations.
+tokens used
+100,640
+Implemented within the three owned files.
 
-[Report with exact commands and findings](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-projection-fact/report.md)
-exec
-/bin/bash -lc "rg -n 'ClipMoveError|conflict' src/tools/video-editor/commands/clipMovePrimitives.ts | head -35; cat src/sdk/video/timeline/patch.ts | head -90; git branch --list 'tl/app-m1-projection-fact'; git log -1 --oneline tl/app-m1-projection-fact" in /home/user/work/wt/app-m1-recovery-basis
- succeeded in 0ms:
-12:export class ClipMoveError extends Error {
-27:    throw new ClipMoveError('capture values must be finite JSON');
-31:    throw new ClipMoveError('capture values must be finite JSON');
-108:  if (!Array.isArray(rows)) throw new ClipMoveError('entity collection must be an array');
-112:  throw new ClipMoveError(`missing or ambiguous identity ${id}`, 'identity_conflict');
-132:    if (!shot || !object(shot.internal_timeline)) throw new ClipMoveError('missing authored owner');
-159:          throw new ClipMoveError('invalid parent registry');
-163:        throw new ClipMoveError('parent.registry conflicts with parent.config.registry');
-173:      if (typeof source !== 'string') throw new ClipMoveError('missing occurrence source identity');
-176:        throw new ClipMoveError('occurrence authoring owner changed', 'identity_conflict');
-181:    throw new ClipMoveError(`unsupported entity reference ${ref}`);
-207:      if (!object(target[key])) throw new ClipMoveError('write requires recorded container creation');
-313:    if (state.state === 'present' && state.value !== null) throw new ClipMoveError('intent container must be object or null');
-/**
- * Timeline patch contracts — portable public contracts.
- *
- * Representative execution/process-like family boundary (M0 sanity check):
- * - Portable: operation-family vocabulary, patch/diff/preview shapes,
- *   diagnostics, and project-data limit contracts. These are data-only
- *   descriptions of intended timeline mutations; they do not execute.
- * - Host-only: the patch planner, runtime validation against actual timeline
- *   state, proposal execution, source-map resolution, React hooks/providers,
- *   and any behavior that needs DataProvider or browser APIs.
- *
- * @publicContract
- */
+- Recovery projects original R0 plus B’s persisted preview, while retaining HA for submission and B’s exact payload/key.
+- Incomplete display pins fail closed and retain work.
+- Typed conflicts/refusals survive recovery without resending rejected work. Dispose/drain behavior is unchanged.
 
-import type { DiagnosticSeverity } from '../../diagnostics';
+Validation:
 
-/** Top-level operation families supported by TimelinePatch. */
-export type TimelinePatchOpFamily =
-  | 'clip.add'
-  | 'clip.update'
-  | 'clip.remove'
-  | 'clip.move'
-  | 'track.add'
-  | 'track.update'
-  | 'track.remove'
-  | 'asset.update'
-  | 'asset.remove'
-  | 'app.update'
-  | 'project-data.write'
-  | 'project-data.delete'
-  | 'extension.noop';
+```bash
+./node_modules/.bin/vitest run --config config/testing/vitest.config.ts src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/commands/commitOutbox.test.ts src/tools/video-editor/commands/clipMoveCapture.test.ts src/tools/video-editor/commands/authoringBundle.test.ts src/tools/video-editor/commands/semanticGestures.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+```
 
-/** Reserved operation families that are validated but not executed in M3. */
-export type TimelinePatchReservedOpFamily =
-  | 'clip.split'
-  | 'clip.slice'
-  | 'graph.node.*'
-  | 'graph.edge.*'
-  | 'graph.group.*';
+**180 passed**, including the existing 25 session/hook cases.
 
-/** All known operation family strings (active + reserved). */
-export type TimelinePatchAnyOpFamily =
-  | TimelinePatchOpFamily
-  | TimelinePatchReservedOpFamily;
+```bash
+./node_modules/.bin/eslint src/tools/video-editor/commands/commitSession.ts src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts --max-warnings 0
+git diff --check
+```
 
-/** Locked vocabulary for active TimelinePatch operation families. */
-export const TIMELINE_PATCH_OP_FAMILIES = [
-  'clip.add',
-  'clip.update',
-  'clip.remove',
-  'clip.move',
-  'track.add',
-  'track.update',
-  'track.remove',
-  'asset.update',
-  'asset.remove',
-  'app.update',
-  'project-data.write',
-  'project-data.delete',
-  'extension.noop',
-] as const satisfies readonly TimelinePatchOpFamily[];
-Object.freeze(TIMELINE_PATCH_OP_FAMILIES);
+Both passed. No full/browser suites or installs.
 
-/** Locked vocabulary for reserved TimelinePatch operation families. */
-export const TIMELINE_PATCH_RESERVED_OP_FAMILIES = [
-  'clip.split',
-  'clip.slice',
-  'graph.node.*',
-  'graph.edge.*',
-  'graph.group.*',
-] as const satisfies readonly TimelinePatchReservedOpFamily[];
-Object.freeze(TIMELINE_PATCH_RESERVED_OP_FAMILIES);
+Decision: legacy recovery uses only a stored direct head with a matching raw document; a dependent submission base cannot establish the display pair.
 
-/** Locked vocabulary for every known TimelinePatch operation family. */
-export const TIMELINE_PATCH_ALL_OP_FAMILIES = [
-  ...TIMELINE_PATCH_OP_FAMILIES,
-  ...TIMELINE_PATCH_RESERVED_OP_FAMILIES,
-] as const satisfies readonly TimelinePatchAnyOpFamily[];
-Object.freeze(TIMELINE_PATCH_ALL_OP_FAMILIES);
+Composition remains unverified: run the producer regression after its field lands. The fixture now returns typed conflicts for actual guard clashes, so its separate producer `retry` assertion needs review. The required r0/p0 assertion is untouched.
 
-/**
- * A single semantic operation in a TimelinePatch batch.
- *
- * Every operation carries an `op` family, a `target` object identifier
- * (clip ID, track ID, asset key, extension ID, etc.), and an optional
- * `payload` whose shape is family-dependent.
- */
-export interface TimelinePatchOperation {
-  /** Operation family, e.g. "clip.add", "track.update". */
-  readonly op: TimelinePatchAnyOpFamily;
-+ tl/app-m1-projection-fact
-5a272cd96 feat(timeline): pair command projections with displayed data
-
-exec
-/bin/bash -lc "sed -n '1,23p' src/tools/video-editor/commands/clipMovePrimitives.ts; rg -n \"guard|expect|conflict\" src/tools/video-editor/commands/clipMoveCapture.ts | tail -20; sed -n '295,360p' src/tools/video-editor/commands/clipMoveCapture.ts" in /home/user/work/wt/app-m1-recovery-basis
- succeeded in 0ms:
-import type { AgentDependency, AgentState, CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
-
-type ObjectValue = { [key: string]: JSON };
-
-// Internal main authoring_bundle shape, not a Runtime wire document or a display projection.
-export type AuthoredBundle = ObjectValue & {
-  parent: ObjectValue;
-  placements: ObjectValue[];
-  shots: Record<string, ObjectValue & { internal_timeline: ObjectValue }>;
-};
-
-export class ClipMoveError extends Error {
-  constructor(message: string, readonly kind = 'invalid_edit_command') {
-    super(message);
-  }
-}
-
-export const copy = <T>(value: T): T => structuredClone(value);
-export const has = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
-export const object = (value: unknown): value is ObjectValue =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
-
-export function assertFiniteJson(value: unknown, ancestors = new Set<object>()): void {
-113:  if (!equal(ctx.select('move.target', owner, [ref]), [ref])) throw new ClipMoveError('move target disappeared', 'identity_conflict');
-136:  if (!ctx.state.entity(trackRef, true)) throw new ClipMoveError('move track disappeared', 'identity_conflict');
-217:  for (const key of ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const) {
-259:    !['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created']
-
-exec
-/bin/bash -lc "sed -n '200,285p' src/tools/video-editor/commands/clipMoveCapture.ts; rg -n 'function|throw new' src/tools/video-editor/commands/clipMovePrimitives.ts | tail -25" in /home/user/work/wt/app-m1-recovery-basis
- succeeded in 0ms:
-  if (has(clip, 'at') && has(clip, 'at_ms')) ctx.write(ref, ['at_ms'], number(local * 1000, 'at_ms'));
-  ctx.object(ref, ['app']);
-  ctx.object(ref, ['app', 'astrid']);
-  for (const prefix of [['app'], ['app', 'astrid']]) {
-    for (const key of ['on', 'until', 'until_film_end']) ctx.clear(ref, [...prefix, key]);
-  }
-  ctx.write(ref, ['app', 'astrid', 'fixed_start'], true);
-  ctx.write(ref, ['app', 'astrid', 'for'], length);
-  ctx.compile();
-  return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record, previewAt: quantized };
-}
-
-/** Local authored execution only. Runtime/Agent remains the accepted compiler and rebase authority. */
-export function executeClipMove(bundle: AuthoredBundle, command: EditCommand) {
-  assertFiniteJson(bundle);
-  assertFiniteJson(command);
-  const result = move(bundle, command);
-  for (const key of ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const) {
-    let matches = equal(command[key], result.command[key]);
-    if (key === 'reads' && Array.isArray(command.reads)) {
-      const actual = result.command.reads!;
-      const state = new AuthoredState(bundle);
-      matches = command.reads.length === actual.length && command.reads.every((claimed, index) => {
-        const read = actual[index];
-        return claimed.ref === read.ref && equal(claimed.path, read.path) &&
-          (equal(claimed.state, read.state) || (read.ref.endsWith('/shot') && state.matches(read.ref, read.path, claimed.state)));
-      });
-    }
-    if (has(command, key) && !matches) {
-      throw new ClipMoveError(`submitted ${key} does not match original capture`, 'capture_mismatch');
-    }
-  }
-  Object.assign(result.command, copy(command), { intent: result.command.intent });
-  return result;
-}
-
-// Local capture data, never a wire field. Both values survive the UI port's JSON clone.
-export type ClipMoveBasis = { readonly bundle: AuthoredBundle; readonly command: EditCommand };
-
-/** Freeze original reads before preview. Pass the previous local result.bundle for dependent B. */
-export function captureClipMove(bundle: AuthoredBundle, select: string): ClipMoveBasis {
-  assertFiniteJson(bundle);
-  const snapshot = copy(bundle);
-  const state = new AuthoredState(snapshot);
-  const target = state.entity(select)!;
-  const owner = select.slice(0, select.lastIndexOf('/'));
-  const current = has(target, 'at') ? number(target.at, 'clip.at') : number(target.at_ms, 'clip.at_ms') / 1000;
-  const origin = owner === 'parent' ? 0 : occurrenceStart(state.occurrence(owner));
-  const { command } = move(snapshot, { schema_version: 1, op: 'clip.move', version: '1', select,
-    args: { on: current + origin }, intent: moveIntent(select) });
-  return freezeJson({ bundle: snapshot, command });
-}
-
-/** Drop supplies absolute global seconds. No ACK or refreshed document enters this operation. */
-export function finishClipMove(basis: unknown, on: number) {
-  assertFiniteJson(basis);
-  if (!object(basis)) throw new ClipMoveError('incomplete clip move basis');
-  const { bundle, command } = basis;
-  if (!object(bundle) || !object(command) ||
-    !['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created']
-      .every((key) => has(command, key))) {
-    throw new ClipMoveError('incomplete clip move basis');
-  }
-  return executeClipMove(bundle as AuthoredBundle, { ...copy(command as EditCommand), args: { on } });
-}
-23:export function assertFiniteJson(value: unknown, ancestors = new Set<object>()): void {
-27:    throw new ClipMoveError('capture values must be finite JSON');
-31:    throw new ClipMoveError('capture values must be finite JSON');
-42:export function freezeJson<T>(value: T): T {
-67:function sha256(text: string): string {
-95:export function equal(a: unknown, b: unknown): boolean {
-107:function one(rows: JSON, key: string, id: string, optional = false): ObjectValue | undefined {
-108:  if (!Array.isArray(rows)) throw new ClipMoveError('entity collection must be an array');
-112:  throw new ClipMoveError(`missing or ambiguous identity ${id}`, 'identity_conflict');
-132:    if (!shot || !object(shot.internal_timeline)) throw new ClipMoveError('missing authored owner');
-159:          throw new ClipMoveError('invalid parent registry');
-163:        throw new ClipMoveError('parent.registry conflicts with parent.config.registry');
-173:      if (typeof source !== 'string') throw new ClipMoveError('missing occurrence source identity');
-176:        throw new ClipMoveError('occurrence authoring owner changed', 'identity_conflict');
-181:    throw new ClipMoveError(`unsupported entity reference ${ref}`);
-207:      if (!object(target[key])) throw new ClipMoveError('write requires recorded container creation');
-313:    if (state.state === 'present' && state.value !== null) throw new ClipMoveError('intent container must be object or null');
-
+[Commit message written](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-recovery-basis/commit-msg). No git mutations.

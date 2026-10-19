@@ -1,104 +1,3 @@
-+  }
-+
-   /** `python -m astrid <args>` where the last stdout line is the `--json` envelope; the caller passes `--json`. */
-   async json<T = any>(args: string[], options?: { timeoutMs?: number }): Promise<AstridEnvelope<T>> {
-     const run = await this.astrid(args, options);
-diff --git a/tests/e2e/local/support/harness.ts b/tests/e2e/local/support/harness.ts
-index 2d5fb0e785ff71c66937cf178784d5f361990da5..db913a32a3808dbacb7907ba0eb781921deceefc
---- a/tests/e2e/local/support/harness.ts
-+++ b/tests/e2e/local/support/harness.ts
-@@ -34,12 +34,16 @@
- export const BIG_DOWNLOAD_BYTES = 60 * 1024 * 1024;
- export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
- 
--export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
-+export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT
-+  ?? [path.join(REPO_ROOT, '..', 'astrid-runtime'), path.join(REPO_ROOT, '../..', 'runtime')]
-+    .find((dir) => existsSync(path.join(dir, 'runtime_protocol', 'cli.py')))
-+  ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
- const DIST_DIR = path.resolve(process.env.ASTRID_APP_DIRECT_DIST ?? path.join(REPO_ROOT, 'dist'));
- 
- export function runtimePython(): string | null {
--  const python = path.join(RUNTIME_CHECKOUT, '.venv', 'bin', 'python');
--  return existsSync(python) ? python : null;
-+  const python = process.env.ASTRID_RUNTIME_PYTHON
-+    ?? [path.join(RUNTIME_CHECKOUT, '.venv/bin/python'), path.join(RUNTIME_CHECKOUT, '../venv-runtime/bin/python')].find(existsSync);
-+  return python && existsSync(python) ? python : null;
- }
- 
- /** Why the harness cannot run here, or null when it can. */
-@@ -370,6 +374,8 @@
-   private extensionsSeed?: ExtensionsSeed;
-   private mediaSeed?: MediaSeed;
-   private threeProductsSeed?: ThreeProductsSeed;
-+  private timelineAuthoring = false;
-+  private authoringPython?: string;
- 
-   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
-   get extensionsConfig(): ExtensionsConfigMode { return this.extensionsMode; }
-@@ -430,8 +436,24 @@
- 
-   // -- Runtime -------------------------------------------------------------------------------
- 
--  private runtimeEnv(): NodeJS.ProcessEnv { return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' }; }
-+  private runtimeEnv(): NodeJS.ProcessEnv {
-+    const agent = path.resolve(process.env.ASTRID_CHECKOUT
-+      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
-+        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
-+      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
-+    return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', PYTHONPATH: [RUNTIME_CHECKOUT, agent].join(path.delimiter) };
-+  }
- 
-+  /** Seed with main's APIs first; startup verifies their original publication provenance. */
-+  async enableTimelineAuthoring(python: string): Promise<void> {
-+    if (this.timelineAuthoring) return;
-+    await this.stopRuntime();
-+    if (!existsSync(python)) throw new Error(`Authoring Python not found at ${python}`);
-+    this.authoringPython = python;
-+    this.timelineAuthoring = true;
-+    await this.startRuntime();
-+  }
-+
-   private async createRealm(): Promise<string> {
-     const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: { ...process.env, ...this.runtimeEnv() }, encoding: 'utf8' });
-     return JSON.parse(output.trim().split('\n').pop()!).realm_id;
-@@ -443,8 +465,9 @@
-    */
-   async startRuntime(port = 0): Promise<void> {
-     if (this.runtime) throw new Error('Runtime already running');
--    const managed = spawnGroup(runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
--      '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath], { cwd: this.tmp, env: this.runtimeEnv() });
-+    const managed = spawnGroup(this.authoringPython ?? runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
-+      '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath,
-+      ...(this.timelineAuthoring ? ['--authoring-profile', 'astrid'] : [])], { cwd: this.tmp, env: this.runtimeEnv() });
-     this.runtime = managed;
-     const endpoint = await waitFor<string>('Runtime start', async () => {
-       const line = managed.stdout.split('\n').find((candidate) => candidate.trim().startsWith('{') && candidate.includes('"endpoint"'));
-diff --git a/tests/e2e/local/three-products.spec.ts b/tests/e2e/local/three-products.spec.ts
-index d498ae75267dfa701f29f3db1f7560c4d767f442..ad920b59835f72b0c5dda32d8fff470292c92b71
---- a/tests/e2e/local/three-products.spec.ts
-+++ b/tests/e2e/local/three-products.spec.ts
-@@ -31,7 +31,7 @@
- import { harnessUnavailableReason, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
- import { commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, openApp, openSeededTimeline, revisionBody, test as appTest } from './support/app.ts';
- import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
--import { AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
-+import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
- 
- /** A hang ceiling for one wait (R-10): many times the usual time, never a budget. */
- const CEILING = { timeout: 90_000 };
-@@ -56,6 +56,7 @@
- test.beforeAll(() => {
-   const reason = harnessUnavailableReason() ?? astridUnavailableReason();
-   if (reason) throw new Error(`the three-products journey cannot run: ${reason}`);
-+  journey.sources = revisionSet();
- });
- 
- // ---------------------------------------------------------------------------------------------
-@@ -75,6 +76,7 @@
-   startedAt: new Date().toISOString(),
-   loadAverageStart: loadavg(),
-   identity: undefined as AstridIdentity | undefined,
 +  sources: undefined as ReturnType<typeof revisionSet> | undefined,
    preflightCalls: [] as AstridCall[],
    cases: [] as CaseRecord[],
@@ -398,3 +297,104 @@ index d498ae75267dfa701f29f3db1f7560c4d767f442..ad920b59835f72b0c5dda32d8fff4702
 exec
 /bin/bash -lc 'node_modules/.bin/eslint tests/e2e/local/three-products.spec.ts tests/e2e/local/support/{app,astrid,harness}.ts && node_modules/.bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --allowImportingTsExtensions --esModuleInterop --skipLibCheck --types node --lib ES2022,DOM tests/e2e/local/three-products.spec.ts tests/e2e/local/support/{app,astrid,harness}.ts && git diff --check' in /home/user/work/wt/app-m1-real-journey
  succeeded in 4775ms:
+exec
+/bin/bash -lc 'git -C /home/user/work/app log -4 --oneline; tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md; date -u' in /home/user/work/wt/app-m1-real-journey
+ succeeded in 0ms:
+0f16295c1 Merge tl/app-m1-wiring-fix
+c98dc6be8 fix(timeline): drain completed moves before releasing command sessions
+384d00c51 Merge tl/app-m1-drag-gate
+d47eac0e6 Merge tl/app-m1-client-021
+
+Recovery compose final seam (2026-10-19): the single mounted surface uses `Recover saved edits` (or `Recover saved edits (session N)` for multiple owners) with the exact owner only in `data-owner-id`. Uncertain/error states expose `Retry save` with `data-testid="timeline-command-retry"`; its copy says the save can be checked without applying edits again. The surface is absent for saved, absent, and no-work loading states, and offers no retry for a typed semantic conflict. Journey selectors should use the final labels/testid above and `button[data-owner-id]`; owner IDs are never visible text.
+
+20:09 producer recovery regression is ASSIGNED to app-m1-recovery-basis, scoped ONLY commitSession core/test. Preserve producer's failing original-r0/p0 assertion unchanged; actual displayBasis payload already recorded, core must prioritize it for local display while retaining acknowledged HA for submission. Also prevent recovered rejected head from losing typed conflict state when pump skips it. No metadata/wire changes, no lifecycle undo. Core fix based SAFE integration0f16295c1; projection producer may finish with explicit dependency hold until this lands. Manager will run real producer+session regression on composed integration.
+Mon Oct 19 20:11:30 UTC 2026
+
+codex
+The expanded recovery assertions pass local lint and typechecking. Browser execution is still waiting on the reviewed recovery-basis/UI batch; no product files have been copied into this worktree yet.
+
+exec
+/bin/bash -lc 'git -C /home/user/work/app log -4 --oneline; tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md; date -u' in /home/user/work/wt/app-m1-real-journey
+ succeeded in 0ms:
+0f16295c1 Merge tl/app-m1-wiring-fix
+c98dc6be8 fix(timeline): drain completed moves before releasing command sessions
+384d00c51 Merge tl/app-m1-drag-gate
+d47eac0e6 Merge tl/app-m1-client-021
+20:06 SAFE REAL PORT NOW MERGED app0f16295c1 incl lifecycle fix/official0.2.1; actual ops.clipMove exists in production. Current inline UI will be replaced ONCE by app-m1-recovery-compose (branch starts safe integration; reuses tl/app-m1-recovery-ui via git show, no duplicate banners). FINAL target controls: 'Recover saved edits' +data-owner-id; 'Retry save' +data-testid timeline-command-retry (no protocol jargon). Real journey should follow these final controls when compose merges. No status-only accepted label claim: projection-fact producer/Viewing consumer still pending and original-base recovery regression retained, session recovery core fix next.
+
+Recovery compose final seam (2026-10-19): the single mounted surface uses `Recover saved edits` (or `Recover saved edits (session N)` for multiple owners) with the exact owner only in `data-owner-id`. Uncertain/error states expose `Retry save` with `data-testid="timeline-command-retry"`; its copy says the save can be checked without applying edits again. The surface is absent for saved, absent, and no-work loading states, and offers no retry for a typed semantic conflict. Journey selectors should use the final labels/testid above and `button[data-owner-id]`; owner IDs are never visible text.
+
+20:09 producer recovery regression is ASSIGNED to app-m1-recovery-basis, scoped ONLY commitSession core/test. Preserve producer's failing original-r0/p0 assertion unchanged; actual displayBasis payload already recorded, core must prioritize it for local display while retaining acknowledged HA for submission. Also prevent recovered rejected head from losing typed conflict state when pump skips it. No metadata/wire changes, no lifecycle undo. Core fix based SAFE integration0f16295c1; projection producer may finish with explicit dependency hold until this lands. Manager will run real producer+session regression on composed integration.
+Mon Oct 19 20:12:55 UTC 2026
+
+codex
+The final patch remains four test files, and local validation is green. The browser lane is waiting on the recovery/UI composition and the regression preserving B’s original display basis.
+
+exec
+/bin/bash -lc 'git -C /home/user/work/app log -4 --oneline; tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md; date -u' in /home/user/work/wt/app-m1-real-journey
+ succeeded in 0ms:
+0f16295c1 Merge tl/app-m1-wiring-fix
+c98dc6be8 fix(timeline): drain completed moves before releasing command sessions
+384d00c51 Merge tl/app-m1-drag-gate
+d47eac0e6 Merge tl/app-m1-client-021
+20:06 SAFE REAL PORT NOW MERGED app0f16295c1 incl lifecycle fix/official0.2.1; actual ops.clipMove exists in production. Current inline UI will be replaced ONCE by app-m1-recovery-compose (branch starts safe integration; reuses tl/app-m1-recovery-ui via git show, no duplicate banners). FINAL target controls: 'Recover saved edits' +data-owner-id; 'Retry save' +data-testid timeline-command-retry (no protocol jargon). Real journey should follow these final controls when compose merges. No status-only accepted label claim: projection-fact producer/Viewing consumer still pending and original-base recovery regression retained, session recovery core fix next.
+
+Recovery compose final seam (2026-10-19): the single mounted surface uses `Recover saved edits` (or `Recover saved edits (session N)` for multiple owners) with the exact owner only in `data-owner-id`. Uncertain/error states expose `Retry save` with `data-testid="timeline-command-retry"`; its copy says the save can be checked without applying edits again. The surface is absent for saved, absent, and no-work loading states, and offers no retry for a typed semantic conflict. Journey selectors should use the final labels/testid above and `button[data-owner-id]`; owner IDs are never visible text.
+
+20:09 producer recovery regression is ASSIGNED to app-m1-recovery-basis, scoped ONLY commitSession core/test. Preserve producer's failing original-r0/p0 assertion unchanged; actual displayBasis payload already recorded, core must prioritize it for local display while retaining acknowledged HA for submission. Also prevent recovered rejected head from losing typed conflict state when pump skips it. No metadata/wire changes, no lifecycle undo. Core fix based SAFE integration0f16295c1; projection producer may finish with explicit dependency hold until this lands. Manager will run real producer+session regression on composed integration.
+Mon Oct 19 20:13:50 UTC 2026
+
+codex
+No browser job has been submitted yet. I’m waiting for the owner’s reviewed recovery batch; once it lands, the next step is the central run.
+
+exec
+/bin/bash -lc 'git -C /home/user/work/app log -4 --oneline; tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-recovery-compose/log.txt; tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-recovery-basis/log.txt; date -u' in /home/user/work/wt/app-m1-real-journey
+ succeeded in 15ms:
+0f16295c1 Merge tl/app-m1-wiring-fix
+c98dc6be8 fix(timeline): drain completed moves before releasing command sessions
+384d00c51 Merge tl/app-m1-drag-gate
+d47eac0e6 Merge tl/app-m1-client-021
+- Diff check: **passed**.
+- App TypeScript: only 2 known unrelated errors remain.
+
+No browser/full/install suites run per instructions.
+
+Composition remains unverified: run the producer regression after its field lands. The fixture now returns typed conflicts for actual guard clashes, so its separate producer `retry` assertion needs review. The required r0/p0 assertion is untouched.
+
+[Commit message written](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-recovery-basis/commit-msg). No git mutations.
+Mon Oct 19 20:14:47 UTC 2026
+
+codex
+Both remaining workers have finished their scoped changes: the single recovery UI and the session recovery-basis fix. They’re awaiting manager composition and the regression check across the combined source.
+
+exec
+/bin/bash -lc 'tail -10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md; git -C /home/user/work/app log -2 --oneline; date -u' in /home/user/work/wt/app-m1-real-journey
+ succeeded in 0ms:
+plus receipt tuple pin and accepted/preview narrowing, both separately assigned.
+No generated/client or lifecycle edits made here. Full report:
+`workers/app-m1-projection-fact/report.md`. Compose lifecycle/client fixes first;
+core owner must correct the persisted display-basis selection before acceptance.
+
+20:06 SAFE REAL PORT NOW MERGED app0f16295c1 incl lifecycle fix/official0.2.1; actual ops.clipMove exists in production. Current inline UI will be replaced ONCE by app-m1-recovery-compose (branch starts safe integration; reuses tl/app-m1-recovery-ui via git show, no duplicate banners). FINAL target controls: 'Recover saved edits' +data-owner-id; 'Retry save' +data-testid timeline-command-retry (no protocol jargon). Real journey should follow these final controls when compose merges. No status-only accepted label claim: projection-fact producer/Viewing consumer still pending and original-base recovery regression retained, session recovery core fix next.
+
+Recovery compose final seam (2026-10-19): the single mounted surface uses `Recover saved edits` (or `Recover saved edits (session N)` for multiple owners) with the exact owner only in `data-owner-id`. Uncertain/error states expose `Retry save` with `data-testid="timeline-command-retry"`; its copy says the save can be checked without applying edits again. The surface is absent for saved, absent, and no-work loading states, and offers no retry for a typed semantic conflict. Journey selectors should use the final labels/testid above and `button[data-owner-id]`; owner IDs are never visible text.
+
+20:09 producer recovery regression is ASSIGNED to app-m1-recovery-basis, scoped ONLY commitSession core/test. Preserve producer's failing original-r0/p0 assertion unchanged; actual displayBasis payload already recorded, core must prioritize it for local display while retaining acknowledged HA for submission. Also prevent recovered rejected head from losing typed conflict state when pump skips it. No metadata/wire changes, no lifecycle undo. Core fix based SAFE integration0f16295c1; projection producer may finish with explicit dependency hold until this lands. Manager will run real producer+session regression on composed integration.
+0f16295c1 Merge tl/app-m1-wiring-fix
+c98dc6be8 fix(timeline): drain completed moves before releasing command sessions
+Mon Oct 19 20:14:52 UTC 2026
+
+exec
+/bin/bash -lc 'git -C /home/user/work/app log -4 --oneline; tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md; date -u' in /home/user/work/wt/app-m1-real-journey
+ succeeded in 0ms:
+0f16295c1 Merge tl/app-m1-wiring-fix
+c98dc6be8 fix(timeline): drain completed moves before releasing command sessions
+384d00c51 Merge tl/app-m1-drag-gate
+d47eac0e6 Merge tl/app-m1-client-021
+20:06 SAFE REAL PORT NOW MERGED app0f16295c1 incl lifecycle fix/official0.2.1; actual ops.clipMove exists in production. Current inline UI will be replaced ONCE by app-m1-recovery-compose (branch starts safe integration; reuses tl/app-m1-recovery-ui via git show, no duplicate banners). FINAL target controls: 'Recover saved edits' +data-owner-id; 'Retry save' +data-testid timeline-command-retry (no protocol jargon). Real journey should follow these final controls when compose merges. No status-only accepted label claim: projection-fact producer/Viewing consumer still pending and original-base recovery regression retained, session recovery core fix next.
+
+Recovery compose final seam (2026-10-19): the single mounted surface uses `Recover saved edits` (or `Recover saved edits (session N)` for multiple owners) with the exact owner only in `data-owner-id`. Uncertain/error states expose `Retry save` with `data-testid="timeline-command-retry"`; its copy says the save can be checked without applying edits again. The surface is absent for saved, absent, and no-work loading states, and offers no retry for a typed semantic conflict. Journey selectors should use the final labels/testid above and `button[data-owner-id]`; owner IDs are never visible text.
+
+20:09 producer recovery regression is ASSIGNED to app-m1-recovery-basis, scoped ONLY commitSession core/test. Preserve producer's failing original-r0/p0 assertion unchanged; actual displayBasis payload already recorded, core must prioritize it for local display while retaining acknowledged HA for submission. Also prevent recovered rejected head from losing typed conflict state when pump skips it. No metadata/wire changes, no lifecycle undo. Core fix based SAFE integration0f16295c1; projection producer may finish with explicit dependency hold until this lands. Manager will run real producer+session regression on composed integration.
+Mon Oct 19 20:15:44 UTC 2026
+

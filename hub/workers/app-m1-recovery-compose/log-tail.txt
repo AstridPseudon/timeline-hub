@@ -1,3 +1,123 @@
++      canUndo: false,
++      ...overrides,
++    },
++    retry: vi.fn(async () => {}),
++    recover: vi.fn(async () => {}),
++  };
++}
++
++afterEach(() => {
++  vi.restoreAllMocks();
++});
++
++describe('TimelineCommandRecovery', () => {
++  it('requires an explicit owner choice and passes the exact selected owner once', async () => {
++    const commandSession = session();
++    render(<TimelineCommandRecovery commandSession={commandSession} />);
++
++    expect(commandSession?.recover).not.toHaveBeenCalled();
++    expect(screen.getByRole('button', { name: 'Recover saved edits (session 1)' })).toHaveAttribute('data-owner-id', 'owner-a');
++    expect(screen.getByRole('button', { name: 'Recover saved edits (session 2)' })).toHaveAttribute('data-owner-id', 'owner-b');
++
++    fireEvent.click(screen.getByRole('button', { name: 'Recover saved edits (session 2)' }));
++    await waitFor(() => expect(commandSession?.recover).toHaveBeenCalledTimes(1));
++    expect(commandSession?.recover).toHaveBeenCalledWith('owner-b');
++  });
++
++  it('uses the singular human label while keeping the owner id only in the data attribute', () => {
++    const commandSession = session({ recoverableOwners: ['owner-with-uuid-1234'] });
++    render(<TimelineCommandRecovery commandSession={commandSession} />);
++
++    const button = screen.getByRole('button', { name: 'Recover saved edits' });
++    expect(button).toHaveAttribute('data-owner-id', 'owner-with-uuid-1234');
++    expect(screen.getByRole('alert')).not.toHaveTextContent('owner-with-uuid-1234');
++  });
++
++  it('shows busy state and prevents duplicate recovery clicks', async () => {
++    let finish!: () => void;
++    const recover = vi.fn(() => new Promise<void>((resolve) => { finish = resolve; }));
++    const commandSession = { ...session({ recoverableOwners: ['owner-a'] }), recover };
++    render(<TimelineCommandRecovery commandSession={commandSession} />);
++
++    const button = screen.getByRole('button', { name: 'Recover saved edits' });
++    fireEvent.click(button);
++    fireEvent.click(button);
++    expect(commandSession.recover).toHaveBeenCalledTimes(1);
++    expect(screen.getByRole('alert')).toHaveAttribute('aria-busy', 'true');
++    expect(screen.getByRole('button', { name: 'Recovering saved edits…' })).toBeDisabled();
++
++    await act(async () => { finish(); });
++  });
++
++  it('offers exact retry for an uncertain save and explains that it does not apply edits again', async () => {
++    const retry = vi.fn(async () => {});
++    const commandSession = { ...session({ status: 'retry', recoverableOwners: [], ownerId: 'owner-a' }), retry };
++    render(<TimelineCommandRecovery commandSession={commandSession} />);
++
++    expect(screen.getByRole('alert')).toHaveTextContent('without applying edits again');
++    fireEvent.click(screen.getByTestId('timeline-command-retry'));
++    await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
++  });
++
++  it('offers retry for typed errors, keeps the original detail, and preserves action failures', async () => {
++    const retry = vi.fn(async () => { throw new Error('The save result could not be confirmed'); });
++    const commandSession = { ...session({ status: 'error', recoverableOwners: [], ownerId: 'owner-a', error: 'provider refused the durable append' }), retry };
++    render(<TimelineCommandRecovery commandSession={commandSession} />);
++
++    expect(screen.getByRole('alert')).toHaveTextContent('Your saved edits could not be completed.');
++    expect(screen.getByRole('alert')).toHaveTextContent('provider refused the durable append');
++    fireEvent.click(screen.getByTestId('timeline-command-retry'));
++    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('The save result could not be confirmed'));
++    expect(retry).toHaveBeenCalledOnce();
++  });
++
++  it('does not claim unsaved changes for an initial error without an owner', () => {
++    render(<TimelineCommandRecovery commandSession={session({
++      status: 'error', recoverableOwners: [], ownerId: null, error: 'Timeline command session is unavailable',
++    })} />);
++
++    expect(screen.getByRole('alert')).toHaveTextContent('Editing is unavailable right now.');
++    expect(screen.getByRole('alert')).not.toHaveTextContent(/unsaved|retained/i);
++    expect(screen.getByRole('alert')).toHaveTextContent('Timeline command session is unavailable');
++  });
++
++  it('distinguishes a retained conflict and does not offer retry for it', () => {
++    const commandSession = session({ status: 'conflict', recoverableOwners: [], ownerId: 'owner-a', error: 'read changed' });
++    render(<TimelineCommandRecovery commandSession={commandSession} />);
++
++    expect(screen.getByRole('alert')).toHaveTextContent('conflict with another change');
++    expect(screen.queryByTestId('timeline-command-retry')).toBeNull();
++    expect(screen.getByRole('alert')).toHaveTextContent('read changed');
++  });
++
++  it('stays hidden without the command surface, after saving, and for no-work loading', () => {
++    const { rerender } = render(<TimelineCommandRecovery />);
++    expect(screen.queryByTestId('timeline-command-recovery')).toBeNull();
++
++    rerender(<TimelineCommandRecovery commandSession={session({ status: 'saved', recoverableOwners: [], ownerId: 'owner-a' })} />);
++    expect(screen.queryByTestId('timeline-command-recovery')).toBeNull();
++
++    rerender(<TimelineCommandRecovery commandSession={session({ status: 'loading', recoverableOwners: [], ownerId: null })} />);
++    expect(screen.queryByTestId('timeline-command-recovery')).toBeNull();
++  });
++});
+diff --git a/src/tools/video-editor/components/TimelineCommandRecovery.tsx b/src/tools/video-editor/components/TimelineCommandRecovery.tsx
+new file mode 100644
+index 0000000000000000000000000000000000000000..bb1c22ec660ceb31e35c398a2ee6b46618cbc6a9
+--- /dev/null
++++ b/src/tools/video-editor/components/TimelineCommandRecovery.tsx
+@@ -0,0 +1,113 @@
++import { useState } from 'react';
++import { Button } from '@/shared/components/ui/button.tsx';
++import { cn } from '@/shared/components/ui/contracts/cn.ts';
++import type { TimelineCommandSessionSurface } from '@/tools/video-editor/hooks/useTimelineCommandSession.ts';
++
++export interface TimelineCommandRecoveryProps {
++  commandSession?: TimelineCommandSessionSurface;
++}
++
++function actionErrorMessage(error: unknown): string {
++  if (error instanceof Error && error.message) return error.message;
 +  if (typeof error === 'string' && error) return error;
 +  return 'The recovery action could not finish.';
 +}
@@ -209,28 +329,32 @@ index e0844ca92d672310758da2c6c800d61a676cb08c..d4133319728f2bd9e2b907e949809a89
          recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />
 
 exec
-/bin/bash -lc 'npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/components/TimelineCommandRecovery.test.tsx src/tools/video-editor/components/TimelineEditorShellCore.test.tsx' in /home/user/work/wt/app-m1-recovery-compose
- succeeded in 17623ms:
-
- RUN  v4.1.5 /home/user/work/wt/app-m1-recovery-compose
-
-
- Test Files  2 passed (2)
-      Tests  103 passed (103)
-   Start at  20:10:04
-   Duration  16.18s (transform 3.37s, setup 691ms, import 6.03s, tests 9.67s, environment 1.69s)
-
-
-codex
-Focused Vitest now passes: 103/103 tests, including all existing 95 shell tests plus the new component/shell coverage. One test adjustment was only to account for the required `Details:` prefix around preserved raw errors; no behavior was weakened. Next I’m checking file lint, App TypeScript, diff scope, and whitespace.
+/bin/bash -lc 'rg -n "commandBanner|TimelineCommandRecoverySession|TimelineCommandSessionStatus|readableError|Recover editor|Retry timeline edits|Retry exact request" src/tools/video-editor/components/TimelineEditorShellCore.tsx src/tools/video-editor/components/TimelineCommandRecovery.tsx || true' in /home/user/work/wt/app-m1-recovery-compose
+ succeeded in 0ms:
 exec
-/bin/bash -lc 'git diff --check 0f16295c1 -- && git status --short && git diff --stat 0f16295c1 -- && git diff --name-only 0f16295c1 --' in /home/user/work/wt/app-m1-recovery-compose
+/bin/bash -lc "tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md && printf '\\n--- commit message ---\\n' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-recovery-compose/commit-msg && printf '\\n--- report exists ---\\n' && wc -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-recovery-compose/report.md" in /home/user/work/wt/app-m1-recovery-compose
+ succeeded in 0ms:
+`workers/app-m1-projection-fact/report.md`. Compose lifecycle/client fixes first;
+core owner must correct the persisted display-basis selection before acceptance.
+
+20:06 SAFE REAL PORT NOW MERGED app0f16295c1 incl lifecycle fix/official0.2.1; actual ops.clipMove exists in production. Current inline UI will be replaced ONCE by app-m1-recovery-compose (branch starts safe integration; reuses tl/app-m1-recovery-ui via git show, no duplicate banners). FINAL target controls: 'Recover saved edits' +data-owner-id; 'Retry save' +data-testid timeline-command-retry (no protocol jargon). Real journey should follow these final controls when compose merges. No status-only accepted label claim: projection-fact producer/Viewing consumer still pending and original-base recovery regression retained, session recovery core fix next.
+
+Recovery compose final seam (2026-10-19): the single mounted surface uses `Recover saved edits` (or `Recover saved edits (session N)` for multiple owners) with the exact owner only in `data-owner-id`. Uncertain/error states expose `Retry save` with `data-testid="timeline-command-retry"`; its copy says the save can be checked without applying edits again. The surface is absent for saved, absent, and no-work loading states, and offers no retry for a typed semantic conflict. Journey selectors should use the final labels/testid above and `button[data-owner-id]`; owner IDs are never visible text.
+
+20:09 producer recovery regression is ASSIGNED to app-m1-recovery-basis, scoped ONLY commitSession core/test. Preserve producer's failing original-r0/p0 assertion unchanged; actual displayBasis payload already recorded, core must prioritize it for local display while retaining acknowledged HA for submission. Also prevent recovered rejected head from losing typed conflict state when pump skips it. No metadata/wire changes, no lifecycle undo. Core fix based SAFE integration0f16295c1; projection producer may finish with explicit dependency hold until this lands. Manager will run real producer+session regression on composed integration.
+
+--- commit message ---
+fix(timeline): compose command recovery surface
+
+Mount the typed command-session recovery component as the sole command
+recovery UI, with explicit owner selection and retry controls.
+
+--- report exists ---
+27 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-recovery-compose/report.md
+
 exec
-/bin/bash -lc 'npx eslint src/tools/video-editor/components/TimelineCommandRecovery.tsx src/tools/video-editor/components/TimelineCommandRecovery.test.tsx src/tools/video-editor/components/TimelineEditorShellCore.tsx src/tools/video-editor/components/TimelineEditorShellCore.test.tsx' in /home/user/work/wt/app-m1-recovery-compose
-exec
-/bin/bash -lc 'npx tsc --noEmit --pretty false' in /home/user/work/wt/app-m1-recovery-compose
- succeeded in 677ms:
- succeeded in 959ms:
+/bin/bash -lc 'git status --short && git diff --stat 0f16295c1 -- && git diff --numstat 0f16295c1 --' in /home/user/work/wt/app-m1-recovery-compose
+ succeeded in 730ms:
  M src/tools/video-editor/components/TimelineEditorShellCore.test.tsx
  M src/tools/video-editor/components/TimelineEditorShellCore.tsx
 ?? src/tools/video-editor/components/TimelineCommandRecovery.test.tsx
@@ -238,163 +362,39 @@ exec
  .../components/TimelineEditorShellCore.test.tsx    | 22 ++++++++++-------
  .../components/TimelineEditorShellCore.tsx         | 28 +++-------------------
  2 files changed, 16 insertions(+), 34 deletions(-)
-src/tools/video-editor/components/TimelineEditorShellCore.test.tsx
-src/tools/video-editor/components/TimelineEditorShellCore.tsx
+13	9	src/tools/video-editor/components/TimelineEditorShellCore.test.tsx
+3	25	src/tools/video-editor/components/TimelineEditorShellCore.tsx
 
- succeeded in 2390ms:
-exec
-/bin/bash -lc "node -e \"const p=require('./package.json'); console.log(JSON.stringify(p.scripts,null,2))\"" in /home/user/work/wt/app-m1-recovery-compose
- succeeded in 16ms:
-{
-  "preflight": "docker build .",
-  "dev": "vite --config config/vite/vite.config.ts",
-  "dev:editor": "node scripts/dev-editor.mjs",
-  "dev:astrid-acp": "tsx scripts/astrid-acp-bridge.ts",
-  "dev:local": "node scripts/dev-local-workspace.mjs",
-  "dev:custom-shell-demo": "vite --config examples/embed-demo/vite.config.ts",
-  "build": "vite build --config config/vite/vite.config.ts",
-  "build:hosted": "VITE_ASTRID_EDITOR_ONLY=1 VITE_RUNTIME_ORIGIN=http://127.0.0.1:17340 VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID= VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID= VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID= vite build --config config/vite/vite.config.ts",
-  "build:custom-shell-demo": "vite build --config examples/embed-demo/vite.config.ts",
-  "build:dev": "vite build --mode development --config config/vite/vite.config.ts",
-  "perf:editor": "node scripts/perf/measure-editor.mjs",
-  "verify:docker-local": "bash scripts/build/verify-docker-image-locally.sh",
-  "verify:extension-ship": "node scripts/release/verify-extension-ship.mjs",
-  "verify:extension-container": "node scripts/runtime/verify-extension-container.mjs",
-  "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-  "lint:edge": "eslint supabase/functions --ext ts --max-warnings 0",
-  "preview": "vite preview --config config/vite/vite.config.ts",
-  "preview:custom-shell-demo": "vite preview --config examples/embed-demo/vite.config.ts",
-  "preview:full": "npm run preview --port 5001",
-  "start:railway": "node scripts/runtime/write-extension-release-config.mjs && npm run serve",
-  "serve": "vite preview --config config/vite/vite.config.ts --host 0.0.0.0 --port $PORT",
-  "bun:dev": "bun run dev",
-  "bun:build": "bun run build",
-  "bun:preview": "bun run preview",
-  "bun:install": "bun install",
-  "test": "npm run check:no-smoke-tests && npm run check:known-failures && vitest run --config config/testing/vitest.config.ts",
-  "test:checkout": "VITEST_LANE=checkout vitest run --config config/testing/vitest.config.ts",
-  "test:astrid-composition": "vitest run --config config/testing/vitest.astrid-renderer.config.ts",
-  "test:contracts": "vitest run --config config/testing/vitest.config.ts src/**/**/*.contract.test.ts src/**/**/clientContracts.test.ts src/shared/lib/__tests__/qualityCheck.contract.test.ts",
-  "test:sdk-boundary": "vitest run --config config/testing/vitest.boundary.config.ts",
-  "test:arch": "npm run check:shots-shim-usage && npm run check:core-shim-usage && npm run check:video-editor-sdk-imports && npm run check:error-runtime-alias-usage && npm run check:fat-contexts && npm run check:contracts && npm run check:contract-surface-map",
-  "test:edge": "npm run test:edge:unit && npm run test:edge:smoke",
-  "test:edge:unit": "vitest run --config config/testing/vitest.edge.config.ts",
-  "test:edge:smoke": "vitest run --config config/testing/vitest.edge.smoke.config.ts --testNamePattern=\"Smoke\"",
-  "test:extensions": "npm run check:extension-drift -- --release && npm run check:extension-family-conformance -- --release && npm run check:sdk-public-exports -- --release && npm run check:video-editor-sdk-imports && vitest run --config config/testing/vitest.config.ts src/sdk/manifest-schema-validation.test.ts src/sdk/index.test.ts src/sdk/examples-governance.test.ts src/sdk/extensionSettingsService.test.ts src/sdk/extensionSettingsMigration.test.ts",
-  "test:creative-extension": "node scripts/quality/check-creative-lab-extension.mjs",
-  "test:extensions:production-smoke": "vitest run --config config/testing/vitest.config.ts src/sdk/smoke/extensionSmoke.test.ts",
-  "test:extension-compatibility": "vitest run --config config/testing/vitest.config.ts src/tools/video-editor/examples/extensions/creative-lab/compatibilityMatrix.test.tsx",
-  "test:extension-scale": "vitest run --config config/testing/vitest.config.ts src/tools/video-editor/dev/runaway-timeline/largeLaneScale.test.tsx",
-  "test:extension-ship-verifier": "node --test --test-concurrency=1 scripts/release/bounded-command.test.mjs scripts/release/astrid-release-provenance.test.mjs scripts/release/native-tool-attestation.test.mjs scripts/release/pinned-node-runtime.test.mjs scripts/release/pinned-python-runtime.test.mjs scripts/release/verify-extension-ship.test.mjs",
-  "test:extension-container-gate": "node --test scripts/runtime/verify-extension-container.test.mjs",
-  "test:extensions:runtime-rollout": "npm run build && node --test scripts/runtime/write-extension-release-config.test.mjs scripts/runtime/verify-extension-runtime-rollout.test.mjs scripts/runtime/service-worker-release-config.test.mjs && vitest run --config config/testing/vitest.config.ts src/tools/video-editor/runtime/extensionReleaseControls.test.ts src/sdk/smoke/extensionSmoke.test.ts",
-  "test:slot:unit": "vitest run --config config/testing/vitest.config.ts src/shared/hooks/__tests__/usePromoteVariantToGeneration.test.ts src/domains/media-lightbox/hooks/useVariantPromotion.test.ts src/tools/video-editor/hooks/useAddVariantAsGeneration.test.tsx",
-  "test:slot:edge": "npm run test:edge:smoke",
-  "test:slot:db": "node scripts/quality/run-slot-pgtap.mjs",
-  "test:slot:e2e": "playwright test --config playwright.config.ts",
-  "slot:first:health": "node scripts/quality/check-slot-first-health.mjs",
-  "test:watch": "npm run check:no-smoke-tests && vitest --config config/testing/vitest.config.ts",
-  "test:coverage": "vitest run --coverage --config config/testing/vitest.config.ts",
-  "check:edge-budget": "node scripts/edge/quality-budget.mjs --check",
-  "check:no-smoke-tests": "node scripts/quality/check-no-smoke-tests.mjs",
-  "check:known-failures": "node scripts/quality/check-known-failures.mjs",
-  "check:core-shim-usage": "node scripts/quality/check-core-shim-usage.mjs",
-  "check:video-editor-sdk-imports": "node scripts/quality/check-video-editor-sdk-imports.mjs",
-  "check:error-runtime-alias-usage": "node scripts/quality/check-error-runtime-alias-usage.mjs",
-  "check:fat-contexts": "node scripts/quality/check-fat-contexts.mjs",
-  "check:shots-shim-usage": "node scripts/quality/check-shots-shim-usage.mjs --max 0",
-  "check:contracts": "node scripts/quality/check-contract-governance.mjs && npm run check:astrid-conformance",
-  "check:contract-surface-map": "node scripts/quality/check-contract-surface-map.mjs",
-  "check:contract-recheck": "node scripts/quality/check-extension-contract-recheck.mjs --audit",
-  "check:contract-recheck:release": "node scripts/quality/check-extension-contract-recheck.mjs --release",
-  "check:deferred-claims": "node scripts/quality/check-extension-deferred-claims.mjs --audit",
-  "check:deferred-claims:release": "node scripts/quality/check-extension-deferred-claims.mjs --release",
-  "check:sdk-public-exports": "node scripts/quality/check-sdk-public-exports.mjs --audit",
-  "check:sdk-public-exports:release": "node scripts/quality/check-sdk-public-exports.mjs --release",
-  "check:sdk-no-barrel-imports": "node scripts/quality/check-sdk-no-barrel-imports.mjs --audit",
-  "check:sdk-no-barrel-imports:release": "node scripts/quality/check-sdk-no-barrel-imports.mjs --release",
-  "check:frontend-closure": "node scripts/quality/check-frontend-closure-matrix.mjs --audit",
-  "check:frontend-closure:release": "node scripts/quality/check-frontend-closure-matrix.mjs --release",
-  "check:example-readiness": "node scripts/quality/check-extension-example-readiness.mjs --audit",
-  "check:example-readiness:release": "node scripts/quality/check-extension-example-readiness.mjs --release",
-  "check:extension-drift": "node scripts/quality/check-extension-drift.mjs --audit",
-  "check:extension-drift:release": "node scripts/quality/check-extension-drift.mjs --release",
-  "check:extension-family-conformance": "tsx scripts/quality/check-extension-family-conformance.mjs --audit",
-  "check:extension-family-conformance:release": "tsx scripts/quality/check-extension-family-conformance.mjs --release",
-  "check:release-checklist": "node scripts/quality/check-extension-release-checklist.mjs --audit",
-  "check:release-checklist:release": "node scripts/quality/check-extension-release-checklist.mjs --release",
-  "check:extension-ship-evidence": "node scripts/quality/check-extension-ship-evidence.mjs --audit",
-  "check:extension-ship-evidence:release": "node scripts/quality/check-extension-ship-evidence.mjs --release",
-  "check:extension-release-preflight": "node scripts/quality/check-extension-release-preflight.mjs",
-  "check:extension-release-preflight:json": "node scripts/quality/check-extension-release-preflight.mjs --json",
-  "check:extension-local-rc-preflight": "node scripts/quality/check-extension-local-rc-preflight.mjs",
-  "check:extension-local-rc-preflight:json": "node scripts/quality/check-extension-local-rc-preflight.mjs --json",
-  "extension:evidence": "node scripts/quality/capture-extension-external-evidence.mjs",
-  "test:extension-evidence": "node --test scripts/quality/check-extension-ship-evidence.test.mjs scripts/quality/capture-extension-external-evidence.test.mjs",
-  "test:extension-release-preflight": "node --test scripts/quality/check-extension-release-preflight.test.mjs",
-  "test:extension-local-rc-preflight": "node --test scripts/quality/check-extension-local-rc-preflight.test.mjs",
-  "check:docs-maturity-sync": "node scripts/quality/check-docs-maturity-sync.mjs --audit",
-  "check:docs-maturity-sync:release": "node scripts/quality/check-docs-maturity-sync.mjs --release",
-  "check:ts-ratchet": "node scripts/check-ts-ratchet.mjs",
-  "quality:schema-drift": "node scripts/quality/check-schema-drift.mjs",
-  "quality:test-fixture-legacy": "node scripts/quality/check-test-fixture-legacy.mjs",
-  "quality:slot-first:audit": "npm run test:slot:unit && npm run test:slot:edge && npm run test:slot:db -- --audit && npm run quality:schema-drift -- --audit && npm run quality:test-fixture-legacy -- --audit && npm run slot:first:health -- --audit && npm run test:slot:e2e",
-  "lint:strict-islands": "eslint src/app src/integrations/supabase/bootstrap src/shared/lib/debugPolling.ts src/shared/lib/mobileProjectDebug.ts src/shared/components/MediaGallery/hooks/useMediaGalleryDebugTools.ts src/shared/components/MediaLightbox/hooks/useVideoLightboxEnvironment.ts src/shared/components/MediaLightbox/hooks/useVideoLightboxRenderModel.tsx src/tools/travel-between-images/components/ShotImagesEditor/hooks/useShotImagesEditorCallbacks.ts src/tools/travel-between-images/components/ShotImagesEditor/hooks/useShotImagesEditorModel.ts src/shared/lib/tasks/travelBetweenImages supabase/functions/create-task --ext ts,tsx --max-warnings 0",
-  "typecheck:strict-islands": "tsc -p tsconfig.strict-islands.json --noEmit",
-  "typecheck:strict-probe": "npm run typecheck:strict-islands",
-  "quality:check": "npm run check:no-smoke-tests && npm run check:shots-shim-usage && npm run check:core-shim-usage && npm run check:video-editor-sdk-imports && npm run check:error-runtime-alias-usage && npm run check:fat-contexts && npm run check:contracts && npm run check:contract-surface-map && npm run check:contract-recheck && npm run check:deferred-claims && npm run check:docs-maturity-sync && npm run check:ts-ratchet && npm run check:extension-family-conformance && npm run check:sdk-public-exports && npm run check:frontend-closure && npm run check:example-readiness && npm run check:release-checklist && npm run check:extension-ship-evidence && npm run lint && npm run typecheck:strict-probe && npm run test:readiness",
-  "test:readiness": "node scripts/quality/check-readiness.mjs --strict && vitest run --config config/testing/vitest.config.ts src/tools/video-editor/runtime/extensionLifecycle.test.ts src/tools/video-editor/runtime/ContributionErrorBoundary.test.tsx src/tools/video-editor/components/TimelineEditorShellCore.test.tsx src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.test.tsx src/tools/video-editor/runtime/extensionSurface.test.ts src/tools/video-editor/contexts/VideoEditorProvider.test.tsx src/tools/video-editor/components/ExtensionManager/ExtensionManager.test.tsx src/tools/video-editor/runtime/phase4ReadinessDocs.test.ts",
-  "test:readiness:e2e": "playwright test --config playwright.config.ts tests/e2e/extension-harness.spec.ts",
-  "test:e2e:extension-accessibility": "playwright test --config playwright.extension-accessibility.config.ts --workers=1",
-  "test:e2e:extension-cross-browser": "playwright test --config playwright.extension-cross-browser.config.ts",
-  "test:e2e:extension-performance": "PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=${PLAYWRIGHT_PORT:-} FAKE_RUNTIME_PORT=${FAKE_RUNTIME_PORT:-} playwright test --config playwright.config.ts --project=timeline-devices --workers=1 tests/e2e/timeline/extension-performance-budget.spec.ts",
-  "test:e2e:timeline-harness": "node --import tsx --test tests/e2e/timeline/isolated-port.test.mjs tests/e2e/fake-runtime/server.contract.test.mjs",
-  "test:e2e:audio-reactive-colour": "PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=${PLAYWRIGHT_PORT:-} FAKE_RUNTIME_PORT=${FAKE_RUNTIME_PORT:-} playwright test --config playwright.config.ts --project=timeline-devices --workers=1 tests/e2e/timeline/audio-reactive-colour-export.spec.ts",
-  "test:e2e:extension-visual": "playwright test --config playwright.extension-visual.config.ts --workers=1",
-  "test:e2e:timeline": "PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=${PLAYWRIGHT_PORT:-} FAKE_RUNTIME_PORT=${FAKE_RUNTIME_PORT:-} playwright test --config playwright.config.ts --project=timeline-devices --workers=1",
-  "test:e2e:direct": "playwright test --config playwright.direct.config.ts",
-  "test:e2e:three-products": "playwright test --config playwright.three-products.config.ts",
-  "test:acceptance:local-project": "node scripts/acceptance/verify-local-project-gallery.mjs",
-  "test:acceptance:local-project:matrix": "ASTRID_APP_ACCEPTANCE_MATRIX=1 node scripts/acceptance/verify-local-project-gallery.mjs",
-  "test:acceptance:local-project:unit": "node --test scripts/acceptance/verify-local-project-gallery.test.mjs",
-  "check:astrid-conformance": "node scripts/vendor-lock.mjs check config/astrid-cli-surface/vendor.lock.json && node --test scripts/quality/astrid-public-boundary.test.mjs",
-  "postinstall": "node scripts/patches/remotion-4.0.509-audio-resume.mjs --apply",
-  "remotion:audio-resume:patch": "node scripts/patches/remotion-4.0.509-audio-resume.mjs --apply",
-  "remotion:audio-resume:check": "node scripts/patches/remotion-4.0.509-audio-resume.mjs --check",
-  "remotion:audio-resume:revert": "node scripts/patches/remotion-4.0.509-audio-resume.mjs --revert",
-  "test:remotion-audio-resume-patch": "node --test scripts/patches/remotion-4.0.509-audio-resume.test.mjs scripts/patches/remotion-4.0.509-audio-resume.semantic.test.mjs"
-}
+codex
+## Done
 
-exec
-/bin/bash -lc 'ls -l tsconfig*.json 2>/dev/null; npx tsc --showConfig --pretty false | head -30' in /home/user/work/wt/app-m1-recovery-compose
- succeeded in 709ms:
--rw-r--r-- 1 root root 767 Oct 19 20:07 tsconfig.app.json
--rw-r--r-- 1 root root 331 Oct 19 20:07 tsconfig.json
--rw-r--r-- 1 root root 538 Oct 19 20:07 tsconfig.node.json
--rw-r--r-- 1 root root 819 Oct 19 20:07 tsconfig.strict-islands.json
-{
-    "compilerOptions": {
-        "baseUrl": "./",
-        "paths": {
-            "@/*": [
-                "./src/*"
-            ],
-            "@astrid/editor-sdk": [
-                "./src/sdk/index.ts"
-            ]
-        },
-        "skipLibCheck": true,
-        "allowJs": true
-    },
-    "references": [
-        {
-            "path": "./tsconfig.app.json"
-        },
-        {
-            "path": "./tsconfig.node.json"
-        }
-    ]
-}
+- Composed the single typed `TimelineCommandRecovery` UI.
+- Removed the duplicate inline command banner.
+- Added final recovery/retry labels, owner attributes, busy/error handling, conflict distinction, and scoped React key.
+- Updated coordination documentation and wrote commit message/report.
 
-exec
-/bin/bash -lc 'npx tsc -p tsconfig.app.json --noEmit --pretty false' in /home/user/work/wt/app-m1-recovery-compose
+## Validation
+
+- Focused Vitest: **103 passed**.
+- File ESLint: **passed**.
+- Diff check: **passed**.
+- App TypeScript: only 2 known unrelated errors remain.
+
+No browser/full/install suites run per instructions.
+tokens used
+144,509
+## Done
+
+- Composed the single typed `TimelineCommandRecovery` UI.
+- Removed the duplicate inline command banner.
+- Added final recovery/retry labels, owner attributes, busy/error handling, conflict distinction, and scoped React key.
+- Updated coordination documentation and wrote commit message/report.
+
+## Validation
+
+- Focused Vitest: **103 passed**.
+- File ESLint: **passed**.
+- Diff check: **passed**.
+- App TypeScript: only 2 known unrelated errors remain.
+
+No browser/full/install suites run per instructions.

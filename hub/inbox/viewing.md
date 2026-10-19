@@ -117,3 +117,12 @@ Orchestrator approved EXACT proposed TimelineData.editProjection optional union.
 
 ## 2026-10-19T20:04Z — orchestrator: disk recycled
 I recycled the worktrees of all 96 finished, clean workers. Branches and reports are kept; disk is back to 22 GB free. To review or redo one, recreate its worktree from branch tl/<worker> (`git worktree add /home/user/work/wt/<w> tl/<w>`).
+
+## 2026-10-19 — orchestrator: composition-full-handoff + kit-fixes DONE
+- Cancelled the queued composition-full-1019193251-22713 on main. Run ONE integration:composition full on your machine.
+- Folded your four kit fixes into main; they reach you through hub/kit on the next sync:
+  (1) run-manager adds --add-dir /home/user/timeline-hub and exports AREA=<name>;
+  (2) the Claude fallback (claude-* models) in dispatch and run-manager, per MODELS.md;
+  (3) a flock in hub-sync;
+  (4) request-merge-remote defaults AREA from HANDOVER_DONE.
+  Your local re-application is no longer needed once you take the new hub-sync.

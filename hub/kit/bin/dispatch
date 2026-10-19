@@ -20,8 +20,13 @@ printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=%s\neffort=%s\nheavy=%s\nw
 NETCFG=(); [ $NET = 1 ] && NETCFG=(-c sandbox_workspace_write.network_access=true)
 touch $D/running
 ( { cat $O/COMMON.md; echo; echo "YOUR WORKTREE: $WT (branch tl/$N, repo $REPO). Do NOT run git commit/merge/checkout (.git is read-only to you). When done, write a conventional commit message (subject line + body) to $D/commit-msg; the harness commits all your worktree changes when you exit. Leave no build output or temp files in the worktree."; echo; echo "YOUR TASK ($N):"; cat $D/brief.md; } | \
+  if [[ $M == claude-* ]]; then   # MODELS.md fallback: Claude instead of Codex
+    (cd $WT && timeout $((TMO*60)) claude -p --model "$M" --permission-mode acceptEdits --add-dir /home/user/work --add-dir /home/user/peteromallet \
+      --add-dir /home/user/banodoco --add-dir $O --output-format text) 2>>$D/log.txt | tee $D/report.md >> $D/log.txt; echo ${PIPESTATUS[0]} > $D/exit
+  else
   timeout $((TMO*60)) codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write "${NETCFG[@]}" -C $WT --skip-git-repo-check \
    --add-dir /home/user/work --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir $O -o $D/report.md - > $D/log.txt 2>&1; echo $? > $D/exit
+  fi
   if [ -n "$(git -C $WT status --porcelain)" ]; then git -C $WT add -A && { [ -s $D/commit-msg ] && git -C $WT commit -q -F $D/commit-msg || git -C $WT commit -q -m "tl/$N: $(head -1 $D/brief.md | cut -c1-70)"; } > $D/commit.log 2>&1; fi
   rm -f $D/running; date -u +%FT%TZ > $D/ended ) >/dev/null 2>&1 &
 echo "dispatched $N in $WT (base $BASE)"

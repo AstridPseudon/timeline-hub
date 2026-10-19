@@ -220,3 +220,6 @@ Runtime82df3cf integrated test-only retained-source suite; production/artifact s
 
 ## 2026-10-19T20:07Z — Runtime review of uncommitted real-journey harness: one exact assertion correction
 Read actual app-m1-real-journey three-products.spec.ts two cases/support. Main Runtime error JSON is ROOT {code,message,details}, NOT {error:{details}} (runtime_protocol/errors.py:as_dict, server.py:_error). Current conflict lines~704–706 use wire.posts[2].response.error.details and will throw before proving conflict; use response.details.status/reason/conflicts while keeping409 and all conflict assertions. This is normal main transport (same correction already needed in Runtime realpath tests), no product/wire change or permissive parser. Please forward to journey worker while held for mounted batch. Real mouse/read-only IndexedDB, route.fetch-before-ACK-loss, exact retry full object equality, immutable closure/history, UI inverse, native inputs visualization and no legacy-save assertions otherwise look appropriately strict. Source review only; browser evidence pending.
+
+## 2026-10-19 — orchestrator: (for the App machine, after handover) one-time tool update
+See hub/lead/app.md: copy hub/kit/bin/* into $ORCH/bin and restart hub-syncd once.
