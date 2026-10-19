@@ -145,7 +145,7 @@ function requireUnchangedGain(actual: number, reference: number) {
   if (Math.abs(db) > 0.5) throw new Error(`captured output gain mismatch: ${db.toFixed(3)} dB`);
 }
 
-for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified fade timing first gesture without warm-up', 'startup cancellation and replay'] as const) {
+for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified fade timing first gesture without warm-up', 'startup cancellation and replay', 'diagnostic warm monitor consumer control'] as const) {
   test(`captures real Player ${mode}`, async ({ browser, context, monitor }, testInfo) => {
     test.setTimeout(360_000);
     expect(await resetFakeRuntimeBaseline()).toBeNull();
@@ -173,6 +173,8 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
           fixtureKey = key;
         }
         const page = await context.newPage();
+        let consumer: Awaited<ReturnType<Monitor['drain']>> | undefined;
+        let primaryFailed = false;
         const requests: Array<{ url: string; status: number }> = [];
         const errors: string[] = [];
         page.on('console', message => {
@@ -221,7 +223,9 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
                   output: (context as AudioContext).getOutputTimestamp(),
                 })),
               });
-              return nativePlay.call(this);
+              const playing = nativePlay.call(this);
+              window.__captureEvents.push({ type: 'media-play-return', epochMs: performance.timeOrigin + performance.now(), src: this.currentSrc || this.src });
+              return playing;
             };
             const suspend = AudioContext.prototype.suspend;
             AudioContext.prototype.suspend = function () {
@@ -233,7 +237,14 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             AudioContext.prototype.resume = function () {
               observeContext(this);
               window.__captureEvents.push({ type: 'context-resume-call', epochMs: performance.timeOrigin + performance.now(), contextState: this.state, contextTime: this.currentTime });
-              return resume.call(this);
+              const resumed = resume.call(this);
+              window.__captureEvents.push({ type: 'context-resume-return', epochMs: performance.timeOrigin + performance.now(), contextState: this.state, contextTime: this.currentTime, output: this.getOutputTimestamp() });
+              void resumed.then(() => {
+                window.__captureEvents.push({ type: 'context-resume-fulfilled', epochMs: performance.timeOrigin + performance.now(), contextState: this.state, contextTime: this.currentTime, output: this.getOutputTimestamp() });
+              }, error => {
+                window.__captureEvents.push({ type: 'context-resume-rejected', epochMs: performance.timeOrigin + performance.now(), error: String(error) });
+              });
+              return resumed;
             };
             const mediaSource = AudioContext.prototype.createMediaElementSource;
             AudioContext.prototype.createMediaElementSource = function (element) {
@@ -250,6 +261,9 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
               const stop = source.stop.bind(source);
               const disconnect = source.disconnect;
               let silent: boolean | undefined;
+              source.addEventListener('ended', () => {
+                window.__captureEvents.push({ type: 'buffer-ended', id, silent, epochMs: performance.timeOrigin + performance.now(), contextTime: this.currentTime, contextState: this.state, output: this.getOutputTimestamp() });
+              });
               source.start = (...args: Parameters<typeof start>) => {
                 const buffer = source.buffer;
                 silent = !buffer || Array.from({ length: buffer.numberOfChannels }, (_, channel) => channel)
@@ -257,6 +271,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
                 if (!silent) window.__captureBackends.audibleBuffers++;
                 window.__captureEvents.push({ type: 'buffer-start', id, silent, epochMs: performance.timeOrigin + performance.now(), args, contextTime: this.currentTime, contextState: this.state, bufferDuration: buffer?.duration });
                 start(...args);
+                window.__captureEvents.push({ type: 'buffer-start-return', id, silent, epochMs: performance.timeOrigin + performance.now(), contextTime: this.currentTime, contextState: this.state, output: this.getOutputTimestamp() });
               };
               source.stop = (...args: Parameters<typeof stop>) => {
                 window.__captureEvents.push({ type: 'buffer-stop', id, silent, epochMs: performance.timeOrigin + performance.now() });
@@ -293,6 +308,37 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
           if (backends.includes('video') && !options.fallback) {
             await expect(page.locator('[data-preview-decoded-frame="true"]')).toHaveCount(1, { timeout: 20_000 });
           }
+          if (mode === 'diagnostic warm monitor consumer control') {
+            const beforeConsumer = await evaluateWithoutGesture(page, () => ({
+              epochMs: performance.timeOrigin + performance.now(),
+              userActivation: navigator.userActivation.hasBeenActive,
+              muted: window.__capturePlayer.isMuted(), frame: window.__capturePlayer.getCurrentFrame(),
+            }));
+            results[`${name}-before-consumer`] = beforeConsumer;
+            expect(beforeConsumer.userActivation, 'consumer precedes the first warm gesture').toBe(false);
+            consumer = await monitor.drain(testInfo.outputPath('monitor-consumer.diagnostics.json'), () => cdp.send('SystemInfo.getProcessInfo'));
+            await evaluateWithoutGesture(page, () => {
+              // Observe warm output progression too; this timer never drives a
+              // source, transport, frame clock, context or browser media.
+              setInterval(() => {
+                window.__captureEvents.push({
+                  type: 'context-output-sample', epochMs: performance.timeOrigin + performance.now(),
+                  playerFrame: window.__capturePlayer.getCurrentFrame(),
+                  contexts: window.__captureContexts.map(context => ({
+                    state: context.state, currentTime: context.currentTime,
+                    output: (context as AudioContext).getOutputTimestamp(),
+                  })),
+                });
+              }, 50);
+            });
+            const beforeWarm = await evaluateWithoutGesture(page, () => ({
+              userActivation: navigator.userActivation.hasBeenActive,
+              muted: window.__capturePlayer.isMuted(), frame: window.__capturePlayer.getCurrentFrame(),
+            }));
+            results[`${name}-before-warm`] = beforeWarm;
+            expect(beforeWarm).toEqual({ userActivation: false, muted: options.muted ?? false, frame: 0 });
+            await consumer.snapshot('before-warm');
+          }
           // Keep the existing warm-rewind measurement, and independently capture
           // the first actual gesture without ever starting the device beforehand.
           if (mode !== 'amplified fade timing first gesture without warm-up') {
@@ -301,6 +347,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             await expect.poll(() => evaluateWithoutGesture(page, () => window.__capturePlayer.getCurrentFrame()), { timeout: 15_000 }).toBeGreaterThan(35);
             if (options.fallback) expect(await page.locator('video').count()).toBeGreaterThan(0);
             await expect.poll(() => evaluateWithoutGesture(page, () => window.__capturePlayer.isPlaying()), { timeout: 15_000 }).toBe(false);
+            await consumer?.snapshot('after-warm-before-rewind');
             await evaluateWithoutGesture(page, () => {
               window.__capturePlayer.pause();
               window.__capturePlayer.seekTo(0);
@@ -394,6 +441,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             expect(readiness.userActivation, 'capture must precede the first user gesture').toBe(false);
           }
           expect(readiness.muted, 'no automatic mute hidden by a reset after warm-up').toBe(options.muted ?? false);
+          await consumer?.snapshot('before-record');
           const path = testInfo.outputPath(`${name}.wav`);
           try {
             await monitor.record(path, () => clickPlay(page), options.captureGain, () => cdp.send('SystemInfo.getProcessInfo'));
@@ -403,6 +451,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             results[name] = { ...results[name] as object, revision: revision.headRevisionId, readiness, recording, events };
             await testInfo.attach(`${name}-recording-diagnostics`, { body: JSON.stringify(results[name], null, 2), contentType: 'application/json' });
           }
+          await consumer?.snapshot('after-record');
           await evaluateWithoutGesture(page, () => window.__capturePlayer.pause());
           const frames = await evaluateWithoutGesture(page, () => window.__captureFrames);
           const moving = frames.filter(frame => frame.frame > 0);
@@ -467,13 +516,24 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
           results[name] = { ...results[name] as object, ...metrics };
           console.log('PLAYER_CAPTURE', name, JSON.stringify(metrics));
           return { capture, metrics };
+        } catch (error) {
+          primaryFailed = true;
+          throw error;
         } finally {
           results[name] = { ...results[name] as object, lifecycleEvents: await evaluateWithoutGesture(page, () => window.__captureEvents).catch(() => null) };
-          await page.close();
+          try {
+            if (consumer) {
+              results.monitorConsumer = await consumer.close().catch(error => {
+                results.monitorConsumerCleanupError = String(error);
+                if (!primaryFailed) throw error;
+                return null;
+              });
+            }
+          } finally { await page.close(); }
         }
       };
 
-      if (mode.startsWith('amplified fade timing') || mode === 'startup cancellation and replay') {
+      if (mode.startsWith('amplified fade timing') || mode === 'startup cancellation and replay' || mode === 'diagnostic warm monitor consumer control') {
         const faded = await run('amplified-fade', ['amplified'], { fade: true });
         if (!('onset' in faded.metrics)) throw new Error('Missing fade onset');
         const fadeOnset = faded.metrics.onset;
