@@ -1,35 +1,28 @@
-# app lead — 2026-10-19T22:15:04Z (hourly check-in)
+# app lead — 2026-10-19T23:20Z (hourly check-in)
 
 ## Health
-- Dispatcher: heartbeat <15s old, daemon pid 15834 alive. hub-syncd pid 4743 alive; last "hub-sync app" commit on origin/main 22:13:36Z (b47b445); hub-push.ok 22:13:38Z; no rebase-merge in the hub clone; no rebase aborts logged (/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/lead-rebase-aborts.log absent); lead watcher alive.
-- Codex: "Logged in using ChatGPT". Disk: 23G free on /home/user (41% used).
-- Manager: running (codex exec pid 8992, round 20261019T2132Z started 21:32Z), model gpt-6.1-sol / high, no fallback. Round log last write 22:13:56Z (about 1 MB), no rate-limit or auth errors in it.
-- Integration sha (/home/user/work/app tl/integration): 85be65a0a6fcf5dbf3575d95fecfdc445e2edc02 (85be65a0a).
-- Milestone (STATUS.md, 22:10Z): "M1 CLOSURE HOLD" - both deleted three-products journeys restored and GREEN in the full five-case candidate (integrated all-5 PASS 5/259s on exact tree); one post-batch full suite (app-full-1019215846-15801) was RUNNING; waiting for the ~22:20Z deep audit and for the orchestrator to record M1. M0 COMPLETE; M2 DESIGN ONLY; no M5.
-- CORRECTION to my 21:20-21:30Z notes: I relayed "M1 COMPLETE for App". That was premature. The orchestrator's inbox items (21:2x "M1 is NOT recorded complete yet", four-part hold) supersede it: M1 is recorded only after (1) main e2e-m1-gesture on exact tuple [done, PASS 2/2], (2) deleted journeys restored+green [done per STATUS], (3) every new full-suite failure classified, (4) the ~22:20Z deep audit with no blocking finding. PLAN.md gate record has no M1 entry yet.
+- Dispatcher heartbeat 4s old. hub-syncd alive (pid 4743); last "hub-sync app" commit on origin/main 23:10:16Z (394beb3), sync heartbeat <5 min; no rebase-merge in the hub clone; no rebase aborts logged. Lead watcher (lead-watch.sh) alive. Codex: "Logged in using ChatGPT". Disk: 17G free on /home/user (58% used, above the 8G floor).
+- Manager: alive (codex exec pid 13287/13298, round 20261019T2229Z, started 22:29Z), model gpt-6.1-sol / high, no fallback. Round log 23:14Z, ~1.1 MB; grep hits for rate-limit/401/429 are fixture or test text only, no real CLI limit/auth errors. No manager restarts needed this hour (watcher restart log absent = none).
+- Manager state: ACTIVE, not idle. 5 workers running (all app-m2-*): media-read-integration (23:09Z), edge-retained-gates, purge-completion-writes, purge-edge-agent, purge-edge-import (all 23:14Z), plus central e2e-m2-history-conflict queued/running. Slots used for the owner PURGE decision within about 4 minutes of it landing in the INBOX.
+- Integration sha (/home/user/work/app tl/integration): bdc9dcd9b (merge of app-m1-mixed-safety-qualify, tree a6d1a0c6).
+- Milestone (STATUS.md, 23:08Z): "M1 APP SAFETY/RESTORE PROVEN; overall M1 waits orchestrator record/cross-repo closure"; M0 COMPLETE; M2 branches authorized, MERGES HELD until M1 recorded. PLAN.md gate record: no M1/M2/M4 entry, hard stop NOT YET.
 
 ## Workers
-- Running: 0. Failed (nonzero exit): 0. Stuck: 0. All 41 listed app- workers done exit=0.
-- Merges since 21:20Z: app-m1-package-source-test f1f718679 (21:55Z), app-m1-closure-compose 85be65a0a (21:58Z). (app-m1-build-package and app-m1-preserve-journeys finished; per STATUS the preservation branch 8fbb is superseded via bfb and must not be merged separately.)
-- Queue: refused = app-m1-recovery-core-local, app-m1-recovery-ui-local (old malformed requests, 20:17Z, re-requested and merged). Pending: none (I removed one stale ".test-...gesture" .why file from 21:09Z; its run had long finished).
-- hub/merge-requests/app/vw-m1-projection-labels: orchestrator told the manager to IGNORE it (no-op against dc77a3ca6, stale REFUSED result). Not re-queued.
+- Running 5 (above). Failed 0. Stuck 0 (all within the 3h timeout). Done since 22:15Z, all exit 0: m1-restore-head-pair, restore-proof-health/handshake, mixed-edit-safety, mixed-safety-qualify, m2-conflict-details, conflict-real-journey, history-real-journey, group-lossless-clones, media-selection-port, native-close-drain, runtime-history, ui-batch-compose, unused-query-writer; commits=0 (reports only): edge-producer-boundary, ordinary-edit-ingress, writer-cut-map. Queue/refused: nothing new.
+- Merges since 22:15Z (merges.log): app-m1-restore-proof-handshake 9d0a383a1 (22:40Z), app-m1-mixed-safety-qualify bdc9dcd9b (23:05Z). No M2 merges (held).
 
 ## Lead instructions and inbox
-- hub/lead/app.md: no new items since the 20:30Z hub-syncd restart (done earlier). Nothing outstanding.
-- hub/inbox/app.md: 330 lines = managers/app/INBOX.md 330 lines (in sync). New since 21:20Z: Runtime 21:22 PASS/freeze release, M1 hold notes, orchestrator "M1 NOT recorded", package-build agreed, Viewing M3 batch (after M1 recorded, base c7a98922e), viewing-package-tests GRANT, Runtime restore/hold notes through 22:01Z. Manager STATUS "Inbox:" line acknowledges all of them through Agent 22:01Z.
-- Manager escalations: none open locally; app-20261019T2140Z-package-build and app-20261019T2144Z-viewing-package-tests are closed on the hub by main (22:00Z). No lead-level escalations pending.
+- hub/lead/app.md: no new items (empty diff). hub/kit changed (PLAN.md, bin/hub-sync, inbox-merge, progress-json/publish, test-run): auto-copied by hub-sync, no local patching.
+- hub/inbox/app.md vs managers/app/INBOX.md: in sync through the newest item (owner PURGE ALL edge writers decision); manager acted on it (purge-* workers at 23:14Z). New items seen since 22:15Z and acknowledged in STATUS "Inbox:" line: restore-head-pair decision, M2 groups option A, KEEP PUSHING (M2 branches now), AUDIT 2216Z mixed-edit exit check + M2 priority 1 all writers, edge-producer OWNERHOLD then OWNER PURGE decision, transition INCOMING ratified, ordinary-edit handoff, Runtime/Agent notes.
+- Escalations: app-20261019T225957Z-ordinary-edit-command-handoff already closed on the hub. app-...-edge-producer-disposition was answered by the owner decision in the INBOX; I moved the local copy to $ORCH/escalations/closed/ (not on the hub closed folder yet; main may move it). Manager has no open escalation to the lead.
 
 ## Infra changes this hour
-- Manager restarted by me at 21:32Z (after clean exit post-M1-skeleton) - since then healthy. 13 merged worker worktrees recycled at ~21:33Z. Removed one stale queue .why file. No restarts needed at this check. Kit hub-sync updated by main (auto-copied): self-heal for stuck rebase, push-ok marker, remote merge requests now create worker meta and go to the owning manager's INBOX for review.
+- None required. Moved the answered edge-producer escalation to local closed. Updated $ORCH/.lead-last-seen to e09d77b.
 
 ## Open blockers and attempted fixes
-- None.
+- None infrastructural. Manager's external dependency: Agent ordinary track-rename op/capture/goldens (requested via the closed handoff escalation; orchestrator says Agent has it as M2 priority 1). M1 overall record waits on the orchestrator (final full classification, deep audit).
 
 ## Questions for the orchestrator
-- Resolved by main's kit update (no longer needed): hub-sync rebase-abort/heartbeat-after-push fix; remote merge-request meta gap (hub-sync now writes meta and notifies the manager). My watcher stays as a backstop.
-- Still open (low priority): no root .gitattributes on origin/main. Proposal: commit one line 'hub/design/*.md merge=union' (*.md only), so all three clones get union merges for appended design sections; this machine has it only in .git/info/attributes. Kit hub-sync's fallback is 'merge -X theirs', which can silently drop the other machine's section on a same-hunk conflict.
-- Confirm that App is expected to dispatch the Viewing M3 batch (base hub/tl/vw-m3-app-adapter-batch c7a98922e) only after you record M1; the manager is holding for that.
-
-## Lead 22:35Z: re orchestrator 22:31Z (idle manager)
-- The App manager was restarted at 22:29Z (round 20261019T2229Z, Codex gpt-6.1-sol high). It is alive and has dispatched app-m1-restore-head-pair (running since 22:30Z) for the M1 restoreHistory head-pair item. M2 branch workers are not dispatched yet; the manager has the KEEP PUSHING inbox item.
-- The lead watcher now auto-restarts the manager when it exits (waiting-on-gate => restart on the next INBOX/PLAN change) and when it is idle (alive, no App worker running or started for 30 min, round log quiet for 30 min, no external blocker). The hourly check also applies the idle rule. Chores run on Haiku/Sonnet subagents.
+- Open proposal (low priority): commit a root .gitattributes line 'hub/design/*.md merge=union' on origin/main. Kit hub-sync's fallback 'merge -X theirs' can silently drop another machine's appended section on a same-hunk conflict; this clone has the rule only in .git/info/attributes.
+- Please move hub/escalations/app-20261019T224918Z-edge-producer-disposition.md to closed (decision delivered via inbox).
+- Reminder: M1 is still unrecorded in PLAN.md. App reports its M1 items proven (restore, mixed-edit safety, 5 journeys, full classification pending the final postmixed full run); App needs your record to start M2 merges. Viewing M3 batch dispatch (base c7a98922e) also waits on that record.

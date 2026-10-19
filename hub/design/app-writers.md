@@ -1,3 +1,5 @@
+> Owner update 2026-10-19 ~23:11Z: PURGE every Supabase canonical writer in ai-timeline-agent, timeline-import, complete_task append+registry upsert and shared astridAppendService; delete retired write tests/docs, keep completion/billing/media preparation/relational metadata and make retained edge tests import/pass. Four isolated workers active; not integrated yet. This supersedes the earlier owner-HOLD and conversion-vs-retirement uncertainty below.
+
 # App M2 durable writer map
 
 Status: **HELD — docs-only groundwork, 2026-10-19.** This map is audited against

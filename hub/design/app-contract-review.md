@@ -90,7 +90,7 @@ Agent must publish the canonical operation/version, closed args/default/clear
 rules, exact singleton selection/owner guards, original tagged label expectation,
 recorded unchanged writes and browser/Python capture vectors. Rename is an
 absolute string assignment, including empty string; null/omission/deletion are
-not synonyms. Label-clear policy needs Agent confirmation (R4 refuses it), while
+not synonyms. Orchestrator ordinary-edit handoff now settles explicit label clear as field removal, absent as no label, and empty string as distinct (superseding the R4 donor refusal);
 inverse must restore originally absent labels exactly. No created IDs, timing
 intent or invented operation name is needed from App.
 
