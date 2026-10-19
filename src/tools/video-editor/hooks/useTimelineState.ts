@@ -649,9 +649,15 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const derived = useDerivedTimeline(save.data, save.selectedClipId, save.selectedTrackId);
   const timelineDataRef = save.dataRef;
   const commitTimelineData = save.commitData;
+  const flushTimelineSave = save.flushPendingSave;
+  const canPersistVisualSeamConfig = runtime.timelineEditability?.checkTimeline?.().allowed ?? true;
   const persistVisualSeamConfig = useCallback(async (acknowledgedConfig: ResolvedTimelineConfig) => {
     const current = timelineDataRef.current;
     if (!current) throw new Error('Timeline data is no longer available.');
+    const permission = runtime.timelineEditability?.checkTimeline?.();
+    if (permission && !permission.allowed) {
+      throw new Error(`Timeline edits are temporarily unavailable (${permission.reason ?? 'read-only'}).`);
+    }
     const contract = acknowledgedConfig.app?.visualSeamContract;
     if (!contract || typeof contract !== 'object' || Array.isArray(contract)) {
       throw new Error('Visual seam declarations are missing from the acknowledged configuration.');
@@ -671,7 +677,8 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     );
     if (timelineDataRef.current !== current) throw new Error('Timeline changed while saving visual boundary declarations.');
     commitTimelineData(nextData, { save: true, semantic: true });
-  }, [commitTimelineData, resolveAssetUrl, timelineDataRef]);
+    await flushTimelineSave();
+  }, [commitTimelineData, flushTimelineSave, resolveAssetUrl, runtime.timelineEditability, timelineDataRef]);
   const render = useRenderState(
     derived.resolvedConfig,
     derived.renderMetadata,
@@ -679,6 +686,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     runtime.extensionRuntime,
     save.flushPendingSave,
     persistVisualSeamConfig,
+    canPersistVisualSeamConfig,
   );
   const assetOperations = useAssetOperations(
     runtime.provider,

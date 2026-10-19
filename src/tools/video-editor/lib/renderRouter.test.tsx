@@ -1289,16 +1289,17 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
       guardFrames: 2,
       boundaries: [{
         frame: 30,
-        timeSeconds: 1,
-        participants: [],
-        structuralIssues: [],
-        unacknowledgedRisk: true,
+        ownerPaths: [['parent', 'main', 'occurrence', 'occ-1', 'clip', 'b']],
+        cues: [{frame: 30, kind: 'motion-start', id: 'move', path: ['parent', 'main', 'occurrence', 'occ-1', 'clip', 'b']}],
+        opaquePaths: [['parent', 'main', 'occurrence', 'occ-2', 'clip', 'plate']],
         requiresIntent: true,
       }],
-      opaqueElements: [],
-      structuralIssues: [],
-      cues: [],
-      warningCount: 1,
+      opaqueElements: [{
+        span: {path: ['parent', 'main', 'occurrence', 'occ-2', 'clip', 'plate'], startFrame: 27, endFrame: 33},
+        opaque: ['unsupported-timing'],
+        source: 'fixture',
+      }],
+      structuralIssues: [{code: 'picture_gap', track: 'picture', frame: 30, message: 'picture gap at seam'}],
       blocked: true,
     };
     const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -1321,7 +1322,26 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     });
 
     expect(result.status).toBe('error');
-    expect(result.seamReport).toEqual(seamReport);
+    expect(result.seamReport).toMatchObject({
+      blocked: true,
+      warningCount: 1,
+      structuralIssues: ['picture_gap: picture gap at seam: picture: frame 30'],
+      boundaries: [{
+        frame: 30,
+        timeSeconds: 1,
+        requiresIntent: true,
+        unacknowledgedRisk: true,
+        participants: expect.arrayContaining([
+          expect.objectContaining({clipId: 'b', ownerId: 'occ-1', behavior: 'motion-start'}),
+          expect.objectContaining({clipId: 'plate', ownerId: 'occ-2', behavior: 'opaque'}),
+        ]),
+      }],
+      opaqueElements: [expect.objectContaining({
+        clipId: 'plate', ownerId: 'occ-2', clipType: 'opaque', startFrame: 27, endFrame: 33,
+        opaqueReasons: ['unsupported-timing'],
+      })],
+      rawDiagnostics: seamReport,
+    });
     vi.unstubAllGlobals();
   });
 
