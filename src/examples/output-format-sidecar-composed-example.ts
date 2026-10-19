@@ -84,7 +84,7 @@ type ProcessStatus =
 
 const EX04_EXTENSION_ID = 'haus.astrid.examples.output-format-sidecar-composed';
 const EX04_OUTPUT_FORMAT_ID = 'metadata-json-sidecar' as OutputFormatContribution['id'];
-const EX04_GRAPH_PATH_MARKER = 'EX-04/output-format-sidecar-composed';
+const GRAPH_PATH_MARKER = 'output-format-sidecar-composed/graph-path';
 const EX04_SOURCE_EXAMPLES = Object.freeze([
   'process-example',
   'metadata-json-output-example',
@@ -193,7 +193,7 @@ const ex04Sidecars = Object.freeze([
       contentSha256: hash('b'),
     },
     provenance: {
-      graphPathMarker: EX04_GRAPH_PATH_MARKER,
+      graphPathMarker: GRAPH_PATH_MARKER,
       routeConstraints: EX04_ROUTE_CONSTRAINTS,
       sourceExamples: EX04_SOURCE_EXAMPLES,
     },
@@ -211,7 +211,7 @@ const ex04Sidecars = Object.freeze([
       contentSha256: hash('c'),
     },
     provenance: {
-      graphPathMarker: EX04_GRAPH_PATH_MARKER,
+      graphPathMarker: GRAPH_PATH_MARKER,
       routeConstraints: EX04_ROUTE_CONSTRAINTS,
       processId: ex04ProcessSpec.id,
       operationId: ex04ExportOperation.id,
@@ -292,7 +292,7 @@ const ex04GraphNodes = Object.freeze([
     kind: 'contribution',
     ref: ex04OutputFormatRef,
     detail: {
-      graphPathMarker: EX04_GRAPH_PATH_MARKER,
+      graphPathMarker: GRAPH_PATH_MARKER,
       exampleId: 'EX-04',
       role: 'output-format',
       outputExtension: ex04OutputFormatContribution.outputExtension,
@@ -303,7 +303,7 @@ const ex04GraphNodes = Object.freeze([
     kind: 'contribution',
     ref: ex04ProcessRef,
     detail: {
-      graphPathMarker: EX04_GRAPH_PATH_MARKER,
+      graphPathMarker: GRAPH_PATH_MARKER,
       exampleId: 'EX-04',
       role: 'trusted-process',
       processId: ex04ProcessSpec.id,
@@ -314,7 +314,7 @@ const ex04GraphNodes = Object.freeze([
     id: ex04ClipNodeId,
     kind: 'clip',
     detail: {
-      graphPathMarker: EX04_GRAPH_PATH_MARKER,
+      graphPathMarker: GRAPH_PATH_MARKER,
       exampleId: 'EX-04',
       clipId: EX04_SOURCE_CLIP_ID,
       materialRefId: EX04_SOURCE_MATERIAL_ID,
@@ -329,7 +329,7 @@ const ex04GraphEdges = Object.freeze([
     sourceNodeId: ex04OutputNodeId,
     targetNodeId: ex04OutputNodeId,
     detail: {
-      graphPathMarker: EX04_GRAPH_PATH_MARKER,
+      graphPathMarker: GRAPH_PATH_MARKER,
       outputFormatId: ex04OutputFormatContribution.id,
       outputLabel: ex04OutputFormatContribution.label,
       refKey: contributionRefKey(ex04OutputFormatRef),
@@ -353,7 +353,7 @@ const ex04GraphEdges = Object.freeze([
     sourceNodeId: ex04OutputNodeId,
     targetNodeId: ex04ProcessNodeId,
     detail: {
-      graphPathMarker: EX04_GRAPH_PATH_MARKER,
+      graphPathMarker: GRAPH_PATH_MARKER,
       outputFormatId: ex04OutputFormatContribution.id,
       outputLabel: ex04OutputFormatContribution.label,
       refKey: contributionRefKey(ex04OutputFormatRef),
@@ -374,7 +374,7 @@ const ex04GraphEdges = Object.freeze([
     sourceNodeId: ex04OutputNodeId,
     targetNodeId: ex04ClipNodeId,
     detail: {
-      graphPathMarker: EX04_GRAPH_PATH_MARKER,
+      graphPathMarker: GRAPH_PATH_MARKER,
       outputFormatId: ex04OutputFormatContribution.id,
       outputLabel: ex04OutputFormatContribution.label,
       refKey: contributionRefKey(ex04OutputFormatRef),
@@ -425,7 +425,7 @@ const ex04SourceMaterial = Object.freeze({
   determinism: 'deterministic',
   replacementPolicy: 'materialize-on-export',
   provenance: {
-    graphPathMarker: EX04_GRAPH_PATH_MARKER,
+    graphPathMarker: GRAPH_PATH_MARKER,
     sourceAssetKey: 'asset://camera-a/source.mov',
     importedAt: '2026-07-05T03:24:00.000Z',
   },
@@ -453,7 +453,7 @@ const ex04MetadataManifest = Object.freeze({
   consumedMaterialRefs: [ex04SourceMaterial],
   sidecars: ex04Sidecars,
   provenance: {
-    graphPathMarker: EX04_GRAPH_PATH_MARKER,
+    graphPathMarker: GRAPH_PATH_MARKER,
     sourceExamples: EX04_SOURCE_EXAMPLES,
     processId: ex04ProcessSpec.id,
     operationId: ex04ExportOperation.id,
@@ -471,7 +471,7 @@ const ex04MetadataManifest = Object.freeze({
   },
   createdAt: '2026-07-05T03:24:00.000Z',
   metadata: {
-    graphPathMarker: EX04_GRAPH_PATH_MARKER,
+    graphPathMarker: GRAPH_PATH_MARKER,
     routeConstraints: EX04_ROUTE_CONSTRAINTS,
     sourceExamples: EX04_SOURCE_EXAMPLES,
   },
@@ -784,7 +784,7 @@ const ex04StoppedBlocker = Object.freeze({
   processId: ex04ProcessSpec.id,
   operationId: ex04ExportOperation.id,
   detail: {
-    graphPathMarker: EX04_GRAPH_PATH_MARKER,
+    graphPathMarker: GRAPH_PATH_MARKER,
     routeScope: 'sidecar-export',
     lifecycleState: 'stopped',
     processProtocol: ex04ProcessSpec.protocol,
@@ -798,7 +798,7 @@ const ex04RequiredBy = Object.freeze([
     outputFormatId: ex04OutputFormatContribution.id,
     detail: {
       routeConstraints: EX04_ROUTE_CONSTRAINTS,
-      graphPathMarker: EX04_GRAPH_PATH_MARKER,
+      graphPathMarker: GRAPH_PATH_MARKER,
     },
   },
   {
@@ -899,7 +899,7 @@ export interface OutputFormatSidecarComposedContract {
 
 export const outputFormatSidecarComposedContract: OutputFormatSidecarComposedContract = Object.freeze({
   exampleId: 'EX-04',
-  graphPathMarker: EX04_GRAPH_PATH_MARKER,
+  graphPathMarker: GRAPH_PATH_MARKER,
   sourceExamples: EX04_SOURCE_EXAMPLES,
   routeConstraints: EX04_ROUTE_CONSTRAINTS,
   extension: outputFormatSidecarComposedExample,

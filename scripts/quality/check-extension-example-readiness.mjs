@@ -740,7 +740,7 @@ const RELEASE_EXAMPLE_CONTRACTS = Object.freeze([
         label: 'sidecar blocker and artifact-route evidence',
         patterns: Object.freeze([
           {
-            regex: /graphPathMarker:\s*EX04_GRAPH_PATH_MARKER/,
+            regex: /graphPathMarker:\s*GRAPH_PATH_MARKER/,
             message: 'missing EX-04 graph-path marker evidence.',
           },
           {
