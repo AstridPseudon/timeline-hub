@@ -57,7 +57,7 @@ def host_log_limit_bytes(environ: Mapping[str, str] | None = None) -> int:
     """Return the rotation cap in bytes; ``0`` means rotation is disabled."""
     raw = (environ if environ is not None else os.environ).get(HOST_LOG_MB_ENV, "").strip()
     if not raw:
-        megabytes = DEFAULT_HOST_LOG_MB
+        megabytes: float = float(DEFAULT_HOST_LOG_MB)
     else:
         try:
             megabytes = float(raw)
