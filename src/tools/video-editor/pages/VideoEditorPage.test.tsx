@@ -1184,8 +1184,8 @@ describe("VideoEditorPage", () => {
     renderPage("/tools/video-editor");
 
     expect(await screen.findByText("No projects yet")).toBeInTheDocument();
-    expect(screen.getByText("Astrid is connected, but this workspace has no projects.")).toBeInTheDocument();
-    expect(screen.getByText("Check connected workspace")).toBeInTheDocument();
+    expect(screen.getByText("Expected to see your work? It may be in another Astrid folder on this computer.")).toBeInTheDocument();
+    expect(screen.getByText("Find my work")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "New project" }),
     ).toBeInTheDocument();
