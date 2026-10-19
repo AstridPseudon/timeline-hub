@@ -24,7 +24,12 @@ declare global {
   interface Window {
     __capturePlayer: PlayerRef;
     __captureBackends: { elements: string[]; buffers: number };
-    __captureFrames: { frame: number; time: number }[];
+    __captureFrames: {
+      frame: number;
+      time: number;
+      media: { currentTime: number; paused: boolean; seeking: boolean; readyState: number }[];
+      contexts: { currentTime: number; state: AudioContextState; output: AudioTimestamp }[];
+    }[];
     __captureEvents: Record<string, unknown>[];
     __captureContexts: BaseAudioContext[];
   }
@@ -149,19 +154,34 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
             for (const type of ['click', 'playing', 'waiting', 'stalled', 'canplay', 'seeking', 'seeked', 'pause', 'ended', 'visibilitychange']) {
               document.addEventListener(type, event => {
                 const media = event.target instanceof HTMLMediaElement ? event.target : null;
-                window.__captureEvents.push({ type, epochMs: performance.timeOrigin + performance.now(), src: media?.currentSrc, currentTime: media?.currentTime, readyState: media?.readyState, visibility: document.visibilityState });
+                window.__captureEvents.push({ type, epochMs: performance.timeOrigin + performance.now(), src: media?.currentSrc, currentTime: media?.currentTime, readyState: media?.readyState, visibility: document.visibilityState, playerFrame: window.__capturePlayer?.getCurrentFrame() });
               }, true);
             }
+            const observeContext = (context: AudioContext) => {
+              if (window.__captureContexts.includes(context)) return;
+              window.__captureContexts.push(context);
+              context.addEventListener('statechange', () => {
+                window.__captureEvents.push({
+                  type: 'context-state', epochMs: performance.timeOrigin + performance.now(),
+                  contextState: context.state, contextTime: context.currentTime,
+                  output: context.getOutputTimestamp(), playerFrame: window.__capturePlayer?.getCurrentFrame(),
+                  media: Array.from(document.querySelectorAll('audio[src], video')).map(element => ({
+                    currentTime: (element as HTMLMediaElement).currentTime,
+                    paused: (element as HTMLMediaElement).paused,
+                  })),
+                });
+              });
+            };
             const mediaSource = AudioContext.prototype.createMediaElementSource;
             AudioContext.prototype.createMediaElementSource = function (element) {
               window.__captureBackends.elements.push(element.src);
-              if (!window.__captureContexts.includes(this)) window.__captureContexts.push(this);
+              observeContext(this);
               return mediaSource.call(this, element);
             };
             const bufferSource = AudioContext.prototype.createBufferSource;
             AudioContext.prototype.createBufferSource = function () {
               window.__captureBackends.buffers++;
-              if (!window.__captureContexts.includes(this)) window.__captureContexts.push(this);
+              observeContext(this);
               const source = bufferSource.call(this);
               const start = source.start.bind(source);
               source.start = (...args: Parameters<typeof start>) => {
@@ -202,7 +222,18 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
             window.__capturePlayer.seekTo(0);
             window.__captureFrames = [];
             window.__capturePlayer.addEventListener('frameupdate', event => {
-              window.__captureFrames.push({ frame: event.detail.frame, time: performance.now() });
+              // Observe both clocks without seeking media or changing its gain.
+              window.__captureFrames.push({
+                frame: event.detail.frame, time: performance.now(),
+                media: Array.from(document.querySelectorAll('audio[src], video')).map(element => {
+                  const media = element as HTMLMediaElement;
+                  return { currentTime: media.currentTime, paused: media.paused, seeking: media.seeking, readyState: media.readyState };
+                }),
+                contexts: window.__captureContexts.map(context => ({
+                  currentTime: context.currentTime, state: context.state,
+                  output: (context as AudioContext).getOutputTimestamp(),
+                })),
+              });
             });
           });
           await expect.poll(() => page.evaluate(() => window.__capturePlayer.getCurrentFrame())).toBe(0);
