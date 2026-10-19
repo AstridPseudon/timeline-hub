@@ -70,11 +70,11 @@
     "packages/typescript/package.json": "sha256:b5d6cd892e5b43020d3079474dec332227a7c87d52158c990f2ac5fa331e06e7",
     "packages/typescript/src/contract-metadata.ts": "sha256:bc552359d4d682e7e3bfd0e365c124a876b200e0cbc9cb93dfc5eb5bec63ccec",
     "packages/typescript/src/generated.ts": "sha256:a98eddf3560097d4ad5547efe7d923576f1bc7cf449da28d7ae49393630e838c",
-    "packages/typescript/src/index.ts": "sha256:6b6dff85e4199007c8890802e0c228171285114fa2f862999c6741c632c5d1a5",
+    "packages/typescript/src/index.ts": "sha256:abe03512b609c91677abb19691c995f1d0dfc82bfde08490040cb7001a08f662",
     "packages/typescript/src/timeline-commit-types.ts": "sha256:624b0fbfb31b056ffb15931ead92ea8b2ce61087aab16d034b47776ee34a6d37",
     "packages/typescript/tsconfig.json": "sha256:48bc718286b70c7ff5af00d1adfea37ad7c7f8820d3050117dc9d6aea239181b",
     "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:67add31efbfa6e2b96a5dd9ae99e442691add36d79dfc76deee4d401d21b2621"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:9ab13c7a3b05ea32d7f2170c62727acb0cef7e51c8f6914399794cde236c9c71"
+  "version": "sha256:3b805d6946fd73c44144009021f44153b78ceeb5e5b1298cd2397a1f2dc19730"
 }
