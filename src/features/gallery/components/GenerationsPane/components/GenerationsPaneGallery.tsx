@@ -10,6 +10,7 @@ import { useShotNavigation } from '@/shared/hooks/shots/useShotNavigation';
 import { VideoGenerationModal } from '@/tools/travel-between-images/components/VideoGenerationModal';
 import { useLassoSelection } from '../hooks/useLassoSelection';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget';
+import { RuntimeAuthorityProvider } from '@/app/runtime/RuntimeAuthorityProvider';
 import {
   userSelectGalleryItem,
   userSelectGalleryItems,
@@ -34,6 +35,8 @@ interface GenerationsPanePageModel {
 }
 
 interface GenerationsPaneGalleryModel {
+  runtimeProjectId: string | null;
+  runtimeAuthority: boolean;
   items: MediaGalleryProps['images'];
   onDelete: NonNullable<MediaGalleryProps['onDelete']>;
   onToggleStar: NonNullable<MediaGalleryProps['onToggleStar']>;
@@ -221,42 +224,47 @@ export function GenerationsPaneGallery({
               className="relative"
               onMouseDown={handleMouseDown}
             >
-              <MediaGallery
-                images={gallery.items}
-                onDelete={gallery.onDelete}
-                onToggleStar={gallery.onToggleStar}
-                isDeleting={gallery.isDeleting}
-                allShots={gallery.allShots}
-                lastShotId={gallery.lastShotId}
-                filters={gallery.filters}
-                onFiltersChange={gallery.onFiltersChange}
-                columnsPerRow={layout.columns}
-                onImageClick={handleImageClick}
-                onContextMenu={gallery.readOnly ? undefined : handleContextMenu}
-                onAddToLastShot={gallery.onAddToShot}
-                onAddToLastShotWithoutPosition={gallery.onAddToShotWithoutPosition}
-                className="space-y-0 pb-8"
-                selectedIds={selectedGalleryIds}
-                config={{
-                  darkSurface: true,
-                  reducedSpacing: true,
-                  hidePagination: true,
-                  hideTopFilters: true,
-                  showShare: false,
-                  enableSingleClick: true,
-                  ...gallery.config,
-                }}
-                pagination={{
-                  offset: (pagination.page - 1) * layout.itemsPerPage,
-                  totalCount: pagination.totalCount,
-                  itemsPerPage: layout.itemsPerPage,
-                  serverPage: pagination.page,
-                  onServerPageChange: gallery.onServerPageChange,
-                }}
-                generationFilters={gallery.generationFilters}
-                currentViewingShotId={gallery.currentViewingShotId}
-                onCreateShot={gallery.onCreateShot}
-              />
+              <RuntimeAuthorityProvider value={{
+                runtimeProjectId: gallery.runtimeProjectId,
+                runtimeAuthority: gallery.runtimeAuthority,
+              }}>
+                <MediaGallery
+                  images={gallery.items}
+                  onDelete={gallery.onDelete}
+                  onToggleStar={gallery.onToggleStar}
+                  isDeleting={gallery.isDeleting}
+                  allShots={gallery.allShots}
+                  lastShotId={gallery.lastShotId}
+                  filters={gallery.filters}
+                  onFiltersChange={gallery.onFiltersChange}
+                  columnsPerRow={layout.columns}
+                  onImageClick={handleImageClick}
+                  onContextMenu={gallery.readOnly ? undefined : handleContextMenu}
+                  onAddToLastShot={gallery.onAddToShot}
+                  onAddToLastShotWithoutPosition={gallery.onAddToShotWithoutPosition}
+                  className="space-y-0 pb-8"
+                  selectedIds={selectedGalleryIds}
+                  config={{
+                    darkSurface: true,
+                    reducedSpacing: true,
+                    hidePagination: true,
+                    hideTopFilters: true,
+                    showShare: false,
+                    enableSingleClick: true,
+                    ...gallery.config,
+                  }}
+                  pagination={{
+                    offset: (pagination.page - 1) * layout.itemsPerPage,
+                    totalCount: pagination.totalCount,
+                    itemsPerPage: layout.itemsPerPage,
+                    serverPage: pagination.page,
+                    onServerPageChange: gallery.onServerPageChange,
+                  }}
+                  generationFilters={gallery.generationFilters}
+                  currentViewingShotId={gallery.currentViewingShotId}
+                  onCreateShot={gallery.onCreateShot}
+                />
+              </RuntimeAuthorityProvider>
               {selectionRect && (
                 <div
                   className="pointer-events-none absolute border border-sky-400 bg-sky-400/10"

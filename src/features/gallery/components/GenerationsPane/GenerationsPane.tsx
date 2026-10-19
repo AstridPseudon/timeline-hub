@@ -173,6 +173,8 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
           pagination={{ page: gallery.page, totalCount: gallery.totalCount }}
           error={gallery.error}
           gallery={{
+            runtimeProjectId: gallery.runtimeProjectId,
+            runtimeAuthority: gallery.runtimeAuthority,
             items: gallery.paginatedData.items,
             onDelete: gallery.handleDeleteGeneration,
             onToggleStar: gallery.handleToggleStar,

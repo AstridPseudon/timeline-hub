@@ -416,6 +416,8 @@ export const useGenerationsPaneController = () => {
     gallery: {
       confirmDialogProps: generationData.confirmDialogProps,
       error: resolvedGalleryProject.error ?? generationData.error,
+      runtimeProjectId: resolvedGalleryProject.projectId,
+      runtimeAuthority: resolvedGalleryProject.runtimeAuthority,
       expectedItemCount: generationData.expectedItemCount,
       handleAddToShot: generationData.handleAddToShot,
       handleAddToShotWithoutPosition: generationData.handleAddToShotWithoutPosition,

@@ -2,10 +2,18 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GenerationsPaneGallery } from './GenerationsPaneGallery';
+import { useGenerationTaskDetails } from '@/shared/components/TaskDetails/hooks/useGenerationTaskDetails';
+import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
+import { resetProjectSelectionStoreForTests, setProjectSelectionSnapshot } from '@/shared/contexts/projectSelectionStore';
 
 const mocks = vi.hoisted(() => ({
   MediaGallery: vi.fn(() => <div data-testid="media-gallery" />),
+  runtimeGetGeneration: vi.fn(),
+  runtimeGetTask: vi.fn(),
+  legacyGalleryGet: vi.fn(),
+  legacyFetchTask: vi.fn(),
   SkeletonGallery: vi.fn(() => <div data-testid="skeleton-gallery" />),
   SelectionContextMenu: vi.fn(({
     position,
@@ -35,9 +43,56 @@ const mocks = vi.hoisted(() => ({
   useLassoSelection: vi.fn(),
 }));
 
-vi.mock('@/shared/components/MediaGallery', () => ({
-  MediaGallery: (props: unknown) => mocks.MediaGallery(props),
+vi.mock('@/integrations/runtime/client', () => ({
+  AstridRuntimeClient: class MockAstridRuntimeClient {
+    getGeneration(generationId: string) { return mocks.runtimeGetGeneration(generationId); }
+    getTask(taskId: string) { return mocks.runtimeGetTask(taskId); }
+  },
 }));
+
+vi.mock('@/integrations/astrid/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/integrations/astrid/client')>();
+  return {
+    ...actual,
+    AstridLocalClient: class MockAstridLocalClient {
+      gallery = { get: (generationId: string) => mocks.legacyGalleryGet(generationId) };
+    },
+  };
+});
+
+vi.mock('@/integrations/supabase/repositories/taskRepository', () => ({
+  fetchTaskInProject: mocks.legacyFetchTask,
+}));
+
+function GalleryTaskDetailsProbe() {
+  const authority = useRuntimeAuthority();
+  const details = useGenerationTaskDetails({
+    generationId: '11111111-1111-4111-8111-111111111111',
+    projectId: 'legacy-selected-project',
+  });
+  return (
+    <div
+      data-testid="gallery-task-details"
+      data-status={details.taskDetailsData?.status ?? ''}
+      data-error={details.taskError?.message ?? ''}
+      data-authority-project={authority.runtimeProjectId ?? ''}
+      data-authority={String(authority.runtimeAuthority)}
+    >
+      {String(details.task?.params?.prompt ?? '')}
+    </div>
+  );
+}
+
+vi.mock('@/shared/components/MediaGallery', async () => {
+  const { useRuntimeAuthority } = await import('@/app/runtime/runtimeAuthority');
+  function GalleryAuthorityProbe() {
+    const authority = useRuntimeAuthority();
+    return <div data-testid="gallery-authority" data-project-id={authority.runtimeProjectId ?? ''} />;
+  }
+  return {
+    MediaGallery: (props: unknown) => <>{mocks.MediaGallery(props)}<GalleryAuthorityProbe /></>,
+  };
+});
 
 vi.mock('@/shared/components/SelectionContextMenu', () => ({
   SelectionContextMenu: (props: unknown) => mocks.SelectionContextMenu(props),
@@ -82,6 +137,8 @@ function buildProps(overrides: Partial<ComponentProps<typeof GenerationsPaneGall
     pagination: { page: 2, totalCount: 25 },
     error: null,
     gallery: {
+      runtimeProjectId: null,
+      runtimeAuthority: false,
       items: [],
       onDelete: vi.fn(),
       onToggleStar: vi.fn(),
@@ -104,6 +161,7 @@ function buildProps(overrides: Partial<ComponentProps<typeof GenerationsPaneGall
 describe('GenerationsPaneGallery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.MediaGallery.mockImplementation(() => <div data-testid="media-gallery" />);
 
     mocks.useGallerySelection.mockReturnValue({
       selectedGalleryIds: new Set(['g2']),
@@ -123,6 +181,82 @@ describe('GenerationsPaneGallery', () => {
       selectionRect: null,
       handleMouseDown: vi.fn(),
     });
+  });
+
+  it('passes resolved Runtime authority into the lightbox subtree for local project selectors', () => {
+    window.history.replaceState({}, '', '/tools/video-editor?localProject=desert-plant-growth');
+    render(<GenerationsPaneGallery {...buildProps({
+      gallery: {
+        ...buildProps().gallery,
+        runtimeProjectId: 'runtime-project-42',
+        runtimeAuthority: true,
+        items: [{ id: 'runtime-generation', url: 'http://runtime.local/media', type: 'image/png' }],
+      },
+    })} />);
+
+    expect(screen.getByTestId('gallery-authority')).toHaveAttribute('data-project-id', 'runtime-project-42');
+  });
+
+  it('replaces the failing slug-scoped gallery read with Runtime generation and task routes', async () => {
+    window.history.replaceState({}, '', '/tools/video-editor');
+    const generationId = '11111111-1111-4111-8111-111111111111';
+    resetProjectSelectionStoreForTests();
+    setProjectSelectionSnapshot({ selectedProjectId: 'legacy-selected-project' });
+    mocks.legacyGalleryGet.mockRejectedValue(new TypeError('Failed to fetch'));
+    const legacyQueryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    const legacyView = render(
+      <QueryClientProvider client={legacyQueryClient}>
+        <GalleryTaskDetailsProbe />
+      </QueryClientProvider>,
+    );
+    const failedLegacyDetails = await screen.findByTestId('gallery-task-details');
+    await waitFor(() => expect(failedLegacyDetails).toHaveAttribute('data-error', expect.stringContaining('Failed to fetch')));
+    expect(mocks.legacyGalleryGet).toHaveBeenCalledWith(generationId);
+    expect(mocks.runtimeGetGeneration).not.toHaveBeenCalled();
+    legacyView.unmount();
+
+    mocks.legacyGalleryGet.mockClear();
+    mocks.runtimeGetGeneration.mockResolvedValue({
+      generation_id: generationId,
+      project_id: 'runtime-project-42',
+      source_task_id: 'runtime-task-1',
+    });
+    mocks.runtimeGetTask.mockResolvedValue({
+      task_id: 'runtime-task-1',
+      project_id: 'runtime-project-42',
+      state: 'succeeded',
+      spec: { family: 'image_generation', params: { prompt: 'runtime image prompt' } },
+      created_at: '2026-10-19T00:00:00Z',
+      updated_at: '2026-10-19T00:00:00Z',
+    });
+    mocks.legacyFetchTask.mockRejectedValue(new TypeError('Failed to fetch'));
+    mocks.MediaGallery.mockImplementation(() => <><div data-testid="media-gallery" /><GalleryTaskDetailsProbe /></>);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <GenerationsPaneGallery {...buildProps({
+          gallery: {
+            ...buildProps().gallery,
+            runtimeProjectId: 'runtime-project-42',
+            runtimeAuthority: true,
+            items: [{ id: generationId, url: 'http://runtime.local/media', type: 'image/png' }],
+          },
+        })} />
+      </QueryClientProvider>,
+    );
+
+    const taskDetails = await screen.findByTestId('gallery-task-details');
+    expect(taskDetails).toHaveAttribute('data-authority', 'true');
+    expect(taskDetails).toHaveAttribute('data-authority-project', 'runtime-project-42');
+    await waitFor(() => expect(mocks.runtimeGetGeneration).toHaveBeenCalledWith(generationId));
+    await waitFor(() => expect(taskDetails).toHaveTextContent('runtime image prompt'));
+    expect(taskDetails).toHaveAttribute('data-status', 'ok');
+    expect(taskDetails).toHaveAttribute('data-error', '');
+    expect(mocks.runtimeGetGeneration).toHaveBeenCalledWith(generationId);
+    expect(mocks.runtimeGetTask).toHaveBeenCalledWith('runtime-task-1');
+    expect(mocks.legacyGalleryGet).not.toHaveBeenCalled();
+    expect(mocks.legacyFetchTask).not.toHaveBeenCalled();
   });
 
   it('renders loading skeleton when loading and no items exist', () => {
