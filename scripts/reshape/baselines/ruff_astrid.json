@@ -12,10 +12,10 @@
     "--output-format",
     "json"
   ],
-  "finding_count": 2227,
+  "finding_count": 2226,
   "code_counts": {
     "F401": 152,
-    "BLE001": 217,
+    "BLE001": 216,
     "I001": 238,
     "E701": 463,
     "E702": 229,
