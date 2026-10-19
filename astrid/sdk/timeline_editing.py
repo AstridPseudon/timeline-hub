@@ -15,10 +15,18 @@ import math
 import re
 import uuid
 from collections.abc import Mapping, MutableMapping, Sequence
-from fractions import Fraction
 from typing import Any
 
 from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline.units import (
+    _playback_rate,  # noqa: F401 - preserve the legacy private import route
+    _time_fraction,  # noqa: F401 - preserve the legacy private import route
+    frame_time,
+    quantize_interval,
+    quantize_time,
+    source_to_timeline_time,
+    timeline_to_source_time,
+)
 
 
 def _is_media_digest(value: Any) -> bool:
@@ -431,113 +439,6 @@ def retime_with_ripple(
             [item.get("at", 0) + _clip_duration(item) for item in clips] or [0]
         )
     return clip
-
-
-def frame_time(frame: int, fps: int | float) -> Fraction:
-    if isinstance(frame, bool) or isinstance(fps, bool) or frame < 0 or fps <= 0:
-        raise TimelineEditError("frame and fps must be non-negative/positive")
-    return Fraction(frame) / Fraction(str(fps))
-
-
-def _time_fraction(value: int | float | Fraction, label: str) -> Fraction:
-    if isinstance(value, bool) or not isinstance(value, (int, float, Fraction)):
-        raise TimelineEditError(f"{label} must be a number")
-    return value if isinstance(value, Fraction) else Fraction(str(value))
-
-
-def _playback_rate(speed: int | float | Fraction) -> Fraction:
-    rate = _time_fraction(speed, "speed")
-    if rate <= 0:
-        raise TimelineEditError("speed must be positive")
-    return rate
-
-
-def source_to_timeline_time(
-    source_time: int | float | Fraction,
-    *,
-    source_start: int | float | Fraction = 0,
-    timeline_start: int | float | Fraction = 0,
-    speed: int | float | Fraction = 1,
-) -> Fraction:
-    """Map a source timestamp into its local timeline timestamp.
-
-    The half-open interval mapping is ``timeline_start + (source_time -
-    source_start) / speed``.  Fractions keep 30fps/0.1s boundaries exact;
-    callers can apply :func:`quantize_time` at the renderer boundary.
-    """
-
-    rate = _playback_rate(speed)
-    return _time_fraction(timeline_start, "timeline_start") + (
-        _time_fraction(source_time, "source_time") - _time_fraction(source_start, "source_start")
-    ) / rate
-
-
-def timeline_to_source_time(
-    timeline_time: int | float | Fraction,
-    *,
-    source_start: int | float | Fraction = 0,
-    timeline_start: int | float | Fraction = 0,
-    speed: int | float | Fraction = 1,
-) -> Fraction:
-    """Map a local timeline timestamp back into source time."""
-
-    rate = _playback_rate(speed)
-    return _time_fraction(source_start, "source_start") + (
-        _time_fraction(timeline_time, "timeline_time") - _time_fraction(timeline_start, "timeline_start")
-    ) * rate
-
-
-def quantize_time(seconds: int | float | Fraction, fps: int | float, *, policy: str = "nearest") -> int:
-    if isinstance(fps, bool) or isinstance(seconds, bool) or fps <= 0 or policy not in {"floor", "ceil", "nearest"}:
-        raise TimelineEditError("invalid fps or quantization policy")
-    frames = _time_fraction(seconds, "seconds") * Fraction(str(fps))
-    if policy == "floor":
-        return math.floor(frames)
-    if policy == "ceil":
-        return math.ceil(frames)
-    return math.floor(frames + Fraction(1, 2))
-
-
-def quantize_interval(
-    start: int | float | Fraction,
-    end: int | float | Fraction,
-    fps: int | float,
-    *,
-    policy: str = "nearest",
-) -> dict[str, Any]:
-    """Quantize a half-open interval and report requested/applied boundaries.
-
-    The returned frame numbers are renderer-facing values; the Fraction
-    values are the exact seconds represented by those frames. A collapsed
-    interval is rejected instead of becoming a zero-frame clip.
-    """
-
-    start_value = _time_fraction(start, "start")
-    end_value = _time_fraction(end, "end")
-    if end_value <= start_value:
-        raise TimelineEditError("interval must be non-empty")
-    if isinstance(fps, bool) or fps <= 0:
-        raise TimelineEditError("fps must be positive")
-    fps_value = Fraction(str(fps))
-    start_frame = quantize_time(start_value, fps_value, policy=policy)
-    end_frame = quantize_time(end_value, fps_value, policy=policy)
-    if end_frame <= start_frame:
-        raise TimelineEditError(
-            "quantization collapsed the interval; choose a wider interval or a different policy"
-        )
-    applied_start = Fraction(start_frame, 1) / fps_value
-    applied_end = Fraction(end_frame, 1) / fps_value
-    return {
-        "policy": policy,
-        "fps": fps_value,
-        "requested_start": start_value,
-        "requested_end": end_value,
-        "start_frame": start_frame,
-        "end_frame": end_frame,
-        "applied_start": applied_start,
-        "applied_end": applied_end,
-        "rounded": applied_start != start_value or applied_end != end_value,
-    }
 
 
 def sequence(clips: Sequence[MutableMapping[str, Any]], *, start: int | float = 0, durations: Sequence[int | float] | None = None, gap: int | float = 0) -> Sequence[MutableMapping[str, Any]]:
