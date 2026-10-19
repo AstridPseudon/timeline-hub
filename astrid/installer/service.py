@@ -12,6 +12,8 @@ import time
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from runtime_protocol import platform
+
 from .core import Version, absolute, read_json, write_json
 
 LABEL = "haus.astrid.runtime"
@@ -184,7 +186,7 @@ class Service:
         if self.system == "darwin":
             if self.path.exists():
                 # bootout both disables KeepAlive and waits for the foreground owner.
-                target = f"gui/{os.getuid()}/{LABEL}"
+                target = f"gui/{platform.current_user()}/{LABEL}"
                 try:
                     self.run(["launchctl", "print", target])
                 except subprocess.CalledProcessError as exc:
@@ -213,7 +215,6 @@ class Service:
             raise RuntimeError("The Astrid sign-in task did not stop.")
         foreground = self.recorded().get("foreground")
         if foreground:
-            from runtime_protocol import platform
             deadline = time.monotonic() + 90
             while time.monotonic() < deadline:
                 identity = platform.process_identity(int(foreground["pid"]))
@@ -227,7 +228,7 @@ class Service:
         user = self.powershell("[Security.Principal.WindowsIdentity]::GetCurrent().User.Value").strip() if self.system == "win32" else ""
         self.path.write_text(render(self.system, version, data, self.log, user=user), encoding="utf-8", newline="\n")
         if self.system == "darwin":
-            self.run(["launchctl", "bootstrap", f"gui/{os.getuid()}", self.path])
+            self.run(["launchctl", "bootstrap", f"gui/{platform.current_user()}", self.path])
         elif self.system == "linux":
             if self.systemd():
                 self.run(["systemctl", "--user", "daemon-reload"])
@@ -242,7 +243,7 @@ class Service:
 
     def start(self) -> bool:
         if self.system == "darwin":
-            self.run(["launchctl", "kickstart", f"gui/{os.getuid()}/{LABEL}"])
+            self.run(["launchctl", "kickstart", f"gui/{platform.current_user()}/{LABEL}"])
         elif self.system == "linux":
             if not self.systemd():
                 return False
@@ -253,7 +254,6 @@ class Service:
 
     def start_foreground(self, version: Version, data: Path) -> None:
         """No systemd: detach Runtime's own supervisor; the line is the restart."""
-        from runtime_protocol import platform
         env = {k: v for k, v in os.environ.items() if k not in {
             "PYTHONPATH", "PYTHONHOME", "ASTRID_WORKSPACE_ENDPOINT",
             "ASTRID_WORKSPACE_CREDENTIAL", "ASTRID_RUNTIME_SOURCE_MANIFEST",

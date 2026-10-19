@@ -43,6 +43,26 @@ def test_launchd_is_foreground_keepalive_with_explicit_environment():
     assert value['EnvironmentVariables']['PATH'] == version.env['PATH']
 
 
+def test_launchd_operations_use_runtime_posix_user_identity(tmp_path, monkeypatch):
+    current_user = Mock(return_value=501)
+    monkeypatch.setattr(service.platform, 'current_user', current_user)
+    runner = Mock(return_value='')
+    manager = service.Service(tmp_path / 'program', tmp_path / 'log', runner,
+                              home=tmp_path, system='darwin')
+    version, data, _ = sample('darwin')
+    manager.register(version, data)
+    assert manager.start()
+    manager.disable()
+    target = f'gui/501/{service.LABEL}'
+    assert [call.args[0] for call in runner.call_args_list] == [
+        ['launchctl', 'bootstrap', 'gui/501', manager.path],
+        ['launchctl', 'kickstart', target],
+        ['launchctl', 'print', target],
+        ['launchctl', 'bootout', target],
+    ]
+    assert current_user.call_count == 3
+
+
 def test_windows_task_settings_and_no_console_executable():
     version, data, log = sample('win32')
     root = ET.fromstring(service.render('win32', version, data, log, user='S-1-5-21-1234'))
