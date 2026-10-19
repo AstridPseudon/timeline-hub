@@ -27,6 +27,56 @@ def _is_candidate(metadata: Mapping[str, Any], authority: Mapping[str, Any]) -> 
     return mode in {"authoring_candidate_preview", "candidate", "preview", "unpublished"}
 
 
+def _candidate_markers(
+    metadata: Mapping[str, Any],
+    canonical: Mapping[str, Any],
+    capture: Mapping[str, Any],
+) -> list[Mapping[str, Any]]:
+    """Return admission-owned candidate markers from either render path."""
+    markers: list[Mapping[str, Any]] = []
+    for source in (metadata, canonical, capture):
+        for key in ("working_copy", "authoring_preview"):
+            marker = source.get(key)
+            if isinstance(marker, Mapping) and marker not in markers:
+                markers.append(marker)
+    return markers
+
+
+def _marker_base_revision(marker: Mapping[str, Any]) -> tuple[str | None, bool]:
+    """Read only the accepted base from a candidate marker.
+
+    The other parent fields in a candidate authority identify the unpublished
+    candidate (for example ``candidate_parent_revision_id`` / ``parent_revision_id``);
+    they are deliberately not accepted as the committed base here.
+    """
+    base_parent = marker.get("base_parent")
+    if not isinstance(base_parent, Mapping):
+        return None, False
+    values = {
+        value
+        for key in ("revision_id", "parent_revision_id", "head_revision_id")
+        for value in (base_parent.get(key),)
+        if isinstance(value, str) and value
+    }
+    if len(values) > 1:
+        return None, True
+    return next(iter(values), None), False
+
+
+def _candidate_base_revision(
+    markers: list[Mapping[str, Any]],
+) -> tuple[str | None, bool]:
+    """Return a shared accepted base, or mark contradictory markers invalid."""
+    bases: set[str] = set()
+    contradictory = False
+    for marker in markers:
+        base, marker_contradictory = _marker_base_revision(marker)
+        contradictory = contradictory or marker_contradictory
+        if base is not None:
+            bases.add(base)
+    return (next(iter(bases), None) if len(bases) <= 1 else None), contradictory or len(bases) > 1
+
+
 def snapshot_label(snapshot: Mapping[str, Any] | None) -> dict[str, Any]:
     """Describe the revision represented by an admitted visualize snapshot.
 
@@ -58,25 +108,29 @@ def snapshot_label(snapshot: Mapping[str, Any] | None) -> dict[str, Any]:
     actual = _first_string(
         authority.get("parent_revision_id"), authority.get("head_revision_id"), authority.get("revision_id")
     )
-    candidate = _is_candidate(metadata, authority)
-    if actual is None and candidate and isinstance(authority.get("authoring_preview"), Mapping):
-        preview = authority["authoring_preview"]
-        actual = _first_string(
-            preview.get("candidate_parent_revision_id"), preview.get("base_revision_id")
-        )
+    markers = _candidate_markers(metadata, canonical, capture)
+    candidate = _is_candidate(metadata, authority) or bool(markers)
     if candidate:
-        if actual is None:
+        base, contradictory = _candidate_base_revision(markers)
+        if contradictory:
             return {
                 "status": "unavailable",
                 "label": "candidate revision unavailable",
                 "actual_revision_id": None,
                 "base_revision_id": None,
             }
+        if base is None:
+            return {
+                "status": "candidate",
+                "label": "unsaved candidate (committed base unavailable)",
+                "actual_revision_id": None,
+                "base_revision_id": None,
+            }
         return {
             "status": "candidate",
-            "label": f"unsaved candidate based on committed revision {actual}",
+            "label": f"unsaved candidate based on committed revision {base}",
             "actual_revision_id": None,
-            "base_revision_id": actual,
+            "base_revision_id": base,
         }
     if actual is None:
         return {

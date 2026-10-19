@@ -23,6 +23,18 @@ def _snapshot(parent: str | None, *, selection: str = "explicit_historical_rende
     }
 
 
+def _candidate_marker(*, base: str | None = "R1", candidate: str = "C1"):
+    marker = {
+        "label": "Unpublished candidate preview",
+        "candidate_digest": "sha256:" + "a" * 64,
+        "publication_digest": "sha256:" + "b" * 64,
+        "candidate_parent_revision_id": candidate,
+    }
+    if base is not None:
+        marker["base_parent"] = {"revision_id": base, "content_digest": "sha256:" + "c" * 64}
+    return marker
+
+
 def test_gateway_main_stamps_the_cli_start_for_the_check_timing(monkeypatch):
     monkeypatch.delenv("ASTRID_CLI_START_MONO", raising=False)
     before = time.monotonic()
@@ -44,9 +56,18 @@ def test_historical_snapshot_label_uses_the_revision_actually_rendered():
     }
 
 
-def test_candidate_label_is_unsaved_and_keeps_its_committed_parent():
+def test_managed_candidate_label_uses_marker_base_not_candidate_parent():
     label = snapshot_label(
-        _snapshot("R1", selection="explicit_candidate_preview", requested_revision_id="R2")
+        {
+            "metadata": {
+                "selection": "explicit_candidate_preview",
+                "canonical_timeline": {
+                    "head_event_id": "R1",
+                    "render_mode": "authoring_candidate_preview",
+                    "authoring_preview": _candidate_marker(),
+                },
+            }
+        }
     )
 
     assert label == {
@@ -54,6 +75,80 @@ def test_candidate_label_is_unsaved_and_keeps_its_committed_parent():
         "label": "unsaved candidate based on committed revision R1",
         "actual_revision_id": None,
         "base_revision_id": "R1",
+    }
+
+
+def test_composed_candidate_label_uses_working_copy_base_not_capture_parent():
+    marker = _candidate_marker()
+    label = snapshot_label(
+        {
+            "metadata": {
+                "selection": "composed_frame_capture",
+                "canonical_timeline": {"parent_revision_id": "C1"},
+                "capture_authority": {
+                    "parent_revision_id": "C1",
+                    "working_copy": marker,
+                },
+                "working_copy": marker,
+            }
+        }
+    )
+
+    assert label["status"] == "candidate"
+    assert label["base_revision_id"] == "R1"
+    assert "C1" not in label["label"]
+
+
+def test_candidate_with_missing_marker_base_stays_unsaved_without_fabricating_candidate_id():
+    label = snapshot_label(
+        {
+            "metadata": {
+                "selection": "explicit_candidate_preview",
+                "canonical_timeline": {
+                    "parent_revision_id": "C1",
+                    "authoring_preview": _candidate_marker(base=None),
+                },
+            }
+        }
+    )
+
+    assert label == {
+        "status": "candidate",
+        "label": "unsaved candidate (committed base unavailable)",
+        "actual_revision_id": None,
+        "base_revision_id": None,
+    }
+
+
+def test_authoring_preview_only_is_candidate_and_uses_its_marker_base():
+    label = snapshot_label(
+        {
+            "metadata": {
+                "canonical_timeline": {"parent_revision_id": "C1"},
+                "capture_authority": {"authoring_preview": _candidate_marker()},
+            }
+        }
+    )
+
+    assert label["status"] == "candidate"
+    assert label["base_revision_id"] == "R1"
+
+
+def test_conflicting_admitted_candidate_bases_are_unavailable():
+    label = snapshot_label(
+        {
+            "metadata": {
+                "working_copy": _candidate_marker(base="R1"),
+                "canonical_timeline": {"authoring_preview": _candidate_marker(base="R2")},
+            }
+        }
+    )
+
+    assert label == {
+        "status": "unavailable",
+        "label": "candidate revision unavailable",
+        "actual_revision_id": None,
+        "base_revision_id": None,
     }
 
 
