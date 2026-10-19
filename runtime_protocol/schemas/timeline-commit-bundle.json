@@ -581,6 +581,36 @@
               "if": {
                 "properties": {
                   "op": {
+                    "const": "track.set"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/TrackSetArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  },
+                  "select": {
+                    "pattern": "^(?!.*::)parent/track:[^/]+$",
+                    "type": "string"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
                     "const": "timeline.inverse"
                   }
                 },
@@ -904,6 +934,49 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "TrackSetArgs": {
+          "additionalProperties": false,
+          "anyOf": [
+            {
+              "properties": {
+                "values": {
+                  "minProperties": 1
+                }
+              }
+            },
+            {
+              "properties": {
+                "clear": {
+                  "minItems": 1
+                }
+              }
+            }
+          ],
+          "description": "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive.",
+          "properties": {
+            "clear": {
+              "items": {
+                "const": "label"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            "values": {
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "values",
+            "clear"
+          ],
+          "type": "object"
         }
       },
       "$id": "https://astrid.local/schemas/timeline/edit-command.schema.json",

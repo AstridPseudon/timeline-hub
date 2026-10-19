@@ -405,6 +405,49 @@
       ],
       "additionalProperties": false
     },
+    "TrackSetArgs": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "clear": {
+          "type": "array",
+          "items": {
+            "const": "label"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "values",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "values": {
+              "minProperties": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "clear": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "description": "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive."
+    },
     "EditCommand": {
       "type": "object",
       "properties": {
@@ -508,6 +551,36 @@
       "additionalProperties": false,
       "description": "Client recorder fields are claims only. Provider verifies/reconstructs all observations; authorship is write classification, never authenticated actor identity. Unknown operations pass the envelope only and require installed registered schemas/handlers.",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "track.set"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)parent/track:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/TrackSetArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
