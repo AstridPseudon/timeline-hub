@@ -1,12 +1,9 @@
 export const strictLintDebtFiles = [
   "src/domains/media-lightbox/components/ImageLightboxControlsPanel.tsx",
-  "src/domains/media-lightbox/components/SegmentRegenerateForm.tsx",
   "src/domains/media-lightbox/components/SegmentSlotFormView.tsx",
   "src/domains/media-lightbox/hooks/modes/useVideoEditingSelections.ts",
   "src/domains/media-lightbox/hooks/persistence/useEditSettingsPersistence.ts",
   "src/domains/media-lightbox/hooks/useEditModePanelState.ts",
-  "src/domains/media-lightbox/hooks/useImageEditOrchestrator.ts",
-  "src/domains/media-lightbox/hooks/useVideoRegenerateMode.ts",
   "src/features/editor/components/EditorPaneTab.tsx",
   "src/features/tasks/components/TasksPane/hooks/useTaskNavigation.ts",
   "src/features/tasks/components/TasksPane/hooks/useVideoGenerations.ts",

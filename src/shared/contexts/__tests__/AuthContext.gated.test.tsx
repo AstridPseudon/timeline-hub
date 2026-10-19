@@ -83,7 +83,8 @@ describe('AuthProvider on the hosted build', () => {
     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('true');
     expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
     expect(probeBridgeSessionMock).not.toHaveBeenCalled();
-    expect(invalidate).toHaveBeenCalledTimes(1);
+    // The onConnected effect flushes after the DOM the waitFor above reads; under load it can land later.
+    await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(1));
     const { predicate } = invalidate.mock.calls[0]![0] as { predicate: (query: { queryKey: unknown[] }) => boolean };
     expect(predicate({ queryKey: ['runtime', 'generation-variants'] })).toBe(true);
     expect(predicate({ queryKey: ['astrid-bridge', 'health'] })).toBe(false);

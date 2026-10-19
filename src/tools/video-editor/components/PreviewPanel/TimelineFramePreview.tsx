@@ -6,7 +6,7 @@ import { TimelineRenderer } from '../../compositions/TimelineRenderer.tsx';
 import { useOptionalVideoEditorRuntime } from '../../contexts/VideoEditorRuntimeContext.tsx';
 import { projectOutputTimelineConfig } from '../../data/timelineOutputProjection.ts';
 import { getClipDurationInFrames, parseResolution, secondsToFrames } from '../../lib/config-utils.ts';
-import { formatTime } from '../../lib/coordinate-utils.ts';
+import { CENTISECOND_TIME_OPTIONS, formatTime } from '@/shared/lib/timeFormatting';
 import { cloneFrame, FramePreviewCache, timelineSecondsToFrame } from '../../lib/frame-preview-cache.ts';
 import { areShotsSettling } from '../../lib/shots-settling.ts';
 import { getAdmittedElementReadiness, getAdmittedElementSelection, subscribeAdmittedElementReadiness, subscribeAdmittedElements } from '../../runtime/admitted-elements.ts';
@@ -199,7 +199,7 @@ export function TimelineFramePreview({ config, request, bounds }: { config: Reso
       </div>
       {frame !== null && (
         <span className="absolute bottom-[7px] left-[7px] rounded-sm bg-card/85 px-1 py-0.5 font-mono text-[10px] leading-none tracking-[0.08em] text-muted-foreground">
-          {formatTime(frame / metadata.fps)}
+          {formatTime(frame / metadata.fps, CENTISECOND_TIME_OPTIONS)}
         </span>
       )}
     </div>, document.body,
