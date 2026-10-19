@@ -112,6 +112,18 @@ const render = maps => {
 assert.match(render(), /Bundled resource/);
 assert.match(render(), /rgb\\(18, 52, 86\\)|#123456/);
 assert.match(render(registries), /host:#123456/);
+const CustomAnimation = ({progress, easing}) => ({content: 'host:' + progress + ':' + easing});
+for (const id of ['project-sweep', 'type-on']) {
+  const maps = durationFrames => ({animations: {[id]: CustomAnimation},
+    animationDefaults: {[id]: {durationFrames, startFrame: 'host-owned'}},
+    animationMeta: {[id]: {kind: 'hook', supportsEasing: true}}});
+  const animate = registries => api.composeAnimations({clip, refs: {id, easing: 'ease-in'}, phase: 'entrance',
+    content: 'original', theme: root.toRuntimeTheme(theme), fps: 30, elapsedFrames: 25, registries});
+  assert.equal(animate(maps(100)), 'host:0.0625:in');
+  assert.equal(animate(maps(50)), 'host:0.25:in');
+  assert.equal(animate(maps(100)), 'host:0.0625:in');
+  assert.throws(() => animate({...maps(100), animationMeta: {[id]: {kind: 'hook'}}}), /cannot consume explicit easing/);
+}
 assert.equal(themes.BUNDLED_THEME_VERSIONS['2rp'], '0.1.0');
 console.log('Plain Node ESM, bundled render, scoped host capability/override and shared theme/peer identity passed');
 `);
@@ -119,13 +131,15 @@ console.log('Plain Node ESM, bundled render, scoped host capability/override and
   writeFileSync(join(temporary, 'consumer.ts'), `
 import {TimelineComposition, prepareCompositionScene, type TimelineClip, type TrackDefinition, type CompositionRegistries} from '@banodoco/timeline-composition';
 import {prepareTrack} from '@banodoco/timeline-composition/evaluation';
-import {composeAnimations, type EffectProps, type RuntimeTheme} from '@banodoco/timeline-composition/theme-api';
+import {composeAnimations, type EffectProps, type RuntimeTheme, type HookAnimationProps} from '@banodoco/timeline-composition/theme-api';
 import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';
 import {EFFECT_REGISTRY} from '@banodoco/timeline-composition/effects.generated';
 import {THEME_PACKAGE_REGISTRY} from '@banodoco/timeline-composition/registry.generated';
 import {ANIMATION_META} from '@banodoco/timeline-composition/animations.generated';
 import {TRANSITION_META} from '@banodoco/timeline-composition/transitions.generated';
 const host: CompositionRegistries = {effects: {custom: (_props: EffectProps<{title: string}>) => null}};
+host.animations = {custom: (props: HookAnimationProps) => ({content: props.progress})};
+host.animationMeta = {custom: {kind: 'hook', supportsEasing: true}};
 const resolved = (theme: RuntimeTheme) => resolveElementRegistries(theme, host);
 const clip: TimelineClip = {id: 'x', at: 0, hold: 1, track: 'v', clipType: 'custom'};
 void [TimelineComposition, prepareCompositionScene, prepareTrack, composeAnimations, resolved, clip, EFFECT_REGISTRY,

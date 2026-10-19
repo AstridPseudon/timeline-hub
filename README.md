@@ -46,6 +46,30 @@ an optional registry input (`composeAnimations` takes it in its input object;
 `normalizeAnimationReferences` and `resolveAnimationReferences` take it last).
 Unknown animation/transition IDs and invalid animation phases still throw.
 
+Animation metadata declares `supportsEasing: true` when the registered component
+consumes explicit easing. The composer passes canonical `easing` and clamped,
+eased `progress` over `elapsedFrames / durationFrames`, under any registered ID.
+Components can use `easing` with their own timing window; bundled type-on owns
+its `startFrame` / `durationFraction` reveal window. With no authored easing,
+both props are undefined and bundled components retain their normal motion.
+Omitted or false support refuses explicit easing. Supply the matching metadata
+and defaults when overriding a registration; names confer no private behavior.
+This declaration does not establish scene geometry, alpha or visibility.
+
+```tsx
+import type {AnimationRegistries, WrapperAnimationProps} from '@banodoco/timeline-composition/theme-api';
+
+const Sweep = ({children, progress}: WrapperAnimationProps) => (
+  <div style={{opacity: progress ?? 1}}>{children}</div>
+);
+const animations = {
+  animations: {'project-sweep': Sweep},
+  animationMeta: {'project-sweep': {kind: 'wrapper', phase: 'entrance', supportsEasing: true}},
+  animationDefaults: {'project-sweep': {durationFrames: 20}},
+} satisfies AnimationRegistries;
+// composeAnimations({...input, refs: {id: 'project-sweep', easing: 'ease-in'}, registries: animations})
+```
+
 ## Transitions
 
 A clip's `transition` (on the clip that starts the boundary, i.e. the outgoing clip) joins it to the next clip on the same track. The next clip must start within one frame of the outgoing clip's end (or exactly at it); otherwise the transition is ignored and the boundary is a cut. A transition longer than either clip is also ignored.
@@ -205,6 +229,7 @@ Focused checks for the packaging/registry change:
 npm run build:test
 node --import ./typescript/tests/register-extensionless.mjs --test \
   typescript/test-dist/tests/registries.test.js \
+  typescript/test-dist/tests/animations.test.js \
   typescript/test-dist/tests/scene-evaluation.test.js scripts/gen-registry.test.mjs
 ```
 

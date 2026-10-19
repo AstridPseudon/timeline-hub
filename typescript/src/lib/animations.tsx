@@ -20,7 +20,6 @@ import type {
 import type {RuntimeTheme} from '../ThemeContext';
 import type {TimelineClip} from '../types';
 import {animationEasingParams, animationProgress, normalizeAnimationEasing} from './animation-easing';
-import {progressTypeOn, progressWrapper, supportsAnimationProgress} from './animation-progress-adapters';
 
 export type NormalizedAnimationReference = {
   id: string;
@@ -118,7 +117,7 @@ export const resolveAnimationReferences = (
 
     const params = animationEasingParams(defaults, ref.params, ref.easing);
     const easing = ref.easing ?? (typeof ref.params.easing === 'string' ? normalizeAnimationEasing(ref.params.easing) : undefined);
-    if (easing !== undefined && !supportsAnimationProgress(ref.id)) {
+    if (easing !== undefined && meta.supportsEasing !== true) {
       throw new Error(`Animation '${ref.id}' cannot consume explicit easing progress`);
     }
     return {
@@ -131,19 +130,6 @@ export const resolveAnimationReferences = (
       durationFrames,
     };
   });
-};
-
-const resolvedProgress = (animation: ResolvedAnimation, elapsedFrames: number): number | undefined => {
-  if (animation.id === 'type-on' && animation.easing !== undefined && animation.durationFrames > 0) {
-    const start = animation.params.startFrame ?? 18;
-    const fraction = animation.params.durationFraction ?? 0.55;
-    if (typeof start !== 'number' || !Number.isFinite(start) || typeof fraction !== 'number' || !Number.isFinite(fraction)) {
-      throw new Error('Type-on window must use finite startFrame and durationFraction');
-    }
-    const end = Math.max(start + 1, Math.floor(animation.durationFrames * fraction));
-    return animationProgress(elapsedFrames - start, end - start, animation.easing);
-  }
-  return animationProgress(elapsedFrames, animation.durationFrames, animation.easing);
 };
 
 const isHookResultObject = (value: unknown): value is HookAnimationResult => {
@@ -170,9 +156,8 @@ export const composeAnimations = ({
   let nextParams: Record<string, unknown> = {};
 
   for (const animation of hookAnimations) {
-    const progress = resolvedProgress(animation, elapsedFrames);
-    const HookComponent = progress !== undefined && animation.id === 'type-on' && animation.component === ANIMATION_REGISTRY[animation.id]
-      ? progressTypeOn : animation.component as HookAnimationComponent<Record<string, unknown>>;
+    const progress = animationProgress(elapsedFrames, animation.durationFrames, animation.easing);
+    const HookComponent = animation.component as HookAnimationComponent<Record<string, unknown>>;
     const result = HookComponent({
       clip,
       params: animation.params,
@@ -182,6 +167,7 @@ export const composeAnimations = ({
       durationFrames: animation.durationFrames,
       elapsedFrames,
       progress,
+      easing: animation.easing,
       animationId: animation.id,
       content: nextContent,
       text: nextText,
@@ -196,10 +182,8 @@ export const composeAnimations = ({
   }
 
   return wrapperAnimations.reduceRight((children, animation) => {
-    const progress = resolvedProgress(animation, elapsedFrames);
-    const WrapperComponent = progress === undefined || animation.component !== ANIMATION_REGISTRY[animation.id]
-      ? animation.component as WrapperAnimationComponent<Record<string, unknown>>
-      : progressWrapper(animation.id, animation.component as WrapperAnimationComponent<Record<string, unknown>>);
+    const progress = animationProgress(elapsedFrames, animation.durationFrames, animation.easing);
+    const WrapperComponent = animation.component as WrapperAnimationComponent<Record<string, unknown>>;
     return (
       <WrapperComponent
         clip={clip}
@@ -210,6 +194,7 @@ export const composeAnimations = ({
         durationFrames={animation.durationFrames}
         elapsedFrames={elapsedFrames}
         progress={progress}
+        easing={animation.easing}
         animationId={animation.id}
       >
         {children}

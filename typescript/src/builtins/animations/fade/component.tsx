@@ -8,8 +8,9 @@ export const Fade = ({
   phase,
   durationFrames,
   elapsedFrames,
+  progress: explicitProgress,
 }: WrapperAnimationProps): ReactElement => {
-  const progress = phase === 'exit'
+  const progress = explicitProgress ?? (phase === 'exit'
     ? interpolate(elapsedFrames, [0, durationFrames], [0, 1], {
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp',
@@ -21,7 +22,7 @@ export const Fade = ({
       to: 1,
       durationInFrames: durationFrames,
       config: {damping: 14, stiffness: 110},
-    });
+    }));
   return (
     <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: phase === 'exit' ? 1 - progress : progress}}>
       {children}

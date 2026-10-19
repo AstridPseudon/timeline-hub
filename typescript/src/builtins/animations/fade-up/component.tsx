@@ -7,8 +7,9 @@ export const FadeUp = ({
   fps,
   durationFrames,
   elapsedFrames,
+  progress: explicitProgress,
 }: WrapperAnimationProps): ReactElement => {
-  const progress = spring({
+  const progress = explicitProgress ?? spring({
     frame: elapsedFrames,
     fps,
     from: 0,
@@ -25,7 +26,7 @@ export const FadeUp = ({
         alignItems: 'center',
         justifyContent: 'center',
         opacity: progress,
-        transform: `translateY(${interpolate(progress, [0, 1], [40, 0])}px)`,
+        transform: `translateY(${explicitProgress === undefined ? interpolate(progress, [0, 1], [40, 0]) : 40 * (1 - progress)}px)`,
       }}
     >
       {children}

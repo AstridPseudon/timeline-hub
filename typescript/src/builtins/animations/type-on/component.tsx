@@ -1,4 +1,5 @@
 import {interpolate} from 'remotion';
+import {animationProgress} from '../../../lib/animation-easing';
 import type {HookAnimationProps, HookAnimationResult} from '../../../effects-types';
 
 type TypeOnParams = {
@@ -13,6 +14,7 @@ export const TypeOn = ({
   durationFrames,
   elapsedFrames,
   params,
+  easing,
 }: HookAnimationProps<Record<string, unknown>>): HookAnimationResult => {
   if (!text) {
     return {};
@@ -21,8 +23,15 @@ export const TypeOn = ({
   const typedParams = params as TypeOnParams;
   const startFrame = typedParams.startFrame ?? 18;
   const durationFraction = typedParams.durationFraction ?? 0.55;
+  if (easing !== undefined && durationFrames > 0
+    && (!Number.isFinite(startFrame) || !Number.isFinite(durationFraction))) {
+    throw new Error('Type-on window must use finite startFrame and durationFraction');
+  }
   const endFrame = Math.max(startFrame + 1, Math.floor(durationFrames * durationFraction));
-  const revealRatio = interpolate(elapsedFrames, [startFrame, endFrame], [0, 1], {
+  const explicitProgress = durationFrames > 0
+    ? animationProgress(elapsedFrames - startFrame, endFrame - startFrame, easing)
+    : animationProgress(elapsedFrames, durationFrames, easing);
+  const revealRatio = explicitProgress ?? interpolate(elapsedFrames, [startFrame, endFrame], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });

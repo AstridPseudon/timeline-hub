@@ -7,8 +7,9 @@ export const ScaleIn = ({
   fps,
   durationFrames,
   elapsedFrames,
+  progress: explicitProgress,
 }: WrapperAnimationProps): ReactElement => {
-  const progress = spring({
+  const progress = explicitProgress ?? spring({
     frame: elapsedFrames,
     fps,
     from: 0,
@@ -25,7 +26,7 @@ export const ScaleIn = ({
         alignItems: 'center',
         justifyContent: 'center',
         opacity: progress,
-        transform: `scale(${interpolate(progress, [0, 1], [0.85, 1])})`,
+        transform: `scale(${explicitProgress === undefined ? interpolate(progress, [0, 1], [0.85, 1]) : 0.85 + 0.15 * progress})`,
         transformOrigin: 'center center',
       }}
     >

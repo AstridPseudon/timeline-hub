@@ -47,6 +47,8 @@ export type AnimationMeta = {
   kind: AnimationKind;
   phase?: AnimationPhase | AnimationPhase[] | 'any';
   defaultDurationFrames?: number;
+  /** Component consumes explicit progress/easing; omitted support refuses authored easing. */
+  supportsEasing?: boolean;
   [key: string]: unknown;
 };
 
@@ -60,6 +62,8 @@ export type BaseAnimationProps<TParams = Record<string, unknown>> = {
   elapsedFrames: number;
   /** Explicit canonical local progress; undefined preserves component legacy curves. */
   progress?: number;
+  /** Canonical authored curve, for components with their own local timing window. */
+  easing?: AnimationEasing;
   animationId: string;
 };
 

@@ -6,8 +6,9 @@ export const SlideUp = ({
   children,
   durationFrames,
   elapsedFrames,
+  progress: explicitProgress,
 }: WrapperAnimationProps): ReactElement => {
-  const progress = interpolate(elapsedFrames, [0, durationFrames], [0, 1], {
+  const progress = explicitProgress ?? interpolate(elapsedFrames, [0, durationFrames], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -20,7 +21,7 @@ export const SlideUp = ({
         alignItems: 'center',
         justifyContent: 'center',
         opacity: 1 - progress,
-        transform: `translateY(${interpolate(progress, [0, 1], [0, -30])}px)`,
+        transform: `translateY(${explicitProgress === undefined ? interpolate(progress, [0, 1], [0, -30]) : -30 * progress}px)`,
       }}
     >
       {children}

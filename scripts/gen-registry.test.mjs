@@ -1,22 +1,27 @@
 import assert from 'node:assert/strict';
-import {mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
 import {spawnSync} from 'node:child_process';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
 
-const packageRoot = fileURLToPath(new URL('..', import.meta.url));
-const generated = ['registry', 'effects', 'animations', 'transitions']
-  .map(name => join(packageRoot, 'typescript', 'src', `${name}.generated.ts`));
+const sourceRoot = fileURLToPath(new URL('..', import.meta.url));
 
 test('package generation ignores installed host themes and checks all local registries', () => {
+  const packageRoot = mkdtempSync(join(tmpdir(), 'composition-registry-'));
+  for (const path of ['scripts', 'typescript/src', 'package.json']) {
+    cpSync(join(sourceRoot, path), join(packageRoot, path), {recursive: true});
+  }
+  const generated = ['registry', 'effects', 'animations', 'transitions']
+    .map(name => join(packageRoot, 'typescript', 'src', `${name}.generated.ts`));
   const themeDir = join(packageRoot, 'node_modules', '@banodoco', `timeline-theme-test-${process.pid}`);
   const originals = generated.map(path => readFileSync(path, 'utf8'));
   mkdirSync(join(themeDir, 'src', 'effects', 'host-only'), {recursive: true});
   writeFileSync(join(themeDir, 'package.json'), JSON.stringify({name: '@banodoco/timeline-theme-test'}));
   writeFileSync(join(themeDir, 'theme.json'), JSON.stringify({id: 'test'}));
   writeFileSync(join(themeDir, 'src', 'effects', 'host-only', 'component.tsx'), 'export default () => null;');
-  const run = (...args) => spawnSync(process.execPath, ['--import', 'tsx', 'scripts/gen-registry.ts', ...args], {
+  const run = (...args) => spawnSync(process.execPath, ['--import', import.meta.resolve('tsx'), 'scripts/gen-registry.ts', ...args], {
     cwd: packageRoot, encoding: 'utf8',
   });
   try {
@@ -32,7 +37,6 @@ test('package generation ignores installed host themes and checks all local regi
     }
     assert.equal(run('--check').status, 0);
   } finally {
-    rmSync(themeDir, {recursive: true, force: true});
-    generated.forEach((path, index) => writeFileSync(path, originals[index]));
+    rmSync(packageRoot, {recursive: true, force: true});
   }
 });

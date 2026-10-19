@@ -56,41 +56,47 @@ export const ANIMATION_META: Readonly<Record<string, AnimationMeta>> = {
       "entrance",
       "exit"
     ],
-    "defaultDurationFrames": 12
+    "defaultDurationFrames": 12,
+    "supportsEasing": true
   },
   "fade-up": {
     "id": "fade-up",
     "name": "Fade Up",
     "kind": "wrapper",
     "phase": "entrance",
-    "defaultDurationFrames": 18
+    "defaultDurationFrames": 18,
+    "supportsEasing": true
   },
   "scale-in": {
     "id": "scale-in",
     "name": "Scale In",
     "kind": "wrapper",
     "phase": "entrance",
-    "defaultDurationFrames": 18
+    "defaultDurationFrames": 18,
+    "supportsEasing": true
   },
   "slide-left": {
     "id": "slide-left",
     "name": "Slide Left",
     "kind": "wrapper",
     "phase": "entrance",
-    "defaultDurationFrames": 18
+    "defaultDurationFrames": 18,
+    "supportsEasing": true
   },
   "slide-up": {
     "id": "slide-up",
     "name": "Slide Up",
     "kind": "wrapper",
     "phase": "exit",
-    "defaultDurationFrames": 12
+    "defaultDurationFrames": 12,
+    "supportsEasing": true
   },
   "type-on": {
     "id": "type-on",
     "name": "Type On",
     "kind": "hook",
     "phase": "entrance",
-    "defaultDurationFrames": 120
+    "defaultDurationFrames": 120,
+    "supportsEasing": true
   }
 };
