@@ -44,7 +44,6 @@ describe('main entry bootstrap order', () => {
     bootstrapMocks.migrateAstridBrowserStorage.mockReset();
     bootstrapMocks.renderApp.mockReset();
     document.body.replaceChildren();
-    document.head.querySelectorAll('link[data-installed-app-fonts]').forEach((link) => link.remove());
     // The web root is the public landing entry; the app bootstrap only runs on an app route.
     window.history.replaceState({}, '', '/tools/video-editor?localTest=1');
   });
@@ -96,30 +95,19 @@ describe('main entry bootstrap order', () => {
     expect(bootstrapMocks.renderApp).toHaveBeenCalledWith(root);
   });
 
-  it.each([
-    ['injects the remote font links by default', undefined, true],
-    ['injects no remote font link when VITE_DISABLE_REMOTE_FONTS=1', '1', false],
-  ])('%s', async (_name, flag, expectLinks) => {
+  it('injects no remote font link: typography is self-hosted', async () => {
     bootstrapMocks.migrateAstridBrowserStorage.mockResolvedValue({ success: true });
     bootstrapMocks.initializeVideoEditorExtensionRuntime.mockResolvedValue(undefined);
-    vi.stubEnv('VITE_DISABLE_REMOTE_FONTS', flag ?? '');
-    try {
-      const root = document.createElement('div');
-      root.id = 'root';
-      document.body.append(root);
+    const root = document.createElement('div');
+    root.id = 'root';
+    document.body.append(root);
 
-      await import('@/app/main');
-      await vi.waitFor(() => expect(bootstrapMocks.renderApp).toHaveBeenCalledOnce());
+    await import('@/app/main');
+    await vi.waitFor(() => expect(bootstrapMocks.renderApp).toHaveBeenCalledOnce());
 
-      const hrefs = [...document.querySelectorAll('link[data-installed-app-fonts]')]
-        .map((link) => link.getAttribute('href'));
-      if (expectLinks) {
-        expect(hrefs.some((href) => href?.startsWith('https://fonts.googleapis.com/css2'))).toBe(true);
-      } else {
-        expect(hrefs).toEqual([]);
-      }
-    } finally {
-      vi.unstubAllEnvs();
-    }
+    const remoteHrefs = [...document.querySelectorAll('link')]
+      .map((link) => link.getAttribute('href') ?? '')
+      .filter((href) => /^https:\/\/(fonts\.(googleapis|gstatic)\.com|unpkg\.com|cdn\.jsdelivr\.net)/.test(href));
+    expect(remoteHrefs).toEqual([]);
   });
 });

@@ -406,7 +406,7 @@ describe('V009 public host behavior qualification', () => {
     // The public document stays separate because main returns from this branch
     // before importing app bootstrap and its route graph.
     const publicBranchStart = main.indexOf("if (owner === 'public')");
-    const appBranchStart = main.indexOf('loadInstalledAppTypography();', publicBranchStart);
+    const appBranchStart = main.indexOf('await startApp(rootElement);', publicBranchStart);
     expect(publicBranchStart).toBeGreaterThanOrEqual(0);
     expect(appBranchStart).toBeGreaterThan(publicBranchStart);
     const publicBranch = main.slice(publicBranchStart, appBranchStart);

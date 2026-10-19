@@ -1,5 +1,4 @@
 import { defineConfig, devices } from '@playwright/test';
-import { DEFAULT_DEV_SUPABASE_URL } from './src/shared/dev/devSession.ts';
 import { fakeRuntimeEnv } from './tests/e2e/fake-runtime/launch.mjs';
 import { astridOnboardedStorageState } from './tests/e2e/fixtures/astridOnboardedStorageState';
 import {
@@ -50,19 +49,13 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: `npm run dev -- --host 127.0.0.1 --port ${port}`,
+      command: `npm run dev -- --mode test --host 127.0.0.1 --port ${port}`,
       url: baseURL,
       reuseExistingServer: false,
       timeout: 120_000,
       env: {
-        VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? DEFAULT_DEV_SUPABASE_URL,
-        VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? 'test-anon-key',
-        // Same font policy as the timeline lane: the dev server strips remote font links.
-        VITE_DISABLE_REMOTE_FONTS: process.env.VITE_DISABLE_REMOTE_FONTS ?? '1',
         // One fake Runtime serves workspace.v1, the `/api/astrid` bridge routes and the ACP read, behind one token.
         ...fakeRuntimeViteEnv,
-        // The editor capability-matrix suite uses a fixed host-owned fixture catalog; the Vite config only
-        // aliases it for `serve`.
       },
     },
     {

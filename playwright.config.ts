@@ -1,5 +1,4 @@
 import { defineConfig, devices } from '@playwright/test';
-import { DEFAULT_DEV_SUPABASE_URL } from './src/shared/dev/devSession.ts';
 import { fakeRuntimeEnv } from './tests/e2e/fake-runtime/launch.mjs';
 import { astridOnboardedStorageState } from './tests/e2e/fixtures/astridOnboardedStorageState';
 import {
@@ -57,7 +56,12 @@ const launchOptions = chromiumExecutablePath
 // Their opt-in script owns their collection.
 // See `npm run test:e2e:timeline`.
 const TIMELINE_DEVICE_SPECS = /tests[\\/]e2e[\\/]timeline[\\/].*\.spec\.ts$/;
-const RENDERER_OWNED_TIMELINE_SPECS = /(?:caption-render-export|caption-render-matrix)\.spec\.ts$/;
+const RENDERER_OWNED_TIMELINE_SPECS = /caption-render-export\.spec\.ts$/;
+// Cases that need H.264 in the browser: encoding it (export) or decoding it (the preview plays
+// example-video.mp4). Playwright's bundled Chromium has neither, so these run only in the
+// `timeline-chrome-export` project (channel 'chrome', `npm run test:e2e:chrome-export`), never in
+// `timeline-devices`.
+const CHROME_H264_TAG = /@chrome-h264/;
 const includeTimelineDevices = process.env.PLAYWRIGHT_TIMELINE_DEVICES === '1';
 const EXTENSION_HARNESS_SETUP_SPEC = /extension-harness\.setup\.ts$/;
 // These specs have dedicated configs which provision their browser, fake Runtime and
@@ -124,17 +128,6 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 120_000,
       env: {
-        // The editor capability-matrix E2E suite uses a fixed host-owned
-        // fixture catalog; the Vite config only aliases it for `serve`.
-        VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? DEFAULT_DEV_SUPABASE_URL,
-        VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? 'test-anon-key',
-        // Vite removes the declarative Google Fonts links before serving the
-        // document, so the origin audit can reject every remote-font attempt
-        // without relying on browser runtime interception.
-        // Every Playwright server is a deterministic localTest surface. Strip
-        // remote-font links before the browser sees HTML; production preview
-        // keeps its normal font policy because this env is dev-server-only.
-        VITE_DISABLE_REMOTE_FONTS: process.env.VITE_DISABLE_REMOTE_FONTS ?? '1',
         // One deterministic fake Runtime serves the timeline (workspace.v1), the
         // `/api/astrid` bridge routes and the narrow project-chat read. This env
         // points all three at it, behind its token, and overrides whatever
@@ -182,12 +175,30 @@ export default defineConfig({
       ? [{
           name: 'timeline-devices',
           testMatch: TIMELINE_DEVICE_SPECS,
-          // Caption export/matrix specs require a producing render worker plus
-          // managed media fixtures and therefore remain renderer-owned until
-          // their dedicated command provisions that topology.
+          // Cases tagged @chrome-h264 export or decode H.264 and run in the `timeline-chrome-export`
+          // project; this project must not collect them. The caption export spec requires a producing
+          // render worker plus managed media fixtures and remains renderer-owned.
           testIgnore: RENDERER_OWNED_TIMELINE_SPECS,
+          grepInvert: CHROME_H264_TAG,
           // Each spec sets its own viewport/touch profile via test.use().
           use: { ...devices['Desktop Chrome'] },
+        }]
+      : []),
+    ...(includeTimelineDevices
+      ? [{
+          name: 'timeline-chrome-export',
+          testMatch: /(?:audio-reactive-colour-export|preview-scrub-evidence)\.spec\.ts$/,
+          grep: CHROME_H264_TAG,
+          // Installed Google Chrome ships the H.264 codec that the bundled Chromium lacks.
+          // The project carries its own launchOptions on purpose: the top-level `launchOptions`
+          // adds `executablePath` when PLAYWRIGHT_CHROMIUM_EXECUTABLE is set, and Playwright
+          // lets executablePath win over `channel`, which would run bundled Chromium here.
+          // Without Chrome installed this lane fails at launch, never silently on Chromium.
+          use: {
+            ...devices['Desktop Chrome'],
+            channel: 'chrome',
+            launchOptions: { args: [...BROWSER_DNS_BLACKHOLE_ARGS] },
+          },
         }]
       : []),
   ],
