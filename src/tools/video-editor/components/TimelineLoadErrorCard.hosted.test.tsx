@@ -87,6 +87,19 @@ describe('TimelineLoadErrorCard on the hosted build', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1);
   });
 
+  it('does not retry by itself when the load failed while Astrid was answering, so the card never loops', async () => {
+    vi.useFakeTimers();
+    origin = 'http://127.0.0.1:17340';
+    const gateway = stubGateway();
+    gateway.instance = 'runtime-a';
+    const onRetry = vi.fn();
+    render(<TimelineLoadErrorCard message={ENGINEER_MESSAGE} onRetry={onRetry} />);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(15_000); });
+    expect(onRetry).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+
   it('asks nothing of the gateway same-origin', async () => {
     vi.useFakeTimers();
     origin = '';

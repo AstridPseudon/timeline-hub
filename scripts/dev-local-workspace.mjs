@@ -36,16 +36,20 @@ const dim = (text) => (process.stderr.isTTY ? `\x1b[2m${text}\x1b[22m` : text);
 
 const INSTALL_GUIDE_URL = 'https://github.com/banodoco/astrid-agent/blob/main/docs/setup/local-source-install.md';
 const NOT_SET_UP = `Astrid isn't set up on this computer yet. Install guide: ${INSTALL_GUIDE_URL}`;
-const ENGINE_STOPPED = "Astrid's engine isn't running. Start it first: astrid-runtime up --profile astrid";
 const PROGRAM_IN_THE_WAY = "Another program is in the way, so Astrid can't start. Close it and try again.";
 const OTHER_ASTRID_RUNNING = 'Another Astrid is already running in another window. Stop it there with Ctrl+C first.';
 const startCommand = process.env.ASTRID_START_COMMAND
   ? shellQuote(process.env.ASTRID_START_COMMAND)
   : 'npm run dev:local';
+// An install keeps its Runtime behind `<install>/with-env` (next to `<install>/start`), off the person's PATH.
+const runtimeUpCommand = process.env.ASTRID_START_COMMAND
+  ? `${shellQuote(resolve(dirname(process.env.ASTRID_START_COMMAND), 'with-env'))} astrid-runtime up --profile astrid`
+  : 'astrid-runtime up --profile astrid';
+const ENGINE_STOPPED = `Astrid's engine isn't running. Start it first: ${runtimeUpCommand}`;
 const ASTRID_STOPPED = `Astrid stopped. Start it again with ${startCommand}.`;
 const AGENT_CHAT_STOPPED = `Agent chat stopped. Start Astrid again with ${startCommand}.`;
 const BAD_HOSTED_ORIGIN = '--hosted-origin must be an https:// address, like https://astrid.haus';
-const ENGINE_CHANGED = 'Astrid changed on this computer. Restart its engine: astrid-runtime up --profile astrid';
+const ENGINE_CHANGED = `Astrid changed on this computer. Restart its engine: ${runtimeUpCommand}`;
 const CANT_START = "Astrid can't start with the setup on this computer.";
 
 /**
@@ -494,7 +498,7 @@ async function verifyRuntime(endpoint, token, expectedIdentity, allowStart = fal
     return true;
   } catch (error) {
     if (allowStart && error.cause?.code === 'ECONNREFUSED') return NOT_RUNNING;
-    return fail(ENGINE_STOPPED, `runtime is unavailable at ${endpoint.origin} (run astrid-runtime up --profile astrid): ${error instanceof Error ? error.message : String(error)}`);
+    return fail(ENGINE_STOPPED, `runtime is unavailable at ${endpoint.origin} (run ${runtimeUpCommand}): ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

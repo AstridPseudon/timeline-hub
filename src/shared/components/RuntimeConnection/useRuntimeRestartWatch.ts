@@ -117,9 +117,10 @@ export function useRuntimeRestartWatch(
 }
 
 /**
- * Runs `onAnswers` whenever Astrid starts answering the health route after not answering (or at the first reading, when
- * the caller is only mounted because something already failed), and never again while it keeps answering. A thing that
- * failed to load because Astrid was not there uses it to try again by itself, as the connection panel opens by itself.
+ * Runs `onAnswers` whenever Astrid starts answering the health route after this hook saw it not answering, and never
+ * again while it keeps answering. The first reading is only the baseline: a caller mounted because a load failed while
+ * Astrid was answering must not retry at once, or retry, fail and remount would loop. A thing that failed to load because
+ * Astrid was not there uses it to try again by itself, as the connection panel opens by itself.
  */
 export function useOnAstridAnswers(
   onAnswers: () => void,
@@ -132,7 +133,8 @@ export function useOnAstridAnswers(
   useEffect(() => {
     let disposed = false;
     let inFlight = false;
-    let answering = false;
+    /** Null until the first reading, which only sets the baseline. */
+    let answering: boolean | null = null;
     const check = async () => {
       if (inFlight) return;
       inFlight = true;
@@ -140,7 +142,7 @@ export function useOnAstridAnswers(
         const reading = await readHealth(fetchImpl);
         if (disposed) return;
         const nowAnswering = reading.kind === 'instance' || reading.kind === 'unknown';
-        const started = nowAnswering && !answering;
+        const started = nowAnswering && answering === false;
         answering = nowAnswering;
         if (started) latest.current();
       } finally {
