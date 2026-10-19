@@ -63,6 +63,21 @@ def test_app_parent_track_label_capture_golden_is_exact_and_portable():
     assert fixture['source'] == 'src/tools/video-editor/commands/fixtures/authoringBundle.json'
     assert fixture['app_case'] == 'parent-only'
     assert command == fixture['command']
+    # Full native record from ceb2ab67/77b1f0f7, including the parent pin wrapper.
+    assert plan.records == [{
+        'ordinal': 0,
+        'command': fixture['command'],
+        'writes': [{'ref': REF, 'path': ['label'],
+                    'before': fixture['before'], 'after': fixture['after']}],
+        'reads': fixture['command']['reads'],
+        'selections': [],
+        'bindings': [{'key': 'scalar.target', 'ref': REF, 'policy': 'fixed',
+                      'dependencies': ['scalar.images']}],
+        'created': [],
+        'dependencies': [{'key': 'scalar.images', 'kind': 'entity',
+                          'pin': {'parent': fixture['bundle']['base_parent']}, 'policy': 'exact'}],
+        'derived_writes': [],
+    }]
     assert execute(fixture['bundle'], [fixture['request']]).commands == [command]
     assert plan.bundle == fixture['after_bundle']
     assert State(fixture['bundle']).get(REF, ['label']) == ABSENT
@@ -111,7 +126,7 @@ def test_parent_label_preserves_unicode_opaque_siblings_and_exact_pins():
     assert changed['opaque'] == track['opaque']
     dependency = next(row for row in plan.records[0]['dependencies'] if row['key'] == 'scalar.images')
     assert dependency['policy'] == 'exact'
-    assert dependency['pin'] == original['base_parent']
+    assert dependency['pin'] == {'parent': original['base_parent']}
     assert plan.records[0]['command']['bindings'] == {'scalar.target': REF}
 
 

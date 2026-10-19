@@ -13,7 +13,7 @@ def _target(ctx, command):
         raise CommandError(f"{command['op']} requires a parent track identity")
     if ctx.read(ref, ['id']) is None:
         raise CommandError('track target disappeared', kind='identity_conflict', ref=ref)
-    ctx.dependency('scalar.images', 'entity', copy.deepcopy(ctx.state.bundle.get('base_parent', {})))
+    ctx.dependency('scalar.images', 'entity', {'parent': copy.deepcopy(ctx.state.bundle.get('base_parent', {}))})
     ctx.bind('scalar.target', ref, dependencies=['scalar.images'])
     return ref
 
