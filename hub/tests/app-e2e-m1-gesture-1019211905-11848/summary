@@ -1,0 +1,64 @@
+test app-e2e-m1-gesture-1019211905-11848: pass exit=0 in 93s — e2e-m1-gesture on integration:app (app tree 4d676bc1d5c15bba11432b97e9b66d8742ad554d)
+cmd: npm run test:e2e:three-products -- --grep 'M1 real'
+counts:   2 passed (1.5m) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-e2e-m1-gesture-1019211905-11848/log.txt ---
+dist/assets/processResultAttach-BUaTRkHe.js                        3.94 kB │ gzip:   1.53 kB │ map:     26.15 kB
+dist/assets/outputFormatRegistry-EXxJCJt6.js                       4.12 kB │ gzip:   1.18 kB │ map:     16.10 kB
+dist/assets/initializeVideoEditorExtensionRuntime-B090YTz0.js      4.46 kB │ gzip:   1.79 kB │ map:     17.99 kB
+dist/assets/astridAgentContext-DRLSXhi1.js                         4.93 kB │ gzip:   2.30 kB │ map:     10.39 kB
+dist/assets/LineageGifModal-BzKTb7Xs.js                            5.69 kB │ gzip:   2.39 kB │ map:     16.32 kB
+dist/assets/liveSceneAcpRoundtrip-CJtp29vq.js                      6.03 kB │ gzip:   2.61 kB │ map:     14.07 kB
+dist/assets/useVoiceRecording-LkOLHrKk.js                          6.07 kB │ gzip:   2.43 kB │ map:     21.98 kB
+dist/assets/PublicAstridScriptedConversation-CfD_UaM_.js           6.37 kB │ gzip:   2.74 kB │ map:     24.85 kB
+dist/assets/gifenc.esm-BWxMhepS.js                                 7.42 kB │ gzip:   3.27 kB │ map:     23.06 kB
+dist/assets/blogPosts-5ulvKLNR.js                                  8.15 kB │ gzip:   3.49 kB │ map:     11.18 kB
+dist/assets/index-D4uziLyM.js                                      8.18 kB │ gzip:   2.91 kB │ map:     26.19 kB
+dist/assets/StrokeOverlayCanvas-D05PuKOv.js                        9.97 kB │ gzip:   4.15 kB │ map:     38.94 kB
+dist/assets/public-example-zyrgpiu2.js                            10.21 kB │ gzip:   6.04 kB │ map:     19.56 kB
+dist/assets/vendor-date-DJ0ddwm3.js                               11.16 kB │ gzip:   3.77 kB │ map:     77.34 kB
+dist/assets/PropertiesPanelBody-5zFigmlV.js                       11.99 kB │ gzip:   4.19 kB │ map:     44.34 kB
+dist/assets/extensionReleaseControls-BKUV9keY.js                  12.08 kB │ gzip:   4.12 kB │ map:     46.51 kB
+dist/assets/SceneSurface-Dkt-Ead4.js                              18.77 kB │ gzip:   6.19 kB │ map:     47.89 kB
+dist/assets/renderRouter-Bdq_9hJp.js                              20.15 kB │ gzip:   6.37 kB │ map:     75.96 kB
+dist/assets/authoring-LU-4Rirn.js                                 21.56 kB │ gzip:   6.94 kB │ map:     66.38 kB
+dist/assets/index-D1ma2Mwd.js                                     24.49 kB │ gzip:   8.62 kB │ map:     82.52 kB
+dist/assets/exportGuard-Dq4pEgQR.js                               25.43 kB │ gzip:   6.17 kB │ map:     96.49 kB
+dist/assets/PromptEditorModal-Bid0c4o1.js                         32.96 kB │ gzip:  10.26 kB │ map:    117.16 kB
+dist/assets/PublicAstridMountedEditor-BweVXUPp.js                 40.18 kB │ gzip:  13.22 kB │ map:    169.64 kB
+dist/assets/index-2z0QaabT.js                                     40.37 kB │ gzip:  17.40 kB │ map:    143.33 kB
+dist/assets/renderPlanner-BqbYbOmp.js                             41.20 kB │ gzip:  10.65 kB │ map:    169.60 kB
+dist/assets/vendor-query-BsSL3njJ.js                              45.51 kB │ gzip:  13.58 kB │ map:    175.17 kB
+dist/assets/vendor-dnd-KnAZKuvI.js                                50.19 kB │ gzip:  16.65 kB │ map:    224.38 kB
+dist/assets/client-CcD0jZg8.js                                    55.15 kB │ gzip:  10.80 kB │ map:    183.66 kB
+dist/assets/TrainingDataHelperPage-ByzAiG2o.js                    57.61 kB │ gzip:  15.97 kB │ map:    202.65 kB
+dist/assets/HomePage-DvxPGNCY.js                                  89.18 kB │ gzip:  22.54 kB │ map:    272.68 kB
+dist/assets/jszip.min-DHtGTfmS.js                                 97.47 kB │ gzip:  30.33 kB │ map:    226.79 kB
+dist/assets/publicBootstrap-C6U6b8Ja.js                          100.93 kB │ gzip:  34.41 kB │ map:    360.96 kB
+dist/assets/EditImagesPage-DGATUARC.js                           104.30 kB │ gzip:  27.84 kB │ map:    411.67 kB
+dist/assets/bulk-utils-C7tZI4tq.js                               108.14 kB │ gzip:  24.66 kB │ map:    375.91 kB
+dist/assets/index-DIjFHfl2.js                                    110.94 kB │ gzip:  35.65 kB │ map:    418.37 kB
+dist/assets/ConversationMessage-DR6hnlCF.js                      169.76 kB │ gzip:  51.61 kB │ map:    992.89 kB
+dist/assets/vendor-supabase-30wnyOyk.js                          206.05 kB │ gzip:  53.27 kB │ map:  1,112.79 kB
+dist/assets/index-ChdEBfdf.js                                    206.46 kB │ gzip:  48.39 kB │ map:    860.36 kB
+dist/assets/index-nuc4PDBf.js                                    240.90 kB │ gzip:  65.88 kB │ map:    952.04 kB
+dist/assets/mediabunny-mp3-encoder-DKoXwz4a.js                   311.35 kB │ gzip: 131.68 kB │ map:    324.38 kB
+dist/assets/mediabunny-flac-encoder-CkLrDmzx.js                  322.83 kB │ gzip:  83.21 kB │ map:    663.98 kB
+dist/assets/metadata-EU4v8ByE.js                                 538.47 kB │ gzip: 152.26 kB │ map:  2,217.71 kB
+dist/assets/vendor-react-BKNS2-vf.js                             554.39 kB │ gzip: 179.73 kB │ map:  2,273.41 kB
+dist/assets/mediabunny-aac-encoder-C6VeI7-w.js                   991.79 kB │ gzip: 256.74 kB │ map:  1,922.25 kB
+dist/assets/mobileProjectDebug-BFdxLVvf.js                     1,983.97 kB │ gzip: 559.63 kB │ map:  7,829.19 kB
+dist/assets/RemotionPreview-BOGwwCYf.js                        3,283.36 kB │ gzip: 919.21 kB │ map: 13,592.19 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 51.15s
+
+Running 2 tests using 1 worker
+
+  ✓  1 tests/e2e/local/three-products.spec.ts:564:1 › M1 real gesture: lost durable ACK, dependent B, reopen, Runtime restart, exact retry and UI undo preserve independent Agent work (17.5s)
+[three-products] source tuple {"appHead":"4fad1d9a40cd1bc2b881d1e3d3c8d87d3d46fa13","astridHead":"a8eb28af525e13dc12391006b916b5cb1e60d9c4","astridFile":"/home/user/work/agent/astrid/__init__.py","runtimeHead":"82df3cf0f46228c57c0c3835b3d55acbe9e81aaa","vendorLocks":{"app":{"source_commit":"182a7dd8446456162a452a25c8493256c5da29fe","producer_version":"sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d"},"astrid":{"source_commit":"45d3b81c426e3c941c9abb9ab7fc140866b68534","producer_version":"sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d"}},"schemaDigest":{"app":"sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d","astrid":"sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d","runtime":"sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d"}}
+  ✓  2 tests/e2e/local/three-products.spec.ts:677:1 › M1 real dependency conflict retains B original guards and pending identity (11.9s)
+
+  2 passed (1.5m)
