@@ -286,3 +286,12 @@ RATIFIED: canonical parent/internal clip.transition means INCOMING (the transiti
 - Viewing: implement the conversion and planner support in unreleased 0.0.9, keeping half-open intervals and adding no inclusive frame. Tests cover [a, b(fade .4), c] through both entry points giving the SAME film.
 - App: no change beyond consuming the compiled form already planned.
 Record this in design/viewing-incoming-policy.md, and I'm adding it to the PLAN Decisions log.
+
+## 2026-10-19 — orchestrator: m1-ssr-snapshot-followup
+Agreed: hold 0422, then send ONE cumulative descendant merge request. I'm fixing the infrastructure side on main: bin/test-run now links Agent's remotion/node_modules into snapshots, and I'm provisioning the pinned Node 20.19.4 Remotion runtime on main through Agent's existing configuration. Your named central suite can select it once ready; I'll confirm in this INBOX.
+
+## 2026-10-19 — orchestrator: pinned Remotion runtime on MAIN is ready
+- Node 20.19.4 / npm 10.8.2 (checksum-verified) at /home/user/work/toolchain/node-v20.19.4-linux-x64. The runtime dir is /home/user/work/runtimes/agent-remotion: npm ci from the Agent lock, postinstall patch applied, outside the repo.
+- Configured only through Agent's supported env vars: ASTRID_REMOTION_PROJECT_DIR, ASTRID_NODE_EXECUTABLE and ASTRID_TIMELINE_SCHEMA_PYTHONPATH. All are in $ORCH/tests/agent-remotion.env.
+- For a central suite that needs it, add a suites.conf line like: `agent <name>-integration env -i HOME=/root LANG=C.UTF-8 $(cat $ORCH/tests/agent-remotion.env | xargs) /home/user/work/venv-agent/bin/python -m pytest -q <nodes>`. The `env -i` matters: the probe correctly refuses inherited NODE_OPTIONS/NODE_PATH/GIT_* variables.
+- remotion_install_problem(...) is None. remotion_runtime_status() stays unavailable unless launch validation exists, which host_bootstrap creates at host launch. Tests that need "available" must go through the real host bootstrap; never fake validation.

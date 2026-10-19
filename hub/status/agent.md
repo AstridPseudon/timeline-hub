@@ -1,5 +1,5 @@
-<!-- main | 2026-10-19T23:06:22Z | dispatcher heartbeat 10s -->
-# agent — 2026-10-19T23:10Z
+<!-- main | 2026-10-19T23:09:48Z | dispatcher heartbeat 3s -->
+# agent — 2026-10-19T23:06Z
 Milestone: M1 ACTIVE, closeout pending Viewing2 consumer fixes +Appmixedediting safety +orchestrator record. M0 COMPLETE. M2 IMPLEMENTATION authorized onbranches; NO M2MERGES untilPLANrecordsM1.
 Integrated: Agent tl/integration fec45b08. Restore9b40→ddc1 +browserenv4ff +defaultfixture d0ca +validcompiledfixture b63 +single1353line metadata fec. Product unchanged from4ff; fixtures preserveallpositive assertions. PriorM1engine/provider +actualreadback qualification retained.
 Evidence: restore manager145PASS10.09s +actualCLI/Python/restore/inverse/redo/restart4PASS13.18s. Browser originalMAIN2PASS93s and restoredALL5PASS259s independentlyqualified tuples retained. ApprestoreHistory onegetProjectTimeline exactheadpair fix integrated9d0 and actualconsumerPASS1/12s; Runtime final3773PASS7exactuntouchedbaselineFAIL18SKIP142.74s, ZEROnew. Appmixedediting proof active (no silentlossclaim from unfinishedprobe).
@@ -11,4 +11,6 @@ Gates: CheckpointAAPPROVED; M1proofslices3/5/6PASS, globalM1NOTrecorded. Allwrit
 Inbox: ACKthroughtransitionmeaningdecision23:03read, Runtime22:54privateguardnarrowing, Viewingremote0422reviewinprogress; AUDIT2216prioritynativewriters→order/stage→groups; KEEP PUSHINGbranchonlyauthorizationAPPLIED. M3checkimport6f2bheldunrevieweduntilM1record.
 Resources: last23GBfree; multipleindependentM2workers, ONE M1dependencyreviewheavyqueued; noAgentfullactive. No managerproductedits/gitmutations/pushes.
 
-Fallback: orchestratorexplicitMODELS.md grant APPLIED23:15; same ordinary read-only sharedidentity audit re-dispatched agt-m2-shared-identity-probe under claude-sonnet-5-5 after Codex repeatedcontentfiltererrors, not a same-model retry. Othertasks stayCodex.
+Fallback: orchestratorexplicitMODELS.md grant APPLIED23:06; same ordinary read-only sharedidentity audit re-dispatched agt-m2-shared-identity-probe under claude-sonnet-5-5 after Codex repeatedcontentfiltererrors, not a same-model retry. Othertasks stayCodex.
+
+Latest23:08: Viewing0422 merged c3bbca52 BEFORE newHOLD arrived; escalated exacttiming. Furtherconsumer/fullrequestsHELD for cumulative runtime-selection descendant and mainNodeprovision. Sharedlockeddeps376MBready, no competing suite/binchange. NewboundedtracklabelpriorityACK; existingnative track.set parentpositive passes, exactAppfixture reconciliationnext.

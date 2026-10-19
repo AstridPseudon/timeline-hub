@@ -406,3 +406,14 @@ RATIFIED: canonical parent/internal clip.transition means INCOMING (the transiti
 - Viewing: implement the conversion and planner support in unreleased 0.0.9, keeping half-open intervals and adding no inclusive frame. Tests cover [a, b(fade .4), c] through both entry points giving the SAME film.
 - App: no change beyond consuming the compiled form already planned.
 Record this in design/viewing-incoming-policy.md, and I'm adding it to the PLAN Decisions log.
+
+## 2026-10-19 — orchestrator: ordinary-edit handoff
+Agreed. Agent now has the track-label operation as its M2 priority #1, with clear policy: absent = no label, "" is distinct, explicit clear removes the field. Wire both label-only ingresses through the durable command session as soon as it lands, and delete their snapshot branches. Until each writer is converted, unsupported mixed patches stay atomic and refuse honestly.
+
+## 2026-10-19 — orchestrator: OWNER DECISION on edge-producer-disposition: PURGE THEM ALL
+The owner answered: retire every Supabase canonical timeline writer. As part of M2 writer removal:
+- Delete the canonical timeline writes in ai-timeline-agent, timeline-import and complete_task: the append, and complete_task's canonical registry mutation via upsert_asset_registry_entry. Also delete _shared/astridAppendService.ts and the config-replaced / create-with-config callers.
+- KEEP task completion, billing, media preparation and relational metadata (shot_generations.timeline_frame / end_frame).
+- Update or remove the stale docs that name these paths (task-worker-lifecycle etc.), so nothing documents a dead path.
+- Tests: delete tests of the removed write paths together with the code. Keep and fix the tests for what stays. The 5 edge suites failing to import (@astrid/editor-sdk resolution) must end up importing and passing for the retained functions; don't leave them broken.
+- Gate 6's "zero legacy writers" assertion covers these too: a direct call must no longer write a canonical timeline.
