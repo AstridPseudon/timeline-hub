@@ -1858,7 +1858,7 @@ class RealmStore:
             # addressed media_id is redundant; real locators remain refused.
             asset = dict(asset)
             media_match = OBJECT_ID_RE.fullmatch(asset["media_id"]) if isinstance(asset.get("media_id"), str) else None
-            for field in ("url", "uri", "path", "source_path", "locator", "realm", "file"):
+            for field in ("url", "uri", "sourceUrl", "remoteUrl", "path", "source_path", "locator", "realm", "file"):
                 if field not in asset:
                     continue
                 locator = asset[field]
@@ -1869,7 +1869,13 @@ class RealmStore:
                         or normalized != "sha256:" + media_match.group(1)):
                     raise ValidationError(f"canonical timeline asset {asset_name!r} contains an unmanaged locator")
                 del asset[field]
-            asset["content_sha256"] = normalized.removeprefix("sha256:")
+            # Worker inputs are managed render bindings, not editor/gallery
+            # records. Keep media characteristics used by the composition;
+            # presentation URLs and generation/provenance metadata stay only
+            # in the immutable authored revision. Check real locators above
+            # before projecting so they can never disappear into this step.
+            asset = {key: asset[key] for key in ("type", "duration", "resolution", "fps") if key in asset}
+            asset.update(media_id=media_id, content_sha256=normalized.removeprefix("sha256:"))
             expanded_assets[asset_name] = asset
             if normalized not in ordered_input_ids:
                 ordered_input_ids.append(normalized)

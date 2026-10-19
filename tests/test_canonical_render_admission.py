@@ -145,12 +145,37 @@ def test_frozen_managed_asset_canonicalizes_the_runtime_object_locator(canonical
     spec = admitted["task"]["spec"]
     assert f["audio"]["object_id"] in spec["input_object_ids"]
     assert _snapshot(f["service"], spec)["registry"]["assets"][asset_id] == {
-        "media_id": object_id, "content_sha256": object_id.removeprefix("sha256:"), "type": "audio/wav",
-        "thumbnailUrl": asset["thumbnailUrl"], "generationId": asset["generationId"]}
+        "media_id": object_id, "content_sha256": object_id.removeprefix("sha256:"), "type": "audio/wav"}
     assert f["service"].get_project_parent_composition_revision(f["project"], "main", "parent-1") == authored
     assert authored["payload"]["registry"]["assets"][asset_id] == asset
     assert spec["spec"]["inputs"]["timeline_authority"]["managed_media_admissions"] == {
         f["audio"]["object_id"]: f["audio"]["object_id"]}
+
+
+def test_frozen_asset_retains_render_characteristics_without_editor_metadata(canonical_scene):
+    f = canonical_scene
+    publication = _publication(f)
+    asset = {
+        "media_id": f["audio"]["object_id"], "type": "audio/wav",
+        "content_sha256": f["audio"]["object_id"],
+        "duration": 3, "fps": 30, "resolution": "1920x1080",
+        "thumbnailUrl": "/api/runtime/v1/objects/sha256%3A" + "1" * 64,
+        "generationId": "film-generation", "variantId": "film-variant",
+        "filename": "source.wav", "handle": "run:film/audio#0",
+        # This is retired editor provenance, never the managed byte source.
+        "source": "/retired/authoring/source.wav", "pixel_provenance": {"drawn_block": 13},
+    }
+    publication["parent_composition"]["registry"]["assets"]["music"] = asset
+    f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    authored = f["service"].get_project_parent_composition_revision(f["project"], "main", "parent-1")
+    spec = f["service"].create_task(_request(f))["task"]["spec"]
+    assert _snapshot(f["service"], spec)["registry"]["assets"]["music"] == {
+        "media_id": f["audio"]["object_id"],
+        "content_sha256": f["audio"]["object_id"].removeprefix("sha256:"),
+        "type": "audio/wav", "duration": 3, "fps": 30, "resolution": "1920x1080",
+    }
+    assert authored["payload"]["registry"]["assets"]["music"] == asset
+    assert f["service"].get_project_parent_composition_revision(f["project"], "main", "parent-1") == authored
 
 
 def test_opaque_media_identity_without_a_digest_still_fails_admission(canonical_scene):
@@ -177,7 +202,7 @@ def test_managed_asset_real_or_mismatched_locators_are_refused(canonical_scene, 
     _assert_rejected(f, _request(f), ValidationError, "unmanaged locator")
 
 
-@pytest.mark.parametrize("field", ["url", "uri", "path", "source_path", "locator", "realm"])
+@pytest.mark.parametrize("field", ["url", "uri", "sourceUrl", "remoteUrl", "path", "source_path", "locator", "realm"])
 def test_matching_runtime_file_url_never_exempts_an_additional_locator(canonical_scene, field):
     f = canonical_scene
     publication = _publication(f)
