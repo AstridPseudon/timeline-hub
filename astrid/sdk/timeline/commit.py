@@ -362,7 +362,7 @@ class RuntimeCommitService:
 
         from astrid.sdk.timeline._collections import AcceptedRecords
         from astrid.sdk.timeline.commands import CommandError, execute
-        from astrid.sdk.timeline.inverse import coalesce
+        from astrid.sdk.timeline.inverse import check_intervening
         from astrid.sdk.timeline.rebase import replay
 
         context = copy.deepcopy(context)
@@ -432,9 +432,15 @@ class RuntimeCommitService:
 
                 inverse_records = AcceptedRecords(accepted, _records(
                     accepted, CommitRejected, base, current), load_boundary)
-                inverse_intervening = _records([entry for entry in ordered
-                                                if entry["publication_id"] not in undo_of],
-                                               CommitRejected, base, current)
+                # A gap before a later target is that target's input, not an
+                # intervening write after it. Check every target's own suffix
+                # before any reversal can mask a non-target overlapping edge.
+                for index, entry in enumerate(ordered):
+                    if entry['publication_id'] in undo_of:
+                        check_intervening(_records([entry], CommitRejected, base, current),
+                                          _records([later for later in ordered[index + 1:]
+                                                    if later['publication_id'] not in undo_of],
+                                                   CommitRejected, base, current))
             closures, restored_from = {}, None
             if restore:
                 from astrid.sdk.timeline.commands import validate_command
@@ -448,7 +454,7 @@ class RuntimeCommitService:
             else:
                 # Only authenticated accepted writes can authorize an inverse
                 # closure replacement. Never accept a caller-supplied image.
-                for write in coalesce(inverse_records):
+                for write in (write for record in inverse_records for write in record['writes']):
                     if write['ref'] == 'timeline' and not write['path']:
                         pin = write['before']['value']
                         source = _load(port, context, pin['revision_id'])

@@ -24,6 +24,10 @@ from astrid.sdk.timeline._command_state import (
 from astrid.sdk.timeline.capture import capture_move, capture_track_create
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.staging_recipes import (
+    install_staging_operations,
+    staged_move,
+)
 from tests.timeline.test_authoring_bundle import _closure, _digest
 
 FIXTURES = Path(__file__).parent / 'fixtures'
@@ -796,3 +800,112 @@ def test_inverse_collection_capture_uses_existing_schema():
     command = inverse(removed, records).commands[0]
     schema = json.loads((Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json').read_text())
     Draft202012Validator(schema).validate(command)
+
+
+@pytest.fixture
+def native_staging_operations(monkeypatch):
+    """Small registered recipes exercise staging without installing M2 move-set."""
+    install_staging_operations(monkeypatch)
+
+
+@pytest.mark.parametrize('owner', ['parent', 'occurrence:occ-1'])
+@pytest.mark.parametrize('second', [False, True])
+def test_create_and_own_consumers_inverse_is_staged_and_claims_replay(native_staging_operations, owner, second):
+    original = bundle()
+    ref = owner + '/clip:' + ('direct' if owner == 'parent' else 'picture-1')
+    calls = [capture_track_create(original, owner, {'id': 'c', 'kind': 'visual'}), staged_move(ref, 'c')]
+    if second:
+        calls += [{'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': owner,
+                   'args': {'row': {'id': 'd', 'kind': 'visual'}}}, staged_move(ref, 'd', 5)]
+    plan = execute(original, calls)
+    immutable = copy.deepcopy(plan.records)
+    undone = inverse(plan.bundle, plan.records)
+    assert json.dumps(undone.bundle) == json.dumps(original)
+    assert plan.records == immutable
+    for read in undone.commands[0]['reads']:
+        assert State(plan.bundle).matches(read['ref'], read['path'], read['state'])
+    assert replay(undone, plan.bundle, inverse_records=plan.records).records == undone.records
+    redone = inverse(undone.bundle, undone.records)
+    assert json.dumps(redone.bundle) == json.dumps(plan.bundle)
+    assert [item['ref'] for item in redone.records[0]['created']] == [
+        owner + '/track:c', *([owner + '/track:d'] if second else [])]
+
+
+def test_ordinary_clip_create_with_own_move_uses_same_reverse_stages(native_staging_operations):
+    original = bundle()
+    plan = execute(original, [
+        capture_track_create(original, 'parent', {'id': 'c', 'kind': 'visual'}),
+        {'schema_version': 1, 'op': 'fixture.clip-create', 'version': '1', 'select': 'parent',
+         'args': {'row': {'id': 'owned', 'track': 'c', 'at': 1, 'hold': 1, 'unknown': [None, 0]}}},
+        staged_move('parent/clip:owned', 'c')])
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == original
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+
+
+@pytest.mark.parametrize('dependent', ['clip', 'occurrence', 'audio', 'effects', 'binding',
+                                       'external', 'unsupported'])
+def test_staged_removal_refuses_surviving_reference_without_partial_changes(native_staging_operations, dependent):
+    original = bundle()
+    plan = execute(original, [capture_track_create(original, 'parent', {'id': 'c', 'kind': 'visual'}),
+                              staged_move('parent/clip:direct', 'c')])
+    head = copy.deepcopy(plan.bundle)
+    if dependent == 'clip':
+        head['parent']['clips'].append({'id': 'newer', 'track': 'c', 'at': 8, 'hold': 1})
+        head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
+    elif dependent == 'occurrence':
+        head['placements'][0]['placement']['track'] = 'c'
+    elif dependent in ('audio', 'effects'):
+        head['parent']['config'][dependent] = [{'track': 'c'}]
+    elif dependent == 'binding':
+        next(iter(head['shots'].values()))['payload']['audio_bindings'].append({'track_ref': 'parent/track:c'})
+    else:
+        clip(head, 'occurrence:occ-2/clip:picture-1')['owner_ref'] = (
+            'parent/track:c' if dependent == 'external' else {'resolver': 'unsupported', 'id': 'c'})
+    before = copy.deepcopy(head)
+    with pytest.raises(CommandError) as error:
+        inverse(head, plan.records)
+    assert error.value.kind == 'surviving_dependents'
+    assert head == before
+
+
+def test_staged_inverse_keeps_opaque_strings_and_refuses_all_unchanged_overlap(native_staging_operations):
+    original = bundle()
+    plan = execute(original, [capture_track_create(original, 'parent', {'id': 'c', 'kind': 'visual'}),
+                              staged_move('parent/clip:direct', 'c')])
+    head = copy.deepcopy(plan.bundle)
+    clip(head)['opaque'] = {'note': 'parent/track:c'}
+    head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
+    undone = inverse(head, plan.records, [later('parent/clip:direct', ['opaque'], clip(head)['opaque'])])
+    assert clip(undone.bundle)['opaque'] == {'note': 'parent/track:c'}
+    for path, value in [(['track'], 'c'), (['at'], 4)]:
+        with pytest.raises(CommandError) as error:
+            inverse(head, plan.records, [later('parent/clip:direct', path, value)])
+        assert error.value.kind == 'intervening_write'
+
+
+def test_same_target_null_absent_clears_and_unchanged_writes_retain_each_stage(native_staging_operations):
+    original = bundle()
+    clip(original)['nullable'] = None
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+    def call(state):
+        return {'schema_version': 1, 'op': 'fixture.properties', 'version': '1',
+                'select': 'parent/clip:direct', 'args': {'changes': [
+                    {'path': ['nullable'], 'state': state}, {'path': ['missing'], 'state': ABSENT}]}}
+    plan = execute(original, [call(ABSENT), call(present(None)), call(present(None)), call(ABSENT)])
+    assert len(plan.records) == 4 and all(len(record['writes']) == 2 for record in plan.records)
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == original
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+
+
+def test_overlapping_read_is_verified_at_input_and_bad_late_stage_is_atomic(native_staging_operations):
+    original = bundle()
+    plan = execute(original, [capture_track_create(original, 'parent', {'id': 'c', 'kind': 'visual'}),
+                              staged_move('parent/clip:direct', 'c')])
+    broken = copy.deepcopy(plan.records)
+    next(read for read in broken[-1]['reads'] if read['path'] == ['track'])['state'] = present('wrong-stage')
+    head = copy.deepcopy(plan.bundle)
+    with pytest.raises(CommandError):
+        inverse(head, broken)
+    assert head == plan.bundle

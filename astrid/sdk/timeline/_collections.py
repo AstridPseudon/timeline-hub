@@ -142,12 +142,14 @@ class AcceptedRecords(list):
         raise CommandError('inverse collection boundary is unavailable', kind='history_unavailable')
 
 
-def restoration_orders(records):
+def restoration_orders(records, *, only=None):
     """Project only structural membership; inverse insert positions need a boundary."""
     touched = {member(w['ref'])[:2] for record in records for w in record['writes']
                if not w['path'] and member(w['ref']) is not None}
     result = {}
     for record in records:
+        if only is not None and record is not only:
+            continue
         for owner, kind in sorted(touched):
             writes = [w for w in record['writes'] if not w['path'] and
                       member(w['ref']) is not None and member(w['ref'])[:2] == (owner, kind)]
@@ -194,7 +196,13 @@ def restoration_orders(records):
             if legacy_inverse and any(s['members'] != s['order'] or s['boundaries'] != s['order']
                                       or s['order'] not in stages for s in selected):
                 raise CommandError('unrecoverable legacy selection stage', kind='history_unavailable')
-            if inserts and record['command']['op'] != 'track.create':
+            # Ordinary recorded creates append through Recording.create. Inverse
+            # insertion is different: its exact position needs accepted order.
+            creates = {item['ref'] for item in record['created']}
+            ordinary_append = (record['command']['op'] != 'timeline.inverse'
+                               and all(w['ref'] in creates for w in writes
+                                       if w['before'] == ABSENT and w['after'] != ABSENT))
+            if inserts and not ordinary_append:
                 if not isinstance(records, AcceptedRecords):
                     raise CommandError('inverse insertion order needs an accepted boundary', kind='history_unavailable')
                 boundary = boundary or records.boundary(record)

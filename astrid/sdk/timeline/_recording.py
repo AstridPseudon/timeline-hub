@@ -37,6 +37,7 @@ def selection(state, key, owner, members=()):
 class Recording:
     def __init__(self, bundle, command, ordinal, *, closures=None):
         self.state = State(bundle, closures=closures)
+        self.input_state = None
         parent = bundle['parent']
         config = parent.get('config')
         self.mirrored_clips = (isinstance(parent.get('clips'), list)
@@ -46,15 +47,20 @@ class Recording:
                        "reads": [], "selections": [], "bindings": [], "created": [],
                        "dependencies": [], "derived_writes": []}
 
+    def capture_input(self):
+        """Keep inverse claims on its immutable head, separate from reverse stages."""
+        self.input_state = State(copy.deepcopy(self.state.bundle), closures=self.state.closures)
+
     def read(self, ref, path=()):
         value = self.state.get(ref, path)
-        read = {"ref": ref, "path": list(path), "state": value}
+        captured = self.input_state.get(ref, path) if self.input_state is not None else value
+        read = {"ref": ref, "path": list(path), "state": captured}
         if not any(equal(read, prior) for prior in self.record['reads']):
             self.record['reads'].append(read)
         return copy.deepcopy(value.get('value'))
 
     def select(self, key, owner, members=()):
-        value = selection(self.state, key, owner, members)
+        value = selection(self.input_state or self.state, key, owner, members)
         if value not in self.record['selections']:
             if key.startswith('collection.'):
                 self.read(owner + '/collection:' + KINDS[key])
@@ -149,7 +155,9 @@ class Recording:
                 if write['ref'] == 'timeline':
                     continue
                 key = write['ref'] + '::' + spelling(write['path'])
-                command['expect'].setdefault(key, copy.deepcopy(write['before']))
+                before = (self.input_state.get(write['ref'], write['path'])
+                          if self.input_state is not None else write['before'])
+                command['expect'].setdefault(key, copy.deepcopy(before))
                 command['authorship'][key] = 'direct'
         return self.record
 

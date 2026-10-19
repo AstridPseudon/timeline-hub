@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import copy
 
-from ._collections import KINDS, arrange, restoration_orders, selection_overlap
-from ._command_state import ABSENT, CommandError, logical_address, overlaps, present
-from ._recording import guard, selection
+from ._collections import AcceptedRecords, arrange, member, restoration_orders, selection_overlap
+from ._command_state import ABSENT, CommandError, State, equal, logical_address, overlaps, present
+from ._recording import Recording, guard, selection
 
 
 def _patch(state, path, replacement):
@@ -98,6 +98,12 @@ def check_intervening(records, intervening_records, *, include_reads=True):
                     guarded.append((read['ref'].removesuffix('/shot'), ('shot_id',)))
                     if read['path'] == ['shot_id'] and isinstance(read['state'].get('value'), str):
                         guarded.append(('shot:' + read['state']['value'], ()))
+            for binding in record.get('bindings', []):
+                ref = binding['ref']
+                if member(ref) is not None:
+                    guarded.append((ref, ('id',)))
+                elif ref.startswith('occurrence:') and '/' not in ref:
+                    guarded.append((ref, ('occurrence_id',)))
     for record in intervening_records:
         if not isinstance(record, dict) or 'writes' not in record:
             raise CommandError("complete intervening write history is required", kind='history_unavailable')
@@ -119,30 +125,86 @@ def check_intervening(records, intervening_records, *, include_reads=True):
 
 def _dependents(state, ref):
     owner, identity = ref.rsplit('/track:', 1)
+
+    def references(row, other):
+        if not isinstance(row, dict):
+            raise CommandError('unsupported declared reference row', kind='surviving_dependents', ref=ref)
+        for key in ('track_ref', 'owner_ref', 'track', 'track_id'):
+            value = row.get(key)
+            if value is not None and not isinstance(value, str):
+                raise CommandError('unsupported declared reference edge', kind='surviving_dependents', ref=ref)
+            if key in ('track_ref', 'owner_ref') and value == ref:
+                return True
+        return other == owner and (row.get('track') == identity or row.get('track_id') == identity)
+
     found = []
     owners = ['parent'] + ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']]
     for other in owners:
         for clip in state.collection(other, 'clip'):
-            if (other == owner and clip.get('track') == identity) or ref in (
-                    clip.get('track_ref'), clip.get('owner_ref')):
+            if references(clip, other):
                 found.append(other + '/clip:' + clip['id'])
         config = state.config(other)
         for key in ('audio', 'effects'):
             for row in config.get(key, []):
-                if isinstance(row, dict) and ((other == owner and row.get('track_id') == identity)
-                                             or row.get('track_ref') == ref):
+                if references(row, other):
                     found.append(other + '/' + key)
         if other != 'parent':
             shot = state.bundle['shots'][state.occurrence(other)['shot_id']]['payload']
             for row in shot.get('audio_bindings', []):
-                if ((other == owner and row.get('track_id') == identity)
-                        or row.get('track_ref') == ref):
+                if references(row, other):
                     found.append(other + '/shot')
-    if owner == 'parent':
-        for row in state.bundle['placements']:
-            if row.get('placement', {}).get('track', row.get('track')) == identity:
-                found.append('occurrence:' + row['occurrence_id'])
+    for row in state.bundle['placements']:
+        if references(row, 'parent') or references(row.get('placement') or {}, 'parent'):
+            found.append('occurrence:' + row['occurrence_id'])
+    for shot in state.bundle['shots'].values():
+        for row in shot['payload'].get('audio_bindings', []):
+            if references(row, None):
+                found.append('shot:' + shot['shot_id'])
     return found
+
+
+def _legacy_inverse_sites(records, record):
+    """Recover only known v1 inverse read/create sites from its verified input."""
+    if record['command']['op'] != 'timeline.inverse' or not isinstance(records, AcceptedRecords):
+        raise CommandError('original read stage is unavailable', kind='history_unavailable')
+    state, _ = records.boundary(record)
+    reads, selections = [], []
+    for write in record['writes']:
+        guard(state, write['ref'], write['path'], write['before'], kind='history_unavailable')
+        # The old inverse read immediately before each authored reversal.
+        reads.append({'ref': write['ref'], 'path': write['path'], 'state': write['before']})
+        entity = member(write['ref'])
+        if entity is not None and not write['path'] and write['before'] == ABSENT:
+            owner, kind, _ = entity
+            if kind == 'track':
+                selections.append(selection(state, 'track.create', owner))
+        state.set(write['ref'], write['path'], write['after'])
+    return reads, selections
+
+
+def _validate_inputs(state, record, records):
+    legacy = None
+    for read in record['reads']:
+        if state.matches(read['ref'], read['path'], read['state']):
+            continue
+        if legacy is None:
+            legacy = _legacy_inverse_sites(records, record)
+        if read not in legacy[0]:
+            raise CommandError('original inverse read changed', kind='inverse_dependency_changed',
+                               ref=read['ref'], path=read['path'])
+    for selected in record['selections']:
+        actual = selection(state, selected['key'], selected['owner'], selected['members'])
+        if equal(actual, selected):
+            continue
+        if legacy is None:
+            legacy = _legacy_inverse_sites(records, record)
+        if selected not in legacy[1]:
+            raise CommandError('inverse selection changed', kind='selection_changed', ref=selected['owner'])
+    created = {item['ref'] for item in record['created']}
+    for binding in record.get('bindings', []):
+        ref = binding['ref']
+        if ref not in created and state.entity(ref, optional=True) is None:
+            raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
 
 
 def apply_inverse(ctx, records, intervening_records):
@@ -160,25 +222,32 @@ def apply_inverse(ctx, records, intervening_records):
                                kind='selection_changed', ref=owner)
     for write in changes:
         guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
-    # Selection and identity guards remain relevant; value reads changed by the
-    # target itself are verified by the coalesced final authored-state guard.
+    scratch = State(copy.deepcopy(ctx.state.bundle), closures=ctx.state.closures)
+    for record in reversed(records):
+        staged = Recording(scratch.bundle, record['command'], record['ordinal'], closures=scratch.closures)
+        scratch = staged.state
+        staged_orders = restoration_orders(records, only=record)
+        for write in reversed(record['writes']):
+            guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+            if not write['path'] and write['before'] == ABSENT:
+                entity = member(write['ref'])
+                if entity is not None and entity[1] == 'track' and _dependents(scratch, write['ref']):
+                    raise CommandError('created track has surviving dependents', kind='surviving_dependents',
+                                       ref=write['ref'])
+            scratch.set(write['ref'], write['path'], write['before'])
+        for (owner, kind), (original, _) in staged_orders.items():
+            arrange(scratch, owner, kind, original)
+        staged.compile_mirrors()
+        _validate_inputs(scratch, record, records)
+
+    # Historical checks above are internal. Public claims describe H even when
+    # the same address is read after another reversal during installation.
+    ctx.capture_input()
     for record in records:
         for read in record['reads']:
-            addr = read['ref'], tuple(read['path'])
-            if not any(overlaps(addr, (w['ref'], tuple(w['path']))) for w in changes):
-                guard(ctx.state, read['ref'], read['path'], read['state'], kind='inverse_dependency_changed')
-                ctx.read(read['ref'], read['path'])
+            ctx.read(read['ref'], read['path'])
         for selected in record['selections']:
-            if (selected['owner'], KINDS.get(selected['key'])) in orders:
-                continue
-            actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
-            if actual != selected:
-                raise CommandError("inverse selection changed", kind='selection_changed', ref=selected['owner'])
             ctx.select(selected['key'], selected['owner'], selected['members'])
-        for created in record['created']:
-            if created['kind'] == 'track' and _dependents(ctx.state, created['ref']):
-                raise CommandError("created track has surviving dependents", kind='surviving_dependents',
-                                   ref=created['ref'])
     for write in reversed(changes):
         ctx.read(write['ref'], write['path'])
         if not write['path'] and write['after'] == ABSENT:

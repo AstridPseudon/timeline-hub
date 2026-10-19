@@ -12,6 +12,10 @@ from astrid.sdk.timeline.commit import (
     bundle_from_document,
     create_runtime_commit_service,
 )
+from tests.editing_conformance.staging_recipes import (
+    install_staging_operations,
+    staged_move,
+)
 from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
 
 
@@ -39,6 +43,11 @@ def runtime_abi(monkeypatch):
     abi.CommitRejected, abi.StaleHead = CommitRejected, StaleHead
     for module in (runtime, metadata, abi):
         monkeypatch.setitem(sys.modules, module.__name__, module)
+
+
+@pytest.fixture
+def native_staging_operations(monkeypatch):
+    install_staging_operations(monkeypatch)
 
 
 def detached(value):
@@ -1142,3 +1151,86 @@ def test_structural_inverse_preserves_published_property_change_on_untouched_row
     assert [row['id'] for row in rows] == ['clip-a', 'clip-b']
     assert rows[1]['opaque'] == {'newer': [None, False, 0]}
     assert rows[0] == document_fixture()['parent_revision']['payload']['clips'][0]
+
+
+def test_composed_create_move_accepts_one_inverse_and_replays_original_claims(native_staging_operations):
+    realm = DetachedRealm()
+    initial = detached(realm.documents['parent-1'])
+    result = realm.call([track_create('c'), staged_move('parent/clip:clip-a', 'c'),
+                         track_create('d'), staged_move('parent/clip:clip-a', 'd', 5)])
+    accepted = detached(realm.entries[-1])
+    command = inverse([result['receipt']['receipt_id']])
+    preview = realm.call([command], dry_run=True)
+    undo = realm.call(preview['data']['commands'])
+    restored = undo['data']['canonical_document']
+    assert restored['parent_revision']['payload'] == initial['parent_revision']['payload']
+    for path in [('clips',), ('config', 'tracks')]:
+        before, after = initial['parent_revision']['payload'], restored['parent_revision']['payload']
+        for token in path:
+            before, after = before[token], after[token]
+        assert json.dumps(after) == json.dumps(before)
+    assert restored['shot_revisions'] == initial['shot_revisions']
+    assert restored['internal_timeline_revisions'] == initial['internal_timeline_revisions']
+    assert realm.entries[-2] == accepted
+    assert realm.entries[-1]['records']['undo_of'] == [result['receipt']['receipt_id']]
+    redo = realm.call([inverse([undo['receipt']['receipt_id']])])
+    assert redo['data']['canonical_document'] == result['data']['canonical_document']
+    assert len(realm.accepted) == 3
+    with pytest.raises(CommitRejected) as error:
+        realm.call([track_create('c')])
+    assert error.value.failure['details']['reason'] == 'identity_collision'
+
+
+def test_noncontiguous_inverse_treats_earlier_gap_as_later_target_input(native_staging_operations):
+    realm = DetachedRealm()
+    realm.page_size = 1
+    initial = detached(realm.documents['parent-1']['parent_revision']['payload'])
+    first = realm.call([track_create('c')])
+    gap = realm.call([realm.move('parent/clip:clip-b', on=7)])
+    second = realm.call([staged_move('parent/clip:clip-b', 'c', 8)])
+    undone = realm.call([inverse([first['receipt']['receipt_id'], second['receipt']['receipt_id']])])
+    expected = detached(gap['data']['canonical_document']['parent_revision']['payload'])
+    expected['config']['tracks'] = initial['config']['tracks']
+    assert undone['data']['canonical_document']['parent_revision']['payload'] == expected
+
+
+@pytest.mark.parametrize('aba', [False, True])
+def test_noncontiguous_overlap_cannot_be_masked_by_reversing_later_target(native_staging_operations, aba):
+    realm = DetachedRealm()
+    first = realm.call([staged_move('parent/clip:clip-a', 'picture')])
+    realm.call([staged_move('parent/clip:clip-a', 'picture', 5 if aba else 4)])
+    if aba:
+        realm.call([staged_move('parent/clip:clip-a', 'picture')])
+    second = realm.call([staged_move('parent/clip:clip-a', 'picture', 6)])
+    head, count = detached(realm.head), len(realm.accepted)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([first['receipt']['receipt_id'], second['receipt']['receipt_id']])])
+    assert error.value.failure['details']['reason'] == 'intervening_write'
+    assert realm.head == head and len(realm.accepted) == count
+
+
+def test_composed_inverse_later_reference_refuses_at_provider_boundary(native_staging_operations):
+    realm = DetachedRealm()
+    first = realm.call([track_create('c'), staged_move('parent/clip:clip-a', 'c')])
+    realm.call([staged_move('parent/clip:clip-b', 'c', 8)])
+    head, count = detached(realm.head), len(realm.accepted)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([first['receipt']['receipt_id']])])
+    assert error.value.failure['details']['reason'] == 'surviving_dependents'
+    assert realm.head == head and len(realm.accepted) == count
+
+
+def test_multiple_targeted_restores_load_each_authenticated_reverse_stage():
+    realm = DetachedRealm()
+    original = detached(realm.documents['parent-1'])
+    changed = realm.call([realm.move()])['data']['canonical_document']
+    first = realm.call([restore(original)])
+    second = realm.call([restore(changed)])
+    undone = realm.call([inverse([first['receipt']['receipt_id'], second['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == changed
+    realm.call([realm.move()])
+    head, count = detached(realm.head), len(realm.accepted)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([undone['receipt']['receipt_id']])])
+    assert error.value.failure['details']['reason'] == 'intervening_write'
+    assert realm.head == head and len(realm.accepted) == count
