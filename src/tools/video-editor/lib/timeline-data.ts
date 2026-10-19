@@ -82,10 +82,16 @@ export interface TranscriptSegment {
 
 export type ClipOrderMap = Record<string, string[]>;
 
+export type TimelineEditProjection =
+  | { kind: 'accepted'; head: { revisionId: string; publicationId: string } }
+  | { kind: 'local'; base: { revisionId: string; publicationId: string }; generation: number };
+
 export interface TimelineData {
   config: TimelineConfig;
   configVersion: number;
   head?: import('../data/DataProvider.ts').TimelineHeadRevision;
+  /** Fact about this displayed snapshot; never part of authored config. */
+  editProjection?: TimelineEditProjection;
   registry: AssetRegistry;
   resolvedConfig: ResolvedTimelineConfig;
   rows: TimelineRow[];
