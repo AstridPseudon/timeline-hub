@@ -85,6 +85,15 @@ Don't set up generation (GPU, models, API keys, workflows) yourself: Astrid does
     expect(agentOption).toHaveFocus();
   });
 
+  it('keeps the shared Runtime, Workspace and Tools rows in onboarding', async () => {
+    inspectMock.mockResolvedValue(ready);
+    render(<OnboardingModal isOpen onClose={vi.fn()} />);
+    const runtime = await screen.findByText('Runtime');
+    expect(runtime).toHaveAttribute('data-state', 'pass');
+    expect(screen.getByText('Workspace')).toHaveAttribute('data-state', 'pass');
+    expect(screen.getByText('Tools')).toHaveAttribute('data-state', 'pass');
+  });
+
   it('offers the agent brief verbatim and copies it whole', async () => {
     inspectMock.mockResolvedValue(down);
     const writeText = vi.fn().mockResolvedValue(undefined);

@@ -14,6 +14,7 @@ export function connectionFor(state: RuntimeConnectionState, overrides: Partial<
     isChecking: false,
     awaitingConnect: false,
     realmName: state.status === 'connected' ? state.realm.display_name : null,
+    schemaDigest: null,
     connect: () => {},
     ...overrides,
   };

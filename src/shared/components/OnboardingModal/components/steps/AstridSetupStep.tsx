@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { Bot, Check, CheckCircle2, Copy, Cpu, ExternalLink, Loader2, Minus, Terminal } from 'lucide-react';
+import { Bot, Check, CheckCircle2, Copy, Cpu, ExternalLink, Terminal } from 'lucide-react';
 import { MinkRunner } from '@/shared/components/MinkRunner/MinkRunner';
 import { DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
@@ -20,20 +20,11 @@ import {
   type SetupPlatform,
 } from '@/shared/components/OnboardingModal/lib/astridSetupGuide';
 import type { OnboardingStepProps } from '@/shared/components/OnboardingModal/types';
+import { SetupStatusLine, type CheckState, type SetupChecks } from '@/shared/components/OnboardingModal/components/SetupStatusLine';
 
 const POLL_MS = 4000;
 const NO_PROJECT_REASON = /no project exists yet/i;
 const REPORT_ISSUE_URL = 'https://github.com/banodoco/astrid-agent/issues';
-
-type CheckState = 'checking' | 'pass' | 'fail' | 'later';
-
-export interface SetupChecks {
-  runtime: CheckState;
-  workspace: CheckState;
-  tools: CheckState;
-  /** Runtime running and workspace readable: enough to start creating. */
-  ready: boolean;
-}
 
 /** What the browser can honestly observe of a local install, from the Runtime's own probes. */
 export function setupChecksFrom(census: AstridCapabilityCensus | null): SetupChecks {
@@ -158,53 +149,6 @@ function MeetAstrid({ platform }: { platform: SetupPlatform }) {
       </p>
       <CommandBlock command={ASTRID_LAUNCH_COMMANDS[platform]} />
       <PastePanel title="Message for Astrid" text={ASTRID_STUDIO_MESSAGE} copyLabel="Copy message" />
-    </div>
-  );
-}
-
-const CHECKS: ReadonlyArray<{ key: keyof Omit<SetupChecks, 'ready'>; label: string; later?: string }> = [
-  { key: 'runtime', label: 'Runtime' },
-  { key: 'workspace', label: 'Workspace' },
-  { key: 'tools', label: 'Tools', later: 'Checked once you have a project' },
-];
-
-/** Pending reads as pending (a spinner), not as a failure, until the check passes. */
-function CheckMark({ state }: { state: CheckState }) {
-  if (state === 'pass') return <CheckCircle2 className="h-3.5 w-3.5 text-green-600 dark:text-green-500" aria-hidden />;
-  if (state === 'later') return <Minus className="h-3.5 w-3.5" aria-hidden />;
-  return <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />;
-}
-
-function statusMessage(checks: SetupChecks): string {
-  if (checks.ready) return 'Astrid is up and running';
-  if (checks.runtime === 'checking') return 'Looking for Astrid';
-  if (checks.runtime !== 'pass') return 'Waiting for Astrid to start';
-  return 'Almost there';
-}
-
-/**
- * What setup is waiting for: a small mark per check, and the running mink while it waits (unless the mink
- * is already shown elsewhere, as above the setup step's title). The modal shows it in its footer, below
- * the scrolling instructions, so it never covers them.
- */
-export function SetupStatusLine({ checks, mink = true }: { checks: SetupChecks; mink?: boolean }) {
-  return (
-    <div className="flex flex-col items-center gap-2 text-xs text-muted-foreground" role="status" aria-live="polite" aria-label={statusMessage(checks)}>
-      {mink && !checks.ready && <MinkRunner className="text-foreground" />}
-      <span className="flex items-center gap-4">
-        {CHECKS.map(({ key, label, later }) => (
-          <span
-            key={key}
-            className={`inline-flex items-center gap-1.5 ${checks[key] === 'pass' ? 'text-foreground' : ''}`}
-            data-check={key}
-            data-state={checks[key]}
-            title={checks[key] === 'later' ? later : undefined}
-          >
-            <CheckMark state={checks[key]} />
-            {label}
-          </span>
-        ))}
-      </span>
     </div>
   );
 }
