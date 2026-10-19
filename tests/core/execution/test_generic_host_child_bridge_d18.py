@@ -163,16 +163,16 @@ def test_discovery_acquisition_production_cap_and_error_identity(monkeypatch, ht
     cap = len(body) + slack
     f = discovery_collection_fixture()
     f.grant["limits"]["max_discovery_metadata_bytes"] = cap
-    f.client.generated = WorkspaceClient("http://runtime", "shared-auth")
+    f.client.generated = WorkspaceClient("http://127.0.0.1:8765", "shared-auth")
     shared = dict(vars(f.client.generated))
     reader = f.collection()
     stream = _MetadataTrackingStream(body, chunk, head)
-    def open_response(request, timeout):
+    def open_response(_opener, request, *, timeout):
         assert request.get_header("Authorization") == "Bearer shared-auth"
         if http_error:
             raise urllib.error.HTTPError(request.full_url, 409, "Conflict", head, stream)
         return stream
-    monkeypatch.setattr(urllib.request, "urlopen", open_response)
+    monkeypatch.setattr(urllib.request.OpenerDirector, "open", open_response)
     decoded = []
     decode_error = generated._decode_error
     monkeypatch.setattr(generated, "_decode_error", lambda *args, **kwargs: decoded.append(True) or decode_error(*args, **kwargs))
@@ -212,14 +212,14 @@ def test_discovery_acquisition_production_cap_and_error_identity(monkeypatch, ht
 def test_discovery_acquisition_truncated_json_is_terminal_before_error_decode(monkeypatch, http_error, body):
     from astrid_runtime_client import generated
     f = discovery_collection_fixture()
-    f.client.generated = WorkspaceClient("http://runtime")
+    f.client.generated = WorkspaceClient("http://127.0.0.1:8765")
     reader = f.collection()
     stream = _MetadataTrackingStream(body, 3, {})
-    def open_response(request, timeout):
+    def open_response(_opener, request, *, timeout):
         if http_error:
             raise urllib.error.HTTPError(request.full_url, 400, "Bad", {}, stream)
         return stream
-    monkeypatch.setattr(urllib.request, "urlopen", open_response)
+    monkeypatch.setattr(urllib.request.OpenerDirector, "open", open_response)
     monkeypatch.setattr(generated, "_decode_error", lambda *args, **kwargs: pytest.fail("truncated error decoded"))
     with pytest.raises(HostError) as caught:
         reader._reader._request("GET", "/probe")
@@ -251,19 +251,19 @@ def test_discovery_acquisition_remaining_budget_error_shared_client_and_binary_i
     f = discovery_collection_fixture()
     cap = 100
     f.grant["limits"]["max_discovery_metadata_bytes"] = cap
-    f.client.generated = WorkspaceClient("http://runtime", "shared-auth")
+    f.client.generated = WorkspaceClient("http://127.0.0.1:8765", "shared-auth")
     shared = dict(vars(f.client.generated))
     reader = f.collection()
     streams = []
     error = [False]
-    def open_response(request, timeout):
+    def open_response(_opener, request, *, timeout):
         body = b'{"project_id":"P"}' if not error[0] else b'{"code":"bad"}'
         stream = _MetadataTrackingStream(body, 65536, {})
         streams.append(stream)
         if error[0]:
             raise urllib.error.HTTPError(request.full_url, 409, "Conflict", {}, stream)
         return stream
-    monkeypatch.setattr(urllib.request, "urlopen", open_response)
+    monkeypatch.setattr(urllib.request.OpenerDirector, "open", open_response)
     reader._reader._request("GET", "/first")
     accepted = streams[0].acquired
     assert streams[0].read_sizes[0] == cap + 1
