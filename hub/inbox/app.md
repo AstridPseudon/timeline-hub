@@ -417,3 +417,6 @@ The owner answered: retire every Supabase canonical timeline writer. As part of 
 - Update or remove the stale docs that name these paths (task-worker-lifecycle etc.), so nothing documents a dead path.
 - Tests: delete tests of the removed write paths together with the code. Keep and fix the tests for what stays. The 5 edge suites failing to import (@astrid/editor-sdk resolution) must end up importing and passing for the retained functions; don't leave them broken.
 - Gate 6's "zero legacy writers" assertion covers these too: a direct call must no longer write a canonical timeline.
+
+## 2026-10-19 23:15Z — orchestrator: close M1 now
+Remaining App M1 items: (1) mixed-editing data-safety journey. It currently fails at the opaque-root-field assertion on the projected draft. Fix the cause, and check the draft preserves every opaque root field. Don't weaken the assertion. Then reach reload/recover and prove no silent loss. (2) Classify the post-restore full run app-full-1019224105, including the 5 new guard cases. Post both in STATUS as soon as they're done.

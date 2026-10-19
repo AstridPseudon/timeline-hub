@@ -66,4 +66,9 @@ browser parity. It is not a frozen Runtime wire pin, an official Runtime
 artifact refresh, or actual browser proof. Runtime’s official artifact refresh
 is still pending; App should consume the portable golden and retain its native
 capture shape until that refresh. No product semantic or schema change was
-made here.
+made here. The Agent schema source remains
+`astrid/core/timeline/schema/edit-command.schema.json`; the corresponding
+official Runtime schema/client artifact refresh is pending. No M2 merge should
+be treated as authorized until the orchestrator records the PLAN M1 milestone.
+
+Manager follow-up: agt-m2-parent-label cuts this SAME official parent-only operation/golden into a clean current-M1-base branch, excluding params/root/group/staged changes. Contract spelling is unchanged. Use that isolated branch for first official artifact/merge after M1 record; broader composition remains separately held.

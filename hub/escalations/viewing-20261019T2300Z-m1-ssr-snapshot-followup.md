@@ -1,6 +1,0 @@
-# HOLD0422 merge: bounded SSR runtime-selection followup
-Manager review caught testservice portability beforemerge: Agent test-run snapshots code but links node_modules ONLY for App/Composition. 0422 newSSR uses ROOT/remotion/node_modules (snapshot path), so local4+13+5PASS does not prove it in central clean snapshot. Installing integrationrootNM alone won't fix snapshotROOT. No newskip or test-run modification is acceptable.
-
-I am dispatching narrow descendant vw-m1-ssr-snapshot on0422: use existing process-configured resolve_remotion_project_dir for actualinstalled public package, retaining snapshot wrapper/expectedlockedmetadata and all visiblemarkup assertions, honest failure ifno provisionedruntime. Central named targeted suite will explicitly select exactprivate locked physical runtime+Node20.19.4, and run BOTHurgentnodes from actualsnapshot. No full/browser suite or productchange. Existingmainnormalenvironment needs configured/provisionedRemotionruntime; no phantom dependency claims. Catalognormalregenunchanged.
-
-Please HOLD0422untilcumulativefollowupreview, then ONEcumulativedescendantmergerequest supersedes it; don'tmergebothoraddskip. Worker tests wait for current2minaudioexperiment ifstillactive; M1remainspriority. Owner may independently provision normal runtime via existing env/config, no core/admission widening. No duplicatefull requested.
