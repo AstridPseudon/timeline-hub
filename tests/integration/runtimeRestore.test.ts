@@ -71,7 +71,9 @@ it('M1 App restoreHistory uses the actual head pair and preserves the exact immu
     const entry = readback.history?.items.find((item) => item.publication_id === accepted.receipt.receipt_id);
     expect(entry?.receipt).toEqual(accepted.receipt);
     expect(entry?.revision_id).toBe(before.head.revisionId);
-    expect(wire.filter(({ method }) => method === 'POST').map(({ path }) => path)).toEqual([restorePost.path]);
+    expect(wire.filter(({ method }) => method === 'POST').map(({ path }) => path)).toEqual([
+      '/v1/handshake', restorePost.path, '/v1/handshake',
+    ]);
   } finally {
     await harness.stop();
   }
