@@ -1012,3 +1012,91 @@ test('M1 real dependency conflict retains B original guards and pending identity
   await expectOpaqueDataKept(harness, seed3);
   await sniff.expectClean(page, seed3.timelineId);
 });
+
+test('M1 mixed editing: an accepted pointer move followed by a refused legacy rename keeps an exact recoverable draft', async ({ page, harness, astrid, seed3 }) => {
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  await openCommandTimeline(page, harness, seed3);
+  journey.facts.sameRealm = await expectSameRealm(page, harness, astrid);
+  const before = await history(harness, seed3);
+  const original = await revisionState(harness, seed3, before.head.revision_id);
+  const from = original.parentClips[seed3.appClipId].at as number;
+  const to = from === 5 ? 7 : 5;
+  const moveResponse = page.waitForResponse((response) => response.request().method() === 'POST'
+    && COMMITS.test(new URL(response.url()).pathname), CEILING);
+  await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, from, to, THREE_PRODUCTS_REFERENCE_AT);
+  const response = await moveResponse;
+  const move = accepted({ method: response.request().method(), path: new URL(response.url()).pathname,
+    body: response.request().postData()!, key: response.request().headers()['idempotency-key'],
+    status: response.status(), response: await response.json() });
+  expect(JSON.parse(response.request().postData()!)).toMatchObject({
+    base_revision_id: before.head.revision_id, base_publication_id: before.head.publication_id,
+    commands: [{ op: 'clip.move', select: `parent/clip:${seed3.appClipId}`, args: { on: to } }],
+  });
+  expect(position(move.data.canonical_document, seed3.appClipId)).toBe(to);
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId))
+    .every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+  await expectPreviewRevision(page, pinOf(move).revision_id);
+  const moved = await history(harness, seed3);
+  expect(moved.head).toEqual(pinOf(move));
+  expect(moved.items).toHaveLength(before.items.length + 1);
+  const revisions = await allRevisions(harness, seed3);
+  const trackLabel = 'F2 mixed editing retained rename';
+  const legacyResponse = () => page.waitForResponse((answer) => answer.request().method() === 'POST'
+    && SAVES.test(new URL(answer.url()).pathname), CEILING);
+  const refusedResponse = legacyResponse();
+  await editFirstTrackName(page, trackLabel);
+  const refused = await refusedResponse;
+  expect(refused.status(), await refused.text()).toBe(409);
+  expect(await refused.json()).toMatchObject({ details: { status: 'refused', reason: 'timeline_commit_required' } });
+  const request = refused.request();
+  expect(request.postDataJSON()).toMatchObject({ expected_head: moved.head.revision_id,
+    parent_composition: { config: { tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: trackLabel })]) } } });
+  const refusalNotice = page.getByRole('alert').filter({
+    hasText: 'The timeline could not be saved because the payload is incompatible with the server schema.',
+  });
+  await expect(refusalNotice).toBeVisible(CEILING);
+  await expect(firstTrackName(page)).toHaveValue(trackLabel);
+  await expect.poll(async () => (await timelineDraft(page, seed3.timelineId))?.draft.config?.tracks
+    ?.find((track: any) => track.id === 'V1')?.label, CEILING).toBe(trackLabel);
+  const kept = (await timelineDraft(page, seed3.timelineId))!;
+  expect(kept).toMatchObject({ baseHeadRevisionId: moved.head.revision_id,
+    baseHeadProjectId: harness.seed.projectId, baseHeadTimelineId: seed3.timelineId });
+  expect(kept.draft.config?.clips?.find((clip: any) => clip.id === seed3.appClipId)?.at).toBe(to);
+  expect(kept.draft.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
+  expect(await history(harness, seed3)).toEqual(moved);
+  expect(await allRevisions(harness, seed3)).toEqual(revisions);
+
+  // AUDIT 2216Z permits visible refusal only for M1. M2 must save, reload and undo this rename through commands.
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  const recovery = page.getByRole('alert').filter({ hasText: 'You have unsaved changes' });
+  await expect(recovery).toBeVisible(CEILING);
+  await expect(recovery.getByRole('button', { name: 'Save them' })).toBeEnabled();
+  expect(await timelineDraft(page, seed3.timelineId), 'reload preserves the entire native IndexedDB record').toEqual(kept);
+  expect(await history(harness, seed3)).toEqual(moved);
+  const retryResponse = legacyResponse();
+  await recovery.getByRole('button', { name: 'Save them' }).click();
+  const retry = await retryResponse;
+  expect(retry.status(), await retry.text()).toBe(409);
+  expect(await retry.json()).toMatchObject({ details: { status: 'refused', reason: 'timeline_commit_required' } });
+  expect(retry.request().postData(), 'recovery keeps the original CAS and authored payload').toBe(request.postData());
+  expect(retry.request().headers()['idempotency-key'], 'recovery keeps the same request identity')
+    .toBe(request.headers()['idempotency-key']);
+  await expect(refusalNotice).toBeVisible(CEILING);
+  await expect(firstTrackName(page)).toHaveValue(trackLabel);
+  await expect.poll(async () => (await timelineDraft(page, seed3.timelineId))?.draft, CEILING).toEqual(kept.draft);
+  expect((await timelineDraft(page, seed3.timelineId))?.baseHeadRevisionId).toBe(kept.baseHeadRevisionId);
+  expect(await history(harness, seed3)).toEqual(moved);
+  expect(await allRevisions(harness, seed3)).toEqual(revisions);
+  await expectImmutableClosure(harness, seed3, move);
+  await expectAgentRevision(astrid, harness, seed3, moved.head.revision_id);
+  await expectOpaqueDataKept(harness, seed3);
+  journey.facts = { ...journey.facts, acceptedMove: pinOf(move), legacyRefusal: await refused.json(),
+    retainedDraftOwner: kept.ownerId, originalCas: kept.baseHeadRevisionId,
+    legacyRequestKey: request.headers()['idempotency-key'], recovery: 'Save them restores the rename and visibly refuses again',
+    renderer: 'not started' };
+  await sniff.expectClean(page, seed3.timelineId);
+});
