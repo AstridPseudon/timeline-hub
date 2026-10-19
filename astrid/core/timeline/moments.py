@@ -78,6 +78,11 @@ class Context(Protocol):
     def line_in_point(self, line: str) -> float | None: ...
 
 
+def bound_word(moment: Moment | None) -> Moment | None:
+    """Return a word moment, for timing adapters that need its binding kind."""
+    return moment if isinstance(moment, Moment) and moment.kind == "word" else None
+
+
 # ---------------------------------------------------------------- parse / format
 
 def parse(text: Any) -> Moment:

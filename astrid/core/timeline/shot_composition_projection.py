@@ -62,6 +62,146 @@ def _mapping(value: Any, path: str) -> Mapping[str, Any]:
     return value
 
 
+def _track_rows(value: Any, path: str) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        raise ShotCompositionProjectionError(f"{path} must be an array")
+    rows: list[dict[str, Any]] = []
+    for index, raw in enumerate(value):
+        row = _mapping(raw, f"{path}[{index}]")
+        track_id = row.get("id")
+        if not isinstance(track_id, str) or not track_id:
+            raise ShotCompositionProjectionError(f"{path}[{index}].id must be a non-empty string")
+        if "app" in row and not isinstance(row["app"], Mapping):
+            raise ShotCompositionProjectionError(f"{path}[{index}].app must be an object")
+        if not _valid_track_label(row):
+            raise ShotCompositionProjectionError(f"{path}[{index}].label must be a non-empty string")
+        rows.append(copy.deepcopy(dict(row)))
+    return rows
+
+
+def _same_track_value(left: Any, right: Any) -> bool:
+    if isinstance(left, Mapping) and isinstance(right, Mapping):
+        return left.keys() == right.keys() and all(
+            _same_track_value(left[key], right[key]) for key in left
+        )
+    if isinstance(left, list) and isinstance(right, list):
+        return len(left) == len(right) and all(
+            _same_track_value(a, b) for a, b in zip(left, right)
+        )
+    return type(left) is type(right) and left == right
+
+
+def _valid_track_label(row: Mapping[str, Any]) -> bool:
+    return "label" not in row or (isinstance(row["label"], str) and bool(row["label"]))
+
+
+def _same_track_definition(left: Mapping[str, Any], right: Mapping[str, Any]) -> bool:
+    """Compare track semantics while allowing a legacy absent label."""
+    if not _valid_track_label(left) or not _valid_track_label(right):
+        return False
+    excluded = {"app"}
+    if "label" not in left or "label" not in right:
+        excluded.add("label")
+    return _same_track_value(
+        {key: value for key, value in left.items() if key not in excluded},
+        {key: value for key, value in right.items() if key not in excluded},
+    )
+
+
+def _merge_track_definition(
+    owner: dict[str, dict[str, Any]], incoming: Mapping[str, Any], *, path: str
+) -> None:
+    track_id = incoming["id"]
+    current = owner.get(track_id)
+    if current is None:
+        owner[track_id] = copy.deepcopy(dict(incoming))
+        return
+    if not _same_track_definition(current, incoming):
+        raise ShotCompositionProjectionError(
+            f"{path} conflicts with the existing definition for track {track_id!r}"
+        )
+    current_app = current.get("app", {})
+    incoming_app = incoming.get("app", {})
+    merged_app = copy.deepcopy(dict(current_app))
+    for key, value in incoming_app.items():
+        if key in merged_app and not _same_track_value(merged_app[key], value):
+            raise ShotCompositionProjectionError(
+                f"{path}.app.{key} conflicts for track {track_id!r}"
+            )
+        merged_app[key] = copy.deepcopy(value)
+    if merged_app:
+        current["app"] = merged_app
+    if "label" not in current and "label" in incoming:
+        current["label"] = incoming["label"]
+
+
+def resolve_parent_tracks(
+    parent: Mapping[str, Any], children: Sequence[Mapping[str, Any]]
+) -> list[dict[str, Any]]:
+    """Resolve parent-owned tracks and legacy child track mirrors."""
+    parent = _mapping(parent, "parent_revision.payload")
+    config = _mapping(parent.get("config", {}), "parent_revision.payload.config")
+    parent_tracks = _track_rows(
+        config.get("tracks", []), "parent_revision.payload.config.tracks"
+    )
+    ordered: list[dict[str, Any]] = []
+    owner: dict[str, dict[str, Any]] = {}
+    for row in parent_tracks:
+        track_id = row["id"]
+        if track_id in owner:
+            raise ShotCompositionProjectionError(
+                f"parent_revision.payload.config.tracks has duplicate id {track_id!r}"
+            )
+        owner[track_id] = row
+        ordered.append(row)
+    if not isinstance(children, Sequence) or isinstance(children, (str, bytes, bytearray)):
+        raise ShotCompositionProjectionError("children must be a sequence of internal timeline payloads")
+    child_clips: list[tuple[str, Any]] = []
+    for child_index, raw_child in enumerate(children):
+        child = _mapping(raw_child, f"children[{child_index}]")
+        rows = _track_rows(child.get("tracks", []), f"children[{child_index}].tracks")
+        child_seen: dict[str, dict[str, Any]] = {}
+        for row_index, row in enumerate(rows):
+            track_id = row["id"]
+            duplicate = child_seen.get(track_id)
+            if duplicate is not None:
+                _merge_track_definition(
+                    {track_id: duplicate}, row,
+                    path=f"children[{child_index}].tracks[{row_index}]",
+                )
+                if track_id in owner:
+                    _merge_track_definition(
+                        owner, duplicate,
+                        path=f"children[{child_index}].tracks[{row_index}]",
+                    )
+                continue
+            child_seen[track_id] = row
+            if track_id in owner:
+                _merge_track_definition(
+                    owner, row, path=f"children[{child_index}].tracks[{row_index}]"
+                )
+            else:
+                owner[track_id] = row
+                ordered.append(row)
+        clips = child.get("clips", [])
+        if not isinstance(clips, list):
+            raise ShotCompositionProjectionError(f"children[{child_index}].clips must be an array")
+        child_clips.extend(
+            (f"children[{child_index}].clips[{clip_index}]", raw_clip)
+            for clip_index, raw_clip in enumerate(clips)
+        )
+    for path, raw_clip in child_clips:
+        clip = _mapping(raw_clip, path)
+        track_id = clip.get("track")
+        if not isinstance(track_id, str) or not track_id:
+            raise ShotCompositionProjectionError(f"{path}.track must be a non-empty string")
+        if track_id not in owner:
+            raise ShotCompositionProjectionError(
+                f"{path}.track references missing track {track_id!r}"
+            )
+    return copy.deepcopy(ordered)
+
+
 def _effective_parent_registry(payload: Mapping[str, Any], config: Mapping[str, Any]) -> Mapping[str, Any]:
     """Use the same single parent registry namespace as authoring validation."""
     from .parent_registry import ParentRegistryError, effective_parent_registry

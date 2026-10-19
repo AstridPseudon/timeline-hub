@@ -1,0 +1,100 @@
+{
+  "api_version": 1,
+  "project_id": "099d98539fd546a284abd4b7165c008b",
+  "timeline_id": "main",
+  "request_id": "e-w42-223835985a-trim",
+  "session_id": "e-w42-223835985a-session",
+  "session_sequence": 1,
+  "base_revision_id": "authoring-parent-revision-b270313829a0b4875ee109c406a6067af00af3af430f371a962f29f300810323",
+  "base_publication_id": null,
+  "scope": {
+    "target": "parent",
+    "complete": [
+      "clips",
+      "tracks"
+    ],
+    "projection_version": 1
+  },
+  "change": {
+    "commands": [
+      {
+        "op": "clip.set-duration",
+        "select": "parent/clip:clip-1",
+        "resolved": [
+          "parent/clip:clip-1"
+        ],
+        "args": {
+          "seconds": 0.5,
+          "relation_choices": [
+            {
+              "target": "parent/clip:clip-1",
+              "edge": "end",
+              "choice": "detach"
+            }
+          ]
+        },
+        "expect": {
+          "": {
+            "state": "present",
+            "value": {
+              "id": "clip-1",
+              "at": 1,
+              "hold": 0.2,
+              "clipType": "hold",
+              "track": "V1",
+              "params": {
+                "data": null,
+                "literal": {
+                  "op": "clear"
+                },
+                "absentLike": {
+                  "$absent": true
+                }
+              },
+              "app": {
+                "opaque": {
+                  "keep": [
+                    null,
+                    false,
+                    ""
+                  ]
+                },
+                "astrid": {
+                  "until": "clip-start \"parent/clip:clip-2\"",
+                  "opaque": {
+                    "keep": null
+                  }
+                }
+              }
+            }
+          },
+          "at": {
+            "state": "present",
+            "value": 1
+          },
+          "hold": {
+            "state": "present",
+            "value": 0.2
+          },
+          "app.astrid.on": {
+            "state": "absent"
+          },
+          "app.astrid.until": {
+            "state": "present",
+            "value": "clip-start \"parent/clip:clip-2\""
+          },
+          "app.astrid.for": {
+            "state": "absent"
+          },
+          "app.astrid.fixed_start": {
+            "state": "absent"
+          }
+        }
+      }
+    ]
+  },
+  "source": {
+    "via": "app"
+  },
+  "dry_run": false
+}

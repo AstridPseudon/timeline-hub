@@ -196,37 +196,65 @@ def append(path: str | Path, payload: Mapping[str, Any] | None = None, **fields:
     if payload is not None:
         fields = {**dict(payload), **fields}
     with _locked(target):
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if target.exists() and verify(target):
-            raise ValueError(f"the journal {target} is damaged; run `timelines log` with --verify")
-        last = _last_record(target)
-        previous = str(last["hash"]) if last else None
-        body = JournalRecord(
-            v=VERSION,
-            seq=int(last["seq"]) + 1 if last else 1,
-            id=str(fields.pop("id", None) or uuid.uuid4().hex),
-            at=str(fields.pop("at", None) or _now()),
-            project=str(fields.pop("project", "")),
-            timeline=str(fields.pop("timeline", "")),
-            draft=fields.pop("draft", None),
-            actor=dict(fields.pop("actor", current_actor()) or {}),
-            source=dict(fields.pop("source", current_source(str(fields.get("label", "edit")))) or {}),
-            kind=str(fields.pop("kind", "edit")),
-            outcome=str(fields.pop("outcome", "changed")),
-            label=str(fields.pop("label", "edit")),
-            prev=previous,
-            **fields,
-        )
-        unsigned = {key: value for key, value in body.to_json().items() if key != "hash"}
-        record = dataclasses.replace(body, hash=_hash(previous, unsigned))
-        data = (json.dumps(record.to_json(), ensure_ascii=False, separators=(",", ":"), default=str) + "\n").encode("utf-8")
-        fd = os.open(target, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
-        try:
-            view = memoryview(data)
-            while view:
-                view = view[os.write(fd, view):]
-        finally:
-            os.close(fd)
+        return _append_locked(target, **fields)
+
+
+def _fsync_directory(path: Path) -> None:
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def sync(path: Path) -> None:
+    """Confirm durability before reusing an envelope after a failed append."""
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    _fsync_directory(path.parent)
+
+
+def _append_locked(target: Path, **fields: Any) -> JournalRecord:
+    """Append while the caller owns the journal lock (draft lock comes first)."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists() and verify(target):
+        raise ValueError(f"the journal {target} is damaged; run `timelines log` with --verify")
+    last = _last_record(target)
+    previous = str(last["hash"]) if last else None
+    body = JournalRecord(
+        v=VERSION,
+        seq=int(last["seq"]) + 1 if last else 1,
+        id=str(fields.pop("id", None) or uuid.uuid4().hex),
+        at=str(fields.pop("at", None) or _now()),
+        project=str(fields.pop("project", "")),
+        timeline=str(fields.pop("timeline", "")),
+        draft=fields.pop("draft", None),
+        actor=dict(fields.pop("actor", current_actor()) or {}),
+        source=dict(fields.pop("source", current_source(str(fields.get("label", "edit")))) or {}),
+        kind=str(fields.pop("kind", "edit")),
+        outcome=str(fields.pop("outcome", "changed")),
+        label=str(fields.pop("label", "edit")),
+        prev=previous,
+        **fields,
+    )
+    unsigned = {key: value for key, value in body.to_json().items() if key != "hash"}
+    record = dataclasses.replace(body, hash=_hash(previous, unsigned))
+    data = (json.dumps(record.to_json(), ensure_ascii=False, separators=(",", ":"), default=str) + "\n").encode("utf-8")
+    fd = os.open(target, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    try:
+        view = memoryview(data)
+        while view:
+            written = os.write(fd, view)
+            if written <= 0:
+                raise OSError("journal write made no progress")
+            view = view[written:]
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    _fsync_directory(target.parent)
     return record
 
 
@@ -249,14 +277,18 @@ def record_working_copy(path: str | Path, *, owner: Any = None, kind: str, outco
     target = Path(path)
     try:
         target.resolve().relative_to(_drafts_root().resolve())
+        is_draft = True
     except (OSError, ValueError):
-        return None
+        is_draft = False
     bundle = getattr(owner, "bundle", {}) or {}
     project = str(bundle.get("project_id") or getattr(owner, "project_id", ""))
     timeline = str(bundle.get("timeline_id") or getattr(owner, "timeline_id", ""))
+    if not is_draft:
+        project, timeline = project or "local", timeline or target.stem
     if not project or not timeline:
         return None
-    return append(journal_path(project, timeline), project=project, timeline=timeline,
+    destination = journal_path(project, timeline) if is_draft else target.with_suffix(target.suffix + ".journal.jsonl")
+    return append(destination, project=project, timeline=timeline,
                   draft=target.stem, actor=current_actor(), source=current_source(label), kind=kind,
                   outcome=outcome, label=label, before=before, after=after, **extra)
 
@@ -312,9 +344,16 @@ def verify(path: str | Path) -> list[str]:
     target = Path(path)
     if not target.is_file():
         return []
+    return verify_text(target.read_text(encoding="utf-8"))
+
+
+def verify_text(text: str) -> list[str]:
+    """Verify one detached read snapshot, without creating locks or files."""
     problems: list[str] = []
     expected, previous = 1, None
-    for number, line in enumerate(target.read_text(encoding="utf-8").splitlines(), 1):
+    if text and not text.endswith("\n"):
+        problems.append("journal ends in an incomplete record (missing newline)")
+    for number, line in enumerate(text.splitlines(), 1):
         try:
             row = json.loads(line)
             if not isinstance(row, dict):

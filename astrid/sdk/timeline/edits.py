@@ -54,12 +54,20 @@ class _EditMixin:
             except mo.MomentError as exc:
                 raise TimelineEditError(f"at={at!r}: {exc}") from None
         start = self.quantize(word.start if word else self._moment_time(moment) if moment else self.time(at))
-        sid = self._shot_at(start)
+        destination = getattr(self, "_add_destination", None)
+        if destination is None:
+            sid = self._shot_at(start)
+        else:
+            from astrid.sdk.timeline.music_beds import locate
+            sid, _ = locate(self, destination, {"id": clip_id})
         internal = self._internal(sid)
         new = {"id": clip_id or self._new_id(element), "clipType": element, "track": track or ELEMENT_TRACK.get(element, "fx"),
                "at": 0.0, "hold": self.quantize(hold if hold is not None else 1.0), "params": {}}
-        if not any(str(t.get("id")) == new["track"] for t in internal.get("tracks") or []):
-            raise TimelineEditError(f"shot {sid} has no track {new['track']!r}; tracks: {', '.join(str(t.get('id')) for t in internal.get('tracks') or [])}")
+        tracks = self._resolved_tracks(sid)
+        if not any(t["id"] == new["track"] for t in tracks):
+            raise TimelineEditError(f"owner {sid} has no track {new['track']!r}")
+        if any(c.get("id") == new["id"] for c in internal.get("clips", [])):
+            raise TimelineEditError(f"duplicate clip identity {new['id']!r}")
         if asset is not None:
             try:
                 new["asset"] = self._register_asset(sid, asset)
@@ -81,7 +89,7 @@ class _EditMixin:
                                                 f"{source_duration:.3f} s")
                     new["from"], new["to"] = 0.0, self.quantize(source_out)
                     new["hold"] = self.quantize(source_out / (_num(new.get("speed"), 1.0) or 1.0))
-        cut_id = (self._cut_id(cut) or cut) if cut else (None if self._is_audio(sid, new) else self._cut_on_screen(start))
+        cut_id = (self._cut_id(cut) or cut) if cut else (None if sid is None or self._is_audio(sid, new) else self._cut_on_screen(start))
         name = layer
         if cut_id:
             taken = {intent.layer_of(c.data) for c in self.clips() if intent.cut_of(c.data) == cut_id}
@@ -94,6 +102,7 @@ class _EditMixin:
         internal["clips"].append(new)
         self._mcache = None
         clip = Clip(self, sid, new)
+        clip._check_param_keys(list(params or {}))
         for key, value in dict(params or {}).items():  # the same path as clip.set: canvas px, formulas, moments
             clip.set_param(key, value)
         if corner:
@@ -103,7 +112,14 @@ class _EditMixin:
         else:
             clip.enter_at(word if word and anchor else start)
         if cut_id:
+            if not self._cut_clips(cut_id):
+                from astrid.sdk.timeline.identity import reserve_cut_id
+                reserve_cut_id(self.bundle, cut_id)
             intent.set_cut(new, cut_id)
+            if not intent.on(new):
+                # Numeric placement was authored before cut membership. Keep
+                # that explicit start when the compiler joins the new layer.
+                intent._set(new, "fixed_start", True)
             if hold is not None:
                 intent.set_for(new, self.quantize(hold))
         if name:
@@ -141,14 +157,8 @@ class _EditMixin:
             raise TimelineEditError(f"{on!r}: {exc}") from None
 
     def _next_cut_id(self, cut_id: str) -> str:
-        m = re.fullmatch(r"(c\d+)([a-z]?)", cut_id)
-        if not m:
-            raise TimelineEditError(f"{cut_id!r} is not a cut id like c33")
-        taken = {g["id"] for g in self._cut_groups()} | {intent.cut_of(c.data) for c in self.clips() if intent.cut_of(c.data)}
-        for code in range(ord(m.group(2)) + 1 if m.group(2) else ord("a"), ord("z") + 1):
-            if f"{m.group(1)}{chr(code)}" not in taken:
-                return f"{m.group(1)}{chr(code)}"
-        raise TimelineEditError(f"no free cut id after {cut_id}; name it with id=")
+        from astrid.sdk.timeline.identity import next_cut_id
+        return next_cut_id(self.bundle, cut_id)
 
     def _split_cut(self, cut: "Cut", on: Any, *, new_id: str | None, picture: Any) -> "Cut":
         pic = cut.picture
@@ -159,14 +169,15 @@ class _EditMixin:
             raise TimelineEditError(f"{cid} is a sequence (a time-lapse): split one of its steps' cuts instead")
         moment = self._split_moment(on, cid)
         t = self._frame(self._moment_time(moment, None, in_point=True))
-        lo, hi = self._cut_spans()[cid]
-        hi = hi if hi is not None else self.duration
+        lo, hi = cut.start, cut.end
         if not lo + 1.0 / self.fps <= t <= hi - 1.0 / self.fps:
             raise TimelineEditError(f"{moment} is at {t:.3f} s, not inside {cid} ({lo:.3f}–{hi:.3f} s): a split needs a "
                                     "moment inside the cut")
         new_id = new_id or self._next_cut_id(cid)
-        if new_id in {g["id"] for g in self._cut_groups()}:
+        if new_id in {g["id"] for g in self.cut_index.groups(self)}:
             raise TimelineEditError(f"there is already a cut {new_id}")
+        from astrid.sdk.timeline.identity import reserve_cut_id
+        reserve_cut_id(self.bundle, new_id)
         old_picture_end = pic.end  # before anything changes: what the new picture must not run past
         data = copy.deepcopy(pic.data)
         data["id"] = self._new_id(f"{new_id}-00-{pic.element}")
@@ -196,12 +207,72 @@ class _EditMixin:
                 intent.set_until(clip.data, f"end of {new_id}")  # it spans the split: carried over the new cut
                 carried.append(clip.address)
         intent.set_on(data, moment)
+        # Preserve real picture coverage, including a gap before the next
+        # opening or an overlap beyond it. Timing's next-opening default
+        # cannot represent the original picture's end after this split.
+        intent.set_until(pic.data, new_id)
+        intent.set_for(data, old_picture_end - t)
         self._mcache = None
         self.retime()
         self.notes.append(f"split {cid} at {moment} ({t:.3f} s): new cut {new_id} ({new_pic.address})"
                           + (f"; moved {', '.join(moved)}" if moved else "")
                           + (f"; carried over it: {', '.join(carried)}" if carried else ""))
         return self.cut(new_id)
+
+    def _lift_cut(self, cut: "Cut", *, layers: str = "stay") -> "Cut":
+        if layers not in {"stay", "remove"}:
+            raise TimelineEditError("lift layers must be stay or remove")
+        groups = self.cut_index.groups(self, include_orphans=True)
+        current = next((i for i, g in enumerate(groups) if g['id'] == cut.id), None)
+        if current is None or current == 0:
+            raise TimelineEditError("lift needs a preceding picture cut to hold")
+        previous = groups[current - 1]
+        if previous['picture'] is None:
+            raise TimelineEditError("lift needs a preceding picture cut to hold")
+        preceding = self.cut(previous['id'])
+        end = max(cut.end, preceding.end)
+        members = list(self._cut_clips(cut.id))
+        picture_ids = {id(c.data) for c in cut.steps}
+        for clip in members:
+            if id(clip.data) in picture_ids or layers == 'remove':
+                clip._remove_raw()
+            else:
+                # Keep both time and identity: an implicit cut-relative start
+                # must not jump back to the preceding cut on the next compile.
+                at, duration = clip.start, clip.duration
+                def refers_to_lifted(text):
+                    if not text:
+                        return False
+                    try:
+                        moment = mo.parse(text)
+                    except mo.MomentError:
+                        return False
+                    while moment is not None:
+                        if moment.cut == cut.id:
+                            return True
+                        moment = moment.base
+                    return False
+                on_lifted = refers_to_lifted(intent.on(clip.data))
+                until_lifted = refers_to_lifted(intent.until(clip.data))
+                intent.set_cut(clip.data, previous['id'])
+                if not intent.on(clip.data) or on_lifted:
+                    intent.set_on(clip.data, f"{previous['id']} {mo.offset_text(at - preceding.start, self.fps)}".strip())
+                if until_lifted:
+                    intent.set_until(clip.data, f"{previous['id']} {mo.offset_text(at + duration - preceding.start, self.fps)}".strip())
+                if not intent.until(clip.data) and intent.for_s(clip.data) is None:
+                    intent.set_for(clip.data, duration)
+        last = max(preceding.steps, key=lambda c: c.end)
+        _set_length(last.data, end - last.start)
+        holder = preceding.picture if preceding.raw.get('sequence') else last
+        intent.set_until(holder.data, f"{previous['id']} {mo.offset_text(end - preceding.start, self.fps)}".strip())
+        chapters = intent.chapters(self.bundle)
+        for chapter in chapters:
+            if chapter.get('from') == cut.id:
+                chapter['from'] = previous['id']
+        intent.set_chapters(self.bundle, chapters)
+        self._mcache = None
+        self.notes.append(f"lift {cut.id}: {previous['id']} holds to {end:.3f} s; layers {layers}; chapter starts moved to {previous['id']}")
+        return self.cut(previous['id'])
 
     def set_cut_note(self, cut: Any, *, why: str | None = None, hold: str | bool | None = None) -> dict[str, Any]:
         """A cut's notes, kept on the CUT (whatever clip is its picture): ``why`` (why the cut is there; it
@@ -235,7 +306,7 @@ class _EditMixin:
         (picture first). Read-only: nothing moves until a note is written."""
         notes = intent.cut_notes(self.bundle)
         out = {cid: dict(note) for cid, note in notes.items()}
-        for g in self._cut_groups():
+        for g in self.cut_index.groups(self):
             cid = g["id"]
             if cid in notes:
                 continue
@@ -257,7 +328,7 @@ class _EditMixin:
         """Lint reads a deliberate hold from a cut's picture: put the cut's hold on whichever clip is its picture
         now, and on no other clip of the cut."""
         notes = self.cut_notes_all()
-        for g in self._cut_groups():
+        for g in self.cut_index.groups(self):
             held = notes.get(g["id"], {}).get("hold") == "deliberate"
             for clip in g["clips"]:
                 on_it = held and g["picture"] is not None and clip.data is g["picture"].data
@@ -345,7 +416,7 @@ class _EditMixin:
                    "at": plate.data.get("at"), "hold": _r(plate.duration), "params": params}
             intent.set_slot(new, slot_id, replaces=[c.id for c in placeholders])
             for c in placeholders:
-                c.remove()
+                c._remove_raw()
             self._internal(plate.shot_id)["clips"].append(new)
             changed.append(f"cut {n}: {', '.join(c.id for c in placeholders)} → {new['id']}")
         slot["media"] = key if isinstance(key, str) else str(key)
@@ -419,8 +490,14 @@ class _EditMixin:
         for sid in old_by_shot:
             self._register_asset(sid, {"key": key, **new_entry}, replace=True)
         changed = []
+        from astrid.sdk.timeline.music_beds import entry_for, source_edit
         for clip in occurrences:
-            self._follow_media(clip, old_by_shot[clip.shot_id], new_entry, asset)
+            managed = entry_for(clip)
+            if managed and clip.id != managed[1]['source']['id']:
+                continue  # generated spans follow their one authored source
+            def follow(authored):
+                self._follow_media(authored, old_by_shot[authored.shot_id], new_entry, asset)
+            source_edit(follow)(clip)
             changed.append(clip.address)
         return changed
 

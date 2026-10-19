@@ -6,16 +6,17 @@ import re
 from typing import Any, Iterable, Mapping, Sequence
 
 from astrid.core.timeline import moments as mo
-from astrid.sdk import timeline_intent as intent
-from astrid.core.timeline.cuts import (
-    occurrences_from_bundle,
-    picture_cuts,
+from astrid.core.timeline.shot_composition_projection import (
+    ShotCompositionProjectionError,
+    resolve_parent_tracks,
 )
+from astrid.sdk import timeline_intent as intent
 
 from astrid.sdk.timeline._common import (AUDIO_KINDS, TIME_RE, TimelineEditError, WORD_ID_RE, _norm, _num, _r)
 from astrid.sdk.timeline.doc import (_read_words, _row_start)
 from astrid.sdk.timeline.model import (Clip, Cut, StepSequence, Voice, Word)
 from astrid.sdk.timeline.selection import Selection
+from astrid.sdk.timeline_editing import source_to_timeline_time
 
 
 class _LookupMixin:
@@ -67,49 +68,54 @@ class _LookupMixin:
     # ---- look things up ---------------------------------------------------
     @property
     def duration(self) -> float:
-        return _r(max((c.end for c in self.cuts), default=0.0))
+        if not self.bundle.get("placements"):
+            from astrid.core.timeline.duration import timeline_duration_seconds
+            parent = self.bundle.get("parent") or {}
+            return _r(timeline_duration_seconds(parent, self.fps)) if parent.get("clips") else 0.0
+        # A child clip cannot lengthen its own explicit placement (or the
+        # parent's overlay limit). Picture coverage is a separate projection.
+        from astrid.core.timeline.cuts import occurrences_from_bundle
+        return _r(max((row["end"] for row in occurrences_from_bundle(self.bundle)), default=0.0))
+
+    @property
+    def cut_index(self):
+        """The shared derived index; direct bundle edits invalidate its digest."""
+        import hashlib
+        import json
+        from astrid.core.timeline.cut_index import bundle_cut_index
+        digest = hashlib.sha256(json.dumps(self.bundle, sort_keys=True, default=str).encode()).hexdigest()
+        digest = (digest, id(self.bundle), tuple(id(c.data) for c in self.clips()))
+        cached = self.__dict__.get('_derived_cut_index')
+        if cached is None or cached[0] != digest:
+            cached = (digest, bundle_cut_index(self.bundle))
+            self._derived_cut_index = cached
+        return cached[1]
 
     @property
     def cuts(self) -> Selection:
-        """Every cut, in order (a Selection: ``tl.cuts(chapter="02")``, ``tl.cuts["c08"]``)."""
-        return Selection((Cut(self, raw) for raw in picture_cuts(occurrences_from_bundle(self.bundle), fps=self.fps)),
-                         kind="cut", tl=self)
+        """Every derived cut, including picture gaps and authored orphans."""
+        return Selection((Cut(self, raw) for raw in self.cut_index.rows), kind="cut", tl=self)
 
     def cut(self, selector: Any) -> Cut:
-        """A cut by number (1-based, as show prints), ``"@62.5"``/``"1:02"`` (the cut on screen then), or picture clip id."""
-        cuts = self.cuts
-        if isinstance(selector, int) or (isinstance(selector, str) and selector.strip().isdigit()):
-            n = int(selector)
-            if not 1 <= n <= len(cuts):
-                raise TimelineEditError(f"cut {n} does not exist; this timeline has cuts 1–{len(cuts)}")
-            return cuts[n - 1]
+        """A stable id, display ordinal, picture clip id, or timeline time."""
         text = str(selector).strip()
-        if mo.CUT_ID_RE.match(text.lower()):
-            text = self._cut_id(text) or text  # c1 is c01
-            group = next((g for g in self._cut_groups() if g["id"] == text.lower()), None)
-            if group is None:
-                ids = [g["id"] for g in self._cut_groups()]
-                raise TimelineEditError(f"no cut {text}; cuts are {', '.join(ids) or 'not named in this timeline'}")
-            if group["picture"] is not None:
-                for cut in cuts:
-                    if any(step.data is group["picture"].data for step in cut.steps):
-                        return cut
-        if TIME_RE.match(text) or isinstance(selector, float):
-            t = self.time(selector if not isinstance(selector, float) else selector)
-            for cut in cuts:
-                if cut.start - 1e-6 <= t < cut.end - 1e-6:
-                    return cut
-            raise TimelineEditError(f"no cut is on screen at {t:.3f} s (the timeline is {self.duration:.3f} s)")
-        for cut in cuts:
-            if any(c.id == text or c.id.startswith(text) for c in cut.steps):
-                return cut
-        raise TimelineEditError(f"no cut matches {selector!r}; pass 1–{len(cuts)}, a time like '1:02' or a picture clip id")
+        if isinstance(selector, int) or text.isdigit():
+            pass  # ordinals are inputs, never stored timing seconds
+        elif mo.CUT_ID_RE.match(text.lower()):
+            text = self._cut_id(text) or text.lower()
+        elif TIME_RE.match(text) or isinstance(selector, float):
+            text = f"@{self.time(selector)}"
+        try:
+            return Cut(self, self.cut_index.resolve(text))
+        except ValueError as exc:
+            raise TimelineEditError(str(exc)) from None
 
     @property
     def clips(self) -> Selection:
         """Every clip, in timeline order (a Selection). Call it to filter: ``tl.clips(role="label")``,
         ``tl.clips(chapter="02", element="am-type")``, ``tl.clips("cut=c1 track=sprite")``. ``tl.clips()`` is all."""
-        pool = [Clip(self, sid, c) for sid in self._shot_ids() for c in self._internal(sid)["clips"]]
+        pool = [Clip(self, None, c) for c in self.bundle.get("parent", {}).get("clips", [])]
+        pool.extend(Clip(self, sid, c) for sid in self._shot_ids() for c in self._internal(sid)["clips"])
         return Selection(sorted(pool, key=lambda c: (c.start, c.id)), kind="clip", tl=self)
 
     def clip(self, query: str, *, cut: Any = None, near: Any = None) -> Clip:
@@ -119,11 +125,16 @@ class _LookupMixin:
         ``cut=`` restricts to one cut; otherwise the error lists the choices.
         """
         if isinstance(query, str) and cut is None and near is None:
+            from astrid.sdk.timeline.music_beds import authored_clip
+            managed = authored_clip(self, query)
+            if managed is not None:
+                return managed
             # one address, everywhere: c41.mink, a carried alias (c30.cover), a layer name, an asset key, …
             from astrid.sdk.timeline_address import candidates
 
             found = [t for t in candidates(self, query, prefer="thing") if t.kind == "clip"]
             if len(found) == 1:
+                self._require_independent_clip(found[0].clip)
                 return found[0].clip
             if len(found) > 1:
                 listing = "\n  ".join(str(t) for t in found[:12]) + (f"\n  … {len(found) - 12} more" if len(found) > 12 else "")
@@ -152,38 +163,80 @@ class _LookupMixin:
         return Selection(self._word_list(), kind="word", tl=self)
 
     def _word_list(self) -> list[Word]:
-        found: list[tuple[float, float, str, str, str, int, str]] = []
-        for sid in self._shot_ids():
+        found = []
+        for sid in [None, *self._shot_ids()]:
             start = self._shot_start(sid)
-            for clip in self._internal(sid)["clips"]:
-                if not self._is_audio(sid, clip):
+            for clip in self._internal(sid).get("clips", []):
+                from astrid.sdk.timeline.transcript_binding import (
+                    binding_of,
+                    source_words,
+                    word_source,
+                )
+                if not self._is_audio(sid, clip) and binding_of(clip) is None:
                     continue
                 segment = intent.line(clip) or str(clip.get("id") or "")
-                for i, entry in enumerate(_read_words({"words": intent.words(clip)}, relative=True)):
+                binding = binding_of(clip)
+                source = None
+                if binding is not None:
+                    placements = [row for row in self.bundle.get("placements", []) if str(row.get("shot_id")) == sid]
+                    if sid is None:
+                        occurrence = clip.get("occurrence_id")
+                    elif len(placements) == 1:
+                        occurrence = placements[0].get("occurrence_id")
+                    else:
+                        raise TimelineEditError("transcript target requires one exact occurrence")
+                    rows = source_words(binding, self._transcript_dependencies, occurrence)
+                    source = word_source(binding, str(clip.get("id")), parent=sid is None)
+                    raw_words = [[r["start_s"], r["end_s"], r["text"], r["id"]] for r in rows]
+                else:
+                    raw_words = intent.words(clip)
+                managed = binding is not None or bool(intent.line_take(clip))
+                at = start + _num(clip.get("at"))
+                for i, entry in enumerate(_read_words({"words": raw_words}, relative=True)):
                     s, e, t = entry
-                    at = start + _num(clip.get("at"))
-                    found.append((at + s, at + e, t, segment, str(clip.get("id")), i, sid))
-        found.sort(key=lambda row: (row[0], row[3], row[5]))
+                    raw = raw_words[i]
+                    word_id = raw[3] if isinstance(raw, list) and len(raw) == 4 else raw.get("id") if isinstance(raw, dict) else None
+                    if managed:
+                        source_in = _num(clip.get("from"))
+                        if not source_in <= s < _num(clip.get("to"), float("inf")):
+                            continue
+                        clock = dict(source_start=source_in, timeline_start=at, speed=_num(clip.get("speed"), 1))
+                        s = source_to_timeline_time(s, **clock)
+                        e = source_to_timeline_time(e, **clock)
+                    else:
+                        s, e = at + s, at + e
+                    found.append((s, e, t, segment, str(clip.get("id")), i, sid, word_id, managed, source))
+        source_starts = {}
+        for row in found:
+            if row[9] is not None:
+                source_starts[row[9]] = min(source_starts.get(row[9], row[0]), row[0])
+        found.sort(key=lambda row: (source_starts[row[9]] if row[9] is not None else row[0], row[3], row[5]))
         counters: dict[str, int] = {}
         words = []
-        for s, e, t, segment, clip_id, _i, sid in found:
-            k = counters.get(segment, 0)
-            counters[segment] = k + 1
-            words.append(Word(f"{segment}:{k}", t, _r(s), _r(e), segment, k, clip_id, sid))
+        for s, e, t, segment, clip_id, _i, sid, word_id, managed, source in found:
+            key = (sid, clip_id) if managed else segment
+            k = counters.get(key, 0)
+            counters[key] = k + 1
+            words.append(Word(word_id or f"{segment}:{k}", t, _r(s), _r(e), segment, k, clip_id, sid, source))
         return words
 
-    def word(self, query: str, *, n: int | None = None, after: Any = None, near: Any = None) -> Word:
+    def word(self, query: str, *, n: int | None = None, after: Any = None, near: Any = None,
+             source: tuple[str, str, str, str, str] | None = None) -> Word:
         """A word by text (``"viral"``, a phrase ``"Hugging Face"``) or id (``"n20b:20"``).
 
         If the text is spoken more than once, pass ``n=`` (1-based), ``after=`` or ``near=``
         (times or words); the error lists every occurrence with its id and time.
         """
         words = self.words()
-        query = str(query).strip()
+        query = str(query) if source is not None else str(query).strip()
+        exact = [w for w in words if w.id == query and (source is None or w.source == source)]
+        if source is not None or any(w.source is not None for w in exact):
+            if len(exact) != 1:
+                raise TimelineEditError("source word identity is ambiguous or unavailable; supply its exact source/occurrence")
+            return exact[0]
         if WORD_ID_RE.match(query):
-            for w in words:
-                if w.id == query:
-                    return w
+            for w in exact:
+                return w
         parts = [_norm(p) for p in query.split() if _norm(p)]
         if not parts:
             raise TimelineEditError("name a word, e.g. tl.word('viral')")
@@ -211,6 +264,13 @@ class _LookupMixin:
         return hits[0]
 
     def voice(self, segment: str) -> Voice:
+        if isinstance(segment, str) and "/clip:" in segment:
+            from astrid.sdk.timeline.commands import EditCommand, recorded_owner
+            clip = recorded_owner(self, EditCommand("clip.set", segment, {}, resolved=(segment,)), "clip")
+            if not intent.line(clip.data):
+                raise TimelineEditError("selected clip is not a narration line")
+            from astrid.sdk.timeline.model import _voice_in_scope
+            return _voice_in_scope(self, intent.line(clip.data), clip.shot_id, clip.id)
         return Voice(self, segment)
 
     def at(self, when: Any) -> dict[str, Any]:
@@ -228,10 +288,15 @@ class _LookupMixin:
         if any((intent.sequence(c.data) or ("",))[0] == text for c in self.clips()):
             return StepSequence(self, text)
         clip = address if isinstance(address, Clip) else self.clip(text)
+        if isinstance(address, Clip) and not any(
+                c.id == address.id and c.shot_id == address.shot_id for c in self.clips()):
+            raise TimelineEditError(f"MISSING_SEQUENCE_STEP: {address.id}")
         tag = intent.sequence(clip.data)
         if tag is None:
             raise TimelineEditError(f"{clip.address} is not a step of a sequence")
-        return StepSequence(self, tag[0])
+        selected = StepSequence(self, tag[0])
+        selected._member = (clip.shot_id, clip.id)
+        return selected
 
     def find(self, query: str | None = None, *, text: str | None = None, asset: str | None = None) -> list[Any]:
         """What you hear or see → addresses and times (``timelines find``): ``tl.find("the conclusion")``."""
@@ -240,18 +305,8 @@ class _LookupMixin:
         return find(self, query, text=text, asset=asset)
 
     def cut_count(self) -> str:
-        """One way to count cuts everywhere: the named cuts (what you address), and the pictures if a
-        sequence (a time-lapse) shows several pictures in one cut."""
-        named, cuts = len(self._cut_groups()), self.cuts
-        pictures = len(cuts)
-        if not named or pictures == named:
-            return f"{named} cuts" if named else f"{pictures} cuts"
-        ids = [intent.cut_of(c.picture.data) if c.picture else None for c in cuts]
-        unnamed = sum(1 for i in ids if not i)
-        steps = pictures - unnamed - len({i for i in ids if i})
-        why = " · ".join(x for x in (f"{steps} more from sequence steps" if steps else "",
-                                     f"{unnamed} without a cut id" if unnamed else "") if x)
-        return f"{named} cuts ({pictures} pictures" + (f": {why})" if why else ")")
+        """The same window count printed by table, visualize, and lint."""
+        return f"{len(self.cut_index.rows)} cuts"
 
     def _cut_on_screen(self, t: float) -> str | None:
         """The cut id on screen at ``t`` (None when the timeline names no cuts)."""
@@ -260,26 +315,43 @@ class _LookupMixin:
 
     def _cut_clips(self, cut_id: str) -> list[Clip]:
         """Every clip of a cut, orphans included (an orphaned cut is not in the cut list until re-homed)."""
-        return [c for c in self.clips() if intent.cut_of(c.data) == cut_id]
+        if not any(source.get('linked') is True for source in self.bundle.get('source_mapping', {}).get('shots', {}).values()):
+            return [c for c in self.clips() if intent.cut_of(c.data) == cut_id]
+        key = self._cut_id(cut_id) or cut_id
+        return [c for c in self.clips() if self._cut_key(c) == key]
 
     def cut_picture(self, cut_id: str) -> Clip | None:
         """A cut's picture (its first bed clip), for live and orphaned cuts alike."""
         beds = sorted((c for c in self._cut_clips(cut_id) if c.track == "plate" and not c.is_audio), key=lambda c: (c.start, c.id))
         return beds[0] if beds else None
 
-    def _cut_id(self, text: str) -> str | None:
-        """The cut id as the sheet prints it: ``c1`` and ``c001`` are ``c01``; None when there is no such cut."""
-        m = re.fullmatch(r"c0*(\d+)([a-z]?)", str(text).strip().lower())
-        if not m:
+    def _cut_id(self, text: str, clip=None) -> str | None:
+        """Resolve an authored cut in its actual occurrence, refusing ambiguity."""
+        exact = str(text).strip()
+        value = exact.lower()
+        groups = self.cut_index.groups(self, include_orphans=True)
+        if any(group['id'] == exact and group['id'] != group['authored_id'] for group in groups):
+            return exact
+        def normalized(value):
+            match = re.fullmatch(r"c0*(\d+)([a-z]?)", value)
+            return match.groups() if match else None
+        key = normalized(value)
+        if key is None:
             return None
-        ids = [g["id"] for g in self._cut_groups()] + [cid for cid in {intent.cut_of(c.data) for c in self.clips()} if cid]
-        if str(text).strip().lower() in ids:
-            return str(text).strip().lower()
-        return next((cid for cid in ids if (mm := re.fullmatch(r"c0*(\d+)([a-z]?)", cid))
-                     and (mm.group(1), mm.group(2)) == (m.group(1), m.group(2))), None)
+        matches = [g for g in groups if normalized(g['authored_id']) == key]
+        local = [g for g in matches if clip is not None and g['shot_id'] == clip.shot_id]
+        if local:
+            matches = local
+        if len(matches) > 1:
+            raise TimelineEditError(f"cut {text!r} requires its occurrence/clip scope")
+        return matches[0]['id'] if matches else None
+
+    def _cut_key(self, clip, text=None):
+        authored = text if text is not None else intent.cut_of(clip.data)
+        return self._cut_id(authored, clip) if authored else None
 
     def _no_cut(self, cut_id: str) -> str:
-        ids = [g["id"] for g in self._cut_groups()]
+        ids = [g["id"] for g in self.cut_index.groups(self)]
         plain = [c for c in ids if re.fullmatch(r"c\d+", c)]
         extra = [c for c in ids if c not in plain]
         span = (f"{plain[0]}…{plain[-1]}" if len(plain) > 1 else ", ".join(plain)) + (f" (+ {', '.join(extra)})" if extra else "")
@@ -288,25 +360,11 @@ class _LookupMixin:
     def _cut_spans(self, skip: Iterable[str] = ()) -> dict[str, tuple[float, float | None]]:
         """``{cut id: (start, end)}``: a cut runs from its start to the next cut's start (end None: the last).
         Cuts in ``skip`` (orphans) don't end the cut before them."""
-        skip = set(skip) | set(getattr(self, "_orphan_cuts", set()) or ())
-        groups = [g for g in self._cut_groups() if g["id"] not in skip]
-        return {g["id"]: (g["start"], groups[k + 1]["start"] if k + 1 < len(groups) else None) for k, g in enumerate(groups)}
+        return self.cut_index.timing_spans(self, skip)
 
     def _cut_groups(self) -> list[dict[str, Any]]:
-        """Clips grouped by cut id, in time order; each group's picture is its bed clip (first step)."""
-        groups: dict[str, list[Clip]] = {}
-        for clip in self.clips():
-            cid = intent.cut_of(clip.data)
-            if cid:
-                groups.setdefault(cid, []).append(clip)
-        out = []
-        for cid, clips in groups.items():
-            if all(intent.orphan(c.data) for c in clips):
-                continue  # a cut kept only as orphans is not a cut until it is re-homed
-            beds = sorted((c for c in clips if c.track == "plate" and not c.is_audio), key=lambda c: (c.start, c.id))
-            out.append({"id": cid, "clips": clips, "picture": beds[0] if beds else None,
-                        "start": beds[0].start if beds else min(c.start for c in clips)})
-        return sorted(out, key=lambda g: (g["start"], g["id"]))
+        """Compatibility reader; production consumers use the index directly."""
+        return self.cut_index.groups(self)
 
     def _is_picture(self, clip: "Clip") -> bool:
         cut = intent.cut_of(clip.data)
@@ -330,9 +388,13 @@ class _LookupMixin:
         raise TimelineEditError(f"no shot {shot_id!r} is placed in this timeline")
 
     def _shot_start(self, shot_id: str) -> float:
+        if shot_id is None:
+            return 0.0
         return _row_start(self._row(shot_id)) / 1000.0
 
     def _shot_length(self, shot_id: str) -> float:
+        if shot_id is None:
+            return self.duration
         return _num(self._row(shot_id).get("duration_ms")) / 1000.0
 
     def _shot_id(self, shot: Any) -> str:
@@ -350,13 +412,55 @@ class _LookupMixin:
         raise TimelineEditError(f"no shot matches {shot!r}; shots: " + ", ".join(ids))
 
     def _internal(self, shot_id: str) -> dict[str, Any]:
+        if shot_id is None:
+            return self.bundle['parent']
         shot = self.bundle["shots"][shot_id]
         internal = shot.setdefault("internal_timeline", {})
         internal.setdefault("clips", [])
         return internal
 
+    def _tracks(self, shot_id: str | None, *, create: bool = False) -> list[dict[str, Any]]:
+        """Authored track rows: parent config or a shot's internal timeline."""
+        if shot_id is None:
+            internal = self.bundle["parent"]
+        else:
+            shot = self.bundle["shots"][shot_id]
+            internal = shot.setdefault("internal_timeline", {}) if create else shot.get("internal_timeline", {})
+        owner = internal
+        if shot_id is None:
+            config = internal.get("config", {})
+            if not isinstance(config, dict):
+                raise TimelineEditError("Parent track config must be an object")
+            if "tracks" in config:
+                if "tracks" in internal:
+                    raise TimelineEditError("Conflicting parent track authorities: config.tracks and tracks")
+                owner = config
+            elif "tracks" not in internal:
+                # Flat-only legacy documents retain their existing backing rows.
+                # New parent collections always belong to config.
+                owner = internal.setdefault("config", {}) if create else config
+        tracks = owner.get("tracks", [])
+        if not isinstance(tracks, list) or any(not isinstance(row, dict) for row in tracks):
+            raise TimelineEditError("Track collection must be an array of objects")
+        if any(not isinstance(row.get("id"), str) or not row["id"] for row in tracks):
+            raise TimelineEditError("Track rows require a nonempty string id")
+        return owner.setdefault("tracks", []) if create else tracks
+
+    def _resolved_tracks(self, shot_id: str | None) -> list[dict[str, Any]]:
+        """Detached film definitions; chapter rows remain references, never copies."""
+        shots = self.bundle.get("shots", {})
+        selected = shots.values() if shot_id is None else [shots.get(shot_id, {})]
+        children = []
+        for shot in selected:
+            internal = shot.get("internal_timeline", {})
+            children.append({**internal, "clips": []})
+        try:
+            return resolve_parent_tracks({"config": {"tracks": self._tracks(None)}}, children)
+        except ShotCompositionProjectionError as exc:
+            raise TimelineEditError(str(exc)) from None
+
     def _track_kind(self, shot_id: str, track: str) -> str:
-        for t in self._internal(shot_id).get("tracks") or []:
+        for t in self._resolved_tracks(shot_id):
             if str(t.get("id")) == track:
                 return str(t.get("kind") or "").lower()
         return ""
@@ -383,6 +487,12 @@ class _LookupMixin:
         if isinstance(when, Word):
             return when
         if isinstance(when, str) and not TIME_RE.match(when.strip()):
+            moment = mo.parse(when)
+            if getattr(moment, "source", None) is not None:
+                hits = mo.find_words(moment, self.words())
+                if len(hits) != 1:
+                    raise TimelineEditError("bound source word is unavailable")
+                return hits[0][0]
             return self.word(when)
         return None
 
@@ -399,6 +509,7 @@ class _LookupMixin:
         for hits in tiers:
             unique = list({id(c.data): c for c in hits}.values())
             if len(unique) == 1:
+                self._require_independent_clip(unique[0])
                 return unique[0]
             if len(unique) > 1:
                 listing = "\n  ".join(f"{c.address:<18} {c.element:<14} {c.start:7.3f}–{c.end:.3f} s" for c in unique[:12])
@@ -406,6 +517,11 @@ class _LookupMixin:
                 raise TimelineEditError(f"{text!r} matches {len(unique)} clips in {where}; name one:\n  {listing}{more}")
         raise TimelineEditError(f"no clip in {where} matches {text!r} (by id, asset, element or text); "
                                 f"list them with tl.clips() or `timelines show --as script`")
+
+    def _require_independent_clip(self, clip):
+        if sum(str(row.get('shot_id')) == clip.shot_id for row in self.bundle.get('placements', [])) > 1:
+            from astrid.sdk.timeline.music_beds import MusicBedError
+            raise MusicBedError(f'{clip.id}: ambiguous shared input; use occurrence-local closure and ScopedId')
 
     def _new_id(self, element: str) -> str:
         existing = {c.id for c in self.clips()}

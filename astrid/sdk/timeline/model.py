@@ -18,19 +18,21 @@ from astrid.core.timeline.cuts import (
     clip_duration,
 )
 
+from astrid.sdk.timeline import commands as _identity_commands
 from astrid.sdk.timeline import look as _look
 from astrid.sdk.timeline import store as _store
 from astrid.sdk.timeline._common import (TIME_RE, TimelineEditError, _Suggest, _length_seconds, _norm, _num, _r)
 from astrid.sdk.timeline.selection import ROLE_VOCABULARY, Selection
 from astrid.sdk.timeline.doc import (_get_path, _read_words, _set_length, _set_path)
 from astrid.sdk.timeline.units import (element_units, formula_from_spec, from_canvas, param_unit, parse_formula_value, parse_moment_value, to_canvas)
+from astrid.sdk.timeline_editing import source_to_timeline_time, timeline_to_source_time
 
 
 # ----------------------------------------------------------------------- views
 
 @dataclass(frozen=True)
 class Word:
-    """One spoken word. ``start``/``end`` are timeline seconds; ``id`` is ``<segment>:<index>``."""
+    """One spoken word in timeline seconds; bound IDs and source are immutable provenance."""
 
     id: str
     text: str
@@ -40,6 +42,7 @@ class Word:
     index: int
     clip_id: str
     shot_id: str
+    source: tuple[str, str, str, str, str] | None = None
 
     def __float__(self) -> float:
         return self.start
@@ -70,7 +73,7 @@ class _LazyParams(dict):
 
 _PX_TEXT = re.compile(r"-?\d+(?:\.\d+)?px")
 _WORDS_OF = re.compile(r"\s*(?:ƒ|f)\(\s*words of \S+\s*\)\s*")
-_TYPE_WORDS = {"integer": "an integer", "number": "a number", "string": "text", "boolean": "true or false",
+_TYPE_WORDS = {"integer": "an integer", "number": "a number", "string": "a string", "boolean": "true or false",
                "array": "a list", "object": "an object"}
 
 
@@ -103,12 +106,12 @@ def validate_param_value(element: str, key: str, value: Any, *, where: str | Non
 
     Every write path calls this with the value as the user wrote it, in canvas units (before ``from_canvas``).
     Skipped: a formula or a moment (``ƒ(…)``, ``'"adapt" in w05c'``, ``ƒ(words of n05b)``); a key the element does not
-    declare (the key check reports that); a nested path (``states[3].at``); ``None``. A position on a logical grid
+    declare (the key check reports that); a nested path (``states[3].at``). A position on a logical grid
     (am-sprite x/y) is range-checked in its STORED units, because the schema describes stored values there
     (``metadata.units.logical``); the message says so."""
     from astrid.sdk.timeline_address import element_schema
 
-    if value is None or re.search(r"[.\[]", key) or _is_formula_or_moment(value):
+    if re.search(r"[.\[]", key) or _is_formula_or_moment(value):
         return
     schema = element_schema(element)
     prop = (schema.get("properties") or {}).get(key)
@@ -120,8 +123,11 @@ def validate_param_value(element: str, key: str, value: Any, *, where: str | Non
     num = value
     if kind in ("number", "integer") and isinstance(value, str) and _PX_TEXT.fullmatch(value.strip()):
         num = float(value.strip()[:-2])  # "20px" is canvas px, as from_canvas reads it
-    if isinstance(kind, str) and not _matches_type(num, kind):
-        raise TimelineEditError(f"{label}: {shown} is not {_TYPE_WORDS.get(kind, kind)}")
+    kinds = [kind] if isinstance(kind, str) else kind if isinstance(kind, list) else []
+    if kinds and not any(_matches_type(num, k) if k != "null" else num is None for k in kinds):
+        expected = " or ".join(_TYPE_WORDS.get(k, k) for k in kinds)
+        hint = f"; use --clear {key} to remove it" if value is None else ""
+        raise TimelineEditError(f"{label}: {shown} is not {expected}{hint}")
     enum = prop.get("enum")
     if isinstance(enum, list) and enum and not any(value == e and isinstance(value, bool) == isinstance(e, bool) for e in enum):
         raise TimelineEditError(f'{label}: {shown} is not allowed; {key} takes {" | ".join(str(e) for e in enum)}')
@@ -232,6 +238,13 @@ class Clip(_Suggest):
     @property
     def start(self) -> float:
         """Timeline seconds."""
+        oid = getattr(self, '_occurrence_id', None)
+        if oid is not None:
+            from astrid.sdk.timeline.doc import _row_start
+            rows = [row for row in self._tl.bundle.get('placements', []) if row.get('occurrence_id') == oid]
+            if len(rows) != 1:
+                raise TimelineEditError(f'{oid}: missing or duplicate occurrence identity')
+            return _r(_row_start(rows[0]) / 1000.0 + self.at)
         return _r(self._tl._shot_start(self.shot_id) + self.at)
 
     @property
@@ -294,6 +307,15 @@ class Clip(_Suggest):
         """Accept an orphan where it is (a fixed time, no moment): it stops blocking publish. Params on a
         moment that no longer resolves keep their last value as a fixed one."""
         for clip in self._sequence_mates():
+            if (intent.orphan(clip.data) or "").startswith("ORPHAN:"):
+                # The spelling may resolve to a different surviving ordinal.
+                # Accepting the cached value must remove that lost binding.
+                span = self._tl._own_cut_span(clip)
+                offset = mo.offset_text(clip.start - span[0], self._tl.fps) if span else None
+                intent.set_on(clip.data, offset)
+                intent.set_until(clip.data, None)
+                intent.set_for(clip.data, clip.duration)
+                intent.set_sequence_fit(clip.data, None)
             intent.set_orphan(clip.data, None)
         on = intent.on(self.data)
         if on:
@@ -302,6 +324,9 @@ class Clip(_Suggest):
             except TimelineEditError:
                 intent.set_on(self.data, None)
         for path, expr in intent.formulas(self.data).items():
+            if isinstance(expr, Mapping) and expr.get("orphan"):
+                intent.set_formula(self.data, path, None)
+                continue
             if isinstance(expr, Mapping) and expr.get("moment"):
                 try:
                     self._tl._evaluate(self, expr, {}, self._tl.words(), self._tl.slots)
@@ -337,7 +362,6 @@ class Clip(_Suggest):
             return self
         intent.set_until(self.data, text)
         intent.set_for(self.data, None)
-        self._check_source_fits(self._tl._frame(t) - self.start)
         _set_length(self.data, self._tl._frame(t) - self.start)
         self._tl.retime()
         return self
@@ -363,7 +387,7 @@ class Clip(_Suggest):
         new_start = self._tl.quantize(self.start + delta)
         if abs(new_start - self.start) < 1e-9:  # a zero nudge: write nothing (no moment, no undo step)
             return self
-        if intent.cut_of(self.data):
+        if intent.cut_of(self.data) and not intent.fixed_start(self.data):
             # a cut's clip with no moment: keep it relative to its cut (as the sheet's "on +0.1s" does),
             # so re-timing keeps the nudge instead of snapping it back to the cut's start
             return self.on(new_start)
@@ -398,28 +422,19 @@ class Clip(_Suggest):
             # the length is unchanged and the only thing written would be an explicit ``for`` that changes nothing
             self._tl.notes.append(f"{self.address}: already ends with its cut (no change)")
             return self
-        self._check_source_fits(new)
+        explicit_end = any(r["target"] == _identity_commands.scoped_clip(self._tl, self) and r["edge"] == "end"
+                           for r in getattr(self._tl, "_active_relation_choices", []))
+        if intent.until(self.data) and not explicit_end:
+            if abs(new - self.duration) > 0.5 / self._tl.fps:
+                from astrid.sdk.timeline.commands import SemanticConflict, scoped_clip
+                raise SemanticConflict("dependent", scoped_clip(self._tl, self), "intent.until",
+                                       intent.until(self.data), new, "duration needs an explicit end relation choice")
+            return self
         _set_length(self.data, new)
         if intent.cut_of(self.data) or intent.until(self.data):
             intent.set_until(self.data, None)
             intent.set_for(self.data, self._tl.quantize(seconds))
         return self
-
-    def _check_source_fits(self, length: float) -> None:
-        """A media clip's length is its source window: refuse a length the file cannot fill (never a silent mismatch)."""
-        if self.data.get("from") is None or self.data.get("to") is None or not (self.is_audio or self.element == "media"):
-            return
-        source_in, source_out = _num(self.data.get("from")), _num(self.data.get("to"))
-        speed = _num(self.data.get("speed"), 1.0) or 1.0
-        needed = source_in + length * speed
-        if needed <= source_out + 1e-6:
-            return
-        limit = self._source_duration()
-        if needed > limit + 1e-6:
-            raise TimelineEditError(
-                f"{self.address}: a {length:g} s length from source {source_in:g} s needs the file to reach {needed:.3f} s, "
-                f"but it is only {limit:g} s long (the most this clip can fill is {(limit - source_in) / speed:.3f} s; "
-                f"slip or trim-in the source window first)")
 
     def _source_duration(self) -> float:
         entry = self._tl._registry(self.shot_id).get(str(self.data.get("asset"))) or {}
@@ -439,10 +454,18 @@ class Clip(_Suggest):
         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
         speed = _num(self.data.get("speed"), 1.0) or 1.0
+        length = self._tl.quantize(float(source_to_timeline_time(source_out, source_start=source_in, speed=speed)))
+        explicit_end = any(r["target"] == _identity_commands.scoped_clip(self._tl, self) and r["edge"] == "end"
+                           for r in getattr(self._tl, "_active_relation_choices", []))
+        if not explicit_end and (intent.until(self.data) or intent.for_s(self.data) is not None) and abs(length - self.duration) > 0.5 / self._tl.fps:
+            from astrid.sdk.timeline.commands import SemanticConflict, scoped_clip
+            raise SemanticConflict("dependent", scoped_clip(self._tl, self), "intent.until",
+                                   intent.until(self.data) or intent.for_s(self.data), length,
+                                   "trim needs an explicit end relation choice")
         self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
-        self.data["hold"] = _r((source_out - source_in) / speed)
-        intent.set_until(self.data, None)
-        intent.set_for(self.data, None)
+        # hold, like to/from, is measured in source seconds; duration divides
+        # it by speed exactly once. Preserve the editor's source endpoints.
+        self.data["hold"] = _r(source_out - source_in)
         self._tl._mcache = None
         return self
 
@@ -454,7 +477,9 @@ class Clip(_Suggest):
         limit = self._source_duration()
         original_in = _num(self.data.get("from"))
         source_in = original_in + shift
-        source_out = _num(self.data.get("to"), original_in + self.duration) + shift
+        speed = _num(self.data.get("speed"), 1.0) or 1.0
+        fallback_out = float(timeline_to_source_time(self.duration, source_start=original_in, speed=speed))
+        source_out = _num(self.data.get("to"), fallback_out) + shift
         if source_in < 0 or source_out > limit:
             raise TimelineEditError(f"{self.address}: slipping {shift:g} s gives source range {source_in:g}–{source_out:g} s; "
                                     f"the file limit is 0–{limit:g} s")
@@ -493,8 +518,22 @@ class Clip(_Suggest):
         not a param (``.hold_for(0.6)``, ``.until(…)``, ``.on(…)``). ``_allow_new=True`` adds one on purpose."""
         from astrid.sdk.timeline_address import element_schema
 
+        if {"keyframes", "keyframeOrigin"} & params.keys():
+            try:
+                trial = cf.app_keyframes(self.data, params)
+            except cf.ClipFieldError as exc:
+                raise TimelineEditError(str(exc)) from None
+            self.data.clear()
+            self.data.update(trial)
+            self._tl._mcache = None
+            return self
+
         allow_new = bool(params.pop("_allow_new", False))
         declared = set(element_schema(self.element).get("properties") or {})
+        from astrid.sdk.timeline import modifiers
+        for key in list(params):
+            if modifiers.handles(key):
+                self.set_param(key, params.pop(key))
         look: dict[str, Any] = {}
         for key in list(params):  # a clip-level field the element does not declare is written with clip.look
             if key in declared:
@@ -531,12 +570,17 @@ class Clip(_Suggest):
             if (audio and applies == "visual") or (not audio and applies == "audio"):
                 raise TimelineEditError(f"{self.address}: {name} does not apply to {'an audio' if audio else 'a visual'} clip")
         try:
-            cf.coerce_many({k: v for k, v in fields.items() if v is not None}, fps=self._tl.fps, audio=audio)  # None clears
+            cf.coerce_many(fields, fps=self._tl.fps, audio=audio)
             trial = copy.deepcopy(self.data)
             for name, value in fields.items():
                 cf.write(trial, name, value, fps=self._tl.fps, audio=audio)
         except cf.ClipFieldError as exc:
             raise TimelineEditError(f"{self.address}: {exc}") from None
+        if "transition" in fields and self._tl._open_edit is not None:
+            tx = self._tl._open_edit
+            if not hasattr(tx, "_transition_patches"):
+                tx._transition_patches = {}
+            tx._transition_patches[(self.shot_id, self.id)] = copy.deepcopy(fields["transition"])
         for name, value in fields.items():
             cf.write(self.data, name, value, fps=self._tl.fps, audio=audio)
         self._tl._mcache = None
@@ -592,23 +636,32 @@ class Clip(_Suggest):
                      "end": ".until(MOMENT)", "asset": ".swap_asset(KEY)"}
 
     def _check_param_keys(self, keys: list[str]) -> None:
-        from astrid.sdk.timeline_address import declared_params, element_schema, unknown_params
+        from astrid.sdk.timeline_address import element_schema, unknown_params
 
-        tops = [re.split(r"[.\[]", k, maxsplit=1)[0] for k in keys]
+        from astrid.sdk.timeline.modifiers import handles
+        tops = [re.split(r"[.\[]", k, maxsplit=1)[0] for k in keys if not handles(k)]
         timing = [k for k in tops if k in self._TIMING_WORDS and k not in (element_schema(self.element).get("properties") or {})]
         if timing:
             raise TimelineEditError(f"{self.address}: {', '.join(timing)} is not a param: use "
                                     + "; ".join(f"{k} → {self._TIMING_WORDS[k]}" for k in timing))
         bad = unknown_params(self.element, tops, existing=self.params)
         if bad:
-            props = declared_params(self.element)
+            props = sorted(element_schema(self.element).get("properties") or {})
             hints = [f"{k} (did you mean {', '.join(difflib.get_close_matches(k, props, n=2))}?)"
                      if difflib.get_close_matches(k, props, n=2) else k for k in bad]
             raise TimelineEditError(f"{self.address} is an {self.element}, which has no param {', '.join(hints)}. It takes: "
-                                    f"{', '.join(props)} (an undeclared param on purpose: .set(..., _allow_new=True))")
+                                    f"{', '.join(props)} (an undeclared param on purpose: --allow-new-params / .set(..., _allow_new=True))")
 
     def set_param(self, path: str, value: Any) -> "Clip":
-        """Set one param by its address inside the clip (``x``, ``states[3].at``, ``stamp.at``)."""
+        """Set a param, or an ID-addressed modifier instance/property.
+
+        ``modifiers["shade"]`` adds/replaces that instance; append ``.params.x``
+        to edit a property. ``modifiers.order`` takes the ordered instance IDs.
+        """
+        from astrid.sdk.timeline import modifiers
+        if modifiers.handles(path):
+            return modifiers.set_value(self, path, value)
+        validate_param_value(self.element, path, value, where=self.address)
         top = re.split(r"[.\[]", path, maxsplit=1)[0]
         formulas = intent.formulas(self.data)
         full = f"params.{path}"
@@ -645,13 +698,51 @@ class Clip(_Suggest):
             return self
         for existing in [p for p in formulas if p == full or p.startswith((f"{full}[", f"{full}."))]:
             intent.set_formula(self.data, existing, None)  # a fixed value replaces the formula: never a silent revert
-        if path == top and value is None:  # null takes the param off: the element's default applies (a stored null fails its schema)
-            self.params.pop(top, None)
-        elif path == top:
+        if path == top:
             self.params[top] = copy.deepcopy(from_canvas(self.element, top, value))
         else:
             self.data.setdefault("params", {})
             _set_path(self.data, full, copy.deepcopy(value))
+        return self
+
+    def clear(self, *keys: str) -> "Clip":
+        """Remove presence (including formula intent); the element default applies.
+
+        Clearing an absent key is a no-op. Null remains a value, never a clear.
+        """
+        from astrid.sdk.timeline_address import element_schema
+        declared = element_schema(self.element).get("properties") or {}
+        from astrid.sdk.timeline import modifiers
+        for key in keys:
+            if key in {"on", "until", "sequence.land"}:
+                edge = {"on": "start", "until": "end", "sequence.land": "sequence-land"}[key]
+                if not any(r["target"] == _identity_commands.scoped_clip(self._tl, self) and
+                           r["edge"] == edge and r["choice"] == "detach"
+                           for r in getattr(self._tl, "_active_relation_choices", [])):
+                    raise TimelineEditError("Clearing a timing relation requires its exact detach choice")
+                continue
+            if modifiers.handles(key):
+                modifiers.clear_value(self, key)
+                continue
+            if key not in declared and key in cf.FIELDS:
+                # Explicit clear removes presence through the shared codec.
+                # set_look's ordinary value validation correctly rejects null
+                # for numeric fields; null must not stand in for this command.
+                try:
+                    cf.read(self.data, key, fps=self._tl.fps, audio=self.is_audio)
+                    cf.write(self.data, key, None, fps=self._tl.fps, audio=self.is_audio)
+                except cf.ClipFieldError as exc:
+                    raise TimelineEditError(f"{self.address}: {exc}") from None
+                self._tl._mcache = None
+                continue
+            self._check_param_keys([key])
+            full = f"params.{key}"
+            if re.search(r"[.\[]", key):
+                raise TimelineEditError("clear takes a top-level param key")
+            self.params.pop(key, None)
+            for path in list(intent.formulas(self.data)):
+                if path == full or path.startswith((full + ".", full + "[")):
+                    intent.set_formula(self.data, path, None)
         return self
 
     def set_track(self, track: str) -> "Clip":
@@ -660,7 +751,7 @@ class Clip(_Suggest):
         frame (its moment gets the offset that says so)."""
         if track == self.track:
             return self
-        if not any(str(t.get("id")) == track for t in self._tl._internal(self.shot_id).get("tracks") or []):
+        if not any(str(t.get("id")) == track for t in self._tl._tracks(self.shot_id)):
             raise TimelineEditError(f"{self.address}: no track {track!r} in this shot")
         was_picture, start, on = self._tl._is_picture(self), self.start, intent.on(self.data)
         self.data["track"] = track
@@ -727,7 +818,36 @@ class Clip(_Suggest):
             key["frame"] = int(_num(key.get("frame"))) + delta
         return self
 
+    def detach_audio(self, *, track: str = "audio") -> "Clip":
+        """Detach a media video's audio, preserving source range, speed and gain."""
+        from astrid.sdk.timeline.edits import _media_kind
+        tl = self._tl
+        entry = tl._registry(self.shot_id).get(str(self.asset)) or {}
+        if self.element != "media" or self.is_audio or _media_kind(entry) != "video":
+            raise TimelineEditError("detach_audio requires a media video clip")
+        if not any(t.get("id") == track and t.get("kind") in {"audio", "music", "voice"}
+                   for t in tl._resolved_tracks(self.shot_id)):
+            raise TimelineEditError(f"no audio track {track!r} in shot {self.shot_id}")
+        if self.data.get("volume") == 0:
+            raise TimelineEditError("this video's audio is already muted/detached")
+        data = copy.deepcopy(self.data)
+        data["id"] = tl._new_id(f"{self.id}-audio")
+        data["track"] = track
+        # A detached audio layer has independent duration, rather than becoming
+        # another picture member of the cut; its original anchor still follows.
+        for key in ("cut", "layer", "sequence", "sequence_index"):
+            intent._set_or_drop(data, key, None)
+        self.data["volume"] = 0
+        tl._internal(self.shot_id)["clips"].append(data)
+        return Clip(tl, self.shot_id, data)
+
     def remove(self) -> None:
+        if not self.is_audio and any(self.data is step.data for cut in self._tl.cuts for step in cut.steps):
+            raise TimelineEditError("lift the cut (`lift c24`), or set its asset".replace("c24", self.cut_id or str(self._tl._cut_at(self.start))))
+        self._remove_raw()
+
+    def _remove_raw(self) -> None:
+        """Internal removal for explicit structural operations (lift/ripple/replacement)."""
         clips = self._tl._internal(self.shot_id)["clips"]
         clips[:] = [c for c in clips if c is not self.data]
 
@@ -744,8 +864,9 @@ class Cut(_Suggest):
         self.n = int(raw["index"])
         self.start = float(raw["start"])
         self.end = float(raw["end"])
-        self.shot_id = str(raw["shot_id"])
-        self.shot = str(raw.get("shot") or self.shot_id)
+        # The derived flat-parent picture projection has no authored shot.
+        self.shot_id = str(raw["shot_id"]) or None
+        self.shot = str(raw.get("shot") or self.shot_id or "")
 
     @property
     def duration(self) -> float:
@@ -763,7 +884,12 @@ class Cut(_Suggest):
         ids = list(sequence.get("clip_ids") or [])
         if not ids:
             return [self.picture] if self.picture else []
-        return [self._tl.clip(i) for i in ids]
+        # These are stored identities, not user selectors (prefixes/ordinals).
+        by_id = {c.id: c for c in self._tl.clips(shot=self.shot_id)}
+        missing = [i for i in ids if i not in by_id]
+        if missing:
+            raise TimelineEditError(f"MISSING_SEQUENCE_STEP: {', '.join(missing)}")
+        return [by_id[i] for i in ids]
 
     def step(self, n: int) -> Clip:
         steps = self.steps
@@ -779,11 +905,11 @@ class Cut(_Suggest):
     def id(self) -> str | None:
         """The cut id of its picture (``c08``), or None."""
         pic = self.picture
-        return intent.cut_of(pic.data) if pic else None
+        return self.raw.get("cut_id") or (intent.cut_of(pic.data) if pic else None)
 
     @property
     def clips(self) -> Selection:
-        return Selection(([self.picture] if self.picture else []) + self.layers, kind="clip", tl=self._tl)
+        return Selection(self.steps + self.layers, kind="clip", tl=self._tl)
 
     def layer(self, query: str) -> Clip:
         return self._tl._pick(self.clips, query, where=f"cut {self.n}")
@@ -794,6 +920,96 @@ class Cut(_Suggest):
             raise TimelineEditError(f"cut {self.n} has no id; it cannot keep notes")
         return self._tl.set_cut_note(self.id, why=why, hold=hold)
 
+    def duplicate(self, at: float, *, id: str | None = None) -> "Cut":
+        """Copy this cut and its layers at a timeline time, with fresh identities.
+
+        Absolute placement is explicit; copied layers retain offsets, source
+        ranges, keyframes and opaque data. The original cut remains untouched.
+        """
+        from astrid.sdk.timeline.identity import reserve_cut_id
+        tl = self._tl
+        if not self.id or not self.picture:
+            raise TimelineEditError("duplicate requires a named picture cut")
+        if intent.sequence(self.picture.data):
+            raise TimelineEditError("duplicate a sequence's individual cut instead")
+        members = tl._cut_clips(self.id)
+        target = tl.quantize(at)
+        sid = tl._shot_at(target)
+        if target < 0:
+            raise TimelineEditError("duplicate needs a nonnegative placement")
+        new_id = id or tl._next_cut_id(self.id)
+        reserve_cut_id(tl.bundle, new_id)
+        # Cross-shot asset/track remapping belongs to add/import; fail closed.
+        if sid != self.shot_id:
+            raise TimelineEditError("duplicate within the same shot; cross-shot copy requires asset remapping")
+        delta = target - self.start
+        for clip in members:
+            data = copy.deepcopy(clip.data)
+            data["id"] = tl._new_id(f"{new_id}-{clip.id}")
+            data["at"] = _r(clip.start + delta - tl._shot_start(sid))
+            _set_length(data, clip.duration)
+            for setter in (intent.set_on, intent.set_until, intent.set_orphan):
+                setter(data, None)
+            intent.set_for(data, clip.duration)
+            intent.set_cut(data, new_id)
+            tl._internal(sid)["clips"].append(data)
+        tl._mcache = None
+        return tl.cut(new_id)
+
+    def move(self, on: Any) -> "Cut":
+        """Place this cut on a Moment, retaining every member's offset and length."""
+        tl = self._tl
+        picture = self.picture
+        if not self.id or picture is None:
+            raise TimelineEditError("move requires a named picture cut")
+        members = tl._cut_clips(self.id)
+        rows = [row for row in tl.bundle.get("placements", []) if row.get("shot_id") == self.shot_id]
+        if len(rows) != 1 or any(c.shot_id != self.shot_id for c in members):
+            raise TimelineEditError("cut move requires one unambiguous occurrence")
+        numeric = (isinstance(on, (int, float)) and not isinstance(on, bool) or (
+            isinstance(on, str) and TIME_RE.fullmatch(on.strip().removeprefix("@"))))
+        text = None if numeric else tl._moment_text(on)
+        target = tl._frame(tl.time(on)) if numeric else tl._moment_time(text, picture, in_point=True)
+        moment = mo.parse(text) if text else None
+        # An unqualified offset is relative to the old cut. Freeze that resolved
+        # destination, rather than storing a relation that moves itself forever.
+        if moment and moment.kind in {"cut_start", "end"}:
+            text = None
+        lo = tl._shot_start(self.shot_id)
+        hi = lo + tl._shot_length(self.shot_id)
+        if not math.isfinite(target) or not lo <= target < hi:
+            raise TimelineEditError("cut move destination must be inside its occurrence")
+        delta = _r(target - picture.start)
+        geometry = [(c, _r(c.start + delta), c.duration) for c in members]
+        if any(start < lo for _, start, _ in geometry):
+            raise TimelineEditError("cut move would place a layer before its occurrence")
+        picture_anchor = mo.parse(f'clip-start "{_identity_commands.scoped_clip(tl, picture)}"')
+        # Move caches together before resolving: the legacy picture setter would
+        # refuse an opener, shorten its picture and leave offset layers behind.
+        for clip, start, duration in geometry:
+            clip._set_start(start)
+            intent.set_orphan(clip.data, None)
+            intent.set_on(clip.data, text if clip.data is picture.data else
+                          mo.format_moment(picture_anchor.with_offset(seconds=start - target)))
+            intent.set_until(clip.data, None)
+            intent.set_for(clip.data, duration)
+        # Existing sequence fitting owns step layout. Re-anchor its landing so
+        # that resolving the moved unit cannot stretch or allocate new steps.
+        for clip, _, _ in geometry:
+            tag = intent.sequence(clip.data)
+            if tag and tag[1] == 0:
+                steps = [row for row in geometry if (intent.sequence(row[0].data) or (None,))[0] == tag[0]]
+                end = max(start + duration for _, start, duration in steps)
+                landing = mo.format_moment(picture_anchor.with_offset(seconds=end - target))
+                fit = intent.sequence_fit(clip.data)
+                if fit:
+                    intent.set_sequence_fit(clip.data, {**fit, "land": landing})
+                else:
+                    intent.set_until(clip.data, landing)
+        tl._mcache = None
+        # The outer runner resolves once and guards these explicit placements.
+        return tl.cut(self.id)
+
     def split(self, on: Any, *, id: str | None = None, picture: Any = None) -> "Cut":
         """Split this cut at a moment (``'"Building" in v27'``, ``+1.2s`` into the cut): the new cut gets a
         copy of the picture from that point (footage continues where it was; ``picture=`` another asset),
@@ -801,6 +1017,10 @@ class Cut(_Suggest):
         the new cut), and layers already carried stay carried. The new id is the next free one after this
         cut's (c33 → c33a), or ``id=``. Returns the new cut."""
         return self._tl._split_cut(self, on, new_id=id, picture=picture)
+
+    def lift(self, *, layers: str = "stay") -> "Cut":
+        """Remove this picture, holding the preceding picture over its span."""
+        return self._tl._lift_cut(self, layers=layers)
 
     @property
     def words(self) -> Selection:
@@ -829,10 +1049,13 @@ class StepSequence(_Suggest):
 
     def __init__(self, tl: "Checkout", seq_id: str):  # noqa: F821
         self._tl, self.id = tl, seq_id
+        self._member: tuple[str, str] | None = None  # selected handle identity, never an ordinal
 
     @property
     def steps(self) -> list[Clip]:
         steps = [c for c in self._tl.clips() if (intent.sequence(c.data) or ("",))[0] == self.id]
+        if self._member is not None and not any((c.shot_id, c.id) == self._member for c in steps):
+            raise TimelineEditError(f"MISSING_SEQUENCE_STEP: {self._member[1]}")
         return sorted(steps, key=lambda c: intent.sequence(c.data)[1])
 
     @property
@@ -840,17 +1063,25 @@ class StepSequence(_Suggest):
         return [max(1, int(round(c.duration * self._tl.fps))) for c in self.steps]
 
     def fit(self, on: Any = None, until: Any = None, *, shape: Sequence[int] | None = None, shape_from: Any = None,
-            client: Any = None) -> "StepSequence":
-        from astrid.sdk.timeline.checkout import Checkout
+            client: Any = None, curve: str | None = None) -> "StepSequence":
         """Fit the whole sequence into a span, keeping its shape (each step's share; its acceleration).
 
         ``on``: where it (and its cut) starts; ``until``: where it ends (``c19``, ``after "x" in w17``; it
         is kept, so a re-flow fits it again). ``shape``: frame counts per step; ``shape_from``: another
         timeline (``"almost-ready-round0"`` or ``"TL@REV"``) whose same sequence has the shape to restore
-        (a sequence torn by an earlier re-flow). Default: the shape it has now."""
+        (a sequence torn by an earlier re-flow). Default: the shape it has now.
+        ``curve`` persists a named fit curve with the original weights; re-fitting
+        never derives a new shape from rounded output. Linear retains the legacy allocator."""
+        from astrid.sdk.timeline.checkout import Checkout
+        from astrid.sdk.timeline.sequence_fit import fit_curve_name, fit_curve_inverse
+
         steps = self.steps
         if not steps:
             raise TimelineEditError(f"no sequence {self.id!r}")
+        named_curve = fit_curve_name(curve) if curve is not None else None
+        if named_curve is not None:
+            fit_curve_inverse(named_curve)  # validate before changing the recipe
+        recipe = intent.sequence_fit(steps[0].data) or {}
         frames = list(shape) if shape else None
         if shape_from is not None:
             name, _, rev = str(shape_from).partition("@")
@@ -867,6 +1098,11 @@ class StepSequence(_Suggest):
                                 f"{name}@{other_rev.removeprefix('authoring-parent-revision-')[:8]}" if other_rev else name)
         elif shape is not None:
             intent._set_or_drop(steps[0].data, "sequence_shape_from", "a given shape")
+        if named_curve is not None or ("weights" in recipe and frames is not None):
+            # Persist the authored weights, never infer them from an already curved layout.
+            recipe = {**recipe, "weights": frames if frames is not None else recipe.get("weights", self.frames),
+                      "curve": named_curve or recipe.get("curve", "linear")}
+            intent.set_sequence_fit(steps[0].data, recipe)
         if frames is not None:  # set the shape now: the re-lay keeps it
             first = steps[0]
             self._tl._relay_steps([c.data for c in steps], first.start - self._tl._shot_start(first.shot_id),
@@ -877,9 +1113,11 @@ class StepSequence(_Suggest):
         if until is not None:
             text = self._tl._moment_text(until)
             self._tl._moment_time(text, head)  # it must resolve
-            intent.set_until(head.data, text)
+            fit = intent.sequence_fit(head.data) or {}
+            intent.set_sequence_fit(head.data, {**fit, "land": text})
+            intent.set_until(head.data, None)
             intent.set_for(head.data, None)
-        self._tl.retime()
+        self._tl.resolve()
         return self
 
     def __repr__(self) -> str:
@@ -914,13 +1152,18 @@ def retime_scope(tl):
         yield cut_notes
         return
     tl._scope = []
+    tl._music_pending = {}
     try:
         yield cut_notes
     except BaseException:
         tl._scope = None
+        tl._music_pending = {}
         raise
     records, tl._scope = tl._scope, None
-    cut_notes.extend(tl._apply_bed_cuts(records))
+    try:
+        cut_notes.extend(tl._apply_bed_cuts(records))
+    finally:
+        tl._music_pending = {}
 
 
 def music_keyword(fn):
@@ -943,77 +1186,129 @@ def music_keyword(fn):
 
 
 def _follow_occurrences(tl: "Checkout", segment: str, said_before: Sequence[Any]) -> None:  # noqa: F821
-    """After line ``segment`` gets new words, keep every word moment on the word it meant.
+    """Align the old/new take, then rewrite references to the matched spoken run.
 
-    ``"and" in m11 #1`` names an occurrence. A take that says the word once more before it
-    ("front-end and back-end features, and share") would silently move the moment onto the
-    new word. The line's old and new words are matched by a diff; a moment whose word is
-    still said gets the occurrence number that now names it. A word the take no longer says
-    keeps its moment, so the re-flow reports it as an orphan.
+    A deleted run is durably orphaned: retaining its spelling alone would let a
+    surviving (or later reintroduced) ordinal silently take over the binding.
     """
     said_after = tl._word_list()
 
-    def places(words: Sequence[Any]) -> dict[int, tuple[str, int]]:
-        count: dict[str, int] = {}
-        out = {}
+    def places(words):
+        count, out = {}, {}
         for w in words:
-            out[id(w)] = (w.segment, count.get(w.segment, 0))
+            out[w.id] = (w.segment, count.get(w.segment, 0))
             count[w.segment] = count.get(w.segment, 0) + 1
         return out
 
     old_places, new_places = places(said_before), places(said_after)
     old_line = [_norm(w.text) for w in said_before if w.segment == segment]
     new_line = [_norm(w.text) for w in said_after if w.segment == segment]
-    moved: dict[int, int] = {}
+    moved = {}
     for tag, i1, i2, j1, _j2 in difflib.SequenceMatcher(a=old_line, b=new_line, autojunk=False).get_opcodes():
         if tag == "equal":
             moved.update({i1 + k: j1 + k for k in range(i2 - i1)})
 
-    def follow(m: Any) -> Any:
+    def follow(m):
         if m.kind in ("beat", "downbeat") and m.base is not None:
             base = follow(m.base)
-            return m if base is m.base else _dc_replace(m, base=base)
-        if m.kind != "word":
+            return None if base is None else m if base is m.base else _dc_replace(m, base=base)
+        if m.kind != "word" or m.source is not None:
             return m
         hits = mo.find_words(m, said_before)
         if not hits or (m.n is None and len(hits) > 1) or (m.n is not None and not 1 <= m.n <= len(hits)):
-            return m
-        seg, pos = old_places[id(hits[(m.n or 1) - 1][0])]
-        if seg == segment:
-            if pos not in moved:
-                return m
-            pos = moved[pos]
+            return m  # Existing ambiguity/malformed diagnostics stay strict.
+        run = hits[(m.n or 1) - 1]
+        target = []
+        for word in run:
+            seg, pos = old_places[word.id]
+            if seg == segment:
+                if pos not in moved:
+                    return None
+                pos = moved[pos]
+            target.append((seg, pos))
         now = mo.find_words(_dc_replace(m, n=None), said_after)
-        k = next((k for k, run in enumerate(now, 1) if new_places[id(run[0])] == (seg, pos)), None)
-        if k is None or (len(now) == 1 and m.n is None) or k == m.n:
+        k = next((k for k, run in enumerate(now, 1)
+                  if [new_places[w.id] for w in run] == target), None)
+        if k is None:
+            return None  # Every word of a phrase must still be contiguous.
+        if (len(now) == 1 and m.n is None) or k == m.n:
             return m
         return _dc_replace(m, n=k)
 
+    def follow_expr(expr):
+        if expr.get("orphan"):
+            return expr
+        if expr.get("moment"):
+            new = follow(mo.parse(expr["moment"]))
+            return None if new is None else {**expr, "moment": mo.format_moment(new)}
+        if "source" in expr:
+            return expr
+        if expr.get("word"):
+            old = next((w for w in said_before if w.id == expr["word"]), None)
+            if old is None or (expr.get("text") and _norm(old.text) != _norm(expr["text"])):
+                return None
+            seg, pos = old_places[old.id]
+            if seg == segment:
+                if pos not in moved:
+                    return None
+                pos = moved[pos]
+            new = next((w for w in said_after if new_places[w.id] == (seg, pos)), None)
+            return None if new is None else {**expr, "word": new.id}
+        return expr
+
+    def note(clip, label, old, new):
+        tl.notes.append(f"{clip.address}{label}: {old} → {new} (the same spoken word in the new take)")
+
     for clip in tl.clips():
-        for read, write in ((intent.on, intent.set_on), (intent.until, intent.set_until)):
-            text = read(clip.data)
-            if not text:
-                continue
-            try:
-                m = mo.parse(text)
-            except mo.MomentError:
-                continue
-            new = follow(m)
-            if new is not m:
-                write(clip.data, mo.format_moment(new))
-                tl.notes.append(f"{clip.address}: {text} → {mo.format_moment(new)} (the same spoken word in the new take)")
+        if not intent.orphan(clip.data):
+            for read, write in ((intent.on, intent.set_on), (intent.until, intent.set_until)):
+                text = read(clip.data)
+                if not text:
+                    continue
+                try:
+                    new = follow(mo.parse(text))
+                except mo.MomentError:
+                    continue
+                if new is None:
+                    reason = f"ORPHAN: {text} lost its spoken word in the new take"
+                    for mate in clip._sequence_mates():
+                        intent.set_orphan(mate.data, reason)
+                    tl._note_orphan(f"{clip.address}: {reason} (kept its last value)")
+                elif mo.format_moment(new) != text:
+                    write(clip.data, mo.format_moment(new))
+                    note(clip, "", text, mo.format_moment(new))
+            fit = intent.sequence_fit(clip.data)
+            if fit and fit.get("land") is not None:
+                land = fit["land"]
+                expr = {"moment": land} if isinstance(land, str) else land
+                try:
+                    new = follow_expr(expr)
+                except mo.MomentError:
+                    continue
+                if new is None:
+                    reason = f"ORPHAN: fit land {land} lost its spoken word in the new take"
+                    for mate in clip._sequence_mates():
+                        intent.set_orphan(mate.data, reason)
+                    tl._note_orphan(f"{clip.address}: {reason} (kept its last value)")
+                else:
+                    value = new["moment"] if isinstance(land, str) else new
+                    if value != land:
+                        intent.set_sequence_fit(clip.data, {**fit, "land": value})
+                        note(clip, " fit land", land, value)
         for path, expr in intent.formulas(clip.data).items():
-            if not isinstance(expr, Mapping) or not expr.get("moment"):
+            if not isinstance(expr, Mapping) or expr.get("orphan"):
                 continue
             try:
-                m = mo.parse(expr["moment"])
+                new = follow_expr(expr)
             except mo.MomentError:
                 continue
-            new = follow(m)
-            if new is not m:
-                intent.set_formula(clip.data, path, {**expr, "moment": mo.format_moment(new)})
-                tl.notes.append(f"{clip.address}.{path.removeprefix('params.')}: {expr['moment']} → "
-                                f"{mo.format_moment(new)} (the same spoken word in the new take)")
+            if new is None:
+                reason = f"ORPHAN: {expr.get('moment') or expr.get('word')} lost its spoken word in the new take"
+                intent.set_formula(clip.data, path, {**expr, "orphan": reason})
+                tl._note_orphan(f"{clip.address}.{path}: {reason} (kept its last value)")
+            elif new != expr:
+                intent.set_formula(clip.data, path, new)
+                note(clip, f".{path}", expr.get("moment") or expr.get("word"), new.get("moment") or new.get("word"))
 
 
 class Voice(_Suggest):
@@ -1022,10 +1317,15 @@ class Voice(_Suggest):
     def __init__(self, tl: "Checkout", segment: str):  # noqa: F821
         self._tl = tl
         self.segment = segment
+        self._shot_id, self._clip_id = None, None
 
     @property
     def clips(self) -> list[Clip]:
         found = [c for c in self._tl.clips() if c.is_audio and intent.line(c.data) == self.segment]
+        if self._clip_id is not None:
+            found = [c for c in found if (c.shot_id, c.id) == (self._shot_id, self._clip_id)]
+        elif any(intent.line_take(c.data) for c in found) and len(found) > 1:
+            raise TimelineEditError(f"line {self.segment!r} requires its occurrence/clip scope")
         if not found:
             known = sorted({intent.line(c.data) for c in self._tl.clips() if c.is_audio and intent.line(c.data)})
             raise TimelineEditError(f"no VO line {self.segment!r}; lines are: {', '.join(known)}")
@@ -1033,13 +1333,21 @@ class Voice(_Suggest):
 
     @property
     def words(self) -> Selection:
-        return Selection((w for w in self._tl.words if w.segment == self.segment), kind="word", tl=self._tl)
+        owners = {(c.shot_id, c.id) for c in self.clips}
+        return Selection((w for w in self._tl.words if (w.shot_id, w.clip_id) in owners), kind="word", tl=self._tl)
 
     @property
     def text(self) -> str:
         """The line's script text (as declared; else its words joined)."""
         declared = intent.line_text(self.clips[0].data)
         return declared if declared is not None else " ".join(w.text for w in self.words)
+
+    def set_text(self, text: str) -> "Voice":
+        """Change this line's script text without replacing its take or word timings."""
+        if not isinstance(text, str) or not text.strip():
+            raise TimelineEditError("line text must be a non-empty string")
+        intent.set_line_text(self.clips[0].data, text)
+        return self
 
     @music_keyword
     def replace(self, media: Any, *, words: Any, ripple: bool = True, text: str | None = None) -> list[tuple[str, float, float]]:
@@ -1100,11 +1408,19 @@ class Voice(_Suggest):
         return self
 
 
+def _voice_in_scope(tl, segment, shot_id, clip_id):
+    """Keep occurrence context private without changing Voice's public API."""
+    voice = Voice(tl, segment)
+    voice._shot_id, voice._clip_id = shot_id, clip_id
+    return voice
+
+
 class _MomentContext:
     """What a moment resolves against: the words, the music's beats, the cuts, and the clip's own cut."""
 
-    def __init__(self, tl: "Checkout", clip: Clip | None):  # noqa: F821
+    def __init__(self, tl: "Checkout", clip: Clip | None, *, film_end: float | None = None):  # noqa: F821
         self.tl, self.clip, self.fps = tl, clip, tl.fps
+        self.film_end = film_end
 
     def words(self):
         cache = tl_cache(self.tl)
@@ -1112,28 +1428,129 @@ class _MomentContext:
             cache["words"] = self.tl.words()
         return cache["words"]
 
-    def beats(self, kind: str):
-        out = []
-        for clip in self.tl.clips(audio=True):
-            if clip.track != "music" and not intent.beat_sources(clip.data):
+    def words_for(self, moment):
+        words = self.words()
+        if self.clip is not None and getattr(moment, "source", None) is None:
+            local = [word for word in words if word.shot_id == self.clip.shot_id]
+            if mo.find_words(moment, local) or (moment.line is not None and any(word.segment == moment.line for word in local)):
+                return local
+        return words
+
+    def _beat_beds(self, kind: str):
+        """Read the existing authored owners and their current sounding pieces."""
+        from astrid.sdk.timeline import music_beds
+
+        clips = list(self.tl.clips(audio=True))
+        by_id = {(c.shot_id, c.id): c for c in clips}
+        groups = {}
+        for clip in clips:
+            owned = music_beds.entry_for(clip)
+            if owned:
+                owner, entry = owned
+                if owner in groups:
+                    continue
+                sid, _ = music_beds.locate(self.tl, owner, entry["source"])
+                # Use the same projection as compile/project, including adopted
+                # arrangements and shared seams. The carrier is never rewritten.
+                output, _, _ = music_beds._materialize_entry(self.tl, owner, entry)
+                source_data = music_beds._resolved_source(self.tl, owner, entry["source"])
+                groups[owner] = (Clip(self.tl, sid, source_data),
+                                 [Clip(self.tl, sid, data) for data in output])
                 continue
-            speed = _num(clip.data.get("speed"), 1.0) or 1.0
-            src0 = _num(clip.data.get("from"))
-            for b in intent.beat_sources(clip.data, kind):
-                t = clip.start + (b - src0) / speed
-                if clip.start - 1e-6 <= t < clip.end - 1e-6:
-                    out.append(t)
-        return sorted(out)
+            source, seen = clip, set()
+            while source.id not in seen:
+                seen.add(source.id)
+                parent = intent._app(source.data).get("split_from")
+                ancestor = by_id.get((source.shot_id, parent))
+                if ancestor is None:
+                    break
+                source = ancestor
+            owner = music_beds.owner_for(self.tl, source)
+            if owner not in groups:
+                groups[owner] = (source, [])
+            groups[owner][1].append(clip)
+        return {owner: (source, pieces) for owner, (source, pieces) in groups.items()
+                if any(intent.beat_sources(c.data, kind) for c in pieces)}
+
+    def _beat_owner(self, kind: str, base: float, groups=None):
+        """The latest authored start owns an overlap; ScopedId breaks ties."""
+        groups = self._beat_beds(kind) if groups is None else groups
+        candidates = [(owner, source) for owner, (source, pieces) in groups.items()
+                      if any(c.start - 1e-6 <= base < c.end - 1e-6 for c in pieces)]
+        if not candidates:
+            return None
+        owner, _ = min(candidates, key=lambda item: (-item[1].start, item[0]))
+        return owner
+
+    def beats_at(self, kind: str, base: float):
+        groups = self._beat_beds(kind)
+        owner = self._beat_owner(kind, base, groups)
+        if owner is None:
+            return []
+        return self.beats(kind, bed=owner, _groups=groups)
+
+    def beats(self, kind: str, *, bed: str | None = None, _groups=None):
+        # Keep the existing optional selector, now fed by the resolver with an
+        # exact authored owner. Legacy split_from ancestry is occurrence-local.
+        groups = self._beat_beds(kind) if _groups is None else _groups
+        out = []
+        for owner, (source, pieces) in groups.items():
+            if bed is not None and bed not in {owner, source.id, *(c.id for c in pieces)}:
+                continue
+            for clip in pieces:
+                speed = _num(clip.data.get("speed"), 1.0) or 1.0
+                src0 = _num(clip.data.get("from"))
+                for b in intent.beat_sources(clip.data, kind):
+                    t = float(source_to_timeline_time(b, source_start=src0,
+                                                     timeline_start=clip.start, speed=speed))
+                    if clip.start - 1e-6 <= t < clip.end - 1e-6:
+                        out.append(t)
+        # A crossfade may expose the same beat in both pieces of one owner.
+        return sorted(set(out)) if bed is not None else sorted(out)
+
+    def clip_edge(self, scoped_id: str, edge: str) -> float:
+        from astrid.sdk.timeline import commands
+        try:
+            target = commands.authored_owner(self.tl, scoped_id)
+        except TimelineEditError as exc:
+            raise mo.MomentError(str(exc)) from None
+        # Resolve authored edges recursively, independent of evaluator list order.
+        stack = getattr(self.tl, "_clip_moment_stack", set())
+        key = (scoped_id, edge)
+        if key in stack:
+            raise mo.MomentError(f"CYCLE: {scoped_id}.{edge}")
+        self.tl._clip_moment_stack = stack
+        stack.add(key)
+        try:
+            text = intent.on(target.data) if edge == "start" else intent.until(target.data)
+            ctx = _MomentContext(self.tl, target)
+            if text:
+                # A picture's start uses the same take-in convention as its
+                # placement; dependent layers must read that exact edge too.
+                return mo.resolve(text, ctx, in_point=edge == "start" and self.tl._is_picture(target))
+            if edge == "start":
+                return target.start
+            start = self.clip_edge(scoped_id, "start")
+            length = intent.for_s(target.data)
+            if length is not None:
+                return start + length
+            if intent.cut_of(target.data) and not target.is_audio and not intent.sequence(target.data):
+                span = self.tl._own_cut_span(target)
+                if span and span[1] is not None:
+                    return span[1]
+            return start + target.duration
+        finally:
+            stack.remove(key)
 
     def cut_start(self, cut_id: str) -> float:
-        cut_id = self.tl._cut_id(cut_id) or cut_id
-        for g in self.tl._cut_groups():
+        cut_id = self.tl._cut_id(cut_id, self.clip) or cut_id
+        for g in self.tl.cut_index.groups(self.tl):
             if g["id"] == cut_id:
                 return g["start"]
         raise mo.MomentError(self.tl._no_cut(cut_id))
 
     def cut_end(self, cut_id: str) -> float:
-        cut_id = self.tl._cut_id(cut_id) or cut_id
+        cut_id = self.tl._cut_id(cut_id, self.clip) or cut_id
         spans = self.tl._cut_spans()
         if cut_id not in spans:
             raise mo.MomentError(self.tl._no_cut(cut_id))
@@ -1142,12 +1559,16 @@ class _MomentContext:
 
     def own_cut(self):
         """The clip's cut; a moment asked of the film itself (``tl.time("end")``) is relative to the whole film."""
+        if self.film_end is not None:
+            return (0.0, self.film_end)  # stored timeline-level until: never feed its new end back into itself
         return self.tl._own_cut_span(self.clip) if self.clip is not None else (0.0, self.tl.duration)
 
     def line_in_point(self, line: str):
         """Where the take begins on the timeline (its file's zero: a trimmed or tightened take starts later)."""
         try:
-            first = Voice(self.tl, line).clips[0]
+            candidates = [c for c in self.tl.clips() if self.clip is not None and c.shot_id == self.clip.shot_id
+                          and c.is_audio and intent.line(c.data) == line]
+            first = min(candidates, key=lambda c: c.start) if candidates else Voice(self.tl, line).clips[0]
         except TimelineEditError:
             return None
         speed = _num(first.data.get("speed"), 1.0) or 1.0
@@ -1158,3 +1579,18 @@ def tl_cache(tl: "Checkout") -> dict[str, Any]:  # noqa: F821
     if tl._mcache is None:
         tl._mcache = {}
     return tl._mcache
+
+
+# These semantic adapters are installed before Checkout registers the existing
+# Clip operations. The command/transaction runner remains their only boundary.
+from astrid.sdk.timeline.music_beds import source_edit as _music_source_edit
+for _music_method in (
+    "on", "until", "enter_at", "nudge", "hold_for", "for_", "set_duration", "trim", "slip", "extend", "end_at",
+    "set", "set_param", "clear", "set_track", "clear_asset", "swap_asset", "set_beats", "keyframe_at",
+    "remove", "remove_layer", "keep", "set_look", "tag", "move_to_cut",
+):
+    setattr(Clip, _music_method, _music_source_edit(getattr(Clip, _music_method)))
+# Identity-owned public mutators use the same explicit registry and runner as
+# the original model methods; checkout's lifecycle registration stays untouched.
+_identity_commands.register(Clip, "clip", ("detach_audio",))
+_identity_commands.register(Cut, "cut", ("duplicate",))

@@ -27,6 +27,9 @@ class Plan:
     blocking: tuple[str, ...] = ()
     sweep: tuple[str, ...] = ()
     digests: Mapping[str, str] = field(default_factory=dict)
+    # Internal recorder output feeds CommitChanges; Plan's existing wire schema stays unchanged.
+    direct_writes: tuple = ()
+    consequences: tuple = ()
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -56,6 +59,21 @@ class Edit:
         self.plan: Plan | None = None
         self.report: CheckReport | None = None
         self.saved: Any = None
+        self.calls: list[Any] = []
+        self.failure: str | None = None
+        self.canonical = False
+        self.cancelled = False
+        self._check_admission = None
+        self._check_admission_closed = False
+
+    def _check_context(self):
+        if self._check_admission_closed:
+            raise RuntimeError("edit check admission is closed")
+        if self._check_admission is None:
+            from astrid.core.pack.checks import CheckAdmissionContext
+
+            self._check_admission = CheckAdmissionContext()
+        return self._check_admission
 
 
 def _digest(document: Any) -> str:
@@ -73,104 +91,220 @@ def _affected_cuts(before: Any, after: Any) -> list[str]:
                 cut_id = intent.cut_of(clip.data) if clip is not None else None
                 if cut_id:
                     affected.add(cut_id)
-    order = [group["id"] for group in after._cut_groups()]
+    order = [group["id"] for group in after.cut_index.groups(after)]
     return sorted(affected, key=lambda cut_id: order.index(cut_id) if cut_id in order else len(order))
 
 
 def _record(tl: Any, label: str, outcome: str, *, reason: str | None, before: str | None = None,
-            after: str | None = None, clips=(), cuts=(), error: str | None = None) -> None:
+            after: str | None = None, clips=(), cuts=(), error: str | None = None, calls=()) -> None:
     if tl.path:
         _journal.record_or_note(tl, Path(tl.path), kind="edit", outcome=outcome, label=label,
                                 before=before, after=after, clips=tuple(clips), cuts=tuple(cuts),
-                                reason=reason, error=error)
+                                reason=reason, error=error, calls=tuple(calls))
 
 
-def _restore(tl: Any, bundle: Any, journal_len: int, notes_len: int) -> None:
-    tl.bundle = bundle
-    tl._refresh()
-    del tl._journal[journal_len:]
-    del tl.notes[notes_len:]
+def _restore_value(current, previous):
+    # Restore live view dictionaries in place where possible, so a retained Clip
+    # cannot continue exposing a partially written value after a refusal.
+    if isinstance(current, dict) and isinstance(previous, dict):
+        for key in list(current):
+            if key not in previous:
+                del current[key]
+        for key, value in previous.items():
+            current[key] = _restore_value(current.get(key), value)
+        return current
+    if isinstance(current, list) and isinstance(previous, list):
+        by_id = {row["id"]: row for row in current if isinstance(row, dict) and "id" in row}
+        restored = []
+        for index, value in enumerate(previous):
+            old = by_id.get(value.get("id")) if isinstance(value, dict) and "id" in value else current[index] if index < len(current) else None
+            restored.append(_restore_value(old, value))
+        current[:] = restored
+        return current
+    return copy.deepcopy(previous)
+
+
+def _restore(tl: Any, state: dict, contents: dict, cache: Any) -> None:
+    # Timing commands can already have adopted reports/scopes before a later
+    # command refuses. Restore entry containers in place and remove new fields,
+    # retaining the original bundle, live views and diagnostic handles.
+    for key, previous in contents.items():
+        state[key] = _restore_value(state[key], previous)
+    if cache is not None:
+        state["_mcache"].clear()
+        state["_mcache"].update(cache)
+    tl.__dict__.clear()
+    tl.__dict__.update(state)
 
 
 def _plan(label: str, *, changed: bool, changes=(), diff=None, clips=(), cuts=(), digests=None,
-          report: CheckReport | None = None) -> Plan:
-    return Plan(label=label, changed=changed, changes=tuple(changes), diff=diff or {}, clips=tuple(clips),
+          report: CheckReport | None = None, calls=(), direct_writes=(), consequences=()) -> Plan:
+    return Plan(label=label, calls=tuple(calls), direct_writes=tuple(direct_writes), consequences=tuple(consequences), changed=changed, changes=tuple(changes), diff=diff or {}, clips=tuple(clips),
                 cuts=tuple(cuts), lint_delta={"new": list((report.problems or []) if report else []), "resolved": []},
                 blocking=tuple(report.blocking) if report else (), sweep=tuple(cuts), digests=dict(digests or {}))
 
 
+def _needs_resolve(calls):
+    if calls and all(call.op == "timeline.restructure" or (
+            call.op == "timeline.inverse" and call.args.get("writes") and all(
+                w.get("id") == "parent" and w.get("path") == "storage_policy"
+                for w in call.args["writes"])) for call in calls):
+        return False  # storage policy never changes the authored clocks
+    if calls and all(call.op == "timeline.register-asset" or (
+            call.op == "timeline.inverse" and call.args.get("writes") and all(
+                w.get("id") == "parent" and (w.get("path") == "registry" or
+                    w.get("path", "").startswith(("registry.", "registry[")))
+                for w in call.args["writes"])) for call in calls):
+        return False  # registry assignment does not author timing or intent versions
+    # Explicit materializers and staged gaps already own their timing semantics.
+    if calls and all(call.op in {"timeline.duplicate", "shot.set", "occurrence.set", "occurrence.add", "shot-group.set", "shot-group.remove"} for call in calls):
+        return False
+    if len(calls) != 1:
+        return True
+    call = calls[0]
+    if (call.op == "timeline.apply-script" and isinstance(call.args.get("spec"), Mapping)
+            and call.args["spec"].get("version") == 1):
+        return False  # the prepared operation owns its one reflow/music scope
+    return not (call.op in {"timeline.duplicate", "timeline.resolve", "timeline.reflow", "timeline.retime", "shot.set", "occurrence.set", "occurrence.add", "shot-group.set", "shot-group.remove"}
+                or (call.op == "voice.set-gap-after" and call.args.get("reflow") is False))
+
+
 @contextlib.contextmanager
 def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool = True,
-                     quiet: bool = False, reason: str | None = None) -> Iterator[Edit]:
+                     quiet: bool = False, reason: str | None = None, persist: bool = True,
+                     record_no_change: bool = True, record_rollback: bool = True) -> Iterator[Edit]:
+    tl._assert_runner_state()
     if getattr(tl, "_edit_depth", 0):
-        outer = getattr(tl, "_open_edit", None)
-        yield outer if outer is not None else Edit(label, dry_run=dry_run, reason=reason)
+        yield tl._open_edit
         return
 
     tx = Edit(label, dry_run=dry_run, reason=reason)
-    entry = copy.deepcopy(tl.bundle)
-    journal_len, notes_len = len(tl._journal), len(tl.notes)
+    state = tl.__dict__.copy()
+    # Cache entries contain live SDK handles; lookups only add cache keys. Keep
+    # those values by identity rather than copying their owner into a snapshot.
+    cache = dict(tl._mcache) if tl._mcache is not None else None
+    contents = copy.deepcopy({key: value for key, value in state.items()
+                              if key != "_mcache" and isinstance(value, (dict, list))}, {id(tl): tl})
+    entry = contents["bundle"]
+    tx.base_document = entry  # relation detaches freeze edges on the captured transaction base
     before_snapshot = _store._snapshot(tl)
-    tl._edit_depth = 1
-    tl._open_edit = tx
+    tl._edit_depth, tl._open_edit = 1, tx
     try:
+        from astrid.core.timeline.compatibility import (
+            TimelineCompatibilityError,
+            require_writable_candidate,
+        )
+        from astrid.sdk.timeline.commands import CommandError, direct_writes, guard_direct_writes
+        try:
+            require_writable_candidate(tl.document())
+        except TimelineCompatibilityError as exc:
+            raise CommandError(str(exc)) from None
         yield tx
+        label = tx.label  # nested admitted operations retain their exact source identity
+        if tx.cancelled:
+            _restore(tl, state, contents, cache)
+            tx.calls.clear()
+            digest = _digest(_strip_derived(copy.deepcopy(entry)))
+            tx.plan = _plan(label, changed=False, digests={"before": digest, "after": digest})
+            return
+        tl._assert_runner_state()
+        # Capture authored values before the existing resolver can normalize them.
+        raw_transitions = {(clip.shot_id, clip.id): copy.deepcopy(clip.data.get("transition"))
+                           for clip in tl.clips() if not clip.is_audio}
+        guards = direct_writes(tl, tx.calls)
+        if _store._snapshot(tl) != before_snapshot:
+            # Explicit timing materializers own their timing semantics. In
+            # particular, set_gap_after(reflow=False) is used to stage several
+            # edits before one explicit reflow.
+            if _needs_resolve(tx.calls):
+                # Resolve through today's timing path. Internal compiler writes join
+                # this transaction and do not recursively produce another command.
+                tl._command_depth = getattr(tl, "_command_depth", 0) + 1
+                try:
+                    tl.resolve()
+                finally:
+                    tl._command_depth -= 1
+        guard_direct_writes(tl, guards)
+        from astrid.sdk.timeline.commands import compact_calls
+        tx.calls[:] = compact_calls(tx.calls, tl)
+        before_doc = _strip_derived(copy.deepcopy(entry))
+        after_doc = _strip_derived(tl.document())
+        digests = {"before": _digest(before_doc), "after": _digest(after_doc)}
+        previous = tl.__class__(copy.deepcopy(entry))
+        from astrid.sdk.timeline.transitions import admit_transition_changes
+        admit_transition_changes(tl, previous, raw_transitions=raw_transitions)
+        if _store._snapshot(tl) == before_snapshot:
+            from astrid.sdk.timeline.commands import finish_recording
+            finish_recording(tl, tx, entry)
+            tl._accept_bundle()
+            tx.plan = _plan(label, changed=False, digests=digests, calls=tx.calls,
+                            direct_writes=getattr(tx, "direct_writes", ()), consequences=getattr(tx, "consequences", ()))
+            if persist and record_no_change and not dry_run:
+                _record(tl, label, "no-change", reason=reason, before=digests["before"], after=digests["after"], calls=tx.calls)
+            if not quiet:
+                print(f"no change: {label}")
+            return
+
+        from astrid.sdk.timeline_cuts import diff_bundles
+        changes = describe_changes(previous, tl)
+        diff = diff_bundles(before_doc, after_doc)
+        clips = list(dict.fromkeys(str(row["clip_id"]) for row in diff.get("changes", []) if row.get("clip_id") is not None))
+        cuts = _affected_cuts(previous, tl)
+        tx.changed, tx.changes = True, changes
+        # Quick checks happen before persistence. Existing compatibility guards
+        # remain in the save path; pre-existing film lint is not a new refusal.
+        local_only = getattr(tl, "_edit_local_only", False)
+        tl._edit_local_only = True
+        tl._command_depth = getattr(tl, "_command_depth", 0) + 1
+        try:
+            tx.report = tl._check(_admission_context=tx._check_context()) if check else None
+        finally:
+            tl._edit_local_only = local_only
+            tl._command_depth -= 1
+        guard_direct_writes(tl, guards)
+        from astrid.sdk.timeline.commands import finish_recording
+        finish_recording(tl, tx, entry)
+        tl._accept_bundle()
+        tx.plan = _plan(label, changed=True, changes=changes, diff=diff, clips=clips, cuts=cuts,
+                        digests=digests, report=tx.report, calls=tx.calls,
+                        direct_writes=getattr(tx, "direct_writes", ()), consequences=getattr(tx, "consequences", ()))
+        if dry_run:
+            _restore(tl, state, contents, cache)
+            # Explicit legacy SDK audit transactions retain their audit record.
+            # Executable command previews (canonical=True) write nothing.
+            if not tx.canonical:
+                _record(tl, label, "dry-run", reason=reason, before=digests["before"], after=digests["after"],
+                        clips=clips, cuts=cuts, calls=tx.calls)
+            if not quiet:
+                print("dry run (nothing saved):")
+                for line in changes:
+                    print(f"  {line}")
+            return
+
+        tl._journal.append((str(label), before_snapshot))
+        if persist and tl.path:
+            tx.saved = tl.save(quiet=True)
+        if not quiet:
+            where = "saved" if tx.saved else "in memory"
+            first = tx.report.brief() if tx.report is not None else ""
+            print(f'edit "{label}": {len(changes)} change(s) · {where}' + (f" · {first}" if first else ""))
     except BaseException as exc:
-        _restore(tl, entry, journal_len, notes_len)
-        _record(tl, label, "rolled-back", reason=reason, error=_journal.one_line(exc))
+        _restore(tl, state, contents, cache)
+        if not dry_run and record_rollback:
+            from astrid.sdk.timeline.commands import call_label, compact_calls
+            tx.calls[:] = compact_calls(tx.calls)
+            record_label = call_label(tx.calls) if tx.canonical and tx.calls else label
+            _record(tl, record_label, "rolled-back", reason=reason, error=tx.failure or _journal.one_line(exc), calls=tx.calls)
         raise
     finally:
-        tl._edit_depth = 0
-        tl._open_edit = None
-
-    before_doc = _strip_derived(copy.deepcopy(entry))
-    after_doc = _strip_derived(tl.document())
-    digests = {"before": _digest(before_doc), "after": _digest(after_doc)}
-    if _store._snapshot(tl) == before_snapshot:
-        tx.plan = _plan(label, changed=False, digests=digests)
-        _record(tl, label, "no-change", reason=reason, before=digests["before"], after=digests["after"])
-        if not quiet:
-            print(f"no change: {label}")
-        return
-
-    from astrid.sdk.timeline_cuts import diff_bundles
-
-    previous = tl.__class__(copy.deepcopy(entry))
-    changes = describe_changes(previous, tl)
-    diff = diff_bundles(before_doc, after_doc)
-    clips = list(dict.fromkeys(str(row["clip_id"]) for row in diff.get("changes", []) if row.get("clip_id") is not None))
-    cuts = _affected_cuts(previous, tl)
-    tx.changed, tx.changes = True, changes
-
-    if dry_run:
-        try:
-            report = tl.check() if check else None
-        finally:
-            _restore(tl, entry, journal_len, notes_len)
-        tx.report = report
-        tx.plan = _plan(label, changed=True, changes=changes, diff=diff, clips=clips, cuts=cuts,
-                        digests=digests, report=report)
-        _record(tl, label, "dry-run", reason=reason, before=digests["before"], after=digests["after"],
-                clips=clips, cuts=cuts)
-        if not quiet:
-            print("dry run (nothing saved):")
-            for line in changes:
-                print(f"  {line}")
-        return
-
-    tl._journal.append((str(label), before_snapshot))
-    try:
-        if tl.path:
-            tx.saved = tl.save(quiet=True)
-    except BaseException as exc:
-        _restore(tl, entry, journal_len, notes_len)
-        _record(tl, label, "rolled-back", reason=reason, error=_journal.one_line(exc))
-        raise
-    tx.report = tl.check() if check else None
-    tx.plan = _plan(label, changed=True, changes=changes, diff=diff, clips=clips, cuts=cuts,
-                    digests=digests, report=tx.report)
-    if not quiet:
-        where = "saved" if tx.saved else "in memory"
-        first = tx.report.brief() if tx.report is not None else ""
-        print(f'edit "{label}": {len(changes)} change(s) · {where}' + (f" · {first}" if first else ""))
-
+        if tx._check_admission is not None:
+            tx._check_admission.close()
+            tx._check_admission = None
+        tx._check_admission_closed = True
+        tl._edit_depth, tl._open_edit = 0, None
+        # The runner's nesting marker belongs to this transaction, including
+        # implicit resolve/check calls. Do not leave a new attribute on refusal.
+        if "_command_depth" not in state:
+            tl.__dict__.pop("_command_depth", None)
+        else:
+            tl._command_depth = state["_command_depth"]

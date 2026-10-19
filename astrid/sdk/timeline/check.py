@@ -1,6 +1,8 @@
 """Checkout: check, lint, picture gaps, stale notes, verify; plus CheckReport and describe_changes."""
 from __future__ import annotations
 
+from astrid.core.timeline.cut_index import cut_index
+
 import copy
 import dataclasses
 import json
@@ -11,10 +13,7 @@ from typing import Any, Iterable, Mapping
 
 from astrid.core.timeline import moments as mo
 from astrid.sdk import timeline_intent as intent
-from astrid.core.timeline.cuts import (
-    occurrences_from_bundle,
-    picture_cuts,
-)
+from astrid.core.timeline.cuts import occurrences_from_bundle
 
 from astrid.sdk.timeline import store as _store
 from astrid.sdk.timeline._common import TimelineEditError
@@ -34,8 +33,6 @@ def _broken_head() -> list[str]:
 
 
 _ELEMENT_COVERAGE: dict[str, dict] = {}
-_DAMAGED_ART_THRESHOLD = 0.75
-_NO_OUTLINE_STYLE = 0.10  # below this the art has no outline by design (sparks, dots)
 
 
 def _cut_in(table: list[tuple[float, float, str]], t: float) -> str | None:
@@ -44,14 +41,58 @@ def _cut_in(table: list[tuple[float, float, str]], t: float) -> str | None:
 
 
 def element_coverage_cached(element_ids: Iterable[str]) -> dict[str, dict]:
-    """``onscreen.element_coverage`` read once per process per element (the registry load is the cost)."""
-    from astrid.core.timeline import onscreen
+    """Declaration metadata cached by its file identity; no renderer dependency."""
+    from astrid.core.timeline.roles import element_coverage
 
-    ids = list(element_ids)
-    missing = sorted({i for i in ids if i not in _ELEMENT_COVERAGE})
-    if missing:
-        _ELEMENT_COVERAGE.update(onscreen.element_coverage(missing))
-    return {i: _ELEMENT_COVERAGE[i] for i in ids}
+    return element_coverage(list(element_ids))
+
+
+def _evaluation_findings(spans):
+    return list(dict.fromkeys(finding for span in spans
+                             for finding in getattr(span, "findings", ())))
+
+
+def _evaluation_complete(spans):
+    return not any(s.cls == "UNKNOWN" or s.content == "UNKNOWN" or getattr(s, "findings", ()) for s in spans)
+
+
+def _require_complete_evaluation(checkout):
+    """Gate publication on scene answers without starting unrelated media reads."""
+    spans = checkout._on_screen()
+    if not _evaluation_complete(spans):
+        raise TimelineEditError("not publishing: scene evaluation incomplete; " + "; ".join(
+            f"evaluation {finding}" for finding in _evaluation_findings(spans)))
+    return spans
+
+
+def _require_empty_evaluation_domain(candidate):
+    """Validate the complete candidate and use publication's shared coverage.
+
+    An empty-only Host must never acquire a renderer, even for an invalid
+    nonempty candidate. The rejecting client also prevents ambient selection.
+    """
+    import copy
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    from astrid.core.timeline import scene_answers
+    from astrid.sdk.timeline.chapter_storage import compile_candidate
+    from astrid.sdk.timeline.checkout import Checkout
+
+    class NoFrames:
+        def query_scene(self, **kwargs):
+            raise FrameOwnerError("empty_only_frame_query")
+
+    previous = scene_answers.use_client(NoFrames())
+    try:
+        snapshot = copy.deepcopy(candidate)
+        compile_candidate(snapshot)  # The same complete, hydrated publication validator.
+        if _require_complete_evaluation(Checkout(snapshot)):
+            raise FrameOwnerError("nonempty_evaluation_domain")
+    except FrameOwnerError:
+        raise
+    except (ValueError, TypeError, KeyError, AttributeError, OverflowError) as exc:
+        raise FrameOwnerError("empty_candidate_invalid") from exc
+    finally:
+        scene_answers.use_client(previous)
 
 
 class _CheckMixin:
@@ -79,9 +120,9 @@ class _CheckMixin:
         return out
 
     def _on_screen(self) -> list:
-        """Every frame of the film, covered or not: ``onscreen.coverage`` over the checkout's visual clips in
+        """Every frame of the film, covered or not: shared renderer coverage over the checkout's visual clips in
         timeline seconds (the render config's shape), tracks top first. Run per check, not per clip."""
-        from astrid.core.timeline import onscreen
+        from astrid.core.timeline import scene_answers
 
         tracks: list[dict[str, Any]] = []
         seen: set[Any] = set()
@@ -91,19 +132,23 @@ class _CheckMixin:
                     seen.add(track.get("id"))
                     tracks.append(dict(track))
         clips = []
+        scene_assets = {}
         for clip in self.clips():
             if clip.is_audio:
                 continue
             data = dict(clip.data)
             data.update({"clipType": clip.element, "track": clip.track, "at": clip.start, "hold": clip.duration,
                          "app": {"cut": clip.cut_id, "layer": clip.layer_name}})
+            if clip.asset:
+                data["asset"] = "scene:" + clip.id
+                scene_assets[data["asset"]] = dict(self._sprite_asset_entry(clip))
             clips.append(data)
         visual = ((((self.bundle.get("parent") or {}).get("config") or {}).get("theme_overrides") or {})
                   .get("visual") or {}).get("canvas") or {}
         canvas = {"width": visual.get("width", 1920), "height": visual.get("height", 1080)}
         elements = element_coverage_cached({c["clipType"] for c in clips})
         end_frame = int(round(self.duration * self.fps))
-        return onscreen.coverage({"tracks": tracks, "clips": clips}, self.fps, canvas, elements,
+        return scene_answers.coverage({"tracks": tracks, "clips": clips, "assets": {"assets": scene_assets}}, self.fps, canvas, elements,
                                  start_frame=0, end_frame=end_frame)
 
     def _showing(self, a: float, b: float) -> list[str]:
@@ -130,6 +175,12 @@ class _CheckMixin:
         under them. The on-screen model decides (element metadata, opacity, bounds), not a list of types.
         Black under whatever is left. Blocking: a re-flow must never tear the film. ``spans``: the film's
         on-screen spans when the caller has them (check() computes them once)."""
+        if spans is None:
+            spans = self._on_screen()
+            if any(span.cls == "UNKNOWN" for span in spans):
+                from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+                raise FrameOwnerError("evaluation_incomplete: " + "; ".join(
+                    finding for span in spans for finding in getattr(span, "findings", ())))
         out = []
         table = self._cut_table()
         for span, a, b in self._spans_of("GAP", spans=spans):
@@ -144,7 +195,7 @@ class _CheckMixin:
         """Each cut's picture span: from its first to its last plate-track clip (a cut with no plate: its window)."""
         windows: dict[str, tuple[float, float]] = {}
         spans = self._cut_spans()
-        for g in self._cut_groups():
+        for g in self.cut_index.groups(self):
             beds = [c for c in g["clips"] if c.track == "plate" and not c.is_audio]
             if beds:
                 windows[g["id"]] = (min(c.start for c in beds), max(c.end for c in beds))
@@ -200,14 +251,20 @@ class _CheckMixin:
             if clip.is_audio:
                 continue
             shot_end = self._shot_start(clip.shot_id) + self._shot_length(clip.shot_id)
-            if clip.end > shot_end + tolerance:
+            visible_end = clip.end
+            if clip.shot_id is None and not self.bundle.get("placements"):
+                # Flat parent Sequences use independently rounded starts and
+                # durations, just like their canonical composition extent.
+                from astrid.core.timeline.duration import clip_end_frame
+                visible_end = clip_end_frame(clip.data, self.fps) / self.fps
+            if visible_end > shot_end + tolerance:
                 out.append(f"{clip.address} ends at {clip.end:.2f} s, after its shot ends at {shot_end:.2f} s: "
                            "the render would cut it off; extend its shot's picture or shorten the clip")
         return out
 
     def _sprite_problems(self) -> tuple[list[str], list[str]]:
         """(blocking, notes) for pixel sprites: canvas bounds, simultaneous scale, and source integrity."""
-        from astrid.core.timeline import onscreen
+        from astrid.core.timeline import scene_answers
 
         canvas = ((((self.bundle.get("parent") or {}).get("config") or {}).get("theme_overrides") or {})
                   .get("visual") or {}).get("canvas") or {}
@@ -245,7 +302,10 @@ class _CheckMixin:
                     layout["x"] = to_canvas(clip.element, "x", px_x)
                 if px_y is not None:
                     layout["y"] = to_canvas(clip.element, "y", px_y)
-                bounds, _source = onscreen.layout_bounds({"params": layout}, width, height)
+                bounds, _source = scene_answers.bounds_at({"tracks": [{"id": clip.track, "kind": "visual"}],
+                    "clips": [{**dict(clip.data), "params": layout, "clipType": clip.element, "track": clip.track,
+                               "at": 0, "hold": clip.duration}]}, int(frame), self.fps,
+                    {"width": width, "height": height}, clip.id)
                 if bounds is None:
                     continue
                 measured += 1
@@ -289,25 +349,6 @@ class _CheckMixin:
                 notes.append(f"MIXED-SCALE {left.address} (scale {left_scale:g}) and {right.address} "
                              f"(scale {right_scale:g}) are on screen together at {start:.2f}–{end:.2f} s")
 
-        for clip in sprites:
-            if not clip.asset:
-                continue
-            entry = self._sprite_asset_entry(clip)
-            provenance = entry.get("pixel_provenance") if isinstance(entry.get("pixel_provenance"), Mapping) else {}
-            integrity = provenance.get("outline_integrity")
-            if isinstance(integrity, Mapping):
-                integrity = integrity.get("fraction")
-            if integrity is None:
-                integrity = self._native_outline_integrity(entry)
-            try:
-                score = float(integrity)
-            except (TypeError, ValueError):
-                continue
-            # Damage is a partly broken outline (a lossy re-snap). Art drawn with no outline at all
-            # (sparks, dots: integrity near 0) is a style, not damage.
-            if _NO_OUTLINE_STYLE <= score < _DAMAGED_ART_THRESHOLD:
-                notes.append(f"DAMAGED-ART {clip.address}: {clip.asset} outline integrity {score:.2f} "
-                             f"(threshold {_DAMAGED_ART_THRESHOLD:.2f})")
         return blocking, notes
 
     def _sprite_asset_entry(self, clip: Clip) -> Mapping[str, Any]:
@@ -328,6 +369,8 @@ class _CheckMixin:
                 source = str(path)
         else:
             media_id = entry.get("media_id") or entry.get("content_sha256")
+            if getattr(self, "_edit_local_only", False):
+                return None  # edit validation never acquires a Runtime or writes its acquisition lock
             if not isinstance(media_id, str) or not media_id.startswith("sha256:"):
                 return None
             cache = self.__dict__.setdefault("_art_bytes", {})
@@ -363,43 +406,99 @@ class _CheckMixin:
     def _stale_whys(self) -> list[str]:
         from astrid.sdk.timeline.checkout import Checkout
         """Cuts whose why may no longer say what is there: written when the cut had other layers, or its
-        layers changed (a swap, a replace) since checkout while the why stayed the same. Info, never a block."""
-        from astrid.sdk.timeline_cuts import base_bundle
+        words or picture changed since checkout while the why stayed the same. Info, never a block."""
+        from astrid.sdk.timeline_cuts import base_bundle, build_cut_table
 
         out = []
         notes = self.cut_notes_all()
+        document = self.document()
         try:
-            base = Checkout(base_bundle(self.document()))
-            then_groups = {g["id"]: g for g in base._cut_groups()}
+            before_bundle = base_bundle(document)
+            base = Checkout(before_bundle)
+            then_groups = {g["id"]: g for g in base.cut_index.groups(base)}
             then_notes = base.cut_notes_all()
+            before_table = build_cut_table(before_bundle)
+            after_table = build_cut_table(document)
+
+            def word_signatures(bundle: Mapping[str, Any], table: Mapping[str, Any]) -> dict[str, tuple]:
+                rows = [row for row in table.get("rows", ()) if row.get("cut_id")]
+                grouped: dict[str, list[tuple[Any, ...]]] = {str(row["cut_id"]): [] for row in rows}
+                words = Checkout(copy.deepcopy(dict(bundle))).words()
+                for word in words:
+                    middle = (word.start + word.end) / 2
+                    row = next((row for row in rows if row["start"] - 1e-6 <= middle < row["end"] - 1e-6), None)
+                    if row is not None:
+                        grouped[str(row["cut_id"])].append((
+                            word.id,
+                            word.text,
+                            round((word.start - row["start"]) * self.fps),
+                            round((word.end - row["start"]) * self.fps),
+                        ))
+                return {cut_id: tuple(items) for cut_id, items in grouped.items()}
+
+            before_words = word_signatures(before_bundle, before_table)
+            after_words = word_signatures(document, after_table)
+            changed_words = {
+                cut_id for cut_id in before_words.keys() | after_words.keys()
+                if before_words.get(cut_id, ()) != after_words.get(cut_id, ())
+            }
         except Exception:  # noqa: BLE001
-            then_groups, then_notes = {}, {}
+            then_groups, then_notes, changed_words = {}, {}, set()
 
-        def signature(clips: Iterable[Clip]) -> list[str]:
-            return sorted(f"{intent.layer_of(c.data) or c.id}:{c.element}:{c.asset or ''}" for c in clips)
+        def signature(group: Mapping[str, Any]) -> list[str]:
+            import json
 
-        for g in self._cut_groups():
+            origin = float(group["start"])
+            clips = group["clips"]
+            fields = (
+                "asset", "clipType", "from", "to", "speed", "params", "x", "y", "width", "height",
+                "opacity", "cropTop", "cropBottom", "cropLeft", "cropRight", "entrance", "exit",
+                "transition", "effects", "modifiers", "keyframeOrigin",
+            )
+            rows = []
+            for clip in clips:
+                data = clip.data
+                visual = {name: data[name] for name in fields if name in data}
+                rows.append(json.dumps({
+                    "id": clip.id,
+                    "layer": intent.layer_of(data),
+                    "element": clip.element,
+                    "track": clip.track,
+                    "relative_start_frame": round((clip.start - origin) * self.fps),
+                    "relative_end_frame": round((clip.end - origin) * self.fps),
+                    "visual": visual,
+                }, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str))
+            return sorted(rows)
+
+        for g in self.cut_index.groups(self):
             note = notes.get(g["id"], {})
             why = note.get("why")
             old = then_groups.get(g["id"])
-            if why and old and then_notes.get(g["id"], {}).get("why") == why and not note.get("why_layers") \
-                    and (signature(old["clips"]) != signature(g["clips"])
-                         or (round(old["start"] * self.fps), len(old["clips"])) != (round(g["start"] * self.fps), len(g["clips"]))
-                         or _span_frames(old["clips"], self.fps) != _span_frames(g["clips"], self.fps)):
-                out.append(f"{g['id']}: its why was written before this change; still true? \"{why}\" "
-                           f"(edit --cut {g['id']} --why …)")
-        for g in self._cut_groups():
-            note = notes.get(g["id"], {})
-            then = note.get("why_layers")
-            if not then or not note.get("why"):
+            if not why:
                 continue
+            then = note.get("why_layers")
             now = sorted(intent.layer_of(c.data) or c.id for c in g["clips"])
-            if now != list(then):
+            layers_changed = bool(then and now != list(then))
+            picture_changed = bool(old and signature(old) != signature(g))
+            words_changed = str(g["id"]) in changed_words
+            same_authored_note = old and then_notes.get(g["id"], {}).get("why") == why
+            if not (layers_changed or picture_changed or words_changed):
+                continue
+            if layers_changed:
                 gone, new = sorted(set(then) - set(now)), sorted(set(now) - set(then))
                 out.append(f"{g['id']}: its why was written when it had other layers ("
                            + " · ".join(x for x in (f"since added {', '.join(new)}" if new else "",
                                                     f"since removed {', '.join(gone)}" if gone else "") if x)
                            + f"); still true? \"{note['why']}\" (edit --cut {g['id']} --why …)")
+            elif same_authored_note:
+                causes = []
+                if words_changed:
+                    causes.append("these words changed")
+                if picture_changed:
+                    causes.append("this picture changed")
+                cause = " and ".join(causes)
+                out.append(f"{g['id']}: its why was written before {cause}; still true? \"{why}\" "
+                           f"(edit --cut {g['id']} --why …)")
         return out
 
     def _note_bare_word(self, moment: Any, clip: Clip) -> None:
@@ -469,27 +568,37 @@ class _CheckMixin:
     # ---- check / publish ----------------------------------------------------
     def lint(self, *, cuts: Iterable[int] | None = None) -> list[str]:
         """Lint lines for this candidate (the same checks as ``timelines lint``), optionally only some cuts."""
-        head = _broken_head()
+        return self._lint(cuts=cuts)
+
+    def _lint(self, *, cuts: Iterable[int] | None = None, _check_registry=None) -> list[str]:
+        from astrid.sdk.timeline.copy_sync import format_findings
+        copy_findings = format_findings(self.copy_lint())
+        head = _broken_head() + copy_findings
         try:
             from astrid.packs.rendering.actions.timeline_visualize.motion import model
             from astrid.packs.rendering.actions.timeline_visualize.motion.conditions import run_checks
         except Exception as exc:  # the visualize pack is optional for editing
             return head + [f"(lint unavailable here: {exc})"]
         occurrences = occurrences_from_bundle(self.bundle)
-        all_cuts = picture_cuts(occurrences, fps=self.fps)
+        all_cuts = cut_index(occurrences, fps=self.fps).rows
         wanted = set(cuts) if cuts is not None else None
         selected = [c for c in all_cuts if wanted is None or c["index"] in wanted]
         elements = model.elements_from_occurrences(occurrences)
         order = next((o.get("track_order") for o in occurrences if o.get("track_order")), [])
-        results, timeline_findings = run_checks(selected, elements, self.fps, track_order=order, all_cuts=all_cuts)
+        results, timeline_findings = run_checks(
+            selected, elements, self.fps, track_order=order, all_cuts=all_cuts,
+            include_declared_checks=True, extension_context=timeline_check_host_context(self),
+            _check_registry=_check_registry,
+        )
         lines = [f.line() for f in timeline_findings if f.severity != "info"]
         for cut, findings in results:
             lines += [f.line(cut["start"]) for f in findings if f.severity != "info"]
         return head + lines
 
     def _type_mismatches(self) -> list[str]:
-        """Params whose value has the wrong type: text where the element (or a formula) wants a number."""
+        """Stored param values rejected by their element schema, plus readable nested text-number findings."""
         from astrid.sdk.timeline_address import element_schema
+        from astrid.sdk.timeline.model import validate_param_value
 
         out = []
         for clip in self.clips():
@@ -505,12 +614,22 @@ class _CheckMixin:
                             out.append(f"{clip.address}.{key} is invalid: {exc}")
             props = (element_schema(clip.element).get("properties") or {}) if params else {}
             for key, value in params.items():
-                for path, text, want in _text_where_number(key, value, props.get(key) or {}):
+                text_mismatches = _text_where_number(key, value, props.get(key) or {})
+                text_lines = []
+                for path, text, want in text_mismatches:
                     stripped = text.strip()
                     moment = stripped[2:-1] if stripped.startswith("ƒ(") and stripped.endswith(")") else stripped
                     hint = (f"; to put it on a moment: --set '{path}=ƒ({moment})' (or a number)"
                             if moment.startswith(('"', "“", "after ", "beat ", "downbeat ", "c")) else "")
-                    out.append(f"{clip.address}.{path} is the text {text!r} where {clip.element} wants a {want}{hint}")
+                    text_lines.append(f"{clip.address}.{path} is the text {text!r} where {clip.element} wants a {want}{hint}")
+                try:
+                    validate_param_value(clip.element, key, value, where=clip.address)
+                except TimelineEditError as exc:
+                    # Keep the established, actionable text-number wording where it applies. The
+                    # schema validator still handles every other type, enum, and range constraint.
+                    out.extend(text_lines or [str(exc)])
+                else:
+                    out.extend(text_lines)
             for path, expr in intent.formulas(clip.data).items():
                 if isinstance(expr, Mapping) and expr.get("as") == "clip_frame":
                     value = _get_path(clip.data, path)
@@ -519,6 +638,10 @@ class _CheckMixin:
         return out
 
     def check(self) -> "CheckReport":
+        """Validate, describe changes against the head, and lint the changed cuts."""
+        return self._check()
+
+    def _check(self, *, _admission_context=None) -> "CheckReport":
         from astrid.sdk.timeline.checkout import Checkout
         """Validate, say what moved (timeline seconds, against the checked-out head) and lint the changed cuts."""
         from astrid.sdk.authoring_bundle import validate_authoring_candidate
@@ -539,8 +662,38 @@ class _CheckMixin:
         cut_numbers = sorted({cut.n for cut in self.cuts for clip in cut.clips if clip.id in changed})
         from astrid.sdk.timeline_address import ordinals_to_ids
 
-        lint = [ordinals_to_ids(line, self) for line in self.lint(cuts=cut_numbers)] if cut_numbers else []
-        lint_new, lint_old = _new_findings(lint, Checkout(base_bundle(candidate)))
+        from astrid.packs.rendering.actions.timeline_visualize.layers.base import (
+            checks as registered_checks,
+        )
+
+        # Explicit outer-edit context shares metadata across final/prefix/base
+        # reports. Independent checks still discover afresh. Every invocation
+        # re-admits its implementation, regardless of this metadata reuse.
+        check_registry = (_admission_context.registry() if _admission_context is not None
+                          else registered_checks(include_v3=True))
+        lint = [ordinals_to_ids(line, self) for line in self._lint(
+            cuts=cut_numbers, _check_registry=check_registry,
+        )]
+        # A CheckReport historically carries asset Check findings in
+        # ``problems`` as well as the complete ``lint`` list. Preserve that
+        # report shape for all manifest-declared Check codes without running
+        # their contributions a second time.
+        declared_codes = {
+            code
+            for check in check_registry.values()
+            if check.source.endswith("V3")
+            for code in check.codes
+        }
+        declared_problems = [
+            line for line in lint
+            if line.split(maxsplit=1) and line.split(maxsplit=1)[0] in declared_codes
+        ]
+        base = Checkout(base_bundle(candidate))
+        # Declared Checks also run on the comparison revision. Keep edit
+        # validation local on both revisions so a preview cannot acquire a
+        # Runtime while measuring the base's selected assets.
+        base._edit_local_only = getattr(self, "_edit_local_only", False)
+        lint_new, lint_old = _new_findings(lint, base, _check_registry=check_registry)
         names = []
         for n in cut_numbers:
             pic = self.cuts[n - 1].picture
@@ -553,7 +706,12 @@ class _CheckMixin:
         blocking += [f"outside {line}" for line in self._outside]
         blocking += [f"type    {line}" for line in self._type_mismatches()]
         blocking += [f"beats   {line}" for line in self._stale_beats()]
+        from astrid.sdk.timeline.story import _migrate_legacy, resolve_ranges
+        _, story_findings = resolve_ranges(self)
+        blocking += [f"story   {f['path']}: {f['message']}" for f in story_findings]
+        problems += [f"story   {f['path']}: {f['message']}" for f in _migrate_legacy(self)]
         spans = self._on_screen()  # one pass over the film for the three readers below
+        problems += [f"evaluation {finding}" for finding in _evaluation_findings(spans)]
         blocking += [f"picture {line}" for line in self.picture_gaps(spans)]
         empty_blocking, empty_info = self.empty_cuts(spans)
         blocking += empty_blocking
@@ -573,9 +731,38 @@ class _CheckMixin:
             problems.append(f"music: the bed ends at {music_end:.2f} s; the film runs {self.duration:.2f} s "
                             f"({self.duration - music_end:.1f} s without music)")
         return CheckReport(valid=valid, validation=validation, summary=summary, lint=lint,
-                           problems=blocking + problems + list(dict.fromkeys(self.notes)), changed_cuts=cut_numbers,
+                           problems=blocking + problems + declared_problems + list(dict.fromkeys(self.notes)), changed_cuts=cut_numbers,
                            diff=diff, cut_names=names, blocking=blocking, lint_new=lint_new, lint_old=lint_old,
-                           addresses={c.id: c.address for c in self.clips() if c.address != c.id})
+                           addresses={c.id: c.address for c in self.clips() if c.address != c.id},
+                           evaluation_complete=_evaluation_complete(spans))
+
+
+def timeline_check_host_context(checkout: Any, *, host: str = "sdk"):
+    """Bind only the document and assets selected by its sprite clips to V3 Checks."""
+    from astrid.core.pack.checks import CheckHostContext
+
+    def selected_assets():
+        rows = []
+        for clip in checkout.clips(element="am-sprite"):
+            if not clip.asset:
+                continue
+            entry = checkout._sprite_asset_entry(clip)
+            provenance = entry.get("pixel_provenance") if isinstance(entry.get("pixel_provenance"), Mapping) else {}
+            integrity = provenance.get("outline_integrity")
+            if isinstance(integrity, Mapping):
+                integrity = integrity.get("fraction")
+            if integrity is None:
+                # Retains the original offline and _edit_local_only behavior.
+                integrity = checkout._native_outline_integrity(entry)
+            rows.append({
+                "clip_id": clip.id,
+                "address": clip.address,
+                "asset": clip.asset,
+                "outline_integrity": integrity,
+            })
+        return rows
+
+    return CheckHostContext(host=host, document=checkout.bundle, selected_assets=selected_assets)
 
 
 @dataclass
@@ -590,6 +777,7 @@ class CheckReport:
     cut_names: list[str] = dataclasses.field(default_factory=list)
     blocking: list[str] = dataclasses.field(default_factory=list)
     lint_new: list[str] | None = None   # lint findings the published head does not have (None: not computed)
+    evaluation_complete: bool = True  # false means visibility/coverage must be evaluated before publication
     lint_old: int = 0                    # findings on the changed cuts that were already there
     addresses: Mapping[str, str] = dataclasses.field(default_factory=dict)  # clip id → its address (c30.cover)
 
@@ -638,15 +826,15 @@ class CheckReport:
                 by_cut[address.split(".")[0]] = by_cut.get(address.split(".")[0], 0) + 1
             shown_blocking = [f"  ! {len(blocking)} orphan(s) in {len(by_cut)} cut(s): "
                               + ", ".join(f"{cut} ({n})" for cut, n in by_cut.items()),
-                              "    each one: timelines status TL --project P --all   ·   the sheet's orphans section"]
+                              "    each one: timelines status <timeline> --project <project> --text --all · the sheet's orphans section"]
         lint = [f"  {line}" for line in new] if full or len(new) <= 12 else (
-            [f"  {line}" for line in new[:12]] + [f"  … {len(new) - 12} more new finding(s) (timelines check TL --all)"])
+            [f"  {line}" for line in new[:12]] + [f"  … {len(new) - 12} more new finding(s) (timelines check <timeline> --all)"])
         tail = []
         if old or elsewhere:
             tail.append("  (" + " · ".join(x for x in (
                 f"{elsewhere} more on other cuts" if elsewhere else "",
                 f"{old} lint finding(s) were already there before your changes" if old else "") if x)
-                + ": timelines check TL --all)")
+                + ": timelines check <timeline> --all)")
         return [head] + shown_blocking + [f"  · {p}" for p in notes[:12]] + lint + tail
 
     def full_text(self) -> str:
@@ -680,7 +868,7 @@ class CheckReport:
             return line.replace("app changed", "intent changed: moments, cut, words").replace(", app,", ", intent,")
         lines += [plain(line) for line in rest[:10]] + ([f"  … {len(rest) - 10} more clip lines"] if len(rest) > 10 else [])
         if kinds or len(rest) > 10:
-            lines.append("  (every line: timelines check TL --all · timelines diff TL)")
+            lines.append("  (every line: timelines check <timeline> --all · timelines diff <timeline>)")
         orphans = sum(1 for p in self.blocking if p.startswith("orphan"))
         lines.append(f"  {orphans} orphan(s) · {len(self.blocking)} to fix before publishing")
         lines += self.brief()[1:]
@@ -738,7 +926,7 @@ def _lint_key(line: str) -> str:
     return re.sub(r"[-+]?\d+(?:\.\d+)?", "#", line)
 
 
-def _new_findings(lint: list[str], base: "Checkout") -> tuple[list[str] | None, int]:  # noqa: F821
+def _new_findings(lint: list[str], base: "Checkout", *, _check_registry=None) -> tuple[list[str] | None, int]:  # noqa: F821
     """(findings the base does not have, how many it already had)."""
     from collections import Counter
 
@@ -747,7 +935,8 @@ def _new_findings(lint: list[str], base: "Checkout") -> tuple[list[str] | None, 
     if not lint:
         return [], 0
     try:
-        seen = Counter(_lint_key(ordinals_to_ids(line, base)) for line in base.lint())
+        base_lint = base.lint() if _check_registry is None else base._lint(_check_registry=_check_registry)
+        seen = Counter(_lint_key(ordinals_to_ids(line, base)) for line in base_lint)
     except Exception:  # noqa: BLE001 - without a base lint every finding counts as new
         return None, 0
     new, old = [], 0
@@ -763,11 +952,21 @@ def _new_findings(lint: list[str], base: "Checkout") -> tuple[list[str] | None, 
 
 def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noqa: F821
     """Plain-words lines for what changed between two versions of a timeline (see ``Checkout.changes``)."""
+    from collections import Counter
+
     old = {c.id: c for c in before.clips()}
     new = {c.id: c for c in after.clips()}
     fps = after.fps
     lines: list[tuple[float, str]] = []
     shifts: dict[int, list[Clip]] = {}
+    unrendered: dict[str, dict[str, str]] = {}
+    from astrid.sdk.timeline.look import look_unrendered
+
+    for finding in look_unrendered(after):
+        match = re.match(r"^LOOK-UNRENDERED (\S+) (\S+): (.*)$", finding)
+        if match:
+            address, name, detail = match.groups()
+            unrendered.setdefault(address, {})[name] = detail
 
     def secs(delta: float) -> str:
         return f"{delta:+.2f} s"
@@ -776,6 +975,12 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
     for cid, clip in new.items():
         prev = old.get(cid)
         if prev is None:
+            app = clip.data.get("app") if isinstance(clip.data.get("app"), Mapping) else {}
+            astrid = app.get("astrid") if isinstance(app.get("astrid"), Mapping) else {}
+            if clip.track == "music" and (app.get("split_from") or astrid.get("split_from")):
+                # Re-flow music pieces are derived from bed seams; the summary below is clearer
+                # than one apparent added-clip line per generated piece.
+                continue
             what = " ".join(x for x in (clip.element.removeprefix("am-"), clip.asset or (f'"{clip.text[:24]}"' if clip.text else "")) if x)
             on = f" on {clip.anchor}" if clip.anchor else ""
             lines.append((clip.start, f"+ {clip.address:<{width}}  added: {what}{on}  {clip.start:.3f}–{clip.end:.3f} s"))
@@ -788,7 +993,8 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
         a_for, b_for = intent.for_s(prev.data), intent.for_s(clip.data)
         if a_on != b_on:
             what = f"now enters on {b_on} = {clip.start:.2f} s" if b_on else f"no longer tied to a moment: starts {clip.start:.2f} s"
-            what += f" (was {prev.start:.2f} s, {secs(clip.start - prev.start)})" if moved_start else " (it was already there)"
+            reference = f"reference {a_on or 'none'} → {b_on or 'none'}"
+            what += f" (was {prev.start:.2f} s, {secs(clip.start - prev.start)}); {reference}" if moved_start else f" ({reference}; it was already there)"
             if not (a_until != b_until or a_for != b_for):
                 what += f"; {_end_rule(after, clip)}, ending {clip.end:.2f} s"
             said.append(what)
@@ -796,6 +1002,8 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
         if a_until != b_until or a_for != b_for:
             what = f"now {_end_rule(after, clip)} = ends {clip.end:.2f} s"
             what += f" (was {prev.end:.2f} s, {secs(clip.end - prev.end)})" if moved_end else " (it already ended there)"
+            if a_until != b_until:
+                what += f"; end reference {a_until or 'none'} → {b_until or 'none'}"
             said.append(what)
             moved_end = False
         if (clip.asset or None) != (prev.asset or None):
@@ -826,7 +1034,10 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
         from astrid.sdk.timeline_cuts import AUDIO_LOOK_KEYS, look_lines
 
         for phrase in look_lines(prev.data, clip.data, audio=clip.is_audio, fps=fps):
-            lines.append((clip.start, f"✎ {clip.address:<{width}}  look {phrase}"))
+            field = phrase.split(" ", 1)[0]
+            ignored = unrendered.get(clip.address, {}).get(field)
+            suffix = f" · {ignored}" if ignored else ""
+            lines.append((clip.start, f"✎ {clip.address:<{width}}  look {phrase}{suffix}"))
         for key in sorted(set(prev.params) | set(clip.params)):
             a_val, b_val = prev.params.get(key), clip.params.get(key)
             if a_val == b_val or key in formula_keys or (clip.is_audio and key in AUDIO_LOOK_KEYS):
@@ -869,6 +1080,32 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
             lines.append((at, f"✎ {cid}  why note: \"{(b.get('why') or '(none)')[:70]}\""))
         if a.get("hold") != b.get("hold"):
             lines.append((at, f"✎ {cid}  hold: {b.get('hold') or 'off'}"))
+    previous_notes = Counter(getattr(before, "notes", []) or [])
+    new_notes = []
+    for note in getattr(after, "notes", []) or []:
+        if previous_notes[note]:
+            previous_notes[note] -= 1
+        else:
+            new_notes.append(str(note))
+    seam_notes = [note for note in new_notes if note.startswith("music ") and ": cut " in note]
+
+    def seam_time(note: str) -> float | None:
+        match = re.search(r"\bat (-?\d+(?:\.\d+)?) s\b", note)
+        return float(match.group(1)) if match else None
+
+    if seam_notes:
+        times = [time for note in seam_notes if (time := seam_time(note)) is not None]
+        shown_times = ", ".join(f"{time:.2f}" for time in times) if times else "unreported"
+        lines.append((min(times, default=0.0),
+                      f"♫ music bed: {len(seam_notes)} seam(s) at {shown_times} s; "
+                      "use `--music plays-on` to keep the bed whole"))
+        for note in seam_notes:
+            lines.append((seam_time(note) or 0.0, f"  {note}"))
+    for note in new_notes:
+        if note.startswith("music ") and "plays on unchanged" in note:
+            lines.append((0.0, f"  {note}"))
+        if "clamp" in note.lower():
+            lines.append((0.0, f"  re-flow clamp: {note}"))
     ordered = [text for _t, text in sorted(lines, key=lambda item: item[0])]
     # align the addresses to the widest one actually printed
     cells = [re.match(r"^(\S\s|\s\s)(\S+)\s+(.*)$", t) for t in ordered]
