@@ -6,6 +6,8 @@ import os
 
 import pytest
 
+from tests.lanes import requires_posix_fork
+
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.server import RuntimeHandler, RuntimeHTTPServer
 from runtime_protocol.store import RealmStore
@@ -168,7 +170,7 @@ def _register_catalog_worker(path, realm_id, ready, release, result):
         result.put((realm_id, type(exc).__name__, str(exc)))
 
 
-@pytest.mark.skipif(os.name == "nt", reason="multiprocessing fork is unavailable on Windows")
+@requires_posix_fork
 def test_catalog_full_read_modify_write_preserves_parallel_registrations(tmp_path):
     support = tmp_path / "support"
     support.mkdir()

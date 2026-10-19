@@ -13,6 +13,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from tests.lanes import requires_posix_uid_metadata
+
 from runtime_protocol.errors import ConflictError
 from runtime_protocol import platform as runtime_platform
 from runtime_protocol.local_worker import LocalWorkerProfile, ProcessIdentity
@@ -716,7 +718,7 @@ def test_host_only_custody_scope_alias_never_mutates_target(tmp_path):
     assert not list(target.iterdir())
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Windows owner-only checks use profile ACLs, not POSIX uid metadata")
+@requires_posix_uid_metadata
 def test_host_only_custody_scope_wrong_owner_never_grants_authority(tmp_path,monkeypatch):
     from runtime_protocol.local_worker_composition import _create_host_custody_scope
     scope=tmp_path/'operation'

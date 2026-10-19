@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.lanes import requires_posix_fork
+
 from runtime_protocol.backup import verify_restore_candidate
 from runtime_protocol.cli import main as runtime_main
 from runtime_protocol.daemon import RuntimeDaemon
@@ -103,7 +105,7 @@ def test_existing_owner_is_rejected_before_sqlite_admission_snapshot(tmp_path, m
     assert not (root / "admission.lock").exists()
 
 
-@pytest.mark.skipif(os.name == "nt", reason="multiprocessing fork is unavailable on Windows")
+@requires_posix_fork
 def test_concurrent_admission_serializes_owner_and_never_reports_sqlite_race(tmp_path):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()

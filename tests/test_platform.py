@@ -10,6 +10,13 @@ from types import SimpleNamespace
 
 import pytest
 
+from tests.lanes import (
+    requires_posix_private_modes,
+    requires_posix_process_groups,
+    requires_windows_job_object,
+    requires_windows_token_process_times,
+)
+
 from runtime_protocol import platform
 
 
@@ -49,7 +56,7 @@ def test_windows_roots_fall_back_to_injected_home(monkeypatch, tmp_path):
     assert platform.log_dir(home) == home / "AppData/Local/Astrid Runtime/logs"
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Windows uses profile ACLs rather than POSIX modes")
+@requires_posix_private_modes
 def test_owner_only_applies_and_checks_private_file_and_directory_modes(tmp_path):
     file_path = tmp_path / "secret"
     file_path.write_text("secret")
@@ -153,7 +160,7 @@ def test_darwin_identity_only_proves_absence_from_native_esrch(monkeypatch):
         platform.process_identity(123)
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows token and process-time APIs")
+@requires_windows_token_process_times
 def test_windows_current_user_and_get_process_times_identity():
     assert platform.current_user() > 0
     identity = platform.process_identity(os.getpid())
@@ -162,7 +169,7 @@ def test_windows_current_user_and_get_process_times_identity():
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(sys.platform == "win32", reason="POSIX process group integration")
+@requires_posix_process_groups
 def test_stop_tree_cleans_up_grandchild(tmp_path):
     from runtime_protocol.platform import spawn_tree, stop_tree
     pid_file = tmp_path / "grandchild.pid"
@@ -185,7 +192,7 @@ def test_stop_tree_cleans_up_grandchild(tmp_path):
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows Job Object integration")
+@requires_windows_job_object
 def test_windows_job_close_kills_grandchild(tmp_path):
     from runtime_protocol.platform import spawn_tree
     pid_file = tmp_path / "grandchild.pid"

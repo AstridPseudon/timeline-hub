@@ -8,6 +8,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from tests.lanes import requires_posix_file_modes_native_custody
+
 from astrid_runtime import custody_broker as custody
 from runtime_protocol import platform
 
@@ -120,7 +122,7 @@ def test_native_custody_recovers_when_prior_controller_is_proven_absent(tmp_path
     assert delivered == [(target, platform.TERM)]
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Windows uses profile ACLs instead of POSIX file modes")
+@requires_posix_file_modes_native_custody
 def test_native_custody_rejects_unsafe_owner_file(tmp_path, monkeypatch):
     _owner, target = _identities(monkeypatch)
     instance = custody.NativeProcessCustody(tmp_path, target)

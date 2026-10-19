@@ -6,6 +6,12 @@ from pathlib import Path
 import pytest
 
 from runtime_protocol.dirfd import filesystem
+from tests.lanes import (
+    requires_windows_dirfd_adapter,
+    requires_windows_reparse_point_rejection,
+    requires_windows_sqlite_backup,
+    skip_windows_symlink_creation_unavailable,
+)
 
 
 def test_platform_filesystem_exports_shared_os_api():
@@ -14,7 +20,7 @@ def test_platform_filesystem_exports_shared_os_api():
     assert filesystem.fspath(Path("sample")) == os.fspath(Path("sample"))
 
 
-@pytest.mark.skipif(os.name != "nt", reason="exercises the native Windows dir-fd adapter")
+@requires_windows_dirfd_adapter
 def test_windows_directory_descriptor_operations(tmp_path):
     directory_flag = filesystem.O_DIRECTORY
     nofollow_flag = filesystem.O_NOFOLLOW
@@ -53,7 +59,7 @@ def test_windows_directory_descriptor_operations(tmp_path):
         filesystem.close(root_fd)
 
 
-@pytest.mark.skipif(os.name != "nt", reason="exercises Windows reparse-point rejection")
+@requires_windows_reparse_point_rejection
 def test_windows_directory_descriptor_rejects_symlink_component(tmp_path):
     target = tmp_path / "real"
     target.mkdir()
@@ -61,12 +67,12 @@ def test_windows_directory_descriptor_rejects_symlink_component(tmp_path):
     try:
         alias.symlink_to(target, target_is_directory=True)
     except (OSError, NotImplementedError):
-        pytest.skip("symlink creation is unavailable for this Windows account")
+        skip_windows_symlink_creation_unavailable()
     with pytest.raises(OSError):
         filesystem.open(alias, os.O_RDONLY | filesystem.O_DIRECTORY | filesystem.O_NOFOLLOW)
 
 
-@pytest.mark.skipif(os.name != "nt", reason="exercises Windows SQLite backup snapshots")
+@requires_windows_sqlite_backup
 def test_windows_backup_restore_verify_uses_pinned_filesystem_paths(tmp_path):
     from runtime_protocol.backup import create_backup, restore_backup, verify_backup, verify_restore_candidate
     from runtime_protocol.store import RealmStore

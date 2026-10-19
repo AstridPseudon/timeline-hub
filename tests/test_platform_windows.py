@@ -8,11 +8,13 @@ import sys
 
 import pytest
 
+from tests.lanes import requires_posix_owner_only_permissions, requires_windows_process_and_lock_apis
+
 from runtime_protocol import platform
 from runtime_protocol.dirfd import filesystem
 
 
-WINDOWS_ONLY = pytest.mark.skipif(os.name != "nt", reason="native Windows process and lock APIs")
+WINDOWS_ONLY = requires_windows_process_and_lock_apis
 
 
 @WINDOWS_ONLY
@@ -157,7 +159,7 @@ def test_windows_detached_child_inherits_job_handle(monkeypatch):
             child._runtime_job.close()
 
 
-@pytest.mark.skipif(os.name == "nt", reason="POSIX owner-only permission behavior")
+@requires_posix_owner_only_permissions
 def test_owner_only_rejects_symlink_before_chmod(tmp_path):
     target = tmp_path / "target"
     target.write_text("data")

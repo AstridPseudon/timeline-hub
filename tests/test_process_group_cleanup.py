@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from runtime_protocol.store import RealmStore
+from tests.lanes import requires_posix_process_group_id_reuse
 
 
 def test_real_daemon_group_is_reaped_after_interrupted_journey(tmp_path, owned_process_groups):
@@ -33,7 +34,7 @@ def test_real_daemon_group_is_reaped_after_interrupted_journey(tmp_path, owned_p
     assert process.poll() is not None
 
 
-@pytest.mark.skipif(os.name == "nt", reason="this regression checks POSIX process group ID reuse")
+@requires_posix_process_group_id_reuse
 def test_a_group_is_signalled_only_while_it_is_still_ours(monkeypatch):
     import subprocess
     import sys
