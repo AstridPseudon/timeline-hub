@@ -125,18 +125,22 @@ describe('AgentChatModelSelector', () => {
     expect(screen.getByRole('option', { name: /Codex/ })).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('keeps missing, unknown-auth, and busy agents disabled', () => {
+  it('allows installed agents with unknown auth while keeping missing and busy agents disabled', async () => {
     const unknown: LocalAgentChoice[] = [
       { id: 'claude-code', name: 'Claude Code', installed: false, authStatus: 'unknown', adapterInstalled: false, installCommand: null, loginCommand: null },
       { id: 'codex', name: 'Codex', installed: true, authStatus: 'unknown', adapterInstalled: true, installCommand: null, loginCommand: null },
     ];
-    const { rerender } = render(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} agents={unknown} onSelectAgent={vi.fn()} />);
+    const onSelectAgent = vi.fn();
+    const { rerender } = render(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} agents={unknown} onSelectAgent={onSelectAgent} />);
     fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
     expect(screen.getByText('CLI not installed')).toBeTruthy();
     expect(screen.getByText('Sign-in status unknown')).toBeTruthy();
     expect(screen.getByRole('option', { name: /Claude Code/ })).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByRole('option', { name: /Codex/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('option', { name: /Codex/ })).not.toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
+    await waitFor(() => expect(onSelectAgent).toHaveBeenCalledWith('codex'));
     rerender(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} agents={agents} onSelectAgent={vi.fn()} busy />);
+    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
     expect(screen.getByRole('option', { name: /Codex/ })).toHaveAttribute('aria-disabled', 'true');
   });
 
