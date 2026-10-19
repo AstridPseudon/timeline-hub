@@ -47,6 +47,11 @@ ASTRID_REMOTION_VALIDATION_ROLE = "ASTRID_REMOTION_VALIDATION_ROLE"
 ASTRID_VIBECOMFY_CHECKOUT = "ASTRID_VIBECOMFY_CHECKOUT"
 """Absolute, server-selected VibeComfy checkout at the supported revision."""
 
+ASTRID_WARM_IDLE_SECONDS = "ASTRID_WARM_IDLE_SECONDS"
+"""Seconds every warm holder (models, model servers, the Remotion frame owner)
+stays resident after its last task. Overrides each holder's default; a request's
+``lifecycle.idle_timeout_seconds`` still wins for its own holder."""
+
 # ---------------------------------------------------------------------------
 # Project run context
 # ---------------------------------------------------------------------------
@@ -175,6 +180,7 @@ __all__ = [
     "ASTRID_REMOTION_PROJECT_DIR",
     "ASTRID_TIMELINE_SCHEMA_PYTHONPATH",
     "ASTRID_VIBECOMFY_CHECKOUT",
+    "ASTRID_WARM_IDLE_SECONDS",
     "ASTRID_STATE_HOME",
     "ASTRID_STRICT_INSTRUCTION_SUBST",
     "ASTRID_TASK_ITEM_ID",
