@@ -1,3 +1,9 @@
+# Receiving precedence — origin history is not live authority
+
+The entire older guidance below records origin-machine technical dispositions. Statements that workers are running/resumed, same-owner lifecycle/down/start commands, old local scripts and run-local ruling/receipt links describe historical origin custody. They are not receiving commands, reusable owner handles or additional unavailable setup gates. Both origin schedules and delivery owners remain held. Use [portable next operations](../assets/current-next-operations.md), [current receiving status](../status.md), and the delivered E/F/EB/G terminal checkpoints; establish fresh receiving-owned credentials, roots, Host/profile and Runtime lifecycle. Never copy old DBs/leases/handles or blindly replay uncertain issued requests. Preserve the technical lessons and UNKNOWN history; absent old local receipts do not add coordinator-created global blocks.
+
+---
+
 # Current precedence — adopted246 write-protected input
 
 Astra246 (`receipts/oracle-R4-RENDERER-INPUT-STABILITY-246.result.md`, SHA eedf78e874c744cc64f8b2d14e297690062514bca23f8a8ba4f079c0d838cc2a) REQUIRES ONE NEW SHARED WRITE-PROTECTED COW RENDERER. Both old renderer inputs are contaminated. Earlier cache-reset/no-new-copy prose does not prohibit this changed protection mechanism. This is not per-consumer copying and there is no numeric artifact ceiling. Preserve oldtrees/readers; remove exactlyfive generatedfiles only innewinput, stripwritebits preservingRX, seal explicitnewmode/path, then jointactualentry/write-refusal/cachetests with sourceSol. Current status front is authoritative; older proof/history is not current readiness. Initial artifact Exec25917 ended withoutallocation because stale rootstatus confused this; continue its task with correctedscope after terminal, no concurrentduplicate. Existing authority suffices, no additional root/human/oracle approval.

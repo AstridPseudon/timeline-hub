@@ -8,7 +8,7 @@ North Star: **“One timeline, many hands.”** A film keeps the same history wh
 
 ## Current phase and evidence
 
-The cross-machine handover is being assembled from verified public source refs and a separate private transfer package. Product delivery remains incomplete. Counts and prior UNKNOWN states are preserved; code publication does not establish product acceptance or completion. At the frozen cutoff `2026-10-19T14:10:14Z`, 29/95 original cards are accepted, 0/3 releases are accepted, and there are 262 completed advisories (225 delivery/direction + 37 scheduled) and 0 new product reviews. This is a packaging and custody transfer; it does not complete product work.
+The cross-machine handover source and control have been published, the private transfer has been built and independently checked, and fresh Astra 263 has completed its audit. Its bounded setup/documentation corrections are included here. Product delivery remains incomplete; publication and handover assurance do not establish product acceptance. At the frozen cutoff `2026-10-19T14:10:14Z`, 29/95 original cards are accepted, 0/3 releases are accepted, and there are 262 completed advisories (225 delivery/direction + 37 scheduled) and 0 new product reviews. This is a packaging and custody transfer; it does not complete product work.
 
 Product source tests, installed-runtime qualification, public App behavior, release acceptance, and owner film viewing are separate evidence claims. Preserve all review UNKNOWN states, consumed caps, prior history, and named human/security/publication/live-migration gates exactly as recorded. No new product review or acceptance is claimed here.
 
@@ -37,14 +37,10 @@ The four product candidate refs are:
 
 Review `source-refs.json` for actual current-installed identities and separately preserved candidate/WIP identities. Use `scripts/clone-pinned.py` with an explicit new empty destination for the four current candidates; it verifies commit and tree and refuses existing paths. If the SDK URL matches the Astrid host, it adds a separate SDK candidate worktree sharing that object store and leaves the control checkout intact; Runtime, App, and Composition use filtered single-branch clones. Historical preservation/WIP refs stay on GitHub for on-demand fetch.
 
-## Current blockers and next operations
+## Continue from the completed handover
 
-- 29 of 95 original cards are accepted; 0 of 3 releases are accepted and there are no new product reviews at this cutoff.
-- EB, E, F and G have incomplete product criteria; their exact terminal checkpoints and unresolved states are retained in the source run.
-- The fresh independent portability validation and final handover audit have not yet completed.
+The cross-machine handover source and control have been published, the private transfer has been built and independently checked, and fresh Astra 263 has completed its audit. Its bounded setup/documentation corrections are included here. Product delivery remains incomplete; publication and handover assurance do not establish product acceptance.
 
-- Finish the prepared Astrid control branch from its verified default and publish the exact final source refs/map.
-- Finalize and validate the private ZIP against the actual control commit/tree; do not substitute the ZIP for public Git source.
-- Run the planned fresh independent handover audit after the code/control package and ZIP are complete.
+Actual post-cutoff advisory 263 makes 263 completed advisories (226 delivery/direction + 37 scheduled), with 0 new product reviews. Read [current next operations](current-next-operations.md), [setup](receiving-setup.md) and [handover assurance](handover-assurance.md). The four qualified/preserved source identities above are unchanged. All necessary handover source refs are already published; do not rebuild/re-publish the transfer as a prerequisite.
 
-See `status.md` for the interpretation of these gates and latest named checkpoint results. Do not merge, push, deploy, migrate live state, or treat packaging as product completion.
+Use the delivered E/F/EB/G terminal checkpoint map; establish fresh receiving ownership and continue implementation/integration within recorded delivery authority. Preserve named human/security/data/publication/deployment/live-migration gates. Allthree product review stages retain cap 1 with historical usage UNKNOWN;0 new reviews does not reset usage. Both old-machine schedules and delivery owners remain held.

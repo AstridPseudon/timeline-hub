@@ -30,16 +30,16 @@
   ],
   "files": [
     {
-      "delivered_bytes": 2926,
-      "delivered_sha256": "f5d1ebeb18fbbe60c6ad4fb812751cbc3ffc79da5543ba17958d40bcf973eae8",
+      "delivered_bytes": 3503,
+      "delivered_sha256": "1ef26c8e86904f5f7ae750ffc743c3565c1ec91be9ae26f79cc42a44e93acab3",
       "destination": "public/docs/projects/timeline-r4/START-HERE.md",
-      "disposition": "published-receiving-guide",
+      "disposition": "post-audit receiving metadata",
       "mode": "0644",
-      "source_bytes": 17226,
-      "source_relative_to_control_root": "receipts/HANDOVER-20261019-REF-MAP-001.md",
-      "source_sha256": "11aa8b7e8e2c09195b357cfe9ed96492082ac82466de975e8b8af1e0f0273678",
+      "source_bytes": 3503,
+      "source_relative_to_control_root": "START-HERE post-audit receiving front",
+      "source_sha256": "1ef26c8e86904f5f7ae750ffc743c3565c1ec91be9ae26f79cc42a44e93acab3",
       "transformations": [
-        "generated from verified A/control inputs"
+        "post-audit metadata correction"
       ]
     },
     {
@@ -225,29 +225,42 @@
       ]
     },
     {
-      "delivered_bytes": 375,
-      "delivered_sha256": "ba90909f3b6848410161a02ae559afe5ed9a60ee18e106502a3411d75919392d",
+      "delivered_bytes": 3333,
+      "delivered_sha256": "9d12019453e167394732351929fecec1547d4b26a77b9d341aeaafd366e7311c",
       "destination": "public/docs/projects/timeline-r4/assets/current-next-operations.md",
-      "disposition": "published-current-next-operations",
+      "disposition": "post-audit receiving metadata",
       "mode": "0644",
-      "source_bytes": null,
-      "source_relative_to_control_root": "receipts/HANDOVER-20261019-HISTORICAL-PUBLICATION-MAP-001.json",
-      "source_sha256": "6c963cc8b61dfe024215aaa0677fd2e732cdf2eb05f11448f0e4561c65a28394",
+      "source_bytes": 3333,
+      "source_relative_to_control_root": "post-audit-263 receiving next operations",
+      "source_sha256": "9d12019453e167394732351929fecec1547d4b26a77b9d341aeaafd366e7311c",
       "transformations": [
-        "generated from verified A/control inputs"
+        "post-audit metadata correction"
       ]
     },
     {
-      "delivered_bytes": 5639,
-      "delivered_sha256": "599bb0f2b1dc90411f938f1b9480d3f37984b654a7f511a45f175eaaaa8070fc",
-      "destination": "public/docs/projects/timeline-r4/assets/handover-message.md",
-      "disposition": "published-receiving-handover-message",
+      "delivered_bytes": 3745,
+      "delivered_sha256": "81ce19d586b205ee18b37802d45531a7deb336d66e7bdb1c0b7cc674c7497883",
+      "destination": "public/docs/projects/timeline-r4/assets/handover-assurance.md",
+      "disposition": "post-audit receiving metadata",
       "mode": "0644",
-      "source_bytes": 17226,
-      "source_relative_to_control_root": "receipts/HANDOVER-20261019-REF-MAP-001.md",
-      "source_sha256": "11aa8b7e8e2c09195b357cfe9ed96492082ac82466de975e8b8af1e0f0273678",
+      "source_bytes": 3745,
+      "source_relative_to_control_root": "root disposition of actual advisory263 and normal validation",
+      "source_sha256": "81ce19d586b205ee18b37802d45531a7deb336d66e7bdb1c0b7cc674c7497883",
       "transformations": [
-        "generated from verified A/control inputs"
+        "post-audit metadata correction"
+      ]
+    },
+    {
+      "delivered_bytes": 6041,
+      "delivered_sha256": "f83fdb8c26063183ab2063a7a68b1aef6b7520337cb618b6aa49a385b21d5168",
+      "destination": "public/docs/projects/timeline-r4/assets/handover-message.md",
+      "disposition": "post-audit receiving metadata",
+      "mode": "0644",
+      "source_bytes": 6041,
+      "source_relative_to_control_root": "handover-message post-audit receiving instructions",
+      "source_sha256": "f83fdb8c26063183ab2063a7a68b1aef6b7520337cb618b6aa49a385b21d5168",
+      "transformations": [
+        "post-audit metadata correction"
       ]
     },
     {
@@ -264,16 +277,17 @@
       ]
     },
     {
-      "delivered_bytes": 2018,
-      "delivered_sha256": "780eb01df89924e08b062c2578f9b80c283741e6637d2386f4d33ff27f0ead90",
+      "delivered_bytes": 6232,
+      "delivered_sha256": "c6629e59b31d64de4ba4c1fe8c63ca8479e39e9bbbdb4ec33c956aad9b25f6bc",
       "destination": "public/docs/projects/timeline-r4/assets/receiving-setup.md",
-      "disposition": "published-receiving-setup",
+      "disposition": "post-audit receiving metadata",
       "mode": "0644",
-      "source_bytes": null,
-      "source_relative_to_control_root": null,
-      "source_sha256": null,
+      "source_bytes": 6232,
+      "source_relative_to_control_root": "receiving setup plus Astra263 dependency closure",
+      "source_sha256": "c6629e59b31d64de4ba4c1fe8c63ca8479e39e9bbbdb4ec33c956aad9b25f6bc",
       "transformations": [
-        "generated from verified A/control inputs"
+        "post-audit metadata correction",
+        "explicit git tar.umask=0022 for canonical source file modes; concrete normal validation correction"
       ]
     },
     {
@@ -291,16 +305,16 @@
       ]
     },
     {
-      "delivered_bytes": 22595,
-      "delivered_sha256": "15fac3e5ea7120c826d1aee278315ea0df4f0bd7ccdc2988c3fcfe3fba8a0587",
+      "delivered_bytes": 23523,
+      "delivered_sha256": "0ebab789b1a02851ef3495a91b480900362cd881e7dc2bb294de5864547eacac",
       "destination": "public/docs/projects/timeline-r4/briefs/manager-current-guidance.md",
-      "disposition": "published-control",
+      "disposition": "post-audit receiving metadata",
       "mode": "0644",
-      "source_bytes": 22635,
-      "source_relative_to_control_root": "briefs/manager-current-guidance.md",
-      "source_sha256": "35e589500e9baf030eca1deff0aa3a2f64f87170520c273e569a3bfc124f1ec4",
+      "source_bytes": 22595,
+      "source_relative_to_control_root": "retained original manager guidance with receiving precedence banner",
+      "source_sha256": "15fac3e5ea7120c826d1aee278315ea0df4f0bd7ccdc2988c3fcfe3fba8a0587",
       "transformations": [
-        "1 local temporary runtime path(s) normalized"
+        "prepend post-audit receiving precedence; preserve original technical history"
       ]
     },
     {
@@ -451,16 +465,16 @@
       ]
     },
     {
-      "delivered_bytes": 70284,
-      "delivered_sha256": "f3d469ff2272aa8575029644ddaa82d4e5500869bedb2a01ca4167bfe9c4c788",
+      "delivered_bytes": 72772,
+      "delivered_sha256": "f6d65cf7d442c1b6e5cd6d75e2e86ebbb781ea2d95bc39115148d8a7fc998df1",
       "destination": "public/docs/projects/timeline-r4/source-refs.json",
-      "disposition": "published-exact-source-reference-map",
+      "disposition": "post-audit receiving metadata",
       "mode": "0644",
-      "source_bytes": 17226,
-      "source_relative_to_control_root": "receipts/HANDOVER-20261019-REF-MAP-001.md",
-      "source_sha256": "11aa8b7e8e2c09195b357cfe9ed96492082ac82466de975e8b8af1e0f0273678",
+      "source_bytes": 72772,
+      "source_relative_to_control_root": "source-refs.json post-audit metadata only; all source ref identities unchanged",
+      "source_sha256": "f6d65cf7d442c1b6e5cd6d75e2e86ebbb781ea2d95bc39115148d8a7fc998df1",
       "transformations": [
-        "generated from verified A/control inputs"
+        "post-audit metadata correction"
       ]
     },
     {
@@ -555,16 +569,16 @@
       ]
     },
     {
-      "delivered_bytes": 2199,
-      "delivered_sha256": "6e4f75e3c5d6161793fec7a578ccd379e8709ad7bdf398996cdb9ba83d5b0d92",
+      "delivered_bytes": 2481,
+      "delivered_sha256": "b2fc5530bdae3a1169acf64cf1e3aecbec155af7f5e4092a5d541f70bf0b30d1",
       "destination": "public/docs/projects/timeline-r4/status.md",
-      "disposition": "published-current-cutoff-status",
+      "disposition": "post-audit receiving metadata",
       "mode": "0644",
-      "source_bytes": null,
-      "source_relative_to_control_root": "receipts/HANDOVER-20261019-HISTORICAL-PUBLICATION-MAP-001.json",
-      "source_sha256": "6c963cc8b61dfe024215aaa0677fd2e732cdf2eb05f11448f0e4561c65a28394",
+      "source_bytes": 2481,
+      "source_relative_to_control_root": "post-audit-263 truthful receiving status",
+      "source_sha256": "b2fc5530bdae3a1169acf64cf1e3aecbec155af7f5e4092a5d541f70bf0b30d1",
       "transformations": [
-        "generated from verified A/control inputs"
+        "post-audit metadata correction"
       ]
     },
     {
@@ -1533,6 +1547,45 @@
       ]
     },
     {
+      "delivered_bytes": 10597,
+      "delivered_sha256": "4fc988689f028b729d89b0d852e4728aa97767f562b6a670005fcb5bd9faa462",
+      "destination": "transfer/evidence/handover/ASTRA-FINAL-263.md",
+      "disposition": "private actual handover assurance evidence",
+      "mode": "0600",
+      "source_bytes": 10597,
+      "source_relative_to_control_root": "receipts/oracle-R4-PORTABLE-HANDOVER-FINAL-263.md",
+      "source_sha256": "4fc988689f028b729d89b0d852e4728aa97767f562b6a670005fcb5bd9faa462",
+      "transformations": [
+        "origin paths replaced with explicitly historical placeholders; actual findings and source hashes preserved"
+      ]
+    },
+    {
+      "delivered_bytes": 9294,
+      "delivered_sha256": "b724def02d3b7b4fce4157df815138ed822551b5645f8309ca18efd6926a66e8",
+      "destination": "transfer/evidence/handover/NORMAL-VALIDATION.json",
+      "disposition": "private actual handover assurance evidence",
+      "mode": "0600",
+      "source_bytes": 9338,
+      "source_relative_to_control_root": "receipts/HANDOVER-20261019-PORTABILITY-VALIDATION.json",
+      "source_sha256": "b5b4933c52d14d1ff8f9f6ffe240d4e2c6d6fe83875a5ded51b620b45223b900",
+      "transformations": [
+        "origin paths replaced with explicitly historical placeholders; actual findings and source hashes preserved"
+      ]
+    },
+    {
+      "delivered_bytes": 3447,
+      "delivered_sha256": "63b05fdf9f194cc370bb7ea36a5b6e7613e0f4838d58a2fd6ea74d16946943c7",
+      "destination": "transfer/evidence/handover/NORMAL-VALIDATION.md",
+      "disposition": "private actual handover assurance evidence",
+      "mode": "0600",
+      "source_bytes": 3447,
+      "source_relative_to_control_root": "receipts/HANDOVER-20261019-PORTABILITY-VALIDATION.md",
+      "source_sha256": "63b05fdf9f194cc370bb7ea36a5b6e7613e0f4838d58a2fd6ea74d16946943c7",
+      "transformations": [
+        "origin paths replaced with explicitly historical placeholders; actual findings and source hashes preserved"
+      ]
+    },
+    {
       "delivered_bytes": 2105,
       "delivered_sha256": "589c98f19ce12187f146e32669ef2a7e8230400dc10cd3a5f268db11f107d5e9",
       "destination": "transfer/evidence/projects/A-integration/EB-CROSS-MACHINE-HANDOVER-CHECKPOINT-NONPORTABLE.md",
@@ -2071,26 +2124,28 @@
       "transformations": [
         "default Codex path changed to CODEX_BIN or PATH lookup; missing CLI now gives a clear refusal"
       ]
-    },
-    {
-      "delivered_bytes": 111377,
-      "delivered_sha256": "6d45c9e083854f08f6eff2e5808f37fbc074685f58555177a8504133405932c0",
-      "destination": "transfer/tools/package_builder.py",
-      "disposition": "private-nonportable-evidence",
-      "mode": "0600",
-      "source_bytes": 111377,
-      "source_relative_to_control_root": "staging/package_builder.py",
-      "source_sha256": "6d45c9e083854f08f6eff2e5808f37fbc074685f58555177a8504133405932c0",
-      "transformations": [
-        "replayable package-only builder; never writes product source"
-      ]
     }
   ],
   "final_audit": {
-    "counted_after_cutoff": false,
+    "actual_helper": {
+      "agent": "/root/astra_handover_final_263/dependency_closure",
+      "effort": "xhigh",
+      "model": "gpt-6-luna"
+    },
+    "advisory_ordinal": 263,
+    "completed_utc": "2026-10-19T14:57:47.593555+00:00",
+    "counted_after_cutoff": true,
+    "disposition": {
+      "path": "assets/handover-assurance.md",
+      "sha256": "81ce19d586b205ee18b37802d45531a7deb336d66e7bdb1c0b7cc674c7497883"
+    },
     "product_review": false,
-    "receipt": null,
-    "status": "pending; separate root-assigned fresh package audit not yet recorded"
+    "receipt": {
+      "original_source_sha256": "4fc988689f028b729d89b0d852e4728aa97767f562b6a670005fcb5bd9faa462",
+      "path": "transfer/evidence/handover/ASTRA-FINAL-263.md",
+      "sha256": "4fc988689f028b729d89b0d852e4728aa97767f562b6a670005fcb5bd9faa462"
+    },
+    "status": "completed; concrete normal corrections applied in final metadata seal"
   },
   "frozen_cutoff_utc": "2026-10-19T14:10:14Z",
   "host_repository": {
@@ -2121,11 +2176,21 @@
     }
   ],
   "package_counts": {
-    "private_transfer_bytes_excluding_zip_reference": 3098383,
-    "private_transfer_files_excluding_zip_reference": 106,
-    "public_control_files_excluding_manifest": 43
+    "private_transfer_bytes_excluding_zip_reference": 3010344,
+    "private_transfer_files_excluding_zip_reference": 108,
+    "public_control_files_excluding_manifest": 44
   },
-  "phase": "prepared; public control content is stable and the final host pin belongs in the private ZIP reference",
+  "phase": "prepared; completed final handover audit and receiving corrections recorded",
+  "post_cutoff_counts": {
+    "accepted_original_cards": 29,
+    "accepted_releases": 0,
+    "completed_advisories": 263,
+    "delivery_direction_advisories": 226,
+    "new_product_reviews": 0,
+    "original_cards": 95,
+    "releases": 3,
+    "scheduled_advisories": 37
+  },
   "receiving_clones": [
     {
       "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",

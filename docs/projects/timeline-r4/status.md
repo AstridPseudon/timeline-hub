@@ -1,27 +1,27 @@
-# Timeline R4 — handover status
+# Timeline R4 — receiving status
 
-**Frozen cutoff:** `2026-10-19T14:10:14Z`. **Status snapshot read:** `2026-10-19T14:10:14Z`. Portfolio: **29/95 original cards accepted; 0/3 releases; 262 completed advisories (225 delivery/direction + 37 scheduled); 0 new product reviews at cutoff.**
+**Product snapshot:** frozen 2026-10-19T14:10:14Z: **29/95 original cards accepted; 0/3 releases; 262 completed advisories (225 delivery/direction + 37 scheduled); 0 new product reviews.**
 
-The cross-machine handover is being assembled from verified public source refs and a separate private transfer package. Product delivery remains incomplete. Counts and prior UNKNOWN states are preserved; code publication does not establish product acceptance or completion.
+**Post-cutoff handover advisory:** actual fresh Astra 263 completed; current advisory total 263 (226 delivery/direction +37 scheduled), still 0 new product reviews.
 
-The accepted-card count is not an effort percentage. Product tests, installed qualification, public behavior, and acceptance are separate claims. Review UNKNOWN states, caps, history, and approval gates remain as recorded in the canonical control files. This package adds no product acceptance or review PASS.
+The cross-machine handover source and control have been published, the private transfer has been built and independently checked, and fresh Astra 263 has completed its audit. Its bounded setup/documentation corrections are included here. Product delivery remains incomplete; publication and handover assurance do not establish product acceptance.
 
-## Current blockers
+The accepted-card count is not an effort percentage. Source tests, installed qualification, public behavior and acceptance are distinct. The exact final control commit/tree is external to the self-hashed public manifest, in the ZIP’s `transfer/ZIP-REFERENCE.json`. Read [handover assurance](assets/handover-assurance.md) for actual audited cut/provenance and applied corrections.
 
-- 29 of 95 original cards are accepted; 0 of 3 releases are accepted and there are no new product reviews at this cutoff.
-- EB, E, F and G have incomplete product criteria; their exact terminal checkpoints and unresolved states are retained in the source run.
-- The fresh independent portability validation and final handover audit have not yet completed.
+## Remaining evidence and receiver prerequisites
 
-## Concrete next operations
+EB/E/F/G terminal results remain incomplete as recorded in the delivered checkpoints linked by [current next operations](assets/current-next-operations.md). Receiver tool/model/package access and fresh operation-specific Host/Runtime/profile readiness are not established by this handover. Historical film/comparator proof remains held only where consumed. Runtime identities/databases/leases/owner credentials and issued-request uncertainty are never transferred as live authority.
 
-- Finish the prepared Astrid control branch from its verified default and publish the exact final source refs/map.
-- Finalize and validate the private ZIP against the actual control commit/tree; do not substitute the ZIP for public Git source.
-- Run the planned fresh independent handover audit after the code/control package and ZIP are complete.
+## Review budgets
 
-## Interpretation
+| Review stage | Configured cap | Historical usage |
+|---|---:|---|
+| CONTRACT-COMMIT | 1 | UNKNOWN |
+| COMMIT | 1 | UNKNOWN |
+| FINAL-R3 | 1 | UNKNOWN |
 
-- Historical preservation refs are custody for exact task-owned source history, not qualified candidates.
-- The 16 candidate/WIP refs and 156 historical refs are separate from per-consumer installed package/profile state.
-- Runtime identities, databases, leases, processes, owner credentials and live/fenced consumer state remain local and are not transferred.
+Zero new handover reviews does not mean zero consumed rounds or permission to spend another round. Preserve UNKNOWN; do not reset or reconcile by inference.
 
-The original 95-card scope, adopted amendments, R1–R3/IP0–IP8, counters, model/effort roles, review caps, UNKNOWN statuses, and authority are retained in the adjacent canonical files.
+## Continue delivery
+
+Follow [the actual next operations and checkpoint map](assets/current-next-operations.md), [receiving setup](assets/receiving-setup.md), run.yaml, tasklist.md, cards.md and dependency-graph.json. All original95/adopted scope, R1–R3/IP0–IP8 and explicit human/security/data/publication/migration gates remain. The old machine’s workers and both schedules remain held. No recipient action is required to repeat completed publication, packaging or handover advisory.

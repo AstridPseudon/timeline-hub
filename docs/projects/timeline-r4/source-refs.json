@@ -1,8 +1,8 @@
 {
   "control_checkpoint": {
-    "bytes": 2199,
+    "bytes": 2481,
     "path": "status.md",
-    "sha256": "6e4f75e3c5d6161793fec7a578ccd379e8709ad7bdf398996cdb9ba83d5b0d92"
+    "sha256": "b2fc5530bdae3a1169acf64cf1e3aecbec155af7f5e4092a5d541f70bf0b30d1"
   },
   "counts_as_of_cutoff": {
     "accepted_original_cards": 29,
@@ -60,6 +60,15 @@
       "status": "portfolio remains 29/95 accepted and 0/3 releases; see exact current consumer checkpoints"
     }
   ],
+  "post_cutoff_handover": {
+    "advisory_ordinal": 263,
+    "completed_advisories": 263,
+    "delivery_direction": 226,
+    "new_product_reviews": 0,
+    "receiving_next_operations": "assets/current-next-operations.md",
+    "report": "transfer/evidence/handover/ASTRA-FINAL-263.md",
+    "scheduled": 37
+  },
   "products": [
     {
       "candidate": {
@@ -1186,22 +1195,27 @@
   },
   "status": {
     "blockers": [
-      "29 of 95 original cards are accepted; 0 of 3 releases are accepted and there are no new product reviews at this cutoff.",
-      "EB, E, F and G have incomplete product criteria; their exact terminal checkpoints and unresolved states are retained in the source run.",
-      "The fresh independent portability validation and final handover audit have not yet completed."
+      "Product remains 29/95 accepted cards and 0/3 accepted releases; EB/E/F/G terminal checkpoints remain incomplete.",
+      "Receiving tools/models/packages and fresh operation-specific Host/Runtime/profile readiness require local qualification; no live lifecycle authority transfers.",
+      "Missing named historical film/comparator proof remains held only for its consuming claims."
     ],
     "distinctions": [
       "Historical preservation refs are custody for exact task-owned source history, not qualified candidates.",
       "The 16 candidate/WIP refs and 156 historical refs are separate from per-consumer installed package/profile state.",
       "Runtime identities, databases, leases, processes, owner credentials and live/fenced consumer state remain local and are not transferred."
     ],
+    "handover_metadata_updated_utc": "2026-10-19T14:57:47.593555+00:00",
     "next_operations": [
-      "Finish the prepared Astrid control branch from its verified default and publish the exact final source refs/map.",
-      "Finalize and validate the private ZIP against the actual control commit/tree; do not substitute the ZIP for public Git source.",
-      "Run the planned fresh independent handover audit after the code/control package and ZIP are complete."
+      "Use the ZIP-pinned control commit/tree, verify the manifest, then use the existing four-candidate clone helper. Read assets/receiving-setup.md before installing packages, including Composition\u2019s local schema dependency. Check configured model availability; do not silently substitute models.",
+      "Establish receiving-owned synthetic consumer roots, credentials, Host/profile and Runtime custody using the admitted sources and actual supported operation readiness. Qualify the selected compatible tuple once; do not copy old databases, owner handles, leases or process graphs.",
+      "Give A one evolving four-repo candidate and a continuous integration/test owner. Integrate compatible ready returns at real seams; retain the qualified App and separate W46/W47/WIP identities until their consumed boundaries are reconciled. Reuse unaffected proof and installed artifacts; no fixed branch quorum or per-card cold setup.",
+      "Continue the actual App edit/save/reload/history/held-response/newer-edit/exact-retry/undo and transcript/bind journeys. EB\u2019s latest Journey46 stopped at a selector/guard harness mismatch before a semantic request; E259/E260 have no successful semantic preview; F265 refused before a call because product-client open was unavailable. Repair admitted ordinary setup/harness/source defects at their owners, routing coupled source corrections through A to Sol6.1/high.",
+      "Continue G\u2019s current Player/native parity consumer with the exact supplied fixture after real receiving operation readiness. G250 materialized input but produced no current Player WAV/native comparison. Historical WAV and earlier readiness remain historical; no blind replay or manufactured acknowledgement of old uncertain requests.",
+      "Close literal satisfied criteria promptly, then run focused changed-boundary checks and prescribed IP/release checks. Keep named historical film/comparator proof held only for claims consuming it. Preserve all 95/adopted criteria, all three releases, UNKNOWN review usage and actual human/security/data/publication/migration gates.",
+      "Recreate hourly/three-hour oversight only on the receiving host after assigning actual new execution handles. Both source-machine schedules and delivery owners remain held; old thread/worker identities are historical context, not reusable receiving authority."
     ],
-    "portfolio_state": "The cross-machine handover is being assembled from verified public source refs and a separate private transfer package. Product delivery remains incomplete. Counts and prior UNKNOWN states are preserved; code publication does not establish product acceptance or completion.",
-    "snapshot_read_utc": "2026-10-19T14:10:14Z"
+    "portfolio_state": "The cross-machine handover source and control have been published, the private transfer has been built and independently checked, and fresh Astra 263 has completed its audit. Its bounded setup/documentation corrections are included here. Product delivery remains incomplete; publication and handover assurance do not establish product acceptance.",
+    "snapshot_read_utc": "2026-10-19T14:57:47.593555+00:00"
   },
   "toolchain": {
     "dependencies_installed_by_handover": false,
