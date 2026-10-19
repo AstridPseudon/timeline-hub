@@ -15,7 +15,6 @@ import math
 import re
 import select
 import shutil
-import signal
 import socket
 import stat
 import subprocess
@@ -2867,7 +2866,8 @@ class ProcessCustody:
         if sys.platform == "win32":
             return list(argv), {}
         if sys.platform != "darwin":
-            if not (hasattr(os, "pidfd_open") and hasattr(signal, "pidfd_send_signal")):
+            if not (callable(getattr(platform, "pidfd_open", None))
+                    and callable(getattr(platform, "pidfd_send_signal", None))):
                 raise CustodyError("incarnation-bound kernel custody is unavailable")
             return list(argv), {}
         policy = _inventory_launch_policy(inventory_context["environment"], inventory_context["cwd"]) if inventory_context is not None and role == "command" else None
@@ -3116,7 +3116,7 @@ class ProcessCustody:
                         return
                     stage = "pidfd-bind"
                     try:
-                        descriptor = os.pidfd_open(pid, 0)
+                        descriptor = platform.pidfd_open(pid)
                     except ProcessLookupError:
                         if held:
                             raise
@@ -3877,7 +3877,7 @@ class ProcessCustody:
             try:
                 if cleanup_deadline is not None and time.monotonic() >= cleanup_deadline:
                     raise CustodyError("retained cleanup deadline expired")
-                signal.pidfd_send_signal(handle, signum, None, 0)
+                platform.pidfd_send_signal(handle, signum)
             except ProcessLookupError:
                 return
             except OSError as exc:

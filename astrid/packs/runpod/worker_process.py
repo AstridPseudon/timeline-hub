@@ -25,7 +25,6 @@ import re
 import secrets
 import select
 import shlex
-import signal
 import socket
 import stat
 import subprocess
@@ -417,7 +416,8 @@ def stop_owned_process(
     """Pin, signal, and prove the exact incarnation exited before acknowledging."""
     if not 0 < timeout_seconds <= 30:
         raise WorkerProcessError("exact stop timeout must be bounded")
-    if not hasattr(os, "pidfd_open") or not hasattr(signal, "pidfd_send_signal"):
+    if not (callable(getattr(platform, "pidfd_open", None))
+            and callable(getattr(platform, "pidfd_send_signal", None))):
         raise WorkerProcessError("exact stop requires Linux pidfd support; no PID fallback")
     def stopped(*, already_exited: bool) -> dict[str, Any]:
         return {
@@ -436,7 +436,7 @@ def stop_owned_process(
     if state != "same":
         raise WorkerProcessError("exact process absence remains unresolved")
     try:
-        fd = os.pidfd_open(handle.pid, 0)
+        fd = platform.pidfd_open(handle.pid)
     except ProcessLookupError:
         state = _exact_incarnation_state(handle)
         if state in {"absent", "different"}:
@@ -452,7 +452,7 @@ def stop_owned_process(
             raise WorkerProcessError("exact process identity became unresolved before stop")
         observe_owned_process(handle)
         try:
-            signal.pidfd_send_signal(fd, platform.TERM)
+            platform.pidfd_send_signal(fd, platform.TERM)
         except ProcessLookupError:
             # It may exit between inspection and signal; prove exit on the same
             # pinned kernel handle rather than guessing from the integer PID.

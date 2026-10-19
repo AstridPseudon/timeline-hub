@@ -1525,7 +1525,7 @@ def test_observed_census_does_not_change_linux_pidfd_admission(observed_descenda
     owner, _, census = _ordinary_census_fixture(observed_descendant)
     monkeypatch.setattr(custody.sys, "platform", "linux")
     monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "birth-103")
-    monkeypatch.setattr(custody.os, "pidfd_open", lambda *_: 77, raising=False)
+    monkeypatch.setattr(custody.platform, "pidfd_open", lambda *_: 77, raising=False)
     inherited = []
     monkeypatch.setattr(custody.os, "set_inheritable", lambda *args: inherited.append(args))
     assert owner.observe_census({103: "birth-103"}, census=census,
@@ -4842,7 +4842,7 @@ def test_linux_descendant_gone_before_registration_is_absent_not_a_violation(obs
     owner, _, census = _ordinary_census_fixture(observed_descendant)
     monkeypatch.setattr(custody.sys, "platform", "linux")
     monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "")  # reaped or zombie
-    monkeypatch.setattr(custody.os, "pidfd_open", lambda *_: pytest.fail("bound a pidfd to a gone process"), raising=False)
+    monkeypatch.setattr(custody.platform, "pidfd_open", lambda *_: pytest.fail("bound a pidfd to a gone process"), raising=False)
     assert owner.observe_census({103: "birth-103"}, census=census,
                                 fresh_census=lambda: pytest.fail("no reconciliation on Linux")) == {103: "birth-103"}
     assert 103 not in owner._handles and owner._uncertain is None
@@ -4853,7 +4853,7 @@ def test_linux_descendant_pid_reused_before_registration_is_absent(observed_desc
     owner, _, census = _ordinary_census_fixture(observed_descendant)
     monkeypatch.setattr(custody.sys, "platform", "linux")
     monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "another-incarnation")
-    monkeypatch.setattr(custody.os, "pidfd_open", lambda *_: pytest.fail("bound a pidfd to a reused pid"), raising=False)
+    monkeypatch.setattr(custody.platform, "pidfd_open", lambda *_: pytest.fail("bound a pidfd to a reused pid"), raising=False)
     owner.observe_census({103: "birth-103"}, census=census, fresh_census=lambda: pytest.fail("unexpected"))
     assert 103 not in owner._handles and owner._uncertain is None
 
@@ -4865,6 +4865,6 @@ def test_linux_descendant_exiting_during_pidfd_bind_is_absent(observed_descendan
     monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "birth-103")
     def gone(*_):
         raise ProcessLookupError
-    monkeypatch.setattr(custody.os, "pidfd_open", gone, raising=False)
+    monkeypatch.setattr(custody.platform, "pidfd_open", gone, raising=False)
     owner.observe_census({103: "birth-103"}, census=census, fresh_census=lambda: pytest.fail("unexpected"))
     assert 103 not in owner._handles and owner._uncertain is None
