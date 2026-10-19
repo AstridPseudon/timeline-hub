@@ -6,19 +6,15 @@
     },
     "astrid_runtime_client/__init__.py": {
       "from": "packages/python/astrid_runtime_client/__init__.py",
-      "sha256": "sha256:97629bd1b977fb75797d26bcdafe3d3763a7fa12b6c2e738ebb49de1e2f4ffa1"
+      "sha256": "sha256:fdcb09cadc13d218a4182272589e14ce02c889638305cae4593ca6f3d5e38842"
     },
     "astrid_runtime_client/contract_metadata.py": {
       "from": "packages/python/astrid_runtime_client/contract_metadata.py",
-      "sha256": "sha256:3b141ab4bebd723a0721b3ae56fabd9cafed658c2245066f2c072ce4cae87663"
+      "sha256": "sha256:4851ffc2142c7b742236bcf82fb0fa22e82bbc952fc452d9a2cb658539c88226"
     },
     "astrid_runtime_client/generated.py": {
       "from": "packages/python/astrid_runtime_client/generated.py",
-      "sha256": "sha256:e1bb3018128ea51355324a230b83be921c550a01586959274baf2c0e2b5955a3"
-    },
-    "tests/fixtures/visual-boundary-v1.json": {
-      "from": "conformance/fixtures/visual-boundary-v1.json",
-      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+      "sha256": "sha256:409983dc4bf3c9aa5d6c8fc82ef8a23196b590ca62fa78ec3cd2c645748e5ae1"
     },
     "tests/fixtures/runtime-responses/events_page_1_200.json": {
       "from": "conformance/responses/events_page_1_200.json",
@@ -55,10 +51,14 @@
     "tests/fixtures/runtime-responses/validation_error_422.json": {
       "from": "conformance/responses/validation_error_422.json",
       "sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"
+    },
+    "tests/fixtures/visual-boundary-v1.json": {
+      "from": "conformance/fixtures/visual-boundary-v1.json",
+      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
     }
   },
   "manifest": "contract/artifacts.json",
   "producer": "astrid-runtime",
-  "producer_version": "sha256:62e5c5def72da0ac28b954ee0df080ed3d28814862e1f7efcf3f6b8005a67dcc",
-  "source_commit": "329c9c591d9c0f74026d599ee00c14c165cb3e53"
+  "producer_version": "sha256:37a4f9102e8fbb9989d2d95f2adebf0bf3098185473830eed06f615534a09bb7",
+  "source_commit": "1f7a4422c4f4ba3b8f9600a55fe25d52adb0a438"
 }
