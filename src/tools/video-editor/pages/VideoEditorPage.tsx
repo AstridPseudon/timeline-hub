@@ -1237,6 +1237,18 @@ export default function VideoEditorPage() {
         onSelectProject={handleSelectProject}
         onSelectTimeline={handleSelectTimeline}
         onSetPrimaryTimeline={handleSetPrimaryTimeline}
+        onRenameTimeline={
+          localProjectId
+            ? async (timelineId, name) => {
+                await new AstridRuntimeClient().renameTimeline(
+                  localProjectId,
+                  timelineId,
+                  name,
+                );
+                await discovery.timelinesQuery.refetch();
+              }
+            : undefined
+        }
         onCreateTimeline={
           (discovery.timelinesQuery.data?.timelines?.length ?? 0) > 0
             ? handleCreateAdditionalTimeline
@@ -1260,6 +1272,8 @@ export default function VideoEditorPage() {
       handleSelectProject,
       handleSelectTimeline,
       handleSetPrimaryTimeline,
+      localProjectId,
+      discovery.timelinesQuery.refetch,
       handleCreateAdditionalTimeline,
       hasGlobalHeader,
       isSwitchBlockedBySave,

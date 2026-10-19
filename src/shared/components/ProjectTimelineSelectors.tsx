@@ -40,6 +40,8 @@ interface ProjectTimelineSelectorsProps {
   onSetPrimaryTimeline?: (timelineId: string) => void;
   /** Creates a new canonical timeline in the selected local project. */
   onCreateTimeline?: () => void;
+  /** Renames a timeline in the selected local project. */
+  onRenameTimeline?: (timelineId: string, name: string) => Promise<void>;
   creatingTimeline?: boolean;
   /** Canonical timeline id currently being promoted, if any. */
   settingPrimaryTimelineId?: string | null;
@@ -197,6 +199,7 @@ export function ProjectTimelineSelectors(props: ProjectTimelineSelectorsProps) {
       onSetPrimaryTimeline={props.onSetPrimaryTimeline}
       settingPrimaryTimelineId={props.settingPrimaryTimelineId}
       onCreateTimeline={props.onCreateTimeline}
+      onRenameTimeline={props.onRenameTimeline}
       creatingTimeline={props.creatingTimeline}
       disabled={props.disabled}
       showProjectSelector={props.showProjectSelector}

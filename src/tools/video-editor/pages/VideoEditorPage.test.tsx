@@ -23,6 +23,7 @@ import VideoEditorPage, {
   LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY,
 } from "@/tools/video-editor/pages/VideoEditorPage.tsx";
 import {
+  AstridRuntimeClient,
   RUNTIME_CLIENT_SCOPES,
   RuntimeAuthenticationError,
 } from "@/integrations/runtime/client.ts";
@@ -1400,6 +1401,46 @@ describe("VideoEditorPage", () => {
     expect(state.timelines.createTimeline.mutateAsync).not.toHaveBeenCalled();
     expect(state.timelines.renameTimeline.mutateAsync).not.toHaveBeenCalled();
     expect(state.timelines.deleteTimeline.mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("renames the current timeline from the default local view", async () => {
+    state.discovery.projects = [
+      {
+        slug: "ados-talks",
+        name: "Ados Talks",
+        project_id: "project-canonical-id",
+      },
+    ];
+    const renameTimeline = vi
+      .spyOn(AstridRuntimeClient.prototype, "renameTimeline")
+      .mockResolvedValue(
+        {} as Awaited<ReturnType<AstridRuntimeClient["renameTimeline"]>>,
+      );
+
+    renderPage(
+      "/tools/video-editor?localProject=ados-talks&localTimeline=01JM4K5N7P0000000000000017",
+    );
+    await screen.findByTestId("video-editor-provider");
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("combobox", { name: "Select timeline" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Rename timeline" }),
+    );
+    await user.clear(screen.getByRole("textbox", { name: "Timeline name" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Timeline name" }),
+      "Renamed intro",
+    );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(renameTimeline).toHaveBeenCalledWith(
+        "project-canonical-id",
+        "01JM4K5N7P0000000000000017",
+        "Renamed intro",
+      );
+    });
   });
 
   it("automatically creates and opens Main from the authoritative empty-project state", async () => {
