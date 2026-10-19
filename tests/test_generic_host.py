@@ -15,9 +15,10 @@ import pytest
 from astrid.core.execution import generic_host, process_group
 from astrid.core.execution.generic_host import (
     AdapterRegistry,
+    CleanupUncertainError,
+    CommandCleanupUnresolved,
     GenericPackHost,
     HostCancelled,
-    CleanupUncertainError,
     HostError,
     HostRegistrationError,
     RuntimeProtocolClient,
@@ -4268,9 +4269,16 @@ def test_failed_worker_release_retains_original(tmp_path, monkeypatch):
     def refuse(_process):
         raise CleanupUncertainError("retained worker release failure")
     monkeypatch.setattr(generic_host, "_terminate_process_group", refuse)
-    with pytest.raises(CleanupUncertainError, match="retained worker release failure"):
+    with pytest.raises(
+        CommandCleanupUnresolved,
+        match="cleanup unresolved: retained worker release failure",
+    ) as caught:
         host.invoke_capability(capability_kind="executor", capability_id="test.echo", request={}, attempt=attempt)
-    assert id(process) in host._active_processes and host._unresolved_task_scopes
+    assert caught.value.execution_error is None
+    assert isinstance(caught.value.__cause__, CleanupUncertainError)
+    assert str(caught.value.__cause__) == "retained worker release failure"
+    assert id(process) in host._active_processes
+    assert "retained worker release failure" in host._unresolved_task_scopes
 
 
 @pytest.mark.darwin_native
