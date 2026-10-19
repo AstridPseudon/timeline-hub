@@ -80,8 +80,9 @@ export class AstridLocalCatalogRoutes {
       throw new AstridCapabilityBindingError(`capability is not registered: ${capabilityId}`);
     }
     if (match.status !== 'ready') {
+      const reason = match.unavailable_reason ? `: ${match.unavailable_reason}` : '';
       throw new AstridCapabilityBindingError(
-        `capability is not ready: ${capabilityId} (${match.status})`,
+        `capability is not ready: ${capabilityId} (${match.status})${reason}`,
       );
     }
     return match;
