@@ -47,11 +47,8 @@ investigation
 *.md
 README.md
 VIDEO_EDITOR_INTEGRATION_PLAN.md
-VIDEO_EDITOR_INTEGRATION_TASKS.json
 findings.json
-scorecard.png
 localhost-*.log
-!prev
 
 # Old build configs (replaced by Dockerfile)
 nixpacks.toml

@@ -1,10 +1,9 @@
-const CACHE_NAME = 'astrid-app-v3';
+const CACHE_NAME = 'astrid-v4';
 
 // Only cache essential static assets, not dynamic content
 const urlsToCache = [
   '/manifest.json',
-  '/astrid-app-icon-192.png',
-  '/lovable-uploads/e2fca7b4-10e4-4ee5-bc85-34d85d75e502.png'
+  '/astrid-app-icon-192.png'
 ];
 
 // Install event - cache only essential resources
@@ -33,10 +32,7 @@ self.addEventListener('fetch', event => {
   }
 
   // For API calls and dynamic content, always go to network first
-  if (event.request.url.includes('/api/') || 
-      event.request.url.includes('supabase.co') ||
-      event.request.url.includes('lovable.dev') ||
-      event.request.url.includes('gpteng.co')) {
+  if (event.request.url.includes('/api/')) {
     return; // Let these bypass the service worker entirely
   }
 

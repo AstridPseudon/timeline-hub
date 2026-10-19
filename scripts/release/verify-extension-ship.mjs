@@ -69,7 +69,7 @@ export const ASTRID_APP_GATE_PROFILE = Object.freeze([
   // Its fixed argument vector intentionally has no snapshot-update switch.
   { id: 'visual-e2e', label: 'extension visual regression gate', command: 'npm', args: ['run', 'test:e2e:extension-visual'] },
   { id: 'lint', label: 'Astrid App lint', command: 'npm', args: ['run', 'lint'] },
-  { id: 'typecheck', label: 'Astrid App strict-island typecheck', command: 'npm', args: ['run', 'typecheck:strict-probe'] },
+  { id: 'typecheck', label: 'Astrid App strict-island typecheck', command: 'npm', args: ['run', 'typecheck:strict-islands'] },
   { id: 'unit', label: 'complete Astrid App unit suite', command: 'npm', args: ['test'] },
   { id: 'extension-tests', label: 'extension contract suite', command: 'npm', args: ['run', 'test:extensions'] },
   { id: 'creative-lab', label: 'Creative Lab extension suite', command: 'npm', args: ['run', 'test:creative-extension'] },

@@ -12,13 +12,12 @@ await fs.mkdir(output, { recursive: true });
 
 const appPort = 44171;
 const appBase = 'http://127.0.0.1:' + appPort;
-const node = '/Users/hannahomalley/Documents/Codex/astrid/.otto/tools/node-v20.19.4/node-v20.19.4-darwin-arm64/bin/node';
-const commonEnv = {
-  ...process.env,
-  ASTRID_CHECKOUT: '/Users/hannahomalley/Documents/Codex/astrid/.otto/sources/astrid-landing-source-v1',
-  ASTRID_PUBLIC_CHECKOUT: '/Users/hannahomalley/Documents/Codex/astrid/.otto/sources/astrid-public-source-v1',
-  VITE_DISABLE_REMOTE_FONTS: '1',
-};
+const node = process.execPath;
+const astridCheckout = process.env.ASTRID_CHECKOUT;
+if (!astridCheckout || !path.isAbsolute(astridCheckout)) throw new Error('ASTRID_CHECKOUT must be an absolute path to the landing source checkout');
+const publicCheckout = process.env.ASTRID_PUBLIC_CHECKOUT;
+if (!publicCheckout || !path.isAbsolute(publicCheckout)) throw new Error('ASTRID_PUBLIC_CHECKOUT must be an absolute path to the public source checkout');
+const commonEnv = { ...process.env };
 
 const args = [
   path.join(appRoot, 'node_modules/vite/bin/vite.js'),
@@ -191,10 +190,6 @@ const runVisit = async ({ name, pathname, protectedHandoff }) => {
       const healthRequests = publicUrls.filter((url) => url.includes('/api/astrid/health'));
       const privateModules = publicUrls.filter((url) => privateModuleSignals.some((signal) => url.includes(signal)));
       const publicModules = publicModuleSignals.filter((signal) => publicUrls.some((url) => url.includes(signal)));
-      const supabaseErrors = [
-        ...visit.pageErrors.map((item) => item.message),
-        ...visit.consoles.map((item) => item.text),
-      ].filter((text) => text.includes('Supabase runtime is not initialized'));
 
       if (visit.marker.count !== 1 || !visit.marker.visible) {
         throw new Error(name + ' did not mount one visible public host');
@@ -211,7 +206,7 @@ const runVisit = async ({ name, pathname, protectedHandoff }) => {
       if (publicModules.length !== publicModuleSignals.length) {
         throw new Error(name + ' public document missed public modules: ' + publicModules.join(', '));
       }
-      if (supabaseErrors.length !== 0 || visit.pageErrors.length !== 0) {
+      if (visit.pageErrors.length !== 0) {
         throw new Error(name + ' public document reported page errors');
       }
 
@@ -220,7 +215,7 @@ const runVisit = async ({ name, pathname, protectedHandoff }) => {
       visit.assertions.noPublicHealthRequests = true;
       visit.assertions.noPublicPrivateModules = true;
       visit.assertions.publicModulesLoaded = publicModules;
-      visit.assertions.noSupabaseOrPageErrors = true;
+      visit.assertions.noPageErrors = true;
 
       if (protectedHandoff) {
         const initialRecords = visit.records.filter((item) => item.documentIndex === 1);
@@ -377,7 +372,6 @@ try {
       ASTRID_CHECKOUT: commonEnv.ASTRID_CHECKOUT,
       ASTRID_PUBLIC_CHECKOUT: commonEnv.ASTRID_PUBLIC_CHECKOUT,
       PLAYWRIGHT_BROWSERS_PATH: commonEnv.PLAYWRIGHT_BROWSERS_PATH ?? null,
-      VITE_DISABLE_REMOTE_FONTS: commonEnv.VITE_DISABLE_REMOTE_FONTS,
     },
     exitCode: server.exitCode,
   }, null, 2) + '\n');
