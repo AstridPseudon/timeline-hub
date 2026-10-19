@@ -10,8 +10,10 @@
  *
  * Cases
  *   1  agent -> open App   an Astrid task and the agent's publication show up in the open App with no reload
- *   2  M1 move/restart     real pointer gestures, lost durable ACK, dependent intent, exact retry and UI inverse
- *   3  relevant conflict   a real dependency change retains B instead of rewriting its guards
+ *   2  concurrent edit     legacy track/transition saves retain a conflicting draft and offer resolution
+ *   3  Runtime restart     an unsent legacy draft survives the open page and explicit recovery
+ *   4  M1 move/restart     real pointer gestures, lost durable ACK, dependent intent, exact retry and UI inverse
+ *   5  relevant conflict   a real dependency change retains B instead of rewriting its guards
  * Every case first proves the three products share one realm, one Runtime instance and one contract, and ends with the
  * page-wide check that no credential ever reached the page.
  *
@@ -24,18 +26,19 @@
  * output) and never judged (R-10). Waits are hang ceilings, not budgets. The ordering of events is made by awaited CLI calls and
  * route holds, never by sleeping.
  */
-import { expect, type Page, type Request, type Route } from '@playwright/test';
+import { expect, type Locator, type Page, type Request, type Route } from '@playwright/test';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
-import { commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, openApp, openSeededTimeline, revisionBody, test as appTest } from './support/app.ts';
+import { commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, firstTrackName, holdTimelineSaves, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI } from './support/app.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 
 /** A hang ceiling for one wait (R-10): many times the usual time, never a budget. */
 const CEILING = { timeout: 90_000 };
 const SAVES = /\/timelines\/[^/]+\/composition-revisions$/;
+const CONFLICT_TITLE = 'This timeline changed somewhere else';
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
 
 const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCli }>({
@@ -271,6 +274,20 @@ async function expectSameRealm(page: Page, harness: DirectHarness, astrid: Astri
   return { realmId: fromPage.realm.realm_id as string, runtimeInstanceId: fromPage.health.runtime_instance_id as string, schemaDigest: fromPage.health.schema_digest as string, astridFile: fromAstrid.astrid_file };
 }
 
+/** The transition control of the clip panel, found by its label (the panel's selects carry no accessible name). */
+const transitionSelect = (page: Page): Locator => page.getByText('Transition', { exact: true }).locator('xpath=following::*[@role="combobox"][1]');
+
+async function selectClip(page: Page, clipId: string) {
+  await page.locator(`[data-clip-id="${clipId}"]`).first().click();
+}
+
+async function setTransitionToNone(page: Page, clipId: string) {
+  await selectClip(page, clipId);
+  await transitionSelect(page).click();
+  await page.getByRole('option', { name: 'None', exact: true }).click();
+  await expect(transitionSelect(page)).toContainText('None');
+}
+
 /** Opens the App's action pane, where the runtime activity dock lives (it slides away until opened). */
 async function openActionPane(page: Page) {
   await page.getByRole('button', { name: /^Open Action pane/ }).click();
@@ -372,6 +389,262 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
   const revisionCount = await expectOpaqueDataKept(harness, seed3);
 
   journey.facts = { ...journey.facts, taskId, outputObjectId: output!.object_id, agentRevision: published.new_head, appRevision, revisionCount };
+  await sniff.expectClean(page, seed3.timelineId);
+});
+
+// ---------------------------------------------------------------------------------------------
+// Legacy concurrent edit
+
+/**
+ * Track/transition writers remain whole-document CAS saves until M2. Replaying A must not let C overwrite B's changed shot
+ * pins, extension and explicit clear. Either the provider notices B before accepting A's receipt or C receives stale_head;
+ * both must retain A+C and offer an explicit resolution. Command rebase is exercised separately by the M1 move cases.
+ */
+test('concurrent edit: the App\'s acknowledgement is lost, the agent publishes, the App edits again; the App names the conflict and keeps its draft', async ({ page, harness, astrid, seed3 }) => {
+  const agent = agentOf(astrid, seed3);
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  const watched = watchPageReads(page, harness);
+
+  // Every save the page sends, with the key and head it names and what became of it.
+  interface Post { key: string; body: string; expectedHead: string | null; status: number | null; outcome: 'held' | 'sent' | 'lost' }
+  const posts: Post[] = [];
+  const postOf = new Map<Request, Post>();
+  page.on('request', (request) => {
+    if (request.method() !== 'POST' || !SAVES.test(new URL(request.url()).pathname)) return;
+    const post: Post = { key: request.headers()['idempotency-key'], body: request.postData()!, expectedHead: JSON.parse(request.postData() ?? '{}').expected_head ?? null, status: null, outcome: 'sent' };
+    postOf.set(request, post);
+    posts.push(post);
+  });
+  page.on('response', (response) => { const post = postOf.get(response.request()); if (post) post.status = response.status(); });
+  page.on('requestfailed', (request) => { const post = postOf.get(request); if (post) post.outcome = 'lost'; });
+
+  // Hold the acknowledgement, not the request: the Runtime commits the save, the page never hears back.
+  let holding = true;
+  const held: Array<{ route: Parameters<Parameters<Page['route']>[1]>[0]; post: Post }> = [];
+  await page.route(SAVES, async (route) => {
+    const request = route.request();
+    if (!holding || request.method() !== 'POST') return route.fallback();
+    const post = postOf.get(request)!;
+    const response = await route.fetch({ maxRetries: 0 });
+    post.status = response.status();
+    post.outcome = 'held';
+    held.push({ route, post });
+  });
+
+  await openApp(page, harness);
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  journey.facts.sameRealm = await expectSameRealm(page, harness, astrid);
+  const baseHead = await currentHead(harness);
+  const revisionsBefore = (await allRevisions(harness, seed3)).length;
+
+  // A: the App renames the track. The Runtime commits it; the acknowledgement is held.
+  await editFirstTrackName(page, 'F2 App A');
+  await expect.poll(() => held.length, CEILING).toBe(1);
+  expect(held[0].post.status, 'the Runtime committed A').toBe(200);
+  expect(held[0].post.expectedHead).toBe(baseHead);
+  const keyA = held[0].post.key;
+  await expect.poll(() => currentHead(harness), CEILING).not.toBe(baseHead);
+  const headA = await currentHead(harness);
+  expect(headA, 'the App\'s save is stored under its idempotency key').toBe(keyA);
+
+  // B: the agent builds on A and publishes (it extends one clip and clears another one's asset).
+  await agent.checkout();
+  const stateA = await revisionState(harness, seed3, headA);
+  await agent.edit('--clip', seed3.agentClipId, '--extend', '1');
+  await agent.edit('--clip', seed3.agentClearClipId, '--clear-asset');
+  const published = await agent.publish('agent: extend and clear', 'f2-case2');
+  expect(published.old_head, 'the agent built on the App\'s save').toBe(headA);
+  const headB = published.new_head;
+  expect(await currentHead(harness)).toBe(headB);
+
+  // C: the App edits again while A is unacknowledged (it clears a transition).
+  await setTransitionToNone(page, seed3.transitionClipId);
+  await expect.poll(async () => {
+    const clip = (await timelineDraft(page, seed3.timelineId))?.draft.config?.clips
+      ?.find((candidate) => candidate.id === seed3.transitionClipId);
+    return { present: Boolean(clip), transition: clip?.transition ?? null };
+  }, CEILING).toEqual({ present: true, transition: null });
+
+  // The acknowledgement is lost: the page sees a connection reset, and its own retry follows.
+  holding = false;
+  await held[0].route.abort('connectionreset');
+
+  const conflict = page.getByRole('alertdialog', { name: CONFLICT_TITLE });
+  await expect(conflict).toBeVisible(CEILING);
+  await expect(conflict.getByText('Keep your changes, or switch to the latest version.')).toBeVisible();
+  await expect(conflict.getByRole('button', { name: 'Keep my changes' })).toBeVisible();
+  await expect(conflict.getByRole('button', { name: 'Use latest version' })).toBeVisible();
+  await page.unroute(SAVES);
+
+  // Which of the two ways to the conflict ran (recorded, not asserted).
+  const afterRelease = posts.slice(1);
+  const queuedEditPosted = afterRelease.find((post) => post.expectedHead === headA && post.key !== keyA);
+  const branch = queuedEditPosted ? 'b: the receipt was accepted, the queued edit was posted on A and the Runtime answered 409 stale_head' : 'a: the provider refused the confirmed receipt after its cached head moved to B';
+  test.info().annotations.push({ type: 'case-2-branch', description: branch });
+  journey.facts = { ...journey.facts, verdict: 'named_conflict', branch, posts: posts.map(({ expectedHead, status, outcome }, index) => ({ n: index + 1, expectedHead: expectedHead === null ? null : expectedHead === baseHead ? 'base head' : expectedHead === headA ? 'A' : expectedHead, status, outcome, sameKeyAsA: posts[index].key === keyA })) };
+
+  // The draft is kept: the dialog is modal, so the editor behind it is hidden from the accessibility tree but still holds A and C.
+  await expect(page.getByRole('textbox', { name: 'Track name', includeHidden: true }).first()).toHaveValue('F2 App A');
+  await expect(transitionSelect(page)).toContainText('None');
+
+  // The Runtime head is B and holds A and B, and not C.
+  expect(await currentHead(harness), 'nothing was published after B').toBe(headB);
+  const stateB = await revisionState(harness, seed3, headB);
+  expect(stateB.trackLabel, 'B holds the App\'s save A').toBe('F2 App A');
+  expect(stateB.shotClips[seed3.agentClipId].hold, 'B holds the agent\'s extension').toBe(stateA.shotClips[seed3.agentClipId].hold + 1);
+  expect(stateB.shotClips[seed3.agentClearClipId].asset, 'B holds the agent\'s clear').toBeUndefined();
+  expect(stateA.shotClips[seed3.agentClearClipId].asset, 'A still had that asset').toBeTruthy();
+  expect(stateB.parentClips[seed3.transitionClipId].transition, 'C was never published').toEqual(stateA.parentClips[seed3.transitionClipId].transition);
+  expect(stateB.parentClips[seed3.transitionClipId].transition).toBeTruthy();
+
+  // One publication per retried save: A was replayed under its own key and made exactly one revision; the agent's publication made one.
+  const revisions = (await allRevisions(harness, seed3)).map((revision) => revision.revision_id);
+  expect(revisions.length, 'two new revisions: A and B').toBe(revisionsBefore + 2);
+  expect(new Set(revisions).size, 'no revision is stored twice').toBe(revisions.length);
+  expect(revisions.filter((id) => id === keyA), 'A\'s key names exactly one revision').toHaveLength(1);
+  const retriesA = posts.filter((post) => post.key === keyA);
+  expect(retriesA.length, 'A was replayed with the same key').toBeGreaterThanOrEqual(2);
+  expect(retriesA.every((post) => post.body === posts[0].body), 'every replay of A keeps the exact request bytes').toBe(true);
+  expect(posts.filter((post) => post.expectedHead === baseHead).every((post) => post.key === keyA), 'every send on the base head is A\'s').toBe(true);
+
+  // Opaque data and clears, in every revision.
+  await expectOpaqueDataKept(harness, seed3);
+
+  // Keep is actionable: it stashes A+C durably and loads B without silently overwriting the agent.
+  await conflict.getByRole('button', { name: 'Keep my changes' }).click();
+  await expect(conflict).toHaveCount(0, CEILING);
+  await expect(firstTrackName(page)).toHaveValue(stateB.trackLabel!);
+  await selectClip(page, seed3.transitionClipId);
+  await expect(transitionSelect(page)).toContainText('crossfade', CEILING);
+  const kept = await timelineDraft(page, seed3.timelineId);
+  expect(kept?.draft.config?.tracks?.find((track: any) => track.id === 'V1')?.label).toBe('F2 App A');
+  expect(kept?.draft.config?.clips?.find((clip: any) => clip.id === seed3.transitionClipId)?.transition).toBeUndefined();
+  expect(kept?.baseHeadProjectId).toBe(harness.seed.projectId);
+  expect(kept?.baseHeadTimelineId).toBe(seed3.timelineId);
+  expect([baseHead, headA]).toContain(kept?.baseHeadRevisionId);
+  expect(await currentHead(harness)).toBe(headB);
+
+  // A reload offers that same draft. Retrying its original CAS cannot erase B; Use latest resolves it explicitly.
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  const recovered = page.getByRole('alert').filter({ hasText: 'You have unsaved changes' });
+  await expect(recovered).toBeVisible(CEILING);
+  await expect(recovered.getByRole('button', { name: 'Save them' })).toBeEnabled();
+  expect((await timelineDraft(page, seed3.timelineId))?.draft).toEqual(kept?.draft);
+  await recovered.getByRole('button', { name: 'Save them' }).click();
+  await expect(conflict).toBeVisible(CEILING);
+  await expect(page.getByRole('textbox', { name: 'Track name', includeHidden: true }).first()).toHaveValue('F2 App A');
+  await expect(transitionSelect(page)).toContainText('None');
+  expect(await currentHead(harness)).toBe(headB);
+  await conflict.getByRole('button', { name: 'Use latest version' }).click();
+  await expect(conflict).toHaveCount(0, CEILING);
+  await expect(firstTrackName(page)).toHaveValue(stateB.trackLabel!);
+  await expect.poll(() => timelineDraft(page, seed3.timelineId), CEILING).toBeNull();
+  await expect(recovered).toHaveCount(0);
+  expect((await allRevisions(harness, seed3)).length, 'resolution creates no extra publication').toBe(revisionsBefore + 2);
+
+  // Both clients agree after another reload: the App reads head B and shows A; the agent reads B.
+  const readsBeforeReload = watched.urls.length;
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  await expect(firstTrackName(page)).toHaveValue(stateB.trackLabel!);
+  await expect.poll(() => watched.urls.slice(readsBeforeReload).some((url) => url.includes(`/composition-revisions/${headB}`)), CEILING).toBe(true);
+  await selectClip(page, seed3.transitionClipId);
+  await expect(transitionSelect(page)).toContainText('crossfade');
+  expect((await agent.status()).current_head).toBe(headB);
+  const shown = await agent.show();
+  expect(shown.head_revision_id).toBe(headB);
+  const layers = shown.rows.flatMap((row) => row.layers);
+  expect(layers.find((layer) => layer.clip_id === seed3.agentClearClipId)?.asset, 'the agent sees the clear').toBeNull();
+  journey.facts.headB = headB;
+  await sniff.expectClean(page, seed3.timelineId);
+});
+
+// ---------------------------------------------------------------------------------------------
+// Legacy Runtime restart with both attached
+
+test('Runtime restart with the App open: the draft survives, saves after the relaunch, and the agent follows', async ({ page, harness, astrid, seed3 }) => {
+  const agent = agentOf(astrid, seed3);
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+
+  await openApp(page, harness);
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  const before = await expectSameRealm(page, harness, astrid);
+  const headBefore = await currentHead(harness);
+  const revisionsBefore = (await allRevisions(harness, seed3)).length;
+
+  // A draft that was never sent: the save is held, so the edit is a draft by construction.
+  const releaseSaves = await holdTimelineSaves(page);
+  const unsent = page.waitForRequest((request) => request.method() === 'POST' && SAVES.test(new URL(request.url()).pathname), CEILING);
+  await editFirstTrackName(page, 'F2 kept across restart');
+  await unsent;
+  await expect.poll(async () => (await timelineDraft(page, seed3.timelineId))?.draft.config?.tracks
+    ?.find((track: any) => track.id === 'V1')?.label, CEILING).toBe('F2 kept across restart');
+  const draftBefore = await timelineDraft(page, seed3.timelineId);
+  expect(draftBefore?.baseHeadRevisionId).toBe(headBefore);
+  expect(draftBefore?.baseHeadProjectId).toBe(harness.seed.projectId);
+  expect(draftBefore?.baseHeadTimelineId).toBe(seed3.timelineId);
+  await plantNoReloadFlag(page);
+
+  // The Runtime restarts on a new port; the page says so and does not reload itself.
+  const restarted = await harness.restartRuntime();
+  expect(restarted.oldInstanceId).toBe(before.runtimeInstanceId);
+  expect(harness.runtimePort).not.toBe(restarted.oldPort);
+  await expect(page.getByRole('heading', { name: 'Astrid restarted' })).toBeVisible(CEILING);
+  expect(await noReloadFlag(page), 'the page does not reload by itself').toBe(true);
+  await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'restarted');
+  await expect(firstTrackName(page)).toHaveValue('F2 kept across restart');
+  expect((await timelineDraft(page, seed3.timelineId))?.draft).toEqual(draftBefore?.draft);
+
+  // The agent follows discovery to the new endpoint: same realm and contract, a new instance, and the draft is not in the Runtime.
+  const after = await astrid.identity();
+  expect(after.realm_id).toBe(before.realmId);
+  expect(after.runtime_instance_id, 'the agent reached the relaunched Runtime').toBe(harness.runtimeInstanceId);
+  expect(after.runtime_instance_id).not.toBe(before.runtimeInstanceId);
+  expect(after.schema_digest).toBe(before.schemaDigest);
+  expect((await agent.status()).current_head, 'the draft is not saved').toBe(headBefore);
+  expect(await currentHead(harness)).toBe(headBefore);
+
+  // The page reconnects after Reload, offers the draft back, and saves it once the hold is released.
+  await page.getByRole('button', { name: UI.reload }).click();
+  await expectConnected(page);
+  await expect(page.getByRole('heading', { name: 'Astrid restarted' })).toHaveCount(0);
+  await openSeededTimeline(page, harness);
+  journey.facts.sameRealmAfterRestart = await expectSameRealm(page, harness, astrid);
+  const recovered = page.getByRole('alert').filter({ hasText: 'You have unsaved changes' });
+  await expect(recovered).toBeVisible(CEILING);
+  await expect(recovered.getByRole('button', { name: 'Save them' })).toBeEnabled();
+  expect((await timelineDraft(page, seed3.timelineId))?.draft).toEqual(draftBefore?.draft);
+  expect(await currentHead(harness), 'reconnection alone never sends the draft').toBe(headBefore);
+  await releaseSaves();
+  const recoveredSave = page.waitForResponse((response) => response.request().method() === 'POST' && SAVES.test(new URL(response.url()).pathname), CEILING);
+  await recovered.getByRole('button', { name: 'Save them' }).click();
+  const saved = await recoveredSave;
+  expect(saved.status(), 'the Runtime accepts the recovered draft').toBe(200);
+  expect(saved.request().postDataJSON().expected_head).toBe(headBefore);
+  const keyAfter = saved.request().headers()['idempotency-key'];
+  await expect(recovered).toHaveCount(0, CEILING);
+  await expect.poll(() => timelineDraft(page, seed3.timelineId), CEILING).toBeNull();
+  await expect.poll(() => currentHead(harness), CEILING).not.toBe(headBefore);
+  await expect(firstTrackName(page)).toHaveValue('F2 kept across restart');
+
+  // The agent reads what the App saved after the relaunch.
+  const headAfter = await currentHead(harness);
+  expect((await agent.status()).current_head).toBe(headAfter);
+  expect((await agent.show()).head_revision_id).toBe(headAfter);
+  const state = await revisionState(harness, seed3, headAfter);
+  expect(state.trackLabel, 'the saved revision is the draft').toBe('F2 kept across restart');
+  expect(headAfter, 'the post-restart save is stored under its idempotency key').toBe(keyAfter);
+  expect((await allRevisions(harness, seed3)).length, 'recover/save creates exactly one revision').toBe(revisionsBefore + 1);
+  await expectOpaqueDataKept(harness, seed3);
+
+  journey.facts = { ...journey.facts, instanceBefore: before.runtimeInstanceId, instanceAfter: after.runtime_instance_id, headBefore, headAfter };
   await sniff.expectClean(page, seed3.timelineId);
 });
 

@@ -6,6 +6,8 @@ import { chromium, expect, test as base, type Browser, type Page } from '@playwr
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
+import type { TimelineConfig } from '../../../../src/tools/video-editor/types/index.ts';
+import type { TimelineDraftRecord } from '../../../../src/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { OutboxRecord } from '../../../../src/tools/video-editor/commands/commitOutbox.ts';
 
 export const UI = {
@@ -139,4 +141,22 @@ export async function dragTimelineClip(page: Page, clipId: string, referenceId: 
   await page.mouse.move(x + (to - from) * pixelsPerSecond, y, { steps: 12 });
   await beforeDrop?.();
   await page.mouse.up();
+}
+
+/** Read the legacy one-slot draft without creating or modifying recovery state. */
+export async function timelineDraft(page: Page, timelineId: string): Promise<(TimelineDraftRecord & { draft: { config?: TimelineConfig } }) | null> {
+  return page.evaluate(async (id) => {
+    if (!(await indexedDB.databases()).some((db) => db.name === 'astrid.timeline-drafts')) return null;
+    return new Promise<(TimelineDraftRecord & { draft: { config?: TimelineConfig } }) | null>((resolve, reject) => {
+      const opening = indexedDB.open('astrid.timeline-drafts');
+      opening.onerror = () => reject(opening.error);
+      opening.onsuccess = () => {
+        const db = opening.result;
+        const tx = db.transaction('timeline-drafts', 'readonly');
+        const read = tx.objectStore('timeline-drafts').get(id);
+        tx.oncomplete = () => { db.close(); resolve(read.result ?? null); };
+        tx.onabort = () => { db.close(); reject(tx.error); };
+      };
+    });
+  }, timelineId);
 }
