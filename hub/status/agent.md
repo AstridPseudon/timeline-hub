@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T23:28:31Z | dispatcher heartbeat 7s -->
+<!-- main | 2026-10-19T23:32:16Z | dispatcher heartbeat 2s -->
 # agent — 2026-10-19T23:24Z
 Milestone: M1 HOLD: NEW PROVEN same-project unrelated shot projection data loss; owner/Runtime decision required. Prior consumer/full closeout satisfied. M0 COMPLETE. M2 work on branches only; NO M2 merges before PLAN records M1.
 Integrated: Agent tl/integration 2b8f2caa, tree d48cdcb3. Reviewed Viewing f8164bef runtime-selection descendant merged atop 0422; all four new consumer failures corrected. Prior restore, browser-env, fixtures and one inventory correction retained. No M2 product integrated.

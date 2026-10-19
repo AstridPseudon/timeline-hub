@@ -17,6 +17,6 @@ while true; do
     age=$(( now - $(date -d "$t" +%s 2>/dev/null || echo $now) )); [ $age -gt 1200 ] && emit "REMOTE_STALE $m since $t"
   done
   last=$(cat $ORCH/.last_tick 2>/dev/null || echo 0)
-  if [ $((now-last)) -ge 3600 ]; then emit "TICK_DUE $last"; fi
+  if [ $((now-last)) -ge 1800 ]; then emit "TICK_DUE $last"; fi
   sleep 20
 done
