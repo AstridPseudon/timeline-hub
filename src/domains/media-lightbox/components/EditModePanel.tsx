@@ -1,6 +1,4 @@
-import React, { Suspense, useRef } from 'react';
-import { mapSelectedLorasForModal } from '@/shared/components/lora/mapSelectedLorasForModal';
-import { LoraSelectorModal } from '@/domains/lora/components';
+import React, { useRef } from 'react';
 import { EditPanelLayout } from './EditPanelLayout';
 import { ModeSelector } from './ModeSelector';
 import { AnnotatePanel } from './editModes/AnnotatePanel';
@@ -63,7 +61,6 @@ function EditModePanelComponent({
     state,
     isCloudMode: upscale?.isCloudMode,
     editLoraManager,
-    availableLoras: lora?.availableLoras ?? [],
     advancedSettings: advanced?.advancedSettings,
     setAdvancedSettings: advanced?.setAdvancedSettings,
     isLocalGeneration,
@@ -76,9 +73,9 @@ function EditModePanelComponent({
       case 'inpaint':
         return <InpaintPanel {...sharedPanelProps} handleUnifiedGenerate={actions.handleUnifiedGenerate} handleGenerateAnnotatedEdit={actions.handleGenerateAnnotatedEdit} />;
       case 'reposition':
-        return <RepositionPanel {...sharedPanelProps} handleSaveAsVariant={actions.handleSaveAsVariant!} handleGenerateReposition={actions.handleGenerateReposition!} />;
+        return <RepositionPanel {...sharedPanelProps} handleGenerateReposition={actions.handleGenerateReposition!} />;
       case 'img2img':
-        return <Img2ImgPanel state={state} handleGenerateImg2Img={actions.handleGenerateImg2Img!} img2imgLoraManager={lora?.img2imgLoraManager} availableLoras={lora?.availableLoras ?? []} />;
+        return <Img2ImgPanel state={state} handleGenerateImg2Img={actions.handleGenerateImg2Img!} img2imgLoraManager={lora?.img2imgLoraManager} />;
       case 'upscale':
         return upscale?.handleUpscale ? (
           <UpscalePanel
@@ -95,48 +92,27 @@ function EditModePanelComponent({
   };
 
   return (
-    <>
-      <EditPanelLayout
-        variant={variant}
-        onClose={state.onClose}
-        onExitEditMode={state.handleExitMagicEditMode}
-        hideInfoEditToggle={hideInfoEditToggle}
-        simplifiedHeader={simplifiedHeader}
-        modeSelector={modeSelector}
-        taskId={taskId}
-        variants={state.variants}
-        activeVariantId={state.activeVariantId}
-        onVariantSelect={state.onVariantSelect}
-        onMakePrimary={state.onMakePrimary}
-        isLoadingVariants={state.isLoadingVariants}
-        onPromoteToGeneration={state.onPromoteToGeneration}
-        isPromoting={state.isPromoting}
-        pendingTaskCount={state.pendingTaskCount}
-        unviewedVariantCount={state.unviewedVariantCount}
-        onMarkAllViewed={state.onMarkAllViewed}
-        onDeleteVariant={state.onDeleteVariant}
-        onLoadVariantSettings={state.onLoadVariantSettings}
-        onLoadVariantImages={state.onLoadVariantImages}
-        currentSegmentImages={state.currentSegmentImages}
-      >
-        {renderPanel()}
-      </EditPanelLayout>
-
-      {editLoraManager && (
-        <Suspense fallback={null}>
-          <LoraSelectorModal
-            isOpen={editLoraManager.isLoraModalOpen}
-            onClose={() => editLoraManager.setIsLoraModalOpen(false)}
-            loras={lora.availableLoras ?? []}
-            onAddLora={editLoraManager.handleAddLora}
-            onRemoveLora={editLoraManager.handleRemoveLora}
-            onUpdateLoraStrength={editLoraManager.handleLoraStrengthChange}
-            selectedLoras={mapSelectedLorasForModal(editLoraManager.selectedLoras, lora.availableLoras ?? [])}
-            loraType="Qwen Edit"
-          />
-        </Suspense>
-      )}
-    </>
+    <EditPanelLayout
+      variant={variant}
+      onClose={state.onClose}
+      onExitEditMode={state.handleExitMagicEditMode}
+      hideInfoEditToggle={hideInfoEditToggle}
+      simplifiedHeader={simplifiedHeader}
+      modeSelector={modeSelector}
+      taskId={taskId}
+      variants={state.variants}
+      activeVariantId={state.activeVariantId}
+      onVariantSelect={state.onVariantSelect}
+      onMakePrimary={state.onMakePrimary}
+      isLoadingVariants={state.isLoadingVariants}
+      pendingTaskCount={state.pendingTaskCount}
+      unviewedVariantCount={state.unviewedVariantCount}
+      onMarkAllViewed={state.onMarkAllViewed}
+      onDeleteVariant={state.onDeleteVariant}
+      onLoadVariantSettings={state.onLoadVariantSettings}
+    >
+      {renderPanel()}
+    </EditPanelLayout>
   );
 }
 

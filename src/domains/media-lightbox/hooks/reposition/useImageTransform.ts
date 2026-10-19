@@ -19,12 +19,6 @@ interface UseImageTransformProps {
 interface UseImageTransformReturn extends ImageTransformControls {
   transform: ImageTransform;
   hasTransformChanges: boolean;
-  /** Get current cache key (for external cache management) */
-  getCacheKey: () => string;
-  /** Clear cache for a specific key */
-  clearCacheForKey: (key: string) => void;
-  /** Mark that next cache should be skipped (after saving) */
-  markSkipNextCache: () => void;
 }
 
 /**
@@ -43,8 +37,6 @@ export function useImageTransform({
 
   // Per-variant transform cache (preserves transforms when switching variants)
   const transformCacheRef = useRef<Map<string, ImageTransform>>(new Map());
-  // Flag to skip caching after save (transform is baked into image)
-  const skipNextCacheRef = useRef(false);
 
   const getCacheKey = useCallback(() => {
     // Use variant ID if available, otherwise use generation ID
@@ -57,12 +49,10 @@ export function useImageTransform({
   useEffect(() => {
     const currentCacheKey = getCacheKey();
     if (prevCacheKeyRef.current !== currentCacheKey) {
-      // Save current transform for old variant/media (unless we just saved)
-      if (prevCacheKeyRef.current && !skipNextCacheRef.current) {
+      // Save current transform for old variant/media
+      if (prevCacheKeyRef.current) {
         transformCacheRef.current.set(prevCacheKeyRef.current, transform);
       }
-      // Reset the skip flag
-      skipNextCacheRef.current = false;
 
       // Try to load transform in order of priority:
       // 1. From session cache (user's current edits)
@@ -115,16 +105,6 @@ export function useImageTransform({
     setTransform(DEFAULT_TRANSFORM);
   }, []);
 
-  // Clear cache for a specific key
-  const clearCacheForKey = useCallback((key: string) => {
-    transformCacheRef.current.delete(key);
-  }, []);
-
-  // Mark that next cache should be skipped
-  const markSkipNextCache = useCallback(() => {
-    skipNextCacheRef.current = true;
-  }, []);
-
   return {
     transform,
     hasTransformChanges,
@@ -135,8 +115,5 @@ export function useImageTransform({
     toggleFlipH,
     toggleFlipV,
     resetTransform,
-    getCacheKey,
-    clearCacheForKey,
-    markSkipNextCache,
   };
 }

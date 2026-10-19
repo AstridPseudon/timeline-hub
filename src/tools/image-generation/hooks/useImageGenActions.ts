@@ -2,11 +2,8 @@ import { useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { useAddImageToShot, usePositionExistingGenerationInShot } from '@/shared/hooks/shots';
-import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation';
 import { useShots } from '@/shared/contexts/ShotsContext';
 import { useLastAffectedShot } from '@/shared/hooks/shots/useLastAffectedShot';
-import { useDeleteGenerationWithConfirm } from '@/domains/generation/hooks/useDeleteGenerationWithConfirm';
-import { useToggleGenerationStar } from '@/domains/generation/hooks/useGenerationMutations';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { deriveTargetShotInfo } from '@/shared/hooks/shots/targetShotInfo';
@@ -34,9 +31,6 @@ export function useImageGenActions({
   const { lastAffectedShotId, setLastAffectedShotId } = useLastAffectedShot();
   const addImageToShotMutation = useAddImageToShot();
   const positionExistingGenerationMutation = usePositionExistingGenerationInShot();
-  const { requestDelete, confirmDialogProps } = useDeleteGenerationWithConfirm({ projectId });
-  const toggleStarMutation = useToggleGenerationStar();
-  const { createShot } = useShotCreation();
   const { shots } = useShots();
 
   const targetShotInfo = useMemo(
@@ -45,17 +39,6 @@ export function useImageGenActions({
   );
 
   const validShots = useMemo(() => shots || [], [shots]);
-
-  const handleDeleteImage = useCallback(async (id: string) => {
-    requestDelete(id);
-  }, [requestDelete]);
-
-  const handleToggleStar = useCallback((id: string, starred: boolean) => {
-    if (!projectId) {
-      return;
-    }
-    toggleStarMutation.mutate({ id, starred, projectId });
-  }, [projectId, toggleStarMutation]);
 
   const handleAddImageToTargetShot = useCallback(async (targetShotId: string, generationId: string, imageUrl?: string, thumbUrl?: string): Promise<boolean> => {
     const resolvedTargetShotId = targetShotId || targetShotInfo.targetShotIdForButton;
@@ -154,32 +137,12 @@ export function useImageGenActions({
     }
   }, [projectId, effectiveProjectId, currentPage, itemsPerPage, queryClient, generationsFilters]);
 
-  const handleCreateShot = useCallback(async (shotName: string, files: File[]): Promise<void> => {
-    const result = await createShot({
-      name: shotName,
-      files: files.length > 0 ? files : undefined,
-      dispatchSkeletonEvents: files.length > 0,
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.shots.list(projectId!) });
-        queryClient.refetchQueries({ queryKey: queryKeys.shots.list(projectId!) });
-      },
-    });
-
-    if (!result) {
-      throw new Error('Shot creation failed');
-    }
-  }, [createShot, queryClient, projectId]);
-
   return {
     targetShotInfo,
     validShots,
-    handleDeleteImage,
-    handleToggleStar,
     handleAddImageToTargetShot,
     handleAddImageToTargetShotWithoutPosition,
     handleBackfillRequest,
-    handleCreateShot,
     setLastAffectedShotId,
-    confirmDialogProps,
   };
 }

@@ -181,8 +181,8 @@ describe('useVideoTravelTaskData', () => {
     expect(formatTravelModelName('wan_2_2_i2v_lightning_baseline_2_2_1')).toBe(
       'Wan 2.2 I2V Lightning (2.2.1)',
     );
-    expect(resolveTravelPresetName('__builtin_default_i2v__', null)).toBe('Basic');
-    expect(resolveTravelPresetName('db-preset-1', 'Studio preset')).toBe('Studio preset');
-    expect(resolveTravelPresetName(undefined, 'ignored')).toBeNull();
+    expect(resolveTravelPresetName('__builtin_default_i2v__')).toBe('Basic');
+    expect(resolveTravelPresetName('db-preset-1')).toBeNull();
+    expect(resolveTravelPresetName(undefined)).toBeNull();
   });
 });

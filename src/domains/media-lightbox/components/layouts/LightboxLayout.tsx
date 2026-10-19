@@ -15,14 +15,12 @@ import {
   useLightboxNavigationSafe,
 } from '../../contexts/LightboxStateContext';
 import { VariantOverlayBadge } from './VariantOverlayBadge';
-import { NewImageOverlayButton } from './NewImageOverlayButton';
 import { AdjacentSegmentNavigation } from './AdjacentSegmentNavigation';
 import { PreviewSequencePill } from './PreviewSequencePill';
 import { ConstituentImageNavigation } from './ConstituentImageNavigation';
 import { NavigationArrows } from '../NavigationArrows';
 import {
   TopRightControls,
-  BottomLeftControls,
   BottomRightControls,
 } from '../ButtonGroups';
 import { MediaDisplayWithCanvas } from '../MediaDisplayWithCanvas';
@@ -104,9 +102,6 @@ function TopCenterOverlay({ className, adjacentSegments, segmentSlotMode }: {
         activeVariant={variantsState.activeVariant ?? undefined}
         variants={variantsState.variants}
         readOnly={core.readOnly}
-        isMakingMainVariant={variantsState.isMakingMainVariant}
-        canMakeMainVariant={variantsState.canMakeMainVariant}
-        onMakeMainVariant={variantsState.handleMakeMainVariant}
       />
     </div>
   );
@@ -116,9 +111,6 @@ function OverlayElements({ topCenterClassName, props }: {
   topCenterClassName: string;
   props: LightboxLayoutProps;
 }) {
-  const core = useLightboxCoreSafe();
-  const mediaState = useLightboxMediaSafe();
-  const variantsState = useLightboxVariantsSafe();
   const buttonGroups = props.buttonGroups;
 
   return (
@@ -129,18 +121,6 @@ function OverlayElements({ topCenterClassName, props }: {
         segmentSlotMode={props.segmentSlotMode}
       />
 
-      <NewImageOverlayButton
-        isVideo={mediaState.isVideo}
-        readOnly={core.readOnly}
-        activeVariantId={variantsState.activeVariant?.id}
-        primaryVariantId={variantsState.primaryVariant?.id}
-        selectedProjectId={core.selectedProjectId}
-        isPromoting={variantsState.isPromoting}
-        promoteSuccess={variantsState.promoteSuccess}
-        onPromote={variantsState.handlePromoteToGeneration}
-      />
-
-      <BottomLeftControls {...buttonGroups.bottomLeft} />
       <BottomRightControls {...buttonGroups.bottomRight} />
       <TopRightControls {...buttonGroups.topRight} />
 

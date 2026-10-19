@@ -9,7 +9,6 @@ import {
   hasLoadableSettings,
   isNewVariant,
 } from '../variantPresentation';
-import { hasDifferentSourceImages } from '../variantSourceImages';
 
 const baseVariant: GenerationVariant = {
   id: 'variant-1',
@@ -90,72 +89,5 @@ describe('hasLoadableSettings', () => {
 
     expect(hasLoadableSettings(videoEnhanceVariant)).toBe(true);
     expect(hasLoadableSettings(promptVariant)).toBe(true);
-  });
-});
-
-describe('hasDifferentSourceImages', () => {
-  it('returns false for non-image variant types', () => {
-    const variant = {
-      ...baseVariant,
-      variant_type: 'upscaled',
-      params: { start_image_generation_id: 'gen-start' },
-    };
-
-    expect(
-      hasDifferentSourceImages(variant, { startGenerationId: 'other', startUrl: 'x' }),
-    ).toBe(false);
-  });
-
-  it('detects when start generation IDs differ', () => {
-    const variant = {
-      ...baseVariant,
-      params: {
-        start_image_generation_id: 'gen-a',
-        input_image_paths_resolved: ['generations/a.png'],
-      },
-    };
-
-    expect(
-      hasDifferentSourceImages(variant, {
-        startGenerationId: 'gen-b',
-        startUrl: 'generations/a.png',
-      }),
-    ).toBe(true);
-  });
-
-  it('detects same generation with different variant IDs', () => {
-    const variant = {
-      ...baseVariant,
-      params: {
-        start_image_generation_id: 'gen-a',
-        start_image_variant_id: 'variant-a',
-        input_image_paths_resolved: ['generations/a.png'],
-      },
-    };
-
-    expect(
-      hasDifferentSourceImages(variant, {
-        startGenerationId: 'gen-a',
-        startVariantId: 'variant-b',
-        startUrl: 'generations/a.png',
-      }),
-    ).toBe(true);
-  });
-
-  it('normalizes signed/public storage URLs for URL-only comparisons', () => {
-    const variant = {
-      ...baseVariant,
-      params: {
-        input_image_paths_resolved: [
-          'https://example.com/storage/v1/object/public/generations/a.png?token=one',
-        ],
-      },
-    };
-
-    expect(
-      hasDifferentSourceImages(variant, {
-        startUrl: 'https://example.com/storage/v1/object/sign/generations/a.png?token=two',
-      }),
-    ).toBe(false);
   });
 });

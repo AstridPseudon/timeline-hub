@@ -8,8 +8,10 @@ import { createEntityStore, type EntityStoreApi } from '@/shared/state/createEnt
 type AutoSaveStatus = 'idle' | 'loading' | 'ready' | 'saving' | 'error';
 
 export interface CustomLoadSave<T> {
-  load: (entityId: string) => Promise<T | null>;
-  save: (entityId: string, data: T) => Promise<void>;
+  /** Without `load` an entity starts from `bootstrapData` or the defaults. */
+  load?: (entityId: string) => Promise<T | null>;
+  /** Without `save` the entity lives in memory only. */
+  save?: (entityId: string, data: T) => Promise<void>;
   entityId: string | null;
   domainKey?: string;
   onFlush?: (entityId: string, data: T) => void;

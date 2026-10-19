@@ -69,10 +69,8 @@ function buildParams() {
         toggleFlipH: vi.fn(),
         toggleFlipV: vi.fn(),
         resetTransform: vi.fn(),
-        isGeneratingReposition: false,
+        isGeneratingReposition: true,
         repositionGenerateSuccess: true,
-        isSavingAsVariant: true,
-        saveAsVariantSuccess: false,
       },
       img2img: {
         img2imgPrompt: 'variation',
@@ -163,7 +161,6 @@ describe('buildImageEditStateValue', () => {
     inpaintCase.params.magic.isMagicEditMode = false;
     inpaintCase.params.magic.isSpecialEditMode = false;
     inpaintCase.params.reposition.isGeneratingReposition = false;
-    inpaintCase.params.reposition.isSavingAsVariant = false;
 
     const magicCase = buildParams();
     magicCase.params.editMode = 'text';
@@ -176,7 +173,6 @@ describe('buildImageEditStateValue', () => {
     repositionCase.params.inpainting.isInpaintMode = false;
     repositionCase.params.magic.isMagicEditMode = false;
     repositionCase.params.reposition.isGeneratingReposition = true;
-    repositionCase.params.reposition.isSavingAsVariant = false;
 
     const img2imgCase = buildParams();
     img2imgCase.params.editMode = 'img2img';
@@ -185,7 +181,6 @@ describe('buildImageEditStateValue', () => {
     img2imgCase.params.img2img.isGeneratingImg2Img = true;
     img2imgCase.params.img2img.img2imgGenerateSuccess = false;
     img2imgCase.params.reposition.isGeneratingReposition = false;
-    img2imgCase.params.reposition.isSavingAsVariant = false;
 
     const inpaintState = buildImageEditStateValue(inpaintCase.params as never);
     const magicState = buildImageEditStateValue(magicCase.params as never);

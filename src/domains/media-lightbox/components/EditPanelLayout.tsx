@@ -12,7 +12,6 @@ import { VariantSelector } from '@/shared/components/VariantSelector';
 import type { GenerationVariant } from '@/shared/hooks/variants/useVariants';
 import { useCopyToClipboard } from '@/shared/hooks/clipboard/useCopyToClipboard';
 import { PanelCloseButton, PanelHeaderMeta } from './PanelHeaderControls';
-import type { CurrentSegmentImagesData } from '@/shared/components/VariantSelector/variantSourceImages';
 
 const NOOP = () => {};
 
@@ -52,18 +51,12 @@ interface EditPanelLayoutProps {
   onMakePrimary?: (variantId: string) => Promise<void>;
   isLoadingVariants?: boolean;
 
-  /** Variant promotion (only for images) */
-  onPromoteToGeneration?: (variantId: string) => Promise<void>;
-  isPromoting?: boolean;
-
   pendingTaskCount?: number;
   unviewedVariantCount?: number;
   onMarkAllViewed?: () => void;
 
   /** Handler to load a variant's settings into the regenerate form */
   onLoadVariantSettings?: (variantParams: Record<string, unknown>) => void;
-  onLoadVariantImages?: (variant: GenerationVariant) => void;
-  currentSegmentImages?: CurrentSegmentImagesData;
 
   /** Handler to delete a variant */
   onDeleteVariant?: (variantId: string) => Promise<void>;
@@ -84,14 +77,10 @@ export const EditPanelLayout: React.FC<EditPanelLayoutProps> = ({
   onVariantSelect,
   onMakePrimary,
   isLoadingVariants,
-  onPromoteToGeneration,
-  isPromoting,
   pendingTaskCount = 0,
   unviewedVariantCount = 0,
   onMarkAllViewed = NOOP,
   onLoadVariantSettings,
-  onLoadVariantImages,
-  currentSegmentImages,
   onDeleteVariant,
 }) => {
   const isMobile = variant === 'mobile';
@@ -192,11 +181,7 @@ export const EditPanelLayout: React.FC<EditPanelLayoutProps> = ({
               onVariantSelect={onVariantSelect}
               onMakePrimary={onMakePrimary}
               isLoading={isLoadingVariants}
-              onPromoteToGeneration={onPromoteToGeneration}
-              isPromoting={isPromoting}
               onLoadVariantSettings={onLoadVariantSettings}
-              onLoadVariantImages={onLoadVariantImages}
-              currentSegmentImages={currentSegmentImages}
               onDeleteVariant={onDeleteVariant}
             />
           </div>

@@ -5,19 +5,18 @@
  * - Clickable thumbnail with status rings (active, primary, parent, child)
  * - NEW badge or time-ago indicator
  * - Desktop: Info button in bottom-right corner (appears on card hover) with HoverCard showing
- *   full details and actions (Make Primary, Load Settings, Delete, Copy ID, Lineage GIF)
+ *   full details and actions (Make Primary, Load Settings, Delete, Copy ID)
  * - Mobile: plain button (info shown via MobileInfoModal on re-tap)
  */
 
 import React, { useEffect, useState } from 'react';
-import { Check, ArrowDown, ArrowUp, Info, Loader2, Trash2, GitBranch, Star, Download, Image } from 'lucide-react';
+import { Check, ArrowDown, ArrowUp, Info, Loader2, Trash2, Star, Download } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/shared/components/ui/hover-card';
 import type { GenerationVariant } from '@/shared/hooks/variants/useVariants';
 import { getVariantIcon, getVariantLabel, isNewVariant, getTimeAgo, hasLoadableSettings } from '../variantPresentation';
-import { hasDifferentSourceImages } from '../variantSourceImages';
 import { VariantDetails } from './VariantDetails';
 import type { VariantCardSharedProps } from './variantCardSharedTypes';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
@@ -30,8 +29,6 @@ interface VariantCardProps extends VariantCardSharedProps {
   isPrimary: boolean;
   isParent: boolean;
   isChild: boolean;
-  /** Lineage depth for this variant (show GIF button when >= 5) */
-  lineageDepth: number;
   /** Whether a delete operation is loading for this variant */
   isDeleteLoading: boolean;
 }
@@ -45,8 +42,6 @@ export const VariantCard: React.FC<VariantCardProps> = ({
   activeVariantId,
   isMobile,
   readOnly,
-  availableLoras,
-  lineageDepth,
   isDeleteLoading,
   copiedVariantId,
   loadedSettingsVariantId,
@@ -54,15 +49,10 @@ export const VariantCard: React.FC<VariantCardProps> = ({
   onMakePrimary,
   onDeleteVariant,
   onLoadVariantSettings,
-  onToggleStar,
   onMouseEnter,
   onShowMobileInfo,
-  onShowLineageGif,
   onCopyId,
   onLoadSettings,
-  onLoadImages,
-  currentSegmentImages,
-  loadedImagesVariantId,
 }) => {
   const [infoOpen, setInfoOpen] = useState(false);
   const [thumbnailFailed, setThumbnailFailed] = useState(false);
@@ -199,21 +189,10 @@ export const VariantCard: React.FC<VariantCardProps> = ({
           )}
         </div>
 
-        {/* Top-left: star button */}
-        {onToggleStar && (
-          <div
-            className={cn(
-              'absolute top-0.5 left-0.5 rounded-full p-0.5 transition-opacity cursor-pointer pointer-events-auto',
-              variant.starred
-                ? 'opacity-100 bg-yellow-500/80'
-                : 'opacity-0 group-hover/variant:opacity-100 bg-black/50 hover:bg-black/70'
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleStar(variant.id, !variant.starred);
-            }}
-          >
-            <Star className={cn('w-2 h-2', variant.starred ? 'text-white fill-white' : 'text-white')} />
+        {/* Top-left: starred marker (read-only) */}
+        {variant.starred && (
+          <div className="absolute top-0.5 left-0.5 rounded-full p-0.5 bg-yellow-500/80 pointer-events-none">
+            <Star className="w-2 h-2 text-white fill-white" />
           </div>
         )}
 
@@ -302,25 +281,6 @@ export const VariantCard: React.FC<VariantCardProps> = ({
                           Copy ID
                         </TooltipContent>
                       </Tooltip>
-                      {/* Lineage GIF button */}
-                      {lineageDepth >= 5 && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onShowLineageGif(variant.id);
-                              }}
-                              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150 active:scale-95 animate-in fade-in slide-in-from-left-1 duration-300"
-                            >
-                              <GitBranch className="w-3.5 h-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="text-xs">
-                            View evolution ({lineageDepth} generations)
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
                       {/* Delete button */}
                       {!readOnly && onDeleteVariant && !isPrimary && variant.variant_type !== 'original' && (
                         <Tooltip>
@@ -373,7 +333,6 @@ export const VariantCard: React.FC<VariantCardProps> = ({
                         <div className="border-t border-border/50 pt-2">
                           <VariantDetails
                             variant={variant}
-                            availableLoras={availableLoras}
                           />
                         </div>
                       </div>
@@ -382,7 +341,7 @@ export const VariantCard: React.FC<VariantCardProps> = ({
                   )}
 
                   {/* Action buttons row - pinned at bottom */}
-                  {!readOnly && ((!isPrimary && onMakePrimary) || (onLoadVariantSettings && hasLoadableSettings(variant)) || (onLoadImages && hasDifferentSourceImages(variant, currentSegmentImages))) && (
+                  {!readOnly && ((!isPrimary && onMakePrimary) || (onLoadVariantSettings && hasLoadableSettings(variant))) && (
                     <div className="flex flex-wrap gap-1.5 px-2 py-1.5 border-t border-border/50 shrink-0">
                       {!isPrimary && onMakePrimary && (
                         <Button
@@ -421,32 +380,6 @@ export const VariantCard: React.FC<VariantCardProps> = ({
                             <>
                               <Download className="w-3 h-3" />
                               Load Settings
-                            </>
-                          )}
-                        </Button>
-                      )}
-                      {onLoadImages && hasDifferentSourceImages(variant, currentSegmentImages) && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onLoadImages(variant);
-                          }}
-                          className={cn(
-                            "h-6 text-xs gap-1 flex-1",
-                            loadedImagesVariantId === variant.id && "bg-green-500/20 border-green-500/50 text-green-400"
-                          )}
-                        >
-                          {loadedImagesVariantId === variant.id ? (
-                            <>
-                              <Check className="w-3 h-3" />
-                              Loaded!
-                            </>
-                          ) : (
-                            <>
-                              <Image className="w-3 h-3" />
-                              Load Images
                             </>
                           )}
                         </Button>

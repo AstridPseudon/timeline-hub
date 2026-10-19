@@ -75,7 +75,6 @@ describe('ImageEditContext', () => {
           <div>
             <span data-testid="isGeneratingInpaint">{String(status.isGeneratingInpaint)}</span>
             <span data-testid="isGeneratingImg2Img">{String(status.isGeneratingImg2Img)}</span>
-            <span data-testid="isSavingAsVariant">{String(status.isSavingAsVariant)}</span>
           </div>
         );
       }
@@ -84,7 +83,6 @@ describe('ImageEditContext', () => {
 
       expect(screen.getByTestId('isGeneratingInpaint')).toHaveTextContent('false');
       expect(screen.getByTestId('isGeneratingImg2Img')).toHaveTextContent('false');
-      expect(screen.getByTestId('isSavingAsVariant')).toHaveTextContent('false');
     });
   });
 
@@ -167,8 +165,6 @@ describe('ImageEditContext', () => {
       img2imgGenerateSuccess: false,
       isGeneratingReposition: false,
       repositionGenerateSuccess: false,
-      isSavingAsVariant: false,
-      saveAsVariantSuccess: false,
       isCreatingMagicEditTasks: false,
       magicEditTasksCreated: false,
     };

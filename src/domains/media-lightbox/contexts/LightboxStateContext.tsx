@@ -56,14 +56,6 @@ interface LightboxVariantState {
   handleVariantSelect: (id: string) => void;
   handleMakePrimary: (id: string) => Promise<void>;
   handleDeleteVariant: (id: string) => Promise<void>;
-  // Promotion
-  promoteSuccess: boolean;
-  isPromoting: boolean;
-  handlePromoteToGeneration: (variantId: string) => Promise<void>;
-  // Make main variant
-  isMakingMainVariant: boolean;
-  canMakeMainVariant: boolean;
-  handleMakeMainVariant: () => Promise<void>;
   // Pending/unviewed counts
   pendingTaskCount: number;
   unviewedVariantCount: number;
@@ -169,12 +161,6 @@ const EMPTY_VARIANTS: LightboxVariantState = {
   handleVariantSelect: () => {},
   handleMakePrimary: async () => {},
   handleDeleteVariant: async () => {},
-  promoteSuccess: false,
-  isPromoting: false,
-  handlePromoteToGeneration: async () => {},
-  isMakingMainVariant: false,
-  canMakeMainVariant: false,
-  handleMakeMainVariant: async () => {},
   pendingTaskCount: 0,
   unviewedVariantCount: 0,
   onMarkAllViewed: () => {},

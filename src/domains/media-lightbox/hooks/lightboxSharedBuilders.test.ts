@@ -17,7 +17,7 @@ describe('lightboxSharedBuilders', () => {
         navigation: { hasNext: true, hasPrevious: false },
         shotWorkflow: { selectedShotId: 'shot-1' },
         features: { showTaskDetails: true, showDownload: true },
-        actions: { onDelete: vi.fn(), isDeleting: 'img-1', starred: true },
+        actions: { onDelete: vi.fn(), isDeleting: 'img-1' },
       },
       env: {
         selectedProjectId: 'project-1',
@@ -45,7 +45,7 @@ describe('lightboxSharedBuilders', () => {
         onClose: vi.fn(),
         navigation: { showNavigation: true },
         features: { showTaskDetails: true, showDownload: true },
-        actions: { onDelete: vi.fn(), isDeleting: 'video-1', starred: false },
+        actions: { onDelete: vi.fn(), isDeleting: 'video-1' },
       } as never,
       modeModel: {
         isFormOnlyMode: false,

@@ -1,12 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { generationQueryKeys } from '@/shared/lib/queryKeys/generations';
 import { useAutoSaveSettings } from '@/shared/settings/hooks/useAutoSaveSettings';
-import type { Json } from '@/shared/types/json';
-import { toJson } from '@/shared/lib/json/jsonGuards';
-import { updateGenerationParams } from '@/integrations/supabase/repositories/generationMutationsRepository';
-import { fetchGenerationDetailQuery } from '@/shared/hooks/generations/useGenerationDetail';
-import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 
 // Import canonical types from single source of truth
 import {
@@ -37,7 +30,6 @@ interface EditApiParams {
   lightning_lora_strength_phase_2?: number;
 }
 
-type JsonObject = { [key: string]: Json | undefined };
 type AutoSaveGenerationEditSettings = GenerationEditSettings & Record<string, unknown>;
 
 /**
@@ -90,76 +82,17 @@ interface UseGenerationEditSettingsProps {
 }
 
 /**
- * Load settings from generations.params.ui.editSettings
- */
-async function loadGenerationSettings(generationId: string, queryClient: QueryClient): Promise<AutoSaveGenerationEditSettings | null> {
-  const generation = await fetchGenerationDetailQuery(queryClient, generationId);
-  if (!generation) {
-    return null;
-  }
-
-  const savedSettings = (generation.params as Record<string, unknown> | null | undefined)?.ui as Record<string, unknown> | undefined;
-  const editSettings = savedSettings?.editSettings as Partial<GenerationEditSettings> | undefined;
-
-  if (editSettings) {
-    return {
-      ...DEFAULT_EDIT_SETTINGS,
-      ...editSettings,
-    };
-  }
-
-  return null;
-}
-
-/**
- * Save settings to generations.params.ui.editSettings
- */
-async function saveGenerationSettings(generationId: string, settings: AutoSaveGenerationEditSettings, queryClient: QueryClient): Promise<void> {
-  // Fetch current params to merge
-  const current = await fetchGenerationDetailQuery(queryClient, generationId);
-
-  if (!current) {
-    // Generation was deleted, skip save
-    return;
-  }
-
-  // Merge with existing params
-  const currentParams = ((current?.params as JsonObject | null) ?? {});
-  const currentUi = ((currentParams.ui as JsonObject | undefined) ?? {});
-  const updatedParams: JsonObject = {
-    ...currentParams,
-    ui: {
-      ...currentUi,
-      editSettings: toJson(settings),
-      // Also save editMode at top level for backwards compatibility
-      editMode: settings.editMode,
-    }
-  };
-
-  await updateGenerationParams({
-    id: generationId,
-    generationParams: toJson(updatedParams),
-  });
-}
-
-/**
- * Hook for managing per-generation edit settings persistence
+ * Hook for managing per-generation edit settings.
  *
- * Uses useAutoSaveSettings (customLoadSave mode) for the core persistence logic:
- * - Status machine (idle → loading → ready → saving)
- * - Debounced auto-save
- * - Pending refs protection
- * - Flush on unmount/entity change
- *
- * Saves to: generations.params.ui.editSettings
+ * Uses useAutoSaveSettings (custom entity mode without load or save), so each
+ * generation keeps its edit settings in memory for the session, starting from
+ * the bootstrap ("last used") values. Nothing is written to a backend.
  */
 export function useGenerationEditSettings({
   generationId,
   enabled = true,
   bootstrapSettings = null,
 }: UseGenerationEditSettingsProps): UseGenerationEditSettingsReturn {
-  const queryClient = useQueryClient();
-  const { runtimeAuthority } = useRuntimeAuthority();
   const bootstrapData = bootstrapSettings
     ? {
         ...DEFAULT_EDIT_SETTINGS,
@@ -184,30 +117,12 @@ export function useGenerationEditSettings({
   } = useAutoSaveSettings<AutoSaveGenerationEditSettings>({
     defaults: DEFAULT_EDIT_SETTINGS as AutoSaveGenerationEditSettings,
     debounceMs: 500,
-    // Runtime generation parameter mutation is not admitted yet. Keep the
-    // editor state local while preventing both the initial read and the
-    // debounced Supabase write from crossing the authority boundary.
-    enabled: enabled && !runtimeAuthority,
+    enabled,
     bootstrapData: bootstrapData as AutoSaveGenerationEditSettings | null,
     debugTag: '[useGenerationEditSettings]',
     customLoadSave: {
       entityId: generationId,
       domainKey: 'generation-edit-settings',
-      load: (entityId) => loadGenerationSettings(entityId, queryClient),
-      save: (entityId, settings) => saveGenerationSettings(entityId, settings, queryClient),
-      onFlush: (entityId) => {
-        // Invalidate generation queries after flush
-        queryClient.invalidateQueries({
-          queryKey: generationQueryKeys.detail(entityId)
-        });
-      },
-    },
-    onSaveSuccess: () => {
-      if (generationId) {
-        queryClient.invalidateQueries({
-          queryKey: generationQueryKeys.detail(generationId)
-        });
-      }
     },
   });
   const advancedSettingsRef = useRef(settings.advancedSettings);

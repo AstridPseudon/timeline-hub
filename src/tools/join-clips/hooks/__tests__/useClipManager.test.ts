@@ -70,9 +70,7 @@ const mockBuildPromptsToSave = vi.fn().mockReturnValue([]);
 const mockGetClipsNeedingDuration = vi.fn().mockReturnValue([]);
 const mockLoadClipDuration = vi.fn();
 const mockNormalizeClipSlots = vi.fn().mockReturnValue(null);
-const mockUploadClipVideo = vi.fn();
 const mockReorderClipsAndPrompts = vi.fn();
-const mockUpdateClipInArray = vi.fn();
 const mockClearClipVideo = vi.fn();
 
 vi.mock('../../lib/clipManagerService', () => ({
@@ -89,9 +87,7 @@ vi.mock('../../lib/clipManagerService', () => ({
   getClipsNeedingDuration: (...args: unknown[]) => mockGetClipsNeedingDuration(...args),
   tryLoadClipDuration: (...args: unknown[]) => mockLoadClipDuration(...args),
   normalizeClipSlots: (...args: unknown[]) => mockNormalizeClipSlots(...args),
-  uploadClipVideo: (...args: unknown[]) => mockUploadClipVideo(...args),
   reorderClipsAndPrompts: (...args: unknown[]) => mockReorderClipsAndPrompts(...args),
-  updateClipInArray: (...args: unknown[]) => mockUpdateClipInArray(...args),
   clearClipVideo: (...args: unknown[]) => mockClearClipVideo(...args),
 }));
 
@@ -110,9 +106,6 @@ function createDefaultParams() {
     } as unknown,
     settingsLoaded: true,
     loopFirstClip: false,
-    createGenerationMutation: {
-      mutateAsync: vi.fn().mockResolvedValue({}),
-    } as unknown,
   };
 }
 
@@ -135,9 +128,6 @@ describe('useClipManager', () => {
     // Initial state from the hook
     expect(result.current.clips).toBeDefined();
     expect(result.current.transitionPrompts).toEqual([]);
-    expect(result.current.uploadingClipId).toBeNull();
-    expect(result.current.draggingOverClipId).toBeNull();
-    expect(result.current.isScrolling).toBe(false);
     expect(result.current.lightboxClip).toBeNull();
     expect(result.current.isLoadingPersistedMedia).toBe(false);
   });

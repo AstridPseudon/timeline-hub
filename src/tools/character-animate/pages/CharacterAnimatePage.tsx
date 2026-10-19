@@ -4,12 +4,12 @@ import { Button } from '@/shared/components/ui/button';
 import { Label } from '@/shared/components/ui/primitives/label';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { PageFadeIn } from '@/shared/components/transitions/PageFadeIn';
+import { CloudBackendNotice } from '@/shared/components/CloudBackendNotice';
 
 import { CharacterImagePanel } from './components/CharacterImagePanel';
 import { ModeSelector } from './components/ModeSelector';
 import { MotionVideoPanel } from './components/MotionVideoPanel';
 import { ResultsGallery } from './components/ResultsGallery';
-import { DeleteGenerationConfirmDialog } from '@/shared/components/dialogs/DeleteGenerationConfirmDialog';
 import { useCharacterAnimateBaseState } from './hooks/useCharacterAnimateBaseState';
 import { useCharacterAnimateDragHandlers } from './hooks/useCharacterAnimateDragHandlers';
 import { useCharacterAnimateEffects } from './hooks/useCharacterAnimateEffects';
@@ -33,6 +33,8 @@ const CharacterAnimatePage: React.FC = () => {
     <PageFadeIn>
       <div className="flex flex-col gap-y-6 pb-6 px-4 max-w-7xl mx-auto pt-6">
         <h1 className="text-3xl font-light tracking-tight text-foreground">Animate Characters</h1>
+
+        {state.cloudBackendUnavailable && <CloudBackendNotice toolName="Animate Characters" />}
 
         <ModeSelector mode={state.localMode} onChange={handlers.handleModeChange} />
 
@@ -118,13 +120,11 @@ const CharacterAnimatePage: React.FC = () => {
           fetching={state.videosFetching}
           videosViewJustEnabled={state.generateModel.videosViewJustEnabled}
           projectAspectRatio={state.projectAspectRatio}
-          deletingId={state.deletingId}
           isMobile={state.isMobile}
           onDelete={state.handleDeleteGeneration}
           onToggleStar={state.handleToggleStar}
         />
       </div>
-      <DeleteGenerationConfirmDialog {...state.confirmDialogProps} />
     </PageFadeIn>
   );
 };

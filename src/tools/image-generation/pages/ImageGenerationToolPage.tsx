@@ -7,13 +7,11 @@ import { MediaGallery } from "@/shared/components/MediaGallery";
 import type { GeneratedImageWithMetadata } from "@/shared/components/MediaGallery/types";
 import { Button } from "@/shared/components/ui/button";
 import { useProjectCrudContext, useProjectSelectionContext } from "@/shared/contexts/ProjectContext";
-import { usePublicLoras, usePublicStyleReferences, useMyStyleReferences } from '@/features/resources/hooks/useResources';
 import { PageFadeIn } from '@/shared/components/transitions/PageFadeIn';
 import { useIsMobile, useIsTablet } from "@/shared/hooks/mobile";
 import { SkeletonGallery } from '@/shared/components/ui/composed/skeleton-gallery';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/components/ui/collapsible';
 import { ChevronDown, ChevronLeft, Sparkles, Settings2 } from 'lucide-react';
-import { DeleteGenerationConfirmDialog } from '@/shared/components/dialogs/DeleteGenerationConfirmDialog';
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
 import { getRuntimeDocumentProjectId } from '@/app/runtime/runtimeDocument';
 import { useResolvedGalleryProject } from '@/app/runtime/useResolvedGalleryProject';
@@ -59,10 +57,6 @@ const ImageGenerationToolPage: React.FC = React.memo(() => {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const isPhoneOnly = isMobile && !isTablet;
-
-  usePublicLoras();
-  usePublicStyleReferences();
-  useMyStyleReferences();
 
   const { selectedProjectId } = useProjectSelectionContext();
   const { projects } = useProjectCrudContext();
@@ -191,7 +185,6 @@ const ImageGenerationToolPage: React.FC = React.memo(() => {
               <div ref={formContainerRef} className="p-6 border rounded-lg shadow-sm bg-card w-full max-w-full transition-all duration-700 ease-in-out">
                 <ImageGenerationForm
                   onGenerate={form.handleNewGenerate}
-                  openaiApiKey={form.openaiApiKey}
                   onShotChange={handleFormShotChange}
                 />
               </div>
@@ -216,8 +209,6 @@ const ImageGenerationToolPage: React.FC = React.memo(() => {
             <div className={gallery.isLoadingGenerations && gallery.isFilterChange ? 'opacity-60 pointer-events-none transition-opacity duration-200' : ''}>
               <MediaGallery
                 images={gallery.imagesToShow}
-                onDelete={actions.handleDeleteImage}
-                onToggleStar={actions.handleToggleStar}
                 onAddToLastShot={actions.handleAddImageToTargetShot}
                 onAddToLastShotWithoutPosition={actions.handleAddImageToTargetShotWithoutPosition}
                 allShots={actions.validShots}
@@ -239,7 +230,6 @@ const ImageGenerationToolPage: React.FC = React.memo(() => {
                 formAssociatedShotId={formAssociatedShotId}
                 onSwitchToAssociatedShot={gallery.handleSwitchToAssociatedShot}
                 generationFilters={gallery.generationsFilters}
-                onCreateShot={actions.handleCreateShot}
                 onBackfillRequest={actions.handleBackfillRequest}
                 onImageClick={handleImageClick}
                 selectedIds={selectedGalleryIds}
@@ -254,7 +244,6 @@ const ImageGenerationToolPage: React.FC = React.memo(() => {
           )}
         </div>
       </div>
-      <DeleteGenerationConfirmDialog {...actions.confirmDialogProps} />
       </PageFadeIn>
     </RuntimeAuthorityProvider>
   );

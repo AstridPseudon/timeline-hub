@@ -49,7 +49,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
   const isMobile = variant === 'mobile';
 
   // ========================================
-  // CONTEXT STATE (no longer from props)
+  // CONTEXT STATE
   // ========================================
   const { onClose, readOnly } = useLightboxCoreSafe();
   const {
@@ -62,8 +62,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
     pendingTaskCount,
     unviewedVariantCount,
     onMarkAllViewed,
-    handlePromoteToGeneration: onPromoteToGeneration,
-    isPromoting,
     handleDeleteVariant: onDeleteVariant,
   } = useLightboxVariantsSafe();
 
@@ -132,8 +130,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
           onVariantSelect={onVariantSelect}
           onMakePrimary={onMakePrimary}
           isLoading={isLoadingVariants}
-          onPromoteToGeneration={onPromoteToGeneration}
-          isPromoting={isPromoting}
           onDeleteVariant={onDeleteVariant}
           readOnly={readOnly}
         />

@@ -2,14 +2,12 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { GenerationRow } from '@/domains/generation/types';
 import { useVariants } from '@/shared/hooks/variants/useVariants';
 import { useVariantSelection } from '../useVariantSelection';
-import { useVariantPromotion } from '../useVariantPromotion';
 
 interface UseSharedLightboxVariantStateInput {
   media: GenerationRow;
   variantFetchGenerationId: string | null;
   initialVariantId?: string;
   isFormOnlyMode: boolean;
-  selectedProjectId: string | null;
 }
 
 export function useSharedLightboxVariantState(input: UseSharedLightboxVariantStateInput) {
@@ -18,7 +16,6 @@ export function useSharedLightboxVariantState(input: UseSharedLightboxVariantSta
     variantFetchGenerationId,
     initialVariantId,
     isFormOnlyMode,
-    selectedProjectId,
   } = input;
 
   const {
@@ -35,7 +32,7 @@ export function useSharedLightboxVariantState(input: UseSharedLightboxVariantSta
     enabled: !isFormOnlyMode,
   });
 
-  const { setActiveVariantId: baseSetActiveVariantId, isViewingNonPrimaryVariant } = useVariantSelection({
+  const { setActiveVariantId: baseSetActiveVariantId } = useVariantSelection({
     media,
     viewedGenerationId: variantFetchGenerationId,
     rawSetActiveVariantId,
@@ -45,9 +42,6 @@ export function useSharedLightboxVariantState(input: UseSharedLightboxVariantSta
   });
 
   const intendedActiveVariantIdRef = useRef<string | null>(activeVariant?.id || null);
-
-  const { promoteSuccess, isPromoting, handlePromoteToGeneration, handleAddVariantAsNewGenerationToShot } =
-    useVariantPromotion({ selectedProjectId });
 
   useEffect(() => {
     if (activeVariant?.id && activeVariant.id !== intendedActiveVariantIdRef.current) {
@@ -72,11 +66,6 @@ export function useSharedLightboxVariantState(input: UseSharedLightboxVariantSta
     refetchVariants,
     setPrimaryVariant,
     deleteVariant,
-    isViewingNonPrimaryVariant,
     intendedActiveVariantIdRef,
-    promoteSuccess,
-    isPromoting,
-    handlePromoteToGeneration,
-    handleAddVariantAsNewGenerationToShot,
   };
 }

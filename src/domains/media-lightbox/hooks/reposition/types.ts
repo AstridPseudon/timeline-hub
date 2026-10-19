@@ -22,10 +22,6 @@ export interface UseRepositionModeProps {
   loras?: Array<{ url: string; strength: number }>;
   inpaintPrompt: string;
   inpaintNumGenerations: number;
-  // Callback to switch to the newly created variant
-  onVariantCreated?: (variantId: string) => void;
-  // Callback to refetch variants after creation
-  refetchVariants?: () => void;
   // Create as new generation instead of variant
   createAsGeneration?: boolean;
   // Advanced settings for hires fix
@@ -45,10 +41,7 @@ export interface UseRepositionModeReturn extends ImageTransformControls {
   hasTransformChanges: boolean;
   isGeneratingReposition: boolean;
   repositionGenerateSuccess: boolean;
-  isSavingAsVariant: boolean;
-  saveAsVariantSuccess: boolean;
   handleGenerateReposition: () => Promise<void>;
-  handleSaveAsVariant: () => Promise<void>;
 
   // For rendering
   getTransformStyle: () => React.CSSProperties;

@@ -29,7 +29,6 @@ vi.mock('@/domains/media-lightbox/components/MediaDisplayWithCanvas', () => ({
 
 vi.mock('@/domains/media-lightbox/components/ButtonGroups', () => ({
   TopRightControls: () => <div data-testid="top-right-controls" />,
-  BottomLeftControls: () => <div data-testid="bottom-left-controls" />,
   BottomRightControls: () => <div data-testid="bottom-right-controls" />,
 }));
 
@@ -99,16 +98,12 @@ vi.mock('@/domains/media-lightbox/components/editModes/AnnotatePanel', () => ({
 vi.mock('@/domains/media-lightbox/components/editModes/RepositionPanel', () => ({
   RepositionPanel: (props: {
     state: { inpaintPrompt: string };
-    handleSaveAsVariant: () => void;
     handleGenerateReposition: () => void;
   }) => {
     repositionPanelSpy(props);
     return (
       <div data-testid="reposition-panel">
         <span data-testid="reposition-prompt">{props.state.inpaintPrompt}</span>
-        <button type="button" onClick={props.handleSaveAsVariant}>
-          save-variant
-        </button>
         <button type="button" onClick={props.handleGenerateReposition}>
           reposition-generate
         </button>
@@ -229,17 +224,13 @@ function createInlineEditState(): InlineEditStateResult {
     },
     generationState: {
       handleDownload: vi.fn(),
-      localStarred: false,
-      handleToggleStar: vi.fn(),
-      toggleStarMutation: { isPending: false },
       handleUnifiedGenerate: vi.fn(),
       handleGenerateAnnotatedEdit: vi.fn(),
       handleGenerateReposition: vi.fn(),
-      handleSaveAsVariant: vi.fn(),
       handleGenerateImg2Img: vi.fn(),
       img2imgLoraManager: undefined,
     },
-    availableLoras: [],
+    cloudBackendUnavailable: false,
     imageEditValue: { kind: 'image-edit-value', flushTextFields },
     variants: {
       variants: [variantA, variantB],
@@ -274,15 +265,11 @@ describe('InlineEditView', () => {
       onVariantSelect: params.variantsState.handleVariantSelect,
       onMakePrimary: params.variantsState.handleMakePrimary,
       isLoadingVariants: params.variantsState.isLoadingVariants ?? false,
-      onPromoteToGeneration: params.variantsState.handlePromoteToGeneration,
-      isPromoting: params.variantsState.isPromoting ?? false,
       onDeleteVariant: params.variantsState.handleDeleteVariant,
       onLoadVariantSettings: params.variantsState.onLoadVariantSettings,
       pendingTaskCount: params.variantsState.pendingTaskCount ?? 0,
       unviewedVariantCount: params.variantsState.unviewedVariantCount ?? 0,
       onMarkAllViewed: params.variantsState.onMarkAllViewed,
-      onLoadVariantImages: params.variantsState.onLoadVariantImages,
-      currentSegmentImages: params.variantsState.currentSegmentImages,
       inpaintPrompt: 'persistent main prompt',
       img2imgPrompt: 'persistent img2img prompt',
     }));
@@ -321,6 +308,24 @@ describe('InlineEditView', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the online-account line when the LoRA library is unavailable', () => {
+    mockUseInlineEditState.mockReturnValue({ ...createInlineEditState(), cloudBackendUnavailable: true });
+
+    render(<InlineEditView media={{ id: 'gen-1' } as never} onClose={vi.fn()} />);
+
+    expect(screen.getByTestId('cloud-backend-notice').textContent).toBe(
+      "Edit Images needs an online account, which isn't available yet.",
+    );
+  });
+
+  it('shows no online-account line while the backend is not needed', () => {
+    mockUseInlineEditState.mockReturnValue(createInlineEditState());
+
+    render(<InlineEditView media={{ id: 'gen-1' } as never} onClose={vi.fn()} />);
+
+    expect(screen.queryByTestId('cloud-backend-notice')).toBeNull();
+  });
+
   it('renders a single variant selector path and forwards variant actions', () => {
     const inlineState = createInlineEditState();
     mockUseInlineEditState.mockReturnValue(inlineState);
@@ -355,7 +360,6 @@ describe('InlineEditView', () => {
           handleUnifiedGenerate: inlineState.generationState.handleUnifiedGenerate,
           handleGenerateAnnotatedEdit: inlineState.generationState.handleGenerateAnnotatedEdit,
           handleGenerateReposition: inlineState.generationState.handleGenerateReposition,
-          handleSaveAsVariant: inlineState.generationState.handleSaveAsVariant,
           handleGenerateImg2Img: inlineState.generationState.handleGenerateImg2Img,
         }}
         upscale={{
@@ -401,7 +405,6 @@ describe('InlineEditView', () => {
     rerender(renderPanel());
     expect(screen.getByTestId('reposition-panel')).toBeTruthy();
     expect(screen.getByTestId('reposition-prompt').textContent).toBe('persistent main prompt');
-    fireEvent.click(screen.getByRole('button', { name: 'save-variant' }));
     fireEvent.click(screen.getByRole('button', { name: 'reposition-generate' }));
 
     currentEditMode = 'img2img';
@@ -417,7 +420,6 @@ describe('InlineEditView', () => {
 
     expect(inlineState.generationState.handleUnifiedGenerate).toHaveBeenCalledTimes(2);
     expect(inlineState.generationState.handleGenerateAnnotatedEdit).toHaveBeenCalledTimes(1);
-    expect(inlineState.generationState.handleSaveAsVariant).toHaveBeenCalledTimes(1);
     expect(inlineState.generationState.handleGenerateReposition).toHaveBeenCalledTimes(1);
     expect(inlineState.generationState.handleGenerateImg2Img).toHaveBeenCalledTimes(1);
     expect(handleUpscale).toHaveBeenCalledTimes(1);

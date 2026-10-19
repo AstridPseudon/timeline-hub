@@ -15,9 +15,6 @@ interface JoinClipsResultsProps {
   videosFetching: boolean;
   projectAspectRatio: string | undefined;
   isMobile: boolean;
-  deletingId: string | null;
-  handleDeleteGeneration: (id: string) => void;
-  onToggleStar: (id: string, starred: boolean) => void;
 }
 
 export function JoinClipsResults({
@@ -26,9 +23,6 @@ export function JoinClipsResults({
   videosFetching,
   projectAspectRatio,
   isMobile,
-  deletingId,
-  handleDeleteGeneration,
-  onToggleStar,
 }: JoinClipsResultsProps) {
   const hasValidData = videosData?.items && videosData.items.length > 0;
   const isLoadingOrFetching = videosLoading || videosFetching;
@@ -59,9 +53,6 @@ export function JoinClipsResults({
           allShots={[]}
           onAddToLastShot={async () => false}
           onAddToLastShotWithoutPosition={async () => false}
-          onDelete={handleDeleteGeneration}
-          onToggleStar={onToggleStar}
-          isDeleting={deletingId}
           currentToolType={TOOL_IDS.JOIN_CLIPS}
           defaultFilters={VIDEO_ONLY_GALLERY_FILTERS}
           columnsPerRow={3}

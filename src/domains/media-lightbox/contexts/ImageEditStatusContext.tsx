@@ -21,8 +21,6 @@ export interface ImageEditStatusState {
   img2imgGenerateSuccess: boolean;
   isGeneratingReposition: boolean;
   repositionGenerateSuccess: boolean;
-  isSavingAsVariant: boolean;
-  saveAsVariantSuccess: boolean;
   isCreatingMagicEditTasks: boolean;
   magicEditTasksCreated: boolean;
 }
@@ -38,8 +36,6 @@ const EMPTY_STATUS: ImageEditStatusState = {
   img2imgGenerateSuccess: false,
   isGeneratingReposition: false,
   repositionGenerateSuccess: false,
-  isSavingAsVariant: false,
-  saveAsVariantSuccess: false,
   isCreatingMagicEditTasks: false,
   magicEditTasksCreated: false,
 };

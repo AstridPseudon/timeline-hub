@@ -51,9 +51,6 @@ describe('JoinClipsResults', () => {
         videosFetching={false}
         projectAspectRatio="16:9"
         isMobile={false}
-        deletingId={null}
-        handleDeleteGeneration={vi.fn()}
-        onToggleStar={vi.fn()}
       />,
     );
 
@@ -67,8 +64,6 @@ describe('JoinClipsResults', () => {
 
   it('renders the media gallery with the expected pagination and config when results exist', () => {
     const items = [{ id: 'video-1' }, { id: 'video-2' }];
-    const onDelete = vi.fn();
-    const onToggleStar = vi.fn();
 
     render(
       <JoinClipsResults
@@ -77,9 +72,6 @@ describe('JoinClipsResults', () => {
         videosFetching={false}
         projectAspectRatio="1:1"
         isMobile
-        deletingId="video-2"
-        handleDeleteGeneration={onDelete}
-        onToggleStar={onToggleStar}
       />,
     );
 
@@ -92,9 +84,6 @@ describe('JoinClipsResults', () => {
     });
     expect(mocks.MediaGallery).toHaveBeenCalledWith(expect.objectContaining({
       images: items,
-      onDelete,
-      onToggleStar,
-      isDeleting: 'video-2',
       pagination: { itemsPerPage: 12 },
       config: { reducedSpacing: true },
     }));
@@ -108,9 +97,6 @@ describe('JoinClipsResults', () => {
         videosFetching={false}
         projectAspectRatio={undefined}
         isMobile={false}
-        deletingId={null}
-        handleDeleteGeneration={vi.fn()}
-        onToggleStar={vi.fn()}
       />,
     );
 

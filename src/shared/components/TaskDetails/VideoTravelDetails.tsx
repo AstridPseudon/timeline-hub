@@ -1,9 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { TaskDetailsProps, getVariantConfig } from '@/shared/types/taskDetailsTypes';
-import { getSupabaseClient } from '@/integrations/supabase/client';
-import { presetQueryKeys } from '@/shared/lib/queryKeys/presets';
-import { asRecord, asString } from '@/shared/lib/tasks/taskParamParsers';
 import {
   resolveTravelPresetName,
   useVideoTravelTaskData,
@@ -30,7 +26,6 @@ export const VideoTravelDetails: React.FC<TaskDetailsProps> = ({
   onShowFullPromptChange,
   showFullNegativePrompt = false,
   onShowFullNegativePromptChange,
-  availableLoras,
   showCopyButtons = false,
 }) => {
   const config = getVariantConfig(variant, isMobile, inputImages.length);
@@ -82,23 +77,7 @@ export const VideoTravelDetails: React.FC<TaskDetailsProps> = ({
     variant,
   });
 
-  const { data: dbPresetName } = useQuery({
-    queryKey: presetQueryKeys.name(presetId ?? ''),
-    queryFn: async () => {
-      if (!presetId) return null;
-      const supabase = getSupabaseClient();
-      const { data } = await supabase
-        .from('resources')
-        .select('metadata')
-        .eq('id', presetId)
-        .single();
-      return asString(asRecord(data?.metadata)?.name) || null;
-    },
-    enabled: false,
-    staleTime: Infinity,
-  });
-
-  const presetName = resolveTravelPresetName(presetId, dbPresetName);
+  const presetName = resolveTravelPresetName(presetId);
   const hasPhases = Array.isArray(phaseConfig?.phases) && phaseConfig.phases.length > 0;
 
   return (
@@ -152,7 +131,6 @@ export const VideoTravelDetails: React.FC<TaskDetailsProps> = ({
             phaseConfig={phaseConfig}
             phaseStepsDisplay={phaseStepsDisplay}
             showSummary={false}
-            availableLoras={availableLoras}
             copiedLoraUrl={copiedLoraUrl}
             onCopyLoraUrl={handleCopyLoraUrl}
           />
@@ -162,7 +140,6 @@ export const VideoTravelDetails: React.FC<TaskDetailsProps> = ({
           <TaskLoraDetails
             config={config}
             additionalLoras={additionalLoras}
-            availableLoras={availableLoras}
             copiedLoraUrl={copiedLoraUrl}
             onCopyLoraUrl={handleCopyLoraUrl}
           />
@@ -177,7 +154,6 @@ export const VideoTravelDetails: React.FC<TaskDetailsProps> = ({
             phaseStepsDisplay={phaseStepsDisplay}
             showSummary
             borderTopClassName="pt-3"
-            availableLoras={availableLoras}
             copiedLoraUrl={copiedLoraUrl}
             onCopyLoraUrl={handleCopyLoraUrl}
           />

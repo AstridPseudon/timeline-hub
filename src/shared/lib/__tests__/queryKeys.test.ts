@@ -20,10 +20,6 @@ describe('queryKeys', () => {
       expect(queryKeys.shots.positions('p1')).toEqual(['shot-positions', 'p1']);
     });
 
-    it('regenData returns shot-scoped key', () => {
-      expect(queryKeys.shots.regenData('s1')).toEqual(['shot-regen-data', 's1']);
-    });
-
     it('batchSettings returns shot-scoped key', () => {
       expect(queryKeys.shots.batchSettings('s1')).toEqual(['shot-batch-settings', 's1']);
     });
@@ -52,10 +48,6 @@ describe('queryKeys', () => {
 
     it('byProject returns project-scoped key', () => {
       expect(queryKeys.generations.byProject('p1')).toEqual(['project-generations', 'p1']);
-    });
-
-    it('lineageChain returns generation-scoped key', () => {
-      expect(queryKeys.generations.lineageChain('g1')).toEqual(['lineage-chain', 'g1']);
     });
 
     it('lastVideo returns shot-scoped key', () => {

@@ -5,7 +5,6 @@ import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeErro
 interface NavigateToGenerationOptions {
   context: string;
   onResolved: (generation: GenerationRow) => void;
-  onAfterResolved?: () => void;
 }
 
 export async function navigateToGenerationById(
@@ -17,7 +16,6 @@ export async function navigateToGenerationById(
 
     if (generation) {
       options.onResolved(generation);
-      options.onAfterResolved?.();
     }
   } catch (error) {
     normalizeAndPresentError(error, { context: options.context, showToast: false });

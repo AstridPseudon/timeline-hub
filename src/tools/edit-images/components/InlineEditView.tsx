@@ -4,7 +4,6 @@ import { GenerationRow } from '@/domains/generation/types';
 import { MediaDisplayWithCanvas } from '@/domains/media-lightbox/components/MediaDisplayWithCanvas';
 import {
   TopRightControls,
-  BottomLeftControls,
   BottomRightControls,
 } from '@/domains/media-lightbox/components/ButtonGroups';
 import { EditModePanel } from '@/domains/media-lightbox/components/EditModePanel';
@@ -15,6 +14,7 @@ import type { EditModePanelVariantsState } from '@/domains/media-lightbox/compon
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
+import { CloudBackendNotice } from '@/shared/components/CloudBackendNotice';
 
 import {
   useInlineEditState,
@@ -61,9 +61,6 @@ interface InlineEditCanvasModel {
   };
   generation: {
     handleDownload: InlineEditStateResult['generationState']['handleDownload'];
-    localStarred: InlineEditStateResult['generationState']['localStarred'];
-    handleToggleStar: InlineEditStateResult['generationState']['handleToggleStar'];
-    toggleStarPending: boolean;
   };
   isSpecialEditMode: boolean;
 }
@@ -87,9 +84,6 @@ function buildInlineEditCanvasModel(state: InlineEditStateResult): InlineEditCan
     },
     generation: {
       handleDownload: state.generationState.handleDownload,
-      localStarred: state.generationState.localStarred,
-      handleToggleStar: state.generationState.handleToggleStar,
-      toggleStarPending: state.generationState.toggleStarMutation.isPending,
     },
     isSpecialEditMode: state.inpaintingState.isSpecialEditMode,
   };
@@ -134,15 +128,7 @@ function InlineEditCanvas({ variant, model, media }: InlineEditCanvasProps) {
         handleDownload={model.generation.handleDownload}
       />
 
-      <BottomLeftControls
-        localStarred={model.generation.localStarred}
-        handleToggleStar={model.generation.handleToggleStar}
-        toggleStarPending={model.generation.toggleStarPending}
-      />
-
-      <BottomRightControls
-        showAddToReferences={false}
-      />
+      <BottomRightControls />
     </ImageEditProvider>
   );
 }
@@ -166,11 +152,10 @@ interface InlineEditSidebarModel {
     handleUnifiedGenerate: InlineEditStateResult['generationState']['handleUnifiedGenerate'];
     handleGenerateAnnotatedEdit: InlineEditStateResult['generationState']['handleGenerateAnnotatedEdit'];
     handleGenerateReposition: InlineEditStateResult['generationState']['handleGenerateReposition'];
-    handleSaveAsVariant: InlineEditStateResult['generationState']['handleSaveAsVariant'];
     handleGenerateImg2Img: InlineEditStateResult['generationState']['handleGenerateImg2Img'];
     img2imgLoraManager: InlineEditStateResult['generationState']['img2imgLoraManager'];
   };
-  availableLoras: InlineEditStateResult['availableLoras'];
+  cloudBackendUnavailable: InlineEditStateResult['cloudBackendUnavailable'];
   imageEditValue: InlineEditStateResult['imageEditValue'];
   variantsState: EditModePanelVariantsState;
   actions: {
@@ -188,11 +173,10 @@ function buildInlineEditSidebarModel(state: InlineEditStateResult): InlineEditSi
       handleUnifiedGenerate: state.generationState.handleUnifiedGenerate,
       handleGenerateAnnotatedEdit: state.generationState.handleGenerateAnnotatedEdit,
       handleGenerateReposition: state.generationState.handleGenerateReposition,
-      handleSaveAsVariant: state.generationState.handleSaveAsVariant,
       handleGenerateImg2Img: state.generationState.handleGenerateImg2Img,
       img2imgLoraManager: state.generationState.img2imgLoraManager,
     },
-    availableLoras: state.availableLoras,
+    cloudBackendUnavailable: state.cloudBackendUnavailable,
     imageEditValue: state.imageEditValue,
     variantsState: {
       variants: state.variants.variants,
@@ -226,12 +210,10 @@ function InlineEditSidebar({ variant, model, onClose }: InlineEditSidebarProps) 
         handleUnifiedGenerate: model.generation.handleUnifiedGenerate,
         handleGenerateAnnotatedEdit: model.generation.handleGenerateAnnotatedEdit,
         handleGenerateReposition: model.generation.handleGenerateReposition,
-        handleSaveAsVariant: model.generation.handleSaveAsVariant,
         handleGenerateImg2Img: model.generation.handleGenerateImg2Img,
       }}
       lora={{
         img2imgLoraManager: model.generation.img2imgLoraManager,
-        availableLoras: model.availableLoras,
       }}
       upscale={{ isCloudMode: model.isCloudMode }}
       coreState={{ onClose }}
@@ -259,6 +241,11 @@ function InlineEditSidebar({ variant, model, onClose }: InlineEditSidebarProps) 
 
   return (
     <div className="w-full h-full flex flex-col min-h-0">
+      {model.cloudBackendUnavailable && (
+        <div className="px-4 pt-4">
+          <CloudBackendNotice toolName="Edit Images" />
+        </div>
+      )}
       <div className="flex-1 min-h-0 overflow-y-auto">{sidebarContent}</div>
     </div>
   );

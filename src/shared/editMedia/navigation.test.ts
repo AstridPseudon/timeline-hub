@@ -20,36 +20,30 @@ describe('editMedia/navigation navigateToGenerationById', () => {
     vi.clearAllMocks();
   });
 
-  it('resolves generation and calls callbacks', async () => {
+  it('resolves generation and calls the resolved callback', async () => {
     const generation = { id: 'gen-1' };
     const onResolved = vi.fn();
-    const onAfterResolved = vi.fn();
     mocks.fetchGenerationById.mockResolvedValue(generation);
 
     await navigateToGenerationById('gen-1', {
       context: 'navigation.test',
       onResolved,
-      onAfterResolved,
     });
 
     expect(onResolved).toHaveBeenCalledWith(generation);
-    expect(onAfterResolved).toHaveBeenCalledTimes(1);
     expect(mocks.normalizeAndPresentError).not.toHaveBeenCalled();
   });
 
   it('does nothing when no generation is returned', async () => {
     const onResolved = vi.fn();
-    const onAfterResolved = vi.fn();
     mocks.fetchGenerationById.mockResolvedValue(null);
 
     await navigateToGenerationById('missing-gen', {
       context: 'navigation.test',
       onResolved,
-      onAfterResolved,
     });
 
     expect(onResolved).not.toHaveBeenCalled();
-    expect(onAfterResolved).not.toHaveBeenCalled();
   });
 
   it('normalizes errors from repository lookup', async () => {

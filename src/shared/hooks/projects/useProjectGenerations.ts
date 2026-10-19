@@ -3,7 +3,6 @@
  * ================================
  *
  * This module provides hooks for querying generations at the PROJECT level.
- * Mutations live in `useGenerationMutations.ts`.
  *
  * ## Data Source
  * Bridge gallery reads (doc-27 §4.1): bounded keyset pages from
