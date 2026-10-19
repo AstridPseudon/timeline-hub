@@ -157,16 +157,36 @@ def assert_move(before, after, clip_id, on):
 
 
 def assert_readback(client, fixture, accepted):
+    from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+
     data, receipt = accepted["data"], accepted["receipt"]
     revision = data["accepted_revision_id"]
     document = data["canonical_document"]
     assert receipt["result"] == {key: value for key, value in data.items()
                                   if key not in {"accepted_publication_id", "show_command"}}
     assert revision == document["parent_revision"]["revision_id"]
+    stored = client._remote._transport.get_project_parent_composition_revision(
+        fixture.project_id, fixture.timeline_id, revision,
+    )
+    assert stored["project_id"] == document["project_id"] == fixture.project_id
+    assert stored["timeline_id"] == document["timeline_id"] == fixture.timeline_id
+    for key, value in document["parent_revision"].items():
+        assert stored[key] == value
+    assert stored["dependency_manifest"] == document["dependency_manifest"]
+    # Main's lossless authoring codec represents occurrences as placements,
+    # with exact shot/internal pins and any identity remapping in source_mapping.
+    expected_bundle = open_authoring_bundle(
+        {**document["parent_revision"], "project_id": fixture.project_id,
+         "timeline_id": fixture.timeline_id},
+        shot_revisions=[{**row, "project_id": fixture.project_id}
+                        for row in document["shot_revisions"]],
+        internal_timeline_revisions=[{**row, "project_id": fixture.project_id}
+                                     for row in document["internal_timeline_revisions"]],
+    )
     opened = client.timelines.open_bundle(fixture.project_id, fixture.timeline_id, revision_id=revision)
     assert opened.ok, opened.as_dict()
     assert opened.data["revision_id"] == revision
-    assert opened.data["bundle"]["parent"] == document["parent_revision"]["payload"]
+    assert opened.data["bundle"] == expected_bundle
     entry = next(row for row in history(client, fixture)["items"]
                  if row["publication_id"] == receipt["receipt_id"])
     assert entry["revision_id"] == revision
