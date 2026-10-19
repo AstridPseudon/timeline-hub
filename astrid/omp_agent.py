@@ -8,11 +8,15 @@ usable even when the optional Astrid runtime dependencies are not installed.
 
 from __future__ import annotations
 
+import argparse
+import json
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+from typing import Any
 
 from .core.auth import AUTH_COMMANDS, contributor_auth_system_notice, run_auth
 from .version import ASTRID_VERSION
@@ -42,7 +46,7 @@ def _installed_pack_families() -> frozenset[str]:
             for pack in discover_pack_metadata()
             if pack.id not in _PACK_ROUTE_BLOCKLIST
         )
-    except Exception:  # pragma: no cover - minimal launcher must still work
+    except (ImportError, OSError, ValueError, RuntimeError):  # pragma: no cover - minimal install
         return frozenset()
 
 
@@ -108,6 +112,8 @@ when you want to make the agent route explicit.
 
   astrid                         interactive Astrid agent
   astrid agent [flags] [message] interactive/one-shot Astrid agent
+  astrid agent models [--json]   list OMP providers, models, and current default
+  astrid agent use PROVIDER/MODEL set the default for the next Astrid launch
   astrid <toolkit> ...           product toolkit gateway
   astrid login                   log in for Hivemind contributions
   astrid status                  show Hivemind contributor login status
@@ -216,6 +222,194 @@ def _select_omp_bin(env=None) -> None:
     resolved = _resolve_omp_bin(target)
     if resolved and target.get("ASTRID_STOCK_OMP") != "1":
         target.setdefault("OMP_BIN", resolved)
+
+
+def _model_command_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="astrid agent")
+    commands = parser.add_subparsers(dest="command", required=True)
+    contract = (
+        "JSON v1: {schemaVersion: 1, currentModel: provider/model or null, providers: "
+        "[{id, name, signedIn, models: [{id, name, selector}], usage?: "
+        "[{fetchedAt, limits: [{label, amount, window?, status?}]}]}]}. "
+        "currentModel shows the saved OMP profile default, even when unavailable, "
+        "or OMP's automatic selection when no default is saved. "
+        "Providers and models come from OMP's /model and /login selectors. "
+        "signedIn means OMP has auth configured; keyless providers can also have usable models. "
+        "Usage is optional and excludes account identifiers. No credentials are returned."
+    )
+    models = commands.add_parser("models", help="list OMP providers and usable models", description=contract)
+    models.add_argument("--json", action="store_true", help="print the stable JSON v1 contract above")
+    use = commands.add_parser(
+        "use", help="save OMP's default model for future App and terminal chats",
+        description="Validate against `astrid agent models` and persist modelRoles.default via "
+        "`omp config set`, the same setting as OMP's /model. The default is shared by App and "
+        "terminal chats using this OMP profile. Explicit project defaults take precedence; "
+        "existing conversations may retain their session model. " + contract,
+    )
+    use.add_argument("selector", metavar="PROVIDER/MODEL", help="exact model selector from `astrid agent models`")
+    use.add_argument("--json", action="store_true", help="print the updated JSON v1 snapshot")
+    return parser
+
+
+def _omp_model_snapshot(omp_bin: str) -> dict[str, Any]:
+    """Query OMP's registry inside OMP, without opening its credential files."""
+    extension = Path(__file__).resolve().parent / "omp_extensions" / "astrid-models.ts"
+    with tempfile.TemporaryDirectory(prefix="astrid-agent-models-") as directory:
+        result_file = Path(directory) / "models.json"
+        env = dict(os.environ)
+        env["ASTRID_OMP_MODELS_RESULT"] = str(result_file)
+        result = subprocess.run(
+            [omp_bin, "models", "ls", "--json", "-e", str(extension)],
+            capture_output=True, text=True, env=env, check=False,
+        )
+        if not result_file.is_file():
+            raise ValueError("OMP could not report its providers; run `omp models ls --json` for details")
+        snapshot = json.loads(result_file.read_text(encoding="utf-8"))
+    if not isinstance(snapshot, dict):
+        raise ValueError("OMP returned an invalid model snapshot")
+    if isinstance(snapshot.get("error"), str):
+        raise ValueError(snapshot["error"])
+    if result.returncode:
+        raise ValueError("OMP model command failed; run `omp models ls --json` for details")
+    if snapshot.get("schemaVersion") != 1 or not isinstance(snapshot.get("providers"), list):
+        raise ValueError("OMP returned an invalid model snapshot")
+    return snapshot
+
+
+def _save_default_model(omp_bin: str, selector: str) -> None:
+    """Persist OMP's global default without copying project roles into it."""
+    with tempfile.TemporaryDirectory(prefix="astrid-agent-config-") as directory:
+        # OMP's config CLI reads effective settings for its cwd. An empty cwd
+        # isolates the profile's global roles from project-specific overrides.
+        result = subprocess.run(
+            [omp_bin, "config", "get", "modelRoles", "--json"], cwd=directory,
+            capture_output=True, text=True, check=False,
+        )
+        if result.returncode:
+            raise ValueError("OMP could not read modelRoles; run `omp config get modelRoles` for details")
+        payload = json.loads(result.stdout)
+        roles = payload.get("value") if isinstance(payload, dict) else None
+        if not isinstance(roles, dict):
+            raise ValueError("OMP returned invalid modelRoles")
+        result = subprocess.run(
+            [omp_bin, "config", "set", "modelRoles", json.dumps({**roles, "default": selector}), "--json"],
+            cwd=directory, capture_output=True, text=True, check=False,
+        )
+        payload = json.loads(result.stdout) if not result.returncode else None
+        saved = payload.get("value") if isinstance(payload, dict) else None
+        if not isinstance(saved, dict) or saved.get("default") != selector:
+            raise ValueError("OMP could not save modelRoles.default; run `omp config get modelRoles` for details")
+
+
+def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
+    """Ask OMP's host for login entries, including extension-only providers."""
+    catalog_model = snapshot.pop("_catalogModel", None)
+    hidden = set(snapshot.pop("_hiddenProviderIds", []))
+    command = [omp_bin, "--mode", "rpc", "--no-session", "--no-tools", "--no-lsp", "--no-pty",
+               "--no-skills", "--no-rules"]
+    if catalog_model:
+        # An explicit real catalog model lets OMP answer metadata requests even
+        # before sign-in. No prompt or provider inference request is submitted.
+        command += ["--model", catalog_model]
+    result = subprocess.run(
+        command, input='{"id":"astrid-login-providers","type":"get_login_providers"}\n',
+        capture_output=True, text=True, check=False,
+    )
+    if result.returncode:
+        raise ValueError("OMP could not list sign-in providers; run `omp` for details")
+    for line in result.stdout.splitlines():
+        try:
+            response = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(response, dict) or response.get("id") != "astrid-login-providers":
+            continue
+        data = response.get("data")
+        if not response.get("success") or not isinstance(data, dict) or not isinstance(data.get("providers"), list):
+            break
+        providers = {provider["id"]: provider for provider in snapshot["providers"]}
+        for login in data["providers"]:
+            if login["id"] in hidden:
+                continue
+            provider = providers.setdefault(login["id"], {"id": login["id"], "models": []})
+            provider.update(name=login["name"], signedIn=login["authenticated"])
+        snapshot["providers"] = sorted(providers.values(), key=lambda provider: provider["id"])
+        return
+    raise ValueError("OMP did not return its sign-in providers")
+
+
+def _add_model_usage(omp_bin: str, snapshot: dict[str, Any]) -> None:
+    """Attach OMP's optional quota reports, retaining only non-identity fields."""
+    try:
+        result = subprocess.run(
+            [omp_bin, "usage", "--json", "--redact"], capture_output=True, text=True, check=False,
+        )
+        if result.returncode:
+            return
+        usage = json.loads(result.stdout)
+        reports = usage.get("reports", []) if isinstance(usage, dict) else []
+        for provider in snapshot["providers"]:
+            safe_reports = []
+            for report in reports:
+                if not isinstance(report, dict) or report.get("provider") != provider["id"]:
+                    continue
+                safe_reports.append({
+                    "fetchedAt": report.get("fetchedAt"),
+                    "limits": [
+                        {key: limit[key] for key in ("label", "amount", "window", "status") if key in limit}
+                        for limit in report.get("limits", []) if isinstance(limit, dict)
+                    ],
+                })
+            if safe_reports:
+                provider["usage"] = safe_reports
+    except (OSError, ValueError):
+        # Usage support/availability varies by OMP provider and build. The model
+        # registry remains authoritative when no quota report can be obtained.
+        return
+
+
+def _run_model_command(argv: list[str]) -> int:
+    try:
+        args = _model_command_parser().parse_args(argv)
+    except SystemExit as exc:
+        return exc.code if isinstance(exc.code, int) else 1
+    omp_bin = _resolve_omp_bin()
+    if omp_bin is None:
+        print("astrid: could not locate the OMP binary; set OMP_BIN or install oh-my-pi", file=sys.stderr)
+        return 1
+    try:
+        snapshot = _omp_model_snapshot(omp_bin)
+        _merge_login_providers(omp_bin, snapshot)
+        if args.command == "models":
+            _add_model_usage(omp_bin, snapshot)
+        else:
+            provider_id, _, _model_id = args.selector.partition("/")
+            provider = next((item for item in snapshot["providers"] if item["id"] == provider_id), None)
+            if provider and not provider["signedIn"] and not provider["models"]:
+                raise ValueError(f"Sign in: run `omp`, then /login and pick {provider['name']}")
+            if provider is None or not any(model["selector"] == args.selector for model in provider["models"]):
+                raise ValueError("Unknown or unavailable model selector; use `astrid agent models`")
+            _save_default_model(omp_bin, args.selector)
+            snapshot["currentModel"] = args.selector
+    except (OSError, ValueError) as exc:
+        print(f"astrid: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        print(json.dumps(snapshot, sort_keys=True))
+    elif args.command == "use":
+        print(f"Astrid default model saved: {snapshot['currentModel']}. New App and terminal chats inherit it unless their project sets a default.")
+    else:
+        print(f"Astrid default model: {snapshot['currentModel'] or '(none available)'}")
+        for provider in snapshot["providers"]:
+            state = "signed in" if provider["signedIn"] else "not signed in"
+            print(f"{provider['name']} ({provider['id']}) — {state}")
+            for model in provider["models"]:
+                print(f"  {model['selector']}  {model['name']}")
+            if provider.get("usage"):
+                print("  Usage: " + json.dumps(provider["usage"], sort_keys=True))
+            if not provider["signedIn"] and not provider["models"]:
+                print(f"  Sign in: run `omp`, then /login and pick {provider['name']}")
+    return 0
 
 
 def _omp_supports_onboard(omp_bin: str) -> bool:
@@ -348,6 +542,8 @@ def main(argv: list[str] | None = None) -> int:
             print("astrid: --agent-profile-file takes no other arguments", file=sys.stderr)
             return 2
         return _print_agent_profile_file()
+    if len(rest) > 1 and rest[0] == "agent" and rest[1] in {"models", "use"}:
+        return _run_model_command(rest[1:])
     if rest and rest[0] == "help":
         return _dispatch_toolkit(rest)
     if rest and rest[0] == "auth":

@@ -29,6 +29,23 @@ database or invent filesystem side channels. For the product CLI use
 `astrid-tools` (or `python3 -m astrid`); prefer JSON output for inspection and
 report artifacts, exit status, and the next useful action clearly.
 
+## Models and providers
+
+Answer "which models can you use?" from `astrid agent models --json`, including
+the saved current default and signed-in alternatives. On request, switch with
+`astrid agent use PROVIDER/MODEL`, using an exact selector from that list. It
+persists OMP's `modelRoles.default` for future App and terminal chats; existing
+conversations and explicit project defaults can retain their own model.
+After a billing, authentication, or quota failure (including 402 Insufficient
+Balance), list the signed-in alternatives and reported limits from the same
+command, then offer to switch. For a signed-out provider, give the one command
+`astrid --onboard` and name the provider exactly as OMP's list shows it. If this
+OMP build lacks onboarding, tell the user to run `omp`, then `/login` and pick
+that exact provider name. Never read, copy, or forward credential files or
+tokens. Confirm a switch only after the command succeeds.
+
+## Creative work
+
 For generation, rendering, and media work in Astrid App, use the `astrid_invoke`
 tool with the selected project from the editor context and the capability's
 documented inputs. It admits a real Runtime task and returns immediately;
