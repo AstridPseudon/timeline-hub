@@ -28,6 +28,7 @@ import { createBundleBudgetPlugin } from "./bundleBudget";
 import { createRemoteFontModePlugin } from "./remoteFonts";
 import { createPairedRelayPlugin, resolvePairedRelayConfig } from "./pairedRelay";
 import { createShareMetaPlugin } from "./shareMeta";
+import { createInstallerAssetsPlugin } from "./installerAssets";
 
 export { createRemoteFontModePlugin, stripRemoteFontLinks } from "./remoteFonts";
 
@@ -162,6 +163,7 @@ export default defineConfig(() => {
       astridBridgeAuthPlugin,
       createRemoteFontModePlugin(disableRemoteFonts),
       createShareMetaPlugin(process.env.ASTRID_SITE_ORIGIN?.trim() || undefined),
+      createInstallerAssetsPlugin(),
       react(),
       createBundleBudgetPlugin(),
     ].filter(Boolean),
