@@ -16,7 +16,8 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
-from runtime_protocol.timeline_commit_port import route_path
+from runtime_protocol.timeline_commit_port import RequestCommitPort, digest, route_path
+from runtime_protocol.timeline_commit_store import request_identity
 from runtime_protocol.util import canonical_json
 
 
@@ -41,11 +42,93 @@ def restore_provider(astrid_importable):
 
 
 def _select_restore_provider(service, project_id, provider):
-    # Legacy publications are seeded through neutral main APIs before startup.
+    # Host-boundary source acceptance is complete before Agent startup.
     service.register_timeline_commit_provider(provider)
     head = service.get_project_timeline(project_id, "main")
     return {"expected_head": head["head_revision_id"],
             "expected_publication_id": head["head_publication_id"]}
+
+
+def _accept_restore_document(service, document, *, idempotency_key):
+    """Accept an exact fixture image, not an Agent first-clip authoring proof."""
+    project_id, timeline_id = document["project_id"], document["timeline_id"]
+    commits, _ = service._timeline_commits()
+    base = commits.bootstrap(project_id, timeline_id, authorize=lambda: None)
+    previous = commits.revision_closure(project_id, timeline_id, base["revision_id"])
+    command = {"schema_version": 1, "op": "fixture.restore-source", "version": "1",
+               "select": None, "args": {"document": copy.deepcopy(document)}}
+    request = {"api_version": 1, "project_id": project_id, "timeline_id": timeline_id,
+               "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
+               "commands": [command]}
+    context = {"request": request, "idempotency_key": idempotency_key,
+               "realm_id": service.realm["id"], "publisher": "restore-source-fixture",
+               "invocation": {"operation": "commitTimeline", "path": route_path(project_id, timeline_id),
+                              "body": copy.deepcopy(request)}}
+    context["request_hash"] = request_identity(context)
+    record = {"ordinal": 0, "command": command, "writes": [{
+        "ref": "parent", "path": [field],
+        "before": {"state": "present", "value": previous["parent_revision"]["payload"][field]},
+        "after": {"state": "present", "value": document["parent_revision"]["payload"][field]},
+    } for field in ("config", "registry", "clips", "occurrences")],
+        "reads": [], "selections": [], "bindings": [], "created": [], "dependencies": [], "derived_writes": []}
+    port = RequestCommitPort(service, commits, context, lambda: None)
+    try:
+        # Retained source documents must be captured and persisted by the real
+        # request port. Media-only host fixtures use the store's CAS validation.
+        port.head()
+        port.revision_closure(base["revision_id"])
+        for pin in document["dependency_manifest"]["documents"]:
+            source = service.get_document(project_id, pin["document_id"])
+            transcript = source["kind"] == "media.transcript"
+            (port.transcript_source if transcript else port.config_source)(pin)
+            record["dependencies"].append({"key": "fixture.input:" + pin["document_id"],
+                                            "kind": "transcript" if transcript else "source",
+                                            "pin": pin, "policy": "exact"})
+        prepared = {"expected_head": base, "canonical_document": document, "document_digest": digest(document),
+                    "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None},
+                    "id_map": {}, "semantic_events": [],
+                    "provider_version": "restore-source-fixture", "compiler_version": "restore-source-fixture"}
+        if document["dependency_manifest"]["documents"]:
+            return port.accept(prepared)
+        return commits.accept(context, prepared, authorize=lambda: None)
+    finally:
+        port.close()
+
+
+def _seed_restore_source(service, project_id, body, *, idempotency_key):
+    """Build only these restore fixtures' declared closure, with real acceptance.
+
+    The return value is a source-read fixture view plus the untouched accepted
+    mutation and its head pair; it is not a legacy publication response.
+    """
+    commits, _ = service._timeline_commits()
+    base = commits.bootstrap(project_id, "main", authorize=lambda: None)
+    previous = commits.revision_closure(project_id, "main", base["revision_id"])
+    shots = copy.deepcopy(body["shot_revisions"] or previous["shot_revisions"])
+    internals = copy.deepcopy(body["internal_timeline_revisions"] or previous["internal_timeline_revisions"])
+    if not body["parent_composition"]["occurrences"]:
+        shots, internals = [], []
+    for shot in shots:
+        shot["payload"]["internal_timeline_revision_id"] = shot["internal_timeline_revision_id"]
+        shot["content_digest"] = digest(shot["payload"])
+    for internal in internals:
+        internal["content_digest"] = digest(internal["payload"])
+    payload = copy.deepcopy(body["parent_composition"])
+    document = {"schema_version": 1, "project_id": project_id, "timeline_id": "main",
+                "parent_revision": {"revision_id": body["parent_revision_id"],
+                                    "payload": payload, "content_digest": digest(payload)},
+                "shot_revisions": shots, "internal_timeline_revisions": internals,
+                "dependency_manifest": {
+                    "shots": [{k: s[k] for k in ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest")}
+                              for s in shots],
+                    "internal_timelines": [{k: i[k] for k in ("timeline_id", "revision_id", "content_digest")} for i in internals],
+                    "media": sorted(body.get("dependency_manifest", {}).get("media", []), key=lambda pin: pin["media_id"]),
+                    "documents": []}}
+    accepted = _accept_restore_document(service, document, idempotency_key=idempotency_key)
+    revision = accepted["data"]["accepted_revision_id"]
+    source = service.get_project_parent_composition_revision(project_id, "main", revision)
+    return {"data": {**source, "new_head": revision}, "new_head": revision, "accepted": accepted,
+            "head": {"revision_id": revision, "publication_id": accepted["receipt"]["receipt_id"]}}
 
 
 def _restore(service, project_id, revision, guards, *, idempotency_key):
@@ -777,16 +860,16 @@ def test_parent_composition_history_paginates_and_restores_exact_closure_over_ht
         project_id = project["id"]
         service.create_timeline(project_id, "main", idempotency_key="history-timeline")
         client = WorkspaceClient(daemon.endpoint, daemon.token)
-        first = client.publish_parent_composition(
-            project_id, "main", _publication(project_id), idempotency_key="history-publish-1"
+        first = _seed_restore_source(
+            service, project_id, _publication(project_id), idempotency_key="history-publish-1"
         )
         second_body = _publication(
             project_id, expected_head=first["new_head"], parent_revision_id="parent-2"
         )
         second_body["internal_timeline_revisions"] = []
         second_body["shot_revisions"] = []
-        second = client.publish_parent_composition(
-            project_id, "main", second_body, idempotency_key="history-publish-2"
+        second = _seed_restore_source(
+            service, project_id, second_body, idempotency_key="history-publish-2"
         )
 
         page_one, cursor = client.list_project_parent_composition_revisions(
@@ -851,16 +934,16 @@ def test_parent_composition_history_paginates_and_restores_exact_closure_over_ht
 def test_parent_composition_history_lists_broken_rows_but_restore_rejects_tampered_dependencies(tmp_path, restore_provider):
     service, project_id = _service(tmp_path)
     try:
-        first = service.publish_parent_composition(
-            project_id, "main", _publication(project_id), idempotency_key="history-publish-1"
+        first = _seed_restore_source(
+            service, project_id, _publication(project_id), idempotency_key="history-publish-1"
         )
         second_body = _publication(
             project_id, expected_head=first["data"]["new_head"], parent_revision_id="parent-2"
         )
         second_body["internal_timeline_revisions"] = []
         second_body["shot_revisions"] = []
-        service.publish_parent_composition(
-            project_id, "main", second_body, idempotency_key="history-publish-2"
+        _seed_restore_source(
+            service, project_id, second_body, idempotency_key="history-publish-2"
         )
         guards = _select_restore_provider(service, project_id, restore_provider)
         service.store.conn.execute(
@@ -926,8 +1009,8 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
             {"media_id": payload_media, "content_digest": payload_media},
             {"media_id": declared_extra, "content_digest": declared_extra},
         ]}
-        first = service.publish_parent_composition(
-            project_id, "main", first_body, idempotency_key="history-publish-media"
+        first = _seed_restore_source(
+            service, project_id, first_body, idempotency_key="history-publish-media"
         )
         later = _publication(
             project_id, expected_head="parent-with-media", parent_revision_id="parent-after-media"
@@ -935,8 +1018,8 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
         later["internal_timeline_revisions"] = []
         later["shot_revisions"] = []
         later["parent_composition"] = {"config": {"clips": []}, "registry": {}, "clips": [], "occurrences": []}
-        service.publish_parent_composition(
-            project_id, "main", later, idempotency_key="history-publish-after-media"
+        _seed_restore_source(
+            service, project_id, later, idempotency_key="history-publish-after-media"
         )
 
         guards = _select_restore_provider(service, project_id, restore_provider)
@@ -966,13 +1049,13 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
 def test_parent_composition_restore_uses_selected_admission_integrity_budget(tmp_path, monkeypatch, admission_seconds, restore_provider):
     service, project_id = _service(tmp_path)
     try:
-        first = service.publish_parent_composition(
-            project_id, "main", _publication(project_id), idempotency_key="restore-budget-first"
+        first = _seed_restore_source(
+            service, project_id, _publication(project_id), idempotency_key="restore-budget-first"
         )
         later = _publication(project_id, expected_head="parent-1", parent_revision_id="parent-2")
         later["internal_timeline_revisions"] = []
         later["shot_revisions"] = []
-        service.publish_parent_composition(project_id, "main", later, idempotency_key="restore-budget-later")
+        _seed_restore_source(service, project_id, later, idempotency_key="restore-budget-later")
         guards = _select_restore_provider(service, project_id, restore_provider)
         service.store.admission_timeout = admission_seconds
         original = service.store.integrity_report
@@ -998,13 +1081,13 @@ def test_parent_composition_restore_uses_selected_admission_integrity_budget(tmp
 def test_parent_composition_restore_refuses_incomplete_integrity_at_selected_budget(tmp_path, monkeypatch, restore_provider):
     service, project_id = _service(tmp_path)
     try:
-        service.publish_parent_composition(
-            project_id, "main", _publication(project_id), idempotency_key="restore-incomplete-first"
+        _seed_restore_source(
+            service, project_id, _publication(project_id), idempotency_key="restore-incomplete-first"
         )
         later = _publication(project_id, expected_head="parent-1", parent_revision_id="parent-2")
         later["internal_timeline_revisions"] = []
         later["shot_revisions"] = []
-        service.publish_parent_composition(project_id, "main", later, idempotency_key="restore-incomplete-later")
+        _seed_restore_source(service, project_id, later, idempotency_key="restore-incomplete-later")
         guards = _select_restore_provider(service, project_id, restore_provider)
         service.store.admission_timeout = 120.0
         observed = []
@@ -1043,7 +1126,7 @@ def test_stale_head_conflict_carries_machine_readable_reason_over_http(tmp_path,
         project_id = service.create_project({"slug": "stale-http", "name": "Stale HTTP"}, idempotency_key="stale-project")["id"]
         service.create_timeline(project_id, "main", idempotency_key="stale-timeline")
         client = WorkspaceClient(daemon.endpoint, daemon.token)
-        first = client.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="stale-publish-1")
+        first = _seed_restore_source(service, project_id, _publication(project_id), idempotency_key="stale-publish-1")
 
         with pytest.raises(ApiError) as stale:
             client.publish_parent_composition(
@@ -1054,7 +1137,7 @@ def test_stale_head_conflict_carries_machine_readable_reason_over_http(tmp_path,
         assert stale.value.details == {"reason": "stale_head", "expected_head": None, "actual_head": first["new_head"]}
 
         later = _publication(project_id, expected_head=first["new_head"], parent_revision_id="parent-later")
-        client.publish_parent_composition(project_id, "main", later, idempotency_key="stale-publish-later")
+        _seed_restore_source(service, project_id, later, idempotency_key="stale-publish-later")
         _select_restore_provider(service, project_id, restore_provider)
         source_publication = service.list_timeline_commits(
             project_id, "main", authorize=lambda: None,

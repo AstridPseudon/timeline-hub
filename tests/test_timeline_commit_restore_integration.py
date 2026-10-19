@@ -3,14 +3,17 @@ from __future__ import annotations
 
 import copy
 import sys
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 import test_shot_composition_runtime as host
 from test_shot_composition_runtime import restore_provider as real_provider  # noqa: F401 (fixture)
 from runtime_protocol.errors import RuntimeErrorBase
+from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
-from runtime_protocol.timeline_commit_port import route_path
+from runtime_protocol.timeline_commit_port import RequestCommitPort, digest, route_path
 from test_timeline_commit_input_integration import (
     assert_retained,
     body,
@@ -18,11 +21,120 @@ from test_timeline_commit_input_integration import (
     commit,
     head,
     history,
-    retained,  # noqa: F401 (shared API-built film/retained-input fixture)
     snapshot,
 )
 
+from timeline_commit_film_fixture import build_film_fixture
+
 pytestmark = pytest.mark.integration
+
+
+@pytest.fixture(params=["transcript", "config"])
+def retained(request, tmp_path, astrid_importable, monkeypatch):
+    # Import Agent only inside this explicitly selected integration fixture.
+    from astrid.sdk.timeline import commands as core
+    from astrid.sdk.timeline import commit as agent
+    from astrid.sdk.timeline.capture import capture_move
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    assert Path(agent.__file__).resolve().is_relative_to(astrid_importable)
+    film = build_film_fixture(tmp_path)
+    service = RuntimeService(film.duplicate_root)
+    try:
+        transcript = service.get_document(film.project_id, film.transcript_document_id)
+        config = service.create_document(
+            film.project_id, {"document_id": "film.config", "kind": "film.config", "content": {
+                "schema": "film.config/v1", "enabled": True, "opaque": [None, {"keep": True}],
+                "source": {"media_id": transcript["content"]["media_id"],
+                           "source_id": transcript["content"]["source_id"], "word_id": "word-1"},
+                "time_map": {"source_offset": 0, "speed": 1},
+            }}, idempotency_key="config-v1",
+        )["data"]
+        sources = [config, transcript]
+        captures = [{"pin": {"document_id": source["document_id"], "version": source["version"],
+                              "content_digest": digest(source["content"])}, "document": source}
+                    for source in sources]
+        selected = captures[1 if request.param == "transcript" else 0]
+        source, pin = selected["document"], selected["pin"]
+        # The captured main backup stays unchanged. Accept only the additional
+        # authored anchor/input image through the host boundary, then restart
+        # with real Agent for all measured restore, inverse and move operations.
+        commits, _ = service._timeline_commits()
+        base = commits.install_verified_baseline(film.project_id, film.timeline_id, authorize=lambda: None)
+        candidate = commits.revision_closure(film.project_id, film.timeline_id, base["revision_id"])
+        parent = candidate["parent_revision"]["payload"]
+        parent["clips"][0]["at"] = 0.25
+        parent["clips"][0]["app"] = {
+            "on": "word:word-1", "astrid": {"on": "word:word-1", "fixed_start": False, "for": 5.5},
+        }
+        parent["config"]["clips"] = copy.deepcopy(parent["clips"])
+        candidate["parent_revision"]["revision_id"] = "input-retained-v1"
+        candidate["parent_revision"]["content_digest"] = digest(parent)
+        candidate["dependency_manifest"]["documents"] = [capture["pin"] for capture in captures]
+        seed = host._accept_restore_document(service, candidate, idempotency_key="initial-input-v1")
+        original = seed["data"]["canonical_document"]
+        changed = copy.deepcopy(source["content"])
+        if request.param == "transcript":
+            changed["segments"][0].update(text="producer v2", start=2, end=3)
+            changed["segments"][0]["words"] = [{"id": "replacement-word", "text": "v2", "start": 2, "end": 3}]
+        else:
+            changed.update(enabled=False, opaque=["producer v2"], time_map={"source_offset": 10, "speed": 2})
+        current = service.update_document(
+            film.project_id, source["document_id"], {"expected_version": 1, "content": changed},
+            idempotency_key="producer-v2",
+        )["data"]
+        assert current["version"] == 2
+    finally:
+        service.close()
+
+    observed = SimpleNamespace(reads=[], core=[], compiled=[], providers=[])
+
+    def watch_read(method):
+        def read(port, value):
+            result = method(port, value)
+            observed.reads.append(copy.deepcopy(result))
+            return result
+        return read
+
+    for name in ("transcript_source", "config_source"):
+        monkeypatch.setattr(RequestCommitPort, name, watch_read(getattr(RequestCommitPort, name)))
+    execute = core.execute
+    compile_candidate = agent.compile_authoring_candidate
+    provider_type = type(load_timeline_commit_provider("astrid"))
+    provider_commit = provider_type.commit
+
+    def observe_execute(bundle, *args, **kwargs):
+        observed.core.append(copy.deepcopy(bundle))
+        return execute(bundle, *args, **kwargs)
+
+    def observe_compile(bundle):
+        result = compile_candidate(bundle)
+        observed.compiled.append(copy.deepcopy(bundle))
+        return result
+
+    def observe_provider(provider, context, port):
+        observed.providers.append(context["idempotency_key"])
+        return provider_commit(provider, context, port)
+
+    monkeypatch.setattr(core, "execute", observe_execute)
+    monkeypatch.setattr(agent, "compile_authoring_candidate", observe_compile)
+    monkeypatch.setattr(provider_type, "commit", observe_provider)
+    value = SimpleNamespace(film=film, agent=agent, move=capture_move,
+                            source=source, pin=pin, captures=captures,
+                            current=current, seed=seed, original=original, observed=observed)
+
+    def restart():
+        if getattr(value, "service", None):
+            value.service.close()
+        value.service = RuntimeService(film.duplicate_root)
+        value.service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+
+    value.restart = restart
+    restart()
+    try:
+        yield value
+    finally:
+        value.service.close()
 
 
 @pytest.mark.parametrize("case,admission_seconds", [
