@@ -16,6 +16,7 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.util import canonical_json
 
 
@@ -26,6 +27,33 @@ def _service(tmp_path):
     project = service.create_project({"slug": "composition", "name": "Composition"}, idempotency_key="project")
     service.create_timeline(project["id"], "main", idempotency_key="timeline")
     return service, project["id"]
+
+
+@pytest.fixture
+def restore_provider(astrid_importable):
+    # Restore semantics select the real provider explicitly via ASTRID_CHECKOUT.
+    # Agent stays out of neutral Runtime startup and default collection.
+    from astrid.sdk.timeline import commit as agent
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    assert Path(agent.__file__).resolve().is_relative_to(astrid_importable)
+    return load_timeline_commit_provider("astrid")
+
+
+def _select_restore_provider(service, project_id, provider):
+    # Legacy publications are seeded through neutral main APIs before startup.
+    service.register_timeline_commit_provider(provider)
+    head = service.get_project_timeline(project_id, "main")
+    return {"expected_head": head["head_revision_id"],
+            "expected_publication_id": head["head_publication_id"]}
+
+
+def _restore(service, project_id, revision, guards, *, idempotency_key):
+    return service.restore_project_parent_composition_revision(
+        project_id, "main", revision, guards, idempotency_key=idempotency_key,
+        publisher="restore-editor", authorize=lambda: None,
+        invocation_path=route_path(project_id, "main", f"composition-revisions/{revision}/restore"),
+    )
 
 
 def _publication(project_id, *, expected_head=None, parent_revision_id="parent-1", shot_revision_id="shot-rev-1", config=None):
@@ -737,7 +765,7 @@ def test_missing_selected_media_rejects_publication_without_identity_leak(tmp_pa
         service.close()
 
 
-def test_parent_composition_history_paginates_and_restores_exact_closure_over_http(tmp_path):
+def test_parent_composition_history_paginates_and_restores_exact_closure_over_http(tmp_path, restore_provider):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
@@ -772,33 +800,55 @@ def test_parent_composition_history_paginates_and_restores_exact_closure_over_ht
         assert page_one[0]["is_current_head"] is True
         assert page_two[0]["is_current_head"] is False
 
+        guards = _select_restore_provider(service, project_id, restore_provider)
+        assert guards["expected_head"] == second["new_head"]
+        before = {table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+                  for table in ("shot_revisions", "internal_timeline_revisions", "timeline_commit_history")}
         restored = client.restore_project_parent_composition_revision(
-            project_id, "main", "parent-1", expected_head=second["new_head"],
+            project_id, "main", "parent-1", **guards,
             idempotency_key="history-restore",
         )
-        restored_head = restored["new_head"]
-        assert restored_head.startswith("restore-") and restored_head != "parent-1"
+        restored_head = restored["data"]["accepted_revision_id"]
+        # Revision content may be reused; the accepted publication is always new.
+        assert restored["receipt"]["result"] == restored["data"]
+        assert restored["receipt"]["receipt_id"] != guards["expected_publication_id"]
+        source_publication = service.list_timeline_commits(
+            project_id, "main", authorize=lambda: None,
+        )["items"][0]["publication_id"]
+        assert restored["receipt"]["receipt_id"] != source_publication
+        assert restored["data"]["canonical_document"]["parent_revision"]["revision_id"] == restored_head
+        assert service.get_project_timeline(project_id, "main")["head_publication_id"] == restored["receipt"]["receipt_id"]
         assert client.get_project_parent_composition_revision(
             project_id, "main", restored_head
         )["payload"] == client.get_project_parent_composition_revision(
             project_id, "main", "parent-1"
         )["payload"]
+        commits = service._timeline_commits()[0]
+        source = commits.revision_closure(project_id, "main", "parent-1")
+        accepted = restored["data"]["canonical_document"]
+        for field in ("shot_revisions", "internal_timeline_revisions", "dependency_manifest"):
+            assert accepted[field] == source[field]
+        before_replay = tuple(service.store.conn.iterdump())
         replay = client.restore_project_parent_composition_revision(
-            project_id, "main", "parent-1", expected_head=second["new_head"],
+            project_id, "main", "parent-1", **guards,
             idempotency_key="history-restore",
         )
-        assert replay["new_head"] == restored_head
+        assert replay == restored
+        assert tuple(service.store.conn.iterdump()) == before_replay
+        assert {table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+                for table in before} == {**before, "timeline_commit_history": before["timeline_commit_history"] + 1}
         with pytest.raises(ApiError) as error:
             client.restore_project_parent_composition_revision(
-                project_id, "main", "parent-1", expected_head=None,
-                idempotency_key="history-restore-stale-null",
+                project_id, "main", "parent-1", **guards,
+                idempotency_key="history-restore-stale-pair",
             )
         assert error.value.status == 409
+        assert error.value.details["reason"] == "stale_head"
     finally:
         daemon.stop()
 
 
-def test_parent_composition_history_lists_broken_rows_but_restore_rejects_tampered_dependencies(tmp_path):
+def test_parent_composition_history_lists_broken_rows_but_restore_rejects_tampered_dependencies(tmp_path, restore_provider):
     service, project_id = _service(tmp_path)
     try:
         first = service.publish_parent_composition(
@@ -812,6 +862,7 @@ def test_parent_composition_history_lists_broken_rows_but_restore_rejects_tamper
         service.publish_parent_composition(
             project_id, "main", second_body, idempotency_key="history-publish-2"
         )
+        guards = _select_restore_provider(service, project_id, restore_provider)
         service.store.conn.execute(
             "UPDATE shot_revisions SET content_digest=? WHERE id='shot-rev-1'",
             ("sha256:" + "0" * 64,),
@@ -827,12 +878,13 @@ def test_parent_composition_history_lists_broken_rows_but_restore_rejects_tamper
                 "command_idempotency", "runs", "tasks",
             )
         }
+        before_rows = tuple(service.store.conn.iterdump())
         with pytest.raises(
             ConflictError,
             match="historical parent composition dependency closure failed immutable verification",
         ):
-            service.restore_project_parent_composition_revision(
-                project_id, "main", "parent-1", {"expected_head": "parent-2"},
+            _restore(
+                service, project_id, "parent-1", guards,
                 idempotency_key="history-restore-broken-source",
             )
         after = {
@@ -840,12 +892,13 @@ def test_parent_composition_history_lists_broken_rows_but_restore_rejects_tamper
             for table in before
         }
         assert after == before
+        assert tuple(service.store.conn.iterdump()) == before_rows
         assert service._timeline_resource("main")["head_revision_id"] == "parent-2"
     finally:
         service.close()
 
 
-def test_parent_composition_restore_preserves_payload_and_declared_media_dependency_closure(tmp_path):
+def test_parent_composition_restore_preserves_payload_and_declared_media_dependency_closure(tmp_path, restore_provider):
     service, project_id = _service(tmp_path)
     try:
         payload_media = service.ingest(
@@ -886,14 +939,15 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
             project_id, "main", later, idempotency_key="history-publish-after-media"
         )
 
-        restored = service.restore_project_parent_composition_revision(
-            project_id, "main", "parent-with-media", {"expected_head": "parent-after-media"},
+        guards = _select_restore_provider(service, project_id, restore_provider)
+        restored = _restore(
+            service, project_id, "parent-with-media", guards,
             idempotency_key="history-restore-media",
         )
-        restored_head = restored["data"]["new_head"]
-        assert restored["data"]["payload"] == first["data"]["payload"]
+        restored_head = restored["data"]["accepted_revision_id"]
+        assert restored["data"]["canonical_document"]["parent_revision"]["payload"] == first["data"]["payload"]
         assert {
-            item["media_id"] for item in restored["data"]["dependency_manifest"]["media"]
+            item["media_id"] for item in restored["data"]["canonical_document"]["dependency_manifest"]["media"]
         } == {payload_media, declared_extra}
         dependencies = service.store.conn.execute(
             "SELECT dependency_kind, dependency_id, content_digest FROM composition_revision_dependencies "
@@ -909,7 +963,7 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
 
 
 @pytest.mark.parametrize("admission_seconds", [5.0, 120.0])
-def test_parent_composition_restore_uses_selected_admission_integrity_budget(tmp_path, monkeypatch, admission_seconds):
+def test_parent_composition_restore_uses_selected_admission_integrity_budget(tmp_path, monkeypatch, admission_seconds, restore_provider):
     service, project_id = _service(tmp_path)
     try:
         first = service.publish_parent_composition(
@@ -919,6 +973,7 @@ def test_parent_composition_restore_uses_selected_admission_integrity_budget(tmp
         later["internal_timeline_revisions"] = []
         later["shot_revisions"] = []
         service.publish_parent_composition(project_id, "main", later, idempotency_key="restore-budget-later")
+        guards = _select_restore_provider(service, project_id, restore_provider)
         service.store.admission_timeout = admission_seconds
         original = service.store.integrity_report
         observed = []
@@ -928,19 +983,19 @@ def test_parent_composition_restore_uses_selected_admission_integrity_budget(tmp
             return original(catalog_path=catalog_path, timeout_seconds=timeout_seconds)
 
         monkeypatch.setattr(service.store, "integrity_report", selected_report)
-        restored = service.restore_project_parent_composition_revision(
-            project_id, "main", "parent-1", {"expected_head": "parent-2"},
+        restored = _restore(
+            service, project_id, "parent-1", guards,
             idempotency_key="restore-budget-selected",
         )
         assert observed == [admission_seconds]
-        assert restored["data"]["payload"] == first["data"]["payload"]
-        assert restored["data"]["content_digest"] == first["data"]["content_digest"]
-        assert service._timeline_resource("main")["head_revision_id"] == restored["data"]["new_head"]
+        assert restored["data"]["canonical_document"]["parent_revision"]["payload"] == first["data"]["payload"]
+        assert restored["data"]["canonical_document"]["parent_revision"]["content_digest"] == first["data"]["content_digest"]
+        assert service._timeline_resource("main")["head_revision_id"] == restored["data"]["accepted_revision_id"]
     finally:
         service.close()
 
 
-def test_parent_composition_restore_refuses_incomplete_integrity_at_selected_budget(tmp_path, monkeypatch):
+def test_parent_composition_restore_refuses_incomplete_integrity_at_selected_budget(tmp_path, monkeypatch, restore_provider):
     service, project_id = _service(tmp_path)
     try:
         service.publish_parent_composition(
@@ -950,6 +1005,7 @@ def test_parent_composition_restore_refuses_incomplete_integrity_at_selected_bud
         later["internal_timeline_revisions"] = []
         later["shot_revisions"] = []
         service.publish_parent_composition(project_id, "main", later, idempotency_key="restore-incomplete-later")
+        guards = _select_restore_provider(service, project_id, restore_provider)
         service.store.admission_timeout = 120.0
         observed = []
 
@@ -962,20 +1018,22 @@ def test_parent_composition_restore_refuses_incomplete_integrity_at_selected_bud
         def counts():
             return {table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] for table in tables}
         before = counts()
+        before_rows = tuple(service.store.conn.iterdump())
         with pytest.raises(ConflictError, match="dependency closure failed immutable verification") as failure:
-            service.restore_project_parent_composition_revision(
-                project_id, "main", "parent-1", {"expected_head": "parent-2"},
+            _restore(
+                service, project_id, "parent-1", guards,
                 idempotency_key="restore-incomplete-refused",
             )
         assert observed == [120.0]
         assert failure.value.details["errors"] == [{"reason": "integrity_report_unavailable"}]
         assert counts() == before
+        assert tuple(service.store.conn.iterdump()) == before_rows
         assert service._timeline_resource("main")["head_revision_id"] == "parent-2"
     finally:
         service.close()
 
 
-def test_stale_head_conflict_carries_machine_readable_reason_over_http(tmp_path):
+def test_stale_head_conflict_carries_machine_readable_reason_over_http(tmp_path, restore_provider):
     """Clients classify a lost head race by details.reason, never by message text."""
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
@@ -995,9 +1053,16 @@ def test_stale_head_conflict_carries_machine_readable_reason_over_http(tmp_path)
         assert (stale.value.status, stale.value.code) == (409, "conflict")
         assert stale.value.details == {"reason": "stale_head", "expected_head": None, "actual_head": first["new_head"]}
 
+        later = _publication(project_id, expected_head=first["new_head"], parent_revision_id="parent-later")
+        client.publish_parent_composition(project_id, "main", later, idempotency_key="stale-publish-later")
+        _select_restore_provider(service, project_id, restore_provider)
+        source_publication = service.list_timeline_commits(
+            project_id, "main", authorize=lambda: None,
+        )["items"][0]["publication_id"]
         with pytest.raises(ApiError) as restore:
             client.restore_project_parent_composition_revision(
-                project_id, "main", "parent-1", expected_head=None, idempotency_key="stale-restore",
+                project_id, "main", "parent-1", expected_head="parent-1",
+                expected_publication_id=source_publication, idempotency_key="stale-restore",
             )
         assert (restore.value.status, restore.value.code) == (409, "conflict")
         assert restore.value.details["reason"] == "stale_head"
