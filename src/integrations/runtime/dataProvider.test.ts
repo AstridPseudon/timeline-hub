@@ -16,6 +16,15 @@ import { MANAGED_OBJECT_DIGEST, MANAGED_OBJECT_ID, PROJECT_ID, TIMELINE_ID, json
 
 const MANAGED_OBJECT_URL = `http://runtime.test/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
 
+function restoreHeadResource(overrides: Record<string, unknown> = {}) {
+  return {
+    project_id: PROJECT_ID, timeline_id: TIMELINE_ID, version: 1, name: 'Main',
+    archived: false, shots: [], references: [],
+    head_revision_id: 'parent-r1', head_publication_id: 'publication-current',
+    ...overrides,
+  };
+}
+
 
 function packageBodyBytes(
   manifest: Record<string, unknown>,
@@ -624,6 +633,7 @@ describe('RuntimeDataProvider', () => {
   it.each([true, false])('restores with both current head guards and validates the accepted closure (complete: %s)', async (complete) => {
     const fixture = runtimeFixture();
     const restoreRequests: Array<{ body: unknown; key?: string }> = [];
+    let headReads = 0;
     const accepted = acceptedCommit(
       { revision_id: 'restore-parent-old', publication_id: 'publication-restored' },
       { revision_id: 'parent-r1', publication_id: 'publication-current' },
@@ -637,18 +647,17 @@ describe('RuntimeDataProvider', () => {
       revision_id: 'parent-old', content_digest: accepted.data.canonical_document.parent_revision.content_digest,
     } }];
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[0] === 'GET' && args[1] === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+        headReads += 1;
+        return { status: 200, headers: {}, body: json(restoreHeadResource()) };
+      }
       if (args[1].endsWith('/composition-revisions/parent-old/restore')) {
         restoreRequests.push({ body: JSON.parse(new TextDecoder().decode(args[3] as Uint8Array)), key: args[2]['Idempotency-Key'] });
         accepted.receipt.idempotency_key = args[2]['Idempotency-Key'];
         accepted.receipt.request_hash = fixtureDigest({ operation: 'restoreProjectParentCompositionRevision', path: args[1], publisher: accepted.data.publisher, request: restoreRequests[0].body }).slice(7);
         return { status: 200, headers: {}, body: json(accepted) };
       }
-      const response = await fixture.transport(...args);
-      if (args[1].endsWith('/inspect')) {
-        const inspection = JSON.parse(new TextDecoder().decode(response.body));
-        return { ...response, body: json({ ...inspection, head_publication_id: 'publication-current' }) };
-      }
-      return response;
+      return fixture.transport(...args);
     } });
 
     const history = await provider.shotComposition.listHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID });
@@ -663,6 +672,8 @@ describe('RuntimeDataProvider', () => {
       body: { expected_head: 'parent-r1', expected_publication_id: 'publication-current' },
       key: expect.any(String),
     }]);
+    expect(headReads).toBe(1);
+    expect(fixture.requests.some((request) => request.path.endsWith('/inspect'))).toBe(false);
     expect(fixture.requests.some((request) => request.method === 'GET' && request.path.includes('/composition-revisions/'))).toBe(false);
   });
 
@@ -670,20 +681,60 @@ describe('RuntimeDataProvider', () => {
     ['missing publication', 'parent-r1', undefined],
     ['unverified publication', 'parent-r1', null],
     ['empty publication', 'parent-r1', ''],
-    ['missing revision', null, 'publication-current'],
+    ['missing revision', undefined, 'publication-current'],
+    ['unverified revision', null, 'publication-current'],
+    ['empty revision', '', 'publication-current'],
   ])('refuses restore before send with %s', async (_label, head, publication) => {
     const fixture = runtimeFixture();
     let restoreSends = 0;
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
       if (args[1].endsWith('/restore')) restoreSends += 1;
-      const response = await fixture.transport(...args);
-      if (!args[1].endsWith('/inspect')) return response;
-      const inspection = JSON.parse(new TextDecoder().decode(response.body));
-      return { ...response, body: json({ ...inspection, head_revision_id: head, head_publication_id: publication }) };
+      if (args[0] === 'GET' && args[1] === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+        return { status: 200, headers: {}, body: json(restoreHeadResource({ head_revision_id: head, head_publication_id: publication })) };
+      }
+      return fixture.transport(...args);
     } });
     await expect(provider.shotComposition.restoreHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, revisionId: 'parent-old' }))
-      .rejects.toThrow(_label === 'empty publication' ? 'head_publication_id is missing' : 'verified revision and publication');
+      .rejects.toThrow(_label.startsWith('empty') ? 'is missing' : 'verified revision and publication');
     expect(restoreSends).toBe(0);
+  });
+
+  it.each(['project_id', 'timeline_id'])('refuses restore before send with a head from another %s', async (field) => {
+    const fixture = runtimeFixture();
+    let restoreSends = 0;
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[1].endsWith('/restore')) restoreSends += 1;
+      if (args[0] === 'GET' && args[1] === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+        return { status: 200, headers: {}, body: json(restoreHeadResource({ [field]: 'another' })) };
+      }
+      return fixture.transport(...args);
+    } });
+    await expect(provider.shotComposition.restoreHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, revisionId: 'parent-old' }))
+      .rejects.toThrow('belongs to');
+    expect(restoreSends).toBe(0);
+  });
+
+  it('preserves Runtime 409 for a stale restore pair without refreshing or falling back', async () => {
+    const fixture = runtimeFixture();
+    const requests: Array<{ method: string; path: string; body?: unknown }> = [];
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      const [method, path, , body] = args;
+      requests.push({ method, path, ...(body ? { body: JSON.parse(new TextDecoder().decode(body as Uint8Array)) } : {}) });
+      if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+        return { status: 200, headers: {}, body: json(restoreHeadResource()) };
+      }
+      if (path.endsWith('/restore')) {
+        return { status: 409, headers: {}, body: json({ code: 'conflict', message: 'stale restore head', request_id: 'restore-stale', details: { reason: 'stale_head' } }) };
+      }
+      return fixture.transport(...args);
+    } });
+    await expect(provider.shotComposition.restoreHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, revisionId: 'parent-old' }))
+      .rejects.toMatchObject({ status: 409, code: 'conflict', details: { reason: 'stale_head' } });
+    expect(requests.filter((request) => request.path.includes(`/timelines/${TIMELINE_ID}`))).toEqual([
+      { method: 'GET', path: `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}` },
+      { method: 'POST', path: `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/composition-revisions/parent-old/restore`,
+        body: { expected_head: 'parent-r1', expected_publication_id: 'publication-current' } },
+    ]);
   });
 
   it('serializes canonical placement start after stale nested placement metadata', async () => {
