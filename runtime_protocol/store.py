@@ -6,7 +6,7 @@ import ctypes
 import errno
 import hashlib
 import math
-import os
+from .dirfd import filesystem as os
 import re
 import shlex
 import sqlite3
@@ -23,6 +23,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import unquote
 
+from . import platform
 from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestError, LeaseError, NotFoundError, OwnerBusyError, RealmAdmissionError, ValidationError
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .cas import ContentAddressedStore
@@ -37,12 +38,6 @@ from .visual_seam import (
 )
 from .visual_boundary import finite as _visual_finite, js_round as _visual_js_round
 from .idempotency import command_result, compact_result, expired_result, EXPIRED, RESULT_WINDOW_SECONDS, IdempotencyWindowExpired
-
-try:
-    import fcntl
-except ImportError:  # pragma: no cover - supported beta host is POSIX
-    fcntl = None
-
 
 SCHEMA_VERSION = 30
 IDEMPOTENCY_RESULT_WINDOW_SECONDS = 24 * 60 * 60
@@ -603,7 +598,7 @@ class RealmStore:
         else:
             root.parent.mkdir(parents=True, exist_ok=True)
         staged_root = Path(tempfile.mkdtemp(prefix=f".{root.name}.create-", dir=str(root.parent)))
-        staged_root.chmod(0o700)
+        platform.owner_only(staged_root, directory=True)
         store = cls.__new__(cls)
         store.root = staged_root
         store.lock_path = staged_root / "owner.lock"
@@ -641,6 +636,11 @@ class RealmStore:
             finally:
                 os.close(staged_fd)
             parent_fd = os.open(root.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+            if sys.platform == "win32":
+                # SQLite's Windows VFS holds non-delete-sharing file handles.
+                # Preserve owner.lock while closing SQLite across publication.
+                store.conn.close()
+                store.conn = None
             os.rename(staged_root.name, root.name, src_dir_fd=parent_fd, dst_dir_fd=parent_fd)
             published = True
             os.fsync(parent_fd)
@@ -653,10 +653,15 @@ class RealmStore:
             store.db_path = root / "realm.sqlite3"
             store.cas_root = root / "cas" / "sha256"
             store.staging_root = root / "staging"
+            if sys.platform == "win32":
+                store._open()
             store._begin_admission_session()
             return store
         except Exception:
             rollback_error = None
+            if sys.platform == "win32" and store.conn is not None:
+                store.conn.close()
+                store.conn = None
             if published and parent_fd >= 0:
                 # The final name may already be visible when durability or
                 # post-publication admission fails.  Remove it below the
@@ -749,11 +754,9 @@ class RealmStore:
         the realm directory provides that short critical section while leaving
         no marker behind. The daemon's owner.lock remains the lifetime lock.
         """
-        if fcntl is None:
-            return
         try:
             descriptor = os.open(self.root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            platform.lock_file(descriptor)
         except OSError as exc:
             if "descriptor" in locals():
                 os.close(descriptor)
@@ -769,8 +772,7 @@ class RealmStore:
             return
         self._admission_lock_file = None
         try:
-            if fcntl is not None:
-                fcntl.flock(descriptor, fcntl.LOCK_UN)
+            platform.unlock_file(descriptor)
         except OSError:
             pass
         finally:
@@ -809,15 +811,18 @@ class RealmStore:
             raise RealmAdmissionError("realm root is unavailable before owner admission")
         if self.lock_path.is_symlink():
             raise RealmAdmissionError("owner lock must not be a symlink")
-        self._lock_file = open(self.lock_path, "a+")
-        self.lock_path.chmod(0o600)
-        if fcntl is not None:
-            try:
-                fcntl.flock(self._lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError as exc:
-                self._lock_file.close()
-                self._lock_file = None
-                raise OwnerBusyError("another runtime daemon owns this realm") from exc
+        if sys.platform == "win32":
+            descriptor = os.open(self.lock_path, os.O_RDWR | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o600)
+            self._lock_file = os.fdopen(descriptor, "a+")
+        else:
+            self._lock_file = open(self.lock_path, "a+")
+        platform.owner_only(self.lock_path)
+        try:
+            platform.lock_file(self._lock_file.fileno(), blocking=False)
+        except (BlockingIOError, OSError) as exc:
+            self._lock_file.close()
+            self._lock_file = None
+            raise OwnerBusyError("another runtime daemon owns this realm") from exc
 
     @staticmethod
     def _copy_admission_file(source: Path, destination: Path, deadline: float) -> None:
@@ -943,18 +948,16 @@ class RealmStore:
 
     @staticmethod
     def _owner_is_locked(root):
-        if fcntl is None:
-            return False
         try:
             fd = os.open(root / "owner.lock", os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
         except OSError:
             return False
         try:
             try:
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
+                platform.lock_file(fd, blocking=False)
+            except (BlockingIOError, OSError):
                 return True
-            fcntl.flock(fd, fcntl.LOCK_UN)
+            platform.unlock_file(fd)
             return False
         finally:
             os.close(fd)
@@ -984,7 +987,7 @@ class RealmStore:
         fd, temporary = tempfile.mkstemp(prefix=".admission-state-", dir=self.root)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as target:
-                os.fchmod(target.fileno(), 0o600)
+                platform.owner_only(target.fileno())
                 json.dump(state, target, sort_keys=True)
                 target.flush()
                 os.fsync(target.fileno())
@@ -1070,20 +1073,20 @@ class RealmStore:
         if fresh:
             self.cas_root.parent.mkdir(parents=True, exist_ok=False)
             self.cas_root.mkdir(parents=True, exist_ok=False)
-            self.cas_root.parent.chmod(0o700)
-            self.cas_root.chmod(0o700)
+            platform.owner_only(self.cas_root.parent, directory=True)
+            platform.owner_only(self.cas_root, directory=True)
             self.staging_root.mkdir(parents=True, exist_ok=False)
-            self.staging_root.chmod(0o700)
+            platform.owner_only(self.staging_root, directory=True)
             self.conn = sqlite3.connect(self.db_path, timeout=10, isolation_level=None, check_same_thread=False)
         else:
             for path in (self.cas_root.parent, self.cas_root, self.staging_root):
                 if not path.exists() or not path.is_dir():
                     raise RealmAdmissionError("realm storage roots are incomplete")
             self.conn = sqlite3.connect(
-                f"file:{self.db_path}?mode=rw", uri=True, timeout=10,
+                f"{self.db_path.as_uri()}?mode=rw", uri=True, timeout=10,
                 isolation_level=None, check_same_thread=False,
             )
-        self.db_path.chmod(0o600)
+        platform.owner_only(self.db_path)
         self.conn.row_factory = sqlite3.Row
         if fresh:
             self.conn.execute("PRAGMA journal_mode=WAL")
@@ -1103,7 +1106,7 @@ class RealmStore:
         if settlements_root.is_symlink() or (settlements_root.exists() and not settlements_root.is_dir()):
             raise ValidationError("attempt staging root is invalid")
         settlements_root.mkdir(parents=True, exist_ok=True)
-        settlements_root.chmod(0o700)
+        platform.owner_only(settlements_root, directory=True)
         return settlements_root / attempt_id
 
     def begin_runtime_session(self, boot_id, *, epoch_floor: int | None = None):
@@ -1260,8 +1263,7 @@ class RealmStore:
                 finally:
                     if self._lock_file is not None:
                         try:
-                            if fcntl is not None:
-                                fcntl.flock(self._lock_file.fileno(), fcntl.LOCK_UN)
+                            platform.unlock_file(self._lock_file.fileno())
                         finally:
                             self._lock_file.close()
                             self._lock_file = None

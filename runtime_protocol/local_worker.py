@@ -11,7 +11,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import json
-import os
+from .dirfd import filesystem as os
 import re
 import sys
 import threading
@@ -24,6 +24,7 @@ from urllib.parse import urlsplit
 
 from .auth import CredentialStore
 from .errors import ConflictError, ValidationError
+from . import platform as runtime_platform
 from .util import atomic_json_write
 
 
@@ -633,7 +634,7 @@ class LocalWorkerLauncher:
     ) -> None:
         if value.pid <= 0 or not value.birth_id:
             raise ConflictError(f"{label} process identity is incomplete")
-        if value.uid != getattr(os, "getuid", lambda: value.uid)():
+        if value.uid != runtime_platform.current_user():
             raise ConflictError(f"{label} process uid does not match Runtime owner")
         if parent_pid is not None and value.parent_pid != parent_pid:
             raise ConflictError(f"{label} process parent lineage is invalid")
@@ -656,7 +657,7 @@ class LocalWorkerLauncher:
     ) -> dict[str, Any]:
         if observed.machine_id != profile.machine_id:
             raise ConflictError("observed machine identity does not match the installed profile")
-        if observed.uid != getattr(os, "getuid", lambda: observed.uid)():
+        if observed.uid != runtime_platform.current_user():
             raise ConflictError("observed owner uid does not match Runtime")
         if observed.workspace_uuid != self.workspace_uuid:
             raise ConflictError("observed workspace identity does not match Runtime")
@@ -1787,7 +1788,7 @@ class LocalWorkerLauncher:
                         os.fsync(descriptor)
                     finally:
                         os.close(descriptor)
-                    directory = os.open(scope, os.O_RDONLY)
+                    directory = os.open(scope, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
                     try:
                         os.fsync(directory)
                     finally:
@@ -1879,7 +1880,7 @@ class LocalWorkerLauncher:
             )
             credential_issued = True
             if _secure_profile(profile):
-                directory = os.open(credential_path.parent, os.O_RDONLY)
+                directory = os.open(credential_path.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
                 try:
                     os.fsync(directory)
                 finally:

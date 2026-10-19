@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import array
-import fcntl
 import ipaddress
 import json
 import math
-import os
+from .dirfd import filesystem as os
 from pathlib import Path
 import socket
 import struct
@@ -17,6 +16,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .errors import ConflictError, ValidationError
+from . import platform as runtime_platform
 
 
 TRANSFER_VERSION = "runtime.local-worker-handoff-transfer/v1"
@@ -57,12 +57,11 @@ def _canonical_frame(value: Mapping[str, Any]) -> bytes:
 
 def _set_and_verify_cloexec(descriptor: int) -> None:
     try:
-        current = fcntl.fcntl(descriptor, fcntl.F_GETFD)
-        fcntl.fcntl(descriptor, fcntl.F_SETFD, current | fcntl.FD_CLOEXEC)
-        observed = fcntl.fcntl(descriptor, fcntl.F_GETFD)
+        os.set_inheritable(descriptor, False)
+        observed = os.get_inheritable(descriptor)
     except OSError as exc:
         raise ConflictError("cannot normalize inherited handoff descriptor") from exc
-    if not observed & fcntl.FD_CLOEXEC:
+    if observed:
         raise ConflictError("inherited handoff descriptor is not close-on-exec")
 
 
@@ -79,6 +78,8 @@ def peer_uid(channel: socket.socket) -> int:
 
     if channel.family != socket.AF_UNIX:
         raise ConflictError("handoff transfer channel must be a Unix socket")
+    if os.name == "nt":
+        raise ConflictError("handoff peer authentication is unavailable on Windows")
     getpeereid = getattr(channel, "getpeereid", None)
     if callable(getpeereid):
         try:
@@ -117,6 +118,8 @@ def peer_pid(channel: socket.socket) -> int:
 
     if channel.family != socket.AF_UNIX:
         raise ConflictError("handoff transfer channel must be a Unix socket")
+    if os.name == "nt":
+        raise ConflictError("handoff peer authentication is unavailable on Windows")
     if sys.platform == "darwin":
         try:
             # LOCAL_PEERPID is Darwin's SOL_LOCAL option 2. Python does not
@@ -146,6 +149,8 @@ def send_authority_transfer(
 
     if frame.get("version") != TRANSFER_VERSION:
         raise ValidationError("handoff transfer version is invalid")
+    if os.name == "nt":
+        raise ConflictError("descriptor handoff is unavailable on Windows")
     descriptors = array.array("i", [int(worker_control_fd), int(listener_fd)])
     encoded = _canonical_frame(frame)
     try:
@@ -315,6 +320,8 @@ def _validate_authority_sockets(
     *,
     expected_listener: tuple[str, int],
 ) -> None:
+    if os.name == "nt":
+        raise ConflictError("descriptor handoff is unavailable on Windows")
     try:
         worker_family, worker_kind, _ = _inspect_socket(worker_control_fd, listener=False)
     except ConflictError as exc:
@@ -386,6 +393,8 @@ def receive_authority_transfer(
     abort.
     """
 
+    if os.name == "nt":
+        raise ConflictError("descriptor handoff is unavailable on Windows")
     if peer_uid(channel) != int(expected_uid):
         raise ConflictError("handoff transfer peer UID is invalid")
     frame, ancillary = _receive_frame(channel)
@@ -464,6 +473,8 @@ class HandoffSuccessorListener:
     authorize B; every accept pins the exact selected kernel incarnation.
     """
     def __init__(self, binding, sealed_record_digest, *, timeout=5.0):
+        if os.name == "nt":
+            raise ConflictError("descriptor handoff is unavailable on Windows")
         from astrid_runtime.custody_broker import _create_compact_socket_root
         from .local_execution_handoff import digest, write_protected
         self.binding = dict(binding); self.sealed_record_digest = sealed_record_digest
@@ -474,7 +485,7 @@ class HandoffSuccessorListener:
         self.manifest_path = Path(binding["custody_scope"]) / "successor-transport.json"
         self.manifest = {"version": "runtime.local-execution-successor-transport/v1", "path": str(self.path), "binding_digest": digest(binding), "sealed_record_digest": sealed_record_digest, "successor": binding["new_owner"], "relay": binding["source_relay_reference"]["target"]}
         try:
-            self.socket.bind(str(self.path)); os.chmod(self.path, 0o600); self.socket.listen(4)
+            self.socket.bind(str(self.path)); runtime_platform.owner_only(self.path); self.socket.listen(4)
             write_protected(self.manifest_path, self.manifest)
         except BaseException:
             self.close(); raise
@@ -519,8 +530,8 @@ def connect_fresh_successor(binding, sealed_record_digest, *, timeout=5.0):
     observed = path.lstat(); parent = path.parent.lstat()
     import stat
     if (path.is_symlink() or path.parent.is_symlink() or not stat.S_ISSOCK(observed.st_mode)
-            or observed.st_uid != os.getuid() or stat.S_IMODE(observed.st_mode) != 0o600
-            or not stat.S_ISDIR(parent.st_mode) or parent.st_uid != os.getuid() or stat.S_IMODE(parent.st_mode) != 0o700):
+            or not runtime_platform.is_owner_only(observed)
+            or not stat.S_ISDIR(parent.st_mode) or not runtime_platform.is_owner_only(parent, directory=True)):
         raise ConflictError("successor socket path is unprotected")
     channel = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     channel.set_inheritable(False); channel.settimeout(timeout)

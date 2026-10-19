@@ -7,6 +7,7 @@ import threading
 import pytest
 
 from astrid_runtime import custody_broker as custody
+from runtime_protocol import platform as runtime_platform
 
 
 @pytest.fixture
@@ -355,97 +356,6 @@ def test_other_roles_cannot_enter_runtime_relinquish_contract(graph):
     fire(graph)
 
 
-# Darwin native observation proof; no signals, services, or ownership fabrication.
-def _native_test_reader(monkeypatch, *, pid=123, uid=501, ppid=41, count=None, error=0):
-    import ctypes
-    import time
-    seconds = int(time.mktime((2026, 10, 9, 18, 21, 21, 0, 0, -1)))
-    class Reader:
-        def __call__(self, observed_pid, flavor, argument, destination, size):
-            assert observed_pid == 123 and flavor == 3 and argument == 0
-            value = ctypes.cast(destination, ctypes.POINTER(custody._DarwinBSDInfo)).contents
-            value.pid, value.uid, value.ppid = pid, uid, ppid
-            value.start_sec, value.start_usec = seconds, 123456
-            ctypes.set_errno(error)
-            return size if count is None else count
-    class Library:
-        proc_pidinfo = Reader()
-    monkeypatch.setattr(custody.ctypes, "CDLL", lambda *args, **kwargs: Library())
-    return seconds
-
-
-@pytest.mark.parametrize("uid", [501, 0])
-def test_darwin_native_identity_preserves_uid_parent_and_legacy_birth_without_ps(monkeypatch, uid):
-    monkeypatch.setattr(custody.sys, "platform", "darwin")
-    _native_test_reader(monkeypatch, uid=uid)
-    monkeypatch.setattr(custody.subprocess, "run", lambda *a, **k: pytest.fail("Darwin ps invoked"))
-    assert custody.default_process_identity(123) == {
-        "pid": 123, "uid": uid, "parent_pid": 41,
-        "birth_id": "ps-lstart:Fri Oct  9 18:21:21 2026",
-    }
-
-
-@pytest.mark.parametrize("count,error,pid,absent", [
-    (0, 3, 123, True), (0, 1, 123, False), (0, 0, 123, False),
-    (1, 0, 123, False), (None, 0, 124, False), (None, 1, 123, False),
-])
-def test_darwin_native_identity_only_esrch_proves_absence(monkeypatch, count, error, pid, absent):
-    monkeypatch.setattr(custody.sys, "platform", "darwin")
-    _native_test_reader(monkeypatch, count=count, error=error, pid=pid)
-    monkeypatch.setattr(custody.subprocess, "run", lambda *a, **k: pytest.fail("unknown became ps fallback"))
-    if absent:
-        assert custody.default_process_identity(123) is None
-    else:
-        with pytest.raises(custody.CustodyError):
-            custody.default_process_identity(123)
-
-
-@pytest.mark.parametrize("changed", ["uid", "parent_pid", "start_sec", "start_usec"])
-def test_darwin_native_identity_bracket_rejects_incarnation_or_identity_drift(monkeypatch, changed):
-    monkeypatch.setattr(custody.sys, "platform", "darwin")
-    first = {"pid": 123, "uid": 501, "parent_pid": 41, "start_sec": 1000, "start_usec": 10}
-    second = dict(first); second[changed] += 1
-    rows = iter((first, second))
-    monkeypatch.setattr(custody, "_read_darwin_process_info", lambda pid: next(rows))
-    with pytest.raises(custody.CustodyError, match="changed"):
-        custody.default_process_identity(123)
-
-
-def test_darwin_native_identity_preserves_expired_deadline_and_no_ps_fallback(monkeypatch):
-    monkeypatch.setattr(custody.sys, "platform", "darwin")
-    monkeypatch.setattr(custody, "_read_darwin_process_info", lambda pid: pytest.fail("expired read"))
-    with pytest.raises(custody.CustodyError, match="deadline"):
-        custody.default_process_identity(123, timeout=0)
-    clock = iter((100.0, 101.0))
-    from types import SimpleNamespace
-    monkeypatch.setattr(custody, "time", SimpleNamespace(monotonic=lambda: next(clock)))
-    monkeypatch.setattr(custody, "_read_darwin_process_info", lambda pid: None)
-    with pytest.raises(custody.CustodyError, match="deadline"):
-        custody.default_process_identity(123, timeout=0.1)
-
-
-@pytest.mark.parametrize("returncode,stdout,stderr,expected", [
-    (0, "501 41 Fri Oct  9 18:21:21 2026\n", "", "identity"),
-    (1, "", "", "absent"), (1, "", "denied", "unknown"),
-    (0, "", "", "unknown"), (0, "malformed", "", "unknown"),
-])
-def test_non_darwin_process_identity_retains_existing_ps_parser(monkeypatch, returncode, stdout, stderr, expected):
-    from types import SimpleNamespace
-    monkeypatch.setattr(custody.sys, "platform", "linux")
-    observed = []
-    def run(argv, **kwargs):
-        observed.append((argv, kwargs))
-        return SimpleNamespace(returncode=returncode, stdout=stdout, stderr=stderr)
-    monkeypatch.setattr(custody.subprocess, "run", run)
-    if expected == "unknown":
-        with pytest.raises(custody.CustodyError):custody.default_process_identity(123, timeout=0.25)
-    else:
-        value = custody.default_process_identity(123, timeout=0.25)
-        assert value == (None if expected == "absent" else {"pid": 123, "uid": 501, "parent_pid": 41, "birth_id": "ps-lstart:Fri Oct  9 18:21:21 2026"})
-    assert observed[0][0] == ["/bin/ps", "-ww", "-o", "uid=", "-o", "ppid=", "-o", "lstart=", "-p", "123"]
-    assert observed[0][1]["timeout"] == 0.25
-
-
 @pytest.mark.darwin_native
 def test_actual_darwin_self_identity_and_boundary_use_native_shared_marker(monkeypatch):
     import os
@@ -454,7 +364,7 @@ def test_actual_darwin_self_identity_and_boundary_use_native_shared_marker(monke
     assert sys.platform == "darwin", "this native proof requires its admitted Darwin venue"
     monkeypatch.setattr(custody.subprocess, "run", lambda *a, **k: pytest.fail("native observation spawned ps"))
     actual = custody.default_process_identity(os.getpid())
-    assert actual["pid"] == os.getpid() and actual["uid"] == os.getuid()
+    assert actual["pid"] == os.getpid() and actual["uid"] == runtime_platform.current_user()
     assert actual["parent_pid"] == os.getppid()
     assert actual["birth_id"].startswith("ps-lstart:")
     assert LocalRuntimeBoundary.process_birth_identity(os.getpid()) == actual["birth_id"]

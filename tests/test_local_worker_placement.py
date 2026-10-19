@@ -14,6 +14,7 @@ from http_helpers import Api
 from runtime_protocol.auth import AuthorizationError, CredentialStore
 from runtime_protocol.daemon import RuntimeDaemon, WORKER_ACTOR, WORKER_SCOPES
 from runtime_protocol.errors import ConflictError
+from runtime_protocol import platform as runtime_platform
 from runtime_protocol.local_worker import (
     PREPARATION_VERSION,
     LocalWorkerLauncher,
@@ -55,7 +56,7 @@ def _process(pid, parent, executable, digest, *, group=None, session=None) -> Pr
     return ProcessIdentity(
         pid=pid,
         birth_id=f"birth-{pid}",
-        uid=os.getuid(),
+        uid=runtime_platform.current_user(),
         parent_pid=parent,
         process_group=pid if group is None else group,
         session_id=pid if session is None else session,
@@ -78,7 +79,7 @@ def _observation(profile: LocalWorkerProfile, runtime_pid: int, *, base=1000) ->
     )
     return LocalWorkerObservation(
         machine_id=profile.machine_id,
-        uid=os.getuid(),
+        uid=runtime_platform.current_user(),
         workspace_uuid=profile.workspace_uuid,
         realm_root=profile.realm_root,
         support_root=profile.support_root,
@@ -948,7 +949,7 @@ def _relay_activation_fixture(tmp_path, *, lose_ack=False, before_request=None, 
     refs = {}
     for role, identity in (("relay", observed.worker), ("host", observed.host), ("engine", observed.engine), ("engine_listener", observed.engine_listener)):
         refs[role] = {"version": "runtime.role-custody-reference/v1", "scope_root": str(scope), "role": role, "generation": 1,
-            "target": {"pid": identity.pid, "birth_id": identity.birth_id, "uid": os.getuid(), "audit_token_sha256": "sha256:" + "2" * 64, "audit_token_pidversion": identity.pid + 1}}
+            "target": {"pid": identity.pid, "birth_id": identity.birth_id, "uid": runtime_platform.current_user(), "audit_token_sha256": "sha256:" + "2" * 64, "audit_token_pidversion": identity.pid + 1}}
     observed = replace(observed, owner_epoch="runtime-epoch", custody_scope=str(scope), custody_capabilities=refs)
     store = CredentialStore(tmp_path / "credentials")
     runtime, relay = socket.socketpair()
@@ -1046,7 +1047,7 @@ def _relay_activation_fixture(tmp_path, *, lose_ack=False, before_request=None, 
         def prepare(self, profile, *, operation_id, channel_id):
             from runtime_protocol.local_execution_supervisor import host_prepare_request, CONTROL_VERSION
             host_prepared.update(operation_id=operation_id, channel_id=channel_id)
-            preparation = host_prepare_request(operation_id=operation_id, channel_id=channel_id, owner_epoch="runtime-epoch", runtime_owner={"pid": 77, "uid": os.getuid(), "birth_id": "runtime-birth", "runtime_instance_id": "runtime-epoch", "coordinator_epoch": "runtime-epoch"}, profile=_selected_profile_payload(profile), custody_scope=str(scope))
+            preparation = host_prepare_request(operation_id=operation_id, channel_id=channel_id, owner_epoch="runtime-epoch", runtime_owner={"pid": 77, "uid": runtime_platform.current_user(), "birth_id": "runtime-birth", "runtime_instance_id": "runtime-epoch", "coordinator_epoch": "runtime-epoch"}, profile=_selected_profile_payload(profile), custody_scope=str(scope))
             handle = _PreparedWorker(SimpleNamespace(pid=observed.worker.pid), observed.worker.birth_id, runtime, {}, tmp_path / "config.json", relay=True, retained=Retained(observed.worker), owner_epoch="runtime-epoch", custody_scope=str(scope))
             self._active = handle
             handle.report_value = self._rpc(handle, {"version": CONTROL_VERSION, "command": "prepare", "preparation": preparation, "config": {}})["report"]
@@ -1204,8 +1205,8 @@ def _host_only_fixture(tmp_path, runtime_pid=77):
     profile.support_root.mkdir(exist_ok=True)
     host=_process(2001,runtime_pid,profile.host_executable,profile.host_artifact_digest)
     ref={'version':'runtime.role-custody-reference/v1','scope_root':str(tmp_path/'scope'),'role':'host','generation':1,
-        'target':{'pid':host.pid,'birth_id':host.birth_id,'uid':os.getuid(),'audit_token_sha256':_digest('2'),'audit_token_pidversion':3}}
-    observation=LocalWorkerObservation(profile.machine_id,os.getuid(),profile.workspace_uuid,profile.realm_root,profile.support_root,
+        'target':{'pid':host.pid,'birth_id':host.birth_id,'uid':runtime_platform.current_user(),'audit_token_sha256':_digest('2'),'audit_token_pidversion':3}}
+    observation=LocalWorkerObservation(profile.machine_id,runtime_platform.current_user(),profile.workspace_uuid,profile.realm_root,profile.support_root,
         None,host,None,None,0,'',profile.session_config_digest,'epoch',str(tmp_path/'scope'),{'host':ref})
     return profile,observation
 

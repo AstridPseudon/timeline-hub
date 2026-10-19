@@ -6,6 +6,9 @@ import argparse
 from dataclasses import asdict, is_dataclass
 import json
 import os
+import contextlib
+import threading
+import time
 from pathlib import Path
 from typing import Any, Mapping
 import urllib.error
@@ -31,7 +34,8 @@ from .bootstrap import (
 from .io import read_json
 from .loopback_http import urlopen_loopback
 from .paths import DATA_ROOT_ENV, RuntimePaths
-from .runtime_boundary import LocalRuntimeBoundary
+from .runtime_boundary import LocalRuntimeBoundary, ForegroundRuntimeBoundary
+from runtime_protocol import platform
 from .workspace import configure_workspace, inspect_workspace
 from runtime_protocol.door import DEFAULT_DOOR_PORT, DEFAULT_HOSTED_ORIGIN, exact_https_origin
 from runtime_protocol.errors import RuntimeErrorBase
@@ -63,6 +67,9 @@ def parser() -> argparse.ArgumentParser:
     sub = root.add_subparsers(dest="command")
     up = sub.add_parser("up", help="start or reconnect the selected runtime")
     _profile_args(up)
+    up.add_argument("--wait", action="store_true", help="return only after this Runtime’s browser door is ready")
+    run = sub.add_parser("run", help="run the daemon and browser door in the foreground for a service manager")
+    _profile_args(run)
     connect_cmd = sub.add_parser("connect", help="connect to the selected live runtime without starting one")
     _profile_args(connect_cmd)
     status = sub.add_parser("status", help="read runtime discovery and health")
@@ -178,7 +185,7 @@ def _profile_args(command: argparse.ArgumentParser, *, data_root_required: bool 
 
 def _read_args(command: argparse.ArgumentParser) -> None:
     command.add_argument("--json", action="store_true")
-    command.add_argument("--home", type=Path, help="override the current-Mac support home (mainly for disposable roots)")
+    command.add_argument("--home", type=Path, help="override the support home (mainly for disposable roots)")
     command.add_argument("--data-root", type=Path, help=f"explicit support root (or {DATA_ROOT_ENV})")
 
 
@@ -218,7 +225,7 @@ def _emit(value: Any, *, json_mode: bool) -> None:
 
 def _paths(args: argparse.Namespace) -> RuntimePaths:
     home = args.home if getattr(args, "home", None) else os.environ.get("ASTRID_RUNTIME_HOME")
-    return RuntimePaths.current_mac(home, data_root=getattr(args, "data_root", None))
+    return RuntimePaths.current(home, data_root=getattr(args, "data_root", None))
 
 
 def _config(args: argparse.Namespace, paths: RuntimePaths) -> BootstrapConfig:
@@ -317,9 +324,97 @@ def _load_state(raw: str) -> Mapping[str, Any]:
     return value
 
 
+def _door_json(endpoint: str, origin: str, path: str) -> Mapping[str, Any]:
+    request = urllib.request.Request(endpoint.rstrip("/") + path,
+        headers={"Origin": origin, "Accept": "application/json"})
+    with urlopen_loopback(request, timeout=2.0) as response:
+        value = json.loads(response.read(1024 * 1024).decode("utf-8"))
+    if not isinstance(value, Mapping):
+        raise BootstrapError("browser door returned invalid metadata")
+    return value
+
+
+def _wait_for_door(paths: RuntimePaths, result: BootstrapResult, boundary: LocalRuntimeBoundary) -> None:
+    if not result.door_endpoint or not result.door_origin:
+        raise BootstrapError("the selected Runtime has no browser door; restart it with the hosted origin enabled")
+    endpoint = _validate_loopback_endpoint(result.door_endpoint)
+    expected = _read_support_json(paths.discovery_path) or {}
+    instance = expected.get("runtime_instance_id")
+    if (not instance or not result.runtime_instance_id
+            or instance != result.runtime_instance_id
+            or expected.get("active_realm") != result.realm_id):
+        raise BootstrapError("Runtime discovery changed before the browser door became ready")
+    deadline = time.monotonic() + boundary.wait_seconds
+    reason = "browser door is unavailable"
+    while time.monotonic() < deadline:
+        current = _read_support_json(paths.discovery_path) or {}
+        if any(current.get(key) != expected.get(key) for key in
+               ("pid", "process_birth_id", "runtime_instance_id", "active_realm", "door_endpoint", "door_origin")):
+            raise BootstrapError("Runtime identity changed while waiting for the browser door")
+        try:
+            health = _door_json(endpoint, result.door_origin, "/api/runtime/v1/health")
+            realm = _door_json(endpoint, result.door_origin, "/api/runtime/v1/realm")
+            if health.get("runtime_instance_id") != instance or realm.get("realm_id") != result.realm_id:
+                raise BootstrapError("browser door belongs to a different Runtime instance or realm")
+            if health.get("status") == "ok":
+                return
+            reason = str(health.get("status") or "browser door is not ready")
+        except BootstrapError:
+            raise
+        except (OSError, ValueError) as exc:
+            reason = str(exc)
+        if not boundary.is_pid_alive(int(expected.get("pid") or 0)):
+            raise BootstrapError("Runtime exited before its browser door became ready: " + reason)
+        time.sleep(0.05)
+    raise BootstrapError("browser door did not become ready before the startup deadline: " + reason)
+
+
+def _run_foreground(paths: RuntimePaths, config: BootstrapConfig, *, json_mode: bool) -> int:
+    logs = platform.log_dir(paths.home)
+    logs.mkdir(parents=True, exist_ok=True)
+    platform.owner_only(logs)
+    log_path = logs / "runtime.log"
+    boundary = ForegroundRuntimeBoundary()
+    stopped = threading.Event()
+    restore = platform.install_stop_handlers(lambda *_: stopped.set())
+    failure = None
+    try:
+        with log_path.open("a", encoding="utf-8", buffering=1) as log:
+            platform.owner_only(log_path)
+            with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
+                try:
+                    result = bootstrap(paths, boundary, config)
+                    boundary.check_running()
+                    _wait_for_door(paths, result, boundary)
+                    _emit_ready(result, json_mode=json_mode)
+                    while not stopped.wait(0.2):
+                        boundary.check_running()
+                except Exception as exc:
+                    failure = str(exc)
+                    print("Runtime failed: " + failure, flush=True)
+                finally:
+                    try:
+                        boundary.stop()
+                    except Exception as exc:
+                        failure = failure or str(exc)
+                        print("Runtime shutdown failed: " + str(exc), flush=True)
+    except Exception as exc:
+        failure = str(exc)
+    finally:
+        restore()
+    if failure:
+        _emit({"ok": False, "error": failure, "log": str(log_path)}, json_mode=True)
+        return 1
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    paths = _paths(args)
+    try:
+        paths = _paths(args)
+    except (OSError, ValueError) as exc:
+        _emit({"ok": False, "error": str(exc)}, json_mode=True)
+        return 1
     if args.command == "workspace":
         try:
             boundary = LocalRuntimeBoundary()
@@ -353,10 +448,25 @@ def main(argv: list[str] | None = None) -> int:
         result = doctor(paths, LocalRuntimeBoundary())
         _emit(result, json_mode=args.json)
         return 0 if result["healthy"] else 1
+    if args.command == "run":
+        config = _config(args, paths)
+        if config.door is None:
+            _emit({"ok": False, "error": "run requires the browser door; enable --hosted-origin"}, json_mode=True)
+            return 1
+        try:
+            return _run_foreground(paths, config, json_mode=args.json)
+        except Exception as exc:
+            _emit({"ok": False, "error": str(exc), "log": str(platform.log_dir(paths.home) / "runtime.log")}, json_mode=True)
+            return 1
     if args.command == "up":
         config = _config(args, paths)
         try:
-            result = bootstrap(paths, LocalRuntimeBoundary(), config)
+            if args.wait and config.door is None:
+                raise BootstrapError("up --wait requires the browser door; enable --hosted-origin")
+            boundary = LocalRuntimeBoundary()
+            result = bootstrap(paths, boundary, config)
+            if args.wait:
+                _wait_for_door(paths, result, boundary)
         except Exception as exc:
             # Operator-facing startup must be a stable boundary: client,
             # import, protocol, filesystem, and OS failures are represented as

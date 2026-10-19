@@ -33,10 +33,12 @@ from __future__ import annotations
 import errno
 import http.client
 import json
-import os
+from .dirfd import filesystem as os
 import re
 import socket
 import stat
+
+from runtime_protocol import platform
 import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -324,8 +326,8 @@ def _owner_only_json(path: Path) -> dict | None:
         return None
     try:
         metadata = os.fstat(descriptor)
-        if (not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid()
-                or stat.S_IMODE(metadata.st_mode) & 0o077 or metadata.st_size > _MAX_LOCAL_FILE_BYTES):
+        if (not stat.S_ISREG(metadata.st_mode) or not platform.is_owner_only(metadata)
+                or metadata.st_size > _MAX_LOCAL_FILE_BYTES):
             return None
         raw = b""
         while len(raw) <= _MAX_LOCAL_FILE_BYTES:

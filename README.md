@@ -62,6 +62,23 @@ fields while validating known fields; request shapes remain unchanged.
 
 ## Run it
 
+For an existing configured workspace, `astrid-runtime up --wait` starts or
+reconnects Astrid and returns after its browser door is ready. Open
+https://astrid.haus. A service manager should execute `astrid-runtime run`:
+the daemon and door run in that process until it receives a stop signal, and
+startup or listener failure exits non-zero with a reason and log path.
+
+Defaults are native per-user paths:
+
+| OS | Data root | Foreground log |
+| --- | --- | --- |
+| macOS | `~/Library/Application Support/Astrid Runtime` | `~/Library/Logs/Astrid Runtime/runtime.log` |
+| Linux | `$XDG_DATA_HOME/astrid-runtime` (default `~/.local/share/astrid-runtime`) | `$XDG_STATE_HOME/astrid-runtime/logs/runtime.log` (default `~/.local/state/astrid-runtime/logs/runtime.log`) |
+| Windows | `%LOCALAPPDATA%\Astrid Runtime` | `%LOCALAPPDATA%\Astrid Runtime\logs\runtime.log` |
+
+The established macOS background log remains `runtime/runtime.log` below the
+data root. See [portability checks and remaining worker transport work](docs/runtime-portability-testing.md).
+
 The local launcher accepts an absolute `--data-root` support directory on
 lifecycle commands, or `ASTRID_RUNTIME_DATA_ROOT`. This directory directly
 contains the installation's `runtime/` and `credentials/` trees.

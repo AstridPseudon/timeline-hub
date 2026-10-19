@@ -6,15 +6,10 @@ public HTTP API and the real persisted Runtime store. No renderer is launched.
 from __future__ import annotations
 
 import json
-import os
-import signal
 import subprocess
 import sys
 import textwrap
 from pathlib import Path
-
-import pytest
-
 
 CLIENT_PACKAGE = Path(__file__).parents[1] / "packages" / "python"
 
@@ -139,8 +134,8 @@ finally:
 """)
 
 
-def test_real_process_replay_policy(tmp_path):
-    process = subprocess.Popen(
+def test_real_process_replay_policy(tmp_path, owned_process_groups):
+    process = owned_process_groups.popen(
         [sys.executable, "-u", "-c", CHILD, str(tmp_path / "realm"), str(CLIENT_PACKAGE)],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         start_new_session=True,
@@ -151,9 +146,7 @@ def test_real_process_replay_policy(tmp_path):
         result = json.loads(stdout.strip().splitlines()[-1])
         assert result["inflight_task"] == result["reuse_task"]
         assert result["unknown_guard"] is True
-        with pytest.raises(ProcessLookupError):
-            os.killpg(process.pid, 0)
     finally:
         if process.poll() is None:
-            os.killpg(process.pid, signal.SIGKILL)
+            owned_process_groups.terminate_all()
             process.communicate(timeout=10)

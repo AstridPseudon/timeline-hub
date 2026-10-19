@@ -167,6 +167,7 @@ class BootstrapTests(unittest.TestCase):
         self._configure()
         result = bootstrap(self.paths, self.boundary, self.config)
         self.assertEqual(result.status, "started")
+        self.assertEqual(result.runtime_instance_id, json.loads(self.paths.discovery_path.read_text())["runtime_instance_id"])
         self.assertEqual(result.credential_file, self.paths.credentials_dir / "astrid.json")
         self.assertEqual(len(self.boundary.starts), 1)
         self.assertEqual(self.boundary.calls, ["start"])
@@ -199,6 +200,8 @@ class BootstrapTests(unittest.TestCase):
         )
         second = bootstrap(self.paths, self.boundary, BootstrapConfig(source_profile=updated))
         self.assertEqual(second.status, "reconnected")
+        self.assertEqual(first.runtime_instance_id, second.runtime_instance_id)
+        self.assertEqual(second.runtime_instance_id, json.loads(self.paths.discovery_path.read_text())["runtime_instance_id"])
         self.assertEqual(first.realm_id, second.realm_id)
         self.assertEqual(first.actor_id, second.actor_id)
         self.assertEqual(len(self.boundary.starts), 1)
@@ -308,8 +311,8 @@ class BootstrapTests(unittest.TestCase):
                 [
                     sys.executable,
                     "-c",
-                    "import fcntl,sys; f=open(sys.argv[1],'a+'); "
-                    "\ntry: fcntl.flock(f.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)"
+                    "import sys; from runtime_protocol.platform import file_lock; p=sys.argv[1]; "
+                    "\ntry: file_lock(p, blocking=False).__enter__()"
                     "\nexcept BlockingIOError: raise SystemExit(7)"
                     "\nraise SystemExit(0)",
                     str(self.paths.bootstrap_lock_path),
@@ -663,15 +666,16 @@ def test_pack_bootstrap_boundaryless_probe_only_esrch_is_absence(monkeypatch):
     import errno
     import pytest
     from astrid_runtime.bootstrap import _pid_alive
+    from runtime_protocol import platform
     for error, result in [(PermissionError(errno.EPERM, "denied"), True),
                           (ProcessLookupError(errno.ESRCH, "absent"), False)]:
         def fail(*_args, error=error):
             raise error
-        monkeypatch.setattr(os, "kill", fail)
+        monkeypatch.setattr(platform, "process_identity", fail)
         assert _pid_alive(None, 12345) is result
     def unknown(*_args):
         raise OSError(errno.EIO, "unknown")
-    monkeypatch.setattr(os, "kill", unknown)
+    monkeypatch.setattr(platform, "process_identity", unknown)
     with pytest.raises(BootstrapError, match="uncertain"):
         _pid_alive(None, 12345)
 

@@ -13,7 +13,7 @@ import hashlib
 import json
 import math
 import mimetypes
-import os
+from runtime_protocol.dirfd import filesystem as os
 import re
 import shutil
 import sqlite3
@@ -25,6 +25,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from . import platform
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .cas import ContentAddressedStore
 from .catalog import _safe_path
@@ -197,7 +198,7 @@ def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = N
             connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             connection.execute("PRAGMA journal_mode=DELETE")
             connection.execute("VACUUM INTO ?", (str(output),))
-            output.chmod(0o600)
+            platform.owner_only(output)
             verified = sqlite3.connect(f"file:{output}?mode=ro", uri=True)
             try:
                 if _retained_idempotency_digest(verified) != (after_count, after_digest):
@@ -228,7 +229,7 @@ def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = N
             os.replace(output, db)
         finally:
             output.unlink(missing_ok=True)
-        directory = os.open(root, os.O_RDONLY)
+        directory = os.open(root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
         try:
             os.fsync(directory)
         finally:
@@ -492,20 +493,18 @@ def _owner_fence(root: Path):
     handle = lock_path.open("a+")
     try:
         try:
-            import fcntl
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError as exc:
+            platform.owner_only(lock_path)
+            platform.lock_file(handle.fileno(), blocking=False)
+        except (BlockingIOError, OSError) as exc:
             raise OwnerBusyError("another runtime daemon owns this realm") from exc
-        except ImportError:  # pragma: no cover - supported runtime is POSIX
-            raise ValidationError("offline upgrade requires a POSIX owner fence")
         yield
     finally:
         try:
-            import fcntl
-            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-        except ImportError:  # pragma: no cover
+            platform.unlock_file(handle.fileno())
+        except OSError:
             pass
         handle.close()
+
 
 
 def _open_readonly(db: Path) -> sqlite3.Connection:
@@ -1084,7 +1083,7 @@ def _fsync_file(path: Path) -> None:
 
 
 def _fsync_directory(path: Path) -> None:
-    descriptor = os.open(path, os.O_RDONLY)
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
     try:
         os.fsync(descriptor)
     finally:
@@ -1173,7 +1172,7 @@ def _write_manifest(archive: Path, metadata: dict) -> None:
     payload["manifest_sha256"] = hashlib.sha256(canonical_json(payload).encode()).hexdigest()
     temporary = archive / ".manifest.json.tmp"
     temporary.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
-    os.chmod(temporary, 0o600)
+    platform.owner_only(temporary)
     _fsync_file(temporary)
     os.replace(temporary, archive / "manifest.json")
     _fsync_directory(archive)
@@ -1287,7 +1286,7 @@ def upgrade_realm(
                 "created_at": now(),
             })
             _write_manifest(archive, archive_meta)
-            os.chmod(stage_db, 0o600)
+            platform.owner_only(stage_db)
             _fsync_file(stage_db)
             _fsync_directory(stage_dir)
             os.replace(stage_db, source_db)
@@ -1320,7 +1319,7 @@ def upgrade_realm(
                 try:
                     rollback = root.parent / f".{source_db.name}.rollback-{uuid.uuid4().hex}"
                     shutil.copy2(archive / source_db.name, rollback)
-                    os.chmod(rollback, 0o600)
+                    platform.owner_only(rollback)
                     os.replace(rollback, source_db)
                     for suffix in ("-wal", "-shm", "-journal"):
                         archived_sidecar = archive / f"{source_db.name}{suffix}"

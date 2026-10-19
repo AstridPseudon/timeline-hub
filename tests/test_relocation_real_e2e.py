@@ -32,7 +32,7 @@ def test_real_runtime_daemon_cutover_starts_from_new_support_root(tmp_path):
     new_support.mkdir()
     (new_support / "existing-auxiliary").mkdir()
     (new_support / "existing-auxiliary" / "keep.txt").write_text("keep", encoding="utf-8")
-    paths = RuntimePaths.current_mac(data_root=old_support)
+    paths = RuntimePaths.current(data_root=old_support)
     boundary = LocalRuntimeBoundary(wait_seconds=8)
     config = _config(repo)
 
@@ -53,7 +53,7 @@ def test_real_runtime_daemon_cutover_starts_from_new_support_root(tmp_path):
         assert result["status"] == "relocated"
         assert (new_support / marker.relative_to(old_support)).read_text(encoding="utf-8") == "preserve"
         assert (new_support / "existing-auxiliary" / "keep.txt").read_text(encoding="utf-8") == "keep"
-        moved = RuntimePaths.current_mac(data_root=new_support)
+        moved = RuntimePaths.current(data_root=new_support)
         assert moved.catalog_path.is_file()
         assert result["data_root"] == str(moved.realms_dir / first.realm_id)
         import json
@@ -70,7 +70,7 @@ def test_real_runtime_cutover_failure_rolls_back_tree_and_metadata(tmp_path, mon
     repo = Path(__file__).resolve().parents[1]
     old_support = tmp_path / "old-support"
     new_support = tmp_path / "new-support"
-    paths = RuntimePaths.current_mac(data_root=old_support)
+    paths = RuntimePaths.current(data_root=old_support)
     boundary = LocalRuntimeBoundary(wait_seconds=8)
     config = _config(repo)
     try:

@@ -15,6 +15,7 @@ import socket
 from typing import Any, Mapping
 from urllib.parse import urlsplit
 from .errors import ValidationError
+from . import platform as runtime_platform
 
 HOST_PREPARATION_VERSION = "runtime.local-execution-host/v1"
 ENGINE_CONTROL_VERSION = "runtime.local-execution-engine-control/v1"
@@ -917,21 +918,18 @@ class RetainedProcess:
         return self.actor
 
     def poll(self):
-        with self.guard, self.child._waitpid_lock:
+        with self.guard, getattr(self.child, "_waitpid_lock", self.guard):
             if self.exit_code is not None:
                 return self.exit_code
             if self.child.returncode is not None:
                 raise RelayError("child was reaped outside retained launch ownership")
             try:
-                pid, status = os.waitpid(self.child.pid, os.WNOHANG)
-            except ChildProcessError as exc:
+                result = self.child.poll()
+            except (ChildProcessError, OSError) as exc:
                 raise RelayError("retained child wait ownership is unknown") from exc
-            if pid == 0:
+            if result is None:
                 return None
-            if pid != self.child.pid:
-                raise RelayError("wait result differs from retained launch")
-            self.child._handle_exitstatus(status)
-            self.exit_code = self.child.returncode
+            self.exit_code = result
             return self.exit_code
 
     def verify(self):
@@ -979,6 +977,8 @@ class NativeHostSession:
     """Park one GenericHost and retain its capability before any RPC."""
 
     def __init__(self, preparation, config, *, timeout=120.0, launch_verifier=None):
+        if os.name == "nt":
+            raise RelayError("local execution descriptor transport is unavailable on Windows")
         import subprocess
         import tempfile
         from .verified_host_launch import HostLaunchVerifier
@@ -1020,7 +1020,7 @@ class NativeHostSession:
                 self.binding_file.flush()
                 self.binding_file.seek(0)
             environment.update(self.broker.child_environment(argv, start_new_session=True))
-            child = subprocess.Popen(custody_wrapper_argv(preparation["profile"]["worker_executable"]), env=environment,
+            child = runtime_platform.spawn_tree(custody_wrapper_argv(preparation["profile"]["worker_executable"]), start_new_session=False, env=environment,
                 cwd=config["support_root"], stdin=subprocess.DEVNULL, close_fds=True,
                 pass_fds=(control_child.fileno(), activation_child.fileno(), *((self.binding_file.fileno(),) if self.binding_file is not None else ())))
             # Publish the exact owned child before fallible sealing/binding.
@@ -1114,16 +1114,15 @@ class NativeHostSession:
         return json.loads(canonical_json(expected_ack))
 
     def reap_host(self):
-        import signal
         if self.retained is None:
             return None
         result = self.retained.poll()
         if result is None:
-            self.broker.signal(signal.SIGTERM, expected_pid=self.retained.child.pid)
+            self.broker.signal(runtime_platform.TERM, expected_pid=self.retained.child.pid)
             try:
                 result = self.retained.wait(min(self.timeout, 5.0))
             except RelayError:
-                self.broker.signal(signal.SIGKILL, expected_pid=self.retained.child.pid)
+                self.broker.signal(runtime_platform.KILL, expected_pid=self.retained.child.pid)
                 result = self.retained.wait(min(self.timeout, 5.0))
         self.control.close()
         self.activation.close()

@@ -537,9 +537,9 @@ def test_retained_process_echild_is_not_successful_exit(monkeypatch):
     from runtime_protocol.local_execution_supervisor import RetainedProcess
     child = SimpleNamespace(pid=123, returncode=None, _waitpid_lock=threading.Lock())
     retained = RetainedProcess(child)
-    def unavailable(*_):
+    def unavailable():
         raise ChildProcessError("not ours")
-    monkeypatch.setattr("os.waitpid", unavailable)
+    child.poll = unavailable
     with pytest.raises(RelayError, match="ownership is unknown"):
         retained.poll()
     assert retained.exit_code is None

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field, replace
 import errno
 import hashlib
 import json
-import os
+from runtime_protocol.dirfd import filesystem as os
 from pathlib import Path
 import secrets
 import shutil
@@ -23,6 +23,7 @@ from urllib.parse import urlsplit
 import uuid
 
 from .io import atomic_write_json, owner_only, read_json, remove_file
+from runtime_protocol import platform as runtime_platform
 from .paths import RuntimePaths
 from runtime_protocol.lifecycle import interruption_fence
 
@@ -270,6 +271,7 @@ class BootstrapResult:
     # The browser door of the running daemon, when it has one: the page to open and where it listens.
     door_origin: str | None = field(default=None, compare=False)
     door_endpoint: str | None = field(default=None, compare=False)
+    runtime_instance_id: str | None = field(default=None, compare=False)
 
     @property
     def ready(self) -> bool:
@@ -387,7 +389,7 @@ def _worker_handoff(value: Mapping[str, Any] | None) -> dict[str, Any]:
         raise BootstrapError("Runtime worker credential handoff is unsafe; " + RECONFIGURE_NEXT_ACTION)
     if not pending:
         try:
-            if stat.S_IMODE(path.stat().st_mode) != 0o600:
+            if not runtime_platform.is_owner_only(path.stat()):
                 raise BootstrapError("Runtime worker credential file must be owner-only; " + RECONFIGURE_NEXT_ACTION)
         except OSError as exc:
             raise BootstrapError("Runtime worker credential handoff is unavailable; " + RECONFIGURE_NEXT_ACTION) from exc
@@ -560,8 +562,7 @@ def _pid_alive(boundary: RuntimeBoundary | None, pid: Any) -> bool:
         # must not authorize cleanup through a different fallback probe.
         return bool(boundary.is_pid_alive(pid_int))
     try:
-        os.kill(pid_int, 0)
-        return True
+        return runtime_platform.process_identity(pid_int) is not None
     except PermissionError:
         return True
     except OSError as exc:
@@ -612,19 +613,12 @@ def _bootstrap_mutex(paths: RuntimePaths):
     handle = paths.bootstrap_lock_path.open("a+")
     owner_only(paths.bootstrap_lock_path)
     try:
-        try:
-            import fcntl
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-        except (ImportError, OSError):
-            # The daemon's instance lock remains the authoritative fallback on
-            # platforms without advisory flock support.
-            pass
+        runtime_platform.lock_file(handle.fileno())
         yield
     finally:
         try:
-            import fcntl
-            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-        except (ImportError, OSError):
+            runtime_platform.unlock_file(handle.fileno())
+        except OSError:
             pass
         handle.close()
 
@@ -860,6 +854,7 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
                 worker.get("worker_credential_file"), worker.get("worker_actor"),
                 worker.get("worker_scopes", ()), source.source_checkout,
                 discovery.get("door_origin"), discovery.get("door_endpoint"),
+                discovery.get("runtime_instance_id"),
             )
         # A dead advertisement is ephemeral support state.  Remove it before
         # starting so a crash cannot be mistaken for a live owner.
@@ -993,6 +988,7 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
         worker.get("worker_credential_file"), worker.get("worker_actor"),
         worker.get("worker_scopes", ()), source.source_checkout,
         handle.get("door_origin") if handle.get("door_endpoint") else None, handle.get("door_endpoint"),
+        instance_id,
     )
 
 
@@ -1031,6 +1027,7 @@ def connect(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCon
         worker.get("worker_credential_file"), worker.get("worker_actor"),
         worker.get("worker_scopes", ()), source.source_checkout,
         discovery.get("door_origin"), discovery.get("door_endpoint"),
+        discovery.get("runtime_instance_id"),
     )
 
 

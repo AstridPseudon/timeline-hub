@@ -6,6 +6,7 @@ import os
 import threading
 import urllib.error
 import subprocess
+import sys
 import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -257,7 +258,7 @@ def test_restart_reconnect_and_catalog_discovery(daemon, tmp_path):
 
 
 def test_doctor_can_run_while_daemon_owns_realm(daemon, tmp_path):
-    completed = subprocess.run(["python3", "-m", "runtime_protocol", "doctor", "--root", str(tmp_path / "realm"), "--json"], capture_output=True, text=True, check=True, cwd=str(Path(__file__).parents[1]), env={**os.environ, "PYTHONPATH": str(Path(__file__).parents[1])})
+    completed = subprocess.run([sys.executable, "-m", "runtime_protocol", "doctor", "--root", str(tmp_path / "realm"), "--json"], capture_output=True, text=True, check=True, cwd=str(Path(__file__).parents[1]), env={**os.environ, "PYTHONPATH": str(Path(__file__).parents[1])})
     assert json.loads(completed.stdout)["ok"] is True
 
 
@@ -292,7 +293,7 @@ def test_offline_core_store_and_read_only_doctor(tmp_path):
     service = RuntimeService(root)
     project = service.create_project({"slug": "offline", "name": "Offline", "metadata": {}})
     service.close()
-    completed = subprocess.run(["python3", "-m", "runtime_protocol", "doctor", "--root", str(root), "--json"], capture_output=True, text=True, check=True, cwd=str(Path(__file__).parents[1]), env={**os.environ, "PYTHONPATH": str(Path(__file__).parents[1])})
+    completed = subprocess.run([sys.executable, "-m", "runtime_protocol", "doctor", "--root", str(root), "--json"], capture_output=True, text=True, check=True, cwd=str(Path(__file__).parents[1]), env={**os.environ, "PYTHONPATH": str(Path(__file__).parents[1])})
     report = json.loads(completed.stdout)
     assert report["state"] == "ready" and report["ok"] is True
     assert project["slug"] == "offline"

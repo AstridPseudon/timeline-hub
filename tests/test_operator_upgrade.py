@@ -51,7 +51,7 @@ class _Boundary:
 
 def _fixture(tmp_path, *, live=True, runtime_checkout=None, version=25):
     support = tmp_path / "support"
-    paths = RuntimePaths.current_mac(data_root=support)
+    paths = RuntimePaths.current(data_root=support)
     paths.ensure_support_dirs()
     realm_root = paths.realms_dir / "realm-1"
     RealmStore.initialize(realm_root, realm_id="realm-1").close()

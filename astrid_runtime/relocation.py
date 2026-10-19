@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import replace
-import os
+from runtime_protocol.dirfd import filesystem as os
+from runtime_protocol import platform
 from pathlib import Path
 import time
 import uuid
@@ -149,7 +150,7 @@ def _restore_metadata(root: Path, snapshot: Mapping[Path, bytes]) -> None:
 
 def _fsync_directory(path: Path) -> None:
     try:
-        fd = os.open(path, os.O_RDONLY)
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
         try:
             os.fsync(fd)
         finally:
@@ -193,13 +194,14 @@ def _reject_live_pack_host(paths: RuntimePaths) -> None:
                 raise RelocationError("Astrid generic host is active; stop it through the host manager before relocation")
             continue
         try:
-            os.kill(pid, 0)
+            if platform.process_identity(pid) is None:
+                continue
         except ProcessLookupError:
             continue
         except PermissionError:
             raise RelocationError("Astrid generic host ownership cannot be verified; stop it through the host manager")
-        except OSError:
-            continue
+        except OSError as exc:
+            raise RelocationError("Astrid generic host liveness is unknown; stop it through the host manager") from exc
         raise RelocationError("Astrid generic host is active; stop it through the host manager before relocation")
 
 
@@ -286,7 +288,7 @@ def relocate(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCo
         raise RelocationError(f"relocation requires confirmation exactly {plan['confirmation']!r}")
     old_support = Path(plan["current_support_root"])
     new_support = Path(plan["destination_support_root"])
-    target_paths = RuntimePaths.current_mac(data_root=new_support)
+    target_paths = RuntimePaths.current(data_root=new_support)
 
     with _bootstrap_mutex(paths):
         # Recheck paths after acquiring the launcher fence.

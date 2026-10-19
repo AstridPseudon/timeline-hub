@@ -279,7 +279,7 @@ def upgrade_workspace(
                 paths, boundary, config, None, destination=destination,
                 confirmation=f"RELOCATE {realm_id}",
             )
-            final_paths = RuntimePaths.current_mac(data_root=destination)
+            final_paths = RuntimePaths.current(data_root=destination)
             _journal(final_paths, operation_id=operation_id, state="complete", realm_id=realm_id, migration=migration, verification=verification, relocation=relocation_result)
         else:
             _journal(paths, operation_id=operation_id, state="complete", realm_id=realm_id, migration=migration, verification=verification)
@@ -300,7 +300,7 @@ def upgrade_workspace(
         state = "failed" if restarted or not stopped else "recovery_required"
         journal_root = paths.runtime_support if paths.runtime_support.is_dir() else None
         if journal_root is None and destination is not None:
-            candidate = RuntimePaths.current_mac(data_root=destination).runtime_support
+            candidate = RuntimePaths.current(data_root=destination).runtime_support
             if candidate.is_dir():
                 journal_root = candidate
         if journal_root is not None:

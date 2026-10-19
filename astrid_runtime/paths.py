@@ -1,4 +1,4 @@
-"""Support paths for the current-Mac beta composition.
+"""Native per-user support paths for the Runtime.
 
 The production default is intentionally boring and explicit.  Tests and local
 development can inject ``home`` (or individual roots) without changing any
@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import os
+
+from runtime_protocol import platform
 
 
 DATA_ROOT_ENV = "ASTRID_RUNTIME_DATA_ROOT"
@@ -29,28 +31,24 @@ class RuntimePaths:
     bootstrap_lock_path: Path
 
     @classmethod
-    def current_mac(
+    def current(
         cls,
         home: Path | str | None = None,
         *,
         data_root: Path | str | None = None,
     ) -> "RuntimePaths":
-        """Resolve support paths without coupling them to the process cwd.
+        """Resolve the native per-user support paths without using the cwd.
 
-        ``home`` retains its original meaning: a macOS home directory whose
-        support tree is ``Library/Application Support/Astrid Runtime``.  A data
-        root is an explicit installation-owned support root and is used as
-        supplied, so passing ``Astrid/.astrid-data`` cannot create a nested
-        ``Library/Application Support`` tree below the checkout.
+        An explicit data root is used as supplied.
         """
-        home_path = Path(home or os.environ.get("HOME", "~")).expanduser()
+        home_path = Path(home).expanduser() if home is not None else Path.home()
         configured_root = data_root if data_root is not None else os.environ.get(DATA_ROOT_ENV)
         if configured_root:
             app_support = Path(configured_root).expanduser()
             if not app_support.is_absolute():
                 raise ValueError(f"{DATA_ROOT_ENV} must be an absolute path")
         else:
-            app_support = home_path / "Library" / "Application Support" / "Astrid Runtime"
+            app_support = platform.data_root(home_path)
         runtime = app_support / "runtime"
         return cls(
             home=home_path,
@@ -67,10 +65,10 @@ class RuntimePaths:
 
     @classmethod
     def sandbox(cls, root: Path | str) -> "RuntimePaths":
-        """An injectable current-Mac-shaped filesystem rooted at ``root``."""
+        """An injectable macOS-shaped fixture filesystem rooted at ``root``."""
 
         home = Path(root)
-        return cls.current_mac(home, data_root=home / "Library" / "Application Support" / "Astrid Runtime")
+        return cls.current(home, data_root=home / "Library" / "Application Support" / "Astrid Runtime")
 
     def ensure_support_dirs(self) -> None:
         for directory in (
@@ -81,7 +79,4 @@ class RuntimePaths:
             self.source_profiles_dir,
         ):
             directory.mkdir(parents=True, exist_ok=True)
-            try:
-                directory.chmod(0o700)
-            except OSError:
-                pass
+            platform.owner_only(directory, directory=True)

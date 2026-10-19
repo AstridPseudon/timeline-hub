@@ -4,7 +4,7 @@ import argparse
 import json
 import math
 import os
-import signal
+from . import platform
 import sqlite3
 import shutil
 import time
@@ -385,12 +385,12 @@ def main(argv=None):
     def handle(*_):
         nonlocal stop
         stop = True
-    signal.signal(signal.SIGINT, handle)
-    signal.signal(signal.SIGTERM, handle)
+    restore = platform.install_stop_handlers(handle)
     try:
         while not stop:
             time.sleep(0.2)
     finally:
+        restore()
         daemon.stop()
     return 0
 

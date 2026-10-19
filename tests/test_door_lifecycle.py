@@ -397,6 +397,7 @@ def _result(door_origin):
     return BootstrapResult(
         "started", "realm-1", "Door Test", "http://127.0.0.1:1", "astrid-door-product", "astrid",
         door_origin=door_origin, door_endpoint="http://127.0.0.1:2" if door_origin else None,
+        runtime_instance_id="door-instance",
     )
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
+from .dirfd import filesystem as os
 import secrets
 import stat
 import tempfile
@@ -10,6 +10,7 @@ import threading
 import uuid
 from pathlib import Path
 
+from . import platform
 from .errors import AuthorizationError, ValidationError
 
 
@@ -19,13 +20,13 @@ class CredentialStore:
     def __init__(self, root: str | Path):
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
-        self.root.chmod(0o700)
+        platform.owner_only(self.root, directory=True)
         self._lock = threading.RLock()
         self._disabled_actors: set[str] = set()
 
     @staticmethod
     def _actor(actor: str) -> str:
-        if not actor or "/" in actor or ".." in actor:
+        if not actor or any(part in actor for part in ("/", "\\", ":", "..")):
             raise ValidationError("invalid actor")
         return actor
 
@@ -55,22 +56,20 @@ class CredentialStore:
             raise ValidationError(f"{label} is unavailable") from exc
         if path.is_symlink() or not stat.S_ISREG(value.st_mode):
             raise ValidationError(f"{label} must be a regular non-symlink file")
-        if value.st_uid != getattr(os, "getuid", lambda: value.st_uid)():
-            raise ValidationError(f"{label} owner does not match the runtime")
-        if stat.S_IMODE(value.st_mode) != 0o600:
+        if not platform.is_owner_only(value):
             raise ValidationError(f"{label} must be owner-only")
 
     def _atomic_replace(self, path: Path, value: bytes) -> None:
         descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=self.root)
         temporary = Path(temporary_name)
         try:
-            os.fchmod(descriptor, 0o600)
+            platform.owner_only(descriptor)
             with os.fdopen(descriptor, "wb") as handle:
                 handle.write(value)
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary, path)
-            path.chmod(0o600)
+            platform.owner_only(path)
         finally:
             temporary.unlink(missing_ok=True)
 

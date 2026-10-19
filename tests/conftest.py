@@ -33,6 +33,11 @@ def owned_process_groups():
 def pytest_sessionfinish(session, exitstatus):
     """Catch a CLI daemon that outlived its pytest child fixture."""
     _ = exitstatus
+    if sys.platform == "win32":
+        # Windows has no portable process-table/session inventory equivalent
+        # to the POSIX `ps` query below. Test-owned trees are closed by their
+        # ProcessGroups Job handles instead.
+        return
     try:
         basetemp = Path(session.config._tmp_path_factory.getbasetemp()).resolve()
         listing = subprocess.run(
@@ -156,7 +161,8 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path
         env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
         check=True,
     )
-    pip = environment / "bin" / "pip"
+    scripts = "Scripts" if os.name == "nt" else "bin"
+    pip = environment / scripts / ("pip.exe" if os.name == "nt" else "pip")
     wheels = sorted(wheelhouse.glob("*.whl"))
     if len(wheels) != 2:
         raise RuntimeError(f"expected two local Stage 1 wheels, found {len(wheels)}")

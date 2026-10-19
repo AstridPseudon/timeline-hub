@@ -7,16 +7,16 @@ into authority. A pending entry cannot be blindly reexecuted after a crash.
 from __future__ import annotations
 
 import contextlib
-import fcntl
 import hashlib
 import json
-import os
+from .dirfd import filesystem as os
 from pathlib import Path
 import re
 import stat
 import time
 
 from .errors import ConflictError, ValidationError
+from . import platform as runtime_platform
 
 VERSION = "runtime.local-execution-handoff/v1"
 FENCE_VERSION = "runtime.local-execution-claim-fence/v1"
@@ -272,17 +272,18 @@ class HandoffJournal:
     @contextlib.contextmanager
     def locked(self, *, transition_authority=None):
         parent = self.path.parent.lstat()
-        if not stat.S_ISDIR(parent.st_mode) or self.path.parent.is_symlink() or parent.st_uid != os.getuid() or stat.S_IMODE(parent.st_mode) != 0o700:
+        if not stat.S_ISDIR(parent.st_mode) or self.path.parent.is_symlink() or not runtime_platform.is_owner_only(parent, directory=True):
             raise ConflictError("handoff journal scope is unprotected")
         fd = os.open(self.path.with_suffix(".lock"), os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
+        locked = False
         try:
             observed = os.fstat(fd)
-            if not stat.S_ISREG(observed.st_mode) or observed.st_uid != os.getuid() or stat.S_IMODE(observed.st_mode) != 0o600:
+            if not stat.S_ISREG(observed.st_mode) or not runtime_platform.is_owner_only(observed):
                 raise ConflictError("handoff journal lock is unprotected")
             deadline = time.monotonic() + self.timeout
             while True:
                 try:
-                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB); break
+                    runtime_platform.lock_file(fd, exclusive=True, blocking=False); locked = True; break
                 except BlockingIOError:
                     if time.monotonic() >= deadline:
                         raise ConflictError("handoff journal lock is unresolved")
@@ -310,6 +311,8 @@ class HandoffJournal:
                 self.writer_generation = 1
             yield state
         finally:
+            if locked:
+                runtime_platform.unlock_file(fd)
             os.close(fd)
 
     def begin(self, request):

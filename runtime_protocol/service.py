@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from . import platform
+
 from .cas import ContentAddressedStore, StagedObject, DEFAULT_MAX_OBJECT_BYTES, file_identity
 from .backup import create_backup, restore_backup, structured_export
 from .store import (
@@ -25,7 +27,7 @@ import sqlite3
 import base64
 import copy
 import hmac
-import os
+from .dirfd import filesystem as os
 import re
 import secrets
 import subprocess
@@ -7804,7 +7806,7 @@ class RuntimeService:
         stage_dir.mkdir(parents=True, exist_ok=True)
         if stage_dir.is_symlink() or not stage_dir.is_dir():
             raise ValidationError("attempt staging directory is invalid")
-        stage_dir.chmod(0o700)
+        platform.owner_only(stage_dir)
         staged = []
         seen = set()
         content_metadata = {}

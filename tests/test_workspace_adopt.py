@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import fcntl
 import hashlib
 from pathlib import Path
 import sqlite3
@@ -13,6 +12,7 @@ from astrid_runtime.workspace_adopt import WorkspaceAdoptError, adopt_workspace
 from runtime_protocol.store import RealmStore
 from runtime_protocol.upgrade import inspect_canonical_schema
 from runtime_protocol.store import SCHEMA_VERSION
+from runtime_protocol import platform as runtime_platform
 
 
 class _Boundary:
@@ -41,7 +41,7 @@ def _setup(tmp_path):
         connection.close()
     (root / "cas" / "sha256" / "aa").mkdir(parents=True)
     (root / "cas" / "sha256" / "aa" / "sample").write_bytes(b"sample-media")
-    paths = RuntimePaths.current_mac(data_root=tmp_path / "new")
+    paths = RuntimePaths.current(data_root=tmp_path / "new")
     profile = SourceProfile("astrid", str(tmp_path), str(tmp_path))
     config = BootstrapConfig(source_profile=profile)
     return root, paths, config
@@ -72,7 +72,7 @@ def test_adopts_v26_without_modifying_source(tmp_path, monkeypatch):
 def test_refuses_live_source_with_stop_instruction(tmp_path, monkeypatch):
     root, paths, config = _setup(tmp_path)
     with (root / "owner.lock").open("r+") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        runtime_platform.lock_file(lock.fileno(), exclusive=True, blocking=False)
         with pytest.raises(WorkspaceAdoptError, match="stop the old runtime first"):
             _adopt(root, paths, config, monkeypatch)
     assert not (paths.realms_dir / "film").exists()
@@ -167,7 +167,7 @@ def _live_backup(tmp_path):
     store.record_object(digest, len(media), "application/octet-stream")
     backup = tmp_path / "backup"
     create_backup(store, backup, key_path=tmp_path / "backup-auth.key")
-    paths = RuntimePaths.current_mac(data_root=tmp_path / "new")
+    paths = RuntimePaths.current(data_root=tmp_path / "new")
     config = BootstrapConfig(source_profile=SourceProfile("astrid", str(tmp_path), str(tmp_path)))
     return store, backup, paths, config
 
@@ -233,7 +233,7 @@ def test_adopts_authenticated_backup_with_live_source_owner(tmp_path, monkeypatc
         result = _adopt_from(backup, paths, config, monkeypatch)
         with pytest.raises(BlockingIOError):
             with (store.root / "owner.lock").open("r+") as contender:
-                fcntl.flock(contender, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                runtime_platform.lock_file(contender.fileno(), exclusive=True, blocking=False)
         assert _fingerprints(store.root) == source_before
         assert _fingerprints(backup) == before
     finally:

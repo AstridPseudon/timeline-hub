@@ -13,6 +13,7 @@ import pytest
 
 from astrid_runtime.bootstrap import BootstrapError, SourceProfile
 from astrid_runtime.runtime_boundary import ADMISSION_TIMEOUT_ENV, LocalRuntimeBoundary
+from runtime_protocol import platform as runtime_platform
 
 
 class _Response:
@@ -206,8 +207,8 @@ def _stub_owner_broker(monkeypatch, child, *, exit_during_signal=False):
 
     monkeypatch.setattr(boundary_module, "RoleBoundCustodyBroker", Broker)
     child._runtime_custody_broker = Broker()
-    monkeypatch.setattr(os, "kill", lambda *_: pytest.fail("numeric PID fallback"))
-    monkeypatch.setattr(os, "killpg", lambda *_: pytest.fail("numeric PGID fallback"))
+    monkeypatch.setattr(runtime_platform, "signal_process", lambda *_: pytest.fail("numeric PID fallback"))
+    monkeypatch.setattr(runtime_platform, "signal_tree", lambda *_: pytest.fail("numeric PGID fallback"))
     return boundary_module
 
 
@@ -286,7 +287,7 @@ def test_runtime_spawn_retains_owner_and_wires_escrow_before_seal(tmp_path, monk
 def _runtime_handoff_fixture(tmp_path, monkeypatch):
     from astrid_runtime import custody_broker as custody
     from astrid_runtime import runtime_boundary as module
-    uid = os.getuid()
+    uid = runtime_platform.current_user()
     identities = {pid: {"pid": pid, "uid": uid, "birth_id": f"birth-{pid}"} for pid in (101, 102, 103)}
     tokens = {pid: {"pid": pid, "uid": uid, "pidversion": pid + 1,
                     "sha256": f"sha256:token-{pid}", "words": [pid] * 8} for pid in identities}
@@ -354,7 +355,7 @@ def _detached_runtime(tmp_path, monkeypatch, *, release=True):
     monkeypatch.setattr(boundary, "process_birth_identity", lambda pid: identities.get(pid, {}).get("birth_id"))
     monkeypatch.setattr(boundary, "_http_health_payload", lambda _: {"status": "ok", "runtime_instance_id": "instance"})
     monkeypatch.setattr(boundary, "endpoint_metadata", lambda **_: {"runtime_instance_id": "instance", "realm_id": "realm"})
-    monkeypatch.setattr(module.os, "getpgid", lambda _: 103)
+    monkeypatch.setattr(module.platform, "process_group", lambda _: 103)
     monkeypatch.setattr(module, "load_sealed_capability", lambda *a, **kw: {"reference": {"role_custody": sealed}, "owner_epoch": "runtime-A"})
     monkeypatch.setattr(module, "RoleCustodyAuthority", lambda *args, **kwargs: authority)
     monkeypatch.setattr(module.AuthenticatedCleanupActor, "current", classmethod(lambda cls: actors[102]))
@@ -509,42 +510,17 @@ def test_postterm_escalation_allows_withdrawal_but_rejects_replacement(tmp_path,
 
 
 @pytest.mark.parametrize("outcome", ["live", "absent", "unknown"])
-def test_darwin_boundary_birth_reuses_shared_identity_without_subprocess(monkeypatch, outcome):
+def test_boundary_birth_uses_shared_platform_identity(monkeypatch, outcome):
     from astrid_runtime import runtime_boundary as module
-    from astrid_runtime.custody_broker import CustodyError
-    monkeypatch.setattr(module.sys, "platform", "darwin")
+    from runtime_protocol import platform
     calls = []
-    def observe(pid):
-        calls.append(pid)
-        if outcome == "unknown":raise CustodyError("observation denied")
-        return None if outcome == "absent" else {"pid": pid, "uid": 501, "parent_pid": 41, "birth_id": "ps-lstart:Fri Oct  9 18:21:21 2026"}
-    monkeypatch.setattr(module, "default_process_identity", observe)
-    monkeypatch.setattr(module.subprocess, "run", lambda *a, **k: pytest.fail("boundary Darwin ps invoked"))
-    assert LocalRuntimeBoundary.process_birth_identity(123) == ("ps-lstart:Fri Oct  9 18:21:21 2026" if outcome == "live" else None)
-    assert calls == [123]
-
-
-def test_non_darwin_boundary_birth_keeps_proc_start_ticks(monkeypatch):
-    from astrid_runtime import runtime_boundary as module
-    monkeypatch.setattr(module.sys, "platform", "linux")
-    monkeypatch.setattr(module.Path, "read_text", lambda *a, **k: "123 (name with spaces) " + " ".join(str(i) for i in range(25)))
-    monkeypatch.setattr(module.subprocess, "run", lambda *a, **k: pytest.fail("proc marker fell through"))
-    assert LocalRuntimeBoundary.process_birth_identity(123) == "proc-start-ticks:19"
-
-
-def test_non_darwin_boundary_birth_keeps_ps_fallback(monkeypatch):
-    from astrid_runtime import runtime_boundary as module
-    monkeypatch.setattr(module.sys, "platform", "linux")
-    def missing(*a, **k):raise FileNotFoundError
-    monkeypatch.setattr(module.Path, "read_text", missing)
-    calls = []
-    def run(argv, **kwargs):
-        calls.append((argv, kwargs))
-        return SimpleNamespace(returncode=0, stdout="Fri Oct  9 18:21:21 2026\n")
-    monkeypatch.setattr(module.subprocess, "run", run)
-    assert LocalRuntimeBoundary.process_birth_identity(123) == "ps-lstart:Fri Oct  9 18:21:21 2026"
-    assert calls[0][0] == ["ps", "-p", "123", "-o", "lstart="]
-    assert calls[0][1]["timeout"] == 1
+    def observe(pid, *, timeout=1.0):
+        calls.append((pid, timeout))
+        if outcome == "unknown": raise OSError("observation denied")
+        return None if outcome == "absent" else {"pid": pid, "uid": 501, "parent_pid": 41, "birth_id": "proc-start-ticks:19"}
+    monkeypatch.setattr(platform, "process_identity", observe)
+    assert LocalRuntimeBoundary.process_birth_identity(123) == ("proc-start-ticks:19" if outcome == "live" else None)
+    assert calls == [(123, 1.0)]
 
 
 @pytest.mark.parametrize("configured, expected", [(None, "120.0"), ("37.5", "37.5")])

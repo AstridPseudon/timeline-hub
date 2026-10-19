@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import multiprocessing
+import os
 
 import pytest
 
@@ -167,6 +168,7 @@ def _register_catalog_worker(path, realm_id, ready, release, result):
         result.put((realm_id, type(exc).__name__, str(exc)))
 
 
+@pytest.mark.skipif(os.name == "nt", reason="multiprocessing fork is unavailable on Windows")
 def test_catalog_full_read_modify_write_preserves_parallel_registrations(tmp_path):
     support = tmp_path / "support"
     support.mkdir()

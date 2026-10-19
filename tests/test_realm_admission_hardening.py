@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-import fcntl
+import os
 import json
 import multiprocessing
 import sqlite3
@@ -19,6 +19,7 @@ from runtime_protocol.errors import ConflictError, OwnerBusyError, RealmAdmissio
 from runtime_protocol.canonical_schema import CANONICAL_FORMAT_ID
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import SCHEMA_VERSION, RealmStore
+from runtime_protocol import platform as runtime_platform
 
 
 def _tree_bytes(root: Path) -> dict[str, str]:
@@ -82,7 +83,7 @@ def test_existing_owner_is_rejected_before_sqlite_admission_snapshot(tmp_path, m
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     owner = (root / "owner.lock").open("a+")
-    fcntl.flock(owner.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    runtime_platform.lock_file(owner.fileno(), exclusive=True, blocking=False)
     inspected = False
 
     def fail_inspection(cls, *_args, **_kwargs):
@@ -95,13 +96,14 @@ def test_existing_owner_is_rejected_before_sqlite_admission_snapshot(tmp_path, m
         with pytest.raises(OwnerBusyError):
             RealmStore(root)
     finally:
-        fcntl.flock(owner.fileno(), fcntl.LOCK_UN)
+        runtime_platform.unlock_file(owner.fileno())
         owner.close()
 
     assert not inspected
     assert not (root / "admission.lock").exists()
 
 
+@pytest.mark.skipif(os.name == "nt", reason="multiprocessing fork is unavailable on Windows")
 def test_concurrent_admission_serializes_owner_and_never_reports_sqlite_race(tmp_path):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()

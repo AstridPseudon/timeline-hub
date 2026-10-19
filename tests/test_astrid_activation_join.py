@@ -635,6 +635,7 @@ def _run_case(tmp_path, astrid_root, *, drop_ack=False, misbind=False):
       "profile":profile,"result":result,"initiating_error":initiating_error,"cleanup":cleanup}
 
 
+@pytest.mark.skipif(os.name == "nt", reason="relay integration requires POSIX inherited descriptors")
 def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_path, astrid_root):
     main=_run_case(tmp_path,astrid_root)
     launcher=main["launcher"]; credentials=main["credentials"]; adapter=main["adapter"]; events=main["events"]
@@ -1289,6 +1290,7 @@ class _JoinedProtocolLauncher(LocalWorkerLauncher):
         return None
 
 
+@pytest.mark.skipif(os.name == "nt", reason="relay integration requires POSIX inherited descriptors")
 def test_runtime_relay_to_generic_host_successor_finalization_cpu(tmp_path, astrid_root, monkeypatch):
     """One joined journey, four scenarios; no ACK/journal validator substitute."""
     import copy

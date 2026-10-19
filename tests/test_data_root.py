@@ -8,7 +8,7 @@ from astrid_runtime.cli import parser
 
 def test_explicit_data_root_is_used_without_mac_support_suffix(tmp_path):
     root = tmp_path / "Astrid" / ".astrid-data"
-    paths = RuntimePaths.current_mac(tmp_path / "home", data_root=root)
+    paths = RuntimePaths.current(tmp_path / "home", data_root=root)
 
     assert paths.app_support == root
     assert paths.runtime_support == root / "runtime"
@@ -19,7 +19,7 @@ def test_explicit_data_root_is_used_without_mac_support_suffix(tmp_path):
 
 def test_relative_data_root_is_rejected(tmp_path):
     with pytest.raises(ValueError, match="absolute"):
-        RuntimePaths.current_mac(tmp_path, data_root=".astrid-data")
+        RuntimePaths.current(tmp_path, data_root=".astrid-data")
 
 
 def test_lifecycle_commands_accept_data_root(tmp_path):
@@ -30,7 +30,7 @@ def test_lifecycle_commands_accept_data_root(tmp_path):
 def test_environment_data_root_and_explicit_precedence_are_isolated(tmp_path, monkeypatch):
     configured = tmp_path / "configured"
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(configured))
-    assert RuntimePaths.current_mac().app_support == configured
-    assert RuntimePaths.current_mac(data_root=tmp_path / "explicit").app_support == tmp_path / "explicit"
+    assert RuntimePaths.current().app_support == configured
+    assert RuntimePaths.current(data_root=tmp_path / "explicit").app_support == tmp_path / "explicit"
     assert RuntimePaths.sandbox(tmp_path / "sandbox").app_support != configured
     assert not configured.exists()

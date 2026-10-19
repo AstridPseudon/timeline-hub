@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-import os
+from .dirfd import filesystem as os
 import stat
 import uuid
 from dataclasses import dataclass

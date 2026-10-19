@@ -14,6 +14,7 @@ from types import SimpleNamespace
 import pytest
 
 from runtime_protocol.errors import ConflictError
+from runtime_protocol import platform as runtime_platform
 from runtime_protocol.local_worker import LocalWorkerProfile, ProcessIdentity
 from runtime_protocol.local_worker_composition import (
     CrossProcessWorkerPreparer,
@@ -146,12 +147,8 @@ def test_independent_inspector_rejects_worker_birth_claim(tmp_path: Path, monkey
         "session_config_digest": profile.session_config_digest,
     }
     monkeypatch.setattr(
-        "runtime_protocol.local_worker_composition.process_birth_identity",
-        lambda observed_pid: "independently-observed-birth",
-    )
-    monkeypatch.setattr(
-        "runtime_protocol.local_worker_composition._ps",
-        lambda observed_pid, field: str(os.getpid()) if field == "ppid" else str(Path(sys.executable)),
+        "runtime_protocol.local_worker_composition.runtime_platform.process_identity",
+        lambda observed_pid: {"pid": observed_pid, "birth_id": "independently-observed-birth"},
     )
     handle = SimpleNamespace(report_value=report)
     with pytest.raises(ConflictError, match="birth identity"):
@@ -241,7 +238,7 @@ def _patch_inspector_os(monkeypatch, inspector):
     def identity(pid, birth, executable, digest, **kwargs):
         parents = {100: os.getpid(), 101: 100, 102: 100, 103: 102}
         groups = {100: 100, 101: 101, 102: 102, 103: 102}
-        return ProcessIdentity(pid, birth, os.getuid(), parents[pid], groups[pid], groups[pid], executable, digest)
+        return ProcessIdentity(pid, birth, runtime_platform.current_user(), parents[pid], groups[pid], groups[pid], executable, digest)
 
     monkeypatch.setattr(inspector, "_identity", identity)
     monkeypatch.setattr(
@@ -321,12 +318,12 @@ def test_cross_process_abort_is_bounded_and_reaps_after_kill(tmp_path, monkeypat
     monkeypatch.setattr(preparer, "_birth", lambda _pid: "birth")
     signals = []
 
-    def killpg(_pid, sent_signal):
+    def kill_tree(_process, sent_signal):
         signals.append(sent_signal)
         if sent_signal == signal.SIGKILL:
             worker.returncode = -signal.SIGKILL
 
-    monkeypatch.setattr("runtime_protocol.local_worker_composition.os.killpg", killpg)
+    monkeypatch.setattr("runtime_protocol.local_worker_composition.runtime_platform.signal_tree", kill_tree)
     try:
         with pytest.raises((TimeoutError, OSError)):
             preparer.abort(handle)
@@ -404,14 +401,14 @@ def test_relay_receipt_v4_binds_epoch_scope_roles_and_selected_profile(tmp_path)
     for role, pid, birth in (("relay", 20, "relay-birth"), ("host", 21, "host-birth")):
         refs[role] = {**refs["engine"], "role": role, "target": {**refs["engine"]["target"], "pid": pid, "birth_id": birth}}
     for ref in refs.values():
-        ref["target"] = {**ref["target"], "uid": os.getuid()}
+        ref["target"] = {**ref["target"], "uid": runtime_platform.current_user()}
     host_report = {**host_report, "custody_capabilities": {role: refs[role] for role in ("engine", "engine_listener")}}
     report = preparation_report(selected, host_report, relay_process={"pid": 20, "birth_id": "relay-birth"}, relay_reference=refs["relay"], host_reference=refs["host"])
     processes = {}
     for role, pid, parent, birth in (("worker", 20, 19, "relay-birth"), ("host", 21, 20, "host-birth"), ("engine", 22, 21, "engine-birth"), ("engine_listener", 23, 22, "listener-birth")):
         exe_name = "worker" if role == "worker" else role
-        processes[role] = ProcessIdentity(pid, birth, os.getuid(), parent, 22 if role == "engine_listener" else pid, 22 if role == "engine_listener" else pid, getattr(profile, exe_name + "_executable"), getattr(profile, exe_name + "_artifact_digest"))
-    observed = LocalWorkerObservation(profile.machine_id, os.getuid(), profile.workspace_uuid, profile.realm_root, profile.support_root, **processes, engine_listener_socket_owner_pid=23, engine_endpoint=profile.engine_endpoint, session_config_digest=profile.session_config_digest, owner_epoch="runtime-epoch", custody_scope=selected["custody_scope"], custody_capabilities=refs)
+        processes[role] = ProcessIdentity(pid, birth, runtime_platform.current_user(), parent, 22 if role == "engine_listener" else pid, 22 if role == "engine_listener" else pid, getattr(profile, exe_name + "_executable"), getattr(profile, exe_name + "_artifact_digest"))
+    observed = LocalWorkerObservation(profile.machine_id, runtime_platform.current_user(), profile.workspace_uuid, profile.realm_root, profile.support_root, **processes, engine_listener_socket_owner_pid=23, engine_endpoint=profile.engine_endpoint, session_config_digest=profile.session_config_digest, owner_epoch="runtime-epoch", custody_scope=selected["custody_scope"], custody_capabilities=refs)
     launcher = object.__new__(LocalWorkerLauncher)
     launcher.runtime_pid = 19
     launcher.workspace_uuid = profile.workspace_uuid
@@ -434,8 +431,8 @@ def test_relay_stop_without_retained_control_never_uses_numeric_signal(tmp_path,
     document, _, support, _ = _profile_document(tmp_path)
     profile = LocalWorkerProfile(**{k: Path(v) if k in {"realm_root", "support_root", "worker_executable", "host_executable", "engine_executable", "engine_listener_executable"} else v for k, v in __import__("test_local_execution_supervisor")._prepare_case()[0]["profile"].items()})
     preparer = CrossProcessWorkerPreparer(profile=profile, config={}, environment={})
-    monkeypatch.setattr(os, "kill", lambda *_: pytest.fail("numeric fallback"))
-    monkeypatch.setattr(os, "killpg", lambda *_: pytest.fail("numeric fallback"))
+    monkeypatch.setattr(runtime_platform, "signal_process", lambda *_: pytest.fail("numeric fallback"))
+    monkeypatch.setattr(runtime_platform, "signal_tree", lambda *_: pytest.fail("numeric fallback"))
     with pytest.raises(ConflictError, match="retained control"):
         preparer.stop_owned({})
 
@@ -502,8 +499,7 @@ def test_relay_adoption_failure_retains_nonchild_cleanup_obligation(tmp_path, mo
     preparer = CrossProcessWorkerPreparer(profile=profile, config={}, environment={})
     a, b = socket.socketpair()
     obligation = SimpleNamespace(control=a, inherited_from="A", cleanup_unresolved=True)
-    monkeypatch.setattr(os, "kill", lambda *_: pytest.fail("numeric fallback"))
-    monkeypatch.setattr(os, "waitpid", lambda *_: pytest.fail("nonchild wait"))
+    monkeypatch.setattr(runtime_platform, "signal_process", lambda *_: pytest.fail("numeric fallback"))
     try:
         with pytest.raises(ConflictError, match="fresh authenticated B"):
             preparer.adopt_control_descriptor(obligation, {}, {})
@@ -582,8 +578,8 @@ def test_host_only_nonchild_stop_and_reconnect_never_signal(tmp_path, monkeypatc
     from test_local_worker import host_only_profile_case
     profile=host_only_profile_case()
     preparer=CrossProcessWorkerPreparer(profile=profile,config={},environment={})
-    monkeypatch.setattr(os,'kill',lambda *args:pytest.fail('numeric PID cleanup'))
-    monkeypatch.setattr(os,'killpg',lambda *args:pytest.fail('numeric group cleanup'))
+    monkeypatch.setattr(runtime_platform,'signal_process',lambda *args:pytest.fail('numeric PID cleanup'))
+    monkeypatch.setattr(runtime_platform,'signal_tree',lambda *args:pytest.fail('numeric group cleanup'))
     with pytest.raises(ConflictError,match='original retained'):
         preparer.stop_owned({'host':{'pid':123,'birth_id':'old'}})
     with pytest.raises(ConflictError,match='unsupported'):
@@ -617,7 +613,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     from runtime_protocol import verified_host_launch, local_execution_supervisor
     import astrid_runtime.custody_broker as custody
     original=SimpleNamespace(pid=4242)
-    identity={'pid':4242,'birth_id':'original','uid':os.getuid()}
+    identity={'pid':4242,'birth_id':'original','uid':runtime_platform.current_user()}
     selected=host_only_profile_case()
     profile=replace(selected,support_root=tmp_path)
     config={**profile.host_launch,'runtime_endpoint':'http://127.0.0.1:1','runtime_instance_id':'epoch',
@@ -659,7 +655,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     monkeypatch.setattr(verified_host_launch,'TrustedLocalHostLaunchVerifier',Verifier)
     monkeypatch.setattr(local_execution_supervisor,'RetainedProcess',Retained)
     monkeypatch.setattr(custody,'RoleBoundCustodyBroker',Broker)
-    monkeypatch.setattr(custody,'default_process_identity',lambda pid:{'pid':os.getpid(),'uid':os.getuid(),'parent_pid':1,'birth_id':'owner'})
+    monkeypatch.setattr(custody,'default_process_identity',lambda pid:{'pid':os.getpid(),'uid':runtime_platform.current_user(),'parent_pid':1,'birth_id':'owner'})
     monkeypatch.setattr(module,'_installed_host_release',lambda *args:{})
     monkeypatch.setattr(module.subprocess,'Popen',popen)
     monkeypatch.setattr(module,'_frame_send',lambda channel,value:captures.update(request=value))
@@ -720,11 +716,12 @@ def test_host_only_custody_scope_alias_never_mutates_target(tmp_path):
     assert not list(target.iterdir())
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Windows owner-only checks use profile ACLs, not POSIX uid metadata")
 def test_host_only_custody_scope_wrong_owner_never_grants_authority(tmp_path,monkeypatch):
     from runtime_protocol.local_worker_composition import _create_host_custody_scope
     scope=tmp_path/'operation'
-    original_uid=os.getuid()
-    monkeypatch.setattr(os,'getuid',lambda:original_uid+1)
+    original_uid=runtime_platform.current_user()
+    monkeypatch.setattr(runtime_platform,'current_user',lambda:original_uid+1)
     with pytest.raises(ConflictError,match='not owner-only'):
         _create_host_custody_scope(scope)
     assert scope.stat().st_uid==original_uid

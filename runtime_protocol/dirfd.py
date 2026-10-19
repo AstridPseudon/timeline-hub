@@ -10,15 +10,258 @@ re-opened as the authority for a material write.
 
 from __future__ import annotations
 
-import os
+import os as _os
 from pathlib import Path
 import stat
 import time
 import hashlib
 import json
+from contextlib import contextmanager
 from typing import Any, Mapping
 
 from .errors import ConflictError
+
+_WIN_DIRECTORY = 0x10000000
+_WIN_NOFOLLOW = 0x20000000
+_WIN_NONBLOCK = 0
+
+
+class _WindowsFilesystem:
+    """Small Windows dir-fd adapter backed by pinned Win32 directory handles.
+
+    Windows has no Python ``dir_fd`` support.  A directory descriptor here is
+    a CRT descriptor for a CreateFile handle opened without FILE_SHARE_DELETE;
+    its final path is used for a child operation while the handle prevents the
+    directory (and each opened ancestor) from being renamed.  Reparse points
+    are opened with OPEN_REPARSE_POINT and rejected for directory traversal.
+    This adapter uses only the Windows API and Python's standard library.
+    """
+
+    def __getattr__(self, name):
+        return getattr(_os, name)
+
+    O_DIRECTORY = _WIN_DIRECTORY
+    O_NOFOLLOW = _WIN_NOFOLLOW
+    O_NONBLOCK = 0
+
+    @staticmethod
+    def _api():
+        import ctypes
+        import msvcrt
+        from ctypes import wintypes
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                       wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+        kernel.CreateFileW.restype = wintypes.HANDLE
+        kernel.GetFinalPathNameByHandleW.argtypes = [wintypes.HANDLE, wintypes.LPWSTR,
+                                                       wintypes.DWORD, wintypes.DWORD]
+        kernel.GetFinalPathNameByHandleW.restype = wintypes.DWORD
+        kernel.GetFileInformationByHandleEx.argtypes = [wintypes.HANDLE, ctypes.c_int,
+                                                         wintypes.LPVOID, wintypes.DWORD]
+        kernel.GetFileInformationByHandleEx.restype = wintypes.BOOL
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel.CloseHandle.restype = wintypes.BOOL
+        return ctypes, msvcrt, wintypes, kernel
+
+    @classmethod
+    def _winerror(cls):
+        ctypes, _msvcrt, _wintypes, _kernel = cls._api()
+        code = ctypes.get_last_error()
+        if code in (2, 3):
+            raise FileNotFoundError(code, _os.strerror(2))
+        if code in (80, 183):
+            raise FileExistsError(code, _os.strerror(17))
+        if code in (5, 32, 33):
+            raise PermissionError(code, _os.strerror(13))
+        raise OSError(code, f"Windows filesystem operation failed (error {code})")
+
+    @staticmethod
+    def _final_path(fd):
+        ctypes, msvcrt, wintypes, kernel = _WindowsFilesystem._api()
+        handle = msvcrt.get_osfhandle(int(fd))
+        size = 512
+        while True:
+            buffer = ctypes.create_unicode_buffer(size)
+            count = kernel.GetFinalPathNameByHandleW(wintypes.HANDLE(handle), buffer, size, 0)
+            if not count:
+                _WindowsFilesystem._winerror()
+            if count < size:
+                # Keep the extended-length prefix returned by Win32 so long
+                # paths remain usable by the subsequent absolute operation.
+                return buffer.value
+            size = count + 1
+
+    @classmethod
+    def path_from_fd(cls, fd):
+        """Return the retained handle's final path (Windows-only helper)."""
+        return cls._final_path(fd)
+
+    @classmethod
+    @contextmanager
+    def _resolved(cls, path, dir_fd=None):
+        """Resolve below a pinned handle, retaining every intermediate dir."""
+        from pathlib import Path
+        value = _os.fspath(path)
+        if dir_fd is None:
+            yield value
+            return
+        if Path(value).is_absolute() or Path(value).drive or value == "":
+            raise OSError(22, "dir_fd path must be relative")
+        parts = value.replace("\\", "/").split("/")
+        if any(part in ("", "..") or ":" in part for part in parts):
+            raise OSError(22, "dir_fd path escapes its retained directory")
+        if parts == ["."]:
+            yield cls._final_path(dir_fd)
+            return
+        current_fd = int(dir_fd)
+        owned = []
+        try:
+            for component in parts[:-1]:
+                current_path = _os.path.join(cls._final_path(current_fd), component)
+                current_fd = cls._open_native(
+                    current_path, _os.O_RDONLY | cls.O_DIRECTORY | cls.O_NOFOLLOW,
+                )
+                owned.append(current_fd)
+            yield _os.path.join(cls._final_path(current_fd), parts[-1])
+        finally:
+            for descriptor in reversed(owned):
+                _os.close(descriptor)
+
+    @classmethod
+    def _open_native(cls, path, flags, mode=0o666):
+        ctypes, msvcrt, wintypes, kernel = cls._api()
+        access = 0
+        if flags & _os.O_RDWR:
+            access = 0x80000000 | 0x40000000 | 0x80
+        elif flags & _os.O_WRONLY:
+            access = 0x40000000 | 0x80
+        else:
+            access = 0x80000000 | 0x80
+        create = bool(flags & (_os.O_CREAT | _os.O_EXCL))
+        if flags & _os.O_EXCL and create:
+            disposition = 1  # CREATE_NEW
+        elif flags & _os.O_TRUNC and create:
+            disposition = 2  # CREATE_ALWAYS
+        elif flags & _os.O_TRUNC:
+            disposition = 5  # TRUNCATE_EXISTING
+        elif create:
+            disposition = 4  # OPEN_ALWAYS
+        else:
+            disposition = 3  # OPEN_EXISTING
+        directory = bool(flags & cls.O_DIRECTORY)
+        nofollow = bool(flags & cls.O_NOFOLLOW)
+        flags &= ~(cls.O_DIRECTORY | cls.O_NOFOLLOW | cls.O_NONBLOCK)
+        attrs = 0x80  # NORMAL
+        if directory:
+            attrs |= 0x02000000  # BACKUP_SEMANTICS
+        if directory or nofollow:
+            attrs |= 0x00200000  # FILE_FLAG_OPEN_REPARSE_POINT
+        # Deliberately omit FILE_SHARE_DELETE: the handle pins directory names.
+        share = 0x1 | 0x2 | (0 if directory else 0x4)
+        handle = kernel.CreateFileW(str(path), access, share, None, disposition, attrs, None)
+        invalid = ctypes.c_void_p(-1).value
+        if handle == invalid:
+            cls._winerror()
+        try:
+            info = (ctypes.c_uint32 * 2)()
+            if not kernel.GetFileInformationByHandleEx(
+                wintypes.HANDLE(handle), 9, ctypes.byref(info), ctypes.sizeof(info)
+            ):
+                cls._winerror()
+            attributes = int(info[0])
+            if (nofollow or directory) and attributes & 0x400:
+                raise OSError(40, "reparse point is not allowed")
+            if directory and not attributes & 0x10:
+                raise NotADirectoryError(str(path))
+            descriptor_flags = flags & (_os.O_RDONLY | _os.O_WRONLY | _os.O_RDWR | _os.O_APPEND)
+            descriptor_flags |= getattr(_os, "O_BINARY", 0) | getattr(_os, "O_NOINHERIT", 0)
+            descriptor = msvcrt.open_osfhandle(int(handle), descriptor_flags)
+            handle = None
+            return descriptor
+        finally:
+            if handle is not None:
+                kernel.CloseHandle(wintypes.HANDLE(handle))
+
+    def open(self, path, flags, mode=0o777, *, dir_fd=None):
+        with self._resolved(path, dir_fd) as target:
+            return self._open_native(target, flags, mode)
+
+    def stat(self, path, *, dir_fd=None, follow_symlinks=True):
+        with self._resolved(path, dir_fd) as target:
+            if not follow_symlinks:
+                return _os.lstat(target)
+            return _os.stat(target)
+
+    def mkdir(self, path, mode=0o777, *, dir_fd=None):
+        with self._resolved(path, dir_fd) as target:
+            return _os.mkdir(target, mode)
+
+    def unlink(self, path, *, dir_fd=None):
+        with self._resolved(path, dir_fd) as target:
+            return _os.unlink(target)
+
+    remove = unlink
+
+    def rmdir(self, path, *, dir_fd=None):
+        with self._resolved(path, dir_fd) as target:
+            return _os.rmdir(target)
+
+    def rename(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None):
+        with self._resolved(src, src_dir_fd) as source, self._resolved(dst, dst_dir_fd) as target:
+            return _os.replace(source, target)
+
+    def replace(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None):
+        with self._resolved(src, src_dir_fd) as source, self._resolved(dst, dst_dir_fd) as target:
+            return _os.replace(source, target)
+
+    def link(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None, follow_symlinks=True):
+        with self._resolved(src, src_dir_fd) as source, self._resolved(dst, dst_dir_fd) as target:
+            return _os.link(source, target, follow_symlinks=follow_symlinks)
+
+    def readlink(self, path, *, dir_fd=None):
+        with self._resolved(path, dir_fd) as target:
+            return _os.readlink(target)
+
+    def symlink(self, src, dst, target_is_directory=False, *, dir_fd=None):
+        with self._resolved(dst, dir_fd) as target:
+            return _os.symlink(src, target, target_is_directory=target_is_directory)
+
+    def chmod(self, path, mode, *, dir_fd=None, follow_symlinks=True):
+        # The adapter does not pretend POSIX mode bits configure Windows ACLs.
+        return None
+
+    def scandir(self, path="."):
+        if isinstance(path, int):
+            path = self._final_path(path)
+        return _os.scandir(path)
+
+    def listdir(self, path=None):
+        if isinstance(path, int):
+            path = self._final_path(path)
+        return _os.listdir(path)
+
+    @classmethod
+    def fsync(cls, fd):
+        # FlushFileBuffers on directory handles is not supported by Windows.
+        try:
+            _os.fsync(fd)
+        except OSError:
+            ctypes, msvcrt, wintypes, kernel = cls._api()
+            info = (ctypes.c_uint32 * 2)()
+            handle = wintypes.HANDLE(msvcrt.get_osfhandle(int(fd)))
+            if (not kernel.GetFileInformationByHandleEx(handle, 9, ctypes.byref(info), ctypes.sizeof(info))
+                    or not (int(info[0]) & 0x10)):
+                raise
+
+    @staticmethod
+    def fchmod(fd, mode):
+        # Windows ACLs, not POSIX mode bits, govern access. Runtime's owner-only
+        # boundary is implemented with per-user storage and native ACL policy.
+        return None
+
+
+filesystem = _WindowsFilesystem() if _os.name == "nt" else _os
+os = filesystem
 
 
 _DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
@@ -559,4 +802,4 @@ def atomic_json_write(path: str | Path, encoded: bytes, *, identity: Mapping[str
             close_pinned(identity)
 
 
-__all__ = ["PinnedParent", "absolute_path", "has_symlink_component", "open_directory_chain", "capture_parent", "pin_directory", "close_pinned", "validate_parent", "validate_created_parent", "mkdir_chain_at", "ensure_parent_at", "ensure_directory", "mkdir_temp_at", "write_bytes_at", "copy_file_at", "copy_tree_at", "remove_tree_at", "atomic_json_write"]
+__all__ = ["filesystem", "PinnedParent", "absolute_path", "has_symlink_component", "open_directory_chain", "capture_parent", "pin_directory", "close_pinned", "validate_parent", "validate_created_parent", "mkdir_chain_at", "ensure_parent_at", "ensure_directory", "mkdir_temp_at", "write_bytes_at", "copy_file_at", "copy_tree_at", "remove_tree_at", "atomic_json_write"]

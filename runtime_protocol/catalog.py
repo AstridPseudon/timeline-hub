@@ -1,22 +1,18 @@
 from __future__ import annotations
 
 import json
-import os
+from .dirfd import filesystem as os
 from pathlib import Path
 import stat
 import subprocess
 from contextlib import contextmanager
 from typing import Mapping, Any
 
+from . import platform
 from .util import atomic_json_write, new_id, now
 from .dirfd import capture_parent, close_pinned, validate_parent
 from .backup import _open_relative
 from .errors import ConflictError
-
-try:
-    import fcntl
-except ImportError:  # pragma: no cover - supported runtime hosts are POSIX
-    fcntl = None
 
 
 def _safe_path(path: str | Path, label: str) -> Path:
@@ -33,36 +29,12 @@ def _safe_path(path: str | Path, label: str) -> Path:
 
 
 def process_birth_identity(pid: int | None = None) -> str | None:
-    """Return an OS birth marker that changes when a PID is reused.
-
-    Linux exposes the process start tick in ``/proc/<pid>/stat``.  macOS and
-    other POSIX hosts do not, so use ``ps``'s start-time rendering there.  The
-    value is only an identity fence; it is never treated as an authorization
-    secret.
-    """
-    value = os.getpid() if pid is None else int(pid)
-    if value <= 0:
+    """Return the shared native incarnation marker, or None if unobservable."""
+    try:
+        identity = platform.process_identity(os.getpid() if pid is None else int(pid))
+        return None if identity is None else str(identity["birth_id"])
+    except OSError:
         return None
-    stat_path = Path(f"/proc/{value}/stat")
-    try:
-        raw = stat_path.read_text(encoding="utf-8")
-        # The comm field may contain ')' so split at the final closing paren.
-        fields = raw.rsplit(")", 1)[-1].split()
-        if len(fields) >= 20:
-            return f"proc-start-ticks:{fields[19]}"
-    except (OSError, ValueError):
-        pass
-    try:
-        result = subprocess.run(
-            ["ps", "-p", str(value), "-o", "lstart="],
-            capture_output=True, text=True, check=False, timeout=1,
-        )
-        rendered = result.stdout.strip()
-        if result.returncode == 0 and rendered:
-            return f"ps-lstart:{rendered}"
-    except (OSError, subprocess.SubprocessError):
-        pass
-    return None
 
 
 class RealmCatalog:
@@ -105,15 +77,13 @@ class RealmCatalog:
                     if attempt == 2:
                         raise
                     validate_parent(self.path, identity, allow_parent_appeared=True)
-            os.fchmod(lock_fd, 0o600)
-            if fcntl is not None:
-                fcntl.flock(lock_fd, fcntl.LOCK_EX)
+            platform.owner_only(lock_fd)
+            platform.lock_file(lock_fd)
             validate_parent(self.path, identity, allow_parent_appeared=True)
             yield identity
         finally:
             if lock_fd >= 0:
-                if fcntl is not None:
-                    fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                platform.unlock_file(lock_fd)
                 os.close(lock_fd)
 
     def __del__(self):  # pragma: no cover - interpreter cleanup

@@ -636,12 +636,12 @@ def test_upgrade_is_not_repeatable_and_refuses_live_owner(tmp_path):
 
     lock = (root / "owner.lock").open("a+")
     try:
-        import fcntl
-        fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        from runtime_protocol import platform as runtime_platform
+        runtime_platform.lock_file(lock.fileno(), exclusive=True, blocking=False)
         with pytest.raises(OwnerBusyError):
             upgrade_realm(root, timeout_seconds=30, confirmation=f"UPGRADE {realm_id}")
     finally:
-        fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+        runtime_platform.unlock_file(lock.fileno())
         lock.close()
 
 

@@ -10,9 +10,9 @@ from __future__ import annotations
 import errno
 import json
 import uuid
-import os
+from runtime_protocol.dirfd import filesystem as os
+from runtime_protocol import platform
 from pathlib import Path
-import signal
 import stat
 import subprocess
 import sys
@@ -27,6 +27,8 @@ from .bootstrap import BootstrapCustodyUncertain, BootstrapError, SourceProfile
 from .loopback_http import urlopen_loopback
 from .custody_broker import (
     ACTIVE_CAPABILITY_NAME,
+    NativeProcessCustody,
+    NATIVE_CAPABILITY_VERSION,
     CustodyError,
     AuthenticatedCleanupActor,
     RoleCustodyAuthority,
@@ -229,10 +231,10 @@ class LocalRuntimeBoundary:
     def _token_file(support_root: Path, token: str) -> Path:
         LocalRuntimeBoundary._validate_path(support_root, "runtime support root")
         support_root.mkdir(parents=True, exist_ok=True)
-        support_root.chmod(0o700)
+        platform.owner_only(support_root)
         fd, name = tempfile.mkstemp(prefix=".bootstrap-token-", dir=support_root)
         path = Path(name)
-        path.chmod(0o600)
+        platform.owner_only(path)
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(token)
             handle.flush()
@@ -246,7 +248,7 @@ class LocalRuntimeBoundary:
         else:
             python = sys.executable
             if source.runtime_environment:
-                candidate = Path(source.runtime_environment).expanduser().resolve() / "bin" / "python"
+                candidate = Path(source.runtime_environment).expanduser().resolve() / ("Scripts" if sys.platform == "win32" else "bin") / ("python.exe" if sys.platform == "win32" else "python")
                 if not candidate.is_file() or not os.access(candidate, os.X_OK):
                     raise BootstrapError(
                         "Configured runtime environment is missing its installed Python: "
@@ -301,7 +303,7 @@ class LocalRuntimeBoundary:
             raise BootstrapError("explicit realm creation requires the pinned runtime environment")
         python = sys.executable
         if source_profile.runtime_environment:
-            candidate = Path(source_profile.runtime_environment).expanduser().resolve() / "bin" / "python"
+            candidate = Path(source_profile.runtime_environment).expanduser().resolve() / ("Scripts" if sys.platform == "win32" else "bin") / ("python.exe" if sys.platform == "win32" else "python")
             if not candidate.is_file() or not os.access(candidate, os.X_OK):
                 raise BootstrapError(
                     "Configured runtime environment is missing its installed Python: "
@@ -363,6 +365,12 @@ class LocalRuntimeBoundary:
 
     def _spawn_runtime(self, argv: list[str], *, support_root: Path, stdout):
         """Publish exact child custody before any admission wait can fail."""
+        if sys.platform != "darwin":
+            process = platform.spawn_tree(argv, detached=True, stdout=stdout,
+                stderr=subprocess.STDOUT, text=True, close_fds=True)
+            process._runtime_boundary_sole_reaper = True
+            self._process = process
+            return process, None
         run_id = uuid.uuid4().hex
         ledger_root = support_root / "runtime-custody" / run_id
         ledger_root.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -416,7 +424,9 @@ class LocalRuntimeBoundary:
         bootstrap_token = os.urandom(32).hex()
         token_file = self._token_file(support_root, bootstrap_token)
         argv = self._argv(source_profile, realm_id=realm_id, realm_root=realm_root, support_root=support_root, display_name=self._display_name, owner_lock=owner_lock, token_file=token_file)
-        log_path = support_root / "runtime.log"
+        log_path = self._log_path(support_root)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        platform.owner_only(log_path.parent)
         log = log_path.open("ab")
         self._log_offset = log.tell()
         try:
@@ -443,8 +453,13 @@ class LocalRuntimeBoundary:
                 raise BootstrapError("Ready Runtime child disappeared before custody publication.")
             if identity.get("birth_id") != discovery.get("process_birth_id"):
                 raise BootstrapError("Ready Runtime birth identity differs from discovery.")
-            broker.bind_ready_token(expected_pid=self._process.pid, expected_identity=identity)
-            publish_active_capability(support_root / ACTIVE_CAPABILITY_NAME, broker)
+            if broker is None:
+                custody = NativeProcessCustody(support_root, identity)
+                custody.publish()
+                self._process._runtime_native_custody = custody
+            else:
+                broker.bind_ready_token(expected_pid=self._process.pid, expected_identity=identity)
+                publish_active_capability(support_root / ACTIVE_CAPABILITY_NAME, broker)
         except Exception:
             self._terminate(self._process)
             token_file.unlink(missing_ok=True)
@@ -495,31 +510,17 @@ class LocalRuntimeBoundary:
 
     @staticmethod
     def process_birth_identity(pid: int) -> str | None:
-        """Return a PID-reuse-resistant process start marker."""
-        if int(pid) <= 0:
-            return None
-        if sys.platform == "darwin":
-            try:
-                identity = default_process_identity(int(pid))
-            except CustodyError:
-                # Preserve the existing restricted-observer/owner-health policy.
-                return None
+        """Return the shared native process start marker."""
+        try:
+            identity = default_process_identity(int(pid))
             return None if identity is None else str(identity["birth_id"])
-        stat_path = Path(f"/proc/{int(pid)}/stat")
-        try:
-            fields = stat_path.read_text(encoding="utf-8").rsplit(")", 1)[-1].split()
-            if len(fields) >= 20:
-                return f"proc-start-ticks:{fields[19]}"
-        except (OSError, ValueError):
-            pass
-        try:
-            result = subprocess.run(["ps", "-p", str(int(pid)), "-o", "lstart="], capture_output=True, text=True, check=False, timeout=1)
-            rendered = result.stdout.strip()
-            if result.returncode == 0 and rendered:
-                return f"ps-lstart:{rendered}"
-        except (OSError, subprocess.SubprocessError):
-            pass
-        return None
+        except CustodyError:
+            return None
+
+    @staticmethod
+    def _log_path(support_root: Path) -> Path:
+        # Preserve the established macOS background log location.
+        return support_root / "runtime.log" if sys.platform == "darwin" else platform.log_dir() / "runtime.log"
 
     @staticmethod
     def _startup_failure(log_path: Path, offset: int) -> str | None:
@@ -544,10 +545,10 @@ class LocalRuntimeBoundary:
         deadline = time.monotonic() + self.wait_seconds
         while time.monotonic() < deadline:
             if process.poll() is not None:
-                cause = self._startup_failure(support_root / "runtime.log", self._log_offset)
+                cause = self._startup_failure(self._log_path(support_root), self._log_offset)
                 raise BootstrapError(
-                    f"Runtime daemon exited during startup: {cause} (see {support_root / 'runtime.log'})." if cause
-                    else f"Runtime daemon exited during startup (see {support_root / 'runtime.log'})."
+                    f"Runtime daemon exited during startup: {cause} (see {self._log_path(support_root)})." if cause
+                    else f"Runtime daemon exited during startup (see {self._log_path(support_root)})."
                 )
             discovery = self._read_discovery(support_root)
             # A support root may still advertise a healthy incumbent while a
@@ -734,6 +735,9 @@ class LocalRuntimeBoundary:
         primary = sys.exc_info()[1]
         broker = getattr(process, "_runtime_custody_broker", None)
         try:
+            if sys.platform != "darwin":
+                platform.stop_tree(process, grace=5.0)
+                return
             if not getattr(process, "_runtime_boundary_sole_reaper", False):
                 raise CustodyError("Runtime child has no authoritative sole-reaper ownership")
             if process.poll() is not None:
@@ -745,7 +749,7 @@ class LocalRuntimeBoundary:
             if broker.authority_scope_root is not None:
                 close_authority_scope(broker.authority_scope_root, deadline=deadline)
             signal_owned = broker.signal_failed_admission if broker.error is not None else broker.signal
-            for signum, timeout in ((signal.SIGTERM, 5.0), (signal.SIGKILL, 2.0)):
+            for signum, timeout in ((platform.TERM, 5.0), (platform.KILL, 2.0)):
                 if process.poll() is not None:
                     return
                 try:
@@ -819,6 +823,9 @@ class LocalRuntimeBoundary:
 
     def release_owner_custody(self) -> Mapping[str, Any]:
         process = self._process
+        native = getattr(process, "_runtime_native_custody", None)
+        if native is not None:
+            return native.release()
         broker = getattr(process, "_runtime_custody_broker", None)
         if process is None or not isinstance(broker, RoleBoundCustodyBroker):
             raise BootstrapError("Runtime release lacks its retained launch controller.")
@@ -864,6 +871,8 @@ class LocalRuntimeBoundary:
         owner_lock = self._validate_path(Path(kwargs.get("owner_lock", support / "instance.lock")), "owner lock").resolve()
         discovery_path = self._validate_path(Path(kwargs.get("discovery_path", support / "discovery.json")), "runtime discovery").resolve()
         exit_evidence = None
+        native_record = self._read_discovery_file(support / ACTIVE_CAPABILITY_NAME)
+        native_owner = native_record.get("version") == NATIVE_CAPABILITY_VERSION
 
         def validate_before_signal(*, require_health: bool = True) -> None:
             """Re-read every fence immediately before the first signal."""
@@ -920,7 +929,7 @@ class LocalRuntimeBoundary:
                 raise BootstrapError("Runtime restart refused: owner identity changed or is stale.")
             # A group kill is only safe for the daemon's own session leader.
             try:
-                if os.getpgid(expected_pid) != expected_pid:
+                if not native_owner and platform.process_group(expected_pid) != expected_pid:
                     raise BootstrapError("Runtime restart refused: owner is not its own process-group leader.")
             except OSError as exc:
                 raise BootstrapError("Runtime restart refused: owner process disappeared.") from exc
@@ -932,10 +941,10 @@ class LocalRuntimeBoundary:
             # target and current authenticated actor/generation under its guard.
             observed = default_process_identity(expected_pid)
             if observed is None or any(observed.get(k) != v for k, v in
-                                       {"pid": expected_pid, "birth_id": expected_birth, "uid": os.getuid()}.items()):
+                                       {"pid": expected_pid, "birth_id": expected_birth, "uid": platform.current_user()}.items()):
                 raise BootstrapError("Runtime escalation refused: selected incarnation changed or disappeared.")
             try:
-                if os.getpgid(expected_pid) != expected_pid:
+                if not native_owner and platform.process_group(expected_pid) != expected_pid:
                     raise BootstrapError("Runtime escalation refused: selected owner session changed.")
                 def read_optional_identity_file(path):
                     try:
@@ -982,7 +991,24 @@ class LocalRuntimeBoundary:
             if detached != expected_pid:
                 raise BootstrapError("Runtime restart refused: adopted owner PID changed.")
             validate_before_signal(require_health=require_health)
-            identity = {"pid": detached, "birth_id": expected_birth, "uid": os.getuid()}
+            identity = {"pid": detached, "birth_id": expected_birth, "uid": platform.current_user()}
+            if native_owner:
+                custody = NativeProcessCustody(support, identity)
+                custody.signal(platform.TERM, validate=lambda: validate_before_signal(require_health=require_health))
+                deadline = time.monotonic() + 5.0
+                while self.is_pid_alive(detached) and time.monotonic() < deadline:
+                    time.sleep(0.05)
+                if self.is_pid_alive(detached):
+                    custody.signal(platform.KILL, validate=validate_escalation_target)
+                deadline = time.monotonic() + 2.0
+                while self.is_pid_alive(detached) and time.monotonic() < deadline:
+                    time.sleep(0.05)
+                if self.is_pid_alive(detached):
+                    raise BootstrapError("Runtime native cleanup remains uncertain after bounded wait.")
+                self._detached_pid = None
+                if not start_after_stop:
+                    return {"state": "stopped", "realm_id": realm_id}
+                return self.start(realm_id=realm_id, realm_root=root, owner_lock=owner_lock, source_profile=source)
             loaded = load_sealed_capability(support / ACTIVE_CAPABILITY_NAME, expected_identity=identity)
             sealed = loaded["reference"]["role_custody"]
             authority = RoleCustodyAuthority(Path(str(sealed["scope_root"])), "runtime_owner")
@@ -1005,7 +1031,7 @@ class LocalRuntimeBoundary:
                 validate_before_signal(require_health=require_health)
                 signal_sealed_capability(
                     support / ACTIVE_CAPABILITY_NAME,
-                    expected_identity=identity, signum=signal.SIGTERM,
+                    expected_identity=identity, signum=platform.TERM,
                     actor=actor, generation=claimed["generation"], signal_provider=deliver,
                 )
                 deadline = time.monotonic() + 5
@@ -1014,7 +1040,7 @@ class LocalRuntimeBoundary:
                 if self.is_pid_alive(detached):
                     validate_escalation_target()
                     signal_sealed_capability(
-                        support / ACTIVE_CAPABILITY_NAME, expected_identity=identity, signum=signal.SIGKILL,
+                        support / ACTIVE_CAPABILITY_NAME, expected_identity=identity, signum=platform.KILL,
                         actor=actor, generation=claimed["generation"], signal_provider=deliver,
                     )
                 deadline = time.monotonic() + 2.0
@@ -1053,3 +1079,81 @@ class LocalRuntimeBoundary:
             return {"status": "stopped", "realm_id": realm_id, "pid": expected_pid,
                     **({"exit_evidence": exit_evidence} if exit_evidence else {})}
         return self.start(realm_id=realm_id, realm_root=root, owner_lock=support / "instance.lock", source_profile=source)
+
+
+class ForegroundRuntimeBoundary(LocalRuntimeBoundary):
+    """Run the daemon in this process so a service manager supervises its owner."""
+    def __init__(self):
+        super().__init__()
+        self.daemon = None
+        self._custody = None
+
+    def start(self, *, realm_id, realm_root, owner_lock, source_profile):
+        from runtime_protocol.daemon import RuntimeDaemon
+        from runtime_protocol.door import DoorConfig
+        from runtime_protocol.local_worker_composition import load_local_worker_composition
+
+        if self.daemon is not None:
+            raise BootstrapError("foreground Runtime already owns a daemon")
+        self._validate_source(source_profile)
+        if source_profile.runtime_command:
+            raise BootstrapError("run requires the installed Runtime, rather than a custom runtime_command")
+        if (source_profile.runtime_environment
+                and Path(source_profile.runtime_environment).resolve() != Path(sys.prefix).resolve()):
+            raise BootstrapError("run must execute inside the selected runtime_environment")
+        root = self._validate_path(Path(realm_root), "realm root").resolve()
+        support = self._validate_path(Path(owner_lock).parent, "runtime support root").resolve()
+        token = os.urandom(32).hex()
+        token_file = self._token_file(support, token)
+        try:
+            door = None
+            if self._door is not None:
+                settings, credential = self._door
+                door = DoorConfig(origin=settings.origin, port=settings.port, credential_file=credential)
+            composition = None
+            if source_profile.worker_profile:
+                composition = load_local_worker_composition(source_profile.worker_profile,
+                    workspace_uuid=realm_id, realm_root=root, support_root=support,
+                    runtime_instance_id="pending-startup")
+            daemon = RuntimeDaemon(root, support_root=support, display_name=self._display_name,
+                realm_id=realm_id, owner_lock=owner_lock, bootstrap_token_file=token_file,
+                production_worker_credentials=True, admission_timeout=self.admission_timeout_seconds,
+                local_worker_profiles=composition.profiles if composition else None,
+                local_worker_preparer=composition.preparer if composition else None,
+                local_worker_inspector=composition.inspector if composition else None, door=door)
+            self.daemon = daemon
+            daemon.start()
+            identity = default_process_identity(os.getpid())
+            if identity is None:
+                raise BootstrapError("foreground Runtime process identity is unavailable")
+            self._custody = NativeProcessCustody(support, identity)
+            self._custody.publish()
+            self._bootstrap_credential = token
+            return {**self._read_discovery(support), "protocol_version": PROTOCOL_VERSION,
+                "schema_version": SCHEMA_VERSION, "capability_digest": source_profile.capability_digest}
+        except BaseException:
+            self.stop()
+            raise
+        finally:
+            token_file.unlink(missing_ok=True)
+
+    def release_owner_custody(self):
+        if self._custody is None:
+            raise BootstrapError("foreground Runtime has no native custody")
+        return self._custody.release()
+
+    def check_running(self):
+        if self.daemon is None:
+            raise BootstrapError("Runtime is already running in another process; stop it before using run")
+        daemon = self.daemon
+        for thread, name in ((daemon.thread, "Runtime listener"), (daemon.door_thread, "browser door")):
+            if thread is None or not thread.is_alive():
+                raise BootstrapError(f"{name} stopped unexpectedly")
+        if daemon.service is None or not daemon.service._verified:
+            raise BootstrapError("Runtime readiness was revoked")
+
+    def stop(self, **kwargs):
+        if self.daemon is not None:
+            daemon, self.daemon = self.daemon, None
+            daemon.stop()
+        self._bootstrap_credential = None

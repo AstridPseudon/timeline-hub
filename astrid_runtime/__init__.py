@@ -1,4 +1,4 @@
-"""Neutral current-Mac bootstrap for the Astrid Runtime.
+"""Neutral native workspace bootstrap for the Astrid Runtime.
 
 This package deliberately knows nothing about SQLite, CAS, Astrid, or runtime
 implementation internals.  It composes those things through ``RuntimeBoundary``

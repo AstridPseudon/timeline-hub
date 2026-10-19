@@ -8,7 +8,6 @@ installed process.  No Worker implementation is imported into Runtime.
 from __future__ import annotations
 
 import hashlib
-import ctypes
 import json
 import os
 from dataclasses import dataclass, field
@@ -16,7 +15,6 @@ import ipaddress
 from pathlib import Path
 import platform
 import select
-import signal
 import socket
 import stat
 import subprocess
@@ -26,7 +24,7 @@ import time
 from typing import Any, Mapping
 from urllib.parse import urlsplit
 
-from .catalog import process_birth_identity
+from . import platform as runtime_platform
 from .errors import ConflictError, ValidationError
 from .local_worker import (
     LocalWorkerObservation,
@@ -61,8 +59,8 @@ def _create_host_custody_scope(scope: Path) -> None:
     except FileExistsError as exc:
         raise ConflictError("host-only custody scope already exists") from exc
     observed = scope.lstat()
-    if (not stat.S_ISDIR(observed.st_mode) or observed.st_uid != os.getuid()
-            or stat.S_IMODE(observed.st_mode) != 0o700 or scope.resolve() != scope):
+    if (not stat.S_ISDIR(observed.st_mode) or not runtime_platform.is_owner_only(observed, directory=True)
+            or scope.resolve() != scope):
         raise ConflictError("host-only custody scope is not owner-only")
 
 
@@ -185,7 +183,11 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
 
     @staticmethod
     def _birth(pid: int) -> str:
-        value = process_birth_identity(pid)
+        try:
+            identity = runtime_platform.process_identity(pid)
+            value = identity.get("birth_id") if identity is not None else None
+        except OSError as exc:
+            raise ConflictError("prepared Worker birth identity is unavailable") from exc
         if not value:
             raise ConflictError("prepared Worker birth identity is unavailable")
         return value
@@ -225,6 +227,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             return self._rpc_unlocked(handle, payload)
 
     def prepare(self, profile: LocalWorkerProfile, *, operation_id: str, channel_id: str) -> _PreparedWorker:
+        if os.name == "nt":
+            raise ConflictError("local Worker descriptor transport is unavailable on Windows")
         if _host_only(profile):
             return self._prepare_host_only(profile, operation_id=operation_id, channel_id=channel_id)
         if profile.engine_launch is not None:
@@ -250,12 +254,12 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     # boundary through its adjacent pyvenv.cfg.  Its kernel
                     # executable may resolve to the base interpreter, which is
                     # checked independently by OSProcessInspector below.
-                    candidate = env_root / "bin" / "python"
+                    candidate = env_root / ("Scripts" if os.name == "nt" else "bin") / ("python.exe" if os.name == "nt" else "python")
                     if candidate.is_file() and os.access(candidate, os.X_OK):
                         executable = candidate
                     environment["VIRTUAL_ENV"] = str(env_root)
-                    environment["PATH"] = str(env_root / "bin") + os.pathsep + environment.get("PATH", "")
-                worker = subprocess.Popen(
+                    environment["PATH"] = str(env_root / ("Scripts" if os.name == "nt" else "bin")) + os.pathsep + environment.get("PATH", "")
+                worker = runtime_platform.spawn_tree(
                     [str(executable), "-m", "source.runtime.supervisor", "--prepared-control-fd", str(child.fileno())],
                     cwd=str(Path(self.config["support_root"])),
                     env=environment,
@@ -305,8 +309,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 parent.close()
             if handle is None and worker is not None and worker.poll() is None:
                 try:
-                    os.killpg(worker.pid, signal.SIGKILL)
-                except ProcessLookupError:
+                    runtime_platform.signal_tree(worker, runtime_platform.KILL)
+                except OSError:
                     pass
                 try:
                     worker.wait(timeout=self.cleanup_timeout_seconds)
@@ -380,7 +384,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     ledger_root=scope / "host-admission", authority_scope_root=scope,
                     authority_journal=scope / "admissions.jsonl", owner_epoch=epoch, timeout=min(self.timeout_seconds, 60))
                 environment.update(broker.child_environment(mapped_argv, start_new_session=True))
-                process = subprocess.Popen(custody_wrapper_argv(str(profile.host_executable)), cwd=str(profile.support_root),
+                process = runtime_platform.spawn_tree(custody_wrapper_argv(str(profile.host_executable)), start_new_session=False, cwd=str(profile.support_root),
                     env=environment, stdin=subprocess.DEVNULL, close_fds=True,
                     pass_fds=(control_child.fileno(), activation_child.fileno(), binding_child.fileno()))
                 retained = RetainedProcess(process)
@@ -449,7 +453,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 raise ConflictError(self.cleanup_uncertain)
             # Full owned child cleanup was acknowledged, then reap original host.
             if handle.retained.poll() is None:
-                handle.broker.signal(signal.SIGTERM, expected_pid=handle.worker.pid)
+                handle.broker.signal(runtime_platform.TERM, expected_pid=handle.worker.pid)
             handle.retained.wait(max(1.0, self.cleanup_timeout_seconds))
             handle.control.close(); handle.activation.close(); handle.closed = True
             if self._active is handle: self._active = None
@@ -490,7 +494,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 environment = {k: v for k, v in os.environ.items() if k not in {"PYTHONPATH", "PYTHONHOME"} and not k.startswith("ASTRID_RUNTIME_CUSTODY_")}
                 environment.update({k: v for k, v in self.environment.items() if k in {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "XDG_RUNTIME_DIR", "CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES", "ASTRID_EXECUTION_TARGET_JSON"}})
                 environment.update(broker.child_environment(argv, start_new_session=True))
-                process = subprocess.Popen(custody_wrapper_argv(sys.executable), cwd=str(profile.support_root),
+                process = runtime_platform.spawn_tree(custody_wrapper_argv(sys.executable), start_new_session=False, cwd=str(profile.support_root),
                     env=environment, stdin=subprocess.DEVNULL, close_fds=True, pass_fds=(child.fileno(),))
                 retained = RetainedProcess(process)
                 # Publish before birth/token/seal observations can fail.
@@ -534,11 +538,11 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         if not isinstance(response.get("host_exit_code"), int) or isinstance(response["host_exit_code"], bool) or response.get("host_result", {}).get("status") != "cleaned":
             raise ConflictError("relay has no verified full host cleanup acknowledgement")
         if handle.retained.poll() is None:
-            handle.broker.signal(signal.SIGTERM, expected_pid=handle.worker.pid)
+            handle.broker.signal(runtime_platform.TERM, expected_pid=handle.worker.pid)
             try:
                 handle.retained.wait(max(1.0, self.cleanup_timeout_seconds))
             except BaseException:
-                handle.broker.signal(signal.SIGKILL, expected_pid=handle.worker.pid)
+                handle.broker.signal(runtime_platform.KILL, expected_pid=handle.worker.pid)
                 handle.retained.wait(max(1.0, self.cleanup_timeout_seconds))
         handle.control.close()
         handle.closed = True
@@ -655,15 +659,15 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             handle.control.close()
             if owned and handle.worker.poll() is None:
                 try:
-                    os.killpg(handle.worker.pid, signal.SIGTERM)
-                except ProcessLookupError:
+                    runtime_platform.signal_tree(handle.worker, runtime_platform.TERM)
+                except OSError:
                     pass
                 try:
                     handle.worker.wait(timeout=self.cleanup_timeout_seconds)
                 except (subprocess.TimeoutExpired, TimeoutError):
                     try:
-                        os.killpg(handle.worker.pid, signal.SIGKILL)
-                    except ProcessLookupError:
+                        runtime_platform.signal_tree(handle.worker, runtime_platform.KILL)
+                    except OSError:
                         pass
                     try:
                         handle.worker.wait(timeout=self.cleanup_timeout_seconds)
@@ -712,6 +716,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             processes.append((item["pid"], item["birth_id"]))
         if handle is not None and (handle.worker.pid, handle.birth_id) != processes[-1]:
             raise ConflictError("local Worker handle does not match relinquish receipt")
+        expected_birth = dict(processes)
 
         def live() -> list[int]:
             remaining = []
@@ -720,32 +725,40 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     # Popen.poll reaps an exited child; an unreaped zombie
                     # still has the same birth marker in /proc or ps.
                     handle.worker.poll()
-                current = process_birth_identity(pid)
+                try:
+                    identity = runtime_platform.process_identity(pid)
+                except ProcessLookupError:
+                    continue
+                except OSError as exc:
+                    raise ConflictError("receipt-owned process state is unobservable") from exc
+                current = identity.get("birth_id") if identity is not None else None
                 if current == birth:
                     remaining.append(pid)
                 elif current is None:
-                    try:
-                        os.kill(pid, 0)
-                    except ProcessLookupError:
-                        continue
-                    except PermissionError as exc:
-                        raise ConflictError("receipt-owned process state is unobservable") from exc
-                    raise ConflictError("receipt-owned process birth is unobservable")
+                    continue
             return remaining
 
         for pid in live():
             try:
-                os.kill(pid, signal.SIGTERM)
+                identity = runtime_platform.process_identity(pid)
+                if identity is not None and identity.get("birth_id") == expected_birth[pid]:
+                    runtime_platform.signal_process(identity, runtime_platform.TERM)
             except ProcessLookupError:
                 pass
+            except OSError as exc:
+                raise ConflictError("receipt-owned process could not be safely stopped") from exc
         deadline = time.monotonic() + max(1.0, self.cleanup_timeout_seconds)
         while time.monotonic() < deadline and live():
             time.sleep(0.02)
         for pid in live():
             try:
-                os.kill(pid, signal.SIGKILL)
+                identity = runtime_platform.process_identity(pid)
+                if identity is not None and identity.get("birth_id") == expected_birth[pid]:
+                    runtime_platform.signal_process(identity, runtime_platform.KILL)
             except ProcessLookupError:
                 pass
+            except OSError as exc:
+                raise ConflictError("receipt-owned process could not be safely terminated") from exc
         deadline = time.monotonic() + max(1.0, self.cleanup_timeout_seconds)
         while time.monotonic() < deadline and live():
             time.sleep(0.02)
@@ -898,12 +911,6 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         raise ConflictError("successor adoption requires fresh authenticated B connection; stale A descriptor refused")
 
 
-def _ps(pid: int, field: str) -> str:
-    result = subprocess.run(["ps", "-p", str(int(pid)), "-o", f"{field}="], capture_output=True, text=True, check=False)
-    if result.returncode != 0 or not result.stdout.strip():
-        raise ConflictError(f"cannot independently observe process {pid}")
-    return result.stdout.strip().splitlines()[0].strip()
-
 
 def _file_digest(path: Path) -> str:
     digest = hashlib.sha256()
@@ -924,7 +931,7 @@ def _session_config_digest(path: Path) -> str:
     if (
         path.is_symlink()
         or not stat.S_ISREG(identity.st_mode)
-        or identity.st_uid != getattr(os, "getuid", lambda: identity.st_uid)()
+        or not runtime_platform.is_current_user(identity)
     ):
         raise ConflictError("owner session configuration is not a regular owner-controlled file")
     return _file_digest(path)
@@ -933,16 +940,9 @@ def _session_config_digest(path: Path) -> str:
 def _actual_executable(pid: int) -> Path:
     """Resolve the kernel-reported executable for one live process."""
     try:
-        if sys.platform == "darwin":
-            library = ctypes.CDLL("/usr/lib/libproc.dylib")
-            buffer = ctypes.create_string_buffer(4096)
-            result = library.proc_pidpath(int(pid), buffer, len(buffer))
-            if result <= 0:
-                raise OSError("proc_pidpath returned no path")
-            return Path(buffer.value.decode()).resolve()
-        return Path(os.readlink(f"/proc/{int(pid)}/exe")).resolve()
-    except (OSError, UnicodeDecodeError, ValueError) as exc:
-        raise ConflictError(f"cannot independently resolve executable identity for process {pid}") from exc
+        return Path(runtime_platform.process_executable(pid)).resolve()
+    except OSError as exc:
+        raise ConflictError("process executable is unavailable") from exc
 
 
 def _owner_machine_id() -> str:
@@ -981,6 +981,8 @@ def _socket_address(value: str) -> tuple[ipaddress.IPv4Address | ipaddress.IPv6A
 
 
 def _listening_socket_owner(pid: int, endpoint: str) -> tuple[int, str]:
+    if os.name == "nt":
+        raise ConflictError("independent local Worker listener custody observation is unavailable on Windows")
     canonical = _engine_endpoint(endpoint)
     parsed = urlsplit(canonical)
     expected = (ipaddress.ip_address(parsed.hostname or ""), int(parsed.port or 0))
@@ -1010,19 +1012,20 @@ class OSProcessInspector:
     def _identity(self, pid: int, birth: str, executable: Path, digest: str, *, parent_pid: int | None, session_owner: bool) -> ProcessIdentity:
         if pid <= 0:
             raise ConflictError("observed process PID is invalid")
-        observed_birth = process_birth_identity(pid)
+        try:
+            observed = runtime_platform.process_identity(pid) or {}
+            observed_birth = observed.get("birth_id")
+        except OSError as exc:
+            raise ConflictError("independent process identity observation failed") from exc
         if not observed_birth or observed_birth != birth:
             raise ConflictError("independent process birth identity disagrees with Worker report")
-        observed_parent = int(_ps(pid, "ppid"))
+        observed_parent = int(observed["parent_pid"])
         if parent_pid is not None and observed_parent != parent_pid:
             raise ConflictError("independent process parent identity disagrees with Worker report")
+        uid = int(observed["uid"])
         try:
-            uid = int(_ps(pid, "uid"))
-        except ValueError as exc:
-            raise ConflictError("independent process UID observation is invalid") from exc
-        try:
-            group = os.getpgid(pid)
-            session = os.getsid(pid)
+            group = runtime_platform.process_group(pid)
+            session = runtime_platform.session_id(pid)
         except OSError as exc:
             raise ConflictError("independent process group/session observation failed") from exc
         if session_owner and (group != pid or session != pid):
@@ -1063,7 +1066,7 @@ class OSProcessInspector:
             reference = handle.broker.role_authority.reference()
             RoleCustodyAuthority(Path(handle.custody_scope), "host").verify_reference(reference,
                 expected_actor=AuthenticatedCleanupActor.current().verify(), owner_epoch=handle.owner_epoch)
-            return LocalWorkerObservation(machine, os.getuid(), self.profile.workspace_uuid,
+            return LocalWorkerObservation(machine, runtime_platform.current_user(), self.profile.workspace_uuid,
                 self.profile.realm_root, self.profile.support_root, None, host, None, None, 0, "",
                 self.profile.session_config_digest, handle.owner_epoch, handle.custody_scope, {"host": reference})
         report = getattr(handle, "report_value", None)
@@ -1123,7 +1126,7 @@ class OSProcessInspector:
                     expected_actor=actors[role], owner_epoch=handle.owner_epoch)
         return LocalWorkerObservation(
             machine_id=observed_machine,
-            uid=os.getuid(),
+            uid=runtime_platform.current_user(),
             workspace_uuid=self.profile.workspace_uuid,
             realm_root=self.profile.realm_root,
             support_root=self.profile.support_root,

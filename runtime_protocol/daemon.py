@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import hashlib
-import os
+from .dirfd import filesystem as os
+from . import platform
 import shutil
 import threading
 import time
@@ -19,11 +20,6 @@ from .errors import ConflictError, NotFoundError, ProtocolError
 from .server import RuntimeHTTPServer, RuntimeHandler
 from .service import RuntimeService
 from .util import atomic_json_write, now
-
-try:
-    import fcntl
-except ImportError:  # pragma: no cover - supported beta host is POSIX
-    fcntl = None
 
 
 WORKER_ACTOR = "astrid-pack-host"
@@ -1234,9 +1230,8 @@ class RuntimeDaemon:
             raise ConflictError("damaged active owner lock must not be a symlink")
         handle = lock_path.open("a+")
         try:
-            os.fchmod(handle.fileno(), 0o600)
-            if fcntl is not None:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            platform.owner_only(handle.fileno())
+            platform.lock_file(handle.fileno(), blocking=False)
             return handle
         except Exception:
             handle.close()
@@ -1247,8 +1242,7 @@ class RuntimeDaemon:
         if handle is None:
             return
         try:
-            if fcntl is not None:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            platform.unlock_file(handle.fileno())
         finally:
             handle.close()
 

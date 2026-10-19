@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import json
-import os
+from runtime_protocol.dirfd import filesystem as os
 from pathlib import Path
 import tempfile
+
+from runtime_protocol import platform
 from typing import Any
 
 
 def owner_only(path: Path, directory: bool = False) -> None:
     try:
-        path.chmod(0o700 if directory else 0o600)
+        platform.owner_only(path, directory=directory)
     except OSError:
-        # chmod can be unavailable on a few test filesystems.  The write still
-        # remains private by construction on supported current-Mac filesystems.
         pass
 
 
@@ -33,7 +33,7 @@ def atomic_write_json(path: Path, value: dict[str, Any]) -> None:
         os.replace(temporary_path, path)
         owner_only(path)
         try:
-            directory_fd = os.open(path.parent, os.O_RDONLY)
+            directory_fd = os.open(path.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
             try:
                 os.fsync(directory_fd)
             finally:

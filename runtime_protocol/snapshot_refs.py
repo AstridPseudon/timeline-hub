@@ -9,7 +9,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-import os
+from .dirfd import filesystem as os
 import re
 from collections.abc import Callable
 from pathlib import Path

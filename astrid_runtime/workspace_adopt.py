@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import json
-import os
+from runtime_protocol.dirfd import filesystem as os
 from pathlib import Path
 import shutil
 import stat
@@ -121,7 +121,7 @@ def _source_root(source: str | Path, realm_id: str) -> Path:
         return source
     catalog_path = source / "runtime" / "catalog.json"
     if catalog_path.exists():
-        catalog = _read_catalog(RuntimePaths.current_mac(data_root=source))
+        catalog = _read_catalog(RuntimePaths.current(data_root=source))
         selected = catalog.get("selected_realm_id")
         realms = catalog.get("realms", [])
         if selected != realm_id or len(realms) != 1:
@@ -176,7 +176,7 @@ def _mirror_directories(root: Path, temporary: Path) -> None:
     for directory in sorted(path for path in root.rglob("*") if path.is_dir() and not path.is_symlink()):
         target = temporary / directory.relative_to(root)
         target.mkdir(parents=True, exist_ok=True)
-        target.chmod(directory.stat().st_mode & 0o777)
+        os.chmod(target, directory.stat().st_mode & 0o777)
 
 
 def _materialize(root: Path, temporary: Path, files: list[tuple[Path, Path, int]]) -> dict[str, int]:

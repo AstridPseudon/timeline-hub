@@ -30,7 +30,7 @@ def test_installed_runtime_wheel_contains_selected_source(stage1_runtime_environ
         for member in sorted(members):
             assert wheel.read(member) == (root / member).read_bytes(), member
 
-    python = stage1_runtime_environment / "bin" / "python"
+    python = stage1_runtime_environment / ("Scripts" if os.name == "nt" else "bin") / ("python.exe" if os.name == "nt" else "python")
     probe = subprocess.run(
         [
             str(python),

@@ -6,6 +6,8 @@ import signal
 import subprocess
 import time
 
+from runtime_protocol import platform as runtime_platform
+
 
 class ProcessGroups:
     def __init__(self) -> None:
@@ -16,13 +18,18 @@ class ProcessGroups:
         self.cleanups.append(callback)
 
     def popen(self, *args, **kwargs) -> subprocess.Popen:
-        process = subprocess.Popen(*args, **kwargs)
         if kwargs.get("start_new_session"):
+            process = runtime_platform.spawn_tree(*args, **kwargs)
             self.record(process)
+        else:
+            process = subprocess.Popen(*args, **kwargs)
         return process
 
     def record(self, process: subprocess.Popen) -> None:
         if process.poll() is not None:
+            return
+        if os.name == "nt":
+            self.groups.setdefault(process.pid, []).append(process)
             return
         try:
             pgid = os.getpgid(process.pid)
@@ -33,6 +40,8 @@ class ProcessGroups:
             self.groups.setdefault(pgid, []).append(process)
 
     def add_group(self, pgid: int) -> None:
+        if os.name == "nt":
+            return
         if pgid > 1 and pgid != os.getpgrp():
             self.groups.setdefault(pgid, [])
 
@@ -44,6 +53,17 @@ class ProcessGroups:
             except Exception as exc:
                 cleanup_errors.append(exc)
         self.cleanups.clear()
+        if os.name == "nt":
+            for members in reversed(tuple(self.groups.values())):
+                for process in reversed(members):
+                    try:
+                        runtime_platform.stop_tree(process, grace=timeout)
+                    except (OSError, subprocess.SubprocessError):
+                        pass
+            self.groups.clear()
+            if cleanup_errors:
+                raise cleanup_errors[0]
+            return
         for pgid, members in reversed(tuple(self.groups.items())):
             if not _still_ours(pgid, members):
                 continue

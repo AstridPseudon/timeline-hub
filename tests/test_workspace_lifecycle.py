@@ -36,7 +36,7 @@ def _config(tmp_path):
 
 def test_up_refuses_missing_selection_without_creating_support_state(tmp_path):
     support = tmp_path / "support"
-    paths = RuntimePaths.current_mac(data_root=support)
+    paths = RuntimePaths.current(data_root=support)
     boundary = _Boundary()
     with pytest.raises(BootstrapError, match="No workspace is configured"):
         bootstrap(paths, boundary, _config(tmp_path))
@@ -45,7 +45,7 @@ def test_up_refuses_missing_selection_without_creating_support_state(tmp_path):
 
 
 def test_explicit_create_preserves_omitted_vs_explicit_empty_identity(tmp_path):
-    paths = RuntimePaths.current_mac(data_root=tmp_path / "support")
+    paths = RuntimePaths.current(data_root=tmp_path / "support")
     boundary = _Boundary()
     with pytest.raises(BootstrapError, match="opaque identifier"):
         configure_workspace(
@@ -75,7 +75,7 @@ def test_explicit_create_preserves_omitted_vs_explicit_empty_identity(tmp_path):
 def test_attach_accepts_bounded_opaque_identity_and_fences_mismatch(tmp_path):
     root = tmp_path / "existing"
     RealmStore.initialize(root, realm_id="realm:opaque-01").close()
-    paths = RuntimePaths.current_mac(data_root=tmp_path / "support")
+    paths = RuntimePaths.current(data_root=tmp_path / "support")
     boundary = _Boundary()
     with pytest.raises(BootstrapError, match="identity mismatch"):
         configure_workspace(
@@ -110,7 +110,7 @@ def test_candidate_inspection_is_nonstarting_and_does_not_create_support(tmp_pat
     directories_before = sorted(
         path.relative_to(root) for path in root.rglob("*") if path.is_dir()
     )
-    paths = RuntimePaths.current_mac(data_root=tmp_path / "support")
+    paths = RuntimePaths.current(data_root=tmp_path / "support")
     boundary = _Boundary()
     result = inspect_workspace(
         paths,
@@ -130,7 +130,7 @@ def test_candidate_inspection_is_nonstarting_and_does_not_create_support(tmp_pat
 
 
 def _configured_live_owner(tmp_path):
-    paths = RuntimePaths.current_mac(data_root=tmp_path / "support")
+    paths = RuntimePaths.current(data_root=tmp_path / "support")
     root = tmp_path / "realm"
     boundary = _Boundary()
     configure_workspace(paths, boundary, _config(tmp_path), mode="create", realm_root=root, realm_id="film")

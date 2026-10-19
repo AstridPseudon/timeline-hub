@@ -1,5 +1,4 @@
 import json
-import fcntl
 import os
 
 import pytest
@@ -12,6 +11,7 @@ from astrid_runtime.relocation import (
     plan_relocation,
     relocate,
 )
+from runtime_protocol import platform as runtime_platform
 
 
 def test_relocation_plan_binds_selected_owner(tmp_path):
@@ -167,7 +167,7 @@ def test_relocation_moves_support_root_and_preserves_catalog_realms(tmp_path, mo
         assert config.source_profile.runtime_environment == str(destination / "runtime-environments" / "astrid")
         with target_paths.bootstrap_lock_path.open("a+") as lock:
             with pytest.raises(BlockingIOError):
-                fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                runtime_platform.lock_file(lock.fileno(), exclusive=True, blocking=False)
         return BootstrapResult("started", "realm-1", "One", "http://127.0.0.1:1", "actor", "astrid")
 
     monkeypatch.setattr("astrid_runtime.relocation._bootstrap_locked", cold_start)
