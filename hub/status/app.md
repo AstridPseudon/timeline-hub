@@ -1,4 +1,4 @@
-<!-- app | 2026-10-19T22:23:46Z | dispatcher heartbeat 10s -->
+<!-- app | 2026-10-19T22:28:54Z | dispatcher heartbeat 3s -->
 # app — 2026-10-19 22:21 UTC
 Milestone: M1 APP EVIDENCE READY — integrated ALL5journeys PASS including BOTH deleted originals restored; new-full-failure classification complete (0new). Overall M1 awaits orchestrator audit+record. M0 COMPLETE; M2 DESIGN ONLY.
 Integrated: app tl/integration85be65a0a CLEAN; exact tree0b115750bdc4981af72bb9b5a5e64ceb1b5a2ee7. Restored conflict/Keep/draft/recovery and open-App Runtime restart positives beside BYTE-IDENTICAL real-M1 helper/cases. Reviewed exactComposition0.0.8/hash93bc.../React18.3.1/Remotion4.0.509 public exports +granted bundledtheme identity assertion. Runtime0.2.1/schema4e52/artifact9b18 unchanged.3original group/multi/retrack it.fails+exact3exceptions remain for M2-FIRST.
