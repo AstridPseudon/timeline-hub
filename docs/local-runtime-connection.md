@@ -1,5 +1,34 @@
 # Reuse an existing local Runtime from the hosted editor
 
+## Connection screens
+
+| # | Situation | Signal | Screen |
+|---|---|---|---|
+| 1 | First visit, never installed | `prompt` → Connect → Allow → 2× `silent` | permission → pending → set_up |
+| 2 | Installed, never connected from this browser (or a private window) | as 1 | set_up. The footer and the setup block find the install first. |
+| 3 | Returning, Astrid stopped | `granted`, 2× `silent`, `connectedBefore` | not_running |
+| 4 | Astrid starting | fewer than 2 failed readings | connecting → app. If slower, row 3 or row 1 until ready. |
+| 5 | Launcher up, Runtime down | `down` | not_running, whatever the history |
+| 6 | Permission not asked | `prompt` | permission |
+| 7 | Chrome's prompt open | `prompt`, Connect probe in flight | pending |
+| 8 | Prompt dismissed | still `prompt` | permission again |
+| 9 | Permission denied | `denied`, nothing sent | blocked |
+| 10 | Launcher started for another origin | 403 before CORS → `silent` | set_up or not_running. The agent's command then hits G2. |
+| 11 | Another program on 17340 | `silent` | set_up or not_running. The launcher says "Another program is in the way"; the agent reports it. |
+| 12 | Realm or identity changed, before connecting | `restart` | restart_needed |
+| 13 | Phone or tablet | `isMobileDevice()` | phone |
+| 14 | Safari or Firefox | scenario not `chromium` | rows 1–5, no permission screens (G5) |
+| 15 | Connected, Astrid stops | 2 failed health readings | stopped card. It clears itself when the same instance answers. |
+| 16 | Connected, Astrid restarts | new `runtime_instance_id` | restarted card → Reload |
+| 17 | Connected, realm changes | 503 `realm_changed` | restarted card → Reload → row 12. Rare, and each step is true. |
+| 18 | Timeline won't load | load error | loadFailed. It retries by itself when Astrid answers. |
+| 19 | Connected, no projects | — | EmptyWorkspaceGuidance |
+
+The page polls every three seconds and on focus. A `restart` signal shows immediately; otherwise it stays on
+`connecting` until two readings in a row fail. Then it shows `not_running` if this browser connected before or any
+probe gave a `down` reading, and `set_up` otherwise. Background checks do not change visible content until
+the screen itself changes. Non-Chromium desktop browsers skip the Chrome permission step.
+
 Run `npm run dev:local` from this App checkout, then open
 `https://astrid.haus/tools/video-editor`. The local gateway on port 17340 connects
 the hosted page to the selected Runtime. Runtime credentials stay on this

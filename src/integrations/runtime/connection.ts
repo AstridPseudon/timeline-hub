@@ -105,20 +105,17 @@ export function isRuntimeMode(apiBaseUrl: string | null | undefined): boolean {
   return typeof apiBaseUrl === 'string' && apiBaseUrl.replace(/\/+$/, '') === runtimeApiBase();
 }
 
-/** Why the gateway refused the connection or said the Runtime cannot serve yet. */
-export type RuntimeNotReadyReason = 'starting' | 'runtime_stopped' | 'realm_changed' | 'identity_mismatch' | 'access_denied' | 'unknown';
-
-/** The boot gate's view of the connection (design D3); the panel renders one sentence per status. */
+/** The boot gate's view of the connection (design D3); each status names one screen. */
 export type RuntimeConnectionState =
   | { status: 'connecting' }
   | { status: 'connected'; realm: Pick<Realm, 'realm_id' | 'display_name'> }
-  /** Nothing answers. `firstTime`: this origin has never connected before (the "connected before" flag). */
-  | { status: 'cant_reach'; firstTime: boolean }
-  /** A bounded set of checks found no connection, but did not establish why. */
-  | { status: 'unavailable' }
+  /** Two failed readings without evidence of an existing install. */
+  | { status: 'set_up' }
+  /** Astrid connected before, or the gateway answered on this page. */
+  | { status: 'not_running' }
   /** The browser's local-network permission is denied. */
   | { status: 'blocked' }
-  | { status: 'not_ready'; reason: RuntimeNotReadyReason };
+  | { status: 'restart_needed' };
 
 /**
  * Query-key roots that read the Runtime through the gateway. The boot gate invalidates them when the

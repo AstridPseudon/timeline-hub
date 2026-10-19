@@ -136,14 +136,14 @@ describe('Layout on the hosted build', () => {
       throw new TypeError('Failed to fetch');
     });
     render(
-      <RuntimeConnectionProvider gated permissions={permissions} fetchImpl={fetchImpl as unknown as typeof fetch}>
+      <RuntimeConnectionProvider gated permissions={permissions} fetchImpl={fetchImpl as unknown as typeof fetch} pollIntervalMs={10}>
         <MemoryRouter initialEntries={['/tools/travel-between-images']}>
           <Layout />
         </MemoryRouter>
       </RuntimeConnectionProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'cant_reach'));
+    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up'));
     expect(globalPaneShortcutsMock).not.toHaveBeenCalled();
     expect(screen.queryByTestId('tools-pane')).not.toBeInTheDocument();
   });

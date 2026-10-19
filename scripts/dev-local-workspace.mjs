@@ -38,8 +38,9 @@ const NOT_SET_UP = `Astrid isn't set up on this computer yet. Install guide: ${I
 const ENGINE_STOPPED = "Astrid's engine isn't running. Start it first: astrid-runtime up --profile astrid";
 const PROGRAM_IN_THE_WAY = "Another program is in the way, so Astrid can't start. Close it and try again.";
 const OTHER_ASTRID_RUNNING = 'Another Astrid is already running in another window. Stop it there with Ctrl+C first.';
-const ASTRID_STOPPED = 'Astrid stopped. Start it again with npm run dev:local.';
-const AGENT_CHAT_STOPPED = 'Agent chat stopped. Start Astrid again with npm run dev:local.';
+const startCommand = process.env.ASTRID_START_COMMAND || 'npm run dev:local';
+const ASTRID_STOPPED = `Astrid stopped. Start it again with ${startCommand}.`;
+const AGENT_CHAT_STOPPED = `Agent chat stopped. Start Astrid again with ${startCommand}.`;
 const BAD_HOSTED_ORIGIN = '--hosted-origin must be an https:// address, like https://astrid.haus';
 const ENGINE_CHANGED = 'Astrid changed on this computer. Restart its engine: astrid-runtime up --profile astrid';
 const CANT_START = "Astrid can't start with the setup on this computer.";
@@ -560,7 +561,7 @@ if (buildOnly) {
   else process.exitCode = process.exitCode || (code ?? 1);
 } else {
 
-const COULDNT_START = "Astrid couldn't start. Run npm run dev:local -- --verbose to see why.";
+const COULDNT_START = `Astrid couldn't start. Run ASTRID_VERBOSE=1 ${startCommand} to see why.`;
 /** How long Vite may take to listen, and the gateway after it printed that it does. */
 const VITE_START_TIMEOUT_MS = 60_000;
 const GATEWAY_START_TIMEOUT_MS = 15_000;
@@ -591,6 +592,8 @@ function probeGatewayPort(portValue, origin, realmId) {
           resolveProbe(body.realm_id === realmId
             ? { kind: 'ours' }
             : { kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another realm` });
+        } else if (response.statusCode === 403 && body?.error === 'hosted_origin_required') {
+          resolveProbe({ kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another origin` });
         } else if (response.statusCode === 503 && ['realm_changed', 'runtime_identity_mismatch'].includes(body?.error)) {
           resolveProbe({ kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another realm (${body.error})` });
         } else {
@@ -612,6 +615,9 @@ if (hostedOrigin && loopbackPort !== '0') {
     // A second launcher for the same Astrid: the first one is serving, so start nothing and point to the same place.
     console.log('Astrid is already running in another window.');
     printOpenBlock();
+    // This invocation may have started the Runtime before discovering the existing gateway.
+    // The gateway already owns that Runtime lifecycle, so final cleanup must leave it running.
+    ownedRuntime = undefined;
     exit(0);
   }
   if (holder.kind === 'other_astrid') exit(fail(OTHER_ASTRID_RUNNING, holder.details) ? 1 : 1);

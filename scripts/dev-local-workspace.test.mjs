@@ -210,7 +210,7 @@ const TEST_DATA_ENV_KEYS = [
   'BANODOCO_LOCAL_DATA_ROOT', 'BANODOCO_LOCAL_SOURCE_MANIFEST', 'ASTRID_LOCAL_DATA_ROOT',
   'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_LOCAL_SOURCE_MANIFEST', 'BANODOCO_RUNTIME_DATA_ROOT',
   'ASTRID_DATA_ROOT', 'ASTRID_SUPPORT_ROOT', 'ASTRID_RUNTIME_PYTHON',
-  'ASTRID_RUNTIME_CHECKOUT', 'ASTRID_RUNTIME_SOURCE_MANIFEST',
+  'ASTRID_RUNTIME_CHECKOUT', 'ASTRID_RUNTIME_SOURCE_MANIFEST', 'ASTRID_START_COMMAND',
 ];
 
 function cleanInheritedEnvironment(source = process.env) {
@@ -508,6 +508,7 @@ fs.appendFileSync(${JSON.stringify(spawnLog)}, args.join(' ') + '\\n');
 fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, kind + ':start\\n');
 if (kind === 'vite') fs.writeFileSync(process.env.FAKE_RUNTIME_APP_ENV, JSON.stringify({ args, astridCheckout: process.env.ASTRID_CHECKOUT, dataRoot: process.env.ASTRID_RUNTIME_DATA_ROOT, supportRoot: process.env.ASTRID_SUPPORT_ROOT, discovery: process.env.ASTRID_WORKSPACE_DISCOVERY }));
 console.log(['fake-npm', ...args].join(' '));
+if (kind === 'vite' && process.env.FAKE_NPM_VITE_EXIT) process.exit(Number(process.env.FAKE_NPM_VITE_EXIT));
 if (args.includes('dev') || args.includes('preview')) require('node:net').createServer(() => {}).listen(Number(process.env.PORT), '127.0.0.1');
 if (args.includes('dev:astrid-acp') && process.env.FAKE_ACP_EXIT_MS) setTimeout(() => process.exit(3), Number(process.env.FAKE_ACP_EXIT_MS));
 for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => { fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, kind + ':stop\\n'); process.exit(0); });
@@ -685,6 +686,37 @@ test('a second launcher for the same Astrid says so, prints the same Open block,
   } finally { await first.stop(); }
 });
 
+test('a second launcher keeps the Runtime it just started when the matching gateway is already live', async () => {
+  const port = String(await freePort());
+  const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: port } });
+  const secondFixture = await launchFixture({ discoveryState: 'missing', configuredOrigin: 'https://hosted.test' });
+  try {
+    const result = await run([], { ...secondFixture.env, ASTRID_APP_LOOPBACK_PORT: port });
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /Astrid is already running in another window/);
+    const lifecycle = readFileSync(secondFixture.env.FAKE_RUNTIME_CLI_LOG, 'utf8');
+    assert.match(lifecycle, /"action":"up"/);
+    assert.doesNotMatch(lifecycle, /"action":"down"/, 'the newly started Runtime remains available to the live gateway');
+  } finally {
+    await first.stop();
+    await secondFixture.close();
+  }
+});
+
+test('a gateway that rejects this hosted origin is another Astrid, not another program', async () => {
+  const holder = createServer((_req, res) => {
+    res.writeHead(403, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'hosted_origin_required' }));
+  });
+  await new Promise(r => holder.listen(0, '127.0.0.1', r));
+  try {
+    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(holder.address().port) } });
+    assert.equal(result.code, 1);
+    assert.equal(result.stderr.split('\n')[0], 'Astrid: Another Astrid is already running in another window. Stop it there with Ctrl+C first.');
+    assert.match(result.stderr.split('\n')[1], /served by a gateway for another origin/);
+  } finally { await new Promise(r => holder.close(r)); }
+});
+
 test('a second launcher for another Astrid says to stop the first one', async () => {
   const port = String(await freePort());
   const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: port } });
@@ -704,7 +736,7 @@ test('a second launcher for another Astrid says to stop the first one', async ()
 
 test('the gateway stopping later is one friendly line, then the details', async () => {
   const port = await freePort();
-  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(port) } });
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(port), ASTRID_START_COMMAND: '/installed/Astrid/start' } });
   try {
     const pids = execFileSync('pgrep', ['-f', `astrid-loopback-gateway.ts.*--port ${port}`], { encoding: 'utf8' }).split('\n').filter(Boolean).map(Number);
     assert(pids.length > 0, 'the gateway process');
@@ -712,7 +744,7 @@ test('the gateway stopping later is one friendly line, then the details', async 
     await started.closed;
     assert.equal(started.child.exitCode, 1);
     const lines = started.seen.stderr.split('\n');
-    assert.equal(lines[0], 'Astrid stopped. Start it again with npm run dev:local.');
+    assert.equal(lines[0], 'Astrid stopped. Start it again with /installed/Astrid/start.');
     assert.match(lines[1], /^Details: loopback gateway exited with SIGKILL; the hosted app cannot reach this computer/);
   } finally { await started.stop(); }
 });
@@ -720,11 +752,29 @@ test('the gateway stopping later is one friendly line, then the details', async 
 test('the agent chat bridge stopping is its own friendly line', async () => {
   const result = await launcherEnds({
     configuredOrigin: 'https://hosted.test',
-    env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()), FAKE_ACP_EXIT_MS: '200' },
+    env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()), FAKE_ACP_EXIT_MS: '200', ASTRID_START_COMMAND: '/installed/Astrid/start' },
   });
   assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], 'Astrid: Agent chat stopped. Start Astrid again with npm run dev:local.');
+  assert.equal(result.stderr.split('\n')[0], 'Astrid: Agent chat stopped. Start Astrid again with /installed/Astrid/start.');
   assert.match(result.stderr.split('\n')[1], /^Details: Astrid ACP bridge exited with code 3; ACP is offline/);
+});
+
+test('a failed app start uses ASTRID_VERBOSE with the installed start command', async () => {
+  const result = await launcherEnds({
+    configuredOrigin: 'https://hosted.test',
+    env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()), ASTRID_START_COMMAND: '/installed/Astrid/start', FAKE_NPM_VITE_EXIT: '7' },
+  });
+  assert.equal(result.code, 1);
+  assert.equal(result.stderr.split('\n')[0], "Astrid: Astrid couldn't start. Run ASTRID_VERBOSE=1 /installed/Astrid/start to see why.");
+});
+
+test('a failed app start uses the default npm command with ASTRID_VERBOSE', async () => {
+  const result = await launcherEnds({
+    configuredOrigin: 'https://hosted.test',
+    env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()), FAKE_NPM_VITE_EXIT: '7' },
+  });
+  assert.equal(result.code, 1);
+  assert.equal(result.stderr.split('\n')[0], "Astrid: Astrid couldn't start. Run ASTRID_VERBOSE=1 npm run dev:local to see why.");
 });
 
 test('a machine without Astrid set up points to the install guide, and every error line names Astrid once', async () => {

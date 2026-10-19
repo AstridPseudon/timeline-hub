@@ -10,11 +10,13 @@ import { installBrowserName } from '@/pages/Home/installScenario.ts';
  * Rules for this file:
  * - Visible text says Astrid and never names a Runtime, workspace, port or command. Commands appear only in the agent block.
  * - Straight apostrophes only: the journey matches `Astrid isn't running` exactly.
- * - One screen per thing a person can do: states a person cannot tell apart share one message.
+ * - Gate states name their screens: connecting, blocked, set_up, not_running, restart_needed and connected.
+ *   Permission, pending and phone screens come from browser context. Polling never adds a checking indicator.
+ * - One screen per thing a person can do: setup finds an install first; start never installs again.
  * - Each phrase the journey looks for (`tests/e2e/local/direct-journey.spec.ts`) appears in one element of its
  *   panel only, so a text locator finds exactly one match.
  * - The browser a card names is a `{browser}` placeholder, filled by `withBrowser` from the landing page's browser detection.
-- No gateway literal (`127.0.0.1:<port>`, `/api/...`): those live in `connection.ts`.
+ * - No gateway literal (`127.0.0.1:<port>`, `/api/...`): those live in `connection.ts`.
  */
 
 /** The browser's name goes where a card says `{browser}`: the one the landing page's install dialog detected. */
@@ -27,7 +29,6 @@ export function withBrowser(text: string, browser: string = installBrowserName()
 
 /** Commands and paths the agent block names. Plain strings. */
 const COMMANDS = {
-  runtime: 'astrid-runtime up --profile astrid',
   app: 'npm run dev:local',
   /** The installer guide, in the astrid-agent repository: a full URL, so a reader without the repo can open it. */
   installUrl: 'https://github.com/banodoco/astrid-agent/blob/main/docs/setup/local-source-install.md',
@@ -36,8 +37,8 @@ const COMMANDS = {
 /** The origin `npm run dev:local` opens for by default (`config/hosted-origin.json`); any other needs `ASTRID_APP_LOOPBACK_ORIGIN`. */
 const DEFAULT_HOSTED_ORIGIN: string | null = hostedOrigin.origin;
 
-/** Which of the two agent blocks to copy: the page has never reached Astrid, or Astrid changed under a connected page. */
-export type AgentInstructionsVariant = 'start' | 'restart';
+/** Setup finds an install first; start is for Astrid we already know is installed. */
+export type AgentInstructionsVariant = 'setup' | 'start';
 
 /** A heading and the one sentence under it. */
 interface Message {
@@ -64,18 +65,13 @@ export interface RuntimeConnectionCopy {
   };
   /** Nothing answers and this page has never connected: the install path. */
   readonly setUp: Message & {
-    readonly button: string;
     /** `linkText` links to `COMMANDS.installUrl`. */
     readonly footer: { readonly before: string; readonly linkText: string; readonly after: string };
   };
-  /** Nothing answers on a return visit, or Astrid answered but is not ready: a person does the same thing for each. */
-  readonly notRunning: Message & { readonly button: string };
-  /** Repeated checks found no connection, but did not confirm why. */
-  readonly unavailable: Message & { readonly button: string };
-  /** The gateway refused this page before Runtime discovery, such as a browser permission or origin check. */
-  readonly accessDenied: Message & { readonly button: string };
-  /** The Astrid running is not the one this page was set up with: only a restart helps. */
-  readonly restartNeeded: Message & { readonly button: string };
+  /** Nothing answers on a return visit, or the gateway answered on this page. */
+  readonly notRunning: Message;
+  /** Astrid changed while it was running: only a restart helps. */
+  readonly restartNeeded: Message;
   /** A phone can never reach Astrid on a computer: the link goes there instead. */
   readonly phone: Message & { readonly button: string; readonly copied: string };
   /** Screen-reader text of the status container while connected; nothing else says it. */
@@ -92,7 +88,7 @@ export interface RuntimeConnectionCopy {
     /** The button everywhere else. */
     readonly copy: string;
     readonly copied: string;
-    /** The line under the button once the steps are copied. */
+    /** The line under the button once the steps are copied; stays until the screen changes. */
     readonly pasteNext: string;
     /** Shown with the steps in a text box, only when the clipboard write failed. */
     readonly copyFailed: string;
@@ -111,7 +107,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   panelLabel: 'Connect to Astrid',
 
   connecting: {
-    sentence: 'Checking your local Astrid connection…',
+    sentence: 'Looking for Astrid on this computer…',
   },
 
   permission: {
@@ -139,9 +135,8 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   setUp: {
     title: 'Set up Astrid on this computer',
     sentence: "Astrid runs on your own computer, and it isn't running here yet.",
-    button: 'Copy setup steps for your agent',
     footer: {
-      before: 'Already installed? Start Astrid and this page opens by itself. Or follow ',
+      before: 'Already installed? Start Astrid and this page opens by itself. To set it up yourself, follow ',
       linkText: 'the install guide',
       after: '.',
     },
@@ -150,25 +145,11 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   notRunning: {
     title: "Astrid isn't running",
     sentence: 'Start Astrid on this computer and this page opens by itself.',
-    button: 'Copy steps for your agent',
-  },
-
-  unavailable: {
-    title: "Can't connect to Astrid yet",
-    sentence: 'Astrid has not answered after a few checks. Keep this page open; it will connect when Astrid is ready.',
-    button: 'Try again',
-  },
-
-  accessDenied: {
-    title: "Check this page's access to Astrid",
-    sentence: "Connection refused. Check this page's local-network access in your browser, then try again.",
-    button: 'Try again',
   },
 
   restartNeeded: {
     title: 'Astrid needs a restart',
-    sentence: 'Astrid changed on this computer since this page last used it. Restart it and this page opens by itself.',
-    button: 'Copy steps for your agent',
+    sentence: 'Astrid on this computer changed while it was running. Restart it and this page opens by itself.',
   },
 
   phone: {
@@ -195,7 +176,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   loadFailed: {
     title: "Couldn't load this timeline",
-    sentence: "Astrid on this computer didn't answer. Start it and try again.",
+    sentence: "Astrid on this computer didn't answer. This timeline loads by itself when it does.",
     button: 'Try again',
     retrying: 'Trying again…',
   },
@@ -209,21 +190,21 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     instructions: (pageOrigin, variant) => {
       const prefix = pageOrigin === DEFAULT_HOSTED_ORIGIN ? '' : `ASTRID_APP_LOOPBACK_ORIGIN=${pageOrigin} `;
       return [
-        `Please start Astrid on this computer so the page open at ${pageOrigin} can connect to it.`,
-        'Keep any existing installation, profile, data root and workspace as they are. Do not reset, reinstall over or delete anything.',
-        ...(variant === 'restart'
-          ? [`Astrid changed since this page connected. If ${COMMANDS.app} is running, stop it before step 2.`]
-          : []),
-        [
-          `1. Start Astrid's Runtime: ${COMMANDS.runtime}`,
-          '   If it is already running, leave it running.',
-          `   If the command is not found, Astrid is not installed here yet: follow the install guide (${COMMANDS.installUrl}), then come back to this step.`,
-          `2. In the Astrid app checkout (the astrid-app repository), run: ${prefix}${COMMANDS.app}`,
-          `   If it is already running but never printed "Open ${pageOrigin}", stop it and start it again this way.`,
-          '   If it says another program is in the way, do not stop that program; report the details line it prints.',
-          `3. Leave both running, and report back once ${COMMANDS.app} prints "Open ${pageOrigin}". The page connects by itself; it does not need a reload.`,
-        ].join('\n'),
-      ].join('\n\n');
+        variant === 'setup'
+          ? `Please start Astrid on this computer so the page open at ${pageOrigin} can connect to it, installing it first only if it isn't installed. Don't reset, reinstall over or delete anything that's already here.`
+          : `Please start Astrid on this computer so the page open at ${pageOrigin} can connect to it. Astrid is already installed here: don't install it again, and don't reset or delete anything.`,
+        '',
+        '1. Start Astrid with the command that fits what you find:',
+        `   - an Astrid install (a folder whose install.json says "astrid.local-source-install"): ${prefix}<that folder>/start`,
+        `     (an older install without a start file: ${prefix}<that folder>/with-env npm --prefix <that folder>/sources/app run dev:local)`,
+        `   - a checkout of the astrid-app repository: ${prefix}${COMMANDS.app}, run inside it`,
+        variant === 'setup'
+          ? `   - neither: install Astrid with ${COMMANDS.installUrl}. Its last step starts it.`
+          : '   - neither: ask me where Astrid is.',
+        "2. Astrid keeps running until it's stopped, so start it where it can stay running and don't wait for it to exit.",
+        `3. Once it prints "Open ${pageOrigin}", tell me. The page connects by itself.`,
+        '4. If it says another Astrid is already running, stop that one and run the command again. If it stops with any other message, tell me that message and the "Details:" line under it.',
+      ].join('\n');
     },
   },
 

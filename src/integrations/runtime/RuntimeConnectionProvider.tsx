@@ -11,9 +11,10 @@
  *   Chrome ask. Re-checking stays off until the browser reports `granted` (the permission's `onchange`).
  * - `denied`: `blocked`, nothing sent.
  *
- * A probe answer maps to one state: a network error (or any answer that is not the gateway's) is `cant_reach`, a 503
- * is `not_ready` with the gateway's reason. Once connected the state is sticky for the page's life: a Runtime that
- * stops later is `client.ts`'s restart message with Reload, and unmounting the editor under unsaved work is worse.
+ * A changed realm or identity asks for a restart at once. Otherwise two failed readings show setup help, or start
+ * help if this browser connected before or the gateway answered. Background probes leave the current panel in place
+ * while they run. Non-Chromium desktop browsers have no permission prompt, so they probe at once. Once connected the
+ * state is sticky: a Runtime that stops later shows a recovery card, keeping the editor and its unsaved work mounted.
  *
  * The first connection also marks this browser as one that chose the app (`rememberAppEntryPreference`), so the next
  * visit to the bare domain skips the landing page. The gate only exists on the hosted build, so a same-origin build
@@ -28,6 +29,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { requireContextValue } from '@/shared/contexts/contextGuard';
 import { rememberAppEntryPreference } from '@/app/entryClassification';
+import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 import {
   queryLocalNetworkPermission,
   watchLocalNetworkPermission,
@@ -38,7 +40,6 @@ import {
   runtimeApiBase,
   runtimeOrigin,
   type RuntimeConnectionState,
-  type RuntimeNotReadyReason,
 } from './connection.ts';
 import { appUrlFromHealth } from './gatewayHealth.ts';
 import { setRuntimeAppUrl } from './runtimeAppUrl.ts';
@@ -47,7 +48,6 @@ import type { Realm } from './generated.ts';
 
 const POLL_INTERVAL_MS = 3000;
 const PROBE_TIMEOUT_MS = 5000;
-const CONNECTION_GRACE_MS = 12_000;
 const CONNECTED_BEFORE_KEY = 'astrid.runtime.connectedBefore';
 
 type RealmSummary = Pick<Realm, 'realm_id' | 'display_name'>;
@@ -55,26 +55,9 @@ type RealmSummary = Pick<Realm, 'realm_id' | 'display_name'>;
 export type RuntimeProbeOutcome =
   /** `appUrl`: the local app address the gateway reported in its health answer (`gatewayHealth.ts`), null when it gave none. */
   | { kind: 'connected'; realm: RealmSummary; appUrl: string | null }
-  | { kind: 'cant_reach' }
-  | { kind: 'not_ready'; reason: RuntimeNotReadyReason };
-
-/**
- * The gateway's 503 body is `{ error: <code> }` (`RuntimeRefusalCode` in `scripts/astrid-loopback-gateway.ts`). A
- * Runtime admission refusals are ambiguous: the gateway may be starting or may have temporarily lost its
- * discovery state. Only realm and identity mismatches prove that a targeted restart is needed.
- */
-function notReadyReason(body: unknown): RuntimeNotReadyReason {
-  const code = typeof body === 'object' && body !== null && 'error' in body ? (body as { error?: unknown }).error : undefined;
-  switch (code) {
-    case 'realm_changed': return 'realm_changed';
-    // These codes say the gateway cannot currently serve this Runtime. They do not establish whether
-    // Astrid is stopped, still starting, or temporarily unable to read its discovery state.
-    case 'runtime_unavailable':
-    case 'runtime_discovery_invalid': return 'starting';
-    case 'runtime_identity_mismatch': return 'identity_mismatch';
-    default: return 'starting';
-  }
-}
+  | { kind: 'restart' }
+  | { kind: 'down' }
+  | { kind: 'silent' };
 
 async function readJson(response: Response): Promise<unknown> {
   try {
@@ -86,7 +69,8 @@ async function readJson(response: Response): Promise<unknown> {
 
 /**
  * Asks the Runtime who it is, the way the gateway does: health, then realm. Never throws. An answer that is not
- * a Astrid gateway's (another server on the port, a bad body) is `cant_reach`.
+ * an Astrid gateway's (another server on the port, a bad body) is `silent`. Error bodies prove the gateway answered,
+ * regardless of their HTTP status.
  */
 export async function probeRuntime(
   signal?: AbortSignal,
@@ -98,27 +82,25 @@ export async function probeRuntime(
     try {
       response = await fetchImpl(`${base}${path}`, { signal, cache: 'no-store' });
     } catch {
-      return { kind: 'cant_reach' };
+      return { kind: 'silent' };
     }
-    if (response.status === 401 || response.status === 403) {
-      // Authentication, origin, or browser-access refusals are already actionable. Do not bury them
-      // under the generic startup grace used for timeouts and Runtime-admission 503s.
-      return { kind: 'not_ready', reason: 'access_denied' };
+    const body = await readJson(response);
+    if (typeof body === 'object' && body !== null && 'error' in body) {
+      return { kind: body.error === 'realm_changed' || body.error === 'runtime_identity_mismatch' ? 'restart' : 'down' };
     }
-    if (response.status === 503) return { kind: 'not_ready', reason: notReadyReason(await readJson(response)) };
-    if (!response.ok) return { kind: 'cant_reach' };
-    return { body: await readJson(response) };
+    if (response.status !== 200) return { kind: 'silent' };
+    return { body };
   };
 
   const health = await get('/v1/health');
   if ('kind' in health) return health;
   if (typeof health.body !== 'object' || health.body === null || typeof (health.body as { status?: unknown }).status !== 'string') {
-    return { kind: 'cant_reach' };
+    return { kind: 'silent' };
   }
   const realm = await get('/v1/realm');
   if ('kind' in realm) return realm;
   const { realm_id, display_name } = (realm.body ?? {}) as Partial<RealmSummary>;
-  if (typeof realm_id !== 'string' || typeof display_name !== 'string') return { kind: 'cant_reach' };
+  if (typeof realm_id !== 'string' || typeof display_name !== 'string') return { kind: 'silent' };
   return { kind: 'connected', realm: { realm_id, display_name }, appUrl: appUrlFromHealth(health.body) };
 }
 
@@ -145,7 +127,7 @@ export interface RuntimeConnectionValue {
   isConnected: boolean;
   /** The permission or the first probe is still pending: nothing can be shown yet, so the app renders nothing. */
   isBooting: boolean;
-  /** A probe is in flight. */
+  /** An explicit Connect probe is in flight; background checks never enter a visible checking state. */
   isChecking: boolean;
   /** The permission is `prompt`: nothing has been sent and `connect()` is what asks Chrome. */
   awaitingConnect: boolean;
@@ -166,8 +148,6 @@ export interface RuntimeConnectionProviderProps {
   /** Override for tests; defaults to `fetch`. */
   fetchImpl?: typeof fetch;
   pollIntervalMs?: number;
-  /** Time to keep an ambiguous initial connection failure in the checking state before showing generic help. */
-  connectionGraceMs?: number;
   /** Called each time the connection comes up (once per page): where Runtime queries are invalidated. */
   onConnected?: () => void;
 }
@@ -178,14 +158,13 @@ export function RuntimeConnectionProvider({
   permissions,
   fetchImpl,
   pollIntervalMs = POLL_INTERVAL_MS,
-  connectionGraceMs = CONNECTION_GRACE_MS,
   onConnected,
 }: RuntimeConnectionProviderProps) {
   const [permission, setPermission] = useState<LocalNetworkPermissionState | null>(null);
   const [outcome, setOutcome] = useState<RuntimeProbeOutcome | null>(null);
   const [isChecking, setIsChecking] = useState(false);
-  const [firstAttemptAt, setFirstAttemptAt] = useState<number | null>(null);
-  const [graceExpired, setGraceExpired] = useState(false);
+  const [failedReadings, setFailedReadings] = useState(0);
+  const [gatewayAnswered, setGatewayAnswered] = useState(false);
   const [connectedBefore, setConnectedBefore] = useState(() => gated && readConnectedBefore());
 
   const mounted = useRef(true);
@@ -210,6 +189,11 @@ export function RuntimeConnectionProvider({
   // The permission, and every change the browser reports to it.
   useEffect(() => {
     if (!gated) return undefined;
+    const scenario = detectInstallScenario();
+    if (scenario === 'safari' || scenario === 'unsupported') {
+      setPermission('granted');
+      return undefined;
+    }
     let cancelled = false;
     let unwatch: () => void = () => {};
     void (async () => {
@@ -234,9 +218,8 @@ export function RuntimeConnectionProvider({
     if (inFlight.current || connectedRef.current) return;
     const controller = new AbortController();
     inFlight.current = controller;
-    setFirstAttemptAt((previous) => previous ?? Date.now());
     if (untimed && permissionRef.current !== 'granted') promptProbe.current = controller;
-    setIsChecking(true);
+    setIsChecking(untimed);
     const timer = untimed ? undefined : setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
     let result: RuntimeProbeOutcome;
     try {
@@ -257,6 +240,8 @@ export function RuntimeConnectionProvider({
       connectedRef.current = true;
       setRuntimeAppUrl(result.appUrl);
     }
+    setFailedReadings((previous) => result.kind === 'connected' ? 0 : previous + 1);
+    if (result.kind === 'down') setGatewayAnswered(true);
     setOutcome(result);
     if (result.kind !== 'connected' && permissionRef.current !== 'granted') {
       // A denied fetch looks like nothing listening, so the permission is the only way to tell them apart.
@@ -266,15 +251,6 @@ export function RuntimeConnectionProvider({
   }, [fetchImpl, permissions]);
 
   const isConnected = outcome?.kind === 'connected';
-
-  // A failed first request is not enough evidence to say Astrid is stopped. Keep checking for a
-  // short, bounded window, then use generic connection help until a successful probe arrives.
-  useEffect(() => {
-    if (!gated || permission !== 'granted' || isConnected || firstAttemptAt === null || graceExpired) return undefined;
-    const remaining = Math.max(0, connectionGraceMs - (Date.now() - firstAttemptAt));
-    const timer = window.setTimeout(() => setGraceExpired(true), remaining);
-    return () => window.clearTimeout(timer);
-  }, [gated, permission, isConnected, firstAttemptAt, graceExpired, connectionGraceMs]);
 
   // Granted: probe at once, then on an interval and on focus, until connected.
   useEffect(() => {
@@ -325,29 +301,19 @@ export function RuntimeConnectionProvider({
       };
     }
     const base = { gated: true, isChecking, connect } as const;
-    const firstTime = !connectedBefore;
     if (outcome?.kind === 'connected') {
       return { ...base, state: { status: 'connected', realm: outcome.realm }, isConnected: true, isBooting: false, awaitingConnect: false, realmName: outcome.realm.display_name };
     }
     const notConnected = { ...base, isConnected: false, realmName: null, awaitingConnect: permission === 'prompt' };
     if (permission === null) return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
     if (permission === 'denied') return { ...notConnected, state: { status: 'blocked' }, isBooting: false };
-    if (permission === 'prompt') {
-      return {
-        ...notConnected,
-        state: isChecking ? { status: 'connecting' } : { status: 'cant_reach', firstTime },
-        isBooting: false,
-      };
+    if (permission === 'prompt') return { ...notConnected, state: { status: 'connecting' }, isBooting: false };
+    if (outcome?.kind === 'restart') return { ...notConnected, state: { status: 'restart_needed' }, isBooting: false };
+    if (failedReadings >= 2) {
+      return { ...notConnected, state: { status: connectedBefore || gatewayAnswered ? 'not_running' : 'set_up' }, isBooting: false };
     }
-    if (outcome?.kind === 'not_ready' && outcome.reason !== 'starting') return { ...notConnected, state: { status: 'not_ready', reason: outcome.reason }, isBooting: false };
-    if (graceExpired && (outcome?.kind === 'cant_reach' || outcome?.kind === 'not_ready' || isChecking)) {
-      return { ...notConnected, state: { status: 'unavailable' }, isBooting: false };
-    }
-    if (outcome?.kind === 'cant_reach' || outcome?.kind === 'not_ready') return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
-    // No answer yet: the first probe is on its way.
-    if (permission === 'granted') return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
-    return { ...notConnected, state: { status: 'unavailable' }, isBooting: false };
-  }, [gated, outcome, permission, isChecking, connectedBefore, connect, graceExpired]);
+    return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
+  }, [gated, outcome, permission, isChecking, connectedBefore, connect, failedReadings, gatewayAnswered]);
 
   return <RuntimeConnectionContext.Provider value={value}>{children}</RuntimeConnectionContext.Provider>;
 }

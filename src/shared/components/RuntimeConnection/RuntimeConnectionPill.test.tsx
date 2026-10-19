@@ -106,7 +106,8 @@ describe('RuntimeConnectionPill', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy steps for your agent' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
-    expect(String(writeText.mock.calls[0][0])).toBe(COPY.agent.instructions(window.location.origin, 'start'));
+      expect(String(writeText.mock.calls[0][0])).toBe(COPY.agent.instructions(window.location.origin, 'start'));
+      expect(String(writeText.mock.calls[0][0])).toContain('<that folder>/start');
   });
 
   it('one dropped reading is not a stop', async () => {
@@ -203,7 +204,7 @@ describe('RuntimeConnectionPill', () => {
   it('renders nothing while not connected, and asks Astrid nothing', () => {
     const fetchImpl = healthRoute(healthy('instance-1'));
     const { container } = render(
-      <RuntimeConnectionPill connection={connectionFor({ status: 'cant_reach', firstTime: false })} fetchImpl={fetchImpl} restartCheckIntervalMs={5} />,
+      <RuntimeConnectionPill connection={connectionFor({ status: 'not_running' })} fetchImpl={fetchImpl} restartCheckIntervalMs={5} />,
     );
     expect(container).toBeEmptyDOMElement();
     expect(fetchImpl).not.toHaveBeenCalled();

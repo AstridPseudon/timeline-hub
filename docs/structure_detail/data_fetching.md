@@ -17,27 +17,30 @@
 | Local dev, Plan B relay | `''` (`VITE_RUNTIME_ORIGIN` unset) | `/api/runtime` / `/api/astrid` |
 | Hosted (`npm run build:hosted`) | `http://127.0.0.1:17340` | `{origin}/api/runtime` / `{origin}/api/astrid` |
 
-**Boot gate**: `RuntimeConnectionProvider` (mounted in `src/shared/contexts/AuthContext.tsx`) and `RuntimeConnectionGate` (`src/app/Layout.tsx`) apply only when `runtimeOrigin() !== ''`. Order: permission (`local-network-access`), probe (`GET {runtimeApiBase()}/v1/health`, then `/v1/realm`), Runtime queries.
+**Boot gate**: `RuntimeConnectionProvider` (mounted in `src/shared/contexts/AuthContext.tsx`) and `RuntimeConnectionGate` (`src/app/Layout.tsx`) apply only when `runtimeOrigin() !== ''`. Order: permission (`local-network-access`), probe (`GET {runtimeApiBase()}/v1/health`, then `/v1/realm`), Runtime queries. Chrome prompts only after Connect. Safari and Firefox skip that prompt. The page polls every 3 s and on focus; background polls never add a checking indicator.
 
-| `RuntimeConnectionState` | Set when (permission behavior) |
-|--------------------------|--------------------------------|
-| `connecting` | Permission unread, or `granted` and probing (re-probes every 3 s and on focus until connected) |
-| `connected` (realm) | Health and realm both answer as a Astrid App gateway's |
-| `cant_reach` (`firstTime`) | Network error, non-OK, or a non-gateway body; also permission `prompt`/unknown/throws, where nothing is sent until `connect()` sends an untimed probe (that is what makes Chrome ask). `firstTime` holds until `astrid.runtime.connectedBefore` is set |
-| `blocked` | Permission `denied`; nothing is sent |
-| `not_ready` (reason) | Gateway 503: `realm_changed`; `runtime_unavailable` or `runtime_discovery_invalid` gives `runtime_stopped`; `runtime_identity_mismatch` gives `identity_mismatch`; other codes give `unknown` |
+| `RuntimeConnectionState` | Set when |
+|--------------------------|----------|
+| `connecting` | Permission is unread or `prompt`, or fewer than two consecutive readings have failed |
+| `connected` | Health and realm both answer successfully |
+| `set_up` | Two consecutive failed readings, with no previous connection and no `down` reading this page |
+| `not_running` | Two consecutive failed readings after a previous connection or any `down` reading this page |
+| `restart_needed` | A gateway response reports `realm_changed` or `runtime_identity_mismatch`; shown immediately |
+| `blocked` | Permission is `denied`; nothing is sent |
 
-**What a person sees** (`src/shared/components/RuntimeConnection/`: wording only in `copy.ts`, layout in `RuntimeConnectionPanel.tsx`). The product is called Astrid on every screen; commands appear only in the agent block (`agent.instructions`). Several states share one screen because a person does the same thing for each:
+Otherwise the provider stays on `connecting` until two readings in a row fail. A gateway error body (including 502 `runtime_unavailable` and 503 discovery errors) is evidence Astrid is installed; network errors and non-gateway replies are silent. A `restart` response takes precedence and shows `restart_needed` immediately. Background re-checks do not produce a temporary checking line.
+
+**What a person sees** (`src/shared/components/RuntimeConnection/`: wording only in `copy.ts`, layout in `RuntimeConnectionPanel.tsx`). The product is called Astrid on every screen; commands appear only in the agent block (`agent.instructions`). Each gate state names its screen; permission and phone screens come from browser context:
 
 | Screen | States that show it | Primary action |
 |--------|---------------------|----------------|
-| Mink only, "Looking for Astrid on this computer…" after 1 s | `connecting`, `not_ready` `starting` | none |
+| Mink only, "Looking for Astrid on this computer…" after 1 s | `connecting` while waiting for permission or probe readings | none |
 | "Connect to Astrid on this computer" | permission `prompt` (direct visit) | Connect (the landing page's "use it right here" click sets a one-shot flag, `autoConnectRequest.ts`, and the gate calls `connect()` at once) |
 | "Choose Allow in Chrome" | Connect pressed, Chrome's prompt open | none (arrow up to the address bar) |
 | "Allow Astrid in Chrome" | `blocked` | two steps in Chrome's site settings |
-| "Set up Astrid on this computer" | `cant_reach` first time | Copy setup steps for your agent (footer links the install guide) |
-| "Astrid isn't running" | `cant_reach` returning, `not_ready` `runtime_stopped` / `unknown` | Copy steps for your agent |
-| "Astrid needs a restart" | `not_ready` `identity_mismatch` / `realm_changed` | Copy steps for your agent (restart variant) |
+| "Set up Astrid on this computer" | `set_up` | Copy setup steps for your agent (footer links the install guide) |
+| "Astrid isn't running" | `not_running` | Copy steps for your agent |
+| "Astrid needs a restart" | `restart_needed` | Copy steps for your agent |
 | "Open Astrid on your computer" | any not-connected state on a phone (`isMobileDevice`, the landing dialog's check) | Send the link to your computer |
 
 Once connected nothing is shown while Astrid is up (a screen-reader-only "Connected to Astrid" in `runtime-connection-status`). `useRuntimeRestartWatch` polls health: two failed readings in a row show the "Astrid stopped" card (clears itself when the same instance answers), a new instance or a `realm_changed` 503 shows the "Astrid restarted" card (Reload). While either card shows, `recoveryCard.ts` tells the editor to stay quiet: no canonical-refresh banner, no load-error card, a neutral "Not saved" badge, and `WorkspaceConnectionRecovery` never renders on the hosted build. When the "stopped" card clears, the shell retries what failed meanwhile: the timeline read (`retryLoad`) and the save that never got an answer (`retryPendingSave`, which replays it under its own idempotency key; an edit made meanwhile queues behind it and is never reported as "changed somewhere else", see `OwnUnacknowledgedSaveError`). The hosted build never shows a red "Error" save badge, and `TimelineLoadErrorCard` (the connection cards' frame) also retries by itself when `/v1/health` starts answering. The gateway adds `app_url` (`http://127.0.0.1:<app port>`, schema in `gatewayHealth.ts`) to its health answer so disabled controls can link to the local app ("Open the full editor").

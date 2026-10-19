@@ -4,7 +4,6 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { MinkRunner } from '@/shared/components/MinkRunner/MinkRunner.tsx';
 import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
-import type { RuntimeNotReadyReason } from '@/integrations/runtime/connection.ts';
 import { isMobileDevice } from '@/pages/Home/installScenario.ts';
 import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
 import { CopyAgentInstructions } from './CopyAgentInstructions.tsx';
@@ -22,7 +21,7 @@ const CONNECTING_LINE_DELAY_MS = 1000;
 const AVATAR_SRC = '/astrid-app-icon-192.png';
 
 interface PanelFrameProps {
-  /** The `data-state` the journey and the Layout test read: `connecting`, `permission`, `cant_reach`, `blocked`, `not_ready`. */
+  /** The screen name, read by the journey and Layout tests. */
   readonly dataState: string;
   readonly title: string;
   readonly sentence: string;
@@ -95,7 +94,7 @@ function ConnectingPanel({ phone }: { phone: boolean }) {
 /** A phone: Astrid runs on a computer, so the only useful thing is to send this page there. */
 function PhonePanel() {
   const { phone } = COPY;
-  const { copied, send } = useSendLinkToComputer(() => window.location.origin);
+  const { copied, send } = useSendLinkToComputer(() => window.location.href);
   return (
     <PanelFrame
       dataState="phone"
@@ -118,7 +117,7 @@ function PermissionPanel({ connection }: { connection: RuntimeConnectionValue })
     // The browser's prompt is open: nothing to press, only where to look.
     return (
       <PanelFrame
-        dataState="permission"
+        dataState="pending"
         title={withBrowser(permission.pending.title)}
         sentence={withBrowser(permission.pending.sentence)}
         pointer={permission.pending.pointer}
@@ -153,10 +152,10 @@ function SetUpPanel({ pageOrigin }: { pageOrigin: string }) {
   const { setUp } = COPY;
   return (
     <PanelFrame
-      dataState="cant_reach"
+      dataState="set_up"
       title={setUp.title}
       sentence={setUp.sentence}
-      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copySetup} variant="start" />}
+      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copySetup} variant="setup" />}
       footer={(
         <>
           {setUp.footer.before}
@@ -171,40 +170,14 @@ function SetUpPanel({ pageOrigin }: { pageOrigin: string }) {
 }
 
 /** Nothing answers on a return visit, or the gateway answered but Astrid is not ready: a person does the same for each. */
-function NotRunningPanel({ dataState, pageOrigin }: { dataState: string; pageOrigin: string }) {
+function NotRunningPanel({ pageOrigin }: { pageOrigin: string }) {
   const { notRunning } = COPY;
   return (
     <PanelFrame
-      dataState={dataState}
+      dataState="not_running"
       title={notRunning.title}
       sentence={notRunning.sentence}
-      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={notRunning.button} variant="start" />}
-    />
-  );
-}
-
-/** Repeated checks failed, but no health response proved that Astrid is stopped. */
-function UnavailablePanel({ connection }: { connection: RuntimeConnectionValue }) {
-  const unavailable = COPY.unavailable;
-  return (
-    <PanelFrame
-      dataState="unavailable"
-      title={unavailable.title}
-      sentence={unavailable.sentence}
-      action={<Button type="button" className="w-full sm:w-auto" onClick={connection.connect}>{unavailable.button}</Button>}
-      footer={connection.isChecking ? COPY.connecting.sentence : undefined}
-    />
-  );
-}
-
-function AccessDeniedPanel({ connection }: { connection: RuntimeConnectionValue }) {
-  const accessDenied = COPY.accessDenied;
-  return (
-    <PanelFrame
-      dataState="access_denied"
-      title={accessDenied.title}
-      sentence={accessDenied.sentence}
-      action={<Button type="button" className="w-full sm:w-auto" onClick={connection.connect}>{accessDenied.button}</Button>}
+      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copy} variant="start" />}
     />
   );
 }
@@ -214,25 +187,12 @@ function RestartNeededPanel({ pageOrigin }: { pageOrigin: string }) {
   const { restartNeeded } = COPY;
   return (
     <PanelFrame
-      dataState="not_ready"
+      dataState="restart_needed"
       title={restartNeeded.title}
       sentence={restartNeeded.sentence}
-      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={restartNeeded.button} variant="restart" />}
+      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copy} variant="start" />}
     />
   );
-}
-
-/** The screen a not-ready reason shows. */
-function notReadyScreen(reason: RuntimeNotReadyReason): 'connecting' | 'not_running' | 'restart_needed' | 'access_denied' | 'unavailable' {
-  switch (reason) {
-    case 'starting': return 'connecting';
-    case 'runtime_stopped':
-      return 'not_running';
-    case 'unknown': return 'unavailable';
-    case 'identity_mismatch':
-    case 'realm_changed': return 'restart_needed';
-    case 'access_denied': return 'access_denied';
-  }
 }
 
 /**
@@ -249,22 +209,13 @@ export function RuntimeConnectionPanel({ connection }: RuntimeConnectionPanelPro
   switch (state.status) {
     case 'connecting':
       return <ConnectingPanel phone={phone} />;
-    case 'cant_reach':
-      if (phone) return <PhonePanel />;
-      return state.firstTime ? <SetUpPanel pageOrigin={pageOrigin} /> : <NotRunningPanel dataState="cant_reach" pageOrigin={pageOrigin} />;
-    case 'unavailable':
-      return phone ? <PhonePanel /> : <UnavailablePanel connection={connection} />;
+    case 'set_up':
+      return phone ? <PhonePanel /> : <SetUpPanel pageOrigin={pageOrigin} />;
+    case 'not_running':
+      return phone ? <PhonePanel /> : <NotRunningPanel pageOrigin={pageOrigin} />;
     case 'blocked':
       return phone ? <PhonePanel /> : <BlockedPanel />;
-    case 'not_ready': {
-      const screen = notReadyScreen(state.reason);
-      if (screen === 'connecting') return <ConnectingPanel phone={phone} />;
-      if (phone) return <PhonePanel />;
-      if (screen === 'access_denied') return <AccessDeniedPanel connection={connection} />;
-      if (screen === 'unavailable') return <UnavailablePanel connection={connection} />;
-      return screen === 'not_running'
-        ? <NotRunningPanel dataState="not_ready" pageOrigin={pageOrigin} />
-        : <RestartNeededPanel pageOrigin={pageOrigin} />;
-    }
+    case 'restart_needed':
+      return phone ? <PhonePanel /> : <RestartNeededPanel pageOrigin={pageOrigin} />;
   }
 }

@@ -8,6 +8,7 @@ vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeApiBase: () => '
 vi.mock('@/shared/lib/browser/clipboard.ts', () => ({ writeClipboardTextSafe: mocks.clipboard }));
 
 import { EmptyWorkspaceGuidance } from './EmptyWorkspaceGuidance.tsx';
+import { RUNTIME_CONNECTION_COPY } from './copy.ts';
 
 function showGuidance(onRefresh = vi.fn()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -15,7 +16,7 @@ function showGuidance(onRefresh = vi.fn()) {
   return onRefresh;
 }
 function openDetails() {
-  const details = screen.getByText('Check connected workspace').closest('details')!;
+  const details = screen.getByText('Find my work').closest('details')!;
   details.open = true;
   fireEvent(details, new Event('toggle'));
 }
@@ -31,42 +32,57 @@ beforeEach(() => {
 });
 
 describe('connected empty workspace guidance', () => {
-  it('explains that a connected workspace can be empty and lets users inspect identity before creating work', async () => {
+  it('uses plain visible words and keeps workspace identity in the agent copy only', async () => {
     const onRefresh = showGuidance();
-    expect(screen.getByText('Astrid is connected, but this workspace has no projects.')).toBeInTheDocument();
-    expect(screen.getByText('If you expected existing work, check which workspace is connected before creating a project.')).toBeInTheDocument();
+    expect(screen.getByText('Astrid is connected, but there are no projects here yet.')).toBeInTheDocument();
+    expect(screen.getByText('Expected to see your work? It may be in another Astrid folder on this computer.')).toBeInTheDocument();
     expect(mocks.ensureSession).not.toHaveBeenCalled();
+
     openDetails();
-    expect(await screen.findByText('My workspace')).toBeInTheDocument();
-    expect(screen.getByText('realm-existing')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Copy workspace check for your agent' }));
-    await screen.findByRole('status');
+    expect(await screen.findByRole('button', { name: RUNTIME_CONNECTION_COPY.agent.copy })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check again' })).toBeInTheDocument();
+    expect(screen.queryByText('My workspace')).toBeNull();
+    expect(screen.queryByText('realm-existing')).toBeNull();
+    expect(screen.queryByText('Workspace ID')).toBeNull();
+    expect(screen.queryByText('Connection:')).toBeNull();
+    expect(document.querySelector('dl')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: RUNTIME_CONNECTION_COPY.agent.copy }));
+    await waitFor(() => expect(screen.getByRole('button', { name: RUNTIME_CONNECTION_COPY.agent.copied })).toBeInTheDocument());
+    expect(screen.getByText(RUNTIME_CONNECTION_COPY.agent.pasteNext)).toBeInTheDocument();
     const copied = mocks.clipboard.mock.calls[0][0];
+    expect(copied).toContain('My workspace');
     expect(copied).toContain('realm-existing');
     expect(copied).toContain('http://127.0.0.1:17340/api/runtime');
     expect(copied).toContain('configured data root');
     expect(copied).toContain('Do not create a new workspace or project');
     expect(copied).not.toContain('private-session-value');
     expect(copied).not.toContain('private-credential-value');
-    fireEvent.click(screen.getByRole('button', { name: 'Check projects again' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: RUNTIME_CONNECTION_COPY.agent.copy })).toBeInTheDocument(), { timeout: 3000 });
+    expect(screen.getByText(RUNTIME_CONNECTION_COPY.agent.pasteNext)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
     expect(onRefresh).toHaveBeenCalledOnce();
   });
 
-  it('keeps a workspace check available when the clipboard cannot be written', async () => {
+  it('uses the shared copy failure wording and keeps the diagnostic available to select', async () => {
     mocks.clipboard.mockResolvedValue(false);
     showGuidance();
     openDetails();
-    fireEvent.click(await screen.findByRole('button', { name: 'Copy workspace check for your agent' }));
-    expect((await screen.findByRole('textbox', { name: 'Workspace check for your agent' }) as HTMLTextAreaElement).value).toContain('realm-existing');
+    fireEvent.click(await screen.findByRole('button', { name: RUNTIME_CONNECTION_COPY.agent.copy }));
+    expect(await screen.findByRole('status')).toHaveTextContent(RUNTIME_CONNECTION_COPY.agent.copyFailed);
+    expect((await screen.findByRole('textbox', { name: RUNTIME_CONNECTION_COPY.agent.copyFailed }) as HTMLTextAreaElement).value).toContain('realm-existing');
   });
 
-  it('shows an identity read failure honestly and offers a retry', async () => {
+  it('lets Check again retry a failed identity read and the project list', async () => {
     mocks.ensureSession.mockRejectedValueOnce(new Error('connection changed'));
-    showGuidance();
+    const onRefresh = showGuidance();
     openDetails();
-    expect(await screen.findByText('Workspace details are unavailable.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Copy workspace check for your agent' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Retry workspace details' }));
-    await waitFor(() => expect(screen.getByText('My workspace')).toBeInTheDocument());
+    expect(await screen.findByText("Astrid's details aren't available right now.")).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: RUNTIME_CONNECTION_COPY.agent.copy })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
+    expect(await screen.findByRole('button', { name: RUNTIME_CONNECTION_COPY.agent.copy })).toBeInTheDocument();
+    expect(onRefresh).toHaveBeenCalledOnce();
+    expect(mocks.ensureSession).toHaveBeenCalledTimes(2);
   });
 });

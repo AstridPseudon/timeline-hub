@@ -9,7 +9,7 @@ export interface CopyAgentInstructionsProps {
   readonly pageOrigin: string;
   /** The state's button label: `agent.copySetup` for set up, `agent.copy` for the rest. */
   readonly label: string;
-  /** `start` when the page has never reached Astrid; `restart` when Astrid changed under it. */
+  /** `setup` finds an install first; `start` is for an existing install. */
   readonly variant?: AgentInstructionsVariant;
 }
 
@@ -28,6 +28,7 @@ export function CopyAgentInstructions({ pageOrigin, label, variant = 'start' }: 
   const copy = RUNTIME_CONNECTION_COPY.agent;
   const instructions = copy.instructions(pageOrigin, variant);
   const [status, setStatus] = useState<CopyStatus>('idle');
+  const [showPasteNext, setShowPasteNext] = useState(false);
   const fieldRef = useRef<HTMLTextAreaElement>(null);
   const resetRef = useRef<number | null>(null);
 
@@ -44,6 +45,7 @@ export function CopyAgentInstructions({ pageOrigin, label, variant = 'start' }: 
     const copied = await writeClipboardTextSafe(instructions);
     if (resetRef.current !== null) window.clearTimeout(resetRef.current);
     setStatus(copied ? 'copied' : 'failed');
+    if (copied) setShowPasteNext(true);
     resetRef.current = copied
       ? window.setTimeout(() => {
         resetRef.current = null;
@@ -60,7 +62,7 @@ export function CopyAgentInstructions({ pageOrigin, label, variant = 'start' }: 
           : <Copy aria-hidden="true" className="mr-2 h-4 w-4" />}
         {status === 'copied' ? copy.copied : label}
       </Button>
-      {status === 'copied' && <p role="status" className="text-sm text-muted-foreground">{copy.pasteNext}</p>}
+      {showPasteNext && <p role="status" className="text-sm text-muted-foreground">{copy.pasteNext}</p>}
       {status === 'failed' && (
         <div className="space-y-2">
           <p role="status" className="text-sm text-muted-foreground">{copy.copyFailed}</p>

@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
+import { RUNTIME_CONNECTION_COPY } from './copy.ts';
 
 type WorkspaceIdentity = { name: string; realmId: string };
 
-/** Only public identity fields are copied; Runtime sessions and credentials stay in the client. */
+/** The details are for an agent to diagnose a misplaced workspace, not for the person to inspect. */
 function emptyWorkspaceDiagnostic(identity: WorkspaceIdentity, pageOrigin: string, endpoint: string): string {
   return [
     `Astrid at ${pageOrigin} is connected, but its workspace returned no projects.`,
@@ -24,6 +25,8 @@ function emptyWorkspaceDiagnostic(identity: WorkspaceIdentity, pageOrigin: strin
 export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void }) {
   const [showDetails, setShowDetails] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
+  const [didCopy, setDidCopy] = useState(false);
+  const copiedTimer = useRef<number | null>(null);
   const identity = useQuery({
     queryKey: ['runtime', 'empty-workspace-identity'],
     enabled: showDetails,
@@ -39,29 +42,49 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
   const diagnostic = identity.data
     ? emptyWorkspaceDiagnostic(identity.data, window.location.origin, runtimeApiBase())
     : '';
+  const copy = RUNTIME_CONNECTION_COPY.agent;
+
+  useEffect(() => () => {
+    if (copiedTimer.current !== null) window.clearTimeout(copiedTimer.current);
+  }, []);
+
+  const handleCopy = async () => {
+    const copied = await writeClipboardTextSafe(diagnostic);
+    if (copiedTimer.current !== null) window.clearTimeout(copiedTimer.current);
+    setCopyState(copied ? 'copied' : 'failed');
+    if (copied) {
+      setDidCopy(true);
+      copiedTimer.current = window.setTimeout(() => {
+        copiedTimer.current = null;
+        setCopyState('idle');
+      }, 2000);
+    }
+  };
+
+  const handleCheckAgain = () => {
+    if (identity.error) void identity.refetch();
+    onRefresh();
+  };
 
   return <div className="space-y-3 text-sm text-muted-foreground">
-    <p>Astrid is connected, but this workspace has no projects.</p>
-    <p>If you expected existing work, check which workspace is connected before creating a project.</p>
+    <p>Astrid is connected, but there are no projects here yet.</p>
+    <p>Expected to see your work? It may be in another Astrid folder on this computer.</p>
     <details onToggle={event => setShowDetails(event.currentTarget.open)}>
-      <summary className="cursor-pointer text-foreground">Check connected workspace</summary>
+      <summary className="cursor-pointer text-foreground">Find my work</summary>
       <div className="mt-3 space-y-3">
-        <p>Check the workspace selected by Astrid on this computer. After reconnecting to the workspace with your work, reload this page.</p>
-        {identity.isPending ? <p role="status">Reading workspace details…</p>
-          : identity.error ? <div className="space-y-2"><p>Workspace details are unavailable.</p><Button variant="outline" onClick={() => void identity.refetch()}>Retry workspace details</Button></div>
+        {identity.isPending ? <p role="status">Reading details…</p>
+          : identity.error ? <p role="status">Astrid's details aren't available right now.</p>
             : identity.data ? <>
-              <dl className="space-y-1 break-all text-xs">
-                <div><dt className="inline font-medium text-foreground">Workspace: </dt><dd className="inline">{identity.data.name}</dd></div>
-                <div><dt className="inline font-medium text-foreground">Workspace ID: </dt><dd className="inline">{identity.data.realmId}</dd></div>
-                <div><dt className="inline font-medium text-foreground">Connection: </dt><dd className="inline">{runtimeApiBase()}</dd></div>
-              </dl>
-              <Button variant="outline" onClick={() => void writeClipboardTextSafe(diagnostic).then(copied => setCopyState(copied ? 'copied' : 'failed'))}>
-                {copyState === 'copied' ? 'Copied' : 'Copy workspace check for your agent'}
+              <Button variant="outline" onClick={() => void handleCopy()}>
+                {copyState === 'copied' ? copy.copied : copy.copy}
               </Button>
-              {copyState === 'copied' && <p role="status">Paste this into your coding agent to check the existing workspace.</p>}
-              {copyState === 'failed' && <textarea aria-label="Workspace check for your agent" readOnly value={diagnostic} rows={6} onFocus={event => event.currentTarget.select()} className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground" />}
+              {didCopy && <p role="status">{copy.pasteNext}</p>}
+              {copyState === 'failed' && <div className="space-y-2">
+                <p role="status">{copy.copyFailed}</p>
+                <textarea aria-label={copy.copyFailed} readOnly value={diagnostic} rows={6} onFocus={event => event.currentTarget.select()} className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground" />
+              </div>}
             </> : null}
-        <Button variant="outline" onClick={onRefresh}>Check projects again</Button>
+        <Button variant="outline" onClick={handleCheckAgain}>Check again</Button>
       </div>
     </details>
   </div>;

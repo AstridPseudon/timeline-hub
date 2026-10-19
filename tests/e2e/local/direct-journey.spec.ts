@@ -135,7 +135,6 @@ test.describe('zero-click connection (App)', () => {
       await expect(panel.getByRole('button', { name: 'Copied' })).toBeVisible();
       await expect(panel.getByText('Now paste them into your agent.')).toBeVisible();
       const copied = await page.evaluate(() => navigator.clipboard.readText());
-      expect(copied).toContain('astrid-runtime up --profile astrid');
       expect(copied).toContain('npm run dev:local');
       expect(copied).toContain(`prints "Open ${harness.origin}"`);
       await harness.startGateway();
@@ -260,7 +259,7 @@ test.describe('permission gate and readiness (App)', () => {
     }
   });
 
-  test('with the gateway up and the Runtime stopped, the panel says Astrid isn\'t running, then connects by itself', async ({ page, harness }) => {
+  test('G1 browser half: a live gateway recovers when the stopped Runtime is started again', async ({ page, harness }) => {
     await harness.stopRuntime(); // the gateway stays up
     try {
       await openApp(page, harness);
@@ -270,9 +269,12 @@ test.describe('permission gate and readiness (App)', () => {
       await expect(panel.getByText('Start Astrid on this computer and this page opens by itself.')).toBeVisible();
       await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
       await expect(panel).not.toContainText(/Runtime|workspace|realm|gateway|reload/i);
+      const failedReadingsBeforeStart = harness.audit().filter((entry) => entry.path === '/v1/health' && entry.status !== 200).length;
+      expect(failedReadingsBeforeStart, 'the live gateway records failed health checks while its Runtime is stopped').toBeGreaterThan(0);
       await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
+      expect(harness.gatewayRunning).toBe(true);
     } finally {
       await harness.resetToHealthy();
     }
