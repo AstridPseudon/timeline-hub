@@ -3,14 +3,14 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { setProjectSelectionSnapshot, resetProjectSelectionStoreForTests } from '@/shared/contexts/projectSelectionStore';
-import { createFakeBridgeRouter, type FakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
+import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
 
 const FAKE_ORIGIN = 'http://bridge.fake';
 
-let router: FakeBridgeRouter;
+let router: FakeRuntimeRouter;
 
 beforeEach(() => {
-  router = createFakeBridgeRouter();
+  router = createFakeRuntimeRouter();
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(input instanceof Request ? input.url : String(input), FAKE_ORIGIN);
     return await router.handle(new Request(`${FAKE_ORIGIN}${url.pathname}${url.search}`, init));

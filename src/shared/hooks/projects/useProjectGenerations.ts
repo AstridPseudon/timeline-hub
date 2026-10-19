@@ -30,7 +30,6 @@ import { unifiedGenerationQueryKeys } from '@/shared/lib/queryKeys/unified';
 import { transformGeneration, type RawGeneration } from '@/shared/lib/generationTransformers';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
-import { useAstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
 import { isAudioMedia, isImageMedia, isVideoMedia } from '@/shared/lib/media/mediaTypeFilters';
 import { AstridRuntimeClient } from '@/integrations/runtime/client';
 import type { Generation, GenerationVariant } from '@/integrations/runtime/generated';
@@ -325,7 +324,6 @@ export function useProjectGenerations(
     runtimeAuthority?: boolean;
   }
 ) {
-  const capabilityCensus = useAstridCapabilityCensus();
   const offset = (page - 1) * limit;
   const runtimeProjectId = options?.runtimeProjectId?.trim() || null;
   const runtimeMode = options?.runtimeAuthority ?? runtimeProjectId !== null;
@@ -343,8 +341,7 @@ export function useProjectGenerations(
 
   // Use DataFreshnessManager for intelligent polling decisions.
   const smartPollingConfig = useSmartPollingConfig(['generations', effectiveProjectId ?? '__no-project__']);
-  const pollingDisabled = Boolean(options?.disablePolling)
-    || capabilityCensus.capabilities.generations === 'unavailable';
+  const pollingDisabled = Boolean(options?.disablePolling);
   const pollingConfig: { refetchInterval: number | false; staleTime: number } = runtimeMode
     ? { refetchInterval: pollingDisabled ? false : 2_000, staleTime: 0 }
     : pollingDisabled
@@ -360,8 +357,7 @@ export function useProjectGenerations(
     queryFn: () => runtimeMode
       ? fetchRuntimeGenerationsForProject(runtimeClient!, effectiveProjectId!, limit, offset, filters)
       : fetchGenerationsForProject(effectiveProjectId!, limit, offset, filters),
-    enabled: !!effectiveProjectId && enabled
-      && (runtimeMode || capabilityCensus.capabilities.generations !== 'unavailable'),
+    enabled: !!effectiveProjectId && enabled,
     // Use `placeholderData` with `keepPreviousData` to prevent UI flashes on pagination/filter changes
     placeholderData: keepPreviousData,
     // Cache management to prevent memory leaks as pagination grows

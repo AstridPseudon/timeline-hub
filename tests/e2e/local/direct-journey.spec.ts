@@ -75,7 +75,6 @@ async function openHostedPage(page: Page, harness: DirectHarness) {
 function reportRss(what: string, baselineBytes: number, growthBytes: number) {
   const description = `${what}: gateway RSS baseline ${(baselineBytes / 1048576).toFixed(0)} MB, peak growth ${(growthBytes / 1048576).toFixed(0)} MB (limit ${GATEWAY_RSS_GROWTH_LIMIT / 1048576} MB)`;
   test.info().annotations.push({ type: 'gateway-rss', description });
-  console.log(`[direct] ${description}`);
 }
 
 /**
@@ -1013,7 +1012,6 @@ test('speed table: each step through the gateway against the Runtime directly', 
   }
 
   const table = speed.render();
-  console.log(`\n${table}\n`);
   const outDir = testInfo.project.outputDir;
   mkdirSync(outDir, { recursive: true });
   const file = path.join(outDir, 'direct-measurements.json');

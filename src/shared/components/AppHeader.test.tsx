@@ -41,7 +41,7 @@ describe('AppHeader', () => {
   });
 
   it('keeps editor selectors and app settings while removing app navigation in local Astrid mode', () => {
-    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     const settingsEvent = vi.fn();
     window.addEventListener('openSettings', settingsEvent, { once: true });
 
@@ -65,7 +65,7 @@ describe('AppHeader', () => {
   });
 
   it('renders the page-owned project selector without app-wide Tools or built-in project controls', () => {
-    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     render(
       <AppHeader
         navigationMode="tools"

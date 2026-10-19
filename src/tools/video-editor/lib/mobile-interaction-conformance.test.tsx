@@ -165,15 +165,6 @@ vi.mock('@/tools/video-editor/hooks/useTimelineRealtime.ts', () => ({
     discardAndReload: vi.fn(),
   }),
 }));
-vi.mock('@/tools/video-editor/hooks/useEditorSync.ts', () => ({
-  useEditorSync: () => ({
-    syncState: 'idle' as const,
-    syncError: null,
-    isSyncAvailable: false,
-    performSync: vi.fn(),
-    lastSyncResult: null,
-  }),
-}));
 vi.mock('@/tools/video-editor/hooks/usePerfDiagnostics.ts', () => ({
   useRenderDiagnostic: vi.fn(),
 }));

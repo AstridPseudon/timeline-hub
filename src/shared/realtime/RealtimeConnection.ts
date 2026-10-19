@@ -22,7 +22,6 @@ import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { dataFreshnessManager } from './DataFreshnessManager';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { listenAppEvent } from '@/shared/lib/typedEvents';
-import { getAstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
 import { getRuntimeDocumentProjectId } from '@/app/runtime/runtimeDocument';
 import {
   ConnectionState,
@@ -441,15 +440,10 @@ export class RealtimeConnection {
   }
 
   private isTableCapabilityAvailable(table: DatabaseTable): boolean {
-    const capabilities = getAstridCapabilityCensus().capabilities;
     if (table === 'tasks') {
       // Runtime document task consumers share the runtime-tasks React Query
       // poller; polling the bridge alias would read the same full list again.
-      return capabilities.tasks !== 'unavailable'
-        && getRuntimeDocumentProjectId() !== this.state.projectId;
-    }
-    if (table === 'generations' || table === 'generation_variants') {
-      return capabilities.generations !== 'unavailable';
+      return getRuntimeDocumentProjectId() !== this.state.projectId;
     }
     return true;
   }

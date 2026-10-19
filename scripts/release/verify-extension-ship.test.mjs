@@ -122,11 +122,6 @@ describe('extension ship verifier', () => {
       && gate.args.join(' ') === 'run verify:extension-container'
     )));
     assert.ok(ASTRID_APP_GATE_PROFILE.some((gate) => (
-      gate.id === 'paired-release-e2e'
-      && gate.command === 'npm'
-      && gate.args.join(' ') === 'run verify:paired-release-e2e'
-    )));
-    assert.ok(ASTRID_APP_GATE_PROFILE.some((gate) => (
       gate.id === 'cross-browser-e2e'
       && gate.command === 'npm'
       && gate.args.join(' ') === 'run test:e2e:extension-cross-browser'
@@ -190,7 +185,7 @@ describe('extension ship verifier', () => {
     );
   });
 
-  it('explicitly permits only the committed Astrid stub in browser release lanes', () => {
+  it('serves browser release lanes from the fake Runtime, with no unauthenticated mode', () => {
     for (const configName of [
       'playwright.extension-cross-browser.config.ts',
       'playwright.extension-accessibility.config.ts',
@@ -199,13 +194,13 @@ describe('extension ship verifier', () => {
       const config = readFileSync(`${REPO_ROOT}/${configName}`, 'utf8');
       assert.match(
         config,
-        /ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB:\s*'1'/,
-        `${configName} must explicitly permit its committed bridge stub`,
+        /command:\s*'node tests\/e2e\/fake-runtime\/launch\.mjs --serve'/,
+        `${configName} must start the fake Runtime launcher`,
       );
-      assert.match(
+      assert.doesNotMatch(
         config,
-        /command:\s*'node tests\/e2e\/timeline\/astrid-bridge-stub\.mjs'/,
-        `${configName} must start the committed bridge stub`,
+        /UNAUTHENTICATED/,
+        `${configName} must not carry an unauthenticated bridge mode`,
       );
     }
   });
@@ -241,8 +236,6 @@ describe('extension ship verifier', () => {
       astridCheckout,
       nodeExecutable: '/tmp/pinned-node',
       astridPython: '/tmp/astrid-python',
-      astridRef: 'a'.repeat(40),
-      appRef: 'b'.repeat(40),
     });
 
     assert.equal(
@@ -263,13 +256,7 @@ describe('extension ship verifier', () => {
     });
     assert.ok(plan.every((step) => Array.isArray(step.args)));
     assert.ok(plan.every((step) => step.command === 'npm' || step.command === 'make'));
-    const paired = plan.find((step) => step.id === 'paired-release-e2e');
-    assert.deepEqual(paired?.env, {
-      ASTRID_CHECKOUT: astridCheckout,
-      ASTRID_PYTHON: '/tmp/astrid-python',
-      ASTRID_REF: 'a'.repeat(40),
-      ASTRID_APP_REF: 'b'.repeat(40),
-    });
+    assert.equal(plan.some((step) => step.id.startsWith('paired')), false);
     assert.notEqual(plan.at(-1).env.ASTRID_APP_RELEASE_CHECKOUT, REPO_ROOT);
 
     const rendered = plan.map(formatCommand).join('\n');
@@ -578,8 +565,6 @@ describe('extension ship verifier', () => {
         astridCheckout: '/tmp/astrid-pinned-fixture',
         nodeExecutable: '/tmp/pinned-node',
         astridPython: '/tmp/astrid-python',
-        astridRef: 'a'.repeat(40),
-        appRef: 'b'.repeat(40),
       }).at(-1);
       let captured;
       executeSteps([astridCi], (_command, _args, options) => {

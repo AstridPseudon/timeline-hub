@@ -1,9 +1,9 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
-import { BASE_URL, PROJECT_SLUG, TIMELINE_SLUG, browserEvidencePath } from './support';
+import { browserEvidencePath, editorUrl, showDataLanes } from './support';
 
 const PROJECT = 'runaway-browser-recovery';
 const RUNAWAY_REQUEST = `**/api/astrid/v1/projects/${PROJECT}/runaway-transitions?*`;
-const EDITOR_URL = `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&runawayTimelineProject=${PROJECT}`;
+const EDITOR_URL = editorUrl({ params: { runawayTimelineProject: PROJECT } });
 
 const validResponse = {
   api_version: 'v1',
@@ -83,8 +83,10 @@ async function openEditor(page: Page): Promise<void> {
   await page.addInitScript(() => {
     localStorage.removeItem('astrid.dev-extensions.disabled');
   });
+  await showDataLanes(page);
   await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
-  await expect.poll(() => page.evaluate(() => Boolean(window.__ASTRID_APP_LOCAL_TEST__))).toBe(true);
+  // The editor boots the Runtime identity before mounting; a cold Vite graph needs far more than the 5 s poll default.
+  await expect.poll(() => page.evaluate(() => Boolean(window.__ASTRID_APP_LOCAL_TEST__)), { timeout: 60_000 }).toBe(true);
 }
 
 async function fulfillJson(route: Route, body: unknown): Promise<void> {

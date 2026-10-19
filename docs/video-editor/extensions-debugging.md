@@ -1,4 +1,4 @@
-# Extension Debugging — Astrid App Video Editor V1
+# Extension Debugging — Astrid Video Editor V1
 
 **Status:** Active (M15)
 **Last updated:** 2026-06-20
@@ -9,7 +9,7 @@
 
 ## 1. Purpose
 
-This document is a practical debugging reference for Astrid App extension authors. Every workflow or limitation is linked to concrete repository evidence — tests, examples, matrix rows, absence checks, or blocker entries. No advice relies on aspirational prose.
+This document is a practical debugging reference for Astrid extension authors. Every workflow or limitation is linked to concrete repository evidence — tests, examples, matrix rows, absence checks, or blocker entries. No advice relies on aspirational prose.
 
 ---
 
@@ -191,30 +191,20 @@ When a project references an extension that is not currently active, the export 
 
 **Evidence:** [Provider Compatibility Matrix §4.1](./provider-compatibility-matrix.md#41-inmemorydataprovider); TEST:`InMemoryDataProvider.test.ts` (13 tests, S-140).
 
-### 6.2 SupabaseDataProvider
+### 6.2 RuntimeDataProvider
 
-**Environment:** Requires `VITE_ASTRID_APP_APPEND_SERVICE_URL`, Supabase auth JWT, and network access.
-
-**Debugging notes:**
-- Provider throws at construction time if `VITE_ASTRID_APP_APPEND_SERVICE_URL` is not set.
-- `saveTimeline` and `syncTimeline` require a valid user JWT — check authentication state.
-- `TimelineVersionConflictError` (409 Conflict) means another client wrote between your read and write. Re-read the snapshot and retry.
-- The sync protocol uses IndexedDB for bookmark persistence — if IndexedDB is unavailable (Node.js pre-21, some test runners), sync state is lost.
-
-**Evidence:** [Provider Compatibility Matrix §4.2, §10.1](./provider-compatibility-matrix.md#42-supabasedataprovider); TEST:`SupabaseDataProvider.test.ts` (18 tests, S-141).
-
-### 6.3 AstridBridgeDataProvider
-
-**Environment:** Requires File System Access API, local bridge process on port 17333, and user-granted directory permissions.
+**Environment:** Requires a connected Workspace Runtime (workspace.v1) reachable through the `/api/runtime` proxy. `dev:editor` and the e2e suite use the fake Runtime in `tests/e2e/fake-runtime/`.
 
 **Debugging notes:**
-- `onUpload()` throws `AstridBridgeReadOnlyError` — asset uploads through `uploadAsset` are not supported.
-- Server-side CAS is enforced by `POST /save` `expected_version`; stale writes return `409 timeline_version_conflict`. Browser File System Access handles asset bytes only and cannot bypass this document writer.
-- `saveCheckpoint` returns a synthetic ID; `loadCheckpoints` returns `[]`.
-- `loadWaveform` and `loadAssetProfile` return `null`.
-- If the bridge process is not running on `127.0.0.1:17333`, all fetch-based operations fail.
+- If no Runtime is connected the editor shows the connect-the-local-workspace state and builds no provider.
+- `saveTimeline(id, config, expectedVersion)` always throws `TimelineVersionConflictError`: Runtime authorizes writes by head revision, so saves go through `saveTimelineAtHead` with the head that was loaded.
+- `TimelineVersionConflictError` from a head-checked save means another writer moved the canonical head between your read and write. Re-read the snapshot and retry.
+- `saveCheckpoint` / `loadCheckpoints` are not implemented; history is Runtime composition revisions.
+- `config.output` is host-derived: saves drop it and loads re-materialise defaults.
+- `createExtensionPersistenceService` is not provided, so extension settings, state and proposals report the corresponding unsupported-capability diagnostics.
+- Asset URLs resolve only through managed objects; a registry entry without a managed object id fails to resolve.
 
-**Evidence:** [Provider Compatibility Matrix §4.3, §10.2](./provider-compatibility-matrix.md#43-astridbridgedataprovider); TEST:`AstridBridgeDataProvider.test.ts` (22 pass / 3 pre-existing, S-142).
+**Evidence:** [Provider Compatibility Matrix §4.2, §10.1](./provider-compatibility-matrix.md#42-runtimedataprovider); TEST:`providerCompatibility.runtime.test.ts` and `src/integrations/runtime/dataProvider.test.ts` (S-141).
 
 ### 6.4 Provider-agnostic debugging
 
@@ -265,9 +255,9 @@ Overflow produces `ProjectDataLimitDetail` diagnostics with `extensionId`, `limi
 | Diagnostic not appearing in panel | Diagnostic code not namespaced or contributionId missing | Add `contributionId`; use extension-scoped code (e.g. `myExt/validation-failed`) | [Author Contract §3.3](./extension-author-contract.md#33-diagnostic-conventions) |
 | Export blocked with `export/unknown-clip-type` | Clip type not declared in any active extension's manifest | Add `kind: 'clipType'` contribution to your manifest; ensure extension is active | [§5.1](#51-pre-render-scan) |
 | `TimelineVersionConflictError` on apply | Patch version doesn't match timeline | Re-read snapshot, update `patch.version` | [§7.1](#71-stale-base-version-errors) |
-| Settings not persisting across reloads | Using InMemory provider | Switch to Supabase or Astrid for persistence | [§6.1](#61-inmemorydataprovider) |
-| `AstridBridgeReadOnlyError` on upload | Astrid doesn't support `uploadAsset` | Use Supabase for uploads or bake to deterministic assets | [Provider Compatibility §4.3](./provider-compatibility-matrix.md#43-astridbridgedataprovider) |
-| `400 Bad Request` on Supabase save | `VITE_ASTRID_APP_APPEND_SERVICE_URL` not set | Set the env variable | [Provider Compatibility §10.1](./provider-compatibility-matrix.md#101-supabasedataprovider--environment-prerequisites) |
+| Extension state not persisting across reloads | InMemory is ephemeral; `RuntimeDataProvider` provides no extension persistence service and reports the capability as unsupported | Check for the unsupported-capability diagnostic; keep durable extension data in timeline project data (patch `project-data.write`) | [§6.1](#61-inmemorydataprovider), [§6.2](#62-runtimedataprovider) |
+| `TimelineVersionConflictError` from a numeric `saveTimeline` | Runtime authorizes writes by head revision and refuses numeric-only saves | Save through `saveTimelineAtHead` with the head that was loaded | [Provider Compatibility §4.2](./provider-compatibility-matrix.md#42-runtimedataprovider) |
+| Editor shows the connect-the-local-workspace state | No Workspace Runtime is connected, so no provider is built | Connect the Runtime, or use `npm run dev:editor` for the fake Runtime | [Provider Compatibility §10.1](./provider-compatibility-matrix.md#101-runtimedataprovider--environment-prerequisites) |
 | Extension doesn't clean up on disable | `dispose()` not returning handles from service registrations | Return a `DisposeHandle` that calls `.dispose()` on all service handles | [Author Contract §5.4](./extension-author-contract.md#54-service-cleanup) |
 
 ---

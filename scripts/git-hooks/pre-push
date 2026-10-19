@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
 
-make prepush
+exec "$(git rev-parse --show-toplevel)/scripts/check-before-push"

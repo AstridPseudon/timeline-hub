@@ -28,8 +28,9 @@ import { fetchGenerationById } from './generationRepository';
 import { fetchPresetResourceById } from './presetResourcesRepository';
 import { RepositoryError } from './repositoryErrors';
 import { fetchTaskInProject } from './taskRepository';
-import { createFakeBridgeRouter, type FakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
-import { createJourneyState, FIXTURE_PROJECT } from '@/test/bridgeFixtures.mjs';
+import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
+import { createJourneyState } from '@/test/bridgeFixtures.mjs';
+import { FIXTURE_PROJECT } from '@/test/fakeRuntimeSeed.mjs';
 import {
   getProjectSelectionFallbackId,
   resetProjectSelectionStoreForTests,
@@ -83,7 +84,7 @@ describe('repository contracts', () => {
   });
 
   it('throws RepositoryError for invalid generation row shapes', async () => {
-    const router: FakeBridgeRouter = createFakeBridgeRouter();
+    const router: FakeRuntimeRouter = createFakeRuntimeRouter();
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const raw = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       return await router.handle(new Request(new URL(raw, 'http://bridge.fake').href, init));
@@ -100,9 +101,9 @@ describe('repository contracts', () => {
   });
 
   it('returns null for missing tasks via the bridge not_found envelope', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     vi.stubGlobal('fetch', vi.fn(async () => await router.handle(
-      new Request('http://bridge.fake/api/astrid/projects/project-1/tasks/01j8zcex4q7m4sjdy6g6missing'),
+      new Request('http://bridge.fake/api/astrid/v1/tasks/01j8zcex4q7m4sjdy6g6missing'),
     )));
 
     await expect(fetchTaskInProject('01j8zcex4q7m4sjdy6g6missing', 'project-1')).resolves.toBeNull();
@@ -110,7 +111,7 @@ describe('repository contracts', () => {
   });
 
   it('maps a bridge task detail onto the app Task model', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     const admit = await router.handle(new Request('http://bridge.fake/api/astrid/projects/project-1/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'k-contract' },

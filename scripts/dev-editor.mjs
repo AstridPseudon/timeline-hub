@@ -1,32 +1,36 @@
 #!/usr/bin/env node
 /**
- * `npm run dev:editor` — the timeline in a browser, with no Supabase.
+ * `npm run dev:editor` — the timeline in a browser, with no Supabase and no install beyond `npm ci`.
  *
- * Spawns the committed Astrid bridge stub (demo project/timeline/assets, saves
- * held in memory) plus the Vite dev server, and prints the deterministic
- * local-mode URL that the e2e device specs use. `localTest=1` suppresses
- * unrelated authenticated-service queries, while `timelineOverlayCanary=1`
- * enables the DEV-only rollout gate for the timelineOverlay family so the
- * scene-phase-markers canary is visible out of the box; production never
- * honors either query parameter. The placeholder `VITE_SUPABASE_*` values mirror the
- * ones `playwright.config.ts` injects: the Supabase env getters are lazy, so
- * local mode only needs them to exist.
+ * Spawns the fake Runtime (`tests/e2e/fake-runtime/launch.mjs --serve`: the demo project and timeline seeded
+ * from the same fixtures the e2e suite uses, saves held in memory) plus the Vite dev server, and prints the
+ * Runtime-mode editor URL that the e2e specs use. `localTest=1` suppresses unrelated authenticated-service
+ * queries, while `timelineOverlayCanary=1` enables the DEV-only rollout gate for the timelineOverlay family so
+ * the scene-phase-markers canary is visible out of the box; production never honors either query parameter.
+ * The placeholder `VITE_SUPABASE_*` values mirror the ones `playwright.config.ts` injects: the Supabase env
+ * getters are lazy, so local mode only needs them to exist.
  */
 import { spawn } from 'node:child_process';
 
+import { fakeRuntimeEnv } from '../tests/e2e/fake-runtime/launch.mjs';
+
 const PORT = process.env.PORT ?? '2222';
-const BRIDGE_PORT = process.env.VITE_ASTRID_BRIDGE_PORT ?? '17334';
-const EDITOR_URL =
-  `http://127.0.0.1:${PORT}/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline&localTest=1&timelineOverlayCanary=1`;
+const RUNTIME_PORT = Number(process.env.VITE_ASTRID_BRIDGE_PORT ?? '17334');
+const EDITOR_QUERY = new URLSearchParams({
+  runtime: '1',
+  runtimeProject: 'demo-project-id',
+  runtimeTimeline: 'demo-timeline',
+  localTest: '1',
+  timelineOverlayCanary: '1',
+});
+const EDITOR_URL = `http://127.0.0.1:${PORT}/tools/video-editor?${EDITOR_QUERY}`;
 
 const env = {
   ...process.env,
   PORT,
-  VITE_ASTRID_BRIDGE_PORT: BRIDGE_PORT,
-  ASTRID_BRIDGE_PORT: BRIDGE_PORT,
-  // This launcher owns the committed deterministic stub, so it is the one
-  // supported unauthenticated bridge mode at the Vite proxy boundary.
-  ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB: '1',
+  // The fake Runtime's port, token file and identity; the Vite proxies read the same values, so the browser
+  // never sees the bearer token.
+  ...fakeRuntimeEnv({ port: RUNTIME_PORT }),
   // Must stay in step with DEFAULT_DEV_SUPABASE_URL in
   // src/shared/dev/devSession.ts — the dev session's storage key is
   // derived from this URL. (.mjs cannot import the TS module.) This is the
@@ -41,7 +45,7 @@ const env = {
 };
 
 const children = [
-  spawn('node', ['tests/e2e/timeline/astrid-bridge-stub.mjs'], { stdio: 'inherit', env }),
+  spawn('node', ['tests/e2e/fake-runtime/launch.mjs', '--serve'], { stdio: 'inherit', env }),
   spawn('npm', ['run', 'dev', '--', '--host', '127.0.0.1', '--port', PORT], { stdio: 'inherit', env }),
 ];
 
@@ -49,7 +53,7 @@ console.log([
   '',
   'Timeline dev environment',
   `  editor : ${EDITOR_URL}`,
-  `  bridge : http://127.0.0.1:${BRIDGE_PORT} (demo project, in-memory saves)`,
+  `  runtime: http://127.0.0.1:${RUNTIME_PORT} (fake Runtime, demo project, in-memory saves)`,
   '',
 ].join('\n'));
 

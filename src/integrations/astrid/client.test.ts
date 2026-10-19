@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/integrations/astrid/capabilityCensus.ts', () => ({
-  observeAstridCapabilityFailure: vi.fn(),
-}));
-
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import {
   BridgeContractError,
@@ -12,24 +8,19 @@ import {
   runtimeManagedObjectSchema,
 } from '@/tools/video-editor/data/bridgeContract.ts';
 import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
-import { createFakeBridgeRouter, type FakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
+import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
 
-import { fixtureUlid } from '@/test/bridgeFixtures.mjs';
+import { fixtureUlid } from '@/test/fakeRuntimeSeed.mjs';
 
 const FAKE_ORIGIN = 'http://bridge.fake';
 
 // These assertions cover the workspace.v1 routes (`/v1/projects`, `/v1/objects`).
-// The workspace flag is read once at module load, so opt in before client.ts
-// (and its workspaceV1 import) is evaluated.
-vi.hoisted(() => {
-  vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
-});
 
 describe('AstridLocalClient', () => {
-  let router: FakeBridgeRouter;
+  let router: FakeRuntimeRouter;
 
   beforeEach(() => {
-    router = createFakeBridgeRouter();
+    router = createFakeRuntimeRouter();
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = new URL(input instanceof Request ? input.url : String(input));
       return await router.handle(new Request(`${FAKE_ORIGIN}${url.pathname}${url.search}`, init));

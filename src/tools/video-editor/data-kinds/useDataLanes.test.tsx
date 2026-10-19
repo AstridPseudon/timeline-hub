@@ -189,7 +189,7 @@ describe('useDataLanes', () => {
     ];
     const loadSegments: LoadDataSegments = vi.fn(async () => segments);
     const audioClip = {
-      id: 'paired-release-audio',
+      id: 'transcript-audio',
       at: 0,
       track: 'A1',
       asset: 'motion-output-audio.aac',
@@ -213,8 +213,8 @@ describe('useDataLanes', () => {
       start: item.timelineStart,
       end: item.timelineEnd,
     }))).toEqual([
-      { clipId: 'paired-release-audio', start: 2, end: 4 },
-      { clipId: 'paired-release-audio', start: 5, end: 8 },
+      { clipId: 'transcript-audio', start: 2, end: 4 },
+      { clipId: 'transcript-audio', start: 5, end: 8 },
     ]);
   });
 

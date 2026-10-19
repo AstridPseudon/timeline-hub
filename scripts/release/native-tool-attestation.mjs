@@ -127,6 +127,6 @@ export function buildContainerBoundaryAttestation(manifest) {
     used: false,
     digest: null,
     expectedNodeImageDigest: manifest?.verification?.nodeImageDigest ?? null,
-    note: 'standalone paired gate runs directly on the attested host; no Node container is used',
+    note: 'the release gate runs directly on the attested host; no Node container is used',
   });
 }

@@ -49,10 +49,6 @@ vi.mock('@/shared/providers/RealtimeProvider', () => ({
   RealtimeProvider: passthroughProvider('RealtimeProvider'),
 }));
 
-vi.mock('@/integrations/astrid/AstridCapabilityBootstrap.tsx', () => ({
-  AstridCapabilityBootstrap: passthroughProvider('AstridCapabilityBootstrap'),
-}));
-
 vi.mock('@/shared/contexts/ShotsContext', () => ({
   AstridShotsProvider: passthroughProvider('AstridShotsProvider'),
 }));
@@ -117,6 +113,5 @@ describe('AppProviders', () => {
     expect(screen.getByTestId('agent-chat-timeline-id')).toHaveTextContent('timeline-from-settings');
     expect(screen.getByTestId('PanesStoreBootstrapBoundary')).toBeInTheDocument();
     expect(screen.getByTestId('AstridShotsProvider')).toBeInTheDocument();
-    expect(screen.getByTestId('AstridCapabilityBootstrap')).toBeInTheDocument();
   });
 });

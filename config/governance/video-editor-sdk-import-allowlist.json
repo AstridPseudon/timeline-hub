@@ -166,13 +166,31 @@
         "expiration": "M5"
       }
     ],
-    "src/test/fakeBridgeRouter.ts": [
+    "src/test/fakeRuntimeRouter.ts": [
       {
         "target": "src/tools/video-editor/data/bridgeContract.ts",
         "classification": "host-facing",
         "owner": "astrid-bridge-tests",
         "rationale": "The fake bridge router mirrors the host bridge wire contract for deterministic tests.",
         "removalCondition": "Move the bridge wire contract to a shared edge-safe package.",
+        "expiration": "M5"
+      }
+    ],
+    "src/test/fakeWorkspaceRuntime.ts": [
+      {
+        "target": "src/tools/video-editor/lib/defaults.ts",
+        "classification": "host-facing",
+        "owner": "astrid-bridge-tests",
+        "rationale": "The fake Runtime test helper seeds its first timeline from the editor's default timeline config.",
+        "removalCondition": "Expose the default timeline config through the SDK, or seed the fake from a literal.",
+        "expiration": "M5"
+      },
+      {
+        "target": "src/tools/video-editor/types/index.ts",
+        "classification": "host-facing",
+        "owner": "astrid-bridge-tests",
+        "rationale": "The fake Runtime test helper types its seeded timeline config with the editor's TimelineConfig.",
+        "removalCondition": "Expose TimelineConfig through the SDK.",
         "expiration": "M5"
       }
     ],

@@ -17,16 +17,16 @@ describe('useAstridTimelinesList — Astrid cutover', () => {
     vi.stubGlobal('fetch', fetchMock);
   });
 
-  it('lists project timelines through the frozen bridge route', async () => {
+  it('lists project timelines through the v1 route', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({
-      timelines: [{ timeline_id: 'tl-1', timeline_ulid: '01TL', name: 'Main', is_default: true }],
+      items: [{ timeline_id: 'tl-1', timeline_ulid: '01TL', name: 'Main', is_default: true }],
     }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
 
     const { result } = renderHook(() => useAstridTimelinesList('demo project', 'fixed-user'), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/astrid/projects/demo%20project/timelines',
+      '/api/astrid/v1/projects/demo%20project/timelines',
       expect.objectContaining({ method: 'GET' }),
     );
     expect(result.current.data).toEqual([expect.objectContaining({

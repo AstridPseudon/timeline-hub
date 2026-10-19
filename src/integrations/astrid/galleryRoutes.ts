@@ -5,7 +5,6 @@
  */
 
 import type { AstridBridgeTransport } from './transport.ts';
-import { observeAstridCapabilityFailure } from './capabilityCensus.ts';
 import {
   runtimeGenerationPageSchema,
   runtimeGenerationResourceSchema,
@@ -54,25 +53,16 @@ export class AstridLocalGalleryRoutes {
       }
       const params = new URLSearchParams({ limit: '200' });
       if (cursor !== undefined) params.set('cursor', cursor);
-      const page = await this.request(() => this.transport.requestJson(
+      const page = await this.transport.requestJson(
         `/v1/generations/${encodeURIComponent(generationId)}/variants?${params.toString()}`,
         {},
         runtimeVariantPageSchema,
         'generation variants',
-      ));
+      );
       result.push(...page.items);
       cursor = page.next_cursor ?? undefined;
     } while (cursor !== undefined);
     return result;
-  }
-
-  private async request<T>(operation: () => Promise<T>): Promise<T> {
-    try {
-      return await operation();
-    } catch (error) {
-      observeAstridCapabilityFailure('generations', error);
-      throw error;
-    }
   }
 
   /**
@@ -90,12 +80,12 @@ export class AstridLocalGalleryRoutes {
     if (options.limit !== undefined) params.set('limit', String(options.limit));
     if (options.cursor !== undefined) params.set('cursor', options.cursor);
     const query = params.size > 0 ? `?${params.toString()}` : '';
-    const page = await this.request(() => this.transport.requestJson(
+    const page = await this.transport.requestJson(
       this.base() + query,
       {},
       runtimeGenerationPageSchema,
       'generation list',
-    ));
+    );
     const generations = options.includeVariants === false
       ? page.items.map((generation) => runtimeGenerationToSummary(generation, []))
       : await mapWithConcurrency(page.items, GALLERY_VARIANT_CONCURRENCY, async (generation) => {
@@ -112,12 +102,12 @@ export class AstridLocalGalleryRoutes {
 
   /** Generation detail including its full variant rows. */
   async get(generationId: string): Promise<BridgeGenerationDetailPayload['generation']> {
-    const generation = await this.request(() => this.transport.requestJson(
+    const generation = await this.transport.requestJson(
       `/v1/generations/${encodeURIComponent(generationId)}`,
       {},
       runtimeGenerationResourceSchema,
       'generation detail',
-    ));
+    );
     return runtimeGenerationToDetail(generation, await this.variants(generationId));
   }
 }

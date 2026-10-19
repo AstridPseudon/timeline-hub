@@ -12,12 +12,12 @@
 
 | Task | Command |
 |---|---|
-| Boot the timeline with demo clips, no Supabase/Docker/sign-in | `npm run dev:editor` (prints the local-mode URL; bridge stub + Vite) |
-| Bridge stub alone (when Vite is already running) | `npm run dev:editor:bridge` |
+| Boot the timeline with demo clips, no Supabase/Docker/sign-in | `npm run dev:editor` (prints the Runtime-mode editor URL; fake Runtime + Vite) |
+| Fake Runtime alone (when Vite is already running) | `node tests/e2e/fake-runtime/launch.mjs --serve` (port from `FAKE_RUNTIME_PORT`) |
 | Run one test file | `npx vitest run <path>` — the root `vitest.config.ts` delegates to `config/testing/`, so the `--config` flag in the package scripts is **not** needed interactively |
 | Watch one test file | `npx vitest <path>` |
 | Everything in the tool | `npx vitest run src/tools/video-editor` (or a subdir, e.g. `.../lib`) |
-| Real-browser device gestures | `npm run test:e2e:timeline` — one command; it boots the dev server *and* the bridge. One-time setup: `npx playwright install chromium` |
+| Real-browser device gestures | `npm run test:e2e:timeline` — one command; it boots the dev server *and* the fake Runtime. One-time setup: `npx playwright install chromium` |
 | Is the extension host wired? | open the editor with `?extensionSmoke=1`; the smoke extension's status contribution should appear |
 
 The conformance suite is the slow one (~45s for the 3-file run) — for the edit
@@ -123,7 +123,7 @@ Policy answers *may this gesture happen*. It cannot make it happen. The **mechan
 
 **Reachability.** Every `TimelineInteractionMode` is now reachable on every non-desktop device class: one component (`TimelineModeSwitcher`) renders both presentations, so the mode list, the ops calls and the `aria-pressed` semantics cannot drift between phone and tablet. Desktop is deliberately modeless and renders no switcher. Pinned by `TimelineEditorShellCore.test.tsx` ("mode switcher reachability") and by `tests/e2e/timeline/tablet-gestures.spec.ts` (`npm run test:e2e:timeline`).
 
-**Enforcement.** `lib/mobile-interaction-conformance.test.tsx` renders the canvas and the shell over the whole (device class × interaction mode) matrix and binds every predicate to the markup or stylesheet rule that implements it — plus a coverage gate: a new export of `mobile-interaction-model.ts` fails the suite until it is either bound to a mechanism or listed in that file's `EXCLUSIONS` with a reason of its own. jsdom cannot see a browser claim a touch stream, so the suite asserts DOM/CSS contracts only; the gesture itself is proven by the committed device specs in `tests/e2e/timeline/` (`npm run test:e2e:timeline`, opt-in: its flag makes Playwright boot both the dev server and the bridge stub).
+**Enforcement.** `lib/mobile-interaction-conformance.test.tsx` renders the canvas and the shell over the whole (device class × interaction mode) matrix and binds every predicate to the markup or stylesheet rule that implements it — plus a coverage gate: a new export of `mobile-interaction-model.ts` fails the suite until it is either bound to a mechanism or listed in that file's `EXCLUSIONS` with a reason of its own. jsdom cannot see a browser claim a touch stream, so the suite asserts DOM/CSS contracts only; the gesture itself is proven by the committed device specs in `tests/e2e/timeline/` (`npm run test:e2e:timeline`, opt-in: its flag makes Playwright boot both the dev server and the fake Runtime).
 
 *Closed (was the last live gap)*: `shouldAllowTouchMarquee` permits touch marquee on tablet in `select` mode, but `resolveTouchGestureMode` used to return a mode only for `move`/`trim`, so no `touch-action` rule covered the select-mode edit area. The consequence was worse than a dead gesture — the left-to-right drag overscrolled at `scrollLeft: 0` and Chromium turned it into the back-navigation swipe, navigating the tab off the editor (which read as "the shell unmounted"; no error was thrown, so no error boundary could have helped). `resolveTouchGestureMode` now derives a third owner, `marquee`, from `shouldAllowTouchMarquee` itself, and the edit area carries `touch-action: none` in that mode. Select mode therefore does not pan — `browse` is the mode that pans. Pinned by the conformance suite above and by `ipad.mjs` (`tablet marquee: shell survives the drag`, `… selects clips`).
 
@@ -135,7 +135,7 @@ Policy answers *may this gesture happen*. It cannot make it happen. The **mechan
 |---|---|---|
 | URL | `?timeline=<id>` (+ project selection) | `?localProject=<slug>&localTimeline=<id>` |
 | Enabled by | default | `import.meta.env.DEV` + `?localProject`/`?localTimeline` URL params (the legacy `dev.videoEditor.localMode` flag and `DevModeToggle` were retired) |
-| Data provider | `data/SupabaseDataProvider.ts` | `data/AstridBridgeDataProvider.ts` → HTTP to the Vite proxy `/api/astrid` → `127.0.0.1:$VITE_ASTRID_BRIDGE_PORT` (default 17333), `config/vite/vite.config.ts` |
+| Data provider | none: `VideoEditorPage` builds a provider only for `runtime` and `local` modes, so `?timeline=` alone builds none | `RuntimeDataProvider` (`src/integrations/runtime/dataProvider.ts`) → `/api/runtime` on the Vite proxy → the Workspace Runtime at `VITE_WORKSPACE_RUNTIME_URL` (`config/vite/vite.config.ts`). `dev:editor` and the e2e suite point that at the fake Runtime |
 | Runtime provider | `contexts/VideoEditorProvider.tsx` (**both modes**) | same |
 
 Only the `dataProvider`, ids, and `remountKey` differ — the provider component and shell are identical. `EditorRuntimeProvider` is *not* the local-mode provider; it is the embed/browser host. `src/app/hooks/useVideoEditorRouteState.ts` must read **both** `timeline` and `localTimeline`, or local mode renders the full-height shell inside the scrolling page layout. Tests/harnesses use `testing/InMemoryDataProvider.ts`; the port contract and its factory-plus-conformance doctrine live in `data/DataProvider.ts` + `data/conformance/`.

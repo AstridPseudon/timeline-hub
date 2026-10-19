@@ -4,7 +4,6 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TimelineEditorShellToolbar } from './TimelineEditorShellToolbar.tsx';
-import type { useEditorSync } from '@/tools/video-editor/hooks/useEditorSync.ts';
 import { createTimelineStore, TimelineStoreProvider } from '@/tools/video-editor/hooks/timelineStore.ts';
 
 // '' is same-origin; a gateway origin is the hosted build.
@@ -29,8 +28,6 @@ describe('TimelineEditorShellToolbar', () => {
     render(
       <TimelineStoreProvider store={store}>
         <TimelineEditorShellToolbar
-          sync={{ isSyncAvailable: false } as ReturnType<typeof useEditorSync>}
-          syncResultMessage={null}
           touchChrome={false}
           condensed={false}
           toolbarModeSwitcher={null}
@@ -57,8 +54,6 @@ describe('TimelineEditorShellToolbar', () => {
       return render(
         <TimelineStoreProvider store={store}>
           <TimelineEditorShellToolbar
-            sync={{ isSyncAvailable: false } as ReturnType<typeof useEditorSync>}
-            syncResultMessage={null}
             touchChrome={false}
             condensed={false}
             toolbarModeSwitcher={null}

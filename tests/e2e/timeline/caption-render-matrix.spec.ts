@@ -5,11 +5,9 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
 import {
-  BASE_URL,
-  BRIDGE_ORIGIN,
   CLIP_BODY_SELECTOR,
-  PROJECT_SLUG,
-  TIMELINE_SLUG,
+  editorUrl,
+  publishFakeRuntimeComposition,
 } from './support.ts';
 
 const MATRIX_CASES = [23.976, 24, 25, 29.97, 30, 48, 60] as const;
@@ -26,9 +24,8 @@ const EXPECTED_CAPTION_INTERVALS = [
   { start: 0.584, end: 0.792, row: 0 },
   { start: 0.73, end: 1.25, row: 1 },
 ] as const;
-const EDITOR_URL = `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&transcriptLaneFixture=render-matrix&runawayTimelineProject=runaway-8085`;
+const EDITOR_URL = editorUrl({ params: { transcriptLaneFixture: 'render-matrix', runawayTimelineProject: 'runaway-8085' } });
 const EVIDENCE = resolve(process.env.RENDER_MATRIX_EVIDENCE ?? 'artifacts/render-export-matrix');
-const BRIDGE_TIMELINE = `${BRIDGE_ORIGIN}/projects/${PROJECT_SLUG}/timelines/${TIMELINE_SLUG}`;
 const execFileAsync = promisify(execFile);
 
 type ProbePacket = { pts_time?: string; duration_time?: string };
@@ -203,32 +200,24 @@ async function decodedCaptionRowPresence(
 }
 
 async function installMatrixConfig(fps: number): Promise<void> {
-  const current = await (await fetch(BRIDGE_TIMELINE)).json() as { config: Record<string, unknown> };
-  const response = await fetch(`${BRIDGE_TIMELINE}/save`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      config: {
-        ...current.config,
-        output: {
-          resolution: '640x360',
-          fps,
-          file: `caption-matrix-${fps}.mp4`,
-          background: '#000000',
-          background_scale: null,
-        },
-        tracks: [
-          { id: 'V1', kind: 'visual', label: 'Transcript carrier', opacity: 0, scale: 1, fit: 'contain', blendMode: 'normal' },
-          { id: 'A1', kind: 'audio', label: 'Matrix audio', muted: false, volume: 1, scale: 1, fit: 'contain', opacity: 1, blendMode: 'normal' },
-        ],
-        clips: [
-          { id: 'matrix-carrier', at: 0, track: 'V1', asset: 'demo-clip', clipType: 'media', from: 0, to: MATRIX_DURATION_SECONDS, opacity: 0 },
-          { id: 'matrix-audio', at: 0, track: 'A1', asset: 'matrix-audio', clipType: 'media', from: 0, to: MATRIX_DURATION_SECONDS, volume: 1 },
-        ],
-      },
-    }),
+  // A new Runtime head (a failed publish throws with the Runtime's response).
+  await publishFakeRuntimeComposition(({ config }) => {
+    config.output = {
+      resolution: '640x360',
+      fps,
+      file: `caption-matrix-${fps}.mp4`,
+      background: '#000000',
+      background_scale: null,
+    };
+    config.tracks = [
+      { id: 'V1', kind: 'visual', label: 'Transcript carrier', opacity: 0, scale: 1, fit: 'contain', blendMode: 'normal' },
+      { id: 'A1', kind: 'audio', label: 'Matrix audio', muted: false, volume: 1, scale: 1, fit: 'contain', opacity: 1, blendMode: 'normal' },
+    ];
+    config.clips = [
+      { id: 'matrix-carrier', at: 0, track: 'V1', asset: 'demo-clip', clipType: 'media', from: 0, to: MATRIX_DURATION_SECONDS, opacity: 0 },
+      { id: 'matrix-audio', at: 0, track: 'A1', asset: 'matrix-audio', clipType: 'media', from: 0, to: MATRIX_DURATION_SECONDS, volume: 1 },
+    ];
   });
-  expect(response.ok, await response.text()).toBe(true);
 }
 
 test.describe.serial('real caption render/export release matrix', () => {

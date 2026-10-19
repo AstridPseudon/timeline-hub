@@ -34,7 +34,7 @@ Bridge rows carry a **J** column tagging which step(s) they serve. `—` on a br
 | defer | 121 | 238 |
 | **Total** | **489** (376 supabase-coupled + 113 raw-grep FP) | **849** |
 
-Covered-journey-marked rows: 148. Census method: imports of `@/integrations/supabase*` / `@supabase/supabase-js` / `SupabaseDataProvider`, `vi.mock('@/integrations/supabase/client')` test doubles, call patterns `.from('…')`, `.rpc(`, `functions.invoke`/`invokeSupabaseEdgeFunction`, storage URL minting (`.storage.from/getPublicUrl/createSignedUrl/.upload(`), `.channel(`, `.auth.*()`, generated-type refs, hardcoded `supabase.co` URLs — plus a full file sweep of `src/integrations/supabase/**`. Raw-pattern false positives (`Array.from(`, non-supabase `.channel(`/`.storage.`) excluded by inspection.
+Covered-journey-marked rows: 148. Census method: imports of `@/integrations/supabase*` / `@supabase/supabase-js`, `vi.mock('@/integrations/supabase/client')` test doubles, call patterns `.from('…')`, `.rpc(`, `functions.invoke`/`invokeSupabaseEdgeFunction`, storage URL minting (`.storage.from/getPublicUrl/createSignedUrl/.upload(`), `.channel(`, `.auth.*()`, generated-type refs, hardcoded `supabase.co` URLs — plus a full file sweep of `src/integrations/supabase/**`. Raw-pattern false positives (`Array.from(`, non-supabase `.channel(`/`.storage.`) excluded by inspection.
 
 ## 4. Ratified cut-list (everything outside the covered journey)
 
@@ -875,31 +875,6 @@ Legend: **Line** = source line (`-` = module-level types/import or test-double r
 | `tools/video-editor/components/SequenceCreator/sequenceGenerationService.ts` | 1 | invoke | edge-fn `?` | cut | — | ai-generate-sequence(-component) LLM edge fns cut (ratified list) |
 |  | 81 | invoke | edge-fn `?` | cut | — | ai-generate-sequence(-component) LLM edge fns cut (ratified list) |
 |  | 264 | invoke | edge-fn `?` | cut | — | ai-generate-sequence(-component) LLM edge fns cut (ratified list) |
-| `tools/video-editor/data/AstridBridgeDataProvider.test.ts` | - | test-double | vi.mock test double of the supabase client / module under test | bridge-client | J1-J6 | — |
-| `tools/video-editor/data/SupabaseDataProvider.test.ts` | - | test-double | vi.mock test double of the supabase client / module under test | bridge-client | J1-J6 | — |
-| `tools/video-editor/data/SupabaseDataProvider.ts` | 192 | auth | auth.getSession() | bridge-client | J1-J6 | /api/astrid health/session probe (fixed local user) |
-|  | 360 | from | table `extension_install_state` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 379 | from | table `extension_settings` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 401 | from | table `extension_proposals` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 471 | from | table `extension_install_state` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 493 | from | table `extension_settings` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 524 | from | table `extension_proposals` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 536 | from | table `extension_proposals` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 566 | from | table `extension_install_state` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 576 | from | table `extension_settings` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 586 | from | table `extension_proposals` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 610 | from | table `timeline_events` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 631 | from | table `sync_bookmarks` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 683 | from | table `timelines` | bridge-client | J1-J6 | unchanged timeline load/save CAS routes |
-|  | 771 | from | table `timelines` | bridge-client | J1-J6 | unchanged timeline load/save CAS routes |
-|  | 973 | from | table `timeline_checkpoints` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 991 | from | table `timeline_checkpoints` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 1008 | from | table `timeline_checkpoints` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 1025 | from | table `timeline_checkpoints` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 1036 | from | table `timeline_checkpoints` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
-|  | 1051 | from | table `timelines` | bridge-client | J1-J6 | unchanged timeline load/save CAS routes |
-|  | 1077 | storage | storage URL mint/check | bridge-client | J1-J6 | GET\|HEAD /projects/:slug/media/:media_id/content (R9) |
-|  | 1089 | rpc | rpc `upsert_asset_registry_entry` | bridge-client | J1-J6 | AstridLocalClient equivalent read/command |
 | `tools/video-editor/data/generationAssetResolver.test.ts` | 205 | storage | storage URL mint/check | bridge-client | J5 | GET\|HEAD /projects/:slug/media/:media_id/content (R9) |
 |  | 272 | storage | storage URL mint/check | bridge-client | J5 | GET\|HEAD /projects/:slug/media/:media_id/content (R9) |
 |  | 577 | storage | storage URL mint/check | bridge-client | J5 | GET\|HEAD /projects/:slug/media/:media_id/content (R9) |
@@ -925,8 +900,6 @@ Legend: **Line** = source line (`-` = module-level types/import or test-double r
 | `tools/video-editor/pages/VideoEditorPage.test.tsx` | - | test-double | vi.mock test double of the supabase client / module under test | bridge-client | J1-J6 | — |
 | `tools/video-editor/pages/VideoEditorPage.tsx` | - | types/import | generated Database types / client module refs | bridge-client | J6 | — |
 | `tools/video-editor/render/renderRuntime.ts` | - | types/import | generated Database types / client module refs | bridge-client | J6 | — |
-| `tools/video-editor/testing/__tests__/providerCompatibility.astrid.test.ts` | - | test-double | vi.mock test double of the supabase client / module under test | bridge-client | J6 | — |
-| `tools/video-editor/testing/__tests__/providerCompatibility.supabase.test.ts` | 28 | storage | storage URL mint/check | cut | — | legacy-provider test double; deleted when SupabaseDataProvider retires |
 
 ### AB. Misc
 
@@ -1061,7 +1034,7 @@ Run from repo root:
 
 ```bash
 # GATE 1 — every file importing/mocking supabase appears in this inventory
-grep -rEl "integrations/supabase|@supabase/supabase-js|SupabaseDataProvider" src --include='*.ts' --include='*.tsx' \
+grep -rEl "integrations/supabase|@supabase/supabase-js" src --include='*.ts' --include='*.tsx' \
   | while read -r f; do grep -qF "\`${f#src/}\`" docs/cutover-inventory.md || echo "UNCOVERED: $f"; done
 
 # GATE 2 — reconcile call-site files vs inventory (tasklist B1 validation)

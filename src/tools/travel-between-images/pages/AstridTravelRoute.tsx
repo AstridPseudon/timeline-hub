@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card.tsx';
-import { isAstridWorkspaceV1 } from '@/integrations/astrid/workspaceV1.ts';
 import { useAstridBridgeDiscovery } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
 import { LocalTimelineShotBrowser } from './LocalTimelineShotBrowser.tsx';
 
@@ -78,8 +77,9 @@ export function AstridTravelRoute() {
     timelineRef,
   ]);
 
-  const projectDiscoveryReady = !isAstridWorkspaceV1
-    || (!discovery.projectsQuery.isLoading && !discovery.projectsQuery.error && Boolean(selectedProject));
+  const projectDiscoveryReady = !discovery.projectsQuery.isLoading
+    && !discovery.projectsQuery.error
+    && Boolean(selectedProject);
 
   useEffect(() => {
     // Normalize UUID deep links emitted by older Runtime-backed surfaces to

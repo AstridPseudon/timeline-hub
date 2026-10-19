@@ -31,7 +31,6 @@ export interface BridgeGalleryDetail {
   readonly [key: string]: unknown;
 }
 
-export function fixtureUlid(suffix: string): string;
 export function makeAttemptWireShape(options?: {
   attemptNo?: number;
   status?: string;

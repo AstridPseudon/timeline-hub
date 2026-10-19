@@ -13,12 +13,6 @@ vi.mock('@/integrations/astrid/bridgeTaskReads', () => ({
   listBridgeTasks: (...args: unknown[]) => mockListBridgeTasks(...args),
 }));
 
-vi.mock('@/integrations/astrid/capabilityCensus.ts', () => ({
-  useAstridCapabilityCensus: () => ({
-    capabilities: { tasks: 'supported', generations: 'supported', media: 'supported' },
-  }),
-}));
-
 vi.mock('@/types/tasks', () => ({
   TASK_STATUS: { QUEUED: 'Queued', IN_PROGRESS: 'In Progress' },
 }));

@@ -17,6 +17,16 @@ describe('host-owned generated-object provenance', () => {
     expect(computeHostFingerprint(source)).toMatch(/^astrid-fnv1a64-v1:[0-9a-f]{16}$/);
   });
 
+  it('canonicalizes non-finite numbers to null and omits undefined object members', () => {
+    expect(computeHostFingerprint({ nested: { z: Number.POSITIVE_INFINITY, a: false }, omitted: undefined }))
+      .toBe(computeHostFingerprint({ nested: { a: false, z: null } }));
+    expect(computeHostFingerprint({ b: 2, a: [1, 'x', null] }))
+      .toBe(computeHostFingerprint({ a: [1, 'x', null], b: 2 }));
+    expect(computeHostFingerprint(['text', { duration: 2, clipType: null }]))
+      .toBe(computeHostFingerprint(['text', { clipType: null, duration: 2 }]));
+    expect(computeHostFingerprint([Number.NaN])).toBe(computeHostFingerprint([null]));
+  });
+
   it('authors the complete versioned source/generator/output contract', () => {
     const meta = createHostGeneratedObjectMeta({
       extensionId: 'haus.astrid.transcript-lane',

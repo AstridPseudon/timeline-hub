@@ -14,7 +14,7 @@ import {
   countSelectedClips,
   createTouchInput,
   openEditor,
-  resetBridgeBaseline,
+  resetFakeRuntimeBaseline,
 } from './support';
 
 test.describe('timeline phone gestures', () => {
@@ -29,7 +29,7 @@ test.describe('timeline phone gestures', () => {
     test.setTimeout(240_000);
 
     const logs: string[] = [];
-    const resetError = await resetBridgeBaseline();
+    const resetError = await resetFakeRuntimeBaseline();
     if (resetError) logs.push(resetError);
     logs.push(...collectPageLogs(page));
 

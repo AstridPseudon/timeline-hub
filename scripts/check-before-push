@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # The one pre-push command: run it before every push (testing plan R-12).
-# It runs the default vitest suite, then flags runtime-facing changes that need the thin full journey (R-11).
+# It runs the build-context guard and the default vitest suite, then flags runtime-facing changes that need the thin full journey (R-11).
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+node scripts/quality/check-build-context.mjs
 npm test
 
 changed=""

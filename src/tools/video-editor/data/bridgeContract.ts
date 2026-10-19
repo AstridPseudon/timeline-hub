@@ -1,12 +1,14 @@
 /**
- * The Astrid local-bridge wire contract — the single written-down form of every
- * shape the editor exchanges with `astrid serve` (and with the committed stub in
- * `tests/e2e/timeline/astrid-bridge-stub.mjs`).
+ * The local Runtime wire contract (`workspace.v1`): the written-down form of
+ * the shapes the editor exchanges with the Astrid Runtime. The fake Runtime
+ * (`tests/e2e/fake-runtime/server.ts`, routed by `src/test/fakeRuntimeRouter.ts`)
+ * is held to these schemas.
  *
- * This module is the **contract artifact**: the `astrid serve` repo should
- * consume or mirror it. Until it does, this file is the only place where the
- * assumptions are checkable, which is exactly the cross-repo drift CLAUDE.md's
- * "typed contracts at service boundaries" policy is aimed at.
+ * Only the exports with an importer live here. Schemas used only inside this
+ * file stay module-private.
+ *
+ * Keeping these parsers is what makes the cross-repo assumptions checkable
+ * (CLAUDE.md's "typed contracts at service boundaries" policy).
  *
  * Two rules the parsers below exist to enforce:
  *
@@ -35,10 +37,6 @@ export const BRIDGE_REQUEST_TIMEOUT_MS = ASTRID_BRIDGE_REQUEST_TIMEOUT_MS;
 
 /** Error code the bridge must return (with HTTP 409) when `expected_version` is stale. */
 export const BRIDGE_VERSION_CONFLICT_CODE = 'timeline_version_conflict';
-/** Error code the bridge must return (with HTTP 404) for an unknown timeline. */
-export const BRIDGE_TIMELINE_NOT_FOUND_CODE = 'timeline_not_found';
-/** Error code the bridge returns with HTTP 422 for schema incompatibility. */
-export const BRIDGE_SCHEMA_INCOMPATIBLE_CODE = 'schema_incompatible';
 
 /** Thrown when a bridge response does not match this contract. */
 export class BridgeContractError extends Error {
@@ -57,7 +55,7 @@ const jsonObject = z.looseObject({});
 export const runtimeSha256IdSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 
 /** Runtime-owned thumbnail associated with a source object. */
-export const runtimeThumbnailDescriptorSchema = z.looseObject({
+const runtimeThumbnailDescriptorSchema = z.looseObject({
   object_id: runtimeSha256IdSchema,
   source_object_id: runtimeSha256IdSchema,
   recipe_version: z.number().int().positive(),
@@ -115,13 +113,13 @@ export function runtimeMutationSchema<Schema extends z.ZodType>(data: Schema) {
   });
 }
 
-export const bridgeTimelineConfigSchema = z.looseObject({
+const bridgeTimelineConfigSchema = z.looseObject({
   output: jsonObject.optional(),
   clips: z.array(jsonObject).optional(),
   tracks: z.array(jsonObject).optional(),
 });
 
-export const bridgeAssetRegistryEntrySchema = z.looseObject({
+const bridgeAssetRegistryEntrySchema = z.looseObject({
   file: z.string().optional(),
   media_id: z.string().min(1).optional(),
   src: z.string().optional(),
@@ -130,7 +128,7 @@ export const bridgeAssetRegistryEntrySchema = z.looseObject({
   generationId: z.string().optional(),
 });
 
-export const bridgeAssetRegistrySchema = z.looseObject({
+const bridgeAssetRegistrySchema = z.looseObject({
   assets: z.record(z.string(), bridgeAssetRegistryEntrySchema),
 });
 
@@ -156,22 +154,6 @@ export const bridgeTimelinePayloadSchema = z.looseObject({
   bundle: timelineBundleEnvelopeSchema.optional(),
 });
 
-export const bridgeHealthSchema = z.looseObject({
-  ok: z.boolean(),
-});
-
-export const bridgeProjectsSchema = z.looseObject({
-  projects: z.array(z.looseObject({
-    slug: z.string(),
-    name: z.string(),
-    project_id: z.string().optional(),
-    version: z.number().int().positive().optional(),
-    created_at: z.string().optional(),
-    metadata: jsonObject.optional(),
-    default_timeline_id: z.string().optional(),
-  })).optional(),
-});
-
 export const bridgeTimelinesSchema = z.looseObject({
   timelines: z.array(z.looseObject({
     timeline_id: z.string(),
@@ -192,7 +174,7 @@ export const bridgeTimelinesSchema = z.looseObject({
 // ---------------------------------------------------------------------------
 
 /** Kernel task status vocabulary (`tasks.status`, lowercase kernel forms). */
-export const bridgeTaskStatusSchema = z.enum([
+const bridgeTaskStatusSchema = z.enum([
   'queued',
   'blocked',
   'running',
@@ -202,7 +184,7 @@ export const bridgeTaskStatusSchema = z.enum([
 ]);
 
 /** The admitted spec (`spec_json` parsed): family, provenance, output policy. */
-export const bridgeTaskSpecSchema = z.looseObject({
+const bridgeTaskSpecSchema = z.looseObject({
   schema_version: z.number().optional(),
   family: z.string().optional(),
   source_task_type: z.string().optional(),
@@ -212,13 +194,13 @@ export const bridgeTaskSpecSchema = z.looseObject({
 
 /** HC-04 typed producer spec. Unknown fields inside typed objects are owned by
  * the capability schema, but the admission envelope itself is closed. */
-export const bridgeTaskAdmissionSpecSchema = z.strictObject({
+const bridgeTaskAdmissionSpecSchema = z.strictObject({
   family: z.string().min(1),
   params: jsonObject,
   output_policy: jsonObject,
 });
 
-export const bridgeTaskStorageEstimateSchema = z.strictObject({
+const bridgeTaskStorageEstimateSchema = z.strictObject({
   scratch_bytes: z.number().int().nonnegative(),
   output_bytes: z.number().int().nonnegative(),
 });
@@ -312,9 +294,9 @@ export const bridgeTaskAttemptSchema = z.looseObject({
  * `bridgeTaskAttemptSchema`: fence responses must remain the minimal lease
  * projection and never carry executor payloads.
  */
-export const bridgeTaskAttemptDiagnosticsProgressSchema = z.record(z.string(), z.unknown());
+const bridgeTaskAttemptDiagnosticsProgressSchema = z.record(z.string(), z.unknown());
 
-export const bridgeTaskAttemptDiagnosticsErrorSchema = z.strictObject({
+const bridgeTaskAttemptDiagnosticsErrorSchema = z.strictObject({
   code: z.string().max(1_000).optional(),
   reason: z.string().max(1_000).optional(),
   type: z.string().max(1_000).optional(),
@@ -328,7 +310,7 @@ export const bridgeTaskAttemptDiagnosticsSchema = z.strictObject({
 });
 
 /** Current-attempt detail projection; diagnostics are never part of a fence. */
-export const bridgeTaskDetailAttemptSchema = bridgeTaskAttemptSchema.extend({
+const bridgeTaskDetailAttemptSchema = bridgeTaskAttemptSchema.extend({
   diagnostics: bridgeTaskAttemptDiagnosticsSchema,
 });
 
@@ -336,7 +318,7 @@ export const bridgeTaskDetailAttemptSchema = bridgeTaskAttemptSchema.extend({
  * Polling task summary (`AstridTaskBridge._task_summary`): the shape returned
  * by `GET /projects/:slug/tasks[/:task_id]` and cancel's terminal replay.
  */
-export const bridgeTaskSummarySchema = z.looseObject({
+const bridgeTaskSummarySchema = z.looseObject({
   task_id: z.string(),
   project_id: z.string(),
   capability: z.string(),
@@ -361,7 +343,7 @@ export const bridgeTaskSummarySchema = z.looseObject({
  * Admission response task: the kernel `TaskReadModel` — note it keys its
  * identity as `id`, unlike the polling summary's `task_id`.
  */
-export const bridgeAdmittedTaskSchema = z.looseObject({
+const bridgeAdmittedTaskSchema = z.looseObject({
   id: z.string(),
   project_id: z.string(),
   capability: z.string(),
@@ -437,7 +419,7 @@ export const runtimeProjectResourceSchema = z.looseObject({
 
 export const runtimeProjectPageSchema = runtimePageSchema(runtimeProjectResourceSchema);
 
-export const runtimeTaskStateSchema = z.enum([
+const runtimeTaskStateSchema = z.enum([
   'queued',
   'blocked',
   'running',
@@ -490,7 +472,7 @@ export const runtimeTaskResourceSchema = z.looseObject({
 
 export const runtimeTaskPageSchema = runtimePageSchema(runtimeTaskResourceSchema);
 
-export const runtimeEventSchema = z.strictObject({
+const runtimeEventSchema = z.strictObject({
   event_id: z.string().min(1),
   sequence: z.number().int().positive(),
   cursor: z.string().min(1),
@@ -535,7 +517,7 @@ export const bridgeTaskListSchema = z.looseObject({
 });
 
 /** One committed output row on the task detail read. */
-export const bridgeTaskOutputRowSchema = z.looseObject({
+const bridgeTaskOutputRowSchema = z.looseObject({
   ordinal: z.number(),
   role: z.string(),
   media_id: z.string(),
@@ -563,18 +545,13 @@ export const bridgeCancelRequestSchema = z.looseObject({
   status_version: z.number().int().positive().optional(),
 });
 
-export const bridgeCancelResponseSchema = z.looseObject({
-  task: z.union([bridgeAdmittedTaskSchema, bridgeTaskSummarySchema]),
-  attempt: bridgeTaskAttemptSchema.nullable().optional(),
-});
-
 /** Gallery list row: primary-variant summary only (detail carries variants). */
-export const bridgeGenerationPrimarySchema = z.looseObject({
+const bridgeGenerationPrimarySchema = z.looseObject({
   media_id: z.string(),
   variant_type: z.string().nullable().optional(),
 });
 
-export const bridgeGenerationSummarySchema = z.looseObject({
+const bridgeGenerationSummarySchema = z.looseObject({
   generation_id: z.string(),
   name: z.string().nullable(),
   type: z.string(),
@@ -593,7 +570,7 @@ export const bridgeGenerationListSchema = z.looseObject({
   next_cursor: z.string().nullable().optional(),
 });
 
-export const bridgeGenerationVariantSchema = z.looseObject({
+const bridgeGenerationVariantSchema = z.looseObject({
   id: z.string(),
   generation_id: z.string(),
   media_id: z.string(),
@@ -641,8 +618,7 @@ export function bridgeMediaContentUrl(baseUrl: string, projectSlug: string, medi
   return `${trimTrailingSlash(baseUrl)}/projects/${encodeURIComponent(projectSlug)}/media/${encodeURIComponent(mediaId)}/content`;
 }
 
-/** Any JSON object. Unknown keys are part of the payload, never stripped. */
-const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, '');
+const trimTrailingSlash =(value: string): string => value.replace(/\/+$/, '');
 /**
  * The five public error categories every *new* build-facing bridge route
  * (doc-27 §4.1 set below) may answer with (doc-27 §4.6). The frozen timeline
@@ -679,27 +655,31 @@ export const bridgeErrorEnvelopeSchema = z.looseObject({
   })).optional(),
 });
 export type BridgeTimelinePayload = z.infer<typeof bridgeTimelinePayloadSchema>;
-export type BridgeAssetRegistryPayload = z.infer<typeof bridgeAssetRegistrySchema>;
 export type RuntimeManagedObject = z.infer<typeof runtimeManagedObjectSchema>;
 export type RuntimeCapability = z.infer<typeof runtimeCapabilitySchema>;
 export type RuntimeMutationReceipt = z.infer<typeof runtimeMutationReceiptSchema>;
 export type RuntimeTaskResource = z.infer<typeof runtimeTaskResourceSchema>;
-export type RuntimeEvent = z.infer<typeof runtimeEventSchema>;
-export type RuntimeEventPage = z.infer<typeof runtimeEventPageSchema>;
 export type RuntimeGenerationResource = z.infer<typeof runtimeGenerationResourceSchema>;
 export type RuntimeVariantResource = z.infer<typeof runtimeVariantResourceSchema>;
-export type BridgeErrorEnvelope = z.infer<typeof bridgeErrorEnvelopeSchema>;
-export type BridgeProjectsPayload = z.infer<typeof bridgeProjectsSchema>;
 export type BridgeTimelinesPayload = z.infer<typeof bridgeTimelinesSchema>;
-export type BridgeHealthPayload = z.infer<typeof bridgeHealthSchema>;
+/** `GET /health`: no runtime parser reads this payload, so the type is declared directly. */
+export type BridgeHealthPayload = { ok: boolean; [key: string]: unknown };
+/** `GET /projects`: the shape the discovery hook reads; no runtime parser reads this payload. */
+export type BridgeProjectsPayload = {
+  projects?: Array<{
+    slug: string;
+    name: string;
+    project_id?: string;
+    version?: number;
+    created_at?: string;
+    metadata?: { [key: string]: unknown };
+    default_timeline_id?: string;
+    [key: string]: unknown;
+  }>;
+  [key: string]: unknown;
+};
 
-export type BridgeTaskStatus = z.infer<typeof bridgeTaskStatusSchema>;
 export type BridgeTaskSpec = z.infer<typeof bridgeTaskSpecSchema>;
-export type BridgeTaskAttempt = z.infer<typeof bridgeTaskAttemptSchema>;
-export type BridgeTaskAttemptDiagnosticsProgress = z.infer<typeof bridgeTaskAttemptDiagnosticsProgressSchema>;
-export type BridgeTaskAttemptDiagnosticsError = z.infer<typeof bridgeTaskAttemptDiagnosticsErrorSchema>;
-export type BridgeTaskAttemptDiagnostics = z.infer<typeof bridgeTaskAttemptDiagnosticsSchema>;
-export type BridgeTaskDetailAttempt = z.infer<typeof bridgeTaskDetailAttemptSchema>;
 export type BridgeTaskSummary = z.infer<typeof bridgeTaskSummarySchema>;
 export type BridgeAdmittedTask = z.infer<typeof bridgeAdmittedTaskSchema>;
 export type BridgeTaskAdmissionRequest = z.infer<typeof bridgeTaskAdmissionRequestSchema>;
@@ -707,7 +687,12 @@ export type BridgeTaskAdmissionResponse = z.infer<typeof bridgeTaskAdmissionResp
 export type BridgeTaskList = z.infer<typeof bridgeTaskListSchema>;
 export type BridgeTaskDetailPayload = z.infer<typeof bridgeTaskDetailPayloadSchema>;
 export type BridgeCancelRequest = z.infer<typeof bridgeCancelRequestSchema>;
-export type BridgeCancelResponse = z.infer<typeof bridgeCancelResponseSchema>;
+/** Cancel response: a fresh cancel returns the admitted task plus the fenced attempt; a replay returns the summary. */
+export type BridgeCancelResponse = {
+  task: BridgeAdmittedTask | BridgeTaskSummary;
+  attempt?: z.infer<typeof bridgeTaskAttemptSchema> | null;
+  [key: string]: unknown;
+};
 export type BridgeGenerationSummary = z.infer<typeof bridgeGenerationSummarySchema>;
 export type BridgeGenerationList = z.infer<typeof bridgeGenerationListSchema>;
 export type BridgeGenerationVariant = z.infer<typeof bridgeGenerationVariantSchema>;

@@ -1,12 +1,9 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
-import { resetBridgeBaseline } from './timeline/support';
+import { editorPath, resetFakeRuntimeBaseline } from './timeline/support';
 
-const COMPOSED_URL = '/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline'
-  + '&localTest=1&timelineOverlayCanary=1&transcriptLaneFixture=render-matrix'
-  + '&runawayTimelineProject=runaway-8085';
+const COMPOSED_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: 'render-matrix', runawayTimelineProject: 'runaway-8085' } });
 const DEGRADED_PROJECT = 'runaway-visual-states';
-const DEGRADED_URL = '/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline'
-  + `&localTest=1&transcriptLaneFixture=render-matrix&runawayTimelineProject=${DEGRADED_PROJECT}`;
+const DEGRADED_URL = editorPath({ params: { transcriptLaneFixture: 'render-matrix', runawayTimelineProject: DEGRADED_PROJECT } });
 const RUNAWAY_REQUEST = `**/api/astrid/v1/projects/${DEGRADED_PROJECT}/runaway-transitions?*`;
 
 const emptyResponse = {
@@ -88,7 +85,7 @@ async function expectTimelineSnapshot(page: Page, name: string): Promise<void> {
 }
 
 async function openComposedEditor(page: Page): Promise<void> {
-  expect(await resetBridgeBaseline()).toBeNull();
+  expect(await resetFakeRuntimeBaseline()).toBeNull();
   await initializeLocalMode(page);
   const response = await page.goto(COMPOSED_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   expect(response?.ok()).toBe(true);

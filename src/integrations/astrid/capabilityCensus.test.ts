@@ -1,18 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createFakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
 
 // This census probes the workspace.v1 routes (/v1/health, /v1/projects,
-// /v1/objects). The workspace flag is read once at module load, so opt in
-// before capabilityCensus.ts is imported.
-vi.hoisted(() => {
-  vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
-});
-import {
-  getAstridCapabilityCensus,
-  inspectAstridCapabilities,
-  refreshAstridCapabilityCensus,
-  resetAstridCapabilityCensusForTesting,
-} from './capabilityCensus.ts';
+// /v1/objects).
+import { inspectAstridCapabilities } from './capabilityCensus.ts';
 
 const ORIGIN = 'http://bridge.fake';
 
@@ -24,8 +15,7 @@ function installFetch(handler: (request: Request) => Promise<Response>) {
   }));
 }
 
-describe('Astrid boot capability census', () => {
-  beforeEach(() => resetAstridCapabilityCensusForTesting());
+describe('Astrid capability inspection', () => {
   afterEach(() => {
     window.history.replaceState({}, '', '/');
     vi.unstubAllGlobals();
@@ -33,7 +23,7 @@ describe('Astrid boot capability census', () => {
   });
 
   it('separates healthy bridge status from supported task, gallery, and media routes', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installFetch((request) => router.handle(request));
 
     const result = await inspectAstridCapabilities();
@@ -50,7 +40,7 @@ describe('Astrid boot capability census', () => {
   });
 
   it('accepts historical task identities during the GET capability probe', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installFetch(async (request) => {
       if (new URL(request.url).pathname.endsWith('/tasks')) {
         return Response.json({
@@ -74,7 +64,7 @@ describe('Astrid boot capability census', () => {
   });
 
   it('reports a healthy older bridge as degraded and probes each absent route only once', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installFetch(async (request) => {
       const pathname = new URL(request.url).pathname;
       if (/\/v1\/(?:projects\/[^/]+\/)?(?:tasks|generations)(?:\/|\?|$)/.test(pathname)
@@ -87,9 +77,7 @@ describe('Astrid boot capability census', () => {
       return router.handle(request);
     });
 
-    const first = refreshAstridCapabilityCensus();
-    const second = refreshAstridCapabilityCensus();
-    const [result] = await Promise.all([first, second]);
+    const result = await inspectAstridCapabilities();
 
     expect(result.health).toBe('available');
     expect(result.readiness).toBe('degraded');
@@ -98,15 +86,13 @@ describe('Astrid boot capability census', () => {
       generations: 'unavailable',
       media: 'unavailable',
     });
-    expect(second).toBe(first);
-    expect(getAstridCapabilityCensus()).toEqual(result);
     // health + projects + tasks + generations + media HEAD + diagnostic GET
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(6);
   });
 
   it('probes the URL-selected bridge project when it matches the project list', async () => {
     window.history.replaceState({}, '', '/tools/video-editor?localProject=selected-project');
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     const requests: string[] = [];
     installFetch(async (request) => {
       const url = new URL(request.url);
@@ -141,7 +127,7 @@ describe('Astrid boot capability census', () => {
     ['?localProject=missing-project', 'an unmatched localProject'],
   ])('falls back to the first bridge project with %s', async (search) => {
     window.history.replaceState({}, '', `/tools/video-editor${search}`);
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installFetch(async (request) => {
       const url = new URL(request.url);
       if (url.pathname.endsWith('/v1/projects')) {
@@ -163,7 +149,7 @@ describe('Astrid boot capability census', () => {
 
   it('falls back safely when localProject is malformed', async () => {
     window.history.replaceState({}, '', '/tools/video-editor?localProject=%E0%A4%A');
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installFetch(async (request) => {
       const url = new URL(request.url);
       if (url.pathname.endsWith('/v1/projects')) {

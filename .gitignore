@@ -52,9 +52,7 @@ temp/
 !docs/structure_detail/*.md
 !docs/blog/*.md
 !docs/quality/*.md
-!docs/astrid-data-dash-app-handoff.md
 !vendor/astrid-browser/remotion/public/fonts/FONT_PROVENANCE.md
-!docs/state_management_refactor_baselines.md
 !docs/state_management_context_audit.md
 !docs/design/*.md
 !docs/governance/contracts/astrid-plan-a.md
@@ -72,13 +70,15 @@ temp/
 !CLAUDE.md
 !/.megaplan/briefs/**/*.md
 
+# TypeScript build output
+*.tsbuildinfo
+
 # Stray media files in root (should be in public/)
 /*.mp4
 /*.webm
 /*.mov
 /*.gif
 /*.png
-!scorecard.png
 /*.jpg
 /*.jpeg
 /*.webp

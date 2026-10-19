@@ -10,6 +10,9 @@ import { migrateAstridBrowserStorage } from '@/migrations/astridRenameBrowserMig
 function loadInstalledAppTypography(): void {
   if (import.meta.env.VITE_DISABLE_REMOTE_FONTS === '1') return;
   if (document.querySelector('[data-installed-app-fonts]')) return;
+  // Offline browser-test mode (see config/vite/remoteFonts.ts): no remote-font request may be
+  // initiated by the document or by this runtime injection.
+  if (import.meta.env.VITE_DISABLE_REMOTE_FONTS === '1') return;
 
   const fonts = [
     {rel: 'preconnect', href: 'https://fonts.googleapis.com'},

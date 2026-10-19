@@ -199,7 +199,7 @@ describe('LayoutMainContent', () => {
   });
 
   it('removes tool navigation chrome in the local editor while preserving task pane space', () => {
-    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     locationPathname = '/tools/video-editor';
 
     const { container } = render(

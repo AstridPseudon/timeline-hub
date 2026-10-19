@@ -1,36 +1,19 @@
 /**
- * Timeline routes of the frozen doc-27 §4.1 set: list, load, CAS save.
+ * Timeline list route of the Astrid workspace (`GET /v1/projects/:p/timelines`).
  *
- * B4 (C1-5): placement is document-native (doc 24 Q1 RATIFIED) — every
- * placement write rides exactly this save route with `expected_version`.
- * A stale version answers `409 timeline_version_conflict` and surfaces as
- * the canonical {@link TimelineVersionConflictError} so the existing
- * reload-and-retry ladders engage unchanged. This module adds no route the
- * bridge does not expose; it is the same wire path `AstridBridgeDataProvider`
- * drives, opened to non-editor surfaces (gallery/App drop, shots panel).
+ * Placement reads and writes never ride a timeline route here: the document head (config and registry)
+ * is read and published only through `RuntimeDataProvider` (`loadTimeline`, `loadAssetRegistry`,
+ * `saveTimelineAtHead`). `GET /v1/projects/:p/timelines/:t` answers the public timeline resource without
+ * either, so this module deliberately offers no load and no save.
  */
 
 import type { AstridBridgeTransport } from './transport.ts';
-import { BridgeRouteError } from './transport.ts';
-import {
-  BRIDGE_VERSION_CONFLICT_CODE,
-  bridgeTimelinePayloadSchema,
-  bridgeTimelinesSchema,
-  type BridgeTimelinePayload,
-  type BridgeTimelinesPayload,
-} from '@/tools/video-editor/data/bridgeContract.ts';
-import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors.ts';
-import { astridTimelineCollectionPath, astridTimelineReadPath, isAstridWorkspaceV1 } from './workspaceV1.ts';
+import { bridgeTimelinesSchema, type BridgeTimelinesPayload } from '@/tools/video-editor/data/bridgeContract.ts';
+import { astridTimelineCollectionPath } from './workspaceV1.ts';
 
 export type TimelineRoutesOptions = {
   /** The project slug every timeline route is scoped under. */
   projectSlug: string;
-};
-
-export type TimelineSaveInput = {
-  config: unknown;
-  registry: unknown;
-  expectedVersion: number;
 };
 
 export class AstridLocalTimelineRoutes {
@@ -42,72 +25,15 @@ export class AstridLocalTimelineRoutes {
     this.projectSlug = options.projectSlug;
   }
 
-  private base(): string {
-    return astridTimelineCollectionPath(this.projectSlug);
-  }
-
-  private toError(error: unknown, action: string, expectedVersion?: number): unknown {
-    if (error instanceof BridgeRouteError
-      && error.status === 409
-      && error.code === BRIDGE_VERSION_CONFLICT_CODE) {
-      return new TimelineVersionConflictError(
-        error.detail ?? `Timeline version conflict (${action})`,
-        expectedVersion,
-        typeof error.envelope?.config_version === 'number' ? error.envelope.config_version : undefined,
-      );
-    }
-    return error;
-  }
-
   /** All timelines of the project (identity, slugs, default flag). */
   async list(): Promise<BridgeTimelinesPayload> {
-    try {
-      const payload = await this.transport.requestJson(this.base(), {}, bridgeTimelinesSchema, 'timeline list');
-      const wire = payload as BridgeTimelinesPayload & { items?: BridgeTimelinesPayload['timelines'] };
-      return isAstridWorkspaceV1 ? { ...wire, timelines: wire.items ?? [] } : wire;
-    } catch (error) {
-      throw this.toError(error, 'timeline list');
-    }
-  }
-
-  /** One timeline document: config + registry + head version. */
-  async get(ref: string): Promise<BridgeTimelinePayload> {
-    try {
-      return await this.transport.requestJson(
-        astridTimelineReadPath(this.projectSlug, ref),
-        {},
-        bridgeTimelinePayloadSchema,
-        'load timeline',
-      );
-    } catch (error) {
-      throw this.toError(error, 'load timeline');
-    }
-  }
-
-  /**
-   * Compare-and-swap save. `expectedVersion` is the head this caller read;
-   * a stale head yields {@link TimelineVersionConflictError}.
-   */
-  async save(ref: string, input: TimelineSaveInput): Promise<BridgeTimelinePayload> {
-    if (isAstridWorkspaceV1) {
-      throw new Error('This live Astrid workspace preview is read-only; timeline saving is not enabled.');
-    }
-    try {
-      return await this.transport.requestJson(
-        `${this.base()}/${encodeURIComponent(ref)}/save`,
-        {
-          method: 'POST',
-          body: {
-            config: input.config,
-            registry: input.registry,
-            expected_version: input.expectedVersion,
-          },
-        },
-        bridgeTimelinePayloadSchema,
-        'save timeline',
-      );
-    } catch (error) {
-      throw this.toError(error, 'save timeline', input.expectedVersion);
-    }
+    const payload = await this.transport.requestJson(
+      astridTimelineCollectionPath(this.projectSlug),
+      {},
+      bridgeTimelinesSchema,
+      'timeline list',
+    );
+    const wire = payload as BridgeTimelinesPayload & { items?: BridgeTimelinesPayload['timelines'] };
+    return { ...wire, timelines: wire.items ?? [] };
   }
 }

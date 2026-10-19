@@ -6,8 +6,9 @@ import type {
   BridgeTaskDetailPayload,
 } from '@/tools/video-editor/data/bridgeContract.ts';
 import type { PlacementDocument } from '@/shared/lib/placement/documentPlacement.ts';
+import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors';
 import { deriveTimelineShotGroupViews } from '@/tools/video-editor/lib/timeline-domain.ts';
-import { createFakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
+import { createFakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
 import {
   deepCopyShotGroupInDocument,
   duplicateShotGroup,
@@ -16,6 +17,74 @@ import {
   waitForShotPackCommand,
   type ShotPackCommandClient,
 } from './shot-group-pack-commands.ts';
+
+// The timeline head is read and written only through `RuntimeDataProvider` (workspace.v1: an immutable
+// parent-composition revision published with `expected_head`), so the document is this in-memory head.
+// Task admission and gallery reads still go through the fetch stub and the canonical fake router.
+const runtime = vi.hoisted(() => ({
+  head: 'rev-1',
+  version: 1,
+  config: null as unknown,
+  registry: { assets: {} } as unknown,
+  loads: 0,
+  publishes: [] as string[],
+}));
+
+vi.mock('@/integrations/runtime/dataProvider', () => ({
+  RuntimeDataProvider: class {
+    constructor(readonly options: { projectId: string }) {}
+    async loadTimeline(timelineId: string) {
+      runtime.loads += 1;
+      return {
+        config: structuredClone(runtime.config),
+        configVersion: runtime.version,
+        head: { projectId: this.options.projectId, timelineId, headRevisionId: runtime.head },
+      };
+    }
+    async loadAssetRegistry() {
+      return structuredClone(runtime.registry);
+    }
+    async saveTimelineAtHead(
+      timelineId: string,
+      config: unknown,
+      expectedHead: { headRevisionId: string | null },
+      registry: unknown,
+    ) {
+      if (expectedHead.headRevisionId !== runtime.head) throw new TimelineVersionConflictError('stale_head');
+      runtime.config = structuredClone(config);
+      runtime.registry = structuredClone(registry);
+      runtime.version += 1;
+      runtime.head = `rev-${runtime.publishes.length + 2}`;
+      runtime.publishes.push(runtime.head);
+      return {
+        configVersion: runtime.version,
+        head: { projectId: this.options.projectId, timelineId, headRevisionId: runtime.head },
+      };
+    }
+  },
+}));
+
+function seedRuntimeHead(seed: PlacementDocument, version: number): void {
+  runtime.head = 'rev-1';
+  runtime.version = version;
+  runtime.config = structuredClone(seed.config);
+  runtime.registry = structuredClone(seed.registry);
+  runtime.loads = 0;
+  runtime.publishes = [];
+}
+
+/** Every request that leaves the app for the fake router, as `METHOD /path`. */
+function recordRouterRequests(router: ReturnType<typeof createFakeRuntimeRouter>): string[] {
+  const paths: string[] = [];
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const raw = input instanceof Request ? input.url : String(input);
+    const url = raw.startsWith('http') ? raw : `http://bridge.fake${raw}`;
+    const request = new Request(url, init);
+    paths.push(`${request.method} ${new URL(url).pathname}`);
+    return await router.handle(request);
+  }));
+  return paths;
+}
 
 // Forbidden relational surface, spelled via join so the repo-wide literal grep
 // gate (zero mentions under src/tools/video-editor) stays clean.
@@ -179,25 +248,11 @@ describe('shot-group pack commands', () => {
   });
 
   it('refuses media-bearing duplicates before task admission or timeline mutation', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     const seed = documentFixture();
-    router.state.config = seed.config;
-    router.state.registry = seed.registry;
-    router.state.configVersion = 11;
-    const stateBefore = structuredClone({
-      config: router.state.config,
-      registry: router.state.registry,
-      galleryDetails: router.state.galleryDetails,
-      configVersion: router.state.configVersion,
-    });
-    const paths: string[] = [];
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const raw = input instanceof Request ? input.url : String(input);
-      const url = raw.startsWith('http') ? raw : `http://bridge.fake${raw}`;
-      const request = new Request(url, init);
-      paths.push(`${request.method} ${new URL(url).pathname}`);
-      return await router.handle(request);
-    }));
+    seedRuntimeHead(seed, 11);
+    const galleryBefore = structuredClone(router.state.galleryDetails);
+    const paths = recordRouterRequests(router);
 
     await expect(duplicateShotGroup({
       projectSlug: 'demo-project',
@@ -209,15 +264,11 @@ describe('shot-group pack commands', () => {
       'Legacy task family duplicate is unsupported; submit the canonical HC-04 admission envelope',
     );
 
-    expect(paths).toEqual(['GET /api/astrid/projects/demo-project/timelines/active-non-default']);
-    expect(paths.some((path) => path.startsWith('POST '))).toBe(false);
-    expect(paths.some((path) => path.includes(forbidden) || path.includes('supabase'))).toBe(false);
-    expect({
-      config: router.state.config,
-      registry: router.state.registry,
-      galleryDetails: router.state.galleryDetails,
-      configVersion: router.state.configVersion,
-    }).toEqual(stateBefore);
+    expect(runtime.loads).toBe(1);
+    expect(paths).toEqual([]);
+    expect(runtime.publishes).toEqual([]);
+    expect({ config: runtime.config, registry: runtime.registry, version: runtime.version, galleryDetails: router.state.galleryDetails })
+      .toEqual({ config: seed.config, registry: seed.registry, version: 11, galleryDetails: galleryBefore });
   });
 
   it('polls a command at the caller-supplied cadence until succeeded', async () => {
@@ -267,26 +318,11 @@ describe('shot-group pack commands', () => {
   });
 
   it('duplicates only the explicitly active non-default timeline and never touches relational storage', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     const seed = documentFixture();
     delete seed.config.pinnedShotGroups![0]!.videoAssetKey;
-    router.state.config = seed.config;
-    router.state.registry = seed.registry;
-    router.state.configVersion = 7;
-    const paths: string[] = [];
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const raw = input instanceof Request ? input.url : String(input);
-      const url = raw.startsWith('http') ? raw : `http://bridge.fake${raw}`;
-      const request = new Request(url, init);
-      paths.push(`${request.method} ${new URL(url).pathname}`);
-      if (request.method === 'POST' && new URL(url).pathname.endsWith('/tasks')) {
-        return new Response(JSON.stringify(admissionResponse()), { status: 201, headers: { 'Content-Type': 'application/json' } });
-      }
-      if (request.method === 'GET' && new URL(url).pathname.endsWith('/tasks/task-1')) {
-        return new Response(JSON.stringify({ task: { ...taskDetail('succeeded'), outputs: [] } }), { headers: { 'Content-Type': 'application/json' } });
-      }
-      return await router.handle(request);
-    }));
+    seedRuntimeHead(seed, 7);
+    const paths = recordRouterRequests(router);
 
     const copied = await duplicateShotGroup({
       projectSlug: 'demo-project',
@@ -297,40 +333,27 @@ describe('shot-group pack commands', () => {
     }, { wait: async () => undefined });
 
     expect(copied.group.derivedFrom).toEqual({ shotId: 'shot-source', trackId: 'V1' });
-    expect(router.state.config.pinnedShotGroups?.map((group) => group.shotId))
+    expect((runtime.config as PlacementDocument['config']).pinnedShotGroups?.map((group) => group.shotId))
       .toEqual(['shot-source', 'shot-copy']);
-    expect(paths).toContain('GET /api/astrid/projects/demo-project/timelines/active-non-default');
-    expect(paths).toContain('POST /api/astrid/projects/demo-project/timelines/active-non-default/save');
-    expect(paths.some((path) => path.startsWith('POST ') && path.endsWith('/tasks'))).toBe(false);
-    expect(paths.some((path) => /\/timelines$/.test(path))).toBe(false);
+    // The version check and the compare-and-swap cycle each load the active head; one revision is published
+    // and no media task is admitted: a group with no final video has nothing to copy.
+    expect(runtime.loads).toBe(2);
+    expect(runtime.publishes).toEqual(['rev-2']);
+    expect(paths).toEqual([]);
     expect(paths.some((path) => path.includes(forbidden) || path.includes('supabase'))).toBe(false);
   });
 
   it('refuses the retired promote-primary family before task admission or timeline mutation', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     const seed = documentFixture();
     const generation = router.state.galleryDetails[0]!;
     const currentPrimary = generation.variants.find((variant) => variant.is_primary)!;
     const alternative = generation.variants.find((variant) => !variant.is_primary)!;
     seed.registry.assets['asset-a']!.generationId = generation.generation_id;
     seed.registry.assets['asset-a']!.variantId = currentPrimary.id;
-    router.state.config = seed.config;
-    router.state.registry = seed.registry;
-    router.state.configVersion = 11;
-    const stateBefore = structuredClone({
-      config: router.state.config,
-      registry: router.state.registry,
-      galleryVariants: generation.variants,
-      configVersion: router.state.configVersion,
-    });
-    const paths: string[] = [];
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const raw = input instanceof Request ? input.url : String(input);
-      const url = raw.startsWith('http') ? raw : `http://bridge.fake${raw}`;
-      const request = new Request(url, init);
-      paths.push(`${request.method} ${new URL(url).pathname}`);
-      return await router.handle(request);
-    }));
+    seedRuntimeHead(seed, 11);
+    const variantsBefore = structuredClone(generation.variants);
+    const paths = recordRouterRequests(router);
 
     await expect(promotePrimaryVariant({
       projectSlug: 'demo-project',
@@ -342,15 +365,10 @@ describe('shot-group pack commands', () => {
       'Legacy task family promote_primary is unsupported; submit the canonical HC-04 admission envelope',
     );
 
-    expect(paths).toHaveLength(1);
-    expect(paths[0]).toMatch(/^GET (?:\/api\/astrid)?\/(?:v1\/)?projects\/demo-project\/timelines\/active-non-default$/);
-    expect(paths.some((path) => path.startsWith('POST '))).toBe(false);
-    expect(paths.some((path) => path.includes(forbidden) || path.includes('supabase'))).toBe(false);
-    expect({
-      config: router.state.config,
-      registry: router.state.registry,
-      galleryVariants: generation.variants,
-      configVersion: router.state.configVersion,
-    }).toEqual(stateBefore);
+    expect(runtime.loads).toBe(1);
+    expect(paths).toEqual([]);
+    expect(runtime.publishes).toEqual([]);
+    expect({ config: runtime.config, registry: runtime.registry, version: runtime.version, galleryVariants: generation.variants })
+      .toEqual({ config: seed.config, registry: seed.registry, version: 11, galleryVariants: variantsBefore });
   });
 });

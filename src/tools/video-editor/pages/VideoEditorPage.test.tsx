@@ -72,7 +72,6 @@ const originalLocalStorageDescriptor = Object.getOwnPropertyDescriptor(
 );
 
 const state = vi.hoisted(() => ({
-  workspaceV1: false,
   auth: { userId: "user-1" as string | null },
   project: {
     selectedProjectId: "project-1" as string | null,
@@ -147,7 +146,6 @@ const state = vi.hoisted(() => ({
     }[],
   },
   ensureProjectHasTimeline: vi.fn(async () => "01CREATED"),
-  workspaceV1: false,
   selectedProvider: null as DataProvider | null,
   providerProbe: null as React.ComponentType<{
     dataProvider: DataProvider;
@@ -181,18 +179,6 @@ const state = vi.hoisted(() => ({
    */
   extensionActivations: [] as string[],
   extensionDisposals: [] as string[],
-  bridgeCtor: vi.fn(function MockBridgeProvider(
-    this: Record<string, unknown>,
-    options: unknown,
-  ) {
-    this.kind = "bridge";
-    this.options = options;
-    this.persistenceEnabled = true;
-    this.resolveAssetUrl = vi.fn();
-    this.loadTimeline = vi.fn();
-    this.saveTimeline = vi.fn();
-    this.loadAssetRegistry = vi.fn();
-  }),
   nativeProbe: vi.fn(),
   runtimeOnError: null as null | ((error: unknown) => void),
   // Mirrors Runtime: selectors match id OR slug and answer with the canonical id.
@@ -214,19 +200,6 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock("@/integrations/astrid/nativeEditorConnection.ts", () => ({assertNativeEditorConnection: state.nativeProbe}));
-
-vi.mock("@/integrations/astrid/workspaceV1.ts", async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import("@/integrations/astrid/workspaceV1.ts")
-    >();
-  return {
-    ...actual,
-    get isAstridWorkspaceV1() {
-      return state.workspaceV1;
-    },
-  };
-});
 
 vi.mock("@/shared/contexts/AuthContext.tsx", () => ({
   useAuth: () => state.auth,
@@ -313,23 +286,6 @@ vi.mock("@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts", () => ({
     bridgeDown: state.discovery.bridgeDown,
     projectsEmpty: state.discovery.projects.length === 0,
   }),
-}));
-
-vi.mock("@/integrations/astrid/workspaceV1.ts", async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import("@/integrations/astrid/workspaceV1.ts")
-    >();
-  return {
-    ...actual,
-    get isAstridWorkspaceV1() {
-      return state.workspaceV1;
-    },
-  };
-});
-
-vi.mock("@/tools/video-editor/data/AstridBridgeDataProvider.ts", () => ({
-  AstridBridgeDataProvider: state.bridgeCtor,
 }));
 
 vi.mock('@/integrations/runtime/resolveProjectSelector.ts', () => ({
@@ -891,7 +847,6 @@ describe("VideoEditorPage", () => {
   beforeEach(() => {
     (import.meta.env as Record<string, unknown>).DEV = true;
     window.localStorage.clear();
-    state.workspaceV1 = true;
     state.auth.userId = "user-1";
     state.project.selectedProjectId = "project-1";
     state.project.setSelectedProjectId.mockClear();
@@ -944,7 +899,6 @@ describe("VideoEditorPage", () => {
       },
     ];
     state.ensureProjectHasTimeline.mockReset().mockResolvedValue("01CREATED");
-    state.workspaceV1 = true;
     state.selectedProvider = null;
     state.providerProbe = null;
     state.providerMounts = 0;
@@ -957,7 +911,6 @@ describe("VideoEditorPage", () => {
     state.extensionDisposals.length = 0;
     state.confirm.mockReset();
     state.confirm.mockReturnValue(true);
-    state.bridgeCtor.mockClear();
     state.runtimeCtor.mockClear();
     state.runtimeOnError = null;
     state.nativeProbe.mockReset().mockRejectedValue(new Error("Configured workspace unavailable"));
@@ -1032,7 +985,6 @@ describe("VideoEditorPage", () => {
   });
 
   it("publishes canonical Runtime project chat scope before any timeline exists and updates it on dropdown selection", async () => {
-    state.workspaceV1 = true;
     state.discovery.timelines = [];
     state.discovery.timelinesLoading = true;
     state.discovery.projects = [
@@ -1241,7 +1193,6 @@ describe("VideoEditorPage", () => {
   });
 
   it("keeps canonical Runtime identity and full live editor context when a timeline is present", async () => {
-    state.workspaceV1 = true;
     state.discovery.projects = [
       {
         slug: "fresh-project",
@@ -1450,7 +1401,6 @@ describe("VideoEditorPage", () => {
   });
 
   it("automatically creates and opens Main from the authoritative empty-project state", async () => {
-    state.workspaceV1 = true;
     state.discovery.projects = [
       {
         slug: "demo-project",
@@ -1478,7 +1428,6 @@ describe("VideoEditorPage", () => {
   });
 
   it("does not retry failed automatic Main timeline creation on every render", async () => {
-    state.workspaceV1 = true;
     state.discovery.projects = [
       {
         slug: "demo-project",
@@ -1497,16 +1446,20 @@ describe("VideoEditorPage", () => {
     ).toBeEnabled();
   });
 
-  it("fails closed without native Runtime configuration rather than mounting a legacy backend", async () => {
-    state.workspaceV1 = false;
+  it("fails closed for a local URL the workspace does not list rather than mounting a slug-addressed backend", async () => {
+    // Only the Runtime provider exists: a slug that workspace discovery does
+    // not resolve to a canonical project id mounts nothing, even when the URL
+    // names a timeline.
+    state.discovery.projects = [{ slug: "other-project", name: "Other project" }];
+    state.discovery.timelines = [];
     renderPage(
       "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
     );
     expect(
-      await screen.findByText("Connect the local workspace"),
+      await screen.findByRole("heading", { name: "Project not found" }),
     ).toBeInTheDocument();
+    expect(screen.queryByText("Connect the local workspace")).toBeNull();
     expect(screen.queryByTestId("video-editor-provider")).toBeNull();
-    expect(state.bridgeCtor).not.toHaveBeenCalled();
     expect(state.runtimeCtor).not.toHaveBeenCalled();
   });
 
@@ -1780,8 +1733,7 @@ describe("VideoEditorPage", () => {
     expect(
       screen.getByRole("combobox", { name: "Select project" }),
     ).toHaveTextContent("Ados Talks");
-    // Timeline label = bridge timeline name once the name GET resolves,
-    // falling back to the timeline id while it loads.
+    // Timeline label = the discovered timeline's name.
     await waitFor(() => {
       expect(
         screen.getByRole("combobox", { name: "Select timeline" }),
@@ -2578,7 +2530,6 @@ describe("VideoEditorPage", () => {
       >("@/integrations/runtime/dataProvider.ts");
     });
     beforeEach(() => {
-      state.workspaceV1 = true;
       state.discovery.projects = [
         { slug: "l04-project", name: "L04 Project", project_id: L04_PROJECT },
         {
@@ -2611,7 +2562,6 @@ describe("VideoEditorPage", () => {
     afterEach(() => {
       runtime.release();
       state.providerProbe = null;
-      state.workspaceV1 = true;
       vi.restoreAllMocks();
       state.runtimeCtor.mockImplementation(defaultRuntimeCtor);
     });

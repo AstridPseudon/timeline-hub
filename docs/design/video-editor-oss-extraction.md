@@ -835,7 +835,7 @@ The extracted packages must contain none of the following concepts:
 | Path | Decision | Destination | Notes |
 | --- | --- | --- | --- |
 | `data/DataProvider.ts` | `SPLIT` | `@tbd/editor/src/data/DataProvider.ts` | Canonical interface anchor moves into editor package (`astrid-app/src/tools/video-editor/data/DataProvider.ts:53-71`). |
-| `data/SupabaseDataProvider.ts` | `STAY` | `astrid-app/src/tools/video-editor-host/data/SupabaseDataProvider.ts` | This is the reference astrid adapter and keeps `projectId`/`userId`/Supabase coupling (`astrid-app/src/tools/video-editor/data/SupabaseDataProvider.ts:43-279`). |
+| `src/integrations/runtime/dataProvider.ts` | `STAY` | `astrid-app/src/tools/video-editor-host/data/RuntimeDataProvider.ts` | This is the reference astrid adapter (`RuntimeDataProvider`) and keeps the Workspace Runtime coupling. It replaces the Supabase adapter this plan was written against, which was retired 2026-10-18. |
 | `contexts/VideoEditorRuntimeContext.tsx` | `SPLIT` | generic runtime context to `@tbd/editor/src/contexts/EditorRuntimeContext.tsx`; host-only wrapper removed | Current wrapper carries `provider`, `timelineId`, `timelineName`, and `userId` (`astrid-app/src/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx:4-33`). |
 | `contexts/VideoEditorProvider.tsx` | `STAY` | `astrid-app/src/tools/video-editor-host/contexts/VideoEditorProvider.tsx` | This is the host bootstrap example; it wires MediaLightbox and AgentChat (`astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:74-112`, `astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:367-405`). |
 | `components/VideoEditorShell.tsx` | `SPLIT` | generic shell to `@tbd/editor/src/components/VideoEditorShell.tsx`; route/pane integration to host shell | Current shell mixes generic editor UI with routing, pane locks, and realtime dialog state (`astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:13-29`, `astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:67-120`). |
@@ -892,7 +892,7 @@ The extracted packages must contain none of the following concepts:
 
 | Touchpoint | Current location | New home | What the extracted package exposes |
 | --- | --- | --- | --- |
-| Supabase persistence | `astrid-app/src/tools/video-editor/data/SupabaseDataProvider.ts:43-279` | Astrid host adapter | `DataProvider` port |
+| Runtime persistence | `astrid-app/src/integrations/runtime/dataProvider.ts` | Astrid host adapter | `DataProvider` port |
 | Auth | `astrid-app/src/tools/video-editor/pages/VideoEditorPage.tsx:183-194` | Astrid bootstrap | `HostContext.userId` and adapter construction |
 | `projectId` | `astrid-app/src/tools/video-editor/pages/VideoEditorPage.tsx:183-194`; `astrid-app/src/tools/video-editor/hooks/useTimelineState.ts:512`, `astrid-app/src/tools/video-editor/hooks/useTimelineState.ts:579-593` | Astrid bootstrap and adapter | `DataProvider` scope and `listTimelines({ projectId })` |
 | MediaLightbox | `astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:5-8`, `astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:367-381` | Astrid `MediaPicker` adapter | `MediaPicker` port and overlay slot |
@@ -922,12 +922,12 @@ The extracted packages must contain none of the following concepts:
 Locked naming and placement:
 
 - Canonical port interface: `data/DataProvider.ts`
-- Reference astrid adapter: `data/SupabaseDataProvider.ts`
+- Reference astrid adapter: `src/integrations/runtime/dataProvider.ts`
 - Bootstrap example: `contexts/VideoEditorProvider.tsx`
 
 Evidence:
 
-- `SupabaseDataProvider` encapsulates timeline load/save, checkpoint persistence, registry loading, asset upload/register, and URL resolution (`astrid-app/src/tools/video-editor/data/SupabaseDataProvider.ts:43-279`).
+- `RuntimeDataProvider` encapsulates head-checked timeline load/save, registry loading, asset upload/register, and URL resolution (`astrid-app/src/integrations/runtime/dataProvider.ts`).
 - `VideoEditorProvider` wraps runtime context, creates store wiring, and mounts app-only extensions such as AgentChatBridge and MediaLightbox (`astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:74-112`, `astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:367-405`).
 
 ### 12.2 Hooks are layered helpers, not the adapter
@@ -943,7 +943,7 @@ These hooks remain helpers around the port; they are not the backend contract:
 ```text
 astrid-app/src/tools/video-editor-host/
 ├─ data/
-│  └─ SupabaseDataProvider.ts
+│  └─ RuntimeDataProvider.ts
 ├─ contexts/
 │  └─ VideoEditorProvider.tsx
 ├─ hooks/
@@ -981,13 +981,13 @@ Example 1, route page:
 
 ```ts
 // Before
-import { SupabaseDataProvider } from '@/tools/video-editor/data/SupabaseDataProvider';
+import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider';
 import { VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider';
 import { VideoEditorShell } from '@/tools/video-editor/components/VideoEditorShell';
 
 // After
 import { EditorProvider, TimelineEditorShell } from '@tbd/editor';
-import { SupabaseDataProvider } from '@/tools/video-editor-host/data/SupabaseDataProvider';
+import { RuntimeDataProvider } from '@/tools/video-editor-host/data/RuntimeDataProvider';
 import { VideoEditorProvider } from '@/tools/video-editor-host/contexts/VideoEditorProvider';
 ```
 
@@ -1173,7 +1173,7 @@ Trigger for revisit:
 | --- | --- |
 | `TimelineConfig` | The persisted, versioned JSON document that describes tracks, clips, output settings, and namespaced app extensions. |
 | Port | A narrow interface exposed by the OSS packages for host-specific behavior, such as persistence or media picking. |
-| Adapter | Host-owned code that implements a port, such as `SupabaseDataProvider`. |
+| Adapter | Host-owned code that implements a port, such as `RuntimeDataProvider`. |
 | Extension | Host-owned UI or behavior layered onto the editor through slots, store subscriptions, or app namespaces. |
 | `HostContext` | Non-document UI/runtime configuration provided by the embedding app, such as `userId`, locale, routes, or branding. |
 
@@ -1182,7 +1182,7 @@ Trigger for revisit:
 | File | Why it informs this design |
 | --- | --- |
 | `astrid-app/src/tools/video-editor/data/DataProvider.ts` | Canonical current persistence contract and error semantics. |
-| `astrid-app/src/tools/video-editor/data/SupabaseDataProvider.ts` | Reference host adapter for persistence, registry, uploads, and URL resolution. |
+| `astrid-app/src/integrations/runtime/dataProvider.ts` | Reference host adapter for persistence, registry, uploads, and URL resolution. |
 | `astrid-app/src/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx` | Current runtime wrapper carrying provider, timeline id, user id, and name. |
 | `astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx` | Bootstrap example and host-only MediaLightbox/AgentChat integration. |
 | `astrid-app/src/tools/video-editor/types/index.ts` | Current core types and `pinnedShotGroups` leakage point. |

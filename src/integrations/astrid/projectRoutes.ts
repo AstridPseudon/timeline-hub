@@ -1,13 +1,12 @@
-/** Project discovery over the frozen `GET /projects` bridge route. */
+/** Project discovery and mutation over the workspace.v1 project routes. */
 
 import type { AstridBridgeTransport } from './transport.ts';
 import {
-  bridgeProjectsSchema,
   runtimeMutationSchema,
   runtimeProjectPageSchema,
   runtimeProjectResourceSchema,
 } from '@/tools/video-editor/data/bridgeContract.ts';
-import { astridProjectCollectionPath, isAstridWorkspaceV1 } from './workspaceV1.ts';
+import { astridProjectCollectionPath } from './workspaceV1.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
 
 export type BridgeProject = {
@@ -27,38 +26,28 @@ export class AstridLocalProjectRoutes {
   constructor(private readonly transport: AstridBridgeTransport) {}
 
   async list(): Promise<BridgeProject[]> {
-    if (isAstridWorkspaceV1) {
-      const projects: BridgeProject[] = [];
-      let cursor: string | undefined;
-      const seenCursors = new Set<string>();
-      do {
-        if (cursor !== undefined) {
-          if (seenCursors.has(cursor)) {
-            throw new Error(`Astrid project pagination repeated cursor ${cursor}`);
-          }
-          seenCursors.add(cursor);
+    const projects: BridgeProject[] = [];
+    let cursor: string | undefined;
+    const seenCursors = new Set<string>();
+    do {
+      if (cursor !== undefined) {
+        if (seenCursors.has(cursor)) {
+          throw new Error(`Astrid project pagination repeated cursor ${cursor}`);
         }
-        const query = new URLSearchParams({ limit: '200' });
-        if (cursor !== undefined) query.set('cursor', cursor);
-        const payload = await this.transport.requestJson(
-          `${astridProjectCollectionPath()}?${query.toString()}`,
-          {},
-          runtimeProjectPageSchema,
-          'project list',
-        );
-        projects.push(...payload.items.map((project) => ({ ...project })));
-        cursor = payload.next_cursor ?? undefined;
-      } while (cursor !== undefined);
-      return projects;
-    }
-
-    const payload = await this.transport.requestJson(
-      astridProjectCollectionPath(),
-      {},
-      bridgeProjectsSchema,
-      'project list',
-    );
-    return (payload.projects ?? []) as BridgeProject[];
+        seenCursors.add(cursor);
+      }
+      const query = new URLSearchParams({ limit: '200' });
+      if (cursor !== undefined) query.set('cursor', cursor);
+      const payload = await this.transport.requestJson(
+        `${astridProjectCollectionPath()}?${query.toString()}`,
+        {},
+        runtimeProjectPageSchema,
+        'project list',
+      );
+      projects.push(...payload.items.map((project) => ({ ...project })));
+      cursor = payload.next_cursor ?? undefined;
+    } while (cursor !== undefined);
+    return projects;
   }
 
   /** Create a project through the canonical workspace.v1 authority. */
@@ -67,9 +56,6 @@ export class AstridLocalProjectRoutes {
     slug: string;
     metadata?: Record<string, unknown>;
   }): Promise<RuntimeProjectMutation> {
-    if (!isAstridWorkspaceV1) {
-      throw new Error('Project creation requires the Astrid workspace.v1 bridge.');
-    }
     return this.transport.requestJson(
       '/v1/projects',
       {
@@ -93,9 +79,6 @@ export class AstridLocalProjectRoutes {
     name?: string;
     metadata?: Record<string, unknown>;
   }): Promise<RuntimeProject> {
-    if (!isAstridWorkspaceV1) {
-      throw new Error('Project settings require the Astrid workspace.v1 bridge.');
-    }
     return this.transport.requestJson(
       `/v1/projects/${encodeURIComponent(input.projectId)}`,
       {

@@ -43,18 +43,23 @@ vi.mock('./ShotEditorView.tsx', () => ({
 }));
 
 const mocks = vi.hoisted(() => ({
+  providerOptions: vi.fn(),
   loadTimeline: vi.fn(),
   loadAssetRegistry: vi.fn(),
-  onResolve: vi.fn(({ file }: { file: string }) => `https://bridge.test/${file}`),
+  onResolve: vi.fn(({ file }: { file: string }) => `https://runtime.test/${file}`),
   loadShotComposition: vi.fn(),
 }));
 
-vi.mock('@/tools/video-editor/data/AstridBridgeDataProvider.ts', () => ({
-  AstridBridgeDataProvider: class MockAstridBridgeDataProvider {
+vi.mock('@/integrations/runtime/dataProvider.ts', () => ({
+  RuntimeDataProvider: class MockRuntimeDataProvider {
+    refreshIntervalMs = 6_000;
     loadTimeline = mocks.loadTimeline;
     loadAssetRegistry = mocks.loadAssetRegistry;
     onResolve = mocks.onResolve;
     shotComposition = { load: mocks.loadShotComposition };
+    constructor(options: unknown) {
+      mocks.providerOptions(options);
+    }
   },
 }));
 
@@ -68,7 +73,7 @@ function renderBrowser(initialEntry = '/tools/travel-between-images?localProject
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
-        <LocalTimelineShotBrowser projectSlug="project-001" timelineRef="document-primary" />
+        <LocalTimelineShotBrowser projectSlug="project-001" projectId="project-001" timelineRef="document-primary" />
         <LocationProbe />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -79,6 +84,7 @@ describe('LocalTimelineShotBrowser', () => {
   afterEach(() => cleanup());
 
   beforeEach(() => {
+    mocks.providerOptions.mockReset();
     mocks.loadTimeline.mockReset();
     mocks.loadAssetRegistry.mockReset();
     mocks.onResolve.mockClear();
@@ -105,6 +111,33 @@ describe('LocalTimelineShotBrowser', () => {
 
     expect(await screen.findAllByRole('button', { name: 'Select shot shot-alpha' })).not.toHaveLength(0);
     expect(screen.getByTestId('production-shot-list')).toBeInTheDocument();
+  });
+
+  it('reads the timeline, registry and assets through the Runtime provider for the project id', async () => {
+    renderBrowser();
+
+    expect(await screen.findAllByRole('button', { name: 'Select shot shot-alpha' })).not.toHaveLength(0);
+    expect(mocks.providerOptions).toHaveBeenCalledWith({ projectId: 'project-001' });
+    expect(mocks.loadTimeline).toHaveBeenCalledWith('document-primary');
+    expect(mocks.loadAssetRegistry).toHaveBeenCalledWith('document-primary');
+    expect(mocks.loadShotComposition).toHaveBeenCalledWith(
+      expect.objectContaining({ projectId: 'project-001', parentDocumentId: 'document-primary' }),
+    );
+  });
+
+  it('reports a load error instead of falling back to another backend when no Runtime project id is given', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/tools/travel-between-images?localProject=project-001&localTimeline=document-primary']}>
+          <LocalTimelineShotBrowser projectSlug="project-001" timelineRef="document-primary" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Workspace Runtime project is unavailable');
+    expect(mocks.providerOptions).not.toHaveBeenCalled();
+    expect(mocks.loadTimeline).not.toHaveBeenCalled();
   });
 
   it('opens the established shot editor with only the selected group clips', async () => {
@@ -144,6 +177,7 @@ describe('LocalTimelineShotBrowser', () => {
         <MemoryRouter initialEntries={['/tools/video-editor?localProject=project-001&localTimeline=document-primary']}>
           <LocalTimelineShotBrowser
             projectSlug="project-001"
+            projectId="project-001"
             timelineRef="document-primary"
             shotCompositionAdapter={shotCompositionAdapter}
             shotRef="project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1"

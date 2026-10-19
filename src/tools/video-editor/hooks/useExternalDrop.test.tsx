@@ -9,7 +9,7 @@ import {
   type ShotDropData,
 } from '@/shared/lib/dnd/dragDrop';
 import { useExternalDrop } from './useExternalDrop';
-import { AstridBridgeDataProvider } from '@/tools/video-editor/data/AstridBridgeDataProvider';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider';
 
 const mockUseShots = vi.fn(() => ({
   shots: undefined,
@@ -660,7 +660,7 @@ describe('useExternalDrop', () => {
   });
 
   it('uses the local bridge direct asset flow for non-generation audio without mutating the timeline before bytes and registry succeed', async () => {
-    mockRuntime.provider = { persistenceEnabled: true, supportsDirectAssetUpload: true } as unknown as AstridBridgeDataProvider;
+    mockRuntime.provider = { persistenceEnabled: true, supportsDirectAssetUpload: true } as unknown as DataProvider;
 
     const dataRef = {
       current: makeDropTestData({
@@ -781,7 +781,7 @@ describe('useExternalDrop', () => {
   });
 
   it('shows a toast and leaves timeline state unchanged when local asset drop is unsupported', async () => {
-    mockRuntime.provider = { persistenceEnabled: true, supportsDirectAssetUpload: true } as unknown as AstridBridgeDataProvider;
+    mockRuntime.provider = { persistenceEnabled: true, supportsDirectAssetUpload: true } as unknown as DataProvider;
 
     const initialData = makeDropTestData({
       tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
@@ -1344,8 +1344,8 @@ describe('useExternalDrop', () => {
     }));
   });
 
-  it('routes file drops through the generation-upload skeleton path when the provider is not AstridBridge', async () => {
-    // Provider is NOT AstridBridgeDataProvider — directAssetUploadAllFiles should be false
+  it('routes file drops through the generation-upload skeleton path when the provider does not support direct asset upload', async () => {
+    // Provider does not declare supportsDirectAssetUpload — directAssetUploadAllFiles should be false
     mockRuntime.provider = { persistenceEnabled: true };
 
     const dataRef = {

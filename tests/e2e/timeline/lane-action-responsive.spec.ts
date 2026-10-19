@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { BASE_URL, PROJECT_SLUG, TIMELINE_SLUG, browserEvidencePath } from './support';
+import { PROJECT_SLUG, browserEvidencePath, editorUrl } from './support';
 
-const EDITOR_URL = `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&transcriptLaneFixture=1`;
+const EDITOR_URL = editorUrl({ params: { transcriptLaneFixture: '1' } });
 const CAPABILITY_PROBE_PATH = `/api/astrid/projects/${PROJECT_SLUG}/media/__astrid_capability_probe__/content`;
 
 const EXPECTED_TRANSCRIPT_ACTION_LABELS = [

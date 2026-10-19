@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fetchDerivedItemsFromRepository } from './derivedItemsRepository';
-import { createFakeBridgeRouter, type FakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
-import { createJourneyState, FIXTURE_PROJECT, fixtureUlid } from '@/test/bridgeFixtures.mjs';
+import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
+import { createJourneyState } from '@/test/bridgeFixtures.mjs';
+import { FIXTURE_PROJECT, fixtureUlid } from '@/test/fakeRuntimeSeed.mjs';
 import {
   getProjectSelectionFallbackId,
   resetProjectSelectionStoreForTests,
@@ -21,10 +22,10 @@ const FAKE_ORIGIN = 'http://bridge.fake';
 const mockedFallback = vi.mocked(getProjectSelectionFallbackId);
 
 describe('fetchDerivedItemsFromRepository (bridge R13 read)', () => {
-  let router: FakeBridgeRouter;
+  let router: FakeRuntimeRouter;
 
   beforeEach(() => {
-    router = createFakeBridgeRouter();
+    router = createFakeRuntimeRouter();
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const raw = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       const url = new URL(raw, FAKE_ORIGIN);

@@ -43,8 +43,8 @@ dependency locks.
 ## Phase 1 — publish and lock the integration baseline
 
 1. Keep the pushed process-containment and native-tool-attestation checkpoints
-   intact; keep `scorecard.png`, `artifacts/`, and Playwright output outside the
-   tracked release tree.
+   intact; keep `artifacts/` and Playwright output outside the tracked release
+   tree.
 2. Require review of the candidate code commits through the production startup-budget
    gate. Do not add feature work to this branch after the evidence rehearsal
    begins; fixes discovered by a gate receive a focused commit and restart the
@@ -69,8 +69,7 @@ branch synchronization is recorded separately from candidate identity.
    attestation and the pinned Astrid commit. Run the individual local release
    gates, complete unit suites,
    production build, three-engine browser/device/accessibility suites, visual
-   baseline provenance, container rollback, and the standalone paired
-   Astrid/Astrid E2E journey.
+   baseline provenance, container rollback, and the three-products journey.
 3. Retain complete logs, canonical database/state hashes, the decoded MP4 and
    every-frame report, screenshots, rollback hashes, dependency inventories,
    native-tool/platform attestation, and the detached artifact-index hash.
@@ -81,30 +80,6 @@ branch synchronization is recorded separately from candidate identity.
 Exit: the exact pair completes every locally executable gate with a clean tree,
 no unexpected errors, reproducible persisted state, and retained hash-addressed
 evidence.
-
-The paired receipt's render gate is code-owned. It requires exactly the two
-persisted captions (`Fixture segment one` at 2–4 seconds and `Fixture segment
-two` at 5–8 seconds), bound by ID, text, interval, and render region. It probes
-each caption at exact motion-safe 25%, 50%, and 75% encoded frames (six
-positive probes total), then probes the exact frames immediately before, at
-the zero-opacity start, at the zero-opacity final frame, and immediately after
-each interval when those frames exist. It also probes a no-caption control
-interval. The control must contain the
-committed 1280×720 paired-release test card with its metadata/hash and pixel
-probes; positive caption frames must pass exact OCR plus region, occupancy, and
-frame-vs-control contrast checks. The MP4 is fully decoded and its codec,
-dimensions, frame rate, duration, frame count, and media bytes are bound to the
-persisted state. This replaces the old shorthand of “two caption midpoints.”
-
-The Runaway/API/UI proof is likewise one chain: apply the Astrid-owned tracked
-Runaway fixtures twice (566 transitions, one evidence receipt, stable project/run
-identity); prove the release-mode bearer and `v1` bridge contract and exact
-media response; exercise the built Astrid App preview's authenticated same-origin
-proxy, including hostile-header rejection; then run the development-only local
-editor journey with the 566-item lane, 48-fps/8,085-frame bounds, keyboard
-first/last navigation, inspector selection, persistence after restart, and
-render/export. Astrid and Astrid App receive newly allocated ports for every phase;
-no fixed developer port is evidence.
 
 Every external command is bounded by a phase budget and writes timeout
 diagnostics. Detached server groups receive TERM and up to five seconds to

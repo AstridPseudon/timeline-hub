@@ -1,16 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveGenerationAsset } from '@/tools/video-editor/data/generationAssetResolver';
-import { createFakeBridgeRouter, type FakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
-import { createJourneyState, FIXTURE_PROJECT } from '@/test/bridgeFixtures.mjs';
+import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
+import { createJourneyState } from '@/test/bridgeFixtures.mjs';
+import { FIXTURE_PROJECT } from '@/test/fakeRuntimeSeed.mjs';
 
 const FAKE_ORIGIN = 'http://bridge.fake';
 
 describe('resolveGenerationAsset (neutral generation detail read → Runtime CAS object route)', () => {
-  let router: FakeBridgeRouter;
+  let router: FakeRuntimeRouter;
 
   beforeEach(() => {
-    router = createFakeBridgeRouter();
+    router = createFakeRuntimeRouter();
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       // The client defaults to the same-origin base ('/api/astrid'); resolve
       // relative paths against the fake origin before handing to the router.

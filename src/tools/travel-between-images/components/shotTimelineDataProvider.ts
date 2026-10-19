@@ -323,7 +323,6 @@ export function createShotTimelineDataProvider(
       return timelineQueryIdentity;
     },
     persistenceEnabled: Boolean(shotCompositionAdapter?.publish),
-    supportsEditorSync: false,
     setShotTimelineTraceId: (traceId) => { activeTimingTraceId = traceId; },
     getTimelineDraftRecoveryMetadata: (): TimelineDraftRecoveryMetadata => ({
       recoveryKey,

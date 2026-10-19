@@ -10,7 +10,6 @@ import type { AssetRegistryEntry, ResolvedAssetRegistryEntry } from '@/tools/vid
 import type {
   TimelinePatchRegistry,
 } from '@/tools/video-editor/hooks/timeline-state-types.ts';
-import { useAstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
 import { getAssetFileLocator } from '@/tools/video-editor/lib/asset-registry.ts';
 
 interface UseStaleVariantsArgs {
@@ -27,7 +26,6 @@ const POLL_INTERVAL_MS = 15_000;
  */
 export function useStaleVariants({ registry, patchRegistry }: UseStaleVariantsArgs) {
   const runtime = useVideoEditorRuntime();
-  const capabilityCensus = useAstridCapabilityCensus();
   const [primaryLocationMap, setPrimaryLocationMap] = useState<Record<string, PrimaryVariantInfo | null>>({});
   const [dismissedAssetKeys, setDismissedAssetKeys] = useState<Set<string>>(() => new Set());
   const fetchCounterRef = useRef(0);
@@ -93,7 +91,7 @@ export function useStaleVariants({ registry, patchRegistry }: UseStaleVariantsAr
   // for primary variant locations, which cannot resolve there — and the demo
   // clips' generation ids would otherwise trigger it on every load.
   useEffect(() => {
-    if (!runtime.auth.userId || capabilityCensus.capabilities.generations === 'unavailable') return;
+    if (!runtime.auth.userId) return;
     const { generationIds } = generationAssetMap;
     if (generationIds.length === 0) return;
 
@@ -106,11 +104,11 @@ export function useStaleVariants({ registry, patchRegistry }: UseStaleVariantsAr
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [capabilityCensus.capabilities.generations, generationAssetMap, fetchPrimaryLocations, runtime.auth.userId]);
+  }, [generationAssetMap, fetchPrimaryLocations, runtime.auth.userId]);
 
   // Subscribe to realtime variant/generation changes for instant updates
   useEffect(() => {
-    if (!runtime.auth.userId || capabilityCensus.capabilities.generations === 'unavailable') return;
+    if (!runtime.auth.userId) return;
     const { generationIds } = generationAssetMap;
     if (generationIds.length === 0) return;
 
@@ -134,7 +132,7 @@ export function useStaleVariants({ registry, patchRegistry }: UseStaleVariantsAr
         }
       }
     });
-  }, [capabilityCensus.capabilities.generations, generationAssetMap, fetchPrimaryLocations, runtime.auth.userId]);
+  }, [generationAssetMap, fetchPrimaryLocations, runtime.auth.userId]);
 
   // Build the set of stale asset keys (compare by file URL)
   const staleAssetKeys = useMemo(() => {

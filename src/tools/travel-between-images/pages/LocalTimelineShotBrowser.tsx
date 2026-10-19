@@ -2,9 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle } from 'lucide-react';
-import { AstridBridgeDataProvider } from '@/tools/video-editor/data/AstridBridgeDataProvider.ts';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
-import { isAstridWorkspaceV1 } from '@/integrations/astrid/workspaceV1.ts';
 import { resolveTimelineConfig } from '@/tools/video-editor/lib/config-utils.ts';
 import type { AssetRegistry } from '@/tools/video-editor/types/index.ts';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl.ts';
@@ -79,18 +77,14 @@ function useLocalTimelineDocument(
   shotCompositionPort?: ShotCompositionPort,
   shotCompositionAdapter?: ShotCompositionAdapter,
 ) {
-  const provider = useMemo(() => {
-    if (isAstridWorkspaceV1 && projectId) {
-      return new RuntimeDataProvider({ projectId });
-    }
-    return new AstridBridgeDataProvider({
-      projectSlug,
-      timelineRef,
-      timelineId: timelineRef,
-    });
-  }, [projectId, projectSlug, timelineRef]);
+  // Runtime is the only local data path; an embedded caller without a
+  // Runtime project id surfaces as a load error instead of a second backend.
+  const provider = useMemo(
+    () => (projectId ? new RuntimeDataProvider({ projectId }) : null),
+    [projectId],
+  );
   const identityProjectId = projectId ?? projectSlug;
-  const canonicalPort = shotCompositionPort ?? provider.shotComposition;
+  const canonicalPort = shotCompositionPort ?? provider?.shotComposition;
   const compositionAdapter = useMemo(
     () => shotCompositionAdapter ?? (canonicalPort ? createShotCompositionAdapter(canonicalPort) : null),
     [canonicalPort, shotCompositionAdapter],
@@ -114,9 +108,12 @@ function useLocalTimelineDocument(
     refetchOnMount: 'always',
     // Runtime has no public event cursor yet; its immutable composition read
     // is the bounded catch-up path for standalone nested/player views too.
-    refetchInterval: (provider as { refreshIntervalMs?: number }).refreshIntervalMs ?? false,
+    refetchInterval: provider?.refreshIntervalMs ?? false,
     refetchOnReconnect: true,
     queryFn: async () => {
+      if (!provider) {
+        throw new Error('Workspace Runtime project is unavailable for this timeline.');
+      }
       if (!compositionAdapter) {
         throw new Error('Canonical shot-composition provider is unavailable for this timeline.');
       }
@@ -125,18 +122,16 @@ function useLocalTimelineDocument(
         provider.loadAssetRegistry(timelineRef),
       ]);
       // Resolve the registry through the same provider used by the editor so
-      // managed media gets a bridge content URL when no thumbnail is stored.
+      // managed media gets a Runtime object URL when no thumbnail is stored.
       const resolved = await resolveTimelineConfig(
         timeline.config,
         registry,
-        (file, entry, assetId) => provider.onResolve
-          ? provider.onResolve({
-            file,
-            entry,
-            assetId,
-            timelineId: timelineRef,
-          })
-          : provider.resolveAssetUrl(file),
+        (file, entry, assetId) => provider.onResolve({
+          file,
+          entry,
+          assetId,
+          timelineId: timelineRef,
+        }),
       );
       return {
         registry: {

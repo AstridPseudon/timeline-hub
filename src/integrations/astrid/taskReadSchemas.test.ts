@@ -10,8 +10,6 @@ import { runtimeTaskReadPageSchema, runtimeTaskReadResourceSchema } from './task
 import { AstridLocalTaskRoutes } from './taskRoutes.ts';
 import type { AstridBridgeTransport } from './transport.ts';
 
-vi.mock('./capabilityCensus.ts', () => ({ observeAstridCapabilityFailure: vi.fn() }));
-
 const hex = 'a'.repeat(64);
 const canonical = `sha256:${hex}`;
 

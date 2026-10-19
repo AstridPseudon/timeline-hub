@@ -3,15 +3,13 @@ import { execFile } from 'node:child_process';
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import {
-  BASE_URL,
   CLIP_BODY_SELECTOR,
-  PROJECT_SLUG,
-  TIMELINE_SLUG,
   browserEvidencePath,
-  resetBridgeBaseline,
+  resetFakeRuntimeBaseline,
+  editorUrl,
 } from './support';
 
-const EDITOR_URL = `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&transcriptLaneFixture=1`;
+const EDITOR_URL = editorUrl({ params: { transcriptLaneFixture: '1' } });
 const TRANSCRIPT_CAPTION_BODY_SELECTOR = `${CLIP_BODY_SELECTOR}[data-clip-id^="transcript-caption-"]`;
 const execFileAsync = promisify(execFile);
 
@@ -46,7 +44,7 @@ test.describe('caption materialization render and export', () => {
 
   test('renders the materialized transcript into a downloadable MP4 without font-stretch warning flood', async ({ page }, testInfo) => {
     test.setTimeout(300_000);
-    expect(await resetBridgeBaseline()).toBeNull();
+    expect(await resetFakeRuntimeBaseline()).toBeNull();
 
     const consoleWarnings: Array<{
       type: string;

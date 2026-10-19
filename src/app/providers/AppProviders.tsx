@@ -23,7 +23,6 @@ import {
 } from '@/shared/state/selectionStore';
 import { queryClient } from '@/app/providers/queryClient';
 import { resolveAppDataAuthority } from '@/app/runtime/dataAuthority.ts';
-import { AstridCapabilityBootstrap } from '@/integrations/astrid/AstridCapabilityBootstrap.tsx';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -134,7 +133,6 @@ const AppProviderTree = composeProviders([
   TaskTypeConfigInitializer,
   UserSettingsProvider,
   ProjectProvider,
-  AstridCapabilityBootstrap,
   RealtimeProvider,
   AuthorityAwareShotsProvider,
   GenerationTaskProvider,

@@ -1,6 +1,6 @@
 import type { Dispatch, PointerEvent as ReactPointerEvent, ReactNode, SetStateAction } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { GripHorizontal, History, Maximize2, Minimize2, Redo2, RefreshCw, Sparkles, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
+import { GripHorizontal, History, Maximize2, Minimize2, Redo2, Sparkles, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/badge.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
@@ -8,7 +8,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
-import type { useEditorSync } from '@/tools/video-editor/hooks/useEditorSync.ts';
 import { clampTimelineScaleWidth, TIMELINE_ZOOM_STEP } from '@/tools/video-editor/lib/timeline-scale.ts';
 
 const STATUS_VARIANT = {
@@ -33,13 +32,11 @@ const CHECKPOINT_TRIGGER_BADGE_VARIANT = {
 } as const;
 
 /**
- * The shell's chrome row: save status, sync, undo/redo/history, the drag
+ * The shell's chrome row: save status, undo/redo/history, the drag
  * handle for the preview/timeline split, and the zoom controls. Shared by all
  * three layout variants.
  */
 export function TimelineEditorShellToolbar({
-  sync,
-  syncResultMessage,
   touchChrome,
   condensed,
   toolbarModeSwitcher,
@@ -53,8 +50,6 @@ export function TimelineEditorShellToolbar({
   onOpenElements,
   timelineLoaded = true,
 }: {
-  sync: ReturnType<typeof useEditorSync>;
-  syncResultMessage: string | null;
   touchChrome: boolean;
   condensed: boolean;
   toolbarModeSwitcher: ReactNode;
@@ -89,33 +84,6 @@ export function TimelineEditorShellToolbar({
       {notSaved ? 'Not saved' : chrome.saveStatus}
     </Badge>
   );
-  const syncButton = sync.isSyncAvailable ? (
-    <div className="flex items-center gap-1">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className={cn(
-          toolbarButtonSizeClass,
-          sync.syncState === 'syncing' && 'animate-spin',
-          sync.syncState === 'source_only_saved' && 'text-green-400',
-          sync.syncState === 'both_advanced' && 'text-amber-400',
-          sync.syncState === 'bookmark_incompatible' && 'text-red-400',
-          sync.syncState === 'error' && 'text-red-400',
-        )}
-        onClick={() => void sync.performSync()}
-        disabled={sync.syncState === 'syncing'}
-        title="Sync timeline with database"
-      >
-        <RefreshCw className="h-3.5 w-3.5" />
-      </Button>
-      {syncResultMessage && sync.syncState !== 'both_advanced' && (
-        <span className="max-w-[140px] truncate text-[10px] text-muted-foreground">
-          {syncResultMessage}
-        </span>
-      )}
-    </div>
-  ) : null;
   // While uploads are in flight the history layer pauses undo/redo (a
   // snapshot restore would strand the upload's registry patch); say so
   // instead of presenting a mysteriously dead button.
@@ -264,7 +232,6 @@ export function TimelineEditorShellToolbar({
         >
           <Sparkles className="h-3.5 w-3.5" />
         </Button>
-        {syncButton}
         {historyControls}
       </div>
       {toolbarModeSwitcher}

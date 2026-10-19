@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('./capabilityCensus.ts', () => ({
-  observeAstridCapabilityFailure: vi.fn(),
-}));
-
 import { AstridLocalTaskRoutes } from './taskRoutes';
 import type { AstridBridgeTransport } from './transport';
 

@@ -80,10 +80,9 @@ describe('Astrid bridge server-side auth boundary', () => {
     ));
   });
 
-  it('allows only an explicitly opted-in deterministic stub without auth', () => {
+  it('never proxies without a server-side token, even when a browser-side token is set', () => {
     const policy = resolveAstridBridgeProxyPolicy({
-      ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB: '1',
-      VITE_ASTRID_BRIDGE_TOKEN: 'ignored',
+      VITE_ASTRID_BRIDGE_TOKEN: 'browser-secret-must-be-ignored',
     });
     const guard = createAstridBridgeAuthGuard(policy);
     const response = responseDouble();
@@ -91,7 +90,8 @@ describe('Astrid bridge server-side auth boundary', () => {
 
     guard({} as IncomingMessage, response, next);
 
-    expect(next).toHaveBeenCalledOnce();
+    expect(next).not.toHaveBeenCalled();
+    expect(response.statusCode).toBe(503);
     expect(astridBridgeUpstreamHeaders(policy)).toEqual({
       'X-Astrid-Bridge-Version': 'v1',
     });

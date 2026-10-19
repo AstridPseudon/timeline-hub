@@ -123,7 +123,6 @@ export const supabaseFacadeAllowlist = [
   'src/tools/character-animate/pages/uploadMedia.ts',
   'src/tools/edit-images/pages/EditImagesPage.tsx',
   'src/tools/edit-video/pages/EditVideoPage.tsx',
-  'src/tools/video-editor/data/SupabaseDataProvider.ts',
   'src/tools/video-editor/adapters/app/generationLookup.ts',
   'src/tools/video-editor/adapters/app/staleVariantRepository.ts',
   'src/tools/video-editor/adapters/app/useAstridEffectsCatalog.ts',

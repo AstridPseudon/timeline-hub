@@ -160,16 +160,13 @@ describe('out-of-order poll application', () => {
 
 import { RealtimeConnection } from '../RealtimeConnection';
 import { dataFreshnessManager } from '../DataFreshnessManager';
-import { createFakeBridgeRouter, type FakeBridgeRouter } from '@/test/fakeBridgeRouter';
-import { fixtureUlid, makeAdmittedTaskReadModel, taskSummaryFromReadModel } from '@/test/bridgeFixtures.mjs';
+import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter';
+import { makeAdmittedTaskReadModel, taskSummaryFromReadModel } from '@/test/bridgeFixtures.mjs';
+import { fixtureUlid } from '@/test/fakeRuntimeSeed.mjs';
 import type { RawDatabaseEvent } from '../types';
-import {
-  getAstridCapabilityCensus,
-  resetAstridCapabilityCensusForTesting,
-} from '@/integrations/astrid/capabilityCensus.ts';
 
 const FAKE_ORIGIN = 'http://bridge.fake';
-function installRouter(router: FakeBridgeRouter): void {
+function installRouter(router: FakeRuntimeRouter): void {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const raw = input instanceof Request ? input.url : String(input);
     const url = raw.startsWith(FAKE_ORIGIN) ? raw : `${FAKE_ORIGIN}${raw}`;
@@ -180,7 +177,6 @@ function installRouter(router: FakeBridgeRouter): void {
 describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    resetAstridCapabilityCensusForTesting();
     vi.spyOn(dataFreshnessManager, 'onRealtimeStatusChange').mockImplementation(() => {});
   });
 
@@ -200,7 +196,7 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
   }
 
   it('reports connected ONLY after the first successful poll cycle', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installRouter(router);
 
     const statuses: string[] = [];
@@ -219,7 +215,7 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
   });
 
   it('reads the Astrid task list at most twice in an idle minute', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installRouter(router);
     const connection = freshConnection();
     await connection.connect('demo-project');
@@ -239,7 +235,7 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
     const originalUrl = `${window.location.pathname}${window.location.search}`;
     window.history.replaceState({}, '', '/tools/video-editor?runtime=1&runtimeProject=demo-project&runtimeTimeline=timeline-1');
     try {
-      const router = createFakeBridgeRouter();
+      const router = createFakeRuntimeRouter();
       installRouter(router);
       const connection = freshConnection();
       await connection.connect('demo-project');
@@ -258,7 +254,7 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
   });
 
   it('refreshes the matching project immediately after local admission', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installRouter(router);
     const connection = freshConnection();
     await connection.connect('demo-project');
@@ -279,7 +275,7 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
   });
 
   it('reuses unchanged variant projections and refreshes only changed generations', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installRouter(router);
 
     const connection = freshConnection();
@@ -312,7 +308,7 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
   });
 
   it('(a) end-to-end: poll diffs over the fake bridge emit INSERT/UPDATE/DELETE with preserved old', async () => {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installRouter(router);
 
     const connection = freshConnection();
@@ -366,7 +362,7 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
     // must NOT re-add A or emit a phantom DELETE of A.
     let resolveSlowRead!: (payload: unknown) => void;
     let firstTasksReadDone = false;
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     installRouter({
       handle: async (request) => {
         const url = new URL(request.url);
@@ -376,7 +372,7 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
         }
         return await router.handle(request);
       },
-    } as unknown as FakeBridgeRouter);
+    } as unknown as FakeRuntimeRouter);
 
     const connection = freshConnection();
     const connectPromise = connection.connect('demo-project');
@@ -431,7 +427,7 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
     let rejectRead!: (reason: unknown) => void;
     installRouter({
       handle: () => new Promise<Response>((_, reject) => { rejectRead = reject; }),
-    } as unknown as FakeBridgeRouter);
+    } as unknown as FakeRuntimeRouter);
 
     const connection = freshConnection();
     const connectPromise = connection.connect('hung-project');
@@ -467,34 +463,6 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
     expect(vi.mocked(dataFreshnessManager.onRealtimeStatusChange).mock.calls.some(
       ([status]) => status !== 'connected',
     )).toBe(true);
-    connection.destroy();
-  });
-
-  it('permanent task route absence is recorded once and never polled again', async () => {
-    const router = createFakeBridgeRouter();
-    let taskRequests = 0;
-    installRouter({
-      ...router,
-      handle: async (request) => {
-        const pathname = new URL(request.url).pathname;
-        if (pathname.endsWith('/tasks')) {
-          taskRequests += 1;
-          return Response.json(
-            { error: 'not_found', detail: `unknown route: ${pathname}` },
-            { status: 404 },
-          );
-        }
-        return router.handle(request);
-      },
-    });
-
-    const connection = freshConnection();
-    await expect(connection.connect('demo-project')).resolves.toBe(true);
-    expect(getAstridCapabilityCensus().capabilities.tasks).toBe('unavailable');
-    expect(taskRequests).toBe(1);
-
-    await vi.advanceTimersByTimeAsync(60_000);
-    expect(taskRequests).toBe(1);
     connection.destroy();
   });
 

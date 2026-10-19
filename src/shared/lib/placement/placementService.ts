@@ -3,12 +3,9 @@
  * non-editor surfaces (B4 / C1-5, doc 24 Q1 RATIFIED).
  *
  * Every mutation is one compare-and-swap cycle: load head → run a pure
- * document mutation (`documentPlacement.ts`) → CAS save. Under Workspace v1
- * the cycle rides the editor's own Runtime path
+ * document mutation (`documentPlacement.ts`) → CAS save. The cycle rides the editor's own Runtime path
  * (`RuntimeDataProvider.saveTimelineAtHead`: an immutable parent-composition
- * revision published with `expected_head`); the legacy bridge
- * (`POST …/save` with `expected_version`) remains only for the opt-in
- * non-v1 host. A stale head answers `timeline_version_conflict`; the cycle
+ * revision published with `expected_head`). A stale head answers `timeline_version_conflict`; the cycle
  * reloads and re-runs against the new head, bounded — exhaustion surfaces
  * the canonical {@link TimelineVersionConflictError} instead of pretending
  * success.
@@ -19,11 +16,10 @@
  */
 
 import { AstridLocalClient } from '@/integrations/astrid/client';
-import { isAstridWorkspaceV1 } from '@/integrations/astrid/workspaceV1';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider';
 import { TimelineVersionConflictError, isTimelineVersionConflictError } from '@/sdk/video/timeline/errors';
 import { resolveGenerationAsset } from '@/tools/video-editor/data/generationAssetResolver';
-import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/index';
+import type { TimelineConfig } from '@/tools/video-editor/types/index';
 import {
   batchUpdateFramesInDocument,
   placeGenerationInDocument,
@@ -34,9 +30,7 @@ import {
   type ShotPlacement,
 } from './documentPlacement';
 
-/** Bounded reload-and-retry ladder for CAS conflicts. */
-const CAS_SAVE_ATTEMPTS = 5;
-/** Workspace v1: placement is recomputable, so one re-read-and-reapply on a stale head. */
+/** Placement is recomputable, so one re-read-and-reapply on a stale head. */
 const RUNTIME_PUBLISH_ATTEMPTS = 2;
 
 const GALLERY_PAGE_LIMIT = 100;
@@ -64,54 +58,52 @@ export interface ActiveTimelineTarget {
   allowVersionRebase?: boolean;
 }
 
-interface LoadedDocument extends PlacementDocument {
+export interface LoadedDocument extends PlacementDocument {
   expectedVersion: number;
   headRevisionId?: string | null;
 }
 
-/** One load/save pair over either the Runtime (v1) or the legacy bridge. */
+/** One load/save pair over the Runtime (workspace.v1). */
 interface DocumentStore {
   load(): Promise<LoadedDocument>;
   save(document: LoadedDocument): Promise<number>;
   attempts: number;
 }
 
+/**
+ * The document head as the Runtime serves it: `RuntimeDataProvider` reads the parent-composition
+ * revision (config and registry), because `GET /v1/projects/:p/timelines/:t` answers the public timeline
+ * resource without either. `headRevisionId` is `undefined` when the provider reports no head at all.
+ */
+export async function loadTimelineDocument(projectSlug: string, timelineRef: string): Promise<LoadedDocument> {
+  const provider = new RuntimeDataProvider({ projectId: projectSlug });
+  const [timeline, registry] = await Promise.all([
+    provider.loadTimeline(timelineRef),
+    provider.loadAssetRegistry(timelineRef),
+  ]);
+  return {
+    config: timeline.config,
+    registry,
+    expectedVersion: timeline.configVersion,
+    headRevisionId: timeline.head?.headRevisionId,
+  };
+}
+
 function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
   const ref = target.timelineRef;
-  if (isAstridWorkspaceV1) {
-    const provider = new RuntimeDataProvider({ projectId: target.projectSlug });
-    return {
-      attempts: RUNTIME_PUBLISH_ATTEMPTS,
-      async load() {
-        const [timeline, registry] = await Promise.all([
-          provider.loadTimeline(ref),
-          provider.loadAssetRegistry(ref),
-        ]);
-        if (!timeline.head) throw new TimelineVersionConflictError(`Runtime timeline ${ref} returned no head revision`);
-        return {
-          config: timeline.config,
-          registry,
-          expectedVersion: timeline.configVersion,
-          headRevisionId: timeline.head.headRevisionId,
-        };
-      },
-      async save(document) {
-        const head = { projectId: target.projectSlug, timelineId: ref, headRevisionId: document.headRevisionId ?? null };
-        return (await provider.saveTimelineAtHead(ref, document.config, head, document.registry)).configVersion;
-      },
-    };
-  }
-  const client = new AstridLocalClient({ projectSlug: target.projectSlug });
+  const provider = new RuntimeDataProvider({ projectId: target.projectSlug });
   return {
-    attempts: CAS_SAVE_ATTEMPTS,
-    load: () => loadDocument(client, ref),
+    attempts: RUNTIME_PUBLISH_ATTEMPTS,
+    async load() {
+      const document = await loadTimelineDocument(target.projectSlug, ref);
+      if (document.headRevisionId === undefined) {
+        throw new TimelineVersionConflictError(`Runtime timeline ${ref} returned no head revision`);
+      }
+      return document;
+    },
     async save(document) {
-      const saved = await client.timelines.save(ref, {
-        config: document.config,
-        registry: document.registry,
-        expectedVersion: document.expectedVersion,
-      });
-      return typeof saved.config_version === 'number' ? saved.config_version : document.expectedVersion + 1;
+      const head = { projectId: target.projectSlug, timelineId: ref, headRevisionId: document.headRevisionId ?? null };
+      return (await provider.saveTimelineAtHead(ref, document.config, head, document.registry)).configVersion;
     },
   };
 }
@@ -120,17 +112,8 @@ async function resolveDefaultTimelineRef(client: AstridLocalClient, projectSlug:
   const timelines = (await client.timelines.list()).timelines ?? [];
   if (timelines.length === 0) throw new PlacementProjectMissingError(projectSlug);
   const chosen = timelines.find((timeline) => timeline.is_default === true) ?? timelines[0];
-  // The Runtime addresses timelines by canonical id; the legacy bridge by slug.
-  return isAstridWorkspaceV1 ? chosen.timeline_id : chosen.slug ?? chosen.timeline_id;
-}
-
-async function loadDocument(client: AstridLocalClient, ref: string): Promise<LoadedDocument> {
-  const payload = await client.timelines.get(ref);
-  return {
-    config: payload.config as TimelineConfig,
-    registry: (payload.registry ?? { assets: {} }) as AssetRegistry,
-    expectedVersion: typeof payload.config_version === 'number' ? payload.config_version : 0,
-  };
+  // The Runtime addresses timelines by canonical id.
+  return chosen.timeline_id;
 }
 
 export async function mutateTimelineDocument<T>(
@@ -143,9 +126,7 @@ export async function mutateTimelineDocument<T>(
   for (let attempt = 0; attempt < store.attempts; attempt += 1) {
     const document = await store.load();
     if (!target.allowVersionRebase) {
-      const stale = isAstridWorkspaceV1
-        ? target.headRevisionId !== undefined && document.headRevisionId !== target.headRevisionId
-        : document.expectedVersion !== target.configVersion;
+      const stale = target.headRevisionId !== undefined && document.headRevisionId !== target.headRevisionId;
       if (stale) {
         throw new TimelineVersionConflictError(
           `Timeline ${ref} is at version ${document.expectedVersion}; expected active editor version ${target.configVersion}`,
@@ -274,14 +255,12 @@ export interface ProjectPlacements {
 export async function fetchProjectPlacements(projectSlug: string): Promise<ProjectPlacements> {
   const client = new AstridLocalClient({ projectSlug });
   const ref = await resolveDefaultTimelineRef(client, projectSlug);
-  const payload = await client.timelines.get(ref);
-  const config = payload.config as TimelineConfig;
-  const registry = (payload.registry ?? { assets: {} }) as AssetRegistry;
+  const { config, registry, expectedVersion } = await loadTimelineDocument(projectSlug, ref);
   return {
     byShot: readPlacements(config, registry),
     config,
     registry,
-    configVersion: typeof payload.config_version === 'number' ? payload.config_version : null,
+    configVersion: expectedVersion,
   };
 }
 

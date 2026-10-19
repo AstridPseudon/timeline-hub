@@ -2,8 +2,7 @@
  * Shared bridge transport — the one fetch pipeline for every JSON exchange
  * with `astrid serve`.
  *
- * Consumed by BOTH `AstridBridgeDataProvider` (timeline load/save) and
- * `AstridLocalClient` (tasks/generations/media). It owns exactly three
+ * Consumed by `AstridLocalClient` (timelines/tasks/generations/media). It owns exactly three
  * concerns and nothing more:
  *
  * 1. **Timeout** — every request is bounded by `BRIDGE_REQUEST_TIMEOUT_MS`
@@ -71,6 +70,13 @@ export class BridgeTransportFailure extends Error {
     this.name = 'BridgeTransportFailure';
   }
 }
+
+/** Host-owned, privacy-bounded observation of one actual bridge request. */
+export type AstridBridgeRequestObservation = Readonly<{
+  outcome: 'success' | 'failure';
+  durationMs: number;
+  errorClass?: 'bridge.timeout' | 'bridge.http_error' | 'bridge.invalid_response';
+}>;
 
 function reasonPhrase(status: number): string {
   // Deliberately tiny: only statuses the frozen routes actually answer with.

@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { DEFAULT_DEV_SUPABASE_URL } from './src/shared/dev/devSession.ts';
+import { fakeRuntimeEnv } from './tests/e2e/fake-runtime/launch.mjs';
 import { astridOnboardedStorageState } from './tests/e2e/fixtures/astridOnboardedStorageState';
 import {
   allocateIsolatedPort,
@@ -52,31 +53,32 @@ const launchOptions = chromiumExecutablePath
   ? { executablePath: chromiumExecutablePath, args: [...BROWSER_DNS_BLACKHOLE_ARGS] }
   : { args: [...BROWSER_DNS_BLACKHOLE_ARGS] };
 
-// Timeline device specs need a live dev server plus the local-mode bridge stub
-// (both booted by `webServer` below). Their opt-in script owns their collection.
+// Timeline device specs need a live dev server plus the fake Runtime (both booted by `webServer` below).
+// Their opt-in script owns their collection.
 // See `npm run test:e2e:timeline`.
 const TIMELINE_DEVICE_SPECS = /tests[\\/]e2e[\\/]timeline[\\/].*\.spec\.ts$/;
 const RENDERER_OWNED_TIMELINE_SPECS = /(?:caption-render-export|caption-render-matrix)\.spec\.ts$/;
 const includeTimelineDevices = process.env.PLAYWRIGHT_TIMELINE_DEVICES === '1';
 const EXTENSION_HARNESS_SETUP_SPEC = /extension-harness\.setup\.ts$/;
-// These specs have dedicated configs which provision their browser, bridge and
+// These specs have dedicated configs which provision their browser, fake Runtime and
 // raster policy. The default device matrix must not collect them a second time
 // under a different topology (in particular, mobile WebKit is not a pixel gate).
 const DEDICATED_EXTENSION_SPECS = /extension-(?:accessibility|cross-browser|visual-regression)\.spec\.ts$/;
-// The bridge port is run-isolated too, so a stale bridge from another
+// The fake Runtime port is run-isolated too, so a stale Runtime from another
 // checkout cannot answer this run's requests.
-const bridgePort = inheritedRunPorts
-  ? readInheritedPort('ASTRID_BRIDGE_PORT')
-  : allocateIsolatedPort('ASTRID_BRIDGE_PORT', allocatedPorts);
+const fakeRuntimePort = inheritedRunPorts
+  ? readInheritedPort('FAKE_RUNTIME_PORT')
+  : allocateIsolatedPort('FAKE_RUNTIME_PORT', allocatedPorts);
 // Playwright reloads this config in worker processes after webServer starts;
 // carry the values across those reloads without probing our own live servers
 // as though they were stale external processes.
 process.env.ASTRID_APP_TIMELINE_PORTS_ALLOCATED = '1';
-const bridgeServeCommand = 'node tests/e2e/timeline/astrid-bridge-stub.mjs';
+// The Vite env that points the app at the fake Runtime (runtime URL, expected identity, the `/api/astrid`
+// bridge port and token, the ACP port and token). It also exports FAKE_RUNTIME_PORT and
+// FAKE_RUNTIME_TOKEN_FILE, which the specs read; a config reload in a worker reads the same token file.
+const fakeRuntimeViteEnv = fakeRuntimeEnv({ port: fakeRuntimePort });
+const fakeRuntimeServeCommand = 'node tests/e2e/fake-runtime/launch.mjs --serve';
 const extensionHarnessDependencies = ['extension-harness-setup'];
-// Release specs require the paired gate's provisioned fixtures and credentials;
-// playwright.paired-release.config.ts owns their collection.
-const PAIRED_RELEASE_SPECS = /tests[\\/]e2e[\\/]release[\\/].*\.spec\.ts$/;
 // The same-machine direct journey needs a Runtime checkout, a gateway and its
 // own config (`playwright.direct.config.ts`, `npm run test:e2e:direct`).
 const LOCAL_JOURNEY_SPECS = /tests[\\/]e2e[\\/]local[\\/].*\.spec\.ts$/;
@@ -84,7 +86,6 @@ const defaultProjectIgnores = [
   TIMELINE_DEVICE_SPECS,
   EXTENSION_HARNESS_SETUP_SPEC,
   DEDICATED_EXTENSION_SPECS,
-  PAIRED_RELEASE_SPECS,
   LOCAL_JOURNEY_SPECS,
 ];
 
@@ -106,13 +107,16 @@ export default defineConfig({
     trace: 'retain-on-failure',
     ...(launchOptions ? { launchOptions } : {}),
   },
-  // Array form: the timeline device specs also need the local-mode bridge, so
-  // their opt-in flag adds it as a second managed server instead of a second
+  // Array form: the default device matrix and the timeline device specs both
+  // need the fake Runtime, so it is a second managed server instead of a second
   // terminal. Every server is owned by this run; an existing process is never
   // adopted, which keeps browser evidence tied to the configured checkout.
   webServer: [
     {
-      command: `npm run dev -- --host 127.0.0.1 --port ${port}`,
+      // `--mode test` is the mode the fixtures are gated on (`?transcriptLaneFixture` is honoured only when
+      // `import.meta.env.MODE === 'test'`, VideoEditorPage.tsx) and the one that keeps the dev-only debug
+      // tooling out of the page. It is still the dev server (`import.meta.env.DEV`), so `localTest=1` works.
+      command: `npm run dev -- --mode test --host 127.0.0.1 --port ${port}`,
       url: baseURL,
       // Never adopt a hand-started process for deterministic timeline/local
       // gates.  The allocated port is ours for this run, and a collision was
@@ -133,27 +137,22 @@ export default defineConfig({
         // remote-font links before the browser sees HTML; production preview
         // keeps its normal font policy because this env is dev-server-only.
         VITE_DISABLE_REMOTE_FONTS: process.env.VITE_DISABLE_REMOTE_FONTS ?? '1',
-        VITE_ASTRID_BRIDGE_PORT: String(bridgePort),
-        VITE_WORKSPACE_RUNTIME_URL: `http://127.0.0.1:${bridgePort}`,
-        VITE_ASTRID_WORKSPACE_V1: '0',
-        // The timeline project uses one deterministic stub for both the
-        // timeline bridge and the narrow project-chat read. Do not inherit
-        // the developer machine's default ACP listener/credential in browser
-        // tests.
-        VITE_ASTRID_ACP_BRIDGE_PORT: String(bridgePort),
-        ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB: '1',
+        // One deterministic fake Runtime serves the timeline (workspace.v1), the
+        // `/api/astrid` bridge routes and the narrow project-chat read. This env
+        // points all three at it, behind its token, and overrides whatever
+        // Runtime, bridge or ACP listener the developer machine exports.
+        ...fakeRuntimeViteEnv,
       },
     },
     {
-      command: bridgeServeCommand,
-      url: `http://127.0.0.1:${bridgePort}/health`,
+      command: fakeRuntimeServeCommand,
+      // workspace.json is the one open route; every other route needs the token.
+      url: `http://127.0.0.1:${fakeRuntimePort}/runtime-config/v1/workspace.json`,
       reuseExistingServer: false,
       timeout: 30_000,
       env: {
-        ASTRID_BRIDGE_PORT: String(bridgePort),
-        // The stub's media URLs must follow the run-isolated editor
-        // origin; otherwise its default 2222 base yields browser 404s.
-        BASE_URL: baseURL,
+        FAKE_RUNTIME_PORT: String(fakeRuntimePort),
+        FAKE_RUNTIME_TOKEN_FILE: fakeRuntimeViteEnv.FAKE_RUNTIME_TOKEN_FILE,
       },
     },
   ],

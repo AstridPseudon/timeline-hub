@@ -89,7 +89,7 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', async () 
   const runtime = {
     userId: 'user-1',
     timelineId: 'timeline-1',
-    provider: { supportsEditorSync: false },
+    provider: {},
     timelineEditability: { check: () => ({ allowed: true }) },
   };
   const VideoEditorRuntimeContext = createContext(runtime);

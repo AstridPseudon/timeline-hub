@@ -9,7 +9,6 @@ on:
       - "package-lock.json"
       - "playwright.config.ts"
       - "docs/slot-first-audits/**"
-      - "docs/slot-first-id-glossary.md"
       - "scripts/quality/**"
       - "src/**"
       - "supabase/**"

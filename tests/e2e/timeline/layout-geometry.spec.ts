@@ -37,16 +37,13 @@ import {
 import {
   BASELINE_CLIPS,
   BASELINE_TRACKS,
-  BRIDGE_ORIGIN,
   openEditor,
-  PROJECT_SLUG,
-  TIMELINE_SLUG,
+  readFakeRuntimeComposition,
 } from './support';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BASELINE_PATH = join(__dirname, 'layout-baseline.json');
 const REGENERATE = process.env.REGENERATE_LAYOUT_BASELINE === '1';
-const BRIDGE_TIMELINE = `${BRIDGE_ORIGIN}/projects/${PROJECT_SLUG}/timelines/${TIMELINE_SLUG}`;
 
 /** Round to the nearest 4px grid — absorbs subpixel/font rendering drift. */
 const GRID = 4;
@@ -186,23 +183,14 @@ function readBaseline(): Record<string, GeometrySnapshot> {
 }
 
 /**
- * Reset the bridge to *exactly* the known 3-track / 4-clip fixture. The shared
- * reset owns identity validation; this helper remains local so geometry tests
- * can fail with their own useful response if the bridge is unavailable.
+ * The geometry baseline is only meaningful on *exactly* the known 3-track / 4-clip fixture. The shared
+ * `beforeEach` hard reset restores the seed (and verifies it against the pristine fixture); this reads the
+ * persisted head back from the Runtime and fails with its own useful message if it is anything else.
  */
-async function resetGeometryFixture(): Promise<string | null> {
-  try {
-    const current = await (await fetch(BRIDGE_TIMELINE)).json();
-    const tracks = BASELINE_TRACKS;
-    await fetch(`${BRIDGE_TIMELINE}/save`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ config: { ...current.config, tracks, clips: BASELINE_CLIPS } }),
-    });
-    return null;
-  } catch (error) {
-    return `[reset] ${(error as Error).message}`;
-  }
+async function assertGeometryFixture(): Promise<void> {
+  const { config } = await readFakeRuntimeComposition();
+  expect(config.tracks, 'geometry fixture: persisted tracks').toEqual(BASELINE_TRACKS);
+  expect(config.clips, 'geometry fixture: persisted clips').toEqual(BASELINE_CLIPS);
 }
 
 const collected: Record<string, GeometrySnapshot> = {};
@@ -220,7 +208,7 @@ test.describe('timeline layout geometry', () => {
       ) => {
         test.setTimeout(120_000);
 
-        await resetGeometryFixture();
+        await assertGeometryFixture();
         await openEditor(page);
 
         const snapshot = await collectGeometry(page);
@@ -255,6 +243,5 @@ test.describe('timeline layout geometry', () => {
     if (Object.keys(collected).length !== CONTEXTS.length) return; // partial run; don't clobber the baseline
     mkdirSync(dirname(BASELINE_PATH), { recursive: true });
     writeFileSync(BASELINE_PATH, `${JSON.stringify(collected, null, 2)}\n`);
-    console.log(`[layout-geometry] wrote baseline for ${Object.keys(collected).length} contexts to ${BASELINE_PATH}`);
   });
 });

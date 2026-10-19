@@ -73,7 +73,7 @@ warnings but not fail.
 |---|---|---|---|---|
 | 17 | Compatibility | Provider compatibility matrix is current and complete | `docs/video-editor/provider-compatibility-matrix.md` — all three providers (InMemory, Supabase, Astrid Bridge) | yes |
 | 18 | Compatibility | InMemory provider: full M3 TimelinePatch + Proposal support | `docs/video-editor/provider-compatibility-matrix.md` § 3.3–3.8; `src/tools/video-editor/data/InMemoryDataProvider.test.ts` | yes |
-| 19 | Compatibility | Supabase provider: full M3 support | `docs/video-editor/provider-compatibility-matrix.md` § 3.3–3.8; `src/tools/video-editor/data/SupabaseDataProvider.test.ts` | yes |
+| 19 | Compatibility | Runtime provider: full M3 support except the checkpoint API | `docs/video-editor/provider-compatibility-matrix.md` § 3.3–3.8; `src/tools/video-editor/testing/__tests__/providerCompatibility.runtime.test.ts` | yes |
 | 20 | Compatibility | Astrid Bridge provider: documented partial support with known limitations | `docs/video-editor/provider-compatibility-matrix.md` § 3.3 (Partial CAS enforcement noted) | yes |
 
 ### 2.6 Docs / Example Parity

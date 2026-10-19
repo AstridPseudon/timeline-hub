@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { BASE_URL, PROJECT_SLUG, TIMELINE_SLUG } from './support';
+import { PROJECT_SLUG, editorUrl, showDataLanes } from './support';
 
-const EDITOR_URL = `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&transcriptLaneFixture=dense`;
+const EDITOR_URL = editorUrl({ params: { transcriptLaneFixture: 'dense' } });
 const CAPABILITY_PROBE_PATH = `/api/astrid/projects/${PROJECT_SLUG}/media/__astrid_capability_probe__/content`;
 
 test.setTimeout(60_000);
@@ -203,9 +203,9 @@ test('keeps Runaway data visible on every frame of fast, edge, reverse, and slow
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1_280, height: 800 });
   await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
+  await showDataLanes(page);
   await page.goto(
-    `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}`
-      + '&localTest=1&timelineOverlayCanary=1&transcriptLaneFixture=1&runawayTimelineProject=runaway-8085',
+    editorUrl({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1', runawayTimelineProject: 'runaway-8085' } }),
     { waitUntil: 'domcontentloaded', timeout: 45_000 },
   );
 
@@ -338,10 +338,9 @@ test.describe('Runaway extension interval scale gate', () => {
       });
 
       await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
+      await showDataLanes(page);
       await page.goto(
-        `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}`
-          + `&localTest=1&timelineOverlayCanary=1&transcriptLaneFixture=1`
-          + `&runawayTimelineProject=${project}`,
+        editorUrl({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1', runawayTimelineProject: project } }),
         { waitUntil: 'domcontentloaded', timeout: 45_000 },
       );
 

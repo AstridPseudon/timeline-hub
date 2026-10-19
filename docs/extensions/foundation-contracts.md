@@ -1,4 +1,4 @@
-# Foundation Contracts — Astrid App Video Editor V1
+# Foundation Contracts — Astrid Video Editor V1
 
 **Status:** Active (M5)
 **Last updated:** 2026-06-24
@@ -342,13 +342,12 @@ Active extension-declared clip types, effects, and transitions are recognized by
 
 ## 11. Provider Compatibility
 
-Three data providers share the same extension lifecycle and contribution contracts:
+Two data providers share the same extension lifecycle and contribution contracts:
 
 | Provider | Support | Source |
 |---|---|---|
 | InMemory | Full | `src/tools/video-editor/data/InMemoryDataProvider.ts` |
-| Supabase | Full | `src/tools/video-editor/data/SupabaseDataProvider.ts` |
-| Astrid Bridge | Partial | `src/tools/video-editor/data/AstridBridgeDataProvider.ts` |
+| Runtime | Full, except the checkpoint API and extension persistence service | `src/integrations/runtime/dataProvider.ts` |
 
 Extensions do not interact with providers directly. The public `TimelineReader.snapshot()` and `TimelineOps.apply()` interfaces abstract over provider differences.
 
@@ -417,7 +416,7 @@ The V1 `ExtensionContext` carries exactly 13 keys — `apiVersion`, `extension`,
 | Settings storage | `src/tools/video-editor/runtime/extensionStateRepositoryProvider.ts` |
 | Extension Manager UI | `src/tools/video-editor/components/ExtensionManager/ExtensionManager.tsx` |
 | Export guard | `src/tools/video-editor/runtime/renderability.ts` (`runExportGuard`) |
-| Provider compatibility | `src/tools/video-editor/data/InMemoryDataProvider.ts`, `SupabaseDataProvider.ts`, `AstridBridgeDataProvider.ts` |
+| Provider compatibility | `src/tools/video-editor/testing/InMemoryDataProvider.ts`, `src/integrations/runtime/dataProvider.ts` |
 | Public SDK boundary (governance) | `config/governance/sdk-public-export-allowlist.json` |
 
 ---

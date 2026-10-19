@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { extractTaskIds, useTaskPlaceholder } from '../useTaskPlaceholder';
 import type * as projectSelectionStoreModule from '@/shared/contexts/projectSelectionStore';
-import { createFakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
-import { FIXTURE_PROJECT } from '@/test/bridgeFixtures.mjs';
+import { createFakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
+import { FIXTURE_PROJECT } from '@/test/fakeRuntimeSeed.mjs';
 import { AstridLocalClient } from '@/integrations/astrid/client';
 
 // ---------------------------------------------------------------------------
@@ -120,7 +120,7 @@ describe('useTaskPlaceholder', () => {
   });
 
   function stubBridge() {
-    const router = createFakeBridgeRouter();
+    const router = createFakeRuntimeRouter();
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const raw = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       return await router.handle(new Request(new URL(raw, FAKE_ORIGIN).href, init));

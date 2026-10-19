@@ -13,13 +13,11 @@ import {
   type AstridGenerationComposer,
 } from './astridGenerationCompose';
 
-export const ASTRID_BRIDGE_STUB_OPT_IN_ENV = 'ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB';
 export const ASTRID_BRIDGE_TOKEN_ENV = 'ASTRID_BRIDGE_TOKEN';
 export const ASTRID_ACP_BRIDGE_TOKEN_ENV = 'ASTRID_ACP_BRIDGE_TOKEN';
 export const ASTRID_ACP_BRIDGE_PORT_ENV = 'VITE_ASTRID_ACP_BRIDGE_PORT';
 
 export interface AstridBridgeProxyPolicy {
-  readonly allowUnauthenticatedStub: boolean;
   readonly token: string | null;
   readonly acpToken: string | null;
 }
@@ -53,7 +51,6 @@ export function resolveAstridBridgeProxyPolicy(
 ): AstridBridgeProxyPolicy {
   const token = env[ASTRID_BRIDGE_TOKEN_ENV]?.trim() || null;
   return Object.freeze({
-    allowUnauthenticatedStub: env[ASTRID_BRIDGE_STUB_OPT_IN_ENV] === '1',
     token,
     acpToken: env[ASTRID_ACP_BRIDGE_TOKEN_ENV]?.trim() || token,
   });
@@ -126,15 +123,15 @@ export function createAstridAcpBridgeProxyOptions(
 }
 
 /**
- * Refuse real bridge traffic unless the server has a bearer credential. The
- * committed deterministic stub is the only unauthenticated mode and requires
- * an explicit server-side opt-in.
+ * Refuse bridge traffic unless the server holds a bearer credential. There is
+ * no unauthenticated mode: the fake Runtime (`tests/e2e/fake-runtime`) takes
+ * the same token as the real daemon.
  */
 export function createAstridBridgeAuthGuard(
   policy: AstridBridgeProxyPolicy,
 ): Connect.NextHandleFunction {
   return (_request, response, next) => {
-    if (policy.token || policy.allowUnauthenticatedStub) {
+    if (policy.token) {
       next();
       return;
     }

@@ -11,14 +11,14 @@ describe('local Astrid editor-only workspace shell', () => {
   });
 
   it('is controlled by the local workspace client flag', () => {
-    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     expect(isAstridEditorOnlyWorkspace()).toBe(true);
     expect(isAstridEditorOnlyShellPath('/tools/video-editor')).toBe(true);
     expect(isAstridEditorOnlyShellPath('/tools/video-editor/harness')).toBe(false);
   });
 
   it('redirects other local app routes to the editor and preserves its selection', () => {
-    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     expect(astridEditorOnlyRedirectTarget(
       '/tools/image-generation',
       '?localProject=project-1&localTimeline=timeline-1&mode=discard',
@@ -28,7 +28,6 @@ describe('local Astrid editor-only workspace shell', () => {
   });
 
   it('leaves cloud route handling untouched', () => {
-    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '0');
     expect(isAstridEditorOnlyWorkspace()).toBe(false);
     expect(isAstridEditorOnlyShellPath('/tools/video-editor')).toBe(false);
     expect(astridEditorOnlyRedirectTarget('/tools/image-generation', '')).toBeNull();

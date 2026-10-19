@@ -87,7 +87,7 @@ This document is the downstream consumer of the [M15 Contract-Recheck Matrix](./
 | S-032 | Accept/reject with stale base version detection | **supported** | CR:M3-003; TEST:proposal-runtime.test.ts; `TimelineVersionConflictError` |
 | S-033 | Undo/rollback for patch batches | **supported** | CR:M3-004; TEST:timeline-patch.test.ts |
 | S-034 | Relative/fractional ordering for clip positioning | **supported** | CR:M3-005; DOC:timeline-patch-operations.md§3.8 |
-| S-035 | Provider version behaviors tested (InMemory, Supabase, Astrid) | **supported** | CR:M3-007; DOC:provider-compatibility-matrix.md§3.3; TEST:AstridBridgeDataProvider.test.ts (22 pass) |
+| S-035 | Provider version behaviors tested (InMemory, Runtime) | **supported** | CR:M3-007; DOC:provider-compatibility-matrix.md§3.3; TEST:providerCompatibility.runtime.test.ts |
 | S-036 | Rapid compiler iteration: atomic proposal replacement from same source | **supported** | CR:M3-008; TEST:proposal-runtime.test.ts |
 | S-037 | Golden patch replay across providers | **supported** | CR:M3-009; TEST:timeline-golden-replay.test.ts (81 tests) |
 | S-038 | Patch extension mechanism with validation, serialization, previewability | **supported** | CR:M3-011; DOC:timeline-patch-operations.md§7 |
@@ -119,7 +119,7 @@ This document is the downstream consumer of the [M15 Contract-Recheck Matrix](./
 | S-070 | Asset parser enriches uploaded assets | **supported** | CR:M6-001; EX:integrity-hash-parser-example.ts |
 | S-071 | Metadata persisted per extension, namespaced by extension ID | **supported** | CR:M6-002; `AssetRegistryEntry.metadata` in `src/tools/video-editor/` |
 | S-072 | Asset search/filter via contributed metadata facets | **supported** | CR:M6-003; `MetadataFacetContribution`, `SearchProviderContribution` in SDK |
-| S-073 | Astrid local-first demo: extension mutation and persistence | **supported** | CR:M6-004; TEST:AstridBridgeDataProvider.test.ts (22 pass) |
+| S-073 | Astrid local-first demo: extension mutation and persistence | **supported** | CR:M6-004; TEST:providerCompatibility.runtime.test.ts; TEST:src/integrations/runtime/dataProvider.test.ts |
 | S-074 | Compile-only export in export UI/command surface | **supported** | CR:M6-005; EX:metadata-json-output-example.ts |
 | S-075 | Render-dependent output formats declared early appear disabled with diagnostics | **supported** | CR:M6-006; `requiresRender: true` → disabled/reserved |
 | S-076 | Parser rejection for unsupported MIME/type, oversized input | **supported** | CR:M6-008; `ParserContribution` with `acceptMimeTypes`, `acceptExtensions`, `maxBytes` |
@@ -190,8 +190,7 @@ This document is the downstream consumer of the [M15 Contract-Recheck Matrix](./
 | Row ID | Behavior | Classification | Evidence |
 |---|---|---|---|
 | S-140 | InMemory provider: full M3 support, ephemeral Map-backed | **supported** | CR:M3-007; DOC:provider-compatibility-matrix.md§2; TEST:InMemoryDataProvider.test.ts (13 tests) |
-| S-141 | Supabase provider: full M3 support, durable DB + append service | **supported** | CR:M3-007; DOC:provider-compatibility-matrix.md§2; TEST:SupabaseDataProvider.test.ts (18 tests) |
-| S-142 | Astrid Bridge provider: partial M3 support, local filesystem + bridge API | **supported** | CR:M3-007; DOC:provider-compatibility-matrix.md§§2,4.3; TEST:AstridBridgeDataProvider.test.ts (22 pass) |
+| S-141 | Runtime provider: full M3 support except the checkpoint API (history is Runtime composition revisions); head-checked saves | **supported** | CR:M3-007; DOC:provider-compatibility-matrix.md§§2,4.2; TEST:providerCompatibility.runtime.test.ts |
 | S-143 | Provider compatibility matrix fully documented | **supported** | CR:M3-010, CR:X-007; DOC:provider-compatibility-matrix.md |
 
 ### 2.15 Cross-Cutting Platform Guarantees
@@ -214,7 +213,7 @@ This document is the downstream consumer of the [M15 Contract-Recheck Matrix](./
 | S-160 | Extension manager UI: enable/disable toggle with immediate contribution visibility change | **supported** | CR:M14-001 (partial); TEST:ExtensionManager.test.tsx (T10 — settings editing); TEST:ExtensionHarnessPage.tsx manager-cycle scenario (T9); `ExtensionManager.tsx` enable/disable controls |
 | S-161 | Settings editing via `SchemaForm` for schema-backed packages with intentional key-value fallback for schemaless/legacy packages | **supported** | CR:M14-001 (partial); TEST:ExtensionManager.test.tsx (T10 — 7 tests for SchemaForm vs fallback split); `ExtensionManager.tsx` lines 828–853 |
 | S-162 | Persisted extension enablement state via repository-backed persistence (`DataProvider.createExtensionPersistenceService`) | **supported** | CR:M14-003 (partial); TEST:extensionStateRepository.test.ts; TEST:ExtensionHarnessPage.tsx manager-cycle scenario (T9 — `extension-manager-cycle-persisted-enablement` probe); `EditorRuntimeProvider.tsx` persistence wiring |
-| S-163 | Persisted extension settings via `InMemoryDataProvider` and `SupabaseDataProvider` persistence services | **supported** | CR:M14-003 (partial); TEST:InMemoryDataProvider.extensionPersistence.test.ts; TEST:SupabaseDataProvider.test.ts (persistence); `DataProvider.createExtensionPersistenceService` |
+| S-163 | Persisted extension settings via the `InMemoryDataProvider` persistence service (`RuntimeDataProvider` provides none, so the capability is reported as unsupported) | **supported** | CR:M14-003 (partial); TEST:InMemoryDataProvider.extensionPersistence.test.ts; TEST:dataProvider.parity.test.ts (Runtime has no persistence service); `DataProvider.createExtensionPersistenceService` |
 | S-164 | Activation lifecycle cleanup disposes renderer registrations and never mutates stale state | **supported** | CR:M5-011, M5-012 (partial); TEST:extensionSmoke.test.ts (T5 — disposal on deactivation); TEST:extensionRenderSurface.test.ts (T5 — renderer unregistration); `internalExtensionRenderSurface.ts` |
 
 ### 2.17 Timeline Overlay Host, Markers & Dev-Local Manager (T7)

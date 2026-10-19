@@ -78,7 +78,6 @@ export const ASTRID_APP_GATE_PROFILE = Object.freeze([
   { id: 'production-smoke', label: 'production extension smoke suite', command: 'npm', args: ['run', 'test:extensions:production-smoke'] },
   { id: 'runtime-rollout', label: 'runtime extension rollout suite', command: 'npm', args: ['run', 'test:extensions:runtime-rollout'] },
   { id: 'container-runtime', label: 'production container smoke and rollback', command: 'npm', args: ['run', 'verify:extension-container'] },
-  { id: 'paired-release-e2e', label: 'paired Astrid/Astrid production-like release acceptance', command: 'npm', args: ['run', 'verify:paired-release-e2e'] },
   { id: 'readiness', label: 'extension readiness suite', command: 'npm', args: ['run', 'test:readiness'] },
   { id: 'readiness-e2e', label: 'extension harness browser suite', command: 'npm', args: ['run', 'test:readiness:e2e'] },
   { id: 'cross-browser-e2e', label: 'Chrome Firefox WebKit extension suite', command: 'npm', args: ['run', 'test:e2e:extension-cross-browser'] },
@@ -121,7 +120,6 @@ const POSIX_DISK_PLATFORMS = new Set([
 export const HEAVY_STEP_MIN_FREE_BYTES = Object.freeze({
   dependencies: 8n * GIB,
   'container-runtime': 6n * GIB,
-  'paired-release-e2e': 5n * GIB,
   'astrid-remotion-dependencies': 3n * GIB,
   'astrid-ci': 2n * GIB,
 });
@@ -235,8 +233,8 @@ export function calculateReleaseRequiredBytes({
   })) {
     if (typeof value !== 'bigint' || value < 0n) fail(`${name} must be a non-negative bigint`);
   }
-  // At peak the outer Astrid App worktree overlaps with the paired gate's tar and
-  // extracted snapshot. The Astrid archive has the same tar/extract overlap.
+  // Budget three copies of the Astrid App tree: the outer worktree plus archive and
+  // extracted-snapshot headroom. The Astrid archive has the same tar/extract overlap.
   const archivePeak = 3n * appTreeBytes;
   const mixedPeak = 2n * appTreeBytes + 2n * astridTreeBytes;
   const treePeak = archivePeak > mixedPeak ? archivePeak : mixedPeak;
@@ -526,8 +524,6 @@ export function buildExecutionPlan({
   astridCheckout,
   nodeExecutable,
   astridPython,
-  astridRef,
-  appRef,
 }) {
   const astridCwd = astridCheckout || '<ASTRID_CHECKOUT required for execution>';
   const node = nodeExecutable || '<PINNED_NODE required for execution>';
@@ -538,14 +534,6 @@ export function buildExecutionPlan({
       timeoutMs: RELEASE_PHASE_TIMEOUT_MS,
       maxBuffer: RELEASE_COMMAND_MAX_BUFFER_BYTES,
       cwd: repoRoot,
-      env: gate.id === 'paired-release-e2e'
-        ? {
-            ASTRID_CHECKOUT: astridCheckout || '<ASTRID_CHECKOUT required for execution>',
-            ASTRID_PYTHON: astridPython || '<ASTRID_PYTHON required for execution>',
-            ASTRID_REF: astridRef || '<ASTRID_REF required for execution>',
-            ASTRID_APP_REF: appRef || '<ASTRID_APP_REF required for execution>',
-          }
-        : undefined,
     })),
     ...ASTRID_GATE_PROFILE.map(({ cwdSuffix, ...gate }) => ({
       ...gate,
@@ -907,8 +895,8 @@ export function resolveAstridPython(manifest, env) {
 }
 
 /**
- * Attest every native executable through the same helper used by the paired
- * release gate. This keeps the outer release boundary bound to executable
+ * Attest every native executable through the shared native-tool attestation
+ * helper. This keeps the outer release boundary bound to executable
  * bytes, exact version/build identity, and Tesseract's trained-data bytes.
  */
 export function assertCaptionSemanticsToolchain(manifest) {
@@ -1011,8 +999,6 @@ function printPlan(manifest, packageJson, env) {
     astridCheckout: env.ASTRID_CHECKOUT,
     nodeExecutable: realpathSync(process.execPath),
     astridPython: env.ASTRID_PYTHON,
-    astridRef: env.ASTRID_REF,
-    appRef: env.ASTRID_APP_REF,
   });
 
   console.log(`${LABEL} PLAN ONLY — no commands will execute`);
@@ -1111,8 +1097,6 @@ export function main(argv = process.argv.slice(2), env = process.env) {
       astridCheckout: astrid.checkout,
       nodeExecutable: realpathSync(process.execPath),
       astridPython,
-      astridRef: env.ASTRID_REF,
-      appRef: env.ASTRID_APP_REF,
     });
     executeSteps(steps, runBoundedCommand, {
       diskRecheck: (step) => assertHeavyStepDiskCapacity(step, {

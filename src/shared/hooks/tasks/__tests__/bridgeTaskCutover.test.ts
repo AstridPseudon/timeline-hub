@@ -23,16 +23,16 @@ import { fetchTaskInProject } from '@/integrations/supabase/repositories/taskRep
 import { fetchPaginatedTasks } from '@/shared/hooks/tasks/paginatedTaskRepository';
 import { getBridgeTaskClient, mapBridgeTaskStatus } from '@/integrations/astrid/bridgeTaskReads';
 import { cancelBridgeTask } from '@/shared/hooks/tasks/useTaskCancellation';
-import { createFakeBridgeRouter, type FakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
+import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
 
 const FAKE_ORIGIN = 'http://bridge.fake';
 const PROJECT = 'demo-project';
 const VISIBLE_TASK_TYPES = ['qwen_image'];
 
-let router: FakeBridgeRouter;
+let router: FakeRuntimeRouter;
 
 beforeEach(() => {
-  router = createFakeBridgeRouter();
+  router = createFakeRuntimeRouter();
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(input instanceof Request ? input.url : String(input), FAKE_ORIGIN);
     return await router.handle(new Request(`${FAKE_ORIGIN}${url.pathname}${url.search}`, init));
