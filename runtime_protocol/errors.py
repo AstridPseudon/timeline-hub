@@ -73,6 +73,10 @@ class ProtocolError(RuntimeErrorBase):
     status = 400
 
 
+class BodyTooLargeError(ProtocolError):
+    """A request body over its byte limit; the browser door answers it as 413."""
+
+
 class InvalidRequestError(RuntimeErrorBase):
     """A syntactically valid request with an invalid JSON shape."""
 

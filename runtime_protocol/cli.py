@@ -11,6 +11,7 @@ import time
 from pathlib import Path
 
 from .daemon import RuntimeDaemon, WORKER_SCOPES
+from .door import DEFAULT_DOOR_PORT, DoorConfig
 from .local_worker_composition import load_local_worker_composition
 from .backup import create_backup, restore_backup, structured_export
 from .errors import RuntimeErrorBase
@@ -53,6 +54,10 @@ def _parser():
     start.add_argument("--bootstrap-token-file")
     start.add_argument("--admission-timeout", type=float, help="bounded startup integrity budget in seconds")
     start.add_argument("--worker-profile", help="absolute installed local Worker composition profile")
+    start.add_argument("--door-origin", help="exact HTTPS origin of the hosted page; opens the browser door")
+    start.add_argument("--door-port", type=int, default=DEFAULT_DOOR_PORT, help="the browser door's loopback port")
+    start.add_argument("--door-credential-file", help="absolute scoped product credential the browser door acts with")
+    start.add_argument("--door-audit-log", help="append one JSON line per browser door request")
     create = sub.add_parser("create", help="explicitly create one fresh canonical realm")
     create.add_argument("--root", required=True)
     create.add_argument("--display-name", default="Workspace")
@@ -330,6 +335,15 @@ def main(argv=None):
         print(json.dumps({"state": "purged", "realm_id": realm_id, "root": str(root)}, sort_keys=True))
         return 0
     try:
+        door = None
+        if args.door_origin:
+            if not args.door_credential_file:
+                raise ValueError("--door-origin requires --door-credential-file")
+            door = DoorConfig(
+                origin=args.door_origin, port=args.door_port,
+                credential_file=Path(args.door_credential_file).expanduser(),
+                audit_log=Path(args.door_audit_log).expanduser().resolve() if args.door_audit_log else None,
+            )
         composition = None
         if getattr(args, "worker_profile", None):
             if not args.realm_id:
@@ -356,6 +370,7 @@ def main(argv=None):
             local_worker_profiles=composition.profiles if composition else None,
             local_worker_preparer=composition.preparer if composition else None,
             local_worker_inspector=composition.inspector if composition else None,
+            door=door,
         ).start()
     except KeyboardInterrupt:
         raise
@@ -365,7 +380,7 @@ def main(argv=None):
         error = exc.as_dict() if isinstance(exc, RuntimeErrorBase) else {"code": "startup_error", "message": str(exc)}
         print(json.dumps({"ok": False, "error": error}, sort_keys=True))
         return 1
-    print(json.dumps({"endpoint": daemon.endpoint, "realm_id": daemon.service.realm["id"], "credential_file": str(daemon.credential_path), "worker_credential_file": str(daemon.worker_credential_path), "worker_actor": "astrid-pack-host", "worker_scopes": list(WORKER_SCOPES), "worker_profile_configured": bool(daemon.local_worker_profiles)}, sort_keys=True), flush=True)
+    print(json.dumps({"endpoint": daemon.endpoint, "realm_id": daemon.service.realm["id"], "credential_file": str(daemon.credential_path), "worker_credential_file": str(daemon.worker_credential_path), "worker_actor": "astrid-pack-host", "worker_scopes": list(WORKER_SCOPES), "worker_profile_configured": bool(daemon.local_worker_profiles), "door_endpoint": daemon.door_endpoint}, sort_keys=True), flush=True)
     stop = False
     def handle(*_):
         nonlocal stop

@@ -14,6 +14,7 @@ from .auth import CredentialStore
 from .catalog import LiveDiscovery, RealmCatalog, process_birth_identity
 from .backup import restore_backup, verify_backup, verify_restore_candidate
 from .dirfd import capture_parent, close_pinned, validate_parent
+from .door import CHAT_FILE_NAME, open_door
 from .errors import ConflictError, NotFoundError, ProtocolError
 from .server import RuntimeHTTPServer, RuntimeHandler
 from .service import RuntimeService
@@ -52,7 +53,7 @@ def _authority_path(value, label):
 class RuntimeDaemon:
     """Loopback-only daemon owning one realm and its storage."""
 
-    def __init__(self, root, *, support_root=None, export_root=None, display_name="Workspace", host="127.0.0.1", port=0, realm_id=None, owner_lock=None, bootstrap_token_file=None, reboot_executor=None, reboot_allowlist=None, production_worker_credentials=False, admission_timeout=None, local_worker_profiles=None, local_worker_preparer=None, local_worker_inspector=None):
+    def __init__(self, root, *, support_root=None, export_root=None, display_name="Workspace", host="127.0.0.1", port=0, realm_id=None, owner_lock=None, bootstrap_token_file=None, reboot_executor=None, reboot_allowlist=None, production_worker_credentials=False, admission_timeout=None, local_worker_profiles=None, local_worker_preparer=None, local_worker_inspector=None, door=None):
         if host not in ("127.0.0.1", "localhost", "::1"):
             raise ValueError("runtime daemon only binds to loopback")
         self.root = _authority_path(root, "realm root").resolve()
@@ -79,6 +80,11 @@ class RuntimeDaemon:
         self.service = None
         self.httpd = None
         self.thread = None
+        # The hosted page's browser door (door.py): a second listener, opened
+        # and fenced together with the Runtime's own.
+        self.door = door
+        self.door_httpd = None
+        self.door_thread = None
         self.catalog = RealmCatalog(self.support_root / "catalog.json")
         self.discovery = LiveDiscovery(self.support_root / "discovery.json")
         # CredentialStore creates its directory. Defer that side effect until
@@ -106,6 +112,10 @@ class RuntimeDaemon:
             return None
         host = "127.0.0.1" if self.host == "localhost" else self.host
         return f"http://{host}:{self.httpd.server_port}"
+
+    @property
+    def door_endpoint(self):
+        return f"http://127.0.0.1:{self.door_httpd.server_port}" if self.door_httpd else None
 
     def start(self):
         if self.httpd:
@@ -177,6 +187,12 @@ class RuntimeDaemon:
             self.bootstrap_token_file.unlink(missing_ok=True)
 
     def _shutdown_http(self):
+        if self.door_httpd:
+            if self.door_thread is not None and self.door_thread.is_alive():
+                self.door_httpd.shutdown()
+            self.door_httpd.server_close()
+            self.door_httpd = None
+        self.door_thread = None
         if self.httpd:
             # HTTPServer.shutdown() waits for serve_forever() to be running.
             # Replacement startup can fail after constructing the server but
@@ -233,6 +249,13 @@ class RuntimeDaemon:
         self.httpd.runtime = self.service
         self.httpd.daemon_runtime = self
         self.httpd.credentials = self.credentials
+        if self.door is not None:
+            # Bound before readiness is published, so a taken port leaves nothing advertised.
+            try:
+                self.door_httpd = open_door(self.door, runtime=self.service, daemon_runtime=self, credentials=self.credentials, chat_file=self.support_root / CHAT_FILE_NAME)
+            except Exception:
+                self._shutdown_http()
+                raise
         owner = self.service.catalog_admission(self.instance_id)
         # Persist the observed epoch before readiness publication.  A restored
         # older database can therefore never reuse an epoch from its snapshot.
@@ -241,9 +264,12 @@ class RuntimeDaemon:
         birth_id = process_birth_identity()
         if self.owner_lock:
             atomic_json_write(self.owner_lock, {"pid": os.getpid(), "process_birth_id": birth_id, "runtime_instance_id": self.instance_id, "realm_id": self.service.realm["id"], "realm_root": str(self.root)})
-        self.discovery.publish(version=1, endpoint=self.endpoint, pid=os.getpid(), process_birth_id=birth_id, runtime_instance_id=self.instance_id, active_realm=self.service.realm["id"], realm_root=str(self.root), protocol_version="workspace.v1", schema_version="workspace-schema-v1", coordinator_epoch=self.instance_id, credential_file=str(self.credential_path), worker_credential_file=str(self.worker_credential_path), worker_credential_pending=bool(self.local_worker_profiles), worker_actor=WORKER_ACTOR, worker_scopes=list(WORKER_SCOPES))
+        self.discovery.publish(version=1, endpoint=self.endpoint, pid=os.getpid(), process_birth_id=birth_id, runtime_instance_id=self.instance_id, active_realm=self.service.realm["id"], realm_root=str(self.root), protocol_version="workspace.v1", schema_version="workspace-schema-v1", coordinator_epoch=self.instance_id, credential_file=str(self.credential_path), worker_credential_file=str(self.worker_credential_path), worker_credential_pending=bool(self.local_worker_profiles), worker_actor=WORKER_ACTOR, worker_scopes=list(WORKER_SCOPES), **({"door_endpoint": self.door_endpoint, "door_origin": self.door.origin} if self.door_httpd else {}))
         self.thread = threading.Thread(target=self.httpd.serve_forever, name="astrid-runtime-protocol", daemon=True)
         self.thread.start()
+        if self.door_httpd is not None:
+            self.door_thread = threading.Thread(target=self.door_httpd.serve_forever, name="astrid-runtime-door", daemon=True)
+            self.door_thread.start()
         return self
 
     def _create_local_worker_launcher(self):
@@ -1373,8 +1399,9 @@ class RuntimeDaemon:
         # potentially blocking child cleanup. The launcher's abort wrapper is
         # bounded independently of the Worker's configured RPC timeout.
         worker_handles = []
-        if self.httpd is not None:
-            self.httpd.accepting_authenticated_requests = False
+        for listener in (self.httpd, self.door_httpd):
+            if listener is not None:
+                listener.accepting_authenticated_requests = False
         if self.local_worker_launcher is not None:
             worker_handles = self.local_worker_launcher.begin_shutdown()
         if self.service is not None:

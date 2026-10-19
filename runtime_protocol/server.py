@@ -6,7 +6,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlsplit, parse_qs
 
-from .errors import RuntimeErrorBase, AuthorizationError, ConflictError, ForbiddenError, NotFoundError, ProtocolError, InvalidRequestError, RetiredRouteError
+from .errors import RuntimeErrorBase, AuthorizationError, BodyTooLargeError, ConflictError, ForbiddenError, NotFoundError, ProtocolError, InvalidRequestError, RetiredRouteError
 from .service import validate_idempotency_key
 from .cas import IO_CHUNK_BYTES
 
@@ -71,7 +71,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         length = int(value, 10)
         maximum = self.MAX_BODY_BYTES if limit is None else limit
         if length > maximum:
-            raise ProtocolError(f"request body exceeds {maximum} byte limit")
+            raise BodyTooLargeError(f"request body exceeds {maximum} byte limit")
         return length
 
     def _binary_chunks(self):
@@ -104,7 +104,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     return
                 total += size
                 if total > maximum:
-                    raise ProtocolError(f"request body exceeds {maximum} byte limit")
+                    raise BodyTooLargeError(f"request body exceeds {maximum} byte limit")
                 remaining = size
                 while remaining:
                     chunk = self.rfile.read(min(remaining, IO_CHUNK_BYTES))
