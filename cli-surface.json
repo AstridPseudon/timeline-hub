@@ -2969,7 +2969,19 @@
             "--draft": {
               "required": false
             },
+            "--dry-run": {
+              "required": false
+            },
+            "--idempotency-key": {
+              "required": false
+            },
+            "--json": {
+              "required": false
+            },
             "--project": {
+              "required": false
+            },
+            "--publication": {
               "required": false
             },
             "--steps": {
