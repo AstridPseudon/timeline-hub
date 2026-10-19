@@ -2260,7 +2260,8 @@ def _claim_snapshot_task(world, capability_id, *, key):
 def _snapshot_task(world, claim):
     task = world.service.task(claim["task_id"])["task"]
     task.update(runtime_epoch=claim["runtime_epoch"], fence=claim["fence"], project_id=world.project,
-        spec=claim["spec"], input_object_ids=claim["input_object_ids"], lease_id=claim["lease_id"], executor_id="worker")
+        spec=claim["spec"], input_object_ids=claim["input_object_ids"], lease_id=claim["lease_id"], executor_id="worker",
+        execution_binding=claim.get("execution_binding"))
     return task
 
 
@@ -2292,7 +2293,19 @@ def _fresh_snapshot_reader(world, *, authorized=True):
             handler._send = lambda status, value=None, *, headers=None, body=None: (
                 status, headers or {}, body if body is not None else json.dumps(value).encode())
             assert method == "GET" and body is None
-            return handler._route()
+            handler._defer_response = True
+            response = handler._route()
+            if response is not None:
+                return response
+            # CAS routes defer an owned stream separately from JSON responses.
+            status, stream, start, length, response_headers = handler._pending_file_response
+            try:
+                stream.seek(start)
+                data = stream.read(length)
+                assert len(data) == length
+                return status, response_headers, data
+            finally:
+                stream.close()
     client.generated._transport = transport
     assert client._attempt_runtime_epochs == {}
     return client
@@ -2513,7 +2526,8 @@ def test_snapshot_fresh_authorized_resume_through_ordinary_managed_child(world, 
     policy["input_object_ids"] = [descriptor["digest"]]
     fresh.generated.admit_task(capability_id=PARENT, capability_digest=host.capabilities[PARENT].capability_digest,
         input_object_ids=[descriptor["digest"]], project_id=world.project, spec={"inputs": {"resume_state": descriptor}},
-        execution_request={"schema_version": 1, "target": {"kind": "default"}, "inputs": [{"name": "resume_state", **descriptor}]},
+        execution_request=normalize_execution_request({"schema_version": 1, "target": {"kind": "default"},
+            "inputs": [{"name": "resume_state", **descriptor}]}),
         child_delegation=policy, idempotency_key="fresh-resume-parent")
     claim = _claim_snapshot_task(world, PARENT, key="claim-resume-parent")
     task = _snapshot_task(world, claim)
@@ -2750,7 +2764,7 @@ def test_declared_command_output_collision_keeps_materialized_input_and_independ
         "assert destination.name == 'rewritten.txt'\n"
         "assert sys.argv[2] in ('--original', '--source')\n"
         "source = Path(sys.argv[3])\n"
-        "assert source.name == 'source.txt' and source != destination\n"
+        "assert source.name == 'managed-41cf6794ba4200b8-221a32623a463a6998b3038c83a0169b8d29be2d66f0e20a096987bfa9dc9f47.txt' and source != destination\n"
         "assert source.read_bytes() == b'original-admitted-input'\n"
         "assert len(sys.argv) == 4 or sys.argv[4] == str(source)\n"
         "destination.write_bytes(b'independent-host-output')\n")
@@ -2918,20 +2932,20 @@ def _real_receiver_host(world, monkeypatch, name):
     return host, launched, processes
 
 
-def _real_receiver_url(launched, processes, future):
-    import select
+def _real_receiver_url(host, launched, processes, future):
+    from astrid.core.execution.generic_host import _observe_owned_review_session
 
     assert launched.wait(8), future.result(timeout=1)
     process = processes[0]
     deadline = time.monotonic() + 8
     while time.monotonic() < deadline:
-        if select.select([process.stdout], [], [], 0.05)[0]:
-            line = process.stdout.readline().strip()
-            if line.startswith("human_review: serving at "):
-                return line.split("serving at ", 1)[1]
+        snapshot = _observe_owned_review_session(process, host.attempt_root)
+        if snapshot is not None:
+            return json.loads(snapshot[2])["receiver_url"]
         if future.done():
             pytest.fail(f"receiver exited before startup: {future.result()}")
-    pytest.fail("actual receiver did not announce its local HTTP URL")
+        time.sleep(0.05)
+    pytest.fail("actual receiver did not publish its owned local HTTP session")
 
 
 def _real_review_http(url, route, body=None):
@@ -3019,7 +3033,7 @@ def test_actual_human_review_acknowledged_batch_recovers_and_settles(world, monk
         source_future = pool.submit(source_host.run_task, {"task": world.source_task},
             lease_token=claim["lease_id"], attempt_id=claim["attempt_id"], fence=claim["fence"])
         try:
-            url = _real_receiver_url(launched, processes, source_future)
+            url = _real_receiver_url(source_host, launched, processes, source_future)
             assert _real_review_http(url, "/state.json") == (200, world.initial_state)
             assert _real_review_http(url, "/clips/sample.txt") == (200, b"mounted-review-media")
             _, saved = _acknowledge_real_snapshot(world, monkeypatch, url, "/save", {
@@ -3123,9 +3137,10 @@ def test_actual_human_review_acknowledged_batch_recovers_and_settles(world, monk
                 attempt_id=child_claim["attempt_id"], fence=child_claim["fence"])
         resumed_future = pool.submit(serve_resumed)
         try:
-            resumed_url = _real_receiver_url(launched, processes, resumed_future)
+            resumed_url = _real_receiver_url(resumed_host, launched, processes, resumed_future)
             assert _real_review_http(resumed_url, "/state.json") == (200, batch_bytes)
-            assert (resumed_host.attempt_root / "inputs/review-state.json").read_bytes() == batch_bytes
+            state_filename = "managed-4ba69735ca53765e-" + digest(batch_bytes)[7:] + ".json"
+            assert (resumed_host.attempt_root / "inputs" / state_filename).read_bytes() == batch_bytes
             resumed_snapshot = _real_unacknowledged_batch(world, monkeypatch, resumed_url, batch_bytes)
             final_body = {"decisions": batch["review_decisions"]}
             assert _real_review_http(resumed_url, "/submit", final_body) == (204, b"")
@@ -3177,8 +3192,8 @@ def test_actual_human_review_acknowledged_batch_recovers_and_settles(world, monk
 
 # D18 host materialization: retain the real generated-client/offline Runtime
 # route; corrupt only the boundary under examination.
-def _materialization_fixture(world, data=(b"child-bytes",), *, expose=True, filenames=None):
-    setup(world, derived=True, child_limits={"max_children": 8})
+def _materialization_fixture(world, data=(b"child-bytes",), *, expose=True, filenames=None, limits=None):
+    setup(world, derived=True, child_limits={"max_children": 8, **(limits or {})})
     b = bridge(world)
     (b.output_root / "source.txt").write_bytes(b"initial-parent-input")
     producer = {"filename": "source.txt", "output_port": "source", "media_type": "text/plain"}
@@ -3404,7 +3419,7 @@ def test_materialization_public_sdk_same_leaf_outputs_consumed_together_without_
         "result = r.materialize_output(r.outputs['managed_outputs'][0]['association_id'])\n"
         "observed = json.loads(Path('outputs', result.filename).read_text())\n"
         "assert observed['left'] == 'left-bytes' and observed['right'] == 'right-bytes'\n"
-        "expected = ['producer-' + hashlib.sha256(item.filename.encode('utf-8')).hexdigest() + '.txt' for item in sources]\n"
+        "expected = ['managed-cd42404d52ad55cc-a15ddcdbedcde8879eb2c3afab4e81d614f37dc6f64561ad93e709a8c0ab4dca.txt', 'managed-d9298a10d1b07358-ac55b9ad5dfe9b8c82303cd2064fa5143de52fb57ac542a912c8ed5d3cfedee6.txt']\n"
         "assert [observed['left_filename'], observed['right_filename']] == expected\n"
         "assert all(Path('outputs', item.filename).read_text() == text for item, text in zip(sources, ('left-bytes', 'right-bytes')))\n"
     )
@@ -3656,19 +3671,19 @@ def _materialization_readback_override(world, monkeypatch, child, row, **changes
     return replacement
 
 
-@pytest.mark.parametrize("size", [64 * 1024 * 1024, 64 * 1024 * 1024 + 1])
-def test_materialization_exact_per_object_boundary(world, monkeypatch, size):
-    b, child, rows = _materialization_fixture(world, expose=False)
-    # Actual bounded CAS readback through the unchanged host route. The
-    # 64-MiB-plus-one descriptor must reject before requesting CAS bytes.
+@pytest.mark.parametrize("size", [64 * 1024 * 1024, 5 * 1024 ** 3 + 1])
+def test_materialization_large_object_and_hard_cap(world, monkeypatch, size):
+    b, child, rows = _materialization_fixture(world, expose=False,
+        limits={"max_derived_bytes": 64 * 1024 * 1024})
+    # Keep real 64-MiB CAS readback; reject metadata above the 5-GiB object
+    # ceiling before requesting bytes, without allocating a 5-GiB payload.
     payload = b"x" * min(size, 64 * 1024 * 1024)
     oid = digest(payload)
     _materialization_readback_override(world, monkeypatch, child, rows[0], size=size, digest=oid, object_id=oid)
     reads = []
     monkeypatch.setattr(world.client, "get_object", lambda oid: reads.append(oid) or payload)
-    b.policy["limits"].update(max_derived_bytes=64 * 1024 * 1024)
     frame = {"v": 1, "request_id": b._sequence + 1, "op": "outputs", "child_key": "child", "task_id": child["task_id"]}
-    if size > 64 * 1024 * 1024:
+    if size > 5 * 1024 ** 3:
         with pytest.raises(ChildBridgeError, match="byte identity"): b.dispatch(frame)
         assert reads == [] and _retained_usage(b) == (0, 0)
         assert not (b.output_root / "child-outputs").exists()
@@ -3678,6 +3693,27 @@ def test_materialization_exact_per_object_boundary(world, monkeypatch, size):
         assert (b.output_root / result["filename"]).stat().st_size == size
         assert _retained_usage(b) == (1, size)
         assert _materialize(b, child, public) == result
+
+
+def test_materialization_rejects_above_persisted_retention_budget_before_reread(world, monkeypatch):
+    limit = 64 * 1024 * 1024
+    b, child, rows = _materialization_fixture(world, expose=False,
+        limits={"max_derived_bytes": limit})
+    payload = b"x" * (limit + 1)
+    oid = digest(payload)
+    _materialization_readback_override(world, monkeypatch, child, rows[0],
+        size=len(payload), digest=oid, object_id=oid)
+    reads = []
+    monkeypatch.setattr(world.client, "get_object", lambda oid: reads.append(oid) or payload)
+    public = b.dispatch({"v": 1, "request_id": b._sequence + 1, "op": "outputs",
+        "child_key": "child", "task_id": child["task_id"]})[0]
+    assert public["size"] == limit + 1 and reads == [oid[7:]]
+    assert b.policy["limits"]["max_derived_bytes"] == limit
+    reads.clear()
+    with pytest.raises(ChildBridgeError, match="materialization retention exceeds persisted limits"):
+        _materialize(b, child, public)
+    assert reads == [] and _retained_usage(b) == (0, 0)
+    assert not (b.output_root / "child-outputs").exists()
 
 
 @pytest.mark.parametrize("tamper", ["actual_size", "stable_descriptor"])
@@ -3715,17 +3751,18 @@ def test_materialization_publication_failure_cleans_before_release(world, monkey
             namespace.mkdir()
         elif phase == "parent_revoked": b.revoke()
         return result
-    monkeypatch.setattr(module.os, "link", linked)
-    if phase == "post_link":
-        original_fsync = module.os.fsync
-        def fsync(fd):
-            import stat
-            if stat.S_ISDIR(os.fstat(fd).st_mode): raise OSError("post-publication fsync failed")
-            return original_fsync(fd)
-        monkeypatch.setattr(module.os, "fsync", fsync)
-    with pytest.raises(Exception): _materialize(b, child, rows[0])
-    assert _retained_usage(b) == (0, 0)
-    assert not [path for path in b.output_root.rglob("*") if path.is_file() and path.name != "source.txt"]
+    with monkeypatch.context() as fault_patch:
+        fault_patch.setattr(module.os, "link", linked)
+        if phase == "post_link":
+            original_fsync = module.os.fsync
+            def fsync(fd):
+                import stat
+                if stat.S_ISDIR(os.fstat(fd).st_mode): raise OSError("post-publication fsync failed")
+                return original_fsync(fd)
+            fault_patch.setattr(module.os, "fsync", fsync)
+        with pytest.raises(Exception): _materialize(b, child, rows[0])
+        assert _retained_usage(b) == (0, 0)
+        assert not [path for path in b.output_root.rglob("*") if path.is_file() and path.name != "source.txt"]
 
 
 def _f05_runtime_review_pair(world, *, timeout=0, runtime_limit=None, before_child=None, with_source=False, training=False, media_payloads=None):
