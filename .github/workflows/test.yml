@@ -6,13 +6,6 @@ on:
   pull_request:
 
 jobs:
-  chat-agent-adapter-smoke:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun run scripts/astrid-local-agent-adapters-smoke.ts
-
   vitest:
     runs-on: ubuntu-latest
     steps:

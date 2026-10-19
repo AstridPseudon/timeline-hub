@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync, appendFileSync, rmSync, mkdirSync, chmodSync, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, appendFileSync, rmSync, mkdirSync, chmodSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, it, test } from 'node:test';
@@ -15,10 +15,6 @@ import {
   viteChildArgs,
   resolveWorkspaceDiscoveryPath,
   resolveRuntimeCommand,
-  chatRegistrationPath,
-  chatRegistration,
-  writeChatRegistration,
-  removeChatRegistration,
   loadLocalRuntimeEnvironment,
   LOCAL_RUNTIME_ENV_KEYS,
   shellQuote,
@@ -64,49 +60,6 @@ async function emittedDirectory({ entry = true } = {}) {
   if (entry) await writeFile(join(directory, 'assets', 'index-test.js'), '');
   return directory;
 }
-
-describe('dev-local chat registration', () => {
-  it('sits next to discovery.json as chat.json', () => {
-    assert.equal(chatRegistrationPath('/d/discovery.json'), join('/d', 'chat.json'));
-  });
-
-  it('is the exact endpoint and token the Runtime door reads', () => {
-    assert.deepEqual(chatRegistration(17335, 'token-value'), { endpoint: 'http://127.0.0.1:17335', token: 'token-value' });
-  });
-
-  it('refuses a bad bridge port or an empty credential', () => {
-    for (const port of ['0', '70000', 'x']) {
-      assert.throws(() => chatRegistration(port, 'token-value'), /chat bridge port/, port);
-    }
-    assert.throws(() => chatRegistration('17335', ''), /needs a credential/);
-  });
-
-  it('writes the registration owner-only, parseable, with no temporary file left behind', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'astrid-chat-registration-test-'));
-    temporaryDirectories.push(directory);
-    const path = join(directory, 'chat.json');
-    const registration = chatRegistration(17335, 'token-value');
-    writeChatRegistration(path, registration);
-    assert.equal(statSync(path).mode & 0o777, 0o600);
-    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), registration);
-    assert.deepEqual(readdirSync(directory), ['chat.json']);
-  });
-
-  it('removes only a registration the predicate owns, and tolerates missing or unparsable files', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'astrid-chat-remove-test-'));
-    temporaryDirectories.push(directory);
-    const path = join(directory, 'chat.json');
-    writeChatRegistration(path, chatRegistration(17335, 'token-value'));
-    removeChatRegistration(path, (registration) => registration.token === 'someone-else');
-    assert.equal(existsSync(path), true, 'a registration another service owns is left alone');
-    removeChatRegistration(path, (registration) => registration.token === 'token-value');
-    assert.equal(existsSync(path), false);
-    assert.doesNotThrow(() => removeChatRegistration(path, () => true));
-    writeFileSync(path, '{not json');
-    assert.doesNotThrow(() => removeChatRegistration(path, () => true));
-    assert.equal(existsSync(path), true, 'an unparsable file is not ours to remove');
-  });
-});
 
 describe('dev-local preview options', () => {
   it('parses preview mode only with an explicit output directory', () => {
@@ -768,24 +721,11 @@ test('a second launcher for another Astrid says to stop the first one', async ()
   }
 });
 
-test('the agent chat bridge stopping later quotes an installed start command containing spaces', async () => {
-  const result = await launcherEnds({
-    configuredOrigin: 'https://hosted.test',
-    env: { FAKE_ACP_EXIT_MS: '200', ASTRID_START_COMMAND: '/installed/Astrid App/start' },
-  });
-  assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], "Astrid: Agent chat stopped. Start Astrid again with '/installed/Astrid App/start'.");
-  assert.match(result.stderr.split('\n')[1], /^Details: Astrid ACP bridge exited with code 3; ACP is offline/);
-});
-
-test('the agent chat bridge stopping is its own friendly line', async () => {
-  const result = await launcherEnds({
-    configuredOrigin: 'https://hosted.test',
-    env: { FAKE_ACP_EXIT_MS: '200', ASTRID_START_COMMAND: '/installed/Astrid/start' },
-  });
-  assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], 'Astrid: Agent chat stopped. Start Astrid again with /installed/Astrid/start.');
-  assert.match(result.stderr.split('\n')[1], /^Details: Astrid ACP bridge exited with code 3; ACP is offline/);
+test('agent chat is supervised independently of the app launcher', async () => {
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test',
+    env: { FAKE_ACP_EXIT_MS: '200', ASTRID_START_COMMAND: '/installed/Astrid App/start' } });
+  try { assert(!readFileSync(started.spawnLog, 'utf8').includes('dev:astrid-acp')); }
+  finally { await started.stop(); }
 });
 
 test('a failed app start uses ASTRID_VERBOSE with the installed start command', async () => {
@@ -838,80 +778,21 @@ function assertOpenAfterStart(stdout, origin) {
   assert.equal(stdout, HEALTHY_OUTPUT(origin));
 }
 
-test('the hosted page reaches the chat bridge through the Runtime door only with --acp', async () => {
-  const chatPort = String(await freePort());
-  const acpToken = 'synthetic-acp-bridge-token';
-  // Without --acp: no registration is written, so the door answers that chat is unavailable.
-  {
-    const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
-    let started;
-    try {
-      started = await startLauncher({ fixture, env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort } });
-      assert.equal(existsSync(join(fixture.fixture, 'chat.json')), false, 'no chat registration without --acp');
-    } finally {
-      if (started) await started.stop();
-      await fixture.close();
-    }
-  }
-  // With --acp: the registration names the bridge and carries its credential, owner-only, and is removed on stop.
-  const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
-  const chatFile = join(fixture.fixture, 'chat.json');
-  let started;
-  try {
-    started = await startLauncher({ fixture, args: ['--acp'], env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort, ASTRID_ACP_BRIDGE_TOKEN: acpToken } });
-    // Written once the bridge answers with this launcher's credential, which can come just after the Open block.
-    for (let attempt = 0; attempt < 600 && !existsSync(chatFile); attempt += 1) await new Promise(r => setTimeout(r, 50));
-    assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), { endpoint: `http://127.0.0.1:${chatPort}`, token: acpToken });
-    assert.equal(statSync(chatFile).mode & 0o777, 0o600);
-    assert(!started.stdout.includes(acpToken) && !started.stderr.includes(acpToken), `${started.stdout}${started.stderr}`);
-    await started.stop();
-    assert.equal(existsSync(chatFile), false, 'chat.json is removed when the launcher stops');
-  } finally {
-    if (started) await started.stop();
-    await fixture.close();
-  }
-});
-
-test("a launcher whose chat bridge cannot bind leaves the running bridge's registration in place", async () => {
-  // Another launcher's bridge already holds the port and answers only its own credential.
-  const theirs = createServer((_req, res) => { res.writeHead(401); res.end(); });
-  await new Promise(r => theirs.listen(0, '127.0.0.1', r));
-  const chatPort = String(theirs.address().port);
-  const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
-  const chatFile = join(fixture.fixture, 'chat.json');
-  const registration = { endpoint: `http://127.0.0.1:${chatPort}`, token: 'their-bridge-token' };
-  writeFileSync(chatFile, JSON.stringify(registration), { mode: 0o600 });
-  try {
-    const result = await launcherEnds({ fixture, args: ['--acp'], env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort, ASTRID_ACP_BRIDGE_TOKEN: 'our-bridge-token', FAKE_ACP_EXIT_MS: '300' } });
-    assert.equal(result.code, 1, result.stdout + result.stderr);
-    assert.equal(result.stderr.split('\n')[0], 'Astrid: Agent chat stopped. Start Astrid again with npm run dev:local.');
-    assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), registration, 'the running bridge keeps its registration');
-  } finally {
-    await new Promise(r => theirs.close(r));
-    await fixture.close();
-  }
-});
-
-test('a stale chat.json naming this bridge is removed at start, and one naming another port is left in place', async () => {
-  const chatPort = String(await freePort());
-  const cases = [
-    ['this bridge', `http://127.0.0.1:${chatPort}`, false],
-    ['another port', 'http://127.0.0.1:1', true],
-  ];
-  for (const [label, endpoint, kept] of cases) {
+test('the launcher leaves agent chat registration and lifecycle to the Runtime', async () => {
+  for (const args of [[], ['--acp']]) {
     const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
     const chatFile = join(fixture.fixture, 'chat.json');
-    const stale = JSON.stringify({ endpoint, token: 'stale-token' });
-    writeFileSync(chatFile, stale);
+    const registration = { endpoint: 'http://127.0.0.1:17335', token: 'agent-service-token' };
+    writeFileSync(chatFile, JSON.stringify(registration), { mode: 0o600 });
     let started;
     try {
-      started = await startLauncher({ fixture, env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort } });
-      assert.equal(existsSync(chatFile), kept, label);
-      if (kept) assert.equal(readFileSync(chatFile, 'utf8'), stale, label);
-    } finally {
-      if (started) await started.stop();
-      await fixture.close();
-    }
+      started = await startLauncher({ fixture, args });
+      assert(!readFileSync(started.spawnLog, 'utf8').includes('dev:astrid-acp'));
+      assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), registration);
+      await started.stop();
+      assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), registration);
+      assert(!started.stdout.includes(registration.token) && !started.stderr.includes(registration.token));
+    } finally { if (started) await started.stop(); await fixture.close(); }
   }
 });
 
@@ -1217,11 +1098,10 @@ test('shutdown stops Vite and bridge services before Runtime down', async () => 
     await started.stop();
     const lifecycle = readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8').trim().split('\n');
     assert(lifecycle.indexOf('vite:stop') >= 0, lifecycle.join('\n'));
-    assert(lifecycle.indexOf('acp:stop') >= 0, lifecycle.join('\n'));
+    assert.equal(lifecycle.indexOf('acp:stop'), -1, 'chat is owned by the Runtime');
     const down = lifecycle.find((line) => line.startsWith('runtime:down '));
     assert(down, lifecycle.join('\n'));
-    assert(lifecycle.indexOf('vite:stop') < lifecycle.indexOf('acp:stop'), lifecycle.join('\n'));
-    assert(lifecycle.indexOf('acp:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
+    assert(lifecycle.indexOf('vite:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
     assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false');
   } finally { if (started) await started.stop(); await fixture.close(); }
 });

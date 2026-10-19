@@ -8,6 +8,7 @@ import { readFileSync, mkdirSync, chmodSync, writeFileSync, existsSync } from 'n
 import { homedir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { currentChat } from './runtime-discovery-proxy.mjs';
 import { WebSocket } from 'ws';
 import { classifyPairedRoute, upstreamRequestHeaders, PAIRED_MAX_FRAME_BYTES, PAIRED_MAX_JSON_BYTES, PAIRED_MAX_UPLOAD_BYTES } from '../config/vite/pairedRoutePolicy';
 import {
@@ -24,7 +25,6 @@ const discoveryPath = resolve(args.get('discovery') || process.env.ASTRID_WORKSP
 const relayOrigin = args.get('relay-origin') || process.env.ASTRID_APP_PAIRED_RELAY_ORIGIN;
 const expectedRealm = args.get('realm') || process.env.ASTRID_APP_PAIRED_REALM_ID;
 const expectedActor = process.env.ASTRID_APP_PAIRED_PRODUCT_ACTOR?.trim();
-const acpBridgeToken = process.env.ASTRID_ACP_BRIDGE_TOKEN?.trim();
 const statePath = resolve(args.get('state') || process.env.ASTRID_APP_PAIRED_CONNECTOR_STATE || `${homedir()}/.config/astrid/paired-connector.json`);
 const resetPairing = args.has('reset-pairing');
 if (!relayOrigin) throw new Error('paired connector requires --relay-origin or ASTRID_APP_PAIRED_RELAY_ORIGIN');
@@ -165,15 +165,19 @@ async function beginRequest(id: string, service: string, path: string, method: s
   const maxBytes = route.service === 'runtime' && route.stream ? PAIRED_MAX_UPLOAD_BYTES : PAIRED_MAX_JSON_BYTES;
   if (headers['content-length'] && (!/^\d+$/.test(headers['content-length']) || Number(headers['content-length']) > maxBytes)) { send({ type: 'response_error', id, detail: 'request body exceeds local bound' }); return; }
   const targetPath = service === 'acp' ? path.replace(/^\/acp(?=\/|$)/, '') || '/' : path;
+  let chat;
+  if (service === 'acp') {
+    try { chat = currentChat(discoveryPath); }
+    catch { send({ type: 'response_error', id, detail: 'Agent chat is unavailable' }); return; }
+  }
   const target = service === 'runtime'
     ? new URL(targetPath, endpoint)
+    : chat ? new URL(targetPath, chat.endpoint)
     : service === 'compose'
       ? new URL(process.env.ASTRID_LOCAL_COMPOSE_URL || 'http://127.0.0.1:2222/api/astrid/generation/compose')
       : new URL(
         targetPath,
-        `http://127.0.0.1:${service === 'acp'
-          ? process.env.VITE_ASTRID_ACP_BRIDGE_PORT || '17335'
-          : process.env.VITE_ASTRID_BRIDGE_PORT || endpoint.port}`,
+        `http://127.0.0.1:${process.env.VITE_ASTRID_BRIDGE_PORT || endpoint.port}`,
       );
   const controller = new AbortController();
   let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
@@ -181,7 +185,7 @@ async function beginRequest(id: string, service: string, path: string, method: s
   requests.set(id, { controller: streamController, abort: controller, cancelled: false, bytes: 0, maxBytes });
   const outgoing: Record<string, string> = { Accept: headers.accept || 'application/json' };
   Object.assign(outgoing, upstreamRequestHeaders(headers));
-  const authorizationToken = service === 'acp' ? acpBridgeToken : token;
+  const authorizationToken = service === 'acp' ? chat?.token : token;
   if (!authorizationToken) {
     send({ type: 'response_error', id, detail: 'ACP bridge credential is not configured' });
     return;

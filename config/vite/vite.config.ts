@@ -82,6 +82,7 @@ export default defineConfig(() => {
     "/api/astrid/acp": createAstridAcpBridgeProxyOptions(
       astridBridgeProxyPolicy,
       astridAcpBridgePort,
+      process.env.ASTRID_ACP_VIA_DISCOVERY_PROXY === '1',
     ),
   };
   const runtimeTarget = process.env.VITE_WORKSPACE_RUNTIME_URL?.trim() || null;
