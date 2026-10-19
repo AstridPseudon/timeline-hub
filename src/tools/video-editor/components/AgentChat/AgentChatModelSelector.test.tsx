@@ -3,7 +3,6 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { AgentChatModelSelector, summarizeUsage } from './AgentChatModelSelector.tsx';
 import type { AcpModelCatalog } from '@/integrations/astrid/acpRoutes.ts';
-import type { LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 
 beforeAll(() => {
   // cmdk keeps the highlighted option in view while arrowing; jsdom has no layout.
@@ -20,10 +19,6 @@ const catalog: AcpModelCatalog = {
   ],
 };
 
-const agents: LocalAgentChoice[] = [
-  { id: 'claude-code', name: 'Claude Code', installed: true, authStatus: 'signed-in', adapterInstalled: false, installCommand: 'astrid adapters install claude-code', loginCommand: 'claude auth login' },
-  { id: 'codex', name: 'Codex', installed: true, authStatus: 'signed-in', adapterInstalled: true, installCommand: null, loginCommand: null },
-];
 
 function openList(onSelectModel = vi.fn(), onOpenChange = vi.fn()) {
   render(<AgentChatModelSelector catalog={catalog} onSelectModel={onSelectModel} onOpenChange={onOpenChange} />);
@@ -156,59 +151,15 @@ describe('AgentChatModelSelector', () => {
     expect(await screen.findByText('OpenAI')).toBeTruthy();
   });
 
-  it('shows unavailable agent states and the exact adapter install and login commands', () => {
-    const unavailable: LocalAgentChoice[] = [
-      { id: 'claude-code', name: 'Claude Code', installed: true, authStatus: 'signed-in', adapterInstalled: false, installCommand: 'astrid adapter install claude-code --exact', loginCommand: 'claude auth login' },
-      { id: 'codex', name: 'Codex', installed: true, authStatus: 'signed-out', adapterInstalled: false, installCommand: 'astrid adapter install codex --exact', loginCommand: 'codex login --browser' },
-    ];
-    render(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} agents={unavailable} onSelectAgent={vi.fn()} />);
-    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
-    expect(screen.getAllByText('Available to install')).toHaveLength(2);
-    expect(screen.getByText('astrid adapter install claude-code --exact')).toBeTruthy();
-    expect(screen.getByText('Your Claude login · Signed in')).toBeTruthy();
-    expect(screen.queryByText('claude auth login')).toBeNull();
-    expect(screen.getByRole('option', { name: /Claude Code/ })).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByText('Your ChatGPT login · Signed out')).toBeTruthy();
-    expect(screen.getByText('astrid adapter install codex --exact')).toBeTruthy();
-    expect(screen.getByText('codex login --browser')).toBeTruthy();
-    expect(screen.getByRole('option', { name: /Codex/ })).toHaveAttribute('aria-disabled', 'true');
-  });
-
-  it('allows installed agents with unknown auth while keeping missing and busy agents disabled', async () => {
-    const unknown: LocalAgentChoice[] = [
-      { id: 'claude-code', name: 'Claude Code', installed: false, authStatus: 'unknown', adapterInstalled: false, installCommand: null, loginCommand: null },
-      { id: 'codex', name: 'Codex', installed: true, authStatus: 'unknown', adapterInstalled: true, installCommand: null, loginCommand: null },
-    ];
-    const onSelectAgent = vi.fn();
-    const { rerender } = render(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} agents={unknown} onSelectAgent={onSelectAgent} />);
-    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
-    expect(screen.getByText('CLI not installed')).toBeTruthy();
-    expect(screen.getByText('Sign-in status unknown')).toBeTruthy();
-    expect(screen.getByRole('option', { name: /Claude Code/ })).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByRole('option', { name: /Codex/ })).not.toHaveAttribute('aria-disabled', 'true');
-    fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
-    await waitFor(() => expect(onSelectAgent).toHaveBeenCalledWith('codex'));
-    rerender(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} agents={agents} onSelectAgent={vi.fn()} busy />);
-    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
-    expect(screen.getByRole('option', { name: /Codex/ })).toHaveAttribute('aria-disabled', 'true');
-  });
-
-  it('selects a ready external agent, closes the picker, and hides OMP models', async () => {
-    const onSelectAgent = vi.fn();
-    const { rerender } = render(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} agents={agents} onSelectAgent={onSelectAgent} />);
+  it('shows an external agent\'s default-model note and never the OMP list', async () => {
+    render(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} selectedAgent="codex" />);
     const trigger = screen.getByRole('combobox', { name: 'Agent model' });
-    fireEvent.click(trigger);
-    expect(await screen.findByText('OpenAI')).toBeTruthy();
-    expect(screen.getByText('OMP models')).toBeTruthy();
-    fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
-    await waitFor(() => expect(onSelectAgent).toHaveBeenCalledWith('codex'));
-    rerender(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} agents={agents} onSelectAgent={onSelectAgent} selectedAgent="codex" />);
-    expect(trigger.textContent).toContain('Codex');
-    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(trigger.textContent).toContain('Default model');
     fireEvent.click(trigger);
     expect(await screen.findByText('Uses your Codex default model.')).toBeTruthy();
     expect(screen.queryByText('OpenAI')).toBeNull();
     expect(screen.queryByRole('option', { name: /GPT 5/ })).toBeNull();
+    expect(screen.queryByText('Agent')).toBeNull();
   });
 
   it('lets a selection failure be dismissed', () => {

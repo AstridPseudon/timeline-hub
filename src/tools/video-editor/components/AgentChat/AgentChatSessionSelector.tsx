@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Check, ChevronsUpDown, Star } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
+import type { LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { AgentIcon, agentNames } from './agentIdentity.tsx';
 
 interface AgentChatSessionSelectorProps {
   sessions: Array<{ id: string }>;
@@ -11,6 +13,8 @@ interface AgentChatSessionSelectorProps {
   onSelectSession: (sessionId: string) => void;
   onSetMainSession?: (sessionId: string) => void;
   settingMainSessionId?: string | null;
+  /** Each chat's agent and the model it last used, shown under its title. */
+  describeSession?: (sessionId: string) => { agent: LocalAgentId; model?: string | null };
 }
 
 export function AgentChatSessionSelector({
@@ -21,6 +25,7 @@ export function AgentChatSessionSelector({
   onSelectSession,
   onSetMainSession,
   settingMainSessionId = null,
+  describeSession,
 }: AgentChatSessionSelectorProps) {
   const [open, setOpen] = useState(false);
   const activeIndex = sessions.findIndex((session) => session.id === activeSessionId);
@@ -42,10 +47,10 @@ export function AgentChatSessionSelector({
           className="flex h-7 w-[5.5rem] min-w-0 max-w-32 shrink items-center gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="min-w-0 truncate">{activeLabel}</span>
-          <ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 opacity-50" aria-hidden="true" />
+          <ChevronsUpDown className="ml-auto hidden h-3.5 w-3.5 shrink-0 opacity-50 @[24rem]/agent-header:block" aria-hidden="true" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-48 max-w-[calc(100vw-2rem)] p-0" align="end">
+      <PopoverContent className="w-60 max-w-[calc(100vw-2rem)] p-0" align="end">
         <Command>
           <CommandInput placeholder="Search chats..." className="h-8" />
           <CommandList>
@@ -56,11 +61,13 @@ export function AgentChatSessionSelector({
                 const selected = session.id === activeSessionId;
                 const isMain = session.id === mainSessionId;
                 const isSettingMain = session.id === settingMainSessionId;
+                const meta = describeSession?.(session.id);
+                const metaLabel = meta ? `${agentNames[meta.agent]}${meta.model ? ` · ${meta.model}` : ''}` : null;
                 return (
                   <CommandItem
                     key={session.id}
                     value={label}
-                    keywords={[label, ...(isMain ? ['Main'] : [])]}
+                    keywords={[label, ...(isMain ? ['Main'] : []), ...(metaLabel ? [metaLabel] : [])]}
                     className="group"
                     onSelect={() => {
                       onSelectSession(session.id);
@@ -68,7 +75,15 @@ export function AgentChatSessionSelector({
                     }}
                   >
                     <Check className={`mr-2 h-3.5 w-3.5 shrink-0 ${selected ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true" />
-                    <span className="min-w-0 truncate">{label}</span>
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="min-w-0 truncate normal-case">{label}</span>
+                      {meta && (
+                        <span className="flex min-w-0 items-center gap-1 text-[11px] leading-4 text-muted-foreground normal-case" title={metaLabel ?? undefined}>
+                          <AgentIcon agent={meta.agent} className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{metaLabel}</span>
+                        </span>
+                      )}
+                    </span>
                     {isMain ? (
                       <span className="ml-auto flex shrink-0 items-center gap-1 pl-2 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                         <Star className="h-3 w-3 fill-current" aria-hidden="true" />Main

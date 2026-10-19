@@ -4,7 +4,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { AcpModelCatalog } from '@/integrations/astrid/acpRoutes.ts';
-import type { LocalAgentChoice, LocalAgentId, LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
+import type { LocalAgentId, LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
+import { AgentIcon, agentNames } from './agentIdentity.tsx';
 
 type Provider = AcpModelCatalog['providers'][number];
 type UsageLimit = NonNullable<Provider['usage']>['limits'][number];
@@ -18,23 +19,11 @@ interface AgentChatModelSelectorProps {
   onOpenChange?: (open: boolean) => void;
   loading?: boolean;
   catalogError?: string | null;
-  agents?: LocalAgentChoice[];
+  /** The current chat's agent; the list shows only its models. */
   selectedAgent?: LocalAgentId;
-  onSelectAgent?: (agent: LocalAgentId) => void | Promise<void>;
-  agentsLoading?: boolean;
-  agentsError?: string | null;
   localModels?: LocalAgentModels | null;
   onSelectLocalModel?: (modelId: string) => void | Promise<void>;
 }
-
-const agentNames: Record<LocalAgentId, string> = {
-  astrid: 'Astrid',
-  'claude-code': 'Claude Code',
-  codex: 'Codex',
-};
-const AGENT_IDS = ['astrid', 'claude-code', 'codex'] as const;
-
-type AgentState = { disabled: boolean; status: string; installCommand?: string; loginCommand?: string; authLabel?: string };
 
 const KEYCAP = 'verbatim-case rounded border border-border px-1 font-mono text-[10px]';
 /** Past this many keyless models, each keyless provider folds into one row. */
@@ -110,7 +99,7 @@ function ProviderHeading({ provider }: { provider: Provider }) {
   );
 }
 
-export function AgentChatModelSelector({ catalog, onSelectModel, selectionError = null, busy = false, open: controlledOpen, onOpenChange, loading = false, catalogError = null, agents, selectedAgent = 'astrid', onSelectAgent, agentsLoading = false, agentsError = null, localModels = null, onSelectLocalModel }: AgentChatModelSelectorProps) {
+export function AgentChatModelSelector({ catalog, onSelectModel, selectionError = null, busy = false, open: controlledOpen, onOpenChange, loading = false, catalogError = null, selectedAgent = 'astrid', localModels = null, onSelectLocalModel }: AgentChatModelSelectorProps) {
   const [localOpen, setLocalOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [showSignedOut, setShowSignedOut] = useState(false);
@@ -144,32 +133,10 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
   const resultGroups = [...new Set(shownResults.map(result => result.provider))]
     .map(provider => ({ provider, models: shownResults.filter(result => result.provider === provider).map(result => result.model) }));
   const listedSignedOut = searching ? signedOut.filter(provider => matches(tokens, provider.name)) : showSignedOut ? signedOut : [];
-  const agentChoices = agents ?? [];
-  const showAgents = agents !== undefined || agentsLoading || Boolean(agentsError);
   const astridSelected = selectedAgent === 'astrid';
-  const agentState = (id: LocalAgentId): AgentState => {
-    if (id === 'astrid') {
-      return { disabled: busy, status: catalog.providers.some(provider => provider.signedIn) ? 'Signed in' : 'Not signed in' };
-    }
-    const agent = agentChoices.find(choice => choice.id === id);
-    if (!agent) return { disabled: true, status: agentsLoading ? 'Checking availability…' : 'Status unavailable' };
-    if (!agent.installed) return { disabled: true, status: 'CLI not installed' };
-    const authLabel = agent.authStatus === 'signed-in' ? 'Signed in' : agent.authStatus === 'signed-out' ? 'Signed out' : 'Sign-in status unknown';
-    if (!agent.adapterInstalled) return { disabled: true, status: 'Available to install', installCommand: agent.installCommand ?? undefined, loginCommand: agent.authStatus === 'signed-out' ? agent.loginCommand ?? undefined : undefined, authLabel };
-    if (agent.authStatus === 'signed-out') return { disabled: true, status: 'Signed out', loginCommand: agent.loginCommand ?? undefined, authLabel };
-    if (agent.authStatus === 'unknown') return { disabled: busy, status: 'Sign-in status unknown', authLabel };
-    return { disabled: busy, status: 'Signed in', authLabel };
-  };
-  const selectAgent = (id: LocalAgentId) => {
-    if (agentState(id).disabled || !onSelectAgent) return;
-    void Promise.resolve(onSelectAgent(id)).catch(() => undefined);
-    changeOpen(false);
-  };
-  // An external agent's models and agent choices share the search field.
-  const listedAgents = AGENT_IDS.filter(id => !searching || (!astridSelected && matches(tokens, agentNames[id])));
   const localCurrent = !astridSelected ? localModels?.availableModels.find(model => model.modelId === localModels.currentModelId) : undefined;
   const localMatches = localModels?.availableModels.filter(model => !searching || matches(tokens, `${model.name} ${model.description ?? ''} ${model.modelId}`)) ?? [];
-  const label = astridSelected ? current?.model.name ?? catalog.currentModel ?? 'Choose model' : localCurrent?.name ?? agentNames[selectedAgent];
+  const label = astridSelected ? current?.model.name ?? catalog.currentModel ?? 'Choose model' : localCurrent?.name ?? 'Default model';
   const showError = selectionError !== null && selectionError !== dismissedError;
 
   const modelItem = (provider: Provider, model: Provider['models'][number]) => {
@@ -198,62 +165,26 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
       <Popover open={open} onOpenChange={changeOpen}>
         <PopoverTrigger asChild>
           <button type="button" role="combobox" aria-label="Agent model" aria-expanded={open}
-            title={!astridSelected ? `Agent: ${agentNames[selectedAgent]}${localCurrent ? ` · ${localCurrent.name}` : ''}` : current ? `Agent model: ${current.provider.name} · ${current.model.name}` : 'Choose the agent model'}
+            title={!astridSelected ? `Agent: ${agentNames[selectedAgent]} · ${localCurrent?.name ?? 'default model'}` : current ? `Agent model: ${current.provider.name} · ${current.model.name}` : 'Choose the agent model'}
             className={cn('flex h-7 w-full min-w-0 items-center gap-1.5 rounded-md border bg-card/80 px-2 text-xs transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               showError ? 'border-destructive/50 text-destructive' : 'border-border/70 text-muted-foreground')}>
             <span className="min-w-0 truncate normal-case">{label}</span>
-            <ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 opacity-50" aria-hidden="true" />
+            {/* In a narrow header the chevrons give way so the model name reads in full. */}
+            <ChevronsUpDown className="ml-auto hidden h-3.5 w-3.5 shrink-0 opacity-50 @[24rem]/agent-header:block" aria-hidden="true" />
           </button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-72 max-w-[calc(100vw-2rem)] p-0">
-          <Command loop shouldFilter={false} defaultValue={astridSelected ? catalog.currentModel ?? undefined : localCurrent?.modelId ?? `agent:${selectedAgent}`}>
+          <Command loop shouldFilter={false} defaultValue={astridSelected ? catalog.currentModel ?? undefined : localCurrent?.modelId}>
             <CommandInput placeholder="Search models..." className="h-8" value={query} onValueChange={setQuery} />
             <CommandList className="max-h-80">
-              {showAgents && (listedAgents.length > 0 || !searching) && (
-                <>
-                  <CommandGroup heading="Agent">
-                    {agentsLoading && <p className="px-2 pb-1 text-[11px] text-muted-foreground">Checking agent availability…</p>}
-                    {agentsError && <p role="alert" className="px-2 pb-1 text-[11px] text-destructive">Could not load agents: {agentsError}</p>}
-                    {listedAgents.map(id => {
-                      const state = agentState(id);
-                      const selected = selectedAgent === id;
-                      const unavailable = state.disabled || !onSelectAgent;
-                      return (
-                        <Fragment key={id}>
-                          <CommandItem value={`agent:${id}`} disabled={unavailable} aria-current={selected ? 'true' : undefined}
-                            className="items-start gap-2 data-[disabled=true]:opacity-100" onSelect={() => selectAgent(id)}>
-                            <Check className={cn('mt-0.5 h-3.5 w-3.5 shrink-0', selected ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
-                            <span className="flex min-w-0 flex-1 flex-col">
-                              <span className="flex items-baseline gap-2">
-                                <span className={cn('normal-case', unavailable ? 'text-muted-foreground' : selected && 'text-foreground')}>{agentNames[id]}</span>
-                                <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">{state.status}</span>
-                              </span>
-                              {id === 'astrid' && <span className="text-[11px] text-muted-foreground">OMP models</span>}
-                              {id === 'claude-code' && <span className="text-[11px] text-muted-foreground">Your Claude login{state.authLabel && <> · {state.authLabel}</>}</span>}
-                              {id === 'codex' && <span className="text-[11px] text-muted-foreground">Your ChatGPT login{state.authLabel && <> · {state.authLabel}</>}</span>}
-                            </span>
-                          </CommandItem>
-                          {state.installCommand && (
-                            <p className="pb-1 pl-[1.875rem] pr-2 text-[11px] text-muted-foreground">Install adapter <code className={cn(KEYCAP, 'select-all')}>{state.installCommand}</code></p>
-                          )}
-                          {state.loginCommand && (
-                            <p className="pb-1 pl-[1.875rem] pr-2 text-[11px] text-muted-foreground">Sign in: run <code className={cn(KEYCAP, 'select-all')}>{state.loginCommand}</code></p>
-                          )}
-                        </Fragment>
-                      );
-                    })}
-                    {!searching && <p className="px-2 pb-1 pt-1.5 text-[10px] text-muted-foreground/80">Agent selection affects new chats only. Saved chats keep their original agent.</p>}
-                  </CommandGroup>
-                  <CommandSeparator />
-                </>
-              )}
-              {!astridSelected && showAgents && !searching && !localModels && !loading && !catalogError && (
+              {busy && (astridSelected ? signedIn.length + keyless.length > 0 : localMatches.length > 0) && <p className="px-3 pt-2 text-[11px] text-muted-foreground">You can switch once the agent is idle.</p>}
+              {!astridSelected && !searching && !localModels && !loading && !catalogError && (
                 <p className="px-3 py-2.5 text-[11px] text-muted-foreground">Uses your {agentNames[selectedAgent]} default model.</p>
               )}
               {!astridSelected && loading && <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />Loading models...</div>}
               {!astridSelected && catalogError && <p role="alert" className="px-3 py-3 text-xs text-destructive">Could not load models: {catalogError}</p>}
               {!astridSelected && !loading && !catalogError && localModels && localMatches.length > 0 && (
-                <CommandGroup heading="Models">
+                <CommandGroup heading={<span className="flex items-center gap-1.5"><AgentIcon agent={selectedAgent} className="h-3 w-3" /><span className="normal-case">{agentNames[selectedAgent]} models</span></span>}>
                   {localMatches.map(model => {
                     const selected = model.modelId === localModels.currentModelId;
                     return (
@@ -264,10 +195,10 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
                           void Promise.resolve(onSelectLocalModel(model.modelId)).catch(() => undefined);
                           changeOpen(false);
                         }}>
-                        <Check className={cn('mt-0.5 h-3.5 w-3.5 shrink-0', selected ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
+                        <Check className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', selected ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
                         <span className="flex min-w-0 flex-col">
                           <span className={cn('truncate normal-case', selected && 'text-foreground')}>{model.name}</span>
-                          {model.description && <span className="truncate text-[11px] text-muted-foreground">{model.description}</span>}
+                          {model.description && <span className="truncate text-[11px] text-muted-foreground normal-case">{model.description}</span>}
                         </span>
                       </CommandItem>
                     );
@@ -285,7 +216,6 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
               {astridSelected && catalogError && <p role="alert" className="px-3 py-3 text-xs text-destructive">Could not load models: {catalogError}</p>}
               {astridSelected && !loading && !catalogError && catalog.providers.length === 0 && <p className="px-3 py-3 text-xs text-muted-foreground">No models available.</p>}
               {((astridSelected && catalog.providers.length > 0) || (!astridSelected && localModels && searching)) && <CommandEmpty className="py-6 text-center text-xs text-muted-foreground">No models match.</CommandEmpty>}
-              {astridSelected && busy && signedIn.length + keyless.length > 0 && <p className="px-3 pt-2 text-[11px] text-muted-foreground">You can switch once the agent is idle.</p>}
               {!astridSelected ? null : searching ? resultGroups.map(({ provider, models }) => providerGroup(provider, models)) : (
                 <>
                   {signedIn.map(provider => providerGroup(provider))}
