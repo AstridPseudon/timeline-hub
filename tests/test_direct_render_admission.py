@@ -96,7 +96,8 @@ def test_direct_managed_render_admission_freezes_snapshot_before_claim(tmp_path)
         service.close()
 
 
-def test_direct_long_render_admission_budgets_png_fallback(tmp_path, monkeypatch):
+@pytest.mark.parametrize("alpha_mode", ["opaque", "stamp", "profile"])
+def test_direct_long_render_admission_budgets_current_fallback(tmp_path, monkeypatch, alpha_mode):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
@@ -108,14 +109,17 @@ def test_direct_long_render_admission_budgets_png_fallback(tmp_path, monkeypatch
         })
         project = service.create_project({"slug": "long-render", "name": "Long Render"}, idempotency_key="project")
         source = service.ingest(project["id"], b"long-video", media_type="video/mp4", idempotency_key="source")["data"]
-        service.create_timeline_document(project["id"], {
-            "timeline_id": "main", "slug": "main",
-            "config": {"clips": [
+        timeline_config = {"clips": [
                 {"id": "late-media", "clipType": "media", "at": 140, "from": 0, "to": 40,
                  "speed": 2, "track": "visual", "asset": "source"},
                 {"id": "long-hold", "clipType": "hold", "at": 160, "hold": 16,
                  "speed": 2, "track": "visual"},
-            ]},
+            ]}
+        if alpha_mode == "stamp":
+            timeline_config["metadata"] = {"astrid_layer": {"alpha": True}}
+        service.create_timeline_document(project["id"], {
+            "timeline_id": "main", "slug": "main",
+            "config": timeline_config,
             "registry": {"assets": {"source": {
                 "media_id": source["object_id"], "content_sha256": source["object_id"],
             }}},
@@ -126,15 +130,29 @@ def test_direct_long_render_admission_budgets_png_fallback(tmp_path, monkeypatch
         admitted = service.create_task({
             "project": project["id"], "capability_id": "rendering.render",
             "capability_digest": capability_digest, "idempotency_key": "long-render",
-            "spec": {"family": "render", "params": {"timeline_ref": "main"}},
+            "spec": {"family": "render", "params": {
+                "timeline_ref": "main",
+                **({"profile": {
+                    "width": 1920, "height": 1080, "fps_rational": [30, 1],
+                    "time_base": [1, 30], "container": "mov", "video_codec": "prores",
+                    "video_profile": "4444", "video_level": "unknown",
+                    "pixel_format": "yuva444p12le", "duration_tolerance": 0,
+                }} if alpha_mode == "profile" else {}),
+            }},
         })
         estimate = admitted["task"]["spec"]["storage_estimate"]
         png_raw_frame_bytes = (4 * 1920 + 1) * 1080
         png_frame_bytes = (png_raw_frame_bytes * 101 + 99) // 100
-        assert estimate["scratch_bytes"] >= png_frame_bytes * 5040 + 256 * 1024 * 1024
-        # The output estimate uses the same 168-second render clock: source
-        # trims are relative to placement, and speed applies to holds too.
-        assert estimate["output_bytes"] == 344_359_936
+        png_sequence_bytes = png_frame_bytes * 5040
+        jpeg_sequence_bytes = ((1920 * 1080 * 6 + 4) // 5) * 5040
+        if alpha_mode == "opaque":
+            assert estimate["scratch_bytes"] >= jpeg_sequence_bytes + 256 * 1024 * 1024
+            assert estimate["scratch_bytes"] < png_sequence_bytes
+            # Eight timeline seconds of held media at 160 seconds keeps the
+            # opaque output clock at exactly 168 seconds / 5040 frames.
+            assert estimate["output_bytes"] == 344_359_936
+        else:
+            assert estimate["scratch_bytes"] >= png_sequence_bytes + 256 * 1024 * 1024
     finally:
         service.close()
 

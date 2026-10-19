@@ -127,7 +127,8 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
     assert f["service"].create_task(request) == f["service"].create_task(request)
 
 
-def test_canonical_long_media_and_hold_admission_covers_png_fallback(canonical_scene, monkeypatch):
+@pytest.mark.parametrize("alpha", [False, True], ids=["opaque", "alpha-stamp"])
+def test_canonical_long_media_and_hold_admission_covers_selected_fallback(canonical_scene, monkeypatch, alpha):
     f = canonical_scene
     publication = _publication(f)
     publication["parent_composition"]["clips"].append({
@@ -138,19 +139,27 @@ def test_canonical_long_media_and_hold_admission_covers_png_fallback(canonical_s
         "id": "long-hold", "clipType": "hold", "at": 40, "hold": 256, "speed": 2,
         "track": "visual",
     })
+    if alpha:
+        publication["parent_composition"]["config"]["metadata"] = {
+            "astrid_layer": {"alpha": True},
+        }
     f["service"].publish_parent_composition(
         f["project"], "main", publication, idempotency_key="publish-long-fallback",
     )
     monkeypatch.setattr(f["service"].store, "storage_preflight", lambda *_args, **_kwargs: {"ok": True})
     admitted = f["service"].create_task(_request(f, key="long-fallback"))
     estimate = admitted["task"]["spec"]["storage_estimate"]
-    # At 30 fps, the nonzero media clips end at frame 450 and the held still
-    # reaches frame 5040 after applying speed=2 to its hold duration. Runtime
-    # must budget the full raw-RGBA PNG sequence.
+    # At 30 fps, the held still reaches frame 5040. Opaque output uses the
+    # JPEG95 fallback estimate; an Astrid alpha stamp retains PNG budgeting.
     png_raw_frame_bytes = (4 * 1920 + 1) * 1080
     png_frame_bytes = (png_raw_frame_bytes * 101 + 99) // 100
     png_sequence_bytes = png_frame_bytes * 5040
-    assert estimate["scratch_bytes"] >= png_sequence_bytes + 256 * 1024 * 1024
+    jpeg_sequence_bytes = ((1920 * 1080 * 6 + 4) // 5) * 5040
+    if alpha:
+        assert estimate["scratch_bytes"] >= png_sequence_bytes + 256 * 1024 * 1024
+    else:
+        assert estimate["scratch_bytes"] >= jpeg_sequence_bytes + 256 * 1024 * 1024
+        assert estimate["scratch_bytes"] < png_sequence_bytes
 
 
 @pytest.mark.parametrize("route", ["/api/runtime/v1/objects/{encoded}", "/v1/objects/{encoded}",

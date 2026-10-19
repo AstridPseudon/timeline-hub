@@ -61,6 +61,18 @@ def configured_spec_retention_days() -> int:
     return days
 
 
+_REMOTION_ALPHA_PIXEL_FORMATS = frozenset({"yuva444p10le", "yuva444p12le"})
+
+
+def _managed_render_uses_alpha(config, profile):
+    metadata = config.get("metadata") if isinstance(config, dict) else None
+    layer = metadata.get("astrid_layer") if isinstance(metadata, dict) else None
+    if isinstance(layer, dict) and layer.get("alpha") is True:
+        return True
+    pixel_format = profile.get("pixel_format") if isinstance(profile, dict) else None
+    return isinstance(pixel_format, str) and pixel_format.lower() in _REMOTION_ALPHA_PIXEL_FORMATS
+
+
 def retire_terminal_specs(connection: sqlite3.Connection, *, retention_days: int | None = None):
     """Keep terminal summaries while releasing payloads beyond the replay window."""
     if retention_days is None:
@@ -1959,8 +1971,9 @@ class RealmStore:
 
         Runtime owns exact CAS object sizes and immutable snapshot bytes.
         Profile validation remains a host concern, while this admission
-        budget also covers the current Remotion default fallback's complete
-        attempt-local PNG sequence, consistent with Astrid's storage estimate.
+        budget also covers the current Remotion default fallback's encoded
+        frame sequence (JPEG95 for opaque output, PNG for alpha output),
+        consistent with Astrid's storage estimate.
         """
         if profile is not None and not isinstance(profile, dict):
             raise ValidationError("render profile must be an object")
@@ -2059,14 +2072,17 @@ class RealmStore:
         video_bitrate = max(4_000_000, math.ceil(width * height * fps / 4 / 1000) * 1000)
         encoded_payload = math.ceil(duration_seconds * (video_bitrate + 320_000) / 8)
         output_bytes = max(1024 * 1024, math.ceil(encoded_payload * 1.03) + 1024 * 1024)
-        # Astrid's Remotion fallback writes every rendered frame as a PNG
-        # before encoding. Bound the PNG sequence using uncompressed RGBA plus
-        # one filter byte per scanline and a 1% compression/chunk allowance;
-        # admission must cover that attempt-local peak even when the final MP4
-        # is small.
-        png_raw_frame_bytes = (4 * width + 1) * height
-        png_frame_bytes = (png_raw_frame_bytes * 101 + 99) // 100
-        png_sequence_bytes = png_frame_bytes * render_frames
+        # Remotion's default opaque fallback uses JPEG quality 95; alpha output
+        # uses a transparent PNG sequence. Keep admission aligned with the
+        # renderer's current output mode rather than charging PNG for every job.
+        if _managed_render_uses_alpha(config, profile):
+            png_raw_frame_bytes = (4 * width + 1) * height
+            frame_sequence_bytes = ((png_raw_frame_bytes * 101 + 99) // 100) * render_frames
+        else:
+            # JPEG95 is content-dependent: one byte per pixel plus 20%,
+            # matching Astrid's selected-format frame storage model.
+            jpeg_frame_bytes = (width * height * 6 + 4) // 5
+            frame_sequence_bytes = jpeg_frame_bytes * render_frames
         materialization_bytes = (
             managed_input_bytes
             + (managed_entry_bytes * 2)
@@ -2075,7 +2091,7 @@ class RealmStore:
         scratch_bytes = max(
             256 * 1024 * 1024,
             materialization_bytes
-            + png_sequence_bytes
+            + frame_sequence_bytes
             + output_bytes
             + 2 * 1024 * 1024
             + _REMOTION_RUNTIME_WORKSPACE_BYTES,
