@@ -4,12 +4,16 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+from concurrent.futures import ThreadPoolExecutor
+from threading import Event
 from types import SimpleNamespace
 
 import pytest
 
-from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+from astrid.core.receipts.canonical import canonical_json
+from astrid.core.timeline.authoring_bundle import compile_authoring_candidate, open_authoring_bundle
 from astrid.sdk.contracts import DomainResult
+from astrid.sdk.remote import RemoteTimelines
 from astrid.sdk.timeline import store
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.capture import capture_move
@@ -17,6 +21,7 @@ from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.outbox import request_bytes
 from astrid.sdk.timeline.rebase import replay
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+from astrid.sdk.workspace_client import WorkspaceClient, WorkspaceClientError
 from astrid_runtime_client import ApiError
 
 
@@ -41,7 +46,7 @@ class Generated:
         self.lose_ack = False
         self.refusal = None
 
-    def list_timeline_commits(self, project, timeline, *, limit):
+    def list_timeline_commits(self, project, timeline, *, cursor=None, limit):
         assert (project, timeline, limit) == ("p", "t", 1)
         return {"head": copy.deepcopy(self.head), "items": [], "next_cursor": None}
 
@@ -70,14 +75,34 @@ class Generated:
                 plan = replay(plan, self.bundles[self.head["revision_id"]])
         except TimelineEditError as exc:
             raise ApiError(409, "conflict", str(exc), details={"status": "conflict", "reason": "guard_changed"}) from exc
-        if body["dry_run"]:
-            return {"data": {"status": "preview", "evaluated_head": copy.deepcopy(self.head), "id_map": {}}, "receipt": None}
         ordinal = len(self.accepted) + 1
         revision, publication = f"r{ordinal}", f"pub{ordinal}"
+        compiled = compile_authoring_candidate(plan.bundle).publication
+        document = {"schema_version": 1, "project_id": project, "timeline_id": timeline,
+                    "parent_revision": {"revision_id": revision, "content_digest": compiled["content_digest"],
+                                        "payload": compiled["parent_composition"]},
+                    "shot_revisions": compiled["shot_revisions"],
+                    "internal_timeline_revisions": compiled["internal_timeline_revisions"],
+                    "dependency_manifest": {**compiled["dependency_manifest"], "documents": []}}
+        candidate = {"canonical_document": document, "document_digest": "sha256:" + hashlib.sha256(
+            json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest(),
+            "commands": plan.commands, "id_map": {}, "provider_version": "astrid-v1", "compiler_version": "m1"}
+        base = {key: body[key] for key in ("base_revision_id", "base_publication_id")}
+        if body.get("dry_run", False):
+            return {"data": {"status": "preview", **base, "evaluated_head": copy.deepcopy(self.head), **candidate}, "receipt": None}
+        rebased = self.head != {"revision_id": body["base_revision_id"], "publication_id": body["base_publication_id"]}
+        data = {"status": "rebased" if rebased else "accepted", **base,
+                "previous_revision_id": self.head["revision_id"], "previous_publication_id": self.head["publication_id"],
+                "accepted_revision_id": revision, "rebased_onto": copy.deepcopy(self.head) if rebased else None,
+                **candidate, "publisher": "actor"}
+        for key in ("source", "label", "rationale", "group_id"):
+            if key in body:
+                data[key] = copy.deepcopy(body[key])
         receipt = {"receipt_id": publication, "command_kind": "timeline.commit", "idempotency_key": idempotency_key,
-                   "request_hash": hashlib.sha256(raw).hexdigest(), "project_id": project, "project_seq": [ordinal, ordinal],
-                   "event_ids": [f"e{ordinal}"], "result": {}, "created_at": "2026-10-19T00:00:00Z"}
-        response = {"data": {"status": "accepted", "accepted_revision_id": revision, "id_map": {}}, "receipt": receipt}
+                   "request_hash": hashlib.sha256(canonical_json({"operation": "commitTimeline", "path": flight["path"],
+                       "publisher": "actor", "request": body}).encode()).hexdigest(), "project_id": project, "project_seq": [ordinal, ordinal],
+                   "event_ids": [f"e{ordinal}"], "result": copy.deepcopy(data), "created_at": "2026-10-19T00:00:00Z"}
+        response = {"data": data, "receipt": receipt}
         self.bundles[revision] = plan.bundle
         self.records[publication] = plan.records
         self.head = {"revision_id": revision, "publication_id": publication}
@@ -90,9 +115,14 @@ class Generated:
 
 class Client:
     def __init__(self, generated):
-        self._remote = SimpleNamespace(_transport=SimpleNamespace(
-            _last_handshake={"realm_id": "realm", "actor_id": "actor"}, _generated=generated))
-        self.timelines = SimpleNamespace(open_composition=self.open_composition, open_bundle=self.open_bundle)
+        transport = WorkspaceClient.__new__(WorkspaceClient)
+        transport._generated = generated
+        transport._last_handshake = {"realm_id": "realm", "actor_id": "actor"}
+        self._remote = SimpleNamespace(_transport=transport)
+        self.timelines = RemoteTimelines(transport)
+        self.timelines.open_composition = self.open_composition
+        self.timelines.open_bundle = self.open_bundle
+        self.timelines._resolve_timeline = lambda *a, **kw: DomainResult.success({"project_id": "p", "timeline_id": "t"})
         self.projects = SimpleNamespace(current=lambda: DomainResult.success({"project": {"id": "p"}}))
         self.generated = generated
         self.reads = []
@@ -132,6 +162,8 @@ def test_capture_and_same_value_write_are_sent_even_without_a_diff(connected):
                for write in generated.records["pub1"][0]["writes"])
     assert result["data"]["accepted_publication_id"] == "pub1"
     assert result["data"]["show_command"] == "astrid timelines show t --project p --published --revision-id r1"
+    assert result["receipt"] == next(iter(generated.accepted.values()))[1]["receipt"]
+    assert "show_command" not in result["receipt"]["result"]
     assert json.loads(path.read_bytes())["pending"] == []
     assert client.reads == ["r0"]
 
@@ -141,7 +173,7 @@ def test_lost_ack_reload_retries_exact_request_before_sending_suffix(connected, 
     session = open_session(connected)
     client, generated, path = connected
     generated.lose_ack = True
-    with pytest.raises(ConnectionError):
+    with pytest.raises(WorkspaceClientError):
         session.move("parent/clip:a", 5, idempotency_key="original")
     before = json.loads(path.read_bytes())["flight"]
     session = open_session(connected)
@@ -209,7 +241,7 @@ def test_changed_intent_key_and_dry_run_cannot_replace_an_ambiguous_request(conn
     session = open_session(connected)
     _, generated, path = connected
     generated.lose_ack = True
-    with pytest.raises(ConnectionError):
+    with pytest.raises(WorkspaceClientError):
         session.move("parent/clip:a", 5, idempotency_key="original")
     persisted = path.read_bytes()
     for attempt in (lambda: session.move("parent/clip:a", 6),
@@ -235,7 +267,7 @@ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(con
     assert state["pending"] and state["flight"]
     assert not generated.accepted
     generated.refusal = ConnectionError("connection unavailable")
-    with pytest.raises(ConnectionError):
+    with pytest.raises(WorkspaceClientError):
         open_session(connected).flush()
     assert json.loads(path.read_bytes()) == state
 
@@ -300,3 +332,313 @@ def test_nonidentity_map_does_not_acknowledge_pending_work(connected, monkeypatc
         session.move("parent/clip:a", 5)
     state = json.loads(path.read_bytes())
     assert state["flight"] and state["pending"] and state["base"]["revision_id"] == "r0"
+
+
+def test_blocked_send_allows_queue_and_acknowledges_only_frozen_prefix(connected, monkeypatch):
+    session = open_session(connected)
+    _, generated, path = connected
+    entered, release = Event(), Event()
+    send = generated.commit_timeline
+
+    def blocked(*args, **kwargs):
+        response = send(*args, **kwargs)
+        entered.set()
+        assert release.wait(10)
+        return response
+
+    monkeypatch.setattr(generated, "commit_timeline", blocked)
+    session.queue_move("parent/clip:a", 5)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        sending = pool.submit(session.flush, idempotency_key="original")
+        try:
+            assert entered.wait(10)
+            frozen = json.loads(path.read_bytes())["flight"]
+            suffix = pool.submit(open_session(connected).queue_move, "parent/clip:a", 7).result(timeout=10)
+            during = json.loads(path.read_bytes())
+            assert during["flight"] == frozen and during["pending"][1:] == [suffix]
+            assert suffix["reads"] and suffix["selections"] and suffix["bindings"]
+        finally:
+            release.set()
+        sending.result(timeout=10)
+    state = json.loads(path.read_bytes())
+    assert state["base"] == {"revision_id": "r1", "publication_id": "pub1"}
+    assert state["flight"] is None and state["pending"] == [suffix]
+    open_session(connected).flush()
+    assert json.loads(generated.calls[-1][0])["commands"] == [suffix]
+    assert len(generated.accepted) == 2
+
+
+@pytest.mark.parametrize("late", ["ack", "timeout", "conflict"])
+def test_duplicate_flush_and_late_completion_cannot_overwrite_new_flight(connected, monkeypatch, late):
+    session = open_session(connected)
+    _, generated, path = connected
+    entered_a, entered_b, release_a, release_b = Event(), Event(), Event(), Event()
+    send = generated.commit_timeline
+
+    def blocked(*args, **kwargs):
+        response = send(*args, **kwargs)
+        if kwargs["idempotency_key"] == "a" and not entered_a.is_set():
+            entered_a.set()
+            assert release_a.wait(10)
+            if late == "timeout":
+                raise ConnectionError("late timeout")
+            if late == "conflict":
+                raise ApiError(409, "conflict", "late conflict", details={"status": "conflict"})
+        elif kwargs["idempotency_key"] == "b":
+            entered_b.set()
+            assert release_b.wait(10)
+        return response
+
+    monkeypatch.setattr(generated, "commit_timeline", blocked)
+    session.queue_move("parent/clip:a", 5)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(session.flush, idempotency_key="a")
+        try:
+            assert entered_a.wait(10)
+            open_session(connected).flush(idempotency_key="a")
+            assert generated.calls[0] == generated.calls[1]
+            session.queue_move("parent/clip:a", 7)
+            second = pool.submit(session.flush, idempotency_key="b")
+            assert entered_b.wait(10)
+            newer = path.read_bytes()
+            release_a.set()
+            if late == "ack":
+                first.result(timeout=10)
+            else:
+                with pytest.raises(CommitConflict if late == "conflict" else WorkspaceClientError):
+                    first.result(timeout=10)
+            assert path.read_bytes() == newer
+            assert json.loads(newer)["flight"]["key"] == "b"
+        finally:
+            release_a.set()
+            release_b.set()
+        second.result(timeout=10)
+    assert len(generated.accepted) == 2
+    assert json.loads(path.read_bytes())["pending"] == []
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    (("data", "status"), "preview"),
+    (("receipt",), None),
+    (("receipt", "receipt_id"), ""),
+    (("receipt", "receipt_id"), "pub0"),
+    (("receipt", "command_kind"), "timeline.restore"),
+    (("receipt", "project_id"), "other"),
+    (("receipt", "idempotency_key"), "other"),
+    (("receipt", "request_hash"), "wrong"),
+    (("receipt", "result"), {}),
+    (("receipt", "project_seq"), [True, 1]),
+    (("data", "base_revision_id"), "other"),
+    (("data", "base_publication_id"), "other"),
+    (("data", "publisher"), "other"),
+    (("data", "accepted_revision_id"), "other"),
+    (("data", "previous_publication_id"), "other"),
+    (("data", "rebased_onto"), {"revision_id": "peer", "publication_id": "peer"}),
+    (("data", "canonical_document", "project_id"), "other"),
+    (("data", "canonical_document", "timeline_id"), "other"),
+    (("data", "canonical_document", "schema_version"), True),
+    (("data", "canonical_document", "parent_revision", "revision_id"), "other"),
+    (("data", "canonical_document", "parent_revision", "payload"), []),
+    (("data", "canonical_document", "shot_revisions"), None),
+    (("data", "canonical_document", "dependency_manifest"), {}),
+    (("data", "commands"), []),
+    (("data", "commands"), [{}]),
+    (("data", "id_map"), None),
+    (("data", "id_map"), {"": ""}),
+    (("data", "provider_version"), 1),
+    (("data", "compiler_version"), ""),
+    (("data", "document_digest"), "bad"),
+])
+def test_invalid_ack_retains_exact_flight_and_suffix(connected, monkeypatch, field, value):
+    session = open_session(connected)
+    _, generated, path = connected
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        session.move("parent/clip:a", 5, idempotency_key="original")
+    session.queue_move("parent/clip:a", 7)
+    before = path.read_bytes()
+    send = generated.commit_timeline
+
+    def invalid(*args, **kwargs):
+        result = send(*args, **kwargs)
+        target = result
+        for key in field[:-1]:
+            target = target[key]
+        target[field[-1]] = value
+        # Isolate semantic validation from the independent result equality check.
+        if field[0] == "data":
+            result["receipt"]["result"] = copy.deepcopy(result["data"])
+        return result
+
+    with monkeypatch.context() as patch:
+        patch.setattr(generated, "commit_timeline", invalid)
+        with pytest.raises((TimelineEditError, ValueError)):
+            open_session(connected).flush()
+    assert path.read_bytes() == before
+    open_session(connected).flush()
+    assert generated.calls[-1] == generated.calls[0]
+    assert len(json.loads(path.read_bytes())["pending"]) == 1
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    (("data", "status"), "accepted"),
+    (("receipt",), {}),
+    (("data", "evaluated_head"), {"revision_id": "r0"}),
+    (("data", "accepted_revision_id"), "r1"),
+    (("data", "base_publication_id"), "wrong"),
+    (("data", "canonical_document", "timeline_id"), "wrong"),
+])
+def test_invalid_preview_never_releases_original_request(connected, monkeypatch, field, value):
+    session = open_session(connected)
+    _, generated, path = connected
+    send = generated.commit_timeline
+    before = []
+
+    def invalid(*args, **kwargs):
+        before.append(path.read_bytes())
+        result = send(*args, **kwargs)
+        target = result
+        for key in field[:-1]:
+            target = target[key]
+        target[field[-1]] = value
+        return result
+
+    monkeypatch.setattr(generated, "commit_timeline", invalid)
+    with pytest.raises((TimelineEditError, ValueError)):
+        session.move("parent/clip:a", 5, dry_run=True, idempotency_key="preview")
+    assert path.read_bytes() == before[0]
+    assert not generated.accepted
+
+
+@pytest.mark.parametrize("optional", [{}, {"dry_run": False, "source": {"via": "cli", "detail": "café"},
+                                          "label": "", "rationale": "keep this", "group_id": "gesture"}])
+def test_restart_preserves_parsed_body_source_and_optional_presence(connected, optional):
+    session = open_session(connected)
+    client, generated, path = connected
+    command = session.queue_move("parent/clip:a", 5)
+    with session.outbox.locked():
+        state = session._state()
+        body = {"api_version": 1, "project_id": "p", "timeline_id": "t", "base_revision_id": "r0",
+                "base_publication_id": "pub0", "commands": [command], **optional}
+        state["flight"] = {"path": session.path, "key": "original", "count": 1,
+                           "body": request_bytes(body).decode()}
+        session.outbox.write(state)
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        session.flush(via="app")
+    frozen = json.loads(path.read_bytes())["flight"]
+    # Explicit reconnect may change discovery/credential, never authenticated scope.
+    client._remote._transport.endpoint = "http://new-runtime-door"
+    client._remote._transport.token = "rotated"
+    open_session(connected).flush(via="python")
+    assert generated.calls == [(frozen["body"].encode(), "original")] * 2
+    assert json.loads(generated.calls[-1][0]) == body
+
+
+@pytest.mark.parametrize("change", ["read", "identity"])
+def test_dependent_suffix_conflict_preserves_original_guards_and_identity(connected, change):
+    session = open_session(connected)
+    _, generated, path = connected
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        session.move("parent/clip:a", 5)
+    suffix = session.queue_move("parent/clip:a", 7)
+    original = copy.deepcopy(suffix)
+    session.flush()
+    peer = copy.deepcopy(generated.bundles["r1"])
+    peer["parent"]["clips"][0]["hold" if change == "read" else "id"] = 2 if change == "read" else "replacement"
+    generated.bundles["peer"] = peer
+    generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
+    with pytest.raises(CommitConflict):
+        open_session(connected).flush(idempotency_key="b")
+    state = json.loads(path.read_bytes())
+    assert state["pending"] == [original]
+    assert state["conflict"] and state["flight"]["key"] == "b"
+    body = json.loads(state["flight"]["body"])
+    assert body["commands"] == [original] and body["base_revision_id"] == "r1"
+    before = path.read_bytes()
+    with pytest.raises(TimelineEditError, match="immutable"):
+        session.flush(idempotency_key="replacement")
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("field", ["realm_id", "actor_id"])
+def test_scope_change_while_response_is_outstanding_keeps_original_flight(connected, monkeypatch, field):
+    session = open_session(connected)
+    client, generated, path = connected
+    entered, release = Event(), Event()
+    send = generated.commit_timeline
+
+    def blocked(*args, **kwargs):
+        result = send(*args, **kwargs)
+        entered.set()
+        assert release.wait(10)
+        return result
+
+    monkeypatch.setattr(generated, "commit_timeline", blocked)
+    session.queue_move("parent/clip:a", 5)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        sending = pool.submit(session.flush)
+        try:
+            assert entered.wait(10)
+            before = path.read_bytes()
+            handshake = client._remote._transport._last_handshake
+            original = handshake[field]
+            handshake[field] = "other"
+        finally:
+            release.set()
+        with pytest.raises(TimelineEditError, match="identity changed"):
+            sending.result(timeout=10)
+    assert path.read_bytes() == before
+    handshake[field] = original
+    open_session(connected).flush()
+    assert generated.calls[0] == generated.calls[1]
+    assert len(generated.accepted) == 1
+
+
+@pytest.mark.parametrize("field", ["realm_id", "actor_id"])
+def test_missing_authenticated_scope_never_defaults_identity(connected, field):
+    client, generated, path = connected
+    del client._remote._transport._last_handshake[field]
+    with pytest.raises(TimelineEditError, match="authenticated"):
+        open_session(connected)
+    assert not path.exists() and not generated.calls
+
+
+@pytest.mark.parametrize("reading", ["history", "bundle"])
+def test_blocked_read_does_not_hold_outbox_lock_or_overwrite_concurrent_work(connected, monkeypatch, reading):
+    session = open_session(connected)
+    client, generated, path = connected
+    entered, release = Event(), Event()
+    if reading == "bundle":
+        session.queue_move("parent/clip:a", 5)
+    read = client.timelines.history if reading == "history" else client.timelines.open_bundle
+
+    def blocked(*args, **kwargs):
+        result = read(*args, **kwargs)
+        entered.set()
+        assert release.wait(10)
+        return result
+
+    monkeypatch.setattr(client.timelines, "history" if reading == "history" else "open_bundle", blocked)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(open_session, connected) if reading == "history" else pool.submit(session.queue_move, "parent/clip:b", 7)
+        try:
+            assert entered.wait(10)
+            if reading == "history":
+                # Capture can read through a separate session while history is blocked.
+                queued = pool.submit(session.queue_move, "parent/clip:a", 5).result(timeout=10)
+                before = path.read_bytes()
+            else:
+                pool.submit(session.flush).result(timeout=10)
+                assert json.loads(path.read_bytes())["base"]["revision_id"] == "r1"
+        finally:
+            release.set()
+        result = first.result(timeout=10)
+    state = json.loads(path.read_bytes())
+    if reading == "history":
+        assert path.read_bytes() == before and state["pending"] == [queued]
+        assert result.project_id == "p"
+    else:
+        assert state["base"]["revision_id"] == "r1" and state["pending"] == [result]
+        assert client.reads == ["r0", "r0", "r1"]

@@ -1,4 +1,4 @@
-"""Guarded timeline commands through the generated Runtime commit operation.
+"""Guarded timeline commands through the public Runtime client bridge.
 
 The Runtime owns acceptance/history. This module retains only pending intent and
 one exact request until its acknowledgement is durably applied.
@@ -8,12 +8,16 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
 import shlex
 import uuid
 from urllib.parse import quote
 
+from astrid.core.receipts.canonical import canonical_json
+from astrid.core.receipts.contract import CommandReceipt
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.outbox import Outbox, request_bytes
+from astrid.sdk.workspace_client import WorkspaceClientError
 
 
 class CommitConflict(TimelineEditError):
@@ -28,7 +32,14 @@ def _connection(client):
     identity = {"realm_id": handshake.get("realm_id"), "actor_id": handshake.get("actor_id")}
     if not all(isinstance(value, str) and value for value in identity.values()):
         raise TimelineEditError("timeline commands require an authenticated Runtime realm and actor")
-    return transport._generated, identity
+    return identity
+
+
+def _response(result):
+    if not result.ok:
+        error = result.error
+        raise WorkspaceClientError(0, error.code, error.message, dict(error.details))
+    return result.as_dict()
 
 
 def _pin(value):
@@ -36,6 +47,68 @@ def _pin(value):
                                              for key in ("revision_id", "publication_id")):
         raise TimelineEditError("timeline has no verified publication; editing is unavailable")
     return {key: value[key] for key in ("revision_id", "publication_id")}
+
+
+def _ack(result, body, flight, identity):
+    """Check acceptance identity, leaving full closure validation to Runtime."""
+    from astrid.sdk.timeline.commands import validate_command
+
+    def require(condition):
+        if not condition:
+            raise ValueError("invalid acceptance identity")
+
+    try:
+        data, receipt = result["data"], result["receipt"]
+        require(isinstance(data, dict))
+        for key in ("base_revision_id", "base_publication_id", "provider_version", "compiler_version"):
+            require(isinstance(data[key], str) and data[key])
+        require(all(data[key] == body[key] for key in ("base_revision_id", "base_publication_id")))
+        require(isinstance(data["commands"], list) and data["commands"])
+        for command in data["commands"]:
+            validate_command(command)
+        require(isinstance(data["id_map"], dict))
+        if any(not isinstance(key, str) or not key or key != value for key, value in data["id_map"].items()):
+            raise TimelineEditError("Runtime returned a nonidentity id_map; request remains in flight")
+        document = data["canonical_document"]
+        require(isinstance(document, dict) and type(document["schema_version"]) is int and document["schema_version"] == 1)
+        require(document["project_id"] == body["project_id"] and document["timeline_id"] == body["timeline_id"])
+        parent = document["parent_revision"]
+        require(isinstance(parent, dict) and isinstance(parent["revision_id"], str) and parent["revision_id"])
+        require(isinstance(parent["payload"], dict))
+        for digest in (data["document_digest"], parent["content_digest"]):
+            require(isinstance(digest, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", digest))
+        for key in ("shot_revisions", "internal_timeline_revisions"):
+            require(isinstance(document[key], list) and all(isinstance(row, dict) for row in document[key]))
+        manifest = document["dependency_manifest"]
+        require(isinstance(manifest, dict))
+        for key in ("shots", "internal_timelines", "media", "documents"):
+            require(isinstance(manifest[key], list) and all(isinstance(row, dict) for row in manifest[key]))
+        if body.get("dry_run", False):
+            require(data["status"] == "preview" and receipt is None)
+            _pin(data["evaluated_head"])
+            require(not any(key in data for key in ("accepted_revision_id", "publisher", "accepted_publication_id")))
+        else:
+            require(data["status"] in {"accepted", "rebased"})
+            CommandReceipt.from_dict(receipt)
+            require(receipt["command_kind"] == "timeline.commit")
+            require(receipt["project_id"] == body["project_id"] and receipt["idempotency_key"] == flight["key"])
+            require(receipt["result"] == data and data["publisher"] == identity["actor_id"])
+            invocation = {"operation": "commitTimeline", "path": flight["path"],
+                          "publisher": identity["actor_id"], "request": body}
+            require(receipt["request_hash"] == hashlib.sha256(canonical_json(invocation).encode()).hexdigest())
+            require(data["accepted_revision_id"] == parent["revision_id"])
+            previous = _pin({"revision_id": data["previous_revision_id"], "publication_id": data["previous_publication_id"]})
+            base = {"revision_id": body["base_revision_id"], "publication_id": body["base_publication_id"]}
+            require(receipt["receipt_id"] not in {previous["publication_id"], base["publication_id"]})
+            if data["status"] == "accepted":
+                require(data["rebased_onto"] is None and previous == base)
+            else:
+                require(_pin(data["rebased_onto"]) == previous and previous != base)
+    except TimelineEditError:
+        raise
+    except (KeyError, TypeError, ValueError) as exc:
+        raise TimelineEditError("invalid Runtime acknowledgement; request remains in flight") from exc
+    return data, receipt
 
 
 class TimelineSession:
@@ -49,27 +122,36 @@ class TimelineSession:
         from astrid.sdk.storage_root import resolve_runtime_data_root
         from astrid.sdk.timeline.store import resolve_ids
 
-        generated, identity = _connection(client)
+        identity = _connection(client)
         project_id, timeline_id, _ = resolve_ids(project, timeline, client=client)
         scope = {**identity, "project_id": project_id, "timeline_id": timeline_id}
         if outbox_path is None:
             name = hashlib.sha256(request_bytes(scope)).hexdigest() + ".json"
             outbox_path = resolve_runtime_data_root() / "timeline-outbox" / name
         session = cls(client, Outbox(outbox_path), identity, project_id, timeline_id)
-        with session.outbox.locked():
-            state = session.outbox.read()
-            if state is None:
-                head = generated.list_timeline_commits(project_id, timeline_id, limit=1)["head"]
-                session.outbox.write({"scope": scope, "base": _pin(head), "pending": [], "flight": None})
-            elif state["scope"] != scope:
-                raise TimelineEditError("outbox belongs to a different realm, actor, project or timeline")
-            elif not state["pending"] and state["flight"] is None:
-                state["base"] = _pin(generated.list_timeline_commits(project_id, timeline_id, limit=1)["head"])
+        while True:
+            with session.outbox.locked():
+                state = session.outbox.read()
+                if state is not None:
+                    if state["scope"] != scope:
+                        raise TimelineEditError("outbox belongs to a different realm, actor, project or timeline")
+                    if state["pending"] or state["flight"] is not None:
+                        session._state()
+                        return session
+            head = _pin(_response(client.timelines.history(project_id, timeline_id, limit=1))["data"]["head"])
+            with session.outbox.locked():
+                if _connection(client) != identity:
+                    raise TimelineEditError("outbox identity changed while reading its head")
+                if session.outbox.read() != state:
+                    continue
+                state = state or {"scope": scope, "pending": [], "flight": None}
+                state["base"] = head
                 session.outbox.write(state)
+                break
         return session
 
     def _state(self):
-        _, identity = _connection(self.client)
+        identity = _connection(self.client)
         state = self.outbox.read()
         if identity != self.identity or state["scope"] != {
             **identity, "project_id": self.project_id, "timeline_id": self.timeline_id,
@@ -89,28 +171,32 @@ class TimelineSession:
         """Capture once against the original state plus earlier local commands."""
         from astrid.sdk.timeline.capture import capture_move
 
-        with self.outbox.locked():
-            state = self._state()
-            command = capture_move(self._bundle(state), select, on)
-            state["pending"].append(copy.deepcopy(command))
-            self.outbox.write(state)
-            return copy.deepcopy(command)
+        return self._queue(lambda state: capture_move(self._bundle(state), select, on))
+
+    def _queue(self, capture, matches=None):
+        while True:
+            with self.outbox.locked():
+                state = self._state()
+                if matches is not None and state["pending"]:
+                    if not matches(state["pending"]):
+                        raise TimelineEditError("pending intent differs; flush the original request before another move")
+                    return copy.deepcopy(state["pending"][0])
+            command = capture(state)
+            with self.outbox.locked():
+                if self._state() != state:
+                    continue
+                state["pending"].append(copy.deepcopy(command))
+                self.outbox.write(state)
+                return copy.deepcopy(command)
 
     def move(self, select, on, *, idempotency_key=None, dry_run=False, via="python"):
         # A repeated one-shot CLI/SDK invocation retries original intent, never
         # recaptures guards from a possibly changed head after a lost ACK.
-        with self.outbox.locked():
-            state = self._state()
-            pending = state["pending"]
-            if pending:
-                command = pending[0]
-                if len(pending) != 1 or command["op"] != "clip.move" or command["select"] != select or command["args"] != {"on": on}:
-                    raise TimelineEditError("pending intent differs; flush the original request before another move")
-            else:
-                from astrid.sdk.timeline.capture import capture_move
+        from astrid.sdk.timeline.capture import capture_move
 
-                pending.append(capture_move(self._bundle(state), select, on))
-                self.outbox.write(state)
+        self._queue(lambda state: capture_move(self._bundle(state), select, on),
+                    lambda pending: len(pending) == 1 and pending[0]["op"] == "clip.move"
+                    and pending[0]["select"] == select and pending[0]["args"] == {"on": on})
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
     def undo(self, publications, *, idempotency_key=None, dry_run=False, via="python"):
@@ -143,53 +229,72 @@ class TimelineSession:
                 if key == state.get("preview_key"):
                     raise TimelineEditError("use a fresh key after a preview")
                 flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
-                          "count": len(state["pending"])}
+                          "count": len(state["pending"]), "fence": uuid.uuid4().hex}
                 state["flight"] = flight
                 self.outbox.write(state)
+            body = self._flight_body(state, flight, idempotency_key, dry_run)
+            if "fence" not in flight:  # Preserve requests persisted before fencing was added.
+                flight["fence"] = uuid.uuid4().hex
+                self.outbox.write(state)
+            flight = copy.deepcopy(flight)
+        try:
+            result = _response(self.client.timelines.commit(
+                self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+            ))
+        except Exception as exc:
+            details = getattr(exc, "details", {})
+            if isinstance(details, dict) and details.get("status") in {"conflict", "refused"}:
+                failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+                with self.outbox.locked():
+                    state = self._state()
+                    if state["flight"] == flight:
+                        self._flight_body(state, flight, idempotency_key, dry_run)
+                        state["conflict"] = failure
+                        self.outbox.write(state)
+                raise CommitConflict(failure) from exc
+            raise  # Ambiguous failure: never replace the durable flight.
+        data, receipt = _ack(result, body, flight, self.identity)
+        with self.outbox.locked():
+            state = self._state()
+            # A duplicate send may finish after another send acknowledged this
+            # prefix and even started the next flight. Its response is read-only.
+            if state["flight"] == flight:
+                self._flight_body(state, flight, idempotency_key, dry_run)
+                if dry_run:
+                    state["preview_key"] = flight["key"]
+                else:
+                    state["base"] = _pin({"revision_id": data["accepted_revision_id"],
+                                           "publication_id": receipt["receipt_id"]})
+                    del state["pending"][:flight["count"]]
+                state["flight"] = None
+                state.pop("conflict", None)
+                self.outbox.write(state)
+        result = copy.deepcopy(result)
+        result["data"] = copy.deepcopy(data)
+        if not dry_run:
+            result["data"]["accepted_publication_id"] = receipt["receipt_id"]
+            result["data"]["show_command"] = shlex.join([
+                "astrid", "timelines", "show", self.timeline_id, "--project", self.project_id,
+                "--published", "--revision-id", data["accepted_revision_id"],
+            ])
+        return result
+
+    def _flight_body(self, state, flight, key, dry_run):
+        try:
             body = json.loads(flight["body"])
-            if (flight["path"] != self.path or body["commands"] != state["pending"][:flight["count"]]
-                    or request_bytes(body).decode() != flight["body"]
-                    or body["project_id"] != self.project_id or body["timeline_id"] != self.timeline_id
-                    or body["base_revision_id"] != state["base"]["revision_id"]
-                    or body["base_publication_id"] != state["base"]["publication_id"]
-                    or (idempotency_key is not None and idempotency_key != flight["key"])
-                    or body["dry_run"] != dry_run):
-                raise TimelineEditError("in-flight request is immutable; retry its original payload and key")
-            generated, _ = _connection(self.client)
-            try:
-                result = generated.commit_timeline(self.project_id, self.timeline_id, body,
-                                                   idempotency_key=flight["key"])
-            except Exception as exc:
-                details = getattr(exc, "details", {})
-                if isinstance(details, dict) and details.get("status") in {"conflict", "refused"}:
-                    failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
-                    state["conflict"] = failure
-                    self.outbox.write(state)
-                    raise CommitConflict(failure) from exc
-                raise  # Ambiguous transport failure: retain exact flight unchanged.
-            data, receipt = result["data"], result["receipt"]
-            if any(key != value for key, value in data.get("id_map", {}).items()):
-                raise TimelineEditError("Runtime returned a nonidentity id_map; request remains in flight")
-            if dry_run:
-                if data.get("status") != "preview" or receipt is not None:
-                    raise TimelineEditError("Runtime did not return an unaccepted preview")
-                state["preview_key"] = flight["key"]
-            else:
-                if data.get("status") not in {"accepted", "rebased"} or not receipt:
-                    raise TimelineEditError("Runtime did not acknowledge acceptance; request remains in flight")
-                if receipt.get("idempotency_key") != flight["key"] or receipt.get("project_id") != self.project_id:
-                    raise TimelineEditError("Runtime acknowledged another request; request remains in flight")
-                state["base"] = _pin({"revision_id": data.get("accepted_revision_id"),
-                                       "publication_id": receipt.get("receipt_id")})
-                del state["pending"][:flight["count"]]
-            state["flight"] = None
-            state.pop("conflict", None)
-            self.outbox.write(state)
-            result = copy.deepcopy(result)
-            if not dry_run:
-                result["data"]["accepted_publication_id"] = receipt["receipt_id"]
-                result["data"]["show_command"] = shlex.join([
-                    "astrid", "timelines", "show", self.timeline_id, "--project", self.project_id,
-                    "--published", "--revision-id", data["accepted_revision_id"],
-                ])
-            return result
+            count = flight["count"]
+            valid = (type(count) is int and 0 < count <= len(state["pending"])
+                     and isinstance(flight["key"], str) and bool(flight["key"])
+                     and flight["path"] == self.path
+                     and body["commands"] == state["pending"][:count]
+                     and request_bytes(body).decode() == flight["body"]
+                     and body["project_id"] == self.project_id and body["timeline_id"] == self.timeline_id
+                     and body["base_revision_id"] == state["base"]["revision_id"]
+                     and body["base_publication_id"] == state["base"]["publication_id"]
+                     and (key is None or key == flight["key"])
+                     and body.get("dry_run", False) == dry_run)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise TimelineEditError("invalid in-flight request; original intent retained") from exc
+        if not valid:
+            raise TimelineEditError("in-flight request is immutable; retry its original payload and key")
+        return body

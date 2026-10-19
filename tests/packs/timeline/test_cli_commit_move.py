@@ -74,3 +74,11 @@ def test_commit_move_parser_refuses_legacy_edit_flags(command):
         run("edit", "move", "t", "--project", "p", "--clip", "parent/clip:a", "--on", "5", "--remove")
     assert exc.value.code == 2
     assert generated.calls == []
+
+
+def test_preview_json_preserves_actual_bridge_request_key(command, capsys):
+    run, generated = command
+    assert run("edit", "move", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run", "--json") == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["idempotency_key"] == generated.calls[0][1]
+    assert output["idempotency_key"] and output["receipt"] is None

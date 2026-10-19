@@ -3871,7 +3871,7 @@ def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False) -> int:
         result = session.undo(parsed.publication, **options) if undo else session.move(parsed.clip, parsed.on, **options)
         receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
         shown = DomainResult.success(result["data"], receipt=receipt,
-                                     idempotency_key=receipt.idempotency_key if receipt else parsed.idempotency_key or "")
+                                     idempotency_key=result["idempotency_key"])
     except Exception as exc:  # noqa: BLE001 - preserve pending work and render transport/semantic failures
         if isinstance(exc, CommitConflict):
             error = ErrorObject(exc.failure["code"], str(exc), exc.failure["details"])
