@@ -73,12 +73,21 @@ class HistoryRejected(Exception):
 
 
 def reservation_check(monkeypatch, plan, history_records=()):
-    # Only the local scan's trusted history input is stubbed. No receipt or
-    # Runtime acceptance is constructed; official atomic admission is separate.
-    monkeypatch.setattr(commit, '_history', lambda *args: [{
+    from tests.sdk.test_timeline_commit_provider import DetachedPort, DetachedRealm
+
+    # Model trusted history and exact closures through the unit port; this is
+    # not evidence of Runtime atomic acceptance.
+    realm = DetachedRealm()
+    entry = {
         'intent': 'recorded', 'records': {'schema_version': 1, 'commands': history_records},
-    }] if history_records else [])
-    commit._check_reservations(None, plan, None, HistoryRejected, None)
+        'previous': realm.head, 'revision_id': 'history-output',
+    }
+    output = commit.document_from_bundle(plan.bundle)
+    output['parent_revision']['revision_id'] = entry['revision_id']
+    realm.documents[entry['revision_id']] = output
+    monkeypatch.setattr(commit, '_history', lambda *args: [entry] if history_records else [])
+    commit._check_reservations(DetachedPort(realm, {}), plan, realm.head, HistoryRejected, realm.head)
+
 
 
 def test_typed_roots_are_valid_local_creations_and_retired_roots_are_reserved(monkeypatch):

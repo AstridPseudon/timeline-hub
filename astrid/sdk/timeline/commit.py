@@ -348,10 +348,30 @@ def _records(entries, rejected, base, current):
     return records
 
 
+def _reservation_refs(state):
+    """Known authored identities only; opaque payloads never allocate IDs."""
+    bundle = state.bundle
+    refs = {'shot:' + bundle['source_mapping']['shots'].get(identity, {}).get('shot_id', identity)
+            for identity in bundle['shots']}
+    owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
+    refs.update(owners[1:])
+    for owner in owners:
+        for kind in ('clip', 'track'):
+            collection = state.collection(owner, kind)
+            if collection is None:
+                continue
+            _require(isinstance(collection, list), 'invalid semantic identity collection')
+            for row in collection:
+                _require(isinstance(row, Mapping) and _id(row.get('id')),
+                         'missing semantic identity')
+                refs.add(owner + '/' + kind + ':' + row['id'])
+    return refs
+
+
 def _check_reservations(port, plan, current, rejected, base):
     from astrid.sdk.timeline.commands import CommandError
 
-    from ._command_state import root_identity
+    from ._command_state import State, root_identity
 
     def valid(item):
         if (not isinstance(item, Mapping) or set(item) != {'ref', 'kind', 'owner'}
@@ -383,26 +403,67 @@ def _check_reservations(port, plan, current, rejected, base):
     if not created:
         return
     reserved, recorded = set(), False
-    for entry in _history(port, current, None, rejected, base):
-        if (not recorded and entry.get("intent") in {"bootstrap", "legacy_unknown"}
-                and entry.get("records") is None):
-            # The verified legacy prefix has no recorder; do not fabricate
-            # allocation intent for edits before the recorded-history boundary.
-            continue
-        recorded = True
-        for record in _records([entry], rejected, base, current):
-            items = record["created"]
-            if (not isinstance(items, list)
-                    or any(not valid(item) for item in items)
-                    or not isinstance(record["command"], Mapping)
-                    or record["command"].get("created") != [item["ref"] for item in items]):
-                raise rejected(_failure("history_unavailable", "created identity history is unavailable",
-                                        base, current))
-            reserved.update(item["ref"] for item in items)
-    for ref in created:
-        if ref in reserved:
-            raise CommandError("created identity was already reserved", kind="identity_collision", ref=ref)
-        reserved.add(ref)
+    context = {'request': {key: plan.bundle[key] for key in ('project_id', 'timeline_id')}}
+
+    def boundary(revision):
+        return _load(port, context, revision)
+
+    def scan(records, bundle, *, ordinary=False):
+        state = State(bundle)
+        reserved.update(_reservation_refs(state))
+        for record in records:
+            items = record['created']
+            if (not isinstance(items, list) or any(not valid(item) for item in items)
+                    or not isinstance(record['command'], Mapping)
+                    or record['command'].get('created') != [item['ref'] for item in items]):
+                raise CommandError('created identity history is unavailable', kind='history_unavailable')
+            check = ordinary and record['command']['op'] != 'timeline.inverse'
+            claimed = set()
+            for item in items:
+                ref = item['ref']
+                if check and (ref in reserved or ref in claimed):
+                    raise CommandError('created identity was already reserved', kind='identity_collision', ref=ref)
+                claimed.add(ref)
+            for write in record['writes']:
+                if write['ref'] == 'timeline':
+                    for pin in (write['before']['value'], write['after']['value']):
+                        source = boundary(pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 'historical closure pin mismatch')
+                        state.closures[pin['revision_id']] = source
+                if not state.matches(write['ref'], write['path'], write['before']):
+                    raise CommandError('semantic identity boundary differs from writes', kind='history_unavailable')
+                before = _reservation_refs(state)
+                state.set(write['ref'], write['path'], write['after'])
+                if write['ref'] == 'timeline':
+                    state = State(state.bundle, closures=state.closures)
+                after = _reservation_refs(state)
+                collisions = (after - before) & reserved if check else set()
+                if collisions:
+                    raise CommandError('created identity was already reserved', kind='identity_collision',
+                                       ref=sorted(collisions)[0])
+                reserved.update(after)
+            reserved.update(claimed)
+            for write in record['derived_writes']:
+                state.set(write['ref'], write['path'], write['after'])
+
+    try:
+        for entry in _history(port, current, None, rejected, base):
+            if (not recorded and entry.get('intent') in {'bootstrap', 'legacy_unknown'}
+                    and entry.get('records') is None):
+                # Unknown legacy intent is not allocation proof. The first
+                # recorded edge supplies its authenticated original boundary.
+                continue
+            recorded = True
+            records = _records([entry], rejected, base, current)
+            _require(entry.get('previous') is not None, 'missing original identity boundary')
+            scan(records, boundary(entry['previous']['revision_id']))
+            reserved.update(_reservation_refs(State(boundary(entry['revision_id']))))
+    except (AuthoringBundleError, CommandError, KeyError, TypeError, ValueError) as exc:
+        raise rejected(_failure('history_unavailable', 'semantic identity history is unavailable',
+                                base, current)) from exc
+    scan(plan.records, boundary(current['revision_id']), ordinary=True)
 
 
 class RuntimeCommitService:
