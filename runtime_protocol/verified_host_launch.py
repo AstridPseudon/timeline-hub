@@ -730,10 +730,12 @@ class HostLaunchVerifier:
             payload["distribution_metadata"] = _distribution_metadata(binding["import_roots"], inventories)
             if selected_python is not None:
                 payload["selected_python"] = selected_python
-                actions = profile.get('host_launch', {}).get('selected_actions', {})
-                if actions:
+                launch = profile.get('host_launch', {})
+                # An explicit empty selection is still bound to this profile.
+                # The Host checks field presence, including no selected actions.
+                if 'selected_actions' in launch:
                     payload['action_launch'] = {
-                        'actions': validate_action_closures(actions), 'profile_digest': raw_digest(profile),
+                        'actions': validate_action_closures(launch['selected_actions']), 'profile_digest': raw_digest(profile),
                         'host_files': source_inventory['files'], 'source_root': config['source_checkout'],
                         'launcher': launcher, 'mapping': mapping,
                         'distribution_metadata': payload['distribution_metadata'], 'selected_python': selected_python}
