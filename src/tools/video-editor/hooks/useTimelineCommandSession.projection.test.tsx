@@ -98,13 +98,15 @@ describe('atomic command projection facts', () => {
     await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
     const b = hook.result.current.commit.data!;
     expect(b.editProjection).toEqual({ kind: 'local', base: originalBase, generation: 2 });
-    // The HTTP stub executes C's inverse, so B's original A5 guard no longer holds.
+    // C's inverse breaks B's original A5 guard; the HTTP fixture returns a typed conflict.
     await publishC(env);
     await act(async () => { await hook.result.current.commands.retry(); });
     expect(env.commits()[2]).toEqual(env.commits()[0]);
     expect(env.commits()[3].body?.base_publication_id).toBe('p1');
     expect(env.commits()[3].body?.commands[0].expect?.['parent/clip:x::at']).toEqual({ state: 'present', value: 5 });
-    expect(hook.result.current.commands.state.status).toBe('retry');
+    expect(hook.result.current.commands.state.status).toBe('conflict');
+    await act(async () => { await hook.result.current.commands.retry(); });
+    expect(env.commits()).toHaveLength(4);
     expect(hook.result.current.commit.data).toBe(b);
     expect(b.config.clips[0].at).toBe(7);
     expect(b.editProjection).toEqual({ kind: 'local', base: originalBase, generation: 2 });
@@ -152,6 +154,9 @@ describe('atomic command projection facts', () => {
     await act(async () => { await recovered.hook.result.current.commands.recover(owner); });
     expect(recovered.hook.result.current.commit.data?.config.clips[0].at).toBe(7);
     expect(recovered.hook.result.current.commit.data?.editProjection).toMatchObject({ kind: 'local', base: originalBase });
+    expect(recovered.hook.result.current.commands.state.status).toBe('conflict');
+    await act(async () => { await recovered.hook.result.current.commands.retry(); });
+    expect(env.commits()).toHaveLength(4);
   });
 
   it('projects a known newer C at C instead of relabeling it as the late A acceptance', async () => {
