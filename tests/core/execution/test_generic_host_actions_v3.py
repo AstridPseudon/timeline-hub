@@ -2048,6 +2048,77 @@ def test_cli_registration_runs_one_real_preflight_inside_fence(tmp_path, monkeyp
         assert phases.index('preflight_begin') < phases.index('ready_written')
 
 
+def test_managed_service_startup_failure_waits_for_requested_cleanup(tmp_path, monkeypatch):
+    import io
+    import threading
+
+    from astrid.core._shared.boot_manifest import build_manifest, load_boot_manifest_hash
+    from astrid.core.execution import generic_host as module
+
+    root, host, runtime, _, _ = pack(tmp_path)
+    boot = tmp_path / 'boot-manifest.json'
+    boot.write_text(json.dumps(build_manifest(registry={}, fixtures=(), profile_order=())))
+    digest = 'sha256:' + load_boot_manifest_hash(boot, support_root=tmp_path)
+    credential = tmp_path / 'worker.token'
+    credential.write_text('unit-worker')
+    credential.chmod(0o600)
+    monkeypatch.setenv('ASTRID_PACK_HOST_SERVICE_MODE', '1')
+    monkeypatch.setattr(sys, 'argv', [
+        'host', 'run', '--pack-root', str(root), '--runtime-endpoint', 'http://127.0.0.1:1',
+        '--credential-file', str(credential), '--register',
+    ])
+    for name in ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'ASTRID_REMOTION_VALIDATION_ROLE',
+                 'ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT', 'ASTRID_HOST_READINESS_PROFILE_PATH'):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(module.platform, 'install_stop_handlers', lambda *args: None)
+    monkeypatch.setattr(module.faulthandler, 'register', lambda *args, **kwargs: None)
+    monkeypatch.setattr(module, '_compose_cli_boot_manifest', lambda *args: (boot, digest))
+    monkeypatch.setattr(module, '_startup_identity_attestation', lambda **kw: {'source': {'closure_digest': '3' * 64}})
+    monkeypatch.setattr(module, 'RuntimeProtocolClient', lambda *args, credential_file=None: runtime)
+    monkeypatch.setattr(module, 'GenericPackHost', lambda **kw: host)
+    cleanup_entered = threading.Event()
+    release_cleanup = threading.Event()
+    completed = threading.Event()
+    outcome = {}
+
+    def shutdown():
+        cleanup_entered.set()
+        assert release_cleanup.wait(timeout=3)
+
+    def discover():
+        assert cleanup_entered.wait(timeout=2)
+        raise module.HostError('discovery failed')
+
+    monkeypatch.setattr(host, 'shutdown', shutdown)
+    monkeypatch.setattr(host, 'discover', discover)
+    lifecycle = module._ManagedStdinShutdown(host, io.StringIO(''))
+    monkeypatch.setattr(module, '_ManagedStdinShutdown', lambda *args: lifecycle)
+
+    def run_cli():
+        try:
+            outcome['result'] = module._cli()
+        except BaseException as exc:  # noqa: BLE001 - assert the CLI's failure after cleanup completes.
+            outcome['error'] = exc
+        finally:
+            completed.set()
+
+    runner = threading.Thread(target=run_cli)
+    try:
+        runner.start()
+        assert cleanup_entered.wait(timeout=2)
+        assert not completed.wait(0.05)
+        release_cleanup.set()
+        assert completed.wait(timeout=2)
+        assert lifecycle.cleanup_done.is_set()
+        assert isinstance(outcome.get('error'), module.HostError)
+        assert str(outcome['error']) == 'discovery failed'
+    finally:
+        release_cleanup.set()
+        runner.join(timeout=3)
+        assert not runner.is_alive()
+        assert lifecycle.cleanup_done.wait(timeout=3)
+
+
 def test_managed_service_registration_failure_does_not_publish_readiness(tmp_path, monkeypatch):
     from astrid.core._shared.boot_manifest import build_manifest, load_boot_manifest_hash
     from astrid.core.execution import generic_host as module

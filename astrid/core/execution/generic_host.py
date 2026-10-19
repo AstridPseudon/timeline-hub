@@ -13463,6 +13463,17 @@ def _log_cli_exit_failure(error: BaseException) -> None:
 
 
 def _cli() -> int:
+    managed_shutdowns: list[_ManagedStdinShutdown] = []
+    try:
+        return _cli_impl(managed_shutdowns)
+    finally:
+        # Startup can fail before the worker-loop wrapper is entered. An EOF
+        # or signal cleanup already in progress still owns the host's exit.
+        for lifecycle in managed_shutdowns:
+            lifecycle.wait_for_shutdown_cleanup()
+
+
+def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
 
     parser = argparse.ArgumentParser(prog="astrid-generic-host")
     parser.add_argument("command", nargs="?", choices=("run", "supervise"), help="run the worker loop or JSONL supervisor")
@@ -13813,6 +13824,8 @@ def _cli() -> int:
         if service_mode and args.command == "run"
         else None
     )
+    if stdin_shutdown is not None:
+        managed_shutdowns.append(stdin_shutdown)
 
     def handle_shutdown(_signum, _frame):
         if stdin_shutdown is not None:
