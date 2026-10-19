@@ -392,6 +392,44 @@ beforeEach(() => {
 });
 
 describe('TimelineRenderer registered sequences', () => {
+  it('passes shared image transition plans through native media dispatch', () => {
+    const config = buildConfig();
+    config.clips = [
+      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
+      { id: 'b', clipType: 'hold', track: 'V1', at: 1, hold: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
+        transition: { type: 'fade', duration: 0.4 } },
+    ];
+    render(<TimelineRenderer config={config} />);
+    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+      clip: expect.objectContaining({ id: 'a' }),
+      drawPlan: expect.objectContaining({ drawStart: 0, drawDuration: 30, fadeOut: { from: 18, to: 24, kind: 'dip' } }),
+    }));
+    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+      clip: expect.objectContaining({ id: 'b' }),
+      drawPlan: expect.objectContaining({ drawStart: 18, drawDuration: 42, ownOffset: 12 }),
+    }));
+  });
+
+  it('preserves a host component overriding a native name and keeps its neighboring transition host-timed', () => {
+    astridElementComponentMock.mockImplementation((id: string) => id === 'hold'
+      ? () => <div data-testid="host-picture" /> : undefined);
+    const config = buildConfig();
+    config.clips = [
+      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
+      { id: 'b', clipType: 'media', track: 'V1', at: 1, from: 0, to: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
+        transition: { type: 'fade', duration: 0.4 } },
+    ];
+    render(<TimelineRenderer config={config} />);
+    expect(screen.getByTestId('host-picture')).toBeInTheDocument();
+    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+      clip: expect.objectContaining({ id: 'b' }), drawPlan: null,
+    }));
+  });
+
   it('keeps a canonical visual image absent at the half-open end after transition expansion', async () => {
     const { VisualClipSequence } = await vi.importActual<typeof import('@/tools/video-editor/compositions/VisualClip.tsx')>(
       '@/tools/video-editor/compositions/VisualClip.tsx',
