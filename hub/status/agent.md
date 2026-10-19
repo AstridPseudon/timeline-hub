@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T21:12:52Z | dispatcher heartbeat 11s -->
+<!-- main | 2026-10-19T21:16:07Z | dispatcher heartbeat 10s -->
 # agent — 2026-10-19T21:02Z
 Milestone: M1 ACTIVE. Agent CLI/Python actual HTTP path passes; mounted App browser is the remaining exit gap. M0 COMPLETE. M2 move-set design only; no implementation.
 Integrated: Agent tl/integration a8eb28af, FROZEN for App. Core1755715f, providerdcfd7299, frontendff57cb46, readback3e293dae, ID reservations43bd9c0d, official Runtime0.2.1/schema4e52. Central agent-commit-integration-1019195539-21968: 3 passed/18.51s on3eba65d2; only later product change formats two branches (8 bridge tests passed). Covers durable lost ACK, dependent B, disjoint C, daemon restart, original exact retry, rebase/conflict, inverse, complete immutable closure, exact show/native visualize, ID collisions. Manager combined focused suite:233 passed. Commands/tuples in agent-review-notes.md.
