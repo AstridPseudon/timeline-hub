@@ -294,6 +294,23 @@ def _validate_child_policy(value: Mapping[str, Any] | None) -> dict[str, Any] | 
     return json.loads(_strict_json(copied))
 
 
+class _BridgeTimeout(CapabilityInvocationError):
+    """An I/O budget expired, observed before cleanup or diagnostic work."""
+
+    def __init__(self, message: str, *, observed_at: float):
+        super().__init__(message)
+        self.observed_at = observed_at
+
+
+class _BridgeReplyTimeout(TimeoutError):
+    """A complete validated reply arrived too late for this exchange."""
+
+    def __init__(self, data: Any, *, observed_at: float):
+        super().__init__("child bridge reply arrived after its deadline")
+        self.data = data
+        self.observed_at = observed_at
+
+
 class ChildBridge:
     """Five fixed operations over an inherited private stream socket.
 
@@ -325,7 +342,8 @@ class ChildBridge:
         started = time.monotonic()
         deadline = started + budget
         if budget <= 0 or not self._lock.acquire(timeout=budget):
-            raise CapabilityInvocationError("child bridge request timed out")
+            raise _BridgeTimeout("child bridge request timed out", observed_at=time.monotonic()) from TimeoutError(
+                "child bridge lock acquisition timed out")
         phase = "send"
         frame = bytearray()
         try:
@@ -340,11 +358,14 @@ class ChildBridge:
             while not frame.endswith(b"\n"):
                 self._channel.settimeout(max(0.000001, deadline - time.monotonic()))
                 chunk = self._channel.recv(min(65536, _MAX_FRAME + 1 - len(frame)))
-                if not chunk or len(frame) >= _MAX_FRAME or time.monotonic() >= deadline:
-                    raise ValueError("closed, oversized or timed out reply")
+                received_at = time.monotonic()
+                if not chunk or len(frame) >= _MAX_FRAME:
+                    raise ValueError("closed or oversized reply")
                 frame.extend(chunk)
                 if b"\n" in frame[:-1] or len(frame) > _MAX_FRAME:
                     raise ValueError("invalid frame boundary")
+                if not frame.endswith(b"\n") and received_at >= deadline:
+                    raise TimeoutError("child bridge reply timed out")
             phase = "decode"
             reply = json.loads(frame, object_pairs_hook=_unique_json_object)
             try:
@@ -387,17 +408,25 @@ class ChildBridge:
                         or type(data["size"]) is not int or data["size"] < 0
                         or data["durability"] != "durable"):
                     raise ValueError("invalid durable snapshot receipt")
+            if received_at >= deadline:
+                # Validate complete replies before classifying lateness; a
+                # caller must still reject malformed or foreign resources.
+                raise _BridgeReplyTimeout(data, observed_at=received_at)
             return data
         except CapabilityValidationError:
             raise
         except CapabilityInvocationError:
             raise
         except (OSError, ValueError, TypeError) as exc:
+            observed_at = exc.observed_at if isinstance(exc, _BridgeReplyTimeout) else time.monotonic()
             self.close()
             _emit_bridge_io_failure(endpoint="sdk", phase=phase, operation=op,
                                     exception=exc, request_sequence=self._sequence,
                                     frame_bytes=len(frame), elapsed_seconds=time.monotonic() - started,
                                     budget_seconds=budget)
+            if isinstance(exc, TimeoutError):
+                raise _BridgeTimeout("child bridge is unavailable or returned an invalid reply",
+                                     observed_at=observed_at) from exc
             raise CapabilityInvocationError("child bridge is unavailable or returned an invalid reply") from exc
         finally:
             self._lock.release()

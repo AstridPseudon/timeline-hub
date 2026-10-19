@@ -552,6 +552,136 @@ def test_foreign_status_fails_closed(tmp_path, isolated, channel):
     assert [item["op"] for item in messages] == ["submit", "status"]
 
 
+@pytest.mark.parametrize("failure", [
+    "late_reply", "late_timeout", "late_partial", "early_timeout", "early_timeout_diagnostic_delay",
+    "early_timeout_cleanup_delay", "late_eof", "late_oversized", "late_multiframe",
+    "late_malformed", "late_envelope", "late_foreign_task", "late_foreign_run", "late_nodata",
+    "late_rejection", "late_bad_error",
+])
+def test_child_wait_deadline_preserves_transport_and_protocol_taxonomy(
+        tmp_path, isolated, monkeypatch, failure):
+    root = write_pack(tmp_path)
+    clock = SimpleNamespace(now=0.0)
+    task = {"run_id": "R-child", "task_id": "T-child", "attempt_id": "A-child", "state": "queued"}
+
+    def sleep(seconds):
+        clock.now += seconds
+
+    fake_time = SimpleNamespace(monotonic=lambda: clock.now, sleep=sleep)
+    monkeypatch.setattr(invocation, "time", fake_time)
+    monkeypatch.setattr(bridge_module, "time", fake_time)
+    monkeypatch.setattr(invocation, "_kernel_invoke", lambda *a, **k: pytest.fail("normal admission"))
+
+    class Channel:
+        def __init__(self):
+            self.requests = []
+            self.events = []
+            self.closed = False
+
+        def settimeout(self, seconds):
+            self.events.append(("budget", clock.now, seconds))
+
+        def sendall(self, data):
+            self.requests.append(json.loads(data))
+            self.events.append(("send", clock.now, self.requests[-1]["op"]))
+
+        def recv(self, size):
+            request = self.requests[-1]
+            data = dict(task)
+            if request["op"] == "status":
+                clock.now = 1.0 if failure.startswith("early_timeout") else 2.0
+                self.events.append(("receive", clock.now, request["op"]))
+                if failure == "late_timeout" or failure.startswith("early_timeout"):
+                    raise TimeoutError("socket receive timed out")
+                if failure == "late_partial":
+                    return b'{"v":'
+                if failure == "late_eof":
+                    return b""
+                if failure == "late_oversized":
+                    return b"x" * (bridge_module._MAX_FRAME + 1)
+                if failure == "late_malformed":
+                    return b"invalid\n"
+                if failure == "late_multiframe":
+                    return b"{}\n{}\n"
+                # A completed reply at the deadline must not become success.
+                data.update(state="completed", result={})
+                if failure == "late_foreign_task":
+                    data["task_id"] = "T-foreign"
+                if failure == "late_foreign_run":
+                    data["run_id"] = "R-foreign"
+            reply = {"v": 1, "request_id": request["request_id"], "ok": True, "data": data}
+            if request["op"] == "status" and failure == "late_envelope":
+                reply["request_id"] += 1
+            if request["op"] == "status" and failure == "late_nodata":
+                reply["data"] = None
+            if request["op"] == "status" and failure in {"late_rejection", "late_bad_error"}:
+                reply = {"v": 1, "request_id": request["request_id"], "ok": False,
+                    "error": {"code": "authorization_error", "message": "rejected", "details": {}}}
+                if failure == "late_bad_error":
+                    reply["error"]["details"] = []
+            return json.dumps(reply).encode() + b"\n"
+
+        def shutdown(self, how):
+            pass
+
+        def close(self):
+            self.closed = True
+            if failure == "early_timeout_cleanup_delay":
+                clock.now = 2.0
+
+    channel = Channel()
+    if failure == "early_timeout_diagnostic_delay":
+        def delayed_diagnostic(**kwargs):
+            channel.events.append(("diagnostic", clock.now))
+            clock.now = 2.0
+        monkeypatch.setattr(bridge_module, "_emit_bridge_io_failure", delayed_diagnostic)
+    bridge = bridge_module.ChildBridge(channel)
+    monkeypatch.setattr(bridge_module, "_bridge", bridge)
+    kwargs = dict(inputs={"message": "hello"}, child_key="child", wait=True,
+                  timeout_seconds=2, poll_seconds=0.01)
+    if failure in {"late_foreign_task", "late_foreign_run", "late_nodata"}:
+        with pytest.raises(astrid.CapabilityInvocationError, match="foreign task"):
+            call(root, **kwargs)
+    else:
+        result = call(root, **kwargs)
+        expected = "task_wait_timeout" if failure in {"late_reply", "late_timeout", "late_partial"} else "task_status_unavailable"
+        assert not result.ok and result.error["code"] == expected, channel.events
+        if failure == "late_rejection":
+            assert result.error["details"]["code"] == "authorization_error"
+    assert [item["op"] for item in channel.requests] == ["submit", "status"]
+    assert channel.closed == (failure != "late_rejection")
+
+
+@pytest.mark.parametrize("budget", [0, 2])
+def test_child_bridge_lock_timeout_preserves_inflight_channel(monkeypatch, budget):
+    clock = SimpleNamespace(now=0.0)
+    monkeypatch.setattr(bridge_module, "time", SimpleNamespace(monotonic=lambda: clock.now))
+
+    class OwnedLock:
+        def __init__(self):
+            self.budgets = []
+
+        def acquire(self, *, timeout):
+            self.budgets.append(timeout)
+            clock.now += timeout
+            return False
+
+        def release(self):
+            pytest.fail("another request owns the lock")
+
+    channel = SimpleNamespace(shutdown=lambda *a: pytest.fail("inflight channel shutdown"),
+                              close=lambda: pytest.fail("inflight channel closed"))
+    bridge = bridge_module.ChildBridge(channel)
+    lock = OwnedLock()
+    bridge._lock = lock
+    with pytest.raises(bridge_module._BridgeTimeout) as caught:
+        bridge.status("child", "T-child", timeout_seconds=budget)
+    assert isinstance(caught.value.__cause__, TimeoutError)
+    assert caught.value.observed_at == budget
+    assert lock.budgets == ([budget] if budget else [])
+    assert not bridge._closed and bridge._sequence == 0
+
+
 def snapshot_receipt(**changes):
     return {"association_id": "association-1", "receipt_id": "receipt-1", "revision": 1,
             "output_port": "state_result", "digest": "sha256:" + "a" * 64,
