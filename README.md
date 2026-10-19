@@ -123,12 +123,21 @@ The element remap is a `<Freeze>` around the element content, applied in `ClipLo
 
 ## Build / test
 
+Node.js **20 or newer** is required for the extensionless-import test loader;
+validation ran with Node.js **22.22.0**. From a fresh checkout, install the
+locked dependencies and run the checks:
+
 ```
+npm ci
 npm run gen-registry:check
 npm run build
 npm run build:ts
 npm test
 ```
+
+If the managed sandbox makes npm's cache read-only, use
+`npm_config_cache=/tmp/timeline-composition-npm-cache npm ci` in place of
+`npm ci`. The ordinary setup command remains `npm ci`.
 
 `npm run build` checks the generated registry and emits JavaScript plus
 declarations for the complete `typescript/src` tree into the ignored
@@ -137,6 +146,10 @@ TypeScript emit and is exposed separately for build-manager checks. Compiler
 errors fail both commands. `npm test` emits the focused TypeScript tests into
 the separate ignored `typescript/test-dist` directory, then runs them with
 the extensionless-import loader used by the standalone Node test runner.
+
+The package currently exports source TypeScript from its package entrypoints;
+the generated `typescript/dist` files are build output, not the public package
+surface. A portable tarball/public export migration is future M3 scope.
 
 The package has no source or type import from `@banodoco/timeline-schema`, so
 it is not a Composition dependency. The generated registries remain
