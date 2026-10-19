@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertTriangle, Check, ImageOff, Loader2, Play, Trash2 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
+import { Check, ImageOff, Loader2, Play, Trash2 } from 'lucide-react';
 import { VariantBadge } from '@/shared/components/VariantBadge';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
@@ -21,7 +20,6 @@ export const SegmentPreview: React.FC<SegmentPreviewProps> = ({
   onDelete,
   isDeleting,
   isPending,
-  hasSourceChanged,
   scrubbing,
   badge,
 }) => {
@@ -263,19 +261,6 @@ export const SegmentPreview: React.FC<SegmentPreviewProps> = ({
           >
             <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
           </div>
-        )}
-
-        {hasSourceChanged && !isPending && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="absolute bottom-1 left-1 z-20 flex items-center justify-center bg-amber-500/90 hover:bg-amber-600/95 p-1 rounded-md shadow-sm cursor-default transition-colors">
-                <AlertTriangle className="w-3 h-3 text-white" />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <p>Source image has changed since this video was created. Consider regenerating.</p>
-            </TooltipContent>
-          </Tooltip>
         )}
 
         {isHovering && <div className="absolute inset-0 ring-2 ring-primary ring-inset pointer-events-none" />}

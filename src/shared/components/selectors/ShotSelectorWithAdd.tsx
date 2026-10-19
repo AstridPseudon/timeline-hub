@@ -4,7 +4,6 @@ import { ShotSelector, ShotOption } from "@/shared/components/selectors/ShotSele
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { useShotNavigation } from "@/shared/hooks/shots/useShotNavigation";
 import { useLastAffectedShot } from "@/shared/hooks/shots/useLastAffectedShot";
-import { useQuickShotCreate } from "@/shared/hooks/useQuickShotCreate";
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { Shot } from "@/domains/generation/types";
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
@@ -23,9 +22,6 @@ interface ShotSelectorWithAddProps {
   // Add to shot functionality
   // CRITICAL: targetShotId is the shot selected in the DROPDOWN, not the shot being viewed
   onAddToShot: (targetShotId: string, generationId: string, imageUrl?: string, thumbUrl?: string) => Promise<boolean>;
-
-  // Whether to show the "create shot" option in the dropdown
-  showCreateShot?: boolean;
 
   // State tracking
   isAlreadyPositionedInSelectedShot?: boolean;
@@ -60,7 +56,6 @@ export const ShotSelectorWithAdd: React.FC<ShotSelectorWithAddProps> = ({
   selectedShotId,
   onShotChange,
   onAddToShot,
-  showCreateShot = false,
   isAlreadyPositionedInSelectedShot = false,
   showTick = false,
   isAdding = false,
@@ -75,23 +70,6 @@ export const ShotSelectorWithAdd: React.FC<ShotSelectorWithAddProps> = ({
 }) => {
   const { navigateToShot } = useShotNavigation();
   const { setLastAffectedShotId } = useLastAffectedShot();
-  
-  // Use consolidated hook for quick shot creation
-  const {
-    isCreatingShot,
-    quickCreateSuccess,
-    handleQuickCreateAndAdd,
-    handleVisitCreatedShot,
-  } = useQuickShotCreate({
-    generationId: imageId,
-    generationPreview: {
-      imageUrl,
-      thumbUrl,
-    },
-    shots,
-    onShotChange,
-    onClose,
-  });
   
   // Get current target shot name for tooltips
   const currentTargetShotName = useMemo(() => {
@@ -160,11 +138,6 @@ export const ShotSelectorWithAdd: React.FC<ShotSelectorWithAddProps> = ({
           selectorClassName
         )}
         contentClassName="w-[var(--anchor-width)]"
-        showAddShot={showCreateShot}
-        onCreateShot={handleQuickCreateAndAdd}
-        isCreatingShot={isCreatingShot}
-        quickCreateSuccess={quickCreateSuccess}
-        onVisitCreatedShot={handleVisitCreatedShot}
         side="top"
         align="start"
         sideOffset={4}

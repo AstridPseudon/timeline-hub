@@ -11,7 +11,6 @@ import {
 } from '@/tools/video-editor/hooks/timelineStore';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data';
 import type { Shot } from '@/domains/generation/types/index.ts';
-import { EMPTY_SHOT_ANCHOR_APP_KEY } from '@/tools/video-editor/lib/shot-group-commands';
 import { VideoEditorRuntimeProvider } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 
 // ---------------------------------------------------------------------------
@@ -19,7 +18,6 @@ import { VideoEditorRuntimeProvider } from '@/tools/video-editor/contexts/VideoE
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({
-  createShot: vi.fn(),
   navigateToShot: vi.fn(),
   pinGroup: vi.fn(),
   shots: [] as Shot[],
@@ -68,15 +66,6 @@ vi.mock('@/tools/video-editor/hooks/useAddVariantAsGeneration', () => ({
     addVariantAsGenerationAfterClip: vi.fn(),
     isPending: false,
     isAddingVariantAsGenerationPending: () => false,
-  }),
-}));
-
-vi.mock('@/shared/hooks/shotCreation/useShotCreation', () => ({
-  useShotCreation: () => ({
-    createShot: mocks.createShot,
-    isCreating: false,
-    lastCreatedShot: null,
-    clearLastCreated: vi.fn(),
   }),
 }));
 
@@ -315,69 +304,18 @@ function getTimelineBackground(container: HTMLElement) {
   return background;
 }
 
-describe('AstridTimelineEditor empty-area shot creation', () => {
+describe('AstridTimelineEditor empty-area menu', () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('creates an empty shot anchored at the clicked time and applies the anchor edit', async () => {
-    mocks.createShot.mockResolvedValue({
-      shotId: 'shot-new',
-      shotName: 'Shot 1',
-      shot: { id: 'shot-new', name: 'Shot 1' },
-    });
+  it('does not offer shot creation from the empty-area context menu', () => {
     const { container, store } = renderEditor();
     const background = getTimelineBackground(container);
 
     fireEvent.contextMenu(background, { clientX: 100, clientY: 40 });
 
-    expect(screen.getByText('Create Shot')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Create Shot'));
-
-    await vi.waitFor(() => {
-      expect(mocks.createShot).toHaveBeenCalledTimes(1);
-    });
-    expect(mocks.createShot).toHaveBeenCalledWith();
-    // The editor stays on the timeline: navigation would unmount it and drop
-    // the debounced save before it lands, so the anchor must not depend on it.
-    expect(mocks.navigateToShot).not.toHaveBeenCalled();
-
-    const applyEdit = store.getState().ops.applyEdit as ReturnType<typeof vi.fn>;
-    expect(applyEdit).toHaveBeenCalledTimes(1);
-    const mutation = applyEdit.mock.calls[0][0];
-    expect(mutation.type).toBe('rows');
-    const anchorClip = mutation.rows[0].actions[0];
-    expect(anchorClip).toBeDefined();
-    expect(mutation.metaUpdates[anchorClip.id]).toEqual(expect.objectContaining({
-      track: 'V1',
-      clipType: 'text',
-      label: 'Shot 1',
-      app: { [EMPTY_SHOT_ANCHOR_APP_KEY]: { shotId: 'shot-new', shotName: 'Shot 1' } },
-    }));
-    expect(mutation.pinnedShotGroupsOverride).toEqual([{
-      shotId: 'shot-new',
-      trackId: 'V1',
-      clipIds: [anchorClip.id],
-      mode: 'images',
-    }]);
-    expect(applyEdit.mock.calls[0][1]).toEqual(expect.objectContaining({
-      selectedClipId: anchorClip.id,
-      selectedTrackId: 'V1',
-      semantic: true,
-    }));
-  });
-
-  it('does not edit when shot creation returns no shot', async () => {
-    mocks.createShot.mockResolvedValue(null);
-    const { container, store } = renderEditor();
-    const background = getTimelineBackground(container);
-
-    fireEvent.contextMenu(background, { clientX: 100, clientY: 40 });
-    fireEvent.click(screen.getByText('Create Shot'));
-
-    await vi.waitFor(() => {
-      expect(mocks.createShot).toHaveBeenCalledTimes(1);
-    });
+    expect(screen.queryByText('Create Shot')).not.toBeInTheDocument();
     expect(mocks.navigateToShot).not.toHaveBeenCalled();
     expect(store.getState().ops.applyEdit).not.toHaveBeenCalled();
   });

@@ -47,9 +47,6 @@ vi.mock('@/shared/components/modals/ImageGenerationModal', () => ({
   ImageGenerationModal: () => null,
 }));
 
-vi.mock('@/shared/components/dialogs/DeleteGenerationConfirmDialog', () => ({
-  DeleteGenerationConfirmDialog: () => null,
-}));
 
 function buildController() {
   return {
@@ -119,15 +116,10 @@ function buildController() {
       paginatedData: {
         items: [],
       },
-      handleDeleteGeneration: vi.fn(),
-      handleToggleStar: vi.fn(),
-      isDeleting: false,
       shotsData: [],
       lastAffectedShotId: null,
       handleAddToShot: vi.fn(),
       handleAddToShotWithoutPosition: vi.fn(),
-      handleCreateShot: vi.fn(),
-      confirmDialogProps: {},
     },
     layout: {
       isMobile: false,
@@ -216,6 +208,6 @@ describe('GenerationsPane', () => {
     });
 
     expect(setDraggingMock).toHaveBeenCalledWith(false);
-    expect(dropToGenerationMock).toHaveBeenCalledWith([file], { items: [] });
+    expect(dropToGenerationMock).toHaveBeenCalledWith([file]);
   });
 });

@@ -1,6 +1,5 @@
 import React, { Suspense } from "react";
 import { createPortal } from "react-dom";
-import { CreateShotModal } from "@/features/shots/components/CreateShotModal";
 import type { BatchImageGenerationTaskParams } from "@/shared/types/imageGeneration";
 
 import { PromptsSection } from "./components/PromptsSection";
@@ -13,12 +12,6 @@ import { ImageGenerationFormProvider } from "./ImageGenerationFormContext";
 import { useImageGenForm } from "./hooks/useImageGenForm";
 
 // Lazy load modals to improve initial bundle size and performance
-const LazyLoraSelectorModal = React.lazy(() =>
-  import("@/domains/lora/components").then(module => ({
-    default: module.LoraSelectorModal
-  }))
-);
-
 const LazyPromptEditorModal = React.lazy(() =>
   import("../PromptEditorModal").then(module => ({
     default: module.PromptEditorModal
@@ -27,7 +20,6 @@ const LazyPromptEditorModal = React.lazy(() =>
 
 interface ImageGenerationFormProps {
   onGenerate: (params: BatchImageGenerationTaskParams) => Promise<string[] | void> | string[] | void;
-  openaiApiKey?: string;
   /**
    * Called when the associated shot selection changes in the form
    */
@@ -51,13 +43,12 @@ interface ImageGenerationFormProps {
 
 export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
   onGenerate,
-  openaiApiKey,
   onShotChange,
   stickyFooter = false,
   footerPortalId,
   initialShotId,
 }) => {
-  const form = useImageGenForm({ onGenerate, openaiApiKey, onShotChange, initialShotId });
+  const form = useImageGenForm({ onGenerate, onShotChange, initialShotId });
 
   return (
     <ImageGenerationFormProvider value={form.contextValue}>
@@ -77,7 +68,6 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
                 form.markAsInteracted();
                 form.setAssociatedShotId(null);
               }}
-              onOpenCreateShot={() => form.uiActions.setCreateShotModalOpen(true)}
               onJumpToShot={form.navigateToShot}
             />
           </div>
@@ -89,7 +79,6 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
             onGenerationSourceChange={form.handleGenerationSourceChange}
             selectedTextModel={form.selectedTextModel}
             onTextModelChange={form.handleTextModelChange}
-            onOpenLoraModal={() => form.loraManager.setIsLoraModalOpen(true)}
             isLoadingReferenceData={form.isReferenceDataLoading}
             referenceCount={form.referenceCount}
           />
@@ -141,21 +130,6 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
 
       <ChunkLoadErrorBoundary>
         <Suspense fallback={<div className="sr-only">Loading...</div>}>
-          <LazyLoraSelectorModal
-            isOpen={form.loraManager.isLoraModalOpen}
-            onClose={() => form.loraManager.setIsLoraModalOpen(false)}
-            loras={form.availableLoras}
-            onAddLora={form.handleAddLora}
-            onRemoveLora={form.handleRemoveLora}
-            onUpdateLoraStrength={form.handleLoraStrengthChange}
-            selectedLoras={form.mappedSelectedLoras}
-            loraType={form.loraType}
-          />
-        </Suspense>
-      </ChunkLoadErrorBoundary>
-
-      <ChunkLoadErrorBoundary>
-        <Suspense fallback={<div className="sr-only">Loading...</div>}>
           <LazyPromptEditorModal
             isOpen={form.uiState.isPromptModalOpen}
             onClose={() => form.uiActions.closePromptModal()}
@@ -165,14 +139,6 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
           />
         </Suspense>
       </ChunkLoadErrorBoundary>
-
-      <CreateShotModal
-        isOpen={form.uiState.isCreateShotModalOpen}
-        onClose={() => form.uiActions.setCreateShotModalOpen(false)}
-        onSubmit={form.handleCreateShot}
-        isLoading={form.isCreatingShot}
-        projectId={form.selectedProjectId ?? undefined}
-      />
     </ImageGenerationFormProvider>
   );
 };

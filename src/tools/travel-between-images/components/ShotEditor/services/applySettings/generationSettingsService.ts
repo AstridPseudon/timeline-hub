@@ -1,4 +1,3 @@
-import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import type {
   ApplyAdvancedContext,
   ApplyGenerationContext,
@@ -36,33 +35,6 @@ export const applyPromptSettings = async (
   // Apply main prompt
   if (typeof settings.prompt === 'string' && settings.prompt.trim()) {
     context.onBatchVideoPromptChange(settings.prompt);
-  }
-
-  // Apply individual prompts to pair configs (regardless of current mode)
-  if (settings.prompts && settings.prompts.length > 1 && context.updatePairPromptsByIndex) {
-    const errors: string[] = [];
-
-    for (let i = 0; i < settings.prompts.length; i++) {
-      const pairPrompt = settings.prompts[i]?.trim();
-      const pairNegativePrompt = settings.negativePrompts?.[i]?.trim() || '';
-
-      if (pairPrompt) {
-        try {
-          await context.updatePairPromptsByIndex(i, pairPrompt, pairNegativePrompt);
-        } catch (e) {
-          normalizeAndPresentError(e, {
-            context: 'ApplySettings.applyPromptSettings',
-            showToast: false,
-            logData: { pairIndex: i },
-          });
-          errors.push(`Pair ${i}: ${e}`);
-        }
-      }
-    }
-
-    if (errors.length > 0) {
-      return { success: false, settingName: 'prompts', error: errors.join('; ') };
-    }
   }
 
   // Apply negative prompt

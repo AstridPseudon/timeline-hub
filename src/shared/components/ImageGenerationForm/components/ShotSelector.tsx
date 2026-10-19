@@ -20,7 +20,6 @@ interface ShotSelectorProps {
   isGenerating: boolean;
   onChangeShot: (value: string) => void;
   onClearShot: () => void;
-  onOpenCreateShot: () => void;
   onJumpToShot?: (shot: Shot) => void;
 }
 
@@ -32,7 +31,6 @@ export const ShotSelector: React.FC<ShotSelectorProps> = ({
   isGenerating,
   onChangeShot,
   onClearShot,
-  onOpenCreateShot,
   onJumpToShot,
 }) => {
   const options = useMemo<ShotOption[]>(() => {
@@ -92,9 +90,6 @@ export const ShotSelector: React.FC<ShotSelectorProps> = ({
           variant="retro"
           className="flex-1"
           triggerClassName="inline-flex w-full min-w-[200px] justify-between"
-          showAddShot
-          onCreateShot={onOpenCreateShot}
-          isCreatingShot={isGenerating}
           onNavigateToShot={(option) => {
             if (!onJumpToShot || option.id === NONE_SHOT_ID) {
               return;

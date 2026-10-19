@@ -9,8 +9,6 @@ Single system for persisting and resolving tool/UI settings across shots, projec
 | What | File |
 |------|------|
 | Priority resolution | `src/shared/lib/settingsResolution.ts` |
-| Write queue (network protection) | `src/shared/lib/settingsWriteQueue.ts` |
-| New-shot inheritance | `src/shared/lib/shotSettingsInheritance.ts` |
 | Low-level DB hook | `src/shared/hooks/settings/useToolSettings.ts` |
 | Auto-save hook (recommended) | `src/shared/settings/hooks/useAutoSaveSettings.ts` |
 | Bind-to-useState adapter | `src/shared/hooks/usePersistentToolState.ts` |
@@ -32,7 +30,6 @@ Feature code should only bypass `useAutoSaveSettings` when the adapter or low-le
 ```
 Need to persist settings?
 ├─ User-scoped UI preference (theme, pane locks)? → useUserUIState
-├─ Generic form-over-server-data (not settings)? → useServerForm
 ├─ Existing useState you want to persist with interaction guard? → usePersistentToolState
 ├─ Need manual save control or multi-scope writes? → useToolSettings
 └─ Everything else (new feature default) → useAutoSaveSettings ✓
@@ -43,7 +40,6 @@ Need to persist settings?
 | New tool with shot-scoped settings | `useAutoSaveSettings` | Owns state, auto-saves, handles entity changes |
 | Dark mode toggle, pane lock | `useUserUIState` | User-scoped, follows user across projects |
 | Image gen form with `markAsInteracted` guard | `usePersistentToolState` | Binds to existing `useState`; only saves after explicit interaction |
-| Prompt editor modal editing server records | `useServerForm` | Not settings -- local edits over arbitrary server data |
 | One-off write to a specific scope | `useToolSettings` | Low-level `update('shot', {...})` / `update('project', {...})` |
 
 **Key differences:**
@@ -131,31 +127,9 @@ update('shot', { myField: 'value' });
 const { value, update } = useUserUIState('paneLocks', { shots: false, tasks: false, gens: false });
 ```
 
-## Write Queue
+## Persistence (Runtime path)
 
-All DB writes go through `settingsWriteQueue.ts` to prevent `ERR_INSUFFICIENT_RESOURCES`:
-
-- **Global concurrency**: 1 in-flight write at a time
-- **Per-target debounce**: 300ms coalesces rapid updates
-- **Merge-on-write**: Multiple patches to same `scope:entityId:toolId` merge into one write
-- **Best-effort flush**: Pending writes flush on `beforeunload` and component unmount
-- **Atomic DB update**: Uses `update_tool_settings_atomic` RPC (single DB operation)
-
-```typescript
-// Normal (debounced) - used by hooks
-await updateToolSettingsSupabase({ scope, id, toolId, patch });
-
-// Immediate (flush on unmount/navigation)
-await updateToolSettingsSupabase({ scope, id, toolId, patch }, { mode: 'immediate' });
-```
-
-## Shot Inheritance
-
-When a new shot is created, settings are inherited via `shotSettingsInheritance.ts`:
-
-**Priority:** localStorage (project) > localStorage (global) > DB (latest shot) > DB (project)
-
-Inherited: all settings + LoRAs (`selectedLoras` field) + UI preferences + join-segments settings.
+There is no tool-settings backend on the Runtime path. `useToolSettings` observes the settings query cache (seeded by other hooks via `setQueryData`) and its `update` is a deliberate no-op; there is no write queue, prefetch or atomic RPC. Anything that was persisted only through that backend (e.g. per-shot form values) does not survive a reload; localStorage-backed state (`usePersistentState`, `lastEditedLora`) is unchanged.
 
 ## Key Invariants
 
@@ -163,7 +137,7 @@ Inherited: all settings + LoRAs (`selectedLoras` field) + UI preferences + join-
 2. **One tool ID per form** -- each `toolId` maps to one JSONB key; don't split a form across IDs.
 3. **Multiple tool IDs per page are OK** when they represent distinct persisted forms (e.g., `travel-between-images` + `join-segments`).
 4. **Wait for ready** -- always gate on `isLoading` / `status !== 'ready'` before reading settings.
-5. **Write queue is global** -- all paths (`useAutoSaveSettings`, `useToolSettings.update`, `useUserUIState`, direct calls) go through the same queue.
+5. **No backend writes** -- `useToolSettings.update` is inert on the Runtime path; do not add a second write path beside it.
 6. **Scope explicitly** -- `update('shot', ...)` vs `update('project', ...)`.
 7. **Don't duplicate storage** -- if a field is in `useAutoSaveSettings`, don't also persist it via `usePersistentToolState` with a different tool ID.
 
@@ -171,10 +145,9 @@ Inherited: all settings + LoRAs (`selectedLoras` field) + UI preferences + join-
 
 | Problem | Solution |
 |---------|----------|
-| Settings not saving | Check `enabled: true`, correct scope in `update()`, network tab for PATCH |
+| Settings not saving | Expected for backend-only settings (see Persistence); check `enabled: true` and scope for cache-backed ones |
 | Settings reset on shot switch | Use project scope for cross-shot settings |
 | Updates lost during loading | Use `useAutoSaveSettings` (has loading gates + pending-edit protection) |
-| Old settings in new shot | Intentional -- inheritance ensures sensible defaults |
 
 ## Migration Guide
 

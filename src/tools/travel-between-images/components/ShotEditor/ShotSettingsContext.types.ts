@@ -1,8 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { Shot, GenerationRow } from '@/domains/generation/types';
 import type { Project } from '@/types/project';
-import type { LoraModel } from '@/domains/lora/types/lora';
-import type { AuthoredVideoMetadata } from '@/shared/lib/media/videoUploader';
+import type { AuthoredVideoMetadata } from '@/shared/lib/media/videoMetadata';
 import type { ShotEditorDimensionProps, ShotEditorState } from './state/types';
 import { ShotEditorActions } from './state/useShotEditorState';
 import { LoraManagerReturn } from './hooks/editor-state/useLoraSync';
@@ -14,13 +13,9 @@ import type { TravelGuidanceMode } from '@/shared/lib/tasks/travelGuidance';
 import type {
   ImageDeleteHandler,
   BatchImageDeleteHandler,
-  ImageDuplicateHandler,
   ImageReorderHandler,
-  FileDropHandler,
   GenerationDropHandler,
-  ImageUploadHandler,
 } from '@/shared/types/imageHandlers';
-import type { VariantDropParams } from '@/shared/hooks/dnd/useImageVariantDrop';
 
 export interface ShotCoreState {
   selectedShot: Shot;
@@ -32,7 +27,6 @@ export interface ShotCoreState {
 
 export interface ShotLoraState {
   loraManager: LoraManagerReturn;
-  availableLoras: LoraModel[];
 }
 
 export interface ShotImagesState {
@@ -46,15 +40,10 @@ export interface ShotImagesState {
 
 export interface ShotImageHandlers {
   onReorder: ImageReorderHandler;
-  onFileDrop: FileDropHandler;
   onGenerationDrop: GenerationDropHandler;
-  onBatchFileDrop: FileDropHandler;
   onBatchGenerationDrop: GenerationDropHandler;
-  onVariantDrop?: (params: VariantDropParams) => Promise<void>;
   onDelete: ImageDeleteHandler;
   onBatchDelete: BatchImageDeleteHandler;
-  onDuplicate: ImageDuplicateHandler;
-  onUpload: ImageUploadHandler;
 }
 
 export interface ShotManagementState {
@@ -62,8 +51,6 @@ export interface ShotManagementState {
   onShotChange: (shotId: string) => void;
   onAddToShot: (shotId: string, generationId: string, position?: number) => Promise<void>;
   onAddToShotWithoutPosition: (shotId: string, generationId: string) => Promise<boolean>;
-  onCreateShot: (name: string) => Promise<string>;
-  onNewShotFromSelection: (selectedIds: string[]) => Promise<string | void>;
   openUnpositionedGenerationsPane: () => void;
 }
 
@@ -74,16 +61,6 @@ export interface GenerationModeState {
   isGenerationDisabled: boolean;
   isSteerableMotionEnqueuing: boolean;
   steerableMotionJustQueued: boolean;
-  currentMotionSettings: {
-    textBeforePrompts: string;
-    textAfterPrompts: string;
-    basePrompt: string;
-    negativePrompt: string;
-    enhancePrompt: boolean;
-    durationFrames: number;
-    lastGeneratedVideoUrl?: string;
-    selectedLoras: Array<{ id: string; name: string; strength: number }>;
-  };
   accelerated: boolean;
   onAcceleratedChange: (val: boolean) => void;
   randomSeed: boolean;
@@ -92,9 +69,8 @@ export interface GenerationModeState {
 
 export interface GenerationHandlers {
   handleGenerateBatch: (variantName: string) => void;
-  handleBatchVideoPromptChangeWithClear: (prompt: string) => void;
+  handleBatchVideoPromptChange: (prompt: string) => void;
   handleStepsChange: (steps: number) => void;
-  clearAllEnhancedPrompts: () => Promise<void>;
 }
 
 export interface StructureVideoHandlers {
@@ -142,7 +118,6 @@ export interface ShotSettingsContextValue {
   state: ShotEditorState;
   actions: ShotEditorActions;
   loraManager: LoraManagerReturn;
-  availableLoras: LoraModel[];
   allShotImages: GenerationRow[];
   timelineImages: GenerationRow[];
   unpositionedImages: GenerationRow[];

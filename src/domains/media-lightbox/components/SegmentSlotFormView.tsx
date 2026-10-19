@@ -59,12 +59,10 @@ export const SegmentSlotFormView: React.FC<SegmentSlotFormViewProps> = ({
   const {
     formProps,
     getSettingsForTaskCreation,
-    saveSettings,
     settings,
     enhancePromptRef,
   } = useSegmentSettingsForm({
     pairShotGenerationId,
-    shotId: segmentSlotMode.shotId,
     defaults: {
       prompt: segmentSlotMode.pairPrompt ?? segmentSlotMode.defaultPrompt ?? '',
       negativePrompt: segmentSlotMode.pairNegativePrompt ?? segmentSlotMode.defaultNegativePrompt ?? '',
@@ -78,7 +76,6 @@ export const SegmentSlotFormView: React.FC<SegmentSlotFormViewProps> = ({
     isRegeneration: false,
     buttonLabel: "Generate Segment",
     showHeader: false,
-    queryKeyPrefix: `segment-slot-${segmentSlotMode.currentIndex}`,
     // Structure video
     structureVideoDefaults: segmentSlotMode.structureVideoDefaults ?? null,
     structureVideoType: segmentSlotMode.structureVideoType,
@@ -86,7 +83,6 @@ export const SegmentSlotFormView: React.FC<SegmentSlotFormViewProps> = ({
     structureVideoFrameRange: segmentSlotMode.structureVideoFrameRange,
     // Per-segment structure video management (Timeline Mode only)
     isTimelineMode: segmentSlotMode.isTimelineMode,
-    onAddSegmentStructureVideo: segmentSlotMode.onAddSegmentStructureVideo,
     onUpdateSegmentStructureVideo: segmentSlotMode.onUpdateSegmentStructureVideo,
     onRemoveSegmentStructureVideo: segmentSlotMode.onRemoveSegmentStructureVideo,
     // Navigation to constituent images
@@ -98,9 +94,6 @@ export const SegmentSlotFormView: React.FC<SegmentSlotFormViewProps> = ({
     // Frame limit
     maxFrames: segmentSlotMode.maxFrameLimit,
   });
-
-  // Extract enhanced prompt from form props (enhancePromptEnabled and onEnhancePromptChange are now included in formProps)
-  const { enhancedPrompt } = formProps;
 
   const effectiveSelectedModel = settings.selectedModel
     ?? formProps.shotDefaults?.selectedModel
@@ -168,10 +161,7 @@ export const SegmentSlotFormView: React.FC<SegmentSlotFormViewProps> = ({
       taskLabel: `Segment ${segmentSlotMode.currentIndex + 1}`,
       errorContext: 'SegmentSlotFormView',
       getSettings: getSettingsForTaskCreation,
-      saveSettings,
-      shouldSaveSettings: !!pairShotGenerationId,
       shouldEnhance: enhancePromptRef.current,
-      enhancedPrompt: enhancedPrompt,
       defaultNumFrames: segmentSlotMode.pairData.frames || 25,
       images: {
         startImageUrl,
@@ -208,14 +198,12 @@ export const SegmentSlotFormView: React.FC<SegmentSlotFormViewProps> = ({
     startImageUrl,
     endImageUrl,
     getSettingsForTaskCreation,
-    saveSettings,
     toast,
     enhancePromptRef,
     run,
     queryClient,
     structureVideoForTask,
     selectedModelName,
-    enhancedPrompt,
   ]);
 
   return (

@@ -25,10 +25,7 @@ interface TimelinePairProps {
 
 interface TimelineImageActionProps {
   onImageDelete: ImageDeleteHandler;
-  onImageDuplicate: (imageId: string, timelineFrame: number, nextTimelineFrame?: number) => void;
   onVariantDrop?: (params: VariantDropParams) => Promise<void>;
-  duplicatingImageId?: string | null;
-  duplicateSuccessImageId?: string | null;
 }
 
 interface TimelineLightboxProps {
@@ -39,7 +36,6 @@ interface TimelineLightboxProps {
 interface TimelineSegmentProps {
   selectedOutputId?: string | null;
   segmentSlots?: SegmentSlot[];
-  isSegmentsLoading?: boolean;
   hasPendingTask?: (pairShotGenerationId: string | null | undefined) => boolean;
   videoOutputs?: GenerationRow[];
 }
@@ -74,6 +70,4 @@ export interface TimelineContainerProps extends
   // Multi-select
   onNewShotFromSelection?: (selectedIds: string[]) => Promise<string | void>;
   onShotChange?: (shotId: string) => void;
-  // Position system
-  onRegisterTrailingUpdater?: (fn: (endFrame: number) => void) => void;
 }

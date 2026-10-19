@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import type { GenerationRow } from '@/domains/generation/types';
 import { filterTimelineEligiblePositionedImages } from '@/shared/lib/timelineEligibility';
-import { useTimelineCore } from '@/shared/hooks/timeline/useTimelineCore';
 import { useTimelinePositionUtils } from '../../../../hooks/timeline/useTimelinePositionUtils';
 import { usePositionManagement } from '../usePositionManagement';
+
+const NO_GENERATIONS: GenerationRow[] = [];
 
 interface UseTimelineDomainServiceInput {
   shotId: string;
@@ -44,23 +45,16 @@ export function useTimelineDomainService(input: UseTimelineDomainServiceInput): 
     readOnly,
   } = input;
 
-  const coreHookData = useTimelineCore(!propAllGenerations ? shotId : null);
+  const allGenerations = propAllGenerations ?? NO_GENERATIONS;
   const utilsHookData = useTimelinePositionUtils({
-    shotId: propAllGenerations ? shotId : null,
-    generations: propAllGenerations || [],
+    shotId,
+    generations: allGenerations,
     projectId,
   });
 
-  const shotGenerations: GenerationRow[] = propShotGenerations
-    || (propAllGenerations ? propAllGenerations : coreHookData.positionedItems);
-
-  const loadPositions = propAllGenerations
-    ? utilsHookData.loadPositions
-    : async (_opts?: { silent?: boolean; reason?: string }) => {
-      coreHookData.refetch();
-    };
-
-  const actualPairPrompts = propAllGenerations ? utilsHookData.pairPrompts : coreHookData.pairPrompts;
+  const shotGenerations: GenerationRow[] = propShotGenerations ?? allGenerations;
+  const loadPositions = utilsHookData.loadPositions;
+  const actualPairPrompts = utilsHookData.pairPrompts;
 
   const images = useMemo(() => {
     let result: GenerationRow[] = propImages ?? shotGenerations;

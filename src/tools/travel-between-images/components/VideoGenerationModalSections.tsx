@@ -22,7 +22,7 @@ import { useModalImageHandlers } from './hooks/useModalImageHandlers';
 import { useSegmentOutputsForShot } from '@/shared/hooks/segments/useSegmentOutputsForShot';
 import { useProjectVideoCountsCache } from '@/shared/hooks/projects/useProjectVideoCountsCache';
 import type { GenerationRow } from '@/domains/generation/types';
-import type { ActiveLora, LoraModel } from '@/domains/lora/types/lora';
+import type { ActiveLora } from '@/domains/lora/types/lora';
 import type { TravelGuidanceMode } from '@/shared/lib/tasks/travelGuidance';
 import type { Project } from '@/types/project';
 import type { ShotImagesEditorProps } from '@/tools/travel-between-images/components/ShotImagesEditor/types';
@@ -116,7 +116,6 @@ interface VideoGenerationModalFormContentProps {
   projects: Project[];
   selectedProjectId: string | null;
   selectedLoras: ActiveLora[];
-  availableLoras: LoraModel[] | undefined;
   accelerated: boolean;
   onAcceleratedChange: (value: boolean) => void;
   randomSeed: boolean;
@@ -126,7 +125,6 @@ interface VideoGenerationModalFormContentProps {
   guidanceKind?: TravelGuidanceMode;
   validPresetId: string | undefined;
   status: 'idle' | 'loading' | 'ready' | 'saving' | 'error';
-  onOpenLoraModal: () => void;
   onRemoveLora: (loraId: string) => void;
   onLoraStrengthChange: (loraId: string, strength: number) => void;
   onAddTriggerWord: (word: string) => void;
@@ -138,7 +136,6 @@ export function VideoGenerationModalFormContent({
   projects,
   selectedProjectId,
   selectedLoras,
-  availableLoras,
   accelerated,
   onAcceleratedChange,
   randomSeed,
@@ -148,7 +145,6 @@ export function VideoGenerationModalFormContent({
   guidanceKind,
   validPresetId,
   status,
-  onOpenLoraModal,
   onRemoveLora,
   onLoraStrengthChange,
   onAddTriggerWord,
@@ -209,7 +205,6 @@ export function VideoGenerationModalFormContent({
             projects={projects}
             selectedProjectId={selectedProjectId}
             selectedLoras={selectedLoras}
-            availableLoras={availableLoras}
             isTimelineMode={false}
             accelerated={accelerated}
             onAcceleratedChange={onAcceleratedChange}
@@ -261,8 +256,6 @@ export function VideoGenerationModalFormContent({
             }}
             lora={{
               selectedLoras,
-              availableLoras: availableLoras || [],
-              onAddLoraClick: onOpenLoraModal,
               onRemoveLora,
               onLoraStrengthChange,
               onAddTriggerWord: (word) => onAddTriggerWord(word),
@@ -271,7 +264,6 @@ export function VideoGenerationModalFormContent({
               selectedPhasePresetId: validPresetId,
               onPhasePresetSelect: handlePhasePresetSelect,
               onPhasePresetRemove: handlePhasePresetRemove,
-              currentSettings: {},
             }}
             advanced={{
               phaseConfig: settings.phaseConfig || DEFAULT_PHASE_CONFIG,
@@ -362,22 +354,16 @@ function ModalShotImagesEditor({ shotId, projectId, images, batchVideoFrames, pr
       pendingPositions: emptyMap,
       unpositionedGenerationsCount: 0,
       fileInputKey: 0,
-      isUploadingImage: handlers.isUploadingImage,
-      uploadProgress: handlers.uploadProgress,
     },
     editActions: {
       onImageReorder: handlers.onImageReorder,
       onFramePositionsChange: noop,
-      onFileDrop: handlers.onFileDrop,
       onGenerationDrop: handlers.onGenerationDrop,
-      onBatchFileDrop: handlers.onBatchFileDrop,
       onBatchGenerationDrop: handlers.onBatchGenerationDrop,
       onPendingPositionApplied: noop,
       onImageDelete: handlers.onImageDelete,
       onBatchImageDelete: handlers.onBatchImageDelete,
-      onImageDuplicate: handlers.onImageDuplicate,
       onOpenUnpositionedPane: noop,
-      onImageUpload: handlers.onImageUpload,
     },
     shotWorkflow: {},
   }), [shotId, projectId, images, batchVideoFrames, projectAspectRatio, generationMode, handlers]);
@@ -473,13 +459,12 @@ export function VideoGenerationModalAccordionContent({
   effectiveAspectRatio,
   ...formProps
 }: VideoGenerationModalAccordionContentProps) {
-  const segmentOutputs = useSegmentOutputsForShot(shotId, projectId);
+  const segmentOutputs = useSegmentOutputsForShot(shotId);
   const hasFinalVideo = segmentOutputs.parentGenerations.some((p) => Boolean(p.location));
   const { getFinalVideoCount } = useProjectVideoCountsCache(projectId || null);
   const cachedFinalVideoCount = getFinalVideoCount(shotId);
   const willHaveFinalVideo = cachedFinalVideoCount !== null && cachedFinalVideoCount > 0;
   const shouldRenderFinalVideoSection = hasFinalVideo || willHaveFinalVideo;
-  const imageHandlers = useModalImageHandlers(shotId, projectId, shotGenerations, formProps.settings.batchVideoFrames || 61);
 
   return (
     <div className="space-y-4">
@@ -494,8 +479,6 @@ export function VideoGenerationModalAccordionContent({
             projectId={projectId}
             projectAspectRatio={effectiveAspectRatio}
             getFinalVideoCount={getFinalVideoCount}
-            isParentLoading={segmentOutputs.isLoading}
-            onDelete={imageHandlers.onDeleteFinalVideo}
           />
         </ModalAccordionSection>
       )}

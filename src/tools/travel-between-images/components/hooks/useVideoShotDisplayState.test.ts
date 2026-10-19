@@ -3,12 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { useVideoShotDisplayState } from './useVideoShotDisplayState';
 
 describe('useVideoShotDisplayState', () => {
-  it('handles local editing state and selection synchronization', () => {
+  it('tracks the modal toggle and synchronizes the selected-for-addition flag', () => {
     const { result, rerender } = renderHook(
-      (props: { locked: boolean; selectedShotId?: string | null; shotName: string }) =>
+      (props: { locked: boolean; selectedShotId?: string | null }) =>
         useVideoShotDisplayState({
           shotId: 'shot-1',
-          shotName: props.shotName,
           selectedShotId: props.selectedShotId,
           isGenerationsPaneLocked: props.locked,
         }),
@@ -16,34 +15,31 @@ describe('useVideoShotDisplayState', () => {
         initialProps: {
           locked: false,
           selectedShotId: null,
-          shotName: 'First shot',
         },
       },
     );
 
-    expect(result.current.editableName).toBe('First shot');
     expect(result.current.isSelectedForAddition).toBe(false);
+    expect(result.current.isVideoModalOpen).toBe(false);
 
     act(() => {
-      result.current.startNameEdit();
-      result.current.setEditableName('Renamed shot');
-      result.current.finishNameEdit();
-      result.current.setDeleteDialogOpen(true);
-      result.current.setSkipConfirmationChecked(true);
-      result.current.setDeleteDialogOpen(false);
+      result.current.setVideoModalOpen(true);
     });
 
-    expect(result.current.isEditingName).toBe(false);
-    expect(result.current.editableName).toBe('Renamed shot');
-    expect(result.current.skipConfirmationChecked).toBe(false);
+    expect(result.current.isVideoModalOpen).toBe(true);
 
     rerender({
       locked: true,
       selectedShotId: 'shot-1',
-      shotName: 'Synced name',
     });
 
     expect(result.current.isSelectedForAddition).toBe(true);
-    expect(result.current.editableName).toBe('Synced name');
+
+    rerender({
+      locked: true,
+      selectedShotId: 'shot-2',
+    });
+
+    expect(result.current.isSelectedForAddition).toBe(false);
   });
 });

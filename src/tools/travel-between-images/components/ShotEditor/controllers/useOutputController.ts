@@ -1,6 +1,5 @@
 import { useOutputSelection } from '../hooks/video/useOutputSelection';
 import { useSegmentOutputsForShot } from '@/shared/hooks/segments';
-import { useDemoteOrphanedVariants } from '../../../hooks/workflow/useDemoteOrphanedVariants';
 import { useEnsureSelectedOutput } from '../hooks/video/useEnsureSelectedOutput';
 import type { GenerationRow, Shot } from '@/domains/generation/types';
 
@@ -8,7 +7,6 @@ interface UseOutputControllerParams {
   selectedProjectId: string | null;
   selectedShotId: string;
   selectedShot: Shot | null;
-  projectId: string | null;
   timelineImages: GenerationRow[];
 }
 
@@ -16,7 +14,6 @@ export function useOutputController({
   selectedProjectId,
   selectedShotId,
   selectedShot,
-  projectId,
   timelineImages,
 }: UseOutputControllerParams) {
   const {
@@ -33,10 +30,8 @@ export function useOutputController({
     selectedParent: joinSelectedParent,
     parentGenerations,
     segmentProgress,
-    isLoading: isSegmentOutputsLoading,
   } = useSegmentOutputsForShot(
     selectedShotId,
-    projectId,
     undefined, // localShotGenPositions not needed here
     outputSelectionReady ? selectedOutputId : undefined,
     outputSelectionReady ? setSelectedOutputId : undefined,
@@ -54,8 +49,6 @@ export function useOutputController({
     setSelectedOutputId,
   });
 
-  const { demoteOrphanedVariants } = useDemoteOrphanedVariants();
-
   return {
     selectedOutputId,
     setSelectedOutputId,
@@ -64,7 +57,5 @@ export function useOutputController({
     joinSelectedParent,
     parentGenerations,
     segmentProgress,
-    isSegmentOutputsLoading,
-    demoteOrphanedVariants,
   };
 }

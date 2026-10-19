@@ -1,22 +1,19 @@
 import { useMemo } from 'react';
 import type { GenerationRow } from '@/domains/generation/types';
 import type { LightboxShotWorkflowProps } from '../../types';
-import { useShotCreation } from '../useShotCreation';
 import { useShotPositioning } from '../useShotPositioning';
 
 interface UseSharedLightboxShotStateInput {
   media: GenerationRow;
-  selectedProjectId: string | null;
   shotWorkflow?: LightboxShotWorkflowProps;
   onClose: () => void;
 }
 
 export function useSharedLightboxShotState(input: UseSharedLightboxShotStateInput) {
-  const { media, selectedProjectId, shotWorkflow, onClose } = input;
+  const { media, shotWorkflow, onClose } = input;
   const {
     allShots,
     onNavigateToShot,
-    onShotChange,
     selectedShotId,
     positionedInSelectedShot,
     associatedWithoutPositionInSelectedShot,
@@ -29,15 +26,6 @@ export function useSharedLightboxShotState(input: UseSharedLightboxShotStateInpu
     onOptimisticPositioned,
     onOptimisticUnpositioned,
   } = shotWorkflow ?? {};
-
-  const { isCreatingShot, quickCreateSuccess, handleQuickCreateAndAdd, handleVisitCreatedShot } = useShotCreation({
-    media,
-    selectedProjectId,
-    allShots: allShots || [],
-    onNavigateToShot,
-    onClose,
-    onShotChange,
-  });
 
   const computedPositionedInSelectedShot = useMemo(
     () => (typeof positionedInSelectedShot === 'boolean' ? positionedInSelectedShot : undefined),
@@ -73,9 +61,5 @@ export function useSharedLightboxShotState(input: UseSharedLightboxShotStateInpu
     isAlreadyAssociatedWithoutPosition,
     handleAddToShot,
     handleAddToShotWithoutPosition,
-    isCreatingShot,
-    quickCreateSuccess,
-    handleQuickCreateAndAdd,
-    handleVisitCreatedShot,
   };
 }

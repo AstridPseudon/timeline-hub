@@ -256,7 +256,6 @@ export interface TimelineEditorCoreProps {
   onOpenGenerateVideo?: (shot: Shot) => void;
   isCreatingShot?: boolean;
   /** Creates a new empty shot anchored at an empty timeline position. */
-  onCreateEmptyShotAt?: (anchor: { time: number; trackId?: string }) => void | Promise<void>;
   duplicatingClipId?: string | null;
   onDuplicateGenerationClip?: (clipId: string) => void | Promise<void>;
   onOpenShotVideoModal?: (shotId: string, reason: 'pinned-group' | 'final-video-file') => void;
@@ -294,7 +293,6 @@ function TimelineEditorCoreComponent({
   onNavigateToShot,
   onOpenGenerateVideo,
   isCreatingShot = false,
-  onCreateEmptyShotAt,
   duplicatingClipId = null,
   onDuplicateGenerationClip,
   onOpenShotVideoModal,
@@ -1005,7 +1003,6 @@ function TimelineEditorCoreComponent({
           newTrackDropLabel={newTrackDropLabel}
           postprocessShader={postprocessShader}
           onSelectPostprocessShader={handlePostprocessShaderSelect}
-          onCreateEmptyShotAt={onCreateEmptyShotAt}
           onCreateShotFromSelection={onCreateShotFromSelection}
           canCreateShotFromSelection={canCreateShotFromSelection}
           isCreatingShot={isCreatingShot}

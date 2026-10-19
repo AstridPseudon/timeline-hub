@@ -7,8 +7,6 @@ import type { HeaderSectionCallbacks, HeaderSectionLayout } from './sections/hea
 import { TimelineSection } from './sections/TimelineSection';
 import { ModalsSection } from './sections/ModalsSection';
 import { GenerationSection } from './sections/GenerationSection';
-import type { LoraModel } from '@/domains/lora/types/lora';
-import type { ModalSelectedLora } from './types/modalLora';
 import {
   getModelSpec,
   resolveGenerationPolicy,
@@ -33,10 +31,7 @@ export interface ShotEditorLayoutProps {
     parentGenerations: GenerationRow[];
     initialParentGenerations: GenerationRow[];
     segmentProgress?: { completed: number; total: number };
-    isSegmentOutputsLoading: boolean;
     getFinalVideoCount?: (shotId: string | null) => number | null;
-    onDeleteFinalVideo: (generationId: string) => void;
-    isClearingFinalVideo: boolean;
     videoGalleryRef: React.RefObject<HTMLDivElement>;
     generateVideosCardRef: React.RefObject<HTMLDivElement>;
   };
@@ -78,13 +73,6 @@ export interface ShotEditorLayoutProps {
   };
 
   modals: {
-    isLoraModalOpen: boolean;
-    onLoraModalClose: () => void;
-    onAddLora: (lora: LoraModel, isManualAction?: boolean, initialStrength?: number) => void;
-    onRemoveLora: (loraId: string) => void;
-    onUpdateLoraStrength: (loraId: string, strength: number) => void;
-    selectedLoras: ModalSelectedLora[];
-    selectedModel: SelectedModel;
     isSettingsModalOpen: boolean;
     onSettingsModalOpenChange: (open: boolean) => void;
   };
@@ -142,10 +130,7 @@ export const ShotEditorLayout: React.FC<ShotEditorLayoutProps> = ({
                 onSelectedParentChange={finalVideo.onSelectedOutputChange}
                 parentGenerations={finalVideo.parentGenerations.length > 0 ? finalVideo.parentGenerations : finalVideo.initialParentGenerations}
                 segmentProgress={finalVideo.segmentProgress}
-                isParentLoading={finalVideo.isSegmentOutputsLoading && finalVideo.initialParentGenerations.length === 0}
                 getFinalVideoCount={finalVideo.getFinalVideoCount}
-                onDelete={finalVideo.onDeleteFinalVideo}
-                isDeleting={finalVideo.isClearingFinalVideo}
                 />
               </fieldset>
             </div>
@@ -197,13 +182,6 @@ export const ShotEditorLayout: React.FC<ShotEditorLayoutProps> = ({
             </div>
 
             <ModalsSection
-              isLoraModalOpen={modals.isLoraModalOpen}
-              onLoraModalClose={modals.onLoraModalClose}
-              onAddLora={modals.onAddLora}
-              onRemoveLora={modals.onRemoveLora}
-              onUpdateLoraStrength={modals.onUpdateLoraStrength}
-              selectedLoras={modals.selectedLoras}
-              selectedModel={modals.selectedModel}
               isSettingsModalOpen={modals.isSettingsModalOpen}
               onSettingsModalOpenChange={modals.onSettingsModalOpenChange}
             />

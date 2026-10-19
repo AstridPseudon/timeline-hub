@@ -10,10 +10,7 @@ export interface FinalVideoSectionProps {
   onSelectedParentChange?: (id: string | null) => void;
   parentGenerations?: GenerationRow[];
   segmentProgress?: { completed: number; total: number };
-  isParentLoading?: boolean;
   getFinalVideoCount?: (shotId: string | null) => number | null;
-  onDelete?: (generationId: string) => void;
-  isDeleting?: boolean;
   readOnly?: boolean;
   preloadedParent?: GenerationRow | null;
 }

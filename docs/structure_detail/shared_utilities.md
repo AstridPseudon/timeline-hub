@@ -12,6 +12,6 @@
 
 ## Migration Status
 
-**ModalContainer** -- migrated: CreateProjectModal, CreateShotModal, LineageGifModal, ProjectSettingsModal. Not migrated (custom layouts): VideoGenerationModal, SettingsModal, OnboardingModal.
+**ModalContainer** -- migrated: CreateProjectModal, LineageGifModal, ProjectSettingsModal. Not migrated (custom layouts): VideoGenerationModal, SettingsModal, OnboardingModal.
 
 **ConfirmDialog** -- used directly by ShotImageManager mobile and wrapped by `DeleteGenerationConfirmDialog` / `DeleteConfirmationDialog` where the copy needs to stay consistent.

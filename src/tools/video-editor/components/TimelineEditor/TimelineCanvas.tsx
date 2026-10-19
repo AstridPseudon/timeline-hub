@@ -186,7 +186,6 @@ export interface TimelineCanvasProps {
   /** Selects the timeline-scoped postprocess shader inspector target. */
   onSelectPostprocessShader?: (shader: TimelinePostprocessShaderMetadata) => void;
   /** Creates a new empty shot anchored at an empty timeline position. */
-  onCreateEmptyShotAt?: (anchor: { time: number; trackId?: string }) => void | Promise<void>;
   /** Creates a shot from the selected clips. */
   onCreateShotFromSelection?: () => Promise<Shot | null>;
   canCreateShotFromSelection?: boolean;
@@ -229,7 +228,6 @@ function TimelineAreaExtensionContextMenu({
   menu,
   menuRef,
   closeMenu,
-  onCreateEmptyShotAt,
   onCreateShotFromSelection,
   canCreateShotFromSelection,
   isCreatingShot,
@@ -238,7 +236,6 @@ function TimelineAreaExtensionContextMenu({
   menu: TimelineAreaContextMenuState;
   menuRef: React.RefObject<HTMLDivElement>;
   closeMenu: () => void;
-  onCreateEmptyShotAt?: TimelineCanvasProps['onCreateEmptyShotAt'];
   onCreateShotFromSelection?: TimelineCanvasProps['onCreateShotFromSelection'];
   canCreateShotFromSelection?: boolean;
   isCreatingShot?: boolean;
@@ -255,7 +252,7 @@ function TimelineAreaExtensionContextMenu({
   const showSelectionItem = Boolean(
     canCreateShotFromSelection && (selectedClipCount ?? 0) >= 2 && onCreateShotFromSelection,
   );
-  const hasBuiltInItems = Boolean(onCreateEmptyShotAt) || showSelectionItem;
+  const hasBuiltInItems = showSelectionItem;
 
   useLayoutEffect(() => {
     const node = menuRef.current;
@@ -295,12 +292,6 @@ function TimelineAreaExtensionContextMenu({
         <button type="button" role="menuitem" className="relative flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent disabled:opacity-50" disabled={isCreatingShot} onClick={() => { void onCreateShotFromSelection!(); closeMenu(); }}>
           <FolderPlus className="h-4 w-4" />
           Create Shot from selection
-        </button>
-      )}
-      {onCreateEmptyShotAt && (
-        <button type="button" role="menuitem" className="relative flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent disabled:opacity-50" disabled={isCreatingShot} onClick={() => { void onCreateEmptyShotAt({ time: menu.time, trackId: menu.trackId }); closeMenu(); }}>
-          <FolderPlus className="h-4 w-4" />
-          Create Shot
         </button>
       )}
       {hasBuiltInItems && hasExtensionItems && <div className="my-1 h-px bg-border" />}
@@ -385,7 +376,6 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   sourceMapStaleClipIds,
   postprocessShader,
   onSelectPostprocessShader,
-  onCreateEmptyShotAt,
   onCreateShotFromSelection,
   canCreateShotFromSelection,
   isCreatingShot,
@@ -970,7 +960,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     const hasSelectionActions = Boolean(
       canCreateShotFromSelection && selectedClipCount >= 2 && onCreateShotFromSelection,
     );
-    const hasBuiltInActions = Boolean(onCreateEmptyShotAt) || hasSelectionActions;
+    const hasBuiltInActions = hasSelectionActions;
     if (!hasBuiltInActions && !hasEligibleExtensionContextMenuItems(commandRegistry, extensions, target)) {
       return;
     }
@@ -984,7 +974,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
       trackId,
       target,
     });
-  }, [canCreateShotFromSelection, commandRegistry, extensions, marqueeRect, onCreateEmptyShotAt, onCreateShotFromSelection, pixelToTime, selectedClipCount]);
+  }, [canCreateShotFromSelection, commandRegistry, extensions, marqueeRect, onCreateShotFromSelection, pixelToTime, selectedClipCount]);
 
   const handlePostprocessShaderBadgeClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -1357,7 +1347,6 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
               menu={timelineAreaMenu}
               menuRef={timelineAreaMenuRef}
               closeMenu={() => setTimelineAreaMenu(null)}
-              onCreateEmptyShotAt={onCreateEmptyShotAt}
               onCreateShotFromSelection={onCreateShotFromSelection}
               canCreateShotFromSelection={canCreateShotFromSelection}
               isCreatingShot={isCreatingShot}

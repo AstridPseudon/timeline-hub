@@ -110,8 +110,6 @@ describe('EditorContent', () => {
         onGenerationDrop: vi.fn(),
         onImageDelete: vi.fn(),
         onImageDuplicate: vi.fn(),
-        duplicatingImageId: null,
-        duplicateSuccessImageId: null,
         projectAspectRatio: '16:9',
         readOnly: false,
         preloadedImages: undefined,
@@ -147,7 +145,6 @@ describe('EditorContent', () => {
         hasEverHadData: true,
         imagesWithBadges: [{ id: 'image-1' }],
         segmentSlots: [{ id: 'slot-1' }],
-        isSegmentsLoading: false,
         hasPendingTask: false,
         pairPrompts: ['pair prompt'],
       } as never,
@@ -163,17 +160,13 @@ describe('EditorContent', () => {
       } as never,
       callbacks: {
         handleDragStateChange: vi.fn(),
-        handleClearEnhancedPromptByIndex: vi.fn(),
-        deletingSegmentId: null,
         handleReorder: vi.fn(),
         handleDelete: vi.fn(),
         runAddToShotOperation: vi.fn(),
         runAddToShotWithoutPositionOperation: vi.fn(),
         runCreateShotOperation: vi.fn(),
-        runDeleteSegmentOperation: vi.fn(),
       } as never,
       timelineMediaValue: { currentMedia: 'media-1' } as never,
-      registerTrailingUpdater: vi.fn(),
     } satisfies React.ComponentProps<typeof EditorContent>;
   }
 
@@ -243,9 +236,6 @@ describe('EditorContent', () => {
         onAddToShot: captures.adaptedSelection,
         onAddToShotWithoutPosition: captures.adaptedSelection,
         onCreateShot: captures.adaptedCreation,
-      }),
-      interactions: expect.objectContaining({
-        onRegisterTrailingUpdater: props.registerTrailingUpdater,
       }),
       segmentNavigation: expect.objectContaining({
         pendingImageToOpen: 'pending-image',

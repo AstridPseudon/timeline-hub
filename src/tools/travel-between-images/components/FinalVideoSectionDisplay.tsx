@@ -1,9 +1,7 @@
 import React from 'react';
-import { Film, Loader2, Trash2 } from 'lucide-react';
+import { Film, Loader2 } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types';
-import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { VideoItem } from './VideoGallery/components/VideoItem';
 
 const noop = () => {};
@@ -14,15 +12,9 @@ interface FinalVideoSectionDisplayProps {
   hasFinalOutput: boolean;
   parentVideoRow: GenerationRow | null;
   isMobile: boolean;
-  projectId: string;
   onLightboxOpen: () => void;
   onMobileTap: () => void;
   onApplySettingsFromTask?: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
-  readOnly: boolean;
-  onDelete?: (generationId: string) => void;
-  onDeleteSelected: () => void;
-  isDeleting: boolean;
-  isCurrentlyLoading: boolean;
   hasActiveJoinTask: boolean;
 }
 
@@ -50,15 +42,9 @@ export const FinalVideoSectionDisplay: React.FC<FinalVideoSectionDisplayProps> =
   hasFinalOutput,
   parentVideoRow,
   isMobile,
-  projectId,
   onLightboxOpen,
   onMobileTap,
   onApplySettingsFromTask,
-  readOnly,
-  onDelete,
-  onDeleteSelected,
-  isDeleting,
-  isCurrentlyLoading,
   hasActiveJoinTask,
 }) => {
   if (shouldShowSkeleton) {
@@ -87,7 +73,6 @@ export const FinalVideoSectionDisplay: React.FC<FinalVideoSectionDisplayProps> =
             shouldPreload="metadata"
             isMobile={isMobile}
             projectAspectRatio={projectAspectRatio}
-            projectId={projectId}
             onLightboxOpen={() => onLightboxOpen()}
             onMobileTap={() => onMobileTap()}
             onDelete={noop}
@@ -100,32 +85,6 @@ export const FinalVideoSectionDisplay: React.FC<FinalVideoSectionDisplayProps> =
             onApplySettingsFromTask={onApplySettingsFromTask || noop}
             hideActions
           />
-
-          {!readOnly && onDelete && (
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="h-8 w-8 bg-red-600/80 hover:bg-red-600"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onDeleteSelected();
-                    }}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Delete final video</TooltipContent>
-              </Tooltip>
-            </div>
-          )}
         </div>
       </div>
     );
@@ -133,12 +92,7 @@ export const FinalVideoSectionDisplay: React.FC<FinalVideoSectionDisplayProps> =
 
   return (
     <div className="flex flex-col items-center justify-center pt-4 pb-1 text-muted-foreground">
-      {isCurrentlyLoading ? (
-        <div className="flex items-center gap-2">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span className="text-sm">Loading...</span>
-        </div>
-      ) : hasActiveJoinTask ? (
+      {hasActiveJoinTask ? (
         <div className="flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin" />
           <span className="text-sm">Generating joined clip...</span>

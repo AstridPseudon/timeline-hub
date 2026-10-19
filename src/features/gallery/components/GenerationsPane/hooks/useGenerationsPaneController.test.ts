@@ -5,7 +5,6 @@ import { useGenerationsPaneController } from './useGenerationsPaneController';
 const mocks = vi.hoisted(() => ({
   useRenderLogger: vi.fn(),
   useSlidingPane: vi.fn(),
-  useQueryClient: vi.fn(),
   useNavigate: vi.fn(),
   useLocation: vi.fn(),
   useContainerWidth: vi.fn(),
@@ -18,7 +17,6 @@ const mocks = vi.hoisted(() => ({
   useShots: vi.fn(),
   useProjectCrudContext: vi.fn(),
   useProjectSelectionContext: vi.fn(),
-  useShotCreation: vi.fn(),
   useStableObject: vi.fn(),
   usePaneInteractionLifecycle: vi.fn(),
   isSpecialFilter: vi.fn(),
@@ -34,10 +32,6 @@ vi.mock('@/shared/lib/debug/debugRendering', () => ({
 
 vi.mock('@/shared/hooks/useSlidingPane', () => ({
   useSlidingPane: (...args: unknown[]) => mocks.useSlidingPane(...args),
-}));
-
-vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: (...args: unknown[]) => mocks.useQueryClient(...args),
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -88,9 +82,6 @@ vi.mock('@/shared/contexts/ProjectContext', () => ({
   useProjectSelectionContext: (...args: unknown[]) => mocks.useProjectSelectionContext(...args),
 }));
 
-vi.mock('@/shared/hooks/shotCreation/useShotCreation', () => ({
-  useShotCreation: (...args: unknown[]) => mocks.useShotCreation(...args),
-}));
 
 vi.mock('@/shared/hooks/useStableObject', () => ({
   useStableObject: (...args: unknown[]) => mocks.useStableObject(...args),
@@ -134,15 +125,11 @@ function buildGalleryPageState(overrides: Record<string, unknown> = {}) {
     setStarredOnly: vi.fn(),
     setSearchTerm: vi.fn(),
     shotsData: [],
-    confirmDialogProps: { isOpen: false, onClose: vi.fn() },
     error: null,
     expectedItemCount: 8,
     handleAddToShot: vi.fn(),
     handleAddToShotWithoutPosition: vi.fn(),
-    handleDeleteGeneration: vi.fn(),
     handleServerPageChange: vi.fn(),
-    handleToggleStar: vi.fn(),
-    isDeleting: false,
     isLoading: false,
     lastAffectedShotId: null,
     page: 1,
@@ -213,7 +200,6 @@ describe('useGenerationsPaneController', () => {
     });
     mocks.useCurrentShot.mockReturnValue({ currentShotId: 'shot-abc' });
     mocks.useShots.mockReturnValue({ shots: [{ id: 'fallback-shot' }] });
-    mocks.useShotCreation.mockReturnValue({ createShot: vi.fn() });
     mocks.useGalleryPageState.mockReturnValue(buildGalleryPageState());
     mocks.useProjectGenerations.mockReturnValue({
       data: { total: 10 },
@@ -221,7 +207,6 @@ describe('useGenerationsPaneController', () => {
       isFetching: false,
       error: null,
     });
-    mocks.useQueryClient.mockReturnValue({ invalidateQueries: vi.fn() });
     mocks.useResolvedGalleryProject.mockReturnValue({
       projectId: null,
       runtimeAuthority: false,
@@ -232,21 +217,16 @@ describe('useGenerationsPaneController', () => {
     });
   });
 
-  it('composes pane/filter/gallery state and wires event handlers plus navigation', async () => {
-    const createShot = vi.fn(async ({ onSuccess }: { onSuccess?: () => void }) => {
-      onSuccess?.();
-    });
+  it('composes pane/filter/gallery state and wires event handlers plus navigation', () => {
     const navigate = vi.fn();
     const openPane = vi.fn();
     const setIsGenerationsPaneLocked = vi.fn();
     const setIsGenerationsPaneOpen = vi.fn();
-    const invalidateQueries = vi.fn();
     const galleryPageState = buildGalleryPageState({
       shotsData: [],
       selectedShotFilter: 'all',
     });
 
-    mocks.useShotCreation.mockReturnValue({ createShot });
     mocks.useNavigate.mockReturnValue(navigate);
     mocks.useSlidingPane.mockReturnValue(buildSlidingPaneState({
       openPane,
@@ -259,7 +239,6 @@ describe('useGenerationsPaneController', () => {
       setIsGenerationsPaneLocked,
     });
     mocks.useGalleryPageState.mockReturnValue(galleryPageState);
-    mocks.useQueryClient.mockReturnValue({ invalidateQueries });
 
     const { result } = renderHook(() => useGenerationsPaneController());
 
@@ -304,19 +283,6 @@ describe('useGenerationsPaneController', () => {
     expect(setIsGenerationsPaneLocked).toHaveBeenCalledWith(false);
     expect(navigate).toHaveBeenCalledWith('/tools/image-generation');
     expect(setIsGenerationsPaneOpen).toHaveBeenCalledWith(true);
-
-    await act(async () => {
-      await result.current.gallery.handleCreateShot('New Shot', [new File(['x'], 'one.png', { type: 'image/png' })]);
-    });
-    expect(createShot).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'New Shot',
-      files: expect.any(Array),
-      dispatchSkeletonEvents: true,
-      onSuccess: expect.any(Function),
-    }));
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['shots', 'project-1'],
-    });
   });
 
   it('keeps the Astrid project and timeline when the gallery shortcut changes tools', () => {

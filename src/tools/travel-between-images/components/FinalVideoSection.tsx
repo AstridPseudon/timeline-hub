@@ -33,8 +33,6 @@ export const FinalVideoSection: React.FC<FinalVideoSectionProps> = (props) => {
     inputImages,
     handleOutputSelect,
     segmentProgress,
-    handleDelete,
-    isCurrentlyLoading,
     shouldShowSkeleton,
     hasActiveJoinTask,
   } = useFinalVideoSectionController(props);
@@ -64,15 +62,9 @@ export const FinalVideoSection: React.FC<FinalVideoSectionProps> = (props) => {
             hasFinalOutput={hasFinalOutput}
             parentVideoRow={parentVideoRow}
             isMobile={isMobile}
-            projectId={props.projectId}
             onLightboxOpen={handleLightboxOpen}
             onMobileTap={handleLightboxOpen}
             onApplySettingsFromTask={props.onApplySettingsFromTask}
-            readOnly={Boolean(props.readOnly)}
-            onDelete={props.onDelete}
-            onDeleteSelected={handleDelete}
-            isDeleting={Boolean(props.isDeleting)}
-            isCurrentlyLoading={isCurrentlyLoading}
             hasActiveJoinTask={hasActiveJoinTask}
           />
         </CardContent>
@@ -91,9 +83,6 @@ export const FinalVideoSection: React.FC<FinalVideoSectionProps> = (props) => {
           features={{
             showDownload: true,
             showTaskDetails: true,
-          }}
-          actions={{
-            starred: parentVideoRow.starred ?? false,
           }}
           shotId={props.shotId}
           readOnly={Boolean(props.readOnly)}

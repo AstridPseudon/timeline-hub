@@ -8,8 +8,6 @@ import {
 } from 'react';
 import { useRenderLogger } from '@/shared/lib/debug/debugRendering';
 import { useSlidingPane } from '@/shared/hooks/useSlidingPane';
-import { useQueryClient } from '@tanstack/react-query';
-import { shotQueryKeys } from '@/shared/lib/queryKeys/shots';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { TOOL_ROUTES } from '@/shared/lib/tooling/toolRoutes';
 import { type GalleryFilterState } from '@/shared/components/MediaGallery';
@@ -26,7 +24,6 @@ import {
   useProjectCrudContext,
   useProjectSelectionContext,
 } from '@/shared/contexts/ProjectContext';
-import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation';
 import { useStableObject } from '@/shared/hooks/useStableObject';
 import { usePaneInteractionLifecycle } from '@/shared/components/panes/usePaneInteractionLifecycle';
 import { SHOT_FILTER, isSpecialFilter } from '@/shared/constants/filterConstants';
@@ -91,8 +88,6 @@ const useGenerationData = ({
   runtimeProjectId,
   runtimeAuthority,
 }: GenerationDataParams) => {
-  const queryClient = useQueryClient();
-  const { createShot } = useShotCreation();
   const { shots: contextShots } = useShots();
 
   const galleryPageState = useGalleryPageState({
@@ -115,26 +110,12 @@ const useGenerationData = ({
     ? galleryPageState.shotsData
     : (contextShots || []);
 
-  const handleCreateShot = useCallback(async (shotName: string, files: File[]): Promise<void> => {
-    await createShot({
-      name: shotName,
-      files: files.length > 0 ? files : undefined,
-      dispatchSkeletonEvents: files.length > 0,
-      onSuccess: () => {
-        if (selectedProjectId) {
-          void queryClient.invalidateQueries({ queryKey: [...shotQueryKeys.all, selectedProjectId] });
-        }
-      },
-    });
-  }, [createShot, queryClient, selectedProjectId]);
-
   return {
     ...galleryPageState,
     mediaAvailabilityCount: mediaAvailabilityQuery.data?.total,
     isMediaAvailabilityLoading: mediaAvailabilityQuery.isLoading,
     isMediaAvailabilityFetching: mediaAvailabilityQuery.isFetching,
     mediaAvailabilityError: mediaAvailabilityQuery.error,
-    handleCreateShot,
     shotsForFilter,
   };
 };
@@ -518,18 +499,13 @@ export const useGenerationsPaneController = () => {
       shotsForFilter: generationData.shotsForFilter,
     },
     gallery: {
-      confirmDialogProps: generationData.confirmDialogProps,
       error: resolvedGalleryProject.error ?? generationData.error,
       runtimeProjectId: resolvedGalleryProject.projectId,
       runtimeAuthority: resolvedGalleryProject.runtimeAuthority,
       expectedItemCount: generationData.expectedItemCount,
       handleAddToShot: generationData.handleAddToShot,
       handleAddToShotWithoutPosition: generationData.handleAddToShotWithoutPosition,
-      handleCreateShot: generationData.handleCreateShot,
-      handleDeleteGeneration: generationData.handleDeleteGeneration,
       handleServerPageChange: generationData.handleServerPageChange,
-      handleToggleStar: generationData.handleToggleStar,
-      isDeleting: generationData.isDeleting,
       isLoading: resolvedGalleryProject.isResolving || generationData.isLoading,
       lastAffectedShotId: generationData.lastAffectedShotId,
       page: generationData.page,

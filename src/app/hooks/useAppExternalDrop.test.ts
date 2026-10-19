@@ -25,30 +25,24 @@ describe('useAppExternalDrop', () => {
     vi.clearAllMocks();
   });
 
-  it('always finalizes overlay for external-file drop failures', async () => {
+  it('places a dropped generation into the target shot, records it, and finalizes the overlay', async () => {
     const onDropHandled = vi.fn();
     const setLastAffectedShotId = vi.fn();
-    const addImageToShotMutation = { mutateAsync: vi.fn() };
-    const createShot = vi.fn();
-    const handleExternalImageDropMutation = {
-      mutateAsync: vi.fn().mockRejectedValue(new Error('upload failed')),
-    };
+    const addImageToShotMutation = { mutateAsync: vi.fn().mockResolvedValue(undefined) };
 
     const { result } = renderHook(() => useAppExternalDrop({
       selectedProjectId: 'project-1',
-      currentShotsCount: 2,
       setLastAffectedShotId,
-      createShot,
       addImageToShotMutation,
-      handleExternalImageDropMutation,
       onDropHandled,
     }));
 
     await act(async () => {
       await result.current(createDragEndEvent({
         activeData: {
-          isExternalFile: true,
-          externalFile: new File(['data'], 'image.png', { type: 'image/png' }),
+          generationId: 'gen-1',
+          imageUrl: 'https://example.com/image.png',
+          thumbUrl: 'https://example.com/thumb.png',
         },
         overData: {
           type: 'shot-group',
@@ -57,46 +51,14 @@ describe('useAppExternalDrop', () => {
       }));
     });
 
-    expect(handleExternalImageDropMutation.mutateAsync).toHaveBeenCalledTimes(1);
-    expect(onDropHandled).toHaveBeenCalledTimes(1);
-    expect(setLastAffectedShotId).not.toHaveBeenCalled();
-    expect(normalizeAndPresentError).toHaveBeenCalledTimes(1);
-  });
-
-  it('records affected shot and finalizes overlay for successful external-file drops', async () => {
-    const onDropHandled = vi.fn();
-    const setLastAffectedShotId = vi.fn();
-    const addImageToShotMutation = { mutateAsync: vi.fn() };
-    const createShot = vi.fn();
-    const handleExternalImageDropMutation = {
-      mutateAsync: vi.fn().mockResolvedValue({ shotId: 'shot-99' }),
-    };
-
-    const { result } = renderHook(() => useAppExternalDrop({
-      selectedProjectId: 'project-1',
-      currentShotsCount: 2,
-      setLastAffectedShotId,
-      createShot,
-      addImageToShotMutation,
-      handleExternalImageDropMutation,
-      onDropHandled,
-    }));
-
-    await act(async () => {
-      await result.current(createDragEndEvent({
-        activeData: {
-          isExternalFile: true,
-          externalFile: new File(['data'], 'image.png', { type: 'image/png' }),
-        },
-        overData: {
-          type: 'shot-group',
-          shotId: 'shot-99',
-        },
-      }));
+    expect(addImageToShotMutation.mutateAsync).toHaveBeenCalledWith({
+      shot_id: 'shot-1',
+      generation_id: 'gen-1',
+      imageUrl: 'https://example.com/image.png',
+      thumbUrl: 'https://example.com/thumb.png',
+      project_id: 'project-1',
     });
-
-    expect(handleExternalImageDropMutation.mutateAsync).toHaveBeenCalledTimes(1);
-    expect(setLastAffectedShotId).toHaveBeenCalledWith('shot-99');
+    expect(setLastAffectedShotId).toHaveBeenCalledWith('shot-1');
     expect(onDropHandled).toHaveBeenCalledTimes(1);
   });
 
@@ -104,16 +66,11 @@ describe('useAppExternalDrop', () => {
     const onDropHandled = vi.fn();
     const setLastAffectedShotId = vi.fn();
     const addImageToShotMutation = { mutateAsync: vi.fn() };
-    const createShot = vi.fn();
-    const handleExternalImageDropMutation = { mutateAsync: vi.fn() };
 
     const { result } = renderHook(() => useAppExternalDrop({
       selectedProjectId: 'project-1',
-      currentShotsCount: 2,
       setLastAffectedShotId,
-      createShot,
       addImageToShotMutation,
-      handleExternalImageDropMutation,
       onDropHandled,
     }));
 
@@ -128,9 +85,31 @@ describe('useAppExternalDrop', () => {
 
     expect(onDropHandled).toHaveBeenCalledTimes(1);
     expect(addImageToShotMutation.mutateAsync).not.toHaveBeenCalled();
-    expect(createShot).not.toHaveBeenCalled();
-    expect(handleExternalImageDropMutation.mutateAsync).not.toHaveBeenCalled();
     expect(setLastAffectedShotId).not.toHaveBeenCalled();
+  });
+
+  it('ignores drops on zones that are not shot groups', async () => {
+    const onDropHandled = vi.fn();
+    const setLastAffectedShotId = vi.fn();
+    const addImageToShotMutation = { mutateAsync: vi.fn() };
+
+    const { result } = renderHook(() => useAppExternalDrop({
+      selectedProjectId: 'project-1',
+      setLastAffectedShotId,
+      addImageToShotMutation,
+      onDropHandled,
+    }));
+
+    await act(async () => {
+      await result.current(createDragEndEvent({
+        activeData: { generationId: 'gen-1' },
+        overData: { type: 'other-zone' },
+      }));
+    });
+
+    expect(addImageToShotMutation.mutateAsync).not.toHaveBeenCalled();
+    expect(setLastAffectedShotId).not.toHaveBeenCalled();
+    expect(onDropHandled).toHaveBeenCalledTimes(1);
   });
 
   it('finalizes overlay for generation drop failures', async () => {
@@ -139,16 +118,11 @@ describe('useAppExternalDrop', () => {
     const addImageToShotMutation = {
       mutateAsync: vi.fn().mockRejectedValue(new Error('mutation failed')),
     };
-    const createShot = vi.fn();
-    const handleExternalImageDropMutation = { mutateAsync: vi.fn() };
 
     const { result } = renderHook(() => useAppExternalDrop({
       selectedProjectId: 'project-1',
-      currentShotsCount: 2,
       setLastAffectedShotId,
-      createShot,
       addImageToShotMutation,
-      handleExternalImageDropMutation,
       onDropHandled,
     }));
 

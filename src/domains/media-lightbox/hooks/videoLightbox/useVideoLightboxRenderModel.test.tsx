@@ -6,29 +6,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useVideoLightboxRenderModel } from './useVideoLightboxRenderModel';
-import { RuntimeAuthorityContext } from '@/app/runtime/runtimeAuthority';
 
 const routerWrapper = ({ children }: { children: ReactNode }) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <MemoryRouter>
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    </MemoryRouter>
-  );
-};
-
-const runtimeRouterWrapper = ({ children }: { children: ReactNode }) => {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return (
-    <MemoryRouter>
-      <QueryClientProvider client={client}>
-        <RuntimeAuthorityContext.Provider value={{
-          runtimeAuthority: true,
-          runtimeProjectId: 'runtime-project',
-        }}>
-          {children}
-        </RuntimeAuthorityContext.Provider>
-      </QueryClientProvider>
     </MemoryRouter>
   );
 };
@@ -207,10 +190,10 @@ describe('useVideoLightboxRenderModel', () => {
     expect(mocks.buildVideoLightboxLayoutState.mock.calls[0][0]).not.toHaveProperty('isAnyVideoEditMode');
   });
 
-  it('omits source-image loaders in Runtime documents', () => {
+  it('never supplies variant settings or source-image loaders', () => {
     const { result } = renderHook(() => useVideoLightboxRenderModel(
       createProps(), createModeModel(), createEnv(), createSharedState(), createInfoModel(),
-    ), { wrapper: runtimeRouterWrapper });
+    ), { wrapper: routerWrapper });
 
     expect(result.current.lightboxStateValue.variants).not.toHaveProperty('onLoadVariantSettings');
     expect(result.current.lightboxStateValue.variants).not.toHaveProperty('onLoadVariantImages');

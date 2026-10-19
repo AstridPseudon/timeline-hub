@@ -43,10 +43,8 @@ interface ShotImagesEditorImageState {
   pendingPositions: Map<string, number>;
   unpositionedGenerationsCount: number;
   fileInputKey: number;
-  isUploadingImage: boolean;
+  isUploadingImage?: boolean;
   uploadProgress?: number;
-  duplicatingImageId?: string | null;
-  duplicateSuccessImageId?: string | null;
   defaultPrompt?: string;
   onDefaultPromptChange?: (prompt: string) => void;
   defaultNegativePrompt?: string;
@@ -74,7 +72,7 @@ interface ShotImagesEditorImageState {
 interface ShotImagesEditorEditActions {
   onImageReorder: (orderedIds: string[], draggedItemId?: string) => void;
   onFramePositionsChange: (newPositions: Map<string, number>) => void;
-  onFileDrop: (files: File[], targetFrame?: number) => Promise<void>;
+  onFileDrop?: (files: File[], targetFrame?: number) => Promise<void>;
   onGenerationDrop?: (generationId: string, imageUrl: string, thumbUrl: string | undefined, targetFrame?: number) => Promise<void>;
   onBatchFileDrop?: (files: File[], targetPosition?: number) => Promise<void>;
   onBatchGenerationDrop?: (generationId: string, imageUrl: string, thumbUrl: string | undefined, targetPosition?: number) => Promise<void>;
@@ -82,9 +80,8 @@ interface ShotImagesEditorEditActions {
   onPendingPositionApplied: (generationId: string) => void;
   onImageDelete: (id: string) => void;
   onBatchImageDelete?: (ids: string[]) => void;
-  onImageDuplicate?: (id: string, timeline_frame: number) => void;
   onOpenUnpositionedPane: () => void;
-  onImageUpload: (files: File[]) => Promise<void>;
+  onImageUpload?: (files: File[]) => Promise<void>;
 
   onPrimaryStructureVideoInputChange?: OnPrimaryStructureVideoInputChange;
   onUni3cEndPercentChange?: (value: number) => void;

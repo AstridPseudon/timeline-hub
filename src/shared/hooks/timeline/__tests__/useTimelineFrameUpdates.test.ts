@@ -2,18 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act } from '@testing-library/react';
 import { renderHookWithProviders } from '@/test/test-utils';
 
-const mockDbUpdate = vi.fn();
+const mockPersistSingle = vi.fn();
 
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    from: vi.fn(() => ({
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          eq: vi.fn(() => mockDbUpdate()),
-        })),
-      })),
-    })),
-  }),
+vi.mock('../timelineMutationService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../timelineMutationService')>()),
+  persistSingleTimelineFrame: (...args: unknown[]) => mockPersistSingle(...args),
 }));
 
 vi.mock('../timelineFrameCalculators', () => ({
@@ -36,7 +29,7 @@ describe('useTimelineFrameUpdates', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockDbUpdate.mockResolvedValue({ error: null });
+    mockPersistSingle.mockResolvedValue(undefined);
   });
 
   it('returns expected functions', () => {
@@ -71,7 +64,7 @@ describe('useTimelineFrameUpdates', () => {
     ).rejects.toThrow('No shotId provided');
   });
 
-  it('updateTimelineFrame calls supabase and syncShotData', async () => {
+  it('updateTimelineFrame persists the frame and syncs shot data', async () => {
     const { result } = renderHookWithProviders(() =>
       useTimelineFrameUpdates({
         shotId: 'shot-1',
@@ -85,7 +78,11 @@ describe('useTimelineFrameUpdates', () => {
       await result.current.updateTimelineFrame('gen-1', 50);
     });
 
-    expect(mockDbUpdate).toHaveBeenCalled();
+    expect(mockPersistSingle).toHaveBeenCalledWith(expect.objectContaining({
+      shotId: 'shot-1',
+      shotGenerationId: 'sg-1',
+      frame: 50,
+    }));
     expect(mockSyncShotData).toHaveBeenCalledWith('gen-1', 'shot-1', 50);
   });
 

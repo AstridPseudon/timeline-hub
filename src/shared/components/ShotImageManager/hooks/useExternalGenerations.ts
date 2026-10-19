@@ -2,17 +2,21 @@ import React, { useState, useCallback } from 'react';
 import { GenerationRow } from '@/domains/generation/types';
 import { DerivedNavContext } from '../types';
 import { transformExternalGeneration } from '../utils/external-generation-utils';
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
+import { fetchGenerationRecordById } from '@/integrations/astrid/repositories/generationRepository';
 import { useAddImageToShot } from '@/shared/hooks/shots';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { useAppEventListener } from '@/shared/lib/typedEvents';
 import { expandShotData } from '@/shared/lib/shots/shotData';
 
-/** Generation row with JSONB shot_data associations */
-interface GenerationWithShotData {
-  shot_data?: Record<string, unknown> | null;
-  [key: string]: unknown;
+/** Loads a generation record plus its shot placements and maps it for the lightbox. */
+async function loadExternalGeneration(generationId: string): Promise<GenerationRow> {
+  const record = await fetchGenerationRecordById(generationId);
+  if (!record) {
+    throw new Error(`Generation ${generationId} not found`);
+  }
+  const shotGenerations = expandShotData(record.shot_data);
+  return transformExternalGeneration(record as Parameters<typeof transformExternalGeneration>[0], shotGenerations);
 }
 
 interface UseExternalGenerationsProps {
@@ -52,29 +56,17 @@ export function useExternalGenerations({
       if (upscaleCompleted && (isInExternal || isInTempDerived)) {
 
         try {
-          const { data, error } = await supabase().from('generations')
-            .select('*')
-            .eq('id', generationId)
-            .single();
+          const transformedData = await loadExternalGeneration(generationId);
 
-          if (error) throw error;
-
-          if (data) {
-            const shotGenerations = expandShotData(
-              (data as unknown as GenerationWithShotData).shot_data,
+          if (isInExternal) {
+            setExternalGenerations(prev =>
+              prev.map(gen => gen.id === generationId ? transformedData : gen)
             );
-            const transformedData = transformExternalGeneration(data, shotGenerations);
-
-            if (isInExternal) {
-              setExternalGenerations(prev =>
-                prev.map(gen => gen.id === generationId ? transformedData : gen)
-              );
-            }
-            if (isInTempDerived) {
-              setTempDerivedGenerations(prev =>
-                prev.map(gen => gen.id === generationId ? transformedData : gen)
-              );
-            }
+          }
+          if (isInTempDerived) {
+            setTempDerivedGenerations(prev =>
+              prev.map(gen => gen.id === generationId ? transformedData : gen)
+            );
           }
         } catch (err) {
           normalizeAndPresentError(err, { context: 'useExternalGenerations', showToast: false });
@@ -218,48 +210,36 @@ export function useExternalGenerations({
     }
     
     try {
-      const { data, error } = await supabase().from('generations')
-        .select('*')
-        .eq('id', generationId)
-        .single();
-      
-      if (error) throw error;
-      
-      if (data) {
-        const shotGenerations = expandShotData(
-          (data as unknown as GenerationWithShotData).shot_data,
-        );
-        const transformedData = transformExternalGeneration(data, shotGenerations);
-        
-        if (derivedContext && derivedContext.length > 0) {
-          setTempDerivedGenerations(prev => {
-            const existingIdx = prev.findIndex(g => g.id === transformedData.id);
-            if (existingIdx !== -1) {
-              const newIndex = baseImages.length + externalGenerations.length + existingIdx;
-              requestAnimationFrame(() => setLightboxIndexRef.current(newIndex));
-              return prev;
-            }
-            
-            const updated = [...prev, transformedData];
-            const newIndex = baseImages.length + externalGenerations.length + updated.length - 1;
+      const transformedData = await loadExternalGeneration(generationId);
+
+      if (derivedContext && derivedContext.length > 0) {
+        setTempDerivedGenerations(prev => {
+          const existingIdx = prev.findIndex(g => g.id === transformedData.id);
+          if (existingIdx !== -1) {
+            const newIndex = baseImages.length + externalGenerations.length + existingIdx;
             requestAnimationFrame(() => setLightboxIndexRef.current(newIndex));
-            return updated;
-          });
-        } else {
-          setExternalGenerations(prev => {
-            const existingIdx = prev.findIndex(g => g.id === transformedData.id);
-            if (existingIdx !== -1) {
-              const newIndex = baseImages.length + existingIdx;
-              requestAnimationFrame(() => setLightboxIndexRef.current(newIndex));
-              return prev;
-            }
-            
-            const updated = [...prev, transformedData];
-            const newIndex = baseImages.length + updated.length - 1;
+            return prev;
+          }
+          
+          const updated = [...prev, transformedData];
+          const newIndex = baseImages.length + externalGenerations.length + updated.length - 1;
+          requestAnimationFrame(() => setLightboxIndexRef.current(newIndex));
+          return updated;
+        });
+      } else {
+        setExternalGenerations(prev => {
+          const existingIdx = prev.findIndex(g => g.id === transformedData.id);
+          if (existingIdx !== -1) {
+            const newIndex = baseImages.length + existingIdx;
             requestAnimationFrame(() => setLightboxIndexRef.current(newIndex));
-            return updated;
-          });
-        }
+            return prev;
+          }
+          
+          const updated = [...prev, transformedData];
+          const newIndex = baseImages.length + updated.length - 1;
+          requestAnimationFrame(() => setLightboxIndexRef.current(newIndex));
+          return updated;
+        });
       }
     } catch (error) {
       normalizeAndPresentError(error, { context: 'useExternalGenerations', toastTitle: 'Failed to load generation' });

@@ -1,73 +1,27 @@
-import type { ReactNode } from 'react';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, Clapperboard, FolderPlus } from 'lucide-react';
-import { cn } from '@/shared/components/ui/contracts/cn';
+import { ArrowRight, Clapperboard } from 'lucide-react';
 import type { Shot } from '@/domains/generation/types';
 import { usePortalMousedownGuard } from '@/shared/hooks/usePortalMousedownGuard';
 
 interface SelectionContextMenuProps {
   position: { x: number; y: number } | null;
   onClose: () => void;
-  onCreateShot: () => Promise<Shot | null>;
-  onGenerateVideo: () => void | Promise<void>;
   onNavigateToShot?: (shot: Shot) => void;
   onOpenGenerateVideo?: (shot: Shot) => void;
+  /** Shots that already contain every selected item. */
   existingShots?: Shot[];
-  isCreating?: boolean;
-}
-
-function MenuItem({
-  icon,
-  label,
-  onClick,
-  disabled = false,
-}: {
-  icon: ReactNode;
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      className={cn(
-        'relative flex w-full select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors',
-        disabled
-          ? 'cursor-wait opacity-60'
-          : 'hover:bg-accent hover:text-accent-foreground',
-      )}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {icon}
-      {label}
-    </button>
-  );
 }
 
 export function SelectionContextMenu({
   position,
   onClose,
-  onCreateShot,
-  onGenerateVideo,
   onNavigateToShot,
   onOpenGenerateVideo,
   existingShots,
-  isCreating = false,
 }: SelectionContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [adjustedPos, setAdjustedPos] = useState<{ x: number; y: number } | null>(null);
-  const [createdShot, setCreatedShot] = useState<Shot | null>(null);
-  const [isCreatingLocal, setIsCreatingLocal] = useState(false);
-
-  // Reset created shot when menu closes/reopens
-  useEffect(() => {
-    if (position) {
-      setCreatedShot(null);
-      setIsCreatingLocal(false);
-    }
-  }, [position]);
 
   // Clamp menu position to viewport after it renders and we know its size
   useLayoutEffect(() => {
@@ -108,24 +62,11 @@ export function SelectionContextMenu({
     };
   }, [position, onClose]);
 
-  const handleCreateShot = useCallback(async () => {
-    setIsCreatingLocal(true);
-    const shot = await onCreateShot();
-    setIsCreatingLocal(false);
-    if (shot) {
-      setCreatedShot(shot);
-    }
-  }, [onCreateShot]);
-
-  if (!position) {
+  if (!position || !existingShots || existingShots.length === 0) {
     return null;
   }
 
   const displayPos = adjustedPos ?? position;
-  const visibleExistingShots = (existingShots ?? []).filter((shot) => shot.id !== createdShot?.id);
-  const hasLowerShotActions = Boolean(
-    !createdShot || (createdShot && (onNavigateToShot || onOpenGenerateVideo)),
-  );
 
   return createPortal(
     <div
@@ -133,7 +74,7 @@ export function SelectionContextMenu({
       className="fixed z-50 min-w-[12rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
       style={{ left: displayPos.x, top: displayPos.y }}
     >
-      {visibleExistingShots.map((shot) => (
+      {existingShots.map((shot) => (
         <div key={shot.id} className="flex w-full items-center gap-1 rounded-sm px-2 py-1.5 text-sm">
           <span className="min-w-0 flex-1 truncate preserve-case">{shot.name}</span>
           {onOpenGenerateVideo && (
@@ -148,39 +89,6 @@ export function SelectionContextMenu({
           )}
         </div>
       ))}
-      {visibleExistingShots.length > 0 && hasLowerShotActions && (
-        <div className="my-1 h-px bg-border" />
-      )}
-      {!createdShot && (
-        <MenuItem
-          icon={<FolderPlus className="h-4 w-4" />}
-          label={isCreatingLocal ? 'Creating…' : 'Create Shot'}
-          onClick={() => void handleCreateShot()}
-          disabled={isCreatingLocal || isCreating}
-        />
-      )}
-      {createdShot && onNavigateToShot && (
-        <MenuItem
-          icon={<ArrowRight className="h-4 w-4" />}
-          label={`Jump to ${createdShot.name}`}
-          onClick={() => { onNavigateToShot(createdShot); onClose(); }}
-        />
-      )}
-      {createdShot && onOpenGenerateVideo && (
-        <MenuItem
-          icon={<Clapperboard className="h-4 w-4" />}
-          label="Generate Video"
-          onClick={() => { onOpenGenerateVideo(createdShot); onClose(); }}
-        />
-      )}
-      {!createdShot && (
-        <MenuItem
-          icon={<Clapperboard className="h-4 w-4" />}
-          label="Generate Video"
-          onClick={() => { onClose(); void onGenerateVideo(); }}
-          disabled={isCreating}
-        />
-      )}
     </div>,
     document.body,
   );

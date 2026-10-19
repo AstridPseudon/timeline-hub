@@ -1,5 +1,4 @@
 export const strictLintDebtFiles = [
-  "src/domains/generation/hooks/useDeleteGenerationWithConfirm.ts",
   "src/domains/media-lightbox/components/ImageLightboxControlsPanel.tsx",
   "src/domains/media-lightbox/components/SegmentRegenerateForm.tsx",
   "src/domains/media-lightbox/components/SegmentSlotFormView.tsx",
@@ -41,7 +40,6 @@ export const strictLintDebtFiles = [
   "src/shared/lib/tasks/taskStatusSemantics.ts",
   "src/shared/media/localMediaResolver.ts",
   "src/shared/settings/hooks/useAutoSaveSettings.ts",
-  "src/shared/settings/runtime/toolSettingsService.ts",
   "src/tools/travel-between-images/components/ShotEditor/controllers/useGenerationControllerInputModel.ts",
   "src/tools/travel-between-images/components/ShotEditor/hooks/actions/useGenerateBatch.ts",
   "src/tools/travel-between-images/components/ShotEditor/hooks/actions/useShotActions.ts",

@@ -22,32 +22,26 @@ import {
 import { ShotEditorState } from '../../state/types';
 import { ShotEditorActions } from '../../state/useShotEditorState';
 import { LoraManagerReturn } from './useLoraSync';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { UseStructureVideoReturn } from '../video/useStructureVideo';
 import type { UseAudioReturn } from '../video/useAudio';
-import type { VariantDropParams } from '@/shared/hooks/dnd/useImageVariantDrop';
 
 // Type for generation actions from useGenerationActions
 // All drop handlers now use unified targetFrame parameter
 interface GenerationActionsReturn {
-  handleTimelineImageDrop: (files: File[], targetFrame?: number, handles?: Array<FileSystemFileHandle | null>) => Promise<void>;
   handleTimelineGenerationDrop: (
     generationId: string,
     imageUrl: string,
     thumbUrl: string | undefined,
     targetFrame?: number
   ) => Promise<void>;
-  handleBatchImageDrop: (files: File[], targetFrame?: number) => Promise<void>;
   handleBatchGenerationDrop: (
     generationId: string,
     imageUrl: string,
     thumbUrl: string | undefined,
     targetFrame?: number
   ) => Promise<void>;
-  handleVariantDrop: (params: VariantDropParams) => Promise<void>;
   handleDeleteImageFromShot: (generationId: string) => Promise<void>;
   handleBatchDeleteImages: (generationIds: string[]) => Promise<void>;
-  handleDuplicateImage: (generationId: string, currentFrame: number, nextFrame?: number) => Promise<void>;
 }
 
 // Type for shot actions from useShotActions
@@ -55,8 +49,6 @@ interface ShotActionsReturn {
   handleShotChange: (shotId: string) => void;
   handleAddToShot: (shotId: string, generationId: string, position?: number) => Promise<void>;
   handleAddToShotWithoutPosition: (shotId: string, generationId: string) => Promise<boolean>;
-  handleCreateShot: (name: string) => Promise<string>;
-  handleNewShotFromSelection: (selectedIds: string[]) => Promise<string | void>;
   openUnpositionedGenerationsPane: () => void;
 }
 
@@ -75,7 +67,6 @@ export interface UseShotSettingsValueProps {
 
   // LoRA
   loraManager: LoraManagerReturn;
-  availableLoras: LoraModel[];
 
   // Images
   allShotImages: GenerationRow[];
@@ -97,7 +88,6 @@ export interface UseShotSettingsValueProps {
   // Generation actions
   generationActions: GenerationActionsReturn;
   handleImageReorder: (orderedShotGenerationIds: string[], draggedItemId?: string) => void;
-  handleImageUpload: (files: File[]) => Promise<void>;
 
   // Shot management
   shots: Shot[] | undefined;
@@ -136,7 +126,6 @@ export function useShotSettingsValue({
   actions,
   // LoRA
   loraManager,
-  availableLoras,
   // Images
   allShotImages,
   timelineImages,
@@ -152,7 +141,6 @@ export function useShotSettingsValue({
   // Generation actions
   generationActions,
   handleImageReorder,
-  handleImageUpload,
   // Shot management
   shots,
   shotActions,
@@ -208,9 +196,6 @@ export function useShotSettingsValue({
   const imageHandlersForContext = useMemo(
     (): ShotSettingsContextValue['imageHandlers'] => ({
       onReorder: handleImageReorder,
-      onFileDrop: async (files: File[], targetFrame?: number, handles?: Array<FileSystemFileHandle | null>) => {
-        await generationActions.handleTimelineImageDrop(files, targetFrame, handles);
-      },
       onGenerationDrop: async (
         generationId: string,
         imageUrl: string,
@@ -223,9 +208,6 @@ export function useShotSettingsValue({
           thumbUrl,
           targetFrame ?? 0
         );
-      },
-      onBatchFileDrop: async (files: File[], targetFrame?: number) => {
-        await generationActions.handleBatchImageDrop(files, targetFrame);
       },
       onBatchGenerationDrop: async (
         generationId: string,
@@ -240,21 +222,14 @@ export function useShotSettingsValue({
           targetFrame
         );
       },
-      onVariantDrop: async (params: VariantDropParams) => {
-        await generationActions.handleVariantDrop(params);
-      },
       onDelete: (id: string) => {
         generationActions.handleDeleteImageFromShot(id);
       },
       onBatchDelete: (ids: string[]) => {
         generationActions.handleBatchDeleteImages(ids);
       },
-      onDuplicate: (id: string, timeline_frame: number, nextFrame?: number) => {
-        generationActions.handleDuplicateImage(id, timeline_frame, nextFrame);
-      },
-      onUpload: handleImageUpload,
     }),
-    [generationActions, handleImageReorder, handleImageUpload]
+    [generationActions, handleImageReorder]
   );
 
   // Build shot management domain for context
@@ -264,8 +239,6 @@ export function useShotSettingsValue({
       onShotChange: shotActions.handleShotChange,
       onAddToShot: shotActions.handleAddToShot,
       onAddToShotWithoutPosition: shotActions.handleAddToShotWithoutPosition,
-      onCreateShot: shotActions.handleCreateShot,
-      onNewShotFromSelection: shotActions.handleNewShotFromSelection,
       openUnpositionedGenerationsPane: shotActions.openUnpositionedGenerationsPane,
     }),
     [shots, shotActions]
@@ -286,7 +259,6 @@ export function useShotSettingsValue({
       actions,
       // LoRA
       loraManager,
-      availableLoras,
       // Images
       allShotImages,
       timelineImages,
@@ -324,7 +296,6 @@ export function useShotSettingsValue({
       state,
       actions,
       loraManager,
-      availableLoras,
       allShotImages,
       timelineImages,
       unpositionedImages,

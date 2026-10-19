@@ -27,10 +27,6 @@ const formUIReducer = (
       if (action.payload === state.isPromptModalOpen) return state;
       return { ...state, isPromptModalOpen: action.payload };
 
-    case 'SET_CREATE_SHOT_MODAL_OPEN':
-      if (action.payload === state.isCreateShotModalOpen) return state;
-      return { ...state, isCreateShotModalOpen: action.payload };
-
     case 'SET_ACTIVE_PROMPT_ID':
       if (action.payload === state.directFormActivePromptId) return state;
       return { ...state, directFormActivePromptId: action.payload };
@@ -54,7 +50,6 @@ const formUIReducer = (
 
 export interface FormUIActions {
   setPromptModalOpen: (open: boolean) => void;
-  setCreateShotModalOpen: (open: boolean) => void;
   setActivePromptId: (id: string | null) => void;
   setHasVisited: (visited: boolean) => void;
   closePromptModal: () => void;
@@ -77,10 +72,6 @@ export const useFormUIState = (): UseFormUIStateReturn => {
     dispatch({ type: 'SET_PROMPT_MODAL_OPEN', payload: open });
   }, []);
 
-  const setCreateShotModalOpen = useCallback((open: boolean) => {
-    dispatch({ type: 'SET_CREATE_SHOT_MODAL_OPEN', payload: open });
-  }, []);
-
   const setActivePromptId = useCallback((id: string | null) => {
     dispatch({ type: 'SET_ACTIVE_PROMPT_ID', payload: id });
   }, []);
@@ -96,13 +87,11 @@ export const useFormUIState = (): UseFormUIStateReturn => {
   // Memoize the actions object
   const uiActions = useMemo<FormUIActions>(() => ({
     setPromptModalOpen,
-    setCreateShotModalOpen,
     setActivePromptId,
     setHasVisited,
     closePromptModal,
   }), [
     setPromptModalOpen,
-    setCreateShotModalOpen,
     setActivePromptId,
     setHasVisited,
     closePromptModal,

@@ -23,7 +23,6 @@ export interface LightboxShotWorkflowProps {
   onShotChange?: (shotId: string) => void;
   onAddToShot?: (targetShotId: string, generationId: string, imageUrl?: string, thumbUrl?: string) => Promise<boolean>;
   onAddToShotWithoutPosition?: (targetShotId: string, generationId: string, imageUrl?: string, thumbUrl?: string) => Promise<boolean>;
-  onCreateShot?: (shotName: string, files: File[]) => Promise<{shotId?: string; shotName?: string} | void>;
   onNavigateToShot?: (shot: Shot, options?: { isNewlyCreated?: boolean }) => void;
   onShowTick?: (imageId: string) => void;
   onShowSecondaryTick?: (imageId: string) => void;
@@ -50,12 +49,10 @@ export interface LightboxFeatureFlags {
   showTaskDetails?: boolean;
 }
 
-/** Action handlers: delete, star, and timeline placement */
+/** Action handlers: delete and timeline placement */
 export interface LightboxActionHandlers {
   onDelete?: LightboxDeleteHandler;
   isDeleting?: string | null;
-  onToggleStar?: (id: string, starred: boolean) => void;
-  starred?: boolean;
   onAddToVideoEditor?: () => void;
 }
 
@@ -84,13 +81,6 @@ export interface AdjacentSegmentsData {
   next?: AdjacentSegmentInfo;
   /** Callback to navigate to a segment by pair index */
   onNavigateToSegment: (pairIndex: number) => void;
-}
-
-export interface QuickCreateSuccess {
-  isSuccessful: boolean;
-  shotId: string | null;
-  shotName: string | null;
-  isLoading?: boolean; // True when shot is created but still syncing/loading
 }
 
 
@@ -194,8 +184,6 @@ export interface SegmentSlotModeData {
   isTimelineMode?: boolean;
   /** All existing structure videos (for overlap detection) */
   existingStructureVideos?: StructureVideoConfigWithMetadata[];
-  /** Callback to add a structure video for this segment (handles overlap resolution) */
-  onAddSegmentStructureVideo?: (video: StructureVideoConfigWithMetadata) => void;
   /** Callback to update this segment's structure video */
   onUpdateSegmentStructureVideo?: (updates: Partial<StructureVideoConfigWithMetadata>) => void;
   /** Callback to remove this segment's structure video */

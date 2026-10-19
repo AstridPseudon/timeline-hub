@@ -70,7 +70,6 @@ interface UseShotEditorLayoutModelParams {
       | 'setSelectedOutputId'
       | 'parentGenerations'
       | 'segmentProgress'
-      | 'isSegmentOutputsLoading'
       | 'joinSegmentSlots'
     >;
     generationActions: UseShotSettingsValueProps['generationActions'];
@@ -79,26 +78,20 @@ interface UseShotEditorLayoutModelParams {
       isGenerationDisabled: UseShotSettingsValueProps['generationMode']['isGenerationDisabled'];
       isSteerableMotionEnqueuing: UseShotSettingsValueProps['generationMode']['isSteerableMotionEnqueuing'];
       steerableMotionJustQueued: UseShotSettingsValueProps['generationMode']['steerableMotionJustQueued'];
-      currentMotionSettings: UseShotSettingsValueProps['generationMode']['currentMotionSettings'];
       handleAcceleratedChange: UseShotSettingsValueProps['generationMode']['onAcceleratedChange'];
       handleRandomSeedChange: UseShotSettingsValueProps['generationMode']['onRandomSeedChange'];
       handleGenerateBatch: UseShotSettingsValueProps['generationHandlers']['handleGenerateBatch'];
-      handleBatchVideoPromptChangeWithClear: UseShotSettingsValueProps['generationHandlers']['handleBatchVideoPromptChangeWithClear'];
+      handleBatchVideoPromptChange: UseShotSettingsValueProps['generationHandlers']['handleBatchVideoPromptChange'];
       handleStepsChange: UseShotSettingsValueProps['generationHandlers']['handleStepsChange'];
-      clearAllEnhancedPrompts: UseShotSettingsValueProps['generationHandlers']['clearAllEnhancedPrompts'];
     };
     imageManagement: {
       handleReorderImagesInShot: UseShotSettingsValueProps['handleImageReorder'];
-      handleImageUpload: UseShotSettingsValueProps['handleImageUpload'];
       handlePendingPositionApplied: ShotEditorLayoutProps['timeline']['onPendingPositionApplied'];
-      handleDeleteFinalVideo: ShotEditorLayoutProps['finalVideo']['onDeleteFinalVideo'];
-      isClearingFinalVideo: boolean;
     };
     bridge: {
       handleSelectionChangeLocal: ShotEditorLayoutProps['timeline']['onSelectionChange'];
     };
     loraManager: UseShotSettingsValueProps['loraManager'];
-    availableLoras: UseShotSettingsValueProps['availableLoras'];
     shots: Shot[] | undefined;
   };
   settings: {
@@ -196,7 +189,6 @@ export function buildShotEditorContextInput({
     state: core.state,
     actions: core.actions,
     loraManager: controllers.loraManager,
-    availableLoras: controllers.availableLoras,
     allShotImages: images.allShotImages,
     timelineImages: images.timelineImages,
     unpositionedImages: images.unpositionedImages,
@@ -241,7 +233,6 @@ export function buildShotEditorContextInput({
     },
     generationActions: controllers.generationActions,
     handleImageReorder: controllers.imageManagement.handleReorderImagesInShot,
-    handleImageUpload: controllers.imageManagement.handleImageUpload,
     shots: controllers.shots,
     shotActions: controllers.shotActions,
     generationMode: {
@@ -255,8 +246,6 @@ export function buildShotEditorContextInput({
         controllers.generationController.isSteerableMotionEnqueuing,
       steerableMotionJustQueued:
         controllers.generationController.steerableMotionJustQueued,
-      currentMotionSettings:
-        controllers.generationController.currentMotionSettings,
       accelerated: settings.accelerated,
       onAcceleratedChange:
         controllers.generationController.handleAcceleratedChange,
@@ -267,11 +256,9 @@ export function buildShotEditorContextInput({
     generationHandlers: {
       handleGenerateBatch:
         controllers.generationController.handleGenerateBatch,
-      handleBatchVideoPromptChangeWithClear:
-        controllers.generationController.handleBatchVideoPromptChangeWithClear,
+      handleBatchVideoPromptChange:
+        controllers.generationController.handleBatchVideoPromptChange,
       handleStepsChange: controllers.generationController.handleStepsChange,
-      clearAllEnhancedPrompts:
-        controllers.generationController.clearAllEnhancedPrompts,
     },
     joinState: {
       joinSettings: {
@@ -356,10 +343,7 @@ function buildShotEditorLayoutSections({
       parentGenerations: controllers.output.parentGenerations,
       initialParentGenerations: sections.initialParentGenerations,
       segmentProgress: controllers.output.segmentProgress,
-      isSegmentOutputsLoading: controllers.output.isSegmentOutputsLoading,
       getFinalVideoCount: sections.getFinalVideoCount,
-      onDeleteFinalVideo: controllers.imageManagement.handleDeleteFinalVideo,
-      isClearingFinalVideo: controllers.imageManagement.isClearingFinalVideo,
       videoGalleryRef: sections.refs.videoGalleryRef,
       generateVideosCardRef: sections.refs.generateVideosCardRef,
     },
@@ -400,15 +384,6 @@ function buildShotEditorLayoutSections({
       parentVideoJustQueued: sections.parentVideoJustQueued,
     },
     modals: {
-      isLoraModalOpen: controllers.loraManager.isLoraModalOpen,
-      onLoraModalClose: () =>
-        controllers.loraManager.setIsLoraModalOpen(false),
-      onAddLora: controllers.loraManager.handleAddLora,
-      onRemoveLora: controllers.loraManager.handleRemoveLora,
-      onUpdateLoraStrength:
-        controllers.loraManager.handleLoraStrengthChange,
-      selectedLoras: controllers.loraManager.selectedLoras,
-      selectedModel: settings.modelSettings.selectedModel,
       isSettingsModalOpen: core.state.isSettingsModalOpen,
       onSettingsModalOpenChange: core.actions.setSettingsModalOpen,
     },

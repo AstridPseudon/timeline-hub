@@ -3,8 +3,7 @@ import type {
   StructureVideoConfigWithMetadata,
 } from '@/shared/lib/tasks/travelBetweenImages';
 import type { PhaseConfig } from '@/shared/types/phaseConfig';
-import type { LoraModel } from '@/domains/lora/types/lora';
-import type { AuthoredVideoMetadata } from '@/shared/lib/media/videoUploader';
+import type { AuthoredVideoMetadata } from '@/shared/lib/media/videoMetadata';
 import type { SelectedModel } from '@/tools/travel-between-images/settings';
 import type { TravelGuidanceMode } from '@/shared/lib/tasks/travelGuidance';
 import type { PresetMetadata } from '@/shared/types/presetMetadata';
@@ -101,7 +100,6 @@ export interface ApplyModelContext {
 export interface ApplyPromptContext {
   onBatchVideoPromptChange: (prompt: string) => void;
   onSteerableMotionSettingsChange: (settings: { model_name?: string; negative_prompt?: string }) => void;
-  updatePairPromptsByIndex?: (index: number, prompt: string, negativePrompt: string) => Promise<void>;
 }
 
 export interface ApplyGenerationContext {
@@ -155,7 +153,5 @@ export interface ApplyLoraContext {
       strength: number;
       [key: string]: unknown;
     }>) => void;
-    handleAddLora: (lora: LoraModel, showToast: boolean, strength: number) => void;
   };
-  availableLoras: LoraModel[];
 }

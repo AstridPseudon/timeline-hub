@@ -9,21 +9,9 @@ vi.mock('@/shared/hooks/shots', () => ({
   useRemoveImageFromShot: () => ({ mutateAsync: vi.fn() }),
 }));
 
-vi.mock('@/shared/hooks/shotCreation/useShotCreation', () => ({
-  useShotCreation: () => ({ createShot: vi.fn() }),
-}));
-
 vi.mock('@/shared/hooks/mobile', () => ({
   useIsMobile: () => false,
   useDeviceInfo: () => ({ isPhone: false, mobileColumns: 3 }),
-}));
-
-vi.mock('@/shared/hooks/timeline/useTimelineCore', () => ({
-  useTimelineCore: () => ({
-    clearAllEnhancedPrompts: vi.fn(async () => {}),
-    updatePairPromptsByIndex: vi.fn(async () => {}),
-    refetch: vi.fn(async () => {}),
-  }),
 }));
 
 vi.mock('@/shared/hooks/settings/useToolSettings', () => ({
@@ -45,14 +33,6 @@ vi.mock('@/shared/hooks/shots/useShotNavigation', () => ({
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn(), setQueryData: vi.fn() }),
   useQuery: () => ({ data: null }),
-}));
-
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    from: () => ({
-      select: () => ({ eq: () => ({ then: undefined }) }),
-    }),
-  }),
 }));
 
 vi.mock('@/shared/contexts/ProjectContext', () => ({
@@ -119,10 +99,6 @@ vi.mock('@/shared/hooks/segments', async (importOriginal) => {
     }),
   };
 });
-
-vi.mock('../../hooks/useDemoteOrphanedVariants', () => ({
-  useDemoteOrphanedVariants: () => ({ demoteOrphanedVariants: vi.fn() }),
-}));
 
 vi.mock('./ShotSettingsContext', () => ({
   ShotSettingsProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -229,8 +205,6 @@ vi.mock('./state/useShotEditorState', () => ({
       isSettingsModalOpen: false,
       isUploadingImage: false,
       uploadProgress: 0,
-      duplicatingImageId: null,
-      duplicateSuccessImageId: null,
       showStepsNotification: false,
     },
     actions: {

@@ -3,32 +3,18 @@ import { renderHook } from '@testing-library/react';
 
 const mockSettings = { prompt: 'test prompt', numFrames: 25 };
 const mockUpdateSettings = vi.fn();
-const mockSaveSettings = vi.fn().mockResolvedValue(true);
 const mockResetSettings = vi.fn();
-const mockSaveAsShotDefaults = vi.fn().mockResolvedValue(true);
-const mockSaveFieldAsDefault = vi.fn().mockResolvedValue(true);
 const mockGetSettingsForTaskCreation = vi.fn(() => mockSettings);
-const mockClearEnhancedPrompt = vi.fn();
-const mockSaveEnhancePromptEnabled = vi.fn().mockResolvedValue(true);
 
 vi.mock('../segments', () => ({
   useSegmentSettings: vi.fn(() => ({
     settings: mockSettings,
     updateSettings: mockUpdateSettings,
-    saveSettings: mockSaveSettings,
     resetSettings: mockResetSettings,
-    saveAsShotDefaults: mockSaveAsShotDefaults,
-    saveFieldAsDefault: mockSaveFieldAsDefault,
     getSettingsForTaskCreation: mockGetSettingsForTaskCreation,
-    isLoading: false,
     isDirty: false,
     hasOverride: { prompt: true },
     shotDefaults: { prompt: 'default prompt' },
-    enhancedPrompt: undefined,
-    basePromptForEnhancement: undefined,
-    clearEnhancedPrompt: mockClearEnhancedPrompt,
-    enhancePromptEnabled: false,
-    saveEnhancePromptEnabled: mockSaveEnhancePromptEnabled,
   })),
 }));
 
@@ -43,17 +29,14 @@ describe('useSegmentSettingsForm', () => {
     const { result } = renderHook(() =>
       useSegmentSettingsForm({
         pairShotGenerationId: 'psg-1',
-        shotId: 'shot-1',
         defaults: { prompt: '', numFrames: 25 },
       })
     );
 
     expect(result.current.formProps).toBeDefined();
     expect(typeof result.current.getSettingsForTaskCreation).toBe('function');
-    expect(typeof result.current.saveSettings).toBe('function');
     expect(typeof result.current.updateSettings).toBe('function');
     expect(result.current.settings).toEqual(mockSettings);
-    expect(result.current.isLoading).toBe(false);
     expect(result.current.isDirty).toBe(false);
     expect(typeof result.current.effectiveEnhanceEnabled).toBe('boolean');
     expect(result.current.enhancePromptRef).toBeDefined();
@@ -64,7 +47,6 @@ describe('useSegmentSettingsForm', () => {
     const { result } = renderHook(() =>
       useSegmentSettingsForm({
         pairShotGenerationId: 'psg-1',
-        shotId: 'shot-1',
         defaults: { prompt: '', numFrames: 25 },
       })
     );
@@ -72,14 +54,13 @@ describe('useSegmentSettingsForm', () => {
     expect(result.current.formProps.settings).toEqual(mockSettings);
     expect(result.current.formProps.onChange).toBe(mockUpdateSettings);
     expect(result.current.formProps.onRestoreDefaults).toBe(mockResetSettings);
-    expect(result.current.formProps.onSaveAsShotDefaults).toBe(mockSaveAsShotDefaults);
+    expect(result.current.formProps.onSaveAsShotDefaults).toBeUndefined();
   });
 
   it('formProps passes through display options', () => {
     const { result } = renderHook(() =>
       useSegmentSettingsForm({
         pairShotGenerationId: 'psg-1',
-        shotId: 'shot-1',
         defaults: { prompt: '', numFrames: 25 },
         segmentIndex: 3,
         startImageUrl: 'start.jpg',
@@ -108,7 +89,6 @@ describe('useSegmentSettingsForm', () => {
     const { result } = renderHook(() =>
       useSegmentSettingsForm({
         pairShotGenerationId: 'psg-1',
-        shotId: 'shot-1',
         defaults: { prompt: '' },
       })
     );
@@ -120,7 +100,6 @@ describe('useSegmentSettingsForm', () => {
     const { result } = renderHook(() =>
       useSegmentSettingsForm({
         pairShotGenerationId: 'psg-1',
-        shotId: 'shot-1',
         defaults: { prompt: '' },
       })
     );
@@ -130,14 +109,12 @@ describe('useSegmentSettingsForm', () => {
     result.current.handleEnhancePromptChange(true);
 
     expect(result.current.enhancePromptRef.current).toBe(true);
-    expect(mockSaveEnhancePromptEnabled).toHaveBeenCalledWith(true);
   });
 
   it('getSettingsForTaskCreation delegates to segment settings', () => {
     const { result } = renderHook(() =>
       useSegmentSettingsForm({
         pairShotGenerationId: 'psg-1',
-        shotId: 'shot-1',
         defaults: { prompt: '' },
       })
     );
@@ -147,24 +124,21 @@ describe('useSegmentSettingsForm', () => {
   });
 
   it('passes structure video callbacks through formProps', () => {
-    const onAdd = vi.fn();
     const onUpdate = vi.fn();
     const onRemove = vi.fn();
 
     const { result } = renderHook(() =>
       useSegmentSettingsForm({
         pairShotGenerationId: 'psg-1',
-        shotId: 'shot-1',
         defaults: { prompt: '' },
         isTimelineMode: true,
-        onAddSegmentStructureVideo: onAdd,
         onUpdateSegmentStructureVideo: onUpdate,
         onRemoveSegmentStructureVideo: onRemove,
       })
     );
 
     expect(result.current.formProps.isTimelineMode).toBe(true);
-    expect(result.current.formProps.onAddSegmentStructureVideo).toBe(onAdd);
+    expect(result.current.formProps).not.toHaveProperty('onAddSegmentStructureVideo');
     expect(result.current.formProps.onUpdateSegmentStructureVideo).toBe(onUpdate);
     expect(result.current.formProps.onRemoveSegmentStructureVideo).toBe(onRemove);
   });

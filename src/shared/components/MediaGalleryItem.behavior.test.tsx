@@ -6,8 +6,6 @@ const mocks = vi.hoisted(() => ({
   prefetchTaskData: vi.fn(),
   navigateToShot: vi.fn(),
   setLastAffectedShotId: vi.fn(),
-  handleQuickCreateAndAdd: vi.fn(),
-  handleVisitCreatedShot: vi.fn(),
   markAllViewed: vi.fn(),
   hasLoadedImage: vi.fn(() => false),
   setImageLoadStatus: vi.fn(),
@@ -54,14 +52,6 @@ vi.mock('@/shared/hooks/shots/useShotNavigation', () => ({
 
 vi.mock('@/shared/hooks/shots/useLastAffectedShot', () => ({
   useLastAffectedShot: () => ({ setLastAffectedShotId: mocks.setLastAffectedShotId }),
-}));
-
-vi.mock('@/shared/hooks/useQuickShotCreate', () => ({
-  useQuickShotCreate: () => ({
-    quickCreateSuccess: false,
-    handleQuickCreateAndAdd: mocks.handleQuickCreateAndAdd,
-    handleVisitCreatedShot: mocks.handleVisitCreatedShot,
-  }),
 }));
 
 vi.mock('@/domains/generation/hooks/tasks/useGenerationTaskMapping', () => ({
@@ -147,7 +137,6 @@ function buildProps(overrides: Record<string, unknown> = {}) {
       addingToShotWithoutPositionImageId: null,
       setAddingToShotWithoutPositionImageId: vi.fn(),
       currentViewingShotId: 'other-shot',
-      onCreateShot: vi.fn(),
       onAddToLastShot: vi.fn(async () => true),
       onAddToLastShotWithoutPosition: vi.fn(async () => true),
       ...((overrides.shotWorkflow as object | undefined) ?? {}),

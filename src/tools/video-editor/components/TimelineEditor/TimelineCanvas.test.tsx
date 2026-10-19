@@ -389,7 +389,6 @@ function renderCanvas(params?: {
   onEditAreaPointerDown?: React.ComponentProps<typeof TimelineCanvas>['onEditAreaPointerDown'];
   postprocessShader?: TimelinePostprocessShaderMetadata;
   onSelectPostprocessShader?: React.ComponentProps<typeof TimelineCanvas>['onSelectPostprocessShader'];
-  onCreateEmptyShotAt?: React.ComponentProps<typeof TimelineCanvas>['onCreateEmptyShotAt'];
   onCreateShotFromSelection?: React.ComponentProps<typeof TimelineCanvas>['onCreateShotFromSelection'];
   canCreateShotFromSelection?: boolean;
   isCreatingShot?: boolean;
@@ -463,7 +462,6 @@ function renderCanvas(params?: {
       postprocessShader={params?.postprocessShader}
       onSelectPostprocessShader={params?.onSelectPostprocessShader}
       onEditAreaPointerDown={params?.onEditAreaPointerDown}
-      onCreateEmptyShotAt={params?.onCreateEmptyShotAt}
       onCreateShotFromSelection={params?.onCreateShotFromSelection}
       canCreateShotFromSelection={params?.canCreateShotFromSelection}
       isCreatingShot={params?.isCreatingShot}
@@ -853,10 +851,8 @@ describe('TimelineCanvas extension context menus', () => {
     expect(screen.queryByText('Open timeline command')).not.toBeInTheDocument();
   });
 
-  it('opens the built-in Create Shot menu on empty-area right-click with the timeline time', () => {
-    const onCreateEmptyShotAt = vi.fn();
+  it('does not open an area menu on empty-area right-click when nothing is eligible', () => {
     const { container } = renderCanvas({
-      onCreateEmptyShotAt,
       scale: 1,
       scaleWidth: 100,
       startLeft: 0,
@@ -868,10 +864,8 @@ describe('TimelineCanvas extension context menus', () => {
 
     fireEvent.contextMenu(background, { clientX: 160, clientY: 120 });
 
-    expect(screen.getByText('Create Shot')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Create Shot'));
-    expect(onCreateEmptyShotAt).toHaveBeenCalledTimes(1);
-    expect(onCreateEmptyShotAt).toHaveBeenCalledWith(expect.objectContaining({ time: 1.6 }));
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(screen.queryByText('Create Shot')).not.toBeInTheDocument();
   });
 
   it('shows Create Shot from selection in the area menu for an eligible multi-selection', () => {

@@ -38,7 +38,6 @@ export interface ItemShotWorkflow {
   currentViewingShotId?: string;
 
   /** Shot creation callback */
-  onCreateShot?: (shotName: string, files: File[]) => Promise<void>;
 
   /** Handlers for adding image to shot */
   onAddToLastShot?: AddToShotHandler;

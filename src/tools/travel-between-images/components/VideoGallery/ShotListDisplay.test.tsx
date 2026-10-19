@@ -8,30 +8,6 @@ const mocks = vi.hoisted(() => ({
   setShotDragData: vi.fn(),
 }));
 
-vi.mock('@dnd-kit/core', () => ({
-  DndContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  closestCenter: vi.fn(),
-}));
-
-vi.mock('@dnd-kit/sortable', () => ({
-  SortableContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  rectSortingStrategy: vi.fn(),
-  useSortable: () => ({
-    setNodeRef: vi.fn(),
-    transform: null,
-    transition: null,
-    isDragging: false,
-  }),
-}));
-
-vi.mock('@dnd-kit/utilities', () => ({
-  CSS: {
-    Transform: {
-      toString: () => undefined,
-    },
-  },
-}));
-
 vi.mock('./hooks/useShotListDisplayController', () => ({
   useShotListDisplayController: ({ shots }: { shots?: Shot[] }) => ({
     shotsLoading: false,
@@ -39,10 +15,6 @@ vi.mock('./hooks/useShotListDisplayController', () => ({
     shots,
     currentProject: { aspectRatio: '16:9' },
     effectiveProjectId: 'project-1',
-    sensors: [],
-    handleDragStart: vi.fn(),
-    handleDragEnd: vi.fn(),
-    sortableItems: (shots ?? []).map((shot) => shot.id),
     pendingNewShot: {
       isNewShotProcessing: false,
       isNewShotDropTarget: false,
@@ -57,13 +29,6 @@ vi.mock('./hooks/useShotListDisplayController', () => ({
       newlyCreatedShotBaselineNonVideoCount: 0,
       clearNewlyCreatedShot: vi.fn(),
     },
-    isDragDisabled: false,
-  }),
-}));
-
-vi.mock('../../hooks/video/useShotFinalVideos', () => ({
-  useShotFinalVideos: () => ({
-    finalVideoMap: new Map(),
   }),
 }));
 
@@ -132,14 +97,13 @@ describe('ShotListDisplay', () => {
     mocks.setShotDragData.mockReset();
   });
 
-  it('threads hidden-shot state and toggle callbacks through sortable items into video cards', () => {
+  it('threads hidden-shot state and toggle callbacks through list items into video cards', () => {
     const hiddenShot = { id: 'shot-hidden', name: 'Hidden shot', images: [] } as Shot;
     const visibleShot = { id: 'shot-visible', name: 'Visible shot', images: [] } as Shot;
     const onToggleHidden = vi.fn();
 
     render(
       <ShotListDisplay
-        projectId="project-1"
         shots={[hiddenShot, visibleShot]}
         onSelectShot={vi.fn()}
         isHidden={(shot) => shot.id === hiddenShot.id}

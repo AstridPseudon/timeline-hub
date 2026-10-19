@@ -1,10 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ArrowDownWideNarrow, ArrowUpWideNarrow, Check, Copy, Eye, EyeOff, Loader2, Pencil, Play, Plus, Search, Trash2, Video, X } from 'lucide-react';
-import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation';
+import { ArrowDownWideNarrow, ArrowUpWideNarrow, Check, Eye, EyeOff, Loader2, Search, X } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useShots } from '@/shared/contexts/ShotsContext';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
-import { useShotFinalVideos, type ShotFinalVideo } from '@/tools/travel-between-images/hooks/video/useShotFinalVideos';
 import {
   setShotDragData,
   createDragPreview,
@@ -20,9 +18,6 @@ import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
 import { useAddImageToShot } from '@/shared/hooks/shots/useShotGenerationMutations';
-import { useDuplicateShot, useDeleteShot } from '@/shared/hooks/shots/useShotsCrud';
-import { useDuplicateShotWithVideos } from '@/shared/hooks/shots/useDuplicateShotWithVideos';
-import { useUpdateShotName } from '@/shared/hooks/shots/useShotUpdates';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import type { Shot } from '@/domains/generation/types';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget';
@@ -35,36 +30,21 @@ type SortMode = 'ordered' | 'newest' | 'oldest';
 
 function ShotCard({
   shot,
-  finalVideo,
   isHidden,
   onDoubleClick,
-  onDuplicate,
-  onDuplicateWithVideos,
-  duplicateWithVideosIsPending,
-  onDelete,
-  onRename,
   onToggleHidden,
   onGenerationDrop,
 }: {
   shot: Shot;
-  finalVideo?: ShotFinalVideo;
   isHidden: boolean;
   onDoubleClick: () => void;
-  onDuplicate: () => void;
-  onDuplicateWithVideos: () => void;
-  duplicateWithVideosIsPending: boolean;
-  onDelete: () => void;
-  onRename: (name: string) => void;
   onToggleHidden: () => void;
   onGenerationDrop: (shotId: string, generationId: string, imageUrl: string, thumbUrl?: string) => Promise<void>;
 }) {
   const [isDropTarget, setIsDropTarget] = useState(false);
   const [dropState, setDropState] = useState<'idle' | 'loading' | 'success'>('idle');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(shot.name);
 
-  const thumbnailUrl = finalVideo?.thumbnailUrl
-    ?? bridgeMediaUrl(getProjectSelectionFallbackId(), shot.images?.[0]?.thumbUrl ?? shot.images?.[0]?.imageUrl ?? shot.images?.[0]?.location);
+  const thumbnailUrl = bridgeMediaUrl(getProjectSelectionFallbackId(), shot.images?.[0]?.thumbUrl ?? shot.images?.[0]?.imageUrl ?? shot.images?.[0]?.location);
   const imageCount = shot.images?.filter((img) => !isVideoGeneration(img) && isPositioned(img)).length ?? 0;
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>) => {
@@ -119,17 +99,9 @@ function ShotCard({
     }
   };
 
-  const handleSaveName = () => {
-    const trimmed = editName.trim();
-    if (trimmed && trimmed !== shot.name) {
-      onRename(trimmed);
-    }
-    setIsEditing(false);
-  };
-
   return (
     <div
-      draggable={!isEditing}
+      draggable
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -147,55 +119,12 @@ function ShotCard({
       <div className="absolute right-0.5 top-0.5 z-10 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); setIsEditing(true); setEditName(shot.name); }}
-          className="rounded bg-background/70 p-0.5 text-muted-foreground backdrop-blur-sm hover:text-foreground"
-          title="Rename"
-        >
-          <Pencil className="h-2.5 w-2.5" />
-        </button>
-        <div className="group/duplicate relative flex">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
-            className="rounded bg-background/70 p-0.5 text-muted-foreground backdrop-blur-sm hover:text-foreground"
-            title="Duplicate"
-            aria-label="Duplicate shot"
-          >
-            <Copy className="h-2.5 w-2.5" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onDuplicateWithVideos(); }}
-            className="absolute -right-1 -top-1 z-20 rounded bg-background/90 p-0.5 text-muted-foreground opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:text-foreground focus:opacity-100 group-hover/duplicate:opacity-100"
-            title="Duplicate with videos"
-            aria-label="Duplicate with videos"
-            disabled={duplicateWithVideosIsPending}
-          >
-            {duplicateWithVideosIsPending ? (
-              <Loader2 className="h-2.5 w-2.5 animate-spin" />
-            ) : (
-              <Video className="h-2.5 w-2.5" />
-            )}
-          </button>
-        </div>
-        <button
-          type="button"
           onClick={(e) => { e.stopPropagation(); onToggleHidden(); }}
           className="rounded bg-background/70 p-0.5 text-muted-foreground backdrop-blur-sm hover:text-foreground"
           title={isHidden ? 'Unhide' : 'Hide'}
         >
           {isHidden ? <Eye className="h-2.5 w-2.5" /> : <EyeOff className="h-2.5 w-2.5" />}
         </button>
-        {isHidden && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="rounded bg-background/70 p-0.5 text-muted-foreground backdrop-blur-sm hover:text-destructive"
-            title="Delete"
-          >
-            <Trash2 className="h-2.5 w-2.5" />
-          </button>
-        )}
       </div>
 
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
@@ -215,29 +144,10 @@ function ShotCard({
             )}
           </div>
         )}
-        {finalVideo && dropState === 'idle' && !isDropTarget && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur-sm">
-              <Play className="h-2.5 w-2.5 fill-current" />
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="flex items-center gap-1 px-1.5 py-1">
-        {isEditing ? (
-          <input
-            type="text"
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setIsEditing(false); }}
-            onBlur={handleSaveName}
-            className="min-w-0 flex-1 rounded bg-background px-1 text-[10px] text-foreground outline-none ring-1 ring-border preserve-case"
-            autoFocus
-          />
-        ) : (
-          <span className="min-w-0 flex-1 truncate text-[10px] text-foreground preserve-case">{shot.name}</span>
-        )}
+        <span className="min-w-0 flex-1 truncate text-[10px] text-foreground preserve-case">{shot.name}</span>
         <span className="shrink-0 text-[9px] text-muted-foreground">{imageCount}</span>
       </div>
     </div>
@@ -247,19 +157,12 @@ function ShotCard({
 export function ShotsPanelContent({ projectId }: ShotsPanelContentProps) {
   useRenderBudget('ShotsPanelContent', 5);
   const { shots, isLoading, refetchShots } = useShots();
-  const { finalVideoMap } = useShotFinalVideos(projectId);
   const { selectedProjectId } = useProjectSelectionContext();
   const addImageToShot = useAddImageToShot();
-  const duplicateShot = useDuplicateShot();
-  const duplicateShotWithVideos = useDuplicateShotWithVideos();
-  const deleteShot = useDeleteShot();
-  const updateShotName = useUpdateShotName();
-  const { createShot } = useShotCreation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('ordered');
   const [modalShot, setModalShot] = useState<Shot | null>(null);
-  const [newShotDropState, setNewShotDropState] = useState<'idle' | 'loading' | 'success'>('idle');
   const [showHidden, setShowHidden] = useState(false);
 
   const { hiddenIds, toggle: toggleHidden } = useHiddenShots(projectId);
@@ -304,66 +207,6 @@ export function ShotsPanelContent({ projectId }: ShotsPanelContentProps) {
       normalizeAndPresentError(error, { context: 'ShotsPanelContent', toastTitle: 'Failed to add image to shot' });
     }
   }, [addImageToShot, refetchShots, selectedProjectId]);
-
-  const handleNewShotDrop = useCallback(async (event: React.DragEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setNewShotDropState('loading');
-    try {
-      const multiData = getMultiGenerationDropData(event);
-      const singleData = getGenerationDropData(event);
-      const generationIds = multiData
-        ? multiData.map((g) => g.generationId)
-        : singleData ? [singleData.generationId] : [];
-      if (generationIds.length === 0) { setNewShotDropState('idle'); return; }
-      const result = await createShot({ generationIds });
-      if (result?.shot) {
-        refetchShots();
-        setNewShotDropState('success');
-        setTimeout(() => setNewShotDropState('idle'), 1500);
-      } else {
-        setNewShotDropState('idle');
-      }
-    } catch {
-      setNewShotDropState('idle');
-    }
-  }, [createShot, refetchShots]);
-
-  const handleDuplicate = useCallback(async (shotId: string) => {
-    if (!selectedProjectId) return;
-    try {
-      await duplicateShot.mutateAsync({ shotId, projectId: selectedProjectId });
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'ShotsPanelContent', toastTitle: 'Failed to duplicate shot' });
-    }
-  }, [duplicateShot, selectedProjectId]);
-
-  const handleDuplicateWithVideos = useCallback(async (shotId: string) => {
-    if (!selectedProjectId) return;
-    try {
-      await duplicateShotWithVideos.mutateAsync({ shotId, projectId: selectedProjectId });
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'ShotsPanelContent', toastTitle: 'Failed to duplicate shot with videos' });
-    }
-  }, [duplicateShotWithVideos, selectedProjectId]);
-
-  const handleDelete = useCallback(async (shotId: string) => {
-    if (!selectedProjectId) return;
-    try {
-      await deleteShot.mutateAsync({ shotId, projectId: selectedProjectId });
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'ShotsPanelContent', toastTitle: 'Failed to delete shot' });
-    }
-  }, [deleteShot, selectedProjectId]);
-
-  const handleRename = useCallback(async (shotId: string, name: string) => {
-    if (!selectedProjectId) return;
-    try {
-      await updateShotName.mutateAsync({ shotId, name, projectId: selectedProjectId });
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'ShotsPanelContent', toastTitle: 'Failed to rename shot' });
-    }
-  }, [updateShotName, selectedProjectId]);
 
   if (isLoading) {
     return <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Loading shots…</div>;
@@ -428,39 +271,12 @@ export function ShotsPanelContent({ projectId }: ShotsPanelContentProps) {
       {/* Shot grid */}
       <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden px-2 py-2">
         <div className="flex h-full flex-wrap content-start gap-1.5" style={{ flexDirection: 'column' }}>
-          {/* New shot drop zone */}
-          <div
-            className="w-[110px] shrink-0"
-            onDragOver={(e) => { if (isValidDropTarget(e)) { e.preventDefault(); e.stopPropagation(); } }}
-            onDrop={handleNewShotDrop}
-          >
-            <div className={cn(
-              'flex aspect-video w-full items-center justify-center rounded-md border-2 border-dashed border-border bg-card/50 text-muted-foreground transition-colors hover:border-accent hover:text-foreground',
-              newShotDropState === 'loading' && 'border-primary/50',
-              newShotDropState === 'success' && 'border-green-500',
-            )}>
-              {newShotDropState === 'loading' ? (
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              ) : newShotDropState === 'success' ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
-            </div>
-            <div className="px-1.5 py-1 text-center text-[10px] text-muted-foreground">New shot</div>
-          </div>
           {visibleShots.map((shot) => (
             <div key={shot.id} className="w-[110px] shrink-0">
               <ShotCard
                 shot={shot}
-                finalVideo={finalVideoMap.get(shot.id)}
                 isHidden={hiddenIds.has(shot.id)}
                 onDoubleClick={() => setModalShot(shot)}
-                onDuplicate={() => void handleDuplicate(shot.id)}
-                onDuplicateWithVideos={() => void handleDuplicateWithVideos(shot.id)}
-                duplicateWithVideosIsPending={duplicateShotWithVideos.isPending}
-                onDelete={() => void handleDelete(shot.id)}
-                onRename={(name) => void handleRename(shot.id, name)}
                 onToggleHidden={() => toggleHidden(shot.id)}
                 onGenerationDrop={handleGenerationDrop}
               />
@@ -480,7 +296,6 @@ export function ShotsPanelContent({ projectId }: ShotsPanelContentProps) {
           isOpen={true}
           onClose={() => setModalShot(null)}
           shot={modalShot}
-          defaultFinalVideoOpen={finalVideoMap.has(modalShot.id)}
         />
       )}
     </div>

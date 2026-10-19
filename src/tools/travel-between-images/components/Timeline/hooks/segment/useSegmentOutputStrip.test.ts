@@ -4,22 +4,9 @@ import { useSegmentOutputStrip } from './useSegmentOutputStrip';
 
 const setLightboxIndex = vi.fn();
 
-vi.mock('@/shared/hooks/sourceImageChanges/useSourceImageChanges', () => ({
-  useSourceImageChanges: () => ({
-    hasRecentMismatch: () => false,
-  }),
-}));
-
 vi.mock('@/shared/hooks/variants/useMarkVariantViewed', () => ({
   useMarkVariantViewed: () => ({
     markAllViewed: vi.fn(),
-  }),
-}));
-
-vi.mock('./useSegmentDeletion', () => ({
-  useSegmentDeletion: () => ({
-    deletingSegmentId: null,
-    handleDeleteSegment: vi.fn(),
   }),
 }));
 
@@ -79,7 +66,6 @@ describe('useSegmentOutputStrip', () => {
           child: { id: 'segment-b', location: 'segment-b.mp4' },
         },
       ] as never,
-      readOnly: false,
     }));
 
     const displayedSlot = result.current.positionedSlots[1]?.slot;

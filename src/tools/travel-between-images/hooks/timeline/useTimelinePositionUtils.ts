@@ -12,14 +12,14 @@
  * - timelineFrameCalculators: pure position math (gaps, distribution, normalization)
  * - useTimelineFrameUpdates: DB update operations (single, batch, moveItems)
  * - useTimelineInitialization: first-time frame assignment
- * - useSegmentPromptMetadata: pair prompt CRUD
+ * - useSegmentPromptMetadata: pair prompt extraction
  */
 
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { GenerationRow } from '@/domains/generation/types';
-import type { ShotGeneration, PositionMetadata } from '@/shared/hooks/timeline/useTimelineCore';
+import type { ShotGeneration, PositionMetadata } from '@/shared/hooks/timeline/useTimelineCore.types';
 import { isVideoGeneration } from '@/shared/lib/typeGuards';
 import { useEnqueueGenerationsInvalidation } from '@/shared/hooks/invalidation';
 import { generationQueryKeys } from '@/shared/lib/queryKeys/generations';
@@ -28,7 +28,7 @@ import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 // Extracted modules
 import { useTimelineFrameUpdates } from '@/shared/hooks/timeline/useTimelineFrameUpdates';
 import { useTimelineInitialization } from './useTimelineInitialization';
-import { useSegmentPromptMetadata, extractPairPrompts } from '../settings/useSegmentPromptMetadata';
+import { extractPairPrompts } from '../settings/useSegmentPromptMetadata';
 
 // Re-export types for convenience
 export type { ShotGeneration, PositionMetadata };
@@ -116,12 +116,6 @@ export function useTimelinePositionUtils({ shotId, generations, projectId }: Use
     batchExchangePositions,
   });
 
-  const { updatePairPrompts, clearEnhancedPrompt } = useSegmentPromptMetadata({
-    shotId,
-    projectId,
-    shotGenerations,
-  });
-
   return {
     // Data (backward compatibility)
     shotGenerations,
@@ -134,8 +128,6 @@ export function useTimelinePositionUtils({ shotId, generations, projectId }: Use
     updateTimelineFrame,
     batchExchangePositions,
     initializeTimelineFrames,
-    updatePairPrompts,
-    clearEnhancedPrompt,
     moveItemsToMidpoint,
   };
 }

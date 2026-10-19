@@ -8,11 +8,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type Dispatch, type SetStateAction } from 'react';
 import { useLoraManager } from '@/domains/lora/hooks/useLoraManager';
 import { usePersistentToolState } from '@/shared/hooks/usePersistentToolState';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
 import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { ActiveLora } from '@/domains/lora/types/lora';
 import { useGenerationSource } from './useGenerationSource';
 import { usePromptManagement } from './usePromptManagement';
@@ -31,14 +29,11 @@ import {
   type HiresFixConfig,
   type ImageGenShotSettings,
   type PromptEntry,
-  getLoraTypeForModel,
-  BY_REFERENCE_LORA_TYPE,
 } from '../types';
 import type { BatchImageGenerationTaskParams } from '@/shared/types/imageGeneration';
 
 interface UseImageGenFormProps {
   onGenerate: (params: BatchImageGenerationTaskParams) => Promise<string[] | void> | string[] | void;
-  openaiApiKey?: string;
   onShotChange?: (shotId: string | null) => void;
   initialShotId?: string | null;
 }
@@ -55,7 +50,6 @@ type PersistentImageGenState = {
 
 export function useImageGenForm({
   onGenerate,
-  openaiApiKey,
   onShotChange,
   initialShotId,
 }: UseImageGenFormProps) {
@@ -100,9 +94,6 @@ export function useImageGenForm({
   const promptIdCounter = useRef(1);
   const generatePromptId = useCallback(() => `prompt-${promptIdCounter.current++}`, []);
 
-  // Fetch public LoRAs from all users
-  const { data: availableLoras } = usePublicLoras();
-
   // Associated shot for image generation (owned here because both
   // useProjectImageSettings and usePersistentToolState need it before useShotManagement)
   const [associatedShotId, setAssociatedShotId] = useState<string | null>(null);
@@ -111,7 +102,6 @@ export function useImageGenForm({
     selectedProjectId,
     projectAspectRatio,
     projectResolution,
-    privacyDefaults,
     isLocalGenerationEnabled,
     projectImageSettings,
     updateProjectImageSettings,
@@ -138,7 +128,7 @@ export function useImageGenForm({
   }, [uiState.hasVisitedImageGeneration, uiActions]);
 
   // LoRA management using the modularized hook with new generalized approach
-  const loraManager = useLoraManager(availableLoras, {
+  const loraManager = useLoraManager({
     projectId: selectedProjectId ?? undefined,
     persistenceScope: 'project',
     enableProjectPersistence: true,
@@ -197,10 +187,8 @@ export function useImageGenForm({
   const {
     shots,
     shotPromptSettings,
-    isCreatingShot,
     navigateToShot,
     handleShotChange,
-    handleCreateShot,
   } = useShotManagement({
     selectedProjectId,
     associatedShotId,
@@ -209,7 +197,6 @@ export function useImageGenForm({
     markAsInteracted,
     onShotChange,
     initialShotId,
-    uiActions,
   });
 
   const updateShotPromptField = useCallback((field: string, value: unknown) => {
@@ -278,13 +265,10 @@ export function useImageGenForm({
     selectedReferenceId,
     selectedReferenceIdByShot,
     referencePointers,
-    hydratedReferences,
     selectedReference,
-    isLoadingProjectSettings,
     isLocalGenerationEnabled,
     updateProjectImageSettings,
     markAsInteracted,
-    privacyDefaults,
     associatedShotId,
     shotPromptSettings: {
       updateField: updateShotPromptField,
@@ -338,13 +322,11 @@ export function useImageGenForm({
   // LORA Handlers (extracted hook)
   // ============================================================================
   const {
-    handleAddLora,
     handleRemoveLora,
     handleLoraStrengthChange,
   } = useLoraHandlers({
     loraManager: {
       selectedLoras: loraManager.selectedLoras,
-      handleAddLora: loraManager.handleAddLora,
       handleRemoveLora: loraManager.handleRemoveLora,
       handleLoraStrengthChange: loraManager.handleLoraStrengthChange,
       handleLoadProjectLoras: loraManager.handleLoadProjectLoras,
@@ -362,20 +344,6 @@ export function useImageGenForm({
     setter(value);
   }, [markAsInteracted]);
 
-  // Pre-compute LoRA modal props (moves computation out of JSX)
-  const mappedSelectedLoras = useMemo(() =>
-    loraManager.selectedLoras.map(lora => {
-      const fullLora = availableLoras?.find(l => l['Model ID'] === lora.id);
-      return {
-        ...fullLora,
-        "Model ID": lora.id,
-        Name: lora.name,
-        strength: lora.strength,
-      } as LoraModel & { strength: number };
-    }), [loraManager.selectedLoras, availableLoras]);
-
-  const loraType = generationSource === 'just-text' ? getLoraTypeForModel(selectedTextModel) : BY_REFERENCE_LORA_TYPE;
-
   // ============================================================================
   // Context Value (for sections to pull from)
   // ============================================================================
@@ -386,7 +354,7 @@ export function useImageGenForm({
     promptManagement: promptManagementResult,
     referenceManagement: referenceManagementResult,
     references: { hydratedReferences, displayedReferenceId },
-    loras: { selectedLoras: loraManager.selectedLoras, availableLoras: availableLoras ?? [], handleAddLora, handleRemoveLora, handleLoraStrengthChange },
+    loras: { selectedLoras: loraManager.selectedLoras, handleRemoveLora, handleLoraStrengthChange },
     markAsInteracted,
   });
 
@@ -425,8 +393,6 @@ export function useImageGenForm({
 
     // Shot handling
     handleShotChange,
-    handleCreateShot,
-    isCreatingShot,
     navigateToShot,
 
     // Generation source
@@ -439,18 +405,11 @@ export function useImageGenForm({
 
     // LoRA
     loraManager,
-    availableLoras,
-    mappedSelectedLoras,
-    loraType,
-    handleAddLora,
     handleRemoveLora,
     handleLoraStrengthChange,
 
     // UI
     uiState,
     uiActions,
-
-    // Pass-through from props
-    openaiApiKey,
   };
 }

@@ -11,7 +11,6 @@ import {
   getShotDropData,
   isValidDropTarget,
   isFileDrag,
-  NEW_GROUP_DROPPABLE_ID,
   GENERATION_MULTI_DRAG_TYPE,
 } from '../dnd/dragDrop';
 import type { GenerationDropData, ShotDropData } from '../dnd/dragDrop';
@@ -299,11 +298,5 @@ describe('isValidDropTarget', () => {
       data: { 'text/plain': 'hello world' },
     });
     expect(isValidDropTarget(event)).toBe(false);
-  });
-});
-
-describe('constants', () => {
-  it('exports NEW_GROUP_DROPPABLE_ID', () => {
-    expect(NEW_GROUP_DROPPABLE_ID).toBe('new-shot-group-dropzone');
   });
 });

@@ -13,19 +13,6 @@ vi.mock('@/shared/hooks/tasks/useTaskPlaceholder', () => ({
   useTaskPlaceholder: () => mockRun,
 }));
 
-vi.mock('@/shared/state/selectionStore', () => ({
-  useCurrentShot: () => ({ currentShotId: null }),
-}));
-
-vi.mock('@/shared/hooks/shots/useShotGenerationMetadata', () => ({
-  useShotGenerationMetadata: () => ({
-    addMagicEditPrompt: vi.fn(),
-    getLastMagicEditPrompt: () => '',
-    getLastSettings: () => ({ numImages: 1, isInSceneBoostEnabled: false }),
-    isLoading: false,
-  }),
-}));
-
 vi.mock('@/shared/components/ui/runtime/sonner', () => ({
   toast: { error: vi.fn() },
 }));
@@ -60,12 +47,8 @@ describe('useMagicEditMode', () => {
       handleGenerateInpaint: vi.fn(),
       brushStrokes: [],
       inpaintPrompt: 'remove the sign',
-      setInpaintPrompt: vi.fn(),
       inpaintNumGenerations: 1,
-      setInpaintNumGenerations: vi.fn(),
       editModeLoras: [],
-      loraMode: 'none',
-      setLoraMode: vi.fn(),
       sourceUrlForTasks: 'https://example.com/source.png',
       imageDimensions: null,
       toolTypeOverride: 'edit-images',

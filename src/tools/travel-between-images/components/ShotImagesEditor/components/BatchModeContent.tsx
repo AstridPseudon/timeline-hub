@@ -10,7 +10,6 @@ import { SectionHeader } from '@/shared/components/ImageGenerationForm/component
 import { UnpositionedGenerationsBanner } from './UnpositionedGenerationsBanner';
 import type { GenerationRow, Shot } from '@/domains/generation/types';
 import type { SegmentSlot } from '@/shared/hooks/segments';
-import type { OperationResult } from '@/shared/lib/operationResult';
 import type { PrimaryStructureVideo } from '@/shared/lib/tasks/travelBetweenImages';
 import type { OnPrimaryStructureVideoInputChange } from '@/tools/travel-between-images/types/mediaHandlers';
 import type { VariantDropParams } from '@/shared/hooks/dnd/useImageVariantDrop';
@@ -32,7 +31,6 @@ interface BatchModeGenerationState {
   defaultPrompt: string;
   defaultNegativePrompt: string;
   segmentSlots: SegmentSlot[];
-  deletingSegmentId: string | null;
   pendingImageToOpen: string | null;
   pendingImageVariantId?: string | null;
 
@@ -47,21 +45,17 @@ interface BatchModeUIOptions {
   onImageReorder: (orderedIds: string[]) => void;
   onImageDelete: (id: string) => void;
   onBatchImageDelete?: (ids: string[]) => void;
-  onImageDuplicate?: (id: string, timeline_frame: number) => void;
-  duplicatingImageId?: string | null;
-  duplicateSuccessImageId?: string | null;
 
   onFileDrop?: (files: File[], targetPosition?: number) => Promise<void>;
   onGenerationDrop?: (generationId: string, imageUrl: string, thumbUrl: string | undefined, targetPosition?: number) => Promise<void>;
   onVariantDrop?: (params: VariantDropParams) => Promise<void>;
 
-  onClearEnhancedPrompt: (pairIndex: number) => Promise<void>;
   onDragStateChange: (isDragging: boolean) => void;
   onPairClick: (pairIndex: number) => void;
   onSelectionChange?: (hasSelection: boolean) => void;
 
-  onImageUpload: (files: File[]) => Promise<void>;
-  isUploadingImage: boolean;
+  onImageUpload?: (files: File[]) => Promise<void>;
+  isUploadingImage?: boolean;
 
   allShots?: Shot[];
   onShotChange?: (shotId: string) => void;
@@ -70,7 +64,6 @@ interface BatchModeUIOptions {
   onCreateShot?: (shotName: string) => Promise<{ shotId: string; shotName: string }>;
   onNewShotFromSelection?: (selectedIds: string[]) => Promise<string | void>;
 
-  onSegmentDelete: (generationId: string) => Promise<OperationResult<{ deleted: boolean }>>;
   onClearPendingImageToOpen: () => void;
   navigateWithTransition: (doNavigation: () => void) => void;
 
@@ -108,7 +101,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
     defaultPrompt,
     defaultNegativePrompt,
     segmentSlots,
-    deletingSegmentId,
     pendingImageToOpen,
     pendingImageVariantId,
     primaryStructureVideo,
@@ -119,13 +111,9 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
     onImageReorder,
     onImageDelete,
     onBatchImageDelete,
-    onImageDuplicate,
-    duplicatingImageId,
-    duplicateSuccessImageId,
     onFileDrop,
     onGenerationDrop,
     onVariantDrop,
-    onClearEnhancedPrompt,
     onDragStateChange,
     onPairClick,
     onSelectionChange,
@@ -137,7 +125,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
     onAddToShotWithoutPosition,
     onCreateShot,
     onNewShotFromSelection,
-    onSegmentDelete,
     onClearPendingImageToOpen,
     navigateWithTransition,
     onPrimaryStructureVideoInputChange,
@@ -167,13 +154,10 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
         images={images}
         onImageDelete={onImageDelete}
         onBatchImageDelete={onBatchImageDelete}
-        onImageDuplicate={onImageDuplicate}
         onImageReorder={onImageReorder}
         columns={columns}
         generationMode={isMobile ? 'batch' : generationMode}
         onMagicEdit={() => {}}
-        duplicatingImageId={duplicatingImageId}
-        duplicateSuccessImageId={duplicateSuccessImageId}
         projectAspectRatio={projectAspectRatio}
         onImageUpload={onImageUpload}
         isUploadingImage={isUploadingImage}
@@ -197,11 +181,8 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
         enhancedPrompts={enhancedPrompts}
         defaultPrompt={defaultPrompt}
         defaultNegativePrompt={defaultNegativePrompt}
-        onClearEnhancedPrompt={onClearEnhancedPrompt}
         onDragStateChange={onDragStateChange}
         segmentSlots={segmentSlots}
-        onSegmentDelete={onSegmentDelete}
-        deletingSegmentId={deletingSegmentId}
         pendingImageToOpen={pendingImageToOpen}
         pendingImageVariantId={pendingImageVariantId}
         onClearPendingImageToOpen={onClearPendingImageToOpen}

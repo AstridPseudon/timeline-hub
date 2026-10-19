@@ -96,13 +96,12 @@ function useSegmentController(
     return positions;
   }, [currentImages, props.generationMode]);
 
-  const shouldFetchSegments = props.generationMode !== 'timeline' &&
+  const shouldDeriveSegments = props.generationMode !== 'timeline' &&
     (!props.segmentSlots || (localShotGenPositions && localShotGenPositions.size > 0));
 
   const hookResult = useSegmentOutputsForShot(
-    shouldFetchSegments ? props.shotId || null : null,
-    shouldFetchSegments ? props.projectId || null : null,
-    shouldFetchSegments ? localShotGenPositions : undefined
+    shouldDeriveSegments ? props.shotId || null : null,
+    shouldDeriveSegments ? localShotGenPositions : undefined
   );
 
   const rawSegmentSlots = (localShotGenPositions && localShotGenPositions.size > 0)
@@ -354,9 +353,6 @@ function SegmentLightboxModal({
       features={{
         showDownload: true,
         showTaskDetails: true,
-      }}
-      actions={{
-        starred: segmentLightbox.currentSegmentMedia.starred ?? false,
       }}
       shotId={shotId}
       readOnly={readOnly}

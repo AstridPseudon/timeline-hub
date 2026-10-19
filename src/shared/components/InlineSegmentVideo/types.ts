@@ -25,7 +25,6 @@ export interface InlineSegmentVideoProps {
   onDelete?: (generationId: string) => void;
   isDeleting?: boolean;
   isPending?: boolean;
-  hasSourceChanged?: boolean;
   isScrubbingActive?: boolean;
   onScrubbingStart?: (rect: DOMRect) => void;
   scrubbingContainerRef?: React.RefObject<HTMLDivElement>;
@@ -82,7 +81,6 @@ export interface SegmentPreviewProps {
   onDelete?: (generationId: string) => void;
   isDeleting: boolean;
   isPending: boolean;
-  hasSourceChanged: boolean;
   scrubbing: ScrubbingProps;
   badge: BadgeProps;
 }

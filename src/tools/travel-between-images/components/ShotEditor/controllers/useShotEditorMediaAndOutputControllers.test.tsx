@@ -66,7 +66,6 @@ describe('useShotEditorMediaAndOutputControllers', () => {
       selectedProjectId: 'project-1',
       selectedShotId: 'shot-1',
       selectedShot: args.selectedShot,
-      projectId: 'project-1',
       timelineImages: args.timelineImages,
     });
     expect(mocks.useEditingController).toHaveBeenCalledWith({

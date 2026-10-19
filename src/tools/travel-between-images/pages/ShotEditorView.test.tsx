@@ -21,7 +21,6 @@ vi.mock('../components/VideoTravelFloatingOverlay', () => ({ VideoTravelFloating
 vi.mock('@/shared/state/selectionStore', () => ({ useCurrentShot: () => ({ setCurrentShotId: vi.fn() }) }));
 vi.mock('@/shared/hooks/mobile', () => ({ useIsMobile: () => false }));
 vi.mock('@/shared/hooks/shots/useShotNavigation', () => ({ useShotNavigation: () => ({ navigateToPreviousShot: vi.fn(), navigateToNextShot: vi.fn() }) }));
-vi.mock('@/shared/hooks/shots', () => ({ useUpdateShotName: () => ({ mutate: vi.fn() }) }));
 vi.mock('@/shared/hooks/shots/useShotImages', () => ({ usePrimeShotImagesCache: () => undefined }));
 vi.mock('@/shared/hooks/invalidation/useGenerationInvalidation', () => ({ useEnqueueGenerationsInvalidation: () => vi.fn() }));
 vi.mock('@/shared/hooks/projects/useProjectVideoCountsCache', () => ({ useProjectVideoCountsCache: () => ({ getFinalVideoCount: vi.fn(), getHasStructureVideo: vi.fn() }) }));
@@ -98,4 +97,13 @@ describe('current App shot editing base', () => {
     expect(state.read().primary_timeline.head.revision_id).not.toBe(state.base.headRevisionId);
   });
 
+  it('offers no shot rename when the shot is not a canonical document occurrence', () => {
+    render(<MemoryRouter initialEntries={['/tools/travel-between-images']}>
+      <ShotEditorView shotToEdit={{ id: 'shot-alpha', name: 'Original', images: [] } as unknown as Shot}
+        selectedProjectId="project-001" isNewlyCreatedShot={false} shotFromState={undefined} shots={[]}
+        availableLoras={[]} />
+    </MemoryRouter>);
+
+    expect(capture.onName).toBeUndefined();
+  });
 });

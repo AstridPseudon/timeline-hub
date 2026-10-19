@@ -1,13 +1,9 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAutoSaveSettings } from '@/shared/settings/hooks/useAutoSaveSettings';
-import { useListShots } from '@/shared/hooks/shots';
-import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation';
+import { useShots } from '@/shared/contexts/ShotsContext';
 import { useShotNavigation } from '@/shared/hooks/shots/useShotNavigation';
-import { useQueryClient } from '@tanstack/react-query';
-import { shotQueryKeys } from '@/shared/lib/queryKeys/shots';
 import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
 
-import type { FormUIActions } from '../state/useFormUIState';
 import type { ImageGenShotSettings } from '../types';
 
 // Per-shot prompt settings start empty and are not inherited between shots.
@@ -24,7 +20,6 @@ interface UseShotManagementProps {
   markAsInteracted: () => void;
   onShotChange?: (shotId: string | null) => void;
   initialShotId?: string | null;
-  uiActions: FormUIActions;
 }
 
 export function useShotManagement({
@@ -35,12 +30,8 @@ export function useShotManagement({
   markAsInteracted,
   onShotChange,
   initialShotId,
-  uiActions,
 }: UseShotManagementProps) {
-  const queryClient = useQueryClient();
-
-  const { data: shots } = useListShots(selectedProjectId);
-  const { createShot, isCreating: isCreatingShot } = useShotCreation();
+  const { shots } = useShots();
   const { navigateToShot } = useShotNavigation();
 
   // Shot-specific prompts using per-shot storage
@@ -105,40 +96,10 @@ export function useShotManagement({
     // and initialized if empty via the initialization effect
   }, [markAsInteracted, onShotChange, setAssociatedShotId]);
 
-  // Handle creating a new shot
-  const handleCreateShot = useCallback(async (shotName: string, files: File[]) => {
-    // Use unified shot creation - handles inheritance, events, lastAffected automatically
-    const result = await createShot({
-      name: shotName,
-      files: files.length > 0 ? files : undefined,
-      dispatchSkeletonEvents: false, // No skeleton needed in form context
-      onSuccess: () => {
-        // Invalidate and refetch shots to update the list
-        const projectShotKey = [...shotQueryKeys.all, selectedProjectId!];
-        queryClient.invalidateQueries({ queryKey: projectShotKey });
-        queryClient.refetchQueries({ queryKey: projectShotKey });
-      },
-    });
-
-    if (!result) {
-      // Error already shown by useShotCreation
-      return;
-    }
-
-    // Note: Settings inheritance is handled automatically by useShotCreation
-
-    // Switch to the newly created shot
-    markAsInteracted();
-    setAssociatedShotId(result.shotId);
-    uiActions.setCreateShotModalOpen(false);
-  }, [createShot, markAsInteracted, queryClient, selectedProjectId, uiActions, setAssociatedShotId]);
-
   return {
     shots,
     shotPromptSettings,
-    isCreatingShot,
     navigateToShot,
     handleShotChange,
-    handleCreateShot,
   };
 }

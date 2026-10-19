@@ -7,10 +7,9 @@
  *   1. Validate inputs
  *   2. Add incoming task placeholder (for optimistic UI)
  *   3. Optionally enhance prompt via edge function
- *   4. Save enhanced prompt metadata
- *   5. Build task params
- *   6. Create the task
- *   7. Cleanup (refetch, remove placeholder)
+ *   4. Build task params
+ *   5. Create the task
+ *   6. Cleanup (refetch, remove placeholder)
  */
 
 import { QueryClient } from '@tanstack/react-query';
@@ -132,14 +131,8 @@ interface SubmitSegmentTaskInput {
   errorContext: string;
   /** Get effective settings from the form hook */
   getSettings: () => SegmentSettings;
-  /** Save persisted settings before task creation */
-  saveSettings: () => Promise<boolean>;
-  /** Whether to save settings (requires pairShotGenerationId) */
-  shouldSaveSettings: boolean;
   /** Current enhance prompt ref value */
   shouldEnhance: boolean;
-  /** Enhanced prompt already available from the form */
-  enhancedPrompt?: string;
   /** Default num frames for enhancement */
   defaultNumFrames: number;
   /** Image context */

@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useTimelineCore } from '@/shared/hooks/timeline/useTimelineCore';
-import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Shot } from '@/domains/generation/types';
 import { useGenerateBatch } from '../hooks/actions/useGenerateBatch';
 import { useSteerableMotionHandlers } from '../hooks/actions/useSteerableMotionHandlers';
@@ -179,7 +177,6 @@ export function useGenerationController({
   join,
   runtime,
 }: UseGenerationControllerParams) {
-  const { clearAllEnhancedPrompts, updatePairPromptsByIndex, refetch: loadPositions } = useTimelineCore(core.selectedShotId);
   const { onPromptChange } = prompt;
   const previousSmoothContinuationsRef = useRef(motion.smoothContinuations);
 
@@ -190,15 +187,6 @@ export function useGenerationController({
     }
     previousSmoothContinuationsRef.current = motion.smoothContinuations;
   }, [join.joinSettings, motion.smoothContinuations]);
-
-  const handleBatchVideoPromptChangeWithClear = useCallback(async (newPrompt: string) => {
-    onPromptChange(newPrompt);
-    try {
-      await clearAllEnhancedPrompts();
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'PromptClearLog', showToast: false });
-    }
-  }, [clearAllEnhancedPrompts, onPromptChange]);
 
   const {
     handleRandomSeedChange,
@@ -241,14 +229,10 @@ export function useGenerationController({
       generationMode: core.generationMode,
     },
     request: batchGenerationRequest,
-    clearAllEnhancedPrompts,
   });
 
   return {
-    clearAllEnhancedPrompts,
-    updatePairPromptsByIndex,
-    loadPositions,
-    handleBatchVideoPromptChangeWithClear,
+    handleBatchVideoPromptChange: onPromptChange,
     handleRandomSeedChange,
     handleAcceleratedChange,
     handleStepsChange,

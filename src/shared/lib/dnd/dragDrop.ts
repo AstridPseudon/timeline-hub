@@ -3,7 +3,7 @@
  *
  * Used by:
  * - MediaGalleryItem (drag source)
- * - ShotGroup, SortableShotItem, ShotListDisplay (drop targets)
+ * - ShotGroup, ShotListItem, ShotListDisplay (drop targets)
  * - Timeline components (drop targets)
  * - BatchDropZone (drop target)
  */
@@ -17,9 +17,6 @@ export const GENERATION_MULTI_DRAG_TYPE = 'application/x-generation-multi';
 const GENERATION_MULTI_TEXT_PREFIX = '__astrid_generation_multi__:';
 const SHOT_MIME_TYPE = 'application/x-shot';
 const SHOT_TEXT_PREFIX = '__astrid_shot__:';
-
-// Droppable ID for creating a new shot from a dropped generation
-export const NEW_GROUP_DROPPABLE_ID = 'new-shot-group-dropzone';
 
 /**
  * Cross-browser safe check for whether a DataTransfer contains a type.

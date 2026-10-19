@@ -1,24 +1,18 @@
-import { useCallback, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { useEnhancedShotImageReorder } from '@/tools/travel-between-images/hooks/timeline/useEnhancedShotImageReorder';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
-import { isVideoAny } from '@/shared/lib/typeGuards';
 import {
   operationFailure,
   operationSuccess,
   type OperationResult,
 } from '@/shared/lib/operationResult';
-import type { GenerationRow } from '@/domains/generation/types';
 import type { ShotImagesEditorDataModel } from './useShotImagesEditorModel';
-import { useDeleteSegmentHandler } from './useDeleteSegmentHandler';
 
 type ShotDataForCallbacks = Pick<
   ShotImagesEditorDataModel,
   'shotGenerations'
-  | 'clearEnhancedPrompt'
   | 'batchExchangePositions'
   | 'moveItemsToMidpoint'
-  | 'deleteItem'
   | 'getImagesForMode'
   | 'loadPositions'
   | 'positionsLoading'
@@ -26,8 +20,6 @@ type ShotDataForCallbacks = Pick<
 
 interface UseShotImagesEditorCallbacksOptions {
   selectedShotId: string;
-  projectId?: string;
-  preloadedImages?: GenerationRow[];
   onImageDelete: (id: string) => void;
   onAddToShot?: (shotId: string, generationId: string, position?: number) => Promise<boolean | void>;
   onAddToShotWithoutPosition?: (shotId: string, generationId: string) => Promise<boolean>;
@@ -170,8 +162,6 @@ function useShotActionOperations({
 export function useShotImagesEditorCallbacks(options: UseShotImagesEditorCallbacksOptions) {
   const {
     selectedShotId,
-    projectId,
-    preloadedImages,
     onImageDelete,
     onAddToShot,
     onAddToShotWithoutPosition,
@@ -182,23 +172,17 @@ export function useShotImagesEditorCallbacks(options: UseShotImagesEditorCallbac
 
   const {
     shotGenerations,
-    clearEnhancedPrompt,
     batchExchangePositions,
     moveItemsToMidpoint,
-    deleteItem,
     getImagesForMode,
     loadPositions,
     positionsLoading,
   } = data;
 
-  const queryClient = useQueryClient();
-  const [deletingSegmentId, setDeletingSegmentId] = useState<string | null>(null);
-
   const handleDragStateChange = useCallback((isDragging: boolean) => {
     onDragStateChange?.(isDragging);
   }, [onDragStateChange]);
 
-  const runDeleteSegmentOperation = useDeleteSegmentHandler(queryClient, setDeletingSegmentId, projectId);
   const {
     runAddToShotOperation,
     runAddToShotWithoutPositionOperation,
@@ -209,17 +193,6 @@ export function useShotImagesEditorCallbacks(options: UseShotImagesEditorCallbac
     onCreateShot,
   });
 
-  const handleClearEnhancedPromptByIndex = useCallback(async (pairIndex: number) => {
-    const sorted = [...shotGenerations]
-      .filter((shotGeneration) => !isVideoAny(shotGeneration))
-      .sort((a, b) => (a.timeline_frame || 0) - (b.timeline_frame || 0));
-
-    const item = sorted[pairIndex];
-    if (item) {
-      await clearEnhancedPrompt(item.id);
-    }
-  }, [shotGenerations, clearEnhancedPrompt]);
-
   const { handleReorder, handleDelete } = useEnhancedShotImageReorder(
     selectedShotId,
     {
@@ -227,25 +200,18 @@ export function useShotImagesEditorCallbacks(options: UseShotImagesEditorCallbac
       getImagesForMode,
       batchExchangePositions,
       moveItemsToMidpoint,
-      deleteItem: preloadedImages
-        ? async (id: string) => {
-            onImageDelete?.(id);
-          }
-        : (deleteItem ?? (async () => {
-            throw new Error('Delete unavailable for non-preloaded mode');
-          })),
+      deleteItem: async (id: string) => {
+        onImageDelete?.(id);
+      },
       loadPositions,
       isLoading: positionsLoading,
     },
   );
 
   return {
-    deletingSegmentId,
-    runDeleteSegmentOperation,
     runAddToShotOperation,
     runAddToShotWithoutPositionOperation,
     runCreateShotOperation,
-    handleClearEnhancedPromptByIndex,
     handleDragStateChange,
     handleReorder,
     handleDelete,

@@ -5,18 +5,6 @@ const mockRunTimelineWriteWithTimeout = vi.fn();
 const mockIsTimelineWriteTimeoutError = vi.fn();
 const mockPersistTimelineFrameBatch = vi.fn();
 
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: vi.fn(() => ({
-    from: vi.fn(() => ({
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          eq: vi.fn(() => ({ error: null })),
-        })),
-      })),
-    })),
-  })),
-}));
-
 vi.mock('@/shared/lib/timelineWriteQueue', () => ({
   runTimelineWriteWithTimeout: (...args: unknown[]) => mockRunTimelineWriteWithTimeout(...args),
   isTimelineWriteTimeoutError: (...args: unknown[]) => mockIsTimelineWriteTimeoutError(...args),
@@ -27,6 +15,7 @@ vi.mock('@/shared/lib/timelineFrameBatchPersist', () => ({
 }));
 
 import {
+  persistSingleTimelineFrame,
   refetchTimelineFrameCaches,
   syncTimelineGenerationFrames,
 } from '../timelineMutationService';
@@ -63,6 +52,32 @@ describe('timelineMutationService', () => {
     });
     expect(queryClient.refetchQueries).toHaveBeenNthCalledWith(4, {
       queryKey: queryKeys.segments.liveTimeline('shot-1'),
+    });
+  });
+
+  it('persists a single frame through the document placement batch writer', async () => {
+    mockPersistTimelineFrameBatch.mockResolvedValue({ updateCount: 1, durationMs: 1, skipped: false });
+    const signal = new AbortController().signal;
+    const log = vi.fn();
+
+    await persistSingleTimelineFrame({
+      shotId: 'shot-1',
+      shotGenerationId: 'sg-shot-1-gen-1',
+      frame: 24,
+      signal,
+      logPrefix: '[timeline]',
+      log,
+    });
+
+    expect(mockPersistTimelineFrameBatch).toHaveBeenCalledTimes(1);
+    expect(mockPersistTimelineFrameBatch).toHaveBeenCalledWith({
+      shotId: 'shot-1',
+      updates: [{ shotGenerationId: 'sg-shot-1-gen-1', timelineFrame: 24 }],
+      operationLabel: 'single-frame update',
+      timeoutOperationName: 'timeline-frame-single-update-write',
+      signal,
+      logPrefix: '[timeline]',
+      log,
     });
   });
 

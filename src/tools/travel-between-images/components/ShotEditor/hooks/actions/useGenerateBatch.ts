@@ -100,7 +100,6 @@ export interface BatchGenerationRequest {
 interface UseGenerateBatchOptions {
   core: UseGenerateBatchCoreOptions;
   request: BatchGenerationRequest;
-  clearAllEnhancedPrompts: () => Promise<void>;
 }
 
 interface UseGenerateBatchReturn {

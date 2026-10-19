@@ -8,14 +8,12 @@ import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext.tsx';
 import { useShots } from '@/shared/contexts/ShotsContext.tsx';
-import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation.ts';
 import { useShotNavigation } from '@/shared/hooks/shots/useShotNavigation.ts';
 import { VideoGenerationModal } from '@/tools/travel-between-images/components/VideoGenerationModal.tsx';
 import { LocalTimelineShotBrowser } from '@/tools/travel-between-images/pages/LocalTimelineShotBrowser.tsx';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { TimelineEditorCore, resolveSelectedGenerationIdsForShotCreation } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx';
-import { buildEmptyShotAnchorEdit } from '@/tools/video-editor/lib/shot-group-commands.ts';
 import { useActiveTaskClips } from '@/tools/video-editor/hooks/useActiveTaskClips.ts';
 import {
   formatManagedOutputExportReceipt,
@@ -100,7 +98,6 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
   const [videoModalShowImages, setVideoModalShowImages] = useState(false);
   const [canonicalShotEditor, setCanonicalShotEditor] = useState<CanonicalShotOccurrence | null>(null);
   const [duplicatingClipId, setDuplicatingClipId] = useState<string | null>(null);
-  const { createShot, isCreating } = useShotCreation();
   const { navigateToShot } = useShotNavigation();
   const { selectedProjectId } = useProjectSelectionContext();
   const { shots } = useShots();
@@ -241,24 +238,6 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     enabled: !isCanonicalEditor,
   });
 
-  const handleCreateShotFromSelection = useCallback(async (): Promise<Shot | null> => {
-    if (selectedDataItems?.length || !selectionShotCreationState.canCreateShot) {
-      return null;
-    }
-
-    const trackId = selectionShotCreationState.trackId;
-    const orderedClipIds = selectionShotCreationState.orderedClipIds;
-
-    const result = await createShot({ generationIds: selectionShotCreationState.generationIds });
-    if (result?.shot && trackId) {
-      pinGroup(result.shot.id, trackId, orderedClipIds, result.shot.name);
-    }
-    if (result?.shot) {
-      return result.shot;
-    }
-    return null;
-  }, [createShot, pinGroup, selectionShotCreationState, selectedDataItems]);
-
   const handleCreateDocumentShotFromSelection = useCallback(async (): Promise<Shot | null> => {
     if (selectedDataItems?.length || !selectionShotCreationState.canCreateShot) return null;
     const trackId = selectionShotCreationState.trackId;
@@ -269,65 +248,9 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     return null;
   }, [pinGroup, selectionShotCreationState, selectedDataItems]);
 
-  const handleGenerateVideoFromSelection = useCallback(async () => {
-    if (selectedDataItems?.length || !selectionShotCreationState.canCreateShot) {
-      return;
-    }
-
-    if (existingShotsForSelection.length === 1) {
-      setVideoModalShot(existingShotsForSelection[0]);
-      return;
-    }
-
-    const trackId = selectionShotCreationState.trackId;
-    const orderedClipIds = selectionShotCreationState.orderedClipIds;
-
-    const result = await createShot({ generationIds: selectionShotCreationState.generationIds });
-    if (!result?.shotId) {
-      return;
-    }
-
-    if (trackId) {
-      pinGroup(result.shotId, trackId, orderedClipIds, result.shot?.name);
-    }
-
-    const createdShot = result.shot ?? shots?.find((shot) => shot.id === result.shotId) ?? null;
-    if (createdShot) {
-      setVideoModalShot(createdShot);
-    }
-  }, [createShot, existingShotsForSelection, pinGroup, selectionShotCreationState, shots, selectedDataItems]);
-
   const handleNavigateToShot = useCallback((shot: Shot) => {
     navigateToShot(shot, { isNewlyCreated: true });
   }, [navigateToShot]);
-
-  const handleCreateEmptyShotAt = useCallback(async (anchor: { time: number; trackId?: string }): Promise<void> => {
-    const current = dataRef.current;
-    if (!current) return;
-
-    const result = await createShot();
-    if (!result?.shot) return;
-
-    const anchorEdit = buildEmptyShotAnchorEdit(current, {
-      shotId: result.shot.id,
-      shotName: result.shotName ?? result.shot.name,
-      time: anchor.time,
-      preferredTrackId: anchor.trackId,
-    });
-    if (!anchorEdit) {
-      normalizeAndPresentError(new Error('No visual track available for the new shot.'), {
-        context: 'video-editor:create-empty-shot',
-        toastTitle: 'Shot created but could not be placed on the timeline',
-      });
-      return;
-    }
-
-    applyEdit(anchorEdit.mutation, {
-      selectedClipId: anchorEdit.clipId,
-      selectedTrackId: anchorEdit.trackId,
-      semantic: true,
-    });
-  }, [applyEdit, createShot, dataRef]);
 
   const handleOpenGenerateVideo = useCallback((shot: Shot) => {
     setVideoModalShot(shot);
@@ -670,12 +593,9 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
         onShotGroupUpdateToLatestVideo={isCanonicalEditor ? undefined : handleUpdateToLatestVideo}
         canCreateShotFromSelection={!selectedDataItems?.length && selectionShotCreationState.canCreateShot}
         existingShots={isDocumentShotMode ? [] : existingShotsForSelection}
-        onCreateShotFromSelection={isDocumentShotMode ? handleCreateDocumentShotFromSelection : handleCreateShotFromSelection}
-        onGenerateVideoFromSelection={isDocumentShotMode ? undefined : handleGenerateVideoFromSelection}
+        onCreateShotFromSelection={isDocumentShotMode ? handleCreateDocumentShotFromSelection : undefined}
         onNavigateToShot={isDocumentShotMode ? undefined : handleNavigateToShot}
         onOpenGenerateVideo={isDocumentShotMode ? undefined : handleOpenGenerateVideo}
-        isCreatingShot={isDocumentShotMode ? false : isCreating}
-        onCreateEmptyShotAt={handleCreateEmptyShotAt}
         duplicatingClipId={duplicatingClipId}
         onDuplicateGenerationClip={handleDuplicateGenerationClip}
         onOpenShotVideoModal={isDocumentShotMode ? undefined : handleOpenShotVideoModal}

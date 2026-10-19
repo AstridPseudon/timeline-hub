@@ -26,12 +26,9 @@ import {
 } from '@/shared/lib/dnd/dragDrop';
 import type { GeneratedImageWithMetadata } from '@/shared/components/MediaGallery/types';
 import { parseRatio } from '@/shared/lib/media/aspectRatios';
-import { CreateShotModal } from "@/features/shots/components/CreateShotModal";
 import { useProjectSelectionContext } from "@/shared/contexts/ProjectContext";
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { useShotNavigation } from "@/shared/hooks/shots/useShotNavigation";
-import { useLastAffectedShot } from "@/shared/hooks/shots/useLastAffectedShot";
-import { useQuickShotCreate } from "@/shared/hooks/useQuickShotCreate";
 import { usePrefetchTaskData } from "@/shared/hooks/tasks/useTaskPrefetch";
 import { useGenerationTaskMapping } from "@/domains/generation/hooks/tasks/useGenerationTaskMapping";
 import { useTaskType } from "@/shared/hooks/tasks/useTaskType";
@@ -141,7 +138,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     addingToShotWithoutPositionImageId,
     setAddingToShotWithoutPositionImageId,
     currentViewingShotId,
-    onCreateShot,
     onAddToLastShot,
     onAddToLastShotWithoutPosition,
   } = shotWorkflow;
@@ -182,11 +178,7 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     setIsShotSelectorOpen,
     isDragging,
     setIsDragging,
-    isCreateShotModalOpen,
-    setIsCreateShotModalOpen,
-    isCreatingShot,
-    handleCreateShot,
-  } = useMediaGalleryItemState({ image, onCreateShot });
+  } = useMediaGalleryItemState({ image });
   const prefetchTaskData = usePrefetchTaskData();
   const taskIdFromMetadata = image.metadata?.taskId as string | undefined;
   const actualGenerationId = getGenerationId(image);
@@ -215,27 +207,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     }
   }, [actualGenerationId, markAllViewed]);
   const { navigateToShot } = useShotNavigation();
-  const { setLastAffectedShotId: updateLastAffectedShotId } = useLastAffectedShot();
-  const {
-    quickCreateSuccess,
-    handleQuickCreateAndAdd,
-    handleVisitCreatedShot,
-  } = useQuickShotCreate({
-    generationId: generationIdForActions,
-    generationPreview: {
-      imageUrl: image.url ?? undefined,
-      thumbUrl: image.thumbUrl ?? undefined,
-      type: image.type,
-      location: image.location,
-    },
-    shots: simplifiedShotOptions,
-    onShotChange: (shotId) => {
-      updateLastAffectedShotId(shotId);
-      setSelectedShotIdLocal(shotId);
-    },
-    onLoadingStart: () => setAddingToShotImageId(image.id),
-    onLoadingEnd: () => setAddingToShotImageId(null),
-  });
   const {
     isVideoContent,
     isAudioContent,
@@ -516,13 +487,7 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
                 shouldShowAddWithoutPositionButton,
                 currentTargetShotName,
               }}
-              quickCreate={{
-                quickCreateSuccess,
-                handleQuickCreateAndAdd,
-                handleVisitCreatedShot,
-              }}
               actions={{
-                onCreateShot,
                 onNavigateToShot: (shot) => navigateToShot(shot, { scrollToTop: true }),
                 onAddToShot: addToShot,
                 onAddToShotWithoutPosition: addToShotWithoutPosition,
@@ -567,28 +532,10 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
   return isMobile ? (
     <React.Fragment key={imageKey}>
       {imageContent}
-      {onCreateShot && (
-        <CreateShotModal
-          isOpen={isCreateShotModalOpen}
-          onClose={() => setIsCreateShotModalOpen(false)}
-          onSubmit={handleCreateShot}
-          isLoading={isCreatingShot}
-          projectId={selectedProjectId ?? undefined}
-        />
-      )}
     </React.Fragment>
   ) : (
     <DraggableImage key={`draggable-${imageKey}`} image={image} onDoubleClick={() => onOpenLightbox(image)}>
       {imageContent}
-      {onCreateShot && (
-        <CreateShotModal
-          isOpen={isCreateShotModalOpen}
-          onClose={() => setIsCreateShotModalOpen(false)}
-          onSubmit={handleCreateShot}
-          isLoading={isCreatingShot}
-          projectId={selectedProjectId ?? undefined}
-        />
-      )}
     </DraggableImage>
   );
 };

@@ -1,16 +1,13 @@
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import type { EditAdvancedSettings as EditAdvancedSettingsType } from '../hooks/useGenerationEditSettings';
 import type { LightboxCoreState, LightboxVariantState } from '../contexts/LightboxStateContext';
 import type { ImageEditState } from '../contexts/ImageEditContext';
-import type { CurrentSegmentImagesData } from '@/shared/components/VariantSelector/variantSourceImages';
 import type { GenerationVariant } from '@/shared/hooks/variants/useVariants';
 
 interface EditModePanelActions {
   handleUnifiedGenerate: () => void;
   handleGenerateAnnotatedEdit: () => void;
   handleGenerateReposition?: () => void;
-  handleSaveAsVariant?: () => void;
   handleGenerateImg2Img?: () => void;
 }
 
@@ -24,7 +21,6 @@ interface EditModePanelUpscaleControls {
 interface EditModePanelLoraControls {
   img2imgLoraManager?: LoraManagerState;
   editLoraManager?: LoraManagerState;
-  availableLoras?: LoraModel[];
 }
 
 interface EditModePanelAdvancedConfig {
@@ -41,15 +37,11 @@ export interface EditModePanelVariantsState {
   handleVariantSelect: (id: string) => void;
   handleMakePrimary?: LightboxVariantState['handleMakePrimary'];
   isLoadingVariants?: boolean;
-  handlePromoteToGeneration?: LightboxVariantState['handlePromoteToGeneration'];
-  isPromoting?: boolean;
   handleDeleteVariant?: LightboxVariantState['handleDeleteVariant'];
   onLoadVariantSettings?: (variantParams: Record<string, unknown>) => void;
   pendingTaskCount?: number;
   unviewedVariantCount?: number;
   onMarkAllViewed?: () => void;
-  onLoadVariantImages?: (variant: GenerationVariant) => void;
-  currentSegmentImages?: CurrentSegmentImagesData;
 }
 
 export interface EditModePanelProps {

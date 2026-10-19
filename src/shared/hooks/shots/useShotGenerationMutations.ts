@@ -3,7 +3,6 @@
  * shots — all through the document-native placement service (doc 24 Q1).
  *
  * Helpers live in ./shotMutationHelpers.ts
- * useDuplicateAsNewGeneration lives in ./useDuplicateAsNewGeneration.ts
  */
 
 import { useCallback } from 'react';
@@ -33,9 +32,6 @@ import {
   rollbackShotGenerationsCache,
   cancelShotGenerationsQuery
 } from './cacheUtils';
-
-// Re-export useDuplicateAsNewGeneration for backwards compatibility
-export { useDuplicateAsNewGeneration } from './useDuplicateAsNewGeneration';
 
 // ============================================================================
 // ADD IMAGE TO SHOT (unified hook)

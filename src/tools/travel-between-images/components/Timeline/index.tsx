@@ -38,14 +38,10 @@ interface TimelineInteractionAdapter {
   onGenerationDrop?: (generationId: string, imageUrl: string, thumbUrl: string | undefined, targetFrame?: number) => Promise<void>;
   onVariantDrop?: (params: VariantDropParams) => Promise<void>;
   onImageDelete: NonNullable<LightboxActionHandlers['onDelete']>;
-  onImageDuplicate?: (imageId: string, timelineFrame: number, nextTimelineFrame?: number) => void;
-  duplicatingImageId?: string | null;
-  duplicateSuccessImageId?: string | null;
   onPairClick?: (pairIndex: number) => void;
   onClearEnhancedPrompt?: (pairIndex: number) => void;
   onDragStateChange?: (isDragging: boolean) => void;
   onNewShotFromSelection?: (selectedIds: string[]) => Promise<string | void>;
-  onRegisterTrailingUpdater?: (fn: (endFrame: number) => void) => void;
 }
 
 interface TimelineDisplayAdapter {
@@ -73,7 +69,6 @@ interface TimelineShotWorkflowAdapter {
 
 interface TimelineSegmentNavigationAdapter {
   segmentSlots?: SegmentSlot[];
-  isSegmentsLoading?: boolean;
   hasPendingTask?: (pairShotGenerationId: string | null | undefined) => boolean;
   onOpenSegmentSlot?: (pairIndex: number) => void;
   pendingImageToOpen?: string | null;
@@ -115,14 +110,10 @@ const Timeline: React.FC<TimelineProps> = ({
     onGenerationDrop,
     onVariantDrop,
     onImageDelete,
-    onImageDuplicate,
-    duplicatingImageId,
-    duplicateSuccessImageId,
     onPairClick,
     onClearEnhancedPrompt,
     onDragStateChange,
     onNewShotFromSelection,
-    onRegisterTrailingUpdater,
   } = interactions;
   const {
     defaultPrompt,
@@ -146,7 +137,6 @@ const Timeline: React.FC<TimelineProps> = ({
   } = shotWorkflow ?? {};
   const {
     segmentSlots,
-    isSegmentsLoading,
     hasPendingTask,
     onOpenSegmentSlot,
     pendingImageToOpen,
@@ -311,7 +301,6 @@ const Timeline: React.FC<TimelineProps> = ({
         onDelete: !readOnly
           ? (mediaId: string) => onImageDelete(mediaId)
           : undefined,
-        starred: media.currentLightboxImage.starred ?? false,
       },
       features: {
         showTaskDetails: true,
@@ -401,9 +390,6 @@ const Timeline: React.FC<TimelineProps> = ({
         defaultNegativePrompt={defaultNegativePrompt}
         onClearEnhancedPrompt={readOnly ? undefined : onClearEnhancedPrompt}
         onImageDelete={onImageDelete}
-        onImageDuplicate={onImageDuplicate || (() => {})}
-        duplicatingImageId={duplicatingImageId}
-        duplicateSuccessImageId={duplicateSuccessImageId}
         projectAspectRatio={projectAspectRatio}
         handleDesktopDoubleClick={lightbox.handleDesktopDoubleClick}
         handleMobileTap={lightbox.handleMobileTap}
@@ -414,12 +400,10 @@ const Timeline: React.FC<TimelineProps> = ({
         maxFrameLimit={maxFrameLimit}
         selectedOutputId={selectedOutputId}
         segmentSlots={segmentSlots}
-        isSegmentsLoading={isSegmentsLoading}
         hasPendingTask={hasPendingTask}
         videoOutputs={readOnlyGenerations}
         onNewShotFromSelection={onNewShotFromSelection}
         onShotChange={onShotChange}
-        onRegisterTrailingUpdater={onRegisterTrailingUpdater}
       />
 
       {/* Lightbox */}
