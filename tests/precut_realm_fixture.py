@@ -20,6 +20,10 @@ from runtime_protocol.backup import restore_backup, verify_backup
 
 
 ARCHIVE = Path(__file__).with_name("fixtures") / "precut-v31.tar.gz"
+VARIANT_ARCHIVES = {
+    name: ARCHIVE.with_name(f"precut-{name}-v31.tar.gz")
+    for name in ("music-documents", "anchor", "raw")
+}
 FIXTURE_LABEL = "schema31/pre-cut80973d3"
 SCHEMA_VERSION = 31
 
@@ -39,9 +43,9 @@ class PrecutRealmFixture:
     pins: dict
 
 
-def _extract_archive(destination: Path) -> Path:
+def _extract_archive(destination: Path, archive_path: Path = ARCHIVE) -> Path:
     destination.mkdir()
-    with tarfile.open(ARCHIVE, "r:gz") as archive:
+    with tarfile.open(archive_path, "r:gz") as archive:
         members = archive.getmembers()
         expected = {"backup/manifest.json", "backup/cas-manifest.json", "backup/realm.sqlite3"}
         names = {member.name.rstrip("/") for member in members}
@@ -102,13 +106,14 @@ def _read_pins(backup_root: Path) -> dict:
         ).fetchone()
         publication = connection.execute(
             "SELECT id, payload_json FROM timeline_events "
-            "WHERE timeline_id=? AND kind=?",
-            ("film", "parent.composition.published"),
+            "WHERE timeline_id=? AND kind=? AND json_extract(payload_json, '$.new_head')=?",
+            ("film", "parent.composition.published", head["revision_id"] if head else None),
         ).fetchone()
         receipt = connection.execute(
             "SELECT txn_id, event_ids_json FROM command_idempotency "
-            "WHERE command_kind=? AND aggregate_id=?",
-            ("parent_composition.publish", "film"),
+            "WHERE command_kind=? AND aggregate_id=? "
+            "AND ? IN (SELECT value FROM json_each(event_ids_json))",
+            ("parent_composition.publish", "film", str(publication["id"]) if publication else None),
         ).fetchone()
         if not all((timeline, head, transcript, binding, reference, association, publication, receipt)):
             raise AssertionError("pre-cut fixture pins are incomplete")
@@ -140,23 +145,28 @@ def _read_pins(backup_root: Path) -> dict:
         connection.close()
 
 
-def load_precut_realm_fixture(tmp_path: Path) -> PrecutRealmFixture:
+def load_precut_realm_fixture(tmp_path: Path, *, variant: str | None = None) -> PrecutRealmFixture:
     """Extract and restore two independent copies of the committed realm.
 
     The returned roots are inactive until opened by the caller.  IDs and
     provenance pins are read from the extracted database, not duplicated in
     this helper, so the fixture remains an exact backup/restore exercise.
+    Optional variants select only the three committed historical captures.
     """
-    if not ARCHIVE.is_file():
-        raise AssertionError(f"missing committed fixture archive: {ARCHIVE}")
-    extracted = tmp_path / "precut-v31-archive"
-    backup_root = _extract_archive(extracted)
+    if variant is not None and variant not in VARIANT_ARCHIVES:
+        raise ValueError(f"unknown pre-cut fixture variant: {variant}")
+    archive_path = ARCHIVE if variant is None else VARIANT_ARCHIVES[variant]
+    if not archive_path.is_file():
+        raise AssertionError(f"missing committed fixture archive: {archive_path}")
+    stem = archive_path.name.removesuffix(".tar.gz")
+    extracted = tmp_path / f"{stem}-archive"
+    backup_root = _extract_archive(extracted, archive_path)
     verified = verify_backup(backup_root, key=FIXTURE_BACKUP_KEY)
     manifest = verified["manifest"]
     if manifest["schema"]["version"] != SCHEMA_VERSION:
         raise AssertionError("pre-cut fixture is not schema 31")
-    copy_a = tmp_path / "precut-v31-copy-a"
-    copy_b = tmp_path / "precut-v31-copy-b"
+    copy_a = tmp_path / f"{stem}-copy-a"
+    copy_b = tmp_path / f"{stem}-copy-b"
     restore_backup(backup_root, copy_a, key=FIXTURE_BACKUP_KEY)
     restore_backup(backup_root, copy_b, key=FIXTURE_BACKUP_KEY)
     return PrecutRealmFixture(
