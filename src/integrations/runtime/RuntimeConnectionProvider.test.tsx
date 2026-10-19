@@ -11,7 +11,7 @@ import {
 import type { PermissionsLike } from './localNetworkPermission.ts';
 import { autoConnectRequested, requestAutoConnect } from './autoConnectRequest.ts';
 import { RuntimeConnectionPanel } from '@/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx';
-import { RUNTIME_SCHEMA_DIGEST } from './contract-metadata.ts';
+import { RUNTIME_ACCEPTED_SCHEMA_DIGESTS, RUNTIME_SCHEMA_DIGEST } from './contract-metadata.ts';
 
 const REALM = { realm_id: 'realm-1', display_name: 'Direct Journey' };
 const STORAGE_KEY = 'astrid.runtime.connectedBefore';
@@ -105,6 +105,14 @@ afterEach(() => {
 });
 
 describe('granted', () => {
+  it.each(RUNTIME_ACCEPTED_SCHEMA_DIGESTS)('connects to the compatible Runtime contract %s', async (digest) => {
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', schema_digest: digest });
+    renderProvider(gateway, fakePermissions('granted').permissions);
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(latest.realmName).toBe(REALM.display_name);
+  });
+
   it('probes health then realm at once and connects, exposing the realm name', async () => {
     const gateway = fakeGateway();
     const onConnected = vi.fn();

@@ -3,7 +3,8 @@ export const PROTOCOL = "workspace.v1" as const;
 export type HeadersLike = Record<string, string>;
 export type RequestBody = Uint8Array | Blob;
 export type Transport = (method: string, path: string, headers: HeadersLike, body?: RequestBody) => Promise<{ status: number; headers: HeadersLike; body: Uint8Array }>;
-export interface Health { status: "ok" | "degraded"; protocol: typeof PROTOCOL; schema_digest: string; runtime_epoch: number; runtime_session_id: string }
+export interface ServiceStatus { name: string; state: "running" | "restarting" | "failed"; last_exit: number | null; restart_count: number; reason?: string | null }
+export interface Health { status: "ok" | "degraded"; protocol: typeof PROTOCOL; schema_digest: string; runtime_epoch: number; runtime_session_id: string; runtime_instance_id: string; services?: ServiceStatus[] }
 export interface Handshake { protocol: typeof PROTOCOL; schema_digest: string; session_id: string; actor_id: string; realm_id: string; scopes: string[]; capabilities: string[] }
 export interface Realm { realm_id: string; display_name: string; version: number; created_at: string; state?: "active" | "tombstoned"; tombstoned_at?: string | null; lifecycle_version?: number }
 export interface IntegrityCheck { ok: boolean; [key: string]: unknown }
@@ -87,7 +88,7 @@ export class WorkspaceClient {
   private decodeError(status: number, body: Uint8Array): ApiError { try { const v = JSON.parse(new TextDecoder().decode(body)); return new ApiError(status, v.code ?? "http_error", v.message ?? `HTTP ${status}`, v.request_id ?? "", v.details ?? {}) } catch { return new ApiError(status, "http_error", `HTTP ${status}`) } }
   private json<T>(body: Uint8Array): T { return JSON.parse(new TextDecoder().decode(body)) as T }
   private page<T>(body: Uint8Array): Page<T> { const value = this.json<Partial<Page<T>>>(body); if (!Array.isArray(value.items) || !(value.next_cursor === null || typeof value.next_cursor === "string")) throw new Error("invalid page response: items and next_cursor are required"); return value as Page<T> }
-  private mutation<T>(body: Uint8Array): MutationResult<T> { const value = this.json<Record<string, unknown>>(body); if (!("data" in value) || !("receipt" in value) || !value.receipt || typeof value.data !== "object" || value.data === null) throw new Error("invalid mutation response: committed receipt is required"); const data = value.data as Record<string, unknown>; Object.defineProperty(data, "receipt", { value: value.receipt, enumerable: false, writable: false, configurable: false }); return data as MutationResult<T> }
+  private mutation<T>(body: Uint8Array): MutationResult<T> { const value = this.json<Record<string, unknown>>(body); if (!value || typeof value !== "object" || Array.isArray(value) || !value.data || typeof value.data !== "object" || Array.isArray(value.data) || !value.receipt || typeof value.receipt !== "object" || Array.isArray(value.receipt)) throw new Error("invalid mutation response: data and committed receipt objects are required"); const data = value.data as Record<string, unknown>; Object.defineProperty(data, "receipt", { value: value.receipt, enumerable: false, writable: false, configurable: false }); return data as MutationResult<T> }
   async health(): Promise<Health> { return this.json<Health>((await this.request("GET", "/v1/health")).body) }
   private preferencesPath(scope: PreferenceScope, projectId?: string): string {
     if (scope !== "user" && scope !== "project") throw new Error("preference scope must be user or project");
@@ -98,7 +99,7 @@ export class WorkspaceClient {
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid preference resource");
     const v = value as Record<string, unknown>;
     const fields = ["scope", "actor_id", "project_id", "document_id", "content", "version", "created_at", "updated_at"];
-    if (Object.keys(v).length !== fields.length || fields.some(key => !(key in v))) throw new Error("invalid preference resource fields");
+    if (fields.some(key => !(key in v))) throw new Error("invalid preference resource fields");
     const owner = scope === "user" ? v.actor_id : v.project_id;
     const other = scope === "user" ? v.project_id : v.actor_id;
     if (v.scope !== scope || typeof owner !== "string" || !owner || other !== null || v.document_id !== "preferences:" + scope + ":" + owner || typeof v.content !== "string" || !Number.isInteger(v.version) || (v.version as number) < 0 || [v.created_at, v.updated_at].some(item => item !== null && typeof item !== "string")) throw new Error("invalid preference resource ownership, content or version");
@@ -106,7 +107,7 @@ export class WorkspaceClient {
   }
   private preferenceMutation(body: Uint8Array, scope: PreferenceScope): PreferenceMutationResult {
     const value = this.json<Record<string, unknown>>(body);
-    if (!value || Object.keys(value).length !== 2 || !("data" in value) || !("receipt" in value)) throw new Error("invalid preference mutation response");
+    if (!value || typeof value !== "object" || !("data" in value) || !("receipt" in value)) throw new Error("invalid preference mutation response");
     const resource = this.preferenceResource(value.data, scope);
     if (scope === "project") return this.mutation<PreferenceResource>(body);
     if (value.receipt !== null) throw new Error("invalid user preference mutation: null receipt is required");
