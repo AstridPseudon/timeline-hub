@@ -207,6 +207,7 @@ export interface TimelineEditorOpsContextValue {
 export interface TimelineEditorContextValue extends TimelineEditorDataContextValue, TimelineEditorOpsContextValue {}
 
 export interface TimelineChromeContextValue {
+  commandSession?: import('./useTimelineCommandSession.ts').TimelineCommandSessionSurface;
   timelineName: string | null;
   saveStatus: SaveStatus;
   isConflictExhausted: boolean;

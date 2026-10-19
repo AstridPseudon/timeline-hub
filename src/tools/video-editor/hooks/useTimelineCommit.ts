@@ -165,6 +165,7 @@ interface UseTimelineCommitOptions {
   eventBus: TimelineEventBus;
   lastSavedSignatureRef: MutableRefObject<string>;
   editability?: TimelineEditability;
+  snapshotWriteBlockedRef?: MutableRefObject<boolean>;
   initialData?: TimelineData;
   resolveAssetUrl?: (reference: string) => Promise<string>;
 }
@@ -203,6 +204,7 @@ export function useTimelineCommit({
   editability,
   initialData,
   resolveAssetUrl,
+  snapshotWriteBlockedRef,
 }: UseTimelineCommitOptions): UseTimelineCommitResult {
   const registryOwnersRef = useRef(new Map<string, OwnedRegistryMutation>());
   const registryReceiptsRef = useRef(new WeakMap<OwnedRegistryMutation, {
@@ -339,6 +341,9 @@ export function useTimelineCommit({
     options?: CommitDataOptions,
   ) => {
     const shouldSave = options?.save ?? true;
+    if (shouldSave && snapshotWriteBlockedRef?.current) {
+      throw new Error('Resolve pending timeline commands before snapshot edits');
+    }
     const currentData = dataRef.current;
     if (options?.skipHistory && options?.updateLastSavedSignature) registryOwnersRef.current.clear();
     for (const [assetId, receipt] of registryOwnersRef.current) {
@@ -399,7 +404,7 @@ export function useTimelineCommit({
       editSeqRef.current += 1;
       eventBus.emit('scheduleSave', nextData);
     }
-  }, [eventBus, lastSavedSignatureRef, selectionOwner]);
+  }, [eventBus, lastSavedSignatureRef, selectionOwner, snapshotWriteBlockedRef]);
 
   const applyEdit = useCallback((
     mutation: TimelineEditMutation,

@@ -1,0 +1,327 @@
+import type { CommitRequest, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import { ApiError } from '@/integrations/runtime/generated.ts';
+import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
+import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
+import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
+import { authoringBundleFromDocument } from './authoringBundle.ts';
+import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
+import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
+import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
+
+type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
+export type CommandSessionState = {
+  status: 'loading' | 'saved' | 'dirty' | 'saving' | 'retry' | 'conflict' | 'error' | 'recovery';
+  error: string | null;
+  ownerId: string | null;
+  recoverableOwners: string[];
+  canUndo: boolean;
+};
+type Options = {
+  scope: OutboxScope;
+  initial: TimelineCommandBasis;
+  outboxes?: ReturnType<typeof createCommitOutbox>;
+  send(request: CommitRequest, key: string): Promise<TimelineCommitResult>;
+  preview(patch: TimelinePatch): void;
+  project(basis: TimelineCommandBasis, previews: TimelinePatch[]): Promise<void>;
+  changed(state: CommandSessionState): void;
+};
+const sameHead = (a: OutboxHead, b: OutboxHead) => a.revisionId === b.revisionId && a.publicationId === b.publicationId;
+const message = (error: unknown) => error instanceof Error ? error.message : String(error);
+const json = (value: unknown): JSON => JSON.parse(JSON.stringify(value)) as JSON;
+
+/** One browser-lock lifetime, one durable prefix, original guarded suffixes. */
+export async function createTimelineCommandSession(options: Options) {
+  const storage = options.outboxes ?? createCommitOutbox();
+  let bundle = await authoringBundleFromDocument(options.initial.canonicalDocument) as AuthoredBundle;
+  let known = options.initial;
+  let acceptedBasis = options.initial;
+  let displayHead = options.initial.head;
+  let projecting = false;
+  let projectionPending: TimelineCommandBasis | undefined;
+  let box: ClaimedOutbox | undefined;
+  let record: OutboxRecord | undefined;
+  let stopped = false;
+  let release: (() => void) | undefined;
+  let lifetime: Promise<unknown> | undefined;
+  let chain = Promise.resolve();
+  let sending: Promise<void> | undefined;
+  let lastIntent: string | undefined;
+  let localGeneration = 0;
+  let appendedGeneration = 0;
+  let persistenceFailed = false;
+  const latestOwn = options.initial.history?.next_cursor == null ? options.initial.history?.items.slice().reverse().find((entry) => entry.publisher === options.scope.actorId
+    && entry.intent === 'recorded' && entry.records) : undefined;
+  const undos: string[] = latestOwn ? [latestOwn.publication_id] : [];
+  const prepared = new Map<string, { payload: Payload; generation: number; basis: OutboxBasis }>();
+  let state: CommandSessionState = { status: 'loading', error: null, ownerId: null, recoverableOwners: [], canUndo: false };
+  function publish(status: CommandSessionState['status'], error: string | null = null) {
+    if (stopped) return;
+    state = { ...state, status, error, canUndo: !persistenceFailed
+      && ((status === 'saved' && !!undos.length) || (status === 'dirty' && !!record?.intents.length && !record.pending)) };
+    options.changed(state);
+  }
+  function assertReady() {
+    if (stopped || !box || projecting || projectionPending || persistenceFailed || record?.intents[0]?.conflict !== undefined) {
+      throw new Error(state.error ?? 'Timeline command session is unavailable');
+    }
+  }
+  async function project(basis: TimelineCommandBasis, previews: TimelinePatch[]) {
+    projecting = true;
+    projectionPending = basis;
+    try {
+      await options.project(basis, previews);
+      displayHead = basis.head;
+      if (projectionPending === basis) projectionPending = undefined;
+    } finally { projecting = false; }
+  }
+  async function pump() {
+    if (sending) return sending;
+    sending = (async () => {
+      await chain;
+      if (stopped || persistenceFailed || !box) return;
+      record = await box.read();
+      if (!record.intents.length && projectionPending) {
+        const target = projectionPending;
+        bundle = await authoringBundleFromDocument(target.canonicalDocument) as AuthoredBundle;
+        await project(target, []);
+        known = target;
+        acceptedBasis = target;
+      }
+      if (record.pending?.outcome?.kind === 'rejected') {
+        const error = record.pending.outcome.error as { kind?: string; message?: string };
+        publish(error.kind === 'conflict' ? 'conflict' : 'error', error.message ?? 'Timeline command was refused');
+        return;
+      }
+      while (!stopped && record.intents.length && !record.intents[0].conflict) {
+        publish('saving');
+        const priorAccepted = record.accepted?.intentId;
+        record = await box.dispatch((intent, head) => ({
+          method: 'POST',
+          path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,
+          body: json({ api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
+            base_revision_id: head.revisionId, base_publication_id: head.publicationId,
+            commands: (intent.payload as unknown as Payload).commands, source: { via: 'app' } } satisfies CommitRequest),
+        }), async (request) => {
+          try {
+            const result = await options.send(JSON.parse(request.body) as CommitRequest, request.key);
+            return { kind: 'accepted', head: result.accepted, value: json(result) };
+          } catch (error) {
+            const kind = error instanceof ApiError && error.status >= 500 ? 'unknown' : classifyRuntimeCommitFailure(error);
+            return { kind: kind === 'unknown' || kind === 'storage' ? 'retry' : 'rejected',
+              error: { kind, message: message(error) } };
+          }
+        });
+        if (stopped) return;
+        if (record.accepted && record.accepted.intentId !== priorAccepted) {
+          const result = record.accepted.value as unknown as TimelineCommitResult;
+          acceptedBasis = { head: result.accepted, canonicalDocument: result.canonicalDocument, graph: result.graph };
+          const previous = result.response.data;
+          const followsKnown = sameHead(known.head, result.accepted) || sameHead(known.head, {
+            revisionId: previous.previous_revision_id, publicationId: previous.previous_publication_id,
+          }) || sameHead(known.head, { revisionId: previous.base_revision_id, publicationId: previous.base_publication_id });
+          if (followsKnown) known = acceptedBasis;
+          const commands = result.response.data.commands;
+          if (commands.some((command) => command.op === 'timeline.inverse')) undos.pop();
+          else if (undos[undos.length - 1] !== result.accepted.publicationId) undos.push(result.accepted.publicationId);
+          // A's ACK cannot erase B, including B whose durable append is still queued.
+          if (!record.intents.length && appendedGeneration === localGeneration) {
+            const nextBundle = await authoringBundleFromDocument(known.canonicalDocument) as AuthoredBundle;
+            if (!stopped && !record.intents.length && appendedGeneration === localGeneration) {
+              const generation = localGeneration;
+              acceptedBasis = known;
+              bundle = nextBundle;
+              await project(known, []);
+              if (generation === localGeneration) lastIntent = undefined;
+            }
+          }
+        }
+        if (record.pending) {
+          const outcome = record.pending.outcome;
+          publish(outcome?.kind === 'rejected' ? ((outcome.error as { kind?: string }).kind === 'conflict' ? 'conflict' : 'error') : 'retry',
+            outcome && outcome.kind !== 'accepted' ? String((outcome.error as { message?: string }).message ?? 'Commit outcome is unknown; retry the exact request') : null);
+          return;
+        }
+        await chain;
+        record = await box.read();
+      }
+      publish(record.intents.length || appendedGeneration !== localGeneration ? 'dirty' : 'saved');
+    })().catch((error) => { publish('error', message(error)); }).finally(() => { sending = undefined; });
+    return sending;
+  }
+  const pendingAppends: Array<{ localId: string; predecessor?: string; head: OutboxHead; payload: Payload; generation: number }> = [];
+  async function persistAppends() {
+    if (persistenceFailed || stopped || !box) return;
+    try {
+      while (pendingAppends.length) {
+        const entry = pendingAppends[0];
+        const basis: OutboxBasis = entry.predecessor
+          ? { after: intentIds.get(entry.predecessor) ?? entry.predecessor } : { head: entry.head };
+        const id = await box.append(json(entry.payload), basis);
+        intentIds.set(entry.localId, id);
+        appendedGeneration = entry.generation;
+        pendingAppends.shift();
+        record = await box.read();
+      }
+    } catch (error) { persistenceFailed = true; publish('error', `Unsaved move: ${message(error)}`); }
+  }
+  function enqueue(payload: Payload, preview: TimelinePatch | null, capturedBasis?: OutboxBasis) {
+    assertReady();
+    const predecessor = capturedBasis && 'after' in capturedBasis ? capturedBasis.after : capturedBasis ? undefined : lastIntent;
+    const generation = ++localGeneration;
+    const previousBundle = bundle;
+    // Advance authored bytes synchronously, before the next capture/service call.
+    bundle = payload.after;
+    publish('dirty');
+    try { if (preview) options.preview(preview); }
+    catch (error) { bundle = previousBundle; localGeneration--; publish('error', message(error)); throw error; }
+    const localId = crypto.randomUUID();
+    lastIntent = localId;
+    pendingAppends.push({ localId, predecessor, head: capturedBasis && 'head' in capturedBasis ? capturedBasis.head : known.head, generation,
+      payload: { ...payload, displayBasis: acceptedBasis } });
+    chain = chain.then(persistAppends);
+    void chain.then(() => pump());
+  }
+  const intentIds = new Map<string, string>();
+  const port: ClipMoveCapturePort = {
+    capture({ clipId, current }) {
+      assertReady();
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1) throw new Error('Move requires one raw clip identity');
+      if (current.head?.headRevisionId !== displayHead.revisionId
+        || (current.head.headPublicationId != null && current.head.headPublicationId !== displayHead.publicationId)) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const identity = matches[0].app?.canonical as { clipRef?: string } | undefined;
+      const select = identity?.clipRef ?? `parent/clip:${clipId}`;
+      return json({ ...captureClipMove(bundle, select), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<ClipMoveCapturePort['capture']>;
+    },
+    finish(basis, on) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the move');
+      const result = finishClipMove(basis, on);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: (basis as unknown as { bundle: AuthoredBundle }).bundle,
+        after: result.bundle, preview: null,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command as ClipMoveProposal, previewAt: result.previewAt };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (!entry || entry.generation !== localGeneration) throw new Error('Move was not captured by this session');
+      prepared.delete(key);
+      enqueue({ ...entry.payload, preview }, preview, entry.basis);
+    },
+  };
+  async function claim(owner?: string) {
+    if (lifetime) throw new Error('An outbox is already claimed');
+    let ready!: () => void;
+    let fail!: (error: unknown) => void;
+    const mounted = new Promise<void>((resolve, reject) => { ready = resolve; fail = reject; });
+    const hold = async (claimed: ClaimedOutbox, ownerId: string) => {
+      box = claimed;
+      state = { ...state, ownerId, recoverableOwners: [] };
+      record = await box.read();
+      if (record.intents.length) {
+        lastIntent = record.intents[record.intents.length - 1].id;
+        const payload = record.intents[record.intents.length - 1].payload as unknown as Payload;
+        bundle = payload.after;
+        // Repaint original local intent; do not replace it with a new capture on today's head.
+        const first = record.intents[0].payload as unknown as Payload;
+        const original = first.before.source_mapping as { _runtime_document?: JSON };
+        const savedAcceptance = record.accepted?.value as unknown as TimelineCommitResult | undefined;
+        const document = savedAcceptance?.canonicalDocument ?? original?._runtime_document as unknown as TimelineCommandBasis['canonicalDocument'];
+        if (!document) throw new Error('Recovered move has no original raw closure');
+        const originalHead = savedAcceptance?.accepted ?? ('head' in record.intents[0].basis ? record.intents[0].basis.head : record.intents[0].readyBase);
+        if (!originalHead) throw new Error('Recovered move has no verified original head');
+        acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
+          : first.displayBasis ?? { head: originalHead, canonicalDocument: document };
+        await project(acceptedBasis,
+          record.intents.map((intent) => (intent.payload as unknown as Payload).preview).filter((patch): patch is TimelinePatch => patch !== null));
+      }
+      publish(record.pending?.outcome?.kind === 'rejected' ? 'conflict' : record.intents.length ? 'dirty' : 'saved');
+      ready();
+      await new Promise<void>((resolve) => { release = resolve; if (stopped) resolve(); });
+    };
+    lifetime = (owner ? storage.recover(options.scope, owner, (claimed) => hold(claimed, owner))
+      : storage.create(options.scope, hold)).catch((error) => { fail(error); publish('error', message(error)); });
+    try { await mounted; }
+    catch (error) {
+      box = undefined;
+      lifetime = undefined;
+      state = { ...state, ownerId: null };
+      throw error;
+    }
+  }
+  const owners = (await storage.list(options.scope)).filter((owner) => owner.intents.length || owner.pending);
+  if (owners.length) {
+    state = { ...state, recoverableOwners: owners.map((owner) => owner.ownerId) };
+    publish('recovery', 'Choose the persisted editor owner to recover its exact pending request');
+  } else await claim();
+  return {
+    port,
+    getState: () => state,
+    async recover(ownerId: string) {
+      if (!state.recoverableOwners.includes(ownerId)) throw new Error('Unknown persisted outbox owner');
+      await claim(ownerId);
+      // Explicit recovery authorizes retry; never adopt a sessionStorage owner.
+      await pump();
+    },
+    async retry() {
+      persistenceFailed = false;
+      chain = chain.then(persistAppends);
+      await chain;
+      await pump();
+    },
+    async flush() {
+      await chain;
+      await pump();
+      if (state.status !== 'saved') throw new Error(state.error ?? 'Timeline commands are not acknowledged');
+      return known.head;
+    },
+    async undo() {
+      assertReady();
+      await chain;
+      record = await box!.read();
+      if (record.pending || sending) throw new Error('Resolve the uncertain commit before undo');
+      if (record.intents.length) {
+        const tail = record.intents[record.intents.length - 1];
+        await box!.cancel(tail.id);
+        record = await box!.read();
+        bundle = (tail.payload as unknown as Payload).before;
+        lastIntent = record.intents[record.intents.length - 1]?.id;
+        localGeneration++;
+        appendedGeneration = localGeneration;
+        await project(acceptedBasis, record.intents.map((intent) => (intent.payload as unknown as Payload).preview)
+          .filter((patch): patch is TimelinePatch => patch !== null));
+        publish(record.intents.length ? 'dirty' : 'saved');
+        return;
+      }
+      const publication = undos[undos.length - 1];
+      if (!publication) throw new Error('No accepted local publication to undo');
+      enqueue({ commands: [{ schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+        args: { publications: [publication] } }], before: bundle, after: bundle, preview: null }, null);
+      await pump();
+    },
+    observe(remote: TimelineCommandBasis) {
+      if (sameHead(remote.head, known.head)) return;
+      known = remote;
+      if (!record?.intents.length && localGeneration === appendedGeneration && !sending) {
+        const generation = localGeneration;
+        projectionPending = remote;
+        void authoringBundleFromDocument(remote.canonicalDocument).then(async (next) => {
+          if (!stopped && known === remote && !record?.intents.length && generation === localGeneration) {
+            bundle = next as AuthoredBundle;
+            acceptedBasis = remote;
+            await project(remote, []);
+            publish('saved');
+          }
+        }).catch((error) => publish('error', message(error)));
+      }
+    },
+    async dispose() { stopped = true; release?.(); await lifetime; },
+  };
+}
+export type TimelineCommandSession = Awaited<ReturnType<typeof createTimelineCommandSession>>;

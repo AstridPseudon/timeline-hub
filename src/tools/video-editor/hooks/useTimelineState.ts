@@ -1162,6 +1162,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   useEffect(() => { void transcriptHost.refreshSources(); }, [transcriptHost, save.data?.transcriptReferences]);
 
   const editorOps = useMemo(() => ({
+    clipMove: save.commands.port,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
@@ -1220,7 +1221,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,
@@ -1230,7 +1231,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     selectedProjectId ?? '',
   );
 
-  const chrome = useTimelineChromeContextValue({
+  const baseChrome = useTimelineChromeContextValue({
     timelineName: runtime.timelineName ?? null,
     saveStatus,
     isConflictExhausted,
@@ -1295,6 +1296,21 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     retryLoad,
   });
 
+  const commandHistory = save.commands.ownsHistoryRef.current;
+  const chrome = useMemo(() => ({
+    ...baseChrome,
+    commandSession: save.commands.enabled ? { state: save.commands.state, retry: save.commands.retry, recover: save.commands.recover } : undefined,
+    ...(commandHistory ? {
+      undo: () => { void save.commands.undo().catch((error) => runtime.toast.error(error instanceof Error ? error.message : String(error))); },
+      canUndo: save.commands.state.canUndo,
+      canRedo: false,
+      redo: () => {},
+    } : {}),
+    ...(save.commands.activeRef.current ? {
+      retryPendingSave: save.commands.retry,
+      retrySaveAfterConflict: save.commands.retry,
+    } : {}),
+  }), [baseChrome, save.commands, commandHistory, runtime.toast]);
   const playbackValue = useTimelinePlaybackContextValue({ playback });
 
   // Seed the external store before descendants render for the first time so
