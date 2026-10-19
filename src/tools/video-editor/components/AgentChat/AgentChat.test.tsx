@@ -293,6 +293,50 @@ describe('AgentChat', () => {
     });
   });
 
+  it('uses the active Codex session model catalog and scopes model changes to that session and project', async () => {
+    const state = createState();
+    const sessionId = 'codex:session-1';
+    const projectId = 'project-1';
+    state.projectChats[projectId].selected_session_id = sessionId;
+    state.projectChats[projectId].sessions = [{ id: sessionId }];
+    state.sessionsData = [{ id: sessionId, status: 'waiting_user' }];
+    state.activeSessionData.id = sessionId;
+    const mutateAsync = vi.fn().mockResolvedValue(undefined);
+    mockFromState(state);
+    mocks.useAgentModels.mockImplementation(() => ({
+      data: {
+        currentModel: 'openai/gpt-5',
+        providers: [{ id: 'openai', name: 'OpenAI', signedIn: true, models: [{ id: 'gpt-5', name: 'GPT 5' }] }],
+        localModels: {
+          currentModelId: 'vendor/codex-current',
+          availableModels: [
+            { modelId: 'vendor/codex-current', name: 'Codex Current' },
+            { modelId: 'vendor/codex-target', name: 'Codex Target', description: 'For focused coding' },
+          ],
+        },
+      },
+      isLoading: false,
+      error: null,
+      refetch: mocks.modelRefetch,
+    }));
+    mocks.useSetAgentModel.mockImplementation(() => ({ mutateAsync, isPending: false, error: null }));
+
+    renderAgentChat();
+    const trigger = await screen.findByRole('combobox', { name: 'Agent model' });
+    await waitFor(() => expect(trigger.textContent).toContain('Codex Current'));
+    expect(mocks.useLocalAgents).toHaveBeenCalled();
+    fireEvent.click(trigger);
+    expect(await screen.findByRole('option', { name: /Codex Target/ })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: /GPT 5$/ })).toBeNull();
+
+    await waitFor(() => {
+      expect(mocks.useAgentModels).toHaveBeenCalledWith(true, sessionId, projectId);
+      expect(mocks.useSetAgentModel).toHaveBeenCalledWith(sessionId, projectId);
+    });
+    fireEvent.click(screen.getByRole('option', { name: /Codex Target/ }));
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith('vendor/codex-target'));
+  });
+
   it.each([
     ['provider auth failure', 'Provider authentication failed (401)', true],
     ['provider balance failure', 'insufficient credits', true],

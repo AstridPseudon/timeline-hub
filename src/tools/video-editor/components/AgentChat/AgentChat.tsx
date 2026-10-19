@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Loader2, Mic, Paperclip, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
+import { sessionAgentId } from '@/integrations/astrid/localAgents.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
@@ -264,8 +265,6 @@ function AvailableAgentChatPanel({
   } = useAgentChatBridge();
   const projectId = editorContext?.projectId ?? null;
   const sessions = useAgentSessions(timelineId, projectId);
-  const modelCatalog = useAgentModels();
-  const setAgentModel = useSetAgentModel();
   const localAgents = useLocalAgents();
   const setLocalAgent = useSetLocalAgent();
   const projectChat = useProjectChat(projectId);
@@ -283,6 +282,8 @@ function AvailableAgentChatPanel({
   const isTasksPaneLocked = usePanesStore((state) => state.isTasksPaneLocked);
   const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const modelCatalog = useAgentModels(true, activeSessionId, projectId);
+  const setAgentModel = useSetAgentModel(activeSessionId, projectId);
   const [createdSession, setCreatedSession] = useState<AgentSessionOption | null>(null);
   const [draft, setDraft] = useState('');
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
@@ -901,7 +902,9 @@ function AvailableAgentChatPanel({
           <AgentChatModelSelector
             catalog={modelCatalog.data ?? emptyModelCatalog}
             agents={localAgents.data?.agents}
-            selectedAgent={localAgents.data?.selectedAgent}
+            selectedAgent={activeSessionId ? sessionAgentId(activeSessionId) : localAgents.data?.selectedAgent}
+            localModels={modelCatalog.data?.localModels}
+            onSelectLocalModel={(model) => setAgentModel.mutateAsync(model).then(() => undefined)}
             onSelectAgent={(agent) => setLocalAgent.mutateAsync(agent).then(() => undefined)}
             agentsLoading={localAgents.isLoading}
             agentsError={localAgents.error instanceof Error ? localAgents.error.message : null}

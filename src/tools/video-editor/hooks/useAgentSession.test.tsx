@@ -22,7 +22,7 @@ import {
   useSetAgentModel,
 } from './useAgentSession.ts';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
-import { LOCAL_AGENT_SETTING_KEY } from '@/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_SETTING_KEY, localAgentModelSettingKey, savedLocalAgentModel } from '@/integrations/astrid/localAgents.ts';
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -38,6 +38,7 @@ function wrapperWithClient(client: QueryClient) {
 afterEach(() => {
   vi.restoreAllMocks();
   localStorage.removeItem(LOCAL_AGENT_SETTING_KEY);
+  for (const agent of ['astrid', 'claude-code', 'codex'] as const) localStorage.removeItem(localAgentModelSettingKey(agent));
 });
 
 describe('timeline agent ACP chat', () => {
@@ -132,6 +133,94 @@ describe('timeline agent ACP chat', () => {
       expect(models).toHaveBeenCalledTimes(2);
     } finally {
       hook.unmount();
+    }
+  });
+
+  it('uses the active chat agent for session models and switches its exact model without reconnecting', async () => {
+    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'claude-code');
+    const chat = { project_id: 'p', revision: 1, selected_session_id: 'codex:chat-1', main_session_id: null, sessions: [{ id: 'codex:chat-1' }], draft: { revision: 1 } };
+    const acp = {
+      projectChat: vi.fn(async () => chat),
+      connect: vi.fn(async () => ({ connection_id: 'codex-connection' })),
+      loadSession: vi.fn(async () => ({})),
+      sessionModels: vi.fn(async (_connectionId: string, sessionId: string) => ({ models: { currentModelId: `${sessionId}/model-a`, availableModels: [{ modelId: 'provider/model-a', name: 'Model A' }] } })),
+      setSessionModel: vi.fn(async (_connectionId: string, _sessionId: string, modelId: string) => ({ models: { currentModelId: modelId, availableModels: [{ modelId, name: 'Model' }] } })),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await expect(store.models('codex:chat-1', 'p')).resolves.toMatchObject({ localModels: { currentModelId: 'codex:chat-1/model-a' } });
+    await expect(store.setModel('provider/model-exact', 'codex:chat-1', 'p')).resolves.toEqual({ currentModel: 'provider/model-exact' });
+    expect(acp.connect).toHaveBeenCalledOnce();
+    expect(acp.connect).toHaveBeenCalledWith('codex', undefined);
+    expect(acp.loadSession).toHaveBeenCalledWith('codex-connection', 'codex:chat-1');
+    expect(acp.sessionModels).toHaveBeenCalledWith('codex-connection', 'codex:chat-1');
+    expect(acp.setSessionModel).toHaveBeenCalledWith('codex-connection', 'codex:chat-1', 'provider/model-exact');
+    expect(acp).not.toHaveProperty('models');
+  });
+
+  it('stores model defaults per agent and passes the saved preference when a fresh store connects', async () => {
+    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'claude-code');
+    const chat = { project_id: 'p', revision: 1, selected_session_id: 'codex:chat-2', main_session_id: null, sessions: [{ id: 'codex:chat-2' }], draft: { revision: 1 } };
+    const makeClient = () => ({ acp: {
+      projectChat: vi.fn(async () => chat),
+      connect: vi.fn(async () => ({ connection_id: 'conn' })),
+      loadSession: vi.fn(async () => ({})),
+      setSessionModel: vi.fn(async (_connectionId: string, _sessionId: string, modelId: string) => ({ models: { currentModelId: modelId, availableModels: [] } })),
+      sessionModels: vi.fn(async () => ({ models: { currentModelId: 'model', availableModels: [] } })),
+    } });
+    const firstClient = makeClient();
+    const firstStore = new AstridAgentSessionStore(firstClient as never);
+    await firstStore.setModel('codex-preference', 'codex:chat-2', 'p');
+    expect(savedLocalAgentModel('codex')).toBe('codex-preference');
+    expect(savedLocalAgentModel('claude-code')).toBeUndefined();
+
+    const freshClient = makeClient();
+    const freshStore = new AstridAgentSessionStore(freshClient as never);
+    await freshStore.models('codex:chat-2', 'p');
+    expect(freshClient.acp.connect).toHaveBeenCalledWith('codex', 'codex-preference');
+  });
+
+  it('does not replace a saved model preference when the session switch fails', async () => {
+    localStorage.setItem(localAgentModelSettingKey('codex'), 'old-model');
+    const chat = { project_id: 'p', revision: 1, selected_session_id: 'codex:chat-3', main_session_id: null, sessions: [{ id: 'codex:chat-3' }], draft: { revision: 1 } };
+    const store = new AstridAgentSessionStore({ acp: {
+      projectChat: vi.fn(async () => chat), connect: vi.fn(async () => ({ connection_id: 'conn' })), loadSession: vi.fn(async () => ({})),
+      setSessionModel: vi.fn(async () => { throw new Error('switch failed'); }),
+    } } as never);
+    await expect(store.setModel('new-model', 'codex:chat-3', 'p')).rejects.toThrow('switch failed');
+    expect(savedLocalAgentModel('codex')).toBe('old-model');
+  });
+
+  it('returns the empty local-model fallback without opening a session when no local chat is active', async () => {
+    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'codex');
+    const connect = vi.fn();
+    const store = new AstridAgentSessionStore({ acp: { connect } } as never);
+    await expect(store.models()).resolves.toEqual({ providers: [], currentModel: null, localModels: null });
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it('keeps the model query scoped to the active session and refreshes it after a switch', async () => {
+    const catalogs: string[] = [];
+    const models = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockImplementation(async (sessionId) => {
+      catalogs.push(sessionId ?? 'default');
+      return { providers: [], currentModel: null, localModels: { currentModelId: sessionId === 'codex:chat-a' ? 'model-a' : 'model-b', availableModels: [] } };
+    });
+    const setModel = vi.spyOn(AstridAgentSessionStore.prototype, 'setModel').mockImplementation(async model => ({ currentModel: model }));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const hook = renderHook(({ sessionId }: { sessionId: string }) => ({ models: useAgentModels(true, sessionId, 'p'), selection: useSetAgentModel(sessionId, 'p') }), {
+      wrapper: wrapperWithClient(client), initialProps: { sessionId: 'codex:chat-a' },
+    });
+    try {
+      await waitFor(() => expect(hook.result.current.models.data?.localModels?.currentModelId).toBe('model-a'));
+      hook.rerender({ sessionId: 'codex:chat-b' });
+      await waitFor(() => expect(hook.result.current.models.data?.localModels?.currentModelId).toBe('model-b'));
+      expect(client.getQueryData(['agent-models', 'codex:chat-a', 'p'])).toMatchObject({ localModels: { currentModelId: 'model-a' } });
+      const beforeSwitch = catalogs.length;
+      await act(async () => { await hook.result.current.selection.mutateAsync('model-b2'); });
+      await waitFor(() => expect(catalogs.length).toBeGreaterThan(beforeSwitch));
+      expect(setModel).toHaveBeenCalledWith('model-b2', 'codex:chat-b', 'p');
+    } finally {
+      hook.unmount();
+      client.clear();
     }
   });
 

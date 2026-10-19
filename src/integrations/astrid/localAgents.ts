@@ -15,6 +15,16 @@ export const localAgentCatalogSchema = z.object({
 });
 export type LocalAgentChoice = z.infer<typeof localAgentCatalogSchema>['agents'][number];
 
+export const localAgentModelsSchema = z.object({
+  availableModels: z.array(z.object({
+    modelId: z.string().min(1),
+    name: z.string().min(1),
+    description: z.string().nullable().optional(),
+  })),
+  currentModelId: z.string(),
+});
+export type LocalAgentModels = z.infer<typeof localAgentModelsSchema>;
+
 /** Astrid's existing opaque IDs remain unchanged; other agents have distinct stores. */
 export function sessionAgentId(sessionId: string): LocalAgentId {
   if (sessionId.startsWith('claude-code:')) return 'claude-code';
@@ -23,6 +33,15 @@ export function sessionAgentId(sessionId: string): LocalAgentId {
 }
 
 export const LOCAL_AGENT_SETTING_KEY = 'astrid.app.defaultAgent';
+export const localAgentModelSettingKey = (agent: LocalAgentId) => `astrid.app.defaultModel.${agent}`;
+
+export function savedLocalAgentModel(agent: LocalAgentId): string | undefined {
+  try {
+    return globalThis.localStorage?.getItem(localAgentModelSettingKey(agent)) || undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export function savedLocalAgent(): LocalAgentId {
   try {

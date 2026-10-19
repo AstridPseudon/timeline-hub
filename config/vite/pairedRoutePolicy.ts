@@ -97,6 +97,8 @@ const acpRoutes: readonly RouteEntry[] = [
   entry('GET', '/acp/agents'),
   entry('POST', '/acp/model'),
   entry('POST', '/acp/connect'),
+  entry('GET', '/acp/:conn/models'),
+  entry('POST', '/acp/:conn/model'),
   entry('POST', '/acp/:conn/rpc'),
   entry('POST', '/acp/:conn/cancel'),
   entry('POST', '/acp/:conn/reconnect'),

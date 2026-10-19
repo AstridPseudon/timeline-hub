@@ -4,6 +4,20 @@ import { AstridLocalAcpRoutes } from './acpRoutes.ts';
 import type { AstridBridgeTransport } from './transport.ts';
 
 describe('AstridLocalAcpRoutes', () => {
+  it('carries a local agent default and scopes model discovery and selection to the chat', async () => {
+    const models = { availableModels: [{ modelId: 'model/a', name: 'Model A', description: 'A model' }], currentModelId: 'model/a' };
+    const requestJson = vi.fn(async (path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) =>
+      schema.parse(path === '/acp/connect' ? { connection_id: 'c 1', initialize: {} } : { models }));
+    const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
+    await routes.connect('codex', 'model/a');
+    await expect(routes.sessionModels('c 1', 'codex:chat/1')).resolves.toEqual({ models });
+    await expect(routes.setSessionModel('c 1', 'codex:chat/1', 'model/a')).resolves.toEqual({ models });
+    expect(requestJson.mock.calls.map(([path, request]) => ({ path, request }))).toEqual([
+      { path: '/acp/connect', request: { method: 'POST', body: { agent: 'codex', defaultModelId: 'model/a' } } },
+      { path: '/acp/c%201/models?sessionId=codex%3Achat%2F1', request: { method: 'GET' } },
+      { path: '/acp/c%201/model', request: { method: 'POST', body: { sessionId: 'codex:chat/1', modelId: 'model/a' } } },
+    ]);
+  });
   it('discovers local agents and launches the exact selected agent', async () => {
     const catalog = { agents: [{ id: 'codex', name: 'Codex', installed: true, authStatus: 'signed-in', adapterInstalled: false, installCommand: 'npm install -g @agentclientprotocol/codex-acp', loginCommand: 'codex login' }] };
     const requestJson = vi.fn(async (path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) => schema.parse(path === '/acp/agents' ? catalog : { connection_id: 'c1', initialize: {} }));

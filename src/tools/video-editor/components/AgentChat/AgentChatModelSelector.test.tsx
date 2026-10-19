@@ -32,6 +32,55 @@ function openList(onSelectModel = vi.fn(), onOpenChange = vi.fn()) {
 }
 
 describe('AgentChatModelSelector', () => {
+  const localModels = { currentModelId: 'vendor/alpha-precise', availableModels: [
+    { modelId: 'vendor/alpha-precise', name: 'Alpha Precise', description: 'Careful code review' },
+    { modelId: 'vendor/beta-fast', name: 'Beta Fast', description: 'Quick drafts' },
+  ] };
+
+  it.each(['claude-code', 'codex'] as const)('lists and selects exact %s model ids, marking the active model', async (selectedAgent) => {
+    const onSelectLocalModel = vi.fn();
+    render(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} selectedAgent={selectedAgent} localModels={localModels} onSelectLocalModel={onSelectLocalModel} />);
+    const trigger = screen.getByRole('combobox', { name: 'Agent model' });
+    expect(trigger.textContent).toContain('Alpha Precise');
+    expect(trigger.title).toContain(`${selectedAgent === 'codex' ? 'Codex' : 'Claude Code'} · Alpha Precise`);
+    fireEvent.click(trigger);
+    const active = await screen.findByRole('option', { name: /Alpha Precise/ });
+    expect(active.getAttribute('aria-current')).toBe('true');
+    expect(active.getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(screen.getByRole('option', { name: /Beta Fast/ }));
+    await waitFor(() => expect(onSelectLocalModel).toHaveBeenCalledWith('vendor/beta-fast'));
+    expect(screen.queryByText('OpenAI')).toBeNull();
+  });
+
+  it('searches external models by name, description, and exact model id', async () => {
+    render(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} selectedAgent="codex" localModels={localModels} onSelectLocalModel={vi.fn()} />);
+    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
+    const input = await screen.findByPlaceholderText('Search models...');
+    fireEvent.change(input, { target: { value: 'review' } });
+    expect(await screen.findByRole('option', { name: /Alpha Precise/ })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: /Beta Fast/ })).toBeNull();
+    fireEvent.change(input, { target: { value: 'vendor/beta-fast' } });
+    expect(await screen.findByRole('option', { name: /Beta Fast/ })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: /Alpha Precise/ })).toBeNull();
+  });
+
+  it('disables local model selection while busy and reuses catalog loading and error states', async () => {
+    const props = { catalog, onSelectModel: vi.fn(), selectedAgent: 'codex' as const, localModels, onSelectLocalModel: vi.fn() };
+    const { rerender } = render(<AgentChatModelSelector {...props} busy />);
+    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
+    expect(await screen.findByRole('option', { name: /Alpha Precise/ })).toHaveAttribute('aria-disabled', 'true');
+    rerender(<AgentChatModelSelector {...props} loading />);
+    expect(screen.getByText('Loading models...')).toBeTruthy();
+    rerender(<AgentChatModelSelector {...props} catalogError="Adapter unavailable" />);
+    expect(screen.getByRole('alert').textContent).toContain('Adapter unavailable');
+  });
+
+  it('falls back to the agent default when the adapter reports no available models', async () => {
+    render(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} selectedAgent="claude-code" localModels={{ availableModels: [], currentModelId: '' }} onSelectLocalModel={vi.fn()} />);
+    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
+    expect(await screen.findByText('Uses your Claude Code default model.')).toBeTruthy();
+  });
+
   it('offers usable keyless models without requiring a provider sign-in', async () => {
     const onSelectModel = vi.fn();
     render(<AgentChatModelSelector catalog={{ currentModel: null, providers: [
@@ -153,7 +202,7 @@ describe('AgentChatModelSelector', () => {
     expect(trigger.textContent).toContain('Codex');
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
     fireEvent.click(trigger);
-    expect(await screen.findByText('Uses your Codex default model. New chats use this agent; saved chats keep their original agent.')).toBeTruthy();
+    expect(await screen.findByText('Uses your Codex default model.')).toBeTruthy();
     expect(screen.queryByText('OpenAI')).toBeNull();
     expect(screen.queryByRole('option', { name: /GPT 5/ })).toBeNull();
   });

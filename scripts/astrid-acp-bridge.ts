@@ -8,7 +8,7 @@ import { delimiter } from 'node:path';
 import { getAstridAgentModelCatalog, setAstridAgentDefaultModel } from './astrid-agent-models.ts';
 import { discoverLocalAgents } from './astrid-local-agents.ts';
 import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
-import { localAgentIdSchema, sessionAgentId, type LocalAgentId } from '../src/integrations/astrid/localAgents.ts';
+import { localAgentIdSchema, localAgentModelsSchema, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '../src/integrations/astrid/localAgents.ts';
 
 import {
   AcpProcessHost,
@@ -65,12 +65,36 @@ type Connection = {
   readonly terminals: Map<string, TerminalRecord>;
   readonly sessions: Set<string>;
   readonly configOptions: Map<string, Map<string, Set<string>>>;
+  readonly models: Map<string, LocalAgentModels>;
+  defaultModelId?: string;
   disconnected: boolean;
   notificationBytes: number;
   readonly localMediaOnly: boolean;
   lastUsedAt: number;
   inFlight: number;
 };
+
+function modelsFrom(value: unknown): LocalAgentModels | null {
+  const record = asRecord(value);
+  const models = asRecord(record?.models);
+  const configOptions = Array.isArray(record?.configOptions) ? record.configOptions : [];
+  const modelConfig = configOptions.map(asRecord).find(item => item?.id === 'model');
+  if (modelConfig) {
+    const options = Array.isArray(modelConfig?.options) ? modelConfig.options : [];
+    const groupedOptions = options.flatMap(item => {
+      const option = asRecord(item);
+      if (typeof option?.value === 'string') return [option];
+      return Array.isArray(option?.options) ? option.options.map(asRecord).filter((nested): nested is JsonRecord => Boolean(nested)) : [];
+    });
+    const availableModels = groupedOptions.flatMap(option => typeof option.value === 'string'
+      ? [{ modelId: option.value, name: typeof option.name === 'string' ? option.name : option.value, ...(typeof option.description === 'string' || option.description === null ? { description: option.description } : {}) }]
+      : []);
+    const parsedConfigModels = localAgentModelsSchema.safeParse({ availableModels, currentModelId: modelConfig.currentValue });
+    return parsedConfigModels.success ? parsedConfigModels.data : null;
+  }
+  const parsed = localAgentModelsSchema.safeParse(models);
+  return parsed.success ? parsed.data : null;
+}
 
 type TerminalExitStatus = {
   readonly exitCode: number | null;
@@ -156,6 +180,9 @@ function advertisedConfigOptions(value: unknown): Map<string, Set<string>> {
     const values = new Set<string>();
     for (const option of candidate.options) {
       if (isRecord(option) && typeof option.value === 'string') values.add(option.value);
+      else if (isRecord(option) && Array.isArray(option.options)) {
+        for (const nested of option.options) if (isRecord(nested) && typeof nested.value === 'string') values.add(nested.value);
+      }
     }
     if (values.size > 0) result.set(candidate.id, values);
   }
@@ -438,12 +465,13 @@ export class AstridAcpBridge {
       if (request.method === 'POST' && url.pathname === '/connect') {
         const body = asRecord(await readJson(request));
         const agent = localAgentIdSchema.safeParse(body?.agent ?? 'astrid');
-        if (!agent.success || !body || Object.keys(body).some(key => key !== 'agent')) {
+        const defaultModelId = body?.defaultModelId;
+        if (!agent.success || !body || Object.keys(body).some(key => key !== 'agent' && key !== 'defaultModelId') || (defaultModelId !== undefined && (typeof defaultModelId !== 'string' || !defaultModelId || agent.data === 'astrid'))) {
           jsonResponse(response, 400, { error: 'invalid_body', detail: 'Choose astrid, claude-code or codex.' });
           return;
         }
         this.connecting++;
-        try { await this.connect(response, this.localMediaOnly(request), agent.data); }
+        try { await this.connect(response, this.localMediaOnly(request), agent.data, defaultModelId as string | undefined); }
         finally { this.connecting--; }
         return;
       }
@@ -454,7 +482,7 @@ export class AstridAcpBridge {
         return;
       }
 
-      const match = url.pathname.match(/^\/([^/]+)(?:\/(rpc|cancel|events|reconnect))?$/);
+      const match = url.pathname.match(/^\/([^/]+)(?:\/(rpc|cancel|events|reconnect|models|model))?$/);
       if (!match) {
         jsonResponse(response, 404, { error: 'not_found', detail: 'Unknown Astrid App ACP route' });
         return;
@@ -475,6 +503,31 @@ export class AstridAcpBridge {
       held.push(this.use(connection));
       if (this.localMediaOnly(request) && !connection.localMediaOnly) {
         jsonResponse(response, 409, { error: 'hosted_connection_required', detail: 'Create a new hosted ACP connection to enable local media protections in the installed agent' });
+        return;
+      }
+      if (match[2] === 'models' && request.method === 'GET') {
+        const sessionId = url.searchParams.get('sessionId');
+        if (!sessionId || !connection.sessions.has(sessionId)) throw new ChatError(400, 'invalid_session', 'sessionId must belong to this ACP connection');
+        jsonResponse(response, 200, { models: connection.models.get(sessionId) ?? null });
+        return;
+      }
+      if (match[2] === 'model' && request.method === 'POST') {
+        if (connection.agent === 'astrid') throw new ChatError(404, 'not_found', 'Local model selection is available for installed agents only');
+        const body = asRecord(await readJson(request));
+        if (!body || Object.keys(body).some(key => key !== 'sessionId' && key !== 'modelId') || typeof body.sessionId !== 'string' || typeof body.modelId !== 'string' || !body.sessionId || !body.modelId) {
+          throw new ChatError(400, 'invalid_body', 'sessionId and modelId are required');
+        }
+        if (connection.inFlight > 1) throw new ChatError(409, 'acp_request_in_progress', 'Wait for the current ACP request to finish before changing models');
+        if (!connection.sessions.has(body.sessionId)) throw new ChatError(403, 'session_not_owned', 'This ACP connection does not own that session');
+        const models = connection.models.get(body.sessionId);
+        if (!models?.availableModels.some(model => model.modelId === body.modelId)) throw new ChatError(409, 'model_unavailable', 'The requested model was not advertised for this session');
+        const usesConfigOption = connection.configOptions.get(body.sessionId)?.has('model');
+        const result = usesConfigOption
+          ? await connection.host.request('session/set_config_option', { sessionId: body.sessionId, configId: 'model', value: body.modelId })
+          : await connection.host.request('session/set_model', { sessionId: body.sessionId, modelId: body.modelId });
+        this.updateLocalModelState(connection, body.sessionId, models, body.modelId, result, Boolean(usesConfigOption));
+        connection.defaultModelId = body.modelId;
+        jsonResponse(response, 200, { result, models: connection.models.get(body.sessionId) });
         return;
       }
       if (match[2] === 'events' && request.method === 'GET') {
@@ -556,7 +609,7 @@ export class AstridAcpBridge {
     return this.config.localMediaOnly === true || request.headers['x-astrid-local-media-only'] === '1';
   }
 
-  private async connect(response: ServerResponse, localMediaOnly: boolean, agent: LocalAgentId): Promise<void> {
+  private async connect(response: ServerResponse, localMediaOnly: boolean, agent: LocalAgentId, defaultModelId?: string): Promise<void> {
     const connectionId = this.idFactory();
     const notifications: unknown[] = [];
     const terminals = new Map<string, TerminalRecord>();
@@ -601,6 +654,13 @@ export class AstridAcpBridge {
       },
       onNotification: (notification) => {
         if (!connection || connection.disconnected) return;
+        const params = asRecord(notification.params);
+        const update = asRecord(params?.update);
+        if (connection.agent !== 'astrid' && notification.method === 'session/update'
+            && update?.sessionUpdate === 'config_option_update' && typeof params?.sessionId === 'string'
+            && connection.sessions.has(params.sessionId)) {
+          this.rememberSession(connection, 'session/load', params, update);
+        }
         const bytes = Buffer.byteLength(JSON.stringify(notification));
         if (connection.notificationBytes + bytes > MAX_NOTIFICATION_BYTES) {
           connection.disconnected = true;
@@ -641,7 +701,7 @@ export class AstridAcpBridge {
       } } : {}),
     };
     const host = agent === 'astrid' ? this.hostFactory(launcherOptions) : await this.localAgentHostFactory(agent, launcherOptions);
-    connection = { agent, host, notifications, terminals, sessions: new Set(), configOptions: new Map(), disconnected: false, notificationBytes: 0, localMediaOnly, lastUsedAt: this.now(), inFlight: 0 };
+    connection = { agent, host, notifications, terminals, sessions: new Set(), configOptions: new Map(), models: new Map(), ...(defaultModelId ? { defaultModelId } : {}), disconnected: false, notificationBytes: 0, localMediaOnly, lastUsedAt: this.now(), inFlight: 0 };
     this.connections.set(connectionId, connection);
     try {
       const initialize = await host.initialize({
@@ -716,7 +776,7 @@ export class AstridAcpBridge {
         const state = await registry.create(projectId, body.mode, body.operation_id, async () => {
           const result = await connection.host.request('session/new', { cwd: this.config.cwd, mcpServers: [] });
           this.rememberSession(connection, 'session/new', {}, result);
-          return result;
+          return await this.applyDefaultLocalModel(connection, result);
         }, async sessionId => {
           // A different agent's chat remains available through its original
           // connection. Changing the default must never mark that chat missing.
@@ -758,11 +818,41 @@ export class AstridAcpBridge {
   }
 
   private rememberSession(connection: Connection, method: string, params: unknown, result: unknown): void {
-    if (method !== 'session/new' && method !== 'session/load' && method !== 'session/resume') return;
+    if (method !== 'session/new' && method !== 'session/load' && method !== 'session/resume' && method !== 'session/fork') return;
     const input = asRecord(params);
     const sessionId = sessionIdFrom(result) ?? (method === 'session/load' || method === 'session/resume' ? sessionIdFrom(input) : null);
     if (!sessionId) return;
     connection.sessions.add(sessionId);
+    const options = advertisedConfigOptions(result);
+    if (options.size > 0) connection.configOptions.set(sessionId, options);
+    const models = modelsFrom(result);
+    if (models) connection.models.set(sessionId, models);
+  }
+
+  private async applyDefaultLocalModel(connection: Connection, result: unknown): Promise<unknown> {
+    if (connection.agent === 'astrid') return result;
+    const sessionId = sessionIdFrom(result);
+    const models = sessionId ? connection.models.get(sessionId) : undefined;
+    if (!sessionId || !models) return result;
+    if (connection.defaultModelId) {
+      if (!models.availableModels.some(model => model.modelId === connection.defaultModelId)) {
+        throw new ChatError(409, 'model_unavailable', 'The selected default model is unavailable in this new ACP session.');
+      }
+      const usesConfigOption = connection.configOptions.get(sessionId)?.has('model');
+      const setterResult = await connection.host.request(usesConfigOption ? 'session/set_config_option' : 'session/set_model', usesConfigOption
+        ? { sessionId, configId: 'model', value: connection.defaultModelId }
+        : { sessionId, modelId: connection.defaultModelId });
+      this.updateLocalModelState(connection, sessionId, models, connection.defaultModelId, setterResult, Boolean(usesConfigOption));
+    }
+    return { ...(asRecord(result) ?? {}), models: connection.models.get(sessionId) };
+  }
+
+  private updateLocalModelState(connection: Connection, sessionId: string, previous: LocalAgentModels, requestedModelId: string, result: unknown, preferConfig: boolean): void {
+    const returnedRecord = asRecord(result);
+    const returned = preferConfig && !Array.isArray(returnedRecord?.configOptions) ? null : modelsFrom(result);
+    const next = returned ?? { ...previous, currentModelId: requestedModelId };
+    if (next.currentModelId !== requestedModelId) throw new ChatError(409, 'model_selection_rejected', 'The installed agent selected a different model than requested.');
+    connection.models.set(sessionId, next);
     const options = advertisedConfigOptions(result);
     if (options.size > 0) connection.configOptions.set(sessionId, options);
   }
@@ -807,15 +897,10 @@ export class AstridAcpBridge {
       const sessionId = sessionIdFrom(params);
       if (sessionId) await this.applySelectedModel(connection, sessionId);
     }
-    const result = await connection.host.request(method, params);
+    let result = await connection.host.request(method, params);
     if (method === 'session/new' || method === 'session/load' || method === 'session/resume' || method === 'session/fork') {
-      const input = asRecord(params);
-      const sessionId = sessionIdFrom(result) ?? (method === 'session/load' || method === 'session/resume' ? sessionIdFrom(input) : null);
-      if (sessionId) {
-        connection.sessions.add(sessionId);
-        const options = advertisedConfigOptions(result);
-        if (options.size > 0) connection.configOptions.set(sessionId, options);
-      }
+      this.rememberSession(connection, method, params, result);
+      if (method === 'session/new') result = await this.applyDefaultLocalModel(connection, result);
     } else if (method === 'session/list') {
       const items = Array.isArray(result) ? result : isRecord(result) && Array.isArray(result.sessions) ? result.sessions : [];
       for (const item of items) {
@@ -831,6 +916,7 @@ export class AstridAcpBridge {
       if (sessionId) {
         connection.sessions.delete(sessionId);
         connection.configOptions.delete(sessionId);
+        connection.models.delete(sessionId);
       }
     }
     jsonResponse(response, 200, { result });

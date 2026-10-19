@@ -4,7 +4,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { AcpModelCatalog } from '@/integrations/astrid/acpRoutes.ts';
-import type { LocalAgentChoice, LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import type { LocalAgentChoice, LocalAgentId, LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
 
 type Provider = AcpModelCatalog['providers'][number];
 type UsageLimit = NonNullable<Provider['usage']>['limits'][number];
@@ -23,6 +23,8 @@ interface AgentChatModelSelectorProps {
   onSelectAgent?: (agent: LocalAgentId) => void | Promise<void>;
   agentsLoading?: boolean;
   agentsError?: string | null;
+  localModels?: LocalAgentModels | null;
+  onSelectLocalModel?: (modelId: string) => void | Promise<void>;
 }
 
 const agentNames: Record<LocalAgentId, string> = {
@@ -108,7 +110,7 @@ function ProviderHeading({ provider }: { provider: Provider }) {
   );
 }
 
-export function AgentChatModelSelector({ catalog, onSelectModel, selectionError = null, busy = false, open: controlledOpen, onOpenChange, loading = false, catalogError = null, agents, selectedAgent = 'astrid', onSelectAgent, agentsLoading = false, agentsError = null }: AgentChatModelSelectorProps) {
+export function AgentChatModelSelector({ catalog, onSelectModel, selectionError = null, busy = false, open: controlledOpen, onOpenChange, loading = false, catalogError = null, agents, selectedAgent = 'astrid', onSelectAgent, agentsLoading = false, agentsError = null, localModels = null, onSelectLocalModel }: AgentChatModelSelectorProps) {
   const [localOpen, setLocalOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [showSignedOut, setShowSignedOut] = useState(false);
@@ -163,9 +165,11 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
     void Promise.resolve(onSelectAgent(id)).catch(() => undefined);
     changeOpen(false);
   };
-  // Models belong to the Astrid agent; with another agent chosen, search narrows the agents instead.
+  // An external agent's models and agent choices share the search field.
   const listedAgents = AGENT_IDS.filter(id => !searching || (!astridSelected && matches(tokens, agentNames[id])));
-  const label = astridSelected ? current?.model.name ?? catalog.currentModel ?? 'Choose model' : agentNames[selectedAgent];
+  const localCurrent = !astridSelected ? localModels?.availableModels.find(model => model.modelId === localModels.currentModelId) : undefined;
+  const localMatches = localModels?.availableModels.filter(model => !searching || matches(tokens, `${model.name} ${model.description ?? ''} ${model.modelId}`)) ?? [];
+  const label = astridSelected ? current?.model.name ?? catalog.currentModel ?? 'Choose model' : localCurrent?.name ?? agentNames[selectedAgent];
   const showError = selectionError !== null && selectionError !== dismissedError;
 
   const modelItem = (provider: Provider, model: Provider['models'][number]) => {
@@ -194,7 +198,7 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
       <Popover open={open} onOpenChange={changeOpen}>
         <PopoverTrigger asChild>
           <button type="button" role="combobox" aria-label="Agent model" aria-expanded={open}
-            title={!astridSelected ? `Agent: ${agentNames[selectedAgent]}` : current ? `Agent model: ${current.provider.name} · ${current.model.name}` : 'Choose the agent model'}
+            title={!astridSelected ? `Agent: ${agentNames[selectedAgent]}${localCurrent ? ` · ${localCurrent.name}` : ''}` : current ? `Agent model: ${current.provider.name} · ${current.model.name}` : 'Choose the agent model'}
             className={cn('flex h-7 w-full min-w-0 items-center gap-1.5 rounded-md border bg-card/80 px-2 text-xs transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               showError ? 'border-destructive/50 text-destructive' : 'border-border/70 text-muted-foreground')}>
             <span className="min-w-0 truncate normal-case">{label}</span>
@@ -202,7 +206,7 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
           </button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-72 max-w-[calc(100vw-2rem)] p-0">
-          <Command loop shouldFilter={false} defaultValue={astridSelected ? catalog.currentModel ?? undefined : `agent:${selectedAgent}`}>
+          <Command loop shouldFilter={false} defaultValue={astridSelected ? catalog.currentModel ?? undefined : localCurrent?.modelId ?? `agent:${selectedAgent}`}>
             <CommandInput placeholder="Search models..." className="h-8" value={query} onValueChange={setQuery} />
             <CommandList className="max-h-80">
               {showAgents && (listedAgents.length > 0 || !searching) && (
@@ -238,13 +242,40 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
                         </Fragment>
                       );
                     })}
-                    {astridSelected && !searching && <p className="px-2 pb-1 pt-1.5 text-[10px] text-muted-foreground/80">Agent selection affects new chats only. Saved chats keep their original agent.</p>}
+                    {!searching && <p className="px-2 pb-1 pt-1.5 text-[10px] text-muted-foreground/80">Agent selection affects new chats only. Saved chats keep their original agent.</p>}
                   </CommandGroup>
                   <CommandSeparator />
                 </>
               )}
-              {!astridSelected && showAgents && !searching && (
-                <p className="px-3 py-2.5 text-[11px] text-muted-foreground">Uses your {agentNames[selectedAgent]} default model. New chats use this agent; saved chats keep their original agent.</p>
+              {!astridSelected && showAgents && !searching && !localModels && !loading && !catalogError && (
+                <p className="px-3 py-2.5 text-[11px] text-muted-foreground">Uses your {agentNames[selectedAgent]} default model.</p>
+              )}
+              {!astridSelected && loading && <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />Loading models...</div>}
+              {!astridSelected && catalogError && <p role="alert" className="px-3 py-3 text-xs text-destructive">Could not load models: {catalogError}</p>}
+              {!astridSelected && !loading && !catalogError && localModels && localMatches.length > 0 && (
+                <CommandGroup heading="Models">
+                  {localMatches.map(model => {
+                    const selected = model.modelId === localModels.currentModelId;
+                    return (
+                      <CommandItem key={model.modelId} value={model.modelId} disabled={busy || !onSelectLocalModel}
+                        aria-current={selected ? 'true' : undefined} className="items-start gap-2"
+                        onSelect={() => {
+                          if (!onSelectLocalModel) return;
+                          void Promise.resolve(onSelectLocalModel(model.modelId)).catch(() => undefined);
+                          changeOpen(false);
+                        }}>
+                        <Check className={cn('mt-0.5 h-3.5 w-3.5 shrink-0', selected ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
+                        <span className="flex min-w-0 flex-col">
+                          <span className={cn('truncate normal-case', selected && 'text-foreground')}>{model.name}</span>
+                          {model.description && <span className="truncate text-[11px] text-muted-foreground">{model.description}</span>}
+                        </span>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+              {!astridSelected && !loading && !catalogError && localModels && localMatches.length === 0 && !searching && (
+                <p className="px-3 py-2.5 text-[11px] text-muted-foreground">Uses your {agentNames[selectedAgent]} default model.</p>
               )}
               {astridSelected && loading && (
                 <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground">
@@ -253,7 +284,7 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
               )}
               {astridSelected && catalogError && <p role="alert" className="px-3 py-3 text-xs text-destructive">Could not load models: {catalogError}</p>}
               {astridSelected && !loading && !catalogError && catalog.providers.length === 0 && <p className="px-3 py-3 text-xs text-muted-foreground">No models available.</p>}
-              {catalog.providers.length > 0 && <CommandEmpty className="py-6 text-center text-xs text-muted-foreground">No models match.</CommandEmpty>}
+              {((astridSelected && catalog.providers.length > 0) || (!astridSelected && localModels && searching)) && <CommandEmpty className="py-6 text-center text-xs text-muted-foreground">No models match.</CommandEmpty>}
               {astridSelected && busy && signedIn.length + keyless.length > 0 && <p className="px-3 pt-2 text-[11px] text-muted-foreground">You can switch once the agent is idle.</p>}
               {!astridSelected ? null : searching ? resultGroups.map(({ provider, models }) => providerGroup(provider, models)) : (
                 <>

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { AstridBridgeTransport } from './transport.ts';
-import { localAgentCatalogSchema, type LocalAgentId } from './localAgents.ts';
+import { localAgentCatalogSchema, localAgentModelsSchema, type LocalAgentId } from './localAgents.ts';
 
 const connectionSchema = z.strictObject({
   connection_id: z.string().min(1),
@@ -42,6 +42,7 @@ export const modelCatalogSchema = z.strictObject({
   currentModel: z.string().nullable(),
 });
 const modelSelectionSchema = z.strictObject({ currentModel: z.string() });
+const localModelResponseSchema = z.object({ models: localAgentModelsSchema.nullable() });
 export type AcpModelCatalog = z.infer<typeof modelCatalogSchema>;
 
 export type AstridAcpConnection = z.infer<typeof connectionSchema>;
@@ -121,10 +122,10 @@ export class AstridLocalAcpRoutes {
     return this.transport.requestJson('/acp/agents', { method: 'GET' }, localAgentCatalogSchema, 'List local agents');
   }
 
-  async connect(agent?: LocalAgentId): Promise<AstridAcpConnection> {
+  async connect(agent?: LocalAgentId, defaultModelId?: string): Promise<AstridAcpConnection> {
     return this.transport.requestJson(
       '/acp/connect',
-      { method: 'POST', body: agent ? { agent } : {} },
+      { method: 'POST', body: { ...(agent ? { agent } : {}), ...(defaultModelId ? { defaultModelId } : {}) } },
       connectionSchema,
       'ACP connect',
     );
@@ -136,6 +137,16 @@ export class AstridLocalAcpRoutes {
 
   async setModel(model: string): Promise<{ currentModel: string }> {
     return this.transport.requestJson('/acp/model', { method: 'POST', body: { model } }, modelSelectionSchema, 'Set ACP model');
+  }
+
+  async sessionModels(connectionId: string, sessionId: string) {
+    return this.transport.requestJson(`/acp/${encodeURIComponent(connectionId)}/models?sessionId=${encodeURIComponent(sessionId)}`,
+      { method: 'GET' }, localModelResponseSchema, 'List local agent models');
+  }
+
+  async setSessionModel(connectionId: string, sessionId: string, modelId: string) {
+    return this.transport.requestJson(`/acp/${encodeURIComponent(connectionId)}/model`,
+      { method: 'POST', body: { sessionId, modelId } }, localModelResponseSchema, 'Set local agent model');
   }
 
   async reconnect(connectionId?: string): Promise<AstridAcpConnection | z.infer<typeof reconnectResponseSchema>> {
