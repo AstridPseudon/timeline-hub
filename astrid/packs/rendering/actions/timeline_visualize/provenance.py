@@ -99,6 +99,12 @@ def snapshot_label(snapshot: Mapping[str, Any] | None) -> dict[str, Any]:
     canonical = canonical if isinstance(canonical, Mapping) else {}
     capture = metadata.get("capture_authority")
     capture = capture if isinstance(capture, Mapping) else {}
+    input_only_parent = None
+    if (
+        str(metadata.get("selection") or "").strip().lower() == "input_only"
+        and metadata.get("authority") == "canonical_parent_revision_closure"
+    ):
+        input_only_parent = metadata.get("parent_revision_id")
     # A composed capture has its own authority block; ordinary managed renders
     # use canonical_timeline. Prefer the capture block only when it carries the
     # immutable parent, never a requested/current-head hint.
@@ -106,6 +112,7 @@ def snapshot_label(snapshot: Mapping[str, Any] | None) -> dict[str, Any]:
         capture.get("parent_revision_id"), capture.get("head_revision_id"), capture.get("revision_id")
     ) else canonical
     actual = _first_string(
+        input_only_parent,
         authority.get("parent_revision_id"), authority.get("head_revision_id"), authority.get("revision_id")
     )
     markers = _candidate_markers(metadata, canonical, capture)

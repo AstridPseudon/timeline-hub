@@ -56,6 +56,46 @@ def test_historical_snapshot_label_uses_the_revision_actually_rendered():
     }
 
 
+def test_input_only_parent_closure_label_uses_immutable_parent_not_current_head():
+    label = snapshot_label(
+        {
+            "metadata": {
+                "selection": "input_only",
+                "authority": "canonical_parent_revision_closure",
+                "parent_revision_id": "R1",
+                "timeline_identity": {"head_event_id": "R2", "config_version": 7},
+                "requested_revision_id": "R2",
+            }
+        }
+    )
+
+    assert label == {
+        "status": "committed",
+        "label": "committed revision R1",
+        "actual_revision_id": "R1",
+        "base_revision_id": None,
+    }
+
+
+def test_input_only_candidate_uses_only_working_copy_base_parent():
+    marker = _candidate_marker(base="R1", candidate="R2")
+    label = snapshot_label(
+        {
+            "metadata": {
+                "selection": "input_only",
+                "authority": "canonical_parent_revision_closure",
+                "parent_revision_id": "R1",
+                "working_copy": marker,
+            }
+        }
+    )
+
+    assert label["status"] == "candidate"
+    assert label["base_revision_id"] == "R1"
+    assert label["actual_revision_id"] is None
+    assert "R2" not in label["label"]
+
+
 def test_managed_candidate_label_uses_marker_base_not_candidate_parent():
     label = snapshot_label(
         {

@@ -16,8 +16,19 @@ from astrid.packs.rendering.actions.timeline_visualize.filmstrip_options import 
 from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import project_input_window
 
 
-def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path):
+def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path, monkeypatch):
     """Input-only uses the same manifest/receipt contract as the paired view."""
+    from astrid.packs.rendering.actions.timeline_visualize import filmstrip_cards
+
+    drawn_text = []
+    draw_text = filmstrip_cards._png_draw_text
+
+    def record_text(*args, **kwargs):
+        if len(args) >= 3:
+            drawn_text.append(str(args[2]))
+        return draw_text(*args, **kwargs)
+
+    monkeypatch.setattr(filmstrip_cards, '_png_draw_text', record_text)
     snapshot = {
         'project_slug': 'demo', 'timeline_id': 'main', 'timeline_name': 'Main',
         'render_run_id': 'run-input', 'fps_rational': [30, 1],
@@ -25,7 +36,13 @@ def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path):
             {'id': 'picture-1', 'track': 'picture', 'asset': 'still-a', 'at': 0, 'hold': 2},
             {'id': 'vo-1', 'track': 'vo', 'asset': 'voice-a', 'at': 1, 'hold': 2},
         ], 'tracks': [{'id': 'picture', 'kind': 'visual'}, {'id': 'vo', 'kind': 'audio'}],
-        'scripts': [], 'metadata': {},
+        'scripts': [], 'metadata': {
+            'selection': 'input_only',
+            'authority': 'canonical_parent_revision_closure',
+            'parent_revision_id': 'R1',
+            'timeline_identity': {'head_event_id': 'R2'},
+            'requested_revision_id': 'R2',
+        },
     }
     args = Namespace(range_value=None, out=tmp_path / 'output', project_slug='demo')
     result = execution.execute_input_only(
@@ -40,6 +57,12 @@ def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path):
     assert 'navigation' not in index
     assert result['outputs']['pages']
     assert all(Path(page).name.startswith('filmstrip-') for page in result['outputs']['pages'])
+    assert result['snapshot_label']['label'] == 'committed revision R1'
+    assert index['provenance']['revision'] == result['snapshot_label']
+    markdown = (manifest_path.parent / 'filmstrip.md').read_text()
+    assert '# Input filmstrip · committed revision R1' in markdown
+    assert 'Revision: `committed revision R1`' in markdown
+    assert any('committed revision R1' in text for text in drawn_text)
     assert (manifest_path.parent / 'render-snapshot.json').is_file()
     assert len(json.dumps(index, separators=(',', ':')).encode()) < 8192
 
