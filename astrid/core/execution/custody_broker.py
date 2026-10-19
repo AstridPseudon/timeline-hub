@@ -2670,10 +2670,14 @@ class _CommandInventoryOwner:
                     self.helpers[frame['operation_id']] = process
             if process is not None:
                 try:
-                    if process.poll() is None:
-                        terminate_tree(process)
-                    process.wait(timeout=5)
-                    verify_tree_absent(process)
+                    try:
+                        if process.poll() is None:
+                            terminate_tree(process)
+                    finally:
+                        # Termination/census uncertainty cannot let the owner
+                        # abandon its direct child or report a settled helper.
+                        process.wait(timeout=None)
+                        verify_tree_absent(process)
                 except BaseException as cleanup_error:
                     self.error = cleanup_error
             self.error = self.error or error
@@ -2751,7 +2755,7 @@ class _CommandInventoryOwner:
                 if channel is not None:
                     channel.close()
                 self.done.set()
-        self.thread = threading.Thread(target=serve, name='astrid-command-inventory', daemon=True)
+        self.thread = threading.Thread(target=serve, name='astrid-command-inventory', daemon=False)
         self.thread.start()
 
     def finish(self, *, cancel: bool = False) -> None:

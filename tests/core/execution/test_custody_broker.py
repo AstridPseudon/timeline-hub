@@ -2727,7 +2727,7 @@ def test_command_inventory_client_rejects_stale_reply_and_latches_transport():
     finally:thread.join(2);left.close();right.close()
 
 
-@pytest.mark.parametrize("fault", ["cancel", "disconnect", "timeout", "overflow", "cleanup"])
+@pytest.mark.parametrize("fault", ["cancel", "disconnect", "timeout", "overflow", "cleanup", "terminate"])
 def test_command_inventory_execute_retains_original_helper_on_each_failure(tmp_path, monkeypatch, fault):
     import os, socket
     from types import SimpleNamespace
@@ -2748,7 +2748,9 @@ def test_command_inventory_execute_retains_original_helper_on_each_failure(tmp_p
             self.stdout=os.fdopen(os.pipe()[0],"rb",buffering=0)
             self.stderr=os.fdopen(os.pipe()[0],"rb",buffering=0)
         def poll(self):return self.returncode
-        def wait(self,timeout):events.append("original_wait");self.returncode=-15;return -15
+        def wait(self,timeout):
+            assert timeout is None  # Cleanup uncertainty cannot abandon the original child.
+            events.append("original_wait");self.returncode=-15;return -15
     # Keep both read endpoints at EOF while poll remains LIVE. This exercises
     # cancellation after pipe closure rather than a blocking wait shortcut.
     def closed_pipe():
@@ -2762,15 +2764,19 @@ def test_command_inventory_execute_retains_original_helper_on_each_failure(tmp_p
         if fault=="disconnect":left.close()
         return helper
     monkeypatch.setattr(pg,"popen_owned_process",launch)
-    monkeypatch.setattr(pg,"terminate_tree",lambda proc:events.append("same_helper_stop"))
+    def stop_helper(proc):
+        events.append("same_helper_stop")
+        if fault == "terminate":
+            raise cb.CustodyError("controlled helper termination failure")
+    monkeypatch.setattr(pg,"terminate_tree",stop_helper)
     def verify(proc):
         assert proc is helper;events.append("closure")
         if fault=="cleanup":raise cb.CustodyError("controlled helper cleanup failure")
     monkeypatch.setattr(pg,"verify_tree_absent",verify)
     if fault=="timeout":
         clock=iter([0,121]);monkeypatch.setattr(cb.time,"monotonic",lambda:next(clock,121))
-    elif fault in {"overflow","cleanup"}:
-        owner.cancelled.set() if fault=="cleanup" else None
+    elif fault in {"overflow","cleanup","terminate"}:
+        owner.cancelled.set() if fault in {"cleanup","terminate"} else None
         if fault=="overflow":
             from astrid.core.execution.pipe_io import PipeReader
             monkeypatch.setattr(PipeReader,"receive",lambda *a,**kw:("stdout",b"x"*(16*1024*1024+1)))
@@ -2794,6 +2800,7 @@ def test_command_inventory_owner_channel_end_never_erases_non_eof_failure(tmp_pa
     owner=cb._CommandInventoryOwner(SimpleNamespace(_launch_broker=SimpleNamespace(channel=right),
         process=SimpleNamespace(poll=lambda:0)),{})
     owner.start()
+    assert owner.thread.daemon is False  # Interpreter exit must join any outstanding helper reap.
     if fault=="abort_release":owner.abort_before_release()
     else:
         if fault=="pending_eof":owner.pending=1
