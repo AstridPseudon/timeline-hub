@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
+import type { ProjectChatRegistry } from './astrid-project-chat.ts';
 import type { AcpProcessHost, AcpProcessHostCallbacks } from '../src/tools/video-editor/runtime/processes/acpProcessHost.ts';
 import type { LocalAgentId } from '../src/integrations/astrid/localAgents.ts';
 
@@ -9,6 +10,16 @@ function deferred() {
   let resolve!: () => void;
   const promise = new Promise<void>(done => { resolve = done; });
   return { promise, resolve };
+}
+
+async function waitForPromptStart(started: Promise<void>, response: Promise<Response>): Promise<void> {
+  let dispatched = false;
+  await Promise.race([
+    started.then(() => { dispatched = true; }),
+    response.then(async result => {
+      if (!dispatched) assert.fail(`Prompt returned HTTP ${result.status} before native dispatch: ${await result.text()}`);
+    }),
+  ]);
 }
 
 for (const agent of ['astrid', 'codex', 'claude-code'] as const) {
@@ -50,9 +61,17 @@ for (const agent of ['astrid', 'codex', 'claude-code'] as const) {
         dispose: async () => { disposed.push(host); if (nativeWriters.get(id) === host) nativeWriters.delete(id); },
       } as unknown as AcpProcessHost;
     };
+    const assertSessionScope = async (project: string, session: string) => {
+      assert.equal(project, 'p');
+      assert.equal(session, id);
+    };
+    const registry = {
+      assertOwned: assertSessionScope,
+      markSessionStarted: assertSessionScope,
+    } satisfies Pick<ProjectChatRegistry, 'assertOwned' | 'markSessionStarted'>;
     const { bridge, server } = createAstridAcpHttpServer({
       config: { token: 'test', port: 0, cwd: '/tmp/astrid-two-tabs' },
-      chatRegistry: { assertOwned: async (project: string, session: string) => { assert.equal(project, 'p'); assert.equal(session, id); } } as never,
+      chatRegistry: registry as ProjectChatRegistry,
       idFactory: () => `c${++nextId}`,
       hostFactory: options => makeHost(options.callbacks),
       localAgentHostFactory: async (_agent: Exclude<LocalAgentId, 'astrid'>, options) => makeHost(options.callbacks),
@@ -82,7 +101,7 @@ for (const agent of ['astrid', 'codex', 'claude-code'] as const) {
       await controls('c1');
 
       const firstPrompt = prompt('c1', 'queue-1');
-      await gate.started.promise;
+      await waitForPromptStart(gate.started.promise, firstPrompt);
       const follow = await rpc('c2', 'session/load');
       assert.equal(follow.status, 200);
       assert.deepEqual(((await follow.json() as Json).result as Json)._astridSession, { role: 'follower', active: true, activeRequestId: 'queue-1' });
@@ -112,7 +131,7 @@ for (const agent of ['astrid', 'codex', 'claude-code'] as const) {
 
       gate = { started: deferred(), finish: deferred() };
       const secondPrompt = prompt('c2', 'queue-2');
-      await gate.started.promise;
+      await waitForPromptStart(gate.started.promise, secondPrompt);
       assert.equal((await call('/c1', undefined, 'DELETE')).status, 200);
       assert.deepEqual(disposed, [], 'closing the original tab must retain the physical host used by its follower');
       gate.finish.resolve();

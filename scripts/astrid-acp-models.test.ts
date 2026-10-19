@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
+import type { ProjectChatRegistry } from './astrid-project-chat.ts';
 
 const token = 'test-bridge-token';
 const protocolHeader = 'X-Astrid-Bridge-Version';
@@ -74,10 +75,19 @@ async function fixture(advertisedModels?: string[]) {
   const astrid = fakeAstrid(directory);
   const hosts: HostRecord[] = [];
   let nextConnection = 0;
-  const registry = { assertOwned: async (_projectId: string, sessionId: string) => assert.equal(sessionId, 'saved-session') };
+  const registry = {
+    assertOwned: async (projectId: string, sessionId: string) => {
+      assert.equal(projectId, 'project-1');
+      assert.equal(sessionId, 'saved-session');
+    },
+    markSessionStarted: async (projectId: string, sessionId: string) => {
+      assert.equal(projectId, 'project-1');
+      assert.equal(sessionId, 'saved-session');
+    },
+  } satisfies Pick<ProjectChatRegistry, 'assertOwned' | 'markSessionStarted'>;
   const { server, bridge } = createAstridAcpHttpServer({
     config: { token, port: 0, cwd: directory, command: astrid.command, profile: 'test-profile' },
-    chatRegistry: registry as never,
+    chatRegistry: registry as unknown as ProjectChatRegistry,
     idFactory: () => `c${++nextConnection}`,
     hostFactory: () => {
       const record: HostRecord = { connection: `c${nextConnection}`, calls: [], disposed: 0 };
