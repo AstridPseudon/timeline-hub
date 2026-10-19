@@ -127,6 +127,32 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
     assert f["service"].create_task(request) == f["service"].create_task(request)
 
 
+def test_canonical_long_media_and_hold_admission_covers_png_fallback(canonical_scene, monkeypatch):
+    f = canonical_scene
+    publication = _publication(f)
+    publication["parent_composition"]["clips"].append({
+        "id": "bridge", "clipType": "hold", "at": 15, "hold": 25,
+        "track": "visual",
+    })
+    publication["parent_composition"]["clips"].append({
+        "id": "long-hold", "clipType": "hold", "at": 40, "hold": 256, "speed": 2,
+        "track": "visual",
+    })
+    f["service"].publish_parent_composition(
+        f["project"], "main", publication, idempotency_key="publish-long-fallback",
+    )
+    monkeypatch.setattr(f["service"].store, "storage_preflight", lambda *_args, **_kwargs: {"ok": True})
+    admitted = f["service"].create_task(_request(f, key="long-fallback"))
+    estimate = admitted["task"]["spec"]["storage_estimate"]
+    # At 30 fps, the nonzero media clips end at frame 450 and the held still
+    # reaches frame 5040 after applying speed=2 to its hold duration. Runtime
+    # must budget the full raw-RGBA PNG sequence.
+    png_raw_frame_bytes = (4 * 1920 + 1) * 1080
+    png_frame_bytes = (png_raw_frame_bytes * 101 + 99) // 100
+    png_sequence_bytes = png_frame_bytes * 5040
+    assert estimate["scratch_bytes"] >= png_sequence_bytes + 256 * 1024 * 1024
+
+
 @pytest.mark.parametrize("route", ["/api/runtime/v1/objects/{encoded}", "/v1/objects/{encoded}",
                                    "/api/runtime/v1/objects/{plain}", "/v1/objects/{bare}"])
 def test_frozen_managed_asset_canonicalizes_the_runtime_object_locator(canonical_scene, route):

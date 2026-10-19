@@ -29,7 +29,13 @@ from .cas import ContentAddressedStore
 from .dirfd import remove_tree_at
 from .snapshot_refs import publish_snapshot, rewrite_spec_snapshots, working_copy_binding
 from .util import canonical_json, new_id, now
-from .visual_seam import load_closure, admit_closure
+from .visual_seam import (
+    admit_closure,
+    clip_seconds as _visual_clip_seconds,
+    load_closure,
+    seconds as _visual_seconds,
+)
+from .visual_boundary import finite as _visual_finite, js_round as _visual_js_round
 from .idempotency import command_result, compact_result, expired_result, EXPIRED, RESULT_WINDOW_SECONDS, IdempotencyWindowExpired
 
 try:
@@ -1951,11 +1957,10 @@ class RealmStore:
     def _derive_managed_render_storage_estimate(self, config, registry, ordered_input_ids, profile=None):
         """Derive a conservative whole-task budget from Runtime-owned inputs.
 
-        This is deliberately engine-neutral.  Runtime owns the exact CAS
-        object sizes and the immutable snapshot bytes; renderer-specific
-        profile validation remains a host concern, but the admission budget
-        must still cover the host's attempt-local materialization before a
-        worker can claim the task.
+        Runtime owns exact CAS object sizes and immutable snapshot bytes.
+        Profile validation remains a host concern, while this admission
+        budget also covers the current Remotion default fallback's complete
+        attempt-local PNG sequence, consistent with Astrid's storage estimate.
         """
         if profile is not None and not isinstance(profile, dict):
             raise ValidationError("render profile must be an object")
@@ -2037,26 +2042,31 @@ class RealmStore:
             if digest is not None:
                 managed_entry_bytes += object_sizes[OBJECT_ID_RE.fullmatch(digest).group(1)]
         snapshot_bytes = len(canonical_json(config).encode()) + len(canonical_json(registry).encode())
-        duration_seconds = 1.0
+        render_frames = 1
         clips = config.get("clips", []) if isinstance(config, dict) else []
         if isinstance(clips, list):
             for clip in clips:
                 if not isinstance(clip, dict):
                     continue
-                at = clip.get("at", clip.get("start", 0))
-                duration = clip.get("duration", clip.get("hold", 0))
-                end = clip.get("to", clip.get("end"))
-                candidates = []
-                if isinstance(end, (int, float)):
-                    candidates.append(float(end))
-                if isinstance(at, (int, float)) and isinstance(duration, (int, float)):
-                    candidates.append(float(at) + max(0.0, float(duration)))
-                if candidates:
-                    duration_seconds = max(duration_seconds, max(candidates))
-        duration_seconds = min(max(duration_seconds, 1.0), 24 * 60 * 60)
+                # Match the composition clock: all projected clips contribute
+                # rounded start + rounded duration, including held media.
+                at = _visual_seconds(clip, "at", _visual_finite(clip.get("start"), 0))
+                duration = _visual_clip_seconds(clip)
+                start_frame = _visual_js_round(at * fps)
+                duration_frames = max(1, _visual_js_round(duration * fps))
+                render_frames = max(render_frames, start_frame + duration_frames)
+        duration_seconds = render_frames / fps
         video_bitrate = max(4_000_000, math.ceil(width * height * fps / 4 / 1000) * 1000)
         encoded_payload = math.ceil(duration_seconds * (video_bitrate + 320_000) / 8)
         output_bytes = max(1024 * 1024, math.ceil(encoded_payload * 1.03) + 1024 * 1024)
+        # Astrid's Remotion fallback writes every rendered frame as a PNG
+        # before encoding. Bound the PNG sequence using uncompressed RGBA plus
+        # one filter byte per scanline and a 1% compression/chunk allowance;
+        # admission must cover that attempt-local peak even when the final MP4
+        # is small.
+        png_raw_frame_bytes = (4 * width + 1) * height
+        png_frame_bytes = (png_raw_frame_bytes * 101 + 99) // 100
+        png_sequence_bytes = png_frame_bytes * render_frames
         materialization_bytes = (
             managed_input_bytes
             + (managed_entry_bytes * 2)
@@ -2065,6 +2075,7 @@ class RealmStore:
         scratch_bytes = max(
             256 * 1024 * 1024,
             materialization_bytes
+            + png_sequence_bytes
             + output_bytes
             + 2 * 1024 * 1024
             + _REMOTION_RUNTIME_WORKSPACE_BYTES,

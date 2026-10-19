@@ -96,6 +96,49 @@ def test_direct_managed_render_admission_freezes_snapshot_before_claim(tmp_path)
         service.close()
 
 
+def test_direct_long_render_admission_budgets_png_fallback(tmp_path, monkeypatch):
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    try:
+        capability_digest = _digest("rendering.render")
+        service.register_capability({
+            "capability_id": "rendering.render",
+            "definition_digest": capability_digest,
+        })
+        project = service.create_project({"slug": "long-render", "name": "Long Render"}, idempotency_key="project")
+        source = service.ingest(project["id"], b"long-video", media_type="video/mp4", idempotency_key="source")["data"]
+        service.create_timeline_document(project["id"], {
+            "timeline_id": "main", "slug": "main",
+            "config": {"clips": [
+                {"id": "late-media", "clipType": "media", "at": 140, "from": 0, "to": 40,
+                 "speed": 2, "track": "visual", "asset": "source"},
+                {"id": "long-hold", "clipType": "hold", "at": 160, "hold": 16,
+                 "speed": 2, "track": "visual"},
+            ]},
+            "registry": {"assets": {"source": {
+                "media_id": source["object_id"], "content_sha256": source["object_id"],
+            }}},
+        }, idempotency_key="timeline")
+        # This isolates budget derivation from the test machine's physical
+        # free-space floor; the admission code still derives the full estimate.
+        monkeypatch.setattr(service.store, "storage_preflight", lambda *_args, **_kwargs: {"ok": True})
+        admitted = service.create_task({
+            "project": project["id"], "capability_id": "rendering.render",
+            "capability_digest": capability_digest, "idempotency_key": "long-render",
+            "spec": {"family": "render", "params": {"timeline_ref": "main"}},
+        })
+        estimate = admitted["task"]["spec"]["storage_estimate"]
+        png_raw_frame_bytes = (4 * 1920 + 1) * 1080
+        png_frame_bytes = (png_raw_frame_bytes * 101 + 99) // 100
+        assert estimate["scratch_bytes"] >= png_frame_bytes * 5040 + 256 * 1024 * 1024
+        # The output estimate uses the same 168-second render clock: source
+        # trims are relative to placement, and speed applies to holds too.
+        assert estimate["output_bytes"] == 344_359_936
+    finally:
+        service.close()
+
+
 def test_direct_managed_render_rejects_stale_scope_and_path_injection(tmp_path):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
