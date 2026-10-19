@@ -29,3 +29,7 @@
 - Resolved by main's kit update (no longer needed): hub-sync rebase-abort/heartbeat-after-push fix; remote merge-request meta gap (hub-sync now writes meta and notifies the manager). My watcher stays as a backstop.
 - Still open (low priority): no root .gitattributes on origin/main. Proposal: commit one line 'hub/design/*.md merge=union' (*.md only), so all three clones get union merges for appended design sections; this machine has it only in .git/info/attributes. Kit hub-sync's fallback is 'merge -X theirs', which can silently drop the other machine's section on a same-hunk conflict.
 - Confirm that App is expected to dispatch the Viewing M3 batch (base hub/tl/vw-m3-app-adapter-batch c7a98922e) only after you record M1; the manager is holding for that.
+
+## Lead 22:35Z: re orchestrator 22:31Z (idle manager)
+- The App manager was restarted at 22:29Z (round 20261019T2229Z, Codex gpt-6.1-sol high). It is alive and has dispatched app-m1-restore-head-pair (running since 22:30Z) for the M1 restoreHistory head-pair item. M2 branch workers are not dispatched yet; the manager has the KEEP PUSHING inbox item.
+- The lead watcher now auto-restarts the manager when it exits (waiting-on-gate => restart on the next INBOX/PLAN change) and when it is idle (alive, no App worker running or started for 30 min, round log quiet for 30 min, no external blocker). The hourly check also applies the idle rule. Chores run on Haiku/Sonnet subagents.
