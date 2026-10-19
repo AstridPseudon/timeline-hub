@@ -42,6 +42,19 @@ Install the executor package through the explicit Astrid executor install flow b
 running these actions. Both executors share the `vibecomfy` package environment via
 the folder-level `PACKAGE_ID`.
 
+## Idle release
+
+After a settled `vibecomfy.run` task the pack host keeps the session warm for
+the next one. After 600 s idle (`ASTRID_WARM_IDLE_SECONDS`, or the request's
+`lifecycle.idle_timeout_seconds`) it releases the session: queued work is
+cleared and ComfyUI is asked to unload models and free memory (`/api/free`).
+The engine process is kept, because the Runtime selected it for this host and
+the host cannot restart it. The host sees only ComfyUI's acknowledgement, so
+whether GPU or unified memory actually came back is not measured. The next
+task loads its models again. `astrid doctor` shows the hold under `warmHolds`
+with `on_idle: "models unloaded; engine process kept; memory release not
+measured"`.
+
 ## Cross-links
 
 - `docs/generation/` — modality contracts, manifest schema, feature list

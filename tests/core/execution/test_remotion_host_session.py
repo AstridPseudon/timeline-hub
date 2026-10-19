@@ -166,6 +166,7 @@ def test_idle_window_keeps_its_defaults_and_a_new_lease_cancels_expiry(tmp_path,
     first.close()
     armed = timers.live()
     assert armed.seconds == 300, "an explicit owner allocation keeps the frame owner five minutes"
+    assert manager._holds.status()[0]["on_idle"] == "frame owner shut down"
     second = manager.lease(env, attempt=tmp_path, requested_idle=30)
     assert armed.cancelled
     assert manager.request(second, request(env))["pid"] == a["pid"] and len(processes) == 1

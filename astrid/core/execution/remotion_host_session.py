@@ -323,7 +323,7 @@ class HostRemotionSession:
                 # deadline; an uncertain or absent child is not kept warm.
                 warm = self.process is not None and not self.uncertain and not self._closed
                 self._holds.release(lease.hold, holding="Remotion frame owner" if warm else None,
-                                    idle_seconds=self._idle_seconds)
+                                    on_idle="frame owner shut down", idle_seconds=self._idle_seconds)
 
     def _expire(self):
         """Idle expiry: the warm hold runs this under self._lock once no lease remains."""

@@ -52,6 +52,7 @@ class _Hold:
         self.key, self.stop, self.lock = key, stop, lock
         self.leases = 0
         self.holding: str | None = None
+        self.on_idle: str | None = None
         self.idle_seconds = 0.0
         self.expires_at: float | None = None
         self.timer: Any = None
@@ -103,9 +104,11 @@ class WarmHolds:
             self._changed()
         return WarmLease(hold)
 
-    def release(self, lease: WarmLease, *, holding: str | None, idle_seconds: float) -> None:
+    def release(self, lease: WarmLease, *, holding: str | None, idle_seconds: float,
+                on_idle: str | None = None) -> None:
         """End one lease.  After the last, arm one deadline while ``holding``
-        names what stays warm; ``None`` means nothing does, so forget the hold."""
+        names what stays warm; ``None`` means nothing does, so forget the hold.
+        ``on_idle`` says exactly what the holder's stop will do, for status."""
         with self._lock:
             hold, lease._hold = lease._hold, None
             if hold is None or self._holds.get(hold.key) is not hold:
@@ -116,7 +119,7 @@ class WarmHolds:
             if holding is None or self._closed:
                 del self._holds[hold.key]
             else:
-                hold.holding, hold.idle_seconds = holding, float(idle_seconds)
+                hold.holding, hold.on_idle, hold.idle_seconds = holding, on_idle, float(idle_seconds)
                 hold.expires_at = self._clock() + hold.idle_seconds
                 hold.timer = self._timer(hold.idle_seconds, partial(self._expire, hold, hold.generation))
         self._changed()
@@ -127,6 +130,7 @@ class WarmHolds:
             return [
                 {
                     "holding": hold.holding,
+                    "on_idle": hold.on_idle,
                     "leases": hold.leases,
                     "idle_seconds": hold.idle_seconds,
                     "expires_at": None if hold.leases or hold.expires_at is None else

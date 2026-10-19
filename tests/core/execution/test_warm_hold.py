@@ -52,9 +52,9 @@ def test_hold_expires_after_the_last_release_by_running_the_holders_stop():
     holds = WarmHolds(timer=timers, clock=lambda: 0.0)
     lease = holds.lease("engine", stop=stop, lock=lock)
     assert holds.status() == [] and timers.live() is None
-    holds.release(lease, holding="wan2gp.generate_video", idle_seconds=600)
-    assert holds.status() == [{"holding": "wan2gp.generate_video", "leases": 0, "idle_seconds": 600.0,
-                               "expires_at": "1970-01-01T00:10:00+00:00"}]
+    holds.release(lease, holding="wan2gp.generate_video", on_idle="child process ended", idle_seconds=600)
+    assert holds.status() == [{"holding": "wan2gp.generate_video", "on_idle": "child process ended", "leases": 0,
+                               "idle_seconds": 600.0, "expires_at": "1970-01-01T00:10:00+00:00"}]
     assert timers.live().seconds == 600 and stops == []
     timers.fire()
     assert stops == [True], "stop runs once, under the holder's own lock"
@@ -266,7 +266,7 @@ def test_host_status_names_each_warm_hold_and_when_it_expires(tmp_path, monkeypa
         binding=binding, adapter=adapter)
     host._settle_session_hold(host._hold_session_slot())
     assert read_evidence_status(host.evidence_status_path)["warm_holds"] == [
-        {"holding": "wan2gp.generate_video", "leases": 0, "idle_seconds": 600.0,
-         "expires_at": "1970-01-01T00:10:00+00:00"}]
+        {"holding": "wan2gp.generate_video", "on_idle": "child process ended", "leases": 0,
+         "idle_seconds": 600.0, "expires_at": "1970-01-01T00:10:00+00:00"}]
     timers.fire()
     assert read_evidence_status(host.evidence_status_path)["warm_holds"] == []

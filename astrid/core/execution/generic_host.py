@@ -924,9 +924,14 @@ class _ManagedWanChildAdapter:
         return {"ok": True, "released": True, "exit_code": process.returncode if process else None}
 
 
-# The sessions the slot keeps warm after a settled task; every other session is
-# released when its task ends.
-_WARM_SESSION_ADAPTERS = (_ManagedVibeSessionAdapter, _ManagedWanChildAdapter)
+# The sessions the slot keeps warm after a settled task, and exactly what idle
+# release does to each; every other session is released when its task ends.
+# VibeComfy's /api/free acknowledgement is all the host sees, so whether GPU or
+# unified memory actually came back is not measured.
+_WARM_SESSION_ADAPTERS = {
+    _ManagedWanChildAdapter: "child process ended",
+    _ManagedVibeSessionAdapter: "models unloaded; engine process kept; memory release not measured",
+}
 
 
 class HostRegistrationError(HostError):
@@ -5522,17 +5527,19 @@ class GenericPackHost:
 
     def _settle_session_hold(self, hold: WarmLease) -> None:
         """At task end, arm idle release for whatever the slot still keeps warm."""
-        self.warm_holds.release(hold, holding=self._warm_session(), idle_seconds=idle_seconds(
+        holding, on_idle = self._warm_session() or (None, None)
+        self.warm_holds.release(hold, holding=holding, on_idle=on_idle, idle_seconds=idle_seconds(
             DEFAULT_IDLE_SECONDS, requested=self._requested_idle_seconds))
 
-    def _warm_session(self) -> str | None:
-        """The capability the session slot keeps warm between tasks, if any."""
+    def _warm_session(self) -> tuple[str, str] | None:
+        """The capability the session slot keeps warm between tasks, and what idle does to it."""
         manager = self.managed_tool_session
         with manager._lock:
-            capability = manager.current_capability
-            if (capability is not None and manager.active
-                    and isinstance(manager.current_adapter, _WARM_SESSION_ADAPTERS)):
-                return capability.capability_id
+            capability, adapter = manager.current_capability, manager.current_adapter
+            if capability is not None and manager.active:
+                for kind, on_idle in _WARM_SESSION_ADAPTERS.items():
+                    if isinstance(adapter, kind):
+                        return capability.capability_id, on_idle
         return None
 
     def _release_idle_session(self) -> None:
@@ -5542,15 +5549,15 @@ class GenericPackHost:
         memory but keeps the engine process: the host cannot restart an engine
         the Runtime selected for it, so ending it would strand the capability.
         """
-        holding = self._warm_session()
-        if holding is None:
+        warm = self._warm_session()
+        if warm is None:
             return
         self._vibecomfy_warmth_hint = None
         try:
             self.managed_tool_session.release(reason="idle")
         except Exception as exc:
             # The slot stays poisoned and occupied, as after any unverified release.
-            self._latch_cleanup_uncertainty(f"{holding} session failed to release after idle: {exc}")
+            self._latch_cleanup_uncertainty(f"{warm[0]} session failed to release after idle: {exc}")
 
     def prepare_wan_session(
         self, *, owner_dir: str | Path, root: str | Path, python: str | Path,
@@ -9883,7 +9890,7 @@ class GenericPackHost:
                         cleanup_errors.append(f"managed fence: {exc}")
             if managed_opened:
                 retain_persistent_session = (
-                    isinstance(managed_adapter, _WARM_SESSION_ADAPTERS)
+                    isinstance(managed_adapter, tuple(_WARM_SESSION_ADAPTERS))
                     and managed_settled
                     and settled
                 )
