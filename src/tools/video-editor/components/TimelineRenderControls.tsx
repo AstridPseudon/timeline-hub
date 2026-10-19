@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Download, Play, Square } from 'lucide-react';
+import { AlertTriangle, Download, Play, Square, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
@@ -31,7 +31,12 @@ export function TimelineRenderControls({
 }) {
   const chrome = useTimelineChromeContext();
   const [playerOpen, setPlayerOpen] = useState(false);
+  const [dismissedRenderError, setDismissedRenderError] = useState<string | null>(null);
+  const renderButtonRef = useRef<HTMLButtonElement>(null);
+  const renderErrorPanelRef = useRef<HTMLDivElement>(null);
   const { renderResultUrl, renderResultInfo } = chrome;
+  const renderError = chrome.renderStatus === 'error' && chrome.renderLog ? chrome.renderLog : null;
+  const renderErrorOpen = renderError !== null && dismissedRenderError !== renderError;
   const completedAt = renderResultInfo?.completedAt ?? null;
   const seenCompletion = useRef(completedAt);
   // A render that finishes while the editor is open shows the film once;
@@ -42,6 +47,30 @@ export function TimelineRenderControls({
     }
     seenCompletion.current = completedAt;
   }, [completedAt, renderResultUrl]);
+
+  useEffect(() => {
+    if (renderError === null) setDismissedRenderError(null);
+  }, [renderError]);
+
+  useEffect(() => {
+    if (!renderErrorOpen || renderError === null) return;
+    const dismiss = () => setDismissedRenderError(renderError);
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (renderErrorPanelRef.current?.contains(target) || renderButtonRef.current?.contains(target)) return;
+      dismiss();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') dismiss();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [renderError, renderErrorOpen]);
 
   const hasResult = Boolean(renderResultUrl) && chrome.renderStatus !== 'rendering';
   const filename = chrome.renderResultFilename ?? 'timeline-render.mp4';
@@ -55,6 +84,7 @@ export function TimelineRenderControls({
   return (
     <>
       <Button
+        ref={renderButtonRef}
         type="button"
         size="sm"
         className={`gap-1.5 ${previewActionButtonClass}`}
@@ -119,14 +149,23 @@ export function TimelineRenderControls({
           Cancel
         </Button>
       )}
-      {chrome.renderStatus === 'error' && chrome.renderLog && (
+      {renderErrorOpen && renderError && (
         <div
+          ref={renderErrorPanelRef}
           className="absolute right-0 top-full z-40 mt-1 max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-md border border-red-500/30 bg-zinc-950/95 px-3 py-2 text-[11px] text-red-200 shadow-lg backdrop-blur-sm"
           data-video-editor-render-blocker="true"
         >
-          <div className="flex items-start gap-1">
+          <button
+            type="button"
+            aria-label="Dismiss"
+            className="absolute right-2 top-2 rounded p-0.5 text-red-300 hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-300"
+            onClick={() => setDismissedRenderError(renderError)}
+          >
+            <X className="h-3 w-3" />
+          </button>
+          <div className="flex items-start gap-1 pr-5">
             <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
-            <span>{chrome.renderLog.split('\n')[0]}</span>
+            <span>{renderError.split('\n')[0]}</span>
           </div>
           {chrome.visualSeamReport && (
             <section className="mt-2 space-y-2 border-t border-red-500/20 pt-2" aria-label="Visual seam admission report">

@@ -31,6 +31,60 @@ describe('TimelineRenderControls', () => {
     vi.clearAllMocks();
   });
 
+  it('shows the render error and lets the close button dismiss it without disabling retry', () => {
+    const startRender = vi.fn();
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({
+      renderStatus: 'error',
+      renderLog: 'Render failed: encoder unavailable',
+      startRender,
+    }));
+
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+
+    expect(screen.getByText('Render failed: encoder unavailable')).toBeTruthy();
+    const renderButton = screen.getByRole('button', { name: 'Render' });
+    fireEvent.pointerDown(renderButton);
+    expect(screen.getByText('Render failed: encoder unavailable')).toBeTruthy();
+    fireEvent.click(renderButton);
+    expect(startRender).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(document.querySelector('[data-video-editor-render-blocker="true"]')).toBeNull();
+    fireEvent.click(renderButton);
+    expect(startRender).toHaveBeenCalledTimes(2);
+    expect(document.querySelector('[data-video-editor-render-blocker="true"]')).toBeNull();
+  });
+
+  it('dismisses the render error on an outside pointer-down', () => {
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({
+      renderStatus: 'error',
+      renderLog: 'Render failed',
+    }));
+
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+    expect(document.querySelector('[data-video-editor-render-blocker="true"]')).toBeTruthy();
+
+    fireEvent.pointerDown(document.body);
+    expect(document.querySelector('[data-video-editor-render-blocker="true"]')).toBeNull();
+  });
+
+  it('dismisses on Escape and shows the same error again after a retry fails', () => {
+    const error = 'Render failed: encoder unavailable';
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({ renderStatus: 'error', renderLog: error }));
+    const { rerender } = render(<TimelineRenderControls previewActionButtonClass="" />);
+    expect(screen.getByText(error)).toBeTruthy();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(document.querySelector('[data-video-editor-render-blocker="true"]')).toBeNull();
+
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({ renderStatus: 'rendering', renderLog: null }));
+    rerender(<TimelineRenderControls previewActionButtonClass="" />);
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({ renderStatus: 'error', renderLog: error }));
+    rerender(<TimelineRenderControls previewActionButtonClass="" />);
+
+    expect(screen.getByText(error)).toBeTruthy();
+  });
+
   it('does not auto-open the player or download for a result that already existed', () => {
     mocks.useTimelineChromeContext.mockReturnValue(chrome({
       renderResultInfo: { revision: 4, completedAt: 1000 },
