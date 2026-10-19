@@ -12,6 +12,8 @@ def make_version(root: Path, name: str) -> Version:
     folder = root / 'versions' / name
     folder.mkdir(parents=True)
     value = Version(folder, folder / 'py/bin/python', folder / 'profile.json', {'PATH': '/tools/bin:/usr/bin:/bin'})
+    value.python.parent.mkdir(parents=True)
+    value.python.write_text('#!/bin/sh\nexit 0\n', encoding='utf-8')
     write_json(folder / 'version.json', value.document())
     return value
 
@@ -89,6 +91,9 @@ class FakeBackend:
 
     def unregister(self):
         self.step('unregister')
+
+    def preflight_remove(self, root, data, *, delete_data):
+        self.step('preflight')
 
     def remove(self, root, data, *, delete_data):
         self.step('remove-data' if delete_data else 'remove-program')
@@ -172,7 +177,7 @@ def test_uninstall_disables_and_unregisters_before_removal_and_reports_residue(i
     root, data, backend, installer, lines = installation
     backend.residue = [root / 'locked.dll']
     installer.run('uninstall', {}, delete_data=delete_data)
-    assert backend.calls == ['stop', 'unregister', 'remove-data' if delete_data else 'remove-program']
+    assert backend.calls == ['preflight', 'stop', 'unregister', 'remove-data' if delete_data else 'remove-program']
     assert f'Remaining: {root / "locked.dll"}' in lines
     assert (f'Workspace kept at {data}.' in lines) is (not delete_data)
     assert 'open' not in backend.calls
@@ -220,3 +225,14 @@ def test_current_is_a_small_atomic_file_and_retains_previous_version(installatio
     (root / 'current').write_text('../outside')
     with pytest.raises(ValueError, match='identifier'):
         current(root)
+
+
+def test_uninstall_preflight_failure_preserves_service_and_program(installation):
+    root, data, backend, installer, lines = installation
+    backend.fail = "preflight"
+    with pytest.raises(RuntimeError, match="preflight failed"):
+        installer.run("uninstall", {})
+    assert backend.calls == ["preflight"]
+    assert current(root) == backend.old
+    assert backend.sentinel.read_text() == "original"
+    assert lines == []

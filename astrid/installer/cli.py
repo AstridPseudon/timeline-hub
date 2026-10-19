@@ -22,6 +22,8 @@ def parser() -> argparse.ArgumentParser:
     mode.add_argument("--update", action="store_true", help="back up and install the pinned version")
     mode.add_argument("--repair", action="store_true", help="restart the installed version without upgrading")
     mode.add_argument("--uninstall", action="store_true")
+    mode.add_argument("--doctor", nargs="?", const="__default__", metavar="PATH",
+                      help="write a redacted support bundle using the installed version")
     result.add_argument("--delete-data", action="store_true", help="also delete the selected data root during uninstall")
     result.add_argument("--root", type=Path, help="absolute managed program directory")
     result.add_argument("--data-root", type=Path, help="absolute workspace support directory")
@@ -32,8 +34,9 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    mode = "update" if args.update else "repair" if args.repair else "uninstall" if args.uninstall else args.operation
-    if args.operation != "install" and any((args.update, args.repair, args.uninstall)):
+    mode = ("update" if args.update else "repair" if args.repair else "uninstall" if args.uninstall
+            else "doctor" if args.doctor is not None else args.operation)
+    if args.operation != "install" and any((args.update, args.repair, args.uninstall, args.doctor is not None)):
         parser().error("Choose either an operation or a mode flag.")
     if args.delete_data and mode != "uninstall":
         parser().error("--delete-data is only valid for uninstall.")
@@ -74,11 +77,12 @@ def main(argv: list[str] | None = None) -> int:
                     raise ValueError("The program directory belongs to another installer.")
                 if not marker and root.exists() and any(p.name != "bootstrap" for p in root.iterdir()):
                     raise ValueError("The program directory contains files Astrid does not own.")
-                if mode == "uninstall" and not marker:
+                if mode == "uninstall" and not marker and recorded.get("owner") != LABEL:
                     raise ValueError("No managed Astrid installation was found to uninstall.")
-                platform.private_directory(root)
-                write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
-                if relocate and mode != "uninstall":
+                if mode not in {"uninstall", "doctor"}:
+                    platform.private_directory(root)
+                    write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
+                if relocate and mode not in {"uninstall", "doctor"}:
                     old = backend.existing(data)
                     if old is None:
                         raise ValueError("The old workspace has no source profile; select it with --data-root for recovery.")
@@ -103,14 +107,21 @@ def main(argv: list[str] | None = None) -> int:
                     write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
                 print(f"Using your workspace at {data}.")
                 manifest = {}
-                if mode != "uninstall" and (mode == "update" or not (current(root) or backend.existing(data))):
+                installed = current(root)
+                if installed is not None and not installed.python.is_file():
+                    installed = None
+                installed = installed or backend.existing(data)
+                if mode not in {"uninstall", "doctor"} and (mode == "update" or installed is None):
                     if not args.manifest:
                         args.manifest = root / "install-manifest.json"
                         download("https://astrid.haus/install-manifest.json", args.manifest)
                     manifest = validate_manifest(read_json(args.manifest))
                     if not uv.is_absolute() or not uv.is_file():
                         raise ValueError("Run the install line to provide the pinned user-local uv.")
-                Installer(root, data, backend).run(mode, manifest, delete_data=args.delete_data)
+                bundle = None
+                if mode == "doctor":
+                    bundle = platform.log_dir() / "doctor.zip" if args.doctor == "__default__" else Path(args.doctor)
+                Installer(root, data, backend).run(mode, manifest, delete_data=args.delete_data, bundle=bundle)
             finally:
                 platform.unlock_file(lock.fileno())
         return 0

@@ -66,6 +66,9 @@ dev = [
     "aioquic>=1.2,<2",
     "ruff==0.12.0",
     "build==1.4.0",
+    # Offline wheel resource tests use the release build backend directly.
+    "setuptools==80.9.0",
+    "wheel==0.46.3",
 ]
 
 # Runtime installs need a configured package index or local wheelhouse because
@@ -96,9 +99,6 @@ exclude = [
 
 [tool.setuptools.exclude-package-data]
 astrid = [
-    "chat/service.mjs",
-    "chat/astrid-acp-local-only.yml",
-    "chat/THIRD_PARTY_LICENSES.txt",
     # Defensive exclusions for non-package directories that may be surfaced
     # by a source/VCS manifest in a future setuptools release.
     "**/__pycache__/*",
@@ -122,6 +122,12 @@ astrid = [
     # The named OMP profile is a runtime resource, not a user-home seed.
     "agent_profiles/*.md",
     "omp_extensions/*.ts",
+
+    # Installed service declarations launch this prebuilt Bun bundle. Ship its
+    # local-only configuration and third-party notices alongside it.
+    "chat/service.mjs",
+    "chat/astrid-acp-local-only.yml",
+    "chat/THIRD_PARTY_LICENSES.txt",
 
     # Capability manifests, runtime data, and agent-facing pack guidance.
     # V3 docs, action guides, and declared requirements are release inputs;

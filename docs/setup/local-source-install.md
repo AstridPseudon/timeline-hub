@@ -26,10 +26,95 @@ access is needed. Without a systemd user service on Linux, run the line to resta
 Installation ends with `Open https://astrid.haus` and opens the connection page.
 On failure, report the sentence and the `Details:` log path.
 
+The installer reuses FFmpeg and FFprobe from `PATH` when both run and FFmpeg has
+all required encoders and filters. Otherwise it downloads the pinned build.
+The installed version records the selected executable paths, actual versions,
+and whether they came from `PATH` or a download; doctor bundles include those
+fields. Tools inside an older managed version are downloaded again so updates
+can remove that older version safely.
+
 `astrid install uninstall` stops and unregisters the service and removes owned
 program files. It keeps data unless you explicitly add `--delete-data`; locked
 files are reported for removal after their processes exit.
 
+Run the line with `--doctor` to write a redacted support bundle using the installed
+version and its recorded workspace. An optional path after `--doctor` selects the
+ZIP destination. You can reinstall onto a kept workspace with the ordinary line;
+it reattaches the existing realm. Repeating uninstall is safe, including adding
+`--delete-data` after an earlier uninstall kept the workspace.
+
+Linux uses `${XDG_DATA_HOME:-$HOME/.local/share}/astrid` for program files.
+Windows GPU environments live separately at `%LOCALAPPDATA%\Astrid GPU` and
+survive uninstall. On Windows, an installer executable may remain locked until
+the line exits; the output lists residue and gives one manual removal step.
+
+To configure the background pack host, edit `service-env.json` in the program
+directory, then run the ordinary line to restart. This JSON file supports these
+string settings and is preserved during repair and updates:
+
+```json
+{
+  "ASTRID_WARM_IDLE_SECONDS": "600",
+  "ASTRID_ALLOW_UNQUALIFIED_GPU": "0"
+}
+```
+
+The login service reads the file before starting Runtime and its declared
+services. Unknown settings or non-string values fail with a logged error.
+`ASTRID_ALLOW_UNQUALIFIED_GPU` opts into unqualified GPU execution when set to
+`1`; keep `0` for the qualified path.
+
 The app is hosted; installation does not clone or build it. App developers use
 `npm run dev:local` in their app checkout. Creative providers still need their
 own credentials and qualified artifacts.
+
+## Developer qualification with local Git sources
+
+Installer developers can exercise unpublished agent or Runtime commits with the
+same installer transaction. Copy the release install manifest, keep its pinned
+tool versions and assets, and add an optional `repo` to either source entry:
+
+```json
+{
+  "agent": {
+    "sha": "0123456789abcdef0123456789abcdef01234567",
+    "repo": "/absolute/path/to/scratch/astrid-agent"
+  },
+  "runtime": {
+    "sha": "89abcdef0123456789abcdef0123456789abcdef",
+    "repo": "file:///absolute/path/to/scratch/astrid-runtime"
+  }
+}
+```
+
+This is an excerpt: preserve `schema_version` and the complete `tools` section
+from the release manifest. `repo` accepts an absolute local directory or a local
+`file://` URL, including URL-encoded spaces. It does not accept remote Git URLs.
+Each `sha` must be the full lowercase 40-character commit ID available in that
+repository; branch names, abbreviated IDs, tree IDs, and annotated tag IDs fail.
+Omitting `repo` keeps the pinned GitHub archive download for that source.
+
+Use scratch clones for candidate changes, commit those changes, and set each
+entry's `sha` from `git -C /absolute/path/to/scratch/repo rev-parse HEAD`. The
+installer reads the commit with `git archive`; it leaves the original repository
+untouched and ignores worktree edits and untracked files. Git archive attributes
+apply. Source trees containing tracked symlinks or submodules are rejected.
+Git must be on `PATH` for local source overrides; hosted installs do not need it.
+
+With a disposable test home, separate empty program and data directories, and
+the release manifest's pinned uv executable, invoke the shared entry point from
+an agent development environment:
+
+```sh
+/absolute/path/to/astrid-agent/.venv/bin/python -m astrid install \
+  --manifest /absolute/path/to/local-install-manifest.json \
+  --uv /absolute/path/to/pinned/uv \
+  --root /absolute/path/to/test/program \
+  --data-root /absolute/path/to/test/data
+```
+
+This still downloads and installs the manifest's real tools and Python packages,
+registers the platform service, and verifies the installed Runtime. The selected
+manifest is recorded in the managed version directory. An existing installation
+uses its installed version during repair; pass `--update` to qualify new source
+pins against an existing workspace, including the normal backup and rollback.

@@ -36,7 +36,13 @@ def venv_python(root: Path) -> Path:
 def default_program_root(home: Path, system: str) -> Path:
     if system == "win32":
         return Path(os.environ.get("LOCALAPPDATA") or home / "AppData" / "Local") / "Astrid"
+    if system == "linux":
+        return Path(os.environ.get("XDG_DATA_HOME") or home / ".local" / "share") / "astrid"
     return home / ".local" / "share" / "astrid"
+
+
+def install_selection(home: Path, system: str) -> Path:
+    return default_program_root(home, system).parent / "astrid-install.json"
 
 
 def legacy_roots(home: Path, default: Path) -> list[Path]:
@@ -46,22 +52,30 @@ def legacy_roots(home: Path, default: Path) -> list[Path]:
                               home / ".banodoco_local"]))
 
 
-def command(version: Version, data: Path, *, windows: bool = False, log: Path | None = None) -> list[str]:
+def command(version: Version, data: Path, *, windows: bool = False, log: Path | None = None,
+            env_file: Path | None = None) -> list[str]:
     python = version.python.with_name("pythonw.exe") if windows else version.python
     module = version.env.get("ASTRID_INSTALL_RUNTIME_MODULE", "astrid_runtime")
     if module not in {"astrid_runtime", "banodoco_local"}:
         raise ValueError("Unknown Runtime module in the installation record.")
     arguments = ["run", "--profile", "astrid", "--data-root", str(data),
                  "--source-manifest", str(version.profile)]
-    if not windows:
+    if env_file is None and not windows:
         return [str(python), "-I", "-m", module, *arguments]
     # Task Scheduler cannot set an environment and Hidden does not hide a
     # console. pythonw executes the foreground Runtime in this same process.
-    script = ("import os,sys; "
-              f"os.environ.update({version.env!r}); "
-              f"sys.stdout=sys.stderr=open({str(log)!r},'a',encoding='utf-8',buffering=1); "
-              f"from {module}.cli import main; "
-              f"sys.exit(main({arguments!r}))")
+    script = "import json,os,sys\nfrom pathlib import Path\n"
+    if windows:
+        script += (f"os.environ.update({version.env!r})\n"
+                   f"sys.stdout=sys.stderr=open({str(log)!r},'a',encoding='utf-8',buffering=1)\n")
+    if env_file is not None:
+        script += (f"path=Path({str(env_file)!r})\n"
+                   "settings=json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}\n"
+                   "if (not isinstance(settings,dict) or set(settings)-{'ASTRID_WARM_IDLE_SECONDS','ASTRID_ALLOW_UNQUALIFIED_GPU'} "
+                   "or any(not isinstance(value,str) for value in settings.values())):\n"
+                   "    raise ValueError('Invalid Astrid service-env.json; use the documented string settings.')\n"
+                   "os.environ.update(settings)\n")
+    script += f"from {module}.cli import main\nsys.exit(main({arguments!r}))"
     return [str(python), "-I", "-c", script]
 
 
@@ -70,8 +84,9 @@ def systemd_quote(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"').replace("%", "%%").replace("\n", "\\n") + '"'
 
 
-def render(system: str, version: Version, data: Path, log: Path, *, user: str = "") -> str:
-    argv = command(version, data, windows=system == "win32", log=log)
+def render(system: str, version: Version, data: Path, log: Path, *, user: str = "",
+           env_file: Path | None = None) -> str:
+    argv = command(version, data, windows=system == "win32", log=log, env_file=env_file)
     if system == "darwin":
         return plistlib.dumps({
             "Label": LABEL, "ProgramArguments": argv, "RunAtLoad": True,
@@ -117,6 +132,8 @@ class Service:
         self.root, self.log, self.run = root, log, run
         self.home, self.system, self.say = home or Path.home(), system or sys.platform, say
         self.registry = default_program_root(self.home, self.system) / "service.json"
+        self.selection = install_selection(self.home, self.system)
+        self.env_file = root / "service-env.json"
         if self.system == "darwin":
             self.path = self.home / "Library" / "LaunchAgents" / f"{LABEL}.plist"
         elif self.system == "linux":
@@ -125,7 +142,7 @@ class Service:
             self.path = root / "task.xml"
 
     def recorded(self) -> dict:
-        record = read_json(self.registry)
+        record = {**read_json(self.selection), **read_json(self.registry)}
         if record and record.get("owner") != LABEL:
             raise ValueError("The service record belongs to another installer.")
         if record:
@@ -225,8 +242,10 @@ class Service:
 
     def register(self, version: Version, data: Path) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        if not self.env_file.exists():
+            write_json(self.env_file, {})
         user = self.powershell("[Security.Principal.WindowsIdentity]::GetCurrent().User.Value").strip() if self.system == "win32" else ""
-        self.path.write_text(render(self.system, version, data, self.log, user=user), encoding="utf-8", newline="\n")
+        self.path.write_text(render(self.system, version, data, self.log, user=user, env_file=self.env_file), encoding="utf-8", newline="\n")
         if self.system == "darwin":
             self.run(["launchctl", "bootstrap", f"gui/{platform.current_user()}", self.path])
         elif self.system == "linux":
@@ -238,8 +257,10 @@ class Service:
         else:
             xml_path = str(self.path).replace("'", "''")
             self.powershell(f"Register-ScheduledTask -TaskName '{TASK}' -Xml ([IO.File]::ReadAllText('{xml_path}')) -Force | Out-Null")
-        write_json(self.registry, {"owner": LABEL, "program_root": str(self.root),
-                                  "data_root": str(data), "version": version.document()})
+        record = {"owner": LABEL, "program_root": str(self.root),
+                  "data_root": str(data), "version": version.document()}
+        write_json(self.registry, record)
+        write_json(self.selection, record)
 
     def start(self) -> bool:
         if self.system == "darwin":
@@ -260,7 +281,7 @@ class Service:
             "ASTRID_RUNTIME_DATA_ROOT", "ASTRID_PACKS_PATH"}}
         env.update(version.env)
         with self.log.open("a", encoding="utf-8") as stream:
-            process = platform.spawn_tree(command(version, data), detached=True,
+            process = platform.spawn_tree(command(version, data, env_file=self.env_file), detached=True,
                                           cwd=version.root, env=env, stdin=subprocess.DEVNULL,
                                           stdout=stream, stderr=subprocess.STDOUT)
         identity = platform.process_identity(process.pid)

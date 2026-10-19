@@ -126,11 +126,20 @@ class Installer:
     def __init__(self, root: Path, data: Path, backend, *, say=print):
         self.root, self.data, self.backend, self.say = root, data, backend, say
 
-    def run(self, mode: str, manifest: dict, *, delete_data: bool = False) -> None:
-        old = current(self.root) or self.backend.existing(self.data)
+    def run(self, mode: str, manifest: dict, *, delete_data: bool = False,
+            bundle: Path | None = None) -> None:
+        old = current(self.root)
+        if old is not None and not old.python.is_file():
+            old = None
+        old = old or self.backend.existing(self.data)
+        if mode == "doctor":
+            if old is None:
+                raise ValueError("No installed Astrid version is available for doctor.")
+            destination = self.backend.doctor(old, self.data, bundle)
+            self.say(f"Astrid doctor bundle: {destination}")
+            return
         if mode == "uninstall":
-            if hasattr(self.backend, "preflight_remove"):
-                self.backend.preflight_remove(self.root, self.data, delete_data=delete_data)
+            self.backend.preflight_remove(self.root, self.data, delete_data=delete_data)
             self.backend.stop(old, self.data)
             self.backend.unregister()
             residue = self.backend.remove(self.root, self.data, delete_data=delete_data)
@@ -153,8 +162,11 @@ class Installer:
             self.say("Open https://astrid.haus")
             return
 
+        has_workspace = self.backend.has_workspace(self.data)
+        reinstallable = getattr(self.backend, "reinstallable", lambda _data: False)
+        reinstall = old is None and has_workspace and reinstallable(self.data)
         realm = self.backend.workspace(old, self.data) if old else None
-        if not old and self.backend.has_workspace(self.data):
+        if not old and has_workspace and not reinstall:
             raise ValueError("An existing workspace has no usable source profile; repair its profile before installing.")
         backup = None
         candidate = None
@@ -175,6 +187,8 @@ class Installer:
                 self.backend.upgrade(candidate, self.data)
                 # upgrade owns its temporary daemon; hand back to the login service.
                 self.backend.stop(candidate, self.data)
+            elif reinstall:
+                realm = self.backend.attach_existing(candidate, self.data)
             else:
                 realm = self.backend.create(candidate, self.data)
             switch(self.root, candidate)

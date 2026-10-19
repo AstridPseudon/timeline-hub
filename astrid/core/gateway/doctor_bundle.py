@@ -99,10 +99,37 @@ def _installed_record() -> tuple[Path | None, Path | None]:
         return None, None
 
 
+def _selected_tools(program_root: Path | None) -> dict:
+    """Read only the recorded media executables, versions, and selection origin."""
+    if program_root is None:
+        return {}
+    try:
+        from astrid.installer.core import current
+
+        installed = current(program_root)
+        if installed is None:
+            return {}
+        env = installed.env
+        source = env.get("ASTRID_INSTALL_FFMPEG_SOURCE")
+        if source not in {"path", "download"}:
+            return {}
+        result = {}
+        for name in ("ffmpeg", "ffprobe"):
+            executable = env.get(f"ASTRID_{name.upper()}_EXECUTABLE")
+            version = env.get(f"ASTRID_INSTALL_{name.upper()}_VERSION")
+            if isinstance(executable, str) and isinstance(version, str):
+                result[name] = {"executable": executable, "version": version, "source": source}
+        return result
+    except (ImportError, OSError, ValueError, KeyError, TypeError):
+        return {}
+
+
 def _install_manifest(support_root: Path) -> dict:
-    """Project only version identifiers and source revisions from install metadata."""
+    """Project source pins and the small recorded tool selection from metadata."""
     candidates = [support_root / "install-manifest.json", support_root / "runtime" / "install-manifest.json"]
     _program_root, installed_manifest = _installed_record()
+    tools = _selected_tools(_program_root)
+    selected = {"selected_tools": tools} if tools else {}
     if installed_manifest is not None:
         candidates.append(installed_manifest)
     candidates.extend((support_root / "install.json", support_root / "runtime" / "install.json"))
@@ -115,6 +142,7 @@ def _install_manifest(support_root: Path) -> dict:
             continue
         if value.get("schema_version") == 1 and isinstance(value.get("agent"), dict):
             return {
+                **selected,
                 "schema_version": 1,
                 "agent": {"sha": value["agent"].get("sha")} if isinstance(value["agent"].get("sha"), str) else {},
                 "runtime": {"sha": value.get("runtime", {}).get("sha")} if isinstance(value.get("runtime"), dict) and isinstance(value["runtime"].get("sha"), str) else {},
@@ -123,6 +151,7 @@ def _install_manifest(support_root: Path) -> dict:
             }
         result = {key: value[key] for key in ("version", "version_id", "runtime_version", "agent_version")
                   if isinstance(value.get(key), (str, int, float))}
+        result.update(selected)
         versions = value.get("versions")
         if isinstance(versions, dict):
             result["versions"] = {
@@ -130,7 +159,7 @@ def _install_manifest(support_root: Path) -> dict:
                 for name, row in versions.items() if isinstance(row, dict)
             }
         return result
-    return {"available": False}
+    return {"available": False, **selected}
 
 
 def _logs(support_root: Path | None = None) -> list[Path]:

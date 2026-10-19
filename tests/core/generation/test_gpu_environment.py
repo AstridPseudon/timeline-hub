@@ -29,7 +29,8 @@ def test_plan_is_platform_specific_and_does_not_install(tmp_path, monkeypatch, p
         return
     assert plan["managed"] is True
     assert Path(plan["python"]).parts[-2:] == ("Scripts", "python.exe")
-    assert str(tmp_path / "user" / "Astrid" / "gpu" / pack) in plan["root"]
+    # GPU environments survive removal of the versioned Astrid program root.
+    assert str(tmp_path / "user" / "Astrid GPU" / pack) in plan["root"]
     assert plan["qualified"] is False
     assert "--managed-python" in plan["commands"][0]
     compile_command = plan["commands"][1]

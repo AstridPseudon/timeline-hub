@@ -231,10 +231,24 @@ def test_stage_service_declaration_uses_candidate_and_preserves_chat_settings(tm
     assert json.loads(services_path.read_text(encoding='utf-8')) == {'version': 1, 'services': []}
 
 
-def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeypatch):
+@pytest.mark.parametrize('prior_port,requested_port,expected_port', [
+    (None, None, '17340'), ('17391', None, '17391'), ('17391', '17393', '17393'),
+])
+def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeypatch, prior_port, requested_port, expected_port):
     backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv')
-    monkeypatch.setattr(backend, 'existing', lambda _data: None)
-    monkeypatch.setattr('astrid.installer.backend.source', lambda _name, _sha, destination: destination)
+    prior = Version(tmp_path / 'prior', tmp_path / 'python', tmp_path / 'profile',
+                    {'ASTRID_RUNTIME_DOOR_PORT': prior_port}) if prior_port else None
+    monkeypatch.setattr(backend, 'existing', lambda _data: prior)
+    if requested_port:
+        monkeypatch.setenv('ASTRID_RUNTIME_DOOR_PORT', requested_port)
+    else:
+        monkeypatch.delenv('ASTRID_RUNTIME_DOOR_PORT', raising=False)
+    def source(name, _sha, destination):
+        if name == 'agent':
+            (destination / 'remotion/node_modules').mkdir(parents=True)
+            (destination / 'remotion/package-lock.json').write_text('{}\n')
+        return destination
+    monkeypatch.setattr('astrid.installer.backend.source', source)
     monkeypatch.setattr('astrid.installer.backend.install_tools', lambda *_args: {
         'PATH': str(tmp_path / 'tools'),
         'ASTRID_NODE_EXECUTABLE': str(tmp_path / 'tools/node'),
@@ -261,6 +275,7 @@ def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeyp
 
     version = backend.stage(manifest, tmp_path / 'program', tmp_path / 'workspace')
 
+    assert version.env['ASTRID_RUNTIME_DOOR_PORT'] == expected_port
     profile = json.loads(version.profile.read_text(encoding='utf-8'))
     declaration = Path(profile['service_declaration'])
     assert declaration == version.root / 'services.json'
@@ -354,14 +369,16 @@ def test_clone_rollback_restores_workspace_and_support_without_deleting_other_re
 
 
 @pytest.mark.parametrize('mismatch', [None, 'realm', 'instance', 'port', 'owner'])
-def test_door_verification_requires_selected_realm_recorded_instance_and_live_owner(tmp_path, monkeypatch, mismatch):
+@pytest.mark.parametrize('door_port', [17340, 17391])
+def test_door_verification_requires_selected_realm_recorded_instance_and_live_owner(tmp_path, monkeypatch, mismatch, door_port):
     import json
 
     from astrid.installer import backend as module
     program, data = tmp_path / 'program', tmp_path / 'data'
-    version = Version(program / 'versions/old', tmp_path / 'python', tmp_path / 'profile', {})
+    version = Version(program / 'versions/old', tmp_path / 'python', tmp_path / 'profile',
+                      {'ASTRID_RUNTIME_DOOR_PORT': str(door_port)})
     discovery = {'active_realm': 'selected', 'runtime_instance_id': 'owned-instance',
-                 'door_endpoint': 'http://127.0.0.1:17340'}
+                 'door_endpoint': f'http://127.0.0.1:{door_port}'}
     if mismatch == 'port':
         discovery['door_endpoint'] = 'http://127.0.0.1:9999'
     write_json(data / 'runtime/discovery.json', discovery)
@@ -433,7 +450,10 @@ def test_no_systemd_starts_foreground_runtime_supervisor_with_recorded_birth_ide
     monkeypatch.setattr(platform, 'spawn_tree', spawn)
     monkeypatch.setattr(platform, 'process_identity', lambda pid: {'birth_id': 'birth-123'})
     manager.start_foreground(version, tmp_path / 'data')
-    assert spawn.call_args.args[0][3:5] == ['astrid_runtime', 'run']
+    # The foreground owner loads the documented settings before invoking Runtime.
+    assert spawn.call_args.args[0][1:3] == ['-I', '-c']
+    assert 'from astrid_runtime.cli import main' in spawn.call_args.args[0][3]
+    assert str(manager.env_file) in spawn.call_args.args[0][3]
     assert spawn.call_args.kwargs['detached'] is True
     assert spawn.call_args.kwargs['env']['PATH'] == '/tools:/bin'
     assert read_json(manager.registry)['foreground'] == {'pid': 123, 'birth_id': 'birth-123'}

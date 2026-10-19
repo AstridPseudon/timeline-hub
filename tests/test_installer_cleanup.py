@@ -207,3 +207,54 @@ def test_already_deleted_recorded_workspace_does_not_block_residue_cleanup(tmp_p
     assert backend.remove(root, data, delete_data=True) == []
     runtime.assert_not_called()
     assert not root.exists()
+
+
+@pytest.mark.parametrize("realm_exists", [True, False])
+def test_retained_selection_recovers_version_with_only_support_logs(tmp_path, monkeypatch, realm_exists):
+    backend, root, data, _ = installation(tmp_path, monkeypatch)
+    (data / "logs").mkdir()
+    version = Version(root / "versions/v1", root / "python", root / "profile", {})
+    write_json(version.root / "version.json", version.document())
+    (root / "current").write_text("v1\n")
+    realm = tmp_path / "kept-realm"
+    if realm_exists:
+        realm.mkdir()
+        (realm / "sentinel").write_text("keep")
+    monkeypatch.setattr(backend.service, "recorded", lambda: {
+        "owner": LABEL, "realm_root": str(realm), "realm_id": "kept",
+    })
+    runtime = Mock(return_value={"ok": True, "realm_id": "kept", "realm_root": str(realm)})
+    monkeypatch.setattr(backend, "runtime", runtime)
+
+    assert backend.remove(root, data, delete_data=False) == []
+
+    if realm_exists:
+        runtime.assert_called_once_with(None, data, "workspace", "inspect", "--realm-root", str(realm),
+                                        "--expected-realm-id", "kept")
+        assert (realm / "sentinel").read_text() == "keep"
+    else:
+        runtime.assert_not_called()
+    assert (data / "sentinel").read_text() == "keep"
+
+
+def test_windows_cleanup_instructions_name_locked_bootstrap_outside_custom_root(tmp_path, monkeypatch):
+    backend, root, data, bootstrap = installation(tmp_path, monkeypatch)
+    backend.service.system = "win32"
+    lines = []
+    backend.service.say = lines.append
+    remove_tree = shutil.rmtree
+
+    def remove(path, *args, **kwargs):
+        if Path(path) == bootstrap:
+            raise PermissionError("bootstrap is locked")
+        return remove_tree(path, *args, **kwargs)
+
+    monkeypatch.setattr(shutil, "rmtree", remove)
+
+    assert backend.remove(root, data, delete_data=False) == [bootstrap]
+
+    quoted = str(bootstrap).replace("'", "''")
+    assert lines == [f"After this line returns, run: Remove-Item -LiteralPath '{quoted}' -Recurse -Force"]
+    assert str(data) not in lines[0]
+    assert not root.exists()
+    assert backend.uv.is_file()

@@ -14,6 +14,9 @@ import uuid
 import webbrowser
 from pathlib import Path
 
+from runtime_protocol import platform
+from runtime_protocol.door import DEFAULT_DOOR_PORT
+
 from .core import Version, absolute, current, linked, new_version_id, read_json, write_json
 from .service import Service, platform_target, venv_python
 from .tools import binary, install_tools, source
@@ -30,7 +33,7 @@ class Backend:
             "PYTHONPATH", "PYTHONHOME", "ASTRID_WORKSPACE_ENDPOINT",
             "ASTRID_WORKSPACE_CREDENTIAL", "ASTRID_RUNTIME_SOURCE_MANIFEST",
             "ASTRID_RUNTIME_DATA_ROOT", "ASTRID_PACKS_PATH"}}
-        env.update({"PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"})
+        env.update({"PYTHONIOENCODING": "utf-8"})
         env.update(extra_env or {})
         result = subprocess.run([str(s) for s in argv], cwd=cwd, env=env, check=False,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -72,8 +75,11 @@ class Backend:
 
     def existing(self, data: Path) -> Version | None:
         record = self.service.recorded()
+        if record.get("uninstalled"):
+            return None
         if record.get("version"):
-            return Version.load(record["version"])
+            version = Version.load(record["version"])
+            return version if version.python.is_file() else None
         profile = data / "runtime" / "source-profiles" / "astrid.json"
         value = read_json(profile)
         if not value:
@@ -91,6 +97,12 @@ class Backend:
     def has_workspace(self, data: Path) -> bool:
         # A nonempty selected root is never mistaken for a fresh installation.
         return data.exists() and any(p.name != "logs" for p in data.iterdir())
+
+    def reinstallable(self, data: Path) -> bool:
+        record = self.service.recorded()
+        return (record.get("owner") == "haus.astrid.runtime"
+                and record.get("data_root") == str(data)
+                and (data / "runtime" / "catalog.json").is_file())
 
     @staticmethod
     def _prior_chat_settings(old: Version | None) -> tuple[Path | None, dict[str, str]]:
@@ -145,16 +157,47 @@ class Backend:
         absolute(value["realm_root"])
         return value
 
+    @staticmethod
+    def _discovery_owner_state(path: Path) -> str:
+        """Classify the recorded Runtime owner without signaling or editing it."""
+        try:
+            discovery = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return "stopped"  # It disappeared after the caller observed it.
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise RuntimeError("Runtime discovery owner identity cannot be read; refusing to change it.") from exc
+        if not isinstance(discovery, dict):
+            raise RuntimeError("Runtime discovery owner identity is incomplete; refusing to change it.")
+        pid = discovery.get("pid")
+        birth = discovery.get("process_birth_id")
+        if type(pid) is not int or pid <= 0 or not isinstance(birth, str) or not birth.strip():
+            raise RuntimeError("Runtime discovery owner identity is incomplete; refusing to change it.")
+        try:
+            identity = platform.process_identity(pid)
+        except OSError as exc:
+            raise RuntimeError("Runtime discovery owner identity could not be observed; refusing to change it.") from exc
+        if identity is None:
+            return "stale"  # Proven absent; Runtime startup owns reconciliation.
+        if identity.get("pid") != pid or identity.get("birth_id") != birth:
+            raise RuntimeError("Runtime discovery owner identity changed; refusing to change it.")
+        return "live"
+
     def stop(self, version: Version | None, data: Path) -> None:
         self.service.disable()
-        if version is not None and (data / "runtime" / "discovery.json").exists():
+        if version is not None and not version.python.is_file():
+            version = None
+        discovery = data / "runtime" / "discovery.json"
+        owner_state = self._discovery_owner_state(discovery) if discovery.exists() else "stopped"
+        if owner_state == "live":
             self.runtime(version, data, "down", profile=True)
         self.service.stop()
-        if (data / "runtime" / "discovery.json").exists():
+        if discovery.exists():
             # A manager may still be draining after its stop operation.
-            if version:
+            owner_state = self._discovery_owner_state(discovery)
+            if owner_state == "live" and version:
                 self.runtime(version, data, "down", profile=True)
-            if (data / "runtime" / "discovery.json").exists():
+                owner_state = self._discovery_owner_state(discovery) if discovery.exists() else "stopped"
+            if owner_state == "live":
                 raise RuntimeError("Astrid did not release its recorded Runtime owner.")
 
     def _copy(self, source: Path, destination: Path, *, clone=False, support=False) -> None:
@@ -248,23 +291,34 @@ class Backend:
             raise ValueError("The installer needs the manifest's pinned uv.")
         folder = root / "versions" / new_version_id(manifest)
         folder.mkdir(parents=True)
-        agent = source("agent", manifest["agent"]["sha"], folder / "a")
-        runtime = source("runtime", manifest["runtime"]["sha"], folder / "r")
+        agent = source("agent", manifest["agent"]["sha"], folder / "a",
+                       **({"repo": manifest["agent"]["repo"]} if "repo" in manifest["agent"] else {}))
+        runtime = source("runtime", manifest["runtime"]["sha"], folder / "r",
+                         **({"repo": manifest["runtime"]["repo"]} if "repo" in manifest["runtime"] else {}))
         environment = folder / "py"
         self.run([self.uv, "venv", "--python", manifest["tools"]["python"]["version"], environment])
         python = venv_python(environment)
         self.run([self.uv, "pip", "install", "--python", python, runtime,
-                  runtime / "packages" / "python", agent / "packages" / "timeline-schema" / "python", agent])
+                  runtime / "packages" / "python", agent])
         env = install_tools(manifest, folder / "tools", platform_target(), self.run)
-        env.update({"ASTRID_RUNTIME_DATA_ROOT": str(data),
-                    "PATH": str(python.parent) + os.pathsep + env["PATH"]})
         prior = current(root) or self.existing(data)
+        env.update({"ASTRID_RUNTIME_DATA_ROOT": str(data),
+                    "ASTRID_RUNTIME_DOOR_PORT": os.environ.get(
+                        "ASTRID_RUNTIME_DOOR_PORT",
+                        prior.env.get("ASTRID_RUNTIME_DOOR_PORT", str(DEFAULT_DOOR_PORT)) if prior else str(DEFAULT_DOOR_PORT)),
+                    "PATH": str(python.parent) + os.pathsep + env["PATH"]})
+        npm = binary(folder / "tools" / "node", "npm-cli.js")
+        self.install_remotion_dependencies(agent, env, npm)
+        # The lockfile's transitive @banodoco/timeline-schema package is the
+        # source used by host_bootstrap. Install its Python subtree from this
+        # candidate's npm tree so the environment follows the same pinned
+        # package as the Remotion bundle.
+        schema_python = agent / "remotion" / "node_modules" / "@banodoco" / "timeline-schema" / "python"
+        self.run([self.uv, "pip", "install", "--python", python, schema_python])
         services_path = self._declare_services(
             folder=folder, agent=agent, data=data, python=python,
             bun=env["ASTRID_BUN_EXECUTABLE"], env=env, old=prior,
         )
-        npm = binary(folder / "tools" / "node", "npm-cli.js")
-        self.install_remotion_dependencies(agent, env, npm)
         profile = folder / "profile.json"
         # Compute the admitted source identity in the installed environment.
         digest = self.run([python, "-I", "-c", "from astrid.core.execution.generic_host import source_checkout_digest; import pathlib,sys; print(source_checkout_digest(pathlib.Path(sys.argv[1])))", agent], extra_env=env)
@@ -281,11 +335,33 @@ class Backend:
         return self.runtime(version, data, "workspace", "create", "--realm-root",
                             str(data / "runtime" / "realms" / realm_id), "--realm-id", realm_id, profile=True)
 
+    def attach_existing(self, version: Version, data: Path) -> dict:
+        realm = self.workspace(version, data)
+        return self.runtime(version, data, "workspace", "attach", "--realm-root", realm["realm_root"],
+                            "--realm-id", realm["realm_id"], profile=True)
+
+    def doctor(self, version: Version, data: Path, bundle: Path) -> Path:
+        bundle = absolute(bundle)
+        before = bundle.stat() if bundle.exists() else None
+        argv = [version.python, "-I", "-m", "astrid", "doctor", "--bundle", bundle]
+        try:
+            self.run(argv, extra_env={**version.env, "ASTRID_RUNTIME_DATA_ROOT": str(data)})
+        except subprocess.CalledProcessError:
+            after = bundle.stat() if bundle.exists() else None
+            if after is None or (before is not None and after.st_mtime_ns == before.st_mtime_ns
+                                 and after.st_ino == before.st_ino):
+                raise
+        return bundle
+
     def upgrade(self, version: Version, data: Path) -> None:
         self.runtime(version, data, "upgrade", profile=True)
 
     def register(self, version: Version, data: Path) -> None:
         self.service.register(version, data)
+        realm = self.workspace(version, data)
+        record = self.service.recorded()
+        write_json(self.service.selection, {**record, "realm_id": realm["realm_id"],
+                                           "realm_root": realm["realm_root"]})
 
     def start(self, version: Version, data: Path) -> None:
         if not self.service.start():
@@ -293,6 +369,7 @@ class Backend:
 
     def verify(self, version: Version, data: Path, realm_id: str) -> None:
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        port = int(version.env.get("ASTRID_RUNTIME_DOOR_PORT", str(DEFAULT_DOOR_PORT)))
         deadline = time.monotonic() + 90
         error = None
         while time.monotonic() < deadline:
@@ -300,8 +377,8 @@ class Backend:
                 status = self.runtime(version, data, "status", timeout=3)
                 discovery = read_json(data / "runtime" / "discovery.json")
                 endpoint = discovery.get("door_endpoint", "")
-                if endpoint != "http://127.0.0.1:17340":
-                    raise ValueError("Astrid's recorded door is not on the hosted page's loopback port.")
+                if endpoint != f"http://127.0.0.1:{port}":
+                    raise ValueError("Astrid's recorded door is not on the configured loopback port.")
                 def get(path):
                     request = urllib.request.Request(endpoint + path, headers={"Origin": "https://astrid.haus"})
                     with opener.open(request, timeout=2) as response:
@@ -339,6 +416,11 @@ class Backend:
                         pass
 
     def unregister(self) -> None:
+        record = self.service.recorded()
+        if record:
+            kept = {key: record[key] for key in ("owner", "program_root", "data_root", "realm_id", "realm_root")
+                    if key in record}
+            write_json(self.service.selection, {**kept, "uninstalled": True})
         self.service.unregister()
 
     def preflight_remove(self, root: Path, data: Path, *, delete_data: bool) -> Path | None:
@@ -359,7 +441,7 @@ class Backend:
         catalog = data / "runtime" / "catalog.json"
         version = current(root) or (self.existing(data) if data.exists() else None)
         realm_root = None
-        if catalog.exists() or (version is not None and data.exists()):
+        if catalog.exists():
             realm_root = absolute(self.workspace(version, data)["realm_root"])
         elif recorded_realm is not None and recorded_realm.exists():
             # Recover through Runtime's public read-only identity API even if a
@@ -371,6 +453,10 @@ class Backend:
             if not value.get("realm_id") or not value.get("realm_root"):
                 raise ValueError("The selected workspace has no unambiguous identity.")
             realm_root = absolute(value["realm_root"])
+        elif recorded_realm is None and version is not None and data.exists():
+            # Without a retained selection, incomplete support metadata cannot
+            # establish that an attached workspace is outside the removal tree.
+            realm_root = absolute(self.workspace(version, data)["realm_root"])
         if realm_root is not None and any(overlaps(realm_root, tree) for tree in trees):
             raise ValueError("The attached workspace overlaps a program removal directory.")
         return realm_root
@@ -378,7 +464,12 @@ class Backend:
     def remove(self, root: Path, data: Path, *, delete_data: bool) -> list[Path]:
         residue = []
         # Only directories created and marked by this installer are removable.
-        if read_json(root / "install.json").get("owner") != "haus.astrid.runtime":
+        marker = read_json(root / "install.json")
+        record = read_json(self.service.selection)
+        kept = (record.get("owner") == "haus.astrid.runtime" and record.get("program_root") == str(root)
+                and record.get("data_root") == str(data) and record.get("uninstalled") is True)
+        bootstrap_only = not root.exists() or all(path.name == "bootstrap" for path in root.iterdir())
+        if marker.get("owner") != "haus.astrid.runtime" and not (kept and bootstrap_only):
             raise ValueError("Refusing to remove an unowned installation directory.")
         realm_root = self.preflight_remove(root, data, delete_data=delete_data)
         data_targets = [data] if delete_data else []
@@ -386,7 +477,7 @@ class Backend:
             data_targets.insert(0, realm_root)
         # Keep the ownership/data-root marker until the last owned file is
         # gone, so rerunning the line can finish removal after a Windows lock.
-        for path in root.iterdir():
+        for path in list(root.iterdir()) if root.exists() else []:
             if path.name == "install.json":
                 continue
             try:
@@ -396,8 +487,8 @@ class Backend:
                     path.unlink()
             except OSError:
                 residue.append(path)
-        if not residue:
-            (root / "install.json").unlink()
+        if not residue and root.exists():
+            (root / "install.json").unlink(missing_ok=True)
             try:
                 root.rmdir()
             except OSError:
@@ -424,6 +515,10 @@ class Backend:
                     bootstrap.parent.rmdir()
                 except OSError:
                     pass  # Other files in the default root remain untouched.
+        if self.service.system == "win32":
+            for path in residue:
+                quoted = str(path).replace("'", "''")
+                self.service.say(f"After this line returns, run: Remove-Item -LiteralPath '{quoted}' -Recurse -Force")
         return residue
 
     def open(self) -> None:

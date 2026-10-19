@@ -17,7 +17,6 @@ from astrid.sdk.workspace_client import (
     resolve_runtime_connection,
 )
 
-
 TARGETED_EXECUTION_BINDING_CAPABILITY = "execution_binding.targeted.v1"
 
 
@@ -109,6 +108,92 @@ def test_open_rejects_tampered_health(monkeypatch: pytest.MonkeyPatch, response:
         )
     assert error.value.details["reason"] in {"protocol_error", "identity_mismatch"}
     assert error.value.details["next_action"] == "astrid-runtime up --profile astrid"
+
+
+def _service(**overrides: object) -> dict[str, object]:
+    return {"name": "chat", "state": "running", "last_exit": None, "restart_count": 0, **overrides}
+
+
+def _open_with_health(monkeypatch: pytest.MonkeyPatch, response: object) -> AstridClient:
+    monkeypatch.setattr(
+        "astrid.sdk.workspace_client.WorkspaceClient",
+        lambda *_args: _Workspace(response, _handshake()),
+    )
+    return AstridClient.open(
+        endpoint="http://127.0.0.1:1", credential="token", realm_id="realm-1", actor_id="actor-1",
+        client_name="test", client_version="1", protocol_version=PROTOCOL,
+    )
+
+
+@pytest.mark.parametrize("services", [
+    [],
+    [_service(state=state) for state in ("starting", "running", "restarting", "failed")],
+    [_service(last_exit=0, restart_count=1, reason=None)],
+    [_service(last_exit=-9, restart_count=2, reason="restarting after signal")],
+    [_service(last_exit=1, reason="")],
+])
+def test_open_accepts_declared_optional_service_health(monkeypatch: pytest.MonkeyPatch, services: object) -> None:
+    assert isinstance(_open_with_health(monkeypatch, _health(services=services)), AstridClient)
+
+
+@pytest.mark.parametrize("services,field", [
+    (None, "health.services"),
+    ({}, "health.services"),
+    ("running", "health.services"),
+    ((), "health.services"),
+    ([None], "health.services[0]"),
+    ([[]], "health.services[0]"),
+    ([_service(extra="tampered")], "health.services[0]"),
+    ([_service(name="")], "health.services[0].name"),
+    ([_service(name=1)], "health.services[0].name"),
+    ([_service(state="stopped")], "health.services[0].state"),
+    ([_service(state={})], "health.services[0].state"),
+    ([_service(last_exit=False)], "health.services[0].last_exit"),
+    ([_service(last_exit=1.5)], "health.services[0].last_exit"),
+    ([_service(last_exit="0")], "health.services[0].last_exit"),
+    ([_service(restart_count=False)], "health.services[0].restart_count"),
+    ([_service(restart_count=-1)], "health.services[0].restart_count"),
+    ([_service(restart_count=1.5)], "health.services[0].restart_count"),
+    ([_service(restart_count="0")], "health.services[0].restart_count"),
+    ([_service(reason=False)], "health.services[0].reason"),
+    ([_service(reason=[])], "health.services[0].reason"),
+])
+def test_open_rejects_malformed_service_health(monkeypatch: pytest.MonkeyPatch, services: object, field: str) -> None:
+    with pytest.raises(ServiceUnavailableError) as error:
+        _open_with_health(monkeypatch, _health(services=services))
+    assert error.value.details["reason"] == "protocol_error"
+    assert error.value.details["field"] == field
+
+
+@pytest.mark.parametrize("field", ["name", "state", "last_exit", "restart_count"])
+def test_service_health_requires_each_declared_row_field(monkeypatch: pytest.MonkeyPatch, field: str) -> None:
+    service = _service()
+    del service[field]
+    with pytest.raises(ServiceUnavailableError) as error:
+        _open_with_health(monkeypatch, _health(services=[service]))
+    assert error.value.details["field"] == "health.services[0]"
+
+
+@pytest.mark.parametrize("field", ["status", "protocol", "schema_digest", "runtime_epoch",
+                                 "runtime_instance_id", "runtime_session_id"])
+def test_service_health_keeps_all_top_level_fields_required(monkeypatch: pytest.MonkeyPatch, field: str) -> None:
+    health = _health(services=[])
+    del health[field]
+    with pytest.raises(ServiceUnavailableError) as error:
+        _open_with_health(monkeypatch, health)
+    assert error.value.details["field"] == "health"
+
+
+@pytest.mark.parametrize("response,field", [
+    (_health(services=[], extra="tampered"), "health"),
+    (_health(services=[], protocol="workspace.v999"), "health.protocol"),
+    (_health(services=[], schema_digest="sha256:" + "0" * 64), "health.schema_digest"),
+])
+def test_optional_services_do_not_relax_health_identity_checks(monkeypatch: pytest.MonkeyPatch, response: object, field: str) -> None:
+    with pytest.raises(ServiceUnavailableError) as error:
+        _open_with_health(monkeypatch, response)
+    assert error.value.details["reason"] == "protocol_error"
+    assert error.value.details["field"] == field
 
 
 @pytest.mark.parametrize(

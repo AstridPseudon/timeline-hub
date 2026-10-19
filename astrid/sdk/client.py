@@ -41,6 +41,7 @@ _HEALTH_KEYS = frozenset(
         "schema_digest",
     }
 )
+_HEALTH_SERVICE_KEYS = frozenset({"name", "state", "last_exit", "restart_count"})
 _HANDSHAKE_KEYS = frozenset(
     {
         "protocol",
@@ -119,7 +120,8 @@ def _require_mapping(value: Any, *, field: str) -> Mapping[str, Any]:
 
 def _validate_health(value: Any, *, expected_protocol: str, expected_digest: str) -> None:
     health = _require_mapping(value, field="health")
-    if frozenset(health) != _HEALTH_KEYS:
+    keys = frozenset(health)
+    if not _HEALTH_KEYS <= keys or keys - _HEALTH_KEYS - {"services"}:
         raise _protocol_error("health", "runtime health response has an unexpected schema")
     if health.get("status") != "ok":
         raise _protocol_error("health.status", "runtime health status is not ok")
@@ -134,6 +136,30 @@ def _validate_health(value: Any, *, expected_protocol: str, expected_digest: str
         identity = health.get(field)
         if not isinstance(identity, str) or not identity.strip():
             raise _protocol_error(f"health.{field}", f"runtime health {field} is invalid")
+    if "services" in health:
+        services = health["services"]
+        if not isinstance(services, list):
+            raise _protocol_error("health.services", "runtime health services must be an array")
+        for index, value in enumerate(services):
+            field = f"health.services[{index}]"
+            service = _require_mapping(value, field=field)
+            keys = frozenset(service)
+            if not _HEALTH_SERVICE_KEYS <= keys or keys - _HEALTH_SERVICE_KEYS - {"reason"}:
+                raise _protocol_error(field, "runtime health service has an unexpected schema")
+            name = service["name"]
+            if not isinstance(name, str) or not name:
+                raise _protocol_error(f"{field}.name", "runtime health service name is invalid")
+            if service["state"] not in ("starting", "running", "restarting", "failed"):
+                raise _protocol_error(f"{field}.state", "runtime health service state is invalid")
+            last_exit = service["last_exit"]
+            if last_exit is not None and (isinstance(last_exit, bool) or not isinstance(last_exit, int)):
+                raise _protocol_error(f"{field}.last_exit", "runtime health service last_exit is invalid")
+            restart_count = service["restart_count"]
+            if isinstance(restart_count, bool) or not isinstance(restart_count, int) or restart_count < 0:
+                raise _protocol_error(f"{field}.restart_count", "runtime health service restart_count is invalid")
+            reason = service.get("reason")
+            if reason is not None and not isinstance(reason, str):
+                raise _protocol_error(f"{field}.reason", "runtime health service reason is invalid")
 
 
 def _validate_handshake(

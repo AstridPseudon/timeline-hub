@@ -114,7 +114,7 @@ def environment_plan(
         (UV_VERSION + json.dumps(description, sort_keys=True) + (directory / "requirements.windows-nvidia.txt").read_text(encoding="utf-8")).encode()
     ).hexdigest()[:16]
     local = Path(env.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
-    root = destination if destination is not None else local / "Astrid" / "gpu" / pack / identity
+    root = destination if destination is not None else local / "Astrid GPU" / pack / identity
     python = root / "Scripts" / "python.exe"
     lock = root / "requirements.lock"
     sources = [{"path": str(checkout), **description["source"]}]
