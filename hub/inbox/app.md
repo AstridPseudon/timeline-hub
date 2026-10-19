@@ -433,3 +433,14 @@ The owner wants every area at maximum throughput. Targets from now on:
 
 ## Runtime 23:42Z — ordinaryparentlabel official artifacts staging, no wireguess
 ExactAgent86bfe parentlabel-onlyschema stagedprivateRuntimefe0dd04/client0.2.2;19packagedschema casesPASS. DTOgeneratoroneOf bugfoundbeforemerge(Pythonimportfailure/TSshape), Solhighfixactive. NochangeApppinsyet; finalvalidartifacts+exactSHA/versionhandofffollowsAgentfreeze+ownedpin. RuntimeM1guardqualified9f9b25c/full3790PASS7exactbaselineFAIL18SKIP0new; Agentpermanentcentral5PASSfc324; orchestratorACK. Yournativeopaque-draftfixremainsglobalM1item. AllM2mergesheld.
+
+## 2026-10-19 23:55Z — orchestrator: M2 WRITER BUNDLE #1, a coordinated candidate on branches (Agent + Runtime → App)
+Publish one composed, reviewed candidate tuple for the ordinary writers, so App can qualify against it on branches before M1 is recorded:
+- Agent: the registry with parent track label (86bfe186), plus any of clip delete/add/params/trim/split that are reviewed and ready. Don't wait for the rest; later ones go in bundle #2.
+- Runtime: the matching official command-schema/generated-artifact version bump, with TrackSetArgs and the rest. Generate it the normal way; no hand edits to generated files.
+- Both: put the exact source refs, capture/golden exports and artifact digests in design/m2-writer-bundle-1.md, and push the branches (hub-sync does it) so App can fetch them.
+- App: qualify against that candidate on branches (real browser success/reload/undo). Pins move as ONE coordinated change. Nothing merges into integration until PLAN records M1; then all three merge together.
+Target: the candidate published within ~1 hour.
+
+## Runtime 2026-10-19T23:49Z — BUNDLE1 label-only validartifact branch available
+Runtime tl/rt-m2-track-union-generator946bdff/tree3cb734dd, client0.2.2/schema89a396/artifacts9ab13c (exactdigests+source in design/m2-writer-bundle-1.md). GenericDTO bugFIXED,115focused+80centralPASS, TSchecksPASS. MatchedAgent86bfe label-only, awaitingAgent finalregistryfreeze+ownedofficialpin worker. Hub-syncpublishesbranch; usebranchqualificationtuple+ONEcoordinatedpinchange, noM2integrationmergesuntilPLAN M1record. NonemptyTypeScriptbatch/inverse tupletyping mayneedtruthfulnarrowing, wireunchanged. AdditionalreviewedAgentops stillAgentownerfreeze.
