@@ -25,6 +25,8 @@ import {
   useSendMessage,
   useAgentModels,
   useSetAgentModel,
+  useLocalAgents,
+  useSetLocalAgent,
 } from '@/tools/video-editor/hooks/useAgentSession.ts';
 import { useAgentVoice } from '@/tools/video-editor/hooks/useAgentVoice.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
@@ -274,6 +276,8 @@ function AvailableAgentChatPanel({
   const sessions = useAgentSessions(timelineId, projectId);
   const modelCatalog = useAgentModels();
   const setAgentModel = useSetAgentModel();
+  const localAgents = useLocalAgents();
+  const setLocalAgent = useSetLocalAgent();
   const projectChat = useProjectChat(projectId);
   const saveDraft = useSaveProjectDraft(projectId);
   const selectSession = useSelectProjectSession(projectId);
@@ -300,8 +304,11 @@ function AvailableAgentChatPanel({
   const [modelListOpen, setModelListOpen] = useState(false);
   const openModelList = useCallback((open: boolean) => {
     setModelListOpen(open);
-    if (open) void modelCatalog.refetch();
-  }, [modelCatalog]);
+    if (open) {
+      void modelCatalog.refetch();
+      void localAgents.refetch();
+    }
+  }, [modelCatalog, localAgents]);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
   // and decoupled from pane open state so the close-path bug from the rev-4
   // setIsTasksPaneOpenProgrammatic approach can't recur.
@@ -901,12 +908,17 @@ function AvailableAgentChatPanel({
         <div className="flex min-w-0 shrink items-center justify-end gap-1">
           <AgentChatModelSelector
             catalog={modelCatalog.data ?? emptyModelCatalog}
-            busy={isProcessing || sendMessage.isPending || setAgentModel.isPending}
+            agents={localAgents.data?.agents}
+            selectedAgent={localAgents.data?.selectedAgent}
+            onSelectAgent={(agent) => setLocalAgent.mutateAsync(agent).then(() => undefined)}
+            agentsLoading={localAgents.isLoading}
+            agentsError={localAgents.error instanceof Error ? localAgents.error.message : null}
+            busy={isProcessing || sendMessage.isPending || setAgentModel.isPending || setLocalAgent.isPending}
             open={modelListOpen}
             onOpenChange={openModelList}
             loading={modelCatalog.isLoading}
             catalogError={modelCatalog.error instanceof Error ? modelCatalog.error.message : null}
-            selectionError={setAgentModel.error instanceof Error ? setAgentModel.error.message : null}
+            selectionError={setLocalAgent.error instanceof Error ? setLocalAgent.error.message : setAgentModel.error instanceof Error ? setAgentModel.error.message : null}
             onSelectModel={(model) => setAgentModel.mutateAsync(model).then(() => undefined)}
           />
           {sessionOptions.length > 0 && projectChat.data && (sessionOptions.length > 1 || hasMainContract) && (

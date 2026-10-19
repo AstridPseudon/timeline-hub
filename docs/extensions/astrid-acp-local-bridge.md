@@ -1,8 +1,8 @@
 # Astrid App local Astrid ACP bridge
 
 The Astrid App ACP bridge is a user-machine process. It keeps only ephemeral
-connection handles in memory; Astrid/OMP remains the authority for profiles,
-opaque session IDs, and session storage. The browser never receives the bearer
+connection handles in memory; each selected agent remains the authority for its
+profiles, opaque session IDs, and session storage. The browser never receives the bearer
 token or starts a child process.
 
 In one terminal, start the bridge with explicit host-owned paths. The bridge
@@ -65,6 +65,57 @@ authenticated providers, then loads the same
 conversation ID and applies the chosen model before the next prompt. Switching
 waits until the current request finishes. The browser receives provider/model
 metadata and usage limits, never credentials or account tokens.
+
+## Other agents already on this computer
+
+The picker has an **Agent** section above Astrid's OMP models. It detects
+`claude` and `codex` on the bridge process's PATH, then asks only
+`claude auth status --text` and `codex login status` whether each is signed in.
+Claude Code uses your Claude login; Codex uses your Codex CLI login (including
+ChatGPT). These are separate from OMP's provider logins. Status errors appear as
+unknown, and child diagnostics and credential files never cross into the App.
+
+Neither CLI currently exposes a native ACP mode. Install its standard adapter
+explicitly in a terminal if the picker says **Available to install**:
+
+```sh
+npm install -g @agentclientprotocol/claude-agent-acp
+npm install -g @agentclientprotocol/codex-acp
+```
+
+These are the current packages maintained at
+[Claude Agent ACP](https://github.com/agentclientprotocol/claude-agent-acp) and
+[Codex ACP](https://github.com/agentclientprotocol/codex-acp), successors to the
+Zed-scoped packages. The bridge runs the installed `claude-agent-acp` or
+`codex-acp` executable directly, pins it to the detected CLI, and never invokes
+an installer or `npx`. To sign in, run `claude auth login` or `codex login`, then
+reopen the picker. Restart the bridge if its PATH needs updating.
+The current Claude adapter requires Node 22 or newer on that PATH; the App's
+Node 20 checks use fake adapters and do not establish live adapter compatibility.
+
+The choice is saved in this App origin's local settings and applies to new
+chats. Existing project chats keep their original agent. Only external session
+IDs are prefixed (`claude-code:` or `codex:`) at the bridge boundary, so native
+IDs from different stores cannot collide; the prefix never reaches an adapter.
+OMP's IDs and model default are unchanged. External agents use their own
+default model; the OMP model list applies only to Astrid.
+
+Every external turn receives the installed Astrid packaged profile from
+`astrid --agent-profile-file`, the editor integration instructions, and the same
+scoped editor context. Astrid skills installed by the setup guide remain
+available to the local agent; chat never installs skills or changes global
+agent configuration. Project associations, replay, cancellation, and terminal
+and permission callbacks use the existing ACP bridge.
+
+The external profile and media policy are prompt context, rather than an
+adapter-enforced system policy. The OMP overlay that disables native image
+tools applies to Astrid only. Permission requests retain the bridge's existing
+host-side decisions; this change does not add an approval dialog.
+
+Live verification after explicitly installing the adapters: reopen the picker,
+start a new chat with each signed-in agent, read a disposable project's timeline
+through Astrid, exercise a tool approval and cancellation, then reload and
+continue each saved chat after selecting a different default agent.
 
 The installed OMP build does not make sessions stored under a custom
 `--session-dir` discoverable to a newly spawned ACP process. Astrid App therefore

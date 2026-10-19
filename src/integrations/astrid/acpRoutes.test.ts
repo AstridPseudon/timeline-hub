@@ -4,6 +4,17 @@ import { AstridLocalAcpRoutes } from './acpRoutes.ts';
 import type { AstridBridgeTransport } from './transport.ts';
 
 describe('AstridLocalAcpRoutes', () => {
+  it('discovers local agents and launches the exact selected agent', async () => {
+    const catalog = { agents: [{ id: 'codex', name: 'Codex', installed: true, authStatus: 'signed-in', adapterInstalled: false, installCommand: 'npm install -g @agentclientprotocol/codex-acp', loginCommand: 'codex login' }] };
+    const requestJson = vi.fn(async (path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) => schema.parse(path === '/acp/agents' ? catalog : { connection_id: 'c1', initialize: {} }));
+    const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
+    await expect(routes.agents()).resolves.toEqual(catalog);
+    await routes.connect('codex');
+    expect(requestJson.mock.calls.map(([path, request]) => ({ path, request }))).toEqual([
+      { path: '/acp/agents', request: { method: 'GET' } },
+      { path: '/acp/connect', request: { method: 'POST', body: { agent: 'codex' } } },
+    ]);
+  });
   it('reads the provider catalog and selects a model through the shared ACP transport', async () => {
     const catalog = { currentModel: 'openai/gpt-5', providers: [{ id: 'openai', name: 'OpenAI', signedIn: true, models: [{ id: 'gpt-5', name: 'GPT 5' }], usage: { limits: [{ usedFraction: 0.5, unit: 'percent' }] } }] };
     const requestJson = vi.fn(async (path: string, request: unknown, schema: { parse: (value: unknown) => unknown }) => {

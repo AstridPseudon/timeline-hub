@@ -14,6 +14,7 @@ import { recordedEditorResults, type RecordedEditorResult } from '../runtime/edi
 import { runElementAcpRoundtrip } from '../runtime/elementAcpRoundtrip';
 import { acceptedReplayRequestIds } from '../runtime/agentRequestReceipts';
 import { readAstridTaskRefs, mergeAstridTaskRefs, type AgentTaskLink } from '../runtime/agentTaskLinks';
+import { LOCAL_AGENT_SETTING_KEY, savedLocalAgent, sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 
 type SendMessageInput = { message: string; attachments?: AgentTurnAttachment[]; requestId?: string };
 type CapturedSendInput = { input: SendMessageInput; projectId: string | null; sessionId: string; context: AgentChatEditorContext };
@@ -172,7 +173,8 @@ export function extractAstridElementOperations(content: string): AstridElementOp
 export function stripAstridEditorContext(content: string): string {
   if (content.startsWith('<astrid_element_result>')) return '';
   if (content.startsWith('<astrid_live_scene_result>') || content.startsWith('<astrid_live_scene_context>')) return '';
-  const markerIndex = content.indexOf('<astrid_editor_context>');
+  const markers = ['<astrid_editor_context>', '<astrid_agent_context>'].map(marker => content.indexOf(marker)).filter(index => index >= 0);
+  const markerIndex = markers.length ? Math.min(...markers) : -1;
   if (markerIndex >= 0) return content.slice(0, markerIndex).trimEnd();
 
   // Sessions created before the structured contract used this text prefix.
@@ -276,8 +278,8 @@ export class AstridAgentSessionStore {
     timeoutMs: ACP_PROMPT_TIMEOUT_MS,
   }), private readonly loadLiveSceneAcpRoundtrip: () => Promise<LiveSceneAcpModule> =
     () => import('../runtime/liveSceneAcpRoundtrip')) {}
-  private connectionId: string | null = null;
-  private connectionPromise: Promise<string> | null = null;
+  private readonly connectionIds = new Map<LocalAgentId, string>();
+  private readonly connectionPromises = new Map<LocalAgentId, Promise<string>>();
   private eventsPromise: Promise<void> | null = null;
   private readonly sessions = new Map<string, AgentSessionView>();
   private readonly loaded = new Set<string>();
@@ -289,35 +291,43 @@ export class AstridAgentSessionStore {
   private readonly sessionProjects = new Map<string, string>();
   private readonly replayMessages = new Map<string, Map<string, string>>();
 
-  private async connection(): Promise<string> {
-    if (this.connectionId) return this.connectionId;
-    if (this.connectionPromise) return this.connectionPromise;
+  private async connection(agent: LocalAgentId = savedLocalAgent()): Promise<string> {
+    const current = this.connectionIds.get(agent);
+    if (current) return current;
+    const pending = this.connectionPromises.get(agent);
+    if (pending) return pending;
 
-    this.connectionPromise = this.client.acp.connect()
+    const connect = agent === 'astrid' ? this.client.acp.connect() : this.client.acp.connect(agent);
+    const promise = connect
       .then((connection) => {
-        this.connectionId = connection.connection_id;
+        this.connectionIds.set(agent, connection.connection_id);
         return connection.connection_id;
       })
       .finally(() => {
-        this.connectionPromise = null;
+        this.connectionPromises.delete(agent);
       });
-    return this.connectionPromise;
+    this.connectionPromises.set(agent, promise);
+    return promise;
   }
 
   /** Best-effort release of the host process when the tab goes away; the bridge's idle sweep is the backstop. */
   closeConnectionOnPageHide(): void {
-    const connectionId = this.connectionId;
-    if (!connectionId) return;
-    this.retireConnection(connectionId);
-    void this.client.acp.disconnect(connectionId, { keepalive: true }).catch(() => undefined);
+    for (const [agent, connectionId] of this.connectionIds) {
+      this.retireConnection(connectionId);
+      void this.client.acp.disconnect(connectionId, { keepalive: true }).catch(() => undefined);
+      this.connectionIds.delete(agent);
+    }
   }
 
   private retireConnection(connectionId: string): void {
-    if (this.connectionId !== connectionId) return;
-    this.connectionId = null;
-    this.loaded.clear();
-    this.loading.clear();
+    const agent = [...this.connectionIds].find(([, id]) => id === connectionId)?.[0];
+    if (!agent) return;
+    this.connectionIds.delete(agent);
+    for (const [sessionId, entry] of this.loading) if (entry.connectionId === connectionId) this.loading.delete(sessionId);
+    for (const sessionId of this.loaded) if (sessionAgentId(sessionId) === agent) this.loaded.delete(sessionId);
   }
+
+  private connected(agent: LocalAgentId, connectionId: string): boolean { return this.connectionIds.get(agent) === connectionId; }
 
   private state(sessionId: string): AgentSessionView {
     const current = this.sessions.get(sessionId);
@@ -367,7 +377,7 @@ export class AstridAgentSessionStore {
     this.replayMessages.set(sessionId, new Map());
     const entry = { connectionId, promise: Promise.resolve() };
     entry.promise = this.client.acp.loadSession(connectionId, sessionId).then(() => {
-      if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected during saved chat load.');
+      if (!this.connected(sessionAgentId(sessionId), connectionId)) throw new Error('ACP disconnected during saved chat load.');
       this.loaded.add(sessionId);
     }).finally(() => { if (this.loading.get(sessionId) === entry) this.loading.delete(sessionId); });
     this.loading.set(sessionId, entry);
@@ -376,19 +386,34 @@ export class AstridAgentSessionStore {
 
   async projectChat(projectId: string) { return this.client.acp.projectChat(projectId); }
   async models() { return this.client.acp.models(); }
+  async agents() { return { ...(await this.client.acp.agents()), selectedAgent: savedLocalAgent() }; }
+  async setAgent(agent: LocalAgentId) {
+    if (this.activePrompts.size > 0) throw new Error('Wait for the active agent turn before switching agents.');
+    const catalog = await this.client.acp.agents();
+    if (agent === 'astrid') {
+      globalThis.localStorage?.setItem(LOCAL_AGENT_SETTING_KEY, agent);
+      return { ...catalog, selectedAgent: agent };
+    }
+    const choice = catalog.agents.find(candidate => candidate.id === agent);
+    if (!choice?.installed || !choice.adapterInstalled) throw new Error(`${choice?.name ?? agent} is not installed or its adapter is unavailable.`);
+    if (choice.authStatus !== 'signed-in') throw new Error(`${choice.name} is not signed in.`);
+    globalThis.localStorage?.setItem(LOCAL_AGENT_SETTING_KEY, agent);
+    return { ...catalog, selectedAgent: agent };
+  }
   async setModel(model: string) {
     if (this.activePrompts.size > 0) throw new Error('Wait for the active agent turn before switching models.');
     const result = await this.client.acp.setModel(model);
     // The bridge restarts ACP to refresh its authenticated provider catalog.
     // Reload this conversation by its existing ID on the next request.
-    if (this.connectionId) this.retireConnection(this.connectionId);
+    const astridConnection = this.connectionIds.get('astrid');
+    if (astridConnection) this.retireConnection(astridConnection);
     return result;
   }
   async unassignedProjectSessions(projectId: string) {
     return this.client.acp.unassignedProjectSessions(projectId, await this.connection());
   }
   async associateProjectSession(projectId: string, expectedRevision: number, sessionId: string) {
-    return this.client.acp.associateProjectSession(projectId, await this.connection(), expectedRevision, sessionId);
+    return this.client.acp.associateProjectSession(projectId, await this.connection(sessionAgentId(sessionId)), expectedRevision, sessionId);
   }
   async selectProjectSession(projectId: string, expectedRevision: number, sessionId: string | null) {
     return this.client.acp.selectProjectSession(projectId, expectedRevision, sessionId);
@@ -401,7 +426,12 @@ export class AstridAgentSessionStore {
   }
 
   async create(projectId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string): Promise<{ id: string; projectChat: ProjectChatState }> {
-    const connectionId = await this.connection();
+    const chatBeforeCreate = mode === 'new' ? null : await this.client.acp.projectChat(projectId);
+    const existingId = mode === 'ensure_main'
+      ? chatBeforeCreate?.main_session_id
+      : chatBeforeCreate?.selected_session_id ?? chatBeforeCreate?.main_session_id;
+    const agent = existingId ? sessionAgentId(existingId) : savedLocalAgent();
+    const connectionId = await this.connection(agent);
     const chat = await this.client.acp.createProjectSession(projectId, connectionId, mode, operationId);
     const id = (mode === 'ensure_main' ? chat.main_session_id : null) ?? chat.operation_session_id ?? chat.selected_session_id;
     if (!id) throw new Error('Astrid ACP did not return a session ID.');
@@ -413,14 +443,15 @@ export class AstridAgentSessionStore {
 
   async get(projectId: string, sessionId: string, replay = false): Promise<AgentSessionView> {
     await this.assertOwned(projectId, sessionId);
-    const connectionId = await this.connection();
+    const agent = sessionAgentId(sessionId);
+    const connectionId = await this.connection(agent);
     if (replay) {
       if (this.activePrompts.has(sessionId)) throw new Error('Wait for the active request before checking saved delivery.');
       this.loaded.delete(sessionId);
     }
     await this.load(connectionId, sessionId);
     await this.pullEvents();
-    if (this.connectionId !== connectionId) throw new Error('Saved delivery could not be verified because ACP disconnected.');
+    if (!this.connected(agent, connectionId)) throw new Error('Saved delivery could not be verified because ACP disconnected.');
     const session = cloneSession(this.state(sessionId));
     for (const turn of session.turns) {
       if (turn.role !== 'user' || !turn.messageId) continue;
@@ -463,7 +494,8 @@ export class AstridAgentSessionStore {
       await this.assertOwned(projectId, sessionId);
       if (signal.aborted) return;
       checkCurrent();
-      const connectionId = await this.connection();
+      const agent = sessionAgentId(sessionId);
+      const connectionId = await this.connection(agent);
       promptConnectionId = connectionId;
       if (signal.aborted) return;
       await this.load(connectionId, sessionId);
@@ -530,10 +562,10 @@ export class AstridAgentSessionStore {
       this.dispatchedPrompts.add(sessionId);
       if (!projectId) throw new Error('Select a project to chat.');
       await this.client.acp.promptProjectSession(projectId, connectionId, sessionId, promptBlocks);
-      if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected. Retry the saved message.');
+      if (!this.connected(agent, connectionId)) throw new Error('ACP disconnected. Retry the saved message.');
       checkCurrent();
       await this.pullEvents();
-      if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected. Retry the saved message.');
+      if (!this.connected(agent, connectionId)) throw new Error('ACP disconnected. Retry the saved message.');
       const draft = trimString(session.assistantDraft);
       const hasElementOperations = /<astrid_element_operation>/.test(draft);
       let finalContent = draft;
@@ -547,7 +579,7 @@ export class AstridAgentSessionStore {
             checkCurrent(); throwIfPromptCancelled(signal);
             session.assistantDraft = undefined; session.assistantDraftMessageId = undefined;
             await this.client.acp.promptProjectSession(projectId!, connectionId, sessionId, [{type:'text',text:feedback}]);
-            if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected while returning element results.');
+            if (!this.connected(agent, connectionId)) throw new Error('ACP disconnected while returning element results.');
             await this.pullEvents(); checkCurrent();
             return trimString(session.assistantDraft);
           },
@@ -565,7 +597,7 @@ export class AstridAgentSessionStore {
             session.assistantDraft = undefined;
             session.assistantDraftMessageId = undefined;
             await this.client.acp.promptProjectSession(projectId!, connectionId, sessionId, [{ type: 'text', text: feedback }]);
-            if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected. Retry the saved message.');
+            if (!this.connected(agent, connectionId)) throw new Error('ACP disconnected. Retry the saved message.');
             await this.pullEvents();
             checkCurrent();
             return trimString(session.assistantDraft);
@@ -576,7 +608,7 @@ export class AstridAgentSessionStore {
       this.commitAssistantDraft(session, finalContent);
     } catch (error) {
       if (error instanceof BridgeTransportFailure || (error instanceof BridgeRouteError && error.code === 'connection_not_found')) {
-        if (promptConnectionId && this.connectionId === promptConnectionId) this.retireConnection(promptConnectionId);
+        if (promptConnectionId && this.connected(sessionAgentId(sessionId), promptConnectionId)) this.retireConnection(promptConnectionId);
       }
       throw error;
     } finally {
@@ -613,7 +645,7 @@ export class AstridAgentSessionStore {
   async cancel(sessionId: string): Promise<void> {
     const cancelledBeforeDispatch = this.activePrompts.has(sessionId) && !this.dispatchedPrompts.has(sessionId);
     this.promptControllers.get(sessionId)?.abort();
-    const connectionId = await this.connection();
+    const connectionId = await this.connection(sessionAgentId(sessionId));
     await this.client.acp.cancelSession(connectionId, sessionId);
     this.state(sessionId).status = cancelledBeforeDispatch ? 'waiting_user' : 'cancelled';
     await this.pullEvents();
@@ -622,19 +654,19 @@ export class AstridAgentSessionStore {
   private async pullEvents(): Promise<void> {
     if (this.eventsPromise) return this.eventsPromise;
     this.eventsPromise = (async () => {
-      const connectionId = await this.connection();
-      const response = await this.client.acp.events(connectionId).catch((error: unknown) => {
-        // The bridge reaps idle connections; an expired id means reconnect.
-        if (error instanceof BridgeRouteError && error.code === 'connection_not_found') {
-          this.retireConnection(connectionId);
-          return null;
-        }
-        throw error;
-      });
-      if (!response) return;
-      if (this.connectionId !== connectionId) return;
-      for (const notification of response.notifications) this.applyNotification(notification);
-      if (response.disconnected) this.retireConnection(connectionId);
+      const connections = [...this.connectionIds.entries()];
+      await Promise.all(connections.map(async ([agent, connectionId]) => {
+        const response = await this.client.acp.events(connectionId).catch((error: unknown) => {
+          if (error instanceof BridgeRouteError && error.code === 'connection_not_found') {
+            this.retireConnection(connectionId);
+            return null;
+          }
+          throw error;
+        });
+        if (!response || !this.connected(agent, connectionId)) return;
+        for (const notification of response.notifications) this.applyNotification(notification);
+        if (response.disconnected) this.retireConnection(connectionId);
+      }));
     })().finally(() => {
       this.eventsPromise = null;
     });
@@ -776,6 +808,19 @@ export function isTimelineAgentSessionsAvailable(): boolean {
 }
 
 const agentModelsQueryKey = ['agent-models'] as const;
+export const localAgentsQueryKey = ['local-agents'] as const;
+
+export function useLocalAgents() {
+  return useQuery({ queryKey: localAgentsQueryKey, queryFn: () => agentStore.agents(), retry: false });
+}
+
+export function useSetLocalAgent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (agent: LocalAgentId) => agentStore.setAgent(agent),
+    onSuccess: (result) => { queryClient.setQueryData(localAgentsQueryKey, result); void queryClient.invalidateQueries({ queryKey: localAgentsQueryKey }); },
+  });
+}
 
 export function useAgentModels(enabled = true) {
   return useQuery({

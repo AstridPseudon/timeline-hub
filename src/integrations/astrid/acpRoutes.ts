@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { AstridBridgeTransport } from './transport.ts';
+import { localAgentCatalogSchema, type LocalAgentId } from './localAgents.ts';
 
 const connectionSchema = z.strictObject({
   connection_id: z.string().min(1),
@@ -116,10 +117,14 @@ export class AstridLocalAcpRoutes {
     return response.result;
   }
 
-  async connect(): Promise<AstridAcpConnection> {
+  async agents() {
+    return this.transport.requestJson('/acp/agents', { method: 'GET' }, localAgentCatalogSchema, 'List local agents');
+  }
+
+  async connect(agent?: LocalAgentId): Promise<AstridAcpConnection> {
     return this.transport.requestJson(
       '/acp/connect',
-      { method: 'POST', body: {} },
+      { method: 'POST', body: agent ? { agent } : {} },
       connectionSchema,
       'ACP connect',
     );

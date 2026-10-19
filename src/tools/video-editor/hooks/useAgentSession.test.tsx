@@ -22,6 +22,7 @@ import {
   useSetAgentModel,
 } from './useAgentSession.ts';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
+import { LOCAL_AGENT_SETTING_KEY } from '@/integrations/astrid/localAgents.ts';
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -34,9 +35,84 @@ function wrapperWithClient(client: QueryClient) {
   };
 }
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  localStorage.removeItem(LOCAL_AGENT_SETTING_KEY);
+});
 
 describe('timeline agent ACP chat', () => {
+  it('persists a usable local agent default and rejects unavailable or signed-out choices', async () => {
+    const acp = {
+      agents: vi.fn(async () => ({ agents: [
+        { id: 'claude-code', name: 'Claude Code', installed: true, adapterInstalled: true, authStatus: 'signed-in' },
+        { id: 'codex', name: 'Codex', installed: true, adapterInstalled: true, authStatus: 'signed-out' },
+      ] })),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    localStorage.removeItem(LOCAL_AGENT_SETTING_KEY);
+    await store.setAgent('claude-code');
+    expect(localStorage.getItem(LOCAL_AGENT_SETTING_KEY)).toBe('claude-code');
+    await expect(store.setAgent('codex')).rejects.toThrow('not signed in');
+    acp.agents.mockResolvedValue({ agents: [{ id: 'claude-code', name: 'Claude Code', installed: false, adapterInstalled: false, authStatus: 'signed-in' }] });
+    await expect(store.setAgent('claude-code')).rejects.toThrow('not installed');
+  });
+
+  it('routes saved sessions by their original agent while new sessions use the current default', async () => {
+    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'claude-code');
+    const connects: Array<string | undefined> = [];
+    const projectChat = { project_id: 'p', revision: 1, selected_session_id: null, main_session_id: null, sessions: [], draft: { revision: 1 } };
+    const acp = {
+      connect: vi.fn(async (agent?: string) => { connects.push(agent); return { connection_id: `conn-${agent ?? 'astrid'}` }; }),
+      createProjectSession: vi.fn(async (_project: string, _connection: string) => ({ ...projectChat, operation_session_id: 'claude-code:new-1', selected_session_id: 'claude-code:new-1', sessions: [{ id: 'claude-code:new-1' }] })),
+      projectChat: vi.fn(async (project: string) => ({ ...projectChat, project_id: project, sessions: [{ id: 'astrid-old' }, { id: 'claude-code:new-1' }] })),
+      loadSession: vi.fn(async () => ({})),
+      events: vi.fn(async () => ({ disconnected: false, notifications: [] })),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await store.create('p', 'new', 'op-1');
+    await store.get('p', 'astrid-old');
+    await store.get('p', 'claude-code:new-1');
+    expect(connects).toEqual(['claude-code', undefined]);
+    expect(acp.loadSession.mock.calls.map(call => call[0])).toEqual(['conn-astrid', 'conn-claude-code']);
+  });
+
+  it('lists saved Astrid chats without connecting to an unavailable selected default', async () => {
+    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'codex');
+    const connects: Array<string | undefined> = [];
+    const chat = { project_id: 'p', revision: 1, selected_session_id: 'astrid-saved', main_session_id: 'astrid-saved', sessions: [{ id: 'astrid-saved' }], draft: { revision: 1 } };
+    const acp = {
+      projectChat: vi.fn(async () => chat),
+      connect: vi.fn(async (agent?: string) => {
+        connects.push(agent);
+        if (agent === 'codex') throw new Error('Codex adapter is unavailable');
+        return { connection_id: 'conn-astrid' };
+      }),
+      loadSession: vi.fn(async () => ({})),
+      events: vi.fn(async () => ({ disconnected: false, notifications: [] })),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await expect(store.list('p')).resolves.toEqual([{ id: 'astrid-saved', status: 'waiting_user' }]);
+    expect(connects).toEqual([]);
+    await store.get('p', 'astrid-saved');
+    expect(connects).toEqual([undefined]);
+    expect(acp.loadSession).toHaveBeenCalledWith('conn-astrid', 'astrid-saved');
+  });
+
+  it('keeps ensure_main on the existing main session agent after the default changes', async () => {
+    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'claude-code');
+    const connects: Array<string | undefined> = [];
+    const priorChat = { project_id: 'p', revision: 1, selected_session_id: 'astrid-selected', main_session_id: 'codex:main', sessions: [{ id: 'astrid-selected' }, { id: 'codex:main' }], draft: { revision: 1 } };
+    const acp = {
+      projectChat: vi.fn(async () => priorChat),
+      connect: vi.fn(async (agent?: string) => { connects.push(agent); return { connection_id: `conn-${agent ?? 'astrid'}` }; }),
+      createProjectSession: vi.fn(async () => priorChat),
+      events: vi.fn(async () => ({ disconnected: false, notifications: [] })),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await store.create('p', 'ensure_main', 'op-2');
+    expect(connects).toEqual(['codex']);
+  });
+
   it('loads the model catalog and refreshes the chip after a selection', async () => {
     let currentModel = 'deepseek/deepseek-chat';
     const models = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockImplementation(async () => ({
@@ -347,6 +423,8 @@ describe('timeline agent ACP chat', () => {
     expect(stripAstridEditorContext('make the first clip start later\n\n<astrid_editor_context>\n{}\n</astrid_editor_context>'))
       .toBe('make the first clip start later');
     expect(stripAstridEditorContext('<astrid_editor_context>\n{}\n</astrid_editor_context>')).toBe('');
+    expect(stripAstridEditorContext('hello\n<astrid_agent_context>private</astrid_agent_context>')).toBe('hello');
+    expect(stripAstridEditorContext('hello\n<astrid_agent_context>private</astrid_agent_context>\n<astrid_editor_context>{}</astrid_editor_context>')).toBe('hello');
     expect(stripAstridEditorContext('make the first clip start later\n\nAstrid editor context:\nTimeline ID: timeline-1'))
       .toBe('make the first clip start later');
   });
