@@ -19,6 +19,12 @@ import {
   type Task,
   type ObjectLocation,
   type TimelineInspectionResult,
+  type CommitAcceptedMutation,
+  type CommitPreviewResponse,
+  type CommitRequest,
+  type HistoryPage,
+  type MediaSelection,
+  type MediaSelectionQuery,
   type Transport,
   type RequestBody,
 } from './generated.ts';
@@ -68,7 +74,7 @@ function configuredRuntimeIdentity(): RuntimeIdentityBinding | undefined {
 // because call sites construct clients ad hoc. A later session that sees another
 // Runtime instance or realm is a restart, never a silent rebind: relaunch is
 // required (a page reload starts a fresh observation) and drafts stay untouched.
-export type ObservedRuntimeIdentities = Map<string, { realmId: string; runtimeInstanceId: string; fencedReason?: string }>;
+export type ObservedRuntimeIdentities = Map<string, { actorId?: string; realmId: string; runtimeInstanceId: string; fencedReason?: string }>;
 const RESTART_INSTANCE = 'Runtime restarted—relaunch workspace. The selected Runtime instance changed; your timeline draft is preserved.';
 const RESTART_REALM = 'Runtime realm changed—relaunch workspace. The connected Runtime belongs to a different realm; your timeline draft is preserved.';
 const observedRuntimeIdentities: ObservedRuntimeIdentities = new Map();
@@ -190,6 +196,8 @@ export function isRuntimeUnavailableFailure(error: unknown): boolean {
 export function isRuntimeConflict(error: unknown): error is ApiError {
   if (!(error instanceof ApiError) || error.status !== 409) return false;
   if (error.code === 'realm_admission_failed' || error.code === 'runtime_unhealthy') return false;
+  if (error.details?.status === 'conflict') return true;
+  if (error.details?.status === 'refused') return false;
   if (error.code === 'timeline_version_conflict' || error.code === 'stale_write') return true;
   // Classify on structure, never on message wording. The Runtime's stale-head
   // 409 (publish and restore) carries details.reason = 'stale_head'; its other
@@ -197,6 +205,30 @@ export function isRuntimeConflict(error: unknown): error is ApiError {
   if (error.code !== 'conflict') return false;
   const details = error.details ?? {};
   return details.reason === 'stale_head' || (typeof details.expected === 'number' && typeof details.actual === 'number');
+}
+
+export type RuntimeCommitFailureKind =
+  | 'conflict'
+  | 'refused'
+  | 'validation'
+  | 'authorization'
+  | 'storage'
+  | 'unknown';
+
+/** Classify commit failures from the typed Runtime status/reason fields. */
+export function classifyRuntimeCommitFailure(error: unknown): RuntimeCommitFailureKind {
+  if (!(error instanceof ApiError)) return 'unknown';
+  // These typed refusals leave the exact request retryable, including 409
+  // head contention. Keep them in the session's unknown-outcome retry lane.
+  if (error.details?.reason === 'head_busy' || error.details?.reason === 'runtime_unavailable') return 'unknown';
+  const status = error.details?.status;
+  if (status === 'conflict') return 'conflict';
+  if (status === 'refused') return 'refused';
+  if (error.status === 401 || error.status === 403) return 'authorization';
+  if (error.status === 400 || error.status === 422) return 'validation';
+  if (/storage|disk|space/i.test(error.code) || /storage|disk|space/i.test(String(error.details?.reason ?? ''))) return 'storage';
+  if (error.status >= 500) return 'unknown';
+  return 'unknown';
 }
 
 /**
@@ -290,13 +322,17 @@ export class AstridRuntimeClient {
     }
     const bound = this.identityStore.get(this.baseUrl);
     if (!bound) return;
+    if (bound.actorId && bound.actorId !== handshake.actor_id) this.fence('Runtime actor changed—relaunch workspace. Recoverable timeline work remains scoped to the original actor.');
     if (bound.realmId !== handshake.realm_id) this.fence(RESTART_REALM);
     if (bound.runtimeInstanceId !== instanceId) this.fence(RESTART_INSTANCE);
   }
 
   private commitObservedIdentity(health: Health, handshake: Handshake): void {
-    if (!this.identityStore.has(this.baseUrl)) {
-      this.identityStore.set(this.baseUrl, { realmId: handshake.realm_id, runtimeInstanceId: AstridRuntimeClient.instanceIdOf(health) });
+    const bound = this.identityStore.get(this.baseUrl);
+    if (!bound) {
+      this.identityStore.set(this.baseUrl, { actorId: handshake.actor_id, realmId: handshake.realm_id, runtimeInstanceId: AstridRuntimeClient.instanceIdOf(health) });
+    } else if (!bound.actorId) {
+      bound.actorId = handshake.actor_id;
     }
   }
 
@@ -382,6 +418,15 @@ export class AstridRuntimeClient {
   async reconnect(): Promise<RuntimeSession> {
     this.slot.current = null;
     return this.ensureSession();
+  }
+
+  /** Return the stable identity that may adopt recoverable local work. */
+  async getRecoverableIdentity(): Promise<{ actorId: string; realmId: string }> {
+    const { handshake, realm } = await this.ensureSession();
+    if (realm.realm_id !== handshake.realm_id || !handshake.actor_id || !handshake.realm_id) {
+      throw new RuntimeCompatibilityError('Runtime recovery identity is incomplete or mismatched', this.baseUrl);
+    }
+    return { actorId: handshake.actor_id, realmId: handshake.realm_id };
   }
 
   private async openSession() {
@@ -566,6 +611,31 @@ export class AstridRuntimeClient {
     });
   }
 
+  async commitTimeline(
+    projectId: string,
+    timelineId: string,
+    request: CommitRequest,
+    idempotencyKeyValue: string,
+  ): Promise<CommitAcceptedMutation | CommitPreviewResponse> {
+    return this.withMutation(() => this.client.commitTimeline(projectId, timelineId, request, idempotencyKeyValue));
+  }
+
+  async listTimelineCommits(
+    projectId: string,
+    timelineId: string,
+    cursor?: string,
+    limit = 50,
+  ): Promise<HistoryPage> {
+    return this.withSession(() => this.client.listTimelineCommits(projectId, timelineId, cursor, limit));
+  }
+
+  async getProjectMediaSelection(
+    projectId: string,
+    selection: MediaSelectionQuery,
+  ): Promise<MediaSelection> {
+    return this.withSession(() => this.client.getProjectMediaSelection(projectId, selection));
+  }
+
   async publishParentComposition(
     projectId: string,
     timelineId: string,
@@ -596,9 +666,9 @@ export class AstridRuntimeClient {
     return typeof createdAt === 'string' ? createdAt : null;
   }
 
-  async restoreProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string, expectedHead: string | null, key?: string): Promise<MutationResult<Record<string, unknown>>> {
+  async restoreProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string, expectedHead: string, expectedPublicationId: string, key?: string): Promise<CommitAcceptedMutation> {
     return this.withMutation(() => this.client.restoreProjectParentCompositionRevision(
-      projectId, timelineId, revision, expectedHead, key ?? idempotencyKey(),
+      projectId, timelineId, revision, expectedHead, expectedPublicationId, key ?? idempotencyKey(),
     ));
   }
 

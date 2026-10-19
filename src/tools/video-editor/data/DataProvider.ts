@@ -21,6 +21,13 @@ import type { AssetResolver } from '@/tools/video-editor/data/AssetResolver.ts';
 import type { TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import type { ShotCompositionPort } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import type {
+  CanonicalDocument,
+  CommitAcceptedMutation,
+  CommitRequest,
+  HistoryPage,
+  MutationReceipt,
+} from '@/integrations/runtime/generated.ts';
 export type {
   AssetProfile,
   SilenceRegion,
@@ -33,11 +40,46 @@ export interface TimelineHeadRevision {
   projectId: string;
   timelineId: string;
   headRevisionId: string | null;
+  /** Runtime acceptance identity. A revision without this pin is read-only. */
+  headPublicationId?: string | null;
+}
+
+export interface TimelineAcceptedIdentity {
+  revisionId: string;
+  publicationId: string;
+}
+
+export interface TimelineRecoveryIdentity {
+  actorId: string;
+  realmId: string;
+}
+
+export interface TimelineCommitResult {
+  response: CommitAcceptedMutation;
+  accepted: TimelineAcceptedIdentity;
+  canonicalDocument: CanonicalDocument;
+  /** The existing graph contract, projected from the accepted closure. */
+  graph: Record<string, unknown>;
+  /** Explicit enumerable copy; generated mutation receipts are non-enumerable elsewhere. */
+  receipt: MutationReceipt;
 }
 
 export interface TimelineSaveReceipt {
   configVersion: number;
   head: TimelineHeadRevision;
+}
+
+export interface TimelineCommitCapability {
+  commitTimeline(
+    request: CommitRequest,
+    idempotencyKey: string,
+  ): Promise<TimelineCommitResult>;
+  listTimelineCommits(timelineId: string, cursor?: string, limit?: number): Promise<HistoryPage>;
+  undoTimeline(
+    base: TimelineHeadRevision,
+    publications: readonly string[],
+    idempotencyKey: string,
+  ): Promise<TimelineCommitResult>;
 }
 
 export interface LoadedTimeline {
@@ -384,6 +426,11 @@ export interface ExtensionPersistenceService {
 // ---------------------------------------------------------------------------
 
 export interface DataProvider extends AssetResolver {
+  /** Command commits are supplied whole by gesture/command producers. */
+  timelineCommands?: TimelineCommitCapability;
+  commitTimeline?(request: CommitRequest, idempotencyKey: string): Promise<TimelineCommitResult>;
+  undoTimeline?(base: TimelineHeadRevision, publications: readonly string[], idempotencyKey: string): Promise<TimelineCommitResult>;
+  getRecoverableIdentity?(): Promise<TimelineRecoveryIdentity>;
   documents?: import('@/sdk/context.ts').ProjectDocumentSurface;
   projectTranscripts?: import('./typed/projectTranscript.ts').ProjectTranscriptRepository;
   /** When present, writes MUST use this immutable-head CAS path, never numeric versions. */

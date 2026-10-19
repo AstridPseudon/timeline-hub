@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AstridRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
+import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
 import { RuntimeDataProvider, toRuntimePublication } from './dataProvider.ts';
 import { TimelineSchemaIncompatibleError, TimelineVersionConflictError, isOwnUnacknowledgedSaveError } from '@/tools/video-editor/data/DataProvider.ts';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
@@ -620,27 +621,69 @@ describe('RuntimeDataProvider', () => {
     expect(fixture.read().documentVersion).toBe(2);
   });
 
-  it('loads project-scoped canonical revisions and restores through a current-head CAS', async () => {
+  it.each([true, false])('restores with both current head guards and validates the accepted closure (complete: %s)', async (complete) => {
     const fixture = runtimeFixture();
-    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    const restoreRequests: Array<{ body: unknown; key?: string }> = [];
+    const accepted = acceptedCommit(
+      { revision_id: 'restore-parent-old', publication_id: 'publication-restored' },
+      { revision_id: 'parent-r1', publication_id: 'publication-current' },
+      { projectId: PROJECT_ID, timelineId: TIMELINE_ID, children: true },
+    );
+    if (!complete) {
+      accepted.data.canonical_document.internal_timeline_revisions = [];
+      accepted.data.canonical_document.dependency_manifest.internal_timelines = [];
+    }
+    accepted.data.commands = [{ schema_version: 1, op: 'timeline.restore', version: '1', select: null, args: {
+      revision_id: 'parent-old', content_digest: accepted.data.canonical_document.parent_revision.content_digest,
+    } }];
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[1].endsWith('/composition-revisions/parent-old/restore')) {
+        restoreRequests.push({ body: JSON.parse(new TextDecoder().decode(args[3] as Uint8Array)), key: args[2]['Idempotency-Key'] });
+        accepted.receipt.idempotency_key = args[2]['Idempotency-Key'];
+        accepted.receipt.request_hash = fixtureDigest({ operation: 'restoreProjectParentCompositionRevision', path: args[1], publisher: accepted.data.publisher, request: restoreRequests[0].body }).slice(7);
+        return { status: 200, headers: {}, body: json(accepted) };
+      }
+      const response = await fixture.transport(...args);
+      if (args[1].endsWith('/inspect')) {
+        const inspection = JSON.parse(new TextDecoder().decode(response.body));
+        return { ...response, body: json({ ...inspection, head_publication_id: 'publication-current' }) };
+      }
+      return response;
+    } });
 
-    const history = await provider.shotComposition.listHistory!({
-      projectId: PROJECT_ID,
-      parentDocumentId: TIMELINE_ID,
-    });
+    const history = await provider.shotComposition.listHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID });
     expect(history.map((entry) => entry.revisionId)).toEqual(['parent-r1', 'parent-old']);
+    const restored = provider.shotComposition.restoreHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, revisionId: 'parent-old' });
+    if (complete) {
+      await expect(restored).resolves.toEqual({ newHead: 'restore-parent-old' });
+    } else {
+      await expect(restored).rejects.toThrow('missing internal revision');
+    }
+    expect(restoreRequests).toEqual([{
+      body: { expected_head: 'parent-r1', expected_publication_id: 'publication-current' },
+      key: expect.any(String),
+    }]);
+    expect(fixture.requests.some((request) => request.method === 'GET' && request.path.includes('/composition-revisions/'))).toBe(false);
+  });
 
-    const restored = await provider.shotComposition.restoreHistory!({
-      projectId: PROJECT_ID,
-      parentDocumentId: TIMELINE_ID,
-      revisionId: 'parent-old',
-    });
-    expect(restored.newHead).toBe('restore-parent-old');
-    expect(fixture.requests.some((request) => request.method === 'POST'
-      && request.path.endsWith('/composition-revisions/parent-old/restore')
-      && request.body?.expected_head === 'parent-r1')).toBe(true);
-    expect(fixture.requests.some((request) => request.method === 'GET'
-      && request.path.endsWith('/composition-revisions/restore-parent-old'))).toBe(true);
+  it.each([
+    ['missing publication', 'parent-r1', undefined],
+    ['unverified publication', 'parent-r1', null],
+    ['empty publication', 'parent-r1', ''],
+    ['missing revision', null, 'publication-current'],
+  ])('refuses restore before send with %s', async (_label, head, publication) => {
+    const fixture = runtimeFixture();
+    let restoreSends = 0;
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[1].endsWith('/restore')) restoreSends += 1;
+      const response = await fixture.transport(...args);
+      if (!args[1].endsWith('/inspect')) return response;
+      const inspection = JSON.parse(new TextDecoder().decode(response.body));
+      return { ...response, body: json({ ...inspection, head_revision_id: head, head_publication_id: publication }) };
+    } });
+    await expect(provider.shotComposition.restoreHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, revisionId: 'parent-old' }))
+      .rejects.toThrow(_label === 'empty publication' ? 'head_publication_id is missing' : 'verified revision and publication');
+    expect(restoreSends).toBe(0);
   });
 
   it('serializes canonical placement start after stale nested placement metadata', async () => {
