@@ -23,6 +23,7 @@ import type { DataProvider, TimelineHeadRevision } from '@/tools/video-editor/da
 import type { TimelineDraftRecord } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { canonicalJsonStringify, parseTimelineBundle, type TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 export { shouldAcceptPolledData } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 export type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 
@@ -52,6 +53,8 @@ export function useTimelineSave(
   // equality, so the first save POSTs expected_version 0 and succeeds.
   const configVersionRef = useRef(initialData?.configVersion ?? 0);
   const headRevisionRef = useRef(initialData?.head);
+  const recoveryConfigScope = useMemo(() => ({ provider, timelineId, config: createRecoveryConfig() }), [provider, timelineId]);
+  const recoveryConfig = recoveryConfigScope.config;
   const recoveryPendingRef = useRef(false);
   // Includes the asynchronous initial draft check and Retry awaiting an ACK.
   const recoveryActiveRef = useRef(true);
@@ -86,6 +89,7 @@ export function useTimelineSave(
     savedSeqRef,
     configVersionRef,
     headRevisionRef,
+    recoveryConfig,
     recoveryPendingRef,
     recoveryActiveRef,
     lastSavedSignatureRef,
@@ -95,7 +99,7 @@ export function useTimelineSave(
   const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl,
     legacyClean: () => commit.editSeqRef.current <= savedSeqRef.current && !persistence.isSavingRef.current
       && !recoveryActiveRef.current,
-    snapshotWriteBlockedRef, loaded: queries.timelineQuery.data, configVersionRef, headRevisionRef, lastSavedSignatureRef, store, shots });
+    snapshotWriteBlockedRef, loaded: queries.timelineQuery.data, configVersionRef, headRevisionRef, lastSavedSignatureRef, store, shots, recoveryConfig });
   snapshotWriteBlockedRef.current = commands.activeRef.current;
   const { clearDeferredRecoverySave, resumeDeferredRecoverySave } = persistence;
   const resumeDeferredRecoverySaveRef = useRef(resumeDeferredRecoverySave);
@@ -308,6 +312,7 @@ export function useTimelineSave(
     // overwrite instead of an honest CAS conflict.
     configVersionRef.current = record.baseVersion;
     headRevisionRef.current = recoveredHead;
+    recoveryConfig.remember(recoveredHead, draft.config);
     if (draft.bundle !== undefined) persistence.loadedBundleRef.current = draft.bundle;
     // The recovered record is the previous session's payload. A new-session
     // edit made while recovery was pending is held separately by persistence
@@ -318,7 +323,7 @@ export function useTimelineSave(
     // or transport failure must leave the recovered work retryable.
     setRecoveredAsDirty(true);
     commit.commitData(recovered, { save: true });
-  }, [canonicalReloadInProgressRef, commit, configVersionRef, persistence, provider, recoveryKey, resolveAssetUrl, timelineEditability, trustedRecoveryHead, offerRecovery, recoveryActiveRef]);
+  }, [canonicalReloadInProgressRef, commit, configVersionRef, persistence, provider, recoveryKey, resolveAssetUrl, timelineEditability, trustedRecoveryHead, offerRecovery, recoveryActiveRef, recoveryConfig]);
 
   const reloadCanonicalFromServer = persistence.reloadFromServer;
   const reloadFromServer = useCallback(async (options?: { clearDraft?: boolean; preserveDraft?: boolean }) => {

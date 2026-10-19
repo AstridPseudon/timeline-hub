@@ -6,7 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { createInteractionState } from '../lib/interaction-state.ts';
 import { buildPendingDragSession, commitDraggingSession } from './useClipDrag.helpers.ts';
-import { environment } from '../commands/__tests__/commitSessionEnvironment.ts';
+import { document as commandDocument, environment } from '../commands/__tests__/commitSessionEnvironment.ts';
+import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { createTimelineStore } from './timelineStore.ts';
 import { useTimelineSave } from './useTimelineSave.ts';
 import { loadTimelineDraft } from '../data/timelineDraftIndexedDb.ts';
@@ -17,8 +18,9 @@ import * as timelineData from '../lib/timeline-data.ts';
 import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
-import type { DataProvider } from '../data/DataProvider.ts';
+import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
+import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
@@ -32,8 +34,8 @@ function installStorage(env: Awaited<ReturnType<typeof environment>>) {
   } } });
 }
 
-async function mounted() {
-  const env = await environment();
+async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>) {
+  const env = existingEnv ?? await environment();
   installStorage(env);
   const snapshotSaves = vi.fn();
   const saveTimeline = vi.spyOn(env.provider, 'saveTimeline');
@@ -77,18 +79,19 @@ async function scoped() {
   const lastSavedSignatureRef = { current: initial.stableSignature };
   const store = createTimelineStore();
   const eventBus = new TimelineEventBus();
+  const recoveryConfig = createRecoveryConfig();
   const hook = renderHook(({ provider, timelineId }: { provider: DataProvider; timelineId: string }) => {
     const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial, snapshotWriteBlockedRef });
     const commands = useTimelineCommandSession({ provider, timelineId, commit, legacyClean: () => true,
       resolveAssetUrl: async (file) => file, loaded: undefined, snapshotWriteBlockedRef, headRevisionRef,
-      configVersionRef, lastSavedSignatureRef, store, shots: { shots: undefined, isLoading: false, error: null,
+      configVersionRef, lastSavedSignatureRef, store, recoveryConfig, shots: { shots: undefined, isLoading: false, error: null,
         refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalDraft: null } });
     return { commit, commands };
   }, { initialProps: { provider: env.provider, timelineId: 'timeline-commit' } });
   await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
   const neutral: DataProvider = { persistenceEnabled: false, loadTimeline: vi.fn(), loadAssetRegistry: vi.fn(),
     saveTimeline: vi.fn(), resolveAssetUrl: async (file) => file };
-  return { env, hook, neutral, snapshotWriteBlockedRef, headRevisionRef, configVersionRef, store };
+  return { env, hook, neutral, snapshotWriteBlockedRef, headRevisionRef, configVersionRef, store, recoveryConfig };
 }
 
 describe('mounted timeline command session', () => {
@@ -114,7 +117,7 @@ describe('mounted timeline command session', () => {
     hook.unmount();
   });
   it('fences an in-progress async projection across a timeline switch', async () => {
-    const { env, hook, headRevisionRef, configVersionRef, store, snapshotWriteBlockedRef } = await scoped();
+    const { env, hook, headRevisionRef, configVersionRef, store, snapshotWriteBlockedRef, recoveryConfig } = await scoped();
     let finishProjection!: () => void;
     const gate = new Promise<void>((resolve) => { finishProjection = resolve; });
     const build = timelineData.buildTimelineData;
@@ -139,6 +142,7 @@ describe('mounted timeline command session', () => {
     act(() => {
       hook.result.current.commit.commitData(next);
       headRevisionRef.current = nextHead;
+      recoveryConfig.remember(nextHead, { x_next: null });
       configVersionRef.current = 42;
       store.getState().setConfigVersion(42);
     });
@@ -147,7 +151,41 @@ describe('mounted timeline command session', () => {
     expect(headRevisionRef.current).toBe(nextHead);
     expect(configVersionRef.current).toBe(42);
     expect(store.getState().configVersion).toBe(42);
+    expect(recoveryConfig.snapshot(nextHead, next.config)).toEqual({ ...next.config, x_next: null });
     expect(hook.result.current.commands.state.status).toBe('saved');
+    hook.unmount();
+  });
+  it.each([false, true])('stores raw opaque roots with an ordinary rename (after accepted move: %s)', async (moveFirst) => {
+    const raw = commandDocument();
+    const opaque = { x_null: null, x_false: false, x_zero: 0, x_empty: [],
+      x_nested: { unknown: [null, false, 0, [], { value: 'keep' }] } };
+    Object.assign(raw.parent_revision.payload.config, opaque);
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const { env, hook, service, saveTimelineAtHead } = await mounted(await environment(raw));
+    saveTimelineAtHead.mockRejectedValue(new TimelineSchemaIncompatibleError('timeline_commit_required', []));
+    // The raw basis load has completed before capture becomes available.
+    if (moveFirst) {
+      await act(async () => {
+        expect(service.moveClip({ clipId: 'x', time: 5 }).ok).toBe(true);
+        await hook.result.current.commands.flush();
+      });
+    }
+    const base = { ...hook.result.current.commit.data!.head! };
+    const next = compileTimelinePatch({ version: 1, operations: [
+      { op: 'track.update', target: 'V1', payload: { label: 'retained rename' } },
+    ] }, hook.result.current.commit.data!).nextData!;
+    act(() => { hook.result.current.commit.commitData(next); });
+    await waitFor(() => expect(hook.result.current.commit.schemaIncompatible).toEqual([]));
+    const kept = await loadTimelineDraft('timeline-commit');
+    expect(kept).toMatchObject({ baseHeadProjectId: base.projectId, baseHeadTimelineId: base.timelineId,
+      baseHeadRevisionId: base.headRevisionId, draft: { config: { ...opaque,
+        tracks: [{ id: 'V1', kind: 'visual', label: 'retained rename' }],
+        clips: [expect.objectContaining({ id: 'x', at: moveFirst ? 5 : 1 })] } } });
+    expect(kept!.draft.config).not.toHaveProperty('x_absent');
+    expect(hook.result.current.commit.data!.config).not.toHaveProperty('x_null');
+    expect(hook.result.current.commit.data!.resolvedConfig).not.toHaveProperty('x_null');
+    expect(saveTimelineAtHead).toHaveBeenCalledWith('timeline-commit', next.config, base, next.registry, undefined);
+    expect(env.commits()).toHaveLength(moveFirst ? 1 : 0);
     hook.unmount();
   });
   it('leaves clean legacy undo available until an actual command owns history', async () => {

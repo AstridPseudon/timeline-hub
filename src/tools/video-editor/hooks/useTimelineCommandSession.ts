@@ -24,6 +24,7 @@ export function useTimelineCommandSession(options: {
   lastSavedSignatureRef: MutableRefObject<string>;
   store: TimelineStoreApi;
   shots: VideoEditorShotsHost;
+  recoveryConfig?: ReturnType<typeof import('./useTimelineSave.draftConfig.ts').createRecoveryConfig>;
 }) {
   const { provider, timelineId, snapshotWriteBlockedRef } = options;
   const latest = useRef(options);
@@ -55,6 +56,12 @@ export function useTimelineCommandSession(options: {
         provider.getRecoverableIdentity!(), provider.loadTimelineCommandBasis!(timelineId),
       ]);
       if (disposed) return;
+      const head = latest.current.headRevisionRef.current;
+      if (head?.projectId === basis.canonicalDocument.project_id && head.timelineId === timelineId
+        && basis.canonicalDocument.timeline_id === timelineId
+        && head.headRevisionId === basis.head.revisionId && head.headPublicationId === basis.head.publicationId) {
+        latest.current.recoveryConfig?.remember(head, basis.canonicalDocument.parent_revision.payload.config);
+      }
       session = await createTimelineCommandSession({
         scope: { ...identity, projectId: basis.canonicalDocument.project_id, timelineId }, initial: basis,
         send: (request, key) => provider.commitTimeline!(request, key),
@@ -109,6 +116,7 @@ export function useTimelineCommandSession(options: {
               : { kind: 'accepted', head: { ...accepted.head } } : undefined;
           context.configVersionRef.current = data.configVersion;
           context.headRevisionRef.current = head;
+          context.recoveryConfig?.remember(head, parent.config);
           context.store.getState().setConfigVersion(data.configVersion);
           context.commit.commitData(data, { save: false, skipHistory: true, updateLastSavedSignature: previews.length === 0 });
           if (composition && !previews.length) context.shots.adoptCanonicalComposition?.(composition);
@@ -144,7 +152,14 @@ export function useTimelineCommandSession(options: {
       const currentHead = latest.current.headRevisionRef.current;
       if (currentHead !== priorHead && (currentHead?.headRevisionId !== basis.head.revisionId
         || currentHead.headPublicationId !== basis.head.publicationId)) return;
-      if (!cancelled) sessionRef.current?.observe(basis);
+      if (!cancelled) {
+        if (currentHead?.projectId === basis.canonicalDocument.project_id && currentHead.timelineId === timelineId
+          && basis.canonicalDocument.timeline_id === timelineId
+          && currentHead.headRevisionId === basis.head.revisionId && currentHead.headPublicationId === basis.head.publicationId) {
+          latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config);
+        }
+        sessionRef.current?.observe(basis);
+      }
     }).catch((error) => {
       // A failed poll does not alter the retained command or its retry identity.
       if (!cancelled) setState((current) => ({ ...current, error: error instanceof Error ? error.message : String(error) }));
