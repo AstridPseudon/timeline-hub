@@ -829,6 +829,36 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.split"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)parent/clip:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipSplitArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -866,6 +896,26 @@
         "type": "string"
       },
       "description": "Normalized property tokens, not entity collection positions. Empty array means the whole entity. Numeric array tokens use canonical decimal strings; provider validates pinned parent-container types before traversal."
+    },
+    "ClipSplitArgs": {
+      "type": "object",
+      "required": [
+        "on",
+        "right_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "on": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Absolute timeline seconds strictly inside the clip. Preserve half-open frame geometry and literal film end."
+        },
+        "right_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$",
+          "description": "Caller-allocated right clip ID, retained on replay and redo."
+        }
+      }
     }
   }
 }
