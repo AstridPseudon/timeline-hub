@@ -77,10 +77,11 @@ class _FirstCaptureProvider:
         reader(pin)
         candidate["parent_revision"]["revision_id"] = "host-first-capture"
         candidate["dependency_manifest"]["documents"] = [pin]
+        dependency_kind = "source" if pin["document_id"] == "film.config" else "transcript"
         record = {"ordinal": 0, "command": context["request"]["commands"][0],
                   "writes": [], "reads": [], "selections": [], "bindings": [], "created": [],
                   "derived_writes": [], "dependencies": [
-                      {"key": "host.input", "kind": "transcript", "pin": pin, "policy": "exact"}]}
+                      {"key": "host.input", "kind": dependency_kind, "pin": pin, "policy": "exact"}]}
         return port.accept({
             "expected_head": base, "canonical_document": candidate, "document_digest": digest(candidate),
             "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None},
@@ -285,6 +286,16 @@ def _assert_one_acceptance(before, after, accepted, captures=(), first_capture=F
         assert after[table] == before[table]
     candidate = accepted["data"]["canonical_document"]
     assert candidate["dependency_manifest"]["documents"] == [capture["pin"] for capture in captures]
+    if first_capture:
+        history = next(row for row in after["timeline_commit_history"] if row[0] == receipt["receipt_id"])
+        records = json.loads(history[7])
+        capture = captures[0]
+        assert records["commands"][0]["dependencies"] == [{
+            "key": "host.input",
+            "kind": "source" if capture["document"]["kind"].endswith(".config") else "transcript",
+            "pin": capture["pin"],
+            "policy": "exact",
+        }]
     contents, bindings = [], []
     for capture in captures:
         pin, source = capture["pin"], capture["document"]
