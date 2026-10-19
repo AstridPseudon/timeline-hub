@@ -1,0 +1,342 @@
+"""SIGKILL at the real acceptance transaction boundary, through the browser door.
+
+The barrier wraps only private test-process methods. It never replaces provider
+execution or SQLite COMMIT, and cannot unwind until the parent kills the owner.
+"""
+from __future__ import annotations
+
+import copy
+import hashlib
+import http.client
+import json
+import multiprocessing
+import signal
+import sqlite3
+import sys
+import threading
+import traceback
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
+from pathlib import Path
+
+import pytest
+
+from runtime_protocol.daemon import RuntimeDaemon
+from runtime_protocol.door import DoorConfig
+from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_store import TimelineCommitStore
+from runtime_protocol.upgrade import compact_idempotency_ledger
+from runtime_protocol.util import canonical_json
+from tests.door_helpers import HOSTED, PRODUCT_ACTOR, DoorWorld, door_call
+from tests.lanes import requires_posix_process_groups
+from test_timeline_commit_input_integration import body, document, head
+from timeline_commit_film_fixture import build_film_fixture
+
+pytestmark = [pytest.mark.integration, requires_posix_process_groups]
+
+_TABLES = (
+    "parent_composition_revisions", "shot_revisions", "internal_timeline_revisions",
+    "composition_revision_occurrences", "composition_revision_dependencies",
+    "parent_composition_heads", "shot_revision_heads", "project_shots", "shot_items",
+    "timelines", "timeline_commit_history", "timeline_events", "command_idempotency",
+    "project_sequences", "project_documents", "timeline_document_input_contents",
+    "timeline_document_input_bindings", "timeline_document_input_links",
+)
+
+
+def _rows(connection):
+    return {table: sorted([list(row) for row in connection.execute(f"SELECT * FROM {table}")], key=repr)
+            for table in _TABLES}
+
+
+def _disk_rows(film):
+    connection = sqlite3.connect(f"file:{film.duplicate_root / 'realm.sqlite3'}?mode=ro", uri=True)
+    try:
+        return _rows(connection)
+    finally:
+        connection.close()
+
+
+def _unavailable(*args, **kwargs):
+    raise AssertionError("save/retry reached renderer or forbidden semantic work")
+
+
+def _runtime_child(pipe, film, tmp):
+    """One fresh interpreter/owner; all measured mutations arrive over HTTP."""
+    daemon = None
+    try:
+        import runtime_protocol.service as service_module
+        import runtime_protocol.visual_seam as visual_seam
+
+        class RendererUnavailable:
+            def find_spec(self, fullname, path=None, target=None):
+                if fullname.startswith(("astrid.packs.rendering", "astrid.core.rendering",
+                                        "astrid.sdk.authoring_render_preview",
+                                        "astrid.core.timeline.compatibility", "composition", "remotion")):
+                    raise AssertionError("save imported renderer: " + fullname)
+
+        sys.meta_path.insert(0, RendererUnavailable())
+        service_module.evaluate_closure = visual_seam.evaluate_closure = _unavailable
+        credential = tmp / "product.json"
+        daemon = RuntimeDaemon(
+            film.duplicate_root, support_root=tmp / "support", authoring_profile="astrid",
+            door=DoorConfig(origin=HOSTED, port=0, credential_file=credential),
+        ).start()
+        world = DoorWorld(tmp, daemon, credential)
+        if not credential.exists():
+            world.provision()
+        handshake = world.call("/api/runtime/v1/handshake", "POST", body=b"{}",
+                               headers={"Content-Type": "application/json"})
+        assert handshake.status == 200, handshake.body
+        service = daemon.service
+        commits = service._timeline_commits()[0]
+        local, armed, calls = threading.local(), {}, []
+        transaction, accept = RealmStore._transaction, TimelineCommitStore.accept
+        provider_type = type(service._timeline_commit_provider)
+        provider_commit = provider_type.commit
+
+        def observe_provider(provider, context, port):
+            calls.append(context["idempotency_key"])
+            return provider_commit(provider, context, port)
+
+        provider_type.commit = observe_provider
+
+        def pause(store, stage):
+            context = local.context
+            assert store is service.store
+            assert store.conn.in_transaction == (stage == "before")
+            envelope = commits._lookup(context)
+            assert envelope is not None
+            pipe.send({"barrier": stage, "in_transaction": store.conn.in_transaction,
+                       "context": context, "envelope": envelope, "rows": _rows(store.conn),
+                       "calls": list(calls)})
+            # No release path: the only successful continuation is SIGKILL.
+            threading.Event().wait(120)
+            raise AssertionError("parent failed to kill paused Runtime")
+
+        @contextmanager
+        def barrier_transaction(store):
+            active = getattr(local, "context", None) is not None
+            with transaction(store):
+                yield
+                if active and armed.get("stage") == "before":
+                    pause(store, "before")
+            if active and armed.get("stage") == "after":
+                pause(store, "after")
+
+        def observed_accept(store, context, prepared, **kwargs):
+            local.context = context
+            try:
+                return accept(store, context, prepared, **kwargs)
+            finally:
+                local.context = None
+
+        RealmStore._transaction = barrier_transaction
+        TimelineCommitStore.accept = observed_accept
+        pipe.send({"port": world.port, "instance": daemon.instance_id, "handshake": handshake.json()})
+        while True:
+            command, value = pipe.recv()
+            if command == "stop":
+                break
+            if command == "arm":
+                armed["stage"] = value
+                pipe.send({"armed": value})
+            elif command == "tripwire":
+                provider_type.commit = _unavailable
+                RealmStore.integrity_report = _unavailable
+                pipe.send({"tripwire": True})
+            elif command == "inspect":
+                with service.store._mutex:
+                    pipe.send({"rows": _rows(service.store.conn), "head": head(service, film),
+                               "document": document(service, film), "calls": list(calls)})
+            else:
+                raise AssertionError(command)
+    except BaseException:
+        pipe.send({"error": traceback.format_exc()})
+    finally:
+        if daemon is not None:
+            daemon.stop()
+        pipe.close()
+
+
+class _Runtime:
+    def __init__(self, film, tmp):
+        context = multiprocessing.get_context("spawn")
+        self.pipe, child = context.Pipe()
+        self.process = context.Process(target=_runtime_child, args=(child, film, tmp))
+        self.process.start()
+        child.close()
+        try:
+            self.ready = self.receive()
+        except BaseException:
+            self.close()
+            raise
+
+    def receive(self):
+        assert self.pipe.poll(40), "Runtime child did not reach the expected barrier/control reply"
+        result = self.pipe.recv()
+        assert "error" not in result, result.get("error")
+        return result
+
+    def control(self, command, value=None):
+        self.pipe.send((command, value))
+        return self.receive()
+
+    def post(self, path, encoded, key):
+        return door_call(self.ready["port"], "/api/runtime" + path, "POST", body=encoded,
+                         headers={"Content-Type": "application/json", "Idempotency-Key": key})
+
+    def kill(self):
+        assert self.process.is_alive()
+        self.process.kill()
+        self.process.join(10)
+        assert self.process.exitcode == -signal.SIGKILL
+
+    def close(self):
+        try:
+            if self.process.is_alive():
+                self.pipe.send(("stop", None))
+                self.process.join(10)
+            if self.process.is_alive():
+                self.process.kill()
+                self.process.join(10)
+            assert not self.process.is_alive(), "Runtime child leaked"
+        finally:
+            self.pipe.close()
+            self.process.close()
+
+
+def _move(film, state, on):
+    from astrid.sdk.timeline.capture import capture_move
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    command = capture_move(bundle_from_document(state["document"]), "parent/clip:music-bed", on)
+    return body(film, state["head"], [command])
+
+
+def _accepted(runtime, path, request, key):
+    response = runtime.post(path, json.dumps(request).encode(), key)
+    assert response.status == 200, response.body
+    return response.json()
+
+
+def _assert_one_acceptance(before, after, accepted):
+    receipt = accepted["receipt"]
+    assert accepted["data"] == receipt["result"]
+    assert len(after["timeline_commit_history"]) == len(before["timeline_commit_history"]) + 1
+    assert len(after["command_idempotency"]) == len(before["command_idempotency"]) + 1
+    assert len(after["timeline_events"]) == len(before["timeline_events"]) + len(receipt["event_ids"])
+    assert sum(row[0] == receipt["receipt_id"] for row in after["timeline_commit_history"]) == 1
+    assert set(receipt["event_ids"]) == {str(row[0]) for row in after["timeline_events"]} - {
+        str(row[0]) for row in before["timeline_events"]}
+    for table in ("shot_revisions", "internal_timeline_revisions"):
+        assert after[table] == before[table]
+    # This API-built main film has no consumed document pins (unlike the
+    # prepared-provider retained-input seed). Even staged acceptance must not
+    # invent input bindings, snapshots or publication links.
+    for table in ("timeline_document_input_contents", "timeline_document_input_bindings",
+                  "timeline_document_input_links"):
+        assert after[table] == before[table] == []
+
+
+@pytest.mark.parametrize("operation", ["commit", "restore"])
+@pytest.mark.parametrize("stage", ["before", "after"])
+def test_real_process_death_at_acceptance_boundary(tmp_path, astrid_importable, monkeypatch, operation, stage):
+    # Spawn imports this module afresh; Agent also has a top-level tests package.
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1]))
+    film = build_film_fixture(tmp_path)
+    source_files = {path.relative_to(film.source_root): path.read_bytes()
+                    for path in film.source_root.rglob("*") if path.is_file()}
+    commit_path = f"/v1/projects/{film.project_id}/timelines/{film.timeline_id}/commit"
+    runtime = _Runtime(film, tmp_path)
+    try:
+        original_ready = runtime.ready
+        initial = runtime.control("inspect")
+        source_revision = initial["head"]["revision_id"]
+        if operation == "restore":
+            _accepted(runtime, commit_path, _move(film, initial, 1), "prepare-restore")
+        before = runtime.control("inspect")
+        if operation == "restore":
+            path = commit_path.removesuffix("commit") + f"composition-revisions/{source_revision}/restore"
+            request = {"expected_head": before["head"]["revision_id"],
+                       "expected_publication_id": before["head"]["publication_id"]}
+        else:
+            path, request = commit_path, _move(film, before, 1)
+        encoded, key = json.dumps(request).encode(), "crash-exact-flight"
+        assert runtime.control("arm", stage) == {"armed": stage}
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            response = pool.submit(runtime.post, path, encoded, key)
+            try:
+                barrier = runtime.receive()
+                assert barrier["barrier"] == stage
+                assert barrier["in_transaction"] == (stage == "before")
+                assert not response.done(), "HTTP response escaped before death"
+                context = barrier["context"]
+                assert context["invocation"] == {
+                    "operation": "commitTimeline" if operation == "commit" else "restoreProjectParentCompositionRevision",
+                    "path": path, "body": request,
+                }
+                assert context["publisher"] == PRODUCT_ACTOR
+                assert context["idempotency_key"] == key
+                assert barrier["calls"] == before["calls"] + [key]
+                staged = barrier["envelope"]
+                expected_hash = hashlib.sha256(canonical_json({
+                    "operation": context["invocation"]["operation"], "path": path,
+                    "publisher": PRODUCT_ACTOR, "request": request,
+                }).encode()).hexdigest()
+                assert staged["receipt"]["request_hash"] == context["request_hash"] == expected_hash
+                _assert_one_acceptance(before["rows"], barrier["rows"], staged)
+                visible = before["rows"] if stage == "before" else barrier["rows"]
+                assert _disk_rows(film) == visible
+            finally:
+                if runtime.process.is_alive():
+                    runtime.kill()
+            with pytest.raises((OSError, http.client.HTTPException)):
+                response.result(timeout=10)
+        runtime.close()
+        runtime = None
+        assert _disk_rows(film) == visible
+
+        runtime = _Runtime(film, tmp_path)
+        assert runtime.ready["instance"] != original_ready["instance"]
+        for field in ("realm_id", "actor_id"):
+            assert runtime.ready["handshake"][field] == original_ready["handshake"][field]
+        assert runtime.ready["handshake"]["actor_id"] == PRODUCT_ACTOR
+        recovered = runtime.control("inspect")
+        assert recovered["rows"] == visible
+        if stage == "before":
+            assert recovered["head"] == before["head"]
+            accepted = _accepted(runtime, path, request, key)
+            _assert_one_acceptance(before["rows"], runtime.control("inspect")["rows"], accepted)
+        else:
+            accepted = staged
+            assert recovered["head"]["publication_id"] == staged["receipt"]["receipt_id"]
+
+        if operation == "restore" and stage == "after":
+            newer = _accepted(runtime, commit_path, _move(film, recovered, 2), "newer-after-restore")
+            runtime.close()
+            runtime = None
+            compact_idempotency_ledger(
+                film.duplicate_root,
+                confirmation=f"COMPACT IDEMPOTENCY {original_ready['handshake']['realm_id']}",
+            )
+            runtime = _Runtime(film, tmp_path)
+            assert runtime.control("inspect")["head"]["publication_id"] == newer["receipt"]["receipt_id"]
+
+        runtime.control("tripwire")
+        settled = runtime.control("inspect")
+        replay = runtime.post(path, encoded, key)
+        assert replay.status == 200, replay.body
+        assert replay.json() == accepted
+        assert runtime.control("inspect") == settled
+        changed = copy.deepcopy(request)
+        changed["expected_publication_id" if operation == "restore" else "rationale"] = "changed-flight"
+        refused = runtime.post(path, json.dumps(changed).encode(), key)
+        assert refused.status == 409, refused.body
+        assert refused.json()["details"]["reason"] == "idempotency_mismatch"
+        assert runtime.control("inspect") == settled
+        assert {path.relative_to(film.source_root): path.read_bytes()
+                for path in film.source_root.rglob("*") if path.is_file()} == source_files
+    finally:
+        if runtime is not None:
+            runtime.close()
