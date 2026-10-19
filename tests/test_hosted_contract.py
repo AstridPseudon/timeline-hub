@@ -27,6 +27,91 @@ def launch(tmp_path):
     finally:launch.close()
 
 
+@pytest.fixture
+def verified_launch(tmp_path):
+    broker = SimpleNamespace(role='host', owner_epoch='epoch', run_id='run',
+        custody_generation=1, authority_scope_root=tmp_path)
+    preparation = {'owner_epoch': 'epoch', 'operation_id': 'operation', 'channel_id': 'channel',
+        'profile': {'host_executable': sys.executable}, 'custody_scope': str(tmp_path)}
+    selected = contract.HostedLaunch(broker, preparation)
+    try:
+        with contract.readonly_payload(b'verified binding') as binding:
+            argv = [sys.executable, '-I', '-S', '-B', str(tmp_path / 'selected-launcher.py'),
+                '--binding-fd', str(binding.fileno())]
+            yield selected, binding, argv
+    finally:
+        selected.close()
+
+
+def test_verified_binding_launch_is_exact_and_digest_bound(verified_launch):
+    selected, binding, argv = verified_launch
+    selected.environment(argv, launch_binding=binding)
+    assert binding.fileno() in contract.validate(selected.value, role='host', argv=argv)
+    assert selected.value['launch_binding']['identity'] == contract.file_identity(binding.fileno())
+    substituted = list(argv)
+    substituted[4] = str(Path(argv[4]).with_name('other-launcher.py'))
+    with pytest.raises(contract.HostedContractError):
+        contract.validate(selected.value, role='host', argv=substituted)
+    with pytest.raises(contract.HostedContractError):
+        selected.environment(argv, launch_binding=binding)
+
+
+@pytest.mark.parametrize('change', [
+    'interpreter', 'legacy-six', 'missing-isolation', 'missing-no-site', 'reordered-flags',
+    'relative-launcher', 'wrong-binding-flag', 'missing-binding-flag', 'missing-descriptor',
+    'extra-binding-arg', 'wrong-descriptor', 'negative-descriptor',
+])
+def test_verified_binding_launch_refuses_changed_shape(verified_launch, change):
+    selected, binding, original = verified_launch
+    argv = list(original)
+    if change == 'interpreter': argv[0] += '-other'
+    elif change == 'legacy-six': argv.remove('-B')
+    elif change == 'missing-isolation': argv.remove('-I')
+    elif change == 'missing-no-site': argv.remove('-S')
+    elif change == 'reordered-flags': argv[1:4] = ['-B', '-I', '-S']
+    elif change == 'relative-launcher': argv[4] = 'selected-launcher.py'
+    elif change == 'wrong-binding-flag': argv[5] = '--other-fd'
+    elif change == 'missing-binding-flag': del argv[5]
+    elif change == 'missing-descriptor': argv.pop()
+    elif change == 'extra-binding-arg': argv.append('extra')
+    elif change == 'wrong-descriptor': argv[6] = str(binding.fileno() + 1)
+    elif change == 'negative-descriptor': argv[6] = '-1'
+    with pytest.raises(contract.HostedContractError):
+        selected.environment(argv, launch_binding=binding)
+    assert selected.value is None
+
+
+def test_verified_binding_launch_refuses_nonprivate_writable_descriptor(verified_launch, tmp_path):
+    selected, _, argv = verified_launch
+    with (tmp_path / 'writable-binding').open('w+b') as writable:
+        writable.write(b'untrusted binding')
+        writable.flush()
+        argv[-1] = str(writable.fileno())
+        with pytest.raises(contract.HostedContractError):
+            selected.environment(argv, launch_binding=writable)
+
+
+def test_verifier_claimed_argv_enters_hosted_contract_without_launch(tmp_path, monkeypatch):
+    from test_verified_host_launch import fixture_authority
+    monkeypatch.setattr(subprocess, 'Popen', lambda *a, **kw: pytest.fail('seam must not spawn'))
+    fixture = fixture_authority(tmp_path)
+    preparation = fixture.args['preparation']
+    broker = SimpleNamespace(role='host', owner_epoch=preparation['owner_epoch'], run_id='run',
+        custody_generation=1, authority_scope_root=Path(preparation['custody_scope']))
+    selected = contract.HostedLaunch(broker, preparation)
+    try:
+        proof = fixture.verifier.verify(**fixture.args)
+        with contract.readonly_payload(b'pending') as binding:
+            argv, payload = fixture.verifier.claim(proof, **fixture.args, binding_fd=binding.fileno())
+            with contract.readonly_payload(payload) as replacement:
+                os.dup2(replacement.fileno(), binding.fileno(), inheritable=False)
+            selected.environment(argv, launch_binding=binding)
+            contract.validate(selected.value, role='host', argv=argv)
+            assert contract.read_payload(binding.fileno(), selected.value['launch_binding']['digest']) == payload
+    finally:
+        selected.close()
+
+
 @pytest.mark.parametrize('field,value',[('role','engine'),('purpose','runtime-relay-control/v1'),
     ('generation',False),('generation',0),('argv_digest','sha256:'+'0'*64),('owner_epoch','')])
 def test_hosted_binding_refuses_wrong_role_purpose_and_launch(launch,field,value):

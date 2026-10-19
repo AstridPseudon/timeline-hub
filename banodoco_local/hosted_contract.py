@@ -232,9 +232,9 @@ class HostedLaunch:
                     or argv[4:] != ['--prepared-control-fd', str(self.children['control'].fileno())]):
                 raise HostedContractError('relay target is not the matched consumer')
         elif launch_binding is not None:
-            if (len(argv) != 6 or argv[1:3] != ['-I', '-S']
-                    or not Path(argv[3]).is_absolute()
-                    or argv[4:] != ['--binding-fd', str(launch_binding.fileno())]):
+            if (len(argv) != 7 or argv[1:4] != ['-I', '-S', '-B']
+                    or not Path(argv[4]).is_absolute()
+                    or argv[5:] != ['--binding-fd', str(launch_binding.fileno())]):
                 raise HostedContractError('host target is not the verified binding launcher')
         else:
             if argv[1:3] != ['-m', 'astrid.core.execution.generic_host']:
