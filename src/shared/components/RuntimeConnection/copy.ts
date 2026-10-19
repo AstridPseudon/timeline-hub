@@ -70,6 +70,10 @@ export interface RuntimeConnectionCopy {
   };
   /** Nothing answers on a return visit, or Astrid answered but is not ready: a person does the same thing for each. */
   readonly notRunning: Message & { readonly button: string };
+  /** Repeated checks found no connection, but did not confirm why. */
+  readonly unavailable: Message & { readonly button: string };
+  /** The gateway refused this page before Runtime discovery, such as a browser permission or origin check. */
+  readonly accessDenied: Message & { readonly button: string };
   /** The Astrid running is not the one this page was set up with: only a restart helps. */
   readonly restartNeeded: Message & { readonly button: string };
   /** A phone can never reach Astrid on a computer: the link goes there instead. */
@@ -107,7 +111,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   panelLabel: 'Connect to Astrid',
 
   connecting: {
-    sentence: 'Looking for Astrid on this computer…',
+    sentence: 'Checking your local Astrid connection…',
   },
 
   permission: {
@@ -147,6 +151,18 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     title: "Astrid isn't running",
     sentence: 'Start Astrid on this computer and this page opens by itself.',
     button: 'Copy steps for your agent',
+  },
+
+  unavailable: {
+    title: "Can't connect to Astrid yet",
+    sentence: 'Astrid has not answered after a few checks. Keep this page open; it will connect when Astrid is ready.',
+    button: 'Try again',
+  },
+
+  accessDenied: {
+    title: "Check this page's access to Astrid",
+    sentence: "Connection refused. Check this page's local-network access in your browser, then try again.",
+    button: 'Try again',
   },
 
   restartNeeded: {

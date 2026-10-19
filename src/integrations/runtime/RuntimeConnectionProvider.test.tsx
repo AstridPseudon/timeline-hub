@@ -74,7 +74,7 @@ function renderProvider(
   props: Partial<React.ComponentProps<typeof RuntimeConnectionProvider>> = {},
 ) {
   return render(
-    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions} pollIntervalMs={10} {...props}>
+    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions} pollIntervalMs={10} connectionGraceMs={15} {...props}>
       <Probe />
     </RuntimeConnectionProvider>,
   );
@@ -142,42 +142,56 @@ describe('granted', () => {
     const gateway = fakeGateway();
     let release: (response: Response) => void = () => {};
     gateway.routes['/v1/health'] = () => new Promise<Response>((resolve) => { release = resolve; });
-    renderProvider(gateway, fakePermissions('granted').permissions);
+    renderProvider(gateway, fakePermissions('granted').permissions, { connectionGraceMs: 60_000 });
 
-    await waitFor(() => expect(gateway.calls).toHaveLength(1));
+    await waitFor(() => expect(gateway.calls.length).toBeGreaterThan(0));
     expect(latest.isBooting).toBe(true);
     expect(status()).toBe('connecting');
     release(json({ status: 'ok' }));
     await waitFor(() => expect(status()).toBe('connected'));
   });
 
-  it('a network error is cant_reach, first-time without the connected-before flag', async () => {
+  it('keeps a transient network failure in checking, then reports generic unavailability', async () => {
     const gateway = fakeGateway();
     gateway.down();
-    renderProvider(gateway, fakePermissions('granted').permissions);
+    renderProvider(gateway, fakePermissions('granted').permissions, { connectionGraceMs: 100 });
 
-    await waitFor(() => expect(status()).toBe('cant_reach'));
-    expect(latest.state).toEqual({ status: 'cant_reach', firstTime: true });
+    await waitFor(() => expect(gateway.calls.length).toBeGreaterThan(0));
+    expect(status()).toBe('connecting');
+    expect(latest.isBooting).toBe(true);
+    await waitFor(() => expect(status()).toBe('unavailable'));
+    expect(latest.state).toEqual({ status: 'unavailable' });
     expect(latest.isBooting).toBe(false);
   });
 
-  it('a network error is cant_reach for a returning visitor when the flag is set', async () => {
+  it('uses the same generic transient state for returning visitors', async () => {
     window.localStorage.setItem(STORAGE_KEY, '1');
     const gateway = fakeGateway();
     gateway.down();
     renderProvider(gateway, fakePermissions('granted').permissions);
 
-    await waitFor(() => expect(status()).toBe('cant_reach'));
-    expect(latest.state).toEqual({ status: 'cant_reach', firstTime: false });
+    await waitFor(() => expect(status()).toBe('unavailable'));
+    expect(latest.state).toEqual({ status: 'unavailable' });
   });
 
   it.each([
-    ['runtime_unavailable', 'runtime_stopped'],
+    ['runtime_unavailable', 'starting'],
+    ['runtime_discovery_invalid', 'starting'],
+    ['a_code_the_page_has_never_heard_of', 'starting'],
+  ])('an ambiguous 503 %s remains in checking before generic help', async (code, _reason) => {
+    const gateway = fakeGateway();
+    gateway.unavailable(code);
+    renderProvider(gateway, fakePermissions('granted').permissions);
+
+    expect(status()).toBe('connecting');
+    await waitFor(() => expect(status()).toBe('unavailable'));
+    expect(latest.state).toEqual({ status: 'unavailable' });
+  });
+
+  it.each([
     ['realm_changed', 'realm_changed'],
-    ['runtime_discovery_invalid', 'runtime_stopped'],
     ['runtime_identity_mismatch', 'identity_mismatch'],
-    ['a_code_the_page_has_never_heard_of', 'unknown'],
-  ])('a 503 %s (the gateway\'s real codes, scripts/astrid-loopback-gateway.ts) is not_ready with reason %s', async (code, reason) => {
+  ] as const)('keeps confirmed %s errors actionable immediately', async (code, reason) => {
     const gateway = fakeGateway();
     gateway.unavailable(code);
     renderProvider(gateway, fakePermissions('granted').permissions);
@@ -186,32 +200,33 @@ describe('granted', () => {
     expect(latest.state).toEqual({ status: 'not_ready', reason });
   });
 
-  it('a 503 with no readable body is not_ready with reason unknown, never "starting"', async () => {
+  it('a 503 with no readable body remains a transient check, not a stopped verdict', async () => {
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => new Response('<html></html>', { status: 503 });
     renderProvider(gateway, fakePermissions('granted').permissions);
 
-    await waitFor(() => expect(status()).toBe('not_ready'));
-    expect(latest.state).toEqual({ status: 'not_ready', reason: 'unknown' });
+    await waitFor(() => expect(status()).toBe('unavailable'));
+    expect(latest.state).toEqual({ status: 'unavailable' });
   });
 
-  it('an answer that is not a Astrid gateway (wrong status or body) is cant_reach', async () => {
+  it('surfaces access refusals immediately and gives malformed responses the generic retry state', async () => {
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => json({ error: 'hosted_origin_required' }, 403);
     renderProvider(gateway, fakePermissions('granted').permissions);
-    await waitFor(() => expect(status()).toBe('cant_reach'));
+    await waitFor(() => expect(status()).toBe('not_ready'));
+    expect(latest.state).toEqual({ status: 'not_ready', reason: 'access_denied' });
 
     const other = fakeGateway();
     other.routes['/v1/health'] = () => new Response('<html></html>', { status: 200 });
     renderProvider(other, fakePermissions('granted').permissions);
-    await waitFor(() => expect(screen.getAllByTestId('status').every((node) => node.textContent === 'cant_reach')).toBe(true));
+    await waitFor(() => expect(screen.getAllByTestId('status').map((node) => node.textContent)).toEqual(['not_ready', 'unavailable']));
   });
 
   it('recovers by the interval, with no reload, and stops probing once connected', async () => {
     const gateway = fakeGateway();
     gateway.down();
     renderProvider(gateway, fakePermissions('granted').permissions);
-    await waitFor(() => expect(status()).toBe('cant_reach'));
+    await waitFor(() => expect(status()).toBe('unavailable'));
 
     gateway.up();
     await waitFor(() => expect(status()).toBe('connected'));
@@ -224,7 +239,7 @@ describe('granted', () => {
     const gateway = fakeGateway();
     gateway.unavailable('runtime_unavailable');
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
-    await waitFor(() => expect(status()).toBe('not_ready'));
+    await waitFor(() => expect(status()).toBe('unavailable'));
 
     gateway.up();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
@@ -246,7 +261,7 @@ describe('app entry preference', () => {
     const gateway = fakeGateway();
     gateway.down();
     const { unmount } = renderProvider(gateway, fakePermissions('granted').permissions);
-    await waitFor(() => expect(status()).toBe('cant_reach'));
+    await waitFor(() => expect(status()).toBe('unavailable'));
     expect(window.localStorage.getItem(PREFERENCE_KEY)).toBeNull();
     unmount();
 
@@ -410,8 +425,8 @@ describe('storage', () => {
     const gateway = fakeGateway();
     gateway.down();
     renderProvider(gateway, fakePermissions('granted').permissions);
-    await waitFor(() => expect(status()).toBe('cant_reach'));
-    expect(latest.state).toEqual({ status: 'cant_reach', firstTime: true });
+    await waitFor(() => expect(status()).toBe('unavailable'));
+    expect(latest.state).toEqual({ status: 'unavailable' });
 
     gateway.up();
     await waitFor(() => expect(status()).toBe('connected'));
@@ -428,14 +443,14 @@ describe('gate', () => {
       return <div data-testid="app" />;
     }
     render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10} connectionGraceMs={15}>
         <RuntimeConnectionGate>
           <RuntimeQueryOwner />
         </RuntimeConnectionGate>
       </RuntimeConnectionProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'cant_reach'));
+    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'unavailable'));
     expect(screen.queryByTestId('app')).toBeNull();
     expect(mounted).not.toHaveBeenCalled();
 
@@ -448,20 +463,20 @@ describe('gate', () => {
     const gateway = fakeGateway();
     gateway.unavailable('runtime_unavailable');
     render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={600_000}>
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={600_000} connectionGraceMs={15}>
         <RuntimeConnectionGate>
           <div data-testid="app" />
         </RuntimeConnectionGate>
       </RuntimeConnectionProvider>,
     );
-    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveTextContent(/^not_ready$/));
+    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveTextContent(/^unavailable$/));
   });
 
   it('takes a panel and a pill as render props', async () => {
     const gateway = fakeGateway();
     gateway.down();
     render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10} connectionGraceMs={15}>
         <RuntimeConnectionGate
           panel={({ state }) => <p data-testid="custom-panel">{state.status}</p>}
           pill={({ realmName }) => <p data-testid="custom-pill">{realmName}</p>}
@@ -470,7 +485,7 @@ describe('gate', () => {
         </RuntimeConnectionGate>
       </RuntimeConnectionProvider>,
     );
-    await waitFor(() => expect(screen.getByTestId('custom-panel')).toHaveTextContent('cant_reach'));
+    await waitFor(() => expect(screen.getByTestId('custom-panel')).toHaveTextContent('unavailable'));
     expect(screen.queryByTestId('custom-pill')).toBeNull();
 
     gateway.up();
