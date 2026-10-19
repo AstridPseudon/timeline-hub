@@ -134,8 +134,19 @@ def test_linux_signaling_uses_each_available_stdlib_wrapper(monkeypatch, missing
     expected = {"pid": 123, "uid": 501, "birth_id": "proc-start-ticks:42"}
     calls = []
     monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="linux"))
-    monkeypatch.setattr(platform.os, "pidfd_open", lambda pid: calls.append(("open", pid)) or 18, raising=False)
-    monkeypatch.setattr(platform.signal, "pidfd_send_signal", lambda fd, sig: calls.append(("send", fd, sig)), raising=False)
+
+    def open_pidfd(pid, flags=0):
+        assert flags == 0
+        calls.append(("open", pid))
+        return 18
+
+    def send_signal(fd, sig, siginfo=None, flags=0):
+        assert siginfo is None
+        assert flags == 0
+        calls.append(("send", fd, sig))
+
+    monkeypatch.setattr(platform.os, "pidfd_open", open_pidfd, raising=False)
+    monkeypatch.setattr(platform.signal, "pidfd_send_signal", send_signal, raising=False)
     for module, name in ((platform.os, "pidfd_open"), (platform.signal, "pidfd_send_signal")):
         if missing in (name, "both"):
             monkeypatch.delattr(module, name, raising=False)
@@ -166,16 +177,19 @@ def test_linux_signaling_refuses_unknown_abi_and_closes_any_open_pidfd(monkeypat
     close = Mock()
     monkeypatch.setattr(platform, "process_identity", observe)
     monkeypatch.setattr(platform.os, "close", close)
-    monkeypatch.setattr(platform.os, "pidfd_open", lambda _pid: 18, raising=False)
+    opener = Mock(return_value=18)
+    monkeypatch.setattr(platform.os, "pidfd_open", opener, raising=False)
     if not opener_available:
         monkeypatch.delattr(platform.os, "pidfd_open", raising=False)
     monkeypatch.delattr(platform.signal, "pidfd_send_signal", raising=False)
     with pytest.raises(NotImplementedError, match="does not support ABI mips64"):
         platform.signal_process(expected, platform.TERM)
     if opener_available:
+        opener.assert_called_once_with(123, 0)
         observe.assert_called_once_with(123)
         close.assert_called_once_with(18)
     else:
+        opener.assert_not_called()
         observe.assert_not_called()
         close.assert_not_called()
     library.assert_not_called()
@@ -313,3 +327,163 @@ def test_linux_pidfd_fallback_rejects_invalid_signal_without_terminating_child(m
         assert len(opened) == 1
         _assert_closed(opened[0])
         assert waiting_child.poll() is None
+
+
+@pytest.mark.parametrize("wrapper_available", [False, True])
+@pytest.mark.parametrize("operation,arguments,stdlib_arguments,syscall_arguments,result", [
+    ("pidfd_open", (123,), (123, 0), (123, 0), 18),
+    ("pidfd_open", (123, 0x800), (123, 0x800), (123, 0x800), 18),
+    ("pidfd_send_signal", (18, platform.TERM), (18, platform.TERM, None, 0), (18, platform.TERM, None, 0), None),
+    ("pidfd_send_signal", (18, platform.TERM, None, 1), (18, platform.TERM, None, 1), (18, platform.TERM, None, 1), None),
+])
+def test_public_pidfd_helpers_select_wrappers_independently_and_preserve_arguments(
+    monkeypatch, wrapper_available, operation, arguments, stdlib_arguments, syscall_arguments, result,
+):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="linux"))
+    monkeypatch.delattr(platform.os, "pidfd_open", raising=False)
+    monkeypatch.delattr(platform.signal, "pidfd_send_signal", raising=False)
+    wrapper = Mock(return_value=result)
+    if wrapper_available:
+        module = platform.os if operation == "pidfd_open" else platform.signal
+        monkeypatch.setattr(module, operation, wrapper, raising=False)
+    syscall = Mock(return_value=18 if operation == "pidfd_open" else 0)
+    monkeypatch.setattr(platform, "_linux_pidfd_syscall", syscall)
+    monkeypatch.setattr(platform, "process_identity", lambda *_: pytest.fail("caller owns identity checks"))
+    monkeypatch.setattr(platform.os, "close", lambda *_: pytest.fail("caller owns fd closure"))
+    actual = getattr(platform, operation)(*arguments)
+    if result is None:
+        assert actual is None
+    else:
+        assert actual == result
+    if wrapper_available:
+        wrapper.assert_called_once_with(*stdlib_arguments)
+        syscall.assert_not_called()
+    else:
+        wrapper.assert_not_called()
+        syscall.assert_called_once_with(operation, *syscall_arguments)
+
+
+def test_public_pidfd_send_signal_preserves_siginfo_for_stdlib(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="linux"))
+    siginfo = object()
+    sender = Mock(return_value=None)
+    monkeypatch.setattr(platform.signal, "pidfd_send_signal", sender, raising=False)
+    monkeypatch.setattr(platform, "_linux_pidfd_syscall", lambda *_: pytest.fail("stdlib wrapper is available"))
+    assert platform.pidfd_send_signal(18, platform.TERM, siginfo=siginfo, flags=1) is None
+    sender.assert_called_once_with(18, platform.TERM, siginfo, 1)
+
+
+@pytest.mark.parametrize("siginfo", [object(), 0, False])
+def test_public_pidfd_send_signal_fallback_refuses_non_null_siginfo(monkeypatch, siginfo):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="linux"))
+    monkeypatch.delattr(platform.signal, "pidfd_send_signal", raising=False)
+    syscall = Mock()
+    monkeypatch.setattr(platform, "_linux_pidfd_syscall", syscall)
+    monkeypatch.setattr(platform.os, "close", lambda *_: pytest.fail("caller owns fd closure"))
+    with pytest.raises(NotImplementedError, match="does not support siginfo"):
+        platform.pidfd_send_signal(18, platform.TERM, siginfo)
+    syscall.assert_not_called()
+
+
+@pytest.mark.parametrize("os_name", ["freebsd", "darwin", "win32"])
+@pytest.mark.parametrize("operation,arguments", [
+    ("pidfd_open", (123,)),
+    ("pidfd_send_signal", (18, platform.TERM)),
+])
+def test_public_pidfd_helpers_require_linux_even_with_stdlib_wrapper(monkeypatch, os_name, operation, arguments):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform=os_name))
+    wrapper = Mock()
+    module = platform.os if operation == "pidfd_open" else platform.signal
+    monkeypatch.setattr(module, operation, wrapper, raising=False)
+    syscall = Mock()
+    monkeypatch.setattr(platform, "_linux_pidfd_syscall", syscall)
+    with pytest.raises(NotImplementedError, match="Linux pidfd support"):
+        getattr(platform, operation)(*arguments)
+    wrapper.assert_not_called()
+    syscall.assert_not_called()
+
+
+@pytest.mark.parametrize("wrapper_available", [False, True])
+@pytest.mark.parametrize("operation,arguments", [
+    ("pidfd_open", (123,)),
+    ("pidfd_send_signal", (18, platform.TERM)),
+])
+@pytest.mark.parametrize("error_number", [errno.EPERM, errno.ENOSYS])
+def test_public_pidfd_helpers_propagate_errors_without_closing_fd(
+    monkeypatch, wrapper_available, operation, arguments, error_number,
+):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="linux"))
+    error = OSError(error_number, "pidfd operation failed")
+    module = platform.os if operation == "pidfd_open" else platform.signal
+    if wrapper_available:
+        monkeypatch.setattr(module, operation, Mock(side_effect=error), raising=False)
+        monkeypatch.setattr(platform, "_linux_pidfd_syscall", lambda *_: pytest.fail("stdlib error must propagate"))
+    else:
+        monkeypatch.delattr(module, operation, raising=False)
+        monkeypatch.setattr(platform, "_linux_pidfd_syscall", Mock(side_effect=error))
+    monkeypatch.setattr(platform.os, "close", lambda *_: pytest.fail("caller owns fd closure"))
+    with pytest.raises(OSError) as caught:
+        getattr(platform, operation)(*arguments)
+    assert caught.value is error
+    assert caught.value.errno == error_number
+
+
+def test_signal_process_uses_public_pidfd_helpers(monkeypatch):
+    expected = {"pid": 123, "uid": 501, "birth_id": "proc-start-ticks:42"}
+    calls = []
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="linux"))
+    monkeypatch.setattr(platform, "pidfd_open", lambda pid: calls.append(("open", pid)) or 18)
+    monkeypatch.setattr(platform, "process_identity", lambda pid: calls.append(("observe", pid)) or expected)
+    monkeypatch.setattr(platform, "pidfd_send_signal", lambda fd, sig: calls.append(("send", fd, sig)))
+    monkeypatch.setattr(platform.os, "close", lambda fd: calls.append(("close", fd)))
+    monkeypatch.setattr(platform.os, "pidfd_open", lambda *_: pytest.fail("use the public helper"), raising=False)
+    monkeypatch.setattr(platform.signal, "pidfd_send_signal", lambda *_: pytest.fail("use the public helper"), raising=False)
+    platform.signal_process(expected, platform.TERM)
+    assert calls == [("open", 123), ("observe", 123), ("send", 18, platform.TERM), ("close", 18)]
+
+
+@requires_linux_tree_custody
+def test_public_pidfd_helpers_fallback_signals_real_child_and_retains_fd(monkeypatch, waiting_child):
+    expected = platform.process_identity(waiting_child.pid)
+    with monkeypatch.context() as patch:
+        opened, operations = _record_real_fallback(patch)
+        fd = platform.pidfd_open(waiting_child.pid, 0)
+        try:
+            assert fd == opened[0]
+            assert not os.get_inheritable(fd)
+            observed = platform.process_identity(waiting_child.pid)
+            assert all(observed.get(key) == expected.get(key) for key in ("pid", "uid", "birth_id"))
+            assert platform.pidfd_send_signal(fd, 0, None, 0) is None
+            assert waiting_child.poll() is None
+            os.fstat(fd)
+            assert platform.pidfd_send_signal(fd, platform.TERM) is None
+            assert waiting_child.wait(timeout=5) == -platform.TERM
+            os.fstat(fd)
+        finally:
+            os.close(fd)
+        _assert_closed(fd)
+        assert operations == ["pidfd_open", "pidfd_send_signal", "pidfd_send_signal"]
+
+
+@requires_linux_tree_custody
+@pytest.mark.parametrize("signum,siginfo,error_type,error_number", [
+    (-1, None, OSError, errno.EINVAL),
+    (2**32 + platform.TERM, None, OverflowError, None),
+    (platform.TERM, object(), NotImplementedError, None),
+])
+def test_public_pidfd_send_signal_fallback_errors_retain_real_fd(
+    monkeypatch, waiting_child, signum, siginfo, error_type, error_number,
+):
+    with monkeypatch.context() as patch:
+        _record_real_fallback(patch)
+        fd = platform.pidfd_open(waiting_child.pid)
+        try:
+            with pytest.raises(error_type) as caught:
+                platform.pidfd_send_signal(fd, signum, siginfo)
+            if error_number is not None:
+                assert caught.value.errno == error_number
+            assert waiting_child.poll() is None
+            os.fstat(fd)
+        finally:
+            os.close(fd)
+        _assert_closed(fd)

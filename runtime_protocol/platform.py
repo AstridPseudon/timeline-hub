@@ -3,6 +3,11 @@
 Windows permissions use owner/SYSTEM protected DACLs and handle-based checks.
 Process identities are observations, never signal authority;
 ``signal_process`` pins a kernel handle before comparing an expected identity.
+
+Linux's public ``pidfd_open(pid, flags=0)`` and
+``pidfd_send_signal(fd, signum, siginfo=None, flags=0)`` prefer each stdlib
+wrapper independently, with a verified syscall fallback when it is absent.
+Callers using these low-level helpers own identity checks and fd closure.
 """
 from __future__ import annotations
 
@@ -947,6 +952,33 @@ def _linux_pidfd_syscall(operation, *arguments):
     return int(result)
 
 
+def pidfd_open(pid: int, flags: int = 0) -> int:
+    """Open a Linux pidfd; the caller authenticates its target and closes it."""
+    if sys.platform != "linux":
+        raise NotImplementedError("identity-safe process signaling requires Linux pidfd support")
+    opener = getattr(os, "pidfd_open", None)
+    if opener is not None:
+        return opener(pid, flags)
+    return _linux_pidfd_syscall("pidfd_open", pid, flags)
+
+
+def pidfd_send_signal(fd: int, signum: int, siginfo=None, flags: int = 0) -> None:
+    """Signal a retained Linux pidfd; the caller owns identity checks and closure.
+
+    The syscall fallback accepts only ``siginfo=None``. Success returns None
+    through either route, and this helper leaves the descriptor open.
+    """
+    if sys.platform != "linux":
+        raise NotImplementedError("identity-safe process signaling requires Linux pidfd support")
+    sender = getattr(signal, "pidfd_send_signal", None)
+    if sender is not None:
+        sender(fd, signum, siginfo, flags)
+    else:
+        if siginfo is not None:
+            raise NotImplementedError("Linux pidfd syscall fallback does not support siginfo")
+        _linux_pidfd_syscall("pidfd_send_signal", fd, signum, None, flags)
+
+
 def signal_process(expected, signum):
     """Signal one incarnation via pidfd / retained Windows handle, never a bare PID."""
     if not expected:
@@ -997,19 +1029,12 @@ def signal_process(expected, signum):
         finally:
             kernel.CloseHandle(handle)
         return
-    opener = getattr(os, "pidfd_open", None)
-    sender = getattr(signal, "pidfd_send_signal", None)
-    if sys.platform != "linux" and (opener is None or sender is None):
-        raise NotImplementedError("identity-safe process signaling requires Linux pidfd support")
-    fd = opener(pid) if opener is not None else _linux_pidfd_syscall("pidfd_open", pid, 0)
+    fd = pidfd_open(pid)
     try:
         observed = process_identity(pid)
         if observed is None or any(observed.get(k) != expected.get(k) for k in ("pid", "uid", "birth_id")):
             raise OSError("process incarnation changed")
-        if sender is not None:
-            sender(fd, signum)
-        else:
-            _linux_pidfd_syscall("pidfd_send_signal", fd, signum, None, 0)
+        pidfd_send_signal(fd, signum)
     finally:
         os.close(fd)
 
