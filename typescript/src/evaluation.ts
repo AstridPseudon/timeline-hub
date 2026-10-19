@@ -82,8 +82,8 @@ export type {ModifierBounds, ModifierContext, ModifierFinding} from './modifier-
 export {compileAudioEnvelope, validateAudioEnvelope, audioEnvelopeAt, applyAudioEnvelope, audioEnvelopeWav, AudioEnvelopeError} from './lib/audio-envelope';
 export type {AudioEnvelope, AudioCurve} from './lib/audio-envelope';
 
-export {prepareScene, querySceneFrame, querySceneFrame as queryCompositionSceneFrame} from './scene-evaluation';
-export type {PreparedScene, SceneFrame, SceneLayer, SceneFinding, SceneTrackInput} from './scene-evaluation';
+export {prepareScene, querySceneFrame, querySceneFrame as queryCompositionSceneFrame, querySceneOcclusion} from './scene-evaluation';
+export type {PreparedScene, SceneFrame, SceneLayer, SceneFinding, SceneTrackInput, SceneOcclusion} from './scene-evaluation';
 
-export type {MediaSceneEvidence, ComponentFrameSupport, PreparedComponentCapability, ComponentCapabilityContext, SceneCapableComponent, SceneCapabilities} from './scene-capabilities';
+export type {MediaSceneEvidence, ComponentDiagnostics, ComponentFrameSupport, PreparedComponentCapability, ComponentCapabilityContext, SceneCapableComponent, SceneCapabilities} from './scene-capabilities';
 export {VIDEO_INTERPRETATION, IMAGE_INTERPRETATION, provenOpaqueMedia} from './scene-capabilities';

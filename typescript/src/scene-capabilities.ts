@@ -9,11 +9,22 @@ export type MediaSceneEvidence = {
   interpretation: typeof VIDEO_INTERPRETATION | typeof IMAGE_INTERPRETATION;
   stream: {index: number; codec: 'h264' | 'mjpeg'; pixelFormat: string; profile: string | null; level: string | null; sampleAspectRatio: '1:1'; width: number; height: number};
 };
+/** Component-owned facts at the supplied content clock. Omitted means unknown.
+ * Regions use canvas coordinates; intrinsic motion is not final geometry or visibility. */
+export type ComponentDiagnostics = {
+  /** Intrinsic scalar names/units belong to the component, before outer geometry. */
+  motion?: Readonly<Record<string, number>>;
+  face?: ModifierBounds;
+  mouth?: ModifierBounds;
+  /** Declared text layout and minimum drawn font size in canvas pixels, not glyph alpha. */
+  text?: {bounds: ModifierBounds; minPx?: number};
+};
 export type ComponentFrameSupport = {
   presence: 'present' | 'absent' | 'unknown'; bounds: ModifierBounds;
   /** Rectangular support filled by the intrinsic source, before layer opacity.
    * Text/glyph layout rectangles must use 'none'. */
   opaqueSupport: 'rect' | 'none' | 'unknown';
+  diagnostics?: ComponentDiagnostics;
 };
 export type PreparedComponentCapability = {
   identity: string;

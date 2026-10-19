@@ -60,7 +60,9 @@ export type {
 export {mediaModifierBounds} from './lib/modifier-bounds';
 
 export {prepareCompositionScene} from './TimelineComposition';
-export {prepareScene, querySceneFrame, queryCompositionSceneFrame} from './evaluation';
+export {prepareScene, querySceneFrame, queryCompositionSceneFrame, querySceneOcclusion} from './evaluation';
+export type {PreparedScene, SceneFrame, SceneLayer, SceneFinding, SceneTrackInput, SceneOcclusion,
+  ComponentDiagnostics, ComponentFrameSupport, PreparedComponentCapability, ComponentCapabilityContext} from './evaluation';
 
 export type {TimelineClip, TimelineConfig, TrackDefinition, AssetRegistry, AssetRegistryEntry, ClipKeyframe} from './types';
 export {resolveElementRegistries, ElementRegistryProvider, useElementRegistries} from './registries';

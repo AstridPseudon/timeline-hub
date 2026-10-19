@@ -158,6 +158,72 @@ and occlusion. It does not establish rendered visibility. Component internals
 and coverage remain unknown here. Renderer-owner/Python caching and consumers,
 coverage findings, and App Player integration are separate work.
 
+## Scene occlusion and declared diagnostics (0.0.9 draft)
+
+`prepareCompositionScene` admits the selected component hooks; `querySceneFrame`
+evaluates each mounted component once at its speed-remapped content clock. The
+answer includes canvas `width`/`height` and layers in bottom-to-top painter order
+(within a track, the same draw order as rendering; `z=0` is frontmost).
+
+Root and `./evaluation` export
+`querySceneOcclusion(answer: SceneFrame, clipId: string, minimumFraction: number)`:
+
+```ts
+type SceneOcclusion =
+  | {status: 'known'; occluderId: string | null; fraction: number}
+  | {status: 'unknown'; reason: string};
+```
+
+It reads an existing frame answer, without invoking hooks again, and shares the
+canonical visibility pass. Supply a finite threshold in `(0, 1]`, such as `.90`
+or `.98`. It names the frontmost qualifying **single** upper layer whose admitted
+support is an opaque rectangle at opacity exactly 1. Fraction is intersection
+area divided by the target's **canvas-clipped output rectangle** area, in canvas
+units. This is rectangular support overlap, not pixel coverage of glyphs, holes,
+or media alpha. Partial offscreen target area is excluded from the denominator.
+It never unions upper layers or accumulates translucent alpha.
+
+Known no qualifying upper layer returns `known/null/0`, including when all known
+overlaps fall below the threshold. Undeclared upper bounds/alpha remain unknown
+unless known geometry rules out the threshold or a proven qualifying upper
+layer exists. Glyph/layout support (`none`) cannot establish an opaque rectangle;
+an overlapping glyph can leave the answer unknown. Missing/unmounted, declared
+absent, zero-opacity, zero-area and wholly offscreen targets return `known/null/0`;
+unknown target output bounds return unknown. `visible=false` alone is never an
+occlusion explanation. Visibility uses the same support calculation at threshold
+1; fraction thresholds remain consumer check policy.
+
+The existing `PreparedComponentCapability.frame(contentFrame)` may return
+`diagnostics?: ComponentDiagnostics`, forwarded to `SceneLayer.diagnostics`:
+
+```ts
+type ComponentDiagnostics = {
+  motion?: Readonly<Record<string, number>>;
+  face?: ModifierBounds;
+  mouth?: ModifierBounds;
+  text?: {bounds: ModifierBounds; minPx?: number};
+};
+```
+
+Each omitted field is unknown, never static motion or an empty region. Motion
+contains component-owned intrinsic scalars with component-defined names/units;
+it does not assert final positions or visibility. Face/mouth/text regions are
+declared canvas rectangles at that callback clock, using the same pure helpers
+as drawing. Text bounds describe declared layout, not glyph alpha; `minPx` is
+the component's minimum drawn font size in canvas pixels. Real measured glyph
+bounds still require the actual admitted fonts. No type name or font string
+produces geometry. These declarations do not establish opaque support.
+
+Semantic regions and `minPx` become unknown for undeclared animation/crop or
+modifier geometry. Even a bounds-preserving modifier does not establish internal
+region positions or text scale, so all modified semantic regions conservatively
+become unknown. Intrinsic motion remains available. Nonfinite motion/size values
+are omitted, invalid rectangles become unknown, and the layer reports
+`invalid-component-diagnostics`; diagnostic validation does not change visibility.
+No hook means no diagnostic field. These optional facts add no support to an
+uninstrumented component: AM/Personal owners still need real render helpers,
+admitted fonts/media and component tests before private viewer retirement.
+
 ## Transition authoring admission
 
 The evaluation subpath also exports `declareAppTransition` and

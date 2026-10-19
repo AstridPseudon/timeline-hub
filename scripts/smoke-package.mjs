@@ -72,6 +72,7 @@ import {realpathSync} from 'node:fs';
 import {Internals} from 'remotion';
 const root = await import('@banodoco/timeline-composition');
 const evaluation = await import('@banodoco/timeline-composition/evaluation');
+assert.strictEqual(root.querySceneOcclusion, evaluation.querySceneOcclusion);
 const api = await import('@banodoco/timeline-composition/theme-api');
 const helpers = await import('@banodoco/timeline-composition/registries');
 const themes = await import('@banodoco/timeline-composition/registry.generated');
@@ -101,13 +102,28 @@ const Custom = Object.assign(() => createElement('strong', null, 'host:' + api.u
   prepareSceneCapability: context => {
     assert.ok(Object.hasOwn(context, 'assetEntry'));
     assert.equal(context.assetEntry, undefined);
-    return {identity: 'host@1', frame: () => ({presence: 'present', opaqueSupport: 'none',
-      bounds: {status: 'known', rect: {x: 0, y: 0, width: 100, height: 100}}})};
+    return {identity: 'host@1', frame: contentFrame => ({presence: 'present', opaqueSupport: 'none',
+      bounds: {status: 'known', rect: {x: 0, y: 0, width: 100, height: 100}},
+      diagnostics: {motion: {zoom: 1 + contentFrame / 100},
+        face: {status: 'known', rect: {x: contentFrame, y: 0, width: 20, height: 30}},
+        mouth: {status: 'unknown', reason: 'Not declared by this fixture'},
+        text: {bounds: {status: 'unknown', reason: 'Fonts not admitted'}}}})};
   }});
 const registries = {effects: {'resource-card': Custom}};
 const prepare = maps => root.prepareCompositionScene([{track, clips: [clip]}], assets, 30, root.toRuntimeTheme(theme),
   1920, 1080, undefined, undefined, {}, '', {}, maps);
 assert.equal(evaluation.querySceneFrame(prepare(registries), 0).layers[0].visible, true);
+const declared = evaluation.querySceneFrame(prepare(registries), 12);
+assert.equal(declared.layers[0].diagnostics.motion.zoom, 1.12);
+assert.equal(declared.layers[0].diagnostics.face.rect.x, 12);
+assert.equal(declared.layers[0].diagnostics.text.bounds.status, 'unknown');
+assert.deepEqual(evaluation.querySceneOcclusion(declared, 'card', .9), {status: 'known', occluderId: null, fraction: 0});
+const opaque = {effects: {'resource-card': Object.assign(() => null, {prepareSceneCapability: () => ({identity: 'solid@1',
+  frame: () => ({presence: 'present', opaqueSupport: 'rect', bounds: {status: 'known', rect: {x: 0, y: 0, width: 100, height: 100}}})})})}};
+const stack = root.prepareCompositionScene([{track, clips: [clip, {...clip, id: 'upper'}]}], assets, 30,
+  root.toRuntimeTheme(theme), 1920, 1080, undefined, undefined, {}, '', {}, opaque);
+assert.deepEqual(evaluation.querySceneOcclusion(evaluation.querySceneFrame(stack, 0), 'card', .98),
+  {status: 'known', occluderId: 'upper', fraction: 1});
 assert.equal(evaluation.querySceneFrame(prepare(), 0).layers[0].visible, 'unknown');
 const render = maps => {
   const composition = {id: 'test', width: 1920, height: 1080, fps: 30, durationInFrames: 60,
@@ -141,7 +157,8 @@ console.log('Plain Node ESM, bundled render, scoped host capability/override and
   run(process.execPath, ['smoke.mjs']);
   writeFileSync(join(temporary, 'consumer.ts'), `
 import {TimelineComposition, prepareCompositionScene, type TimelineClip, type TrackDefinition, type CompositionRegistries, type TransitionReferenceObject} from '@banodoco/timeline-composition';
-import {prepareTrack, queryTrackFrame, declareAppTransition, type TransitionSpec, type IncomingTransitionPolicy, type ComponentCapabilityContext} from '@banodoco/timeline-composition/evaluation';
+import {prepareTrack, queryTrackFrame, querySceneOcclusion, declareAppTransition, type SceneFrame, type SceneOcclusion,
+  type ComponentDiagnostics, type ComponentFrameSupport, type TransitionSpec, type IncomingTransitionPolicy, type ComponentCapabilityContext} from '@banodoco/timeline-composition/evaluation';
 import {composeAnimations, type EffectProps, type RuntimeTheme, type HookAnimationProps} from '@banodoco/timeline-composition/theme-api';
 import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';
 import {EFFECT_REGISTRY} from '@banodoco/timeline-composition/effects.generated';
@@ -159,7 +176,11 @@ const spec: TransitionSpec = {T: 12, kind: 'dip', align: 'end', incomingPolicy};
 const contentFrame: number = queryTrackFrame(prepareTrack([{start: 0, duration: 30}], [spec]), 0).layers[0].contentFrame;
 declareAppTransition('v', 'x', {type: 'fade', duration: .4, incomingPolicy}, 30, 'timeline-composition');
 const selectedFile = (context: ComponentCapabilityContext): string | undefined => context.assetEntry?.file;
-void [transition, contentFrame, selectedFile];
+const occlusion = (answer: SceneFrame): SceneOcclusion => querySceneOcclusion(answer, 'x', .90);
+const diagnostics: ComponentDiagnostics = {motion: {zoom: 1.2}, face: {status: 'unknown', reason: 'No face declaration'},
+  text: {bounds: {status: 'known', rect: {x: 0, y: 0, width: 100, height: 50}}, minPx: 24}};
+const support: ComponentFrameSupport = {presence: 'present', opaqueSupport: 'none', bounds: {status: 'unknown', reason: 'Glyphs'}, diagnostics};
+void [transition, contentFrame, selectedFile, occlusion, support];
 void [TimelineComposition, prepareCompositionScene, prepareTrack, composeAnimations, resolved, clip, EFFECT_REGISTRY,
   THEME_PACKAGE_REGISTRY, ANIMATION_META, TRANSITION_META];
 `);
