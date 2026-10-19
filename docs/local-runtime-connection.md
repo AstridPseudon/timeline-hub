@@ -14,13 +14,13 @@
 | 8 | Prompt dismissed | still `prompt` | permission again |
 | 9 | Permission denied | `denied`, nothing sent | blocked |
 | 10 | Launcher started for another origin | 403 before CORS → `silent` | set_up or not_running. The agent's command then hits G2. |
-| 11 | Another program on 17340 | `silent` | set_up or not_running. The launcher says "Another program is in the way"; the agent reports it. |
+| 11 | Another program on 17340 | `silent` | set_up or not_running. `astrid-runtime up` names it, and the launcher says "Another program is in the way"; the agent reports it. |
 | 12 | Realm or identity changed, before connecting | `restart` | restart_needed |
 | 13 | Phone or tablet | `isMobileDevice()` | phone |
 | 14 | Safari or Firefox | scenario not `chromium` | rows 1–5, no permission screens (G5) |
 | 15 | Connected, Astrid stops | 2 failed health readings | stopped card. It clears itself when the same instance answers. |
 | 16 | Connected, Astrid restarts | new `runtime_instance_id` | restarted card → Reload |
-| 17 | Connected, realm changes | 503 `realm_changed` | restarted card → Reload → row 12. Rare, and each step is true. |
+| 17 | Connected, the door's credential changes identity | 503 `runtime_identity_mismatch` | restarted card → Reload → row 12. Rare, and each step is true. |
 | 18 | Timeline won't load | load error | loadFailed. It retries a few times when Astrid answers; Try again always works. |
 | 19 | Connected, no projects | — | EmptyWorkspaceGuidance |
 
@@ -35,8 +35,8 @@ for an astrid-app checkout (`scripts/dev-local-workspace.mjs`; `npm run dev:loca
 setup block installs only when it finds nothing and no sign that Astrid ran here before; the start block asks.
 
 Run `npm run dev:local` from this App checkout, then open
-`https://astrid.haus/tools/video-editor`. The local gateway on port 17340 connects
-the hosted page to the selected Runtime. Runtime credentials stay on this
+`https://astrid.haus/tools/video-editor`. The Runtime's own door on port 17340
+(opened by `astrid-runtime up`) connects the hosted page to the selected Runtime. Runtime credentials stay on this
 computer; the browser receives no product token.
 
 For an existing installation, inspect its saved Runtime selection and source
@@ -69,13 +69,13 @@ interpreter, preserve those paths with `ASTRID_ENV_FILE` and
 `ASTRID_PACK_HOST_PYTHON`. The launcher passes paths, never reads or copies the
 credential values. Existing credentials remain managed by Astrid's resolver.
 
-The same one-command restart reuses the configured Runtime, starts the local App
-and gateway, and passes that exact root and discovery path to the agent. Stop
+The same one-command restart reuses the configured Runtime, starts the local App,
+and passes that exact root and discovery path to the agent. Stop
 the App launcher with Ctrl+C before restarting it; a separately running Runtime
 remains owned by its existing launcher.
 
 Verify `/api/runtime/v1/health`, realm identity, projects and timelines through
-the gateway using the configured hosted Origin. Verify the selected agent by a
+the Runtime's door using the configured hosted Origin. Verify the selected agent by a
 small read-only prompt. A connection can be healthy while a workspace is empty;
 never create demo records to hide a wrong selection.
 
@@ -93,8 +93,8 @@ instructions hash before and after recovery.
 
 A successful object GET from a terminal does not prove that browser playback can
 read it. The hosted page must send its exact Origin on native media requests,
-and browser fetches must omit credentials. The gateway adds the Runtime token
-on this computer; it rejects browser cookies and authorization. Keep its strict
+and browser fetches must omit credentials. The Runtime's door acts with the
+product credential on this computer; it rejects browser cookies and authorization. Keep its strict
 Origin rule instead of adding credentialed CORS to work around a renderer bug.
 
 The canonical rendering pack owns one managed-object URL recognizer and the
@@ -109,8 +109,8 @@ each effect. Refresh the browser source with
 Regression coverage includes `ManagedMedia.hosted.test.tsx` (managed URLs,
 encoded IDs, ports/hosts, native attributes, refs/readiness callbacks, decoder
 and fallback options), `AudioAnalysisProvider.test.tsx` (credential-free cache
-warming), and `astrid-loopback-gateway.test.ts` (Origin refusal and ranged byte
-responses). Browser QA must also cover a pack-owned animated image/video,
+warming), and the Runtime's door conformance tests (astrid-runtime
+`tests/test_door_transport.py`: Origin refusal and ranged byte responses). Browser QA must also cover a pack-owned animated image/video,
 backward and forward seeking, and transition boundaries; ordinary seeded media
 alone does not exercise pack-owned native requests. Inspect the browser's actual
 request and console when an image fails, not only a server-side GET.

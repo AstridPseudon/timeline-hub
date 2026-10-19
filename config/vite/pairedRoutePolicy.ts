@@ -45,6 +45,10 @@ function entry(methods: string, template: string, stream = false): RouteEntry {
   return { methods: new Set(methods.split(',')), segments: template.split('/').slice(1), stream };
 }
 
+// The paired relay's table. The hosted page's direct route, the Runtime's own browser door
+// (astrid-runtime runtime_protocol/door.py), keeps the same table in the Runtime, and its
+// conformance tests (tests/test_door_routes.py) port this file's product calls: change both.
+//
 // Runtime routes. The `astrid` service is an alias of the Runtime (the connector
 // forwards it to the Runtime's own port unless VITE_ASTRID_BRIDGE_PORT overrides
 // it), so both services share this single table. The product's generated-client,

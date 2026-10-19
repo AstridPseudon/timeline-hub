@@ -4,8 +4,9 @@ import type { Realm } from './generated.ts';
  * Where the browser reaches the local Runtime (Plan A, F1). One origin, set once at boot:
  *
  * - `''`: same-origin. Local dev (Vite proxies `/api/*`) and Plan B's relay.
- * - an origin such as `http://127.0.0.1:17340`: the hosted build, talking to the loopback gateway,
- *   which serves the same `/api/runtime/*` and `/api/astrid/*` paths.
+ * - an origin such as `http://127.0.0.1:17340`: the hosted build, talking to the Runtime's own browser door
+ *   (astrid-runtime `runtime_protocol/door.py`; "the gateway" in this codebase), which serves the same
+ *   `/api/runtime/*` and `/api/astrid/*` paths.
  *
  * Everything else reads the bases through the functions below at request time, never a cached
  * string, so a client or helper created before boot still reaches the right place. Whether the

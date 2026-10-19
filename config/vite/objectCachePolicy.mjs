@@ -1,5 +1,5 @@
 // Cache policy for Runtime object reads, shared by every proxy hop (dev proxy,
-// vite proxy, hosted loopback gateway, paired relay). Plain .mjs so the
+// vite proxy, paired relay; the Runtime's browser door has its own copy). Plain .mjs so the
 // dependency-free dev proxy script can import it without a TypeScript loader.
 
 export const IMMUTABLE_OBJECT_CACHE_CONTROL = 'private, max-age=31536000, immutable';
