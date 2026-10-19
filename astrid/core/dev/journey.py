@@ -234,6 +234,24 @@ def scrub_child_env(environ: Mapping[str, str]) -> dict[str, str]:
     return {key: value for key, value in environ.items() if keep(key)}
 
 
+def _isolate_quick_pack_home(env: dict[str, str], root: Path) -> None:
+    """Keep QUICK's mutable pack source/config roots inside its disposable data tree."""
+    packhome = root / "data" / "packhome"
+    data_home, state_home, config_home = packhome / "data", packhome / "state", packhome / "config"
+    for key in ("ASTRID_ENV_FILE", "ASTRID_PACKS_PATH", "ASTRID_SOURCE_DECLARATIONS",
+                "ASTRID_HIVEMIND_REPOSITORY", "ASTRID_HIVEMIND_REVISION"):
+        env.pop(key, None)
+    env["HOME"] = str(packhome)
+    env["ASTRID_HOME"] = str(packhome / ".astrid")
+    env["XDG_DATA_HOME"] = str(data_home)
+    env["XDG_STATE_HOME"] = str(state_home)
+    env["XDG_CONFIG_HOME"] = str(config_home)
+    # These explicit selectors take precedence over XDG defaults in pack setup/discovery.
+    env["ASTRID_SOURCE_DATA"] = str(data_home / "astrid" / "packs")
+    env["ASTRID_SOURCE_STATE"] = str(state_home / "astrid" / "pack-sources.json")
+    env["ASTRID_USER_PACKS"] = str(config_home / "astrid" / "packs")
+
+
 # -- render backend -------------------------------------------------------------------------
 def review_supported(backend: str) -> bool:
     """Only the Remotion backend renders ``--review`` (the ffmpeg backend takes ``--range`` but not review)."""
@@ -591,7 +609,8 @@ class Runner:
         finally:
             if process.poll() is None:
                 platform.stop_tree(process, grace=3)
-
+        if self.tier == "quick" and phase == "first_open" and process.returncode:
+            self._save_command_output(phase, out, err)
         if process.returncode:
             # Both streams: stderr may hold only progress diagnostics while the refusal is on stdout.
             told = [f"{label}: {text.strip()[-1500:]}" for label, text in (("stderr", err), ("stdout", out)) if text and text.strip()]
@@ -605,6 +624,15 @@ class Runner:
         if isinstance(value, dict) and value.get("ok") is False:
             raise JourneyFailure(phase, str(value.get("error") or value))
         return value
+
+    def _save_command_output(self, phase: str, stdout: str, stderr: str) -> None:
+        """Retain bounded failing-command output inside the private root for failure evidence."""
+        directory = self.root / "command-logs"
+        directory.mkdir(parents=True, exist_ok=True)
+        for stream, value in (("stdout", stdout), ("stderr", stderr)):
+            if value:
+                encoded = value.encode("utf-8", errors="replace")[-EVIDENCE_TAIL_BYTES:]
+                (directory / f"{phase}.{stream}.log").write_bytes(encoded)
 
     def write_summary(self, *, error: str | None = None, outcome: str | None = None) -> None:
         elapsed = round(time.monotonic() - self.started, 3)
@@ -1126,6 +1154,8 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
     runner.details.update({"backend": backend, "app_selector": app_selector, "disk_preflight": disk})
     env = scrub_child_env(os.environ)
     env["ASTRID_RUNTIME_DATA_ROOT"] = str(root / "data")
+    if tier == "quick":
+        _isolate_quick_pack_home(env, root)
     env["TMPDIR"] = str(root / "tmp")
     (root / "tmp").mkdir()
     changed = False
@@ -1156,6 +1186,13 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
         env["ASTRID_RUNTIME_DATA_ROOT"] = str(root / "data")
         adopt_attempted = True
         runner.phase("adopt", lambda: runner.command("adopt", local + ["workspace", "adopt", "--from", str(source_realm), "--realm-id", realm_id, "--source-manifest", str(manifest_path)] + common, env, unbounded=(tier == "quick")))
+        if tier == "quick":
+            # Adoption creates data/; create the isolated home afterward so it
+            # cannot alter the source realm or interfere with adoption.
+            packhome = root / "data" / "packhome"
+            if packhome.is_symlink():
+                raise JourneyFailure("adopt", "QUICK pack home is an alias")
+            packhome.mkdir(parents=True, exist_ok=True)
         runner.phase("up", lambda: runner.command("up", local + ["up", "--source-manifest", str(manifest_path)] + common, env, unbounded=(tier == "quick")))
         if tier == "quick":
             quick_journey = Journey(runner=runner, root=root, env=env, project=project, timeline=source_timeline,
@@ -1265,20 +1302,22 @@ EVIDENCE_TAIL_BYTES = 256 * 1024
 
 
 def _keep_failure_logs(root: Path, summary: Path) -> str | None:
-    """Before the disposable root goes, keep the tail of each runtime/host log beside the summary.
+    """Before the disposable root goes, keep runtime logs and failing command output beside the summary.
 
-    Only ``*.log`` files under the data root's ``runtime`` directory are kept (never credentials or
-    the realm), each cut to its last 256 KiB, so a failed run can still be diagnosed.
+    Runtime logs are cut to their last 256 KiB; failing QUICK first_open output is
+    already bounded to that size. Credential files and realm files are never copied.
     """
     logs = sorted((root / "data" / "runtime").glob("*.log"))
-    if not logs:
+    command_logs = sorted((root / "command-logs").glob("*.log"))
+    if not logs and not command_logs:
         return None
-    target = summary.with_name(summary.stem + "-evidence")
-    target.mkdir(parents=True, exist_ok=True)
+    target = Path(tempfile.mkdtemp(prefix=summary.stem + "-evidence-", dir=summary.parent))
     for log in logs:
         with log.open("rb") as stream:
             stream.seek(max(0, log.stat().st_size - EVIDENCE_TAIL_BYTES))
             (target / log.name).write_bytes(stream.read())
+    for log in command_logs:
+        (target / log.name).write_bytes(log.read_bytes())
     return str(target)
 
 

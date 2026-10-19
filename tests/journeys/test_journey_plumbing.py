@@ -720,10 +720,13 @@ def test_a_failed_run_keeps_log_tails_but_not_credentials(tmp_path: Path) -> Non
     (runtime / "credentials" / "token.json").write_text("secret")
     (runtime / "runtime.log").write_bytes(b"x" * (journey.EVIDENCE_TAIL_BYTES + 10) + b"END")
     kept = journey._keep_failure_logs(tmp_path / "root", tmp_path / "summary.json")
-    assert kept == str(tmp_path / "summary-evidence")
-    tail = (tmp_path / "summary-evidence" / "runtime.log").read_bytes()
+    assert kept is not None
+    evidence = Path(kept)
+    assert evidence.parent == tmp_path and evidence.name.startswith("summary-evidence-")
+    tail = (evidence / "runtime.log").read_bytes()
     assert tail.endswith(b"END") and len(tail) == journey.EVIDENCE_TAIL_BYTES
-    assert not (tmp_path / "summary-evidence" / "credentials").exists()
+    assert not (evidence / "credentials").exists()
+    assert journey._keep_failure_logs(tmp_path / "root", tmp_path / "summary.json") != kept
     assert journey._keep_failure_logs(tmp_path / "empty", tmp_path / "s2.json") is None
 
 

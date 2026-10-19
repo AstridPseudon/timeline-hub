@@ -128,6 +128,12 @@ def test_quick_run_branches_through_browser_render_and_strict_teardown(
 
     def command(self, phase, argv, _env, **kwargs):
         phases.append(phase)
+        if phase == "first_open":
+            packhome = Path(_env["HOME"])
+            assert packhome.is_dir()
+            assert packhome == Path(_env["ASTRID_RUNTIME_DATA_ROOT"]) / "packhome"
+            assert Path(_env["ASTRID_SOURCE_DATA"]).is_relative_to(packhome)
+            assert Path(_env["ASTRID_SOURCE_STATE"]).is_relative_to(packhome)
         if phase == "doctor":
             return {"healthy": True, "renderer_node": {"status": "ok"}}
         return {"ok": True}
