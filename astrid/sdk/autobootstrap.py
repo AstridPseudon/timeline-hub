@@ -160,7 +160,7 @@ def _discovery_present(data_root: Path) -> bool:
         from astrid.sdk.workspace_client import _safe_local_path
 
         path = _safe_local_path(data_root / "runtime" / "discovery.json", field="runtime discovery")
-    except Exception:
+    except (OSError, RuntimeError, ValueError, TypeError, ImportError):
         return False
     return path.is_file() and not path.is_symlink()
 
@@ -435,11 +435,11 @@ def ensure_runtime(*, start_pack_host: bool = True, data_root: str | Path | None
     try:
         from astrid.sdk.storage_root import ensure_no_unmigrated_runtime, resolve_runtime_data_root
 
-        data_root = (
-            Path(data_root).expanduser().absolute()
-            if explicit_data_root
-            else resolve_runtime_data_root()
-        )
+        if explicit_data_root:
+            assert data_root is not None
+            data_root = Path(data_root).expanduser().absolute()
+        else:
+            data_root = resolve_runtime_data_root()
         if data_root is not None and not explicit_data_root:
             ensure_no_unmigrated_runtime(data_root)
     except ValueError as exc:
@@ -482,7 +482,6 @@ def ensure_runtime(*, start_pack_host: bool = True, data_root: str | Path | None
             value = _bootstrap_with_recovery(up_command)
 
     worker_handoff: dict[str, Any] = {}
-    credential_file = value.get("credential_file", "")
     if value.get("worker_credential_file"):
         worker_file = value.get("worker_credential_file")
         if not isinstance(worker_file, str):
@@ -505,13 +504,11 @@ def ensure_runtime(*, start_pack_host: bool = True, data_root: str | Path | None
     # never put the credential value in the subprocess result or logs.
     result.update(worker_handoff)
     if worker_handoff and start_pack_host:
-        from astrid.sdk.host_bootstrap import (
-            PackHostBootstrapError, ensure_pack_host,
-        )
+        from astrid.sdk.host_bootstrap import PackHostBootstrapError, ensure_pack_host
 
         try:
             result.update(ensure_pack_host(
-                value, reconfigure_action=RECONFIGURE_ACTION
+                value, reconfigure_action=RECONFIGURE_ACTION, attach_healthy=True
             ))
         except PackHostBootstrapError as exc:
             raise AutoBootstrapError(str(exc)) from exc

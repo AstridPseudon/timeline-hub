@@ -14,7 +14,10 @@ import pytest
 
 from astrid.core._shared.boot_manifest import load_boot_manifest_hash
 from astrid.core.execution import generic_host
-from astrid.core.execution.generic_host import source_checkout_closure_digest, source_checkout_digest
+from astrid.core.execution.generic_host import (
+    source_checkout_closure_digest,
+    source_checkout_digest,
+)
 from astrid.sdk import host_bootstrap
 from tests.sdk.test_host_bootstrap_source_identity import _materialize_source_closure
 
@@ -54,6 +57,16 @@ class Harness:
             def health(self):
                 return {"status": "ok", "runtime_epoch": "epoch-1", "runtime_instance_id": "instance-1",
                         "schema_digest": "schema-1"}
+            def _authenticate_worker(self, _executor_id):
+                return "realm-1"
+            @property
+            def generated(self):
+                return SimpleNamespace(get_executor=lambda _executor_id: SimpleNamespace(
+                    executor_id=host_bootstrap.PACK_HOST_ACTOR, readiness="ready",
+                    runtime_epoch="epoch-1", source_epoch="source-epoch-1",
+                    source_digest="source-digest-1", dependency_digest="dependency-digest-1",
+                    capabilities=[SimpleNamespace(status="ready")],
+                ))
         monkeypatch.setattr(generic_host, "RuntimeProtocolClient", Client)
         real_birth = host_bootstrap._host_birth_identity
         monkeypatch.setattr(host_bootstrap, "_host_birth_identity",
@@ -77,6 +90,11 @@ class Harness:
             "boot_manifest_path": str(manifest),
             "boot_manifest_hash": load_boot_manifest_hash(manifest, support_root=self.support),
             "runtime_instance_id": "instance-1", "runtime_epoch": "epoch-1", "schema_digest": "schema-1",
+            "source_epoch": "source-epoch-1",
+            "registration": {
+                "source_epoch": "source-epoch-1", "source_digest": "source-digest-1",
+                "dependency_digest": "dependency-digest-1",
+            },
             "ready_capabilities": [],
         }), encoding="utf-8")
         return SimpleNamespace(pid=FAKE_PID, poll=lambda: None)
@@ -130,6 +148,86 @@ def harness(tmp_path, monkeypatch):
     h.launches.clear()
     yield h
     h.cleanup()
+
+
+def test_launcher_attaches_to_healthy_host_from_another_checkout(harness, monkeypatch, tmp_path):
+    h = harness
+    second = tmp_path / "second-source"
+    (second / "astrid" / "packs").mkdir(parents=True)
+    _materialize_source_closure(second)
+    h.value["source_checkout"] = str(second)
+    monkeypatch.setattr(host_bootstrap, "_registered_host_status", lambda _state: "ours")
+    from astrid.core.gateway import dispatch
+    monkeypatch.setattr(
+        dispatch, "compose_profile_handoff",
+        lambda *_args, **_kwargs: pytest.fail("attach must preserve the resident boot manifest"),
+    )
+
+    result = host_bootstrap.ensure_pack_host(
+        h.value, reconfigure_action="reconfigure", attach_healthy=True,
+    )
+
+    assert result["host_status"] == "ready"
+    assert result["host_pid"] == FAKE_PID
+    assert result["host_source_checkout_digest"] == source_checkout_digest(h.source)
+    assert h.launches == []
+
+
+@pytest.mark.parametrize("fault", [
+    "unready-registration", "changed-registration-generation", "changed-resident-source",
+])
+def test_launcher_replaces_cross_checkout_host_when_resident_is_unhealthy(
+    harness, monkeypatch, tmp_path, fault,
+):
+    h = harness
+    resident_source = h.source
+    second = tmp_path / "second-source"
+    (second / "astrid" / "packs").mkdir(parents=True)
+    _materialize_source_closure(second)
+    h.value["source_checkout"] = str(second)
+    h.source = second
+    monkeypatch.setattr(host_bootstrap, "_registered_host_status", lambda _state: "ours")
+    monkeypatch.setattr(host_bootstrap, "_host_idle", lambda *_args: True)
+    retired = []
+    monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda state: retired.append(dict(state)))
+
+    if fault == "unready-registration":
+        client_type = generic_host.RuntimeProtocolClient
+
+        class UnreadyClient(client_type):
+            @property
+            def generated(self):
+                return SimpleNamespace(get_executor=lambda _executor_id: SimpleNamespace(
+                    executor_id=host_bootstrap.PACK_HOST_ACTOR, readiness="starting",
+                    runtime_epoch="epoch-1", source_epoch="source-epoch-1",
+                    source_digest="source-digest-1", dependency_digest="dependency-digest-1",
+                    capabilities=[SimpleNamespace(status="ready")],
+                ))
+
+        monkeypatch.setattr(generic_host, "RuntimeProtocolClient", UnreadyClient)
+    elif fault == "changed-registration-generation":
+        client_type = generic_host.RuntimeProtocolClient
+
+        class SupersededClient(client_type):
+            @property
+            def generated(self):
+                return SimpleNamespace(get_executor=lambda _executor_id: SimpleNamespace(
+                    executor_id=host_bootstrap.PACK_HOST_ACTOR, readiness="ready",
+                    runtime_epoch="epoch-1", source_epoch="source-epoch-2",
+                    source_digest="source-digest-1", dependency_digest="dependency-digest-1",
+                    capabilities=[SimpleNamespace(status="ready")],
+                ))
+
+        monkeypatch.setattr(generic_host, "RuntimeProtocolClient", SupersededClient)
+    else:
+        (resident_source / "astrid" / "packs" / "changed.marker").write_text("changed")
+    result = host_bootstrap.ensure_pack_host(
+        h.value, reconfigure_action="reconfigure", attach_healthy=True,
+    )
+
+    assert result["host_status"] == "ready"
+    assert len(retired) == 1
+    assert len(h.launches) == 1
 
 
 def _defunct(pid: int) -> bool:
@@ -222,7 +320,8 @@ def test_host_whose_validation_does_not_cover_this_caller_is_replaced_not_refuse
     reference = {"ASTRID_REMOTION_VALIDATION_PATH": "/x", "ASTRID_REMOTION_VALIDATION_SHA256": "a" * 64,
                  "ASTRID_REMOTION_VALIDATION_LAUNCH": "b" * 32, "ASTRID_REMOTION_VALIDATION_ROLE": "host"}
     harness.register(proc.pid, remotion_validation=reference)
-    ready = harness.marker("generic-host.ready.json"); ready["remotion_validation"] = reference
+    ready = harness.marker("generic-host.ready.json")
+    ready["remotion_validation"] = reference
     (harness.support / "generic-host.ready.json").write_text(json.dumps(ready), encoding="utf-8")
     monkeypatch.setattr(host_bootstrap, "_host_render_environment",
                         lambda _source: {"ASTRID_REMOTION_PROJECT_DIR": str(harness.tmp)})
