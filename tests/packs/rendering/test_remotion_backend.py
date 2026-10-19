@@ -1722,8 +1722,8 @@ def test_alpha_stamp_appends_transparent_flags_to_remotion_cli(
     """Stamped timeline -> --image-format=png --pixel-format=yuva444p10le
     --codec=prores --prores-profile=4444 appended to the remotion CLI, the
     rendered output is remapped to .mov, and the serialized theme's
-    visual.color.bg is transparent.  Unstamped (today's frozen path) -> no
-    alpha flags at all, .mp4 output, opaque theme bg kept."""
+    visual.color.bg is transparent. Unstamped timelines use JPEG95 frames,
+    .mp4 output, and keep their opaque theme background."""
     seen: dict[str, list[str]] = {"commands": []}
     props_seen: list[dict[str, object]] = []
 
@@ -1766,8 +1766,13 @@ def test_alpha_stamp_appends_transparent_flags_to_remotion_cli(
             )
 
     opaque_cmd, alpha_cmd = seen["commands"]
-    # Ordinary opaque renders remain lossless PNG; only review uses JPEG.
-    assert "--image-format=png" in opaque_cmd
+    # Video uses high-quality JPEG unless its requested output retains alpha.
+    # Selected still-frame captures use their separate lossless PNG path.
+    assert "--image-format=jpeg" in opaque_cmd
+    assert "--jpeg-quality=95" in opaque_cmd
+    assert "--image-format=png" not in opaque_cmd
+    assert "--image-format=png" in alpha_cmd
+    assert not any(part.startswith("--jpeg-quality=") for part in alpha_cmd)
     for flag in (
         "--pixel-format=yuva444p10le",
         "--codec=prores",

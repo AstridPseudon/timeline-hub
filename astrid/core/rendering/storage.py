@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import math
-import os
 from collections.abc import Iterable, Mapping
 from dataclasses import replace
 from fractions import Fraction
@@ -54,13 +53,8 @@ _PARALLEL_ENCODE_WORKING_COPIES = 1
 _MANAGED_RENDERER_COPY_PASSES = 2
 
 
-REMOTION_FRAME_FORMATS = ("png", "jpeg")
-_FRAME_BYTES_PER_PIXEL = {"png": Fraction(8, 5), "jpeg": Fraction(3, 10)}
-_FRAME_GUARD_PERCENT = 120
 REVIEW_MAX_WIDTH = 640
 REVIEW_MAX_HEIGHT = 360
-REVIEW_FRAME_FORMAT_ENV = "ASTRID_RENDER_REVIEW_FRAME_FORMAT"
-EXPORT_FRAME_FORMAT_ENV = "ASTRID_RENDER_EXPORT_FRAME_FORMAT"
 
 
 class StorageEstimateError(ValueError):
@@ -69,30 +63,11 @@ class StorageEstimateError(ValueError):
 
 def remotion_frame_format(
     *,
-    review: bool,
     alpha: bool = False,
-    environ: Mapping[str, str] | None = None,
 ) -> str:
-    """Return the Remotion frame image format for one render.
+    """Return the fixed Remotion frame format for opaque and alpha renders."""
 
-    PNG by default for review and export alike: frames stream into the
-    encoder, so the format no longer costs disk, and JPEG frames make the
-    H.264 output full-range (``yuvj420p``) and soften pixel edges. Alpha
-    renders always need PNG. Override with ``ASTRID_RENDER_REVIEW_FRAME_FORMAT``
-    or ``ASTRID_RENDER_EXPORT_FRAME_FORMAT`` set to ``png`` or ``jpeg``.
-    """
-
-    if alpha:
-        return "png"
-    env = os.environ if environ is None else environ
-    name = REVIEW_FRAME_FORMAT_ENV if review else EXPORT_FRAME_FORMAT_ENV
-    default = "png"
-    value = str(env.get(name) or default).strip().lower()
-    if value not in REMOTION_FRAME_FORMATS:
-        raise StorageEstimateError(
-            f"{name} must be one of {', '.join(REMOTION_FRAME_FORMATS)} (got {value!r})"
-        )
-    return value
+    return "png" if alpha else "jpeg"
 
 
 def remotion_frame_sequence_bytes(
@@ -102,12 +77,21 @@ def remotion_frame_sequence_bytes(
     height: int,
     image_format: str,
 ) -> int:
-    """Scratch bytes for one Remotion frame-image sequence, with the guard."""
+    """Conservative scratch bytes for one selected-format frame sequence."""
 
-    if image_format not in _FRAME_BYTES_PER_PIXEL:
+    if image_format not in {"png", "jpeg"}:
         raise StorageEstimateError(f"unknown Remotion frame format: {image_format!r}")
-    per_frame = Fraction(int(width) * int(height), 1) * _FRAME_BYTES_PER_PIXEL[image_format]
-    return math.ceil(per_frame * int(frames) * Fraction(_FRAME_GUARD_PERCENT, 100))
+    if image_format == "png":
+        per_frame = math.ceil(
+            Fraction((int(width) * 4 + 1) * int(height), 1) * Fraction(101, 100)
+        )
+    else:
+        # JPEG95 storage is content-dependent. Reserve one byte per pixel
+        # plus 20%, with the live attempt guard enforcing the admitted budget.
+        per_frame = math.ceil(
+            Fraction(int(width) * int(height) * 6, 5)
+        )
+    return per_frame * int(frames)
 
 
 def review_render_profile(profile: RenderProfile, *, alpha: bool = False) -> RenderProfile:
@@ -565,24 +549,28 @@ def estimate_managed_render_storage(
         else 0
     )
     alpha_frame_working_bytes = alpha_frame_bytes_per_frame * frames
-    # Paint coordinates remain authored; PNG storage follows the native
-    # screenshot's scaled device pixels, before any frame-provider resize.
+    # Paint coordinates remain authored; frame storage follows the selected
+    # format at rendered device pixels, before any frame-provider resize.
     # Explicit profiles do not enable the renderer's implicit review scale.
     capture_profile = _render_profile(timeline, registry, None)
     frame_profile = profile if implicit_review_scale else max(
         (profile, capture_profile), key=lambda value: value.width * value.height
     )
-    frame_pixels = frame_profile.width * frame_profile.height
-    frame_image_format = remotion_frame_format(review=bool(review_render), alpha=alpha)
-    frame_sequence_bytes_per_frame = math.ceil(
-        Fraction(frame_pixels * 4 + frame_profile.height, 1) * Fraction(101, 100))
+    frame_image_format = remotion_frame_format(alpha=alpha)
+    frame_sequence_bytes_per_frame = remotion_frame_sequence_bytes(
+        frames=1,
+        width=frame_profile.width,
+        height=frame_profile.height,
+        image_format=frame_image_format,
+    )
     frame_sequence_bytes = frame_sequence_bytes_per_frame * frames
     if (type(streaming_memory_budget_bytes) is not int or streaming_memory_budget_bytes < 0):
         raise StorageEstimateError("streaming memory budget must be a non-negative owner allocation")
     streaming_memory_required_bytes = profile.width * profile.height * 1000 + 2 * 1024**3
     streams_frames = (not alpha and streaming_memory_budget_bytes >= streaming_memory_required_bytes)
     # Never subtract fallback scratch from admission: a codec/browser can
-    # refuse parallel encoding even after its memory gate admitted it.
+    # refuse parallel encoding even after its memory gate admitted it. The
+    # fallback uses the selected format too; opaque renders do not switch to PNG.
     frame_working_bytes = max(alpha_frame_working_bytes, frame_sequence_bytes)
     base_bytes = (
         managed_input_bytes

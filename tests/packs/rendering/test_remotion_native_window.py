@@ -83,7 +83,7 @@ def test_actual_locked_command_selects_original_frames_once(tmp_path,monkeypatch
  def command(argv,**kwargs):
   flags=[x for x in argv if x.startswith('--frames=')]
   assert flags==([] if end is None else [f'--frames=150-{end-1}'])
-  assert '--sequence' not in argv and '--image-format=png' in argv and '--bundle-cache=false' in argv and '--concurrency=1' in argv
+  assert '--sequence' not in argv and '--image-format=jpeg' in argv and '--jpeg-quality=95' in argv and '--bundle-cache=false' in argv and '--concurrency=1' in argv
   assert any(x.startswith('--max-rate=') for x in argv) and any(x.startswith('--buffer-size=') for x in argv)
   props=json.loads(Path(argv[argv.index('--props')+1]).read_text());clip=props['timeline']['clips'][0]
   assert (clip['id'],clip['at'],clip['hold'])==('original-phase',1.001,9.009) and props['review']==review

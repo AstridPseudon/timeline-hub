@@ -1554,7 +1554,13 @@ def _execute_remotion_locked(
                     "--prores-profile=4444",
                 ]
             else:
-                remotion_args.append(f"--image-format={remotion_frame_format(review=review is not None)}")
+                # Opaque video needs no alpha plane. JPEG95 keeps screenshot
+                # detail while avoiding a full lossless PNG cache when
+                # Remotion's memory gate selects disk-backed encoding.
+                remotion_args += [
+                    f"--image-format={remotion_frame_format()}",
+                    "--jpeg-quality=95",
+                ]
                 remotion_args.append("--enforce-audio-track")
                 profile = _canonical_profile(
                     timeline_path,

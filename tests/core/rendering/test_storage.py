@@ -317,10 +317,10 @@ def test_streaming_allocation_keeps_full_fallback_scratch_and_capture_canvas():
     assert streamed["streams_frames"]
     assert streamed["estimated_scratch_bytes"] == full["estimated_scratch_bytes"]
     assert streamed["frame_sequence_bytes"] == streamed["frame_sequence_bytes_per_frame"] * 300
-    assert streamed["frame_sequence_bytes"] >= 1920 * 1080 * 4 * 300
+    assert streamed["frame_sequence_bytes"] == math.ceil(1920 * 1080 * 6 / 5) * 300
     assert streamed["frame_scratch_mode"] == "streaming_with_full_disk_fallback"
     review = estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={}, review_render=True)
-    assert review["frame_image_format"] == "png"  # PNG by default (freeze): JPEG frames soften pixel edges
+    assert review["frame_image_format"] == "jpeg"
     assert review["capture_canvas_width"] == 1920
     alpha = estimate_managed_render_storage(timeline=_timeline(alpha=True), registry={"assets": {}}, object_sizes={}, review_render=True, streaming_memory_budget_bytes=8 * 1024**3)
     assert alpha["frame_image_format"] == "png"
@@ -333,25 +333,15 @@ def test_streaming_allocation_rejects_boolean_or_negative_budget():
             estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={}, streaming_memory_budget_bytes=budget)
 
 
-def test_remotion_frame_format_defaults_by_render_kind() -> None:
-    # Frames stream, so PNG costs no disk; JPEG makes full-range H.264.
-    assert remotion_frame_format(review=True, environ={}) == "png"
-    assert remotion_frame_format(review=False, environ={}) == "png"
-    assert remotion_frame_format(
-        review=True, environ={"ASTRID_RENDER_REVIEW_FRAME_FORMAT": "jpeg"}
-    ) == "jpeg"
-    assert remotion_frame_format(review=False, alpha=True, environ={}) == "png"
-    assert remotion_frame_format(
-        review=True, environ={"ASTRID_RENDER_REVIEW_FRAME_FORMAT": "png"}
-    ) == "png"
-    assert remotion_frame_format(
-        review=False, environ={"ASTRID_RENDER_EXPORT_FRAME_FORMAT": "jpeg"}
-    ) == "jpeg"
-    with pytest.raises(StorageEstimateError, match="ASTRID_RENDER_REVIEW_FRAME_FORMAT"):
-        remotion_frame_format(review=True, environ={"ASTRID_RENDER_REVIEW_FRAME_FORMAT": "gif"})
+def test_remotion_frame_format_is_jpeg_for_opaque_and_png_for_alpha(monkeypatch):
+    monkeypatch.setenv("ASTRID_RENDER_REVIEW_FRAME_FORMAT", "png")
+    monkeypatch.setenv("ASTRID_RENDER_EXPORT_FRAME_FORMAT", "png")
+    assert remotion_frame_format() == "jpeg"
+    assert remotion_frame_format(alpha=False) == "jpeg"
+    assert remotion_frame_format(alpha=True) == "png"
 
 
-def test_review_estimate_uses_native_scaled_png_dimensions_but_keeps_paint_canvas():
+def test_review_estimate_uses_native_scaled_jpeg_dimensions_but_keeps_paint_canvas():
     estimate = estimate_managed_render_storage(
         timeline=_timeline(), registry={"assets": {}}, object_sizes={}, review_render=True,
     )
@@ -360,7 +350,7 @@ def test_review_estimate_uses_native_scaled_png_dimensions_but_keeps_paint_canva
     assert (estimate["frame_image_width"], estimate["frame_image_height"]) == (640, 360)
     assert estimate["video_bitrate_bps"] == 4_000_000
     assert estimate["duration_frames"] == 300
-    expected_per_frame = math.ceil((640 * 360 * 4 + 360) * 101 / 100)
+    expected_per_frame = math.ceil(640 * 360 * 6 / 5)
     assert estimate["frame_sequence_bytes_per_frame"] == expected_per_frame
     assert estimate["frame_sequence_bytes"] == expected_per_frame * 300
     assert estimate["frame_scratch_mode"] == "disk_fallback"
@@ -376,7 +366,7 @@ def test_explicit_profile_disables_implicit_review_scaling_in_estimate():
     )
     assert (estimate["width"], estimate["height"]) == (1920, 1080)
     assert (estimate["frame_image_width"], estimate["frame_image_height"]) == (1920, 1080)
-    assert estimate["frame_sequence_bytes"] >= 1920 * 1080 * 4 * 300
+    assert estimate["frame_sequence_bytes"] == math.ceil(1920 * 1080 * 6 / 5) * 300
 
 
 @pytest.mark.parametrize("alpha,expected_width", [(False, 230), (True, 231)])
@@ -389,11 +379,17 @@ def test_scaled_review_rounding_matches_backend_opaque_and_alpha(alpha, expected
     assert (estimate["width"], estimate["height"]) == (expected_width, 360)
     assert (estimate["frame_image_width"], estimate["frame_image_height"]) == (expected_width, 360)
     assert estimate["frame_sequence_bytes"] == estimate["frame_sequence_bytes_per_frame"] * 300
-    assert estimate["frame_image_format"] == "png"
+    assert estimate["frame_image_format"] == ("png" if alpha else "jpeg")
+    per_frame = (
+        math.ceil((expected_width * 4 + 1) * 360 * 101 / 100)
+        if alpha
+        else math.ceil(expected_width * 360 * 6 / 5)
+    )
+    assert estimate["frame_sequence_bytes_per_frame"] == per_frame
     assert not estimate["streams_frames"]
 
 
-def test_review_streaming_allocation_still_reserves_every_fallback_png():
+def test_review_streaming_allocation_still_reserves_selected_format_fallback():
     ordinary = estimate_managed_render_storage(
         timeline=_timeline(), registry={"assets": {}}, object_sizes={}, review_render=True,
     )
