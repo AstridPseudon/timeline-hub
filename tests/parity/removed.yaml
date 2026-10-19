@@ -196,3 +196,8 @@
   card: UX-LOOP
   reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
   alias: "--project"
+
+- feature: "flag:timelines.restore:--from"
+  card: A-D-PENDING-REFUSAL-RESOLUTION-249
+  reason: "Normal restore retains --from and requires its selection. The required mutually exclusive group also admits the explicitly local --resolve-refusal evidence path, which never dispatches COMMIT. This changes the individual flag requiredness only; omitting both modes or mixing them still refuses."
+  alias: "--from"

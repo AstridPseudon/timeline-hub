@@ -104,7 +104,12 @@ def configure_restore(parser):
     )
     _add_project_arg(parser, required=False)
     parser.add_argument("ref", help="Timeline to restore as a whole.")
-    parser.add_argument("--from", dest="from_ref", required=True, help="Exact revision ID or @prev / @-N.")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--from", dest="from_ref", help="Exact revision ID or @prev / @-N.")
+    mode.add_argument("--resolve-refusal", metavar="EVIDENCE_JSON",
+                      help="Locally resolve the qualified single D233 refusal; requires exact --project ID and response bytes.")
+    parser.add_argument("--refusal-response", metavar="RESPONSE_JSON",
+                        help="Original captured response file for --resolve-refusal; never sends a request.")
     _add_idempotency_key(parser)
     parser.add_argument("--message", default=None, help="Name this restore COMMIT in history.")
     _add_json_flag(parser)
@@ -114,6 +119,34 @@ def configure_restore(parser):
 def run_restore(parsed):
     from astrid.packs.timeline.cli import print_result
     from astrid.sdk.timeline.restore_commit import restore_revision
+    if getattr(parsed, "resolve_refusal", None) is not None:
+        from pathlib import Path
+
+        from astrid.sdk.contracts import DomainResult
+        from astrid.sdk.timeline.restore_commit import (
+            _REFUSAL_EVIDENCE_LIMIT,
+            resolve_restore_refusal,
+        )
+        from astrid.sdk.timeline.saved_intent import _finite_json
+
+        if (not parsed.project or not getattr(parsed, "refusal_response", None)
+                or getattr(parsed, "idempotency_key", None) or getattr(parsed, "message", None)):
+            raise TimelineEditError("local refusal resolution requires --project and --refusal-response; no key or message override")
+        try:
+            def read_bounded(name):
+                with Path(name).open("rb") as handle:
+                    raw = handle.read(_REFUSAL_EVIDENCE_LIMIT + 1)
+                if len(raw) > _REFUSAL_EVIDENCE_LIMIT:
+                    raise ValueError
+                return raw
+            evidence = _finite_json(read_bounded(parsed.resolve_refusal).decode("utf-8"))
+            response = read_bounded(parsed.refusal_response)
+        except (OSError, ValueError) as exc:
+            raise TimelineEditError("cannot read bounded refusal evidence and original response JSON") from exc
+        resolution = resolve_restore_refusal(parsed.project, parsed.ref, evidence=evidence, response=response)
+        return print_result(DomainResult.success(resolution), as_json=parsed.json)
+    if getattr(parsed, "refusal_response", None):
+        raise TimelineEditError("--refusal-response requires --resolve-refusal")
     result = restore_revision(
         parsed.client, parsed.project, parsed.ref, parsed.from_ref,
         idempotency_key=getattr(parsed, "idempotency_key", None),

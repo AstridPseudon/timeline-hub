@@ -3024,7 +3024,7 @@
           "options": [
             "--from"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreAction",
@@ -3063,6 +3063,28 @@
           "nargs": null,
           "options": [
             "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "refusal_response",
+          "metavar": "RESPONSE_JSON",
+          "nargs": null,
+          "options": [
+            "--refusal-response"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "resolve_refusal",
+          "metavar": "EVIDENCE_JSON",
+          "nargs": null,
+          "options": [
+            "--resolve-refusal"
           ],
           "required": false
         }

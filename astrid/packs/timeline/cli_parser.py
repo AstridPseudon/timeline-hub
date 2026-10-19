@@ -127,6 +127,8 @@ class TimelinesParser(argparse.ArgumentParser):
             self.error(f"unrecognized arguments: {' '.join(extras)}")
         if getattr(parsed, "command", None) == "lines" and not getattr(parsed, "file", None) and not parsed.ref:
             self.error("lines: name a timeline or pass --file F")
+        if getattr(parsed, "command", None) == "restore" and getattr(parsed, "resolve_refusal", None) is not None and not parsed.project:
+            self.error("restore --resolve-refusal requires an explicit canonical --project ID")
         if getattr(parsed, "command", None) in CURRENT_PROJECT_VERBS and not getattr(parsed, "project", None) and not getattr(parsed, "file", None):
             project = resolve_current_project(parsed)  # an explicit --project always wins
             if project is None:

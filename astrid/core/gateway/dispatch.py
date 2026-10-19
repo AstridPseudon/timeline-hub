@@ -454,6 +454,13 @@ def _dispatch_product(args: list[str]) -> int:
         # workspace nor a pack host, so keep it available on an offline host.
         return run_product_family(family, rest, client=None)
 
+    if family == "timelines" and rest[:1] == ["restore"] and any(
+        token.startswith("--") and len(token.partition("=")[0]) > 2
+        and "--resolve-refusal".startswith(token.partition("=")[0]) for token in rest
+    ):
+        # Evidence reconciliation must not acquire a Runtime or consult it.
+        return run_product_family(family, rest, client=None)
+
     help_request = any(token in {"-h", "--help"} for token in rest)
     edit_alias_help = family == "timelines" and rest[:1] == ["edit"] and "--help-all" in rest
     if help_request or edit_alias_help:
