@@ -7,13 +7,11 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import runpod_lifecycle
+from runpod_lifecycle import AllocationUnknown, LaunchFailure, PostCreateHookFailure
 
-# runpod-lifecycle is an optional extra (`pip install 'astrid[runpod]'`), not on public PyPI.
-runpod_lifecycle = pytest.importorskip("runpod_lifecycle")
-from runpod_lifecycle import AllocationUnknown, LaunchFailure, PostCreateHookFailure  # noqa: E402
-
-from astrid.packs.runpod import worker_preparation  # noqa: E402
-from scripts import claim_runpod_5090_backup as claim  # noqa: E402
+from astrid.packs.runpod import worker_preparation
+from scripts import claim_runpod_5090_backup as claim
 
 _TEST_API_KEY = "rpa_test_secret_must_not_persist"
 _VOLUME = {"id": "vol-backup", "name": "backup", "size": 250}

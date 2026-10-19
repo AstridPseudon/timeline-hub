@@ -25,9 +25,8 @@ dependencies = [
     # It is an optional/heavy dependency; install separately if needed.
     # "pyannote.audio==3.3.2",
     #
-    # runpod-lifecycle has been moved to [project.optional-dependencies].runpod.
-    # It is not published on public PyPI and requires a configured private index
-    # or local wheelhouse to resolve.  Install with: pip install 'astrid[runpod]'
+    # Keep runpod-lifecycle optional for runtime installs; its test dependency is
+    # pinned from upstream in the dev extra below.
     # "runpod-lifecycle>=0.3.1.dev0,<0.4",
 ]
 
@@ -44,6 +43,9 @@ astrid-upgrade = "astrid.sdk.upgrade:main"
 [project.optional-dependencies]
 dev = [
     "fonttools[woff]>=4.0",
+    # The RunPod claim script is exercised by unit and Darwin CI tests. Pin
+    # the lifecycle implementation because it is not published on PyPI.
+    "runpod-lifecycle @ git+https://github.com/banodoco/runpod-lifecycle.git@db79345536985c701b7aff2eb5eec36667aae204",
     "mypy==1.17.0",
     "pytest==9.0.2",
     "pytest-cov==7.1.0",
@@ -66,8 +68,8 @@ dev = [
     "build==1.4.0",
 ]
 
-# Requires a configured private package index (e.g. local wheelhouse or git
-# source) because runpod-lifecycle is not published on public PyPI.
+# Runtime installs need a configured package index or local wheelhouse because
+# runpod-lifecycle is not published on public PyPI.
 # Install: pip install 'astrid[runpod]'
 runpod = [
     "runpod-lifecycle>=0.3.1.dev0,<0.4",
