@@ -7,8 +7,10 @@ from .base import Check, CheckContext, Finding, register_check
 
 
 def _composition(ctx: CheckContext) -> list[Finding]:
+    # Bundle-only lint has no capture handoff; keep its existing caller path.
     return rules.composition(ctx.cut, ctx.elements, ctx.fps, track_order=ctx.track_order,
-                             params=ctx.params, tracks=ctx.tracks)
+                             params=ctx.params, tracks=ctx.tracks,
+                             **({"shared": ctx.shared} if "scene_frames" in ctx.shared else {}))
 
 
 def _timing(ctx: CheckContext) -> list[Finding]:

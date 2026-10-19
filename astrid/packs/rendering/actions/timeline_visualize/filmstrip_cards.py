@@ -1788,6 +1788,14 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         index['provenance']['frame_capture'] = capture_info
     label_batches = getattr(frame_provider, 'label_batches', None)
     label_canvas = getattr(frame_provider, 'label_canvas', None)
+    if frame_provider is not None:
+        from .overlays.labels import unavailable_labels
+
+        label_batches = dict(label_batches or {})
+        missing = [int(card['frame']) for card in cards if int(card['frame']) not in label_batches]
+        label_batches.update(unavailable_labels(
+            snapshot.get('config') or {}, missing, float(Fraction(*snapshot['fps_rational'])),
+            (capture_info or {}).get('scene_unavailable') or 'capture did not supply exact Root scene facts'))
     capture_ended_at = time.time()
     if options.get('view') == 'contact' and video_path is not None:
         # Render review: sample the rendered file itself and measure its audio.
@@ -1851,7 +1859,11 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         cut = window['cut']
         context = build_context(snapshot, cut, frames, fps=fps_value, frame_size=size,
                                 beats=options.get('beats'), layer_names=options.get('layers') or (),
-                                label_batches=label_batches, label_canvas=label_canvas)
+                                label_batches=label_batches, label_canvas=label_canvas,
+                                scene_frames=getattr(frame_provider, 'scene_frames', None),
+                                scene_occlusions=getattr(frame_provider, 'scene_occlusions', None),
+                                scene_clip_identities=getattr(frame_provider, 'scene_clip_identities', None),
+                                scene_unavailable=(capture_info or {}).get('scene_unavailable'))
         context.shared['window'] = window
         context.shared['frame_labels'] = {int(k): v for k, v in (motion_meta.get('labels') or {}).items()}
         from .motion.window import preset_settings

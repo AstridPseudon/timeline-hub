@@ -43,8 +43,6 @@ def labels_batch(config: Mapping[str, Any], frames: Sequence[int], fps: float,
                  canvas: Mapping[str, int] | None = None, *, assets=None, theme=None) -> dict[int, list[Visible]]:
     """One native query for a set of frames; missing render inputs stay explicit."""
     from astrid.core.timeline import scene_answers
-    from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
-    from astrid.core.timeline.scene_roles import _address, element_coverage, role_of
 
     requested = list(dict.fromkeys(frames))
     if not requested:
@@ -52,27 +50,46 @@ def labels_batch(config: Mapping[str, Any], frames: Sequence[int], fps: float,
     declared_canvas = (((config.get("theme_overrides") or {}).get("visual") or {}).get("canvas") or {})
     theme_canvas = ((theme or {}).get("visual") or {}).get("canvas") or {}
     basis = {**dict(canvas or declared_canvas or theme_canvas), "fps": fps}
-    clips = {c["id"]: c for c in config.get("clips") or []}
     try:
         answers = scene_answers.host_frames_at({"timeline": config, "assets": assets, "theme": theme}, basis, requested)
     except scene_answers.SceneQueryUnavailable as exc:
-        # These are structural address diagnostics, never confirmed visibility.
-        declarations = element_coverage({c.get("clipType", "") for c in clips.values()})
-        result = {}
-        tracks = {t["id"]: (i, t) for i, t in enumerate(config.get("tracks") or [])}
-        ordered = sorted(reversed(list(clips.values())), key=lambda c: tracks.get(c.get("track"), (len(tracks), {}))[0])
-        ordered = [(i, c) for i, c in enumerate(ordered)
-                   if tracks.get(c.get("track"), (0, {}))[1].get("kind") != "audio"
-                   and role_of(c, c.get("track"), declarations) != "none"]
-        for frame in requested:
-            active = [(i, c) for i, c in ordered if clip_start_frame(c, fps) <= frame < clip_end_frame(c, fps)]
-            result[frame] = [Visible(c["id"], _address(c), str(c.get("track", "")), i,
-                                     role_of(c, c.get("track"), declarations), None, None, "unknown", False,
-                                     "unavailable", str(exc)) for i, c in active]
-            if not active:
-                result[frame] = [Visible("", "Scene unavailable", "", 0, "content", None, None,
-                                         "unknown", False, "unavailable", str(exc))]
-        return result
+        return unavailable_labels(config, requested, fps, str(exc))
+    return labels_from_frames(config, answers)
+
+
+def unavailable_labels(config: Mapping[str, Any], frames: Sequence[int], fps: float,
+                       reason: str) -> dict[int, list[Visible]]:
+    """Structural address diagnostics, never confirmed visibility or a new query."""
+    if not frames:
+        return {}
+
+    from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
+    from astrid.core.timeline.scene_roles import _address, element_coverage, role_of
+
+    clips = {c["id"]: c for c in config.get("clips") or []}
+    declarations = element_coverage({c.get("clipType", "") for c in clips.values()})
+    result = {}
+    tracks = {t["id"]: (i, t) for i, t in enumerate(config.get("tracks") or [])}
+    ordered = sorted(reversed(list(clips.values())), key=lambda c: tracks.get(c.get("track"), (len(tracks), {}))[0])
+    ordered = [(i, c) for i, c in enumerate(ordered)
+               if tracks.get(c.get("track"), (0, {}))[1].get("kind") != "audio"
+               and role_of(c, c.get("track"), declarations) != "none"]
+    for frame in frames:
+        active = [(i, c) for i, c in ordered if clip_start_frame(c, fps) <= frame < clip_end_frame(c, fps)]
+        result[frame] = [Visible(c["id"], _address(c), str(c.get("track", "")), i,
+                                 role_of(c, c.get("track"), declarations), None, None, "unknown", False,
+                                 "unavailable", reason) for i, c in active]
+        if not active:
+            result[frame] = [Visible("", "Scene unavailable", "", 0, "content", None, None,
+                                     "unknown", False, "unavailable", reason)]
+    return result
+
+
+def labels_from_frames(config: Mapping[str, Any], answers: Sequence[Mapping[str, Any]]) -> dict[int, list[Visible]]:
+    """Project labels from the same public rows retained by a fresh capture."""
+    from astrid.core.timeline.scene_roles import _address
+
+    clips = {c["id"]: c for c in config.get("clips") or []}
     result = {}
     for answer in answers:
         layers = []

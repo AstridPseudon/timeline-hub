@@ -500,6 +500,9 @@ class RemotionFrameProvider:
         self.cache = cache or FrameCaptureCache()
         self.label_batches: dict[int, list] = {}
         self.label_canvas: dict | None = None
+        self.scene_frames: dict[str, dict] = {}
+        self.scene_occlusions: dict[str, dict] = {}
+        self.scene_clip_identities: dict[str, dict] = {}
         self.scene_unavailable: str | None = None
         if renderer is None:
             renderer = _acquire_shared_remotion_handle(
@@ -520,7 +523,9 @@ class RemotionFrameProvider:
         """Observe actual prepared capture props while their staging is alive."""
         from fractions import Fraction
 
-        from .overlays.labels import canvas_of, labels_batch
+        from astrid.core.timeline import scene_answers
+
+        from .overlays.labels import canvas_of, labels_from_frames
 
         try:
             canvas = ((props["timeline"].get("theme_overrides") or {}).get("visual") or {}).get("canvas")
@@ -530,10 +535,34 @@ class RemotionFrameProvider:
             fps = canvas["fps"]
             if fps != float(Fraction(*self.snapshot["fps_rational"])):
                 raise ValueError("captured Root frame rate differs from the frozen snapshot")
+            requested = list(dict.fromkeys(frames))
+            answers = scene_answers.host_frames_at(props, canvas, requested)
             self.label_canvas = canvas_of(props["timeline"], props["theme"])
-            self.label_batches.update(labels_batch(props["timeline"], list(frames), fps, self.label_canvas,
-                                                   assets=props["assets"], theme=props["theme"]))
-        except Exception as exc:  # noqa: BLE001 - advisory labels cannot change capture success
+            self.label_batches.update(labels_from_frames(props["timeline"], answers))
+            self.scene_frames.update({str(answer["frame"]): answer for answer in answers})
+            # The projection already records the source occurrence. Keep that
+            # mapping intact rather than recovering raw IDs from compiled IDs.
+            clips = {clip["id"]: clip for clip in props["timeline"]["clips"]}
+            for clip_id in {layer["clipId"] for answer in answers for layer in answer["layers"]}:
+                clip = clips[clip_id]
+                provenance = (clip.get("app") or {}).get("astrid_shot_composition") or {}
+                self.scene_clip_identities[clip_id] = {
+                    "clip_id": provenance.get("source_clip_id") or clip_id,
+                    "occurrence_id": provenance.get("occurrence_id") or clip.get("occurrence_id")
+                    or clip.get("shot_occurrence_id") or "",
+                }
+            targets = [{"frame": answer["frame"], "clip_id": layer["clipId"], "min_fraction": fraction}
+                       for fraction in (0.9, 0.98) for answer in answers for layer in answer["layers"]
+                       if layer["role"] != "none"]
+            if targets:
+                occlude = getattr(scene_answers, "occlusions_from_frames", None)
+                if occlude is None:
+                    raise scene_answers.SceneQueryUnavailable("public scene occlusion query unavailable")
+                occlusions = occlude(answers, targets)
+                for target, occlusion in zip(targets, occlusions, strict=True):
+                    self.scene_occlusions.setdefault(str(target["min_fraction"]), {}).setdefault(
+                        str(target["frame"]), {})[target["clip_id"]] = occlusion
+        except Exception as exc:  # noqa: BLE001 - advisory scene queries cannot change capture success
             self.scene_unavailable = str(exc)
 
     def close(self, *, force: bool = False) -> None:
@@ -547,6 +576,9 @@ class RemotionFrameProvider:
     ) -> dict[str, Any]:
         self.label_batches.clear()
         self.label_canvas = None
+        self.scene_frames = {}
+        self.scene_occlusions = {}
+        self.scene_clip_identities = {}
         self.scene_unavailable = None
         out_root = Path(out_root)
         frames_dir = out_root / "frames"
@@ -597,6 +629,10 @@ class RemotionFrameProvider:
         finally:
             if temporary is not None:
                 shutil.rmtree(temporary, ignore_errors=True)
+        if any(str(card["frame"]) not in self.scene_frames for card in cards):
+            self.scene_unavailable = self.scene_unavailable or (
+                "exact scene facts unavailable for cached pixels" if cached else
+                "capture did not supply exact Root scene facts")
         return {
             "evidence_source": "cache" if fresh == 0 else "fresh_capture" if cached == 0 else "mixed",
             "renderer": RENDERER_IDENTITY,
