@@ -10,6 +10,8 @@ export const RUNTIME_PROTOCOL = PROTOCOL;
 export const RUNTIME_SCHEMA_DIGEST = SCHEMA_DIGEST;
 export const RUNTIME_ACCEPTED_SCHEMA_DIGESTS = [
   RUNTIME_SCHEMA_DIGEST,
+  // Before the additive starting state: existing service health remains compatible.
+  'sha256:d4b3e46ab6481694810561c7aac99e45356a24a04b08545e53a7257663f007c4',
   // Before service health was added: existing Runtime responses remain compatible.
   'sha256:ec06fbc6567fe28065d22626b040cad81bb2e5318623586ae9187c713794f6b9',
 ] as const;

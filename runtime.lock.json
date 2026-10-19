@@ -38,11 +38,11 @@
     },
     "src/integrations/runtime/generated-contract-metadata.ts": {
       "from": "packages/typescript/src/contract-metadata.ts",
-      "sha256": "sha256:fe41cc95a8643671c110062a24c2355512025c420b4486cda792c10a0bfafb0a"
+      "sha256": "sha256:550dcc5d494614a0e9ac0582888b6c00899f1651b7bc96c678a8ebb441ebb371"
     },
     "src/integrations/runtime/generated.ts": {
       "from": "packages/typescript/src/generated.ts",
-      "sha256": "sha256:090aa6b6ffaed28b29c51b724f9db5fa45b18b8205f9e17f829d5d0fa0b857ea"
+      "sha256": "sha256:9f0c4f69b4422dbd62c4b3989296ee1e28f30d3685cfd83f32dab21902e91705"
     },
     "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json": {
       "from": "contract/schemas/timeline-config.schema.json",
@@ -51,6 +51,6 @@
   },
   "manifest": "contract/artifacts.json",
   "producer": "astrid-runtime",
-  "producer_version": "sha256:37a4f9102e8fbb9989d2d95f2adebf0bf3098185473830eed06f615534a09bb7",
-  "source_commit": "1f7a4422c4f4ba3b8f9600a55fe25d52adb0a438"
+  "producer_version": "sha256:570d6443ea9548f920c5392dae23d74120614e8b04258c4215747481334b41d5",
+  "source_commit": "2607f8b539e51502dec0436d65b4094daa77fc2c"
 }
