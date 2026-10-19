@@ -641,10 +641,24 @@ def test_installed_run_and_up_supervise_declared_service_and_report_status(tmp_p
         service_pid = launched["pid"]
         assert launched == {"python": str(_python(stage1_runtime_environment)), "endpoint": discovery["endpoint"], "pid": service_pid}
         assert platform.process_identity(service_pid) is not None
-        status = subprocess.run([str(_python(stage1_runtime_environment)), "-m", "astrid_runtime.cli", "status",
-            "--data-root", str(tmp_path / "support"), "--json"], env=env, capture_output=True, text=True, timeout=30)
+        status_command = [str(_python(stage1_runtime_environment)), "-m", "astrid_runtime.cli", "status",
+            "--data-root", str(tmp_path / "support"), "--json"]
+        status = subprocess.run(status_command, env=env, capture_output=True, text=True, timeout=30)
         assert status.returncode == 0, status.stdout + status.stderr
         rows = json.loads(status.stdout)["health"]["services"]
+        assert rows[0]["name"] == "example"
+        states = [rows[0]["state"]]
+        assert rows[0]["state"] in {"starting", "running"}
+        deadline = time.monotonic() + 15
+        while rows[0]["state"] != "running" and time.monotonic() < deadline:
+            time.sleep(0.1)
+            status = subprocess.run(status_command, env=env, capture_output=True, text=True, timeout=30)
+            assert status.returncode == 0, status.stdout + status.stderr
+            rows = json.loads(status.stdout)["health"]["services"]
+            states.append(rows[0]["state"])
+        assert rows[0]["state"] == "running", f"service did not become running before deadline: {rows}"
+        if "starting" in states:
+            assert states.index("starting") < states.index("running")
         assert rows[0]["name"] == "example" and rows[0]["state"] == "running" and rows[0]["last_exit"] is None
     finally:
         if process is not None:
