@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-19T22:48:37Z | dispatcher heartbeat 2s -->
+<!-- viewing | 2026-10-19T22:53:46Z | dispatcher heartbeat 10s -->
 # viewing — 2026-10-19 22:44 UTC
 Milestone: M0 COMPLETE. M1 Viewing label/renderer-off slice PASS; overall M1 OPEN, urgent two new Agent full failures assigned Viewing. M2 branches allowed22:35; integrations still wait recorded M1. M3 continues on held branches.
 Integrated: Composition tl/integration7aa384a/0.0.8 — locked build/repeat pack/fresh consumer PASS, central `npm test`22PASS0FAIL0SKIP. Agent4ffbb8b0 includes public-package/readiness/gate chain7a68b7ed +owner metadata/summary/M1restore/browserenv. App85be65a0a includes labels/paired projection/recovery/public0.0.8 root adoption. No M3 scene/vendor batch integrated.
@@ -16,3 +16,7 @@ Inbox: ACK urgentM1twofullnodes+Agent22:30/Runtime4newdiff, ACK22:35throughput/M
 Resources:13GBfree lastcheck; Player1heavy, M1targetedCPUpriority, route read-only, CPUworkerDONE. Candidatebranchesretained; clean/no-op/env/theme workersrecyclable; interrupteddirtysources retained. No managerproductedits/gitmutations/pushes.
 
 M1twofixes READY0422a817, ONEremoteagentrequestsent: normalcatalogregen+actualwrapper/publiccomponentSSR. Manager exactcatalogfile+TextCard4PASS6.07s; worker13PASS2existingSKIP16deselected +5registryPASS, gen--checkPASS; inheritedRuff2217vs2220baseline unchanged. LockedNM/PinnedNode setup prerequisite honest; no skipadded. Ownerreviewpending, no duplicatefull. Player77patch/semantic+77neighbors nowready; fresh6minquietgrant afterM1/CPU/routeDONE, managerread-onlyuntilrelease.
+
+22:49 Playerresumedbaseline COMPLETE4PASS2FAIL(1.5m), sourcefrozenESM22eaceaf/originalRemotionhashesunchanged. Transientzero sourceNOTsufficient; samewarmautomaticmute persists. QuietRELEASED, CPU/metric/sourceeventdiagnosis next; no mixed/planted/identicalretry. ACK22:36/38 Agentowns single1353line rationaleentry, no duplicateworker; ACKRuntimefull3773PASS7oldFAIL18SKIP/zero new, productff0ae58unchanged; ACKauditstablepositiveBEFOREnegatives/tolerancesunchanged, afterM1twofixes0422remotereviewpending.
+
+22:54 current M3 work: Player2fc323db DONE/HELDRED (77patch+77neighbors+1comparatorPASS; actual4/6baseline), new vw-m3-audio-monitor-control active test-onlyonevariable consumer-beforewarm/no productchange. vw-m3-real-frame-door active ownedAppharnessrealdoor/sourceclosure/normalCPUtask, no centraluntilbootstrap+schedule. vw-m3-incoming-policy-design source-only confirms no admittedconventionselector; design/viewing-incoming-policy.md, newescalation2254 recommendscanonicalincomingcontract/nativecompiledoutgoingdefault +explicitoldcanonicalmigrationdecision. Prior2248 bootstrap/publicpolicyrequestawaitsorchestrator. 0.0.9 heldunchanged.
