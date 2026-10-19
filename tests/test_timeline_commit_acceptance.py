@@ -365,23 +365,29 @@ def test_timeline_commit_retention_survives_online_and_offline_compaction(realm)
 
 
 def test_verified_baseline_keeps_main_receipt_event_and_unknown_intent(tmp_path):
-    from test_timeline_cutover import _service
+    from runtime_protocol.timeline_commit_baseline import verify_baseline
+    from timeline_commit_film_fixture import build_film_fixture
 
-    service, project, _ = _service(tmp_path)
+    film = build_film_fixture(tmp_path)
+    service = RuntimeService(film.duplicate_root)
+    project, timeline = film.project_id, film.timeline_id
     try:
         commits = TimelineCommitStore(service.store, validate_prepared=validate_prepared)
-        receipt = service.committed_receipt("parent_composition.publish", "main", "publish", project_id=project)
+        # Read the immutable captured receipt, including its original times.
+        # Ordinary old-command replay may expire independently of this proof.
+        facts = verify_baseline(service.store.conn, project, timeline, read_object=service.cas.read)
+        receipt = facts["entries"][0]["receipt"]
         before = counts(service)
-        head = commits.install_verified_baseline(project, "main", authorize=lambda: None)
-        assert head == {"revision_id": "parent-1", "publication_id": receipt["receipt_id"]}
-        entry = commits.history_entry(project, "main", head["publication_id"])
+        head = commits.install_verified_baseline(project, timeline, authorize=lambda: None)
+        assert head == {"revision_id": film.parent_revision_id, "publication_id": receipt["receipt_id"]}
+        entry = commits.history_entry(project, timeline, head["publication_id"])
         assert entry["receipt"] == receipt
         assert entry["intent"] == "legacy_unknown"
         assert entry["records"] is None
         assert entry["publisher"] is None
         assert counts(service) == {**before, "timeline_commit_history": 1}
-        assert commits.install_verified_baseline(project, "main", authorize=lambda: None) == head
-        assert commits.revision_closure(project, "main", "parent-1")["shot_revisions"][0]["shot_id"] == "shot-1"
+        assert commits.install_verified_baseline(project, timeline, authorize=lambda: None) == head
+        assert commits.revision_closure(project, timeline, film.parent_revision_id)["shot_revisions"][0]["shot_id"] == "shot-1"
         assert service.store.integrity_report()["ok"]
     finally:
         service.close()
