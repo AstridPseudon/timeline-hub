@@ -266,9 +266,7 @@ def _publication(connection, project_id, timeline_id, event, stream_seq, command
     return entry, document
 
 
-def _verify(connection, project_id, timeline_id, read_object):
-    _row(connection, "SELECT 1 FROM timelines WHERE id=? AND project_id=?", (timeline_id, project_id))
-    head = _row(connection, "SELECT * FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, project_id))
+def _publication_events(connection, project_id, timeline_id):
     events = connection.execute("SELECT * FROM timeline_events WHERE timeline_id=? ORDER BY id", (timeline_id,)).fetchall()
     previous = ""
     publications = []
@@ -282,6 +280,13 @@ def _verify(connection, project_id, timeline_id, read_object):
         _require(payload.get("project_id") == project_id, "event_project_mismatch")
         if event["kind"] == "parent.composition.published":
             publications.append((stream_seq, event))
+    return events, publications, previous
+
+
+def _verify(connection, project_id, timeline_id, read_object):
+    _row(connection, "SELECT 1 FROM timelines WHERE id=? AND project_id=?", (timeline_id, project_id))
+    head = _row(connection, "SELECT * FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, project_id))
+    events, publications, previous = _publication_events(connection, project_id, timeline_id)
     _require(publications, "publication_missing")
     last_seq, latest = publications[-1]
     latest_payload = _json(latest["payload_json"])
@@ -364,6 +369,28 @@ def verify_baseline(connection, project_id, timeline_id, *, read_object):
     """
     try:
         return _verify(connection, project_id, timeline_id, read_object)
+    except RuntimeErrorBase as exc:
+        if isinstance(exc.details, dict) and exc.details.get("reason") == "history_unavailable":
+            raise
+        _refuse("publication_dependency_unavailable:" + exc.code)
+    except (KeyError, TypeError, ValueError, IndexError, sqlite3.Error, OSError) as exc:
+        _refuse("missing_or_corrupt_publication_facts:" + type(exc).__name__)
+
+
+def verify_revision_source(connection, project_id, timeline_id, revision_id, *, read_object):
+    """Read an exact main publication closure without installing history or heads."""
+    try:
+        _row(connection, "SELECT 1 FROM timelines WHERE id=? AND project_id=?", (timeline_id, project_id))
+        _, publications, _ = _publication_events(connection, project_id, timeline_id)
+        commands = connection.execute(
+            "SELECT * FROM command_idempotency WHERE command_kind='parent_composition.publish' AND aggregate_id=?",
+            (timeline_id,),
+        ).fetchall()
+        for stream_seq, event in reversed(publications):
+            if _json(event["payload_json"])["new_head"] == revision_id:
+                _, document = _publication(connection, project_id, timeline_id, event, stream_seq, commands, read_object)
+                return document
+        _refuse("source_publication_missing")
     except RuntimeErrorBase as exc:
         if isinstance(exc.details, dict) and exc.details.get("reason") == "history_unavailable":
             raise
