@@ -351,7 +351,8 @@ class _RemoteFamily:
             elif operation == "cancel_run": value = self._client.cancel_run(*args, **kwargs)
             elif operation == "cancel_task": value = self._client.cancel_task(*args, **kwargs)
             elif operation == "claim_task": value = self._client.claim_task(*args, **kwargs)
-            elif operation == "commit_timeline": value = self._client.commit_timeline(*args, **kwargs)
+            elif operation == "commit_timeline":
+                value = self._client.commit_timeline(*args, **kwargs)
             elif operation == "create_generation": value = self._client.create_generation(*args, **kwargs)
             elif operation == "create_media_relation": value = self._client.create_media_relation(*args, **kwargs)
             elif operation == "create_project": value = self._client.create_project(*args, **kwargs)
@@ -397,7 +398,8 @@ class _RemoteFamily:
             elif operation == "list_managed_outputs": value = self._client.list_managed_outputs(*args, **kwargs)
             elif operation == "list_projects": value = self._client.list_projects(*args, **kwargs)
             elif operation == "list_run_events": value = self._client.list_run_events(*args, **kwargs)
-            elif operation == "list_timeline_commits": value = self._client.list_timeline_commits(*args, **kwargs)
+            elif operation == "list_timeline_commits":
+                value = self._client.list_timeline_commits(*args, **kwargs)
             elif operation == "list_timeline_history": value = self._client.list_timeline_history(*args, **kwargs)
             elif operation == "list_timelines": value = self._client.list_timelines(*args, **kwargs)
             elif operation == "list_variants": value = self._client.list_variants(*args, **kwargs)
