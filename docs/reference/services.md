@@ -16,9 +16,11 @@ python -m astrid.services declare --source-checkout /absolute/agent \
 When moving an existing app bridge, retain its `ASTRID_ACP_CWD`, profile,
 command, and optional session directory when generating the declaration.
 `--chat-cwd` can set the previous cwd explicitly; cwd participates in OMP's
-session store identity. The local source installer retains its app checkout
-cwd. New installations otherwise default to the agent source checkout. The
-default command remains `astrid`; the declaration prepends the selected
+session store identity. New installations default to `<selected data root>/chat`.
+The installer retains explicit cwd, profile and session-directory selections
+across updates and kept-workspace reinstalls. When replacing an old managed
+source-checkout cwd, it explicitly retains that cwd's original OMP session
+directory without moving or resetting the store. The default command remains `astrid`; the declaration prepends the selected
 Python's scripts directory to PATH to resolve that installed launcher.
 
 The pack-host entry is `python -m astrid.core.execution.generic_host --service

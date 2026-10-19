@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -20,6 +21,12 @@ from runtime_protocol.door import DEFAULT_DOOR_PORT
 from .core import Version, absolute, current, linked, new_version_id, read_json, write_json
 from .service import Service, platform_target, venv_python
 from .tools import binary, install_tools, source
+
+
+def _legacy_omp_session_dir(cwd: str, agent_dir: Path) -> Path:
+    if cwd.startswith(("/", "\\")):
+        cwd = cwd[1:]
+    return agent_dir / "sessions" / ("--" + re.sub(r"[/\\:]", "-", cwd) + "--")
 
 
 class Backend:
@@ -105,18 +112,17 @@ class Backend:
                 and (data / "runtime" / "catalog.json").is_file())
 
     @staticmethod
-    def _prior_chat_settings(old: Version | None) -> tuple[Path | None, dict[str, str]]:
+    def _prior_chat_settings(old: Version | None, retained: dict | None = None) -> tuple[Path | None, dict[str, str]]:
         """Carry the selected chat store and supported options across updates."""
-        if old is None:
-            return None, {}
-        profile = read_json(old.profile)
-        declaration_path = profile.get("service_declaration")
-        if not isinstance(declaration_path, str) or not Path(declaration_path).is_absolute():
-            return None, {}
-        declaration = read_json(Path(declaration_path))
-        chat = next((row for row in declaration.get("services", [])
-                     if isinstance(row, dict) and row.get("name") == "chat"), None)
-        values = chat.get("env", {}) if isinstance(chat, dict) else {}
+        values = retained or {}
+        if old is not None:
+            profile = read_json(old.profile)
+            declaration_path = profile.get("service_declaration")
+            if isinstance(declaration_path, str) and Path(declaration_path).is_absolute():
+                declaration = read_json(Path(declaration_path))
+                chat = next((row for row in declaration.get("services", [])
+                             if isinstance(row, dict) and row.get("name") == "chat"), None)
+                values = chat.get("env", {}) if isinstance(chat, dict) else values
         if not isinstance(values, dict):
             return None, {}
         cwd = values.get("ASTRID_ACP_CWD")
@@ -129,10 +135,27 @@ class Backend:
                    if key in option_names and isinstance(value, str) and value}
         return chat_cwd, options
 
+    def _selected_chat_settings(self, old: Version | None, data: Path) -> tuple[Path, dict[str, str]]:
+        record = self.service.recorded()
+        retained = record.get("chat_settings") if record.get("data_root") == str(data) else None
+        chat_cwd, chat_options = self._prior_chat_settings(old, retained)
+        managed_cwd = chat_cwd is not None and (
+            (old is not None and chat_cwd == old.root / "a")
+            or (chat_cwd.name == "a" and chat_cwd.parent.parent == self.root / "versions"))
+        if managed_cwd:
+            # Changing the managed cwd must not change OMP's canonical store.
+            agent_dir = Path(os.environ.get("PI_CODING_AGENT_DIR") or Path.home() / ".omp" / "agent")
+            chat_options.setdefault("ASTRID_ACP_SESSION_DIR", str(
+                _legacy_omp_session_dir(str(chat_cwd), agent_dir)))
+            chat_cwd = data / "chat"
+        if chat_cwd is None:
+            chat_cwd = Path(os.environ.get("ASTRID_ACP_CWD") or data / "chat")
+        return chat_cwd, chat_options
+
     def _declare_services(self, *, folder: Path, agent: Path, data: Path, python: Path,
                           bun: str, env: dict[str, str], old: Version | None) -> Path:
         """Run the candidate package's declaration API and write its profile input."""
-        chat_cwd, chat_options = self._prior_chat_settings(old)
+        chat_cwd, chat_options = self._selected_chat_settings(old, data)
         services_path = folder / "services.json"
         script = (
             "import json,sys; from pathlib import Path; "
@@ -361,11 +384,15 @@ class Backend:
         self.runtime(version, data, "upgrade", profile=True)
 
     def register(self, version: Version, data: Path) -> None:
+        chat_cwd, chat_options = self._prior_chat_settings(version)
+        if chat_cwd == data / "chat":
+            platform.private_directory(chat_cwd)
         self.service.register(version, data)
         realm = self.workspace(version, data)
         record = self.service.recorded()
+        settings = {"ASTRID_ACP_CWD": str(chat_cwd), **chat_options} if chat_cwd else {}
         write_json(self.service.selection, {**record, "realm_id": realm["realm_id"],
-                                           "realm_root": realm["realm_root"]})
+                                           "realm_root": realm["realm_root"], "chat_settings": settings})
 
     def start(self, version: Version, data: Path) -> None:
         if not self.service.start():
@@ -422,8 +449,12 @@ class Backend:
     def unregister(self) -> None:
         record = self.service.recorded()
         if record:
-            kept = {key: record[key] for key in ("owner", "program_root", "data_root", "realm_id", "realm_root")
+            kept = {key: record[key] for key in ("owner", "program_root", "data_root", "realm_id", "realm_root", "chat_settings")
                     if key in record}
+            if "chat_settings" not in kept and isinstance(record.get("version"), dict):
+                version = Version.load(record["version"])
+                chat_cwd, options = self._selected_chat_settings(version, Path(record["data_root"]))
+                kept["chat_settings"] = {"ASTRID_ACP_CWD": str(chat_cwd), **options}
             write_json(self.service.selection, {**kept, "uninstalled": True})
         self.service.unregister()
 

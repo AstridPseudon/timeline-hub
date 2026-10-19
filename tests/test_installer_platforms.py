@@ -12,7 +12,7 @@ from unittest.mock import Mock
 import pytest
 
 from astrid.installer import service, tools
-from astrid.installer.backend import Backend
+from astrid.installer.backend import Backend, _legacy_omp_session_dir
 from astrid.installer.core import Version, read_json, write_json
 
 FIXTURES = Path(__file__).parent / 'fixtures/installer'
@@ -460,3 +460,136 @@ def test_no_systemd_starts_foreground_runtime_supervisor_with_recorded_birth_ide
     # PID reuse cannot make uninstall wait for an unrelated process.
     monkeypatch.setattr(platform, 'process_identity', lambda pid: {'birth_id': 'new-owner'})
     manager.stop()
+
+
+@pytest.mark.parametrize('explicit_session', [False, True])
+def test_managed_chat_cwd_migrates_without_moving_omp_store(tmp_path, monkeypatch, explicit_session):
+    backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv')
+    root = backend.root / 'versions' / 'first'
+    root.mkdir(parents=True)
+    old_cwd = root / 'a'
+    old_profile = root / 'profile.json'
+    old_services = root / 'services.json'
+    selected = tmp_path / 'selected sessions'
+    options = {'ASTRID_ACP_SESSION_DIR': str(selected)} if explicit_session else {}
+    old_services.write_text(json.dumps({'services': [{'name': 'chat', 'env': {
+        'ASTRID_ACP_CWD': str(old_cwd), **options,
+    }}]}))
+    old_profile.write_text(json.dumps({'service_declaration': str(old_services)}))
+    old = Version(root, root / 'python', old_profile, {})
+    monkeypatch.setattr(backend.service, 'recorded', lambda: {})
+    monkeypatch.setenv('PI_CODING_AGENT_DIR', str(tmp_path / 'omp agent'))
+    expected_store = selected if explicit_session else tmp_path / 'omp agent' / 'sessions' / (
+        '--' + str(old_cwd).removeprefix('/').removeprefix('\\').replace('\\', '-').replace('/', '-').replace(':', '-') + '--')
+    expected_store.mkdir(parents=True)
+    session = expected_store / 'existing.jsonl'
+    session.write_bytes(b'canonical session bytes\n')
+    before = session.stat().st_mtime_ns
+
+    cwd, carried = backend._selected_chat_settings(old, tmp_path / 'workspace')
+
+    assert cwd == tmp_path / 'workspace' / 'chat'
+    assert carried['ASTRID_ACP_SESSION_DIR'] == str(expected_store)
+    assert session.read_bytes() == b'canonical session bytes\n'
+    assert session.stat().st_mtime_ns == before
+    assert not cwd.exists()  # Selection does not rewrite the session store or workspace.
+
+
+def test_kept_reinstall_retains_explicit_chat_choices_from_external_selection(tmp_path, monkeypatch):
+    backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv')
+    data = tmp_path / 'workspace'
+    settings = {'ASTRID_ACP_CWD': str(tmp_path / 'selected cwd'),
+                'ASTRID_ACP_SESSION_DIR': str(tmp_path / 'sessions'),
+                'ASTRID_ACP_PROFILE': 'selected-profile', 'UNRELATED_SECRET': 'excluded'}
+    record = {'owner': service.LABEL, 'program_root': str(backend.root),
+              'data_root': str(data), 'uninstalled': True, 'chat_settings': settings}
+    monkeypatch.setattr(backend.service, 'recorded', lambda: record)
+
+    cwd, options = backend._selected_chat_settings(None, data)
+
+    assert cwd == tmp_path / 'selected cwd'
+    assert options == {'ASTRID_ACP_SESSION_DIR': str(tmp_path / 'sessions'),
+                       'ASTRID_ACP_PROFILE': 'selected-profile'}
+    assert backend._selected_chat_settings(None, tmp_path / 'different workspace') == (
+        tmp_path / 'different workspace' / 'chat', {})
+
+
+def test_uninstall_records_legacy_managed_chat_settings_before_program_removal(tmp_path, monkeypatch):
+    backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv')
+    data = tmp_path / 'workspace'
+    old_root = backend.root / 'versions' / 'old'
+    old_root.mkdir(parents=True)
+    declaration = old_root / 'services.json'
+    declaration.write_text(json.dumps({'services': [{'name': 'chat', 'env': {
+        'ASTRID_ACP_CWD': str(old_root / 'a'), 'ASTRID_ACP_PROFILE': 'existing-profile',
+    }}]}))
+    profile = old_root / 'profile.json'
+    profile.write_text(json.dumps({'service_declaration': str(declaration)}))
+    old = Version(old_root, old_root / 'python', profile, {})
+    record = {'owner': service.LABEL, 'program_root': str(backend.root),
+              'data_root': str(data), 'version': old.document()}
+    backend.service.selection = tmp_path / 'outside-program' / 'astrid-install.json'
+    monkeypatch.setattr(backend.service, 'recorded', lambda: record)
+    monkeypatch.setattr(backend.service, 'unregister', lambda: None)
+    monkeypatch.setenv('PI_CODING_AGENT_DIR', str(tmp_path / 'omp agent'))
+
+    backend.unregister()
+    retained = read_json(backend.service.selection)
+    monkeypatch.setattr(backend.service, 'recorded', lambda: retained)
+    profile.unlink()
+    declaration.unlink()
+
+    assert retained['uninstalled'] is True
+    assert 'version' not in retained
+    cwd, options = backend._selected_chat_settings(None, data)
+    assert cwd == data / 'chat'
+    assert options['ASTRID_ACP_PROFILE'] == 'existing-profile'
+    expected = tmp_path / 'omp agent' / 'sessions' / (
+        '--' + str(old_root / 'a').removeprefix('/').removeprefix('\\').replace('\\', '-').replace('/', '-').replace(':', '-') + '--')
+    assert options['ASTRID_ACP_SESSION_DIR'] == str(expected)
+
+
+def test_chat_declaration_failure_can_retry_without_claiming_fresh_workspace(tmp_path, monkeypatch):
+    backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv')
+    data = tmp_path / 'workspace'
+    folder = tmp_path / 'candidate'
+    folder.mkdir()
+    monkeypatch.setattr(backend.service, 'recorded', lambda: {})
+    failure = [True]
+
+    def run(argv, **_kwargs):
+        assert Path(argv[-2]) == data / 'chat'
+        if failure[0]:
+            raise subprocess.CalledProcessError(1, argv)
+        Path(argv[-1]).write_text(json.dumps({'services': [{'name': 'chat', 'env': {
+            'ASTRID_ACP_CWD': str(data / 'chat'),
+        }}]}))
+        return ''
+
+    monkeypatch.setattr(backend, 'run', run)
+    kwargs = dict(folder=folder, agent=folder / 'a', data=data, python=folder / 'python',
+                  bun=str(folder / 'bun'), env={}, old=None)
+    with pytest.raises(subprocess.CalledProcessError):
+        backend._declare_services(**kwargs)
+    assert not backend.has_workspace(data)
+    failure[0] = False
+    declaration = backend._declare_services(**kwargs)
+    assert not backend.has_workspace(data)
+    profile = folder / 'profile.json'
+    profile.write_text(json.dumps({'service_declaration': str(declaration)}))
+    version = Version(folder, folder / 'python', profile, {})
+    backend.service.selection = tmp_path / 'outside' / 'selection.json'
+    monkeypatch.setattr(backend.service, 'register', lambda *_args: (
+        None if (data / 'chat').is_dir() else pytest.fail('managed chat cwd absent at registration')))
+    monkeypatch.setattr(backend, 'workspace', lambda *_args: {'realm_id': 'selected', 'realm_root': str(data / 'realm')})
+    backend.register(version, data)
+    assert read_json(backend.service.selection)['chat_settings']['ASTRID_ACP_CWD'] == str(data / 'chat')
+
+
+@pytest.mark.parametrize('cwd,namespace', [
+    ('/home/owner/old checkout', '--home-owner-old checkout--'),
+    (r'C:\Users\owner\old checkout', '--C--Users-owner-old checkout--'),
+    (r'\server\share\old checkout', '--server-share-old checkout--'),
+])
+def test_legacy_omp12_namespace_matches_original_producer(cwd, namespace, tmp_path):
+    assert _legacy_omp_session_dir(cwd, tmp_path) == tmp_path / 'sessions' / namespace

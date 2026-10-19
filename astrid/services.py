@@ -24,7 +24,7 @@ def service_declaration(
         raise ValueError("Bun 1.3.14 is required for Astrid chat")
     if not Path(python).is_absolute() or not Path(bun).is_absolute():
         raise ValueError("service interpreters must be absolute")
-    chat_cwd = chat_cwd or Path(os.environ.get("ASTRID_ACP_CWD") or source_checkout)
+    chat_cwd = chat_cwd or Path(os.environ.get("ASTRID_ACP_CWD") or data_root / "chat")
     if not chat_cwd.is_absolute():
         raise ValueError("chat cwd must be absolute")
     chat_options = {key: os.environ[key] for key in (
