@@ -107,3 +107,17 @@ test('unknown modifier output bounds produce a finding and unknown coverage', ()
   assert.equal(frame.coverage, 'UNKNOWN');
   assert.ok(frame.findings.some(({code}) => code === 'unknown-modifier-bounds'));
 });
+
+test('scene incoming vector consumes occurrence caps with ceil quantization and keeps omitted policy unchanged', () => {
+  const clips = [clip({at: 0}), {...clip({id: 'incoming', at: 1}),
+    app: {canonicalTiming: {occurrenceStartMs: 0, occurrenceDurationMs: 1501}}}];
+  const fps = 24000 / 1001;
+  const scene = prepareScene([{track: visualTrack, clips, transitions: [], incomingTransitions: [null, {T: 60}]}],
+    assets, fps, 1920, 1080);
+  const cap = Math.ceil(1.501 * fps);
+  assert.equal(scene.tracks[0].prepared.plans[1].drawDuration, cap);
+  assert.equal(querySceneFrame(scene, cap - 1).layers.at(-1)!.clipId, 'incoming');
+  assert.deepEqual(querySceneFrame(scene, cap).layers, []);
+  const native = prepareScene([{track: visualTrack, clips, transitions: []}], assets, fps, 1920, 1080);
+  assert.equal(querySceneFrame(native, cap).layers[0].clipId, 'incoming');
+});

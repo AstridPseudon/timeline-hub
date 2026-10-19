@@ -4,9 +4,9 @@ import {createElement, type ComponentProps, type ReactElement} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {Internals, useCurrentFrame} from 'remotion';
 import {Video} from '@remotion/media';
-import {TimelineComposition, prepareCompositionScene, querySceneFrame, DEFAULT_THEME, toRuntimeTheme,
+import {TimelineComposition, prepareCompositionScene, compileCanonicalTransitions, querySceneFrame, DEFAULT_THEME, toRuntimeTheme,
   type TimelineClip, type TrackDefinition, type AssetRegistry, type CompositionRegistries,
-  type ModifierRegistry, type EffectProps} from '../src/index';
+  type ModifierRegistry, type EffectProps, type CompiledCanonicalTransitions} from '../src/index';
 import {VisualClip} from '../src/VisualClip';
 
 const theme = toRuntimeTheme(DEFAULT_THEME);
@@ -190,4 +190,217 @@ test('overlapping windows use the same per-boundary clocks in the public scene a
       assert.deepEqual(answer.layers.map(layer => layer.transitionOpacity), frame === 42 ? [1] : policy ? [1, .5, .5] : [1, 0, 0]);
     }
   }
+});
+
+const compileIncoming = (clips: TimelineClip[], registries: CompositionRegistries = {}, fps = 30) =>
+  compileCanonicalTransitions([{track, clips}], fps, theme, registries);
+const prepareIncoming = (clips: TimelineClip[], registries: CompositionRegistries = {}, fps = 30,
+  compiled = compileIncoming(clips, registries, fps)) =>
+  prepareCompositionScene([{track, clips}], assets, fps, theme, 1920, 1080, undefined, undefined, {}, '', {}, registries, compiled);
+const incomingComposition = (clips: TimelineClip[], registries: CompositionRegistries = {}, modifierRegistry?: ModifierRegistry,
+  fps = 30, compiled = compileIncoming(clips, registries, fps)) =>
+  createElement(TimelineComposition, {timeline: {theme: 'default', tracks: [track], clips}, assets,
+    registries, modifierRegistry, compiledTransitions: compiled});
+
+const incomingCases: {name: string; S: number; T: number; predecessor: boolean; R: number; H: number; middle: number; cap?: number}[] = [
+  {name: 'adjacent', S: 30, T: 12, predecessor: true, R: 18, H: 60, middle: 24},
+  {name: 'first', S: 60, T: 12, predecessor: false, R: 60, H: 90, middle: 66},
+  {name: 'gap', S: 60, T: 12, predecessor: true, R: 48, H: 90, middle: 54},
+  {name: 'overlap', S: 15, T: 12, predecessor: true, R: 3, H: 45, middle: 9},
+  {name: 'oversized', S: 30, T: 60, predecessor: true, R: 0, H: 90, middle: 30},
+  {name: 'capped oversized', S: 30, T: 60, predecessor: true, R: 0, H: 60, middle: 30, cap: 60},
+];
+
+for (const {name, S, T, predecessor, R, H, middle, cap} of incomingCases) {
+  test(`explicit incoming ${name}: real registered component, Sequence mount, opacity and scene agree`, () => {
+    const seen: [string, number][] = [];
+    const queried: [string, number][] = [];
+    const Clock = Object.assign(({clip}: EffectProps) => {
+      const frame = useCurrentFrame();
+      seen.push([clip.id, frame]);
+      return createElement('b', {'data-clock': frame}, clip.id);
+    }, {prepareSceneCapability: ({clip}: {clip: TimelineClip}) => ({identity: clip.id,
+      frame: (frame: number) => {
+        queried.push([clip.id, frame]);
+        return {presence: 'present' as const, opaqueSupport: 'none' as const,
+          bounds: {status: 'known' as const, rect: {x: 0, y: 0, width: 1920, height: 1080}}};
+      }})});
+    const registries = {effects: {clock: Clock}};
+    for (const id of ['fade', 'crossfade', 'cross-fade']) {
+      const clips: TimelineClip[] = [
+        ...(predecessor ? [{id: 'outgoing', track: track.id, at: 0, hold: 1, clipType: 'clock'}] : []),
+        {id: 'incoming', track: track.id, at: S / 30, hold: 1, clipType: 'clock', transition: {type: id, duration: T / 30},
+          ...(cap === undefined ? {} : {app: {canonicalTiming: {occurrenceStartMs: 0, occurrenceDurationMs: cap * 1000 / 30}}})},
+      ];
+      const before = JSON.stringify(clips);
+      const compiled = compileIncoming(clips, registries);
+      const scene = prepareIncoming(clips, registries, 30, compiled);
+      const plan = scene.tracks[0].prepared.plans.at(-1)!;
+      assert.equal(plan.drawStart, R);
+      assert.equal(plan.drawDuration, H - R);
+      for (const frame of [R - 1, R, middle, H - 1, H].filter(frame => frame >= 0)) {
+        seen.length = 0;
+        queried.length = 0;
+        const html = render(incomingComposition(clips, registries, undefined, 30, compiled), frame);
+        queried.length = 0;
+        const answer = querySceneFrame(scene, frame);
+        assert.deepEqual(seen, queried);
+        const incoming = answer.layers.find(layer => layer.clipId === 'incoming');
+        const mounted = frame >= R && frame < H;
+        assert.equal(Boolean(incoming), mounted);
+        assert.equal(seen.some(([id]) => id === 'incoming'), mounted);
+        if (incoming) {
+          assert.equal(incoming.contentFrame, frame - R);
+          assert.equal(incoming.ownFrame, Math.min(29, Math.max(0, frame - S)));
+          if (frame === R) assert.equal(incoming.transitionOpacity, 0);
+          if (frame === middle) {
+            assert.equal(incoming.transitionOpacity, .5);
+            assert.match(html, /opacity:0\.5/);
+            assert.match(html, new RegExp(`data-clock="${middle - R}"`));
+          }
+        }
+        assert.ok(answer.layers.filter(layer => layer.clipId === 'outgoing').every(layer => layer.transitionOpacity === 1));
+      }
+      assert.equal(JSON.stringify(clips), before);
+    }
+  });
+}
+
+test('explicit incoming occurrence cap excludes its endpoint and can mount nothing', () => {
+  for (const T of [12, 60]) {
+    const clips: TimelineClip[] = [
+      {id: 'a', at: 0, hold: 1, track: track.id},
+      {id: 'b', at: 1, hold: 1, track: track.id, transition: {id: 'fade', durationFrames: T},
+        ...{app: {canonicalTiming: {occurrenceStartMs: 0, occurrenceDurationMs: 2000}}}},
+    ];
+    const scene = prepareIncoming(clips);
+    assert.equal(scene.tracks[0].prepared.plans[1].drawStart, Math.max(0, 30 - T));
+    assert.equal(querySceneFrame(scene, 59).layers.at(-1)!.clipId, 'b');
+    assert.deepEqual(querySceneFrame(scene, 60).layers, []);
+    const ended = {...clips[1], app: {canonicalTiming: {occurrenceStartMs: 0, occurrenceDurationMs: 0}}};
+    assert.deepEqual(querySceneFrame(prepareIncoming([clips[0], ended]), 0).layers.map(layer => layer.clipId), ['a']);
+    // The cap also applies to a cut; omission preserves the original own span.
+    const cut = {...clips[1], transition: undefined, app: {canonicalTiming: {occurrenceStartMs: 0, occurrenceDurationMs: 1500}}};
+    assert.equal(querySceneFrame(prepareIncoming([cut]), 44).layers.length, 1);
+    assert.deepEqual(querySceneFrame(prepareIncoming([cut]), 45).layers, []);
+    assert.equal(querySceneFrame(prepare([cut]), 45).layers.length, 1);
+  }
+});
+
+test('canonical compiler rejects malformed/conflicting input, duration, parameters and unsupported registry implementations', () => {
+  const clip: TimelineClip = {id: 'b', at: 1, hold: 1, track: track.id, transition: {id: 'fade', durationFrames: 12}};
+  const compiled = compileIncoming([clip]);
+  const withCompiled = (value: unknown) => prepareCompositionScene([{track, clips: [clip]}], assets, 30,
+    theme, 1920, 1080, undefined, undefined, {}, '', {}, {}, value as never);
+  for (const value of [null, false, [], {}, 'incoming', {fps: 24, tracks: compiled.tracks},
+    {fps: 30, tracks: null}, {fps: 30, tracks: []}, {fps: 30, tracks: [...compiled.tracks, ...compiled.tracks]},
+    {fps: 30, tracks: [{...compiled.tracks[0], clipIds: ['wrong']}]},
+    {fps: 30, tracks: [{...compiled.tracks[0], incomingTransitions: null}]}]) {
+    assert.throws(() => withCompiled(value), /transition\/invalid-compilation/);
+    assert.throws(() => render(createElement(TimelineComposition, {timeline: {theme: 'default', tracks: [track], clips: [clip]},
+      assets, compiledTransitions: value as never}), 0), /transition\/invalid-compilation/);
+  }
+  for (const durationFrames of [0, -1, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, .1, '12', null]) {
+    assert.throws(() => prepareIncoming([{...clip, transition: {id: 'fade', durationFrames}}]), /transition\/invalid-duration/);
+  }
+  for (const transition of [null, false, 12, {id: 'fade', duration: 0}, {id: 'fade', duration: NaN},
+    {id: 'fade', duration: .00001}, {id: 'fade', duration: 'bad'}]) {
+    assert.throws(() => prepareIncoming([{...clip, transition}]));
+  }
+  for (const transition of [{id: 'fade', align: 'center'}, {id: 'fade', incomingPolicy: 'other'}, {id: 'fade', type: 'cross-fade'}]) {
+    assert.throws(() => prepareIncoming([{...clip, transition}]), /transition\/conflicting-policy/);
+  }
+  for (const params of [null, [], {easing: 'ease-in'}, {ignored: 1}, {durationFrames: 30}]) {
+    assert.throws(() => prepareIncoming([{...clip, transition: {id: 'fade', params}}]), /transition\/unsupported-params/);
+  }
+  assert.throws(() => prepareIncoming([{...clip, transition: {id: 'unknown'}}]), /Unknown transition id 'unknown'/);
+  assert.throws(() => prepareIncoming([{...clip, transition: {id: 'custom'}}],
+    {transitions: {custom: () => ({presentation: null, timing: null})}}), /transition\/unsupported-implementation/);
+  assert.throws(() => prepareIncoming([clip], {transitions: {fade: () => ({presentation: null, timing: null})}}), /transition\/unsupported-implementation/);
+  assert.throws(() => prepareIncoming([{...clip, app: {canonicalTiming: {occurrenceDurationMs: 1000}}} as TimelineClip]), /transition\/invalid-span/);
+  assert.throws(() => prepareIncoming([{...clip, at: Number.MAX_SAFE_INTEGER}]), /transition\/invalid-span/);
+  const selected = {...clip, transition: {id: 'fade', durationFrames: 12, duration: 2, params: {easing: 'linear'}}};
+  assert.equal(prepareIncoming([selected]).tracks[0].prepared.plans[0].fadeIn!.to, 12);
+});
+
+test('explicit incoming rational fps shares speed-remapped registered clock and native trim/gain', () => {
+  const fps = 24000 / 1001;
+  const clips: TimelineClip[] = [
+    {id: 'a', at: 0, hold: 1001 / 1000, track: track.id},
+    {id: 'b', at: 1001 / 1000, from: 1001 / 1000, to: 3003 / 1000, speed: 2,
+      track: track.id, asset: 'video', volume: .5, transition: {id: 'fade', duration: 1001 / 4000}},
+  ];
+  const seen: number[] = [];
+  const queried: number[] = [];
+  const Clock = Object.assign(() => {seen.push(useCurrentFrame()); return createElement('b', null, 'clock');},
+    {prepareSceneCapability: () => ({identity: 'clock', frame: (frame: number) => {
+      queried.push(frame);
+      return {presence: 'present' as const, opaqueSupport: 'none' as const, bounds: {status: 'unknown' as const, reason: 'test'}};
+    }})});
+  const elements = [clips[0], {...clips[1], clipType: 'clock'}];
+  const scene = prepareIncoming(elements, {effects: {clock: Clock}}, fps);
+  const nativeSeen: {frame: number; trimBefore: number; trimAfter?: number; playbackRate: number; volume: number}[] = [];
+  const Probe = ({content}: {content: ReactElement<ComponentProps<typeof VisualClip>>}) => {
+    const video = VisualClip(content.props) as ReactElement<{trimBefore: number; trimAfter?: number; playbackRate: number; volume: number}>;
+    assert.equal(video.type, Video);
+    const {trimBefore, trimAfter, playbackRate, volume} = video.props;
+    nativeSeen.push({frame: useCurrentFrame(), trimBefore, trimAfter, playbackRate, volume});
+    return createElement('i');
+  };
+  const modifiers: ModifierRegistry = {probe: {kind: 'modifier', element: 'probe', hosts: ['composition'],
+    bounds: 'preserve', alpha: 'preserve', support: 'preserve',
+    wrap: (_instance, _context, content) => createElement(Probe, {content: content as ReactElement<ComponentProps<typeof VisualClip>>})}};
+  const media = [clips[0], {...clips[1], modifiers: [{id: 'probe', element: 'probe', params: {}}]}];
+  for (const frame of [18, 21, 47, 48]) {
+    seen.length = 0; queried.length = 0; nativeSeen.length = 0;
+    render(incomingComposition(elements, {effects: {clock: Clock}}, undefined, fps), frame, fps);
+    queried.length = 0;
+    const answer = querySceneFrame(scene, frame);
+    render(incomingComposition(media, {}, modifiers, fps), frame, fps);
+    assert.deepEqual(seen, queried);
+    const incoming = answer.layers.find(layer => layer.clipId === 'b');
+    if (frame === 48) {
+      assert.equal(incoming, undefined);
+      assert.deepEqual(nativeSeen, []);
+    } else {
+      assert.equal(incoming!.contentFrame, frame - 18);
+      assert.deepEqual(seen, [(frame - 18) * 2]);
+      assert.deepEqual(nativeSeen, [{frame: frame - 18, trimBefore: 24, trimAfter: 72, playbackRate: 2, volume: .4}]);
+      if (frame === 21) assert.equal(incoming!.transitionOpacity, .5);
+    }
+  }
+});
+
+test('canonical conversion of [a,b(fade),c] is deterministic and both public entry points consume its same result', () => {
+  const seen: [string, number][] = [];
+  const Clock = ({clip}: EffectProps) => {
+    seen.push([clip.id, useCurrentFrame()]);
+    return createElement('b', null, clip.id);
+  };
+  const registries = {effects: {clock: Clock}};
+  const clips: TimelineClip[] = [
+    {id: 'a', track: track.id, at: 0, hold: 1, clipType: 'clock'},
+    {id: 'b', track: track.id, at: 1, hold: 1, clipType: 'clock', transition: {type: 'fade', duration: .4}},
+    {id: 'c', track: track.id, at: 2, hold: 1, clipType: 'clock'},
+  ];
+  const before = JSON.stringify(clips);
+  const compiled = compileIncoming(clips, registries);
+  assert.deepEqual(compiled, {fps: 30, tracks: [{trackId: track.id, clipIds: ['a', 'b', 'c'],
+    incomingTransitions: [null, {T: 12}, null]}]});
+  assert.deepEqual(compileIncoming(clips, registries), compiled);
+  const transferred = JSON.parse(JSON.stringify(compiled)) as CompiledCanonicalTransitions;
+  const scene = prepareIncoming(clips, registries, 30, transferred);
+  assert.deepEqual(querySceneFrame(scene, 24).layers.map(layer => [layer.clipId, layer.contentFrame, layer.transitionOpacity]),
+    [['a', 24, 1], ['b', 6, .5]]);
+  assert.deepEqual(querySceneFrame(scene, 54).layers.map(layer => [layer.clipId, layer.transitionOpacity]), [['b', 1]]);
+  const html = render(incomingComposition(clips, registries, undefined, 30, transferred), 24);
+  assert.deepEqual(seen, [['a', 24], ['b', 6]]);
+  assert.match(html, /opacity:0\.5/);
+  seen.length = 0;
+  render(incomingComposition(clips, registries, undefined, 30, transferred), 54);
+  assert.deepEqual(seen, [['b', 36]]);
+  // Ordinary native inputs retain b's outgoing interpretation toward c.
+  assert.deepEqual(querySceneFrame(prepare(clips, registries), 24).layers.map(layer => layer.clipId), ['a']);
+  assert.deepEqual(querySceneFrame(prepare(clips, registries), 54).layers.map(layer => [layer.clipId, layer.transitionOpacity]), [['b', 0], ['c', 0]]);
+  assert.equal(JSON.stringify(clips), before);
 });

@@ -21,7 +21,7 @@ does not fetch assets or change their authored registry.
 ## Scoped host elements
 
 `TimelineComposition` accepts an optional `registries` prop. The same input is
-the final argument of `prepareCompositionScene`. Effects and aliases, animations
+the `registries` argument of `prepareCompositionScene`. Effects and aliases, animations
 and their defaults/meta, and transitions and their defaults/meta use the public
 `CompositionRegistries` contract from the root or `./registries` export.
 Every supplied member is the host's **complete resolved map** for that category;
@@ -103,6 +103,35 @@ At 30 fps, incoming authored frames 90..120 with a 12-frame end-aligned window
 start drawing at 78. With source trim 90..150 and speed 2, the opt-in supplies
 source-clock input 102 at frame 84 and 114 at frame 90; the default supplies 90
 at both frames. Source trim/end handling remains the media backend's responsibility.
+
+Canonical parent/internal documents define `clip.transition` as incoming for every
+producer. After resolving that document to projected tracks/clips, call
+`compileCanonicalTransitions(tracks, fps, theme, registries?)` once. Pass its
+serializable `CompiledCanonicalTransitions` result as the `compiledTransitions`
+prop of `TimelineComposition` and as the last argument of
+`prepareCompositionScene` (after `registries`). Both entry points consume the
+same resolved per-clip declarations. Native `TimelineConfig` inputs omit this
+compiler output and keep the outgoing behavior above. The compiler never
+rewrites authored clips or selects a contract from aliases or occurrence metadata.
+
+The canonical compiler supports registered `fade`, `crossfade` and `cross-fade`
+with linear opacity. It includes first clips, gaps, overlaps and oversized
+windows. For own start/duration S/D and rounded positive transition duration T,
+P is T with a same-track predecessor, otherwise zero. The draw origin is
+R=max(0,S−P) and the exclusive end is R+D+P, capped by existing admitted
+`app.canonicalTiming.occurrenceStartMs + occurrenceDurationMs` when present.
+Content advances from R; own frames remain clamped. The ramp is (frame−R)/T,
+clamped to [0,1]; outgoing opacity and audio gain stay unchanged. Unsupported
+implementations, parameters, conflicting policies and malformed durations fail
+explicitly. No caller-selected ownership policy is needed.
+
+Outgoing pair declarations cannot represent a transition on a lone first clip,
+a nonadjacent gap/overlap or a transition longer than a clip. Their admission
+and fit checks stay intact. The resolved compiler output therefore carries a
+separate incoming vector, which `prepareTrack` accepts as its optional third
+argument: one `{T}` or `null` per clip, with optional `ClipSpan.endCap` frame
+bounds. The scene API exposes it as `SceneTrackInput.incomingTransitions`.
+Incoming and outgoing vectors cannot both declare transitions.
 
 ## Pure planner API
 

@@ -6,9 +6,29 @@
 
 export type Align = 'end' | 'start' | 'center';
 
-export type ClipSpan = {start: number; duration: number}; // frames, the clip's own span
+export type ClipSpan = {start: number; duration: number; endCap?: number}; // frames, the clip's own span
 
 export type IncomingTransitionPolicy = 'preroll-crossfade';
+export type IncomingTransitionSpec = {T: number};
+
+/** Resolved canonical presentation input, never an authored document field. */
+export type CompiledCanonicalTransitions = {
+  fps: number;
+  tracks: readonly {trackId: string; clipIds: readonly string[];
+    incomingTransitions: readonly (IncomingTransitionSpec | null)[]}[];
+};
+
+export const validateCompiledCanonicalTransitions = (compiled: CompiledCanonicalTransitions | undefined, fps: number): void => {
+  if (compiled === undefined) return;
+  if (!compiled || compiled.fps !== fps || !Array.isArray(compiled.tracks)
+      || Object.keys(compiled).some(key => key !== 'fps' && key !== 'tracks')
+      || compiled.tracks.some(track => !track || typeof track.trackId !== 'string' || !track.trackId
+        || !Array.isArray(track.clipIds) || track.clipIds.some((id: unknown) => typeof id !== 'string' || !id)
+        || new Set(track.clipIds).size !== track.clipIds.length || !Array.isArray(track.incomingTransitions))
+      || new Set(compiled.tracks.map(track => track.trackId)).size !== compiled.tracks.length) {
+    throw new Error('transition/invalid-compilation: Expected unique compiled tracks and clip IDs at the composition frame rate');
+  }
+};
 
 export type FadeWindow = {from: number; to: number; kind: 'dissolve' | 'dip'}; // draw-local frames
 
@@ -45,11 +65,38 @@ export const overlapWindow = (
 };
 
 // transitions[i] is the transition from clip i to clip i+1 (null = a cut).
-// `spans` must already be in track order.
+// `spans` must already be in track order. The optional incoming vector owns
+// declarations by clip index (including zero) and is exclusive with outgoing pairs.
 export const planTrack = (
   spans: ClipSpan[],
   transitions: Array<TransitionSpec | null>,
+  incomingTransitions?: readonly (IncomingTransitionSpec | null)[],
 ): DrawPlan[] => {
+  if (incomingTransitions !== undefined) {
+    if (transitions.some(Boolean)) throw new Error('transition/conflicting-policy: Outgoing and incoming vectors cannot be combined');
+    if (incomingTransitions.length !== spans.length) throw new Error('transition/invalid-vector: One incoming entry is required per clip');
+    return spans.map((span, index) => {
+      const transition = incomingTransitions[index];
+      if (!Number.isSafeInteger(span.start) || span.start < 0 || !Number.isSafeInteger(span.duration)
+          || span.duration <= 0 || !Number.isSafeInteger(span.start + span.duration)
+          || (span.endCap !== undefined && (!Number.isSafeInteger(span.endCap) || span.endCap < 0))) {
+        throw new Error('transition/invalid-span: Expected safe positive frame spans and an optional nonnegative cap');
+      }
+      const T = transition?.T;
+      if (transition !== null && (typeof transition !== 'object' || typeof T !== 'number' || !Number.isSafeInteger(T) || T <= 0
+          || Object.keys(transition).some(key => key !== 'T'))) {
+        throw new Error('transition/invalid-duration: Expected positive safe whole transition frames');
+      }
+      const P = index > 0 ? T ?? 0 : 0;
+      const R = Math.max(0, span.start - P);
+      const end = R + span.duration + P;
+      if (!Number.isSafeInteger(end)) throw new Error('transition/invalid-span: Draw endpoint is unsafe');
+      return {drawStart: R, drawDuration: Math.max(0, Math.min(end, span.endCap ?? end) - R),
+        ownOffset: span.start - R, ownDuration: span.duration,
+        fadeIn: T === undefined ? null : {from: 0, to: T, kind: 'dissolve'}, fadeOut: null,
+        ...(T === undefined ? {} : {incomingPolicy: 'preroll-crossfade' as const})};
+    });
+  }
   const plans: DrawPlan[] = spans.map((span) => ({
     drawStart: span.start,
     drawDuration: span.duration,

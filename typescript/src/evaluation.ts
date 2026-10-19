@@ -7,13 +7,14 @@ import {
   type ClipSpan,
   type DrawPlan,
   type TransitionSpec,
+  type IncomingTransitionSpec,
 } from './lib/transition-spans';
 import {admitDeclaredTransitions, type TransitionDeclaration} from './lib/transition-declarations';
 
 export {declareAppTransition, admitTransitionContribution, transitionContributionIdentity, TransitionAdmissionError} from './lib/transition-declarations';
 export type {AppTransition, TransitionDeclaration, TransitionImplementation, TransitionContributionResource, TransitionContributionReference, AdmittedTransitionContribution} from './lib/transition-declarations';
 
-export type {Align, ClipSpan, DrawPlan, FadeWindow, TransitionSpec, IncomingTransitionPolicy} from './lib/transition-spans';
+export type {Align, ClipSpan, DrawPlan, FadeWindow, TransitionSpec, IncomingTransitionPolicy, CompiledCanonicalTransitions, IncomingTransitionSpec} from './lib/transition-spans';
 
 export type PreparedTrack = {
   readonly plans: readonly DrawPlan[];
@@ -40,7 +41,8 @@ export type TrackFrame = {
 export const prepareTrack = (
   spans: readonly ClipSpan[],
   transitions: readonly (TransitionSpec | null)[],
-): PreparedTrack => ({plans: planTrack([...spans], [...transitions])});
+  incomingTransitions?: readonly (IncomingTransitionSpec | null)[],
+): PreparedTrack => ({plans: planTrack([...spans], [...transitions], incomingTransitions)});
 
 // Strict authoring admission. Legacy prepareTrack inputs retain their behavior.
 export const prepareDeclaredTrack = (

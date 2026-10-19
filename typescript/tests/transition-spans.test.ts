@@ -48,3 +48,18 @@ test('start and center transitions extend draw spans without shifting own spans'
   assert.equal(center[0].fadeOut?.from, 8);
   assert.equal(center[0].fadeOut?.to, 10);
 });
+
+test('explicit incoming vectors preserve oversized windows and refuse conflicting or unsafe inputs', () => {
+  const spans = [{start: 0, duration: 30}, {start: 30, duration: 30, endCap: 60}];
+  const plans = planTrack(spans, [], [null, {T: 60}]);
+  assert.deepEqual([plans[1].drawStart, plans[1].drawDuration, plans[1].ownOffset], [0, 60, 30]);
+  assert.equal(ownFrame(plans[1], 0), 0);
+  assert.equal(ownFrame(plans[1], 59), 29);
+  assert.equal(layerOpacity(plans[1], 30), .5);
+  assert.throws(() => planTrack(spans, [{T: 12, kind: 'dip', align: 'end'}], [null, {T: 12}]), /transition\/conflicting-policy/);
+  assert.throws(() => planTrack(spans, [], [{T: 12}]), /transition\/invalid-vector/);
+  for (const T of [0, NaN, Infinity, .5, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.throws(() => planTrack(spans, [], [null, {T}]), /transition\/invalid-duration/);
+  }
+  assert.throws(() => planTrack([{start: 0, duration: 1}, {start: 1, duration: Number.MAX_SAFE_INTEGER - 1}], [], [null, {T: Number.MAX_SAFE_INTEGER}]), /transition\/invalid-span/);
+});

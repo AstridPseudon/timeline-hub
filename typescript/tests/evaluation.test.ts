@@ -123,3 +123,29 @@ test('App admission carries only explicit policy and still refuses unsupported c
   assert.throws(() => prepareTrack(clips, [{T: 12, kind: 'dip', align: 'end',
     incomingPolicy: 'unknown' as never}]), /Unsupported incoming transition policy/);
 });
+
+test('public incoming vector represents first clips and leaves audio envelope gain unchanged', () => {
+  const clip: TimelineClip = {id: 'first', at: 2, hold: 1, track: 'v', volume: .4, params: {fadeIn: .5}};
+  const before = JSON.stringify(clip);
+  const envelope = compileAudioEnvelope(clip, 30);
+  const track = prepareTrack([{start: 60, duration: 30}], [], [{T: 12}]);
+  assert.deepEqual(queryTrackFrame(track, 59).layers, []);
+  assert.deepEqual(queryTrackFrame(track, 66).layers.map(layer => [layer.ownFrame, layer.contentFrame, layer.opacity]), [[6, 6, .5]]);
+  assert.deepEqual(queryTrackFrame(track, 90).layers, []);
+  assert.deepEqual(compileAudioEnvelope(clip, 30), envelope);
+  assert.equal(JSON.stringify(clip), before);
+});
+
+test('native outgoing pairs cannot encode canonical first, gap, overlap or oversized incoming declarations', () => {
+  const spec = {T: 12, kind: 'dissolve', align: 'end', incomingPolicy: 'preroll-crossfade'} as const;
+  const first = prepareTrack([{start: 60, duration: 30}], [spec]);
+  assert.equal(queryTrackFrame(first, 66).layers[0].opacity, 1);
+  assert.equal(queryTrackFrame(prepareTrack([{start: 60, duration: 30}], [], [{T: 12}]), 66).layers[0].opacity, .5);
+  for (const [S, T, midpoint] of [[60, 12, 54], [15, 12, 9], [30, 60, 30]]) {
+    const spans = [{start: 0, duration: 30}, {start: S, duration: 30}];
+    const native = prepareTrack(spans, [{...spec, T}]);
+    const canonical = prepareTrack(spans, [], [null, {T}]);
+    assert.notEqual(queryTrackFrame(native, midpoint).layers.find(layer => layer.clipIndex === 1)?.opacity, .5);
+    assert.equal(queryTrackFrame(canonical, midpoint).layers.find(layer => layer.clipIndex === 1)!.opacity, .5);
+  }
+});

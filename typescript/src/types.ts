@@ -99,6 +99,8 @@ export type AssetRegistry = {
 
 export type HypeCompositionProps = {
   timeline: TimelineConfig;
+  /** Resolved output of compileCanonicalTransitions; native inputs omit it. */
+  compiledTransitions?: import('./lib/transition-spans').CompiledCanonicalTransitions;
   assets: AssetRegistry;
   theme?: import('./ThemeContext').Theme;
   registries?: import('./registries').CompositionRegistries;

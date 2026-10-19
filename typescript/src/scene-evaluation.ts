@@ -1,5 +1,5 @@
 /** Pure requested-frame scene answers. Undeclared component pixels remain unknown. */
-import {prepareTrack, queryTrackFrame, type PreparedTrack, type TransitionSpec} from './evaluation';
+import {prepareTrack, queryTrackFrame, type PreparedTrack, type TransitionSpec, type IncomingTransitionSpec} from './evaluation';
 import {getClipDurationInFrames} from './lib/duration';
 import {clipOpacity, fadeMultiplier, remappedFrame} from './lib/clip-look';
 import {admitModifiers} from './lib/modifier-admission';
@@ -11,7 +11,8 @@ import type {RenderBounds} from './lib/render-bounds';
 
 export type SceneFinding = {code: string; clipId: string; reason: string; instanceId?: string; element?: string};
 export type SceneTrackInput = {track: TrackDefinition; clips: readonly TimelineClip[];
-  transitions: readonly (TransitionSpec | null)[]};
+  transitions: readonly (TransitionSpec | null)[];
+  incomingTransitions?: readonly (IncomingTransitionSpec | null)[]};
 export type PreparedScene = {tracks: (SceneTrackInput & {prepared: PreparedTrack})[];
   assets: AssetRegistry; fps: number; width: number; height: number;
   capabilities: SceneCapabilities; elements: ReadonlySet<string>; modifiers: ModifierRegistry; roles: Readonly<Record<string, string>>};
@@ -28,13 +29,31 @@ export type SceneFrame = {frame: number; width: number; height: number; layers: 
 export type SceneOcclusion = {status: 'known'; occluderId: string | null; fraction: number}
   | {status: 'unknown'; reason: string};
 
+// Consume already-admitted projection timing only when the caller explicitly opts in.
+const occurrenceEndFrame = (clip: TimelineClip, fps: number): number | undefined => {
+  const timing = (clip as TimelineClip & {app?: {canonicalTiming?: {occurrenceStartMs?: unknown;
+    occurrenceDurationMs?: unknown}}}).app?.canonicalTiming;
+  if (timing === undefined) return undefined;
+  if (!timing || typeof timing !== 'object' || Array.isArray(timing)) {
+    throw new Error('transition/invalid-span: Malformed canonical occurrence cap');
+  }
+  const {occurrenceStartMs: start, occurrenceDurationMs: duration} = timing;
+  if (start === undefined && duration === undefined) return undefined;
+  if (typeof start !== 'number' || !Number.isFinite(start) || start < 0
+      || typeof duration !== 'number' || !Number.isFinite(duration) || duration < 0) {
+    throw new Error('transition/invalid-span: Malformed canonical occurrence cap');
+  }
+  return Math.ceil(((start + duration) / 1000) * fps);
+};
+
 // Track input order is bottom to top, exactly Composition's painter order.
 export const prepareScene = (tracks: readonly SceneTrackInput[], assets: AssetRegistry,
   fps: number, width: number, height: number, options: {elements?: ReadonlySet<string>;
     capabilities?: SceneCapabilities; modifiers?: ModifierRegistry; roles?: Readonly<Record<string, string>>} = {}): PreparedScene => {
   if (![fps, width, height].every(value => Number.isFinite(value) && value > 0)) throw new Error('evaluation_inputs_invalid');
   return {tracks: tracks.map(input => ({...input, prepared: prepareTrack(input.clips.map(clip => ({
-    start: Math.round(clip.at * fps), duration: getClipDurationInFrames(clip, fps)})), input.transitions)})),
+    start: Math.round(clip.at * fps), duration: getClipDurationInFrames(clip, fps),
+    ...(input.incomingTransitions === undefined ? {} : {endCap: occurrenceEndFrame(clip, fps)})})), input.transitions, input.incomingTransitions)})),
     assets, fps, width, height, capabilities: options.capabilities ?? {}, elements: options.elements ?? new Set(), modifiers: options.modifiers ?? {}, roles: options.roles ?? {}};
 };
 
