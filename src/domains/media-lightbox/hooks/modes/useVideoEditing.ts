@@ -17,7 +17,6 @@ export const useVideoEditing = ({
   selectedProjectId,
   videoDuration,
   videoUrl,
-  onExitVideoEditMode,
 }: UseVideoEditingProps): UseVideoEditingReturn => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -55,8 +54,7 @@ export const useVideoEditing = ({
 
   const handleExitVideoEditMode = useCallback(() => {
     setIsVideoEditMode(false);
-    onExitVideoEditMode?.();
-  }, [onExitVideoEditMode]);
+  }, []);
 
   return {
     isVideoEditMode,

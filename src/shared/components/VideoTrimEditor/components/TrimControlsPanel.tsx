@@ -2,7 +2,7 @@
  * TrimControlsPanel Component
  *
  * Side panel with trim controls, similar to EditModePanel in MediaLightbox.
- * Contains the timeline bar, duration info and the reset control.
+ * Contains the timeline bar, frame previews, the reset control and the save button.
  */
 
 import React from 'react';
@@ -19,6 +19,7 @@ export const TrimControlsPanel: React.FC<TrimControlsPanelProps> = ({
   onEndTrimChange,
   onResetTrim,
   hasTrimChanges,
+  onSave,
   variant,
   videoUrl,
   currentTime: externalCurrentTime,
@@ -87,6 +88,15 @@ export const TrimControlsPanel: React.FC<TrimControlsPanelProps> = ({
             Reset to original
           </Button>
         )}
+
+        <Button
+          onClick={onSave}
+          disabled={!hasTrimChanges || !trimState.isValid}
+          className="w-full"
+        >
+          <Scissors className="w-4 h-4 mr-2" />
+          Save trimmed video
+        </Button>
       </div>
     </div>
   );

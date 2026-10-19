@@ -8,6 +8,7 @@ export interface TrimControlsPanelProps {
   onResetTrim: () => void;
   trimmedDuration: number;
   hasTrimChanges: boolean;
+  onSave: () => void;
   onClose: () => void;
   variant: 'desktop' | 'mobile';
   videoUrl?: string;
@@ -23,7 +24,6 @@ export interface TrimTimelineBarProps {
   onStartTrimChange: (seconds: number) => void;
   onEndTrimChange: (seconds: number) => void;
   currentTime?: number;
-  disabled?: boolean;
   videoRef?: RefObject<HTMLVideoElement | null>;
   onSeek?: (time: number) => void;
 }

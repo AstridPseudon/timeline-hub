@@ -17,7 +17,6 @@ export const TrimTimelineBar: React.FC<TrimTimelineBarProps> = ({
   onStartTrimChange,
   onEndTrimChange,
   currentTime,
-  disabled = false,
   videoRef,
   onSeek,
 }) => {
@@ -47,7 +46,7 @@ export const TrimTimelineBar: React.FC<TrimTimelineBarProps> = ({
   // Handle click on the keep region to seek video
   const handleTimelineClick = useCallback(
     (e: React.MouseEvent) => {
-      if (disabled || isDragging) return;
+      if (isDragging) return;
 
       // Don't seek if click was on a handle (they have z-10, so check target classes)
       const target = e.target as HTMLElement;
@@ -67,25 +66,24 @@ export const TrimTimelineBar: React.FC<TrimTimelineBarProps> = ({
         onSeek?.(clickedTime);
       }
     },
-    [disabled, isDragging, clientXToTime, startTrim, endTrim, duration, videoRef, onSeek]
+    [isDragging, clientXToTime, startTrim, endTrim, duration, videoRef, onSeek]
   );
 
   // Handle pointer down on handles
   const handlePointerDown = useCallback(
     (type: 'start' | 'end') => (e: React.PointerEvent) => {
-      if (disabled) return;
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(type);
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [disabled]
+    []
   );
 
   // Handle pointer move
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!isDragging || disabled) return;
+      if (!isDragging) return;
       e.preventDefault();
 
       const time = clientXToTime(e.clientX);
@@ -99,7 +97,7 @@ export const TrimTimelineBar: React.FC<TrimTimelineBarProps> = ({
         onEndTrimChange(newEndTrim);
       }
     },
-    [isDragging, disabled, clientXToTime, duration, onStartTrimChange, onEndTrimChange]
+    [isDragging, clientXToTime, duration, onStartTrimChange, onEndTrimChange]
   );
 
   // Handle pointer up
@@ -146,10 +144,7 @@ export const TrimTimelineBar: React.FC<TrimTimelineBarProps> = ({
       {/* Timeline bar */}
       <div
         ref={containerRef}
-        className={cn(
-          'relative h-12 rounded-lg overflow-hidden select-none',
-          disabled ? 'opacity-50 pointer-events-none' : 'cursor-pointer'
-        )}
+        className="relative h-12 rounded-lg overflow-hidden select-none cursor-pointer"
         onClick={handleTimelineClick}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

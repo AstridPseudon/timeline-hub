@@ -12,7 +12,19 @@ export type KleinModel = 'flux-klein-4b' | 'flux-klein-9b';
 export function isKleinModel(model: QwenEditModel): model is KleinModel {
   return model === 'flux-klein-4b' || model === 'flux-klein-9b';
 }
-export type VideoEditSubMode = 'trim' | 'replace' | 'regenerate' | 'enhance';
+export type VideoEditSubMode = 'replace' | 'regenerate' | 'enhance';
+
+const VIDEO_EDIT_SUB_MODES: readonly VideoEditSubMode[] = ['replace', 'regenerate', 'enhance'];
+
+/**
+ * Reads a persisted sub-mode. Settings saved while the lightbox still had a
+ * Trim sub-mode hold `'trim'` (it was the default); anything that is not a
+ * current sub-mode reads as unset.
+ */
+export function parseVideoEditSubMode(value: unknown): VideoEditSubMode | null {
+  return VIDEO_EDIT_SUB_MODES.find((mode) => mode === value) ?? null;
+}
+
 export type PanelMode = 'info' | 'edit';
 
 export interface EditAdvancedSettings {
@@ -101,7 +113,7 @@ interface UserPreferenceSettings {
 
 const DEFAULT_USER_PREFERENCE_SETTINGS: UserPreferenceSettings = {
   editMode: 'text',
-  videoEditSubMode: 'trim',
+  videoEditSubMode: 'replace',
   panelMode: 'info',
 };
 

@@ -10,7 +10,6 @@ export interface UseVideoEditingProps {
   isVideo: boolean;
   videoDuration: number;
   videoUrl: string;
-  onExitVideoEditMode?: () => void;
 }
 
 export interface UseVideoEditingReturn {

@@ -20,6 +20,9 @@ import { cn } from '@/shared/components/ui/contracts/cn';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { useVariants } from '@/shared/hooks/variants/useVariants';
+import { useCloudBackendNotice } from '@/shared/hooks/async/useCloudBackendNotice';
+import { requireCloudBackend } from '@/shared/lib/cloudBackend';
+import { CloudBackendNotice } from '@/shared/components/CloudBackendNotice';
 import type { PortionSelection } from '@/shared/components/VideoPortionTimeline';
 import { TrimControlsPanel } from '@/shared/components/VideoTrimEditor/components/TrimControlsPanel';
 import { useVideoTrimming } from '@/shared/components/VideoTrimEditor/hooks/useVideoTrimming';
@@ -112,6 +115,13 @@ export function InlineEditVideoView({
     trimmedDuration,
     hasTrimChanges,
   } = useVideoTrimming();
+
+  // Saving a trim needs the online backend, which isn't available yet: the
+  // person sees the one plain line instead of a silent no-op.
+  const { unavailable: trimSaveUnavailable, attempt: attemptTrimSave } = useCloudBackendNotice();
+  const handleSaveTrim = useCallback(() => {
+    void attemptTrimSave(() => requireCloudBackend('edit-video'));
+  }, [attemptTrimSave]);
 
   const [videoDuration, setVideoDuration] = useState(0);
   const [videoFps, setVideoFps] = useState<number | null>(null);
@@ -264,20 +274,28 @@ export function InlineEditVideoView({
           {/* Panel Content - conditionally render based on mode */}
           <div className="flex-1 overflow-y-auto min-h-0">
             {videoEditSubMode === 'trim' && (
-              <TrimControlsPanel
-                trimState={trimState}
-                onStartTrimChange={setStartTrim}
-                onEndTrimChange={setEndTrim}
-                onResetTrim={resetTrim}
-                trimmedDuration={trimmedDuration}
-                hasTrimChanges={hasTrimChanges}
-                onClose={onClose}
-                variant={isMobile ? 'mobile' : 'desktop'}
-                videoUrl={videoUrl || ''}
-                currentTime={currentVideoTime}
-                videoRef={videoRef}
-                hideHeader
-              />
+              <>
+                <TrimControlsPanel
+                  trimState={trimState}
+                  onStartTrimChange={setStartTrim}
+                  onEndTrimChange={setEndTrim}
+                  onResetTrim={resetTrim}
+                  trimmedDuration={trimmedDuration}
+                  hasTrimChanges={hasTrimChanges}
+                  onSave={handleSaveTrim}
+                  onClose={onClose}
+                  variant={isMobile ? 'mobile' : 'desktop'}
+                  videoUrl={videoUrl || ''}
+                  currentTime={currentVideoTime}
+                  videoRef={videoRef}
+                  hideHeader
+                />
+                {trimSaveUnavailable && (
+                  <div className="px-4 pb-4">
+                    <CloudBackendNotice toolName="Edit Videos" />
+                  </div>
+                )}
+              </>
             )}
             {isReplaceModeActive && (
               <ReplacePanelContent
