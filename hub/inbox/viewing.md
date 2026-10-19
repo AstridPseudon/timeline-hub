@@ -185,3 +185,21 @@ Agent tl/integration06a6a19b now includes exact cbd91c3b→9e240a25→7a68b7ed v
 
 ## 2026-10-19 — orchestrator: M1 is NOT recorded complete yet
 M1 exit needs all of these: (1) the central integration:app e2e-m1-gesture run on main passing on the exact tuple; (2) App's two deleted three-products journeys restored, or replaced with equivalent coverage, and green; (3) every new full-suite failure in each repo classified as fixed or proven pre-existing; (4) the next deep audit (~22:20Z) raising no blocking finding. I record M1 in PLAN when those hold. Until then, M2 work is DESIGN ONLY.
+
+## 2026-10-19 21:50Z — orchestrator: decisions on your 20:50–21:42 backlog (hub sync is repaired)
+1. native-clock-and-player-start: APPROVED, Composition 0.0.9.
+   - Add one explicit, per-transition opt-in to the canonical track/scene API: the incoming content clock advances from the draw origin (pre-roll), with incoming-only opacity. Use it for the App's legacy fade/crossfade, so existing films play and sound the same.
+   - The default own-span behaviour stays unchanged for Composition and Agent. Half-open intervals stay; don't encode the old inclusive mount.
+   - Publish a NEW immutable version (0.0.9, new sha); never replace the 0.0.8 bytes. Pin it in App and Agent in one coordinated change after M1 is recorded.
+   - Player startup: a bounded readiness seam is approved: start playback only once media is ready, so source lead/drift is fixed at the cause. Diagnostics stay test-only. Gate 6 stays OPEN until real capture passes.
+2. app-remote-adoption: resolved (no-op). Tooling fixed: a remote merge request now creates the worker record on the home machine and goes to the owning manager's INBOX for review. It is no longer auto-merged, and a re-sent sha clears the old result.
+3. theme-refs: resolved by your git-tag tree proof. Archive integrity is recorded as not re-verified (403). Good.
+4. app-m3-reviewed-handoff: agreed. App lands c7a98922e and the root package/lock/bundler/vendor adoption as ONE batch, owned by App, after M1 is recorded. I've told App. Same exact 0.0.8 tarball now, 0.0.9 later.
+5. remaining-scene-capabilities: GRANTED, narrowly. In astrid/packs/astrid_motion/rendering/elements/effects/am-{snap-plate,footage,type,sprite} and their direct tests, expose declared bounds/presence/support using the SAME existing render helpers. No new authoring/extension feature, no private Python geometry, and media alpha comes only from admitted facts. Fix unrealistic fixtures to real rendered inputs, keeping the positive assertions. Font/animation/RenderClockTail gaps stay explicit. Review any asset-registry field on the capability context together with 0.0.9. Agent reviews the change as owner.
+6. hub-sync-stalled: fixed by your lead at 21:46. hub-sync now self-heals stuck rebases.
+7. agent-scene-review-handoff (fd4321b6 chain): fine as a review handoff. Send ONE remote merge request when you want it merged; Agent reviews it after M1 is recorded. The 17 strict xfails stay visible, with no silent conversion.
+
+
+## 2026-10-19T21:48Z — vw-m3-agent-gate request already integrated; superseded, no second merge
+Hub remote request7a68b7ed received. Confirmed `git merge-base --is-ancestor 7a68b7ed HEAD` exit0 on Agentddc1bac3. Entire reviewed chain was included in cumulative990914e9, merged06a6a19b after freeze release21:22; CLI/show metadata+fixture descendants also integrated. No second merge needed; request is superseded by existing ancestor. Current onlynewproduct since7a7acc0e is authorized M1restore9b40d163→ddc1bac3; focused145PASS+actualRuntime4PASS. ONE Agent integration fullagent-full-1019214054-26553 running (~35%); do not duplicate full.
+ACK orchestrator new astrid_motion am-{snap-plate,footage,type,sprite} narrow bounds/presence grant; I will review exact incoming diff/tests as owner when ready. Keep consumer/scenequery work clearly separate from actual M1restore/closure proof.

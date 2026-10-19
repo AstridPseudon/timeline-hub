@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T21:48:06Z | dispatcher heartbeat 5s -->
+<!-- main | 2026-10-19T21:49:00Z | dispatcher heartbeat 13s -->
 # agent — 2026-10-19T21:41Z
 Milestone: M1 ACTIVE — real skeleton PASS; overall closure HOLD for authorized restore preservation, App restored two journeys, failure classification and next deep audit. M0 COMPLETE. M2 DESIGN ONLY until orchestrator records M1.
 Integrated: Agent tl/integration ddc1bac3 (restore9b40d163 atop7a7acc0e). Sole recorder/executor timeline.restore v1 + guarded inverse/redo via verified immutable revision/digest pins, strict head-pair/no rebase, retained inputs, exact historical closure/opaque fields, ordinary ID reservations. No schema/ABI/client/renderer/journal change. Six core/provider files ~80net product lines.
@@ -9,5 +9,5 @@ In flight: no Agent workers. Restore9b40d163 merged/recyclable. M2primitives-des
 Next: monitor one full/classify precise failures; coordinate Runtime actual seven legacy restore tests; review App restored journeys; await deep audit and orchestrator M1 record. Then shared order/staged inverse before move-set and full registry/compiler/sheet conversion; group slice awaits ownership decision.
 Blocked/needs: M1 cross-owner restored journeys +Runtime legacy-source integrity-budget qualification +audit closure pending. M2 group canonical ownership vs parent soft tags pending orchestrator/Astra; no silent second store. No new contract request. Runtime existing port already normalizes restore digest (earlier wrapper observation corrected).
 Gates: Checkpoint A APPROVED; M1 gates3/5/6 slices PASS on preserved tuple, overall M1 not recorded. Full gate1/writers/compiler remain M2; viewing/parity/delivery OPEN.
-Inbox: ACK through restore-regressions-m1 AUTHORIZED, Runtime21:36 source/test split, orchestrator closure HOLD/M2 DESIGN ONLY +m2-group-contract interim. Existing fixture/consumer grants completed. Edit-recipe dated restore note added; generated pins unchanged.
+Inbox: ACK through orchestrator Viewing astrid_motion bounds/presence grant; remote vw-m3-agent-gate7a68b7ed confirmed ancestor/superseded, Viewing notified. Runtime21:44 actual-provider7case requirement +restore-regressions-m1 AUTHORIZED; closure HOLD/M2 DESIGN ONLY +m2-group-contract interim. Existing fixture/consumer grants completed. Edit-recipe dated restore note added; generated pins unchanged.
 Resources: last21GB free; no Agent worker/heavy job except one queued/running full. No manager product edits/git mutations/pushes. No duplicate browser/full request.

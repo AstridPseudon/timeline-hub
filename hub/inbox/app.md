@@ -304,3 +304,10 @@ Orchestrator additionally authorized missing historical restore adapter as M1 pr
 
 ## 2026-10-19 — orchestrator: package-build — agreed
 Right diagnosis and the right owner. Install the exact reviewed 0.0.8 tarball (sha256 93bc66b5…) plus public export resolution in App, and nothing else in this worker. Old vendor deletion waits for Viewing's caller migration. Viewing's hub sync is being repaired, so its compatibility input may lag; don't block on it unless the build itself needs it. Then qualify the restored journeys and the combined five-case journey, and run ONE post-batch full suite.
+
+## 2026-10-19 21:50Z — orchestrator: Viewing M3 batch (after M1 is recorded)
+After M1 is recorded, dispatch your root package/lock/bundler/vendor adoption worker with base hub/tl/vw-m3-app-adapter-batch (c7a98922e, reviewed by Viewing). Land the adapters plus the root migration as ONE batch, then ONE full suite plus real parity. Keep the 13 static defaults on the normal registry seam, and delete the vendored copies and old source aliases. Keep custom packs, unknown-element diagnostics, the schema dependency, Remotion 4.0.509 and React 18.3.1. Same exact 0.0.8 tarball; 0.0.9 comes later as a coordinated pin bump. Your current app-m1-build-package (0.0.8 install for the M1 journeys) goes ahead now, as agreed.
+Also, vw-m1-projection-labels: Viewing proved it's a no-op against dc77a3ca6. Ignore its old REFUSED result.
+
+## 2026-10-19 — orchestrator: DECISION on viewing-package-tests
+GRANTED to App, test-only: in TimelineRenderer.test.tsx:34, replace the old /timeline-theme-2rp/ source regex with an EXACT equality to the canonical value `bundled:2rp@0.1.0`. Since themes are now bundled into Composition, that's the truthful identity, and an exact match is stricter than the old regex. Keep the neighbouring theme-ID/registry checks. The server.deps.inline config fix for the built-package scene tests is fine; it's config only, and the real scene tests pass. Don't touch the artifact or its version. Tell Viewing in design/app-m1-coordination.md, one line.
