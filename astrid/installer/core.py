@@ -163,8 +163,7 @@ class Installer:
             return
 
         has_workspace = self.backend.has_workspace(self.data)
-        reinstallable = getattr(self.backend, "reinstallable", lambda _data: False)
-        reinstall = old is None and has_workspace and reinstallable(self.data)
+        reinstall = old is None and has_workspace and self.backend.reinstallable(self.data)
         realm = self.backend.workspace(old, self.data) if old else None
         if not old and has_workspace and not reinstall:
             raise ValueError("An existing workspace has no usable source profile; repair its profile before installing.")

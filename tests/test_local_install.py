@@ -46,6 +46,9 @@ class FakeBackend:
     def has_workspace(self, data):
         return False
 
+    def reinstallable(self, data):
+        return False
+
     def workspace(self, old, data):
         self.step('workspace')
         return {'realm_id': 'same-realm', 'realm_root': str(data / 'realm')}
