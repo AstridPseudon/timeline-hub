@@ -1,0 +1,32 @@
+# Final Agent full-suite cause audit
+
+## What I did
+
+- Read `PLAN.md`, `design/agent-baseline.md`, and the existing full review.
+- Parsed exact `FAILED`/`ERROR` node sets from the three saved Agent full logs.
+- Independently confirmed: baseline 63, previous full 131, latest 67; 0/63 baseline nodes resolved; all 68 previous-added nodes resolved; four latest nodes are new consumers.
+- Re-read current tracebacks for all 63 persisted nodes and partitioned them by exact family and cause.
+- Audited every changed oversized Python file against baseline/current physical line counts and the current giant-file rationale. Confirmed `workspace_client.py` and `cli.py` entries are fixed, and found the hidden `remotion_runtime.py` rationale mismatch (1,353 actual vs 1,247 documented).
+- Appended the final classification section to the shared review document. No product, test, fixture, or generated output was changed.
+
+## Evidence and commands
+
+- Saved authoritative run: `/home/user/work/venv-agent/bin/python -m pytest -q -n 3` from Agent tree `ddc1bac3` / source tree `36d86ed3`; result: `11746 passed, 52 failed, 15 errors, 456 skipped, 75 warnings, 563 subtests passed in 2844.65s`.
+- Baseline saved result: `11503 passed, 48 failed, 15 errors, 456 skipped, 13 warnings, 563 subtests passed in 3433.42s`.
+- Previous full saved result: `11652 passed, 116 failed, 15 errors, 456 skipped, 13 warnings, 563 subtests passed in 2392.19s`.
+- Exact set parsing used the saved `log.txt` files and lines beginning `FAILED ` or `ERROR `; no test command was rerun.
+- Source proof used `git diff --quiet a6502806 ddc1bac3 -- <path>`, `git rev-parse <ref>:<path>`, and `git show <ref>:<path> | wc -l`.
+- Unchanged inherited blob proofs: staging test/source `136f924a2e8b491e676e88c0cd7cb056061e597f`/`0ea7fce0ed5ef28161eae840390f89ce3570c2a0`; H3 boundary/owner `b28270908c3eedc963b16ec3ba4344888f9a2670`/`ea0255614c40e74532238669cd39bba9c330eecd`; Runtime-prep `133f92a6a4e524317fddf10eeaf7529e0ece1d7f`; VibeComfy metadata `ec15ebc4f3f6f4e2b66288b61142b00da836f928`; executor tests `c2e8382f13ba3883e6115eea3e8a97df7dfc69f3`/`5500de6c8a4d3e98729d90994068011e73626cf5`/`23beda8d57cb53e4cf4c2b6a6a0ee60091e45a6a`; worker-process test/source `e7215c95cd35abbb08f32d659e64fd4303e8a7c2`/`3f0a66149474ef1bf2c7139d41d694efc0601d64`; structure test `06af60745273bef70b8833f12f5eaa2f4ce09bce`.
+
+## Decisions / findings
+
+- The 63 persisted nodes classify as 15 external VibeComfy fixture errors, 7 uninstalled-source child probes, 1 missing Runtime package, 1 xdist serialization failure, 34 pre-existing RunPod path-drift nodes, 3 test-code `signal` import failures, 1 inherited generic-host contract mismatch, and 1 mixed structure-inventory node.
+- The structure node cannot be called wholly inherited: generic-host metadata is inherited and source-identical, but changed `remotion_runtime.py` has a new 106-line rationale mismatch hidden behind the first assertion. This is reported as a Viewing follow-up; no fix was made under the evidence-only scope.
+- The four latest consumer nodes remain explicit NEW/not closed, with owners and causes taken from `agent-20261019T223054Z-consumer-full-four.md`.
+- The later `4ffbb8b0` environment-only change and separate 2-pass result were kept outside the authoritative full snapshot.
+
+## Tests / blockers / next steps
+
+- Tests run by this worker: none, intentionally. The task prohibited targeted/full reruns and required using saved logs.
+- No full-green or M1-complete claim is made.
+- Next: Viewing should correct the `remotion_runtime.py` rationale and close its consumer failures; Agent should handle the pinned `render_status` fixture; then re-audit the structure node.
