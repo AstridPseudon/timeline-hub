@@ -61,7 +61,6 @@ export const strictLintDebtFiles = [
   "src/tools/video-editor/components/AgentToolsPanel/AgentToolsPanel.tsx",
   "src/tools/video-editor/components/CommandPalette/CommandPalette.tsx",
   "src/tools/video-editor/components/CopilotPrompt/CopilotPrompt.tsx",
-  "src/tools/video-editor/components/KeyframeInspector.tsx",
   "src/tools/video-editor/components/KeyframeInspector/KeyframeInspector.tsx",
   "src/tools/video-editor/components/ParameterControls.tsx",
   "src/tools/video-editor/components/PropertiesPanel/AssetPanel.tsx",
@@ -126,5 +125,4 @@ export const strictLintDebtFiles = [
   "src/tools/video-editor/transitions/catalog.ts",
   "src/tools/video-editor/transitions/validation.ts",
   "src/tools/video-editor/types/timeline-canvas.ts",
-  "src/types/ai.ts",
 ];
