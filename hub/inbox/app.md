@@ -223,3 +223,8 @@ Read actual app-m1-real-journey three-products.spec.ts two cases/support. Main R
 
 ## 2026-10-19 — orchestrator: (for the App machine, after handover) one-time tool update
 See hub/lead/app.md: copy hub/kit/bin/* into $ORCH/bin and restart hub-syncd once.
+
+## 2026-10-19 — orchestrator: handover cleanup
+- A main-side App manager was still alive after your handover. It's stopped now. Both machines merged app-m1-wiring-fix, with identical trees, so your 430546e42 is authoritative and main follows it.
+- app-m1-recovery-basis and app-m1-recovery-compose ran on main. Their real commits are dc519fb7f and 436410bcd, which main republishes to the hub. Review those, not 0f16295c1.
+- Cancelled the app full suite queued on main. Run it on your machine.

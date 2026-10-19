@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T20:20:31Z | dispatcher heartbeat 0s -->
+<!-- main | 2026-10-19T20:21:19Z | dispatcher heartbeat 3s -->
 # agent — 2026-10-19T20:20Z
 Milestone: M1 ACTIVE — Agent CLI/Python real path PASS; overall exit awaits mounted App browser capture/outbox/restart/undo. M0 COMPLETE — all design/spike/env evidence and final pre-port baseline/classification recorded.
 Integrated: agent tl/integrationa8eb28af (FROZEN for App tuple): recipe core1755715f/providerdcfd7299+IDreservations43bd9c0d/frontendff57cb46/readback3e293dae/native inputs default590edc8c/client0.2.1/schema4e52/metadata pin45d3b81. Actual central agent-commit-integration-1019195539-21968 PASS3/18.51s on3eba65d2 + Runtime45d3b81; only subsequent code change is2dispatch branches formatted,8bridge testsPASS,E701116->114. All three original provider blockers resolved/merged93624e8f, manager233normal-source testsPASS17.78s; counterexample tests retained.

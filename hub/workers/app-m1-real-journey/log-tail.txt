@@ -1,22 +1,3 @@
-   await openSeededTimeline(page, harness);
-+  // Loading the canvas can finish before immutable reads and the native owner claim.
-+  await expect.poll(async () => ({
-+    ready: (await commandOutboxes(page, seed.timelineId)).some((owner) =>
-+      !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length),
-+    notice: await page.getByTestId('timeline-command-recovery').allTextContents(),
-+  }), { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' }).toMatchObject({ ready: true });
-+}
-+
-+async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: ThreeProductsSeed, beforeBDrop?: (a: CommitAcceptedMutation) => Promise<void>) {
-+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
-+  const wire = await faultFirstCommit(page);
-+  await openCommandTimeline(page, harness, seed);
-   const before = await history(harness, seed);
--  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 0, 5, 9);
-+  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 0, 5, 9, () => {
-+    expect(wire.attempts, 'pointer movement previews; the actual drop commits').toBe(0);
-+  });
-   await expect.poll(() => wire.posts.length, CEILING).toBe(1);
    const a = accepted(wire.posts[0]);
    const bodyA = JSON.parse(wire.posts[0].body) as CommitRequest;
 @@ -497,27 +519,46 @@
@@ -397,4 +378,23 @@ Mon Oct 19 20:20:23 UTC 2026
 
 codex
 Integration is being updated during composition; the final recovery batch is not yet published. I’m continuing to wait before taking the central browser snapshot.
+
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md' in /home/user/work/wt/app-m1-real-journey
+ succeeded in 0ms:
+
+20:06 SAFE REAL PORT NOW MERGED app0f16295c1 incl lifecycle fix/official0.2.1; actual ops.clipMove exists in production. Current inline UI will be replaced ONCE by app-m1-recovery-compose (branch starts safe integration; reuses tl/app-m1-recovery-ui via git show, no duplicate banners). FINAL target controls: 'Recover saved edits' +data-owner-id; 'Retry save' +data-testid timeline-command-retry (no protocol jargon). Real journey should follow these final controls when compose merges. No status-only accepted label claim: projection-fact producer/Viewing consumer still pending and original-base recovery regression retained, session recovery core fix next.
+
+Recovery compose final seam (2026-10-19): the single mounted surface uses `Recover saved edits` (or `Recover saved edits (session N)` for multiple owners) with the exact owner only in `data-owner-id`. Uncertain/error states expose `Retry save` with `data-testid="timeline-command-retry"`; its copy says the save can be checked without applying edits again. The surface is absent for saved, absent, and no-work loading states, and offers no retry for a typed semantic conflict. Journey selectors should use the final labels/testid above and `button[data-owner-id]`; owner IDs are never visible text.
+
+20:09 producer recovery regression is ASSIGNED to app-m1-recovery-basis, scoped ONLY commitSession core/test. Preserve producer's failing original-r0/p0 assertion unchanged; actual displayBasis payload already recorded, core must prioritize it for local display while retaining acknowledged HA for submission. Also prevent recovered rejected head from losing typed conflict state when pump skips it. No metadata/wire changes, no lifecycle undo. Core fix based SAFE integration0f16295c1; projection producer may finish with explicit dependency hold until this lands. Manager will run real producer+session regression on composed integration.
+
+exec
+/bin/bash -lc 'git -C /home/user/work/app log -4 --oneline; date -u' in /home/user/work/wt/app-m1-real-journey
+ succeeded in 0ms:
+430546e42 Merge tl/app-m1-wiring-fix
+c98dc6be8 fix(timeline): drain completed moves before releasing command sessions
+384d00c51 Merge tl/app-m1-drag-gate
+d47eac0e6 Merge tl/app-m1-client-021
+Mon Oct 19 20:21:19 UTC 2026
 
