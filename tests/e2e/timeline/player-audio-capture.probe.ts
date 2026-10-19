@@ -20,6 +20,10 @@ const test = base.extend<object, { monitor: Monitor }>({
   }, { scope: 'worker' }],
 });
 
+// Trace DOM inspection can itself grant activation; keep API traces and the
+// explicit media/frame/context observations without inspecting live DOM frames.
+test.use({ trace: { mode: 'retain-on-failure', snapshots: false, screenshots: false } });
+
 declare global {
   interface Window {
     __capturePlayer: PlayerRef;
@@ -35,10 +39,40 @@ declare global {
   }
 }
 
+// Playwright's page.evaluate grants user activation through CDP. Inspection and
+// transport setup must not unlock the audio device before the measured click.
+async function evaluateWithoutGesture<T, A = undefined>(page: Page, fn: (arg: A) => T, arg?: A): Promise<T> {
+  const session = await page.context().newCDPSession(page);
+  try {
+    const { result, exceptionDetails } = await session.send('Runtime.evaluate', {
+      expression: `(${fn.toString()})(${JSON.stringify(arg) ?? 'undefined'})`,
+      userGesture: false, returnByValue: true, awaitPromise: true,
+    });
+    if (exceptionDetails) throw new Error(exceptionDetails.exception?.description ?? exceptionDetails.text);
+    return result.value as T;
+  } finally { await session.detach(); }
+}
+
+// Locator actions also inspect the DOM with activation enabled. Dispatch the
+// actual mouse gesture directly so no inspection can wake a pending resume.
+async function clickPlay(page: Page) {
+  const point = await evaluateWithoutGesture(page, () => {
+    const button = document.querySelector('.astrid-preview-transport button[aria-label="Play"]');
+    if (!button) throw new Error('Missing Play button');
+    const rect = button.getBoundingClientRect();
+    return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+  });
+  const session = await page.context().newCDPSession(page);
+  try {
+    await session.send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', clickCount: 1 });
+    await session.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', clickCount: 1 });
+  } finally { await session.detach(); }
+}
+
 async function findPlayer(page: Page) {
   // React's ref is inspected only by this harness. Product code needs no debug
   // API, and playback/volume/mute still use the mounted real Player methods.
-  await page.evaluate(() => {
+  await evaluateWithoutGesture(page, () => {
     type Fiber = { return?: Fiber; memoizedState?: Hook };
     type Hook = { memoizedState?: { current?: PlayerRef }; next?: Hook };
     const label = document.querySelector('[data-testid="preview-revision-label"]');
@@ -111,7 +145,7 @@ function requireUnchangedGain(actual: number, reference: number) {
   if (Math.abs(db) > 0.5) throw new Error(`captured output gain mismatch: ${db.toFixed(3)} dB`);
 }
 
-for (const mode of ['mixed output controls', 'amplified fade timing'] as const) {
+for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified fade timing first gesture without warm-up'] as const) {
   test(`captures real Player ${mode}`, async ({ browser, context, monitor }, testInfo) => {
     test.setTimeout(360_000);
     expect(await resetFakeRuntimeBaseline()).toBeNull();
@@ -149,7 +183,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
         try {
           await page.addInitScript(({ fallback }) => {
             window.__captureBackends = { elements: [], buffers: 0 };
-            window.__captureEvents = [];
+            window.__captureEvents = [{ type: 'init', epochMs: performance.timeOrigin + performance.now(), userActivation: navigator.userActivation.hasBeenActive }];
             window.__captureContexts = [];
             for (const type of ['click', 'playing', 'waiting', 'stalled', 'canplay', 'seeking', 'seeked', 'pause', 'ended', 'visibilitychange']) {
               document.addEventListener(type, event => {
@@ -193,33 +227,42 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
             if (fallback) Object.defineProperty(window, 'VideoDecoder', { value: undefined });
           }, { fallback: options.fallback ?? false });
           await page.goto(editorUrl({ timeline: CAPTURE_TIMELINE }), { waitUntil: 'domcontentloaded' });
-          const play = page.getByRole('button', { name: 'Play', exact: true }).first();
-          await expect(play).toBeVisible({ timeout: 90_000 });
+          await expect.poll(() => evaluateWithoutGesture(page, () => {
+            const button = document.querySelector('.astrid-preview-transport button[aria-label="Play"]');
+            return Boolean(button?.getBoundingClientRect().width);
+          }), { timeout: 90_000 }).toBe(true);
           await findPlayer(page);
-          await page.evaluate(({ volume, muted }) => {
+          await evaluateWithoutGesture(page, ({ volume, muted }) => {
             window.__capturePlayer.pause();
             window.__capturePlayer.seekTo(0);
             window.__capturePlayer.setVolume(volume);
             if (muted) window.__capturePlayer.mute(); else window.__capturePlayer.unmute();
           }, { volume: options.volume ?? 1, muted: options.muted ?? false });
-          await expect.poll(() => page.evaluate(() => window.__capturePlayer.getCurrentFrame())).toBe(0);
+          await expect.poll(() => evaluateWithoutGesture(page, () => window.__capturePlayer.getCurrentFrame())).toBe(0);
           // Audio premount must be ready before starting the monitor and gesture.
           if (backends.some(backend => backend !== 'video')) {
-            await expect.poll(() => page.locator('audio[src]').evaluateAll(elements => elements.length > 0 && elements.every(element => (element as HTMLAudioElement).readyState >= 2)), { timeout: 20_000 }).toBe(true);
+            await expect.poll(() => evaluateWithoutGesture(page, () => {
+              const elements = [...document.querySelectorAll<HTMLAudioElement>('audio[src]')];
+              return elements.length > 0 && elements.every(element => element.readyState >= 2);
+            }), { timeout: 20_000 }).toBe(true);
           }
           if (backends.includes('video') && !options.fallback) {
             await expect(page.locator('[data-preview-decoded-frame="true"]')).toHaveCount(1, { timeout: 20_000 });
           }
-          // Warm the real browser output device/decoder with this same Player,
-          // then rewind. Startup device latency is outside the measured run.
-          await play.click();
-          await expect.poll(() => page.evaluate(() => window.__capturePlayer.getCurrentFrame()), { timeout: 15_000 }).toBeGreaterThan(35);
-          if (options.fallback) expect(await page.locator('video').count()).toBeGreaterThan(0);
-          await expect.poll(() => page.evaluate(() => window.__capturePlayer.isPlaying()), { timeout: 15_000 }).toBe(false);
+          // Keep the existing warm-rewind measurement, and independently capture
+          // the first actual gesture without ever starting the device beforehand.
+          if (mode !== 'amplified fade timing first gesture without warm-up') {
+            await clickPlay(page);
+            await expect.poll(() => evaluateWithoutGesture(page, () => window.__capturePlayer.getCurrentFrame()), { timeout: 15_000 }).toBeGreaterThan(35);
+            if (options.fallback) expect(await page.locator('video').count()).toBeGreaterThan(0);
+            await expect.poll(() => evaluateWithoutGesture(page, () => window.__capturePlayer.isPlaying()), { timeout: 15_000 }).toBe(false);
+            await evaluateWithoutGesture(page, () => {
+              window.__capturePlayer.pause();
+              window.__capturePlayer.seekTo(0);
+            });
+          }
 
-          await page.evaluate(() => {
-            window.__capturePlayer.pause();
-            window.__capturePlayer.seekTo(0);
+          await evaluateWithoutGesture(page, () => {
             window.__captureFrames = [];
             window.__capturePlayer.addEventListener('frameupdate', event => {
               // Observe both clocks without seeking media or changing its gain.
@@ -236,15 +279,19 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
               });
             });
           });
-          await expect.poll(() => page.evaluate(() => window.__capturePlayer.getCurrentFrame())).toBe(0);
+          await expect.poll(() => evaluateWithoutGesture(page, () => window.__capturePlayer.getCurrentFrame())).toBe(0);
           if (backends.some(backend => backend !== 'video')) {
-            await expect.poll(() => page.locator('audio[src]').evaluateAll(elements => elements.length > 0 && elements.every(element => (element as HTMLAudioElement).readyState >= 2)), { timeout: 20_000 }).toBe(true);
+            await expect.poll(() => evaluateWithoutGesture(page, () => {
+              const elements = [...document.querySelectorAll<HTMLAudioElement>('audio[src]')];
+              return elements.length > 0 && elements.every(element => element.readyState >= 2);
+            }), { timeout: 20_000 }).toBe(true);
           }
           if (backends.includes('video') && !options.fallback) {
             await expect(page.locator('[data-preview-decoded-frame="true"]')).toHaveCount(1, { timeout: 20_000 });
           }
-          const readiness = await page.evaluate(() => ({
+          const readiness = await evaluateWithoutGesture(page, () => ({
             epochMs: performance.timeOrigin + performance.now(), timeOrigin: performance.timeOrigin, visibility: document.visibilityState,
+            muted: window.__capturePlayer.isMuted(), userActivation: navigator.userActivation.hasBeenActive,
             media: Array.from(document.querySelectorAll('audio[src], video')).map(element => {
               const media = element as HTMLMediaElement;
               return { src: media.currentSrc, readyState: media.readyState, currentTime: media.currentTime, seeking: media.seeking, paused: media.paused, error: media.error?.message, buffered: Array.from({ length: media.buffered.length }, (_, index) => [media.buffered.start(index), media.buffered.end(index)]) };
@@ -252,23 +299,36 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
             contexts: window.__captureContexts.map(context => ({ state: context.state, currentTime: context.currentTime, sampleRate: context.sampleRate, baseLatency: (context as AudioContext).baseLatency, outputLatency: (context as AudioContext).outputLatency })),
           }));
           results[name] = { revision: revision.headRevisionId, readiness };
+          console.log('PLAYER_READINESS', name, JSON.stringify(readiness));
+          if (mode === 'amplified fade timing first gesture without warm-up') {
+            expect(readiness.userActivation, 'capture must precede the first user gesture').toBe(false);
+          }
+          expect(readiness.muted, 'no automatic mute hidden by a reset after warm-up').toBe(options.muted ?? false);
           const path = testInfo.outputPath(`${name}.wav`);
           try {
-            await monitor.record(path, () => play.click(), options.captureGain, () => cdp.send('SystemInfo.getProcessInfo'));
+            await monitor.record(path, () => clickPlay(page), options.captureGain, () => cdp.send('SystemInfo.getProcessInfo'));
           } finally {
             const recording = JSON.parse(await readFile(`${path}.diagnostics.json`, 'utf8'));
-            const events = await page.evaluate(() => window.__captureEvents);
+            const events = await evaluateWithoutGesture(page, () => window.__captureEvents);
             results[name] = { revision: revision.headRevisionId, readiness, recording, events };
             await testInfo.attach(`${name}-recording-diagnostics`, { body: JSON.stringify(results[name], null, 2), contentType: 'application/json' });
           }
-          await page.evaluate(() => window.__capturePlayer.pause());
-          const frames = await page.evaluate(() => window.__captureFrames);
+          await evaluateWithoutGesture(page, () => window.__capturePlayer.pause());
+          const frames = await evaluateWithoutGesture(page, () => window.__captureFrames);
           const moving = frames.filter(frame => frame.frame > 0);
           const first = moving[0];
           const last = moving.at(-1);
           if (!first || !last) throw new Error('Player did not advance during capture');
           const drift = (last.time - first.time) / 1000 - (last.frame - first.frame) / 30;
-          const clock = { first, last, drift, events: moving.length, finalFrame: Math.max(...frames.map(frame => frame.frame)) };
+          const sourceLeads = moving.filter(frame => frame.frame >= 10 && frame.frame <= 80)
+            .flatMap(frame => frame.media.filter(media => !media.paused && !media.seeking)
+              .map(media => media.currentTime - frame.frame / 30)).sort((a, b) => a - b);
+          const sourceLeadMedian = sourceLeads[Math.floor(sourceLeads.length / 2)];
+          const clock = { first, last, drift, sourceLeadMedian, sourceLeadMin: sourceLeads[0], sourceLeadMax: sourceLeads.at(-1), events: moving.length, finalFrame: Math.max(...frames.map(frame => frame.frame)) };
+          if (options.fade) {
+            expect(sourceLeads.length, 'source/frame clock observations').toBeGreaterThan(30);
+            expect.soft(Math.abs(sourceLeadMedian), 'native source and authored gain frame must agree within one frame').toBeLessThan(1 / 30);
+          }
           console.log('PLAYER_CLOCK', name, JSON.stringify(clock));
           expect(clock.finalFrame).toBeGreaterThanOrEqual(118);
           expect.soft(Math.abs(clock.drift), 'Player wall clock drift during capture').toBeLessThan(0.12);
@@ -276,7 +336,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
           for (const backend of backends) {
             expect(requests.some(request => decodeURIComponent(request.url).includes(objects[backend]) && [200, 206].includes(request.status)), `managed ${backend} fetched`).toBe(true);
           }
-          const backendState = await page.evaluate(() => window.__captureBackends);
+          const backendState = await evaluateWithoutGesture(page, () => window.__captureBackends);
           results[name] = { ...results[name] as object, clock, frames, backendState, requests };
           if (backends.includes('amplified')) expect(backendState.elements.some(url => decodeURIComponent(url).includes(objects.amplified))).toBe(true);
           if (backends.includes('native')) expect(backendState.elements.some(url => decodeURIComponent(url).includes(objects.native))).toBe(false);
@@ -290,7 +350,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
         } finally { await page.close(); }
       };
 
-      if (mode === 'amplified fade timing') {
+      if (mode.startsWith('amplified fade timing')) {
         const faded = await run('amplified-fade', ['amplified'], { fade: true });
         if (!('onset' in faded.metrics)) throw new Error('Missing fade onset');
         const fadeOnset = faded.metrics.onset;
