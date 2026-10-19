@@ -9,10 +9,22 @@ import { runInstallPrompt, useInstallPromptSignals } from '@/shared/hooks/platfo
 import { detectInstallScenario, type InstallScenario } from './installScenario.ts';
 import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
 import { useSendLinkToComputer } from './useSendLinkToComputer.ts';
+import { CopyInstallCommand } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
 import './PublicAstridInstallDialog.css';
 
 const AVATAR_SRC = '/astrid-app-icon-192.png';
 const HOME_PATH = '/home';
+
+/** Landing page wording is kept together here for the product copy pass. */
+export const SET_UP_ASTRID_COPY = {
+  title: 'Set up Astrid',
+  subtitle: 'One line starts Astrid on this computer.',
+  copyCommand: 'Copy install command',
+  browserShortcut: 'Add a browser shortcut',
+  installNow: 'Install now',
+  useHere: 'Use Astrid in this browser',
+  useHereInstalled: 'Use it here instead',
+};
 
 function useInstallScenario(): InstallScenario {
   return useMemo(detectInstallScenario, []);
@@ -262,8 +274,8 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
         <header className="astrid-install-header">
           <img className="astrid-install-avatar" src={AVATAR_SRC} alt="" />
           <div>
-            <h2 id="astrid-install-title">{installed ? 'Astrid is installed' : 'Install Astrid'}</h2>
-            <p>{desktop ? (installed ? 'Open it from your dock or apps.' : 'The app, one click from your dock.') : 'Desktop only, for now'}</p>
+            <h2 id="astrid-install-title">{SET_UP_ASTRID_COPY.title}</h2>
+            <p>{SET_UP_ASTRID_COPY.subtitle}</p>
           </div>
         </header>
 
@@ -271,30 +283,22 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
 
         {desktop && copy ? (
           <>
-            {installed ? null : (
-              <div className="astrid-install-body">
-                {scenario === 'chromium' ? <ChromiumVisual /> : null}
-                {scenario === 'safari' ? <SafariVisual /> : null}
-                <div className="astrid-install-guide">
-                  <p className="astrid-install-lede">{copy.lede}</p>
-                  {copy.steps.length ? (
-                    <ol className="astrid-install-steps">
-                      {copy.steps.map((step) => <li key={step}>{step}</li>)}
-                    </ol>
-                  ) : null}
-                </div>
-              </div>
-            )}
+            <CopyInstallCommand label={SET_UP_ASTRID_COPY.copyCommand} />
             <div className="astrid-install-actions">
-              {canPrompt && !installed ? (
-                <button type="button" className="astrid-button astrid-button-primary" onClick={promptInstall}>
-                  <span>Install now</span>
-                  <Monitor size={17} aria-hidden="true" />
-                </button>
-              ) : null}
+              <details className="astrid-install-guide">
+                <summary>{SET_UP_ASTRID_COPY.browserShortcut}</summary>
+                <div className="astrid-install-body">
+                  {scenario === 'chromium' ? <ChromiumVisual /> : null}
+                  {scenario === 'safari' ? <SafariVisual /> : null}
+                  <div>
+                    <p className="astrid-install-lede">{copy.lede}</p>
+                    {copy.steps.length ? <ol className="astrid-install-steps">{copy.steps.map((step) => <li key={step}>{step}</li>)}</ol> : null}
+                    {canPrompt && !installed ? <button type="button" className="astrid-button astrid-button-primary" onClick={promptInstall}>{SET_UP_ASTRID_COPY.installNow} <Monitor size={17} aria-hidden="true" /></button> : null}
+                  </div>
+                </div>
+              </details>
               <button type="button" className="astrid-button astrid-install-here" onClick={openInBrowser}>
-                <span>{installed ? 'Use it here instead' : 'Or use it right here, in the browser'}</span>
-                <ArrowRight size={17} aria-hidden="true" />
+                <span>{installed ? SET_UP_ASTRID_COPY.useHereInstalled : SET_UP_ASTRID_COPY.useHere}</span><ArrowRight size={17} aria-hidden="true" />
               </button>
             </div>
           </>

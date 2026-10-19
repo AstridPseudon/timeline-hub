@@ -106,7 +106,12 @@ describe('PublicAstridInstallDialog', () => {
     screen.getByRole('button', { name: 'Open install' }).focus();
     fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
     expect(screen.getByRole('dialog')).toHaveAttribute('data-scenario', scenario);
-    expect(screen.getByText(new RegExp(copy))).toBeInTheDocument();
+    if (scenario === 'mobile') expect(screen.getByText(new RegExp(copy))).toBeInTheDocument();
+    else {
+      expect(screen.getByRole('heading', { name: 'Set up Astrid' })).toBeInTheDocument();
+      expect(screen.getByText(/https:\/\/astrid\.haus\/install/)).toBeInTheDocument();
+      expect(screen.getByText('Add a browser shortcut')).toBeInTheDocument();
+    }
   });
 
   it('renders the installed variant without an install prompt action', () => {
@@ -114,12 +119,12 @@ describe('PublicAstridInstallDialog', () => {
     render(<Harness />);
     screen.getByRole('button', { name: 'Open install' }).focus();
     fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
-    expect(screen.getByRole('heading', { name: 'Astrid is installed' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Set up Astrid' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Install now' })).not.toBeInTheDocument();
   });
 
   it.each([
-    ['not installed', 'Or use it right here, in the browser', false],
+    ['not installed', 'Use Astrid in this browser', false],
     ['installed', 'Use it here instead', true],
   ] as const)('%s: choosing the browser already says "take me in", so the app is told to go straight to Chrome\'s prompt', (_name, label, installed) => {
     window.sessionStorage.clear();
@@ -141,7 +146,7 @@ describe('PublicAstridInstallDialog', () => {
     render(<Harness />);
     screen.getByRole('button', { name: 'Open install' }).focus();
     fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
-    expect(() => fireEvent.click(screen.getByRole('button', { name: 'Or use it right here, in the browser' }))).not.toThrow();
+    expect(() => fireEvent.click(screen.getByRole('button', { name: 'Use Astrid in this browser' }))).not.toThrow();
   });
 
   it('does not consume a prompt whose result arrives after modal departure', async () => {

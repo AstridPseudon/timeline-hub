@@ -48,6 +48,16 @@ function isHostedBuild(): boolean {
 export const APP_ENTRY_PATH = isHostedBuild()
   ? '/tools/video-editor'
   : `/tools/video-editor?project=${DEMO_PROJECT_ID}&timeline=${DEMO_TIMELINE_ID}`;
+
+/** Installer links arrive on the public root, but `?connect=1` must reach the app's Runtime gate. */
+export function resolveInstallerConnectEntry(url: URL): string | null {
+  if (url.pathname !== '/' || url.searchParams.get('connect') !== '1') return null;
+  const target = new URL(APP_ENTRY_PATH, url.origin);
+  const incomingKeys = new Set(url.searchParams.keys());
+  for (const key of incomingKeys) target.searchParams.delete(key);
+  url.searchParams.forEach((value, key) => target.searchParams.append(key, value));
+  return `${target.pathname}${target.search}${url.hash}`;
+}
 const APP_ENTRY_PREFERENCE_KEY = 'astrid:prefers-app';
 
 /** Remember that this browser chose the app (installed it, or asked to use it here). */

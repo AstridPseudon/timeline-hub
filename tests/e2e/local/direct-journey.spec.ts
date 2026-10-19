@@ -87,7 +87,7 @@ function expectBareUrl(page: Page, harness: DirectHarness) {
   expect(url.origin).toBe(harness.origin);
   expect(url.pathname).toBe(APP_ENTRY_ROUTE);
   expect(url.hash).toBe('');
-  expect([...url.searchParams.keys()].filter((key) => !['localProject', 'localTimeline'].includes(key))).toEqual([]);
+  expect([...url.searchParams.keys()].filter((key) => !['project', 'timeline'].includes(key))).toEqual([]);
 }
 
 /** The App's probe, as a raw request: `GET /api/runtime/v1/health` with the hosted Origin (or the given Origin and Host). */
@@ -161,6 +161,36 @@ test.describe('the bare domain (App)', () => {
     await expect(page.locator(UI.status)).toHaveCount(0);
     expect(doorRequests, 'the landing page does not talk to the local Runtime').toEqual([]);
     expect(harness.audit().length, 'the door saw nothing').toBe(auditedBefore);
+  });
+
+  test('the installer root URL enters the app, connects, and preserves its other URL parts', async ({ page, harness }) => {
+    const doorRequests: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().startsWith(`http://127.0.0.1:${DOOR_PORT}/`)) {
+        doorRequests.push(`${request.method()} ${request.url()}`);
+      }
+    });
+
+    const initialSearch = new URLSearchParams({
+      connect: '1',
+      project: harness.seed.projectId,
+      timeline: harness.seed.timelineId,
+      source: 'installer',
+    });
+    await page.goto(`${harness.origin}/?${initialSearch}#continue`);
+    await expectConnected(page);
+    await openSeededTimeline(page, harness);
+
+    const url = new URL(page.url());
+    expect(url.pathname).toBe(APP_ENTRY_ROUTE);
+    const expectedSearch = new URLSearchParams({
+      project: harness.seed.projectId,
+      timeline: harness.seed.timelineId,
+      source: 'installer',
+    });
+    expect(url.search).toBe(`?${expectedSearch}`);
+    expect(url.hash).toBe('#continue');
+    expect(doorRequests.some((request) => request.startsWith('GET ') && request.endsWith('/api/runtime/v1/health'))).toBe(true);
   });
 
   test('a returning visitor at the bare domain goes straight into the app and connects with no click', async ({ page, harness }) => {
@@ -829,12 +859,12 @@ test.describe('security', () => {
 
 /**
  * The second timeline the harness seeds for the pack extensions (made here, after the cases that open the seeded timeline,
- * so none of them sees a second timeline). Opened by URL: the hosted workspace route takes the project slug and timeline id.
+ * so none of them sees a second timeline). Opened by URL with canonical project and timeline IDs.
  */
 async function openSeededTimelineByUrl(page: Page, harness: DirectHarness, seed: { projectSlug: string; timelineId: string }) {
   const doorRequests: string[] = [];
   page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${DOOR_PORT}/`)) doorRequests.push(`${request.method()} ${request.url()}`); });
-  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?localProject=${encodeURIComponent(seed.projectSlug)}&localTimeline=${encodeURIComponent(seed.timelineId)}`);
+  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?project=${encodeURIComponent(harness.seed.projectId)}&timeline=${encodeURIComponent(seed.timelineId)}`);
   await expectConnected(page);
   await expect(firstTrackName(page)).toBeVisible();
   return { seed, doorRequests };
