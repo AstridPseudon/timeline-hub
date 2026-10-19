@@ -231,3 +231,41 @@ Runtime6489e47 now includes approved raw immutable codec432e473/client0.2.1. agt
 
 ### agt-m1-id-reservations central first result / client pin blocker
 Central run agt-m1-id-reservations-commit-integration-1019194227-15619 =>3 failed/5.33s. BOTH existing CLI journeys stop at mandatory health handshake: live Runtime schema `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d` vs this Agent generated client `sha256:a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e`. Generated client pin belongs owner; no schema guard bypass here. New real-store reservation test reached genuine preview+accept and correctly received occupied-ID conflict; my test expected ConflictError subclass, but Runtime public_failure returns RuntimeErrorBase with explicit code/status. Corrected test to actual service error contract with STRICT code==conflict,status==409,reason==identity_collision; rerunning centrally. No product change from this test correction. Manager please synchronize generated client after Runtime schema owner finalizes.
+
+### agt-m1-id-reservations FINAL handoff
+Provider reservation semantics closed using existing trusted Runtime history; Runtime custody/ABI/schema unchanged. Final source: commit.py +38/-1 (net+37;472 physical lines); detached provider tests +162/-2; new real Runtime provider integration test +90. Total +290/-3 across3files. No core/schema/Runtime/UI/outbox edits. Reservations begin at the verified pre-recorder baseline boundary; no invented pre-boundary allocation history. Current occupied IDs remain guarded by core. Trusted inverse-only plans reuse exact identities and do not scan reservation history; mixed batches still check every ordinary create. Required corrupt recorded-created metadata/ancestry fails closed. Existing pure core authored roundtrip tests unchanged and passing.
+Final local exact command:
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_structure.py tests/sdk/test_timeline_restructure.py -p no:cacheprovider --basetemp=/tmp/agt-m1-id-reservations-neighbors --tb=short`
+=>186 passed,1 default-lane deselected/26.68s. Original executable counterexample previously failed DID NOT RAISE as documented above; now passes along with exact authored undo/redo, occupied collision, disjoint rebase, original recorded IDs across CAS, create/delete CAS race, preview, scoped refs, mixed inverse+ordinary and8corrupt-history schedules.
+`/home/user/work/venv-agent/bin/ruff check --cache-dir=/tmp/agt-m1-id-reservations-ruff astrid/sdk/timeline/commit.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_runtime.py` =>All checks passed (integration test rerun after correcting actual Runtime error class:also pass).
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=skip --ignore-missing-imports --cache-dir=/tmp/agt-m1-id-reservations-mypy astrid/sdk/timeline/commit.py` =>Success:1source.
+`git diff --check` and `git diff --no-index --check /dev/null tests/sdk/test_timeline_commit_provider_runtime.py` =>clean.
+Central request+wait:
+`orch/bin/request-test agt-m1-id-reservations commit-integration --files tests/sdk/test_timeline_commit_provider_runtime.py`
+`orch/bin/wait-test agt-m1-id-reservations-commit-integration-1019194321-27263 1`
+=>2 failed,1 passed/3.30s; exit1. Executed command: `env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py`.
+NEW REAL Runtime custody regression PASSED: actual normal startup ABI/service/store, preview, accepted create, occupied409, accepted inverse-delete, close/reopen same realm, original receipt exact retry with execute+reservation tripwires, new-key recreate409/unchanged head, exact inverse-redo, exactly4history edges (zero new edges for preview/conflicts/retry). No fake accept, shadow ledger, bypassed schema, copied DTO or alternate persistence. BOTH pre-existing CLI journeys FAIL mandatory health schema handshake (Runtime4e52f7df vs vendored clienta32cc6e5), before editing. Full/M1 CLI gate therefore NOT claimed. Initial central test had an incorrect expected exception subclass; corrected to real RuntimeErrorBase plus strict code/status/reason; no product weakening.
+Recommended manager next step: review/merge bounded provider change, regenerate client pin through its owner against finalized Runtime schema, then rerun central CLI/M1 lanes. Commit-msg written for harness; no git mutation/manual commit. No full suite, make check or local socket/listener run.
+
+### agt-m1-client-pin-021 — official Runtime 0.2.1 pin (2026-10-19)
+
+Consumed the approved immutable Runtime producer snapshot at full source SHA `6489e47e5d3efc996e9f92cc2fffcb831cc39a24` (raw immutable codec correction `432e473`), using `scripts/vendor_lock.py update` and then `check` against that exact producer tree. The official tuple is:
+
+| Item | Value |
+| --- | --- |
+| Client version | `0.2.1` |
+| Runtime schema digest | `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d` |
+| Producer manifest/version | `sha256:82db7dfef7e6a09af94b78de384f672f9c202f4d3c80d1128775cfab1ddb4acf` |
+| Manifest file SHA256 | `efe6b8e3980d03e14f08736874c7e13bae87dc899f18d363ef3b540fdb3498a0` |
+| Compiled timeline-config schema | `sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1` (unchanged) |
+
+Exact commands and results:
+
+```bash
+/home/user/work/venv-agent/bin/python scripts/vendor_lock.py update runtime.lock.json --producer <exact-6489-runtime-snapshot>
+# updated runtime.lock.json from astrid-runtime 6489e47e5d3
+/home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer <exact-6489-runtime-snapshot>
+# ok runtime.lock.json (matches producer manifest)
+```
+
+Changed only the official vendored client metadata/generated/types and `runtime.lock.json`; `__init__.py`, fixtures, and compiled timeline-config schema were byte-identical. The pre-pin API consumer mismatch was the expected Runtime handshake refusal: live Runtime schema `4e52f7df...1714d` versus old Agent client schema `a32cc6e5...db0e`; no handshake or digest bypass was added. Targeted vendor/parity/lock/signature/envelope smoke evidence is reported by the worker; no old socket cutover or full suite was run.
