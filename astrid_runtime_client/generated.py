@@ -10,11 +10,34 @@ import urllib.request
 import uuid
 from dataclasses import dataclass
 from typing import Any, Callable, Literal, Mapping
+from urllib.parse import urlsplit
+
+from .timeline_commit_types import CommitAcceptedMutation, CommitPreviewResponse, CommitRequest, HistoryPage, MediaSelection, MediaSelectionQuery
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
-SCHEMA_DIGEST = "sha256:ec06fbc6567fe28065d22626b040cad81bb2e5318623586ae9187c713794f6b9"
-OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+SCHEMA_DIGEST = "sha256:a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e"
+OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
+
+
+def _require_loopback(url: str) -> None:
+    host = urlsplit(url).hostname
+    if host not in _LOOPBACK_HOSTS:
+        raise ValueError(f"refusing to send a runtime credential to non-loopback host {host!r}")
+
+
+class _LoopbackRedirects(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        _require_loopback(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _urlopen_loopback(request: urllib.request.Request, *, timeout: float) -> Any:
+    """Open `request` without any configured HTTP proxy; loopback hosts only."""
+    _require_loopback(request.full_url)
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _LoopbackRedirects)
+    return opener.open(request, timeout=timeout)
 
 
 @dataclass(frozen=True)
@@ -154,7 +177,7 @@ class PreferenceResource:
     @classmethod
     def from_json(cls, value: Mapping[str, Any]) -> "PreferenceResource":
         fields = {"scope", "actor_id", "project_id", "document_id", "content", "version", "created_at", "updated_at"}
-        if not isinstance(value, Mapping) or set(value) != fields:
+        if not isinstance(value, Mapping) or not fields.issubset(value):
             raise ApiError(0, "invalid_response", "preference resource fields are required")
         scope = value["scope"]
         owner = value["actor_id"] if scope == "user" else value["project_id"]
@@ -165,7 +188,10 @@ class PreferenceResource:
             raise ApiError(0, "invalid_response", "preference resource identity or content is invalid")
         if type(value["version"]) is not int or value["version"] < 0 or any(item is not None and not isinstance(item, str) for item in (value["created_at"], value["updated_at"])):
             raise ApiError(0, "invalid_response", "preference resource version or timestamps are invalid")
-        return cls(**value)
+        # Response extensions are tolerated, while the typed resource exposes
+        # only fields understood by this client. Opaque documented payloads
+        # (such as content and metadata) remain intact in their fields.
+        return cls(**{key: value[key] for key in fields})
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
@@ -593,7 +619,7 @@ class WorkspaceClient:
                     reading_response = False
             else:
                 request = urllib.request.Request(self.base_url + path, data=body, headers=request_headers, method=method)
-                with urllib.request.urlopen(request, timeout=self.timeout) as response:  # noqa: S310 - endpoint is caller-configured
+                with _urlopen_loopback(request, timeout=self.timeout) as response:
                     status, response_headers = response.status, dict(response.headers)
                     reading_response = response_reader is not None
                     response_body = response.read() if response_reader is None else response_reader(response)
@@ -640,7 +666,7 @@ class WorkspaceClient:
 
     def _mutation_json(self, body: bytes) -> Mapping[str, Any]:
         value = self._json(body)
-        if set(value) != {"data", "receipt"}:
+        if not {"data", "receipt"}.issubset(value):
             raise ApiError(0, "invalid_response", "mutation response must contain data and committed receipt")
         data = value.get("data")
         receipt = value.get("receipt")
@@ -738,7 +764,7 @@ class WorkspaceClient:
             receipt = mutation.receipt
         else:
             value = self._json(body)
-            if set(value) != {"data", "receipt"} or value["receipt"] is not None:
+            if not {"data", "receipt"}.issubset(value) or value["receipt"] is not None:
                 raise ApiError(0, "invalid_response", "user preference mutation requires data and null receipt")
             resource = PreferenceResource.from_json(value["data"])
             receipt = None
@@ -855,9 +881,37 @@ class WorkspaceClient:
         items, next_cursor = self._page(value)
         return list(items), next_cursor
 
-    def restore_project_parent_composition_revision(self, project_id: str, timeline_id: str, revision: str, *, expected_head: str | None, idempotency_key: str) -> MutationResult:
-        payload = {"expected_head": expected_head}
-        return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/composition-revisions/{_path_part(revision)}/restore", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
+    def restore_project_parent_composition_revision(self, project_id: str, timeline_id: str, revision: str, *, expected_head: str, expected_publication_id: str, idempotency_key: str) -> CommitAcceptedMutation:
+        payload = {"expected_head": expected_head, "expected_publication_id": expected_publication_id}
+        return self._commit_response(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/composition-revisions/{_path_part(revision)}/restore", body=json.dumps(payload, separators=(",", ":"), allow_nan=False).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2], preview=False)
+
+    def _commit_response(self, body: bytes, *, preview: bool) -> CommitAcceptedMutation | CommitPreviewResponse:
+        value = self._json(body)
+        data, receipt = value.get("data"), value.get("receipt")
+        if not isinstance(data, dict) or "receipt" not in value:
+            raise ApiError(0, "invalid_response", "commit response requires data and receipt")
+        if preview:
+            if data.get("status") != "preview" or receipt is not None:
+                raise ApiError(0, "invalid_response", "preview requires preview status and null receipt")
+        elif data.get("status") not in ("accepted", "rebased") or not isinstance(receipt, dict):
+            raise ApiError(0, "invalid_response", "acceptance requires accepted status and committed receipt")
+        return value
+
+    def commit_timeline(self, project_id: str, timeline_id: str, request: CommitRequest, *, idempotency_key: str) -> CommitAcceptedMutation | CommitPreviewResponse:
+        body = json.dumps(request, separators=(",", ":"), allow_nan=False).encode()
+        return self._commit_response(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/commit", body=body, headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2], preview=request.get("dry_run", False))
+
+    def list_timeline_commits(self, project_id: str, timeline_id: str, *, cursor: str | None = None, limit: int = 50) -> HistoryPage:
+        query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "")
+        value = self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/commits" + query)[2])
+        self._page(value)
+        if not isinstance(value.get("head"), dict):
+            raise ApiError(0, "invalid_response", "commit history requires a fixed head pair")
+        return value
+
+    def get_project_media_selection(self, project_id: str, selection: MediaSelectionQuery) -> MediaSelection:
+        query = "&".join(f"{_path_part(k)}={_path_part(str(v))}" for k, v in selection.items())
+        return self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-selection?{query}")[2])
 
     def inspect_timeline(self, project_id: str, timeline_id: str, options: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
         payload = dict(options or {})
