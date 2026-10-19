@@ -179,6 +179,14 @@ class HostError(RuntimeError):
     """A controlled host-side error suitable for a worker diagnostic."""
 
 
+class CommandCleanupUnresolved(HostError):
+    """A command finished but its task scope may still own child writers."""
+
+    def __init__(self, message: str, *, execution_error: BaseException | None = None):
+        super().__init__(message)
+        self.execution_error = execution_error
+
+
 class HostCancelled(HostError):
     """The runtime cancelled the attempt while the subprocess was running."""
 
@@ -7963,15 +7971,25 @@ class GenericPackHost:
                         "--renderer-command", str(remotion_lease.inherited_fd()), json.dumps(argv[1:])]
             if not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
                 argv = _network_startup_argv(argv, attempt, env, broker_required=network_broker is not None)
-            # Ordinary task commands run in a task scope: own process group,
-            # leader retained unreaped until cleanup, no per-descendant custody.
-            process = spawn_task_scope(
+            # Rendering can create native descendants that change groups.
+            # Retain their incarnation-bound custody while the leader runs;
+            # a group-only census after it exits cannot own those processes.
+            render_scope = record.id == "rendering.render"
+            if render_scope:
+                env["ASTRID_RENDER_INHERIT_PROCESS_GROUP"] = "1"
+            launch = popen_owned_group if render_scope else spawn_task_scope
+            process = launch(
                 _network_sandbox_argv(argv, attempt, broker_endpoint), cwd=str(cwd), env=env,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, pass_fds=inherited_fds,
             )
-        except BaseException:
+        except BaseException as exc:
             if remotion_lease is not None:
                 remotion_lease.close()
+            retained = getattr(exc, "process", None)
+            if retained is not None:
+                self._track_process(retained)
+                self._latch_cleanup_uncertainty(str(exc))
+                raise CommandCleanupUnresolved(f"render launch custody unresolved: {type(exc).__name__}") from exc
             raise
         if child_bridge is not None:
             child_bridge.launched()
@@ -7980,11 +7998,14 @@ class GenericPackHost:
         self._track_process(process)
         review_session = record.id == "editorial.human_review" and child_bridge is not None
         review_snapshot = None
+        execution_error = None
         if review_session:
             process._astrid_process_birth = process_birth_identity(process.pid)
         try:
             guards_due = 0.0
             while process.poll() is None:
+                if render_scope:
+                    observe_tree(process)
                 if review_session:
                     review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot)
                 # Storage, evidence and Runtime-state checks walk the attempt
@@ -8044,6 +8065,7 @@ class GenericPackHost:
                 process_id=process_id,
             )
         except BaseException as exc:
+            execution_error = exc
             # The first census may fail before tree_members exists. Latch
             # before the finalizer can select a successful group-only fallback.
             if isinstance(exc, CleanupUncertainError):
@@ -8076,10 +8098,16 @@ class GenericPackHost:
                 # Fails this task only; the host is not latched. Keep a note.
                 teardown_complete = True
                 self._unresolved_task_scopes.append(exc.report.describe())
-                raise HostError(f"task scope cleanup unresolved: {exc}") from exc
+                detail = f"task scope cleanup unresolved: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}: {self._scrub_secret_text(str(execution_error), secrets)}"
+                raise CommandCleanupUnresolved(self._scrub_secret_text(detail, secrets), execution_error=execution_error) from exc
             except BaseException as exc:
                 self._latch_cleanup_uncertainty(str(exc))
-                raise HostError(f"owned command cleanup uncertain: {exc}") from exc
+                detail = f"owned command cleanup uncertain: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}: {self._scrub_secret_text(str(execution_error), secrets)}"
+                raise CommandCleanupUnresolved(self._scrub_secret_text(detail, secrets), execution_error=execution_error) from exc
             finally:
                 if teardown_complete or process_proven_gone:
                     self._untrack_process(process)
@@ -8200,22 +8228,34 @@ class GenericPackHost:
                 argv.extend(("--child-bridge", str(bridge_fd)))
             if require_network_startup:
                 argv = _network_startup_argv(argv, attempt_path, env, broker_required=network_broker_required)
-            process = spawn_task_scope(
+            render_scope = capability_id == "rendering.render"
+            if render_scope:
+                env["ASTRID_RENDER_INHERIT_PROCESS_GROUP"] = "1"
+            launch = popen_owned_group if render_scope else spawn_task_scope
+            process = launch(
                 _network_sandbox_argv(argv, attempt_path, broker_endpoint), cwd=str(attempt_path), env=env,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, pass_fds=inherited_fds,
             )
-        except BaseException:
+        except BaseException as exc:
             if remotion_lease is not None:
                 remotion_lease.close()
+            retained = getattr(exc, "process", None)
+            if retained is not None:
+                self._track_process(retained)
+                self._latch_cleanup_uncertainty(str(exc))
+                raise CommandCleanupUnresolved(f"render launch custody unresolved: {type(exc).__name__}") from exc
             raise
         if child_bridge is not None:
             child_bridge.launched()
         if remotion_lease is not None:
             remotion_lease.launched()
         self._track_process(process)
+        execution_error = None
         try:
             guards_due = 0.0
             while process.poll() is None:
+                if render_scope:
+                    observe_tree(process)
                 if time.monotonic() >= guards_due:
                     guards_due = time.monotonic() + _LIVE_GUARD_INTERVAL_SECONDS
                     _assert_live_storage_envelope(storage_estimate, attempt_path, attempt_path / "outputs")
@@ -8268,6 +8308,9 @@ class GenericPackHost:
                 }),
                 process_id=process_id,
             )
+        except BaseException as exc:
+            execution_error = exc
+            raise
         finally:
             try:
                 _terminate_process_group(process)
@@ -8276,10 +8319,16 @@ class GenericPackHost:
                 # Fails this task only; the host is not latched. Keep a note.
                 self._untrack_process(process)
                 self._unresolved_task_scopes.append(exc.report.describe())
-                raise HostError(f"capability {capability_id!r}: {exc}") from exc
+                detail = f"capability {capability_id!r}: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}"
+                raise CommandCleanupUnresolved(detail, execution_error=execution_error) from exc
             except BaseException as exc:
                 self._latch_cleanup_uncertainty(str(exc))
-                raise
+                detail = f"capability {capability_id!r} cleanup unresolved: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}"
+                raise CommandCleanupUnresolved(detail, execution_error=execution_error) from exc
             finally:
                 if remotion_lease is not None:
                     remotion_lease.close()
@@ -8773,6 +8822,7 @@ class GenericPackHost:
         evidence_failure_message: str | None = None
         evidence_failure_receipt: dict[str, Any] | None = None
         storage_failure_receipt: dict[str, Any] | None = None
+        command_cleanup_error: CommandCleanupUnresolved | None = None
         deadline_failed = False
         storage_receipt: dict[str, int] | None = None
         # Every network attempt gets a fresh host-issued nonce.  It is part of
@@ -9696,6 +9746,8 @@ class GenericPackHost:
             cancelled_attempt = True
             return {"task_id": task_id, "status": "cancelled", "cancelled": True}
         except Exception as exc:
+            if isinstance(exc, CommandCleanupUnresolved):
+                command_cleanup_error = exc
             # A cancellation/lease-loss race must not be turned into a second
             # runtime failure after child work has been contained.
             if cancelled():
@@ -9704,8 +9756,9 @@ class GenericPackHost:
                     return {"task_id": task_id, "status": "failed", "deadline_exceeded": True}
                 cancelled_attempt = True
                 return {"task_id": task_id, "status": "cancelled", "cancelled": True}
-            if isinstance(exc, StorageEnvelopeError):
-                storage_failure_receipt = dict(exc.diagnostic)
+            original_error = exc.execution_error if isinstance(exc, CommandCleanupUnresolved) else exc
+            if isinstance(original_error, StorageEnvelopeError):
+                storage_failure_receipt = dict(original_error.diagnostic)
             self._handoff_settlement_call(self.client.fail,
                 task_id,
                 lease_token,
@@ -9728,13 +9781,19 @@ class GenericPackHost:
             if pump_thread is not None:
                 pump_thread.join(timeout=2)
             cleanup_errors: list[str] = []
+            retain_for_unresolved_scope = command_cleanup_error is not None
+            if retain_for_unresolved_scope:
+                # The task-scope supervisor has evidence of a child writer
+                # that outlived its leader. Keep the attempt even when the
+                # caller did not request debug retention.
+                cleanup_errors.append("unresolved command task scope; attempt retained")
             cleanup_receipt: dict[str, Any] = {
                 "path": str(root),
                 "intended_disposition": (
                     "caller_owned"
                     if self.attempt_root is not None
                     else "retained"
-                    if keep_attempt
+                    if keep_attempt or retain_for_unresolved_scope
                     else "deleted"
                 ),
                 "status": "pending",
@@ -9804,7 +9863,7 @@ class GenericPackHost:
                         f"Codex credential copy not removed, remove it by hand: {root / 'codex-home' / 'auth.json'}: {exc}")
             # An unverified session release may still own a writer: fail this
             # task and keep its attempt below; the host keeps accepting work.
-            if keep_attempt:
+            if keep_attempt or retain_for_unresolved_scope:
                 try:
                     retained_exists = _strict_root_exists(root)
                 except Exception as exc:
@@ -13152,6 +13211,34 @@ def _await_enabled_runtime_credential(
 _emit_startup_phase("module_import_done")
 
 
+def _handle_host_shutdown_signal(host: GenericPackHost, signum: int) -> None:
+    """Log a bounded shutdown reason and keep cleanup failures observable."""
+    try:
+        signal_name = signal.Signals(signum).name
+    except (ValueError, TypeError):
+        signal_name = "unknown"
+    _LOGGER.warning(
+        "generic host shutdown requested: signal=%d reason=%s",
+        int(signum),
+        signal_name[:32],
+    )
+    try:
+        host.shutdown()
+    except BaseException as exc:
+        # Exception text can contain command arguments or credentials. The
+        # class name is enough to direct operators to the cleanup receipt.
+        _LOGGER.error(
+            "generic host shutdown cleanup failed: error_type=%s",
+            type(exc).__name__[:96],
+        )
+        raise
+
+
+def _log_cli_exit_failure(error: BaseException) -> None:
+    """Log CLI failures without copying potentially sensitive exception text."""
+    _LOGGER.error("generic host CLI exiting after failure: error_type=%s", type(error).__name__[:96])
+
+
 def _cli() -> int:
 
     parser = argparse.ArgumentParser(prog="astrid-generic-host")
@@ -13504,7 +13591,7 @@ def _cli() -> int:
         _emit_startup_phase("preflight_done")
 
     def handle_shutdown(_signum, _frame):
-        host.shutdown()
+        _handle_host_shutdown_signal(host, _signum)
 
     signal.signal(signal.SIGTERM, handle_shutdown)
     signal.signal(signal.SIGINT, handle_shutdown)
@@ -13630,4 +13717,10 @@ def _cli() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(_cli())
+    try:
+        raise SystemExit(_cli())
+    except BaseException as exc:
+        if isinstance(exc, SystemExit):
+            raise
+        _log_cli_exit_failure(exc)
+        raise

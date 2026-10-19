@@ -156,6 +156,182 @@ def test_successful_render_uses_authoritative_result_file(tmp_path: Path) -> Non
     assert transport.last_logs == {"stdout": "", "stderr": ""}
 
 
+def test_success_waits_for_owned_cleanup_after_detached_leader_exit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A success DTO is not returned until an observed escaped worker is gone.
+
+    This is deliberately a pure transport orchestration test. Native custody
+    admission and per-process signalling are exercised by the integration test
+    below, but this test proves the success path waits at the cleanup barrier.
+    """
+    events: list[tuple[str, Any]] = []
+    result_path = tmp_path / "result.json"
+
+    class ExitedLeader:
+        pid = 91801
+        returncode = 0
+        _astrid_process_group_id = pid
+
+        def poll(self):
+            return self.returncode
+
+        def communicate(self, *, timeout):
+            events.append(("communicate", timeout))
+            if not result_path.exists():
+                result_path.write_text(
+                    json.dumps(_wire_fixture("result.json")), encoding="utf-8"
+                )
+            return "", ""
+
+    process = ExitedLeader()
+
+    def launch(_argv, **_kwargs):
+        events.append(("launch", process.pid))
+        return process
+
+    def observe(owned, **_kwargs):
+        assert owned is process
+        events.append(("observe", process.pid))
+        # The known worker is in a new session and has already outlived the
+        # leader. Its birth-fenced identity is what retained cleanup consumes.
+        return {91802: "worker-birth-identity"}
+
+    def terminate_tree(owned, **_kwargs):
+        assert owned is process
+        events.append(("terminate_tree", process.pid))
+
+    def terminate_group(owned, **_kwargs):
+        assert owned is process
+        events.append(("terminate_group", process.pid))
+
+    def verify_absent(owned, **_kwargs):
+        assert owned is process
+        assert ("terminate_tree", process.pid) in events
+        assert ("terminate_group", process.pid) in events
+        events.append(("verify_absent", process.pid))
+
+    monkeypatch.setattr(transport_module, "_resolve_executable", lambda value, **_: str(value))
+    monkeypatch.setattr(transport_module, "popen_owned_process", launch)
+    monkeypatch.setattr(transport_module, "observe_tree", observe)
+    monkeypatch.setattr(transport_module, "terminate_tree", terminate_tree)
+    monkeypatch.setattr(transport_module, "terminate_group", terminate_group)
+    monkeypatch.setattr(transport_module, "verify_tree_absent", verify_absent)
+    monkeypatch.delenv("ASTRID_RENDER_INHERIT_PROCESS_GROUP", raising=False)
+
+    result = CommandTransport(RENDERER_ID).run(
+        "render", [sys.executable, BACKEND_SCRIPT],
+        request_path=_request(tmp_path, {"action": "detached-success"}),
+        result_path=result_path, cwd=FIXTURE_DIR, timeout=5,
+    )
+
+    assert isinstance(result, RenderResult)
+    verify_index = events.index(("verify_absent", process.pid))
+    final_communicate_index = max(i for i, event in enumerate(events) if event[0] == "communicate")
+    assert verify_index < final_communicate_index
+    assert final_communicate_index == len(events) - 1
+
+
+def test_detached_worker_is_cleaned_after_successful_leader_exit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Native custody integration: worker exits only after transport cleanup.
+
+    The fixture's leader writes the successful protocol result and exits after
+    the test confirms custody observed its worker in a separate session. The
+    worker ignores TERM and keeps writing, so the normal-success cleanup path
+    must retain and KILL that exact incarnation before returning the DTO.
+    """
+    registry = tmp_path / "detached-identities"
+    release_gate = tmp_path / "release-leader.gate"
+    payload = {
+        "action": "detached-success",
+        "leader_release_gate": str(release_gate),
+        "payload": _wire_fixture("result.json"),
+    }
+    sibling = subprocess.Popen(
+        [sys.executable, "-c", "import signal; signal.pause()"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    original_launch = transport_module.popen_owned_process
+    original_observe = transport_module.observe_tree
+    original_verify = transport_module.verify_tree_absent
+    original_killpg = os.killpg
+    observed: list[subprocess.Popen[str]] = []
+    verified: list[int] = []
+    released = False
+
+    def launch_after_observation(argv, *args, **kwargs):
+        process = original_launch(argv, *args, **kwargs)
+        observed.append(process)
+        argv_text = [str(part) for part in argv]
+        request = json.loads(
+            Path(argv_text[argv_text.index("--request") + 1]).read_text(encoding="utf-8")
+        )
+        pid_path = registry / "detached-worker.pid"
+        ready_path = registry / "detached-worker.ready"
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            live = original_observe(process)
+            if pid_path.is_file() and ready_path.is_file():
+                worker_pid = int(pid_path.read_text(encoding="utf-8"))
+                if process.pid in live and worker_pid in live:
+                    Path(request["leader_release_gate"]).touch()
+                    nonlocal released
+                    released = True
+                if released and process.poll() is not None:
+                    # Once the leader has exited, the worker must remain known
+                    # through retained ancestry evidence, despite setsid().
+                    assert worker_pid in original_observe(process)
+                    return process
+            if process.poll() is not None and not released:
+                pytest.fail("renderer leader exited before detached worker was observed")
+            time.sleep(0.01)
+        pytest.fail("detached worker did not reach the custody-observed state")
+
+    def verify_after_cleanup(process):
+        original_verify(process)
+        verified.append(process.pid)
+
+    def guarded_killpg(pgid, signum):
+        assert pgid != os.getpgrp(), "renderer cleanup signalled the host process group"
+        return original_killpg(pgid, signum)
+
+    monkeypatch.setattr(transport_module, "popen_owned_process", launch_after_observation)
+    monkeypatch.setattr(transport_module, "verify_tree_absent", verify_after_cleanup)
+    monkeypatch.setattr(os, "killpg", guarded_killpg)
+    try:
+        assert sibling.poll() is None
+        result = CommandTransport(RENDERER_ID, termination_grace=0.05).run(
+            "render",
+            [sys.executable, FIXTURE_DIR / "owned_tree_backend.py", "detached-success", tmp_path, registry],
+            request_path=_request(tmp_path, payload),
+            result_path=tmp_path / "detached-result.json",
+            cwd=FIXTURE_DIR,
+            timeout=5,
+        )
+        assert isinstance(result, RenderResult)
+        assert len(observed) == 1 and observed[0].returncode == 0
+        assert verified == [observed[0].pid]
+        with pytest.raises(ChildProcessError):
+            os.waitpid(observed[0].pid, os.WNOHANG)
+        worker_pid = int((registry / "detached-worker.pid").read_text(encoding="utf-8"))
+        _assert_pid_disappears(worker_pid)
+        last_write = (registry / "detached-worker.last-write").read_text(encoding="utf-8")
+        time.sleep(0.1)
+        assert (registry / "detached-worker.last-write").read_text(encoding="utf-8") == last_write
+        assert sibling.poll() is None
+        assert os.getpid() in process_group._process_snapshot()
+    finally:
+        try:
+            for process in observed:
+                transport_module._terminate_process_group(process, grace=0.05)
+        finally:
+            sibling.terminate()
+            sibling.wait(timeout=3)
+
+
 @pytest.mark.parametrize("verb", ["render", "support"])
 @pytest.mark.parametrize("timeout_mode", ["omitted", "explicit_none"])
 def test_unbounded_timeout_keeps_polling_and_parses_result(
