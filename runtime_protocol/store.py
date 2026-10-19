@@ -25,11 +25,11 @@ from urllib.parse import unquote
 
 from . import platform
 from . import cancellation
-from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestError, LeaseError, NotFoundError, OwnerBusyError, RealmAdmissionError, ValidationError
+from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestError, LeaseError, NotFoundError, OwnerBusyError, RealmAdmissionError, RetiredRouteError, ValidationError
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .cas import ContentAddressedStore
 from .dirfd import remove_tree_at
-from .snapshot_refs import publish_snapshot, rewrite_spec_snapshots, working_copy_binding
+from .snapshot_refs import publish_snapshot, rewrite_spec_snapshots, snapshot_digest, working_copy_binding
 from .util import canonical_json, new_id, now
 from .visual_seam import (
     admit_closure,
@@ -509,7 +509,26 @@ class RealmStore:
         return publish_snapshot(self.conn, self.cas_root, self.staging_root,
                                 snapshot, provenance, project_id)
 
-    def _validate_spec_snapshot_refs(self, spec, project_id):
+    def _prepare_spec_snapshot(self, snapshot, provenance, project_id):
+        """Compute the publication identity without writing DB, CAS, or staging."""
+        revision_id = provenance.get("revision_id")
+        revision_digest = provenance.get("revision_digest")
+        source_kind = provenance.get("source_kind") or ("revision" if revision_id else "cas")
+        if revision_id is not None and source_kind != "working_copy":
+            revision = self.conn.execute(
+                "SELECT content_digest FROM parent_composition_revisions "
+                "WHERE id=? AND project_id=? AND timeline_id=?",
+                (revision_id, project_id, provenance.get("timeline_id")),
+            ).fetchone()
+            if revision is not None and revision_digest is None:
+                revision_digest = revision[0]
+        return {"digest": snapshot_digest(snapshot), "project_id": project_id,
+                "timeline_id": provenance.get("timeline_id"), "revision_id": revision_id,
+                "revision_digest": revision_digest, "source_kind": source_kind,
+                **({"working_copy": provenance["working_copy"]} if source_kind == "working_copy" else {})}
+
+    @staticmethod
+    def _spec_snapshot_refs(spec, project_id):
         inner = spec.get("spec") if isinstance(spec.get("spec"), dict) else spec
         locations = (inner, inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {})
         refs = [location["timeline_snapshot_ref"] for location in locations
@@ -518,13 +537,18 @@ class RealmStore:
         refs.extend(context[key] for key in
                     ("filmstrip_snapshot_ref", "input_snapshot_ref", "capture_snapshot_ref")
                     if isinstance(context.get(key), dict))
-        ids = []
         for ref in refs:
             digest = ref.get("digest")
-            match = OBJECT_ID_RE.fullmatch(digest) if isinstance(digest, str) else None
-            if match is None or ref.get("project_id") not in (None, project_id):
+            if (not isinstance(digest, str) or OBJECT_ID_RE.fullmatch(digest) is None
+                    or ref.get("project_id") not in (None, project_id)):
                 raise ValidationError("timeline snapshot reference has an invalid digest or project")
-            bare = match.group(1)
+        return refs
+
+    def _validate_spec_snapshot_refs(self, spec, project_id):
+        ids = []
+        for ref in self._spec_snapshot_refs(spec, project_id):
+            digest = ref.get("digest")
+            bare = OBJECT_ID_RE.fullmatch(digest).group(1)
             object_row = self.conn.execute("SELECT size FROM objects WHERE digest=?", (bare,)).fetchone()
             try:
                 intact = object_row is not None and self._cas_digest(bare) == bare
@@ -1479,19 +1503,7 @@ class RealmStore:
         return [dict(row) for row in rows]
 
     def promote_shot_items(self, shot_id, expected_version, updates, *, timestamp):
-        """Apply candidate metadata and advance the shot head atomically."""
-        for item_id, metadata in updates:
-            self.conn.execute(
-                "UPDATE shot_items SET metadata_json=? WHERE id=? AND shot_id=?",
-                (canonical_json(metadata), str(item_id), str(shot_id)),
-            )
-        changed = self.conn.execute(
-            "UPDATE project_shots SET version=?, updated_at=? WHERE id=? AND version=?",
-            (int(expected_version) + 1, timestamp, str(shot_id), int(expected_version)),
-        ).rowcount
-        if changed != 1:
-            raise ConflictError("shot head conflict", details={"expected": int(expected_version)})
-        return int(expected_version) + 1
+        raise RetiredRouteError("direct shot promotion is retired; use timeline commands")
 
     def record_object(self, digest, size, media_type, original_name=None):
         with self._mutex:
@@ -2225,6 +2237,25 @@ class RealmStore:
             spec["required_facts"] = normalize_execution_facts(spec["required_facts"], field="required_facts")
         with self._mutex, (self._transaction() if capability == "rendering.render" else nullcontext()):
             project_id = self._project(project)["id"] if project else None
+            if expected_effect is not None and expected_effect != {}:
+                # Key existence permits only read-only preparation. Persisted
+                # identity below must prove replay before any publication or
+                # exemption from new-admission kind validation.
+                replay = idempotency_key and self.conn.execute(
+                    "SELECT 1 FROM runs WHERE project_id IS ? AND idempotency_key=? "
+                    "UNION ALL SELECT 1 FROM command_idempotency "
+                    "WHERE command_kind='task.create' AND aggregate_id=? AND idempotency_key=? LIMIT 1",
+                    (project_id, idempotency_key, project_id or "unscoped", idempotency_key),
+                ).fetchone()
+                if not replay:
+                    self._settlement_effect_kind(expected_effect)
+            snapshots = []
+
+            def prepare_snapshot(snapshot, provenance):
+                ref = self._prepare_spec_snapshot(snapshot, provenance, project_id)
+                snapshots.append((snapshot, provenance))
+                return ref
+
             if capability == "rendering.render":
                 admitted_spec = spec.get("spec") if isinstance(spec, dict) else None
                 admitted_spec, frozen_inputs, frozen_snapshot = self._freeze_managed_render_inputs(
@@ -2255,37 +2286,19 @@ class RealmStore:
                     admitted_spec["inputs"]["timeline_authority"]["storage_estimate"] = derived_storage
                     spec["storage_estimate"] = derived_storage
                     authority = admitted_spec["inputs"]["timeline_authority"]
-                    admitted_spec["timeline_snapshot_ref"] = self._publish_spec_snapshot(
+                    admitted_spec["timeline_snapshot_ref"] = prepare_snapshot(
                         frozen_snapshot,
                         {"project_id": project_id, "timeline_id": authority["timeline_id"],
                          "revision_id": authority.get("parent_revision_id"),
                          "revision_digest": authority.get("parent_content_digest")},
-                        project_id,
                     )
-            spec, _ = rewrite_spec_snapshots(
-                spec, lambda snapshot, provenance: self._publish_spec_snapshot(snapshot, provenance, project_id)
-            )
-            snapshot_ids = self._validate_spec_snapshot_refs(spec, project_id)
+            spec, _ = rewrite_spec_snapshots(spec, prepare_snapshot)
+            snapshot_ids = [ref.get("digest") for ref in self._spec_snapshot_refs(spec, project_id)]
             if snapshot_ids:
                 # Only specs that reference snapshots change shape; any other spec keeps its exact
                 # bytes, so its admission identity (and legacy replay) is unchanged.
                 spec["input_object_ids"] = list(dict.fromkeys([*spec.get("input_object_ids", []), *snapshot_ids]))
             predecessors = self._continuation_predecessors(spec)
-            if isinstance(expected_effect, dict) and expected_effect.get("effect_type") == "generation.publish_v1":
-                # The typed GEN publication plan is admitted against the task
-                # project before any durable task/run rows are created. Its
-                # output/member semantics are rechecked against staged bytes
-                # inside the fenced settlement transaction.
-                self._validate_settlement_effect(expected_effect, project_id=project_id)
-                if project_id is None:
-                    raise ConflictError("generation.publish_v1 requires a project-scoped task")
-            if isinstance(expected_effect, dict) and expected_effect.get("effect_type") == "generation.thumbnail.attach":
-                self._validate_settlement_effect(
-                    expected_effect,
-                    project_id=project_id,
-                    input_object_ids=spec.get("input_object_ids", []) if isinstance(spec, dict) else [],
-                )
-            self._validate_task_inputs(project_id, spec)
             with self._transaction():
                 request_hash = hashlib.sha256(canonical_json({"capability": capability, "spec": task_spec_for_request_hash(spec), "execution_request": execution_request, "project_id": project_id, "expected_effect": expected_effect, "capability_digest": capability_digest}).encode()).hexdigest()
                 aggregate_id = project_id or "unscoped"
@@ -2343,6 +2356,33 @@ class RealmStore:
                         "SELECT result_json, request_hash, txn_id, created_at, primary_stream_id FROM command_idempotency WHERE command_kind='task.create' AND aggregate_id=? AND idempotency_key=?",
                         (aggregate_id, idempotency_key),
                     ).fetchone()
+                if receipt and old is None:
+                    if receipt["txn_id"] is None:
+                        raise ConflictError("persisted task admission identity is unavailable")
+                    if receipt["request_hash"] != request_hash:
+                        raise ConflictError("idempotency key was already used with different input")
+                if old is None and receipt is None:
+                    if expected_effect is not None and expected_effect != {}:
+                        self._settlement_effect_kind(expected_effect)
+                for snapshot, provenance in snapshots:
+                    self._publish_spec_snapshot(snapshot, provenance, project_id)
+                self._validate_spec_snapshot_refs(spec, project_id)
+                if isinstance(expected_effect, dict) and expected_effect.get("effect_type") == "generation.publish_v1":
+                    # The typed GEN publication plan is admitted against the task
+                    # project before any durable task/run rows are created. Its
+                    # output/member semantics are rechecked against staged bytes
+                    # inside the fenced settlement transaction.
+                    self._validate_settlement_effect(expected_effect, project_id=project_id)
+                    if project_id is None:
+                        raise ConflictError("generation.publish_v1 requires a project-scoped task")
+                if isinstance(expected_effect, dict) and expected_effect.get("effect_type") == "generation.thumbnail.attach":
+                    self._validate_settlement_effect(
+                        expected_effect,
+                        project_id=project_id,
+                        input_object_ids=spec.get("input_object_ids", []) if isinstance(spec, dict) else [],
+                    )
+                self._validate_task_inputs(project_id, spec)
+                if idempotency_key:
                     if receipt and receipt["txn_id"] is not None:
                         if receipt["request_hash"] == request_hash:
                             if old_task is not None and old_task["status"] in {"queued", "running", "cancel_requested"}:
@@ -3677,10 +3717,20 @@ class RealmStore:
             row = self.conn.execute("SELECT * FROM executors WHERE id=?", (executor_id,)).fetchone()
             return self._executor_result(row)
 
-    def _validate_settlement_effect(self, effect, *, project_id=None, result=None, input_object_ids=None):
+    @staticmethod
+    def _settlement_effect_kind(effect):
         if not isinstance(effect, dict):
             raise ValidationError("settlement effect must be an object")
         kind = effect.get("effect_type")
+        if kind not in (
+            "generation.publish_v1", "generation.create_with_variant",
+            "generation.variant.append", "generation.thumbnail.attach", "project.update",
+        ):
+            raise ValidationError("unsupported settlement effect_type")
+        return kind
+
+    def _validate_settlement_effect(self, effect, *, project_id=None, result=None, input_object_ids=None):
+        kind = self._settlement_effect_kind(effect)
         if kind == "generation.publish_v1":
             return self._validate_generation_publish_v1_effect(
                 effect,
@@ -3716,8 +3766,6 @@ class RealmStore:
                 result=result,
                 input_object_ids=input_object_ids,
             )
-        if kind != "project.update":
-            raise ValidationError("unsupported settlement effect_type")
         try:
             current = self._project(str(target))
         except NotFoundError as exc:
@@ -4494,7 +4542,7 @@ class RealmStore:
         settled_at=None,
         attempt_id=None,
     ):
-        kind = effect.get("effect_type")
+        kind = self._settlement_effect_kind(effect)
         if kind == "generation.publish_v1":
             plan = self._validate_settlement_effect(
                 effect,
@@ -4771,8 +4819,6 @@ class RealmStore:
                 "version": int(generation["version"]) + (1 if changed else 0),
             }
         if kind != "project.update":
-            if kind != "generation.variant.append":
-                raise ValidationError("unsupported settlement effect_type")
             plan = self._validate_settlement_effect(
                 effect,
                 project_id=project_id,
