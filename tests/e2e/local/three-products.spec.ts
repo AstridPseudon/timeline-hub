@@ -28,7 +28,7 @@ import { expect, type Page, type Request, type Route } from '@playwright/test';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
-import { harnessUnavailableReason, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+import { harnessUnavailableReason, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, openApp, openSeededTimeline, revisionBody, test as appTest } from './support/app.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
@@ -510,7 +510,7 @@ async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: T
   const wire = await faultFirstCommit(page);
   await openCommandTimeline(page, harness, seed);
   const before = await history(harness, seed);
-  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 0, 5, 9, () => {
+  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 0, 5, THREE_PRODUCTS_REFERENCE_AT, () => {
     expect(wire.attempts, 'pointer movement previews; the actual drop commits').toBe(0);
   });
   await expect.poll(() => wire.posts.length, CEILING).toBe(1);
@@ -521,7 +521,7 @@ async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: T
   expect(position(a.data.canonical_document, seed.appClipId)).toBe(5);
   expect(await currentHead(harness)).toBe(pinOf(a).revision_id);
   // The second pointerdown observes the actual optimistic authored bundle A.
-  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 5, 7, 9, async () => {
+  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 5, 7, THREE_PRODUCTS_REFERENCE_AT, async () => {
     expect(wire.attempts, 'B stays unsent behind unacknowledged A').toBe(1);
     await beforeBDrop?.(a);
   });
@@ -683,7 +683,7 @@ test('M1 real dependency conflict retains B original guards and pending identity
   });
   await openCommandTimeline(page, harness, seed3);
   const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
-  await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 5, 0, 9);
+  await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 5, 0, THREE_PRODUCTS_REFERENCE_AT);
   const reset = await resetResponse;
   expect(reset.status(), await reset.text()).toBe(200);
   await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);

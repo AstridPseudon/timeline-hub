@@ -342,6 +342,9 @@ export const THREE_PRODUCTS_OPAQUE = {
   clip: { owner: 'f2', nested: [1, { k: 'v' }] },
 } as const;
 
+/** Keep the App's reference sibling clear of the A5/B7 moves on the same track. */
+export const THREE_PRODUCTS_REFERENCE_AT = 15;
+
 const SCENE_MARKER = 'journey-scene';
 
 /** The smallest entry page the validator accepts: a `<head>` for the CSP, a `<body>` for the bridge, and `window.astridScene`. */
@@ -691,13 +694,13 @@ export class DirectHarness {
     const videoAsset = { file: `f2-video.${videoExtension}`, type: video.mediaType, duration: 12, media_id: video.objectId, content_sha256: video.digest };
     // The App's clips are the parent composition's own (the editor changes only the parent). The Astrid CLI reaches clips only
     // inside a placed shot's internal timeline (astrid/sdk/timeline/lookup.py `clips`), so the agent's two clips live in a shot
-    // placed between them: 3 s to 9 s on the film, clips at 0 s and 3 s inside it.
+    // placed independently: 0 s to 12 s on the film, clips at 3 s and 6 s inside it.
     const shotId = 'f2-shot';
     const internalRevisionId = randomUUID();
     const shotRevisionId = randomUUID();
     const parentClips = [
       { id: ids.appClipId, at: 0, track: 'V1', clipType: 'media', asset: 'f2-app', from: 0, to: 3, speed: 1 },
-      { id: ids.transitionClipId, at: 9, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
+      { id: ids.transitionClipId, at: THREE_PRODUCTS_REFERENCE_AT, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
     ];
     const shotClips = [
       { id: 'f2-plate', at: 0, track: 'plate', clipType: 'media', asset: 'f2-plate', hold: 12 },

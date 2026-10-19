@@ -22,7 +22,9 @@ export const APP_ENTRY_ROUTE = '/tools/video-editor';
 
 function resolveChromium(): string | undefined {
   if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE) return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
-  if (existsSync(chromium.executablePath())) return undefined;
+  // The installed headless shell uses HTTPS_PROXY despite --no-proxy-server, resetting the hosted origin.
+  // Select full Chromium explicitly; an implicit launch selects the headless shell instead.
+  if (existsSync(chromium.executablePath())) return chromium.executablePath();
   // The installed Playwright may expect a newer browser build than the one in the image; use what is there.
   const browsers = process.env.PLAYWRIGHT_BROWSERS_PATH ?? '/opt/pw-browsers';
   const found = existsSync(browsers) ? readdirSync(browsers).filter((name) => /^chromium-\d+$/.test(name)).sort().pop() : undefined;
@@ -48,8 +50,16 @@ export const test = base.extend<object, { harness: DirectHarness; browser: Brows
 });
 
 export async function currentHead(harness: DirectHarness): Promise<string> {
-  const timelines = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions?limit=1`);
-  return timelines.body.items.find((item: any) => item.is_current_head).revision_id;
+  // A new publication can reuse an older immutable revision, so creation order does not identify the head.
+  let cursor: string | null = null;
+  do {
+    const revisions = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions?limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`);
+    expect(revisions.status, JSON.stringify(revisions.body)).toBe(200);
+    const head = revisions.body.items.find((item: any) => item.is_current_head);
+    if (head) return head.revision_id;
+    cursor = revisions.body.next_cursor;
+  } while (cursor);
+  throw new Error('Timeline has no current composition revision');
 }
 
 export async function waitForAudit(harness: DirectHarness, predicate: (entry: ReturnType<DirectHarness['audit']>[number]) => boolean, timeoutMs = 3000) {

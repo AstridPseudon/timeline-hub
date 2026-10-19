@@ -190,7 +190,7 @@ export class AstridCli {
     return this.python(['-m', 'astrid', ...args], options);
   }
 
-  /** Real core capture and public SDK commit, using this client's own credential. */
+  /** Real core capture and public SDK commit, reading pinned immutable payloads in Python to retain their numeric bytes. */
   async commitCaptured(document: CanonicalDocument, base: HeadPin, operation:
     { kind: 'track'; id: string } | { kind: 'move'; clipId: string; on: number }, key: string): Promise<CommitAcceptedMutation> {
     const program = `
@@ -198,17 +198,52 @@ import json, sys
 from astrid.sdk.client import AstridClient
 from astrid.sdk.timeline.capture import capture_move, capture_track_create
 from astrid.sdk.timeline.commit import bundle_from_document
-document, base, operation, key = json.loads(sys.argv[1])
-bundle = bundle_from_document(document)
-if operation['kind'] == 'track':
-    command = capture_track_create(bundle, 'parent', {'id': operation['id'], 'kind': 'audio', 'label': operation['id']})
-else:
-    command = capture_move(bundle, 'parent/clip:' + operation['clipId'], operation['on'])
-body = dict(api_version=1, project_id=document['project_id'], timeline_id=document['timeline_id'],
-            base_revision_id=base['revision_id'], base_publication_id=base['publication_id'],
-            commands=[command], source={'via': 'python'})
+supplied, base, operation, key = json.loads(sys.argv[1])
+project, timeline = supplied['project_id'], supplied['timeline_id']
 with AstridClient.open_from_launcher(start_pack_host=False, client_name='three-products-command') as client:
-    result = client.timelines.commit(document['project_id'], document['timeline_id'], body, idempotency_key=key)
+    def read(operation, *args, expected):
+        result = client.timelines._typed(operation, *args)
+        assert result.ok, result.as_dict()
+        row = result.data
+        assert all(row.get(field) == value for field, value in expected.items()), (operation, expected)
+        return row
+
+    cursor = None
+    while True:
+        history = client.timelines._typed('list_timeline_commits', project, timeline, cursor=cursor, limit=50)
+        assert history.ok, history.as_dict()
+        if any(row['revision_id'] == base['revision_id'] and row['publication_id'] == base['publication_id']
+               for row in history.data['items']):
+            break
+        cursor = history.data['next_cursor']
+        assert cursor, ('original base pair is missing from scoped history', base)
+
+    parent = read('get_project_parent_composition_revision', project, timeline, base['revision_id'],
+                  expected=dict(project_id=project, timeline_id=timeline, revision_id=base['revision_id']))
+    manifest = parent['dependency_manifest']
+    shots, internals = [], []
+    for pin in manifest['shots']:
+        row = read('get_project_shot_revision', project, pin['shot_id'], pin['revision_id'],
+                   expected=dict(project_id=project, **pin))
+        shots.append({**pin, 'payload': row['payload']})
+    for pin in manifest['internal_timelines']:
+        row = read('get_project_timeline_revision', project, pin['timeline_id'], pin['revision_id'],
+                   expected=dict(project_id=project, **pin))
+        internals.append({**pin, 'payload': row['payload']})
+    # Keep Python's raw JSON numbers and all original document/media pins for digest and closure validation.
+    document = dict(schema_version=1, project_id=project, timeline_id=timeline,
+                    parent_revision={field: parent[field] for field in ('revision_id', 'content_digest', 'payload')},
+                    shot_revisions=shots, internal_timeline_revisions=internals, dependency_manifest=manifest)
+    assert document == supplied, 'Pinned closure differs from the supplied document'
+    bundle = bundle_from_document(document)
+    if operation['kind'] == 'track':
+        command = capture_track_create(bundle, 'parent', {'id': operation['id'], 'kind': 'audio', 'label': operation['id']})
+    else:
+        command = capture_move(bundle, 'parent/clip:' + operation['clipId'], operation['on'])
+    body = dict(api_version=1, project_id=project, timeline_id=timeline,
+                base_revision_id=base['revision_id'], base_publication_id=base['publication_id'],
+                commands=[command], source={'via': 'python'})
+    result = client.timelines.commit(project, timeline, body, idempotency_key=key)
     assert result.ok, result.as_dict()
     print(json.dumps(result.as_dict()))
 `;
