@@ -288,9 +288,16 @@ def test_closed_prepared_failure_and_restore_envelopes():
 
 
 def test_bundle_matches_canonical_resources_and_generator():
-    from scripts.artifact_manifest import digests
+    manifest_path = ROOT / "scripts" / "artifact_manifest.py"
+    manifest_spec = importlib.util.spec_from_file_location(
+        "_runtime_timeline_artifact_manifest", manifest_path
+    )
+    assert manifest_spec is not None and manifest_spec.loader is not None
+    manifest = importlib.util.module_from_spec(manifest_spec)
+    manifest_spec.loader.exec_module(manifest)
+    assert Path(manifest.__file__).resolve() == manifest_path.resolve()
 
-    artifacts = digests()
+    artifacts = manifest.digests()
     for relative in (
         "packages/python/astrid_runtime_client/timeline_commit_types.py",
         "packages/typescript/src/timeline-commit-types.ts",
