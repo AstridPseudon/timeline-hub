@@ -335,6 +335,9 @@ installer line again to restart the service.
 
 ## 7. Update
 
+Before updating, leave a recognizable conversation in each agent you configured in journey 3.
+Record its title and a sentence you can find again.
+
 **Steps**
 
 1. Run the update line:
@@ -379,6 +382,8 @@ installer line again to restart the service.
   `Open https://astrid.haus`.
 - The page shows **Astrid stopped**, then **Astrid restarted**. After Reload, the same projects are there.
 - Two folders under `versions` (the new one and the previous one) and one under `backups`.
+- Your earlier conversations still appear once in the session list and reopen with their messages.
+  If you selected a custom chat folder or session directory, that selection is retained.
 
 **The "Update Astrid" screen.** The page shows **Update Astrid** only when your Astrid is older than the page. You
 can't bring it up on purpose. If you see it, click **Copy**, run that line, and check the same things as above.
@@ -457,7 +462,8 @@ Make a doctor bundle first (see [Reporting](#reporting)); there is no installed 
    ```
 
 4. Run the plain install line once more (journey 1) to reinstall. The installer should adopt the kept workspace; check
-   that `Using your workspace at …` names the same path, then open astrid.haus and confirm your projects are still there.
+   that `Using your workspace at …` names the same path, then open astrid.haus and confirm your projects and earlier
+   conversations are still there.
 5. Run the uninstall line a second time. It should complete safely.
 6. Remove the workspace at the end of testing with the delete-data line below. Run it twice; both runs should complete
    safely, and the workspace should be gone.
