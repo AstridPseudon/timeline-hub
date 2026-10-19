@@ -30,6 +30,10 @@ port settings. Shell variables take precedence over the local file, and explicit
 launcher path arguments take precedence over both. Keep secrets out of `VITE_`
 variables. `ASTRID_SUPPORT_ROOT`, `ASTRID_WORKSPACE_DISCOVERY`, and
 `ASTRID_RUNTIME_SOURCE_MANIFEST` are also supported local launcher settings.
+When the installation already uses a credential file or a specific pack-host
+interpreter, preserve those paths with `ASTRID_ENV_FILE` and
+`ASTRID_PACK_HOST_PYTHON`. The launcher passes paths, never reads or copies the
+credential values. Existing credentials remain managed by Astrid's resolver.
 
 The same one-command restart reuses the configured Runtime, starts the local App
 and gateway, and passes that exact root and discovery path to the agent. Stop
