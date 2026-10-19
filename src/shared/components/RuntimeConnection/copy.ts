@@ -97,9 +97,7 @@ export interface RuntimeConnectionCopy {
   };
   /** Next to the compose controls the hosted build disables (card A2.X); followed by `openApp` when the app address is known. */
   readonly composeDisabled: string;
-  /** In place of agent chat on the hosted build, which the loopback gateway does not serve (design D2). */
-  readonly agentChatDisabled: string;
-  /** The link text after `composeDisabled` / `agentChatDisabled`; it never shows the address. */
+  /** The link text after `composeDisabled`; it never shows the address. */
   readonly openApp: string;
 }
 
@@ -215,8 +213,6 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   composeDisabled: "Making new images isn't on this page yet.",
 
-  agentChatDisabled: "Agent chat isn't on this page yet.",
-
   openApp: 'Open the full editor',
 };
 
@@ -227,12 +223,4 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
  */
 export function composeDisabledReason(): string | null {
   return runtimeOrigin() !== '' ? RUNTIME_CONNECTION_COPY.composeDisabled : null;
-}
-
-/**
- * The agent chat line on the hosted build, `null` same-origin. The gateway never serves the ACP routes, so
- * on the hosted page chat is not mounted and its project-chat routes are never requested.
- */
-export function agentChatDisabledReason(): string | null {
-  return runtimeOrigin() !== '' ? RUNTIME_CONNECTION_COPY.agentChatDisabled : null;
 }

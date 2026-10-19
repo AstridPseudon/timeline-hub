@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Loader2, Mic, Paperclip, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
-import { agentChatDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
-import { LocalAppNote } from '@/shared/components/RuntimeConnection/LocalAppNote.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
 import { useAgentChatBridge, useAgentChatActionsRegistry, type AgentChatActionsHandlers } from '@/shared/contexts/AgentChatContext.tsx';
@@ -225,14 +223,6 @@ export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange
   const scope = useAgentChatBridge();
 
   if (!isTimelineAgentSessionsAvailable()) {
-    const hostedReason = agentChatDisabledReason();
-    if (hostedReason) {
-      return (
-        <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-          <LocalAppNote message={hostedReason} className="max-w-sm text-xs" />
-        </div>
-      );
-    }
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
         <img
