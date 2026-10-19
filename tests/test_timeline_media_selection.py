@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from runtime_protocol.errors import ConflictError, NotFoundError, ProtocolError, RuntimeErrorBase
+from runtime_protocol.errors import ConflictError, NotFoundError, ProtocolError
 from runtime_protocol.server import RuntimeHandler
 
 from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
@@ -98,7 +98,6 @@ def test_media_selection_query_decodes_exact_selector_values():
     "asset=a&generation_id=g&variant_id=v&association_id=a&object_id=o&version=1",
     "asset=a&generation_id=g",
     "asset=a&generation_id=g&variant_id=v&unknown=x",
-    "asset=a&generation_id=g&variant_id=v&bad=%",
     "association_id=a&object_id=o&version=0",
     "association_id=a&object_id=o&version=1.0",
 ])
@@ -108,6 +107,18 @@ def test_media_selection_query_rejects_duplicate_ambiguous_or_malformed_selector
 
     handler = _route_handler(SimpleNamespace(get_project_media_selection=get_selection), query)
     with pytest.raises(ProtocolError):
+        handler._route()
+
+
+def test_media_selection_query_rejects_invalid_percent_encoding():
+    def get_selection(*args, **kwargs):
+        pytest.fail("invalid query encoding reached the service")
+
+    handler = _route_handler(
+        SimpleNamespace(get_project_media_selection=get_selection),
+        "asset=a&generation_id=g&variant_id=v%",
+    )
+    with pytest.raises(ProtocolError, match="invalid media selection query encoding"):
         handler._route()
 
 
@@ -180,30 +191,81 @@ def _selection_acceptance_snapshot(service, project):
     }
 
 
+def _prepared_media_candidate(context, port, selection):
+    port.selected_media(selection)
+    candidate = prepared(context, port)
+    media_pin = {"media_id": selection["object_id"], "content_digest": selection["object_id"]}
+    candidate["canonical_document"]["dependency_manifest"]["media"] = [media_pin]
+    candidate["records"]["commands"][0]["dependencies"] = [{
+        "key": "media:selected", "kind": "media", "pin": selection, "policy": "exact",
+    }]
+    candidate["document_digest"] = digest(candidate["canonical_document"])
+    return candidate, media_pin
+
+
+def test_selected_media_capture_and_accept_records_exact_pin(tmp_path):
+    service, project, associations = _settled_media(tmp_path, slug="accept-control")
+    try:
+        association = associations["first"]
+        selection = _capture(service, project, association)
+
+        def action(context, port):
+            candidate, _ = _prepared_media_candidate(context, port, selection)
+            return port.accept(candidate)
+
+        provider = PreparedProvider(action)
+        service.register_timeline_commit_provider(provider)
+        service.test_project = project
+        service.create_timeline(project, "main", idempotency_key="create-main")
+        body = request(service)
+        body["commands"][0]["op"] = "fixture.inspect"
+        body["commands"][0]["args"]["selection"] = selection
+
+        accepted = commit(service, body, key="accepted-selection")
+        result = accepted["data"]
+        media_pin = {"media_id": selection["object_id"], "content_digest": selection["object_id"]}
+        assert provider.calls == 1
+        assert accepted["receipt"]["command_kind"] == "timeline.commit"
+        assert accepted["receipt"]["result"] == result
+        assert result["status"] == "accepted"
+        assert result["canonical_document"]["dependency_manifest"]["media"] == [media_pin]
+
+        history = service.list_timeline_commits(project, "main", authorize=lambda: None)
+        recorded = [item for item in history["items"] if item["intent"] == "recorded"]
+        assert len(recorded) == 1
+        assert recorded[0]["receipt"]["result"]["canonical_document"]["dependency_manifest"]["media"] == [media_pin]
+        head = service.get_project_timeline(project, "main")
+        assert head["head_revision_id"] == result["accepted_revision_id"]
+        assert head["head_publication_id"] == accepted["receipt"]["receipt_id"]
+        manifest = service.store.conn.execute(
+            "SELECT commit_manifest_json FROM parent_composition_revisions WHERE id=?",
+            (result["accepted_revision_id"],),
+        ).fetchone()
+        assert json.loads(manifest["commit_manifest_json"])["media"] == [media_pin]
+        edges = service.store.conn.execute(
+            "SELECT dependency_kind, dependency_id, content_digest, ordinal "
+            "FROM composition_revision_dependencies WHERE parent_revision_id=?",
+            (result["accepted_revision_id"],),
+        ).fetchall()
+        assert [tuple(edge) for edge in edges] == [
+            ("media", selection["object_id"], selection["object_id"], 0),
+        ]
+    finally:
+        service.close()
+
+
 @pytest.mark.parametrize("mutation", ["lifecycle", "identity"])
 def test_selected_media_mutation_between_capture_and_accept_is_atomic(tmp_path, mutation):
     service, project, associations = _settled_media(tmp_path, slug="accept-" + mutation)
     try:
         association = associations["first"]
-        selection = service.get_project_media_selection(project, {
-            "association_id": association["association_id"],
-            "object_id": association["object_id"],
-            "version": 1,
-        }, authorize=lambda: None)
+        selection = _capture(service, project, association)
         assert set(selection) == {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}
         before_accept = None
 
         def action(context, port):
             nonlocal before_accept
-            port.selected_media(selection)
-            candidate = prepared(context, port)
-            candidate["canonical_document"]["dependency_manifest"]["media"] = [{
-                "media_id": selection["object_id"], "content_digest": selection["object_id"],
-            }]
-            candidate["records"]["commands"][0]["dependencies"] = [{
-                "key": "media:selected", "kind": "media", "pin": selection, "policy": "exact",
-            }]
-            candidate["document_digest"] = digest(candidate["canonical_document"])
+            candidate, _ = _prepared_media_candidate(context, port, selection)
             if mutation == "lifecycle":
                 service.store.conn.execute(
                     "UPDATE managed_output_lifecycle SET state='reclaimed', version=version+1 WHERE association_id=?",
@@ -225,8 +287,13 @@ def test_selected_media_mutation_between_capture_and_accept_is_atomic(tmp_path, 
         body = request(service)
         body["commands"][0]["op"] = "fixture.inspect"
         body["commands"][0]["args"]["selection"] = selection
-        with pytest.raises(RuntimeErrorBase):
+        expected = {
+            "lifecycle": "selected output is not an eligible durable creative output",
+            "identity": "selected variant has no unique exact managed output binding",
+        }[mutation]
+        with pytest.raises(ConflictError, match=expected) as error:
             commit(service, body, key="mutated-" + mutation)
+        assert (error.value.status, error.value.code, error.value.message) == (409, "conflict", expected)
         assert provider.calls == 1
         assert before_accept == _selection_acceptance_snapshot(service, project)
         assert service.store.conn.execute(
