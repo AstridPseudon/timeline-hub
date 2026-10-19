@@ -16,7 +16,16 @@ from typing import Iterable, Optional
 from astrid.core.foundation.paths import REPO_ROOT
 
 from ..discovery import SkillDescriptor
-from .base import Action, HarnessAdapter, InstallRecord, PlannedStep, ensure_symlink, remove_symlink
+from .base import (
+    Action,
+    HarnessAdapter,
+    InstallRecord,
+    PlannedStep,
+    ensure_symlink,
+    managed_target_matches,
+    remove_symlink,
+    target_mechanism,
+)
 
 PACKS_DIR_FOR_EXTERNAL = REPO_ROOT / "astrid" / "packs"
 
@@ -59,7 +68,7 @@ class HermesAdapter(HarnessAdapter):
         for descriptor in descriptors:
             target = self.target_for(descriptor)
             if action == "install":
-                steps.append(PlannedStep(description=f"symlink {target} -> {descriptor.skill_dir}", target=target))
+                steps.append(PlannedStep(description=f"install {target} from {descriptor.skill_dir}", target=target))
             else:
                 steps.append(PlannedStep(description=f"remove {target}", target=target))
         return steps
@@ -87,7 +96,7 @@ class HermesAdapter(HarnessAdapter):
                     PlannedStep(
                         description=("created" if changed else "ok") + f" {target}",
                         target=target,
-                        extras={"changed": changed, "mechanism": "symlink"},
+                        extras={"changed": changed, "mechanism": target_mechanism(target)},
                     )
                 )
             else:
@@ -103,14 +112,8 @@ class HermesAdapter(HarnessAdapter):
 
     def verify(self, descriptor: SkillDescriptor) -> tuple[bool, str]:
         target = self.target_for(descriptor)
-        if target.is_symlink():
-            try:
-                resolved = target.resolve(strict=True)
-            except OSError as exc:
-                return False, f"{target} resolves to a missing path ({exc})"
-            if resolved != descriptor.skill_dir.resolve():
-                return False, f"{target} resolves to {resolved}, expected {descriptor.skill_dir}"
-            return True, "ok (symlink)"
+        if managed_target_matches(target, descriptor.skill_dir):
+            return True, "ok (copy)" if target.is_dir() and not target.is_symlink() else "ok (symlink)"
         # external-dir mechanism: confirm the packs dir is in config.yaml.
         if not self.config_path.exists():
             return False, f"{target} missing and {self.config_path} not present"
@@ -123,13 +126,9 @@ class HermesAdapter(HarnessAdapter):
 
     def discover_installed(self, descriptor: SkillDescriptor) -> Optional[InstallRecord]:
         target = self.target_for(descriptor)
-        if target.is_symlink():
-            try:
-                resolved = target.resolve(strict=True)
-            except OSError:
-                resolved = None
-            if resolved == descriptor.skill_dir.resolve():
-                return InstallRecord(pack_id=descriptor.pack_id, target=target, mechanism="symlink")
+        if managed_target_matches(target, descriptor.skill_dir):
+            mechanism = target_mechanism(target)
+            return InstallRecord(pack_id=descriptor.pack_id, target=target, mechanism=mechanism)
         # external-dir mechanism: packs dir registered in config.yaml
         if self.config_path.exists():
             cfg = self._load_config()

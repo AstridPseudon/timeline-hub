@@ -1973,11 +1973,11 @@ def _network_startup_argv(argv: list[str], attempt: Path, env: Mapping[str, str]
 
 
 def _network_sandbox_argv(argv: list[str], attempt: Path, endpoint: str | None) -> list[str]:
-    """Put broker children behind the host's OS network boundary on macOS."""
+    """Keep macOS broker children behind sandbox-exec; other OSes use the Python guard."""
     if not endpoint:
         return argv
     if sys.platform != "darwin":
-        raise HostError("host-managed provider broker requires an OS network sandbox")
+        return argv
     sandbox = shutil.which("sandbox-exec")
     if not sandbox:
         raise HostError("host-managed provider broker requires macOS sandbox-exec")
@@ -6145,10 +6145,10 @@ class GenericPackHost:
             else:
                 checks["network"] = {"ok": True}
             if record.definition.isolation.network and adapter.family == "provider" and _host_managed_broker(policy):
-                sandbox_available = sys.platform == "darwin" and shutil.which("sandbox-exec") is not None
+                sandbox_available = sys.platform != "darwin" or shutil.which("sandbox-exec") is not None
                 checks["sandbox"] = {
                     "ok": sandbox_available,
-                    **({} if sandbox_available else {"reason": "host-managed provider broker requires an OS network sandbox"}),
+                    **({} if sandbox_available else {"reason": "host-managed provider broker requires macOS sandbox-exec"}),
                 }
             pack_source = _hivemind_source_preflight(record)
             if pack_source is not None:

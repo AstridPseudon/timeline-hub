@@ -383,7 +383,7 @@ def install(args: argparse.Namespace) -> None:
     # The Runtime decodes through PATH. Bind only the measured decoders into
     # its private executable directory, even when the caller's PATH is narrow.
     for name, tool in {**decoders, **agents}.items():
-        (root / "venv/bin" / name).symlink_to(tool["path"])
+        shutil.copy2(tool["path"], root / "venv/bin" / name)
     run([build_python, "-m", "pip", "install", "--require-hashes", "-r", locks["build"]], cwd=work, env=env)
     products = []
     for name, pattern, prefixes in (("astrid", "astrid-*.whl", ("astrid/", "astrid_runtime_client/")),

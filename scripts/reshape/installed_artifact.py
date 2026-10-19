@@ -30,6 +30,7 @@ from email.parser import Parser
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from astrid.core.foundation.paths import venv_python
 from astrid.core.util.time import utc_now_iso
 
 SCHEMA = "astrid.installed_artifact.v1"
@@ -664,9 +665,7 @@ class InstalledArtifactHarness:
                     "isolated build venv creation failed:\n"
                     + _redact_output(build_venv_result.stdout + build_venv_result.stderr)
                 )
-            build_python = build_venv_dir / (
-                "Scripts/python.exe" if os.name == "nt" else "bin/python"
-            )
+            build_python = venv_python(build_venv_dir)
             build_install = subprocess.run(
                 [
                     str(build_python),
@@ -730,7 +729,7 @@ class InstalledArtifactHarness:
                     "isolated venv creation failed:\n"
                     + _redact_output(venv_result.stdout + venv_result.stderr)
                 )
-            child_python = venv_dir / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+            child_python = venv_python(venv_dir)
             if not child_python.is_file():
                 raise InstalledArtifactError(f"venv Python executable is missing: {child_python}")
 
@@ -860,7 +859,7 @@ class InstalledArtifactHarness:
                 f"expected {DEFAULT_DISTRIBUTION!r} wheel, found {artifact.distribution!r}"
             )
         venv_path = Path(venv_dir).expanduser().absolute()
-        python = venv_path / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        python = venv_python(venv_path)
         if not python.is_file():
             raise InstalledArtifactError(f"venv Python executable is missing: {python}")
         owned = workspace is None
@@ -1200,7 +1199,7 @@ def provision_locked_environment(
                 "isolated proof venv creation failed:\n"
                 + _redact_output(venv_result.stdout + venv_result.stderr)
             )
-        child_python = venv_dir / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        child_python = venv_python(venv_dir)
         if not child_python.is_file():
             raise InstalledArtifactError(f"proof venv Python executable is missing: {child_python}")
         install_root = workspace_path / "pip"

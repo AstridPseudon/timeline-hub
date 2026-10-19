@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import errno
+import hashlib
+import json
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Literal, Optional
@@ -11,6 +15,25 @@ from astrid.core.contracts.errors import AstridError
 from ..discovery import SkillDescriptor
 
 Action = Literal["install", "uninstall"]
+_COPY_MARKER = ".astrid-managed-skill.json"
+
+
+def _directory_digest(root: Path, *, exclude_marker: bool = False) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root).as_posix()
+        if exclude_marker and relative == _COPY_MARKER:
+            continue
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        if path.is_symlink():
+            digest.update(b"link\0" + str(path.readlink()).encode("utf-8"))
+        elif path.is_file():
+            digest.update(b"file\0" + path.read_bytes())
+        else:
+            digest.update(b"dir\0")
+        digest.update(b"\0")
+    return digest.hexdigest()
 
 
 @dataclass(frozen=True)
@@ -67,7 +90,7 @@ class HarnessAdapter:
 
         Default implementation reuses ``verify`` semantics: if verify passes,
         the install is considered present at ``target_for(descriptor)`` with
-        mechanism "symlink". Adapters with multi-mechanism or composite
+        mechanism "link". Adapters with multi-mechanism or composite
         evidence (codex AGENTS.md, hermes external-dir) override.
         """
         try:
@@ -79,7 +102,7 @@ class HarnessAdapter:
         return InstallRecord(
             pack_id=descriptor.pack_id,
             target=self.target_for(descriptor),
-            mechanism="symlink",
+            mechanism="copy" if is_managed_copy(self.target_for(descriptor)) else "symlink",
         )
 
 
@@ -121,22 +144,54 @@ def prune_orphan_skill_links(skills_dir: Path, known_pack_ids: set[str]) -> list
         name = entry.name
         if name == "astrid" or not name.startswith("astrid-"):
             continue
-        if not entry.is_symlink():
+        if not entry.is_symlink() and not is_managed_copy(entry):
             continue
         pack_id = ours_link_to_pack_id(name)
         if pack_id is not None and pack_id not in known_pack_ids:
-            entry.unlink()
+            if is_managed_copy(entry):
+                shutil.rmtree(entry)
+            else:
+                entry.unlink()
             removed.append(entry)
     return removed
 
 
-def ensure_symlink(target: Path, source: Path, *, force: bool = False) -> bool:
-    """Idempotently create ``target`` as a symlink → ``source``.
+def is_managed_copy(target: Path, source: Path | None = None) -> bool:
+    if not target.is_dir() or target.is_symlink():
+        return False
+    try:
+        marker = json.loads((target / _COPY_MARKER).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    if source is None:
+        return True
+    return (
+        marker.get("source") == str(source.resolve())
+        and marker.get("digest") == _directory_digest(source)
+        and _directory_digest(target, exclude_marker=True) == marker.get("digest")
+    )
 
-    Returns True if the FS state changed, False if already correct.
-    """
+
+def managed_target_matches(target: Path, source: Path) -> bool:
+    if target.is_symlink():
+        try:
+            return target.resolve(strict=True) == source.resolve()
+        except OSError:
+            return False
+    return is_managed_copy(target, source)
+
+
+def target_mechanism(target: Path, default: str = "symlink") -> str:
+    return "copy" if is_managed_copy(target) else default
+
+
+def ensure_symlink(target: Path, source: Path, *, force: bool = False) -> bool:
+    """Create a symlink to ``source``, falling back to a managed directory copy."""
+    # Returns True if the FS state changed, False if already correct.
     target.parent.mkdir(parents=True, exist_ok=True)
     source_resolved = source.resolve()
+    if is_managed_copy(target, source_resolved):
+        return False
     if target.is_symlink():
         try:
             existing = Path(target).resolve()
@@ -149,6 +204,8 @@ def ensure_symlink(target: Path, source: Path, *, force: bool = False) -> bool:
             # authoritative writer for these paths.
             pass
         target.unlink()
+    elif is_managed_copy(target):
+        shutil.rmtree(target)
     elif target.exists():
         if not force:
             raise AstridError(
@@ -156,18 +213,32 @@ def ensure_symlink(target: Path, source: Path, *, force: bool = False) -> bool:
                 recovery_command="re-run with --force to replace it",
             )
         if target.is_dir():
-            import shutil
-
             shutil.rmtree(target)
         else:
             target.unlink()
-    target.symlink_to(source_resolved)
+    try:
+        target.symlink_to(source_resolved, target_is_directory=source_resolved.is_dir())
+    except (OSError, NotImplementedError) as exc:
+        fallback_errors = {errno.EPERM, errno.EACCES, errno.ENOSYS, errno.EOPNOTSUPP}
+        if isinstance(exc, OSError) and exc.errno not in fallback_errors and getattr(exc, "winerror", None) != 1314:
+            raise
+        shutil.copytree(source_resolved, target)
+        (target / _COPY_MARKER).write_text(
+            json.dumps(
+                {"source": str(source_resolved), "digest": _directory_digest(source_resolved)},
+                sort_keys=True,
+            ) + "\n",
+            encoding="utf-8",
+        )
     return True
 
 
 def remove_symlink(target: Path) -> bool:
     if target.is_symlink():
         target.unlink()
+        return True
+    if is_managed_copy(target):
+        shutil.rmtree(target)
         return True
     if target.exists():
         # Refuse to remove a non-symlink we didn't create.
@@ -181,6 +252,9 @@ __all__ = [
     "InstallRecord",
     "PlannedStep",
     "ensure_symlink",
+    "is_managed_copy",
+    "managed_target_matches",
+    "target_mechanism",
     "is_ours",
     "ours_link_to_pack_id",
     "prune_orphan_skill_links",

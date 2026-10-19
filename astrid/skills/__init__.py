@@ -15,6 +15,7 @@ from typing import Iterable
 from . import discovery, registry, state
 from .discovery import SkillDescriptor, list_skills
 from .harnesses import ADAPTERS, HarnessAdapter, adapter_for, all_adapters
+from .harnesses.base import target_mechanism
 from .links import LinkScan, scan_links
 
 # Frozen setup composition selected from existing first-party declarations.
@@ -122,7 +123,11 @@ def install(
                     harness_name,
                     descriptor.pack_id,
                     target=str(target),
-                    mechanism=kwargs.get("mechanism", "symlink"),
+                    mechanism=(
+                        kwargs["mechanism"]
+                        if kwargs.get("mechanism") == "external-dir"
+                        else target_mechanism(target)
+                    ),
                 )
         report["actions"].append({"harness": harness_name, "steps": [_step_to_dict(s) for s in steps]})
 
@@ -254,7 +259,11 @@ def sync(
                     harness_name,
                     descriptor.pack_id,
                     target=str(target),
-                    mechanism=kwargs.get("mechanism", "symlink"),
+                    mechanism=(
+                        kwargs["mechanism"]
+                        if kwargs.get("mechanism") == "external-dir"
+                        else target_mechanism(target)
+                    ),
                 )
             # Prune orphan installs from state.
             installed_ids = {d.pack_id for d in descriptors}

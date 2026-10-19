@@ -68,11 +68,23 @@ def _absolute_root(value: str | Path, *, label: str) -> Path:
     return path
 
 
-def _runtime_command(env: Mapping[str, str] | None = None) -> tuple[str, ...]:
+def _runtime_command(env: Mapping[str, str] | None = None, *, windows: bool | None = None) -> tuple[str, ...]:
     target = os.environ if env is None else env
     configured = target.get(RUNTIME_COMMAND_ENV, "").strip()
     if configured:
-        command = tuple(shlex.split(configured))
+        try:
+            structured = json.loads(configured)
+        except json.JSONDecodeError:
+            structured = None
+        if isinstance(structured, list) and all(isinstance(item, (str, int, float)) for item in structured):
+            command = tuple(str(item) for item in structured)
+        elif (os.name == "nt" if windows is None else windows):
+            # A configured Windows executable path is commonly a single value
+            # containing spaces. Structured JSON argv handles arguments; the
+            # legacy string form is treated as one executable on Windows.
+            command = (configured,)
+        else:
+            command = tuple(shlex.split(configured))
         if not command:
             raise RuntimeCLIError(f"{RUNTIME_COMMAND_ENV} is empty")
         return command

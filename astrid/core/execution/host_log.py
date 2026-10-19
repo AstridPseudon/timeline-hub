@@ -16,6 +16,7 @@ from ``ASTRID_HOST_LOG_MB`` (default 50, ``0`` disables rotation).
 from __future__ import annotations
 
 import os
+import sys
 import threading
 import time
 from pathlib import Path
@@ -26,6 +27,30 @@ HOST_LOG_MB_ENV = "ASTRID_HOST_LOG_MB"
 DEFAULT_HOST_LOG_MB = 50
 DEFAULT_HOST_LOG_BACKUPS = 3
 _WATCH_INTERVAL_SECONDS = 30.0
+_WINDOWS_REPLACE_ATTEMPTS = 5
+_WINDOWS_SHARING_ERRORS = {5, 32, 33}
+
+
+def _replace(source: Path, destination: Path) -> None:
+    for attempt in range(_WINDOWS_REPLACE_ATTEMPTS):
+        try:
+            os.replace(source, destination)
+            return
+        except OSError as exc:
+            if sys.platform != "win32" or getattr(exc, "winerror", None) not in _WINDOWS_SHARING_ERRORS or attempt + 1 == _WINDOWS_REPLACE_ATTEMPTS:
+                raise
+            time.sleep(0.05 * (attempt + 1))
+
+
+def _unlink(path: Path) -> None:
+    for attempt in range(_WINDOWS_REPLACE_ATTEMPTS):
+        try:
+            path.unlink(missing_ok=True)
+            return
+        except OSError as exc:
+            if sys.platform != "win32" or getattr(exc, "winerror", None) not in _WINDOWS_SHARING_ERRORS or attempt + 1 == _WINDOWS_REPLACE_ATTEMPTS:
+                raise
+            time.sleep(0.05 * (attempt + 1))
 
 
 def host_log_limit_bytes(environ: Mapping[str, str] | None = None) -> int:
@@ -50,15 +75,15 @@ def _backup_path(path: Path, index: int) -> Path:
 def rotate_log(path: Path, *, backups: int = DEFAULT_HOST_LOG_BACKUPS) -> None:
     """Shift ``path`` to ``path.1`` and older backups up, dropping beyond ``backups``."""
     if backups < 1:
-        path.unlink(missing_ok=True)
+        _unlink(path)
         return
-    _backup_path(path, backups).unlink(missing_ok=True)
+    _unlink(_backup_path(path, backups))
     for index in range(backups - 1, 0, -1):
         source = _backup_path(path, index)
         if source.exists():
-            os.replace(source, _backup_path(path, index + 1))
+            _replace(source, _backup_path(path, index + 1))
     if path.exists():
-        os.replace(path, _backup_path(path, 1))
+        _replace(path, _backup_path(path, 1))
 
 
 def rotate_if_needed(path: Path, *, limit: int | None = None, backups: int = DEFAULT_HOST_LOG_BACKUPS) -> bool:
@@ -98,13 +123,30 @@ class StdioLogRotator:
             return False
         if current.st_size < self.limit:
             return False
-        rotate_log(self.path, backups=self.backups)
-        fresh = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+        # Windows opens stdout/stderr without delete sharing. Temporarily
+        # redirect both descriptors so the process releases its own handles
+        # before rename, then reopen the active path for subsequent writes.
+        if sys.platform == "win32":
+            for stream in (sys.stdout, sys.stderr):
+                try:
+                    stream.flush()
+                except (AttributeError, OSError, ValueError):
+                    pass
+            null_fd = os.open(os.devnull, os.O_WRONLY)
+            try:
+                os.dup2(null_fd, 1)
+                os.dup2(null_fd, 2)
+            finally:
+                os.close(null_fd)
         try:
-            os.dup2(fresh, 1)
-            os.dup2(fresh, 2)
+            rotate_log(self.path, backups=self.backups)
         finally:
-            os.close(fresh)
+            fresh = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+            try:
+                os.dup2(fresh, 1)
+                os.dup2(fresh, 2)
+            finally:
+                os.close(fresh)
         return True
 
     def start(self, interval: float = _WATCH_INTERVAL_SECONDS) -> threading.Thread:
