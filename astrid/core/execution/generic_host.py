@@ -183,7 +183,7 @@ class HostCancelled(HostError):
     """The runtime cancelled the attempt while the subprocess was running."""
 
 
-_CONTENT_ADDRESSED_MEDIA_ID = re.compile(r"sha256:[0-9a-f]{64}\Z")
+_CONTENT_ADDRESSED_MEDIA_ID = re.compile(r"(?:sha256:)?([0-9a-f]{64})\Z")
 _MANAGED_ASSET_LOCATOR_KEYS = frozenset({"url", "uri", "path", "source_path", "locator", "realm", "file"})
 
 
@@ -202,8 +202,9 @@ def _managed_asset_identity(key: str, raw: Mapping[str, Any]) -> tuple[str, str]
     object_id = raw.get("object_id") or raw.get("media_id")
     raw_digest = raw.get("digest") or raw.get("content_sha256") or raw.get("sha256") or raw.get("hash")
     media_id = raw.get("media_id")
-    if not raw_digest and isinstance(media_id, str) and _CONTENT_ADDRESSED_MEDIA_ID.fullmatch(media_id):
-        raw_digest = media_id
+    media_match = _CONTENT_ADDRESSED_MEDIA_ID.fullmatch(media_id) if isinstance(media_id, str) else None
+    if not raw_digest and media_match:
+        raw_digest = media_match.group(1)
     if not isinstance(object_id, str) or not object_id.strip() or not isinstance(raw_digest, str):
         raise HostError(f"managed asset {key!r} requires object_id and digest")
     digest_hex = raw_digest.removeprefix("sha256:")

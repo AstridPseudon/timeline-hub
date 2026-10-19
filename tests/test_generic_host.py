@@ -769,17 +769,39 @@ def test_input_materialization_rejects_foreign_nested_digest(tmp_path):
 
 def test_managed_asset_identity_accepts_runtime_canonical_film_media_id():
     media_id = "sha256:95fc75f6ef87b32177308d0bb34a699f07a1960c443edc630377d1dec88f0602"
-    assert _managed_asset_identity("film", {
+    canonical_asset = {
         "media_id": media_id,
         "thumbnailUrl": "/api/runtime/v1/media/sha256:thumbnail",
         "generationId": "generation-film",
-    }) == (media_id, media_id.removeprefix("sha256:"))
+    }
+    assert _managed_asset_identity("film", canonical_asset) == (media_id, media_id.removeprefix("sha256:"))
+    assert _managed_asset_identity("film", {**canonical_asset, "content_sha256": media_id}) == (
+        media_id,
+        media_id.removeprefix("sha256:"),
+    )
+    bare_digest = media_id.removeprefix("sha256:")
+    assert _managed_asset_identity("film", {"media_id": bare_digest}) == (bare_digest, bare_digest)
 
 
 def test_managed_asset_identity_keeps_locator_rejection_and_explicit_opaque_digest():
     media_id = "opaque-runtime-media-id"
     digest = hashlib.sha256(b"managed test object").hexdigest()
     assert _managed_asset_identity("asset", {"media_id": media_id, "digest": digest}) == (media_id, digest)
+    locator_values = {
+        "url": "/api/runtime/v1/objects/sha256%3A" + "0" * 64,
+        "uri": "file:///Users/example/film.mov",
+        "path": "/Users/example/film.mov",
+        "source_path": "/Users/example/film.mov",
+        "locator": "/api/runtime/v1/objects/sha256%3A" + "0" * 64,
+        "realm": "file:///Users/example/film.mov",
+        "file": "/api/runtime/v1/objects/sha256%3A" + "0" * 64,
+    }
+    for key, value in locator_values.items():
+        with pytest.raises(HostError, match="unmanaged locator"):
+            _managed_asset_identity("film", {
+                "media_id": "sha256:" + "0" * 64,
+                key: value,
+            })
     with pytest.raises(HostError, match="unmanaged locator"):
         _managed_asset_identity("film", {
             "media_id": "sha256:" + "0" * 64,
@@ -787,6 +809,35 @@ def test_managed_asset_identity_keeps_locator_rejection_and_explicit_opaque_dige
         })
     with pytest.raises(HostError, match="requires object_id and digest"):
         _managed_asset_identity("asset", {"media_id": media_id})
+
+
+def test_materialize_inputs_fetches_media_id_only_registry_entry(tmp_path):
+    payload = b"canonical managed film fixture"
+    digest = hashlib.sha256(payload).hexdigest()
+    registry = tmp_path / "registry.json"
+    registry.write_text(json.dumps({"assets": {"film": {
+        "media_id": digest,
+        "thumbnailUrl": "/api/runtime/v1/media/thumbnail-id",
+        "generationId": "generation-film",
+        "type": "video/mp4",
+    }}}), encoding="utf-8")
+
+    class Objects(FakeRuntime):
+        def get_object(self, object_digest):
+            assert object_digest == digest
+            return payload
+
+    host = GenericPackHost(pack_roots=[tmp_path], client=Objects())
+    values = host._materialize_inputs({
+        "input_object_ids": [digest],
+        "spec": {"inputs": {"assets_registry": str(registry)}},
+    }, tmp_path / "attempt", authorized_input_object_ids=[digest])
+    derived = json.loads(Path(values["assets_registry"]).read_text(encoding="utf-8"))
+    asset = derived["assets"]["film"]
+    assert Path(asset["file"]).read_bytes() == payload
+    assert asset["media_id"] == digest
+    assert asset["thumbnailUrl"] == "/api/runtime/v1/media/thumbnail-id"
+    assert asset["generationId"] == "generation-film"
 
 
 def test_command_cwd_must_stay_in_attempt_or_source_scope(tmp_path):
