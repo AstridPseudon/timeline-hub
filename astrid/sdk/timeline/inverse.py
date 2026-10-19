@@ -4,7 +4,16 @@ from __future__ import annotations
 import copy
 
 from ._collections import AcceptedRecords, arrange, member, restoration_orders, selection_overlap
-from ._command_state import ABSENT, CommandError, State, equal, logical_address, overlaps, present
+from ._command_state import (
+    ABSENT,
+    CommandError,
+    State,
+    equal,
+    logical_address,
+    overlaps,
+    present,
+    root_identity,
+)
 from ._recording import Recording, guard, selection
 
 
@@ -234,7 +243,13 @@ def apply_inverse(ctx, records, intervening_records):
                 if entity is not None and entity[1] == 'track' and _dependents(scratch, write['ref']):
                     raise CommandError('created track has surviving dependents', kind='surviving_dependents',
                                        ref=write['ref'])
-            scratch.set(write['ref'], write['path'], write['before'])
+            root = root_identity(write['ref'])
+            if root is not None and not write['path'] and write['after'] == ABSENT:
+                staged.create_entity(write['ref'], kind=root[0],
+                                     owner=None if root[0] == 'shot' else 'parent',
+                                     value=write['before']['value'], restoring=True)
+            else:
+                scratch.set(write['ref'], write['path'], write['before'])
         for (owner, kind), (original, _) in staged_orders.items():
             arrange(scratch, owner, kind, original)
         staged.compile_mirrors()
@@ -251,8 +266,14 @@ def apply_inverse(ctx, records, intervening_records):
     for write in reversed(changes):
         ctx.read(write['ref'], write['path'])
         if not write['path'] and write['after'] == ABSENT:
-            owner, entity = write['ref'].rsplit('/', 1)
-            ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)
+            root = root_identity(write['ref'])
+            if root is not None:
+                ctx.create_entity(write['ref'], kind=root[0],
+                                  owner=None if root[0] == 'shot' else 'parent',
+                                  value=write['before']['value'], restoring=True)
+            else:
+                owner, entity = write['ref'].rsplit('/', 1)
+                ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)
         else:
             ctx.assign(write['ref'], write['path'], write['before'])
     for (owner, kind), (original, _) in orders.items():

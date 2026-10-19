@@ -158,8 +158,10 @@ def bundle_from_document(document):
     return bundle
 
 
-def document_from_bundle(bundle, *, document_pins=None):
+def document_from_bundle(bundle, *, document_pins=None, source_bundles=()):
     """Compile through main and close every reused image from the exact input."""
+    from ._command_state import equal
+
     source = bundle["source_mapping"]["_runtime_document"]
     publication = compile_authoring_candidate(bundle).publication
     shot_index = {row["revision_id"]: copy.deepcopy(row) for row in source["shot_revisions"]}
@@ -169,18 +171,45 @@ def document_from_bundle(bundle, *, document_pins=None):
                        for row in publication["shot_revisions"]})
     internal_index.update({row["revision_id"]: copy.deepcopy(row)
                            for row in publication["internal_timeline_revisions"]})
+    # Only authenticated publication boundaries may supply earlier immutable
+    # images. Reuse them after exact authored-content comparison, never restore
+    # a parent snapshot or replace a sibling's currently accepted pins.
+    for historical in source_bundles:
+        document = historical['source_mapping']['_runtime_document']
+        _verify_document(document)
+        _require((document['project_id'], document['timeline_id']) ==
+                 (bundle['project_id'], bundle['timeline_id']), 'foreign inverse source')
+        shot_index.update({row['revision_id']: copy.deepcopy(row) for row in document['shot_revisions']})
+        internal_index.update({row['revision_id']: copy.deepcopy(row)
+                               for row in document['internal_timeline_revisions']})
     parent = copy.deepcopy(publication["parent_composition"])
     # Opening shared occurrences gives them independent editing identities. A
     # parent-only edit must still reuse their ORIGINAL immutable shot images.
     for occurrence in parent["occurrences"]:
         identity = occurrence["shot_id"]
         shot = bundle["shots"][identity]
-        origin = bundle["source_mapping"]["shots"][identity]
-        if (shot["payload"] == shot["base_payload"]
+        origin = bundle["source_mapping"]["shots"].get(identity)
+        if (origin is not None and shot["payload"] == shot["base_payload"]
                 and shot["internal_timeline"] == shot["base_internal_timeline"]
                 and origin.get("revision_id") in shot_index):
             occurrence["shot_id"] = origin["shot_id"]
             occurrence["shot_revision_id"] = origin["revision_id"]
+            continue
+        for historical in source_bundles:
+            prior = next((row for row in historical['placements']
+                          if row['occurrence_id'] == occurrence['occurrence_id']), None)
+            if prior is None or prior['shot_id'] != identity:
+                continue
+            old = historical['shots'][identity]
+            payload, old_payload = copy.deepcopy(shot['payload']), copy.deepcopy(old['payload'])
+            payload.pop('internal_timeline_revision_id', None)
+            old_payload.pop('internal_timeline_revision_id', None)
+            if not equal(payload, old_payload) or not equal(shot['internal_timeline'], old['internal_timeline']):
+                continue
+            origin = historical['source_mapping']['shots'][identity]
+            occurrence['shot_id'] = origin['shot_id']
+            occurrence['shot_revision_id'] = origin['revision_id']
+            break
     shot_ids = {row["shot_revision_id"] for row in parent["occurrences"]}
     shots = sorted((shot_index[key] for key in shot_ids),
                    key=lambda row: (row["shot_id"], row["revision_id"]))
@@ -203,6 +232,11 @@ def document_from_bundle(bundle, *, document_pins=None):
             "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
             "parent": parent, "manifest": manifest,
         }).removeprefix("sha256:")
+    for historical in source_bundles:
+        prior = historical['source_mapping']['_runtime_document']
+        if equal(parent, prior['parent_revision']['payload']) and equal(manifest, prior['dependency_manifest']):
+            revision = prior['parent_revision']['revision_id']
+            break
     document = {
         "schema_version": 1, "project_id": bundle["project_id"],
         "timeline_id": bundle["timeline_id"],
@@ -317,6 +351,31 @@ def _records(entries, rejected, base, current):
 def _check_reservations(port, plan, current, rejected, base):
     from astrid.sdk.timeline.commands import CommandError
 
+    from ._command_state import root_identity
+
+    def valid(item):
+        if (not isinstance(item, Mapping) or set(item) != {'ref', 'kind', 'owner'}
+                or not _id(item['ref']) or not _id(item['kind'])):
+            return False
+        root = root_identity(item['ref'])
+        if root is not None:
+            return (item['kind'] == root[0]
+                    and item['owner'] == (None if root[0] == 'shot' else 'parent'))
+        owner = item['owner']
+        if not _id(owner) or not (owner == 'parent' or (
+                root_identity(owner) is not None and root_identity(owner)[0] == 'occurrence')):
+            return False
+        return (item['kind'] in ('track', 'clip')
+                and re.fullmatch(re.escape(owner + '/' + item['kind'] + ':') + r'(?!.*::)[^/]+',
+                                 item['ref']) is not None)
+
+    for record in plan.records:
+        if (any(not valid(item) for item in record['created'])
+                or record['command'].get('created') != [item['ref'] for item in record['created']]):
+            raise CommandError('invalid created identity scope', kind='identity_collision')
+
+    # This scan is timeline-local. Runtime atomic admission must additionally
+    # check project-wide shot occupancy/reservations before persisting a closure.
     # Inverse creates restore authenticated accepted writes. Ordinary creates
     # must never claim an identity retired by an earlier accepted publication.
     created = [item["ref"] for record in plan.records
@@ -334,11 +393,7 @@ def _check_reservations(port, plan, current, rejected, base):
         for record in _records([entry], rejected, base, current):
             items = record["created"]
             if (not isinstance(items, list)
-                    or any(not isinstance(item, Mapping)
-                           or set(item) != {"ref", "kind", "owner"}
-                           or not all(_id(item[key]) for key in ("ref", "kind", "owner"))
-                           or not item["ref"].startswith(item["owner"] + "/" + item["kind"] + ":")
-                           for item in items)
+                    or any(not valid(item) for item in items)
                     or not isinstance(record["command"], Mapping)
                     or record["command"].get("created") != [item["ref"] for item in items]):
                 raise rejected(_failure("history_unavailable", "created identity history is unavailable",
@@ -397,7 +452,7 @@ class RuntimeCommitService:
                     for publication in call["args"]["publications"]:
                         if publication not in undo_of:
                             undo_of.append(publication)
-            inverse_records, inverse_intervening = [], []
+            inverse_records, inverse_intervening, inverse_sources = [], [], []
             if undo_of:
                 targets = [port.history_entry(publication) for publication in undo_of]
                 segments = []
@@ -430,6 +485,7 @@ class RuntimeCommitService:
                     return (_load(port, context, previous['revision_id']),
                             _load(port, context, entry['revision_id']))
 
+                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
                 inverse_records = AcceptedRecords(accepted, _records(
                     accepted, CommitRejected, base, current), load_boundary)
                 # A gap before a later target is that target's input, not an
@@ -487,7 +543,7 @@ class RuntimeCommitService:
                                   intervening_records=[*inverse_intervening, *_records(
                                       entries, CommitRejected, base, current)], closures=closures)
                 _check_reservations(port, plan, current, CommitRejected, base)
-                document = document_from_bundle(plan.bundle)
+                document = document_from_bundle(plan.bundle, source_bundles=inverse_sources)
                 prepared = {
                     "expected_head": copy.deepcopy(current), "canonical_document": document,
                     "document_digest": _digest(document),

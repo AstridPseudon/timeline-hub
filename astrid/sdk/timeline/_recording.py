@@ -116,6 +116,32 @@ class Recording:
         self.record['created'].append({"ref": ref, "kind": kind, "owner": owner})
         return ref
 
+    def create_entity(self, ref, *, kind, owner, value, restoring=False):
+        from ._command_state import root_identity
+
+        root = root_identity(ref)
+        if (root is None or root[0] != kind
+                or owner != (None if kind == 'shot' else 'parent')):
+            raise CommandError('invalid created root scope', ref=ref)
+        self.state.validate_root(ref, value)
+        document = self.state.bundle['source_mapping'].get('_runtime_document', {})
+        occupied = (any(row['shot_id'] == root[1] for row in document.get('shot_revisions', []))
+                    if kind == 'shot' else any(row['occurrence_id'] == root[1] for row in
+                        document.get('parent_revision', {}).get('payload', {}).get('occurrences', [])))
+        if not document:
+            mapping = self.state.bundle['source_mapping']
+            occupied = (any(row['shot_id'] == root[1] for row in mapping['shots'].values())
+                        if kind == 'shot' else root[1] in mapping['placements'])
+        if (occupied and not restoring) or self.state.get(ref, []) != ABSENT or any(
+                item['ref'] == ref for item in self.record['created']):
+            raise CommandError('created identity is occupied', kind='identity_collision', ref=ref)
+        self.read(ref)
+        self.write(ref, [], value)
+        if kind == 'shot' and root[1] not in self.state.bundle['source_mapping']['shots']:
+            self.state.bundle['shots'][root[1]]['_created'] = True
+        self.record['created'].append({'ref': ref, 'kind': kind, 'owner': owner})
+        return ref
+
     def compile_inputs(self):
         # The compiler retains this immutable input closure. These pins do not
         # imply that the move evaluated an anchor or any document settings.

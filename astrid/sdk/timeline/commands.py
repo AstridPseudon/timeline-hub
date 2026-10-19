@@ -33,9 +33,14 @@ class Operation:
 
 def operations():
     """M1 native recipe entries; the full extensible registry belongs to M2."""
+    from ._clip_commands import clip_add
+    from ._scalar_commands import clip_set_params, track_set
     from .capture import MOVE_INTENT, move, track_create
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
-            'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {})}
+            'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+            'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
+            'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
+            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
 
 
 @dataclass
@@ -63,7 +68,7 @@ def validate_command(command):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
     if operation is not None:
-        errors = list(Draft202012Validator(operation.parameters).iter_errors(command['args']))
+        errors = list(_VALIDATOR.evolve(schema=operation.parameters).iter_errors(command['args']))
         if errors:
             raise CommandError(errors[0].message)
     if command['op'] == 'track.create':
@@ -78,7 +83,8 @@ def validate_command(command):
 def _normalize(command):
     command = copy.deepcopy(command)
     validate_command(command)
-    resolved = command.get('resolved', [command['select']] if command['op'] == 'clip.move' else [])
+    operation = operations().get(command['op'])
+    resolved = command.get('resolved', [command['select']] if operation and operation.singleton else [])
     for field in ('expect', 'authorship'):
         if field not in command:
             continue
