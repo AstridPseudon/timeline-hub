@@ -405,6 +405,49 @@
       ],
       "additionalProperties": false
     },
+    "ClipAddArgs": {
+      "type": "object",
+      "required": [
+        "row"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "row": {
+          "type": "object",
+          "required": [
+            "id",
+            "clipType",
+            "track",
+            "at",
+            "hold"
+          ],
+          "description": "Complete literal parent clip row, preserved exactly, including unknown JSON. Preallocated ID; existing active output track. at and hold are seconds without creation-time rounding. Media, source windows and following anchors are unsupported in v1.",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^(?!.*::)[^/]+$"
+            },
+            "clipType": {
+              "type": "string",
+              "minLength": 1
+            },
+            "track": {
+              "type": "string",
+              "pattern": "^(?!.*::)[^/]+$"
+            },
+            "at": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hold": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "additionalProperties": true
+        }
+      }
+    },
     "EditCommand": {
       "type": "object",
       "properties": {
@@ -610,6 +653,35 @@
                   }
                 },
                 "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.add"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipAddArgs"
+              },
+              "intent": {
+                "type": "object",
                 "additionalProperties": false
               }
             }
