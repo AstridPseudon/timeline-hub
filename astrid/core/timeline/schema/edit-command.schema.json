@@ -829,6 +829,36 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "track.delete"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)parent/track:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/TrackDeleteArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -866,6 +896,12 @@
         "type": "string"
       },
       "description": "Normalized property tokens, not entity collection positions. Empty array means the whole entity. Numeric array tokens use canonical decimal strings; provider validates pinned parent-container types before traversal."
+    },
+    "TrackDeleteArgs": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false,
+      "description": "Delete one empty parent track by stable identity. Surviving declared references refuse; no cascade."
     }
   }
 }

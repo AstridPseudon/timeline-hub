@@ -132,13 +132,15 @@ def check_intervening(records, intervening_records, *, include_reads=True):
                                        kind='intervening_write', ref=address[0])
 
 
-def _dependents(state, ref):
+def _dependents(state, ref, *, recording=None):
     owner, identity = ref.rsplit('/track:', 1)
 
-    def references(row, other):
+    def references(row, other, site=None, path=()):
         if not isinstance(row, dict):
             raise CommandError('unsupported declared reference row', kind='surviving_dependents', ref=ref)
         for key in ('track_ref', 'owner_ref', 'track', 'track_id'):
+            if recording is not None and site is not None:
+                recording.read(site, [*path, key])
             value = row.get(key)
             if value is not None and not isinstance(value, str):
                 raise CommandError('unsupported declared reference edge', kind='surviving_dependents', ref=ref)
@@ -147,25 +149,50 @@ def _dependents(state, ref):
         return other == owner and (row.get('track') == identity or row.get('track_id') == identity)
 
     found = []
+    if recording is not None:
+        recording.select('collection.occurrences', 'parent')
+        recording.select('collection.shots', 'parent')
     owners = ['parent'] + ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']]
     for other in owners:
-        for clip in state.collection(other, 'clip'):
-            if references(clip, other):
+        clips = state.collection(other, 'clip')
+        if not isinstance(clips, list):
+            raise CommandError('unsupported declared clip population', kind='surviving_dependents', ref=ref)
+        if recording is not None:
+            config = state.config(other)
+            if isinstance(config.get('clips'), list) or (
+                    other == 'parent' and isinstance(state.bundle['parent'].get('clips'), list)):
+                recording.select('collection.clips', other)
+            else:
+                recording.read(other + '/collection:clip')
+                if other != 'parent':
+                    recording.read(other, ['occurrence_id'])
+                    recording.read(other + '/shot', ['shot_id'])
+        for clip in clips:
+            if references(clip, other, other + '/clip:' + clip['id']):
                 found.append(other + '/clip:' + clip['id'])
         config = state.config(other)
         for key in ('audio', 'effects'):
+            if recording is not None:
+                recording.read(other + '/source', [key])
             for row in config.get(key, []):
                 if references(row, other):
                     found.append(other + '/' + key)
         if other != 'parent':
-            shot = state.bundle['shots'][state.occurrence(other)['shot_id']]['payload']
+            shot_id = state.occurrence(other)['shot_id']
+            shot = state.bundle['shots'][shot_id]['payload']
+            if recording is not None:
+                recording.read('shot:' + shot_id, ['payload', 'audio_bindings'])
             for row in shot.get('audio_bindings', []):
                 if references(row, other):
                     found.append(other + '/shot')
     for row in state.bundle['placements']:
-        if references(row, 'parent') or references(row.get('placement') or {}, 'parent'):
+        site = 'occurrence:' + row['occurrence_id']
+        if (references(row, 'parent', site)
+                or references(row.get('placement') or {}, 'parent', site, ['placement'])):
             found.append('occurrence:' + row['occurrence_id'])
     for shot in state.bundle['shots'].values():
+        if recording is not None:
+            recording.read('shot:' + shot['shot_id'], ['payload', 'audio_bindings'])
         for row in shot['payload'].get('audio_bindings', []):
             if references(row, None):
                 found.append('shot:' + shot['shot_id'])
