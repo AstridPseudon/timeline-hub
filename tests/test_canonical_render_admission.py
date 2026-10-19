@@ -107,7 +107,7 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
     expected_config = copy.deepcopy(publication["data"]["payload"]["config"])
     expected_config["clips"] = publication["data"]["payload"]["clips"]
     expected_registry = copy.deepcopy(publication["data"]["payload"]["registry"])
-    expected_registry["assets"]["music"]["content_sha256"] = f["audio"]["object_id"]
+    expected_registry["assets"]["music"]["content_sha256"] = f["audio"]["object_id"].removeprefix("sha256:")
     assert snapshot == {"config": expected_config, "registry": expected_registry}
     assert [clip["id"] for clip in snapshot["config"]["clips"]] == ["scene-a", "scene-b", "music"]
     canonical = [oid for oid in spec["input_object_ids"] if oid != ref["digest"]]
@@ -145,7 +145,7 @@ def test_frozen_managed_asset_canonicalizes_the_runtime_object_locator(canonical
     spec = admitted["task"]["spec"]
     assert f["audio"]["object_id"] in spec["input_object_ids"]
     assert _snapshot(f["service"], spec)["registry"]["assets"][asset_id] == {
-        "media_id": object_id, "content_sha256": object_id, "type": "audio/wav",
+        "media_id": object_id, "content_sha256": object_id.removeprefix("sha256:"), "type": "audio/wav",
         "thumbnailUrl": asset["thumbnailUrl"], "generationId": asset["generationId"]}
     assert f["service"].get_project_parent_composition_revision(f["project"], "main", "parent-1") == authored
     assert authored["payload"]["registry"]["assets"][asset_id] == asset

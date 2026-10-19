@@ -1869,7 +1869,7 @@ class RealmStore:
                         or normalized != "sha256:" + media_match.group(1)):
                     raise ValidationError(f"canonical timeline asset {asset_name!r} contains an unmanaged locator")
                 del asset[field]
-            asset["content_sha256"] = normalized
+            asset["content_sha256"] = normalized.removeprefix("sha256:")
             expanded_assets[asset_name] = asset
             if normalized not in ordered_input_ids:
                 ordered_input_ids.append(normalized)

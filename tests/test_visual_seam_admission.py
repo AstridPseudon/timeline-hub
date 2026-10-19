@@ -780,11 +780,11 @@ def test_managed_render_preserves_asset_identity_from_the_pinned_asset_scope(tmp
         rendered_asset = snapshot["registry"]["assets"][snapshot["config"]["clips"][0]["asset"]]
         assert rendered_asset["media_id"] == media
         if scope == "shot":
-            assert rendered_asset["content_sha256"] == media
+            assert rendered_asset["content_sha256"] == media.removeprefix("sha256:")
         else:
             # Frozen worker inputs carry explicit digest identity, while the
             # redundant browser URL remains only in authored revision bytes.
-            assert rendered_asset == {**{k: v for k, v in asset.items() if k != "file"}, "content_sha256": media}
+            assert rendered_asset == {**{k: v for k, v in asset.items() if k != "file"}, "content_sha256": media.removeprefix("sha256:")}
         assert media in spec["input_object_ids"]
         assert service.get_project_parent_composition_revision(project["id"], "main", "unsafe-parent") == authored
     finally:
