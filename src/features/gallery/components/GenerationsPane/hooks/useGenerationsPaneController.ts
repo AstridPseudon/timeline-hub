@@ -269,7 +269,14 @@ const usePaneLifecycle = ({
     paneIsOpen,
     paneProps,
     showBackdrop: showBackdrop && !isLightboxOpen,
-    toggleLock,
+    toggleLock: (force?: boolean) => {
+      if (isLocked && force !== true && isLightboxOpen) {
+        // Release the viewer's hold as well as the lock.
+        closePane();
+        setIsGenerationsPaneOpen(false);
+      }
+      toggleLock(force);
+    },
     transformClass,
   };
 };
