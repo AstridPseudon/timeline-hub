@@ -1,0 +1,400 @@
+         "schema": "astrid.timeline-input-inspection.v1",
+         "provenance": {
+             **{key: snapshot.get(key) for key in ("project_slug", "timeline_id", "timeline_name", "render_run_id", "fps_rational", "duration_frames", "metadata")},
+-            "revision": snapshot_label(snapshot),
++            "revision": revision_label,
+         },
+         "sampling": {"mode": "input_only", "window": projection["window"], "shared_window": [float(Fraction(start_frame, 1) / fps), float(Fraction(end_frame, 1) / fps)], "range": [float(Fraction(start_frame, 1) / fps), float(Fraction(end_frame, 1) / fps)], "step_frames_rational": [1, 1], "include_cuts": False, "explicit_interval": False, "options": options},
+         "input_projection": projection, "cards": [], "navigation": {"frames": [], "tracks": [], "clips": [], "shots": [], "phrases": [], "gaps": [], "waveforms": [], "targets": {}},
+@@ -250,6 +251,7 @@
+     # same ``filmstrip-###.png`` entrypoint naming as rendered/paired output.
+     png_pages = _render_input_projection_png(
+         projection, snapshot, pack_root, filename_prefix="filmstrip",
++        revision_label=revision_label,
+     )
+     (pack_root / "render-snapshot.json").write_text(json.dumps(snapshot, indent=2, ensure_ascii=False), encoding="utf-8")
+     # Input-only deliveries use the same compact v2 receipt as output and
+@@ -261,6 +263,16 @@
+         json.dumps(persisted_index, ensure_ascii=True, separators=(",", ":")),
+         encoding="utf-8",
+     )
++    revision_text = revision_label.get("label", "revision unavailable")
++    (pack_root / "filmstrip.md").write_text(
++        "\n".join([
++            f"# Input filmstrip · {revision_text}", "",
++            f"Revision: `{revision_text}`", "",
++            "Input-only inspection; no rendered output was requested.", "",
++            f"Timeline: `{snapshot.get('timeline_name') or snapshot.get('timeline_id')}`", "",
++        ]),
++        encoding="utf-8",
++    )
+     files = sorted(path for path in pack_root.rglob("*") if path.is_file())
+     primary_png = Path(png_pages[0]).relative_to(pack_root).as_posix() if png_pages else None
+     # Every concrete file in a universal result manifest needs a stable
+@@ -277,7 +289,7 @@
+         }
+         for path in files
+     ]
+-    entrypoints = {"frames": "frame-index.json"}
++    entrypoints = {"frames": "frame-index.json", "markdown": "filmstrip.md"}
+     if primary_png:
+         entrypoints["png"] = primary_png
+     manifest = build_manifest(kind="timeline_filmstrip", created="1970-01-01T00:00:00Z", inputs={"timeline_id": snapshot.get("timeline_id"), "components": options.get("components"), "window": projection["window"], "render_requested": False}, outputs=outputs, entrypoints=entrypoints, timeline_ids=[snapshot.get("timeline_id")], request=options.get("request"))
+@@ -288,7 +300,11 @@
+     # manifest whose attempt-local PNGs disappear during cleanup.
+     bundle = out_root / "filmstrip-bundle.zip"
+     _write_zip_atomic(bundle, pack_root)
+-    outer_entrypoints = {"manifest": "filmstrip-view/manifest.json", "frame_index": "filmstrip-view/frame-index.json"}
++    outer_entrypoints = {
++        "manifest": "filmstrip-view/manifest.json",
++        "frame_index": "filmstrip-view/frame-index.json",
++        "markdown": "filmstrip-view/filmstrip.md",
++    }
+     if primary_png:
+         outer_entrypoints["png"] = f"filmstrip-view/{primary_png}"
+     write_manifest(
+@@ -317,8 +333,8 @@
+         ),
+     )
+     return {"returncode": 0, "run_root": str(out_root), "manifest_path": str(pack_root / "manifest.json"), "timeline_ids": [snapshot.get("timeline_id")],
+-            "snapshot_label": snapshot_label(snapshot),
+-            "outputs": {"pack_root": str(pack_root), "manifest_path": str(pack_root / "manifest.json"), "frame_index": str(pack_root / "frame-index.json"), "pages": [str(path) for path in png_pages], "filmstrip_bundle": str(bundle), "render_requested": False}}
++            "snapshot_label": revision_label,
++            "outputs": {"pack_root": str(pack_root), "manifest_path": str(pack_root / "manifest.json"), "frame_index": str(pack_root / "frame-index.json"), "markdown": str(pack_root / "filmstrip.md"), "pages": [str(path) for path in png_pages], "filmstrip_bundle": str(bundle), "render_requested": False}}
+ 
+ 
+ def _materialize_input_previews(projection: Mapping, pack_root: Path) -> None:
+@@ -373,7 +389,7 @@
+ 
+ def _render_input_projection_png(
+     projection, snapshot, pack_root: Path, *, width: int = 1500,
+-    filename_prefix: str = "input-band",
++    filename_prefix: str = "input-band", revision_label: Mapping[str, object] | None = None,
+ ) -> list[Path]:
+     """Render readable, paginated input lanes without creating media frames."""
+     from PIL import Image, ImageDraw
+@@ -413,9 +429,16 @@
+             row_heights.append(max(112 if audio_track else row_height, 64 + (58 if audio_track else 48) * max_subrow))
+         image = Image.new("RGB", (width, header + sum(row_heights or [row_height]) + 28), "#10161d")
+         draw = ImageDraw.Draw(image)
+-        _png_draw_text(draw, (24, 16), f"{snapshot.get('timeline_name') or snapshot.get('timeline_id')} · input lanes", font, fill="#ebf2f5")
++        revision_text = revision_label.get("label") if isinstance(revision_label, Mapping) else None
++        title = f"{snapshot.get('timeline_name') or snapshot.get('timeline_id')} · input lanes"
++        if revision_text:
++            title += f" · {revision_text}"
++        _png_draw_text(draw, (24, 16), title, font, fill="#ebf2f5")
+         _png_draw_text(draw, (24, 42), f"{band.get('label', f'tracks {page}')} · [{start / float(fps):.3f}s, {end / float(fps):.3f}s) · frozen source placements", small_font, fill="#9fb0bf")
+-        _png_draw_text(draw, (24, 66), "Source previews are shown only when digest-verified; placeholders never substitute rendered output.", small_font, fill="#9fb0bf")
++        provenance = "Source previews are shown only when digest-verified; placeholders never substitute rendered output."
++        if revision_text:
++            provenance += f" Revision: {revision_text}"
++        _png_draw_text(draw, (24, 66), provenance, small_font, fill="#9fb0bf")
+         _png_draw_text(draw, (24, 90), "Teal = verified source / measured waveform · amber = timing fallback or unavailable · vertical guides = shared time samples.", small_font, fill="#9fb0bf")
+         lane_left, lane_right = 24, width - 24
+         ruler_y = 128
+@@ -1201,6 +1224,7 @@
+ def _render_paired_rows(
+     frame_index: Mapping[str, object], pack_root: Path, *, options: Mapping[str, object],
+     snapshot: Mapping[str, object], input_projection: Mapping[str, object],
++    revision_label: Mapping[str, object] | None = None,
+ ) -> tuple[list[str], list[dict], list[str]]:
+     """Render five-card rows with the relevant input lanes directly below.
+ 
+@@ -1452,8 +1476,15 @@
+         page_height = sum(row.height for row in rendered_rows) + 28 * max(0, len(rendered_rows) - 1) + 86
+         sheet = Image.new("RGB", (width, page_height), "#0b1118")
+         draw = ImageDraw.Draw(sheet)
+-        _png_draw_text(draw, (16, 12), f"{timeline_name} · page {page} · paired timeline", title_font, fill="white")
+-        _png_draw_text(draw, (16, 40), f"Render {render_id} · {columns} columns · output samples with synchronized input lanes", small_font, fill="#acbbcb")
++        revision_text = revision_label.get("label") if isinstance(revision_label, Mapping) else None
++        title = f"{timeline_name} · page {page} · paired timeline"
++        if revision_text:
++            title += f" · {revision_text}"
++        _png_draw_text(draw, (16, 12), title, title_font, fill="white")
++        provenance = f"Render {render_id} · {columns} columns · output samples with synchronized input lanes"
++        if revision_text:
++            provenance += f" · revision: {revision_text}"
++        _png_draw_text(draw, (16, 40), provenance, small_font, fill="#acbbcb")
+         y = 78
+         for row_index, row in enumerate(rendered_rows):
+             sheet.paste(row, (0, y))
+@@ -1471,6 +1502,7 @@
+     output_pages: list[str], input_pages: list[Path], *, pack_root: Path,
+     frame_index: Mapping[str, object] | None = None,
+     options: Mapping[str, object] | None = None,
++    revision_label: Mapping[str, object] | None = None,
+ ) -> list[str]:
+     """Put rendered samples and canonical input lanes on one static surface.
+ 
+@@ -1488,6 +1520,7 @@
+             frame_index, pack_root, options=options or {},
+             snapshot=frame_index.get("provenance") or {},
+             input_projection=frame_index["input_projection"],
++            revision_label=revision_label,
+         )
+         if isinstance(frame_index, dict):
+             visible_components = ["output"]
+@@ -1758,6 +1791,7 @@
+             materialized_objects=getattr(args, "materialized_objects", None),
+             materialized_root=getattr(args, "materialized_root", None),
+         )
++    revision_label = snapshot_label(snapshot)
+     out_root = args.out.expanduser().resolve()
+     if capture_mode:
+         analysis = {
+@@ -1801,7 +1835,8 @@
+         result = build_filmstrip_pack(out_root=pack_root, video_path=video,
+                                       snapshot=snapshot, options=options,
+                                       frame_provider=frame_provider,
+-                                      asset_files=_materialized_asset_files(getattr(args, 'assets_registry', None)))
++                                      asset_files=_materialized_asset_files(getattr(args, 'assets_registry', None)),
++                                      revision_label=revision_label)
+     except BaseException as operation_error:
+         if frame_provider is not None:
+             try:
+@@ -1827,11 +1862,14 @@
+     if 'inputs' in (options.get('components') or ()) and result.get('frame_index', {}).get('input_projection'):
+         output_pages = list(result['paths'].get('png') or [])
+         input_pages = _render_input_projection_png(
+-            result['frame_index']['input_projection'], snapshot, pack_root)
++            result['frame_index']['input_projection'], snapshot, pack_root,
++            revision_label=revision_label,
++        )
+         if 'output' in (options.get('components') or ()):
+             output_pages = _compose_synchronized_surface(
+                 output_pages, input_pages, pack_root=pack_root,
+                 frame_index=result.get('frame_index'), options=options,
++                revision_label=revision_label,
+             )
+         result['paths']['png'] = output_pages + [str(path) for path in input_pages]
+         if 'output' in (options.get('components') or ()):
+@@ -2010,12 +2048,12 @@
+     timing['total_s'] = round(finished_at - started_at, 3)
+     return {'returncode': 0, 'run_root': str(out_root),
+             'manifest_path': str(manifest_path), 'timeline_ids': [snapshot['timeline_id']],
+-            'snapshot_label': snapshot_label(snapshot),
++            'snapshot_label': result.get('snapshot_label') or snapshot_label(snapshot),
+             'identity': identity, 'cas': cas, 'entrypoints': entrypoints,
+             'request': options.get('request'), 'timing': timing,
+             'outputs': {'pack_root': str(pack_root), 'manifest_path': str(manifest_path),
+                         'identity': identity, 'cas': cas, 'entrypoints': entrypoints,
+-                        'snapshot_label': snapshot_label(snapshot),
++                        'snapshot_label': result.get('snapshot_label') or snapshot_label(snapshot),
+                         'request': options.get('request'), 'timing': timing,
+                         **result['paths'], 'pages': result['paths']['png'],
+                         'primary_page': (result['paths']['png'] or [None])[0],
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/provenance.py b/astrid/packs/rendering/actions/timeline_visualize/provenance.py
+index cb6288563134df5c19a2f202824a0535f78cba8f..8c2f2f6a5cd47cb166bcb908d2c104cf56b55bbe
+--- a/astrid/packs/rendering/actions/timeline_visualize/provenance.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/provenance.py
+@@ -99,6 +99,12 @@
+     canonical = canonical if isinstance(canonical, Mapping) else {}
+     capture = metadata.get("capture_authority")
+     capture = capture if isinstance(capture, Mapping) else {}
++    input_only_parent = None
++    if (
++        str(metadata.get("selection") or "").strip().lower() == "input_only"
++        and metadata.get("authority") == "canonical_parent_revision_closure"
++    ):
++        input_only_parent = metadata.get("parent_revision_id")
+     # A composed capture has its own authority block; ordinary managed renders
+     # use canonical_timeline. Prefer the capture block only when it carries the
+     # immutable parent, never a requested/current-head hint.
+@@ -106,6 +112,7 @@
+         capture.get("parent_revision_id"), capture.get("head_revision_id"), capture.get("revision_id")
+     ) else canonical
+     actual = _first_string(
++        input_only_parent,
+         authority.get("parent_revision_id"), authority.get("head_revision_id"), authority.get("revision_id")
+     )
+     markers = _candidate_markers(metadata, canonical, capture)
+diff --git a/tests/packs/rendering/test_fast_lane.py b/tests/packs/rendering/test_fast_lane.py
+index cc1514209ee91816a8ca6bb277cc178ee935381d..55dc91b0e3fad322981598c79a0a39e9685d6745
+--- a/tests/packs/rendering/test_fast_lane.py
++++ b/tests/packs/rendering/test_fast_lane.py
+@@ -56,6 +56,46 @@
+     }
+ 
+ 
++def test_input_only_parent_closure_label_uses_immutable_parent_not_current_head():
++    label = snapshot_label(
++        {
++            "metadata": {
++                "selection": "input_only",
++                "authority": "canonical_parent_revision_closure",
++                "parent_revision_id": "R1",
++                "timeline_identity": {"head_event_id": "R2", "config_version": 7},
++                "requested_revision_id": "R2",
++            }
++        }
++    )
++
++    assert label == {
++        "status": "committed",
++        "label": "committed revision R1",
++        "actual_revision_id": "R1",
++        "base_revision_id": None,
++    }
++
++
++def test_input_only_candidate_uses_only_working_copy_base_parent():
++    marker = _candidate_marker(base="R1", candidate="R2")
++    label = snapshot_label(
++        {
++            "metadata": {
++                "selection": "input_only",
++                "authority": "canonical_parent_revision_closure",
++                "parent_revision_id": "R1",
++                "working_copy": marker,
++            }
++        }
++    )
++
++    assert label["status"] == "candidate"
++    assert label["base_revision_id"] == "R1"
++    assert label["actual_revision_id"] is None
++    assert "R2" not in label["label"]
++
++
+ def test_managed_candidate_label_uses_marker_base_not_candidate_parent():
+     label = snapshot_label(
+         {
+diff --git a/tests/packs/rendering/test_timeline_filmstrip_cards.py b/tests/packs/rendering/test_timeline_filmstrip_cards.py
+index 067d5e4781df34bc2cde38f8f3a5d9d908b84791..906cd8a31d58e976f33a3c1b9f5061cb9925324e
+--- a/tests/packs/rendering/test_timeline_filmstrip_cards.py
++++ b/tests/packs/rendering/test_timeline_filmstrip_cards.py
+@@ -215,10 +215,22 @@
+ 
+ 
+ @pytest.mark.skipif(shutil.which('ffmpeg') is None, reason='ffmpeg required')
+-def test_pack_uses_rendered_frames_without_html_artifact(tmp_path):
++def test_pack_uses_rendered_frames_without_html_artifact(tmp_path, monkeypatch):
++    drawn_text = []
++    draw_text = filmstrip_cards._png_draw_text
++
++    def record_text(*args, **kwargs):
++        if len(args) >= 3:
++            drawn_text.append(str(args[2]))
++        return draw_text(*args, **kwargs)
++
++    monkeypatch.setattr(filmstrip_cards, '_png_draw_text', record_text)
+     video = tmp_path / 'render.mp4'
+     subprocess.run(['ffmpeg', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=red:size=160x90:rate=24:duration=4', '-c:v', 'libx264', '-y', str(video)], check=True)
+-    snap = snapshot(scripts=[dict(start=0, end=4, text='</script><script>alert("x")</script>')], metadata={'selection': 'explicit_render'})
++    snap = snapshot(
++        scripts=[dict(start=0, end=4, text='</script><script>alert("x")</script>')],
++        metadata={'selection': 'explicit_render', 'canonical_timeline': {'parent_revision_id': 'R1'}},
++    )
+     result = build_filmstrip_pack(out_root=tmp_path / 'pack', video_path=video, snapshot=snap, options={'every': 2})
+     assert set(result['paths']) == {'png', 'json', 'markdown'}
+     assert not (tmp_path / 'pack' / 'filmstrip.html').exists()
+@@ -231,6 +243,9 @@
+         assert r > 200 and g < 30 and b < 30
+     assert Path(result['paths']['png'][0]).exists()
+     markdown = Path(result['paths']['markdown']).read_text()
++    assert '# Rendered filmstrip · committed revision R1' in markdown
++    assert 'Revision: `committed revision R1`' in markdown
++    assert any('committed revision R1' in text for text in drawn_text)
+     assert '</script><script>alert' not in markdown
+     assert not list((tmp_path / 'pack').glob('*.svg'))
+ 
+diff --git a/tests/packs/rendering/test_timeline_filmstrip_execution.py b/tests/packs/rendering/test_timeline_filmstrip_execution.py
+index 4a6f178b67e3e341edd858936ea3f2c115c589f9..44969190112056f76d5886f3e412dccc3ae3ab15
+--- a/tests/packs/rendering/test_timeline_filmstrip_execution.py
++++ b/tests/packs/rendering/test_timeline_filmstrip_execution.py
+@@ -16,8 +16,19 @@
+ from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import project_input_window
+ 
+ 
+-def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path):
++def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path, monkeypatch):
+     """Input-only uses the same manifest/receipt contract as the paired view."""
++    from astrid.packs.rendering.actions.timeline_visualize import filmstrip_cards
++
++    drawn_text = []
++    draw_text = filmstrip_cards._png_draw_text
++
++    def record_text(*args, **kwargs):
++        if len(args) >= 3:
++            drawn_text.append(str(args[2]))
++        return draw_text(*args, **kwargs)
++
++    monkeypatch.setattr(filmstrip_cards, '_png_draw_text', record_text)
+     snapshot = {
+         'project_slug': 'demo', 'timeline_id': 'main', 'timeline_name': 'Main',
+         'render_run_id': 'run-input', 'fps_rational': [30, 1],
+@@ -25,7 +36,13 @@
+             {'id': 'picture-1', 'track': 'picture', 'asset': 'still-a', 'at': 0, 'hold': 2},
+             {'id': 'vo-1', 'track': 'vo', 'asset': 'voice-a', 'at': 1, 'hold': 2},
+         ], 'tracks': [{'id': 'picture', 'kind': 'visual'}, {'id': 'vo', 'kind': 'audio'}],
+-        'scripts': [], 'metadata': {},
++        'scripts': [], 'metadata': {
++            'selection': 'input_only',
++            'authority': 'canonical_parent_revision_closure',
++            'parent_revision_id': 'R1',
++            'timeline_identity': {'head_event_id': 'R2'},
++            'requested_revision_id': 'R2',
++        },
+     }
+     args = Namespace(range_value=None, out=tmp_path / 'output', project_slug='demo')
+     result = execution.execute_input_only(
+@@ -40,6 +57,12 @@
+     assert 'navigation' not in index
+     assert result['outputs']['pages']
+     assert all(Path(page).name.startswith('filmstrip-') for page in result['outputs']['pages'])
++    assert result['snapshot_label']['label'] == 'committed revision R1'
++    assert index['provenance']['revision'] == result['snapshot_label']
++    markdown = (manifest_path.parent / 'filmstrip.md').read_text()
++    assert '# Input filmstrip · committed revision R1' in markdown
++    assert 'Revision: `committed revision R1`' in markdown
++    assert any('committed revision R1' in text for text in drawn_text)
+     assert (manifest_path.parent / 'render-snapshot.json').is_file()
+     assert len(json.dumps(index, separators=(',', ':')).encode()) < 8192
+ 
+
+exec
+/bin/bash -lc "test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-input-labels/commit-msg && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-input-labels/commit-msg && git status --short" in /home/user/work/wt/vw-m1-input-labels
+ succeeded in 302ms:
+fix(rendering): label input-only filmstrip provenance
+
+Read the immutable parent from the admitted input-only closure and carry the
+single snapshot label into filmstrip Markdown and PNG artifact chrome.
+ M astrid/packs/rendering/actions/timeline_visualize/contact_sheet.py
+ M astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
+ M astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+ M astrid/packs/rendering/actions/timeline_visualize/provenance.py
+ M tests/packs/rendering/test_fast_lane.py
+ M tests/packs/rendering/test_timeline_filmstrip_cards.py
+ M tests/packs/rendering/test_timeline_filmstrip_execution.py
+
+codex
+Implemented input-only revision labels and artifact provenance.
+
+- Uses immutable `metadata.parent_revision_id` only for the strict input-only closure shape.
+- Candidate labels use only `working_copy.base_parent`; contradictory bases remain unavailable.
+- Added consistent revision labels to JSON, Markdown, normal PNGs, input-only PNGs, and contact/paired surfaces.
+- Added representative historical/candidate and artifact tests.
+
+Tests:
+
+- Requested targeted suite: 99 passed.
+- Adjacent filmstrip/overview tests: 52 passed.
+- `git diff tl/integration --check`: passed.
+
+No full suite or live Runtime journey run. Commit message written to the requested path.
+tokens used
+223,438
+Implemented input-only revision labels and artifact provenance.
+
+- Uses immutable `metadata.parent_revision_id` only for the strict input-only closure shape.
+- Candidate labels use only `working_copy.base_parent`; contradictory bases remain unavailable.
+- Added consistent revision labels to JSON, Markdown, normal PNGs, input-only PNGs, and contact/paired surfaces.
+- Added representative historical/candidate and artifact tests.
+
+Tests:
+
+- Requested targeted suite: 99 passed.
+- Adjacent filmstrip/overview tests: 52 passed.
+- `git diff tl/integration --check`: passed.
+
+No full suite or live Runtime journey run. Commit message written to the requested path.

@@ -1,0 +1,400 @@
+mutation, and preserve an already declared origin. Missing origins keep each
+legacy consumer's existing domain. New clip-local seconds keys use origin zero.
+A later timeline move carries a declared origin with its clip. An undeclared App
+clip retains the old absolute-timeline behavior. This contract is available to
+component consumers; it introduces no easing, loops or modifiers.
+--- package history around schema ---
+31cbb92 build(composition): verify reproducible M0 setup
+6a3247d build(composition): make evaluator checks honest
+f9da6c0 Import authenticated Composition package 025
+67b8aa3 v0.0.6
+321d4bc Use HTTPS tarball dependency for schema
+ec3702f Use HTTPS Git dependency for schema
+27fd2b1 Make Git package install standalone
+a759dfe Initial package extraction
+6a3247d build(composition): make evaluator checks honest
+f9da6c0 Import authenticated Composition package 025
+a759dfe Initial package extraction
+
+exec
+/bin/bash -lc "git show 321d4bc:package.json | sed -n '1,120p'; printf '%s\\n' '--- schema history diff ---'; git show --stat --oneline 321d4bc; git show --format= --no-ext-diff 321d4bc -- package.json README.md | sed -n '1,220p'; printf '%s\\n' '--- all scoped future wording ---'; rg -n -i -C 3 'future|tarball|M3' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports -g '*.md'" in /home/user/work/wt/vw-m0-setup-doc
+ succeeded in 0ms:
+{
+  "name": "@banodoco/timeline-composition",
+  "version": "0.0.5",
+  "private": true,
+  "description": "Banodoco timeline Remotion composition. Sprint 5: physical lift of TimelineComposition + theme-api + codegen plugin registry. Theme packages are external peer-dep `@banodoco/timeline-theme-<id>` packages.",
+  "type": "module",
+  "main": "./typescript/src/index.ts",
+  "types": "./typescript/src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./typescript/src/index.ts",
+      "remotion": "./typescript/src/index.ts",
+      "import": "./typescript/src/index.ts",
+      "require": "./typescript/src/index.ts",
+      "default": "./typescript/src/index.ts"
+    },
+    "./theme-api": {
+      "types": "./typescript/src/theme-api.ts",
+      "remotion": "./typescript/src/theme-api.ts",
+      "import": "./typescript/src/theme-api.ts",
+      "require": "./typescript/src/theme-api.ts",
+      "default": "./typescript/src/theme-api.ts"
+    },
+    "./registry.generated": {
+      "types": "./typescript/src/registry.generated.ts",
+      "remotion": "./typescript/src/registry.generated.ts",
+      "import": "./typescript/src/registry.generated.ts",
+      "require": "./typescript/src/registry.generated.ts",
+      "default": "./typescript/src/registry.generated.ts"
+    },
+    "./typescript/src/effects.generated": "./typescript/src/effects.generated.ts",
+    "./typescript/src/animations.generated": "./typescript/src/animations.generated.ts",
+    "./typescript/src/transitions.generated": "./typescript/src/transitions.generated.ts",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "typescript/dist",
+    "typescript/src",
+    "scripts"
+  ],
+  "scripts": {
+    "build": "tsc -p typescript/tsconfig.json || true",
+    "build:ts": "tsc -p typescript/tsconfig.json || true",
+    "build:test": "tsc -p typescript/tsconfig.test.json",
+    "gen-registry": "tsx scripts/gen-registry.ts",
+    "gen-registry:check": "tsx scripts/gen-registry.ts --check",
+    "test": "npm run build:test && node --test typescript/dist/tests/*.test.js"
+  },
+  "dependencies": {
+    "@banodoco/timeline-schema": "https://github.com/banodoco/timeline-schema/archive/refs/tags/v0.0.1.tar.gz"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "remotion": ">=4"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "tsx": "^4.20.3",
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "4.0.448",
+    "@remotion/media": "4.0.448",
+    "@remotion/layout-utils": "4.0.448"
+  }
+}
+--- schema history diff ---
+321d4bc Use HTTPS tarball dependency for schema
+ package.json | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+diff --git a/package.json b/package.json
+index 9ca0142..279bf02 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@banodoco/timeline-composition",
+-  "version": "0.0.4",
++  "version": "0.0.5",
+   "private": true,
+   "description": "Banodoco timeline Remotion composition. Sprint 5: physical lift of TimelineComposition + theme-api + codegen plugin registry. Theme packages are external peer-dep `@banodoco/timeline-theme-<id>` packages.",
+   "type": "module",
+@@ -47,7 +47,7 @@
+     "test": "npm run build:test && node --test typescript/dist/tests/*.test.js"
+   },
+   "dependencies": {
+-    "@banodoco/timeline-schema": "git+https://github.com/banodoco/timeline-schema.git#v0.0.1"
++    "@banodoco/timeline-schema": "https://github.com/banodoco/timeline-schema/archive/refs/tags/v0.0.1.tar.gz"
+   },
+   "peerDependencies": {
+     "react": ">=18",
+--- all scoped future wording ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md-1-# Verify and finish Composition M0 from fresh dependencies
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md-2-Result: finish M0 honest build/test setup on top of the reviewed vw-m0-build-prep branch. Read PLAN, that worker report, and design/viewing.md M0 relationship. Your --base will be tl/vw-m0-build-prep; do not change refs yourself. Work only in your Composition worktree.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md:3:Do not reuse/symlink shared App dependencies for this verification. Fresh npm install (generate/commit package-lock.json), then remove YOUR installed node_modules and npm ci to prove lock reproducibility. Never alter another worktree's node_modules. Network/install is authorized here; no registry publishing. No M1/M3 migration.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md:4:Run npm run build, npm run build:ts, npm test; all must exit zero without masking. Compile whole product source; verify strict configs/no fake any module shims. Review meaningful unit coverage of evaluation.ts, scene-evaluation.ts and transition-spans.ts and retain existing-film fade/transition/audio behavior. Exact typed declarations of real host component contracts are acceptable for the pre-M3 generated-import boundary; runtime hosts still supply those components. Document that limitation honestly.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md-5-Prove a temporary syntactic/type error in an included source produces nonzero npm run build AND build:ts, then restore source and rerun success. Prefer an intentional planner wrong-result mutation that fails a meaningful new unit assertion, restore, then rerun success; no manufactured failing assertion and no changes to thresholds/skips. Include current test count and exact commands/results.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md-6-Minimal necessary fixes/README/.gitignore/config/package/lock/test edits are allowed; no broad refactor or new framework. Remove tracked stale dist from the build setup; clean all ignored generated output before exit. Leave node_modules installed for manager review unless disk requires cleanup. Never commit dependencies/build output. Use git diff --check and report git diff stats; harness commits.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md-7-Write conventional commit message at /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/commit-msg. Final report: exact clean-install/build/test/negative-control results, schema-import evidence, deletions, external tests not run. Manager decides merge, not you.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md-8-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md:9:Manager review requirement: if preparation copied App's noEmit tsconfig, make npm run build/build:ts emit fresh JS (and declarations if appropriate) for ALL Composition source into ignored local build output; keep test output separate/clean if needed. Calling a pure noEmit check a real build is insufficient. Public export migration/portable tarball is still M3, not required here. Review any generated theme registry change carefully: optional installed-theme discovery/regeneration must keep working; do not remove a consumer's theme capability to get a green build. Explain the empty standalone theme registry if used, and add a small generator assertion using actual temporary descriptor inputs if needed rather than weakening existing tests.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md-10-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/brief.md-11-Additional reviewed finding: npm run gen-registry:check currently invokes tsx CLI, which is blocked here by its unnecessary IPC pipe. Prefer the supported `node --import tsx scripts/gen-registry.ts [--check]` launcher and run the exact npm gen-registry:check script successfully in fresh dependencies. Do not report only an equivalent bypass when a tiny script correction suffices. Prep's manager re-run passed, and a temporary mutation in ignored compiled evaluation.js changing the half-open >= exclusion to > made the actual Node evaluation test fail (restoration passed); no source was left modified.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/03-process.md-49-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/03-process.md-50-A review packet freezes the scope and candidate identity. It contains the role/model, lens, task and criterion IDs, budget, North Star, goal, frozen SHA/tree or snapshot, changed-path census, exact test commands and results, evidence digests, prior concrete findings and correction scope ([review-packet.md:1-32](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/handover/transfer/skills/megado/templates/review-packet.md:1>)). The reviewer must return `PASS`, `REWORK`, `HARD_BLOCK` or `UNKNOWN`; missing evidence cannot be inferred from a worker narrative ([review-packet.md:63-70](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/handover/transfer/skills/megado/templates/review-packet.md:63>).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/03-process.md-51-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/03-process.md:52:Generic Megado defaults allow up to two rounds for an intermediate stage and five for a final stage, but these are caps, not quotas ([run-config.md:5-12](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/handover/transfer/skills/megado/references/run-config.md:5>)). The current Timeline R4 run explicitly declares three product-review stages—`CONTRACT-COMMIT`, `COMMIT` and `FINAL-R3`—each with `max_rounds: 1` ([run.yaml:96-119](</home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/run.yaml:96>)). The final stage covers the full task set and uses a completion-and-strategy lens, but the file warns that these are future allocations subject to historical count reconciliation. Therefore, the nominal maximum is three newly declared review calls, not proof that three calls remain.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/03-process.md-53-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/03-process.md-54-## Literal closure and acceptance
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/03-process.md-55-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/11-astra.md-16-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/11-astra.md-17-The three biggest omissions are:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/11-astra.md-18-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/11-astra.md:19:- **The receiving build instructions contradict the pinned source.** The setup guide says Composition `c82eb7c` uses `file:../timeline-schema` v0.0.2; that exact commit actually declares the v0.0.1 GitHub tarball. Its build masks compiler failures with `|| true`, and referenced TypeScript configs/test loader are absent. “Keep pinned artifact” does not resolve this. Evidence: [setup claim](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/assets/receiving-setup.md:11), [actual manifest](/home/user/peteromallet/timeline-composition/package.json:48).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/11-astra.md-20-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/11-astra.md-21-- **Mixed writers are an immediate correctness problem.** A successful semantic save can still be overwritten by a legacy snapshot writer. The 24/44 census is explicitly historical, not a current measured total. Inventory reachable writers on the integrated App and establish their behavior before enabling semantic editing broadly. Evidence: [writer census and remaining contracts](/home/user/banodoco/reigh-app/docs/video-editor/semantic-gesture-consumers.md:57).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/11-astra.md-22-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/07-runtime.md-4-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/07-runtime.md-5-The Runtime is a substantial Python workspace service, not merely a process launcher. It owns the local workspace/realm, SQLite persistence, HTTP protocol, authentication, task execution leases, CAS-style writes, worker fencing, and—when started with the Astrid authoring profile—the mounted Astrid timeline-commit provider.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/07-runtime.md-6-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/07-runtime.md:7:The source is technically mature and heavily tested, but it is not yet proven ready as the complete Timeline R4 cross-repository system. The largest gap is evidence: the handback proves source and wheel qualification, while the Runtime/App/SDK integration, hosted security matrix, live lifecycle, and full App writer cutover remain unverified or explicitly carded as future work.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/07-runtime.md-8-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/07-runtime.md-9-## Runtime structure
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/07-runtime.md-10-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/05-nextops.md-80-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/05-nextops.md-81-F265 passed package/profile/generation checks, but the supported product-client open failed with sanitized `OtherException`, code `unavailable`, and no status or request ID. It therefore stopped before `start_local_worker`; actual calls were zero, with no composition request, operation ID, timeline operation, or service mutation (`f_checkpoint-manager-current-handback.md:344-354`).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/05-nextops.md-82-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/05-nextops.md:83:The next owner action is ordinary F-owned locator/configuration qualification, followed by fresh actor, scope, and public-read qualification. Only then may a future composition call be considered. The handback explicitly says not to start a Host, retry a semantic request, install, build, render, restart automatically, or mutate source before receiving custody is established.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/05-nextops.md-84-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/05-nextops.md-85-Earlier F254/F256 Runtime `500 internal_error` results and F226/F232/F233 uncertainties remain historical evidence. They are not permission to retry.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/05-nextops.md-86-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/09-composition.md-75-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/09-composition.md-76-The package is not standalone. Generated files import external workspace/theme packages such as `@workspace-effects`, `@workspace-animations`, `@workspace-transitions`, and `@banodoco/timeline-theme-2rp` ([effects.generated.ts](/home/user/peteromallet/timeline-composition/typescript/src/effects.generated.ts:1-13), [registry.generated.ts](/home/user/peteromallet/timeline-composition/typescript/src/registry.generated.ts:1-25)). Those packages are expected to be supplied by the consuming workspace.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/09-composition.md-77-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/09-composition.md:78:The package also declares `@banodoco/timeline-schema` as a GitHub tarball dependency ([package.json](/home/user/peteromallet/timeline-composition/package.json:56-58)). That is compatible with a normal installed workspace but not with the requested offline handover check.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/09-composition.md-79-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/09-composition.md-80-The local repository is clean and checked out at `c82eb7c459d0a41263954bf007071a6a0e8e0a6a`, matching the publication ruling’s exact candidate commit ([composition-publication-ruling-262.md](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/assets/composition-publication-ruling-262.md:1-13)). This verifies local identity, not the ruling’s required fresh remote checkout or independent transport verification.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/09-composition.md-81-
+
+codex
+The reviewed verification report confirms the exact fresh-checkout sequence and Node 22.22.0 validation. I’ll add `npm ci` as the first setup command, document the Node/cache prerequisite, and clarify that source exports and host components remain M0 limitations while portable tarball/public export work is deferred to M3.
+2026-10-19T18:54:51.426891Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/user/work/wt/vw-m0-setup-doc/README.md:
+`npm test` emits the focused TypeScript tests into the separate ignored
+`typescript/test-dist` directory, then runs them with the extensionless-import
+loader used by the standalone Node test runner.
+
+The package has no source or type import from `@banodoco/timeline-schema`, so
+it is not a Composition dependency. The generated registries remain
+consumer-owned: a standalone checkout with no installed theme packages has
+exec
+/bin/bash -lc "sed -n '120,160p' README.md" in /home/user/work/wt/vw-m0-setup-doc
+ succeeded in 0ms:
+- Invalid speeds (not a finite number above 0) act as 1.
+
+The element remap is a `<Freeze>` around the element content, applied in `ClipLook.tsx`. The sanitising and frame math is pure and lives in `typescript/src/lib/clip-look.ts` (`clipSpeed`, `remappedFrame`).
+
+## Build / test
+
+```
+npm run gen-registry:check
+npm run build
+npm run build:ts
+npm test
+```
+
+`npm run build` checks the generated registry and emits JavaScript plus
+declarations for the complete `typescript/src` tree into the ignored
+`typescript/dist` directory. `npm run build:ts` is the underlying strict
+TypeScript emit and is exposed separately for build-manager checks. Compiler
+errors fail both commands. `npm test` emits the focused TypeScript tests into
+the separate ignored `typescript/test-dist` directory, then runs them with
+the extensionless-import loader used by the standalone Node test runner.
+
+The package has no source or type import from `@banodoco/timeline-schema`, so
+it is not a Composition dependency. The generated registries remain
+consumer-owned: a standalone checkout with no installed theme packages has
+an empty `registry.generated.ts`, while a consuming workspace regenerates it
+with `npm run gen-registry` after its theme packages or in-tree themes are
+available. Workspace primitive imports are likewise resolved by the
+consumer's bundler; the package build checks their typed public contracts but
+does not invent default components. Runtime generated imports therefore still
+require the host components until the planned M3 default-component relocation.
+
+## Keyframe origin
+
+`clip.keyframeOrigin` is key-time zero in **seconds relative to the clip's
+start on the timeline**. Zero means clip start. It is independent of media
+`from`/`to` and playback `speed`; trimming changes source sampling, never this
+origin or authored keys. Keys retain their payload units (App seconds, sprite
+frames). For a declared origin `o`, App key time at timeline second `t` is
+`t - (clip.at + o)`; sprite key frame at own local frame `f` is `f - o * fps`.
+The sprite then applies its existing step quantization and held-pose selection.
+Transition extensions still use the evaluator's existing clamped own frame.
+
+apply patch
+patch: completed
+/home/user/work/wt/vw-m0-setup-doc/README.md
+diff --git a/README.md b/README.md
+index 8f8bc12a84e17a9cf047a902e71d461905e3fc55..6d4028c433a7eb399ffe0f96f0d6d34bed2b21f1
+--- a/README.md
++++ b/README.md
+@@ -123,13 +123,22 @@
+ 
+ ## Build / test
+ 
++Node.js **20 or newer** is required for the extensionless-import test loader;
++validation ran with Node.js **22.22.0**. From a fresh checkout, install the
++locked dependencies and run the checks:
++
+ ```
++npm ci
+ npm run gen-registry:check
+ npm run build
+ npm run build:ts
+ npm test
+ ```
+ 
++If the managed sandbox makes npm's cache read-only, use
++`npm_config_cache=/tmp/timeline-composition-npm-cache npm ci` in place of
++`npm ci`. The ordinary setup command remains `npm ci`.
++
+ `npm run build` checks the generated registry and emits JavaScript plus
+ declarations for the complete `typescript/src` tree into the ignored
+ `typescript/dist` directory. `npm run build:ts` is the underlying strict
+@@ -138,6 +147,10 @@
+ the separate ignored `typescript/test-dist` directory, then runs them with
+ the extensionless-import loader used by the standalone Node test runner.
+ 
++The package currently exports source TypeScript from its package entrypoints;
++the generated `typescript/dist` files are build output, not the public package
++surface. A portable tarball/public export migration is future M3 scope.
++
+ The package has no source or type import from `@banodoco/timeline-schema`, so
+ it is not a Composition dependency. The generated registries remain
+ consumer-owned: a standalone checkout with no installed theme packages has
+
+codex
+The README edit is in place and remains documentation-only. I’m verifying the final diff for whitespace errors, then I’ll write the requested conventional commit message without running installs or tests.
+exec
+/bin/bash -lc 'git diff --check && git diff -- README.md && git status --short' in /home/user/work/wt/vw-m0-setup-doc
+ succeeded in 0ms:
+diff --git a/README.md b/README.md
+index 8f8bc12..6d4028c 100644
+--- a/README.md
++++ b/README.md
+@@ -123,13 +123,22 @@ The element remap is a `<Freeze>` around the element content, applied in `ClipLo
+ 
+ ## Build / test
+ 
++Node.js **20 or newer** is required for the extensionless-import test loader;
++validation ran with Node.js **22.22.0**. From a fresh checkout, install the
++locked dependencies and run the checks:
++
+ ```
++npm ci
+ npm run gen-registry:check
+ npm run build
+ npm run build:ts
+ npm test
+ ```
+ 
++If the managed sandbox makes npm's cache read-only, use
++`npm_config_cache=/tmp/timeline-composition-npm-cache npm ci` in place of
++`npm ci`. The ordinary setup command remains `npm ci`.
++
+ `npm run build` checks the generated registry and emits JavaScript plus
+ declarations for the complete `typescript/src` tree into the ignored
+ `typescript/dist` directory. `npm run build:ts` is the underlying strict
+@@ -138,6 +147,10 @@ errors fail both commands. `npm test` emits the focused TypeScript tests into
+ the separate ignored `typescript/test-dist` directory, then runs them with
+ the extensionless-import loader used by the standalone Node test runner.
+ 
++The package currently exports source TypeScript from its package entrypoints;
++the generated `typescript/dist` files are build output, not the public package
++surface. A portable tarball/public export migration is future M3 scope.
++
+ The package has no source or type import from `@banodoco/timeline-schema`, so
+ it is not a Composition dependency. The generated registries remain
+ consumer-owned: a standalone checkout with no installed theme packages has
+ M README.md
+
+exec
+/bin/bash -lc "if test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-setup-doc/commit-msg; then sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-setup-doc/commit-msg; else echo '<missing>'; fi" in /home/user/work/wt/vw-m0-setup-doc
+ succeeded in 0ms:
+<missing>
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-setup-doc/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-setup-doc/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-setup-doc/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..564d5f80e77a51f315ca16b532889f9e6b88007b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-setup-doc/commit-msg
+@@ -0,0 +1,6 @@
++docs: document fresh checkout setup
++
++Add the locked npm install and supported Node prerequisite to the
++Composition build/test instructions, including the managed-sandbox cache
++fallback. Keep source exports, host-component requirements, and M3 tarball
++scope explicit.
+diff --git a/README.md b/README.md
+index 8f8bc12a84e17a9cf047a902e71d461905e3fc55..6d4028c433a7eb399ffe0f96f0d6d34bed2b21f1
+--- a/README.md
++++ b/README.md
+@@ -123,13 +123,22 @@
+ 
+ ## Build / test
+ 
++Node.js **20 or newer** is required for the extensionless-import test loader;
++validation ran with Node.js **22.22.0**. From a fresh checkout, install the
++locked dependencies and run the checks:
++
+ ```
++npm ci
+ npm run gen-registry:check
+ npm run build
+ npm run build:ts
+ npm test
+ ```
+ 
++If the managed sandbox makes npm's cache read-only, use
++`npm_config_cache=/tmp/timeline-composition-npm-cache npm ci` in place of
++`npm ci`. The ordinary setup command remains `npm ci`.
++
+ `npm run build` checks the generated registry and emits JavaScript plus
+ declarations for the complete `typescript/src` tree into the ignored
+ `typescript/dist` directory. `npm run build:ts` is the underlying strict
+@@ -138,6 +147,10 @@
+ the separate ignored `typescript/test-dist` directory, then runs them with
+ the extensionless-import loader used by the standalone Node test runner.
+ 
++The package currently exports source TypeScript from its package entrypoints;
++the generated `typescript/dist` files are build output, not the public package
++surface. A portable tarball/public export migration is future M3 scope.
++
+ The package has no source or type import from `@banodoco/timeline-schema`, so
+ it is not a Composition dependency. The generated registries remain
+ consumer-owned: a standalone checkout with no installed theme packages has
+
+codex
+## Completed
+
+- Updated [README.md](/home/user/work/wt/vw-m0-setup-doc/README.md) with:
+  - `npm ci` as the first fresh-checkout command.
+  - Node.js ≥20 prerequisite; validation used Node 22.22.0.
+  - Optional read-only npm cache fallback.
+  - Explicit source exports, host-component limitation, and future M3 tarball scope.
+- No product, config, or test changes.
+
+## Verification
+
+- `git diff --check` — passed.
+- Installs and tests were intentionally not run per task instructions.
+
+Commit message written to the requested path.
+tokens used
+60,530
+## Completed
+
+- Updated [README.md](/home/user/work/wt/vw-m0-setup-doc/README.md) with:
+  - `npm ci` as the first fresh-checkout command.
+  - Node.js ≥20 prerequisite; validation used Node 22.22.0.
+  - Optional read-only npm cache fallback.
+  - Explicit source exports, host-component limitation, and future M3 tarball scope.
+- No product, config, or test changes.
+
+## Verification
+
+- `git diff --check` — passed.
+- Installs and tests were intentionally not run per task instructions.
+
+Commit message written to the requested path.

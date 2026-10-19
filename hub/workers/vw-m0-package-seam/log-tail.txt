@@ -1,0 +1,400 @@
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing.md')
+s=p.read_text()
+for needle in ['frame and/or', 'M1 adds', '0.0.8', 'Committed R1', 'no import', 'No vw-m0-build']:
+ print(needle, s.count(needle))
+print('bytes', p.stat().st_size)
+print('fences', s.count('"'```'"'))
+PY
+git diff --stat; git status --short" in /home/user/work/wt/vw-m0-package-seam
+ succeeded in 0ms:
+frame and/or 1
+M1 adds 1
+0.0.8 4
+Committed R1 2
+no import 1
+No vw-m0-build 1
+bytes 37638
+fences 4
+
+exec
+/bin/bash -lc "sed -n '745,760p' /home/user/work/runtime/runtime_protocol/timeline_inspection.py; rg -n 'AnimationComponent|export type' typescript/src/effects-types.ts | head -35; sed -n '1065,1105p' /home/user/work/agent/astrid/packs/rendering/actions/render/managed_timeline.py; sed -n '1,160p' /home/user/work/runtime/runtime_protocol/snapshot_refs.py; rg -n 'THEME_PACKAGE_REGISTRY|EffectRegistry|ANIMATION_REGISTRY' /home/user/work/app/src/tools/video-editor/runtime /home/user/work/app/src/integrations/astrid | head -45; rg --files /home/user/work/app/vendor/banodoco-{effects,animations,transitions} /home/user/work/app/vendor/timeline-theme-2rp | tail -20" in /home/user/work/wt/vw-m0-package-seam
+ succeeded in 0ms:
+    next_cursor = _encode_cursor(scope, end_offset) if end_offset < total_clips else None
+    selected_clip_count = sum(len(row["clips"]) for row in page_rows) + len(selected_parent_page)
+    omitted_authored_fields = sum(
+        len(_projection_omissions(clip))
+        for clip in [item for row in page_rows for item in row["clips"]] + selected_parent_page
+    ) + sum(len(_projection_omissions(row["occurrence"])) for row in page_rows)
+    result = {"schema": SCHEMA, "evidence_kind": "declared_inputs", "render_requested": False,
+            "representation": "canonical_head" if revision == head_revision else "canonical_revision",
+            "authority": "runtime_parent_composition", "is_current_head": revision == head_revision,
+            "source_pixels": "not_requested", "waveforms": "not_requested", "project_id": project_id,
+            "timeline_id": timeline_id, "revision_id": revision, "parent_content_digest": parent["content_digest"],
+            "head_revision_id": head_revision, "head_content_digest": (head_row["content_digest"] if head_row else None),
+            "snapshot_digest": "sha256:" + snapshot_digest,
+            "selectors": {key: value for key, value in options.items() if key != "cursor"},
+            "selection_status": "selected" if target_indices or selected_parent_clips else "selector_miss",
+            "target_count": len(target_indices), "occurrence_count": len(children),
+8:export type EffectProps<TParams = unknown> = {
+18:export type EffectComponent = FC<EffectProps>;
+20:export type AnimationPhase = 'entrance' | 'sustain' | 'exit';
+21:export type AnimationKind = 'wrapper' | 'hook';
+22:export type AnimationEasing = 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out' | string;
+24:export type AnimationReferenceObject<TParams = Record<string, unknown>> = {
+31:export type AnimationReference<TParams = Record<string, unknown>> =
+35:export type AnimationReferenceList<TParams = Record<string, unknown>> =
+39:export type AnimationSlots<TParams = Record<string, unknown>> = {
+45:export type AnimationMeta = {
+53:export type BaseAnimationProps<TParams = Record<string, unknown>> = {
+66:export type WrapperAnimationProps<TParams = Record<string, unknown>> = BaseAnimationProps<TParams> & {
+71:export type HookAnimationResult = {
+78:export type HookAnimationProps<TParams = Record<string, unknown>> = BaseAnimationProps<TParams> & {
+83:export type WrapperAnimationComponent<TParams = Record<string, unknown>> = FC<WrapperAnimationProps<TParams>>;
+84:export type HookAnimationComponent<TParams = Record<string, unknown>> = (
+87:export type AnimationComponent<TParams = Record<string, unknown>> =
+88:  | WrapperAnimationComponent<TParams>
+89:  | HookAnimationComponent<TParams>;
+91:export type TransitionReferenceObject<TParams = Record<string, unknown>> = {
+99:export type TransitionReference<TParams = Record<string, unknown>> =
+103:export type TransitionProps<TParams = Record<string, unknown>> = {
+111:export type TransitionComponentResult = {
+116:export type TransitionComponent<TParams = Record<string, unknown>> = (
+    if not inspected.ok or not isinstance(inspected.data, Mapping):
+        raise ValueError("canonical timeline inspection is unavailable")
+    inspection = inspected.data
+    if inspection.get("representation") != "canonical_head" or inspection.get("is_current_head") is not True:
+        raise ValueError(
+            "Runtime did not return the canonical current timeline head; "
+            "legacy timeline documents are not renderable"
+        )
+    parent_head = inspection.get("revision_id") or inspection.get("head_revision_id")
+    if not isinstance(parent_head, str) or not parent_head:
+        raise ValueError("canonical timeline inspection has no current head revision")
+    inspected_timeline_id = inspection.get("timeline_id")
+    if inspected_timeline_id is not None and str(inspected_timeline_id) != timeline_id:
+        raise ValueError("Runtime inspected a different timeline identity")
+
+    timeline_slug = str(listed_timeline.get("slug") or timeline_ref)
+    project_id = str(project.get("id") or project["project_id"])
+    if candidate_preview:
+        # Candidate previews replace this base with their own frozen closure.
+        # Resolve only the exact parent identity here: superseded source
+        # children may be unavailable or intentionally unrenderable, and must
+        # not be fetched before the candidate's changed/reused pins are read.
+        exact_parent = _read_exact_parent_head(
+            client=client,
+            project_id=project_id,
+            timeline_id=timeline_id,
+            parent_revision_id=parent_head,
+        )
+        parent_digest = str(exact_parent["content_digest"])
+        identity_config: dict[str, Any] = {"tracks": [], "clips": []}
+        identity_registry: dict[str, Any] = {"assets": {}}
+        return ManagedRenderSnapshot(
+            project_id=project_id,
+            project_slug=str(project["slug"]),
+            timeline_id=timeline_id,
+            timeline_ulid=str(listed_timeline.get("timeline_ulid") or timeline_id),
+            timeline_slug=timeline_slug,
+            config_version=version,
+            head_event_id=parent_head,
+            head_hash=parent_digest.removeprefix("sha256:"),
+            config=identity_config,
+"""Small, content-addressed task snapshot references.
+
+The task spec keeps provenance and a digest; the exact projected document lives
+once in Runtime CAS.  This module deliberately does not infer a newer head.
+"""
+
+from __future__ import annotations
+
+import copy
+import hashlib
+import json
+from .dirfd import filesystem as os
+import re
+from collections.abc import Callable
+from pathlib import Path
+
+from .cas import ContentAddressedStore
+from .dirfd import open_directory_chain, mkdir_chain_at
+from .errors import ConflictError, NotFoundError, ValidationError
+from .util import atomic_json_write, canonical_json, new_id, now
+
+
+SNAPSHOT_KEYS = ("filmstrip_snapshot", "input_snapshot", "capture_snapshot")
+_SHA256 = re.compile(r"sha256:[0-9a-f]{64}\Z")
+
+
+def snapshot_bytes(snapshot: dict) -> bytes:
+    return canonical_json(snapshot).encode("utf-8")
+
+
+def snapshot_digest(snapshot: dict) -> str:
+    return "sha256:" + hashlib.sha256(snapshot_bytes(snapshot)).hexdigest()
+
+
+def working_copy_binding(snapshot: dict, revision_id: str | None) -> dict | None:
+    metadata = snapshot.get("metadata") if isinstance(snapshot.get("metadata"), dict) else {}
+    value = metadata.get("working_copy")
+    if not isinstance(value, dict) or value.get("candidate_parent_revision_id") != revision_id:
+        return None
+    candidate = value.get("candidate_digest")
+    publication = value.get("publication_digest")
+    base = value.get("base_parent")
+    if (not isinstance(candidate, str) or not _SHA256.fullmatch(candidate)
+            or not isinstance(publication, str) or not _SHA256.fullmatch(publication)
+            or not isinstance(base, dict) or not isinstance(base.get("revision_id"), str)
+            or not isinstance(base.get("content_digest"), str)
+            or not _SHA256.fullmatch(base["content_digest"])):
+        return None
+    return {"candidate_digest": candidate, "publication_digest": publication,
+            "base_revision_id": base["revision_id"],
+            "base_revision_digest": base["content_digest"]}
+
+
+def journal_snapshot_publication(staging_root: Path, digest: str, project_id: str | None) -> None:
+    """Use the existing CAS recovery journal before publishing a new object."""
+    root_fd = open_directory_chain(staging_root)
+    publication_fd = -1
+    try:
+        publication_fd = mkdir_chain_at(root_fd, "publications")
+        os.fsync(root_fd)
+    finally:
+        if publication_fd >= 0:
+            os.close(publication_fd)
+        os.close(root_fd)
+    atomic_json_write(Path(staging_root) / "publications" / (new_id() + ".json"), {
+        "version": 1, "kind": "ingest", "project_id": project_id,
+        "task_id": None, "entries": [{"digest": digest}],
+    })
+
+
+def publish_snapshot(connection, cas_root: Path, staging_root: Path,
+                     snapshot: dict, provenance: dict, project_id: str | None) -> dict:
+    """Validate provenance and publish exact projected bytes through one CAS path."""
+    if provenance.get("project_id") not in (None, project_id):
+        raise ConflictError("snapshot project does not match task project")
+    revision_id = provenance.get("revision_id")
+    revision_digest = provenance.get("revision_digest")
+    timeline_id = provenance.get("timeline_id")
+    source_kind = provenance.get("source_kind") or ("revision" if revision_id else "cas")
+    if source_kind == "working_copy":
+        binding = working_copy_binding(snapshot, revision_id)
+        if binding is None or binding != provenance.get("working_copy") or revision_digest != binding["candidate_digest"]:
+            raise ValidationError("working-copy snapshot binding is invalid")
+        base = connection.execute(
+            "SELECT content_digest FROM parent_composition_revisions "
+            "WHERE id=? AND project_id=? AND timeline_id=?",
+            (binding["base_revision_id"], project_id, timeline_id),
+        ).fetchone()
+        if base is None or base[0] != binding["base_revision_digest"]:
+            raise NotFoundError("working-copy base parent revision is missing or changed")
+    elif revision_id is not None:
+        revision = connection.execute(
+            "SELECT content_digest FROM parent_composition_revisions "
+            "WHERE id=? AND project_id=? AND timeline_id=?",
+            (revision_id, project_id, timeline_id),
+        ).fetchone()
+        if revision is None:
+            raise NotFoundError("snapshot parent revision is missing")
+        if revision_digest is not None and revision_digest != revision[0]:
+            raise ConflictError("snapshot parent revision digest changed")
+        revision_digest = revision[0]
+    elif source_kind != "cas":
+        raise ValidationError("snapshot source kind is invalid")
+    payload = snapshot_bytes(snapshot)
+    digest = hashlib.sha256(payload).hexdigest()
+    cas = ContentAddressedStore(cas_root)
+    existing = connection.execute("SELECT size FROM objects WHERE digest=?", (digest,)).fetchone()
+    if existing is None:
+        journal_snapshot_publication(staging_root, digest, project_id)
+        cas.put(payload)
+    elif int(existing[0]) != len(payload) or hashlib.sha256(cas.read(digest)).hexdigest() != digest:
+        raise ConflictError("existing timeline snapshot CAS object is corrupt")
+    stamp = now()
+    connection.execute(
+        "INSERT OR IGNORE INTO objects(digest,size,media_type,original_name,created_at) VALUES (?,?,?,?,?)",
+        (digest, len(payload), "application/json", "timeline-snapshot.json", stamp),
+    )
+    if project_id is not None:
+        connection.execute(
+            "INSERT OR IGNORE INTO project_objects(project_id,digest,relation,created_at) "
+            "VALUES (?,?,'managed',?)", (project_id, digest, stamp),
+        )
+    return {"digest": "sha256:" + digest, "project_id": project_id,
+            "timeline_id": timeline_id, "revision_id": revision_id,
+            "revision_digest": revision_digest, "source_kind": source_kind,
+            **({"working_copy": provenance["working_copy"]} if source_kind == "working_copy" else {})}
+
+
+def rewrite_spec_snapshots(spec: dict, publish: Callable[[dict, dict], dict]) -> tuple[dict, int]:
+    """Replace only recognized inline snapshot fields, preserving other inputs."""
+    result = copy.deepcopy(spec)
+    inner = result.get("spec") if isinstance(result.get("spec"), dict) else result
+    inputs = inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {}
+    authority = inputs.get("timeline_authority") if isinstance(inputs.get("timeline_authority"), dict) else {}
+    count = 0
+
+    for location in (inner, inputs):
+        snapshot = location.get("timeline_snapshot")
+        if not isinstance(snapshot, dict) or not isinstance(snapshot.get("config"), dict):
+            continue
+        provenance = {
+            "project_id": authority.get("project_id") or snapshot.get("project_id"),
+            "timeline_id": authority.get("timeline_id") or snapshot.get("timeline_id"),
+            "revision_id": authority.get("parent_revision_id"),
+            "revision_digest": authority.get("parent_content_digest"),
+        }
+        location["timeline_snapshot_ref"] = publish(snapshot, provenance)
+        del location["timeline_snapshot"]
+        count += 1
+
+    context = inner.get("authority_context")
+    if not isinstance(context, dict):
+        context = result.get("authority_context")
+    if isinstance(context, dict):
+        for key in SNAPSHOT_KEYS:
+            snapshot = context.get(key)
+            if not isinstance(snapshot, dict):
+                continue
+            metadata = snapshot.get("metadata") if isinstance(snapshot.get("metadata"), dict) else {}
+            canonical = metadata.get("canonical_timeline") if isinstance(metadata.get("canonical_timeline"), dict) else {}
+/home/user/work/app/src/tools/video-editor/runtime/extensionContextFactory.ts:488:        message: `Cannot register effect component "${_effectId}" — the EffectRegistry has not been wired by the host provider.`,
+/home/user/work/app/src/tools/video-editor/runtime/shaderRegistrationService.ts:5: * scoped ShaderEffectRegistry. Shader registration stays on the dedicated
+/home/user/work/app/src/tools/video-editor/runtime/shaderRegistrationService.ts:21:import type { ShaderEffectRegistry } from '@/tools/video-editor/shaders/registry/types.ts';
+/home/user/work/app/src/tools/video-editor/runtime/shaderRegistrationService.ts:23:  ShaderEffectRegistryRecord,
+/home/user/work/app/src/tools/video-editor/runtime/shaderRegistrationService.ts:24:  ShaderEffectRegistryRecordStatus,
+/home/user/work/app/src/tools/video-editor/runtime/shaderRegistrationService.ts:90:  readonly shaderRegistry: ShaderEffectRegistry;
+/home/user/work/app/src/tools/video-editor/runtime/shaderRegistrationService.ts:148:    const status: ShaderEffectRegistryRecordStatus = hasSchemaErrors ? 'error' : 'active';
+/home/user/work/app/src/tools/video-editor/runtime/shaderRegistrationService.ts:151:    const record: ShaderEffectRegistryRecord = {
+/home/user/work/app/src/tools/video-editor/runtime/exportGuard.ts:36:  getEffectRegistry,
+/home/user/work/app/src/tools/video-editor/runtime/exportGuard.ts:39:  EffectRegistryRecord,
+/home/user/work/app/src/tools/video-editor/runtime/exportGuard.ts:40:  EffectRegistrySnapshot,
+/home/user/work/app/src/tools/video-editor/runtime/exportGuard.ts:233:    const registry = getEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/exportGuard.ts:329:  effectRegistrySnapshot?: EffectRegistrySnapshot;
+/home/user/work/app/src/tools/video-editor/runtime/exportGuard.ts:341:  effectRegistrySnapshot?: EffectRegistrySnapshot,
+/home/user/work/app/src/tools/video-editor/runtime/exportGuard.ts:401:  effectRegistrySnapshot?: EffectRegistrySnapshot,
+/home/user/work/app/src/tools/video-editor/runtime/exportGuard.ts:1345:  record: EffectRegistryRecord,
+/home/user/work/app/src/tools/video-editor/runtime/exportGuard.ts:1465:function firstRouteBlockerReason(record: EffectRegistryRecord, route: RenderRoute): RenderBlockerReason | undefined {
+/home/user/work/app/src/tools/video-editor/runtime/exportGuard.ts:1480:    record?: EffectRegistryRecord;
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:23:import { createEffectRegistry } from '@/tools/video-editor/effects/registry/EffectRegistry';
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:24:import type { EffectRegistry } from '@/tools/video-editor/effects/registry/types';
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:25:import type { EffectRegistryRecord } from '@/tools/video-editor/effects/registry/types';
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:63:/** Create a real EffectRegistry for integration-level testing. */
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:64:function makeEffectRegistry(): EffectRegistry {
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:65:  return createEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:443:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:471:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:494:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:523:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:543:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:563:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:589:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:623:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:653:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:672:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:697:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:720:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:751:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:772:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:795:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:828:    const registry = makeEffectRegistry();
+/home/user/work/app/src/tools/video-editor/runtime/effectRegistrationService.test.ts:841:    // The record's label is not directly stored on EffectRegistryRecord;
+/home/user/work/app/src/tools/video-editor/runtime/ExtensionStatusDrawer.test.tsx:17:import { EffectRegistryProvider, useEffectRegistryContext } from '@/tools/video-editor/effects/registry/EffectRegistryContext';
+/home/user/work/app/src/tools/video-editor/runtime/ExtensionStatusDrawer.test.tsx:89:  const { registry } = useEffectRegistryContext();
+/home/user/work/app/src/tools/video-editor/runtime/ExtensionStatusDrawer.test.tsx:979:        <EffectRegistryProvider>
+/home/user/work/app/src/tools/video-editor/runtime/ExtensionStatusDrawer.test.tsx:982:        </EffectRegistryProvider>
+/home/user/work/app/vendor/banodoco-animations/slide-up/component.jsx
+/home/user/work/app/vendor/banodoco-animations/slide-up/schema.json
+/home/user/work/app/vendor/banodoco-animations/slide-up/meta.json
+/home/user/work/app/vendor/banodoco-animations/slide-up/component.tsx
+/home/user/work/app/vendor/banodoco-animations/slide-up/defaults.json
+/home/user/work/app/vendor/banodoco-animations/fade/component.jsx
+/home/user/work/app/vendor/banodoco-animations/fade/schema.json
+/home/user/work/app/vendor/banodoco-animations/fade/meta.json
+/home/user/work/app/vendor/banodoco-animations/fade/component.tsx
+/home/user/work/app/vendor/banodoco-animations/fade/defaults.json
+/home/user/work/app/vendor/banodoco-animations/type-on/component.jsx
+/home/user/work/app/vendor/banodoco-animations/type-on/schema.json
+/home/user/work/app/vendor/banodoco-animations/type-on/meta.json
+/home/user/work/app/vendor/banodoco-animations/type-on/component.tsx
+/home/user/work/app/vendor/banodoco-animations/type-on/defaults.json
+/home/user/work/app/vendor/banodoco-effects/text-card/component.jsx
+/home/user/work/app/vendor/banodoco-effects/text-card/schema.json
+/home/user/work/app/vendor/banodoco-effects/text-card/meta.json
+/home/user/work/app/vendor/banodoco-effects/text-card/component.tsx
+/home/user/work/app/vendor/banodoco-effects/text-card/defaults.json
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing.md')
+s=p.read_text()
+s=s.replace('Additional host element/transition registrations use main\\'s host interfaces and package contracts. If the shared TimelineComposition entry needs an explicit registry override to replace the current generated globals, add the smallest optional registry parameter/prop and use it for both preparation and drawing; do not create another evaluator. App can continue mounting its necessary host components from the shared scene answer. Do not replace its renderer wholesale with the narrower Composition component and silently lose existing features.', '''Additional host element/transition registrations use main's host interfaces and package contracts. Concretely, add one optional in-process "'`registries` prop to TimelineComposition, and the same optional final argument to `prepareCompositionScene`: effects/clip aliases, animations/defaults/meta and transitions/defaults/meta, using the existing generated-module map types. An omitted member uses the immutable bundled default; a supplied member is the host'"'s complete resolved map for that category (host resolves pack/theme precedence once). Thread that same selection through component dispatch, animation/transition helpers and capability preparation, scoped to this composition instance; never assign mutable module globals. Host-generated modules live outside the package and import its public contracts. This small rendering input is not a transport/save DTO. App can continue mounting its necessary host components from the shared scene answer. Do not replace its renderer wholesale with the narrower Composition component and silently lose existing features.''')
+s=s.replace('The response has "'`revision_id`, `head_revision_id`, `is_current_head`,'"', 'The response distinguishes "'`representation: canonical_head` / `canonical_revision` and has `revision_id`, `head_revision_id`, `is_current_head`,'"')
+s=s.replace('These metadata admit the selected versions; they do **not** prove working playback.', 'This metadata admits the selected versions; it does **not** prove working playback.')
+s=s.replace('Use normal audited lifecycle scripts:', 'Use normal inspected lifecycle scripts:')
+s=s.replace('No product pass/fail counts are claimed.', '''No product pass/fail counts are claimed. Reproducible source probes include "'`rg -n '"'@banodoco/timeline-schema' typescript/src scripts"'` (no import matches), `git rev-parse HEAD` in each integration checkout (the four bases above), and reading installed `react`, `react-dom`, `remotion`, `@remotion/{media,player,layout-utils}` and theme `package.json` files with Python'"'s JSON parser. These are inspection results, not tests.''')
+p.write_text(s)
+commit=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-package-seam/commit-msg')
+commit.write_text('''docs(viewing): define immutable package and revision seams
+
+Specify built ESM distribution with bundled default registries, exact main
+React/Remotion versions, and reproducible offline sibling-checkout installs.
+Separate M1 host revision labels from M3 migration, retain cached committed
+identity, and require independent Player picture/audio parity controls.
+Record unproven Linux mixed-audio capture and source-backed migration work.
+''')
+print('Updated design and wrote commit-msg; no product files changed.')
+PY
+rg -n '@banodoco/timeline-schema' typescript/src scripts" in /home/user/work/wt/vw-m0-package-seam
+ exited 1 in 3ms:
+Updated design and wrote commit-msg; no product files changed.
+
+codex
+The design now chooses one immutable tarball with built ESM/types and all current generated component imports resolved inside it. It also separates M1 labels from M3 migration, preserves cached committed revision labels, and requires separate picture-only and audio-only negative controls. I’m checking the migration map for remaining source-path assumptions and writing the commit message; no product builds or tests have run.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing.md')
+s=p.read_text()
+s=s.replace('An omitted member uses the immutable bundled default; a supplied member is the host\\'s complete resolved map for that category (host resolves pack/theme precedence once).', 'For effects, the bundled selection combines core EFFECT_REGISTRY with THEME_PACKAGE_REGISTRY entries for the selected runtime theme; this is necessary because c82 TimelineComposition dispatches only core EFFECT_REGISTRY while App separately resolves theme components. Other omitted members use their immutable bundled defaults. A supplied member is the host\\'s complete resolved map for that category (host resolves pack/theme precedence once).')
+s=s.replace('Move the nine primitive/four theme implementations as above; delete obsolete App primitive/theme vendors after all callers use the package.', 'Move the nine primitive/four theme implementations as above; remove the now-unused direct npm theme dependency in both consumers and delete obsolete App primitive/theme vendors after all callers use the package.')
+p.write_text(s)
+assert s.count('"'```'"') % 2 == 0
+for required in ['## 1.', '## 2.', '## 3.', '## 4.', '## 5.', '## 6.', '## 7.', 'Picture only, exactly one host', 'Audio only, exactly one host', '**Keep "'`Committed R1`**'"', '--offline', 'No vw-m0-build results']:
+ assert required in s, required
+print('Design structure/content checks passed; bytes:', p.stat().st_size)
+print('Commit message exists:', Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-package-seam/commit-msg').is_file())
+PY
+git status --short" in /home/user/work/wt/vw-m0-package-seam
+ succeeded in 0ms:
+Design structure/content checks passed; bytes: 38965
+Commit message exists: True
+
+codex
+Updated [viewing.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing.md) with:
+
+- One immutable tarball recipe, built exports, complete registry closure, and offline installation steps.
+- Import-based schema removal and main’s React/Remotion versions.
+- Independent M1 revision labels preserving cached committed identity.
+- Separate picture/audio parity controls and the unproven Linux audio-capture blocker.
+
+Documentation checks passed. Product tests, builds, and installs were not run, per scope.
+
+Commit message written at the requested path. Next: reconcile `vw-m0-build`, then prove actual Player audio capture before claiming parity.
+tokens used
+152,669
+Updated [viewing.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing.md) with:
+
+- One immutable tarball recipe, built exports, complete registry closure, and offline installation steps.
+- Import-based schema removal and main’s React/Remotion versions.
+- Independent M1 revision labels preserving cached committed identity.
+- Separate picture/audio parity controls and the unproven Linux audio-capture blocker.
+
+Documentation checks passed. Product tests, builds, and installs were not run, per scope.
+
+Commit message written at the requested path. Next: reconcile `vw-m0-build`, then prove actual Player audio capture before claiming parity.

@@ -1,0 +1,400 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./test-dist",
+    "noEmit": false,
+    "noEmitOnError": true,
+    "declaration": false,
+    "isolatedModules": false,
+    "skipLibCheck": true,
+    "emitDeclarationOnly": false
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts",
+    "tests/**/*.test.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
+}
+import {rmSync, readdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {build} from 'esbuild';
+
+rmSync('dist', {recursive: true, force: true});
+execFileSync(process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'typescript/tsconfig.json'], {stdio: 'inherit'});
+// NodeNext consumers need explicit ESM extensions in declarations as well.
+const fixDeclarations = directory => {
+  for (const entry of readdirSync(directory, {withFileTypes: true})) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) fixDeclarations(path);
+    else if (entry.name.endsWith('.d.ts')) {
+      writeFileSync(path, readFileSync(path, 'utf8').replace(/(['"])(\.\.?\/[^'"]+)\1/g,
+        (match, quote, specifier) => /\.[a-z]+$/.test(specifier) ? match : `${quote}${specifier}.js${quote}`));
+    }
+  }
+};
+fixDeclarations('dist');
+
+await build({
+  entryPoints: ['index', 'evaluation', 'theme-api', 'registries', 'registry.generated',
+    'effects.generated', 'animations.generated', 'transitions.generated']
+    .map(name => `typescript/src/${name}.ts`),
+  outdir: 'dist',
+  bundle: true,
+  splitting: true,
+  format: 'esm',
+  platform: 'neutral',
+  target: 'es2022',
+  jsx: 'automatic',
+  external: ['react', 'react/*', 'react-dom', 'react-dom/*', 'remotion', '@remotion/media', '@remotion/layout-utils'],
+});
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('typescript/tests/registries.test.ts'); s=p.read_text().replace(\"  assert.match(render(composition), /host composition/);\", \"  assert.match(render(composition), /host composition/);\\n  const animatedClip = createElement(TimelineComposition, {\\n    timeline: {theme: 'default', tracks: [track], clips: [{...clip, entrance: 'fade-up'}]}, assets,\\n    registries: {...registries, effects: {'text-card': () => createElement('b', null, 'host composition')}},\\n  });\\n  assert.match(render(animatedClip), /<mark>scoped<\\\\/mark>/);\"); p.write_text(s)
+PY
+npm run build:test && node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/registries.test.js typescript/test-dist/tests/scene-evaluation.test.js scripts/gen-registry.test.mjs && git diff --check" in /home/user/work/wt/vw-m3-built-package
+ exited 1 in 8743ms:
+
+> @banodoco/timeline-composition@0.0.8 build:test
+> tsc -p typescript/tsconfig.test.json
+
+TAP version 13
+# Subtest: package generation ignores installed host themes and checks all local registries
+ok 1 - package generation ignores installed host themes and checks all local registries
+  ---
+  duration_ms: 2376.167827
+  type: 'test'
+  ...
+# Subtest: bundled core and selected theme effects use the same scoped dispatch and stay conservative
+ok 2 - bundled core and selected theme effects use the same scoped dispatch and stay conservative
+  ---
+  duration_ms: 5.82624
+  type: 'test'
+  ...
+# Subtest: host effects, aliases and capabilities are instance scoped, including default overrides
+ok 3 - host effects, aliases and capabilities are instance scoped, including default overrides
+  ---
+  duration_ms: 1.047839
+  type: 'test'
+  ...
+# Subtest: host animation maps keep defaults, phase validation and unknown errors scoped
+ok 4 - host animation maps keep defaults, phase validation and unknown errors scoped
+  ---
+  duration_ms: 1.211364
+  type: 'test'
+  ...
+# Subtest: host transition resolution reaches preparation without changing another instance
+ok 5 - host transition resolution reaches preparation without changing another instance
+  ---
+  duration_ms: 3.60336
+  type: 'test'
+  ...
+# Subtest: default animations retain real motion and type-on output
+ok 6 - default animations retain real motion and type-on output
+  ---
+  duration_ms: 3.235038
+  type: 'test'
+  ...
+# Subtest: packaged effect internal animations and clip animations honor the rendering scope
+not ok 7 - packaged effect internal animations and clip animations honor the rendering scope
+  ---
+  duration_ms: 14.942758
+  type: 'test'
+  location: '/home/user/work/wt/vw-m3-built-package/typescript/test-dist/tests/registries.test.js:116:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /<mark>scoped<\/mark>/. Input:
+    
+    '<div style="position:absolute;top:0;left:0;right:0;bottom:0;width:1920px;height:1080px;display:flex;flex-direction:column;background-color:black;overflow:hidden"><div style="position:relative;top:0;left:0;right:0;bottom:0;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden"><div style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;display:flex;flex-direction:column;opacity:1"><div style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;display:flex"><div style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;display:flex;flex-direction:column" data-clip-id="title"><b>host composition</b></div></div></div></div></div>'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<div style="position:absolute;top:0;left:0;right:0;bottom:0;width:1920px;height:1080px;display:flex;flex-direction:column;background-color:black;overflow:hidden"><div style="position:relative;top:0;left:0;right:0;bottom:0;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden"><div style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;display:flex;flex-direction:column;opacity:1"><div style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;display:flex"><div style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;display:flex;flex-direction:column" data-clip-id="title"><b>host composition</b></div></div></div></div></div>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/work/wt/vw-m3-built-package/typescript/test-dist/tests/registries.test.js:132:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: proven opaque visual media reports visible covered content
+ok 8 - proven opaque visual media reports visible covered content
+  ---
+  duration_ms: 3.834614
+  type: 'test'
+  ...
+# Subtest: unresolved or unproven media remains unknown instead of being treated as absent
+ok 9 - unresolved or unproven media remains unknown instead of being treated as absent
+  ---
+  duration_ms: 0.670424
+  type: 'test'
+  ...
+# Subtest: assetless native holds are visibly absent, while declared component support stays explicit
+ok 10 - assetless native holds are visibly absent, while declared component support stays explicit
+  ---
+  duration_ms: 0.657523
+  type: 'test'
+  ...
+# Subtest: unknown modifier output bounds produce a finding and unknown coverage
+ok 11 - unknown modifier output bounds produce a finding and unknown coverage
+  ---
+  duration_ms: 0.734574
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 10
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2690.074708
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('typescript/tests/registries.test.ts'); s=p.read_text().replace(\"clips: [{...clip, entrance: 'fade-up'}]\", \"clips: [{...clip, entrance: {id: 'fade-up', durationFrames: 60}}]\"); p.write_text(s)
+PY
+npm run build:test && node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/registries.test.js typescript/test-dist/tests/scene-evaluation.test.js scripts/gen-registry.test.mjs && git diff --check" in /home/user/work/wt/vw-m3-built-package
+ succeeded in 8620ms:
+
+> @banodoco/timeline-composition@0.0.8 build:test
+> tsc -p typescript/tsconfig.test.json
+
+TAP version 13
+# Subtest: package generation ignores installed host themes and checks all local registries
+ok 1 - package generation ignores installed host themes and checks all local registries
+  ---
+  duration_ms: 2719.520859
+  type: 'test'
+  ...
+# Subtest: bundled core and selected theme effects use the same scoped dispatch and stay conservative
+ok 2 - bundled core and selected theme effects use the same scoped dispatch and stay conservative
+  ---
+  duration_ms: 7.003769
+  type: 'test'
+  ...
+# Subtest: host effects, aliases and capabilities are instance scoped, including default overrides
+ok 3 - host effects, aliases and capabilities are instance scoped, including default overrides
+  ---
+  duration_ms: 0.874882
+  type: 'test'
+  ...
+# Subtest: host animation maps keep defaults, phase validation and unknown errors scoped
+ok 4 - host animation maps keep defaults, phase validation and unknown errors scoped
+  ---
+  duration_ms: 1.125479
+  type: 'test'
+  ...
+# Subtest: host transition resolution reaches preparation without changing another instance
+ok 5 - host transition resolution reaches preparation without changing another instance
+  ---
+  duration_ms: 0.950014
+  type: 'test'
+  ...
+# Subtest: default animations retain real motion and type-on output
+ok 6 - default animations retain real motion and type-on output
+  ---
+  duration_ms: 5.116133
+  type: 'test'
+  ...
+# Subtest: packaged effect internal animations and clip animations honor the rendering scope
+ok 7 - packaged effect internal animations and clip animations honor the rendering scope
+  ---
+  duration_ms: 33.740188
+  type: 'test'
+  ...
+# Subtest: proven opaque visual media reports visible covered content
+ok 8 - proven opaque visual media reports visible covered content
+  ---
+  duration_ms: 3.316989
+  type: 'test'
+  ...
+# Subtest: unresolved or unproven media remains unknown instead of being treated as absent
+ok 9 - unresolved or unproven media remains unknown instead of being treated as absent
+  ---
+  duration_ms: 0.42987
+  type: 'test'
+  ...
+# Subtest: assetless native holds are visibly absent, while declared component support stays explicit
+ok 10 - assetless native holds are visibly absent, while declared component support stays explicit
+  ---
+  duration_ms: 0.660825
+  type: 'test'
+  ...
+# Subtest: unknown modifier output bounds produce a finding and unknown coverage
+ok 11 - unknown modifier output bounds produce a finding and unknown coverage
+  ---
+  duration_ms: 0.62887
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3046.091196
+
+codex
+The final 11 focused tests pass, including a host override during an active clip animation. Two clean build-and-pack runs produced identical tarball integrity, and the fresh-consumer smoke passed against those bytes. I’ll leave the tarball, remove build output, and write the harness commit message. The full suite, consumer migration, and film/frame/audio parity remain for integration.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil,hashlib
+for directory in ['dist','typescript/test-dist','typescript/dist']:
+ path=Path(directory)
+ if path.exists(): shutil.rmtree(path)
+for filename in ['vw-m3-pack.json','vw-m3-pack-final.json','vw-m3-pack-repeat.json']:
+ Path('/tmp', filename).unlink(missing_ok=True)
+cache=Path('/tmp/vw-m3-npm-cache')
+if cache.exists(): shutil.rmtree(cache)
+message=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-built-package/commit-msg')
+message.write_text('''feat(composition): build portable 0.0.8 package with scoped registries
+
+Relocate the approved thirteen App default implementations and metadata into
+Composition. Generate all package registries from explicit local inputs and
+remove workspace aliases and installed-theme discovery from package builds.
+
+Use instance-scoped registry maps for component dispatch, animation and
+transition resolution, and scene capabilities. Preserve conservative unknown
+findings and the bundled 2rp source version of 0.1.0.
+
+Ship compiled shared ESM and declarations with exact React/Remotion peers.
+Add focused registry coverage and a fresh tarball consumer smoke for exports,
+rendering, host overrides, declaration resolution and runtime deduplication.
+
+Validation: npm ci, registry check, build, 11 focused tests, fresh consumer
+smoke, reproducible npm pack, and git diff --check passed. A planted builtin
+type error failed the build before restoration. Full suite and host/film
+frame and audio parity remain integration checks.
+''')
+tarball=Path('banodoco-timeline-composition-0.0.8.tgz')
+assert hashlib.sha256(tarball.read_bytes()).hexdigest() == '47bf46897fc83bc364c71e26ca68dd69722585cef8f0975648f1caaddd34f723'
+print('Build output removed; tarball retained:',tarball.resolve())
+print('Commit message written:',message)
+PY
+ git diff --check && git status --short" in /home/user/work/wt/vw-m3-built-package
+ succeeded in 198ms:
+Build output removed; tarball retained: /home/user/work/wt/vw-m3-built-package/banodoco-timeline-composition-0.0.8.tgz
+Commit message written: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-built-package/commit-msg
+ M .gitignore
+ M README.md
+ M package-lock.json
+ M package.json
+ M scripts/gen-registry.test.mjs
+ M scripts/gen-registry.ts
+ M typescript/src/ClipAnimationPhase.tsx
+ M typescript/src/ClipLook.tsx
+ M typescript/src/TimelineComposition.tsx
+ M typescript/src/animations.generated.ts
+ M typescript/src/effects.generated.ts
+ M typescript/src/index.ts
+ M typescript/src/lib/animations.tsx
+ M typescript/src/lib/transitions.tsx
+ M typescript/src/registry.generated.ts
+ M typescript/src/theme-api.ts
+ M typescript/src/transitions.generated.ts
+ M typescript/src/types.ts
+ D typescript/src/workspace-aliases.d.ts
+ M typescript/tsconfig.json
+ M typescript/tsconfig.test.json
+?? scripts/build.mjs
+?? scripts/builtin-inputs.json
+?? scripts/smoke-package.mjs
+?? typescript/src/RegistryContext.tsx
+?? typescript/src/builtins/
+?? typescript/src/registries.ts
+?? typescript/tests/registries.test.ts
+
+codex
+Built Composition **0.0.8** with all 13 approved defaults, scoped registries, compiled ESM/declarations, and exact React/Remotion peers. Removed workspace shims and external theme discovery. No consumer edits.
+
+[Tarball](/home/user/work/wt/vw-m3-built-package/banodoco-timeline-composition-0.0.8.tgz) — 51,083 bytes; two clean build/pack runs produced identical integrity:
+
+```text
+sha512-Pr+RFouHJVbKNfncRGFUCsxiPMy7PGSkRPdVHtoPg2rzdu7x1JDHsvpiMjw4nBU2GnAE55FpsTQpvsCZJ1Mvaw==
+```
+
+Passed:
+
+```sh
+npm_config_cache=/tmp/vw-m3-npm-cache npm ci
+npm run gen-registry:check
+npm run build
+npm run build:test
+node --import ./typescript/tests/register-extensionless.mjs --test \
+  typescript/test-dist/tests/registries.test.js \
+  typescript/test-dist/tests/scene-evaluation.test.js scripts/gen-registry.test.mjs
+npm_config_cache=/tmp/vw-m3-npm-cache npm pack --json
+git diff --check
+```
+
+Focused tests: **11 passed, zero skipped**. A planted builtin type error correctly failed the build with TS2322; restored afterward.
+
+Fresh-consumer smoke passed. Reproduce from this worktree:
+
+```sh
+npm_config_cache=/tmp/vw-m3-npm-cache npm run test:package -- \
+  "$PWD/banodoco-timeline-composition-0.0.8.tgz"
+```
+
+It verifies plain Node imports, bundled rendering, scoped overrides/capabilities, declaration consumption, shared ThemeContext, deduplicated peers, and unchanged installed files. The declaration probe uses `skipLibCheck` for upstream Remotion’s legacy `Timer` declaration.
+
+Decisions followed the design: supplied registry members replace complete category maps; bundled 2rp remains **0.1.0**.
+
+No blockers. Commit message written; build output removed. Next: manager review/full suite, consumer migrations, and host/film frame/audio parity—all still unverified.
+tokens used
+164,869
+Built Composition **0.0.8** with all 13 approved defaults, scoped registries, compiled ESM/declarations, and exact React/Remotion peers. Removed workspace shims and external theme discovery. No consumer edits.
+
+[Tarball](/home/user/work/wt/vw-m3-built-package/banodoco-timeline-composition-0.0.8.tgz) — 51,083 bytes; two clean build/pack runs produced identical integrity:
+
+```text
+sha512-Pr+RFouHJVbKNfncRGFUCsxiPMy7PGSkRPdVHtoPg2rzdu7x1JDHsvpiMjw4nBU2GnAE55FpsTQpvsCZJ1Mvaw==
+```
+
+Passed:
+
+```sh
+npm_config_cache=/tmp/vw-m3-npm-cache npm ci
+npm run gen-registry:check
+npm run build
+npm run build:test
+node --import ./typescript/tests/register-extensionless.mjs --test \
+  typescript/test-dist/tests/registries.test.js \
+  typescript/test-dist/tests/scene-evaluation.test.js scripts/gen-registry.test.mjs
+npm_config_cache=/tmp/vw-m3-npm-cache npm pack --json
+git diff --check
+```
+
+Focused tests: **11 passed, zero skipped**. A planted builtin type error correctly failed the build with TS2322; restored afterward.
+
+Fresh-consumer smoke passed. Reproduce from this worktree:
+
+```sh
+npm_config_cache=/tmp/vw-m3-npm-cache npm run test:package -- \
+  "$PWD/banodoco-timeline-composition-0.0.8.tgz"
+```
+
+It verifies plain Node imports, bundled rendering, scoped overrides/capabilities, declaration consumption, shared ThemeContext, deduplicated peers, and unchanged installed files. The declaration probe uses `skipLibCheck` for upstream Remotion’s legacy `Timer` declaration.
+
+Decisions followed the design: supplied registry members replace complete category maps; bundled 2rp remains **0.1.0**.
+
+No blockers. Commit message written; build output removed. Next: manager review/full suite, consumer migrations, and host/film frame/audio parity—all still unverified.

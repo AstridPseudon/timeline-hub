@@ -1,0 +1,9 @@
+name=vw-m1-app-label-clean
+repo=app
+base=tl/vw-m1-app-label-review
+base_sha=d25e1af09
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/vw-m1-app-label-clean
+started=2026-10-19T19:18:26Z

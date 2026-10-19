@@ -1,0 +1,9 @@
+name=vw-m3-agent-package
+repo=agent
+base=tl/integration
+base_sha=8c4bd850
+model=gpt-6.1-sol
+effort=high
+heavy=1
+worktree=/home/user/work/wt/vw-m3-agent-package
+started=2026-10-19T19:50:24Z

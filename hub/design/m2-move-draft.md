@@ -41,7 +41,10 @@ anchor's destination-index minus source-index, and apply that integer offset to
 every member's original lane index. Missing/out-of-range/incompatible targets
 refuse the whole command. Compatibility requires the same authored track kind,
 an active editable output lane, and supported role. Use main's output/source
-role classifier; audio output is not excluded merely because it is audio.
+role classifier (`role` absent means output; `"output"`/`"source"` are the only
+explicit values; null/unknown refuses); audio output is not excluded merely
+because it is audio. Active means enabled/active are not false and
+disabled/hidden/deleted are not true; muted content still has temporal extent.
 No nearest-lane search or server choice of a different destination occurs.
 Complete groups must land on one lane; mixed source lanes in a soft group refuse.
 Cross-owner/parent-to-child/cross-occurrence relocation, shared-shot editing,
@@ -188,11 +191,14 @@ handler/capture/replay/inverse and `tests/editing_conformance` fixtures, startin
 from `astrid/sdk/timeline/{commands,capture,_recording,_command_state,inverse}.py`.
 Reuse the current scenario runner with YAML cases under
 `tests/editing_scenarios/` for the three examples, relative/pure retrack, explicit
-clears and occurrence isolation. Each runs CLI **JSON EditCommand apply**, Python
+clears and occurrence isolation. Each runs CLI **EditCommand batch ingress**, Python
 session queue/flush, and sheet edits to both starts and tracks as one batch,
 comparing authored JSON, undo/redo, IDs and records. Existing CLI `apply`/session
-builders must be wired to these same ops; do not claim today's legacy sheet or
-JSON writer already commits through Runtime. No speculative convenience flags.
+builders must be wired to these same ops; current `timelines apply TL FILE` is
+sheet-only, not JSON command ingress, and current Python session exposes only
+`queue_move(select,on)`. Generic batch ingress and sheet adaptation are required
+handoff work; do not claim today's local writers already commit through Runtime.
+No speculative convenience flags.
 Runtime only refreshes the byte-identical packaged schema/generated exports via
 the existing handoff; no endpoint/ABI changes. App owns
 `commands/{semanticGestures,clipMoveCapture,clipMovePrimitives}.ts`,

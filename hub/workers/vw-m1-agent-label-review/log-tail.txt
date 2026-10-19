@@ -1,0 +1,400 @@
+     }
+ 
+ 
+-def test_candidate_label_is_unsaved_and_keeps_its_committed_parent():
++def test_managed_candidate_label_uses_marker_base_not_candidate_parent():
+     label = snapshot_label(
+-        _snapshot("R1", selection="explicit_candidate_preview", requested_revision_id="R2")
++        {
++            "metadata": {
++                "selection": "explicit_candidate_preview",
++                "canonical_timeline": {
++                    "head_event_id": "R1",
++                    "render_mode": "authoring_candidate_preview",
++                    "authoring_preview": _candidate_marker(),
++                },
++            }
++        }
+     )
+ 
+     assert label == {
+@@ -57,6 +78,80 @@ def test_candidate_label_is_unsaved_and_keeps_its_committed_parent():
+     }
+ 
+ 
++def test_composed_candidate_label_uses_working_copy_base_not_capture_parent():
++    marker = _candidate_marker()
++    label = snapshot_label(
++        {
++            "metadata": {
++                "selection": "composed_frame_capture",
++                "canonical_timeline": {"parent_revision_id": "C1"},
++                "capture_authority": {
++                    "parent_revision_id": "C1",
++                    "working_copy": marker,
++                },
++                "working_copy": marker,
++            }
++        }
++    )
++
++    assert label["status"] == "candidate"
++    assert label["base_revision_id"] == "R1"
++    assert "C1" not in label["label"]
++
++
++def test_candidate_with_missing_marker_base_stays_unsaved_without_fabricating_candidate_id():
++    label = snapshot_label(
++        {
++            "metadata": {
++                "selection": "explicit_candidate_preview",
++                "canonical_timeline": {
++                    "parent_revision_id": "C1",
++                    "authoring_preview": _candidate_marker(base=None),
++                },
++            }
++        }
++    )
++
++    assert label == {
++        "status": "candidate",
++        "label": "unsaved candidate (committed base unavailable)",
++        "actual_revision_id": None,
++        "base_revision_id": None,
++    }
++
++
++def test_authoring_preview_only_is_candidate_and_uses_its_marker_base():
++    label = snapshot_label(
++        {
++            "metadata": {
++                "canonical_timeline": {"parent_revision_id": "C1"},
++                "capture_authority": {"authoring_preview": _candidate_marker()},
++            }
++        }
++    )
++
++    assert label["status"] == "candidate"
++    assert label["base_revision_id"] == "R1"
++
++
++def test_conflicting_admitted_candidate_bases_are_unavailable():
++    label = snapshot_label(
++        {
++            "metadata": {
++                "working_copy": _candidate_marker(base="R1"),
++                "canonical_timeline": {"authoring_preview": _candidate_marker(base="R2")},
++            }
++        }
++    )
++
++    assert label == {
++        "status": "unavailable",
++        "label": "candidate revision unavailable",
++        "actual_revision_id": None,
++        "base_revision_id": None,
++    }
++
++
+ def test_requested_revision_without_actual_snapshot_identity_is_unavailable():
+     label = snapshot_label(_snapshot(None, requested_revision_id="R2"))
+ 
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-agent-label-review/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-agent-label-review/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-agent-label-review/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..256f055897eae1989ae2e3676c6d4d2bb729da57
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-agent-label-review/commit-msg
+@@ -0,0 +1,5 @@
++fix(rendering): preserve candidate base provenance
++
++Read candidate labels from admitted marker base_parent identities, keeping
++unpublished candidate parents separate from committed revisions and failing
++closed on missing or contradictory base authority.
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/provenance.py b/astrid/packs/rendering/actions/timeline_visualize/provenance.py
+index 3b9276ca377649aa0ac11d0995310c161ca3cc0f..cb6288563134df5c19a2f202824a0535f78cba8f
+--- a/astrid/packs/rendering/actions/timeline_visualize/provenance.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/provenance.py
+@@ -27,6 +27,56 @@
+     return mode in {"authoring_candidate_preview", "candidate", "preview", "unpublished"}
+ 
+ 
++def _candidate_markers(
++    metadata: Mapping[str, Any],
++    canonical: Mapping[str, Any],
++    capture: Mapping[str, Any],
++) -> list[Mapping[str, Any]]:
++    """Return admission-owned candidate markers from either render path."""
++    markers: list[Mapping[str, Any]] = []
++    for source in (metadata, canonical, capture):
++        for key in ("working_copy", "authoring_preview"):
++            marker = source.get(key)
++            if isinstance(marker, Mapping) and marker not in markers:
++                markers.append(marker)
++    return markers
++
++
++def _marker_base_revision(marker: Mapping[str, Any]) -> tuple[str | None, bool]:
++    """Read only the accepted base from a candidate marker.
++
++    The other parent fields in a candidate authority identify the unpublished
++    candidate (for example ``candidate_parent_revision_id`` / ``parent_revision_id``);
++    they are deliberately not accepted as the committed base here.
++    """
++    base_parent = marker.get("base_parent")
++    if not isinstance(base_parent, Mapping):
++        return None, False
++    values = {
++        value
++        for key in ("revision_id", "parent_revision_id", "head_revision_id")
++        for value in (base_parent.get(key),)
++        if isinstance(value, str) and value
++    }
++    if len(values) > 1:
++        return None, True
++    return next(iter(values), None), False
++
++
++def _candidate_base_revision(
++    markers: list[Mapping[str, Any]],
++) -> tuple[str | None, bool]:
++    """Return a shared accepted base, or mark contradictory markers invalid."""
++    bases: set[str] = set()
++    contradictory = False
++    for marker in markers:
++        base, marker_contradictory = _marker_base_revision(marker)
++        contradictory = contradictory or marker_contradictory
++        if base is not None:
++            bases.add(base)
++    return (next(iter(bases), None) if len(bases) <= 1 else None), contradictory or len(bases) > 1
++
++
+ def snapshot_label(snapshot: Mapping[str, Any] | None) -> dict[str, Any]:
+     """Describe the revision represented by an admitted visualize snapshot.
+ 
+@@ -58,25 +108,29 @@
+     actual = _first_string(
+         authority.get("parent_revision_id"), authority.get("head_revision_id"), authority.get("revision_id")
+     )
+-    candidate = _is_candidate(metadata, authority)
+-    if actual is None and candidate and isinstance(authority.get("authoring_preview"), Mapping):
+-        preview = authority["authoring_preview"]
+-        actual = _first_string(
+-            preview.get("candidate_parent_revision_id"), preview.get("base_revision_id")
+-        )
++    markers = _candidate_markers(metadata, canonical, capture)
++    candidate = _is_candidate(metadata, authority) or bool(markers)
+     if candidate:
+-        if actual is None:
++        base, contradictory = _candidate_base_revision(markers)
++        if contradictory:
+             return {
+                 "status": "unavailable",
+                 "label": "candidate revision unavailable",
+                 "actual_revision_id": None,
+                 "base_revision_id": None,
+             }
++        if base is None:
++            return {
++                "status": "candidate",
++                "label": "unsaved candidate (committed base unavailable)",
++                "actual_revision_id": None,
++                "base_revision_id": None,
++            }
+         return {
+             "status": "candidate",
+-            "label": f"unsaved candidate based on committed revision {actual}",
++            "label": f"unsaved candidate based on committed revision {base}",
+             "actual_revision_id": None,
+-            "base_revision_id": actual,
++            "base_revision_id": base,
+         }
+     if actual is None:
+         return {
+diff --git a/tests/packs/rendering/test_fast_lane.py b/tests/packs/rendering/test_fast_lane.py
+index 768639ea93bc74abe62224639fc30a5dbf2ebfe8..cc1514209ee91816a8ca6bb277cc178ee935381d
+--- a/tests/packs/rendering/test_fast_lane.py
++++ b/tests/packs/rendering/test_fast_lane.py
+@@ -23,6 +23,18 @@
+     }
+ 
+ 
++def _candidate_marker(*, base: str | None = "R1", candidate: str = "C1"):
++    marker = {
++        "label": "Unpublished candidate preview",
++        "candidate_digest": "sha256:" + "a" * 64,
++        "publication_digest": "sha256:" + "b" * 64,
++        "candidate_parent_revision_id": candidate,
++    }
++    if base is not None:
++        marker["base_parent"] = {"revision_id": base, "content_digest": "sha256:" + "c" * 64}
++    return marker
++
++
+ def test_gateway_main_stamps_the_cli_start_for_the_check_timing(monkeypatch):
+     monkeypatch.delenv("ASTRID_CLI_START_MONO", raising=False)
+     before = time.monotonic()
+@@ -44,9 +56,18 @@
+     }
+ 
+ 
+-def test_candidate_label_is_unsaved_and_keeps_its_committed_parent():
++def test_managed_candidate_label_uses_marker_base_not_candidate_parent():
+     label = snapshot_label(
+-        _snapshot("R1", selection="explicit_candidate_preview", requested_revision_id="R2")
++        {
++            "metadata": {
++                "selection": "explicit_candidate_preview",
++                "canonical_timeline": {
++                    "head_event_id": "R1",
++                    "render_mode": "authoring_candidate_preview",
++                    "authoring_preview": _candidate_marker(),
++                },
++            }
++        }
+     )
+ 
+     assert label == {
+@@ -57,6 +78,80 @@
+     }
+ 
+ 
++def test_composed_candidate_label_uses_working_copy_base_not_capture_parent():
++    marker = _candidate_marker()
++    label = snapshot_label(
++        {
++            "metadata": {
++                "selection": "composed_frame_capture",
++                "canonical_timeline": {"parent_revision_id": "C1"},
++                "capture_authority": {
++                    "parent_revision_id": "C1",
++                    "working_copy": marker,
++                },
++                "working_copy": marker,
++            }
++        }
++    )
++
++    assert label["status"] == "candidate"
++    assert label["base_revision_id"] == "R1"
++    assert "C1" not in label["label"]
++
++
++def test_candidate_with_missing_marker_base_stays_unsaved_without_fabricating_candidate_id():
++    label = snapshot_label(
++        {
++            "metadata": {
++                "selection": "explicit_candidate_preview",
++                "canonical_timeline": {
++                    "parent_revision_id": "C1",
++                    "authoring_preview": _candidate_marker(base=None),
++                },
++            }
++        }
++    )
++
++    assert label == {
++        "status": "candidate",
++        "label": "unsaved candidate (committed base unavailable)",
++        "actual_revision_id": None,
++        "base_revision_id": None,
++    }
++
++
++def test_authoring_preview_only_is_candidate_and_uses_its_marker_base():
++    label = snapshot_label(
++        {
++            "metadata": {
++                "canonical_timeline": {"parent_revision_id": "C1"},
++                "capture_authority": {"authoring_preview": _candidate_marker()},
++            }
++        }
++    )
++
++    assert label["status"] == "candidate"
++    assert label["base_revision_id"] == "R1"
++
++
++def test_conflicting_admitted_candidate_bases_are_unavailable():
++    label = snapshot_label(
++        {
++            "metadata": {
++                "working_copy": _candidate_marker(base="R1"),
++                "canonical_timeline": {"authoring_preview": _candidate_marker(base="R2")},
++            }
++        }
++    )
++
++    assert label == {
++        "status": "unavailable",
++        "label": "candidate revision unavailable",
++        "actual_revision_id": None,
++        "base_revision_id": None,
++    }
++
++
+ def test_requested_revision_without_actual_snapshot_identity_is_unavailable():
+     label = snapshot_label(_snapshot(None, requested_revision_id="R2"))
+ 
+
+codex
+All requested targeted tests pass (`97 passed`, one unrelated Pillow deprecation warning), and `git diff --check` is clean. Only the provenance helper and its rendering test file changed; no SDK files or build artifacts were touched. The harness commit message is written and no commit was created.
+exec
+/bin/bash -lc "git status --short --untracked-files=all && printf '\\n--- commit message ---\\n' && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-agent-label-review/commit-msg" in /home/user/work/wt/vw-m1-agent-label-review
+ succeeded in 415ms:
+ M astrid/packs/rendering/actions/timeline_visualize/provenance.py
+ M tests/packs/rendering/test_fast_lane.py
+
+--- commit message ---
+fix(rendering): preserve candidate base provenance
+
+Read candidate labels from admitted marker base_parent identities, keeping
+unpublished candidate parents separate from committed revisions and failing
+closed on missing or contradictory base authority.
+
+codex
+## Report
+
+Implemented candidate provenance fix in [provenance.py](/home/user/work/wt/vw-m1-agent-label-review/astrid/packs/rendering/actions/timeline_visualize/provenance.py) and tests.
+
+- Candidate labels now use only admitted marker `base_parent`.
+- Managed and composed candidates no longer treat candidate revision `C1` as committed.
+- Missing bases remain explicitly unsaved candidates.
+- Conflicting bases fail closed.
+- Added tests for real managed/composed marker shapes and `authoring_preview` detection.
+
+Tests:
+
+```text
+97 passed, 1 warning
+git diff --check: passed
+```
+
+Used the shared venv at `/home/user/work/venv-agent/bin/python`; the relative `venv-agent/bin/python` was absent.
+
+No full suite run. Commit message written; no commit created.
+tokens used
+114,606
+## Report
+
+Implemented candidate provenance fix in [provenance.py](/home/user/work/wt/vw-m1-agent-label-review/astrid/packs/rendering/actions/timeline_visualize/provenance.py) and tests.
+
+- Candidate labels now use only admitted marker `base_parent`.
+- Managed and composed candidates no longer treat candidate revision `C1` as committed.
+- Missing bases remain explicitly unsaved candidates.
+- Conflicting bases fail closed.
+- Added tests for real managed/composed marker shapes and `authoring_preview` detection.
+
+Tests:
+
+```text
+97 passed, 1 warning
+git diff --check: passed
+```
+
+Used the shared venv at `/home/user/work/venv-agent/bin/python`; the relative `venv-agent/bin/python` was absent.
+
+No full suite run. Commit message written; no commit created.

@@ -1,0 +1,400 @@
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium-1194/chrome-linux/chrome npm exec -- playwright test --config tests/e2e/timeline/player-audio.config.ts
+npm exec -- eslint tests/e2e/timeline/player-audio*.ts tests/e2e/timeline/player-tab-capture.probe.ts --max-warnings 0
+git diff --check
+```
+
+- Browser: **2 failed**. Mixes showed silent gaps, phase discontinuities and up to 841 ms drift. Fade duration also failed.
+- Mute produced zero PCM; Player half-volume measured −6.334 dB. Planted capture gain measured −6.232 dB, but the positive baseline remains unqualified.
+- ESLint and whitespace checks passed.
+- Used private PulseAudio after tab capture failed, and playable WebM after MP4 failed. Product/shared configuration growth: zero.
+- Processes and temporary directories cleaned; commit message written.
+
+[Detailed evidence and launch steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/player-audio-feasibility.md).
+
+Next: isolate Player scheduling/buffering versus capture-clock effects. M3 export/frame parity remains unverified; gate 6 stays open.
+exec
+/bin/bash -lc "nl -ba node_modules/@remotion/media/dist/esm/index.mjs | sed -n '2290,2385p;2420,2470p'; nl -ba node_modules/@remotion/media/dist/esm/index.mjs | sed -n '1700,1763p'; nl -ba node_modules/remotion/dist/cjs/set-global-time-anchor.js; git status --short" in /home/user/work/wt/vw-m1-audio-analysis
+ succeeded in 375ms:
+  2290	        playbackRate: this.playbackRate * this.globalPlaybackRate
+  2291	      });
+  2292	    }
+  2293	  };
+  2294	  audioSyncAnchorChanged = () => {
+  2295	    if (!this.audioIteratorManager) {
+  2296	      return;
+  2297	    }
+  2298	    this.audioIteratorManager.destroyIterator();
+  2299	  };
+  2300	}
+  2301	
+  2302	// src/on-error.ts
+  2303	var callOnErrorAndResolve = ({
+  2304	  onError,
+  2305	  error,
+  2306	  disallowFallback,
+  2307	  isClientSideRendering,
+  2308	  clientSideError
+  2309	}) => {
+  2310	  const result = onError?.(error);
+  2311	  if (isClientSideRendering) {
+  2312	    return ["fail", clientSideError];
+  2313	  }
+  2314	  if (result) {
+  2315	    return [result, error];
+  2316	  }
+  2317	  if (disallowFallback) {
+  2318	    return ["fail", error];
+  2319	  }
+  2320	  return ["fallback", error];
+  2321	};
+  2322	
+  2323	// src/use-common-effects.ts
+  2324	import { useContext, useLayoutEffect } from "react";
+  2325	import { Internals as Internals7 } from "remotion";
+  2326	var useCommonEffects = ({
+  2327	  mediaPlayerRef,
+  2328	  mediaPlayerReady,
+  2329	  currentTimeRef,
+  2330	  playing,
+  2331	  isPlayerBuffering,
+  2332	  frame,
+  2333	  trimBefore,
+  2334	  trimAfter,
+  2335	  effectiveMuted,
+  2336	  userPreferredVolume,
+  2337	  playbackRate,
+  2338	  globalPlaybackRate,
+  2339	  fps,
+  2340	  sequenceOffset,
+  2341	  loop,
+  2342	  durationInFrames,
+  2343	  isPremounting,
+  2344	  isPostmounting,
+  2345	  currentTime,
+  2346	  logLevel,
+  2347	  label
+  2348	}) => {
+  2349	  const sharedAudioContext = useContext(Internals7.SharedAudioContext);
+  2350	  useLayoutEffect(() => {
+  2351	    const mediaPlayer = mediaPlayerRef.current;
+  2352	    if (!mediaPlayer)
+  2353	      return;
+  2354	    if (playing && !isPlayerBuffering) {
+  2355	      mediaPlayer.play();
+  2356	    } else {
+  2357	      mediaPlayer.pause();
+  2358	    }
+  2359	  }, [
+  2360	    isPlayerBuffering,
+  2361	    playing,
+  2362	    logLevel,
+  2363	    mediaPlayerReady,
+  2364	    frame,
+  2365	    mediaPlayerRef
+  2366	  ]);
+  2367	  useLayoutEffect(() => {
+  2368	    if (!sharedAudioContext)
+  2369	      return;
+  2370	    const { remove } = sharedAudioContext.audioSyncAnchorEmitter.subscribe((event) => {
+  2371	      if (event === "changed") {
+  2372	        mediaPlayerRef.current?.audioSyncAnchorChanged();
+  2373	      }
+  2374	    });
+  2375	    return () => {
+  2376	      remove();
+  2377	    };
+  2378	  }, [sharedAudioContext, mediaPlayerRef]);
+  2379	  useLayoutEffect(() => {
+  2380	    const mediaPlayer = mediaPlayerRef.current;
+  2381	    if (!mediaPlayer || !mediaPlayerReady) {
+  2382	      return;
+  2383	    }
+  2384	    mediaPlayer.setTrimBefore(trimBefore, currentTimeRef.current);
+  2385	  }, [trimBefore, mediaPlayerReady, mediaPlayerRef, currentTimeRef]);
+  2420	  useLayoutEffect(() => {
+  2421	    const mediaPlayer = mediaPlayerRef.current;
+  2422	    if (!mediaPlayer || !mediaPlayerReady) {
+  2423	      return;
+  2424	    }
+  2425	    mediaPlayer.setLoop(loop, currentTimeRef.current);
+  2426	  }, [loop, mediaPlayerReady, mediaPlayerRef, currentTimeRef]);
+  2427	  useLayoutEffect(() => {
+  2428	    const mediaPlayer = mediaPlayerRef.current;
+  2429	    if (!mediaPlayer || !mediaPlayerReady) {
+  2430	      return;
+  2431	    }
+  2432	    mediaPlayer.setSequenceDurationInFrames(durationInFrames, currentTimeRef.current);
+  2433	  }, [durationInFrames, mediaPlayerReady, mediaPlayerRef, currentTimeRef]);
+  2434	  useLayoutEffect(() => {
+  2435	    const mediaPlayer = mediaPlayerRef.current;
+  2436	    if (!mediaPlayer) {
+  2437	      return;
+  2438	    }
+  2439	    mediaPlayer.setIsPremounting(isPremounting);
+  2440	  }, [isPremounting, mediaPlayerReady, mediaPlayerRef]);
+  2441	  useLayoutEffect(() => {
+  2442	    const mediaPlayer = mediaPlayerRef.current;
+  2443	    if (!mediaPlayer) {
+  2444	      return;
+  2445	    }
+  2446	    mediaPlayer.setIsPostmounting(isPostmounting);
+  2447	  }, [isPostmounting, mediaPlayerReady, mediaPlayerRef]);
+  2448	  useLayoutEffect(() => {
+  2449	    const mediaPlayer = mediaPlayerRef.current;
+  2450	    if (!mediaPlayer || !mediaPlayerReady) {
+  2451	      return;
+  2452	    }
+  2453	    mediaPlayer.setFps(fps, currentTimeRef.current);
+  2454	  }, [fps, mediaPlayerReady, mediaPlayerRef, currentTimeRef]);
+  2455	  useLayoutEffect(() => {
+  2456	    const mediaPlayer = mediaPlayerRef.current;
+  2457	    if (!mediaPlayer || !mediaPlayerReady) {
+  2458	      return;
+  2459	    }
+  2460	    mediaPlayer.setSequenceOffset(sequenceOffset, currentTimeRef.current);
+  2461	  }, [sequenceOffset, mediaPlayerReady, mediaPlayerRef, currentTimeRef]);
+  2462	  useLayoutEffect(() => {
+  2463	    const mediaPlayer = mediaPlayerRef.current;
+  2464	    if (!mediaPlayer || !mediaPlayerReady)
+  2465	      return;
+  2466	    mediaPlayer.seekTo(currentTime).catch(() => {});
+  2467	    Internals7.Log.trace({ logLevel, tag: "@remotion/media" }, `[${label}] Updating target time to ${currentTime.toFixed(3)}s`);
+  2468	  }, [currentTime, logLevel, mediaPlayerReady, label, mediaPlayerRef]);
+  2469	};
+  2470	
+  1700	      return;
+  1701	    }
+  1702	    if (currentSeek !== null && roundTo4Digits(currentSeek) === roundTo4Digits(newTime)) {
+  1703	      return;
+  1704	    }
+  1705	    const previousTime = currentSeek;
+  1706	    currentSeek = newTime;
+  1707	    if (getIsLooping()) {
+  1708	      if (getLoopSegmentMediaEndTimestamp() - newTime < 1) {
+  1709	        prewarmedVideoIteratorCache.prewarmIteratorForLooping({
+  1710	          timeToSeek: getStartTime()
+  1711	        });
+  1712	      }
+  1713	    }
+  1714	    const pendingFrameBehavior = previousTime !== null && isSequentialMediaTimeAdvance({
+  1715	      previousTime,
+  1716	      newTime,
+  1717	      fps,
+  1718	      playbackRate,
+  1719	      isPlaying
+  1720	    }) ? "wait" : "restart-iterator";
+  1721	    const videoSatisfyResult = await videoFrameIterator.tryToSatisfySeek(newTime, {
+  1722	      pendingFrameBehavior,
+  1723	      shouldContinue: () => !nonce.isStale()
+  1724	    });
+  1725	    if (videoSatisfyResult.type === "satisfied") {
+  1726	      await drawFrame(videoSatisfyResult.frame);
+  1727	      return;
+  1728	    }
+  1729	    if (nonce.isStale()) {
+  1730	      return;
+  1731	    }
+  1732	    await startVideoIterator(newTime, nonce);
+  1733	  };
+  1734	  return {
+  1735	    startVideoIterator,
+  1736	    getVideoIteratorsCreated: () => videoIteratorsCreated,
+  1737	    seek,
+  1738	    destroy: () => {
+  1739	      clearLastDrawnFrame();
+  1740	      prewarmedVideoIteratorCache.destroy();
+  1741	      videoFrameIterator?.destroy();
+  1742	      if (context && canvas) {
+  1743	        context.clearRect(0, 0, canvas.width, canvas.height);
+  1744	      }
+  1745	      if (currentDelayHandle) {
+  1746	        currentDelayHandle.unblock();
+  1747	        currentDelayHandle = null;
+  1748	      }
+  1749	      videoFrameIterator = null;
+  1750	    },
+  1751	    getVideoFrameIterator: () => videoFrameIterator,
+  1752	    drawFrame,
+  1753	    redrawCurrentFrame,
+  1754	    getFramesRendered: () => framesRendered
+  1755	  };
+  1756	};
+  1757	
+  1758	// src/media-player.ts
+  1759	class MediaPlayer {
+  1760	  tagType;
+  1761	  canvas;
+  1762	  context;
+  1763	  src;
+nl: node_modules/remotion/dist/cjs/set-global-time-anchor.js: No such file or directory
+
+exec
+/bin/bash -lc "python - <<'PY'
+import numpy as np,glob,wave,json,zipfile
+p=glob.glob('/tmp/timeline-player-audio-results/*/mixed-repeat.wav')[0]
+with wave.open(p) as w:x=np.frombuffer(w.readframes(w.getnframes()),'<i2').reshape(-1,2)[:,0]/32768
+phase=[]
+for f in [440,660,880]:
+ cs=[]
+ for t in [1.7,2.2]:
+  i=np.arange(round(t*48000),round((t+.1)*48000));cs.append(2*np.mean(x[i]*np.exp(2j*np.pi*f*i/48000)))
+ phase.append(np.angle(cs[1]/cs[0]))
+print('common-capture shift harmonic residual:',np.angle(np.exp(1j*(phase[2]-2*phase[0]))))
+print('ideal continuous fade visible duration:',3-2*.6*.004/.1767790757626562)
+# Summarize original trace timing of measurement gesture and observed buffers, without claiming recorder alignment.
+for p in glob.glob('/tmp/timeline-player-audio-results/*/trace.zip'):
+ z=zipfile.ZipFile(p);es=[json.loads(l) for l in z.read('0-trace.trace').splitlines()]
+ keywords=('buffer','audio-scheduling','AudioContext','seek','Waiting')
+ msgs=[e.get('text','') for e in es if e['type']=='console' and any(s.lower() in e.get('text','').lower() for s in keywords)]
+ print(p.split('/')[-2], 'scheduling/readiness console events',len(msgs),msgs[:5])
+PY
+rg --files -uuu node_modules/remotion/dist/cjs | rg 'global-time-anchor'; rg -n 'ALLOWED_GLOBAL_TIME_ANCHOR_SHIFT|setGlobalTimeAnchor|frame / config.fps|context.buffering.current|listenForResume' node_modules/@remotion/player/dist/esm/index.mjs | tail -20; git status --short" in /home/user/work/wt/vw-m1-audio-analysis
+ succeeded in 599ms:
+common-capture shift harmonic residual: -1.2020422956734462
+ideal continuous fade visible duration: 2.9728474652370935
+player-audio-capture.probe-afeb7-layer-amplified-fade-timing-player-audio-capture scheduling/readiness console events 0 []
+player-audio-capture.probe-f0029-layer-mixed-output-controls-player-audio-capture scheduling/readiness console events 0 []
+531:    const clear2 = bufferManager.listenForResume(() => {
+978:var ALLOWED_GLOBAL_TIME_ANCHOR_SHIFT = 0.1;
+979:var setGlobalTimeAnchor = ({
+992:  if (Math.abs(shift) < ALLOWED_GLOBAL_TIME_ANCHOR_SHIFT + latency && !force) {
+1055:    const changed = setGlobalTimeAnchor({
+1058:      absoluteTimeInSeconds: frame / config.fps,
+1081:        setGlobalTimeAnchor({
+1112:      const changed = setGlobalTimeAnchor({
+1150:      if (!muted && !audioContextFailed && !context.buffering.current) {
+1168:      if (nextFrame !== getCurrentFrame() && (!hasEnded || moveToBeginningWhenEnded) && !context.buffering.current) {
+1200:      if (context.buffering.current) {
+1204:        const stopListening = context.listenForResume(() => {
+
+codex
+The untouched repeat gives stronger evidence of a playback discontinuity: between two steady windows, the 440 Hz and 880 Hz phase changes differ by 1.202 radians from what a common recorder time shift would produce. That rules out whole-stream capture loss as the sole explanation.
+
+The traces lack buffering transitions and audio-context clocks, so they cannot identify the specific scheduling cause. I’ll recommend one clock-instrumented mixed replay for the orchestrator to run; no product fix is proven yet.
+codex
+**Gate 6 remains open.** Mixed playback has real backend-relative discontinuities; capture artifacts alone cannot explain it. No product/test edits, installs, browser runs, or commit were made. Both existing failed test verdicts remain unchanged.
+
+Paths below are relative to `/home/user/work/wt/vw-m1-player-mix`, except installed dependencies, which resolve through shared `node_modules`.
+
+| Finding | Diagnosis and confidence |
+|---|---|
+| Mixed clock excess | **High:** Player timing changed independently of PCM capture. Base mix: `(20097.1−15592.4)/1000−118/30 = 0.571367 s`. Frames 11→12 took 235.1 ms; 15→16 took 182.3 ms. These can include intentional buffering pauses; they do not by themselves prove erroneous scheduling. |
+| Mixed gaps/phase | **High:** actual discontinuities exist upstream of the common recorder. Base mix contains exact stereo-zero runs at 1.230667–1.262812 s and 3.668771–3.697396 s. Untouched repeat contains 18.146 ms and 76.417 ms zero runs. |
+| Repeat gain failure | **High:** the fixed measurement window confounds gain with interruptions. It is not evidence of a gain-control defect. |
+| Decoded-video tail | **High:** prolonged captured output; **unresolved cause**. Constant startup latency cannot explain increased duration. |
+| Fade duration | The generic audible-duration metric is biased, but **threshold bias alone does not explain this recording**. Backend/envelope timing remains unresolved. |
+
+**Calculations from captured PCM**
+
+The repeat’s steady 1.7–1.8 s and 2.2–2.3 s windows retain approximately 0.1250/0.2500/0.1253 tone amplitudes. Their phase changes are:
+
+- 440 Hz: 1.583039 rad.
+- 880 Hz: 1.964035 rad.
+- A common recorder sample displacement requires `Δφ880 = 2Δφ440 (mod 2π)`. Observed residual: **−1.202042 rad**.
+
+Thus whole-stream capture loss or displacement cannot be the sole cause. Backend scheduling, pausing, or resynchronization is implicated; the responsible implementation path is not yet isolated.
+
+The original gain window is `onset+0.5` through `onset+2.5` (`player-audio-capture.probe.ts:68–73`). Its repeat result is **+0.561 dB**. Diagnostic whole-record energy, `E=Σ(left²)/48000`, gives:
+
+| Capture | E | `10 log10(E/Ebase)` |
+|---|---:|---:|
+| Mixed | 0.1346325025 | 0 dB |
+| Untouched repeat | 0.1385322349 | +0.124009 dB |
+| Player half | 0.0339375916 | −5.984689 dB |
+| Capture half | 0.0336387094 | −6.023106 dB |
+
+Stable 2.8–3.1 s mixed/repeat RMS values are 0.21659566/0.21659432. This identifies substantial window bias; whole-record energy is diagnostic only and does not replace the failed continuity/comparator checks.
+
+Decoded video retains approximately **0.1253 peak amplitude at 3.5–3.6 s**, with phase unchanged from an earlier steady window, despite only −8.933 ms aggregate Player drift. This is more than threshold-edge rounding. Scheduling/replayed audio and downstream capture insertion remain distinguishable possibilities; periodic tones cannot reveal every repeated/dropped whole cycle.
+
+**Fade assessment**
+
+`src/tools/video-editor/lib/audioFade.ts:30–46,59–65` implements linear **amplitude** ramps: 18 frames in/out over 90 frames at 30 fps. The measured plateau RMS is approximately 0.176779.
+
+The continuous-ramp threshold approximation is:
+
+`3 − 2×0.6×(0.004/0.176779) = 2.972847 s`
+
+Frame stepping and 20 ms detector windows bias the edges, so thresholded onset is not playback start. Nevertheless, the observed support is approximately **0.621083–3.441375 s**; RMS at 3.42–3.44 s remains approximately **27.6–27.7% of plateau**, then vanishes. The measured falling-envelope extrapolation reaches zero near 3.614 s. Consequently, dismissing the 2.84 s verdict as merely the threshold would be unsupported. Product ownership of the cutoff is unproven.
+
+**Relevant implementation**
+
+- `AudioTrack.tsx:122–125,151–166` deliberately holds playback until `HAVE_FUTURE_DATA`; the probe’s initial readiness check requires only `readyState >= 2` (`probe.ts:163–165`). After warm-up/rewind, it checks frame zero but does not record renewed readiness (`:177–187`).
+- `ReadinessVideo.tsx:23,42–46` records that a frame was decoded; this does not establish sustained decoder/audio readiness.
+- Installed `@remotion/media/dist/esm/index.mjs:659–704` blocks while collecting 100 ms of audio; `:1662–1689,1714–1732` can restart video iterators with playback holds; `:2294–2298,2370–2373` destroys audio iterators on anchor changes.
+- Installed `@remotion/player/dist/cjs/use-playback.js:229–239` intentionally suspends/waits during buffering and resets its wall-clock origin on resume. Native media also pauses during Player buffering (`remotion/dist/cjs/use-media-playback.js:109–118`).
+- The managed-media wrapper changes request credentials/CORS, not scheduling (`vendor/astrid-browser/astrid/packs/rendering/shared/managed-media.tsx:17–20`).
+
+Neither trace contains scheduling/readiness console events. Existing observations therefore cannot separate intended holds from faulty resume/rescheduling, and establish no host-load cause.
+
+`player-audio-monitor.ts:45–61,81–83` trims to **288,000 received frames**. This guarantees file length, not continuous acquisition: dropped packets can be followed by later samples. WAV discards original acquisition timing. Keep the existing gap/phase rejection; even that cannot detect every whole-period loss.
+
+**One next experiment**
+
+Have the central test service run **one quiet, unchanged mixed replay**, retaining the current assertions. Record a shared clock timeline containing Player `waiting/resume/frameupdate`, native media `currentTime/readyState/seeking`, AudioContext state/currentTime/output timestamps and decoded-node start/stop times, alongside recorder packet PTS/sample totals and monotonic capture/gesture times. This will locate discontinuities relative to buffering and distinguish backend rescheduling from capture-clock loss. No speculative product fix is justified yet.
+
+**Validation:** read-only Python analysis (`wave`, NumPy, `zipfile`, JSON) checked all ten recordings: each is 48 kHz, stereo s16, 288,000 frames; muted PCM is exactly zero. `git status --short` returned clean. No tests or full suites were run; existing browser evidence remains **2 failed**. Export parity and absolute capture latency remain unverified.
+tokens used
+113,156
+**Gate 6 remains open.** Mixed playback has real backend-relative discontinuities; capture artifacts alone cannot explain it. No product/test edits, installs, browser runs, or commit were made. Both existing failed test verdicts remain unchanged.
+
+Paths below are relative to `/home/user/work/wt/vw-m1-player-mix`, except installed dependencies, which resolve through shared `node_modules`.
+
+| Finding | Diagnosis and confidence |
+|---|---|
+| Mixed clock excess | **High:** Player timing changed independently of PCM capture. Base mix: `(20097.1−15592.4)/1000−118/30 = 0.571367 s`. Frames 11→12 took 235.1 ms; 15→16 took 182.3 ms. These can include intentional buffering pauses; they do not by themselves prove erroneous scheduling. |
+| Mixed gaps/phase | **High:** actual discontinuities exist upstream of the common recorder. Base mix contains exact stereo-zero runs at 1.230667–1.262812 s and 3.668771–3.697396 s. Untouched repeat contains 18.146 ms and 76.417 ms zero runs. |
+| Repeat gain failure | **High:** the fixed measurement window confounds gain with interruptions. It is not evidence of a gain-control defect. |
+| Decoded-video tail | **High:** prolonged captured output; **unresolved cause**. Constant startup latency cannot explain increased duration. |
+| Fade duration | The generic audible-duration metric is biased, but **threshold bias alone does not explain this recording**. Backend/envelope timing remains unresolved. |
+
+**Calculations from captured PCM**
+
+The repeat’s steady 1.7–1.8 s and 2.2–2.3 s windows retain approximately 0.1250/0.2500/0.1253 tone amplitudes. Their phase changes are:
+
+- 440 Hz: 1.583039 rad.
+- 880 Hz: 1.964035 rad.
+- A common recorder sample displacement requires `Δφ880 = 2Δφ440 (mod 2π)`. Observed residual: **−1.202042 rad**.
+
+Thus whole-stream capture loss or displacement cannot be the sole cause. Backend scheduling, pausing, or resynchronization is implicated; the responsible implementation path is not yet isolated.
+
+The original gain window is `onset+0.5` through `onset+2.5` (`player-audio-capture.probe.ts:68–73`). Its repeat result is **+0.561 dB**. Diagnostic whole-record energy, `E=Σ(left²)/48000`, gives:
+
+| Capture | E | `10 log10(E/Ebase)` |
+|---|---:|---:|
+| Mixed | 0.1346325025 | 0 dB |
+| Untouched repeat | 0.1385322349 | +0.124009 dB |
+| Player half | 0.0339375916 | −5.984689 dB |
+| Capture half | 0.0336387094 | −6.023106 dB |
+
+Stable 2.8–3.1 s mixed/repeat RMS values are 0.21659566/0.21659432. This identifies substantial window bias; whole-record energy is diagnostic only and does not replace the failed continuity/comparator checks.
+
+Decoded video retains approximately **0.1253 peak amplitude at 3.5–3.6 s**, with phase unchanged from an earlier steady window, despite only −8.933 ms aggregate Player drift. This is more than threshold-edge rounding. Scheduling/replayed audio and downstream capture insertion remain distinguishable possibilities; periodic tones cannot reveal every repeated/dropped whole cycle.
+
+**Fade assessment**
+
+`src/tools/video-editor/lib/audioFade.ts:30–46,59–65` implements linear **amplitude** ramps: 18 frames in/out over 90 frames at 30 fps. The measured plateau RMS is approximately 0.176779.
+
+The continuous-ramp threshold approximation is:
+
+`3 − 2×0.6×(0.004/0.176779) = 2.972847 s`
+
+Frame stepping and 20 ms detector windows bias the edges, so thresholded onset is not playback start. Nevertheless, the observed support is approximately **0.621083–3.441375 s**; RMS at 3.42–3.44 s remains approximately **27.6–27.7% of plateau**, then vanishes. The measured falling-envelope extrapolation reaches zero near 3.614 s. Consequently, dismissing the 2.84 s verdict as merely the threshold would be unsupported. Product ownership of the cutoff is unproven.
+
+**Relevant implementation**
+
+- `AudioTrack.tsx:122–125,151–166` deliberately holds playback until `HAVE_FUTURE_DATA`; the probe’s initial readiness check requires only `readyState >= 2` (`probe.ts:163–165`). After warm-up/rewind, it checks frame zero but does not record renewed readiness (`:177–187`).
+- `ReadinessVideo.tsx:23,42–46` records that a frame was decoded; this does not establish sustained decoder/audio readiness.
+- Installed `@remotion/media/dist/esm/index.mjs:659–704` blocks while collecting 100 ms of audio; `:1662–1689,1714–1732` can restart video iterators with playback holds; `:2294–2298,2370–2373` destroys audio iterators on anchor changes.
+- Installed `@remotion/player/dist/cjs/use-playback.js:229–239` intentionally suspends/waits during buffering and resets its wall-clock origin on resume. Native media also pauses during Player buffering (`remotion/dist/cjs/use-media-playback.js:109–118`).
+- The managed-media wrapper changes request credentials/CORS, not scheduling (`vendor/astrid-browser/astrid/packs/rendering/shared/managed-media.tsx:17–20`).
+
+Neither trace contains scheduling/readiness console events. Existing observations therefore cannot separate intended holds from faulty resume/rescheduling, and establish no host-load cause.
+
+`player-audio-monitor.ts:45–61,81–83` trims to **288,000 received frames**. This guarantees file length, not continuous acquisition: dropped packets can be followed by later samples. WAV discards original acquisition timing. Keep the existing gap/phase rejection; even that cannot detect every whole-period loss.
+
+**One next experiment**
+
+Have the central test service run **one quiet, unchanged mixed replay**, retaining the current assertions. Record a shared clock timeline containing Player `waiting/resume/frameupdate`, native media `currentTime/readyState/seeking`, AudioContext state/currentTime/output timestamps and decoded-node start/stop times, alongside recorder packet PTS/sample totals and monotonic capture/gesture times. This will locate discontinuities relative to buffering and distinguish backend rescheduling from capture-clock loss. No speculative product fix is justified yet.
+
+**Validation:** read-only Python analysis (`wave`, NumPy, `zipfile`, JSON) checked all ten recordings: each is 48 kHz, stereo s16, 288,000 frames; muted PCM is exactly zero. `git status --short` returned clean. No tests or full suites were run; existing browser evidence remains **2 failed**. Export parity and absolute capture latency remain unverified.

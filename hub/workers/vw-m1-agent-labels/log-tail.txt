@@ -1,0 +1,400 @@
+
+exec
+/bin/bash -lc "sed -n '1,240p' astrid/packs/rendering/actions/timeline_visualize/provenance.py && git diff -- astrid/packs/rendering/actions/timeline_visualize/fast_lane.py astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py astrid/packs/rendering/actions/timeline_visualize/inspection_contract.py tests/packs/rendering/test_fast_lane.py" in /home/user/work/wt/vw-m1-agent-labels
+ succeeded in 15ms:
+"""Truthful labels for the immutable snapshot a visualize result consumed."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+
+def _first_string(*values: Any) -> str | None:
+    for value in values:
+        if isinstance(value, str) and value:
+            return value
+    return None
+
+
+def _is_candidate(metadata: Mapping[str, Any], authority: Mapping[str, Any]) -> bool:
+    selection = str(metadata.get("selection") or "").strip().lower()
+    if selection in {"explicit_candidate_preview", "candidate_preview", "unpublished_candidate_preview"}:
+        return True
+    if isinstance(metadata.get("working_copy"), Mapping):
+        return True
+    if isinstance(authority.get("working_copy"), Mapping):
+        return True
+    if isinstance(authority.get("authoring_preview"), Mapping):
+        return True
+    mode = str(authority.get("render_mode") or authority.get("mode") or "").strip().lower()
+    return mode in {"authoring_candidate_preview", "candidate", "preview", "unpublished"}
+
+
+def snapshot_label(snapshot: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Describe the revision represented by an admitted visualize snapshot.
+
+    The snapshot's canonical authority is the only source of revision identity.
+    In particular, ``requested_revision_id`` and current-head fields are not
+    used: they can describe a request or a later mutable state rather than the
+    bytes that were actually rendered.
+    """
+    if not isinstance(snapshot, Mapping):
+        return {
+            "status": "unavailable",
+            "label": "revision unavailable",
+            "actual_revision_id": None,
+            "base_revision_id": None,
+        }
+
+    metadata = snapshot.get("metadata")
+    metadata = metadata if isinstance(metadata, Mapping) else {}
+    canonical = metadata.get("canonical_timeline")
+    canonical = canonical if isinstance(canonical, Mapping) else {}
+    capture = metadata.get("capture_authority")
+    capture = capture if isinstance(capture, Mapping) else {}
+    # A composed capture has its own authority block; ordinary managed renders
+    # use canonical_timeline. Prefer the capture block only when it carries the
+    # immutable parent, never a requested/current-head hint.
+    authority = capture if _first_string(
+        capture.get("parent_revision_id"), capture.get("head_revision_id"), capture.get("revision_id")
+    ) else canonical
+    actual = _first_string(
+        authority.get("parent_revision_id"), authority.get("head_revision_id"), authority.get("revision_id")
+    )
+    candidate = _is_candidate(metadata, authority)
+    if actual is None and candidate and isinstance(authority.get("authoring_preview"), Mapping):
+        preview = authority["authoring_preview"]
+        actual = _first_string(
+            preview.get("candidate_parent_revision_id"), preview.get("base_revision_id")
+        )
+    if candidate:
+        if actual is None:
+            return {
+                "status": "unavailable",
+                "label": "candidate revision unavailable",
+                "actual_revision_id": None,
+                "base_revision_id": None,
+            }
+        return {
+            "status": "candidate",
+            "label": f"unsaved candidate based on committed revision {actual}",
+            "actual_revision_id": None,
+            "base_revision_id": actual,
+        }
+    if actual is None:
+        return {
+            "status": "unavailable",
+            "label": "revision unavailable",
+            "actual_revision_id": None,
+            "base_revision_id": None,
+        }
+    return {
+        "status": "committed",
+        "label": f"committed revision {actual}",
+        "actual_revision_id": actual,
+        "base_revision_id": None,
+    }
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/fast_lane.py b/astrid/packs/rendering/actions/timeline_visualize/fast_lane.py
+index e4eea771..0bd5b12f 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/fast_lane.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/fast_lane.py
+@@ -20,6 +20,8 @@ from fractions import Fraction
+ from pathlib import Path
+ from typing import Any, Iterable, Mapping, Sequence
+ 
++from .provenance import snapshot_label
++
+ FAST_ROOT = Path(tempfile.gettempdir()) / "astrid-v3-fast-lane"
+ KEEP_RUNS = 6
+ MAX_MOMENTS = 4
+@@ -768,6 +770,10 @@ def verify_lines(result: Mapping[str, Any]) -> list[str]:
+     lines.append(f"page    {result['page']}   (left published, right working copy; read it)")
+     timing = result["timing"]
+     lines.append(f"time    {timing['total_s']:.1f} s (decoded from the two managed renders; no capture)")
++    labels = result.get("snapshot_labels") or {}
++    if labels:
++        lines.append(f"snapshot published: {(labels.get('published') or {}).get('label', 'revision unavailable')}")
++        lines.append(f"snapshot working: {(labels.get('working') or {}).get('label', 'revision unavailable')}")
+     lines.extend(str(note) for note in result.get("notes") or ())
+     return lines
+ 
+@@ -862,7 +868,20 @@ def verify(
+                 for side, labelled_path in row["labelled"].items():
+                     row[f"{side}_display"] = labelled_path
+             rows.append(row)
+-        page = _compose_page(rows, run_dir / "verify.png", title=f"verify {timeline} · {len(rows)} moment(s)", footer=footer)
++        snapshot_labels = {
++            "published": snapshot_label(pair.get("base_snapshot")),
++            "working": snapshot_label(pair.get("working_snapshot")),
++        }
++        page = _compose_page(
++            rows,
++            run_dir / "verify.png",
++            title=f"verify {timeline} · {len(rows)} moment(s)",
++            footer=(
++                f"published snapshot: {snapshot_labels['published']['label']}",
++                f"working snapshot: {snapshot_labels['working']['label']}",
++                *footer,
++            ),
++        )
+         notes: list[str] = []
+         if skipped:  # one page holds MAX_MOMENTS; say what was left out instead of dropping it silently
+             notes.append(f"verified the first {len(selected)} of {len(requested)} moments (a page holds {MAX_MOMENTS}); "
+@@ -871,7 +890,8 @@ def verify(
+                   "timing": {"total_s": round(time.monotonic() - started, 1), "startup_s": round(startup_s, 1),
+                              "end_to_end_s": round(startup_s + time.monotonic() - started, 1)},
+                   "notes": notes, "render_runs": {"published": pair["base_run"], "working": pair["working_run"]},
+-                  "base_media": pair["base_media"], "working_media": pair["working_media"]}
++                  "base_media": pair["base_media"], "working_media": pair["working_media"],
++                  "snapshot_labels": snapshot_labels}
+         result["lines"] = verify_lines(result)
+         return result
+     except FastLaneError:
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py b/astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
+index 4835d086..3e42f466 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
+@@ -27,6 +27,7 @@ from .audio_analysis import (
+     project_waveform,
+ )
+ from .inspection_contract import canonical_clip_identity, compact_render_receipt, project_input_window
++from .provenance import snapshot_label
+ from .inspector_navigation import build_inspector_navigation
+ 
+ 
+@@ -1019,8 +1020,10 @@ def plan_filmstrip(snapshot: dict, options: dict) -> dict:
+         motion_info = {key: motion_cut.get(key) for key in ('index', 'start', 'end', 'duration', 'clip_id', 'shot', 'occurrence_id', 'deliberate_hold')}
+         motion_info.update({'preset': motion_window['preset'], 'window': [motion_window['start'], motion_window['end']],
+                             'cuts_in': motion_window['cuts_in'], 'labels': {str(k): v for k, v in window_labels.items()}})
++    provenance = {k: snapshot.get(k) for k in ('project_slug', 'timeline_id', 'timeline_name', 'render_run_id', 'video_digest', 'fps_rational', 'duration_frames', 'metadata')}
++    provenance['revision'] = snapshot_label(snapshot)
+     return {'navigation': navigation, 'schema': 'astrid.filmstrip.v1', 'view': options.get('view') or 'filmstrip', 'contact': contact_info, 'motion': motion_info,
+-            'provenance': {k: snapshot.get(k) for k in ('project_slug', 'timeline_id', 'timeline_name', 'render_run_id', 'video_digest', 'fps_rational', 'duration_frames', 'metadata')},
++            'provenance': provenance,
+             'audio': snapshot.get('audio') if isinstance(snapshot.get('audio'), dict) else navigation['audio'],
+             'boundary_index': boundary_index,
+             'coverage': coverage,
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py b/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+index e3a49d6a..68428d1c 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+@@ -26,6 +26,7 @@ from .filmstrip_cards import (
+ )
+ from .filmstrip_options import filmstrip_options
+ from .inspection_contract import canonical_clip_identity, compact_render_receipt, project_input_window
++from .provenance import snapshot_label
+ from .shot_selector import resolve_shot_selector
+ 
+ 
+@@ -218,7 +219,10 @@ def execute_input_only(args, authority):
+         index_target = None
+     index = {
+         "schema": "astrid.timeline-input-inspection.v1",
+-        "provenance": {key: snapshot.get(key) for key in ("project_slug", "timeline_id", "timeline_name", "render_run_id", "fps_rational", "duration_frames", "metadata")},
++        "provenance": {
++            **{key: snapshot.get(key) for key in ("project_slug", "timeline_id", "timeline_name", "render_run_id", "fps_rational", "duration_frames", "metadata")},
++            "revision": snapshot_label(snapshot),
++        },
+         "sampling": {"mode": "input_only", "window": projection["window"], "shared_window": [float(Fraction(start_frame, 1) / fps), float(Fraction(end_frame, 1) / fps)], "range": [float(Fraction(start_frame, 1) / fps), float(Fraction(end_frame, 1) / fps)], "step_frames_rational": [1, 1], "include_cuts": False, "explicit_interval": False, "options": options},
+         "input_projection": projection, "cards": [], "navigation": {"frames": [], "tracks": [], "clips": [], "shots": [], "phrases": [], "gaps": [], "waveforms": [], "targets": {}},
+         "components": options.get("components"), "render": {"status": "not_requested", "auto_render": False},
+@@ -312,7 +316,9 @@ def execute_input_only(args, authority):
+             entrypoints=outer_entrypoints,
+         ),
+     )
+-    return {"returncode": 0, "run_root": str(out_root), "manifest_path": str(pack_root / "manifest.json"), "timeline_ids": [snapshot.get("timeline_id")], "outputs": {"pack_root": str(pack_root), "manifest_path": str(pack_root / "manifest.json"), "frame_index": str(pack_root / "frame-index.json"), "pages": [str(path) for path in png_pages], "filmstrip_bundle": str(bundle), "render_requested": False}}
++    return {"returncode": 0, "run_root": str(out_root), "manifest_path": str(pack_root / "manifest.json"), "timeline_ids": [snapshot.get("timeline_id")],
++            "snapshot_label": snapshot_label(snapshot),
++            "outputs": {"pack_root": str(pack_root), "manifest_path": str(pack_root / "manifest.json"), "frame_index": str(pack_root / "frame-index.json"), "pages": [str(path) for path in png_pages], "filmstrip_bundle": str(bundle), "render_requested": False}}
+ 
+ 
+ def _materialize_input_previews(projection: Mapping, pack_root: Path) -> None:
+@@ -2004,10 +2010,12 @@ def execute_filmstrip(args, *, authority=None):
+     timing['total_s'] = round(finished_at - started_at, 3)
+     return {'returncode': 0, 'run_root': str(out_root),
+             'manifest_path': str(manifest_path), 'timeline_ids': [snapshot['timeline_id']],
++            'snapshot_label': snapshot_label(snapshot),
+             'identity': identity, 'cas': cas, 'entrypoints': entrypoints,
+             'request': options.get('request'), 'timing': timing,
+             'outputs': {'pack_root': str(pack_root), 'manifest_path': str(manifest_path),
+                         'identity': identity, 'cas': cas, 'entrypoints': entrypoints,
++                        'snapshot_label': snapshot_label(snapshot),
+                         'request': options.get('request'), 'timing': timing,
+                         **result['paths'], 'pages': result['paths']['png'],
+                         'primary_page': (result['paths']['png'] or [None])[0],
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/inspection_contract.py b/astrid/packs/rendering/actions/timeline_visualize/inspection_contract.py
+index dd493a0c..4fb23e4b 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/inspection_contract.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/inspection_contract.py
+@@ -17,6 +17,7 @@ from pathlib import Path, PurePosixPath
+ from typing import Any, Iterable, Mapping
+ 
+ from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
++from astrid.packs.rendering.actions.timeline_visualize.provenance import snapshot_label
+ 
+ COMPONENTS = ("output", "text", "audio", "inputs")
+ DEFAULT_COMPONENTS = ("output", "text", "audio")
+@@ -1065,6 +1066,7 @@ def compact_render_receipt(index: Mapping, snapshot: Mapping, root: Path) -> dic
+     """Persist sample evidence, never a duplicate timeline/navigation graph."""
+     provenance = _projection(snapshot, _IDENTITY_KEYS)
+     provenance["fps_rational"] = list(snapshot["fps_rational"])
++    provenance["revision"] = snapshot_label(snapshot)
+     canonical = (snapshot.get("metadata") or {}).get("canonical_timeline") or {}
+     timeline = _projection(canonical, ("config_version", "config_hash", "authority"))
+     timeline["timeline_ref"] = provenance.get("timeline_id")
+diff --git a/tests/packs/rendering/test_fast_lane.py b/tests/packs/rendering/test_fast_lane.py
+index 25cbfad7..768639ea 100644
+--- a/tests/packs/rendering/test_fast_lane.py
++++ b/tests/packs/rendering/test_fast_lane.py
+@@ -1,8 +1,26 @@
+-"""Unit-level fast-lane timing checks (no Chrome, no Node)."""
++"""Unit-level fast-lane timing and snapshot provenance checks."""
++
++from __future__ import annotations
++
+ import os
+ import time
+ 
+ from astrid.core import gateway
++from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import render_status
++from astrid.packs.rendering.actions.timeline_visualize.provenance import snapshot_label
++
++
++def _snapshot(parent: str | None, *, selection: str = "explicit_historical_render", **metadata):
++    canonical = {}
++    if parent is not None:
++        canonical["parent_revision_id"] = parent
++    return {
++        "metadata": {
++            "selection": selection,
++            "canonical_timeline": canonical,
++            **metadata,
++        }
++    }
+ 
+ 
+ def test_gateway_main_stamps_the_cli_start_for_the_check_timing(monkeypatch):
+@@ -13,3 +31,64 @@ def test_gateway_main_stamps_the_cli_start_for_the_check_timing(monkeypatch):
+     assert stamp <= time.monotonic()
+     # The first call stamps the gateway import; it is never later than this test's start by a wide margin.
+     assert stamp <= before + 1.0
++
++
++def test_historical_snapshot_label_uses_the_revision_actually_rendered():
++    label = snapshot_label(_snapshot("R1", requested_revision_id="R2", current_head_revision_id="R2"))
++
++    assert label == {
++        "status": "committed",
++        "label": "committed revision R1",
++        "actual_revision_id": "R1",
++        "base_revision_id": None,
++    }
++
++
++def test_candidate_label_is_unsaved_and_keeps_its_committed_parent():
++    label = snapshot_label(
++        _snapshot("R1", selection="explicit_candidate_preview", requested_revision_id="R2")
++    )
++
++    assert label == {
++        "status": "candidate",
++        "label": "unsaved candidate based on committed revision R1",
++        "actual_revision_id": None,
++        "base_revision_id": "R1",
++    }
++
++
++def test_requested_revision_without_actual_snapshot_identity_is_unavailable():
++    label = snapshot_label(_snapshot(None, requested_revision_id="R2"))
++
++    assert label["status"] == "unavailable"
++    assert label["actual_revision_id"] is None
++    assert "R2" not in label["label"]
++
++
++def test_no_cache_has_no_revision_label():
++    label = snapshot_label(None)
++
++    assert label == {
++        "status": "unavailable",
++        "label": "revision unavailable",
++        "actual_revision_id": None,
++        "base_revision_id": None,
++    }
++
++
++def test_mismatched_requested_revision_cannot_relabel_actual_snapshot():
++    snapshot = _snapshot(
++        "R1",
++        capture_authority={"parent_revision_id": "R1"},
++        requested_revision_id="R2",
++    )
++
++    assert snapshot_label(snapshot)["label"] == "committed revision R1"
++
++
++def test_renderer_outage_status_says_output_is_unavailable():
++    status = render_status(lifecycle="absent", output={"timeline": "cut"}, project="demo")
++
++    assert status["kind"] == "absent"
++    assert "No successful render is available" in status["label"]
++    assert status["output"]["available"] is False
+
+codex
+## Report
+
+Implemented actual snapshot provenance labels for visualize outputs.
+
+- Added committed, candidate, and unavailable labels using immutable snapshot authority.
+- Threaded labels into filmstrip provenance, render receipts, execution results, and fast-lane output.
+- Requested/current revision IDs cannot relabel the snapshot actually rendered.
+- Renderer-unavailable behavior continues through the existing `render_status` contract.
+- No SDK/compiler, Runtime, transport, lifecycle, or receipt machinery changes.
+
+Tests:
+
+```text
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q \
+  tests/packs/rendering/test_fast_lane.py \
+  tests/packs/rendering/test_timeline_visualize_labels.py \
+  tests/packs/rendering/test_fast_lane_words.py \
+  tests/packs/rendering/test_timeline_filmstrip_execution.py \
+  tests/packs/rendering/test_timeline_inspection_contract.py \
+  tests/packs/rendering/test_timeline_offline_inspection.py
+```
+
+Result: `93 passed, 1 warning`
+
+`git diff --check`: passed.
+
+The real renderer path and full suite were not run per instructions. Commit message written to the requested orchestrator path; no commit was created.
+tokens used
+284,009
+## Report
+
+Implemented actual snapshot provenance labels for visualize outputs.
+
+- Added committed, candidate, and unavailable labels using immutable snapshot authority.
+- Threaded labels into filmstrip provenance, render receipts, execution results, and fast-lane output.
+- Requested/current revision IDs cannot relabel the snapshot actually rendered.
+- Renderer-unavailable behavior continues through the existing `render_status` contract.
+- No SDK/compiler, Runtime, transport, lifecycle, or receipt machinery changes.
+
+Tests:
+
+```text
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q \
+  tests/packs/rendering/test_fast_lane.py \
+  tests/packs/rendering/test_timeline_visualize_labels.py \
+  tests/packs/rendering/test_fast_lane_words.py \
+  tests/packs/rendering/test_timeline_filmstrip_execution.py \
+  tests/packs/rendering/test_timeline_inspection_contract.py \
+  tests/packs/rendering/test_timeline_offline_inspection.py
+```
+
+Result: `93 passed, 1 warning`
+
+`git diff --check`: passed.
+
+The real renderer path and full suite were not run per instructions. Commit message written to the requested orchestrator path; no commit was created.

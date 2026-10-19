@@ -1,0 +1,9 @@
+#!/bin/bash
+# digest — one-screen hourly check-in summary for the orchestrator
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+echo "== $(date -u +%FT%TZ)  disk free: $(df -h --output=avail /home/user | tail -1)  codex procs: $(pgrep -fc 'codex-linux.*exec')"
+echo "== integration heads"; for r in agent runtime app composition; do echo "  $r $(git -C /home/user/work/$r log -1 --format='%h %cr %s' 2>/dev/null | cut -c1-90)"; done
+echo "== managers"; for f in $O/managers/*/STATUS.md; do [ -f $f ] || continue; m=$(basename $(dirname $f)); r=$( [ -f $(dirname $f)/running ] && echo RUNNING || echo idle); echo "--- $m ($r, status updated $(date -u -r $f +%H:%MZ))"; sed -n '1,25p' $f; done
+echo "== escalations"; ls $O/escalations/*.md 2>/dev/null | while read f; do echo "  OPEN: $f"; head -5 $f | sed 's/^/    /'; done
+echo "== workers"; $O/bin/workers | sort -k2
+echo "== failed workers (nonzero exit)"; for d in $O/workers/*/; do [ -f $d/exit ] && [ "$(cat $d/exit)" != 0 ] && echo "  $(basename $d) exit=$(cat $d/exit): $(tail -2 $d/log.txt | tr '\n' ' ' | cut -c1-150)"; done

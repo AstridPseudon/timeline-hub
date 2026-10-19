@@ -1,0 +1,400 @@
+ succeeded in 9725ms:
+
+> @banodoco/timeline-composition@0.0.7 gen-registry:check
+> node --import tsx scripts/gen-registry.ts --check
+
+registry.generated.ts up-to-date
+
+> @banodoco/timeline-composition@0.0.7 build
+> npm run gen-registry:check && npm run build:ts
+
+
+> @banodoco/timeline-composition@0.0.7 gen-registry:check
+> node --import tsx scripts/gen-registry.ts --check
+
+registry.generated.ts up-to-date
+
+> @banodoco/timeline-composition@0.0.7 build:ts
+> tsc -p typescript/tsconfig.json
+
+
+> @banodoco/timeline-composition@0.0.7 build:ts
+> tsc -p typescript/tsconfig.json
+
+
+> @banodoco/timeline-composition@0.0.7 test
+> npm run build:test && node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/*.test.js scripts/gen-registry.test.mjs
+
+
+> @banodoco/timeline-composition@0.0.7 build:test
+> tsc -p typescript/tsconfig.test.json
+
+TAP version 13
+# Subtest: registry discovery includes a temporary installed theme descriptor
+ok 1 - registry discovery includes a temporary installed theme descriptor
+  ---
+  duration_ms: 512.545816
+  type: 'test'
+  ...
+# Subtest: track queries use half-open draw bounds and retain mounted zero-opacity layers
+ok 2 - track queries use half-open draw bounds and retain mounted zero-opacity layers
+  ---
+  duration_ms: 2.365108
+  type: 'test'
+  ...
+# Subtest: audio envelope evaluation accepts representative fade input and applies gain in place
+ok 3 - audio envelope evaluation accepts representative fade input and applies gain in place
+  ---
+  duration_ms: 0.807564
+  type: 'test'
+  ...
+# Subtest: proven opaque visual media reports visible covered content
+ok 4 - proven opaque visual media reports visible covered content
+  ---
+  duration_ms: 3.161199
+  type: 'test'
+  ...
+# Subtest: unresolved or unproven media remains unknown instead of being treated as absent
+ok 5 - unresolved or unproven media remains unknown instead of being treated as absent
+  ---
+  duration_ms: 0.604965
+  type: 'test'
+  ...
+# Subtest: assetless native holds are visibly absent, while declared component support stays explicit
+ok 6 - assetless native holds are visibly absent, while declared component support stays explicit
+  ---
+  duration_ms: 0.818635
+  type: 'test'
+  ...
+# Subtest: unknown modifier output bounds produce a finding and unknown coverage
+ok 7 - unknown modifier output bounds produce a finding and unknown coverage
+  ---
+  duration_ms: 0.630448
+  type: 'test'
+  ...
+# Subtest: transition windows use half-open placement and preserve frozen source frames
+ok 8 - transition windows use half-open placement and preserve frozen source frames
+  ---
+  duration_ms: 2.161607
+  type: 'test'
+  ...
+# Subtest: start and center transitions extend draw spans without shifting own spans
+ok 9 - start and center transitions extend draw spans without shifting own spans
+  ---
+  duration_ms: 0.215988
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 689.774863
+
+codex
+The lock reproducibility check is complete: I moved this worktree’s original `node_modules` aside, `npm ci` installed exactly from the committed lockfile, and the final registry check, both builds, and 9-test suite all passed on that clean install. I’m cleaning only generated outputs and temporary verification artifacts, then I’ll record the conventional commit message and final diff/status evidence.
+exec
+/bin/bash -lc "node -e \"const fs=require('node:fs'); for (const path of ['/home/user/work/wt/vw-m0-build-verify/typescript/dist','/home/user/work/wt/vw-m0-build-verify/typescript/test-dist','/tmp/timeline-composition-node-modules-before-ci','/tmp/timeline-composition-npm-cache','/tmp/timeline-composition-negative-planner.log','/tmp/timeline-composition-negative-build.log','/tmp/timeline-composition-negative-build-ts.log']) fs.rmSync(path,{recursive:true,force:true});\" && git diff --check && printf '%s\\n' '--- final status ---' && git status --short && printf '%s\\n' '--- ignored output check ---' && git status --short --ignored | rg 'typescript/(dist|test-dist)|node_modules' | head -20 || true && printf '%s\\n' '--- tracked diff stat ---' && git diff --stat && printf '%s\\n' '--- untracked sizes ---' && wc -l package-lock.json scripts/gen-registry.test.mjs && printf '%s\\n' '--- dependency retained ---' && test -x node_modules/.bin/tsc && echo 'node_modules installed'" in /home/user/work/wt/vw-m0-build-verify
+ succeeded in 220ms:
+--- final status ---
+ M .gitignore
+ M README.md
+ M package.json
+ M typescript/tsconfig.json
+ M typescript/tsconfig.test.json
+?? package-lock.json
+?? scripts/gen-registry.test.mjs
+--- ignored output check ---
+!! node_modules/
+--- tracked diff stat ---
+ .gitignore                    |  1 +
+ README.md                     | 14 +++++++++-----
+ package.json                  |  8 ++++----
+ typescript/tsconfig.json      |  5 +++--
+ typescript/tsconfig.test.json |  3 ++-
+ 5 files changed, 19 insertions(+), 12 deletions(-)
+--- untracked sizes ---
+  737 package-lock.json
+   42 scripts/gen-registry.test.mjs
+  779 total
+--- dependency retained ---
+node_modules installed
+
+exec
+/bin/bash -lc "if test -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/commit-msg; then sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/commit-msg; else echo '(missing)'; fi" in /home/user/work/wt/vw-m0-build-verify
+ succeeded in 0ms:
+(missing)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/commit-msg
+diff --git a/.gitignore b/.gitignore
+index 11f578d102b290fc9cd6ca06240792b4bb79689b..fac19609ed5f6fbfa9aa3017ba7365c8eb142a7e
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,2 +1,3 @@
+ node_modules/
+ typescript/dist/
++typescript/test-dist/
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d94aae51aa99f34a30f3d2a08267d806b1e79c02
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/commit-msg
+@@ -0,0 +1,6 @@
++build(composition): verify reproducible M0 setup
++
++Emit strict Composition JavaScript and declarations, separate test output,
++and lock the fresh npm dependency install. Use the supported Node tsx
++launcher, and exercise installed-theme registry discovery with a temporary
++descriptor.
+diff --git a/README.md b/README.md
+index 4eb4b99cb1f14899a1b157b7408e957901184949..8f8bc12a84e17a9cf047a902e71d461905e3fc55
+--- a/README.md
++++ b/README.md
+@@ -124,15 +124,19 @@
+ ## Build / test
+ 
+ ```
++npm run gen-registry:check
+ npm run build
++npm run build:ts
+ npm test
+ ```
+ 
+-`npm run build` type-checks the complete `typescript/src` tree and fails on
+-the first compiler error. It does not emit package output. `npm test` emits
+-the focused TypeScript tests into the ignored `typescript/dist` directory,
+-then runs them with the extensionless-import loader used by the standalone
+-Node test runner.
++`npm run build` checks the generated registry and emits JavaScript plus
++declarations for the complete `typescript/src` tree into the ignored
++`typescript/dist` directory. `npm run build:ts` is the underlying strict
++TypeScript emit and is exposed separately for build-manager checks. Compiler
++errors fail both commands. `npm test` emits the focused TypeScript tests into
++the separate ignored `typescript/test-dist` directory, then runs them with
++the extensionless-import loader used by the standalone Node test runner.
+ 
+ The package has no source or type import from `@banodoco/timeline-schema`, so
+ it is not a Composition dependency. The generated registries remain
+diff --git a/package.json b/package.json
+index aef522ac0ee16c62b3bdc3e41a673b762a3ba827..edff8cf93576e4c6cbca30ec5d0718786a6c6810
+--- a/package.json
++++ b/package.json
+@@ -46,12 +46,12 @@
+     "scripts"
+   ],
+   "scripts": {
+-    "build": "tsc -p typescript/tsconfig.json",
++    "build": "npm run gen-registry:check && npm run build:ts",
+     "build:ts": "tsc -p typescript/tsconfig.json",
+     "build:test": "tsc -p typescript/tsconfig.test.json",
+-    "gen-registry": "tsx scripts/gen-registry.ts",
+-    "gen-registry:check": "tsx scripts/gen-registry.ts --check",
+-    "test": "npm run build:test && node --import ./typescript/tests/register-extensionless.mjs --test typescript/dist/tests/*.test.js"
++    "gen-registry": "node --import tsx scripts/gen-registry.ts",
++    "gen-registry:check": "node --import tsx scripts/gen-registry.ts --check",
++    "test": "npm run build:test && node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/*.test.js scripts/gen-registry.test.mjs"
+   },
+   "peerDependencies": {
+     "react": ">=18",
+diff --git a/scripts/gen-registry.test.mjs b/scripts/gen-registry.test.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..79c788f82f9891b7a92201441ef12ab55c44d192
+--- /dev/null
++++ b/scripts/gen-registry.test.mjs
+@@ -0,0 +1,42 @@
++import assert from 'node:assert/strict';
++import {mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
++import {spawnSync} from 'node:child_process';
++import {join} from 'node:path';
++import {fileURLToPath} from 'node:url';
++import {test} from 'node:test';
++
++const packageRoot = fileURLToPath(new URL('..', import.meta.url));
++const registryPath = join(packageRoot, 'typescript', 'src', 'registry.generated.ts');
++
++test('registry discovery includes a temporary installed theme descriptor', () => {
++  const themeName = `timeline-theme-m0-generator-${process.pid}`;
++  const themeDir = join(packageRoot, 'node_modules', '@banodoco', themeName);
++  const effectDir = join(themeDir, 'src', 'effects', 'temporary-card');
++  const original = readFileSync(registryPath, 'utf8');
++
++  mkdirSync(effectDir, {recursive: true});
++  writeFileSync(join(themeDir, 'package.json'), JSON.stringify({name: `@banodoco/${themeName}`}));
++  writeFileSync(join(themeDir, 'theme.json'), JSON.stringify({id: 'm0-generator'}));
++  writeFileSync(join(effectDir, 'component.tsx'), 'export default function TemporaryCard() { return null; }\n');
++
++  try {
++    const result = spawnSync(process.execPath, ['--import', 'tsx', 'scripts/gen-registry.ts'], {
++      cwd: packageRoot,
++      encoding: 'utf8',
++    });
++    assert.equal(result.status, 0, result.stderr);
++    const generated = readFileSync(registryPath, 'utf8');
++    assert.match(generated, /temporary-card/);
++    assert.match(generated, new RegExp(`@banodoco/${themeName}/src/effects/temporary-card/component`));
++  } finally {
++    rmSync(themeDir, {recursive: true, force: true});
++    writeFileSync(registryPath, original);
++  }
++
++  const check = spawnSync(process.execPath, ['--import', 'tsx', 'scripts/gen-registry.ts', '--check'], {
++    cwd: packageRoot,
++    encoding: 'utf8',
++  });
++  assert.equal(check.status, 0, check.stderr);
++  assert.equal(readFileSync(registryPath, 'utf8'), original);
++});
+diff --git a/typescript/tsconfig.json b/typescript/tsconfig.json
+index 806ffe7976b751dcb89d61567a525832da10e919..063883905bf9789c31e34f323364e62859927db8
+--- a/typescript/tsconfig.json
++++ b/typescript/tsconfig.json
+@@ -4,8 +4,10 @@
+     "module": "ES2022",
+     "moduleResolution": "bundler",
+     "outDir": "./dist",
+-    "declaration": false,
++    "declaration": true,
+     "sourceMap": false,
++    "noEmit": false,
++    "noEmitOnError": true,
+     "strict": true,
+     "esModuleInterop": true,
+     "skipLibCheck": true,
+@@ -13,7 +15,6 @@
+     "resolveJsonModule": true,
+     "isolatedModules": true,
+     "jsx": "react-jsx",
+-    "noEmit": true,
+     "baseUrl": ".",
+     "paths": {
+       "@workspace-effects/*": ["../../../effects/*"],
+diff --git a/typescript/tsconfig.test.json b/typescript/tsconfig.test.json
+index a8bb46eb9d315d3bc7efb29e0e653533ac491bc8..ee8086ee2c2925e40e1134541b71259db3f221a2
+--- a/typescript/tsconfig.test.json
++++ b/typescript/tsconfig.test.json
+@@ -2,8 +2,9 @@
+   "extends": "./tsconfig.json",
+   "compilerOptions": {
+     "rootDir": "./",
+-    "outDir": "./dist",
++    "outDir": "./test-dist",
+     "noEmit": false,
++    "noEmitOnError": true,
+     "declaration": false,
+     "isolatedModules": false,
+     "skipLibCheck": true
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- schema import scan ---'; if rg -n '@banodoco/timeline-schema' typescript/src package.json; then echo 'unexpected schema import'; else echo 'no Composition source/package schema import'; fi; printf '%s\\n' '--- host contract scan ---'; rg -n 'EffectComponent<never>|declare module .@workspace-(effects|animations|transitions)' typescript/src/registry.generated.ts typescript/src/workspace-aliases.d.ts; printf '%s\\n' '--- dependency versions ---'; npm ls --depth=0 --omit=optional 2>&1 | sed -n '1,120p'; printf '%s\\n' '--- commit message ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-verify/commit-msg; printf '%s\\n' '--- final diff check/status ---'; git diff --check; git status --short" in /home/user/work/wt/vw-m0-build-verify
+ succeeded in 240ms:
+--- schema import scan ---
+no Composition source/package schema import
+--- host contract scan ---
+typescript/src/registry.generated.ts:9:  component: EffectComponent<never>;
+typescript/src/workspace-aliases.d.ts:15:declare module '@workspace-effects/*' {
+typescript/src/workspace-aliases.d.ts:20:declare module '@workspace-animations/*' {
+typescript/src/workspace-aliases.d.ts:25:declare module '@workspace-transitions/*' {
+--- dependency versions ---
+@banodoco/timeline-composition@0.0.7 /home/user/work/wt/vw-m0-build-verify
+├── @remotion/layout-utils@4.0.509
+├── @remotion/media@4.0.509
+├── @types/node@20.19.43
+├── @types/react@18.3.31
+├── react-dom@18.3.1
+├── react@18.3.1
+├── remotion@4.0.509
+├── tsx@4.23.15
+└── typescript@5.9.3
+
+--- commit message ---
+build(composition): verify reproducible M0 setup
+
+Emit strict Composition JavaScript and declarations, separate test output,
+and lock the fresh npm dependency install. Use the supported Node tsx
+launcher, and exercise installed-theme registry discovery with a temporary
+descriptor.
+--- final diff check/status ---
+ M .gitignore
+ M README.md
+ M package.json
+ M typescript/tsconfig.json
+ M typescript/tsconfig.test.json
+?? package-lock.json
+?? scripts/gen-registry.test.mjs
+
+codex
+## Result
+
+Composition M0 verification completed on fresh dependencies.
+
+Changes:
+- Added reproducible `package-lock.json`.
+- Builds now emit 44 JS + 44 declaration files into ignored `typescript/dist`.
+- Tests emit separately into ignored `typescript/test-dist`.
+- Fixed registry scripts to use `node --import tsx`.
+- Added temporary-theme registry discovery coverage.
+- Documented build, host-component, and empty-registry limitations.
+- Confirmed typed host contracts; no `any` shims.
+
+Verification:
+
+- `npm install` — passed with task-local npm cache.
+- `npm ci` after removing prior dependencies — passed.
+- `npm run gen-registry:check` — passed.
+- `npm run build` — passed.
+- `npm run build:ts` — passed.
+- `npm test` — 9/9 passed.
+- `git diff --check` — passed.
+- No Composition source/package import of `@banodoco/timeline-schema`.
+- Stale tracked `typescript/dist` remains removed; generated outputs were cleaned before exit. `node_modules` remains installed.
+
+Negative controls:
+
+- Temporary planner mutation (`>=` → `>`) caused `npm test` to exit 1: 8 passed, 1 failed.
+- Temporary type error caused both `npm run build` and `npm run build:ts` to exit 1 with TS2322.
+- All mutations were restored and final verification passed.
+
+Not run: external modifier integration requiring host configuration, App Player/native render parity, pixel/audio parity, and Agent/Runtime/App suites.
+
+Commit message written to the requested path. Manager decides merge.
+tokens used
+105,346
+## Result
+
+Composition M0 verification completed on fresh dependencies.
+
+Changes:
+- Added reproducible `package-lock.json`.
+- Builds now emit 44 JS + 44 declaration files into ignored `typescript/dist`.
+- Tests emit separately into ignored `typescript/test-dist`.
+- Fixed registry scripts to use `node --import tsx`.
+- Added temporary-theme registry discovery coverage.
+- Documented build, host-component, and empty-registry limitations.
+- Confirmed typed host contracts; no `any` shims.
+
+Verification:
+
+- `npm install` — passed with task-local npm cache.
+- `npm ci` after removing prior dependencies — passed.
+- `npm run gen-registry:check` — passed.
+- `npm run build` — passed.
+- `npm run build:ts` — passed.
+- `npm test` — 9/9 passed.
+- `git diff --check` — passed.
+- No Composition source/package import of `@banodoco/timeline-schema`.
+- Stale tracked `typescript/dist` remains removed; generated outputs were cleaned before exit. `node_modules` remains installed.
+
+Negative controls:
+
+- Temporary planner mutation (`>=` → `>`) caused `npm test` to exit 1: 8 passed, 1 failed.
+- Temporary type error caused both `npm run build` and `npm run build:ts` to exit 1 with TS2322.
+- All mutations were restored and final verification passed.
+
+Not run: external modifier integration requiring host configuration, App Player/native render parity, pixel/audio parity, and Agent/Runtime/App suites.
+
+Commit message written to the requested path. Manager decides merge.

@@ -1,0 +1,400 @@
+src/tools/video-editor/hooks/useTimelineState.ts:534:    saveStatus,
+src/tools/video-editor/hooks/useTimelineState.ts:708:    saveStatus,
+src/tools/video-editor/hooks/useTimelineState.ts:1235:    saveStatus,
+src/tools/video-editor/hooks/useTimelineSave.recovery.persistence.test.tsx:211:    expect(hook.result.current.saveStatus).not.toBe('saved');
+src/tools/video-editor/hooks/useTimelineSave.recovery.persistence.test.tsx:219:    expect(hook.result.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelineSave.recovery.persistence.test.tsx:235:    expect(hook.result.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelineSave.ts:384:    saveStatus: recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
+src/tools/video-editor/hooks/timelineStore.ts:364:    saveStatus: 'saved',
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:804:    expect(harness.result.current.saveStatus).toBe('retrying');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:970:      expect(harness.result.current.saveStatus).toBe('error');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:980:      expect(harness.result.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:994:      expect(harness.result.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1028:      expect(harness.result.current.saveStatus).toBe('error');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1035:      expect(harness.result.current.saveStatus).toBe('retrying');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1043:      expect(harness.result.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1064:      expect(harness.result.current.saveStatus).toBe('retrying');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1069:      expect(harness.result.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1166:    expect(harness.result.current.saveStatus).toBe('error');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1281:    expect(harness.result.current.saveStatus).toBe('error');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1388:    expect(harness.result.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1449:    expect(harness.result.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1656:    expect(harness.result.current.saveStatus).toBe('error');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1680:    expect(harness.result.current.saveStatus).toBe('error');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:1907:    expect(harness.result.current.saveStatus).toBe('error');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2068:    expect(harness.result.current.saveStatus).toBe('error');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2081:    expect(harness.result.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2152:    expect(harness.result?.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2177:    expect(harness.result?.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2198:    expect(harness.result?.current.saveStatus).toBe('retrying');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2203:    expect(harness.result?.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2230:    expect(harness.result?.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2264:    expect(harness.result?.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2318:    expect(harness.result?.current.saveStatus).toBe('saving');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2333:    expect(harness.result?.current.saveStatus).toBe('saved');
+src/tools/video-editor/hooks/useTimelinePersistence.test.tsx:2345:    expect(harness.result?.current.saveStatus).toBe('error');
+src/tools/video-editor/contexts/VideoEditorProvider.tsx:463:    onSaveStatusChange?.(chrome.saveStatus);
+src/tools/video-editor/contexts/VideoEditorProvider.tsx:464:  }, [chrome.saveStatus, onSaveStatusChange]);
+src/tools/video-editor/contexts/EditorRuntimeProvider.tsx:165:  const saveStatus = !hostServices && onSaveStatusChange ? sync.chrome.saveStatus : undefined;
+src/tools/video-editor/contexts/EditorRuntimeProvider.tsx:167:    if (saveStatus) onSaveStatusChange?.(saveStatus);
+src/tools/video-editor/contexts/EditorRuntimeProvider.tsx:168:  }, [onSaveStatusChange, saveStatus]);
+src/tools/video-editor/contexts/VideoEditorProvider.test.tsx:280:      saveStatus: 'saved' as const,
+src/tools/video-editor/contexts/VideoEditorProvider.test.tsx:356:      <span>{chrome.saveStatus}</span>
+src/tools/video-editor/runtime/ports.ts:76:  canonicalCompositionError?: Error | null;
+src/tools/video-editor/examples/CustomTwoPaneVideoEditorExample.tsx:64:      <span>Save status: {chrome.saveStatus}</span>
+src/tools/video-editor/lib/mobile-interaction-conformance.test.tsx:125:      saveStatus: 'saved' as const,
+src/tools/video-editor/lib/shots-settling.ts:13:    && !shots.canonicalCompositionError
+
+exec
+/bin/bash -lc "sed -n '1,240p' src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts; sed -n '40,100p' src/tools/video-editor/runtime/ports.ts; sed -n '180,225p' src/tools/video-editor/hooks/useTimelineState.types.ts" in /home/user/work/wt/vw-m1-app-labels
+ succeeded in 69ms:
+import { useMemo } from 'react';
+import { useOptionalVideoEditorRuntime } from '../../contexts/VideoEditorRuntimeContext.tsx';
+import { resolveCanonicalComposition } from '../../data/canonicalCompositionState.ts';
+import type { ResolvedTimelineConfig } from '../../types/index.ts';
+
+/** Both the stage and panel stills include in-progress edits inside placed shots. */
+export function useVideoEditorPreviewComposition(resolvedConfig: ResolvedTimelineConfig | null | undefined) {
+  const runtime = useOptionalVideoEditorRuntime();
+  const hasShotClips = Boolean(resolvedConfig?.clips.some((clip) => clip.clipType === 'shot'));
+  const composition = runtime?.userId === null
+    ? runtime.shots?.canonicalDraft?.composition ?? runtime.shots?.canonicalComposition
+    : null;
+  return useMemo(() => resolveCanonicalComposition({
+    userId: runtime?.userId,
+    hasShotClips,
+    hasShotComposition: Boolean(runtime?.shots?.shotComposition),
+    composition,
+    compositionError: runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null,
+    baseConfig: resolvedConfig,
+  }), [hasShotClips, composition, resolvedConfig, runtime?.shots?.canonicalCompositionError,
+    runtime?.shots?.shotComposition, runtime?.userId]);
+}
+  'ShotsHost',
+  'MediaLightboxHost',
+  'AgentChatHost',
+  'ToastHost',
+  'TelemetryHost',
+  'AuthHost',
+] as const;
+
+export interface VideoEditorAssetResolver {
+  resolveAssetUrl: DataProvider['resolveAssetUrl'];
+}
+
+export interface VideoEditorAuthHost {
+  userId: string | null;
+}
+
+export interface VideoEditorProjectHost {
+  projectId: string | null;
+  /** Human-friendly/local workspace reference when it differs from projectId. */
+  projectSlug?: string | null;
+}
+
+export interface VideoEditorShotsHost {
+  shots: Shot[] | undefined;
+  isLoading: boolean;
+  error: Error | null;
+  refetchShots: () => void;
+  allImagesCount?: number;
+  noShotImagesCount?: number;
+  finalVideoMap: Map<string, ShotFinalVideo>;
+  dismissFinalVideo: (finalVideoId: string) => void;
+  shotComposition?: ShotCompositionAdapter | null;
+  canonicalOccurrences?: readonly CanonicalShotOccurrence[];
+  /** Runtime-owned source-frame thumbnails keyed by canonical occurrence. */
+  canonicalThumbnailUrls?: ReadonlyMap<string, string>;
+  canonicalComposition?: PreparedShotComposition | null;
+  canonicalCompositionError?: Error | null;
+  canonicalDraft?: CanonicalShotTimelineDraft | null;
+  beginCanonicalDraftSession?: (scope: CanonicalShotTimelineScope) => void;
+  endCanonicalDraftSession?: (scope: CanonicalShotTimelineScope) => void;
+  setCanonicalDraftProjection?: (draft: CanonicalShotTimelineDraft) => void;
+  clearCanonicalDraftProjection?: (
+    scope: CanonicalShotTimelineScope,
+    generation: number,
+  ) => void;
+  adoptCanonicalComposition?: (
+    composition: PreparedShotComposition,
+    publication?: CanonicalShotTimelinePublication,
+  ) => void;
+}
+
+export interface VideoEditorMediaLightboxHost {
+  Lightbox: ComponentType<Record<string, unknown>>;
+  loadGenerationForLightbox: (generationId: string) => Promise<GenerationRow | null>;
+}
+
+export interface VideoEditorAgentChatHost {
+  registerTimeline: (value: {
+    timelineId: string | null;
+    projectId: string | null;
+    projectSlug?: string | null;
+  handleDetachAudioClip: ClipEditingHook['handleDetachAudioClip'];
+  handleTrackPopoverChange: TimelineTrackManagementHook['handleTrackPopoverChange'];
+  handleMoveTrack: TimelineTrackManagementHook['handleMoveTrack'];
+  handleRemoveTrack: TimelineTrackManagementHook['handleRemoveTrack'];
+  moveSelectedClipToTrack: TimelineTrackManagementHook['moveSelectedClipToTrack'];
+  moveSelectedClipsToTrack: TimelineTrackManagementHook['moveSelectedClipsToTrack'];
+  moveClipToRow: TimelineTrackManagementHook['moveClipToRow'];
+  applyResolvedClipMove: TimelineTrackManagementHook['applyResolvedClipMove'];
+  createTrackAndMoveClip: TimelineTrackManagementHook['createTrackAndMoveClip'];
+  uploadFiles: TimelineUploadFiles;
+  /** Host-only transcript mutations; canonical references never enter extension props. */
+  transcriptHost?: TranscriptPanelHost;
+  applyEdit: TimelineApplyEdit;
+  commands: TimelineEditorCommands;
+  patchRegistry: TimelinePatchRegistry;
+  unpatchRegistry: TimelineUnpatchRegistry;
+  registerAsset: TimelineRegisterAsset;
+  onDoubleClickAsset?: (assetKey: string, clipId?: string) => void;
+  setLightboxAssetKey?: (assetKey: string | null) => void;
+}
+
+/**
+ * @deprecated Prefer `TimelineEditorDataContextValue` and `TimelineEditorOpsContextValue`.
+ */
+export interface TimelineEditorContextValue extends TimelineEditorDataContextValue, TimelineEditorOpsContextValue {}
+
+export interface TimelineChromeContextValue {
+  timelineName: string | null;
+  saveStatus: SaveStatus;
+  isConflictExhausted: boolean;
+  schemaIncompatible: ReadonlyArray<{ pointer?: string; code?: string; message?: string }> | null;
+  /**
+   * The timeline load query's error, or null. A load failure never reaches
+   * `TimelineErrorBoundary` (it happens before any render), so without this the
+   * shell mounts an empty editor whose badge reads `saved`.
+   */
+  loadError: Error | null;
+  /** Refetch the timeline load query — the retry affordance on the error card. */
+  retryLoad: () => void;
+  renderStatus: RenderStatus;
+  renderLog: string;
+  visualSeamReport: VisualSeamReport | null;
+  canDeclareSeamsAsHardCuts: boolean;
+  declareSeamsAsHardCuts: () => Promise<void>;
+  canAcknowledgeVisualCues: boolean;
+  acknowledgeVisualCuesAsSynchronized: () => Promise<void>;
+
+exec
+/bin/bash -lc "sed -n '445,535p' src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx; sed -n '120,180p' src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx" in /home/user/work/wt/vw-m1-app-labels
+ succeeded in 54ms:
+    play,
+    pause,
+    togglePlayPause,
+    get isPlaying() {
+      return playerRef.current?.isPlaying() ?? isPlaying;
+    },
+  }), [isPlaying, pause, play, seek, togglePlayPause]);
+
+  const transportControls = (
+    <div
+      className="astrid-preview-transport pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 px-3 py-3"
+      style={{ backgroundImage: 'linear-gradient(to top, var(--video-editor-stage-gradient-start), transparent)' }}
+    >
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className={cn(TRANSPORT_BUTTON_CLASS, touchChrome ? 'h-11 w-11' : 'h-8 w-8')}
+        onClick={() => requestSeek(0)}
+        title="Jump to beginning"
+        aria-label="Jump to beginning"
+      >
+        <SkipBack className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className={cn(TRANSPORT_BUTTON_CLASS, touchChrome ? 'h-12 w-12' : 'h-10 w-10')}
+        disabled={!hasPlayableOutput}
+        onClick={togglePlayPause}
+        title={isPlaying ? 'Pause' : 'Play'}
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+      >
+        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current" />}
+      </Button>
+      {!compact && (
+        <div className="pointer-events-none rounded-full bg-background/70 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          {config.output.resolution}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div
+      ref={playerContainerRef}
+      className="relative flex h-full min-h-[220px] w-full items-center justify-center overflow-hidden rounded-xl bg-transparent"
+      style={VIDEO_EDITOR_THEME_VARS}
+    >
+      <PreviewAudioFailureNotice />
+      {hasSourceTracks && (
+        <div className="pointer-events-none absolute left-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-xs text-foreground">
+          Output · source tracks excluded
+        </div>
+      )}
+      <div
+        data-testid="preview-revision-label"
+        aria-label={displayedRevisionLabel}
+        title={delivery.revision.reason}
+        className="pointer-events-none absolute right-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+      >
+        {displayedRevisionLabel}
+      </div>
+      {unavailableTarget && (
+        <div
+          data-testid="preview-revision-unavailable"
+          aria-label={previewUnavailableLabel(unavailableTarget)}
+          title={unavailableTarget.reason}
+          className="pointer-events-none absolute right-3 top-10 z-10 max-w-[min(75%,24rem)] rounded bg-destructive/90 px-2 py-1 text-[10px] uppercase tracking-[0.08em] text-destructive-foreground"
+        >
+          {previewUnavailableLabel(unavailableTarget)}
+        </div>
+      )}
+      <div className="h-full w-full">
+        <Player
+          ref={playerRef}
+          component={PreviewComposition}
+          inputProps={inputProps}
+          durationInFrames={metadata.durationInFrames}
+          fps={metadata.fps}
+          compositionWidth={metadata.compositionWidth}
+          compositionHeight={metadata.compositionHeight}
+          numberOfSharedAudioTags={PREVIEW_SHARED_AUDIO_TAGS}
+          initialFrame={Math.min(Math.max(0, Math.round(initialTime * metadata.fps)), Math.max(0, metadata.durationInFrames - 1))}
+          controls={false}
+          clickToPlay={false}
+          doubleClickToFullscreen={false}
+          spaceKeyToPlayOrPause={false}
+          showVolumeControls={false}
+          acknowledgeRemotionLicense
+    if (!hostNode || !hasConfig || !slotNode) {
+      return;
+    }
+
+    if (hostNode.parentElement !== slotNode) {
+      slotNode.appendChild(hostNode);
+    }
+
+    return () => {
+      hostNode.remove();
+    };
+  }, [hasConfig, hostNode, slotNode]);
+
+  const portal = useMemo(() => {
+    if (!hostNode || !hasConfig || !previewConfig || !slotNode) {
+      return null;
+    }
+
+    return createPortal(
+      <RemotionPreview
+        // A physical slot move is a new preview attachment. Remount the
+        // player-owned subtree at the current paused playhead for that case,
+        // while ordinary config updates retain the existing DOM attachment.
+        key={`${runtime?.project?.projectId ?? ''}:${runtime?.timelineId ?? ''}:${previewSource}:${attachmentGeneration}`}
+        ref={previewRef}
+        config={previewConfig}
+        previewRevision={previewRevision}
+        compact={compact}
+        touchChrome={touchChrome}
+        initialTime={currentTime}
+        onTimeUpdate={onPreviewTimeUpdate}
+        playerContainerRef={playerContainerRef}
+      />,
+      hostNode,
+    );
+  }, [
+    compact,
+    currentTime,
+    touchChrome,
+    hostNode,
+    hasConfig,
+    onPreviewTimeUpdate,
+    playerContainerRef,
+    previewRef,
+    previewConfig,
+    previewRevision,
+    previewSource,
+    attachmentGeneration,
+    slotNode,
+    runtime?.project?.projectId,
+    runtime?.timelineId,
+  ]);
+
+  return useMemo(() => ({
+    slotRef,
+    portal,
+    hasConfig: Boolean(previewConfig),
+  }), [portal, previewConfig, slotRef]);
+}
+
+codex
+Focused validation is clean: 4 Vitest files, 44 tests passed; targeted ESLint and `git diff --check` also passed. The commit message is present at the required path. I’m doing the final status review now; the repository typecheck remains limited by two unrelated pre-existing errors noted below.
+exec
+/bin/bash -lc "git status --short && git diff --numstat && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-app-labels/commit-msg && echo 'commit-msg: present'" in /home/user/work/wt/vw-m1-app-labels
+ succeeded in 195ms:
+ M src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx
+ M src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
+ M src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.test.tsx
+ M src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
+?? src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+101	4	src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx
+62	17	src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
+5	0	src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.test.tsx
+56	1	src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
+commit-msg: present
+
+exec
+/bin/bash -lc 'npm exec tsc -- --noEmit -p tsconfig.app.json' in /home/user/work/wt/vw-m1-app-labels
+codex
+## Report
+
+Implemented preview revision provenance bound to the throttled Player delivery:
+
+- Added committed/local/unavailable revision labels.
+- Threaded revision metadata through the config mailbox with generation guards.
+- Preserved cached committed labels when a newer target is unavailable.
+- Added focused coverage for throttling, acknowledgements, stale generations, cached results, and no-cache failures.
+
+Tests:
+
+```text
+Vitest: 4 files, 44 tests passed
+ESLint: passed
+git diff --check: passed
+```
+
+Typecheck remains blocked by two unrelated existing errors in `RuntimeConnectionProvider.tsx` and `AgentChatNewChatButton.tsx`.
+
+Host wiring gap: `canonicalCompositionError` does not currently expose the attempted target revision ID. The UI therefore shows a generic unavailable-target message unless `targetRevisionId` is supplied on the error. A future small seam should expose that ID from the loader/host without changing persistence.
+
+Commit message written to the required path. No commit performed; harness will commit the worktree.
+2026-10-19T19:10:39.253408Z ERROR codex_core::session: failed to record rollout items: thread 01a1558b-a3e7-7a82-b421-06cf8fb2f275 not found
+tokens used
+305,216
+## Report
+
+Implemented preview revision provenance bound to the throttled Player delivery:
+
+- Added committed/local/unavailable revision labels.
+- Threaded revision metadata through the config mailbox with generation guards.
+- Preserved cached committed labels when a newer target is unavailable.
+- Added focused coverage for throttling, acknowledgements, stale generations, cached results, and no-cache failures.
+
+Tests:
+
+```text
+Vitest: 4 files, 44 tests passed
+ESLint: passed
+git diff --check: passed
+```
+
+Typecheck remains blocked by two unrelated existing errors in `RuntimeConnectionProvider.tsx` and `AgentChatNewChatButton.tsx`.
+
+Host wiring gap: `canonicalCompositionError` does not currently expose the attempted target revision ID. The UI therefore shows a generic unavailable-target message unless `targetRevisionId` is supplied on the error. A future small seam should expose that ID from the loader/host without changing persistence.
+
+Commit message written to the required path. No commit performed; harness will commit the worktree.

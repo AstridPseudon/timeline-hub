@@ -1,0 +1,400 @@
++        method: 'media-element-source',
++        ok: blob.size > 0,
++        mimeType: recorder.mimeType,
++        bytes: blob.size,
++        base64: encoded,
++        tracks: destination.stream.getAudioTracks().map((track) => ({
++          kind: track.kind,
++          label: track.label,
++          enabled: track.enabled,
++          readyState: track.readyState,
++        })),
++        audioElements,
++      } satisfies CaptureResult;
++    } catch (error) {
++      return {
++        method: 'media-element-source',
++        ok: false,
++        error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
++        audioElements,
++      } satisfies CaptureResult;
++    } finally {
++      await context.close();
++    }
++  });
++}
++
++async function decodeCapture(result: CaptureResult, testInfo: import('@playwright/test').TestInfo, name: string): Promise<Record<string, unknown>> {
++  if (!result.base64) return { ok: false, reason: 'capture returned no encoded recording' };
++  const recordingPath = browserEvidencePath(testInfo, `${name}.webm`);
++  const pcmPath = browserEvidencePath(testInfo, `${name}.s16le`);
++  await writeFile(recordingPath, Buffer.from(result.base64, 'base64'));
++  const { stdout: probeOutput } = await execFileAsync('ffprobe', [
++    '-v', 'error', '-show_entries', 'stream=sample_rate,channels,duration', '-of', 'json', recordingPath,
++  ]);
++  await execFileAsync('ffmpeg', [
++    '-v', 'error', '-i', recordingPath, '-ac', '2', '-ar', '44100', '-f', 's16le', pcmPath,
++  ]);
++  const pcm = await readFile(pcmPath);
++  const samples = new Int16Array(pcm.buffer, pcm.byteOffset, Math.floor(pcm.byteLength / 2));
++  const rms = Math.sqrt([...samples].reduce((sum, sample) => sum + sample * sample, 0) / Math.max(1, samples.length));
++  return {
++    ok: true,
++    containerBytes: result.bytes,
++    decodedPcmBytes: pcm.byteLength,
++    decodedStereoSamples: pcm.byteLength / 4,
++    rms,
++    ffprobe: JSON.parse(probeOutput),
++  };
++}
++
++async function tryTabCapture(page: import('@playwright/test').Page): Promise<CaptureResult> {
++  return page.evaluate(async () => {
++    const button = document.createElement('button');
++    button.textContent = 'capture-probe';
++    button.style.position = 'fixed';
++    button.style.zIndex = '99999';
++    document.body.append(button);
++    const result = await Promise.race([
++      new Promise<CaptureResult>((resolve) => {
++      button.onclick = async () => {
++        try {
++          const stream = await navigator.mediaDevices.getDisplayMedia({
++            video: true,
++            audio: { suppressLocalAudioPlayback: false },
++          });
++          resolve({
++            method: 'getDisplayMedia',
++            ok: stream.getAudioTracks().length > 0,
++            tracks: stream.getTracks().map((track) => ({
++              kind: track.kind,
++              label: track.label,
++              enabled: track.enabled,
++              readyState: track.readyState,
++            })),
++          });
++          for (const track of stream.getTracks()) track.stop();
++        } catch (error) {
++          resolve({
++            method: 'getDisplayMedia',
++            ok: false,
++            error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
++          });
++        }
++      };
++      }),
++      new Promise<CaptureResult>((resolve) => {
++        window.setTimeout(() => resolve({
++          method: 'getDisplayMedia',
++          ok: false,
++          error: 'Timeout waiting for browser tab-share chooser (5s)',
++        }), 5_000);
++      }),
++    ]);
++    button.remove();
++    return result;
++  });
++}
++
++test('probes actual Player audio capture paths', async ({ page }, testInfo) => {
++  test.setTimeout(120_000);
++  expect(await resetFakeRuntimeBaseline()).toBeNull();
++  await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
++  await expect(page.getByTestId('audio-reactive-colour-renderer')).toBeVisible({ timeout: 90_000 });
++  await expect(page.getByRole('button', { name: 'Play', exact: true }).first()).toBeVisible({ timeout: 30_000 });
++  await page.getByRole('button', { name: 'Play', exact: true }).first().click();
++  await page.evaluate(async () => {
++    const audio = document.querySelector('audio');
++    if (!audio) throw new Error('Player has no audio element');
++    audio.currentTime = 0;
++    await audio.play();
++  });
++  await page.waitForTimeout(50);
++  const mediaElementResult = await recordMediaElementSources(page);
++  const decoded = await decodeCapture(mediaElementResult, testInfo, 'player-audio-media-element-capture');
++  await writeFile(browserEvidencePath(testInfo, 'player-audio-media-element-probe.json'), `${JSON.stringify(mediaElementResult, null, 2)}\n`);
++  console.log(JSON.stringify({ mediaElementResult: { ...mediaElementResult, base64: undefined }, decoded }));
++  const tabCaptureResult = await tryTabCapture(page);
++  const result = { mediaElementResult, tabCaptureResult };
++  await writeFile(browserEvidencePath(testInfo, 'player-audio-capture-probe.json'), `${JSON.stringify(result, null, 2)}\n`);
++  console.log(JSON.stringify(result));
++});
++
++test('probes the amplified Web Audio Player path', async ({ page }, testInfo) => {
++  test.setTimeout(120_000);
++  expect(await resetFakeRuntimeBaseline()).toBeNull();
++  await publishFakeRuntimeComposition((composition) => {
++    const clips = composition.config.clips as Array<{ id: string; volume?: number }>;
++    const audioClip = clips.find((clip) => clip.id === 'audio_source');
++    if (!audioClip) throw new Error('audio-reactive fixture has no audio_source clip');
++    audioClip.volume = 2;
++  }, 'audio-reactive-colour-timeline');
++  await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
++  await expect(page.getByTestId('audio-reactive-colour-renderer')).toBeVisible({ timeout: 90_000 });
++  await expect(page.getByRole('button', { name: 'Play', exact: true }).first()).toBeVisible({ timeout: 30_000 });
++  await page.getByRole('button', { name: 'Play', exact: true }).first().click();
++  await page.evaluate(async () => {
++    const audio = document.querySelector('audio');
++    if (!audio) throw new Error('Player has no audio element');
++    audio.currentTime = 0;
++    await audio.play();
++  });
++  await page.waitForTimeout(50);
++  const result = await recordMediaElementSources(page);
++  const decoded = await decodeCapture(result, testInfo, 'player-audio-amplified-media-element-capture');
++  await writeFile(browserEvidencePath(testInfo, 'player-audio-amplified-media-element-probe.json'), `${JSON.stringify(result, null, 2)}\n`);
++  console.log(JSON.stringify({ amplifiedMediaElementResult: { ...result, base64: undefined }, decoded }));
++});
+
+apply patch
+patch: completed
+/home/user/work/wt/vw-m1-player-audio/tests/e2e/timeline/player-audio-capture-probe.spec.ts
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/player-audio-feasibility.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/player-audio-feasibility.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..d739af716eefb8bd37b62fb372f6ed5005cc4057
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/player-audio-feasibility.md
+@@ -0,0 +1,99 @@
++# Early M1 Linux Player-audio capture feasibility
++
++Date: 2026-10-19  
++Worker: `vw-m1-player-audio`  
++Result: **blocked for full Player-mix capture; native managed-audio partial path demonstrated**
++
++## Scope
++
++This was the bounded M1 experiment required by PLAN gate 6 and `design/viewing.md` §6. It used the current App Player and the existing `audio-reactive-colour-export.spec.ts` managed-object fixture. It did not claim M3 parity, compare two exports, decode the source WAV as a substitute for Player output, or add product code.
++
++## Environment and exact commands
++
++Read-only host probes:
++
++```text
++ffmpeg: /usr/bin/ffmpeg
++ffprobe: /usr/bin/ffprobe
++pactl: absent
++pulseaudio: absent
++pw-cli: absent
++/dev/snd: absent
++/run/user/*/pulse: absent
++```
++
++Playwright 1.60 expected a missing Chromium 1223 bundle. The image did contain Chromium 1194, so the focused browser commands explicitly selected that existing executable; no browser or system package was installed:
++
++```bash
++PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium-1194/chrome-linux/chrome \
++PLAYWRIGHT_TIMELINE_DEVICES=1 \
++npm exec -- playwright test --config playwright.config.ts \
++  --project=timeline-devices tests/e2e/timeline/audio-reactive-colour-export.spec.ts \
++  --grep 'loads and plays the managed source_audio asset' --workers=1
++
++PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium-1194/chrome-linux/chrome \
++PLAYWRIGHT_TIMELINE_DEVICES=1 \
++npm exec -- playwright test --config playwright.config.ts \
++  --project=timeline-devices tests/e2e/timeline/player-audio-capture-probe.spec.ts \
++  --workers=1
++```
++
++The probe was temporary and has been removed from the worker worktree after the run. It used a real managed Runtime object URL, then tried (a) a browser `MediaElementSource -> MediaStreamDestination -> MediaRecorder` tap and (b) `getDisplayMedia({audio:true})` tab capture. Recordings were decoded with the local `ffprobe`/`ffmpeg` commands embedded in the probe; no source-WAV decode was used for the capture result.
++
++## Results
++
++### Real Player and managed-object path: PASS
++
++The existing real-Player test passed in 1 test / 36.1s. It fetched the content-addressed managed WAV through the local Runtime proxy, including a successful 206 range request, and the Player audio element became playing with advancing `currentTime` after the Play gesture.
++
++### Native HTML audio partial tap: PASS, but not sufficient
++
++The probe found one real Player `<audio>` element with the managed Runtime object URL, `paused: false` at tap setup, `volume: 1`, and `muted: false`. The destination contained one live audio track labeled `MediaStreamAudioDestinationNode`. The emitted WebM was nonempty (6,031 bytes); decoding that captured recording produced:
++
++```text
++decoded PCM: 84,672 bytes = 21,168 stereo samples
++ffprobe stream: 48,000 Hz, 2 channels
++RMS: 508.9484984031616
++```
++
++This proves a real, audible native-media element can be captured in-browser on this host. It does not prove the Player mix because it only taps media elements that are not already owned by another Web Audio graph.
++
++### Browser/tab capture: FAIL
++
++`navigator.mediaDevices.getDisplayMedia({video: true, audio: {suppressLocalAudioPlayback: false}})` was invoked from a user-gesture handler. The existing launch had no automatable tab-share source/chooser; after 5 seconds the negative result was:
++
++```text
++Timeout waiting for browser tab-share chooser (5s)
++```
++
++No tab-audio track was obtained. The Playwright config has no tab-audio or system-loopback recorder/launch setup.
++
++### Amplified/Web Audio path: FAIL (conclusive inclusion blocker)
++
++The probe first published the same canonical fixture with `audio_source.volume = 2`, which activates the current `AudioTrack.tsx` `useWebAudioApi` path. The Player still loaded the same managed object and played it. Attempting to attach a second `MediaElementSource` to that element failed with:
++
++```text
++InvalidStateError: Failed to execute 'createMediaElementSource' on 'AudioContext':
++HTMLMediaElement already connected previously to a different MediaElementSourceNode.
++```
++
++This is the required negative: an in-browser tap that can capture the native element misses the active amplified/Web Audio backend. It cannot be used as the full Player-mix recorder.
++
++### Video-with-audio: NOT PROVABLE from the current fixture
++
++The managed audio-reactive fixture contains no video element and no checked-in playable managed video-with-audio asset. The only managed media used by this experiment is the WAV. The existing `demo-clip` fixture is a non-playable stub and was not substituted. Therefore video-with-audio inclusion was not silently claimed or replaced with synthetic media.
++
++### Mute and 0.5-volume response: NOT CLAIMED
++
++The native partial tap is nonempty and audible, but because it misses the active Web Audio path and there is no video-with-audio fixture, mute/0.5 response on that partial tap would not establish the required full Player behavior. No parity or gate-6 pass is claimed.
++
++## Concrete blocker and recommended route
++
++Full true Player-output capture is blocked by two independent missing prerequisites:
++
++1. Provision an isolated Linux audio capture backend or browser tab-output capture route. The current host has no `/dev/snd`, PulseAudio, PipeWire CLI, or visible Pulse socket. This needs system/browser-launch permission outside this worker; do not install it silently.
++2. Extend the test-only managed-object fixture with a real playable video-with-audio asset and pin it in the fake Runtime seed. The current audio-reactive fixture cannot test that backend.
++
++The recommended M1 continuation is an isolated Chromium launch with a deterministic tab-audio/system-loopback recorder, then the existing real Player fixture plus a pinned managed video-with-audio fixture. Validate native audio, volume > 1/Web Audio, and video-with-audio separately before measuring the mix; then add explicit mute and 0.5-volume captures with decoded PCM sample counts/timing. If browser capture is preferred, it must instrument the Player's actual shared AudioContext destination before media mounts and still demonstrate all three backends; the `MediaElementSource` tap tested here does not satisfy that requirement.
++
++Gate 6 remains open for Player audio. Renderer-independent save, frame rendering, and two-export audio checks are unrelated evidence and were not used to close this experiment.
+
+exec
+/bin/bash -lc "find test-results -maxdepth 1 -type d -name '*player-audio-capt*' -print 2>/dev/null" in /home/user/work/wt/vw-m1-player-audio
+ succeeded in 0ms:
+test-results/timeline-player-audio-capt-56f4e--Player-audio-capture-paths-timeline-devices
+
+2026-10-19T19:12:09.617454Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc \\\"rm -rf -- test-results/timeline-player-audio-capt-56f4e--Player-audio-capture-paths-timeline-devices && git status --short && find test-results -maxdepth 1 -type d -name '*player-audio*' -print 2>/dev/null\\\"` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+codex
+The report is written with the concrete blockers and exact measurements. The sandbox rejected a direct `rm -rf` cleanup command, so I’m using a recoverable move of only the worker-owned probe result directory into `/tmp`, then I’ll verify the worktree and report file.
+exec
+/bin/bash -lc "mkdir -p /tmp/vw-m1-player-audio-cleanup && mv -- test-results/timeline-player-audio-capt-56f4e--Player-audio-capture-paths-timeline-devices /tmp/vw-m1-player-audio-cleanup/ && git status --short && find test-results -maxdepth 1 -type d -name '*player-audio*' -print 2>/dev/null" in /home/user/work/wt/vw-m1-player-audio
+ succeeded in 369ms:
+exec
+/bin/bash -lc "git status --short; printf '%s\\n' '--- report tail ---'; sed -n '1,280p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/player-audio-feasibility.md; printf '%s\\n' '--- worktree probe/build leftovers ---'; find . -maxdepth 3 \\( -name '*player-audio-capture*' -o -name '*audio-capture-probe*' \\) -print" in /home/user/work/wt/vw-m1-player-audio
+ succeeded in 382ms:
+--- report tail ---
+# Early M1 Linux Player-audio capture feasibility
+
+Date: 2026-10-19  
+Worker: `vw-m1-player-audio`  
+Result: **blocked for full Player-mix capture; native managed-audio partial path demonstrated**
+
+## Scope
+
+This was the bounded M1 experiment required by PLAN gate 6 and `design/viewing.md` §6. It used the current App Player and the existing `audio-reactive-colour-export.spec.ts` managed-object fixture. It did not claim M3 parity, compare two exports, decode the source WAV as a substitute for Player output, or add product code.
+
+## Environment and exact commands
+
+Read-only host probes:
+
+```text
+ffmpeg: /usr/bin/ffmpeg
+ffprobe: /usr/bin/ffprobe
+pactl: absent
+pulseaudio: absent
+pw-cli: absent
+/dev/snd: absent
+/run/user/*/pulse: absent
+```
+
+Playwright 1.60 expected a missing Chromium 1223 bundle. The image did contain Chromium 1194, so the focused browser commands explicitly selected that existing executable; no browser or system package was installed:
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium-1194/chrome-linux/chrome \
+PLAYWRIGHT_TIMELINE_DEVICES=1 \
+npm exec -- playwright test --config playwright.config.ts \
+  --project=timeline-devices tests/e2e/timeline/audio-reactive-colour-export.spec.ts \
+  --grep 'loads and plays the managed source_audio asset' --workers=1
+
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium-1194/chrome-linux/chrome \
+PLAYWRIGHT_TIMELINE_DEVICES=1 \
+npm exec -- playwright test --config playwright.config.ts \
+  --project=timeline-devices tests/e2e/timeline/player-audio-capture-probe.spec.ts \
+  --workers=1
+```
+
+The probe was temporary and has been removed from the worker worktree after the run. It used a real managed Runtime object URL, then tried (a) a browser `MediaElementSource -> MediaStreamDestination -> MediaRecorder` tap and (b) `getDisplayMedia({audio:true})` tab capture. Recordings were decoded with the local `ffprobe`/`ffmpeg` commands embedded in the probe; no source-WAV decode was used for the capture result.
+
+## Results
+
+### Real Player and managed-object path: PASS
+
+The existing real-Player test passed in 1 test / 36.1s. It fetched the content-addressed managed WAV through the local Runtime proxy, including a successful 206 range request, and the Player audio element became playing with advancing `currentTime` after the Play gesture.
+
+### Native HTML audio partial tap: PASS, but not sufficient
+
+The probe found one real Player `<audio>` element with the managed Runtime object URL, `paused: false` at tap setup, `volume: 1`, and `muted: false`. The destination contained one live audio track labeled `MediaStreamAudioDestinationNode`. The emitted WebM was nonempty (6,031 bytes); decoding that captured recording produced:
+
+```text
+decoded PCM: 84,672 bytes = 21,168 stereo samples
+ffprobe stream: 48,000 Hz, 2 channels
+RMS: 508.9484984031616
+```
+
+This proves a real, audible native-media element can be captured in-browser on this host. It does not prove the Player mix because it only taps media elements that are not already owned by another Web Audio graph.
+
+### Browser/tab capture: FAIL
+
+`navigator.mediaDevices.getDisplayMedia({video: true, audio: {suppressLocalAudioPlayback: false}})` was invoked from a user-gesture handler. The existing launch had no automatable tab-share source/chooser; after 5 seconds the negative result was:
+
+```text
+Timeout waiting for browser tab-share chooser (5s)
+```
+
+No tab-audio track was obtained. The Playwright config has no tab-audio or system-loopback recorder/launch setup.
+
+### Amplified/Web Audio path: FAIL (conclusive inclusion blocker)
+
+The probe first published the same canonical fixture with `audio_source.volume = 2`, which activates the current `AudioTrack.tsx` `useWebAudioApi` path. The Player still loaded the same managed object and played it. Attempting to attach a second `MediaElementSource` to that element failed with:
+
+```text
+InvalidStateError: Failed to execute 'createMediaElementSource' on 'AudioContext':
+HTMLMediaElement already connected previously to a different MediaElementSourceNode.
+```
+
+This is the required negative: an in-browser tap that can capture the native element misses the active amplified/Web Audio backend. It cannot be used as the full Player-mix recorder.
+
+### Video-with-audio: NOT PROVABLE from the current fixture
+
+The managed audio-reactive fixture contains no video element and no checked-in playable managed video-with-audio asset. The only managed media used by this experiment is the WAV. The existing `demo-clip` fixture is a non-playable stub and was not substituted. Therefore video-with-audio inclusion was not silently claimed or replaced with synthetic media.
+
+### Mute and 0.5-volume response: NOT CLAIMED
+
+The native partial tap is nonempty and audible, but because it misses the active Web Audio path and there is no video-with-audio fixture, mute/0.5 response on that partial tap would not establish the required full Player behavior. No parity or gate-6 pass is claimed.
+
+## Concrete blocker and recommended route
+
+Full true Player-output capture is blocked by two independent missing prerequisites:
+
+1. Provision an isolated Linux audio capture backend or browser tab-output capture route. The current host has no `/dev/snd`, PulseAudio, PipeWire CLI, or visible Pulse socket. This needs system/browser-launch permission outside this worker; do not install it silently.
+2. Extend the test-only managed-object fixture with a real playable video-with-audio asset and pin it in the fake Runtime seed. The current audio-reactive fixture cannot test that backend.
+
+The recommended M1 continuation is an isolated Chromium launch with a deterministic tab-audio/system-loopback recorder, then the existing real Player fixture plus a pinned managed video-with-audio fixture. Validate native audio, volume > 1/Web Audio, and video-with-audio separately before measuring the mix; then add explicit mute and 0.5-volume captures with decoded PCM sample counts/timing. If browser capture is preferred, it must instrument the Player's actual shared AudioContext destination before media mounts and still demonstrate all three backends; the `MediaElementSource` tap tested here does not satisfy that requirement.
+
+Gate 6 remains open for Player audio. Renderer-independent save, frame rendering, and two-export audio checks are unrelated evidence and were not used to close this experiment.
+--- worktree probe/build leftovers ---
+
+codex
+## Report
+
+- Ran the real managed-object Player test: passed (1 test, 36.1s).
+- Native HTML-audio tap captured real non-silent PCM: 21,168 stereo samples, RMS 508.95.
+- Tab capture failed: no automatable browser chooser.
+- Amplified/WebAudio capture failed with `InvalidStateError`; the Player owns the element through another AudioContext.
+- Video-with-audio could not be tested because no playable managed fixture exists.
+- No full suite run; no code retained or commit message needed.
+
+Full blocker report: [player-audio-feasibility.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/player-audio-feasibility.md)
+
+Recommendation: provision isolated Linux loopback/tab capture and add a real managed video-with-audio fixture before attempting Gate 6 audio closure.
+tokens used
+161,643
+## Report
+
+- Ran the real managed-object Player test: passed (1 test, 36.1s).
+- Native HTML-audio tap captured real non-silent PCM: 21,168 stereo samples, RMS 508.95.
+- Tab capture failed: no automatable browser chooser.
+- Amplified/WebAudio capture failed with `InvalidStateError`; the Player owns the element through another AudioContext.
+- Video-with-audio could not be tested because no playable managed fixture exists.
+- No full suite run; no code retained or commit message needed.
+
+Full blocker report: [player-audio-feasibility.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/player-audio-feasibility.md)
+
+Recommendation: provision isolated Linux loopback/tab capture and add a real managed video-with-audio fixture before attempting Gate 6 audio closure.

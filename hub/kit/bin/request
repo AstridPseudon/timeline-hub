@@ -1,0 +1,6 @@
+#!/bin/bash
+# request NAME <dispatch args...>   — managers call this; the dispatcher daemon launches it within ~15s.
+# Example: request agent-m1-clipmove --repo agent --model gpt-5.6-luna --effort xhigh --brief /path/brief.md
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+N=$1; shift; [ -e $O/workers/$N ] || [ -e $O/queue/pending/$N ] && { echo "name $N already used"; exit 2; }
+printf '%q ' "$N" "$@" > $O/queue/pending/$N; echo "queued $N (check: $O/queue/done/$N or refused/$N)"

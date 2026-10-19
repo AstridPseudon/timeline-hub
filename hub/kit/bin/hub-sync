@@ -1,0 +1,149 @@
+#!/bin/bash
+# hub-sync MACHINE  (main | app | viewing): one sync cycle with the hub (see $ORCH/COMMS.md).
+set -u
+M=$1
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+HUBURL=https://github.com/AstridPseudon/timeline-hub
+H=/home/user/timeline-hub
+W=/home/user/work
+# Handover: an area moves to its remote machine only after a handshake.
+#   remote writes hub/status/<area>.READY -> main stops its local manager, publishes final STATUS/INBOX,
+#   marks $ORCH/managers/<area>/REMOTE and writes hub/status/<area>.HANDOVER -> remote starts its manager.
+# Until then main keeps the area (and its home repo) local.
+declare -A REPO_OF=( [app]=app [viewing]=composition )
+case $M in
+  main)    AREAS="runtime agent"; HOME_REPOS="agent runtime"; REMOTE_AREAS=""
+           for a in app viewing; do
+             if [ -e $ORCH/managers/$a/REMOTE ]; then REMOTE_AREAS="$REMOTE_AREAS $a"
+             else AREAS="$AREAS $a"; HOME_REPOS="$HOME_REPOS ${REPO_OF[$a]}"; fi
+           done;;
+  app)     AREAS="app";           HOME_REPOS="app";           REMOTE_AREAS="";;
+  viewing) AREAS="viewing";       HOME_REPOS="composition";   REMOTE_AREAS="";;
+  *) echo "usage: hub-sync main|app|viewing"; exit 2;;
+esac
+# on a remote machine, home repos count as mine only once the handover arrived
+[ $M != main ] && [ ! -e $ORCH/managers/$AREAS/HANDOVER_DONE ] && HOME_REPOS=""
+now=$(date -u +%FT%TZ)
+retry(){ local d=2; for i in 1 2 3 4 5; do "$@" && return 0; sleep $d; d=$((d*2)); done; return 1; }
+
+# --- files checkout (branch timeline-hub) ---
+if [ ! -d $H/.git ]; then
+  git clone -q $HUBURL $H 2>/dev/null || { mkdir -p $H; git -C $H init -q; git -C $H remote add origin $HUBURL; }
+  git -C $H fetch -q origin main 2>/dev/null && git -C $H checkout -q -B main origin/main || git -C $H checkout -q -B main
+fi
+cd $H && git pull -q --rebase origin main 2>/dev/null
+mkdir -p hub/status hub/escalations/closed hub/inbox hub/design hub/merge-requests hub/merge-results
+
+# --- handover handshake ---
+if [ $M = main ]; then
+  for a in app viewing; do
+    [ -e $ORCH/managers/$a/REMOTE ] && continue
+    [ -e hub/status/$a.READY ] || continue
+    p=$(pgrep -f "bin/run-manager $a" | head -1)
+    [ -n "$p" ] && { pg=$(ps -o pgid= -p $p | tr -d " "); kill -TERM -- -$pg 2>/dev/null || kill -TERM $p; }; # timeout(1) gives codex its own process group: also kill every process running this manager's prompt
+    for q in $(pgrep -f "codex exec"); do tr '\0' '\n' < /proc/$q/cmdline 2>/dev/null | grep -q "managers/$a/rounds" && kill -TERM -- -$(ps -o pgid= -p $q | tr -d " ") 2>/dev/null; done
+    sleep 5; rm -f $ORCH/managers/$a/running
+    { echo "<!-- main | $now | handed over -->"; cat $ORCH/managers/$a/STATUS.md; } > hub/status/$a.md
+    cp $ORCH/managers/$a/INBOX.md hub/inbox/$a.md
+    touch $ORCH/managers/$a/REMOTE; echo "$now" > hub/status/$a.HANDOVER
+    echo "- $now handover: $a manager stopped on main; area now runs on the $a machine" >> $ORCH/STATE.md
+    AREAS=$(echo " $AREAS " | sed "s/ $a / /"); REMOTE_AREAS="$REMOTE_AREAS $a"
+    HOME_REPOS=$(echo " $HOME_REPOS " | sed "s/ ${REPO_OF[$a]} / /")
+  done
+elif [ ! -e $ORCH/managers/$AREAS/HANDOVER_DONE ]; then
+  a=$AREAS
+  [ -e $ORCH/managers/$a/READY ] && [ ! -e hub/status/$a.READY ] && echo "$now" > hub/status/$a.READY
+  if [ -e hub/status/$a.HANDOVER ]; then
+    tail -n +2 hub/status/$a.md > $ORCH/managers/$a/STATUS.md; cp hub/inbox/$a.md $ORCH/managers/$a/INBOX.md
+    touch $ORCH/managers/$a/HANDOVER_DONE; HOME_REPOS=${REPO_OF[$a]}
+  else AREAS=""; fi   # not mine yet: publish nothing about the area
+fi
+
+hb=$(( $(date +%s) - $(stat -c %Y $ORCH/dispatcher.heartbeat 2>/dev/null || echo 0) ))
+for a in $AREAS; do
+  { echo "<!-- $M | $now | dispatcher heartbeat ${hb}s -->"; cat $ORCH/managers/$a/STATUS.md 2>/dev/null; } > hub/status/$a.md
+  for f in $ORCH/escalations/$a-*.md; do [ -e "$f" ] && cp -n "$f" hub/escalations/; done
+  # closed escalations of my own areas: if the orchestrator closed them on the hub, close locally too
+  for f in hub/escalations/closed/$a-*.md; do [ -e "$f" ] && [ -e $ORCH/escalations/$(basename $f) ] && mv $ORCH/escalations/$(basename $f) $ORCH/escalations/closed/; done
+  # inbox in (remote machines): append hub items not yet in the local inbox
+  if [ $M != main ] && [ -f hub/inbox/$a.md ]; then
+    n_loc=$(wc -c < $ORCH/managers/$a/INBOX.md 2>/dev/null || echo 0); n_hub=$(wc -c < hub/inbox/$a.md)
+    [ $n_hub -gt $n_loc ] && cp hub/inbox/$a.md $ORCH/managers/$a/INBOX.md
+  fi
+done
+if [ $M = main ]; then
+  for a in $REMOTE_AREAS; do
+    [ -f hub/status/$a.md ] && cp hub/status/$a.md $ORCH/managers/$a/STATUS.md
+    for f in hub/escalations/$a-*.md; do [ -e "$f" ] || continue; b=$(basename $f)
+      if [ -e $ORCH/escalations/closed/$b ]; then git mv -f $f hub/escalations/closed/$b 2>/dev/null || mv $f hub/escalations/closed/$b
+      elif [ ! -e $ORCH/escalations/$b ]; then cp $f $ORCH/escalations/$b; fi; done
+    [ -f $ORCH/managers/$a/INBOX.md ] && cp $ORCH/managers/$a/INBOX.md hub/inbox/$a.md
+  done
+fi
+# shared kit: main publishes tools and rules; remote machines take them (PLAN changes and tool fixes propagate)
+KIT="PLAN.md COMMON.md MANAGER-COMMON.md MODELS.md COMMS.md AREA-LEAD.md"
+if [ $M = main ]; then mkdir -p hub/kit/bin; cp -p $ORCH/bin/* hub/kit/bin/ 2>/dev/null; rm -f hub/kit/bin/*.bak; for f in $KIT; do cp -p $ORCH/$f hub/kit/; done
+else [ -d hub/kit ] && { for f in $KIT; do [ -f hub/kit/$f ] && cp -p hub/kit/$f $ORCH/$f; done; for f in hub/kit/bin/*; do [ "$(basename $f)" = hub-sync ] && continue; cp -p $f $ORCH/bin/; done
+  cmp -s hub/kit/bin/hub-sync $ORCH/bin/hub-sync || cp -p hub/kit/bin/hub-sync $ORCH/bin/hub-sync.next; }   # applied by hub-syncd between cycles
+fi
+
+# worker evidence for handed-over areas: main publishes its workers' report/meta/exit/commit.log + log tail and
+# the area's test-service results; the remote machine copies them into its $ORCH/workers and $ORCH/tests (no overwrite)
+declare -A PFX=( [app]=app [viewing]=vw )
+declare -A TREPO=( [app]=app [viewing]=composition )
+if [ $M = main ]; then
+  for a in $REMOTE_AREAS; do
+    for d in $ORCH/workers/${PFX[$a]}-*; do [ -d "$d" ] || continue; w=$(basename $d); mkdir -p hub/workers/$w
+      for f in report.md meta exit commit.log; do [ -f $d/$f ] && cp -p $d/$f hub/workers/$w/; done
+      [ -f $d/log.txt ] && tail -n 400 $d/log.txt > hub/workers/$w/log-tail.txt; [ -f $d/running ] && touch hub/workers/$w/running || rm -f hub/workers/$w/running; done
+    for d in $ORCH/tests/${TREPO[$a]}-*; do [ -d "$d" ] || continue; t=$(basename $d); mkdir -p hub/tests/$t
+      for f in status exit summary ext snap; do [ -f $d/$f ] && cp -p $d/$f hub/tests/$t/; done; done
+  done
+else
+  for d in hub/workers/*; do [ -d "$d" ] || continue; w=$(basename $d); mkdir -p $ORCH/workers/$w
+    for f in $d/*; do b=$(basename $f); [ $b = running ] && continue; cp -p $f $ORCH/workers/$w/$b; done
+    [ -e $d/running ] && echo "$w is still running on MAIN" > $ORCH/workers/$w/ON-MAIN || rm -f $ORCH/workers/$w/ON-MAIN; done
+  for d in hub/tests/*; do [ -d "$d" ] && [ ! -d $ORCH/tests/$(basename $d) ] && cp -rp $d $ORCH/tests/; done
+fi
+
+# design docs both ways, newer wins
+for f in $ORCH/design/*; do [ -f "$f" ] || continue; b=$(basename $f); [ ! -e hub/design/$b ] || [ $f -nt hub/design/$b ] && cp -p $f hub/design/$b; done
+for f in hub/design/*; do [ -f "$f" ] || continue; b=$(basename $f); [ ! -e $ORCH/design/$b ] || [ $f -nt $ORCH/design/$b ] && cp -p $f $ORCH/design/$b; done
+
+# --- code ---
+for r in agent runtime app composition; do
+  R=$W/$r; [ -d $R ] || continue
+  git -C $R remote get-url hub >/dev/null 2>&1 || git -C $R remote add hub $HUBURL
+  refs=""
+  for b in $(git -C $R for-each-ref --format='%(refname:short)' 'refs/heads/tl/*'); do
+    [ $b = tl/integration ] && ! echo " $HOME_REPOS " | grep -q " $r " && continue
+    refs="$refs +refs/heads/$b:refs/heads/timeline/$r/$b"
+  done
+  [ -n "$refs" ] && retry git -C $R push -q hub $refs
+  git -C $R fetch -q hub "+refs/heads/timeline/$r/*:refs/remotes/hub/*" 2>/dev/null
+  if ! echo " $HOME_REPOS " | grep -q " $r "; then   # non-home: follow the hub's integration read-only
+    git -C $R rev-parse -q --verify refs/remotes/hub/tl/integration >/dev/null && \
+      git -C $R merge-base --is-ancestor tl/integration hub/tl/integration 2>/dev/null && \
+      { [ "$(git -C $R symbolic-ref -q --short HEAD)" = tl/integration ] && git -C $R merge -q --ff-only hub/tl/integration || git -C $R branch -f tl/integration hub/tl/integration; }
+  fi
+done
+
+# --- merge requests addressed to my home repos ---
+for r in $HOME_REPOS; do
+  for f in hub/merge-requests/$r/*; do [ -e "$f" ] || continue; w=$(basename $f)
+    [ -e hub/merge-results/$r/$w ] && continue
+    [ -e $ORCH/queue/done/merge-$w ] || [ -e $ORCH/queue/refused/merge-$w ] || [ -e $ORCH/queue/pending/merge-$w ] && { :; } || {
+      git -C $W/$r fetch -q hub "+refs/heads/timeline/$r/tl/$w:refs/heads/tl/$w" && echo "MERGE $w" > $ORCH/queue/pending/merge-$w; }
+    mkdir -p hub/merge-results/$r
+    [ -e $ORCH/queue/done/merge-$w ] && echo "MERGED $(git -C $W/$r rev-parse --short tl/integration)" > hub/merge-results/$r/$w
+    [ -e $ORCH/queue/refused/merge-$w ] && { echo -n "REFUSED "; tail -1 $ORCH/queue/refused/merge-$w; } > hub/merge-results/$r/$w
+  done
+done
+
+git add -A hub >/dev/null 2>&1
+git diff --cached --quiet || git commit -qm "hub-sync $M $now
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NCfFG4UM2PAWDGuSNXfJtu"
+retry sh -c "git pull -q --rebase origin main 2>/dev/null; git push -q origin HEAD:main"
+date -u +%FT%TZ > $ORCH/hub-sync.heartbeat

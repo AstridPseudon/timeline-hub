@@ -1,0 +1,9 @@
+name=vw-m0-build-prep
+repo=composition
+base=tl/integration
+base_sha=c82eb7c
+model=gpt-5.6-luna
+effort=xhigh
+heavy=0
+worktree=/home/user/work/wt/vw-m0-build-prep
+started=2026-10-19T18:06:33Z

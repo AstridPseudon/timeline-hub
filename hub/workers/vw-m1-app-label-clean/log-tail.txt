@@ -1,0 +1,400 @@
+../agt-m0-env/examples/packs/text_digest/AGENTS.md
+../agt-m0-env/examples/packs/text_review/AGENTS.md
+../agt-m0-ext/AGENTS.md
+../agt-m0-ext/astrid/packs/discord_local/AGENTS.md
+../agt-m0-ext/astrid/packs/seedance_local/AGENTS.md
+../agt-m0-ext/examples/packs/file_summarizer/AGENTS.md
+../agt-m0-ext/examples/packs/media/AGENTS.md
+../agt-m0-ext/examples/packs/minimal/AGENTS.md
+../agt-m0-ext/examples/packs/text_digest/AGENTS.md
+../agt-m0-ext/examples/packs/text_review/AGENTS.md
+../agt-m0-port-audit/AGENTS.md
+../agt-m0-port-audit/astrid/packs/discord_local/AGENTS.md
+../agt-m0-port-audit/astrid/packs/seedance_local/AGENTS.md
+../agt-m0-port-audit/examples/packs/file_summarizer/AGENTS.md
+../agt-m0-port-audit/examples/packs/media/AGENTS.md
+../agt-m0-port-audit/examples/packs/minimal/AGENTS.md
+../agt-m0-port-audit/examples/packs/text_digest/AGENTS.md
+../agt-m0-port-audit/examples/packs/text_review/AGENTS.md
+../agt-m0-recipe/AGENTS.md
+../agt-m0-recipe/astrid/packs/discord_local/AGENTS.md
+../agt-m0-recipe/astrid/packs/seedance_local/AGENTS.md
+../agt-m0-recipe/examples/packs/file_summarizer/AGENTS.md
+../agt-m0-recipe/examples/packs/media/AGENTS.md
+../agt-m0-recipe/examples/packs/minimal/AGENTS.md
+../agt-m0-recipe/examples/packs/text_digest/AGENTS.md
+../agt-m0-recipe/examples/packs/text_review/AGENTS.md
+../agt-m0-spike/AGENTS.md
+../agt-m0-spike/astrid/packs/discord_local/AGENTS.md
+../agt-m0-spike/astrid/packs/seedance_local/AGENTS.md
+../agt-m0-spike/examples/packs/file_summarizer/AGENTS.md
+../agt-m0-spike/examples/packs/media/AGENTS.md
+../agt-m0-spike/examples/packs/minimal/AGENTS.md
+../agt-m0-spike/examples/packs/text_digest/AGENTS.md
+../agt-m0-spike/examples/packs/text_review/AGENTS.md
+../agt-m0-suffix-basis/AGENTS.md
+../agt-m0-suffix-basis/astrid/packs/discord_local/AGENTS.md
+../agt-m0-suffix-basis/astrid/packs/seedance_local/AGENTS.md
+../agt-m0-suffix-basis/examples/packs/file_summarizer/AGENTS.md
+../agt-m0-suffix-basis/examples/packs/media/AGENTS.md
+../agt-m0-suffix-basis/examples/packs/minimal/AGENTS.md
+../agt-m0-suffix-basis/examples/packs/text_digest/AGENTS.md
+../agt-m0-suffix-basis/examples/packs/text_review/AGENTS.md
+../agt-m0-suffix-conformance/AGENTS.md
+../agt-m0-suffix-conformance/astrid/packs/discord_local/AGENTS.md
+../agt-m0-suffix-conformance/astrid/packs/seedance_local/AGENTS.md
+../agt-m0-suffix-conformance/examples/packs/file_summarizer/AGENTS.md
+../agt-m0-suffix-conformance/examples/packs/media/AGENTS.md
+../agt-m0-suffix-conformance/examples/packs/minimal/AGENTS.md
+../agt-m0-suffix-conformance/examples/packs/text_digest/AGENTS.md
+../agt-m0-suffix-conformance/examples/packs/text_review/AGENTS.md
+../agt-m1-core/AGENTS.md
+../agt-m1-core/astrid/packs/discord_local/AGENTS.md
+../agt-m1-core/astrid/packs/seedance_local/AGENTS.md
+../agt-m1-core/examples/packs/file_summarizer/AGENTS.md
+../agt-m1-core/examples/packs/media/AGENTS.md
+../agt-m1-core/examples/packs/minimal/AGENTS.md
+../agt-m1-core/examples/packs/text_digest/AGENTS.md
+../agt-m1-core/examples/packs/text_review/AGENTS.md
+../agt-m1-frontends/AGENTS.md
+../agt-m1-frontends/astrid/packs/discord_local/AGENTS.md
+../agt-m1-frontends/astrid/packs/seedance_local/AGENTS.md
+../agt-m1-frontends/examples/packs/file_summarizer/AGENTS.md
+../agt-m1-frontends/examples/packs/media/AGENTS.md
+../agt-m1-frontends/examples/packs/minimal/AGENTS.md
+../agt-m1-frontends/examples/packs/text_digest/AGENTS.md
+../agt-m1-frontends/examples/packs/text_review/AGENTS.md
+../agt-m1-provider/AGENTS.md
+../agt-m1-provider/astrid/packs/discord_local/AGENTS.md
+../agt-m1-provider/astrid/packs/seedance_local/AGENTS.md
+../agt-m1-provider/examples/packs/file_summarizer/AGENTS.md
+../agt-m1-provider/examples/packs/media/AGENTS.md
+../agt-m1-provider/examples/packs/minimal/AGENTS.md
+../agt-m1-provider/examples/packs/text_digest/AGENTS.md
+../agt-m1-provider/examples/packs/text_review/AGENTS.md
+../agt-m1-readback-fix/AGENTS.md
+../agt-m1-readback-fix/astrid/packs/discord_local/AGENTS.md
+../agt-m1-readback-fix/astrid/packs/seedance_local/AGENTS.md
+../agt-m1-readback-fix/examples/packs/file_summarizer/AGENTS.md
+../agt-m1-readback-fix/examples/packs/media/AGENTS.md
+../agt-m1-readback-fix/examples/packs/minimal/AGENTS.md
+../agt-m1-readback-fix/examples/packs/text_digest/AGENTS.md
+../agt-m1-readback-fix/examples/packs/text_review/AGENTS.md
+../agt-m1-readback/AGENTS.md
+../agt-m1-readback/astrid/packs/discord_local/AGENTS.md
+../agt-m1-readback/astrid/packs/seedance_local/AGENTS.md
+../agt-m1-readback/examples/packs/file_summarizer/AGENTS.md
+../agt-m1-readback/examples/packs/media/AGENTS.md
+../agt-m1-readback/examples/packs/minimal/AGENTS.md
+../agt-m1-readback/examples/packs/text_digest/AGENTS.md
+../agt-m1-readback/examples/packs/text_review/AGENTS.md
+../agt-m1-workspace-client/AGENTS.md
+../agt-m1-workspace-client/astrid/packs/discord_local/AGENTS.md
+../agt-m1-workspace-client/astrid/packs/seedance_local/AGENTS.md
+../agt-m1-workspace-client/examples/packs/file_summarizer/AGENTS.md
+../agt-m1-workspace-client/examples/packs/media/AGENTS.md
+../agt-m1-workspace-client/examples/packs/minimal/AGENTS.md
+../agt-m1-workspace-client/examples/packs/text_digest/AGENTS.md
+../agt-m1-workspace-client/examples/packs/text_review/AGENTS.md
+../app-m0-baseline-full/CLAUDE.md
+../app-m0-contract-map/CLAUDE.md
+../app-m0-env/CLAUDE.md
+../app-m0-listen-guard/CLAUDE.md
+../app-m0-loopback/CLAUDE.md
+../app-m0-writers/CLAUDE.md
+../app-m1-capture-parity/CLAUDE.md
+../app-m1-client-review/CLAUDE.md
+../app-m1-commit-client/CLAUDE.md
+../app-m1-move-capture/CLAUDE.md
+../app-m1-outbox-browser/CLAUDE.md
+../app-m1-outbox-race/CLAUDE.md
+../app-m1-outbox/CLAUDE.md
+../rt-m0-journeys/CLAUDE.md
+../vw-m1-agent-label-review/AGENTS.md
+../vw-m1-agent-label-review/astrid/packs/discord_local/AGENTS.md
+../vw-m1-agent-label-review/astrid/packs/seedance_local/AGENTS.md
+../vw-m1-agent-label-review/examples/packs/file_summarizer/AGENTS.md
+../vw-m1-agent-label-review/examples/packs/media/AGENTS.md
+../vw-m1-agent-label-review/examples/packs/minimal/AGENTS.md
+../vw-m1-agent-label-review/examples/packs/text_digest/AGENTS.md
+../vw-m1-agent-label-review/examples/packs/text_review/AGENTS.md
+../vw-m1-agent-labels/AGENTS.md
+../vw-m1-agent-labels/astrid/packs/discord_local/AGENTS.md
+../vw-m1-agent-labels/astrid/packs/seedance_local/AGENTS.md
+../vw-m1-agent-labels/examples/packs/file_summarizer/AGENTS.md
+../vw-m1-agent-labels/examples/packs/media/AGENTS.md
+../vw-m1-agent-labels/examples/packs/minimal/AGENTS.md
+../vw-m1-agent-labels/examples/packs/text_digest/AGENTS.md
+../vw-m1-agent-labels/examples/packs/text_review/AGENTS.md
+../vw-m1-app-label-clean/CLAUDE.md
+../vw-m1-app-label-review/CLAUDE.md
+../vw-m1-app-labels/CLAUDE.md
+../vw-m1-player-audio/CLAUDE.md
+
+exec
+/bin/bash -lc "sed -n '1,240p' CLAUDE.md && printf '\\n--- status ---\\n' && git status --short && printf '\\n--- target diff vs base ---\\n' && git diff -- src/tools/video-editor/components/PreviewPanel/previewRevision.ts && printf '\\n--- target tail bytes ---\\n' && tail -c 160 src/tools/video-editor/components/PreviewPanel/previewRevision.ts | od -An -t x1c && printf '\\n--- requested check before edit ---\\n' && git diff 925ef330b --check; test "'$? -eq 0' in /home/user/work/wt/vw-m1-app-label-clean
+ exited 1 in 1328ms:
+# Astrid: Working Rules (read first)
+
+## Docs (consult before editing cross-cutting code)
+- **Cross-cutting** = spans multiple tools, or touches core tables/storage/auth/billing.
+- Start at `../structure.md` (collection-level, links to sub-docs). Deep dives live in `../docs/structure_detail/`.
+- **Read the relevant sub-doc before editing** (all in `../docs/structure_detail/` unless noted):
+  - *Data & persistence:* Settings → `settings_system.md` · Per-pair data → `per_pair_data_persistence.md` · Data fetching → `data_fetching.md` · DB/RPCs/storage → `db_and_storage.md` · Storage/uploads → `storage_uploads.md`
+  - *Infrastructure:* Task creation → `unified_task_creation.md` · Workers → `task_worker_lifecycle.md` · Edge Functions → `edge_functions.md` · Realtime → `realtime_system.md` · Payments → `auto_topup_system.md`
+  - *Frontend:* Architecture → `frontend_architecture.md` · Shared utilities → `shared_utilities.md` · Design/motion → `design_motion_guidelines.md` · Auth → `auth_system.md` · Routing → `routing_and_navigation.md` · Performance → `performance_system.md` · Image loading → `image_loading_system.md`
+  - *Operations:* Debugging → `../debugging.md` (collection-level, cross-repo) · Error handling → `error_handling.md` · Deployment → `deployment_and_migration_guide.md` · Refactoring → `refactoring_patterns.md` · Video travel tool → `tool_video_travel.md` · Video editor timeline → `tool_video_editor.md` · Code quality → `docs/code_quality_audit.md`
+- **Multiple docs apply?** Start with most specific (e.g., `image_loading` before `performance`).
+- **New feature?** Check `adding_new_tool.md` for tool pattern; `structure.md` for where things live.
+- **Debugging a flow?** Trace: UI → hook → task creation (`unified_task_creation.md`) → worker (`task_worker_lifecycle.md`) → `complete_task` edge function.
+
+## Supabase safety (non-negotiable)
+- Prefer Edge Functions/DB triggers for atomic/elevated/sensitive/guaranteed work.
+- Deploy functions individually: `npx supabase functions deploy <name> --project-ref wczysqzxlwdndgxitrvc`
+- Migrations: `npx supabase db push --linked` (**never** `db reset --linked`)
+- SQL for editor: wrap results in `SELECT json_agg(results) FROM (...) results;`
+
+## Engineering policies (read once, apply always)
+- **Constraints over comments.** Invariants belong in the database (CHECK, partial UNIQUE, trigger), not in code comments. If you find yourself writing "should be unique but isn't" or "duplicates are expected", make the constraint instead.
+- **Burn down on the same PR.** Adding a replacement requires deleting its predecessor in the same PR. Disabling a trigger without removing its callers, or adding a new column without dropping the column it replaces, is not done.
+- **Migrations live where prod runs.** Any DDL applied to prod must have a tracked migration in git. The schema-drift CI gate enforces this; the policy says it out loud.
+- **Typed contracts at service boundaries.** Cross-service / cross-repo payloads (worker↔edge, edge↔agent) require a shared schema (Zod). String-keyed JSON payloads silently drift.
+- **Allowlists shrink, never grow.** `eslint.shared-layer-allowlist.js`, `eslint.strict-debt.js`, `.megaplan/debt.json` entries are known violations. Net additions require an exception note in the PR.
+
+## UI conventions
+- Toasts: **errors only** (no “success” toasts for task creation).
+- Don’t create new `*.md` unless explicitly requested.
+
+## Prefer existing patterns
+- Reuse shared components/hooks in `src/shared/` before creating new ones.
+- Tools follow `src/tools/[name]/{pages,components,hooks,settings.ts}` (see `adding_new_tool.md`).
+- UI: shadcn (`src/shared/components/ui/`), lucide icons, **never hardcode colors** (use `bg-background`, `text-foreground`, etc.). Responsive: Tailwind + `@container`.
+
+## Key concepts / correctness
+- Generations vs variants: generations are gallery items; variants are per-generation alternates; use `based_on` for lineage.
+- **Generation IDs**: Use `getGenerationId(media)` from `shared/lib/mediaTypeHelpers.ts` instead of inline `media.generation_id || media.id`. Handles variants, metadata, and null safely.
+- Shots data: use `ShotsContext` via `useShots()`; shot images via `useShotImages(shotId)`.
+- React Query: invalidate after mutations; scope invalidations where possible.
+
+## Review discipline
+- After changes: ensure nothing out-of-scope was deleted/edited.
+- Flag briefly (don't derail): duplication, giant components (>300 LOC), prop drilling (3+ levels), mixed concerns, inconsistent patterns, missing error handling.
+- Anti-patterns and quality standards: see `docs/code_quality_audit.md`. Core principle: every change should make the codebase smaller or more explicit.
+
+## Context hooks
+- Required-provider hooks must throw when their context is missing. Do not hide missing providers behind default objects with no-op setters.
+- Only add a `Safe` hook variant for genuinely optional consumers, and justify that callsite inline.
+- Motivating incident: the media-lightbox edit textarea dropped typing because `EMPTY_FORM` setters were no-ops, so missing context failed silently instead of crashing where the provider was absent.
+
+## Thoroughness over speed
+- **Don't half-measure.** When reviewing/fixing a batch of items, read every one. Don't blanket-categorize based on metadata alone.
+- **Wontfix requires justification.** Every wontfix must include a specific reason for THIS item — not a generic category label. If you can't explain why it's fine, you haven't read it.
+- **Fix > wontfix.** The default action is fixing. Only wontfix when fixing would make things worse or the finding is a false positive.
+- **Don't game metrics.** Wontfixing to inflate a score is worse than leaving items open. The goal is code quality, not numbers.
+- **When the user asks for a complete job, do a complete job.** Don't propose half-measures or shortcuts unless the user explicitly says they want speed over thoroughness.
+
+## Debugging
+- See `../debugging.md` (collection-level) for cross-repo debugging router, CLI commands, and decision table.
+- **Use consistent tags**: `console.log('[MyTag] message', data)` — filter with `debug.py logs --latest --tag MyTag`.
+- Debug logs are dev-only (stripped in prod), so temporary instrumentation is OK.
+
+## Doc maintenance
+- **Sub-docs** (`docs/structure_detail/`): Update when changing system patterns (triggers, RPCs, storage, shared hooks). Use routing table above.
+- **structure.md**: Update only when adding/removing sub-docs or changing top-level directory structure. It's an index, not implementation detail.
+- **Style**: Tables > prose; point to code; sub-docs under ~150 lines; include Purpose + Source of Truth + Key Invariants.
+- **Don't create catalog docs** (hook lists, component inventories, file trees). The typed source is the source of truth; catalogs drift.
+
+## Git workflow (when pushing)
+- Before push: review `git diff`, update docs if system patterns changed, then `git add . && git commit -m "feat/fix: ..." && git push`.
+
+## Task lists (when asked)
+- Save to `tasks/YYYY-MM-DD-*.md` with per-task sections + a master checklist (quick wins first; group by area/files).
+
+--- status ---
+
+--- target diff vs base ---
+
+--- target tail bytes ---
+  77  55  6e  61  76  61  69  6c  61  62  6c  65  54  61  72  67
+   w   U   n   a   v   a   i   l   a   b   l   e   T   a   r   g
+  65  74  29  3a  20  73  74  72  69  6e  67  20  7b  0a  20  20
+   e   t   )   :       s   t   r   i   n   g       {  \n        
+  72  65  74  75  72  6e  20  74  61  72  67  65  74  2e  74  61
+   r   e   t   u   r   n       t   a   r   g   e   t   .   t   a
+  72  67  65  74  52  65  76  69  73  69  6f  6e  49  64  0a  20
+   r   g   e   t   R   e   v   i   s   i   o   n   I   d  \n    
+  20  20  20  3f  20  60  50  72  65  76  69  65  77  20  6f  66
+               ?       `   P   r   e   v   i   e   w       o   f
+  20  24  7b  74  61  72  67  65  74  2e  74  61  72  67  65  74
+       $   {   t   a   r   g   e   t   .   t   a   r   g   e   t
+  52  65  76  69  73  69  6f  6e  49  64  7d  20  75  6e  61  76
+   R   e   v   i   s   i   o   n   I   d   }       u   n   a   v
+  61  69  6c  61  62  6c  65  60  0a  20  20  20  20  3a  20  27
+   a   i   l   a   b   l   e   `  \n                   :       '
+  50  72  65  76  69  65  77  20  74  61  72  67  65  74  20  75
+   P   r   e   v   i   e   w       t   a   r   g   e   t       u
+  6e  61  76  61  69  6c  61  62  6c  65  27  3b  0a  7d  0a  0a
+   n   a   v   a   i   l   a   b   l   e   '   ;  \n   }  \n  \n
+
+--- requested check before edit ---
+src/tools/video-editor/components/PreviewPanel/previewRevision.ts:36: new blank line at EOF.
+
+codex
+The worktree is clean, and the target file currently ends with two newline characters after the closing brace. The requested check already identifies only the extra EOF blank line against `925ef330b`; I’m checking the exact base/HEAD relationship before applying the one-line deletion.
+exec
+/bin/bash -lc "printf '%s\\n' '--- target lines ---'; nl -ba src/tools/video-editor/components/PreviewPanel/previewRevision.ts | tail -n 12; printf '%s\\n' '--- commits ---'; git log -3 --oneline --decorate; printf '%s\\n' '--- target diff from stated task base ---'; git diff --unified=3 d25e1af09 -- src/tools/video-editor/components/PreviewPanel/previewRevision.ts; printf '%s\\n' '--- target diff from check base ---'; git diff --unified=3 925ef330b -- src/tools/video-editor/components/PreviewPanel/previewRevision.ts" in /home/user/work/wt/vw-m1-app-label-clean
+ succeeded in 198ms:
+--- target lines ---
+    25	      ? `Preview of ${revision.unavailableTarget.targetRevisionId} unavailable`
+    26	      : 'Preview unavailable';
+    27	  }
+    28	  return 'Preview revision unavailable';
+    29	}
+    30	
+    31	export function previewUnavailableLabel(target: PreviewUnavailableTarget): string {
+    32	  return target.targetRevisionId
+    33	    ? `Preview of ${target.targetRevisionId} unavailable`
+    34	    : 'Preview target unavailable';
+    35	}
+    36	
+--- commits ---
+d25e1af09 (HEAD -> tl/vw-m1-app-label-clean, tl/vw-m1-app-label-review) fix(video-editor): close preview identity boundary gaps
+1a4e2ce3a (tl/vw-m1-app-labels) fix(video-editor): bind preview revision labels to Player delivery
+925ef330b (tl/vw-m1-player-audio, tl/app-m1-capture-parity) Merge tl/app-m0-listen-guard
+--- target diff from stated task base ---
+--- target diff from check base ---
+diff --git a/src/tools/video-editor/components/PreviewPanel/previewRevision.ts b/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+new file mode 100644
+index 000000000..e481962e0
+--- /dev/null
++++ b/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+@@ -0,0 +1,36 @@
++export type PreviewUnavailableTarget = Readonly<{
++  targetRevisionId?: string;
++  reason: string;
++}>;
++
++export type PreviewRevision = Readonly<{
++  kind: 'committed' | 'local' | 'unavailable' | 'unknown';
++  revisionId?: string;
++  baseRevisionId?: string | null;
++  unavailableTarget?: PreviewUnavailableTarget;
++  reason?: string;
++}>;
++
++export function previewRevisionLabel(revision: PreviewRevision): string {
++  if (revision.kind === 'committed' && revision.revisionId) {
++    return `Committed ${revision.revisionId}`;
++  }
++  if (revision.kind === 'local') {
++    return revision.baseRevisionId
++      ? `Unsaved local · based on ${revision.baseRevisionId}`
++      : 'Unsaved local';
++  }
++  if (revision.kind === 'unavailable') {
++    return revision.unavailableTarget?.targetRevisionId
++      ? `Preview of ${revision.unavailableTarget.targetRevisionId} unavailable`
++      : 'Preview unavailable';
++  }
++  return 'Preview revision unavailable';
++}
++
++export function previewUnavailableLabel(target: PreviewUnavailableTarget): string {
++  return target.targetRevisionId
++    ? `Preview of ${target.targetRevisionId} unavailable`
++    : 'Preview target unavailable';
++}
++
+
+apply patch
+patch: completed
+/home/user/work/wt/vw-m1-app-label-clean/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+diff --git a/src/tools/video-editor/components/PreviewPanel/previewRevision.ts b/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+index e481962e0fa1992ff85792ed5e87eb2b4273db14..bdffbf78395eaaa4793beaef234fe94e630fab65
+--- a/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
++++ b/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+@@ -33,4 +33,3 @@
+     ? `Preview of ${target.targetRevisionId} unavailable`
+     : 'Preview target unavailable';
+ }
+-
+
+codex
+The exact relationship is confirmed: `d25e1af09` introduced this file with the trailing blank line, and `925ef330b` predates the file. I removed only that final blank line; no tests are being rerun per the task because this is whitespace-only.
+exec
+/bin/bash -lc "set -o pipefail
+printf '%s\\n' '--- worktree diff ---'
+git diff -- src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+printf '%s\\n' '--- requested check ---'
+git diff 925ef330b --check
+check_status="'$?
+printf '"'requested check exit: %s\\n' \""'$check_status"
+printf '"'%s\\n' '--- current tail bytes ---'
+tail -c 24 src/tools/video-editor/components/PreviewPanel/previewRevision.ts | od -An -t x1c
+printf '%s\\n' '--- status ---'
+git status --short
+exit \""'$check_status"' in /home/user/work/wt/vw-m1-app-label-clean
+ succeeded in 1379ms:
+--- worktree diff ---
+diff --git a/src/tools/video-editor/components/PreviewPanel/previewRevision.ts b/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+index e481962e0..bdffbf783 100644
+--- a/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
++++ b/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+@@ -33,4 +33,3 @@ export function previewUnavailableLabel(target: PreviewUnavailableTarget): strin
+     ? `Preview of ${target.targetRevisionId} unavailable`
+     : 'Preview target unavailable';
+ }
+-
+--- requested check ---
+requested check exit: 0
+--- current tail bytes ---
+  20  74  61  72  67  65  74  20  75  6e  61  76  61  69  6c  61
+       t   a   r   g   e   t       u   n   a   v   a   i   l   a
+  62  6c  65  27  3b  0a  7d  0a
+   b   l   e   '   ;  \n   }  \n
+--- status ---
+ M src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-app-label-clean/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-app-label-clean/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-app-label-clean/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..a7c9fc98c4c728c25a10c8a22459eeff76e79f87
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-app-label-clean/commit-msg
+@@ -0,0 +1,3 @@
++fix(video-editor): remove trailing blank line from preview revision
++
++Keep previewRevision.ts free of an extra blank line at EOF.
+diff --git a/src/tools/video-editor/components/PreviewPanel/previewRevision.ts b/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+index e481962e0fa1992ff85792ed5e87eb2b4273db14..bdffbf78395eaaa4793beaef234fe94e630fab65
+--- a/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
++++ b/src/tools/video-editor/components/PreviewPanel/previewRevision.ts
+@@ -33,4 +33,3 @@
+     ? `Preview of ${target.targetRevisionId} unavailable`
+     : 'Preview target unavailable';
+ }
+-
+
+codex
+Implemented only the EOF whitespace removal in `previewRevision.ts`.
+
+Validation:
+
+- `git diff 925ef330b --check` — passed.
+- No tests rerun; whitespace-only change.
+- No claim made for `npx tsc --noEmit`; the actual App check is `npm exec tsc -- --noEmit -p tsconfig.app.json`, handled by the manager.
+
+Commit message written to the requested path. No blockers or unrelated changes.
+tokens used
+22,238
+Implemented only the EOF whitespace removal in `previewRevision.ts`.
+
+Validation:
+
+- `git diff 925ef330b --check` — passed.
+- No tests rerun; whitespace-only change.
+- No claim made for `npx tsc --noEmit`; the actual App check is `npm exec tsc -- --noEmit -p tsconfig.app.json`, handled by the manager.
+
+Commit message written to the requested path. No blockers or unrelated changes.

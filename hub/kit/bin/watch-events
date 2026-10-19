@@ -1,0 +1,18 @@
+#!/bin/bash
+# Emits one line per event that needs the orchestrator. Runs until killed.
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+seen=$ORCH/.watch_seen; touch $seen
+emit(){ grep -qxF "$1" $seen || { echo "$1"; echo "$1" >> $seen; }; }
+while true; do
+  now=$(date -u +%s)
+  for f in $ORCH/escalations/*.md; do [ -e "$f" ] && emit "ESCALATION $(basename $f)"; done
+  hb=$(stat -c %Y $ORCH/dispatcher.heartbeat 2>/dev/null || echo 0)
+  if [ $((now-hb)) -gt 180 ]; then emit "DISPATCHER_STALE $(date -u +%H%M)"; fi
+  for m in runtime agent app viewing; do
+    [ -e $ORCH/managers/$m/REMOTE ] && continue
+    [ -e $ORCH/managers/$m/running ] || emit "MANAGER_STOPPED $m $(date -u +%Y%m%dT%H)"
+  done
+  last=$(cat $ORCH/.last_tick 2>/dev/null || echo 0)
+  if [ $((now-last)) -ge 3600 ]; then emit "TICK_DUE $last"; fi
+  sleep 20
+done

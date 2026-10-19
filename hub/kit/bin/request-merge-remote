@@ -1,0 +1,9 @@
+#!/bin/bash
+# request-merge-remote REPO WORKER "reason": ask the repo's home machine (see COMMS.md) to merge tl/WORKER.
+# Run on the machine that ran the worker; hub-sync pushes the branch and the request on its next cycle.
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+R=$1; WK=$2; shift 2
+sha=$(git -C /home/user/work/$R rev-parse --short tl/$WK) || exit 1
+mkdir -p /home/user/timeline-hub/hub/merge-requests/$R
+echo "timeline/$R/tl/$WK $sha ${AREA:-?} $*" > /home/user/timeline-hub/hub/merge-requests/$R/$WK
+echo "queued remote merge request for $R tl/$WK ($sha); result will appear in /home/user/timeline-hub/hub/merge-results/$R/$WK"

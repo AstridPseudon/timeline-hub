@@ -1,0 +1,400 @@
++  const clip: TimelineClip = {
++    id: 'audio', at: 0, hold: 1, track: 'music',
++    params: {fadeIn: .5, fadeOut: .25},
++  };
++  const envelope = compileAudioEnvelope(clip, 4);
++  assert.ok(envelope);
++  assert.equal(audioEnvelopeAt(envelope, 0), 0);
++  assert.equal(audioEnvelopeAt(envelope, .25), .5);
++  assert.equal(audioEnvelopeAt(envelope, .5), 1);
++
++  const channel = new Float32Array([1, 1, 1]);
++  applyAudioEnvelope([channel], 4, envelope);
++  assert.deepEqual([...channel].map((value) => Number(value.toFixed(6))), [0, .5, 1]);
++});
++
++// Keep the public result shape exercised as a compile-time contract too.
++const _frameShape: TrackFrame = {frame: 0, layers: []};
++void _frameShape;
+diff --git a/typescript/tests/extensionless-loader.mjs b/typescript/tests/extensionless-loader.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..62b230adba9d05476fb2630bcd3ab26c63c3ba49
+--- /dev/null
++++ b/typescript/tests/extensionless-loader.mjs
+@@ -0,0 +1,11 @@
++export async function resolve(specifier, context, nextResolve) {
++  if ((specifier.startsWith('./') || specifier.startsWith('../'))
++      && !specifier.endsWith('.js')) {
++    try {
++      return await nextResolve(`${specifier}.js`, context);
++    } catch {
++      // Let Node produce its normal diagnostic for unresolved imports.
++    }
++  }
++  return nextResolve(specifier, context);
++}
+diff --git a/typescript/tests/register-extensionless.mjs b/typescript/tests/register-extensionless.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..67446643e1eed6d2dc1f89aaf70daa62e317fb73
+--- /dev/null
++++ b/typescript/tests/register-extensionless.mjs
+@@ -0,0 +1,3 @@
++import {register} from 'node:module';
++
++register('./extensionless-loader.mjs', import.meta.url);
+diff --git a/typescript/tests/scene-evaluation.test.ts b/typescript/tests/scene-evaluation.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..76e01b97a14cb9a2c948d907e3c91399ec166972
+--- /dev/null
++++ b/typescript/tests/scene-evaluation.test.ts
+@@ -0,0 +1,109 @@
++import assert from 'node:assert/strict';
++import {test} from 'node:test';
++import {createElement} from 'react';
++import {prepareScene, querySceneFrame} from '../src/scene-evaluation';
++import type {ModifierDeclaration} from '../src/modifier-types';
++import type {AssetRegistry, TimelineClip, TrackDefinition} from '../src/types';
++import {VIDEO_INTERPRETATION} from '../src/scene-capabilities';
++
++const visualTrack: TrackDefinition = {id: 'video', kind: 'visual', label: 'Video'};
++const assets: AssetRegistry = {assets: {}};
++const clip = (overrides: Partial<TimelineClip> = {}): TimelineClip => ({
++  id: 'clip', at: 0, hold: 1, track: 'video', ...overrides,
++});
++const mediaProof = (file: string, contentSha256: string) => ({
++  version: 1 as const,
++  objectId: `sha256:${contentSha256}`,
++  contentSha256,
++  file,
++  interpretation: VIDEO_INTERPRETATION,
++  stream: {
++    index: 0, codec: 'h264' as const, pixelFormat: 'yuv420p', profile: 'Main', level: '40',
++    sampleAspectRatio: '1:1' as const, width: 1920, height: 1080,
++  },
++});
++const prepare = (
++  clips: readonly TimelineClip[],
++  sceneAssets: AssetRegistry = assets,
++  options: Parameters<typeof prepareScene>[5] = {},
++) => prepareScene([{track: visualTrack, clips, transitions: [null]}], sceneAssets, 30, 1920, 1080, options);
++
++test('proven opaque visual media reports visible covered content', () => {
++  const hash = 'a'.repeat(64);
++  const file = 'video.mp4';
++  const scene = prepare([clip({id: 'picture', asset: 'video'})], {
++    assets: {video: {file, type: 'video/mp4', resolution: '1920x1080', content_sha256: hash}},
++  }, {roles: {picture: 'picture'}, capabilities: {media: {video: mediaProof(file, hash)}}});
++  const frame = querySceneFrame(scene, 0);
++  assert.equal(frame.coverage, 'COVERED');
++  assert.equal(frame.content, 'CONTENT');
++  assert.equal(frame.layers[0].visible, true);
++  assert.equal(frame.layers[0].opaqueSupport, 'rect');
++  assert.deepEqual(frame.findings, []);
++});
++
++test('unresolved or unproven media remains unknown instead of being treated as absent', () => {
++  const unresolved = querySceneFrame(prepare([clip({asset: 'missing'})]), 0);
++  assert.equal(unresolved.coverage, 'UNKNOWN');
++  assert.equal(unresolved.layers[0].visible, 'unknown');
++  assert.ok(unresolved.findings.some(({code}) => code === 'unknown-media-alpha'));
++
++  const hash = 'b'.repeat(64);
++  const unproven = querySceneFrame(prepare([clip({id: 'unproven', asset: 'video'})], {
++    assets: {video: {file: 'video.mp4', type: 'video/mp4', resolution: '1920x1080', content_sha256: hash}},
++  }), 0);
++  assert.equal(unproven.coverage, 'UNKNOWN');
++  assert.equal(unproven.layers[0].visible, 'unknown');
++  assert.ok(unproven.findings.some(({code}) => code === 'unknown-media-alpha'));
++});
++
++test('assetless native holds are visibly absent, while declared component support stays explicit', () => {
++  const absent = querySceneFrame(prepare([clip({id: 'hold'})]), 0);
++  assert.equal(absent.coverage, 'GAP');
++  assert.equal(absent.layers[0].visible, false);
++  assert.deepEqual(absent.findings, []);
++
++  const component = clip({id: 'title', clipType: 'title'});
++  const capability = {
++    identity: 'title@1',
++    frame: () => ({
++      presence: 'present' as const,
++      bounds: {status: 'known' as const, rect: {x: 0, y: 0, width: 1920, height: 1080}},
++      opaqueSupport: 'none' as const,
++    }),
++  };
++  const supported = querySceneFrame(prepare([component], assets, {
++    elements: new Set(['title']), capabilities: {components: {title: capability}},
++  }), 0);
++  assert.equal(supported.layers[0].visible, true);
++  assert.equal(supported.layers[0].coverage, 'partial');
++  assert.deepEqual(supported.findings, []);
++
++  const unknown = querySceneFrame(prepare([component], assets, {elements: new Set(['title'])}), 0);
++  assert.equal(unknown.layers[0].visible, 'unknown');
++  assert.ok(unknown.findings.some(({code}) => code === 'unknown-component-internals'));
++  assert.ok(unknown.findings.some(({code}) => code === 'unknown-component-bounds'));
++  assert.equal(unknown.coverage, 'UNKNOWN');
++});
++
++test('unknown modifier output bounds produce a finding and unknown coverage', () => {
++  const hash = 'c'.repeat(64);
++  const file = 'video.mp4';
++  const modifier: ModifierDeclaration = {
++    kind: 'modifier', element: 'vignette', hosts: ['composition'], bounds: 'unknown',
++    alpha: 'preserve', support: 'preserve',
++    wrap: (_instance, _context, children) => createElement('div', null, children),
++  };
++  const scene = prepare([clip({id: 'picture', asset: 'video', modifiers: [{id: 'v', element: 'vignette', params: {}}]})], {
++    assets: {video: {file, type: 'video/mp4', resolution: '1920x1080', content_sha256: hash}},
++  }, {
++    roles: {picture: 'picture'},
++    capabilities: {media: {video: mediaProof(file, hash)}},
++    modifiers: {vignette: modifier},
++  });
++  const frame = querySceneFrame(scene, 0);
++  assert.equal(frame.layers[0].visible, 'unknown');
++  assert.equal(frame.layers[0].opacity, null);
++  assert.equal(frame.coverage, 'UNKNOWN');
++  assert.ok(frame.findings.some(({code}) => code === 'unknown-modifier-bounds'));
++});
+diff --git a/typescript/tests/transition-spans.test.ts b/typescript/tests/transition-spans.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..ab56a7aaf8034d3e48df0114cedd15489969cb92
+--- /dev/null
++++ b/typescript/tests/transition-spans.test.ts
+@@ -0,0 +1,50 @@
++import assert from 'node:assert/strict';
++import {test} from 'node:test';
++import {layerOpacity, ownFrame, overlapWindow, planTrack} from '../src/lib/transition-spans';
++
++test('transition windows use half-open placement and preserve frozen source frames', () => {
++  assert.deepEqual(overlapWindow(10, 4, 'end'), {start: 6, end: 10});
++  const plans = planTrack(
++    [{start: 0, duration: 10}, {start: 10, duration: 10}],
++    [{T: 4, kind: 'dissolve', align: 'end'}],
++  );
++
++  assert.equal(plans[0].drawStart, 0);
++  assert.equal(plans[0].drawDuration, 10);
++  assert.equal(plans[1].drawStart, 6);
++  assert.equal(plans[1].drawDuration, 14);
++  assert.equal(plans[1].ownOffset, 4);
++  assert.equal(ownFrame(plans[1], 0), 0);
++  assert.equal(ownFrame(plans[1], 3), 0);
++  assert.equal(ownFrame(plans[1], 4), 0);
++  assert.equal(ownFrame(plans[1], 13), 9);
++  assert.equal(ownFrame(plans[1], 20), 9);
++  assert.equal(layerOpacity(plans[1], 0), 0);
++  assert.equal(layerOpacity(plans[1], 2), .5);
++  assert.equal(layerOpacity(plans[1], 4), 1);
++});
++
++test('start and center transitions extend draw spans without shifting own spans', () => {
++  const start = planTrack(
++    [{start: 0, duration: 10}, {start: 10, duration: 10}],
++    [{T: 4, kind: 'dip', align: 'start'}],
++  );
++  assert.equal(start[0].drawDuration, 14);
++  assert.equal(start[1].drawStart, 10);
++  assert.equal(start[1].ownOffset, 0);
++  assert.equal(ownFrame(start[0], 10), 9);
++  assert.equal(ownFrame(start[0], 13), 9);
++
++  const center = planTrack(
++    [{start: 0, duration: 10}, {start: 10, duration: 10}],
++    [{T: 5, kind: 'dip', align: 'center'}],
++  );
++  assert.deepEqual(overlapWindow(10, 5, 'center'), {start: 8, end: 13});
++  assert.equal(center[1].drawStart, 8);
++  assert.equal(center[1].drawDuration, 12);
++  assert.equal(center[1].ownOffset, 2);
++  assert.equal(center[1].fadeIn?.from, 2);
++  assert.equal(center[1].fadeIn?.to, 5);
++  assert.equal(center[0].fadeOut?.from, 8);
++  assert.equal(center[0].fadeOut?.to, 10);
++});
+diff --git a/typescript/tsconfig.json b/typescript/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..806ffe7976b751dcb89d61567a525832da10e919
+--- /dev/null
++++ b/typescript/tsconfig.json
+@@ -0,0 +1,29 @@
++{
++  "compilerOptions": {
++    "target": "ES2022",
++    "module": "ES2022",
++    "moduleResolution": "bundler",
++    "outDir": "./dist",
++    "declaration": false,
++    "sourceMap": false,
++    "strict": true,
++    "esModuleInterop": true,
++    "skipLibCheck": true,
++    "forceConsistentCasingInFileNames": true,
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "jsx": "react-jsx",
++    "noEmit": true,
++    "baseUrl": ".",
++    "paths": {
++      "@workspace-effects/*": ["../../../effects/*"],
++      "@workspace-animations/*": ["../../../animations/*"],
++      "@workspace-transitions/*": ["../../../transitions/*"],
++      "@theme-effects/*": ["../../../tools/remotion/_active_theme/effects/*"],
++      "@theme-animations/*": ["../../../tools/remotion/_active_theme/animations/*"],
++      "@theme-transitions/*": ["../../../tools/remotion/_active_theme/transitions/*"]
++    }
++  },
++  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
++  "exclude": ["dist", "node_modules"]
++}
+diff --git a/typescript/tsconfig.test.json b/typescript/tsconfig.test.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..a8bb46eb9d315d3bc7efb29e0e653533ac491bc8
+--- /dev/null
++++ b/typescript/tsconfig.test.json
+@@ -0,0 +1,13 @@
++{
++  "extends": "./tsconfig.json",
++  "compilerOptions": {
++    "rootDir": "./",
++    "outDir": "./dist",
++    "noEmit": false,
++    "declaration": false,
++    "isolatedModules": false,
++    "skipLibCheck": true
++  },
++  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts", "tests/**/*.test.ts"],
++  "exclude": ["dist", "node_modules"]
++}
+
+exec
+/bin/bash -lc "sed -n '248,254p' scripts/gen-registry.ts; git diff -- scripts/gen-registry.ts | sed -n '1,120p'" in /home/user/work/wt/vw-m0-build-prep
+ succeeded in 0ms:
+    // params, and the dispatch in TimelineRenderer / TimelineComposition",
+    // narrows at the call site.",
+    "import type {EffectComponent} from './effects-types';",
+    ...imports,
+    "",
+    "export type ThemePackageRegistryEntry = {",
+    "  component: EffectComponent<never>;",
+diff --git a/scripts/gen-registry.ts b/scripts/gen-registry.ts
+index a6b5aad..01b0b2a 100644
+--- a/scripts/gen-registry.ts
++++ b/scripts/gen-registry.ts
+@@ -238,20 +238,20 @@ function render(entries: RegistryEntry[]): string {
+   );
+   const ids = deduped.map((e) => `'${e.clipType}'`).join(", ");
+   const lines = [
+-    "// DO NOT EDIT — generated by packages/timeline-composition/scripts/gen-registry.ts.",
++    "// DO NOT EDIT — generated by scripts/gen-registry.ts.",
+     "// Discovery walks node_modules/@banodoco/timeline-theme-* (Reigh-side) and",
+     "// themes/<id>/effects/ (Banodoco-side). Drift gate: scripts/ci-timeline-composition.sh",
+     "// runs gen-registry --check pre-test.",
+     "",
+-    // Use `unknown` for the component type so we don't impose a specific",
++    // Use a never-parameter component contract so theme props remain checked",
+     // EffectProps shape — theme components are typed against their own",
+     // params, and the dispatch in TimelineRenderer / TimelineComposition",
+     // narrows at the call site.",
+-    "/* eslint-disable @typescript-eslint/no-explicit-any */",
++    "import type {EffectComponent} from './effects-types';",
+     ...imports,
+     "",
+     "export type ThemePackageRegistryEntry = {",
+-    "  component: any;",
++    "  component: EffectComponent<never>;",
+     "  themeId: string;",
+     "  source: string;",
+     "};",
+
+exec
+/bin/bash -lc "git diff --check; printf '%s\\n' '--- commit message ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m0-build-prep/commit-msg; printf '%s\\n' '--- final workspace artifacts ---'; test "'! -e node_modules && echo '"'no node_modules'; test "'! -e typescript/dist && echo '"'no dist'; printf '%s\\n' '--- changed files ---'; git status --short | wc -l; git status --short | tail -20" in /home/user/work/wt/vw-m0-build-prep
+ succeeded in 0ms:
+--- commit message ---
+build(composition): make evaluator checks honest
+
+Restore full-source TypeScript and standalone evaluator test infrastructure,
+remove masked builds and the unused timeline-schema dependency, and keep
+generated registry discovery consumer-owned without tracked dist output.
+--- final workspace artifacts ---
+no node_modules
+no dist
+--- changed files ---
+57
+ D typescript/dist/src/lib/use-audio-envelope.js
+ D typescript/dist/src/modifier-types.js
+ D typescript/dist/src/modifiers.js
+ D typescript/dist/src/registry.generated.js
+ D typescript/dist/src/scene-capabilities.js
+ D typescript/dist/src/scene-evaluation.js
+ D typescript/dist/src/theme-api.js
+ D typescript/dist/src/transitions.generated.js
+ D typescript/dist/src/types.js
+ M typescript/src/effects-types.ts
+ M typescript/src/registry.generated.ts
+?? .gitignore
+?? typescript/src/workspace-aliases.d.ts
+?? typescript/tests/evaluation.test.ts
+?? typescript/tests/extensionless-loader.mjs
+?? typescript/tests/register-extensionless.mjs
+?? typescript/tests/scene-evaluation.test.ts
+?? typescript/tests/transition-spans.test.ts
+?? typescript/tsconfig.json
+?? typescript/tsconfig.test.json
+
+codex
+## Completed
+
+- Restored full-source TypeScript configs and extensionless Node test loader.
+- Removed `|| true` build masks.
+- Removed unused `@banodoco/timeline-schema`.
+- Added evaluator coverage for transitions, scene visibility/unknowns/findings, audio envelopes, and half-open bounds.
+- Added typed workspace aliases and consumer-owned registry generation.
+- Updated Remotion packages to 4.0.509.
+- Removed 43 tracked stale `typescript/dist` files and ignored generated output.
+- Documented M3 host-component limitation.
+
+## Verification
+
+Using shared installed dependencies only; no installation or downloads:
+
+- `npm run build && npm test` — passed; 3 test modules / 8 cases.
+- Temporary invalid TypeScript build — failed as expected with exit 2; source restored.
+- Registry generation/check via installed tsx loader — passed.
+- Dependency versions: TypeScript 5.9.3, tsx 4.21.0, React 18.3.1, Remotion 4.0.509.
+- `git diff --check` — passed.
+
+`npm run gen-registry:check` itself is blocked by the sandbox denying tsx’s IPC pipe; equivalent direct invocation passed.
+
+Fresh install/lockfile verification and App/Runtime/renderer integration tests were not run; those remain for the heavy verifier/M3 work.
+
+Commit message written to the requested path.
+tokens used
+184,294
+## Completed
+
+- Restored full-source TypeScript configs and extensionless Node test loader.
+- Removed `|| true` build masks.
+- Removed unused `@banodoco/timeline-schema`.
+- Added evaluator coverage for transitions, scene visibility/unknowns/findings, audio envelopes, and half-open bounds.
+- Added typed workspace aliases and consumer-owned registry generation.
+- Updated Remotion packages to 4.0.509.
+- Removed 43 tracked stale `typescript/dist` files and ignored generated output.
+- Documented M3 host-component limitation.
+
+## Verification
+
+Using shared installed dependencies only; no installation or downloads:
+
+- `npm run build && npm test` — passed; 3 test modules / 8 cases.
+- Temporary invalid TypeScript build — failed as expected with exit 2; source restored.
+- Registry generation/check via installed tsx loader — passed.
+- Dependency versions: TypeScript 5.9.3, tsx 4.21.0, React 18.3.1, Remotion 4.0.509.
+- `git diff --check` — passed.
+
+`npm run gen-registry:check` itself is blocked by the sandbox denying tsx’s IPC pipe; equivalent direct invocation passed.
+
+Fresh install/lockfile verification and App/Runtime/renderer integration tests were not run; those remain for the heavy verifier/M3 work.
+
+Commit message written to the requested path.

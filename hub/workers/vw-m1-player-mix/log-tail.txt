@@ -1,0 +1,400 @@
+    Error: dropped 880 Hz backend block
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: > [32m0.04[39m
+    Received:   [31m0.037146856546291004[39m
+
+      87 |     expect.soft(phaseStep, `sample/phase discontinuity in ${frequency} Hz backend`).toBeLessThan(0.1);
+      88 |     phaseSteps.push(phaseStep);
+    > 89 |     for (const level of levels) expect.soft(level, `dropped ${frequency} Hz backend block`).toBeGreaterThan(0.04);
+         |                                                                                             ^
+      90 |     const amplitude = levels.reduce((sum, value) => sum + value, 0) / levels.length;
+      91 |     expect.soft(amplitude, `missing ${frequency} Hz backend`).toBeGreaterThan(0.04);
+      92 |     const otherChannel = windows.reduce((sum, time) => sum + capture.spectrum(frequency, time, time + 0.1, 1).amplitude, 0) / windows.length;
+        at map (/home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts:89:93)
+        at audibleMetrics (/home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts:78:34)
+        at run (/home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts:210:132)
+        at /home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts:239:24
+
+    Error: captured output gain mismatch: 0.561 dB
+
+      104 | function requireUnchangedGain(actual: number, reference: number) {
+      105 |   const db = gainDifferenceDb(actual, reference);
+    > 106 |   if (Math.abs(db) > 0.5) throw new Error(`captured output gain mismatch: ${db.toFixed(3)} dB`);
+          |                                 ^
+      107 | }
+      108 |
+      109 | for (const mode of ['mixed output controls', 'amplified fade timing'] as const) {
+        at requireUnchangedGain (/home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts:106:33)
+        at /home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts:240:7
+
+    Error Context: ../../../../../tmp/timeline-player-audio-results/player-audio-capture.probe-f0029-layer-mixed-output-controls-player-audio-capture/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../../tmp/timeline-player-audio-results/player-audio-capture.probe-f0029-layer-mixed-output-controls-player-audio-capture/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../../tmp/timeline-player-audio-results/player-audio-capture.probe-f0029-layer-mixed-output-controls-player-audio-capture/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [player-audio-capture] › tests/e2e/timeline/player-audio-capture.probe.ts:110:3 › captures real Player amplified fade timing 
+
+    Error: three-second live media duration
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: > [32m2.88[39m
+    Received:   [31m2.84[39m
+
+      63 |   const offset = (active.at(-1)! + 1) * 0.02;
+      64 |   console.log('CAPTURE_TIMING', JSON.stringify({ onset, offset, activeBlocks: active.length }));
+    > 65 |   expect.soft(offset - onset, 'three-second live media duration').toBeGreaterThan(2.88);
+         |                                                                   ^
+      66 |   expect.soft(offset - onset).toBeLessThan(3.12);
+      67 |   // One onset for the whole capture; no per-source shifting or realignment.
+      68 |   const start = onset + 0.5;
+        at audibleMetrics (/home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts:65:67)
+        at run (/home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts:210:132)
+        at /home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts:218:23
+
+    Error Context: ../../../../../tmp/timeline-player-audio-results/player-audio-capture.probe-afeb7-layer-amplified-fade-timing-player-audio-capture/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../../tmp/timeline-player-audio-results/player-audio-capture.probe-afeb7-layer-amplified-fade-timing-player-audio-capture/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../../tmp/timeline-player-audio-results/player-audio-capture.probe-afeb7-layer-amplified-fade-timing-player-audio-capture/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [player-audio-capture] › tests/e2e/timeline/player-audio-capture.probe.ts:110:3 › captures real Player mixed output controls 
+    [player-audio-capture] › tests/e2e/timeline/player-audio-capture.probe.ts:110:3 › captures real Player amplified fade timing 
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import glob,json,zipfile,math
+for p in glob.glob('/tmp/timeline-player-audio-results/**/trace.zip',recursive=True):
+ z=zipfile.ZipFile(p)
+ for name in z.namelist():
+  if name.endswith('.trace'):
+   for line in z.read(name).decode().splitlines():
+    d=json.loads(line)
+    if d.get('method')=='attach' or ('player-capture-metrics' in line):print(str(d)[:1200])
+print('half gain dB',20*math.log10(.09241164361710835/.19162255527966998))
+print('capture gain dB',20*math.log10(.09350423081620518/.19162255527966998))
+print('repeat gain dB',20*math.log10(.20439733868777932/.19162255527966998))
+PY" in /home/user/work/wt/vw-m1-player-mix
+ succeeded in 153ms:
+{'type': 'before', 'callId': 'test.attach@539', 'stepId': 'test.attach@539', 'startTime': 274779.353, 'class': 'Test', 'method': 'test.attach', 'title': 'Attach "player-capture-metrics"', 'params': {}, 'stack': [{'file': '/home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts', 'line': 242, 'column': 22}]}
+{'type': 'after', 'callId': 'test.attach@539', 'endTime': 274779.775, 'attachments': [{'name': 'player-capture-metrics', 'contentType': 'application/json', 'sha1': '22aee90bde0202710dc0c80fbb3dfa761b646dbd'}], 'annotations': []}
+{'type': 'before', 'callId': 'test.attach@4260', 'stepId': 'test.attach@4260', 'startTime': 236536.762, 'class': 'Test', 'method': 'test.attach', 'title': 'Attach "player-capture-metrics"', 'params': {}, 'stack': [{'file': '/home/user/work/wt/vw-m1-player-mix/tests/e2e/timeline/player-audio-capture.probe.ts', 'line': 242, 'column': 22}]}
+{'type': 'after', 'callId': 'test.attach@4260', 'endTime': 236537.32, 'attachments': [{'name': 'player-capture-metrics', 'contentType': 'application/json', 'sha1': '31a29677399ca762a1895386895b858ee6c70f82'}], 'annotations': []}
+half gain dB -6.334398651434631
+capture gain dB -6.232307303783278
+repeat gain dB 0.5605721938189839
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import glob,zipfile,json
+for p in glob.glob('/tmp/timeline-player-audio-results/**/trace.zip',recursive=True):
+ z=zipfile.ZipFile(p)
+ for name in z.namelist():
+  if not name.endswith('.trace'):continue
+  for line in z.read(name).decode().splitlines():
+   d=json.loads(line)
+   for a in d.get('attachments',[]):
+    if a.get('name')"'!='"'player-capture-metrics':continue
+    m=json.loads(z.read('resources/'+a['sha1']))
+    for case,s in m.items():
+     print(case,json.dumps({k:s.get(k) for k in ['revision','sampleCount','onset','offset','left','right','amplitudes','phaseSteps']}),'clockDrift',s.get('clock',{}).get('drift'),'backend',s.get('backendState'), 'statuses',sorted(set(r['status'] for r in s.get('requests',[]))))
+PY
+ls -d .player-pulse-* 2>/dev/null
+git status --short" in /home/user/work/wt/vw-m1-player-mix
+ succeeded in 468ms:
+amplified-fade {"revision": "e2e-external-783-1", "sampleCount": 288000, "onset": 0.62, "offset": 3.46, "left": 0.17482573927874068, "right": 0.1311190290576947, "amplitudes": [0.24705807031212873], "phaseSteps": [0.0002778360012829495]} clockDrift -0.008833333333333027 backend {'elements': ['http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0'], 'buffers': 0} statuses [200, 206]
+native {"revision": "e2e-external-104-1", "sampleCount": 288000, "onset": 0.4, "offset": 3.42, "left": 0.08839358012708667, "right": 0.06629460612495205, "amplitudes": [0.12500739793745055], "phaseSteps": [4.17723790535618e-06]} clockDrift -0.006133333332215329 backend {'elements': [], 'buffers': 0} statuses [200, 206]
+amplified {"revision": "e2e-external-104-2", "sampleCount": 288000, "onset": 0.42, "offset": 3.44, "left": 0.1767790757626562, "right": 0.13258353648262056, "amplitudes": [0.25000991739924716], "phaseSteps": [0.00016894377987375364]} clockDrift 0.0011666666666667602 backend {'elements': ['http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0'], 'buffers': 0} statuses [200, 206]
+video {"revision": "e2e-external-104-3", "sampleCount": 288000, "onset": 0.38, "offset": 3.62, "left": 0.08859420890707384, "right": 0.06631706307932854, "amplitudes": [0.12529034138176814], "phaseSteps": [2.4941737866268635e-05]} clockDrift -0.008933333332960647 backend {'elements': [], 'buffers': 724} statuses [200, 206]
+video-native-fallback {"revision": "e2e-external-104-3", "sampleCount": 288000, "onset": 0.34, "offset": 3.36, "left": 0.08859462996117942, "right": 0.06631700333671409, "amplitudes": [0.125290935598486], "phaseSteps": [1.8510731725651652e-05]} clockDrift -0.014233333333705467 backend {'elements': [], 'buffers': 0} statuses [200, 206]
+mixed {"revision": "e2e-external-104-4", "sampleCount": 288000, "onset": 0.36, "offset": 4, "left": 0.19162255527966998, "right": 0.14365797816344866, "amplitudes": [0.10010629119887622, 0.18615886237400783, 0.11557530228542882], "phaseSteps": [1.7043151358865314, 2.8207466613687635, 1.8676527567025727]} clockDrift 0.5713666666659214 backend {'elements': ['http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0'], 'buffers': 839} statuses [200, 206]
+mixed-player-half {"revision": "e2e-external-104-4", "sampleCount": 288000, "onset": 0.38, "offset": 4.12, "left": 0.09241164361710835, "right": 0.0692834046426497, "amplitudes": [0.047624692198630955, 0.08701035085199973, 0.05196362519780716], "phaseSteps": [1.5253319559663283, 1.4985598499011152, 3.081644507646926]} clockDrift 0.7349666666674115 backend {'elements': ['http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0'], 'buffers': 870} statuses [200, 206]
+mixed-player-muted {"revision": "e2e-external-104-4", "sampleCount": 288000, "onset": null, "offset": null, "left": 0, "right": 0, "amplitudes": null, "phaseSteps": null} clockDrift 0.17026666666815737 backend {'elements': ['http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0'], 'buffers': 8} statuses [200, 206]
+mixed-capture-half {"revision": "e2e-external-104-4", "sampleCount": 288000, "onset": 0.38, "offset": 4.16, "left": 0.09350423081620518, "right": 0.07010194992383235, "amplitudes": [0.048590343828943165, 0.08867948024548383, 0.05421683377502508], "phaseSteps": [2.9597860973919916, 3.1285426269669423, 1.0828684731784748]} clockDrift 0.8407666666662945 backend {'elements': ['http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0'], 'buffers': 1403} statuses [200, 206]
+mixed-repeat {"revision": "e2e-external-104-4", "sampleCount": 288000, "onset": 0.34, "offset": 3.58, "left": 0.20439733868777932, "right": 0.15324761636553264, "amplitudes": [0.10894772040027749, 0.22091391230468477, 0.11773053011215262], "phaseSteps": [1.2712188668033415, 2.2910804764516564, 1.9576407256328145]} clockDrift 0.16696666666554938 backend {'elements': ['http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0', 'http://127.0.0.1:43030/api/runtime/v1/objects/sha256%3A0cd2f2b198c2ab99d9d1692a5a62344e037455737f9d189f26eb6bc1df261ac0'], 'buffers': 841} statuses [200, 206]
+?? tests/e2e/timeline/player-audio-capture.probe.ts
+?? tests/e2e/timeline/player-audio-fixture.ts
+?? tests/e2e/timeline/player-audio-monitor.ts
+?? tests/e2e/timeline/player-audio.config.ts
+?? tests/e2e/timeline/player-tab-capture.probe.ts
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import glob,zipfile,json,subprocess,array,math
+for p in glob.glob('/tmp/timeline-player-audio-results/**/trace.zip',recursive=True):
+ z=zipfile.ZipFile(p)
+ for name in z.namelist():
+  if name.endswith('.network'):
+   modes=set()
+   for line in z.read(name).decode().splitlines():
+    s=json.loads(line).get('snapshot',{});q=s.get('request',{})
+    if '/objects/' not in q.get('url',''):continue
+    h={h['name'].lower():h['value'] for h in q.get('headers',[])}
+    modes.add((h.get('sec-fetch-mode'), 'authorization' in h, 'cookie' in h))
+   if modes:print(p.split('/')[-2], 'object request (mode, auth, cookie):',sorted(modes,key=str))
+for label,onset in [('mixed',.36),('mixed-player-half',.38),('mixed-capture-half',.38),('mixed-repeat',.34),('amplified-fade',.62)]:
+ ps=glob.glob('/tmp/timeline-player-audio-results/**/'+label+'.wav',recursive=True)
+ if not ps:continue
+ a=array.array('h',subprocess.check_output(['ffmpeg','-v','error','-i',ps[0],'-f','s16le','pipe:1']))[::2]
+ def rms(b,e):
+  w=a[int(b*48000):int(e*48000)];return math.sqrt(sum(x*x for x in w)/max(1,len(w)))/32768
+ gaps=sum(rms(onset+.5+i*.005,onset+.5+(i+1)*.005)<=.004 for i in range(400))
+ print(label,'interior silent5ms blocks',gaps)
+ if label=='amplified-fade':
+  plateau=rms(onset+1,onset+2)
+  print('fade early/plateau',rms(onset+.06,onset+.16)/plateau,'late/plateau',rms(onset+2.8,onset+2.9)/plateau)
+PY" in /home/user/work/wt/vw-m1-player-mix
+ succeeded in 1292ms:
+player-audio-capture.probe-afeb7-layer-amplified-fade-timing-player-audio-capture object request (mode, auth, cookie): [('cors', False, False), (None, False, False)]
+player-audio-capture.probe-f0029-layer-mixed-output-controls-player-audio-capture object request (mode, auth, cookie): [('cors', False, False), (None, False, False)]
+mixed interior silent5ms blocks 6
+mixed-player-half interior silent5ms blocks 39
+mixed-capture-half interior silent5ms blocks 27
+mixed-repeat interior silent5ms blocks 17
+amplified-fade interior silent5ms blocks 0
+fade early/plateau 0.16455752464684995 late/plateau 0.12794362434880927
+
+codex
+All ten bounded recordings are complete. The final focused run failed both probes: the mix has timing, silent-gap and phase failures, and the fade has an edge-duration failure. The live 0.5 capture gain measured −6.23 dB and triggered the expected mismatch, but the untouched repeat also differed by +0.561 dB, so there is no qualified positive baseline. I’m documenting the evidence; the private daemon and browsers are stopped, and their temporary directories are removed.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/player-audio-feasibility.md <<'EOF'
+# Early M1 Linux Player-audio capture feasibility
+
+Date: 2026-10-19  
+Worker: "'`vw-m1-player-mix`  
+App base: `d52ef5341`  
+Result: **private full-output recording works, including every current backend; mixed-output timing/continuity qualification FAILED. Gate 6 remains open.**
+
+This replaces the earlier missing-audio-backend blocker. PulseAudio is now provisioned and the actual current App Player can be recorded. The remaining blocker is observed playback/capture synchronization and discontinuous mixed output, not an inability to obtain audio. Do not interpret the audible recordings, level controls, or planted gain detection as successful M3 Player/export parity.
+
+## Reproduction and exact checks
+
+Run from `/home/user/work/wt/vw-m1-player-mix`:
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium-1194/chrome-linux/chrome '"\\
+  npm exec -- playwright test --config tests/e2e/timeline/player-audio.config.ts
+
+npm exec -- eslint tests/e2e/timeline/player-audio*.ts tests/e2e/timeline/player-tab-capture.probe.ts --max-warnings 0
+
+git diff --check
+"'```
+
+Final browser result: **2 failed**, exit 1. `captures real Player mixed output controls` ran nine recordings (3.9 minutes); `captures real Player amplified fade timing` ran one recording (26.9 seconds). Both preserve their timing/integrity failures. Soft assertions collect the remaining recordings without changing the failing verdict; empty output, wrong sample counts, missing backend setup and media errors remain hard failures. No tests were skipped, disabled, or made green by widening bounds. ESLint and `git diff --check` passed. New-file whitespace was also checked with `git diff --no-index --check /dev/null <file>` for each added TS file.
+
+Only these focused browser experiments and touched-file checks ran. No full suite, broad browser suite, export, package migration, or product change was performed. The custom task explicitly permits these focused local browser runs.
+
+The retained worker-local config inherits the normal isolated Vite/fake-Runtime servers and DNS blocking, sets their cwd explicitly, removes Chromium'"'s default "'`--mute-audio`, and collects only `.probe.ts` files. Ordinary shared Playwright config and normal timeline collection are unchanged. The probes are opt-in; an ordinary timeline run will not collect these red feasibility tests.
+
+Environment: Node 22.22.0; Playwright 1.60.0; Chromium 141.0.7390.37 from bundle 1194 (1223 absent); Remotion 4.0.509; ffmpeg/ffprobe 6.1.1; PulseAudio/pactl 16.1. No packages were installed by this worker.
+
+## Capture backend and launch steps
+
+The cheaper tab-capture attempt ran first against the real Player, with a user-gesture handler calling `getDisplayMedia({video:true, audio:true, preferCurrentTab:true})` and Chromium `--auto-accept-this-tab-capture`, `--enable-usermedia-screen-capturing`, `--allow-http-screen-capture`. It failed after 31.3 seconds with `locator.getAttribute: Target page, context or browser has been closed`; no audio track or recording was obtained. The retained reproduction selector is:
+
+```bash
+PLAYER_AUDIO_CAPTURE=tab '"\\
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium-1194/chrome-linux/chrome \\
+  npm exec -- playwright test --config tests/e2e/timeline/player-audio.config.ts
+"'```
+
+The original attempt used the same config command while that config selected the tab probe directly; the selector above reproduces it with the final config. Browser closure was observed; its underlying cause was not established. The native-element tap from the previous report was not reused as full-mix evidence.
+
+The selected fallback is implemented in `tests/e2e/timeline/player-audio-monitor.ts`. It creates a mode-0700 `.player-pulse-*` directory under the worker cwd and passes the following environment **only to its daemon, Chromium, pactl and recorder**, never to shared servers or the shell'"'s default audio:
+
+"'```text
+XDG_RUNTIME_DIR=<private directory>
+PULSE_RUNTIME_PATH=<private directory>
+PULSE_STATE_PATH=<private directory>
+PULSE_SERVER=unix:<private directory>/native
+PULSE_SINK=player
+```
+
+Exact daemon arguments (no system mode, default.pa, hardware detection or shared state):
+
+```bash
+pulseaudio -n --daemonize=no --use-pid-file=no --exit-idle-time=-1 --log-target=stderr '"\\
+  --load=\"module-native-protocol-unix socket=<private directory>/native auth-anonymous=1 auth-cookie-enabled=0\" \\
+  --load=\"module-null-sink sink_name=player rate=48000 channels=2 channel_map=front-left,front-right\"
+"'```
+
+Disabling cookie loading is necessary here: the first private protocol-module attempt failed while looking for the root user'"'s default cookie. Authentication is disabled only on this private socket inside its 0700 directory. No shared/default sink was changed.
+
+Exact recorder arguments, generated without a shell:
+
+"'```bash
+ffmpeg -hide_banner -y -f pulse -sample_rate 48000 -channels 2 '"\\
+  -i player.monitor -af 'volume=1,atrim=end_sample=288000' -c:a pcm_s16le <recording.wav>
+"'```
+
+The planted control changes only this live recorder'"'s "'`volume=1` to `volume=0.5`, after normal browser mixing. It changes neither shared input nor the Player, and performs no offline mixing. Chromium has one actual Player page at a time. Browsers close before daemon teardown; recorders have a 15-second deadline and are killed in `finally`; the daemon and private runtime directory are removed in `finally`. Generated media input directories are also removed. No build output, recording, private runtime directory or temporary file remains in the worktree.
+
+A preliminary wall-clock `-t 6` recording contained 287,255 frames and correctly failed the exact sample-count check. Sample-based `atrim` now terminates after 288,000 received frames without resampling or padding. Exact length alone does not hide source silence: the independent interior-gap and phase checks reject the observed bad mixes.
+
+## Real media, Player and managed-object inclusion
+
+`player-audio-fixture.ts` generates ordinary three-second playable inputs with ffmpeg: native 440 Hz stereo WAV, amplified 660 Hz stereo WAV, and a real moving 320x180/30 fps VP8 + 880 Hz Opus WebM. The deterministic tone has right amplitude 0.75 of left. The amplified clip has authored volume 2, exercising the existing `AudioTrack.tsx` Web Audio path. An initial H.264/AAC MP4 reached the object route but emitted browser `MediaError` and produced silence; it was rejected and replaced with the browser-playable WebM.
+
+Bytes are ingested through the existing fake Runtime'"'s project-object API and addressed by their actual SHA-256 digest. Fixture revisions are published with the existing guarded composition helper. Every final case observed managed-object **200 and 206** responses through the current App's normal Vite Runtime proxy. Trace inspection includes CORS-mode object requests without browser Authorization or Cookie headers; the existing server proxy supplies Runtime authorization. Native/amplified media use the current anonymous-media policy; decoded video uses the current managed-media fetch path. Hosted/cross-origin deployment was not tested.
+
+The test mounts the actual editor and "'`@remotion/player`, clicks its real Play button, warms the same Player through a complete play, rewinds, and records another real gesture-driven play. Media begins at frame zero so decoder readiness can be checked before measurement. The harness reads the mounted PlayerRef through React'"'s existing ref; it uses real "'`setVolume()`/`mute()` methods and adds no product debug API. Backend spies only observe existing media-source/buffer-source creation; they neither attach a new MediaElementSource nor reroute audio.
+
+Native audio, volume-2 Web Audio, decoded-video audio, and supported native video fallback were exercised separately. The fallback test removes browser `VideoDecoder` support and verifies a real `<video>` during warm-up; the default decoded-video case verifies a decoded frame and active buffer sources. All three tones are then present together in the monitor recording. Source WAV decode, synthetic PCM mixing, exports and two-export comparisons were never used as capture substitutes.
+
+All mixed/control/repeat recordings use the same immutable fake-Runtime head, `e2e-external-104-4`, with unchanged object bytes/config. Only Player controls or the live recorder gain vary.
+
+## Final recorded measurements
+
+Every recording decoded to **48,000 Hz, two-channel s16 PCM, exactly 288,000 stereo frames (six seconds)**. The table reports onset/offset in captured PCM seconds, Player wall-clock drift relative to its reported frame span, and left-channel interior RMS. These are measurements of Player output, not exported/source audio. Onsets use 20 ms energy windows; no per-source time shift or correlation alignment is applied.
+
+| Case | Onset → offset | Player drift | Left RMS | Result |
+|---|---:|---:|---:|---|
+| Native 440 Hz | 0.40 → 3.42 | -6.1 ms | 0.088394 | Individual capture checks passed |
+| Amplified 660 Hz | 0.42 → 3.44 | +1.2 ms | 0.176779 | Individual capture checks passed; correct 2x level |
+| Decoded video 880 Hz | 0.38 → 3.62 | -8.9 ms | 0.088594 | 3.24 s audible duration failed |
+| Native video fallback | 0.34 → 3.36 | -14.2 ms | 0.088595 | Individual capture checks passed |
+| Mixed | 0.36 → 4.00 | +571.4 ms | 0.191623 | Duration, gaps and phase failed |
+| Mixed Player volume 0.5 | 0.38 → 4.12 | +735.0 ms | 0.092412 | Level response observed; timing/integrity failed |
+| Mixed Player muted | silence | +170.3 ms | **0**, right **0** | Mute silence passed; clock bound failed |
+| Mixed capture gain 0.5 | 0.38 → 4.16 | +840.8 ms | 0.093504 | Planted level mismatch detected; timing/integrity failed |
+| Mixed untouched repeat | 0.34 → 3.58 | +167.0 ms | 0.204397 | Timing/integrity and repeat gain failed |
+| Amplified 0.6 s in/out fades | 0.62 → 3.46 | -8.8 ms | 0.174826 | 2.84 s audible interval failed |
+
+The inclusion evidence is real: isolated native, amplified and video peak spectral amplitudes are approximately 0.1250, 0.2500 and 0.1253, with both stereo channels present. The mixed capture contains all three frequencies. However, it is explicitly **not** accepted merely because it is non-silent.
+
+Integrity bounds remain visible in the probe: 2.88–3.12 s audible duration; <120 ms Player clock drift; no silent 5 ms interior blocks; every tone present in each 100 ms interior spectral window; adjacent spectral phase step <0.1 rad; right/left level ratio 0.70–0.80. Mixed output failed these checks, including six wholly silent 5 ms interior windows in the base mix (post-decode count), 39 in Player-half, 27 in capture-half, and 17 in the untouched repeat. Maximum per-tone phase steps in the base mix were 1.704, 2.821 and 1.868 rad, versus at most 0.000169 rad for isolated native/amplified and 0.000025 rad for isolated decoded video. This rejects discontinuous recordings rather than manufacturing a pass from their fixed total sample count. Phase changes can reflect Player resynchronization as well as missing audio; their underlying cause is unproven.
+
+Player volume 0.5 measured **-6.334 dB** relative to the base mixed RMS. The single-host live capture-only 0.5 control measured **-6.232 dB** and triggered the expected `captured output gain mismatch: -6.232 dB`. The untouched repeat differed by **+0.561 dB**, failing the same comparator'"'s 0.5 dB positive bound. Consequently the planted detection has **no qualified positive baseline** and is not a completed M3 negative-control proof.
+
+The fade recording contains a nontrivial gain envelope: early/plateau RMS ratio 0.165 and late/plateau ratio 0.128, with no silent interior window. Its edge-duration assertion still fails and has not been relaxed or dismissed as intended fading. Distinguishing envelope callback timing, detector threshold effects, and scheduling is follow-up work.
+
+An earlier isolated decoded-video diagnostic passed once (one test / 49.8 s overall, 3.02 s audible duration); another repeat showed +438.3 ms Player drift and 3.74 s audible output. This variability is retained as adverse evidence, not hidden by selecting the passing run.
+
+Artifacts: "'`/tmp/timeline-player-audio-results/` contains ten short WAV recordings and the two failed-test traces. Each trace has the `player-capture-metrics` JSON attachment with revisions, managed-object requests, backend observations, stereo/spectral/phase measurements and frame clocks. They are intentionally outside the worktree. Override `PLAYWRIGHT_OUTPUT_DIR` to preserve a separate reproduction run.
+
+## Escalation and remaining M3 work
+
+**The missing Linux recording backend is resolved. Full mixed-output qualification is still blocked.** Current real Player output exhibits extended decoded-video tails, frame-clock stalls, silent interior gaps and phase discontinuities when backends play together. Cause is not isolated to Player scheduling, decoded-media buffering, host load, or the capture clock. The successful isolated native/amplified/fallback recordings make this a narrower problem than the old missing-device prerequisite.
+
+Recommended next step: Viewing owner investigates actual Player decoded-video/audio scheduling and buffering against these preserved recordings and frame clocks, plus the amplified fade edges. Add focused regression coverage and resolve the discontinuities before accepting a synchronized mixed-output baseline. This worker cannot change preview product code under its assigned scope; no settled architecture decision was changed.
+
+M3 still needs a pinned package/revision/media closure, an absolute playback/capture latency calibration, stricter onset/offset/drift and waveform comparison against the **actual final export** in the common 44.1 kHz stereo domain, positive frame/audio parity, picture-only planted mismatch, and a repeated audio-only planted mismatch against a successful positive baseline. The current RMS capture-only comparator is not that export comparator. No export or picture parity was run, and gate 6 is not closed.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-player-mix/commit-msg <<'"'EOF'
+test(timeline): add isolated real Player audio capture probes
+
+Record native, amplified, decoded-video and native-video output through a
+private PulseAudio monitor using managed playable fixtures and the real Player.
+Exercise mute, volume and a live recorder-only gain control without product
+or shared Playwright configuration changes.
+
+Retain failing mix continuity and fade timing checks for viewing follow-up.
+EOF
+npm exec -- eslint tests/e2e/timeline/player-audio*.ts tests/e2e/timeline/player-tab-capture.probe.ts --max-warnings 0" in /home/user/work/wt/vw-m1-player-mix
+ succeeded in 2198ms:
+exec
+/bin/bash -lc 'git diff --check
+for file in tests/e2e/timeline/player-audio*.ts tests/e2e/timeline/player-tab-capture.probe.ts; do git diff --no-index --check /dev/null "$file" || exit "$?"; done
+git status --short
+ls -d .player-pulse-* 2>/dev/null || true' in /home/user/work/wt/vw-m1-player-mix
+ exited 3 in 178ms:
+tests/e2e/timeline/player-audio-capture.probe.ts:176: trailing whitespace.
++  
+tests/e2e/timeline/player-audio-capture.probe.ts:216: trailing whitespace.
++  
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='tests/e2e/timeline/player-audio-capture.probe.ts'
+s=open(p).read()
+open(p,'w').write('\\n'.join(line.rstrip() for line in s.splitlines())+'\\n')
+PY
+git diff --check
+for file in tests/e2e/timeline/player-audio*.ts tests/e2e/timeline/player-tab-capture.probe.ts; do git diff --no-index --check /dev/null \""'$file" || exit "$?"; done
+git status --short
+ls -d .player-pulse-* 2>/dev/null || true
+npm exec -- eslint tests/e2e/timeline/player-audio*.ts tests/e2e/timeline/player-tab-capture.probe.ts --max-warnings 0' in /home/user/work/wt/vw-m1-player-mix
+ exited 1 in 253ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess,glob
+subprocess.run(['git','diff','--check'],check=True)
+paths=glob.glob('tests/e2e/timeline/player-audio*.ts')+['tests/e2e/timeline/player-tab-capture.probe.ts']
+for p in paths:
+ r=subprocess.run(['git','diff','--no-index','--check','/dev/null',p],capture_output=True,text=True)
+ if r.stdout or r.stderr or r.returncode not in (0,1):raise SystemExit(f'{p}: {r.returncode}\\n{r.stdout}{r.stderr}')
+print('Whitespace checks passed for all 5 new TS files')
+PY
+git status --short
+ls -d .player-pulse-* 2>/dev/null || true
+npm exec -- eslint tests/e2e/timeline/player-audio*.ts tests/e2e/timeline/player-tab-capture.probe.ts --max-warnings 0" in /home/user/work/wt/vw-m1-player-mix
+ succeeded in 2943ms:
+Whitespace checks passed for all 5 new TS files
+?? tests/e2e/timeline/player-audio-capture.probe.ts
+?? tests/e2e/timeline/player-audio-fixture.ts
+?? tests/e2e/timeline/player-audio-monitor.ts
+?? tests/e2e/timeline/player-audio.config.ts
+?? tests/e2e/timeline/player-tab-capture.probe.ts
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-player-mix/commit-msg; du -sh /tmp/timeline-player-audio-results; git diff --numstat' in /home/user/work/wt/vw-m1-player-mix
+ succeeded in 51ms:
+test(timeline): add isolated real Player audio capture probes
+
+Record native, amplified, decoded-video and native-video output through a
+private PulseAudio monitor using managed playable fixtures and the real Player.
+Exercise mute, volume and a live recorder-only gain control without product
+or shared Playwright configuration changes.
+
+Retain failing mix continuity and fade timing checks for viewing follow-up.
+54M	/tmp/timeline-player-audio-results
+
+codex
+Implemented isolated real-Player capture probes. **All backends produced captured audio, but mixed-output qualification failed.**
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium-1194/chrome-linux/chrome npm exec -- playwright test --config tests/e2e/timeline/player-audio.config.ts
+npm exec -- eslint tests/e2e/timeline/player-audio*.ts tests/e2e/timeline/player-tab-capture.probe.ts --max-warnings 0
+git diff --check
+```
+
+- Browser: **2 failed**. Mixes showed silent gaps, phase discontinuities and up to 841 ms drift. Fade duration also failed.
+- Mute produced zero PCM; Player half-volume measured −6.334 dB. Planted capture gain measured −6.232 dB, but the positive baseline remains unqualified.
+- ESLint and whitespace checks passed.
+- Used private PulseAudio after tab capture failed, and playable WebM after MP4 failed. Product/shared configuration growth: zero.
+- Processes and temporary directories cleaned; commit message written.
+
+[Detailed evidence and launch steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/player-audio-feasibility.md).
+
+Next: isolate Player scheduling/buffering versus capture-clock effects. M3 export/frame parity remains unverified; gate 6 stays open.
+tokens used
+252,839
+Implemented isolated real-Player capture probes. **All backends produced captured audio, but mixed-output qualification failed.**
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium-1194/chrome-linux/chrome npm exec -- playwright test --config tests/e2e/timeline/player-audio.config.ts
+npm exec -- eslint tests/e2e/timeline/player-audio*.ts tests/e2e/timeline/player-tab-capture.probe.ts --max-warnings 0
+git diff --check
+```
+
+- Browser: **2 failed**. Mixes showed silent gaps, phase discontinuities and up to 841 ms drift. Fade duration also failed.
+- Mute produced zero PCM; Player half-volume measured −6.334 dB. Planted capture gain measured −6.232 dB, but the positive baseline remains unqualified.
+- ESLint and whitespace checks passed.
+- Used private PulseAudio after tab capture failed, and playable WebM after MP4 failed. Product/shared configuration growth: zero.
+- Processes and temporary directories cleaned; commit message written.
+
+[Detailed evidence and launch steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/player-audio-feasibility.md).
+
+Next: isolate Player scheduling/buffering versus capture-clock effects. M3 export/frame parity remains unverified; gate 6 stays open.

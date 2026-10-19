@@ -1,0 +1,12 @@
+#!/bin/bash
+# refresh-main — fetch origin/main for agent/runtime/app and MERGE it into tl/integration (under the per-repo merge lock). Run by the orchestrator (needs network).
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+declare -A SRC=([agent]=/home/user/peteromallet/astrid-agent [runtime]=/home/user/banodoco/banodoco-workspace-runtime [app]=/home/user/banodoco/reigh-app)
+for r in agent runtime app; do
+  git -C ${SRC[$r]} fetch -q --depth 3000 origin "+refs/heads/main:refs/remotes/origin/main" || { echo "$r: fetch failed"; continue; }
+  n=$(git -C /home/user/work/$r rev-list --count tl/integration..origin/main)
+  [ "$n" = 0 ] && { echo "$r: up to date"; continue; }
+  ( exec 9>/home/user/work/.$r.merge.lock; flock -w 600 9
+    if git -C /home/user/work/$r merge --no-ff -q -m "Merge current main ($n commits) into tl/integration" origin/main; then echo "$r: merged $n main commits -> $(git -C /home/user/work/$r rev-parse --short HEAD)"; echo "$(date -u +%FT%TZ) $r main-refresh $(git -C /home/user/work/$r rev-parse --short HEAD)" >> $O/merges.log
+    else git -C /home/user/work/$r merge --abort; echo "$r: CONFLICT merging $n main commits — aborted; dispatch a worker (via the owning manager) to resolve on a branch"; fi )
+done

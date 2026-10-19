@@ -1,0 +1,400 @@
+  ...
+# Subtest: proven opaque visual media reports visible covered content
+ok 15 - proven opaque visual media reports visible covered content
+  ---
+  duration_ms: 4.104437
+  type: 'test'
+  ...
+# Subtest: unresolved or unproven media remains unknown instead of being treated as absent
+ok 16 - unresolved or unproven media remains unknown instead of being treated as absent
+  ---
+  duration_ms: 0.581511
+  type: 'test'
+  ...
+# Subtest: assetless native holds are visibly absent, while declared component support stays explicit
+ok 17 - assetless native holds are visibly absent, while declared component support stays explicit
+  ---
+  duration_ms: 0.869168
+  type: 'test'
+  ...
+# Subtest: unknown modifier output bounds produce a finding and unknown coverage
+ok 18 - unknown modifier output bounds produce a finding and unknown coverage
+  ---
+  duration_ms: 0.71565
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3473.111457
+
+codex
+All 18 focused tests pass, along with registry drift checks and the production build. Overrides now receive ordinary progress even when reusing `type-on`; the bundled type-on also keeps its reveal window under a new ID. I’ll pack 0.0.8, run the fresh-consumer smoke against those bytes, and compare a second pack for determinism.
+exec
+/bin/bash -lc 'npm_config_cache=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/npm-cache npm pack --json --pack-destination /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/pack.json' in /home/user/work/wt/vw-m3-package-progress
+exec
+/bin/bash -lc 'git diff ed89754 --check; git status --short; rg -n "type-on|supportsAnimationProgress|animation-progress-adapters|component ===|component !==" typescript/src/lib/animations.tsx; cat scripts/gen-registry.test.mjs' in /home/user/work/wt/vw-m3-package-progress
+ succeeded in 32ms:
+ M README.md
+ M scripts/gen-registry.test.mjs
+ M scripts/smoke-package.mjs
+ M typescript/src/animations.generated.ts
+ M typescript/src/builtins/animations/fade-up/component.tsx
+ M typescript/src/builtins/animations/fade-up/meta.json
+ M typescript/src/builtins/animations/fade/component.tsx
+ M typescript/src/builtins/animations/fade/meta.json
+ M typescript/src/builtins/animations/scale-in/component.tsx
+ M typescript/src/builtins/animations/scale-in/meta.json
+ M typescript/src/builtins/animations/slide-left/component.tsx
+ M typescript/src/builtins/animations/slide-left/meta.json
+ M typescript/src/builtins/animations/slide-up/component.tsx
+ M typescript/src/builtins/animations/slide-up/meta.json
+ M typescript/src/builtins/animations/type-on/component.tsx
+ M typescript/src/builtins/animations/type-on/meta.json
+ M typescript/src/effects-types.ts
+ D typescript/src/lib/animation-progress-adapters.tsx
+ M typescript/src/lib/animations.tsx
+?? animation-baseline.json
+?? node_modules
+?? typescript/tests/animations.test.ts
+import assert from 'node:assert/strict';
+import {cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {spawnSync} from 'node:child_process';
+import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {test} from 'node:test';
+
+const sourceRoot = fileURLToPath(new URL('..', import.meta.url));
+
+test('package generation ignores installed host themes and checks all local registries', () => {
+  const packageRoot = mkdtempSync(join(tmpdir(), 'composition-registry-'));
+  for (const path of ['scripts', 'typescript/src', 'package.json']) {
+    cpSync(join(sourceRoot, path), join(packageRoot, path), {recursive: true});
+  }
+  const generated = ['registry', 'effects', 'animations', 'transitions']
+    .map(name => join(packageRoot, 'typescript', 'src', `${name}.generated.ts`));
+  const themeDir = join(packageRoot, 'node_modules', '@banodoco', `timeline-theme-test-${process.pid}`);
+  const originals = generated.map(path => readFileSync(path, 'utf8'));
+  mkdirSync(join(themeDir, 'src', 'effects', 'host-only'), {recursive: true});
+  writeFileSync(join(themeDir, 'package.json'), JSON.stringify({name: '@banodoco/timeline-theme-test'}));
+  writeFileSync(join(themeDir, 'theme.json'), JSON.stringify({id: 'test'}));
+  writeFileSync(join(themeDir, 'src', 'effects', 'host-only', 'component.tsx'), 'export default () => null;');
+  const run = (...args) => spawnSync(process.execPath, ['--import', import.meta.resolve('tsx'), 'scripts/gen-registry.ts', ...args], {
+    cwd: packageRoot, encoding: 'utf8',
+  });
+  try {
+    const result = run();
+    assert.equal(result.status, 0, result.stderr);
+    generated.forEach((path, index) => assert.equal(readFileSync(path, 'utf8'), originals[index]));
+    for (const path of generated) {
+      writeFileSync(path, readFileSync(path, 'utf8') + '// drift\n');
+      const stale = run('--check');
+      assert.equal(stale.status, 1);
+      assert.match(stale.stderr, /is stale/);
+      writeFileSync(path, originals[generated.indexOf(path)]);
+    }
+    assert.equal(run('--check').status, 0);
+  } finally {
+    rmSync(packageRoot, {recursive: true, force: true});
+  }
+});
+
+exec
+/bin/bash -lc 'git rev-parse --short HEAD; git diff --numstat; git diff -- scripts/smoke-package.mjs' in /home/user/work/wt/vw-m3-package-progress
+ succeeded in 203ms:
+ed89754
+25	0	README.md
+11	7	scripts/gen-registry.test.mjs
+15	1	scripts/smoke-package.mjs
+12	6	typescript/src/animations.generated.ts
+3	2	typescript/src/builtins/animations/fade-up/component.tsx
+1	1	typescript/src/builtins/animations/fade-up/meta.json
+3	2	typescript/src/builtins/animations/fade/component.tsx
+1	1	typescript/src/builtins/animations/fade/meta.json
+3	2	typescript/src/builtins/animations/scale-in/component.tsx
+1	1	typescript/src/builtins/animations/scale-in/meta.json
+3	2	typescript/src/builtins/animations/slide-left/component.tsx
+1	1	typescript/src/builtins/animations/slide-left/meta.json
+3	2	typescript/src/builtins/animations/slide-up/component.tsx
+1	1	typescript/src/builtins/animations/slide-up/meta.json
+10	1	typescript/src/builtins/animations/type-on/component.tsx
+1	1	typescript/src/builtins/animations/type-on/meta.json
+4	0	typescript/src/effects-types.ts
+0	50	typescript/src/lib/animation-progress-adapters.tsx
+7	22	typescript/src/lib/animations.tsx
+diff --git a/scripts/smoke-package.mjs b/scripts/smoke-package.mjs
+index 74b9df0..feb1381 100644
+--- a/scripts/smoke-package.mjs
++++ b/scripts/smoke-package.mjs
+@@ -112,6 +112,18 @@ const render = maps => {
+ assert.match(render(), /Bundled resource/);
+ assert.match(render(), /rgb\\(18, 52, 86\\)|#123456/);
+ assert.match(render(registries), /host:#123456/);
++const CustomAnimation = ({progress, easing}) => ({content: 'host:' + progress + ':' + easing});
++for (const id of ['project-sweep', 'type-on']) {
++  const maps = durationFrames => ({animations: {[id]: CustomAnimation},
++    animationDefaults: {[id]: {durationFrames, startFrame: 'host-owned'}},
++    animationMeta: {[id]: {kind: 'hook', supportsEasing: true}}});
++  const animate = registries => api.composeAnimations({clip, refs: {id, easing: 'ease-in'}, phase: 'entrance',
++    content: 'original', theme: root.toRuntimeTheme(theme), fps: 30, elapsedFrames: 25, registries});
++  assert.equal(animate(maps(100)), 'host:0.0625:in');
++  assert.equal(animate(maps(50)), 'host:0.25:in');
++  assert.equal(animate(maps(100)), 'host:0.0625:in');
++  assert.throws(() => animate({...maps(100), animationMeta: {[id]: {kind: 'hook'}}}), /cannot consume explicit easing/);
++}
+ assert.equal(themes.BUNDLED_THEME_VERSIONS['2rp'], '0.1.0');
+ console.log('Plain Node ESM, bundled render, scoped host capability/override and shared theme/peer identity passed');
+ `);
+@@ -119,13 +131,15 @@ console.log('Plain Node ESM, bundled render, scoped host capability/override and
+   writeFileSync(join(temporary, 'consumer.ts'), `
+ import {TimelineComposition, prepareCompositionScene, type TimelineClip, type TrackDefinition, type CompositionRegistries} from '@banodoco/timeline-composition';
+ import {prepareTrack} from '@banodoco/timeline-composition/evaluation';
+-import {composeAnimations, type EffectProps, type RuntimeTheme} from '@banodoco/timeline-composition/theme-api';
++import {composeAnimations, type EffectProps, type RuntimeTheme, type HookAnimationProps} from '@banodoco/timeline-composition/theme-api';
+ import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';
+ import {EFFECT_REGISTRY} from '@banodoco/timeline-composition/effects.generated';
+ import {THEME_PACKAGE_REGISTRY} from '@banodoco/timeline-composition/registry.generated';
+ import {ANIMATION_META} from '@banodoco/timeline-composition/animations.generated';
+ import {TRANSITION_META} from '@banodoco/timeline-composition/transitions.generated';
+ const host: CompositionRegistries = {effects: {custom: (_props: EffectProps<{title: string}>) => null}};
++host.animations = {custom: (props: HookAnimationProps) => ({content: props.progress})};
++host.animationMeta = {custom: {kind: 'hook', supportsEasing: true}};
+ const resolved = (theme: RuntimeTheme) => resolveElementRegistries(theme, host);
+ const clip: TimelineClip = {id: 'x', at: 0, hold: 1, track: 'v', clipType: 'custom'};
+ void [TimelineComposition, prepareCompositionScene, prepareTrack, composeAnimations, resolved, clip, EFFECT_REGISTRY,
+
+exec
+/bin/bash -lc "rg -n 'animation-progress-adapters|supportsAnimationProgress|progressWrapper|progressTypeOn' typescript/src scripts README.md; git diff --check" in /home/user/work/wt/vw-m3-package-progress
+ succeeded in 161ms:
+ succeeded in 18889ms:
+
+> @banodoco/timeline-composition@0.0.8 prepack
+> npm run build
+
+
+> @banodoco/timeline-composition@0.0.8 build
+> npm run gen-registry:check && node scripts/build.mjs
+
+
+> @banodoco/timeline-composition@0.0.8 gen-registry:check
+> node --import tsx scripts/gen-registry.ts --check
+
+npm notice
+npm notice New major version of npm available! 10.9.4 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
+
+exec
+/bin/bash -lc 'npm_config_cache=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/npm-cache npm run test:package -- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/banodoco-timeline-composition-0.0.8.tgz' in /home/user/work/wt/vw-m3-package-progress
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/pack.json')
+s=json.loads(p.read_text())[0]
+print(json.dumps({k:s[k] for k in ['filename','size','shasum','integrity','entryCount']},indent=2))
+PY" in /home/user/work/wt/vw-m3-package-progress
+ succeeded in 169ms:
+{
+  "filename": "banodoco-timeline-composition-0.0.8.tgz",
+  "size": 50664,
+  "shasum": "577467995bf0339d699dd787cf61b3f8dcfd3300",
+  "integrity": "sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw==",
+  "entryCount": 77
+}
+
+ succeeded in 13934ms:
+
+> @banodoco/timeline-composition@0.0.8 test:package
+> node scripts/smoke-package.mjs /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/banodoco-timeline-composition-0.0.8.tgz
+
+
+added 18 packages in 7s
+Plain Node ESM, bundled render, scoped host capability/override and shared theme/peer identity passed
+composition-consumer-yk3VJ3@ /tmp/composition-consumer-yk3VJ3
+├─┬ @banodoco/timeline-composition@0.0.8
+│ ├── @remotion/layout-utils@4.0.509 deduped
+│ ├── @remotion/media@4.0.509 deduped
+│ ├── react-dom@18.3.1 deduped
+│ ├── react@18.3.1 deduped
+│ └── remotion@4.0.509 deduped
+├── @remotion/layout-utils@4.0.509
+├─┬ @remotion/media@4.0.509
+│ ├── react-dom@18.3.1 deduped
+│ ├── react@18.3.1 deduped
+│ └── remotion@4.0.509 deduped
+├─┬ react-dom@18.3.1
+│ └── react@18.3.1 deduped
+├── react@18.3.1
+└─┬ remotion@4.0.509
+  ├── react-dom@18.3.1 deduped
+  └── react@18.3.1 deduped
+
+Installed integrity: sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw==
+Package smoke passed; installed files unchanged.
+
+exec
+/bin/bash -lc 'npm_config_cache=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/npm-cache npm pack --json --pack-destination /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/pack-repeat.json' in /home/user/work/wt/vw-m3-package-progress
+codex
+The fresh-consumer smoke passed against the rebuilt tarball, including custom easing under a new ID, a `type-on` override, declarations, peer deduplication and installed-file immutability. The repeat pack is running. After comparing its bytes, I’ll remove build and temporary files and write the harness commit message. Full-suite and film parity checks remain with the manager.
+ succeeded in 17156ms:
+
+> @banodoco/timeline-composition@0.0.8 prepack
+> npm run build
+
+
+> @banodoco/timeline-composition@0.0.8 build
+> npm run gen-registry:check && node scripts/build.mjs
+
+
+> @banodoco/timeline-composition@0.0.8 gen-registry:check
+> node --import tsx scripts/gen-registry.ts --check
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import base64
+import hashlib
+import json
+from pathlib import Path
+import shutil
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress')
+first = json.loads((worker / 'pack.json').read_text())[0]
+second = json.loads((worker / 'pack-repeat.json').read_text())[0]
+actual = 'sha512-' + base64.b64encode(hashlib.sha512((worker / first['filename']).read_bytes()).digest()).decode()
+assert first['integrity'] == second['integrity'] == actual
+print('Repeated clean build/pack and tarball bytes match:', actual)
+print('Artifact:', worker / first['filename'])
+print('Size:', first['size'])
+(worker / 'commit-msg').write_text('''fix(composition): make animation easing support registration-owned
+
+Declare easing support in typed animation metadata and pass canonical easing
+and progress through ordinary component props under any registered ID.
+Move explicit progress rendering into the default components and type-on's
+reveal window into type-on; remove private ID and component-identity adapters.
+Preserve legacy interpolation and spring behavior when easing is omitted.
+
+Cover custom IDs, built-in overrides, isolated scopes, window ownership and
+curve validation. Isolate generator fixtures from shared dependencies and
+extend the immutable-tarball consumer smoke for the public animation seam.
+
+Validation: 18 focused animation/registry/scene/generator tests, registry drift
+check, production build, fresh-consumer package smoke, reproducible 0.0.8 pack,
+and diff against ed89754 passed. 1,030 captured default output samples match
+the base. Full-suite and film/frame/audio parity remain integration work.
+''')
+for directory in ['dist', 'typescript/test-dist']:
+    shutil.rmtree(directory)
+Path('animation-baseline.json').unlink()
+Path('node_modules').unlink()
+shutil.rmtree(worker / 'npm-cache')
+print('Temporary worktree files, build output and local npm cache removed; commit message written.')
+PY
+git diff ed89754 --check
+git status --short" in /home/user/work/wt/vw-m3-package-progress
+ succeeded in 2142ms:
+Repeated clean build/pack and tarball bytes match: sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw==
+Artifact: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/banodoco-timeline-composition-0.0.8.tgz
+Size: 50664
+Temporary worktree files, build output and local npm cache removed; commit message written.
+ M README.md
+ M scripts/gen-registry.test.mjs
+ M scripts/smoke-package.mjs
+ M typescript/src/animations.generated.ts
+ M typescript/src/builtins/animations/fade-up/component.tsx
+ M typescript/src/builtins/animations/fade-up/meta.json
+ M typescript/src/builtins/animations/fade/component.tsx
+ M typescript/src/builtins/animations/fade/meta.json
+ M typescript/src/builtins/animations/scale-in/component.tsx
+ M typescript/src/builtins/animations/scale-in/meta.json
+ M typescript/src/builtins/animations/slide-left/component.tsx
+ M typescript/src/builtins/animations/slide-left/meta.json
+ M typescript/src/builtins/animations/slide-up/component.tsx
+ M typescript/src/builtins/animations/slide-up/meta.json
+ M typescript/src/builtins/animations/type-on/component.tsx
+ M typescript/src/builtins/animations/type-on/meta.json
+ M typescript/src/effects-types.ts
+ D typescript/src/lib/animation-progress-adapters.tsx
+ M typescript/src/lib/animations.tsx
+?? typescript/tests/animations.test.ts
+
+codex
+Implemented registration-owned `supportsEasing` metadata and ordinary progress/easing props. Removed default-ID and component-identity routing; deleted the private adapters. Type-on now owns its reveal window. No dependency or consumer changes.
+
+Validation passed:
+
+```sh
+npm run build:test
+node --import ./typescript/tests/register-extensionless.mjs --test \
+  typescript/test-dist/tests/animations.test.js \
+  typescript/test-dist/tests/registries.test.js \
+  typescript/test-dist/tests/scene-evaluation.test.js \
+  scripts/gen-registry.test.mjs
+npm run gen-registry:check
+npm run build
+git diff ed89754 --check
+```
+
+All **18 tests passed**. Also compared **1,030 default-output samples** against the base: unchanged.
+
+With `W="$ORCH/workers/vw-m3-package-progress"`:
+
+```sh
+npm_config_cache="$W/npm-cache" npm pack --json --pack-destination "$W"
+npm_config_cache="$W/npm-cache" npm run test:package -- \
+  "$W/banodoco-timeline-composition-0.0.8.tgz"
+```
+
+Fresh-consumer smoke passed. Repeating the clean pack produced identical bytes.
+
+[New 0.0.8 tarball](丿tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/banodoco-timeline-composition-0.0.8.tgz), 50,664 bytes:
+
+```text
+sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw==
+```
+
+Commit message written to the assigned path; build output and temporary files removed. No blockers. Manager review/merge and central full suite are next; browser/frame/audio/film parity remains unverified. The old tarball remains unapproved.
+tokens used
+89,121
+Implemented registration-owned `supportsEasing` metadata and ordinary progress/easing props. Removed default-ID and component-identity routing; deleted the private adapters. Type-on now owns its reveal window. No dependency or consumer changes.
+
+Validation passed:
+
+```sh
+npm run build:test
+node --import ./typescript/tests/register-extensionless.mjs --test \
+  typescript/test-dist/tests/animations.test.js \
+  typescript/test-dist/tests/registries.test.js \
+  typescript/test-dist/tests/scene-evaluation.test.js \
+  scripts/gen-registry.test.mjs
+npm run gen-registry:check
+npm run build
+git diff ed89754 --check
+```
+
+All **18 tests passed**. Also compared **1,030 default-output samples** against the base: unchanged.
+
+With `W="$ORCH/workers/vw-m3-package-progress"`:
+
+```sh
+npm_config_cache="$W/npm-cache" npm pack --json --pack-destination "$W"
+npm_config_cache="$W/npm-cache" npm run test:package -- \
+  "$W/banodoco-timeline-composition-0.0.8.tgz"
+```
+
+Fresh-consumer smoke passed. Repeating the clean pack produced identical bytes.
+
+[New 0.0.8 tarball](丿tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/banodoco-timeline-composition-0.0.8.tgz), 50,664 bytes:
+
+```text
+sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw==
+```
+
+Commit message written to the assigned path; build output and temporary files removed. No blockers. Manager review/merge and central full suite are next; browser/frame/audio/film parity remains unverified. The old tarball remains unapproved.

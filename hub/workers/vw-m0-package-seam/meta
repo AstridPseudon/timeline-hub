@@ -1,0 +1,9 @@
+name=vw-m0-package-seam
+repo=composition
+base=tl/integration
+base_sha=c82eb7c
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/vw-m0-package-seam
+started=2026-10-19T17:49:33Z

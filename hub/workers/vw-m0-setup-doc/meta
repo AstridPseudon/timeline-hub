@@ -1,0 +1,9 @@
+name=vw-m0-setup-doc
+repo=composition
+base=tl/vw-m0-build-verify
+base_sha=31cbb92
+model=gpt-5.6-luna
+effort=xhigh
+heavy=0
+worktree=/home/user/work/wt/vw-m0-setup-doc
+started=2026-10-19T18:54:20Z

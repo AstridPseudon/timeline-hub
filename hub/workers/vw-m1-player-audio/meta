@@ -1,0 +1,9 @@
+name=vw-m1-player-audio
+repo=app
+base=tl/integration
+base_sha=925ef330b
+model=gpt-5.6-luna
+effort=high
+heavy=1
+worktree=/home/user/work/wt/vw-m1-player-audio
+started=2026-10-19T19:02:58Z
