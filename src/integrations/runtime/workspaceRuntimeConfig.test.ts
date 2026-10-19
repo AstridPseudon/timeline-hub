@@ -12,8 +12,9 @@ const scopes = ['handshake', 'projects:read', 'projects:write', 'objects:read', 
 function runtimeFetch(config: unknown, runtime = live) {
   const calls: string[] = [];
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-    const path = new URL(String(input), window.location.origin).pathname;
-    calls.push(path);
+    const requestedPath = new URL(String(input), window.location.origin).pathname;
+    calls.push(requestedPath);
+    const path = requestedPath.replace('/api/astrid/', '/api/runtime/');
     if (path === '/runtime-config/v1/workspace.json') {
       return config === null
         ? new Response('missing', { status: 404 })
@@ -23,7 +24,11 @@ function runtimeFetch(config: unknown, runtime = live) {
       ? { status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_instance_id: runtime.runtimeInstanceId }
       : path === '/api/runtime/v1/handshake'
         ? { protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, actor_id: runtime.actorId, realm_id: runtime.realmId, session_id: 'test', scopes, capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }
-        : { realm_id: runtime.realmId, display_name: 'Test realm', version: 1, created_at: '2026-01-01T00:00:00Z' };
+        : path === '/api/runtime/v1/projects'
+          ? { items: [{ project_id: 'project', realm_id: runtime.realmId, slug: 'film', name: 'Film' }], next_cursor: null }
+          : path === '/api/runtime/v1/projects/project/timelines'
+            ? { items: [{ timeline_id: 'main', project_id: 'project' }], next_cursor: null }
+            : { realm_id: runtime.realmId, display_name: 'Test realm', version: 1, created_at: '2026-01-01T00:00:00Z' };
     return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
   });
   vi.stubGlobal('fetch', fetchMock);
@@ -37,6 +42,77 @@ afterEach(() => {
 });
 
 describe('workspace Runtime launch binding', () => {
+  it('catalogs follow a moved local Runtime without rebinding an existing timeline writer', async () => {
+    const { AstridRuntimeClient } = await import('./client.ts');
+    const config = { schemaVersion: 1, endpoint: 'http://127.0.0.1:17890', ...live };
+    const runtime = { ...live };
+    const calls = runtimeFetch(config, runtime);
+    const writer = new AstridRuntimeClient();
+    await writer.ensureSession();
+    const catalog = new AstridRuntimeClient({ readOnly: true });
+    await expect(catalog.listProjects()).resolves.toMatchObject([{ project_id: 'project' }]);
+    await expect(catalog.listTimelines('project')).resolves.toEqual([{ timeline_id: 'main', project_id: 'project' }]);
+
+    config.endpoint = 'http://127.0.0.1:17891';
+    config.runtimeInstanceId = runtime.runtimeInstanceId = 'restarted-instance';
+    await expect(catalog.listProjects()).resolves.toMatchObject([{ project_id: 'project' }]);
+    await expect(catalog.listTimelines('project')).resolves.toEqual([{ timeline_id: 'main', project_id: 'project' }]);
+    expect((await catalog.ensureSession()).health.runtime_instance_id).toBe('restarted-instance');
+    expect(calls.filter((path) => path === '/api/runtime/v1/handshake')).toHaveLength(3);
+
+    await expect(writer.updateProject('project', 'draft-write', 1, undefined, {}))
+      .rejects.toThrow('Runtime restarted—relaunch workspace');
+    await expect(catalog.updateProject('project', 'catalog-write', 1, undefined, {}))
+      .rejects.toThrow('read-only');
+    expect(calls).not.toContain('/api/runtime/v1/projects/project');
+  });
+
+  it('re-resolves discovery and retries a catalog read when the endpoint moves during a request', async () => {
+    const { AstridRuntimeClient } = await import('./client.ts');
+    const config = { schemaVersion: 1, endpoint: 'http://127.0.0.1:17890', ...live };
+    const runtime = { ...live };
+    runtimeFetch(config, runtime);
+    const baseFetch = globalThis.fetch;
+    let moved = false;
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (!moved && String(input).includes('/v1/projects?')) {
+        moved = true;
+        config.endpoint = 'http://127.0.0.1:17891';
+        config.runtimeInstanceId = runtime.runtimeInstanceId = 'restarted-instance';
+        return new Response(JSON.stringify({ code: 'runtime_unavailable', message: 'old endpoint stopped' }), { status: 503 });
+      }
+      return baseFetch(input, init);
+    }));
+    const catalog = new AstridRuntimeClient({ readOnly: true });
+    await expect(catalog.listProjects()).resolves.toMatchObject([{ project_id: 'project' }]);
+    expect(moved).toBe(true);
+    expect((await catalog.ensureSession()).health.runtime_instance_id).toBe('restarted-instance');
+  });
+
+  it('does not let a catalog follow discovery into a different realm', async () => {
+    const { AstridRuntimeClient } = await import('./client.ts');
+    const config = { schemaVersion: 1, endpoint: 'http://127.0.0.1:17890', ...live };
+    const runtime = { ...live };
+    runtimeFetch(config, runtime);
+    const catalog = new AstridRuntimeClient({ readOnly: true });
+    await catalog.listProjects();
+    config.realmId = runtime.realmId = 'another-realm';
+    await expect(catalog.listProjects()).rejects.toThrow('changed the selected actor or realm');
+  });
+
+  it('renegotiates both native editor transports after local discovery moves', async () => {
+    const { assertNativeEditorConnection } = await import('../astrid/nativeEditorConnection.ts');
+    const config = { schemaVersion: 1, endpoint: 'http://127.0.0.1:17890', ...live };
+    const runtime = { ...live };
+    const calls = runtimeFetch(config, runtime);
+    await assertNativeEditorConnection();
+    config.endpoint = 'http://127.0.0.1:17891';
+    config.runtimeInstanceId = runtime.runtimeInstanceId = 'restarted-instance';
+    await expect(assertNativeEditorConnection()).resolves.toBeUndefined();
+    expect(calls.filter((path) => path === '/api/runtime/v1/handshake')).toHaveLength(2);
+    expect(calls.filter((path) => path === '/api/astrid/v1/handshake')).toHaveLength(2);
+  });
+
   it('loads runtime config before the first Runtime call and prefers it over baked ids', async () => {
     const { AstridRuntimeClient } = await import('./client.ts');
     vi.stubEnv('VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID', baked.actorId);

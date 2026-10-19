@@ -4,6 +4,7 @@ import { closeSync, mkdirSync, openSync, readFileSync, realpathSync, writeFileSy
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { ApiError, WorkspaceClient, type Project } from '../src/integrations/runtime/generated.ts';
+import { currentRuntime } from './runtime-discovery-proxy.mjs';
 
 const KEY = 'astrid_agent_chat_v1';
 export class ChatError extends Error {
@@ -16,7 +17,7 @@ export interface ChatState {
   revision: number;
   selected_session_id: string | null;
   main_session_id: string | null;
-  sessions: Array<{ id: string; title?: string; missing?: boolean }>;
+  sessions: Array<{ id: string; title?: string; missing?: boolean; pending_first_message?: boolean }>;
   draft: { text: string; revision: number; queued_messages: QueuedChatMessage[] };
 }
 interface StoredChat extends Omit<ChatState, 'project_id' | 'scope_key'> {
@@ -40,7 +41,25 @@ export function chatClaimIdentity(config: { cwd: string; sessionDir?: string }):
 export function projectChatClaimDirectory(config: { cwd: string; sessionDir?: string }): string {
   return join(homedir(), '.omp', 'agent', 'project-chat-claims', chatClaimIdentity(config));
 }
-export function runtimeChatClient(env: NodeJS.ProcessEnv = process.env): WorkspaceClient | undefined {
+export function runtimeChatClient(env: NodeJS.ProcessEnv = process.env): ProjectStore | undefined {
+  const discoveryPath = env.ASTRID_WORKSPACE_DISCOVERY?.trim();
+  if (discoveryPath) {
+    // Resolve discovery and credentials for each operation. Runtime can move to
+    // another loopback port or rotate its product token while this agent process
+    // stays alive; the proxy helper validates loopback endpoints and rereads both.
+    const clientForOperation = () => {
+      const runtime = currentRuntime(discoveryPath);
+      return new WorkspaceClient(runtime.endpoint.origin, runtime.token);
+    };
+    return {
+      getProject: (...args) => clientForOperation().getProject(...args),
+      updateProject: (...args) => clientForOperation().updateProject(...args),
+      listProjects: (...args) => clientForOperation().listProjects(...args),
+    };
+  }
+
+  // Preserve the older explicit endpoint/token-file configuration for callers
+  // that have not adopted the discovery file yet.
   const endpoint = env.VITE_WORKSPACE_RUNTIME_URL?.trim();
   const tokenFile = env.WORKSPACE_RUNTIME_TOKEN_FILE?.trim();
   if (!endpoint || !tokenFile) return undefined;
@@ -49,7 +68,12 @@ export function runtimeChatClient(env: NodeJS.ProcessEnv = process.env): Workspa
   const raw = readFileSync(tokenFile, 'utf8').trim();
   const token = raw.startsWith('{') ? record(JSON.parse(raw)).token : raw;
   if (typeof token !== 'string' || !token) throw new Error('Chat runtime credential is empty');
-  return new WorkspaceClient(url.origin, token);
+  const client = new WorkspaceClient(url.origin, token);
+  return {
+    getProject: (...args) => client.getProject(...args),
+    updateProject: (...args) => client.updateProject(...args),
+    listProjects: (...args) => client.listProjects(...args),
+  };
 }
 
 /** Associations and drafts only. OMP remains the sole transcript authority. */

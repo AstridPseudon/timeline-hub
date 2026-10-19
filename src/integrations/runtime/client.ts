@@ -219,19 +219,24 @@ export class AstridRuntimeClient {
   private expectedIdentity: RuntimeIdentityBinding | undefined;
   /** A default client with no pinned launch binding adopts the page's runtime config on its first session. */
   private readonly usesRuntimeConfig: boolean;
+  private readonly readOnly: boolean;
+  private discoveryIdentity: RuntimeIdentityBinding | undefined;
   private readonly identityStore: ObservedRuntimeIdentities;
   /** A private slot (token, transport or injected store); undefined means the page-shared slot for the current base. */
   private readonly ownSlot: SessionSlot | undefined;
 
   constructor(options: {
     baseUrl?: string; token?: string; transport?: Transport; expectedIdentity?: RuntimeIdentityBinding;
+    /** Catalog reads may follow local discovery after a restart; this client cannot mutate. */
+    readOnly?: boolean;
     /** Observation store; the browser shares one per page, an injected transport (tests/CLI) gets its own. */
     identityStore?: ObservedRuntimeIdentities;
   } = {}) {
-    this.identityStore = options.identityStore ?? (options.transport ? new Map() : observedRuntimeIdentities);
+    this.identityStore = options.identityStore ?? (options.transport || options.readOnly ? new Map() : observedRuntimeIdentities);
     this.pinnedBaseUrl = options.baseUrl;
+    this.readOnly = options.readOnly === true;
     this.expectedIdentity = options.expectedIdentity ?? configuredRuntimeIdentity();
-    this.usesRuntimeConfig = options.baseUrl === undefined
+    this.usesRuntimeConfig = (options.baseUrl === undefined || this.readOnly)
       && !options.expectedIdentity && !options.transport && !options.token;
     // Browser credentials are supplied by the authenticated connector/proxy.
     // A token is accepted for direct test/CLI clients, but is never persisted.
@@ -256,7 +261,7 @@ export class AstridRuntimeClient {
 
   /** One slot per resolved base and launch binding, so a page negotiates once per base. */
   private get slot(): SessionSlot {
-    return this.ownSlot ?? sharedSlotFor(JSON.stringify([this.baseUrl, this.expectedIdentity ?? null]));
+    return this.ownSlot ?? sharedSlotFor(JSON.stringify([this.baseUrl, this.expectedIdentity ?? null, this.readOnly]));
   }
 
   /** Refuse every operation once any client sharing this binding saw a restart. */
@@ -314,6 +319,7 @@ export class AstridRuntimeClient {
   }
 
   private async withMutation<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.readOnly) throw new Error('A read-only Runtime discovery client cannot mutate the workspace');
     // A read already in flight may predate this write; later readers must not join it.
     this.slot.inflight.clear();
     try {
@@ -346,7 +352,21 @@ export class AstridRuntimeClient {
   async ensureSession(): Promise<RuntimeSession> {
     // Every ad hoc client must receive the same page binding, including clients
     // that join a session opened by another instance.
-    if (this.usesRuntimeConfig) this.expectedIdentity = await initializeWorkspaceRuntimeIdentity();
+    if (this.usesRuntimeConfig) {
+      if (this.readOnly && runtimeOrigin() === '') {
+        // Catalogs follow the proxy's current discovery, independently of the
+        // launch binding held by timeline writers with drafts in memory.
+        const identity = await loadWorkspaceRuntimeConfig(this.expectedIdentity);
+        if (this.discoveryIdentity && identity
+          && (identity.actorId !== this.discoveryIdentity.actorId || identity.realmId !== this.discoveryIdentity.realmId)) {
+          throw new RuntimeCompatibilityError('Runtime discovery changed the selected actor or realm', this.baseUrl);
+        }
+        this.discoveryIdentity ??= identity;
+        this.expectedIdentity = identity;
+      } else {
+        this.expectedIdentity = await initializeWorkspaceRuntimeIdentity();
+      }
+    }
     const slot = this.slot;
     if (!slot.current) {
       const opening: Promise<RuntimeSession> = this.openSession().catch((error) => {
@@ -440,10 +460,20 @@ export class AstridRuntimeClient {
 
   private async withSession<T>(operation: () => Promise<T>): Promise<T> {
     this.assertNotFenced();
-    await this.ensureSession();
     try {
+      await this.ensureSession();
       return await operation();
     } catch (error) {
+      // A restart can happen between reading discovery and reaching the proxy.
+      // Retry a catalog read once with fresh discovery and a new handshake.
+      if (this.readOnly && this.usesRuntimeConfig && runtimeOrigin() === ''
+        && (error instanceof TypeError || error instanceof RuntimeUnavailableError
+          || error instanceof RuntimeAuthenticationError
+          || error instanceof RuntimeCompatibilityError && error.reason === RESTART_INSTANCE
+          || error instanceof ApiError && (error.status === 401 || error.status >= 500))) {
+        await this.reconnect();
+        return operation();
+      }
       if (error instanceof ApiError && error.status === 401) {
         this.slot.current = null;
         throw new RuntimeAuthenticationError(this.baseUrl);

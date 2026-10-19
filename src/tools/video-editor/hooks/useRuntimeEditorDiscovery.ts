@@ -55,7 +55,7 @@ export function useRuntimeEditorDiscovery({
   /** Overridable so tests can observe an error without waiting out backoff. */
   retry?: number;
 }) {
-  const client = useMemo(() => new AstridRuntimeClient(), []);
+  const client = useMemo(() => new AstridRuntimeClient({ readOnly: true }), []);
   const queryClient = useQueryClient();
   const [session] = useState(() => crypto.randomUUID());
   const projectsQuery = useQuery({
