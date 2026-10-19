@@ -4,7 +4,7 @@ Canonical form: UTF-8 output, object keys sorted, compact separators
 ``("," , ":")``, no NaN/Infinity, and explicit size/depth bounds. The
 canonical request hash — command kind plus semantic request fields with
 generated values excluded — defines the idempotency identity stored on
-``command_receipts.request_hash`` (v10 section 2.3, m1 plan step 9).
+``command_receipts.request_hash`` (v10 section 2.3).
 """
 
 from __future__ import annotations

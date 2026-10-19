@@ -274,7 +274,7 @@ def load_pack_manifest(path: str | Path, *, expected_pack_id: str | None = None)
 def pack_taxonomy_from_manifest(data: dict[str, Any], *, status: str) -> dict[str, str]:
     """Return the deterministic taxonomy projection for a pack manifest.
 
-    These defaults are the M1 taxonomy baseline for manifests that do not yet
+    These defaults are the taxonomy baseline for manifests that do not yet
     declare an explicit taxonomy block.
     """
     return {

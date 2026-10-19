@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -10,11 +9,8 @@ import pytest
 
 from astrid.core.foundation.atomic_io import write_json_atomic
 from astrid.core.foundation.hash import sha256_file
-from astrid.core.pack.alias_resolver import AliasResolver
 from astrid.core.rendering import publication
-from astrid.core.rendering.contracts import RenderPlan
 from astrid.core.rendering.provenance import (
-    assemble_provenance_v2,
     validate_backend_fragments,
 )
 from astrid.core.rendering.publication import (
@@ -22,19 +18,8 @@ from astrid.core.rendering.publication import (
     publish_render_result,
     read_committed_provenance,
 )
-from astrid.core.rendering.registry import (
-    FinalizerRegistry,
-    PlannerRegistry,
-    RendererRegistry,
-)
-from astrid.core.rendering.service import RenderService
 from tests.core.rendering.test_service import (
     FakeTransport,
-    _candidate,
-    _finalizer_resolution,
-    _mixed_plan,
-    _mixed_service,
-    _plan,
     _request,
     _service,
 )
@@ -46,179 +31,6 @@ def _sidecar(output: Path) -> Path:
 
 def _read_sidecar(output: Path) -> dict[str, Any]:
     return json.loads(_sidecar(output).read_text(encoding="utf-8"))
-
-
-def _lineage_service(
-    tmp_path: Path,
-    transport: FakeTransport,
-    *,
-    provenance_builder: Any,
-) -> RenderService:
-    aliases: dict[str, AliasResolver] = {}
-    for kind, requested, canonical in (
-        ("planner", "rendering.legacy_hybrid", "lineage.planner"),
-        ("renderer", "lineage.renderer-alias", "lineage.renderer"),
-        ("finalizer", "lineage.finalizer-alias", "lineage.finalizer"),
-    ):
-        resolver = AliasResolver()
-        resolver.register_alias(requested, canonical)
-        aliases[kind] = resolver
-
-    renderers = RendererRegistry(
-        [_candidate(tmp_path, "lineage.renderer-v2", "renderer")],
-        alias_resolver=aliases["renderer"],
-    )
-    planners = PlannerRegistry(
-        [_candidate(tmp_path, "lineage.planner-v2", "planner")],
-        alias_resolver=aliases["planner"],
-    )
-    finalizers = FinalizerRegistry(
-        [_candidate(tmp_path, "lineage.finalizer-v2", "finalizer")],
-        alias_resolver=aliases["finalizer"],
-    )
-    return RenderService(
-        registries=(renderers, planners, finalizers),
-        transport=transport,
-        validator=lambda result, **_kwargs: result,
-        provenance_builder=provenance_builder,
-    )
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_service_plan_round_trips_complete_routing_lineage(
-    tmp_path: Path,
-) -> None:
-    transport = FakeTransport()
-    transport.plan = replace(
-        _plan("lineage.renderer-alias", segment_frames=(5, 5)),
-        finalizer=_finalizer_resolution("lineage.finalizer-alias"),
-    )
-    captured: dict[str, RenderPlan] = {}
-
-    def capture_provenance(**kwargs: Any) -> dict[str, Any]:
-        plan = kwargs["plan"]
-        captured["plan"] = RenderPlan.from_dict(plan.to_dict())
-        return assemble_provenance_v2(**kwargs)
-
-    service = _lineage_service(
-        tmp_path,
-        transport,
-        provenance_builder=capture_provenance,
-    )
-    request = _request(tmp_path)
-    output = tmp_path / "lineage.mp4"
-
-    service.render_request(request, selector="hybrid", out_path=output)
-
-    plan = captured["plan"]
-    payload = _read_sidecar(output)
-    assert payload["request_digest"] == plan.request_digest
-    assert payload["requested_policy"] == "hybrid"
-    assert payload["planner"] == plan.planner.to_dict()
-    assert payload["segments_v2"] == [
-        segment.to_dict() for segment in plan.segments
-    ]
-    assert payload["finalizer"] == plan.finalizer.to_dict()
-
-    planner = payload["planner"]
-    assert planner["alias_chain"] == [
-        "rendering.legacy_hybrid",
-        "lineage.planner",
-    ]
-    assert planner["override"] == {
-        "from": "lineage.planner",
-        "to": "lineage.planner-v2",
-    }
-    assert planner["manifest_digest"] == hashlib.sha256(
-        b"lineage.planner-v2"
-    ).hexdigest()
-    assert planner["trust_eligibility"]["eligible"] is True
-    assert planner["support_decision"]["backend"] == "lineage.planner-v2"
-
-    for segment in payload["segments_v2"]:
-        renderer = segment["renderer"]
-        assert renderer["alias_chain"] == [
-            "lineage.renderer-alias",
-            "lineage.renderer",
-        ]
-        assert renderer["override"] == {
-            "from": "lineage.renderer",
-            "to": "lineage.renderer-v2",
-        }
-        assert renderer["trust_eligibility"]["eligible"] is True
-        assert renderer["support_decision"]["backend"] == "lineage.renderer-v2"
-        assert segment["input_hashes"]["timeline"] == sha256_file(
-            Path(request.timeline_path)
-        )
-        assert segment["input_hashes"]["assets_registry"] == sha256_file(
-            Path(request.assets_registry_path or "")
-        )
-
-    finalizer = payload["finalizer"]
-    assert finalizer["alias_chain"] == [
-        "lineage.finalizer-alias",
-        "lineage.finalizer",
-    ]
-    assert finalizer["override"] == {
-        "from": "lineage.finalizer",
-        "to": "lineage.finalizer-v2",
-    }
-    assert finalizer["trust_eligibility"]["eligible"] is True
-    assert finalizer["support_decision"]["backend"] == "lineage.finalizer-v2"
-
-    expected_policy = {
-        "planner": "lineage.planner-v2",
-        "renderers": ["lineage.renderer-v2"],
-        "finalizer": "lineage.finalizer-v2",
-    }
-    assert payload["resolved_policy"] == expected_policy
-    assert payload["routing"] == {
-        "requested_engine": "hybrid",
-        "requested_policy": "hybrid",
-        "resolved_policy": expected_policy,
-        "resolved_backend": "lineage.renderer-v2",
-        "resolved_backends": ["lineage.renderer-v2"],
-        "auto_route": False,
-        "auto_route_reason": None,
-        "segment_reasons": plan.reasons,
-    }
-    assert len(payload["artifact_profiles"]) == 2
-    for artifact in payload["artifact_profiles"]:
-        assert artifact["sha256"] == hashlib.sha256(
-            b"render:lineage.renderer-v2:5"
-        ).hexdigest()
-        assert artifact["attachments"] == {}
-    assert payload["audio_ownership"] == "none"
-    assert payload["normalization"] == []
-    assert payload["attachments"] == {}
-    assert set(payload["backend_fragments"]) == {
-        "lineage.renderer-v2",
-        "lineage.finalizer-v2",
-    }
-
-
-@pytest.mark.skip(reason="retired shorthand and fallback route")
-def test_legacy_remotion_auto_route_reason_is_recorded(tmp_path: Path) -> None:
-    transport = FakeTransport()
-    service = _service(tmp_path, transport)
-    output = tmp_path / "legacy-remotion.mp4"
-
-    with pytest.warns(LegacyRenderRoutingWarning, match="auto-routed"):
-        service.render_request(
-            _request(tmp_path),
-            selector="remotion",
-            out_path=output,
-        )
-
-    payload = _read_sidecar(output)
-    routing = payload["routing"]
-    assert routing["requested_engine"] == "remotion"
-    assert routing["resolved_backend"] == "rendering.ffmpeg"
-    assert routing["auto_route"] is True
-    assert routing["auto_route_reason"] == (
-        "legacy selector 'remotion' auto-routed the supported request to "
-        "rendering.ffmpeg"
-    )
 
 
 @pytest.mark.parametrize("core_key", ["routing", "resolved_policy", "engine"])
@@ -286,130 +98,6 @@ def test_previous_output_cleanup_skips_a_live_locked_render(tmp_path: Path) -> N
 # ---------------------------------------------------------------------------
 # T4.5 — provenance / crash-recovery matrix
 # ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("selector", "hybrid_plan", "expected_engine", "expected_backend", "auto_route"),
-    [
-        (
-            "rendering.remotion",
-            False,
-            "rendering.remotion",
-            "rendering.remotion",
-            False,
-        ),
-        (
-            "rendering.ffmpeg",
-            False,
-            "rendering.ffmpeg",
-            "rendering.ffmpeg",
-            False,
-        ),
-        ("ffmpeg", False, "ffmpeg", "rendering.ffmpeg", False),
-        ("remotion", False, "remotion", "rendering.ffmpeg", True),
-        ("hybrid", True, "hybrid", "fixture.window", False),
-    ],
-    ids=[
-        "qualified-remotion",
-        "qualified-ffmpeg",
-        "legacy-ffmpeg",
-        "legacy-remotion",
-        "hybrid",
-    ],
-)
-@pytest.mark.skip(reason="retired shorthand and planner selectors")
-def test_routing_fields_matrix_for_every_selector(
-    tmp_path: Path,
-    selector: str,
-    hybrid_plan: bool,
-    expected_engine: str,
-    expected_backend: str,
-    auto_route: bool,
-) -> None:
-    transport = FakeTransport()
-    if hybrid_plan:
-        transport.plan = _plan("fixture.window")
-        service = _service(
-            tmp_path,
-            transport,
-            renderer_ids=("fixture.window",),
-            planner_ids=("rendering.legacy_hybrid",),
-        )
-    else:
-        service = _service(tmp_path, transport)
-    output = tmp_path / "routing.mp4"
-
-    if auto_route:
-        with pytest.warns(LegacyRenderRoutingWarning, match="auto-routed"):
-            service.render_request(
-                _request(tmp_path), selector=selector, out_path=output
-            )
-    else:
-        service.render_request(
-            _request(tmp_path), selector=selector, out_path=output
-        )
-
-    payload = _read_sidecar(output)
-    routing = payload["routing"]
-    assert routing["requested_engine"] == expected_engine
-    assert routing["resolved_backend"] == expected_backend
-    assert routing["resolved_backends"] == [expected_backend]
-    assert routing["auto_route"] is auto_route
-    resolved_policy = routing["resolved_policy"]
-    assert resolved_policy["renderers"] == [expected_backend]
-    if hybrid_plan:
-        assert resolved_policy["planner"] == "rendering.legacy_hybrid"
-        assert resolved_policy["finalizer"] == "rendering.ffmpeg-finalizer"
-    assert payload["requested_policy"] == expected_engine
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_raw_mixed_plan_segment_provenance_is_aligned(tmp_path: Path) -> None:
-    transport = FakeTransport()
-    request = _mixed_plan(
-        tmp_path,
-        transport,
-        config={
-            "simple_renderers": ["raw_command.renderer"],
-            "complex_renderers": ["rendering.remotion"],
-        },
-    )
-    service = _mixed_service(tmp_path, transport)
-    output = tmp_path / "mixed-provenance.mp4"
-
-    service.render_request(request, selector="hybrid", out_path=output)
-
-    payload = _read_sidecar(output)
-    segments = payload["segments_v2"]
-    assert [segment["renderer"]["id"] for segment in segments] == [
-        "raw_command.renderer",
-        "rendering.remotion",
-        "raw_command.renderer",
-    ]
-    assert all(
-        "timeline" in segment["input_hashes"] for segment in segments
-    )
-    assert all(
-        "assets_registry" in segment["input_hashes"] for segment in segments
-    )
-    assert payload["finalizer"]["id"] == "rendering.ffmpeg-finalizer"
-    routing = payload["routing"]
-    assert routing["requested_engine"] == "hybrid"
-    assert routing["resolved_backend"] is None  # multi-segment: no single winner
-    assert routing["resolved_backends"] == [
-        "raw_command.renderer",
-        "rendering.remotion",
-    ]
-    assert set(payload["backend_fragments"]) == {
-        "raw_command.renderer",
-        "rendering.remotion",
-        "rendering.ffmpeg-finalizer",
-    }
-    assert payload["segments"] == [
-        {"engine": "renderer", "from": 0.0, "to": 1.75},
-        {"engine": "remotion", "from": 1.75, "to": 3.25},
-        {"engine": "renderer", "from": 3.25, "to": 6.0},
-    ]
 
 
 def test_attachments_are_recorded_in_committed_provenance(

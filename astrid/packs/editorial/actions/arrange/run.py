@@ -29,7 +29,7 @@ from astrid.core.timeline import (
     validate_arrangement_duration_window,
 )
 from astrid.core.util.llm_clients import ClaudeClient, build_claude_client
-from astrid.core.util.time import _utc_now, utc_now_seconds
+from astrid.core.util.time import utc_now_seconds
 
 FORBIDDEN_TIME_KEYS = frozenset({"start", "end", "timestamp", "seconds", "time", "src_start", "src_end", "from", "to", "at"})
 RESPONSE_SCHEMA = {
@@ -462,7 +462,7 @@ def _validated_arrangement(
         )
     payload: dict[str, Any] = {
         "version": ARRANGEMENT_VERSION,
-        "generated_at": _utc_now(),
+        "generated_at": utc_now_seconds(),
         "brief_text": brief_text,
         "target_duration_sec": response_target_duration,
         "clips": clips,
@@ -850,7 +850,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         audit.register_node(stage="arrange", label="Build arrangement", parents=[pool_id, brief_id], outputs=[arrangement_id])
     print(out_path)
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     manifest_path = out_dir / "manifest.json"
     manifest = build_manifest(
         kind="arrange",

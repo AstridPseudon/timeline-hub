@@ -128,7 +128,7 @@ must contain one to sixteen replacements.
 The implementation is in
 [`editor/live-scenes/authoring.ts`](../../editor/live-scenes/authoring.ts),
 [`editor/live-scenes/runtime.ts`](../../editor/live-scenes/runtime.ts), and
-[`live_scenes/package.py`](../../live_scenes/package.py).
+[`live_scenes/package.py`](../../shared/live_scenes/package.py).
 
 The underlying package types can carry immutable asset metadata, but the
 current prepared browser command supports only a self-contained HTML entry and

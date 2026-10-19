@@ -238,10 +238,10 @@ Python package.
 
 ## 7. Tests
 
-The canonical test layout, root-staying designations, and settled domain-home
-decisions (SD1–SD3) are documented in
-[docs/architecture/test-layout.md](test-layout.md). That document is the
-authoritative source for test directory conventions and relocation policy.
+Test directory conventions live in the test tree and its plan:
+`tests/lanes.py` (lanes and markers), `tests/known_failures.txt` and
+`tests/removed.yaml`, documented in
+[docs/development/testing-plan.md](../development/testing-plan.md).
 
 ## 8. Docs
 

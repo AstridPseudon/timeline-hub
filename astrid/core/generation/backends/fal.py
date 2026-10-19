@@ -1,6 +1,6 @@
 """FalBackend — cloud generation via fal.ai HTTP API.
 
-SD-004 / SD-009: Uses :class:`~astrid.core.util.http.HttpClient` for all
+Uses :class:`~astrid.core.util.http.HttpClient` for all
 HTTP transport (no fal SDK).  Image references are uploaded via
 :func:`~astrid.core.util.http.fal_upload`.  Jobs are submitted and polled
 via :func:`~astrid.core.util.http.fal_submit_and_poll`.
@@ -69,7 +69,7 @@ class FalBackend(BackendAdapter):
     """Cloud generation backend via fal.ai HTTP API.
 
     Uses the shared :class:`HttpClient` so tests can mock transport
-    (sprint 1 pattern preserved — SD-009).
+    (pattern preserved).
 
     Parameters:
         env_file: Optional path to a ``.env`` file holding ``FAL_KEY``.
@@ -448,7 +448,7 @@ class FalBackend(BackendAdapter):
                 continue
 
             # Special handling for resolution — parse WxH, split into
-            # width/height per param_map or write as single video_size string (Sprint 04)
+            # width/height per param_map or write as single video_size string
             if canon == "resolution":
                 res_str = str(value)
                 parsed = parse_dimension_pair(res_str)
@@ -635,7 +635,7 @@ def _extract_asset_urls(result: dict[str, Any]) -> list[str]:
     - ``{"output": {"image": {"url": "..."}}}``
     - ``{"output": "..."}`` (direct URL string)
 
-    *Video shapes (Sprint 04):*
+    *Video shapes:*
     - ``{"video": {"url": "..."}}`` — single video dict
     - ``{"videos": [{"url": "..."}, ...]}`` — video list
 
@@ -664,13 +664,13 @@ def _extract_asset_urls(result: dict[str, Any]) -> list[str]:
         urls.append(image["url"])
         return urls
 
-    # Single video object (Sprint 04)
+    # Single video object
     video = result.get("video")
     if isinstance(video, dict) and "url" in video:
         urls.append(video["url"])
         return urls
 
-    # Video list (Sprint 04)
+    # Video list
     videos = result.get("videos")
     if isinstance(videos, list):
         for item in videos:

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import pytest
 
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core.timeline.events.schema import TimelineActor, TimelineEvent, with_event_hash
 from astrid.core.timeline.snapshot import (

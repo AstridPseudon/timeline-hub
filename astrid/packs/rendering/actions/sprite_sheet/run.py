@@ -388,7 +388,7 @@ def build(args: argparse.Namespace) -> int:
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote {manifest_path}")
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     universal_outputs: list[dict[str, Any]] = [
         {"path": "layout_guide.png", "type": "file"},
         {"path": "sprite_manifest.json", "type": "file"},

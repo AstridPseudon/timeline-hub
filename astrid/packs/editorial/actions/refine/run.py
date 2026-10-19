@@ -618,7 +618,7 @@ def write_outputs(enriched: enriched_arrangement.EnrichedArrangement, registry: 
         },
     )
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     manifest_path = args.out / "manifest.json"
     manifest = build_manifest(
         kind="refine",

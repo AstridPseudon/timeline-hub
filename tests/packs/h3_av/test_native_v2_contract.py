@@ -63,7 +63,7 @@ def _av(path: Path, *, frames: int, color: str, frequency: int) -> None:
 
 @pytest.mark.integration
 def test_native_v2_schema_profile_and_supported_branch_bindings(tmp_path: Path) -> None:
-    load_workflow_any = pytest.importorskip("vibecomfy.cli_loader").load_workflow_any
+    from vibecomfy.cli_loader import load_workflow_any
     schema = json.loads((PACK / "schemas/request.v2.json").read_text(encoding="utf-8"))
     profile = yaml.safe_load((PACK / "profiles/native-v2.yaml").read_text(encoding="utf-8"))
     assert schema["properties"]["version"] == {"const": 2}
@@ -351,7 +351,7 @@ def test_masked_composition_keeps_temporal_yuv420p_witnesses_exact(tmp_path: Pat
 def test_canonical_v2_source_free_reaches_real_compose_and_verify_boundary(
     tmp_path: Path,
 ) -> None:
-    pytest.importorskip("vibecomfy")  # VibeComfy is a sibling checkout; compile loads it lazily
+    import vibecomfy  # noqa: F401  (a sibling checkout; compile loads it lazily)
     reference = tmp_path / "look.png"
     Image.new("RGB", (16, 16), color=(32, 64, 128)).save(reference)
     request = normalize_request(
@@ -537,7 +537,7 @@ def test_v2_full_timeline_audio_composes_with_independent_video_permissions(
 def test_v2_same_length_edit_binds_intervals_and_reaches_compose_verify(
     tmp_path: Path,
 ) -> None:
-    load_workflow_any = pytest.importorskip("vibecomfy.cli_loader").load_workflow_any
+    from vibecomfy.cli_loader import load_workflow_any
     source = tmp_path / "source.mkv"
     video = tmp_path / "generated.mkv"
     audio = tmp_path / "generated.flac"
@@ -622,7 +622,7 @@ def test_v2_same_length_edit_binds_intervals_and_reaches_compose_verify(
 def test_v2_audio_only_fails_before_graph_composition_on_actual_video_port(
     tmp_path: Path,
 ) -> None:
-    load_workflow_any = pytest.importorskip("vibecomfy.cli_loader").load_workflow_any
+    from vibecomfy.cli_loader import load_workflow_any
     audio = tmp_path / "voice.wav"
     audio.write_bytes(b"bounded-audio-fixture")
     request = normalize_request(_case("audio_only"))
@@ -665,7 +665,7 @@ def test_parent_v1_source_free_generation_and_reference_capacity_are_retained() 
 
 @pytest.mark.integration
 def test_native_v2_source_free_reference_capacity_uses_declared_ports(tmp_path: Path) -> None:
-    load_workflow_any = pytest.importorskip("vibecomfy.cli_loader").load_workflow_any
+    from vibecomfy.cli_loader import load_workflow_any
     paths = {}
     for index in range(9):
         path = tmp_path / f"ref-{index}.png"

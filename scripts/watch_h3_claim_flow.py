@@ -14,10 +14,10 @@ import hashlib
 import json
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, TextIO
 
+from astrid.core.util.time import utc_now_iso
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RUN_DIR = ROOT / ".otto/runs/h3-av-simplicity-20260924-T2"
@@ -32,10 +32,6 @@ _STAGES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("verify", ("06-verify", "verify-result", "verification")),
     ("final", ("07-final-receipt", "final-receipt")),
 )
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def _read_json(path: Path) -> tuple[dict[str, Any] | None, str | None]:
@@ -372,7 +368,7 @@ def emit_transitions(
         )
         suffix = f" {details}" if details else ""
         print(
-            f"{_utc_now()} phase={observation['phase']} state={transition}{suffix}",
+            f"{utc_now_iso()} phase={observation['phase']} state={transition}{suffix}",
             file=stream,
             flush=True,
         )
@@ -458,7 +454,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(str(exc))
     max_polls = 1 if args.once else args.max_polls
     print(
-        f"{_utc_now()} watching=local-only run_dir={json.dumps(str(run_dir))} "
+        f"{utc_now_iso()} watching=local-only run_dir={json.dumps(str(run_dir))} "
         f"poll_seconds={args.poll_seconds:g}",
         flush=True,
     )
@@ -478,7 +474,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 0
             time.sleep(args.poll_seconds)
     except KeyboardInterrupt:
-        print(f"{_utc_now()} watch=stopped reason=keyboard_interrupt", file=sys.stderr, flush=True)
+        print(f"{utc_now_iso()} watch=stopped reason=keyboard_interrupt", file=sys.stderr, flush=True)
         return 130
 
 

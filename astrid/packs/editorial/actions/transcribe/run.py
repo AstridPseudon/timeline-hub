@@ -386,7 +386,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     _ensure_declared_chunk_plan(out_dir, metadata_path)
     print(" ".join([f"chunks={summary['chunks']}", f"skipped_silent={summary['skipped_silent']}", f"segments_kept={summary['segments_kept']}", f"segments_filtered={summary['segments_filtered']}", f"transcript_json={paths['json']}", f"metadata={metadata_path}"]))
 
-    # --- universal result manifest (output-contract M1) -----------------------
+    # --- universal result manifest -----------------------
     output_specs = (
         ("transcript", Path("transcript.json")),
         ("subtitle", Path("transcript.srt")),

@@ -25,7 +25,7 @@ from .compiler import (  # noqa: E402
     compile_video_enhance,
     ensure_media_capability_supported,
 )
-from .executor import DirectVibeMediaExecutor  # noqa: E402
+from .direct_executor import DirectVibeMediaExecutor  # noqa: E402
 
 
 def _bool(value: str) -> bool:

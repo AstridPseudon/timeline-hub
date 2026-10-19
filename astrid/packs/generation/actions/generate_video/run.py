@@ -3,8 +3,8 @@
 
 
 v2: model → mode → backend taxonomy.  ``--mode`` is required.
-Backend dispatch goes through ``BackendAdapter`` (SD-004).
-Features are validated per-mode (SD-003).
+Backend dispatch goes through ``BackendAdapter``.
+Features are validated per-mode.
 
 Per-mode requires:
   t2v → prompt
@@ -498,7 +498,7 @@ def generate_core(
             )
         prompts = [{"prompt": args.prompt, "model": args.model}]
 
-    # --- build adapter (SD-004: dispatch through BackendAdapter) -------------
+    # --- build adapter (dispatch through BackendAdapter) -------------
     adapter = _create_backend_adapter(
         backend_registry,
         args.execution,
@@ -628,7 +628,7 @@ def generate_core(
         params["seed"] = seed
         params["count"] = 1  # N=1 per loop iteration
 
-        # --- dispatch to adapter (SD-004) ------------------------------------
+        # --- dispatch to adapter ------------------------------------
         try:
             result: GenerationResult = adapter.generate(
                 entry=entry,
@@ -701,7 +701,7 @@ def generate_core(
                         source_urls=source_urls,
                     )
                     manifest_path = out / "manifest.json"
-                    # Route output metadata through the shared contract (M1).
+                    # Route output metadata through the shared contract.
                     manifest["outputs"] = complete_output_metadata(
                         manifest["outputs"], root_dir=out,
                     )
@@ -737,7 +737,7 @@ def generate_core(
         source_urls=source_urls,
     )
     manifest_path = out / "manifest.json"
-    # Route output metadata through the shared contract (M1).
+    # Route output metadata through the shared contract.
     manifest["outputs"] = complete_output_metadata(
         manifest["outputs"], root_dir=out,
     )

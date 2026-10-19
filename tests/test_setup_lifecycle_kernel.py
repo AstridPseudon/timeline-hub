@@ -13,6 +13,7 @@ import pytest
 
 from astrid import setup
 from astrid.runtime_cli import RuntimeCLI, RuntimeResult
+from tests.helpers.runtime import runtime_checkout
 
 WORKSPACE_ID = "12345678-1234-5678-9234-567812345678"
 
@@ -275,19 +276,7 @@ def test_startup_recovery_command_parses_at_installed_runtime_boundary(tmp_path)
 
     request = replace(_request(tmp_path), support_root=tmp_path / "support root")
     emitted = shlex.split(setup._runtime_up_command(request))[1:]
-    astrid_root = Path(__file__).parents[1]
-    runtime_candidate = Path(
-        os.environ.get(
-            "ASTRID_RUNTIME_CANDIDATE",
-            astrid_root.parents[3]
-            / "astrid-runtime"
-            / ".otto"
-            / "worktrees"
-            / astrid_root.name,
-        )
-    )
-    if not (runtime_candidate / "astrid_runtime" / "cli.py").is_file():
-        pytest.skip("paired Runtime candidate is unavailable")
+    runtime_candidate = runtime_checkout()
     probe = """
 import json
 from astrid_runtime.cli import parser

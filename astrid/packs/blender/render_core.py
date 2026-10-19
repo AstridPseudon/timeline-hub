@@ -439,6 +439,55 @@ def build_blend_render_script(
     return script
 
 
+def require_https_mesh_url(url: Any) -> str:
+    """Return ``url`` if it is an ``https://`` URL with a host; else raise ``ValueError``."""
+    from urllib.parse import urlparse
+
+    if not isinstance(url, str):
+        raise ValueError("mesh_url must be a string")
+    parsed = urlparse(url.strip())
+    if parsed.scheme.lower() != "https" or not parsed.hostname:
+        raise ValueError("mesh_url must be an https:// URL")
+    return url.strip()
+
+
+def https_only_opener() -> Any:
+    """Return a ``urllib`` opener that refuses redirects to any non-``https`` URL.
+
+    Every mesh download goes through this, so an ``https://`` mesh URL cannot
+    bounce the host onto ``http://`` or ``file://``.
+    """
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+
+    class HttpsOnlyRedirects(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
+            if urllib.parse.urlparse(newurl).scheme.lower() != "https":
+                raise urllib.error.URLError(f"refusing non-https redirect to {newurl!r}")
+            return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+    return urllib.request.build_opener(HttpsOnlyRedirects)
+
+
+def safe_extract_zip(archive: Any, dest: str) -> None:
+    """Extract an open ``zipfile.ZipFile`` into ``dest`` after checking every member path.
+
+    Raises ``ValueError`` (extracting nothing) if any member is absolute or
+    would land outside ``dest``.
+    """
+    import os
+
+    root = os.path.realpath(dest)
+    for name in archive.namelist():
+        if not name or name.startswith(("/", "\\")) or os.path.isabs(name):
+            raise ValueError(f"unsafe zip member path: {name!r}")
+        target = os.path.realpath(os.path.join(root, name))
+        if os.path.commonpath([root, target]) != root:
+            raise ValueError(f"unsafe zip member path: {name!r}")
+    archive.extractall(root)
+
+
 def parse_output_path(line: str) -> str | None:
     """Extract the rendered path from an ``ASTRID_BLENDER_OUT=...`` log line."""
     marker = "ASTRID_BLENDER_OUT="

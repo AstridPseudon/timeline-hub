@@ -17,7 +17,7 @@ from typing import Any, Sequence
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.audit import register_outputs
 from astrid.core.util.llm_clients import ClaudeClient, build_claude_client
-from astrid.core.util.time import _utc_now, utc_now_seconds
+from astrid.core.util.time import utc_now_seconds
 
 TRIAGE_VERSION = 1
 FORBIDDEN_TIME_KEYS = frozenset({"start", "end", "timestamp", "seconds", "time", "src_start", "src_end", "from", "to", "at"})
@@ -261,7 +261,7 @@ def build_triage(
         deduped.append(entry)
     if dupes:
         print(f"triage: dropped {len(dupes)} duplicate entries from Claude response ({', '.join(dupes[:5])}{'…' if len(dupes) > 5 else ''})", flush=True)
-    payload = {"version": TRIAGE_VERSION, "generated_at": _utc_now(), "entries": deduped}
+    payload = {"version": TRIAGE_VERSION, "generated_at": utc_now_seconds(), "entries": deduped}
     validate_scene_triage(payload)
     return payload
 
@@ -302,7 +302,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     print(out_path)
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     manifest_path = out_dir / "manifest.json"
     manifest = build_manifest(
         kind="triage",

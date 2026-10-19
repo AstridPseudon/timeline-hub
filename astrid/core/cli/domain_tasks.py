@@ -1,4 +1,4 @@
-"""Product tasks family CLI (m4 plan step 28, task T31).
+"""Product tasks family CLI.
 
 This module is the product parser for the ``tasks`` family: ordinary verbs are
 **argument parsing plus exactly one SDK call** on the composed

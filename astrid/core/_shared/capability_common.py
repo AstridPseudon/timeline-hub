@@ -1,6 +1,6 @@
 """Shared leaf helpers for executor and orchestrator packages.
 
-These were previously duplicated verbatim (or near-verbatim) in
+These helpers are the single copy used by
 ``astrid.core.execution.executor.{runner,cli}`` and ``astrid.core.execution.orchestrator.{runner,cli}``.
 """
 
@@ -246,7 +246,7 @@ def _require_pack_match(
 
 
 # ---------------------------------------------------------------------------
-# Shared runner helpers — moved from executor/runner.py + orchestrator/runner.py
+# Shared runner helpers for executor/runner.py and orchestrator/runner.py
 # ---------------------------------------------------------------------------
 
 
@@ -259,8 +259,7 @@ def _expand_placeholders(
     """Replace ``{placeholder}`` tokens in *value* using *placeholders*.
 
     Raises *error_cls* when a token has no corresponding entry.
-    Previously duplicated in executor/runner.py and orchestrator/runner.py;
-    only the error class differed.
+    Used by executor/runner.py and orchestrator/runner.py.
     """
 
     def replace(match: re.Match[str]) -> str:
@@ -330,7 +329,7 @@ def _has_cli_option(args: Sequence[str], option: str) -> bool:
 
     Accepts any ``Sequence[str]`` so both ``list[str]`` (gateway) and
     ``tuple[str, ...]`` (orchestrator runner) work.
-    Previously duplicated in orchestrator/runner.py (tuple) and
+    Used by orchestrator/runner.py (tuple) and
     gateway/project.py (list).
     """
     return any(arg == option or arg.startswith(f"{option}=") for arg in args)

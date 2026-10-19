@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import pytest
 
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core.timeline.events.schema import (
     ArrangementReplacedPayload,

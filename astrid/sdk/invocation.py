@@ -1942,7 +1942,7 @@ def _validate_generation_intent(
     *,
     modality: str,
 ) -> dict[str, Any]:
-    """Validate and copy the opaque D1 generation intent envelope."""
+    """Validate and copy the opaque generation intent envelope."""
     if not isinstance(value, Mapping):
         raise CapabilityValidationError("generation_intent must be an object")
     required_keys = {"version", "modality", "partial_success_policy", "groups"}
@@ -2167,7 +2167,7 @@ def _automatic_generation_intent(
     Routes whose output cardinality comes from an opaque prompt file are left
     opt-in: admission cannot safely invent their selector set. Typed routes
     with a declared count, or a single fixed output, can use the canonical
-    settlement path without requiring every caller to hand-compose D1 JSON.
+    settlement path without requiring every caller to hand-compose the JSON.
     """
     if modality is None or getattr(capability, "capability_type", None) != "executor":
         return None
@@ -4202,7 +4202,7 @@ def invoke(
 
     # Media handles (reference names, prior outputs, digests) and the
     # generation ``references=[{ref, role}]`` sugar resolve here, inside the
-    # project, to the same managed descriptors callers used to hand-build.
+    # project, to the same managed descriptors callers hand-build.
     from .media_handles import apply_media_handles
 
     request_inputs, media_lineage, reference_links = apply_media_handles(

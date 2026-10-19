@@ -1,11 +1,10 @@
 """Entrypoint help rendering for the Astrid gateway.
 
-Extracted from ``astrid/gateway.py`` during M4 batch 41 (T42) to keep the
+Extracted from ``astrid/gateway.py`` to keep the
 gateway facade focused while preserving the help-printing entrypoint that
 callers rely on via ``astrid.core.gateway._print_entrypoint_help``.
 
-``_product_help_text`` / ``_print_product_help`` (m4 plan step 24, task
-T26) are the executable help. They document the nine-family core surface
+``_product_help_text`` / ``_print_product_help`` are the executable help. They document the nine-family core surface
 plus discovered external pack routes: the
 seven product families from the explicit registry
 (``astrid/core/cli/domain_product.py``) with their kernel/pack ownership,

@@ -145,7 +145,7 @@ def assemble_iteration(
     _write_json(quality_path, assembly["quality"])
     report_path.write_text(assembly["report_html"], encoding="utf-8")
 
-    # --- universal result manifest (output-contract M1) -----------------------
+    # --- universal result manifest -----------------------
     universal_manifest_path = out_path / "manifest.json"
     universal_manifest: dict[str, Any] = {
         "schema_version": 1,

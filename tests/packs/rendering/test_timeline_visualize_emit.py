@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import shutil
 from copy import deepcopy
 from dataclasses import replace
 from datetime import date, datetime
@@ -14,9 +13,6 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
-
-pytestmark = pytest.mark.skip(reason="legacy filesystem fixture superseded by runtime snapshot tests")
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core.timeline.snapshot import TimelineSnapshot, snapshot_from_runtime
 from astrid.packs.rendering.actions.timeline_visualize.emit import (
@@ -63,49 +59,29 @@ def _digest(value: object) -> str:
     return sha256_bytes(canonical_json_bytes(value))
 
 
-def _prepared_snapshot(
-    tmp_path: Path,
-    *,
-    tamper_head: bool = False,
-) -> tuple[TimelineSnapshot, Path, Path]:
-    """Portable slice plus synthetic contained media for full classification."""
-    project_root = tmp_path / "project"
-    timeline_dir = project_root / "timelines" / TRUTH["timeline"]["ulid"]
-    timeline_dir.parent.mkdir(parents=True)
-    shutil.copytree(SLICE_DIR, timeline_dir)
-
-    if tamper_head:
-        head_path = timeline_dir / "assembly.head.json"
-        head = json.loads(head_path.read_text(encoding="utf-8"))
-        head["version"] = 100
-        head["event_count"] = 100
-        head_path.write_text(json.dumps(head), encoding="utf-8")
-
-    snapshot = acquire_snapshot(timeline_dir, project_slug=PROJECT_SLUG)
-
-    registry = deepcopy(snapshot.registry)
-    for key, entry in registry["assets"].items():
-        payload = f"portable R7 media: {key}".encode("utf-8")
-        target = project_root / "sources" / entry["file"]
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(payload)
-        if "content_sha256" in entry:
-            entry["content_sha256"] = hashlib.sha256(payload).hexdigest()
-
-    snapshot = replace(
-        snapshot,
-        registry=registry,
-        registry_sha256=_digest(registry),
+def _prepared_snapshot(tmp_path: Path) -> tuple[TimelineSnapshot, Path]:
+    """Portable runtime slice; media classification comes from runtime admission only."""
+    events = [
+        json.loads(line)
+        for line in (SLICE_DIR / "assembly.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    identity = TRUTH["timeline"]
+    snapshot = snapshot_from_runtime(
+        timeline_id=identity["uuid"],
+        timeline_ulid=identity["ulid"],
+        slug=identity["slug"],
+        project_slug=PROJECT_SLUG,
+        events=events,
     )
-    return snapshot, project_root, timeline_dir
+    return snapshot, tmp_path
 
 
 @pytest.fixture
 def desert(
     tmp_path: Path,
 ) -> tuple[TimelineInspectionModel, object, TimelineSnapshot, Path]:
-    snapshot, project_root, _timeline_dir = _prepared_snapshot(tmp_path)
-    model = build_model(snapshot, project_root=project_root)
+    snapshot, project_root = _prepared_snapshot(tmp_path)
+    model = build_model(snapshot)
     identity_map = build_identity_map(
         model,
         root_sns=model.snapshot_sns,
@@ -113,26 +89,6 @@ def desert(
         timeline_ulid=model.timeline_ulid,
     )
     return model, identity_map, snapshot, project_root
-
-
-@pytest.fixture
-def tampered(
-    tmp_path: Path,
-) -> tuple[TimelineInspectionModel, object, TimelineSnapshot]:
-    snapshot, project_root, _timeline_dir = _prepared_snapshot(tmp_path, tamper_head=True)
-    # Remove one contained media file so classification reports MISSING_MEDIA.
-    for key, entry in snapshot.registry["assets"].items():
-        if key == "plant-frame-2":
-            target = project_root / "sources" / entry["file"]
-            target.unlink()
-    model = build_model(snapshot, project_root=project_root)
-    identity_map = build_identity_map(
-        model,
-        root_sns=model.snapshot_sns,
-        timeline_uuid=model.timeline_uuid,
-        timeline_ulid=model.timeline_ulid,
-    )
-    return model, identity_map, snapshot
 
 
 def _schema_registry() -> Registry:
@@ -341,31 +297,23 @@ def test_cross_artifact_join(desert) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 3. Desert slice: one recovery action per unavailable state.
+# 3. Desert slice: navigation relations, refresh/focus actions, and one
+#    recovery action per unavailable state.
 # ---------------------------------------------------------------------------
 
 
-def test_desert_slice_one_recovery_action_per_unavailable_state(desert) -> None:
+def _unavailable(actions: dict) -> list[tuple[str, str, dict]]:
+    return [
+        (ref, name, action)
+        for ref, entry in actions["entries"].items()
+        for name, action in entry["actions"].items()
+        if not action["available"]
+    ]
+
+
+def test_desert_slice_relations_and_refresh_focus_actions(desert) -> None:
     model, identity_map, snapshot, _project_root = desert
     actions = emit_action_index(model, identity_map, snapshot, MANIFEST_PATH)
-
-    unavailable: list[tuple[str, str, dict]] = []
-    for ref, entry in actions["entries"].items():
-        for name, action in entry["actions"].items():
-            if not action["available"]:
-                unavailable.append((ref, name, action))
-
-    # Only AS05 (toccata-fugue, hash_unrecorded) is unavailable, exactly once.
-    assert [item[0] for item in unavailable] == ["TL01.AS05"]
-    assert [item[1] for item in unavailable] == ["inspect_original"]
-    assert unavailable[0][2]["unavailable_reason"] is not None
-    assert "hash_unrecorded" in unavailable[0][2]["unavailable_reason"]
-
-    # Verified assets keep inspect_original available.
-    as01 = actions["entries"]["TL01.AS01"]["actions"]
-    assert as01["inspect_original"]["available"] is True
-    assert as01["inspect_original"]["unavailable_reason"] is None
-    assert as01["inspect_original"]["reads"] == "snapshot"
 
     # refresh_root reads current state; focus actions read the snapshot.
     tl01 = actions["entries"]["TL01"]["actions"]
@@ -382,6 +330,77 @@ def test_desert_slice_one_recovery_action_per_unavailable_state(desert) -> None:
     assert actions["entries"]["TL01.CL04"]["relations"]["next"] is None
     assert actions["entries"]["TL01.CL05"]["relations"]["previous"] is None
     assert actions["entries"]["TL01.AS01"]["relations"]["parent"] == "TL01"
+
+
+def test_desert_slice_one_recovery_action_per_unavailable_state(desert) -> None:
+    model, identity_map, snapshot, _project_root = desert
+    actions = emit_action_index(model, identity_map, snapshot, MANIFEST_PATH)
+
+    # No asset is admitted by the runtime, so each of the five assets exposes
+    # exactly one unavailable action (inspect_original), and nothing else.
+    unavailable = _unavailable(actions)
+    assert [(ref, name) for ref, name, _ in unavailable] == [
+        (f"TL01.AS0{n}", "inspect_original") for n in range(1, 6)
+    ]
+    for _ref, _name, action in unavailable:
+        assert action["unavailable_reason"] is not None
+        assert action["unavailable_reason"].startswith("unsupported")
+        assert action["reads"] == "snapshot"
+
+    # Every unavailable action anywhere carries a reason; available ones none.
+    for entry in actions["entries"].values():
+        for action in entry["actions"].values():
+            assert (action["unavailable_reason"] is None) == action["available"]
+
+
+def test_runtime_admitted_asset_keeps_inspect_original_available(desert) -> None:
+    """Admitted, unsupported and missing media stay distinguishable."""
+    _model, _identity_map, snapshot, _project_root = desert
+    digest = hashlib.sha256(b"admitted desert frame").hexdigest()
+    registry = deepcopy(snapshot.registry)
+    registry["assets"]["plant-frame-1"] = {
+        "media_id": "object-1",
+        "content_sha256": digest,
+        "type": "image/png",
+    }
+    # toccata-fugue: no locator and no object id -> classified missing.
+    del registry["assets"]["toccata-fugue"]["file"]
+    snapshot = replace(snapshot, registry=registry, registry_sha256=_digest(registry))
+    model = build_model(
+        snapshot,
+        media_snapshot=[
+            {"object_id": "object-1", "content_hash": f"sha256:{digest}", "media_type": "image/png"}
+        ],
+    )
+    identity_map = build_identity_map(
+        model,
+        root_sns=model.snapshot_sns,
+        timeline_uuid=model.timeline_uuid,
+        timeline_ulid=model.timeline_ulid,
+    )
+    actions = emit_action_index(model, identity_map, snapshot, MANIFEST_PATH)
+
+    admitted = actions["entries"]["TL01.AS01"]["actions"]["inspect_original"]
+    assert admitted["available"] is True
+    assert admitted["unavailable_reason"] is None
+    assert admitted["reads"] == "snapshot"
+
+    unavailable = _unavailable(actions)
+    assert [ref for ref, _name, _action in unavailable] == [
+        "TL01.AS02",
+        "TL01.AS03",
+        "TL01.AS04",
+        "TL01.AS05",
+    ]
+    assert all(action["unavailable_reason"] for _r, _n, action in unavailable)
+
+    codes = {
+        entry["object_ref"]: entry["code"]
+        for entry in emit_diagnostics(model, identity_map, snapshot)["diagnostics"]
+        if entry["code"] in {"MISSING_MEDIA", "UNSUPPORTED_MEDIA"}
+    }
+    assert codes["TL01.AS05"] == "MISSING_MEDIA"
+    assert codes["TL01.AS02"] == "UNSUPPORTED_MEDIA"
 
 
 # ---------------------------------------------------------------------------
@@ -512,49 +531,6 @@ def test_transition_accepted_and_ignored(desert) -> None:
         if entry["code"] == "TRANSITION_IGNORED"
     ]
     assert [entry["object_ref"] for entry in ignored] == ["TL01.CL03"]
-
-
-# ---------------------------------------------------------------------------
-# 6. Diagnostics capture tampered input.
-# ---------------------------------------------------------------------------
-
-
-def test_diagnostics_capture_stale_sidecar_and_missing_media(tampered) -> None:
-    model, identity_map, snapshot = tampered
-    ground, actions, assets, transcript, diagnostics = _emit_all(
-        model, identity_map, snapshot
-    )
-
-    _validate("ground-truth", ground)
-    _validate("action-index", actions)
-    _validate("asset-index", assets)
-    _validate("diagnostics", diagnostics)
-
-    codes = {entry["code"] for entry in diagnostics["diagnostics"]}
-    assert "HEAD_SIDECAR_STALE" in codes
-    assert "MISSING_MEDIA" in codes
-    assert "HASH_UNRECORDED" in codes
-
-    by_code: dict[str, list[dict]] = {}
-    for entry in diagnostics["diagnostics"]:
-        by_code.setdefault(entry["code"], []).append(entry)
-
-    stale = by_code["HEAD_SIDECAR_STALE"]
-    assert len(stale) == 2  # version and event_count
-    for entry in stale:
-        assert entry["severity"] == "warning"
-        assert entry["object_ref"] == "TL01"
-        assert entry["message"]
-
-    missing = by_code["MISSING_MEDIA"]
-    assert len(missing) == 1
-    assert missing[0]["object_ref"] == "TL01.AS02"
-    assert "plant-frame-2" in missing[0]["message"] or "file" in missing[0]["message"]
-
-    # The missing asset also lands in the asset index with a null observed hash.
-    as02 = next(entry for entry in assets["assets"] if entry["stable_id"] == "AS02")
-    assert as02["integrity_state"] == "missing"
-    assert as02["observed_sha256"] is None
 
 
 # ---------------------------------------------------------------------------

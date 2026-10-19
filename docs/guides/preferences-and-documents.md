@@ -15,7 +15,7 @@ you inferred into a lasting preference.
 
 The main Astrid skill is the agent-facing entrypoint. In a host that supports
 Astrid skill references, read `skill://astrid`; otherwise read the installed
-`astrid/packs/_core/skill/SKILL.md` distributed with Astrid. For every new task,
+`astrid/packs/_core/docs/SKILL.md` distributed with Astrid. For every new task,
 fetch current preference content before applying it. Fetch again when the
 project changes, before editing, and after a context refresh that might have
 made earlier content stale. A failed fetch is an error to report, not an empty

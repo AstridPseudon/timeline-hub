@@ -391,6 +391,7 @@ class TestFalParamMapFallback:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 class TestVibeComfyParamMapFallback:
     """VibeComfyBackend.generate() param_map fallback behaviour.
 
@@ -399,11 +400,6 @@ class TestVibeComfyParamMapFallback:
     ``vibecomfy.registry.ready.workflow_from_ready`` inside the method body,
     which re-binds local names from submodule filesystem resolution.
     """
-
-    @classmethod
-    def setup_class(cls) -> None:
-        """Skip the whole class when vibecomfy is not installed."""
-        pytest.importorskip("vibecomfy")
 
     @staticmethod
     def _mock_vibecomfy_imports(wf):

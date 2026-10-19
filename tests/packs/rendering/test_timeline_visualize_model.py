@@ -3,7 +3,6 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
-import shutil
 import subprocess
 import sys
 from copy import deepcopy
@@ -11,9 +10,6 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-
-pytestmark = pytest.mark.skip(reason="legacy filesystem fixture superseded by runtime snapshot tests")
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core.timeline.snapshot import TimelineSnapshot, snapshot_from_runtime
 from astrid.packs.rendering.actions.timeline_visualize.model import (
@@ -42,38 +38,21 @@ def _digest(value: object) -> str:
     return sha256_bytes(canonical_json_bytes(value))
 
 
-def _file_state(root: Path) -> dict[str, tuple[bytes, int]]:
-    return {
-        str(path.relative_to(root)): (path.read_bytes(), path.stat().st_mtime_ns)
-        for path in sorted(root.rglob("*"))
-        if path.is_file()
-    }
+def _prepared_snapshot() -> TimelineSnapshot:
+    """Portable desert slice projected through the runtime snapshot path."""
 
-
-def _prepared_snapshot(tmp_path: Path) -> tuple[TimelineSnapshot, Path, Path]:
-    """Portable slice plus synthetic contained media for full R5 classification."""
-
-    project_root = tmp_path / "project"
-    timeline_dir = project_root / "timelines" / TRUTH["timeline"]["ulid"]
-    timeline_dir.parent.mkdir(parents=True)
-    shutil.copytree(SLICE_DIR, timeline_dir)
-    snapshot = acquire_snapshot(timeline_dir, project_slug=PROJECT_SLUG)
-
-    registry = deepcopy(snapshot.registry)
-    for key, entry in registry["assets"].items():
-        payload = f"portable R7 media: {key}".encode("utf-8")
-        target = project_root / "sources" / entry["file"]
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(payload)
-        if "content_sha256" in entry:
-            entry["content_sha256"] = hashlib.sha256(payload).hexdigest()
-
-    snapshot = replace(
-        snapshot,
-        registry=registry,
-        registry_sha256=_digest(registry),
+    events = [
+        json.loads(line)
+        for line in (SLICE_DIR / "assembly.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    identity = TRUTH["timeline"]
+    return snapshot_from_runtime(
+        timeline_id=identity["uuid"],
+        timeline_ulid=identity["ulid"],
+        slug=identity["slug"],
+        project_slug=PROJECT_SLUG,
+        events=events,
     )
-    return snapshot, project_root, timeline_dir
 
 
 def _with_assembly(
@@ -94,17 +73,15 @@ def _with_assembly(
 
 
 @pytest.fixture
-def desert(
-    tmp_path: Path,
-) -> tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path]:
-    snapshot, project_root, timeline_dir = _prepared_snapshot(tmp_path)
-    return build_model(snapshot, project_root=project_root), snapshot, project_root, timeline_dir
+def desert() -> tuple[TimelineInspectionModel, TimelineSnapshot]:
+    snapshot = _prepared_snapshot()
+    return build_model(snapshot), snapshot
 
 
 def test_build_model_desert_truth_and_integrity(
-    desert: tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path],
+    desert: tuple[TimelineInspectionModel, TimelineSnapshot],
 ) -> None:
-    model, snapshot, _project_root, _timeline_dir = desert
+    model, snapshot = desert
 
     assert model.timeline_uuid == TRUTH["timeline"]["uuid"]
     assert model.timeline_ulid == TRUTH["timeline"]["ulid"]
@@ -122,14 +99,20 @@ def test_build_model_desert_truth_and_integrity(
     assert model.transition_default_frames == 12
     assert model.snapshot_sns == snapshot.sns()
     assert model.registry_keys == frozenset(snapshot.registry["assets"])
+    # No runtime admission is supplied, so every locator-only asset is
+    # "unsupported"; the recorded-versus-unrecorded hash distinction survives
+    # on ``expected_sha256`` (toccata-fugue never recorded one).
     states = {key: value.state for key, value in model.media_integrity.items()}
     assert states == {
-        "plant-frame-1": "verified_original",
-        "plant-frame-2": "verified_original",
-        "plant-frame-3": "verified_original",
-        "plant-frame-4": "verified_original",
-        "toccata-fugue": "hash_unrecorded",
+        "plant-frame-1": "unsupported",
+        "plant-frame-2": "unsupported",
+        "plant-frame-3": "unsupported",
+        "plant-frame-4": "unsupported",
+        "toccata-fugue": "unsupported",
     }
+    expected = {key: value.expected_sha256 for key, value in model.media_integrity.items()}
+    assert expected["toccata-fugue"] is None
+    assert all(expected[key] for key in expected if key != "toccata-fugue")
 
     # Authored source seconds remain distinct from compositor-quantized seconds.
     frame_four = next(clip for clip in model.clips if clip.clip_id == "plant-frame-4")
@@ -138,26 +121,24 @@ def test_build_model_desert_truth_and_integrity(
     assert frame_four.frames.end_frame / model.fps == 332 / 24
 
 
-def test_managed_visualization_uses_admitted_runtime_media_snapshot(
-    tmp_path: Path,
-) -> None:
-    snapshot, project_root, _timeline_dir = _prepared_snapshot(tmp_path)
-    payload = b"runtime admitted visualization asset"
-    digest = hashlib.sha256(payload).hexdigest()
-    # This legacy module is retained only as a skipped historical specification;
-    # runtime tests provide materialized objects directly and never derive a
-    # filesystem CAS path.
-    managed = tmp_path / "runtime-materialized" / "object-1"
-    managed.parent.mkdir(parents=True, exist_ok=True)
-    managed.write_bytes(payload)
+def test_managed_visualization_uses_admitted_runtime_media_snapshot() -> None:
+    snapshot = _prepared_snapshot()
+    digest = hashlib.sha256(b"runtime admitted visualization asset").hexdigest()
     registry = {
         "assets": {
             "managed": {
-                "file": str(managed),
                 "media_id": "object-1",
                 "content_sha256": digest,
                 "type": "image/png",
-            }
+            },
+            # A filesystem locator is never trusted, even when the object id
+            # and digest are admitted by the runtime.
+            "locator": {
+                "file": "/not/runtime/managed.png",
+                "media_id": "object-1",
+                "content_sha256": digest,
+                "type": "image/png",
+            },
         }
     }
     managed_snapshot = replace(
@@ -174,16 +155,14 @@ def test_managed_visualization_uses_admitted_runtime_media_snapshot(
         }
     ]
 
-    denied = build_model(managed_snapshot, project_root=project_root)
-    admitted = build_model(
-        managed_snapshot,
-        project_root=project_root,
-        media_snapshot=runtime_media,
-    )
+    denied = build_model(managed_snapshot)
+    admitted = build_model(managed_snapshot, media_snapshot=runtime_media)
 
     assert denied.media_integrity["managed"].state == "unsupported"
     assert admitted.media_integrity["managed"].state == "verified_original"
-    assert admitted.media_integrity["managed"].path == str(managed.resolve())
+    assert admitted.media_integrity["managed"].observed_sha256 == digest
+    assert admitted.media_integrity["locator"].state == "unsupported"
+    assert admitted.media_integrity["locator"].observed_sha256 is None
 
 
 def test_visualization_resolution_import_is_local_authority_free() -> None:
@@ -203,9 +182,9 @@ def test_visualization_resolution_import_is_local_authority_free() -> None:
 
 
 def test_track_config_and_bottom_to_top_paint_indices(
-    desert: tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path],
+    desert: tuple[TimelineInspectionModel, TimelineSnapshot],
 ) -> None:
-    model, snapshot, _project_root, _timeline_dir = desert
+    model, snapshot = desert
     storyboard, audio = model.tracks
     assert (storyboard.config_order, storyboard.paint_index) == (0, 0)
     assert (audio.config_order, audio.paint_index) == (1, 1)
@@ -251,9 +230,9 @@ def test_clip_model_legacy_construction_defaults_mounted_to_frames() -> None:
 
 
 def test_desert_clip_frames_match_frozen_windows(
-    desert: tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path],
+    desert: tuple[TimelineInspectionModel, TimelineSnapshot],
 ) -> None:
-    model, _snapshot, _project_root, _timeline_dir = desert
+    model, _snapshot = desert
     expected = {
         item["id"]: (item["frame_start"], item["frame_end"])
         for item in TRUTH["clip_windows"]
@@ -273,9 +252,9 @@ def test_desert_clip_frames_match_frozen_windows(
 
 
 def test_transition_effective_intervals_mirror_group_retiming_and_clipping(
-    desert: tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path],
+    desert: tuple[TimelineInspectionModel, TimelineSnapshot],
 ) -> None:
-    desert_model, snapshot, _project_root, _timeline_dir = desert
+    desert_model, snapshot = desert
     assert transition_effective_intervals(desert_model) == {
         clip.clip_id: clip.frames.as_seconds() for clip in desert_model.clips
     }
@@ -359,9 +338,9 @@ def test_transition_effective_intervals_mirror_group_retiming_and_clipping(
 
 
 def test_cold_scopes_use_closed_open_compositor_intersections(
-    desert: tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path],
+    desert: tuple[TimelineInspectionModel, TimelineSnapshot],
 ) -> None:
-    model, _snapshot, _project_root, _timeline_dir = desert
+    model, _snapshot = desert
 
     whole = select_scope(model, kind="timeline")
     assert whole.start_frame == 0
@@ -432,9 +411,9 @@ def test_cold_scopes_use_closed_open_compositor_intersections(
 
 
 def test_timestamp_scope_retains_exact_requested_instant(
-    desert: tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path],
+    desert: tuple[TimelineInspectionModel, TimelineSnapshot],
 ) -> None:
-    model, _snapshot, _project_root, _timeline_dir = desert
+    model, _snapshot = desert
 
     scope = select_scope(model, kind="timestamp", at_seconds=2.0)
 
@@ -445,9 +424,9 @@ def test_timestamp_scope_retains_exact_requested_instant(
 
 
 def test_range_scope_retains_exact_requested_bounds_when_clipped(
-    desert: tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path],
+    desert: tuple[TimelineInspectionModel, TimelineSnapshot],
 ) -> None:
-    model, _snapshot, _project_root, _timeline_dir = desert
+    model, _snapshot = desert
 
     scope = select_scope(model, kind="range", start=97.0, end=120.0)
 
@@ -467,9 +446,9 @@ def test_scope_new_fields_have_backward_compatible_defaults() -> None:
 
 
 def test_shot_scope_prefers_authored_bounds_and_keeps_intersecting_tracks(
-    desert: tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path],
+    desert: tuple[TimelineInspectionModel, TimelineSnapshot],
 ) -> None:
-    _model, snapshot, project_root, _timeline_dir = desert
+    _model, snapshot = desert
     assembly = deepcopy(snapshot.assembly)
     assembly["pinnedShotGroups"] = [
         {
@@ -480,7 +459,7 @@ def test_shot_scope_prefers_authored_bounds_and_keeps_intersecting_tracks(
             "end": 8.5667,
         }
     ]
-    model = build_model(_with_assembly(snapshot, assembly, registry=snapshot.registry), project_root=project_root)
+    model = build_model(_with_assembly(snapshot, assembly, registry=snapshot.registry))
     scope = select_scope(model, kind="shot", ref="growth-middle")
     assert (scope.start_frame, scope.end_frame) == (86, 206)
     assert scope.clip_ids == ("plant-frame-2", "toccata-fugue")
@@ -488,12 +467,12 @@ def test_shot_scope_prefers_authored_bounds_and_keeps_intersecting_tracks(
 
 
 def test_model_and_scopes_are_deterministic_and_do_not_write(
-    desert: tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path],
+    desert: tuple[TimelineInspectionModel, TimelineSnapshot],
 ) -> None:
-    first, snapshot, project_root, timeline_dir = desert
-    before = _file_state(project_root)
+    first, snapshot = desert
+    before = deepcopy(snapshot)
 
-    second = build_model(snapshot, project_root=project_root)
+    second = build_model(snapshot)
     scopes_first = (
         select_scope(first, kind="timeline"),
         select_scope(first, kind="range", start=0, end=5),
@@ -511,8 +490,7 @@ def test_model_and_scopes_are_deterministic_and_do_not_write(
 
     assert first == second
     assert scopes_first == scopes_second
-    assert _file_state(project_root) == before
-    assert timeline_dir.is_dir()
+    assert snapshot == before
 
 
 def test_model_and_scope_import_graph_has_no_repair_or_mutation_api() -> None:
@@ -521,7 +499,7 @@ def test_model_and_scope_import_graph_has_no_repair_or_mutation_api() -> None:
         / "astrid"
         / "packs"
         / "rendering"
-        / "executors"
+        / "actions"
         / "timeline_visualize"
     )
     imported: set[str] = set()
@@ -541,10 +519,12 @@ def test_model_and_scope_import_graph_has_no_repair_or_mutation_api() -> None:
     assert not any(token in module for module in imported for token in forbidden)
 
 
-def test_rootless_build_never_guesses_local_asset_paths(
-    desert: tuple[TimelineInspectionModel, TimelineSnapshot, Path, Path],
+def test_build_never_guesses_local_asset_paths(
+    desert: tuple[TimelineInspectionModel, TimelineSnapshot],
 ) -> None:
-    _rooted, snapshot, _project_root, _timeline_dir = desert
-    model = build_model(snapshot)
-    assert set(value.state for value in model.media_integrity.values()) == {"missing"}
-    assert all(value.path is None for value in model.media_integrity.values())
+    model, _snapshot = desert
+    assert {value.state for value in model.media_integrity.values()} == {"unsupported"}
+    assert all(
+        value.observed_sha256 is None and "runtime-managed" in value.reason
+        for value in model.media_integrity.values()
+    )

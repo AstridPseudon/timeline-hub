@@ -72,7 +72,7 @@ from astrid.packs.rendering.shared.rendering_backend import (
 )
 from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_backend
 
-# Reuse seam (T3.3): only the side-effect-free execution helper. The shared
+# Reuse seam: only the side-effect-free execution helper. The shared
 # Remotion render lock is acquired inside ``_execute_remotion``; this backend
 # never adds a second lock or capture stack.
 _execute_remotion = remotion_backend._execute_remotion

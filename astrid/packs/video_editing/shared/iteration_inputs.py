@@ -436,9 +436,9 @@ def assembly_inputs(
 
 
 def pathless_render_registry(registry: Mapping[str, Any], frozen: Mapping[str, Any], *, project: str, target_run_id: str) -> dict[str, Any]:
-    """Replace M09 asset file locators with exact frozen dependency identities.
+    """Replace asset file locators with exact frozen dependency identities.
 
-    Match by M09's deterministic asset_<run_id>_<artifact_index> key, never by a
+    Match by the deterministic asset_<run_id>_<artifact_index> key, never by a
     file path. The later F04/F05 bridge must admit these dependencies separately.
     """
     value = normalize_frozen_inputs(frozen, project=project, target_run_id=target_run_id)

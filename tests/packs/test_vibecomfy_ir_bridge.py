@@ -32,10 +32,6 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "tests" / "fixtures" / "vibecomfy_ir" / "flat.json"
 
 
-def _require_vibecomfy() -> None:
-    pytest.importorskip("vibecomfy")
-
-
 def _write_operations(path: Path, ops: list[dict[str, object]]) -> None:
     path.write_text(
         json.dumps({"schema_version": 1, "expected_revision": 0, "ops": ops}),
@@ -908,8 +904,8 @@ def test_manual_python_capture_keeps_parent_and_candidate_separate_with_gate_aud
     assert report["security_gate_audit"][0]["reason"] == "assume_yes_bypass"
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_inspect_emits_projection_without_mutating_ui_graph(tmp_path: Path) -> None:
-    _require_vibecomfy()
     before = FIXTURE.read_bytes()
 
     outputs = inspect_workflow(FIXTURE, tmp_path / "inspection")
@@ -1027,10 +1023,10 @@ def test_canonical_inspect_rejects_missing_consent_before_loading_python(
     assert not (tmp_path / "inspection").exists()
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_edit_applies_one_atomic_typed_batch_and_emits_fresh_projection(
     tmp_path: Path,
 ) -> None:
-    _require_vibecomfy()
     operations = tmp_path / "operations.json"
     _write_operations(
         operations,
@@ -1060,8 +1056,8 @@ def test_edit_applies_one_atomic_typed_batch_and_emits_fresh_projection(
     assert len(report["canonical_delta"]) == 2
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_edit_rejects_projection_rewrites_before_creating_outputs(tmp_path: Path) -> None:
-    _require_vibecomfy()
     operations = tmp_path / "operations.json"
     _write_operations(
         operations,
@@ -1075,8 +1071,8 @@ def test_edit_rejects_projection_rewrites_before_creating_outputs(tmp_path: Path
     assert not out_dir.exists()
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_edit_rejects_nested_batches_before_creating_outputs(tmp_path: Path) -> None:
-    _require_vibecomfy()
     operations = tmp_path / "operations.json"
     _write_operations(
         operations,
@@ -1090,8 +1086,8 @@ def test_edit_rejects_nested_batches_before_creating_outputs(tmp_path: Path) -> 
     assert not out_dir.exists()
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_edit_rejects_a_stale_expected_revision(tmp_path: Path) -> None:
-    _require_vibecomfy()
     operations = tmp_path / "operations.json"
     operations.write_text(
         json.dumps(
@@ -1113,8 +1109,8 @@ def test_edit_rejects_a_stale_expected_revision(tmp_path: Path) -> None:
     assert not out_dir.exists()
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_edit_batch_is_atomic_when_any_leaf_operation_is_invalid(tmp_path: Path) -> None:
-    _require_vibecomfy()
     operations = tmp_path / "operations.json"
     _write_operations(
         operations,

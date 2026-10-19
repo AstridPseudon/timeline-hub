@@ -215,9 +215,9 @@ def build_plan_v2(
     - Render stays local and calls ``rendering.render`` unless a future plan
       explicitly promotes it to ``remote-artifact``.
     - ``editor_review`` uses ``adapter: manual`` for human-in-the-loop.
-    - The top-level group step ``hype`` declares ``re_export`` per G1.
+    - The top-level group step ``hype`` declares ``re_export``.
     - ``cut`` fans out across discovered scene item ids via
-      ``repeat.for_each.from_ref: "scenes.produces.scene_items"`` (G5).
+      ``repeat.for_each.from_ref: "scenes.produces.scene_items"``.
 
     Dynamic discovery (shot count after cut) is handled by the orchestrator
     calling ``astrid plan add-step`` at runtime — not by this template.
@@ -251,7 +251,7 @@ def build_plan_v2(
     plan_id = f"hype-{run_id or uuid.uuid4().hex[:12]}"
 
     # Command interpolation: {python_exec}, {run_root}, {source} are resolved
-    # at plan-emission time per G3.
+    # at plan-emission time.
     cmd_transcribe = _build_transcribe_cmd(python_exec, run_root, source)
     cmd_scenes = _build_scenes_cmd(python_exec, run_root, source)
     cmd_cut = _build_cut_cmd(python_exec, run_root, source, brief)

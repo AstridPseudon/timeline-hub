@@ -1,6 +1,6 @@
 """Project-run and gate environment adapter helpers for the hype orchestrator.
 
-Extracted from ``run.py`` as part of M4 giant-file decomposition (T66).
+Extracted from ``run.py``.
 Kept separate from the main ``run.py`` facade so that project binding,
 gate command interception, and environment variable management are
 isolated from the manifest-facing ``main()`` entrypoint.

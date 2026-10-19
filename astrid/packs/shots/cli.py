@@ -1,4 +1,4 @@
-"""Product shots family CLI — nested beneath timelines (m4 plan step 26, task T29).
+"""Product shots family CLI — nested beneath timelines.
 
 This module is the product parser for the runtime-owned nested ``shots``
 mount. It is **never** a top-level command: ``shots`` is reachable only as

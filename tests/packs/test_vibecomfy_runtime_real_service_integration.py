@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-import io
 import json
-import subprocess
-import tarfile
 from pathlib import Path
 from typing import Any
 
@@ -16,38 +13,14 @@ from astrid.core.execution.generic_host import (
     RuntimeProtocolClient,
 )
 from astrid.sdk.client import AstridClient
+from tests.lanes import require_module
 
-pytest.importorskip("vibecomfy.porting.import_service")
+pytestmark = pytest.mark.integration  # needs vibecomfy and the Runtime from second checkouts (real_runtime fixture)
+require_module("vibecomfy.porting.import_service")
 
 
-ASTRID_SOURCE = Path(
-    subprocess.run(
-        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-).parent
-RUNTIME_WORKTREE = ASTRID_SOURCE.parent / "astrid-runtime-execution-20260909"
-RUNTIME_COMMIT = "afccb430e2a983c968b6a8a96fd630ba3a6262fc"
 ROOT = Path(__file__).resolve().parents[2]
 PACK_ROOT = ROOT / "astrid" / "packs" / "vibecomfy"
-
-
-def _runtime_daemon_class(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Any:
-    runtime_root = tmp_path / "runtime-source"
-    runtime_root.mkdir()
-    if RUNTIME_WORKTREE.is_dir():
-        archive = subprocess.run(
-            ["git", "-C", str(RUNTIME_WORKTREE), "archive", "--format=tar", RUNTIME_COMMIT],
-            check=True,
-            capture_output=True,
-        ).stdout
-        with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
-            tar.extractall(runtime_root)
-        monkeypatch.syspath_prepend(str(runtime_root))
-    runtime_daemon = pytest.importorskip("runtime_protocol.daemon")
-    return runtime_daemon.RuntimeDaemon
 
 
 def _open_client(daemon: Any) -> AstridClient:
@@ -161,15 +134,14 @@ def _new_host(
 
 def test_real_vibecomfy_runtime_requires_explicit_python_consent_and_tracks_flow(
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
+    real_runtime,
 ) -> None:
     """Prove consent rejection and consented import → edit → validate history.
 
     This uses a disposable RuntimeDaemon and real VibeComfy services. The test
     never starts a generation task, contacts ComfyUI, or touches a live host.
     """
-    RuntimeDaemon = _runtime_daemon_class(monkeypatch, tmp_path)
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         client = _open_client(daemon)
         project = client.projects.create(

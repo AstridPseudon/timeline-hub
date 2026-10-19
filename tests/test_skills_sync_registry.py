@@ -3,7 +3,7 @@
 All filesystem effects are pinned to a tmp ``$HOME`` (via the shared ``_Tmp``
 fixture, which patches ``Path.home``) and to a temp copy of the gateway
 SKILL.md, so the suite never mutates the real ``~/.claude`` / ``~/.codex`` dirs
-or the in-repo ``_core/skill/SKILL.md``.
+or the in-repo ``_core/docs/SKILL.md``.
 """
 
 from __future__ import annotations
@@ -201,6 +201,7 @@ class SyncGatewayTest(unittest.TestCase):
                 view / "creative-work" / "../packs" / "generation" / "SKILL.md",
                 view / "creative-work" / "../packs" / "rendering" / "SKILL.md",
                 view / "pack-builder" / "SKILL.md",
+                view / "pack-testing" / "SKILL.md",
             ):
                 self.assertTrue(route.resolve().is_file(), f"unopenable composed route: {route}")
             # ``packs/references`` has no pack.yaml; only _core may be a manifestless
@@ -209,6 +210,12 @@ class SyncGatewayTest(unittest.TestCase):
             pack_builder = (view / "pack-builder" / "SKILL.md").read_text(encoding="utf-8")
             self.assertIn("https://github.com/banodoco/astrid-agent/blob/main/docs/", pack_builder)
             self.assertNotIn("../../../../../docs/", pack_builder)
+            self.assertIn("](../pack-testing/SKILL.md)", pack_builder)
+            pack_testing = (view / "pack-testing" / "SKILL.md").read_text(encoding="utf-8")
+            for target in ("tests/conftest.py", "tests/lanes.py", "pyproject.toml"):
+                self.assertIn(f"https://github.com/banodoco/astrid-agent/blob/main/{target}", pack_testing)
+            self.assertNotIn("peteromallet", pack_testing)
+            self.assertNotIn("../../../../../", pack_testing)
             registry_text = (view / "creative-work" / "references" / "packs.md").read_text(encoding="utf-8")
             self.assertIn("packs/foley/SKILL.md", registry_text)
             self.assertEqual(registry.CORE_SKILL_MD.read_text(encoding="utf-8"), source_registry)

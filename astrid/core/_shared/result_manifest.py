@@ -18,8 +18,7 @@ def write_json_atomic(path: str | Path, payload: Any) -> None:
     """Atomically write *payload* as JSON to *path*.
 
     Delegates to :func:`astrid.core.foundation.atomic_io.write_json_atomic`,
-    wrapping low-level ``OSError`` in :class:`AstridError` with the same
-    message previously produced by ``_shared.jsonio.write_json_atomic``.
+    wrapping low-level ``OSError`` in :class:`AstridError`.
     """
     try:
         _atomic_write_json(path, payload)
@@ -201,7 +200,7 @@ def build_manifest(
 
 
 # ---------------------------------------------------------------------------
-# Strict result-manifest reading and validation (m2 plan step 9)
+# Strict result-manifest reading and validation
 # ---------------------------------------------------------------------------
 #
 # The executor boundary quarantines handler outputs: a handler result is

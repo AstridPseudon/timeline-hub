@@ -70,7 +70,7 @@ def _warn(message: str) -> None:
     warnings.warn(message)
 
 
-# Secrets resolution delegated to astrid.core.util.secrets (Sprint 01 ecosystem reconciliation).
+# Secrets resolution delegated to astrid.core.util.secrets.
 
 
 def _resolve_key(*, env_file: Path | None = None) -> str:
@@ -314,7 +314,7 @@ def _build_openai_manifest(
         "jobs": jobs,
     }
 
-    # Route output metadata through the shared contract (M1), rooted at the
+    # Route output metadata through the shared contract, rooted at the
     # manifest directory used by GenericHost for harvesting.
     manifest["outputs"] = complete_output_metadata(
         manifest["outputs"], root_dir=manifest_root,

@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-import pytest
 import yaml
 
 from astrid.packs.training.actions.dataset_build.config import load_dataset_config
@@ -12,7 +11,6 @@ from astrid.packs.training.actions.dataset_build.config import load_dataset_conf
 ROOT = Path(__file__).resolve().parents[4]
 EXAMPLE_CONFIG = ROOT / "examples" / "configs" / "dataset" / "seinfeld-dataset.yaml"
 ALWAYS_SUNNY_CONFIG = ROOT / "examples" / "configs" / "dataset" / "always-sunny-dataset.yaml"
-MIGRATION_DOC = ROOT / "docs" / "builtin-dataset-build.md"
 TRAINING_WORKFLOW_DOC = ROOT / "docs" / "examples" / "training-workflow.md"
 BUILTIN_PACKAGE = ROOT / "astrid" / "packs" / "training" / "actions" / "dataset_build"
 PACK_MANIFEST = ROOT / "astrid" / "packs" / "training" / "pack.yaml"
@@ -42,19 +40,6 @@ def test_always_sunny_example_is_distinct_strict_generic_dataset_config() -> Non
     assert always_sunny["output"]["run_dir"].endswith("runs/always-sunny-dataset")
     assert "REPLACE_WITH_LICENSED_SOURCE" in always_sunny["sources"][0]["config"]["source_urls"][0]
     assert "astrid/packs/seinfeld" not in ALWAYS_SUNNY_CONFIG.read_text(encoding="utf-8")
-
-
-def test_migration_docs_explain_m1_scope_and_no_compatibility_shim() -> None:
-    if not MIGRATION_DOC.is_file():
-        pytest.skip("retired builtin dataset-build migration doc is not shipped")
-    text = MIGRATION_DOC.read_text(encoding="utf-8")
-
-    assert "M1 reproduces the prototype's generic VLM bucket-judge and caption flow" in text
-    assert "does not implement the M2b top-up loop" in text
-    assert "no Seinfeld compatibility shim" in text
-    assert "examples/configs/dataset/seinfeld-dataset.yaml" in text
-    assert "python3 -m astrid orchestrators run training.dataset_build --" in text
-    assert "python3 -m astrid.packs." + "seinfeld" not in text
 
 
 def test_training_workflow_doc_uses_canonical_builtin_commands() -> None:

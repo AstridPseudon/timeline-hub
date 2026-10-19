@@ -33,19 +33,10 @@ if not DEPENDENCY_ROOT.is_dir():
         allow_module_level=True,
     )
 
-from astrid_runtime_client import WorkspaceClient  # noqa: E402
-from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
-from tests.helpers.runtime import initialize_runtime_realm
-
 from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient  # noqa: E402
+from astrid_runtime_client import WorkspaceClient  # noqa: E402
 
-
-_RuntimeDaemon = RuntimeDaemon
-
-
-def RuntimeDaemon(root, *args, **kwargs):
-    initialize_runtime_realm(root)
-    return _RuntimeDaemon(root, *args, **kwargs)
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
 
 def _make_media(root: Path) -> tuple[Path, Path]:
@@ -162,7 +153,7 @@ def _make_media(root: Path) -> tuple[Path, Path]:
 
 
 def test_generic_host_remotion_register_claim_execute_settle_and_cas(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
 ) -> None:
     node = shutil.which("node")
     if node is None or shutil.which("ffmpeg") is None:
@@ -199,11 +190,7 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(remotion.resolve()))
     timeline_path, assets_path = _make_media(workspace)
 
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake(

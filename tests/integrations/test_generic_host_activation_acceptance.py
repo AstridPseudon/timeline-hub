@@ -15,16 +15,6 @@ from types import SimpleNamespace
 
 import pytest
 
-pytest.importorskip("runtime_protocol")
-from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.remote_worker_activation import QualifiedRemoteWorkerLauncher
-from runtime_protocol.remote_worker_deployment import (
-    ArtifactReference,
-    DeploymentReference,
-    deployment_binding_from_task,
-    project_launch,
-)
-
 from astrid.core.execution.generic_host import (
     GenericPackHost,
     RuntimeProtocolClient,
@@ -36,13 +26,14 @@ from astrid.core.gateway.dispatch import compose_profile_handoff
 from astrid.core.generation.model_root import canonical_model_inventory_digest
 from astrid.sdk import host_bootstrap
 from astrid_runtime_client import ApiError
-from tests.helpers.runtime import initialize_runtime_realm
+
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
 OWNER = {"actor": "owner", "scopes": ["admin"]}
 
 
 @pytest.fixture
-def resident_host(tmp_path):
+def resident_host(tmp_path, real_runtime):
     """CPU fixture: actual host/OS/artifacts and one resident authority store."""
     source = Path(__file__).resolve().parents[2]
     data = tmp_path / "data"
@@ -86,8 +77,16 @@ def resident_host(tmp_path):
     boot = support / "boot-manifest.json"
     handoff = compose_profile_handoff(boot, support_root=support)
     record = GenericPackHost(pack_roots=[pack]).discover()[0]
-    realm = initialize_runtime_realm(tmp_path / "realm")
-    daemon = RuntimeDaemon(realm, support_root=support, production_worker_credentials=True).start()
+    daemon = real_runtime(tmp_path / "realm", support_root=support, production_worker_credentials=True)
+    # The Runtime is importable only once real_runtime has located it.
+    from runtime_protocol.remote_worker_activation import QualifiedRemoteWorkerLauncher
+    from runtime_protocol.remote_worker_deployment import (
+        ArtifactReference,
+        DeploymentReference,
+        deployment_binding_from_task,
+        project_launch,
+    )
+
     target = {"kind": "runpod", "pod_id": "explicit-fake-local-pod", "provider_account_ref": "test-account"}
     def verify_fake_target(actual):
         assert actual == target  # Only this CPU fixture maps the fake pod to our local OS.
@@ -420,11 +419,8 @@ def test_uncertain_commit_preserves_exact_host_and_credential(resident_host, mon
     assert host_bootstrap._parked_host_identity_matches(parked.handle.state)
 
 
-def test_real_disabled_bearer_fails_handshake_and_enabled_bearer_becomes_ready(tmp_path):
-    realm = initialize_runtime_realm(tmp_path / "realm")
-    daemon = RuntimeDaemon(
-        realm, support_root=tmp_path / "support", production_worker_credentials=True,
-    ).start()
+def test_real_disabled_bearer_fails_handshake_and_enabled_bearer_becomes_ready(real_runtime):
+    daemon = real_runtime(production_worker_credentials=True)
     try:
         token, _path = daemon.credentials.provision(
             "activation-host", ["handshake", "worker:execute"], enabled=False,

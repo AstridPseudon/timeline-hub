@@ -287,7 +287,7 @@ def main(argv: Sequence[str] | None = None, *, client: ClaudeClient | None = Non
     out_path.write_text(json.dumps(response, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(out_path)
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     manifest_path = args.out / "manifest.json"
     manifest = build_manifest(
         kind="human_notes",

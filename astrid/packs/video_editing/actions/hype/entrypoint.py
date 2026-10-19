@@ -20,7 +20,7 @@ import sys
 
 from astrid.core.project.runtime import ProjectRuntimeError
 
-# Extracted modules (M4 T62)
+# Extracted modules
 from astrid.packs.video_editing.actions.hype.config import (  # noqa: F401 — re-exported for command compatibility
     STEP_ORDER,
     load_config,
@@ -35,7 +35,7 @@ from astrid.packs.video_editing.actions.hype.parser import (  # noqa: F401 — b
     resolve_args,
 )
 
-# Extracted module (M4 T66)
+# Extracted module
 from astrid.packs.video_editing.actions.hype.project_adapter import (  # noqa: F401 — re-exported for command compatibility
     _prepare_project_main,
     _project_hype_artifact_roots,
@@ -72,7 +72,7 @@ from astrid.packs.video_editing.actions.hype.runner import (  # noqa: F401 — r
     write_skip_log,
 )
 
-# Extracted modules (M4 T64)
+# Extracted modules
 from astrid.packs.video_editing.actions.hype.steps import (  # noqa: F401 — re-exported for command compatibility
     PER_BRIEF_SENTINELS,
     PER_SOURCE_SENTINELS,
@@ -92,7 +92,7 @@ from astrid.packs.video_editing.actions.hype.steps import (  # noqa: F401 — re
 
 
 # === Main command entry point (kept separate from the callback facade) ===
-# Project/gate adapter helpers imported from .project_adapter (M4 T66)
+# Project/gate adapter helpers imported from .project_adapter
 def main(argv: list[str] | None = None) -> int:
     project_context = None
     project_env: dict[str, str | None] = {}

@@ -5,6 +5,13 @@ Lanes. The default run deselects tests marked ``integration``, ``darwin_native``
 those: ``pytest -m "integration or darwin_native or live or opt_in"``. Together the two lanes are the
 whole suite, by construction. A ``darwin_native`` test is skipped off macOS.
 
+Skips on import (testing plan R-6). ``pytest.importorskip`` is allowed locally but fails in a required
+lane, where a skip would hide a broken install: any lane run by CI (``CI`` set) and any run that selects
+the ``integration`` tests. A declared dev dependency is imported plainly. A module only the integration
+lane provides (a second checkout or an optional library) is loaded with ``require_module``: it fails in a
+lane that runs integration tests and skips the module in the default lane, which deselects every test that
+needs it.
+
 Leaked file descriptors (testing plan LEAK.2). The run fails if the pytest process
 ends holding more than FD_LEAK_ALLOWANCE descriptors beyond what it held at start.
 (Leaked daemon and host process groups are caught by conftest's session guard.)
@@ -12,8 +19,11 @@ ends holding more than FD_LEAK_ALLOWANCE descriptors beyond what it held at star
 
 from __future__ import annotations
 
+import importlib
 import os
 import sys
+from types import ModuleType
+from typing import NoReturn
 
 import pytest
 
@@ -50,10 +60,65 @@ class _FdGuard:
         session.exitstatus = pytest.ExitCode.TESTS_FAILED
 
 
+IMPORT_SKIP = "could not import"
+_config = None
+
+
+def runs_integration(config) -> bool:
+    """True when the run selects the ``integration`` tests with a marker expression (the nightly lane)."""
+    expression = (config.getoption("markexpr", default="") or "").strip()
+    return "integration" in expression and "not integration" not in expression
+
+
+def in_required_lane(config) -> bool:
+    return bool(os.environ.get("CI")) or runs_integration(config)
+
+
+def require_module(name: str) -> ModuleType:
+    """Import a module that only the integration lane provides (a second checkout or an optional library)."""
+    try:
+        return importlib.import_module(name)
+    except ImportError:
+        if _config is None or runs_integration(_config):
+            raise
+        pytest.skip(f"{name} is not installed; the tests that need it run in the integration lane", allow_module_level=True)
+
+
+def unavailable(message: str) -> NoReturn:
+    """A second checkout is missing: fail in a lane that runs integration tests, skip the module elsewhere."""
+    if _config is None or runs_integration(_config):
+        pytest.fail(message, pytrace=False)
+    pytest.skip(message, allow_module_level=True)
+
+
+class _ImportSkipGuard:
+    """Turn a skip on import into a failure in a required lane (R-6)."""
+
+    @staticmethod
+    def _fail(config, report) -> None:
+        reason = report.longrepr[2] if isinstance(report.longrepr, tuple) and len(report.longrepr) == 3 else ""
+        if report.skipped and IMPORT_SKIP in str(reason) and in_required_lane(config):
+            report.outcome = "failed"
+            report.longrepr = f"{reason}\nA skip on import hides a broken install. Import a declared dependency plainly; load an integration-lane module with tests.lanes.require_module (testing plan R-6)."
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(self, item, call):
+        outcome = yield
+        self._fail(item.config, outcome.get_result())
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_make_collect_report(self, collector):
+        outcome = yield
+        self._fail(collector.config, outcome.get_result())
+
+
 def pytest_configure(config):
+    global _config
+    _config = config
     for name, meaning in LANE_MARKERS.items():
         config.addinivalue_line("markers", f"{name}: {meaning}")
     config.pluginmanager.register(_FdGuard(), "fd-leak-guard")
+    config.pluginmanager.register(_ImportSkipGuard(), "import-skip-guard")
 
 
 @pytest.hookimpl(tryfirst=True)

@@ -15,7 +15,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core.execution.executor import runner as executor_runner
 from astrid.core.execution.executor.registry import load_default_registry

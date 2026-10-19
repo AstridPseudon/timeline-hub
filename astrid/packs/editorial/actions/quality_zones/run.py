@@ -136,7 +136,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     print(f"zones={len(payload['zones'])} cached={str(cached is not None).lower()} out={out_path}")
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     manifest_path = out_path.parent / "manifest.json"
     manifest = build_manifest(
         kind="quality_zones",

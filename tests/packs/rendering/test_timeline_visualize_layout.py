@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 
 import pytest
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
-
-pytestmark = pytest.mark.skip(reason="legacy filesystem fixture superseded by runtime snapshot tests")
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core.timeline.snapshot import TimelineSnapshot, snapshot_from_runtime
 from astrid.packs.rendering.actions.timeline_visualize.layout import (
@@ -47,13 +43,25 @@ TIMELINE_UUID = "ed70ef66-43da-4182-9f14-69361c6c5e10"
 TIMELINE_ULID = "01KYPVKMW5STB4W6FE05ED8242"
 
 
+TRUTH = json.loads((FIXTURE_ROOT / "desert_truth.json").read_text(encoding="utf-8"))
+
+
 @pytest.fixture
 def desert(
     tmp_path: Path,
 ) -> tuple[TimelineInspectionModel, IdentityMap, TimelineSnapshot, Scope]:
-    timeline_dir = tmp_path / "timeline"
-    shutil.copytree(SLICE_DIR, timeline_dir)
-    snapshot = acquire_snapshot(timeline_dir, project_slug=PROJECT_SLUG)
+    del tmp_path
+    events = [
+        json.loads(line)
+        for line in (SLICE_DIR / "assembly.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    snapshot = snapshot_from_runtime(
+        timeline_id=TIMELINE_UUID,
+        timeline_ulid=TIMELINE_ULID,
+        slug=TRUTH["timeline"]["slug"],
+        project_slug=PROJECT_SLUG,
+        events=events,
+    )
     model = build_model(snapshot)
     identity_map = build_identity_map(
         model,

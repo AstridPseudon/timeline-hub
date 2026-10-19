@@ -1,6 +1,6 @@
 """ffprobe media-probing helpers for the cut executor.
 
-Extracted from ``run.py`` during M4 giant-file decomposition (T78).
+Extracted from ``run.py``.
 """
 
 from __future__ import annotations

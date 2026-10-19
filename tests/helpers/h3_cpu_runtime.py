@@ -26,13 +26,13 @@ import tarfile
 import uuid
 from typing import Any, Mapping
 
+from tests.helpers.runtime import locate_runtime
+
 ASTRID_ROOT = Path(__file__).resolve().parents[2]
 WORKSPACE_ROOT = ASTRID_ROOT.parents[2]
 RECEIVING_ROOT = ASTRID_ROOT.parents[1]
-RUNTIME_ROOT = Path(
-    os.environ.get("ASTRID_STAGE1_RUNTIME_CHECKOUT")
-    or RECEIVING_ROOT / "checkouts" / "astrid-runtime--integration"
-).resolve()
+# The one Runtime locator; absent a Runtime this is the sibling path it would look in (H3CpuRuntime refuses it).
+RUNTIME_ROOT = locate_runtime() or ASTRID_ROOT.parent / "astrid-runtime"
 VIBECOMFY_ROOT = Path(
     os.environ.get("ASTRID_VIBECOMFY_CHECKOUT") or RECEIVING_ROOT / "repos" / "vibecomfy"
 ).resolve()
@@ -375,11 +375,11 @@ def _public_workspace_environment() -> dict[str, str]:
         "ASTRID_C11_EXPECTED_PATH",
         "ASTRID_C11_SCHEMA_PATH",
         "ASTRID_C11_SESSION_DIR",
-        "ASTRID_STAGE1_RUNTIME_CHECKOUT",
         "ASTRID_VIBECOMFY_CHECKOUT",
         "ASTRID_RUNTIME_DATA_ROOT",
         "ASTRID_RUNTIME_HOME",
         "ASTRID_RUNTIME_SOURCE_MANIFEST",
+        "ASTRID_RUNTIME_CHECKOUT",
         "ASTRID_RUNTIME_CREDENTIAL",
         "ASTRID_RUNTIME_ENDPOINT",
         "PYTHONHOME",
@@ -1323,7 +1323,6 @@ class H3CpuRuntime:
                 "ASTRID_C11_EXPECTED_PATH",
                 "ASTRID_C11_SCHEMA_PATH",
                 "ASTRID_C11_SESSION_DIR",
-                "ASTRID_STAGE1_RUNTIME_CHECKOUT",
                 "ASTRID_HOST_READINESS_PROFILE_HASH",
                 "ASTRID_HOST_READINESS_PROFILE_PATH",
                 "ASTRID_VIBECOMFY_CHECKOUT",
@@ -1332,6 +1331,7 @@ class H3CpuRuntime:
                 "ASTRID_RUNTIME_DATA_ROOT",
                 "ASTRID_RUNTIME_HOME",
                 "ASTRID_RUNTIME_SOURCE_MANIFEST",
+                "ASTRID_RUNTIME_CHECKOUT",
                 "ASTRID_RUNTIME_CREDENTIAL",
                 "ASTRID_RUNTIME_ENDPOINT",
                 "PATH",

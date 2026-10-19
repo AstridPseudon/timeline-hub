@@ -1,4 +1,4 @@
-"""Product references family CLI — nested beneath media (m4 plan step 27, task T30).
+"""Product references family CLI — nested beneath media.
 
 This module is the product parser for the runtime-owned nested
 ``references`` mount. It is **never** a top-level command:

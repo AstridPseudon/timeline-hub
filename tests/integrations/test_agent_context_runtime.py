@@ -1,8 +1,8 @@
 """Real shared-renderer parity against a disposable, explicitly supplied Runtime.
 
-Run with the Astrid candidate first and Runtime candidate second on PYTHONPATH.
+The Runtime comes from the ``real_runtime`` fixture (``ASTRID_RUNTIME_CHECKOUT``).
 The public Astrid bundle performs the real generated-client handshake; no
-sibling-checkout discovery or live launcher is used by this test.
+sibling-checkout discovery or live launcher is used by the product code under test.
 """
 
 from __future__ import annotations
@@ -11,25 +11,22 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("runtime_protocol.daemon")
 import astrid_runtime_client
 from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
-from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
-from runtime_protocol.store import RealmStore  # noqa: E402
 
 from astrid import agent_context
 from astrid.sdk.client import AstridClient
 
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout
+
 
 def test_launcher_context_reads_real_preferences_and_refreshes_project(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    real_runtime, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     package_root = Path(__file__).resolve().parents[2] / "astrid_runtime_client"
     assert Path(astrid_runtime_client.__file__).resolve().is_relative_to(package_root)
     # All Runtime-owned state and owner-only actor credentials stay in tmp_path.
-    root = tmp_path / "realm"
-    RealmStore.initialize(root).close()
-    daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         assert SCHEMA_DIGEST == daemon.service.health()["schema_digest"]
         actor = "context-parity"

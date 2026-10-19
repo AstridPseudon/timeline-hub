@@ -1,6 +1,6 @@
 """Timeline, metadata, and EDL builders for the hype cut executor.
 
-Extracted from ``run.py`` during M4 batch 79 (T80). Contains all
+Extracted from ``run.py``. Contains all
 functions that construct the hype.timeline.json, hype.metadata.json,
 hype.edl.csv, and associated artefacts.
 """
@@ -325,7 +325,7 @@ def build_multitrack_timeline(
     config.update({"tracks": tracks, "clips": clips})
     if theme_overrides:
         config["theme_overrides"] = theme_overrides
-    # SD-009: every emitted timeline carries the canonical `output` block so
+    # Every emitted timeline carries the canonical `output` block so
     # downstream consumers get
     # resolution/fps/file without re-resolving the theme. Sourced from
     # theme.visual.canvas via materialize_output() in the shared schema package;

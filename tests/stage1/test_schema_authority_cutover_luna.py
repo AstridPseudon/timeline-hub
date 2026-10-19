@@ -1,13 +1,9 @@
-"""Negative and runtime-parity proof for the flattened schema authority."""
+"""Negative proof for the flattened schema authority: Astrid carries no schema host or migrations."""
 
 from __future__ import annotations
 
 import importlib.util
-import os
-import re
 from pathlib import Path
-
-import pytest
 
 from astrid.core.cli.domain_product import (
     REQUIRED_RUNTIME_MOUNTS,
@@ -15,23 +11,6 @@ from astrid.core.cli.domain_product import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
-RUNTIME_ROOT = Path(
-    os.environ.get(
-        "ASTRID_RUNTIME_CHECKOUT",
-        str(ROOT.parent / "astrid-runtime-stage1-convergence"),
-    )
-)
-
-
-def _tables(path: Path) -> set[str]:
-    return {
-        match.group(1).lower()
-        for match in re.finditer(
-            r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([A-Za-z_][A-Za-z0-9_]*)",
-            path.read_text(encoding="utf-8"),
-            re.IGNORECASE,
-        )
-    }
 
 
 def test_astrid_has_no_local_schema_host_or_migrations() -> None:
@@ -44,41 +23,6 @@ def test_astrid_has_no_local_schema_host_or_migrations() -> None:
         assert "astrid.core.schema_packs" not in source, path
         assert "schema-pack.yaml" not in source, path
     assert importlib.util.find_spec("astrid.core.schema_packs") is None
-
-
-def test_neutral_runtime_contains_canonical_domain_tables_and_constraints() -> None:
-    migration_dir = RUNTIME_ROOT / "runtime_protocol" / "migrations"
-    domains = migration_dir / "003_domains.sql"
-    references = migration_dir / "014_project_shots_references.sql"
-    if not domains.is_file() or not references.is_file():
-        pytest.skip("neutral runtime checkout is not available in this environment")
-
-    assert {
-        "timelines",
-        "timeline_shots",
-        "timeline_references",
-        "project_documents",
-        "generations",
-        "generation_variants",
-    } <= _tables(domains)
-    assert {
-        "project_shots",
-        "shot_items",
-        "project_references",
-        "media_references",
-        "reference_links",
-    } <= _tables(references)
-
-    sql = references.read_text(encoding="utf-8")
-    for marker in (
-        "project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE",
-        "shot_id TEXT NOT NULL REFERENCES project_shots(id) ON DELETE CASCADE",
-        "reference_id TEXT NOT NULL REFERENCES project_references(id) ON DELETE CASCADE",
-        "from_reference_id TEXT NOT NULL REFERENCES project_references(id) ON DELETE CASCADE",
-        "to_reference_id TEXT NOT NULL REFERENCES project_references(id) ON DELETE CASCADE",
-        "CHECK (role = 'canonical' OR is_primary = 0)",
-    ):
-        assert marker in sql
 
 
 def test_executable_capability_manifests_and_runtime_mounts_remain() -> None:

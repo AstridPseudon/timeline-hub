@@ -10,7 +10,6 @@ from unittest import mock
 
 import pytest
 
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core import timeline
 from astrid.core.rendering import remotion_runtime

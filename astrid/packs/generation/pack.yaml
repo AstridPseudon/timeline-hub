@@ -1550,7 +1550,9 @@ actions:
     - input: provider
       kind: requires_input
     description: Generate exact spoken text as a WAV artifact with Edge TTS and record
-      voice settings and content hashes.
+      voice settings and content hashes. The default provider (edge-tts) sends the exact
+      text to Microsoft's Edge Read Aloud service over a WebSocket to api.msedgeservices.com:443,
+      falling back to speech.platform.bing.com:443.
     graph:
       consumes:
       - text
@@ -1566,7 +1568,7 @@ actions:
       type: string
       required: false
       default: edge-tts
-      description: Speech provider. Currently edge-tts.
+      description: Speech provider. Currently edge-tts only, which sends the text to Microsoft's Edge Read Aloud service (api.msedgeservices.com:443, fallback speech.platform.bing.com:443).
     - name: voice
       type: string
       required: false

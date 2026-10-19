@@ -1,6 +1,6 @@
 """Basic pack CLI handlers: validate, new, list, status.
 
-Extracted from ``astrid/core/pack/cli.py`` during M4 giant-file split.
+Extracted from ``astrid/core/pack/cli.py``.
 Contains ``cmd_validate``, ``cmd_new``, ``cmd_list`` and their supporting
 helpers plus the ``_handle_*`` wrappers used by ``build_parser``.
 """

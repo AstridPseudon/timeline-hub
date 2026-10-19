@@ -1,13 +1,10 @@
 """:mod:`astrid.core.pack.cli` — Canonical pack CLI implementation.
 
-This is the canonical home for the ``astrid packs`` CLI machinery,
-moved from ``astrid/packs/cli.py`` during M1 Pack Layout Normalization
-(Plan v1.0).
+This is the canonical home for the ``astrid packs`` CLI machinery.
 
-M4 giant-file split: ``build_parser`` moved to ``.cli_parser``,
-validate/new/list/status handlers moved to ``.cli_basic``, inspect helpers
-moved to ``.cli_inspect``, and agent-index/search handlers moved to
-``.cli_search``.  This module re-exports the canonical definitions from
+``build_parser`` lives in ``.cli_parser``, the validate/new/list/status handlers
+in ``.cli_basic``, inspect helpers in ``.cli_inspect``, and agent-index/search
+handlers in ``.cli_search``.  This module re-exports the canonical definitions from
 each split module.
 """
 

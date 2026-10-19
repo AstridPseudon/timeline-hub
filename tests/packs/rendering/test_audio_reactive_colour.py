@@ -8,7 +8,6 @@ from unittest.mock import patch
 
 import pytest
 
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core.timeline.validators.timeline import validate_timeline
 from astrid.packs.rendering.actions.render import audio_reactive_colour

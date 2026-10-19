@@ -44,13 +44,13 @@ from . import probe
 from . import resume as _resume
 from . import timeline_build as _timeline_build
 
-# ── re-exports from focused modules (T78) ────────────────────────────
+# ── re-exports from focused modules ────────────────────────────
 _FFPROBE_VERBOSE = probe._FFPROBE_VERBOSE  # alias for module-level access
 parse_ffprobe_fps = probe.parse_ffprobe_fps
 probe_asset = probe.probe_asset
 probe_video_duration = probe.probe_video_duration
 
-# ── re-exports from timeline_build (T80) ─────────────────────────────
+# ── re-exports from timeline_build ─────────────────────────────
 _LEGACY_DEFAULT_CLIP_SEC = _timeline_build._LEGACY_DEFAULT_CLIP_SEC
 _THEME_DEFAULT_CLIP_SEC = _timeline_build._theme_default_clip_sec
 _BRANDED_EFFECT_IDS = _timeline_build._BRANDED_EFFECT_IDS
@@ -69,7 +69,7 @@ arrangement_edl_rows = _timeline_build.arrangement_edl_rows
 write_edl = _timeline_build.write_edl
 _register_cut_outputs = _timeline_build._register_cut_outputs
 
-# ── re-exports from resume (T80) ─────────────────────────────────────
+# ── re-exports from resume ─────────────────────────────────────
 ensure_resume_mode_args = _resume.ensure_resume_mode_args
 build_resume_metadata = _resume.build_resume_metadata
 execute_resume_mode = _resume.execute_resume_mode
@@ -371,7 +371,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         metadata={"clips": len(timeline.get("clips", [])), "renderer": args.renderer},
         rendered_path=None,
     )
-    # --- universal result manifest (output-contract M2) -------------------
+    # --- universal result manifest -------------------
     manifest_outputs = [
         {"name": "edl", "path": "hype.edl.csv", "type": "file", "role": "auxiliary", "is_primary": False},
         {"name": "timeline", "path": "hype.timeline.json", "type": "file", "role": "result", "is_primary": True},

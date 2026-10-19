@@ -270,6 +270,20 @@ def test_broken_generator_fails_closed(tmp_path: Path) -> None:
     assert "pack broke" in findings[0].message
 
 
+def test_committed_catalog_is_fresh_for_the_in_repo_packs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The real committed catalog equals what the generator emits for ``astrid/packs/``.
+
+    An external pack on ``ASTRID_PACKS_PATH`` must not change the result, so the
+    check gives the same answer on every machine.
+    """
+    external = tmp_path / "external"
+    shutil.copytree(REPO_ROOT / "examples/packs/minimal", external / "minimal")
+    monkeypatch.setenv("ASTRID_PACKS_PATH", str(external))
+
+    assert gate.check_catalog(REPO_ROOT) == []
+    assert "minimal." not in (REPO_ROOT / gate.CATALOG_PATH).read_text(encoding="utf-8")
+
+
 # --- 5. Untracked pack code (warning only) ------------------------------------
 
 
@@ -339,7 +353,7 @@ def test_untracked_pack_code_nobody_references_does_not_warn(pack_repo: Path) ->
         ("docs/guides/cli-journeys.md", True),
         ("docs/getting-started.md", True),
         ("AGENTS.md", True),
-        ("docs/testing/some-qa-record.md", False),
+        ("docs/plans/some-dated-record.md", False),
         ("docs/architecture/plan.md", False),
         ("tools/notes.md", False),
     ],

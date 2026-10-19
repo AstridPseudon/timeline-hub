@@ -145,9 +145,11 @@ def test_timeline_script_cli_forwards_revision_occurrence_and_kind(monkeypatch):
     assert calls == [(("project", "timeline"), {"revision_id": "parent-9", "occurrence": "occ-2", "kind": "voiceover_script"})]
 
 
+@pytest.mark.integration  # a real Runtime from a second checkout
 def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
-    service_module = pytest.importorskip("runtime_protocol.service")
-    store_module = pytest.importorskip("runtime_protocol.store")
+    from runtime_protocol import service as service_module
+    from runtime_protocol import store as store_module
+
     realm = tmp_path / "realm"
     store_module.RealmStore.initialize(realm).close()
     service = service_module.RuntimeService(realm)

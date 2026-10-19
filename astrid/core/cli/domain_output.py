@@ -1,4 +1,4 @@
-"""Shared product CLI output layer (m4 plan step 24, task T26).
+"""Shared product CLI output layer.
 
 One exact JSON envelope renderer for the stable SDK envelope plus concise
 human output, stable exit codes, and no domain semantics. Every product

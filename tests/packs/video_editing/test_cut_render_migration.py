@@ -15,7 +15,6 @@ from astrid.packs.video_editing.actions.cut import run as cut_run
 
 
 def test_cut_cli_emits_only_attempt_outputs(tmp_path: Path) -> None:
-    pytest.importorskip("banodoco_timeline_schema")
     inputs = _write_visual_only_inputs(tmp_path)
     theme = _write_theme(tmp_path)
     out = tmp_path / "out"
@@ -39,7 +38,6 @@ def test_cut_cli_emits_only_attempt_outputs(tmp_path: Path) -> None:
 
 
 def test_cut_rejects_generative_arrangement_without_explicit_theme(tmp_path: Path) -> None:
-    pytest.importorskip("banodoco_timeline_schema")
     inputs = _write_visual_only_inputs(tmp_path)
 
     with pytest.raises(AstridError, match="explicit absolute runtime-materialized theme.json"):
@@ -87,7 +85,6 @@ def test_source_only_cut_timeline_does_not_inject_a_theme() -> None:
 def test_cut_resume_copies_materialized_artifacts_without_workspace_lookup(
     tmp_path: Path,
 ) -> None:
-    pytest.importorskip("banodoco_timeline_schema")
     source = tmp_path / "source"
     source.mkdir()
     (source / "hype.timeline.json").write_text(

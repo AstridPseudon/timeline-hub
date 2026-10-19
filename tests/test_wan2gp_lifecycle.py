@@ -282,10 +282,12 @@ def test_materialize_host_result_receipt_identifies_video_collection(tmp_path: P
     assert (attempt_root / "manifest.json").is_file()
 
 
+@pytest.mark.integration  # needs mutagen, which is not a dev dependency
 def test_generated_mp4_wall_clock_comments_canonicalize_to_equal_digest(
     tmp_path: Path,
 ) -> None:
-    mutagen_mp4 = pytest.importorskip("mutagen.mp4")
+    from mutagen import mp4 as mutagen_mp4
+
     source = Path(__file__).parent / "fixtures" / "reshape" / "hype_regression" / "main.mp4"
     cold = tmp_path / "cold.mp4"
     warm = tmp_path / "warm.mp4"

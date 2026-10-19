@@ -1992,7 +1992,7 @@ def resolve_focus(
     model = model_from_frozen(frozen)
     if parsed.kind == "timestamp":
         if neighbors:
-            raise FocusResolutionError("neighbors applies only to clip focus in M1")
+            raise FocusResolutionError("neighbors applies only to clip focus")
         return select_scope(
             model,
             kind="timestamp",
@@ -2003,7 +2003,7 @@ def resolve_focus(
         )
     if parsed.kind == "TL":
         if neighbors:
-            raise FocusResolutionError("neighbors applies only to clip focus in M1")
+            raise FocusResolutionError("neighbors applies only to clip focus")
         return select_scope(model, kind="timeline", ref=str(parsed), context_seconds=0, neighbors=0)
     if parsed.kind in {"TS", "SP"}:
         identity = frozen.identity_map.lookup_display(str(parsed))
@@ -2058,7 +2058,7 @@ def resolve_focus(
     if identity[1] != expected_kind:
         raise FocusResolutionError(f"display id {focus_ref!r} has the wrong semantic kind")
     if neighbors and parsed.kind != "CL":
-        raise FocusResolutionError("neighbors applies only to clip focus in M1")
+        raise FocusResolutionError("neighbors applies only to clip focus")
     authored_id = identity[2]
     if parsed.kind == "CL":
         return select_scope(

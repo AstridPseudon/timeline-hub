@@ -1,4 +1,4 @@
-"""Platform step 0: the safety-net fixtures (production/review/merge/TIMELINE-PLATFORM.md, section 7).
+"""Platform safety net: the App round-trip and Source-track fixtures (production/review/merge/TIMELINE-PLATFORM.md, section 7).
 
 These tests keep focused assertions for platform behavior that needs explicit validation. Do not
 weaken the assertions to make them pass.
@@ -9,7 +9,8 @@ weaken the assertions to make them pass.
     `ALLOWED_TOP_LEVEL_KEYS` (timeline-domain.ts:217-226), `withCanonicalClips` (timeline-domain.ts:1241-1250)
     and the `app` replace on save (timeline-patch.ts:1261-1266), as the platform doc describes them.
 (b) A track with role "source" is excluded from render (today the Astrid validator rejects `role`).
-(c) A preview-vs-render parity harness: structure only, skipped until the App preview is reachable.
+(c) A preview-vs-render parity harness: structure only, skipped until the F2 journey wires the App preview
+    (testing plan, F2 step 4).
 
 Run: python -m pytest -q tests/editing_conformance/test_platform_safety_net.py
 """
@@ -142,8 +143,8 @@ def test_source_role_track_is_excluded_from_render():
 
 
 @pytest.mark.skip(reason=(
-    "step-0 skeleton (c): needs the App preview (timeline-composition, a Codex-owned package not reachable "
-    "from this worktree) and a frame capture of `tiny` through the Astrid render; fill in when both are wired"
+    "F2 step 4 (testing plan): needs the App preview (timeline-composition) and a frame capture of `tiny` "
+    "through the Astrid render; fill in when the journey wires both"
 ))
 @pytest.mark.parametrize("frame_ms", [0, 1000, 2000, 3500])
 def test_preview_matches_render_frame(frame_ms):

@@ -2,7 +2,7 @@
 
 The pack-dependent registry helpers (``RegistryChoices`` / ``add_kind_arg``) live
 in ``astrid.core.cli.choices_registry`` so this module stays free of any
-``astrid.core.pack`` import (which previously formed the ``cli_choices <-> pack``
+``astrid.core.pack`` import (a ``cli_choices <-> pack``
 cycle). The shared recoverability machinery here is pack-free; recoverable choice
 objects mark themselves by subclassing ``RecoverableChoices`` so
 ``RecoverableArgumentParser`` can recognise them without importing the registry half.

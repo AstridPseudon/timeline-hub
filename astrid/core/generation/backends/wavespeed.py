@@ -1,6 +1,6 @@
 """WavespeedBackend — cloud generation via the WaveSpeedAI HTTP API.
 
-Mirrors the fal adapter (SD-004 / SD-009): all HTTP transport goes through
+Mirrors the fal adapter: all HTTP transport goes through
 :class:`~astrid.core.util.http.HttpClient` and jobs are submitted/polled via
 :func:`~astrid.core.util.http.wavespeed_submit_and_poll`.
 """

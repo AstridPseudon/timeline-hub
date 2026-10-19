@@ -52,7 +52,7 @@ def character_swap_asset_sha256() -> str:
     Production callers do not need an environment setting and always receive
     ``CHARACTER_SWAP_SHA256``. The override exists only for the explicit,
     synthetic CPU boundary. It verifies the candidate manifest, the exact
-    T9 fixture source, and the synthetic file against the readiness profile's
+    fixture source, and the synthetic file against the readiness profile's
     digest-bound model-root inventory before returning a different digest.
     """
     raw_profile = os.environ.get("ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE")
@@ -71,7 +71,7 @@ def character_swap_asset_sha256() -> str:
     if not isinstance(profile, Mapping):
         raise ValueError("T9 model substitute profile must be an object")
     if profile.get("schema_version") != "hc03-worker-readiness.v1" or profile.get("status") != "ready":
-        raise ValueError("T9 model substitute profile is not a ready HC-03 profile")
+        raise ValueError("T9 model substitute profile is not a ready profile")
     substitute = profile.get("t9_model_substitute")
     if not isinstance(substitute, Mapping) or (
         substitute.get("approved") is not True

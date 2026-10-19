@@ -18,7 +18,7 @@ Ordinal allocation (deterministic, one root snapshot per map):
   a fixture without pinned shots simply allocates none.
 * ``RG`` ordinals are minted later by :func:`assign_range_ids` (R9) in range
   start-time order; re-passing an already allocated range never renumbers it.
-* ``TS``/``SP`` stay empty in M1 (R20 fills them).
+* ``TS``/``SP`` stay empty for now.
 
 Display ids are stored in *qualified* form (``TL01.CL03``), because
 :func:`ids.parse_qualified_ref` deliberately rejects bare object ids such as
@@ -370,7 +370,7 @@ def stable_id_for(
     """Convenience lookup: build the model's root map and resolve one id.
 
     Raises ``KeyError`` with a clear message when the authored id has no
-    allocated display id (including kinds M1 does not yet allocate, such as
+    allocated display id (including kinds that are not yet allocated, such as
     tracks, ranges before R9, and TS/SP before R20).
     """
 
@@ -391,8 +391,8 @@ def stable_id_for(
     if display_id is None:
         raise KeyError(
             f"no display id allocated for {kind!r} authored id {authored_id!r} "
-            f"(snapshot {model.snapshot_sns!r}); M1 allocates timeline/shot/clip/"
-            f"asset ordinals only — tracks have no R3 code; range and "
+            f"(snapshot {model.snapshot_sns!r}); only timeline, shot, clip and "
+            f"asset ordinals are allocated here; tracks, ranges and "
             f"transcript ids require their explicit assignment helpers"
         )
     return display_id

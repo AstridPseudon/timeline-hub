@@ -13,8 +13,8 @@ permissions:
   - id: project_files
     reason: Reads scene/blend inputs and writes rendered image/video output.
   - id: network
-    reason: Cloud execution POSTs to a remote Blender render API host (Hetzner / RunPod).
-description: Render 3D scenes with Blender, locally or on a remote cloud render host (a Hetzner box or an on-demand RunPod GPU pod).
+    reason: Cloud execution POSTs to a remote Blender render API host (an SSH host or RunPod).
+description: Render 3D scenes with Blender, locally or on a remote cloud render host (an SSH host or an on-demand RunPod GPU pod).
 keywords:
   - blender
   - render
@@ -23,7 +23,6 @@ keywords:
   - eevee
   - animation
   - runpod
-  - hetzner
   - cloud-render
 capabilities:
   - render_scene
@@ -40,7 +39,7 @@ actions:
     name: Blender Render
     version: "1.0"
     short_description: Render a Blender scene (declarative spec or .blend file) to a still or animation, locally or on a cloud render host.
-    description: Renders a Blender scene either locally (runs the blender binary on this machine) or on a cloud render host (HTTP POST to a Blender render API such as the Hetzner box or a RunPod GPU pod). Accepts a declarative scene spec JSON or an existing .blend file; emits a still PNG (--frames 1) or an mp4 animation (--frames N>1) plus a manifest.
+    description: Renders a Blender scene either locally (runs the blender binary on this machine) or on a cloud render host (HTTP POST to a Blender render API such as an SSH-deployed host or a RunPod GPU pod). Accepts a declarative scene spec JSON or an existing .blend file; emits a still PNG (--frames 1) or an mp4 animation (--frames N>1) plus a manifest.
     keywords:
       - blender
       - render
@@ -49,7 +48,6 @@ actions:
       - eevee
       - animation
       - runpod
-      - hetzner
       - cloud
     invocation:
       kind: command

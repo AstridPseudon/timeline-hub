@@ -247,7 +247,7 @@ def _read_bounded_zip(path: Path) -> tuple[dict[str, bytes], set[str]]:
     except OSError as exc:
         raise HumanReviewInputError(f"ZIP input is unreadable: {path}") from exc
     if archive_size > _D18_OBJECT_LIMIT:
-        raise HumanReviewInputError("ZIP input exceeds the 64 MiB D18 object limit")
+        raise HumanReviewInputError("ZIP input exceeds the 64 MiB object limit")
     members: dict[str, bytes] = {}
     directories: set[str] = set()
     try:
@@ -389,7 +389,7 @@ def _load_state_schema_bundle(path: Path, entry_name: str = "run-state.schema.js
     members, directories = _read_bounded_zip(path)
     if directories or set(members) != _STATE_SCHEMA_FILES:
         raise HumanReviewInputError(
-            "state_schema_bundle must contain exactly the three unchanged M17 schema files"
+            "state_schema_bundle must contain exactly the three unchanged schema files"
         )
     entry_name = _archive_relative(entry_name, field="state schema entry")
     if entry_name not in members:
@@ -1172,7 +1172,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.state_schema_bundle is not None and not args.state_schema_bundle.is_file():
         raise AstridError(
             f"--state-schema-bundle not found: {args.state_schema_bundle}",
-            recovery_command="verify the M17 schema archive path",
+            recovery_command="verify the schema archive path",
         )
 
     asset_scratch: tempfile.TemporaryDirectory[str] | None = None
@@ -1208,7 +1208,7 @@ def main(argv: list[str] | None = None) -> int:
         except HumanReviewInputError as exc:
             raise AstridError(
                 str(exc),
-                recovery_command="provide the unchanged three-file M17 schema bundle",
+                recovery_command="provide the unchanged three-file schema bundle",
             ) from exc
         if args.state is not None and args.state.is_file():
             try:

@@ -1,8 +1,7 @@
 # Timeline visualization plan
 
-> Historical design record. The epic is complete; current implementation and
-> proof live in `timeline-visualization-agent-navigation.md` and
-> `timeline-visualization-release-evidence.md`. Where the original plan spoke
+> Historical design record. The epic is complete; the current public surface
+> is the rendered filmstrip (see `astrid/packs/rendering/docs/SKILL.md`). Where the original plan spoke
 > about repairing a projected `assembly.json`, the shipped kernel integration
 > instead replays and verifies the authoritative event stream without repair
 > or mutation.
@@ -515,7 +514,7 @@ Change:
 astrid/packs/rendering/executors/timeline_storyboard/run.py
 astrid/packs/rendering/pack.yaml
 astrid/packs/rendering/skill/SKILL.md
-astrid/packs/_core/skill/SKILL.md             # regenerated capability index
+astrid/packs/_core/docs/references/capabilities.md   # regenerated capability index
 astrid/core/cli/timeline_parser.py
 astrid/core/cli/timeline.py
 astrid/core/cli/timeline_output.py

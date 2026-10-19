@@ -73,6 +73,9 @@ FILMSTRIP_DIR = "filmstrip"
 COMPOSITOR_SOURCE_SNAPSHOT_PATH = "docs/reference/timeline-composition-v0.0.6/"
 COMPOSITOR_PACKAGE = "timeline-composition"
 
+#: Deterministic reason recorded for the retired SVG output format.
+_SVG_NULL_REASON = "SVG output was removed; request PNG or Markdown instead"
+
 #: Deterministic reason used when structure.md is not emitted.
 _STRUCTURE_NULL_REASON = (
     "structure.md was not emitted for this pack; the reading guide and "
@@ -342,6 +345,9 @@ def _build_manifest(
                 "path": primary_png,
                 "reason": None if primary_png else "no pages were laid out for this scope",
             },
+            # The closed manifest schema still requires the key; SVG output
+            # is not produced, so it is always null with a stable reason.
+            "svg": {"path": None, "reason": _SVG_NULL_REASON},
             "structure": {
                 "path": structure_path,
                 "reason": None if structure_present else _STRUCTURE_NULL_REASON,

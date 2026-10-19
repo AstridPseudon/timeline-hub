@@ -15,7 +15,7 @@ Artifacts produced:
   ``scope`` only scoped objects are indexed and relations stay resolved.
 * ``emit_asset_index`` — per-asset provenance, integrity, and contained path
   (always the full frozen project; scoped views never hide library state).
-* ``emit_transcript_index`` — empty-valid M1 shape (TS/SP declared, empty).
+* ``emit_transcript_index`` — empty-valid shape (TS/SP declared, empty).
 * ``emit_diagnostics`` — every model/snapshot warning with severity/code; with
   a ``scope`` narrowed to the scoped objects plus the scope's own warnings.
 * ``emit_reading_guide`` — generic prose teaching the qualified-id rule.
@@ -794,7 +794,7 @@ def _frozen_ranges(
 ) -> list[dict[str, Any]]:
     """Serialize navigation ranges whose bounds are known in this lineage.
 
-    M1 allocates an RG identity only for an explicit range scope.  Descendants
+    An RG identity is allocated only for an explicit range scope.  Descendants
     preserve this list byte-for-byte, so the one allocation remains usable
     after navigating from that range into a clip or asset.
     """
@@ -1022,6 +1022,31 @@ _METRIC_DEFINITIONS: tuple[dict[str, str], ...] = (
         "id": "all_track_composition_seconds",
         "name": "All-track composition extent (seconds)",
         "definition": ("The all-track composition extent in seconds: composition_frames / fps."),
+        "formula": "timeline_duration_frames(assembly, fps) / fps",
+        "derivation": "duration.py: timeline_duration_seconds",
+        "unit": "seconds",
+        "scope": "per-timeline",
+    },
+    {
+        "id": "authored_all_track_composition_frames",
+        "name": "Authored all-track composition extent (frames)",
+        "definition": (
+            "All-track authored composition duration in frames, before any "
+            "declared render-only tail; equals the all-track composition "
+            "extent when the timeline declares no tail."
+        ),
+        "formula": "timeline_duration_frames(assembly, fps)",
+        "derivation": "duration.py: timeline_duration_frames",
+        "unit": "frames",
+        "scope": "per-timeline",
+    },
+    {
+        "id": "authored_all_track_composition_seconds",
+        "name": "Authored all-track composition extent (seconds)",
+        "definition": (
+            "The authored all-track composition extent in seconds: "
+            "authored_all_track_composition_frames / fps."
+        ),
         "formula": "timeline_duration_frames(assembly, fps) / fps",
         "derivation": "duration.py: timeline_duration_seconds",
         "unit": "seconds",
@@ -1604,7 +1629,7 @@ def emit_asset_index(
 
 
 # ---------------------------------------------------------------------------
-# Transcript index (empty-valid M1).
+# Transcript index (empty-valid).
 # ---------------------------------------------------------------------------
 
 
@@ -1619,7 +1644,7 @@ def emit_transcript_index(
 ) -> dict[str, Any]:
     """Return hash-scoped TS records and occurrence-specific SP records.
 
-    Missing/non-verifiable attachment state remains the M1 empty-valid shape;
+    Missing/non-verifiable attachment state remains the empty-valid shape;
     transcript content is never fabricated or substituted.
     """
     normalized_segments = list(segments or [])

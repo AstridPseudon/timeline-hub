@@ -1,4 +1,4 @@
-"""Product-family CLI registry (m4 plan step 24, task T25).
+"""Product-family CLI registry.
 
 This module is the ownership authority for the product command census and
 runtime mounts. It declares **exactly** the five product families —
@@ -19,7 +19,7 @@ registry, help, or product dispatch.
 
 The dispatch boundary (:func:`run_product_family`) composes one
 ``AstridClient`` and passes it to the family's in-tree parser builder, so
-every product handler is a rule-free SDK adapter (m4 plan step 24).
+every product handler is a rule-free SDK adapter.
 """
 
 from __future__ import annotations
@@ -58,19 +58,18 @@ PRODUCT_FAMILIES: tuple[str, ...] = (
     "runs",
     "timelines",
 )
-"""The seven core product families (frozen m4 contract, plan step 24)."""
+"""The seven core product families."""
 
 PRODUCT_FAMILY_SET: frozenset[str] = frozenset(PRODUCT_FAMILIES)
 
 EXCLUDED_FROM_PRODUCT_CENSUS: frozenset[str] = frozenset(
-    {"serve", "doctor", "backup"}
+    {"doctor", "backup"}
 )
 """Operational commands excluded from the product census.
 
-``serve``, ``doctor``, and ``backup`` are operational families (tooling
-over the single SQLite file and managed-media root). None of them is a
-product family, appears in the product census, or dispatches through the
-product boundary.
+``doctor`` and ``backup`` are operational families (tooling over the single
+SQLite file and managed-media root). Neither is a product family, appears in
+the product census, or dispatches through the product boundary.
 """
 
 REQUIRED_RUNTIME_MOUNTS: dict[str, tuple[str, ...]] = {
@@ -274,7 +273,7 @@ def family_mount(family: str) -> ProductMount:
     raise ProductRegistryError(f"{family!r} is not a registered product family")
 
 
-# The explicit in-tree parser builders per family (m4 plan step 24: map
+# The explicit in-tree parser builders per family (map
 # declared mount tokens to explicit in-tree parser builders). The modules
 # are created by the family cutover tasks (steps 25/27-31); the mapping is
 # the static contract, and the import stays lazy until dispatch.

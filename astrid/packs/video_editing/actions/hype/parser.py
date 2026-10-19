@@ -1,6 +1,6 @@
 """Argument parser construction and resolution for the hype orchestrator.
 
-Extracted from ``run.py`` as part of M4 giant-file decomposition (T62).
+Extracted from ``run.py``.
 """
 
 from __future__ import annotations

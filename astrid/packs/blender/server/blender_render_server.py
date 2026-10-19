@@ -2,7 +2,7 @@
 """Blender render HTTP API.
 
 A small, dependency-free (stdlib only) HTTP service that renders Blender scenes
-on demand. Lives on a render host (a Hetzner box, a RunPod GPU pod, or any
+on demand. Lives on a render host (an SSH host, a RunPod GPU pod, or any
 machine with ``blender`` installed). Designed to be copied alongside
 ``render_core.py`` and run under systemd or as a background process — it has no
 Astrid/Flask dependencies so the host does not need an Astrid install.
@@ -28,13 +28,17 @@ A still (``frames == 1``) returns a PNG. An animation (``frames > 1``) returns a
 mp4 (PNG sequence encoded with ffmpeg). Response headers carry ``X-Render-Ms``,
 ``X-Blender-Engine``, ``X-Blender-Version`` and ``X-Output-Type``.
 
-Auth: if ``BLENDER_RENDER_TOKEN`` is set, requests must send
-``Authorization: Bearer <token>``.
+Binding and auth: the server binds ``127.0.0.1`` unless ``BLENDER_RENDER_HOST``
+says otherwise, and refuses to start on any non-loopback address without a
+``BLENDER_RENDER_TOKEN``. When a token is set, ``POST /render`` requires
+``Authorization: Bearer <token>``. ``mesh_url`` must be ``https://``.
 """
 
 from __future__ import annotations
 
 import base64
+import hmac
+import ipaddress
 import json
 import os
 import shutil
@@ -44,7 +48,6 @@ import tempfile
 import threading
 import time
 import urllib.parse
-import urllib.request
 import zipfile
 import traceback
 from http import HTTPStatus
@@ -62,10 +65,34 @@ FFMPEG_EXEC = os.environ.get("FFMPEG_EXEC", "ffmpeg")
 RENDER_TIMEOUT = int(os.environ.get("BLENDER_RENDER_TIMEOUT", "1800"))
 MAX_BODY_BYTES = int(os.environ.get("BLENDER_MAX_BODY_MB", "512")) * 1024 * 1024
 AUTH_TOKEN = os.environ.get("BLENDER_RENDER_TOKEN", "").strip()
-HOST = os.environ.get("BLENDER_RENDER_HOST", "0.0.0.0")
+HOST = os.environ.get("BLENDER_RENDER_HOST", "127.0.0.1")
 PORT = int(os.environ.get("BLENDER_RENDER_PORT", "8778"))
 
 _RENDER_SEMAPHORE = threading.Semaphore(int(os.environ.get("BLENDER_RENDER_CONCURRENCY", "2")))
+
+
+class RequestRefused(ValueError):
+    """The request is malformed or unsafe; reported to the client as HTTP 400."""
+
+
+def is_loopback_host(host: str) -> bool:
+    """True only for ``localhost`` and loopback IP literals (not ``0.0.0.0`` / ``::``)."""
+    if host.strip().lower() == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host.strip()).is_loopback
+    except ValueError:
+        return False
+
+
+def require_safe_bind(host: str, token: str) -> None:
+    """Refuse to listen on a non-loopback address without an auth token."""
+    if not is_loopback_host(host) and not token:
+        raise SystemExit(
+            f"refusing to bind {host!r} without BLENDER_RENDER_TOKEN: "
+            "set a token, or bind 127.0.0.1 and reach the server through an SSH tunnel"
+        )
+
 
 # Cache the blender version (cheap, but avoid repeated subprocess spawns).
 _BLENDER_VERSION_CACHE: list[str | None] = [None]
@@ -91,8 +118,13 @@ def has_gpu() -> bool:
 
 
 def _download(url: str, dest_path: str, timeout: int = 300) -> None:
-    """Download ``url`` to ``dest_path`` (streaming)."""
-    with urllib.request.urlopen(url, timeout=timeout) as resp, open(dest_path, "wb") as fh:
+    """Download an ``https://`` ``url`` to ``dest_path`` (streaming)."""
+    try:
+        url = render_core.require_https_mesh_url(url)
+    except ValueError as exc:
+        raise RequestRefused(str(exc)) from exc
+    opener = render_core.https_only_opener()
+    with opener.open(url, timeout=timeout) as resp, open(dest_path, "wb") as fh:
         shutil.copyfileobj(resp, fh)
 
 
@@ -114,6 +146,10 @@ def _find_model_file(directory: str) -> str | None:
 
 def _resolve_mesh_in_workdir(mesh_url: str, work_dir: str) -> str:
     """Download ``mesh_url`` into ``work_dir``; extract archives; return model path."""
+    try:
+        mesh_url = render_core.require_https_mesh_url(mesh_url)
+    except ValueError as exc:
+        raise RequestRefused(str(exc)) from exc
     parsed = urllib.parse.urlparse(mesh_url)
     url_ext = ""
     path_lower = (parsed.path or "").lower()
@@ -126,7 +162,10 @@ def _resolve_mesh_in_workdir(mesh_url: str, work_dir: str) -> str:
         _download(mesh_url, archive)
         if zipfile.is_zipfile(archive):
             with zipfile.ZipFile(archive) as zf:
-                zf.extractall(work_dir)
+                try:
+                    render_core.safe_extract_zip(zf, work_dir)
+                except ValueError as exc:
+                    raise RequestRefused(str(exc)) from exc
             model = _find_model_file(work_dir)
             if not model:
                 raise RuntimeError("downloaded archive contained no .gltf/.glb/.fbx")
@@ -248,7 +287,8 @@ class Handler(BaseHTTPRequestHandler):
             return True
         header = self.headers.get("Authorization", "")
         if header.startswith("Bearer "):
-            return header[len("Bearer "):].strip() == AUTH_TOKEN
+            supplied = header[len("Bearer "):].strip()
+            return hmac.compare_digest(supplied.encode("utf-8"), AUTH_TOKEN.encode("utf-8"))
         return False
 
     def _send_json(self, status: int, obj: dict[str, Any]) -> None:
@@ -295,6 +335,16 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != "/render":
             self._send_error_text(HTTPStatus.NOT_FOUND, "not found")
             return
+        # A page in the operator's browser can POST to a loopback server; a
+        # simple cross-site form cannot send application/json, and browsers
+        # attach Origin to every cross-site POST. Non-browser clients send neither.
+        if self.headers.get("Origin") is not None:
+            self._send_error_text(HTTPStatus.FORBIDDEN, "browser-originated requests are refused")
+            return
+        content_type = (self.headers.get("Content-Type") or "").split(";", 1)[0].strip().lower()
+        if content_type != "application/json":
+            self._send_error_text(HTTPStatus.UNSUPPORTED_MEDIA_TYPE, "Content-Type must be application/json")
+            return
         length = int(self.headers.get("Content-Length") or 0)
         if length <= 0 or length > MAX_BODY_BYTES:
             self._send_error_text(
@@ -330,6 +380,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(data)
             except (BrokenPipeError, ConnectionResetError):
                 pass
+        except RequestRefused as exc:
+            self._send_error_text(HTTPStatus.BAD_REQUEST, f"request refused: {exc}")
         except subprocess.TimeoutExpired:
             self._send_error_text(HTTPStatus.GATEWAY_TIMEOUT, f"render timed out after {RENDER_TIMEOUT}s")
         except Exception as exc:
@@ -352,6 +404,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> int:
+    require_safe_bind(HOST, AUTH_TOKEN)
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     sys.stderr.write(
         f"blender-render-api listening on {HOST}:{PORT} "

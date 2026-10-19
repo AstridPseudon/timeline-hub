@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-jsonschema = pytest.importorskip("jsonschema")
 from jsonschema import Draft202012Validator  # noqa: E402
 from referencing import Registry, Resource  # noqa: E402
 from referencing.jsonschema import DRAFT202012  # noqa: E402

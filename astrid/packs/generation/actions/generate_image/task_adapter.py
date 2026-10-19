@@ -1,4 +1,4 @@
-"""Pack-owned TaskHandler adapter around ``generate_image.run_sdk`` (T7).
+"""Pack-owned TaskHandler adapter around ``generate_image.run_sdk``.
 
 Plan step 6's boundary: the adapter is **pack code** — kernel code never
 imports it, and the adapter never imports kernel executor internals. It

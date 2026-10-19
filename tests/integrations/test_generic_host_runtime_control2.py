@@ -4,30 +4,21 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
+from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
+from astrid_runtime_client import ApiError, WorkspaceClient
 
-RUNTIME = Path(__file__).resolve().parents[3] / "runtime"
-if RUNTIME.is_dir():
-    sys.path.insert(0, str(RUNTIME))
-
-runtime_protocol = pytest.importorskip("runtime_protocol")
-from astrid_runtime_client import ApiError, WorkspaceClient  # noqa: E402
-from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
-from runtime_protocol.store import RealmStore  # noqa: E402
-
-from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient  # noqa: E402
-from tests.helpers.runtime import initialize_runtime_realm
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
 
 def _digest(value: str) -> str:
     return "sha256:" + hashlib.sha256(value.encode()).hexdigest()
 
 
-def test_generated_host_echo_claim_cas_settlement_and_restart(tmp_path: Path) -> None:
+def test_generated_host_echo_claim_cas_settlement_and_restart(tmp_path: Path, real_runtime) -> None:
     pack = tmp_path / "pack"
     pack.mkdir()
     (pack / "executor.yaml").write_text(
@@ -66,9 +57,7 @@ def test_generated_host_echo_claim_cas_settlement_and_restart(tmp_path: Path) ->
     probe = GenericPackHost(pack_roots=[pack])
     record = probe.discover()[0]
 
-    realm_root = tmp_path / "realm"
-    RealmStore.initialize(realm_root).close()
-    daemon = RuntimeDaemon(realm_root, support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake("astrid-generic-host-test", "0.1.0", ["projects:read", "worker:execute"])
@@ -103,8 +92,7 @@ def test_generated_host_echo_claim_cas_settlement_and_restart(tmp_path: Path) ->
         assert not list(tmp_path.glob("astrid-attempt-*"))
 
         daemon.stop()
-        initialize_runtime_realm(tmp_path / "realm")
-        daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+        daemon = real_runtime()
         restarted = WorkspaceClient(daemon.endpoint, daemon.token)
         restarted.handshake("astrid-generic-host-test-reconnect", "0.1.0", ["projects:read", "worker:execute"])
         assert restarted.get_task(task.task_id).state == "succeeded"
@@ -114,7 +102,7 @@ def test_generated_host_echo_claim_cas_settlement_and_restart(tmp_path: Path) ->
 
 
 def test_provider_fixture_is_credential_gated_then_settles_offline(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
 ) -> None:
     """Provider admission is honest without making a real network request."""
     monkeypatch.delenv("ASTRID_TEST_PROVIDER_KEY", raising=False)
@@ -192,8 +180,7 @@ def test_provider_fixture_is_credential_gated_then_settles_offline(
         encoding="utf-8",
     )
 
-    initialize_runtime_realm(tmp_path / "realm")
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake("provider-fixture-test", "0.1.0", ["projects:read", "worker:execute"])

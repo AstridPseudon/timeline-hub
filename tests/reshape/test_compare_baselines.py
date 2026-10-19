@@ -70,6 +70,21 @@ def test_mypy_findings_exit_one_remains_valid(monkeypatch: pytest.MonkeyPatch) -
     assert "--no-pretty" in result["command"]
 
 
+@pytest.mark.parametrize(
+    ("current", "baseline", "code"),
+    [(10, 10, 0), (11, 10, 1), (9, 10, 1)],
+)
+def test_count_baselines_are_exact_so_deleted_code_cannot_leave_slack(current: int, baseline: int, code: int) -> None:
+    from scripts.reshape.count_baseline import verdict
+
+    result, message = verdict("Ruff", current, baseline)
+
+    assert result == code
+    assert f"current={current} baseline={baseline}" in message
+    if current < baseline:
+        assert "--write-baseline" in message
+
+
 def test_structure_violations_are_normalised_to_survive_unrelated_edits(tmp_path) -> None:
     from scripts.reshape.compare_structure_baseline import normalise
 

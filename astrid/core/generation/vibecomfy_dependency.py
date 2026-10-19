@@ -15,7 +15,7 @@ VIBECOMFY_CANDIDATE_KIND_ENV = "ASTRID_VIBECOMFY_CANDIDATE_KIND"
 VIBECOMFY_CANDIDATE_REVISION_ENV = "ASTRID_VIBECOMFY_CANDIDATE_REVISION"
 VIBECOMFY_CANDIDATE_CONTENT_DIGEST_ENV = "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST"
 # These values are emitted only by a GenericPackHost after validating the
-# digest-bound HC-03 readiness profile.  They let a constrained child reuse
+# digest-bound readiness profile.  They let a constrained child reuse
 # trusted source identity without spawning ``git`` under the child network
 # hook (which intentionally rejects arbitrary native descendants).
 VIBECOMFY_ATTESTED_REVISION_ENV = "ASTRID_VIBECOMFY_ATTESTED_REVISION"

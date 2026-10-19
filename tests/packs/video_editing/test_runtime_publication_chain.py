@@ -5,29 +5,14 @@ import hashlib
 import json
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
+from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
 from astrid.packs.rendering.actions.assemble_timeline.run import build_authoring_proposal
 from astrid.packs.rendering.shared.runtime_stitch import publish_authoring_proposal
 from astrid.sdk.client import AstridClient
-from astrid.core.execution.generic_host import GenericPackHost
-from astrid.core.execution.generic_host import RuntimeProtocolClient
-
-RUNTIME_CHECKOUT = Path(__file__).resolve().parents[3].parent / "astrid-runtime-execution-20260909"
-if str(RUNTIME_CHECKOUT) not in sys.path:
-    sys.path.insert(0, str(RUNTIME_CHECKOUT))
-
-from tests.helpers.runtime import initialize_runtime_realm
-
-
-def RuntimeDaemon(root, *args, **kwargs):
-    from runtime_protocol.daemon import RuntimeDaemon as _RuntimeDaemon
-
-    initialize_runtime_realm(root)
-    return _RuntimeDaemon(root, *args, **kwargs)
 
 
 def _digest(value: str | bytes) -> str:
@@ -69,9 +54,9 @@ def _settle_child(service, attempt: dict, *, index: int, value: bytes, digest: s
 
 
 @pytest.mark.integration
-def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tmp_path):
+def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tmp_path, real_runtime):
     """Exercise child settlement -> authoring -> fenced publication -> render admission."""
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     service = daemon.service
     try:
         project = service.create_project({"slug": "chain", "name": "Chain"})
@@ -193,7 +178,7 @@ def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invo
 
 
 @pytest.mark.integration
-def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch):
+def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch, real_runtime):
     """Run the complete two-child continuation through the real pack host."""
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None or shutil.which("node") is None:
         pytest.skip("ffmpeg, ffprobe, and node are required for the daemon render chain")
@@ -204,9 +189,7 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
         "ASTRID_TIMELINE_SCHEMA_PYTHONPATH",
         str(astrid_root / "remotion/node_modules/@banodoco/timeline-schema/python"),
     )
-    daemon = RuntimeDaemon(
-        tmp_path / "realm", support_root=tmp_path / "support", production_worker_credentials=True
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     service = daemon.service
     host = GenericPackHost(
         pack_roots=[astrid_root / "astrid/packs/rendering"],

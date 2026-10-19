@@ -263,9 +263,9 @@ class ProductRegistryConformanceTest(unittest.TestCase):
 
         self.assertEqual(
             EXCLUDED_FROM_PRODUCT_CENSUS,
-            frozenset({"serve", "doctor", "backup"}),
+            frozenset({"doctor", "backup"}),
         )
-        for excluded in ("serve", "doctor", "backup"):
+        for excluded in ("doctor", "backup"):
             with self.subTest(excluded=excluded):
                 self.assertIn(excluded, EXCLUDED_FROM_PRODUCT_CENSUS)
                 self.assertFalse(is_product_family(excluded))

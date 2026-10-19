@@ -286,7 +286,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     for boundary in payload["boundaries"][:5]:
         print(f"{boundary['id']} candidates={len(boundary['candidates'])}")
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     manifest_path = args.out.parent / "manifest.json"
     manifest = build_manifest(
         kind="boundary_candidates",

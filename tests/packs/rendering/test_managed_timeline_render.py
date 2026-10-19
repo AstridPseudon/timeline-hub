@@ -8,7 +8,6 @@ from types import SimpleNamespace
 
 import pytest
 
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.packs.rendering.actions.render import managed_timeline
 from astrid.packs.rendering.actions.render.managed_timeline import (
@@ -714,6 +713,38 @@ def test_managed_render_clock_requires_runtime_admitted_tail_identity() -> None:
     runtime.timeline["registry"]["assets"].pop("tail")
     with pytest.raises(ManagedRenderValidationError, match="tail source asset"):
         validate_managed_render_snapshot(_snapshot(runtime))
+
+
+def test_snapshot_validation_accepts_music_bed_and_visible_title_tracks() -> None:
+    digest = "b" * 64
+    runtime = _Runtime(media=[{"media_id": "media-music", "digest": digest}])
+    runtime.timeline["config"] = {
+        "tracks": [
+            {"id": "visual", "kind": "visual", "label": "Visual"},
+            {"id": "titles", "kind": "visual", "label": "Titles"},
+            {"id": "music", "kind": "audio", "label": "Music"},
+        ],
+        "clips": [
+            {"id": "music-bed", "track": "music", "at": 0, "hold": 90, "clipType": "media",
+             "asset": "music-bed", "volume": 1},
+            {"id": "visible-title", "track": "titles", "at": 0, "hold": 60, "clipType": "text",
+             "text": {"content": "Astrid"}},
+        ],
+        "output": {"resolution": "640x360", "fps": 30, "file": "fixture.mp4"},
+    }
+    runtime.timeline["registry"] = {
+        "assets": {"music-bed": {"media_id": "media-music", "content_sha256": digest}}
+    }
+
+    snapshot = _snapshot(runtime)
+    validate_managed_render_snapshot(snapshot)
+
+    clips = {row["id"]: row for row in snapshot.config["clips"]}
+    assert clips["music-bed"]["track"] == "music"
+    assert clips["music-bed"]["asset"] in snapshot.registry["assets"]
+    assert clips["visible-title"]["track"] == "titles"
+    assert clips["visible-title"]["text"]["content"] == "Astrid"
+    assert {"music", "titles"} <= {row["id"] for row in snapshot.config["tracks"]}
 
 
 def test_snapshot_validation_rejects_incomplete_config_output() -> None:

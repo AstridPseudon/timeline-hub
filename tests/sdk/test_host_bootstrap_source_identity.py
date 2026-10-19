@@ -223,6 +223,15 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
         credential.parent.parent / "discovery.json"
     )
     assert launches[0].count("--pack-root") == 2
+    # The runtime-issued handoff (worker credential, least-privilege actor,
+    # runtime instance, epoch and schema) is what the registered host binds to.
+    assert state["endpoint"] == value["endpoint"]
+    assert state["credential_file"] == str(credential)
+    assert state["executor_id"] == host_bootstrap.PACK_HOST_ACTOR
+    assert state["runtime_instance_id"] == value["runtime_instance_id"]
+    assert state["runtime_epoch"] == value["runtime_epoch"]
+    assert state["schema_digest"] == value["schema_digest"]
+    assert state["source_checkout"] == str(source)
 
     inventory.identity = "inventory-2"
     ready.clear()
@@ -836,3 +845,41 @@ def _framework_native_fixture(f, monkeypatch):
 
 
 
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"worker_actor": "someone-else"},
+        {"worker_scopes": []},
+        {"worker_scopes": list(host_bootstrap.PACK_HOST_SCOPES)[:-1]},
+        {"worker_scopes": [*host_bootstrap.PACK_HOST_SCOPES, "extra:scope"]},
+    ],
+)
+def test_bootstrap_refuses_worker_credential_outside_the_pack_host_contract(
+    monkeypatch, tmp_path: Path, overrides: dict
+) -> None:
+    source = tmp_path / "source"
+    (source / "astrid" / "packs").mkdir(parents=True)
+    _materialize_source_closure(source)
+    support = tmp_path / "support" / "nested"
+    support.mkdir(parents=True)
+    credential = support.parent / "worker.token"
+    credential.write_text("worker", encoding="utf-8")
+    os.chmod(credential, 0o600)
+    inventory = SimpleNamespace(identity="", roots=(), sources=())
+    monkeypatch.setattr("astrid.core.pack.source_setup.active_source_inventory", lambda: inventory)
+    value = {
+        "worker_credential_file": str(credential),
+        "source_checkout": str(source),
+        "worker_actor": host_bootstrap.PACK_HOST_ACTOR,
+        "worker_scopes": list(host_bootstrap.PACK_HOST_SCOPES),
+        "endpoint": "http://runtime.test",
+        "runtime_epoch": "epoch-1",
+        "runtime_instance_id": "instance-1",
+        "schema_digest": "schema-1",
+        **overrides,
+    }
+
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="least-privilege pack-host contract"):
+        host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")

@@ -8,15 +8,14 @@
 
 PY ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
-.PHONY: help test check ci preflight structure doc-refs doctor ruff mypy cycles remotion-install remotion-typecheck renderer-parity wheel editable lock-build lock-runtime lock-proof lock-validate toolchain-record s1-gate
+.PHONY: help test check ci preflight structure doc-refs doctor ruff mypy cycles remotion-install remotion-typecheck renderer-parity wheel editable lock-build lock-runtime lock-proof lock-validate toolchain-record
 
 help:
 	@echo "make check   - blocking gates: structure, doc-refs, doctor, ruff, mypy, cycles, Remotion, renderer parity"
 	@echo "make ci      - check + editable + wheel-install smoke + default pytest lane (minutes)"
-	@echo "make s1-gate - m1 S1 gate: 11 focused lanes + durable summary/logs in out/s1-gate/latest"
 	@echo "make lock-runtime / lock-build / lock-proof - refresh universal SHA-256 dependency locks with uv"
 	@echo "make lock-validate - validate exact pins, hashes, and direct dependency coverage"
-	@echo "make <gate>  - run one gate: structure | doctor | ruff | mypy | cycles | remotion-install | remotion-typecheck | renderer-parity | wheel | editable | s1-gate"
+	@echo "make <gate>  - run one gate: structure | doctor | ruff | mypy | cycles | remotion-install | remotion-typecheck | renderer-parity | wheel | editable"
 	@echo "make preflight - verify Python, Node, ffmpeg, and locked Remotion prerequisites"
 
 # --- Fast gates: catch the common deploy blockers in seconds. Run before every push. ---
@@ -38,7 +37,7 @@ preflight:
 	@echo "✓ local gate preflight ($(PY))"
 
 structure:
-	@$(PY) scripts/reshape/compare_structure_baseline.py
+	@$(PY) -m scripts.reshape.compare_structure_baseline
 	@echo "✓ repo structure: no violation beyond the shrink-only baseline"
 
 doc-refs:
@@ -50,11 +49,11 @@ doctor:
 	@echo "✓ doctor (deploy health gate)"
 
 ruff:
-	@$(PY) scripts/reshape/compare_ruff_baseline.py
+	@$(PY) -m scripts.reshape.compare_ruff_baseline
 	@echo "✓ ruff baseline (no lint regression)"
 
 mypy:
-	@$(PY) scripts/reshape/compare_mypy_baseline.py
+	@$(PY) -m scripts.reshape.compare_mypy_baseline
 	@echo "✓ mypy baseline (no type regression)"
 
 cycles:
@@ -98,15 +97,3 @@ lock-validate:
 toolchain-record:
 	@$(PY) -m scripts.reshape.release_reproducibility --output out/release-toolchain.json >/dev/null
 	@echo "✓ release toolchain recorded in out/release-toolchain.json"
-
-# --- m1 S1 gate (plan step 23): the eleven focused m1 lanes, one command ---
-# Runs the complete fresh-database, conformance, crash, lint,
-# runtime, and provider lane hermetically (fresh ASTRID_PROJECTS_ROOT /
-# ASTRID_HOME, scrubbed task env) and retains a machine-readable summary plus
-# per-lane logs and JUnit XML under out/s1-gate/latest (gitignored). CI uploads
-# that directory with `if: always()` so evidence survives failures. PY overrides the interpreter (e.g. a
-# runtime venv that provides banodoco_timeline_schema for schema lanes).
-s1-gate:
-	@rm -rf out/s1-gate/latest
-	@$(PY) scripts/reshape/s1_gate.py --out-dir out/s1-gate/latest
-	@echo "✓ s1-gate (11 focused lanes; summary + logs retained in out/s1-gate/latest)"

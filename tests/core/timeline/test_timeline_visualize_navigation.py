@@ -15,7 +15,6 @@ from types import MappingProxyType
 
 import pytest
 
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core.timeline.snapshot import snapshot_from_runtime
 from astrid.packs.rendering.actions.timeline_visualize.ids import (

@@ -1,12 +1,10 @@
-"""End-state regression tests for m5b god-module splits.
+"""Regression tests for the CLI-unification end state (the m5b god-module splits).
 
-These tests encode the *intended* post-refactor invariants.  They are
-expected to FAIL against the current implementation and turn green only
-when the corresponding refactors are complete.  Each test class documents
-which specific refactor it guards.
+The refactors they guard are complete and these tests pass. Each test class
+documents the invariant it holds: table-driven dispatch, no fall-through to the
+default hype brief, executable family help, and an explicit default-brief route.
 
-DO NOT weaken these assertions to pass against the old code — they are the
-contract the refactor must satisfy.
+Do not weaken these assertions; they are the contract the dispatch layer keeps.
 """
 
 from __future__ import annotations

@@ -19,7 +19,7 @@ from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.media import require_runtime_materialized_file
 from astrid.core.audit import register_outputs
 from astrid.core.util.llm_clients import GeminiClient, build_gemini_client
-from astrid.core.util.time import _utc_now, utc_now_seconds
+from astrid.core.util.time import utc_now_seconds
 
 SCENE_DESCRIPTIONS_VERSION = 1
 FORBIDDEN_TIME_KEYS = frozenset({"start", "end", "timestamp", "seconds", "time", "src_start", "src_end", "from", "to", "at"})
@@ -236,7 +236,7 @@ def build_scene_descriptions(
             "deep_score": _compute_deep_score(response),
         }
         entries.append(entry)
-    payload = {"version": SCENE_DESCRIPTIONS_VERSION, "generated_at": _utc_now(), "entries": entries}
+    payload = {"version": SCENE_DESCRIPTIONS_VERSION, "generated_at": utc_now_seconds(), "entries": entries}
     validate_scene_descriptions(payload)
     return payload
 
@@ -280,7 +280,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         print(out_path)
 
-        # --- universal result manifest (output-contract M1) -----------------------
+        # --- universal result manifest -----------------------
         manifest_outputs: list[dict[str, Any]] = [
             {"path": str(out_path), "type": "file"},
         ]

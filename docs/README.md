@@ -47,7 +47,7 @@ boundary.
 Contributor-facing architecture docs live under
 **[docs/architecture/](architecture/)**.  See
 **[Repo Shape](architecture/repo-shape.md)** for module layout,
-**[Test Layout](architecture/test-layout.md)** for test organization, and
+**[Testing Plan](development/testing-plan.md)** for test organization, and
 **[Decisions](architecture/decisions.md)** for design records.
 
 The proposed direction for local pack-authored app tools and interface
@@ -74,7 +74,6 @@ It does not change the current pack or trust contract.
   pluggable renderer contract and the renderer-author golden path.
 - **[Skills Install](guides/skills-install.md)** — Installing Astrid prompt content as
   skills into Claude Code, Codex, and Hermes.
-- **[HOOKS](guides/hooks.md)** — Retired task-mode stop hook (documented as a retired notice).
 - **[Ideas](guides/ideas.md)** — Suggestions for what to make or learn with Astrid.
 
 ## Examples

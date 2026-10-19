@@ -177,7 +177,7 @@ def _acquisition_file_lock(
     """Serialize launcher acquisition across independent Astrid processes.
 
     The in-process lock above only protects threads sharing one interpreter.
-    A stable flock sibling is needed because LC-06 launches separate CLI
+    A stable flock sibling is needed because the launcher starts separate CLI
     processes concurrently.  The lock is advisory, auto-released on process
     death, and scoped to the canonical support root.  Waiting is bounded by
     the same admission budget as the launcher so a stuck peer cannot leave a

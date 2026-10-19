@@ -345,7 +345,7 @@ _MANAGED_OUTPUT_IDENTITY_FIELDS = (
 
 
 def _managed_output_source(value: Any) -> Mapping[str, Any] | None:
-    """Return an explicit D1 managed-output row, never a generic output."""
+    """Return an explicit managed-output row, never a generic output."""
     if isinstance(value, Mapping):
         source = value
     elif is_dataclass(value):
@@ -358,7 +358,7 @@ def _managed_output_source(value: Any) -> Mapping[str, Any] | None:
 
 
 def _managed_output_to_result_output(value: Any) -> Any:
-    """Map one typed D1 row into the existing manifest output entry shape."""
+    """Map one typed row into the existing manifest output entry shape."""
     source = _managed_output_source(value)
     if source is None:
         return value
@@ -390,7 +390,7 @@ def _managed_generation_output_rows(
 def _normalize_generation_payload(
     payload: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Normalize explicit D1 rows already carried by a result manifest."""
+    """Normalize explicit rows already carried by a result manifest."""
     normalized = dict(payload)
     manifest = payload.get("manifest")
     if not isinstance(manifest, Mapping):
@@ -411,7 +411,7 @@ def _join_managed_generation_outputs(
     payload: Mapping[str, Any],
     managed_outputs: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Join D1 rows, replacing legacy copies of the same deliverable."""
+    """Join rows, replacing legacy copies of the same deliverable."""
     normalized = _normalize_generation_payload(payload)
     manifest = normalized.get("manifest")
     normalized_manifest = dict(manifest) if isinstance(manifest, Mapping) else {}

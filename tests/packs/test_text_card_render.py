@@ -10,7 +10,7 @@ from astrid.packs.rendering.actions.render import run as render_executor
 from astrid.core import timeline
 
 
-@pytest.mark.slow
+@pytest.mark.opt_in
 class TextCardRenderTest(unittest.TestCase):
     def test_text_card_render_smoke(self) -> None:
         if os.environ.get("RUN_RENDER_TESTS") != "1":

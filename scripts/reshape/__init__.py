@@ -1,1 +1,1 @@
-"""Sprint 0 reshape operator scripts."""
+"""Reshape operator scripts: the repo-shape, baseline and release gates run by the Makefile and CI."""

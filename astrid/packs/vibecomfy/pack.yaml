@@ -1038,7 +1038,7 @@ resources:
 - kind: implementation
   path: direct_image/compiler.py
 - kind: implementation
-  path: direct_image/executor.py
+  path: direct_image/direct_executor.py
 - kind: template
   path: direct_image/templates/__init__.py
 - kind: template
@@ -1060,7 +1060,7 @@ resources:
 - kind: implementation
   path: media/compiler.py
 - kind: implementation
-  path: media/executor.py
+  path: media/direct_executor.py
 - kind: implementation
   path: media/runtime.py
 - kind: template

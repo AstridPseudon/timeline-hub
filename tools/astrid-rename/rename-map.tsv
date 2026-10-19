@@ -190,7 +190,6 @@ path	docs/extensions/reigh-acp-local-bridge.md	docs/extensions/astrid-acp-local-
 path	docs/local-runtime/02-reigh-plan.md	docs/local-runtime/02-astrid-app-plan.md	app	inventory section 2 path move
 path	docs/local-runtime/reviews/grok-reigh-review.md	docs/local-runtime/reviews/grok-astrid-app-review.md	app	inventory section 2 path move
 path	docs/video-editor/reigh-branch-census-and-convergence.md	docs/video-editor/astrid-app-branch-census-and-convergence.md	app	inventory section 2 path move
-path	tsconfig.reigh-	tsconfig.astrid-	app	inventory section 2 path move
 prose	Reigh	Astrid App	mixed	file also names Astrid; section 5 rule 4
 prose	Reigh	Astrid	all	single-product prose; section 5 rule 4
 prose	REIGH	Astrid App	mixed	uppercase brand in mixed prose
@@ -232,7 +231,6 @@ prose	Banodoco	Astrid Runtime	astrid:examples/agentic_ux/README.md	inspected Run
 token	Banodoco/orchestrator	Astrid Runtime/orchestrator	app:src/tools/video-editor/lib/renderRouter.ts	Runtime admission comment at line 941
 token	banodoco.dev/workspace/v1/	astrid.haus/workspace/v1/	runtime	Astra decision: Runtime contract URI host; preserve protocol path
 token	banodoco.local/schemas/	astrid.haus/schemas/	runtime	Astra decision: Runtime schema ID host; preserve schema path
-token	banodoco.local/schemas/	astrid.haus/schemas/	astrid:docs/contracts/stage1-acceptance-evidence-v1.schema.json	Astra decision: retained acceptance schema ID
 token	x-banodoco-	x-astrid-runtime-	runtime	Astra decision: Runtime extension metadata keys; community package values remain
 token	workspace-runtime	astrid-runtime	runtime:contract/schemas/shot-composition.json	Astra decision: Runtime owner metadata values only
 token	workspace-runtime	astrid-runtime	runtime:tests/test_shot_composition_contract.py	Astra decision: matching Runtime owner assertions
@@ -244,12 +242,7 @@ token	createReleaseReighWorktree	createReleaseAppWorktree	app:scripts/release/ve
 token	removeReleaseReighWorktree	removeReleaseAppWorktree	app:scripts/release/verify-extension-ship.mjs	App release worktree operation
 token	releaseReighWorktree	releaseAppWorktree	app:scripts/release/verify-extension-ship.mjs	App release worktree binding
 token	reigh-release-provenance	astrid-release-provenance	all	import basename follows the renamed release-provenance path
-token	manifest.reigh	manifest.app	app:scripts/release/verify-paired-release-e2e.mjs	App release manifest property beside manifest.astrid
 token	manifest.reigh	manifest.app	app:docs/extensions/extension-release-runbook.md	App release tag documented beside manifest.astrid commit pin
-token	reigh.tar	app.tar	app:scripts/release/verify-paired-release-e2e.mjs	App archive beside astrid.tar
-token	reigh.tar	app.tar	app:scripts/release/verify-paired-release-e2e.test.mjs	App archive fixture beside astrid.tar
-token	'reigh'	'app'	app:scripts/release/verify-paired-release-e2e.mjs	App checkout folder beside astrid folder
-token	'reigh'	'app'	app:scripts/release/verify-paired-release-e2e.test.mjs	App checkout fixture beside astrid folder
 regex	(?<=[\x22\x27])reigh(?=[\x22\x27])	app	app:scripts/quality/check-extension-ship-evidence.mjs	App repository literal beside astrid repository literal
 regex	(?<=[\x22\x27])reigh(?=[\x22\x27])	app	app:scripts/quality/check-extension-ship-evidence.test.mjs	App repository test literal beside astrid
 regex	(?<=[\x22\x27])reigh(?=[\x22\x27])	app	app:scripts/quality/capture-extension-external-evidence.mjs	App repository receipt literal beside astrid

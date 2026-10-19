@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Demo orchestrator: z-image local + flux-dev cloud, t2i + i2i exercises.
 
-v2: model → mode → backend taxonomy.  ``--mode`` is required (SD-005).
-flux-dev is cloud-only in v2 (SD-001).  z-image covers local.
+v2: model → mode → backend taxonomy.  ``--mode`` is required.
+flux-dev is cloud-only in v2.  z-image covers local.
 
 Usage::
 
@@ -162,7 +162,7 @@ def run_demo() -> int:
     neg = "blurry, complex, text, watermark"
 
     # -----------------------------------------------------------------------
-    # 1. flux-dev t2i cloud (cloud-only per SD-001)
+    # 1. flux-dev t2i cloud (cloud-only)
     # -----------------------------------------------------------------------
     print("\n=== flux-dev t2i cloud ===")
     out_cloud = str(Path(TemporaryDirectory().name) / "out_cloud")
@@ -231,7 +231,7 @@ def run_demo() -> int:
         print("\n=== z-image t2i local: SKIP (vibecomfy not importable) ===", file=sys.stderr)
 
     # -----------------------------------------------------------------------
-    # 3. flux-dev i2i cloud (cloud-only per SD-001)
+    # 3. flux-dev i2i cloud (cloud-only)
     # -----------------------------------------------------------------------
     print("\n=== flux-dev i2i cloud ===")
     out_img2img_cloud = str(Path(TemporaryDirectory().name) / "out_img2img_cloud")

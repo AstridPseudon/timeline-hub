@@ -34,17 +34,20 @@ from .links import DROP, iter_link_targets, rewrite_links, split_target
 _CORE_FILES = (
     "creative-work/SKILL.md",
     "pack-builder/SKILL.md",
+    "pack-testing/SKILL.md",
     "references/capabilities.md",
 )
 _PACKS_REGISTRY = "creative-work/references/packs.md"
 
-# The pack-builder guide points at the canonical public docs rather than at
-# checkout paths: its authoring guides are not shipped in a clean wheel.
+# The pack-builder and pack-testing guides point at the canonical public docs
+# rather than at checkout paths: the guides, scripts and tests they link are not
+# shipped in a clean wheel.
 _PACK_BUILDER_DOC_PREFIX = "https://github.com/banodoco/astrid-agent/blob/main/"
 _PACK_BUILDER_DOC_REWRITES = {
-    "../../../../../docs/": _PACK_BUILDER_DOC_PREFIX + "docs/",
-    "../../../../../scripts/": _PACK_BUILDER_DOC_PREFIX + "scripts/",
+    f"../../../../../{top}": _PACK_BUILDER_DOC_PREFIX + top
+    for top in ("docs/", "scripts/", "tests/", "pyproject.toml")
 }
+_PACK_AUTHORING_FILES = frozenset({"pack-builder/SKILL.md", "pack-testing/SKILL.md"})
 
 _NEEDS_ANGLE_BRACKETS = re.compile(r"[\s()<>]")
 
@@ -229,7 +232,7 @@ def compose_view(
             source = core_dir / rel
             if not source.is_file():
                 continue
-            pre = _PACK_BUILDER_DOC_REWRITES if rel == "pack-builder/SKILL.md" else None
+            pre = _PACK_BUILDER_DOC_REWRITES if rel in _PACK_AUTHORING_FILES else None
             _materialise(source, root / rel, links, pre=pre)
         # The registry is regenerated in place by sync, so copy it only once.
         source_packs = core_dir / _PACKS_REGISTRY

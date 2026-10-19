@@ -134,7 +134,7 @@ def main() -> int:
         )
         print("validate: skipped because timeline has no audio track")
 
-        # --- universal result manifest (output-contract M2) -----------------------
+        # --- universal result manifest -----------------------
         manifest_path = out_path.parent / "manifest.json"
         manifest = build_manifest(
             kind="validate",
@@ -267,7 +267,7 @@ def main() -> int:
                 flush=True,
             )
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     manifest_path = out_path.parent / "manifest.json"
     manifest = build_manifest(
         kind="validate",

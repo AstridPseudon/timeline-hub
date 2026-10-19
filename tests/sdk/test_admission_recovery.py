@@ -12,22 +12,18 @@ from types import SimpleNamespace
 
 import pytest
 
-# Reuse the current sibling Runtime when available; never bootstrap providers.
-_runtime = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
-if not _runtime:
-    _runtime = next((str(parent / "astrid-runtime") for parent in Path(__file__).resolve().parents
-                     if (parent / "astrid-runtime/runtime_protocol").is_dir()), None)
-if _runtime:
-    sys.path.insert(0, _runtime)
-pytest.importorskip("runtime_protocol")
-from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.store import RealmStore
+from tests.helpers.runtime import use_runtime
 
-assert Path(sys.modules[RuntimeDaemon.__module__].__file__).resolve().parents[1] == Path(_runtime).resolve()
+# Reuse the current Runtime; never bootstrap providers.
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
+_runtime = use_runtime()
+import runtime_protocol.daemon as _runtime_daemon  # noqa: E402
+
+assert Path(_runtime_daemon.__file__).resolve().parents[1] == _runtime
 
 # Load the current Runtime-generated source explicitly. Other collected SDK
 # tests may already have imported Astrid's bundled package under its normal name.
-_generated_path = Path(_runtime) / "packages/python/astrid_runtime_client/generated.py"
+_generated_path = _runtime / "packages/python/astrid_runtime_client/generated.py"
 _spec = importlib.util.spec_from_file_location("_admission_recovery_runtime_generated", _generated_path)
 _current_generated = importlib.util.module_from_spec(_spec)
 sys.modules[_spec.name] = _current_generated
@@ -54,15 +50,14 @@ def _connect(daemon):
 
 
 @pytest.fixture
-def runtime(tmp_path):
+def runtime(tmp_path, real_runtime):
     root = tmp_path / "realm"
-    RealmStore.initialize(root).close()
-    daemon = RuntimeDaemon(root).start()
+    daemon = real_runtime(root)
     try:
         daemon.service.register_capability({"capability_id": CAPABILITY, "definition_digest": DIGEST, "status": "ready"})
         client = _connect(daemon)
         project = client._transport.create_project("Demo", slug="demo", idempotency_key="project-demo")["data"]["project_id"]
-        yield SimpleNamespace(daemon=daemon, client=client, project=project, root=root)
+        yield SimpleNamespace(daemon=daemon, client=client, project=project, root=root, start=real_runtime)
     finally:
         daemon.stop()
 
@@ -271,7 +266,7 @@ def test_ordinary_runtime_restart_keeps_realm_and_task_identity(runtime, tmp_pat
     old_handshake = dict(runtime.client._transport._last_handshake)
     old_epoch = runtime.client._transport.health()["runtime_epoch"]
     runtime.daemon.stop()
-    runtime.daemon = RuntimeDaemon(runtime.root).start()
+    runtime.daemon = runtime.start(runtime.root)
     runtime.client = _connect(runtime.daemon)
     new_handshake = runtime.client._transport._last_handshake
     assert new_handshake["realm_id"] == old_handshake["realm_id"]
@@ -435,9 +430,7 @@ def test_different_authenticated_realm_fails_before_replay(runtime, tmp_path):
     path = tmp_path / "stage.json"
     with _receipt(runtime, path) as receipt:
         receipt.freeze(_prepare(runtime), metadata=METADATA)
-    other_root = tmp_path / "other-realm"
-    RealmStore.initialize(other_root).close()
-    other = RuntimeDaemon(other_root).start()
+    other = runtime.start(tmp_path / "other-realm")
     try:
         other_client = _connect(other)
         with pytest.raises(CapabilityValidationError, match="realm identity mismatch"):

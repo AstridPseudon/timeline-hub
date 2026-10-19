@@ -1,6 +1,6 @@
 """Backend adapter abstract interface and shared result type.
 
-SD-004: Backend dispatch goes through :class:`BackendAdapter`.  Every
+Backend dispatch goes through :class:`BackendAdapter`.  Every
 backend (local vibecomfy, cloud fal, future runpod, etc.) implements
 this single-method interface so the executor stays thin.
 """

@@ -1,6 +1,6 @@
 """Run-loop helpers, step execution, editor-review iteration, and audit registration for the hype orchestrator.
 
-Extracted from ``run.py`` as part of M4 giant-file decomposition (T64).
+Extracted from ``run.py``.
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def _clear_per_brief_sentinels(brief_out: Path) -> None:
         (brief_out / name).unlink(missing_ok=True)
 
 
-# Phase 3 SD-003: brief frontmatter keys we recognize. Unknown keys are parsed
+# Brief frontmatter keys we recognize. Unknown keys are parsed
 # (best-effort) but ignored, so future briefs can declare additional metadata
 _BRIEF_FRONTMATTER_BOOL_KEYS = ("allow_generative_visuals",)
 

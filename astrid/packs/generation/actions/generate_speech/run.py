@@ -42,9 +42,23 @@ _EDGE_TTS_HOST = (
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Generate speech using Edge TTS.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Generate speech using Edge TTS. The default provider sends --text to "
+            "Microsoft's Edge Read Aloud service over WebSocket: api.msedgeservices.com:443, "
+            "falling back to speech.platform.bing.com:443."
+        ),
+    )
     parser.add_argument("--text", required=True, help="Exact text to speak.")
-    parser.add_argument("--provider", default="edge-tts")
+    parser.add_argument(
+        "--provider",
+        default="edge-tts",
+        help=(
+            "Speech provider; only edge-tts is supported. edge-tts sends --text to "
+            "Microsoft's Edge Read Aloud service (api.msedgeservices.com:443, fallback "
+            "speech.platform.bing.com:443)."
+        ),
+    )
     parser.add_argument("--voice", default="en-US-ChristopherNeural")
     parser.add_argument("--rate", default="+0%")
     parser.add_argument("--volume", default="+0%")

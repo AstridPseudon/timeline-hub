@@ -30,6 +30,8 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+from astrid.packs.blender.render_core import https_only_opener, require_https_mesh_url, safe_extract_zip
+
 API = "https://api.sketchfab.com/v3"
 TOKEN_FILE = Path.home() / ".astrid" / "sketchfab-token"
 
@@ -103,11 +105,12 @@ def download_sketchfab(uid: str, out_dir: str, token: str | None = None) -> str:
     out_dir_p.mkdir(parents=True, exist_ok=True)
     name = url.split("?")[0].split("/")[-1] or "model.zip"
     archive = out_dir_p / name
-    with urllib.request.urlopen(url, timeout=300) as resp, open(archive, "wb") as fh:
+    require_https_mesh_url(url)
+    with https_only_opener().open(url, timeout=300) as resp, open(archive, "wb") as fh:
         fh.write(resp.read())
     if zipfile.is_zipfile(archive):
         with zipfile.ZipFile(archive) as zf:
-            zf.extractall(out_dir_p)
+            safe_extract_zip(zf, str(out_dir_p))
     for ext in (".glb", ".gltf", ".fbx"):
         for p in out_dir_p.rglob(f"*{ext}"):
             return str(p)

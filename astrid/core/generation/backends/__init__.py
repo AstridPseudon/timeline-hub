@@ -1,6 +1,6 @@
 """Generation backend adapters — local, cloud, and Codex.
 
-SD-004: Backend dispatch goes through this package.  The executor imports
+Backend dispatch goes through this package.  The executor imports
 the adapter classes from here and calls ``.generate()`` without any
 backend-specific branching.
 """
@@ -15,7 +15,7 @@ from astrid.core.generation.backends.registry import (
     load_default_generation_backend_registry,
 )
 
-# VibeComfy adapters are lazy-imported via module __getattr__ (SD-009) so
+# VibeComfy adapters are lazy-imported via module __getattr__ so
 # that ``import astrid`` never pulls in the vibecomfy module tree.
 # Their public names are preserved and trigger the lazy load.
 

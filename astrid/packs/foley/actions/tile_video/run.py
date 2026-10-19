@@ -232,7 +232,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"wrote_tiles_manifest={manifest_path}")
         print(f"wrote_tiles={len(tiles)}")
 
-        # --- universal result manifest (output-contract M2) -----------------------
+        # --- universal result manifest -----------------------
         result_manifest_path = out_root / "manifest.json"
         result_manifest = build_manifest(
             kind="tile_video",

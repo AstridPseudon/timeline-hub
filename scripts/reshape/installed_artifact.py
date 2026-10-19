@@ -26,10 +26,11 @@ import sys
 import tempfile
 import zipfile
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from email.parser import Parser
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+
+from astrid.core.util.time import utc_now_iso
 
 SCHEMA = "astrid.installed_artifact.v1"
 DEFAULT_DISTRIBUTION = "astrid"
@@ -463,10 +464,6 @@ def inspect_wheel(wheel: str | Path) -> WheelArtifact:
         distribution=distribution,
         version=version,
     )
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def _relative_to(path: Path, parent: Path) -> bool:
@@ -1034,7 +1031,7 @@ class InstalledArtifactHarness:
             raise ValueError("lane command must not be empty")
         identity = self.probe_identity()
         full_command = self._python_command(args)
-        started_at = _utc_now()
+        started_at = utc_now_iso()
         started_clock = __import__("time").monotonic()
         completed = subprocess.run(
             full_command,
@@ -1045,7 +1042,7 @@ class InstalledArtifactHarness:
             timeout=timeout,
             check=False,
         )
-        finished_at = _utc_now()
+        finished_at = utc_now_iso()
         stdout = _redact_output(completed.stdout)
         stderr = _redact_output(completed.stderr)
         output = stdout + stderr
@@ -1106,7 +1103,7 @@ class InstalledArtifactHarness:
         if not script.is_file():
             raise InstalledArtifactError(f"installed console entry point is missing: {script}")
         full_command = [str(script), *map(str, args)]
-        started_at = _utc_now()
+        started_at = utc_now_iso()
         import time
 
         started_clock = time.monotonic()
@@ -1119,7 +1116,7 @@ class InstalledArtifactHarness:
             timeout=timeout,
             check=False,
         )
-        finished_at = _utc_now()
+        finished_at = utc_now_iso()
         stdout = _redact_output(completed.stdout)
         stderr = _redact_output(completed.stderr)
         output = stdout + stderr

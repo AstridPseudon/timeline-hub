@@ -809,7 +809,7 @@ def _run_profile_result(
         return _result_from_runtime_result(result, tuple(outputs))
 
     if not isinstance(hc03_profile, Mapping):
-        raise ProductionEngineError("checkout_server lacks its verified HC-03 profile")
+        raise ProductionEngineError("checkout_server lacks its verified VibeComfy readiness profile")
     from astrid.core.generation.backends.vibecomfy import CheckoutServerAdapter
 
     workflow_comfyui_version = _workflow_comfyui_version_requirement(resolved)
@@ -895,7 +895,7 @@ def run_workflow_path(
 
     The registered ``vibecomfy.run`` executor uses this adapter instead of
     importing VibeComfy's low-level runner directly.  Checkout-server callers
-    must supply the host-issued HC-03 profile; the default embedded profile is
+    must supply the host-issued VibeComfy readiness profile; the default embedded profile is
     intentionally the only implicit profile.
     """
     if not isinstance(task_identity, str) or not task_identity.strip():

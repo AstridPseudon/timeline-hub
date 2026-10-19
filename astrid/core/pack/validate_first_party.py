@@ -1,6 +1,6 @@
 """First-party packs root validation.
 
-Extracted from ``astrid.core.pack.validate`` during M4 T26.
+Extracted from ``astrid.core.pack.validate``.
 Validates the ``astrid/packs/`` source tree structure and inventory.
 """
 

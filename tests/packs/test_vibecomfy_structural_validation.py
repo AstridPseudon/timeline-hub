@@ -11,9 +11,11 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+pytestmark = pytest.mark.integration  # needs vibecomfy from a second checkout
+
+
 @pytest.fixture
 def offline_validator(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    pytest.importorskip("vibecomfy")
     from vibecomfy.runtime import server
     from vibecomfy.schema import provider
 

@@ -494,7 +494,7 @@ def run(args: argparse.Namespace) -> int:
                 }
             results.append(result)
 
-    # --- universal result manifest (output-contract M1) -----------------------
+    # --- universal result manifest -----------------------
     manifest_outputs: list[dict[str, Any]] = []
     for item in extracted:
         window_path = Path(item["path"])

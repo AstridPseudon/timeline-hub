@@ -164,7 +164,7 @@ def test_external_broken_hidden_and_duplicate_roots_are_isolated(tmp_path: Path,
 
 
 def test_broken_source_remains_strict_and_core_shell_is_not_a_pack(tmp_path: Path) -> None:
-    core = tmp_path / "_core/skill"
+    core = tmp_path / "_core/docs"
     core.mkdir(parents=True)
     (core / "SKILL.md").write_text(SKILL)
     assert discover_packs(tmp_path) == ()

@@ -2,7 +2,7 @@
 
 Uses ``yaml.safe_load`` (stdlib PyYAML) because the YAML subset parser
 (``_parse_yaml_subset``) does not tolerate flow-style inline mappings in
-``param_map`` blocks (see T2 findings).
+``param_map`` blocks.
 
 Schema v2: model → mode → backend taxonomy.  Lookups are keyed by
 (model_id, mode) rather than model_id alone.
@@ -162,8 +162,8 @@ class ModelRegistry:
 def _load_yaml(path: Path) -> dict[str, Any]:
     """Load a YAML file using ``yaml.safe_load``.
 
-    This is the fallback parser chosen over ``_parse_yaml_subset`` after
-    T2 confirmed that flow-style inline mappings (``{key: value}``) in
+    This is the fallback parser chosen over ``_parse_yaml_subset`` because
+    flow-style inline mappings (``{key: value}``) in
     ``param_map`` blocks cannot be parsed by the YAML subset parser.
     """
     import yaml
