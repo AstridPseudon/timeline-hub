@@ -39,7 +39,7 @@ export default defineConfig({
       ...baseConfig.test.server,
       deps: {
         ...baseConfig.test.server?.deps,
-        inline: ['remotion'],
+        inline: ['remotion', '@banodoco/timeline-composition'],
       },
     },
   },
