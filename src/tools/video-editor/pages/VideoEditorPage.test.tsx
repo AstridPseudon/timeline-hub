@@ -1597,6 +1597,22 @@ describe("VideoEditorPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps recovery controls mounted while a failed connection is checked again", async () => {
+    state.discovery.bridgeDown = true;
+    state.discovery.bridgeHealthy = false;
+    state.discovery.timelines = [];
+    const view = renderPage("/tools/video-editor?localProject=ados-talks");
+    const recovery = await screen.findByTestId("workspace-connection-recovery");
+    await userEvent.setup().click(screen.getByRole("button", { name: "Show restart steps" }));
+    state.discovery.healthLoading = true;
+    view.refresh();
+    expect(screen.getByTestId("workspace-connection-recovery")).toBe(recovery);
+    expect(screen.getByRole("button", { name: "Hide restart steps" })).toBeInTheDocument();
+    state.discovery.healthLoading = false;
+    view.refresh();
+    expect(screen.getByTestId("workspace-connection-recovery")).toBe(recovery);
+  });
+
   it("shows the projects-root hint when the bridge is reachable but has no projects", async () => {
     state.discovery.projects = [];
     state.discovery.timelines = [];

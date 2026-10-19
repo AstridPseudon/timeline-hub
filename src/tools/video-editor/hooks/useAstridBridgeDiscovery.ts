@@ -199,7 +199,11 @@ export function useAstridBridgeDiscovery({
   });
 
   const bridgeHealthy = healthQuery.data === true;
-  const bridgeDown = healthQuery.isError || healthQuery.data === false;
+  // A retry with no cached success temporarily changes query status back to
+  // pending. Keep the last failed result visible until a successful probe,
+  // so polling does not replace recovery controls with a loading skeleton.
+  const bridgeDown = healthQuery.isError || healthQuery.data === false
+    || healthQuery.errorUpdatedAt > healthQuery.dataUpdatedAt;
 
   const projectsQuery = useQuery({
     queryKey: ['astrid-bridge', 'projects'],

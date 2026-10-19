@@ -1680,13 +1680,13 @@ export default function VideoEditorPage() {
         ) : (
           <>
             <div className="flex flex-1 items-center justify-center px-6">
-              {discovery.healthQuery.isLoading ? (
+              {discovery.bridgeDown ? (
+                recovery
+              ) : discovery.healthQuery.isLoading ? (
                 <div className="w-full max-w-4xl space-y-4">
                   <Skeleton className="h-20 w-full" />
                   <Skeleton className="h-20 w-full" />
                 </div>
-              ) : discovery.bridgeDown ? (
-                recovery
               ) : discovery.projectsQuery.error &&
                 (!discovery.projectsQuery.data ||
                   !localProjectSlug ||

@@ -441,6 +441,23 @@ describe('workspace.v1 canonical timeline discovery', () => {
 
 
 describe('bounded native authority recovery', () => {
+  it('keeps failure visible while an unsuccessful initial connection is retried', async () => {
+    const probe = vi.mocked(assertNativeEditorConnection);
+    probe.mockRejectedValueOnce(new Error('Workspace discovery: 503'));
+    let finishRetry!: () => void;
+    probe.mockImplementationOnce(() => new Promise<void>((resolve) => { finishRetry = resolve; }));
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ items: [], next_cursor: null }))));
+    const { result } = renderHook(() => useAstridBridgeDiscovery({ open: false, currentLocal: true, selectedProjectSlug: null }), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.bridgeDown).toBe(true));
+    let retry!: ReturnType<typeof result.current.healthQuery.refetch>;
+    act(() => { retry = result.current.healthQuery.refetch(); });
+    await waitFor(() => expect(result.current.healthQuery.isFetching).toBe(true));
+    expect(result.current.bridgeDown).toBe(true);
+    await act(async () => { finishRetry(); await retry; });
+    await waitFor(() => expect(result.current.bridgeDown).toBe(false));
+    expect(result.current.bridgeHealthy).toBe(true);
+  });
+
   it('stops after three failed probes and admits an explicit retry only after verified recovery', async () => {
     vi.useFakeTimers({toFake:['setInterval','clearInterval']});
     const probe=vi.mocked(assertNativeEditorConnection);
