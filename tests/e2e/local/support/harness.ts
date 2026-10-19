@@ -34,12 +34,16 @@ export const PRODUCT_SCOPES = ['handshake', 'projects:read', 'projects:write', '
 export const BIG_DOWNLOAD_BYTES = 60 * 1024 * 1024;
 export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
 
-export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
+export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT
+  ?? [path.join(REPO_ROOT, '..', 'astrid-runtime'), path.join(REPO_ROOT, '../..', 'runtime')]
+    .find((dir) => existsSync(path.join(dir, 'runtime_protocol', 'cli.py')))
+  ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
 const DIST_DIR = path.resolve(process.env.ASTRID_APP_DIRECT_DIST ?? path.join(REPO_ROOT, 'dist'));
 
 export function runtimePython(): string | null {
-  const python = path.join(RUNTIME_CHECKOUT, '.venv', 'bin', 'python');
-  return existsSync(python) ? python : null;
+  const python = process.env.ASTRID_RUNTIME_PYTHON
+    ?? [path.join(RUNTIME_CHECKOUT, '.venv/bin/python'), path.join(RUNTIME_CHECKOUT, '../venv-runtime/bin/python')].find(existsSync);
+  return python && existsSync(python) ? python : null;
 }
 
 /** Why the harness cannot run here, or null when it can. */
@@ -338,6 +342,9 @@ export const THREE_PRODUCTS_OPAQUE = {
   clip: { owner: 'f2', nested: [1, { k: 'v' }] },
 } as const;
 
+/** Keep the App's reference sibling clear of the A5/B7 moves on the same track. */
+export const THREE_PRODUCTS_REFERENCE_AT = 15;
+
 const SCENE_MARKER = 'journey-scene';
 
 /** The smallest entry page the validator accepts: a `<head>` for the CSP, a `<body>` for the bridge, and `window.astridScene`. */
@@ -370,6 +377,8 @@ export class DirectHarness {
   private extensionsSeed?: ExtensionsSeed;
   private mediaSeed?: MediaSeed;
   private threeProductsSeed?: ThreeProductsSeed;
+  private timelineAuthoring = false;
+  private authoringPython?: string;
 
   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
   get extensionsConfig(): ExtensionsConfigMode { return this.extensionsMode; }
@@ -430,7 +439,23 @@ export class DirectHarness {
 
   // -- Runtime -------------------------------------------------------------------------------
 
-  private runtimeEnv(): NodeJS.ProcessEnv { return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' }; }
+  private runtimeEnv(): NodeJS.ProcessEnv {
+    const agent = path.resolve(process.env.ASTRID_CHECKOUT
+      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
+        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
+      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
+    return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', PYTHONPATH: [RUNTIME_CHECKOUT, agent].join(path.delimiter) };
+  }
+
+  /** Seed with main's APIs first; startup verifies their original publication provenance. */
+  async enableTimelineAuthoring(python: string): Promise<void> {
+    if (this.timelineAuthoring) return;
+    await this.stopRuntime();
+    if (!existsSync(python)) throw new Error(`Authoring Python not found at ${python}`);
+    this.authoringPython = python;
+    this.timelineAuthoring = true;
+    await this.startRuntime();
+  }
 
   private async createRealm(): Promise<string> {
     const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: { ...process.env, ...this.runtimeEnv() }, encoding: 'utf8' });
@@ -443,8 +468,9 @@ export class DirectHarness {
    */
   async startRuntime(port = 0): Promise<void> {
     if (this.runtime) throw new Error('Runtime already running');
-    const managed = spawnGroup(runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
-      '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath], { cwd: this.tmp, env: this.runtimeEnv() });
+    const managed = spawnGroup(this.authoringPython ?? runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
+      '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath,
+      ...(this.timelineAuthoring ? ['--authoring-profile', 'astrid'] : [])], { cwd: this.tmp, env: this.runtimeEnv() });
     this.runtime = managed;
     const endpoint = await waitFor<string>('Runtime start', async () => {
       const line = managed.stdout.split('\n').find((candidate) => candidate.trim().startsWith('{') && candidate.includes('"endpoint"'));
@@ -668,13 +694,13 @@ export class DirectHarness {
     const videoAsset = { file: `f2-video.${videoExtension}`, type: video.mediaType, duration: 12, media_id: video.objectId, content_sha256: video.digest };
     // The App's clips are the parent composition's own (the editor changes only the parent). The Astrid CLI reaches clips only
     // inside a placed shot's internal timeline (astrid/sdk/timeline/lookup.py `clips`), so the agent's two clips live in a shot
-    // placed between them: 3 s to 9 s on the film, clips at 0 s and 3 s inside it.
+    // placed independently: 0 s to 12 s on the film, clips at 3 s and 6 s inside it.
     const shotId = 'f2-shot';
     const internalRevisionId = randomUUID();
     const shotRevisionId = randomUUID();
     const parentClips = [
       { id: ids.appClipId, at: 0, track: 'V1', clipType: 'media', asset: 'f2-app', from: 0, to: 3, speed: 1 },
-      { id: ids.transitionClipId, at: 9, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
+      { id: ids.transitionClipId, at: THREE_PRODUCTS_REFERENCE_AT, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
     ];
     const shotClips = [
       { id: 'f2-plate', at: 0, track: 'plate', clipType: 'media', asset: 'f2-plate', hold: 12 },

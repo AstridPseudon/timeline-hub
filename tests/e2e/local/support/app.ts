@@ -6,6 +6,7 @@ import { chromium, expect, test as base, type Browser, type Page } from '@playwr
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
+import type { OutboxRecord } from '../../../../src/tools/video-editor/commands/commitOutbox.ts';
 
 export const UI = {
   status: '[data-testid="runtime-connection-status"]',
@@ -21,9 +22,9 @@ export const APP_ENTRY_ROUTE = '/tools/video-editor';
 
 function resolveChromium(): string | undefined {
   if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE) return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
-  if (existsSync(chromium.executablePath())) return undefined;
+  if (existsSync(chromium.executablePath())) return chromium.executablePath();
   // The installed Playwright may expect a newer browser build than the one in the image; use what is there.
-  const browsers = process.env.PLAYWRIGHT_BROWSERS_PATH ?? '';
+  const browsers = process.env.PLAYWRIGHT_BROWSERS_PATH ?? '/opt/pw-browsers';
   const found = existsSync(browsers) ? readdirSync(browsers).filter((name) => /^chromium-\d+$/.test(name)).sort().pop() : undefined;
   const candidate = found ? path.join(browsers, found, 'chrome-linux', 'chrome') : undefined;
   return candidate && existsSync(candidate) ? candidate : undefined;
@@ -100,4 +101,42 @@ export async function holdTimelineSaves(page: Page) {
 
 export async function revisionBody(harness: DirectHarness, revisionId: string) {
   return (await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions/${revisionId}`)).body;
+}
+
+/** Read the real browser outbox without creating, claiming or modifying an owner. */
+export async function commandOutboxes(page: Page, timelineId: string): Promise<OutboxRecord[]> {
+  return page.evaluate(async (id) => {
+    if (!(await indexedDB.databases()).some((db) => db.name === 'astrid.command-outbox')) return [];
+    return new Promise<OutboxRecord[]>((resolve, reject) => {
+      const opening = indexedDB.open('astrid.command-outbox');
+      opening.onerror = () => reject(opening.error);
+      opening.onsuccess = () => {
+        const db = opening.result;
+        const tx = db.transaction('owners', 'readonly');
+        const read = tx.objectStore('owners').getAll();
+        tx.oncomplete = () => { db.close(); resolve((read.result as OutboxRecord[]).filter((record) => record.scope.timelineId === id)); };
+        tx.onabort = () => { db.close(); reject(tx.error); };
+      };
+    });
+  }, timelineId);
+}
+
+/** Actual pointerdown/move/drop: scale comes from the two rendered parent clips. */
+export async function dragTimelineClip(page: Page, clipId: string, referenceId: string, from: number, to: number, referenceAt: number, beforeDrop?: () => void | Promise<void>) {
+  const clip = page.locator(`.clip-action[data-clip-id="${clipId}"]`).first();
+  const reference = page.locator(`.clip-action[data-clip-id="${referenceId}"]`).first();
+  await expect(clip).toBeVisible();
+  await expect(reference).toBeVisible();
+  const box = await clip.boundingBox();
+  const other = await reference.boundingBox();
+  if (!box || !other || referenceAt === from) throw new Error('Cannot measure timeline clip scale');
+  const pixelsPerSecond = (other.x - box.x) / (referenceAt - from);
+  expect(pixelsPerSecond).toBeGreaterThan(0);
+  const x = box.x + Math.min(box.width / 2, 24);
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + (to - from) * pixelsPerSecond, y, { steps: 12 });
+  await beforeDrop?.();
+  await page.mouse.up();
 }
