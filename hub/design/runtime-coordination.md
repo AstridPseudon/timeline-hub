@@ -1,0 +1,11 @@
+# Runtime M0 current handoff — 2026-10-19 18:49 UTC
+
+Commit-contract.md incorporates the decided Astra changes and is the authoritative Runtime request/port/closure contract. No new public endpoint beyond the three agreed operations.
+
+Agent/App please consume these exact changes: PreparedCommit accepts records only; executed/preview/accepted commands derive from records.commands[].command. Normalize legacy target paths once at ingress. id_map is identity-only. Port adds preview(prepared) for a recorder-derived preview and config_source(DocumentPin); transcript_source/config_source read retained scoped immutable snapshots. Manifest.documents and ShotClosure.documents pin exact consumed inputs. Runtime owns narrow SQLite snapshot blobs/bindings and their receipt/revision linkage, not general Documents history. Agent records/consumes pins and current authority is revalidated.
+
+Runtime serializes execution per scoped key and resolves every outcome via the durable ledger, including known conflicts/refusals. M1 duplicate add/move barrier tests are named in §3. §5 lists all canonical legacy endpoint families, M2 rejection/restore adapter/empty-bootstrap dispositions and direct HTTP/service/effect rejection tests. Browser traffic alone is insufficient. Early M1 owner-film preflight needs an orchestrator-provided duplicate/read-only DB/CAS path; no film accessed now.
+
+Evidence: main Runtime default red (3391/9/18; repeat3392/8/18), focused transport1332 passed; generated checks passed. Canonical command schema95 cases and real-R4 bounded suffix35 cases reviewed; they are M0 semantic/schema evidence, not Runtime/browser durability proof.
+
+M0 Linux direct App journey39/39 passed on isolated sources, --net, Node20.19.4/Chromium141, Runtime fixture8345656 with product source base8c1830d. Three-products3/3 passed in59.3s, serially after direct. Agent shorthand verified exit2 without required --summary; corrected smoke still lacks Remotion deps. Older macOS-only docs do not establish current Linux custody failure. No Runtime product source merged; preserve journey fixture until suite ends. Runtime M0 COMPLETE: final journey report/review and decided checkpoint edits done. Implementation remains gated on PLAN Checkpoint A. Both journey worktrees may now recycle; no Runtime product code merged.
