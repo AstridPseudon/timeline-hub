@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   useSetLocalAgent: vi.fn(),
   modelRefetch: vi.fn(),
   useCancelSession: vi.fn(),
+  useTakeOverSession: vi.fn(),
   useCurrentAttachmentSet: vi.fn(),
   composerRemoveAttachment: vi.fn(),
   composerClearAttachments: vi.fn(),
@@ -62,6 +63,7 @@ vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({
   useLocalAgents: (...args: unknown[]) => mocks.useLocalAgents(...args),
   useSetLocalAgent: (...args: unknown[]) => mocks.useSetLocalAgent(...args),
   useCancelSession: (...args: unknown[]) => mocks.useCancelSession(...args),
+  useTakeOverSession: (...args: unknown[]) => mocks.useTakeOverSession(...args),
 }));
 
 vi.mock('@/shared/state/selectionStore', () => ({
@@ -162,6 +164,8 @@ function createState() {
       id: 'session-1',
       status: 'waiting_user',
       turns: [] as AgentTurn[],
+      durableAcceptedRequestIds: undefined as string[] | undefined,
+      control: undefined as { role: 'writer' | 'follower'; active: boolean; activeRequestId: string | null } | undefined,
     },
     createSession: {
       isPending: false,
@@ -176,6 +180,11 @@ function createState() {
     cancelSession: {
       mutate: vi.fn(),
       isPending: false,
+    },
+    takeOverSession: {
+      mutate: vi.fn(),
+      isPending: false,
+      error: null as Error | null,
     },
     voice: {
       startRecording: vi.fn(),
@@ -230,6 +239,7 @@ function mockFromState(state: ReturnType<typeof createState>) {
   mocks.useSetLocalAgent.mockImplementation(() => ({ mutateAsync: vi.fn().mockResolvedValue(undefined), isPending: false, error: null }));
   mocks.useSendMessage.mockImplementation(() => state.sendMessage);
   mocks.useCancelSession.mockImplementation(() => state.cancelSession);
+  mocks.useTakeOverSession.mockImplementation(() => state.takeOverSession);
   mocks.useCurrentAttachmentSet.mockImplementation(() => ({
     clips: state.timelineClips,
     summary: state.timelineClips.length > 0 ? `attaching ${state.timelineClips.length} image` : '',
@@ -872,6 +882,107 @@ describe('AgentChat', () => {
 
     fireEvent.click(screen.getAllByTitle('Remove queued message')[1]);
     expect(getQueuedTexts()).toEqual(['second', 'third']);
+  });
+
+  it('keeps an active foreign request read-only through takeover and completion without replaying saved queue work', async () => {
+    const state = createState();
+    state.projectChats['project-1'].draft = { text: 'Saved text', revision: 4, queued_messages: [
+      { id: 'active-request', text: 'Already running', session_id: 'session-1', attachments: [] },
+      { id: 'queued-next', text: 'Waiting behind it', session_id: 'session-1', attachments: [] },
+    ] };
+    state.activeSessionData.status = 'waiting_user'; // Control data must still report the live turn.
+    state.activeSessionData.turns = [{ role: 'assistant', content: 'Live assistant update', timestamp: iso(12_000) }];
+    state.activeSessionData.control = { role: 'follower', active: true, activeRequestId: 'active-request' };
+    state.activeSessionData.durableAcceptedRequestIds = ['active-request'];
+    mockFromState(state);
+
+    const view = renderAgentChat();
+    await screen.findByText('Live assistant update');
+    await screen.findByText('Already running');
+    await screen.findByText('In progress in another tab');
+    expect(screen.getByRole('button', { name: 'Active in another tab — take over' })).toBeEnabled();
+    expect(screen.getByPlaceholderText('Type to queue next message...')).toBeDisabled();
+    expect(screen.queryByText(/Delivery not confirmed/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Retry saved message' })).toBeNull();
+    expect(screen.queryByTitle('Stop agent')).toBeNull();
+    expect(screen.getByTitle('Voice input (Cmd+Shift+R)')).toBeDisabled();
+    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
+    expect(screen.getByRole('option', { name: /GPT 5 Mini/ })).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(getQueuedTexts()).toEqual(['Already running', 'Waiting behind it']);
+    expect(state.projectChats['project-1'].draft.queued_messages.map(row => row.id)).toEqual(['active-request', 'queued-next']);
+    expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
+    expect(mocks.useTakeOverSession).toHaveBeenCalledWith('session-1', 'project-1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Active in another tab — take over' }));
+    expect(state.takeOverSession.mutate).toHaveBeenCalledTimes(1);
+
+    state.activeSessionData.control = { role: 'writer', active: true, activeRequestId: 'active-request' };
+    rerenderAgentChat(view.rerender);
+    expect(await screen.findByText('In progress')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Active in another tab — take over' })).toBeNull();
+    expect(screen.queryByText(/Delivery not confirmed/)).toBeNull();
+    expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
+
+    state.activeSessionData.control = { role: 'writer', active: false, activeRequestId: null };
+    state.activeSessionData.status = 'waiting_user';
+    rerenderAgentChat(view.rerender);
+    await waitFor(() => expect(state.projectChats['project-1'].draft.queued_messages.map(row => row.id)).toEqual(['queued-next']));
+    expect(getQueuedTexts()).toEqual(['Waiting behind it']);
+    expect(screen.getByText(/Delivery not confirmed/)).toBeInTheDocument();
+    expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
+
+    // Another tab may take ownership after this panel has completed its takeover.
+    state.activeSessionData.control = { role: 'follower', active: false, activeRequestId: null };
+    rerenderAgentChat(view.rerender);
+    expect(screen.getByRole('button', { name: 'Active in another tab — take over' })).toBeEnabled();
+    expect(screen.getByRole('textbox')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Retry saved message' })).toBeNull();
+    expect(screen.getByTitle('Remove queued message')).toBeDisabled();
+    expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('shows the active external session model to a follower while keeping model selection disabled and takeover available', async () => {
+    const state = createState();
+    const sessionId = 'codex:chat-3';
+    state.projectChats['project-1'].selected_session_id = sessionId;
+    state.projectChats['project-1'].sessions = [{ id: sessionId }];
+    state.sessionsData = [{ id: sessionId, status: 'waiting_user' }];
+    state.activeSessionData.id = sessionId;
+    state.activeSessionData.status = 'waiting_user';
+    state.activeSessionData.control = { role: 'follower', active: false, activeRequestId: null };
+    mockFromState(state);
+
+    const modelSelection = vi.fn();
+    mocks.useSetAgentModel.mockReturnValue({ mutateAsync: modelSelection, isPending: false, error: null });
+    const localModels = { currentModelId: 'vendor/alpha-precise', availableModels: [
+      { modelId: 'vendor/alpha-precise', name: 'Alpha Precise', description: 'Careful code review' },
+      { modelId: 'vendor/beta-fast', name: 'Beta Fast', description: 'Quick drafts' },
+    ] };
+    mocks.useAgentModels.mockReturnValue({
+      data: { currentModel: null, providers: [], localModels },
+      isLoading: false,
+      error: null,
+      refetch: mocks.modelRefetch,
+    });
+
+    renderAgentChat();
+    const trigger = screen.getByRole('combobox', { name: 'Agent model' });
+    await waitFor(() => expect(trigger).toHaveAttribute('title', 'Agent: Codex · Alpha Precise'));
+    expect(mocks.useAgentModels).toHaveBeenLastCalledWith(true, sessionId, 'project-1');
+    expect(mocks.useSetAgentModel).toHaveBeenLastCalledWith(sessionId, 'project-1');
+    expect(screen.getByRole('button', { name: 'Active in another tab — take over' })).toBeEnabled();
+
+    fireEvent.click(trigger);
+    const currentModel = await screen.findByRole('option', { name: /Alpha Precise/ });
+    const otherModel = screen.getByRole('option', { name: /Beta Fast/ });
+    expect(currentModel).toHaveAttribute('aria-current', 'true');
+    expect(otherModel).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(otherModel);
+    expect(modelSelection).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Active in another tab — take over' }));
+    expect(state.takeOverSession.mutate).toHaveBeenCalledTimes(1);
   });
 });
 

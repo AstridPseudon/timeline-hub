@@ -1,5 +1,6 @@
+import {ManagedImg as Img} from '../../../../../rendering/shared/managed-media';
 import type {CSSProperties, ReactElement} from 'react';
-import {Img, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 
 import type {EffectProps} from '@banodoco/timeline-composition/theme-api';
 

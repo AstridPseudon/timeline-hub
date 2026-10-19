@@ -19,6 +19,7 @@ import {
   useUnassignedProjectSessions,
   useAssociateProjectSession,
   useCancelSession,
+  useTakeOverSession,
   useCreateSession,
   useSendMessage,
   useAgentModels,
@@ -84,6 +85,7 @@ type AgentSessionView = {
   status: AgentSessionStatus;
   turns: AgentTurn[];
   assistantDraft?: string;
+  control?: { role: 'writer' | 'follower'; active: boolean; activeRequestId: string | null };
 };
 
 type AgentSessionOption = Pick<AgentSessionView, 'id' | 'status'>;
@@ -356,6 +358,7 @@ function AvailableAgentChatPanel({
   // editor supplies the full project/timeline snapshot above.
   const sendMessage = useSendMessage(activeSessionId, editorContext, projectId);
   const cancelSession = useCancelSession(activeSessionId);
+  const takeOverSession = useTakeOverSession(activeSessionId, projectId);
   const sessionOptions = useMemo(() => {
     const saved = readAgentSessions(sessions.data);
     // Creation is an authenticated ownership receipt. Keep that exact session
@@ -539,9 +542,16 @@ function AvailableAgentChatPanel({
     [activeSessionData?.turns],
   );
   const activeStatus = activeSessionData?.status;
+  const sessionControl = activeSessionData?.control;
+  const isFollower = sessionControl?.role === 'follower';
   const isCancelled = activeStatus === 'cancelled';
-  const isProcessing = activeStatus === 'processing' || activeStatus === 'continue';
-  const showKillSwitch = activeStatus === 'processing' || activeStatus === 'continue';
+  const isProcessing = activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active);
+  const showKillSwitch = !isFollower && (activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active));
+  const isFollowerRef = useRef(isFollower);
+  isFollowerRef.current = isFollower;
+  useEffect(() => {
+    if (isFollower) voiceRef.current.cancelRecording();
+  }, [isFollower]);
   const showNoProjectState = !hasProject && sessionOptions.length === 0;
   const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId);
   const activeQueue = queue.filter((item) => item.sessionId === activeSessionId);
@@ -689,7 +699,7 @@ function AvailableAgentChatPanel({
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
         event.preventDefault();
-        if (!hasProject) {
+        if (!hasProject || isFollower) {
           return;
         }
         if (voice.isRecording) {
@@ -702,13 +712,20 @@ function AvailableAgentChatPanel({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasProject, voice]);
+  }, [hasProject, isFollower, voice]);
 
   useEffect(() => {
     sendingRef.current = false;
     setPausedQueueHeadId(draftSnapshotRef.current.queue.find(item => item.sessionId === activeSessionId)?.id ?? null);
     setOptimisticMessage(null);
   }, [activeSessionId]);
+
+  useEffect(() => {
+    if (!isFollower || !activeSessionId) return;
+    const followerQueue = queue.filter(item => item.sessionId === activeSessionId);
+    followerQueue.forEach(item => pausedQueuedIdsRef.current.add(item.id));
+    if (followerQueue.length > 0) setPausedQueueHeadId(current => current ?? followerQueue[0].id);
+  }, [isFollower, activeSessionId, queue]);
 
   useEffect(() => {
     if (pausedQueueHeadId && !queue.some((item) => item.id === pausedQueueHeadId)) {
@@ -749,8 +766,10 @@ function AvailableAgentChatPanel({
   }, []);
   useEffect(() => {
     if (!activeSessionId || !hydratedProjectDraftRef.current) return;
-    reconcileAcceptedQueue(activeSessionData?.durableAcceptedRequestIds ?? [], activeSessionId);
-  }, [activeSessionId, activeSessionData?.durableAcceptedRequestIds, queue, reconcileAcceptedQueue]);
+    const acceptedIds = activeSessionData?.durableAcceptedRequestIds ?? [];
+    const inFlightId = sessionControl?.active ? sessionControl.activeRequestId : null;
+    reconcileAcceptedQueue(inFlightId ? acceptedIds.filter(id => id !== inFlightId) : acceptedIds, activeSessionId);
+  }, [activeSessionId, activeSessionData?.durableAcceptedRequestIds, queue, reconcileAcceptedQueue, sessionControl?.active, sessionControl?.activeRequestId]);
 
   const sendingRef = useRef(false);
   const currentSessionRef = useRef(activeSessionId);
@@ -758,7 +777,7 @@ function AvailableAgentChatPanel({
   const currentContextRef = useRef(editorContext);
   currentContextRef.current = editorContext;
   const sendNow = useCallback(async (item: QueuedMessage, retryCaptured = false, checkSaved = false) => {
-    if (!activeSessionId || !projectId || !editorContext || item.sessionId !== activeSessionId) {
+    if (!activeSessionId || !projectId || !editorContext || item.sessionId !== activeSessionId || isFollower || sessionControl?.active) {
       return;
     }
 
@@ -815,11 +834,11 @@ function AvailableAgentChatPanel({
     } finally {
       if (isCurrent()) sendingRef.current = false;
     }
-  }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage, reconcileAcceptedQueue]);
+  }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage, reconcileAcceptedQueue, isFollower, sessionControl?.active]);
 
   const handleSend = useCallback(async (rawText?: string) => {
     const text = (rawText ?? draft).trim();
-    if (!text || !activeSessionId || !hasProject) return;
+    if (!text || !activeSessionId || !hasProject || isFollower) return;
 
     const attachments: AgentTurnAttachment[] = clips.map((clip) => ({
       clipId: clip.clipId,
@@ -850,6 +869,7 @@ function AvailableAgentChatPanel({
 
     if (
       sendingRef.current
+      || isFollower
       || isProcessing
       || sendMessage.isPending
       || optimisticMessage
@@ -862,11 +882,12 @@ function AvailableAgentChatPanel({
     try { await sendNow(item); } catch {
       // The durable queue and visible recovery retain the failed submission.
     }
-  }, [activeSessionId, clips, draft, hasProject, isProcessing, optimisticMessage, queue, sendMessage.isPending, sendNow]);
+  }, [activeSessionId, clips, draft, hasProject, isProcessing, isFollower, optimisticMessage, queue, sendMessage.isPending, sendNow]);
 
   useEffect(() => {
     if (
       sendingRef.current
+      || isFollower
       || isProcessing
       || sendMessage.isPending
       || optimisticMessage
@@ -890,7 +911,7 @@ function AvailableAgentChatPanel({
         // Leave the failed head in place; pausedQueueHeadId will prevent further drains.
       }
     })();
-  }, [queue, pausedQueueHeadId, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
+  }, [queue, pausedQueueHeadId, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
   const handleNewSession = useCallback(async (): Promise<string | null> => {
     if (!projectId) return null;
@@ -943,6 +964,7 @@ function AvailableAgentChatPanel({
   const actionsRegistry = useAgentChatActionsRegistry();
   const stableHandlers = useMemo<AgentChatActionsHandlers>(() => ({
     toggleRecording: () => {
+      if (isFollowerRef.current) return;
       const v = voiceRef.current;
       if (v.isRecording) {
         v.stopRecording();
@@ -997,7 +1019,7 @@ function AvailableAgentChatPanel({
             selectedAgent={chatAgent}
             localModels={modelCatalog.data?.localModels}
             onSelectLocalModel={(model) => setAgentModel.mutateAsync(model).then(() => undefined)}
-            busy={isProcessing || sendMessage.isPending || setAgentModel.isPending}
+            busy={isFollower || isProcessing || sendMessage.isPending || setAgentModel.isPending}
             open={modelListOpen}
             onOpenChange={openModelList}
             loading={modelCatalog.isLoading}
@@ -1082,6 +1104,24 @@ function AvailableAgentChatPanel({
       )}
       {/* Messages */}
       <div ref={scrollContainerRef} onScroll={onScroll} className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+        {isFollower && (
+          // Stays in view while scrolling, just under the header that names the chat's agent.
+          <div role="status" className="sticky top-0 z-10 mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-border/70 bg-card px-3 py-2 text-xs text-muted-foreground shadow-sm">
+            <span>Active in another tab</span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 shrink-0 px-2 text-xs"
+              aria-label="Active in another tab — take over"
+              disabled={takeOverSession.isPending || !activeSessionId || !projectId}
+              onClick={() => takeOverSession.mutate()}
+            >
+              Take over
+            </Button>
+            {takeOverSession.error && <span role="alert">Could not take over: {takeOverSession.error instanceof Error ? takeOverSession.error.message : String(takeOverSession.error)}</span>}
+          </div>
+        )}
         {draftSaveError && (
           <div role="alert" className="mb-2 rounded-md border border-destructive/40 p-2 text-xs text-destructive">
             <p>Draft or queued messages could not be saved: {draftSaveError}</p>
@@ -1177,14 +1217,15 @@ function AvailableAgentChatPanel({
               >
                 <div className="flex-1 text-foreground">
                   <div className="line-clamp-2 break-words leading-relaxed">{item.text}</div>
-                  {item.id === pausedQueueHeadId && <div className="text-muted-foreground">Delivery not confirmed. Retry checks saved history first; it may send this message again.</div>}
+                  {sessionControl?.active && item.id === sessionControl.activeRequestId && <div className="text-muted-foreground">{isFollower ? 'In progress in another tab' : 'In progress'}</div>}
+                  {item.id === pausedQueueHeadId && !isFollower && !activeSession.isLoading && !sessionControl?.active && <div className="text-muted-foreground">Delivery not confirmed. Retry checks saved history first; it may send this message again.</div>}
                 </div>
                 {item.attachments.length > 0 && (
                   <span className="shrink-0 rounded-full bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground">
                     {`📎 ${item.attachments.length}`}
                   </span>
                 )}
-                {item.id === pausedQueueHeadId && (
+                {item.id === pausedQueueHeadId && !isFollower && !sessionControl?.active && !activeSession.isLoading && (
                   <button type="button" onClick={() => { void sendNow(item, sendMessage.hasCapturedMessage?.(item.sessionId, item.id) ?? false, true).catch(() => undefined); }}>
                     Retry saved message
                   </button>
@@ -1194,7 +1235,7 @@ function AvailableAgentChatPanel({
                   size="icon"
                   variant="ghost"
                   className="h-6 w-6 shrink-0"
-                  disabled={index === 0}
+                  disabled={isFollower || index === 0}
                   onClick={() => moveQueuedMessageUp(queue.indexOf(item))}
                   title="Move queued message up"
                 >
@@ -1205,7 +1246,7 @@ function AvailableAgentChatPanel({
                   size="icon"
                   variant="ghost"
                   className="h-6 w-6 shrink-0"
-                  disabled={index === activeQueue.length - 1}
+                  disabled={isFollower || index === activeQueue.length - 1}
                   onClick={() => moveQueuedMessageDown(queue.indexOf(item))}
                   title="Move queued message down"
                 >
@@ -1216,6 +1257,7 @@ function AvailableAgentChatPanel({
                   size="icon"
                   variant="ghost"
                   className="h-6 w-6 shrink-0"
+                  disabled={isFollower}
                   onClick={() => removeQueuedMessage(item.id)}
                   title="Remove queued message"
                 >
@@ -1325,7 +1367,7 @@ function AvailableAgentChatPanel({
               rows={isExpanded ? 8 : 4}
               placeholder={inputPlaceholder}
               className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 text-sm leading-5 outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
-              disabled={!hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
+              disabled={isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault();
@@ -1344,7 +1386,7 @@ function AvailableAgentChatPanel({
                     ? 'relative h-full w-full rounded-xl bg-red-500 text-white transition-colors hover:bg-red-600'
                     : 'relative h-full w-full rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
                   onClick={() => voice.isRecording ? voice.stopRecording() : voice.startRecording()}
-                  disabled={!hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending}
+                  disabled={isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending}
                   title={voice.isRecording ? 'Stop recording' : 'Voice input (Cmd+Shift+R)'}
                 >
                   {voice.isRecording ? <Square className="h-3 w-3" /> : <Mic className="h-3.5 w-3.5" />}
@@ -1370,7 +1412,7 @@ function AvailableAgentChatPanel({
                   variant="default"
                   className="h-full w-full rounded-xl"
                   onClick={() => void handleSend()}
-                  disabled={!hasProject || !draft.trim() || !activeSessionId || isCancelled}
+                  disabled={isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
                   title="Send"
                 >
                   <Send className="h-4 w-4" />

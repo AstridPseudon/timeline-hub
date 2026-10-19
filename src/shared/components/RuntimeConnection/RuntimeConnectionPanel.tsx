@@ -183,6 +183,32 @@ function NotRunningPanel({ dataState, pageOrigin }: { dataState: string; pageOri
   );
 }
 
+/** Repeated checks failed, but no health response proved that Astrid is stopped. */
+function UnavailablePanel({ connection }: { connection: RuntimeConnectionValue }) {
+  const unavailable = COPY.unavailable;
+  return (
+    <PanelFrame
+      dataState="unavailable"
+      title={unavailable.title}
+      sentence={unavailable.sentence}
+      action={<Button type="button" className="w-full sm:w-auto" onClick={connection.connect}>{unavailable.button}</Button>}
+      footer={connection.isChecking ? COPY.connecting.sentence : undefined}
+    />
+  );
+}
+
+function AccessDeniedPanel({ connection }: { connection: RuntimeConnectionValue }) {
+  const accessDenied = COPY.accessDenied;
+  return (
+    <PanelFrame
+      dataState="access_denied"
+      title={accessDenied.title}
+      sentence={accessDenied.sentence}
+      action={<Button type="button" className="w-full sm:w-auto" onClick={connection.connect}>{accessDenied.button}</Button>}
+    />
+  );
+}
+
 /** The Astrid running is not the one this page was set up with: only a restart helps, and the agent block says so. */
 function RestartNeededPanel({ pageOrigin }: { pageOrigin: string }) {
   const { restartNeeded } = COPY;
@@ -196,14 +222,16 @@ function RestartNeededPanel({ pageOrigin }: { pageOrigin: string }) {
   );
 }
 
-/** The screen a not-ready reason shows: five causes, three things a person can do. */
-function notReadyScreen(reason: RuntimeNotReadyReason): 'connecting' | 'not_running' | 'restart_needed' {
+/** The screen a not-ready reason shows. */
+function notReadyScreen(reason: RuntimeNotReadyReason): 'connecting' | 'not_running' | 'restart_needed' | 'access_denied' | 'unavailable' {
   switch (reason) {
     case 'starting': return 'connecting';
     case 'runtime_stopped':
-    case 'unknown': return 'not_running';
+      return 'not_running';
+    case 'unknown': return 'unavailable';
     case 'identity_mismatch':
     case 'realm_changed': return 'restart_needed';
+    case 'access_denied': return 'access_denied';
   }
 }
 
@@ -224,12 +252,16 @@ export function RuntimeConnectionPanel({ connection }: RuntimeConnectionPanelPro
     case 'cant_reach':
       if (phone) return <PhonePanel />;
       return state.firstTime ? <SetUpPanel pageOrigin={pageOrigin} /> : <NotRunningPanel dataState="cant_reach" pageOrigin={pageOrigin} />;
+    case 'unavailable':
+      return phone ? <PhonePanel /> : <UnavailablePanel connection={connection} />;
     case 'blocked':
       return phone ? <PhonePanel /> : <BlockedPanel />;
     case 'not_ready': {
       const screen = notReadyScreen(state.reason);
       if (screen === 'connecting') return <ConnectingPanel phone={phone} />;
       if (phone) return <PhonePanel />;
+      if (screen === 'access_denied') return <AccessDeniedPanel connection={connection} />;
+      if (screen === 'unavailable') return <UnavailablePanel connection={connection} />;
       return screen === 'not_running'
         ? <NotRunningPanel dataState="not_ready" pageOrigin={pageOrigin} />
         : <RestartNeededPanel pageOrigin={pageOrigin} />;

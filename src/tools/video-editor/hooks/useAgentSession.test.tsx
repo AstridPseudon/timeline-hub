@@ -20,8 +20,11 @@ import {
   useAgentSession,
   useAgentModels,
   useSetAgentModel,
+  useTakeOverSession,
+  agentSessionQueryKey,
 } from './useAgentSession.ts';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
+import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
 import { LOCAL_AGENT_SETTING_KEY, localAgentModelSettingKey, savedLocalAgentModel } from '@/integrations/astrid/localAgents.ts';
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -42,6 +45,170 @@ afterEach(() => {
 });
 
 describe('timeline agent ACP chat', () => {
+  it.each([
+    ['load', 'not_found'], ['events', 'not_found'],
+    ['load', 'connection_not_found'], ['events', 'connection_not_found'],
+  ])('reconnects a lost bridge during %s (%s) without sending a prompt', async (stage, code) => {
+    const missing = new BridgeRouteError('ACP events', 404, { error: code, detail: 'ACP connection is not available; reconnect' });
+    const acp = {
+      projectChat: vi.fn(async () => ({ project_id: 'p', sessions: [{ id: 'chat-1' }] })),
+      connect: vi.fn().mockResolvedValueOnce({ connection_id: 'old' }).mockResolvedValue({ connection_id: 'new' }),
+      loadSession: vi.fn(async (id: string) => { if (id === 'old' && stage === 'load') throw missing; return {}; }),
+      events: vi.fn(async (id: string) => { if (id === 'old' && stage === 'events') throw missing; return { notifications: [], disconnected: false }; }),
+      promptProjectSession: vi.fn(),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    expect((await store.get('p', 'chat-1')).id).toBe('chat-1');
+    expect(acp.connect).toHaveBeenCalledTimes(2);
+    expect(acp.loadSession).toHaveBeenLastCalledWith('new', 'chat-1');
+    expect(acp.promptProjectSession).not.toHaveBeenCalled();
+  });
+
+  it('stops read-only recovery after one fresh connection also disappears', async () => {
+    const missing = new BridgeRouteError('ACP rpc', 404, { error: 'connection_not_found', detail: 'ACP connection expired while idle; reconnect' });
+    const acp = {
+      projectChat: vi.fn(async () => ({ project_id: 'p', sessions: [{ id: 'chat-1' }] })),
+      connect: vi.fn(async () => ({ connection_id: 'missing' })),
+      loadSession: vi.fn(async () => { throw missing; }),
+    };
+    await expect(new AstridAgentSessionStore({ acp } as never).get('p', 'chat-1')).rejects.toBe(missing);
+    expect(acp.connect).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not reconnect or hide an unknown saved session', async () => {
+    const missing = new BridgeRouteError('ACP rpc', 404, { error: 'not_found', detail: 'ACP session not found: chat-1' });
+    const acp = {
+      projectChat: vi.fn(async () => ({ project_id: 'p', sessions: [{ id: 'chat-1' }] })),
+      connect: vi.fn(async () => ({ connection_id: 'valid' })),
+      loadSession: vi.fn(async () => { throw missing; }),
+    };
+    await expect(new AstridAgentSessionStore({ acp } as never).get('p', 'chat-1')).rejects.toBe(missing);
+    expect(acp.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it('streams live follower turns without recording replay receipts, blocks writes, and takes over explicitly', async () => {
+    const projectChat = { project_id: 'p', scope_key: 'project:p', revision: 1, selected_session_id: 'chat-1', sessions: [{ id: 'chat-1' }], draft: { text: '', revision: 1, queued_messages: [] } };
+    let eventsRead = false;
+    const acp = {
+      connect: vi.fn(async () => ({ connection_id: 'follower-connection' })),
+      projectChat: vi.fn(async () => projectChat),
+      loadSession: vi.fn(async () => ({ _astridSession: { role: 'follower', active: true, activeRequestId: 'remote-request' } })),
+      events: vi.fn(async () => {
+        if (eventsRead) return { disconnected: false, notifications: [] };
+        eventsRead = true;
+        return { disconnected: false, notifications: [
+          { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-1', update: { sessionUpdate: 'user_message_chunk', live: true, requestId: 'remote-request', messageId: 'astrid-live:remote-request', content: { type: 'text', text: 'Remote request' } } } },
+          { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-1', update: { sessionUpdate: 'agent_message_chunk', messageId: 'remote-reply', content: { type: 'text', text: 'Remote reply' } } } },
+        ] };
+      }),
+      promptProjectSession: vi.fn(),
+      cancelSession: vi.fn(),
+      takeOverSession: vi.fn(async () => ({ _astridSession: { role: 'writer', active: false, activeRequestId: null } })),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    const follower = await store.get('p', 'chat-1');
+    expect(follower.control).toEqual({ role: 'follower', active: true, activeRequestId: 'remote-request' });
+    expect(follower.status).toBe('processing');
+    expect(follower.turns).toEqual([
+      expect.objectContaining({ role: 'user', content: 'Remote request', request_id: 'remote-request', messageId: 'astrid-live:remote-request' }),
+      expect.objectContaining({ role: 'assistant', content: 'Remote reply', messageId: 'remote-reply' }),
+    ]);
+    expect(follower.durableAcceptedRequestIds).not.toContain('remote-request');
+    await expect(store.prompt('chat-1', { message: 'duplicate' }, { tool: 'video-editor', projectId: 'p', projectSlug: null, timelineId: null, timelineName: null })).rejects.toThrow('Take over');
+    await expect(store.cancel('chat-1')).rejects.toThrow('Take over');
+    expect(acp.promptProjectSession).not.toHaveBeenCalled();
+    expect(acp.cancelSession).not.toHaveBeenCalled();
+    const owned = await store.takeOver('p', 'chat-1');
+    expect(acp.takeOverSession).toHaveBeenCalledWith('follower-connection', 'chat-1');
+    expect(owned.control).toEqual({ role: 'writer', active: false, activeRequestId: null });
+    expect(owned.turns).toHaveLength(2);
+  });
+
+  it('keeps live assistant output when the current writer is taken over mid-turn', async () => {
+    const projectChat = { project_id: 'p', scope_key: 'project:p', revision: 1, selected_session_id: 'chat-2', sessions: [{ id: 'chat-2' }], draft: { text: '', revision: 1, queued_messages: [] } };
+    const requestId = 'writer-request';
+    let promptReturned = false;
+    const acp = {
+      connect: vi.fn(async () => ({ connection_id: 'writer-connection' })),
+      projectChat: vi.fn(async () => projectChat),
+      loadSession: vi.fn(async () => ({ _astridSession: { role: 'writer', active: false, activeRequestId: null } })),
+      events: vi.fn(async () => {
+        if (!promptReturned) return { disconnected: false, notifications: [] };
+        promptReturned = false;
+        return { disconnected: false, notifications: [
+          { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-2', update: { sessionUpdate: 'astrid_session_control', role: 'follower', active: true, activeRequestId: requestId } } },
+          { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-2', update: { sessionUpdate: 'agent_message_chunk', live: true, messageId: 'reply-2', content: { type: 'text', text: 'Streamed once' } } } },
+        ] };
+      }),
+      promptProjectSession: vi.fn(async () => { promptReturned = true; return {}; }),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await store.prompt('chat-2', { message: 'hello', requestId }, { tool: 'video-editor', projectId: 'p', projectSlug: null, timelineId: null, timelineName: null });
+    const saved = await store.get('p', 'chat-2');
+    expect(acp.promptProjectSession).toHaveBeenCalledWith('p', 'writer-connection', 'chat-2', expect.any(Array), requestId);
+    expect(saved.turns.filter(turn => turn.role === 'assistant')).toEqual([expect.objectContaining({ content: 'Streamed once', messageId: 'reply-2' })]);
+    expect(saved.control).toEqual({ role: 'follower', active: true, activeRequestId: requestId });
+    expect(saved.status).toBe('processing');
+  });
+
+  it('allows the active writer to cancel and lets its prompt finish across active control updates', async () => {
+    const projectChat = { project_id: 'p', scope_key: 'project:p', revision: 1, selected_session_id: 'chat-active', sessions: [{ id: 'chat-active' }], draft: { text: '', revision: 1, queued_messages: [] } };
+    let releasePrompt!: () => void;
+    let notification: unknown;
+    const promptWait = new Promise<void>(resolve => { releasePrompt = resolve; });
+    const acp = {
+      connect: vi.fn(async () => ({ connection_id: 'active-connection' })),
+      projectChat: vi.fn(async () => projectChat),
+      loadSession: vi.fn(async () => ({ _astridSession: { role: 'writer', active: false, activeRequestId: null } })),
+      events: vi.fn(async () => ({ disconnected: false, notifications: notification ? [notification] : [] })),
+      promptProjectSession: vi.fn(async () => { await promptWait; return {}; }),
+      cancelSession: vi.fn(async () => ({})),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    const prompt = store.prompt('chat-active', { message: 'hello', requestId: 'local-request' }, { tool: 'video-editor', projectId: 'p', projectSlug: null, timelineId: null, timelineName: null });
+    await vi.waitFor(() => expect(acp.promptProjectSession).toHaveBeenCalled());
+    notification = { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-active', update: { sessionUpdate: 'astrid_session_control', role: 'writer', active: true, activeRequestId: 'local-request' } } };
+    await store.get('p', 'chat-active');
+    await expect(store.cancel('chat-active')).resolves.toBeUndefined();
+    notification = { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-active', update: { sessionUpdate: 'astrid_session_control', role: 'writer', active: false, activeRequestId: null } } };
+    releasePrompt();
+    await expect(prompt).resolves.toBeUndefined();
+  });
+
+  it('returns quietly when takeover arrives during an in-flight writer prompt', async () => {
+    const projectChat = { project_id: 'p', scope_key: 'project:p', revision: 1, selected_session_id: 'chat-taken', sessions: [{ id: 'chat-taken' }], draft: { text: '', revision: 1, queued_messages: [] } };
+    let releasePrompt!: () => void;
+    const notification: { value: unknown } = { value: undefined };
+    const promptWait = new Promise<void>(resolve => { releasePrompt = resolve; });
+    const acp = {
+      connect: vi.fn(async () => ({ connection_id: 'taken-connection' })),
+      projectChat: vi.fn(async () => projectChat),
+      loadSession: vi.fn(async () => ({ _astridSession: { role: 'writer', active: false, activeRequestId: null } })),
+      events: vi.fn(async () => ({ disconnected: false, notifications: notification.value ? [notification.value] : [] })),
+      promptProjectSession: vi.fn(async () => { await promptWait; return {}; }),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    const prompt = store.prompt('chat-taken', { message: 'hello', requestId: 'remote-request' }, { tool: 'video-editor', projectId: 'p', projectSlug: null, timelineId: null, timelineName: null });
+    await vi.waitFor(() => expect(acp.promptProjectSession).toHaveBeenCalled());
+    notification.value = { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-taken', update: { sessionUpdate: 'astrid_session_control', role: 'follower', active: true, activeRequestId: 'remote-request' } } };
+    await store.get('p', 'chat-taken');
+    releasePrompt();
+    await expect(prompt).resolves.toBeUndefined();
+    expect(acp.promptProjectSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not replay a request already active in a follower session', async () => {
+    const get = vi.spyOn(AstridAgentSessionStore.prototype, 'get').mockResolvedValue({
+      id: 'chat-3', status: 'processing', turns: [], taskLinks: [],
+      control: { role: 'follower', active: true, activeRequestId: 'queued-request' },
+    } as never);
+    const hook = renderHook(() => useSendMessage('chat-3', { tool: 'video-editor', projectId: 'p', projectSlug: null, timelineId: null, timelineName: null }, 'p'), { wrapper });
+    await expect(hook.result.current.checkAcceptedRequest('queued-request')).resolves.toBe(false);
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(get).toHaveBeenCalledWith('p', 'chat-3');
+    hook.unmount();
+  });
+
   it('persists a usable local agent default and rejects unavailable or signed-out choices', async () => {
     const acp = {
       agents: vi.fn(async () => ({ agents: [
@@ -143,6 +310,7 @@ describe('timeline agent ACP chat', () => {
       projectChat: vi.fn(async () => chat),
       connect: vi.fn(async () => ({ connection_id: 'codex-connection' })),
       loadSession: vi.fn(async () => ({})),
+      events: vi.fn(async () => ({ notifications: [], disconnected: false })),
       sessionModels: vi.fn(async (_connectionId: string, sessionId: string) => ({ models: { currentModelId: `${sessionId}/model-a`, availableModels: [{ modelId: 'provider/model-a', name: 'Model A' }] } })),
       setSessionModel: vi.fn(async (_connectionId: string, _sessionId: string, modelId: string) => ({ models: { currentModelId: modelId, availableModels: [{ modelId, name: 'Model' }] } })),
     };
@@ -164,6 +332,7 @@ describe('timeline agent ACP chat', () => {
       projectChat: vi.fn(async () => chat),
       connect: vi.fn(async () => ({ connection_id: 'conn' })),
       loadSession: vi.fn(async () => ({})),
+      events: vi.fn(async () => ({ notifications: [], disconnected: false })),
       setSessionModel: vi.fn(async (_connectionId: string, _sessionId: string, modelId: string) => ({ models: { currentModelId: modelId, availableModels: [] } })),
       sessionModels: vi.fn(async () => ({ models: { currentModelId: 'model', availableModels: [] } })),
     } });
@@ -183,7 +352,7 @@ describe('timeline agent ACP chat', () => {
     localStorage.setItem(localAgentModelSettingKey('codex'), 'old-model');
     const chat = { project_id: 'p', revision: 1, selected_session_id: 'codex:chat-3', main_session_id: null, sessions: [{ id: 'codex:chat-3' }], draft: { revision: 1 } };
     const store = new AstridAgentSessionStore({ acp: {
-      projectChat: vi.fn(async () => chat), connect: vi.fn(async () => ({ connection_id: 'conn' })), loadSession: vi.fn(async () => ({})),
+      projectChat: vi.fn(async () => chat), connect: vi.fn(async () => ({ connection_id: 'conn' })), loadSession: vi.fn(async () => ({})), events: vi.fn(async () => ({ notifications: [], disconnected: false })),
       setSessionModel: vi.fn(async () => { throw new Error('switch failed'); }),
     } } as never);
     await expect(store.setModel('new-model', 'codex:chat-3', 'p')).rejects.toThrow('switch failed');
@@ -218,6 +387,36 @@ describe('timeline agent ACP chat', () => {
       await act(async () => { await hook.result.current.selection.mutateAsync('model-b2'); });
       await waitFor(() => expect(catalogs.length).toBeGreaterThan(beforeSwitch));
       expect(setModel).toHaveBeenCalledWith('model-b2', 'codex:chat-b', 'p');
+    } finally {
+      hook.unmount();
+      client.clear();
+    }
+  });
+
+  it('refreshes a follower model catalog from live model updates and blocks model changes', async () => {
+    const sessionId = 'codex:chat-model-follower';
+    const project = { project_id: 'p', scope_key: 'project:p', revision: 1, selected_session_id: sessionId, sessions: [{ id: sessionId }], draft: { text: '', revision: 1, queued_messages: [] } };
+    let eventPending = true;
+    const acp = {
+      connect: vi.fn(async () => ({ connection_id: 'model-connection' })),
+      projectChat: vi.fn(async () => project),
+      loadSession: vi.fn(async () => ({ _astridSession: { role: 'follower', active: true, activeRequestId: 'remote-model-turn' } })),
+      events: vi.fn(async () => ({ disconnected: false, notifications: eventPending ? (eventPending = false, [{ jsonrpc: '2.0', method: 'session/update', params: { sessionId, update: { sessionUpdate: 'current_model_update', currentModelId: 'model-b', models: { currentModelId: 'model-b', availableModels: [{ modelId: 'model-b', name: 'Model B' }] } } } }]) : [] })),
+      sessionModels: vi.fn(async () => ({ models: { currentModelId: 'model-b', availableModels: [{ modelId: 'model-b', name: 'Model B' }] } })),
+      setSessionModel: vi.fn(),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    const catalogs = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockImplementation(async () => ({ providers: [], currentModel: null, localModels: { currentModelId: eventPending ? 'model-a' : 'model-b', availableModels: [] } }));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(agentSessionQueryKey(sessionId, 'p'), { id: sessionId, status: 'processing', turns: [], taskLinks: [], control: { role: 'follower', active: true, activeRequestId: 'remote-model-turn' } });
+    const hook = renderHook(() => useAgentModels(true, sessionId, 'p'), { wrapper: wrapperWithClient(client) });
+    try {
+      await waitFor(() => expect(hook.result.current.data?.localModels?.currentModelId).toBe('model-a'));
+      await store.get('p', sessionId);
+      await waitFor(() => expect(hook.result.current.data?.localModels?.currentModelId).toBe('model-b'));
+      expect(catalogs).toHaveBeenCalledTimes(2);
+      await expect(store.setModel('model-c', sessionId, 'p')).rejects.toThrow('Take over');
+      expect(acp.setSessionModel).not.toHaveBeenCalled();
     } finally {
       hook.unmount();
       client.clear();

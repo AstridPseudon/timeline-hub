@@ -8,7 +8,8 @@ import { delimiter } from 'node:path';
 import { getAstridAgentModelCatalog, setAstridAgentDefaultModel } from './astrid-agent-models.ts';
 import { discoverLocalAgents } from './astrid-local-agents.ts';
 import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
-import { localAgentIdSchema, localAgentModelsSchema, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '../src/integrations/astrid/localAgents.ts';
+import { SharedAcpSessions, sharedSessionModels } from './astrid-shared-acp-sessions.ts';
+import { localAgentIdSchema, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '../src/integrations/astrid/localAgents.ts';
 
 import {
   AcpProcessHost,
@@ -39,6 +40,7 @@ const REQUEST_METHODS = new Set([
   'session/close',
   'session/prompt',
   'session/set_config_option',
+  'session/takeover',
 ]);
 
 type JsonRecord = Record<string, unknown>;
@@ -59,6 +61,7 @@ export type AstridAcpBridgeConfig = {
 };
 
 type Connection = {
+  readonly id: string;
   readonly agent: LocalAgentId;
   readonly host: AcpProcessHost;
   readonly notifications: unknown[];
@@ -68,33 +71,13 @@ type Connection = {
   readonly models: Map<string, LocalAgentModels>;
   defaultModelId?: string;
   disconnected: boolean;
+  closed: boolean;
   notificationBytes: number;
   readonly localMediaOnly: boolean;
   lastUsedAt: number;
   inFlight: number;
 };
 
-function modelsFrom(value: unknown): LocalAgentModels | null {
-  const record = asRecord(value);
-  const models = asRecord(record?.models);
-  const configOptions = Array.isArray(record?.configOptions) ? record.configOptions : [];
-  const modelConfig = configOptions.map(asRecord).find(item => item?.id === 'model');
-  if (modelConfig) {
-    const options = Array.isArray(modelConfig?.options) ? modelConfig.options : [];
-    const groupedOptions = options.flatMap(item => {
-      const option = asRecord(item);
-      if (typeof option?.value === 'string') return [option];
-      return Array.isArray(option?.options) ? option.options.map(asRecord).filter((nested): nested is JsonRecord => Boolean(nested)) : [];
-    });
-    const availableModels = groupedOptions.flatMap(option => typeof option.value === 'string'
-      ? [{ modelId: option.value, name: typeof option.name === 'string' ? option.name : option.value, ...(typeof option.description === 'string' || option.description === null ? { description: option.description } : {}) }]
-      : []);
-    const parsedConfigModels = localAgentModelsSchema.safeParse({ availableModels, currentModelId: modelConfig.currentValue });
-    return parsedConfigModels.success ? parsedConfigModels.data : null;
-  }
-  const parsed = localAgentModelsSchema.safeParse(models);
-  return parsed.success ? parsed.data : null;
-}
 
 type TerminalExitStatus = {
   readonly exitCode: number | null;
@@ -367,6 +350,16 @@ export class AstridAcpBridge {
   private readonly localAgentHostFactory: typeof createLocalAgentAcpProcessHost;
   private readonly idFactory: () => string;
   private readonly connections = new Map<string, Connection>();
+  private readonly sharedSessions = new SharedAcpSessions(
+    (client, notification) => this.enqueueNotification(client as Connection, notification),
+    (client, sessionId) => {
+      const connection = client as Connection;
+      for (let index = connection.notifications.length - 1; index >= 0; index--) {
+        if (asRecord(asRecord(connection.notifications[index])?.params)?.sessionId === sessionId) connection.notifications.splice(index, 1);
+      }
+      connection.notificationBytes = connection.notifications.reduce<number>((total, item) => total + Buffer.byteLength(JSON.stringify(item)), 0);
+    },
+  );
   private readonly chatRegistry?: ProjectChatRegistry;
   private readonly now: () => number;
   // Ids we reaped, so a late poll gets the disconnected answer, not a bare 404.
@@ -450,11 +443,7 @@ export class AstridAcpBridge {
           // retains the transcript; clients load the same opaque session ID.
           for (const [id, connection] of this.connections) {
             if (connection.agent !== 'astrid') continue;
-            this.connections.delete(id);
-            this.reaped.add(id);
-            if (this.reaped.size > MAX_REAPED_IDS) this.reaped.delete(this.reaped.values().next().value as string);
-            closeTerminals(connection.terminals);
-            await connection.host.dispose();
+            await this.releaseConnection(id, connection);
           }
           jsonResponse(response, 200, { currentModel });
         } finally {
@@ -488,7 +477,7 @@ export class AstridAcpBridge {
         return;
       }
       const connection = this.connections.get(match[1]);
-      if (!connection) {
+      if (!connection || connection.closed) {
         if (this.reaped.has(match[1])) {
           if (match[2] === 'events' && request.method === 'GET') {
             jsonResponse(response, 200, { notifications: [], disconnected: true });
@@ -508,7 +497,7 @@ export class AstridAcpBridge {
       if (match[2] === 'models' && request.method === 'GET') {
         const sessionId = url.searchParams.get('sessionId');
         if (!sessionId || !connection.sessions.has(sessionId)) throw new ChatError(400, 'invalid_session', 'sessionId must belong to this ACP connection');
-        jsonResponse(response, 200, { models: connection.models.get(sessionId) ?? null });
+        jsonResponse(response, 200, { models: sharedSessionModels(this.sharedSessions.snapshot(connection, sessionId)) });
         return;
       }
       if (match[2] === 'model' && request.method === 'POST') {
@@ -519,13 +508,14 @@ export class AstridAcpBridge {
         }
         if (connection.inFlight > 1) throw new ChatError(409, 'acp_request_in_progress', 'Wait for the current ACP request to finish before changing models');
         if (!connection.sessions.has(body.sessionId)) throw new ChatError(403, 'session_not_owned', 'This ACP connection does not own that session');
+        this.rememberSession(connection, 'session/load', body, this.sharedSessions.snapshot(connection, body.sessionId));
         const models = connection.models.get(body.sessionId);
         if (!models?.availableModels.some(model => model.modelId === body.modelId)) throw new ChatError(409, 'model_unavailable', 'The requested model was not advertised for this session');
         const usesConfigOption = connection.configOptions.get(body.sessionId)?.has('model');
         const result = usesConfigOption
-          ? await connection.host.request('session/set_config_option', { sessionId: body.sessionId, configId: 'model', value: body.modelId })
-          : await connection.host.request('session/set_model', { sessionId: body.sessionId, modelId: body.modelId });
-        this.updateLocalModelState(connection, body.sessionId, models, body.modelId, result, Boolean(usesConfigOption));
+          ? await this.sharedSessions.request(connection, 'session/set_config_option', { sessionId: body.sessionId, configId: 'model', value: body.modelId })
+          : await this.sharedSessions.request(connection, 'session/set_model', { sessionId: body.sessionId, modelId: body.modelId });
+        this.updateLocalModelState(connection, body.sessionId, body.modelId);
         connection.defaultModelId = body.modelId;
         jsonResponse(response, 200, { result, models: connection.models.get(body.sessionId) });
         return;
@@ -551,9 +541,7 @@ export class AstridAcpBridge {
         return;
       }
       if (!match[2] && (request.method === 'DELETE' || request.method === 'POST')) {
-        await connection.host.dispose();
-        closeTerminals(connection.terminals);
-        this.connections.delete(match[1]);
+        await this.releaseConnection(match[1], connection);
         jsonResponse(response, 200, { connection_id: match[1], closed: true });
         return;
       }
@@ -569,6 +557,7 @@ export class AstridAcpBridge {
       jsonResponse(response, result.status, result.body);
     } finally {
       for (const release of held) release();
+      await this.disposeUnusedHosts();
     }
   }
 
@@ -582,18 +571,32 @@ export class AstridAcpBridge {
   /** Disposes connections whose client went away; never one with a request in flight. */
   async reapIdle(): Promise<void> {
     const cutoff = this.now() - CONNECTION_IDLE_MS;
-    const abandoned = [...this.connections].filter(([, c]) => c.inFlight === 0 && c.lastUsedAt <= cutoff);
-    await Promise.all(abandoned.map(async ([id, { host, terminals }]) => {
+    const abandoned = [...this.connections].filter(([, c]) => !c.closed && c.inFlight === 0 && c.lastUsedAt <= cutoff);
+    await Promise.all(abandoned.map(([id, connection]) => this.releaseConnection(id, connection)));
+    await this.disposeUnusedHosts();
+  }
+
+  private async releaseConnection(id: string, connection: Connection): Promise<void> {
+    connection.closed = true;
+    this.sharedSessions.detach(connection);
+    this.reaped.add(id);
+    if (this.reaped.size > MAX_REAPED_IDS) this.reaped.delete(this.reaped.values().next().value as string);
+    await this.disposeUnusedHosts();
+  }
+
+  private async disposeUnusedHosts(): Promise<void> {
+    for (const [id, connection] of this.connections) {
+      if (!connection.closed || connection.inFlight > 0 || this.sharedSessions.retainsHost(connection)) continue;
       this.connections.delete(id);
-      this.reaped.add(id);
-      if (this.reaped.size > MAX_REAPED_IDS) this.reaped.delete(this.reaped.values().next().value as string);
-      closeTerminals(terminals);
-      await host.dispose().catch(() => undefined);
-    }));
+      this.sharedSessions.forgetHost(connection);
+      closeTerminals(connection.terminals);
+      await connection.host.dispose();
+    }
   }
 
   async close(): Promise<void> {
     clearInterval(this.sweeper);
+    this.sharedSessions.close();
     await Promise.all([...this.connections.values()].map(async ({ host, terminals }) => {
       await host.dispose();
       closeTerminals(terminals);
@@ -607,6 +610,29 @@ export class AstridAcpBridge {
 
   private localMediaOnly(request: IncomingMessage): boolean {
     return this.config.localMediaOnly === true || request.headers['x-astrid-local-media-only'] === '1';
+  }
+
+  private enqueueNotification(connection: Connection, notification: unknown): void {
+    if (connection.closed || connection.disconnected) return;
+    const bytes = Buffer.byteLength(JSON.stringify(notification));
+    if (connection.notificationBytes + bytes > MAX_NOTIFICATION_BYTES) {
+      connection.disconnected = true;
+      connection.notifications.splice(0, connection.notifications.length, {
+        jsonrpc: '2.0', method: 'astrid/acp/disconnected',
+        params: { code: 'acp_event_overflow', detail: 'ACP event queue exceeded 1 MiB; reconnect and resume the installed session' },
+      });
+      connection.notificationBytes = 0;
+      this.sharedSessions.detach(connection);
+      // A slow follower must not terminate another tab's active agent.
+      if (!this.sharedSessions.retainsHost(connection)) {
+        closeTerminals(connection.terminals);
+        void connection.host.dispose();
+      }
+      return;
+    }
+    connection.notificationBytes += bytes;
+    connection.notifications.push(notification);
+    if (asRecord(notification)?.method === 'astrid/acp/disconnected') connection.disconnected = true;
   }
 
   private async connect(response: ServerResponse, localMediaOnly: boolean, agent: LocalAgentId, defaultModelId?: string): Promise<void> {
@@ -653,32 +679,12 @@ export class AstridAcpBridge {
         return {};
       },
       onNotification: (notification) => {
-        if (!connection || connection.disconnected) return;
-        const params = asRecord(notification.params);
-        const update = asRecord(params?.update);
-        if (connection.agent !== 'astrid' && notification.method === 'session/update'
-            && update?.sessionUpdate === 'config_option_update' && typeof params?.sessionId === 'string'
-            && connection.sessions.has(params.sessionId)) {
-          this.rememberSession(connection, 'session/load', params, update);
-        }
-        const bytes = Buffer.byteLength(JSON.stringify(notification));
-        if (connection.notificationBytes + bytes > MAX_NOTIFICATION_BYTES) {
-          connection.disconnected = true;
-          notifications.splice(0, notifications.length, {
-            jsonrpc: '2.0', method: 'astrid/acp/disconnected',
-            params: { code: 'acp_event_overflow', detail: 'ACP event queue exceeded 1 MiB; reconnect and resume the installed session' },
-          });
-          connection.notificationBytes = 0;
-          closeTerminals(terminals);
-          void connection.host.dispose();
-          return;
-        }
-        connection.notificationBytes += bytes;
-        notifications.push(notification);
+        if (connection) this.sharedSessions.notification(connection, notification);
       },
       onDisconnect: (error) => {
         if (connection?.disconnected) return;
         if (connection) connection.disconnected = true;
+        if (connection) this.sharedSessions.forgetHost(connection);
         closeTerminals(terminals);
         notifications.push({
           jsonrpc: '2.0',
@@ -701,7 +707,7 @@ export class AstridAcpBridge {
       } } : {}),
     };
     const host = agent === 'astrid' ? this.hostFactory(launcherOptions) : await this.localAgentHostFactory(agent, launcherOptions);
-    connection = { agent, host, notifications, terminals, sessions: new Set(), configOptions: new Map(), models: new Map(), ...(defaultModelId ? { defaultModelId } : {}), disconnected: false, notificationBytes: 0, localMediaOnly, lastUsedAt: this.now(), inFlight: 0 };
+    connection = { id: connectionId, agent, host, notifications, terminals, sessions: new Set(), configOptions: new Map(), models: new Map(), ...(defaultModelId ? { defaultModelId } : {}), disconnected: false, closed: false, notificationBytes: 0, localMediaOnly, lastUsedAt: this.now(), inFlight: 0 };
     this.connections.set(connectionId, connection);
     try {
       const initialize = await host.initialize({
@@ -728,10 +734,10 @@ export class AstridAcpBridge {
     if (action === 'unassigned' && request.method === 'GET') {
       const connectionId = new URL(request.url ?? '/', 'http://localhost').searchParams.get('connection_id');
       const connection = connectionId ? this.connections.get(connectionId) : undefined;
-      if (!connection || connection.disconnected) throw new ChatError(404, 'connection_not_found', 'ACP connection is unavailable; reconnect');
+      if (!connection || connection.closed || connection.disconnected) throw new ChatError(404, 'connection_not_found', 'ACP connection is unavailable; reconnect');
       held.push(this.use(connection));
       if (localMediaOnly && !connection.localMediaOnly) throw new ChatError(409, 'hosted_connection_required', 'Create a hosted ACP connection to enable installed-agent media protections');
-      const result = await connection.host.request('session/list', { cwd: this.config.cwd });
+      const result = await this.sharedSessions.request(connection, 'session/list', { cwd: this.config.cwd });
       const root = asRecord(result) ?? {};
       const items = Array.isArray(result) ? result : Array.isArray(root.sessions) ? root.sessions : Array.isArray(root.items) ? root.items : [];
       const candidates = items.flatMap(item => {
@@ -764,7 +770,7 @@ export class AstridAcpBridge {
     }
     if (request.method === 'POST' && (action === 'sessions' || action === 'prompt' || action === 'associate')) {
       const connection = typeof body.connection_id === 'string' ? this.connections.get(body.connection_id) : undefined;
-      if (!connection || connection.disconnected) throw new ChatError(404, 'connection_not_found', 'ACP connection is unavailable; reconnect');
+      if (!connection || connection.closed || connection.disconnected) throw new ChatError(404, 'connection_not_found', 'ACP connection is unavailable; reconnect');
       held.push(this.use(connection));
       if (localMediaOnly && !connection.localMediaOnly) throw new ChatError(409, 'hosted_connection_required', 'Create a hosted ACP connection to enable installed-agent media protections');
       // Follow-up requests inherit the connection's sticky hosted policy even
@@ -774,7 +780,7 @@ export class AstridAcpBridge {
       if (action === 'sessions') {
         if ((body.mode !== 'ensure' && body.mode !== 'ensure_main' && body.mode !== 'new') || typeof body.operation_id !== 'string' || !body.operation_id || body.operation_id.length > 200) throw new ChatError(400, 'invalid_body', 'mode and operation_id are required');
         const state = await registry.create(projectId, body.mode, body.operation_id, async () => {
-          const result = await connection.host.request('session/new', { cwd: this.config.cwd, mcpServers: [] });
+          const result = await this.sharedSessions.request(connection, 'session/new', { cwd: this.config.cwd, mcpServers: [] });
           this.rememberSession(connection, 'session/new', {}, result);
           return await this.applyDefaultLocalModel(connection, result);
         }, async sessionId => {
@@ -782,7 +788,7 @@ export class AstridAcpBridge {
           // connection. Changing the default must never mark that chat missing.
           if (sessionAgentId(sessionId) !== connection.agent) return true;
           try {
-            const result = await connection.host.request('session/resume', { sessionId, cwd: this.config.cwd, mcpServers: [] });
+            const result = await this.sharedSessions.request(connection, 'session/resume', { sessionId, cwd: this.config.cwd, mcpServers: [] });
             this.rememberSession(connection, 'session/resume', { sessionId }, result);
             return true;
           } catch (error) {
@@ -796,7 +802,7 @@ export class AstridAcpBridge {
         if (typeof body.session_id !== 'string' || !Number.isInteger(body.expected_revision)) throw new ChatError(400, 'invalid_body', 'session_id and expected_revision are required');
         const state = await registry.associate(projectId, body.expected_revision as number, body.session_id, async sessionId => {
           try {
-            const result = await connection.host.request('session/resume', { sessionId, cwd: this.config.cwd, mcpServers: [] });
+            const result = await this.sharedSessions.request(connection, 'session/resume', { sessionId, cwd: this.config.cwd, mcpServers: [] });
             this.rememberSession(connection, 'session/resume', { sessionId }, result);
             return true;
           } catch (error) {
@@ -809,7 +815,8 @@ export class AstridAcpBridge {
         if (typeof body.session_id !== 'string' || !Array.isArray(body.prompt)) throw new ChatError(400, 'invalid_body', 'session_id and prompt are required');
         await registry.assertOwned(projectId, body.session_id);
         await this.applySelectedModel(connection, body.session_id);
-        const result = await connection.host.request('session/prompt', { sessionId: body.session_id, prompt: body.prompt });
+        if (body.request_id !== undefined && (typeof body.request_id !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/.test(body.request_id))) throw new ChatError(400, 'invalid_body', 'request_id must be a submission identifier');
+        const result = await this.sharedSessions.request(connection, 'session/prompt', { sessionId: body.session_id, prompt: body.prompt, ...(body.request_id ? { _astridRequestId: body.request_id } : {}) });
         jsonResponse(response, 200, { result });
       }
       return;
@@ -824,9 +831,10 @@ export class AstridAcpBridge {
     if (!sessionId) return;
     connection.sessions.add(sessionId);
     const options = advertisedConfigOptions(result);
-    if (options.size > 0) connection.configOptions.set(sessionId, options);
-    const models = modelsFrom(result);
+    if (Array.isArray(asRecord(result)?.configOptions)) connection.configOptions.set(sessionId, options);
+    const models = sharedSessionModels(result);
     if (models) connection.models.set(sessionId, models);
+    else connection.models.delete(sessionId);
   }
 
   private async applyDefaultLocalModel(connection: Connection, result: unknown): Promise<unknown> {
@@ -839,22 +847,19 @@ export class AstridAcpBridge {
         throw new ChatError(409, 'model_unavailable', 'The selected default model is unavailable in this new ACP session.');
       }
       const usesConfigOption = connection.configOptions.get(sessionId)?.has('model');
-      const setterResult = await connection.host.request(usesConfigOption ? 'session/set_config_option' : 'session/set_model', usesConfigOption
+      await this.sharedSessions.request(connection, usesConfigOption ? 'session/set_config_option' : 'session/set_model', usesConfigOption
         ? { sessionId, configId: 'model', value: connection.defaultModelId }
         : { sessionId, modelId: connection.defaultModelId });
-      this.updateLocalModelState(connection, sessionId, models, connection.defaultModelId, setterResult, Boolean(usesConfigOption));
+      this.updateLocalModelState(connection, sessionId, connection.defaultModelId);
     }
-    return { ...(asRecord(result) ?? {}), models: connection.models.get(sessionId) };
+    return { ...(asRecord(result) ?? {}), ...(asRecord(this.sharedSessions.snapshot(connection, sessionId)) ?? {}), models: connection.models.get(sessionId) };
   }
 
-  private updateLocalModelState(connection: Connection, sessionId: string, previous: LocalAgentModels, requestedModelId: string, result: unknown, preferConfig: boolean): void {
-    const returnedRecord = asRecord(result);
-    const returned = preferConfig && !Array.isArray(returnedRecord?.configOptions) ? null : modelsFrom(result);
-    const next = returned ?? { ...previous, currentModelId: requestedModelId };
-    if (next.currentModelId !== requestedModelId) throw new ChatError(409, 'model_selection_rejected', 'The installed agent selected a different model than requested.');
-    connection.models.set(sessionId, next);
-    const options = advertisedConfigOptions(result);
-    if (options.size > 0) connection.configOptions.set(sessionId, options);
+  private updateLocalModelState(connection: Connection, sessionId: string, requestedModelId: string): void {
+    this.rememberSession(connection, 'session/load', { sessionId }, this.sharedSessions.snapshot(connection, sessionId));
+    if (connection.models.get(sessionId)?.currentModelId !== requestedModelId) {
+      throw new ChatError(409, 'model_selection_rejected', 'The installed agent selected a different model than requested.');
+    }
   }
 
   private async applySelectedModel(connection: Connection, sessionId: string): Promise<void> {
@@ -863,9 +868,9 @@ export class AstridAcpBridge {
     // Listing the saved default must leave session/project defaults to Astrid.
     const selected = this.selectedModel;
     if (!selected) return;
-    const options = connection.configOptions.get(sessionId)?.get('model');
+    const options = advertisedConfigOptions(this.sharedSessions.snapshot(connection, sessionId)).get('model');
     if (!options?.has(selected)) throw new ChatError(409, 'model_unavailable', 'The selected model is unavailable in this ACP session. Reconnect and choose an available model.');
-    await connection.host.request('session/set_config_option', { sessionId, configId: 'model', value: selected });
+    await this.sharedSessions.request(connection, 'session/set_config_option', { sessionId, configId: 'model', value: selected });
   }
 
   private async rpc(connection: Connection, request: IncomingMessage, response: ServerResponse, localMediaOnly: boolean): Promise<void> {
@@ -890,6 +895,7 @@ export class AstridAcpBridge {
       if (!connection.sessions.has(input.sessionId)) throw new Error('config option sessionId is not owned by this ACP connection');
       if (input.configId !== 'model' && input.configId !== 'thinking') throw new Error('config option id must be model or thinking');
       if (typeof input.value !== 'string' || !input.value) throw new Error('config option value is required');
+      this.rememberSession(connection, 'session/load', input, this.sharedSessions.snapshot(connection, input.sessionId));
       const allowedValues = connection.configOptions.get(input.sessionId)?.get(input.configId);
       if (!allowedValues?.has(input.value)) throw new Error('config option value was not advertised for this session');
     }
@@ -897,7 +903,9 @@ export class AstridAcpBridge {
       const sessionId = sessionIdFrom(params);
       if (sessionId) await this.applySelectedModel(connection, sessionId);
     }
-    let result = await connection.host.request(method, params);
+    let result = method === 'session/takeover'
+      ? await this.sharedSessions.takeover(connection, String(asRecord(params)?.sessionId ?? ''))
+      : await this.sharedSessions.request(connection, method, params);
     if (method === 'session/new' || method === 'session/load' || method === 'session/resume' || method === 'session/fork') {
       this.rememberSession(connection, method, params, result);
       if (method === 'session/new') result = await this.applyDefaultLocalModel(connection, result);
@@ -909,8 +917,7 @@ export class AstridAcpBridge {
       }
     } else if (method === 'session/set_config_option') {
       const input = asRecord(params)!;
-      const options = advertisedConfigOptions(result);
-      if (options.size > 0) connection.configOptions.set(input.sessionId as string, options);
+      this.rememberSession(connection, 'session/load', input, this.sharedSessions.snapshot(connection, input.sessionId as string));
     } else if (method === 'session/close') {
       const sessionId = sessionIdFrom(params);
       if (sessionId) {
@@ -926,7 +933,7 @@ export class AstridAcpBridge {
     const body = asRecord(await readJson(request));
     const sessionId = body?.sessionId;
     if (typeof sessionId !== 'string' || !sessionId) throw new Error('sessionId is required');
-    await connection.host.cancel({ sessionId });
+    await this.sharedSessions.cancel(connection, sessionId);
     jsonResponse(response, 200, { cancelled: true, session_id: sessionId });
   }
 }

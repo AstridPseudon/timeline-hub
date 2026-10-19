@@ -1,5 +1,6 @@
+import {ManagedImg as Img} from '../../../../../rendering/shared/managed-media';
 import type {ReactElement} from 'react';
-import {Img, staticFile} from 'remotion';
+import {staticFile} from 'remotion';
 import {
   type ElementComponentProps,
   narrowParams,

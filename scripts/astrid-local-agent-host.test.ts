@@ -110,6 +110,13 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     const codexId = (await connected[1]!.json() as Json).connection_id as string;
     const rpc = async (connection: string, method: string, params: unknown = {}) => call(`/${connection}/rpc`, { method, params });
 
+    // Exercise real native load/resume calls with cold, distinct sessions.
+    // Later operations on the shared session should come from bridge cache.
+    for (const [connection, agent] of [[claudeId, 'claude-code'], [codexId, 'codex']] as const) {
+      assert.equal((await rpc(connection, 'session/load', { sessionId: `${agent}:cold-load` })).status, 200);
+      assert.equal((await rpc(connection, 'session/resume', { sessionId: `${agent}:cold-resume` })).status, 200);
+    }
+
     const created = await Promise.all([rpc(claudeId, 'session/new'), rpc(codexId, 'session/new')]);
     const sessionIds = await Promise.all(created.map(async response => (await response.json() as Json).result as Json));
     assert.deepEqual(sessionIds.map(result => result.sessionId), ['claude-code:shared-native-id', 'codex:shared-native-id']);
@@ -125,7 +132,7 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     assert.equal(codexSessions[0]!.sessionId, 'codex:shared-native-id');
 
     const crossAgent = await rpc(codexId, 'session/load', { sessionId: 'claude-code:shared-native-id' });
-    assert.equal(crossAgent.status, 502);
+    assert.equal(crossAgent.status, 409);
     assert.match((await crossAgent.json() as Json).detail as string, /different agent/);
 
     const prompt = await rpc(claudeId, 'session/prompt', {
@@ -135,7 +142,7 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     assert.equal(prompt.status, 200);
     const events = await call(`/${claudeId}/events`, undefined, 'GET');
     const notifications = (await events.json() as Json).notifications as Json[];
-    assert.equal((notifications[0]!.params as Json).sessionId, 'claude-code:shared-native-id');
+    assert.ok(notifications.some(notification => (notification.params as Json).sessionId === 'claude-code:shared-native-id'));
 
     const cancel = await call(`/${codexId}/cancel`, { sessionId: 'codex:shared-native-id' });
     assert.equal(cancel.status, 200);
@@ -158,6 +165,15 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     for (const method of ['session/load', 'session/resume', 'session/list']) {
       assert.ok(claudeRecords.some(row => row.method === method));
       assert.ok(codexRecords.some(row => row.method === method));
+    }
+    for (const agentRows of [claudeRecords, codexRecords]) {
+      for (const method of ['session/load', 'session/resume']) {
+        const nativeCalls = agentRows.filter(row => row.method === method);
+        const coldCalls = nativeCalls.filter(row => String((row.params as Json).sessionId).includes('cold-'));
+        const sharedCalls = nativeCalls.filter(row => (row.params as Json).sessionId === 'shared-native-id');
+        assert.equal(coldCalls.length, 1);
+        assert.equal(sharedCalls.length, 0); // shared cache never re-loads or resumes the native session
+      }
     }
   } finally {
     await bridge.close();

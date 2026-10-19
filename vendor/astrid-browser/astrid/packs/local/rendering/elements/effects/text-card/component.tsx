@@ -1,5 +1,6 @@
+import {ManagedImg as Img, ManagedOffthreadVideo as OffthreadVideo} from '../../../../../rendering/shared/managed-media';
 import type {CSSProperties, ReactElement} from 'react';
-import {Img, OffthreadVideo, useCurrentFrame, useVideoConfig} from 'remotion';
+import {useCurrentFrame, useVideoConfig} from 'remotion';
 import {
   type Anchor,
   anchorPosition,

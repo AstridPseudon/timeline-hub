@@ -30,6 +30,10 @@ port settings. Shell variables take precedence over the local file, and explicit
 launcher path arguments take precedence over both. Keep secrets out of `VITE_`
 variables. `ASTRID_SUPPORT_ROOT`, `ASTRID_WORKSPACE_DISCOVERY`, and
 `ASTRID_RUNTIME_SOURCE_MANIFEST` are also supported local launcher settings.
+When the installation already uses a credential file or a specific pack-host
+interpreter, preserve those paths with `ASTRID_ENV_FILE` and
+`ASTRID_PACK_HOST_PYTHON`. The launcher passes paths, never reads or copies the
+credential values. Existing credentials remain managed by Astrid's resolver.
 
 The same one-command restart reuses the configured Runtime, starts the local App
 and gateway, and passes that exact root and discovery path to the agent. Stop
@@ -50,3 +54,44 @@ editable finder mappings repaired to the current package paths; record exactly
 which environment and aliases changed, rather than reinstalling or silently
 changing interpreters. Preserve the installed named agent profile and verify its
 instructions hash before and after recovery.
+
+## Managed media requests
+
+A successful object GET from a terminal does not prove that browser playback can
+read it. The hosted page must send its exact Origin on native media requests,
+and browser fetches must omit credentials. The gateway adds the Runtime token
+on this computer; it rejects browser cookies and authorization. Keep its strict
+Origin rule instead of adding credentialed CORS to work around a renderer bug.
+
+The canonical rendering pack owns one managed-object URL recognizer and the
+`ManagedImg`, `ManagedOffthreadVideo`, and `ManagedVideo` primitives. They apply
+anonymous native CORS and credential-free decoder fetches only to managed object
+routes on loopback origins or the same-origin proxy, preserving external and
+signed URL options. Pack effects, image readiness, video readiness, and the App's
+audio cache must reuse that boundary. Do not add request policy separately to
+each effect. Refresh the browser source with
+`scripts/astrid-landing/refresh-vendor.mjs` and verify its recorded provenance.
+
+Regression coverage includes `ManagedMedia.hosted.test.tsx` (managed URLs,
+encoded IDs, ports/hosts, native attributes, refs/readiness callbacks, decoder
+and fallback options), `AudioAnalysisProvider.test.tsx` (credential-free cache
+warming), and `astrid-loopback-gateway.test.ts` (Origin refusal and ranged byte
+responses). Browser QA must also cover a pack-owned animated image/video,
+backward and forward seeking, and transition boundaries; ordinary seeded media
+alone does not exercise pack-owned native requests. Inspect the browser's actual
+request and console when an image fails, not only a server-side GET.
+
+## Saved chat after a bridge restart
+
+An ACP connection ID belongs to one bridge process. If that process restarts,
+the client retires a missing connection and retries the read-only saved
+transcript load once with a fresh connection. This includes the older bridge's
+specific `not_found` / `ACP connection is not available; reconnect` response;
+an unknown saved session remains an error. Prompts are never automatically
+resent by this recovery. Restored unconfirmed messages stay paused until the
+user explicitly retries delivery after checking saved history.
+
+`useAgentSession.test.tsx` covers both transcript-load and event-poll connection
+loss, plus unknown-session isolation. `AgentChat.projectContract.test.tsx`
+exercises the real panel/hooks/transport and verifies that a fresh connection
+preserves the draft and queued message without calling the prompt endpoint.

@@ -48,6 +48,8 @@ const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
   ['permission', () => connectionFor({ status: 'cant_reach', firstTime: true }, { awaitingConnect: true })],
   ['permission pending', () => connectionFor({ status: 'connecting' }, { awaitingConnect: true, isChecking: true })],
   ['blocked', () => connectionFor({ status: 'blocked' })],
+  ['unavailable', () => connectionFor({ status: 'unavailable' })],
+  ['access denied', () => connectionFor({ status: 'not_ready', reason: 'access_denied' })],
   ['set up', () => connectionFor({ status: 'cant_reach', firstTime: true })],
   ['not running (returning)', () => connectionFor({ status: 'cant_reach', firstTime: false })],
   ['not running (runtime_stopped)', () => connectionFor({ status: 'not_ready', reason: 'runtime_stopped' })],
@@ -59,7 +61,7 @@ const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
 describe('RuntimeConnectionPanel', () => {
   it.each(ALL_SCREENS)('%s: speaks of Astrid and never names a Runtime, workspace, port or command', (_name, connection) => {
     panel(connection());
-    expect(shownText()).toMatch(/\bAstrid\b/);
+    expect(shownText()).toContain('Astrid');
     expect(shownText()).not.toMatch(ENGINEER_WORDS);
     expect(shownText()).not.toMatch(/\bport\b|\borigin\b/i);
   });
@@ -124,7 +126,7 @@ describe('RuntimeConnectionPanel', () => {
       expect(screen.queryByText(COPY.connecting.sentence)).not.toBeInTheDocument();
 
       act(() => { vi.advanceTimersByTime(1000); });
-      expect(screen.getByText('Looking for Astrid on this computer…')).toBeInTheDocument();
+      expect(screen.getByText(COPY.connecting.sentence)).toBeInTheDocument();
       expect(screen.getByText(COPY.connecting.sentence).closest('p')).toHaveClass('text-sm', 'text-muted-foreground');
     });
 
@@ -238,7 +240,6 @@ describe('RuntimeConnectionPanel', () => {
   const NOT_RUNNING: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
     ['nothing answers on a return visit', () => connectionFor({ status: 'cant_reach', firstTime: false })],
     ['Astrid answered but its engine stopped', () => connectionFor({ status: 'not_ready', reason: 'runtime_stopped' })],
-    ['Astrid answered with something unknown', () => connectionFor({ status: 'not_ready', reason: 'unknown' })],
   ];
 
   it.each(NOT_RUNNING)('not running (%s): one screen, one button, no footer, no command', (_name, connection) => {
@@ -269,6 +270,33 @@ describe('RuntimeConnectionPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Copy steps for your agent' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
     expect(String(writeText.mock.calls[0][0])).toBe(COPY.agent.instructions(window.location.origin, 'restart'));
+  });
+
+  it('uses an honest retry screen when repeated checks cannot confirm why Astrid is unavailable', () => {
+    const connect = vi.fn();
+    panel(connectionFor({ status: 'unavailable' }, { connect }));
+
+    expect(screen.getByRole('heading', { name: "Can't connect to Astrid yet" })).toBeInTheDocument();
+    expect(screen.getByText(/has not answered after a few checks/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(connect).toHaveBeenCalledOnce();
+  });
+
+  it('surfaces access refusals immediately with browser permission guidance', () => {
+    const connect = vi.fn();
+    panel(connectionFor({ status: 'not_ready', reason: 'access_denied' }, { connect }));
+
+    expect(screen.getByRole('heading', { name: "Check this page's access to Astrid" })).toBeInTheDocument();
+    expect(screen.getByText(/local-network access/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(connect).toHaveBeenCalledOnce();
+  });
+
+  it('does not turn an unknown Runtime refusal into a claim that Astrid is stopped', () => {
+    panel(connectionFor({ status: 'not_ready', reason: 'unknown' }));
+
+    expect(screen.getByRole('heading', { name: "Can't connect to Astrid yet" })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: "Astrid isn't running" })).not.toBeInTheDocument();
   });
 
   describe('on a phone', () => {

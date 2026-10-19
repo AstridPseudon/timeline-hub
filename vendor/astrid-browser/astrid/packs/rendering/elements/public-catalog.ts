@@ -679,7 +679,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:30e00b95b62667a81f26fb6e6eca419e41a3e81ea7b76d04876a84fec674c57a",
+    "revision": "sha256:d4abf1f3d88b599f0766840707eae45b0eeeda3c5b0b7ac548f292975da6c9a1",
     "runtime": {
       "adapter": "remotion"
     },
@@ -874,7 +874,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:a4d929a4c325886fe0abac9ca152ef73f942983bb93404211fb3eb2e0398ad9b",
+    "revision": "sha256:a4488eb6b7fd883d5dc33111f1661eae87c8ddef3923b521bcd4d3577692ff06",
     "runtime": {},
     "schema": {
       "additionalProperties": true,

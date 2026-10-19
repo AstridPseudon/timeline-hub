@@ -123,6 +123,31 @@ does not emulate a registry or migrate those files; the canonical no-override
 launch is the supported fresh-process path, while custom-directory sessions
 remain an explicit same-process limitation.
 
+## Sharing a chat between tabs
+
+The bridge keeps one native ACP session for every live chat, across all three
+agents. A second tab loading that chat follows the existing host's transcript
+and updates without opening another native writer. Each browser connection
+has its own event queue, so polling one tab never drains another tab's stream.
+
+The follower shows **Active in another tab — take over**. Takeover transfers
+write permission immediately; a running turn continues on the same native
+session. The former writer becomes a follower, and the new writer waits for
+the running turn to finish before sending another message. Only the current
+writer can change session settings or cancel its turn. A submitted request ID
+is retained with its native operation, so a retry joins that operation instead
+of sending it again.
+
+The shared state reports the running request ID separately from a durable
+history receipt. A saved queued row for that request shows **In progress in
+another tab**, and cannot be retried while it is running. Following a turn or
+taking over never automatically dispatches saved queued messages.
+
+Closing the original tab retains its native host while other tabs still use
+the session. The bridge releases it when no attached client or running request
+needs it. This sharing is scoped to one bridge process; native agents continue
+to own durable transcripts after a bridge restart.
+
 ## Editor context passed to Astrid
 
 The launcher is deliberately project-agnostic. Astrid App does not put the selected

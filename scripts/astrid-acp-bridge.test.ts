@@ -9,6 +9,12 @@ import { ProjectChatRegistry } from './astrid-project-chat.ts';
 import { ApiError, type Project } from '../src/integrations/runtime/generated.ts';
 import type { AcpProcessHostCallbacks } from '../src/tools/video-editor/runtime/processes/acpProcessHost.ts';
 
+function deferred<T = void>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(yes => { resolve = yes; });
+  return { promise, resolve };
+}
+
 const mediaForms = [
   { type: 'image', data: 'aGVsbG8=', mimeType: 'image/png' },
   { type: 'audio', data: 'aGVsbG8=', mimeType: 'audio/wav' },
@@ -68,6 +74,9 @@ test('gateway and real HTTP bridge enforce RPC and project policy and preserve p
   ];
   let callbacks: AcpProcessHostCallbacks = {};
   let disposed = 0;
+  let nextSession = 0;
+  const promptStarted = deferred();
+  const releasePrompt = deferred();
   const { server, bridge } = createAstridAcpHttpServer({
     config: { token: 'dedicated', port: 0, cwd: '/tmp/local' },
     chatRegistry: registry,
@@ -83,12 +92,13 @@ test('gateway and real HTTP bridge enforce RPC and project policy and preserve p
         initialize: async () => ({ protocolVersion: 1 }),
         request: async (method: string, params: unknown) => {
           forwarded.push({ method, params });
-          if (method === 'session/new') return { sessionId: 's1', configOptions };
+          if (method === 'session/new') return { sessionId: `s${++nextSession}`, configOptions };
           if (method === 'session/resume') return { sessionId: (params as { sessionId: string }).sessionId, configOptions };
           if (method === 'session/list') return { sessions: [{ sessionId: 'unassigned' }] };
           if (method !== 'session/prompt') return {};
-          hostCallbacks.onNotification?.({ jsonrpc: '2.0', method: 'session/update', params: { text: 'CPU in progress' } });
-          await new Promise(resolve => setTimeout(resolve, 60));
+          hostCallbacks.onNotification?.({ jsonrpc: '2.0', method: 'session/update', params: { sessionId: (params as { sessionId: string }).sessionId, update: { sessionUpdate: 'agent_message_chunk', content: { type: 'text', text: 'CPU in progress' } } } });
+          promptStarted.resolve();
+          await releasePrompt.promise;
           return { stopReason: 'end_turn' };
         },
         cancel: async () => {},
@@ -97,6 +107,7 @@ test('gateway and real HTTP bridge enforce RPC and project policy and preserve p
     },
   });
   let gateway: ReturnType<typeof createLoopbackGateway> | undefined;
+  let pendingPrompt: Promise<Response> | undefined;
   try {
     const acpBase = await listen(server);
     gateway = createLoopbackGateway({ endpoint: acpBase, token: 'runtime', origin: 'https://hosted.test', acpEndpoint: acpBase, acpToken: 'dedicated' });
@@ -138,23 +149,28 @@ test('gateway and real HTTP bridge enforce RPC and project policy and preserve p
     assert.equal((await call('/projects/p2/chat/prompt', { connection_id: 'c1', session_id: 's1', prompt: textMetadata })).status, 403);
     assert.equal((await call('/projects/p2/chat/associate', { connection_id: 'c1', session_id: 's1', expected_revision: 0 })).status, 409);
     assert.equal(forwarded.length, forwardedBeforeMedia);
-    const pending = call('/projects/p1/chat/prompt', { connection_id: 'c1', session_id: 's1', prompt: textMetadata });
-    await new Promise(resolve => setTimeout(resolve, 20));
+    pendingPrompt = call('/projects/p1/chat/prompt', { connection_id: 'c1', session_id: 's1', prompt: textMetadata });
+    await promptStarted.promise;
     const events = await (await call('/c1/events')).json();
-    assert.equal(events.disconnected, false); assert.equal(events.notifications.length, 1);
-    assert.equal((await pending).status, 200);
+    assert.equal(events.disconnected, false);
+    assert.ok(events.notifications.some((event: Json) => JSON.stringify(event).includes('CPU in progress')));
+    assert.ok(events.notifications.some((event: Json) => ((event.params as Json)?.update as Json)?.sessionUpdate === 'astrid_session_control' && ((event.params as Json)?.update as Json)?.active === true));
+    releasePrompt.resolve();
+    assert.equal((await pendingPrompt).status, 200);
     assert.deepEqual((forwarded[forwarded.length - 1].params as { prompt: unknown }).prompt, textMetadata);
     assert.equal((await direct('/projects/p1/chat/prompt', { connection_id: 'c1', session_id: 's1', prompt: textMetadata })).status, 200);
     assert.equal((await call('/c1/rpc', { method: 'session/prompt', params: { sessionId: 's1', prompt: textMetadata } })).status, 200);
     assert.deepEqual((forwarded[forwarded.length - 1].params as { prompt: unknown }).prompt, textMetadata);
-    // Reconnect the saved project session through ensure/resume. Its advertised
-    // options must belong to this new connection, not only the creating one.
+    // Reattach the saved project session through ensure. Its advertised
+    // options are shared, while config writes require taking over its writer role.
     assert.equal((await call('/connect', {})).status, 200);
     assert.equal((await rpc('c2', 'model', 'model-a')).status, 400);
     const resumed = await call('/projects/p1/chat/sessions', { connection_id: 'c2', mode: 'ensure', operation_id: 'resume-one' });
     assert.equal(resumed.status, 200); assert.equal((await resumed.json()).operation_session_id, 's1');
     assert.equal(forwarded.filter(item => item.method === 'session/new').length, 1);
-    assert.equal(forwarded.filter(item => item.method === 'session/resume').length, 1);
+    assert.equal(forwarded.filter(item => item.method === 'session/resume').length, 0);
+    assert.equal((await rpc('c2', 'model', 'model-a')).status, 409);
+    assert.equal((await call('/c2/rpc', { method: 'session/takeover', params: { sessionId: 's1' } })).status, 200);
     assert.equal((await rpc('c2', 'model', 'model-a')).status, 200);
     assert.equal((await rpc('c2', 'thinking', 'high')).status, 200);
     const beforeBadConfig = forwarded.length;
@@ -164,16 +180,21 @@ test('gateway and real HTTP bridge enforce RPC and project policy and preserve p
     // Separately configured non-hosted ACP preserves supported media prompts.
     assert.equal((await direct('/connect', {})).status, 200);
     assert.equal((await call('/c3/rpc', { method: 'session/list', params: {} })).status, 409);
-    assert.equal((await call('/projects/p1/chat/prompt', { connection_id: 'c3', session_id: 's1', prompt: textMetadata })).status, 409);
-    assert.equal((await direct('/c3/rpc', { method: 'session/prompt', params: { sessionId: 's1', prompt: [mediaForms[0]] } })).status, 200);
-    assert.equal((await direct('/projects/p1/chat/prompt', { connection_id: 'c3', session_id: 's1', prompt: [mediaForms[0]] })).status, 200);
+    const directCreated = await direct('/projects/p1/chat/sessions', { connection_id: 'c3', mode: 'new', operation_id: 'direct-one' });
+    assert.equal(directCreated.status, 200);
+    const directSessionId = (await directCreated.json() as Json).operation_session_id as string;
+    assert.notEqual(directSessionId, 's1');
+    assert.equal((await direct('/c3/rpc', { method: 'session/prompt', params: { sessionId: directSessionId, prompt: [mediaForms[0]] } })).status, 200);
+    assert.equal((await direct('/projects/p1/chat/prompt', { connection_id: 'c3', session_id: directSessionId, prompt: [mediaForms[0]] })).status, 200);
     hostedCallbacks.onNotification?.({ jsonrpc: '2.0', method: 'session/update', params: { text: 'x'.repeat(1024 * 1024) } });
     const overflow = await (await call('/c1/events')).json();
     assert.equal(overflow.disconnected, true); assert.equal(overflow.notifications[0].params.code, 'acp_event_overflow');
-    assert.equal(disposed, 1);
+    assert.equal(disposed, 0); // c2 still follows s1, so c1 remains the physical owner
     assert.equal((await call('/c1/reconnect', {})).status, 502);
     assert.equal((await call('/c1', undefined, 'DELETE')).status, 200);
   } finally {
+    releasePrompt.resolve();
+    await (pendingPrompt ?? Promise.resolve()).catch(() => {});
     try { await bridge.close(); }
     finally {
       const servers = [server, ...(gateway ? [gateway.server] : [])];
@@ -188,7 +209,9 @@ test('idle sweep disposes abandoned connections, keeps polled and in-flight ones
   let clock = 0;
   let nextId = 0;
   const disposed: string[] = [];
-  let releasePrompt: () => void = () => {};
+  const started = deferred();
+  const releasePrompt = deferred();
+  let pendingPrompt: Promise<Response> | undefined;
   const { server, bridge } = createAstridAcpHttpServer({
     config: { token: 'dedicated', port: 0, cwd: '/tmp/local' },
     chatRegistry: {} as never,
@@ -198,7 +221,11 @@ test('idle sweep disposes abandoned connections, keeps polled and in-flight ones
       const id = `c${nextId}`;
       return {
         initialize: async () => ({ protocolVersion: 1 }),
-        request: async () => { await new Promise<void>(resolve => { releasePrompt = resolve; }); return {}; },
+        request: async (method: string, params: unknown) => {
+          if (method === 'session/load') return { sessionId: (params as { sessionId: string }).sessionId };
+          if (method === 'session/prompt') { started.resolve(); await releasePrompt.promise; }
+          return {};
+        },
         cancel: async () => {},
         dispose: async () => { disposed.push(id); },
       } as never;
@@ -213,8 +240,9 @@ test('idle sweep disposes abandoned connections, keeps polled and in-flight ones
     // c1 abandoned, c2 keeps polling, c3 has a prompt in flight, c4 is fresh.
     clock = 10 * 60_000;
     assert.equal((await call('/c2/events')).status, 200);
-    const prompt = call('/c3/rpc', { method: 'POST', body: JSON.stringify({ method: 'session/prompt', params: { sessionId: 's', prompt: [] } }) });
-    await new Promise(resolve => setImmediate(resolve));
+    assert.equal((await call('/c3/rpc', { method: 'POST', body: JSON.stringify({ method: 'session/load', params: { sessionId: 's' } }) })).status, 200);
+    pendingPrompt = call('/c3/rpc', { method: 'POST', body: JSON.stringify({ method: 'session/prompt', params: { sessionId: 's', prompt: [] } }) });
+    await started.promise;
     clock = 16 * 60_000;
     assert.equal((await call('/c4/events')).status, 200);
     await bridge.reapIdle();
@@ -226,8 +254,8 @@ test('idle sweep disposes abandoned connections, keeps polled and in-flight ones
     clock = 60 * 60_000;
     await bridge.reapIdle();
     assert.deepEqual(disposed, ['c1', 'c2', 'c4']);
-    releasePrompt();
-    assert.equal((await prompt).status, 200);
+    releasePrompt.resolve();
+    assert.equal((await pendingPrompt).status, 200);
     await bridge.reapIdle();
     assert.deepEqual(disposed, ['c1', 'c2', 'c4']);
     clock = 120 * 60_000;
@@ -237,7 +265,8 @@ test('idle sweep disposes abandoned connections, keeps polled and in-flight ones
     console.error(error);
     throw error;
   } finally {
-    releasePrompt();
+    releasePrompt.resolve();
+    await (pendingPrompt ?? Promise.resolve()).catch(() => {});
     await bridge.close();
     server.closeAllConnections();
     server.close();

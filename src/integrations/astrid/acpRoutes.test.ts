@@ -4,6 +4,16 @@ import { AstridLocalAcpRoutes } from './acpRoutes.ts';
 import type { AstridBridgeTransport } from './transport.ts';
 
 describe('AstridLocalAcpRoutes', () => {
+  it('takes over the loaded session and preserves submission identity on prompt requests', async () => {
+    const requestJson = vi.fn(async (_path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) => schema.parse({ result: { _astridSession: { role: 'writer', active: true, activeRequestId: 'queued-1' } } }));
+    const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
+    await routes.takeOverSession('second-tab', 'codex:chat-3');
+    await routes.promptProjectSession('p', 'second-tab', 'codex:chat-3', [{ type: 'text', text: 'hello' }], 'queued-1');
+    expect(requestJson.mock.calls.map(([path, request]) => ({ path, request }))).toEqual([
+      { path: '/acp/second-tab/rpc', request: { method: 'POST', body: { method: 'session/takeover', params: { sessionId: 'codex:chat-3' } } } },
+      { path: '/acp/projects/p/chat/prompt', request: { method: 'POST', body: { connection_id: 'second-tab', session_id: 'codex:chat-3', prompt: [{ type: 'text', text: 'hello' }], request_id: 'queued-1' } } },
+    ]);
+  });
   it('carries a local agent default and scopes model discovery and selection to the chat', async () => {
     const models = { availableModels: [{ modelId: 'model/a', name: 'Model A', description: 'A model' }], currentModelId: 'model/a' };
     const requestJson = vi.fn(async (path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) =>

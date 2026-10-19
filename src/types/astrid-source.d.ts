@@ -195,3 +195,13 @@ declare module '@astrid/tools/catalog.json' {
   const catalog: import('@/shared/lib/tooling/toolCatalog').AstridToolCatalog;
   export default catalog;
 }
+
+declare module '@astrid/packs/rendering/shared/managed-media-policy' {
+  export function isManagedObjectUrl(src: string | null | undefined): boolean;
+}
+
+declare module '@astrid/packs/rendering/shared/managed-media' {
+  export const ManagedImg: typeof import('remotion').Img;
+  export const ManagedOffthreadVideo: typeof import('remotion').OffthreadVideo;
+  export const ManagedVideo: typeof import('@remotion/media').Video;
+}

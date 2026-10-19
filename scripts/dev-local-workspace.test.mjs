@@ -29,6 +29,7 @@ test('local launcher settings persist without importing app secrets or overridin
   writeFileSync(join(directory, '.env.local'), [
     'ASTRID_RUNTIME_DATA_ROOT="/existing/workspace with spaces"',
     'ASTRID_RUNTIME_PYTHON=/existing/python', 'ASTRID_APP_ACP_ENABLED=1',
+    'ASTRID_ENV_FILE=/existing/credentials.env', 'ASTRID_PACK_HOST_PYTHON=/existing/python',
     'PORT=9999', 'UNRELATED_SECRET=synthetic-test-secret',
   ].join('\n'));
   const env = { ASTRID_RUNTIME_PYTHON: '/shell/python' };
@@ -36,6 +37,7 @@ test('local launcher settings persist without importing app secrets or overridin
   assert.deepEqual(env, {
     ASTRID_RUNTIME_DATA_ROOT: '/existing/workspace with spaces',
     ASTRID_RUNTIME_PYTHON: '/shell/python', ASTRID_APP_ACP_ENABLED: '1',
+    ASTRID_ENV_FILE: '/existing/credentials.env', ASTRID_PACK_HOST_PYTHON: '/existing/python',
   });
   assert.equal(parseDevLocalWorkspaceArgs([], env).acp, true);
   assert.equal(parseDevLocalWorkspaceArgs([], { ASTRID_APP_ACP_ENABLED: '0' }).acp, false);

@@ -111,9 +111,9 @@ export class AstridLocalAcpRoutes {
     }, projectChatSchema, 'Choose Main project chat');
   }
 
-  async promptProjectSession(projectId: string, connectionId: string, sessionId: string, prompt: Array<Record<string, unknown>>): Promise<unknown> {
+  async promptProjectSession(projectId: string, connectionId: string, sessionId: string, prompt: Array<Record<string, unknown>>, requestId?: string): Promise<unknown> {
     const response = await this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/prompt`, {
-      method: 'POST', body: { connection_id: connectionId, session_id: sessionId, prompt },
+      method: 'POST', body: { connection_id: connectionId, session_id: sessionId, prompt, ...(requestId ? { request_id: requestId } : {}) },
     }, rpcResponseSchema, 'Prompt project chat session');
     return response.result;
   }
@@ -169,6 +169,10 @@ export class AstridLocalAcpRoutes {
 
   async loadSession<T = unknown>(connectionId: string, sessionId: string, params: AstridAcpRpcParams = {}): Promise<T> {
     return this.rpc<T>(connectionId, 'session/load', { ...params, sessionId });
+  }
+
+  async takeOverSession<T = unknown>(connectionId: string, sessionId: string): Promise<T> {
+    return this.rpc<T>(connectionId, 'session/takeover', { sessionId });
   }
 
   async listSessions<T = unknown>(connectionId: string, params: AstridAcpRpcParams = {}): Promise<T> {
