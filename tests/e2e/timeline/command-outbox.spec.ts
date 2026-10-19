@@ -3,6 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
+import { acceptedCommit } from '../../../src/integrations/runtime/__tests__/timelineCommitFixture.ts';
 
 const OUTBOX_MODULE = '/src/tools/video-editor/commands/commitOutbox.ts';
 const BLANK_ROUTE = '/__timeline-command-outbox__';
@@ -10,6 +11,11 @@ const scope = { realmId: 'browser-realm', actorId: 'browser-actor', projectId: '
 const h0 = { revisionId: 'R0', publicationId: 'P0' };
 const ha = { revisionId: 'RA', publicationId: 'PA' };
 const hb = { revisionId: 'RB', publicationId: 'PB' };
+const nativeInitialDocument = acceptedCommit(
+  { revision_id: h0.revisionId, publication_id: h0.publicationId },
+  { revision_id: h0.revisionId, publication_id: h0.publicationId },
+  { projectId: scope.projectId, timelineId: scope.timelineId },
+).data.canonical_document;
 const path = '/v1/projects/browser-project/timelines/browser-timeline/commit';
 
 type BrowserRequest = { method: string; path: string; body: string; key: string };
@@ -204,6 +210,132 @@ test('persists and excludes native browser command outbox claims across restart'
       proposal: setup.payloadB,
     });
     expect(recovered.final.intents).toEqual([]);
+  } finally {
+    if (context) await context.close();
+    await rm(profile, { recursive: true, force: true });
+  }
+});
+
+test('drains a native captured move on same-turn dispose before explicit recovery', async () => {
+  const profile = await mkdtemp(join(tmpdir(), 'astrid-command-session-close-'));
+  const launch = {
+    executablePath: resolveChromium(),
+    args: ['--no-sandbox'],
+  };
+
+  let context: Awaited<ReturnType<typeof chromium.launchPersistentContext>> | undefined;
+  try {
+    context = await chromium.launchPersistentContext(profile, launch);
+    const firstPage = await openBlank(context);
+    const setup = await firstPage.evaluate(async ({ modulePaths, outboxScope, initial, initialHead }) => {
+      const { createCommitOutbox } = await import(modulePaths.outbox);
+      const { createTimelineCommandSession } = await import(modulePaths.session);
+      const { buildTimelineData } = await import(modulePaths.timelineData);
+      const { captureClipMove, submitClipMove } = await import(modulePaths.gestures);
+      const parent = initial.parent_revision.payload as { config: Record<string, unknown>; clips: unknown[]; registry: unknown };
+      const current = await buildTimelineData(
+        { ...parent.config, clips: parent.clips } as never, parent.registry as never, undefined, 1,
+        undefined, { projectId: outboxScope.projectId, timelineId: outboxScope.timelineId,
+          headRevisionId: initialHead.revisionId, headPublicationId: initialHead.publicationId },
+      );
+      const requests: Array<{ request: unknown; key: string }> = [];
+      const session = await createTimelineCommandSession({
+        scope: outboxScope,
+        initial: { head: initialHead, canonicalDocument: initial },
+        send: async (request: unknown, key: string) => {
+          requests.push({ request, key });
+          throw new Error('same-turn dispose must not start a network request');
+        },
+        preview: () => {},
+        project: async () => {},
+        changed: () => {},
+      });
+      const ownerId = session.getState().ownerId;
+      if (!ownerId) throw new Error('native session did not claim an owner');
+      const captured = captureClipMove(session.port, current, 'x');
+      const expectedCommand = session.port.finish(captured.basis, 5).command;
+      submitClipMove(captured, 5);
+      await session.dispose();
+
+      let claimReleased = false;
+      await createCommitOutbox().recover(outboxScope, ownerId, async () => { claimReleased = true; });
+      const records = await createCommitOutbox().list(outboxScope);
+      return { claimReleased, expectedCommand, ownerId, records, requests };
+    }, {
+      modulePaths: {
+        gestures: '/src/tools/video-editor/commands/semanticGestures.ts',
+        outbox: OUTBOX_MODULE,
+        session: '/src/tools/video-editor/commands/commitSession.ts',
+        timelineData: '/src/tools/video-editor/lib/timeline-data.ts',
+      },
+      outboxScope: scope,
+      initial: nativeInitialDocument,
+      initialHead: h0,
+    });
+
+    expect(setup.claimReleased).toBe(true);
+    expect(setup.requests).toEqual([]);
+    expect(setup.ownerId).toMatch(/^[0-9a-f-]{36}$/);
+    const saved = setup.records.find((record: BrowserRecord) => record.ownerId === setup.ownerId);
+    expect(saved?.intents).toHaveLength(1);
+    expect(saved?.intents[0]?.basis).toEqual({ head: h0 });
+    expect(saved?.intents[0]?.payload).toMatchObject({ commands: [setup.expectedCommand] });
+    const savedIntent = saved?.intents[0];
+    expect(savedIntent).toBeDefined();
+
+    await context.close();
+    context = undefined;
+    context = await chromium.launchPersistentContext(profile, launch);
+    const restartedPage = await openBlank(context);
+    const recovered = await restartedPage.evaluate(async ({ modulePaths, outboxScope, initial, initialHead, ownerId }) => {
+      const { createCommitOutbox } = await import(modulePaths.outbox);
+      const { createTimelineCommandSession } = await import(modulePaths.session);
+      const outboxes = createCommitOutbox();
+      const requests: Array<{ request: unknown; key: string }> = [];
+      const session = await createTimelineCommandSession({
+        scope: outboxScope,
+        initial: { head: initialHead, canonicalDocument: initial },
+        outboxes,
+        send: async (request: unknown, key: string) => {
+          requests.push({ request, key });
+          throw new Error('transport intentionally unavailable during native recovery');
+        },
+        preview: () => {},
+        project: async () => {},
+        changed: () => {},
+      });
+      const before = (await outboxes.list(outboxScope)).find((record: BrowserRecord) => record.ownerId === ownerId);
+      const recoverableOwners = session.getState().recoverableOwners;
+      await session.recover(ownerId);
+      const after = (await outboxes.list(outboxScope)).find((record: BrowserRecord) => record.ownerId === ownerId);
+      await session.dispose();
+      return { after, before, recoverableOwners, requests };
+    }, {
+      modulePaths: {
+        outbox: OUTBOX_MODULE,
+        session: '/src/tools/video-editor/commands/commitSession.ts',
+      },
+      outboxScope: scope,
+      initial: nativeInitialDocument,
+      initialHead: h0,
+      ownerId: setup.ownerId,
+    });
+
+    expect(recovered.before?.intents[0]).toEqual(savedIntent);
+    expect(recovered.recoverableOwners).toEqual([setup.ownerId]);
+    expect(recovered.requests).toHaveLength(1);
+    expect(recovered.after?.pending?.request.key).toBe(recovered.requests[0].key);
+    expect(recovered.after?.intents[0]?.payload).toMatchObject({ commands: [setup.expectedCommand] });
+    expect(JSON.parse(recovered.after?.pending?.request.body ?? '')).toEqual({
+      api_version: 1,
+      project_id: scope.projectId,
+      timeline_id: scope.timelineId,
+      base_revision_id: h0.revisionId,
+      base_publication_id: h0.publicationId,
+      commands: [setup.expectedCommand],
+      source: { via: 'app' },
+    });
+    expect(recovered.requests[0].request).toEqual(JSON.parse(recovered.after?.pending?.request.body ?? ''));
   } finally {
     if (context) await context.close();
     await rm(profile, { recursive: true, force: true });
