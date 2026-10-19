@@ -1064,7 +1064,16 @@ test('M1 mixed editing: an accepted pointer move followed by a refused legacy re
   expect(kept).toMatchObject({ baseHeadRevisionId: moved.head.revision_id,
     baseHeadProjectId: harness.seed.projectId, baseHeadTimelineId: seed3.timelineId });
   expect(kept.draft.config?.clips?.find((clip: any) => clip.id === seed3.appClipId)?.at).toBe(to);
-  expect(kept.draft.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
+  // projectCanonicalComposition selects display config fields; recovery stores that projection
+  // plus its scoped immutable base. saveTimelineAtHead merges it over the original raw config.
+  const authoredBase = move.data.canonical_document;
+  expect(kept.baseHeadRevisionId).toBe(authoredBase.parent_revision.revision_id);
+  expect(authoredBase.parent_revision.payload.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
+  expect(request.postDataJSON().parent_composition.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
+  expect(request.postDataJSON().parent_composition.occurrences).toEqual(authoredBase.parent_revision.payload.occurrences);
+  await expectImmutableClosure(harness, seed3, move);
+  const pinned = await revisionState(harness, seed3, kept.baseHeadRevisionId!);
+  expect(pinned.shotClips[seed3.agentClipId].app?.f2Opaque).toEqual(seed3.opaque.clip);
   expect(await history(harness, seed3)).toEqual(moved);
   expect(await allRevisions(harness, seed3)).toEqual(revisions);
 
@@ -1076,6 +1085,7 @@ test('M1 mixed editing: an accepted pointer move followed by a refused legacy re
   await expect(recovery).toBeVisible(CEILING);
   await expect(recovery.getByRole('button', { name: 'Save them' })).toBeEnabled();
   expect(await timelineDraft(page, seed3.timelineId), 'reload preserves the entire native IndexedDB record').toEqual(kept);
+  await expectImmutableClosure(harness, seed3, move);
   expect(await history(harness, seed3)).toEqual(moved);
   const retryResponse = legacyResponse();
   await recovery.getByRole('button', { name: 'Save them' }).click();
