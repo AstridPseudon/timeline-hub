@@ -127,6 +127,70 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
     assert f["service"].create_task(request) == f["service"].create_task(request)
 
 
+@pytest.mark.parametrize(
+    "picture_tracks,issue_code",
+    [(None, "boundary/empty-child-picture"), (["plate"], "boundary/child-picture-gap")],
+    ids=["custom-track-unclassified", "declared-picture-track-gap"],
+)
+def test_unsafe_occurrence_seam_is_advisory_and_materialized_for_render(canonical_scene, picture_tracks, issue_code):
+    f = canonical_scene
+    publication = {
+        "project_id": f["project"], "timeline_id": "main", "expected_head": None,
+        "parent_revision_id": "unsafe-occurrence-parent",
+        "internal_timeline_revisions": [{
+            "timeline_id": "main", "revision_id": "unsafe-occurrence-child",
+            "payload": {
+                "tracks": [{"id": "plate", "kind": "visual"}],
+                "clips": [
+                    {"id": "custom-a", "clipType": "am-footage", "at": 0, "hold": 0.5, "track": "plate"},
+                    {"id": "custom-b", "clipType": "am-snap-plate", "at": 0.8, "hold": 0.5, "track": "plate"},
+                ],
+                "effects": [], "audio": [], "layout": {}, "registry": {}, "assets": [],
+            },
+        }],
+        "shot_revisions": [{
+            "shot_id": "unsafe-shot", "revision_id": "unsafe-shot-revision",
+            "internal_timeline_revision_id": "unsafe-occurrence-child",
+            "payload": {"metadata": {}, "items": [], "pools": [], "selected_variants": {},
+                        "provenance": {}, "generation_inputs": {}, "audio_bindings": [], "text_bindings": []},
+        }],
+        "parent_composition": {
+            "config": {"output": {"fps": 30}, "tracks": [{"id": "visual", "kind": "visual"}]},
+            "registry": {}, "clips": [],
+            "occurrences": [{
+                "occurrence_id": "unsafe-occurrence", "shot_id": "unsafe-shot",
+                "shot_revision_id": "unsafe-shot-revision", "placement": {"start_ms": 0},
+                "source_offset": 0, "duration_ms": 2000, "speed": 1, "track": "visual",
+                "transform": {}, "gain": 1, "mute": False, "provenance": {},
+            }],
+        },
+    }
+    if picture_tracks is not None:
+        publication["parent_composition"]["config"]["app"] = {
+            "visualSeamContract": {"pictureTracks": picture_tracks},
+        }
+    saved = f["service"].publish_parent_composition(
+        f["project"], "main", publication, idempotency_key="save-unsafe-occurrence"
+    )
+    assert saved["data"]["visual_seam_report"]["blocked"] is True
+
+    request = _request(f, head="unsafe-occurrence-parent", key="render-unsafe-occurrence")
+    request["spec"]["params"]["canonical_occurrence_ids"] = ["unsafe-occurrence"]
+    admitted = f["service"].create_task(request)
+    spec = admitted["task"]["spec"]
+    authority = spec["spec"]["inputs"]["timeline_authority"]
+    snapshot = _snapshot(f["service"], spec)
+
+    assert authority["visual_seam_report"] == saved["data"]["visual_seam_report"]
+    assert authority["visual_seam_report"]["blocked"] is True
+    assert any(issue["code"] == issue_code
+               for issue in authority["visual_seam_report"]["structuralIssues"])
+    assert [clip["clipType"] for clip in snapshot["config"]["clips"]] == ["am-footage", "am-snap-plate"]
+    assert [clip["track"] for clip in snapshot["config"]["clips"]] == ["plate", "plate"]
+    assert [(clip["at"], clip["hold"]) for clip in snapshot["config"]["clips"]] == [(0, 0.5), (0.8, 0.5)]
+    assert snapshot["config"].get("app", {}).get("visualSeamContract", {}).get("pictureTracks") == picture_tracks
+
+
 @pytest.mark.parametrize("alpha", [False, True], ids=["opaque", "alpha-stamp"])
 def test_canonical_long_media_and_hold_admission_covers_selected_fallback(canonical_scene, monkeypatch, alpha):
     f = canonical_scene

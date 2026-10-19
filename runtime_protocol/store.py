@@ -1794,6 +1794,8 @@ class RealmStore:
             if not isinstance(occurrences, list):
                 raise ValidationError("canonical parent occurrences must be a list")
             closure_parent, closure_shots, closure_internal = load_closure(self.conn, project_id, row["id"], parent)
+            # Keep the materialized closure even when seam diagnostics warn;
+            # the report is returned in timeline_authority for app review.
             seam_report, seam_metadata = admit_closure(closure_parent, closure_shots, closure_internal, timeline_id=row["id"], materialize=True)
             content = {**content, "config": copy.deepcopy(payload.get("config")), "registry": copy.deepcopy(payload.get("registry"))}
             config_clips = content["config"].get("clips", []) if isinstance(content["config"], dict) else None
