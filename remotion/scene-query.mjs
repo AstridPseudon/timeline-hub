@@ -6,9 +6,25 @@ import {pathToFileURL} from 'node:url';
 try {
   // Resolve the public export from the validated host install, never this checkout.
   const require = createRequire(path.join(process.argv[2], 'package.json'));
-  const {prepareScene, querySceneFrame} = await import(pathToFileURL(
+  const {prepareScene, querySceneFrame, querySceneOcclusion} = await import(pathToFileURL(
     require.resolve('@banodoco/timeline-composition/evaluation')));
-  const {scene, props, basis, roles: hostRoles, frames} = JSON.parse(readFileSync(0, 'utf8'));
+  const input = JSON.parse(readFileSync(0, 'utf8'));
+  const {scene, props, basis, roles: hostRoles, frames} = input;
+  if (input.query === 'occlusion') {
+    if (typeof querySceneOcclusion !== 'function') throw new Error('scene_occlusion_export_missing');
+    if (!Array.isArray(input.answers) || !Array.isArray(input.targets)) {
+      throw new Error('scene_occlusion_inputs_invalid');
+    }
+    const answers = new Map(input.answers.map(answer => [answer.frame, answer]));
+    const results = input.targets.map(target => {
+      const answer = answers.get(target.frame);
+      if (answer === undefined) {
+        return {status: 'unavailable', reason: `SceneFrame for frame ${target.frame} is unavailable`};
+      }
+      return querySceneOcclusion(answer, target.clip_id, target.min_fraction);
+    });
+    process.stdout.write(JSON.stringify(results));
+  } else {
   if (!Array.isArray(frames)) throw new Error('scene_frames_invalid');
   let prepared;
   if (props) {
@@ -33,6 +49,7 @@ try {
       {roles, elements: new Set(elements ?? [])});
   }
   process.stdout.write(JSON.stringify(frames.map(frame => querySceneFrame(prepared, frame))));
+  }
 } catch (error) {
   process.stderr.write(`scene evaluation unavailable: ${error.message}\n`);
   process.exitCode = 1;
