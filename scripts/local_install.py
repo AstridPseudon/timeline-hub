@@ -255,9 +255,10 @@ def wheel_parity(wheel: Path, source: Path, prefixes: tuple[str, ...]) -> dict[s
 # This code executes only inside the noneditable environment, from its unrelated
 # working directory. Runtime remains the sole owner of creation and discovery.
 START_RUNTIME = r'''
-import dataclasses, importlib, importlib.metadata, json, pathlib, sys
+import dataclasses, importlib, importlib.metadata, json, os, pathlib, sys
 from astrid.runtime_cli import RuntimeCLI, validate_selected_workspace
 from astrid.core.execution.generic_host import source_checkout_digest
+from astrid.services import service_declaration
 from astrid_runtime_client import WorkspaceClient
 from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
 from runtime_protocol.store import SCHEMA_VERSION
@@ -272,7 +273,11 @@ for name in ('astrid','astrid-runtime'):
 profile={'profile':'astrid','runtime_checkout':str(site),'source_checkout':str(site),
          'runtime_environment':sys.prefix,'protocol_version':'workspace.v1',
          'schema_version':'workspace-schema-v1','source_digest':source_checkout_digest(site)}
-manifest=root/'profile.json'; manifest.write_text(json.dumps(profile,indent=2)+'\n')
+manifest=root/'profile.json'
+declaration=root/'services.json'
+declaration.write_text(json.dumps(service_declaration(source_checkout=site,data_root=root/'support',chat_cwd=pathlib.Path(os.environ.get('ASTRID_ACP_CWD') or root/'sources/app')),indent=2)+'\n')
+profile['service_declaration']=str(declaration)
+manifest.write_text(json.dumps(profile,indent=2)+'\n')
 cli=RuntimeCLI(command=[str(pathlib.Path(sys.prefix)/'bin/astrid-runtime')])
 args={'support_root':root/'support','realm_root':root/'support/runtime/realms/local',
       'expected_realm_id':identity['workspace_id']}

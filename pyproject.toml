@@ -96,6 +96,9 @@ exclude = [
 
 [tool.setuptools.exclude-package-data]
 astrid = [
+    "chat/service.mjs",
+    "chat/astrid-acp-local-only.yml",
+    "chat/THIRD_PARTY_LICENSES.txt",
     # Defensive exclusions for non-package directories that may be surfaced
     # by a source/VCS manifest in a future setuptools release.
     "**/__pycache__/*",
