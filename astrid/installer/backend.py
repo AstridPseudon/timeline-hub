@@ -516,7 +516,10 @@ class Backend:
                 except OSError:
                     pass  # Other files in the default root remain untouched.
         if self.service.system == "win32":
-            for path in residue:
+            # Include the retained ownership marker when the locked files are
+            # inside the program tree. Custom-root bootstrap residue is separate.
+            cleanup = dict.fromkeys(root if path == root or root in path.parents else path for path in residue)
+            for path in cleanup:
                 quoted = str(path).replace("'", "''")
                 self.service.say(f"After this line returns, run: Remove-Item -LiteralPath '{quoted}' -Recurse -Force")
         return residue

@@ -258,3 +258,28 @@ def test_windows_cleanup_instructions_name_locked_bootstrap_outside_custom_root(
     assert str(data) not in lines[0]
     assert not root.exists()
     assert backend.uv.is_file()
+
+
+
+def test_windows_program_cleanup_includes_retained_ownership_marker(tmp_path, monkeypatch):
+    backend, root, data, _ = installation(tmp_path, monkeypatch)
+    backend.service.system = "win32"
+    lines = []
+    backend.service.say = lines.append
+    locked = root / "versions"
+    locked.mkdir()
+    remove_tree = shutil.rmtree
+
+    def remove(path, *args, **kwargs):
+        if Path(path) == locked:
+            raise PermissionError("installed Python is locked")
+        return remove_tree(path, *args, **kwargs)
+
+    monkeypatch.setattr(shutil, "rmtree", remove)
+
+    assert backend.remove(root, data, delete_data=False) == [locked]
+
+    quoted = str(root).replace("'", "''")
+    assert lines == [f"After this line returns, run: Remove-Item -LiteralPath '{quoted}' -Recurse -Force"]
+    assert (root / "install.json").is_file()
+    assert (data / "sentinel").read_text() == "keep"
