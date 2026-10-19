@@ -13,7 +13,7 @@ import {admitDeclaredTransitions, type TransitionDeclaration} from './lib/transi
 export {declareAppTransition, admitTransitionContribution, transitionContributionIdentity, TransitionAdmissionError} from './lib/transition-declarations';
 export type {AppTransition, TransitionDeclaration, TransitionImplementation, TransitionContributionResource, TransitionContributionReference, AdmittedTransitionContribution} from './lib/transition-declarations';
 
-export type {Align, ClipSpan, DrawPlan, FadeWindow, TransitionSpec} from './lib/transition-spans';
+export type {Align, ClipSpan, DrawPlan, FadeWindow, TransitionSpec, IncomingTransitionPolicy} from './lib/transition-spans';
 
 export type PreparedTrack = {
   readonly plans: readonly DrawPlan[];
@@ -22,6 +22,8 @@ export type PreparedTrack = {
 export type DrawFrame = {
   drawLocalFrame: number;
   ownFrame: number;
+  // Content clock consumed by media and components, before their speed remap.
+  contentFrame: number;
   // Transition opacity only; excludes track/clip/component opacity and occlusion.
   opacity: number;
 };
@@ -53,6 +55,7 @@ export const prepareDeclaredTrack = (
 export const queryDrawFrame = (plan: DrawPlan, drawLocalFrame: number): DrawFrame => ({
   drawLocalFrame,
   ownFrame: ownFrame(plan, drawLocalFrame),
+  contentFrame: plan.incomingPolicy === 'preroll-crossfade' ? Math.max(0, drawLocalFrame) : ownFrame(plan, drawLocalFrame),
   opacity: layerOpacity(plan, drawLocalFrame),
 });
 

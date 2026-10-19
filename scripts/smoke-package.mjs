@@ -6,7 +6,7 @@ import {mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync} from 'nod
 import {tmpdir} from 'node:os';
 import {dirname, join, resolve} from 'node:path';
 
-const tarball = resolve(process.argv[2] ?? 'banodoco-timeline-composition-0.0.8.tgz');
+const tarball = resolve(process.argv[2] ?? 'banodoco-timeline-composition-0.0.9.tgz');
 const files = execFileSync('tar', ['-tzf', tarball], {encoding: 'utf8'}).trim().split('\n');
 assert.ok(files.every(file => /^package\/(?:dist\/.*\.(?:js|d\.ts)|package\.json|README\.md|LICENSE)$/.test(file)),
   'Tarball contains source, scripts, tests or other unexpected files');
@@ -85,14 +85,25 @@ for (const peer of ['react', 'react-dom', 'remotion', '@remotion/media', '@remot
   assert.equal(realpathSync(require.resolve(peer + '/package.json')), realpathSync(packageRequire.resolve(peer + '/package.json')));
 }
 assert.equal(evaluation.queryTrackFrame(evaluation.prepareTrack([{start: 0, duration: 30}], []), 0).layers.length, 1);
+const spans = [{start: 60, duration: 30}, {start: 90, duration: 30}];
+const native = evaluation.prepareTrack(spans, [{T: 12, kind: 'dip', align: 'end', incomingPolicy: 'preroll-crossfade'}]);
+assert.deepEqual(evaluation.queryTrackFrame(native, 84).layers.map(layer => [layer.contentFrame, layer.opacity]), [[24, 1], [6, .5]]);
+assert.equal(evaluation.queryTrackFrame(native, 90).layers[0].contentFrame, 12);
+assert.deepEqual(evaluation.queryTrackFrame(native, 120).layers, []);
+const legacy = evaluation.prepareTrack(spans, [{T: 12, kind: 'dip', align: 'end'}]);
+assert.deepEqual(evaluation.queryTrackFrame(legacy, 84).layers.map(layer => [layer.contentFrame, layer.opacity]), [[24, 0], [0, 0]]);
 const theme = {...themes.BUNDLED_THEMES['2rp'], visual: {...themes.BUNDLED_THEMES['2rp'].visual,
   color: {fg: '#123456', bg: '#010203', accent: '#abcdef'}}};
 const track = {id: 'visual', kind: 'visual', label: 'Visual'};
 const clip = {id: 'card', track: 'visual', at: 0, hold: 2, clipType: 'resource-card', params: {title: 'Bundled resource', entrance: [], exit: []}};
 const assets = {assets: {}};
 const Custom = Object.assign(() => createElement('strong', null, 'host:' + api.useTheme().color.fg), {
-  prepareSceneCapability: () => ({identity: 'host@1', frame: () => ({presence: 'present', opaqueSupport: 'none',
-    bounds: {status: 'known', rect: {x: 0, y: 0, width: 100, height: 100}}})})});
+  prepareSceneCapability: context => {
+    assert.ok(Object.hasOwn(context, 'assetEntry'));
+    assert.equal(context.assetEntry, undefined);
+    return {identity: 'host@1', frame: () => ({presence: 'present', opaqueSupport: 'none',
+      bounds: {status: 'known', rect: {x: 0, y: 0, width: 100, height: 100}}})};
+  }});
 const registries = {effects: {'resource-card': Custom}};
 const prepare = maps => root.prepareCompositionScene([{track, clips: [clip]}], assets, 30, root.toRuntimeTheme(theme),
   1920, 1080, undefined, undefined, {}, '', {}, maps);
@@ -129,8 +140,8 @@ console.log('Plain Node ESM, bundled render, scoped host capability/override and
 `);
   run(process.execPath, ['smoke.mjs']);
   writeFileSync(join(temporary, 'consumer.ts'), `
-import {TimelineComposition, prepareCompositionScene, type TimelineClip, type TrackDefinition, type CompositionRegistries} from '@banodoco/timeline-composition';
-import {prepareTrack} from '@banodoco/timeline-composition/evaluation';
+import {TimelineComposition, prepareCompositionScene, type TimelineClip, type TrackDefinition, type CompositionRegistries, type TransitionReferenceObject} from '@banodoco/timeline-composition';
+import {prepareTrack, queryTrackFrame, declareAppTransition, type TransitionSpec, type IncomingTransitionPolicy, type ComponentCapabilityContext} from '@banodoco/timeline-composition/evaluation';
 import {composeAnimations, type EffectProps, type RuntimeTheme, type HookAnimationProps} from '@banodoco/timeline-composition/theme-api';
 import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';
 import {EFFECT_REGISTRY} from '@banodoco/timeline-composition/effects.generated';
@@ -142,6 +153,13 @@ host.animations = {custom: (props: HookAnimationProps) => ({content: props.progr
 host.animationMeta = {custom: {kind: 'hook', supportsEasing: true}};
 const resolved = (theme: RuntimeTheme) => resolveElementRegistries(theme, host);
 const clip: TimelineClip = {id: 'x', at: 0, hold: 1, track: 'v', clipType: 'custom'};
+const incomingPolicy: IncomingTransitionPolicy = 'preroll-crossfade';
+const transition: TransitionReferenceObject = {id: 'fade', durationFrames: 12, align: 'end', incomingPolicy};
+const spec: TransitionSpec = {T: 12, kind: 'dip', align: 'end', incomingPolicy};
+const contentFrame: number = queryTrackFrame(prepareTrack([{start: 0, duration: 30}], [spec]), 0).layers[0].contentFrame;
+declareAppTransition('v', 'x', {type: 'fade', duration: .4, incomingPolicy}, 30, 'timeline-composition');
+const selectedFile = (context: ComponentCapabilityContext): string | undefined => context.assetEntry?.file;
+void [transition, contentFrame, selectedFile];
 void [TimelineComposition, prepareCompositionScene, prepareTrack, composeAnimations, resolved, clip, EFFECT_REGISTRY,
   THEME_PACKAGE_REGISTRY, ANIMATION_META, TRANSITION_META];
 `);

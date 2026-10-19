@@ -1,6 +1,6 @@
 # @banodoco/timeline-composition
 
-Version 0.0.8 ships built ESM and declarations for the timeline evaluator,
+Version 0.0.9 ships built ESM and declarations for the timeline evaluator,
 Remotion composition, theme API and default registries. Plain Node can import
 `@banodoco/timeline-composition/evaluation` without React, Remotion or a TypeScript
 loader. The renderer uses host peers React/React DOM 18.3.1 and
@@ -10,6 +10,13 @@ The package owns text-card (including the `text` alias), six animations, two
 transitions and four 2rp effects relocated from App. The bundled 2rp source is
 **0.1.0**; equivalence to the separately referenced 0.1.1 theme is unverified.
 Fonts, media and project pack admission remain host responsibilities.
+
+In 0.0.9, `ComponentCapabilityContext.assetEntry?: Readonly<AssetRegistryEntry>`
+is the same selected entry passed to the rendered component, resolved by the
+existing asset lookup. The context always owns this property: `undefined` means
+no entry resolved (no asset or a missing reference). Older hosts may omit it,
+which means selection is unknown. Selection alone proves no media alpha; it
+does not fetch assets or change their authored registry.
 
 ## Scoped host elements
 
@@ -82,6 +89,21 @@ A clip's `transition` (on the clip that starts the boundary, i.e. the outgoing c
 
 The planning is pure and lives in `typescript/src/lib/transition-spans.ts`.
 
+For existing App films, each transition object can explicitly set
+`incomingPolicy: 'preroll-crossfade'`. This one opt-in advances incoming content
+from its draw origin throughout its half-open draw span and ramps incoming
+opacity over the whole window, keeping the outgoing transition contribution at
+1 even for `fade`. Omit it to retain the own-span clock and dip behavior above.
+It is supported on resolved `TransitionSpec`, `declareAppTransition` input, and
+renderer `TransitionReferenceObject` (`fade` or `cross-fade`). Unknown/custom
+implementations do not acquire support through this flag. No clip fields are
+rewritten, no endpoint is mounted, and the visual ramp never multiplies audio gain.
+
+At 30 fps, incoming authored frames 90..120 with a 12-frame end-aligned window
+start drawing at 78. With source trim 90..150 and speed 2, the opt-in supplies
+source-clock input 102 at frame 84 and 114 at frame 90; the default supplies 90
+at both frames. Source trim/end handling remains the media backend's responsibility.
+
 ## Pure planner API
 
 Import `@banodoco/timeline-composition/evaluation` to prepare one visual track
@@ -97,8 +119,8 @@ const track = prepareTrack(
 );
 const at25 = queryTrackFrame(track, 25);
 // {frame: 25, layers: [
-//   {clipIndex: 0, drawLocalFrame: 25, ownFrame: 25, opacity: 1},
-//   {clipIndex: 1, drawLocalFrame: 5, ownFrame: 0, opacity: 0.5},
+//   {clipIndex: 0, drawLocalFrame: 25, ownFrame: 25, contentFrame: 25, opacity: 1},
+//   {clipIndex: 1, drawLocalFrame: 5, ownFrame: 0, contentFrame: 0, opacity: 0.5},
 // ]}
 ```
 
@@ -119,11 +141,14 @@ enumeration or serialization. Preparation and each query scale with clip count,
 not film duration; no cache is installed by this API.
 
 `queryDrawFrame(plan, drawLocalFrame)` returns the same `drawLocalFrame`, clamped
-`ownFrame`, and transition `opacity` for a single plan. It does not filter by
+`ownFrame`, content clock `contentFrame`, and transition `opacity` for a single plan. It does not filter by
 mount interval: its caller supplies a frame inside the clip's draw Sequence.
-`TransitionLayer` uses this query for its Freeze frame and opacity;
-`TimelineComposition` uses `prepareTrack` for its Sequences. Both paths delegate
-to the original `ownFrame` / `layerOpacity` implementation. The subpath also
+`contentFrame` equals `ownFrame` by default. Opted-in incoming plans use the
+nonnegative draw-local frame instead, before media playback rate or element
+speed remapping. `TransitionLayer` freezes default extensions at this clock and
+leaves opted-in incoming content advancing; scene component capabilities receive
+the same clock after element speed remapping. `SceneLayer` also exposes
+`contentFrame`. `TimelineComposition` uses the same prepared plans for its Sequences. The subpath also
 exports the planner input/output types, including `ClipSpan`, `TransitionSpec`
 and `DrawPlan`.
 
@@ -187,7 +212,7 @@ npm ci
 npm run gen-registry:check
 npm run build
 npm pack
-npm run test:package -- "$PWD/banodoco-timeline-composition-0.0.8.tgz"
+npm run test:package -- "$PWD/banodoco-timeline-composition-0.0.9.tgz"
 ```
 
 Use a writable `npm_config_cache` if the environment's default npm cache is
@@ -247,7 +272,8 @@ origin or authored keys. Keys retain their payload units (App seconds, sprite
 frames). For a declared origin `o`, App key time at timeline second `t` is
 `t - (clip.at + o)`; sprite key frame at own local frame `f` is `f - o * fps`.
 The sprite then applies its existing step quantization and held-pose selection.
-Transition extensions still use the evaluator's existing clamped own frame.
+Default transition extensions use the evaluator's existing clamped own frame;
+the explicit incoming policy uses its advancing content clock.
 
 The pure `./evaluation` and component `./theme-api` subpaths expose
 `timelineKeyframeTime`, `spriteKeyframeFrame` and `declareKeyframeOrigin`.

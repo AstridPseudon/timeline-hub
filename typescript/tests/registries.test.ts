@@ -12,6 +12,7 @@ import {querySceneFrame} from '../src/evaluation';
 import {BUNDLED_THEMES, BUNDLED_THEME_VERSIONS} from '../src/registry.generated';
 import type {EffectProps, HookAnimationProps} from '../src/effects-types';
 import type {AssetRegistry, TimelineClip, TrackDefinition} from '../src/types';
+import type {ComponentCapabilityContext} from '../src/scene-capabilities';
 
 const theme = toRuntimeTheme(DEFAULT_THEME);
 const branded = toRuntimeTheme(BUNDLED_THEMES['2rp']);
@@ -84,6 +85,40 @@ test('host effects, aliases and capabilities are instance scoped, including defa
   assert.deepEqual(effect.props.params, clip.params);
   assert.equal(seen.length, 0);
   assert.deepEqual(Object.keys(resolveElementRegistries(branded, {effects: {}}).effects), []);
+});
+
+test('component capability receives the exact renderer-selected asset, including explicit absence', () => {
+  const contexts: ComponentCapabilityContext[] = [];
+  const rendered: EffectProps[] = [];
+  const Custom = Object.assign((props: EffectProps) => {rendered.push(props); return createElement('b', null, 'asset');}, {
+    prepareSceneCapability: (context: ComponentCapabilityContext) => {
+      contexts.push(context);
+      return {identity: 'asset@1', frame: () => ({presence: 'unknown' as const, opaqueSupport: 'unknown' as const,
+        bounds: {status: 'unknown' as const, reason: 'Asset selection alone proves no alpha'}})};
+    },
+  });
+  const registries = {effects: {'text-card': Custom}};
+  const entry = Object.freeze({file: 'https://example.test/selected.mp4', url: 'https://example.test/source',
+    resolution: '1920x1080', type: 'video/mp4'});
+  const selectedAssets = Object.freeze({assets: Object.freeze({selected: entry,
+    other: Object.freeze({file: 'other.jpg', type: 'image/jpeg'})})});
+  const before = JSON.stringify(selectedAssets);
+  for (const asset of ['selected', 'missing', undefined]) {
+    const selected = Object.freeze({...clip, asset});
+    const scene = prepareCompositionScene([{track, clips: [selected]}], selectedAssets, 30, theme, 1920, 1080,
+      undefined, undefined, {}, '', {}, registries);
+    const context = contexts.at(-1)!;
+    assert.ok(Object.hasOwn(context, 'assetEntry'));
+    assert.strictEqual(context.assetEntry, asset === 'selected' ? entry : undefined);
+    const content = renderVisualClipContent(track, selected, selectedAssets, 30, theme, 24,
+      {width: 1920, height: 1080, registries});
+    assert.ok(content);
+    render(content, DEFAULT_THEME, registries);
+    assert.strictEqual(rendered.at(-1)!.assetEntry, context.assetEntry);
+    assert.equal(querySceneFrame(scene, 24).layers[0].opaqueSupport, 'unknown');
+    assert.equal(selected.asset, asset);
+  }
+  assert.equal(JSON.stringify(selectedAssets), before);
 });
 
 test('host animation maps keep defaults, phase validation and unknown errors scoped', () => {

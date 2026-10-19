@@ -199,6 +199,7 @@ const resolveTransitionSpec = (
     T: resolved.durationFrames,
     kind: resolved.id === 'fade' ? 'dip' : 'dissolve',
     align: resolved.align,
+    ...(resolved.incomingPolicy ? {incomingPolicy: resolved.incomingPolicy} : {}),
   };
 };
 
@@ -220,7 +221,8 @@ export const prepareCompositionScene = (tracks: {track: TrackDefinition; clips: 
         const name = clip.clipType ?? '';
         const id = Object.prototype.hasOwnProperty.call(resolved.effects, name) ? name : resolved.clipTypeAliases[name];
         const component = Object.prototype.hasOwnProperty.call(resolved.effects, id) ? resolved.effects[id] : undefined;
-        const prepared = component?.prepareSceneCapability?.({clip: {...clip, params: resolveParams(clip) as Record<string, unknown> | undefined}, fps, width, height, rendererIdentity, fontDigests});
+        const prepared = component?.prepareSceneCapability?.({clip: {...clip, params: resolveParams(clip) as Record<string, unknown> | undefined},
+          assetEntry: getAssetEntry(clip, assets), fps, width, height, rendererIdentity, fontDigests});
         return prepared ? [[clip.id, prepared]] : [];
       })))}}});
 };

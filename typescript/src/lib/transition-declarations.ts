@@ -1,12 +1,13 @@
 // Authoring admission only. Legacy references keep their existing renderer path;
 // admitted declarations use the same frame planner, never repair clip timing.
-import type {Align, ClipSpan, TransitionSpec} from './transition-spans';
+import type {Align, ClipSpan, IncomingTransitionPolicy, TransitionSpec} from './transition-spans';
 
 export type AppTransition = {
   type: string;
   revision?: string; // contributed resource digest; builtins retain their legacy shape
   duration: number; // seconds, as stored by the App
   params?: Record<string, unknown>;
+  incomingPolicy?: IncomingTransitionPolicy;
 };
 
 export type TransitionImplementation = Readonly<{host: 'timeline-composition'; id: 'cross-fade' | 'fade'}>;
@@ -190,6 +191,9 @@ export const declareAppTransition = (
       'Choose cross-fade or fade for this host.');
   }
   const T = Math.round(transition.duration * fps);
+  if (transition.incomingPolicy !== undefined && transition.incomingPolicy !== 'preroll-crossfade') {
+    refuse('transition/invalid-policy', 'Incoming transition policy is unsupported.', 'Use preroll-crossfade or omit the policy.');
+  }
   if (!Number.isFinite(fps) || fps <= 0 || !Number.isFinite(transition.duration)
       || transition.duration <= 0 || !Number.isSafeInteger(T) || T <= 0) {
     refuse('transition/invalid-duration', 'Transition duration must resolve to positive whole frames.',
@@ -201,7 +205,8 @@ export const declareAppTransition = (
     owner: {trackId, clipId},
     implementation: binding?.resource.implementation ?? {host: 'timeline-composition', id: id as 'cross-fade' | 'fade'},
     ...(binding ? {contribution: binding} : {}),
-    spec: {T, kind: id === 'fade' ? 'dip' : 'dissolve', align: 'end'},
+    spec: {T, kind: id === 'fade' ? 'dip' : 'dissolve', align: 'end',
+      ...(transition.incomingPolicy ? {incomingPolicy: transition.incomingPolicy} : {})},
     params: {...params},
   };
 };
@@ -254,9 +259,10 @@ export const admitDeclaredTransitions = (
         'Keep exactly one outgoing transition declaration on this clip.');
     }
     const {id} = declaration.implementation;
-    const {T, kind, align} = declaration.spec;
+    const {T, kind, align, incomingPolicy} = declaration.spec;
     if ((id !== 'cross-fade' && id !== 'fade') || kind !== (id === 'fade' ? 'dip' : 'dissolve')
         || !(['end', 'start', 'center'] as Align[]).includes(align)
+        || (incomingPolicy !== undefined && incomingPolicy !== 'preroll-crossfade')
         || !Number.isSafeInteger(T) || T <= 0) {
       refuse('transition/invalid-declaration', 'Transition declaration does not match its declared implementation.',
         'Recreate the declaration from the App transition for this host.');

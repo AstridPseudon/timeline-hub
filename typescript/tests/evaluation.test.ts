@@ -5,7 +5,10 @@ import {
   audioEnvelopeAt,
   compileAudioEnvelope,
   prepareTrack,
+  declareAppTransition,
+  prepareDeclaredTrack,
   queryTrackFrame,
+  type TransitionSpec,
   type TrackFrame,
 } from '../src/evaluation';
 import type {TimelineClip} from '../src/types';
@@ -54,3 +57,69 @@ test('audio envelope evaluation accepts representative fade input and applies ga
 // Keep the public result shape exercised as a compile-time contract too.
 const _frameShape: TrackFrame = {frame: 0, layers: []};
 void _frameShape;
+
+test('incoming preroll policy advances content without changing own frames or half-open mounts', () => {
+  const spans = [{start: 60, duration: 30}, {start: 90, duration: 30}];
+  for (const kind of ['dip', 'dissolve'] as const) {
+    for (const [align, before, start, middle, end, atBoundary, last] of [
+      ['end', 77, 78, 84, 90, 12, 41],
+      ['center', 83, 84, 90, 96, 6, 35],
+      ['start', 89, 90, 96, 102, 0, 29],
+    ] as const) {
+      const spec = {T: 12, kind, align, incomingPolicy: 'preroll-crossfade'} as const;
+      const track = prepareTrack(spans, [spec]);
+      assert.deepEqual(queryTrackFrame(track, before).layers.map(layer => layer.clipIndex), [0]);
+      const first = queryTrackFrame(track, start).layers;
+      assert.equal(first[1].contentFrame, 0);
+      assert.equal(first[1].opacity, 0);
+      const mid = queryTrackFrame(track, middle).layers;
+      assert.deepEqual(mid.map(layer => layer.opacity), [1, .5]);
+      assert.equal(mid[1].contentFrame, 6);
+      const boundary = queryTrackFrame(track, 90).layers.find(layer => layer.clipIndex === 1)!;
+      assert.equal(boundary.ownFrame, 0);
+      assert.equal(boundary.contentFrame, atBoundary);
+      assert.deepEqual(queryTrackFrame(track, end).layers.map(layer => layer.clipIndex), [1]);
+      assert.equal(queryTrackFrame(track, end).layers[0].opacity, 1);
+      assert.equal(queryTrackFrame(track, 119).layers[0].contentFrame, last);
+      assert.deepEqual(queryTrackFrame(track, 120).layers, []);
+      const legacy = prepareTrack(spans, [{T: 12, kind, align}]);
+      assert.deepEqual(queryTrackFrame(legacy, middle).layers.map(layer => layer.opacity), kind === 'dip' ? [0, 0] : [1, .5]);
+      assert.equal(queryTrackFrame(legacy, 90).layers.find(layer => layer.clipIndex === 1)!.contentFrame, 0);
+    }
+  }
+});
+
+test('policy is per boundary, preserves cut admission, and composes overlapping transition windows', () => {
+  const spans = [{start: 0, duration: 30}, {start: 30, duration: 12}, {start: 42, duration: 30}];
+  const incoming: TransitionSpec = {T: 12, kind: 'dip', align: 'start', incomingPolicy: 'preroll-crossfade'};
+  const outgoing: TransitionSpec = {T: 12, kind: 'dip', align: 'end'};
+  const mixed = prepareTrack(spans, [incoming, outgoing]);
+  assert.deepEqual(queryTrackFrame(mixed, 36).layers.map(layer => [layer.contentFrame, layer.opacity]), [[29, 1], [6, 0], [0, 0]]);
+  const both = prepareTrack(spans, [incoming, {...outgoing, incomingPolicy: 'preroll-crossfade'}]);
+  assert.deepEqual(queryTrackFrame(both, 36).layers.map(layer => [layer.contentFrame, layer.opacity]), [[29, 1], [6, .5], [6, .5]]);
+  assert.deepEqual(queryTrackFrame(both, 42).layers.map(layer => [layer.clipIndex, layer.contentFrame]), [[2, 12]]);
+  for (const start of [28, 31]) { // unsupported overlap or gap remains a cut
+    const cut = prepareTrack([{start: 0, duration: 30}, {start, duration: 30}], [incoming]);
+    assert.equal(cut.plans[1].drawStart, start);
+    assert.equal(cut.plans[1].incomingPolicy, undefined);
+  }
+  const oversized = prepareTrack(spans, [{...incoming, T: 13}]);
+  assert.equal(oversized.plans[1].incomingPolicy, undefined);
+  const adjacent = prepareTrack([{start: 0, duration: 30}, {start: 29, duration: 30}], [{...incoming, align: 'end'}]);
+  assert.equal(queryTrackFrame(adjacent, 24).layers[1].contentFrame, 6);
+});
+
+test('App admission carries only explicit policy and still refuses unsupported custom transitions and overlap', () => {
+  const clips = [{id: 'a', start: 60, duration: 30}, {id: 'b', start: 90, duration: 30}];
+  for (const type of ['fade', 'crossfade', 'cross-fade']) {
+    const input = Object.freeze({type, duration: .4, incomingPolicy: 'preroll-crossfade' as const});
+    const declaration = declareAppTransition('visual', 'a', input, 30, 'timeline-composition');
+    const layer = queryTrackFrame(prepareDeclaredTrack('visual', clips, [declaration], 'timeline-composition'), 84).layers[1];
+    assert.deepEqual([layer.ownFrame, layer.contentFrame, layer.opacity], [0, 6, .5]);
+    assert.throws(() => prepareDeclaredTrack('visual', [clips[0], {...clips[1], start: 89}], [declaration], 'timeline-composition'), /overlap/);
+  }
+  assert.throws(() => declareAppTransition('visual', 'a', {type: 'custom', duration: .4,
+    incomingPolicy: 'preroll-crossfade'}, 30, 'timeline-composition'), /No admitted contribution/);
+  assert.throws(() => prepareTrack(clips, [{T: 12, kind: 'dip', align: 'end',
+    incomingPolicy: 'unknown' as never}]), /Unsupported incoming transition policy/);
+});

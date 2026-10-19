@@ -15,7 +15,7 @@ export type PreparedScene = {tracks: (SceneTrackInput & {prepared: PreparedTrack
   assets: AssetRegistry; fps: number; width: number; height: number;
   capabilities: SceneCapabilities; elements: ReadonlySet<string>; modifiers: ModifierRegistry; roles: Readonly<Record<string, string>>};
 export type SceneLayer = {clipId: string; track: string; clipIndex: number; z: number;
-  drawLocalFrame: number; ownFrame: number; transitionOpacity: number; opacity: number | null;
+  drawLocalFrame: number; ownFrame: number; contentFrame: number; transitionOpacity: number; opacity: number | null;
   visible: boolean | 'unknown';
   /** Evaluated target geometry, independent of uncertain modified output bounds. */
   targetBounds: ModifierBounds; bounds: ModifierBounds; role: string; fullFrame: boolean;
@@ -72,12 +72,12 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
         || (!!clip.clipType && !['media', 'image', 'video', 'hold', 'effect-layer'].includes(clip.clipType));
       const asset = clip.asset ? scene.assets.assets[clip.asset] : undefined;
       const capability = element ? scene.capabilities.components?.[clip.id] : undefined;
-      const support = capability?.frame(remappedFrame(draw.ownFrame, clip.speed));
+      const support = capability?.frame(remappedFrame(draw.contentFrame, clip.speed));
       const targetBounds: ModifierBounds = element && support ? support.bounds : element ? {status: 'unknown', reason: 'Component has no declared evaluated bounds'}
         : mediaModifierBounds(clip, track, asset, scene.width, scene.height);
       let bounds = targetBounds;
       let opacity: number | null = Math.min(1, Math.max(0, track.opacity ?? 1))
-        * clipOpacity(clip, draw.ownFrame, scene.fps) * draw.opacity;
+        * clipOpacity(clip, draw.contentFrame, scene.fps) * draw.opacity;
       // An assetless native layer draws nothing; an unresolved referenced asset
       // is still unknown and cannot acquire valid absence from missing media.
       const absent = support?.presence === 'absent' || clip.clipType === 'effect-layer' || (!element && !clip.asset);
@@ -133,9 +133,9 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
         && bounds.rect.x + bounds.rect.width >= scene.width && bounds.rect.y + bounds.rect.height >= scene.height;
       const plan = prepared.plans[draw.clipIndex];
       const dip = !absent && (((plan.fadeIn?.kind === 'dip' || plan.fadeOut?.kind === 'dip') && draw.opacity < 1)
-        || fadeMultiplier(clip, draw.ownFrame, scene.fps) < 1);
+        || fadeMultiplier(clip, draw.contentFrame, scene.fps) < 1);
       layers.push({clipId: clip.id, track: track.id, clipIndex: draw.clipIndex, z: 0,
-        drawLocalFrame: draw.drawLocalFrame, ownFrame: draw.ownFrame, transitionOpacity: draw.opacity,
+        drawLocalFrame: draw.drawLocalFrame, ownFrame: draw.ownFrame, contentFrame: draw.contentFrame, transitionOpacity: draw.opacity,
         opacity, visible, opaqueSupport, targetBounds, bounds, fullFrame, role: scene.roles[clip.id] ?? (track.id === 'plate' ? 'picture' : 'content'),
         coverage: bounds.status === 'unknown' || uncertain ? 'unknown' : opaqueSupport === 'rect' && fullFrame && opacity! >= .999 ? 'covered' : 'partial', findings, dip});
     }

@@ -5,13 +5,14 @@ import {
   TRANSITION_DEFAULTS,
   TRANSITION_REGISTRY,
 } from '../transitions.generated';
-import type {Align} from './transition-spans';
+import type {Align, IncomingTransitionPolicy} from './transition-spans';
 
 export type ResolvedTransition = {
   id: string;
   durationFrames: number;
   align: Align;
   params: Record<string, unknown>;
+  incomingPolicy?: IncomingTransitionPolicy;
 };
 
 const isObjectReference = (value: unknown): value is TransitionReferenceObject => {
@@ -38,6 +39,10 @@ export const resolveTransitionReference = (
   if (!id || !Object.prototype.hasOwnProperty.call(transitionRegistry, id)) {
     throw new Error(`Unknown transition id '${id}'`);
   }
+  const incomingPolicy = isObjectReference(ref) ? ref.incomingPolicy : undefined;
+  if (incomingPolicy !== undefined && (incomingPolicy !== 'preroll-crossfade' || !['fade', 'cross-fade'].includes(id))) {
+    throw new Error('Unsupported incoming transition policy or implementation');
+  }
   const defaults = transitionDefaults[id] ?? {};
   const params = typeof ref === 'string'
     ? {...defaults}
@@ -51,5 +56,5 @@ export const resolveTransitionReference = (
   // The registry component is called to validate the reference; the visual
   // result is produced by transition-spans (dissolve or dip), not by this call.
   component({transitionId: id, params, theme, fps, durationFrames});
-  return {id, durationFrames, align: readAlign(ref), params};
+  return {id, durationFrames, align: readAlign(ref), params, ...(incomingPolicy ? {incomingPolicy} : {})};
 };

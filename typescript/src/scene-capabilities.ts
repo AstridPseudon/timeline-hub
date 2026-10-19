@@ -17,10 +17,13 @@ export type ComponentFrameSupport = {
 };
 export type PreparedComponentCapability = {
   identity: string;
-  frame: (ownFrame: number) => ComponentFrameSupport;
+  /** Content clock after the component's speed remap. */
+  frame: (contentFrame: number) => ComponentFrameSupport;
 };
 export type ComponentCapabilityContext = {
   clip: TimelineClip; fps: number; width: number; height: number;
+  /** Renderer-selected entry. An own property with undefined means no entry resolved. */
+  assetEntry?: Readonly<AssetRegistryEntry>;
   /** Current authenticated renderer closure, including actual fonts/materials. */
   rendererIdentity: string;
   fontDigests: Readonly<Record<string, string>>;

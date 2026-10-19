@@ -8,6 +8,8 @@ export type Align = 'end' | 'start' | 'center';
 
 export type ClipSpan = {start: number; duration: number}; // frames, the clip's own span
 
+export type IncomingTransitionPolicy = 'preroll-crossfade';
+
 export type FadeWindow = {from: number; to: number; kind: 'dissolve' | 'dip'}; // draw-local frames
 
 export type DrawPlan = {
@@ -17,9 +19,12 @@ export type DrawPlan = {
   ownDuration: number;
   fadeIn: FadeWindow | null; // this clip ramps in (incoming side of a transition)
   fadeOut: FadeWindow | null; // this clip ramps out (dip only; a dissolve outgoing clip stays at 1)
+  incomingPolicy?: IncomingTransitionPolicy;
 };
 
-export type TransitionSpec = {T: number; kind: 'dissolve' | 'dip'; align: Align};
+export type TransitionSpec = {T: number; kind: 'dissolve' | 'dip'; align: Align;
+  /** Advance incoming content from draw origin and ramp only its visual opacity. */
+  incomingPolicy?: IncomingTransitionPolicy};
 
 // Placement of the overlap window around a boundary (the outgoing clip's end).
 // 'end' is upstream's placement and the default: the window sits fully before
@@ -61,6 +66,9 @@ export const planTrack = (
     if (!transition) {
       continue;
     }
+    if (transition.incomingPolicy !== undefined && transition.incomingPolicy !== 'preroll-crossfade') {
+      throw new Error('Unsupported incoming transition policy');
+    }
     const out = spans[index];
     const inc = spans[index + 1];
     const outEnd = out.start + out.duration;
@@ -86,7 +94,10 @@ export const planTrack = (
       incPlan.drawDuration += extra;
     }
 
-    applied.push({index, T, kind: transition.kind, win});
+    if (transition.incomingPolicy === 'preroll-crossfade') {
+      incPlan.incomingPolicy = transition.incomingPolicy;
+    }
+    applied.push({index, T, kind: transition.incomingPolicy === 'preroll-crossfade' ? 'dissolve' : transition.kind, win});
   }
 
   // Fade windows are computed after all extensions so draw-local frames are final.
