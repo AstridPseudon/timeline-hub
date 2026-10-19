@@ -392,7 +392,6 @@ def _run_foreground(paths: RuntimePaths, config: BootstrapConfig, *, json_mode: 
     stopped = threading.Event()
     restore = platform.install_stop_handlers(lambda *_: stopped.set())
     failure = None
-    startup_ready = False
     try:
         with RotatingLog(log_path) as log:
             platform.owner_only(log_path)
@@ -403,13 +402,14 @@ def _run_foreground(paths: RuntimePaths, config: BootstrapConfig, *, json_mode: 
                         cancellation.check()
                         boundary.check_running()
                         _wait_for_door(paths, result, boundary)
-                        startup_ready = True
                         cancellation.check()
                         _emit_ready(result, json_mode=json_mode)
                     while not stopped.wait(0.2):
                         boundary.check_running()
                 except Exception as exc:
-                    if not (startup_ready and stopped.is_set() and isinstance(exc, cancellation.StartupCancelled)):
+                    # A requested stop is orderly at any point, including mid-startup;
+                    # only real failures exit non-zero (login services restart on failure).
+                    if not (stopped.is_set() and isinstance(exc, cancellation.StartupCancelled)):
                         failure = str(exc)
                         print("Runtime failed: " + failure, flush=True)
                 finally:

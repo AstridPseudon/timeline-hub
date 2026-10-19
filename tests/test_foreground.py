@@ -234,6 +234,28 @@ def test_run_foreground_treats_stop_after_readiness_as_orderly(tmp_path, monkeyp
     assert capsys.readouterr().out == ""
 
 
+def test_run_foreground_treats_stop_during_startup_as_orderly(tmp_path, monkeypatch, capsys):
+    paths = RuntimePaths.sandbox(tmp_path / "support")
+    boundary = _Boundary()
+    registration = {}
+    monkeypatch.setattr(cli, "platform", SimpleNamespace(
+        log_dir=lambda _home: tmp_path / "logs",
+        owner_only=lambda _path: None,
+        install_stop_handlers=lambda callback: (registration.update(handler=callback) or (lambda: None)),
+    ))
+    monkeypatch.setattr(cli, "ForegroundRuntimeBoundary", lambda: boundary)
+
+    def stop_during_bootstrap(*_):
+        registration["handler"](None, None)
+        return _result()
+
+    monkeypatch.setattr(cli, "bootstrap", stop_during_bootstrap)
+    monkeypatch.setattr(cli, "_wait_for_door", lambda *_: pytest.fail("startup continued after a stop request"))
+    assert cli._run_foreground(paths, cli.BootstrapConfig(door=DoorSettings(ORIGIN, 17340)), json_mode=True) == 0
+    assert boundary.stops == 1
+    assert capsys.readouterr().out == ""
+
+
 def test_run_command_routes_to_in_process_foreground_owner(tmp_path, monkeypatch):
     paths = RuntimePaths.sandbox(tmp_path / "support")
     config = cli.BootstrapConfig(door=DoorSettings(ORIGIN, 17340))
