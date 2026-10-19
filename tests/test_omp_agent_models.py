@@ -40,7 +40,7 @@ import sys
 
 log = Path(os.environ["FAKE_OMP_LOG"])
 args = sys.argv[1:]
-record = {{"argv": args, "selection": os.environ.get("ASTRID_OMP_MODEL_SELECTION")}}
+record = {{"argv": args, "cwd": os.getcwd()}}
 if args[:2] == ["--mode", "rpc"]:
     record["input"] = sys.stdin.read()
 with log.open("a", encoding="utf-8") as stream:
@@ -65,6 +65,36 @@ if args and args[0] == "usage":
     print(json.dumps(json.loads(os.environ.get("FAKE_OMP_USAGE", '{{"reports": []}}'))))
     raise SystemExit(int(os.environ.get("FAKE_OMP_USAGE_EXIT", "0")))
 
+state_path = Path(os.environ["FAKE_OMP_STATE"])
+if args[:3] == ["config", "get", "modelRoles"]:
+    mode = os.environ.get("FAKE_OMP_CONFIG_GET_MODE", "ok")
+    if mode == "fail":
+        raise SystemExit(1)
+    if mode == "malformed":
+        print("not-json")
+        raise SystemExit(0)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    roles = state["roles"]
+    if not Path.cwd().name.startswith("astrid-agent-config-") and os.environ.get("FAKE_OMP_PROJECT_ROLE"):
+        roles = {{"default": os.environ["FAKE_OMP_PROJECT_ROLE"], "project-only": "project-only/model"}}
+    print(json.dumps({{"value": roles}}))
+    raise SystemExit(0)
+
+if args[:3] == ["config", "set", "modelRoles"]:
+    mode = os.environ.get("FAKE_OMP_CONFIG_SET_MODE", "ok")
+    requested = json.loads(args[3])
+    if mode == "fail":
+        raise SystemExit(1)
+    if mode == "no-roundtrip":
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        print(json.dumps({{"value": state["roles"]}}))
+        raise SystemExit(0)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state["roles"] = requested
+    state_path.write_text(json.dumps(state), encoding="utf-8")
+    print(json.dumps({{"value": requested}}))
+    raise SystemExit(0)
+
 result_path = os.environ.get("ASTRID_OMP_MODELS_RESULT")
 mode = os.environ.get("FAKE_OMP_MODE", "ok")
 if mode == "no-result":
@@ -74,34 +104,28 @@ if mode == "malformed":
     raise SystemExit(0)
 
 snapshot = json.loads(os.environ["FAKE_OMP_SNAPSHOT"])
-selection = os.environ.get("ASTRID_OMP_MODEL_SELECTION")
-state_path = Path(os.environ["FAKE_OMP_STATE"])
-if selection is not None:
-    if mode == "provider-only" and selection in {{"closed", "closed/model"}}:
-        Path(result_path).write_text(json.dumps({{"error": "Sign in: run `omp`, then /login and pick Closed Provider"}}), encoding="utf-8")
-        raise SystemExit(1)
-    match = next((model for provider in snapshot["providers"] for model in provider["models"] if model["selector"] == selection), None)
-    if not match:
-        Path(result_path).write_text(json.dumps({{"error": "Unknown or unavailable model selector"}}), encoding="utf-8")
-        raise SystemExit(1)
-    state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {{}}
-    state["roles"] = {{**state.get("roles", {{}}), "default": selection}}
-    state_path.write_text(json.dumps(state), encoding="utf-8")
-    snapshot["currentModel"] = selection
+state = json.loads(state_path.read_text(encoding="utf-8"))
+snapshot["currentModel"] = state["roles"].get("default")
 
 Path(result_path).write_text(json.dumps(snapshot), encoding="utf-8")
 raise SystemExit(int(os.environ.get("FAKE_OMP_EXIT", "0")))
 '''
 
 
-def _setup(tmp_path: Path, *, snapshot: dict[str, Any] | None = None) -> tuple[dict[str, str], Path, Path]:
+def _setup(
+    tmp_path: Path,
+    *,
+    snapshot: dict[str, Any] | None = None,
+    initial_default: str | None = None,
+) -> tuple[dict[str, str], Path, Path]:
     tmp_path.mkdir(parents=True, exist_ok=True)
     fake_omp = tmp_path / "omp-fake"
     fake_omp.write_text(FAKE_OMP.format(python=sys.executable), encoding="utf-8")
     fake_omp.chmod(0o755)
     log = tmp_path / "calls.jsonl"
     state = tmp_path / "omp-state.json"
-    state.write_text(json.dumps({"roles": {"default": "before/model", "coding": "keep/coding", "title": "keep/title"}, "other": "preserve"}), encoding="utf-8")
+    initial_default = initial_default or (snapshot or SNAPSHOT)["currentModel"]
+    state.write_text(json.dumps({"roles": {"default": initial_default, "coding": "keep/coding", "title": "keep/title"}, "other": "preserve"}), encoding="utf-8")
     env = os.environ.copy()
     for key in tuple(env):
         if key.startswith("FAKE_OMP_"):
@@ -253,7 +277,8 @@ def test_models_json_does_not_emit_raw_account_or_scope_usage_fields(tmp_path: P
 
 
 def test_use_saves_exact_model_selector_and_preserves_other_roles(tmp_path: Path) -> None:
-    env, log, state_path = _setup(tmp_path)
+    env, log, state_path = _setup(tmp_path, initial_default="alpha/small")
+    env["FAKE_OMP_PROJECT_ROLE"] = "project-only/model"
 
     result = _run(tmp_path, env, "agent", "use", "alpha/model/team/name", "--json")
 
@@ -269,15 +294,24 @@ def test_use_saves_exact_model_selector_and_preserves_other_roles(tmp_path: Path
         "other": "preserve",
     }
     calls = _calls(log)
-    assert len(calls) == 3
+    assert len(calls) == 4
     assert calls[0]["argv"][:3] == ["models", "ls", "--json"]
     assert calls[1]["argv"][:2] == ["--mode", "rpc"]
-    assert calls[2]["selection"] == "alpha/model/team/name"
-    assert calls[2]["argv"][:3] == ["models", "ls", "--json"]
+    assert calls[2]["argv"] == ["config", "get", "modelRoles", "--json"]
+    assert calls[3]["argv"][:3] == ["config", "set", "modelRoles"]
+    assert json.loads(calls[3]["argv"][3]) == {
+        "default": "alpha/model/team/name",
+        "coding": "keep/coding",
+        "title": "keep/title",
+    }
+    assert calls[3]["argv"][4] == "--json"
+    for call in calls[2:]:
+        assert Path(call["cwd"]).name.startswith("astrid-agent-config-")
+    assert calls[2]["cwd"] == calls[3]["cwd"]
 
 
 def test_use_accepts_signed_out_provider_model(tmp_path: Path) -> None:
-    env, _log, state_path = _setup(tmp_path)
+    env, log, state_path = _setup(tmp_path)
 
     result = _run(tmp_path, env, "agent", "use", "keyless/public", "--json")
 
@@ -285,6 +319,31 @@ def test_use_accepts_signed_out_provider_model(tmp_path: Path) -> None:
     assert json.loads(result.stdout)["currentModel"] == "keyless/public"
     state = json.loads(state_path.read_text(encoding="utf-8"))
     assert state["roles"]["default"] == "keyless/public"
+    assert len(_calls(log)) == 4
+
+
+def test_models_displays_persisted_default_even_when_provider_is_signed_out(tmp_path: Path) -> None:
+    env, _log, _state = _setup(tmp_path, initial_default="closed/retired-model")
+
+    result = _run(tmp_path, env, "agent", "models", "--json")
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["currentModel"] == "closed/retired-model"
+    closed = next(provider for provider in payload["providers"] if provider["id"] == "closed")
+    assert closed["signedIn"] is False
+    assert closed["models"] == []
+
+
+def test_use_persists_default_for_a_later_models_subprocess(tmp_path: Path) -> None:
+    env, _log, _state = _setup(tmp_path)
+
+    selected = _run(tmp_path, env, "agent", "use", "alpha/small", "--json")
+    listed = _run(tmp_path, env, "agent", "models", "--json")
+
+    assert selected.returncode == 0, selected.stderr
+    assert listed.returncode == 0, listed.stderr
+    assert json.loads(listed.stdout)["currentModel"] == "alpha/small"
 
 
 def test_provider_only_signed_out_selection_prints_one_line_sign_in_hint_without_mutation(tmp_path: Path) -> None:
@@ -347,6 +406,38 @@ def test_help_describes_model_commands_without_invoking_omp(tmp_path: Path) -> N
         assert "currentModel" in result.stdout
         assert "signedIn" in result.stdout
         assert _calls(log) == []
+
+
+def test_profile_models_section_has_one_command_signin_guidance_and_exact_fallback() -> None:
+    profile = Path(__file__).parents[1] / "astrid" / "agent_profiles" / "astrid.md"
+    text = profile.read_text(encoding="utf-8")
+    section = text.split("## Models and providers\n", 1)[1].split("\n## ", 1)[0]
+
+    assert "astrid --onboard" in section
+    assert "omp`, then `/login" in section
+    assert "that exact provider name" in section
+    assert "astrid agent models --json" in section
+    assert "astrid agent use PROVIDER/MODEL" in section
+
+
+def test_native_config_failures_do_not_report_success_or_mutate_default(tmp_path: Path) -> None:
+    for get_mode, set_mode in (("fail", "ok"), ("malformed", "ok"), ("ok", "fail"), ("ok", "no-roundtrip")):
+        env, log, state_path = _setup(tmp_path / f"{get_mode}-{set_mode}")
+        env["FAKE_OMP_CONFIG_GET_MODE"] = get_mode
+        env["FAKE_OMP_CONFIG_SET_MODE"] = set_mode
+        before = state_path.read_text(encoding="utf-8")
+
+        result = _run(tmp_path, env, "agent", "use", "alpha/small", "--json")
+
+        assert result.returncode != 0
+        assert result.stdout == ""
+        assert result.stderr.strip()
+        assert state_path.read_text(encoding="utf-8") == before
+        calls = _calls(log)
+        if get_mode != "ok":
+            assert [call["argv"][:3] for call in calls[-1:]] == [["config", "get", "modelRoles"]]
+        else:
+            assert calls[-1]["argv"][:3] == ["config", "set", "modelRoles"]
 
 
 def test_usage_failure_or_unavailable_usage_is_optional(tmp_path: Path) -> None:

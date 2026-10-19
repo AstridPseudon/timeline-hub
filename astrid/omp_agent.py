@@ -231,6 +231,8 @@ def _model_command_parser() -> argparse.ArgumentParser:
         "JSON v1: {schemaVersion: 1, currentModel: provider/model or null, providers: "
         "[{id, name, signedIn, models: [{id, name, selector}], usage?: "
         "[{fetchedAt, limits: [{label, amount, window?, status?}]}]}]}. "
+        "currentModel shows the saved OMP profile default, even when unavailable, "
+        "or OMP's automatic selection when no default is saved. "
         "Providers and models come from OMP's /model and /login selectors. "
         "signedIn means OMP has auth configured; keyless providers can also have usable models. "
         "Usage is optional and excludes account identifiers. No credentials are returned."
@@ -238,25 +240,24 @@ def _model_command_parser() -> argparse.ArgumentParser:
     models = commands.add_parser("models", help="list OMP providers and usable models", description=contract)
     models.add_argument("--json", action="store_true", help="print the stable JSON v1 contract above")
     use = commands.add_parser(
-        "use", help="set OMP's default model for the next Astrid launch",
-        description="Validate against `astrid agent models` and save the same default role as OMP's /model. "
-        "Existing conversations may retain their session model; relaunch Astrid for the new default. " + contract,
+        "use", help="save OMP's default model for future App and terminal chats",
+        description="Validate against `astrid agent models` and persist modelRoles.default via "
+        "`omp config set`, the same setting as OMP's /model. The default is shared by App and "
+        "terminal chats using this OMP profile. Explicit project defaults take precedence; "
+        "existing conversations may retain their session model. " + contract,
     )
     use.add_argument("selector", metavar="PROVIDER/MODEL", help="exact model selector from `astrid agent models`")
     use.add_argument("--json", action="store_true", help="print the updated JSON v1 snapshot")
     return parser
 
 
-def _omp_model_snapshot(omp_bin: str, selection: str | None) -> dict[str, Any]:
+def _omp_model_snapshot(omp_bin: str) -> dict[str, Any]:
     """Query OMP's registry inside OMP, without opening its credential files."""
     extension = Path(__file__).resolve().parent / "omp_extensions" / "astrid-models.ts"
     with tempfile.TemporaryDirectory(prefix="astrid-agent-models-") as directory:
         result_file = Path(directory) / "models.json"
         env = dict(os.environ)
         env["ASTRID_OMP_MODELS_RESULT"] = str(result_file)
-        env.pop("ASTRID_OMP_MODEL_SELECTION", None)
-        if selection is not None:
-            env["ASTRID_OMP_MODEL_SELECTION"] = selection
         result = subprocess.run(
             [omp_bin, "models", "ls", "--json", "-e", str(extension)],
             capture_output=True, text=True, env=env, check=False,
@@ -273,6 +274,31 @@ def _omp_model_snapshot(omp_bin: str, selection: str | None) -> dict[str, Any]:
     if snapshot.get("schemaVersion") != 1 or not isinstance(snapshot.get("providers"), list):
         raise ValueError("OMP returned an invalid model snapshot")
     return snapshot
+
+
+def _save_default_model(omp_bin: str, selector: str) -> None:
+    """Persist OMP's global default without copying project roles into it."""
+    with tempfile.TemporaryDirectory(prefix="astrid-agent-config-") as directory:
+        # OMP's config CLI reads effective settings for its cwd. An empty cwd
+        # isolates the profile's global roles from project-specific overrides.
+        result = subprocess.run(
+            [omp_bin, "config", "get", "modelRoles", "--json"], cwd=directory,
+            capture_output=True, text=True, check=False,
+        )
+        if result.returncode:
+            raise ValueError("OMP could not read modelRoles; run `omp config get modelRoles` for details")
+        payload = json.loads(result.stdout)
+        roles = payload.get("value") if isinstance(payload, dict) else None
+        if not isinstance(roles, dict):
+            raise ValueError("OMP returned invalid modelRoles")
+        result = subprocess.run(
+            [omp_bin, "config", "set", "modelRoles", json.dumps({**roles, "default": selector}), "--json"],
+            cwd=directory, capture_output=True, text=True, check=False,
+        )
+        payload = json.loads(result.stdout) if not result.returncode else None
+        saved = payload.get("value") if isinstance(payload, dict) else None
+        if not isinstance(saved, dict) or saved.get("default") != selector:
+            raise ValueError("OMP could not save modelRoles.default; run `omp config get modelRoles` for details")
 
 
 def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
@@ -352,7 +378,7 @@ def _run_model_command(argv: list[str]) -> int:
         print("astrid: could not locate the OMP binary; set OMP_BIN or install oh-my-pi", file=sys.stderr)
         return 1
     try:
-        snapshot = _omp_model_snapshot(omp_bin, None)
+        snapshot = _omp_model_snapshot(omp_bin)
         _merge_login_providers(omp_bin, snapshot)
         if args.command == "models":
             _add_model_usage(omp_bin, snapshot)
@@ -363,15 +389,15 @@ def _run_model_command(argv: list[str]) -> int:
                 raise ValueError(f"Sign in: run `omp`, then /login and pick {provider['name']}")
             if provider is None or not any(model["selector"] == args.selector for model in provider["models"]):
                 raise ValueError("Unknown or unavailable model selector; use `astrid agent models`")
-            selected = _omp_model_snapshot(omp_bin, args.selector)
-            snapshot["currentModel"] = selected["currentModel"]
+            _save_default_model(omp_bin, args.selector)
+            snapshot["currentModel"] = args.selector
     except (OSError, ValueError) as exc:
         print(f"astrid: {exc}", file=sys.stderr)
         return 1
     if args.json:
         print(json.dumps(snapshot, sort_keys=True))
     elif args.command == "use":
-        print(f"Astrid default model: {snapshot['currentModel']}. Relaunch Astrid to use it.")
+        print(f"Astrid default model saved: {snapshot['currentModel']}. New App and terminal chats inherit it unless their project sets a default.")
     else:
         print(f"Astrid default model: {snapshot['currentModel'] or '(none available)'}")
         for provider in snapshot["providers"]:
