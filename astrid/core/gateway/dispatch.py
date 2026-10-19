@@ -187,18 +187,22 @@ def _dispatch_doctor(args: list[str]) -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--diagnostic", action="store_true", help="emit the strict C2 diagnostic document")
     parser.add_argument("--shared", action="store_true", help="redact the diagnostic for shared transport")
+    parser.add_argument("--bundle", nargs="?", const="astrid-doctor.zip", metavar="PATH",
+                        help="write a redacted support ZIP (default: astrid-doctor.zip)")
     if any(token in {"-h", "--help"} for token in args):
         parser.print_help()
         return 0
     parsed = parser.parse_args(args)
+    support_root = None
     try:
         from astrid.core.gateway.diagnostics import collect_diagnostic
         from astrid.runtime_cli import RuntimeCLI, RuntimeCLIError
         from astrid.sdk.storage_root import resolve_runtime_data_root
 
+        support_root = resolve_runtime_data_root()
         diagnostic, _workspace, observed = collect_diagnostic(
             RuntimeCLI(),
-            support_root=resolve_runtime_data_root(),
+            support_root=support_root,
             mode="shared" if parsed.shared else "local",
             command="doctor",
         )
@@ -215,6 +219,18 @@ def _dispatch_doctor(args: list[str]) -> int:
             "authorization_required": False,
             "error": str(exc),
         }
+        if parsed.bundle:
+            from astrid.core.gateway.doctor_bundle import write_bundle
+            from astrid.sdk.storage_root import resolve_runtime_data_root
+
+            if support_root is None:
+                try:
+                    support_root = resolve_runtime_data_root()
+                except ValueError:
+                    support_root = None
+            destination = write_bundle(Path(parsed.bundle), payload, Path(support_root) if support_root else None)
+            print(f"Astrid doctor bundle: {destination}")
+            return 1
         if parsed.diagnostic:
             from astrid.core.gateway.diagnostics import build_diagnostic, _failure_from
             code, boundary = _failure_from(exc)
@@ -242,6 +258,12 @@ def _dispatch_doctor(args: list[str]) -> int:
     report.setdefault("effects", ["observe"])
     report.setdefault("authorization_required", False)
     report["diagnostic"] = diagnostic
+    if parsed.bundle:
+        from astrid.core.gateway.doctor_bundle import write_bundle
+
+        destination = write_bundle(Path(parsed.bundle), report, Path(support_root))
+        print(f"Astrid doctor bundle: {destination}")
+        return result_code
     if not parsed.shared:
         try:
             from astrid.sdk.storage_ownership import reclaim

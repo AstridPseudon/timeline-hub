@@ -369,7 +369,9 @@ def collect_diagnostic(runtime: Any, *, support_root: str, mode: str = "local", 
             facts["computeWorker"] = _fact(observed=True, value="blocked" if blocked else "observed", observed_at=observed_at)
             from dataclasses import replace
             details = _redact_shared(observations) if mode == "shared" else observations
-            runtime_result = replace(runtime_result, data={**runtime_result.data, "astrid_observations": details})
+            # Preserve the existing Runtime status health projection gathered
+            # above so the doctor bundle can report supervised service states.
+            runtime_result = replace(runtime_result, data={**runtime_data, "astrid_observations": details})
             if problem_code is None and observations["cleanupLatch"]["blocked"]:
                 problem_code, failure_boundary = "capability_unavailable", "compute-readiness"
             if (problem_code is None and observations["runtimeClientCompatibility"]["observed"]
