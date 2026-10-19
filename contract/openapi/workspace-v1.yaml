@@ -754,6 +754,15 @@ paths:
       operationId: getExecutor
       parameters: [ { name: executor_id, in: path, required: true, schema: { type: string, minLength: 1 } } ]
       responses: { '200': { description: Exact owner-observed executor, content: { application/json: { schema: { $ref: './schemas/worker.json#/definitions/Executor' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/control/local-worker/credential-generation:
+    get:
+      operationId: getReceiptlessWorkerCredentialGeneration
+      responses: { '200': { description: Exact owner-scoped receiptless credential authority; historical process custody remains UNKNOWN, content: { application/json: { schema: { $ref: './schemas/worker.json#/definitions/ReceiptlessWorkerCredentialGeneration' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+  /v1/control/local-worker/retire-credential:
+    post:
+      operationId: retireReceiptlessWorkerCredential
+      requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/worker.json#/definitions/ReceiptlessWorkerCredentialBinding' } } } }
+      responses: { '200': { description: Exact credential authority retired; no process stop is attested, content: { application/json: { schema: { $ref: './schemas/worker.json#/definitions/ReceiptlessWorkerCredentialRetirementResult' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
   /v1/control/local-worker/generation:
     get:
       operationId: getLocalWorkerGeneration

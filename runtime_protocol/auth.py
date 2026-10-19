@@ -106,6 +106,63 @@ class CredentialStore:
             raise ValidationError("credential generation is inconsistent")
         return token, metadata
 
+    def _generation_file_snapshot(self, path: Path):
+        """Pin regular owner-only bytes; reject lexical replacement and aliases."""
+        self._safe_file(path, "credential generation file")
+        try:
+            descriptor = os.open(path, os.O_RDONLY | os.O_NONBLOCK | getattr(os, "O_NOFOLLOW", 0))
+            with os.fdopen(descriptor, "rb") as handle:
+                before = os.fstat(handle.fileno())
+                if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid()
+                        or stat.S_IMODE(before.st_mode) != 0o600 or before.st_nlink != 1):
+                    raise ValidationError("credential generation file is unsafe or aliased")
+                data = handle.read(1_048_577)
+                after = os.fstat(handle.fileno())
+            lexical = path.lstat()
+            fields = ("st_dev", "st_ino", "st_mode", "st_uid", "st_nlink", "st_size", "st_mtime_ns", "st_ctime_ns")
+            if (len(data) > 1_048_576 or any(getattr(before, k) != getattr(after, k)
+                    or getattr(before, k) != getattr(lexical, k) for k in fields)):
+                raise ValidationError("credential generation file changed during read")
+            return data, after
+        except OSError as exc:
+            raise ValidationError("credential generation file is unavailable") from exc
+
+    def committed_generation(self, actor: str) -> tuple[dict, dict]:
+        """Return a secret-free proof of one complete, unaliased generation.
+
+        Owner reconciliation uses this stricter snapshot, never the lenient
+        metadata lookup that intentionally maps damaged storage to None.
+        """
+        from .local_execution_handoff import decode
+        with self._lock:
+            paths = self._paths(actor)
+            snapshots = {}
+            identities = set()
+            for path in paths:
+                data, before = self._generation_file_snapshot(path)
+                if (before.st_dev, before.st_ino) in identities:
+                    raise ValidationError("credential generation file is aliased")
+                identities.add((before.st_dev, before.st_ino))
+                snapshots[path.name] = (data, before)
+            _, metadata = self._read_actor(actor)
+            if decode(snapshots[paths[1].name][0]) != metadata:
+                raise ValidationError("credential metadata changed during validation")
+            self._parse_credential(actor, metadata)
+            commit = decode(snapshots[paths[2].name][0])
+            if (not isinstance(commit, dict) or set(commit) != {"generation", "token_sha256", "metadata_sha256"}
+                    or not isinstance(commit["generation"], str) or len(commit["generation"]) != 32
+                    or any(c not in "0123456789abcdef" for c in commit["generation"])):
+                raise ValidationError("credential commit identity is invalid")
+            digests = {}
+            for path in paths:
+                data, before = snapshots[path.name]
+                after_data, after = self._generation_file_snapshot(path)
+                fields = ("st_dev", "st_ino", "st_mode", "st_uid", "st_nlink", "st_size", "st_mtime_ns", "st_ctime_ns")
+                if (any(getattr(before, k) != getattr(after, k) for k in fields) or after_data != data):
+                    raise ValidationError("credential generation changed during validation")
+                digests[path.name] = self._sha256(data)
+            return metadata, {"credential_generation_digest": digests[paths[2].name], "file_digests": digests}
+
     @staticmethod
     def _scopes(scopes) -> list[str]:
         if (not isinstance(scopes, list)

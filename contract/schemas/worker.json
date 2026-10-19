@@ -111,6 +111,111 @@
         "runtime_session_id": { "type": "string", "minLength": 1 }
       }
     },
+      "ReceiptlessWorkerCredentialBinding": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "actor",
+          "workspace_uuid",
+          "realm_root",
+          "support_root",
+          "credential_generation_digest",
+          "file_digests"
+        ],
+        "properties": {
+          "actor": {
+            "type": "string",
+            "const": "astrid-pack-host"
+          },
+          "workspace_uuid": {
+            "type": "string",
+            "minLength": 1
+          },
+          "realm_root": {
+            "type": "string",
+            "minLength": 1
+          },
+          "support_root": {
+            "type": "string",
+            "minLength": 1
+          },
+          "credential_generation_digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "file_digests": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "astrid-pack-host.token",
+              "astrid-pack-host.json",
+              "astrid-pack-host.commit"
+            ],
+            "properties": {
+              "astrid-pack-host.token": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "astrid-pack-host.json": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "astrid-pack-host.commit": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              }
+            }
+          }
+        }
+      },
+      "ReceiptlessWorkerCredentialGeneration": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "binding",
+          "state",
+          "historical_process_state"
+        ],
+        "properties": {
+          "binding": {
+            "$ref": "#/definitions/ReceiptlessWorkerCredentialBinding"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "committed",
+              "fencing",
+              "complete"
+            ]
+          },
+          "historical_process_state": {
+            "type": "string",
+            "const": "UNKNOWN"
+          }
+        }
+      },
+      "ReceiptlessWorkerCredentialRetirementResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "binding",
+          "state",
+          "historical_process_state"
+        ],
+        "properties": {
+          "binding": {
+            "$ref": "#/definitions/ReceiptlessWorkerCredentialBinding"
+          },
+          "state": {
+            "type": "string",
+            "const": "credential_authority_retired"
+          },
+          "historical_process_state": {
+            "type": "string",
+            "const": "UNKNOWN"
+          }
+        }
+      },
     "LocalWorkerGeneration": {
       "type": "object", "additionalProperties": false,
       "required": ["executor_incarnation", "evidence_digest", "profile_id", "workspace_uuid", "state"],

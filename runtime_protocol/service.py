@@ -561,6 +561,7 @@ def _verified_mutation(function):
     def wrapped(self, *args, **kwargs):
         with self.store._mutex:
             self._assert_mutation_admitted()
+            self._assert_worker_credential_admitted(kwargs.get("identity"))
             return function(self, *args, **kwargs)
     return wrapped
 
@@ -571,6 +572,7 @@ def _durable_mutation(function):
     def wrapped(self, *args, **kwargs):
         with self.store._mutex:
             self._assert_mutation_admitted()
+            self._assert_worker_credential_admitted(kwargs.get("identity"))
             try:
                 with self.store._transaction():
                     result = function(self, *args, **kwargs)
@@ -708,9 +710,17 @@ class RuntimeService(TimelineCommitAcceptance):
         self._local_generation_verifier = callback
         self._local_claim_actor = actor
 
+    def _assert_worker_credential_admitted(self, identity):
+        # Called only inside the canonical mutation/claim mutex. Authentication
+        # may precede a slow transfer or an owner retirement waiting on it.
+        callback = getattr(self, "_worker_credential_admission", None)
+        if callback is not None:
+            callback(identity)
+
     def _assert_local_claim_admission(self, executor_id, *, identity=None, registration=False):
         if executor_id != self._local_claim_actor:
             return
+        self._assert_worker_credential_admitted(identity)
         self._load_local_claim_fence()
         fence = self._local_claim_fence
         if self._local_claim_fence_unknown:
@@ -5103,6 +5113,7 @@ class RuntimeService(TimelineCommitAcceptance):
             existing = self.cas.existing_identity(data.digest, data.size)
             with self.store._mutex:
                 self._assert_mutation_admitted()
+                self._assert_worker_credential_admitted(identity)
                 project_row = self.store.get_project(project) if project is not None else None
                 project_id = project_row["id"] if project_row else "unscoped"
                 aggregate_id = project_id if project_row else "objects"
@@ -7738,7 +7749,7 @@ class RuntimeService(TimelineCommitAcceptance):
         return resource
 
     @_verified_mutation
-    def register_capability(self, body):
+    def register_capability(self, body, *, identity=None):
         if "storage_estimate_contract" in body:
             raise ValidationError("storage_estimate_contract requires an executor descriptor")
         value = self.store.register_capability(body.get("capability_id", ""), body.get("definition_digest", ""), required_resource_keys=body.get("required_resource_keys", []), status=body.get("status", "ready"), unavailable_reason=body.get("unavailable_reason"), estimated_scratch_bytes=body.get("estimated_scratch_bytes", 0), estimated_output_bytes=body.get("estimated_output_bytes", 0))

@@ -2434,6 +2434,24 @@ class RealmStore:
         rows = self.conn.execute("SELECT * FROM events WHERE run_id=? ORDER BY id", (run_id,)).fetchall()
         return [dict(row) | {"payload": json.loads(row["payload_json"])} for row in rows]
 
+    def _event_chain_errors(self):
+        """Verify retained task history before it is used as owner authority."""
+        errors = []
+        for run in self.conn.execute("SELECT id FROM runs"):
+            previous = ""
+            for event in self.conn.execute("SELECT * FROM events WHERE run_id=? ORDER BY id", (run[0],)):
+                if event["previous_hash"] != previous:
+                    errors.append({"run_id": run[0], "event_id": event["id"], "reason": "broken_link"})
+                try:
+                    payload = json.loads(event["payload_json"])
+                    expected = hashlib.sha256(canonical_json({"run_id": event["run_id"], "task_id": event["task_id"], "kind": event["kind"], "payload": payload, "previous_hash": event["previous_hash"], "created_at": event["created_at"]}).encode()).hexdigest()
+                    if expected != event["event_hash"]:
+                        errors.append({"run_id": run[0], "event_id": event["id"], "reason": "hash_mismatch"})
+                except (ValueError, TypeError, ValidationError):
+                    errors.append({"run_id": run[0], "event_id": event["id"], "reason": "malformed_payload"})
+                previous = event["event_hash"]
+        return errors
+
     def _append_event(self, run_id, task_id, kind, payload, *, created_at=None):
         previous = self.conn.execute("SELECT event_hash FROM events WHERE run_id=? ORDER BY id DESC LIMIT 1", (run_id,)).fetchone()
         previous_hash = previous[0] if previous else ""
@@ -5409,17 +5427,7 @@ class RealmStore:
                 })
         orphaned = self._cas_orphans(reachable, deadline=deadline)
         cas_ok = not missing and not corrupt
-        event_errors = []
-        if {"runs", "events"}.issubset(actual_tables):
-            for run in self.conn.execute("SELECT id FROM runs"):
-                previous = ""
-                for event in self.conn.execute("SELECT * FROM events WHERE run_id=? ORDER BY id", (run[0],)):
-                    if event["previous_hash"] != previous:
-                        event_errors.append({"run_id": run[0], "event_id": event["id"], "reason": "broken_link"})
-                    expected = hashlib.sha256(canonical_json({"run_id": event["run_id"], "task_id": event["task_id"], "kind": event["kind"], "payload": json.loads(event["payload_json"]), "previous_hash": event["previous_hash"], "created_at": event["created_at"]}).encode()).hexdigest()
-                    if expected != event["event_hash"]:
-                        event_errors.append({"run_id": run[0], "event_id": event["id"], "reason": "hash_mismatch"})
-                    previous = event["event_hash"]
+        event_errors = self._event_chain_errors() if {"runs", "events"}.issubset(actual_tables) else []
         publication_events = {}
         timeline_chain_valid = {}
         if "timeline_events" in actual_tables:

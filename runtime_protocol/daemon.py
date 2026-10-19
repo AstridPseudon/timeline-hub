@@ -16,7 +16,7 @@ from .auth import CredentialStore
 from .catalog import LiveDiscovery, RealmCatalog, process_birth_identity
 from .backup import restore_backup, verify_backup, verify_restore_candidate
 from .dirfd import capture_parent, close_pinned, validate_parent
-from .errors import ConflictError, NotFoundError, ProtocolError, RuntimeErrorBase
+from .errors import AuthorizationError, ConflictError, NotFoundError, ProtocolError, RuntimeErrorBase
 from .server import RuntimeHTTPServer, RuntimeHandler
 from .service import RuntimeService
 from .util import atomic_json_write, now
@@ -133,7 +133,20 @@ class RuntimeDaemon:
         self._local_worker_deferred = False
         owner_scopes = ["admin", "handshake", "projects:read", "projects:write", "objects:read", "objects:write", "tasks:read", "tasks:write", "worker:execute", "worker:register", "credentials:provision"]
         self.token, self.credential_path = self.credentials.provision("owner", owner_scopes, rotate=rotate)
-        if self.local_worker_profiles:
+        checkpoint = self._local_relinquish_state()
+        retirement = checkpoint is not None and checkpoint.get("variant") == "receiptless_credential_retirement"
+        pending = checkpoint is not None and checkpoint["state"] != "complete"
+        retired_without_successor = retirement and not any(
+            p.exists() or p.is_symlink() for p in self.credentials._paths(WORKER_ACTOR))
+        if pending or retired_without_successor:
+            # A durable receiptless retirement intent fences even a crash
+            # before disable/revoke. Completed retirement also cannot silently
+            # provision: the future local producer must create its own proof.
+            self.credentials.disable_actor(WORKER_ACTOR)
+            self.worker_token = None
+            self.worker_credential_path = self.credentials.path_for(WORKER_ACTOR)
+            self._local_worker_deferred = pending
+        elif self.local_worker_profiles:
             if self._remote_worker_custody_unresolved() or self._local_relinquish_pending():
                 # Keep the owner and exact remote cleanup route available. Do
                 # not construct LocalWorkerLauncher here: its restart recovery
@@ -246,6 +259,7 @@ class RuntimeDaemon:
         self.service.set_local_claim_generation_verifier(self._verify_local_claim_generation, actor=WORKER_ACTOR)
         self.catalog.bind_owner(self._catalog_owner_valid)
         self._provision_credentials(rotate=rotate_credentials)
+        self.service._worker_credential_admission = self._assert_worker_credential_admitted
         if self.local_worker_profiles and not self._local_worker_deferred:
             self._create_local_worker_launcher()
         self.httpd = RuntimeHTTPServer((self.host, self.port), RuntimeHandler)
@@ -356,12 +370,21 @@ class RuntimeDaemon:
 
     def _local_relinquish_state(self):
         path = self._local_relinquish_path()
-        if not path.exists():
+        if not path.exists() and not path.is_symlink():
             return None
         try:
-            value = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as exc:
+            from .local_execution_handoff import read_protected
+            value = read_protected(path)
+        except Exception as exc:
             raise ConflictError("local Worker relinquish checkpoint is unreadable") from exc
+        if isinstance(value, dict) and value.get("variant") == "receiptless_credential_retirement":
+            if (set(value) != {"version", "variant", "state", "binding", "historical_process_state"}
+                    or type(value["version"]) is not int or value["version"] != 1
+                    or value["state"] not in {"fencing", "complete"}
+                    or value["historical_process_state"] != "UNKNOWN"):
+                raise ConflictError("receiptless Worker retirement checkpoint is invalid")
+            self._validate_receiptless_binding(value["binding"])
+            return value
         if (not isinstance(value, dict) or value.get("version") != 1
                 or value.get("state") not in {"fencing", "fenced", "stop_unknown", "stopped", "complete"}
                 or not isinstance(value.get("receipt"), dict)):
@@ -374,6 +397,172 @@ class RuntimeDaemon:
 
     def _write_local_relinquish(self, state):
         atomic_json_write(self._local_relinquish_path(), state)
+
+    def _validate_receiptless_binding(self, binding):
+        from .local_execution_handoff import sha
+        fields = {"actor", "workspace_uuid", "realm_root", "support_root", "credential_generation_digest", "file_digests"}
+        if (not isinstance(binding, dict) or set(binding) != fields
+                or binding["actor"] != WORKER_ACTOR
+                or binding["workspace_uuid"] != self.service.realm["id"]
+                or binding["realm_root"] != str(self.root)
+                or binding["support_root"] != str(self.support_root)
+                or not isinstance(binding["file_digests"], dict)
+                or set(binding["file_digests"]) != {p.name for p in self.credentials._paths(WORKER_ACTOR)}):
+            raise ConflictError("receiptless Worker retirement binding differs from this owner")
+        sha(binding["credential_generation_digest"])
+        for value in binding["file_digests"].values():
+            sha(value)
+        if binding["credential_generation_digest"] != binding["file_digests"][self.credentials._paths(WORKER_ACTOR)[2].name]:
+            raise ConflictError("receiptless Worker commit proof differs")
+        return binding
+
+    def _require_receiptless_owner(self, identity):
+        if self.service._require_placement_recovery_owner(identity) != "owner":
+            raise AuthorizationError("receiptless Worker retirement requires the Runtime owner")
+        self.credentials.validate_binding("owner", identity.get("_credential_binding"), "admin")
+
+    def _receiptless_worker_binding(self):
+        metadata, proof = self.credentials.committed_generation(WORKER_ACTOR)
+        if (set(metadata) != {"credential_format", "actor", "scopes"}
+                or metadata["scopes"] != sorted(WORKER_SCOPES)):
+            raise ConflictError("Worker generation is scoped or bound to another lifecycle")
+        return {"actor": WORKER_ACTOR, "workspace_uuid": self.service.realm["id"],
+                "realm_root": str(self.root), "support_root": str(self.support_root), **proof}
+
+    def _assert_receiptless_worker_quiescent(self):
+        # The history scan includes accepted records: malformed history can
+        # never become evidence that remote authority has been relinquished.
+        from .local_execution_handoff import decode, sha
+        if self.service.store._event_chain_errors():
+            raise ConflictError("remote Worker activation history is corrupt")
+        active = set()
+        rows = self.service.store.conn.execute(
+            "SELECT run_id, task_id, kind, payload_json FROM events WHERE kind IN "
+            "('task.remote_activation_qualified', 'task.remote_activation_accepted', 'task.remote_activation_revoked') ORDER BY id"
+        ).fetchall()
+        for row in rows:
+            try:
+                payload = decode(row["payload_json"])
+                activation = payload.get("activation_id") if isinstance(payload, dict) else None
+                if not isinstance(activation, str) or not activation or not row["task_id"]:
+                    raise ValueError("missing activation identity")
+                if row["kind"] == "task.remote_activation_accepted":
+                    if set(payload) != {"activation_id"}:
+                        raise ValueError("invalid activation acceptance")
+                elif row["kind"] == "task.remote_activation_revoked":
+                    if (not {"activation_id", "revoked_at"} <= set(payload)
+                            or set(payload) - {"activation_id", "revoked_at", "reason"}
+                            or not isinstance(payload["revoked_at"], str)):
+                        raise ValueError("invalid activation revocation")
+                else:
+                    required = {"activation_id", "task_id", "run_id", "credential_actor", "binding_digest",
+                                "deployment_digest", "evidence_digest", "effective_target", "executor_incarnation",
+                                "runtime_session_id", "runtime_epoch", "expires_at", "observation_digest", "authorized_child_lineage"}
+                    if (set(payload) != required or payload["task_id"] != row["task_id"]
+                            or payload["run_id"] != row["run_id"]
+                            or type(payload["runtime_epoch"]) is not int or payload["runtime_epoch"] < 1
+                            or not isinstance(payload["effective_target"], dict)
+                            or not isinstance(payload["authorized_child_lineage"], dict)
+                            or not all(isinstance(payload[k], str) and payload[k] for k in
+                                       ("credential_actor", "executor_incarnation", "runtime_session_id", "expires_at"))):
+                        raise ValueError("invalid activation qualification")
+                    for field in ("binding_digest", "deployment_digest", "evidence_digest", "observation_digest"):
+                        sha(payload[field])
+            except Exception as exc:
+                raise ConflictError("remote Worker activation history is invalid") from exc
+            key = (row["task_id"], activation)
+            if row["kind"] == "task.remote_activation_revoked":
+                active.discard(key)
+            else:
+                active.add(key)
+        if active:
+            raise ConflictError("remote Worker activation is unresolved")
+        self.service._load_local_claim_fence()
+        fence = self.service._local_claim_fence
+        if self.service._local_claim_fence_unknown or (fence is not None and fence["state"] != "released"):
+            raise ConflictError("local execution claim fence is unresolved")
+        if self.local_worker_launcher is not None and not self.local_worker_launcher.is_idle():
+            raise ConflictError("local Worker launcher owns the shared actor")
+        current_handle = getattr(self.local_worker_preparer, "current_handle", None)
+        if callable(current_handle) and current_handle() is not None:
+            raise ConflictError("local Worker preparer owns a launch handle")
+        self._assert_worker_actor_has_no_work()
+
+    def _assert_worker_credential_admitted(self, identity):
+        if not isinstance(identity, dict) or identity.get("actor") != WORKER_ACTOR:
+            return
+        checkpoint = self._local_relinquish_state()
+        retirement = checkpoint is not None and checkpoint.get("variant") == "receiptless_credential_retirement"
+        if retirement and checkpoint["state"] != "complete":
+            raise ConflictError("Worker credential retirement is fenced")
+        binding = identity.get("_credential_binding")
+        if binding is not None or retirement:
+            self.credentials.validate_binding(WORKER_ACTOR, binding, "worker:execute")
+            commit = self.credentials._paths(WORKER_ACTOR)[2]
+            if identity.get("_credential_generation_digest") != self.credentials._sha256(commit.read_bytes()):
+                raise AuthorizationError("Worker credential generation changed after authentication")
+
+    def receiptless_worker_generation(self, *, identity):
+        """Owner readback of authority identity; it makes no process claim."""
+        with self._worker_actor_lock, self.service.store._mutex:
+            self._require_receiptless_owner(identity)
+            checkpoint = self._local_relinquish_state()
+            if checkpoint is not None and checkpoint.get("variant") == "receiptless_credential_retirement":
+                return {"binding": checkpoint["binding"], "state": checkpoint["state"],
+                        "historical_process_state": "UNKNOWN"}
+            if checkpoint is not None and checkpoint["state"] != "complete":
+                raise ConflictError("local Worker relinquish is unresolved")
+            return {"binding": self._receiptless_worker_binding(), "state": "committed",
+                    "historical_process_state": "UNKNOWN"}
+
+    def retire_receiptless_worker_credential(self, binding, *, identity):
+        """Retire exact receiptless authority, never infer a process stop.
+
+        The existing protected reconciliation checkpoint is the durable fence.
+        Replays may remove only remaining bytes of this same recorded proof.
+        """
+        with self._worker_actor_lock, self.service.store._mutex, self.credentials._lock:
+            self.service._assert_mutation_admitted()
+            self._require_receiptless_owner(identity)
+            self._validate_receiptless_binding(binding)
+            checkpoint = self._local_relinquish_state()
+            paths = self.credentials._paths(WORKER_ACTOR)
+            if checkpoint is not None and checkpoint.get("variant") == "receiptless_credential_retirement":
+                if checkpoint["binding"] != binding:
+                    raise ConflictError("another exact Worker retirement is recorded")
+                if checkpoint["state"] == "complete":
+                    if any(p.exists() or p.is_symlink() for p in paths):
+                        raise ConflictError("Worker generation changed after retirement")
+                    return {"state": "credential_authority_retired", "binding": binding,
+                            "historical_process_state": "UNKNOWN"}
+            else:
+                if checkpoint is not None and checkpoint["state"] != "complete":
+                    raise ConflictError("local Worker relinquish is unresolved")
+                if self._receiptless_worker_binding() != binding:
+                    raise ConflictError("Worker credential generation changed")
+                self._assert_receiptless_worker_quiescent()
+                checkpoint = {"version": 1, "variant": "receiptless_credential_retirement",
+                              "state": "fencing", "binding": binding, "historical_process_state": "UNKNOWN"}
+                # Publication must precede disable or any destructive effect.
+                self._write_local_relinquish(checkpoint)
+            self.credentials.disable_actor(WORKER_ACTOR)
+            self._assert_receiptless_worker_quiescent()
+            for path in paths:
+                if path.exists() or path.is_symlink():
+                    data, _ = self.credentials._generation_file_snapshot(path)
+                    if self.credentials._sha256(data) != binding["file_digests"][path.name]:
+                        raise ConflictError("Worker credential bytes changed during retirement")
+            self.credentials.revoke(WORKER_ACTOR)
+            descriptor = os.open(self.credentials.root, os.O_RDONLY)
+            try:
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+            checkpoint = {**checkpoint, "state": "complete"}
+            self._write_local_relinquish(checkpoint)
+            self._local_worker_deferred = False
+            return {"state": "credential_authority_retired", "binding": binding,
+                    "historical_process_state": "UNKNOWN"}
 
     def _assert_worker_actor_has_no_work(self):
         """Called under the claim/store mutex before disabling the bearer."""
@@ -666,6 +855,8 @@ class RuntimeDaemon:
                 if self.service._require_placement_recovery_owner(identity) != "owner":
                     raise ConflictError("local Worker relinquish requires the Runtime owner")
                 checkpoint = self._local_relinquish_state()
+                if checkpoint is not None and checkpoint.get("variant") == "receiptless_credential_retirement" and checkpoint["state"] != "complete":
+                    raise ConflictError("receiptless credential retirement has no local process receipt")
                 metadata = self.credentials.actor_metadata(WORKER_ACTOR)
                 receipt = metadata.get("local_launch_receipt") if isinstance(metadata, dict) else None
                 if checkpoint is not None and checkpoint["state"] != "complete":
@@ -682,8 +873,8 @@ class RuntimeDaemon:
                             or receipt.get("executor_incarnation") != executor_incarnation
                             or receipt.get("evidence_digest") != evidence_digest):
                         if checkpoint is not None and checkpoint["state"] == "complete" and (
-                            checkpoint["receipt"].get("executor_incarnation") == executor_incarnation
-                            and checkpoint["receipt"].get("evidence_digest") == evidence_digest
+                            checkpoint.get("receipt", {}).get("executor_incarnation") == executor_incarnation
+                            and checkpoint.get("receipt", {}).get("evidence_digest") == evidence_digest
                         ):
                             return {"state": "relinquished", "executor_incarnation": executor_incarnation}
                         raise ConflictError("local Worker credential generation changed")
@@ -790,6 +981,8 @@ class RuntimeDaemon:
                 if self.service._require_placement_recovery_owner(identity) != "owner":
                     raise ConflictError("local Worker generation requires the Runtime owner")
                 checkpoint = self._local_relinquish_state()
+                if checkpoint is not None and checkpoint.get("variant") == "receiptless_credential_retirement" and checkpoint["state"] != "complete":
+                    raise NotFoundError("receiptless credential retirement has no local process receipt")
                 if checkpoint is not None and checkpoint["state"] != "complete":
                     receipt = checkpoint["receipt"]
                     state = checkpoint["state"]

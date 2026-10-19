@@ -61,8 +61,12 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             raise AuthorizationError("bearer credential required", guard=AuthorizationGuard.IDENTITY_BEARER_REQUIRED)
         if hasattr(self.server, "paired_sessions"):
             self.runtime.bind_task_authority(self.server.paired_sessions, self.server.credentials)
-        identity = self.server.credentials.require(value[7:], scope)  # type: ignore[attr-defined]
-        identity = {**identity, "_credential_binding": self.server.credentials._sha256(value[7:].encode())}
+        with self.server.credentials._lock:
+            identity = self.server.credentials.require(value[7:], scope)  # type: ignore[attr-defined]
+            identity = {**identity, "_credential_binding": self.server.credentials._sha256(value[7:].encode()),
+                        "_credential_generation_digest": self.server.credentials._sha256(
+                            self.server.credentials._paths(identity["actor"])[2].read_bytes())}
+            self.runtime._assert_worker_credential_admitted(identity)
         contexts = self._header_values(PAIRED_SESSION_HEADER)
         if identity.get("connector_assertion") and not contexts and urlsplit(self.path).path != "/v1/handshake":
             paired_deny("paired_session_required")
@@ -1058,8 +1062,8 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 raise ValidationError("unsupported capability catalog_version")
             return self._send(200, self.runtime.list_capabilities(cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0], catalog_version=int(version[0])))
         if path == ["v1", "capabilities"] and method == "POST":
-            self._identity("worker:register")
-            return self._send(201, self.runtime.register_capability(self._body()))
+            identity = self._identity("worker:register")
+            return self._send(201, self.runtime.register_capability(self._body(), identity=identity))
         if path == ["v1", "executors"] and method == "POST":
             identity = self._identity("worker:register")
             key = self.headers.get("Idempotency-Key")
@@ -1081,7 +1085,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         method = getattr(self, "command", None)
         return (method == "POST" and path in {
             "/v1/control/local-worker/start", "/v1/control/local-worker/relinquish",
-        }) or (method == "GET" and path == "/v1/control/local-worker/generation")
+            "/v1/control/local-worker/retire-credential",
+        }) or (method == "GET" and path in {
+            "/v1/control/local-worker/generation", "/v1/control/local-worker/credential-generation",
+        })
 
     def _is_remote_credential_control(self):
         path = [unquote(x) for x in urlsplit(getattr(self, "path", "")).path.split("/") if x]
@@ -1095,8 +1102,12 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         if daemon is None:
             raise ConflictError("local worker launch requires daemon ownership")
         if self.command == "GET":
+            if urlsplit(self.path).path.endswith("/credential-generation"):
+                return self._send(200, daemon.receiptless_worker_generation(identity=identity))
             return self._send(200, daemon.local_worker_generation(identity=identity))
         body = self._body()
+        if urlsplit(self.path).path.endswith("/retire-credential"):
+            return self._send(200, daemon.retire_receiptless_worker_credential(body, identity=identity))
         if urlsplit(self.path).path.endswith("/relinquish"):
             if not isinstance(body, dict) or set(body) != {"executor_incarnation", "evidence_digest"}:
                 raise ProtocolError("exact local Worker generation fields are required")

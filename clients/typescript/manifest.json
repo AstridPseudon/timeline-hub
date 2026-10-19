@@ -1,9 +1,9 @@
 {
   "artifacts": [
     {
-      "byte_length": 3468,
+      "byte_length": 3547,
       "path": "contract-metadata.ts",
-      "sha256": "420c0cda243247abc8974ad5fa98e3cdf18b6801e5b98422523b66ea76210d72"
+      "sha256": "3e8606ffc0da45c1fcbf50e2092b75af59c591d1640de9e5a1af4927cb83c4c6"
     },
     {
       "byte_length": 215,
@@ -46,14 +46,14 @@
       "sha256": "7dc2f5d3f82219b439f1c1147aa230f39e706a3c3b24a7d177efc1b975f543b9"
     },
     {
-      "byte_length": 22197,
+      "byte_length": 22276,
       "path": "generated.ts",
-      "sha256": "b9e7eb4dc38a7b2aa486c4476378e765848916c8021acb49b862935be3a92759"
+      "sha256": "7c752422f8bfff1a3253ad080eebcde32a0e7ed8640ed36c8983a4a9eda9b021"
     }
   ],
   "component_manifest_id": "GENERATOR-CONFORMANCE-ID",
   "component_manifest_sha256": "43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082",
-  "contract_sha256": "c3a02ef9712549c7676d4547ff29cc06f50ba91b4b5eee93ed49bcd87d6466c2",
+  "contract_sha256": "31c6aa3b89321197f29dfcac7b4fe60ce7e7cd653be4d9fa32e636f691691646",
   "generator": "GENERATOR-TYPESCRIPT-CONFORMANCE",
   "operations": [
     "addShotItem",
@@ -114,6 +114,7 @@
     "getProjectTimeline",
     "getProjectTimelineRevision",
     "getRealm",
+    "getReceiptlessWorkerCredentialGeneration",
     "getReference",
     "getRun",
     "getShot",
@@ -178,6 +179,7 @@
     "restoreBackup",
     "restoreProjectParentCompositionRevision",
     "resumeAttempt",
+    "retireReceiptlessWorkerCredential",
     "retryRun",
     "retryTask",
     "revokeRemoteActivation",
@@ -199,7 +201,7 @@
     "updateTimeline"
   ],
   "protocol": "workspace.v1",
-  "schema_digest": "sha256:f51f48c0a0d80be5f17149126eb3b24d766a77458fffd339ad140c2e3b0a37ac",
+  "schema_digest": "sha256:fc6c573edaa89fb84c85235873b42c27eabd32bb8571369e5c380e4a84298e7c",
   "schema_manifest_sha256": "83d7e25c0ba52a7ef9f78fb4a88143e0d9729caf9fc5393750ba1833740264bd",
   "schema_version": 1
 }

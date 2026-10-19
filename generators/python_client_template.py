@@ -1466,6 +1466,15 @@ class WorkspaceClient:
         _, _, body = self._request("GET", f"/v1/executors/{_path_part(executor_id)}")
         return Executor.from_json(self._json(body))
 
+    def get_receiptless_worker_credential_generation(self) -> Mapping[str, Any]:
+        """Observe exact authority identity without asserting process custody."""
+        _, _, body = self._request("GET", "/v1/control/local-worker/credential-generation")
+        return self._json(body)
+
+    def retire_receiptless_worker_credential(self, binding: Mapping[str, Any]) -> Mapping[str, Any]:
+        _, _, body = self._request("POST", "/v1/control/local-worker/retire-credential", body=json.dumps(dict(binding), separators=(",", ":"), allow_nan=False).encode(), headers={"Content-Type": "application/json"})
+        return self._json(body)
+
     def get_local_worker_generation(self) -> Mapping[str, Any]:
         _, _, body = self._request("GET", "/v1/control/local-worker/generation")
         return self._json(body)
