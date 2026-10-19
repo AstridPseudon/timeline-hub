@@ -1,4 +1,4 @@
-UTC: 2026-10-19T21:57:14Z (area lead, out-of-cycle)
-Fixed: hub file sync was stuck mid-rebase 20:48–21:46Z; reset + resync done, hub-syncd restarted, stuck-rebase guard and commit-age alarm added.
-Done: optional H.264 Chrome installed at /opt/google/chrome/chrome (v155.0.8059.84, avc1+mp4a true); manager told via local INBOX — please mirror into hub/inbox/viewing.md so it survives the next inbox copy.
-Health: dispatcher/hub-syncd/adopt-watch/manager alive.
+UTC: 2026-10-19T22:38:20Z (area lead, incident note)
+Incident 22:34Z: the hourly check-in subagent ran lead-recover inside its sandbox (own PID namespace) and falsely marked 3 LIVE workers interrupted (vw-m3-app-route-contract, vw-m3-cpu-profile-proof, vw-m3-player-startup). The manager re-dispatched them as *-recover; the lead stopped the 3 originals at 22:45 to avoid duplicates (partial work on their own unmerged branches). No container restart happened.
+Fixes: check-in subagent now read-only (Codex -s read-only; message returned as text); lead-recover refuses when it cannot see the live dispatcher pid. Manager told via local INBOX note — please mirror the 22:45Z correction into hub/inbox/viewing.md.
+Health: dispatcher/hub-syncd/adopt-watch/manager alive; hub file sync fresh.
