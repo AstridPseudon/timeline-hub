@@ -1,5 +1,6 @@
 """Service contracts and native command boundaries, exercised without OS services."""
 import io
+import json
 import plistlib
 import subprocess
 import tarfile
@@ -160,6 +161,91 @@ def test_backend_native_failures_reach_transaction_and_log_details(tmp_path, mon
         backend.run(['tool'])
     assert error.value.returncode == 19
     assert 'failure details' in (tmp_path / 'install.log').read_text()
+
+
+def test_stage_service_declaration_uses_candidate_and_preserves_chat_settings(tmp_path, monkeypatch):
+    backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv')
+    old_profile = tmp_path / 'old' / 'profile.json'
+    old_services = tmp_path / 'old' / 'services.json'
+    old_profile.parent.mkdir()
+    old_profile.write_text(json.dumps({'service_declaration': str(old_services)}))
+    old_services.write_text(json.dumps({'version': 1, 'services': [{
+        'name': 'chat', 'env': {
+            'ASTRID_ACP_CWD': str(tmp_path / 'previous chat cwd'),
+            'ASTRID_ACP_SESSION_DIR': str(tmp_path / 'chat sessions'),
+            'ASTRID_ACP_PROFILE': 'film-profile',
+            'ASTRID_ACP_COMMAND': str(tmp_path / 'old astrid command'),
+        },
+    }]}))
+    old = Version(tmp_path / 'old', tmp_path / 'old' / 'py' / 'bin' / 'python', old_profile, {})
+    candidate_python = tmp_path / 'candidate' / 'py' / 'bin' / 'python'
+    candidate_agent = tmp_path / 'candidate' / 'a'
+    candidate_python.parent.mkdir(parents=True)
+    (tmp_path / 'candidate').mkdir(exist_ok=True)
+    candidate_data = tmp_path / 'workspace data'
+    pinned_bun = str(tmp_path / 'candidate' / 'tools' / 'bun' / 'bun')
+    recorded = {}
+
+    def run(argv, *, extra_env, **_kwargs):
+        recorded['argv'] = argv
+        recorded['env'] = extra_env
+        Path(argv[-1]).write_text('{"version":1,"services":[]}', encoding='utf-8')
+        return ''
+
+    monkeypatch.setattr(backend, 'run', run)
+    services_path = backend._declare_services(
+        folder=tmp_path / 'candidate', agent=candidate_agent, data=candidate_data,
+        python=candidate_python, bun=pinned_bun, env={'PATH': str(candidate_python.parent)}, old=old,
+    )
+
+    assert recorded['argv'][0] == candidate_python
+    assert recorded['argv'][1:3] == ['-I', '-c']
+    assert 'from astrid.services import service_declaration' in recorded['argv'][3]
+    assert str(candidate_agent) in recorded['argv'] and str(candidate_data) in recorded['argv']
+    assert pinned_bun in recorded['argv']
+    assert recorded['env']['ASTRID_ACP_SESSION_DIR'] == str(tmp_path / 'chat sessions')
+    assert recorded['env']['ASTRID_ACP_PROFILE'] == 'film-profile'
+    assert recorded['env']['ASTRID_ACP_COMMAND'] == str(tmp_path / 'old astrid command')
+    assert Path(recorded['argv'][-2]) == tmp_path / 'previous chat cwd'
+    assert services_path == tmp_path / 'candidate' / 'services.json'
+    assert json.loads(services_path.read_text(encoding='utf-8')) == {'version': 1, 'services': []}
+
+
+def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeypatch):
+    backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv')
+    monkeypatch.setattr(backend, 'existing', lambda _data: None)
+    monkeypatch.setattr('astrid.installer.backend.source', lambda _name, _sha, destination: destination)
+    monkeypatch.setattr('astrid.installer.backend.install_tools', lambda *_args: {
+        'PATH': str(tmp_path / 'tools'),
+        'ASTRID_NODE_EXECUTABLE': str(tmp_path / 'tools/node'),
+        'ASTRID_BUN_EXECUTABLE': str(tmp_path / 'tools/bun'),
+    })
+    monkeypatch.setattr('astrid.installer.backend.binary', lambda *_args: tmp_path / 'npm-cli.js')
+    calls = []
+
+    def run(argv, **_kwargs):
+        calls.append(argv)
+        if argv[0] == backend.uv and argv[1:] == ['--version']:
+            return 'uv 1.0.0'
+        if len(argv) > 3 and argv[1:3] == ['-I', '-c'] and 'service_declaration' in argv[3]:
+            Path(argv[-1]).write_text('{"version":1,"services":[]}', encoding='utf-8')
+        if len(argv) > 3 and argv[1:3] == ['-I', '-c'] and 'source_checkout_digest' in argv[3]:
+            return 'digest-value'
+        return ''
+
+    monkeypatch.setattr(backend, 'run', run)
+    manifest = {
+        'agent': {'sha': 'a' * 40}, 'runtime': {'sha': 'b' * 40},
+        'tools': {'uv': {'version': '1.0.0'}, 'python': {'version': '3.11.9'}},
+    }
+
+    version = backend.stage(manifest, tmp_path / 'program', tmp_path / 'workspace')
+
+    profile = json.loads(version.profile.read_text(encoding='utf-8'))
+    declaration = Path(profile['service_declaration'])
+    assert declaration == version.root / 'services.json'
+    assert json.loads(declaration.read_text(encoding='utf-8')) == {'version': 1, 'services': []}
+    assert any('service_declaration' in argv[3] for argv in calls if len(argv) > 3 and argv[1:3] == ['-I', '-c'])
 
 
 def test_old_service_wrapper_data_root_is_read_without_executing_profile(tmp_path):

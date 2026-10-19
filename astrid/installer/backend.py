@@ -92,6 +92,51 @@ class Backend:
         # A nonempty selected root is never mistaken for a fresh installation.
         return data.exists() and any(p.name != "logs" for p in data.iterdir())
 
+    @staticmethod
+    def _prior_chat_settings(old: Version | None) -> tuple[Path | None, dict[str, str]]:
+        """Carry the selected chat store and supported options across updates."""
+        if old is None:
+            return None, {}
+        profile = read_json(old.profile)
+        declaration_path = profile.get("service_declaration")
+        if not isinstance(declaration_path, str) or not Path(declaration_path).is_absolute():
+            return None, {}
+        declaration = read_json(Path(declaration_path))
+        chat = next((row for row in declaration.get("services", [])
+                     if isinstance(row, dict) and row.get("name") == "chat"), None)
+        values = chat.get("env", {}) if isinstance(chat, dict) else {}
+        if not isinstance(values, dict):
+            return None, {}
+        cwd = values.get("ASTRID_ACP_CWD")
+        chat_cwd = Path(cwd) if isinstance(cwd, str) and Path(cwd).is_absolute() else None
+        option_names = {
+            "ASTRID_ACP_PROFILE", "ASTRID_ACP_SESSION_DIR", "ASTRID_ACP_SYSTEM_PROMPT_FILE",
+            "ASTRID_ACP_BRIDGE_PORT", "ASTRID_ACP_COMMAND",
+        }
+        options = {key: value for key, value in values.items()
+                   if key in option_names and isinstance(value, str) and value}
+        return chat_cwd, options
+
+    def _declare_services(self, *, folder: Path, agent: Path, data: Path, python: Path,
+                          bun: str, env: dict[str, str], old: Version | None) -> Path:
+        """Run the candidate package's declaration API and write its profile input."""
+        chat_cwd, chat_options = self._prior_chat_settings(old)
+        services_path = folder / "services.json"
+        script = (
+            "import json,sys; from pathlib import Path; "
+            "from astrid.services import service_declaration; "
+            "value=service_declaration(source_checkout=Path(sys.argv[1]), "
+            "data_root=Path(sys.argv[2]), python=sys.argv[3], bun=sys.argv[4], "
+            "chat_cwd=Path(sys.argv[5]) if sys.argv[5] else None); "
+            "Path(sys.argv[6]).write_text(json.dumps(value, indent=2, sort_keys=True)+'\\n', encoding='utf-8')"
+        )
+        self.run(
+            [python, "-I", "-c", script, str(agent), str(data), str(python), bun,
+             str(chat_cwd) if chat_cwd else "", str(services_path)],
+            extra_env={**env, **chat_options},
+        )
+        return services_path
+
     def workspace(self, version: Version, data: Path) -> dict:
         value = self.runtime(version, data, "workspace", "inspect")
         if not value.get("realm_id") or not value.get("realm_root"):
@@ -212,6 +257,11 @@ class Backend:
         env = install_tools(manifest, folder / "tools", platform_target(), self.run)
         env.update({"ASTRID_RUNTIME_DATA_ROOT": str(data),
                     "PATH": str(python.parent) + os.pathsep + env["PATH"]})
+        prior = current(root) or self.existing(data)
+        services_path = self._declare_services(
+            folder=folder, agent=agent, data=data, python=python,
+            bun=env["ASTRID_BUN_EXECUTABLE"], env=env, old=prior,
+        )
         npm = binary(folder / "tools" / "node", "npm-cli.js")
         self.install_remotion_dependencies(agent, env, npm)
         profile = folder / "profile.json"
@@ -219,7 +269,7 @@ class Backend:
         digest = self.run([python, "-I", "-c", "from astrid.core.execution.generic_host import source_checkout_digest; import pathlib,sys; print(source_checkout_digest(pathlib.Path(sys.argv[1])))", agent], extra_env=env)
         write_json(profile, {"profile": "astrid", "runtime_checkout": str(runtime),
                              "source_checkout": str(agent), "runtime_environment": str(environment),
-                             "source_digest": digest})
+                             "source_digest": digest, "service_declaration": str(services_path)})
         version = Version(folder, python, profile, env)
         write_json(folder / "version.json", version.document())
         write_json(folder / "manifest.json", manifest)
