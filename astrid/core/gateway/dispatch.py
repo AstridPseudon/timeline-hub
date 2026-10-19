@@ -73,8 +73,8 @@ def _dispatch_media(args: list[str]) -> int:
 
 
 def _dispatch_setup(args: list[str]) -> int:
-    """Use the shared setup plan/apply core; preview remains the default."""
-    from astrid.setup import main
+    """Keep the old spelling as an alias of the single installer."""
+    from astrid.installer.cli import main
 
     return int(main(args))
 
@@ -544,7 +544,7 @@ from .hivemind import PACK_COMMANDS as _PACK_COMMANDS, installed_pack_ids as _in
 # outer launcher command. This is a blocklist/precedence rule, not a second
 # hand-maintained pack allowlist.
 _PACK_ROUTE_BLOCKLIST = frozenset(
-    {"agent", "auth", "help", "login", "setup", "status", "logout", "revoke", "--help", "--version"}
+    {"agent", "auth", "help", "install", "login", "setup", "status", "logout", "revoke", "--help", "--version"}
 )
 _DYNAMIC_PACK_ROUTE_NAMES: set[str] = set()
 
