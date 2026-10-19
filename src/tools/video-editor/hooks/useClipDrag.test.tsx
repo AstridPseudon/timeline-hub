@@ -1,6 +1,5 @@
 import { __resetSelectionStoreForTests, userSelectTimelineItems } from '@/shared/state/selectionStore';
 import type { ClipMoveCapturePort } from '../commands/semanticGestures.ts';
-import { toast } from '@/shared/components/ui/toast.tsx';
 import { commitDraggingSession } from './useClipDrag.helpers.ts';
 // @vitest-environment jsdom
 import { act, fireEvent, renderHook } from '@testing-library/react';
@@ -20,8 +19,6 @@ import type {
   TimelineEditorDataContextValue,
   TimelineEditorOpsContextValue,
 } from '@/tools/video-editor/hooks/useTimelineState.types';
-
-vi.mock('@/shared/components/ui/toast.tsx', () => ({ toast: { error: vi.fn() } }));
 
 const selectionMocks = vi.hoisted(() => ({
   userSelectTimelineClip: vi.fn(),
@@ -826,7 +823,8 @@ describe('useClipDrag', () => {
     }
   });
 
-  it('refuses a free multi-clip drag onto a new bottom track in move v1', () => {
+  // Expected failure until group/multi-clip EditCommand support lands (M2).
+  it.fails('commits a config edit when a free multi-clip drag drops onto a new bottom track', () => {
 
     const applyEdit = vi.fn();
     const selectClips = vi.fn();
@@ -899,10 +897,18 @@ describe('useClipDrag', () => {
         });
       });
 
-      expect(applyEdit).not.toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith('Clip move unavailable', {
-        description: 'clip.move v1 does not support group or multi-clip moves.',
-      });
+      expect(applyEdit).toHaveBeenCalledTimes(1);
+      const [edit, options] = applyEdit.mock.calls[0];
+      expect(edit.type).toBe('config');
+      expect(options).toMatchObject({ transactionId: expect.any(String) });
+      expect(edit.resolvedConfig.tracks.map((track: TrackDefinition) => track.id)).toEqual(['V1', 'V2', 'V3']);
+      expect(edit.resolvedConfig.clips).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 'clip-1', track: 'V2', at: 1, hold: 2 }),
+        expect.objectContaining({ id: 'clip-2', track: 'V3', at: 3, hold: 2 }),
+      ]));
+      expect(edit.pinnedShotGroupsOverride).toBeUndefined();
+      expect(selectionMocks.userSelectTimelineClips).toHaveBeenCalledWith(['clip-2', 'clip-1'], { additive: false });
+      expect(coordinator.showSecondaryGhosts).toHaveBeenCalled();
     } finally {
       cleanup();
     }
@@ -1163,7 +1169,8 @@ describe('useClipDrag', () => {
     }
   });
 
-  it('refuses a pinned group drag across tracks in move v1', () => {
+  // Expected failure until cross-track group EditCommand support lands (M2).
+  it.fails('updates pinnedShotGroupsOverride when a pinned group is dragged across tracks', () => {
 
     const applyEdit = vi.fn();
     const selectClips = vi.fn();
@@ -1233,16 +1240,47 @@ describe('useClipDrag', () => {
         });
       });
 
-      expect(applyEdit).not.toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith('Clip move unavailable', {
-        description: 'clip.move v1 does not support group or multi-clip moves.',
+      expect(applyEdit).toHaveBeenCalledTimes(1);
+      const [edit, options] = applyEdit.mock.calls[0];
+      expect(edit).toEqual({
+        type: 'rows',
+        rows: [
+          { id: 'V1', actions: [] },
+          {
+            id: 'V2',
+            actions: [
+              { id: 'clip-1', start: 1, end: 3, effectId: 'effect-clip-1' },
+              { id: 'clip-2', start: 3, end: 5, effectId: 'effect-clip-2' },
+            ],
+          },
+        ],
+        metaUpdates: {
+          'clip-1': { track: 'V2' },
+          'clip-2': { track: 'V2' },
+        },
+        clipOrderOverride: { V1: [], V2: ['clip-1', 'clip-2'] },
+        pinnedShotGroupsOverride: [expect.objectContaining({
+          shotId: 'shot-1',
+          trackId: 'V2',
+          clipIds: ['clip-1', 'clip-2'],
+          mode: 'images',
+        })],
       });
+      expect(edit.pinnedShotGroupsOverride).toEqual([expect.objectContaining({
+        shotId: 'shot-1',
+        trackId: 'V2',
+        clipIds: ['clip-1', 'clip-2'],
+        mode: 'images',
+      })]);
+      expect(options).toMatchObject({ transactionId: expect.any(String) });
+      expect(selectionMocks.userSelectTimelineClips).toHaveBeenCalledWith(['clip-1', 'clip-2'], { additive: false });
     } finally {
       cleanup();
     }
   });
 
-  it('refuses a pinned group drag onto a new track in move v1', () => {
+  // Expected failure until new-track group EditCommand support lands (M2).
+  it.fails('updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track', () => {
 
     const applyEdit = vi.fn();
     const coordinator = makeCoordinator({
@@ -1314,10 +1352,15 @@ describe('useClipDrag', () => {
         });
       });
 
-      expect(applyEdit).not.toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith('Clip move unavailable', {
-        description: 'clip.move v1 does not support group or multi-clip moves.',
-      });
+      expect(applyEdit).toHaveBeenCalledTimes(1);
+      const [edit] = applyEdit.mock.calls[0];
+      expect(edit.type).toBe('config');
+      expect(edit.pinnedShotGroupsOverride).toEqual([expect.objectContaining({
+        shotId: 'shot-1',
+        trackId: 'V3',
+        clipIds: ['clip-1', 'clip-2'],
+        mode: 'images',
+      })]);
     } finally {
       cleanup();
     }
