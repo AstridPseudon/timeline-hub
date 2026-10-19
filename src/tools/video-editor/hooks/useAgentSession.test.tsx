@@ -18,6 +18,8 @@ import {
   useSetMainProjectSession,
   useSendMessage,
   useAgentSession,
+  useAgentModels,
+  useSetAgentModel,
 } from './useAgentSession.ts';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 
@@ -35,6 +37,28 @@ function wrapperWithClient(client: QueryClient) {
 afterEach(() => vi.restoreAllMocks());
 
 describe('timeline agent ACP chat', () => {
+  it('loads the model catalog and refreshes the chip after a selection', async () => {
+    let currentModel = 'deepseek/deepseek-chat';
+    const models = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockImplementation(async () => ({
+      currentModel,
+      providers: [{ id: 'deepseek', name: 'DeepSeek', signedIn: true, models: [{ id: 'deepseek-chat', name: 'DeepSeek' }] }],
+    }));
+    const setModel = vi.spyOn(AstridAgentSessionStore.prototype, 'setModel').mockImplementation(async model => {
+      currentModel = model;
+      return { currentModel };
+    });
+    const hook = renderHook(() => ({ models: useAgentModels(), selection: useSetAgentModel() }), { wrapper });
+    try {
+      await waitFor(() => expect(hook.result.current.models.data?.currentModel).toBe('deepseek/deepseek-chat'));
+      await act(async () => { await hook.result.current.selection.mutateAsync('openai-codex/gpt-5'); });
+      await waitFor(() => expect(hook.result.current.models.data?.currentModel).toBe('openai-codex/gpt-5'));
+      expect(setModel).toHaveBeenCalledWith('openai-codex/gpt-5');
+      expect(models).toHaveBeenCalledTimes(2);
+    } finally {
+      hook.unmount();
+    }
+  });
+
   it('advertises the local Astrid ACP implementation', () => {
     expect(isTimelineAgentSessionsAvailable()).toBe(true);
   });

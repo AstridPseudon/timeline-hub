@@ -375,6 +375,15 @@ export class AstridAgentSessionStore {
   }
 
   async projectChat(projectId: string) { return this.client.acp.projectChat(projectId); }
+  async models() { return this.client.acp.models(); }
+  async setModel(model: string) {
+    if (this.activePrompts.size > 0) throw new Error('Wait for the active agent turn before switching models.');
+    const result = await this.client.acp.setModel(model);
+    // The bridge restarts ACP to refresh its authenticated provider catalog.
+    // Reload this conversation by its existing ID on the next request.
+    if (this.connectionId) this.retireConnection(this.connectionId);
+    return result;
+  }
   async unassignedProjectSessions(projectId: string) {
     return this.client.acp.unassignedProjectSessions(projectId, await this.connection());
   }
@@ -764,6 +773,25 @@ if (typeof window !== 'undefined') {
  */
 export function isTimelineAgentSessionsAvailable(): boolean {
   return agentChatDisabledReason() === null;
+}
+
+const agentModelsQueryKey = ['agent-models'] as const;
+
+export function useAgentModels(enabled = true) {
+  return useQuery({
+    queryKey: agentModelsQueryKey,
+    enabled: enabled && isTimelineAgentSessionsAvailable(),
+    queryFn: () => agentStore.models(),
+    retry: false,
+  });
+}
+
+export function useSetAgentModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (model: string) => agentStore.setModel(model),
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: agentModelsQueryKey }); },
+  });
 }
 
 export const agentSessionsQueryKey = (timelineId: string | null | undefined, projectId?: string | null) =>

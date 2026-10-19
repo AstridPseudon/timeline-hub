@@ -5,6 +5,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { delimiter } from 'node:path';
+import { getAstridOmpModelCatalog, OmpModelSelectionError, setAstridOmpDefaultModel } from './astrid-omp-models.ts';
 
 import {
   AcpProcessHost,
@@ -50,6 +51,8 @@ export type AstridAcpBridgeConfig = {
   readonly sessionDir?: string;
   readonly systemPromptFile?: string;
   readonly command?: string;
+  /** OMP model-management executable; separate from the Astrid ACP launcher. */
+  readonly ompCommand?: string;
   /** Hosted same-machine mode refuses inline prompt attachments. */
   readonly localMediaOnly?: boolean;
 };
@@ -337,6 +340,11 @@ export class AstridAcpBridge {
   private readonly now: () => number;
   // Ids we reaped, so a late poll gets the disconnected answer, not a bare 404.
   private readonly reaped = new Set<string>();
+  private selectedModel: string | null = null;
+  private modelRevision = 0;
+  private changingModel = false;
+  private connecting = 0;
+  private modelCatalogRequest?: Promise<Awaited<ReturnType<typeof getAstridOmpModelCatalog>>>;
   private readonly sweeper: ReturnType<typeof setInterval>;
 
   constructor(options: BridgeOptions) {
@@ -373,8 +381,65 @@ export class AstridAcpBridge {
         jsonResponse(response, 200, { status: 'ok', bridge: 'astrid-acp', protocol: ASTRID_BRIDGE_PROTOCOL_VERSION });
         return;
       }
+      if (request.method === 'GET' && url.pathname === '/models') {
+        if (this.changingModel) throw new ChatError(409, 'model_change_in_progress', 'Wait for the model switch to finish.');
+        const revision = this.modelRevision;
+        const pending = getAstridOmpModelCatalog({
+          command: this.config.ompCommand,
+          cwd: this.config.cwd,
+          profile: this.config.profile,
+        });
+        this.modelCatalogRequest = pending;
+        try {
+          const catalog = await pending;
+          if (revision === this.modelRevision) this.selectedModel = catalog.currentModel;
+          jsonResponse(response, 200, { ...catalog, currentModel: this.selectedModel });
+        } finally {
+          if (this.modelCatalogRequest === pending) this.modelCatalogRequest = undefined;
+        }
+        return;
+      }
+      if (this.changingModel) {
+        throw new ChatError(409, 'model_change_in_progress', 'Wait for the model switch to finish.');
+      }
+      if (request.method === 'POST' && url.pathname === '/model') {
+        const body = asRecord(await readJson(request));
+        if (typeof body?.model !== 'string' || Object.keys(body).some(key => key !== 'model')) {
+          jsonResponse(response, 400, { error: 'invalid_body', detail: 'model is required' });
+          return;
+        }
+        if (this.changingModel || this.connecting > 0 || [...this.connections.values()].some(connection => connection.inFlight > 0)) {
+          jsonResponse(response, 409, { error: 'model_change_during_request', detail: 'Wait for the current ACP request to finish before changing models' });
+          return;
+        }
+        this.changingModel = true;
+        try {
+          const currentModel = await setAstridOmpDefaultModel({
+            command: this.config.ompCommand,
+            cwd: this.config.cwd,
+            profile: this.config.profile,
+          }, body.model);
+          this.selectedModel = currentModel;
+          this.modelRevision++;
+          // Fresh hosts rediscover accounts signed in through /login. OMP
+          // retains the transcript; clients load the same opaque session ID.
+          for (const [id, connection] of this.connections) {
+            this.connections.delete(id);
+            this.reaped.add(id);
+            if (this.reaped.size > MAX_REAPED_IDS) this.reaped.delete(this.reaped.values().next().value as string);
+            closeTerminals(connection.terminals);
+            await connection.host.dispose();
+          }
+          jsonResponse(response, 200, { currentModel });
+        } finally {
+          this.changingModel = false;
+        }
+        return;
+      }
       if (request.method === 'POST' && url.pathname === '/connect') {
-        await this.connect(response, this.localMediaOnly(request));
+        this.connecting++;
+        try { await this.connect(response, this.localMediaOnly(request)); }
+        finally { this.connecting--; }
         return;
       }
 
@@ -438,6 +503,8 @@ export class AstridAcpBridge {
     } catch (error) {
       const result = error instanceof LocalMediaOnlyError
         ? { status: 415, body: { error: 'local_media_required', detail: error.message } }
+        : error instanceof OmpModelSelectionError
+        ? { status: 400, body: { error: 'invalid_model', detail: error.message } }
         : error instanceof Error && error.message.includes('128 KiB')
         ? { status: 413, body: { error: 'payload_too_large', detail: error.message } }
       : error instanceof Error && (error.message.includes('request body') || error.message.includes('method') || error.message.includes('sessionId') || error.message.includes('config option'))
@@ -669,6 +736,7 @@ export class AstridAcpBridge {
       } else {
         if (typeof body.session_id !== 'string' || !Array.isArray(body.prompt)) throw new ChatError(400, 'invalid_body', 'session_id and prompt are required');
         await registry.assertOwned(projectId, body.session_id);
+        await this.applySelectedModel(connection, body.session_id);
         const result = await connection.host.request('session/prompt', { sessionId: body.session_id, prompt: body.prompt });
         jsonResponse(response, 200, { result });
       }
@@ -685,6 +753,17 @@ export class AstridAcpBridge {
     connection.sessions.add(sessionId);
     const options = advertisedConfigOptions(result);
     if (options.size > 0) connection.configOptions.set(sessionId, options);
+  }
+
+  private async applySelectedModel(connection: Connection, sessionId: string): Promise<void> {
+    // The panel may fetch its catalog concurrently with a saved chat load.
+    // Wait for that default before dispatching a turn on the restored model.
+    await this.modelCatalogRequest;
+    const selected = this.selectedModel;
+    if (!selected) return;
+    const options = connection.configOptions.get(sessionId)?.get('model');
+    if (!options?.has(selected)) throw new ChatError(409, 'model_unavailable', 'The selected model is unavailable in this ACP session. Reconnect and choose an available model.');
+    await connection.host.request('session/set_config_option', { sessionId, configId: 'model', value: selected });
   }
 
   private async rpc(connection: Connection, request: IncomingMessage, response: ServerResponse, localMediaOnly: boolean): Promise<void> {
@@ -711,6 +790,10 @@ export class AstridAcpBridge {
       if (typeof input.value !== 'string' || !input.value) throw new Error('config option value is required');
       const allowedValues = connection.configOptions.get(input.sessionId)?.get(input.configId);
       if (!allowedValues?.has(input.value)) throw new Error('config option value was not advertised for this session');
+    }
+    if (method === 'session/prompt') {
+      const sessionId = sessionIdFrom(params);
+      if (sessionId) await this.applySelectedModel(connection, sessionId);
     }
     const result = await connection.host.request(method, params);
     if (method === 'session/new' || method === 'session/load' || method === 'session/resume' || method === 'session/fork') {

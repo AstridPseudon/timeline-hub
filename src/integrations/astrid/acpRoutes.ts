@@ -23,6 +23,25 @@ const eventsResponseSchema = z.strictObject({
   notifications: z.array(z.unknown()),
   disconnected: z.boolean(),
 });
+const modelUsageSchema = z.strictObject({
+  limits: z.array(z.strictObject({
+    unit: z.enum(['percent', 'tokens', 'requests', 'usd', 'minutes', 'bytes', 'unknown']).optional(),
+    used: z.number().optional(), limit: z.number().optional(), remaining: z.number().optional(),
+    usedFraction: z.number().optional(), remainingFraction: z.number().optional(),
+    durationMs: z.number().optional(), resetsAt: z.number().optional(),
+    status: z.enum(['ok', 'warning', 'exhausted', 'unknown']).optional(),
+  })),
+});
+const modelCatalogSchema = z.strictObject({
+  providers: z.array(z.strictObject({
+    id: z.string().min(1), name: z.string().min(1), signedIn: z.boolean(),
+    models: z.array(z.strictObject({ id: z.string().min(1), name: z.string().min(1) })),
+    usage: modelUsageSchema.optional(),
+  })),
+  currentModel: z.string().nullable(),
+});
+const modelSelectionSchema = z.strictObject({ currentModel: z.string() });
+export type AcpModelCatalog = z.infer<typeof modelCatalogSchema>;
 
 export type AstridAcpConnection = z.infer<typeof connectionSchema>;
 export type AstridAcpRpcParams = Record<string, unknown>;
@@ -104,6 +123,14 @@ export class AstridLocalAcpRoutes {
       connectionSchema,
       'ACP connect',
     );
+  }
+
+  async models(): Promise<AcpModelCatalog> {
+    return this.transport.requestJson('/acp/models', { method: 'GET' }, modelCatalogSchema, 'List ACP models');
+  }
+
+  async setModel(model: string): Promise<{ currentModel: string }> {
+    return this.transport.requestJson('/acp/model', { method: 'POST', body: { model } }, modelSelectionSchema, 'Set ACP model');
   }
 
   async reconnect(connectionId?: string): Promise<AstridAcpConnection | z.infer<typeof reconnectResponseSchema>> {
