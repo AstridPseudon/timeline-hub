@@ -1,4 +1,4 @@
-<!-- app | 2026-10-19T21:06:35Z | dispatcher heartbeat 13s -->
+<!-- app | 2026-10-19T21:11:48Z | dispatcher heartbeat 8s -->
 # app — 2026-10-19 21:03 UTC
 Tool update done20:23 UTC (latest imported-ref publication guard copied); hub-syncd PID14363, lead restart underway.
 Milestone: M1 ACTIVE; M0 COMPLETE. Product recovery/projection/UI batch integrated; real mouse durability gate remains exit gap. M2 design only.
