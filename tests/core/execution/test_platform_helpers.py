@@ -189,6 +189,26 @@ def test_recovered_group_signals_only_runtime_bound_members(monkeypatch):
                     ({"pid": 100, "birth_id": "100"}, platform.KILL)]
 
 
+@pytest.mark.parametrize("change", ["birth", "group", "missing"])
+def test_recovered_group_refuses_member_drift_before_any_signal(monkeypatch, change):
+    monkeypatch.setattr(platform, "process_group", lambda pid: 10)
+    original = {100: SimpleNamespace(birth="root", pgid=100),
+                101: SimpleNamespace(birth="child", pgid=100)}
+    changed = {100: original[100]}
+    if change != "missing":
+        changed[101] = SimpleNamespace(
+            birth="replacement" if change == "birth" else "child",
+            pgid=200 if change == "group" else 100,
+        )
+    observations = iter([original, original, changed])
+    monkeypatch.setattr(process_group, "_process_snapshot", lambda: next(observations))
+    monkeypatch.setattr(platform, "process_identity", lambda pid: {"pid": pid, "birth_id": str(pid)})
+    monkeypatch.setattr(platform, "signal_process", lambda *_: pytest.fail("changed group signalled"))
+
+    with pytest.raises(ProcessLookupError, match="member changed"):
+        platform_helpers.signal_observed_group(100, platform.KILL, leader_birth="root")
+
+
 WINDOWS_ONLY = pytest.mark.skipif(sys.platform != "win32", reason="native Windows Job and SID APIs")
 
 

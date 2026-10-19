@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Current inventory of top-level files and directories directly under astrid/. This is a documentation artifact, not a runtime input.",
-  "updated_at": "2026-06-08",
+  "updated_at": "2026-10-19",
   "source_root": "astrid/",
   "classification_categories": {
     "public_facade": "Part of the public SDK contract.",
@@ -9,7 +9,10 @@
     "internal_kernel": "Framework machinery under astrid/core.",
     "pack_capability_surface": "Capability surface; packs ship here.",
     "sdk_package": "Public SDK package.",
-    "skills": "Agent skill discovery and harnesses."
+    "skills": "Agent skill discovery and harnesses.",
+    "service_composition": "Product service declarations for the Runtime supervisor.",
+    "chat_service": "Bundled agent chat service and its authored sources.",
+    "installer": "Product installation, service setup, and upgrade tooling."
   },
   "top_level_files": [
     {
@@ -21,13 +24,28 @@
       "name": "__main__.py",
       "classification": "cli_entrypoint",
       "notes": "Executable package gateway; delegates to astrid.core.gateway.main()."
+    },
+    {
+      "name": "services.py",
+      "classification": "service_composition",
+      "notes": "Concrete shell-free service argv and environment declarations for Runtime-managed pack-host and chat services."
     }
   ],
   "top_level_directories": [
     {
+      "name": "chat",
+      "classification": "chat_service",
+      "notes": "Agent-owned chat service, bundled release artifact, and source tests."
+    },
+    {
       "name": "core",
       "classification": "internal_kernel",
       "notes": "Framework kernel, contracts, runtime, integrations, generation/model catalog, timelines, packs, tasks, and shared libraries."
+    },
+    {
+      "name": "installer",
+      "classification": "installer",
+      "notes": "Cross-platform installer CLI, dependency provisioning, and service management."
     },
     {
       "name": "packs",
@@ -49,15 +67,17 @@
     "TOP_LEVEL_ASTRID_FILES": [
       "__init__.py",
       "__main__.py",
-      "application.py"
+      "services.py"
     ],
     "TOP_LEVEL_ASTRID_DIRS": [
+      "chat",
       "core",
+      "installer",
       "packs",
       "sdk",
       "skills"
     ],
-    "rule": "No top-level implementation modules, package-local docs, or compatibility shim files are allowed. New implementation code belongs under astrid/core/ unless it is pack data, SDK surface, or agent skill machinery. Repository documentation belongs under root docs/."
+    "rule": "Top-level files are the public SDK facade, package CLI entrypoint, and Runtime service composition. Implementation belongs under astrid/core/, astrid/chat/, astrid/installer/, astrid/sdk/, or astrid/skills/ according to its declared purpose; astrid/packs/ holds pack content. Package-local docs and compatibility shims are rejected. Repository documentation belongs under root docs/."
   },
   "pack_layout": {
     "canonical_home": "astrid/core/pack/",

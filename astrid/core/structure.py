@@ -32,9 +32,13 @@ INTERNAL_PACK_DIRS = {"__pycache__", "schemas"}
 TOP_LEVEL_ASTRID_FILES = {
     "__init__.py",
     "__main__.py",
+    # Product composition consumed by Runtime's service supervisor.
+    "services.py",
 }
 TOP_LEVEL_ASTRID_DIRS = {
+    "chat",
     "core",
+    "installer",
     "packs",
     "sdk",
     "skills",

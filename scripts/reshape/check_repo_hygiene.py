@@ -27,6 +27,8 @@ ROOT_FILE_ALLOWLIST = {
     "Makefile",
     "README.md",
     "package.json",
+    # Exact build dependency lock for the shipped chat service bundle.
+    "package-lock.json",
     # Generated, checked contracts: scripts/artifact_manifest.py and
     # scripts/gen_cli_surface.py write them; tests/test_artifact_manifest.py
     # checks them.
