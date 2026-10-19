@@ -158,17 +158,9 @@ export function MyNewToolPage() {
 
 > **See also:** [Settings System](./settings_system.md) for full API docs and alternative hooks (`usePersistentToolState` for binding existing useState, `useToolSettings` for low-level access).
 
-### 6. (Optional) Add Backend Logic
+### 6. Backend logic
 
-If your tool needs server-side processing, create an Edge Function:
-
-```bash
-# Create new Edge Function
-supabase functions new my-tool-process
-
-# Implement in supabase/functions/my-tool-process/index.ts
-# Deploy with: supabase functions deploy my-tool-process
-```
+There is no cloud backend in this repo (the Supabase `supabase/` directory and Edge Functions were removed 2026-10-18, tag `pre-cloud-removal`). Server-side work goes through the Runtime: admit a task with `createTask` (`src/shared/lib/taskCreation/createTask.ts`, see [Task Creation](./unified_task_creation.md)). A tool that needs an online account calls `requireCloudBackend(feature)` from `src/shared/lib/cloudBackend.ts` and catches `CloudBackendUnavailableError` once at the page to show one plain line.
 
 ---
 

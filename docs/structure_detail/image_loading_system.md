@@ -87,7 +87,7 @@ Individual items should NOT invent their own delays -- progressive loading is th
 | Input | `mediaCrossOrigin(url)` | Why |
 |-------|-------------------------|-----|
 | Gateway URL on the hosted build | `'anonymous'` | The gateway authorizes media by `Origin`, which an element sends only in CORS mode |
-| Same-origin path, Supabase, CDN | `undefined` | Unchanged; no attribute rendered |
+| Same-origin path, CDN | `undefined` | Unchanged; no attribute rendered |
 | `data:`, `blob:`, null or relative | `undefined` | Not a gateway read |
 
 Apply it to each element whose source comes from `objectContentUrl`, `bridgeMediaUrl` or `getDisplayUrl`: `crossOrigin={mediaCrossOrigin(src)}`. A video's poster gets the same treatment (`src/shared/components/media/StyledVideoPlayer.tsx`). Scripted loads (`new Image()`, `document.createElement('video')`, the preload queue and cache probes) set `crossOrigin` before `src`, so their request has the same CORS mode as the element that shows the URL; a File or `blob:` source needs nothing.

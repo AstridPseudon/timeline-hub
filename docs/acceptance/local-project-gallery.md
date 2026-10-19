@@ -27,7 +27,7 @@ Each row verifies:
 - a representative lightbox's variant count against generation detail;
 - shot overview names and visual clip scope against `pinnedShotGroups`;
 - deep-link refresh, browser back, and focused-shot clip isolation; and
-- no Supabase traffic, page errors, console errors, HTTP failures, or failed
+- no request to the removed cloud backend (a negative guard in the runner), page errors, console errors, HTTP failures, or failed
   network requests (apart from the bounded capability sentinel probes).
 
 Screenshots and the JSON summary are written below

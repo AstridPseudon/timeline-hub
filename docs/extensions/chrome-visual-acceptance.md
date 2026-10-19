@@ -61,7 +61,7 @@ reproducible headless matrix.
 
 | Area | Result | Evidence and exact observation |
 | --- | --- | --- |
-| Deterministic local-test bootstrap | PASS | `window.__ASTRID_APP_LOCAL_TEST__` reported enabled loader/runtime diagnostics. The strict Playwright gate made zero Supabase requests and emitted no console or page errors after the `useApiTokens`/`useOnboarding` fixes. |
+| Deterministic local-test bootstrap | PASS | `window.__ASTRID_APP_LOCAL_TEST__` reported enabled loader/runtime diagnostics. The strict Playwright gate made zero cloud-backend requests and emitted no console or page errors after the `useApiTokens`/`useOnboarding` fixes. |
 | Extension inventory | PASS | Extension Manager listed 13 extensions: Scene Phase Markers, Transcript Caption Foundry, Astrid Runaway Timeline, and all ten Creative Lab extensions. |
 | Enable/disable lifecycle | PASS | Each of the 13 toggles was disabled and enabled in Chrome. Its extension-specific surfaces disappeared while disabled and returned after re-enable. |
 | Ordering | N/A | The current Extension Manager exposes enable/disable controls but no user reordering control. No unsupported ordering behavior was claimed or simulated. |
@@ -121,7 +121,7 @@ npx vitest run src/tools/video-editor/runtime/extensionReleaseControls.test.ts s
 Result: 2 files passed, 48 tests passed
 
 PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=2222 BASE_URL=http://127.0.0.1:2222 FAKE_RUNTIME_PORT=17334 npx playwright test --config playwright.config.ts --project=timeline-devices --workers=1 tests/e2e/timeline/desktop-interaction.spec.ts
-Result: 1 passed (19.2 s); zero forbidden Supabase calls; zero console/page errors
+Result: 1 passed (19.2 s); zero forbidden cloud-backend calls; zero console/page errors
 
 PATH=/Users/peteromalley/.nvm/versions/node/v20.19.4/bin:$PATH npm run test:e2e:extension-cross-browser
 Result: PASS; 9/9 in 3.0m, one worker; Chrome stable 3/3, Firefox 3/3, WebKit 3/3

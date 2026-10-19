@@ -42,7 +42,6 @@ The source path and its tests are authoritative if this summary drifts.
 
 | Compatibility surface | Canonical surface | Owner | Why it remains | Removal condition | Direct evidence |
 |---|---|---|---|---|---|
-| `src/integrations/supabase/client.ts` facade and `supabaseClientRegistry` | `src/integrations/supabase/runtime/supabaseRuntime.ts` | Supabase runtime | Existing browser-runtime imports need a stable, non-proxy facade while initialization and access are centralized. | Remove compatibility-only facade members only after all callers use the runtime contract and `config/contracts/registry.json` is deliberately revised. A module-level `supabase` proxy must not return. | `src/integrations/supabase/__tests__/legacySupabaseFacade.contract.test.ts`, `src/integrations/supabase/__tests__/clientFacadeBehavior.test.ts`, `npm run test:contracts` |
 | `src/sdk/video/families/kinds.ts` re-exports | `src/sdk/video/families/contributionKinds.ts` | Editor SDK | Preserves historical family-kind imports after the canonical family module extraction. | No production or supported external consumer imports `families/kinds`; remove the file and any compatibility references in one reviewed SDK change. | Source-level delegation in `kinds.ts`; SDK public-surface checks in `npm run check:sdk-public-exports` and `npm run test:contracts` |
 | `INTERNAL_EXTENSION_RENDER_SURFACE`, attachment, and accessor in `src/sdk/internalExtensionRenderSurface.ts` | `ExtensionContext.ui` / `ExtensionUiService.registerRenderer` | Editor SDK runtime | Older bundled contexts resolve renderer registration through a non-public symbol. The context factory attaches the same service under `ctx.ui` and the symbol; the accessor prefers `ctx.ui`. | All supported contexts provide `ctx.ui`, no bundled extension or lifecycle test requires symbol fallback, and author examples remain free of the internal module. | `src/tools/video-editor/runtime/extensionContextFactory.ts`, `src/tools/video-editor/runtime/extensionRenderSurface.test.ts`, `src/sdk/smoke/extensionSmoke.test.ts`, `src/sdk/examples-governance.test.ts` |
 | `createInternalExtensionRenderSurface` in `src/tools/video-editor/runtime/extensionRenderSurface.ts` | `createExtensionUiService` | Video-editor runtime | Keeps pre-`ctx.ui` host wiring source-compatible while returning the canonical UI service implementation. | No non-test caller constructs the alias and the internal-symbol bridge above is removable. | Alias implementation and `src/tools/video-editor/runtime/extensionRenderSurface.test.ts` |
@@ -72,11 +71,9 @@ The current exception groups are:
 | `selection-store` | Selected-media reads | M5; move ownership into the editor or use an event contract |
 | `travel-between-images` | Final-video asset metadata | M5; move metadata to a shared domain module |
 | `settings-ui` | Extension reference report and its type | M5; expose a host/shared report contract |
-| `edge-ai-sequence` | Sequence metadata and validation | M5; extract portable validation |
-| `edge-complete-task` | Timeline types and placement logic | M5; extract edge-safe types and portable placement logic |
 
 The import boundary itself follows source ownership. Host implementation code
-(application shells, integrations, runtime adapters, edge functions, and test
+(application shells, integrations, runtime adapters, and test
 harnesses) is part of the same product and release unit as the editor, so its
 private implementation imports do not represent extension SDK consumption.
 The gate scans public consumer roots instead: extension examples in

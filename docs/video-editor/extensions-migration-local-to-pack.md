@@ -36,7 +36,7 @@ import { flagshipLocalExtension } from '@/tools/video-editor/examples/extensions
 </VideoEditorProvider>
 ```
 
-**Evidence:** [Author Contract §7.1](./extension-author-contract.md#71-v1-source-local-and-repository-loaded-packages); [Trust Envelope §2](./extensions-trust-envelope.md#2-capability-visibility-table) (Package loading row); [Contract-Recheck CR:X-006](./extension-platform-contract-recheck.md#216-cross-milestone--structural-claims).
+**Evidence:** [Author Contract §7.1](./extension-author-contract.md#71-v1-source-local-and-repository-loaded-packages); [Trust and Security §11.1](../extensions/trust-and-security.md#111-capability-visibility-table) (Package loading row); [Contract-Recheck CR:X-006](./extension-platform-contract-recheck.md#216-cross-milestone--structural-claims).
 
 ### 2.2 What you cannot do today
 
@@ -45,7 +45,7 @@ Installed packages **can** already be managed (enable/disable, settings editing,
 | Action | Status | Reference |
 |---|---|---|
 | Install an extension from a URL or marketplace | Unsupported | D-123, CR:X-006 |
-| Load an extension dynamically via `import()` | Deferred | Trust Envelope §2 |
+| Load an extension dynamically via `import()` | Deferred | Trust and Security §11.1 |
 | Verify extension integrity with a content hash | Deferred | D-003, B-001 |
 | Install, update, or delete an installed pack through the manager UI (enable/disable and settings editing are shipped — S-160–S-164) | Deferred | D-001, B-001 |
 | Build/bundle a pack, discover packages, or receive updates through tooling | Deferred | D-004, D-123 |
@@ -105,7 +105,7 @@ interface StateRepository {
 }
 ```
 
-This is a **minimal SDK-owned subset** of the full internal `ExtensionStateRepository`. In V1, the repository is **not provider-backed** — settings live in localStorage. When M14 lands, the same contract will be backed by the provider (Supabase, Astrid, or InMemory).
+This is a **minimal SDK-owned subset** of the full internal `ExtensionStateRepository`. In V1, the repository is **not provider-backed** — settings live in localStorage. When M14 lands, the same contract will be backed by the provider (Runtime or InMemory).
 
 **Evidence:** `src/sdk/contracts.ts`; [Author Contract §7.2](./extension-author-contract.md#72-what-is-deferred) (D-008).
 
@@ -228,7 +228,7 @@ Persisted enablement for **installed packages is shipped** via repository-backed
 
 No content hashing or signature verification exists in V1. The `permissions` field is descriptive only. When M14 introduces installed packs, integrity verification will prevent installation of tampered packs.
 
-**Evidence:** [Trust Envelope §6](./extensions-trust-envelope.md#6-when-will-sandboxing-arrive); [Supported/Deferred Matrix D-003](./extension-platform-supported-deferred.md#31-extension-packaging--manager-m14).
+**Evidence:** [Trust and Security §10](../extensions/trust-and-security.md#10-when-will-enforcement-arrive); [Supported/Deferred Matrix D-003](./extension-platform-supported-deferred.md#31-extension-packaging--manager-m14).
 
 ### 6.4 Provider-backed state repository (D-008)
 
@@ -256,7 +256,7 @@ The `dependsOn` field in the manifest is validated and frozen but not resolved a
 
 Loading extensions from a URL, CDN, or remote package registry is **unsupported** across all milestones (CR:X-006, D-123). The `import()` function is not used for extension code. There is no extension registry server.
 
-**Evidence:** [Trust Envelope §2](./extensions-trust-envelope.md#2-capability-visibility-table) (Package loading row); [Author Contract §7.3](./extension-author-contract.md#73-what-is-unsupported).
+**Evidence:** [Trust and Security §11.1](../extensions/trust-and-security.md#111-capability-visibility-table) (Package loading row); [Author Contract §7.3](./extension-author-contract.md#73-what-is-unsupported).
 
 ### 7.2 Marketplace
 
@@ -281,7 +281,7 @@ There is **no specialised export path** for installed packs, and no plan for one
 
 Sandboxing (iframe, Worker, or ShadowRealm isolation) is **deferred** to M4–M5 (D-121). When installed packs land in M14, they will initially run under the same trusted-local model as source-local extensions. Sandboxing is a separate concern from packaging.
 
-**Evidence:** [Trust Envelope §5–6](./extensions-trust-envelope.md#5-what-trusted-local-does-not-mean); [Supported/Deferred Matrix D-121](./extension-platform-supported-deferred.md#312-permissions--sandboxing).
+**Evidence:** [Trust and Security §11.3, §10](../extensions/trust-and-security.md#113-what-trusted-local-does-not-mean); [Supported/Deferred Matrix D-121](./extension-platform-supported-deferred.md#312-permissions--sandboxing).
 
 ---
 
@@ -333,8 +333,7 @@ What you can do **today** to prepare for the M14 installed-pack migration:
 | Provider | Settings persistence today | Post-M14 settings persistence |
 |---|---|---|
 | **InMemory** | `localStorage` (`astrid.ext.<id>.*` keys) | Provider-backed repository (InMemory → ephemeral; settings lost on reload) |
-| **Supabase** | `localStorage` (`astrid.ext.<id>.*` keys) | Provider-backed repository (Supabase → durable; settings survive reload) |
-| **Astrid Bridge** | `localStorage` (`astrid.ext.<id>.*` keys) | Provider-backed repository (Astrid → local filesystem-backed) |
+| **Runtime** | `localStorage` (`astrid.ext.<id>.*` keys) | Provider-backed repository (Runtime → local workspace-backed) |
 
 Settings are always scoped to browser `localStorage` under the `astrid.ext.<id>.` key prefix today, regardless of provider. No provider currently offers a server-side settings store. When M14 introduces the provider-backed `StateRepository`, settings will follow the same persistence model as the provider.
 
@@ -344,7 +343,7 @@ Settings are always scoped to browser `localStorage` under the `astrid.ext.<id>.
 
 The `runSettingsMigration()` function is **provider-agnostic** — it operates on in-memory `SettingsSnapshot` and `Record<string, unknown>` values. The provider only enters the picture through the optional `StateRepository` for lifecycle event persistence.
 
-When migrating from source-local (InMemory) to installed-pack (Supabase), the settings migration runs identically — the handler receives the same input shapes.
+When migrating from source-local (InMemory) to installed-pack (Runtime), the settings migration runs identically — the handler receives the same input shapes.
 
 **Evidence:** `src/sdk/extensionSettingsMigration.ts` (no provider imports); [Provider Compatibility Matrix §3.1](./provider-compatibility-matrix.md#31-settings).
 
@@ -360,7 +359,7 @@ node scripts/quality/check-extension-example-readiness.mjs --audit
 
 Verifies that the `settings-migration-example.ts` imports exclusively from `@astrid/editor-sdk` and has a corresponding supported matrix row.
 
-**Evidence:** [Quickstart §7](./extensions-quickstart.md#7-running-the-pre-doc-example-readiness-gate).
+**Evidence:** [Author Contract §10](./extension-author-contract.md#10-pre-doc-example-readiness-gate).
 
 ### 10.2 Deferred claims check
 
@@ -388,11 +387,10 @@ Checks that migration-related contract-recheck rows (CR:M14-001 through CR:M14-0
 
 | Document | Relevance |
 |---|---|
-| [extensions-quickstart.md](./extensions-quickstart.md) | Getting-started guide; V1 extension patterns |
 | [extension-author-contract.md](./extension-author-contract.md) | Complete developer obligations and platform guarantees |
 | [extension-platform-supported-deferred.md](./extension-platform-supported-deferred.md) | Full supported/deferred classification (103 supported, 70 deferred) |
 | [extension-platform-contract-recheck.md](./extension-platform-contract-recheck.md) | Complete M0–M14 Done Criteria evidence |
-| [extensions-trust-envelope.md](./extensions-trust-envelope.md) | V1 trusted-local execution model; sandboxing deferral |
+| [trust-and-security.md](../extensions/trust-and-security.md) | V1 trusted-local execution model; sandboxing deferral |
 | [provider-compatibility-matrix.md](./provider-compatibility-matrix.md) | Settings persistence across providers; migration compatibility |
 | [extensions-debugging.md](./extensions-debugging.md) | Debugging activation, disposal, and export guard failures |
 

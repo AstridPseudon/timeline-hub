@@ -1,29 +1,29 @@
 # Astrid: Working Rules (read first)
 
 ## Docs (consult before editing cross-cutting code)
-- **Cross-cutting** = spans multiple tools, or touches core tables/storage/auth/billing.
+- **Cross-cutting** = spans multiple tools, or touches core data/storage/auth.
 - Start at `../structure.md` (collection-level, links to sub-docs). Deep dives live in `../docs/structure_detail/`.
 - **Read the relevant sub-doc before editing** (all in `../docs/structure_detail/` unless noted):
-  - *Data & persistence:* Settings → `settings_system.md` · Per-pair data → `per_pair_data_persistence.md` · Data fetching → `data_fetching.md` · DB/RPCs/storage → `db_and_storage.md` · Storage/uploads → `storage_uploads.md`
-  - *Infrastructure:* Task creation → `unified_task_creation.md` · Workers → `task_worker_lifecycle.md` · Edge Functions → `edge_functions.md` · Realtime → `realtime_system.md` · Payments → `auto_topup_system.md`
-  - *Frontend:* Architecture → `frontend_architecture.md` · Shared utilities → `shared_utilities.md` · Design/motion → `design_motion_guidelines.md` · Auth → `auth_system.md` · Routing → `routing_and_navigation.md` · Performance → `performance_system.md` · Image loading → `image_loading_system.md`
+  - *Data & persistence:* Settings → `settings_system.md` · Per-pair data → `per_pair_data_persistence.md` · Data fetching → `data_fetching.md`
+  - *Infrastructure:* Task creation → `unified_task_creation.md` · Workers → `task_worker_lifecycle.md` · Realtime → `realtime_system.md`
+  - *Frontend:* Architecture → `frontend_architecture.md` · Shared utilities → `shared_utilities.md` · Design/motion → `design_motion_guidelines.md` · Routing → `routing_and_navigation.md` · Performance → `performance_system.md` · Image loading → `image_loading_system.md`
   - *Operations:* Debugging → `../debugging.md` (collection-level, cross-repo) · Error handling → `error_handling.md` · Deployment → `deployment_and_migration_guide.md` · Refactoring → `refactoring_patterns.md` · Video travel tool → `tool_video_travel.md` · Video editor timeline → `tool_video_editor.md` · Code quality → `docs/code_quality_audit.md`
 - **Multiple docs apply?** Start with most specific (e.g., `image_loading` before `performance`).
 - **New feature?** Check `adding_new_tool.md` for tool pattern; `structure.md` for where things live.
-- **Debugging a flow?** Trace: UI → hook → task creation (`unified_task_creation.md`) → worker (`task_worker_lifecycle.md`) → `complete_task` edge function.
+- **Debugging a flow?** Trace: UI → hook → task creation (`unified_task_creation.md`) → worker (`task_worker_lifecycle.md`) → Runtime settlement → gallery/timeline readback.
 
-## Supabase safety (non-negotiable)
-- Prefer Edge Functions/DB triggers for atomic/elevated/sensitive/guaranteed work.
-- Deploy functions individually: `npx supabase functions deploy <name> --project-ref wczysqzxlwdndgxitrvc`
-- Migrations: `npx supabase db push --linked` (**never** `db reset --linked`)
-- SQL for editor: wrap results in `SELECT json_agg(results) FROM (...) results;`
+## Cloud removed (2026-10-18)
+- The Supabase backend, login, billing, share page, AI prompt helpers and sequence generator are gone from the App; it runs on the Astrid Runtime only. Do not add `supabase/`, Edge Functions or `@supabase/*` (ESLint blocks the import).
+- Recover anything from tag `pre-cloud-removal`.
+- The four kept tools (`training-data-helper`, `edit-images`, `character-animate`, `edit-video`) go through `requireCloudBackend()` (`src/shared/lib/cloudBackend.ts`) until a new backend exists.
+- The future backend is designed in `docs/design/cloud-mode-*`.
 
 ## Engineering policies (read once, apply always)
 - **Constraints over comments.** Invariants belong in the database (CHECK, partial UNIQUE, trigger), not in code comments. If you find yourself writing "should be unique but isn't" or "duplicates are expected", make the constraint instead.
 - **Burn down on the same PR.** Adding a replacement requires deleting its predecessor in the same PR. Disabling a trigger without removing its callers, or adding a new column without dropping the column it replaces, is not done.
-- **Migrations live where prod runs.** Any DDL applied to prod must have a tracked migration in git. The schema-drift CI gate enforces this; the policy says it out loud.
+- **Migrations live where prod runs.** Any DDL applied to prod must have a tracked migration in git.
 - **Typed contracts at service boundaries.** Cross-service / cross-repo payloads (worker↔edge, edge↔agent) require a shared schema (Zod). String-keyed JSON payloads silently drift.
-- **Allowlists shrink, never grow.** `eslint.shared-layer-allowlist.js`, `eslint.strict-debt.js`, `.megaplan/debt.json` entries are known violations. Net additions require an exception note in the PR.
+- **Allowlists shrink, never grow.** `eslint.shared-layer-allowlist.js` and `eslint.strict-debt.js` entries are known violations. Net additions require an exception note in the PR.
 
 ## UI conventions
 - Toasts: **errors only** (no “success” toasts for task creation).
@@ -63,7 +63,7 @@
 - Debug logs are dev-only (stripped in prod), so temporary instrumentation is OK.
 
 ## Doc maintenance
-- **Sub-docs** (`docs/structure_detail/`): Update when changing system patterns (triggers, RPCs, storage, shared hooks). Use routing table above.
+- **Sub-docs** (`docs/structure_detail/`): Update when changing system patterns (shared hooks, routing, settings, realtime). Use routing table above.
 - **structure.md**: Update only when adding/removing sub-docs or changing top-level directory structure. It's an index, not implementation detail.
 - **Style**: Tables > prose; point to code; sub-docs under ~150 lines; include Purpose + Source of Truth + Key Invariants.
 - **Don't create catalog docs** (hook lists, component inventories, file trees). The typed source is the source of truth; catalogs drift.

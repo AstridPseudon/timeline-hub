@@ -15,9 +15,9 @@ milestone.
 Downstream milestones (M1a–M7b) cite this document as stable reference material
 for contract language, edge discriminants, and ownership assignments.
 
-Source of record: `.megaplan/initiatives/astrid-extension-composition-spine-epic/prep.md`
-Locked Decisions (lines 35–49), M0 brief (`.megaplan/initiatives/astrid-extension-composition-spine-epic/m0-decisions-fixtures.md`),
-and North Star constraints (`.megaplan/initiatives/astrid-extension-composition-spine-epic/NORTHSTAR.md`).
+Source of record: `prep.md`
+Locked Decisions (lines 35–49), M0 brief (`m0-decisions-fixtures.md`),
+and North Star constraints (`NORTHSTAR.md`).
 
 ## 1. Route-Model Decisions
 
@@ -287,14 +287,14 @@ Section 3 for full deferral rationale.
 Every decision in this document traces to a stable repo source. The primary
 sources are:
 
-- `.megaplan/initiatives/astrid-extension-composition-spine-epic/prep.md` —
+- `prep.md` —
   Locked Decisions (lines 35–49), Constraints (lines 63–75), Anti-Scope
   (lines 111–122), Done Criteria (lines 124–132).
 
-- `.megaplan/initiatives/astrid-extension-composition-spine-epic/NORTHSTAR.md` —
+- `NORTHSTAR.md` —
   Immutable constraints (lines 13–18).
 
-- `.megaplan/initiatives/astrid-extension-composition-spine-epic/m0-decisions-fixtures.md` —
+- `m0-decisions-fixtures.md` —
   Scope IN/OUT (lines 13–28), Locked Decisions (lines 30–36), Constraints
   (lines 38–44).
 
@@ -321,7 +321,7 @@ sources are:
   satisfied contracts, family maturity snapshot.
 
 No claim in this document depends solely on the absent v8 architecture brief
-(`.megaplan/briefs/astrid-extension-composition-spine-plan-elegant-v8.md`).
+(`astrid-extension-composition-spine-plan-elegant-v8.md`).
 
 ## 10. Relationship to Other M0 Artifacts
 

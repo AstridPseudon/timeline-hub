@@ -309,7 +309,7 @@ This summary survives without active runtime descriptors — disabled/error pack
 
 ### 9.1 Storage backend
 
-Extension settings are backed by the provider (`SupabaseProviderStore` in production, `LocalStorageProviderStore` for local/direct extensions) with localStorage as the fallback.
+Extension settings are backed by `LocalStorageProviderStore` (`InMemoryProviderStore` in tests), with localStorage as the fallback. The cloud-backed production store was removed 2026-10-18 (tag `pre-cloud-removal`).
 
 ### 9.2 Key scoping
 

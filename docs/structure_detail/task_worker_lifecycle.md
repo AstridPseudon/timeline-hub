@@ -1,61 +1,12 @@
 # Task & Worker Lifecycle
 
-> **Current post-cutover boundary (2026-09-10).** The diagrams and historical implementation notes below describe the retired Astrid/Supabase task lifecycle. New work must follow the canonical Astrid path: Astrid App producer → Astrid Runtime admission → Worker `GenericPackHost` execution → Runtime settlement → CAS/gallery/timeline readback. Runtime owns task, run, receipt, event-history, and publication authority; Astrid App does not insert or complete legacy task rows. See [`unified_task_creation.md`](unified_task_creation.md) for the current contract. The historical details are retained as migration context and are not an acceptance path.
+> **Current boundary.** New work follows the canonical Astrid path: Astrid App producer -> Astrid Runtime admission -> Worker `GenericPackHost` execution -> Runtime settlement -> CAS/gallery/timeline readback. Runtime owns task, run, receipt, event-history, and publication authority; Astrid App does not insert or complete task rows. See [`unified_task_creation.md`](unified_task_creation.md) for the contract. The Supabase task queue, `create_task`/`claim_next_task`/`complete_task` edge functions, credit deduction and database triggers were removed 2026-10-18 (tag `pre-cloud-removal`).
 
 ## Overview
 
-Astrid App uses an async task queue pattern for all AI generation workloads. This decouples the UI from long-running operations and enables distributed processing.
-
-## Flow Diagram
-
-### High-Level Overview
-```
-┌─────────┐     ┌──────────────┐     ┌─────────┐     ┌────────────┐
-│ Client  │────▶│ create_task  │────▶│   DB    │◀────│   Worker   │
-│   UI    │     │ Edge Function│     │ (tasks) │     │  (Express) │
-└─────────┘     └──────────────┘     └─────────┘     └────────────┘
-     ▲                                      │                 │
-     │                                      │                 │
-     │          ┌──────────────┐           │                 │
-     └──────────│   Realtime   │◀──────────┴─────────────────┘
-                │  Broadcast   │         (status updates)
-                └──────────────┘
-```
-
-## Detailed Steps
-
-### 1. Task Creation
-- Client calls `/supabase/functions/create_task` with:
-  - `tool_id` (e.g., 'image-generation')
-  - `input` (tool-specific parameters)
-  - `cost` (pre-calculated credits)
-- Edge Function validates user has sufficient credits
-- Inserts row into `tasks` table with `status = 'Queued'`
-- Returns task ID to client
-
-### 2. Worker Polling & Task Processing
-- **External Workers** (Headless-Wan2GP) poll via `claim_next_task` Edge Function:
-  - Uses **model affinity**: prefers tasks matching worker's `current_model` to avoid model reloads
-  - Falls back to FIFO (oldest first) if no model match or worker hasn't reported a model
-  - Updates to `In Progress` with `worker_id`
-  - Returns task details
-- **Model Tracking**: Workers call `update-worker-model` after loading a model to enable affinity matching
-- **Task Processing** now uses **Database Triggers** (instant):
-  - When task status → `Complete`: SQL trigger `create_generation_on_task_complete` runs
-  - Creates generations and shot_generations automatically in the database
-  - Normalizes image paths and handles all edge cases
-  - Broadcasts real-time updates via Supabase Realtime
-- Worker processes based on `tool_id`:
-  - Image generation → FAL API
-  - Video processing → FFmpeg
-  - Prompt enhancement → OpenAI
+Astrid App treats generation as asynchronous work: the UI admits a task and reads the result back when Runtime settles it. This decouples the UI from long-running operations and enables distributed processing.
 
 ## Worker Types
-
-### Local Express Worker
-- Basic task processor (`/src/server/services/taskProcessingService.ts`)
-- Handles simple tasks like prompt enhancement and basic image generation
-- Runs alongside the main application in development
 
 ### Headless-Wan2GP Worker (Cloud/Local GPU)
 - Advanced video generation worker: [Headless-Wan2GP](https://github.com/peteromallet/Headless-Wan2GP)
@@ -74,7 +25,7 @@ Astrid App uses an async task queue pattern for all AI generation workloads. Thi
 
 **Local Deployment (GPU Required)**
 ```bash
-# Clone the worker repository where the Settings modal expects it
+# Clone the worker repository
 git clone https://github.com/banodoco/astrid-app-Worker.git ~/Documents/Astrid-Worker
 cd ~/Documents/Astrid-Worker
 
@@ -89,8 +40,6 @@ export PATH="$HOME/.local/bin:$PATH"
 uv sync --locked --python 3.10 --extra cuda124
 uv run --python 3.10 python run_worker.py --astrid-access-token <PAT_TOKEN>
 ```
-
-The desktop Settings modal now stores a `Worker repo location` field. Both generated commands `cd` into that absolute path before any `uv` call, so users can paste them from a fresh shell in their home directory.
 
 **Cloud Deployment (RunPod)**
 
@@ -144,36 +93,6 @@ Pods can be queried programmatically via RunPod GraphQL API (credentials in `~/D
 - If the first uv-based startup fails on a machine with an older virtualenv, restore the latest `venv.pre-uv-*` or `.venv.pre-uv-*` backup and remove `.uv-migrated`.
 - If the release must be rolled back, revert the uv rollout commits and return to the pre-uv revision that still bootstraps from `requirements.txt`.
 
-#### Worker Configuration
-The worker polls the same task queue but specializes in video generation:
-- Connects to Supabase using environment credentials
-- Claims tasks with `tool_id` matching its capabilities
-- Updates task status and uploads results to designated storage buckets
-- Uses PostgreSQL (Supabase) for both local development and production
-
-### 3. Task Completion
-- Worker calls `complete_task` Edge Function with:
-  - Task ID
-  - Output data (URLs, metadata)
-  - Error info (if failed)
-- Edge Function:
-  - Updates task status using `func_mark_task_complete` or `func_mark_task_failed`
-  - Deducts credits from user's balance
-  - **Variant vs Generation Logic**: If task has `based_on` parameter, creates a `generation_variant` on the source generation. If `create_as_generation=true` flag is set, overrides this and creates a new `generation` with `based_on` for lineage tracking instead.
-- **SQL Trigger** (`create_generation_on_task_complete`):
-  - Automatically creates `generations` records when status → `Complete`
-  - Normalizes image paths (removes local server IPs)
-  - Creates `shot_generations` links if applicable
-  - All processing happens instantly in the database
-
-### 4. Real-time Updates
-- **Database Triggers** automatically broadcast changes via Supabase Realtime
-- **Instant processing** when tasks complete (no 10-second delay)
-- Client subscribes via the realtime system (`RealtimeProvider`; see [`realtime_system.md`](realtime_system.md))
-- UI updates automatically as task progresses
-
 ## Debugging
 
-See [`debugging.md`](debugging.md) for full debugging tools (CLI, SQL views, frontend logging).
-
-For task-specific debugging: `cd scripts && python3 debug.py task <task_id>` shows the full timeline including trigger execution and generation creation.
+For cross-repo debugging see the collection-level [`debugging.md`](../../../debugging.md). For worker pods, `scripts/debug.py pod worker <pod_id>` prints the start, restart and status commands used above.

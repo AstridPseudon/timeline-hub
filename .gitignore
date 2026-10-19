@@ -56,7 +56,6 @@ temp/
 !docs/state_management_context_audit.md
 !docs/design/*.md
 !docs/governance/contracts/astrid-plan-a.md
-!docs/extensions/foundation-contract-ledger.md
 !vendor/astrid-browser/remotion/public/fonts/FONT_PROVENANCE.md
 !docs/extensions/foundation-closure-assessment.md
 !docs/extensions/composition-spine/*.md
@@ -68,7 +67,6 @@ temp/
 /vendor/timeline-schema/python/build/
 !tasks/*.md
 !CLAUDE.md
-!/.megaplan/briefs/**/*.md
 
 # TypeScript build output
 *.tsbuildinfo
@@ -108,8 +106,6 @@ supabase/.temp/
 supabase/.branches/
 .claude/worktrees/
 
-# megaplan per-run state files — writing them during execute triggers megaplan audit false-positives
-.megaplan/plans/
 this.env
 
 # Playwright output (screenshots, traces, last-run state) — generated, never source

@@ -6,15 +6,15 @@ Status: reconstructed from surviving source artifacts (original v8 brief is abse
 ## Provenance Statement
 
 The original v8 architecture brief for this epic is **absent** from the repository.
-The expected path was:
+The expected file was:
 
 ```
-.megaplan/briefs/astrid-extension-composition-spine-plan-elegant-v8.md
+astrid-extension-composition-spine-plan-elegant-v8.md
 ```
 
-This file was authored in a private workspace
-(`/Users/peteromalley/Documents/.megaplan-worktrees/astrid-pristine-sdk-boundary-run`)
-and was **not transferred** to the target repository (source: `.megaplan/initiatives/astrid-extension-composition-spine-epic/prep.md` line 5).
+This file was authored in a private planning workspace and was **not transferred**
+to the target repository (source: `prep.md` line 5; the epic's planning artifacts
+`prep.md`, `NORTHSTAR.md` and the milestone briefs are not in this repository).
 
 This document reconstructs the v8 architecture baseline from the collective state of
 the following surviving artifacts. Every major claim is annotated with its
@@ -24,10 +24,10 @@ reconstructive source path. No claim depends solely on the absent v8 brief.
 
 | # | Source | Path | Role |
 |---|--------|------|------|
-| 1 | prep.md | `.megaplan/initiatives/astrid-extension-composition-spine-epic/prep.md` | Primary reconstruction artifact: 13-milestone epic chain, 44 locked decisions, constraints, open questions, anti-scope |
-| 2 | NORTHSTAR.md | `.megaplan/initiatives/astrid-extension-composition-spine-epic/NORTHSTAR.md` | Immutable constraints, success definition |
-| 3 | M0 milestone brief | `.megaplan/initiatives/astrid-extension-composition-spine-epic/m0-decisions-fixtures.md` | M0 scope, decisions, done criteria |
-| 4 | M1a–M7b milestone briefs | `.megaplan/initiatives/astrid-extension-composition-spine-epic/{m1a-*,m1b-*,m2-*,m3a-*,m3b-*,m3c-*,m4-*,m5-*,m6a-*,m6b-*,m7a-*,m7b-*}.md` | Per-milestone scope, ownership, and acceptance |
+| 1 | prep.md | `prep.md` | Primary reconstruction artifact: 13-milestone epic chain, 44 locked decisions, constraints, open questions, anti-scope |
+| 2 | NORTHSTAR.md | `NORTHSTAR.md` | Immutable constraints, success definition |
+| 3 | M0 milestone brief | `m0-decisions-fixtures.md` | M0 scope, decisions, done criteria |
+| 4 | M1a–M7b milestone briefs | `m1a-*.md` through `m7b-*.md` (not in this repository) | Per-milestone scope, ownership, and acceptance |
 | 5 | family-maturity.json | `config/extensions/family-maturity.json` | 21-family declaration/execution maturity snapshot |
 | 6 | SDK contract surface | `src/sdk/index.ts` | 153-line public barrel: 30+ exported families, stable types |
 | 7 | contributionKinds.ts | `src/sdk/video/families/contributionKinds.ts` | Authoritative `VideoContributionKind` union (21 members) |
@@ -42,7 +42,7 @@ reconstructive source path. No claim depends solely on the absent v8 brief.
 
 ## Immutable Constraints (North Star)
 
-From `NORTHSTAR.md` (`.megaplan/initiatives/astrid-extension-composition-spine-epic/NORTHSTAR.md`):
+From `NORTHSTAR.md` (`NORTHSTAR.md`):
 
 1. **Extensions and processes never mutate raw timeline internals directly.**
 2. **The graph is the authority for graph-authoritative fact families;** legacy fields are compatibility inputs only.

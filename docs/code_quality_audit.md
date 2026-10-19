@@ -10,11 +10,11 @@ Last verified: 2026-02-03 (932 source files).
 
 | Dimension | Status | Key metric |
 |-----------|--------|------------|
-| Dependency direction | ✅ Clean | Zero `shared/ → tools/` violations; ESLint enforced |
+| Dependency direction | ⚠️ Rule masked | Zero `shared/ → tools/` violations; the `shared/ → domains/features` ESLint rule is masked for `src` (56 known violations) |
 | Data fetching | ✅ Clean | 3 query scopes; mutations separated. ~25 inline query keys |
 | Type safety | ✅ Clean | 94 `any` (17 `: any`, 81 `as any`), all justified |
 | File size | ⚠️ Acceptable | 11 files over 1,000 LOC; each documented |
-| Explicit contracts | ✅ Clean | 8 patterns encoded as constants/helpers/types |
+| Explicit contracts | ✅ Clean | 7 patterns encoded as constants/helpers/types |
 | Code duplication | ✅ Patterns exist | 4 shared patterns for repeated operations |
 | Naming | ✅ Clean | ~20 single-letter vars (`w`/`h`, `x`/`y`, `i`/`j`), all conventional |
 | Logging hygiene | ⚠️ Acceptable | 2,974 console statements / 342 files; tagged, stripped in prod |
@@ -26,7 +26,9 @@ Last verified: 2026-02-03 (932 source files).
 
 **Principle:** `tools/` → `shared/`, never reverse.
 
-**Status:** Zero violations. 4 `shared/` files import from `@/tools/index.ts` (the registry barrel, not tool internals): `ToolsPane.tsx`, `useToolSettings.ts`, `usePrefetchToolSettings.ts`, `usePersistentToolState.ts` — all reading `toolsManifest`/`toolsUIManifest`. ESLint `no-restricted-imports` prevents new violations.
+**Status:** Zero violations. 4 `shared/` files import from `@/tools/index.ts` (the registry barrel, not tool internals): `ToolsPane.tsx`, `useToolSettings.ts`, `usePrefetchToolSettings.ts`, `usePersistentToolState.ts` — all reading `toolsManifest`/`toolsUIManifest`. ESLint `no-restricted-imports` prevents new `shared/ → tools/` violations.
+
+**Known gap — masked `shared/ → domains|features` rule (owned debt):** `eslint.config.js` declares a rule that `shared/` must not import `@/domains/*` or `@/features/*`, but the later block that bans the removed cloud SDK for `src/**` replaces that rule's options per file (flat config), exactly as the removed facade blocks did, so the rule does not fire on non-test `src` files. Unmasking it exposes 56 violations (counted during the cloud removal). Not fixed by the cloud removal; fix by merging both patterns into one block and moving or allowlisting the 56 sites (`eslint.shared-layer-allowlist.js` entries only shrink).
 
 ---
 
@@ -34,9 +36,9 @@ Last verified: 2026-02-03 (932 source files).
 
 **Principle:** Three query scopes (project, shot, variant). Mutations in dedicated files, not mixed with queries.
 
-**Status:** Clean. Mutations in `useGenerationMutations.ts`, invalidation centralized via `useGenerationInvalidation.ts`. Full details in `docs/structure_detail/data_fetching.md`.
+**Status:** Clean. Shot placement mutations in `useShotGenerationMutations.ts`, invalidation centralized via `useGenerationInvalidation.ts`. Full details in `docs/structure_detail/data_fetching.md`.
 
-**Known gap — inline query keys:** ~25 `useQuery`/`useInfiniteQuery` hooks define keys as inline string arrays instead of `queryKeys.*` (`src/shared/lib/queryKeys.ts`). These are mostly single-use keys in isolated hooks (e.g., `['credits', 'balance']`, `['lineage-chain', variantId]`, `['pending-segment-tasks', ...]`). Mutation invalidation keys use the registry.
+**Known gap — inline query keys:** ~25 `useQuery`/`useInfiniteQuery` hooks define keys as inline string arrays instead of `queryKeys.*` (`src/shared/lib/queryKeys.ts`). These are mostly single-use keys in isolated hooks (e.g., `['lineage-chain', variantId]`, `['pending-segment-tasks', ...]`). Mutation invalidation keys use the registry.
 
 ---
 
@@ -49,13 +51,12 @@ Last verified: 2026-02-03 (932 source files).
 | Category | Count | Justification |
 |----------|-------|---------------|
 | Debug/instrumentation/monitoring | ~55 | Intentionally generic — logs arbitrary runtime state |
-| Supabase instrumentation (window + realtime) | ~24 | WebSocket/channel introspection at runtime |
 | Browser API interop | ~16 | `navigator.connection`, `.standalone`, `performance.memory` — no `lib.dom.d.ts` types |
-| Window debug globals | ~15 | Dev-only (`__REALTIME_SNAPSHOT__`, `__VISIBILITY_MANAGER__`, etc.) |
+| Window debug globals | ~15 | Dev-only (`__DATA_FRESHNESS_MANAGER__`, etc.) |
 | Tests | ~7 | `VisibilityManager.test.ts` — white-box access to private methods |
 | Generic function types | ~4 | `errorHandler`, `queryKeys`, `useStableObject`, `logger` |
 
-Heaviest files: `instrumentation/window` (27), `instrumentation/realtime` (11), `NetworkStatusManager` (8), `mobileProjectDebug` (7), `VisibilityManager.test` (7), `snapshot` (7).
+Heaviest files: `NetworkStatusManager` (8), `mobileProjectDebug` (7), `VisibilityManager.test` (7). Counts predate the cloud removal (2026-10-18, tag `pre-cloud-removal`), which deleted the `instrumentation/window` and `instrumentation/realtime` files that held ~24 of them; re-measure before relying on the totals.
 
 ---
 
@@ -87,12 +88,11 @@ Heaviest files: `instrumentation/window` (27), `instrumentation/realtime` (11), 
 
 **Principle:** No magic strings, no head-knowledge contracts. Encode rules in constants, helpers, or types.
 
-**Status:** Clean. 8 patterns encoded explicitly.
+**Status:** Clean. 7 patterns encoded explicitly.
 
 | Domain rule | How it's encoded |
 |-------------|-----------------|
 | Shot filter "no shot" value | `SHOT_FILTER.NO_SHOT` constant |
-| Supabase "not found" error detection | `isNotFoundError()` helper |
 | Dynamic column layout | `columnsPerRow='auto'` literal type |
 | Variant type discrimination | `VARIANT_TYPE.ORIGINAL`, `.INPAINT`, etc. |
 | Generation ID resolution (variants, metadata, null) | `getGenerationId()` helper |
@@ -131,7 +131,7 @@ Top files: `applySettingsService.ts` (79), `PromptEditorModal.tsx` (53), `MediaG
 
 **Principle:** Delete, don't deprecate-and-keep.
 
-**Status:** Clean. Components use named exports only (no duplicate `export default`). Knip reports 35 unused exports and 142 unused types — these are intentional (shadcn UI variants, Supabase generated types) or false positives from dynamic imports.
+**Status:** Clean. Components use named exports only (no duplicate `export default`). Knip reports 35 unused exports and 142 unused types — these are intentional (shadcn UI variants) or false positives from dynamic imports.
 
 ---
 

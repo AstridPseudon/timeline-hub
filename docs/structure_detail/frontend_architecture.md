@@ -26,29 +26,18 @@ All keys live in `queryKeys` object. Invalidation goes through hooks in `shared/
 
 ## Contexts
 
-| Context | Provider location |
-|---------|-------------------|
-| `AuthContext` | `App.tsx` (top-level) |
-| `ProjectContext` | `App.tsx` (inside auth) |
-| `UserSettingsContext` | `App.tsx` (inside auth) |
-| `ShotsContext` | Project route layout |
-| `CurrentShotContext` | Shot route layout |
-| `PanesContext` | Shot route layout |
-| `GenerationTaskContext` | Tool pages |
-| `IncomingTasksContext` | Project route layout |
-| `ToolPageHeaderContext` | Tool page layout |
-| `LastAffectedShotContext` | Project route layout |
+All app-level providers are composed in `src/app/providers/AppProviders.tsx` (outer to inner: `AuthProvider`, `AuthGate`, `UserSettingsProvider`, `ProjectProvider`, `RealtimeProvider`, `AstridShotsProvider`, `GenerationTaskProvider`, `IncomingTasksProvider`, `PanesStoreBootstrapBoundary`, `AgentChatProvider`, `SelectionStoreBoundary`, `ToolPageHeaderProvider`). They wrap the whole router; see [routing_and_navigation.md](routing_and_navigation.md) for the table.
 
 ### Provider nesting order matters
 
-See `App.tsx` for the hierarchy. Providers that depend on others must be nested inside them (e.g., `ProjectContext` inside `AuthContext`).
+See `AppProviders.tsx` for the hierarchy. Providers that depend on others must be nested inside them (e.g., `ProjectContext` inside `AuthContext`).
 
 ---
 
 ## Ownership Boundaries
 
 - `shared/components/ui/` is for low-level presentational primitives and thin wrappers only. If a component depends on app contexts, feature hooks, or workflow-specific behavior, move it out of the UI primitive root.
-- `shared` can host neutral contracts and infrastructure, but feature orchestration, repository logic, and Supabase-backed workflows should live in the owning `domains`, `features`, or `tools` module.
+- `shared` can host neutral contracts and infrastructure, but feature orchestration, repository logic, and backend-specific workflows should live in the owning `domains`, `features`, or `tools` module.
 - When two areas need the same type, extract that type into a neutral shared contract file instead of importing from one concrete widget package into another.
 - Prefer folder entrypoints (`index.ts`) for reusable shared component packages so callers import the package boundary instead of deep implementation files.
 - When a feature or domain owns a surface, keep the implementation in that owner and leave any legacy `shared/*` path as a documented compatibility shim only. Do not maintain parallel implementations behind both paths.

@@ -24,7 +24,8 @@ evidence and a concrete improvement direction.
 ## Early architecture observations
 
 1. **The authoring docs describe two generations of extension shape.**
-   `docs/extensions/authoring.md` begins with an older `ExtensionPackage`
+   The authoring guide (now `docs/video-editor/extension-author-contract.md`
+   §12) began with an older `ExtensionPackage`
    manifest-plus-config example while current DEV examples use
    `defineExtension`, `AstridExtension`, flat contribution arrays, and
    `@astrid/editor-sdk`. This creates immediate uncertainty about the canonical
@@ -323,7 +324,7 @@ evidence and a concrete improvement direction.
   command dispatch, patch save, namespaced data persistence, reload hydration,
   keyboard commit, activation disposal, and reactivation restoration.
 - No extension-owned runtime errors appeared. The local page does emit unrelated
-  auth/API-token network errors, repeated non-UUID Supabase warnings, render
+  auth/API-token network errors, repeated non-UUID remote-backend warnings, render
   budget warnings, and a five-second auth-lock recovery after reload. These make
   extension failures harder to spot and materially slow browser iteration; the
   local editor mode should suppress remote-only queries and isolate its auth
@@ -500,8 +501,8 @@ evidence and a concrete improvement direction.
 - **Historical local-test finding (resolved):** local editor mode previously
   performed remote token/auth work, emitted unrelated warnings, and obscured the
   extension signal. Explicit deterministic local-test mode now short-circuits
-  authentication and Supabase work, exposes loader/runtime diagnostics, and the
-  strict browser gate asserts zero unexpected Supabase requests, page errors, or
+  authentication and remote-backend work, exposes loader/runtime diagnostics, and the
+  strict browser gate asserts zero unexpected remote-backend requests, page errors, or
   console errors.
 - The dedicated `npm run dev:editor` launcher now includes the existing
   DEV-only `localTest=1` contract in the URL it prints. A fresh Chrome tab loaded
@@ -572,7 +573,7 @@ evidence and a concrete improvement direction.
 - Deep merged-suite runs found stale public-context key inventories, SDK export
   ceilings, missing selection-store/provider wrappers, and page tests that
   accidentally mounted preference persistence against an uninitialized
-  Supabase client. Several failures presented as unrelated timeouts until the
+  remote-backend client. Several failures presented as unrelated timeouts until the
   real remote side effect was removed from the page-test boundary.
 - The durable lesson is to make local-test zero-remote behavior executable and
   to keep shared mocks structurally aligned with public hooks/providers. Merely
@@ -756,7 +757,7 @@ evidence and a concrete improvement direction.
 
 ### A per-isolate telemetry counter is not production rate limiting
 
-- The edge function's fixed batch cap and 120-request runtime-minute counter
+- The (since removed) telemetry edge function's fixed batch cap and 120-request runtime-minute counter
   bound one isolate, but horizontally scaled or cold-started isolates do not
   share that state. Leaving the ingress anonymous would also make event-volume
   abuse unnecessarily easy.
@@ -805,11 +806,11 @@ evidence and a concrete improvement direction.
 ### Deterministic local-test mode must short-circuit global application chrome
 
 - The editor harness correctly selected its local provider, but the global
-  header still initialized Supabase authentication. A test URL could therefore
+  header still initialized remote authentication. A test URL could therefore
   fail before reaching the editor when production credentials were absent,
   making a supposedly hermetic browser gate depend on unrelated infrastructure.
 - Global-header authentication and referral effects now no-op in explicit
-  local-test mode, with a unit test proving that no Supabase surface is touched.
+  local-test mode, with a unit test proving that no remote surface is touched.
   Deterministic mode is an application-shell contract, not a feature-local
   flag; every global side effect must honor it.
 
@@ -1251,9 +1252,10 @@ identity.
   claim broad caption semantics beyond the paired verifier's fixture.
 - The combined host inventory is now thirteen extensions, and all-13
   activation/reorder/disable/re-enable and browser evidence must be rerun on
-  the current candidate. Local auth is a narrow editor-route/Supabase seam:
-  local Astrid mode must stay backend-free, while ordinary cloud/legacy Astrid App
-  routes retain Supabase. No global Supabase removal is authorized.
+  the current candidate. Local auth was a narrow editor-route seam:
+  local Astrid mode must stay backend-free. The cloud backend was later removed
+  entirely (2026-10-18, tag `pre-cloud-removal`), which supersedes the earlier
+  restriction that ordinary cloud/legacy routes keep their backend.
 - Exact paired evidence, production/observability and rollback drills, a real
   upstream transcript-owner acknowledgement, Edge/physical-device and
   accessibility sessions, four human acceptance personas, and two independent
@@ -2619,7 +2621,7 @@ fresh console collection.
   selector-produced Desert URL return HTTP 400. Identifier parsing now applies
   the same canonical UUID, case-insensitive ULID, and immutable-slug rules at
   both boundaries, with the original identifier preserved for lookup.
-- A globally mounted Tasks pane queried the legacy Supabase shot hook even
+- A globally mounted Tasks pane queried the legacy cloud shot hook even
   while the editor was explicitly in Astrid/SQLite authority mode. This caused
   unrelated credit/auth warnings and refused localhost requests on otherwise
   healthy pages. The pane now consumes the host-owned authority-aware shots
@@ -2660,7 +2662,7 @@ fresh console collection.
   selection fallback or the generations-pane shortcut. Directly opening Image
   Generation looked correct, while clicking there from Travel silently dropped
   both localProject and localTimeline. Both selection and every tool transition
-  now preserve the URL-owned scope without consulting Supabase.
+  now preserve the URL-owned scope without consulting a cloud backend.
 - The full-page Image Generation gallery and the globally mounted generations
   pane rendered at the same time, producing a valid project gallery followed
   by a contradictory empty-state pane. The shell pane is now absent on the
@@ -2678,7 +2680,7 @@ fresh console collection.
   not only direct URLs: five document-derived shot timelines with isolated clip
   membership, selected-shot refresh persistence, all 35 generation summaries,
   both image cards, visible variants, exactly one detail request, refresh
-  durability, zero Supabase traffic, zero unexpected HTTP failures, and zero
+  durability, zero cloud-backend traffic, zero unexpected HTTP failures, and zero
   console errors.
 
 ### Matrix acceptance exposed remaining gallery contract boundaries
@@ -2706,10 +2708,10 @@ fresh console collection.
   and tests that exact narrow-width case. Evidence: `c5a4383a2`,
   `src/shared/components/MediaGalleryItem/components/ImageContent.tsx` and
   its behavior test.
-- Mark-viewed still had a local-mode Supabase write path. The hook now selects
+- Mark-viewed still had a local-mode cloud-backend write path. The hook now selects
   the project-scoped Astrid gallery mutation when local URL authority is
-  active, with a bridge response schema and focused tests; cloud mode retains
-  its existing Supabase path. Evidence: `8031de318`,
+  active, with a bridge response schema and focused tests; the cloud path was
+  removed 2026-10-18 (tag `pre-cloud-removal`). Evidence: `8031de318`,
   `src/shared/hooks/variants/useMarkVariantViewed.ts`,
   `src/shared/hooks/__tests__/useMarkVariantViewed.test.ts`.
 - A timeline overview was not enough to prove shot isolation: the focused
@@ -2734,7 +2736,7 @@ fresh console collection.
   free before retrying, and recheck the volume around heavyweight phases;
   do not touch user caches, active browser data, worktrees, or live servers.
   Evidence: the superseded RC6 late-friction addendum, removed during the App history cleanup.
-  and `docs/extensions/extension-release-next-steps.md` (Phase 2).
+  and the "Release phases" section of `docs/extensions/extension-release-runbook.md` (Phase 2).
 - The capability census reports tasks, generations, and media, but does not
   census the timeline-document route. A green boot census therefore does not
   prove that local shot browsing can load `{config, registry}`; the matrix

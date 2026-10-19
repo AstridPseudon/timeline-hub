@@ -309,13 +309,13 @@ The current repositories already contain much of the local control-plane foundat
 - Astrid's serve composition currently demonstrates usable process and worker patterns, but the neutral runtime must not depend on Astrid to start.
 - Astrid App can consume project, timeline, gallery, generation, and task state through an Astrid-named proxy that should become a neutral workspace client/proxy.
 
-The current Astrid App Worker remains materially coupled to Supabase:
+The current Astrid App Worker remains materially coupled to the legacy cloud backend (Supabase; the App's side of it was removed 2026-10-18, tag `pre-cloud-removal`, and the Worker repo is unchanged):
 
-- Its database runtime is hard-coded to Supabase despite accepting a `--db-type` flag.
-- Claims use Supabase Edge Functions.
-- Status, completion, storage upload, retries, and some child orchestration assume Supabase.
+- Its database runtime is hard-coded to the cloud database despite accepting a `--db-type` flag.
+- Claims use the cloud edge functions.
+- Status, completion, storage upload, retries, and some child orchestration assume the cloud backend.
 - Its local mode adds local file ingress but does not replace the queue authority.
-- RunPod orchestration injects Supabase credentials and derives scaling state from Supabase.
+- RunPod orchestration injects cloud credentials and derives scaling state from the cloud queue.
 
 The missing composition seam is an independently owned runtime repository/package and protocol, extracted from the reusable kernel pieces without importing Astrid product concepts. On top of that boundary, the local release needs a general executor using the neutral worker protocol and an explicit capability-parity map for functionality that still exists only in Astrid App Worker.
 
@@ -328,7 +328,7 @@ The first implementation slice is specified in the companion [SQLite-Only Local 
 - every durable structured workspace concept is migrated into SQLite;
 - immutable large bytes are settled into the local object store;
 - the worker executes at least real image generation, travel/video generation, and rendering on local compute;
-- no Supabase, Turso, hosted relay, RunPod, cloud GPU, or filesystem compatibility path participates;
+- no legacy cloud database, Turso, hosted relay, RunPod, cloud GPU, or filesystem compatibility path participates;
 - the normal runtime contains no legacy fallback or dual-write behavior after the one-time offline migration.
 
 That plan has been ground-truthed through successive repository audits and now carries the handoff-ready work breakdown, dependency order, deletions, migration rules, and acceptance gates. Its first execution gate creates and reviews the concrete DDL, OpenAPI, generated clients, conformance suite, and release manifest before product cutover begins. This vision remains the durable destination; the companion document is the current delivery blueprint.
@@ -454,7 +454,7 @@ Autoscaling reads queue summaries and executor registration from the runtime. It
 - Should task capability versions use semantic versions, immutable definition digests, or both?
 - Which policies belong in a capability declaration versus runtime configuration?
 - Can third-party capability packages be trusted in-process, or must they execute out of process?
-- Which existing Astrid App Worker task handlers contain hidden Supabase or child-task coupling?
+- Which existing Astrid App Worker task handlers contain hidden cloud-backend or child-task coupling?
 - What is the minimum parity set required for the first local release?
 
 ### Media
@@ -490,7 +490,7 @@ The oracle should review the vision adversarially and answer these questions wit
 6. **Turso feasibility:** Audit the current kernel's SQLite usage against current Turso Database/Turso Sync behavior. Identify incompatible SQL, transaction, locking, migration, or concurrency assumptions.
 7. **Tenancy:** Recommend database-per-user, database-per-realm, or a hybrid, including collaboration, backup, token scope, cost, and deletion consequences.
 8. **Capability contract:** Propose the minimum complete capability schema and versioning model that supports agents, UI generation, local workers, third-party providers, and reproducible provenance.
-9. **Worker reuse:** Identify which Astrid App Worker compute paths are safely reusable behind the neutral worker protocol and which are too coupled to Supabase or worker-owned orchestration.
+9. **Worker reuse:** Identify which Astrid App Worker compute paths are safely reusable behind the neutral worker protocol and which are too coupled to the cloud backend or worker-owned orchestration.
 10. **Media architecture:** Recommend the local/cloud artifact contract, upload policy, caching, verification, retention, and garbage-collection model.
 11. **Security:** Threat-model hosted Astrid App → local connector, cloud runtime → RunPod, worker-created child tasks, and untrusted capability packages.
 12. **Migration seam:** Define the safest sequence from the current repositories to the target without breaking the already-working local timeline/gallery/editor integration.

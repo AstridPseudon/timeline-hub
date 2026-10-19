@@ -67,18 +67,18 @@ Client-side display in GuidanceVideoStrip is visual-only (no frame deletion).
 
 ```typescript
 {
-  structure_video_path?: string | null;           // Storage URL
+  structure_video_path?: string | null;           // Video URL
   structure_video_treatment?: 'adjust' | 'clip';  // Frame mismatch handling
   structure_video_motion_strength?: number;        // 0.0-2.0
 }
 ```
 
-**Storage path**: `image_uploads` bucket at `guidance-videos/{projectId}/{timestamp}-{random}.{ext}`
+**Uploads**: the App has no structure-video upload path (the Supabase storage upload was removed 2026-10-18, tag `pre-cloud-removal`).
 
 ### Gotchas
 
 - Structure video state resets when switching shots (not persisted across navigation)
-- Metadata extraction (duration, fps, dimensions) happens client-side before upload
+- Metadata extraction (duration, fps, dimensions) happens client-side
 - Canvas rendering + seek debouncing needed for hover-scrub performance
 
 ---
@@ -89,17 +89,6 @@ Shot selection syncs via URL hash (`#shotId`). Three sources stay in sync:
 - URL changes (browser back/forward, direct links)
 - Programmatic navigation (Previous/Next via `useShotNavigation()`)
 - Shot selection from other components (ShotsPane, ShotGroup)
-
----
-
-## Scalability Notes
-
-| Concern | Solution | Location |
-|---------|----------|----------|
-| 1000+ generations per shot | `shot_generations` fetched in batches of 1000 | `useListShots` |
-| Unpositioned generation counts | `count_unpositioned_generations()` SQL function | DB |
-| Video gallery pagination | Server-side pagination (6-8 per page) | `VideoOutputsGallery` |
-| Shot reordering | Optimistic updates with conflict resolution | `useReorderShots` |
 
 ---
 

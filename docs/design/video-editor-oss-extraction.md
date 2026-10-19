@@ -15,14 +15,14 @@ This document describes how to extract `astrid-app/src/tools/video-editor/` into
 
 ## Executive Summary
 
-The current video editor is already close to a clean split in two important ways. First, the rendering path is materially separated: `TimelineRenderer.tsx`, `VisualClip.tsx`, `AudioTrack.tsx`, and `EffectLayerSequence.tsx` are Remotion-centric composition code with no direct Supabase, auth, or project selection imports (`astrid-app/src/tools/video-editor/compositions/TimelineRenderer.tsx:1-173`, `astrid-app/src/tools/video-editor/compositions/VisualClip.tsx:1-220`, `astrid-app/src/tools/video-editor/compositions/AudioTrack.tsx:1-68`, `astrid-app/src/tools/video-editor/compositions/EffectLayerSequence.tsx:1-65`). Second, the editor already has a store/provider seam: `useTimelineState()` creates and seeds a Zustand-backed external store, `TimelineStoreProvider` publishes it, and `VideoEditorShell` renders a propless `<TimelineEditor />` that reads selectors from the store (`astrid-app/src/tools/video-editor/hooks/useTimelineState.ts:413-838`, `astrid-app/src/tools/video-editor/hooks/timelineStore.ts:34-50`, `astrid-app/src/tools/video-editor/hooks/timelineStore.ts:302-550`, `astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:67-71`, `astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:686`, `astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:744`, `astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:770`).
+The current video editor is already close to a clean split in two important ways. First, the rendering path is materially separated: `TimelineRenderer.tsx`, `VisualClip.tsx`, `AudioTrack.tsx`, and `EffectLayerSequence.tsx` are Remotion-centric composition code with no direct backend, auth, or project selection imports (`astrid-app/src/tools/video-editor/compositions/TimelineRenderer.tsx:1-173`, `astrid-app/src/tools/video-editor/compositions/VisualClip.tsx:1-220`, `astrid-app/src/tools/video-editor/compositions/AudioTrack.tsx:1-68`, `astrid-app/src/tools/video-editor/compositions/EffectLayerSequence.tsx:1-65`). Second, the editor already has a store/provider seam: `useTimelineState()` creates and seeds a Zustand-backed external store, `TimelineStoreProvider` publishes it, and `VideoEditorShell` renders a propless `<TimelineEditor />` that reads selectors from the store (`astrid-app/src/tools/video-editor/hooks/useTimelineState.ts:413-838`, `astrid-app/src/tools/video-editor/hooks/timelineStore.ts:34-50`, `astrid-app/src/tools/video-editor/hooks/timelineStore.ts:302-550`, `astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:67-71`, `astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:686`, `astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:744`, `astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:770`).
 
 The extraction problem is not rendering. It is host coupling. `TimelineEditor.tsx` currently imports project selection, shots context, shot creation/navigation, `VideoGenerationModal`, active task tracking, final-video availability, pinned shot-group hooks, stale-variant handling, and generation duplication utilities directly (`astrid-app/src/tools/video-editor/components/TimelineEditor/TimelineEditor.tsx:10-50`). `VideoEditorProvider.tsx` also binds the editor to `MediaLightbox`, `ShotsContext`, pending generation-add flows, and the app-level AgentChat bridge (`astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:5-41`, `astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:74-112`, `astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:142-209`, `astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:367-405`). The extraction therefore succeeds only if those concerns are removed from the packages and reintroduced through ports and extension slots.
 
 Why extract:
 
 - OSS audience: a versioned JSON timeline schema, a headless render engine, a reusable React editor shell, and a CLI renderer are independently valuable for teams building lightweight timeline tools.
-- Astrid-app: smaller in-tree surface area, cleaner boundaries around Supabase/auth/project state, clearer test ownership, and the ability to consume the editor as a dependency instead of an in-tree subsystem.
+- Astrid-app: smaller in-tree surface area, cleaner boundaries around backend/auth/project state, clearer test ownership, and the ability to consume the editor as a dependency instead of an in-tree subsystem.
 
 Non-goals:
 
@@ -58,7 +58,7 @@ Part B. Astrid-app integration, for astrid engineers
 9. [Forbidden in Core](#9-forbidden-in-core)
 10. [File and Folder Migration Table](#10-file-and-folder-migration-table)
 11. [Host Touchpoint Mapping](#11-host-touchpoint-mapping)
-12. [Reference Supabase Adapter and Host Extensions](#12-reference-supabase-adapter-and-host-extensions)
+12. [Reference Runtime Adapter and Host Extensions](#12-reference-runtime-adapter-and-host-extensions)
 13. [Migration Sequence and Sync Strategy](#13-migration-sequence-and-sync-strategy)
 
 Part C. Open questions and risks, for both audiences
@@ -84,8 +84,8 @@ Dependency direction is explicit and one-way:
 | Package | Responsibility | Public exports | Peer dependencies | Out of scope |
 | --- | --- | --- | --- | --- |
 | `@tbd/schema` | Versioned, hand-editable `TimelineConfig` contract; zod parsing; JSON Schema export; migrations; stable serializer. The baseline comes from today's `TimelineConfig`, `TimelineClip`, `TrackDefinition`, and defaults (`astrid-app/src/tools/video-editor/types/index.ts:51-186`, `astrid-app/src/tools/video-editor/lib/defaults.ts:3-35`, `astrid-app/src/tools/video-editor/lib/serialize.ts:98-139`). | `TimelineConfigSchema`, `TimelineTrackSchema`, `TimelineClipSchema`, `migrateTimeline()`, `serializeTimeline()`, `createDefaultTimelineConfig()`, JSON Schema files. | None. `zod` is a direct dependency, not a peer. | Rendering, React UI, persistence, auth, project routing, astrid extensions. |
-| `@tbd/engine` | Pure Remotion render engine: given `TimelineConfig`, frame/time context, effect registry, and `AssetResolver`, produce preview or final-frame output. Candidate source files are already in `compositions/` and render-time utilities (`astrid-app/src/tools/video-editor/compositions/TimelineRenderer.tsx:1-173`, `astrid-app/src/tools/video-editor/compositions/VisualClip.tsx:1-220`, `astrid-app/src/tools/video-editor/compositions/AudioTrack.tsx:1-68`, `astrid-app/src/tools/video-editor/compositions/EffectLayerSequence.tsx:1-65`). | `TimelineRenderer`, clip renderers, `DynamicEffectRegistry`, render helpers, engine typings, `createEngineAssetResolver()`. | `react`, `remotion`, `@remotion/media`. | Timeline picker UI, inspector state, Supabase, list/create/delete workflows, app overlays. |
-| `@tbd/editor` | React editor shell and store, wired through ports and extension slots. The current store/provider seam is the anchor: `TimelineStoreProvider`, selector hooks, and `useTimelineState()` (`astrid-app/src/tools/video-editor/hooks/timelineStore.ts:34-50`, `astrid-app/src/tools/video-editor/hooks/timelineStore.ts:302-550`, `astrid-app/src/tools/video-editor/hooks/useTimelineState.ts:413-838`). | `EditorProvider`, `TimelineEditorShell`, `TimelineCanvas`, preview components, editor hooks, default in-memory ports, slot contracts, test helpers. | `react`, `react-dom`, `remotion`, `@remotion/player`. `zustand` can be a direct dependency to keep the store internal. | Supabase adapter, auth, project selection, MediaLightbox, AgentChat, task-based export, shots context. |
+| `@tbd/engine` | Pure Remotion render engine: given `TimelineConfig`, frame/time context, effect registry, and `AssetResolver`, produce preview or final-frame output. Candidate source files are already in `compositions/` and render-time utilities (`astrid-app/src/tools/video-editor/compositions/TimelineRenderer.tsx:1-173`, `astrid-app/src/tools/video-editor/compositions/VisualClip.tsx:1-220`, `astrid-app/src/tools/video-editor/compositions/AudioTrack.tsx:1-68`, `astrid-app/src/tools/video-editor/compositions/EffectLayerSequence.tsx:1-65`). | `TimelineRenderer`, clip renderers, `DynamicEffectRegistry`, render helpers, engine typings, `createEngineAssetResolver()`. | `react`, `remotion`, `@remotion/media`. | Timeline picker UI, inspector state, backend list/create/delete workflows, app overlays. |
+| `@tbd/editor` | React editor shell and store, wired through ports and extension slots. The current store/provider seam is the anchor: `TimelineStoreProvider`, selector hooks, and `useTimelineState()` (`astrid-app/src/tools/video-editor/hooks/timelineStore.ts:34-50`, `astrid-app/src/tools/video-editor/hooks/timelineStore.ts:302-550`, `astrid-app/src/tools/video-editor/hooks/useTimelineState.ts:413-838`). | `EditorProvider`, `TimelineEditorShell`, `TimelineCanvas`, preview components, editor hooks, default in-memory ports, slot contracts, test helpers. | `react`, `react-dom`, `remotion`, `@remotion/player`. `zustand` can be a direct dependency to keep the store internal. | Runtime adapter, auth, project selection, MediaLightbox, AgentChat, task-based export, shots context. |
 | `@tbd/cli` | Headless render entrypoint for `timeline.json -> video file`. Uses `@tbd/schema` for validation and `@tbd/engine` for rendering. | `render` command, programmatic `renderTimeline()` helper. | None. Runtime deps are direct. | React editor UI, app shell, timeline creation/listing UI. |
 
 Effect registry placement decision:
@@ -102,7 +102,7 @@ Current save/load logic is already treated as a contract boundary. `DataProvider
 
 ### 2.2 Why `engine` stays pure
 
-The current composition layer has no direct Supabase, project, auth, or lightbox coupling. The rendering path is already centered around Remotion components plus config resolution (`astrid-app/src/tools/video-editor/compositions/TimelineRenderer.tsx:1-173`, `astrid-app/src/tools/video-editor/compositions/VisualClip.tsx:1-220`, `astrid-app/src/tools/video-editor/compositions/AudioTrack.tsx:1-68`). Keeping the engine pure gives one render truth for editor preview, CLI render, and headless/server render.
+The current composition layer has no direct backend, project, auth, or lightbox coupling. The rendering path is already centered around Remotion components plus config resolution (`astrid-app/src/tools/video-editor/compositions/TimelineRenderer.tsx:1-173`, `astrid-app/src/tools/video-editor/compositions/VisualClip.tsx:1-220`, `astrid-app/src/tools/video-editor/compositions/AudioTrack.tsx:1-68`). Keeping the engine pure gives one render truth for editor preview, CLI render, and headless/server render.
 
 ### 2.3 Why `editor` is ports-and-adapters
 
@@ -801,7 +801,7 @@ The extracted packages must contain none of the following concepts:
 | Generation assets | Tied to astrid generation pipeline | Astrid `MediaPicker`/asset adapter |
 | AgentChat | App-level assistant workflow | Astrid extension layer |
 | Task-based export | Astrid task system concern | Astrid `Exporter` adapter |
-| Supabase | Backend implementation detail | Astrid `DataProvider` adapter |
+| Backend (the removed cloud service) | Backend implementation detail | Astrid `DataProvider` adapter |
 | Auth | Host identity concern | `HostContext` and host bootstrap |
 | `projectId` | Host document scoping concern | Astrid `DataProvider` adapter |
 | MediaLightbox | Host media UI | Astrid `MediaPicker` adapter and overlay slot |
@@ -822,7 +822,7 @@ The extracted packages must contain none of the following concepts:
 | `compositions/` | `MOVE` | `@tbd/engine/src/compositions/` | Pure Remotion render layer (`astrid-app/src/tools/video-editor/compositions/TimelineRenderer.tsx:1-173`). |
 | `components/` | `SPLIT` | `@tbd/editor/src/components/` and `astrid-app/src/tools/video-editor-host/` | Generic preview/editor UI moves; lightbox, AgentChat, shot-group, and route-aware shells stay host. |
 | `contexts/` | `SPLIT` | `@tbd/editor/src/contexts/` and `astrid-app/src/tools/video-editor-host/contexts/` | Generic runtime/provider context moves; host bootstrap stays astrid. |
-| `data/` | `SPLIT` | `@tbd/editor/src/data/` and `astrid-app/src/tools/video-editor-host/data/` | Interface moves; Supabase adapter stays host. |
+| `data/` | `SPLIT` | `@tbd/editor/src/data/` and `astrid-app/src/tools/video-editor-host/data/` | Interface moves; the Runtime adapter stays host. |
 | `effects/` | `SPLIT` | `@tbd/engine/src/effects/` and `@tbd/editor/src/effects/` | Registry and render-time ABI move to engine; editor gets convenience bindings only. |
 | `hooks/` | `SPLIT` | `@tbd/editor/src/hooks/` and `astrid-app/src/tools/video-editor-host/hooks/` | Generic store, persistence, render, and mutation hooks move; app-specific hooks stay. |
 | `lib/` | `SPLIT` | `@tbd/schema/src/`, `@tbd/engine/src/`, `@tbd/editor/src/`, and host | Serializer/defaults to schema; render helpers to engine; editor mutations to editor; host-only generation utilities stay. |
@@ -835,7 +835,7 @@ The extracted packages must contain none of the following concepts:
 | Path | Decision | Destination | Notes |
 | --- | --- | --- | --- |
 | `data/DataProvider.ts` | `SPLIT` | `@tbd/editor/src/data/DataProvider.ts` | Canonical interface anchor moves into editor package (`astrid-app/src/tools/video-editor/data/DataProvider.ts:53-71`). |
-| `src/integrations/runtime/dataProvider.ts` | `STAY` | `astrid-app/src/tools/video-editor-host/data/RuntimeDataProvider.ts` | This is the reference astrid adapter (`RuntimeDataProvider`) and keeps the Workspace Runtime coupling. It replaces the Supabase adapter this plan was written against, which was retired 2026-10-18. |
+| `src/integrations/runtime/dataProvider.ts` | `STAY` | `astrid-app/src/tools/video-editor-host/data/RuntimeDataProvider.ts` | This is the reference astrid adapter (`RuntimeDataProvider`) and keeps the Workspace Runtime coupling. It replaces the cloud adapter this plan was written against, which was retired 2026-10-18 (tag `pre-cloud-removal`). |
 | `contexts/VideoEditorRuntimeContext.tsx` | `SPLIT` | generic runtime context to `@tbd/editor/src/contexts/EditorRuntimeContext.tsx`; host-only wrapper removed | Current wrapper carries `provider`, `timelineId`, `timelineName`, and `userId` (`astrid-app/src/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx:4-33`). |
 | `contexts/VideoEditorProvider.tsx` | `STAY` | `astrid-app/src/tools/video-editor-host/contexts/VideoEditorProvider.tsx` | This is the host bootstrap example; it wires MediaLightbox and AgentChat (`astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:74-112`, `astrid-app/src/tools/video-editor/contexts/VideoEditorProvider.tsx:367-405`). |
 | `components/VideoEditorShell.tsx` | `SPLIT` | generic shell to `@tbd/editor/src/components/VideoEditorShell.tsx`; route/pane integration to host shell | Current shell mixes generic editor UI with routing, pane locks, and realtime dialog state (`astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:13-29`, `astrid-app/src/tools/video-editor/components/VideoEditorShell.tsx:67-120`). |
@@ -861,7 +861,7 @@ The extracted packages must contain none of the following concepts:
 | `hooks/useTimelinePersistence.ts` | `MOVE` | `@tbd/editor/src/hooks/useTimelinePersistence.ts` | Generic optimistic save/conflict logic over `DataProvider` (`astrid-app/src/tools/video-editor/hooks/useTimelinePersistence.ts:22-220`). |
 | `hooks/useTimelineRealtime.ts` | `STAY` | `astrid-app/src/tools/video-editor-host/hooks/useTimelineRealtime.ts` | Current implementation is app-level `realtimeEventProcessor` glue, not a provider contract (`astrid-app/src/tools/video-editor/hooks/useTimelineRealtime.ts:29-43`). |
 | `hooks/useTimelineQueries.ts` | `MOVE` | `@tbd/editor/src/hooks/useTimelineQueries.ts` | Generic provider-backed query helper (`astrid-app/src/tools/video-editor/hooks/useTimelineQueries.ts:1-25`). |
-| `hooks/useTimelinesList.ts` | `STAY` | `astrid-app/src/tools/video-editor-host/hooks/useTimelinesList.ts` | Supabase list/create/rename/delete helper until `listTimelines()` and `deleteTimeline()` ports are adopted (`astrid-app/src/tools/video-editor/hooks/useTimelinesList.ts:8-98`). |
+| `hooks/useTimelinesList.ts` | `STAY` | `astrid-app/src/tools/video-editor-host/hooks/useTimelinesList.ts` | Timeline list/create/rename/delete helper until `listTimelines()` and `deleteTimeline()` ports are adopted (`astrid-app/src/tools/video-editor/hooks/useTimelinesList.ts:8-98`). |
 | `hooks/useActiveTaskClips.ts` | `STAY` | `astrid-app/src/tools/video-editor-host/hooks/useActiveTaskClips.ts` | Project-scoped task queue integration (`astrid-app/src/tools/video-editor/hooks/useActiveTaskClips.ts:125-261`). |
 | `hooks/useFinalVideoAvailable.ts` | `STAY` | `astrid-app/src/tools/video-editor-host/hooks/useFinalVideoAvailable.ts` | Astrid final-video state (`astrid-app/src/tools/video-editor/hooks/useFinalVideoAvailable.ts:13-30`). |
 | `hooks/useAgentSession.ts` | `STAY` | `astrid-app/src/tools/video-editor-host/hooks/useAgentSession.ts` | Agent session persistence and chat bridge are app-only. |
@@ -915,7 +915,7 @@ The extracted packages must contain none of the following concepts:
 | Profile | `astrid-app/src/tools/video-editor/data/DataProvider.ts:71`; `astrid-app/src/tools/video-editor/lib/timeline-data.ts:405-410` | Optional asset metadata adapter | `loadAssetProfile?` / `loadProfile?` |
 | Realtime subscription | `astrid-app/src/tools/video-editor/hooks/useTimelineRealtime.ts:29-43` | Optional provider capability | `DataProvider.subscribe?()`; explicitly a new design addition |
 
-## 12. Reference Supabase Adapter and Host Extensions
+## 12. Reference Runtime Adapter and Host Extensions
 
 ### 12.1 Reference adapter placement
 
@@ -1079,7 +1079,7 @@ Execution scope for this plan: steps 1 through 5 execute atomically in a single 
 5. Flip astrid to `workspace:*` or local `file:` consumption and validate in app.
    Rollback: revert package resolution to the in-tree copy.
 
-   - Validate route page, bootstrap provider, MediaLightbox, AgentChat, and Supabase adapter behavior.
+   - Validate route page, bootstrap provider, MediaLightbox, AgentChat, and Runtime adapter behavior.
 
 6. Post-plan (manual): publish `v0.1.0` of the OSS repo.
    Out of scope for the single megaplan run; requires external repo creation, history subtree split, and npm/GitHub credentials.

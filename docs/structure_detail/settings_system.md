@@ -9,7 +9,7 @@ Single system for persisting and resolving tool/UI settings across shots, projec
 | What | File |
 |------|------|
 | Priority resolution | `src/shared/lib/settingsResolution.ts` |
-| Low-level DB hook | `src/shared/hooks/settings/useToolSettings.ts` |
+| Low-level settings hook | `src/shared/hooks/settings/useToolSettings.ts` |
 | Auto-save hook (recommended) | `src/shared/settings/hooks/useAutoSaveSettings.ts` |
 | Bind-to-useState adapter | `src/shared/hooks/usePersistentToolState.ts` |
 | Generic persistent state | `src/shared/hooks/usePersistentState.ts` |
@@ -38,14 +38,14 @@ Need to persist settings?
 | Scenario | Hook | Why |
 |----------|------|-----|
 | New tool with shot-scoped settings | `useAutoSaveSettings` | Owns state, auto-saves, handles entity changes |
-| Dark mode toggle, pane lock | `useUserUIState` | User-scoped, follows user across projects |
+| Dark mode toggle, pane lock | `useUserUIState` | User-scoped UI preference, held for the session |
 | Image gen form with `markAsInteracted` guard | `usePersistentToolState` | Binds to existing `useState`; only saves after explicit interaction |
 | One-off write to a specific scope | `useToolSettings` | Low-level `update('shot', {...})` / `update('project', {...})` |
 
 **Key differences:**
 - `useAutoSaveSettings` vs `usePersistentToolState`: Auto-save owns its state; PersistentToolState is an adapter that binds to existing `useState` and requires `markAsInteracted()` before saving.
 - `useAutoSaveSettings` vs `useToolSettings`: Auto-save adds debounce, dirty tracking, entity-change flushing. ToolSettings is the raw read/write layer.
-- `useUserUIState` vs the rest: Writes to `users.settings.ui` only; the others write to project/shot/user settings keyed by tool ID.
+- `useUserUIState` vs the rest: user-scoped UI state under the `ui` key, held in memory for the session; the others are keyed by tool ID and scoped to project/shot/user.
 
 ### Migration Direction
 
@@ -79,14 +79,13 @@ const mode = resolveGenerationMode(sources); // 'batch' | 'timeline' | 'by-pair'
 
 | Layer | Scope | Hook / API | Use Case |
 |-------|-------|------------|----------|
-| **Postgres JSONB** | Cross-device | `useToolSettings`, `useAutoSaveSettings` | Tool settings, synced across devices |
+| **Settings query cache** | Session | `useToolSettings`, `useAutoSaveSettings` | Tool settings, observed from the cache; there is no backend write (see Persistence) |
 | **localStorage** | Device-only | `usePersistentState` (from `storageKeys.ts`) | Collapsed panels, active tabs, last-active-shot cache |
 | **sessionStorage** | Tab-only | Direct access | Inheritance handoff (`apply-project-defaults-${shotId}`) |
-| **Supabase Storage** | Assets | `imageUploader`, `useResources` | Images, videos, LoRAs |
 
-### Database Schema
+### Settings Shape
 
-JSONB columns `shots.settings`, `projects.settings`, `users.settings` store settings keyed by tool ID:
+Settings are keyed by tool ID, one key per persisted form:
 
 ```json
 {
@@ -129,7 +128,7 @@ const { value, update } = useUserUIState('paneLocks', { shots: false, tasks: fal
 
 ## Persistence (Runtime path)
 
-There is no tool-settings backend on the Runtime path. `useToolSettings` observes the settings query cache (seeded by other hooks via `setQueryData`) and its `update` is a deliberate no-op; there is no write queue, prefetch or atomic RPC. Anything that was persisted only through that backend (e.g. per-shot form values) does not survive a reload; localStorage-backed state (`usePersistentState`, `lastEditedLora`) is unchanged.
+There is no tool-settings backend on the Runtime path (the Supabase JSONB columns, settings RPCs and write queue were removed 2026-10-18, tag `pre-cloud-removal`). `useToolSettings` observes the settings query cache (seeded by other hooks via `setQueryData`) and its `update` is a deliberate no-op; there is no write queue, prefetch or atomic RPC. Anything that was persisted only through that backend (e.g. per-shot form values) does not survive a reload; localStorage-backed state (`usePersistentState`, `lastEditedLora`) is unchanged.
 
 ## Key Invariants
 
