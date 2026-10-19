@@ -15,7 +15,7 @@ export type EffectProps<TParams = unknown> = {
   assetEntry?: AssetRegistryEntry;
 };
 
-export type EffectComponent = FC<EffectProps>;
+export type EffectComponent<TParams = unknown> = FC<EffectProps<TParams>>;
 
 export type AnimationPhase = 'entrance' | 'sustain' | 'exit';
 export type AnimationKind = 'wrapper' | 'hook';
