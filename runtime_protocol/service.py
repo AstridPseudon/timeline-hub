@@ -4486,6 +4486,15 @@ class RuntimeService:
         value["content"] = content
         return value
 
+    @staticmethod
+    def _reject_canonical_document_write(document_id, kind):
+        if str(document_id).startswith("timeline:") or kind == "timeline.composition":
+            from .errors import RetiredRouteError
+            raise RetiredRouteError(
+                "canonical timeline documents must be edited through timeline commit",
+                details={"replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/commit"},
+            )
+
     @_durable_mutation
     def create_document(self, project_id, body, *, idempotency_key=None):
         self._require_object_body(body)
@@ -4494,13 +4503,16 @@ class RuntimeService:
         kind = str(body.get("kind") or "")
         if not document_id or not kind or "content" not in body:
             raise ValidationError("document_id, kind, and content are required")
+        self._reject_canonical_document_write(document_id, kind)
+        existing = self.store.conn.execute("SELECT * FROM project_documents WHERE project_id=? AND id=?", (project["id"], document_id)).fetchone()
+        if existing:
+            self._reject_canonical_document_write(existing["id"], existing["kind"])
         content = body["content"]
         self._validate_project_document(project["id"], document_id, kind, content)
         request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "document_id": document_id, "kind": kind, "content": content}).encode()).hexdigest()
         replay = self._command_replay("document.create", document_id, idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
             return replay
-        existing = self.store.conn.execute("SELECT * FROM project_documents WHERE project_id=? AND id=?", (project["id"], document_id)).fetchone()
         if existing:
             if existing["kind"] == kind and json.loads(existing["content_json"]) == content:
                 return self._command_record("document.create", document_id, idempotency_key, request_hash, self._document_resource(existing), project_id=project["id"])
@@ -4535,11 +4547,15 @@ class RuntimeService:
         self._require_object_body(body)
         expected = self._expected_version(body)
         project = self.store.get_project(project_id)
+        self._reject_canonical_document_write(document_id, body.get("kind"))
+        self._reject_canonical_document_write(body.get("document_id", document_id), body.get("kind"))
+        row = self.store.conn.execute("SELECT * FROM project_documents WHERE project_id=? AND id=?", (project["id"], document_id)).fetchone()
+        if row:
+            self._reject_canonical_document_write(row["id"], row["kind"])
         request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "document_id": document_id, "body": body}).encode()).hexdigest()
         replay = self._command_replay("document.update", document_id, idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
             return replay
-        row = self.store.conn.execute("SELECT * FROM project_documents WHERE project_id=? AND id=?", (project["id"], document_id)).fetchone()
         if not row:
             raise NotFoundError("document not found")
         if int(row["version"]) != expected:
@@ -4560,20 +4576,9 @@ class RuntimeService:
                 raise ValidationError("transcript media_id and source_id are immutable")
         if document_id.startswith(self.PROJECT_PREFERENCE_PREFIX) and body.get("document_id", document_id) != document_id:
             raise ValidationError("project preference document identity is reserved")
-        timeline_id = document_id.removeprefix("timeline:") if document_id.startswith("timeline:") else None
-        if timeline_id is not None and not isinstance(content, dict):
-            raise ValidationError("timeline document content must be an object for lossless canonical revision")
         timestamp = now()
         self.store.conn.execute("UPDATE project_documents SET kind=?, content_json=?, version=?, updated_at=? WHERE id=?", (kind, canonical_json(content), expected + 1, timestamp, document_id))
         result = self._document_resource(self.store.conn.execute("SELECT * FROM project_documents WHERE id=?", (document_id,)).fetchone())
-        if timeline_id is not None:
-            timeline_row = self.store.conn.execute(
-                "SELECT project_id FROM timelines WHERE id=? AND project_id=?", (timeline_id, project["id"])
-            ).fetchone()
-            if timeline_row is None:
-                raise NotFoundError("timeline not found")
-            revision = self._record_internal_revision(project["id"], timeline_id, content)
-            result.update({"revision_id": revision["revision_id"], "content_digest": revision["content_digest"]})
         return self._command_record("document.update", document_id, idempotency_key, request_hash, result, project_id=project["id"])
 
     def _generation_resource(self, row):
