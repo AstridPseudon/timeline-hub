@@ -1,10 +1,11 @@
-<!-- app | 2026-10-19T20:18:04Z | dispatcher heartbeat 9s -->
-# app — 2026-10-19 20:19 UTC
+<!-- app | 2026-10-19T20:21:24Z | dispatcher heartbeat 12s -->
+# app — 2026-10-19 20:20 UTC
+Tool update copied 20:20 UTC; external hub-syncd restart requested from area lead.
 Milestone: M1 ACTIVE; M0 COMPLETE. App machine handover reconciled. Single clip real mouse durability gate remains exit gap; M2 design only.
 Integrated: app tl/integration430546e42 restores reviewed mounted port/lifecycle (a7ea077e4,c98dc6be8) atop official0.2.1 + audited3drag expected failures. Manager reran commandSession + mounted hook:25passed8.50s. This is NOT browser evidence.
-In flight: app-m1-recovery-core-local original display R0 vs submission HA + retained typed conflict; app-m1-recovery-ui-local sole human UI extraction; both queued. Imported projection-fact5a272cd96 reviewed, held until original-basis regression fixed. Main app-m1-real-journey still running/uncommitted per hub log, branch unchanged26d69a1cb; source transfer requested.
+In flight: app-m1-recovery-core-local original display R0 vs submission HA + retained typed conflict; app-m1-recovery-ui-local sole human UI extraction; both running. Imported projection-fact5a272cd96 reviewed, held until original-basis regression fixed. Main app-m1-real-journey still running/uncommitted per hub log, branch unchanged26d69a1cb; source transfer requested.
 Next: merge core+producer together with unchanged regression green; merge ONE recovery UI; receive main real journey harness; pair Viewing consumer; central actual e2e-m1-gesture; ONE full App on final batch.
 Blocked/needs: active main worker artifacts not fully transferred (escalation app-20261019T2018Z-active-handover). Main full App request app-full-1019192621-29082 absent locally: do not duplicate until final batch/result handoff. No API/schema blocker. Two preexisting source tsc errors remain.
 Gates:3/5/6 OPEN for actual App. Main Runtime5 + Agent3 real durability cases PASS per hub statuses; no local browser/full claim. Native outbox stub browser prior1pass only mechanism.
-Inbox: through Runtime20:07 flat response.details correction acknowledged; exact selectors Recover saved edits/data-owner-id and Retry save/testid timeline-command-retry. Main worker log already includes selector+conflict-remount assertions. Ownership/approvals retained.
+Inbox: through orchestrator tool-update acknowledged; Runtime20:07 flat response.details correction acknowledged; exact selectors Recover saved edits/data-owner-id and Retry save/testid timeline-command-retry. Main worker log already includes selector+conflict-remount assertions. Ownership/approvals retained.
 Resources:25GB free. No local heavy jobs. Imported recovery-basis/recovery-compose branches contain STARTING SOURCE ONLY, not their promised fixes; retain reports/refs. wiring-fix now merged/recyclable; projection-fact/recovery-ui held.
