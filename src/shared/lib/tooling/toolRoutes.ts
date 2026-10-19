@@ -28,15 +28,15 @@ export type ShotLocation = {
   hash: string;
 };
 
-/** Build a local Astrid deep link to one canonical shot occurrence. */
+/** Build an Astrid deep link to one canonical shot occurrence. */
 export function astridShotUrl(
-  projectSlug: string,
-  timelineRef: string,
+  projectId: string,
+  timelineId: string,
   stableDeepLink: string,
 ): string {
   const params = new URLSearchParams({
-    localProject: projectSlug,
-    localTimeline: timelineRef,
+    project: projectId,
+    timeline: timelineId,
   });
   return `${TOOL_ROUTES.TRAVEL_BETWEEN_IMAGES}?${params.toString()}#${encodeURIComponent(stableDeepLink)}`;
 }

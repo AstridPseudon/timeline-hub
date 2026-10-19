@@ -5,7 +5,7 @@ import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeErro
 import { isNotFoundError } from '@/shared/constants/supabaseErrors';
 import { apiQueryKeys } from '@/shared/lib/queryKeys/api';
 import { requireUserFromSession } from '@/integrations/supabase/auth/ensureAuthenticatedSession';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 
 interface ApiKeys {
   fal_api_key?: string;
@@ -53,7 +53,7 @@ const updateApiKeys = async (apiKeys: ApiKeys): Promise<ApiKeys> => {
 
 export const useApiKeys = () => {
   const queryClient = useQueryClient();
-  const isLocalMode = hasLocalModeUrlParams(
+  const isLocalMode = hasRuntimeDocumentIdentity(
     typeof window === 'undefined' ? '' : window.location.search,
   );
   

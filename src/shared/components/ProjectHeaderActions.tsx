@@ -8,7 +8,8 @@ import { CreateProjectModal } from '@/shared/components/GlobalHeader/CreateProje
 import { ProjectSettingsModal } from '@/shared/components/modals/ProjectSettingsModal.tsx';
 
 type ProjectSummary = {
-  slug: string;
+  project_id: string;
+  slug?: string;
   name: string;
   metadata?: Record<string, unknown>;
 };
@@ -18,17 +19,20 @@ interface ProjectHeaderActionsProps {
   onProjectCreated?: () => void;
   onProjectUpdated?: () => void;
   disabled?: boolean;
+  confirmNavigation?: () => boolean;
 }
 
 function toProject(summary: ProjectSummary | null, contextProject: Project | null): Project | null {
-  if (!summary) return contextProject;
+  if (!summary) return null;
+  const id = summary.project_id;
+  if (contextProject?.id !== id) contextProject = null;
   const aspectRatio = typeof summary.metadata?.aspect_ratio === 'string'
     ? summary.metadata.aspect_ratio
     : typeof summary.metadata?.aspectRatio === 'string'
       ? summary.metadata.aspectRatio
       : contextProject?.aspectRatio;
   return {
-    id: summary.slug,
+    id,
     name: summary.name,
     user_id: contextProject?.user_id ?? 'local-user',
     ...(aspectRatio ? { aspectRatio } : {}),
@@ -68,6 +72,7 @@ export function ProjectHeaderActions({
   onProjectCreated,
   onProjectUpdated,
   disabled = false,
+  confirmNavigation,
 }: ProjectHeaderActionsProps) {
   const { project: contextProject } = useProjectSelectionContext();
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
@@ -91,6 +96,7 @@ export function ProjectHeaderActions({
           className="h-7 shrink-0 gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
           onClick={() => setIsCreateProjectModalOpen(true)}
           aria-label="New project"
+          disabled={disabled}
         >
           <PlusCircle className="h-3.5 w-3.5" aria-hidden="true" />
           <span>New project</span>
@@ -101,6 +107,7 @@ export function ProjectHeaderActions({
         isOpen={isCreateProjectModalOpen}
         onOpenChange={setIsCreateProjectModalOpen}
         onProjectCreated={onProjectCreated}
+        confirmNavigation={confirmNavigation}
       />
       <ProjectSettingsModal
         isOpen={isProjectSettingsModalOpen}

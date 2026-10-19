@@ -30,19 +30,19 @@ describe('projectSelectionStore', () => {
     expect(getProjectSelectionFallbackId()).toBeNull();
   });
 
-  it('uses localProject URL authority over stale storage for bridge consumers', () => {
+  it('uses canonical project URL authority over stale storage for Runtime consumers', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('stale-cloud-project');
-    window.history.replaceState({}, '', '/tools/image-generation?localProject=desert-plant-growth');
+    window.history.replaceState({}, '', '/tools/image-generation?project=project-a');
 
     initializeProjectSelectionStore();
 
-    expect(getProjectSelectionFallbackId()).toBe('desert-plant-growth');
+    expect(getProjectSelectionFallbackId()).toBe('project-a');
     expect(getProjectSelectionFallbackId()).not.toBe('stale-cloud-project');
   });
 
-  it('does not expose stale storage when local mode has no project slug', () => {
+  it('does not expose stale storage when a timeline is explicit without its project', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('stale-cloud-project');
-    window.history.replaceState({}, '', '/tools/travel-between-images?localTimeline=main');
+    window.history.replaceState({}, '', '/tools/travel-between-images?timeline=main');
 
     initializeProjectSelectionStore();
 

@@ -5,8 +5,7 @@ import { preloadingService } from '@/shared/lib/preloading';
 import { UserPreferences } from '@/shared/settings/userPreferences';
 import { determineProjectIdToSelect } from './useProjectCRUD';
 import { setProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
-import { getLocalProjectSlug, hasLocalModeUrlParams } from '@/shared/dev/devSession';
-import { getRuntimeDocumentProjectId } from '@/app/runtime/runtimeDocument';
+import { getRuntimeDocumentProjectId, hasRuntimeDocumentIdentity, isRuntimeDocumentMode } from '@/app/runtime/runtimeDocument';
 
 interface UseProjectSelectionOptions {
   userId: string | null;
@@ -27,25 +26,18 @@ export function useProjectSelection({
   isLoadingPreferences,
   updateUserSettings,
 }: UseProjectSelectionOptions) {
-  const localProjectSlug = getLocalProjectSlug(
-    typeof window === 'undefined' ? '' : window.location.search,
-  );
-  const isLocalMode = hasLocalModeUrlParams(
-    typeof window === 'undefined' ? '' : window.location.search,
-  );
+  const search = typeof window === 'undefined' ? '' : window.location.search;
+  const pathname = typeof window === 'undefined' ? '' : window.location.pathname;
   const runtimeProjectId = getRuntimeDocumentProjectId();
-  const isRuntimeMode = runtimeProjectId !== null;
-  const isUrlOwnedMode = isLocalMode || isRuntimeMode;
-  const urlProjectId = localProjectSlug ?? runtimeProjectId;
+  const isUrlOwnedMode = hasRuntimeDocumentIdentity(search) || isRuntimeDocumentMode(search, pathname);
+  const urlProjectId = runtimeProjectId;
   // CROSS-DEVICE SYNC: Track if we had a localStorage value at startup
   const hadLocalStorageValueRef = useRef<boolean>(false);
   const hasAppliedServerPreferencesRef = useRef<boolean>(false);
   const previousUserIdRef = useRef(userId);
 
   // FAST RESUME: Try to restore selectedProjectId from localStorage immediately.
-  // Only for a real user: with no session (dev local-mode editor), restoring a
-  // stale project id would re-enable the project-scoped Supabase queries
-  // (shots, generations) against a backend local mode must never touch.
+  // URL-owned Runtime documents never restore a stale project id.
   const [selectedProjectId, setSelectedProjectIdState] = useState<string | null>(() => {
     if (urlProjectId) {
       hadLocalStorageValueRef.current = false;
@@ -84,8 +76,8 @@ export function useProjectSelection({
     setProjectSelectionFallbackId(selectedProjectId);
   }, [selectedProjectId]);
 
-  // A localProject URL owns selection for every tool. This also handles
-  // client-side navigation between local projects without consulting cloud
+  // A canonical document URL owns selection for every tool. This also handles
+  // client-side navigation between projects without consulting persisted
   // preferences or stale lastSelectedProjectId storage.
   const previousUrlOwnedModeRef = useRef(isUrlOwnedMode);
   useEffect(() => {
@@ -114,7 +106,7 @@ export function useProjectSelection({
     previousUserIdRef.current = userId;
 
     if (previousUserId && !userId && !isUrlOwnedMode) {
-      // Auth/local-mode transitions must not retain a cloud project identity:
+      // Auth/Runtime transitions must not retain a cloud project identity:
       // otherwise project-scoped Supabase queries can briefly outlive the
       // session. Clear local resume state without writing a logout preference.
       hadLocalStorageValueRef.current = false;
@@ -159,7 +151,7 @@ export function useProjectSelection({
 
     setSelectedProjectIdState(projectId);
 
-    // Local project identity is URL-owned and must never be persisted as a
+    // Runtime project identity is URL-owned and must never be persisted as a
     // cloud resume preference.
     if (isUrlOwnedMode) {
       setProjectSelectionFallbackId(projectId);

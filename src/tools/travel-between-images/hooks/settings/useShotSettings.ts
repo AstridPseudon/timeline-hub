@@ -14,7 +14,7 @@ import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { DEFAULT_STEERABLE_MOTION_SETTINGS } from '../../components/ShotEditor/state/types';
 import { useSessionInheritedDefaults } from './inheritedDefaults';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import { assertDeferredCloudShotOperation } from '@/shared/hooks/shots/shotAuthority';
 
 export interface UseShotSettingsReturn {
@@ -117,7 +117,7 @@ export const useShotSettings = (
     revert,
   } = autoSave;
   const seededLastEditedLoraShotIdRef = useRef<string | null>(null);
-  const isLocalMode = hasLocalModeUrlParams(typeof window === 'undefined' ? '' : window.location.search);
+  const isLocalMode = hasRuntimeDocumentIdentity(typeof window === 'undefined' ? '' : window.location.search);
 
   useEffect(() => {
     seededLastEditedLoraShotIdRef.current = null;

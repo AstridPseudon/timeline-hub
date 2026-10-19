@@ -1,30 +1,15 @@
 /**
- * Dev-only local-mode editor constants, in one place.
- *
- * Local mode reads the timeline from the Astrid bridge and needs no login. The
- * auth gate exempts the local-mode editor route in DEV (`Layout.tsx`), so no
- * fake Supabase session is ever created: a fake login would make the app-wide
- * providers (user settings, projects, credits) fetch real data against a
- * non-existent backend and fail. This module only carries the constants those
- * DEV paths share.
- *
- * The legacy `dev.videoEditor.localMode` localStorage flag has been retired:
- * local mode is now derived solely from the `localProject`/`localTimeline`
- * URL params. Existing stored values are left in place and are inert.
+ * Dev-only demo identities and local Supabase defaults.
  *
  * Keep this module free of `import.meta.env` and of React/DOM-typed imports.
  */
 
-/** URL params that mean "open the local-mode editor" (see `VideoEditorPage`). */
-export const LOCAL_MODE_URL_PARAMS = ['localProject', 'localTimeline'] as const;
-
 /**
- * The demo project/timeline the committed bridge stub serves and `dev:editor`
- * prints. The DEV root redirect uses them to send a sessionless developer
- * straight to the working editor.
+ * Canonical identities served by the committed Runtime fixture and printed
+ * by `dev:editor`.
  */
-export const DEMO_LOCAL_PROJECT = 'demo-project';
-export const DEMO_LOCAL_TIMELINE = 'demo-timeline';
+export const DEMO_PROJECT_ID = 'demo-project-id';
+export const DEMO_TIMELINE_ID = 'demo-timeline';
 
 /**
  * The Supabase URL dev boot paths use when no real one is configured.
@@ -44,22 +29,4 @@ export const DEFAULT_DEV_SUPABASE_URL = 'http://127.0.0.1:54321';
  */
 export function devSessionStorageKey(supabaseUrl: string): string {
   return `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
-}
-
-/** True when the URL carries the local-mode params `VideoEditorPage` reads. */
-export function hasLocalModeUrlParams(search: string): boolean {
-  const params = new URLSearchParams(search);
-  return LOCAL_MODE_URL_PARAMS.some((name) => params.has(name));
-}
-
-/**
- * Return the URL-owned local project slug, if one is present.
- *
- * Local project URLs are authoritative across every tool, not only the
- * timeline editor. Keep this parser here so project/session consumers cannot
- * accidentally fall back to a cloud selection or persisted storage value.
- */
-export function getLocalProjectSlug(search: string): string | null {
-  const slug = new URLSearchParams(search).get('localProject')?.trim();
-  return slug || null;
 }

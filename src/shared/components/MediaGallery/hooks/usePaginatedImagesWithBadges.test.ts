@@ -99,8 +99,24 @@ describe('usePaginatedImagesWithBadges', () => {
     ]);
   });
 
-  it('leaves Runtime-projected counts untouched and does not request legacy badges', () => {
-    window.history.pushState({}, '', '/tools/image-generation?runtime=1&runtimeProject=project-1&runtimeTimeline=timeline-1');
+  it('keeps Runtime projected badge counts visible while enrichment is loading', () => {
+    window.history.pushState({}, '', '/tools/image-generation?project=project-1');
+    mocks.useVariantBadges.mockReturnValue({ getBadgeData: vi.fn(), isLoading: true });
+    mocks.getGenerationId.mockReturnValue('gen-1');
+    const images = [{ id: 'gen-1', derivedCount: 4, hasUnviewedVariants: true, unviewedVariantCount: 2 }] as never;
+    const { result } = renderHook(() => usePaginatedImagesWithBadges({ paginatedImages: images }));
+    expect(result.current.paginatedImagesWithBadges).toEqual(images);
+    expect(result.current.isBadgeDataLoading).toBe(true);
+    window.history.pushState({}, '', '/');
+  });
+
+  it('requests Runtime badges and preserves projected counts while applying badge data', () => {
+    window.history.pushState({}, '', '/tools/image-generation?project=project-1');
+    const getBadgeData = vi.fn(() => ({
+      derivedCount: 5, hasUnviewedVariants: true, unviewedVariantCount: 2,
+    }));
+    mocks.useVariantBadges.mockReturnValue({ getBadgeData, isLoading: false });
+    mocks.getGenerationId.mockReturnValue('gen-1');
     const images = [{
       id: 'gen-1',
       derivedCount: 4,
@@ -113,8 +129,12 @@ describe('usePaginatedImagesWithBadges', () => {
       usePaginatedImagesWithBadges({ paginatedImages: images }),
     );
 
-    expect(mocks.useVariantBadges).toHaveBeenCalledWith([]);
-    expect(result.current.paginatedImagesWithBadges).toEqual(images);
+    expect(mocks.useVariantBadges).toHaveBeenCalledWith(['gen-1']);
+    expect(result.current.paginatedImagesWithBadges).toEqual([expect.objectContaining({
+      derivedCount: 4,
+      hasUnviewedVariants: true,
+      unviewedVariantCount: 2,
+    })]);
 
     window.history.pushState({}, '', '/');
   });

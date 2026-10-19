@@ -7,7 +7,6 @@ import { Project } from '@/types/project';
 import { UserPreferences } from '@/shared/settings/userPreferences';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { ensureUserRecordExists } from '@/features/projects/services/projectSetupService';
-import { getLocalProjectSlug, hasLocalModeUrlParams } from '@/shared/dev/devSession';
 import { getRuntimeDocumentProjectId } from '@/app/runtime/runtimeDocument';
 
 // Type for updating projects
@@ -74,23 +73,14 @@ export function useProjectCRUD({
   onProjectDeleted: _onProjectDeleted,
   updateUserSettings: _updateUserSettings,
 }: UseProjectCRUDOptions) {
-  const localProjectSlug = getLocalProjectSlug(
-    typeof window === 'undefined' ? '' : window.location.search,
-  );
-  const localProject = useMemo(
-    () => localProjectSlug
-      ? { id: localProjectSlug, name: localProjectSlug, user_id: 'local-user' }
-      : null,
-    [localProjectSlug],
-  );
-  const runtimeProjectSlug = getRuntimeDocumentProjectId();
+  const runtimeProjectId = getRuntimeDocumentProjectId();
   const runtimeProject = useMemo(
-    () => runtimeProjectSlug
-      ? { id: runtimeProjectSlug, name: runtimeProjectSlug, user_id: 'runtime-user' }
+    () => runtimeProjectId
+      ? { id: runtimeProjectId, name: runtimeProjectId, user_id: 'runtime-user' }
       : null,
-    [runtimeProjectSlug],
+    [runtimeProjectId],
   );
-  const urlProject = localProject ?? runtimeProject;
+  const urlProject = runtimeProject;
   const isUrlOwnedMode = urlProject !== null;
   const [projects, setProjects] = useState<Project[]>(() => urlProject ? [urlProject] : []);
   const [isLoadingProjects, setIsLoadingProjects] = useState(!urlProject);
@@ -98,9 +88,8 @@ export function useProjectCRUD({
   const [isUpdatingProject, setIsUpdatingProject] = useState(false);
   const [isDeletingProject, setIsDeletingProject] = useState(false);
 
-  // Keep the URL-owned project visible in ProjectContext while navigating
-  // between local tools/projects. No discovery or cloud setup is needed for
-  // this entry: the slug itself is the bridge project identity.
+  // Keep the canonical URL project visible in ProjectContext while navigating
+  // between document tools; Runtime discovery supplies its display metadata.
   useEffect(() => {
     if (urlProject) {
       setProjects([urlProject]);
@@ -113,7 +102,7 @@ export function useProjectCRUD({
 
   const fetchProjects = useCallback(async () => {
     try {
-      if (hasLocalModeUrlParams(typeof window === 'undefined' ? '' : window.location.search) || isUrlOwnedMode) {
+      if (isUrlOwnedMode) {
         return;
       }
       if (!userId) throw new Error('Not authenticated');
@@ -123,7 +112,7 @@ export function useProjectCRUD({
 
       const projectsData = await new AstridLocalClient({ projectSlug: '__discovery__' }).projects.list();
       const mappedProjects = projectsData.map((project) => mapDbProjectToProject({
-        id: project.slug,
+        id: project.project_id,
         name: project.name,
         user_id: user.id,
       }));
@@ -154,7 +143,7 @@ export function useProjectCRUD({
         metadata: { aspect_ratio: projectData.aspectRatio },
       });
       const createdProject = mapDbProjectToProject({
-        id: created.data.slug,
+        id: created.data.project_id,
         name: created.data.name,
         user_id: 'local-user',
         aspect_ratio: created.data.metadata.aspect_ratio,
@@ -187,11 +176,12 @@ export function useProjectCRUD({
     setIsUpdatingProject(true);
     try {
       if (isUrlOwnedMode) {
-        const client = new AstridLocalClient({ projectSlug: projectId });
-        const current = (await client.projects.list()).find((project) => project.slug === projectId);
+        const discoveryClient = new AstridLocalClient({ projectSlug: '__discovery__' });
+        const current = (await discoveryClient.projects.list()).find((project) => project.project_id === projectId);
         if (!current?.project_id || current.version === undefined) {
           throw new Error('Astrid did not return the project version required to save settings.');
         }
+        const client = new AstridLocalClient({ projectSlug: current.slug });
         const metadata = { ...(current.metadata ?? {}) };
         if (updates.aspectRatio) metadata.aspect_ratio = updates.aspectRatio;
         const updated = await client.projects.update({
@@ -201,14 +191,14 @@ export function useProjectCRUD({
           metadata,
         });
         const updatedProject = mapDbProjectToProject({
-          id: updated.slug,
+          id: updated.project_id,
           name: updated.name,
           user_id: 'local-user',
           aspect_ratio: updated.metadata.aspect_ratio,
           created_at: updated.created_at,
         });
         setProjects((currentProjects) => currentProjects.map((project) => (
-          project.id === updatedProject.id ? updatedProject : project
+          project.id === projectId ? updatedProject : project
         )));
         return true;
       }

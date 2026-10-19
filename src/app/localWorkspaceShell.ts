@@ -23,7 +23,7 @@ export function astridEditorOnlyRedirectTarget(pathname: string, search: string)
 
   const current = new URLSearchParams(search);
   const editorParams = new URLSearchParams();
-  for (const key of ['localProject', 'localTimeline', 'runtime', 'runtimeProject', 'runtimeTimeline', 'timeline']) {
+  for (const key of ['project', 'timeline']) {
     const value = current.get(key);
     if (value !== null) editorParams.set(key, value);
   }

@@ -17,9 +17,8 @@ import { fakeRuntimeEnv } from '../tests/e2e/fake-runtime/launch.mjs';
 const PORT = process.env.PORT ?? '2222';
 const RUNTIME_PORT = Number(process.env.VITE_ASTRID_BRIDGE_PORT ?? '17334');
 const EDITOR_QUERY = new URLSearchParams({
-  runtime: '1',
-  runtimeProject: 'demo-project-id',
-  runtimeTimeline: 'demo-timeline',
+  project: 'demo-project-id',
+  timeline: 'demo-timeline',
   localTest: '1',
   timelineOverlayCanary: '1',
 });

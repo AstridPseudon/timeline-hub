@@ -55,7 +55,7 @@ async function playerCall(page, method, ...args) {
 const FLAGS = { loadingCanonical: /Loading the canonical/i, selectClip: /Select a clip/i };
 async function textFlags(page) { const t = await page.evaluate(() => document.body?.innerText || '').catch(() => ''); return Object.fromEntries(Object.entries(FLAGS).map(([k, re]) => [k, re.test(t)])); }
 
-const defaultUrl = 'http://127.0.0.1:2240/tools/video-editor?runtime=1&runtimeProject=811a657af5fe43e4b2b48a670de1f3e8&runtimeTimeline=01M4GGKMHZ3J8V402C8CWSCE95';
+const defaultUrl = 'http://127.0.0.1:2240/tools/video-editor?project=811a657af5fe43e4b2b48a670de1f3e8&timeline=01M4GGKMHZ3J8V402C8CWSCE95';
 let runtimeEndpoint = null;
 const reactCounter = String.raw`// Installed with addInitScript before any page script. Provides a minimal React DevTools global hook
 // (react-refresh wraps it; React calls onCommitFiberRoot after every commit). Counting is OFF until
@@ -207,9 +207,9 @@ if (!Number.isInteger(runs) || runs < 1 || runs > 20) throw new Error('--runs mu
 if (!phases.length || phases.some(p => !['timing', 'memory'].includes(p))) throw new Error('--phases must be timing,memory (either phase may be omitted)');
 const parsed = new URL(url);
 if (!/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(parsed.origin) || parsed.pathname !== '/tools/video-editor') throw new Error('URL must be the local editor');
-const project = parsed.searchParams.get('runtimeProject');
-const timeline = parsed.searchParams.get('runtimeTimeline');
-if (!project || !timeline) throw new Error('URL needs runtimeProject and runtimeTimeline');
+const project = parsed.searchParams.get('project');
+const timeline = parsed.searchParams.get('timeline');
+if (!project || !timeline) throw new Error('URL needs canonical project and timeline');
 const label = path.basename(out, path.extname(out));
 const round = (n, places = 2) => Number.isFinite(n) ? +n.toFixed(places) : null;
 const now = () => Date.now() / 1000;

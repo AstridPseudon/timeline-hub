@@ -61,8 +61,8 @@ describe('useToggleVariantStar', () => {
   });
 
   it.each([
-    ['/tools/video-editor?localProject=local-project&localTimeline=timeline-1', 'local Runtime'],
-    ['/tools/image-generation?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1', 'explicit Runtime'],
+    ['/tools/video-editor?project=local-project&timeline=timeline-1', 'local Runtime'],
+    ['/tools/image-generation?project=runtime-project&timeline=timeline-1', 'explicit Runtime'],
   ])('suppresses %s star mutations before network work', async (path) => {
     window.history.replaceState({}, '', path);
     const { result } = renderHookWithProviders(() => useToggleVariantStar());

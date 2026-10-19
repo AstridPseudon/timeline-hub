@@ -64,14 +64,12 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
   const runtimeParams = useMemo(() => new URLSearchParams(search), [search]);
   const selectedEditor = useOptionalAgentChatBridge()?.editorContext;
   const routeRuntimeProjectId = pathname === '/tools/video-editor'
-    && runtimeParams.get('runtime') === '1'
-    && runtimeParams.get('runtimeTimeline')
-    ? runtimeParams.get('runtimeProject')?.trim() || null
+    ? runtimeParams.get('project')?.trim() || null
     : null;
   const runtimeProjectId = selectedEditor?.projectId ?? routeRuntimeProjectId;
   const runtimeTimelineId = selectedEditor?.projectId
     ? selectedEditor.timelineId
-    : routeRuntimeProjectId ? runtimeParams.get('runtimeTimeline')?.trim() || null : null;
+    : routeRuntimeProjectId ? runtimeParams.get('timeline')?.trim() || null : null;
   const {
     isTasksPaneLocked,
     setIsTasksPaneLocked,

@@ -6,7 +6,7 @@ import { useHomeNavigation } from '@/shared/hooks/useHomeNavigation';
 const navigate = vi.fn();
 let currentLocation: { pathname: string; search: string; hash: string } = {
   pathname: '/tools/video-editor',
-  search: '?localProject=demo&localTimeline=abc',
+  search: '?project=demo&timeline=abc',
   hash: '',
 };
 
@@ -36,7 +36,7 @@ describe('useHomeNavigation', () => {
     navigate.mockClear();
     currentLocation = {
       pathname: '/tools/video-editor',
-      search: '?localProject=demo&localTimeline=abc',
+      search: '?project=demo&timeline=abc',
       hash: '',
     };
   });
@@ -50,35 +50,35 @@ describe('useHomeNavigation', () => {
 
     // Same home as app mode, with the local params riding along so the
     // destination renders the full app shell (auth gate exempts on any route).
-    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?localProject=demo&localTimeline=abc');
+    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?project=demo&timeline=abc');
   });
 
   it('copies only the params present in local mode', () => {
-    currentLocation = { pathname: '/tools/video-editor', search: '?localProject=demo', hash: '' };
+    currentLocation = { pathname: '/tools/video-editor', search: '?project=demo', hash: '' };
     const { result } = renderHook(() => useHomeNavigation());
 
     act(() => {
       result.current.navigateHome();
     });
 
-    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?localProject=demo');
+    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?project=demo');
   });
 
   it('keeps bare local params as the mode signal', () => {
-    currentLocation = { pathname: '/tools/video-editor', search: '?localTimeline=abc', hash: '' };
+    currentLocation = { pathname: '/tools/video-editor', search: '?timeline=abc', hash: '' };
     const { result } = renderHook(() => useHomeNavigation());
 
     act(() => {
       result.current.navigateHome();
     });
 
-    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?localTimeline=abc');
+    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?timeline=abc');
   });
 
   it('clears a local shot hash without dropping the selected project and timeline', () => {
     currentLocation = {
       pathname: '/tools/travel-between-images',
-      search: '?localProject=demo&localTimeline=abc',
+      search: '?project=demo&timeline=abc',
       hash: '#project%2Fdemo%2Fdocument%2Fabc%2Fshot%2Fshot-1',
     };
     const { result } = renderHook(() => useHomeNavigation());
@@ -88,7 +88,7 @@ describe('useHomeNavigation', () => {
     });
 
     expect(navigate).toHaveBeenCalledWith(
-      { pathname: '/tools/travel-between-images', search: '?localProject=demo&localTimeline=abc', hash: '' },
+      { pathname: '/tools/travel-between-images', search: '?project=demo&timeline=abc', hash: '' },
       { replace: true, state: { fromShotClick: false } },
     );
   });
@@ -101,13 +101,13 @@ describe('useHomeNavigation', () => {
       result.current.navigateHome();
     });
 
-    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images');
+    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?timeline=app-timeline');
   });
 
   it('targets the home tool when DEV is off (params ride along but are inert in prod)', () => {
     const originalDev = import.meta.env.DEV;
     (import.meta.env as Record<string, unknown>).DEV = false;
-    currentLocation = { pathname: '/tools/video-editor', search: '?localProject=demo&localTimeline=abc', hash: '' };
+    currentLocation = { pathname: '/tools/video-editor', search: '?project=demo&timeline=abc', hash: '' };
 
     const { result } = renderHook(() => useHomeNavigation());
 
@@ -118,7 +118,7 @@ describe('useHomeNavigation', () => {
     // The mode decision is DEV-gated (route state); the param-copy helper is
     // DEV-agnostic, so the URL still carries the params — inert because Layout
     // will not exempt and the auth gate redirects to /home in production.
-    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?localProject=demo&localTimeline=abc');
+    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?project=demo&timeline=abc');
 
     (import.meta.env as Record<string, unknown>).DEV = originalDev;
   });

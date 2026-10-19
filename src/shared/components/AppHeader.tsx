@@ -5,10 +5,9 @@ import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { dispatchAppEvent } from '@/shared/lib/typedEvents.ts';
-import { ProjectTimelineSelectors } from '@/shared/components/ProjectTimelineSelectors.tsx';
+import { ProjectTimelinePicker } from '@/shared/components/ProjectTimelineSelectors.tsx';
 import { ProjectHeaderActions } from '@/shared/components/ProjectHeaderActions.tsx';
-import { useAstridBridgeDiscovery } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
-import { useQueryClient } from '@tanstack/react-query';
+import { useRuntimeEditorDiscovery } from '@/tools/video-editor/hooks/useRuntimeEditorDiscovery.ts';
 import { isAstridEditorOnlyWorkspace } from '@/app/localWorkspaceShell';
 
 export type AppHeaderNavigationMode = 'home' | 'tools';
@@ -22,32 +21,25 @@ interface AppHeaderProps {
 }
 
 function AppHeaderProjectControls() {
-  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const localProjectSlug = searchParams.get('localProject');
-  const localTimelineId = searchParams.get('localTimeline');
+  const projectId = searchParams.get('project');
   const [selectorsOpen, setSelectorsOpen] = useState(false);
-  const discovery = useAstridBridgeDiscovery({
+  const discovery = useRuntimeEditorDiscovery({
+    enabled: true,
+    projectId,
     open: selectorsOpen,
-    // Astrid is the product authority. URL parameters select a project and
-    // timeline; they do not switch the header between cloud and local modes.
-    currentLocal: true,
-    selectedProjectSlug: localProjectSlug,
   });
-  const selectedProject = discovery.projectsQuery.data?.projects?.find(
-    (project) => project.slug === localProjectSlug,
-  ) ?? null;
+  const selectedProject = discovery.project;
 
   const refreshProjects = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ['astrid-bridge', 'projects'] });
-  }, [queryClient]);
+    void discovery.projectsQuery.refetch();
+  }, [discovery.projectsQuery]);
 
-  const handleProjectChange = useCallback((nextProjectSlug: string) => {
-    if (nextProjectSlug) {
+  const handleProjectChange = useCallback((nextProjectId: string) => {
+    if (nextProjectId) {
       setSearchParams((current) => {
         const next = new URLSearchParams(current);
-        next.set('localProject', nextProjectSlug);
-        next.delete('localTimeline');
+        next.set('project', nextProjectId);
         next.delete('timeline');
         return next;
       }, { replace: true });
@@ -57,11 +49,15 @@ function AppHeaderProjectControls() {
   return (
     <>
       <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
-        <ProjectTimelineSelectors
-          localProjectSlug={localProjectSlug}
-          localTimelineId={localTimelineId}
-          localTimelineName={null}
-          discovery={discovery}
+        <ProjectTimelinePicker
+          projects={(discovery.projectsQuery.data ?? []).map((p) => ({ id: p.project_id, name: p.name, detail: p.slug }))}
+          timelines={[]}
+          projectId={selectedProject?.project_id ?? projectId}
+          timelineId={null}
+          projectName={selectedProject?.name ?? (projectId ? 'Project unavailable' : 'Select project')}
+          projectsLoading={discovery.projectsQuery.isLoading}
+          projectsError={discovery.projectsQuery.error?.message}
+          onRetry={() => void discovery.reconnect()}
           onSelectProject={handleProjectChange}
           onSelectTimeline={() => undefined}
           disabled={false}

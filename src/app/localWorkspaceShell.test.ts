@@ -21,9 +21,9 @@ describe('local Astrid editor-only workspace shell', () => {
     vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     expect(astridEditorOnlyRedirectTarget(
       '/tools/image-generation',
-      '?localProject=project-1&localTimeline=timeline-1&mode=discard',
-    )).toBe('/tools/video-editor?localProject=project-1&localTimeline=timeline-1');
-    expect(astridEditorOnlyRedirectTarget('/tools/video-editor', '?localProject=project-1')).toBeNull();
+      '?project=project-1&timeline=timeline-1&mode=discard',
+    )).toBe('/tools/video-editor?project=project-1&timeline=timeline-1');
+    expect(astridEditorOnlyRedirectTarget('/tools/video-editor', '?project=project-1')).toBeNull();
     expect(astridEditorOnlyRedirectTarget('/tools/video-editor/harness', '')).toBe('/tools/video-editor');
   });
 

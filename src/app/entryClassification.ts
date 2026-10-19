@@ -1,4 +1,4 @@
-import { DEMO_LOCAL_PROJECT, DEMO_LOCAL_TIMELINE } from '@/shared/dev/devSession.ts';
+import { DEMO_PROJECT_ID, DEMO_TIMELINE_ID } from '@/shared/dev/devSession.ts';
 
 export type BrowserEntryOwner = 'public' | 'app';
 
@@ -53,7 +53,7 @@ function isHostedBuild(): boolean {
  */
 export const APP_ENTRY_PATH = isHostedBuild()
   ? '/tools/video-editor'
-  : `/tools/video-editor?localProject=${DEMO_LOCAL_PROJECT}&localTimeline=${DEMO_LOCAL_TIMELINE}`;
+  : `/tools/video-editor?project=${DEMO_PROJECT_ID}&timeline=${DEMO_TIMELINE_ID}`;
 const APP_ENTRY_PREFERENCE_KEY = 'astrid:prefers-app';
 
 /** Remember that this browser chose the app (installed it, or asked to use it here). */

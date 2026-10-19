@@ -28,8 +28,8 @@ vi.mock('@/shared/lib/lastEditedLora', () => ({
   readLastEditedLoraFromProject: vi.fn(async () => null),
 }));
 
-vi.mock('@/shared/dev/devSession', () => ({
-  hasLocalModeUrlParams: () => true,
+vi.mock('@/app/runtime/runtimeDocument', () => ({
+  hasRuntimeDocumentIdentity: () => true,
 }));
 
 vi.mock('./inheritedDefaults', () => ({

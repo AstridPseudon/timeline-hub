@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolsPane } from '@/shared/components/ToolsPane/ToolsPane';
 
 const navigate = vi.fn();
-let currentLocation = { pathname: '/tools/video-editor', search: '?localProject=demo&localTimeline=abc' };
+let currentLocation = { pathname: '/tools/video-editor', search: '?project=demo&timeline=abc' };
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => navigate,
@@ -66,7 +66,7 @@ vi.mock('@/shared/components/PaneControlTab', () => ({
 describe('ToolsPane navigation', () => {
   beforeEach(() => {
     navigate.mockClear();
-    currentLocation = { pathname: '/tools/video-editor', search: '?localProject=demo&localTimeline=abc' };
+    currentLocation = { pathname: '/tools/video-editor', search: '?project=demo&timeline=abc' };
   });
 
   it('carries local params onto tool navigation in local mode', () => {
@@ -74,7 +74,7 @@ describe('ToolsPane navigation', () => {
 
     fireEvent.pointerUp(screen.getByText('Travel Between Images'));
 
-    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?localProject=demo&localTimeline=abc');
+    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?project=demo&timeline=abc');
   });
 
   it('carries local params onto the Video Editor tool (same local timeline)', () => {
@@ -82,7 +82,7 @@ describe('ToolsPane navigation', () => {
 
     fireEvent.pointerUp(screen.getByText('Video Editor'));
 
-    expect(navigate).toHaveBeenCalledWith('/tools/video-editor?localProject=demo&localTimeline=abc');
+    expect(navigate).toHaveBeenCalledWith('/tools/video-editor?project=demo&timeline=abc');
   });
 
   it('navigates to bare tool paths in app mode', () => {
@@ -91,6 +91,6 @@ describe('ToolsPane navigation', () => {
 
     fireEvent.pointerUp(screen.getByText('Travel Between Images'));
 
-    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images');
+    expect(navigate).toHaveBeenCalledWith('/tools/travel-between-images?timeline=app-timeline');
   });
 });

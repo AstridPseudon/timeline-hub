@@ -1,23 +1,23 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo, useCallback, useRef } from 'react';
 import { LOCAL_USER_ID, probeBridgeSession } from '@/shared/auth/bridgeSession';
 import { queryClient } from '@/app/providers/queryClient';
 import { isRuntimeQueryKey } from '@/integrations/runtime/connection';
 import { RuntimeConnectionProvider, useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider';
 import { requireContextValue } from './contextGuard';
-import { isLocalTestMode } from '@/app/localTestRuntime';
-import { isRuntimeDocumentMode } from '@/app/runtime/runtimeDocument';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
 
 interface AuthContextType {
   userId: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  authError: Error | null;
+  isRetryingAuth: boolean;
+  retryAuth: () => Promise<void>;
 }
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /** Boot/auth seam: one health probe of the Astrid bridge (`astridBase()`) per boot IS the session
  * (doc 27 §local-trust). A healthy bridge resolves the fixed local user;
- * failure degrades to alive-but-unauthenticated with exactly one probe.
+ * failure remains unauthenticated and exposes a manual recovery action.
  * The per-boot request token lives at the vite-proxy layer and never
  * reaches browser code.
  *
@@ -38,43 +38,72 @@ function invalidateRuntimeQueries() {
 const AuthSession = ({ children }: { children: ReactNode }) => {
   const connection = useRuntimeConnection();
   const gated = connection.gated;
-  const localTestMode = isLocalTestMode();
-  const localAstridMode = hasLocalModeUrlParams(
-    typeof window === 'undefined' ? '' : window.location.search,
-  );
-  const runtimeDocumentMode = isRuntimeDocumentMode();
-  const sessionlessDocument = !gated && (localTestMode || localAstridMode || runtimeDocumentMode);
   const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(!gated && !sessionlessDocument);
+  const [isLoading, setIsLoading] = useState(!gated);
+  const [authError, setAuthError] = useState<Error | null>(null);
+  const [isRetryingAuth, setIsRetryingAuth] = useState(false);
+  const requestRef = useRef(0);
+  const mountedRef = useRef(false);
+
+  const runBridgeProbe = useCallback(async (manual: boolean) => {
+    const request = ++requestRef.current;
+    if (manual) setIsRetryingAuth(true);
+    else setIsLoading(true);
+    try {
+      const probe = await probeBridgeSession();
+      if (!mountedRef.current || request !== requestRef.current) return;
+      setUserId(probe.ok ? probe.userId : null);
+      setAuthError(probe.ok ? null : new Error(probe.reason));
+    } catch (error) {
+      if (!mountedRef.current || request !== requestRef.current) return;
+      setUserId(null);
+      setAuthError(error instanceof Error ? error : new Error(String(error)));
+    } finally {
+      if (mountedRef.current && request === requestRef.current) {
+        setIsLoading(false);
+        setIsRetryingAuth(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    if (gated) return;
-    if (sessionlessDocument) {
-      setUserId(null);
-      setIsLoading(false);
-      return;
-    }
-    let cancelled = false;
-    void probeBridgeSession().then((probe) => {
-      if (cancelled) return;
-      setUserId(probe.ok ? probe.userId : null);
-      setIsLoading(false);
-    });
+    mountedRef.current = true;
+    if (gated) return () => { mountedRef.current = false; };
+    void runBridgeProbe(false);
     return () => {
-      cancelled = true;
+      mountedRef.current = false;
+      requestRef.current += 1;
     };
-  }, [gated, sessionlessDocument]);
+  }, [gated, runBridgeProbe]);
+
+  const retryAuth = useCallback(async () => {
+    if (!gated) await runBridgeProbe(true);
+  }, [gated, runBridgeProbe]);
 
   const { isConnected, isBooting } = connection;
   const value = useMemo(
     () => gated
-      ? { userId: isConnected ? LOCAL_USER_ID : null, isAuthenticated: isConnected, isLoading: isBooting }
-      : { userId, isAuthenticated: !!userId, isLoading },
-    [gated, isConnected, isBooting, userId, isLoading],
+      ? {
+          userId: isConnected ? LOCAL_USER_ID : null,
+          isAuthenticated: isConnected,
+          isLoading: isBooting,
+          authError: null,
+          isRetryingAuth: false,
+          retryAuth: async () => {},
+        }
+      : { userId, isAuthenticated: !!userId, isLoading, authError, isRetryingAuth, retryAuth },
+    [gated, isConnected, isBooting, userId, isLoading, authError, isRetryingAuth, retryAuth],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => requireContextValue(useContext(AuthContext), 'useAuth', 'AuthProvider');
-const NO_AUTH = Object.freeze({ userId: null, isAuthenticated: false, isLoading: false });
+const NO_AUTH: AuthContextType = Object.freeze({
+  userId: null,
+  isAuthenticated: false,
+  isLoading: false,
+  authError: null,
+  isRetryingAuth: false,
+  retryAuth: async () => {},
+});
 export const useAuthSafe = (): AuthContextType => useContext(AuthContext) ?? NO_AUTH;

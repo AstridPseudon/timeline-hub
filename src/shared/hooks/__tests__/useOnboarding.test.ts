@@ -127,7 +127,7 @@ describe("useOnboarding", () => {
     window.history.replaceState(
       {},
       "",
-      "/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline&localTest=1",
+      "/tools/video-editor?project=demo-project&timeline=demo-timeline&localTest=1",
     );
 
     const { result } = renderHook(() => useOnboarding());
@@ -148,7 +148,7 @@ describe("useOnboarding", () => {
     window.history.replaceState(
       {},
       "",
-      "/tools/video-editor?localProject=demo&localTimeline=main",
+      "/tools/video-editor?project=demo&timeline=main",
     );
     window.localStorage.setItem(ASTRID_SETUP_COMPLETE_KEY, "true");
     runtimeSessionMock
@@ -171,7 +171,7 @@ describe("useOnboarding", () => {
     window.history.replaceState(
       {},
       "",
-      "/tools/video-editor?localProject=demo&localTimeline=main",
+      "/tools/video-editor?project=demo&timeline=main",
     );
     runtimeSessionMock.mockRejectedValue(new Error("Runtime unavailable"));
     const { result } = renderHook(() => useOnboarding());
@@ -211,7 +211,7 @@ describe("useOnboarding", () => {
     window.history.replaceState(
       {},
       "",
-      "/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline",
+      "/tools/video-editor?project=demo-project&timeline=demo-timeline",
     );
 
     const { result } = renderHook(() => useOnboarding());

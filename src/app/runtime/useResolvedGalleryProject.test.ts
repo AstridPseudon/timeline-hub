@@ -1,24 +1,33 @@
-import { describe, expect, it } from 'vitest';
-import { findRuntimeProjectId } from './useResolvedGalleryProject';
+import { describe, expect, it, vi } from 'vitest';
+import { renderHook } from '@testing-library/react';
 
-describe('findRuntimeProjectId', () => {
-  it('maps a local Astrid slug to the canonical Runtime project id', () => {
-    expect(findRuntimeProjectId([
-      { slug: 'astrid-intro', project_id: '61d1078d029e42a9af8540c0d5647ae3' },
-      { slug: 'matrix-minkhole', project_id: '7f362daea1f048969980ef23f0cd46e6' },
-    ], 'astrid-intro')).toBe('61d1078d029e42a9af8540c0d5647ae3');
+const useRuntimeAuthority = vi.hoisted(() => vi.fn());
+vi.mock('./runtimeAuthority', () => ({ useRuntimeAuthority }));
+
+import { useResolvedGalleryProject } from './useResolvedGalleryProject';
+
+describe('useResolvedGalleryProject', () => {
+  it('uses the canonical Runtime project id without requiring a timeline', () => {
+    useRuntimeAuthority.mockReturnValue({ runtimeAuthority: true, runtimeProjectId: 'project-uuid' });
+    const { result } = renderHook(() => useResolvedGalleryProject());
+    expect(result.current).toMatchObject({
+      projectId: 'project-uuid', runtimeAuthority: true, status: 'resolved', isResolving: false,
+    });
   });
 
-  it('does not turn an unknown selector into a legacy project id', () => {
-    expect(findRuntimeProjectId([
-      { slug: 'astrid-intro', project_id: '61d1078d029e42a9af8540c0d5647ae3' },
-    ], 'missing-project')).toBeNull();
+  it('keeps Runtime authority while canonical project identity is pending', () => {
+    useRuntimeAuthority.mockReturnValue({ runtimeAuthority: true, runtimeProjectId: null });
+    const { result } = renderHook(() => useResolvedGalleryProject());
+    expect(result.current).toMatchObject({
+      projectId: null, runtimeAuthority: true, status: 'pending', isResolving: true,
+    });
   });
 
-  it('ignores malformed Runtime rows without a usable project id', () => {
-    expect(findRuntimeProjectId([
-      { slug: 'astrid-intro', project_id: '   ' },
-      { slug: 'astrid-intro' },
-    ], 'astrid-intro')).toBeNull();
+  it('does not resolve a project for a non-Runtime gallery', () => {
+    useRuntimeAuthority.mockReturnValue({ runtimeAuthority: false, runtimeProjectId: null });
+    const { result } = renderHook(() => useResolvedGalleryProject());
+    expect(result.current).toMatchObject({
+      projectId: null, runtimeAuthority: false, status: 'not-applicable', isResolving: false,
+    });
   });
 });

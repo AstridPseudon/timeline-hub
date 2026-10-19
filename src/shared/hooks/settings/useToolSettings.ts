@@ -20,7 +20,7 @@ import {
   type SettingsScope,
 } from '@/shared/settings';
 import type { ToolDefaultsById, ToolDefaultsId } from '@/tooling/toolDefaultsRegistry';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
 
 export { updateToolSettingsSupabase } from '@/shared/settings';
@@ -187,7 +187,7 @@ export function useToolSettings<T extends object>(
 ) {
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuthSafe();
-  const isLocalMode = hasLocalModeUrlParams(
+  const isLocalMode = hasRuntimeDocumentIdentity(
     typeof window === 'undefined' ? '' : window.location.search,
   );
   const isDeferredCloudMode = isDeferredCloudDataAuthority();

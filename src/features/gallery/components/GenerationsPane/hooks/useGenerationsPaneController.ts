@@ -32,7 +32,6 @@ import { useStableObject } from '@/shared/hooks/useStableObject';
 import { usePaneInteractionLifecycle } from '@/shared/components/panes/usePaneInteractionLifecycle';
 import { SHOT_FILTER, isSpecialFilter } from '@/shared/constants/filterConstants';
 import { useAppEventListener } from '@/shared/lib/typedEvents';
-import { withLocalModeParams } from '@/shared/dev/localModeUrl';
 import { withRuntimeDocumentParams } from '@/app/runtime/runtimeDocument';
 import { useResolvedGalleryProject } from '@/app/runtime/useResolvedGalleryProject';
 import { isVideoEditorShellActiveForLocation } from '@/app/hooks/useVideoEditorRouteState';
@@ -329,7 +328,7 @@ export const useGenerationsPaneController = () => {
   const { projects } = useProjectCrudContext();
   const { currentShotId } = useCurrentShot();
 
-  const resolvedGalleryProject = useResolvedGalleryProject(location.search, location.pathname);
+  const resolvedGalleryProject = useResolvedGalleryProject();
 
   const isOnImageGenerationPage = location.pathname === TOOL_ROUTES.IMAGE_GENERATION;
   const currentProject = projects.find((project) => project.id === selectedProjectId);
@@ -383,8 +382,7 @@ export const useGenerationsPaneController = () => {
 
   const handleNavigateToImageGeneration = useCallback(() => {
     setIsGenerationsPaneLocked(false);
-    const localTarget = withLocalModeParams(TOOL_ROUTES.IMAGE_GENERATION, location.search);
-    navigate(withRuntimeDocumentParams(localTarget, location.search));
+    navigate(withRuntimeDocumentParams(TOOL_ROUTES.IMAGE_GENERATION, location.search));
   }, [location.search, navigate, setIsGenerationsPaneLocked]);
 
   const handleAddGenerationToTimeline = useCallback((generationId: string) => {

@@ -11,7 +11,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { isTaskDbRow, mapTaskDbRowToTask } from '@/shared/lib/taskRowMapper';
 import { getRealtimeConnection } from '@/shared/realtime/RealtimeConnection';
@@ -208,7 +208,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
   useEffect(() => {
     const previousProjectId = activeProjectIdRef.current;
 
-    if (hasLocalModeUrlParams(urlSearch)) {
+    if (hasRuntimeDocumentIdentity(urlSearch)) {
       if (activeProjectIdRef.current) {
         resetRealtimeTaskScope(activeProjectIdRef.current);
         activeProjectIdRef.current = null;
@@ -254,7 +254,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
 
   // Manual reconnect function
   const reconnect = useCallback(() => {
-    if (hasLocalModeUrlParams(urlSearch)) {
+    if (hasRuntimeDocumentIdentity(urlSearch)) {
       return;
     }
     if (selectedProjectId) {

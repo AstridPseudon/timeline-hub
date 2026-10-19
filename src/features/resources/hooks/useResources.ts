@@ -12,10 +12,10 @@ import { QUERY_PRESETS } from '@/shared/lib/query/queryDefaults';
 import { resourceQueryKeys } from '@/shared/lib/queryKeys/resources';
 import type { ParameterSchema } from '@/tools/video-editor';
 import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 
 function canReadCloudResources(): boolean {
-    return isDeferredCloudDataAuthority() && !hasLocalModeUrlParams(
+    return isDeferredCloudDataAuthority() && !hasRuntimeDocumentIdentity(
         typeof window === 'undefined' ? '' : window.location.search,
     );
 }

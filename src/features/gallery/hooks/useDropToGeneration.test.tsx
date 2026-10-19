@@ -202,14 +202,14 @@ describe('useDropToGeneration', () => {
     }));
   });
 
-  it('fails closed for the legacy Bridge local route without invoking generation or local-file writers', async () => {
-    locationMock.search = '?localProject=bridge-slug&localTimeline=timeline-1';
+  it('fails closed when Runtime has no canonical project for a scoped URL', async () => {
+    locationMock.search = '?project=bridge-slug&timeline=timeline-1';
     useResolvedGalleryProjectMock.mockReturnValue({
       projectId: null,
-      runtimeAuthority: false,
-      status: 'not-applicable',
+      runtimeAuthority: true,
+      status: 'error',
       isResolving: false,
-      error: null,
+      error: new Error('Runtime project is unavailable.'),
       selector: 'bridge-slug',
     });
     const { result } = renderHook(() => useDropToGeneration(), {
@@ -223,7 +223,7 @@ describe('useDropToGeneration', () => {
     expect(runtimePrepareMediaImportMock).not.toHaveBeenCalled();
     expect(createGenerationForLocalFileMock).not.toHaveBeenCalled();
     expect(createGenerationForUploadedImageMock).not.toHaveBeenCalled();
-    expect(toastErrorMock).toHaveBeenCalledWith('Runtime media import is unavailable for the legacy Astrid Bridge host.');
+    expect(toastErrorMock).toHaveBeenCalledWith('Runtime project is unavailable.');
   });
 
   it('shows an informational toast and skips oversized files', async () => {

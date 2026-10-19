@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { RuntimeAuthenticationError, RuntimeUnavailableError } from '@/integrations/runtime/client.ts';
-import { RuntimeConnectorRecoveryBanner } from './VideoEditorPage.tsx';
+import { RuntimeConnectorRecoveryBanner } from '@/shared/components/RuntimeConnection/RuntimeConnectorRecoveryBanner.tsx';
 
 describe('RuntimeConnectorRecoveryBanner', () => {
   it('shows the auth recovery action and invokes reconnect', async () => {

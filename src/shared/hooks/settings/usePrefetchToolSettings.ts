@@ -8,7 +8,7 @@ import {
   fetchToolSettingsSupabase,
   type SettingsFetchResult,
 } from '@/shared/settings';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
 
 // Central list of tool IDs we want to preload. Update when you add more tools.
@@ -39,7 +39,7 @@ function fetchSettingsForPrefetch(
  */
 export function usePrefetchToolSettings(projectId?: string | null, shotIds: string[] = EMPTY_SHOT_IDS) {
   const queryClient = useQueryClient();
-  const isLocalMode = hasLocalModeUrlParams(
+  const isLocalMode = hasRuntimeDocumentIdentity(
     typeof window === 'undefined' ? '' : window.location.search,
   );
   const isDeferredCloudMode = isDeferredCloudDataAuthority();

@@ -105,17 +105,17 @@ describe('useLineageChain', () => {
     window.history.replaceState({}, '', '/');
   });
 
-  it('recognizes explicit local and Runtime document authority', () => {
-    expect(isRuntimeLineageAuthority('?localProject=astrid-intro&localTimeline=timeline-1')).toBe(true);
-    expect(isRuntimeLineageAuthority('?runtime=1&runtimeProject=project-1&runtimeTimeline=timeline-1')).toBe(true);
-    expect(isRuntimeLineageAuthority('?project=cloud-project')).toBe(false);
+  it('recognizes canonical Runtime document authority', () => {
+    expect(isRuntimeLineageAuthority('?project=astrid-intro&timeline=timeline-1')).toBe(true);
+    expect(isRuntimeLineageAuthority('?project=project-1&timeline=timeline-1')).toBe(true);
+    expect(isRuntimeLineageAuthority('?project=project-1')).toBe(true);
   });
 
   it('does not start legacy lineage reads for an explicit local document', async () => {
     window.history.replaceState(
       {},
       '',
-      '/tools/image-generation?localProject=astrid-intro&localTimeline=timeline-1',
+      '/tools/image-generation?project=astrid-intro&timeline=timeline-1',
     );
 
     const { result } = renderHook(

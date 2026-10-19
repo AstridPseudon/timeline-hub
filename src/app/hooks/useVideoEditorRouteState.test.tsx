@@ -24,7 +24,7 @@ describe('useVideoEditorRouteState', () => {
   });
 
   it('recognizes only timeline-backed editor locations for shell-only chrome', () => {
-    expect(isVideoEditorShellActiveForLocation('/tools/video-editor', '?localTimeline=local-timeline')).toBe(true);
+    expect(isVideoEditorShellActiveForLocation('/tools/video-editor', '?timeline=local-timeline')).toBe(true);
     expect(isVideoEditorShellActiveForLocation('/tools/video-editor', '')).toBe(false);
     expect(isVideoEditorShellActiveForLocation('/tools/join-clips', '?timeline=app-timeline')).toBe(false);
   });
@@ -44,7 +44,7 @@ describe('useVideoEditorRouteState', () => {
 
   it('fills the local Astrid editor shell before the first timeline exists', () => {
     vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
-    const state = stateFor('/tools/video-editor?localProject=project-1');
+    const state = stateFor('/tools/video-editor?project=project-1');
 
     expect(state.isEditorRoute).toBe(true);
     expect(state.isVideoEditorShellActive).toBe(true);
@@ -61,19 +61,19 @@ describe('useVideoEditorRouteState', () => {
     // Dev "Local" mode mounts the same full-height shell from `localTimeline`.
     // Missing it left the editor inside the scrolling page layout, with the
     // timeline pushed below the fold.
-    const state = stateFor('/tools/video-editor?localProject=demo&localTimeline=local-timeline');
+    const state = stateFor('/tools/video-editor?project=demo&timeline=local-timeline');
     expect(state.isVideoEditorShellActive).toBe(true);
     expect(state.timelineId).toBe('local-timeline');
   });
 
   it('activates the shell for an ordinary Runtime timeline', () => {
-    const state = stateFor('/tools/video-editor?runtime=1&runtimeProject=project-1&runtimeTimeline=runtime-timeline');
+    const state = stateFor('/tools/video-editor?project=project-1&timeline=runtime-timeline');
     expect(state.isVideoEditorShellActive).toBe(true);
     expect(state.timelineId).toBe('runtime-timeline');
   });
 
   it('prefers the app-mode timeline when both params are present', () => {
-    const state = stateFor('/tools/video-editor?timeline=app-timeline&localTimeline=local-timeline');
+    const state = stateFor('/tools/video-editor?timeline=app-timeline&timeline=local-timeline');
     expect(state.timelineId).toBe('app-timeline');
   });
 });

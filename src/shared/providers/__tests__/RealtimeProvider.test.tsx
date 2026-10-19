@@ -430,7 +430,7 @@ describe('RealtimeProvider', () => {
     vi.clearAllMocks();
 
     act(() => {
-      window.history.replaceState({}, '', `${window.location.pathname}?localProject=demo&localTimeline=tl`);
+      window.history.replaceState({}, '', `${window.location.pathname}?project=demo&timeline=tl`);
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
 
@@ -441,7 +441,7 @@ describe('RealtimeProvider', () => {
   });
 
   it('reconnects reactively when the URL leaves local mode', () => {
-    window.history.replaceState({}, '', `${window.location.pathname}?localProject=demo&localTimeline=tl`);
+    window.history.replaceState({}, '', `${window.location.pathname}?project=demo&timeline=tl`);
     const view = renderWithProviders(
       <RealtimeProvider>
         <RealtimeConsumer />

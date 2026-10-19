@@ -115,15 +115,15 @@ describe('ProjectContext', () => {
       });
     });
 
-    it('exposes the URL-owned local project as selection and a project context entry', () => {
+    it('exposes the URL-owned canonical Runtime project as selection', () => {
       mockUseProjectSessionCoordinator.mockReturnValue({
         userId: null,
         selection: {
-          selectedProjectId: 'desert-plant-growth',
+          selectedProjectId: 'stale-legacy-selection',
           setSelectedProjectId: mockSetSelectedProjectId,
         },
         crud: {
-          projects: [{ id: 'desert-plant-growth', name: 'desert-plant-growth', user_id: 'local-user' }],
+          projects: [{ id: 'stale-legacy-selection', name: 'old project', user_id: 'local-user' }],
           isLoadingProjects: false,
           fetchProjects: mockFetchProjects,
           addNewProject: mockAddNewProject,
@@ -134,7 +134,7 @@ describe('ProjectContext', () => {
           isDeletingProject: false,
         },
       });
-      window.history.replaceState({}, '', '/tools/travel-between-images?localProject=desert-plant-growth');
+      window.history.replaceState({}, '', '/tools/travel-between-images?project=runtime-project-id');
 
       render(
         <ProjectProvider>
@@ -142,9 +142,20 @@ describe('ProjectContext', () => {
         </ProjectProvider>,
       );
 
-      expect(screen.getByTestId('selectedProjectId')).toHaveTextContent('desert-plant-growth');
+      expect(screen.getByTestId('selectedProjectId')).toHaveTextContent('runtime-project-id');
       expect(screen.getByTestId('userId')).toHaveTextContent('null');
       expect(screen.getByTestId('projectCount')).toHaveTextContent('1');
+    });
+
+    it('does not fall back to a stale selection when Runtime owns a timeline without a project', () => {
+      window.history.replaceState({}, '', '/tools/video-editor?timeline=timeline-id');
+      render(
+        <ProjectProvider>
+          <ProjectConsumer />
+        </ProjectProvider>,
+      );
+
+      expect(screen.getByTestId('selectedProjectId')).toHaveTextContent('null');
     });
   });
 });

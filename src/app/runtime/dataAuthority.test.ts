@@ -12,8 +12,8 @@ describe('resolveAppDataAuthority', () => {
   });
 
   it('never enables deferred cloud readers on a local editor URL', () => {
-    expect(resolveAppDataAuthority('?localProject=demo&localTimeline=main', {
+    expect(resolveAppDataAuthority('?project=demo&timeline=main', {
       VITE_DATA_AUTHORITY: 'supabase-deferred',
-    })).toBe('astrid');
+    }, '/tools/video-editor')).toBe('astrid');
   });
 });

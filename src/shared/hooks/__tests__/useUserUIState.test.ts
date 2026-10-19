@@ -163,7 +163,7 @@ describe('useUserUIState', () => {
   });
 
   it('is completely local and does not read or write Supabase in Astrid editor mode', async () => {
-    window.history.replaceState({}, '', '/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline');
+    window.history.replaceState({}, '', '/tools/video-editor?project=demo-project&timeline=demo-timeline');
 
     const fallback = { darkMode: true };
     const { result } = renderHook(() => useUserUIState('theme', fallback));

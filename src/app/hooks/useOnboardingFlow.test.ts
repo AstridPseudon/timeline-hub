@@ -109,7 +109,7 @@ describe('useOnboardingFlow', () => {
   });
 
   it('keeps a local editor link open after first-run setup completes', async () => {
-    window.history.replaceState({}, '', '/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline');
+    window.history.replaceState({}, '', '/tools/video-editor?project=demo-project&timeline=demo-timeline');
     const { result, unmount } = renderHook(() => useOnboardingFlow());
 
     await act(async () => {

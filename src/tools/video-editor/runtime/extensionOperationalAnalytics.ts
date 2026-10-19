@@ -4,7 +4,7 @@ import {
   type ExtensionOperationalEvent,
 } from './extensionReleaseControls';
 import { isLocalTestMode } from '@/app/localTestRuntime';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import { invokeSupabaseEdgeFunction } from '@/integrations/supabase/functions/invokeSupabaseEdgeFunction';
 
 /** Keep analytics work strictly out of the editor's synchronous/runtime path. */
@@ -119,7 +119,7 @@ let installedSink: ExtensionOperationalAnalyticsSink | undefined;
 
 function isOfflineEditorMode(): boolean {
   return typeof window === 'undefined'
-    || hasLocalModeUrlParams(window.location.search)
+    || hasRuntimeDocumentIdentity(window.location.search)
     || isLocalTestMode();
 }
 

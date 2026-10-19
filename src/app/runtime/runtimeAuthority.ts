@@ -1,5 +1,4 @@
 import { createContext, useContext } from 'react';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
 import {
   getRuntimeDocumentProjectId,
   isRuntimeDocumentMode,
@@ -23,16 +22,14 @@ export function resolveRuntimeAuthority(
   const runtimeProjectId = getRuntimeDocumentProjectId(search, pathname);
   return {
     runtimeAuthority:
-      isRuntimeDocumentMode(search, pathname) ||
-      runtimeProjectId !== null ||
-      hasLocalModeUrlParams(search),
+      isRuntimeDocumentMode(search, pathname) || runtimeProjectId !== null,
     runtimeProjectId,
   };
 }
 
 /**
- * Read the nearest explicit authority. Outside a route provider, local and
- * explicit `runtime=1` document URLs are still authoritative. No generation-id
+ * Read the nearest explicit authority. Outside a route provider, canonical
+ * document URLs are still authoritative. No generation-id
  * shape is used to choose a backend.
  */
 export function useRuntimeAuthority(): RuntimeAuthority {

@@ -7,7 +7,6 @@
  * explicit opt-in, and a local-editor URL always wins.
  */
 
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession.ts';
 import { isRuntimeDocumentMode } from './runtimeDocument';
 
 export type AppDataAuthority = 'astrid' | 'supabase-deferred';
@@ -25,7 +24,7 @@ export function resolveAppDataAuthority(
   env: DataAuthorityEnvironment = runtimeDataAuthorityEnvironment,
   pathname: string = typeof window === 'undefined' ? '' : window.location.pathname,
 ): AppDataAuthority {
-  if (hasLocalModeUrlParams(search) || isRuntimeDocumentMode(search, pathname)) return 'astrid';
+  if (isRuntimeDocumentMode(search, pathname)) return 'astrid';
   return env.VITE_DATA_AUTHORITY === 'supabase-deferred'
     ? 'supabase-deferred'
     : 'astrid';

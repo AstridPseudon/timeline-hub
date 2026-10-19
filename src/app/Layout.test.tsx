@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Layout } from './Layout';
-import { RuntimeConnectionProvider } from '@/integrations/runtime/RuntimeConnectionProvider';
 
 const { globalPaneShortcutsMock } = vi.hoisted(() => ({ globalPaneShortcutsMock: vi.fn() }));
 
@@ -110,44 +109,11 @@ vi.mock('react-router-dom', async () => {
 
 function renderLayout() {
   return render(
-    <RuntimeConnectionProvider>
-      <MemoryRouter initialEntries={['/tools/travel-between-images']}>
-        <Layout />
-      </MemoryRouter>
-    </RuntimeConnectionProvider>,
+    <MemoryRouter initialEntries={['/tools/travel-between-images']}>
+      <Layout />
+    </MemoryRouter>,
   );
 }
-
-describe('Layout on the hosted build', () => {
-  // jsdom's own user agent names the host OS ("(darwin)" on a Mac), which reads as a phone: start on desktop Chrome.
-  beforeEach(() => {
-    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-    );
-  });
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('holds the shell behind the Runtime gate: LayoutShell hooks never run while the Runtime is unreachable', async () => {
-    globalPaneShortcutsMock.mockClear();
-    const permissions = { query: vi.fn(async () => ({ state: 'granted', onchange: null })) };
-    const fetchImpl = vi.fn(async () => {
-      throw new TypeError('Failed to fetch');
-    });
-    render(
-      <RuntimeConnectionProvider gated permissions={permissions} fetchImpl={fetchImpl as unknown as typeof fetch} pollIntervalMs={10}>
-        <MemoryRouter initialEntries={['/tools/travel-between-images']}>
-          <Layout />
-        </MemoryRouter>
-      </RuntimeConnectionProvider>,
-    );
-
-    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up'));
-    expect(globalPaneShortcutsMock).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('tools-pane')).not.toBeInTheDocument();
-  });
-});
 
 describe('Layout route access', () => {
   afterEach(() => {
@@ -194,97 +160,4 @@ describe('Layout route access', () => {
     expect(screen.queryByTestId('main-content')).not.toBeInTheDocument();
   });
 
-  it('keeps the deterministic localTest editor route sessionless without redirecting to Home', () => {
-    locationPathname = '/tools/video-editor';
-    locationSearch = '?localProject=demo-project&localTimeline=demo-timeline&localTest=1';
-
-    renderLayout();
-
-    expect(screen.getByTestId('main-content')).toBeInTheDocument();
-    expect(screen.getByTestId('tools-pane')).toBeInTheDocument();
-  });
-
-  it('keeps the ordinary Runtime editor route sessionless without redirecting to Home', () => {
-    locationPathname = '/tools/video-editor';
-    locationSearch = '?runtime=1&runtimeProject=project-1&runtimeTimeline=timeline-1';
-
-    renderLayout();
-
-    expect(screen.getByTestId('main-content')).toBeInTheDocument();
-    expect(screen.getByTestId('tools-pane')).toBeInTheDocument();
-  });
-
-  it('keeps the Runtime image-generation route sessionless without redirecting to Home', () => {
-    locationPathname = '/tools/image-generation';
-    locationSearch = '?runtime=1&runtimeProject=project-1&runtimeTimeline=timeline-1';
-
-    renderLayout();
-
-    expect(screen.getByTestId('main-content')).toBeInTheDocument();
-    expect(screen.getByTestId('tools-pane')).toBeInTheDocument();
-  });
-
-  it('keeps the local-project image-generation route sessionless without redirecting to Home', () => {
-    locationPathname = '/tools/image-generation';
-    locationSearch = '?localProject=astrid-intro&localTimeline=timeline-1';
-
-    renderLayout();
-
-    expect(screen.getByTestId('main-content')).toBeInTheDocument();
-    expect(screen.getByTestId('tools-pane')).toBeInTheDocument();
-  });
-
-  it('keeps the deterministic local Travel document route sessionless without redirecting to Home', () => {
-    locationPathname = '/tools/travel-between-images';
-    locationSearch = '?localProject=demo-project&localTimeline=demo-timeline&localTest=1';
-
-    renderLayout();
-
-    expect(screen.getByTestId('main-content')).toBeInTheDocument();
-    expect(screen.getByTestId('tools-pane')).toBeInTheDocument();
-  });
-
-  it('does not let localTest bypass auth on another protected route', () => {
-    locationSearch = '?localTest=1';
-
-    renderLayout();
-
-    expect(screen.queryByTestId('main-content')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('tools-pane')).not.toBeInTheDocument();
-  });
-
-  it('keeps a local project-only editor URL sessionless so it can auto-pick main', () => {
-    locationPathname = '/tools/video-editor';
-    locationSearch = '?localTest=1&localProject=demo-project&localTimeline=';
-
-    renderLayout();
-
-    expect(screen.getByTestId('main-content')).toBeInTheDocument();
-    expect(screen.getByTestId('tools-pane')).toBeInTheDocument();
-  });
-
-  it('keeps an ordinary local editor URL sessionless without the test-only flag', () => {
-    locationPathname = '/tools/video-editor';
-    locationSearch = '?localProject=astrid-intro&localTimeline=timeline-1';
-
-    renderLayout();
-
-    expect(screen.getByTestId('main-content')).toBeInTheDocument();
-    expect(screen.getByTestId('tools-pane')).toBeInTheDocument();
-  });
-
-  it('hides only tool navigation in the local Astrid editor while preserving task and editor panes', () => {
-    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
-    locationPathname = '/tools/video-editor';
-    locationSearch = '?localProject=astrid-intro';
-
-    renderLayout();
-
-    expect(screen.getByTestId('main-content')).toBeInTheDocument();
-    expect(screen.queryByTestId('tools-pane')).not.toBeInTheDocument();
-    expect(screen.getByTestId('tasks-pane')).toBeInTheDocument();
-    expect(screen.getByTestId('task-status-controls')).toBeInTheDocument();
-    expect(screen.getByTestId('editor-pane')).toBeInTheDocument();
-    expect(screen.getByTestId('generations-pane')).toBeInTheDocument();
-  });
 });

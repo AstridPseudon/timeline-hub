@@ -66,10 +66,10 @@ describe('useProjectSelection', () => {
     expect(result.current.selectedProjectId).toBe('project-from-storage');
   });
 
-  it('uses localProject URL authority without reading stale localStorage', () => {
+  it('uses canonical project URL authority without reading stale localStorage', () => {
     localStorageMock['lastSelectedProjectId'] = 'stale-cloud-project';
     const getItem = vi.mocked(Storage.prototype.getItem);
-    window.history.replaceState({}, '', '/tools/travel-between-images?localProject=desert-plant-growth');
+    window.history.replaceState({}, '', '/tools/travel-between-images?project=desert-plant-growth');
 
     const { result } = renderHook(() => useProjectSelection(defaultOptions));
 
@@ -78,18 +78,18 @@ describe('useProjectSelection', () => {
     expect(defaultOptions.updateUserSettings).not.toHaveBeenCalled();
   });
 
-  it('updates selection and fallback when local URL navigation changes project', () => {
-    window.history.replaceState({}, '', '/tools/travel-between-images?localProject=first-project');
+  it('updates selection and fallback when canonical URL navigation changes project', () => {
+    window.history.replaceState({}, '', '/tools/travel-between-images?project=first-project');
     const { result, rerender } = renderHook(() => useProjectSelection(defaultOptions));
     expect(result.current.selectedProjectId).toBe('first-project');
 
-    window.history.replaceState({}, '', '/tools/travel-between-images?localProject=second-project');
+    window.history.replaceState({}, '', '/tools/travel-between-images?project=second-project');
     rerender();
 
     expect(result.current.selectedProjectId).toBe('second-project');
   });
 
-  it('clears a cloud selection when the authenticated user becomes local-mode/null without persisting', () => {
+  it('clears a cloud selection when the authenticated user becomes Runtime/null without persisting', () => {
     localStorageMock['lastSelectedProjectId'] = 'cloud-project';
     const updateUserSettings = vi.fn().mockResolvedValue(undefined);
     const { result, rerender } = renderHook(

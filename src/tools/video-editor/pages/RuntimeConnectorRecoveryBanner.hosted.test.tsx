@@ -11,7 +11,7 @@ vi.mock('@/integrations/runtime/connection.ts', async (importOriginal) => ({
 
 import { RuntimeAuthenticationError, RuntimeUnavailableError } from '@/integrations/runtime/client.ts';
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
-import { RuntimeConnectorRecoveryBanner } from './VideoEditorPage.tsx';
+import { RuntimeConnectorRecoveryBanner } from '@/shared/components/RuntimeConnection/RuntimeConnectorRecoveryBanner.tsx';
 
 const ENGINEER_WORDS = /Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/i;
 

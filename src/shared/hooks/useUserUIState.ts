@@ -6,7 +6,7 @@ import { updateToolSettingsSupabase } from '@/shared/hooks/settings/useToolSetti
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
 import { isLocalTestMode } from '@/app/localTestRuntime';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
 
 // Module-level request deduplication cache for the raw `users.settings` DB fetch.
@@ -342,7 +342,7 @@ export function useUserUIState<K extends keyof UISettings>(
   // consumers may probe or write the Supabase `users.settings` row.  Keep the
   // check at this shared boundary so a newly-mounted shell consumer cannot
   // accidentally reintroduce a remote request.
-  const isLocalMode = hasLocalModeUrlParams(
+  const isLocalMode = hasRuntimeDocumentIdentity(
     typeof window === 'undefined' ? '' : window.location.search,
   );
   const isDeferredCloudMode = isDeferredCloudDataAuthority();

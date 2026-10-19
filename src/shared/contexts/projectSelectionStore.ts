@@ -5,25 +5,17 @@
  */
 const PROJECT_SELECTION_STORAGE_KEY = 'lastSelectedProjectId';
 
-function readLocalProjectFromUrl(): string | null {
-  if (typeof window === 'undefined') return null;
-
-  const slug = new URLSearchParams(window.location.search).get('localProject')?.trim();
-  return slug || null;
-}
-
-function readRuntimeProjectFromUrl(): string | null {
+function readProjectFromUrl(): string | null {
   if (typeof window === 'undefined') return null;
   const params = new URLSearchParams(window.location.search);
-  if (params.get('runtime') !== '1' || !params.get('runtimeTimeline')?.trim()) return null;
-  const project = params.get('runtimeProject')?.trim();
-  return project || null;
+  if (params.has('project') || params.has('timeline')) return params.get('project')?.trim() || null;
+  return null;
 }
 
-function isLocalModeUrl(): boolean {
+function hasExplicitDocumentInUrl(): boolean {
   if (typeof window === 'undefined') return false;
   const params = new URLSearchParams(window.location.search);
-  return params.has('localProject') || params.has('localTimeline');
+  return params.has('project') || params.has('timeline');
 }
 
 interface ProjectSelectionSnapshot {
@@ -54,9 +46,9 @@ let initialized = false;
 const listeners = new Set<ProjectSelectionListener>();
 
 export function initializeProjectSelectionStore(
-  initialSelectedProjectId: string | null = isLocalModeUrl()
-    ? readLocalProjectFromUrl()
-    : (readRuntimeProjectFromUrl() ?? readPersistedProjectSelection()),
+  initialSelectedProjectId: string | null = hasExplicitDocumentInUrl()
+    ? readProjectFromUrl()
+    : readPersistedProjectSelection(),
 ): ProjectSelectionSnapshot {
   const normalized: ProjectSelectionSnapshot = {
     selectedProjectId: normalizeSelectedProjectId(initialSelectedProjectId),
@@ -88,11 +80,7 @@ export function getProjectSelectionSnapshot(): ProjectSelectionSnapshot {
 }
 
 export function getProjectSelectionFallbackId(): string | null {
-  // The URL remains authoritative during local navigation, including for
-  // consumers that render before ProjectProvider's synchronization effect.
-  return isLocalModeUrl()
-    ? readLocalProjectFromUrl()
-    : (readRuntimeProjectFromUrl() ?? snapshot.selectedProjectId);
+  return hasExplicitDocumentInUrl() ? readProjectFromUrl() : snapshot.selectedProjectId;
 }
 
 /** @internal Only for test isolation — do not call in production code. */

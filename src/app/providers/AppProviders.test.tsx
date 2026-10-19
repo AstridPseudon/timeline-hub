@@ -1,11 +1,24 @@
 // @vitest-environment jsdom
-import type { ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { useEffect, useState, type ReactNode } from 'react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAgentChatBridge } from '@/shared/contexts/AgentChatContext';
 import { useGallerySelectionOptional } from '@/shared/state/selectionStore';
+import { RuntimeConnectionProvider } from '@/integrations/runtime/RuntimeConnectionProvider';
+import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 import { AppProviders } from './AppProviders';
+
+const mocks = vi.hoisted(() => ({ listProjects: vi.fn(), listTimelines: vi.fn() }));
+
+vi.mock('@/integrations/runtime/client', () => ({
+  AstridRuntimeClient: class {
+    listProjects = mocks.listProjects;
+    listTimelines = mocks.listTimelines;
+  },
+}));
+
+vi.mock('@/shared/components/AstridLoading', () => ({ AstridLoading: () => <div data-testid="runtime-document-loading" /> }));
 
 function passthroughProvider(testId: string) {
   return function Provider({ children }: { children: ReactNode }) {
@@ -98,14 +111,38 @@ function AgentChatBridgeConsumer() {
   );
 }
 
+function AuthorityNavigationProbe() {
+  const { runtimeAuthority, runtimeProjectId } = useRuntimeAuthority();
+  const navigate = useNavigate();
+  const [mounts, setMounts] = useState(0);
+  useEffect(() => setMounts((value) => value + 1), []);
+  return (
+    <>
+      <span data-testid="authority-project">{runtimeAuthority ? runtimeProjectId : 'no-runtime-authority'}</span>
+      <span data-testid="authority-mounts">{mounts}</span>
+      <button onClick={() => navigate('/tools/video-editor?project=project-2&timeline=timeline-2')}>navigate project</button>
+    </>
+  );
+}
+
 describe('AppProviders', () => {
+  beforeEach(() => {
+    mocks.listProjects.mockReset().mockResolvedValue([
+      { project_id: 'project-id', slug: 'project-slug', name: 'Project' },
+      { project_id: 'project-2', slug: 'project-two', name: 'Project Two' },
+    ]);
+    mocks.listTimelines.mockReset().mockResolvedValue([{ project_id: 'project-id', timeline_id: 'timeline-id', timeline_ulid: 'timeline-alias' }]);
+  });
+
   it('mounts the selection-store boundary and the default AgentChat bridge inside the provider tree', () => {
     render(
       <MemoryRouter>
-        <AppProviders>
-          <GallerySelectionConsumer />
-          <AgentChatBridgeConsumer />
-        </AppProviders>
+        <RuntimeConnectionProvider gated={false}>
+          <AppProviders>
+            <GallerySelectionConsumer />
+            <AgentChatBridgeConsumer />
+          </AppProviders>
+        </RuntimeConnectionProvider>
       </MemoryRouter>,
     );
 
@@ -113,5 +150,85 @@ describe('AppProviders', () => {
     expect(screen.getByTestId('agent-chat-timeline-id')).toHaveTextContent('timeline-from-settings');
     expect(screen.getByTestId('PanesStoreBootstrapBoundary')).toBeInTheDocument();
     expect(screen.getByTestId('AstridShotsProvider')).toBeInTheDocument();
+  });
+
+  it('holds settings and project providers until a legacy tool URL resolves to canonical identity', async () => {
+    let resolveProjects!: (projects: Array<{ project_id: string; slug: string; name: string }>) => void;
+    mocks.listProjects.mockImplementationOnce(() => new Promise((resolve) => { resolveProjects = resolve; }));
+    function RouteProbe() {
+      const { pathname, search } = useLocation();
+      return <span data-testid="resolved-route">{pathname}{search}</span>;
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/tools/image-generation?localProject=project-slug&localTimeline=timeline-alias&filter=video']}>
+        <RuntimeConnectionProvider gated={false}>
+          <AppProviders><RouteProbe /></AppProviders>
+        </RuntimeConnectionProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByTestId('runtime-document-loading')).toBeInTheDocument();
+    expect(screen.queryByTestId('UserSettingsProvider')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ProjectProvider')).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveProjects([{ project_id: 'project-id', slug: 'project-slug', name: 'Project' }]);
+    });
+    await waitFor(() => expect(screen.getByTestId('resolved-route')).toHaveTextContent(
+      '/tools/image-generation?filter=video&project=project-id&timeline=timeline-id',
+    ));
+    expect(screen.getByTestId('UserSettingsProvider')).toBeInTheDocument();
+    expect(screen.getByTestId('ProjectProvider')).toBeInTheDocument();
+    expect(mocks.listTimelines).toHaveBeenCalledWith('project-id');
+  });
+
+  it('keeps hosted providers behind the Runtime connection gate before attempting normalization', async () => {
+    const permissions = { query: vi.fn(async () => ({ state: 'granted', onchange: null })) };
+    const fetchImpl = vi.fn(async () => { throw new TypeError('Failed to fetch'); });
+    render(
+      <MemoryRouter initialEntries={['/tools/image-generation?localProject=project-slug']}>
+        <RuntimeConnectionProvider gated permissions={permissions} fetchImpl={fetchImpl as unknown as typeof fetch} pollIntervalMs={10}>
+          <AppProviders><span>providers mounted</span></AppProviders>
+        </RuntimeConnectionProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toBeInTheDocument());
+    expect(screen.queryByTestId('UserSettingsProvider')).not.toBeInTheDocument();
+    expect(screen.queryByText('providers mounted')).not.toBeInTheDocument();
+    expect(mocks.listProjects).not.toHaveBeenCalled();
+  });
+
+  it('leaves public routes available while a hosted Runtime is disconnected', () => {
+    const permissions = { query: vi.fn(async () => ({ state: 'granted', onchange: null })) };
+    const fetchImpl = vi.fn(async () => { throw new TypeError('Failed to fetch'); });
+    render(
+      <MemoryRouter initialEntries={['/blog?localProject=ignored']}>
+        <RuntimeConnectionProvider gated permissions={permissions} fetchImpl={fetchImpl as unknown as typeof fetch} pollIntervalMs={10}>
+          <AppProviders><span>public page</span></AppProviders>
+        </RuntimeConnectionProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('public page')).toBeInTheDocument();
+    expect(screen.queryByTestId('runtime-not-connected')).not.toBeInTheDocument();
+    expect(mocks.listProjects).not.toHaveBeenCalled();
+  });
+
+  it('updates Runtime authority on picker navigation without remounting provider children', async () => {
+    render(
+      <MemoryRouter initialEntries={['/tools/video-editor?project=project-id&timeline=timeline-id']}>
+        <RuntimeConnectionProvider gated={false}>
+          <AppProviders><AuthorityNavigationProbe /></AppProviders>
+        </RuntimeConnectionProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('authority-project')).toHaveTextContent('project-id'));
+    expect(screen.getByTestId('authority-mounts')).toHaveTextContent('1');
+    act(() => screen.getByText('navigate project').click());
+    await waitFor(() => expect(screen.getByTestId('authority-project')).toHaveTextContent('project-2'));
+    expect(screen.getByTestId('authority-mounts')).toHaveTextContent('1');
   });
 });

@@ -10,7 +10,7 @@ import { QUERY_PRESETS, STANDARD_RETRY, STANDARD_RETRY_DELAY } from '@/shared/li
 import { generationQueryKeys } from '@/shared/lib/queryKeys/generations';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import React from 'react';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
 
 import { mapShotGenerationToRow } from '@/shared/hooks/shots';
@@ -37,7 +37,7 @@ const useAllShotGenerations = (
     // Local Astrid shots are document-derived and are already supplied by the
     // local timeline adapter. Never fall through to the retired relational
     // shot_generations read path for those URLs.
-    return !!stableShotId && isDeferredCloudDataAuthority() && !hasLocalModeUrlParams(
+    return !!stableShotId && isDeferredCloudDataAuthority() && !hasRuntimeDocumentIdentity(
       typeof window === 'undefined' ? '' : window.location.search,
     );
   }, [stableShotId, options?.disableRefetch]);

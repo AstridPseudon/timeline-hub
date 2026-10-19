@@ -5,7 +5,7 @@ import { useSmartPollingConfig } from '@/shared/hooks/useSmartPolling';
 import type { GenerationModeNormalized } from '@/shared/lib/settingsResolution';
 import { settingsQueryKeys } from '@/shared/lib/queryKeys/settings';
 import { ProjectScopedCache } from '@/shared/lib/cache/ProjectScopedCache';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 
 // Global cache instance that persists across component remounts
 const globalProjectGenerationModesCache = new ProjectScopedCache<GenerationModeNormalized>();
@@ -30,7 +30,7 @@ async function fetchProjectGenerationModesFromDB(projectId: string): Promise<Map
  */
 export function useProjectGenerationModesCache(projectId: string | null, options?: { enabled?: boolean }) {
   const { enabled = true } = options ?? {};
-  const isLocalMode = hasLocalModeUrlParams(typeof window === 'undefined' ? '' : window.location.search);
+  const isLocalMode = hasRuntimeDocumentIdentity(typeof window === 'undefined' ? '' : window.location.search);
   const cacheRef = useRef(globalProjectGenerationModesCache);
   const queryClient = useQueryClient();
   
