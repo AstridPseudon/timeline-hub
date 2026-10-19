@@ -37,7 +37,13 @@ import {
   type GeneratedLaneClipShape,
 } from '@/tools/video-editor/lib/generated-lanes.ts';
 import { materializeSequenceConfig } from '@/tools/video-editor/sequences/materialize.ts';
-import { assertVisualSeamAdmission } from '@/tools/video-editor/data/visualSeamContract.ts';
+import {
+  assertVisualSeamAdmission,
+  type VisualBoundaryBehavior,
+  type VisualSeamParticipant,
+  type VisualSeamReport,
+} from '@/tools/video-editor/data/visualSeamContract.ts';
+import type { BoundaryCue } from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/boundary';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import {
   planRender,
@@ -846,7 +852,7 @@ function newCorrelationId(): string {
 
 export function buildRenderTimelinePayload(
   input: BuildRenderPayloadInput,
-): { payload?: AstridRuntimeRenderTimelinePayload; error?: string } {
+): { payload?: AstridRuntimeRenderTimelinePayload; error?: string; seamReport?: VisualSeamReport } {
   const { request } = input;
   if (!request?.timelineId) return { error: 'timelineId is required' };
   if (!request?.renderRuntime?.projectId) return { error: 'projectId is required' };
@@ -864,7 +870,13 @@ export function buildRenderTimelinePayload(
     try {
       assertVisualSeamAdmission(outputConfig, { enforceIntent: true });
     } catch (error) {
-      return { error: error instanceof Error ? error.message : 'visual seam admission blocked' };
+      const seamReport = error && typeof error === 'object' && 'report' in error
+        ? (error as { report?: VisualSeamReport }).report
+        : undefined;
+      return {
+        error: error instanceof Error ? error.message : 'visual seam admission blocked',
+        ...(seamReport ? { seamReport } : {}),
+      };
     }
   }
 
@@ -894,6 +906,7 @@ export interface EnqueueRenderResult {
   task_id?: string;
   correlation_id?: string;
   message: string;
+  seamReport?: VisualSeamReport;
 }
 
 export type RenderExportDestination = 'download' | 'project-media';
@@ -1007,12 +1020,178 @@ export async function enqueueAstridRuntimeRenderTimeline(
     if (stale) {
       return { status: 'error', correlation_id: payload.correlation_id, message: stale };
     }
+    const seamReport = readRuntimeVisualSeamReport(error);
     return {
       status: 'error',
       correlation_id: payload.correlation_id,
       message: `Astrid render admission failed: ${error instanceof Error ? error.message : String(error)}`,
+      ...(seamReport ? { seamReport } : {}),
     };
   }
+}
+
+function jsonRecord(value: unknown): Record<string, unknown> | undefined {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : undefined;
+}
+
+function stringPath(value: unknown): readonly string[] | undefined {
+  return Array.isArray(value) && value.every((segment) => typeof segment === 'string')
+    ? value as string[]
+    : undefined;
+}
+
+function seamOwnerIds(path: readonly string[]): {ownerId: string; clipId: string} {
+  const occurrenceIndex = path.lastIndexOf('occurrence');
+  const clipIndex = path.lastIndexOf('clip');
+  return {
+    ownerId: occurrenceIndex >= 0 ? path[occurrenceIndex + 1] ?? path[path.length - 1] ?? 'unknown' : path[path.length - 1] ?? 'unknown',
+    clipId: clipIndex >= 0 ? path[clipIndex + 1] ?? path[path.length - 1] ?? 'unknown' : path[path.length - 1] ?? 'unknown',
+  };
+}
+
+const seamCueKinds = new Set(['activation', 'source-reset', 'source-change', 'rate-change', 'motion-start', 'phase-change']);
+const seamBehaviors = new Set<VisualBoundaryBehavior>([
+  'continues', 'enters', 'exits', 'source-change', 'motion-start', 'phase-change', 'activation', 'source-reset', 'rate-change', 'opaque',
+]);
+
+function runtimeCue(value: unknown): BoundaryCue | undefined {
+  const candidate = jsonRecord(value);
+  const path = stringPath(candidate?.path);
+  if (!candidate || !path || typeof candidate.frame !== 'number' || !Number.isFinite(candidate.frame)
+    || typeof candidate.id !== 'string' || typeof candidate.kind !== 'string' || !seamCueKinds.has(candidate.kind)) return undefined;
+  return {frame: candidate.frame, id: candidate.id, kind: candidate.kind as BoundaryCue['kind'], path: [...path]};
+}
+
+function issueText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  const issue = jsonRecord(value);
+  if (!issue) return String(value);
+  const range = typeof issue.startFrame === 'number' || typeof issue.endFrame === 'number'
+    ? `frames ${typeof issue.startFrame === 'number' ? issue.startFrame : issue.endFrame}–${typeof issue.endFrame === 'number' ? issue.endFrame : issue.startFrame}`
+    : undefined;
+  const parts = [issue.code, issue.message, issue.track, typeof issue.frame === 'number' ? `frame ${issue.frame}` : range]
+    .filter((part): part is string => typeof part === 'string');
+  const path = stringPath(issue.path);
+  if (path) parts.push(path.join(' / '));
+  if (Array.isArray(issue.paths)) parts.push(issue.paths.map((item) => stringPath(item)?.join(' / ') ?? JSON.stringify(item)).join(', '));
+  return parts.length > 0 ? parts.join(': ') : JSON.stringify(value);
+}
+
+/** Runtime and App use different report schemas. Normalize the Runtime wire report
+ * into the UI contract while retaining the original diagnostics for path details. */
+export function normalizeRuntimeVisualSeamReport(value: unknown): VisualSeamReport | undefined {
+  const raw = jsonRecord(value);
+  if (!raw || !Array.isArray(raw.boundaries)) return undefined;
+  const fps = typeof raw.fps === 'number' && Number.isFinite(raw.fps) && raw.fps > 0 ? raw.fps : 30;
+  const rawIssues = Array.isArray(raw.structuralIssues) ? raw.structuralIssues : [];
+  const structuralIssues = rawIssues.map(issueText);
+  const boundaries = raw.boundaries.flatMap((rawBoundary) => {
+    const boundary = jsonRecord(rawBoundary);
+    if (!boundary || typeof boundary.frame !== 'number' || !Number.isFinite(boundary.frame)) return [];
+    const frame = Math.round(boundary.frame);
+    const cues = Array.isArray(boundary.cues)
+      ? boundary.cues.map(runtimeCue).filter((cue): cue is BoundaryCue => cue !== undefined)
+      : [];
+    const ownerPaths = Array.isArray(boundary.ownerPaths)
+      ? boundary.ownerPaths.map(stringPath).filter((path): path is readonly string[] => path !== undefined)
+      : [];
+    const opaquePaths = Array.isArray(boundary.opaquePaths)
+      ? boundary.opaquePaths.map(stringPath).filter((path): path is readonly string[] => path !== undefined)
+      : [];
+    const opaqueKeys = new Set(opaquePaths.map((path) => JSON.stringify(path)));
+    const participants = new Map<string, VisualSeamParticipant>();
+    for (const path of [...ownerPaths, ...opaquePaths]) {
+      const ids = seamOwnerIds(path);
+      const opaque = opaqueKeys.has(JSON.stringify(path));
+      participants.set(`owner:${JSON.stringify(path)}`, {
+        ...ids,
+        path,
+        behavior: opaque ? 'opaque' : 'continues',
+      });
+    }
+    for (const cue of cues) {
+      const ids = seamOwnerIds(cue.path);
+      const behavior = seamBehaviors.has(cue.kind as VisualBoundaryBehavior)
+        ? cue.kind as VisualBoundaryBehavior
+        : 'continues';
+      participants.set(`cue:${JSON.stringify([cue.path, cue.kind, cue.id, cue.frame])}`, {...ids, path: cue.path, behavior, cue});
+    }
+    const boundaryIssues = structuralIssues.filter((issue, index) => {
+      const source = jsonRecord(rawIssues[index]);
+      if (typeof source?.frame === 'number') return Math.round(source.frame) === frame;
+      if (typeof source?.startFrame === 'number' || typeof source?.endFrame === 'number') {
+        const start = typeof source.startFrame === 'number' ? source.startFrame : source.endFrame as number;
+        const end = typeof source.endFrame === 'number' ? source.endFrame : start;
+        return frame >= start && frame <= end;
+      }
+      return true;
+    });
+    const requiresIntent = boundary.requiresIntent === true;
+    return [Object.freeze({
+      frame,
+      timeSeconds: frame / fps,
+      ...(boundary.intent === 'hard-cut' || boundary.intent === 'transition' || boundary.intent === 'synchronized'
+        ? {intent: boundary.intent}
+        : {}),
+      participants: Object.freeze([...participants.values()]),
+      structuralIssues: Object.freeze(boundaryIssues),
+      unacknowledgedRisk: requiresIntent || opaquePaths.length > 0 || cues.length > 0,
+      requiresIntent,
+    })];
+  });
+  const cues = Array.isArray(raw.cues)
+    ? raw.cues.map(runtimeCue).filter((cue): cue is BoundaryCue => cue !== undefined)
+    : boundaries.flatMap((boundary) => boundary.participants.flatMap((participant) => participant.cue ? [participant.cue] : []));
+  const opaqueElements = Array.isArray(raw.opaqueElements)
+    ? raw.opaqueElements.flatMap((item) => {
+        const opaque = jsonRecord(item);
+        const span = jsonRecord(opaque?.span);
+        const path = stringPath(opaque?.path) ?? stringPath(span?.path);
+        if (!opaque || !path) return [];
+        const ids = seamOwnerIds(path);
+        const reasons = Array.isArray(opaque.opaque)
+          ? opaque.opaque.filter((reason): reason is string => typeof reason === 'string')
+          : undefined;
+        const knownReasons = new Set(['custom-clip-type', 'element-ref', 'unsupported-transition', 'unsupported-timing']);
+        const reason = reasons?.find((item) => knownReasons.has(item)) as VisualSeamReport['opaqueElements'][number]['reason'] | undefined;
+        return [{
+          clipId: typeof opaque.clipId === 'string' ? opaque.clipId : ids.clipId,
+          clipType: typeof opaque.clipType === 'string' ? opaque.clipType : 'opaque',
+          ownerId: typeof opaque.ownerId === 'string' ? opaque.ownerId : ids.ownerId,
+          path,
+          startFrame: typeof opaque.startFrame === 'number' ? opaque.startFrame : typeof span?.startFrame === 'number' ? span.startFrame : 0,
+          endFrame: typeof opaque.endFrame === 'number' ? opaque.endFrame : typeof span?.endFrame === 'number' ? span.endFrame : 0,
+          reason: reason ?? 'custom-clip-type' as const,
+          ...(reasons ? {opaqueReasons: reasons} : {}),
+        }];
+      })
+    : [];
+  const warningCount = typeof raw.warningCount === 'number'
+    ? raw.warningCount
+    : boundaries.filter((boundary) => boundary.unacknowledgedRisk).length;
+  const blocked = typeof raw.blocked === 'boolean'
+    ? raw.blocked
+    : structuralIssues.length > 0 || boundaries.some((boundary) => boundary.requiresIntent);
+  return Object.freeze({
+    version: 1,
+    fps,
+    guardFrames: typeof raw.guardFrames === 'number' ? raw.guardFrames : 2,
+    boundaries: Object.freeze(boundaries),
+    opaqueElements: Object.freeze(opaqueElements),
+    structuralIssues: Object.freeze(structuralIssues),
+    cues: Object.freeze(cues),
+    warningCount,
+    blocked,
+    rawDiagnostics: raw,
+  });
+}
+
+function readRuntimeVisualSeamReport(error: unknown): VisualSeamReport | undefined {
+  if (!(error instanceof BridgeRouteError)) return undefined;
+  const details = error.envelope?.details;
+  return normalizeRuntimeVisualSeamReport(jsonRecord(details)?.report);
 }
 
 /**

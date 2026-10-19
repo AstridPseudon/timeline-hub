@@ -1282,6 +1282,69 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     vi.unstubAllGlobals();
   });
 
+  it('preserves a Runtime seam report from admission error details', async () => {
+    const seamReport = {
+      version: 1,
+      fps: 30,
+      guardFrames: 2,
+      boundaries: [{
+        frame: 30,
+        ownerPaths: [['parent', 'main', 'occurrence', 'occ-1', 'clip', 'b']],
+        cues: [{frame: 30, kind: 'motion-start', id: 'move', path: ['parent', 'main', 'occurrence', 'occ-1', 'clip', 'b']}],
+        opaquePaths: [['parent', 'main', 'occurrence', 'occ-2', 'clip', 'plate']],
+        requiresIntent: true,
+      }],
+      opaqueElements: [{
+        span: {path: ['parent', 'main', 'occurrence', 'occ-2', 'clip', 'plate'], startFrame: 27, endFrame: 33},
+        opaque: ['unsupported-timing'],
+        source: 'fixture',
+      }],
+      structuralIssues: [{code: 'picture_gap', track: 'picture', frame: 30, message: 'picture gap at seam'}],
+      blocked: true,
+    };
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.pathname === '/v1/capabilities') return new Response(JSON.stringify(renderCapabilityPage()), { status: 200 });
+      if (url.pathname === '/v1/tasks' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          code: 'visual_seam_admission_blocked',
+          message: 'Visual seam admission blocked',
+          details: { report: seamReport },
+          request_id: 'req-seam',
+        }), { status: 422 });
+      }
+      throw new Error(`unexpected request: ${url.pathname}`);
+    });
+    vi.stubGlobal('fetch', fetchImpl);
+
+    const result = await enqueueAstridRuntimeRenderTimeline(payload, {
+      client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }),
+    });
+
+    expect(result.status).toBe('error');
+    expect(result.seamReport).toMatchObject({
+      blocked: true,
+      warningCount: 1,
+      structuralIssues: ['picture_gap: picture gap at seam: picture: frame 30'],
+      boundaries: [{
+        frame: 30,
+        timeSeconds: 1,
+        requiresIntent: true,
+        unacknowledgedRisk: true,
+        participants: expect.arrayContaining([
+          expect.objectContaining({clipId: 'b', ownerId: 'occ-1', behavior: 'motion-start'}),
+          expect.objectContaining({clipId: 'plate', ownerId: 'occ-2', behavior: 'opaque'}),
+        ]),
+      }],
+      opaqueElements: [expect.objectContaining({
+        clipId: 'plate', ownerId: 'occ-2', clipType: 'opaque', startFrame: 27, endFrame: 33,
+        opaqueReasons: ['unsupported-timing'],
+      })],
+      rawDiagnostics: seamReport,
+    });
+    vi.unstubAllGlobals();
+  });
+
   it('POSTs the canonical rendering.render envelope through the Runtime task route', async () => {
     const fetchImpl = canonicalRenderFetch();
     vi.stubGlobal('fetch', fetchImpl);

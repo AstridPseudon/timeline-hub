@@ -44,6 +44,7 @@ import type {
 import type { ClipTab, EditorPreferences, RightPanelLayoutSlot } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
 import type { RenderStatus } from '@/tools/video-editor/hooks/useRenderState.ts';
 import type { RenderExportDestination } from '@/tools/video-editor/lib/renderRouter.ts';
+import type { VisualSeamReport } from '@/tools/video-editor/data/visualSeamContract.ts';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelineSave.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { SelectClipOptions, UseTimelineMultiSelectResult } from '@/shared/state/selectionStore.ts';
@@ -217,6 +218,11 @@ export interface TimelineChromeContextValue {
   retryLoad: () => void;
   renderStatus: RenderStatus;
   renderLog: string;
+  visualSeamReport: VisualSeamReport | null;
+  canDeclareSeamsAsHardCuts: boolean;
+  declareSeamsAsHardCuts: () => Promise<void>;
+  canAcknowledgeVisualCues: boolean;
+  acknowledgeVisualCuesAsSynchronized: () => Promise<void>;
   renderDirty: boolean;
   renderProgress: TimelineRenderProgress;
   queuedRender: TimelineQueuedRender;

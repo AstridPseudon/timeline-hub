@@ -42,6 +42,22 @@ import type {
   RenderBlocker,
   RenderBlockerReason,
 } from '@astrid/editor-sdk';
+import {
+  analyzeVisualSeams,
+  withVisualSeamIntent,
+  type VisualSeamReport,
+} from '@/tools/video-editor/data/visualSeamContract.ts';
+
+export type PersistVisualSeamConfig = (config: ResolvedTimelineConfig) => Promise<void>;
+
+function renderConfigFingerprint(config: ResolvedTimelineConfig | null): string | null {
+  if (!config) return null;
+  try {
+    return JSON.stringify(config);
+  } catch {
+    return null;
+  }
+}
 
 export type RenderStatus = 'idle' | 'rendering' | 'done' | 'error';
 
@@ -513,9 +529,13 @@ export function useRenderState(
   exporter?: VideoEditorExporter | null,
   extensionRuntime?: ExtensionRuntime,
   flushPendingSave?: () => Promise<number>,
+  persistVisualSeamConfig?: PersistVisualSeamConfig,
+  canPersistVisualSeamConfig = true,
 ) {
   const [renderStatus, setRenderStatus] = useState<RenderStatus>('idle');
   const [renderLog, setRenderLog] = useState('');
+  const [visualSeamReport, setVisualSeamReport] = useState<VisualSeamReport | null>(null);
+  const visualSeamReportConfigRef = useRef<string | null>(null);
   const [renderDirty, setRenderDirty] = useState(false);
   const [renderProgress, setRenderProgress] = useState<RenderProgress>(null);
   const [renderResultUrl, setRenderResultUrl] = useState<string | null>(null);
@@ -876,6 +896,8 @@ export function useRenderState(
     };
     const built = renderRouter.buildRenderTimelinePayload({ request });
     if (!built.payload) {
+      visualSeamReportConfigRef.current = renderConfigFingerprint(renderConfig);
+      setVisualSeamReport(built.seamReport ?? null);
       setRenderStatus('error');
       setRenderProgress(null);
       setRenderLog(built.error ?? 'Could not build Astrid render request.');
@@ -897,6 +919,8 @@ export function useRenderState(
       operationId,
     });
     if (admission.status === 'error' || !admission.task_id) {
+      visualSeamReportConfigRef.current = renderConfigFingerprint(renderConfig);
+      setVisualSeamReport(admission.seamReport ?? null);
       setRenderStatus('error');
       setRenderProgress(null);
       setRenderLog(admission.message);
@@ -907,6 +931,68 @@ export function useRenderState(
     await pollAstridRender(client, admission.task_id, generation);
     return true;
   }, [flushPendingSave, pollAstridRender, renderConfig, renderDestination, renderMetadata?.durationInFrames, renderProjectionError, runtimeContext]);
+
+  const eligibleSeamFrames = useMemo(() => {
+    if (!visualSeamReport?.blocked || visualSeamReport.structuralIssues.length > 0 || !renderConfig || !persistVisualSeamConfig || !canPersistVisualSeamConfig
+      || visualSeamReportConfigRef.current !== renderConfigFingerprint(renderConfig)) return null;
+    const flagged = visualSeamReport.boundaries.filter((boundary) => boundary.requiresIntent);
+    if (flagged.length === 0) return null;
+    return flagged;
+  }, [canPersistVisualSeamConfig, persistVisualSeamConfig, renderConfig, visualSeamReport]);
+
+  const canDeclareSeamsAsHardCuts = useMemo(() => {
+    if (!eligibleSeamFrames || !renderConfig) return false;
+    if (eligibleSeamFrames.some((boundary) => boundary.participants.some((participant) => (
+      participant.behavior !== 'enters' && participant.behavior !== 'exits' && participant.behavior !== 'source-change'
+    )))) return false;
+    try {
+      const acknowledged = eligibleSeamFrames.reduce(
+        (config, boundary) => withVisualSeamIntent(config, boundary.frame, 'hard-cut'),
+        renderConfig,
+      );
+      return !analyzeVisualSeams(acknowledged, { enforceIntent: true }).blocked;
+    } catch {
+      return false;
+    }
+  }, [eligibleSeamFrames, renderConfig]);
+
+  const canAcknowledgeVisualCues = useMemo(() => {
+    if (!eligibleSeamFrames || !renderConfig) return false;
+    if (!eligibleSeamFrames.some((boundary) => boundary.participants.some((participant) => participant.cue))) return false;
+    try {
+      const acknowledged = eligibleSeamFrames.reduce(
+        (config, boundary) => withVisualSeamIntent(config, boundary.frame, 'synchronized'),
+        renderConfig,
+      );
+      return !analyzeVisualSeams(acknowledged, { enforceIntent: true }).blocked;
+    } catch {
+      return false;
+    }
+  }, [eligibleSeamFrames, renderConfig]);
+
+  const persistSeamAcknowledgement = useCallback(async (kind: 'hard-cut' | 'synchronized') => {
+    const allowed = kind === 'hard-cut' ? canDeclareSeamsAsHardCuts : canAcknowledgeVisualCues;
+    if (!allowed || !canPersistVisualSeamConfig || !eligibleSeamFrames || !renderConfig || !persistVisualSeamConfig) return;
+    try {
+      const acknowledged = eligibleSeamFrames.reduce(
+        (config, boundary) => withVisualSeamIntent(config, boundary.frame, kind),
+        renderConfig,
+      );
+      if (analyzeVisualSeams(acknowledged, { enforceIntent: true }).blocked) return;
+      await persistVisualSeamConfig(acknowledged);
+      visualSeamReportConfigRef.current = null;
+      setVisualSeamReport(null);
+      setRenderStatus('idle');
+      setRenderLog(kind === 'hard-cut'
+        ? 'Visual boundaries declared as hard cuts. Render again to continue.'
+        : 'Listed visual cues acknowledged as synchronized. Render again to continue.');
+    } catch (error) {
+      setRenderLog(`Could not save visual boundary declarations: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [canAcknowledgeVisualCues, canDeclareSeamsAsHardCuts, canPersistVisualSeamConfig, eligibleSeamFrames, persistVisualSeamConfig, renderConfig]);
+
+  const declareSeamsAsHardCuts = useCallback(() => persistSeamAcknowledgement('hard-cut'), [persistSeamAcknowledgement]);
+  const acknowledgeVisualCuesAsSynchronized = useCallback(() => persistSeamAcknowledgement('synchronized'), [persistSeamAcknowledgement]);
 
   const cancelRender = useCallback(async () => {
     if (!activeRenderTaskId || !renderClientRef.current) return;
@@ -952,6 +1038,8 @@ export function useRenderState(
       setRenderLog('Render is unavailable in this read-only preview.');
       return;
     }
+    visualSeamReportConfigRef.current = null;
+    setVisualSeamReport(null);
 
     let decision: FastRenderRouteDecision | PlannerBackedRenderRouteDecision | null =
       getFastRenderRouteDecision(renderConfig);
@@ -1284,6 +1372,11 @@ export function useRenderState(
   return {
     renderStatus,
     renderLog,
+    visualSeamReport,
+    canDeclareSeamsAsHardCuts,
+    declareSeamsAsHardCuts,
+    canAcknowledgeVisualCues,
+    acknowledgeVisualCuesAsSynchronized,
     renderDirty,
     renderProgress,
     renderResultUrl,

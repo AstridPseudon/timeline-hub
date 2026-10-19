@@ -26,6 +26,41 @@ function media(id: string, at: number, hold: number, asset: string, extra: Parti
 }
 
 describe('visual seam contract', () => {
+  it('admits custom picture owners only on declared picture tracks, independently of continuity tracks', () => {
+    const base = config([
+      media('picture-a', 0, 1, 'a'),
+      media('picture-b', 1, 1, 'b'),
+      {id: 'plate', clipType: 'am-footage', track: 'plate', at: 0.9, hold: 0.2},
+    ], {
+      visualSeamContract: { mode: 'enforced', pictureTracks: ['plate'], continuityTracks: ['video'] },
+    });
+    base.tracks.push({id: 'plate', kind: 'visual', label: 'Plate'});
+
+    const report = analyzeVisualSeams(base, {enforceIntent: true});
+
+    expect(report.structuralIssues).toEqual([]);
+    expect(report.opaqueElements).toEqual([expect.objectContaining({clipId: 'plate', clipType: 'am-footage'})]);
+    expect(report.cues.some((cue) => cue.kind === 'activation' && cue.path.includes('plate'))).toBe(false);
+    expect(report.boundaries[0]?.participants).toEqual(expect.arrayContaining([
+      expect.objectContaining({clipId: 'plate', behavior: 'opaque'}),
+    ]));
+  });
+
+  it('uses authored continuityTracks for gap and overlap checks when no analysis override is supplied', () => {
+    const base = config([
+      media('picture-a', 0, 1, 'a'),
+      media('picture-b', 2, 1, 'b'),
+      {id: 'plate-a', clipType: 'am-footage', track: 'plate', at: 0, hold: 2},
+      {id: 'plate-b', clipType: 'am-footage', track: 'plate', at: 1, hold: 2},
+    ], {visualSeamContract: {pictureTracks: ['plate'], continuityTracks: ['video']}});
+    base.tracks.push({id: 'plate', kind: 'visual', label: 'Plate'});
+
+    const report = analyzeVisualSeams(base);
+
+    expect(report.structuralIssues).toHaveLength(1);
+    expect(report.structuralIssues[0]).toContain('video: picture-a ends at frame 30, picture-b starts at frame 60');
+  });
+
   it('uses frame ownership rather than float seconds for a contiguous hard cut', () => {
     const report = analyzeVisualSeams(config([
       media('shot-09', 0, 33.8, 'a'),
