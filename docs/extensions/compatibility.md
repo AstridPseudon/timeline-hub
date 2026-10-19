@@ -109,16 +109,13 @@ payload parse closed with `BridgeContractError`. Astrid-side *serving* of
 bundles (an `astrid serve` that writes and returns them) is an explicitly
 out-of-scope follow-up outside this repo.
 
-Supabase posture (two halves proven): the client sends the bundle inside the
-config-replaced POST body on save (the since-retired Supabase provider's `saveTimeline`) and
-parses the row's `data_bundle` column fail-closed to `null` plus a warning on
-load. The SQL side is shipped: migration
-`supabase/migrations/20260822000000_add_timeline_data_bundle.sql` adds the
-nullable `data_bundle` column and materializes it from `timeline.bundle_replaced`
-events in the append RPCs, with pre-bundle function signatures kept live as
-wrappers so existing callers behave exactly as before. Activation of the
-Python append service middle hop remains a documented follow-up outside this
-repo.
+The former Supabase `saveTimeline`/append path is retired. Timeline authoring
+now uses App command capture, the crash-safe outbox, and the Runtime `/v1`
+commit door; no `config-replaced` or `create-with-config` route is a supported
+compatibility path. The bundle remains a fail-closed compatibility contract:
+unknown versions and malformed payloads are rejected rather than silently
+becoming empty lanes. Immutable media and task results are referenced by
+normal guarded commands when they need to enter a timeline.
 
 Upgrade policy: writers always emit the current `TIMELINE_BUNDLE_SCHEMA_VERSION`;
 readers reject newer versions rather than guessing.
