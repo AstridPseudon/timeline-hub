@@ -77,7 +77,7 @@ def test_receipt_persists_capture_provenance_and_exact_sampling(tmp_path):
             "renderer_environment": "{\"sources\":\"digest\"}",
             "fresh_frames": 1, "cached_frames": 0, "requested_frames": [3],
             "resolution": [320, 180],
-            "worker": {"batches": 1, "idle_seconds": 45.0, "serialized": True},
+            "worker": {"batches": 1, "serialized": True},
         },
     }
     receipt = compact_render_receipt(index, snapshot, tmp_path)

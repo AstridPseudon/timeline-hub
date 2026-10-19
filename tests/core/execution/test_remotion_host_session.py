@@ -318,7 +318,7 @@ assert reply['ok'] is True, reply
     assert running_host.execution_policy.evidence_budget.charged_bytes == 0
 
 
-def test_actual_frame_session_uses_inherited_host_lease_not_legacy_namespace(tmp_path, monkeypatch):
+def test_actual_frame_session_uses_inherited_host_lease(tmp_path, monkeypatch):
     from astrid.packs.rendering.rendering.renderers.remotion.run import PersistentRemotionFrameSession
     calls = []
     class Client:
@@ -326,7 +326,6 @@ def test_actual_frame_session_uses_inherited_host_lease_not_legacy_namespace(tmp
             calls.append((identity, value))
             return {"ok": True, "findings": [{"code": "host-fixture"}], "released": True, "exit": True}
     monkeypatch.setattr(host, "_client", Client())
-    monkeypatch.setattr(PersistentRemotionFrameSession, "_owner_paths", lambda *args: pytest.fail("legacy namespace selected"))
     session = PersistentRemotionFrameSession()
     session.render(project_dir=tmp_path, composition_id="Main", node_executable=Path(sys.executable),
                    remotion_cli=tmp_path/'cli', props_path=tmp_path/'props.json', output_dir=tmp_path/'out',

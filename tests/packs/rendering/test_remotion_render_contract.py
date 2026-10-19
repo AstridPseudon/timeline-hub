@@ -695,10 +695,12 @@ def test_frame_session_transports_explicit_chrome_diagnostic_environment(tmp_pat
     """Existing actual Python request producer transports the switch unchanged."""
     from astrid.packs.rendering.rendering.renderers.remotion import run as backend
     session = backend.PersistentRemotionFrameSession()
-    monkeypatch.setattr(session, '_owner_paths', lambda identity: (tmp_path/'owner.sock', tmp_path/'owner.lock'))
-    monkeypatch.setattr(session, '_ensure_owner', lambda **kwargs: None)
     requests = []
-    monkeypatch.setattr(session, '_request', lambda request: requests.append(request) or {'ok': True, 'findings': []})
+    class HostLease:
+        def request(self, identity, request, parser):
+            requests.append(request)
+            return {'ok': True, 'findings': []}
+    monkeypatch.setattr('astrid.core.execution.remotion_host_session.host_remotion_client', lambda: HostLease())
     environment = {'TMPDIR':str(tmp_path), 'ASTRID_FRAME_WORKER_CHROME_DIAGNOSTICS':'1'}
     session.render(project_dir=tmp_path, composition_id='Fixture', node_executable=tmp_path/'node',
         remotion_cli=tmp_path/'cli.js', props_path=tmp_path/'props.json', output_dir=tmp_path/'frames',

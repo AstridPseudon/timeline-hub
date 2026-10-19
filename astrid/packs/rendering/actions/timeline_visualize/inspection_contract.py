@@ -1048,7 +1048,7 @@ def _capture_projection(value: Any) -> dict[str, Any] | None:
             result["requested_frame_bounds"] = [min(requested), max(requested)]
     worker = value.get("worker")
     if isinstance(worker, Mapping):
-        result["worker"] = _projection(worker, ("batches", "idle_seconds", "serialized", "owner"))
+        result["worker"] = _projection(worker, ("batches", "serialized", "owner"))
     return result
 
 

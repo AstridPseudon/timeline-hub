@@ -1,8 +1,7 @@
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import net from 'node:net';
 import readline from 'node:readline';
 import {createRequire, syncBuiltinESMExports} from 'node:module';
 import { openBrowser, renderFrames, selectComposition } from '@remotion/renderer';
@@ -177,14 +176,6 @@ async function closeSession() {
   projectDir = null;
 }
 
-function removeLaunchdJob(socketPath) {
-  if (process.platform !== 'darwin') return;
-  const name = socketPath.split('/').pop() ?? '';
-  if (!name.startsWith('owner-') || !name.endsWith('.sock')) return;
-  const label = `astrid-rfo-${name.slice('owner-'.length, -'.sock'.length)}`;
-  spawnSync('/bin/launchctl', ['remove', label], { stdio: 'ignore' });
-}
-
 async function startSession(request) {
   await closeSession();
   projectDir = resolve(request.projectDir);
@@ -192,7 +183,7 @@ async function startSession(request) {
   await bundleProject(request);
   sessionFindings = [];
   // Read the admitted request field directly, so a previous request or
-  // inherited launchd environment cannot silently enable this diagnostic.
+  // inherited owner environment cannot silently enable this diagnostic.
   const diagnosticsEnabled = request.environment?.ASTRID_FRAME_WORKER_CHROME_DIAGNOSTICS === '1';
   const options = {browserExecutable: request.browserExecutable ?? sharedBrowserExecutable() ?? null,
     chromiumOptions: {headless: true}, logLevel: 'error'};
@@ -325,7 +316,7 @@ async function renderRequest(request) {
   if (unresolvedColdLaunches.length) throw new Error('Cold Chrome original graph custody is unresolved; capture refused');
   // Apply this invocation's admitted environment before cold Chrome chooses
   // its profile/temp paths, and before either cold or warm bundle work.
-  // The long-lived launchd owner must not use its inherited context here.
+  // The long-lived host-owned child must not use its inherited context here.
   Object.assign(process.env, request.environment ?? {});
   if (!browser || projectDir !== resolve(request.projectDir)) {
     await startSession(request);
@@ -365,105 +356,25 @@ async function handleRequest(request) {
   return { ok: true, findings: sessionFindings, ...(diagnostics ? { diagnostics } : {}) };
 }
 
-// The launching Python side passes its one idle policy's seconds.
-function idleSeconds() {
-  const configured = Number(process.env.ASTRID_WARM_IDLE_SECONDS ?? 45);
-  return Number.isFinite(configured) && configured >= 0 ? configured : 45;
-}
-
-async function runServer(socketPath) {
-  try { unlinkSync(socketPath); } catch { /* stale socket */ }
-  let idleTimer = null;
-  let closing = false;
-  let server;
-  const closeServer = async () => {
-    if (closing) return;
-    if (idleTimer) clearTimeout(idleTimer);
-    await closeSession();
-    closing = true;
-    try { unlinkSync(socketPath); } catch { /* already removed */ }
-    removeLaunchdJob(socketPath);
-    server.close(() => process.exit(0));
-  };
-  const armIdle = () => {
-    if (unresolvedColdLaunches.length || sessionCleanupError) return;
-    if (idleTimer) clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => {closeServer().catch(error => {
-      sessionCleanupError ??= error;
-    });}, idleSeconds() * 1000);
-    idleTimer.unref?.();
-  };
-  const disarmIdle = () => {
-    if (idleTimer) clearTimeout(idleTimer);
-    idleTimer = null;
-  };
-  let queue = Promise.resolve();
-  server = net.createServer((connection) => {
-    let buffer = '';
-    let handled = false;
-    connection.on('data', (chunk) => {
-      buffer += chunk.toString('utf8');
-      if (handled || !buffer.includes('\n')) return;
-      handled = true;
-      disarmIdle();
-      const line = buffer.split('\n', 1)[0];
-      let request;
-      try {
-        request = JSON.parse(line);
-      } catch (error) {
-        connection.end(JSON.stringify({ ok: false, error: String(error) }) + '\n');
-        return;
-      }
-      queue = queue.then(async () => {
-        try {
-          const response = await handleRequest(request);
-          connection.end(JSON.stringify({ ok: true, ...response }) + '\n');
-          armIdle();
-          if (response.exit) await closeServer();
-        } catch (error) {
-          const primaryDetails = failureDetails(error);
-          let cleanupError = null;
-          try {await closeSession();} catch (failure) {cleanupError = failure;}
-          connection.end(JSON.stringify({ok: false, cleanup_uncertain: Boolean(cleanupError),
-            error: primaryDetails.message, error_details: primaryDetails,
-            cleanup_error: cleanupError instanceof Error ? cleanupError.message : null,
-            cleanup_error_details: cleanupError ? failureDetails(cleanupError) : null}) + '\n');
-          armIdle();
-        }
-      });
-    });
-  });
-  server.on('error', async () => { await closeSession(); process.exit(1); });
-  server.listen(socketPath, () => {
-    chmodSync(socketPath, 0o600);
-    armIdle();
-  });
-}
-
-if (process.argv[2] === '--server') {
-  const socketPath = resolve(process.argv[3] ?? '');
-  if (!socketPath) throw new Error('frame worker server requires a socket path');
-  await runServer(socketPath);
-} else {
-  const input = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
-  for await (const line of input) {
-    if (!line.trim()) continue;
-    let request;
-    try {
-      request = JSON.parse(line);
-      const response = await handleRequest(request);
-      reply(response);
-      if (response.exit) process.exit(0);
-    } catch (error) {
-      const primaryDetails = failureDetails(error);
-      let cleanupError = null;
-      try {await closeSession();} catch (failure) {cleanupError = failure;}
-      reply({ok: false, cleanup_uncertain: Boolean(cleanupError),
-        error: primaryDetails.message, error_details: primaryDetails,
-        cleanup_error: cleanupError instanceof Error ? cleanupError.message : null,
-        cleanup_error_details: cleanupError ? failureDetails(cleanupError) : null});
-    }
+// The pack host owns this child over stdio and decides when it idles out.
+const input = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
+for await (const line of input) {
+  if (!line.trim()) continue;
+  let request;
+  try {
+    request = JSON.parse(line);
+    const response = await handleRequest(request);
+    reply(response);
+    if (response.exit) process.exit(0);
+  } catch (error) {
+    const primaryDetails = failureDetails(error);
+    let cleanupError = null;
+    try {await closeSession();} catch (failure) {cleanupError = failure;}
+    reply({ok: false, cleanup_uncertain: Boolean(cleanupError),
+      error: primaryDetails.message, error_details: primaryDetails,
+      cleanup_error: cleanupError instanceof Error ? cleanupError.message : null,
+      cleanup_error_details: cleanupError ? failureDetails(cleanupError) : null});
   }
-
-  await closeSession();
 }
+
+await closeSession();

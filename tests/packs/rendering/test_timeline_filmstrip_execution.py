@@ -884,35 +884,31 @@ def test_execution_delivers_audio_sidecar_optional_media_and_reuses_cache(tmp_pa
 
 
 def test_filmstrip_preserves_session_primary_through_all_capture_cleanup_layers(tmp_path, monkeypatch, capsys):
-    """Real session/protocol parser, worker, provider and outer export; fake socket only.
+    """Real session/protocol parser, worker, provider and outer export; fake host lease only.
 
     The renderer bridge supplies the same session argument projection without
     invoking compilation or Chrome. This is an error-lifetime proof, not pixels.
     """
     from astrid.packs.rendering.actions.timeline_visualize import composed_frame
     from astrid.packs.rendering.rendering.renderers.remotion import run as backend
-    sock = tmp_path / "owned.sock"
-    sock.write_text("retained original endpoint")
     session = backend.PersistentRemotionFrameSession()
-    session._socket_path = sock
-    session._identity = "same-owner"
     sent = []
-    class Connection:
-        request = None
-        def sendall(self, data):
-            self.request = json.loads(data)
-            sent.append(self.request["type"])
+    class Channel:
+        def __init__(self, reply):
+            self.reply = reply
         def recv(self, _size):
-            primary = self.request["type"] == "render"
-            return json.dumps({"ok": False, "error": "E1 original capture" if primary else "E2 original cleanup",
+            return self.reply
+    class HostLease:
+        """The inherited host renderer lease; the session's real parser reads each reply."""
+        def request(self, identity, request, parser):
+            assert identity == "same-owner"
+            sent.append(request["type"])
+            primary = request["type"] == "render"
+            return parser(Channel(json.dumps({"ok": False, "error": "E1 original capture" if primary else "E2 original cleanup",
                 "cleanup_uncertain": True,
                 "error_details": {"name": "Error", "message": "E1 original capture" if primary else "E2 original cleanup",
-                                  "stack": "PRIMARY_STACK" if primary else "CLEANUP_STACK"}}).encode() + b"\n"
-        def close(self): pass
-    monkeypatch.setattr(session, "_owner_paths", lambda identity: (sock, sock.with_suffix(".lock")))
-    monkeypatch.setattr(session, "_connect", lambda *_args, **_kwargs: Connection())
-    monkeypatch.setattr(session, "_launch_owner", lambda **_kwargs: pytest.fail("no new owner allocation"))
-    monkeypatch.setattr(session, "_remove_owner_job", lambda *_args: pytest.fail("uncertain owner removed"))
+                                  "stack": "PRIMARY_STACK" if primary else "CLEANUP_STACK"}}).encode() + b"\n"))
+    monkeypatch.setattr("astrid.core.execution.remotion_host_session.host_remotion_client", lambda: HostLease())
     class Renderer:
         def __call__(self, frames, output_dir, resolution):
             session.render(project_dir=tmp_path, composition_id="Fixture", node_executable=tmp_path / "node",
@@ -924,7 +920,7 @@ def test_filmstrip_preserves_session_primary_through_all_capture_cleanup_layers(
     providers = []
     def provider(snapshot, **kwargs):
         value = real_provider(snapshot, **kwargs, renderer=Renderer(),
-            cache=composed_frame.FrameCaptureCache(tmp_path / "cache"), idle_seconds=45)
+            cache=composed_frame.FrameCaptureCache(tmp_path / "cache"))
         providers.append(value)
         return value
     monkeypatch.setattr(composed_frame, "RemotionFrameProvider", provider)
@@ -942,9 +938,6 @@ def test_filmstrip_preserves_session_primary_through_all_capture_cleanup_layers(
     assert caught.value.frame_owner_failure['error_details']['stack'] == 'PRIMARY_STACK'
     assert caught.value.__cause__ is not None
     assert 'cleanup' in str(caught.value.__cause__)
-    assert str(session._owner_cleanup_error) == 'E2 original cleanup'
-    assert session._socket_path == sock and session._identity == 'same-owner'
-    assert sock.read_text() == 'retained original endpoint'
     assert sent.count('render') == 1 and sent.count('release') >= 1
     assert providers[0].worker._closed and not providers[0].worker.started
     assert not list(tmp_path.glob('astrid-frame-capture-*'))

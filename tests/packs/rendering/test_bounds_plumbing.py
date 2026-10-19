@@ -72,7 +72,6 @@ def _provider(tmp_path: Path, snapshot, cache, renderer) -> RemotionFrameProvide
         project_dir=tmp_path,
         cache=cache,
         renderer=renderer,
-        idle_seconds=0,
     )
 
 

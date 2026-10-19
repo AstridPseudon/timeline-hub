@@ -9,7 +9,6 @@ structured error file.
 from __future__ import annotations
 
 import argparse
-import fcntl
 import hashlib
 import json
 import os
@@ -21,7 +20,6 @@ import socket
 import subprocess
 import sys
 import tempfile
-import time
 from contextlib import ExitStack
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -32,7 +30,6 @@ from typing import Any, Mapping, Sequence
 from astrid.core import timeline
 from astrid.core.audit import AuditContext
 from astrid.core.element.registry import load_default_registry
-from astrid.core.env_vars import ASTRID_WARM_IDLE_SECONDS
 from astrid.core.element.schema import ElementDefinition
 from astrid.core.foundation.atomic_io import write_json_atomic
 from astrid.core.foundation.paths import REPO_ROOT, WORKSPACE_ROOT
@@ -147,225 +144,19 @@ class _FrameOwnerSubmissionRefused(RuntimeError):
 
 
 class PersistentRemotionFrameSession:
-    """Lease the process-independent Remotion frame owner for one batch.
+    """Lease the pack host's Remotion frame owner for one batch.
 
-    Managed executor children lease the original stdio Node child retained by
-    their GenericPackHost across task boundaries. The inherited private channel
-    carries no Runtime capability authority. Unmanaged legacy callers keep the
-    existing socket owner; this does not adopt old handles.
+    Frame capture runs only inside a GenericPackHost task child, which
+    inherits the host's private renderer lease. The host retains the original
+    stdio Node child across tasks and releases it through its warm hold when
+    idle; there is no hostless socket owner. The inherited channel carries no
+    Runtime capability authority.
     """
 
     def __init__(self) -> None:
         self._host_identity: str | None = None
-        self._socket_path: Path | None = None
-        self._identity: str | None = None
-        self._owner_cleanup_error: BaseException | None = None
-        self._owner_boundary_diagnostics: list[dict[str, Any]] = []
         self.findings: list[dict[str, Any]] = []
         self.diagnostics: dict[str, Any] | None = None  # ASTRID_FRAME_DIAGNOSTICS=1 probes of the last request
-
-    def _record_owner_boundary(self, stage: str, **facts: Any) -> None:
-        # Diagnostics describe observed boundaries, never cleanup authority.
-        self._owner_boundary_diagnostics.append({"stage": stage, **facts})
-        del self._owner_boundary_diagnostics[:-16]
-
-    @staticmethod
-    def _owner_paths(identity: str) -> tuple[Path, Path]:
-        # macOS derives tempfile.gettempdir() from a long per-user sandbox
-        # path. Unix-domain sockets have a small platform path limit, so keep
-        # this owner directory deliberately short while still namespacing it.
-        owner_root = Path("/tmp") / "astrid-rfo"
-        owner_root.mkdir(parents=True, exist_ok=True)
-        owner_root.chmod(0o700)
-        key = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:32]
-        return owner_root / f"owner-{key}.sock", owner_root / f"owner-{key}.lock"
-
-    @staticmethod
-    def _owner_label(socket_path: Path) -> str:
-        return f"astrid-rfo-{socket_path.stem.removeprefix('owner-')}"
-
-    @classmethod
-    def _remove_owner_job(cls, socket_path: Path) -> dict[str, Any]:
-        """Remove the launchd job after a forced owner shutdown.
-
-        ``launchctl submit`` keeps the label around after the submitted
-        process exits on macOS.  Without removing the label here, launchd
-        respawns an idle worker every time its bounded lease expires, turning
-        a successful shutdown into a process leak.
-        """
-        if sys.platform != "darwin" or not Path("/bin/launchctl").is_file():
-            return {"removal_attempted": False, "native_cleanup": "UNPROVED"}
-        completed = subprocess.run(
-            ["/bin/launchctl", "remove", cls._owner_label(socket_path)],
-            check=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        return {"removal_attempted": True, "returncode": completed.returncode,
-                "native_cleanup": "UNPROVED"}
-
-    @classmethod
-    def _launch_owner(
-        cls,
-        *,
-        socket_path: Path,
-        project_dir: Path,
-        node_executable: Path,
-        helper: Path,
-        child_environment: Mapping[str, str],
-    ) -> None:
-        """Start the owner outside GenericPackHost's per-task process tree."""
-        worker_root = Path(child_environment["ASTRID_FRAME_WORKER_ROOT"])
-        configured_idle = child_environment.get(ASTRID_WARM_IDLE_SECONDS)
-        if sys.platform == "darwin" and Path("/bin/launchctl").is_file():
-            label = cls._owner_label(socket_path)
-            # launchctl submit creates a user launchd child rather than a
-            # descendant of the managed executor. GenericPackHost can then
-            # clean up the short-lived executor without killing this bounded
-            # browser lease between managed visualization requests.
-            subprocess.run(
-                ["/bin/launchctl", "remove", label],
-                check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            env_assignments = [f"ASTRID_FRAME_WORKER_ROOT={worker_root}"]
-            if configured_idle is not None:
-                env_assignments.append(f"{ASTRID_WARM_IDLE_SECONDS}={configured_idle}")
-            command = [
-                "/bin/launchctl", "submit", "-l", label,
-                "-o", "/dev/null", "-e", "/dev/null", "--", "/usr/bin/env",
-                *env_assignments, "/bin/sh", "-c",
-                'cd "$1" && exec "$2" "$3" --server "$4"',
-                label, str(project_dir), str(node_executable), str(helper), str(socket_path),
-            ]
-            completed = subprocess.run(
-                command,
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=10.0,
-            )
-            if completed.returncode != 0:
-                detail = (completed.stderr or completed.stdout or "").strip()
-                raise _FrameOwnerSubmissionRefused(
-                    f"could not launch Remotion frame owner{': ' + detail if detail else ''}", completed.returncode
-                )
-            return
-        subprocess.Popen(
-            [str(node_executable), str(helper), "--server", str(socket_path)],
-            cwd=str(project_dir),
-            env=build_child_subprocess_env(explicit_env=dict(child_environment)),
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-
-    @staticmethod
-    def _connect(path: Path, *, timeout_seconds: float = 300.0) -> socket.socket:
-        connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        connection.settimeout(timeout_seconds)
-        try:
-            connection.connect(str(path))
-        except BaseException:
-            connection.close()
-            raise
-        return connection
-
-    @classmethod
-    def _wait_for_owner(cls, socket_path: Path, *, timeout_seconds: float = 30.0) -> None:
-        deadline = time.monotonic() + timeout_seconds
-        last_error: BaseException | None = None
-        while time.monotonic() < deadline:
-            try:
-                connection = cls._connect(socket_path, timeout_seconds=1.0)
-            except OSError as exc:
-                last_error = exc
-                time.sleep(0.05)
-                continue
-            else:
-                connection.close()
-                return
-        raise TimeoutError(f"Remotion frame owner did not become ready: {socket_path}") from last_error
-
-    def _ensure_owner(
-        self,
-        *,
-        socket_path: Path,
-        project_dir: Path,
-        node_executable: Path,
-        environment: Mapping[str, str],
-    ) -> None:
-        if self._owner_cleanup_error is not None:
-            raise RuntimeError("original Remotion frame owner cleanup is unresolved") from self._owner_cleanup_error
-        if socket_path == self._socket_path:
-            try:
-                connection = self._connect(socket_path, timeout_seconds=1.0)
-            except OSError as error:
-                # Endpoint absence never proves that a retained original
-                # owner/browser graph exited. Do not unlink and replace it.
-                self._owner_cleanup_error = error
-                raise RuntimeError("retained Remotion frame owner is unreachable; replacement refused") from error
-            else:
-                connection.close()
-                self._record_owner_boundary("reused_bound_ready", socket=str(socket_path))
-                return
-        socket_path.parent.mkdir(parents=True, exist_ok=True)
-        socket_path.parent.chmod(0o700)
-        lock_path = socket_path.with_suffix(".lock")
-        with lock_path.open("a+") as lock_file:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-            try:
-                try:
-                    connection = self._connect(socket_path, timeout_seconds=1.0)
-                except OSError:
-                    socket_path.unlink(missing_ok=True)
-                    helper = project_dir / "src" / "astrid-frame-worker.mjs"
-                    if not helper.is_file():
-                        raise FileNotFoundError(f"Remotion frame worker is missing: {helper}")
-                    child_environment = dict(environment)
-                    child_environment["ASTRID_REMOTION_FRAME_WORKER"] = "1"
-                    child_environment["ASTRID_FRAME_WORKER_ROOT"] = str(
-                        Path(tempfile.gettempdir()) / "astrid-frame-workers"
-                    )
-                    from astrid.core.execution.remotion_host_session import frame_owner_idle_seconds
-                    # The owner idles out on its own after the one Python policy's seconds.
-                    child_environment[ASTRID_WARM_IDLE_SECONDS] = str(frame_owner_idle_seconds())
-                    Path(child_environment["ASTRID_FRAME_WORKER_ROOT"]).mkdir(
-                        parents=True, exist_ok=True
-                    )
-                    self._record_owner_boundary("submission_requested", socket=str(socket_path),
-                                                previously_bound=self._socket_path == socket_path)
-                    try:
-                        self._launch_owner(
-                            socket_path=socket_path,
-                            project_dir=project_dir,
-                            node_executable=node_executable,
-                            helper=helper,
-                            child_environment=child_environment,
-                        )
-                    except _FrameOwnerSubmissionRefused as error:
-                        self._record_owner_boundary("submission_refused", returncode=error.returncode)
-                        raise
-                    except BaseException as error:
-                        # No successful return: do not acquire by planned identity.
-                        self._record_owner_boundary("submission_unresolved", error_type=type(error).__name__)
-                        raise
-                    # Retain successful submission before readiness can fail.
-                    self._socket_path = socket_path
-                    self._record_owner_boundary("submitted", socket=str(socket_path))
-                else:
-                    connection.close()
-                    self._record_owner_boundary("existing_owner_discovered", socket=str(socket_path))
-                try:
-                    self._wait_for_owner(socket_path)
-                except BaseException as error:
-                    self._record_owner_boundary("readiness_failed", error_type=type(error).__name__)
-                    raise
-                self._record_owner_boundary("ready", socket=str(socket_path))
-            finally:
-                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
     @staticmethod
     def _read_response(connection: socket.socket) -> dict[str, Any]:
@@ -388,8 +179,8 @@ class PersistentRemotionFrameSession:
             raise RuntimeError("Remotion frame owner returned a non-object response")
         if response.get("ok") is not True:
             # This stderr belongs to the managed task and is already retained
-            # and secret-scrubbed by GenericPackHost. The launchd owner's own
-            # stderr is intentionally not a durable diagnostic sink.
+            # and secret-scrubbed by GenericPackHost. The host-owned frame
+            # child's own stderr is intentionally not a durable diagnostic sink.
             def details(value: Any, depth: int = 0) -> dict[str, Any] | None:
                 if not isinstance(value, dict):
                     return None
@@ -411,16 +202,6 @@ class PersistentRemotionFrameSession:
             error.frame_owner_failure = diagnostic
             raise error
         return response
-
-    def _request(self, request: Mapping[str, Any]) -> dict[str, Any]:
-        if self._socket_path is None:
-            raise RuntimeError("Remotion frame owner is not configured")
-        connection = self._connect(self._socket_path)
-        try:
-            connection.sendall(json.dumps(dict(request), separators=(",", ":")).encode("utf-8") + b"\n")
-            return self._read_response(connection)
-        finally:
-            connection.close()
 
     def render(
         self,
@@ -444,65 +225,22 @@ class PersistentRemotionFrameSession:
         if bench_id:
             identity = f"{identity}|bench:{bench_id}"
         host_client = host_remotion_client()
-        if host_client is not None:
-            self._host_identity = identity
-            host_request = {
-                "type": "render", "projectDir": str(project_dir),
-                "compositionId": composition_id, "nodeExecutable": str(node_executable),
-                "remotionCli": str(remotion_cli), "propsPath": str(props_path),
-                "outputDir": str(output_dir), "frames": [int(frame) for frame in frames],
-                "resolution": list(resolution) if resolution is not None else None,
-                "port": int(port), "environment": dict(environment),
-            }
-            if os.environ.get("ASTRID_FRAME_DIAGNOSTICS") == "1":
-                host_request["diagnostics"] = True
-            response = host_client.request(identity, host_request, self._read_response)
-            self.findings = [dict(item) for item in response.get("findings", []) if isinstance(item, dict)][:16]
-            self.diagnostics = response.get("diagnostics")
-            return
-        socket_path, _lock_path = self._owner_paths(identity)
-        try:
-            self._ensure_owner(
-                socket_path=socket_path,
-                project_dir=project_dir,
-                node_executable=node_executable,
-                environment=environment,
-            )
-        except BaseException as operation_error:
-            if self._socket_path == socket_path:
-                try:
-                    self.close(force=True)
-                except BaseException as cleanup_error:
-                    self._record_owner_boundary("cleanup_failed", error_type=type(cleanup_error).__name__)
-                    raise operation_error from cleanup_error
-            raise
-        self._socket_path = socket_path
-        self._identity = identity
-        request = {
-            "type": "render",
-            "projectDir": str(project_dir),
-            "compositionId": composition_id,
-            "nodeExecutable": str(node_executable),
-            "remotionCli": str(remotion_cli),
-            "propsPath": str(props_path),
-            "outputDir": str(output_dir),
-            "frames": [int(frame) for frame in frames],
+        if host_client is None:
+            raise RuntimeError("Remotion frame capture needs the pack host's renderer lease; run it as a host task")
+        self._host_identity = identity
+        host_request = {
+            "type": "render", "projectDir": str(project_dir),
+            "compositionId": composition_id, "nodeExecutable": str(node_executable),
+            "remotionCli": str(remotion_cli), "propsPath": str(props_path),
+            "outputDir": str(output_dir), "frames": [int(frame) for frame in frames],
             "resolution": list(resolution) if resolution is not None else None,
-            "port": int(port),
-            "environment": dict(environment),
+            "port": int(port), "environment": dict(environment),
         }
         if os.environ.get("ASTRID_FRAME_DIAGNOSTICS") == "1":
-            request["diagnostics"] = True
-        try:
-            response = self._request(request)
-            self.findings = [dict(item) for item in response.get("findings", []) if isinstance(item, dict)][:16]
-            self.diagnostics = response.get("diagnostics")
-        except BaseException as operation_error:
-            try:
-                self.close(force=True)
-            except BaseException as cleanup_error:
-                raise operation_error from cleanup_error
-            raise
+            host_request["diagnostics"] = True
+        response = host_client.request(identity, host_request, self._read_response)
+        self.findings = [dict(item) for item in response.get("findings", []) if isinstance(item, dict)][:16]
+        self.diagnostics = response.get("diagnostics")
 
     def retain_staged_public_root(self, root: Path) -> None:
         # The owner consumes each invocation's staged files before replying;
@@ -511,41 +249,14 @@ class PersistentRemotionFrameSession:
         return None
 
     def close(self, *, force: bool = False) -> None:
-        if self._host_identity is not None:
-            from astrid.core.execution.remotion_host_session import host_remotion_client
-            client = host_remotion_client()
-            if client is None:
-                raise RuntimeError("original host renderer lease is unavailable")
-            client.request(self._host_identity, {"type": "release", "force": force}, self._read_response)
-            self._host_identity = None
+        if self._host_identity is None:
             return
-        socket_path = self._socket_path
-        if not force and self._owner_cleanup_error is not None:
-            raise RuntimeError("original Remotion frame owner cleanup is unresolved") from self._owner_cleanup_error
-        if force and socket_path is not None:
-            try:
-                connection = self._connect(socket_path, timeout_seconds=5.0)
-                try:
-                    connection.sendall(b'{"type":"release","force":true}\n')
-                    response = self._read_response(connection)
-                    if response.get("released") is not True or response.get("exit") is not True:
-                        raise RuntimeError("original frame owner did not acknowledge release")
-                finally:
-                    connection.close()
-            except BaseException as error:
-                # Keep the same original session obligation. A timeout,
-                # transport close or cleanup_uncertain reply is no drain.
-                if self._owner_cleanup_error is None:
-                    self._owner_cleanup_error = error
-                self._record_owner_boundary("cleanup_unresolved", socket=str(socket_path),
-                                            error_type=type(error).__name__)
-                raise RuntimeError("original Remotion frame owner cleanup is unresolved") from error
-            removal = self._remove_owner_job(socket_path)
-            self._record_owner_boundary("removal_observed", socket=str(socket_path),
-                                        result=removal, native_cleanup="UNPROVED")
-        self._socket_path = None
-        self._identity = None
-
+        from astrid.core.execution.remotion_host_session import host_remotion_client
+        client = host_remotion_client()
+        if client is None:
+            raise RuntimeError("original host renderer lease is unavailable")
+        client.request(self._host_identity, {"type": "release", "force": force}, self._read_response)
+        self._host_identity = None
 
 
 def _validate_project_dir(project_dir: Path) -> RemotionRuntimeTools:

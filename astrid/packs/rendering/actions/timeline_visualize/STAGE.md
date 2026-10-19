@@ -114,10 +114,12 @@ When an exact managed render is available, the executor samples presentation
 frame numbers from that video with ffmpeg. Otherwise `auto` and `composed`
 capture only the planned frames through the same server-owned Remotion
 composition, media registry, fonts, effects, and rational frame clock; they do
-not create a full video. Capture uses a bounded content-addressed PNG cache,
-one serialized lazy worker, and a 45-second idle expiry (set
-`ASTRID_WARM_IDLE_SECONDS`, which applies to every warm holder, to change it;
-`0` releases the worker after each capture). The frame index
+not create a full video. Capture uses a bounded content-addressed PNG cache
+and one serialized worker that leases the pack host's Remotion frame owner;
+capture runs only as a host task. The host keeps that owner warm for 45 s
+after its last capture (300 s with `ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES`
+of at least 512 MiB), then shuts it down; `ASTRID_WARM_IDLE_SECONDS`, which
+applies to every warm holder, changes that. The frame index
 records `evidence_source` (`fresh_capture`, `cache`, or `mixed`), requested and
 resolved frame/time, revision/candidate identity, renderer, and resolution.
 `--mode inputs` remains renderer-free. SDK-injected `filmstrip_authority` is

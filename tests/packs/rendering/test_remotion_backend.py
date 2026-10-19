@@ -1952,48 +1952,6 @@ def test_frame_progress_relay_publishes_bound_attempt_and_keeps_codec_stages(tmp
     assert parse_progress_line("Rendered 99/4")["percent"] == 85
 
 
-@pytest.mark.parametrize("failure", ["transport", "rejected", "malformed_ack"])
-def test_frame_session_retains_original_owner_on_cleanup_failure(monkeypatch, tmp_path, failure):
-    session = remotion.PersistentRemotionFrameSession()
-    original = tmp_path / "owner.sock"
-    session._socket_path = original; session._identity = "original-generation"
-    class Connection:
-        def sendall(self, _): pass
-        def close(self): pass
-    def connect(*_args, **_kwargs):
-        if failure == "transport": raise OSError("owner channel interrupted")
-        return Connection()
-    def reply(_):
-        if failure == "rejected": raise RuntimeError("native cleanup_uncertain")
-        return {"ok": True}  # Generic success is not a release acknowledgment.
-    monkeypatch.setattr(session, "_connect", connect)
-    monkeypatch.setattr(session, "_read_response", reply)
-    monkeypatch.setattr(session, "_remove_owner_job", lambda _: pytest.fail("uncertain original job removed"))
-    with pytest.raises(RuntimeError, match="cleanup is unresolved"):
-        session.close(force=True)
-    assert session._socket_path == original and session._identity == "original-generation"
-    assert session._owner_cleanup_error is not None
-    with pytest.raises(RuntimeError, match="cleanup is unresolved"):
-        session.close(force=False)
-    with pytest.raises(RuntimeError, match="cleanup is unresolved"):
-        session._ensure_owner(socket_path=original, project_dir=tmp_path,
-                              node_executable=tmp_path / "node", environment={})
-    assert session._socket_path == original
-
-
-def test_retained_frame_owner_endpoint_absence_never_authorizes_replacement(monkeypatch, tmp_path):
-    session = remotion.PersistentRemotionFrameSession()
-    original = tmp_path / "owner.sock"; original.write_text("original")
-    session._socket_path = original
-    monkeypatch.setattr(session, "_connect", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("closed endpoint")))
-    monkeypatch.setattr(session, "_launch_owner", lambda **_: pytest.fail("replacement allocation"))
-    with pytest.raises(RuntimeError, match="replacement refused"):
-        session._ensure_owner(socket_path=original, project_dir=tmp_path,
-                              node_executable=tmp_path / "node", environment={})
-    assert session._socket_path == original and original.read_text() == "original"
-    assert session._owner_cleanup_error is not None
-
-
 @pytest.mark.parametrize("file", ["astrid-media/owner/card.png", "https://bound.example/card", "blob:bound-card", "data:image/png;base64,AA=="])
 def test_card_overrides_use_materialized_registry(file):
     clip = {"params": {"cardAssets": {"card0": "authored-key", "card5": "authored-key"}}}

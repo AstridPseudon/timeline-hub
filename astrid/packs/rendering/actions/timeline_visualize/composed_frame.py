@@ -17,7 +17,6 @@ import threading
 import uuid
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from threading import Timer
 from typing import Any
 
 RENDERER_IDENTITY = "astrid.remotion.frame-capture.v1|backend=1.0.0|remotion=4.0.509|fonts=local-bundle-v1"
@@ -266,50 +265,23 @@ class FrameCaptureCache:
 
 
 class FrameCaptureWorker:
-    """Serialize capture batches and retire the worker after idle time.
+    """Serialize capture batches through one renderer.
 
-    The callable is intentionally injected. Production uses one Remotion CLI
-    image-sequence session with one lazily started Chromium browser; tests can
-    supply a deterministic renderer without starting Chromium.
+    The callable is intentionally injected. Production leases the pack host's
+    Remotion frame owner, which the host keeps warm and idles out through its
+    warm hold; tests can supply a deterministic renderer without starting
+    Chromium.
     """
 
     def __init__(
         self,
         renderer: Callable[[Sequence[int], Path, Sequence[int] | None], Mapping[int, Path]],
-        *,
-        idle_seconds: float | None = None,
     ) -> None:
-        from astrid.core.execution.remotion_host_session import frame_owner_idle_seconds
-
         self.renderer = renderer
-        self.idle_seconds = frame_owner_idle_seconds() if idle_seconds is None else max(0.0, float(idle_seconds))
         self._lock = threading.RLock()
-        self._timer: Timer | None = None
-        self._timer_generation = 0
         self._closed = False
         self.started = False
         self.capture_batches = 0
-
-    def _expire(self, generation: int | None = None) -> None:
-        with self._lock:
-            if generation is not None and generation != self._timer_generation:
-                return
-            self.started = False
-            self._timer = None
-            _close_renderer(self.renderer)
-
-    def _arm(self) -> None:
-        if self.idle_seconds <= 0:
-            self._timer_generation += 1
-            self._expire(self._timer_generation)
-            return
-        if self._timer is not None:
-            self._timer.cancel()
-        self._timer_generation += 1
-        generation = self._timer_generation
-        self._timer = Timer(self.idle_seconds, lambda: self._expire(generation))
-        self._timer.daemon = True
-        self._timer.start()
 
     def capture(
         self,
@@ -335,16 +307,11 @@ class FrameCaptureWorker:
                 except BaseException as cleanup_error:
                     raise operation_error from cleanup_error
                 raise
-            self._arm()
             return result
 
     def close(self, *, force: bool = False) -> None:
         with self._lock:
             self._closed = True
-            if self._timer is not None:
-                self._timer.cancel()
-                self._timer = None
-            self._timer_generation += 1
             self.started = False
             _close_renderer(self.renderer, force=force)
 
@@ -398,28 +365,20 @@ class _PersistentRemotionRenderer:
 
 
 class _SharedRemotionOwner:
-    """Own the one process-local browser and serialize all capture requests."""
+    """Share this process's host renderer lease and serialize all capture requests."""
 
     def __init__(self) -> None:
-        from astrid.core.execution.remotion_host_session import frame_owner_idle_seconds
         from astrid.packs.rendering.rendering.renderers.remotion.run import PersistentRemotionFrameSession
 
         self.session = PersistentRemotionFrameSession()
         self.lock = threading.RLock()
         self.references = 0
-        self.timer: Timer | None = None
-        self.timer_generation = 0
         self.closed = False
-        self.idle_seconds = frame_owner_idle_seconds()
 
     def acquire(self, context: Mapping[str, Any]) -> "_SharedRemotionHandle":
         with self.lock:
             if self.closed:
                 raise RuntimeError("shared Remotion owner is closed")
-            if self.timer is not None:
-                self.timer.cancel()
-                self.timer = None
-            self.timer_generation += 1
             self.references += 1
             return _SharedRemotionHandle(self, context)
 
@@ -451,34 +410,12 @@ class _SharedRemotionOwner:
     def release(self, *, force: bool = False) -> None:
         with self.lock:
             self.references = max(0, self.references - 1)
-            if self.references or self.closed:
+            # The host keeps the frame owner warm and idles it out; only a
+            # failed capture force-closes it from here.
+            if self.references or self.closed or not force:
                 return
-            if force or self.idle_seconds <= 0:
-                self._close_locked()
-                return
-            if self.timer is not None:
-                self.timer.cancel()
-            self.timer_generation += 1
-            generation = self.timer_generation
-            self.timer = Timer(self.idle_seconds, lambda: self._expire(generation))
-            self.timer.daemon = True
-            self.timer.start()
-
-    def _expire(self, generation: int | None = None) -> None:
-        with self.lock:
-            if generation is not None and generation != self.timer_generation:
-                return
-            self.timer = None
-            if not self.references:
-                self._close_locked()
-
-    def _close_locked(self) -> None:
-        self.closed = True
-        self.timer_generation += 1
-        if self.timer is not None:
-            self.timer.cancel()
-            self.timer = None
-        self.session.close(force=True)
+            self.closed = True
+            self.session.close(force=True)
 
 
 class _SharedRemotionHandle:
@@ -551,7 +488,6 @@ class RemotionFrameProvider:
         materialized_objects: Mapping[str, str] | None = None,
         cache: FrameCaptureCache | None = None,
         renderer: Callable[[Sequence[int], Path, Sequence[int] | None], Mapping[int, Path]] | None = None,
-        idle_seconds: float | None = None,
     ) -> None:
         self.snapshot = snapshot
         self.timeline_path = Path(timeline_path)
@@ -571,7 +507,7 @@ class RemotionFrameProvider:
                 }
             )
 
-        self.worker = FrameCaptureWorker(renderer, idle_seconds=idle_seconds)
+        self.worker = FrameCaptureWorker(renderer)
         self.wants_bounds = snapshot_wants_bounds(snapshot)
 
     def close(self, *, force: bool = False) -> None:
@@ -648,7 +584,6 @@ class RemotionFrameProvider:
             "notes": notes,
             "worker": {
                 "batches": self.worker.capture_batches,
-                "idle_seconds": self.worker.idle_seconds,
                 "serialized": True,
                 "owner": "process_shared" if isinstance(self.worker.renderer, _SharedRemotionHandle) else "provider_local",
             },
