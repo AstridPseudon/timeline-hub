@@ -82,6 +82,52 @@ hidden sixth writer closure: it can proceed independently once Agent publishes
 the relevant command/capture contract, but no Next-5 success authorizes their
 snapshot/config append paths to remain.
 
+## Supabase producer transport boundary (2026-10-19 audit)
+
+Audited App worker base `fa1f7965e`; details, exact tests and the socket-free
+executable probe are in
+[the boundary report](../workers/app-m2-edge-producer-boundary/report.md).
+**No current producer uses the normal local commit door. This is not evidence
+that ordinary App editing requires a cloud relay.** Current App chat uses
+`hooks/useAgentSession.ts:313,709` (local ACP), and task creation uses
+`shared/lib/taskCreation/createTask.ts:324-346` (capability admission).
+Production App call-site searches found no invocation of `ai-timeline-agent`,
+`complete_task`, or `timeline-import`; edge entrypoints and their internal
+writer calls still exist. External CLI/worker use and deployed configuration
+were not checked. The census above remains an inventory of writers to remove,
+not proof that these three endpoints have ordinary App callers.
+
+`_shared/astridAppendService.ts:7-8,48-87,119-163` reads only the two
+`ASTRID_APP_APPEND_SERVICE_*` variables and posts a whole config to
+`config-replaced` / `create-with-config` with an internal bearer. It has no
+local discovery, product-credential binding, project-scoped commit request,
+base head pair, or idempotency key. The real normal client is
+`integrations/runtime/generated.ts:174-176` plus
+`dataProvider.ts:678-694`; local proxy/discovery supplies its product credential
+(`config/vite/runtimeProxy.ts:8-25`, `scripts/runtime-discovery-proxy.mjs:46-81`).
+Changing the append URL cannot convert either route/body into a commit.
+A hosted edge function's loopback would address that host, not the user's
+local Runtime (topology inference, not an attempted connection); a same-host
+deployment is not intrinsically impossible, but no supported wiring appears
+in the audited source. No environment values or secrets were inspected.
+
+Smallest permitted follow-up: qualify and delete unused legacy canonical-write
+entrypoints/wrappers, or return proposed edits to an **identified existing local
+caller** for Agent capture → existing outbox → normal commit. The edge agent
+already returns proposals (`index.ts:107-117`, `tools/registry.ts:512-536`), but
+they are numeric-version `TimelinePatch` envelopes, not canonical EditCommands;
+`importEdgeProposals` has no production caller. Completion returns URLs and
+follow-up warnings (`complete_task/handler.ts:570-592`); import returns only
+version/created status (`timeline-import/types.ts`). Neither has a local
+proposal consumer. Do not invent one silently. Agent must publish the relevant
+operation/capture and lossless-import semantics; Runtime/Agent must identify
+any retained completion/import caller and immutable media/result handoff.
+Delete `createTimelineViaService`, `appendTimelineConfigViaService`, and
+`saveTimelineConfigVersioned` only after their remaining consumers are retired
+or converted; preserve artifact storage, billing and relational placement.
+Next worker: **app-m2-edge-writer-retirement**, after manager disposition of
+external consumers. This audit converts no writer and leaves Gate 6 OPEN.
+
 ## Backend reachability and negative matrix
 
 The App-only Supabase targets
