@@ -80,3 +80,18 @@ responses). Browser QA must also cover a pack-owned animated image/video,
 backward and forward seeking, and transition boundaries; ordinary seeded media
 alone does not exercise pack-owned native requests. Inspect the browser's actual
 request and console when an image fails, not only a server-side GET.
+
+## Saved chat after a bridge restart
+
+An ACP connection ID belongs to one bridge process. If that process restarts,
+the client retires a missing connection and retries the read-only saved
+transcript load once with a fresh connection. This includes the older bridge's
+specific `not_found` / `ACP connection is not available; reconnect` response;
+an unknown saved session remains an error. Prompts are never automatically
+resent by this recovery. Restored unconfirmed messages stay paused until the
+user explicitly retries delivery after checking saved history.
+
+`useAgentSession.test.tsx` covers both transcript-load and event-poll connection
+loss, plus unknown-session isolation. `AgentChat.projectContract.test.tsx`
+exercises the real panel/hooks/transport and verifies that a fresh connection
+preserves the draft and queued message without calling the prompt endpoint.

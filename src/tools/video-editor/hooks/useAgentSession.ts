@@ -41,6 +41,14 @@ const ACP_PROMPT_TIMEOUT_MS = 5 * 60_000;
 const ACP_ACTIVE_POLL_MS = 500;
 const ACP_IDLE_POLL_MS = 15_000;
 const ACP_TASK_ACTIVE_POLL_MS = 1_000;
+function isMissingAcpConnection(error: unknown): boolean {
+  return error instanceof BridgeRouteError && error.status === 404 && (
+    error.code === 'connection_not_found'
+    // Older bridges lose their idle tombstones on restart. Do not treat a
+    // missing saved session (also sometimes `not_found`) as a lost transport.
+    || (error.code === 'not_found' && error.detail === 'ACP connection is not available; reconnect')
+  );
+}
 const sessionModelListeners = new Map<string, Set<() => void>>();
 
 function notifySessionModelChanged(sessionId: string): void {
@@ -533,14 +541,26 @@ export class AstridAgentSessionStore {
   async get(projectId: string, sessionId: string, replay = false): Promise<AgentSessionView> {
     await this.assertOwned(projectId, sessionId);
     const agent = sessionAgentId(sessionId);
-    const connectionId = await this.connection(agent);
     if (replay) {
       if (this.activePrompts.has(sessionId)) throw new Error('Wait for the active request before checking saved delivery.');
       this.loaded.delete(sessionId);
     }
-    await this.load(connectionId, sessionId);
-    await this.pullEvents();
-    if (!this.connected(agent, connectionId)) throw new Error('Saved delivery could not be verified because ACP disconnected.');
+    // Reconnect only a read-only transcript load, once. Never replay a prompt
+    // when its delivery may already have been accepted by the previous host.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const connectionId = await this.connection(agent);
+      try {
+        await this.load(connectionId, sessionId);
+        await this.pullEvents();
+      } catch (error) {
+        if (!isMissingAcpConnection(error)) throw error;
+        this.retireConnection(connectionId);
+        if (attempt === 1) throw error;
+        continue;
+      }
+      if (this.connected(agent, connectionId)) break;
+      if (attempt === 1) throw new Error('Saved delivery could not be verified because ACP disconnected.');
+    }
     const session = cloneSession(this.state(sessionId));
     for (const turn of session.turns) {
       if (turn.role !== 'user' || !turn.messageId) continue;
@@ -715,7 +735,7 @@ export class AstridAgentSessionStore {
       this.assertWriter(sessionId);
       this.commitAssistantDraft(session, finalContent);
     } catch (error) {
-      if (error instanceof BridgeTransportFailure || (error instanceof BridgeRouteError && error.code === 'connection_not_found')) {
+      if (error instanceof BridgeTransportFailure || isMissingAcpConnection(error)) {
         if (promptConnectionId && this.connected(sessionAgentId(sessionId), promptConnectionId)) this.retireConnection(promptConnectionId);
       }
       throw error;
@@ -766,7 +786,7 @@ export class AstridAgentSessionStore {
       const connections = [...this.connectionIds.entries()];
       await Promise.all(connections.map(async ([agent, connectionId]) => {
         const response = await this.client.acp.events(connectionId).catch((error: unknown) => {
-          if (error instanceof BridgeRouteError && error.code === 'connection_not_found') {
+          if (isMissingAcpConnection(error)) {
             this.retireConnection(connectionId);
             return null;
           }

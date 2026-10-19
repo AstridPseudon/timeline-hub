@@ -38,6 +38,8 @@ class HostTransport {
   promptFailure: Error | null = null;
   acceptedResponseFailure: Error | null = null;
   disconnected = false;
+  expiredConnection: string | null = null;
+  private connections = 0;
   onPrompt: (() => Promise<void>) | null = null;
   onLoad: (() => Promise<void>) | null = null;
   assistant = 'Done.';
@@ -63,7 +65,10 @@ class HostTransport {
     this.calls.push({ route, body });
     if (route === '/acp/connect') {
       if (this.connectFailure) throw this.connectFailure;
-      return response({ connection_id: 'connection-1', initialize: {} });
+      return response({ connection_id: `connection-${++this.connections}`, initialize: {} });
+    }
+    if (this.expiredConnection && route.startsWith(`/acp/${this.expiredConnection}/`)) {
+      return response({ error: 'not_found', detail: 'ACP connection is not available; reconnect' }, 404);
     }
     if (route.endsWith('/events')) {
       const disconnected = this.disconnected; this.disconnected = false;
@@ -151,6 +156,22 @@ afterEach(async () => {
 });
 
 describe('real panel → real hooks → owned ACP transport', () => {
+  it('recovers a restarted bridge while keeping restored messages paused and the draft intact', async () => {
+    const id = fixture.seed('p1');
+    fixture.chat('p1').draft = { text: 'Keep my draft', revision: 4, queued_messages: [
+      { id: 'not-confirmed', text: 'hi', session_id: id, attachments: [] },
+    ] };
+    // The first transcript request encounters a connection from before restart.
+    fixture.expiredConnection = 'connection-1';
+    mount();
+    await screen.findByText(/Delivery not confirmed/);
+    await waitFor(() => expect(fixture.calls.filter(call => call.route === '/acp/connect')).toHaveLength(2));
+    expect(fixture.calls.some(call => call.route === '/acp/connection-2/rpc')).toBe(true);
+    expect(screen.getByRole('textbox')).toHaveValue('Keep my draft');
+    expect(fixture.chat('p1').draft.queued_messages.map(row => row.id)).toEqual(['not-confirmed']);
+    expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(0);
+  });
+
   function receipt(id: string, project = 'p1') {
     return '<astrid_editor_context>' + JSON.stringify({ schema: 'astrid.editor-context/v1', request_id: id,
       context_revision: 'snapshot', captured_at: '2026-10-15T12:00:00Z', project: { id: project }, editor: { tool: 'video-editor' } }) + '</astrid_editor_context>';

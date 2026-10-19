@@ -24,6 +24,7 @@ import {
   agentSessionQueryKey,
 } from './useAgentSession.ts';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
+import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
 import { LOCAL_AGENT_SETTING_KEY, localAgentModelSettingKey, savedLocalAgentModel } from '@/integrations/astrid/localAgents.ts';
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -44,6 +45,47 @@ afterEach(() => {
 });
 
 describe('timeline agent ACP chat', () => {
+  it.each([
+    ['load', 'not_found'], ['events', 'not_found'],
+    ['load', 'connection_not_found'], ['events', 'connection_not_found'],
+  ])('reconnects a lost bridge during %s (%s) without sending a prompt', async (stage, code) => {
+    const missing = new BridgeRouteError('ACP events', 404, { error: code, detail: 'ACP connection is not available; reconnect' });
+    const acp = {
+      projectChat: vi.fn(async () => ({ project_id: 'p', sessions: [{ id: 'chat-1' }] })),
+      connect: vi.fn().mockResolvedValueOnce({ connection_id: 'old' }).mockResolvedValue({ connection_id: 'new' }),
+      loadSession: vi.fn(async (id: string) => { if (id === 'old' && stage === 'load') throw missing; return {}; }),
+      events: vi.fn(async (id: string) => { if (id === 'old' && stage === 'events') throw missing; return { notifications: [], disconnected: false }; }),
+      promptProjectSession: vi.fn(),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    expect((await store.get('p', 'chat-1')).id).toBe('chat-1');
+    expect(acp.connect).toHaveBeenCalledTimes(2);
+    expect(acp.loadSession).toHaveBeenLastCalledWith('new', 'chat-1');
+    expect(acp.promptProjectSession).not.toHaveBeenCalled();
+  });
+
+  it('stops read-only recovery after one fresh connection also disappears', async () => {
+    const missing = new BridgeRouteError('ACP rpc', 404, { error: 'connection_not_found', detail: 'ACP connection expired while idle; reconnect' });
+    const acp = {
+      projectChat: vi.fn(async () => ({ project_id: 'p', sessions: [{ id: 'chat-1' }] })),
+      connect: vi.fn(async () => ({ connection_id: 'missing' })),
+      loadSession: vi.fn(async () => { throw missing; }),
+    };
+    await expect(new AstridAgentSessionStore({ acp } as never).get('p', 'chat-1')).rejects.toBe(missing);
+    expect(acp.connect).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not reconnect or hide an unknown saved session', async () => {
+    const missing = new BridgeRouteError('ACP rpc', 404, { error: 'not_found', detail: 'ACP session not found: chat-1' });
+    const acp = {
+      projectChat: vi.fn(async () => ({ project_id: 'p', sessions: [{ id: 'chat-1' }] })),
+      connect: vi.fn(async () => ({ connection_id: 'valid' })),
+      loadSession: vi.fn(async () => { throw missing; }),
+    };
+    await expect(new AstridAgentSessionStore({ acp } as never).get('p', 'chat-1')).rejects.toBe(missing);
+    expect(acp.connect).toHaveBeenCalledTimes(1);
+  });
+
   it('streams live follower turns without recording replay receipts, blocks writes, and takes over explicitly', async () => {
     const projectChat = { project_id: 'p', scope_key: 'project:p', revision: 1, selected_session_id: 'chat-1', sessions: [{ id: 'chat-1' }], draft: { text: '', revision: 1, queued_messages: [] } };
     let eventsRead = false;
