@@ -359,7 +359,10 @@ describe('Astrid App ACP HTTP bridge', () => {
       params: { cwd: '/tmp/astrid-app-project', mcpServers: [] },
     });
     respond(first, newSession.id, { sessionId: 'omp-session-opaque' });
-    await expect((await creating).json()).resolves.toEqual({ result: { sessionId: 'omp-session-opaque' } });
+    await expect((await creating).json()).resolves.toEqual({ result: {
+      sessionId: 'omp-session-opaque',
+      _astridSession: { role: 'writer', active: false, activeRequestId: null },
+    } });
 
     const reconnecting = fetch(base + '/connection-1/reconnect', { method: 'POST', headers: headers(), body: '{}' });
     expect(await (await reconnecting).json()).toEqual({ connection_id: 'connection-1', reused: true });
@@ -369,14 +372,11 @@ describe('Astrid App ACP HTTP bridge', () => {
       method: 'POST', headers: headers(),
       body: JSON.stringify({ method: 'session/resume', params: { sessionId: 'omp-session-opaque' } }),
     });
-    await waitForRequest(first, afterReconnect);
-    const resume = lastRequest(first);
-    expect(resume).toMatchObject({
-      method: 'session/resume',
-      params: { sessionId: 'omp-session-opaque', cwd: '/tmp/astrid-app-project', mcpServers: [] },
-    });
-    respond(first, resume.id, { sessionId: 'omp-session-opaque' });
-    await expect((await resuming).json()).resolves.toEqual({ result: { sessionId: 'omp-session-opaque' } });
+    await expect((await resuming).json()).resolves.toEqual({ result: {
+      sessionId: 'omp-session-opaque',
+      _astridSession: { role: 'writer', active: false, activeRequestId: null },
+    } });
+    expect(first.stdin.writes).toHaveLength(afterReconnect);
 
     const afterResume = first.stdin.writes.length;
     const prompting = fetch(`${base}/connection-1/rpc`, {
@@ -463,7 +463,13 @@ describe('Astrid App ACP HTTP bridge', () => {
       jsonrpc: '2.0',
       id: 'permission-1',
       method: 'session/request_permission',
-      params: { toolCall: { title: 'astrid-tools timelines show --summary', kind: 'execute' } },
+      params: {
+        toolCall: { title: 'astrid-tools timelines show --summary', kind: 'execute' },
+        options: [
+          { optionId: 'allow_always', kind: 'allow_always' },
+          { optionId: 'allow_once', kind: 'allow_once' },
+        ],
+      },
     })}\n`);
     await waitForRequest(fakeProcess, afterInitialize);
     expect(lastRequest(fakeProcess)).toMatchObject({
