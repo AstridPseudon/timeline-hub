@@ -26,6 +26,17 @@ function openList(onSelectModel = vi.fn(), onOpenChange = vi.fn()) {
 }
 
 describe('AgentChatModelSelector', () => {
+  it('offers usable keyless models without requiring a provider sign-in', async () => {
+    const onSelectModel = vi.fn();
+    render(<AgentChatModelSelector catalog={{ currentModel: null, providers: [
+      { id: 'local', name: 'Local models', signedIn: false, models: [{ id: 'llama', name: 'Llama' }] },
+    ] }} onSelectModel={onSelectModel} />);
+    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
+    expect(screen.queryByText('Not signed in')).toBeNull();
+    fireEvent.click(await screen.findByRole('option', { name: /Llama$/ }));
+    expect(onSelectModel).toHaveBeenCalledWith('local/llama');
+  });
+
   it('lists signed-in providers first, marks the active model, and selects exact provider/model ids', async () => {
     const { onSelectModel, onOpenChange } = openList();
     expect(onOpenChange).toHaveBeenCalledWith(true);

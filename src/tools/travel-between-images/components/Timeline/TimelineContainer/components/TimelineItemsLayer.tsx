@@ -35,7 +35,6 @@ interface TimelineItemsLayerProps {
     onImageDuplicate: (imageId: string, timelineFrame: number) => void;
     onVariantDrop?: (params: VariantDropParams) => Promise<void>;
     onVariantDropTargetChange?: (targetId: string | null) => void;
-    onInpaintClick?: (idx: number) => void;
     duplicatingImageId?: string | null;
     duplicateSuccessImageId?: string | null;
   };
@@ -107,7 +106,6 @@ export const TimelineItemsLayer: React.FC<TimelineItemsLayerProps> = ({
               onDuplicate: actions.onImageDuplicate,
               onVariantDrop: actions.onVariantDrop,
               onVariantDropTargetChange: actions.onVariantDropTargetChange,
-              onInpaintClick: actions.onInpaintClick ? () => actions.onInpaintClick?.(idx) : undefined,
               duplicatingImageId: actions.duplicatingImageId ?? undefined,
               duplicateSuccessImageId: actions.duplicateSuccessImageId ?? undefined,
             }}

@@ -24,7 +24,6 @@ function createInput(overrides: Record<string, unknown> = {}) {
       },
       actions: {
         onDelete: vi.fn().mockResolvedValue(undefined),
-        onApplySettings: vi.fn(),
       },
       shotWorkflow: {
         onNavigateToShot: vi.fn(),
@@ -50,7 +49,7 @@ describe('useVideoLightboxActions', () => {
     mocks.invokeLightboxDelete.mockResolvedValue(undefined);
   });
 
-  it('downloads/deletes media and applies settings with expected payloads', async () => {
+  it('downloads and deletes media with expected payloads', async () => {
     const input = createInput();
     const { result } = renderHook(() => useVideoLightboxActions(input));
 
@@ -58,10 +57,6 @@ describe('useVideoLightboxActions', () => {
       await result.current.handleDownload();
       await result.current.handleDelete();
     });
-    act(() => {
-      result.current.handleApplySettings();
-    });
-
     expect(mocks.handleLightboxDownload).toHaveBeenCalledWith({
       intendedVariantId: 'variant-1',
       variants: [{ id: 'variant-1' }],
@@ -76,7 +71,6 @@ describe('useVideoLightboxActions', () => {
       'media-1',
       'VideoLightbox.delete',
     );
-    expect(input.props.actions.onApplySettings).toHaveBeenCalledWith({ prompt: 'hello' });
   });
 
   it('no-ops without required handlers and routes shot selector navigation', async () => {
@@ -97,7 +91,6 @@ describe('useVideoLightboxActions', () => {
       await result.current.handleDelete();
     });
     act(() => {
-      result.current.handleApplySettings();
       result.current.handleNavigateToShotFromSelector({ id: 'shot-1', name: 'Shot 1' });
     });
 

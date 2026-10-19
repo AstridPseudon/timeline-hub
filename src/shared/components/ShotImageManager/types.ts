@@ -60,7 +60,6 @@ interface ShotUploadProps {
 interface ShotManagementProps {
   shotId?: string;
   projectId?: string;
-  toolTypeOverride?: string;
   allShots?: Array<{ id: string; name: string }>;
   selectedShotId?: string;
   onShotChange?: (shotId: string) => void;
@@ -141,7 +140,6 @@ export interface BaseShotImageManagerProps extends
   ShotPairPromptProps,
   ShotSegmentProps {
   onOpenLightbox?: (index: number) => void;
-  onInpaintClick?: (index: number) => void;
   onImageUpload?: (files: File[]) => Promise<void>;
   isUploadingImage?: boolean;
   /** Create a new shot from selected images */
@@ -158,7 +156,6 @@ export interface ShotBatchItemMobileProps {
   onDelete: () => void;
   onDuplicate?: (shotImageEntryId: string, timeline_frame: number) => void;
   onOpenLightbox?: () => void;
-  onInpaintClick?: () => void;
   hideDeleteButton?: boolean;
   duplicatingImageId?: string | null;
   duplicateSuccessImageId?: string | null;

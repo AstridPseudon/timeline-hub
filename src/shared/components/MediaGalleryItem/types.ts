@@ -63,7 +63,6 @@ export interface ItemFeatures {
   showShare?: boolean;
   showDelete?: boolean;
   showDownload?: boolean;
-  showEdit?: boolean;
   showStar?: boolean;
   showAddToShot?: boolean;
   enableSingleClick?: boolean;
@@ -75,7 +74,7 @@ export interface ItemFeatures {
 
 /** Core action callbacks for the gallery item */
 export interface ItemActions {
-  onOpenLightbox: (image: GeneratedImageWithMetadata, autoEnterEditMode?: boolean) => void;
+  onOpenLightbox: (image: GeneratedImageWithMetadata) => void;
   onDelete?: (id: string) => void;
   onApplySettings?: (metadata: DisplayableMetadata) => void;
   onDownloadImage: (rawUrl: string, filename: string, imageId?: string, isVideo?: boolean, originalContentType?: string) => void;

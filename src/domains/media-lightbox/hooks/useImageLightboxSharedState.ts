@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { GenerationRow } from '@/domains/generation/types';
 import type {
   LightboxActionHandlers,
@@ -8,6 +8,8 @@ import type {
 } from '../types';
 import { buildImageSharedLightboxInput } from './lightboxSharedBuilders';
 import { useSharedLightboxState } from './useSharedLightboxState';
+import { useAdjustedTaskDetails } from './useAdjustedTaskDetails';
+import { useLightboxVariantBadges } from './useLightboxVariantBadges';
 import type { ImageLightboxEnvironment } from './useImageLightboxEnvironment';
 
 interface UseImageLightboxSharedStateProps {
@@ -21,6 +23,7 @@ interface UseImageLightboxSharedStateProps {
   features?: LightboxFeatureFlags;
   actions?: LightboxActionHandlers;
   onOpenExternalGeneration?: (generationId: string, derivedContext?: string[]) => Promise<void>;
+  taskDetailsData?: import('../types').TaskDetailsData;
 }
 
 export function useImageLightboxSharedState(
@@ -28,7 +31,6 @@ export function useImageLightboxSharedState(
   env: ImageLightboxEnvironment,
 ) {
   const navigation = props.navigation;
-  const { upscaleHook } = env;
 
   const handleSlotNavNext = useCallback(() => {
     navigation?.onNext?.();
@@ -38,40 +40,40 @@ export function useImageLightboxSharedState(
     navigation?.onPrevious?.();
   }, [navigation]);
 
-  const [modeSnapshot, setModeSnapshot] = useState({
-    isInpaintMode: false,
-    isMagicEditMode: false,
-  });
-
   const sharedInput = useMemo(() => buildImageSharedLightboxInput({
     props,
     env,
-    modeSnapshot,
     handleSlotNavNext,
     handleSlotNavPrev,
   }), [
     env,
     handleSlotNavNext,
     handleSlotNavPrev,
-    modeSnapshot,
     props,
   ]);
   const sharedState = useSharedLightboxState(sharedInput);
 
-  useEffect(() => {
-    upscaleHook.setActiveVariant(sharedState.variants.activeVariant?.location, sharedState.variants.activeVariant?.id);
-  }, [
-    sharedState.variants.activeVariant?.location,
-    sharedState.variants.activeVariant?.id,
-    upscaleHook,
-  ]);
+  const { adjustedTaskDetailsData } = useAdjustedTaskDetails({
+    projectId: env.selectedProjectId,
+    activeVariant: sharedState.variants.activeVariant,
+    taskDetailsData: props.taskDetailsData,
+    isLoadingVariants: sharedState.variants.isLoading,
+    initialVariantId: props.initialVariantId,
+  });
+
+  const variantBadges = useLightboxVariantBadges({
+    pendingTaskGenerationId: env.actualGenerationId,
+    selectedProjectId: env.selectedProjectId,
+    variants: sharedState.variants.list,
+    variantFetchGenerationId: env.variantFetchGenerationId,
+  });
 
   return {
     sharedState,
+    adjustedTaskDetailsData,
+    variantBadges,
     handleSlotNavNext,
     handleSlotNavPrev,
-    modeSnapshot,
-    setModeSnapshot,
   };
 }
 

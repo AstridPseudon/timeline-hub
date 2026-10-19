@@ -12,7 +12,6 @@ type DesktopLightboxManagerProps = Pick<
   ShotImageManagerProps,
   | 'images'
   | 'shotId'
-  | 'toolTypeOverride'
   | 'selectedShotId'
   | 'readOnly'
   | 'onImageDelete'
@@ -118,12 +117,10 @@ export function DesktopLightboxOverlay({
     <MediaLightbox
       media={lightbox.currentImages[lightboxIndex]}
       shotId={managerProps.shotId}
-      toolTypeOverride={managerProps.toolTypeOverride}
       initialVariantId={capturedVariantIdRef.current ?? undefined}
       onClose={() => {
         capturedVariantIdRef.current = null;
         lightbox.setLightboxIndex(null);
-        lightbox.setShouldAutoEnterInpaint(false);
         externalGens.setDerivedNavContext(null);
         externalGens.setTempDerivedGenerations([]);
         if (isExternalGen) {
@@ -139,11 +136,8 @@ export function DesktopLightboxOverlay({
         hasPrevious,
       }}
       features={{
-        showImageEditTools: true,
         showDownload: true,
-        showMagicEdit: true,
         showTaskDetails: true,
-        initialEditActive: lightbox.shouldAutoEnterInpaint,
       }}
       actions={{
         onDelete: includeDeleteAction && !managerProps.readOnly

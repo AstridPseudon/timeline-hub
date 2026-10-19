@@ -85,8 +85,15 @@ Rules:
 - Leave Astrid's Runtime running when you finish; I'll be using it.
 The install is done when every check in the guide's "Check the complete setup" section passes. Report each briefly, and never mark a blocked or skipped check as passed. The Astrid App watches the Runtime itself and shows me "You're set up", so you don't need to ask me to refresh anything.
 
-FINALLY: HAND OVER TO ASTRID
-Astrid has its own agent (the astrid command, which runs on oh-my-pi). Make sure running astrid opens it; if something it needs is missing, install that too. Then run astrid --onboard with me so I can choose the AI model Astrid uses.
+FINALLY: CHOOSE YOUR MODEL AND HAND OVER TO ASTRID
+Astrid has its own agent (the astrid command, running on oh-my-pi). Make sure the command is installed; install any missing requirements.
+
+1. Run astrid agent models --json. Show me the saved current default, signed-in model choices, and providers that need sign-in. Ask which exact PROVIDER/MODEL I want to use.
+2. If my chosen provider needs sign-in, have me run astrid --onboard locally and choose the provider by its exact displayed name. If onboarding is unavailable, have me run omp, then /login, and pick that same name. Use OMP's own sign-in; never read, copy, or forward credential files or tokens from another agent, including ~/.codex/auth.json.
+3. Run astrid agent use PROVIDER/MODEL with my choice, then astrid agent models to verify the saved default. This persists OMP's modelRoles.default for new App and terminal chats using this OMP profile. Existing chats and explicit project defaults can retain their own model.
+
+Tell me I can later ask Astrid "Which models can you use?" or "Switch to PROVIDER/MODEL." After a billing, authentication, or quota error, Astrid should list signed-in alternatives and offer to switch.
+
 Don't set up generation (GPU, models, API keys, workflows) yourself: Astrid does that with me.
 
 End by telling me briefly what's ready, then offer me the two ways to use Astrid, and let me pick:

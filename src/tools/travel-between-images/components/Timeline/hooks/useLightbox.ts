@@ -11,7 +11,6 @@ export function useLightbox({ images, isMobile = false }: LightboxProps) {
   
   // Lightbox state
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [initialEditActive, setAutoEnterInpaint] = useState(false);
 
   // Navigation functions
   const goNext = useCallback(() => {
@@ -34,16 +33,8 @@ export function useLightbox({ images, isMobile = false }: LightboxProps) {
     }
   }, [images]);
 
-  const openLightboxWithInpaint = useCallback((index: number) => {
-    if (index >= 0 && index < images.length) {
-      setAutoEnterInpaint(true);
-      setLightboxIndex(index);
-    }
-  }, [images]);
-
   const closeLightbox = useCallback(() => {
     setLightboxIndex(null);
-    setAutoEnterInpaint(false); // Reset auto-enter flag when closing
   }, []);
 
   // Handle mobile tap - called by the "Open" button in TimelineItem when selected
@@ -71,13 +62,11 @@ export function useLightbox({ images, isMobile = false }: LightboxProps) {
     lightboxIndex,
     setLightboxIndex, // Expose raw setter for external hooks
     currentLightboxImage,
-    initialEditActive,
     
     // Navigation
     goNext,
     goPrev,
     openLightbox,
-    openLightboxWithInpaint,
     closeLightbox,
     
     // Event handlers

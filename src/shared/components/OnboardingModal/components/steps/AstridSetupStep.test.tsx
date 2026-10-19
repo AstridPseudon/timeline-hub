@@ -55,6 +55,21 @@ describe('AstridSetupStep', () => {
     resetSetupChecksForTests();
   });
 
+  it('guides the agent through choosing and saving Astrid’s model', () => {
+    expect(AGENT_SETUP_BRIEF).toContain(`FINALLY: CHOOSE YOUR MODEL AND HAND OVER TO ASTRID
+Astrid has its own agent (the astrid command, running on oh-my-pi). Make sure the command is installed; install any missing requirements.
+
+1. Run astrid agent models --json. Show me the saved current default, signed-in model choices, and providers that need sign-in. Ask which exact PROVIDER/MODEL I want to use.
+2. If my chosen provider needs sign-in, have me run astrid --onboard locally and choose the provider by its exact displayed name. If onboarding is unavailable, have me run omp, then /login, and pick that same name. Use OMP's own sign-in; never read, copy, or forward credential files or tokens from another agent, including ~/.codex/auth.json.
+3. Run astrid agent use PROVIDER/MODEL with my choice, then astrid agent models to verify the saved default. This persists OMP's modelRoles.default for new App and terminal chats using this OMP profile. Existing chats and explicit project defaults can retain their own model.
+
+Tell me I can later ask Astrid "Which models can you use?" or "Switch to PROVIDER/MODEL." After a billing, authentication, or quota error, Astrid should list signed-in alternatives and offer to switch.
+
+Don't set up generation (GPU, models, API keys, workflows) yourself: Astrid does that with me.`);
+    expect(AGENT_SETUP_BRIEF).toContain('1. Inside an agent I already use, like you: through the Astrid skill you installed, I can just ask for Astrid there.');
+    expect(AGENT_SETUP_BRIEF).toContain("2. In Astrid's own dedicated agent: run astrid in a terminal.");
+  });
+
   it('opens the modal on its content and lets Tab reach the selected setup option', async () => {
     inspectMock.mockResolvedValue(down);
     const user = userEvent.setup();

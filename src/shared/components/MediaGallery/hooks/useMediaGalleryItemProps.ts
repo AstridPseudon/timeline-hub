@@ -35,7 +35,6 @@ interface UseMediaGalleryItemFeaturesProps {
   showDelete: boolean;
   showDownload: boolean;
   showShare: boolean;
-  showEdit: boolean;
   showStar: boolean;
   showAddToShot: boolean;
   enableSingleClick: boolean;
@@ -74,7 +73,7 @@ interface UseMediaGalleryItemMobileProps {
 }
 
 interface UseMediaGalleryItemActionsProps {
-  onOpenLightbox: (image: GeneratedImageWithMetadata, autoEnterEditMode?: boolean) => void;
+  onOpenLightbox: (image: GeneratedImageWithMetadata) => void;
   onDelete?: (id: string) => void;
   onDownloadImage: (
     rawUrl: string,
@@ -106,7 +105,6 @@ export function useMediaGalleryItemProps({
   showDelete,
   showDownload,
   showShare,
-  showEdit,
   showStar,
   showAddToShot,
   enableSingleClick,
@@ -206,7 +204,6 @@ export function useMediaGalleryItemProps({
       showDelete,
       showDownload,
       showShare,
-      showEdit,
       showStar: showStar && typeof onToggleStar === 'function',
       showAddToShot,
       enableSingleClick,
@@ -216,7 +213,6 @@ export function useMediaGalleryItemProps({
       showDelete,
       showDownload,
       showShare,
-      showEdit,
       showStar,
       onToggleStar,
       showAddToShot,

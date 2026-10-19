@@ -1,14 +1,9 @@
 /**
  * ImageLightbox
  *
- * Specialized lightbox for image media. Handles all image-specific functionality:
- * - Upscale
- * - Inpainting/magic edit
- * - Reposition mode
- * - Img2Img mode
+ * Specialized info-only lightbox for image media.
  *
  * Uses useSharedLightboxState for shared functionality (variants, navigation, etc.)
- * Uses useImageEditOrchestrator for all edit-mode hooks and context value construction.
  *
  * This is part of the split architecture where MediaLightbox dispatches to
  * ImageLightbox or VideoLightbox based on media type.
@@ -34,16 +29,11 @@ import {
   useImageLightboxSharedState,
   type ImageLightboxSharedModel,
 } from './hooks/useImageLightboxSharedState';
-import {
-  useImageLightboxEditing,
-  type ImageLightboxEditModel,
-} from './hooks/useImageLightboxEditing';
 import { ImageLightboxControlsPanel } from './components/ImageLightboxControlsPanel';
 
 import { LightboxShell } from './components/LightboxShell';
 import { LightboxProviders } from './components/LightboxProviders';
 import { LightboxLayout } from './components/layouts/LightboxLayout';
-import { ImageEditProvider } from './contexts/ImageEditContext';
 import type { WorkflowControlsBarProps } from './components/WorkflowControlsBar';
 import type { LightboxLayoutProps } from './components/layouts/types';
 
@@ -70,7 +60,6 @@ interface ImageLightboxCoreProps {
   readOnly?: boolean;
   shotId?: string;
   initialVariantId?: string;
-  toolTypeOverride?: string;
 }
 
 interface ImageLightboxTaskDetailProps {
@@ -106,7 +95,6 @@ function useImageLightboxRenderModel(
   props: ImageLightboxProps,
   env: ImageLightboxEnvironment,
   sharedModel: ImageLightboxSharedModel,
-  editModel: ImageLightboxEditModel,
 ) {
   const {
     media,
@@ -122,8 +110,7 @@ function useImageLightboxRenderModel(
   const navigation = props.navigation;
   const shotWorkflow = props.shotWorkflow;
 
-  const { sharedState, handleSlotNavNext, handleSlotNavPrev } = sharedModel;
-  const { editOrchestrator, adjustedTaskDetailsData, variantBadges } = editModel;
+  const { sharedState, handleSlotNavNext, handleSlotNavPrev, adjustedTaskDetailsData, variantBadges } = sharedModel;
 
   // --- Variant state for LightboxStateContext ---
   const lightboxVariants = useMemo(() => ({
@@ -134,7 +121,6 @@ function useImageLightboxRenderModel(
     handleVariantSelect: sharedState.variants.setActiveVariantId,
     handleMakePrimary: sharedState.variants.setPrimaryVariant,
     handleDeleteVariant: sharedState.variants.deleteVariant,
-    onLoadVariantSettings: env.setVariantParamsToLoad,
     promoteSuccess: sharedState.variants.promoteSuccess,
     isPromoting: sharedState.variants.isPromoting,
     handlePromoteToGeneration: sharedState.variants.handlePromoteToGeneration,
@@ -146,7 +132,7 @@ function useImageLightboxRenderModel(
     onMarkAllViewed: variantBadges.handleMarkAllViewed,
     variantsSectionRef: env.variantsSectionRef,
   }), [
-    sharedState.variants, env.setVariantParamsToLoad,
+    sharedState.variants,
     sharedState.makeMainVariant, variantBadges, env.variantsSectionRef,
   ]);
 
@@ -165,10 +151,6 @@ function useImageLightboxRenderModel(
     await invokeLightboxDelete(actionHandlers.onDelete, media.id, 'ImageLightbox.delete');
   }, [actionHandlers, media.id]);
 
-  const handleApplySettings = useCallback(() => {
-    actionHandlers?.onApplySettings?.(media.metadata);
-  }, [actionHandlers, media.metadata]);
-
   // --- Workflow bar ---
   const handleNavigateToShotFromSelector = useCallback((shot: { id: string; name: string }) => {
     if (!shotWorkflow?.onNavigateToShot) return;
@@ -181,13 +163,9 @@ function useImageLightboxRenderModel(
 
   const workflowBar = useMemo(() => ({
     core: {
-      onDelete: actionHandlers?.onDelete,
-      onApplySettings: actionHandlers?.onApplySettings,
       onAddToVideoEditor: actionHandlers?.onAddToVideoEditor ?? addToVideoEditor.onClick,
       addToVideoEditorPhase: actionHandlers?.onAddToVideoEditor ? 'idle' : addToVideoEditor.phase,
-      isSpecialEditMode: editOrchestrator.isSpecialEditMode,
       isVideo: false,
-      handleApplySettings,
     },
     shotSelector: shotWorkflow?.onAddToShot
       ? {
@@ -218,7 +196,6 @@ function useImageLightboxRenderModel(
   } satisfies WorkflowControlsBarProps), [
     actionHandlers,
     addToVideoEditor,
-    editOrchestrator.isSpecialEditMode, handleApplySettings,
     shotWorkflow, env.actualGenerationId, env.contentRef,
     media.id, media.thumbUrl, media.timeline_frame,
     sharedState.effectiveMedia.mediaUrl, allShots, selectedShotId,
@@ -231,9 +208,9 @@ function useImageLightboxRenderModel(
   ]);
 
   // --- Panel layout ---
-  const showTaskDetails = props.features?.showTaskDetails ?? false;
+  const showTaskDetails = props.features?.showTaskDetails ?? true;
   const showPanel = sharedState.layout.shouldShowSidePanel
-    || ((showTaskDetails || editOrchestrator.isSpecialEditMode) && env.isMobile);
+    || (showTaskDetails && env.isMobile);
   const panelVariant = (sharedState.layout.shouldShowSidePanel && !env.isMobile)
     ? 'desktop' as const : 'mobile' as const;
   const panelTaskId = adjustedTaskDetailsData?.taskId || media?.source_task_id || null;
@@ -280,10 +257,7 @@ function useImageLightboxRenderModel(
 
   const controlsPanelContent = (
     <ImageLightboxControlsPanel
-      media={props.media}
-      features={props.features}
-      env={env}
-      editModel={editModel}
+      taskDetailsData={adjustedTaskDetailsData}
       showPanel={showPanel}
       panelVariant={panelVariant}
       panelTaskId={panelTaskId}
@@ -357,18 +331,8 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = (props) => {
   if (envChanged.length > 0) {
     console.log(`[ImageLightbox] env changed r${renderCountRef.current}: ${envChanged.join(', ')}`);
   }
-  const flushTextFields = env.editSettingsPersistence.flushTextFields;
-  const handleClose = useCallback(() => {
-    void flushTextFields();
-    onRequestClose();
-  }, [flushTextFields, onRequestClose]);
-  const propsWithFlushOnClose = useMemo(
-    () => ({ ...props, onClose: handleClose }),
-    [props, handleClose],
-  );
-  const sharedModel = useImageLightboxSharedState(propsWithFlushOnClose, env);
-  const editModel = useImageLightboxEditing(propsWithFlushOnClose, env, sharedModel);
-  const renderModel = useImageLightboxRenderModel(propsWithFlushOnClose, env, sharedModel, editModel);
+  const sharedModel = useImageLightboxSharedState(props, env);
+  const renderModel = useImageLightboxRenderModel(props, env, sharedModel);
   const overlayViewport: OverlayViewportConstraints = {
     tasksPaneOpen: env.effectiveTasksPaneOpen,
     tasksPaneWidth: env.effectiveTasksPaneWidth,
@@ -380,21 +344,17 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = (props) => {
 
   return (
     <LightboxProviders stateValue={renderModel.lightboxStateValue}>
-      <ImageEditProvider value={editModel.editOrchestrator.imageEditValue}>
-        <LightboxShell
-          onClose={handleClose}
-          hasCanvasOverlay={editModel.editOrchestrator.isInpaintMode}
-          isRepositionMode={editModel.editOrchestrator.isInpaintMode && editModel.editOrchestrator.editMode === 'reposition'}
-          isMobile={env.isMobile}
-          isTabletOrLarger={sharedModel.sharedState.layout.isTabletOrLarger}
-          overlayViewport={overlayViewport}
-          contentRef={env.contentRef}
-          accessibilityTitle={renderModel.accessibilityTitle}
-          accessibilityDescription={renderModel.accessibilityDescription}
-        >
-          <LightboxLayout {...renderModel.layoutProps} controlsPanelContent={renderModel.controlsPanelContent} />
-        </LightboxShell>
-      </ImageEditProvider>
+      <LightboxShell
+        onClose={onRequestClose}
+        isMobile={env.isMobile}
+        isTabletOrLarger={sharedModel.sharedState.layout.isTabletOrLarger}
+        overlayViewport={overlayViewport}
+        contentRef={env.contentRef}
+        accessibilityTitle={renderModel.accessibilityTitle}
+        accessibilityDescription={renderModel.accessibilityDescription}
+      >
+        <LightboxLayout {...renderModel.layoutProps} controlsPanelContent={renderModel.controlsPanelContent} />
+      </LightboxShell>
     </LightboxProviders>
   );
 };

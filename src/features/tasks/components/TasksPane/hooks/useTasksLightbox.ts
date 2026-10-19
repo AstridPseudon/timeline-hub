@@ -199,8 +199,6 @@ export function useTasksLightbox({
       hasPrevious: isVideoWithNavigation && currentIndex > 0,
       onNext: isVideoWithNavigation ? handleVideoNext : undefined,
       onPrevious: isVideoWithNavigation ? handleVideoPrevious : undefined,
-      showImageEditTools: lightboxData.type === 'image',
-      showMagicEdit: lightboxData.type === 'image',
       initialVariantId: lightboxData.initialVariantId,
       // For video tasks (especially individual segments), fetch variants for the video itself
       // not from its parent - this ensures we show the correct video in the lightbox

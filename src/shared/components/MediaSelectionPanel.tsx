@@ -93,7 +93,6 @@ export function MediaSelectionPanel({ onSelect, mediaType, label }: MediaSelecti
                  showDelete: false,
                  showDownload: false,
                  showShare: false,
-                 showEdit: false,
                  showStar: false,
                  showAddToShot: false,
                  enableSingleClick: true,

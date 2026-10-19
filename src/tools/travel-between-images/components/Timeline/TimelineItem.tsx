@@ -45,7 +45,6 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
     onDuplicate,
     onVariantDrop,
     onVariantDropTargetChange,
-    onInpaintClick,
     duplicatingImageId,
     duplicateSuccessImageId,
   } = actions ?? {};
@@ -296,7 +295,6 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
             isSelected={isSelected}
             isTouchDevice={isTouchDevice}
             onMobileTap={onMobileTap}
-            onInpaintClick={onInpaintClick}
             onDuplicateClick={handleDuplicateClick}
             onDeleteClick={handleDeleteClick}
             duplicatingImageId={duplicatingImageId}

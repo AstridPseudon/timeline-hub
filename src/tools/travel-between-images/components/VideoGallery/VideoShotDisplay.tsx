@@ -400,7 +400,6 @@ export const VideoShotDisplay: React.FC<VideoShotDisplayProps> = ({
             hasPrevious: false,
           }}
           features={{
-            showImageEditTools: false,
             showDownload: true,
           }}
           actions={{ starred: false }}

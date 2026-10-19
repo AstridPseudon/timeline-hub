@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
-import type { GeneratedImageWithMetadata } from '../../types';
 import type { GenerationRow } from '@/domains/generation/types';
 import { MediaGalleryLightbox } from '../MediaGalleryLightbox';
 
@@ -26,16 +25,6 @@ vi.mock('@/domains/generation/components/GenerationDetails', () => ({
   GenerationDetails: () => null,
 }));
 
-function buildMedia(overrides: Partial<GeneratedImageWithMetadata>): GeneratedImageWithMetadata {
-  return {
-    id: 'gen-1',
-    url: 'https://example.com/image.png',
-    metadata: {},
-    createdAt: '2025-01-01T00:00:00Z',
-    ...overrides,
-  } as GeneratedImageWithMetadata;
-}
-
 function buildLightboxMedia(overrides: Partial<GenerationRow>): GenerationRow {
   return {
     id: 'gen-1',
@@ -46,23 +35,11 @@ function buildLightboxMedia(overrides: Partial<GenerationRow>): GenerationRow {
   };
 }
 
-function renderLightbox({
-  activeLightboxMedia,
-  lightboxMedia,
-  isMobile = false,
-  onShowTaskDetails = vi.fn(),
-}: {
-  activeLightboxMedia: GeneratedImageWithMetadata | null;
-  lightboxMedia: GenerationRow | null;
-  isMobile?: boolean;
-  onShowTaskDetails?: () => void;
-}) {
+function renderLightbox(lightboxMedia: GenerationRow | null) {
   return render(
     <MediaGalleryLightbox
       session={{
-        activeLightboxMedia,
         lightboxMedia,
-        autoEnterEditMode: false,
         onClose: vi.fn(),
         filteredImages: [],
         isServerPagination: false,
@@ -78,12 +55,10 @@ function renderLightbox({
         onShotChange: vi.fn(),
         showTickForImageId: null,
         setShowTickForImageId: vi.fn(),
-        isMobile,
         showTaskDetailsModal: false,
         setShowTaskDetailsModal: vi.fn(),
         selectedImageForDetails: null,
         setSelectedImageForDetails: vi.fn(),
-        onShowTaskDetails,
         taskDetailsData: null,
       }}
     />
@@ -99,51 +74,37 @@ describe('MediaGalleryLightbox', () => {
     });
   });
 
-  it('uses session-owned lightbox media while preserving auto-enter edit mode from active metadata', () => {
-    const active = buildMedia({
-      id: 'gen-1',
-      metadata: { __autoEnterEditMode: true, source: 'active' } as GeneratedImageWithMetadata['metadata'],
-    });
+  it('uses session media and omits viewer edit props', () => {
     const lightboxMedia = buildLightboxMedia({
       id: 'gen-1',
       starred: true,
       metadata: { source: 'session' },
     });
 
-    renderLightbox({ activeLightboxMedia: active, lightboxMedia });
+    renderLightbox(lightboxMedia);
 
     const props = mediaLightboxSpy.mock.calls[0]?.[0] as {
       actions?: { starred?: boolean };
-      features?: { initialEditActive?: boolean };
+      features?: Record<string, unknown>;
       media?: GenerationRow;
     };
     expect(props.actions?.starred).toBe(true);
-    expect(props.features?.initialEditActive).toBe(true);
+    expect(props.features).not.toHaveProperty('showImageEditTools');
+    expect(props.features).not.toHaveProperty('showMagicEdit');
+    expect(props.actions).not.toHaveProperty('onApplySettings');
     expect(props.media?.metadata).toEqual({ source: 'session' });
     expect(props.media?.location).toBe('https://example.com/resolved.png');
   });
 
-  it('disables image edit tools for video media and forwards mobile task details callbacks', () => {
-    const active = buildMedia({
-      id: 'gen-video',
-      type: 'video',
-      metadata: { source: 'active-video' } as GeneratedImageWithMetadata['metadata'],
-    });
-    const onShowTaskDetails = vi.fn();
+  it('keeps video viewers info-only on mobile', () => {
     const lightboxMedia = buildLightboxMedia({ id: 'gen-video', starred: false, metadata: { source: 'video' } });
 
-    renderLightbox({
-      activeLightboxMedia: active,
-      lightboxMedia,
-      isMobile: true,
-      onShowTaskDetails,
-    });
+    renderLightbox(lightboxMedia);
 
     const props = mediaLightboxSpy.mock.calls[0]?.[0] as {
-      features?: { showImageEditTools?: boolean };
-      videoProps?: { onShowTaskDetails?: () => void };
+      features?: Record<string, unknown>;
     };
-    expect(props.features?.showImageEditTools).toBe(false);
-    expect(props.videoProps?.onShowTaskDetails).toBe(onShowTaskDetails);
+    expect(props.features).not.toHaveProperty('showImageEditTools');
+    expect(props.features).not.toHaveProperty('showMagicEdit');
   });
 });

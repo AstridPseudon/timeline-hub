@@ -34,12 +34,10 @@ interface TimelineImageActionProps {
 interface TimelineLightboxProps {
   handleDesktopDoubleClick: (idx: number) => void;
   handleMobileTap: (idx: number) => void;
-  handleInpaintClick?: (idx: number) => void;
 }
 
 interface TimelineSegmentProps {
   selectedOutputId?: string | null;
-  onSegmentFrameCountChange?: (pairShotGenerationId: string, frameCount: number) => void;
   segmentSlots?: SegmentSlot[];
   isSegmentsLoading?: boolean;
   hasPendingTask?: (pairShotGenerationId: string | null | undefined) => boolean;

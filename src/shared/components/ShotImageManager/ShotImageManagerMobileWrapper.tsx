@@ -82,10 +82,6 @@ export const ShotImageManagerMobileWrapper: React.FC<ShotImageManagerMobileWrapp
         onImageReorder={props.onImageReorder}
         generationMode={props.generationMode}
         onOpenLightbox={props.onOpenLightbox || lightbox.setLightboxIndex}
-        onInpaintClick={(index) => {
-          lightbox.setShouldAutoEnterInpaint(true);
-          lightbox.setLightboxIndex(index);
-        }}
         columns={props.columns}
         duplicatingImageId={props.duplicatingImageId}
         duplicateSuccessImageId={props.duplicateSuccessImageId}

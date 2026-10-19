@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useMediaGalleryLightboxSession } from '@/shared/components/MediaGallery/hooks/useMediaGalleryLightboxSession';
+import { useLightboxNavigationState } from '@/shared/components/MediaGallery/hooks/useMediaGalleryLightboxControllers';
 
 vi.mock('@/shared/components/MediaGallery/hooks/useMediaGalleryLightboxControllers', () => ({
   buildTaskDetailsPayload: ({
@@ -26,7 +27,7 @@ vi.mock('@/shared/components/MediaGallery/hooks/useMediaGalleryLightboxControlle
     taskId: taskId ?? null,
     onClose,
   }),
-  useLightboxNavigationState: () => ({ hasNext: true, hasPrevious: true }),
+  useLightboxNavigationState: vi.fn(() => ({ hasNext: true, hasPrevious: true })),
   useShotAssociationState: () => ({
     positionedInSelectedShot: undefined,
     associatedWithoutPositionInSelectedShot: undefined,
@@ -45,7 +46,6 @@ function buildParams(overrides: Record<string, unknown> = {}) {
         metadata: { __autoEnterEditMode: true, source: 'active' },
         starred: false,
       },
-      autoEnterEditMode: false,
       selectedShotIdLocal: 'shot-1',
       showTickForImageId: 'img-1',
       showTickForSecondaryImageId: 'img-2',
@@ -86,11 +86,9 @@ function buildParams(overrides: Record<string, unknown> = {}) {
     handlePreviousImage: vi.fn(),
     handleSetActiveLightboxIndex: vi.fn(),
     lightboxDeletingId: 'img-2',
-    onApplySettings: vi.fn(),
     simplifiedShotOptions: [{ id: 'shot-1', name: 'Shot 1' }],
     onAddToLastShot: vi.fn(),
     onAddToLastShotWithoutPosition: vi.fn(),
-    isMobile: false,
     task: { id: 'task-1' },
     taskDetailsLoading: true,
     taskError: null,
@@ -98,8 +96,6 @@ function buildParams(overrides: Record<string, unknown> = {}) {
     lightboxTaskMapping: { taskId: 'task-1' },
     onCreateShot: vi.fn(),
     handleNavigateToShot: vi.fn(),
-    handleShowTaskDetails: vi.fn(),
-    currentToolType: 'image',
     showDelete: true,
     ...overrides,
   };
@@ -110,9 +106,15 @@ describe('useMediaGalleryLightboxSession', () => {
     const params = buildParams();
     const { result } = renderHook(() => useMediaGalleryLightboxSession(params as never));
 
-    expect(result.current).toEqual(expect.objectContaining({
+    expect(vi.mocked(useLightboxNavigationState)).toHaveBeenCalledWith({
       activeLightboxMedia: params.stateHook.state.activeLightboxMedia,
-      autoEnterEditMode: false,
+      filteredImages: params.filtersHook.filteredImages,
+      isServerPagination: true,
+      serverPage: 2,
+      totalPages: 4,
+    });
+
+    expect(result.current).toEqual(expect.objectContaining({
       onClose: expect.any(Function),
       filteredImages: params.filtersHook.filteredImages,
       isServerPagination: true,
@@ -122,7 +124,6 @@ describe('useMediaGalleryLightboxSession', () => {
       onPrevious: params.handlePreviousImage,
       onDelete: params.actionsHook.handleOptimisticDelete,
       isDeleting: 'img-2',
-      onApplySettings: params.onApplySettings,
       simplifiedShotOptions: params.simplifiedShotOptions,
       selectedShotIdLocal: 'shot-1',
       selectedShotIdForLightbox: 'shot-1',
@@ -149,9 +150,10 @@ describe('useMediaGalleryLightboxSession', () => {
         onClose: expect.any(Function),
       }),
       onNavigateToShot: params.handleNavigateToShot,
-      toolTypeOverride: 'image',
       setActiveLightboxIndex: params.handleSetActiveLightboxIndex,
     }));
+    expect(result.current).not.toHaveProperty('autoEnterEditMode');
+    expect(result.current).not.toHaveProperty('onApplySettings');
     expect(result.current.lightboxMedia).toEqual(expect.objectContaining({
       id: 'img-1',
       generation_id: 'img-1',

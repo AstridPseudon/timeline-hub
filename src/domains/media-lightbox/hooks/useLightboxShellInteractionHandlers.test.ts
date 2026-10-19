@@ -63,8 +63,6 @@ describe('useLightboxShellInteractionHandlers', () => {
     const popupRef = { current: popup };
     const { result } = renderHook(() =>
       useLightboxShellInteractionHandlers({
-        hasCanvasOverlay: false,
-        isRepositionMode: false,
         isMobile: false,
         onClose,
         popupRef,
@@ -89,38 +87,11 @@ describe('useLightboxShellInteractionHandlers', () => {
     expect(upEvent.nativeEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
   });
 
-  it('does not close on overlay pointer up while in reposition mode', () => {
-    const onClose = vi.fn();
-    const popupRef = { current: document.createElement('div') };
-    const { result } = renderHook(() =>
-      useLightboxShellInteractionHandlers({
-        hasCanvasOverlay: false,
-        isRepositionMode: true,
-        isMobile: false,
-        onClose,
-        popupRef,
-      }),
-    );
-
-    const overlay = document.createElement('div');
-    const downEvent = createPointerEvent(overlay, overlay);
-    const upEvent = createPointerEvent(overlay, overlay);
-
-    act(() => {
-      result.current.handleOverlayPointerDown(downEvent);
-      result.current.handleOverlayPointerUp(upEvent);
-    });
-
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
   it('closes from background capture when pointer down/up are both on lightbox background', () => {
     const onClose = vi.fn();
     const popupRef = { current: document.createElement('div') };
     const { result } = renderHook(() =>
       useLightboxShellInteractionHandlers({
-        hasCanvasOverlay: false,
-        isRepositionMode: false,
         isMobile: false,
         onClose,
         popupRef,
@@ -146,8 +117,6 @@ describe('useLightboxShellInteractionHandlers', () => {
     const popupRef = { current: document.createElement('div') };
     const { result } = renderHook(() =>
       useLightboxShellInteractionHandlers({
-        hasCanvasOverlay: false,
-        isRepositionMode: false,
         isMobile: false,
         onClose,
         popupRef,
@@ -175,8 +144,6 @@ describe('useLightboxShellInteractionHandlers', () => {
     const popupRef = { current: document.createElement('div') };
     const { result } = renderHook(() =>
       useLightboxShellInteractionHandlers({
-        hasCanvasOverlay: true,
-        isRepositionMode: false,
         isMobile: true,
         onClose,
         popupRef,
@@ -213,8 +180,6 @@ describe('useLightboxShellInteractionHandlers', () => {
     const popupRef = { current: document.createElement('div') };
     const { result } = renderHook(() =>
       useLightboxShellInteractionHandlers({
-        hasCanvasOverlay: false,
-        isRepositionMode: false,
         isMobile: false,
         onClose,
         popupRef,

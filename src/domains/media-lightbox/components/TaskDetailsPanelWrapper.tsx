@@ -5,9 +5,6 @@ import type { TaskDetailsData } from '../types';
 
 interface TaskDetailsPanelWrapperProps {
   taskDetailsData?: TaskDetailsData;
-  replaceImages: boolean;
-  onReplaceImagesChange: (replace: boolean) => void;
-  onClose: () => void;
 }
 
 /**
@@ -17,9 +14,6 @@ interface TaskDetailsPanelWrapperProps {
  */
 export const TaskDetailsPanelWrapper: React.FC<TaskDetailsPanelWrapperProps> = ({
   taskDetailsData,
-  replaceImages,
-  onReplaceImagesChange,
-  onClose,
 }) => {
   return (
     <TaskDetailsPanel
@@ -29,12 +23,8 @@ export const TaskDetailsPanelWrapper: React.FC<TaskDetailsPanelWrapperProps> = (
       error={taskDetailsData?.error ?? null}
       inputImages={taskDetailsData?.inputImages || []}
       taskId={taskDetailsData?.taskId || null}
-      replaceImages={replaceImages}
-      onReplaceImagesChange={onReplaceImagesChange}
-      onApplySettingsFromTask={taskDetailsData?.onApplySettingsFromTask ? (taskId, replaceImages, inputImages) => {
-        taskDetailsData.onApplySettingsFromTask?.(taskId, replaceImages, inputImages);
-        onClose(); // Close lightbox after applying settings
-      } : undefined}
+      replaceImages={false}
+      onReplaceImagesChange={() => {}}
       className=""
       showUserImage={false}
       derivedSection={null}

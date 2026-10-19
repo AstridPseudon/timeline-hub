@@ -44,7 +44,7 @@ export interface EditModePanelVariantsState {
   handlePromoteToGeneration?: LightboxVariantState['handlePromoteToGeneration'];
   isPromoting?: boolean;
   handleDeleteVariant?: LightboxVariantState['handleDeleteVariant'];
-  onLoadVariantSettings?: LightboxVariantState['onLoadVariantSettings'];
+  onLoadVariantSettings?: (variantParams: Record<string, unknown>) => void;
   pendingTaskCount?: number;
   unviewedVariantCount?: number;
   onMarkAllViewed?: () => void;

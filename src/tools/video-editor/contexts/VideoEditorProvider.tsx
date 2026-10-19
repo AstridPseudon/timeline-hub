@@ -136,10 +136,7 @@ function isLightboxFeatures(value: unknown): value is LightboxFeatureFlags {
   return isRecord(value) && hasOptionalFieldsOfType(
     value,
     [
-      'showImageEditTools',
       'showDownload',
-      'showMagicEdit',
-      'initialEditActive',
       'showTaskDetails',
     ],
     'boolean',

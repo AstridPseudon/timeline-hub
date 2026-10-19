@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -19,40 +19,41 @@ const configOptions = [{
 
 type HostCall = { connection: string; method: string; params: unknown };
 type HostRecord = { connection: string; calls: HostCall[]; disposed: number; releasePrompt?: () => void; promptStarted?: () => void };
+type CliInvocation = { args: string[]; cwd: string; profile: string | null };
 
-function fakeOmp(directory: string): { command: string; rolesPath: string } {
-  const packageRoot = join(directory, 'node_modules', '@oh-my-pi', 'pi-coding-agent');
-  const executable = join(packageRoot, 'dist', 'cli.js');
-  const catalogDirectory = join(directory, 'node_modules', '@oh-my-pi', 'pi-catalog', 'src');
-  const rolesPath = join(directory, 'model-roles.json');
-  mkdirSync(join(packageRoot, 'dist'), { recursive: true });
-  mkdirSync(catalogDirectory, { recursive: true });
-  writeFileSync(join(catalogDirectory, 'models.json'), JSON.stringify({
-    openai: {
-      'gpt-4.1': { name: 'GPT 4.1' },
-      'gpt-4.1-mini': { name: 'GPT 4.1 mini' },
-    },
-    anthropic: { 'claude-sonnet': { name: 'Claude Sonnet' } },
-  }));
-  writeFileSync(rolesPath, JSON.stringify({ default: 'openai/gpt-4.1', smol: 'openai/gpt-4.1-mini', slow: 'anthropic/claude-sonnet' }));
+function invocations(path: string): CliInvocation[] {
+  return readFileSync(path, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line) as CliInvocation);
+}
+
+function fakeAstrid(directory: string): { command: string; invocationsPath: string; selectedPath: string } {
+  const executable = join(directory, 'astrid');
+  const invocationsPath = join(directory, 'invocations.jsonl');
+  const selectedPath = join(directory, 'selected-model.txt');
+  writeFileSync(selectedPath, 'openai/gpt-4.1');
   const script = `#!/usr/bin/env node
 const fs = require('node:fs');
-const args = process.argv.slice(2).filter(arg => !arg.startsWith('--profile='));
-if (process.env.OMP_FAKE_FAIL === '1') {
+const args = process.argv.slice(2);
+fs.appendFileSync(${JSON.stringify(invocationsPath)}, JSON.stringify({args, cwd:process.cwd(), profile:process.env.OMP_PROFILE ?? null}) + '\\n');
+const snapshot = currentModel => ({schemaVersion:1,currentModel,providers:[
+  {id:'openai',name:'OpenAI',signedIn:true,models:[
+    {id:'gpt-4.1',name:'GPT 4.1',selector:'openai/gpt-4.1'},
+    {id:'gpt-4.1-mini',name:'GPT 4.1 mini',selector:'openai/gpt-4.1-mini'}
+  ]},
+  {id:'anthropic',name:'Anthropic',signedIn:false,models:[{id:'claude-sonnet',name:'Claude Sonnet',selector:'anthropic/claude-sonnet'}]}
+]});
+if (process.env.ASTRID_FAKE_FAIL === '1' && args[1] === 'use') {
   process.stderr.write('credential-secret-should-never-escape');
   process.exit(7);
 }
-if (args[0] === 'models' && args[1] === 'ls' && args.includes('--json')) {
-  process.stdout.write(JSON.stringify({models:[
-    {provider:'openai',id:'gpt-4.1',selector:'openai/gpt-4.1',name:'GPT 4.1'},
-    {provider:'openai',id:'gpt-4.1-mini',selector:'openai/gpt-4.1-mini',name:'GPT 4.1 mini'}
-  ]}));
-} else if (args[0] === 'config' && args[1] === 'get' && args[2] === 'modelRoles') {
-  process.stdout.write(JSON.stringify({key:'modelRoles',value:JSON.parse(fs.readFileSync(${JSON.stringify(rolesPath)},'utf8'))}));
-} else if (args[0] === 'config' && args[1] === 'set' && args[2] === 'modelRoles') {
-  fs.writeFileSync(${JSON.stringify(rolesPath)}, args[3]);
-} else if (args[0] === 'usage' && args.includes('--json')) {
-  process.stdout.write(JSON.stringify({reports:[],accountsWithoutUsage:[],disabledCredentials:[],capacity:{}}));
+if (args.length === 3 && args[0] === 'agent' && args[1] === 'models' && args[2] === '--json') {
+  process.stdout.write(JSON.stringify(snapshot(fs.readFileSync(${JSON.stringify(selectedPath)},'utf8'))));
+} else if (args.length === 4 && args[0] === 'agent' && args[1] === 'use' && args[3] === '--json') {
+  if (!['openai/gpt-4.1', 'openai/gpt-4.1-mini', 'anthropic/claude-sonnet'].includes(args[2])) {
+    process.stderr.write('credential-secret-should-never-escape');
+    process.exit(7);
+  }
+  fs.writeFileSync(${JSON.stringify(selectedPath)}, args[2]);
+  process.stdout.write(JSON.stringify(snapshot(args[2])));
 } else {
   process.stderr.write('credential-secret-should-never-escape');
   process.exit(7);
@@ -60,22 +61,7 @@ if (args[0] === 'models' && args[1] === 'ls' && args.includes('--json')) {
 `;
   writeFileSync(executable, script, { mode: 0o755 });
   chmodSync(executable, 0o755);
-  return { command: executable, rolesPath };
-}
-
-function fakeBun(directory: string): void {
-  const bin = join(directory, 'bin');
-  mkdirSync(bin, { recursive: true });
-  const metadata = {
-    providers: [
-      { id: 'openai', name: 'OpenAI', models: [{ id: 'gpt-4.1', name: 'GPT 4.1' }, { id: 'gpt-4.1-mini', name: 'GPT 4.1 mini' }] },
-      { id: 'anthropic', name: 'Anthropic', models: [{ id: 'claude-sonnet', name: 'Claude Sonnet' }] },
-    ],
-    loginProviders: [{ id: 'openai-codex', name: 'ChatGPT Plus/Pro (Codex Subscription)' }],
-  };
-  const executable = join(bin, 'bun');
-  writeFileSync(executable, `#!/usr/bin/env node\nprocess.stdout.write(${JSON.stringify(JSON.stringify(metadata))});\n`, { mode: 0o755 });
-  chmodSync(executable, 0o755);
+  return { command: executable, invocationsPath, selectedPath };
 }
 
 async function listen(server: ReturnType<typeof createServer>): Promise<string> {
@@ -84,16 +70,13 @@ async function listen(server: ReturnType<typeof createServer>): Promise<string> 
 }
 
 async function fixture(advertisedModels?: string[]) {
-  const directory = mkdtempSync(join(tmpdir(), 'astrid-acp-model-http-'));
-  const omp = fakeOmp(directory);
-  fakeBun(directory);
-  const originalPath = process.env.PATH;
-  process.env.PATH = `${join(directory, 'bin')}${originalPath ? `:${originalPath}` : ''}`;
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), 'astrid-acp-model-http-')));
+  const astrid = fakeAstrid(directory);
   const hosts: HostRecord[] = [];
   let nextConnection = 0;
   const registry = { assertOwned: async (_projectId: string, sessionId: string) => assert.equal(sessionId, 'saved-session') };
   const { server, bridge } = createAstridAcpHttpServer({
-    config: { token, port: 0, cwd: directory, ompCommand: omp.command, profile: 'test-profile' },
+    config: { token, port: 0, cwd: directory, command: astrid.command, profile: 'test-profile' },
     chatRegistry: registry as never,
     idFactory: () => `c${++nextConnection}`,
     hostFactory: () => {
@@ -129,7 +112,7 @@ async function fixture(advertisedModels?: string[]) {
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
-  return { directory, omp, hosts, server, bridge, call, originalPath };
+  return { directory, astrid, hosts, server, bridge, call };
 }
 
 async function closeFixture(value: Awaited<ReturnType<typeof fixture>>): Promise<void> {
@@ -137,13 +120,11 @@ async function closeFixture(value: Awaited<ReturnType<typeof fixture>>): Promise
   finally {
     value.server.closeAllConnections();
     await new Promise<void>(resolve => value.server.close(() => resolve()));
-    if (value.originalPath === undefined) delete process.env.PATH;
-    else process.env.PATH = value.originalPath;
     rmSync(value.directory, { recursive: true, force: true });
   }
 }
 
-test('model HTTP routes require the bridge token and protocol, reject unavailable selectors without fallback, and redact OMP stderr', async () => {
+test('model HTTP routes require the bridge token and protocol, reject unavailable selectors without fallback, and redact CLI stderr', async () => {
   const value = await fixture();
   try {
     assert.equal((await value.call('/models', undefined, { auth: false })).status, 401);
@@ -153,18 +134,26 @@ test('model HTTP routes require the bridge token and protocol, reject unavailabl
     const models = await modelsResponse.json() as { providers: Array<{ id: string; signedIn: boolean; models: Array<{ id: string }> }>; currentModel: string };
     assert.equal(models.currentModel, 'openai/gpt-4.1');
     assert.ok(models.providers.some(provider => provider.id === 'openai' && provider.signedIn && provider.models.some(model => model.id === 'gpt-4.1-mini')));
+    assert.deepEqual(invocations(value.astrid.invocationsPath), [{
+      args: ['agent', 'models', '--json'], cwd: value.directory, profile: 'test-profile',
+    }]);
 
     const unavailable = await value.call('/model', { model: 'openai/not-available' });
-    assert.equal(unavailable.status, 400);
+    assert.equal(unavailable.status, 500);
     const errorBody = await unavailable.text();
     assert.equal(errorBody.includes('credential-secret'), false);
-    assert.equal(JSON.parse(readFileSync(value.omp.rolesPath, 'utf8')).default, 'openai/gpt-4.1');
-    process.env.OMP_FAKE_FAIL = '1';
+    assert.equal(readFileSync(value.astrid.selectedPath, 'utf8'), 'openai/gpt-4.1');
+    process.env.ASTRID_FAKE_FAIL = '1';
     try {
       const failed = await value.call('/model', { model: 'openai/gpt-4.1-mini' });
       assert.equal(failed.status, 500);
       assert.equal((await failed.text()).includes('credential-secret'), false);
-    } finally { delete process.env.OMP_FAKE_FAIL; }
+    } finally { delete process.env.ASTRID_FAKE_FAIL; }
+    assert.deepEqual(invocations(value.astrid.invocationsPath).map(({ args, cwd, profile }) => ({ args, cwd, profile })), [
+      { args: ['agent', 'models', '--json'], cwd: value.directory, profile: 'test-profile' },
+      { args: ['agent', 'use', 'openai/not-available', '--json'], cwd: value.directory, profile: 'test-profile' },
+      { args: ['agent', 'use', 'openai/gpt-4.1-mini', '--json'], cwd: value.directory, profile: 'test-profile' },
+    ]);
     assert.equal((await value.call('/model', { model: 'openai/gpt-4.1-mini' }, { auth: false })).status, 401);
     assert.equal((await value.call('/model', { model: 'openai/gpt-4.1-mini' }, { protocol: 'v0' })).status, 400);
   } finally { await closeFixture(value); }
@@ -180,9 +169,11 @@ test('a valid model switch retires old hosts and project prompts load the same t
 
     const switched = await value.call('/model', { model: 'openai/gpt-4.1-mini' });
     assert.equal(switched.status, 200);
-    assert.deepEqual(JSON.parse(readFileSync(value.omp.rolesPath, 'utf8')), {
-      default: 'openai/gpt-4.1-mini', smol: 'openai/gpt-4.1-mini', slow: 'anthropic/claude-sonnet',
-    });
+    assert.equal(readFileSync(value.astrid.selectedPath, 'utf8'), 'openai/gpt-4.1-mini');
+    assert.deepEqual(invocations(value.astrid.invocationsPath).map(({ args, cwd, profile }) => ({ args, cwd, profile })), [
+      { args: ['agent', 'models', '--json'], cwd: value.directory, profile: 'test-profile' },
+      { args: ['agent', 'use', 'openai/gpt-4.1-mini', '--json'], cwd: value.directory, profile: 'test-profile' },
+    ]);
     assert.equal(value.hosts[0]?.disposed, 1);
     const oldEvents = await value.call('/c1/events');
     assert.equal(oldEvents.status, 200);
@@ -218,7 +209,7 @@ test('model switching returns conflict while an ACP prompt is active', async () 
     const switched = await value.call('/model', { model: 'openai/gpt-4.1-mini' });
     assert.equal(switched.status, 409);
     assert.equal((await switched.json() as { error: string }).error, 'model_change_during_request');
-    assert.equal(JSON.parse(readFileSync(value.omp.rolesPath, 'utf8')).default, 'openai/gpt-4.1');
+    assert.equal(readFileSync(value.astrid.selectedPath, 'utf8'), 'openai/gpt-4.1');
     value.hosts[0]!.releasePrompt?.();
     assert.equal((await prompt).status, 200);
   } finally {
@@ -239,5 +230,21 @@ test('an ACP session missing the selected model cannot silently prompt on its ol
     assert.equal(response.status, 409);
     assert.equal((await response.json() as { error: string }).error, 'model_unavailable');
     assert.equal(value.hosts[0].calls.some(call => call.method === 'session/prompt'), false);
+  } finally { await closeFixture(value); }
+});
+
+test('reading the CLI saved default does not change a loaded session model', async () => {
+  const value = await fixture(['openai/gpt-4.1-mini']);
+  try {
+    const modelsResponse = await value.call('/models');
+    assert.equal(modelsResponse.status, 200);
+    assert.equal((await modelsResponse.json() as { currentModel: string }).currentModel, 'openai/gpt-4.1');
+    assert.equal((await value.call('/connect', {})).status, 200);
+    assert.equal((await value.call('/c1/rpc', { method: 'session/load', params: { sessionId: 'saved-session' } })).status, 200);
+    const prompted = await value.call('/projects/project-1/chat/prompt', {
+      connection_id: 'c1', session_id: 'saved-session', prompt: [{ type: 'text', text: 'continue' }],
+    });
+    assert.equal(prompted.status, 200);
+    assert.deepEqual(value.hosts[0]?.calls.map(call => call.method), ['session/load', 'session/prompt']);
   } finally { await closeFixture(value); }
 });

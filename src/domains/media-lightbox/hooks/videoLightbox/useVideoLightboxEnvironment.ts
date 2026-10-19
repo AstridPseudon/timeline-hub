@@ -1,13 +1,11 @@
-import { useState, useRef, useLayoutEffect, useCallback } from 'react';
+import { useCallback, useState, useRef, useLayoutEffect } from 'react';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useTaskStatusCounts } from '@/shared/hooks/tasks/useTaskStatusCounts';
 import { useIsMobile } from '@/shared/hooks/mobile';
-import { useEditSettingsPersistence } from '../persistence/useEditSettingsPersistence';
 import { extractDimensionsFromMedia } from '../../utils/dimensions';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import type { GenerationRow } from '@/domains/generation/types';
 import type { SegmentSlotModeData } from '../../types';
-import type { VideoEditSubMode } from '../../model/editSettingsTypes';
 import { usePanesStore } from '@/shared/state/panesStore';
 
 import type { LightboxNavigationProps } from '../../types';
@@ -15,35 +13,6 @@ import type { LightboxNavigationProps } from '../../types';
 interface VideoLightboxModeOptions {
   segmentSlotMode?: SegmentSlotModeData;
   navigation?: LightboxNavigationProps;
-}
-
-function resolveInitialVideoEditSubMode(
-  selectedProjectId: string | null,
-  initialVideoTrimMode?: boolean,
-): VideoEditSubMode | null {
-  if (initialVideoTrimMode) {
-    return 'trim';
-  }
-
-  try {
-    const projectKey = selectedProjectId ? `lightbox-edit-last-used-${selectedProjectId}` : null;
-    const stored = projectKey
-      ? localStorage.getItem(projectKey)
-      : localStorage.getItem('lightbox-edit-last-used-global');
-
-    if (!stored) {
-      return null;
-    }
-
-    const parsed = JSON.parse(stored);
-    if (parsed.panelMode === 'edit' && parsed.videoEditSubMode) {
-      return parsed.videoEditSubMode;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
 }
 
 export function useVideoLightboxMode(options: VideoLightboxModeOptions) {
@@ -108,23 +77,17 @@ interface VideoLightboxEnvironmentOptions {
   variantFetchGenerationIdOverride?: string;
   videoProps?: {
     fetchVariantsForSelf?: boolean;
-    initialVideoTrimMode?: boolean;
   };
 }
 
-export function useVideoLightboxEnvironment(
-  options: VideoLightboxEnvironmentOptions,
-  modeModel: VideoLightboxModeModel,
-) {
+export function useVideoLightboxEnvironment(options: VideoLightboxEnvironmentOptions) {
   const { media, tasksPaneOpen, tasksPaneWidth, variantFetchGenerationIdOverride } = options;
   const fetchVariantsForSelf = options.videoProps?.fetchVariantsForSelf;
-  const initialVideoTrimMode = options.videoProps?.initialVideoTrimMode;
 
   const isMobile = useIsMobile();
   const { project, selectedProjectId } = useProjectSelectionContext();
   const projectAspectRatio = project?.aspectRatio;
   const isCloudMode = true;
-
   const tasksPaneOpenContext = usePanesStore((state) => state.isTasksPaneOpen);
   const tasksPaneWidthContext = usePanesStore((state) => state.tasksPaneWidth);
   const isTasksPaneLocked = usePanesStore((state) => state.isTasksPaneLocked);
@@ -138,18 +101,12 @@ export function useVideoLightboxEnvironment(
   const variantsSectionRef = useRef<HTMLDivElement>(null);
 
   const [isDownloading, setIsDownloading] = useState(false);
-  const [replaceImages, setReplaceImages] = useState(true);
-  const [variantParamsToLoad, setVariantParamsToLoad] = useState<Record<string, unknown> | null>(null);
 
   const actualGenerationId = getGenerationId(media) || null;
   const variantFetchGenerationId = variantFetchGenerationIdOverride
     || (fetchVariantsForSelf
       ? actualGenerationId
       : (media?.parent_generation_id || actualGenerationId));
-
-  const [videoEditSubMode, setVideoEditSubModeLocal] = useState<VideoEditSubMode | null>(() => {
-    return resolveInitialVideoEditSubMode(selectedProjectId, initialVideoTrimMode);
-  });
 
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(() => {
     return media ? extractDimensionsFromMedia(media) : null;
@@ -168,28 +125,6 @@ export function useVideoLightboxEnvironment(
 
   const effectiveImageUrl = media?.imageUrl || media?.location || '';
 
-  const editSettingsPersistence = useEditSettingsPersistence({
-    generationId: actualGenerationId,
-    projectId: selectedProjectId,
-    enabled: !modeModel.isFormOnlyMode,
-  });
-
-  const {
-    enhanceSettings,
-    setEnhanceSettings,
-    videoEditSubMode: persistedVideoEditSubMode,
-    panelMode: persistedPanelMode,
-    setVideoEditSubMode: setPersistedVideoEditSubMode,
-    setPanelMode: setPersistedPanelMode,
-  } = editSettingsPersistence;
-
-  const setVideoEditSubMode = useCallback((value: VideoEditSubMode | null) => {
-    setVideoEditSubModeLocal(value);
-    if (value) {
-      setPersistedVideoEditSubMode(value);
-    }
-  }, [setPersistedVideoEditSubMode]);
-
   return {
     isMobile,
     selectedProjectId,
@@ -202,23 +137,11 @@ export function useVideoLightboxEnvironment(
     variantsSectionRef,
     isDownloading,
     setIsDownloading,
-    replaceImages,
-    setReplaceImages,
-    variantParamsToLoad,
-    setVariantParamsToLoad,
     actualGenerationId,
     variantFetchGenerationId,
-    videoEditSubMode,
-    setVideoEditSubMode,
     imageDimensions,
     setImageDimensions,
     effectiveImageUrl,
-    editSettingsPersistence,
-    enhanceSettings,
-    setEnhanceSettings,
-    persistedVideoEditSubMode,
-    persistedPanelMode,
-    setPersistedPanelMode,
   };
 }
 

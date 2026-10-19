@@ -10,7 +10,6 @@ import { useSourceImageChanges } from '@/shared/hooks/sourceImageChanges/useSour
 import { useMarkVariantViewed } from '@/shared/hooks/variants/useMarkVariantViewed';
 import { TIMELINE_PADDING_OFFSET } from '../../constants';
 import type { SegmentSlot } from '@/shared/hooks/segments';
-import type { PairData } from '@/shared/types/pairData';
 
 import { useSegmentDeletion } from './useSegmentDeletion';
 import { useSegmentScrubbing } from './useSegmentScrubbing';
@@ -52,12 +51,10 @@ interface UseSegmentOutputStripProps {
   pairInfo: PairInfo[];
   rawSegmentSlots: SegmentSlot[];
   trailingSegmentMode?: TrailingSegmentMode;
-  pairDataByIndex?: Map<number, PairData>;
   hasPendingTaskProp?: (pairShotGenerationId: string | null | undefined) => boolean;
   readOnly: boolean;
   onTrailingVideoInfo?: (videoUrl: string | null) => void;
   selectedParentId?: string | null;
-  onSegmentFrameCountChange?: (pairShotGenerationId: string, frameCount: number) => void;
   isMultiImage?: boolean;
   lastImageFrame?: number;
 }
@@ -159,12 +156,10 @@ export function useSegmentOutputStrip({
   pairInfo,
   rawSegmentSlots,
   trailingSegmentMode,
-  pairDataByIndex,
   hasPendingTaskProp,
   readOnly,
   onTrailingVideoInfo,
   selectedParentId,
-  onSegmentFrameCountChange,
   isMultiImage,
   lastImageFrame,
 }: UseSegmentOutputStripProps) {
@@ -177,7 +172,7 @@ export function useSegmentOutputStrip({
   // ===== SUB-HOOKS =====
   const deletion = useSegmentDeletion();
   const scrubbingHook = useSegmentScrubbing({ projectAspectRatio, displaySlots });
-  const lightbox = useSegmentLightbox({ displaySlots, pairDataByIndex, selectedParentId });
+  const lightbox = useSegmentLightbox({ displaySlots, selectedParentId });
   const { clearScrubbing } = scrubbingHook;
   const { setLightboxIndex } = lightbox;
   const { markAllViewed } = useMarkVariantViewed();
@@ -302,8 +297,6 @@ export function useSegmentOutputStrip({
     // Lightbox
     lightboxIndex: lightbox.lightboxIndex,
     lightboxMedia: lightbox.lightboxMedia,
-    lightboxCurrentSegmentImages: lightbox.lightboxCurrentSegmentImages,
-    lightboxCurrentFrameCount: lightbox.lightboxCurrentFrameCount,
     currentLightboxMedia: lightbox.currentLightboxMedia,
     childSlotIndices: lightbox.childSlotIndices,
     handleSegmentClick,
@@ -315,8 +308,6 @@ export function useSegmentOutputStrip({
     deletingSegmentId: deletion.deletingSegmentId,
     handleDeleteSegment: deletion.handleDeleteSegment,
 
-    // Segment frame count change (pass-through)
-    onSegmentFrameCountChange,
     shotId,
   };
 }

@@ -36,15 +36,12 @@ export interface SharedLightboxShotProps {
   shotWorkflow?: LightboxShotWorkflowProps;
 }
 
-/** Layout mode inputs (drives panel/edit mode visibility) */
+/** Layout mode inputs */
 export interface SharedLightboxLayoutProps {
   showTaskDetails?: boolean;
-  isSpecialEditMode: boolean;
-  isInpaintMode: boolean;
-  isMagicEditMode: boolean;
 }
 
-/** Button group inputs (download, delete, star, upscale, edit mode) */
+/** Button group inputs (download and delete) */
 export interface SharedLightboxButtonGroupProps {
   isCloudMode: boolean;
   showDownload?: boolean;
@@ -52,8 +49,6 @@ export interface SharedLightboxButtonGroupProps {
   setIsDownloading: (v: boolean) => void;
   onDelete?: LightboxDeleteHandler;
   isDeleting?: string | null;
-  isUpscaling: boolean;
-  handleUpscale: () => void;
 }
 
 /** Effective media inputs (for computing display URLs/dimensions) */
@@ -85,8 +80,6 @@ export interface LightboxButtonGroupProps {
     onClose: () => void;
   };
   bottomLeft: {
-    isUpscaling: boolean;
-    handleUpscale: () => Promise<void>;
     localStarred: boolean;
     handleToggleStar: () => void;
     toggleStarPending: boolean;
@@ -181,7 +174,6 @@ export interface UseSharedLightboxStateReturn {
     isTabletOrLarger: boolean;
     isTouchLikeDevice: boolean;
     shouldShowSidePanel: boolean;
-    isUnifiedEditMode: boolean;
     isPortraitMode: boolean;
   };
   buttonGroupProps: LightboxButtonGroupProps;
