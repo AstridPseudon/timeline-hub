@@ -552,6 +552,16 @@ if (args.includes('dev') || args.includes('preview')) require('node:http').creat
   response.end(JSON.stringify({ realmId: process.env.FAKE_VITE_REALM_ID || process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID }));
 }).listen(Number(process.env.PORT), '127.0.0.1');
 if (args.includes('dev:astrid-acp') && process.env.FAKE_ACP_EXIT_MS) setTimeout(() => process.exit(3), Number(process.env.FAKE_ACP_EXIT_MS));
+// The chat bridge answers its health route only with its own credential, as the real one does; a taken port ends it.
+if (kind === 'acp' && !process.env.FAKE_ACP_EXIT_MS) {
+  const bridge = require('node:http').createServer((request, response) => {
+    const ours = request.url === '/health' && request.headers.authorization === 'Bearer ' + process.env.ASTRID_ACP_BRIDGE_TOKEN;
+    response.writeHead(ours ? 200 : 401, { 'Content-Type': 'application/json' });
+    response.end(ours ? '{"status":"ok"}' : '{"error":"unauthorized"}');
+  });
+  bridge.on('error', () => process.exit(1));
+  bridge.listen(Number(process.env.ASTRID_ACP_BRIDGE_PORT), '127.0.0.1');
+}
 for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => { fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, kind + ':stop\\n'); process.exit(0); });
 setInterval(() => {}, 1000);
 `;
@@ -573,6 +583,7 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
     ...fixture.env,
     PORT: String(await freePort()),
     VITE_ASTRID_DYNAMIC_PROXY_PORT: String(await freePort()),
+    VITE_ASTRID_ACP_BRIDGE_PORT: String(await freePort()),
     ...overrides,
   };
   // The shipped config/hosted-origin.json is read only when a case asks for it; the fixture config is the default otherwise.
@@ -722,8 +733,8 @@ test('a second launcher for the same Astrid says so, prints the same Open block,
 
 test('a Runtime whose door port is held by another Astrid says so', async () => {
   const cases = [
-    ['another Astrid', 'Runtime daemon exited during startup: port 17340 is already served by another Astrid Runtime for realm "Other" (r2); stop that one first (astrid-runtime down), or start this one with another --door-port (see /x/runtime.log).', /already served by another Astrid Runtime/],
-    ['another program', 'Runtime daemon exited during startup: port 17340 is already in use by a program that is not an Astrid Runtime; stop it, or start this one with another --door-port (see /x/runtime.log).', /already in use by a program that is not an Astrid Runtime/],
+    ['another Astrid', 'Runtime daemon exited during startup: port 17340 is already served by another Astrid Runtime for realm "Other" (r2); stop that one first (astrid-runtime down) (see /x/runtime.log).', /already served by another Astrid Runtime/],
+    ['another program', 'Runtime daemon exited during startup: port 17340 is already in use by a program that is not an Astrid Runtime; stop it, then start Astrid again (see /x/runtime.log).', /already in use by a program that is not an Astrid Runtime/],
   ];
   for (const [label, upError, detailsPattern] of cases) {
     const fixture = await launchFixture({ discoveryState: 'missing', configuredOrigin: 'https://hosted.test' });
@@ -848,6 +859,8 @@ test('the hosted page reaches the chat bridge through the Runtime door only with
   let started;
   try {
     started = await startLauncher({ fixture, args: ['--acp'], env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort, ASTRID_ACP_BRIDGE_TOKEN: acpToken } });
+    // Written once the bridge answers with this launcher's credential, which can come just after the Open block.
+    for (let attempt = 0; attempt < 600 && !existsSync(chatFile); attempt += 1) await new Promise(r => setTimeout(r, 50));
     assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), { endpoint: `http://127.0.0.1:${chatPort}`, token: acpToken });
     assert.equal(statSync(chatFile).mode & 0o777, 0o600);
     assert(!started.stdout.includes(acpToken) && !started.stderr.includes(acpToken), `${started.stdout}${started.stderr}`);
@@ -855,6 +868,26 @@ test('the hosted page reaches the chat bridge through the Runtime door only with
     assert.equal(existsSync(chatFile), false, 'chat.json is removed when the launcher stops');
   } finally {
     if (started) await started.stop();
+    await fixture.close();
+  }
+});
+
+test("a launcher whose chat bridge cannot bind leaves the running bridge's registration in place", async () => {
+  // Another launcher's bridge already holds the port and answers only its own credential.
+  const theirs = createServer((_req, res) => { res.writeHead(401); res.end(); });
+  await new Promise(r => theirs.listen(0, '127.0.0.1', r));
+  const chatPort = String(theirs.address().port);
+  const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
+  const chatFile = join(fixture.fixture, 'chat.json');
+  const registration = { endpoint: `http://127.0.0.1:${chatPort}`, token: 'their-bridge-token' };
+  writeFileSync(chatFile, JSON.stringify(registration), { mode: 0o600 });
+  try {
+    const result = await launcherEnds({ fixture, args: ['--acp'], env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort, ASTRID_ACP_BRIDGE_TOKEN: 'our-bridge-token', FAKE_ACP_EXIT_MS: '300' } });
+    assert.equal(result.code, 1, result.stdout + result.stderr);
+    assert.equal(result.stderr.split('\n')[0], 'Astrid: Agent chat stopped. Start Astrid again with npm run dev:local.');
+    assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), registration, 'the running bridge keeps its registration');
+  } finally {
+    await new Promise(r => theirs.close(r));
     await fixture.close();
   }
 });

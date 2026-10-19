@@ -542,6 +542,21 @@ if (!/^\d+$/.test(runtimeProxyPort) || Number(runtimeProxyPort) < 1 || Number(ru
   exit(fail(CANT_START, 'VITE_ASTRID_DYNAMIC_PROXY_PORT must be an integer from 1 to 65535') ? 1 : 1);
 }
 
+/** Resolves true once the chat bridge on this port answers its health route with this credential, false when `aborted()`. */
+async function ownBridgeAnswers(bridgePort, token, aborted) {
+  while (!aborted()) {
+    try {
+      const response = await fetch(`http://127.0.0.1:${bridgePort}/health`, {
+        headers: { Authorization: `Bearer ${token}`, 'X-Astrid-Bridge-Version': 'v1' },
+        signal: AbortSignal.timeout(2000),
+      });
+      if (response.ok) return true;
+    } catch { /* not listening yet */ }
+    await new Promise((resolveLater) => setTimeout(resolveLater, 100));
+  }
+  return false;
+}
+
 /** Resolves true once something listens on the port, false at the deadline or when `aborted()` turns true. */
 function waitForPort(portValue, timeoutMs = 3000, aborted = () => false) {
   const deadline = Date.now() + timeoutMs;
@@ -712,8 +727,14 @@ if (!(await waitForPort(acpPort, 0))) removeChatRegistration(chatFile, ownChat);
 const acpBridge = spawnService('npm', [...npmQuiet, 'run', 'dev:astrid-acp'], { stdio: piped, env: serviceEnvironment() });
 const acpOutput = watch(acpBridge);
 if (hostedOrigin && launcherOptions.acp) {
-  writeChatRegistration(chatFile, chatRegistration(acpPort, acpToken));
-  releaseChat = () => removeChatRegistration(chatFile, (registration) => ownChat(registration) && registration.token === acpToken);
+  // Registered only once this launcher's own bridge answers on that port, so a bridge that never bound (its port held by
+  // another launcher's) never replaces the registration of the one that did.
+  void ownBridgeAnswers(acpPort, acpToken, () => shuttingDown || acpBridge.exitCode !== null || acpBridge.signalCode !== null)
+    .then((ours) => {
+      if (!ours || shuttingDown) return;
+      writeChatRegistration(chatFile, chatRegistration(acpPort, acpToken));
+      releaseChat = () => removeChatRegistration(chatFile, (registration) => ownChat(registration) && registration.token === acpToken);
+    });
 }
 if (hostedOrigin) technical(`browser door ${discovery.door_endpoint} for ${hostedOrigin}${launcherOptions.acp ? ' (chat on)' : ''}`);
 if (paired) {
