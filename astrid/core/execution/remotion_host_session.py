@@ -334,6 +334,9 @@ class HostRemotionSession:
             self._close_original()
         except BaseException as error:
             self.uncertain = error
+            # Custody stays with the child and its scratch; doctor names them.
+            self._report(f"Remotion frame owner failed to release after idle ({error}); "
+                         f"child {getattr(self.process, 'pid', '?')} and scratch {self.root} retained")
 
     def _close_original(self, already_exited=False):
         process = self.process

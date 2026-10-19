@@ -204,7 +204,7 @@ def test_failed_idle_release_is_recorded_and_keeps_the_slot_occupied(tmp_path):
         binding=binding, adapter=adapter)
     host._settle_session_hold(host._hold_session_slot())
     timers.fire()
-    assert notes and "idle session release" in notes[0]
+    assert notes == [notes[0]] and "wan2gp.generate_video session failed to release after idle" in notes[0]
     assert host.managed_tool_session.occupied, "an unverified release never forgets the child"
 
 

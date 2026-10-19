@@ -176,6 +176,27 @@ def test_idle_window_keeps_its_defaults_and_a_new_lease_cancels_expiry(tmp_path,
     manager.close()
 
 
+def test_failed_idle_release_keeps_the_child_and_reports_it(tmp_path, monkeypatch):
+    timers, notes = Timers(), []
+    manager = host.HostRemotionSession(track=lambda p: None, untrack=lambda p: None, root_parent=str(tmp_path),
+                                       report=notes.append, holds=WarmHolds(timer=timers))
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    lease = manager.lease(env, attempt=tmp_path)
+    manager.request(lease, request(env))
+    lease.close()
+
+    def shutdown_times_out(req, **kw):
+        raise TimeoutError("original Remotion worker response timed out")
+
+    monkeypatch.setattr(manager, "_exchange", shutdown_times_out)
+    timers.fire()
+    assert manager.process is processes[0] and not processes[0].waited, "custody of the child is kept"
+    assert manager.uncertain is not None
+    assert len(notes) == 1 and "Remotion frame owner failed to release" in notes[0]
+    assert "timed out" in notes[0]
+
+
 def test_uncertain_child_is_not_kept_warm(tmp_path, monkeypatch):
     timers = Timers()
     manager, _ = owner(tmp_path, timers)

@@ -5542,14 +5542,15 @@ class GenericPackHost:
         memory but keeps the engine process: the host cannot restart an engine
         the Runtime selected for it, so ending it would strand the capability.
         """
-        if self._warm_session() is None:
+        holding = self._warm_session()
+        if holding is None:
             return
         self._vibecomfy_warmth_hint = None
         try:
             self.managed_tool_session.release(reason="idle")
         except Exception as exc:
             # The slot stays poisoned and occupied, as after any unverified release.
-            self._latch_cleanup_uncertainty(f"idle session release: {exc}")
+            self._latch_cleanup_uncertainty(f"{holding} session failed to release after idle: {exc}")
 
     def prepare_wan_session(
         self, *, owner_dir: str | Path, root: str | Path, python: str | Path,
