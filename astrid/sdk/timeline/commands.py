@@ -32,9 +32,12 @@ class Operation:
 
 
 def operations():
-    """M1 native recipe entries; the full extensible registry belongs to M2."""
+    """Native recipe entries; the full extensible registry belongs to M2."""
+    from ._delete_commands import PARAMETERS as DELETE_PARAMETERS
+    from ._delete_commands import delete
     from .capture import MOVE_INTENT, move, track_create
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+            'clip.delete': Operation(DELETE_PARAMETERS, delete, {}, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {})}
 
 
@@ -78,7 +81,8 @@ def validate_command(command):
 def _normalize(command):
     command = copy.deepcopy(command)
     validate_command(command)
-    resolved = command.get('resolved', [command['select']] if command['op'] == 'clip.move' else [])
+    operation = operations().get(command['op'])
+    resolved = command.get('resolved', [command['select']] if operation and operation.singleton else [])
     for field in ('expect', 'authorship'):
         if field not in command:
             continue
