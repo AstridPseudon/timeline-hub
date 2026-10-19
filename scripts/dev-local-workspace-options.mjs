@@ -1,5 +1,6 @@
-import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
-import { isAbsolute, join, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { parseEnv } from 'node:util';
 
 const VITE_ENTRY_RE = /^index-[A-Za-z0-9_-]+\.js$/;
@@ -220,13 +221,6 @@ export function resolveWorkspaceDiscoveryPath({ discovery, supportRoot, dataRoot
   return join(roots[0] || join(home, 'Library', 'Application Support', 'Astrid Runtime'), 'runtime', 'discovery.json');
 }
 
-/** The gateway's well-known port (Plan A D1); `ASTRID_APP_LOOPBACK_PORT` overrides it, and tests use 0. */
-export const DEFAULT_LOOPBACK_PORT = '17340';
-
-export function resolveLoopbackPort(value) {
-  return value?.trim() || DEFAULT_LOOPBACK_PORT;
-}
-
 /** Quote one command path for the shell snippets shown to the person. */
 export function shellQuote(value) {
   const command = String(value);
@@ -234,21 +228,32 @@ export function shellQuote(value) {
 }
 
 /**
- * Arguments for `scripts/astrid-loopback-gateway.ts`. ACP auto-approves tool calls and can open terminals, so the
- * gateway gets `--acp-endpoint` only when the developer passed `--acp` to the launcher. `appPort` is the local app's port: the
- * gateway reports it in its health answer so the hosted page can link to the app.
+ * Where a chat service tells the running Runtime about itself: `chat.json` next to the Runtime's discovery.json. The
+ * Runtime's browser door reads it on every chat request and forwards the hosted page's `/api/astrid/acp/*` there with
+ * this credential (astrid-runtime `runtime_protocol/door.py`); with no file, the page shows that chat is unavailable.
  */
-export function gatewayChildArgs({ discoveryPath, credentialPath, hostedOrigin, loopbackPort, acp, acpPort, appPort, auditLog, actor }) {
-  return [
-    '--import', 'tsx',
-    'scripts/astrid-loopback-gateway.ts',
-    '--discovery', discoveryPath,
-    '--token-file', credentialPath,
-    '--origin', hostedOrigin,
-    ...(acp ? ['--acp-endpoint', `http://127.0.0.1:${acpPort}`] : []),
-    '--port', loopbackPort,
-    ...(appPort ? ['--app-port', String(appPort)] : []),
-    ...(auditLog ? ['--audit-log', auditLog] : []),
-    ...(actor ? ['--actor', actor] : []),
-  ];
+export function chatRegistrationPath(discoveryPath) {
+  return join(dirname(discoveryPath), 'chat.json');
+}
+
+/** The registration the door reads: `{"endpoint": "http://127.0.0.1:<port>", "token": "<credential>"}`, owner-only. */
+export function chatRegistration(acpPort, token) {
+  const port = Number(acpPort);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('the chat bridge port must be an integer from 1 to 65535');
+  if (typeof token !== 'string' || !token) throw new Error('the chat bridge needs a credential');
+  return { endpoint: `http://127.0.0.1:${port}`, token };
+}
+
+/** Publishes the registration atomically and owner-only (the door ignores anything readable by others). */
+export function writeChatRegistration(path, registration) {
+  const temporary = join(dirname(path), `.chat.json.${randomBytes(6).toString('hex')}`);
+  writeFileSync(temporary, JSON.stringify(registration), { mode: 0o600, flag: 'wx' });
+  try { renameSync(temporary, path); } catch (error) { rmSync(temporary, { force: true }); throw error; }
+}
+
+/** Removes the registration when `owned(registration)` holds for what is there now, so another service's is left alone. */
+export function removeChatRegistration(path, owned) {
+  let current;
+  try { current = JSON.parse(readFileSync(path, 'utf8')); } catch { return; }
+  if (owned(current)) rmSync(path, { force: true });
 }

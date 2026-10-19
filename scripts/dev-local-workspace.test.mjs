@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { execFileSync, spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync, appendFileSync, rmSync, mkdirSync, chmodSync, existsSync, readFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { mkdtempSync, writeFileSync, appendFileSync, rmSync, mkdirSync, chmodSync, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, it, test } from 'node:test';
@@ -15,8 +15,10 @@ import {
   viteChildArgs,
   resolveWorkspaceDiscoveryPath,
   resolveRuntimeCommand,
-  gatewayChildArgs,
-  resolveLoopbackPort,
+  chatRegistrationPath,
+  chatRegistration,
+  writeChatRegistration,
+  removeChatRegistration,
   loadLocalRuntimeEnvironment,
   LOCAL_RUNTIME_ENV_KEYS,
   shellQuote,
@@ -63,28 +65,46 @@ async function emittedDirectory({ entry = true } = {}) {
   return directory;
 }
 
-describe('dev-local gateway options', () => {
-  const base = {
-    discoveryPath: '/d/discovery.json', credentialPath: '/d/astrid.json', hostedOrigin: 'https://hosted.test',
-    loopbackPort: '17340', acp: false, acpPort: '17335', auditLog: undefined, actor: undefined,
-  };
-
-  it('passes no --acp-endpoint unless --acp was given, and defaults to port 17340', () => {
-    const without = gatewayChildArgs(base);
-    assert(!without.includes('--acp-endpoint'), without.join(' '));
-    assert.deepEqual(without, ['--import', 'tsx', 'scripts/astrid-loopback-gateway.ts', '--discovery', '/d/discovery.json', '--token-file', '/d/astrid.json', '--origin', 'https://hosted.test', '--port', '17340']);
-    const withAcp = gatewayChildArgs({ ...base, acp: true });
-    assert.deepEqual(withAcp.slice(withAcp.indexOf('--acp-endpoint'), withAcp.indexOf('--acp-endpoint') + 2), ['--acp-endpoint', 'http://127.0.0.1:17335']);
-    assert.equal(resolveLoopbackPort(undefined), '17340');
-    assert.equal(resolveLoopbackPort('  '), '17340');
-    assert.equal(resolveLoopbackPort('0'), '0');
-    assert.deepEqual(gatewayChildArgs({ ...base, auditLog: '/a.jsonl', actor: 'x' }).slice(-4), ['--audit-log', '/a.jsonl', '--actor', 'x']);
+describe('dev-local chat registration', () => {
+  it('sits next to discovery.json as chat.json', () => {
+    assert.equal(chatRegistrationPath('/d/discovery.json'), join('/d', 'chat.json'));
   });
 
-  it('tells the gateway the local app port, so its health answer can point the page there', () => {
-    const args = gatewayChildArgs({ ...base, appPort: '2222' });
-    assert.deepEqual(args.slice(args.indexOf('--app-port'), args.indexOf('--app-port') + 2), ['--app-port', '2222']);
-    assert(!gatewayChildArgs(base).includes('--app-port'));
+  it('is the exact endpoint and token the Runtime door reads', () => {
+    assert.deepEqual(chatRegistration(17335, 'token-value'), { endpoint: 'http://127.0.0.1:17335', token: 'token-value' });
+  });
+
+  it('refuses a bad bridge port or an empty credential', () => {
+    for (const port of ['0', '70000', 'x']) {
+      assert.throws(() => chatRegistration(port, 'token-value'), /chat bridge port/, port);
+    }
+    assert.throws(() => chatRegistration('17335', ''), /needs a credential/);
+  });
+
+  it('writes the registration owner-only, parseable, with no temporary file left behind', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'astrid-chat-registration-test-'));
+    temporaryDirectories.push(directory);
+    const path = join(directory, 'chat.json');
+    const registration = chatRegistration(17335, 'token-value');
+    writeChatRegistration(path, registration);
+    assert.equal(statSync(path).mode & 0o777, 0o600);
+    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), registration);
+    assert.deepEqual(readdirSync(directory), ['chat.json']);
+  });
+
+  it('removes only a registration the predicate owns, and tolerates missing or unparsable files', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'astrid-chat-remove-test-'));
+    temporaryDirectories.push(directory);
+    const path = join(directory, 'chat.json');
+    writeChatRegistration(path, chatRegistration(17335, 'token-value'));
+    removeChatRegistration(path, (registration) => registration.token === 'someone-else');
+    assert.equal(existsSync(path), true, 'a registration another service owns is left alone');
+    removeChatRegistration(path, (registration) => registration.token === 'token-value');
+    assert.equal(existsSync(path), false);
+    assert.doesNotThrow(() => removeChatRegistration(path, () => true));
+    writeFileSync(path, '{not json');
+    assert.doesNotThrow(() => removeChatRegistration(path, () => true));
+    assert.equal(existsSync(path), true, 'an unparsable file is not ours to remove');
   });
 });
 
@@ -284,6 +304,9 @@ async function launchFixture(overrides = {}) {
     res.writeHead(404); res.end();
   });
   await new Promise(r => runtime.listen(0, '127.0.0.1', r));
+  // The Runtime's browser door: a stand-in listener on its own port, recorded in discovery as the hosted page's door.
+  const door = createServer((_req, res) => { res.writeHead(404); res.end(); });
+  await new Promise(r => door.listen(0, '127.0.0.1', r));
   const discovery = join(fixture, 'discovery.json');
   const discoveryDocument = JSON.stringify({
     endpoint: `http://127.0.0.1:${runtime.address().port}`,
@@ -291,6 +314,10 @@ async function launchFixture(overrides = {}) {
     runtime_instance_id: runtimeInstanceId,
     active_realm: overrides.discoveryRealmId ?? realmId,
     realm_root: overrides.discoveryRealmRoot ?? realmRoot,
+    ...(overrides.door === false ? {} : {
+      door_endpoint: `http://127.0.0.1:${door.address().port}`,
+      door_origin: overrides.doorOrigin ?? overrides.configuredOrigin ?? 'https://hosted.test',
+    }),
   });
   writeFileSync(discovery, discoveryDocument);
   if (overrides.discoveryState === 'missing') rmSync(discovery, { force: true });
@@ -331,6 +358,10 @@ const args = process.argv.slice(2);
 const log = process.env.FAKE_RUNTIME_CLI_LOG;
 const action = args[0] || 'unknown';
 fs.appendFileSync(log, JSON.stringify({ args, action, cwd: process.cwd(), astridCheckout: process.env.ASTRID_CHECKOUT || null }) + '\\n');
+if (action === 'up' && process.env.FAKE_RUNTIME_UP_ERROR) {
+  console.log(JSON.stringify({ ok: false, error: process.env.FAKE_RUNTIME_UP_ERROR }));
+  process.exit(1);
+}
 if (action === 'up' && process.env.FAKE_RUNTIME_UP_EXIT !== '1') {
   const dataRootIndex = args.indexOf('--data-root');
   const dataRoot = dataRootIndex >= 0 ? args[dataRootIndex + 1] : null;
@@ -371,9 +402,8 @@ if (action === 'up' && process.env.FAKE_RUNTIME_UP_EXIT !== '1') {
   Promise.all([
     listening(process.env.PORT),
     listening(process.env.VITE_ASTRID_DYNAMIC_PROXY_PORT),
-    listening(process.env.ASTRID_APP_LOOPBACK_PORT),
-  ]).then(([vite, proxy, gateway]) => {
-    fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'runtime:down viteOpen=' + vite + ' proxyOpen=' + proxy + ' gatewayOpen=' + gateway + '\\n');
+  ]).then(([vite, proxy]) => {
+    fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'runtime:down viteOpen=' + vite + ' proxyOpen=' + proxy + '\\n');
     console.log(JSON.stringify({ status: 'stopped' }));
     process.exit(0);
   });
@@ -385,10 +415,11 @@ if (action === 'up' && process.env.FAKE_RUNTIME_UP_EXIT !== '1') {
   writeFileSync(join(noSpawnBin, 'astrid-runtime'), fakeRuntimeCli, { mode: 0o700 });
   return {
     fixture, token, actorId, realmId, runtimeInstanceId, realmRoot, catalog, discoveryDocument,
-    discovery, spawnMarker, requests, runtime, env,
+    discovery, spawnMarker, requests, runtime, door, env,
     setAvailable(value) { available = value; },
     async close() {
       await new Promise(r => runtime.close(r));
+      await new Promise(r => door.close(r));
       rmSync(fixture, { recursive: true, force: true });
     },
   };
@@ -515,7 +546,11 @@ fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, kind + ':start\\n');
 if (kind === 'vite') fs.writeFileSync(process.env.FAKE_RUNTIME_APP_ENV, JSON.stringify({ args, astridCheckout: process.env.ASTRID_CHECKOUT, dataRoot: process.env.ASTRID_RUNTIME_DATA_ROOT, supportRoot: process.env.ASTRID_SUPPORT_ROOT, discovery: process.env.ASTRID_WORKSPACE_DISCOVERY }));
 console.log(['fake-npm', ...args].join(' '));
 if (kind === 'vite' && process.env.FAKE_NPM_VITE_EXIT) process.exit(Number(process.env.FAKE_NPM_VITE_EXIT));
-if (args.includes('dev') || args.includes('preview')) require('node:net').createServer(() => {}).listen(Number(process.env.PORT), '127.0.0.1');
+if (args.includes('dev') || args.includes('preview')) require('node:http').createServer((request, response) => {
+  if (request.url !== '/runtime-config/v1/workspace.json') { response.writeHead(404); response.end(); return; }
+  response.writeHead(200, { 'Content-Type': 'application/json' });
+  response.end(JSON.stringify({ realmId: process.env.FAKE_VITE_REALM_ID || process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID }));
+}).listen(Number(process.env.PORT), '127.0.0.1');
 if (args.includes('dev:astrid-acp') && process.env.FAKE_ACP_EXIT_MS) setTimeout(() => process.exit(3), Number(process.env.FAKE_ACP_EXIT_MS));
 for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => { fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, kind + ':stop\\n'); process.exit(0); });
 setInterval(() => {}, 1000);
@@ -525,15 +560,14 @@ const OPEN_BLOCK_END = 'Keep this window open while you work. Press Ctrl+C to st
 
 /**
  * The launcher against a fake Runtime. Resolves once `until(stdout, stderr, exitCode)` holds, with what it printed; `stop()`
- * ends it and cleans up. The default free ports keep a developer's own gateway (17340) and app (2222) out of it.
+ * ends it and cleans up. The default free ports keep a developer's own app (2222) out of it.
  */
 async function startLauncher({ args = [], env: overrides = {}, shippedConfig = false, until = (stdout) => stdout.includes(OPEN_BLOCK_END) || stdout.includes('Local App: http://127.0.0.1:'), fixture: given, ...fixtureOverrides } = {}) {
   const fixture = given ?? await launchFixture(fixtureOverrides);
   const spawnLog = join(fixture.fixture, 'spawn.log');
   writeFileSync(spawnLog, '');
   writeFileSync(join(fixture.fixture, 'bin', 'npm'), FAKE_NPM(spawnLog), { mode: 0o700 });
-  // The default port is 17340, so ASTRID_APP_LOOPBACK_PORT is not inherited from the developer's shell.
-  const { ASTRID_APP_LOOPBACK_PORT: _inheritedPort, ASTRID_VERBOSE: _verbose, ...inherited } = cleanInheritedEnvironment();
+  const { ASTRID_VERBOSE: _verbose, ...inherited } = cleanInheritedEnvironment();
   const env = {
     ...inherited,
     ...fixture.env,
@@ -580,32 +614,16 @@ async function launcherEnds(options) {
   return result;
 }
 
-async function launchedGatewayLine(extraArgs) {
-  const started = await startLauncher({ args: ['--verbose', ...extraArgs], env: { ASTRID_APP_LOOPBACK_ORIGIN: 'https://hosted.test', ASTRID_APP_LOOPBACK_PORT: '0' } });
-  try {
-    const line = started.stdout.split('\n').find(candidate => candidate.trim().startsWith('{') && candidate.includes('"base"'));
-    assert(line, `gateway line not printed: ${started.stdout}${started.stderr}`);
-    assert(!started.stdout.includes(started.fixture.token) && !started.stderr.includes(started.fixture.token));
-    return { line: JSON.parse(line), stdout: started.stdout };
-  } finally {
-    await started.stop();
-  }
+function runtimeCliCalls(fixture) {
+  if (!existsSync(fixture.env.FAKE_RUNTIME_CLI_LOG)) return [];
+  return readFileSync(fixture.env.FAKE_RUNTIME_CLI_LOG, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
 }
-
-test('the launcher starts the gateway without ACP by default, and with it only for --acp', async () => {
-  const off = await launchedGatewayLine([]);
-  assert.equal(off.line.acp, false);
-  assert.match(off.line.base, /^http:\/\/127\.0\.0\.1:\d+\/api\/runtime$/);
-  assert.deepEqual(Object.keys(off.line).sort(), ['acp', 'base', 'realm_id']);
-  const on = await launchedGatewayLine(['--acp']);
-  assert.equal(on.line.acp, true);
-});
 
 // What a person sees on a healthy start: three lines and the address, nothing else.
 const HEALTHY_OUTPUT = (origin) => ['Starting Astrid…', '', `  Open ${origin}`, '', OPEN_BLOCK_END, ''].join('\n');
 
 test('a healthy start prints exactly the Open block, once Astrid is reachable, and nothing else', async () => {
-  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test' });
   try {
     assert.equal(started.stdout, HEALTHY_OUTPUT('https://hosted.test'));
     assert.equal(started.stderr, '');
@@ -618,45 +636,56 @@ test('a healthy start prints exactly the Open block, once Astrid is reachable, a
 
 test('the Open block is bold on a terminal only', async () => {
   // The launcher decides from process.stdout.isTTY; piped output (as here) carries no escape codes.
-  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test' });
   try { assert(!started.stdout.includes('\x1b['), JSON.stringify(started.stdout)); } finally { await started.stop(); }
 });
 
-test('--verbose prints the old technical lines after the Open block, and ASTRID_VERBOSE=1 does the same', async () => {
-  for (const options of [{ args: ['--verbose'] }, { env: { ASTRID_VERBOSE: '1' } }]) {
-    const port = await freePort();
-    const started = await startLauncher({
-      configuredOrigin: 'https://hosted.test',
-      ...options,
-      env: { ASTRID_APP_LOOPBACK_PORT: String(port), ...options.env },
-      until: (stdout) => stdout.includes('"base"') && stdout.includes('fake-npm'),
-    });
+test('--verbose prints the technical lines after the Open block, and ASTRID_VERBOSE=1 does the same', async () => {
+  for (const options of [{ args: ['--verbose'], env: {} }, { args: [], env: { ASTRID_VERBOSE: '1' } }]) {
+    const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
+    const doorEndpoint = JSON.parse(fixture.discoveryDocument).door_endpoint;
+    let started;
     try {
+      started = await startLauncher({
+        fixture,
+        args: options.args,
+        env: options.env,
+        until: (stdout) => stdout.includes(OPEN_BLOCK_END) && stdout.includes('browser door') && stdout.includes('fake-npm run dev --') && stdout.includes('Runtime discovery proxy listening'),
+      });
       const { stdout } = started;
       assert(stdout.startsWith(HEALTHY_OUTPUT('https://hosted.test')), stdout);
       const rest = stdout.slice(HEALTHY_OUTPUT('https://hosted.test').length);
       assert.match(rest, /workspace\.v1 runtime healthy at http:\/\/127\.0\.0\.1:\d+; Astrid App will use port \d+/);
       assert(rest.includes('Runtime discovery proxy listening on 127.0.0.1:'), rest);
-      assert(rest.includes(`loopback gateway starting on 127.0.0.1:${port} for https://hosted.test`), rest);
-      assert.match(rest, /"base":"http:\/\/127\.0\.0\.1:\d+\/api\/runtime"/);
+      assert(rest.includes(`browser door ${doorEndpoint} for https://hosted.test`), rest);
       assert(rest.includes('fake-npm run dev --'), rest);
       assert(!rest.includes('--silent'), 'verbose runs npm as it always did');
-    } finally { await started.stop(); }
+    } finally {
+      if (started) await started.stop();
+      await fixture.close();
+    }
   }
 });
 
-test('nothing is printed as Open until the gateway and the app both answer', async () => {
-  // A program already on the gateway port: the launcher refuses before it starts anything or prints an address.
-  const holder = createServer((_req, res) => { res.writeHead(200); res.end('not a gateway'); });
-  await new Promise(r => holder.listen(0, '127.0.0.1', r));
-  try {
-    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(holder.address().port) } });
-    assert.equal(result.code, 1);
-    assert.equal(result.stderr.split('\n')[0], "Astrid: Another program is in the way, so Astrid can't start. Close it and try again.");
-    assert.match(result.stderr.split('\n')[1], /^Details: port \d+ is already in use by a program that is not the gateway for https:\/\/hosted\.test/);
-    assert(!result.stdout.includes('Open '), result.stdout);
-    assert.equal(result.spawned, '', 'no proxy, ACP bridge or Vite was started');
-  } finally { await new Promise(r => holder.close(r)); }
+test('a running Runtime without a door for this hosted page is not attached: it is named, nothing starts, no Open', async () => {
+  const cases = [
+    ['another page', { doorOrigin: 'https://other.test' }, 'the running Runtime\'s browser door serves https://other.test'],
+    ['no door at all', { door: false }, 'the running Runtime\'s browser door serves no hosted page'],
+  ];
+  for (const [label, overrides, details] of cases) {
+    const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test', ...overrides });
+    try {
+      const result = await launcherEnds({ fixture });
+      assert.equal(result.code, 1, label);
+      assert.deepEqual(result.stderr.split('\n').slice(0, 2), [
+        "Astrid's engine is running without a door for https://hosted.test. Restart it: astrid-runtime restart --profile astrid --hosted-origin https://hosted.test",
+        `Details: ${details}`,
+      ], label);
+      assert.equal(result.stdout, '', `${label}: printed something`);
+      assert.deepEqual(runtimeCliCalls(fixture), [], `${label}: Runtime CLI invoked`);
+      assert.equal(result.spawned, '', `${label}: launched a child`);
+    } finally { await fixture.close(); }
+  }
 });
 
 test('the app port taken by another program: one friendly line, the details, no Open block, and nothing started', async () => {
@@ -666,7 +695,7 @@ test('the app port taken by another program: one friendly line, the details, no 
   await new Promise(r => holder.listen(0, '127.0.0.1', r));
   const appPort = String(holder.address().port);
   try {
-    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { PORT: appPort, ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
+    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { PORT: appPort } });
     assert.equal(result.code, 1, result.stdout + result.stderr);
     assert.deepEqual(result.stderr.split('\n').slice(0, 2), [
       "Astrid: Another program is in the way, so Astrid can't start. Close it and try again.",
@@ -680,11 +709,10 @@ test('the app port taken by another program: one friendly line, the details, no 
 });
 
 test('a second launcher for the same Astrid says so, prints the same Open block, starts nothing and exits 0', async () => {
-  const port = String(await freePort());
-  const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: port } });
+  const first = await startLauncher({ configuredOrigin: 'https://hosted.test' });
   try {
     writeFileSync(first.spawnLog, '');
-    const second = await launcherEnds({ fixture: first.fixture, env: { ASTRID_APP_LOOPBACK_PORT: port } });
+    const second = await launcherEnds({ fixture: first.fixture, env: { PORT: first.env.PORT } });
     assert.equal(second.code, 0, second.stderr);
     assert.equal(second.stdout, ['Astrid is already running in another window.', '', '  Open https://hosted.test', '', OPEN_BLOCK_END, ''].join('\n'));
     assert.equal(second.stderr, '');
@@ -692,47 +720,35 @@ test('a second launcher for the same Astrid says so, prints the same Open block,
   } finally { await first.stop(); }
 });
 
-test('a second launcher does not start a Runtime when the existing gateway reports its engine stopped', async () => {
-  const port = String(await freePort());
-  const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: port } });
-  const secondFixture = await launchFixture({ discoveryState: 'missing', configuredOrigin: 'https://hosted.test' });
-  try {
-    writeFileSync(first.fixture.discovery, '{invalid discovery');
-    const result = await launcherEnds({ fixture: secondFixture, env: { ASTRID_APP_LOOPBACK_PORT: port } });
-    assert.equal(result.code, 1, result.stdout + result.stderr);
-    assert.equal(result.stderr.split('\n')[0], 'Astrid is running, but its engine stopped. Stop the other Astrid (Ctrl+C in its window) and run this again.');
-    assert.match(result.stderr.split('\n')[1], /^Details: gateway on port \d+ answered HTTP 503 with runtime_discovery_invalid$/);
-    assert.equal(result.spawned, '', 'no Runtime CLI, discovery proxy, ACP bridge or Vite was started');
-    assert.equal(existsSync(secondFixture.env.FAKE_RUNTIME_CLI_LOG), false, 'Runtime up was never invoked');
-  } finally {
-    await first.stop();
-    await secondFixture.close();
+test('a Runtime whose door port is held by another Astrid says so', async () => {
+  const cases = [
+    ['another Astrid', 'Runtime daemon exited during startup: port 17340 is already served by another Astrid Runtime for realm "Other" (r2); stop that one first (astrid-runtime down), or start this one with another --door-port (see /x/runtime.log).', /already served by another Astrid Runtime/],
+    ['another program', 'Runtime daemon exited during startup: port 17340 is already in use by a program that is not an Astrid Runtime; stop it, or start this one with another --door-port (see /x/runtime.log).', /already in use by a program that is not an Astrid Runtime/],
+  ];
+  for (const [label, upError, detailsPattern] of cases) {
+    const fixture = await launchFixture({ discoveryState: 'missing', configuredOrigin: 'https://hosted.test' });
+    try {
+      const result = await launcherEnds({ fixture, env: { FAKE_RUNTIME_UP_ERROR: upError } });
+      assert.equal(result.code, 1, `${label}: ${result.stdout}${result.stderr}`);
+      assert.equal(result.stderr.split('\n')[0], label === 'another Astrid'
+        ? 'Astrid: Another Astrid is already running in another window. Stop it there with Ctrl+C first.'
+        : "Astrid: Another program is in the way, so Astrid can't start. Close it and try again.", label);
+      assert.match(result.stderr.split('\n')[1], /^Details: Runtime up failed: /, label);
+      assert.match(result.stderr.split('\n')[1], detailsPattern, label);
+      assert.equal(result.stdout, '', label);
+      assert.equal(result.spawned, '', `${label}: launched a child`);
+    } finally { await fixture.close(); }
   }
 });
 
-test('a gateway that rejects this hosted origin is another Astrid, not another program', async () => {
-  const holder = createServer((_req, res) => {
-    res.writeHead(403, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'hosted_origin_required' }));
-  });
-  await new Promise(r => holder.listen(0, '127.0.0.1', r));
-  try {
-    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(holder.address().port) } });
-    assert.equal(result.code, 1);
-    assert.equal(result.stderr.split('\n')[0], 'Astrid: Another Astrid is already running in another window. Stop it there with Ctrl+C first.');
-    assert.match(result.stderr.split('\n')[1], /served by a gateway for another origin/);
-  } finally { await new Promise(r => holder.close(r)); }
-});
-
 test('a second launcher for another Astrid says to stop the first one', async () => {
-  const port = String(await freePort());
-  const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: port } });
+  const first = await startLauncher({ configuredOrigin: 'https://hosted.test' });
   const other = await launchFixture({ configuredOrigin: 'https://hosted.test', discoveryRealmId: 'realm-other', catalogSelectedRealmId: 'realm-other', catalogRealmId: 'realm-other', handshakeRealmId: 'realm-other', realmResponseId: 'realm-other' });
   try {
-    const second = await launcherEnds({ fixture: other, env: { ASTRID_APP_LOOPBACK_PORT: port } });
+    const second = await launcherEnds({ fixture: other, env: { PORT: first.env.PORT } });
     assert.equal(second.code, 1, second.stdout + second.stderr);
     assert.equal(second.stderr.split('\n')[0], 'Astrid: Another Astrid is already running in another window. Stop it there with Ctrl+C first.');
-    assert.match(second.stderr.split('\n')[1], /^Details: /);
+    assert.equal(second.stderr.split('\n')[1], `Details: port ${first.env.PORT} is in use by Astrid's app for another realm`);
     assert(!second.stdout.includes('Open '), second.stdout);
     assert.equal(second.spawned, '');
   } finally {
@@ -741,25 +757,20 @@ test('a second launcher for another Astrid says to stop the first one', async ()
   }
 });
 
-test('the gateway stopping later quotes an installed start command containing spaces', async () => {
-  const port = await freePort();
-  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(port), ASTRID_START_COMMAND: '/installed/Astrid App/start' } });
-  try {
-    const pids = execFileSync('pgrep', ['-f', `astrid-loopback-gateway.ts.*--port ${port}`], { encoding: 'utf8' }).split('\n').filter(Boolean).map(Number);
-    assert(pids.length > 0, 'the gateway process');
-    for (const pid of pids) process.kill(pid, 'SIGKILL');
-    await started.closed;
-    assert.equal(started.child.exitCode, 1);
-    const lines = started.seen.stderr.split('\n');
-    assert.equal(lines[0], "Astrid stopped. Start it again with '/installed/Astrid App/start'.");
-    assert.match(lines[1], /^Details: loopback gateway exited with SIGKILL; the hosted app cannot reach this computer/);
-  } finally { await started.stop(); }
+test('the agent chat bridge stopping later quotes an installed start command containing spaces', async () => {
+  const result = await launcherEnds({
+    configuredOrigin: 'https://hosted.test',
+    env: { FAKE_ACP_EXIT_MS: '200', ASTRID_START_COMMAND: '/installed/Astrid App/start' },
+  });
+  assert.equal(result.code, 1);
+  assert.equal(result.stderr.split('\n')[0], "Astrid: Agent chat stopped. Start Astrid again with '/installed/Astrid App/start'.");
+  assert.match(result.stderr.split('\n')[1], /^Details: Astrid ACP bridge exited with code 3; ACP is offline/);
 });
 
 test('the agent chat bridge stopping is its own friendly line', async () => {
   const result = await launcherEnds({
     configuredOrigin: 'https://hosted.test',
-    env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()), FAKE_ACP_EXIT_MS: '200', ASTRID_START_COMMAND: '/installed/Astrid/start' },
+    env: { FAKE_ACP_EXIT_MS: '200', ASTRID_START_COMMAND: '/installed/Astrid/start' },
   });
   assert.equal(result.code, 1);
   assert.equal(result.stderr.split('\n')[0], 'Astrid: Agent chat stopped. Start Astrid again with /installed/Astrid/start.');
@@ -769,7 +780,7 @@ test('the agent chat bridge stopping is its own friendly line', async () => {
 test('a failed app start uses ASTRID_VERBOSE with the installed start command', async () => {
   const result = await launcherEnds({
     configuredOrigin: 'https://hosted.test',
-    env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()), ASTRID_START_COMMAND: '/installed/Astrid/start', FAKE_NPM_VITE_EXIT: '7' },
+    env: { ASTRID_START_COMMAND: '/installed/Astrid/start', FAKE_NPM_VITE_EXIT: '7' },
   });
   assert.equal(result.code, 1);
   assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run ASTRID_VERBOSE=1 /installed/Astrid/start to see why.");
@@ -778,7 +789,7 @@ test('a failed app start uses ASTRID_VERBOSE with the installed start command', 
 test('a failed app start uses the default npm command with ASTRID_VERBOSE', async () => {
   const result = await launcherEnds({
     configuredOrigin: 'https://hosted.test',
-    env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()), FAKE_NPM_VITE_EXIT: '7' },
+    env: { FAKE_NPM_VITE_EXIT: '7' },
   });
   assert.equal(result.code, 1);
   assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run ASTRID_VERBOSE=1 npm run dev:local to see why.");
@@ -806,24 +817,81 @@ test('a stopped Runtime points to the command that starts it', async () => {
     assert.equal(result.code, 1);
     assert.equal(result.stderr.split('\n')[0], "Astrid's engine isn't running. Start it first: astrid-runtime up --profile astrid");
     assert.match(result.stderr.split('\n')[1], /^Details: runtime is unavailable at http:\/\/127\.0\.0\.1:\d+ /);
-  } finally { rmSync(fixture.fixture, { recursive: true, force: true }); }
+  } finally {
+    await new Promise(r => fixture.door.close(r));
+    rmSync(fixture.fixture, { recursive: true, force: true });
+  }
 });
 
 function assertOpenAfterStart(stdout, origin) {
   assert.equal(stdout, HEALTHY_OUTPUT(origin));
 }
 
-test('the shipped config makes the production origin the default: Open shows it once the gateway and the app answer', async () => {
-  const started = await startLauncher({ shippedConfig: true, env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
+test('the hosted page reaches the chat bridge through the Runtime door only with --acp', async () => {
+  const chatPort = String(await freePort());
+  const acpToken = 'synthetic-acp-bridge-token';
+  // Without --acp: no registration is written, so the door answers that chat is unavailable.
+  {
+    const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
+    let started;
+    try {
+      started = await startLauncher({ fixture, env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort } });
+      assert.equal(existsSync(join(fixture.fixture, 'chat.json')), false, 'no chat registration without --acp');
+    } finally {
+      if (started) await started.stop();
+      await fixture.close();
+    }
+  }
+  // With --acp: the registration names the bridge and carries its credential, owner-only, and is removed on stop.
+  const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
+  const chatFile = join(fixture.fixture, 'chat.json');
+  let started;
+  try {
+    started = await startLauncher({ fixture, args: ['--acp'], env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort, ASTRID_ACP_BRIDGE_TOKEN: acpToken } });
+    assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), { endpoint: `http://127.0.0.1:${chatPort}`, token: acpToken });
+    assert.equal(statSync(chatFile).mode & 0o777, 0o600);
+    assert(!started.stdout.includes(acpToken) && !started.stderr.includes(acpToken), `${started.stdout}${started.stderr}`);
+    await started.stop();
+    assert.equal(existsSync(chatFile), false, 'chat.json is removed when the launcher stops');
+  } finally {
+    if (started) await started.stop();
+    await fixture.close();
+  }
+});
+
+test('a stale chat.json naming this bridge is removed at start, and one naming another port is left in place', async () => {
+  const chatPort = String(await freePort());
+  const cases = [
+    ['this bridge', `http://127.0.0.1:${chatPort}`, false],
+    ['another port', 'http://127.0.0.1:1', true],
+  ];
+  for (const [label, endpoint, kept] of cases) {
+    const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
+    const chatFile = join(fixture.fixture, 'chat.json');
+    const stale = JSON.stringify({ endpoint, token: 'stale-token' });
+    writeFileSync(chatFile, stale);
+    let started;
+    try {
+      started = await startLauncher({ fixture, env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort } });
+      assert.equal(existsSync(chatFile), kept, label);
+      if (kept) assert.equal(readFileSync(chatFile, 'utf8'), stale, label);
+    } finally {
+      if (started) await started.stop();
+      await fixture.close();
+    }
+  }
+});
+
+test('the shipped config makes the production origin the default: Open shows it once the door and the app answer', async () => {
+  const started = await startLauncher({ shippedConfig: true, doorOrigin: 'https://astrid.haus' });
   try { assertOpenAfterStart(started.stdout, 'https://astrid.haus'); } finally { await started.stop(); }
 });
 
-test('ASTRID_APP_LOOPBACK_ORIGIN=off starts no gateway and prints no Open line, even with a configured origin', async () => {
+test('ASTRID_APP_LOOPBACK_ORIGIN=off requires no door and prints no Open line, even with a configured origin', async () => {
   const started = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' }, until: (stdout) => stdout.includes('fake-npm run dev --') });
   try {
-    assert(!started.stdout.includes('loopback gateway'), started.stdout);
+    assert(!started.stdout.includes('browser door'), started.stdout);
     assert(!started.stdout.includes('Open '), started.stdout);
-    assert(!started.stdout.includes('"base"'), started.stdout);
   } finally { await started.stop(); }
 });
 
@@ -832,27 +900,27 @@ test('--check starts nothing, even with the production origin as the default', a
   try {
     const result = await run(['--check'], fixture.env);
     assert.equal(result.code, 0, result.stderr);
-    assert(!result.stdout.includes('loopback gateway'), result.stdout);
+    assert(!result.stdout.includes('browser door'), result.stdout);
     assert(!result.stdout.includes('Open '), result.stdout);
-    assert.equal(existsSync(fixture.spawnMarker), false, '--check must not start the gateway, ACP or Vite');
+    assert.equal(existsSync(fixture.spawnMarker), false, '--check must not start the door, ACP or Vite');
   } finally { await fixture.close(); }
 });
 
-test("a null configured origin keeps today's behaviour: no gateway unless one is given", async () => {
+test("a null configured origin keeps today's behaviour: no door unless one is given", async () => {
   const started = await startLauncher({ configuredOrigin: null, until: (stdout) => stdout.includes('fake-npm run dev --') });
   try {
-    assert(!started.stdout.includes('loopback gateway'), started.stdout);
+    assert(!started.stdout.includes('browser door'), started.stdout);
     assert(!started.stdout.includes('Open '), started.stdout);
   } finally { await started.stop(); }
 });
 
 test('an explicit origin wins over the configured one, from ASTRID_APP_LOOPBACK_ORIGIN or --hosted-origin', async () => {
-  const fromEnvironment = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { ASTRID_APP_LOOPBACK_ORIGIN: 'https://hosted.test', ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
+  const fromEnvironment = await startLauncher({ configuredOrigin: 'https://astrid.haus', doorOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_ORIGIN: 'https://hosted.test' } });
   try {
     assertOpenAfterStart(fromEnvironment.stdout, 'https://hosted.test');
     assert(!fromEnvironment.stdout.includes('astrid.haus'), fromEnvironment.stdout);
   } finally { await fromEnvironment.stop(); }
-  const fromArgument = await startLauncher({ configuredOrigin: 'https://astrid.haus', args: ['--hosted-origin', 'https://hosted.test'], env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
+  const fromArgument = await startLauncher({ configuredOrigin: 'https://astrid.haus', doorOrigin: 'https://hosted.test', args: ['--hosted-origin', 'https://hosted.test'] });
   try {
     assertOpenAfterStart(fromArgument.stdout, 'https://hosted.test');
     assert(!fromArgument.stdout.includes('astrid.haus'), fromArgument.stdout);
@@ -898,11 +966,6 @@ test('an explicit origin does not read a broken config', async () => {
   } finally { await fixture.close(); }
 });
 
-function runtimeCliCalls(fixture) {
-  if (!existsSync(fixture.env.FAKE_RUNTIME_CLI_LOG)) return [];
-  return readFileSync(fixture.env.FAKE_RUNTIME_CLI_LOG, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
-}
-
 test('normal launch auto-starts with the selected Runtime, Astrid, data root and source manifest', async () => {
   const fixture = await launchFixture({ discoveryState: 'missing' });
   const dataRoot = join(fixture.fixture, 'selected-data');
@@ -927,7 +990,7 @@ process.exit(result.status ?? 1);
     });
     assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
     assert.deepEqual(runtimeCliCalls(fixture)[0].args, [
-      'up', '--profile', 'astrid', '--data-root', dataRoot, '--source-manifest', sourceManifest, '--json',
+      'up', '--profile', 'astrid', '--data-root', dataRoot, '--source-manifest', sourceManifest, '--hosted-origin', 'off', '--json',
     ]);
     assert.equal(runtimeCliCalls(fixture)[0].cwd, realpathSync(runtimeCheckout));
     assert.equal(JSON.parse(readFileSync(fixture.env.FAKE_RUNTIME_APP_ENV, 'utf8')).astridCheckout, astridCheckout);
@@ -979,7 +1042,7 @@ process.exit(result.status ?? 1);
     });
     assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
     assert.deepEqual(runtimeCliCalls(fixture)[0].args, [
-      'up', '--profile', 'astrid', '--data-root', dataRoot, '--source-manifest', sourceManifest, '--json',
+      'up', '--profile', 'astrid', '--data-root', dataRoot, '--source-manifest', sourceManifest, '--hosted-origin', 'off', '--json',
     ]);
     assert.equal(runtimeCliCalls(fixture)[0].cwd, realpathSync(runtimeCheckout));
     assert.equal(runtimeCliCalls(fixture)[0].astridCheckout, astridCheckout);
@@ -1126,7 +1189,7 @@ test('shutdown stops Vite and bridge services before Runtime down', async () => 
     assert(down, lifecycle.join('\n'));
     assert(lifecycle.indexOf('vite:stop') < lifecycle.indexOf('acp:stop'), lifecycle.join('\n'));
     assert(lifecycle.indexOf('acp:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
-    assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false gatewayOpen=false');
+    assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false');
   } finally { if (started) await started.stop(); await fixture.close(); }
 });
 
@@ -1142,7 +1205,7 @@ test('SIGINT stops services and then shuts down the Runtime this launcher starte
     const down = lifecycle.find((line) => line.startsWith('runtime:down '));
     assert(down, lifecycle.join('\n'));
     assert(lifecycle.indexOf('vite:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
-    assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false gatewayOpen=false');
+    assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false');
   } finally { if (started) await started.stop(); await fixture.close(); }
 });
 
@@ -1170,7 +1233,7 @@ test('SIGINT during Runtime up waits for ownership handoff, then brings that Run
     assert.equal(started.child.exitCode, 130, started.seen.stderr);
     assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up', 'down']);
     assert.equal(readFileSync(started.spawnLog, 'utf8'), '', 'Vite and ACP must not start after interrupted up');
-    assert.equal(readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8'), 'runtime:down viteOpen=false proxyOpen=false gatewayOpen=false\n', 'only Runtime down should run');
+    assert.equal(readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8'), 'runtime:down viteOpen=false proxyOpen=false\n', 'only Runtime down should run');
   } finally {
     if (started && started.child.exitCode === null) {
       appendFileSync(releaseFile, ' release Runtime up');
@@ -1205,7 +1268,7 @@ test('--check and --build do not auto-start a missing Runtime', async () => {
   } finally { await fixture.close(); }
 });
 
-test('a failed Runtime up leaves the App, gateway and bridges stopped', async () => {
+test('a failed Runtime up leaves the App and bridges stopped', async () => {
   const fixture = await launchFixture({ discoveryState: 'missing' });
   try {
     const result = await launcherEnds({ fixture, env: { FAKE_RUNTIME_UP_EXIT: '1' } });

@@ -1,5 +1,5 @@
 # Same-machine "direct" journey (Plan A, card A0.3): a production build on a hosted-style HTTPS origin,
-# the real loopback gateway, a real Runtime daemon on throwaway SQLite, and Chromium.
+# a real Runtime daemon on throwaway SQLite serving it through its own browser door, and Chromium.
 # Local equivalent: npm run test:e2e:direct (tests/e2e/local/support/harness.ts).
 #
 # Runtime checkout: the Runtime repo is private, so actions/checkout needs a token that can read it. Add a
@@ -16,7 +16,6 @@ on:
   pull_request:
     paths:
       - ".github/workflows/direct-journey.yml"
-      - "scripts/astrid-loopback-gateway*"
       - "scripts/runtime-discovery-proxy.mjs"
       - "scripts/dev-local-workspace*"
       - "src/integrations/runtime/**"
@@ -121,7 +120,7 @@ jobs:
           path: ${{ runner.temp }}/direct-results/
           if-no-files-found: ignore
 
-  # Three products on one realm (testing plan F2, thin slice): the same hosted build, loopback gateway and real Runtime as the
+  # Three products on one realm (testing plan F2, thin slice): the same hosted build and real Runtime (with its browser door) as the
   # job above, plus the real Astrid CLI as a second client. Local equivalent: npm run test:e2e:three-products.
   # Astrid is private to this lane's token: add a repository secret ASTRID_READ_TOKEN (a fine-grained PAT with read access to
   # banodoco/astrid-agent, or whichever repository holds Astrid). Without it the job falls back to github.token, which

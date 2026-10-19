@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import * as policy from '../../../config/vite/pairedRoutePolicy';
-import { allowedAcpRoute, allowedRoute } from '../../../scripts/astrid-loopback-gateway';
 import { classifyPairedRoute, forwardHeaders, type PairedService } from '../../../config/vite/pairedRoutePolicy';
 import generatedClientSource from '../runtime/generated.ts?raw';
 import runtimeClientSource from '../runtime/client.ts?raw';
@@ -310,24 +309,6 @@ describe('paired route policy', () => {
     expect(classifyPairedRoute('/api/astrid/generation/compose?x=1', 'POST')).toBeNull();
   });
 
-  // The hosted loopback gateway and the paired relay must share one route table
-  // and one canonicalisation, so they can never drift.
-  const everyCase: ReadonlyArray<readonly [string, string]> = [
-    ...productCalls.flatMap(([method, path]) => ALL_METHODS.map((m) => [m, path] as const).concat([[method, path]])),
-    ...forbidden,
-    ...privilegedCases,
-    ...malformedCases.map(([, method, path]) => [method, path] as const),
-  ];
-  it.each(everyCase)('gateway agrees with relay: %s %s', (method, path) => {
-    const service = path.startsWith('/api/runtime') ? 'runtime' : 'astrid';
-    const relay = classifyPairedRoute(path, method);
-    const upstream = bare(path);
-    const gateway = upstream.startsWith('/acp')
-      ? allowedAcpRoute(upstream, method)
-      : allowedRoute(upstream, method, service);
-    expect(gateway).toBe(relay !== null);
-  });
-
   it("forwards the App's media and conditional request headers to the Runtime, never credentials", () => {
     const upstreamRequestHeaders = (policy as unknown as {
       upstreamRequestHeaders?: (headers: Record<string, string | undefined>) => Record<string, string>;
@@ -425,12 +406,11 @@ describe('paired route policy vs the App\'s Workspace v1 calls', () => {
 
   describe.each(calls)('$op: $method $path', ({ method, path, headers, op }) => {
     const prefixes = astridOnly.has(op) ? ['/api/astrid'] : ['/api/runtime', '/api/astrid'];
-    it.each(prefixes)('is allowed through %s, relay and gateway agree', (prefix) => {
+    it.each(prefixes)('is allowed through %s', (prefix) => {
       const service = prefix === '/api/runtime' ? 'runtime' : 'astrid';
       const route = classifyPairedRoute(`${prefix}${path}`, method, { 'content-length': '12' });
       expect(route?.service).toBe(service);
       expect(route?.upstreamPath).toBe(decodeURIComponent(path.split('?')[0]) + (path.includes('?') ? `?${path.split('?')[1]}` : ''));
-      expect(allowedRoute(path, method, service)).toBe(true);
     });
     it('keeps every header the call sends', () => {
       const sent = Object.fromEntries(headers.map((name) => [name, 'v']));

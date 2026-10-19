@@ -22,8 +22,10 @@ import {
   validatePreviewOutputDirectory,
   viteChildArgs,
   resolveWorkspaceDiscoveryPath,
-  gatewayChildArgs,
-  resolveLoopbackPort,
+  chatRegistrationPath,
+  chatRegistration,
+  writeChatRegistration,
+  removeChatRegistration,
   loadLocalRuntimeEnvironment,
   shellQuote,
 } from './dev-local-workspace-options.mjs';
@@ -42,11 +44,13 @@ const startCommand = process.env.ASTRID_START_COMMAND
   ? shellQuote(process.env.ASTRID_START_COMMAND)
   : 'npm run dev:local';
 // An install keeps its Runtime behind `<install>/with-env` (next to `<install>/start`), off the person's PATH.
-const runtimeUpCommand = process.env.ASTRID_START_COMMAND
-  ? `${shellQuote(resolve(dirname(process.env.ASTRID_START_COMMAND), 'with-env'))} astrid-runtime up --profile astrid`
-  : 'astrid-runtime up --profile astrid';
+const runtimeCli = (action) => (process.env.ASTRID_START_COMMAND
+  ? `${shellQuote(resolve(dirname(process.env.ASTRID_START_COMMAND), 'with-env'))} astrid-runtime ${action} --profile astrid`
+  : `astrid-runtime ${action} --profile astrid`);
+const runtimeUpCommand = runtimeCli('up');
 const ENGINE_STOPPED = `Astrid's engine isn't running. Start it first: ${runtimeUpCommand}`;
-const ASTRID_STOPPED = `Astrid stopped. Start it again with ${startCommand}.`;
+const DEFAULT_HOSTED_ORIGIN = 'https://astrid.haus';
+const engineWithoutDoor = (origin) => `Astrid's engine is running without a door for ${origin}. Restart it: ${runtimeCli('restart')}${origin === DEFAULT_HOSTED_ORIGIN ? '' : ` --hosted-origin ${origin}`}`;
 const AGENT_CHAT_STOPPED = `Agent chat stopped. Start Astrid again with ${startCommand}.`;
 const BAD_HOSTED_ORIGIN = '--hosted-origin must be an https:// address, like https://astrid.haus';
 const ENGINE_CHANGED = `Astrid changed on this computer. Restart its engine: ${runtimeUpCommand}`;
@@ -71,6 +75,7 @@ const services = [];
 let runtimeSettings;
 let ownedRuntime;
 let runtimeCliChild;
+let releaseChat = () => {};
 let cleanupPromise;
 let interrupted = false;
 
@@ -97,7 +102,10 @@ async function stopService(service, signal) {
 function runtimeCommand(action) {
   const { command, args, cwd } = resolveRuntimeCommand(runtimeSettings);
   return { command, cwd, args: [...args, action, '--profile', 'astrid', '--data-root', runtimeSettings.dataRoot,
-    ...(runtimeSettings.sourceManifest ? ['--source-manifest', runtimeSettings.sourceManifest] : []), '--json'] };
+    ...(runtimeSettings.sourceManifest ? ['--source-manifest', runtimeSettings.sourceManifest] : []),
+    // The Runtime opens the hosted page's door itself; `off` starts it without one.
+    ...(action === 'up' || action === 'restart' ? ['--hosted-origin', runtimeSettings.hostedOrigin ?? 'off'] : []),
+    '--json'] };
 }
 
 async function runRuntimeCommand(action) {
@@ -128,6 +136,8 @@ async function runRuntimeCommand(action) {
 
 function cleanup(signal = 'SIGTERM') {
   return cleanupPromise ??= (async () => {
+    // The door stops forwarding chat before the bridge stops.
+    releaseChat();
     for (const service of services.filter(({ kind }) => kind === 'vite')) await stopService(service, signal);
     for (const service of services.filter(({ kind }) => kind !== 'vite')) await stopService(service, signal);
     if (ownedRuntime) {
@@ -227,7 +237,7 @@ const hostedOrigin = resolveHostedOrigin({
   explicit: hostedOriginEnvironment ?? hostedOriginArgument,
   configPath: process.env.ASTRID_APP_HOSTED_ORIGIN_CONFIG?.trim() || fileURLToPath(new URL('../config/hosted-origin.json', import.meta.url)),
 });
-const loopbackPort = resolveLoopbackPort(process.env.ASTRID_APP_LOOPBACK_PORT);
+runtimeSettings.hostedOrigin = hostedOrigin;
 const generatedMetadataPath = resolve(process.cwd(), 'src/integrations/runtime/generated-contract-metadata.ts');
 
 function requireExactHttpsOrigin(value, details, friendly = BAD_HOSTED_ORIGIN) {
@@ -246,8 +256,8 @@ function requireExactHttpsOrigin(value, details, friendly = BAD_HOSTED_ORIGIN) {
 }
 
 /**
- * The gateway's origin. An explicit ASTRID_APP_LOOPBACK_ORIGIN or --hosted-origin wins, and `off` opts out. Otherwise the
- * origin in config/hosted-origin.json is the default, or null for no gateway. A broken config stops the launch.
+ * The hosted page the Runtime's door serves. An explicit ASTRID_APP_LOOPBACK_ORIGIN or --hosted-origin wins, and `off` opts
+ * out. Otherwise the origin in config/hosted-origin.json is the default, or null for none. A broken config stops the launch.
  */
 function resolveHostedOrigin({ explicit, configPath }) {
   if (explicit === 'off') return null;
@@ -269,60 +279,31 @@ function resolveHostedOrigin({ explicit, configPath }) {
   return requireExactHttpsOrigin(configured, message, CANT_START);
 }
 
-/** Identify the gateway before Runtime verification can start a replacement Runtime. */
-function probeGatewayPort(portValue, origin, realmId) {
-  return new Promise((resolveProbe) => {
-    const parseBody = (chunks) => {
-      try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return null; }
-    };
-    const readResponse = (response, onBody) => {
-      const chunks = [];
-      let size = 0;
-      response.on('data', (chunk) => {
-        if (size < 16_384) {
-          const accepted = chunk.subarray(0, 16_384 - size);
-          chunks.push(accepted);
-          size += accepted.length;
-        }
-      });
-      response.on('error', () => resolveProbe({ kind: 'program', details: `port ${portValue} answered and then dropped the connection` }));
-      response.on('end', () => onBody(response.statusCode, parseBody(chunks)));
-    };
-    const requestPath = (path, onBody) => {
-      const request = httpRequest({ hostname: '127.0.0.1', port: Number(portValue), path, method: 'GET', headers: { Origin: origin }, timeout: 2000 }, (response) => readResponse(response, onBody));
-      request.on('timeout', () => { request.destroy(); resolveProbe({ kind: 'program', details: `port ${portValue} did not answer in time` }); });
-      request.on('error', (error) => resolveProbe(error.code === 'ECONNREFUSED'
-        ? { kind: 'free' }
-        : { kind: 'program', details: `port ${portValue} is not usable: ${error.message}` }));
-      request.end();
-    };
-    requestPath('/api/runtime/v1/health', (status, body) => {
-      const error = typeof body?.error === 'string' ? body.error : '';
-      if ((status === 502 || status === 503) && ['runtime_unavailable', 'runtime_discovery_invalid'].includes(error)) {
-        resolveProbe({ kind: 'engine_stopped', details: `gateway on port ${portValue} answered HTTP ${status} with ${error}` });
-      } else if ((status === 502 || status === 503) && ['realm_changed', 'runtime_identity_mismatch'].includes(error)) {
-        resolveProbe({ kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another realm (${error})` });
-      } else if (status === 403 && error === 'hosted_origin_required') {
-        resolveProbe({ kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another origin` });
-      } else if (status === 200 && body?.status === 'ok' && body?.protocol === 'workspace.v1') {
-        if (!realmId) {
-          resolveProbe({ kind: 'ours' });
-          return;
-        }
-        requestPath('/api/runtime/v1/realm', (realmStatus, realm) => {
-          if (realmStatus === 200 && typeof realm?.realm_id === 'string') {
-            resolveProbe(realm.realm_id === realmId
-              ? { kind: 'ours' }
-              : { kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another realm` });
-          } else {
-            resolveProbe({ kind: 'program', details: `port ${portValue} is already in use by a program that is not the gateway for ${origin} (HTTP ${realmStatus})` });
-          }
-        });
-      } else {
-        resolveProbe({ kind: 'program', details: `port ${portValue} is already in use by a program that is not the gateway for ${origin} (HTTP ${status})` });
-      }
-    });
-  });
+/**
+ * The hosted page reaches this computer through the Runtime's own door (astrid-runtime `runtime_protocol/door.py`), which
+ * the Runtime opens when it starts and records in discovery. Returns its port, or fails when it serves another page.
+ */
+function requireDoor(runtimeDiscovery, origin) {
+  let endpoint = null;
+  try { endpoint = new URL(String(runtimeDiscovery.door_endpoint ?? '')); } catch { /* no door */ }
+  if (runtimeDiscovery.door_origin !== origin || endpoint?.protocol !== 'http:' || endpoint.hostname !== '127.0.0.1' || !endpoint.port) {
+    return fail(engineWithoutDoor(origin), `the running Runtime's browser door serves ${runtimeDiscovery.door_origin ?? 'no hosted page'}`);
+  }
+  return endpoint.port;
+}
+
+/**
+ * Who holds the app's port: another launcher's app (its Vite answers the realm it serves) for this realm (`ours`) or
+ * another one (`other_astrid`), or some other program.
+ */
+async function appPortHolder(appPort, realmId) {
+  let config = null;
+  try {
+    const response = await fetch(`http://127.0.0.1:${appPort}/runtime-config/v1/workspace.json`, { signal: AbortSignal.timeout(2000) });
+    config = response.ok ? await response.json() : null;
+  } catch { /* not an app that answers */ }
+  if (typeof config?.realmId !== 'string') return 'program';
+  return config.realmId === realmId ? 'ours' : 'other_astrid';
 }
 
 function printOpenBlock(origin) {
@@ -522,23 +503,18 @@ if (Number.isInteger(discovery?.pid) && discovery.pid > 0) {
 }
 let selected = discovery ? validateDiscovery(discovery) : null;
 if (discovery && !selected) exit(1);
-if (hostedOrigin && loopbackPort !== '0' && !checkOnly && !buildOnly) {
-  const holder = await probeGatewayPort(loopbackPort, hostedOrigin, selected?.expectedIdentity.realmId);
-  if (holder.kind === 'engine_stopped') {
-    exit(fail('Astrid is running, but its engine stopped. Stop the other Astrid (Ctrl+C in its window) and run this again.', holder.details) ? 1 : 1);
-  }
-  if (holder.kind === 'ours') {
-    console.log('Astrid is already running in another window.');
-    printOpenBlock(hostedOrigin);
-    exit(0);
-  }
-  if (holder.kind === 'other_astrid') exit(fail(OTHER_ASTRID_RUNNING, holder.details) ? 1 : 1);
-  if (holder.kind === 'program') exit(fail(PROGRAM_IN_THE_WAY, holder.details) ? 1 : 1);
-}
 let verified = selected ? await verifyRuntime(selected.endpoint, selected.credential.token, selected.expectedIdentity, !checkOnly && !buildOnly) : NOT_RUNNING;
 if (interrupted) exit(130);
 if (verified === NOT_RUNNING && !checkOnly && !buildOnly) {
-  const result = await runRuntimeCommand('up'); // CLI publishes discovery only after its owner passes readiness.
+  let result;
+  try {
+    result = await runRuntimeCommand('up'); // CLI publishes discovery only after its owner passes readiness.
+  } catch (error) {
+    // The Runtime names whatever already holds its door's port.
+    const message = error instanceof Error ? error.message : String(error);
+    exit(fail(/already served by another Astrid Runtime/.test(message) ? OTHER_ASTRID_RUNNING
+      : /already in use by a program/.test(message) ? PROGRAM_IN_THE_WAY : CANT_START, message) ? 1 : 1);
+  }
   if (!['started', 'reconnected'].includes(result.status)) throw new Error('Runtime up did not report started or reconnected');
   // Runtime publishes here after readiness; CLI output cannot redirect our data root.
   discoveryPath = resolve(runtimeSettings.dataRoot, 'runtime', 'discovery.json');
@@ -555,6 +531,8 @@ if (verified === NOT_RUNNING) exit(fail(NOT_SET_UP, `no live Runtime discovery a
 if (!verified) exit(process.exitCode ?? 1);
 if (interrupted) exit(130);
 const { endpoint, credentialPath, credential, expectedIdentity } = selected;
+const doorPort = hostedOrigin && !checkOnly && !buildOnly ? requireDoor(discovery, hostedOrigin) : null;
+if (hostedOrigin && !checkOnly && !buildOnly && !doorPort) exit(1);
 if (paired && !pairedRelayOrigin) exit(fail(CANT_START, '--paired requires ASTRID_APP_PAIRED_RELAY_ORIGIN') ? 1 : 1);
 
 const acpToken = process.env.ASTRID_ACP_BRIDGE_TOKEN?.trim() || randomBytes(32).toString('base64url');
@@ -645,13 +623,19 @@ if (buildOnly) {
 } else {
 
 const COULDNT_START = `Astrid couldn't start. Run ASTRID_VERBOSE=1 ${startCommand} to see why.`;
-/** How long Vite may take to listen, and the gateway after it printed that it does. */
+/** How long Vite may take to listen. */
 const VITE_START_TIMEOUT_MS = 60_000;
-const GATEWAY_START_TIMEOUT_MS = 15_000;
 
-// The app's own port, checked the way the gateway's was: if anything already listens there, Vite (`--strictPort`) cannot
-// start, and whatever answers would otherwise look like Astrid's app. No App services have started; cleanup releases any owned Runtime.
+// The app's own port: if anything already listens there, Vite (`--strictPort`) cannot start. Another launcher's app for this
+// realm is Astrid already running; anything else is in the way. No App services have started; cleanup releases any owned Runtime.
 if (port !== '0' && await waitForPort(port, 0)) {
+  const holder = await appPortHolder(port, expectedIdentity.realmId);
+  if (holder === 'ours') {
+    console.log('Astrid is already running in another window.');
+    if (hostedOrigin) printOpenBlock(hostedOrigin);
+    exit(0);
+  }
+  if (holder === 'other_astrid') exit(fail(OTHER_ASTRID_RUNNING, `port ${port} is in use by Astrid's app for another realm`) ? 1 : 1);
   exit(fail(PROGRAM_IN_THE_WAY, `port ${port} is in use`) ? 1 : 1);
 }
 if (interrupted) exit(130);
@@ -706,6 +690,8 @@ if (hostedOrigin) console.log('Starting Astrid…');
 technical(healthyLine);
 
 let connector;
+// Kept for the local app: it is same-origin and reaches the Runtime through this proxy, while the Runtime's door answers
+// only the hosted origin.
 const runtimeProxy = spawnService(process.execPath, ['scripts/runtime-discovery-proxy.mjs'], {
   stdio: piped,
   env: serviceEnvironment({ ASTRID_RUNTIME_PROXY_PORT: runtimeProxyPort, ASTRID_WORKSPACE_DISCOVERY: discoveryPath }),
@@ -717,34 +703,19 @@ if (!proxyReady) {
   flushHeld();
   exit(fail(COULDNT_START, `runtime discovery proxy did not start on port ${runtimeProxyPort}${withLast(proxyOutput)}`) ? 1 : 1);
 }
+// The hosted page's chat goes through the Runtime's door to this bridge only when the developer passed --acp: ACP
+// auto-approves tool calls and can open terminals. A registration naming this bridge's port while nothing listens there is
+// an earlier launcher's that did not get to remove it.
+const chatFile = chatRegistrationPath(discoveryPath);
+const ownChat = (registration) => registration?.endpoint === chatRegistration(acpPort, acpToken).endpoint;
+if (!(await waitForPort(acpPort, 0))) removeChatRegistration(chatFile, ownChat);
 const acpBridge = spawnService('npm', [...npmQuiet, 'run', 'dev:astrid-acp'], { stdio: piped, env: serviceEnvironment() });
 const acpOutput = watch(acpBridge);
-const gateway = hostedOrigin
-  ? spawnService(process.execPath, gatewayChildArgs({
-    discoveryPath,
-    credentialPath,
-    hostedOrigin,
-    loopbackPort,
-    acp: launcherOptions.acp,
-    acpPort,
-    appPort: port,
-    auditLog: process.env.ASTRID_APP_LOOPBACK_AUDIT_LOG?.trim(),
-    actor: process.env.ASTRID_APP_PAIRED_PRODUCT_ACTOR?.trim(),
-  }), { stdio: piped, env: serviceEnvironment() })
-  : null;
-// The gateway prints one JSON line once it listens; that line carries the port it actually got (`--port 0` in tests).
-let gatewayListening = () => {};
-const gatewayReady = new Promise((resolveReady) => { gatewayListening = resolveReady; });
-const gatewayOutput = gateway
-  ? watch(gateway, (line) => {
-    if (!line.startsWith('{')) return;
-    try {
-      const { base } = JSON.parse(line);
-      if (typeof base === 'string') gatewayListening(Number(new URL(base).port));
-    } catch { /* not the ready line */ }
-  })
-  : null;
-if (hostedOrigin) technical(`loopback gateway starting on 127.0.0.1:${loopbackPort} for ${hostedOrigin}${launcherOptions.acp ? ' (ACP on)' : ''}`);
+if (hostedOrigin && launcherOptions.acp) {
+  writeChatRegistration(chatFile, chatRegistration(acpPort, acpToken));
+  releaseChat = () => removeChatRegistration(chatFile, (registration) => ownChat(registration) && registration.token === acpToken);
+}
+if (hostedOrigin) technical(`browser door ${discovery.door_endpoint} for ${hostedOrigin}${launcherOptions.acp ? ' (chat on)' : ''}`);
 if (paired) {
   connector = spawnService('npx', ['tsx', 'scripts/astrid-local-connector.ts', '--discovery', discoveryPath, '--relay-origin', pairedRelayOrigin, ...(resetPairing ? ['--reset-pairing'] : [])], {
     stdio: 'inherit',
@@ -767,7 +738,6 @@ const viteOutput = watch(child);
 const shutdown = (signal) => {
   if (shuttingDown) return;
   shuttingDown = true;
-  gatewayListening(null);
   void cleanup(signal).catch((error) => fail(CANT_START, error.message));
 };
 /** A failure: the technical output held back so far is shown, then the friendly line and its details. */
@@ -793,33 +763,20 @@ acpBridge.on('error', (error) => stopWith(AGENT_CHAT_STOPPED, `could not start A
 acpBridge.on('exit', (code, signal) => {
   stopWith(AGENT_CHAT_STOPPED, `Astrid ACP bridge exited${signal ? ` with ${signal}` : ` with code ${code}`}; ACP is offline${withLast(acpOutput)}`);
 });
-gateway?.on('error', (error) => stopWith(ASTRID_STOPPED, `could not start loopback gateway: ${error.message}`));
-gateway?.on('exit', (code, signal) => {
-  gatewayListening(null);
-  // Before Open, a gateway that never listened usually found its port taken (`describePortHolder`); after it, Astrid stopped.
-  const tail = gatewayOutput.tail;
-  const friendly = opened ? ASTRID_STOPPED
-    : /already served by/.test(tail) ? OTHER_ASTRID_RUNNING
-      : /already in use/.test(tail) ? PROGRAM_IN_THE_WAY
-        : ASTRID_STOPPED;
-  stopWith(friendly, `loopback gateway exited${signal ? ` with ${signal}` : ` with code ${code}`}; the hosted app cannot reach this computer${withLast(gatewayOutput)}`);
-});
-
-// Astrid is reachable when the gateway listens and the app answers. Only then does a person get the Open block.
+// Astrid is reachable when the Runtime's door listens and the app answers. Only then does a person get the Open block.
 if (hostedOrigin) {
-  const gatewayPort = await gatewayReady;
-  if (gatewayPort !== null && !shuttingDown) {
-    const aborted = () => shuttingDown;
-    const reachable = await waitForPort(gatewayPort, GATEWAY_START_TIMEOUT_MS, aborted) && await waitForPort(port, VITE_START_TIMEOUT_MS, aborted);
-    // Something answering on the app's port is not enough: it has to be our own Vite, still running. A Vite that already
-    // exited (its port taken after the check above) leaves another program answering, and that is not Astrid's app.
-    const viteAlive = child.exitCode === null && child.signalCode === null;
-    if (reachable && viteAlive && !shuttingDown) {
-      printOpenBlock(hostedOrigin);
-      flushHeld();
-    } else {
-      stopWith(COULDNT_START, `nothing listened on 127.0.0.1:${gatewayPort} and 127.0.0.1:${port} in time`);
-    }
+  const aborted = () => shuttingDown;
+  const reachable = await waitForPort(doorPort, 3000, aborted) && await waitForPort(port, VITE_START_TIMEOUT_MS, aborted);
+  // Something answering on the app's port is not enough: it has to be our own Vite, still running. A Vite that already
+  // exited (its port taken after the check above) leaves another program answering, and that is not Astrid's app.
+  const viteAlive = child.exitCode === null && child.signalCode === null;
+  if (shuttingDown) {
+    // A service already stopped the launch and said why.
+  } else if (reachable && viteAlive) {
+    printOpenBlock(hostedOrigin);
+    flushHeld();
+  } else {
+    stopWith(COULDNT_START, `nothing listened on 127.0.0.1:${doorPort} and 127.0.0.1:${port} in time`);
   }
 } else if (await waitForPort(port, VITE_START_TIMEOUT_MS, () => shuttingDown)) {
   console.log(`Local App: http://127.0.0.1:${port}`);

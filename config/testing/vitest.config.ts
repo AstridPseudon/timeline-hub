@@ -92,9 +92,7 @@ export default defineConfig({
     environment: 'jsdom',
     include: checkoutLane
       ? CHECKOUT_LANE
-      // The loopback gateway test lives next to its subject in scripts/ and is
-      // the only scripts/ test that runs under vitest (the others use node:test).
-      : ['src/**/*.test.{ts,tsx}', 'scripts/astrid-loopback-gateway.test.ts'],
+      : ['src/**/*.test.{ts,tsx}'],
     exclude: [
       ...(checkoutLane ? [] : CHECKOUT_LANE),
       'supabase/functions/**',

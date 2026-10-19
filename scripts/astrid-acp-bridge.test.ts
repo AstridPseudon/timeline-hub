@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createAstridAcpHttpServer, resolveAstridAcpBridgeConfig, assertLocalMediaOnly } from './astrid-acp-bridge.ts';
-import { createLoopbackGateway } from './astrid-loopback-gateway.ts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -50,7 +49,7 @@ async function listen(server: import('node:http').Server) {
   return `http://127.0.0.1:${(server.address() as { port: number }).port}`;
 }
 
-test('gateway and real HTTP bridge enforce RPC and project policy and preserve project session/config ownership', async () => {
+test('real HTTP bridge enforces RPC and project policy for hosted calls and preserves project session/config ownership', async () => {
   const claimDirectory = mkdtempSync(join(tmpdir(), 'astrid-http-chat-'));
   const projects = new Map<string, Project>(['p1', 'p2'].map(project_id => [project_id, {
     project_id, realm_id: 'test-realm', slug: project_id, name: project_id,
@@ -106,15 +105,15 @@ test('gateway and real HTTP bridge enforce RPC and project policy and preserve p
       } as never;
     },
   });
-  let gateway: ReturnType<typeof createLoopbackGateway> | undefined;
   let pendingPrompt: Promise<Response> | undefined;
   try {
     const acpBase = await listen(server);
-    gateway = createLoopbackGateway({ endpoint: acpBase, token: 'runtime', origin: 'https://hosted.test', acpEndpoint: acpBase, acpToken: 'dedicated' });
-    const gatewayBase = await listen(gateway.server);
-    const base = gatewayBase + gateway.prefix.replace('/api/runtime', '/api/astrid') + '/acp';
-    const call = (path: string, body?: unknown, method = body === undefined ? 'GET' : 'POST') => fetch(base + path, {
-      method, headers: { Origin: 'https://hosted.test', 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    // A hosted call as the Runtime's browser door forwards it (astrid-runtime runtime_protocol/door.py): the bridge's
+    // own credential, the protocol version, and the hosted local-media-only policy on every request.
+    const call = (path: string, body?: unknown, method = body === undefined ? 'GET' : 'POST') => fetch(acpBase + path, {
+      method,
+      headers: { Authorization: 'Bearer dedicated', 'X-Astrid-Bridge-Version': 'v1', 'X-Astrid-Local-Media-Only': '1', 'Content-Type': 'application/json' },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     // Direct follow-up deliberately omits the hosted-policy header.
     const direct = (path: string, body: unknown) => fetch(acpBase + path, {
@@ -197,7 +196,7 @@ test('gateway and real HTTP bridge enforce RPC and project policy and preserve p
     await (pendingPrompt ?? Promise.resolve()).catch(() => {});
     try { await bridge.close(); }
     finally {
-      const servers = [server, ...(gateway ? [gateway.server] : [])];
+      const servers = [server];
       for (const owned of servers) owned.closeAllConnections();
       try { await Promise.all(servers.map(owned => new Promise<void>(resolve => owned.close(() => resolve())))); }
       finally { rmSync(claimDirectory, { recursive: true, force: true }); }
