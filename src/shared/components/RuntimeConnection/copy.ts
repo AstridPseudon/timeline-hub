@@ -44,11 +44,6 @@ export function installCommand(mode: CommandMode): string {
   return windows ? ASTRID_COMMANDS.windows : ASTRID_COMMANDS.macLinux;
 }
 
-/** Search hints are only included in the separate empty-workspace diagnostic for a coding agent. */
-export const AGENT_SEARCHES = {
-  install: 'find ~ -maxdepth 6 -name install.json -not -path "*/node_modules/*" -exec grep -l \'"owner"[[:space:]]*:[[:space:]]*"haus.astrid.runtime"\' {} + 2>/dev/null',
-} as const;
-
 /** A heading and the one sentence under it. */
 interface Message {
   readonly title: string;

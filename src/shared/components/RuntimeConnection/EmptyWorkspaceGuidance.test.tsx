@@ -8,7 +8,7 @@ vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeApiBase: () => '
 vi.mock('@/shared/lib/browser/clipboard.ts', () => ({ writeClipboardTextSafe: mocks.clipboard }));
 
 import { EmptyWorkspaceGuidance } from './EmptyWorkspaceGuidance.tsx';
-import { AGENT_SEARCHES, installCommand, RUNTIME_CONNECTION_COPY } from './copy.ts';
+import { installCommand, RUNTIME_CONNECTION_COPY } from './copy.ts';
 
 function showGuidance(onRefresh = vi.fn()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -53,7 +53,7 @@ describe('connected empty workspace guidance', () => {
     expect(copied).toContain('My workspace');
     expect(copied).toContain('realm-existing');
     expect(copied).toContain('http://127.0.0.1:17340/api/runtime');
-    expect(copied).toContain(AGENT_SEARCHES.install);
+    expect(copied).toContain('install.json');
     expect(copied).toContain('haus.astrid.runtime');
     expect(copied).toContain(installCommand('install'));
     expect(copied).not.toContain('astrid-runtime up');

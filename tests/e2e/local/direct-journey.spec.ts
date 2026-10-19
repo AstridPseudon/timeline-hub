@@ -249,6 +249,12 @@ test.describe('permission gate and readiness (App)', () => {
       await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
       await expect(panel.getByRole('button', { name: UI.connect })).toHaveCount(0);
       expect(doorRequests, 'a fresh profile does not probe the door while showing setup').toEqual([]);
+
+      await page.goto(`${harness.origin}/?connect=1#continue`);
+      await expect(page.locator(UI.panel).getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeVisible();
+      await context.grantPermissions([LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
+      await expectConnected(page);
+      expect(doorRequests.length).toBeGreaterThan(0);
     } finally {
       await context.close();
     }
