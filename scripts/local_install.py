@@ -30,6 +30,22 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def install_remotion_dependencies(source: Path, env: dict[str, str], npm: str | None = None) -> None:
+    """Install the rendering source's locked dependencies, reusing a matching install."""
+    remotion = source / "remotion"
+    lockfile = remotion / "package-lock.json"
+    node_modules = remotion / "node_modules"
+    marker = node_modules / ".astrid-package-lock.sha256"
+    npm = npm or shutil.which("npm", path=env.get("PATH"))
+    if not npm:
+        raise ValueError("npm is required to install Remotion dependencies")
+    lock_hash = digest(lockfile)
+    if node_modules.is_dir() and marker.is_file() and marker.read_text(encoding="ascii").strip() == lock_hash:
+        return
+    run([npm, "ci"], cwd=remotion, env=env)
+    marker.write_text(lock_hash + "\n", encoding="ascii")
+
+
 def run(argv: list[str | Path], *, cwd: Path, env: dict[str, str], capture: bool = False) -> str:
     result = subprocess.run([str(x) for x in argv], cwd=cwd, env=env, check=True,
                             text=True, stdout=subprocess.PIPE if capture else None)
@@ -335,6 +351,9 @@ def install(args: argparse.Namespace) -> None:
     node = run(["node", "--version"], cwd=sources["app"], env=env, capture=True)
     if tuple(int(n) for n in node.lstrip("v").split(".")[:2]) < (20, 19):
         raise ValueError("Astrid App requires Node 20.19 or newer")
+    npm = shutil.which("npm", path=env.get("PATH"))
+    if not npm:
+        raise ValueError("npm is required for local installation")
     decoders = media_tools(env, {"ffmpeg": args.ffmpeg, "ffprobe": args.ffprobe})
     agents = agent_tools(env, {"omp": args.omp, "bun": args.bun})
     identity = {name: source_identity(path, env) for name, path in sources.items()}
@@ -353,6 +372,7 @@ def install(args: argparse.Namespace) -> None:
     copies = {name: root / "sources" / name for name in sources}
     for name, copy in copies.items():
         snapshot(identity[name], copy, env)
+    install_remotion_dependencies(copies["astrid"], env, npm)
     locks = {name: copies["astrid"] / "requirements" / (name + ".lock") for name in ("build", "runtime")}
     wheels = root / "wheelhouse"; wheels.mkdir()
     cache = safe_path(args.wheelhouse) if args.wheelhouse else wheels
