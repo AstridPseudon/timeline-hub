@@ -87,12 +87,15 @@ def test_credentials_are_checked_before_retired_body(family, realm):
 
 
 @pytest.mark.parametrize("family", ["timeline", "shot", "reference", "document"])
-def test_limited_project_token_cannot_use_foreign_retired_resource(family, realm):
+def test_authenticated_foreign_owned_resources_are_refused_without_writes_or_disclosure(family, realm):
     case = realm
     daemon = case.daemon
     foreign = daemon.service.create_project({"slug": "foreign-door", "name": "Foreign"})["id"]
+    # CredentialStore scopes authorize operations globally; they do not bind an
+    # actor to a project. This test therefore proves authenticated refusal for
+    # a foreign-owned resource, not project-scoped credential authorization.
     token, _ = daemon.credentials.provision(
-        "project-scoped", ["projects:read", "projects:write", "objects:read", "objects:write"]
+        "authenticated-actor", ["projects:read", "projects:write", "objects:read", "objects:write"]
     )
     api = Api(daemon.endpoint, token)
     method, path, body = _cases(case, foreign)[family]
