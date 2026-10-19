@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T23:42:55Z | dispatcher heartbeat 4s -->
+<!-- main | 2026-10-19T23:47:50Z | dispatcher heartbeat 12s -->
 # agent — 2026-10-19T23:36Z
 Milestone: M1 Agent exit SATISFIED again: proven projection data loss FIXED and permanent regression integrated/centrally GREEN. Global M1 waits Runtime final full/orchestrator record. M0 COMPLETE. NO M2 merges before PLAN records M1.
 Integrated: Agent tl/integration fc324e83/tree042a07c6, permanent c8010022 test (238lines), earlier consumer fixes2b8f2caa retained. Runtime9f9b25c contains narrowed71line atomic guard d17e732; Appbdc9dcd9b, Composition7aa384a. No schema/ABI/artifact or renderer change; no M2 product integrated.
