@@ -19,8 +19,8 @@ in the logs stay, so they can show your user name.
 | | macOS | Linux | Windows |
 |---|---|---|---|
 | Program files | `~/.local/share/astrid` | `${XDG_DATA_HOME:-$HOME/.local/share}/astrid` | `%LOCALAPPDATA%\Astrid` |
-| Your workspace (projects, media) | `~/Library/Application Support/Astrid Runtime` | `~/.local/share/astrid-runtime` | `%LOCALAPPDATA%\Astrid Runtime` |
-| The log (install and running Astrid) | `~/Library/Logs/Astrid Runtime/install.log` | `~/.local/state/astrid-runtime/logs/install.log` | `%LOCALAPPDATA%\Astrid Runtime\logs\install.log` |
+| Your workspace (projects, media) | `~/Library/Application Support/Astrid Runtime` | `${XDG_DATA_HOME:-$HOME/.local/share}/astrid-runtime` | `%LOCALAPPDATA%\Astrid Runtime` |
+| The log (install and running Astrid) | `~/Library/Logs/Astrid Runtime/install.log` | `${XDG_STATE_HOME:-$HOME/.local/state}/astrid-runtime/logs/install.log` | `%LOCALAPPDATA%\Astrid Runtime\logs\install.log` |
 | What keeps Astrid running | LaunchAgent `haus.astrid.runtime` | systemd user unit `astrid.service` | Task Scheduler task `Astrid Runtime` |
 | Optional service settings | `~/.local/share/astrid/service-env.json` | `${XDG_DATA_HOME:-$HOME/.local/share}/astrid/service-env.json` | `%LOCALAPPDATA%\Astrid\service-env.json` |
 
@@ -135,9 +135,13 @@ Good: `State` is `Running`.
 
 **Steps**
 
-1. With Astrid running, open a new Chrome profile or an incognito window (Edge: InPrivate). Go to https://astrid.haus.
-2. Click **Set up Astrid**, then **Use Astrid in this browser**. Choose **Block** when the browser asks.
-3. Follow the two steps on the screen, then come back to the tab.
+1. With Astrid running, open a new Chrome profile or an incognito window (Edge: InPrivate). Go directly to
+   https://astrid.haus/tools/video-editor.
+2. Before clicking anything, confirm the page says **Set up Astrid on this computer** and shows the install line.
+   There should be no local-network permission prompt and the page should not try to connect yet.
+3. In that profile, open `https://astrid.haus/?connect=1#continue`. When the browser asks about devices on your
+   network, choose **Block**. The page should show **Allow Astrid in Chrome** with two Site settings steps. Follow
+   them to set Local network access to Allow, then return to the tab; it should open the editor once Astrid is found.
 4. Stop Astrid:
 
    macOS:
@@ -158,19 +162,21 @@ Good: `State` is `Running`.
    Stop-ScheduledTask -TaskName 'Astrid Runtime'
    ```
 
-5. Open another fresh profile or incognito window, go to https://astrid.haus/tools/video-editor and click **Connect**.
-   Choose **Allow**.
-6. Look at your first browser (the one from journey 1) too. Reload it if it hasn't changed.
-7. Click **Copy** on either screen and run the line it gives you.
+5. While Astrid is stopped, open another fresh profile or incognito window and go directly to
+   https://astrid.haus/tools/video-editor. Confirm it shows setup before any permission instructions. Then open
+   `https://astrid.haus/?connect=1#continue` and choose **Allow** when the browser asks.
+6. Look at your first browser (the one from journey 1) too. Reload it if it hasn't changed. Click **Copy** on that
+   page and run the line it gives you.
 
 **You should see**
 
-- Step 2: **Allow Astrid in Chrome**, with two steps: the icon at the left of the address bar, then Site settings,
-  then Local network access set to Allow.
-- Step 3: the page opens the editor by itself, with your workspace.
-- Step 5: **Connect to Astrid on this computer**, then, after Allow, **Set up Astrid on this computer** with the line.
+- Step 2: **Set up Astrid on this computer** appears before any permission instructions.
+- Step 3: after you block the browser prompt, **Allow Astrid in Chrome** shows the two Site settings steps. After
+  Local network access is allowed, the editor opens with your workspace.
+- Step 5: the fresh profile shows setup before the prompt. After you allow it while Astrid is stopped, it still says
+  **Set up Astrid on this computer**; this profile has not connected to Astrid before.
 - Step 6: the browser that connected before says **Astrid isn't running**, with the same line.
-- Step 7: the line prints `Restarting Astrid with the installed version.` Both pages open the editor by themselves.
+- Step 6: the line prints `Restarting Astrid with the installed version.` Both pages open the editor by themselves.
 
 **It's a failure if**
 
@@ -212,7 +218,7 @@ Good: `State` is `Running`.
 - Each agent shows one state: Ready (or its model name), **Sign in** or **Not installed**, with one line underneath
   when it isn't ready.
 - A ready agent answers within about 30 seconds.
-- A signed-out Claude Code or Codex shows **Sign in** and its matching `auth login` command. A signed-out Astrid
+- A signed-out Claude Code or Codex shows **Sign in** and its matching `claude auth login` or `codex login` command. A signed-out Astrid
   agent shows `Run astrid, then /login`. Clicking a sign-in line copies it and shows **Copied**; it doesn't start a chat.
 - An agent you haven't installed shows **Not installed** and an install line.
 - After you sign back in, the agent shows Ready again.
@@ -223,8 +229,9 @@ Good: `State` is `Running`.
   (for example npm, Homebrew or the official installer).
 - The chat panel says `Chat isn't running on this computer right now.` while the page is connected.
 - You see a raw error, an error code or "404" anywhere in chat.
-- Astrid does not show **Ready** when a model provider is signed in or a usable model catalog is available, or does not
-  show **Sign in** with `Run astrid, then /login` when it has neither.
+- A known signed-in provider or available model catalog does not show **Ready**; a known signed-out provider with no
+  usable models does not show **Sign in** with `Run astrid, then /login`; or an unknown/unavailable catalog shows
+  **Sign in** instead of remaining **Ready**.
 
 ## 4. A GPU task, then idle
 
@@ -347,10 +354,16 @@ installer line again to restart the service.
 2. Watch the page while it runs, and reload it if it asks.
 3. List the program versions and backups:
 
-   macOS and Linux:
+   macOS:
 
    ```sh
    ls ~/.local/share/astrid/versions ~/.local/share/astrid/backups
+   ```
+
+   Linux:
+
+   ```sh
+   ls "${XDG_DATA_HOME:-$HOME/.local/share}/astrid/versions" "${XDG_DATA_HOME:-$HOME/.local/share}/astrid/backups"
    ```
 
    Windows:
@@ -464,7 +477,8 @@ Make a doctor bundle first (see [Reporting](#reporting)); there is no installed 
 - the `astrid-install.lock` file and `astrid-install.json` selection record next to the program folder; the selection
   record supports repeat uninstall and reinstall;
 - installer-managed Windows GPU environments under `%LOCALAPPDATA%\Astrid GPU`, if you have any;
-- uv's download cache (`~/.cache/uv`; on Windows `%LOCALAPPDATA%\uv\cache`);
+- uv's download cache (macOS: `~/Library/Caches/uv`; Linux: `${XDG_CACHE_HOME:-$HOME/.cache}/uv`;
+  Windows: `%LOCALAPPDATA%\uv\cache`);
 - your sign-ins for Claude Code, Codex and Astrid's model provider;
 - the browser's permission for astrid.haus.
 
@@ -541,14 +555,13 @@ These are known. Report what you see, but don't stop testing for them.
   setup needs an engine checkout and is beyond this short installer run. To pass settings to the login service, use
   the service environment file described in [Where things live](#where-things-live); shell profile changes do not
   reach the service.
-- If the line fails, the PowerShell window may close before you can read it. The log has the details.
-- Windows PowerShell 5.1 may stop the line on ordinary progress text that uv prints. If the error message looks like
-  normal progress (for example "Installed Python…"), report it word for word.
+- The installer has not been run natively on Windows. Windows PowerShell 5.1 in particular remains unverified; if
+  the line fails or its window closes, report the exact message and attach the install log.
 - Coming back after the Runtime is killed relies on Task Scheduler's restart on failure. It hasn't been confirmed.
 - Windows may retain the bootstrap directory while an Astrid terminal is open. If uninstall prints
   `Close Astrid terminals, then remove the remaining program folder: <path>`, close those terminals, remove that folder,
   and check that it is gone.
-- Windows on ARM can't install: there's no Bun or FFmpeg build for it. The log says
+- Windows on ARM can't install: the pinned downloads have no Bun or FFmpeg build for it. The log says
   `There is no qualified bun build for windows-arm64.`
 - A PC whose execution policy is set by the organization stops with a message asking the administrator to allow the installer.
 - OneDrive: Astrid's own folders are in `AppData\Local`, which OneDrive doesn't sync. Media you add from a
@@ -567,7 +580,8 @@ These are known. Report what you see, but don't stop testing for them.
 - If the installer never completed, or Astrid has already been uninstalled, the installer’s `--doctor` command is
   unavailable; attach the install log instead.
 - "Making new images isn't on this page yet." next to the compose controls is expected.
-- The "Find my work" text on an empty workspace refers to an older installer (`<folder>/start`).
+- macOS service and installer behavior has not been tested natively; report what happens with the LaunchAgent and
+  include the install log and doctor bundle.
 
 **Linux**
 
