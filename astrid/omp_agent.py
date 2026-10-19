@@ -229,11 +229,13 @@ def _model_command_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
     contract = (
         "JSON v1: {schemaVersion: 1, currentModel: provider/model or null, providers: "
-        "[{id, name, signedIn, models: [{id, name, selector}], usage?: "
+        "[{id, name, signedIn, usable, reason?, models: [{id, name, selector, usable}], usage?: "
         "[{fetchedAt, limits: [{label, amount, window?, status?}]}]}]}. "
         "currentModel shows the saved OMP profile default, even when unavailable, "
         "or OMP's automatic selection when no default is saved. "
         "Providers and models come from OMP's /model and /login selectors. "
+        "usable follows OMP's own available-model listing and enabled-model scope; "
+        "reason is needs_sign_in or no_available_models when false. "
         "signedIn means OMP has auth configured; keyless providers can also have usable models. "
         "Usage is optional and excludes account identifiers. No credentials are returned."
     )
@@ -273,6 +275,22 @@ def _omp_model_snapshot(omp_bin: str) -> dict[str, Any]:
         raise ValueError("OMP model command failed; run `omp models ls --json` for details")
     if snapshot.get("schemaVersion") != 1 or not isinstance(snapshot.get("providers"), list):
         raise ValueError("OMP returned an invalid model snapshot")
+    # OMP's models CLI renders registry.getAvailable(), whereas the extension
+    # also reads its full catalog to enumerate providers. The CLI listing is
+    # the authority for what this OMP invocation can currently select.
+    listing = json.loads(result.stdout)
+    if not isinstance(listing, dict) or not isinstance(listing.get("models"), list):
+        raise ValueError("OMP returned an invalid available-model listing")
+    available = {model["selector"] for model in listing["models"] if isinstance(model, dict)
+                 and isinstance(model.get("selector"), str)}
+    needs_sign_in = set(snapshot.pop("_needsSignInProviderIds", []))
+    for provider in snapshot["providers"]:
+        provider["models"] = [model for model in provider["models"] if model["selector"] in available]
+        for model in provider["models"]:
+            model["usable"] = True
+        provider["usable"] = bool(provider["models"])
+        if not provider["usable"]:
+            provider["reason"] = "needs_sign_in" if provider["id"] in needs_sign_in else "no_available_models"
     return snapshot
 
 
@@ -331,8 +349,18 @@ def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
         for login in data["providers"]:
             if login["id"] in hidden:
                 continue
-            provider = providers.setdefault(login["id"], {"id": login["id"], "models": []})
-            provider.update(name=login["name"], signedIn=login["authenticated"])
+            provider = providers.setdefault(login["id"], {
+                "id": login["id"], "models": [],
+                "reason": "no_available_models" if login["authenticated"] else "needs_sign_in",
+            })
+            provider.update(name=login["name"], signedIn=provider.get("signedIn", False) or login["authenticated"])
+            provider["usable"] = bool(provider["models"])
+            if provider["usable"]:
+                provider.pop("reason", None)
+            elif provider["signedIn"] and provider.get("reason") == "needs_sign_in":
+                provider["reason"] = "no_available_models"
+            else:
+                provider.setdefault("reason", "no_available_models")
         snapshot["providers"] = sorted(providers.values(), key=lambda provider: provider["id"])
         return
     raise ValueError("OMP did not return its sign-in providers")
@@ -385,7 +413,7 @@ def _run_model_command(argv: list[str]) -> int:
         else:
             provider_id, _, _model_id = args.selector.partition("/")
             provider = next((item for item in snapshot["providers"] if item["id"] == provider_id), None)
-            if provider and not provider["signedIn"] and not provider["models"]:
+            if provider and provider.get("reason") == "needs_sign_in":
                 raise ValueError(f"Sign in: run `omp`, then /login and pick {provider['name']}")
             if provider is None or not any(model["selector"] == args.selector for model in provider["models"]):
                 raise ValueError("Unknown or unavailable model selector; use `astrid agent models`")
@@ -407,8 +435,10 @@ def _run_model_command(argv: list[str]) -> int:
                 print(f"  {model['selector']}  {model['name']}")
             if provider.get("usage"):
                 print("  Usage: " + json.dumps(provider["usage"], sort_keys=True))
-            if not provider["signedIn"] and not provider["models"]:
+            if provider.get("reason") == "needs_sign_in":
                 print(f"  Sign in: run `omp`, then /login and pick {provider['name']}")
+            elif not provider["usable"]:
+                print("  No available models in OMP")
     return 0
 
 

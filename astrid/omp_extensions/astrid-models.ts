@@ -9,7 +9,7 @@ import {
 } from "@oh-my-pi/pi-coding-agent/config/model-resolver";
 import { getOAuthProviders } from "@oh-my-pi/pi-ai/oauth";
 
-type ListedModel = { id: string; name: string; selector: string };
+type ListedModel = { id: string; name: string; selector: string; usable: true };
 type ListedProvider = { id: string; name: string; signedIn: boolean; models: ListedModel[] };
 type Snapshot = {
 	schemaVersion: 1;
@@ -17,12 +17,14 @@ type Snapshot = {
 	providers: ListedProvider[];
 	_catalogModel: string | null;
 	_hiddenProviderIds: string[];
+	_needsSignInProviderIds: string[];
 };
 
 async function makeSnapshot(ctx: any, settings: any): Promise<Snapshot> {
 	const registry = ctx.modelRegistry;
 	const allModels = registry.getAll();
-	const enabledModels = await resolveAllowedModels(registry, settings, getModelMatchPreferences(settings));
+	const enabledModels = (await resolveAllowedModels(registry, settings, getModelMatchPreferences(settings)))
+		.filter((model: any) => registry.hasConfiguredAuth(model));
 	const oauthProviders = getOAuthProviders();
 	const oauthById = new Map(oauthProviders.map((provider: any) => [provider.id, provider]));
 	const disabled = new Set<string>(settings.get("disabledProviders") ?? []);
@@ -45,7 +47,7 @@ async function makeSnapshot(ctx: any, settings: any): Promise<Snapshot> {
 			const oauth = (oauthById.get(id) ?? oauthProviders.find((provider: any) => provider.storeCredentialsAs === id)) as any;
 			const models = enabledModels
 				.filter((model: any) => model.provider === id)
-				.map((model: any) => ({ id: model.id, name: model.name, selector: `${model.provider}/${model.id}` }))
+				.map((model: any) => ({ id: model.id, name: model.name, selector: `${model.provider}/${model.id}`, usable: true as const }))
 			.sort((a: ListedModel, b: ListedModel) => a.id.localeCompare(b.id));
 			const hasAuth = registry.authStorage.hasAuth(id) || oauthProviders.some((provider: any) =>
 				(provider.id === id || provider.storeCredentialsAs === id) &&
@@ -64,7 +66,7 @@ async function makeSnapshot(ctx: any, settings: any): Promise<Snapshot> {
 		: undefined;
 	const fallback = globalDefault || resolvedDefault
 		? undefined
-		: pickDefaultAvailableModel(enabledModels.filter((model: any) => registry.hasConfiguredAuth(model)));
+		: pickDefaultAvailableModel(enabledModels);
 	const selected = resolvedDefault ?? fallback;
 	return {
 		schemaVersion: 1,
@@ -72,6 +74,10 @@ async function makeSnapshot(ctx: any, settings: any): Promise<Snapshot> {
 		providers,
 		_catalogModel: allModels[0] ? `${allModels[0].provider}/${allModels[0].id}` : null,
 		_hiddenProviderIds: [...hiddenProviderIds].sort((a, b) => a.localeCompare(b)),
+		_needsSignInProviderIds: [...providerIds].filter(id =>
+			allModels.some((model: any) => model.provider === id) &&
+			!allModels.some((model: any) => model.provider === id && registry.hasConfiguredAuth(model)),
+		),
 	};
 }
 

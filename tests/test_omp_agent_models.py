@@ -17,17 +17,20 @@ SNAPSHOT: dict[str, Any] = {
             "id": "alpha",
             "name": "Alpha Provider",
             "signedIn": True,
+            "usable": True,
             "models": [
-                {"id": "model/team/name", "name": "Team Model", "selector": "alpha/model/team/name"},
-                {"id": "small", "name": "Small", "selector": "alpha/small"},
+                {"id": "model/team/name", "name": "Team Model", "selector": "alpha/model/team/name", "usable": True},
+                {"id": "small", "name": "Small", "selector": "alpha/small", "usable": True},
             ],
         },
-        {"id": "closed", "name": "Closed Provider", "signedIn": False, "models": []},
+        {"id": "closed", "name": "Closed Provider", "signedIn": False, "usable": False,
+         "reason": "needs_sign_in", "models": []},
         {
             "id": "keyless",
             "name": "Keyless Provider",
             "signedIn": False,
-            "models": [{"id": "public", "name": "Public Model", "selector": "keyless/public"}],
+            "usable": True,
+            "models": [{"id": "public", "name": "Public Model", "selector": "keyless/public", "usable": True}],
         },
     ],
 }
@@ -108,6 +111,11 @@ state = json.loads(state_path.read_text(encoding="utf-8"))
 snapshot["currentModel"] = state["roles"].get("default")
 
 Path(result_path).write_text(json.dumps(snapshot), encoding="utf-8")
+available = os.environ.get("FAKE_OMP_AVAILABLE_SELECTORS")
+selectors = json.loads(available) if available is not None else [
+    model["selector"] for provider in snapshot["providers"] for model in provider["models"]
+]
+print(json.dumps({{"models": [{{"selector": selector}} for selector in selectors]}}))
 raise SystemExit(int(os.environ.get("FAKE_OMP_EXIT", "0")))
 '''
 
@@ -143,6 +151,7 @@ def _setup(
     fake_snapshot = json.loads(json.dumps(snapshot if snapshot is not None else SNAPSHOT))
     fake_snapshot["_catalogModel"] = "alpha/model/team/name"
     fake_snapshot.setdefault("_hiddenProviderIds", [])
+    fake_snapshot["_needsSignInProviderIds"] = ["closed"]
     env.update(
         {
             "OMP_BIN": str(fake_omp),
@@ -193,6 +202,63 @@ def test_models_json_returns_selector_snapshot_and_uses_only_fake_omp(tmp_path: 
     assert calls[1]["argv"][calls[1]["argv"].index("--model") + 1] == "alpha/model/team/name"
     assert calls[1]["input"] == '{"id":"astrid-login-providers","type":"get_login_providers"}\n'
     assert "_catalogModel" not in result.stdout and "_hiddenProviderIds" not in result.stdout
+    assert "_needsSignInProviderIds" not in result.stdout
+
+
+def test_models_only_advertises_omp_available_selectors_and_read_does_not_save(tmp_path: Path) -> None:
+    snapshot = json.loads(json.dumps(SNAPSHOT))
+    snapshot["providers"].extend([
+        {"id": "amazon-bedrock", "name": "Amazon Bedrock", "signedIn": False,
+         "models": [{"id": "claude", "name": "Claude", "selector": "amazon-bedrock/claude"}]},
+        {"id": "cursor", "name": "Cursor", "signedIn": False,
+         "models": [{"id": "composer", "name": "Composer", "selector": "cursor/composer"}]},
+        {"id": "ollama", "name": "Ollama", "signedIn": False, "models": []},
+    ])
+    env, log, state_path = _setup(tmp_path, snapshot=snapshot)
+    env["FAKE_OMP_AVAILABLE_SELECTORS"] = json.dumps(["alpha/small", "keyless/public"])
+    fake = json.loads(env["FAKE_OMP_SNAPSHOT"])
+    fake["_needsSignInProviderIds"] = ["closed", "amazon-bedrock", "cursor"]
+    env["FAKE_OMP_SNAPSHOT"] = json.dumps(fake)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state["roles"].pop("default")
+    state_path.write_text(json.dumps(state), encoding="utf-8")
+    before = state_path.read_text(encoding="utf-8")
+
+    listed = _run(tmp_path, env, "agent", "models", "--json")
+
+    assert listed.returncode == 0, listed.stderr
+    payload = json.loads(listed.stdout)
+    assert payload["currentModel"] is None
+    providers = {provider["id"]: provider for provider in payload["providers"]}
+    assert [model["selector"] for model in providers["alpha"]["models"]] == ["alpha/small"]
+    assert providers["keyless"]["models"][0]["usable"] is True
+    for name in ("amazon-bedrock", "cursor"):
+        assert providers[name]["signedIn"] is False
+        assert providers[name]["usable"] is False
+        assert providers[name]["reason"] == "needs_sign_in"
+        assert providers[name]["models"] == []
+    assert providers["ollama"]["reason"] == "no_available_models"
+    assert state_path.read_text(encoding="utf-8") == before
+    assert not any(call["argv"][:2] == ["config", "set"] for call in _calls(log))
+
+    refused = _run(tmp_path, env, "agent", "use", "amazon-bedrock/claude")
+    assert refused.returncode != 0
+    assert state_path.read_text(encoding="utf-8") == before
+    assert not any(call["argv"][:2] == ["config", "set"] for call in _calls(log))
+
+
+def test_login_rpc_cannot_downgrade_configured_auth_to_keyless(tmp_path: Path) -> None:
+    env, _log, _state = _setup(tmp_path)
+    env["FAKE_OMP_LOGIN_PROVIDERS"] = json.dumps([
+        {"id": "alpha", "name": "Alpha Provider", "authenticated": False},
+    ])
+
+    result = _run(tmp_path, env, "agent", "models", "--json")
+
+    assert result.returncode == 0, result.stderr
+    alpha = next(provider for provider in json.loads(result.stdout)["providers"] if provider["id"] == "alpha")
+    assert alpha["signedIn"] is True
+    assert alpha["usable"] is True
 
 
 def test_models_human_output_includes_provider_state_and_provider_only_hint(tmp_path: Path) -> None:
@@ -229,7 +295,8 @@ def test_login_only_provider_is_merged_and_hidden_provider_is_excluded(tmp_path:
     payload = json.loads(result.stdout)
     assert [provider["id"] for provider in payload["providers"]] == ["alpha", "closed", "keyless", "plugin-only"]
     plugin = payload["providers"][-1]
-    assert plugin == {"id": "plugin-only", "name": "Custom Login Plugin", "signedIn": False, "models": []}
+    assert plugin == {"id": "plugin-only", "name": "Custom Login Plugin", "signedIn": False,
+                      "usable": False, "reason": "needs_sign_in", "models": []}
     assert "secret-hidden" not in result.stdout and "Must Stay Hidden" not in result.stdout
 
 
