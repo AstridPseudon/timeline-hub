@@ -537,6 +537,99 @@ def test_occurrence_requires_complete_picture_output(clips, code):
     assert any(i["code"] == code for i in report["structuralIssues"])
 
 
+def _custom_picture_closure():
+    parent = {"config": {"output": {"fps": 30}, "tracks": [{"id": "v", "kind": "visual"}]},
+              "clips": [], "registry": {}, "occurrences": [
+                  {"occurrence_id": f"o-{i}", "shot_id": f"s-{i}", "shot_revision_id": f"sr-{i}",
+                   "placement": {"start_ms": i * 1000}, "track": "v", "duration_ms": 1000}
+                  for i in range(2)]}
+    shots = {(f"s-{i}", f"sr-{i}"): {"internal_timeline_revision_id": f"ir-{i}"} for i in range(2)}
+    internal = {f"ir-{i}": {"payload": {
+        "tracks": [{"id": "plate", "kind": "visual"}, {"id": "fx", "kind": "visual"}],
+        "clips": [{"id": f"picture-{i}", "clipType": "custom-picture", "track": "plate", "at": 0, "hold": 1}],
+    }} for i in range(2)}
+    return parent, shots, internal
+
+
+def test_declared_custom_picture_lane_counts_opaque_content_without_mutating_pins():
+    parent, shots, internal = _custom_picture_closure()
+    original = copy.deepcopy(internal)
+    undeclared, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
+    assert [issue["code"] for issue in undeclared["structuralIssues"]] == ["boundary/empty-child-picture"] * 2
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    report, metadata = admit_closure(parent, shots, internal, timeline_id="main", materialize=True)
+    assert not report["blocked"]
+    assert not report["structuralIssues"]
+    assert [b["frame"] for b in report["boundaries"]] == [30]
+    assert not report["cues"]  # Primary opaque picture is represented by its cut.
+    assert len(report["opaqueElements"]) == 2
+    assert all(s["primary"] for s in report["spans"])
+    assert [c["clipType"] for c in metadata["render_config"]["clips"]] == ["custom-picture"] * 2
+    assert internal == original
+
+
+def test_layered_picture_coverage_is_independent_of_strict_continuity_lanes():
+    parent, shots, internal = _custom_picture_closure()
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    internal["ir-0"]["payload"]["clips"].append(
+        {"id": "layer", "clipType": "custom-picture", "track": "plate", "at": 0.2, "hold": 0.8})
+    report, _ = admit_closure(parent, shots, internal, timeline_id="main")
+    assert not report["structuralIssues"]
+    assert [b["frame"] for b in report["boundaries"]] == [30]
+    # Requiring strict continuity on that same lane still detects the overlap.
+    parent["config"]["app"]["visualSeamContract"]["continuityTracks"].append("plate")
+    report, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
+    assert report["blocked"]
+    assert any(i["code"] == "boundary/overlap" for i in report["structuralIssues"])
+
+
+@pytest.mark.parametrize("change", [
+    {"clipType": "end-spanning-layer"}, {"clipType": "effect-layer"}, {"clipType": "frame-overlay"},
+    {"clipType": "text"}, {"clipType": "audio"}, {"elementRef": {"id": "custom", "kind": "effect"}},
+    {"elementRef": {"id": "custom", "kind": "animation"}},
+    {"elementRef": {"id": "custom", "kind": "transition"}},
+    {"active": False}, {"enabled": False}, {"disabled": True}, {"hidden": True}, {"deleted": True},
+])
+def test_declared_picture_lane_never_turns_auxiliary_or_inactive_content_into_picture(change):
+    parent, shots, internal = _custom_picture_closure()
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    internal["ir-0"]["payload"]["clips"][0].update(change)
+    report, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
+    assert report["blocked"]
+    assert any(i["code"] == "boundary/empty-child-picture" and i["path"][-1] == "o-0"
+               for i in report["structuralIssues"])
+
+
+@pytest.mark.parametrize("track", [{"id": "plate", "kind": "audio"},
+                                   {"id": "plate", "kind": "visual", "role": "source"}])
+def test_declared_custom_picture_requires_a_visual_output_lane(track):
+    parent, shots, internal = _custom_picture_closure()
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    internal["ir-0"]["payload"]["tracks"][0] = track
+    report, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
+    assert report["blocked"]
+    assert report["structuralIssues"][0]["code"] == "boundary/empty-child-picture"
+
+
+def test_declared_custom_picture_preserves_auxiliary_activation_and_context_bound_intents():
+    parent, shots, internal = _custom_picture_closure()
+    policy = {"continuityTracks": ["v"], "pictureTracks": ["plate"]}
+    parent["config"]["app"] = {"visualSeamContract": policy}
+    internal["ir-1"]["payload"]["clips"].append(
+        {"id": "custom-overlay", "clipType": "custom-overlay", "track": "fx", "at": 0, "hold": 1})
+    report, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
+    assert not report["structuralIssues"]
+    assert report["blocked"]
+    assert report["boundaries"][0]["requiresIntent"]
+    assert [(c["kind"], c["path"][-1]) for c in report["cues"]] == [("activation", "custom-overlay")]
+    policy.update(_portable_policy(report, 30, "hard-cut"))
+    assert evaluate_closure(parent, shots, internal, timeline_id="main")[0]["blocked"]
+    policy.update(_portable_policy(report, 30))
+    assert not admit_closure(parent, shots, internal, timeline_id="main")[0]["blocked"]
+    internal["ir-1"]["payload"]["clips"][-1]["params"] = {"message": "changed"}
+    assert evaluate_closure(parent, shots, internal, timeline_id="main")[0]["blocked"]
+
+
 def test_managed_materialization_preserves_child_effects_and_offset_without_trim():
     body = _unsafe_publication("p")
     parent = body["parent_composition"]

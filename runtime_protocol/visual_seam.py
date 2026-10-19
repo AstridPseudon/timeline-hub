@@ -23,6 +23,23 @@ AUXILIARY = frozenset({"end-spanning-layer", "effect-layer", "frame-overlay", "t
 PICTURE = frozenset({"media", "hold", "video", "image", "animated-media-transform", "haus.astrid.liveScene"})
 
 
+def picture_clip(clip, track, *, declared=False):
+    """An authored picture lane may carry a custom renderer's opaque clips.
+
+    Unknown types are not implicitly picture: a pictureTracks declaration
+    supplies that editorial meaning without executing an extension. Known
+    auxiliary types and source/audio lanes cannot supply picture coverage.
+    Timing disclosure remains independent, including for custom picture.
+    """
+    kind = clip.get("clipType", clip.get("clip_type", "media"))
+    element = clip.get("elementRef")
+    if (kind in AUXILIARY or kind == "audio"
+            or isinstance(element, dict) and element.get("kind") in ("effect", "animation", "transition")
+            or track.get("kind") == "audio" or track.get("role") == "source"):
+        return False
+    return kind in PICTURE or declared and track.get("kind") == "visual"
+
+
 def active(clip):
     return (clip.get("enabled") is not False and clip.get("active") is not False
             and clip.get("disabled") is not True and clip.get("hidden") is not True and clip.get("deleted") is not True)
@@ -121,6 +138,8 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
     policy = (config.get("app") or {}).get("visualSeamContract") or {}
     tracks = {t["id"]: t for t in config.get("tracks", []) if isinstance(t, dict) and "id" in t}
     explicit = policy.get("continuityTracks")
+    picture_tracks = policy.get("pictureTracks")
+    picture_tracks = set(picture_tracks) if isinstance(picture_tracks, list) else set()
     continuity = set(explicit) if isinstance(explicit, list) else {k for k, t in tracks.items() if t.get("kind") == "visual"}
     # Canonical occurrence tracks are explicit editorial picture lanes.
     if explicit is None:
@@ -140,7 +159,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         for a, b in zip(ordered, ordered[1:]):
             next_start[a["occurrence_id"]] = seconds(b, "at", finite(b.get("placement", {}).get("start_ms"), 0) / 1000)
 
-    def add(raw, registry, path, *, offset=0, bound=None, inherited_speed=1, inherited_track=None, source_offset=0, inherited_gain=1, muted=False, render=True):
+    def add(raw, registry, path, *, offset=0, bound=None, inherited_speed=1, inherited_track=None, source_offset=0, inherited_gain=1, muted=False, render=True, track_definitions=None):
         if not isinstance(raw, dict):
             raise ValidationError("canonical clips must be objects")
         if not active(raw):
@@ -156,7 +175,9 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
             raise ValidationError("visual timing start must be finite")
         duration = clip_seconds(clip, (bound[1] - offset) * clip["speed"] if bound else 0, speed=clip["speed"])
         track = clip.get("track", inherited_track or "video")
-        primary = track in continuity and kind in PICTURE and kind not in AUXILIARY
+        definition = (track_definitions if track_definitions is not None else tracks).get(track, {})
+        primary = (track in continuity or definition.get("kind") == "visual") and picture_clip(
+            clip, definition, declared=track in picture_tracks)
         if at < 0 or offset + at < 0:
             structural.append({"code": "boundary/negative-start", "path": path})
         raw_start = js_round((offset + at) * fps)
@@ -235,6 +256,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         if child is None:
             raise NotFoundError("canonical internal closure is incomplete")
         body = child["payload"]
+        child_tracks = {**tracks, **{t["id"]: t for t in body.get("tracks", []) if isinstance(t, dict) and "id" in t}}
         clips = body.get("clips", body.get("local_clips", []))
         if not isinstance(clips, list):
             raise ValidationError("canonical child clips must be a list")
@@ -263,11 +285,12 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
                     known_tracks.add(t.get("id"))
         for c in clips:
             track = c.get("track", o["track"])
-            for t in body.get("tracks", []):
-                if explicit is None and isinstance(t, dict) and t.get("id") == track and t.get("kind") == "visual" and c.get("clipType", c.get("clip_type", "media")) in PICTURE:
-                    continuity.add(track)
+            definition = child_tracks.get(track, {})
+            if explicit is None and definition.get("kind") == "visual" and picture_clip(c, definition, declared=track in picture_tracks):
+                continuity.add(track)
             add(c, body.get("registry", {}), path + ["clip", str(c.get("id", "?"))], offset=offset, bound=(offset, end), inherited_speed=inherited_speed,
-                inherited_track=o["track"], source_offset=source_offset, inherited_gain=o.get("gain", 1), muted=o.get("muted", o.get("mute", False)))
+                inherited_track=o["track"], source_offset=source_offset, inherited_gain=o.get("gain", 1), muted=o.get("muted", o.get("mute", False)),
+                track_definitions=child_tracks)
         # Occurrence ownership cannot stand in for picture output. Verify the
         # union of its child picture spans, including leading and trailing holes.
         pictures = sorted((s for s in spans[span_begin:] if s["primary"]), key=lambda s: s["startFrame"])
@@ -304,7 +327,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
                 parent.get("registry", {}), ["parent", timeline_id, "effect", str(e.get("id", i))], render=False)
     if len(spans) > MAX_METADATA_CLIPS:
         raise ValidationError("visual seam metadata exceeds the bounded clip limit")
-    return {"fps": fps, "policy": policy, "spans": spans, "occurrences": occurrences, "structural": structural,
+    return {"fps": fps, "policy": policy, "continuity": continuity, "spans": spans, "occurrences": occurrences, "structural": structural,
             "render_config": render_config, "render_registry": render_registry}
 
 
@@ -324,7 +347,7 @@ def analyze_normalized(metadata):
     candidates = defaultdict(list)
     groups = defaultdict(list)
     for s in spans:
-        if s["primary"]:
+        if s["primary"] and s["track"] in metadata["continuity"]:
             groups[(s["track"], tuple(s["path"][:4]) if "occurrence" in s["path"] else ("parent",))].append(s)
     for o in metadata["occurrences"]:
         if o["primary"]:
