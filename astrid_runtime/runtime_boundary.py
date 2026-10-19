@@ -601,7 +601,11 @@ class LocalRuntimeBoundary:
                 return None
         except ValueError:
             return None
-        request = urllib.request.Request(str(endpoint).rstrip("/") + "/v1/health", headers={"Accept": "application/json"})
+        # Identity observation must remain reachable under the lifecycle write fence.
+        request = urllib.request.Request(
+            str(endpoint).rstrip("/") + "/v1/health",
+            headers={"Accept": "application/json", "X-Astrid-Owner-Identity": "1"},
+        )
         try:
             def read(timeout):
                 with urlopen_loopback(request, timeout=timeout) as response:
@@ -673,7 +677,8 @@ class LocalRuntimeBoundary:
                 return {}
             request = urllib.request.Request(
                 str(endpoint).rstrip("/") + "/v1/realm",
-                headers={"Accept": "application/json", "Authorization": f"Bearer {token}"},
+                headers={"Accept": "application/json", "Authorization": f"Bearer {token}",
+                         "X-Astrid-Owner-Identity": "1"},
             )
             with urlopen_loopback(request, timeout=self.HEALTH_TIMEOUT_SECONDS) as response:
                 realm = json.loads(response.read().decode("utf-8"))

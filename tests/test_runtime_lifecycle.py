@@ -150,7 +150,8 @@ def test_interruption_fence_keeps_http_owner_identity_reachable_during_claim(tmp
             assert metadata.get("status") == "ok"
             for token in (None, restricted_token):
                 with pytest.raises(RuntimeError) as denied:
-                    Api(daemon.endpoint, token).request("GET", "/v1/realm")
+                    Api(daemon.endpoint, token).request("GET", "/v1/realm",
+                                                       headers={"X-Astrid-Owner-Identity": "1"})
                 assert denied.value.status == 401
             assert not claim_done.is_set(), "claim crossed the held interruption fence"
         worker.join(12)
@@ -185,12 +186,12 @@ def test_identity_snapshot_preserves_closed_or_broken_store_degradation(tmp_path
             service.store.db_path = tmp_path / "corrupt.sqlite3"
             service.store.db_path.write_bytes(b"not a database")
             platform.owner_only(service.store.db_path)
-        assert service.health()["status"] == "degraded"
+        assert service.health(identity_probe=True)["status"] == "degraded"
         assert service._admission_failure == {"reason": "runtime_liveness_failed"}
         if failure == "missing-database":
             assert not service.store.db_path.exists()
             service.store.db_path = database
-            assert service.health()["status"] == "degraded"
+            assert service.health(identity_probe=True)["status"] == "degraded"
             with pytest.raises(RealmAdmissionError):
                 service.create_project({"slug": "after-failure", "name": "After failure"})
     finally:
@@ -205,10 +206,10 @@ def test_identity_snapshot_reads_exact_committed_realm_and_is_read_only(tmp_path
     RealmStore.initialize(root, realm_id="selected-realm").close()
     service = RuntimeService(root)
     try:
-        assert service.health()["status"] == "ok"
-        assert service.realm_resource()["realm_id"] == "selected-realm"
+        assert service.health(identity_probe=True)["status"] == "ok"
+        assert service.realm_resource(identity_probe=True)["realm_id"] == "selected-realm"
         service.tombstone({"expected_version": 1})
-        resource = service.realm_resource()
+        resource = service.realm_resource(identity_probe=True)
         assert resource["state"] == "tombstoned"
         assert resource["lifecycle_version"] == 2
         with service.store._read_snapshot() as reader:
@@ -216,7 +217,7 @@ def test_identity_snapshot_reads_exact_committed_realm_and_is_read_only(tmp_path
                 reader.execute("UPDATE realm SET display_name='uncommitted'")
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             reader.execute("SELECT 1")
-        assert service.realm_resource()["display_name"] == "Workspace"
+        assert service.realm_resource(identity_probe=True)["display_name"] == "Workspace"
     finally:
         service.close()
 
@@ -261,7 +262,7 @@ def test_failed_health_snapshot_serializes_admission_loss_with_mutation(tmp_path
 
     def health():
         try:
-            results["health"] = service.health()
+            results["health"] = service.health(identity_probe=True)
         except Exception as error:
             failures.append(error)
         finally:

@@ -260,11 +260,18 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         else:
             self._send(500, error={"code": "internal_error", "message": "internal runtime error", "request_id": self._request_id()})
 
+    def _is_owner_identity_probe(self):
+        """Select a read-only snapshot; route authentication is unchanged."""
+        return (getattr(self, "command", None) == "GET"
+                and urlsplit(getattr(self, "path", "")).path in {"/v1/health", "/v1/realm"}
+                and getattr(self, "headers", {}).get("X-Astrid-Owner-Identity") == "1")
+
     def _route(self):
         path = [unquote(x) for x in urlsplit(self.path).path.split("/") if x]
         method = self.command
         if path == ["v1", "health"]:
-            health = dict(self.runtime.health())
+            health = dict(self.runtime.health(identity_probe=True) if self._is_owner_identity_probe()
+                          else self.runtime.health())
             daemon = getattr(self.server, "daemon_runtime", None)
             if daemon is not None:
                 health["runtime_instance_id"] = daemon.instance_id
@@ -296,7 +303,8 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             return self._send(200, self.runtime.handshake({"authenticated_actor": identity["actor"], "authenticated_scopes": identity.get("scopes", []), "requested_scopes": []}))
         if path == ["v1", "realm"] and method == "GET":
             self._identity("projects:read")
-            return self._send(200, self.runtime.realm_resource())
+            return self._send(200, self.runtime.realm_resource(identity_probe=True)
+                              if self._is_owner_identity_probe() else self.runtime.realm_resource())
         if path == ["v1", "doctor"] and method == "GET":
             self._identity("admin")
             return self._send(200, self.runtime.doctor())
@@ -975,11 +983,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     # outside the SQLite mutex. Credential authentication and
                     # publication use CredentialStore's short internal lock.
                     self._local_worker_control()
-                elif (getattr(self, "command", None) == "GET"
-                      and urlsplit(getattr(self, "path", "")).path in {"/v1/health", "/v1/realm"}):
-                    # These identity reads use independent read-only SQLite
-                    # snapshots. Keep them reachable while a lifecycle fence
-                    # blocks a mutation on the shared writer connection.
+                elif self._is_owner_identity_probe():
+                    # Boundary identity probes use independent read-only
+                    # snapshots while a lifecycle fence blocks the writer.
+                    # Ordinary health/realm reads retain writer serialization.
                     self._route()
                 elif self._is_remote_credential_control() or self._is_binary_io():
                     # Both routes own short store sections. Transfer, hashing,
