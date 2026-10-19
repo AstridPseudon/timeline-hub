@@ -50,6 +50,7 @@ WAIT_SECONDS = 10.0
 ADMISSION_TIMEOUT_ENV = "ASTRID_RUNTIME_ADMISSION_TIMEOUT_SECONDS"
 DEFAULT_ADMISSION_TIMEOUT_SECONDS = 120.0
 STARTUP_WAIT_MARGIN_SECONDS = 5.0
+SERVICE_OWNER_STOP_GRACE_SECONDS = 20.0
 
 
 def _admission_timeout_from_environment() -> float:
@@ -280,6 +281,10 @@ class LocalRuntimeBoundary:
             argv += ["--admission-timeout", str(self.admission_timeout_seconds)]
         if source.worker_profile and "--worker-profile" not in argv:
             argv += ["--worker-profile", str(Path(source.worker_profile).expanduser().resolve())]
+        if source.service_declaration:
+            argv += ["--service-declaration", source.service_declaration,
+                "--service-python", python, "--service-source-checkout", source.source_checkout]
+        argv += ["--log-file", str(self._log_path(support_root))]
         if self._door is not None and "--door-origin" not in argv:
             door, credential_file = self._door
             argv += ["--door-origin", door.origin, "--door-port", str(door.port), "--door-credential-file", str(credential_file)]
@@ -367,6 +372,7 @@ class LocalRuntimeBoundary:
         if sys.platform != "darwin":
             process = platform.spawn_tree(argv, detached=True, stdout=stdout,
                 stderr=subprocess.STDOUT, text=True, close_fds=True)
+            process._runtime_stop_grace = SERVICE_OWNER_STOP_GRACE_SECONDS if "--service-declaration" in argv else 5.0
             process._runtime_boundary_sole_reaper = True
             self._process = process
             return process, None
@@ -396,6 +402,7 @@ class LocalRuntimeBoundary:
             raise
         # This object is the sole reaper; adopted owners cannot use this fact.
         process._runtime_boundary_owner = self
+        process._runtime_stop_grace = SERVICE_OWNER_STOP_GRACE_SECONDS if "--service-declaration" in argv else 5.0
         process._runtime_boundary_sole_reaper = True
         process._runtime_custody_broker = broker
         self._process = process
@@ -426,8 +433,9 @@ class LocalRuntimeBoundary:
         log_path = self._log_path(support_root)
         log_path.parent.mkdir(parents=True, exist_ok=True)
         platform.owner_only(log_path.parent)
-        log = log_path.open("ab")
-        self._log_offset = log.tell()
+        # The daemon owns its rotating stream; no inherited file descriptor
+        # holds a log open across a Windows rename.
+        self._log_offset = log_path.stat().st_size if log_path.exists() else 0
         try:
             # Do not derive imports from either checkout.  The selected
             # runtime_environment is an installed environment and the child
@@ -435,13 +443,10 @@ class LocalRuntimeBoundary:
             # Preserve the daemon's structured startup failure on the existing
             # operator log boundary; successful stdout is only its one-line
             # launch record.
-            self._process, broker = self._spawn_runtime(argv, support_root=support_root, stdout=log)
+            self._process, broker = self._spawn_runtime(argv, support_root=support_root, stdout=subprocess.DEVNULL)
         except Exception:
-            log.close()
             token_file.unlink(missing_ok=True)
             raise
-        finally:
-            log.close()
         self._source, self._realm_root, self._support_root, self._realm_id = source_profile, realm_root, support_root, realm_id
         self._bootstrap_credential = bootstrap_token
         try:
@@ -534,7 +539,8 @@ class LocalRuntimeBoundary:
         """The daemon's own structured startup error, from what it logged after ``offset``."""
         try:
             with log_path.open("rb") as handle:
-                handle.seek(max(offset, log_path.stat().st_size - 65536))
+                size = log_path.stat().st_size
+                handle.seek(max(offset if offset <= size else 0, size - 65536))
                 lines = handle.read().decode("utf-8", "replace").splitlines()
         except OSError:
             return None
@@ -750,9 +756,10 @@ class LocalRuntimeBoundary:
     def _terminate(process: subprocess.Popen[str]):
         primary = sys.exc_info()[1]
         broker = getattr(process, "_runtime_custody_broker", None)
+        grace = getattr(process, "_runtime_stop_grace", 5.0)
         try:
             if sys.platform != "darwin":
-                platform.stop_tree(process, grace=5.0)
+                platform.stop_tree(process, grace=grace)
                 return
             if not getattr(process, "_runtime_boundary_sole_reaper", False):
                 raise CustodyError("Runtime child has no authoritative sole-reaper ownership")
@@ -760,12 +767,12 @@ class LocalRuntimeBoundary:
                 return
             if not isinstance(broker, RoleBoundCustodyBroker):
                 raise CustodyError("Runtime child has no registered kernel custody")
-            deadline = time.monotonic() + 7.0
+            deadline = time.monotonic() + grace + 2.0
             broker.set_cleanup_deadline(deadline)
             if broker.authority_scope_root is not None:
                 close_authority_scope(broker.authority_scope_root, deadline=deadline)
             signal_owned = broker.signal_failed_admission if broker.error is not None else broker.signal
-            for signum, timeout in ((platform.TERM, 5.0), (platform.KILL, 2.0)):
+            for signum, timeout in ((platform.TERM, grace), (platform.KILL, 2.0)):
                 if process.poll() is not None:
                     return
                 try:
@@ -877,6 +884,7 @@ class LocalRuntimeBoundary:
         if not self._source or not self._realm_root or not self._support_root or not self._realm_id:
             raise BootstrapError("No runtime process is available to restart.")
         source, root, support, realm_id = self._source, self._realm_root, self._support_root, self._realm_id
+        shutdown_grace = SERVICE_OWNER_STOP_GRACE_SECONDS if getattr(source, "service_declaration", None) else 5.0
         start_after_stop = bool(kwargs.get("start_after_stop", True))
         require_health = bool(kwargs.get("require_health", True))
         endpoint = str(kwargs.get("endpoint", ""))
@@ -1011,7 +1019,7 @@ class LocalRuntimeBoundary:
             if native_owner:
                 custody = NativeProcessCustody(support, identity)
                 custody.signal(platform.TERM, validate=lambda: validate_before_signal(require_health=require_health))
-                deadline = time.monotonic() + 5.0
+                deadline = time.monotonic() + shutdown_grace
                 while self.is_pid_alive(detached) and time.monotonic() < deadline:
                     time.sleep(0.05)
                 if self.is_pid_alive(detached):
@@ -1050,7 +1058,7 @@ class LocalRuntimeBoundary:
                     expected_identity=identity, signum=platform.TERM,
                     actor=actor, generation=claimed["generation"], signal_provider=deliver,
                 )
-                deadline = time.monotonic() + 5
+                deadline = time.monotonic() + shutdown_grace
                 while time.monotonic() < deadline and self.is_pid_alive(detached):
                     time.sleep(0.05)
                 if self.is_pid_alive(detached):
@@ -1103,11 +1111,13 @@ class ForegroundRuntimeBoundary(LocalRuntimeBoundary):
         super().__init__()
         self.daemon = None
         self._custody = None
+        self._log_directory = None
 
     def start(self, *, realm_id, realm_root, owner_lock, source_profile):
         from runtime_protocol.daemon import RuntimeDaemon
         from runtime_protocol.door import DoorConfig
         from runtime_protocol.local_worker_composition import load_local_worker_composition
+        from runtime_protocol.services import load_service_configuration
 
         cancellation.check()
         if self.daemon is not None:
@@ -1132,12 +1142,15 @@ class ForegroundRuntimeBoundary(LocalRuntimeBoundary):
                 composition = load_local_worker_composition(source_profile.worker_profile,
                     workspace_uuid=realm_id, realm_root=root, support_root=support,
                     runtime_instance_id="pending-startup")
+            services = load_service_configuration(getattr(source_profile, "service_declaration", None),
+                python=sys.executable, source_checkout=getattr(source_profile, "source_checkout", ""))
             daemon = RuntimeDaemon(root, support_root=support, display_name=self._display_name,
                 realm_id=realm_id, owner_lock=owner_lock, bootstrap_token_file=token_file,
                 admission_timeout=self.admission_timeout_seconds,
                 local_worker_profiles=composition.profiles if composition else None,
                 local_worker_preparer=composition.preparer if composition else None,
-                local_worker_inspector=composition.inspector if composition else None, door=door)
+                local_worker_inspector=composition.inspector if composition else None, door=door,
+                services=services, log_directory=self._log_directory)
             self.daemon = daemon
             cancellation.check()
             daemon.start()

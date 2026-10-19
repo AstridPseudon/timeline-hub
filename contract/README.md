@@ -1,5 +1,10 @@
 # Workspace protocol contracts
 
+Profile-owned long-running services use the independent
+[`schemas/services.json`](schemas/services.json) declaration. See
+[`profile-services.md`](../docs/profile-services.md) for the source-profile link,
+portable argv tokens, lifecycle, logs and existing health/status readback.
+
 ## Artifact manifest
 
 `artifacts.json` lists the sha256 of every file consumers copy or rely on (OpenAPI, schemas,

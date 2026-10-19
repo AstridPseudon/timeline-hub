@@ -10,6 +10,20 @@
     "schema_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
     "runtime_epoch": { "type": "integer", "minimum": 1 },
     "runtime_session_id": { "type": "string", "minLength": 1 },
-    "runtime_instance_id": { "type": "string", "minLength": 1 }
+    "runtime_instance_id": { "type": "string", "minLength": 1 },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["name", "state", "last_exit", "restart_count"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "state": {"enum": ["running", "restarting", "failed"]},
+          "last_exit": {"type": ["integer", "null"]},
+          "restart_count": {"type": "integer", "minimum": 0},
+          "reason": {"type": ["string", "null"]}
+        }
+      }
+    }
   }
 }

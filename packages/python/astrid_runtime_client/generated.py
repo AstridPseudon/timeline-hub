@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
-SCHEMA_DIGEST = "sha256:ec06fbc6567fe28065d22626b040cad81bb2e5318623586ae9187c713794f6b9"
+SCHEMA_DIGEST = "sha256:d4b3e46ab6481694810561c7aac99e45356a24a04b08545e53a7257663f007c4"
 OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 
@@ -39,6 +39,20 @@ def _urlopen_loopback(request: urllib.request.Request, *, timeout: float) -> Any
 
 
 @dataclass(frozen=True)
+class ServiceStatus:
+    name: str
+    state: Literal["running", "restarting", "failed"]
+    last_exit: int | None
+    restart_count: int
+    reason: str | None = None
+
+    @classmethod
+    def from_json(cls, value: Mapping[str, Any]) -> "ServiceStatus":
+        return cls(name=value["name"], state=value["state"], last_exit=value["last_exit"],
+            restart_count=int(value["restart_count"]), reason=value.get("reason"))
+
+
+@dataclass(frozen=True)
 class Health:
     status: str
     protocol: str
@@ -46,10 +60,11 @@ class Health:
     runtime_epoch: int
     runtime_session_id: str
     runtime_instance_id: str
+    services: tuple[ServiceStatus, ...] = ()
 
     @classmethod
     def from_json(cls, value: Mapping[str, Any]) -> "Health":
-        return cls(status=value["status"], protocol=value["protocol"], schema_digest=value["schema_digest"], runtime_epoch=int(value.get("runtime_epoch", 0)), runtime_session_id=value["runtime_session_id"], runtime_instance_id=value["runtime_instance_id"])
+        return cls(status=value["status"], protocol=value["protocol"], schema_digest=value["schema_digest"], runtime_epoch=int(value.get("runtime_epoch", 0)), runtime_session_id=value["runtime_session_id"], runtime_instance_id=value["runtime_instance_id"], services=tuple(ServiceStatus.from_json(item) for item in value.get("services", ())))
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)

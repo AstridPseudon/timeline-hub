@@ -289,7 +289,7 @@ class _DarwinBSDInfo(ctypes.Structure):
     ] + [("nice", ctypes.c_int32), ("start_sec", ctypes.c_uint64), ("start_usec", ctypes.c_uint64)]
 
 
-def _read_darwin_process_info(pid: int):
+def _read_darwin_process_info(pid: int, *, include_exit: bool = False):
     library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
     reader = library.proc_pidinfo
     reader.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64, ctypes.c_void_p, ctypes.c_int]
@@ -305,7 +305,8 @@ def _read_darwin_process_info(pid: int):
     if value.pid != pid or value.start_sec == 0 or value.start_usec >= 1_000_000:
         raise OSError("native process identity observation was malformed")
     return {"pid": int(value.pid), "uid": int(value.uid), "parent_pid": int(value.ppid),
-            "start_sec": int(value.start_sec), "start_usec": int(value.start_usec)}
+            "start_sec": int(value.start_sec), "start_usec": int(value.start_usec),
+            **({"status": int(value.status)} if include_exit else {})}
 
 
 def _kernel():
@@ -602,7 +603,7 @@ def _resume_process(pid):
         kernel.CloseHandle(snapshot)
 
 
-def spawn_tree(argv, *, detached=False, **kwargs):
+def spawn_tree(argv, *, detached=False, hidden=False, **kwargs):
     """Spawn a session/Job, assigning Windows children before their first instruction.
 
     Detached Windows daemons inherit the sole extra Job handle, so launcher
@@ -626,7 +627,7 @@ def spawn_tree(argv, *, detached=False, **kwargs):
         kwargs["close_fds"] = True
     process = None
     try:
-        kwargs["creationflags"] = kwargs.get("creationflags", 0) | 0x200 | 0x4
+        kwargs["creationflags"] = kwargs.get("creationflags", 0) | 0x200 | 0x4 | (0x08000000 if hidden else 0)
         process = subprocess.Popen(argv, **kwargs)
         job.assign(process)
         process._runtime_job = job
@@ -664,9 +665,52 @@ def signal_tree(process_or_pid, signum):
         os.kill(pid, signal.CTRL_BREAK_EVENT)
 
 
+def tree_exited(process):
+    """Observe exit without reaping a POSIX tree's process-group anchor.
+
+    The caller must remain the sole waiter until stop_tree has killed any
+    surviving descendants. Windows retains that authority in the Job handle.
+    """
+    if sys.platform == "linux":
+        with getattr(process, "_waitpid_lock", nullcontext()):
+            if process.returncode is not None:
+                return True
+            return os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is not None
+    if sys.platform == "darwin":
+        with getattr(process, "_waitpid_lock", nullcontext()):
+            return _darwin_tree_exited(process)
+    return process.poll() is not None
+
+
+def _darwin_tree_exited(process):
+    if process.returncode is not None:
+        return True
+    info = _read_darwin_process_info(process.pid, include_exit=True)
+    return info is None or info["status"] == 5  # SZOMB
+
+
 def stop_tree(process, grace=5.0):
     if sys.platform == "linux":
         return _stop_linux_tree(process, grace)
+    if sys.platform == "darwin":
+        # Keep the unreaped leader until the last group signal, as on Linux.
+        with getattr(process, "_waitpid_lock", nullcontext()):
+            if process.returncode is not None:
+                return
+            if not _darwin_tree_exited(process):
+                try:
+                    signal_tree(process, TERM)
+                except ProcessLookupError:
+                    pass
+                deadline = time.monotonic() + grace
+                while time.monotonic() < deadline and not _darwin_tree_exited(process):
+                    time.sleep(min(0.05, max(0, deadline - time.monotonic())))
+            try:
+                signal_tree(process, KILL)
+            except ProcessLookupError:
+                pass
+        process.wait(timeout=max(2.0, grace))
+        return
     try:
         if process.poll() is None:
             try:

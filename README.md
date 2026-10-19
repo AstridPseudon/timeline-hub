@@ -68,6 +68,10 @@ https://astrid.haus. A service manager should execute `astrid-runtime run`:
 the daemon and door run in that process until it receives a stop signal, and
 startup or listener failure exits non-zero with a reason and log path.
 
+Both commands supervise the optional long-running services declared by the
+active source profile. See [profile services](docs/profile-services.md) for the
+JSON Schema, interpreter tokens, restart policies, logs and health readback.
+
 Defaults are native per-user paths:
 
 | OS | Data root | Foreground log |

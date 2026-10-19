@@ -268,6 +268,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             daemon = getattr(self.server, "daemon_runtime", None)
             if daemon is not None:
                 health["runtime_instance_id"] = daemon.instance_id
+                health["services"] = daemon.service_status()
             return self._send(200, health)
         if path == ["v1", "credentials"] and method == "POST":
             self._identity("credentials:provision")

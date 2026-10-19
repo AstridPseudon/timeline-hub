@@ -13,6 +13,7 @@ from .generated import (
     Generation,
     GenerationVariant,
     Health,
+    ServiceStatus,
     IntegrityCheck,
     IntegrityReport,
     Handshake,
@@ -35,4 +36,4 @@ from .generated import (
     WorkspaceClient,
 )
 
-__all__ = ["CONTRACT_VERSION", "ApiError", "AttemptFence", "ClaimWaiting", "ByteResponse", "Capability", "Event", "Executor", "Generation", "GenerationVariant", "Handshake", "Health", "IntegrityCheck", "IntegrityReport", "ManagedObject", "ManagedOutput", "ObjectLocation", "ShotTextBinding", "MutationResult", "Project", "ProjectDocument", "PreferenceResource", "PreferenceMutationResult", "Realm", "RealmLifecycle", "RecoveryAuthorization", "RecoveryCheckpointReceipt", "RecoveryReceipt", "RecoveryResumeReceipt", "Task", "WorkspaceClient"]
+__all__ = ["CONTRACT_VERSION", "ApiError", "AttemptFence", "ClaimWaiting", "ByteResponse", "Capability", "Event", "Executor", "Generation", "GenerationVariant", "Handshake", "Health", "ServiceStatus", "IntegrityCheck", "IntegrityReport", "ManagedObject", "ManagedOutput", "ObjectLocation", "ShotTextBinding", "MutationResult", "Project", "ProjectDocument", "PreferenceResource", "PreferenceMutationResult", "Realm", "RealmLifecycle", "RecoveryAuthorization", "RecoveryCheckpointReceipt", "RecoveryReceipt", "RecoveryResumeReceipt", "Task", "WorkspaceClient"]
