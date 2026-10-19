@@ -459,6 +459,21 @@ def _bind_selected_host(daemon, profile, handle, diagnostic):
                         or receipt.get("owner_epoch") != report["owner_epoch"]
                         or any(receipt["host"].get(k) != report["processes"]["host"][k]
                                for k in ("pid", "birth_id"))):
+                    # Keep this internal: startup diagnostics are also public
+                    # error details. Only fixed field names may reach this log.
+                    try:
+                        mismatches = [name for name, changed in (
+                            ("source_digest", row["source_digest"] != source),
+                            ("dependency_digest", row["dependency_digest"] != dependency),
+                            ("owner_epoch", receipt.get("owner_epoch") != report["owner_epoch"]),
+                            ("host_pid", receipt["host"].get("pid") != report["processes"]["host"]["pid"]),
+                            ("host_birth_id", receipt["host"].get("birth_id") != report["processes"]["host"]["birth_id"]),
+                        ) if changed]
+                        print(json.dumps({"event": "storage_preparation_selected_source_changed",
+                                          "mismatches": mismatches}, sort_keys=True),
+                              file=sys.stderr, flush=True)
+                    except BaseException:
+                        pass  # Diagnostics must never replace the original refusal.
                     raise unavailable("selected_source_changed")
                 binding = dict(realm_id=service.realm["id"], runtime_instance_id=service.runtime_instance_id,
                     runtime_session_id=service.runtime_session_id, runtime_epoch=service.store._current_runtime_epoch(),

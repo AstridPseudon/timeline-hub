@@ -202,6 +202,114 @@ def test_source_unavailable_is_typed_without_listener_or_publication(source_comp
     assert row["status"] == "unavailable"
 
 
+@pytest.mark.parametrize("fields", [
+    (), ("source_digest",), ("dependency_digest",), ("owner_epoch",),
+    ("host_pid",), ("host_birth_id",), ("source_digest", "dependency_digest"),
+    ("owner_epoch", "host_pid", "host_birth_id"),
+    ("source_digest", "dependency_digest", "owner_epoch", "host_pid", "host_birth_id"),
+])
+def test_selected_source_guard_internal_discriminator(source_composition, monkeypatch, capsys, caplog, fields):
+    """Exercise real admission, guard and HTTP serialization, without a server."""
+    from io import BytesIO
+    from types import SimpleNamespace
+    from runtime_protocol import local_preparation_relay as transport
+    from runtime_protocol.daemon import WORKER_ACTOR
+    from runtime_protocol.errors import CapabilityUnavailableError
+    from runtime_protocol.local_worker import _digest
+    from runtime_protocol.server import RuntimeHandler
+    w = source_composition
+    monkeypatch.setattr(transport, "time", SimpleNamespace(monotonic=lambda: 100.0))
+    monkeypatch.setattr(transport.LocalPreparationRelay, "_paths",
+                        lambda self: pytest.fail("guard inspected a listener"))
+    w.availability("action_child_unavailable:fixture")
+    private = {"source_digest": "sha256:" + "e" * 64, "dependency_digest": "sha256:" + "f" * 64,
+               "owner_epoch": "private-owner-epoch", "host_pid": 987654321,
+               "host_birth_id": 'private-birth\n{"event":"forged"}'}
+    for field in fields:
+        if field in {"source_digest", "dependency_digest"}:
+            w.s.store.conn.execute(f"UPDATE executors SET {field}=?", (private[field],))
+        elif field == "owner_epoch":
+            w.receipt[field] = private[field]
+        else:
+            w.receipt["host"][field.removeprefix("host_")] = private[field]
+    # Validly bind the changed fixture receipt: no custody/credential check is
+    # bypassed to reach the later selected-source comparison.
+    w.receipt["evidence_digest"] = _digest({k: v for k, v in w.receipt.items()
+        if k not in {"version", "evidence_digest", "executor_incarnation"}})
+    w.metadata["execution_binding"]["verification"]["evidence_digest"] = w.receipt["evidence_digest"]
+    w.metadata["private_request_payload"] = "private-request-payload"
+    w.provision()
+    token, _ = w.d.credentials._read_actor(WORKER_ACTOR)
+    before = db_snapshot(w.s)
+    if fields:
+        with pytest.raises(CapabilityUnavailableError) as caught:
+            transport.bind_selected_host(w.d, w.profile, w.handle)
+        error = caught.value
+        assert type(error) is CapabilityUnavailableError and error.status == 409
+        expected = {"code": "unavailable", "message": "storage preparation unavailable", "details": {
+            "reason": "selected_source_changed", "startup": {
+                "stage": "registration", "elapsed_ms": 0, "generation_sha256": None,
+                "registration": "pending", "readiness": "pending", "listener_present": None,
+                "phase_budget_ms": 10, "total_budget_ms": 30}}}
+        assert error.as_dict() == expected
+        handler = RuntimeHandler.__new__(RuntimeHandler)
+        handler.command = "POST"
+        handler._runtime_request_id = "selected-source-test"
+        handler.wfile = BytesIO()
+        statuses, headers = [], {}
+        handler.send_response = statuses.append
+        handler.send_header = headers.__setitem__
+        handler.end_headers = lambda: None
+        handler._error(error)
+        public = handler.wfile.getvalue().decode()
+        assert public == json.dumps({**expected, "request_id": "selected-source-test"}, sort_keys=True)
+        assert statuses == [409] and headers["Content-Length"] == str(len(public.encode()))
+    else:
+        staged = transport.bind_selected_host(w.d, w.profile, w.handle)
+        assert staged.unavailable == transport.StorageUnavailable(CAP, "action_child_unavailable:fixture")
+        assert staged.relay is None
+        public = ""
+    assert db_snapshot(w.s) == before
+    assert w.s._preparation_relay is None and w.d.local_worker_preparer.current_handle() is w.handle
+    assert w.handle.activated and not w.handle.closed
+    assert w.d.credentials._read_actor(WORKER_ACTOR)[0] == token
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    events = [json.loads(line) for line in captured.err.splitlines()]
+    internal = [e for e in events if e["event"] == "storage_preparation_selected_source_changed"]
+    assert internal == ([{"event": "storage_preparation_selected_source_changed", "mismatches": list(fields)}]
+                        if fields else [])
+    assert [e["event"] for e in events] == (["storage_preparation_selected_source_changed"] if fields else []) + [
+        "storage_preparation_startup"]
+    emitted = captured.out + captured.err + caplog.text + public
+    for value in (*private.values(), token, w.source, w.dependency, w.s.runtime_session_id,
+                  w.s.runtime_instance_id, w.receipt["evidence_digest"], "private-request-payload"):
+        assert str(value) not in emitted
+
+
+def test_selected_source_guard_logging_failure_preserves_refusal(source_composition, monkeypatch, capsys):
+    from runtime_protocol import local_preparation_relay as transport
+    from runtime_protocol.errors import CapabilityUnavailableError
+    w = source_composition
+    w.s.store.conn.execute("UPDATE executors SET source_digest='private-source'")
+    attempted = []
+    def broken_log(message, **kwargs):
+        attempted.append(json.loads(message))
+        raise OSError("private-logging-exception")
+    monkeypatch.setattr(transport, "print", broken_log, raising=False)
+    before = db_snapshot(w.s)
+    with pytest.raises(CapabilityUnavailableError) as caught:
+        transport.bind_selected_host(w.d, w.profile, w.handle)
+    assert type(caught.value) is CapabilityUnavailableError and caught.value.status == 409
+    assert caught.value.details["reason"] == "selected_source_changed"
+    assert caught.value.details["startup"] == w.d.local_preparation_diagnostic
+    assert attempted[0] == {"event": "storage_preparation_selected_source_changed", "mismatches": ["source_digest"]}
+    assert [e["event"] for e in attempted] == ["storage_preparation_selected_source_changed", "storage_preparation_startup"]
+    assert db_snapshot(w.s) == before and w.s._preparation_relay is None
+    assert w.handle.activated and not w.handle.closed
+    assert capsys.readouterr() == ("", "")
+
+
 @pytest.mark.parametrize("fault", ["owner", "peer", "receipt", "receipt_owner", "credential", "inactive", "handle",
     "source", "dependency", "dead", "epoch", "executor", "readiness", "capability", "contract", "ambiguous", "reason", "incoherent"])
 def test_source_invalid_binding_never_becomes_operational_unavailability(source_composition, monkeypatch, fault):
