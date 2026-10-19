@@ -123,7 +123,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 remaining -= len(chunk)
                 yield chunk
 
-    def _raw_body(self):
+    def _read_raw_body(self):
         if self._header_values("Transfer-Encoding"):
             raise ProtocolError("JSON requests require Content-Length without Transfer-Encoding")
         length = self._content_length()
@@ -131,6 +131,28 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         if len(raw) != length:
             raise ProtocolError("request body is shorter than Content-Length")
         return raw
+
+    def _prefetch_body(self):
+        """Read a declared request body before the store mutex is taken.
+
+        A client that is still sending its body must not hold the lock every
+        other database route waits on. A framing error is kept and raised
+        only if the route reads the body, as it was before.
+        """
+        if not hasattr(self, "headers") or not (self._header_values("Content-Length") or self._header_values("Transfer-Encoding")):
+            return
+        try:
+            self._prefetched_body = self._read_raw_body()
+        except RuntimeErrorBase as exc:
+            self._prefetched_body = exc
+
+    def _raw_body(self):
+        prefetched = getattr(self, "_prefetched_body", None)
+        if isinstance(prefetched, RuntimeErrorBase):
+            raise prefetched
+        if prefetched is not None:
+            return prefetched
+        return self._read_raw_body()
 
     def _body(self):
         raw = self._raw_body()
@@ -936,6 +958,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         try:
             self._pending_response = None
             self._pending_file_response = None
+            self._prefetched_body = None
             self._defer_response = True
             try:
                 if self._is_local_worker_control():
@@ -948,6 +971,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     # and daemon actor ownership must stay outside this lock.
                     self._route()
                 else:
+                    self._prefetch_body()
                     with self.runtime.store._mutex:
                         self._route()
             finally:

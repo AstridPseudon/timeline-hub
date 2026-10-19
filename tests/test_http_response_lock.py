@@ -69,3 +69,57 @@ def test_abandoned_response_does_not_attempt_second_response():
     h.server = SimpleNamespace(runtime=SimpleNamespace(store=SimpleNamespace(_mutex=threading.RLock())))
     h._dispatch()
     assert h.close_connection
+
+
+def test_slow_request_body_is_read_before_the_shared_database_lock():
+    reading = threading.Event()
+    release = threading.Event()
+    completed = threading.Event()
+    mutex = threading.RLock()
+
+    class SlowBody:
+        def read(self, size):
+            reading.set()
+            assert release.wait(30)
+            return b'{"slow": true}'[:size]
+
+    class Handler(RuntimeHandler):
+        def _route(self):
+            self._send(200, self._body())
+
+        def send_response(self, status):
+            self.status = status
+
+        def send_header(self, *_):
+            pass
+
+        def end_headers(self):
+            pass
+
+    def handler(body, headers):
+        h = object.__new__(Handler)
+        h.server = SimpleNamespace(runtime=SimpleNamespace(store=SimpleNamespace(_mutex=mutex)))
+        h.headers = headers
+        h.command = "POST"
+        h.path = "/v1/projects"
+        h.rfile = body
+        h.wfile = io.BytesIO()
+        return h
+
+    slow = handler(SlowBody(), {"Content-Length": str(len(b'{"slow": true}'))})
+    other = handler(io.BytesIO(b"{}"), {"Content-Length": "2"})
+    first = threading.Thread(target=slow._dispatch)
+    second = threading.Thread(target=lambda: (other._dispatch(), completed.set()))
+    first.start()
+    try:
+        assert reading.wait(10)
+        second.start()
+        assert completed.wait(10), "a client still sending its body held the shared database lock"
+        assert other.status == 200
+    finally:
+        release.set()
+        first.join(10)
+        if second.ident is not None:
+            second.join(10)
+    assert slow.status == 200
+    assert slow.wfile.getvalue() == b'{"slow": true}'
