@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { AstridBridgeTransport } from './transport.ts';
+import { BridgeRouteError, type AstridBridgeTransport } from './transport.ts';
 import { localAgentCatalogSchema, localAgentModelsSchema, type LocalAgentId } from './localAgents.ts';
 
 const connectionSchema = z.strictObject({
@@ -44,6 +44,17 @@ export const modelCatalogSchema = z.strictObject({
 const modelSelectionSchema = z.strictObject({ currentModel: z.string() });
 const localModelResponseSchema = z.object({ models: localAgentModelsSchema.nullable() });
 export type AcpModelCatalog = z.infer<typeof modelCatalogSchema>;
+
+/**
+ * The Runtime door's answer to every chat route while no chat service is running on this computer
+ * (astrid-runtime `runtime_protocol/door.py`: 503 `{"error": "acp_unavailable"}`).
+ */
+export const ACP_UNAVAILABLE_CODE = 'acp_unavailable';
+
+/** True for the door's "no chat service here" answer: a state the chat pane shows plainly, never an error. */
+export function isAcpUnavailable(error: unknown): boolean {
+  return error instanceof BridgeRouteError && error.status === 503 && error.code === ACP_UNAVAILABLE_CODE;
+}
 
 export type AstridAcpConnection = z.infer<typeof connectionSchema>;
 export type AstridAcpRpcParams = Record<string, unknown>;

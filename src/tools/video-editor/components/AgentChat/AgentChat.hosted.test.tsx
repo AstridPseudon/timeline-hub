@@ -74,6 +74,25 @@ describe('agent chat on the hosted build', () => {
     for (const [, request] of fetchSpy.mock.calls) expect(request?.headers).not.toHaveProperty('Authorization');
   });
 
+  it('with no chat service on this computer, says so in one plain line, with no alert or retry', async () => {
+    origin = GATEWAY;
+    fetchSpy.mockImplementation(async () => new Response(JSON.stringify({ error: 'acp_unavailable' }), { status: 503 }));
+    render(<AgentChatPanel />, { wrapper: withQueryClient });
+
+    await waitFor(() => expect(screen.getByText("Chat needs Astrid's agent on this computer.")).toBeInTheDocument());
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+  });
+
+  it('still shows a chat service that fails as an error', async () => {
+    origin = GATEWAY;
+    fetchSpy.mockImplementation(async () => new Response(JSON.stringify({ error: 'internal_error' }), { status: 500 }));
+    render(<AgentChatPanel />, { wrapper: withQueryClient });
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    expect(screen.queryByText("Chat needs Astrid's agent on this computer.")).toBeNull();
+  });
+
   it('rehydrates project task links through the gateway', async () => {
     origin = GATEWAY;
     const { result } = renderHook(() => useProjectAgentTaskLinks('project-1'), { wrapper: withQueryClient });

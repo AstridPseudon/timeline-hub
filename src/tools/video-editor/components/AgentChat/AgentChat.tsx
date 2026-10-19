@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Loader2, Mic, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { savedLocalAgentModel, sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { isAcpUnavailable } from '@/integrations/astrid/acpRoutes.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { useAgentChatBridge, useAgentChatActionsRegistry, type AgentChatActionsHandlers } from '@/shared/contexts/AgentChatContext.tsx';
@@ -564,7 +565,10 @@ function AvailableAgentChatPanel({
         : 'Type or press Cmd+Shift+R to talk...';
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
     && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
-  const turnFailure = activeSession.error ?? sendMessage.localError ?? createSession.error ?? createNewSession.error ?? setLocalAgent.error ?? sessions.error ?? projectChat.error;
+  const chatFailures = [activeSession.error, sendMessage.localError, createSession.error, createNewSession.error, setLocalAgent.error, sessions.error, projectChat.error];
+  // No chat service on this computer is a state, not a failure: the pane says so in one plain line, with no alert or retry.
+  const chatUnavailable = chatFailures.some(isAcpUnavailable);
+  const turnFailure = chatFailures.find(Boolean);
   const turnFailureMessage = turnFailure instanceof Error ? turnFailure.message : turnFailure ? String(turnFailure) : 'Agent error. Try again or start a new conversation.';
 
   const handleAttachmentPreviewClick = useCallback(async (attachment: AgentChatAttachmentPreviewItem) => {
@@ -1136,7 +1140,9 @@ function AvailableAgentChatPanel({
 
         {!activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending && (
           <div className="flex min-h-full flex-col items-center justify-center py-8 text-center text-sm text-muted-foreground">
-            {sessions.isError ? (
+            {chatUnavailable ? (
+              <p>Chat needs Astrid's agent on this computer.</p>
+            ) : sessions.isError ? (
               <>
                 <p>Local Astrid chat is unavailable.</p>
                 <p className="mt-1 text-xs">Start the Astrid ACP bridge, then reopen this pane.</p>
@@ -1328,7 +1334,7 @@ function AvailableAgentChatPanel({
           </div>
         )}
 
-        {!isProcessing && !sendMessage.isPending && !isCancelled && (activeSession.error || sendMessage.localError || createSession.error || createNewSession.error || setLocalAgent.error || sessions.error || projectChat.error || activeStatus === 'error') && (
+        {!isProcessing && !sendMessage.isPending && !isCancelled && !chatUnavailable && (turnFailure || activeStatus === 'error') && (
           <div role="alert" className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
             {turnFailureMessage}
             {isProviderAccessError(turnFailure) && (
