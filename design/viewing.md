@@ -1,0 +1,177 @@
+# Viewing seam: one evaluator, one revision identity
+
+Status: design inventory only. The Composition base is `c82eb7c459d0a41263954bf007071a6a0e8e0a6a` (`tl/integration`). This document separates observations from the M0/M1/M3 proposal. It does not change a product or manager contract.
+
+## 1. What is on screen today
+
+### Composition is the candidate viewer authority
+
+The Composition package is not a rasterizer by itself. It is the pure timing/scene planner consumed by the Remotion composition. Its current public surface is visible in `typescript/src/index.ts:13-71` and `package.json:9-41`:
+
+- `prepareScene`/`querySceneFrame` and `prepareCompositionScene` produce the requested-frame answer (`SceneFrame`, layers, bounds, coverage, opacity, findings). `prepareScene` uses the same rounded start frame and clip-duration rules as the renderer (`typescript/src/scene-evaluation.ts:27-35`); `querySceneFrame` answers layer presence, opacity, bounds, alpha/coverage, occlusion, and explicit `UNKNOWN` findings (`typescript/src/scene-evaluation.ts:63-160`).
+- The actual visual component path is `TimelineComposition.tsx:70-140,203-251`: `renderVisualClipContent` dispatches registered elements or `VisualClip`, and `renderVisualTrack` calls `querySceneFrame` before mounting the planned layers in Remotion `Sequence`s. `VisualClip.tsx` uses Remotion `Img` for images and `Video` for video, including trim, speed, volume/mute, and layout/crop.
+- The actual audio path is `TimelineComposition.tsx:254-306` plus `AudioTrack.tsx`. Each audio clip is a Remotion `Sequence` containing `Audio`; trim, playback rate, volume, and the encoded-envelope path are applied there. `audio-envelope.ts` refuses an encoded envelope whose source file, source offset, or playback rate does not match.
+- `ClipLook.tsx`, `TransitionLayer.tsx`, `lib/duration.ts`, and `lib/clip-look.ts` are render adapters/effect implementations. They are not a second scene authority. Their frame math must agree with the scene answer, but pixels and samples remain the proof of playback/export parity.
+
+The scene answer is deliberately conservative: component internals, animation geometry, alpha, blend-mode support, and undeclared modifier bounds remain unknown. The README’s limitation is explicit: evaluator opacity does not include every component/track transform, bounds, coverage, or occlusion (`README.md:29-78`). A shared answer therefore says what is admitted/expected on screen; it does not prove pixels.
+
+### Agent has three different concerns
+
+1. **Required timing compiler.** The frozen R4 Agent candidate’s `astrid/sdk/timeline/compiler.py:385-426` owns the compiler working copy and imports `_TimingEvaluators`; `astrid/sdk/timeline/_timing_evaluators.py:1` and its frame helpers are compiler-owned timing materialization. Keep both. This is not replaced by a viewer query.
+
+2. **Private on-screen mirror.** The current `astrid/core/timeline/onscreen.py:1-12` describes itself as on-screen truth and mirrors Composition fade/clip-look/transition logic; `astrid/core/timeline/duration.py:1-4` is a Python mirror of Composition timing. This is duplicate viewer math, not the compiler contract. It is the M1/M3 retirement target, subject to preserving any pure input validation needed by the compiler.
+
+3. **Viewing/render actions.**
+
+   - `astrid/packs/rendering/actions/timeline_visualize/fast_lane.py:1-7,40-95,139-180` maps exact times to frames and requires the checkout’s exact base parent revision, then obtains managed base and candidate videos and decodes them. Keep this pixel-verification lane; it explicitly does not own a renderer or second timeline authority.
+   - `motion/model.py:1-18,122-150` is a no-pixels semantic model: event timing, fallback `clipType` knowledge, declared boxes, words/beats/SFX. Its component-specific motion adapter is useful for labels/diagnostics; the fallback visibility/box tables are duplicate semantics and must not decide whether the viewer rendered a pixel.
+   - `sweep.py:1-16,50-86,154-205` samples cut-relative frames, and `sweep.py:225-255` compares decoded images. Keep it as an orchestration/reporting layer over `fast_lane`, not as an evaluator replacement.
+   - R4 `scene_answers.py:1-4,101-160` is the right shape for a necessary adapter: it asks a warm/remote scene owner for `frames_at`, `coverage`, `visible_at`, and `bounds_at`, and returns unavailable/unknown rather than calculating a fallback. Port that role; do not port its old transport assumptions as a new authority.
+   - The actual Linux Remotion path is `astrid/core/rendering/remotion_runtime.py:44-56,262-303` and `astrid/packs/rendering/rendering/renderers/remotion/run.py:277-305,335-368`: it validates installed composition/schema/theme packages, resolves the installed Composition package, and checks generated registry outputs. This should consume the one package described below.
+
+### App currently renders a second implementation
+
+The current `src/tools/video-editor/compositions/TimelineRenderer.tsx:1-60,69-87,1262-1321,1570-1605` imports App timing helpers, groups/sorts clips itself, applies track opacity/blend/scale, and dispatches App `VisualClip`/audio/effect components. It does not call Composition `prepareScene` or `querySceneFrame`; comments at `:71-80` say it mirrors the Composition. `RemotionPreview.tsx:88-94,103-145,220-239` passes the local resolved config to the Remotion Player and derives fps, duration, and dimensions locally. This is an unsaved local preview, not a committed revision viewer.
+
+The R4 App candidate contains the necessary bridge in `src/tools/video-editor/compositions/playerEvaluation.ts:1-17,21-67,69-187` (frozen branch `candidate-app-qualified`). It translates App clip/hold/speed/transition semantics, declares host capabilities, calls Composition `prepareScene`, and retains explicit legacy/unknown outcomes. Its tests (`playerEvaluation.test.ts:20-30,58-70,110-180`) cover half-open cuts, transitions, speed, output projection, and unknown components. This adapter should be ported forward; the evaluator itself should not be copied into App.
+
+The R4 candidate’s `TimelineRenderer.tsx` then queries `querySceneFrame` and uses the returned layers for mounting while App-owned component dispatch remains an adapter. That is the M1/M3 endpoint: one scene answer, many host/component adapters. It is not present in the current integration branch.
+
+Export already has a separate save barrier. `useRenderState.ts:841-920` flushes a durable save and passes a numeric `expectedVersion`; `renderRouter.ts:950-1001` sends `timeline_ref`, selector, and expected version so Runtime resolves the canonical snapshot. This is useful export admission, but numeric version alone is not the exact revision identity required for all viewing surfaces.
+
+### Duplicate versus necessary code
+
+| Area | Duplicate authority to retire | Necessary adapter to keep |
+| --- | --- | --- |
+| Timing | App `config-utils` timing used to decide layer existence; Agent `core/timeline/duration.py` mirror when used as viewer truth; Agent `onscreen.py` timing/visibility mirror | Agent compiler and `_timing_evaluators.py`; App `playerEvaluation` translation and validation; Composition’s frame planner |
+| Visibility/coverage | Agent `onscreen.py`, `motion/model.py` fallback tables, any App private “visible” calculation | Composition scene findings; declared component/media capabilities; Agent `scene_answers` transport/status adapter |
+| Pixels | None of `fast_lane`/`sweep` should be replaced by a semantic answer | Actual Remotion Player/export components and decoded frame comparison |
+| Components | Composition’s `VisualClip`/`AudioTrack` must remain actual media implementations | App host registry, theme dispatch, capability declarations, and Runtime package admission |
+| Package source | Agent `remotion/vendor/timeline-composition` and App `vendor/timeline-composition`, plus their stale `typescript/dist` | One built Composition package and explicit theme/schema dependencies |
+
+## 2. M0 package handoff; no registry publishing
+
+### Concrete packaging decision
+
+Composition owns the source, version, build, generated registries, and tarball. For M0, build one package from the pinned Composition commit and publish no npm registry release:
+
+```sh
+cd /path/to/timeline-composition
+# M0 prerequisite: commit the lockfile and make build/test fail closed.
+npm install --package-lock-only --ignore-scripts
+npm ci --ignore-scripts
+npm run gen-registry:check
+npm run build
+npm test
+npm pack --pack-destination /path/to/shared/timeline-artifacts
+sha256sum /path/to/shared/timeline-artifacts/timeline-composition-<version>.tgz
+```
+
+The current `package.json:49-55` is not yet this recipe: `build` is masked by `|| true`, `build:test` names a missing test tsconfig in the received candidate, and this checkout has no lockfile. Those are M0 packaging blockers, not test results. The build must emit a clean `dist` and fail on TypeScript, generated-registry, or test failure before a tarball is accepted.
+
+Agent and App then install the same tarball by file URL/path and record it in their lockfiles, for example:
+
+```sh
+npm install /path/to/shared/timeline-artifacts/timeline-composition-<version>.tgz --save-exact
+npm install --package-lock-only
+npm ci --ignore-scripts
+```
+
+The shared artifact path is an integration/release input, not a copied source tree. The two old source trees are deleted in M3: Agent `remotion/vendor/timeline-composition` (and `timeline-composition.source.json`) and App `vendor/timeline-composition`; their checked-in stale `typescript/dist` is deleted with them. Runtime source discovery must stop requiring `node_modules/@banodoco/timeline-composition/typescript/src` and use package exports/package identity instead. No package source is copied into Agent or App.
+
+### Package surface and closure
+
+The current public exports are the correct conceptual surface and should remain explicit: `.` (composition and types), `./evaluation`, `./theme-api`, `./registry.generated`, generated effect/animation/transition entries, and `./package.json` (`package.json:9-41`). The M0 package build should point those entries at built JS and declarations in `dist`, not at a stale or consumer-local `typescript/src` tree. Consumers must stop deep-importing `typescript/src`; the deep generated subpaths may be removed after all callers use the named exports, or retained only as tested compatibility entries.
+
+The tarball’s exact closure must be checked in one lockfile and probed by both consumers:
+
+- `@banodoco/timeline-schema` is the exact `0.0.1` dependency currently declared at `package.json:56-58`; use one pinned tarball/integrity, not App’s separate source vendor.
+- `react`, `react-dom`, `remotion`, `@remotion/media`, and `@remotion/layout-utils` must have one exact compatible version set. Current Composition dev Remotion is `4.0.448` (`package.json:63-72`), while App integration is `4.0.509`; the exact set is an open release decision and must be settled before the first tarball. Do not allow a package-range resolution to silently create two Remotion copies. React/Remotion peer requirements must be checked with `npm ls` in both consumers.
+- `registry.generated.ts` imports `@banodoco/timeline-theme-2rp/src/effects/*` (`typescript/src/registry.generated.ts:1-25`). The theme package is an explicit peer/runtime closure, with its own pinned tarball and compatible React/Remotion peers; it is not vendored into Composition.
+- `effects.generated.ts`, `animations.generated.ts`, and `transitions.generated.ts` import `@workspace-effects`, `@workspace-animations`, and `@workspace-transitions`. Current App Vite aliases these to `vendor/banodoco-*` (`scripts/astrid-landing/public-host-browser/vite.config.ts:28-36`), so a package tarball alone is not portable. M0 must choose one of: make these real pinned package dependencies with exported components, or make registry generation run in each consumer’s installed theme/package context and ship the resulting generated entries. The choice, package names, and ownership are open; leaving aliases unresolved is not a valid tarball.
+- `scripts/gen-registry.ts:5-21,37-80,109-227` scans installed theme packages and in-tree theme effects and has a drift check. Composition owns the generator and generated output; theme owners own theme source/metadata; the package build records generator inputs and runs `gen-registry:check`. Agent/App do not edit generated registries.
+
+Consumer configuration is also part of the closure: Agent `remotion/package.json` must point at the tarball and its runtime discovery must resolve `@banodoco/timeline-composition/package.json`/public exports, not the current `typescript/src` path or `ASTRID_TIMELINE_COMPOSITION_SRC` source override; App `package.json` must point at the same tarball and its Vite aliases must target the installed package’s public `./theme-api`, `./evaluation`, and `./registry.generated` exports. The theme package and any resolved workspace effect/animation/transition packages must be installed from the same lockfile context. The existing `remotion_runtime.py:44-56` required-package probe remains a deployment check, but its package-source check must become package-root/export/version/digest checking.
+
+Update path: a Composition change bumps the package version (the c82 candidate is `0.0.7`; whether the first clean tarball is `0.0.8` is an open release decision), builds/tests, emits the tarball and SHA-256, and sends that immutable artifact to Agent/App owners. They update only the tarball reference/lockfile and adapter compatibility tests. A theme change rebuilds the theme artifact, regenerates the Composition registry in its canonical build context, and produces a new Composition artifact if generated imports changed. Runtime owns deployment of the exact package closure and rejects missing/mismatched package identities.
+
+## 3. Exact revision seam
+
+### Current identity source
+
+Runtime is the authority. `runtime_protocol/timeline_inspection.py:552-566` reads the immutable parent-composition head and accepts an explicit historical `revision_id`; `:715-717` scopes the inspection by project, timeline, head, selected revision, snapshot digest, and selectors; `:751-757` returns `representation`, `is_current_head`, `revision_id`, `head_revision_id`, and content/snapshot digests. The door exposes inspect and composition-revision routes (`runtime_protocol/door.py:155-164`).
+
+App already carries a useful but incomplete head shape in `src/tools/video-editor/data/DataProvider.ts:31-54` (`projectId`, `timelineId`, `headRevisionId`) and adopts/rejects stale heads in `useAstridShotsHost.ts:117-137,203-220`. It does not currently carry this identity into `ResolvedTimelineConfig`, `RemotionPreview` metadata, or the Player input. Export’s `expectedVersion` (`useRenderState.ts:841-865`) is a save/concurrency barrier, not a substitute for `revision_id`.
+
+Agent’s `fast_lane._base_revision` (`astrid/packs/rendering/actions/timeline_visualize/fast_lane.py:87-95`) already refuses to proceed without the exact base parent revision, and `prepare_pair` (`:139-180`) retains base/working managed run identities. Preserve this fail-closed behavior.
+
+### Smallest M1 adapter contract
+
+Composition stays pure and does not query Runtime. Add a host-side envelope around every evaluation/view result, without changing the save or authoring contracts:
+
+```ts
+type EvaluatedRevision = {
+  projectId: string;
+  timelineId: string;
+  revisionId: string | null;       // null means no committed revision
+  headRevisionId: string | null;   // known head at lookup time
+  state: 'committed' | 'unsaved-local' | 'unavailable';
+  source: 'runtime-revision' | 'runtime-head' | 'local-draft' | 'none';
+  contentDigest?: string;          // integrity, never identity by itself
+  baseRevisionId?: string | null;  // for an unsaved local draft
+  evaluator: { packageName: string; version: string; sha256: string };
+};
+
+type EvaluationRequest = {
+  revision: EvaluatedRevision;
+  frame: number;
+  fpsRational: [number, number];
+};
+```
+
+The envelope is metadata around Composition’s existing `PreparedScene`/`SceneFrame`; it is not a new manager-owned scene API. Preview, check, visualize, and export reports must include it, plus exact frame/time/fps. A semantic result without it is not an evaluated revision.
+
+The state rules are:
+
+| Input | Required label | Behavior |
+| --- | --- | --- |
+| Runtime head or explicit immutable revision loaded successfully | `committed` | Pin `revisionId`; retain `headRevisionId` and `isCurrentHead` separately. |
+| App edits not yet saved | `unsaved-local` | `revisionId: null`, retain `baseRevisionId` and a local content digest if useful; never call it the current committed head. Saving remains independent of render/evaluation. |
+| Runtime/revision/package unavailable | `unavailable` | Return no false committed claim and include the reason/target. A cached local Player may continue only with the `unsaved-local`/stale label. |
+
+Surface-specific behavior follows from that table: App preview reads the loaded Runtime head and marks every edited local config before it asks the Player for a frame; Agent `check`/`scene_answers` includes the pinned revision envelope in each scene result or explicitly reports unavailable; Agent `visualize` records the exact base revision plus working candidate/run identity in its manifest while retaining the pixel lane; export carries the exact revision or the existing expected-version barrier and Runtime returns the immutable admitted revision. None of these surfaces may infer a committed revision from a content digest, Player frame, numeric config version, or stale cache.
+
+Owner work for M1 is deliberately small:
+
+- Runtime exposes/continues to expose the exact immutable revision and content digest through the existing inspection/revision routes; if export must pin a revision rather than only `expected_version`, Runtime owns that route change. Do not change Runtime’s save contract in this design.
+- App carries `head` from `LoadedTimeline` through the resolved preview config/input and export request, marks local edits as `unsaved-local`, and forwards the envelope to `playerEvaluation`/`TimelineRenderer`. Its R4 `playerEvaluation` remains the only App-to-Composition semantic adapter. Render admission must never be the save mechanism; existing `flushPendingSave` is an export barrier only.
+- Agent makes `scene_answers` the thin Composition query adapter, includes the envelope in `check`/`visualize` output, and keeps exact base/working render IDs in `fast_lane`/`sweep`. `motion/model.py` may annotate findings but cannot override Composition answers.
+- Composition owns package/evaluator identity only; it does not decide whether a revision is committed. Agent/App/Runtime own transport, revision, and local-state labels.
+
+This leaves open only the cross-manager choices that require their owners: the exact export pin field (`revision_id` versus an extension of the existing expected-version request), the exact Remotion version closure, and whether unavailable preview should stop playback or continue explicitly as stale local. No manager contract is changed here.
+
+## 4. M0, M1, and M3 boundary
+
+**M0 (this inventory/design):** establish the package build failure conditions, public exports/closure checklist, the revision envelope, and the ownership/update path. Keep current playback/export behavior. Do not delete code or alter save traffic in this worker.
+
+**M1 (gated adapter work):** install the same pinned Composition tarball in Agent/App; port App `playerEvaluation` and Agent `scene_answers`; carry `EvaluatedRevision` through preview/check/visualize/export metadata; prove a save can commit with the renderer/evaluator unavailable. Remove only private viewer visibility decisions after Composition answers are available.
+
+**M3 (one viewer/gate):** delete both Composition source vendor trees and stale `dist`; use package exports in Player and Linux Remotion; retire duplicate visibility math; keep compiler `_timing_evaluators`, actual feature components, and Agent fast-lane/sweep pixel verification. The gate is zero legacy save traffic plus an actual frame-and-audio parity test. A shared evaluator alone is not sufficient evidence.
+
+## 5. Linux Player/export parity test
+
+This is a proposed M3 gate, not an execution claim. Use the smallest existing checked-in film fixture that includes real visual media, an edit/transition or fade, and audio. The existing Agent fixture family `tests/fixtures/timeline_visualize/compositor_parity/` (including its `oracle.py` and F1–F10 timing cases) is the starting point; select one deterministic case with actual media rather than manufacturing a new fixture. Pin the fixture repository SHA and exact Runtime `project_id`, `timeline_id`, and immutable `revision_id` in the test manifest.
+
+Runner, on Linux:
+
+1. Install the exact tarball and theme/schema closure; use one pinned Node/Remotion/Chromium/ffmpeg toolchain. Load the same immutable revision into the browser Player and the Remotion export path. Record package SHA-256, viewport, width/height, fps rational, revision envelope, and the exact frame list (at least first frame, frame before/at a cut, a transition middle, and last frame).
+2. Capture actual Player frames as PNGs from the Linux headless Player (not scene JSON). Export the same frames from the Linux Remotion renderer. Compare dimensions, alpha/color mode, and pixels with a documented exact/tolerance rule; report the first differing frame and pixel box.
+3. Capture actual audio from the Player path through a deterministic Web Audio/PCM capture, and decode the export audio to PCM with ffmpeg. Pin sample rate, channel count, sample format, trim, and playback rate. Compare sample count, alignment, RMS/peak, and a bounded sample tolerance; include the encoded-envelope identity when one is used.
+4. Run a deliberate negative control: change exactly one known input (for example transition duration, fps rational, or clip volume) while retaining the old expected output. The test must fail on a decoded frame and/or PCM difference. A scene evaluator returning the same layer plan must not make this control pass.
+5. Store only compact manifests/diffs as test artifacts; do not put generated build output or media in the source worktrees.
+
+The minimal runner dependencies are Node with `remotion`, `@remotion/player`, `@remotion/renderer`, the pinned theme/schema packages, headless Chromium/Playwright or the project’s existing Player harness, Python/Pillow only for image comparison if already in the test environment, and ffmpeg for frame/audio decode. Reuse existing `test_timeline_visualize_parity.py`, fast-lane, render/export, and PCM test helpers where possible. The semantic evaluator can identify the expected layers and exact frame coordinates; only decoded visual frames and PCM establish Player/export parity.
+
+## Evidence status
+
+This worker performed read-only source/plan/research inspection and wrote this design. No package install, build, or product test was run. The received Composition candidate’s masked build and missing lock/test configuration are recorded above as observations, not as passing or failing test results.
