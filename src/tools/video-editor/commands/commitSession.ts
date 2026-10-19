@@ -62,6 +62,14 @@ export async function createTimelineCommandSession(options: Options) {
       && ((status === 'saved' && !!undos.length) || (status === 'dirty' && !!record?.intents.length && !record.pending)) };
     options.changed(state);
   }
+  function publishRefusal() {
+    const failure = record?.pending?.outcome?.kind === 'rejected'
+      ? record.pending.outcome.error : record?.intents[0]?.conflict;
+    if (failure === undefined) return false;
+    const error = failure as { kind?: string; message?: string };
+    publish(error.kind === 'conflict' ? 'conflict' : 'error', error.message ?? 'Timeline command was refused');
+    return true;
+  }
   function assertReady() {
     if (stopped || !box || projecting || projectionPending || persistenceFailed || record?.intents[0]?.conflict !== undefined) {
       throw new Error(state.error ?? 'Timeline command session is unavailable');
@@ -90,11 +98,7 @@ export async function createTimelineCommandSession(options: Options) {
         known = target;
         acceptedBasis = target;
       }
-      if (record.pending?.outcome?.kind === 'rejected') {
-        const error = record.pending.outcome.error as { kind?: string; message?: string };
-        publish(error.kind === 'conflict' ? 'conflict' : 'error', error.message ?? 'Timeline command was refused');
-        return;
-      }
+      if (publishRefusal()) return;
       while (!stopped && record.intents.length && !record.intents[0].conflict) {
         publish('saving');
         const priorAccepted = record.accepted?.intentId;
@@ -247,10 +251,11 @@ export async function createTimelineCommandSession(options: Options) {
         if (!originalHead) throw new Error('Recovered move has no verified original head');
         acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
           : first.displayBasis ?? { head: originalHead, canonicalDocument: document };
-        await project(acceptedBasis,
+        // Submission advances with A's ACK; B's display retains its original closure.
+        await project(first.displayBasis ?? acceptedBasis,
           record.intents.map((intent) => (intent.payload as unknown as Payload).preview).filter((patch): patch is TimelinePatch => patch !== null));
       }
-      publish(record.pending?.outcome?.kind === 'rejected' ? 'conflict' : record.intents.length ? 'dirty' : 'saved');
+      if (!publishRefusal()) publish(record.intents.length ? 'dirty' : 'saved');
       ready();
       await new Promise<void>((resolve) => { release = resolve; if (stopped) resolve(); });
     };
