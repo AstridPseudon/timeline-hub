@@ -26,6 +26,7 @@ import { createBundleBudgetPlugin } from "./bundleBudget";
 import { createRemoteFontModePlugin } from "./remoteFonts";
 import { createPairedRelayPlugin, resolvePairedRelayConfig } from "./pairedRelay";
 import { createShareMetaPlugin } from "./shareMeta";
+import { createReactDomAliases } from "./reactDomAliases";
 
 export { createRemoteFontModePlugin, stripRemoteFontLinks } from "./remoteFonts";
 
@@ -154,8 +155,8 @@ export default defineConfig(() => {
         // Sprint 5: deduplicate React / Remotion / @banodoco/* across the
         // linked timeline-composition + timeline-theme-* packages so a
         // single React runtime drives the @remotion/player preview.
+        ...createReactDomAliases(path.resolve(__dirname, "../../node_modules")),
         "react": path.resolve(__dirname, "../../node_modules/react"),
-        "react-dom": path.resolve(__dirname, "../../node_modules/react-dom"),
         "remotion": path.resolve(__dirname, "../../node_modules/remotion"),
         "@remotion/layout-utils": path.resolve(__dirname, "../../node_modules/@remotion/layout-utils"),
         "@remotion/media": path.resolve(__dirname, "../../node_modules/@remotion/media"),
