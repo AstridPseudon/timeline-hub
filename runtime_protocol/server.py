@@ -975,6 +975,12 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     # outside the SQLite mutex. Credential authentication and
                     # publication use CredentialStore's short internal lock.
                     self._local_worker_control()
+                elif (getattr(self, "command", None) == "GET"
+                      and urlsplit(getattr(self, "path", "")).path in {"/v1/health", "/v1/realm"}):
+                    # These identity reads use independent read-only SQLite
+                    # snapshots. Keep them reachable while a lifecycle fence
+                    # blocks a mutation on the shared writer connection.
+                    self._route()
                 elif self._is_remote_credential_control() or self._is_binary_io():
                     # Both routes own short store sections. Transfer, hashing,
                     # and daemon actor ownership must stay outside this lock.

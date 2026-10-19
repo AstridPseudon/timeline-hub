@@ -784,6 +784,30 @@ class RealmStore:
             os.close(descriptor)
 
     @contextmanager
+    def _read_snapshot(self):
+        """Read committed identity state without waiting on a busy writer."""
+        primary = self.conn
+        if primary is None:
+            raise sqlite3.ProgrammingError("realm store is closed")
+        # This metadata getter checks that the primary handle is still open;
+        # executing a statement on it would wait behind BEGIN IMMEDIATE.
+        _ = primary.in_transaction
+        if self.root.is_symlink() or not self.root.is_dir():
+            raise OSError("realm root is unavailable")
+        if not stat.S_ISREG(self.db_path.lstat().st_mode):
+            raise OSError("realm database must be an ordinary file")
+        if not platform.is_owner_only(self.db_path):
+            raise PermissionError("realm database must retain owner-only permissions")
+        connection = sqlite3.connect(f"{self.db_path.as_uri()}?mode=ro", uri=True, isolation_level=None)
+        connection.row_factory = sqlite3.Row
+        try:
+            connection.execute("PRAGMA query_only=ON")
+            connection.execute("BEGIN")
+            yield connection
+        finally:
+            connection.close()
+
+    @contextmanager
     def _transaction(self):
         # Service decorators and a few domain operations compose transactions
         # (for example a timeline mutation records its revision inside the
