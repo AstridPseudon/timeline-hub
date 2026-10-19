@@ -171,7 +171,8 @@
         "media": { "type": "array" },
         "shots": { "type": "array" },
         "internal_timelines": { "type": "array" },
-        "timelines": { "type": "array" }
+        "timelines": { "type": "array" },
+        "documents": { "type": "array", "items": { "$ref": "timeline-commit.json#/$defs/DocumentPin" } }
       }
     }
   }

@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from typing import Any, Callable, Literal, Mapping
 from urllib.parse import urlsplit
 
+from .timeline_commit_types import CommitAcceptedMutation, CommitPreviewResponse, CommitRequest, HistoryPage, MediaSelection, MediaSelectionQuery
+
 PROTOCOL = "workspace.v1"
 _UNSET = object()
 SCHEMA_DIGEST = "__SCHEMA_DIGEST__"
@@ -879,9 +881,37 @@ class WorkspaceClient:
         items, next_cursor = self._page(value)
         return list(items), next_cursor
 
-    def restore_project_parent_composition_revision(self, project_id: str, timeline_id: str, revision: str, *, expected_head: str | None, idempotency_key: str) -> MutationResult:
-        payload = {"expected_head": expected_head}
-        return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/composition-revisions/{_path_part(revision)}/restore", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
+    def restore_project_parent_composition_revision(self, project_id: str, timeline_id: str, revision: str, *, expected_head: str, expected_publication_id: str, idempotency_key: str) -> CommitAcceptedMutation:
+        payload = {"expected_head": expected_head, "expected_publication_id": expected_publication_id}
+        return self._commit_response(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/composition-revisions/{_path_part(revision)}/restore", body=json.dumps(payload, separators=(",", ":"), allow_nan=False).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2], preview=False)
+
+    def _commit_response(self, body: bytes, *, preview: bool) -> CommitAcceptedMutation | CommitPreviewResponse:
+        value = self._json(body)
+        data, receipt = value.get("data"), value.get("receipt")
+        if not isinstance(data, dict) or "receipt" not in value:
+            raise ApiError(0, "invalid_response", "commit response requires data and receipt")
+        if preview:
+            if data.get("status") != "preview" or receipt is not None:
+                raise ApiError(0, "invalid_response", "preview requires preview status and null receipt")
+        elif data.get("status") not in ("accepted", "rebased") or not isinstance(receipt, dict):
+            raise ApiError(0, "invalid_response", "acceptance requires accepted status and committed receipt")
+        return value
+
+    def commit_timeline(self, project_id: str, timeline_id: str, request: CommitRequest, *, idempotency_key: str) -> CommitAcceptedMutation | CommitPreviewResponse:
+        body = json.dumps(request, separators=(",", ":"), allow_nan=False).encode()
+        return self._commit_response(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/commit", body=body, headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2], preview=request.get("dry_run", False))
+
+    def list_timeline_commits(self, project_id: str, timeline_id: str, *, cursor: str | None = None, limit: int = 50) -> HistoryPage:
+        query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "")
+        value = self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/commits" + query)[2])
+        self._page(value)
+        if not isinstance(value.get("head"), dict):
+            raise ApiError(0, "invalid_response", "commit history requires a fixed head pair")
+        return value
+
+    def get_project_media_selection(self, project_id: str, selection: MediaSelectionQuery) -> MediaSelection:
+        query = "&".join(f"{_path_part(k)}={_path_part(str(v))}" for k, v in selection.items())
+        return self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-selection?{query}")[2])
 
     def inspect_timeline(self, project_id: str, timeline_id: str, options: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
         payload = dict(options or {})

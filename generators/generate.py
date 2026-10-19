@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -185,6 +186,11 @@ def validate_typescript_client(manifest_path: Path = MANIFEST) -> None:
         "run_id: string; project_id: string | null; lease_id: string",
         "lease_expires_at: string; runtime_epoch: number",
         "provider_state_unknown",
+        "request: CommitRequest, idempotencyKey: string",
+        "Promise<CommitAcceptedMutation | CommitPreviewResponse>",
+        "expected_publication_id: expectedPublicationId",
+        "Promise<HistoryPage>",
+        "selection: MediaSelectionQuery",
     )
     missing_fragments = [value for value in required_fragments if value not in source]
     if missing_fragments:
@@ -226,7 +232,10 @@ def main() -> int:
     parser.add_argument("--component-manifest", default=str(COMPONENT_MANIFEST))
     parser.add_argument("--python-output", default=str(PYTHON_CLIENT_OUTPUT), help="Python client output path (for isolated checks)")
     args = parser.parse_args()
-    generated = render(component_path=Path(args.component_manifest).expanduser())
+    sys.path.insert(0, str(ROOT / "generators"))
+    from timeline_commit_types import render as render_commit_types
+    generated = render_commit_types()
+    generated.update(render(component_path=Path(args.component_manifest).expanduser()))
     generated["packages/python/astrid_runtime_client/generated.py"] = render_python_client()
     generated["packages/typescript/src/generated.ts"] = render_typescript_client()
     for relative, content in generated.items():
