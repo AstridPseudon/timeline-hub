@@ -540,6 +540,165 @@ class TimelineCommitStore:
                 "commands": [r["command"] for r in commands], "id_map": prepared["id_map"],
                 "provider_version": prepared["provider_version"], "compiler_version": prepared["compiler_version"]}
 
+    @staticmethod
+    def _projection_claims(records):
+        claims = {}
+        for record in records["commands"]:
+            for item in record["created"]:
+                kind, ref, owner = item["kind"], item["ref"], item["owner"]
+                if kind not in {"shot", "item"}:
+                    continue
+                if kind == "shot":
+                    valid, identity = owner is None and ref.startswith("shot:"), ref.removeprefix("shot:")
+                else:
+                    prefix = str(owner) + "/item:"
+                    valid = isinstance(owner, str) and owner.startswith("shot:") and bool(owner[5:]) and ref.startswith(prefix)
+                    identity = ref.removeprefix(prefix)
+                if (not valid or not identity or "/" in identity or (kind, identity) in claims
+                        or record["command"].get("created") != [i["ref"] for i in record["created"]]):
+                    reject("identity_collision")
+                claims[kind, identity] = (owner, record["command"]["op"] == "timeline.inverse")
+        return claims
+
+    def _check_projection_ids(self, context, prepared):
+        document, records = prepared["canonical_document"], prepared["records"]
+        project, timeline = document["project_id"], document["timeline_id"]
+        claims = self._projection_claims(records)
+        # These are precisely the images _persist_closure will project. Exact
+        # immutable reuse has no mutable write and needs no allocation proof.
+        writes = [s for s in document["shot_revisions"] if self.conn.execute(
+            "SELECT 1 FROM shot_revisions WHERE id=?", (s["revision_id"],)).fetchone() is None]
+        if len({s["shot_id"] for s in writes}) != len(writes):
+            reject("identity_collision")
+        if not writes and not claims:
+            return
+        current = self.revision_closure(project, timeline, prepared["expected_head"]["revision_id"])
+        owned = {s["shot_id"] for s in current["shot_revisions"]}
+        fresh = {s["shot_id"] for s in writes} - owned
+        reversed_shots, reversed_items, slots = set(), set(), set()
+        occupied = {s for s in fresh if self.conn.execute("SELECT 1 FROM project_shots WHERE id=?", (s,)).fetchone()}
+        if occupied or any(inverse for _, inverse in claims.values()):
+            from .timeline_commit_port import command_leaves
+            requested = [p for c in command_leaves(context["request"]["commands"])
+                         if c["op"] == "timeline.inverse" for p in c["args"]["publications"]]
+            if requested != records["undo_of"]:
+                reject("identity_collision")
+            # Historical slots need an accepted occurrence/source edge, owner
+            # binding and owner read. Their spelling is never ownership proof.
+            def edges(value):
+                return {o["occurrence_id"]: (o["shot_id"], o["shot_revision_id"])
+                        for o in value["parent_revision"]["payload"]["occurrences"]}
+            active, output = edges(current), edges(document)
+            cursor, remaining = prepared["expected_head"], set(requested)
+            while cursor and (occupied - slots or remaining):
+                entry = self.history_entry(project, timeline, cursor["publication_id"])
+                previous = entry["previous"]
+                if entry["intent"] == "recorded":
+                    before = self.revision_closure(project, timeline, previous["revision_id"])
+                    prior = edges(before)
+                    if entry["publication_id"] in remaining:
+                        for o, (s, _) in prior.items():
+                            owner = "occurrence:" + o
+                            source = before["parent_revision"]
+                            if output.get(o, (None,))[0] == s and any(
+                                    w["ref"] == "shot:" + s or w["ref"] == owner or w["ref"].startswith(owner + "/")
+                                    or (w["ref"] == "timeline" and not w["path"] and w["before"] == {
+                                        "state": "present", "value": {k: source[k] for k in ("revision_id", "content_digest")}})
+                                    for r in entry["records"]["commands"] for w in r["writes"]):
+                                reversed_shots.add(s)
+                                reversed_items.update((s, i.get("item_id", i.get("id"))) for shot in before["shot_revisions"]
+                                                      if shot["shot_id"] == s for i in shot["payload"].get("items", []))
+                        remaining.remove(entry["publication_id"])
+                    after = edges(self.revision_closure(project, timeline, entry["revision_id"]))
+                    for o, (s, _) in after.items():
+                        owner = "occurrence:" + o
+                        if (s in occupied and output.get(o, (None,))[0] == s and o in prior
+                                and active.get(o) == prior[o] and prior[o][0] != s
+                                and any(any(b["ref"] == owner for b in r["bindings"])
+                                        and any(read["ref"] == owner + "/shot" and read["path"] == ["shot_id"]
+                                                and read["state"] == {"state": "present", "value": prior[o][0]}
+                                                for read in r["reads"]) for r in entry["records"]["commands"])):
+                            slots.add(s)
+                cursor = previous
+            if remaining:
+                reject("identity_collision")
+        authorized = owned | reversed_shots | slots
+        fresh_items, destinations = set(), {}
+        for image in writes:
+            shot = image["shot_id"]
+            if shot in fresh and shot not in authorized and self.conn.execute(
+                    "SELECT 1 FROM project_shots WHERE id=?", (shot,)).fetchone():
+                reject("identity_collision")
+            old_items = {i.get("item_id", i.get("id")) for s in current["shot_revisions"]
+                         if s["shot_id"] == shot for i in s["payload"].get("items", [])}
+            for item in image["payload"].get("items", []):
+                identity = item.get("item_id", item.get("id"))
+                if (not identity or identity in destinations
+                        or ("item_id" in item and "id" in item and item["item_id"] != item["id"])):
+                    reject("identity_collision")
+                destinations[identity] = shot
+                if identity not in old_items:
+                    fresh_items.add(identity)
+        checks = set(claims) | {("shot", s) for s in fresh} | {("item", i) for i in fresh_items}
+        for kind, identity in set(checks) | {("item", i) for i in destinations}:
+            claim = claims.get((kind, identity))
+            owner = destinations.get(identity) if kind == "item" else identity
+            if claim and kind == "item":
+                owner = claim[0].removeprefix("shot:")
+            inverse = bool(claim and claim[1] and owner in reversed_shots
+                           and (kind == "shot" or (owner, identity) in reversed_items))
+            if kind == "shot":
+                if claim and not inverse and self.conn.execute("SELECT 1 FROM project_shots WHERE id=?", (identity,)).fetchone():
+                    reject("identity_collision")
+                continue
+            row = self.conn.execute("SELECT shot_id FROM shot_items WHERE id=?", (identity,)).fetchone()
+            owners = {row[0]} if row else set()
+            for retained in self.conn.execute(
+                    "SELECT DISTINCT s.* FROM shot_revisions s, json_each(s.payload_json, '$.items') i "
+                    "WHERE COALESCE(json_extract(i.value, '$.item_id'), json_extract(i.value, '$.id'))=?", (identity,)):
+                if digest(json.loads(retained["payload_json"])) != retained["content_digest"]:
+                    reject("identity_collision")
+                if retained["project_id"] != project:
+                    reject("identity_collision")
+                owners.add(retained["shot_id"])
+            if owners and (owners != {owner} or owner not in authorized or (claim and not inverse)):
+                reject("identity_collision")
+        if not checks:
+            return
+        # Allocation facts can survive even when created and removed in one
+        # acceptance. Inspect all timelines (including archived ones), then
+        # authenticate matching records against their durable receipt/event.
+        if self.conn.execute("SELECT 1 FROM command_idempotency c LEFT JOIN timeline_commit_history h ON h.publication_id=c.txn_id "
+                             "WHERE c.command_kind='timeline.commit' AND h.publication_id IS NULL LIMIT 1").fetchone():
+            reject("identity_collision")
+        for entry in self.conn.execute("SELECT h.* FROM timeline_commit_history h LEFT JOIN command_idempotency c ON c.txn_id=h.publication_id "
+                                       "WHERE h.intent='recorded' OR h.records_json IS NOT NULL OR c.command_kind='timeline.commit'"):
+            try:
+                historical = self._projection_claims(json.loads(entry["records_json"]))
+            except (KeyError, TypeError, ValueError):
+                reject("identity_collision")
+            matches = {key for key in checks & historical.keys() if key[0] == "item" or entry["project_id"] == project}
+            if not matches:
+                continue
+            ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (entry["publication_id"],)).fetchone()
+            if ledger is None:
+                reject("identity_collision")
+            self._verify_accepted(ledger, entry)
+            for kind, identity in matches:
+                claim = claims.get((kind, identity))
+                owner = identity if kind == "shot" else destinations.get(identity)
+                if claim and kind == "item":
+                    owner = claim[0].removeprefix("shot:")
+                if (claim and claim[1] and owner in reversed_shots and entry["project_id"] == project
+                        and (kind == "shot" or ((owner, identity) in reversed_items
+                             and historical[kind, identity][0] == "shot:" + owner))):
+                    continue
+                if kind == "item" and not claim and entry["project_id"] == project and historical[kind, identity][0] == "shot:" + owner and owner in authorized:
+                    continue
+                if kind == "shot" and not claim and owner in slots and entry["timeline_id"] == timeline:
+                    continue
+                reject("identity_collision")
+
     def preview(self, context, prepared, *, authorize, inputs=None):
         context, prepared = detached(context), detached(prepared)
         with self.store._mutex:
@@ -549,6 +708,7 @@ class TimelineCommitStore:
             self._check_context(context)
             self._check_head(context, prepared["expected_head"])
             candidate = self._validate(context, prepared, inputs)
+            self._check_projection_ids(context, prepared)
             request = context["request"]
             return {"data": {"status": "preview", "base_revision_id": request["base_revision_id"],
                             "base_publication_id": request["base_publication_id"],
@@ -590,6 +750,7 @@ class TimelineCommitStore:
                 self._check_context(context)
                 self._check_head(context, prepared["expected_head"])
                 candidate = self._validate(context, prepared, inputs)
+                self._check_projection_ids(context, prepared)
                 request, previous = context["request"], prepared["expected_head"]
                 base = {"revision_id": request["base_revision_id"], "publication_id": request["base_publication_id"]}
                 data = {"status": "accepted" if previous == base else "rebased", "base_revision_id": base["revision_id"],
