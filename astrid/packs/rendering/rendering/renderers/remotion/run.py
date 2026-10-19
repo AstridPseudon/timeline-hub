@@ -112,10 +112,10 @@ BACKEND_VERSION = "1.0.0"
 
 # The timeline schema keeps ``clipType`` open for forward-compatible values. These
 # built-in spellings all mean an ordinary asset-backed media clip; Remotion's
-# VisualClip/AudioTrack dispatch already handles them identically.  Keep them
-# out of effect resolution so intuitive image/video/audio annotations do not
-# become false "unregistered effect" failures.
-_BUILTIN_MEDIA_CLIP_TYPES = frozenset({"media", "video", "image", "audio"})
+# VisualClip/AudioTrack dispatch already handles them identically. Keep them
+# out of effect resolution so intuitive media/hold annotations do not become
+# false "unregistered effect" failures.
+_BUILTIN_MEDIA_CLIP_TYPES = frozenset({"media", "video", "image", "audio", "hold"})
 DEFAULT_COMPOSITION_ID = "TimelineComposition"
 _REGISTRY_STATE_PATH = ".astrid-registry-state.json"
 _CONFIG_KEYS = frozenset(

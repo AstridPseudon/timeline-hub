@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -8,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest import mock
 
@@ -201,6 +203,7 @@ def test_manifest_registers_static_raw_command_backend() -> None:
     assert manifest.operations == ("render", "support")
     assert manifest.required_permissions == ("project_files", "subprocess")
     assert manifest.required_binaries == ("ffprobe",)
+    assert "hold" in manifest.capabilities["clip_types"]
     assert (manifest_path.parent / manifest.command[1]).is_file()
 
 
@@ -411,26 +414,66 @@ def test_support_treats_timeline_output_hint_as_informational_without_profile(
 
 
 @pytest.mark.usefixtures("qualified_launch_validation")
-@pytest.mark.parametrize("clip_type", ["video", "image", "audio"])
+@pytest.mark.parametrize("clip_type", ["video", "image", "audio", "hold"])
 def test_support_accepts_builtin_media_clip_type_aliases(
     tmp_path: Path,
     clip_type: str,
 ) -> None:
     timeline_path, assets_path = _write_inputs(tmp_path)
     payload = json.loads(timeline_path.read_text(encoding="utf-8"))
-    payload["clips"] = [
-        {
-            "id": "source",
-            "at": 0,
-            "track": "v1",
-            "clipType": clip_type,
-            "from": 0,
-            "to": 1,
-        }
-    ]
+    clip = {
+        "id": "source",
+        "at": 0,
+        "track": "v1",
+        "clipType": clip_type,
+        "from": 0,
+        "to": 1,
+    }
+    if clip_type == "hold":
+        # A real managed still exercises the same support/materialization path
+        # as the film timeline without depending on product media.
+        media_id = "5c8c3d4e-12ab-4cde-9f01-23456789abcd"
+        image_bytes = base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/"
+            "lWQAAAAASUVORK5CYII="
+        )
+        digest = hashlib.sha256(image_bytes).hexdigest()
+        source_path = tmp_path / "managed-still.png"
+        source_path.write_bytes(image_bytes)
+        clip.update(
+            {
+                "at": 0,
+                "asset": "held-still",
+                "hold": 2,
+                "x": 0, "y": 0, "width": 1920, "height": 1080,
+            }
+        )
+        clip.pop("from")
+        clip.pop("to")
+        payload["clips"] = [clip]
+        timeline.save_registry(
+            {
+                "assets": {
+                    "held-still": {
+                        "media_id": media_id,
+                        "content_sha256": digest,
+                        "type": "image/png",
+                    }
+                }
+            },
+            assets_path,
+        )
+    else:
+        payload["clips"] = [clip]
     timeline_path.write_text(json.dumps(payload), encoding="utf-8")
     project = _write_project(tmp_path)
     request = _request(timeline_path, assets_path, project)
+    if clip_type == "hold":
+        request = replace(
+            request,
+            materialized_root=str(tmp_path),
+            materialized_objects={media_id: str(source_path)},
+        )
 
     with mock.patch.object(remotion.shutil, "which", return_value="/usr/bin/tool"):
         report = remotion.support(request, workspace=tmp_path)
@@ -439,8 +482,14 @@ def test_support_accepts_builtin_media_clip_type_aliases(
     assert report.reasons == []
 
 
-def test_effect_staging_treats_video_as_builtin_media_not_unknown_effect(
+@pytest.mark.parametrize(
+    ("clip_type", "extra"),
+    [("video", {}), ("hold", {"hold": 2})],
+)
+def test_effect_staging_treats_builtin_visual_types_as_media_not_unknown_effect(
     tmp_path: Path,
+    clip_type: str,
+    extra: dict[str, int],
 ) -> None:
     timeline_data = {
         "tracks": [{"id": "v1", "kind": "visual", "label": "Visual"}],
@@ -449,10 +498,11 @@ def test_effect_staging_treats_video_as_builtin_media_not_unknown_effect(
                 "id": "source",
                 "at": 0,
                 "track": "v1",
-                "clipType": "video",
+                "clipType": clip_type,
                 "asset": "source-video",
                 "from": 0,
                 "to": 1,
+                **extra,
             }
         ],
     }
@@ -478,6 +528,45 @@ def test_effect_staging_treats_video_as_builtin_media_not_unknown_effect(
         "animations": [],
         "transitions": [],
     }
+
+
+def test_hold_is_not_validated_as_a_registered_effect(tmp_path: Path) -> None:
+    timeline_data = {
+        "clips": [
+            {"id": "still", "clipType": "hold", "asset": "still-image", "hold": 2}
+        ]
+    }
+
+    with (
+        mock.patch("astrid.core.element.catalog.list_effect_ids", return_value={"hold"}),
+        mock.patch.object(remotion, "_generated_effect_registry_ids", return_value=set()),
+    ):
+        remotion._validate_renderer_effect_registry(tmp_path, timeline_data)
+
+
+def test_unknown_clip_type_still_fails_effect_staging(tmp_path: Path) -> None:
+    timeline_data = {
+        "tracks": [{"id": "v1", "kind": "visual", "label": "Visual"}],
+        "clips": [
+            {"id": "mystery", "at": 0, "track": "v1", "clipType": "unregistered-visual"}
+        ],
+    }
+
+    with (
+        mock.patch.object(remotion, "_effect_registry_for_assets", return_value=({}, {})),
+        mock.patch.object(
+            remotion,
+            "_resolve_timeline_element_references",
+            return_value={"animations": [], "transitions": []},
+        ),
+        pytest.raises(ValueError, match="unregistered effect clip type.*unregistered-visual"),
+    ):
+        remotion._stage_effect_assets_for_timeline(
+            timeline_data,
+            project_dir=tmp_path,
+            theme_path=None,
+            render_hash="unknown-clip",
+        )
 
 
 def test_support_rejects_native_window_source_range_with_actionable_reason(tmp_path: Path) -> None:

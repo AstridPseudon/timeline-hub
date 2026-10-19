@@ -16,6 +16,7 @@ capabilities:
     - video
     - image
     - audio
+    - hold
     - text
   track_types:
     - visual
