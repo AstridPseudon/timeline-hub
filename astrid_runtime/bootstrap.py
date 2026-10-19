@@ -644,15 +644,15 @@ def _provision_connection(connection: Any, actor_id: str, token: str, realm_id: 
     """Call only generated-client-shaped methods; never inspect runtime state."""
     provision = getattr(connection, "provision_actor", None)
     if provision is not None:
-        result = provision(scope="astrid", actor_id=actor_id, credential=token)
+        result = cancellation.wait_for(provision, scope="astrid", actor_id=actor_id, credential=token)
         if isinstance(result, Mapping) and result.get("scope") not in (None, "astrid"):
             raise BootstrapError("Runtime refused the Astrid-scoped credential.")
     select = getattr(connection, "select_realm", None)
     if select is not None:
-        select(actor_id=actor_id, realm_id=realm_id)
+        cancellation.wait_for(select, actor_id=actor_id, realm_id=realm_id)
     handshake = getattr(connection, "handshake", None)
     if handshake is not None:
-        handshake(protocol_version=PROTOCOL_VERSION, schema_version=SCHEMA_VERSION)
+        cancellation.wait_for(handshake, protocol_version=PROTOCOL_VERSION, schema_version=SCHEMA_VERSION)
 
 
 def _rollback_failed_bootstrap(paths: RuntimePaths, boundary: RuntimeBoundary, *, realm_root: Path, new_realm: bool, credential_before: bytes | None, catalog_before: bytes | None = None, source_before: bytes | None = None, source_profile: str = "astrid", candidate_pid: int | None = None) -> None:

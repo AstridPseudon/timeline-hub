@@ -158,14 +158,17 @@ def test_startup_transport_retains_original_timeout_budget(monkeypatch):
     from runtime_protocol import cancellation
     event = threading.Event()
     attempts = []
+    elapsed = [0.0]
+    monkeypatch.setattr(cancellation, "time", SimpleNamespace(monotonic=lambda: elapsed[0]))
     def read(timeout):
         attempts.append(timeout)
+        elapsed[0] += 1.25
         if len(attempts) < 3:
             raise TimeoutError("temporarily busy")
         return "ready"
     with cancellation.startup_scope(event):
         assert cancellation.retry_timeouts(read, 5.0) == "ready"
-    assert attempts == [0.2, 0.2, 0.2]
+    assert attempts == [5.0, 3.75, 2.5]
 
 
 def test_startup_transport_checks_cancel_after_socket_timeout():
@@ -309,16 +312,19 @@ def test_linux_cleanup_retains_exited_child_until_group_teardown():
 @pytest.mark.integration
 @requires_posix_process_groups
 @pytest.mark.parametrize("stop_signal", [signal.SIGTERM, signal.SIGINT])
-@pytest.mark.parametrize("stage", ["lock", "door"])
+@pytest.mark.parametrize("stage", ["lock", "door", "provision", "handshake"])
 def test_run_native_startup_signal_cancels_promptly_and_cleans_up(tmp_path, stage, stop_signal):
     from astrid_runtime.paths import RuntimePaths
     paths = RuntimePaths.current(data_root=tmp_path / "data")
     paths.ensure_support_dirs()
     script = r'''
-import json, sys
+import json, sys, threading
 from pathlib import Path
 from astrid_runtime import cli
-from astrid_runtime.bootstrap import _bootstrap_mutex
+from astrid_runtime.bootstrap import _bootstrap_mutex, _provision_connection
+from astrid_runtime.runtime_boundary import LocalRuntimeBoundary
+from astrid_runtime_client import generated
+from astrid_runtime import runtime_boundary
 from astrid_runtime.paths import RuntimePaths
 root, stage = Path(sys.argv[1]), sys.argv[2]
 paths = RuntimePaths.current(data_root=root)
@@ -330,6 +336,24 @@ class Boundary:
     def stop(self): (root / "cleaned").write_text("yes")
 cli.ForegroundRuntimeBoundary = Boundary
 def pending(*_):
+    if stage in {"provision", "handshake"}:
+        def blocked(request, *, timeout):
+            if request.full_url.endswith("/credentials") and stage == "handshake":
+                class Response:
+                    def __enter__(self): return self
+                    def __exit__(self, *_): return False
+                    def read(self): return b'{"scope":"astrid"}'
+                return Response()
+            (root / "waiting").write_text("yes")
+            threading.Event().wait(timeout)
+            raise TimeoutError("handoff timed out")
+        runtime_boundary.urlopen_loopback = blocked
+        generated._urlopen_loopback = blocked
+        boundary = LocalRuntimeBoundary()
+        boundary._bootstrap_credential = "bootstrap-token"
+        connection = boundary.connect(endpoint="http://127.0.0.1:1", credential="token")
+        _provision_connection(connection, "actor", "token", "realm")
+        raise RuntimeError("handoff unexpectedly completed")
     (root / "waiting").write_text("yes")
     if stage == "lock":
         with _bootstrap_mutex(paths): raise RuntimeError("lock unexpectedly acquired")
