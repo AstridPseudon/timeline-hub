@@ -277,7 +277,7 @@ function AvailableAgentChatPanel({
   const unassignedSessions = useUnassignedProjectSessions(projectId, showAttachSessions);
   const associateSession = useAssociateProjectSession(projectId);
   const hasMainContract = projectChat.data?.main_session_id !== undefined;
-  const createSession = useCreateSession(timelineId, projectId, hasMainContract ? 'ensure_main' : 'ensure');
+  const createSession = useCreateSession(timelineId, projectId, 'ensure');
   const createNewSession = useCreateSession(timelineId, projectId, 'new');
   // Engagement signal: when the pane is locked the user has clearly committed to
   // having chat visible, so auto-create can fire without an explicit click.
@@ -595,24 +595,20 @@ function AvailableAgentChatPanel({
     if (hasProject && !projectChat.data) return;
     setActiveSessionId(current => {
       if (current && sessionOptions.some(session => session.id === current)) return current;
-      const preferred = hasMainContract
-        ? projectChat.data?.main_session_id
-        : projectChat.data?.selected_session_id;
+      const preferred = projectChat.data?.selected_session_id ?? projectChat.data?.main_session_id;
       if (preferred && sessionOptions.some(session => session.id === preferred)) return preferred;
-      return hasMainContract ? null : (sessionOptions.find(session => session.status !== 'cancelled') ?? sessionOptions[0])?.id ?? null;
+      return (sessionOptions.find(session => session.status !== 'cancelled') ?? sessionOptions[0])?.id ?? null;
     });
   }, [hasProject, hasMainContract, projectChat.data, sessionOptions]);
 
-  // Real project registries always receive a Main; legacy hosts retain their
-  // engagement-based creation behavior. The host CAS claim arbitrates tabs.
+  // An empty engaged project gets one session. Existing project chats remain
+  // selectable when Main is unset, and the host CAS claim arbitrates tabs.
   const isEngaged = userEngaged || isTasksPaneLocked || voice.isRecording || voice.isProcessing;
-  const hasAvailableMain = Boolean(projectChat.data?.main_session_id && projectChat.data.sessions.some(
-    session => session.id === projectChat.data?.main_session_id && !session.missing,
-  ));
+  const hasAvailableProjectSession = Boolean(projectChat.data?.sessions.some(session => !session.missing));
   useEffect(() => {
     if (hasAutoCreatedSessionRef.current || !projectChat.data || projectChat.isLoading || projectChat.isError || sessions.isLoading || sessions.isError
       || createSession.isPending || !hasProject
-      || (hasMainContract ? hasAvailableMain : sessionOptions.length > 0 || !isEngaged)) return;
+      || hasAvailableProjectSession || !isEngaged) return;
     hasAutoCreatedSessionRef.current = true;
     autoCreateOperationIdRef.current ??= createMessageId();
     createSession.mutate(autoCreateOperationIdRef.current, {
@@ -623,7 +619,7 @@ function AvailableAgentChatPanel({
         if (sessionId) setActiveSessionId(current => current ?? sessionId);
       },
     });
-  }, [createSession, hasProject, hasMainContract, hasAvailableMain, sessionOptions.length, sessions.isError, sessions.isLoading, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged]);
+  }, [createSession, hasProject, hasAvailableProjectSession, sessions.isError, sessions.isLoading, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged]);
 
   // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
   useEffect(() => {

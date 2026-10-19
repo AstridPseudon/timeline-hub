@@ -89,42 +89,45 @@ describe('ProjectChatRegistry', () => {
     } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
   });
 
-  it('promotes intentional New atomically and preserves conversations when Main is reassigned', async () => {
+  it('changes Main only through explicit Make Main and New preserves it', async () => {
     const store = new MemoryProjects();
     try {
       const chat = registry(store, 'store');
       const first = await chat.create('p1', 'ensure_main', 'main-1', async () => ({ sessionId: 'main' }));
-      expect(first.main_session_id).toBe('main');
+      expect(first.main_session_id).toBeNull();
+      const initialMain = await chat.setMain('p1', first.revision, 'main');
       const ordinary = await chat.create('p1', 'new', 'new-1', async () => ({ sessionId: 'other' }));
-      expect(ordinary).toMatchObject({main_session_id:'other',selected_session_id:'other'});
-      expect(await registry(store,'store').get('p1')).toMatchObject({main_session_id:'other',selected_session_id:'other'});
-      const chosen = await chat.setMain('p1', ordinary.revision, 'main');
-      expect(chosen).toMatchObject({ main_session_id: 'main', selected_session_id: 'main' });
+      expect(ordinary).toMatchObject({ main_session_id: 'main', selected_session_id: 'other' });
+      expect(await registry(store,'store').get('p1')).toMatchObject({ main_session_id: 'main', selected_session_id: 'other' });
+      const chosen = await chat.setMain('p1', ordinary.revision, 'other');
+      expect(chosen).toMatchObject({ main_session_id: 'other', selected_session_id: 'other' });
       expect(chosen.sessions.map(s => s.id)).toEqual(['main', 'other']);
       const replay = await chat.create('p1', 'ensure_main', 'main-1', async () => ({ sessionId: 'duplicate' }));
-      expect(replay).toMatchObject({ operation_session_id: 'main', main_session_id: 'main', selected_session_id: 'main' });
+      expect(replay).toMatchObject({ operation_session_id: 'main', main_session_id: 'other', selected_session_id: 'other' });
       await expect(chat.setMain('p1', ordinary.revision, 'main')).rejects.toMatchObject({ code: 'chat_conflict' });
       await expect(chat.setMain('p1', chosen.revision, 'foreign')).rejects.toMatchObject({ code: 'session_not_owned' });
+      expect(initialMain.main_session_id).toBe('main');
     } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
   });
 
-  it('orders explicit New promotion and Make Main by the successful durable commit without replay promotion',async()=>{
+  it('keeps a concurrent Make Main choice while New completes without promotion',async()=>{
     const store=new MemoryProjects();try{
       const chat=registry(store,'store');
-      await chat.create('p1','new','first',async()=>({sessionId:'first'}));
+      const first=await chat.create('p1','new','first',async()=>({sessionId:'first'}));
       await chat.create('p1','new','second',async()=>({sessionId:'second'}));
+      await chat.setMain('p1',(await chat.get('p1')).revision,'first');
       await chat.draft('p1',0,'Keep this draft',[{id:'queued',text:'Pending',session_id:'first'}]);
       let finish!:(value:{sessionId:string})=>void;let started!:()=>void;
       const beginning=new Promise<void>(resolve=>{started=resolve;});
       const pending=chat.create('p1','new','deferred-new',()=>{started();return new Promise(resolve=>{finish=resolve;});});
-      await beginning;await chat.setMain('p1',(await chat.get('p1')).revision,'first');
+      await beginning;await chat.setMain('p1',(await chat.get('p1')).revision,'second');
       finish({sessionId:'third'});const completed=await pending;
-      expect(completed).toMatchObject({main_session_id:'third',selected_session_id:'third',operation_session_id:'third'});
+      expect(completed).toMatchObject({main_session_id:'second',selected_session_id:'third',operation_session_id:'third'});
       expect(completed.sessions.map(s=>s.id)).toEqual(['first','second','third']);
       expect(completed.draft.text).toBe('Keep this draft');expect(completed.draft.queued_messages).toHaveLength(1);
-      const later=await chat.setMain('p1',completed.revision,'second');
+      const later=await chat.setMain('p1',completed.revision,'first');
       const replay=await registry(store,'store').create('p1','new','deferred-new',async()=>({sessionId:'must-not-create'}));
-      expect(replay).toMatchObject({main_session_id:'second',selected_session_id:'second',operation_session_id:'third',revision:later.revision});
+      expect(replay).toMatchObject({main_session_id:'first',selected_session_id:'first',operation_session_id:'third',revision:later.revision});
       expect(replay.sessions).toHaveLength(3);
     }finally{rmSync(store.claimDirectory,{recursive:true,force:true});}
   });
@@ -141,7 +144,7 @@ describe('ProjectChatRegistry', () => {
     }finally{rmSync(store.claimDirectory,{recursive:true,force:true});}
   });
 
-  it('creates a fresh Main for a legacy registry with ordinary history and never adopts it implicitly', async () => {
+  it('creates a fresh chat for a legacy registry without assigning Main', async () => {
     const store = new MemoryProjects();
     try {
       const chat = registry(store, 'store');
@@ -149,12 +152,12 @@ describe('ProjectChatRegistry', () => {
       const project = store.projects.get('p1')!;
       delete (project.metadata.astrid_agent_chat_v1 as Record<string, Record<string, unknown>>).store.main_session_id;
       const state = await chat.create('p1', 'ensure_main', 'new-main', async () => ({ sessionId: 'fresh' }));
-      expect(state.main_session_id).toBe('fresh');
+      expect(state.main_session_id).toBeNull();
       expect(state.sessions.map(s => s.id)).toEqual(['old-chat', 'fresh']);
     } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
   });
 
-  it('retains an explicit Main reassignment made while background Main creation is in flight', async () => {
+  it('retains an explicit Main choice made while ensure creation is in flight', async () => {
     const store = new MemoryProjects();
     try {
       const chat = registry(store, 'store');
@@ -173,7 +176,7 @@ describe('ProjectChatRegistry', () => {
     } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
   });
 
-  it('arbitrates concurrent Main creation with the existing host claim', async () => {
+  it('arbitrates concurrent ensure creation with the existing host claim', async () => {
     const store = new MemoryProjects();
     try {
       const a = registry(store, 'store');
@@ -182,7 +185,7 @@ describe('ProjectChatRegistry', () => {
       const create = async () => { calls++; await new Promise(resolve => setTimeout(resolve, 1)); return { sessionId: 'main' }; };
       await Promise.allSettled([a.create('p1', 'ensure_main', 'a', create), b.create('p1', 'ensure_main', 'b', create)]);
       expect(calls).toBe(1);
-      expect(await a.get('p1')).toMatchObject({ main_session_id: 'main', sessions: [{ id: 'main' }] });
+      expect(await a.get('p1')).toMatchObject({ main_session_id: null, sessions: [{ id: 'main' }] });
     } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
   });
 

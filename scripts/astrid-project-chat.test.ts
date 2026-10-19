@@ -1,7 +1,57 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { ProjectChatRegistry } from './astrid-project-chat.ts';
 import { ApiError, type Project } from '../src/integrations/runtime/generated.ts';
+
+function registryFor(project: Project) {
+  const claimDirectory = mkdtempSync(join(tmpdir(), 'project-chat-test-'));
+  const registry = new ProjectChatRegistry({
+    getProject: async () => structuredClone(project),
+    listProjects: async () => ({ items: [structuredClone(project)], next_cursor: null }),
+    updateProject: async (_id, _key, version, _name, metadata) => {
+      assert.equal(version, project.version);
+      project = { ...project, version: version + 1, metadata: metadata! };
+      return structuredClone(project);
+    },
+  }, 'test', Date.now, claimDirectory);
+  return { registry, cleanup: () => rmSync(claimDirectory, { recursive: true, force: true }) };
+}
+
+test('New selects the created chat without changing the project Main chat', async () => {
+  const project: Project = {
+    project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', version: 1,
+    created_at: '', updated_at: '', metadata: {
+      astrid_agent_chat_v1: { test: {
+        revision: 4, selected_session_id: 'old', main_session_id: 'main',
+        sessions: [{ id: 'main' }, { id: 'old' }], draft: { text: '', revision: 0, queued_messages: [] },
+      } },
+    },
+  };
+  const { registry, cleanup } = registryFor(project);
+  try {
+    const result = await registry.create('p', 'new', 'new-operation', async () => ({ sessionId: 'new-session' }));
+    assert.equal(result.selected_session_id, 'new-session');
+    assert.equal(result.main_session_id, 'main');
+    assert.deepEqual(result.sessions.map(session => session.id), ['main', 'old', 'new-session']);
+  } finally {
+    cleanup();
+  }
+});
+
+test('New does not assign Main when the project has no Main chat', async () => {
+  const project: Project = { project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', metadata: {}, version: 1, created_at: '', updated_at: '' };
+  const { registry, cleanup } = registryFor(project);
+  try {
+    const result = await registry.create('p', 'new', 'new-operation', async () => ({ sessionId: 'new-session' }));
+    assert.equal(result.selected_session_id, 'new-session');
+    assert.equal(result.main_session_id, null);
+  } finally {
+    cleanup();
+  }
+});
 
 test('identical draft retries acknowledge without writes while divergent stale payloads retain CAS protection', async () => {
   let project: Project = { project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', metadata: {}, version: 1, created_at: '', updated_at: '' };

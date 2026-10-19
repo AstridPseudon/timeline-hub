@@ -390,6 +390,8 @@ describe('AgentChat', () => {
     const state = createState();
     state.timelineId = null;
     state.sessionsData = [];
+    state.projectChats['project-1'].sessions = [];
+    state.projectChats['project-1'].selected_session_id = null;
     state.createSession = {
       isPending: false,
       mutate: vi.fn(),
@@ -448,6 +450,7 @@ describe('AgentChat', () => {
       { id: 'session-2', status: 'waiting_user' },
     ];
     Object.assign(state.projectChats['project-1'], {
+      selected_session_id: 'session-2',
       main_session_id: 'session-2',
       sessions: [{ id: 'session-1' }, { id: 'session-2' }],
     });
@@ -478,7 +481,7 @@ describe('AgentChat', () => {
     expect(screen.getByRole('option', { name: /Chat 1/ })).toBeInTheDocument();
   });
 
-  it('waits for Main when history resolves before the authoritative project registry', async () => {
+  it('waits for persisted selection when history resolves before the project registry', async () => {
     const state = createState();
     state.sessionsData = [
       { id: 'session-1', status: 'waiting_user' },
@@ -498,25 +501,26 @@ describe('AgentChat', () => {
     mocks.useProjectChat.mockReturnValue({ data: state.projectChats['project-1'], isLoading: false });
     view.rerender(<AgentChatPanel isExpanded={false} />);
     const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
-    await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
 
     const user = userEvent.setup();
     await user.click(selector);
-    expect(screen.getByText('Main', { exact: true })).toBeInTheDocument();
-    await user.click(await screen.findByRole('option', { name: /Chat 1/ }));
-    await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
+    await user.click(await screen.findByRole('option', { name: /Chat 2/ }));
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
     mocks.useProjectChat.mockReturnValue({ data: undefined, isLoading: true });
     view.rerender(<AgentChatPanel isExpanded={false} />);
-    expect(selector).toHaveTextContent('Chat 1');
+    expect(selector).toHaveTextContent('Chat 2');
     mocks.useProjectChat.mockReturnValue({ data: state.projectChats['project-1'], isLoading: false });
     view.rerender(<AgentChatPanel isExpanded={false} />);
-    expect(selector).toHaveTextContent('Chat 1');
+    expect(selector).toHaveTextContent('Chat 2');
   });
 
-  it('opens the newly created Main when old history arrived before absent-Main registry state', async () => {
+  it('reopens the persisted selected chat when Main is unset', async () => {
     const state = createState();
     state.sessionsData = [{ id: 'session-1', status: 'waiting_user' }];
-    Object.assign(state.projectChats['project-1'], { main_session_id: null });
+    Object.assign(state.projectChats['project-1'], {
+      selected_session_id: 'session-1', main_session_id: null, sessions: [{ id: 'session-1' }],
+    });
     mockFromState(state);
     mocks.useProjectChat.mockReturnValue({ data: undefined, isLoading: true });
     const view = renderAgentChat();
@@ -525,62 +529,47 @@ describe('AgentChat', () => {
 
     mocks.useProjectChat.mockReturnValue({ data: state.projectChats['project-1'], isLoading: false });
     view.rerender(<AgentChatPanel isExpanded={false} />);
-    await waitFor(() => expect(state.createSession.mutate).toHaveBeenCalledTimes(1));
-    expect(mocks.useAgentSession).not.toHaveBeenCalledWith('session-1', 'project-1');
-    const callbacks = state.createSession.mutate.mock.calls[0][1] as { onSuccess: (session: { id: string }) => void };
-    Object.assign(state.projectChats['project-1'], {
-      main_session_id: 'created-main', selected_session_id: 'created-main',
-      sessions: [{ id: 'session-1' }, { id: 'created-main' }],
-    });
-    state.sessionsData = [...state.sessionsData, { id: 'created-main', status: 'waiting_user' }];
-    mocks.useProjectChat.mockReturnValue({ data: { ...state.projectChats['project-1'] }, isLoading: false });
-    callbacks.onSuccess({ id: 'created-main' });
-    view.rerender(<AgentChatPanel isExpanded={false} />);
     const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
-    await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
-    expect(screen.queryByRole('button', { name: 'Main chat' })).toBeNull();
-    expect(mocks.useAgentSession).toHaveBeenCalledWith('created-main', 'project-1');
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
+    expect(state.createSession.mutate).not.toHaveBeenCalled();
+    expect(mocks.useAgentSession).toHaveBeenCalledWith('session-1', 'project-1');
   });
 
-  it('preserves an explicit history choice while deferred Main creation completes', async () => {
+  it('keeps project chats selectable when Main is unset without creating a replacement Main', async () => {
     const state = createState();
     state.sessionsData = [{ id: 'session-1', status: 'waiting_user' }, { id: 'session-2', status: 'waiting_user' }];
     Object.assign(state.projectChats['project-1'], {
-      main_session_id: null, sessions: [{ id: 'session-1' }, { id: 'session-2' }],
+      selected_session_id: 'session-2', main_session_id: null, sessions: [{ id: 'session-1' }, { id: 'session-2' }],
     });
     mockFromState(state);
-    mocks.useProjectChat.mockReturnValue({ data: undefined, isLoading: true });
     const view = renderAgentChat();
-    mocks.useProjectChat.mockReturnValue({ data: state.projectChats['project-1'], isLoading: false });
-    view.rerender(<AgentChatPanel isExpanded={false} />);
-    await waitFor(() => expect(state.createSession.mutate).toHaveBeenCalledTimes(1));
     const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
-    expect(selector).toHaveTextContent('Choose chat');
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
+    expect(state.createSession.mutate).not.toHaveBeenCalled();
     const user = userEvent.setup();
     await user.click(selector);
     await user.click(await screen.findByRole('option', { name: /Chat 1/ }));
     await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
-    const callbacks = state.createSession.mutate.mock.calls[0][1] as { onSuccess: (session: { id: string }) => void };
-    Object.assign(state.projectChats['project-1'], { main_session_id: 'created-main', selected_session_id: 'created-main' });
-    state.sessionsData = [...state.sessionsData, { id: 'created-main', status: 'waiting_user' }];
-    mocks.useProjectChat.mockReturnValue({ data: { ...state.projectChats['project-1'] }, isLoading: false });
-    callbacks.onSuccess({ id: 'created-main' });
+    const priorRevision = state.projectChats['project-1'].revision;
+    state.projectChats['project-1'] = {
+      ...state.projectChats['project-1'], selected_session_id: 'session-1', revision: priorRevision + 1,
+    };
     view.rerender(<AgentChatPanel isExpanded={false} />);
     expect(selector).toHaveTextContent('Chat 1');
     await user.click(selector);
     expect(screen.getByRole('button', { name: 'Make Chat 1 main' })).toBeEnabled();
   });
 
-  it('creates a fresh Main without engagement when existing history has no Main', async () => {
+  it('does not create or assign Main when existing project chats have no Main', async () => {
     mocks.panesState.isTasksPaneLocked = false;
     const state = createState();
     state.sessionsData = [{ id: 'session-1', status: 'waiting_user' }];
     Object.assign(state.projectChats['project-1'], { main_session_id: null });
     mockFromState(state);
     renderAgentChat();
-    await waitFor(() => expect(state.createSession.mutate).toHaveBeenCalledTimes(1));
-    expect(mocks.useCreateSession).toHaveBeenCalledWith('timeline-1', 'project-1', 'ensure_main');
-    expect(state.projectChats['project-1'].sessions).toEqual([{ id: 'session-1' }]);
+    await waitFor(() => expect(mocks.useCreateSession).toHaveBeenCalledWith('timeline-1', 'project-1', 'ensure'));
+    expect(state.createSession.mutate).not.toHaveBeenCalled();
+    expect(state.projectChats['project-1'].main_session_id).toBeNull();
   });
 
   it('waits for authoritative project chat state before attempting Main creation', async () => {
@@ -641,6 +630,8 @@ describe('AgentChat', () => {
   it('auto-creates a session when the engagement gate fires (pane locked) with a timeline available', async () => {
     const state = createState();
     state.sessionsData = [];
+    state.projectChats['project-1'].sessions = [];
+    state.projectChats['project-1'].selected_session_id = null;
     state.createSession = {
       isPending: false,
       mutate: vi.fn(),
@@ -1048,17 +1039,30 @@ describe('project draft consumer ownership', () => {
     mocks.panesState.setIsTasksPaneOpen = openPane;
     state.projectChats['project-1'] = { ...state.projectChats['project-1'], main_session_id: 'session-1' } as typeof state.projectChats['project-1'];
     mocks.useAgentSession.mockImplementation((id: string) => ({ data: { id, status: 'waiting_user', turns: [] }, isLoading: false }));
-    render(<AgentChatPanel />);
+    const view = render(<AgentChatPanel />);
     const composer = screen.getByRole('textbox');
     fireEvent.change(composer, { target: { value: 'Keep my unsent draft' } });
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
     fireEvent.click(screen.getByRole('button', { name: 'New', exact: true }));
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-2', 'project-1'));
     expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Chat 2');
+    Object.assign(state.projectChats['project-1'], {
+      selected_session_id: 'session-2',
+      main_session_id: 'session-1',
+      sessions: [{ id: 'session-1' }, { id: 'session-2' }],
+      revision: state.projectChats['project-1'].revision + 1,
+    });
+    state.sessionsData = [...state.sessionsData, { id: 'session-2', status: 'waiting_user' }];
+    view.rerender(<AgentChatPanel />);
+    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-2', 'project-1'));
+    expect(state.createSession.mutate).not.toHaveBeenCalled();
     expect(composer).toHaveValue('Keep my unsent draft');
     expect(openPane).toHaveBeenCalledWith(true);
     expect(composer).toHaveFocus();
-    expect(state.sessionsData).toEqual([{ id: 'session-1', status: 'waiting_user' }]);
+    expect(state.sessionsData).toEqual([
+      { id: 'session-1', status: 'waiting_user' },
+      { id: 'session-2', status: 'waiting_user' },
+    ]);
     expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
   });
   it.each([false, true])('ignores a delayed New completion after a project transition (return to origin: %s)', async (returnToOrigin) => {

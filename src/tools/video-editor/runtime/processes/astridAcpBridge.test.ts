@@ -172,8 +172,8 @@ describe('Astrid App ACP HTTP bridge', () => {
     respond(fakeProcess, createRequest.id, { sessionId: 'session-1' });
     const created = await (await creating).json() as { selected_session_id: string };
     expect(created.selected_session_id).toBe('session-1');
-    const currentChat = await (await read()).json() as { revision: number; main_session_id: string };
-    expect(currentChat.main_session_id).toBe('session-1');
+    const currentChat = await (await read()).json() as { revision: number; main_session_id: string | null };
+    expect(currentChat.main_session_id).toBeNull();
     const foreignMain = await fetch(`${base}/projects/p1/chat/main`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ expected_revision: currentChat.revision, main_session_id: 'foreign' }) });
     expect(foreignMain.status).toBe(403);
     const chooseMain = await fetch(`${base}/projects/p1/chat/main`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ expected_revision: currentChat.revision, main_session_id: 'session-1' }) });
@@ -186,8 +186,8 @@ describe('Astrid App ACP HTTP bridge', () => {
     const newChat = fetch(`${base}/projects/p1/chat/sessions`, { method: 'POST', headers: headers(), body: JSON.stringify({ connection_id: 'connection-1', mode: 'new', operation_id: 'intentional-new' }) });
     await waitForRequest(fakeProcess, beforeNew);
     respond(fakeProcess, lastRequest(fakeProcess).id, { sessionId: 'session-2' });
-    expect(await (await newChat).json()).toMatchObject({ main_session_id: 'session-2', selected_session_id: 'session-2', sessions: [{ id: 'session-1' }, { id: 'session-2' }] });
-    expect(await (await read()).json()).toMatchObject({ main_session_id: 'session-2', selected_session_id: 'session-2' });
+    expect(await (await newChat).json()).toMatchObject({ main_session_id: 'session-1', selected_session_id: 'session-2', sessions: [{ id: 'session-1' }, { id: 'session-2' }] });
+    expect(await (await read()).json()).toMatchObject({ main_session_id: 'session-1', selected_session_id: 'session-2' });
 
     const savedDraft = await fetch(`${base}/projects/p1/chat/draft`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ expected_revision: 0, text: 'draft', queued_messages: [{ id: 'q1', text: 'queued', session_id: 'session-1' }] }) });
     expect(await savedDraft.json()).toMatchObject({ draft: { text: 'draft', queued_messages: [{ id: 'q1' }] } });
