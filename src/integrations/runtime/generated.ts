@@ -1,3 +1,5 @@
+import type { CommitAcceptedMutation, CommitPreviewResponse, CommitRequest, HistoryPage, MediaSelection, MediaSelectionQuery } from "./timeline-commit-types.js";
+export type { CommitAcceptedMutation, CommitPreviewResponse, CommitRequest, HistoryPage, MediaSelection, MediaSelectionQuery, EditCommand, CanonicalDocument, HeadPin, Recorder, PreparedCommit, CommitAccepted, CommitPreview, TimelineCommitPage } from "./timeline-commit-types.js";
 /** Generated from contract/openapi/workspace-v1.yaml; do not edit by hand. */
 export const PROTOCOL = "workspace.v1" as const;
 export type HeadersLike = Record<string, string>;
@@ -87,7 +89,7 @@ export class WorkspaceClient {
   private decodeError(status: number, body: Uint8Array): ApiError { try { const v = JSON.parse(new TextDecoder().decode(body)); return new ApiError(status, v.code ?? "http_error", v.message ?? `HTTP ${status}`, v.request_id ?? "", v.details ?? {}) } catch { return new ApiError(status, "http_error", `HTTP ${status}`) } }
   private json<T>(body: Uint8Array): T { return JSON.parse(new TextDecoder().decode(body)) as T }
   private page<T>(body: Uint8Array): Page<T> { const value = this.json<Partial<Page<T>>>(body); if (!Array.isArray(value.items) || !(value.next_cursor === null || typeof value.next_cursor === "string")) throw new Error("invalid page response: items and next_cursor are required"); return value as Page<T> }
-  private mutation<T>(body: Uint8Array): MutationResult<T> { const value = this.json<Record<string, unknown>>(body); if (!("data" in value) || !("receipt" in value) || !value.receipt || typeof value.data !== "object" || value.data === null) throw new Error("invalid mutation response: committed receipt is required"); const data = value.data as Record<string, unknown>; Object.defineProperty(data, "receipt", { value: value.receipt, enumerable: false, writable: false, configurable: false }); return data as MutationResult<T> }
+  private mutation<T>(body: Uint8Array): MutationResult<T> { const value = this.json<Record<string, unknown>>(body); if (!value || typeof value !== "object" || Array.isArray(value) || !value.data || typeof value.data !== "object" || Array.isArray(value.data) || !value.receipt || typeof value.receipt !== "object" || Array.isArray(value.receipt)) throw new Error("invalid mutation response: data and committed receipt objects are required"); const data = value.data as Record<string, unknown>; Object.defineProperty(data, "receipt", { value: value.receipt, enumerable: false, writable: false, configurable: false }); return data as MutationResult<T> }
   async health(): Promise<Health> { return this.json<Health>((await this.request("GET", "/v1/health")).body) }
   private preferencesPath(scope: PreferenceScope, projectId?: string): string {
     if (scope !== "user" && scope !== "project") throw new Error("preference scope must be user or project");
@@ -98,7 +100,7 @@ export class WorkspaceClient {
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid preference resource");
     const v = value as Record<string, unknown>;
     const fields = ["scope", "actor_id", "project_id", "document_id", "content", "version", "created_at", "updated_at"];
-    if (Object.keys(v).length !== fields.length || fields.some(key => !(key in v))) throw new Error("invalid preference resource fields");
+    if (fields.some(key => !(key in v))) throw new Error("invalid preference resource fields");
     const owner = scope === "user" ? v.actor_id : v.project_id;
     const other = scope === "user" ? v.project_id : v.actor_id;
     if (v.scope !== scope || typeof owner !== "string" || !owner || other !== null || v.document_id !== "preferences:" + scope + ":" + owner || typeof v.content !== "string" || !Number.isInteger(v.version) || (v.version as number) < 0 || [v.created_at, v.updated_at].some(item => item !== null && typeof item !== "string")) throw new Error("invalid preference resource ownership, content or version");
@@ -106,7 +108,7 @@ export class WorkspaceClient {
   }
   private preferenceMutation(body: Uint8Array, scope: PreferenceScope): PreferenceMutationResult {
     const value = this.json<Record<string, unknown>>(body);
-    if (!value || Object.keys(value).length !== 2 || !("data" in value) || !("receipt" in value)) throw new Error("invalid preference mutation response");
+    if (!value || typeof value !== "object" || !("data" in value) || !("receipt" in value)) throw new Error("invalid preference mutation response");
     const resource = this.preferenceResource(value.data, scope);
     if (scope === "project") return this.mutation<PreferenceResource>(body);
     if (value.receipt !== null) throw new Error("invalid user preference mutation: null receipt is required");
@@ -162,7 +164,19 @@ export class WorkspaceClient {
   async getProjectTimeline(projectId: string, timelineId: string): Promise<Record<string, unknown>> { return this.json((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}`)).body) }
   async getProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string): Promise<Record<string, unknown>> { return this.json((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/composition-revisions/${encodeURIComponent(revision)}`)).body) }
   async listProjectParentCompositionRevisions(projectId: string, timelineId: string, cursor?: string, limit = 50): Promise<Page<Record<string, unknown>>> { return this.page((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/composition-revisions?limit=${limit}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`)).body) }
-  async restoreProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string, expectedHead: string | null, idempotencyKey: string): Promise<MutationResult<Record<string, unknown>>> { return this.mutation((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/composition-revisions/${encodeURIComponent(revision)}/restore`, new TextEncoder().encode(JSON.stringify({ expected_head: expectedHead })), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body) }
+  async restoreProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string, expectedHead: string, expectedPublicationId: string, idempotencyKey: string): Promise<CommitAcceptedMutation> { return this.commitResponse((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/composition-revisions/${encodeURIComponent(revision)}/restore`, new TextEncoder().encode(JSON.stringify({ expected_head: expectedHead, expected_publication_id: expectedPublicationId })), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body, false) as CommitAcceptedMutation }
+  private commitResponse(body: Uint8Array, preview: boolean): CommitAcceptedMutation | CommitPreviewResponse {
+    const value = this.json<CommitAcceptedMutation | CommitPreviewResponse>(body);
+    if (!value || !value.data || typeof value.data !== "object" || !("receipt" in value)) throw new Error("invalid commit response");
+    if (preview ? value.data.status !== "preview" || value.receipt !== null : !["accepted", "rebased"].includes(value.data.status) || !value.receipt || typeof value.receipt !== "object" || Array.isArray(value.receipt)) throw new Error("invalid commit status or receipt");
+    return value;
+  }
+  async commitTimeline(projectId: string, timelineId: string, request: CommitRequest, idempotencyKey: string): Promise<CommitAcceptedMutation | CommitPreviewResponse> {
+    const body = JSON.stringify(request, (_key, value) => { if (typeof value === "number" && !Number.isFinite(value)) throw new Error("nonfinite commit value"); return value; });
+    return this.commitResponse((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/commit`, new TextEncoder().encode(body), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body, request.dry_run === true);
+  }
+  async listTimelineCommits(projectId: string, timelineId: string, cursor?: string, limit = 50): Promise<HistoryPage> { return this.json((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/commits?limit=${limit}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`)).body) }
+  async getProjectMediaSelection(projectId: string, selection: MediaSelectionQuery): Promise<MediaSelection> { const query = Object.entries(selection).map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`).join("&"); return this.json((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/media-selection?${query}`)).body) }
   async inspectTimeline(projectId: string, timelineId: string, options: Record<string, unknown> = {}): Promise<Record<string, unknown>> { return this.json((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/inspect`, new TextEncoder().encode(JSON.stringify(options)), { "Content-Type": "application/json" })).body) }
   async createTimelineView(projectId: string, timelineId: string, options: Record<string, unknown> = {}): Promise<Record<string, unknown>> { return this.json((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/views`, new TextEncoder().encode(JSON.stringify(options)), { "Content-Type": "application/json" })).body) }
   async replaceTimelineClip(timelineId: string, clipId: string, sourceObjectId: string, expectedVersion: number, idempotencyKey: string, timing = "preserve-duration"): Promise<MutationResult<Record<string, unknown>>> { const payload = { clip_id: clipId, source_object_id: sourceObjectId, expected_version: expectedVersion, timing }; return this.mutation((await this.request("POST", `/v1/timelines/${encodeURIComponent(timelineId)}/replace-clip`, new TextEncoder().encode(JSON.stringify(payload)), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body) }
