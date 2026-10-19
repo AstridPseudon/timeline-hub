@@ -1,10 +1,10 @@
 /**
  * Three products on one realm (testing plan F2, thin slice on the Plan A direct path):
  *
- *   npm run test:e2e:three-products    # hosted App build -> loopback gateway -> real Runtime, plus the real Astrid CLI
+ *   npm run test:e2e:three-products    # hosted App build -> Runtime door -> real Runtime, plus the real Astrid CLI
  *
  * The App (hosted build, Chromium) and the agent (the Astrid CLI as a subprocess) are two clients of one Runtime. Nothing in a
- * case is a stand-in: the page talks to the real gateway, Astrid to the same Runtime over its own credential, and the Runtime
+ * case is a stand-in: the page talks to the real door, Astrid to the same Runtime over its own credential, and the Runtime
  * is the real daemon on a throwaway realm. Needs an Astrid checkout (ASTRID_CHECKOUT, default ../astrid-agent) with its Python
  * (ASTRID_PYTHON, default <checkout>/.venv/bin/python); a missing prerequisite fails the run with its name, it never skips.
  *
@@ -190,7 +190,7 @@ function agentOf(astrid: AstridCli, seed: ThreeProductsSeed) {
   };
 }
 
-/** A credential never reaches the page: not in a request, a gateway answer, the DOM, or the page's storage. */
+/** A credential never reaches the page: not in a request, a door answer, the DOM, or the page's storage. */
 class TokenSniff {
   private readonly pending: Array<Promise<void>> = [];
   private readonly leaks: string[] = [];
@@ -247,14 +247,14 @@ function secretsOf(harness: DirectHarness, astrid: AstridCli): Record<string, st
 
 /**
  * The three products are talking to the same Runtime: the realm and instance the harness made, the page's health and realm
- * (fetched from inside the page, through the gateway) and Astrid's handshake all agree, and so do the contract digests of the App,
+ * (fetched from inside the page, through the door) and Astrid's handshake all agree, and so do the contract digests of the App,
  * of Astrid and of the Runtime. Returns what each saw, for the summary.
  */
 async function expectSameRealm(page: Page, harness: DirectHarness, astrid: AstridCli) {
   const fromPage = await page.evaluate(async (base) => {
     const [health, realm] = await Promise.all([fetch(`${base}/v1/health`), fetch(`${base}/v1/realm`)]);
     return { health: await health.json(), realm: await realm.json() };
-  }, harness.gatewayBase);
+  }, harness.doorBase);
   const fromAstrid = await astrid.identity();
   const digest = contractDigest();
   expect([
@@ -289,8 +289,8 @@ function watchPageReads(page: Page, harness: DirectHarness) {
   const reads = { eventFeed: [] as Array<{ aggregate_type: string; aggregate_id: string; event_type: string }>, urls: [] as string[], internalRevisions: [] as Array<{ id: string; payload: any }> };
   page.on('response', (response) => {
     const url = response.url();
-    if (!url.startsWith(harness.gatewayBase) || response.request().method() !== 'GET' || response.status() !== 200) return;
-    const route = url.slice(harness.gatewayBase.length);
+    if (!url.startsWith(harness.doorBase) || response.request().method() !== 'GET' || response.status() !== 200) return;
+    const route = url.slice(harness.doorBase.length);
     reads.urls.push(route);
     if (route.startsWith('/v1/events')) {
       void response.json().then((body) => { for (const item of body.items ?? []) reads.eventFeed.push({ aggregate_type: item.aggregate_type, aggregate_id: item.aggregate_id, event_type: item.event_type }); }).catch(() => {});

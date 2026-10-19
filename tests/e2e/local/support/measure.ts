@@ -3,7 +3,7 @@ import { cpus, loadavg } from 'node:os';
 
 export interface MeasureRow {
   step: string;
-  via: 'runtime' | 'gateway';
+  via: 'runtime' | 'door';
   reps: number;
   medianMs: number;
   p95Ms: number;
@@ -45,14 +45,14 @@ export class SpeedTable {
   }
 
   render(): string {
-    const lines = ['step                              via      reps  median ms    p95 ms    MB/s   gateway/runtime'];
+    const lines = ['step                              via      reps  median ms    p95 ms    MB/s   door/runtime'];
     const steps = [...new Set(this.rows.map((row) => row.step))];
     for (const step of steps) {
       const runtime = this.rows.find((row) => row.step === step && row.via === 'runtime');
-      const gateway = this.rows.find((row) => row.step === step && row.via === 'gateway');
-      for (const row of [runtime, gateway]) {
+      const door = this.rows.find((row) => row.step === step && row.via === 'door');
+      for (const row of [runtime, door]) {
         if (!row) continue;
-        const ratio = row.via === 'gateway' && runtime ? `${(row.medianMs / runtime.medianMs).toFixed(2)}x` : '';
+        const ratio = row.via === 'door' && runtime ? `${(row.medianMs / runtime.medianMs).toFixed(2)}x` : '';
         lines.push(`${row.step.padEnd(33)} ${row.via.padEnd(8)} ${String(row.reps).padStart(4)}  ${row.medianMs.toFixed(1).padStart(9)} ${row.p95Ms.toFixed(1).padStart(9)} ${(row.mbPerSecond === undefined ? '' : row.mbPerSecond.toFixed(1)).padStart(7)}   ${ratio}`);
       }
     }

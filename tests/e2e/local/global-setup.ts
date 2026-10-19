@@ -1,4 +1,4 @@
-/** Builds the hosted production bundle once unless an existing dist is newer than every input and was built for the gateway. */
+/** Builds the hosted production bundle once unless an existing dist is newer than every input and was built for the Runtime door. */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const INPUTS = ['src', 'config', 'public', 'vendor', 'index.html', 'package.json', 'package-lock.json', 'tsconfig.json'];
-/** The gateway origin `npm run build:hosted` compiles in (package.json). A dist without it came from another mode. */
+/** The Runtime door's origin `npm run build:hosted` compiles in (package.json). A dist without it came from another mode. */
 const HOSTED_ORIGIN = 'http://127.0.0.1:17340';
 
 function newestMtime(entry: string): number {
@@ -21,7 +21,7 @@ function newestMtime(entry: string): number {
   return newest;
 }
 
-/** True when the built bundle points at the gateway origin (the hosted build, not a plain `npm run build`). */
+/** True when the built bundle points at the door origin (the hosted build, not a plain `npm run build`). */
 export function distIsHosted(dist = path.join(root, 'dist')): boolean {
   const assets = path.join(dist, 'assets');
   if (!existsSync(assets)) return false;

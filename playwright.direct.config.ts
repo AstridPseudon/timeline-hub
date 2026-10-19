@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 // Same-machine "direct" journey (Plan A, phase A0): production build on a hosted-style HTTPS origin,
-// the real loopback gateway, a real Runtime daemon on throwaway SQLite, and Chromium.
+// a real Runtime daemon on throwaway SQLite with its browser door, and Chromium.
 // Run with: npm run test:e2e:direct
 export default defineConfig({
   testDir: './tests/e2e/local',

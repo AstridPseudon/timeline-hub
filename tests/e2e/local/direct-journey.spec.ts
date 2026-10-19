@@ -1,23 +1,24 @@
 /**
  * Plan A journey harness (phase A0): the hosted app used from a browser on the same machine as the
- * user's Runtime, through the local loopback gateway (tasks/2026-10-16-plan-a-same-machine-direct.md §3).
+ * user's Runtime, through the Runtime's own browser door (tasks/2026-10-16-plan-a-same-machine-direct.md §3;
+ * astrid-runtime `runtime_protocol/door.py`). Nothing from this repo runs between the page and the Runtime.
  *
  *   npm run test:e2e:direct            # builds dist if it is stale, then runs this file
  *
- * Not part of `npm test`. CI runs it from .github/workflows/direct-journey.yml (pull requests touching the gateway,
- * launcher, runtime integration or media helpers; nightly; on demand), which expects exactly the expected failures below.
+ * Not part of `npm test`. CI runs it from .github/workflows/direct-journey.yml (pull requests touching the launcher,
+ * runtime integration or media helpers; nightly; on demand), which expects exactly the expected failures below.
  *
  * What runs: a production build served over HTTPS at https://astrid.test:<port> (test certificate made at
  * run time, host mapped by Chromium's --host-resolver-rules, the page marked "public" with
- * --ip-address-space-overrides so Chromium applies its public -> loopback rules), scripts/astrid-loopback-gateway.ts
- * on its well-known port (17340, override with ASTRID_APP_DIRECT_GATEWAY_PORT), and a real Runtime daemon on a
- * throwaway SQLite realm. See support/harness.ts for how each is started and torn down.
+ * --ip-address-space-overrides so Chromium applies its public -> loopback rules), and a real Runtime daemon on a
+ * throwaway SQLite realm whose door listens on its well-known port (17340, override with ASTRID_APP_DIRECT_DOOR_PORT).
+ * See support/harness.ts for how each is started and torn down.
  *
- * Design: tasks/2026-10-16-plan-a-same-machine-direct.md (revision 3): the App reaches the gateway at
+ * Design: tasks/2026-10-16-plan-a-same-machine-direct.md (revision 3): the App reaches the door at
  * http://127.0.0.1:17340/api/runtime and /api/astrid with the hosted Origin as the only credential, probes with
  * /api/runtime/v1/health, and asks Chrome for the local-network permission only after a Connect click.
  *
- * Expected failures: cases that need App or gateway behaviour that does not exist yet are marked as expected
+ * Expected failures: cases that need App or door behaviour that does not exist yet are marked as expected
  * failures, each with a `known-failure:` comment naming the cause (file:line) and the card that fixes it
  * (tasks/2026-10-16-plan-a-execution.md). When the card lands, the case starts passing, Playwright reports it as
  * an unexpected pass, and the marker comes off in the same commit that lowers the budget in
@@ -34,13 +35,13 @@ import { expect, type Page } from '@playwright/test';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { BIG_DOWNLOAD_BYTES, BIG_UPLOAD_BYTES, DirectHarness, GATEWAY_PORT, harnessUnavailableReason, rawRequest, sha256Hex, compositionPublication } from './support/harness.ts';
+import { BIG_DOWNLOAD_BYTES, BIG_UPLOAD_BYTES, DirectHarness, DOOR_PORT, harnessUnavailableReason, rawRequest, sha256Hex, compositionPublication } from './support/harness.ts';
 import { APP_ENTRY_ROUTE, UI, currentHead, editFirstTrackName, expectConnected, firstTrackName, holdTimelineSaves, openApp, openSeededTimeline, revisionBody, test, waitForAudit } from './support/app.ts';
 import { SpeedTable } from './support/measure.ts';
 import { LOCAL_NETWORK_PERMISSION, readLocalNetworkState, setLocalNetworkPermission } from './support/permission.ts';
 
-/** Gateway RSS may grow by at most this much while streaming a 60 or 200 MB body ("bounded" means well under the file size). */
-const GATEWAY_RSS_GROWTH_LIMIT = 100 * 1024 * 1024;
+/** The Runtime's RSS (it serves the door) may grow by at most this much while streaming a 60 or 200 MB body ("bounded" means well under the file size). */
+const RUNTIME_RSS_GROWTH_LIMIT = 100 * 1024 * 1024;
 /** The realm's display name (harness.ts creates the realm and starts the Runtime with it); the Runtime reports it, the page no longer shows it. */
 const REALM_DISPLAY_NAME = 'Direct Journey';
 
@@ -73,8 +74,8 @@ async function openHostedPage(page: Page, harness: DirectHarness) {
 }
 
 function reportRss(what: string, baselineBytes: number, growthBytes: number) {
-  const description = `${what}: gateway RSS baseline ${(baselineBytes / 1048576).toFixed(0)} MB, peak growth ${(growthBytes / 1048576).toFixed(0)} MB (limit ${GATEWAY_RSS_GROWTH_LIMIT / 1048576} MB)`;
-  test.info().annotations.push({ type: 'gateway-rss', description });
+  const description = `${what}: Runtime RSS baseline ${(baselineBytes / 1048576).toFixed(0)} MB, peak growth ${(growthBytes / 1048576).toFixed(0)} MB (limit ${RUNTIME_RSS_GROWTH_LIMIT / 1048576} MB)`;
+  test.info().annotations.push({ type: 'runtime-rss', description });
 }
 
 /**
@@ -93,7 +94,7 @@ function expectBareUrl(page: Page, harness: DirectHarness) {
 function healthProbe(harness: DirectHarness, options: { origin?: string | null; host?: string; path?: string } = {}) {
   const headers: Record<string, string> = {};
   if (options.origin !== null) headers.Origin = options.origin ?? harness.origin;
-  return rawRequest({ port: harness.gatewayPort, path: options.path ?? '/api/runtime/v1/health', headers, host: options.host });
+  return rawRequest({ port: harness.doorPort, path: options.path ?? '/api/runtime/v1/health', headers, host: options.host });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -101,12 +102,12 @@ function healthProbe(harness: DirectHarness, options: { origin?: string | null; 
 
 test.describe('zero-click connection (App)', () => {
   test('opening the hosted origin connects to the local Runtime with nothing in the URL', async ({ page, harness }) => {
-    const gatewayRequests = await openApp(page, harness);
+    const doorRequests = await openApp(page, harness);
     await expectConnected(page);
     expectBareUrl(page, harness);
     // The probe is the existing health route under /api/runtime; there is no /v1/connect.
-    expect(gatewayRequests.some((request) => request.startsWith('GET ') && request.endsWith('/api/runtime/v1/health'))).toBe(true);
-    expect(gatewayRequests.some((request) => request.endsWith('/v1/connect'))).toBe(false);
+    expect(doorRequests.some((request) => request.startsWith('GET ') && request.endsWith('/api/runtime/v1/health'))).toBe(true);
+    expect(doorRequests.some((request) => request.endsWith('/v1/connect'))).toBe(false);
     // Nothing about the connection is visible while it holds: the editor already shows the project.
     await expect(page.locator(UI.status)).toHaveText('Connected to Astrid');
     await expect(page.locator(UI.status)).toHaveClass(/sr-only/);
@@ -122,10 +123,10 @@ test.describe('zero-click connection (App)', () => {
     expectBareUrl(page, harness);
   });
 
-  test('with the gateway stopped the panel offers agent instructions, then connects by itself once it starts', async ({ page, harness, context }) => {
+  test('with Astrid stopped the panel offers agent instructions, then connects by itself once it starts', async ({ page, harness, context }) => {
     // grantPermissions replaces the origin's grants, so the local-network permission the fixture context holds is listed again.
     await context.grantPermissions(['clipboard-read', 'clipboard-write', LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
-    await harness.stopGateway();
+    await harness.stopRuntime(); // the door goes with it
     try {
       await openApp(page, harness);
       await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
@@ -137,7 +138,7 @@ test.describe('zero-click connection (App)', () => {
       const copied = await page.evaluate(() => navigator.clipboard.readText());
       expect(copied).toContain('npm run dev:local');
       expect(copied).toContain(`prints "Open ${harness.origin}"`);
-      await harness.startGateway();
+      await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
     } finally {
@@ -149,9 +150,9 @@ test.describe('zero-click connection (App)', () => {
 // The bare domain keeps its two faces: the public landing page for a first visit, the app for someone who has connected
 // before (src/app/entryClassification.ts). Connecting to the Runtime for the first time is what makes a visitor a returning one.
 test.describe('the bare domain (App)', () => {
-  test('a first visit to the bare domain shows the landing page and sends nothing to the gateway', async ({ page, harness }) => {
-    const gatewayRequests: string[] = [];
-    page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${GATEWAY_PORT}/`)) gatewayRequests.push(`${request.method()} ${request.url()}`); });
+  test('a first visit to the bare domain shows the landing page and sends nothing to the door', async ({ page, harness }) => {
+    const doorRequests: string[] = [];
+    page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${DOOR_PORT}/`)) doorRequests.push(`${request.method()} ${request.url()}`); });
     const auditedBefore = harness.audit().length;
     await page.goto(`${harness.origin}/`);
     await expect(page.getByRole('heading', { level: 1, name: /creative limits/i })).toBeVisible();
@@ -159,8 +160,8 @@ test.describe('the bare domain (App)', () => {
     expect(new URL(page.url()).pathname).toBe('/');
     await expect(page.locator(UI.panel)).toHaveCount(0);
     await expect(page.locator(UI.status)).toHaveCount(0);
-    expect(gatewayRequests, 'the landing page does not talk to the local Runtime').toEqual([]);
-    expect(harness.audit().length, 'the gateway saw nothing').toBe(auditedBefore);
+    expect(doorRequests, 'the landing page does not talk to the local Runtime').toEqual([]);
+    expect(harness.audit().length, 'the door saw nothing').toBe(auditedBefore);
   });
 
   test('a returning visitor at the bare domain goes straight into the app and connects with no click', async ({ page, harness }) => {
@@ -183,7 +184,6 @@ test.describe('the bare domain (App)', () => {
 test.describe('first time and returning panels (App)', () => {
   test('a fresh profile shows "Set up Astrid on this computer", and after one connection the same profile shows "Astrid isn\'t running"', async ({ page, harness }) => {
     // Same context for both phases, so localStorage carries over; the fixture context is fresh, so nothing is remembered at the start.
-    await harness.stopGateway();
     await harness.stopRuntime();
     try {
       await openApp(page, harness);
@@ -194,10 +194,9 @@ test.describe('first time and returning panels (App)', () => {
       await expect(panel.getByRole('button', { name: UI.copySetup })).toBeVisible();
 
       await harness.startRuntime();
-      await harness.startGateway();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
 
-      await harness.stopGateway();
+      await harness.stopRuntime();
       await page.reload();
       await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
       await expect(panel.getByRole('button', { name: UI.copySteps })).toBeVisible();
@@ -208,25 +207,25 @@ test.describe('first time and returning panels (App)', () => {
   });
 });
 
-// Revision 3 (D3): the hosted build reads the local-network permission first and sends nothing to the gateway until it
+// Revision 3 (D3): the hosted build reads the local-network permission first and sends nothing to the door until it
 // is granted. These cases use their own browser context, because the fixture context is granted up front.
 test.describe('permission gate and readiness (App)', () => {
-  test('a first visit without the local-network permission sends nothing to the gateway until Connect, then connects', async ({ browser, harness }) => {
+  test('a first visit without the local-network permission sends nothing to the door until Connect, then connects', async ({ browser, harness }) => {
     const context = await browser.newContext(); // no grant: the permission reads `prompt`
     try {
       const page = await context.newPage();
-      const gatewayRequests = await openApp(page, harness);
+      const doorRequests = await openApp(page, harness);
       expect(await readLocalNetworkState(page)).toBe('prompt');
       const panel = page.locator(UI.panel);
       await expect(panel.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeVisible();
       await expect(panel.getByRole('button', { name: UI.connect })).toBeVisible();
-      expect(gatewayRequests, 'nothing is sent to the gateway before Connect').toEqual([]);
+      expect(doorRequests, 'nothing is sent to the door before Connect').toEqual([]);
       // Headless Chromium cannot answer Chrome's prompt, so the click is followed by the grant the prompt would give.
       // The grant comes after the click: a granted permission connects by itself, and Connect would be gone.
       await panel.getByRole('button', { name: UI.connect }).click();
       await context.grantPermissions([LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
       await expectConnected(page);
-      expect(gatewayRequests.length).toBeGreaterThan(0);
+      expect(doorRequests.length).toBeGreaterThan(0);
     } finally {
       await context.close();
     }
@@ -242,13 +241,13 @@ test.describe('permission gate and readiness (App)', () => {
       await page.goto(`${harness.origin}/__blank.html?permission=denied`);
       override = await setLocalNetworkPermission(browser, page, harness.origin, 'denied');
       expect(await readLocalNetworkState(page)).toBe('denied');
-      const gatewayRequests = await openApp(page, harness);
+      const doorRequests = await openApp(page, harness);
       const panel = page.locator(UI.panel);
       await expect(panel.getByRole('heading', { name: 'Allow Astrid in Chrome' })).toBeVisible();
       await expect(panel.getByText('Local network access')).toBeVisible();
       await expect(panel.getByText('Come back here and it opens by itself.')).toBeVisible();
       await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
-      expect(gatewayRequests, 'a denied permission is not retried as if nothing were listening').toEqual([]);
+      expect(doorRequests, 'a denied permission is not retried as if nothing were listening').toEqual([]);
       // Phone width (CP3): the steps wrap inside the card instead of scrolling the page sideways.
       await page.setViewportSize({ width: 360, height: 740 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
@@ -259,8 +258,10 @@ test.describe('permission gate and readiness (App)', () => {
     }
   });
 
-  test('G1 browser half: a live gateway recovers when the stopped Runtime is started again', async ({ page, harness }) => {
-    await harness.stopRuntime(); // the gateway stays up
+  test('G1 browser half: a door that listens before its Runtime is ready shows "not running", then connects by itself once it is', async ({ page, harness }) => {
+    // Listening is not readiness: without the product credential the door answers `runtime_unavailable`, as it does
+    // between the daemon starting and `astrid-runtime up` provisioning that credential.
+    harness.withdrawProductCredential();
     try {
       await openApp(page, harness);
       await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
@@ -268,13 +269,13 @@ test.describe('permission gate and readiness (App)', () => {
       await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
       await expect(panel.getByText('Start Astrid on this computer and this page opens by itself.')).toBeVisible();
       await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
-      await expect(panel).not.toContainText(/Runtime|workspace|realm|gateway|reload/i);
-      const failedReadingsBeforeStart = harness.audit().filter((entry) => entry.path === '/v1/health' && entry.status !== 200).length;
-      expect(failedReadingsBeforeStart, 'the live gateway records failed health checks while its Runtime is stopped').toBeGreaterThan(0);
-      await harness.startRuntime();
+      await expect(panel).not.toContainText(/Runtime|workspace|realm|gateway|door|reload/i);
+      const notReadyReadings = harness.audit().filter((entry) => entry.path === '/v1/health' && entry.status === 503).length;
+      expect(notReadyReadings, 'the listening door answered the health checks it could not serve yet').toBeGreaterThan(0);
+      harness.restoreProductCredential();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
-      expect(harness.gatewayRunning).toBe(true);
+      expect(harness.runtimeRunning).toBe(true);
     } finally {
       await harness.resetToHealthy();
     }
@@ -283,7 +284,7 @@ test.describe('permission gate and readiness (App)', () => {
 
 // Revision 3 has no /v1/connect: the App probes the existing health route under /api/runtime with the hosted Origin as
 // its only credential. These cases pin who the probe answers: the configured origin at Host 127.0.0.1:<port>, nobody else.
-test.describe('probe through the gateway (gateway)', () => {
+test.describe('probe through the door (door)', () => {
   test('answers the configured origin at /api/runtime/v1/health with the realm and Runtime instance', async ({ harness }) => {
     const response = await healthProbe(harness);
     expect(response.status).toBe(200);
@@ -312,7 +313,7 @@ test.describe('probe through the gateway (gateway)', () => {
 
   test('refuses a rebinding Host, including localhost', async ({ harness }) => {
     expect((await healthProbe(harness)).status).toBe(200);
-    const port = harness.gatewayPort;
+    const port = harness.doorPort;
     for (const host of [`evil.test:${port}`, '127.0.0.1', 'localhost', `localhost:${port}`, `[::1]:${port}`, `127.0.0.1:${port + 1}`, `127.0.0.1.evil.test:${port}`]) {
       const refused = await healthProbe(harness, { host });
       expect(refused.status, `Host ${host}`).toBe(403);
@@ -374,7 +375,7 @@ test.describe('core journey', () => {
   test('through the hosted origin: open, read the timeline, save with the expected head, reload byte-identical', async ({ page, harness }) => {
     const { projectId, timelineId } = harness.seed;
     await openHostedPage(page, harness);
-    const call = (suffix: string, init?: Parameters<typeof pageFetch>[2]) => pageFetch(page, `${harness.gatewayBase}${suffix}`, init);
+    const call = (suffix: string, init?: Parameters<typeof pageFetch>[2]) => pageFetch(page, `${harness.doorBase}${suffix}`, init);
 
     const projects = await call('/v1/projects?limit=100');
     expect(projects.status).toBe(200);
@@ -387,7 +388,7 @@ test.describe('core journey', () => {
     expect(read.text).toBe(await direct.text());
 
     const head = await currentHead(harness);
-    const publication = compositionPublication(harness.seed, head, 'Main (edited through the gateway)', 24);
+    const publication = compositionPublication(harness.seed, head, 'Main (edited through the door)', 24);
     const saved = await call(`/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': randomUUID() }, body: JSON.stringify(publication),
     });
@@ -398,7 +399,7 @@ test.describe('core journey', () => {
     const revisionPath = `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions/${newHead}`;
     const beforeReload = await call(revisionPath);
     expect(beforeReload.status).toBe(200);
-    expect(beforeReload.text).toContain('Main (edited through the gateway)');
+    expect(beforeReload.text).toContain('Main (edited through the door)');
     const afterReadInspect = await call(inspectPath, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
 
     await page.reload();
@@ -412,7 +413,7 @@ test.describe('core journey', () => {
   test('through the hosted origin: a second writer saves first, the stale save is refused and the first writer keeps its draft', async ({ page, harness }) => {
     const { projectId, timelineId } = harness.seed;
     await openHostedPage(page, harness);
-    const publishUrl = `${harness.gatewayBase}/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`;
+    const publishUrl = `${harness.doorBase}/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`;
     const head = await currentHead(harness);
     const draft = compositionPublication(harness.seed, head, 'First writer draft', 12); // held by the caller
 
@@ -435,7 +436,7 @@ test.describe('core journey', () => {
 // 3. Media and big files
 
 test.describe('media', () => {
-  const objectUrl = (harness: DirectHarness, objectId: string) => `${harness.gatewayBase}/v1/objects/${encodeURIComponent(objectId)}`;
+  const objectUrl = (harness: DirectHarness, objectId: string) => `${harness.doorBase}/v1/objects/${encodeURIComponent(objectId)}`;
 
   test('an image element loads with crossorigin=anonymous (Origin), and without it is refused', async ({ page, harness }) => {
     await openHostedPage(page, harness);
@@ -449,7 +450,7 @@ test.describe('media', () => {
       image.src = `${src}?${variant}=1`;
     }), { src, variant });
     expect(await load('cors'), 'crossorigin=anonymous').toEqual([64, 48]);
-    // Plan A D5: the default referrer policy sends no Referer on https -> http, and the gateway accepts no Referer in
+    // Plan A D5: the default referrer policy sends no Referer on https -> http, and the door accepts no Referer in
     // place of Origin (A3.R removed that fallback), so media must say crossorigin; even a Referer sent on purpose is refused.
     expect(await load('plain'), 'no crossorigin attribute, default referrer policy').toBe('error');
     expect(await load('referrer-origin'), 'no crossorigin attribute, referrerpolicy=origin').toBe('error');
@@ -461,12 +462,12 @@ test.describe('media', () => {
     expect(refused.length, 'the plain and the referrer-policy requests').toBe(2);
   });
 
-  test('a video poster follows the video\'s crossorigin: with it the gateway sees Origin, without it the poster is refused', async ({ page, harness }) => {
+  test('a video poster follows the video\'s crossorigin: with it the door sees Origin, without it the poster is refused', async ({ page, harness }) => {
     await openHostedPage(page, harness);
     const src = objectUrl(harness, harness.seed.image.objectId);
     const objectPath = `/v1/objects/${harness.seed.image.objectId}`;
     // The poster is an image the video element fetches, so the video's attribute decides whether it sends Origin.
-    // Each variant is a fresh URL, and the gateway's audit entry for it is the one new request on this object.
+    // Each variant is a fresh URL, and the door's audit entry for it is the one new request on this object.
     const posterRequest = async (variant: 'cors' | 'plain') => {
       const before = harness.audit().length;
       await page.evaluate(({ src, variant }) => {
@@ -475,7 +476,7 @@ test.describe('media', () => {
         video.poster = `${src}?poster-${variant}=1`;
         document.body.append(video);
       }, { src, variant });
-      await expect.poll(() => harness.audit().slice(before).filter((entry) => entry.path === objectPath).length, { message: `the ${variant} poster reached the gateway` }).toBe(1);
+      await expect.poll(() => harness.audit().slice(before).filter((entry) => entry.path === objectPath).length, { message: `the ${variant} poster reached the door` }).toBe(1);
       return harness.audit().slice(before).find((entry) => entry.path === objectPath)!;
     };
     expect(await posterRequest('cors'), 'poster of a video with crossorigin=anonymous').toMatchObject({ origin: harness.origin, status: 200 });
@@ -530,7 +531,7 @@ test.describe('media', () => {
     expect(beyond.status).toBe(416);
   });
 
-  test('a 60 MB download keeps its digest and the gateway streams it in bounded memory', async ({ page, harness }) => {
+  test('a 60 MB download keeps its digest and the door streams it in bounded memory', async ({ page, harness }) => {
     const { big } = harness.seed;
     await openHostedPage(page, harness);
     const { result, growthBytes, baselineBytes } = await harness.withRssSampling(() => page.evaluate(async ({ url }) => {
@@ -544,10 +545,10 @@ test.describe('media', () => {
     expect(result.contentLength).toBe(String(BIG_DOWNLOAD_BYTES));
     expect(result.digest).toBe(big.digest);
     reportRss('60 MB download', baselineBytes, growthBytes);
-    expect(growthBytes).toBeLessThan(GATEWAY_RSS_GROWTH_LIMIT);
+    expect(growthBytes).toBeLessThan(RUNTIME_RSS_GROWTH_LIMIT);
   });
 
-  test('a 200 MB upload from the page keeps its digest and the gateway streams it in bounded memory', async ({ page, harness }) => {
+  test('a 200 MB upload from the page keeps its digest and the door streams it in bounded memory', async ({ page, harness }) => {
     await openHostedPage(page, harness);
     const { result, growthBytes, baselineBytes } = await harness.withRssSampling(() => page.evaluate(async ({ url, bytes, projectUrl }) => {
       const chunk = new Uint8Array(1024 * 1024);
@@ -562,12 +563,12 @@ test.describe('media', () => {
       const response = await fetch(`${url}${projectUrl}`, { method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'Idempotency-Key': crypto.randomUUID(), 'X-Original-Name': 'upload-200mb.bin' }, body: blob });
       const body = await response.json();
       return { status: response.status, digest: body?.data?.digest, size: body?.data?.size, expected: `sha256:${Array.from(expected, (b) => b.toString(16).padStart(2, '0')).join('')}` };
-    }, { url: harness.gatewayBase, bytes: BIG_UPLOAD_BYTES, projectUrl: `/v1/projects/${harness.seed.projectId}/objects` }));
+    }, { url: harness.doorBase, bytes: BIG_UPLOAD_BYTES, projectUrl: `/v1/projects/${harness.seed.projectId}/objects` }));
     expect(result.status).toBe(201);
     expect(result.size).toBe(BIG_UPLOAD_BYTES);
     expect(result.digest).toBe(result.expected);
     reportRss('200 MB upload', baselineBytes, growthBytes);
-    expect(growthBytes).toBeLessThan(GATEWAY_RSS_GROWTH_LIMIT);
+    expect(growthBytes).toBeLessThan(RUNTIME_RSS_GROWTH_LIMIT);
     // The Runtime holds exactly those bytes.
     const stored = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(result.digest)}`, { method: 'HEAD' });
     expect(stored.status).toBe(200);
@@ -594,9 +595,9 @@ test.describe('restarts', () => {
     expect(sha256Hex(Buffer.from(await image.arrayBuffer()))).toBe(harness.seed.image.digest);
   });
 
-  test('the gateway keeps serving after the Runtime restarts on a new port (it re-reads discovery)', async ({ harness }) => {
+  test('the door comes back on its fixed port when the Runtime restarts on a new one', async ({ harness }) => {
     await harness.restartRuntime();
-    const response = await harness.gatewayRequest('/v1/health');
+    const response = await harness.doorRequest('/v1/health');
     expect(response.status).toBe(200);
     expect(response.json().runtime_instance_id).toBe(harness.runtimeInstanceId);
   });
@@ -609,7 +610,7 @@ test.describe('restarts', () => {
     await editFirstTrackName(page, 'Draft kept across the restart');
     await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
 
-    // The gateway follows the Runtime to its new port by itself; nothing here restarts it.
+    // The Runtime comes back on a new port, and its door on the same fixed one.
     await harness.restartRuntime();
     await expect(page.getByRole('heading', { name: 'Astrid restarted' })).toBeVisible({ timeout: 20_000 });
     expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload), 'the page does not reload by itself').toBe(true);
@@ -637,7 +638,9 @@ test.describe('restarts', () => {
     await expectConnected(page);
     await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
 
-    await harness.stopGateway();
+    // The same Runtime stops being usable and becomes usable again: a Runtime that restarts is a new instance and
+    // shows the restart card (above), so this is its door losing the product credential and getting it back.
+    harness.withdrawProductCredential();
     try {
       await expect(page.getByRole('heading', { name: 'Astrid stopped' })).toBeVisible({ timeout: 20_000 });
       await expect(page.getByText('Start it again on this computer and this page carries on. Your changes are kept.')).toBeVisible();
@@ -646,7 +649,7 @@ test.describe('restarts', () => {
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'stopped');
       await expect(page.locator(UI.status)).not.toContainText('Connected');
       await expect(page.getByText('Workspace connection unavailable')).toHaveCount(0);
-      await harness.startGateway();
+      harness.restoreProductCredential();
       await expect(page.getByRole('heading', { name: 'Astrid stopped' })).toHaveCount(0, { timeout: 20_000 });
       await expectConnected(page);
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload), 'the page carries on without a reload').toBe(true);
@@ -655,30 +658,22 @@ test.describe('restarts', () => {
     }
   });
 
-  test('a stopped gateway refuses connections (Node and the page); started again it serves on the same fixed port', async ({ page, harness }) => {
+  test('a stopped Runtime takes its door with it (Node and the page are refused); started again it serves on the same fixed port', async ({ page, harness }) => {
     await openHostedPage(page, harness);
-    const before = harness.gatewayBase;
-    await harness.stopGateway();
-    await expect(rawRequest({ port: harness.gatewayPort, path: '/api/runtime/v1/health', headers: { Origin: harness.origin } })).rejects.toMatchObject({ code: 'ECONNREFUSED' });
+    const before = harness.doorBase;
+    await harness.stopRuntime();
+    await expect(rawRequest({ port: harness.doorPort, path: '/api/runtime/v1/health', headers: { Origin: harness.origin } })).rejects.toMatchObject({ code: 'ECONNREFUSED' });
     const fromPage = await page.evaluate(async (url) => { try { await fetch(url); return 'responded'; } catch { return 'failed'; } }, `${before}/v1/health`);
     expect(fromPage).toBe('failed');
 
-    const started = await harness.startGateway();
-    expect(new URL(started.base).port).toBe(String(GATEWAY_PORT));
-    const health = await pageFetch(page, `${started.base}/v1/health`);
+    await harness.startRuntime();
+    expect(harness.doorBase).toBe(before);
+    expect(new URL(before).port).toBe(String(DOOR_PORT));
+    const health = await pageFetch(page, `${before}/v1/health`);
     expect(health.status).toBe(200);
     expect(json(health).runtime_instance_id).toBe(harness.runtimeInstanceId);
-    const projects = await harness.gatewayRequest('/v1/projects?limit=100');
+    const projects = await harness.doorRequest('/v1/projects?limit=100');
     expect(projects.json().items.map((item: any) => item.project_id)).toContain(harness.seed.projectId);
-  });
-
-  test('App: a gateway restart reconnects by itself', async ({ page, harness }) => {
-    await openApp(page, harness);
-    await expectConnected(page);
-    await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
-    await harness.restartGateway();
-    await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
-    expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
   });
 });
 
@@ -686,15 +681,15 @@ test.describe('restarts', () => {
 // 5. Security
 
 test.describe('security', () => {
-  test('another origin is refused by the gateway (Node) and cannot read anything from a page', async ({ page, harness }) => {
-    const refused = await harness.gatewayRequest('/v1/projects?limit=100', { origin: harness.otherOrigin });
+  test('another origin is refused by the door (Node) and cannot read anything from a page', async ({ page, harness }) => {
+    const refused = await harness.doorRequest('/v1/projects?limit=100', { origin: harness.otherOrigin });
     expect(refused.status).toBe(403);
     expect(refused.json().error).toBe('hosted_origin_required');
     expect(refused.headers['access-control-allow-origin']).toBeUndefined();
     expect(refused.text).not.toContain(harness.seed.projectId);
-    const sameSite = await harness.gatewayRequest('/v1/projects?limit=100', { origin: `https://${'astrid.test'}.evil.test:${harness.originPort}` });
+    const sameSite = await harness.doorRequest('/v1/projects?limit=100', { origin: `https://${'astrid.test'}.evil.test:${harness.originPort}` });
     expect(sameSite.status).toBe(403);
-    const plainHttp = await harness.gatewayRequest('/v1/projects?limit=100', { origin: harness.origin.replace('https:', 'http:') });
+    const plainHttp = await harness.doorRequest('/v1/projects?limit=100', { origin: harness.origin.replace('https:', 'http:') });
     expect(plainHttp.status).toBe(403);
 
     // A page on another origin: the browser may send the request, but the page can read nothing back.
@@ -704,7 +699,7 @@ test.describe('security', () => {
       try { await fetch(`${base}/v1/projects?limit=100`); results.cors = 'responded'; } catch { results.cors = 'blocked'; }
       try { const response = await fetch(`${base}/v1/projects?limit=100`, { mode: 'no-cors' }); results.noCors = `${response.type}/${response.status}`; } catch { results.noCors = 'blocked'; }
       return results;
-    }, harness.gatewayBase);
+    }, harness.doorBase);
     expect(outcomes.cors).toBe('blocked');
     expect(['blocked', 'opaque/0']).toContain(outcomes.noCors);
     const fromEvil = harness.audit().filter((entry) => entry.origin === harness.otherOrigin);
@@ -714,22 +709,22 @@ test.describe('security', () => {
   });
 
   test('a rebinding Host is refused on the product routes', async ({ harness }) => {
-    const port = harness.gatewayPort;
+    const port = harness.doorPort;
     for (const host of [`evil.test:${port}`, `127.0.0.1.evil.test:${port}`, '127.0.0.1', 'localhost', `localhost:${port}`, `127.0.0.1:${port + 1}`, `[::1]:${port}`, `astrid.test:${port}`]) {
       for (const requestPath of ['/api/runtime/v1/health', '/api/astrid/v1/health']) {
-        const refused = await harness.gatewayRequest(requestPath, { host, fromRoot: true });
+        const refused = await harness.doorRequest(requestPath, { host, fromRoot: true });
         expect(refused.status, `Host ${host} ${requestPath}`).toBe(403);
         expect(refused.json().error).toBe('invalid_host');
       }
     }
-    expect((await harness.gatewayRequest('/v1/health', { host: `127.0.0.1:${port}` })).status).toBe(200);
+    expect((await harness.doorRequest('/v1/health', { host: `127.0.0.1:${port}` })).status).toBe(200);
   });
 
   test('the old /session/ paths and paths outside /api/runtime and /api/astrid are refused', async ({ harness }) => {
-    const port = harness.gatewayPort;
+    const port = harness.doorPort;
     const capability = 'A'.repeat(43);
     for (const requestPath of ['/v1/health', '/v1/connect', `/session/${capability}/api/runtime/v1/health`, `/session/${capability}/api/astrid/v1/health`, '/session//api/runtime/v1/health', '/api/runtime', '/api/runtime/', '/api/other/v1/health', '/']) {
-      // The hosted origin gets a plain 404 from the gateway, so the refusals below are the Origin check and not a missing route.
+      // The hosted origin gets a plain 404 from the door, so the refusals below are the Origin check and not a missing route.
       const own = await rawRequest({ port, path: requestPath, headers: { Origin: harness.origin } });
       expect(own.status, requestPath).toBe(404);
       expect(own.json().error).toBe('route_not_allowed');
@@ -758,48 +753,55 @@ test.describe('security', () => {
     ];
     for (const [method, requestPath] of refusals) {
       const init = { method, headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : '{}' };
-      const response = await harness.gatewayRequest(requestPath, init);
+      const response = await harness.doorRequest(requestPath, init);
       expect(response.status, `${method} ${requestPath}`).toBe(404);
       expect(response.json().error).toBe('route_not_allowed');
       // Beside the 404 for the hosted origin: another origin and no origin are refused by the Origin check, whatever the route.
-      expect((await harness.gatewayRequest(requestPath, { ...init, origin: harness.otherOrigin })).status, `another origin ${method} ${requestPath}`).toBe(403);
-      expect((await harness.gatewayRequest(requestPath, { ...init, origin: null })).status, `no origin ${method} ${requestPath}`).toBe(403);
+      expect((await harness.doorRequest(requestPath, { ...init, origin: harness.otherOrigin })).status, `another origin ${method} ${requestPath}`).toBe(403);
+      expect((await harness.doorRequest(requestPath, { ...init, origin: null })).status, `no origin ${method} ${requestPath}`).toBe(403);
     }
-    // Compose is a local-dev route and ACP is off unless the launcher was given --acp: neither is served on any prefix.
+    // Compose is a local-dev route, and chat lives only under /api/astrid: neither is served here.
     const notServed: Array<[string, string]> = [
-      ['POST', '/api/astrid/generation/compose'], ['POST', '/api/runtime/generation/compose'],
-      ['POST', '/api/astrid/acp/connect'], ['GET', '/api/astrid/acp/health'], ['POST', '/api/astrid/acp/c1/rpc'], ['GET', '/api/astrid/acp/c1/events'],
-      ['POST', '/api/runtime/acp/connect'],
+      ['POST', '/api/astrid/generation/compose'], ['POST', '/api/runtime/generation/compose'], ['POST', '/api/runtime/acp/connect'],
     ];
     for (const [method, requestPath] of notServed) {
       const init = { method, fromRoot: true, headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : '{}' };
-      const response = await harness.gatewayRequest(requestPath, init);
+      const response = await harness.doorRequest(requestPath, init);
       expect(response.status, `${method} ${requestPath}`).toBe(404);
       expect(response.json().error).toBe('route_not_allowed');
-      expect((await harness.gatewayRequest(requestPath, { ...init, origin: harness.otherOrigin })).status, `another origin ${method} ${requestPath}`).toBe(403);
-      expect((await harness.gatewayRequest(requestPath, { ...init, origin: null })).status, `no origin ${method} ${requestPath}`).toBe(403);
+      expect((await harness.doorRequest(requestPath, { ...init, origin: harness.otherOrigin })).status, `another origin ${method} ${requestPath}`).toBe(403);
+      expect((await harness.doorRequest(requestPath, { ...init, origin: null })).status, `no origin ${method} ${requestPath}`).toBe(403);
     }
-    // The gateway answered every one itself (404 or 403) and still serves allowed routes.
-    expect((await harness.gatewayRequest('/v1/projects?limit=1')).status).toBe(200);
+    // Chat routes exist, but no chat service runs on this computer: a refusal the page can read and show calmly.
+    for (const [method, requestPath] of [['POST', '/api/astrid/acp/connect'], ['GET', '/api/astrid/acp/health'], ['POST', '/api/astrid/acp/c1/rpc'], ['GET', '/api/astrid/acp/c1/events']] as const) {
+      const init = { method, fromRoot: true, headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : '{}' };
+      const response = await harness.doorRequest(requestPath, init);
+      expect(response.status, `${method} ${requestPath}`).toBe(503);
+      expect(response.json().error).toBe('acp_unavailable');
+      expect(response.headers['access-control-allow-origin']).toBe(harness.origin);
+      expect((await harness.doorRequest(requestPath, { ...init, origin: harness.otherOrigin })).status, `another origin ${method} ${requestPath}`).toBe(403);
+    }
+    // The door answered every one itself (404, 403 or 503) and still serves allowed routes.
+    expect((await harness.doorRequest('/v1/projects?limit=1')).status).toBe(200);
     expect((await harness.runtimeJson('GET', '/v1/projects?limit=1')).status).toBe(200);
   });
 
   test('browser credentials, a foreign Referer and the Private Network preflight', async ({ harness }) => {
-    const withAuthorization = await harness.gatewayRequest('/v1/health', { headers: { Authorization: `Bearer ${harness.productToken}` } });
+    const withAuthorization = await harness.doorRequest('/v1/health', { headers: { Authorization: `Bearer ${harness.productToken}` } });
     expect(withAuthorization.status).toBe(403);
     expect(withAuthorization.json().error).toBe('browser_credentials_forbidden');
-    const withCookie = await harness.gatewayRequest('/v1/health', { headers: { Cookie: 'a=b' } });
+    const withCookie = await harness.doorRequest('/v1/health', { headers: { Cookie: 'a=b' } });
     expect(withCookie.status).toBe(403);
 
     // A media-style request without Origin is refused, whatever its Referer: the hosted one included.
-    const asMedia = (referer?: string) => harness.gatewayRequest(`/v1/objects/${encodeURIComponent(harness.seed.image.objectId)}`, { origin: null, headers: referer ? { Referer: referer } : {} });
+    const asMedia = (referer?: string) => harness.doorRequest(`/v1/objects/${encodeURIComponent(harness.seed.image.objectId)}`, { origin: null, headers: referer ? { Referer: referer } : {} });
     expect((await asMedia(`${harness.origin}/`)).status).toBe(403);
     expect((await asMedia(`${harness.origin}/tools/video-editor`)).status).toBe(403);
     expect((await asMedia(`${harness.otherOrigin}/`)).status).toBe(403);
     expect((await asMedia()).status).toBe(403);
-    expect((await harness.gatewayRequest('/v1/projects', { origin: null, method: 'POST', headers: { Referer: `${harness.origin}/`, 'Content-Type': 'application/json' }, body: '{"name":"x"}' })).status).toBe(403);
+    expect((await harness.doorRequest('/v1/projects', { origin: null, method: 'POST', headers: { Referer: `${harness.origin}/`, 'Content-Type': 'application/json' }, body: '{"name":"x"}' })).status).toBe(403);
 
-    const preflight = (origin: string, requestHeaders: string) => harness.gatewayRequest('/v1/projects', {
+    const preflight = (origin: string, requestHeaders: string) => harness.doorRequest('/v1/projects', {
       method: 'OPTIONS', origin,
       headers: { 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': requestHeaders, 'Access-Control-Request-Private-Network': 'true' },
     });
@@ -818,7 +820,7 @@ test.describe('security', () => {
     await openHostedPage(page, harness);
     const blocked = await page.evaluate(async (base) => {
       try { await fetch(`${base}/v1/projects`, { headers: { Authorization: 'Bearer owner' } }); return 'responded'; } catch { return 'blocked'; }
-    }, harness.gatewayBase);
+    }, harness.doorBase);
     expect(blocked).toBe('blocked');
   });
 });
@@ -831,12 +833,12 @@ test.describe('security', () => {
  * so none of them sees a second timeline). Opened by URL: the hosted workspace route takes the project slug and timeline id.
  */
 async function openSeededTimelineByUrl(page: Page, harness: DirectHarness, seed: { projectSlug: string; timelineId: string }) {
-  const gatewayRequests: string[] = [];
-  page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${GATEWAY_PORT}/`)) gatewayRequests.push(`${request.method()} ${request.url()}`); });
+  const doorRequests: string[] = [];
+  page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${DOOR_PORT}/`)) doorRequests.push(`${request.method()} ${request.url()}`); });
   await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?localProject=${encodeURIComponent(seed.projectSlug)}&localTimeline=${encodeURIComponent(seed.timelineId)}`);
   await expectConnected(page);
   await expect(firstTrackName(page)).toBeVisible();
-  return { seed, gatewayRequests };
+  return { seed, doorRequests };
 }
 
 async function openExtensionsTimeline(page: Page, harness: DirectHarness) {
@@ -844,7 +846,7 @@ async function openExtensionsTimeline(page: Page, harness: DirectHarness) {
 }
 
 test.describe('pack extensions (App)', () => {
-  test('extensions: the transcript lane renders its words from the gateway', async ({ page, harness }) => {
+  test('extensions: the transcript lane renders its words from the door', async ({ page, harness }) => {
     harness.extensionsConfig = 'on';
     const { seed } = await openExtensionsTimeline(page, harness);
     // The lane is the bundled transcript extension's (config on): one chip per segment of the bundle read from the Runtime.
@@ -855,9 +857,9 @@ test.describe('pack extensions (App)', () => {
     for (const text of seed.transcriptTexts) {
       await expect(lane.getByLabel(`Transcript segment: ${text}`, { exact: false })).toHaveCount(1);
     }
-    // The words came through the gateway with the hosted Origin: the timeline's composition read is in its audit.
+    // The words came through the door with the hosted Origin: the timeline's composition read is in its audit.
     const reads = await waitForAudit(harness, (entry) => entry.method === 'GET' && entry.path.includes(`/timelines/${seed.timelineId}/composition-revisions`) && entry.status === 200 && entry.origin === harness.origin);
-    expect(reads.length, 'the composition (with its transcript bundle) was read through the gateway with the hosted Origin').toBeGreaterThan(0);
+    expect(reads.length, 'the composition (with its transcript bundle) was read through the door with the hosted Origin').toBeGreaterThan(0);
   });
 
   test('extensions: a live scene previews from a Runtime object in its sandboxed iframe', async ({ page, harness }) => {
@@ -879,16 +881,16 @@ test.describe('pack extensions (App)', () => {
     expect(frame, 'the scene frame is reachable').not.toBeNull();
     await expect(frame!.locator('#scene')).toContainText(seed.sceneMarker);
     // From inside the frame: no network (the document's CSP is connect-src 'none') and no reach into the hosting page.
-    const inside = await frame!.evaluate(async (gatewayBase) => {
-      const network = await fetch(`${gatewayBase}/v1/health`).then(() => 'reached', () => 'blocked');
+    const inside = await frame!.evaluate(async (doorBase) => {
+      const network = await fetch(`${doorBase}/v1/health`).then(() => 'reached', () => 'blocked');
       let parentAccess = 'blocked';
       try { void (window.parent.document.title); parentAccess = 'reached'; } catch { /* cross-origin */ }
       let storage = 'blocked';
       try { void window.localStorage.length; storage = 'reached'; } catch { /* opaque origin */ }
       return { network, parentAccess, storage };
-    }, harness.gatewayBase);
+    }, harness.doorBase);
     expect(inside).toEqual({ network: 'blocked', parentAccess: 'blocked', storage: 'blocked' });
-    expect(harness.audit().filter((entry) => entry.origin === 'null'), 'the scene frame sent nothing to the gateway').toEqual([]);
+    expect(harness.audit().filter((entry) => entry.origin === 'null'), 'the scene frame sent nothing to the door').toEqual([]);
   });
 
   test('extensions: with the config missing, the editor still loads and extensions are off', async ({ page, harness }) => {
@@ -905,7 +907,7 @@ test.describe('pack extensions (App)', () => {
       await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toHaveCount(0);
       await expect(page.getByTestId('astrid-live-scene-entry')).toHaveCount(0);
       await expect(page.locator('iframe[title^="Live scene"]')).toHaveCount(0);
-      // The timeline itself is intact: the same composition was read through the gateway, so it is the extensions that are off.
+      // The timeline itself is intact: the same composition was read through the door, so it is the extensions that are off.
       const reads = await waitForAudit(harness, (entry) => entry.method === 'GET' && entry.path.includes(`/timelines/${seed.timelineId}/composition-revisions`) && entry.status === 200);
       expect(reads.length).toBeGreaterThan(0);
       await expectConnected(page);
@@ -919,15 +921,15 @@ test.describe('pack extensions (App)', () => {
 // Media elements need crossorigin="anonymous" so the browser sends the hosted Origin (`mediaCrossOrigin`, applied on each element).
 // The seeded timeline has no clips, so this case opens the harness's media timeline (an image clip and a video clip, both Runtime objects).
 test.describe('media (App)', () => {
-  test('App: the seeded image and video thumbnail render from the gateway', async ({ page, harness }) => {
+  test('App: the seeded image and video thumbnail render from the door', async ({ page, harness }) => {
     const { image, video } = harness.seed;
     const { seed } = await openSeededTimelineByUrl(page, harness, await harness.seedMedia());
-    const gatewayObject = (objectId: string) => `/v1/objects/${encodeURIComponent(objectId)}`;
+    const doorObject = (objectId: string) => `/v1/objects/${encodeURIComponent(objectId)}`;
     // The audit records the decoded path (the id's colon is not escaped).
     const auditPath = (objectId: string) => `/v1/objects/${objectId}`;
 
-    // The image clip's thumbnail is an <img> on the gateway URL; it decodes only if the gateway answered the hosted Origin.
-    const thumbnail = page.locator(`[data-clip-id="${seed.imageClipId}"] img[src*="${gatewayObject(image.objectId)}"]`).first();
+    // The image clip's thumbnail is an <img> on the door URL; it decodes only if the door answered the hosted Origin.
+    const thumbnail = page.locator(`[data-clip-id="${seed.imageClipId}"] img[src*="${doorObject(image.objectId)}"]`).first();
     await expect(thumbnail).toBeVisible();
     await expect(thumbnail).toHaveAttribute('crossorigin', 'anonymous');
     await expect.poll(() => thumbnail.evaluate((element: HTMLImageElement) => [element.naturalWidth, element.naturalHeight])).toEqual([64, 48]);
@@ -946,18 +948,18 @@ test.describe('media (App)', () => {
 // ---------------------------------------------------------------------------------------------
 // 7. Speed table (reported, never judged)
 
-test('speed table: each step through the gateway against the Runtime directly', async ({ harness }, testInfo) => {
+test('speed table: each step through the door against the Runtime directly', async ({ harness }, testInfo) => {
   test.setTimeout(300_000);
   const { projectId, timelineId, image, video, big } = harness.seed;
   const idem = () => randomBytes(8).toString('hex');
-  const viaGateway = (pathUnderBase: string, init: { method?: string; headers?: Record<string, string>; body?: Buffer | string } = {}) => harness.gatewayRequest(pathUnderBase, init);
+  const viaDoor = (pathUnderBase: string, init: { method?: string; headers?: Record<string, string>; body?: Buffer | string } = {}) => harness.doorRequest(pathUnderBase, init);
   const viaRuntime = (pathUnderBase: string, init: { method?: string; headers?: Record<string, string>; body?: Buffer | string } = {}) =>
     rawRequest({ port: harness.runtimePort, path: pathUnderBase, method: init.method, headers: { Authorization: `Bearer ${harness.productToken}`, ...init.headers }, body: init.body });
-  const sides = { runtime: viaRuntime, gateway: viaGateway } as const;
+  const sides = { runtime: viaRuntime, door: viaDoor } as const;
   const SMALL = 9;
   const jsonHeaders = { 'Content-Type': 'application/json' };
 
-  for (const via of ['runtime', 'gateway'] as const) {
+  for (const via of ['runtime', 'door'] as const) {
     const call = sides[via];
     await speed.time('handshake (POST)', via, SMALL, async () => {
       const response = await call('/v1/handshake', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ protocol: 'workspace.v1', client_name: 'journey', client_version: '1', requested_scopes: ['handshake'] }) });
@@ -999,7 +1001,7 @@ test('speed table: each step through the gateway against the Runtime directly', 
 
   // Uploads: a fresh 200 MB body per repetition (the store is content-addressed, so a repeat would dedupe).
   const payload = randomBytes(BIG_UPLOAD_BYTES);
-  for (const via of ['runtime', 'gateway'] as const) {
+  for (const via of ['runtime', 'door'] as const) {
     const call = sides[via];
     const bodies: Array<{ body: Buffer; digest: string }> = [];
     for (let rep = 0; rep < 2; rep++) {

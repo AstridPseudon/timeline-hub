@@ -1,14 +1,17 @@
 /**
  * Journey harness for the same-machine "direct" transport (Plan A, F4).
  *
- *   hosted-style HTTPS origin (production build)  ->  loopback gateway  ->  real Runtime daemon (SQLite)
+ *   hosted-style HTTPS origin (production build)  ->  the Runtime's browser door  ->  real Runtime daemon (SQLite)
+ *
+ * The door is the Runtime's own second listener (astrid-runtime `runtime_protocol/door.py`): nothing from this repo runs
+ * between the page and the Runtime.
  *
  * Everything lives in one throwaway temp directory that `stop()` removes. Child processes
  * run in their own process groups and are killed by group.
  */
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
 import { createHash, randomBytes, randomUUID, X509Certificate } from 'node:crypto';
-import { createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer as createHttpsServer, type Server as HttpsServer } from 'node:https';
 import { request as httpRequest, type IncomingHttpHeaders } from 'node:http';
 import { createServer as createNetServer } from 'node:net';
@@ -20,8 +23,8 @@ import { deflateSync } from 'node:zlib';
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, '../../../..');
 
-/** The gateway's well-known port (Plan A D1). Override with ASTRID_APP_DIRECT_GATEWAY_PORT. */
-export const GATEWAY_PORT = Number(process.env.ASTRID_APP_DIRECT_GATEWAY_PORT ?? 17340);
+/** The door's well-known port (Plan A D1). Override with ASTRID_APP_DIRECT_DOOR_PORT. */
+export const DOOR_PORT = Number(process.env.ASTRID_APP_DIRECT_DOOR_PORT ?? 17340);
 export const HOSTED_HOST = 'astrid.test';
 export const OTHER_HOST = 'evil.test';
 export const PRODUCT_ACTOR = 'astrid-e2e-product';
@@ -66,7 +69,7 @@ async function freePort(): Promise<number> {
 async function assertPortFree(port: number, what: string): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const server = createNetServer();
-    server.once('error', (error: NodeJS.ErrnoException) => reject(new Error(`${what} port ${port} is not free (${error.code}); stop whatever uses it or set ASTRID_APP_DIRECT_GATEWAY_PORT`)));
+    server.once('error', (error: NodeJS.ErrnoException) => reject(new Error(`${what} port ${port} is not free (${error.code}); stop whatever uses it or set ASTRID_APP_DIRECT_DOOR_PORT`)));
     server.listen(port, '127.0.0.1', () => server.close(() => resolve()));
   });
 }
@@ -291,7 +294,7 @@ export interface ExtensionsSeed {
   sceneEntry: SeededObject;
 }
 
-/** One timeline whose clips are the seeded image and the seeded video, so the editor draws both from the gateway. */
+/** One timeline whose clips are the seeded image and the seeded video, so the editor draws both through the door. */
 export interface MediaSeed {
   projectSlug: string;
   timelineId: string;
@@ -357,13 +360,10 @@ export class DirectHarness {
   runtimePort = 0;
   runtimeInstanceId = '';
   realmId = '';
-  gatewayBase = '';
-  gatewayPid = 0;
   seed!: Seed;
   productToken = '';
-  readonly gatewayPort = GATEWAY_PORT;
+  readonly doorPort = DOOR_PORT;
   private runtime?: Managed;
-  private gateway?: Managed;
   private https?: HttpsServer;
   private stopped = false;
   private extensionsMode: ExtensionsConfigMode = 'on';
@@ -377,8 +377,12 @@ export class DirectHarness {
 
   get realmDir() { return path.join(this.tmp, 'realm'); }
   get supportDir() { return path.join(this.tmp, 'support'); }
-  get auditPath() { return path.join(this.tmp, 'gateway-audit.jsonl'); }
-  get gatewayPrefix() { return new URL(this.gatewayBase).pathname; }
+  get auditPath() { return path.join(this.tmp, 'door-audit.jsonl'); }
+  /** The product credential the door acts with, as `astrid-runtime up` would provision it. */
+  get credentialPath() { return path.join(this.tmp, 'product-credential.json'); }
+  /** The App's Runtime base (`runtimeApiBase()`) under the door's origin. */
+  get doorBase() { return `http://127.0.0.1:${this.doorPort}${this.doorPrefix}`; }
+  get doorPrefix() { return '/api/runtime'; }
 
   /** Browser context options: the local-network permission is granted (the prompt itself is a manual-checklist item). */
   get contextOptions() {
@@ -403,7 +407,7 @@ export class DirectHarness {
     process.on('SIGTERM', () => { void this.stop().finally(() => process.exit(143)); });
     try {
       this.tmp = mkdtempSync(path.join(tmpdir(), 'astrid-direct-'));
-      await assertPortFree(this.gatewayPort, 'gateway');
+      await assertPortFree(this.doorPort, 'door');
       const tls = makeCertificate(this.tmp);
       this.spki = tls.spki;
       this.originPort = Number(process.env.ASTRID_APP_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
@@ -414,9 +418,9 @@ export class DirectHarness {
       mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
       this.realmId = await this.createRealm();
       await this.startRuntime();
-      this.productToken = await this.provisionCredential(PRODUCT_ACTOR, 'product-credential.json');
+      // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
+      this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
       this.seed = await this.seedRuntime();
-      await this.startGateway();
     } catch (error) {
       await this.stop();
       throw error;
@@ -433,15 +437,19 @@ export class DirectHarness {
     return JSON.parse(output.trim().split('\n').pop()!).realm_id;
   }
 
-  /** Starts the daemon the way the launcher does: port 0, so every start gets a new port; discovery is rewritten by the Runtime. */
+  /**
+   * Starts the daemon the way `astrid-runtime up` does: port 0, so every start gets a new port (discovery is rewritten by the
+   * Runtime), and the browser door for the hosted origin on its fixed port, acting with the product credential.
+   */
   async startRuntime(port = 0): Promise<void> {
     if (this.runtime) throw new Error('Runtime already running');
-    const managed = spawnGroup(runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey'], { cwd: this.tmp, env: this.runtimeEnv() });
+    const managed = spawnGroup(runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
+      '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath], { cwd: this.tmp, env: this.runtimeEnv() });
     this.runtime = managed;
     const endpoint = await waitFor<string>('Runtime start', async () => {
       const line = managed.stdout.split('\n').find((candidate) => candidate.trim().startsWith('{') && candidate.includes('"endpoint"'));
       return line ? JSON.parse(line).endpoint : null;
-    }, 60_000, () => (managed.child.exitCode !== null ? `Runtime exited ${managed.child.exitCode}: ${managed.stderr.slice(-800)}` : null));
+    }, 60_000, () => (managed.child.exitCode !== null ? `Runtime exited ${managed.child.exitCode}: ${managed.stdout.slice(-800)}${managed.stderr.slice(-800)}` : null));
     this.runtimePort = Number(new URL(endpoint).port);
     const health = await waitFor<any>('Runtime health', async () => {
       const response = await fetch(`${endpoint}/v1/health`);
@@ -485,7 +493,7 @@ export class DirectHarness {
 
   /**
    * A credential for `actorId`, minted through the Runtime's own route with the owner credential and written to
-   * `<tmp>/<file>` as `{token, actor_id}`, mode 0600 (the shape the gateway's `--token-file` and Astrid's reader accept).
+   * `<tmp>/<file>` as `{token, actor_id}`, mode 0600 (the shape the door's `--door-credential-file` and Astrid's reader accept).
    * Returns the token; it never leaves Node memory and that file, and the hosted server serves neither.
    */
   async provisionCredential(actorId: string, file: string): Promise<string> {
@@ -502,8 +510,8 @@ export class DirectHarness {
   }
 
   /**
-   * What the Runtime last published about itself (`<support>/discovery.json`, rewritten on every start). The gateway and every
-   * Astrid call re-read it, so a restarted Runtime on a new port is followed with no special case. Throws when it is absent or unparsable.
+   * What the Runtime last published about itself (`<support>/discovery.json`, rewritten on every start). Every Astrid call
+   * re-reads it, so a restarted Runtime on a new port is followed with no special case. Throws when it is absent or unparsable.
    */
   discovery(): RuntimeDiscovery {
     const parsed = JSON.parse(readFileSync(path.join(this.supportDir, 'discovery.json'), 'utf8'));
@@ -568,7 +576,7 @@ export class DirectHarness {
     const scenePackage = await ingest(packageBody, 'application/json', 'scene.package.json');
     const liveScene = { revision: scenePackage.digest, source: { objectId: scenePackage.objectId, revision: scenePackage.digest }, packageBody, html };
 
-    const transcriptTexts = ['Words arrive through the gateway', 'then the lane draws them', 'one chip for each segment'];
+    const transcriptTexts = ['Words arrive through the door', 'then the lane draws them', 'one chip for each segment'];
     const assetKey = 'journey-speech';
     const bundle = {
       schema_version: 1,
@@ -605,7 +613,7 @@ export class DirectHarness {
   /**
    * A timeline in the seeded project whose two clips use the seeded image and video objects (registry `media_id`), made on first
    * use after the cases that open the seeded timeline (like `seedExtensions`, so none of them sees another timeline). The editor
-   * resolves each asset to a gateway object URL and draws the image clip's thumbnail from it.
+   * resolves each asset to a door object URL and draws the image clip's thumbnail from it.
    */
   async seedMedia(): Promise<MediaSeed> {
     if (this.mediaSeed) return this.mediaSeed;
@@ -708,80 +716,61 @@ export class DirectHarness {
     return this.threeProductsSeed;
   }
 
-  // -- Gateway -------------------------------------------------------------------------------
+  // -- Door ----------------------------------------------------------------------------------
 
-  /** `node --import tsx scripts/astrid-loopback-gateway.ts ...` using the repo's tsx; prints one `{base, realm_id, acp}` line when listening. */
-  async startGateway(): Promise<{ base: string; realm_id: string; acp: boolean }> {
-    if (this.gateway) throw new Error('gateway already running');
-    const managed = spawnGroup(process.execPath, ['--import', 'tsx', 'scripts/astrid-loopback-gateway.ts',
-      '--discovery', path.join(this.supportDir, 'discovery.json'),
-      '--token-file', path.join(this.tmp, 'product-credential.json'),
-      '--origin', this.origin,
-      '--port', String(this.gatewayPort),
-      '--audit-log', this.auditPath], { cwd: REPO_ROOT });
-    this.gateway = managed;
-    const printed = await waitFor<any>('gateway start', async () => {
-      const line = managed.stdout.split('\n').find((candidate) => candidate.trim().startsWith('{'));
-      return line ? JSON.parse(line) : null;
-    }, 60_000, () => (managed.child.exitCode !== null ? `gateway exited ${managed.child.exitCode}: ${managed.stderr.slice(-800)}` : null));
-    this.gatewayBase = printed.base;
-    this.gatewayPid = managed.child.pid!;
-    return printed;
+  /**
+   * Takes the product credential away from the door, so it listens but is not ready (`runtime_unavailable`), as before
+   * `astrid-runtime up` has provisioned it. `restoreProductCredential` gives it back; nothing restarts.
+   */
+  withdrawProductCredential(): void {
+    renameSync(this.credentialPath, `${this.credentialPath}.withdrawn`);
   }
 
-  async stopGateway(): Promise<void> {
-    await stopGroup(this.gateway);
-    this.gateway = undefined;
+  restoreProductCredential(): void {
+    if (existsSync(`${this.credentialPath}.withdrawn`)) renameSync(`${this.credentialPath}.withdrawn`, this.credentialPath);
   }
 
-  async restartGateway() {
-    await this.stopGateway();
-    return this.startGateway();
-  }
-
-  get gatewayRunning() { return Boolean(this.gateway && this.gateway.child.exitCode === null); }
-
-  /** Resident memory of the gateway process, in bytes (Linux). */
-  gatewayRssBytes(): number {
+  /** Resident memory of the Runtime process, which serves the door, in bytes (Linux). */
+  runtimeRssBytes(): number {
     try {
-      const status = readFileSync(`/proc/${this.gatewayPid}/status`, 'utf8');
+      const status = readFileSync(`/proc/${this.runtime?.child.pid}/status`, 'utf8');
       return Number(/VmRSS:\s+(\d+) kB/.exec(status)?.[1] ?? 0) * 1024;
     } catch { return 0; }
   }
 
-  /** Samples gateway RSS while `work` runs; returns its result and the peak growth over the starting RSS. */
+  /** Samples the Runtime's RSS while `work` runs; returns its result and the peak growth over the starting RSS. */
   async withRssSampling<T>(work: () => Promise<T>): Promise<{ result: T; baselineBytes: number; peakBytes: number; growthBytes: number }> {
-    const baselineBytes = this.gatewayRssBytes();
+    const baselineBytes = this.runtimeRssBytes();
     let peakBytes = baselineBytes;
-    const timer = setInterval(() => { peakBytes = Math.max(peakBytes, this.gatewayRssBytes()); }, 25);
+    const timer = setInterval(() => { peakBytes = Math.max(peakBytes, this.runtimeRssBytes()); }, 25);
     try {
       const result = await work();
-      peakBytes = Math.max(peakBytes, this.gatewayRssBytes());
+      peakBytes = Math.max(peakBytes, this.runtimeRssBytes());
       return { result, baselineBytes, peakBytes, growthBytes: peakBytes - baselineBytes };
     } finally { clearInterval(timer); }
   }
 
-  /** What the gateway judged and forwarded, from its own audit log. */
+  /** What the door judged and served, from its own audit log. */
   audit(): Array<{ method: string; path: string; origin: string | null; status: number; response_bytes: number }> {
     try { return readFileSync(this.auditPath, 'utf8').split('\n').filter(Boolean).map((line) => JSON.parse(line)); } catch { return []; }
   }
 
   /**
-   * A request to the gateway as the hosted page would send it (the hosted Origin, Host 127.0.0.1:<port>); nothing else is needed.
+   * A request to the door as the hosted page would send it (the hosted Origin, Host 127.0.0.1:<port>); nothing else is needed.
    * `pathUnderBase` is appended to the Runtime base `/api/runtime`; with `fromRoot` it is the whole path (for `/api/astrid/...` and paths outside both).
    */
-  gatewayRequest(pathUnderBase: string, init: { method?: string; headers?: Record<string, string>; body?: Buffer | string; host?: string; origin?: string | null; fromRoot?: boolean } = {}) {
+  doorRequest(pathUnderBase: string, init: { method?: string; headers?: Record<string, string>; body?: Buffer | string; host?: string; origin?: string | null; fromRoot?: boolean } = {}) {
     const headers: Record<string, string> = { ...init.headers };
     if (init.origin !== null) headers.Origin = init.origin ?? this.origin;
-    return rawRequest({ port: this.gatewayPort, path: init.fromRoot ? pathUnderBase : `${this.gatewayPrefix}${pathUnderBase}`, method: init.method, headers, body: init.body, host: init.host });
+    return rawRequest({ port: this.doorPort, path: init.fromRoot ? pathUnderBase : `${this.doorPrefix}${pathUnderBase}`, method: init.method, headers, body: init.body, host: init.host });
   }
 
-  /** Brings Runtime and gateway back to a serving state after a test that restarted or stopped either. */
+  /** Brings the Runtime and its door back to a serving state after a test that stopped it or took its credential away. */
   async resetToHealthy(): Promise<void> {
+    this.restoreProductCredential();
     if (!this.runtimeRunning) { this.runtime = undefined; await this.startRuntime(); }
-    if (!this.gatewayRunning) { this.gateway = undefined; await this.startGateway(); return; }
-    const probe = await this.gatewayRequest('/v1/health').catch(() => null);
-    if (!probe || probe.status !== 200) await this.restartGateway();
+    const probe = await this.doorRequest('/v1/health').catch(() => null);
+    if (!probe || probe.status !== 200) { await this.stopRuntime(); await this.startRuntime(); }
   }
 
   // -- Teardown ------------------------------------------------------------------------------
@@ -789,7 +778,6 @@ export class DirectHarness {
   async stop(): Promise<void> {
     if (this.stopped) return;
     this.stopped = true;
-    await stopGroup(this.gateway).catch(() => {});
     await stopGroup(this.runtime).catch(() => {});
     await new Promise<void>((resolve) => { if (!this.https) return resolve(); this.https.closeAllConnections?.(); this.https.close(() => resolve()); });
     if (this.tmp) rmSync(this.tmp, { recursive: true, force: true });

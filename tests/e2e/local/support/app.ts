@@ -5,7 +5,7 @@
 import { chromium, expect, test as base, type Browser, type Page } from '@playwright/test';
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
-import { DirectHarness, GATEWAY_PORT, startDirectHarness } from './harness.ts';
+import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
 
 export const UI = {
   status: '[data-testid="runtime-connection-status"]',
@@ -60,12 +60,12 @@ export async function waitForAudit(harness: DirectHarness, predicate: (entry: Re
   }
 }
 
-/** Opens the App at the hosted origin with nothing in the URL and returns the requests it made to the gateway. */
+/** Opens the App at the hosted origin with nothing in the URL and returns the requests it made to the door. */
 export async function openApp(page: Page, harness: DirectHarness) {
-  const gatewayRequests: string[] = [];
-  page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${GATEWAY_PORT}/`)) gatewayRequests.push(`${request.method()} ${request.url()}`); });
+  const doorRequests: string[] = [];
+  page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${DOOR_PORT}/`)) doorRequests.push(`${request.method()} ${request.url()}`); });
   await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}`);
-  return gatewayRequests;
+  return doorRequests;
 }
 
 export const expectConnected = (page: Page) => expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected');
