@@ -86,9 +86,11 @@ class WarmHolds:
         """Hold ``key`` for one task and cancel its pending expiry.
 
         ``lock`` guards the holder's resource; ``stop`` ends that resource and
-        runs under ``lock``.  Callers may hold ``lock`` while leasing.
+        runs under ``lock``.  Leasing takes ``lock`` first, so a lease never
+        returns while an expiry's stop is still running; ``lock`` must be
+        reentrant if callers hold it while leasing.
         """
-        with self._lock:
+        with lock, self._lock:
             if self._closed:
                 return WarmLease(None)
             hold = self._holds.get(key)

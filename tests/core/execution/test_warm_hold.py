@@ -116,6 +116,48 @@ def test_expiry_waiting_for_the_holder_lock_yields_to_a_task_that_arrives_first(
     assert stops == [] and holds.status()[0]["leases"] == 1
 
 
+def test_a_lease_waits_for_an_expiry_whose_stop_is_already_running():
+    timers, inner = Timers(), threading.RLock()
+    holds = WarmHolds(timer=timers)
+    stopping, proceed, progressed = threading.Event(), threading.Event(), threading.Event()
+    order, leaser = [], None
+
+    class HolderLock:
+        def __enter__(self):
+            if threading.current_thread() is leaser:
+                progressed.set()  # the new lease has reached the holder's lock
+            inner.acquire()
+
+        def __exit__(self, *exc_info):
+            inner.release()
+
+    def stop():
+        stopping.set()
+        proceed.wait()
+        order.append("stopped")
+
+    def lease():
+        holds.lease("engine", stop=stop, lock=lock)
+        order.append("leased")
+        progressed.set()
+
+    lock = HolderLock()
+    holds.release(holds.lease("engine", stop=stop, lock=lock), holding="wan2gp.generate_video", idle_seconds=600)
+    expiry = threading.Thread(target=timers.fire, daemon=True)
+    expiry.start()
+    stopping.wait()
+    leaser = threading.Thread(target=lease, daemon=True)
+    leaser.start()
+    try:
+        progressed.wait()
+        assert order == [], "a new lease must not return while the holder's stop runs"
+    finally:
+        proceed.set()
+    expiry.join()
+    leaser.join()
+    assert order == ["stopped", "leased"]
+
+
 def test_close_cancels_pending_expiries_and_later_leases_are_inert():
     timers, (lock, stops, stop) = Timers(), holder()
     holds = WarmHolds(timer=timers)
