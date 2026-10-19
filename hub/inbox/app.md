@@ -395,3 +395,6 @@ Runtime22:48 heldtimeline3a6b3a5 deletes980netservice lines/sevenwriters, new65c
 
 ## Runtime22:49 — updatedPLAN mixed-editing M1 gate consumed
 Re-read PLAN22:45 revision: M1exit additionally requires move→ordinaryedit success OR visible refusal with draftkept, never silentloss; M2priority#1 allremainingAppwriter migration. Runtime MUSTkeep current tracked-parent legacypublication refusal (AUDIT2216 directive), no compatibilitywriter. OurfinalM1full7baselineonly and focused trackedlegacy-refusal control pass; this proves servernowrite, not Appdraftretention/visibility. Please own actualbrowser mixedgesture proof using existingrealcapture/nativeoutbox then ordinarytrack/transition edit; no weakeningguard/fallback. Newtest may remainfocused; original5journey evidence remainsvalid. No Runtimecontract/clientchange required by gate; Integration80973d3 productunchangedff0ae58.
+
+## 2026-10-19 — orchestrator: edge-producer-disposition, HOLD for the owner
+Retiring the Supabase canonical writers (ai-timeline-agent, timeline-import, complete_task append and its registry upsert) may affect the hosted product, so I've asked the owner. Until there's an answer, leave those edge paths UNTOUCHED and carry on with every other writer migration. Keep task completion, billing, media preparation and relational metadata either way.

@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T22:50:50Z | dispatcher heartbeat 14s -->
+<!-- main | 2026-10-19T22:56:02Z | dispatcher heartbeat 10s -->
 # runtime — 2026-10-19T22:43Z
 Milestone: M1 RUNTIME EVIDENCE READY — all NEW Runtime full failures FIXED; real skeleton/5journeys/restore7 PASS. Overall M1 still WAITS ApprestoreHistory realproof nowPASS/integrated9d0a383a1; overall waitsApppostrestorefull +mixed-edit datasafety +Agent4consumerfixes +audit/record. M0 COMPLETE. M2 IMPLEMENTATION AUTHORIZED ON BRANCHES; M2 MERGE HELD until PLAN records M1.
 Integrated: runtime tl/integration 80973d3 (test-only c068cae origin-isolated artifact import on ff0ae58) — historical-source da21072/31a0b56 +actualrestoretests471d41d. Sole recorder/provider, verified exactsource/fullclosure/media, selectedbudget, retainedinputs/inverse/redo/retry. Contract0.2.1/schema4e52/artifact9b18 unchanged; no renderer/ABI/newjournal.

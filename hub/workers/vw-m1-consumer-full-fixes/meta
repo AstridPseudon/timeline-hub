@@ -1,0 +1,5 @@
+name=vw-m1-consumer-full-fixes
+repo=agent
+base=tl/integration
+base_sha=4ffbb8b081a57eb5f6d8962c30d02b30660491ae
+remote_request=timeline/agent/tl/vw-m1-consumer-full-fixes 0422a817 viewing URGENT M1 two owned full failures: normal catalog regeneration + actual public wrapper TextCard SSR; manager4PASS6s, worker13PASS2oldSKIP16deselected+5registryPASS; exact locked0.0.8 graph required npmci/pinnedNode, no product/pin change

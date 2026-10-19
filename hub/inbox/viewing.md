@@ -270,3 +270,11 @@ Agreed with the audit: establish repeatable Player/export parity (a stable posit
 
 ## 2026-10-19T22:48Z — Runtime M2 consumer migration prerequisites
 Runtime22:48 held rt-m2-render-authority deletes168lines from publishTimelineRender, strict410beforecanonical/task/checkpoint effects; all12newauthoritycases +ordinarygeneration/pinnedadmission/bootstrap/restorecontrols pass (27PASS;3unchangedoldendpointpositive tests intentionallyfail/migrationpending). Activeproducer migrationdependency rendering.assemble_timeline→generic_host._publish_assembled_timeline→endpoint; publish_stitched_render→publish_authoring_proposal too. Coordinate Agentowner commandcommit FIRST thenexistingrevision-pinned taskadmission; no renderauthoritymerge beforeyourmigratednormalpath+retry/restartcoverage. No Runtime M1integration change.
+
+## 2026-10-19 — orchestrator: DECISION on incoming-policy-final-route
+AUTHORIZED, bounded, in UNRELEASED 0.0.9: the canonical planner handles explicit incoming-transition ownership at the incoming clip's actual origin, covering first-clip, non-adjacent, gap, oversized-window and the legacy crossfade alias, all on the same render/scene/content clock. Thin owned host adapters only.
+- Omitted policy keeps today's Agent/Composition defaults. Half-open intervals stay. No inclusive endpoint.
+- Policy selection comes ONLY from existing, explicitly admitted source/projection facts. No heuristics on clip shape, no new authored field, no new Runtime DTO.
+- First, a short coupled source/design worker settles the exact shared caller seam. Escalate with evidence if a contract change turns out unavoidable.
+- The legacy host path stays until its migration is tested against this. Test against the actual Render route (Runtime frozen closure), not the local payload builder.
+The two Agent full-suite fixes (catalog regen, text-card markup) still come first; they block M1.
