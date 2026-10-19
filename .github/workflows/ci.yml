@@ -69,6 +69,7 @@ jobs:
           tests/test_platform_windows.py
           tests/test_windows_worker_handoff.py
           tests/test_platform_filesystem.py
+          tests/test_dirfd_windows.py
           tests/test_m1_review.py
           tests/test_foreground.py
           tests/test_native_custody.py
