@@ -8,7 +8,7 @@ vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeApiBase: () => '
 vi.mock('@/shared/lib/browser/clipboard.ts', () => ({ writeClipboardTextSafe: mocks.clipboard }));
 
 import { EmptyWorkspaceGuidance } from './EmptyWorkspaceGuidance.tsx';
-import { RUNTIME_CONNECTION_COPY } from './copy.ts';
+import { AGENT_SEARCHES, RUNTIME_CONNECTION_COPY } from './copy.ts';
 
 function showGuidance(onRefresh = vi.fn()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -34,7 +34,6 @@ beforeEach(() => {
 describe('connected empty workspace guidance', () => {
   it('uses plain visible words and keeps workspace identity in the agent copy only', async () => {
     const onRefresh = showGuidance();
-    expect(screen.getByText('Astrid is connected, but there are no projects here yet.')).toBeInTheDocument();
     expect(screen.getByText('Expected to see your work? It may be in another Astrid folder on this computer.')).toBeInTheDocument();
     expect(mocks.ensureSession).not.toHaveBeenCalled();
 
@@ -54,8 +53,8 @@ describe('connected empty workspace guidance', () => {
     expect(copied).toContain('My workspace');
     expect(copied).toContain('realm-existing');
     expect(copied).toContain('http://127.0.0.1:17340/api/runtime');
-    expect(copied).toContain('configured data root');
-    expect(copied).toContain('Do not create a new workspace or project');
+    expect(copied).toContain(AGENT_SEARCHES.install);
+    expect(copied).toContain('Never create, reset or delete a workspace, project or install');
     expect(copied).not.toContain('private-session-value');
     expect(copied).not.toContain('private-credential-value');
     await waitFor(() => expect(screen.getByRole('button', { name: RUNTIME_CONNECTION_COPY.agent.copy })).toBeInTheDocument(), { timeout: 3000 });

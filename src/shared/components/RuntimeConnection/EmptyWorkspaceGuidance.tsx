@@ -4,21 +4,26 @@ import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
-import { RUNTIME_CONNECTION_COPY } from './copy.ts';
+import { AGENT_SEARCHES, RUNTIME_CONNECTION_COPY } from './copy.ts';
 
 type WorkspaceIdentity = { name: string; realmId: string };
 
-/** The details are for an agent to diagnose a misplaced workspace, not for the person to inspect. */
+/**
+ * The details are for an agent to find the person's work, not for the person to inspect. Each Astrid install keeps its
+ * own workspace, so the likely cause is that another Astrid on this computer holds it.
+ */
 function emptyWorkspaceDiagnostic(identity: WorkspaceIdentity, pageOrigin: string, endpoint: string): string {
   return [
-    `Astrid at ${pageOrigin} is connected, but its workspace returned no projects.`,
-    `Connected workspace: ${identity.name}`,
-    `Workspace ID: ${identity.realmId}`,
-    `Connection: ${endpoint}`,
-    'Please check which existing workspace the local Astrid launcher is using, including its configured data root and Runtime discovery files. Compare it with the workspace that contains my existing work.',
-    'Keep my existing installation, profile, data, credentials and agent instructions. Do not create a new workspace or project to work around missing data.',
-    'If the launcher points to the wrong workspace, reconnect it to the existing intended workspace, then reload this page and check the project list.',
-  ].join('\n\n');
+    `The page open at ${pageOrigin} is connected to Astrid on this computer, but there are no projects in its workspace, "${identity.name}" (ID ${identity.realmId}, reached through ${endpoint}). I expected to see my work, so it may be in another Astrid on this computer.`,
+    '',
+    '1. Find out which Astrid is running now, and the folder it runs from.',
+    '2. Look for the others. Each Astrid install keeps its own workspace:',
+    `     ${AGENT_SEARCHES.install}`,
+    `   A developer setup may also keep one in ${AGENT_SEARCHES.runtimeDataFolder}.`,
+    "3. Tell me what you found, and ask me which one holds my work before you change anything. To switch, stop the Astrid that's running and start that one (an install starts with <folder>/start, where <folder> holds its install.json). Then I'll reload this page.",
+    '',
+    'Never create, reset or delete a workspace, project or install to work around this.',
+  ].join('\n');
 }
 
 /** An empty, healthy workspace can be the wrong one; help people check before creating new work. */
@@ -66,25 +71,25 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
     onRefresh();
   };
 
+  // The card around this already says "No projects yet", so the guidance starts at the question it answers.
   return <div className="space-y-3 text-sm text-muted-foreground">
-    <p>Astrid is connected, but there are no projects here yet.</p>
     <p>Expected to see your work? It may be in another Astrid folder on this computer.</p>
     <details onToggle={event => setShowDetails(event.currentTarget.open)}>
       <summary className="cursor-pointer text-foreground">Find my work</summary>
       <div className="mt-3 space-y-3">
-        {identity.isPending ? <p role="status">Reading details…</p>
-          : identity.error ? <p role="status">Astrid's details aren't available right now.</p>
-            : identity.data ? <>
-              <Button variant="outline" onClick={() => void handleCopy()}>
-                {copyState === 'copied' ? copy.copied : copy.copy}
-              </Button>
-              {didCopy && <p role="status">{copy.pasteNext}</p>}
-              {copyState === 'failed' && <div className="space-y-2">
-                <p role="status">{copy.copyFailed}</p>
-                <textarea aria-label={copy.copyFailed} readOnly value={diagnostic} rows={6} onFocus={event => event.currentTarget.select()} className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground" />
-              </div>}
-            </> : null}
-        <Button variant="outline" onClick={handleCheckAgain}>Check again</Button>
+        {identity.isPending && <p role="status">Reading details…</p>}
+        {identity.error && <p role="status">Astrid's details aren't available right now.</p>}
+        <div className="flex flex-wrap gap-2">
+          {identity.data && <Button variant="outline" onClick={() => void handleCopy()}>
+            {copyState === 'copied' ? copy.copied : copy.copy}
+          </Button>}
+          <Button variant="outline" onClick={handleCheckAgain}>Check again</Button>
+        </div>
+        {identity.data && didCopy && <p role="status">{copy.pasteNext}</p>}
+        {identity.data && copyState === 'failed' && <div className="space-y-2">
+          <p role="status">{copy.copyFailed}</p>
+          <textarea aria-label={copy.copyFailed} readOnly value={diagnostic} rows={6} onFocus={event => event.currentTarget.select()} className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground" />
+        </div>}
       </div>
     </details>
   </div>;
