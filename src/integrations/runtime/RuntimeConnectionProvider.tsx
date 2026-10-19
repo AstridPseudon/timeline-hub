@@ -87,7 +87,9 @@ export async function probeRuntime(
     }
     const body = await readJson(response);
     if ((response.status === 502 || response.status === 503) && typeof body === 'object' && body !== null && 'error' in body) {
-      const kind = Object.entries(GATEWAY_REFUSAL_OUTCOMES).find(([code]) => code === body.error)?.[1];
+      const kind = typeof body.error === 'string' && Object.prototype.hasOwnProperty.call(GATEWAY_REFUSAL_OUTCOMES, body.error)
+        ? GATEWAY_REFUSAL_OUTCOMES[body.error as RuntimeRefusalCode]
+        : undefined;
       if (kind) return { kind };
     }
     if (response.status !== 200) return { kind: 'silent' };
