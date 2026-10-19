@@ -595,6 +595,7 @@ describe('Transcript panel SDK example contract', () => {
     expect(descriptor.entry.object_id).toBe('transcript-object-1');
     expect(descriptor.assets).toEqual([]);
   });
+
 });
 
 // ---------------------------------------------------------------------------

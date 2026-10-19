@@ -740,6 +740,8 @@
         "LiveSceneRequest",
         "LiveSceneResult",
         "LiveSceneScope",
+        "PanelFrameAnchor",
+        "PanelPreviewService",
         "PanelRenderProps",
         "PanelVideoAdapter",
         "ProjectDocumentSurface",
