@@ -12,7 +12,7 @@ import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/Re
 import { useTimelineChromeSelector, useTimelineDataSelector, useTimelinePlaybackSelector } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { useVideoEditorPreviewComposition } from './useVideoEditorPreviewComposition.ts';
-import type { PreviewRevision } from './previewRevision.ts';
+import { previewUnavailableLabel, type PreviewRevision } from './previewRevision.ts';
 
 export interface VideoEditorPreviewSurface {
   slotRef: RefCallback<HTMLDivElement>;
@@ -34,15 +34,30 @@ export function useVideoEditorPreviewSurface({
   const timelineData = useTimelineDataSelector((timeline) => timeline.data);
   const saveStatus = useTimelineChromeSelector((chrome) => chrome.saveStatus);
   const runtime = useOptionalVideoEditorRuntime();
-  const compositionResolution = useVideoEditorPreviewComposition(resolvedConfig);
+  const compositionResolution = useVideoEditorPreviewComposition(resolvedConfig, timelineData);
   const previewConfig = compositionResolution.config;
   const previewSource = compositionResolution.source;
   const previewRevision = useMemo<PreviewRevision>(() => {
+    const fact = timelineData?.editProjection;
+    const paired = fact && previewConfig === timelineData.resolvedConfig;
     const error = runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null;
-    const unavailableTarget = error && typeof error === 'object'
+    const unavailableTarget = fact && !paired
+      ? {
+        ...(fact.kind === 'accepted' ? { targetRevisionId: fact.head.revisionId } : {}),
+        reason: compositionResolution.error?.message ?? 'The command projection is unavailable.',
+      }
+      : error && typeof error === 'object'
       && 'targetRevisionId' in error && typeof error.targetRevisionId === 'string'
       ? { targetRevisionId: error.targetRevisionId, reason: error.message }
       : error ? { reason: error.message } : undefined;
+    if (paired) {
+      return {
+        ...(fact.kind === 'accepted'
+          ? { kind: 'committed' as const, revisionId: fact.head.revisionId }
+          : { kind: 'local' as const, baseRevisionId: fact.base.revisionId }),
+        ...(unavailableTarget ? { unavailableTarget } : {}),
+      };
+    }
     const canonicalDraft = runtime?.userId === null ? runtime.shots?.canonicalDraft : null;
     const canonicalComposition = runtime?.userId === null ? runtime.shots?.canonicalComposition : null;
 
@@ -87,9 +102,9 @@ export function useVideoEditorPreviewSurface({
     return unavailableTarget
       ? { kind: 'unavailable', unavailableTarget }
       : { kind: 'unknown', reason: 'The loaded timeline has no committed revision identity.' };
-  }, [compositionResolution.error?.message, previewSource, runtime?.shots?.canonicalComposition,
+  }, [compositionResolution.error?.message, previewConfig, previewSource, runtime?.shots?.canonicalComposition,
     runtime?.shots?.canonicalCompositionError, runtime?.shots?.canonicalDraft, runtime?.userId,
-    saveStatus, timelineData?.head?.headRevisionId]);
+    saveStatus, timelineData]);
   const {
     currentTime,
     previewRef,
@@ -186,7 +201,10 @@ export function useVideoEditorPreviewSurface({
         ? 'unavailable'
         : 'loading',
     ...(compositionResolution.status === 'error' && compositionResolution.error?.message
-      ? { unavailableReason: compositionResolution.error.message }
+      ? { unavailableReason: timelineData?.editProjection && previewRevision.unavailableTarget
+        ? `${previewUnavailableLabel(previewRevision.unavailableTarget)}: ${compositionResolution.error.message}`
+        : compositionResolution.error.message }
       : {}),
-  }), [compositionResolution.error?.message, compositionResolution.status, portal, previewConfig, slotRef]);
+  }), [compositionResolution.error?.message, compositionResolution.status, portal, previewConfig,
+    previewRevision.unavailableTarget, slotRef, timelineData?.editProjection]);
 }

@@ -345,6 +345,11 @@ export function useTimelineCommit({
       throw new Error('Resolve pending timeline commands before snapshot edits');
     }
     const currentData = dataRef.current;
+    // Legacy callers spread the displayed data; its fact cannot certify a later edit.
+    if (nextData.editProjection && (shouldSave
+      || (nextData !== currentData && nextData.editProjection === currentData?.editProjection))) {
+      nextData = { ...nextData, editProjection: undefined };
+    }
     if (options?.skipHistory && options?.updateLastSavedSignature) registryOwnersRef.current.clear();
     for (const [assetId, receipt] of registryOwnersRef.current) {
       const owned = registryReceiptsRef.current.get(receipt);
