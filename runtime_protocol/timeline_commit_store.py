@@ -127,9 +127,10 @@ class TimelineCommitStore:
             valid = valid and data["status"] == ("accepted" if previous == base else "rebased")
             valid = valid and data["rebased_onto"] == (None if previous == base else previous)
             ids = json.loads(row["event_ids_json"])
-            events = self.conn.execute("SELECT * FROM timeline_events WHERE timeline_id=? ORDER BY id",
-                                       (edge["timeline_id"],)).fetchall()
             seq = row["resulting_stream_seq"]
+            # Replay verifies the accepted prefix, independent of later writes.
+            events = self.conn.execute("SELECT * FROM timeline_events WHERE timeline_id=? ORDER BY id LIMIT ?",
+                                       (edge["timeline_id"], seq)).fetchall()
             valid = valid and isinstance(ids, list) and 0 < len(ids) <= seq <= len(events)
             valid = valid and ids == [str(e["id"]) for e in events[seq - len(ids):seq]]
             project_seq = self.conn.execute("SELECT next_seq FROM project_sequences WHERE project_id=?",
