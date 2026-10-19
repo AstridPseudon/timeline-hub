@@ -1839,7 +1839,9 @@ class RealmStore:
             digest = next(
                 (
                     value
-                    for key in ("content_sha256", "object_id", "digest", "sha256", "hash")
+                    # A content-addressed media_id is itself the immutable
+                    # CAS digest; opaque media IDs still need a digest field.
+                    for key in ("content_sha256", "object_id", "digest", "sha256", "hash", "media_id")
                     for value in (asset.get(key),)
                     if isinstance(value, str) and OBJECT_ID_RE.fullmatch(value)
                 ),

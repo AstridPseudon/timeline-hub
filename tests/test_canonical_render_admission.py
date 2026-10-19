@@ -125,6 +125,30 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
     assert f["service"].create_task(request) == f["service"].create_task(request)
 
 
+def test_content_addressed_media_identity_also_supplies_its_immutable_digest(canonical_scene):
+    f = canonical_scene
+    publication = _publication(f)
+    asset = {"media_id": f["audio"]["object_id"], "type": "audio/wav",
+             "file": "/api/runtime/v1/objects/" + f["audio"]["object_id"]}
+    publication["parent_composition"]["registry"]["assets"]["music"] = asset
+    f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    admitted = f["service"].create_task(_request(f))
+    spec = admitted["task"]["spec"]
+    assert f["audio"]["object_id"] in spec["input_object_ids"]
+    assert _snapshot(f["service"], spec)["registry"]["assets"]["music"] == asset
+    assert spec["spec"]["inputs"]["timeline_authority"]["managed_media_admissions"] == {
+        f["audio"]["object_id"]: f["audio"]["object_id"]}
+
+
+def test_opaque_media_identity_without_a_digest_still_fails_admission(canonical_scene):
+    f = canonical_scene
+    publication = _publication(f)
+    publication["parent_composition"]["registry"]["assets"]["music"] = {
+        "media_id": "opaque-media-id", "file": "/api/runtime/v1/objects/" + f["audio"]["object_id"], "type": "audio/wav"}
+    f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    _assert_rejected(f, _request(f), ValidationError, "no runtime content digest")
+
+
 def test_saved_source_tracks_remain_authored_but_are_removed_from_render_projection(canonical_scene):
     f = canonical_scene
     service = f["service"]

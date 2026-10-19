@@ -746,7 +746,7 @@ def test_managed_render_freezes_child_effects_and_offset_from_pinned_closure(tmp
         service.close()
 
 
-@pytest.mark.parametrize("scope", ["parent", "shot", "internal"])
+@pytest.mark.parametrize("scope", ["parent", "parent-media-id", "shot", "internal"])
 def test_managed_render_preserves_asset_identity_from_the_pinned_asset_scope(tmp_path, scope):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
@@ -759,10 +759,12 @@ def test_managed_render_preserves_asset_identity_from_the_pinned_asset_scope(tmp
         service.register_executor({"executor_id": "worker", "capabilities": ["rendering.render"]})
         media = service.ingest(project["id"], b"pinned-picture", media_type="image/png", idempotency_key="media")["data"]["object_id"]
         asset = {"media_id": media, "content_sha256": media, "type": "image/png", "file": "/api/runtime/v1/objects/" + media}
+        if scope == "parent-media-id":
+            del asset["content_sha256"]
         publication = _unsafe_publication(project["id"])
         child = publication["internal_timeline_revisions"][0]["payload"]
         child["clips"] = [{"id": "picture", "clipType": "media", "at": 0, "hold": 1, "track": "v", "asset": "shared"}]
-        if scope == "parent":
+        if scope in ("parent", "parent-media-id"):
             publication["parent_composition"]["registry"] = {"assets": {"shared": asset}}
         elif scope == "shot":
             publication["shot_revisions"][0]["payload"]["assets"] = [
@@ -777,8 +779,9 @@ def test_managed_render_preserves_asset_identity_from_the_pinned_asset_scope(tmp
         snapshot = json.loads(service.object(spec["spec"]["timeline_snapshot_ref"]["digest"])[1])
         rendered_asset = snapshot["registry"]["assets"][snapshot["config"]["clips"][0]["asset"]]
         assert rendered_asset["media_id"] == media
-        assert rendered_asset["content_sha256"] == media
-        if scope != "shot":
+        if scope == "shot":
+            assert rendered_asset["content_sha256"] == media
+        else:
             assert rendered_asset == asset
         assert media in spec["input_object_ids"]
         assert service.get_project_parent_composition_revision(project["id"], "main", "unsafe-parent") == authored
