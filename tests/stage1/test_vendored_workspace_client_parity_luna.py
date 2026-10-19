@@ -18,6 +18,7 @@ from banodoco_workspace_client import ManagedOutput, ObjectLocation, WorkspaceCl
 from banodoco_workspace_client.contract_metadata import (
     COMPONENT_MANIFEST_SHA256,
     OPERATIONS,
+    OPERATION_VERSIONS,
     PROTOCOL,
     SCHEMA_DIGEST,
 )
@@ -30,11 +31,13 @@ METADATA_PATH = ROOT / "banodoco_workspace_client" / "contract_metadata.py"
 # future runtime contract refresh must update the contract exports, file
 # hashes, and this test in one reviewed change; no ambient sibling checkout can
 # silently alter the shipped transport.
+# Runtime-owned generator and canonical contract at this immutable source.
+PINNED_RUNTIME_COMMIT = '0c003484230e962707358dec4750c19a57a12565'
 PINNED_PROTOCOL = "workspace.v1"
 PINNED_COMPONENT_MANIFEST_SHA256 = 'sha256:43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082'
-PINNED_SCHEMA_DIGEST = 'sha256:2170992517c98545d573222eef144580093e879fb3094b5bcb3f240008b5bb21'
-PINNED_GENERATED_SHA256 = '843ee389984294e2cdb9adebf5ccdb5757bd8ffb6f7a00fcc52acd76761da31e'
-PINNED_METADATA_SHA256 = '1a204d775f90fff0aec44d8e6212814020d9ad799b155224a7979ecc3d103b79'
+PINNED_SCHEMA_DIGEST = 'sha256:fc6c573edaa89fb84c85235873b42c27eabd32bb8571369e5c380e4a84298e7c'
+PINNED_GENERATED_SHA256 = 'f412024b78ec3be56f817096c0975f998c950de741f0967f20b96c8f22dbf703'
+PINNED_METADATA_SHA256 = '272908b65e1694a2322497401948ca329cdbc20e8dad8f4040a4d65b85cf4108'
 
 
 def _camel_to_snake(value: str) -> str:
@@ -64,7 +67,9 @@ def test_vendored_client_operation_catalog_matches_typed_methods() -> None:
     # This is a generated typed composition, not an independent OpenAPI
     # operation ID: it composes updateDocument while retaining a convenient
     # resource-scoped method for product adapters.
-    composed_helpers = {"update_timeline_document"}
+    # The media-output selector is the one explicit x-client-alias in the
+    # canonical contract; it uses the existing selection GET with output_id.
+    composed_helpers = {"update_timeline_document", "get_project_media_selection_for_output"}
     assert methods == operation_methods | composed_helpers
 
 
@@ -149,3 +154,28 @@ def test_obsolete_generic_client_artifact_is_absent() -> None:
 def test_generation_preserves_source_task_identity():
     row = generated.Generation.from_json({"generation_id": "g", "project_id": "p", "source_task_id": "task-1", "type": "image", "status": "completed", "version": 1, "created_at": "now", "updated_at": "now"})
     assert row.source_task_id == "task-1"
+
+
+def test_receiptless_worker_operations_preserve_generated_wire_boundary() -> None:
+    for operation in ("getReceiptlessWorkerCredentialGeneration", "retireReceiptlessWorkerCredential"):
+        assert operation in OPERATIONS
+        assert OPERATION_VERSIONS[operation] == [1]
+    calls = []
+    def transport(method, path, headers, body):
+        calls.append((method, path, headers, body))
+        return 200, {}, b'{"observed":true}'
+    client = WorkspaceClient("http://runtime", "owned-token", transport=transport)
+    assert client.get_receiptless_worker_credential_generation() == {"observed": True}
+    binding = {"generation": 7, "executor_id": "astrid-pack-host", "owner_epoch": "own-epoch"}
+    assert client.retire_receiptless_worker_credential(binding) == {"observed": True}
+    assert calls[0][0:2] == ("GET", "/v1/control/local-worker/credential-generation")
+    assert calls[0][3] is None
+    assert calls[1][0:2] == ("POST", "/v1/control/local-worker/retire-credential")
+    assert json.loads(calls[1][3]) == binding
+    assert calls[1][2]["Content-Type"] == "application/json"
+    assert all(call[2]["Authorization"] == "Bearer owned-token" for call in calls)
+
+
+def test_timeline_provider_uses_the_same_generated_contract() -> None:
+    from astrid.sdk.timeline.commit import RuntimeCommitService
+    assert RuntimeCommitService.contract_digest == SCHEMA_DIGEST
