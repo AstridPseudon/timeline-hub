@@ -202,7 +202,7 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
           </button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-72 max-w-[calc(100vw-2rem)] p-0">
-          <Command loop shouldFilter={false} defaultValue={catalog.currentModel ?? undefined}>
+          <Command loop shouldFilter={false} defaultValue={astridSelected ? catalog.currentModel ?? undefined : `agent:${selectedAgent}`}>
             <CommandInput placeholder="Search models..." className="h-8" value={query} onValueChange={setQuery} />
             <CommandList className="max-h-80">
               {showAgents && (listedAgents.length > 0 || !searching) && (
