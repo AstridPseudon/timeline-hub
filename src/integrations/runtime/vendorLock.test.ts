@@ -77,11 +77,12 @@ describe('runtime.lock.json', () => {
   it('consolidates generated types, timeline schema, and every response fixture under the Runtime pin', () => {
     const lock = JSON.parse(readFileSync(path.join(ROOT, 'runtime.lock.json'), 'utf8')) as VendorLock;
     expect(lock.source_commit).toMatch(/^[0-9a-f]{40}$/);
-    expect(Object.keys(lock.files)).toHaveLength(12);
+    expect(Object.keys(lock.files)).toHaveLength(13);
     expect(Object.keys(lock.files).filter((file) => file.startsWith('src/integrations/runtime/fixtures/responses/'))).toHaveLength(9);
     expect(Object.keys(lock.files)).toEqual(expect.arrayContaining([
       'src/integrations/runtime/generated-contract-metadata.ts',
       'src/integrations/runtime/generated.ts',
+      'src/integrations/runtime/timeline-commit-types.ts',
       'vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json',
       'src/integrations/runtime/fixtures/responses/events_page_1_200.json',
       'src/integrations/runtime/fixtures/responses/validation_error_422.json',
