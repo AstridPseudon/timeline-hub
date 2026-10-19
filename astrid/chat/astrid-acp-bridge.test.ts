@@ -127,7 +127,14 @@ test('real HTTP bridge enforces RPC and project policy for hosted calls and pres
     assert.equal((await created.json()).operation_session_id, 's1');
     assert.equal((await registry.get('p1')).selected_session_id, 's1');
     const rpc = (connection: string, configId: string, value: string, sessionId = 's1') => call(`/${connection}/rpc`, { method: 'session/set_config_option', params: { sessionId, configId, value } });
-    assert.equal((await rpc('c1', 'model', 'model-a')).status, 409);
+    const assertModelFixed = async (connection: string, value: string) => {
+      const before = forwarded.length;
+      const rejected = await rpc(connection, 'model', value);
+      assert.equal(rejected.status, 409);
+      assert.equal((await rejected.json()).error, 'session_model_fixed');
+      assert.equal(forwarded.length, before);
+    };
+    await assertModelFixed('c1', 'model-a');
     assert.equal((await rpc('c1', 'thinking', 'high')).status, 200);
     const protectedState = await registry.get('p1');
     const forwardedBeforeMedia = forwarded.length;
@@ -161,19 +168,23 @@ test('real HTTP bridge enforces RPC and project policy for hosted calls and pres
     assert.equal((await call('/c1/rpc', { method: 'session/prompt', params: { sessionId: 's1', prompt: textMetadata } })).status, 200);
     assert.deepEqual((forwarded[forwarded.length - 1].params as { prompt: unknown }).prompt, textMetadata);
     // Reattach the saved project session through ensure. Its advertised
-    // options are shared, while config writes require taking over its writer role.
+    // options are shared. Thinking writes require taking over its writer role;
+    // model writes stay forbidden for every attached client.
     assert.equal((await call('/connect', {})).status, 200);
+    const beforeUnownedConfig = forwarded.length;
     assert.equal((await rpc('c2', 'model', 'model-a')).status, 400);
+    assert.equal(forwarded.length, beforeUnownedConfig);
     const resumed = await call('/projects/p1/chat/sessions', { connection_id: 'c2', mode: 'ensure', operation_id: 'resume-one' });
     assert.equal(resumed.status, 200); assert.equal((await resumed.json()).operation_session_id, 's1');
     assert.equal(forwarded.filter(item => item.method === 'session/new').length, 1);
     assert.equal(forwarded.filter(item => item.method === 'session/resume').length, 0);
-    assert.equal((await rpc('c2', 'model', 'model-a')).status, 409);
+    await assertModelFixed('c2', 'model-a');
+    assert.equal((await rpc('c2', 'thinking', 'high')).status, 409);
     assert.equal((await call('/c2/rpc', { method: 'session/takeover', params: { sessionId: 's1' } })).status, 200);
-    assert.equal((await rpc('c2', 'model', 'model-a')).status, 200);
+    await assertModelFixed('c2', 'model-a');
+    await assertModelFixed('c2', 'unadvertised');
     assert.equal((await rpc('c2', 'thinking', 'high')).status, 200);
     const beforeBadConfig = forwarded.length;
-    assert.equal((await rpc('c2', 'model', 'unadvertised')).status, 400);
     assert.equal((await rpc('c2', 'thinking', 'high', 'foreign')).status, 400);
     assert.equal(forwarded.length, beforeBadConfig);
     // Separately configured non-hosted ACP preserves supported media prompts.

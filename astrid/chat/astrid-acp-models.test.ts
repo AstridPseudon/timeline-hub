@@ -86,11 +86,21 @@ for (const agent of ids) test(`${agent} applies its model once when created and 
     const result = (await created.json() as { result: { sessionId: string; models: { currentModelId: string } } }).result;
     expect(result.models.currentModelId).toBe(selected);
     expect((await value.call('/connect', { agent, defaultModelId: modelIds(agent)[0] })).status).toBe(200);
+    const beforeAttach = value.hosts.flatMap(host => host.calls).length;
+    expect((await value.rpc('c2', 'session/set_config_option', { sessionId: result.sessionId, configId: 'model', value: modelIds(agent)[0] })).status).toBe(400);
+    expect(value.hosts.flatMap(host => host.calls)).toHaveLength(beforeAttach);
     expect((await value.rpc('c2', 'session/load', { sessionId: result.sessionId })).status).toBe(200);
+    expect((await value.rpc('c2', 'session/set_config_option', { sessionId: result.sessionId, configId: 'thinking', value: 'low' })).status).toBe(409);
     expect((await value.rpc('c2', 'session/takeover', { sessionId: result.sessionId })).status).toBe(200);
     expect((await value.call('/projects/p/chat/prompt', { connection_id: 'c2', session_id: result.sessionId, prompt: [] })).status).toBe(200);
     expect((await value.rpc('c2', 'session/prompt', { sessionId: result.sessionId, prompt: [] })).status).toBe(200);
-    expect((await value.rpc('c2', 'session/set_config_option', { sessionId: result.sessionId, configId: 'model', value: modelIds(agent)[0] })).status).toBe(409);
+    for (const model of [modelIds(agent)[0], 'unadvertised']) {
+      const beforeModelWrite = value.hosts.flatMap(host => host.calls).length;
+      const rejected = await value.rpc('c2', 'session/set_config_option', { sessionId: result.sessionId, configId: 'model', value: model });
+      expect(rejected.status).toBe(409);
+      expect(await rejected.json()).toMatchObject({ error: 'session_model_fixed' });
+      expect(value.hosts.flatMap(host => host.calls)).toHaveLength(beforeModelWrite);
+    }
     expect((await value.call('/model', { model: modelIds(agent)[0] })).status).toBe(404);
     expect((await value.call('/c2/model', { sessionId: result.sessionId, modelId: modelIds(agent)[0] })).status).toBe(404);
     expect((await value.rpc('c2', 'session/set_config_option', { sessionId: result.sessionId, configId: 'thinking', value: 'low' })).status).toBe(200);
