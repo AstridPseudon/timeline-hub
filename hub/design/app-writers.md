@@ -1,4 +1,4 @@
-> Owner update 2026-10-19 ~23:11Z: PURGE every Supabase canonical writer in ai-timeline-agent, timeline-import, complete_task append+registry upsert and shared astridAppendService; delete retired write tests/docs, keep completion/billing/media preparation/relational metadata and make retained edge tests import/pass. Four isolated workers active; not integrated yet. This supersedes the earlier owner-HOLD and conversion-vs-retirement uncertainty below.
+> Owner update 2026-10-19 ~23:11Z: PURGE every Supabase canonical writer in ai-timeline-agent, timeline-import, complete_task append+registry upsert and shared astridAppendService; delete retired write tests/docs, keep completion/billing/media preparation/relational metadata and make retained edge tests import/pass. The reviewed purge is composed on this worker branch; this supersedes the earlier owner-HOLD and conversion-vs-retirement uncertainty below.
 
 # App M2 durable writer map
 
@@ -39,11 +39,13 @@ central `app-m1-journey-python-basis-e2e-m1-gesture-1019210718-13326` run;
 The five-case M1 closure also passed centrally on its final tuple. These prove
 move/inverse/outbox/restart mechanics. They do **not** close Gate 6.
 
-The following remain **OPEN** until their own producer emits an Agent command
-through `commitTimeline`, or the producer is deleted: ordinary editor snapshot
-save, add/update/trim/split/delete/track edits, asset/registry writes, popup
-add/swap, duplicate/group writes, placement, element/standalone adapters,
-visual seam/transcript/project-data writes, and all Supabase producers.
+The following App-owned writers remain **OPEN** until their own producer emits
+an Agent command through `commitTimeline`, or the producer is deleted:
+ordinary editor snapshot save, add/update/trim/split/delete/track edits,
+asset/registry writes, popup add/swap, duplicate/group writes, placement,
+element/standalone adapters, and visual seam/transcript/project-data writes.
+The retired Supabase canonical-writer lane is closed below and is not a
+remaining UI-writer dependency.
 
 ## Reachable writer census
 
@@ -56,7 +58,7 @@ Paths below are current App paths, not filenames inferred from the M0 search.
 | **Popup add/swap** | `travel-between-images/components/shotTimelineDataProvider.ts:435-590` implements `saveTimeline`; it calls `enqueueCanonicalShotPublish` and `shotCompositionAdapter.publish`, which reaches `publishParentComposition`. Recovery is persisted through `saveTimelineDraftIfOwner` at `:516-537`. | **OPEN.** Remove this `saveTimeline` compatibility publisher only after add and swap each have independent command-door tests; refusal must make no snapshot/legacy call. |
 | **Canonical duplicate/group** | `components/AstridTimelineEditor.tsx:390-445` directly calls `runtime.shots.shotComposition.publish` for canonical duplication. The fallback `lib/shot-group-pack-commands.ts:379-418` / `:444-477` calls `mutateTimelineDocument`; `shared/lib/placement/placementService.ts:78-147` saves through `saveTimelineAtHead`. | **OPEN.** Duplicate must become a command/proposal or be deleted. The M2 group migration and occurrence moves below are the only approved route for legacy-group behavior; no direct graph publication or whole-parent replacement survives. |
 | **Shared placement** | `shared/lib/placement/placementService.ts:119-239` loads, mutates and CAS-saves the document. Callers include `placeGeneration`, `unplaceGeneration`, `batchUpdatePlacementFrames`, and `lib/shot-group-pack-commands.ts:410,469`. | **OPEN.** Convert canonical placement/unplacement/frame edits to Agent commands with server rebase, or delete the writer. Its bounded client CAS loop is not semantic migration proof. |
-| **Supabase append service and callers** | `_shared/astridAppendService.ts:119-163` posts `config-replaced` / `create-with-config`. `ai-timeline-agent/db.ts:716-729` exposes `saveTimelineConfigVersioned`; callers are `ai-timeline-agent/tools/registry.ts:810,840,961,1039`, `complete_task/handler.ts:105`, `complete_task/placement.ts:235`, and `timeline-import/handler.ts:249,302`. | **OPEN.** These server-side producers must propose Agent commands and reach the same Runtime commit path, or be deleted. An edge function that cannot reach the door is a blocker to escalate with evidence, never permission for a second writer. |
+| **Retired Supabase canonical writers** | The `ai-timeline-agent` and `timeline-import` functions, `_shared/astridAppendService.ts`, `complete_task` canonical append, and `complete_task` registry upsert were removed by the owner-authorized M2 purge. | **CLOSED — zero active canonical writers and zero supported append/registry commands.** Retained `complete_task` continues task completion, billing, media preparation, and relational metadata only. Do not add an edge-to-Runtime relay or replacement whole-document writer. |
 | **Other durable adapters** | `hooks/useTimeline.ts:31-50`, `runtime/element-adapter.ts:66-105`, `useTimelineState.persistVisualSeamConfig`, persisted transcript/project-data paths, and asset registration through `useTimelineCommit.patchRegistry` / `useAssetOperations.ts`. | **OPEN.** Convert each bounded producer or remove its provider save branch. Relational `shot_generations.timeline_frame` and `metadata.end_frame` remain outside canonical M2 scope and cannot count as command coverage. |
 
 Local preview, IndexedDB recovery drafts and test providers are not accepted
@@ -77,10 +79,10 @@ sequence below remains valid within that slice, not the current global priority.
 
 Current Next5: (1) ordinary editor track/clip producers, beginning the mixed
 track-rename case, on official Agent operations/capture; (2) popup add/swap with
-immutable media/occurrence pins; (3) placement plus Supabase writer disposition/
-conversion; (4) remaining adapters/registry/transcript/data producers and delete
-the last snapshot publisher once all callers pass; (5) canonical group migration/
-occurrence/retrack/new-track/free-multi sequence and its three original positives.
+immutable media/occurrence pins; (3) placement; (4) remaining
+adapters/registry/transcript/data producers and delete the last snapshot
+publisher once all callers pass; (5) canonical group migration/occurrence/
+retrack/new-track/free-multi sequence and its three original positives.
 Accepted-history and conflict UI/clone branches proceed independently; M2 merges
 still wait for the recorded M1 gate. Missing command schemas are Agent handoff
 dependencies, never permission to invent local wire names.
@@ -100,56 +102,31 @@ visibly **OPEN**.
 | **4** | **Independent free multi-clip move.** App seams: `lib/multi-drag-utils.ts`, `lib/clip-drag-planner.ts`, `hooks/useClipDrag.ts`, `hooks/useTimelineTrackManagement.ts`, and the public command service. Agent must publish the explicit multi-member command/capture/query schema (the draft’s `clip.move-set` is provisional). | Bind a nonempty ordered set of exact parent or occurrence clip refs, one anchor, original lane membership/order, all source/media selections and collision/extent predicates. Apply one quantized delta, preserve relative offsets/source windows/opaque fields, and refuse mixed owners, shared ownership, blockers or missing immutable pins as one transaction. The third `it.fails` test remains until accepted reload/inverse/redo passes. This slice does not edit group provenance or remove popup/placement writers. |
 | **5** | **Popup add/swap command conversion.** App seam: `travel-between-images/components/shotTimelineDataProvider.ts:321-590`; tests: `ShotTimelinePreview.test.ts`, popup provider tests, and the command-session/outbox tests. Agent must publish exact add and replacement/clear operations; local `add-media` and `swap` are not wire names. Runtime must provide the immutable media-selection read and accepted canonical closure needed by the command. | Add captures the exact occurrence owner, canonical head pair, source/media selection, asset identity, duration/type and all created IDs. Swap captures the exact occurrence/clip identity, old membership/source pin and replacement media selection; it must not select by display ID or refresh guards after authoring. Test add and swap separately, including missing occurrence/media pins, mixed batches, lost ACK and exact retry. On proof, remove popup `saveTimeline`, `shotCompositionAdapter.publish`, and its whole-graph fallback; retain draft recovery as command outbox recovery. |
 
-Placement and Supabase work is a parallel **OPEN** conversion lane, not a
-hidden sixth writer closure: it can proceed independently once Agent publishes
-the relevant command/capture contract, but no Next-5 success authorizes their
-snapshot/config append paths to remain.
+Placement remains a parallel **OPEN** conversion lane. The Supabase canonical
+writer lane is already closed by the owner-authorized purge; no App UI writer or
+future command may restore its snapshot/config append paths.
 
-## Supabase producer transport boundary (2026-10-19 audit)
+## Supabase canonical-writer status (2026-10-19 owner purge)
 
-Audited App worker base `fa1f7965e`; details, exact tests and the socket-free
-executable probe are in
-[the boundary report](../workers/app-m2-edge-producer-boundary/report.md).
-**No current producer uses the normal local commit door. This is not evidence
-that ordinary App editing requires a cloud relay.** Current App chat uses
-`hooks/useAgentSession.ts:313,709` (local ACP), and task creation uses
-`shared/lib/taskCreation/createTask.ts:324-346` (capability admission).
-Production App call-site searches found no invocation of `ai-timeline-agent`,
-`complete_task`, or `timeline-import`; edge entrypoints and their internal
-writer calls still exist. External CLI/worker use and deployed configuration
-were not checked. The census above remains an inventory of writers to remove,
-not proof that these three endpoints have ordinary App callers.
+Status is exact: **zero active Supabase canonical timeline writers and zero
+supported append/registry commands** in the reviewed purge tree. The removed
+writer set is:
 
-`_shared/astridAppendService.ts:7-8,48-87,119-163` reads only the two
-`ASTRID_APP_APPEND_SERVICE_*` variables and posts a whole config to
-`config-replaced` / `create-with-config` with an internal bearer. It has no
-local discovery, product-credential binding, project-scoped commit request,
-base head pair, or idempotency key. The real normal client is
-`integrations/runtime/generated.ts:174-176` plus
-`dataProvider.ts:678-694`; local proxy/discovery supplies its product credential
-(`config/vite/runtimeProxy.ts:8-25`, `scripts/runtime-discovery-proxy.mjs:46-81`).
-Changing the append URL cannot convert either route/body into a commit.
-A hosted edge function's loopback would address that host, not the user's
-local Runtime (topology inference, not an attempted connection); a same-host
-deployment is not intrinsically impossible, but no supported wiring appears
-in the audited source. No environment values or secrets were inspected.
+* `ai-timeline-agent` canonical timeline editing and registry paths;
+* `timeline-import` canonical import publication;
+* `_shared/astridAppendService.ts` and its whole-document routes;
+* `complete_task` canonical append and `upsert_asset_registry_entry` mutation.
 
-Smallest permitted follow-up: qualify and delete unused legacy canonical-write
-entrypoints/wrappers, or return proposed edits to an **identified existing local
-caller** for Agent capture → existing outbox → normal commit. The edge agent
-already returns proposals (`index.ts:107-117`, `tools/registry.ts:512-536`), but
-they are numeric-version `TimelinePatch` envelopes, not canonical EditCommands;
-`importEdgeProposals` has no production caller. Completion returns URLs and
-follow-up warnings (`complete_task/handler.ts:570-592`); import returns only
-version/created status (`timeline-import/types.ts`). Neither has a local
-proposal consumer. Do not invent one silently. Agent must publish the relevant
-operation/capture and lossless-import semantics; Runtime/Agent must identify
-any retained completion/import caller and immutable media/result handoff.
-Delete `createTimelineViaService`, `appendTimelineConfigViaService`, and
-`saveTimelineConfigVersioned` only after their remaining consumers are retired
-or converted; preserve artifact storage, billing and relational placement.
-Next worker: **app-m2-edge-writer-retirement**, after manager disposition of
-external consumers. This audit converts no writer and leaves Gate 6 OPEN.
+The retained `complete_task` boundary is completion, billing, media
+preparation, and relational shot metadata. It does not publish canonical
+timeline state or automatically place a result. Proposal records using the
+stable `ai-timeline-agent` extension identifier are unrelated active proposal
+storage and remain supported as data; they are not a writer.
+
+No replacement edge command, schema, relay, or canonical scope is introduced.
+Remaining work is the App UI writer census above: each remaining UI producer
+must use a published Agent command through the normal Runtime door or be
+deleted. This status does not claim deployment state.
 
 ## Backend reachability and negative matrix
 
@@ -185,10 +162,9 @@ separate projection candidate and do not satisfy Gate 6.
 * Popup: targeted `src/tools/travel-between-images/components/ShotTimelinePreview.test.ts`
   and `ShotTimelinePreview.integration.test.tsx` tests for add and swap independently, then the
   command outbox/restart test; no snapshot fallback is an accepted substitute.
-* Placement/Supabase: targeted placement and function tests must assert command
-  proposal/commit calls and no `saveTimelineConfigVersioned` or append-service
-  call. If the edge runtime cannot reach `/v1/.../commit`, record the exact
-  transport failure and stop at the blocker.
+* Placement: targeted placement tests must assert command proposal/commit calls
+  and preserve the relational metadata boundary; they do not broaden M2 to
+  canonical placement projections.
 * Agent owns unpublished operation schemas, capture queries, recorder effects,
   immutable media/occurrence binding rules and conformance tests; App must pin
   the published artifact rather than guess an opname. Runtime owns the route,

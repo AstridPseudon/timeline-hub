@@ -1,0 +1,11 @@
+# App-local track-label seam (M2 branch handoff, 2026-10-19 23:44 UTC)
+Agent owns op/schema; consume exact native handoff77b1f0f7 and App capturec3e95aea. App-only seam mirrors clip.move, no wire changes:
+- new commands/trackLabelGesture.ts exports TrackLabelCapturePort, CapturedTrackLabelEdit, captureTrackLabelEdit(port,current,trackId), submitTrackLabelEdit(captured,args).
+- port capture({trackId,current}): JsonObject; finish(basis,args): {command}; submit({command,preview:TimelinePatch}):void. args follows exact TrackLabelArgs from trackLabelCapture.ts.
+- raw session exposes trackLabelPort; hook returns trackLabelPort; ops exposes trackLabel?: TrackLabelCapturePort.
+- capture before user typing. submit never recaptures original expectations. Parent tracks only, explicit unambiguous identity. Missing/ambiguous scope and unsupported mixed patches refuse atomically and visibly, preserve user input. No display-ID ownership inference.
+- empty string is a value; clear removes canonical label field. A compiled/display fallback may represent missing labels only in preview, never on wire.
+- session worker owns new gesture seam and raw/hook session. UI worker owns all ops/store/state.types/useTimelineState threading plus UI/TrackManagement. Public-patch worker owns useTimelineOps (+tests), adds optional trackLabelPort there; UI worker threads it from save.commands in useTimelineState. Coordinate via this document/report files, no shared edits.
+- publicpatch supports exactly ONE merge-mode label-only track.update per apply initially; reject unsupported mixed/batched labels atomically, with no commitData save. UI-only controlled stories retain presentation callbacks; production mounted canonical edits never fall back.
+
+Coordination: workers may READ live /home/user/work/wt/app-m2-track-label-session/src/tools/video-editor/commands/trackLabelGesture.ts once created to check exact exports, but may not edit/commit someone else's worktree. Session implementation owns capture files imported from c3e and helper; composer imports them once. Public patch confirms existing save.flush already awaits command session, so no second ACK barrier API. Official Runtime artifact remains M1; widened tuple requested via app-20261019T234600Z-label-artifact-handoff escalation.
