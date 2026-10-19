@@ -41,7 +41,7 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
               <section key={provider.id} aria-label={provider.name}>
                 <h3 className="px-2 pb-1 text-[11px] font-semibold text-muted-foreground">{provider.name}</h3>
                 {provider.signedIn && provider.models.length === 0 && <p className="px-2 py-1 text-[11px] text-muted-foreground">Signed in. No enabled models; check <code>omp models ls</code>.</p>}
-                {provider.signedIn ? provider.models.map(model => {
+                {provider.signedIn || provider.models.length > 0 ? provider.models.map(model => {
                   const id = `${provider.id}/${model.id}`;
                   const selected = catalog.currentModel === id;
                   return <button key={id} type="button" disabled={busy} aria-current={selected ? 'true' : undefined}

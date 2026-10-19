@@ -32,7 +32,7 @@ const modelUsageSchema = z.strictObject({
     status: z.enum(['ok', 'warning', 'exhausted', 'unknown']).optional(),
   })),
 });
-const modelCatalogSchema = z.strictObject({
+export const modelCatalogSchema = z.strictObject({
   providers: z.array(z.strictObject({
     id: z.string().min(1), name: z.string().min(1), signedIn: z.boolean(),
     models: z.array(z.strictObject({ id: z.string().min(1), name: z.string().min(1) })),

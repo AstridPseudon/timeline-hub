@@ -5,7 +5,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { delimiter } from 'node:path';
-import { getAstridOmpModelCatalog, OmpModelSelectionError, setAstridOmpDefaultModel } from './astrid-omp-models.ts';
+import { getAstridAgentModelCatalog, setAstridAgentDefaultModel } from './astrid-agent-models.ts';
 
 import {
   AcpProcessHost,
@@ -51,8 +51,6 @@ export type AstridAcpBridgeConfig = {
   readonly sessionDir?: string;
   readonly systemPromptFile?: string;
   readonly command?: string;
-  /** OMP model-management executable; separate from the Astrid ACP launcher. */
-  readonly ompCommand?: string;
   /** Hosted same-machine mode refuses inline prompt attachments. */
   readonly localMediaOnly?: boolean;
 };
@@ -341,10 +339,8 @@ export class AstridAcpBridge {
   // Ids we reaped, so a late poll gets the disconnected answer, not a bare 404.
   private readonly reaped = new Set<string>();
   private selectedModel: string | null = null;
-  private modelRevision = 0;
   private changingModel = false;
   private connecting = 0;
-  private modelCatalogRequest?: Promise<Awaited<ReturnType<typeof getAstridOmpModelCatalog>>>;
   private readonly sweeper: ReturnType<typeof setInterval>;
 
   constructor(options: BridgeOptions) {
@@ -383,20 +379,12 @@ export class AstridAcpBridge {
       }
       if (request.method === 'GET' && url.pathname === '/models') {
         if (this.changingModel) throw new ChatError(409, 'model_change_in_progress', 'Wait for the model switch to finish.');
-        const revision = this.modelRevision;
-        const pending = getAstridOmpModelCatalog({
-          command: this.config.ompCommand,
+        const catalog = await getAstridAgentModelCatalog({
+          command: this.config.command,
           cwd: this.config.cwd,
           profile: this.config.profile,
         });
-        this.modelCatalogRequest = pending;
-        try {
-          const catalog = await pending;
-          if (revision === this.modelRevision) this.selectedModel = catalog.currentModel;
-          jsonResponse(response, 200, { ...catalog, currentModel: this.selectedModel });
-        } finally {
-          if (this.modelCatalogRequest === pending) this.modelCatalogRequest = undefined;
-        }
+        jsonResponse(response, 200, catalog);
         return;
       }
       if (this.changingModel) {
@@ -414,13 +402,12 @@ export class AstridAcpBridge {
         }
         this.changingModel = true;
         try {
-          const currentModel = await setAstridOmpDefaultModel({
-            command: this.config.ompCommand,
+          const currentModel = await setAstridAgentDefaultModel({
+            command: this.config.command,
             cwd: this.config.cwd,
             profile: this.config.profile,
           }, body.model);
           this.selectedModel = currentModel;
-          this.modelRevision++;
           // Fresh hosts rediscover accounts signed in through /login. OMP
           // retains the transcript; clients load the same opaque session ID.
           for (const [id, connection] of this.connections) {
@@ -503,8 +490,6 @@ export class AstridAcpBridge {
     } catch (error) {
       const result = error instanceof LocalMediaOnlyError
         ? { status: 415, body: { error: 'local_media_required', detail: error.message } }
-        : error instanceof OmpModelSelectionError
-        ? { status: 400, body: { error: 'invalid_model', detail: error.message } }
         : error instanceof Error && error.message.includes('128 KiB')
         ? { status: 413, body: { error: 'payload_too_large', detail: error.message } }
       : error instanceof Error && (error.message.includes('request body') || error.message.includes('method') || error.message.includes('sessionId') || error.message.includes('config option'))
@@ -756,9 +741,8 @@ export class AstridAcpBridge {
   }
 
   private async applySelectedModel(connection: Connection, sessionId: string): Promise<void> {
-    // The panel may fetch its catalog concurrently with a saved chat load.
-    // Wait for that default before dispatching a turn on the restored model.
-    await this.modelCatalogRequest;
+    // Only an explicit App switch overrides an existing chat's session model.
+    // Listing the saved default must leave session/project defaults to Astrid.
     const selected = this.selectedModel;
     if (!selected) return;
     const options = connection.configOptions.get(sessionId)?.get('model');

@@ -15,6 +15,16 @@ const catalog: AcpModelCatalog = {
 };
 
 describe('AgentChatModelSelector', () => {
+  it('offers usable keyless models without requiring a provider sign-in', () => {
+    const onSelectModel = vi.fn();
+    render(<AgentChatModelSelector catalog={{ currentModel: null, providers: [
+      { id: 'local', name: 'Local models', signedIn: false, models: [{ id: 'llama', name: 'Llama' }] },
+    ] }} onSelectModel={onSelectModel} />);
+    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Llama' }));
+    expect(onSelectModel).toHaveBeenCalledWith('local/llama');
+  });
+
   it('opens provider groups, marks the active model, and selects exact provider/model ids', async () => {
     const onSelectModel = vi.fn();
     const onOpenChange = vi.fn();
