@@ -4,7 +4,7 @@
     "pyproject.toml [tool.ruff].include"
   ],
   "command": [
-    "/Users/hannahomalley/Developer/tp-merge-20261018/wt/land/.venv/bin/python",
+    "/home/user/banodoco/wt/ag-int/.venv/bin/python",
     "-m",
     "ruff",
     "check",
@@ -12,11 +12,11 @@
     "--output-format",
     "json"
   ],
-  "finding_count": 2210,
+  "finding_count": 2207,
   "code_counts": {
-    "F401": 151,
+    "F401": 149,
     "BLE001": 213,
-    "I001": 225,
+    "I001": 224,
     "E701": 463,
     "E702": 229,
     "E731": 11,
