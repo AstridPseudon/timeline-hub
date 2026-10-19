@@ -119,9 +119,11 @@ class DetachedPort:
 
     def history(self, through, after_publication_id=None, cursor=None, limit=100):
         entries = self.realm.entries
+        self.realm.reads.append(("history", detached(through), after_publication_id))
         try:
-            start = next(i + 1 for i, entry in enumerate(entries)
-                         if entry["publication_id"] == after_publication_id)
+            start = (next(i + 1 for i, entry in enumerate(entries)
+                          if entry["publication_id"] == after_publication_id)
+                     if after_publication_id is not None else 0)
             end = next(i + 1 for i, entry in enumerate(entries)
                        if entry["publication_id"] == through["publication_id"])
         except StopIteration:
@@ -229,6 +231,32 @@ class DetachedPort:
 def inverse(publications):
     return {"schema_version": 1, "op": "timeline.inverse", "version": "1",
             "select": None, "args": {"publications": publications}}
+
+
+def track_create(identity="reserved-track", owner="parent"):
+    return {"schema_version": 1, "op": "track.create", "version": "1",
+            "select": owner, "args": {"row": {"id": identity, "kind": "visual",
+                                                "opaque": {"clear": None}}}}
+
+
+def test_retired_identity_refuses_new_create_but_guarded_redo_restores_exact_state():
+    realm = DetachedRealm()
+    original = detached(realm.documents["parent-1"])
+    created = realm.call([track_create()])
+    deleted = realm.call([inverse([realm.head["publication_id"]])])
+    document = deleted["data"]["canonical_document"]
+    assert document["parent_revision"]["payload"] == original["parent_revision"]["payload"]
+    for key in ("shot_revisions", "internal_timeline_revisions", "dependency_manifest"):
+        assert document[key] == original[key]
+    head, entries = detached(realm.head), detached(realm.entries)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([track_create()])
+    assert error.value.failure["details"]["reason"] == "identity_collision"
+    assert error.value.failure["details"]["status"] == "conflict"
+    assert realm.head == head and realm.entries == entries
+    assert len(realm.accepted) == len(realm.prepared) == 2
+    restored = realm.call([inverse([head["publication_id"]])])
+    assert restored["data"]["canonical_document"] == created["data"]["canonical_document"]
 
 
 def test_factory_matches_fixed_installed_runtime_contract():
@@ -615,3 +643,135 @@ assert len(realm.entries) == 3
     result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True,
                             env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
     assert result.returncode == 0, result.stderr
+
+
+def test_occupied_track_identity_conflicts_without_acceptance():
+    realm = DetachedRealm()
+    realm.call([track_create()])
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([track_create()])
+    assert error.value.failure["details"]["reason"] == "identity_collision"
+    assert realm.head == head and len(realm.accepted) == len(realm.prepared) == 1
+
+
+def test_structural_preview_does_not_reserve_and_stale_disjoint_rebase_keeps_identity():
+    realm = DetachedRealm()
+    command, base = track_create(), detached(realm.head)
+    before = detached(realm.entries)
+    preview = realm.call([command], dry_run=True)
+    assert preview["receipt"] is None
+    assert realm.entries == before and realm.accepted == realm.prepared == []
+    realm.call([realm.move()])
+    result = realm.call([command], base=base)
+    assert result["data"]["status"] == "rebased"
+    record = realm.entries[-1]["records"]["commands"][0]
+    assert record["created"] == [{"ref": "parent/track:reserved-track", "kind": "track",
+                                   "owner": "parent"}]
+    assert record["command"]["args"] == command["args"]
+    parent = result["data"]["canonical_document"]["parent_revision"]["payload"]
+    assert parent["config"]["tracks"][-1] == command["args"]["row"]
+    assert parent["clips"][0]["at"] == 3.003
+    assert preview["data"]["canonical_document"]["parent_revision"]["payload"][
+        "config"]["tracks"][-1] == command["args"]["row"]
+    assert result["data"]["id_map"] == {}
+
+
+def test_cas_race_create_delete_does_not_release_identity_for_original_request():
+    realm = DetachedRealm()
+    command = track_create()
+
+    def retire():
+        realm.call([track_create()])
+        realm.call([inverse([realm.head["publication_id"]])])
+
+    realm.before_accept = retire
+    with pytest.raises(CommitRejected) as error:
+        realm.call([command])
+    assert error.value.failure["details"]["reason"] == "intervening_write"
+    assert len(realm.accepted) == 2
+    assert realm.prepared[0]["records"]["commands"][0]["created"] == [
+        {"ref": "parent/track:reserved-track", "kind": "track", "owner": "parent"}]
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([command])
+    assert error.value.failure["details"]["reason"] == "identity_collision"
+    assert realm.head == head and len(realm.accepted) == 2
+
+
+@pytest.mark.parametrize("damage", ["missing_entry", "ancestry", "unknown_intent", "records",
+                                   "missing_created", "null_created", "created_item", "created_claim"])
+def test_structural_reservation_history_fails_closed(damage):
+    realm = DetachedRealm()
+    realm.page_size = 1
+    realm.call([track_create()])
+    realm.call([inverse([realm.head["publication_id"]])])
+    entry = realm.entries[1]
+    if damage == "missing_entry":
+        realm.entries.pop(1)
+    elif damage == "ancestry":
+        entry["previous"]["publication_id"] = "missing"
+    elif damage == "unknown_intent":
+        entry["intent"] = "unknown"
+    elif damage == "records":
+        entry["records"] = None
+    elif damage == "missing_created":
+        del entry["records"]["commands"][0]["created"]
+    elif damage == "null_created":
+        entry["records"]["commands"][0]["created"] = None
+    elif damage == "created_item":
+        entry["records"]["commands"][0]["created"] = [{"ref": "parent/track:reserved-track"}]
+    elif damage == "created_claim":
+        entry["records"]["commands"][0]["created"] = []
+    before, head = detached(realm.entries), detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([track_create("different-new-id")])
+    assert error.value.failure["details"]["reason"] == "history_unavailable"
+    assert realm.entries == before and realm.head == head and len(realm.accepted) == 2
+
+
+def test_known_legacy_prefix_is_a_boundary_but_unknown_intent_after_recording_refuses():
+    realm = DetachedRealm()
+    realm.entries[0]["intent"] = "legacy_unknown"
+    realm.call([track_create()])
+    realm.call([inverse([realm.head["publication_id"]])])
+    realm.entries[-1].update(intent="legacy_unknown", records=None)
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([track_create("different-new-id")])
+    assert error.value.failure["details"]["reason"] == "history_unavailable"
+    assert realm.head == head and len(realm.accepted) == 2
+
+
+def test_moves_do_not_scan_reservation_history():
+    realm = DetachedRealm()
+    realm.call([track_create()])
+    realm.reads.clear()
+    realm.call([realm.move()])
+    assert not any(read[0] == "history" for read in realm.reads)
+
+
+def test_reservations_are_scoped_and_guarded_inverse_does_not_authorize_other_creates():
+    realm = DetachedRealm()
+    realm.page_size = 1
+    realm.call([track_create("other-retired")])
+    realm.call([inverse([realm.head["publication_id"]])])
+    realm.call([track_create()])
+    realm.call([inverse([realm.head["publication_id"]])])
+    deleted = realm.head["publication_id"]
+    realm.call([track_create(owner="occurrence:occ-a")])
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([deleted]), track_create("other-retired")])
+    assert error.value.failure["details"]["reason"] == "identity_collision"
+    assert realm.head == head and len(realm.accepted) == 5
+
+
+def test_batch_inverse_delete_cannot_reallocate_its_retired_identity():
+    realm = DetachedRealm()
+    realm.call([track_create()])
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([head["publication_id"]]), track_create()])
+    assert error.value.failure["details"]["reason"] == "identity_collision"
+    assert realm.head == head and len(realm.accepted) == len(realm.prepared) == 1
