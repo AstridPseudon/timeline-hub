@@ -273,7 +273,7 @@ def _history(port, through, after, rejected, base):
     previous = copy.deepcopy(after)
     entries, cursor, cursors = [], None, set()
     while previous != through:
-        page = port.history(through, after_publication_id=after["publication_id"],
+        page = port.history(through, after_publication_id=after["publication_id"] if after else None,
                             cursor=cursor, limit=100)
         if page["head"] != through:
             raise rejected(_failure("history_unavailable", "history head changed", base, through))
@@ -312,6 +312,42 @@ def _records(entries, rejected, base, current):
                                     base, current))
         records.extend(copy.deepcopy(recorder["commands"]))
     return records
+
+
+def _check_reservations(port, plan, current, rejected, base):
+    from astrid.sdk.timeline.commands import CommandError
+
+    # Inverse creates restore authenticated accepted writes. Ordinary creates
+    # must never claim an identity retired by an earlier accepted publication.
+    created = [item["ref"] for record in plan.records
+               if record["command"]["op"] != "timeline.inverse" for item in record["created"]]
+    if not created:
+        return
+    reserved, recorded = set(), False
+    for entry in _history(port, current, None, rejected, base):
+        if (not recorded and entry.get("intent") in {"bootstrap", "legacy_unknown"}
+                and entry.get("records") is None):
+            # The verified legacy prefix has no recorder; do not fabricate
+            # allocation intent for edits before the recorded-history boundary.
+            continue
+        recorded = True
+        for record in _records([entry], rejected, base, current):
+            items = record["created"]
+            if (not isinstance(items, list)
+                    or any(not isinstance(item, Mapping)
+                           or set(item) != {"ref", "kind", "owner"}
+                           or not all(_id(item[key]) for key in ("ref", "kind", "owner"))
+                           or not item["ref"].startswith(item["owner"] + "/" + item["kind"] + ":")
+                           for item in items)
+                    or not isinstance(record["command"], Mapping)
+                    or record["command"].get("created") != [item["ref"] for item in items]):
+                raise rejected(_failure("history_unavailable", "created identity history is unavailable",
+                                        base, current))
+            reserved.update(item["ref"] for item in items)
+    for ref in created:
+        if ref in reserved:
+            raise CommandError("created identity was already reserved", kind="identity_collision", ref=ref)
+        reserved.add(ref)
 
 
 class RuntimeCommitService:
@@ -400,6 +436,7 @@ class RuntimeCommitService:
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
                                       entries, CommitRejected, base, current)])
+                _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle)
                 prepared = {
                     "expected_head": copy.deepcopy(current), "canonical_document": document,
