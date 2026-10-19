@@ -73,6 +73,27 @@ describe('AgentChatModelSelector', () => {
     await waitFor(() => expect(onSelectModel).toHaveBeenCalledWith('openai/gpt-5-mini'));
   });
 
+  it('folds a large keyless catalog into one row per provider, with search across every model', async () => {
+    const many = (prefix: string, count: number) => Array.from({ length: count }, (_, index) => ({ id: `${prefix}-${index}`, name: `${prefix} ${index}` }));
+    render(<AgentChatModelSelector onSelectModel={vi.fn()} catalog={{ currentModel: 'gateway/gateway-7', providers: [
+      ...catalog.providers,
+      { id: 'gateway', name: 'Gateway', signedIn: false, models: many('gateway', 30) },
+      { id: 'router', name: 'Router', signedIn: false, models: many('router', 30) },
+    ] }} />);
+    fireEvent.click(screen.getByRole('combobox', { name: 'Agent model' }));
+    expect(await screen.findByText('Other providers')).toBeTruthy();
+    // The current model's provider opens on its own; the others stay one row.
+    expect(screen.getByRole('option', { name: /gateway 7$/ }).getAttribute('aria-current')).toBe('true');
+    expect(screen.queryByRole('option', { name: /router 3$/ })).toBeNull();
+    fireEvent.click(screen.getByRole('option', { name: /Router/ }));
+    expect(screen.getByRole('option', { name: /router 3$/ })).toBeTruthy();
+    fireEvent.change(screen.getByPlaceholderText('Search models...'), { target: { value: 'router 2' } });
+    expect(screen.getByRole('option', { name: /router 29$/ })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: /gateway/ })).toBeNull();
+    fireEvent.change(screen.getByPlaceholderText('Search models...'), { target: { value: 't' } });
+    expect(screen.getByText('Showing 50 of 62 matches. Keep typing to narrow.')).toBeTruthy();
+  });
+
   it('shows a selection failure inline with a Switch model action that opens the list', async () => {
     render(<AgentChatModelSelector catalog={catalog} onSelectModel={vi.fn()} selectionError="Provider quota exceeded" />);
     expect(screen.getByRole('alert').textContent).toContain('Provider quota exceeded');

@@ -104,6 +104,16 @@ describe('TimelineFramePreview', () => {
     await waitFor(() => expect(card.querySelector('.mock-composition-frame')?.textContent).toBe('output-new'));
   });
 
+  it('shows nothing, and never throws, when the output has no usable resolution', () => {
+    const config = makeConfig('sizeless');
+    const sizeless = { ...config, output: { fps: 10, file: 'sizeless.mp4' } } as unknown as ResolvedTimelineConfig;
+    const { container } = render(<TimelineFramePreview config={sizeless} request={{ seconds: 1, anchor }} />);
+    expect(container.ownerDocument.querySelector('[aria-label="Film frame preview"]')).toBeNull();
+    expect(mocks.mounted).toBe(0);
+    render(<TimelineFramePreview config={{ ...config, output: { ...config.output, resolution: 'auto' } }} request={{ seconds: 1, anchor }} />);
+    expect(mocks.mounted).toBe(0);
+  });
+
   it('keeps a newer hover when an older disposer runs and hides on scroll or resize', () => {
     let service: ReturnType<typeof usePanelFramePreview>['preview'];
     let currentRequest: ReturnType<typeof usePanelFramePreview>['request'];

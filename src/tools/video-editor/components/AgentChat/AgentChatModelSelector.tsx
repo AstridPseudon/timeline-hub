@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Check, ChevronRight, ChevronsUpDown, Loader2, X } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
@@ -20,6 +20,17 @@ interface AgentChatModelSelectorProps {
 }
 
 const KEYCAP = 'verbatim-case rounded border border-border px-1 font-mono text-[10px]';
+/** Past this many keyless models, each keyless provider folds into one row. */
+const FOLD_OVER = 40;
+/** An unfolded provider lists this many models; search reaches the rest. */
+const UNFOLD_LIMIT = 100;
+/** Search shows this many matches; typing more narrows them. */
+const SEARCH_LIMIT = 50;
+
+function matches(tokens: string[], text: string): boolean {
+  const haystack = text.toLowerCase();
+  return tokens.every((token) => haystack.includes(token));
+}
 
 function usedFraction(limit: UsageLimit): number | null {
   if (limit.usedFraction !== undefined) return limit.usedFraction;
@@ -86,21 +97,58 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
   const [localOpen, setLocalOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [showSignedOut, setShowSignedOut] = useState(false);
+  const [unfolded, setUnfolded] = useState<ReadonlySet<string> | null>(null);
   const [dismissedError, setDismissedError] = useState<string | null>(null);
   const open = controlledOpen ?? localOpen;
   const changeOpen = (next: boolean) => {
     setLocalOpen(next);
-    if (!next) { setQuery(''); setShowSignedOut(false); }
+    if (!next) { setQuery(''); setShowSignedOut(false); setUnfolded(null); }
     onOpenChange?.(next);
   };
   const current = catalog.providers.flatMap(provider => provider.models.map(model => ({ provider, model })))
     .find(item => `${item.provider.id}/${item.model.id}` === catalog.currentModel);
+  const signedIn = catalog.providers.filter(provider => provider.signedIn);
   // Keyless providers (local models, for example) are usable without signing in.
-  const usable = catalog.providers.filter(provider => provider.signedIn || provider.models.length > 0);
+  const keyless = catalog.providers.filter(provider => !provider.signedIn && provider.models.length > 0);
   const signedOut = catalog.providers.filter(provider => !provider.signedIn && provider.models.length === 0);
-  const listSignedOut = showSignedOut || query.trim() !== '';
+  const fold = keyless.reduce((count, provider) => count + provider.models.length, 0) > FOLD_OVER;
+  const openProviders = unfolded ?? new Set(current ? [current.provider.id] : []);
+  const toggleProvider = (id: string) => setUnfolded(() => {
+    const next = new Set(openProviders);
+    if (!next.delete(id)) next.add(id);
+    return next;
+  });
+  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const searching = tokens.length > 0;
+  const results = searching ? [...signedIn, ...keyless].flatMap(provider => provider.models
+    .filter(model => matches(tokens, `${provider.name} ${model.name} ${provider.id}/${model.id}`))
+    .map(model => ({ provider, model }))) : [];
+  const shownResults = results.slice(0, SEARCH_LIMIT);
+  const resultGroups = [...new Set(shownResults.map(result => result.provider))]
+    .map(provider => ({ provider, models: shownResults.filter(result => result.provider === provider).map(result => result.model) }));
+  const listedSignedOut = searching ? signedOut.filter(provider => matches(tokens, provider.name)) : showSignedOut ? signedOut : [];
   const label = current?.model.name ?? catalog.currentModel ?? 'Choose model';
   const showError = selectionError !== null && selectionError !== dismissedError;
+
+  const modelItem = (provider: Provider, model: Provider['models'][number]) => {
+    const id = `${provider.id}/${model.id}`;
+    const selected = catalog.currentModel === id;
+    return (
+      <CommandItem key={id} value={id} disabled={busy} aria-current={selected ? 'true' : undefined}
+        className="gap-2" onSelect={() => { void Promise.resolve(onSelectModel(id)).catch(() => undefined); changeOpen(false); }}>
+        <Check className={cn('h-3.5 w-3.5 shrink-0', selected ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
+        <span className={cn('min-w-0 truncate normal-case', selected && 'text-foreground')}>{model.name}</span>
+      </CommandItem>
+    );
+  };
+  const providerGroup = (provider: Provider, models = provider.models) => (
+    <CommandGroup key={provider.id} heading={<ProviderHeading provider={provider} />}>
+      {provider.models.length === 0 && (
+        <p className="px-2 pb-1.5 text-[11px] text-muted-foreground">No enabled models. Check <code className={KEYCAP}>omp models ls</code>.</p>
+      )}
+      {models.map(model => modelItem(provider, model))}
+    </CommandGroup>
+  );
 
   return (
     // In a crowded header the long model name gives way first; the chat chip keeps its label.
@@ -116,7 +164,7 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
           </button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-72 max-w-[calc(100vw-2rem)] p-0">
-          <Command loop defaultValue={catalog.currentModel ?? undefined}>
+          <Command loop shouldFilter={false} defaultValue={catalog.currentModel ?? undefined}>
             <CommandInput placeholder="Search models..." className="h-8" value={query} onValueChange={setQuery} />
             <CommandList className="max-h-80">
               {loading && (
@@ -127,36 +175,50 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
               {catalogError && <p role="alert" className="px-3 py-3 text-xs text-destructive">Could not load models: {catalogError}</p>}
               {!loading && !catalogError && catalog.providers.length === 0 && <p className="px-3 py-3 text-xs text-muted-foreground">No models available.</p>}
               {catalog.providers.length > 0 && <CommandEmpty className="py-6 text-center text-xs text-muted-foreground">No models match.</CommandEmpty>}
-              {busy && usable.length > 0 && <p className="px-3 pt-2 text-[11px] text-muted-foreground">You can switch once the agent is idle.</p>}
-              {usable.map(provider => (
-                <CommandGroup key={provider.id} heading={<ProviderHeading provider={provider} />}>
-                  {provider.models.length === 0 && (
-                    <p className="px-2 pb-1.5 text-[11px] text-muted-foreground">No enabled models. Check <code className={KEYCAP}>omp models ls</code>.</p>
-                  )}
-                  {provider.models.map(model => {
-                    const id = `${provider.id}/${model.id}`;
-                    const selected = catalog.currentModel === id;
-                    return (
-                      <CommandItem key={id} value={id} keywords={[provider.name, model.name]} disabled={busy} aria-current={selected ? 'true' : undefined}
-                        className="gap-2" onSelect={() => { void Promise.resolve(onSelectModel(id)).catch(() => undefined); changeOpen(false); }}>
-                        <Check className={cn('h-3.5 w-3.5 shrink-0', selected ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
-                        <span className={cn('min-w-0 truncate normal-case', selected && 'text-foreground')}>{model.name}</span>
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              ))}
-              {signedOut.length > 0 && (
+              {busy && signedIn.length + keyless.length > 0 && <p className="px-3 pt-2 text-[11px] text-muted-foreground">You can switch once the agent is idle.</p>}
+              {searching ? resultGroups.map(({ provider, models }) => providerGroup(provider, models)) : (
                 <>
-                  {usable.length > 0 && <CommandSeparator />}
-                  <CommandGroup heading={<span className="flex items-center justify-between"><span>Not signed in</span>{!query.trim() && <span className="tabular-nums">{signedOut.length}</span>}</span>}>
-                    {listSignedOut ? signedOut.map(provider => (
-                      <CommandItem key={provider.id} value={`signed-out/${provider.id}`} keywords={[provider.name]} disabled
+                  {signedIn.map(provider => providerGroup(provider))}
+                  {!fold && keyless.map(provider => providerGroup(provider))}
+                  {fold && (
+                    <>
+                      {signedIn.length > 0 && <CommandSeparator />}
+                      <CommandGroup heading={<span className="flex items-center justify-between"><span>Other providers</span><span className="tabular-nums">{keyless.length}</span></span>}>
+                        {keyless.map(provider => {
+                          const unfoldedHere = openProviders.has(provider.id);
+                          return (
+                            <Fragment key={provider.id}>
+                              <CommandItem value={`provider:${provider.id}`} aria-expanded={unfoldedHere} className="gap-2 text-xs text-muted-foreground" onSelect={() => toggleProvider(provider.id)}>
+                                <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 transition-transform duration-100', unfoldedHere && 'rotate-90')} aria-hidden="true" />
+                                <span className="min-w-0 truncate normal-case">{provider.name}</span>
+                                <span className="ml-auto pl-2 text-[10px] tabular-nums">{provider.models.length}</span>
+                              </CommandItem>
+                              {unfoldedHere && provider.models.slice(0, UNFOLD_LIMIT).map(model => modelItem(provider, model))}
+                              {unfoldedHere && provider.models.length > UNFOLD_LIMIT && (
+                                <p className="py-1 pl-[1.875rem] pr-2 text-[11px] text-muted-foreground">{provider.models.length - UNFOLD_LIMIT} more; search to find them.</p>
+                              )}
+                            </Fragment>
+                          );
+                        })}
+                      </CommandGroup>
+                    </>
+                  )}
+                </>
+              )}
+              {results.length > SEARCH_LIMIT && (
+                <p className="px-3 py-2 text-[11px] text-muted-foreground">Showing {SEARCH_LIMIT} of {results.length} matches. Keep typing to narrow.</p>
+              )}
+              {signedOut.length > 0 && (!searching || listedSignedOut.length > 0) && (
+                <>
+                  {(searching ? results.length : signedIn.length + keyless.length) > 0 && <CommandSeparator />}
+                  <CommandGroup heading={<span className="flex items-center justify-between"><span>Not signed in</span>{!searching && <span className="tabular-nums">{signedOut.length}</span>}</span>}>
+                    {searching || showSignedOut ? listedSignedOut.map(provider => (
+                      <CommandItem key={provider.id} value={`signed-out:${provider.id}`} disabled
                         className="pl-[1.875rem] text-xs text-muted-foreground data-[disabled=true]:opacity-100">
                         <span className="min-w-0 truncate normal-case">{provider.name}</span>
                       </CommandItem>
                     )) : (
-                      <CommandItem value="signed-out/show" keywords={['not signed in', 'providers']} className="gap-2 text-xs text-muted-foreground" onSelect={() => setShowSignedOut(true)}>
+                      <CommandItem value="signed-out:show" className="gap-2 text-xs text-muted-foreground" onSelect={() => setShowSignedOut(true)}>
                         <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                         <span className="normal-case">Show all</span>
                       </CommandItem>

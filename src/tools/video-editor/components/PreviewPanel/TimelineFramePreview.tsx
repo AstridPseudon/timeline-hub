@@ -113,9 +113,12 @@ export function TimelineFramePreview({ config, request, bounds }: { config: Reso
   const live = useRef<HTMLDivElement>(null);
   const frozen = useRef<HTMLDivElement>(null);
   const metadata = useMemo(() => {
-    if (!output) return null;
+    // Without a composition size there is no film frame to show (the renderer needs one too).
+    const resolution: unknown = output?.output.resolution;
+    if (!output || typeof resolution !== 'string') return null;
     const fps = output.output.fps;
-    const { width, height } = parseResolution(output.output.resolution);
+    const { width, height } = parseResolution(resolution);
+    if (!(width > 0 && height > 0)) return null;
     return {
       fps, compositionWidth: width, compositionHeight: height,
       durationInFrames: Math.max(1, ...output.clips.map((clip) => secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps))),
