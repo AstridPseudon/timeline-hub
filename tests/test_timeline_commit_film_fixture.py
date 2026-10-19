@@ -16,11 +16,7 @@ from timeline_commit_film_fixture import (
 )
 
 
-def _baseline_module():
-    return pytest.importorskip(
-        "runtime_protocol.timeline_commit_baseline",
-        reason="the Runtime baseline verifier is supplied by rt-m1-baseline",
-    )
+from runtime_protocol import timeline_commit_baseline as baseline
 
 
 def _open_duplicate(fixture):
@@ -94,7 +90,6 @@ def test_fixture_is_api_built_and_duplicate_contains_real_closure(tmp_path):
 
 
 def test_baseline_verifies_valid_scoped_head_and_survives_reopen(tmp_path):
-    baseline = _baseline_module()
     fixture = build_film_fixture(tmp_path)
     service = _open_duplicate(fixture)
     try:
@@ -115,7 +110,6 @@ def test_baseline_verifies_valid_scoped_head_and_survives_reopen(tmp_path):
 
 @pytest.mark.parametrize("corruption", ["receipt", "digest", "source"])
 def test_baseline_fails_closed_on_duplicate_provenance_corruption(tmp_path, corruption):
-    baseline = _baseline_module()
     fixture = build_film_fixture(tmp_path)
     service = _open_duplicate(fixture)
     try:

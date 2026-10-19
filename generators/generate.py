@@ -238,6 +238,8 @@ def main() -> int:
     generated.update(render(component_path=Path(args.component_manifest).expanduser()))
     generated["packages/python/astrid_runtime_client/generated.py"] = render_python_client()
     generated["packages/typescript/src/generated.ts"] = render_typescript_client()
+    from timeline_commit_resources import render as render_commit_resources
+    generated.update(render_commit_resources())
     for relative, content in generated.items():
         path = Path(args.python_output).expanduser().resolve() if relative == "packages/python/astrid_runtime_client/generated.py" else ROOT / relative
         if args.check:
