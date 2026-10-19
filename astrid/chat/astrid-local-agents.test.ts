@@ -69,7 +69,7 @@ test('signed-in CLIs are Ready with no adapters installed and launch uses each p
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
-test('finds CLIs and Bun on the login-shell PATH before falling back to the service PATH', async () => {
+test('prefers the login-shell CLI and service Bun, with login Bun as fallback', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'astrid-login-path-'));
   try {
     const servicePath = join(directory, 'service-bin');
@@ -80,12 +80,34 @@ test('finds CLIs and Bun on the login-shell PATH before falling back to the serv
     const claude = fake(loginPath, 'claude', { json: '{"loggedIn":true}', text: '' });
     fake(loginPath, 'codex', 'Logged in using ChatGPT');
     const bun = executable(servicePath, 'bun', '#!/bin/sh\nexit 0\n');
+    executable(loginPath, 'bun', '#!/bin/sh\nexit 99\n');
     const env = testEnv(shell, servicePath, loginPath);
     const agents = await discoverLocalAgents({ env });
     assert.equal(agents[1]?.state, 'ready');
     assert.equal(agents[2]?.state, 'ready');
     assert.deepEqual(await localAgentLaunch('claude-code', env), {
       command: bun,
+      args: ['x', '--bun', LOCAL_AGENT_ADAPTERS['claude-code']],
+      env: { PATH: `${loginPath}:${servicePath}` },
+      cliPath: claude,
+    });
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('falls back to login-shell Bun when service PATH has no Bun', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-login-bun-fallback-'));
+  try {
+    const servicePath = join(directory, 'service-bin');
+    const loginPath = join(directory, 'login-bin');
+    const shellDir = join(directory, 'shell-bin');
+    for (const path of [servicePath, loginPath, shellDir]) mkdirSync(path);
+    const shell = loginShell(shellDir);
+    const claude = fake(loginPath, 'claude', { json: '{"loggedIn":true}', text: '' });
+    const loginBun = executable(loginPath, 'bun', '#!/bin/sh\nexit 0\n');
+    const env = testEnv(shell, servicePath, loginPath);
+
+    assert.deepEqual(await localAgentLaunch('claude-code', env), {
+      command: loginBun,
       args: ['x', '--bun', LOCAL_AGENT_ADAPTERS['claude-code']],
       env: { PATH: `${loginPath}:${servicePath}` },
       cliPath: claude,

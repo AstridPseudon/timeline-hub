@@ -126,8 +126,9 @@ export async function discoverLocalAgents(options: Options = {}): Promise<LocalA
 export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.ProcessEnv = process.env): Promise<{ command: string; args: string[]; env: Record<string, string | undefined>; cliPath: string }> {
   const loginPath = await loginShellPath(env);
   const path = combinedPath(loginPath, env.PATH);
+  const bunPath = combinedPath(env.PATH, loginPath);
   const [bun, cli] = await Promise.all([
-    executable('bun', path),
+    executable('bun', bunPath),
     executable(agentId === 'claude-code' ? 'claude' : 'codex', path),
   ]);
   if (!cli) throw new Error(`${LOCAL_AGENT_TABLE[agentId].name} is not installed on PATH.`);
