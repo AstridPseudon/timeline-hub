@@ -134,7 +134,7 @@
     "astrid/packs/rendering/ui/live-scenes/identity.ts": "sha256:ab1fa9c6972518d85dd39f5f1fdeee983a2754b6ad04a738d3e4dff13ed2b3b9",
     "astrid/packs/rendering/ui/live-scenes/runtime.ts": "sha256:3bdfa73290d935699d3937798df950376cfd25209a442fc9b294fc12c98a14f2",
     "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": "sha256:d92ea46a3d25f3d5e952db9d3b3c41401da2f82d49a58ca60a0f1fefb22f5c9b",
-    "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": "sha256:dcdcd9ef1aed8f60418fe1c2837d7b5d9657be0157d0da008ac9fd9f0b1d0a18",
+    "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": "sha256:2f315298851f579bce16c9a72253d1df37c0f772e05833d5f151f6d5c034dea4",
     "astrid/packs/rendering/ui/transcript/extension.tsx": "sha256:870ef0dadec02b41246161fdd74653756a26fc5d53c4458d7221af67202bee1e",
     "astrid/packs/video_editing/pack.yaml": "sha256:53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
     "astrid/packs/video_editing/ui/video-editor/entry.json": "sha256:ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
@@ -161,5 +161,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:703a53e6569e9aaf800758ff516d32db65a0d74ae3a357e882d12d6d7e605eb0"
+  "version": "sha256:e00e01fa12f75588f59d86ef10f5fe29798be804f39ef32e6fe91e2eedc4eee8"
 }
