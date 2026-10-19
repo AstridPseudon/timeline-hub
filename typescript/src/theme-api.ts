@@ -79,3 +79,6 @@ export type {MotionCurveName} from './lib/motion-curves.generated';
 export {ClipAnimationPhase, composeClipAnimationPhase} from './ClipAnimationPhase';
 export type {ClipAnimationPhaseProps} from './ClipAnimationPhase';
 export {normalizeAnimationRefs} from './lib/clip-look';
+
+export {ElementRegistryProvider, useElementRegistries} from './RegistryContext';
+export type {CompositionRegistries, AnimationRegistries, TransitionRegistries} from './registries';

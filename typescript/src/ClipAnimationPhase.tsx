@@ -1,4 +1,6 @@
 // One phase only: no clip opacity, crop, modifiers, speed remap, or new clock.
+import {useElementRegistries} from './RegistryContext';
+import type {AnimationRegistries} from './registries';
 import type {ReactNode} from 'react';
 import {useCurrentFrame} from 'remotion';
 import {useTheme} from './ThemeContext';
@@ -10,15 +12,16 @@ export type ClipAnimationPhaseProps = Pick<ComposeAnimationsInput, 'clip' | 'fps
   reference: unknown;
   clipFrames: number;
   children: ReactNode;
+  registries?: AnimationRegistries;
 };
 
 export const composeClipAnimationPhase = ({clip, fps, theme, phase, reference, clipFrames,
-  children}: ClipAnimationPhaseProps, frame: number): ReactNode => {
+  children, registries}: ClipAnimationPhaseProps, frame: number): ReactNode => {
   const refs = normalizeAnimationRefs(reference, fps);
   if (refs === undefined) {
     return children;
   }
-  const resolved = resolveAnimationReferences(refs, phase);
+  const resolved = resolveAnimationReferences(refs, phase, registries);
   if (resolved.length === 0) {
     return children;
   }
@@ -37,9 +40,12 @@ export const composeClipAnimationPhase = ({clip, fps, theme, phase, reference, c
     theme,
     fps,
     elapsedFrames,
+    registries,
   });
 };
 
 // Host adapter reads only the existing clip-local clock.
-export const ClipAnimationPhase = (props: Omit<ClipAnimationPhaseProps, 'theme'>) =>
-  composeClipAnimationPhase({...props, theme: useTheme()}, useCurrentFrame());
+export const ClipAnimationPhase = (props: Omit<ClipAnimationPhaseProps, 'theme'>) => {
+  const registries = useElementRegistries();
+  return composeClipAnimationPhase({...props, theme: useTheme(), registries: props.registries ?? registries}, useCurrentFrame());
+};

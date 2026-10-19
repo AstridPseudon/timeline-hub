@@ -1,11 +1,4 @@
-/**
- * @banodoco/timeline-composition
- *
- * Sprint 5: real composition + theme-api + plugin registry. The Banodoco
- * CLI render path imports `TimelineComposition` from here; Reigh's
- * TimelineRenderer imports the EFFECT_REGISTRY-style dispatch entries
- * via the codegenned `registry.generated.ts`.
- */
+/** Shared timeline rendering, evaluation and theme contracts. */
 
 export const TIMELINE_COMPOSITION_SCAFFOLD = "sprint-5" as const;
 export type TimelineCompositionScaffoldTag = typeof TIMELINE_COMPOSITION_SCAFFOLD;
@@ -48,8 +41,7 @@ export type { Theme, RuntimeTheme } from "./ThemeContext";
 // Duration helper used by the bundle root for calculateMetadata.
 export { getTimelineDurationInFrames } from "./lib/duration";
 
-// Plugin registry — codegenned from installed `@banodoco/timeline-theme-*`
-// packages (Reigh-side) and from `themes/<id>/effects/` (Banodoco-side).
+// Bundled theme defaults; additional host elements use scoped registry input.
 export {
   THEME_PACKAGE_REGISTRY,
   THEME_PACKAGE_CLIP_TYPES,
@@ -69,3 +61,7 @@ export {mediaModifierBounds} from './lib/modifier-bounds';
 
 export {prepareCompositionScene} from './TimelineComposition';
 export {prepareScene, querySceneFrame, queryCompositionSceneFrame} from './evaluation';
+
+export type {TimelineClip, TimelineConfig, TrackDefinition, AssetRegistry, AssetRegistryEntry, ClipKeyframe} from './types';
+export {resolveElementRegistries, ElementRegistryProvider, useElementRegistries} from './registries';
+export type {CompositionRegistries, ResolvedCompositionRegistries, AnimationRegistries, TransitionRegistries} from './registries';

@@ -1,4 +1,4 @@
-import type {SceneCapabilities, SceneCapableComponent} from './scene-capabilities';
+import type {SceneCapabilities} from './scene-capabilities';
 // Sprint 5: physically moved + renamed from
 // tools/remotion/src/HypeComposition.tsx → TimelineComposition.tsx.
 //
@@ -10,7 +10,9 @@ import type {ReactElement} from 'react';
 import {AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig} from 'remotion';
 import {AudioTrack} from './AudioTrack';
 import {ClipLook} from './ClipLook';
-import {CLIP_TYPE_ALIASES, EFFECT_REGISTRY, type EffectId} from './effects.generated';
+import {resolveElementRegistries, type CompositionRegistries} from './registries';
+import {ElementRegistryProvider} from './RegistryContext';
+import type {EffectComponent} from './effects-types';
 import {DEFAULT_THEME, ThemeProvider, useTheme} from './ThemeContext';
 import {VisualClip} from './VisualClip';
 import {resolveParams} from './lib/effect-params';
@@ -41,6 +43,7 @@ type ModifierHostOptions = {
   height: number;
   registry?: ModifierRegistry;
   onFinding?: (finding: ModifierFinding) => void;
+  registries?: CompositionRegistries;
 };
 
 const sortClipsByAt = (clips: TimelineClip[]): TimelineClip[] => {
@@ -81,19 +84,17 @@ export const renderVisualClipContent = (
     return null;
   }
 
-  // Sprint 5 EFFECT_REGISTRY dispatch (the migration target cited at
-  // tools/remotion/src/HypeComposition.tsx:58-64). Same shape; the
-  // registry now lives inside the package.
-  const effectId = (
-    clip.clipType && clip.clipType in EFFECT_REGISTRY
-      ? clip.clipType as EffectId
-      : clip.clipType ? CLIP_TYPE_ALIASES[clip.clipType] : undefined
-  );
-  if (effectId) {
-    const EffectComponent = EFFECT_REGISTRY[effectId];
+  const registries = resolveElementRegistries(theme, modifiers.registries);
+  const id = clip.clipType ?? '';
+  const effectId = Object.prototype.hasOwnProperty.call(registries.effects, id)
+    ? id : registries.clipTypeAliases[id];
+  const effect = effectId && Object.prototype.hasOwnProperty.call(registries.effects, effectId)
+    ? registries.effects[effectId] : undefined;
+  if (effect) {
+    const EffectComponent = effect as EffectComponent;
     const assetEntry = getAssetEntry(clip, assets);
     return (
-      <ClipLook clip={clip} fps={fps} kind="element" globalFrame={globalFrame}
+      <ClipLook registries={registries} clip={clip} fps={fps} kind="element" globalFrame={globalFrame}
         modifierRegistry={modifiers.registry} onModifierFinding={modifiers.onFinding}>
         <EffectComponent
           clip={clip}
@@ -109,7 +110,7 @@ export const renderVisualClipContent = (
 
   const assetEntry = getAssetEntry(clip, assets);
   const modifierBounds: ModifierBounds = mediaModifierBounds(clip, track, assetEntry, modifiers.width, modifiers.height);
-  const lookProps = {clip, fps, globalFrame, modifierBounds, modifierRegistry: modifiers.registry,
+  const lookProps = {registries, clip, fps, globalFrame, modifierBounds, modifierRegistry: modifiers.registry,
     onModifierFinding: modifiers.onFinding};
   const baseVisual = (
     <VisualClip clip={clip} track={track} assetEntry={assetEntry} fps={fps}
@@ -185,11 +186,12 @@ const resolveTransitionSpec = (
   toClip: TimelineClip,
   fps: number,
   theme: ReturnType<typeof useTheme>,
+  registries: CompositionRegistries,
 ): TransitionSpec | null => {
   if (!clipsCanTransition(fromClip, toClip, fps)) {
     return null;
   }
-  const resolved = resolveTransitionReference(fromClip.transition as never, theme, fps);
+  const resolved = resolveTransitionReference(fromClip.transition as never, theme, fps, registries);
   if (!resolved) {
     return null;
   }
@@ -204,19 +206,24 @@ const resolveTransitionSpec = (
 export const prepareCompositionScene = (tracks: {track: TrackDefinition; clips: TimelineClip[]}[],
   assets: TimelineCompositionProps['assets'], fps: number, theme: ReturnType<typeof useTheme>,
   width: number, height: number, registry?: ModifierRegistry, roles?: Readonly<Record<string, string>>,
-  capabilities: SceneCapabilities = {}, rendererIdentity = '', fontDigests: Readonly<Record<string, string>> = {}) =>
-  prepareScene(tracks.map(({track, clips}) => {
+  capabilities: SceneCapabilities = {}, rendererIdentity = '', fontDigests: Readonly<Record<string, string>> = {},
+  registries: CompositionRegistries = {}) => {
+  const resolved = resolveElementRegistries(theme, registries);
+  return prepareScene(tracks.map(({track, clips}) => {
     const sorted = sortClipsByAt(clips);
     return {track, clips: sorted, transitions: sorted.slice(0, -1).map((clip, index) =>
-      resolveTransitionSpec(clip, sorted[index + 1], fps, theme))};
-  }), assets, fps, width, height, {elements: new Set(Object.keys(EFFECT_REGISTRY).concat(Object.keys(CLIP_TYPE_ALIASES))),
+      resolveTransitionSpec(clip, sorted[index + 1], fps, theme, resolved))};
+  }), assets, fps, width, height, {elements: new Set(Object.keys(resolved.effects).concat(
+    Object.keys(resolved.clipTypeAliases).filter(alias => Object.prototype.hasOwnProperty.call(resolved.effects, resolved.clipTypeAliases[alias])))),
     modifiers: registry, roles, capabilities: {...capabilities, components: {...capabilities.components, ...Object.fromEntries(tracks.flatMap(({clips}) =>
       clips.flatMap(clip => {
-        const id = (CLIP_TYPE_ALIASES[clip.clipType ?? ''] ?? clip.clipType) as keyof typeof EFFECT_REGISTRY;
-        const component = EFFECT_REGISTRY[id] as (SceneCapableComponent | undefined);
+        const name = clip.clipType ?? '';
+        const id = Object.prototype.hasOwnProperty.call(resolved.effects, name) ? name : resolved.clipTypeAliases[name];
+        const component = Object.prototype.hasOwnProperty.call(resolved.effects, id) ? resolved.effects[id] : undefined;
         const prepared = component?.prepareSceneCapability?.({clip: {...clip, params: resolveParams(clip) as Record<string, unknown> | undefined}, fps, width, height, rendererIdentity, fontDigests});
         return prepared ? [[clip.id, prepared]] : [];
       })))}}});
+};
 
 const renderVisualTrack = (
   track: TrackDefinition,
@@ -233,7 +240,7 @@ const renderVisualTrack = (
   }
 
   const prepared = prepareCompositionScene([{track, clips: sortedClips}], assets, fps, theme,
-    modifiers.width, modifiers.height, modifiers.registry);
+    modifiers.width, modifiers.height, modifiers.registry, undefined, {}, '', {}, modifiers.registries);
   const evaluated = querySceneFrame(prepared, globalFrame);
   const rendered = evaluated.layers.map(layer => renderVisualSequence(track, sortedClips[layer.clipIndex],
     assets, fps, theme, prepared.tracks[0].prepared.plans[layer.clipIndex], globalFrame, modifiers));
@@ -288,14 +295,16 @@ export const TimelineComposition = (props: TimelineCompositionProps): ReactEleme
       }}
     >
       <ThemeProvider value={props.theme ?? DEFAULT_THEME}>
-        <TimelineCompositionBody
-          timeline={timeline}
-          assets={assets}
-          visualTracks={visualTracks}
-          audioTracks={audioTracks}
-          fps={fps}
-          modifiers={{width, height, registry: props.modifierRegistry, onFinding: props.onModifierFinding}}
-        />
+        <ElementRegistryProvider value={resolveElementRegistries(props.theme ?? DEFAULT_THEME, props.registries)}>
+          <TimelineCompositionBody
+            timeline={timeline}
+            assets={assets}
+            visualTracks={visualTracks}
+            audioTracks={audioTracks}
+            fps={fps}
+            modifiers={{width, height, registry: props.modifierRegistry, onFinding: props.onModifierFinding, registries: props.registries}}
+          />
+        </ElementRegistryProvider>
       </ThemeProvider>
     </AbsoluteFill>
   );

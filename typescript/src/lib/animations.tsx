@@ -2,6 +2,7 @@
 // The theme-api re-export now points at this in-package module.
 
 import type {ReactNode} from 'react';
+import type {AnimationRegistries} from '../registries';
 import {
   ANIMATION_DEFAULTS,
   ANIMATION_META,
@@ -12,7 +13,6 @@ import type {
   AnimationPhase,
   AnimationReference,
   AnimationReferenceList,
-  AnimationMeta,
   HookAnimationComponent,
   HookAnimationResult,
   WrapperAnimationComponent,
@@ -20,7 +20,6 @@ import type {
 import type {RuntimeTheme} from '../ThemeContext';
 import type {TimelineClip} from '../types';
 import {animationEasingParams, animationProgress, normalizeAnimationEasing} from './animation-easing';
-import {progressTypeOn, progressWrapper, supportsAnimationProgress} from './animation-progress-adapters';
 
 export type NormalizedAnimationReference = {
   id: string;
@@ -45,21 +44,19 @@ export type ComposeAnimationsInput = {
   theme: RuntimeTheme;
   fps: number;
   elapsedFrames: number;
+  registries?: AnimationRegistries;
 };
 
 const isObjectReference = (value: unknown): value is Exclude<AnimationReference, string> => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
-const animationRegistry = ANIMATION_REGISTRY as Record<string, AnimationComponent | undefined>;
-const animationDefaults = ANIMATION_DEFAULTS as Record<string, Record<string, unknown> | undefined>;
-const animationMeta = ANIMATION_META as Record<string, AnimationMeta | undefined>;
-
-const hasAnimationId = (id: string): boolean => Object.prototype.hasOwnProperty.call(animationRegistry, id);
-
 export const normalizeAnimationReferences = (
   refs: AnimationReferenceList | undefined,
+  registries: AnimationRegistries = {},
 ): NormalizedAnimationReference[] => {
+  const animationRegistry = registries.animations ?? ANIMATION_REGISTRY;
+  const hasAnimationId = (id: string) => Object.prototype.hasOwnProperty.call(animationRegistry, id);
   if (refs === undefined) {
     return [];
   }
@@ -91,8 +88,12 @@ export const normalizeAnimationReferences = (
 export const resolveAnimationReferences = (
   refs: AnimationReferenceList | undefined,
   phase: AnimationPhase,
+  registries: AnimationRegistries = {},
 ): ResolvedAnimation[] => {
-  return normalizeAnimationReferences(refs).map((ref) => {
+  const animationRegistry = registries.animations ?? ANIMATION_REGISTRY;
+  const animationDefaults = registries.animationDefaults ?? ANIMATION_DEFAULTS;
+  const animationMeta = registries.animationMeta ?? ANIMATION_META;
+  return normalizeAnimationReferences(refs, registries).map((ref) => {
     const meta = animationMeta[ref.id];
     if (!meta) {
       throw new Error(`Unknown animation id '${ref.id}'`);
@@ -116,7 +117,7 @@ export const resolveAnimationReferences = (
 
     const params = animationEasingParams(defaults, ref.params, ref.easing);
     const easing = ref.easing ?? (typeof ref.params.easing === 'string' ? normalizeAnimationEasing(ref.params.easing) : undefined);
-    if (easing !== undefined && !supportsAnimationProgress(ref.id)) {
+    if (easing !== undefined && meta.supportsEasing !== true) {
       throw new Error(`Animation '${ref.id}' cannot consume explicit easing progress`);
     }
     return {
@@ -129,19 +130,6 @@ export const resolveAnimationReferences = (
       durationFrames,
     };
   });
-};
-
-const resolvedProgress = (animation: ResolvedAnimation, elapsedFrames: number): number | undefined => {
-  if (animation.id === 'type-on' && animation.easing !== undefined && animation.durationFrames > 0) {
-    const start = animation.params.startFrame ?? 18;
-    const fraction = animation.params.durationFraction ?? 0.55;
-    if (typeof start !== 'number' || !Number.isFinite(start) || typeof fraction !== 'number' || !Number.isFinite(fraction)) {
-      throw new Error('Type-on window must use finite startFrame and durationFraction');
-    }
-    const end = Math.max(start + 1, Math.floor(animation.durationFrames * fraction));
-    return animationProgress(elapsedFrames - start, end - start, animation.easing);
-  }
-  return animationProgress(elapsedFrames, animation.durationFrames, animation.easing);
 };
 
 const isHookResultObject = (value: unknown): value is HookAnimationResult => {
@@ -157,8 +145,9 @@ export const composeAnimations = ({
   theme,
   fps,
   elapsedFrames,
+  registries,
 }: ComposeAnimationsInput): ReactNode => {
-  const resolved = resolveAnimationReferences(refs, phase);
+  const resolved = resolveAnimationReferences(refs, phase, registries);
   const hookAnimations = resolved.filter((animation) => animation.kind === 'hook');
   const wrapperAnimations = resolved.filter((animation) => animation.kind === 'wrapper');
 
@@ -167,9 +156,8 @@ export const composeAnimations = ({
   let nextParams: Record<string, unknown> = {};
 
   for (const animation of hookAnimations) {
-    const progress = resolvedProgress(animation, elapsedFrames);
-    const HookComponent = progress !== undefined && animation.id === 'type-on'
-      ? progressTypeOn : animation.component as HookAnimationComponent<Record<string, unknown>>;
+    const progress = animationProgress(elapsedFrames, animation.durationFrames, animation.easing);
+    const HookComponent = animation.component as HookAnimationComponent<Record<string, unknown>>;
     const result = HookComponent({
       clip,
       params: animation.params,
@@ -179,6 +167,7 @@ export const composeAnimations = ({
       durationFrames: animation.durationFrames,
       elapsedFrames,
       progress,
+      easing: animation.easing,
       animationId: animation.id,
       content: nextContent,
       text: nextText,
@@ -193,10 +182,8 @@ export const composeAnimations = ({
   }
 
   return wrapperAnimations.reduceRight((children, animation) => {
-    const progress = resolvedProgress(animation, elapsedFrames);
-    const WrapperComponent = progress === undefined
-      ? animation.component as WrapperAnimationComponent<Record<string, unknown>>
-      : progressWrapper(animation.id, animation.component as WrapperAnimationComponent<Record<string, unknown>>);
+    const progress = animationProgress(elapsedFrames, animation.durationFrames, animation.easing);
+    const WrapperComponent = animation.component as WrapperAnimationComponent<Record<string, unknown>>;
     return (
       <WrapperComponent
         clip={clip}
@@ -207,6 +194,7 @@ export const composeAnimations = ({
         durationFrames={animation.durationFrames}
         elapsedFrames={elapsedFrames}
         progress={progress}
+        easing={animation.easing}
         animationId={animation.id}
       >
         {children}

@@ -1,18 +1,74 @@
 # @banodoco/timeline-composition
 
-Scaffold (Sprint 4). The eventual home of:
+Version 0.0.8 ships built ESM and declarations for the timeline evaluator,
+Remotion composition, theme API and default registries. Plain Node can import
+`@banodoco/timeline-composition/evaluation` without React, Remotion or a TypeScript
+loader. The renderer uses host peers React/React DOM 18.3.1 and
+Remotion/media/layout-utils 4.0.509; those runtimes are never bundled.
 
-- `HypeComposition.tsx` and the rest of the Remotion composition.
-- `EFFECT_REGISTRY` / `TRANSITION_REGISTRY` dispatch.
-- The stable theme public API.
+The package owns text-card (including the `text` alias), six animations, two
+transitions and four 2rp effects relocated from App. The bundled 2rp source is
+**0.1.0**; equivalence to the separately referenced 0.1.1 theme is unverified.
+Fonts, media and project pack admission remain host responsibilities.
 
-Sprint 4 ships **only the scaffold** plus the `./theme-api` sub-path —
-re-exports of `effects.types`, `lib/animations`, and `ThemeContext` from
-the in-tree `tools/remotion/src/` location. Theme components migrate off
-the deep relative imports onto `@banodoco/timeline-composition/theme-api`
-via the codemod at `tools/scripts/codemod-theme-api-imports.ts`.
+## Scoped host elements
 
-The actual composition extraction lands in Sprint 5 (Phase 4d).
+`TimelineComposition` accepts an optional `registries` prop. The same input is
+the final argument of `prepareCompositionScene`. Effects and aliases, animations
+and their defaults/meta, and transitions and their defaults/meta use the public
+`CompositionRegistries` contract from the root or `./registries` export.
+Every supplied member is the host's **complete resolved map** for that category;
+omitted members use bundled defaults. `resolveElementRegistries(theme, input)`
+returns these maps, admitting core effects plus effects for the selected runtime
+theme. Hosts resolve pack/theme precedence before passing the maps.
+
+```tsx
+import {
+  TimelineComposition, resolveElementRegistries,
+  type EffectProps, type RuntimeTheme,
+} from '@banodoco/timeline-composition';
+
+const Title = ({params}: EffectProps<{title: string}>) => <h1>{params.title}</h1>;
+const registriesFor = (theme: RuntimeTheme) => ({
+  effects: {...resolveElementRegistries(theme).effects, 'project-title': Title},
+});
+// <TimelineComposition {...input} registries={registriesFor(runtimeTheme)} />
+```
+
+Pass the same maps to scene preparation and rendering. A component's existing
+`prepareSceneCapability` hook is used for both packaged and host effects;
+undeclared internals, alpha and geometry remain unknown. Registry inputs never
+assign module globals or modify installed files. Packaged effects' internal
+animations and clip entrance/exit animations read the instance's scope. Hosts
+mounting packaged components themselves can wrap them in `ElementRegistryProvider`
+(and the shared `ThemeProvider`) from `./theme-api`. Pure animation helpers take
+an optional registry input (`composeAnimations` takes it in its input object;
+`normalizeAnimationReferences` and `resolveAnimationReferences` take it last).
+Unknown animation/transition IDs and invalid animation phases still throw.
+
+Animation metadata declares `supportsEasing: true` when the registered component
+consumes explicit easing. The composer passes canonical `easing` and clamped,
+eased `progress` over `elapsedFrames / durationFrames`, under any registered ID.
+Components can use `easing` with their own timing window; bundled type-on owns
+its `startFrame` / `durationFraction` reveal window. With no authored easing,
+both props are undefined and bundled components retain their normal motion.
+Omitted or false support refuses explicit easing. Supply the matching metadata
+and defaults when overriding a registration; names confer no private behavior.
+This declaration does not establish scene geometry, alpha or visibility.
+
+```tsx
+import type {AnimationRegistries, WrapperAnimationProps} from '@banodoco/timeline-composition/theme-api';
+
+const Sweep = ({children, progress}: WrapperAnimationProps) => (
+  <div style={{opacity: progress ?? 1}}>{children}</div>
+);
+const animations = {
+  animations: {'project-sweep': Sweep},
+  animationMeta: {'project-sweep': {kind: 'wrapper', phase: 'entrance', supportsEasing: true}},
+  animationDefaults: {'project-sweep': {durationFrames: 20}},
+} satisfies AnimationRegistries;
+// composeAnimations({...input, refs: {id: 'project-sweep', easing: 'ease-in'}, registries: animations})
+```
 
 ## Transitions
 
@@ -121,45 +177,66 @@ This API does not wire the App editor or change legacy rendering automatically.
 
 The element remap is a `<Freeze>` around the element content, applied in `ClipLook.tsx`. The sanitising and frame math is pure and lives in `typescript/src/lib/clip-look.ts` (`clipSpeed`, `remappedFrame`).
 
-## Build / test
+## Build, package and verify
 
-Node.js **20 or newer** is required for the extensionless-import test loader;
-validation ran with Node.js **22.22.0**. From a fresh checkout, install the
-locked dependencies and run the checks:
+Node.js 20 or newer is required (validated with Node.js 22.22.0). Install from
+the lockfile, then build and pack:
 
-```
+```sh
 npm ci
 npm run gen-registry:check
 npm run build
-npm run build:ts
-npm test
+npm pack
+npm run test:package -- "$PWD/banodoco-timeline-composition-0.0.8.tgz"
 ```
 
-If the managed sandbox makes npm's cache read-only, use
-`npm_config_cache=/tmp/timeline-composition-npm-cache npm ci` in place of
-`npm ci`. The ordinary setup command remains `npm ci`.
+Use a writable `npm_config_cache` if the environment's default npm cache is
+read-only. `npm run build` cleans `dist`, checks all four generated registries,
+strictly checks the complete source/declarations with TypeScript 5.9.3, and
+builds shared ESM chunks with esbuild 0.27.7. Compiler and generator errors fail
+the build. `npm run build:ts` checks/emits declarations separately. `npm pack`
+runs the build again; the tarball contains only built runtime/declarations,
+package metadata and this README. Consumers install the tarball bytes and
+normal peers; they need no source aliases, source checkout or code generation.
 
-`npm run build` checks the generated registry and emits JavaScript plus
-declarations for the complete `typescript/src` tree into the ignored
-`typescript/dist` directory. `npm run build:ts` is the underlying strict
-TypeScript emit and is exposed separately for build-manager checks. Compiler
-errors fail both commands. `npm test` emits the focused TypeScript tests into
-the separate ignored `typescript/test-dist` directory, then runs them with
-the extensionless-import loader used by the standalone Node test runner.
+`npm run test:package -- /absolute/path/to/artifact.tgz` installs that actual
+artifact and exact peers in a fresh temporary consumer. It checks plain Node
+imports of every public entry, the evaluator's peer-free import graph, bundled
+resource-card rendering, scoped host registration/capabilities, shared
+ThemeProvider and React/Remotion identity, NodeNext declaration consumption,
+installed-file immutability and dependency deduplication. It removes its temporary
+consumer on exit. The declaration probe uses `skipLibCheck` for upstream Remotion
+4 declarations (which reference the legacy global `Timer`); the package source
+itself receives the strict build check using the existing Timer compatibility
+interface. This smoke does not prove browser pixels, Player audio or film parity.
 
-The package currently exports source TypeScript from its package entrypoints;
-the generated `typescript/dist` files are build output, not the public package
-surface. A portable tarball/public export migration is future M3 scope.
+Registry generation uses only `scripts/builtin-inputs.json` and the listed local
+components/defaults/meta under `typescript/src/builtins`. `npm run gen-registry`
+updates checked-in generated source; `gen-registry:check` refuses drift in any of
+the four files. Installed themes and neighboring workspaces cannot affect this
+output. Optional host discovery/generation stays in the host and supplies maps
+through the same scoped input.
 
-The package has no source or type import from `@banodoco/timeline-schema`, so
-it is not a Composition dependency. The generated registries remain
-consumer-owned: a standalone checkout with no installed theme packages has
-an empty `registry.generated.ts`, while a consuming workspace regenerates it
-with `npm run gen-registry` after its theme packages or in-tree themes are
-available. Workspace primitive imports are likewise resolved by the
-consumer's bundler; the package build checks their typed public contracts but
-does not invent default components. Runtime generated imports therefore still
-require the host components until the planned M3 default-component relocation.
+The public ESM/declaration exports are `.`, `./evaluation`, `./theme-api`,
+`./registries`, `./registry.generated`, `./effects.generated`,
+`./animations.generated`, `./transitions.generated` and `./package.json`.
+There are no source/deep-path or CommonJS exports and no npm schema or separately
+installed theme dependency.
+
+Focused checks for the packaging/registry change:
+
+```sh
+npm run build:test
+node --import ./typescript/tests/register-extensionless.mjs --test \
+  typescript/test-dist/tests/registries.test.js \
+  typescript/test-dist/tests/animations.test.js \
+  typescript/test-dist/tests/scene-evaluation.test.js scripts/gen-registry.test.mjs
+```
+
+`npm test` runs the repository suite; orchestration workers request full suites
+through the central test service. Do not regenerate or edit an installed package.
+Consumer migrations, existing-film comparison and real Player/export frame/audio
+parity remain separate integration gates.
 
 ## Keyframe origin
 

@@ -1,3 +1,4 @@
+import type {TransitionRegistries} from '../registries';
 import type {TransitionComponent, TransitionReference, TransitionReferenceObject} from '../effects-types';
 import type {RuntimeTheme} from '../ThemeContext';
 import {
@@ -13,9 +14,6 @@ export type ResolvedTransition = {
   params: Record<string, unknown>;
 };
 
-const transitionRegistry = TRANSITION_REGISTRY as Record<string, TransitionComponent | undefined>;
-const transitionDefaults = TRANSITION_DEFAULTS as Record<string, Record<string, unknown> | undefined>;
-
 const isObjectReference = (value: unknown): value is TransitionReferenceObject => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
@@ -29,12 +27,15 @@ export const resolveTransitionReference = (
   ref: TransitionReference | undefined,
   theme: RuntimeTheme,
   fps: number,
+  registries: TransitionRegistries = {},
 ): ResolvedTransition | null => {
+  const transitionRegistry = registries.transitions ?? TRANSITION_REGISTRY;
+  const transitionDefaults = registries.transitionDefaults ?? TRANSITION_DEFAULTS;
   if (ref === undefined) {
     return null;
   }
   const id = typeof ref === 'string' ? ref : isObjectReference(ref) ? (ref.id ?? ref.type ?? '') : '';
-  if (!id || !transitionRegistry[id]) {
+  if (!id || !Object.prototype.hasOwnProperty.call(transitionRegistry, id)) {
     throw new Error(`Unknown transition id '${id}'`);
   }
   const defaults = transitionDefaults[id] ?? {};
