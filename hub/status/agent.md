@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T22:25:01Z | dispatcher heartbeat 5s -->
+<!-- main | 2026-10-19T22:30:11Z | dispatcher heartbeat 14s -->
 # agent — 2026-10-19T22:11Z
 Milestone: M1 ACTIVE — real skeleton PASS; overall closure HOLD for authorized restore preservation, App restored two journeys, failure classification and next deep audit. M0 COMPLETE. M2 DESIGN ONLY until orchestrator records M1.
 Integrated: Agent tl/integration4ffbb8b0 (one authorized browser-env entry bbb5f529 atop restore9b40d163→ddc1bac3). Browser-env worker+manager2PASS0.36s, only unchanged inherited RuffI001; Viewing notified normalCPUexport may retry. Sole recorder/executor timeline.restore v1 + guarded inverse/redo via verified immutable revision/digest pins, strict head-pair/no rebase, retained inputs, exact historical closure/opaque fields, ordinary ID reservations. No schema/ABI/client/renderer/journal change. Six core/provider files ~80net product lines.

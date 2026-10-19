@@ -243,14 +243,18 @@ At this inspected SHA, `commit.py:373–381` still refuses that adapter. Consume
 its reviewed implementation before widening; do not build another restore path.
 No M2 product implementation is authorized by this queue.
 
-**First M2 item, owned separately:** approve/publish the minimal multi/group move
-and retrack capture contract in `m2-move-draft.md`, then App restores the three
-original success cases in `useClipDrag.test.tsx` from `it.fails` to passing.
-This section neither edits that draft nor chooses canonical-shot versus parent
-soft-tag group ownership. Ordered restoration and staged guarded reversal are
-already approved groundwork, landing only after M1 is recorded. Subsequent
-slices below depend on the first drag contract; a row is one reviewable source
-boundary, with regression cases added alongside it, not one registry-wide PR.
+**First M2 dependency (DECIDED A; design only until M1 is recorded):** follow
+`m2-move-draft.md`: approved order/staged-inverse groundwork, then explicit
+recorded lossless legacy-group→canonical-shot migration + whole-occurrence move
+to an existing lane + explicitly owner-bound derived App group view. Retrack
+updates occurrence-owned child tracks atomically; `pinnedShotGroups` is consumed
+migration input, never an editable store. Next compose track.create+move, then
+separately add free multi-clip move-set. Preserve all three original App success
+assertions; local patch/group-array shapes are compatibility output only. Refresh
+new command/ref schemas and reservation semantics through the existing artifact
+handoff, without new Runtime DTO/ABI. This supersedes pending group-choice language
+below, not historical M0 observations. Later rows are bounded source/test slices,
+not one registry-wide PR; M1 restore preservation and closure remain prerequisites.
 
 ### What “full registry” must cover
 
