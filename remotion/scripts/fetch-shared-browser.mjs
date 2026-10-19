@@ -18,6 +18,11 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const version = remotionRendererVersion(projectRoot);
 const existing = sharedBrowserExecutable({projectRoot});
 if (existing) {
+  const downloaded = path.join(projectRoot, 'node_modules', '.remotion', 'chrome-headless-shell');
+  if (fs.lstatSync(downloaded, {throwIfNoEntry: false})?.isSymbolicLink()) {
+    fs.rmSync(downloaded, {recursive: true, force: true});
+    fs.cpSync(path.join(sharedBrowserRoot(), version, 'chrome-headless-shell'), downloaded, {recursive: true});
+  }
   console.log(`shared browser already present: ${existing}`);
   process.exit(0);
 }
@@ -28,8 +33,11 @@ if (!fs.existsSync(path.join(downloaded, browserRelativePath().replace(/^chrome-
   throw new Error(`Remotion reported ${status.path} but ${downloaded} has no browser to share`);
 }
 fs.mkdirSync(path.dirname(target), {recursive: true});
+if (fs.existsSync(target)) fs.rmSync(target, {recursive: true, force: true});
 fs.renameSync(downloaded, target);
-fs.symlinkSync(target, downloaded, 'dir');
+// Directory symlinks require Developer Mode or elevation on Windows. A copy
+// keeps Remotion's project-local lookup working for ordinary user installs.
+fs.cpSync(target, downloaded, {recursive: true, errorOnExist: true});
 const shared = sharedBrowserExecutable({projectRoot});
 if (!shared) throw new Error(`shared browser did not resolve after move: ${target}`);
 console.log(`shared browser ready: ${shared}`);

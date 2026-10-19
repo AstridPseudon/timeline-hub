@@ -7,7 +7,7 @@ lane all resolve the renderer's Node here:
 1. ``ASTRID_NODE_EXECUTABLE`` is an explicit override. It must match the pin, or the
    launch is refused with the versions named. It never quietly falls back to something else.
 2. Otherwise the first Node whose ``--version`` equals the pin, from: PATH, nvm, fnm,
-   volta, asdf, mise, n, and official tarballs (``node-v20.19.4-<os>-<arch>/bin/node``)
+   volta, asdf, mise, n, and official tarballs (Unix ``bin/node`` or Windows ``node.exe``)
    in a ``tools/`` folder beside the checkout or one of its parents.
 3. If none matches, the result says what was found and where to put the pinned Node.
    A different Node on PATH is never used silently.
@@ -20,16 +20,21 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
+from typing import Sequence
 
 from runtime_protocol import platform
 
 OVERRIDE_ENV = "ASTRID_NODE_EXECUTABLE"
 _PROBE_TIMEOUT_S = 5
+_NODE_PROBE_ENV = {
+    "HOME", "PATH", "TMPDIR", "TEMP", "TMP", "SYSTEMROOT", "COMSPEC",
+    "USERPROFILE", "HOMEDRIVE", "HOMEPATH", "APPDATA", "LOCALAPPDATA",
+}
 
 
 @dataclass(frozen=True)
@@ -63,7 +68,7 @@ def probe_version(node: Path | str) -> str | None:
         return None
     try:
         done = subprocess.run([str(path), "--version"], capture_output=True, text=True, timeout=_PROBE_TIMEOUT_S,
-                              check=False, env={k: v for k, v in os.environ.items() if k in ("HOME", "PATH", "TMPDIR")})
+                              check=False, env={k: v for k, v in os.environ.items() if k.upper() in _NODE_PROBE_ENV})
     except (OSError, subprocess.SubprocessError):
         return None
     version = (done.stdout.strip().splitlines() or [""])[0]
@@ -75,25 +80,31 @@ def candidates(project_dir: Path, pin: str | None, *, search_path: str | None = 
     """Where a Node may live, in order, with a word for each place."""
     home = home or Path.home()
     found: list[tuple[Path, str]] = []
-    for directory in (search_path if search_path is not None else os.environ.get("PATH", "")).split(os.pathsep):
-        if directory:
-            found.append((Path(directory) / "node", "PATH"))
+    path_node = shutil.which("node", path=search_path)
+    if path_node:
+        found.append((Path(path_node), "PATH"))
     if pin:
         bare = pin.lstrip("v")
         found += [
             (home / ".nvm" / "versions" / "node" / pin / "bin" / "node", "nvm"),
+            (home / ".nvm" / "versions" / "node" / pin / "node.exe", "nvm"),
             (home / ".local" / "share" / "fnm" / "node-versions" / pin / "installation" / "bin" / "node", "fnm"),
+            (home / ".fnm" / "node-versions" / pin / "installation" / "node.exe", "fnm"),
             (home / "Library" / "Application Support" / "fnm" / "node-versions" / pin / "installation" / "bin" / "node", "fnm"),
             (home / ".volta" / "tools" / "image" / "node" / bare / "bin" / "node", "volta"),
+            (home / ".volta" / "tools" / "image" / "node" / bare / "node.exe", "volta"),
             (home / ".asdf" / "installs" / "nodejs" / bare / "bin" / "node", "asdf"),
             (home / ".local" / "share" / "mise" / "installs" / "node" / bare / "bin" / "node", "mise"),
             (Path("/usr/local/n/versions/node") / bare / "bin" / "node", "n"),
+            (home / ".local" / "share" / "mise" / "installs" / "node" / bare / "node.exe", "mise"),
         ]
         project = Path(project_dir).resolve(strict=False)
         for ancestor in [project, *list(project.parents)[:4]]:
             for root in (ancestor / "tools", ancestor):
-                for tarball in sorted(root.glob(f"node-{pin}-*/bin/node")) if root.is_dir() else ():
-                    found.append((tarball, f"tools beside the checkout ({root})"))
+                if root.is_dir():
+                    for pattern in (f"node-{pin}-*/bin/node", f"node-{pin}-*/node.exe"):
+                        for tarball in sorted(root.glob(pattern)):
+                            found.append((tarball, f"tools beside the checkout ({root})"))
     unique: dict[str, tuple[Path, str]] = {}
     for path, where in found:
         unique.setdefault(str(path), (path, where))

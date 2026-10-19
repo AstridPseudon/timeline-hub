@@ -14,6 +14,14 @@ REPO_ROOT = PACKAGE_ROOT.parent
 WORKSPACE_ROOT = REPO_ROOT.parent
 
 
+def venv_python(venv_dir: str | Path, *, windows: bool | None = None) -> Path:
+    """Return the platform's Python executable inside a virtual environment."""
+    import os
+
+    is_windows = os.name == "nt" if windows is None else windows
+    return Path(venv_dir) / ("Scripts/python.exe" if is_windows else "bin/python")
+
+
 def load_checkout_script(name: str):
     """Import ``scripts/<name>.py`` of this checkout by its file, not by the top-level name ``scripts``.
 
