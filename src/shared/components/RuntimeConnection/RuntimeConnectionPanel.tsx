@@ -7,7 +7,7 @@ import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConne
 import { isMobileDevice } from '@/pages/Home/installScenario.ts';
 import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
 import { CopyInstallCommand } from './CopyInstallCommand.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY, withBrowser } from './copy.ts';
+import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, withCommandShell } from './copy.ts';
 
 export interface RuntimeConnectionPanelProps {
   /** The gate's value; the panel is only rendered while it is not connected. */
@@ -161,7 +161,7 @@ function SetUpPanel() {
     <PanelFrame
       dataState="set_up"
       title={setUp.title}
-      sentence={setUp.sentence}
+      sentence={withCommandShell(setUp.sentence)}
       action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
     />
   );
@@ -174,7 +174,7 @@ function NotRunningPanel() {
     <PanelFrame
       dataState="not_running"
       title={notRunning.title}
-      sentence={notRunning.sentence}
+      sentence={withCommandShell(notRunning.sentence)}
       action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
     />
   );
@@ -187,7 +187,7 @@ function RestartNeededPanel() {
     <PanelFrame
       dataState="restart_needed"
       title={restartNeeded.title}
-      sentence={restartNeeded.sentence}
+      sentence={withCommandShell(restartNeeded.sentence)}
       action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
     />
   );
@@ -199,7 +199,7 @@ function UpdateNeededPanel() {
     <PanelFrame
       dataState="update_needed"
       title={updateNeeded.title}
-      sentence={updateNeeded.sentence}
+      sentence={withCommandShell(updateNeeded.sentence)}
       action={<CopyInstallCommand label={COPY.agent.copy} mode="update" />}
     />
   );

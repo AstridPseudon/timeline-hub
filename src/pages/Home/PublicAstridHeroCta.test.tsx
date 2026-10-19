@@ -14,8 +14,8 @@ describe('PublicAstridHeroCta', () => {
     cleanup();
   });
 
-  it.each(['app', 'agent'] as const)('%s audience opens the shared OS installer line', (audience) => {
-    render(<PublicAstridHeroCta audience={audience} active />);
+  it('opens the shared OS installer line', () => {
+    render(<PublicAstridHeroCta active />);
     fireEvent.click(screen.getByRole('button', { name: 'Set up Astrid' }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();

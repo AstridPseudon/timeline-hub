@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ArrowDownToLine } from 'lucide-react';
 import { PublicAstridInstallDialog, SET_UP_ASTRID_COPY } from './PublicAstridInstallDialog';
-import type { PublicAstridAudience } from './publicAstridMotion';
 
 /** The hero routes both audiences to the same OS-aware setup instructions. */
-export function PublicAstridHeroCta({ active = true }: { audience: PublicAstridAudience; pixelIcons?: boolean; active?: boolean }) {
+export function PublicAstridHeroCta({ active = true }: { active?: boolean }) {
   const [installOpen, setInstallOpen] = useState(false);
   useEffect(() => { if (!active) setInstallOpen(false); }, [active]);
   return (

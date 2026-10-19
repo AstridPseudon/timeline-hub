@@ -39,6 +39,10 @@ function switchableRoute(first: () => Response) {
 const connected = () => connectionFor({ status: 'connected', realm: CONNECTED_REALM });
 const status = () => screen.getByTestId('runtime-connection-status');
 
+function onWindows() {
+  vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36');
+}
+
 describe('RuntimeConnectionPill', () => {
   it('connected: shows nothing, and says "Connected to Astrid" to a screen reader only', async () => {
     const fetchImpl = healthRoute(healthy('instance-1'));
@@ -107,6 +111,16 @@ describe('RuntimeConnectionPill', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
     expect(String(writeText.mock.calls[0][0])).toMatch(/^curl -fsSL https:\/\/astrid\.haus\/install \| sh$/);
+  });
+
+  it('names PowerShell on the stopped card on Windows', async () => {
+    onWindows();
+    const { route, fetchImpl } = switchableRoute(healthy('instance-1'));
+    render(<RuntimeConnectionPill connection={connected()} fetchImpl={fetchImpl} restartCheckIntervalMs={5} />);
+    await waitFor(() => expect(fetchImpl).toHaveBeenCalled());
+    route.answer = unreachable;
+
+    await waitFor(() => expect(screen.getByText('Run this line in PowerShell to start it again. Your changes are kept.')).toBeInTheDocument());
   });
 
   it('one dropped reading is not a stop', async () => {

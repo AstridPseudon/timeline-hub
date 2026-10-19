@@ -3,7 +3,7 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { CopyInstallCommand } from './CopyInstallCommand.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
+import { RUNTIME_CONNECTION_COPY as COPY, withCommandShell } from './copy.ts';
 import { useRuntimeRestartWatch } from './useRuntimeRestartWatch.ts';
 
 export interface RuntimeConnectionPillProps {
@@ -62,7 +62,7 @@ export function RuntimeConnectionPill({
   if (restart === 'stopped') {
     return (
       <div data-testid="runtime-connection-status" data-state="stopped" role="alert" className={CARD_CLASS}>
-        <CardText title={COPY.stopped.title} sentence={COPY.stopped.sentence} />
+        <CardText title={COPY.stopped.title} sentence={withCommandShell(COPY.stopped.sentence)} />
         <CopyInstallCommand label={COPY.agent.copy} mode="install" />
       </div>
     );

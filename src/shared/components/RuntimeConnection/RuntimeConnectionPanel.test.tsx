@@ -229,6 +229,22 @@ describe('RuntimeConnectionPanel', () => {
     expect(panelText).not.toContain("isn't running");
   });
 
+  it('uses PowerShell for setup, repair, restart and update on Windows', () => {
+    inEdge();
+    const windowsSentences: ReadonlyArray<[RuntimeConnectionValue, string]> = [
+      [connectionFor({ status: 'set_up' }), "This browser hasn't found Astrid here yet. Run this line in PowerShell to set it up, or to start it if it's already installed."],
+      [connectionFor({ status: 'not_running' }), 'Run this line in PowerShell to start it again. It keeps your work as it is. This page opens by itself.'],
+      [connectionFor({ status: 'restart_needed' }), 'Astrid on this computer changed while it was running. Run this line in PowerShell to restart it. This page opens by itself.'],
+      [connectionFor({ status: 'update_needed' }), 'Astrid on this computer is older than this page. Run this line in PowerShell to update it. It backs up your work first.'],
+    ];
+
+    for (const [connection, sentence] of windowsSentences) {
+      panel(connection);
+      expect(screen.getByText(sentence)).toBeInTheDocument();
+      cleanup();
+    }
+  });
+
   const NOT_RUNNING: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
     ['nothing answers on a return visit', () => connectionFor({ status: 'not_running' })],
     ['Astrid answered but its engine stopped', () => connectionFor({ status: 'not_running' })],

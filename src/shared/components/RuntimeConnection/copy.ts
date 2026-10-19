@@ -44,6 +44,11 @@ export function installCommand(mode: CommandMode): string {
   return windows ? ASTRID_COMMANDS.windows : ASTRID_COMMANDS.macLinux;
 }
 
+/** Names the shell that matches the command shown on setup, repair and recovery cards. */
+export function withCommandShell(sentence: string): string {
+  return detectPlatform() === 'windows' ? sentence.replace('in a terminal', 'in PowerShell') : sentence;
+}
+
 /** A heading and the one sentence under it. */
 interface Message {
   readonly title: string;
