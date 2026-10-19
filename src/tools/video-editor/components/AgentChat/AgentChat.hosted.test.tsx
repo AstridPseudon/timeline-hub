@@ -79,7 +79,7 @@ describe('agent chat on the hosted build', () => {
     fetchSpy.mockImplementation(async () => new Response(JSON.stringify({ error: 'acp_unavailable' }), { status: 503 }));
     render(<AgentChatPanel />, { wrapper: withQueryClient });
 
-    await waitFor(() => expect(screen.getByText("Chat needs Astrid's agent on this computer.")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Chat isn't running on this computer right now.")).toBeInTheDocument());
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
   });
@@ -90,7 +90,7 @@ describe('agent chat on the hosted build', () => {
     render(<AgentChatPanel />, { wrapper: withQueryClient });
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
-    expect(screen.queryByText("Chat needs Astrid's agent on this computer.")).toBeNull();
+    expect(screen.queryByText("Chat isn't running on this computer right now.")).toBeNull();
   });
 
   it('rehydrates project task links through the gateway', async () => {

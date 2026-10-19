@@ -224,6 +224,9 @@ interface AgentChatPanelProps {
   onSessionSelectorOpenChange?: (open: boolean) => void;
 }
 
+/** What the pane says while no chat service runs on this computer (the door's `acp_unavailable`). */
+const CHAT_UNAVAILABLE = "Chat isn't running on this computer right now.";
+
 export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange }: AgentChatPanelProps) {
   useRenderDiagnostic('AgentChatPanel');
   const scope = useAgentChatBridge();
@@ -568,6 +571,7 @@ function AvailableAgentChatPanel({
   const chatFailures = [activeSession.error, sendMessage.localError, createSession.error, createNewSession.error, setLocalAgent.error, sessions.error, projectChat.error];
   // No chat service on this computer is a state, not a failure: the pane says so in one plain line, with no alert or retry.
   const chatUnavailable = chatFailures.some(isAcpUnavailable);
+  const showEmptyState = !activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending;
   const turnFailure = chatFailures.find(Boolean);
   const turnFailureMessage = turnFailure instanceof Error ? turnFailure.message : turnFailure ? String(turnFailure) : 'Agent error. Try again or start a new conversation.';
 
@@ -1138,10 +1142,10 @@ function AvailableAgentChatPanel({
           </div>
         )}
 
-        {!activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending && (
+        {showEmptyState && (
           <div className="flex min-h-full flex-col items-center justify-center py-8 text-center text-sm text-muted-foreground">
             {chatUnavailable ? (
-              <p>Chat needs Astrid's agent on this computer.</p>
+              <p>{CHAT_UNAVAILABLE}</p>
             ) : sessions.isError ? (
               <>
                 <p>Local Astrid chat is unavailable.</p>
@@ -1332,6 +1336,10 @@ function AvailableAgentChatPanel({
           <div className="mb-2 rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
             Session stopped. Start a new conversation to continue.
           </div>
+        )}
+
+        {chatUnavailable && !showEmptyState && (
+          <p className="mb-2 px-1 text-xs text-muted-foreground">{CHAT_UNAVAILABLE}</p>
         )}
 
         {!isProcessing && !sendMessage.isPending && !isCancelled && !chatUnavailable && (turnFailure || activeStatus === 'error') && (

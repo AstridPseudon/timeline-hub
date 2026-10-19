@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentTurn } from '@/tools/video-editor/types/agent-session';
+import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
 import { AgentChatPanel } from './AgentChat';
 
 const mocks = vi.hoisted(() => ({
@@ -387,6 +388,17 @@ describe('AgentChat', () => {
       expect(await screen.findByRole('dialog')).toHaveTextContent('GPT 5 Mini');
       expect(mocks.modelRefetch).toHaveBeenCalled();
     }
+  });
+
+  it('keeps saying chat is unavailable once a conversation has turns: the same plain line, no alert', async () => {
+    const state = createState() as ReturnType<typeof createState> & { activeError?: Error };
+    state.activeSessionData.turns = [{ role: 'assistant', content: 'Earlier answer', timestamp: iso(1_000) }] as AgentTurn[];
+    state.activeError = new BridgeRouteError('Read chat session', 503, { error: 'acp_unavailable' });
+    mockFromState(state);
+    renderAgentChat();
+    expect(await screen.findByText('Earlier answer')).toBeInTheDocument();
+    expect(screen.getByText("Chat isn't running on this computer right now.")).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('renders one Astrid-managed notice and never starts unavailable session work', async () => {
