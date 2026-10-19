@@ -98,7 +98,7 @@ describe('RuntimeConnectionPill', () => {
     route.answer = unreachable;
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Astrid stopped' })).toBeInTheDocument());
-    expect(screen.getByText('Start it again on this computer and this page carries on. Your changes are kept.')).toBeInTheDocument();
+    expect(screen.getByText('Run this line in a terminal to start it again. Your changes are kept.')).toBeInTheDocument();
     expect(status()).toHaveAttribute('data-state', 'stopped');
     expect(status()).not.toHaveTextContent('Connected');
     expect(screen.getByRole('alert')).toHaveClass('fixed', 'right-4', 'bottom-20', 'sm:bottom-4');

@@ -5,7 +5,7 @@
 | # | Situation | Signal | Screen |
 |---|---|---|---|
 | 1 | First visit, no local install | `prompt` → Connect → Allow → 2× `silent` | permission → pending → set_up |
-| 2 | Installed, but this browser has not connected before (cleared data, private window, another browser) | as 1 | set_up. It says only "you might not be set up yet" and shows the same installer line. |
+| 2 | Installed, but this browser has not connected before (cleared data, private window, another browser) | as 1 | set_up. It says only that this browser hasn't found Astrid here yet, and shows the same installer line, which also starts an existing install. |
 | 3 | Returning, Astrid stopped | `granted`, 2× `silent`, `connectedBefore` | not_running |
 | 4 | Astrid starting | fewer than 2 failed readings | connecting → app. If slower, row 3 or row 1 until ready. |
 | 5 | Launcher up, Runtime down | `down` | not_running, whatever the history |

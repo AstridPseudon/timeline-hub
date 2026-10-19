@@ -218,7 +218,7 @@ describe('RuntimeConnectionPanel', () => {
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up');
     expect(screen.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeInTheDocument();
-    const sentence = screen.getByText("This browser hasn't found Astrid here, so it looks like you might not be set up yet.");
+    const sentence = screen.getByText("This browser hasn't found Astrid here yet. Run this line in a terminal to set it up, or to start it if it's already installed.");
     expect(sentence).toHaveClass('text-base', 'leading-7', 'text-muted-foreground');
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
@@ -238,7 +238,7 @@ describe('RuntimeConnectionPanel', () => {
     panel(connection());
 
     expect(screen.getByRole('heading', { name: "Astrid isn't running" })).toBeInTheDocument();
-    expect(screen.getByText('Start Astrid on this computer and this page opens by itself.')).toBeInTheDocument();
+    expect(screen.getByText('Run this line in a terminal to start it again. It keeps your work as it is. This page opens by itself.')).toBeInTheDocument();
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
@@ -253,7 +253,7 @@ describe('RuntimeConnectionPanel', () => {
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'restart_needed');
     expect(screen.getByRole('heading', { name: 'Astrid needs a restart' })).toBeInTheDocument();
-    expect(screen.getByText('Astrid on this computer changed while it was running. Restart it and this page opens by itself.')).toBeInTheDocument();
+    expect(screen.getByText('Astrid on this computer changed while it was running. Run this line in a terminal to restart it. This page opens by itself.')).toBeInTheDocument();
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy' }));

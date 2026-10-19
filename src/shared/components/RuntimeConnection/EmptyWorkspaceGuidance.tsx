@@ -80,7 +80,7 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
         {identity.error && <p role="status">Astrid's details aren't available right now.</p>}
         <div className="flex flex-wrap gap-2">
           {identity.data && <Button variant="outline" onClick={() => void handleCopy()}>
-            {copyState === 'copied' ? copy.copied : copy.copy}
+            {copyState === 'copied' ? copy.copied : 'Copy steps for your agent'}
           </Button>}
           <Button variant="outline" onClick={handleCheckAgain}>Check again</Button>
         </div>

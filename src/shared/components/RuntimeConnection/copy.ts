@@ -132,22 +132,22 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   setUp: {
     title: 'Set up Astrid on this computer',
-    sentence: "This browser hasn't found Astrid here, so it looks like you might not be set up yet.",
+    sentence: "This browser hasn't found Astrid here yet. Run this line in a terminal to set it up, or to start it if it's already installed.",
   },
 
   notRunning: {
     title: "Astrid isn't running",
-    sentence: 'Start Astrid on this computer and this page opens by itself.',
+    sentence: 'Run this line in a terminal to start it again. It keeps your work as it is. This page opens by itself.',
   },
 
   restartNeeded: {
     title: 'Astrid needs a restart',
-    sentence: 'Astrid on this computer changed while it was running. Restart it and this page opens by itself.',
+    sentence: 'Astrid on this computer changed while it was running. Run this line in a terminal to restart it. This page opens by itself.',
   },
 
   updateNeeded: {
     title: 'Update Astrid',
-    sentence: 'Astrid on this computer needs an update to work with this page.',
+    sentence: 'Astrid on this computer is older than this page. Run this line in a terminal to update it. It backs up your work first.',
   },
 
   phone: {
@@ -163,7 +163,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   stopped: {
     title: 'Astrid stopped',
-    sentence: 'Start it again on this computer and this page carries on. Your changes are kept.',
+    sentence: 'Run this line in a terminal to start it again. Your changes are kept.',
   },
 
   restarted: {
@@ -184,9 +184,9 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   agent: {
     copy: 'Copy',
     copied: 'Copied',
-    pasteNext: 'Now paste it into your agent.',
-    copyFailed: 'Copy this command and paste it into your coding agent if you like.',
-    note: 'This command also works pasted to a coding agent.',
+    pasteNext: 'Now paste them into your agent.',
+    copyFailed: "Copying didn't work. Select the text below and copy it.",
+    note: 'Or paste it into a coding agent to run for you.',
   },
 
   composeDisabled: "Making new images isn't on this page yet.",
