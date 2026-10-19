@@ -29,6 +29,14 @@ describe('resolveHomeToolPath', () => {
       }),
     ).toBe('/tools/video-editor');
   });
+
+  it('keeps the character animate tool reachable as the preferred tool', () => {
+    expect(
+      resolveHomeToolPath({
+        preferredToolId: TOOL_IDS.CHARACTER_ANIMATE,
+      }),
+    ).toBe('/tools/character-animate');
+  });
 });
 
 describe('isHomeToolPathActive', () => {

@@ -420,7 +420,7 @@ describe('V009 public host behavior qualification', () => {
     expect(publicBootstrap).not.toMatch(/['"]@\/(?:app\/(?:bootstrap|routes)|tools\/travel-between-images\/pages\/VideoTravelToolPage)(?:\.tsx?)?['"]/);
     expect(main).toContain("@/tools/video-editor/browser/initializeVideoEditorExtensionRuntime.ts");
     expect(main).not.toMatch(/from\s+['"]@\/tools\/video-editor\/browser(?:\/index(?:\.[cm]?[jt]sx?)?)?['"]/);
-    expect(routes).toContain('<HomeDocumentHandoff replaceDocument={replaceDocument} />');
+    expect(routes).toContain('<HomeDocumentHandoff replaceDocument={homeDocumentReplacement} />');
     expect(home).not.toContain('PublicAstridQualificationSurface');
     expect(publicShell).not.toContain('PublicAstridQualificationSurface');
     expect(publicShell).toContain('./PublicAstridMountedEditor.tsx');

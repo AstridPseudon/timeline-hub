@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   APP_ENTRY_PATH,
   classifyBrowserEntry,
-  isRecognizedOAuthCallbackUrl,
   prefersAppEntry,
   rememberAppEntryPreference,
   resolveInstallerConnectEntry,
@@ -25,20 +24,6 @@ describe('browser entry classification', () => {
   it('preserves app ownership for protected documents', () => {
     expect(classifyBrowserEntry(new URL('https://astrid.test/tools/video-editor'))).toBe('app');
     expect(classifyBrowserEntry(new URL('https://astrid.test/tools/image-generation'))).toBe('app');
-  });
-
-  it('latches existing complete hash-token callbacks to the app for this boot', () => {
-    const rootCallback = new URL('https://astrid.test/#access_token=access&refresh_token=refresh');
-    const homeCallback = new URL('https://astrid.test/home#access_token=access&refresh_token=refresh');
-    expect(isRecognizedOAuthCallbackUrl(rootCallback)).toBe(true);
-    expect(classifyBrowserEntry(rootCallback)).toBe('app');
-    expect(classifyBrowserEntry(homeCallback)).toBe('app');
-  });
-
-  it('does not let a stale oauthInProgress flag claim an ordinary public document', () => {
-    localStorage.setItem('oauthInProgress', 'true');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/'))).toBe('public');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/home'))).toBe('public');
   });
 
   it('keeps app bootstrap and extension initialization behind dynamic app imports', () => {
@@ -102,13 +87,9 @@ describe('browser entry classification', () => {
     expect(target.hash).toBe('#continue');
   });
 
-  it('keeps the landing page for first visits, /home and OAuth callbacks', () => {
+  it('keeps the landing page for first visits and /home', () => {
     expect(resolveReturningAppEntry(new URL('https://astrid.test/'), false)).toBeNull();
     expect(resolveReturningAppEntry(new URL('https://astrid.test/home'), true)).toBeNull();
-    expect(resolveReturningAppEntry(
-      new URL('https://astrid.test/#access_token=a&refresh_token=b'),
-      true,
-    )).toBeNull();
   });
 
   it('opens the Runtime\'s own projects on the hosted build, where the demo project does not exist', async () => {

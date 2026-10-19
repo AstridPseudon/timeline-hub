@@ -181,8 +181,6 @@ export function ShotEditorView({
   updateShotNameMutateRef.current = updateShotNameMutation.mutate;
   const invalidateGenerations = useEnqueueGenerationsInvalidation();
 
-  const isCloudGenerationEnabled = true;
-
   // Project caches
   const { getFinalVideoCount, getHasStructureVideo } = useProjectVideoCountsCache(selectedProjectId);
   const { updateShotMode } = useProjectGenerationModesCache(selectedProjectId);
@@ -378,7 +376,7 @@ export function ShotEditorView({
             updateShotMode={updateShotMode}
             shotSettingsPersistence={canonicalSettingsPersistence}
           >
-            <SettingsAutoDisable shotId={shotToEdit.id} isCloudGenerationEnabled={isCloudGenerationEnabled} readOnly={editorReadOnly} />
+            <SettingsAutoDisable shotId={shotToEdit.id} readOnly={editorReadOnly} />
             <ShotSettingsEditor
               // Core identifiers
               selectedShotId={shotToEdit.id}
@@ -443,20 +441,13 @@ export function ShotEditorView({
  * Renderless component that auto-disables conflicting settings.
  * Lives inside VideoTravelSettingsProvider to access settings context.
  */
-function SettingsAutoDisable({ shotId, isCloudGenerationEnabled, readOnly }: {
+function SettingsAutoDisable({ shotId, readOnly }: {
   shotId: string;
-  isCloudGenerationEnabled: boolean;
   readOnly?: boolean;
 }) {
-  const { settings, status, shotId: loadedShotId, updateField, updateFields } =
+  const { settings, status, shotId: loadedShotId, updateFields } =
     useVideoTravelSettingsMutations();
   const { turboMode = false, advancedMode = false } = settings;
-
-  // Auto-disable turbo mode when cloud generation is disabled
-  useEffect(() => {
-    if (readOnly || status !== 'ready' || loadedShotId !== shotId) return;
-    if (!isCloudGenerationEnabled && turboMode) updateField('turboMode', false);
-  }, [isCloudGenerationEnabled, turboMode, status, loadedShotId, shotId, updateField, readOnly]);
 
   // Auto-disable advanced mode when turbo mode is on
   useEffect(() => {

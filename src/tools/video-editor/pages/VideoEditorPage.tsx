@@ -180,7 +180,7 @@ export default function VideoEditorPage() {
       ),
     );
 
-  // ---- M14: extension loader wiring (host-owned) --------------------------
+  // ---- extension loader wiring (host-owned) --------------------------
   // Resolves direct-local extensions + optional repository state through the
   // ExtensionLoader pipeline.  When no repository is provided, direct-local
   // extensions pass through unchanged (backward compatible).

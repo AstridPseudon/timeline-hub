@@ -529,32 +529,6 @@ export const BatchSettingsForm: React.FC<BatchSettingsFormProps> = ({
               </div>
             )}
             
-            {/* Turbo Mode Toggle - DISABLED - keeping code for potential future use
-            {isCloudGenerationEnabled && !isTurboModeDisabled && (
-              <div className="flex items-center gap-x-2 p-3 bg-muted/30 rounded-lg border">
-                <Switch
-                  id="turbo-mode"
-                  checked={turboMode}
-                  onCheckedChange={(checked) => {
-                    onTurboModeChange(checked);
-                    // Auto-set frames to 81 when turbo mode is enabled
-                    if (checked && batchVideoFrames !== 81) {
-                      onBatchVideoFramesChange(81);
-                    }
-                  }}
-                />
-                <div className="flex-1">
-                  <Label htmlFor="turbo-mode" className="font-medium">
-                    Turbo Mode
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Using fast WAN 2.2 model for quick results ({framesToSeconds(81)})
-                  </p>
-                </div>
-              </div>
-            )}
-            */}
-            
             {/* Frames per pair - hidden in Timeline mode since users set duration individually */}
             {!isTimelineMode && (
               <div className="relative">

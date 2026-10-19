@@ -16,7 +16,6 @@ const LazyProductTour = React.lazy(() =>
     default: module.ProductTour
   }))
 );
-import { AIInputModeProvider } from '@/shared/contexts/AIInputModeContext';
 import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
@@ -71,7 +70,7 @@ const LayoutShell: React.FC = () => {
   const { splitViewWrapperRef } = useSplitViewScroll(isMobileSplitView);
   const { isAuthenticated, isLoading } = useAuth();
   const { preserveUserText, setPreserveUserText } = useTextCase();
-  const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab, settingsCreditsTab, handleOpenSettings } = useSettingsModal();
+  const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab } = useSettingsModal();
   const { showOnboardingModal, onboardingMode, handleOnboardingClose } = useOnboardingFlow();
   useResetCurrentShotOnRouteChange();
   useGlobalPaneShortcuts();
@@ -113,70 +112,65 @@ const LayoutShell: React.FC = () => {
   } : {};
 
   const mainContent = (
-    <LayoutMainContent
-      isMobileSplitView={isMobileSplitView}
-    />
+    <LayoutMainContent isMobileSplitView={isMobileSplitView} />
   );
 
   return (
-    <AIInputModeProvider>
-      <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-dvh min-h-0 overflow-hidden')}>
-        <ScrollToTop />
-        <AppSkyBackground />
+    <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-dvh min-h-0 overflow-hidden')}>
+      <ScrollToTop />
+      <AppSkyBackground />
 
-        {/* When in mobile split view, wrap header + content in a scroll container */}
-        {isMobileSplitView ? (
-          <div ref={splitViewWrapperRef} style={splitViewWrapperStyle}>
-            {mainContent}
-          </div>
-        ) : (
-          mainContent
-        )}
+      {/* When in mobile split view, wrap header + content in a scroll container */}
+      {isMobileSplitView ? (
+        <div ref={splitViewWrapperRef} style={splitViewWrapperStyle}>
+          {mainContent}
+        </div>
+      ) : (
+        mainContent
+      )}
 
-        {/* The local Astrid App hides the legacy tool-navigation sidebar. The
-            task/status and editor panes remain available to the user. */}
-        <>
-          <EditorPane />
-          <TasksPane onOpenSettings={handleOpenSettings} />
-          <ToolsPane />
-          <GenerationsPane />
-        </>
+      {/* The local Astrid App hides the legacy tool-navigation sidebar. The
+          task/status and editor panes remain available to the user. */}
+      <>
+        <EditorPane />
+        <TasksPane />
+        <ToolsPane />
+        <GenerationsPane />
+      </>
 
-        {/* Social Icons Footer */}
-        {!isVideoEditorShellActive && (
-          <div
-            className="relative transition-[margin] duration-300 ease-smooth"
-            style={footerStyle}
-          >
-            <SocialIcons />
-          </div>
-        )}
+      {/* Social Icons Footer */}
+      {!isVideoEditorShellActive && (
+        <div
+          className="relative transition-[margin] duration-300 ease-smooth"
+          style={footerStyle}
+        >
+          <SocialIcons />
+        </div>
+      )}
 
-        {/* App-shell modals. Local mode renders them too; their content
-            degrades to empty/disabled states without account data. */}
-        <SettingsModal
-          isOpen={isSettingsModalOpen}
-          onOpenChange={setIsSettingsModalOpen}
-          initialTab={settingsInitialTab}
-          creditsTab={settingsCreditsTab}
-          preserveUserText={preserveUserText}
-          setPreserveUserText={setPreserveUserText}
-        />
+      {/* App-shell modals. Local mode renders them too; their content
+          degrades to empty/disabled states without account data. */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onOpenChange={setIsSettingsModalOpen}
+        initialTab={settingsInitialTab}
+        preserveUserText={preserveUserText}
+        setPreserveUserText={setPreserveUserText}
+      />
 
-        {/* Onboarding Modal */}
-        <OnboardingModal
-          isOpen={showOnboardingModal}
-          mode={onboardingMode}
-          onClose={handleOnboardingClose}
-        />
+      {/* Onboarding Modal */}
+      <OnboardingModal
+        isOpen={showOnboardingModal}
+        mode={onboardingMode}
+        onClose={handleOnboardingClose}
+      />
 
-        {/* Product Tour - lazy loaded since only needed during onboarding */}
-        <ChunkLoadErrorBoundary>
-          <React.Suspense fallback={null}>
-            <LazyProductTour />
-          </React.Suspense>
-        </ChunkLoadErrorBoundary>
-      </div>
-    </AIInputModeProvider>
+      {/* Product Tour - lazy loaded since only needed during onboarding */}
+      <ChunkLoadErrorBoundary>
+        <React.Suspense fallback={null}>
+          <LazyProductTour />
+        </React.Suspense>
+      </ChunkLoadErrorBoundary>
+    </div>
   );
 };
