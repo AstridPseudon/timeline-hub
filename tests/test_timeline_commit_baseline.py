@@ -4,8 +4,12 @@ import copy
 import json
 import shutil
 import sqlite3
+from pathlib import Path
 
 import pytest
+from jsonschema import Draft7Validator, ValidationError
+
+from test_shot_composition_contract import _composition_validator, _schema
 
 from runtime_protocol.errors import ConflictError
 from runtime_protocol.store import expired_command_result, expired_publication_result
@@ -293,7 +297,50 @@ def test_empty_bootstrap_candidate_requires_real_parent_receipt(tmp_path, monkey
         assert plan["entries"][0]["intent"] == "bootstrap"
         assert plan["entries"][0]["records"] is None
         assert plan["entries"][0]["previous"] is None
+        assert plan["entries"][0]["receipt"] == accepted["receipt"]
         assert _verify(service, project_id)["canonical_document"] == document
+    finally:
+        service.close()
+
+
+def test_empty_bootstrap_uses_authoritative_timeline_config_schema():
+    document = empty_bootstrap_document("project", "main", "empty-parent")
+    payload = document["parent_revision"]["payload"]
+    assert payload["config"] == {"clips": [], "tracks": []}
+    # The wire ParentComposition references this pinned artifact; do not copy
+    # TimelineConfig's definition into the bootstrap tests or implementation.
+    schema_path = Path(__file__).resolve().parents[1] / "contract" / "schemas" / "timeline-config.schema.json"
+    validator = Draft7Validator(json.loads(schema_path.read_text()))
+    validator.validate(payload["config"])
+    with pytest.raises(ValidationError):
+        validator.validate({})
+    _composition_validator(_schema()).validate({
+        "project_id": document["project_id"], "timeline_id": document["timeline_id"],
+        "expected_head": None, "parent_revision_id": document["parent_revision"]["revision_id"],
+        "parent_composition": payload,
+    })
+
+
+@pytest.mark.parametrize("field,value", [
+    ("config", {}),
+    ("config", {"clips": [], "tracks": [], "app": {}}),
+    ("registry", {"assets": {}}),
+    ("extension", {"innocent": True}),
+])
+def test_bootstrap_requires_exact_canonical_empty_payload(tmp_path, monkeypatch, field, value):
+    service, project_id = _service(tmp_path)
+    try:
+        document = empty_bootstrap_document(project_id, "main", "empty-parent")
+        document["parent_revision"]["payload"][field] = value
+        service.publish_parent_composition(project_id, "main", {
+            "project_id": project_id, "timeline_id": "main", "expected_head": None,
+            "parent_revision_id": "empty-parent", "parent_composition": document["parent_revision"]["payload"],
+        }, idempotency_key="empty")
+        _disable_renderer(monkeypatch, service)
+        with service.store._transaction():
+            before = service.store.conn.total_changes
+            assert _refused(lambda: bootstrap_install_plan(service.store.conn, project_id, "main", read_object=service.cas.read)) == "bootstrap_requires_empty_initial_publication"
+            assert service.store.conn.total_changes == before
     finally:
         service.close()
 
@@ -434,13 +481,78 @@ def test_unrelated_project_and_timeline_writes_do_not_invalidate_baseline(publis
     assert _verify(service, project_id)["head"]["publication_id"] == accepted["receipt"]["receipt_id"]
 
 
-def test_live_document_pin_is_not_silently_labelled_an_empty_dependency_closure(tmp_path, monkeypatch):
+def test_declared_document_pin_is_not_silently_labelled_an_empty_dependency_closure(published):
+    service, project_id, accepted = published
+    connection = service.store.conn
+    event_id = int(accepted["data"]["event_id"])
+    payload = json.loads(connection.execute("SELECT payload_json FROM timeline_events WHERE id=?", (event_id,)).fetchone()[0])
+    payload["dependency_manifest"]["documents"] = [{
+        "document_id": "source-config", "version": 1, "content_digest": "sha256:" + "1" * 64,
+    }]
+    result = copy.deepcopy(accepted["data"])
+    result["dependency_manifest"] = payload["dependency_manifest"]
+    connection.execute("UPDATE command_idempotency SET result_json=? WHERE txn_id=?", (canonical_json(result), accepted["receipt"]["receipt_id"]))
+    _rehash_timeline_events(service, "main", replacements={event_id: payload})
+    before = connection.total_changes
+    assert _refused(lambda: _verify(service, project_id)) == "unretained_document_dependency"
+    assert connection.total_changes == before
+
+
+@pytest.mark.parametrize("location", ["config", "parent", "shot", "internal"])
+def test_pin_shaped_opaque_values_are_preserved(tmp_path, monkeypatch, location):
     service, project_id = _service(tmp_path)
     try:
         body = _publication(project_id)
-        body["parent_composition"]["config"]["source"] = {"document_id": "source-config", "version": 1, "content_digest": "sha256:" + "1" * 64}
-        service.publish_parent_composition(project_id, "main", body, idempotency_key="unretained-source")
+        opaque = {
+            "project_id": "unrelated-project", "document_id": "notes", "object_id": "external-record",
+            "version": 1, "content_digest": "sha256:" + "1" * 64,
+            "example.org/extension": {"source": {"document_id": "other-notes", "version": 2},
+                                      "ref": {"document_id": "third-notes", "content_digest": "unrelated"}},
+        }
+        if location == "config":
+            target = body["parent_composition"]["config"]
+        elif location == "parent":
+            target = body["parent_composition"].setdefault("metadata", {})
+        elif location == "shot":
+            target = body["shot_revisions"][0]["payload"]["metadata"]
+        else:
+            target = body["internal_timeline_revisions"][0]["payload"].setdefault("app", {})
+        # No schema declares config.source a DocumentPin on main either.
+        target["source"] = opaque
+        accepted = service.publish_parent_composition(project_id, "main", body, idempotency_key="opaque")
         _disable_renderer(monkeypatch, service)
-        assert _refused(lambda: _verify(service, project_id)) == "unretained_document_dependency"
+        facts = _verify(service, project_id)
+        document = facts["canonical_document"]
+        assert facts["entries"][0]["receipt"] == accepted["receipt"]
+        assert document["dependency_manifest"]["documents"] == []
+        if location == "config":
+            restored = document["parent_revision"]["payload"]["config"]
+        elif location == "parent":
+            restored = document["parent_revision"]["payload"]["metadata"]
+        elif location == "shot":
+            restored = document["shot_revisions"][0]["payload"]["metadata"]
+        else:
+            restored = document["internal_timeline_revisions"][0]["payload"]["app"]
+        assert restored["source"] == opaque
+    finally:
+        service.close()
+
+
+@pytest.mark.parametrize("relation", ["reference", "promoted"])
+def test_reference_only_media_is_not_current_managed_ownership(tmp_path, monkeypatch, relation):
+    service, project_id = _service(tmp_path)
+    try:
+        accepted, scene, _ = _publish_with_explicit_media(service, project_id)
+        _disable_renderer(monkeypatch, service)
+        original = _verify(service, project_id)
+        assert original["entries"][0]["receipt"] == accepted["receipt"]
+        digest = scene.removeprefix("sha256:")
+        connection = service.store.conn
+        connection.execute("UPDATE project_objects SET relation=? WHERE project_id=? AND digest=?", (relation, project_id, digest))
+        before = connection.total_changes
+        assert _refused(lambda: _verify(service, project_id)) == "missing_scoped_row"
+        assert connection.total_changes == before
+        connection.execute("INSERT INTO project_objects(project_id, digest, relation, created_at) SELECT project_id, digest, 'managed', created_at FROM project_objects WHERE project_id=? AND digest=?", (project_id, digest))
+        assert _verify(service, project_id) == original
     finally:
         service.close()

@@ -69,12 +69,10 @@ def _image(connection, table, revision_id, project_id, **identity):
 
 
 def _payload_media(value):
+    # Match main's _collect_digest_media; source/content hashes are not CAS
+    # identities, and opaque JSON does not declare consumed Document inputs.
     found = set()
     if isinstance(value, dict):
-        # Main's three-family manifest has no retained Document snapshots.
-        # An explicit external pin cannot be justified by today's live row.
-        if "document_id" in value and ("version" in value or "content_digest" in value):
-            _refuse("unretained_document_dependency")
         for key, child in value.items():
             if key in {"media_id", "object_id"} and isinstance(child, str):
                 bare = child.removeprefix("sha256:")
@@ -92,7 +90,7 @@ def _media(connection, project_id, media_id, read_object):
              _HEX.fullmatch(media_id[7:]), "invalid_media_identity")
     bare = media_id[7:]
     row = _row(connection, "SELECT size, media_type FROM objects WHERE digest=?", (bare,))
-    _row(connection, "SELECT 1 FROM project_objects WHERE project_id=? AND digest=?", (project_id, bare))
+    _row(connection, "SELECT 1 FROM project_objects WHERE project_id=? AND digest=? AND relation='managed'", (project_id, bare))
     data = read_object(bare)
     _require(isinstance(data, bytes) and len(data) == row["size"] and
              hashlib.sha256(data).hexdigest() == bare, "media_bytes_mismatch")
@@ -189,6 +187,10 @@ def _closure(connection, project_id, timeline_id, revision_id, manifest, read_ob
         internals[(internal_id, link)] = internal
     shot_images = [shots[key] for key in sorted(shots)]
     internal_images = [internals[key] for key in sorted(internals)]
+    # Main's publication manifest has no retained Document snapshots. Only an
+    # explicit dependency declares a consumed pin; arbitrary payload keys do not.
+    if isinstance(manifest, dict) and manifest.get("documents"):
+        _refuse("unretained_document_dependency")
     _require(isinstance(manifest, dict) and set(manifest) == {"shots", "internal_timelines", "media"}, "manifest_missing_or_unsupported")
     expected_manifest = {
         "shots": [{key: image[key] for key in ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest")} for image in shot_images],
@@ -388,7 +390,7 @@ def baseline_install_plan(connection, facts, *, read_object, existing_head=None)
 def empty_bootstrap_document(project_id, timeline_id, revision_id):
     """Candidate for acceptance's constrained, renderer-free publication hook."""
     _require(all(isinstance(value, str) and value for value in (project_id, timeline_id, revision_id)), "bootstrap_identity_missing")
-    payload = {"config": {}, "registry": {}, "clips": [], "occurrences": []}
+    payload = {"config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": []}
     return {"schema_version": 1, "project_id": project_id, "timeline_id": timeline_id,
             "parent_revision": {"revision_id": revision_id, "payload": payload, "content_digest": _digest(payload)},
             "shot_revisions": [], "internal_timeline_revisions": [],
