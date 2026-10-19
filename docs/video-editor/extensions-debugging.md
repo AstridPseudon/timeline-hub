@@ -3,7 +3,7 @@
 **Status:** Active (M15)
 **Last updated:** 2026-06-20
 **Audience:** Extension authors diagnosing activation failures, disposal errors, export guard warnings, and provider-specific behaviour.
-**Prerequisite:** [Extension Quickstart](./extensions-quickstart.md), [Extension Author Contract](./extension-author-contract.md).
+**Prerequisite:** [Extension Author Contract](./extension-author-contract.md) (start at its §11 Getting started).
 
 ---
 
@@ -26,19 +26,19 @@ Every extension activation and deactivation is wrapped in `console.groupCollapse
     Extension "haus.astrid.examples.flagship-local" activated successfully
 ```
 
-**Evidence:** [Trust Envelope §4](./extensions-trust-envelope.md#4-activation-lifecycle-visible-boundaries) (S-016). The trust envelope documents the exact console group format and lifecycle state transitions.
+**Evidence:** [Trust and Security §11.2](../extensions/trust-and-security.md#112-activation-lifecycle-visible-boundaries) (S-016). The trust envelope documents the exact console group format and lifecycle state transitions.
 
 ### 2.2 Diagnostic console echo
 
 `ctx.chrome.toast()` calls are echoed to `console.log`/`console.warn`/`console.error` in dev. If a toast isn't appearing in the host UI, check the console for payload details.
 
-**Evidence:** [Trust Envelope §2](./extensions-trust-envelope.md#2-capability-visibility-table) (Chrome toasts / progress row).
+**Evidence:** [Trust and Security §11.1](../extensions/trust-and-security.md#111-capability-visibility-table) (Chrome toasts / progress row).
 
 ### 2.3 Non-React error paths
 
 Extensions can throw in non-React paths (event handlers, timers, `setTimeout` callbacks). These errors are **not caught** by `ContributionErrorBoundary`. Check the console for unhandled errors.
 
-**Evidence:** [Trust Envelope §5](./extensions-trust-envelope.md#5-what-trusted-local-does-not-mean) (S-017); [Author Contract §5.3](./extension-author-contract.md#53-error-boundaries).
+**Evidence:** [Trust and Security §11.3](../extensions/trust-and-security.md#113-what-trusted-local-does-not-mean) (S-017); [Author Contract §5.3](./extension-author-contract.md#53-error-boundaries).
 
 ---
 
@@ -83,7 +83,7 @@ const allDiagnostics = ctx.services.diagnostics.diagnostics;
 // Returns all diagnostics for the current extension, frozen.
 ```
 
-**Evidence:** [Quickstart §4.4](./extensions-quickstart.md#44-diagnostics-ctxservicesdiagnostics); `DiagnosticCollection` in `src/sdk/index.ts` (S-006).
+**Evidence:** [Author Contract §11.4.4](./extension-author-contract.md#1144-diagnostics-ctxservicesdiagnostics); `DiagnosticCollection` in `src/sdk/index.ts` (S-006).
 
 ### 3.4 Diagnostic surface locations
 
@@ -119,7 +119,7 @@ If `activate()` throws:
        console.error('Extension "com.example.myExtension" failed during activation')
    ```
 
-**Evidence:** [Trust Envelope §4](./extensions-trust-envelope.md#4-activation-lifecycle-visible-boundaries) (S-016, S-017); [Contract-Recheck CR:M1-002](./extension-platform-contract-recheck.md#22-m1--sdk-kernel-and-trusted-local-extension-runtime).
+**Evidence:** [Trust and Security §11.2](../extensions/trust-and-security.md#112-activation-lifecycle-visible-boundaries) (S-016, S-017); [Contract-Recheck CR:M1-002](./extension-platform-contract-recheck.md#22-m1--sdk-kernel-and-trusted-local-extension-runtime).
 
 **Common causes:**
 - Importing from an internal path (`src/tools/video-editor/`) instead of `@astrid/editor-sdk`. Run `node scripts/quality/check-extension-example-readiness.mjs --audit` to verify.
@@ -131,7 +131,7 @@ If `activate()` throws:
 
 The lifecycle host calls `dispose()` on every `DisposeHandle` returned by `activate()`. Disposal failures are captured as `error`-severity diagnostics (code: `lifecycle/teardown-error`) but **never thrown** — the lifecycle continues.
 
-**Evidence:** [Trust Envelope §2](./extensions-trust-envelope.md#2-capability-visibility-table) (Shutdown / dispose row); [Author Contract §2.2](./extension-author-contract.md#22-extension-lifecycle) (S-017).
+**Evidence:** [Trust and Security §11.1](../extensions/trust-and-security.md#111-capability-visibility-table) (Shutdown / dispose row); [Author Contract §2.2](./extension-author-contract.md#22-extension-lifecycle) (S-017).
 
 **Debugging checklist:**
 1. Ensure `dispose()` is **idempotent** — safe to call multiple times.
@@ -250,7 +250,7 @@ Overflow produces `ProjectDataLimitDetail` diagnostics with `extensionId`, `limi
 
 | Symptom | Likely cause | Debugging step | Evidence link |
 |---|---|---|---|
-| Extension doesn't appear in toolbar | Slot contribution not declared or `kind` mismatch | Check manifest `contributions` array; verify `slot` field matches `VideoEditorSlotName` | [Quickstart §3.1](./extensions-quickstart.md#31-slot-contributions-toolbar-statusbar-codepanel-etc) |
+| Extension doesn't appear in toolbar | Slot contribution not declared or `kind` mismatch | Check manifest `contributions` array; verify `slot` field matches `VideoEditorSlotName` | [Author Contract §11.3.1](./extension-author-contract.md#1131-slot-contributions-toolbar-statusbar-codepanel-etc) |
 | Activation throws; extension in `failed` state | `activate()` threw or invalid import path | Check console for `[Extension lifecycle]` group; verify `@astrid/editor-sdk` imports | [§4.1](#41-activation-failure) |
 | Diagnostic not appearing in panel | Diagnostic code not namespaced or contributionId missing | Add `contributionId`; use extension-scoped code (e.g. `myExt/validation-failed`) | [Author Contract §3.3](./extension-author-contract.md#33-diagnostic-conventions) |
 | Export blocked with `export/unknown-clip-type` | Clip type not declared in any active extension's manifest | Add `kind: 'clipType'` contribution to your manifest; ensure extension is active | [§5.1](#51-pre-render-scan) |
@@ -272,7 +272,7 @@ node scripts/quality/check-extension-example-readiness.mjs --audit
 
 Verifies that every example imports exclusively from `@astrid/editor-sdk`. Run this before debugging — an internal import is the most common activation failure cause.
 
-**Evidence:** [Quickstart §7](./extensions-quickstart.md#7-running-the-pre-doc-example-readiness-gate); [Contract-Recheck CR:X-001, CR:X-002](./extension-platform-contract-recheck.md#216-cross-milestone--structural-claims).
+**Evidence:** [Author Contract §10](./extension-author-contract.md#10-pre-doc-example-readiness-gate); [Contract-Recheck CR:X-001, CR:X-002](./extension-platform-contract-recheck.md#216-cross-milestone--structural-claims).
 
 ### 9.2 Contract recheck
 
@@ -320,9 +320,8 @@ The following behaviours are **deferred** or **unsupported** in V1. If you encou
 
 | Document | Relevance |
 |---|---|
-| [extensions-trust-envelope.md](./extensions-trust-envelope.md) | V1 execution context, lifecycle visibility, error containment |
+| [trust-and-security.md](../extensions/trust-and-security.md) | V1 execution context, lifecycle visibility, error containment |
 | [extension-author-contract.md](./extension-author-contract.md) | Diagnostic contract, dispose obligations, renderability |
-| [extensions-quickstart.md](./extensions-quickstart.md) | Getting-started patterns, service reference |
 | [extension-platform-supported-deferred.md](./extension-platform-supported-deferred.md) | Full supported/deferred classification (84 supported, 69 deferred) |
 | [extension-platform-contract-recheck.md](./extension-platform-contract-recheck.md) | Complete M0–M14 Done Criteria evidence |
 | [provider-compatibility-matrix.md](./provider-compatibility-matrix.md) | Provider-specific limitations and environment prerequisites |

@@ -6,8 +6,8 @@
  * (`docs/video-editor/extension-platform-supported-deferred.md`) and
  * governance outputs (`config/governance/contract-surface-map.json`,
  * `config/governance/sdk-public-export-allowlist.json`) to determine which
- * example files are safe to reference in author-contract docs and quickstart
- * guides.
+ * example files are safe to reference in the author contract, including its
+ * getting-started section.
  *
  * ## What this gate enforces
  *

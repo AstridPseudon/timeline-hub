@@ -67,7 +67,7 @@ key files; signing remains a separate participant action.
 
 First capture the typed human-session or independent-review document with the
 operator flow in
-[`extension-ship-evidence-ledger.md`](extension-ship-evidence-ledger.md#external-evidence-operator-flow),
+[`extension-release-runbook.md`](extension-release-runbook.md#external-evidence-operator-flow),
 then generate or append its unsigned receipt. A human receipt includes its
 assigned `persona`; a review receipt carries the reviewer identity mirrored
 from the document. Both use `"decision": "approve"`. All other receipt fields

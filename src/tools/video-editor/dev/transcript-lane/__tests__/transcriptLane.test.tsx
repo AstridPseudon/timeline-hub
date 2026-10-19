@@ -14,8 +14,8 @@
 //         (transcript chips), not host extent bars.
 //
 // Secondary/manual evidence (embed-host resolver path) and the prod
-// null-provider posture are documented in docs/extensions/authoring.md
-// ("Data Kinds" section).
+// null-provider posture are documented in docs/video-editor/extension-author-contract.md
+// (§12.5 "Data Kinds").
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TimelineCanvas } from '@/tools/video-editor/components/TimelineEditor/TimelineCanvas';

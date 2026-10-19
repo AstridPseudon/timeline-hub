@@ -549,7 +549,7 @@ Supported primitives map to rows S-020–S-027, S-050–S-051, S-060–S-065 in 
 |---|---|
 | [extension-platform-contract-recheck.md](./extension-platform-contract-recheck.md) | Complete M0–M14 Done Criteria evidence matrix |
 | [extension-platform-supported-deferred.md](./extension-platform-supported-deferred.md) | Canonical supported/deferred V1 behavior classification |
-| [extensions-trust-envelope.md](./extensions-trust-envelope.md) | V1 trusted-local execution model |
+| [trust-and-security.md](../extensions/trust-and-security.md) | V1 trusted-local execution model |
 | [provider-compatibility-matrix.md](./provider-compatibility-matrix.md) | DataProvider compatibility matrix |
 | [docs/video-editor/frontend-closure-checklist.md](./frontend-closure-checklist.md) | Transitional checklist (superseded by this matrix) |
 
