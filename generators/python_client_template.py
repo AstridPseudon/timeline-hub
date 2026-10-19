@@ -41,7 +41,7 @@ def _urlopen_loopback(request: urllib.request.Request, *, timeout: float) -> Any
 @dataclass(frozen=True)
 class ServiceStatus:
     name: str
-    state: Literal["running", "restarting", "failed"]
+    state: Literal["starting", "running", "restarting", "failed"]
     last_exit: int | None
     restart_count: int
     reason: str | None = None

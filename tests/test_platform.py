@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 
@@ -289,3 +290,57 @@ def _wait_absent(pid):
             return
         time.sleep(.02)
     pytest.fail(f"process {pid} outlived its owned tree")
+
+
+def test_windows_service_stop_uses_stdin_eof_then_job_cleanup(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    job = SimpleNamespace(close=Mock())
+    channel = Mock()
+    process = SimpleNamespace(pid=1234, stdin=channel, _runtime_job=job,
+        poll=Mock(return_value=None),
+        wait=Mock(side_effect=[subprocess.TimeoutExpired("service", 1), None]))
+    events = []
+    monkeypatch.setattr(platform, "signal_tree", lambda _process, signum: events.append(signum))
+    monkeypatch.setattr(platform.time, "monotonic", lambda: 10.0)
+    monkeypatch.setattr(platform.time, "sleep", lambda delay: events.append(("grace", delay)))
+    platform.stop_tree(process, grace=1, stop_channel=True)
+    channel.close.assert_called_once_with()
+    assert events == [("grace", 1.0), platform.KILL]
+    assert process.wait.call_count == 2
+    job.close.assert_called_once_with()
+
+
+@pytest.mark.parametrize("leader_exited", [False, True])
+def test_linux_service_grace_expires_before_forcing_remaining_group(monkeypatch, leader_exited):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="linux"))
+    now, events = [0.0], []
+    process = SimpleNamespace(pid=1234, returncode=None,
+        stdin=SimpleNamespace(close=lambda: events.append("eof")), wait=Mock())
+    monkeypatch.setattr(platform, "os", SimpleNamespace(
+        waitid=lambda *args: object() if leader_exited else None,
+        P_PID=1, WEXITED=4, WNOHANG=1, WNOWAIT=16))
+    monkeypatch.setattr(platform, "_signal_linux_group", lambda child, sig: events.append((sig, now[0])))
+    monkeypatch.setattr(platform.time, "monotonic", lambda: now[0])
+    def sleep(delay):
+        assert delay > 0, "shutdown must escalate when its grace deadline expires"
+        now[0] += delay
+    monkeypatch.setattr(platform.time, "sleep", sleep)
+    platform.stop_tree(process, grace=0.15, stop_channel=True)
+    assert events[0] == "eof"
+    assert events[1] == (platform.TERM, 0.0)
+    assert events[2][0] == platform.KILL
+    assert events[2][1] == pytest.approx(0.15)
+    process.wait.assert_called_once_with(timeout=2.0)
+
+
+def test_darwin_service_stop_signals_group_after_leader_exit(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="darwin"))
+    events = []
+    process = SimpleNamespace(pid=1234, returncode=None,
+        stdin=SimpleNamespace(close=lambda: events.append("eof")), wait=Mock())
+    monkeypatch.setattr(platform, "_darwin_tree_exited", lambda child: True)
+    monkeypatch.setattr(platform, "signal_tree", lambda child, sig: events.append(sig))
+    monkeypatch.setattr(platform.time, "sleep", lambda delay: events.append(("grace", delay)))
+    platform.stop_tree(process, grace=0.15, stop_channel=True)
+    assert events == ["eof", platform.TERM, ("grace", 0.15), platform.KILL]
+    process.wait.assert_called_once_with(timeout=2.0)

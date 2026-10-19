@@ -23,6 +23,8 @@ _NAME = re.compile(r"[a-z][a-z0-9-]{0,63}\Z")
 _ENV = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
 _READY = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}\Z")
 _RESERVED_ENV = {"PYTHONPATH", "PYTHONHOME", "ASTRID_RUNTIME_JOB_HANDLE"}
+_STARTUP_STABLE_SECONDS = 2.0
+_FAST_FAILURE_LIMIT = 3
 
 
 @dataclass(frozen=True)
@@ -135,7 +137,7 @@ def load_service_configuration(declaration, *, python, source_checkout):
 @dataclass
 class _Service:
     spec: ServiceSpec
-    state: str = "restarting"
+    state: str = "starting"
     last_exit: int | None = None
     restart_count: int = 0
     reason: str | None = None
@@ -192,7 +194,7 @@ class ServiceSupervisor:
         # Retain and retry a tree whose cleanup failed; never launch over it.
         for item in self._services:
             if item.process is not None:
-                platform.stop_tree(item.process, grace=self.grace)
+                platform.stop_tree(item.process, grace=self.grace, stop_channel=True)
                 self._update(item, process=None)
 
     def _environment(self, spec):
@@ -231,13 +233,13 @@ class ServiceSupervisor:
             return None, 0.0, "stopped"
         argv = [self.values.get(arg, arg) for arg in spec.argv]
         process = platform.spawn_tree(argv, hidden=True, cwd=self.config.source_checkout, env=self._environment(spec),
-            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
         self._update(item, process=process)
         reader = None
         try:
             log_errors = threading.Event()
             reader = threading.Thread(target=self._pipe_log, args=(process.stdout, log, log_errors), name="log-" + spec.name, daemon=True)
-            started, stable_since, reason = time.monotonic(), None, None
+            started, running_since, reason = time.monotonic(), None, None
             ready_path = self._ready_path(spec)
             reader.start()
             while not self._stop.is_set():
@@ -247,17 +249,17 @@ class ServiceSupervisor:
                 if platform.tree_exited(process):
                     break
                 current = time.monotonic()
-                ready = ready_path is None or (ready_path.is_file() and not ready_path.is_symlink())
-                if ready and stable_since is None:
-                    stable_since = current
+                ready = ready_path is not None and ready_path.is_file() and not ready_path.is_symlink()
+                if running_since is None and (ready or (ready_path is None and current - started >= _STARTUP_STABLE_SECONDS)):
+                    running_since = current if ready else started
                     self._update(item, state="running", reason=None)
-                if stable_since is None and current - started >= spec.ready_timeout:
+                if ready_path is not None and running_since is None and current - started >= spec.ready_timeout:
                     reason = "readiness_timeout"
                     break
                 self._stop.wait(0.1)
         finally:
             ended = time.monotonic()
-            platform.stop_tree(process, grace=self.grace)
+            platform.stop_tree(process, grace=self.grace, stop_channel=True)
             self._update(item, process=None, last_exit=process.returncode)
             if reader is not None and reader.ident is not None:
                 reader.join(2.0)
@@ -266,15 +268,16 @@ class ServiceSupervisor:
             else:
                 process.stdout.close()
             self._remove_ready(spec)
-        stable_for = ended - stable_since if stable_since is not None else 0.0
+        stable_for = ended - running_since if running_since is not None else 0.0
         return process.returncode, stable_for, reason
 
     def _run(self, item):
         delay = self.initial_backoff
+        fast_failures = 0
         try:
             with RotatingLog(self.logs / ("service-" + item.spec.name + ".log")) as log:
                 while not self._stop.is_set():
-                    self._update(item, state="restarting", reason=None)
+                    self._update(item, state="starting", reason=None)
                     try:
                         code, stable_for, reason = self._attempt(item, log)
                     except OSError:
@@ -286,9 +289,15 @@ class ServiceSupervisor:
                     if item.spec.restart == "on-failure" and code == 0 and reason is None:
                         self._update(item, state="failed", reason="exited")
                         break
+                    if stable_for < _STARTUP_STABLE_SECONDS:
+                        fast_failures += 1
+                    else:
+                        fast_failures = 0
                     if stable_for >= self.stable_seconds:
                         delay = self.initial_backoff
-                    self._update(item, state="restarting", reason=reason or "exited")
+                    failed_fast = fast_failures >= _FAST_FAILURE_LIMIT
+                    self._update(item, state="failed" if failed_fast else "restarting",
+                        reason="startup_failed" if failed_fast else (reason or "exited"))
                     log.write(f"Service exited ({code}); retrying in {delay:g}s ({reason or 'exited'}).\n")
                     if self._stop.wait(delay):
                         break

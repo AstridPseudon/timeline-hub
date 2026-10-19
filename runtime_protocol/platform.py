@@ -789,19 +789,26 @@ def _darwin_tree_exited(process):
     return info is None or info["status"] == 5  # SZOMB
 
 
-def stop_tree(process, grace=5.0):
+def stop_tree(process, grace=5.0, *, stop_channel=False):
+    if stop_channel:
+        _close_stop_channel(process)
     if sys.platform == "linux":
-        return _stop_linux_tree(process, grace)
+        return _stop_linux_tree(process, grace, wait_full_grace=stop_channel)
     if sys.platform == "darwin":
         # Keep the unreaped leader until the last group signal, as on Linux.
         with getattr(process, "_waitpid_lock", nullcontext()):
             if process.returncode is not None:
                 return
-            if not _darwin_tree_exited(process):
+            if stop_channel or not _darwin_tree_exited(process):
                 try:
                     signal_tree(process, TERM)
                 except ProcessLookupError:
                     pass
+            if stop_channel:
+                # Descendants share stdin and may still be handling EOF after
+                # the session leader has exited.
+                time.sleep(max(0.0, grace))
+            elif not _darwin_tree_exited(process):
                 deadline = time.monotonic() + grace
                 while time.monotonic() < deadline and not _darwin_tree_exited(process):
                     time.sleep(min(0.05, max(0, deadline - time.monotonic())))
@@ -812,30 +819,45 @@ def stop_tree(process, grace=5.0):
         process.wait(timeout=max(2.0, grace))
         return
     try:
+        deadline = time.monotonic() + grace
         if process.poll() is None:
             try:
-                signal_tree(process, TERM)
+                if not (stop_channel and sys.platform == "win32"):
+                    signal_tree(process, TERM)
             except (OSError, ValueError):
                 if sys.platform != "win32":
                     raise
             try:
-                process.wait(timeout=grace)
+                process.wait(timeout=max(0.0, deadline - time.monotonic()))
             except subprocess.TimeoutExpired:
-                signal_tree(process, KILL)
-                process.wait(timeout=max(2.0, grace))
-        # Kill any descendants which outlived their session leader.
-        if sys.platform != "win32":
+                pass
+        if stop_channel and sys.platform == "win32":
+            # Hidden services have no console. EOF is their cooperative stop
+            # request; Job termination is the forced escalation.
+            time.sleep(max(0.0, deadline - time.monotonic()))
+        if process.poll() is None or sys.platform != "win32":
             try:
                 signal_tree(process, KILL)
             except ProcessLookupError:
                 pass
+        if process.poll() is None:
+            process.wait(timeout=max(2.0, grace))
     finally:
         job = getattr(process, "_runtime_job", None)
         if job:
             job.close()
 
 
-def _stop_linux_tree(process, grace):
+def _close_stop_channel(process):
+    channel = getattr(process, "stdin", None)
+    if channel is not None:
+        try:
+            channel.close()
+        except OSError:
+            pass
+
+
+def _stop_linux_tree(process, grace, *, wait_full_grace=False):
     # poll()/wait() reap the leader and release its numeric PID/PGID. Hold
     # Popen's wait lock and use WNOWAIT until the final descendant signal.
     with getattr(process, "_waitpid_lock", nullcontext()):
@@ -845,20 +867,20 @@ def _stop_linux_tree(process, grace):
             exited = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
         except ChildProcessError:
             return  # externally reaped: no authority to signal a bare PGID
-        if exited is None:
+        if exited is None or wait_full_grace:
             try:
                 _signal_linux_group(process, TERM)
             except ProcessLookupError:
                 pass
-            deadline = time.monotonic() + grace
-            while time.monotonic() < deadline:
-                try:
-                    exited = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
-                except ChildProcessError:
-                    return
-                if exited is not None:
-                    break
-                time.sleep(min(0.05, max(0, deadline - time.monotonic())))
+        deadline = time.monotonic() + grace
+        while time.monotonic() < deadline and (exited is None or wait_full_grace):
+            try:
+                exited = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+            except ChildProcessError:
+                return
+            if exited is not None and not wait_full_grace:
+                break
+            time.sleep(min(0.05, max(0, deadline - time.monotonic())))
         try:
             _signal_linux_group(process, KILL)
         except ProcessLookupError:

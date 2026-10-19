@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://astrid.haus/runtime/schemas/services.json",
   "title": "Profile service declaration",
+  "description": "Runtime guarantees cleanup for descendants that remain in its supervised POSIX process group or Windows Job Object. If a service creates descendants outside that group, the service owns their lifecycle: stop them before exiting after stdin EOF or SIGTERM, and recover them on its next start after a crash. Runtime closes service stdin as the cooperative stop request on every OS, also sending SIGTERM on POSIX; after the grace period it forcibly cleans up the supervised group or Job.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "services"],

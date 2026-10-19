@@ -18,7 +18,10 @@
         "required": ["name", "state", "last_exit", "restart_count"],
         "properties": {
           "name": {"type": "string", "minLength": 1},
-          "state": {"enum": ["running", "restarting", "failed"]},
+          "state": {
+            "description": "starting until the process survives two seconds or writes its declared readiness file; running after that point; restarting during retry backoff; failed after three consecutive failures before completing two seconds of running (backoff continues) or a terminal on-failure exit.",
+            "enum": ["starting", "running", "restarting", "failed"]
+          },
           "last_exit": {"type": ["integer", "null"]},
           "restart_count": {"type": "integer", "minimum": 0},
           "reason": {"type": ["string", "null"]}

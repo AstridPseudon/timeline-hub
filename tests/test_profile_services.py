@@ -153,7 +153,7 @@ def test_service_environment_and_argv_keep_spaces_and_literal_shell_syntax(tmp_p
     argv, options = calls[0]
     assert argv == [sys.executable, "literal $HOME ; echo bad", str(tmp_path / "support")]
     assert "shell" not in options and options["cwd"] == tmp_path and options["hidden"] is True
-    assert options["stdin"] == subprocess.DEVNULL and options["stderr"] == subprocess.STDOUT
+    assert options["stdin"] == subprocess.PIPE and options["stderr"] == subprocess.STDOUT
     assert options["env"]["VALUE"] == str(tmp_path / "support")
     assert options["env"]["EMPTY"] == "" and options["env"]["USERPROFILE"] == "user home with spaces"
     assert options["env"]["PATH"].split(os.pathsep)[0] == str(Path(sys.executable).parent)
@@ -178,7 +178,8 @@ def test_restart_backoff_caps_and_resets_only_after_stable_running(tmp_path, mon
     monkeypatch.setattr(supervisor, "_attempt", lambda *_: next(attempts))
     supervisor._run(supervisor._services[0])
     assert delays == [1, 2, 4, 8, 16, 30, 30, 1]
-    assert all(row["state"] == "restarting" and row["reason"] == "exited" for row in observed)
+    assert [row["state"] for row in observed] == ["restarting", "restarting", "failed", "failed", "failed", "failed", "failed", "restarting"]
+    assert all(row["reason"] == ("startup_failed" if row["state"] == "failed" else "exited") for row in observed)
     assert supervisor.snapshot()[0]["restart_count"] == 7
 
 
@@ -233,25 +234,66 @@ def test_ready_timeout_removes_stale_hint_and_cleans_tree(tmp_path, monkeypatch)
         code, stable_for, reason = supervisor._attempt(supervisor._services[0], log)
     assert (code, stable_for, reason) == (-15, 0, "readiness_timeout")
     assert not ready.exists()
-    stop.assert_called_once_with(process, grace=0.1)
+    stop.assert_called_once_with(process, grace=0.1, stop_channel=True)
 
 
 def test_stability_window_excludes_tree_and_log_cleanup_time(tmp_path, monkeypatch):
     from runtime_protocol import services
     supervisor = _supervisor(tmp_path)
     process = SimpleNamespace(stdout=io.BytesIO(b""), returncode=None)
-    clock = iter([0.0, 0.0, 59.0])
+    clock = iter([0.0, 2.0, 3.0, 60.0])
     monkeypatch.setattr(services, "time", SimpleNamespace(monotonic=lambda: next(clock)))
     monkeypatch.setattr(platform, "spawn_tree", lambda *_, **__: process)
-    monkeypatch.setattr(platform, "tree_exited", Mock(side_effect=[False, True]))
+    monkeypatch.setattr(platform, "tree_exited", Mock(side_effect=[False, False, True]))
     monkeypatch.setattr(platform, "stop_tree", lambda proc, **_: setattr(proc, "returncode", 7))
     monkeypatch.setattr(supervisor._stop, "wait", lambda _: False)
     with RotatingLog(tmp_path / "logs/service-example.log") as log:
         code, stable_for, reason = supervisor._attempt(supervisor._services[0], log)
-    assert (code, stable_for, reason) == (7, 59.0, None)
+    assert (code, stable_for, reason) == (7, 60.0, None)
 
 
-@pytest.mark.parametrize("state,code", [("running", None), ("restarting", 7), ("failed", 0)])
+def test_fast_exit_never_reports_running_with_mocked_process(tmp_path, monkeypatch):
+    from runtime_protocol import services
+    supervisor = _supervisor(tmp_path)
+    process = SimpleNamespace(stdout=io.BytesIO(b""), returncode=None)
+    clock = iter([0.0, 0.0, 0.1])
+    monkeypatch.setattr(services, "time", SimpleNamespace(monotonic=lambda: next(clock)))
+    monkeypatch.setattr(platform, "spawn_tree", lambda *_, **__: process)
+    monkeypatch.setattr(platform, "tree_exited", Mock(side_effect=[False, True]))
+    monkeypatch.setattr(platform, "stop_tree", lambda proc, **_: setattr(proc, "returncode", 1))
+    observed = []
+    monkeypatch.setattr(supervisor._stop, "wait", lambda _: observed.append(supervisor.snapshot()[0]["state"]))
+    with RotatingLog(tmp_path / "logs/service-example.log") as log:
+        result = supervisor._attempt(supervisor._services[0], log)
+    assert result == (1, 0.0, None)
+    assert observed == ["starting"]
+
+
+@pytest.mark.parametrize("declares_ready", [False, True])
+def test_running_waits_for_stability_or_declared_readiness(tmp_path, monkeypatch, declares_ready):
+    from runtime_protocol import services
+    spec = ServiceSpec("example", (sys.executable,), "always", ready_file="service.ready" if declares_ready else None)
+    supervisor = _supervisor(tmp_path, [spec])
+    process = SimpleNamespace(stdout=io.BytesIO(b""), returncode=None)
+    now, states = [0.0], []
+    monkeypatch.setattr(services, "time", SimpleNamespace(monotonic=lambda: now[0]))
+    monkeypatch.setattr(platform, "spawn_tree", lambda *_, **__: process)
+    monkeypatch.setattr(platform, "tree_exited", lambda _: now[0] >= 3.0)
+    monkeypatch.setattr(platform, "stop_tree", lambda proc, **_: setattr(proc, "returncode", 1))
+    def wait(delay):
+        states.append(supervisor.snapshot()[0]["state"])
+        now[0] += 1.0
+        if declares_ready and now[0] == 1.0:
+            (tmp_path / "support/service.ready").write_text("ready", encoding="utf-8")
+    monkeypatch.setattr(supervisor._stop, "wait", wait)
+    with RotatingLog(tmp_path / "logs/service-example.log") as log:
+        code, stable_for, reason = supervisor._attempt(supervisor._services[0], log)
+    assert code == 1 and reason is None
+    assert states == (["starting", "running", "running"] if declares_ready else ["starting", "starting", "running"])
+    assert stable_for == (2.0 if declares_ready else 3.0)
+
+
+@pytest.mark.parametrize("state,code", [("starting", None), ("running", None), ("restarting", 7), ("failed", 0)])
 def test_health_and_typed_operator_status_preserve_service_state(state, code):
     rows = [{"name": "example", "state": state, "last_exit": code, "restart_count": 2, "reason": "exited"}]
     base = {"status": "ok", "protocol": "workspace.v1", "schema_digest": "sha256:" + "a" * 64,
@@ -273,6 +315,14 @@ def test_typed_service_status_accepts_future_response_fields():
     from astrid_runtime_client import ServiceStatus
     row = {"name": "example", "state": "running", "last_exit": None, "restart_count": 0, "future": "value"}
     assert ServiceStatus.from_json(row) == ServiceStatus("example", "running", None, 0)
+
+
+def test_typed_service_status_states_match_health_contract():
+    from typing import get_args, get_type_hints
+    from astrid_runtime_client import ServiceStatus
+    schema = json.loads((ROOT / "contract/schemas/health.json").read_text(encoding="utf-8"))
+    states = schema["properties"]["services"]["items"]["properties"]["state"]["enum"]
+    assert set(get_args(get_type_hints(ServiceStatus)["state"])) == set(states)
 
 
 def test_runtime_and_service_logs_close_before_rotation_and_bound_backups(tmp_path):
@@ -479,6 +529,31 @@ def test_real_crash_restarts_after_backoff_and_preserves_last_exit(tmp_path):
         assert second - first >= 0.3
         assert supervisor.snapshot()[0]["last_exit"] == 7
         assert "retrying in 0.3s" in (tmp_path / "logs/service-example.log").read_text()
+    finally:
+        supervisor.stop()
+
+
+@pytest.mark.integration
+def test_immediate_exit_service_never_reports_running_and_marks_startup_failure(tmp_path):
+    script = tmp_path / "service.py"
+    script.write_text("raise SystemExit(1)\n", encoding="utf-8")
+    supervisor = _supervisor(tmp_path, [ServiceSpec("example", (sys.executable, str(script),), "always")],
+        initial_backoff=0.2, max_backoff=0.2, grace=0.05)
+    observed = []
+    try:
+        supervisor.start()
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            row, = supervisor.snapshot()
+            observed.append(row)
+            if row["state"] == "failed" and row["restart_count"] >= 2:
+                break
+            time.sleep(0.005)
+        else:
+            pytest.fail("immediate-exit service did not reach repeated-startup-failure state")
+        assert all(row["state"] != "running" for row in observed)
+        assert row["last_exit"] == 1
+        assert row["reason"] == "startup_failed"
     finally:
         supervisor.stop()
 
