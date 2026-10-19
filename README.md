@@ -41,6 +41,8 @@ Tools and knowledge for agents and humans to make art with open models.
 
 **Want step-by-step instructions?** [Set up Astrid →](docs/setup/README.md)
 
+**Testing the installer?** Follow the [tester guide](docs/testing/TESTING.md).
+
 macOS and Linux:
 
 ```sh
