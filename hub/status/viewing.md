@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-19T22:28:01Z | dispatcher heartbeat 2s -->
+<!-- viewing | 2026-10-19T22:33:09Z | dispatcher heartbeat 8s -->
 # viewing — 2026-10-19 22:26 UTC
 Milestone: M0 COMPLETE. Viewing M1 labels/renderer-off path PASS; App integratedALL5journeys PASS and0newfullfailures, overallM1awaitsorchestratoraudit/record. M2DESIGNONLY. M3active; gatesnotcomplete.
 Integrated: Composition7aa384a/0.0.8, central npmtest22passed/0failed/skipped +lockedbuild/repeatpack/freshconsumerPASS. Agent4ffbb8b0 includesour7a68b7ed package/readiness/gatechain +ownerartifact/summaryrefresh +M1restore +singlebrowserenvfix. App85be65a0a includeslabels,0.0.8rootpublicexports andrestoredjourneys; no M3vendorcleanupyet.
