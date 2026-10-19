@@ -2,6 +2,7 @@
 import React from 'react';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { audioEnvelopeAt, compileAudioEnvelope } from '@banodoco/timeline-composition/evaluation';
 import {
   AUDIO_RETRY_DELAYS_MS,
   AUDIO_HOLD_LIMIT_MS,
@@ -158,6 +159,36 @@ describe('AudioTrack', () => {
   });
 
   describe('fades', () => {
+    it.each([false, true])('compares trimmed, sped audio fades with the public envelope (rendering=%s)', isRendering => {
+      currentEnvironment = { isRendering, isClientSideRendering: false };
+      const fadeClip: ResolvedTimelineClip = { ...clip, at: 3, from: 3, to: 5, speed: 2, volume: 0.5,
+        transition: { type: 'fade', duration: 0.4 }, params: { fadeIn: 0.4, fadeOut: 0.4 } };
+      const fadeTrack = { ...track, volume: 0.8 };
+      const envelope = compileAudioEnvelope(fadeClip, 30)!;
+      const view = render(<AudioTrack track={fadeTrack} clips={[fadeClip]} fps={30} />);
+      const props = (isRendering ? mediaAudioProps : html5AudioProps).at(-1)!;
+      expect(sequenceProps.at(-1)).toMatchObject({ from: 90, durationInFrames: 30, premountFor: 60 });
+      expect(props).toMatchObject({ trimBefore: 90, trimAfter: 150, playbackRate: 2 });
+      const volume = props.volume as (frame: number) => number;
+      // AudioTrack starts at authored at=3, independent of visual transition
+      // pre-roll. The volume callback is in timeline frames, not source frames.
+      for (const [frame, gain] of [[-1, 0], [0, 0], [6, 0.5], [12, 1], [18, 1], [24, 0.5], [29, 1 / 12], [30, 0]]) {
+        expect(volume(frame)).toBeCloseTo(0.4 * gain, 12);
+        expect(volume(frame)).toBeCloseTo(0.4 * audioEnvelopeAt(envelope, frame / 30), 12);
+      }
+      // Occurrence clipping moves the mount, while fades retain authored time.
+      const bounded = { ...fadeClip, app: { canonicalTiming: { occurrenceStartMs: 3200, occurrenceDurationMs: 600 } } };
+      view.rerender(<AudioTrack track={fadeTrack} clips={[bounded]} fps={30} />);
+      expect(sequenceProps.at(-1)).toMatchObject({ from: 96, durationInFrames: 18 });
+      const boundedVolume = (isRendering ? mediaAudioProps : html5AudioProps).at(-1)!.volume as (frame: number) => number;
+      for (const frame of [0, 6, 12, 17]) {
+        expect(boundedVolume(frame)).toBeCloseTo(0.4 * audioEnvelopeAt(envelope, (frame + 6) / 30), 12);
+      }
+      view.rerender(<AudioTrack track={{ ...fadeTrack, muted: true }} clips={[fadeClip]} fps={30} />);
+      const mutedVolume = (isRendering ? mediaAudioProps : html5AudioProps).at(-1)!.volume as (frame: number) => number;
+      expect(mutedVolume(6)).toBe(0);
+    });
+
     const fadeCases: Array<{ name: string; fps: number; clip: ResolvedTimelineClip; track?: TrackDefinition }> = [
       { name: 'fade-out only (music-chip)', fps: 30, clip: { ...clip, at: 0, from: 0, to: 31.5, volume: 0.5129, params: { fadeOut: 3 } } },
       { name: 'fade-in and fade-out (music-piano)', fps: 30, clip: { ...clip, at: 28.5, from: 28.5, to: 88.4, volume: 0.7674, params: { fadeIn: 3, fadeOut: 4 } } },

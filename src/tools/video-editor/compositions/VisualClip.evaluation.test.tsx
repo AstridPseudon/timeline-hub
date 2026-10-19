@@ -2,6 +2,7 @@
 import type { PropsWithChildren, CSSProperties } from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { declareAppTransition, prepareTrack, queryDrawFrame, queryTrackFrame } from '@banodoco/timeline-composition/evaluation';
 import { VisualClipSequence } from './VisualClip.tsx';
 import { preparePlayerTrack } from './playerEvaluation.ts';
 import type { ResolvedTimelineClip, TrackDefinition } from '../types/index.ts';
@@ -45,7 +46,7 @@ vi.mock('./ReadinessVideo.tsx', async () => {
   const { useCurrentFrame } = await import('remotion');
   return { ReadinessVideo: (props: Record<string, unknown>) => {
     videoProps({ ...props, frame: useCurrentFrame() });
-    return <div data-testid="video" />;
+    return <div data-testid="video" data-clip-id={props.clipId as string} />;
   } };
 });
 
@@ -120,5 +121,69 @@ describe('VisualClip shared draw plans', () => {
     expect(screen.getByTestId('sequence')).toHaveAttribute('data-from', '15');
     expect(screen.queryByTestId('freeze')).not.toBeInTheDocument();
     expect(videoProps).toHaveBeenLastCalledWith(expect.objectContaining({ frame: 5, volume: 0.7, muted: false }));
+  });
+
+  it.each(['crossfade', 'cross-fade', 'fade'])('measures native %s clocks and opacity against the public planner', type => {
+    const previous = image('outgoing', 2, { clipType: 'media', hold: undefined, from: 1, to: 3, speed: 2,
+      assetEntry: { type: 'video/mp4', src: 'https://example.test/outgoing.mp4' } });
+    const clip = image('incoming', 3, { clipType: 'media', hold: undefined, from: 3, to: 5, speed: 2,
+      volume: 0.5, params: { fadeIn: 0.4, fadeOut: 0.4 }, transition: { type, duration: 0.4 },
+      assetEntry: { type: 'video/mp4', src: 'https://example.test/incoming.mp4' } });
+    const prepared = prepareTrack([{ start: 60, duration: 30 }, { start: 90, duration: 30 }],
+      [declareAppTransition(track.id, previous.id, clip.transition!, 30, 'timeline-composition').spec]);
+    const incomingPlan = prepared.plans[1];
+    expect(incomingPlan).toMatchObject({ drawStart: 78, drawDuration: 42, ownOffset: 12 });
+    const player = preparePlayerTrack(track, [previous, clip], 30, 1920, 1080);
+    const renderPair = (muted = false) => <>
+      <VisualClipSequence clip={previous} track={{ ...track, volume: 0.8, muted }} fps={30}
+        drawPlan={player.plans.get(previous.id) ?? null} />
+      <VisualClipSequence clip={clip} predecessor={previous} track={{ ...track, volume: 0.8, muted }} fps={30}
+        drawPlan={player.plans.get(clip.id) ?? null} />
+    </>;
+    const view = render(renderPair());
+    // Source frames below are media-clock inputs, not decoded samples. Frame 77
+    // is premounted/inactive; the mock does not claim it produces audible output.
+    for (const [frame, local, canonicalOwn, hostOpacity, canonicalOpacity, outgoingOpacity] of [
+      [77, -1, 0, 0, 0, 1], // before the draw window
+      [78, 0, 0, 0, 0, 1], // transition start
+      [84, 6, 0, 0.5, type === 'fade' ? 0 : 0.5, type === 'fade' ? 0 : 1], // midpoint
+      [90, 12, 0, 1, 1, 0], // transition end; outgoing canonical span is excluded
+    ]) {
+      currentFrame = frame;
+      videoProps.mockClear();
+      view.rerender(renderPair());
+      const media = videoProps.mock.calls.map(([props]) => props).find(props => props.clipId === clip.id)!;
+      expect(media).toMatchObject({ frame: local, trimBefore: 90, trimAfter: 150,
+        playbackRate: 2, volume: 0.4, muted: false });
+      expect(media.trimBefore + media.frame * media.playbackRate).toBe(90 + local * 2);
+      const evaluated = queryDrawFrame(incomingPlan, frame - incomingPlan.drawStart);
+      expect(evaluated).toMatchObject({ drawLocalFrame: local, ownFrame: canonicalOwn, opacity: canonicalOpacity });
+      expect(90 + evaluated.ownFrame * 2).toBe(90);
+      const incoming = view.container.querySelector('[data-clip-id="incoming"]')!;
+      expect(incoming.parentElement).toHaveStyle({ opacity: hostOpacity });
+      expect(incoming.closest('[data-testid="sequence"]')).toHaveAttribute('data-active', String(frame >= 78));
+      expect(incoming.closest('[data-testid="sequence"]')).toHaveAttribute('data-duration', '43');
+      const outgoing = view.container.querySelector('[data-clip-id="outgoing"]')!;
+      expect(outgoing.parentElement?.style.opacity).toBe('');
+      const outgoingLayer = queryTrackFrame(prepared, frame).layers.find(layer => layer.clipIndex === 0);
+      if (frame < 90) expect(outgoingLayer?.opacity).toBe(outgoingOpacity);
+      else expect(outgoingLayer).toBeUndefined();
+      expect(screen.queryByTestId('freeze')).not.toBeInTheDocument();
+    }
+    view.rerender(renderPair(true));
+    expect(videoProps).toHaveBeenLastCalledWith(expect.objectContaining({ clipId: clip.id, volume: 0, muted: true }));
+    // The legacy host has one extra mount frame; canonical planning is half-open.
+    currentFrame = 120;
+    view.rerender(renderPair());
+    expect(view.container.querySelector('[data-clip-id="incoming"]')).toBeInTheDocument();
+    expect(queryTrackFrame(prepared, 120).layers).toEqual([]);
+    currentFrame = 121;
+    view.rerender(renderPair());
+    expect(screen.queryByTestId('video')).not.toBeInTheDocument();
+    currentFrame = 120;
+    view.rerender(<VisualClipSequence clip={{ ...clip,
+      app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 4000 } } }}
+      predecessor={previous} track={track} fps={30} drawPlan={null} />);
+    expect(screen.queryByTestId('video')).not.toBeInTheDocument();
   });
 });
