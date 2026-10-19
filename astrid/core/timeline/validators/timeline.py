@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+import math
+from typing import Any, Literal
 
 from astrid.core.timeline.banodoco_schema import (
     _CLIP_ALLOWED,
@@ -102,6 +103,8 @@ def _validate_effect_params(effect_id: str, params: Any, path: str, theme: str |
 
 def _transition_reference(value: Any, path: str) -> tuple[str, float | None]:
     if isinstance(value, str):
+        if not value:
+            raise ValueError(f"{path}.id must be a non-empty string")
         return value, None
     if not isinstance(value, dict):
         raise ValueError(f"{path} must be a transition id string or object")
@@ -112,15 +115,18 @@ def _transition_reference(value: Any, path: str) -> tuple[str, float | None]:
     if "params" in value and not isinstance(value.get("params"), dict):
         raise ValueError(f"{path}.params must be an object")
     duration_frames = value.get("durationFrames")
-    duration_seconds = value.get("duration")
+    for field in ("durationFrames", "duration"):
+        if field in value:
+            duration = value[field]
+            if (
+                isinstance(duration, bool)
+                or not isinstance(duration, (int, float))
+                or not math.isfinite(duration)
+                or duration <= 0
+            ):
+                raise ValueError(f"{path}.{field} must be a positive finite number")
     if duration_frames is not None:
-        if not isinstance(duration_frames, (int, float)) or float(duration_frames) <= 0:
-            raise ValueError(f"{path}.durationFrames must be a positive number")
         return transition_id, float(duration_frames)
-    if duration_seconds is not None:
-        if not isinstance(duration_seconds, (int, float)) or float(duration_seconds) <= 0:
-            raise ValueError(f"{path}.duration must be a positive number")
-        return transition_id, None
     return transition_id, None
 
 
@@ -135,7 +141,14 @@ def _clip_duration_seconds(clip: dict[str, Any]) -> float | None:
     return None
 
 
-def _validate_clip_transitions(clips: list[dict[str, Any]], fps: float) -> None:
+def _validate_clip_transitions(
+    clips: list[dict[str, Any]],
+    fps: float,
+    *,
+    document_kind: Literal["canonical", "compiled"] = "compiled",
+) -> None:
+    if document_kind not in ("canonical", "compiled"):
+        raise ValueError("document_kind must be 'canonical' or 'compiled'")
     from astrid.core.timeline.banodoco_schema import _transition_ids
     known_ids = _transition_ids()
     by_track: dict[str, list[tuple[int, dict[str, Any]]]] = {}
@@ -149,10 +162,22 @@ def _validate_clip_transitions(clips: list[dict[str, Any]], fps: float) -> None:
             if "transition" not in clip:
                 continue
             transition_id, duration_frames = _transition_reference(clip["transition"], f"clips[{index}].transition")
-            if known_ids and transition_id not in known_ids:
+            catalog_id = (
+                "cross-fade"
+                if document_kind == "canonical" and transition_id == "crossfade"
+                else transition_id
+            )
+            if known_ids and catalog_id not in known_ids:
                 raise ValueError(
                     f"clips[{index}].transition id {transition_id!r} is not present in the transitions catalog"
                 )
+            # Canonical declarations belong to this clip, with preroll from
+            # its same-track predecessor (none for the first clip). The planner
+            # permits gaps, overlaps and oversized windows; no pair-fit limit
+            # applies. Native compiled declarations still belong to the outgoing
+            # clip and retain their existing successor-fit validation below.
+            if document_kind == "canonical":
+                continue
             next_clip = track_clips[position + 1][1] if position + 1 < len(track_clips) else None
             current_duration = _clip_duration_seconds(clip)
             next_duration = _clip_duration_seconds(next_clip) if next_clip is not None else None
@@ -187,7 +212,12 @@ def _timeline_fps(config: dict[str, Any]) -> float:
     return 30.0
 
 
-def validate_timeline(config: Any, *, strict: bool = True) -> None:
+def validate_timeline(
+    config: Any,
+    *,
+    strict: bool = True,
+    document_kind: Literal["canonical", "compiled"] = "compiled",
+) -> None:
     """Validate a Banodoco timeline.
 
     `clipType` is an open string for editor compatibility. Built-in media/text
@@ -197,6 +227,13 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
     Callers that need to accept legacy/under-construction timelines (e.g.
     in-flight pipeline outputs that reference theme content not yet on
     disk) can opt into `strict=False`.
+
+    Canonical parent/internal documents use ``document_kind="canonical"``:
+    ``clip.transition`` is incoming and its window may exceed either clip.
+    Raw/native compiled TimelineConfig retains outgoing transition validation
+    by default. The document layer must be supplied by the owning boundary;
+    it cannot be inferred from fields shared by both formats. This only checks
+    validity; canonical-to-compiled conversion belongs to the compiler.
     """
     if not isinstance(config, dict):
         raise ValueError("Timeline must be a JSON object")
@@ -290,4 +327,4 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
         if clip["id"] in clip_ids:
             raise ValueError(f"clips[{index}].id {clip['id']!r} is not unique")
         clip_ids.add(clip["id"])
-    _validate_clip_transitions(normalized_clips, float(fps))
+    _validate_clip_transitions(normalized_clips, float(fps), document_kind=document_kind)
