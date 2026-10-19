@@ -8,6 +8,7 @@ from astrid.core.execution.executor import runner as executor_runner
 from astrid.core.rendering import transport as rendering_transport
 from astrid.core.rendering.contracts import SCHEMA_VERSION, SupportReport
 from astrid.core.rendering.transport import CommandTransport
+from astrid.core.subprocess_env import build_child_subprocess_env
 
 
 def test_render_process_group_marker_survives_executor_and_transport(
@@ -74,3 +75,16 @@ def test_render_process_group_marker_survives_executor_and_transport(
     assert report.supported is True
     assert launched["start_new_session"] is False
     assert launched["env"][marker] == "1"
+
+
+def test_remotion_browser_executable_is_parent_owned_and_unlisted_env_is_dropped() -> None:
+    selector = "ASTRID_REMOTION_BROWSER_EXECUTABLE"
+    child = build_child_subprocess_env(
+        base={selector: "/base/browser", "ASTRID_UNLISTED_BASE": "base"},
+        parent={selector: "/parent/browser", "ASTRID_UNLISTED_PARENT": "parent"},
+        explicit_env={selector: "/explicit/browser"},
+    )
+
+    assert child[selector] == "/parent/browser"
+    assert "ASTRID_UNLISTED_BASE" not in child
+    assert "ASTRID_UNLISTED_PARENT" not in child
