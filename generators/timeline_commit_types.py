@@ -1,0 +1,140 @@
+"""Render detached commit DTOs from Runtime envelopes and the Agent schema pin."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def render() -> dict[str, str]:
+    runtime = json.loads((ROOT / "contract/schemas/timeline-commit.json").read_text())[
+        "$defs"
+    ]
+    agent = json.loads((ROOT / "contract/schemas/edit-command.json").read_text())[
+        "$defs"
+    ]
+    definitions = {**agent, **runtime}
+    # Resolve the imported Agent aliases without maintaining a second leaf schema.
+    for name, schema in list(definitions.items()):
+        if schema.get("$ref", "").startswith("edit-command.json#/$defs/"):
+            definitions[name] = agent[schema["$ref"].rsplit("/", 1)[1]]
+
+    openapi = yaml.safe_load((ROOT / "contract/openapi/workspace-v1.yaml").read_text())
+    definitions["MutationReceipt"] = openapi["components"]["schemas"][
+        "CommittedMutation"
+    ]["properties"]["receipt"]
+    for name, schema in list(definitions.items()):
+        for keyword in ("oneOf", "anyOf"):
+            for index, variant in enumerate(schema.get(keyword, [])):
+                if "properties" in variant:
+                    variant = {"type": "object", **variant}
+                    variant_name = f"{name}Variant{index + 1}"
+                    definitions[variant_name] = variant
+                    schema[keyword][index] = {"$ref": "#/$defs/" + variant_name}
+
+    def expression(schema: dict, language: str) -> str:
+        py = language == "python"
+        if "$ref" in schema:
+            target = schema["$ref"]
+            if target.startswith("#/$defs/") or target.startswith(
+                "edit-command.json#/$defs/"
+            ):
+                name = target.rsplit("/", 1)[1]
+                return repr(name) if py else name
+            # Canonical payloads remain open, owned by their existing schemas.
+            return "dict[str, Any]" if py else "Record<string, unknown>"
+        if "const" in schema or "enum" in schema:
+            values = schema.get("enum", [schema.get("const")])
+            return (
+                ("Literal[" + ", ".join(repr(v) for v in values) + "]")
+                if py
+                else " | ".join(json.dumps(v) for v in values)
+            )
+        variants = schema.get("oneOf", schema.get("anyOf"))
+        if variants:
+            parts = [expression(v, language) for v in variants]
+            return (
+                "Union[" + ", ".join(parts) + "]"
+                if py
+                else "(" + " | ".join(parts) + ")"
+            )
+        kind = schema.get("type")
+        if isinstance(kind, list):
+            parts = [expression({"type": t}, language) for t in kind]
+            return (
+                "Union[" + ", ".join(parts) + "]"
+                if py
+                else "(" + " | ".join(parts) + ")"
+            )
+        if kind == "array":
+            item = expression(schema.get("items", {}), language)
+            return f"list[{item}]" if py else f"Array<{item}>"
+        if kind == "object":
+            if "properties" in schema:
+                required = schema.get("required", [])
+                fields = []
+                for key, value in schema["properties"].items():
+                    item = expression(value, language)
+                    if py:
+                        if key not in required:
+                            item = f"NotRequired[{item}]"
+                        fields.append(f"{key!r}: {item}")
+                    else:
+                        fields.append(f"{key}{'' if key in required else '?'}: {item}")
+                return (
+                    "{ " + "; ".join(fields) + " }"
+                    if not py
+                    else "{" + ", ".join(fields) + "}"
+                )
+            additional = schema.get("additionalProperties", {})
+            item = (
+                expression(additional, language)
+                if isinstance(additional, dict)
+                else ("Any" if py else "unknown")
+            )
+            return f"dict[str, {item}]" if py else "{ [key: string]: " + item + " }"
+        return (
+            {
+                "null": "None",
+                "boolean": "bool",
+                "number": "float",
+                "integer": "int",
+                "string": "str",
+            }.get(kind, "Any")
+            if py
+            else {
+                "null": "null",
+                "boolean": "boolean",
+                "number": "number",
+                "integer": "number",
+                "string": "string",
+            }.get(kind, "unknown")
+        )
+
+    python = [
+        '"""Generated timeline commit DTOs; do not edit by hand."""',
+        "",
+        "from typing import Any, Literal, NotRequired, TypedDict, Union",
+        "",
+    ]
+    typescript = ["/** Generated timeline commit DTOs; do not edit by hand. */", ""]
+    for name, schema in definitions.items():
+        value = expression(schema, "python")
+        if schema.get("$ref", "").startswith("#/$defs/"):
+            value = schema["$ref"].rsplit("/", 1)[1]
+        if schema.get("type") == "object" and "properties" in schema:
+            python.append(f"{name} = TypedDict({name!r}, {value})")
+        else:
+            python.append(f"{name} = {value}")
+        typescript.append(f"export type {name} = {expression(schema, 'typescript')};")
+    py = "\n".join(python) + "\n"
+    ts = "\n".join(typescript) + "\n"
+    return {
+        "runtime_protocol/timeline_commit_types.py": py,
+        "packages/python/astrid_runtime_client/timeline_commit_types.py": py,
+        "packages/typescript/src/timeline-commit-types.ts": ts,
+    }

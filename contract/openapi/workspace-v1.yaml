@@ -263,6 +263,40 @@ paths:
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' } ]
       requestBody: { required: false, content: { application/json: { schema: { $ref: './schemas/timeline-inspection.json' } } } }
       responses: { '200': { description: Deterministic metadata-only Markdown/PNG view, content: { application/json: { schema: { $ref: './schemas/timeline-view.json' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/projects/{project_id}/timelines/{timeline_id}/commit:
+    post:
+      operationId: commitTimeline
+      description: Atomically validate and accept an edit batch; saving requires no renderer. Requires projects:write, including dry runs.
+      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CommitRequest' } } } }
+      responses:
+        '200': { description: Accepted edit or nonpersistent preview, content: { application/json: { schema: { oneOf: [ { $ref: '#/components/schemas/CommitAcceptedMutation' }, { $ref: '#/components/schemas/CommitPreviewResponse' } ] } } } }
+        '400': { description: Runtime error, content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } } }
+        '401': { description: Runtime error, content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } } }
+        '403': { description: Runtime error, content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } } }
+        '404': { description: Runtime error, content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } } }
+        '409': { description: Runtime error, content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } } }
+        '422': { description: Runtime error, content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } } }
+        '503': { description: Runtime error, content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } } }
+  /v1/projects/{project_id}/timelines/{timeline_id}/commits:
+    get:
+      operationId: listTimelineCommits
+      description: Accepted history in ascending publication order, bounded by the first page's head. Requires projects:read.
+      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' } ]
+      responses: { '200': { description: Accepted history page, content: { application/json: { schema: { $ref: '#/components/schemas/TimelineCommitPage' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/projects/{project_id}/media-selection:
+    get:
+      operationId: getProjectMediaSelection
+      description: Requires projects:read. Exactly one complete selector triplet is required (asset/generation_id/variant_id or association_id/object_id/version). Mixed, duplicate, unknown or incomplete selectors are refused.
+      parameters:
+        - { $ref: '#/components/parameters/ProjectId' }
+        - { name: asset, in: query, schema: { type: string, minLength: 1 } }
+        - { name: generation_id, in: query, schema: { type: string, minLength: 1 } }
+        - { name: variant_id, in: query, schema: { type: string, minLength: 1 } }
+        - { name: association_id, in: query, schema: { type: string, minLength: 1 } }
+        - { name: object_id, in: query, schema: { type: string, minLength: 1 } }
+        - { name: version, in: query, schema: { type: integer, minimum: 1 } }
+      responses: { '200': { description: Exact immutable selection, content: { application/json: { schema: { $ref: '#/components/schemas/ProjectMediaSelection' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
   /v1/projects/{project_id}/timelines/{timeline_id}/composition-revisions:
     get:
       operationId: listProjectParentCompositionRevisions
@@ -300,7 +334,7 @@ paths:
       description: Publish the exact historical parent and dependency closure as a new head using compare-and-swap.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' }, { name: revision, in: path, required: true, schema: { type: string, minLength: 1 } }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RestoreParentCompositionRevision' } } } }
-      responses: { '200': { description: New parent revision published from the exact historical closure, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' } }
+      responses: { '200': { description: New parent revision published from the exact historical closure, content: { application/json: { schema: { $ref: '#/components/schemas/CommitAcceptedMutation' } } } }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' } }
   /v1/projects/{project_id}/timeline-documents:
     post:
       operationId: createTimelineDocument
@@ -1372,6 +1406,20 @@ components:
             - properties:
                 data:
                   allOf: [ { $ref: '#/components/schemas/PreferenceResource' }, { properties: { scope: { const: project } } } ]
+    CommitRequest:
+      $ref: './schemas/timeline-commit.json#/$defs/CommitRequest'
+    CommitAccepted:
+      $ref: './schemas/timeline-commit.json#/$defs/CommitAccepted'
+    CommitPreviewResponse:
+      $ref: './schemas/timeline-commit.json#/$defs/CommitPreviewResponse'
+    TimelineCommitPage:
+      $ref: './schemas/timeline-commit.json#/$defs/TimelineCommitPage'
+    CommitAcceptedMutation:
+      allOf:
+        - { $ref: '#/components/schemas/CommittedMutation' }
+        - { properties: { data: { $ref: '#/components/schemas/CommitAccepted' } } }
+    ProjectMediaSelection:
+      $ref: './schemas/media-selection.json'
     CommittedMutation:
       type: object
       additionalProperties: false
@@ -1440,6 +1488,7 @@ components:
         internal_timeline_revision_id: { type: string }
         content_digest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
         payload: { type: object }
+        dependency_manifest: { $ref: './schemas/shot-composition.json#/$defs/DependencyManifest' }
         created_at: { type: string }
     ParentCompositionRevision:
       type: object
@@ -1459,11 +1508,7 @@ components:
         items: { type: array, items: { $ref: '#/components/schemas/ParentCompositionRevision' } }
         next_cursor: { type: [string, 'null'] }
     RestoreParentCompositionRevision:
-      type: object
-      additionalProperties: false
-      required: [expected_head]
-      properties:
-        expected_head: { type: [string, 'null'] }
+      $ref: './schemas/timeline-commit.json#/$defs/RestoreParentCompositionRevision'
     ParentCompositionPublication:
       type: object
       additionalProperties: false
@@ -1477,7 +1522,7 @@ components:
         parent_composition: { type: object }
         shot_revisions: { type: array, items: { type: object } }
         internal_timeline_revisions: { type: array, items: { type: object } }
-        dependency_manifest: { type: object }
+        dependency_manifest: { $ref: './schemas/shot-composition.json#/$defs/DependencyManifest' }
     ParentCompositionMediaReplacement:
       type: object
       additionalProperties: false

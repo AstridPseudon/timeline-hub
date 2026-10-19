@@ -67,3 +67,15 @@ the authoritative local filename. If a requested export filename already
 exists or is too long for the host's temporary-name byte budget, Runtime keeps
 the same root and chooses a deterministic association-scoped direct filename
 rather than overwriting it or failing on the private staging sibling.
+
+## Timeline commit ABI
+
+`schemas/timeline-commit.json` defines detached ABI 1 envelopes and the complete
+immutable closure. `schemas/edit-command.json` is the byte-identical Agent-owned
+command schema pin, including recorder leaves; Runtime does not redefine them.
+`python generators/generate.py` also emits the Runtime/Python TypedDict modules
+and TypeScript commit types. These are plain JSON-shaped values, with no runtime
+validation or renderer dependency. Acceptance validates finite JSON, closure
+identity and recorder consistency separately; types alone do not grant authority.
+Commit clients preserve the `{data, receipt}` envelope, including the distinct
+preview status with a null receipt. Restore requires both current head pins.

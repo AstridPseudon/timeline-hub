@@ -1,0 +1,43 @@
+"""Detached synchronous timeline commit provider ABI (interface version 1)."""
+
+from __future__ import annotations
+
+from copy import deepcopy
+from typing import Protocol
+
+from . import timeline_commit_types as dto
+from .timeline_commit_types import *  # noqa: F403
+
+
+class CommitRejected(Exception):
+    def __init__(self, failure: dto.CommitFailure):
+        self.failure = deepcopy(failure)
+        super().__init__(self.failure["message"])
+
+
+class StaleHead(Exception):
+    def __init__(self, current_head: dto.HeadPin):
+        self.current_head = deepcopy(current_head)
+        super().__init__("timeline head changed")
+
+
+class RuntimeCommitPort(Protocol):
+    def head(self) -> dto.HeadPin: ...
+    def revision_closure(self, revision_id: str) -> dto.CanonicalDocument: ...
+    def shot_closure(self, shot_id: str, revision_id: str) -> dto.ShotClosure: ...
+    def history(
+        self,
+        through: dto.HeadPin,
+        after_publication_id: str | None = None,
+        cursor: str | None = None,
+        limit: int = 100,
+    ) -> dto.HistoryPage: ...
+    def history_entry(self, publication_id: str) -> dto.HistoryEntry: ...
+    def selected_media(self, selection: dto.MediaSelection) -> dto.VerifiedMedia: ...
+    def transcript_source(self, pin: dto.DocumentPin) -> dto.VerifiedDocument: ...
+    def config_source(self, pin: dto.DocumentPin) -> dto.VerifiedDocument: ...
+    def narration_take(
+        self, refs: dto.NarrationTakeRefs
+    ) -> dto.VerifiedNarrationTake: ...
+    def preview(self, prepared: dto.PreparedCommit) -> dto.CommitPreviewResponse: ...
+    def accept(self, prepared: dto.PreparedCommit) -> dto.CommitAcceptedMutation: ...
