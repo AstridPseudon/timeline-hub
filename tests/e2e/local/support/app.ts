@@ -22,7 +22,7 @@ export const APP_ENTRY_ROUTE = '/tools/video-editor';
 
 function resolveChromium(): string | undefined {
   if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE) return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
-  if (existsSync(chromium.executablePath())) return undefined;
+  if (existsSync(chromium.executablePath())) return chromium.executablePath();
   // The installed Playwright may expect a newer browser build than the one in the image; use what is there.
   const browsers = process.env.PLAYWRIGHT_BROWSERS_PATH ?? '/opt/pw-browsers';
   const found = existsSync(browsers) ? readdirSync(browsers).filter((name) => /^chromium-\d+$/.test(name)).sort().pop() : undefined;
