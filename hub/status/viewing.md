@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T19:38:40Z | dispatcher heartbeat 9s -->
+<!-- main | 2026-10-19T19:42:39Z | handed over -->
 # viewing — 2026-10-19 19:36 UTC
 Milestone: M1 labels integrated; real shared move/retry/restart/undo/readback journey pending. M0 COMPLETE. M3 package integrated; consumer migration underway.
 Integrated: Agent rendering through77e66c13 (current Agent93624e8f adds other owners); manager8-file pytest151pass/1existing Pillow warning/53.80s. App preview throughd52ef5341 (current Appdaf820bc1 adds other owners); manager PreviewPanel7files68pass/19.30s. Actual tsc -p tsconfig.app.json: same existing TS7053/TS2550 outside preview, no new preview errors. Composition7aa384a (ed89754+760230e): built0.0.8/13 defaults/scoped registries, generic declared easing/private adapters deleted; central18pass0skip,1030default samples unchanged, fresh-consumer smoke/repeat pack pass. Exact commands/source in design/viewing.md and worker reports.
