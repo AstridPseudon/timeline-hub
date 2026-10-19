@@ -341,7 +341,7 @@ describe('marker payload ceiling (normalized, ≥20% headroom under the 64 KiB h
   it('keeps the worst-case NORMALIZED payload below 80% of the 64 KiB hard entry limit', () => {
     // Hostile finite/infinite inputs must clamp to MAX_SCENE_MARKER_SECONDS,
     // whose serialized form ("9999.999") is the longest representation
-    // reachable inside the bounded domain. Measured 2026-08-11 with real
+    // reachable inside the bounded domain. Worst case measured with real
     // 36-char crypto.randomUUID ids: 800 markers at the clamped maximum
     // serialize to 49,601 bytes — 75.7% of the 65,536 limit, ≥20% headroom.
     const hostile = Array.from({ length: MAX_SCENE_MARKERS }, (_, index) => ({
@@ -363,8 +363,8 @@ describe('marker payload ceiling (normalized, ≥20% headroom under the 64 KiB h
   it('normalizes EXACT 24fps frame-snapped input times at the persist seam and stays under the limit at the ceiling', () => {
     // 24fps-snapped playhead floats, deliberately EXACT (index / 24 — e.g.
     // 1/24 = 0.041666666666666664, 2/24 = 0.08333333333333333) — the input
-    // shape that overflowed the limit before normalization (1000 raw
-    // markers measured 67,487 bytes). The persist seam (buildMarkersPatch,
+    // shape that would overflow the limit without normalization.
+    // The persist seam (buildMarkersPatch,
     // used by the Mark command and the overlay drag commit) must bound them.
     const input = Array.from({ length: MAX_SCENE_MARKERS }, (_, index) => ({
       id: crypto.randomUUID(),

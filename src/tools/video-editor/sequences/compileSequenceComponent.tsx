@@ -33,7 +33,7 @@ export interface SequenceComponentProps {
 // `remotion` / `theme-api` import. Some test environments mock those modules
 // with a partial export set, and accessing a missing export at module-evaluation
 // time would throw before the consumer's `vi.mock` runs (the same pattern used
-// in effects/compileEffect.tsx after T1).
+// in effects/compileEffect.tsx).
 function getSequenceGlobals(): Record<string, unknown> {
   return {
     React,

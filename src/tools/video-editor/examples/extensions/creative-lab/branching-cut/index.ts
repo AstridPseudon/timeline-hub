@@ -77,7 +77,7 @@ export function normalizeClipLinkTime(time: number): number {
   return Math.round(time * 1000) / 1000;
 }
 
-/** Compatibility export; this no longer clamps at one hour. */
+/** Compatibility export; this does not clamp at one hour. */
 export const normalizeChoiceGateTime = normalizeClipLinkTime;
 
 function clipOrder(a: TimelineClipSummary, b: TimelineClipSummary): number {

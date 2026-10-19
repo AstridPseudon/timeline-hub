@@ -1,5 +1,5 @@
 /**
- * Contract tests for ExtensionActivityRegion — M1 shallow placeholder.
+ * Contract tests for ExtensionActivityRegion — shallow placeholder.
  *
  * Covers:
  * - Renders nothing for empty statusEvents

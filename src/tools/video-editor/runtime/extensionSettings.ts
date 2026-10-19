@@ -1,5 +1,5 @@
 /**
- * Manifest settings-schema adapter (M4, Step 7).
+ * Manifest settings-schema adapter.
  *
  * Converts an extension manifest's `settingsSchema` into a SchemaForm-compatible
  * `StandardSchema` (or emits diagnostics when the manifest schema is malformed).
@@ -469,7 +469,7 @@ export function materializeSettingsDefaults(
 }
 
 // ---------------------------------------------------------------------------
-// Settings reconciliation (T3)
+// Settings reconciliation
 // ---------------------------------------------------------------------------
 
 /**

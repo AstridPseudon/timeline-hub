@@ -28,8 +28,8 @@ export const TextClip: FC<TextClipProps> = ({ clip, track: _track, fps, effectRe
 
   // Position-less clips fall back to the clip-type descriptor's canonical
   // default box — the same box the gizmo and the properties panel show. The
-  // renderer used to invent its own (0,0,640,160), so a legacy x-less text
-  // clip rendered 120px away from its own gizmo.
+  // renderer must not invent its own (0,0,640,160), or a legacy x-less text
+  // clip would render 120px away from its own gizmo.
   const defaultBox = getDefaultBoxForClipType(clip.clipType ?? 'text', compositionWidth, compositionHeight);
   const content = (
     <AbsoluteFill

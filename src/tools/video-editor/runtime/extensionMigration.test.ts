@@ -1,5 +1,5 @@
 /**
- * Tests for extensionMigration.ts (M14, T24).
+ * Tests for extensionMigration.ts.
  *
  * Covers:
  *   - compareContributionIds: identical, local-only, installed-only, shared, empty.

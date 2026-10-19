@@ -1,5 +1,5 @@
 /**
- * M10: Agent tool registry — provider-scoped, in-memory, unit-testable.
+ * Agent tool registry — provider-scoped, in-memory, unit-testable.
  *
  * Responsibilities:
  * - Declarative AgentToolContribution ingestion from extension manifests
@@ -16,7 +16,6 @@
  * for a disposed extension.
  *
  * @module agentToolRegistry
- * @milestone M10
  */
 
 import type {

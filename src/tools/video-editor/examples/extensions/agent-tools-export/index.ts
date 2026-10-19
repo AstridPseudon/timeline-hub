@@ -1,7 +1,7 @@
 /**
  * agent-tools-export — Export-adjacent canary extension.
  *
- * Demonstrates M10 agent tools for export-planning that:
+ * Demonstrates agent tools for export-planning that:
  *   - Read only explicit request context (timeline, assets, export context)
  *   - Return exportPlanFindings (CapabilityFinding-shaped records)
  *     via the 'export' ToolResult family
@@ -14,7 +14,6 @@
  * It imports exclusively from @astrid/editor-sdk, the public SDK entrypoint.
  *
  * @publicContract
- * @milestone M10
  */
 
 import { defineExtension } from '@astrid/editor-sdk';

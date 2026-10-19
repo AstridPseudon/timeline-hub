@@ -1,6 +1,6 @@
-// [CONVERGE-WITH-M1] TimelineBundle persistence envelope: the schema-versioned
+// TimelineBundle persistence envelope: the schema-versioned
 // serialization of SOURCE data items (never views/occurrences) that rides the
-// existing timeline save path. When the M1 kernel lands, this module is the
+// existing timeline save path. When the kernel lands, this module is the
 // one file to converge.
 //
 // Contract (L6-settled):

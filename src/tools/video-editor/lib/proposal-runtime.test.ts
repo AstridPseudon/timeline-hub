@@ -1063,7 +1063,7 @@ describe('ProposalRuntime', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M3: Expiry — pending proposal TTL and auto-expiration
+  // Expiry — pending proposal TTL and auto-expiration
   // -----------------------------------------------------------------------
 
   describe('expiry', () => {
@@ -1081,7 +1081,7 @@ describe('ProposalRuntime', () => {
 
       // The runtime should expose an expireStale method or auto-expire
       // proposals.  Since the current runtime has no TTL support, this
-      // expectation should fail until M3 wires expiry in.
+      // expectation should fail until expiry is wired in.
       expect(typeof (runtime as any).expireStale).toBe('function');
 
       // Expire proposals older than 0ms (all pending proposals)
@@ -1172,7 +1172,7 @@ describe('ProposalRuntime', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M3: Stale-before-mutation — timeline is never mutated for stale proposals
+  // Stale-before-mutation — timeline is never mutated for stale proposals
   // -----------------------------------------------------------------------
 
   describe('stale-before-mutation', () => {
@@ -1250,7 +1250,7 @@ describe('ProposalRuntime', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M3: Reload — proposal survival across provider/runtime reload
+  // Reload — proposal survival across provider/runtime reload
   // -----------------------------------------------------------------------
 
   describe('reload survival', () => {
@@ -1360,7 +1360,7 @@ describe('ProposalRuntime', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M3: Unsupported-provider diagnostics
+  // Unsupported-provider diagnostics
   // -----------------------------------------------------------------------
 
   describe('unsupported-provider diagnostics', () => {
@@ -1479,7 +1479,7 @@ describe('ProposalRuntime', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M3: Negative-path — provider_capability_extension_proposals_unsupported bridge
+  // Negative-path — provider_capability_extension_proposals_unsupported bridge
   // -----------------------------------------------------------------------
 
   describe('negative-path: unsupported-provider bridge to DataProvider diagnostics', () => {
@@ -1516,7 +1516,7 @@ describe('ProposalRuntime', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M1: importProposal — import validation diagnostics
+  // importProposal — import validation diagnostics
   // -----------------------------------------------------------------------
 
   describe('importProposal', () => {
@@ -1694,7 +1694,7 @@ describe('ProposalRuntime', () => {
       }
     });
 
-    // ── M1: Invalid patch shapes (fail-to-pass — not yet validated) ────
+    // ── Invalid patch shapes (fail-to-pass — not yet validated) ────
 
     it('rejects proposals with invalid patch shape (missing version)', () => {
       const proposal = makeValidProposal({
@@ -1744,7 +1744,7 @@ describe('ProposalRuntime', () => {
       expect(runtime.get('import-1')).toBeUndefined();
     });
 
-    // ── M1: Unsupported operations (fail-to-pass — not yet validated) ──
+    // ── Unsupported operations (fail-to-pass — not yet validated) ──
 
     it('rejects proposals with unsupported patch operations', () => {
       const proposal = makeValidProposal({
@@ -1804,7 +1804,7 @@ describe('ProposalRuntime', () => {
       expect(opDiag).toBeDefined();
     });
 
-    // ── M1: Payload mismatches (fail-to-pass — not yet validated) ──────
+    // ── Payload mismatches (fail-to-pass — not yet validated) ──────
 
     it('rejects clip.add operations with invalid payload types', () => {
       const proposal = makeValidProposal({
@@ -1818,7 +1818,7 @@ describe('ProposalRuntime', () => {
       const result = runtime.importProposal(proposal);
 
       expect(result).toBe('rejected');
-      // M1 contract: validateTimelinePatch should catch payload mismatches
+      // contract: validateTimelinePatch should catch payload mismatches
       const diags = runtime.diagnostics;
       const payloadDiag = diags.find(
         (d) =>
@@ -1870,14 +1870,14 @@ describe('ProposalRuntime', () => {
       expect(payloadDiag).toBeDefined();
     });
 
-    // ── M1: Structured diagnostics shape (fail-to-pass — not yet validated) ──
+    // ── Structured diagnostics shape (fail-to-pass — not yet validated) ──
 
     it('produces structured diagnostics with proposalIndex for batch validation', () => {
       // Import two proposals: one valid, one invalid
       runtime.importProposal(makeValidProposal({ id: 'valid-1' }));
       runtime.importProposal(makeValidProposal({ id: '', source: 'bad' })); // invalid
 
-      // M1 contract: diagnostics should identify which proposal failed
+      // contract: diagnostics should identify which proposal failed
       const diags = runtime.diagnostics;
       const importDiags = diags.filter((d) => d.code === 'proposal-import/invalid-shape');
       expect(importDiags.length).toBeGreaterThanOrEqual(1);
@@ -1903,7 +1903,7 @@ describe('ProposalRuntime', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M1: importEdgeProposals — envelope-level import
+  // importEdgeProposals — envelope-level import
   // -----------------------------------------------------------------------
 
   describe('importEdgeProposals', () => {
@@ -2065,7 +2065,7 @@ describe('ProposalRuntime', () => {
       expect(runtime.get('rejected-1')).toBeUndefined();
     });
 
-    // ── M1: Malformed envelope validation (fail-to-pass — not yet validated) ──
+    // ── Malformed envelope validation (fail-to-pass — not yet validated) ──
 
     it('rejects malformed envelopes where proposals is not an array', () => {
       const runtime = makeRuntime();
@@ -2073,7 +2073,7 @@ describe('ProposalRuntime', () => {
         { proposals: 'not-an-array' as any, baseVersion: 1, mutationApplied: false },
         runtime,
       );
-      // M1 contract: malformed envelopes should be rejected/skipped
+      // contract: malformed envelopes should be rejected/skipped
       expect(result.imported).toBe(0);
       expect(result.diagnostics).toEqual([
         expect.objectContaining({ code: 'proposal-import/invalid-envelope' }),
@@ -2086,7 +2086,7 @@ describe('ProposalRuntime', () => {
         { proposals: [makePendingProposal('p1')], mutationApplied: false } as any,
         runtime,
       );
-      // M1 contract: envelope missing baseVersion should be treated with caution
+      // contract: envelope missing baseVersion should be treated with caution
       // Current behavior: imports anyway (no validation)
       // Future: should skip or warn
       expect(result.imported).toBeGreaterThanOrEqual(0);
@@ -2099,13 +2099,13 @@ describe('ProposalRuntime', () => {
         baseVersion: -1,
         mutationApplied: false,
       };
-      // M1 contract: invalid baseVersion should be rejected
+      // contract: invalid baseVersion should be rejected
       const result = importEdgeProposals(envelope, runtime);
       // Future: should be 0 with a diagnostic
       expect(result.imported).toBeGreaterThanOrEqual(0);
     });
 
-    // ── M1: Full batch validation (fail-to-pass — not yet validated) ───
+    // ── Full batch validation (fail-to-pass — not yet validated) ───
 
     it('imports only valid proposals when batch contains mixed valid/invalid', () => {
       const runtime = makeRuntime();
@@ -2120,7 +2120,7 @@ describe('ProposalRuntime', () => {
       };
 
       const result = importEdgeProposals(envelope, runtime);
-      // M1 contract: only valid proposals should be imported
+      // contract: only valid proposals should be imported
       // Current: invalid proposal is rejected by importProposal, so count
       // should reflect only the successfully imported ones
       expect(result.imported).toBeGreaterThanOrEqual(2);
@@ -2129,10 +2129,10 @@ describe('ProposalRuntime', () => {
       expect(runtime.get('valid-2')).toBeDefined();
     });
 
-    // ── M1: ProposalImportResult contract (fail-to-pass) ───────────────
+    // ── ProposalImportResult contract (fail-to-pass) ───────────────
 
     it('returns a structured ProposalImportResult instead of a bare count', () => {
-      // M1 contract: importEdgeProposals should return ProposalImportResult
+      // contract: importEdgeProposals should return ProposalImportResult
       // with imported, skipped, rejected counts and per-proposal diagnostics.
       // Currently it returns just a number — this test documents the
       // expectation for the contract upgrade.

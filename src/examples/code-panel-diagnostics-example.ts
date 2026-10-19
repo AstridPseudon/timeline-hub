@@ -1,5 +1,5 @@
 /**
- * code-panel-diagnostics-example — M2 code panel diagnostics example.
+ * code-panel-diagnostics-example — code panel diagnostics example.
  *
  * Demonstrates structured diagnostic reporting with 1-based source
  * ranges, representing what a code panel extension would emit when

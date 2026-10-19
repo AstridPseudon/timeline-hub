@@ -90,7 +90,7 @@ export interface ExtensionInventoryEntry {
   readonly hasWarnings: boolean;
 }
 
-/** M7: Per-effect blocker detail surfaced in the drawer. */
+/** Per-effect blocker detail surfaced in the drawer. */
 export interface EffectBlockerDetail {
   readonly effectId: string;
   readonly provenance: string;
@@ -116,28 +116,28 @@ export interface ExtensionStatusSummary {
   readonly warningDiagnostics: number;
   readonly infoDiagnostics: number;
   readonly exportBlockers: number;
-  /** M5: Planner-compatible blocker diagnostics published by renderPlanner. */
+  /** Planner-compatible blocker diagnostics published by renderPlanner. */
   readonly plannerBlockers: number;
   readonly renderBlockers: number;
-  /** M4: Total commands registered in the command registry. */
+  /** Total commands registered in the command registry. */
   readonly commandCount: number;
-  /** M4: Total keybindings registered. */
+  /** Total keybindings registered. */
   readonly keybindingCount: number;
-  /** M4: Total context menu items registered. */
+  /** Total context menu items registered. */
   readonly contextMenuCount: number;
-  /** M4: Commands whose most recent invocation threw or rejected. */
+  /** Commands whose most recent invocation threw or rejected. */
   readonly commandsFailedLastRun: number;
-  /** M5: Effect records currently loaded in the provider-scoped registry. */
+  /** Effect records currently loaded in the provider-scoped registry. */
   readonly effectRecordCount: number;
-  /** M5: Effect records that block browser export. */
+  /** Effect records that block browser export. */
   readonly effectBrowserExportBlockers: number;
-  /** M5: Supported renderability capability declarations across effect records. */
+  /** Supported renderability capability declarations across effect records. */
   readonly effectSupportedRoutes: number;
-  /** M5: Blocked renderability capability declarations across effect records. */
+  /** Blocked renderability capability declarations across effect records. */
   readonly effectBlockedRoutes: number;
-  /** M5: Unknown renderability capability declarations across effect records. */
+  /** Unknown renderability capability declarations across effect records. */
   readonly effectUnknownRoutes: number;
-  /** M7: Per-effect blocker details for drawer surfacing. */
+  /** Per-effect blocker details for drawer surfacing. */
   readonly effectBlockerDetails: readonly EffectBlockerDetail[];
 }
 
@@ -366,7 +366,7 @@ export function useExtensionStatusInventory(): ExtensionStatusInventory {
 
     // ---- Compute summary ---------------------------------------------------
 
-    // M4: Derive command registry statistics from the snapshot.
+    // Derive command registry statistics from the snapshot.
     let commandCount = 0;
     let keybindingCount = 0;
     let contextMenuCount = 0;
@@ -393,7 +393,7 @@ export function useExtensionStatusInventory(): ExtensionStatusInventory {
     const effectBlockedRoutes = effectCapabilities.filter((capability) => capability.status === 'blocked').length;
     const effectUnknownRoutes = effectCapabilities.filter((capability) => capability.status === 'unknown').length;
 
-    // M7: Build per-effect blocker details for drawer surfacing.
+    // Build per-effect blocker details for drawer surfacing.
     const effectBlockerDetails: EffectBlockerDetail[] = [];
     for (const record of effectRegistrySnapshot.records) {
       const blockedRoutes: string[] = [];
@@ -577,7 +577,7 @@ function SummaryBar({ inventory }: { inventory: ExtensionStatusInventory }) {
     { label: 'Info', value: summary.infoDiagnostics, color: 'text-blue-400' },
   ];
 
-  // M4: Command registry stats row (only shown when commands are present).
+  // Command registry stats row (only shown when commands are present).
   const hasCommands = summary.commandCount > 0
     || summary.keybindingCount > 0
     || summary.contextMenuCount > 0;
@@ -655,7 +655,7 @@ function SummaryBar({ inventory }: { inventory: ExtensionStatusInventory }) {
         )}
       </div>
 
-      {/* M4: Command registry stats */}
+      {/* Command registry stats */}
       {hasCommands && (
         <div className="mt-1.5 flex flex-wrap items-center gap-2 border-t border-white/5 pt-1.5">
           {cmdItems.map((item) => (
@@ -722,7 +722,7 @@ function SummaryBar({ inventory }: { inventory: ExtensionStatusInventory }) {
         </div>
       )}
 
-      {/* M7: Per-effect blocker details */}
+      {/* Per-effect blocker details */}
       {summary.effectBlockerDetails.length > 0 && (
         <div className="mt-1.5 border-t border-white/5 pt-1.5">
           <div className="mb-1">

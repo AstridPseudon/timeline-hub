@@ -47,7 +47,7 @@ function ReconciliationIcon({ state }: { state: ReconciliationState }) {
   }
 }
 
-/** Reconciliation diagnostic row (T4). */
+/** Reconciliation diagnostic row. */
 export function SettingsReconciliationRow({
   extensionId,
   reconciliationResult,

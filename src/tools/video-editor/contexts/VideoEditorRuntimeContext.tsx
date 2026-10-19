@@ -62,42 +62,42 @@ export interface VideoEditorRuntimeContextValue {
   renderExportEnabled?: boolean;
   extensions: VideoEditorExtensionRuntimeConfig;
   extensionRuntime?: ExtensionRuntime;
-  /** M4: Provider-scoped command registry (commands, keybindings, context menus). */
+  /** Provider-scoped command registry (commands, keybindings, context menus). */
   commandRegistry?: CommandRegistry;
-  /** M10: Provider-scoped agent tool registry for host-mediated, proposal-backed agent tools. */
+  /** Provider-scoped agent tool registry for host-mediated, proposal-backed agent tools. */
   agentToolRegistry?: AgentToolRegistry;
   liveSceneOperationPort?: import('../runtime/liveSceneOperationPort').LiveSceneOperationPort;
-  /** M11: Provider-scoped live data registry for source lifecycle, channels, samples, and bake. */
+  /** Provider-scoped live data registry for source lifecycle, channels, samples, and bake. */
   liveDataRegistry?: LiveDataRegistry;
-  /** M11: Provider-scoped live permission service for browser-gated permission probes/requests. */
+  /** Provider-scoped live permission service for browser-gated permission probes/requests. */
   livePermissionService?: LivePermissionService;
   /** Provider-scoped diagnostics surfaced by status and diagnostic panels. */
   diagnosticCollection?: DiagnosticCollection;
-  /** M5: Extension state repository for enable/disable persistence. */
+  /** Extension state repository for enable/disable persistence. */
   extensionStateRepository?: ExtensionStateRepository | null;
-  /** M5: Trigger extension re-resolution after persistence writes. */
+  /** Trigger extension re-resolution after persistence writes. */
   triggerExtensionRefresh?: () => void;
-  /** T9: Host-visible settings notification registry for manager/runtime coherence. */
+  /** Host-visible settings notification registry for manager/runtime coherence. */
   settingsNotificationRegistry?: ExtensionSettingsNotificationRegistry;
-  /** M5: Recovery key facade backed by ExtensionLifecycleHost.
+  /** Recovery key facade backed by ExtensionLifecycleHost.
    *  Returns the current monotonic recovery key for an extension, or "0"
    *  for unknown/disposed extension IDs. */
   getRecoveryKey?: (extensionId: string) => string;
-  /** M5: Increment the recovery key for an extension and return the new key.
+  /** Increment the recovery key for an extension and return the new key.
    *  This is the programmatic retry signal for ContributionErrorBoundary.
    *  No-op for unknown/disposed extension IDs (returns "0"). */
   incrementRecoveryKey?: (extensionId: string) => string;
-  /** M6b: Provider-scoped process manager for trusted local processes.
+  /** Provider-scoped process manager for trusted local processes.
    *  Created by default from declared process specs; hosts may override. */
   processManager?: ProcessManager;
-  /** M6b: Read-only snapshot of all process statuses from the process manager. */
+  /** Read-only snapshot of all process statuses from the process manager. */
   processStatuses?: readonly ProcessStatus[];
-  /** M6b: Host-session scoped attach records for process result provenance.
+  /** Host-session scoped attach records for process result provenance.
    *  Memory only — not persisted into project data or timeline internals. */
   processResultAttachRecords?: readonly ProcessResultAttachRecord[];
-  /** M6b: Record a process result attach record for the current editor session. */
+  /** Record a process result attach record for the current editor session. */
   recordProcessResultAttach?: (record: ProcessResultAttachRecord) => void;
-  /** T22: Provider-owned timeline-overlay feature flag. Explicitly defaults
+  /** Provider-owned timeline-overlay feature flag. Explicitly defaults
    *  to false; hosts opt in by supplying `true`. No provider inspects a query
    *  string, and no environment enables it yet. */
   timelineOverlaysEnabled?: boolean;

@@ -97,9 +97,9 @@ export interface FamilyRequirementChecklist {
   examples: boolean | undefined;
   /** Conformance tests exist. */
   tests: boolean | undefined;
-  /** Sidecar export capability is tracked (M7b). */
+  /** Sidecar export capability is tracked. */
   sidecarExport?: boolean | undefined;
-  /** Artifact route completion evidence exists (M7b). */
+  /** Artifact route completion evidence exists. */
   artifactRouteCompletion?: boolean | undefined;
 }
 
@@ -163,7 +163,7 @@ export interface FamilyDefinition<Kind extends string = string> {
 
   /**
    * Optional compatibility metadata for legacy milestone bridging.
-   * Populated only for families that previously relied on
+   * Populated only for families that rely on
    * `CONTRIBUTION_KIND_MILESTONE`.
    */
   readonly legacyMilestone?: string;

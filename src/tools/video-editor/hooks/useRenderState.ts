@@ -61,7 +61,7 @@ function renderConfigFingerprint(config: ResolvedTimelineConfig | null): string 
 
 export type RenderStatus = 'idle' | 'rendering' | 'done' | 'error';
 
-/** M6: Export status for compile-only and render-dependent export operations. */
+/** Export status for compile-only and render-dependent export operations. */
 export type ExportStatus = 'idle' | 'exporting' | 'done' | 'error';
 
 type RenderProgress = { current: number; total: number; percent: number; phase: string } | null;
@@ -490,7 +490,7 @@ function toCollectionDiagnostic(
 }
 
 // ---------------------------------------------------------------------------
-// M6: Export format categorization
+// Export format categorization
 // ---------------------------------------------------------------------------
 
 /** Categorize output format descriptors into compile-only and render-dependent groups. */
@@ -551,7 +551,7 @@ export function useRenderState(
   const renderOperationIdRef = useRef<string | null>(null);
   const renderCancellationRef = useRef<RenderCancellation | null>(null);
   const renderClientRef = useRef<AstridLocalClient | null>(null);
-  // M6: Export state
+  // Export state
   const [exportStatus, setExportStatus] = useState<ExportStatus>('idle');
   const [exportLog, setExportLogState] = useState('');
   const [exportResultUrl, setExportResultUrl] = useState<string | null>(null);
@@ -559,7 +559,7 @@ export function useRenderState(
   const effectRegistrySnapshot = useEffectRegistrySnapshot();
   const transitionRegistrySnapshot = useTransitionRegistrySnapshot();
   const clipTypeRegistrySnapshot = useClipTypeRegistrySnapshot();
-  // M6: Derive export format categories from extension runtime
+  // Derive export format categories from extension runtime
   const exportFormats = useMemo(() => {
     const outputFormats = outputFormatsForPlanning(extensionRuntime);
     return categorizeExportFormats(outputFormats);
@@ -590,7 +590,7 @@ export function useRenderState(
       }
     };
   }, [renderResultUrl]);
-  // M6: Cleanup export result URL on unmount
+  // Cleanup export result URL on unmount
   useEffect(() => {
     return () => {
       if (exportResultUrl) {
@@ -1206,7 +1206,7 @@ export function useRenderState(
     runtimeContext,
   ]);
 
-  // ---- M6: compile-only export ------------------------------------------------
+  // ---- compile-only export ------------------------------------------------
   const startExport = useCallback(async (
     formatId: string,
     compileOnlyRegistry?: CompileOnlyOutputFormatRegistry,
@@ -1268,7 +1268,7 @@ export function useRenderState(
       return;
     }
 
-    // ---- M7: Run export guard before compile-only export --------------------
+    // ---- Run export guard before compile-only export --------------------
     // Compile-only exports don't need rendered pixels, but they still process
     // timeline data.  Unknown / missing-contribution effects should block
     // because the exported data would be invalid.  Route-specific capability
@@ -1390,7 +1390,7 @@ export function useRenderState(
     setRenderDirty,
     setRenderProgress,
     startRender,
-    // M6: Export state
+    // Export state
     exportStatus,
     exportLog,
     exportResultUrl,

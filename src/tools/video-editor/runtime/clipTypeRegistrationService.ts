@@ -51,7 +51,7 @@ function getClipTypeContributions(
  * Build a {@link ContributionRenderability} from a `ClipTypeContribution`'s
  * declared capabilities.
  *
- * Per SD2: trusted component clip types default to preview-only. Browser-export
+ * Trusted component clip types default to preview-only. Browser-export
  * and worker-export are blocked unless the contribution declares them.
  */
 function buildRenderability(

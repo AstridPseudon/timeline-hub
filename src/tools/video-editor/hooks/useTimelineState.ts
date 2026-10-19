@@ -746,7 +746,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     onRemoteData,
   } = history;
 
-  // Wire TimelineOps (M3 atomic mutation adapter) into the host runtime context.
+  // Wire TimelineOps (atomic mutation adapter) into the host runtime context.
   // The adapter is stable (memoized on its callback deps) and delegates to
   // the existing commitData/history path without replacing the command facade.
   // The canonical version getter reads the store's ack-tracked field (outside

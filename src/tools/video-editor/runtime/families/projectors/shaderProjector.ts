@@ -8,7 +8,7 @@
  * through sequencing, and missing `shaderId` diagnostics are emitted here
  * rather than in Phase 2 filtering.
  *
- * M1b: When a {@link CompositionGraph} is supplied the projector treats the
+ * When a {@link CompositionGraph} is supplied the projector treats the
  * graph's `consumes` edges as the authority for which shader contributions
  * produce descriptors.  The descriptor-array shape stays identical so
  * downstream callers are not broken.
@@ -40,7 +40,7 @@ function hasConsumesEdges(compositionGraph: CompositionGraph): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Graph-derived shader descriptor shim (M1b)
+// Graph-derived shader descriptor shim
 // ---------------------------------------------------------------------------
 
 /**
@@ -51,7 +51,7 @@ function hasConsumesEdges(compositionGraph: CompositionGraph): boolean {
  * The graph is the authoritative source for *which* shader contributions
  * produce descriptors; the contribution data still supplies the descriptor
  * payload fields (`pass`, `source`, `uniforms`, etc.).  This prevents the
- * descriptor array from becoming a second authority for M1b shader/ref
+ * descriptor array from becoming a second authority for shader/ref
  * resolution.
  */
 export function buildShaderDescriptorsFromGraph(

@@ -66,7 +66,7 @@ const resolveHostComponent = (host: AstridElementHost, ref: NonNullable<Resolved
     ? host.resolveComponent(ref.id, ref.kind, ref.packId, ref.revision) : undefined
 );
 
-// Phase 4d (Sprint 5): EFFECT_REGISTRY dispatch.
+// EFFECT_REGISTRY dispatch.
 //
 // Mirrors `tools/remotion/src/HypeComposition.tsx:58-64` (lifted into
 // `packages/timeline-composition/typescript/src/TimelineComposition.tsx`).
@@ -108,9 +108,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> => (
 /**
  * Resolved-child-config cache for nested `clipType: 'shot'` clips.
  *
- * Playback previously blinked black at every shot boundary because
- * ShotClipSequence cleared `childConfig` and reloaded the referenced timeline
- * asynchronously on every mount. The cache fixes this at two levels:
+ * Playback must not blink black at shot boundaries. ShotClipSequence clears
+ * `childConfig` and reloads the referenced timeline asynchronously on every mount,
+ * so the cache keeps the loaded timeline. The cache works at two levels:
  *
  * 1. `loadReferencedTimelineIntoCache` deduplicates: repeated and concurrent
  *    loads of the same (provider, timeline) pair share one in-flight promise,
@@ -332,7 +332,7 @@ const ThemeEffectSequence: FC<ThemeEffectSequenceProps> = ({ clip, fps, theme, d
     }>
     | undefined;
   // Defensive: if neither registry has the component, fall back to the loud
-  // placeholder. This is the second layer of the SD-025 "loud placeholder"
+  // placeholder. This is the second layer of the "loud placeholder"
   // safety net for clipTypes that *are* in the registry but somehow fail to
   // render.
   if (!Component) {
@@ -491,7 +491,7 @@ const GeneratedModulePlaceholderSequence: FC<{
 };
 
 // ---------------------------------------------------------------------------
-// M9 T10: Extension clip renderer dispatch
+// Extension clip renderer dispatch
 // ---------------------------------------------------------------------------
 
 /** Parse width and height from a resolution string like "1920x1080". */
@@ -1114,7 +1114,7 @@ const UnsupportedPostprocessShaderExportBody: FC<{ shaderId: string }> = ({ shad
  * Error boundary that catches renderer crashes and shows a loud placeholder.
  * Extension renderers are trusted local code but may throw at runtime
  * (e.g. division by zero, invalid state). The boundary preserves the
- * SD-025 guarantee that broken clips never silently vanish.
+ * guarantee that broken clips never silently vanish.
  */
 class ExtensionRendererErrorBoundary extends Component<
   { fallback: ReactNode; children: ReactNode },
@@ -1150,12 +1150,12 @@ interface ExtensionClipSequenceProps {
  * host-interpolated keyframe params and automation overrides applied.
  *
  * The host computes interpolated parameter values via resolveAnimatedParams()
- * before passing them to the extension renderer, satisfying SD2 ("extension
+ * before passing them to the extension renderer, satisfying the rule that "extension
  * renderers must not implement timeline interpolation").
  *
  * Automation overrides are then applied via applyAutomationOverrides(),
  * which scans automation clips for matching target contribution IDs and
- * overrides the extension clip's parameters at the current time (SD3 /
+ * overrides the extension clip's parameters at the current time (
  * success criterion 9).
  *
  * Both are resolved at the CURRENT composition time, not at `clip.at`:
@@ -1446,7 +1446,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
           }
         }
 
-        // EFFECT_REGISTRY dispatch (Sprint 5 / SD-026): if the clipType
+        // EFFECT_REGISTRY dispatch if the clipType
         // is provided by an installed theme package OR a DB-stored
         // sequence component, render via the dynamic-aware registry entry.
         // Mirrors HypeComposition.tsx:58-64 with DB augmentation.
@@ -1462,12 +1462,12 @@ const VisualTrack: FC<VisualTrackProps> = ({
           );
         }
 
-        // M9 T10: Extension clip renderer dispatch.
+        // Extension clip renderer dispatch.
         // After built-ins and sequence components, before the loud
         // placeholder fallback. Looks up the clipTypeId in the
         // provider-scoped ClipTypeRegistry.
         // - Active record with a renderer → ExtensionClipSequence
-        //   with host-interpolated params (SD2).
+        //   with host-interpolated params.
         // - Active record without a usable renderer → loud placeholder
         //   (missing renderer).
         // - Inactive / error record → loud placeholder.
@@ -1532,7 +1532,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
           );
         }
 
-        // SD-025 (Sprint 3): loud placeholder for unknown clipTypes that
+        // loud placeholder for unknown clipTypes that
         // are NOT in BUILTIN_CLIP_TYPES and NOT in the theme registry —
         // theme package missing, typo, or future clipType not yet
         // supported. Surfaces as a labeled band rather than a silent

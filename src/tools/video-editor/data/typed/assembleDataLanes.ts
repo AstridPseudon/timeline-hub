@@ -1,4 +1,4 @@
-// [CONVERGE-WITH-M1] Pure, synchronous lane assembly. Every input is
+// Pure, synchronous lane assembly. Every input is
 // injected: the registered-kind snapshot, resolved clips, and SOURCE data
 // items — host-fetched transcript segments adapt into source items (the
 // producer path) and join any persisted bundle items passed via
@@ -81,7 +81,7 @@ const timelineTimeForSourceTime = sourceToTimelineTime;
 const compareStrings = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 /**
  * Strip occurrence chrome from an adapter item → persisted-plane shape
- * ([CONVERGE-WITH-M1] `SourceFrozenDataItem`). Items without provenance get
+ * (`SourceFrozenDataItem`). Items without provenance get
  * an empty `assetId`, which can never match a clip and therefore never maps.
  */
 const toSourceItem = (item: FrozenDataItem): SourceFrozenDataItem => ({
@@ -286,7 +286,7 @@ export function assembleDataLanes(input: AssembleDataLanesInput): readonly DataL
  * reference. Shallow clone — the base is left untouched.
  *
  * Batch 5 made `TimelineData.dataLanes` a required field, so the former
- * readonly-intersection return is redundant (and no longer typechecks).
+ * readonly-intersection return is redundant (and does not typecheck).
  */
 export function mergeDataLanes(
   base: TimelineData,

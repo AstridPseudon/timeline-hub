@@ -1,5 +1,5 @@
 /**
- * Tests for IndexedDB-backed ExtensionStateRepository (T6).
+ * Tests for IndexedDB-backed ExtensionStateRepository.
  *
  * Validates:
  *  - Records survive reinitialization (close + reopen)

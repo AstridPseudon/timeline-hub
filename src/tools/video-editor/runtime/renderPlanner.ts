@@ -850,7 +850,7 @@ function compositionDiagnosticReason(code: string): RenderBlockerReason {
     case COMPOSITION_DIAGNOSTIC_CODE.UNSUPPORTED_RESERVED_TARGET:
       return 'inactive-extension';
     default: {
-      // Delegate M5-specific blocker reasons
+      // Delegate blocker reasons
       if (isBlockingM5CompositionDiagnosticCode(code)) {
         return m5CompositionBlockerReason(code as Parameters<typeof m5CompositionBlockerReason>[0]) as RenderBlockerReason;
       }

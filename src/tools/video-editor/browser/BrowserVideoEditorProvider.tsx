@@ -36,12 +36,12 @@ export interface BrowserVideoEditorProviderProps {
   exporter?: VideoEditorExporter | null;
   hostContext?: VideoEditorHostContext | null;
   extensions?: readonly AstridExtension[];
-  /** M14: Optional extension state repository for installed pack resolution. */
+  /** Optional extension state repository for installed pack resolution. */
   repository?: ExtensionStateRepository | null;
-  /** M14: Optional bundle content store for installed pack bytes (IndexedDB). */
+  /** Optional bundle content store for installed pack bytes (IndexedDB). */
   bundleStore?: BundleContentStore | null;
   /**
-   * M5: Monotonic refresh key forwarded to useExtensionLoaderWiring.
+   * Monotonic refresh key forwarded to useExtensionLoaderWiring.
    * Increment after persistence writes (enable/disable, settings save) to
    * force re-resolution of extensions, diagnostics, and package-state
    * inventory without a page refresh.
@@ -49,7 +49,7 @@ export interface BrowserVideoEditorProviderProps {
   refreshKey?: number;
   queryClient?: QueryClient;
   initialEntries?: string[];
-  /** T22: Provider-owned timeline-overlay feature flag. Explicitly defaults
+  /** Provider-owned timeline-overlay feature flag. Explicitly defaults
    *  to false; hosts opt in by supplying `true`. */
   timelineOverlaysEnabled?: boolean;
   children: ReactNode;
@@ -140,7 +140,7 @@ function BrowserVideoEditorProviderInstance({
   useOwnedResourceDisposal(ownedQueryClient, (client) => client.clear());
   const hasHostRouter = useInRouterContext();
 
-  // ---- M5: Internal refresh key for extension re-resolution ----------------
+  // ---- Internal refresh key for extension re-resolution ----------------
   // When refreshKey prop is provided it takes precedence; otherwise we manage
   // an internal counter that gets incremented by triggerExtensionRefresh.
   const [internalRefreshKey, setInternalRefreshKey] = useState(0);
@@ -155,7 +155,7 @@ function BrowserVideoEditorProviderInstance({
     setInternalRefreshKey((prev) => prev + 1);
   }, [refreshKey]);
 
-  // ---- M2: Derive effective repository / bundleStore from DataProvider when
+  // ---- Derive effective repository / bundleStore from DataProvider when
   //        explicit props are not supplied ----------------------------------
 
   const [derivedPersistence, setDerivedPersistence] = useState<{
@@ -213,7 +213,7 @@ function BrowserVideoEditorProviderInstance({
     return [smokeExt, ...extensions];
   }, [extensions]);
 
-  // ---- M14: extension loader wiring (host-owned) --------------------------
+  // ---- extension loader wiring (host-owned) --------------------------
   const {
     resolvedExtensions,
     isResolving: _loaderIsResolving,

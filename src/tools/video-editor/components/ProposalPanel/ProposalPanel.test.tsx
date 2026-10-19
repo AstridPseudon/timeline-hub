@@ -1568,7 +1568,7 @@ describe('ProposalPanel', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M3: Stale and expired proposal controls
+  // Stale and expired proposal controls
   // -----------------------------------------------------------------------
 
   describe('stale and expired proposal controls', () => {
@@ -1860,7 +1860,7 @@ describe('ProposalPanel', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M2: Import diagnostics
+  // Import diagnostics
   // -----------------------------------------------------------------------
 
   describe('import diagnostics', () => {

@@ -1,5 +1,5 @@
 /**
- * M9: Keyframe utilities — unit tests
+ * Keyframe utilities — unit tests
  *
  * Covers:
  * - Linear/hold interpolation for numbers, strings, booleans
@@ -1403,7 +1403,7 @@ describe('recordAutomation', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M9 T13: applyAutomationOverrides
+// applyAutomationOverrides
 // ---------------------------------------------------------------------------
 
 import {

@@ -100,7 +100,7 @@ function isEffectInError(effect: { registryStatus?: string }): boolean {
   return effect.registryStatus === 'error';
 }
 
-/** Check if an effect resource is read-only (bundled-extension per SD3). */
+/** Check if an effect resource is read-only (bundled-extension). */
 function isReadOnlyEffect(effect: { readOnly?: boolean }): boolean {
   return effect.readOnly === true;
 }
@@ -202,7 +202,7 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
   const {effectResources} = props;
   const [drafts, setDrafts] = useState<BulkDrafts>(() => buildDrafts(props));
 
-  // Transition registry (T12: bulk transition controls)
+  // Transition registry
   const transitionRegistryContext = useOptionalTransitionRegistryContext();
   const mergedTransitionSnapshot = useMemo(
     () => createTransitionSnapshot(transitionRegistryContext?.snapshot),

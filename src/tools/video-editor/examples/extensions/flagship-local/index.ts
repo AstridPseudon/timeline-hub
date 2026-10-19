@@ -1,7 +1,7 @@
 /**
  * flagship-local-extension — Flagship trusted-local extension example.
  *
- * Demonstrates the full M1 SDK surface using only the public @astrid/editor-sdk
+ * Demonstrates the full SDK surface using only the public @astrid/editor-sdk
  * entrypoint:
  *
  *   - Activation / deactivation lifecycle with diagnostics
@@ -12,8 +12,8 @@
  *   - Trusted-local safety-warning copy emitted on activation
  *   - Command palette, keybinding, and clip context-menu contributions
  *   - Patch-backed command behavior through public creative timeline APIs
- *   - M7 trusted component-effect registration with parameter schema
- *   - M8 trusted component-transition registration with pure renderer
+ *   - trusted component-effect registration with parameter schema
+ *   - trusted component-transition registration with pure renderer
  *   - Future inactive contribution declarations (clipType, parser, agentTool)
  *     in the manifest for forward-compatibility testing
  *
@@ -69,7 +69,7 @@ const FLAGSHIP_MARK_REVIEW_COMMAND =
   `${FLAGSHIP_EXTENSION_ID}.markClipReview`;
 
 // ---------------------------------------------------------------------------
-// M7: Trusted component-effect parameter schema
+// Trusted component-effect parameter schema
 // ---------------------------------------------------------------------------
 
 /**
@@ -121,7 +121,7 @@ const FLAGSHIP_GLOW_SCHEMA: EffectParameterSchema = [
 ];
 
 // ---------------------------------------------------------------------------
-// M8: Trusted component-transition parameter schema
+// Trusted component-transition parameter schema
 // ---------------------------------------------------------------------------
 
 /**
@@ -286,7 +286,7 @@ export const flagshipLocalExtension: AstridExtension = defineExtension({
       'Flagship trusted-local extension example demonstrating the full M1 SDK surface.',
     apiVersion: 1,
 
-    // ---- Bridged M1 slot contributions ------------------------------------
+    // ---- Slot contributions ------------------------------------
     contributions: [
       ...commandContributions,
       {
@@ -304,20 +304,20 @@ export const flagshipLocalExtension: AstridExtension = defineExtension({
         label: 'Flagship status',
       },
 
-      // ---- M7 trusted component-effect contribution ------------------------
+      // ---- trusted component-effect contribution ------------------------
       {
         id: 'flagship-effect-glow' as any,
         kind: 'effect',
         label: 'Flagship Glow',
         effectId: 'haus.astrid.flagship.effect.glow',
         // Preview-only: browser and worker export are blocked until a
-        // future milestone lifts the restriction (SD2).
+        // future milestone lifts the restriction.
         allowBrowserExport: false,
         allowWorkerExport: false,
         order: 10,
       } satisfies EffectContribution,
 
-      // ---- M8: Active transition contribution ----------------------------------
+      // ---- Active transition contribution ----------------------------------
       {
         id: 'flagship-transition-wipe' as any,
         kind: 'transition',
@@ -326,7 +326,7 @@ export const flagshipLocalExtension: AstridExtension = defineExtension({
         allowBrowserExport: false,
         allowWorkerExport: false,
         order: 10,
-        // M5: Example/test material slot declaration — not a production SDK
+        // Example/test material slot declaration — not a production SDK
         // constant.  Descriptor projection tests use this slot to validate
         // the TransitionMaterialSlotDeclaration → VideoEditorTransitionMaterialSlotDescriptor
         // normalization path.
@@ -454,7 +454,7 @@ export const flagshipLocalExtension: AstridExtension = defineExtension({
       ctx.services.i18n.t('command.markReview.ready'),
     );
 
-    // --- M7: Trusted component-effect registration ----------------------
+    // --- Trusted component-effect registration ----------------------
     const effectHandle = ctx.effects.registerComponent(
       'haus.astrid.flagship.effect.glow',
       flagshipEffectRegistration,
@@ -470,7 +470,7 @@ export const flagshipLocalExtension: AstridExtension = defineExtension({
       'Flagship Glow component effect registered (preview-only).',
     );
 
-    // --- M8: Trusted component-transition registration ------------------
+    // --- Trusted component-transition registration ------------------
     const transitionHandle = ctx.transitions.registerRenderer(
       'haus.astrid.flagship.transition.wipe',
       flagshipWipeRenderer,

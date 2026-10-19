@@ -1,5 +1,5 @@
 /**
- * Golden replay fixture tests — M3 T32.
+ * Golden replay fixture tests.
  *
  * These tests verify that every supported operation family produces consistent
  * results across the full lifecycle:

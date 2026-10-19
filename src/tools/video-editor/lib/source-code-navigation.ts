@@ -12,7 +12,7 @@
  *   looks up affected timeline objects for a source range and dispatches
  *   SOURCE_NAVIGATE_TO_TIMELINE_EVENT or TIMELINE_CENTER_CLIP_EVENT.
  *
- * @publicContract — implements bidirectional navigation as specified in M3.
+ * @publicContract — implements bidirectional navigation as specified.
  */
 
 import type { SourceMapRuntime, SourceMapEntry } from '@/sdk/index';

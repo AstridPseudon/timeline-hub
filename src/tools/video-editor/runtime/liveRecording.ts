@@ -1,5 +1,5 @@
 /**
- * M11 live recording conversion.
+ * Live recording conversion.
  *
  * Converts provider-scoped scalar, controller, and audio-analysis samples into
  * deterministic keyframes or automation clips. This module is pure: callers

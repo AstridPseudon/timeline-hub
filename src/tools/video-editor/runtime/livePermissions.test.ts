@@ -1,5 +1,5 @@
 /**
- * M11 T3: Unit tests for livePermissions.
+ * Unit tests for livePermissions.
  *
  * Covers:
  *  - API availability checks for all LiveSourceKind values
@@ -14,7 +14,6 @@
  *    non-interaction with registry bindings)
  *
  * @module livePermissions.test
- * @milestone M11
  */
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';

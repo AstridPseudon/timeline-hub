@@ -1,5 +1,5 @@
 /**
- * ExtensionStateRepository contract for M14.
+ * ExtensionStateRepository contract.
  *
  * Defines the persistence abstraction for extension state: installed packs,
  * enablement, dev overrides, settings, schema versions, lifecycle events,
@@ -12,7 +12,7 @@
  *     enablement state, but preserves lifecycle events for audit.
  *
  * Storage adapters (IndexedDB, provider-backed) implement this interface
- * in later tasks (T6, T7).
+ * in later tasks.
  */
 
 import type {
@@ -33,7 +33,7 @@ import type {
  * Stored in the repository after a successful install.  The record is
  * preserved on disable and deleted on uninstall.
  *
- * Bundle content bytes live in browser-local IndexedDB (SD2); this record
+ * Bundle content bytes live in browser-local IndexedDB; this record
  * holds the metadata and a content reference key.
  */
 export interface ExtensionPackRecord {
@@ -89,7 +89,7 @@ export interface ExtensionEnablementState {
  * Dev-only override preference for an extension that has both a local
  * (workspace source) and an installed (bundle) form.
  *
- * Default conflict resolution policy (SD6): installed-wins.
+ * Default conflict resolution policy: installed-wins.
  * Dev overrides allow a developer to prefer the local source version.
  */
 export interface DevOverrideState {
@@ -181,7 +181,7 @@ export interface ExtensionLifecycleEvent {
  * Updated when an installed extension is enabled.  Contains the information
  * required to reproduce the extension state for team/project consistency.
  *
- * This is project metadata, not extension-owned data (SD2).
+ * This is project metadata, not extension-owned data.
  */
 export interface ExtensionLockEntry {
   /** The extension identifier. */

@@ -1,5 +1,5 @@
 /**
- * Extension local-to-installed migration flow (M14, T24).
+ * Extension local-to-installed migration flow.
  *
  * Provides a structured migration path for converting a workspace-source
  * (local) extension into an installed-bundle extension while preserving:

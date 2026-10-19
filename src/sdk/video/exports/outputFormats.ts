@@ -3,9 +3,8 @@
  *
  * Contains compile-only output format handler, context, result, and
  * ExportService contracts consumed by extension code at runtime.
- * These were extracted from src/sdk/video/assets/metadata.ts in M2b
- * to separate the export-service runtime surface from asset metadata
- * descriptor/value contracts.
+ * Kept apart from asset metadata so the export-service runtime surface stays
+ * distinct from asset descriptor and value contracts.
  *
  * All contracts are data-only types and read-only surfaces; no
  * registry, provider, resolver, upload, or storage behaviour lives here.

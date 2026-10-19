@@ -7,7 +7,7 @@
  * host schema capability registry; unsupported types render as
  * diagnostic placeholders and publish via `onDiagnostics`.
  *
- * This is the canonical parameter form for M2+.  `ParameterControls`
+ * This is the canonical parameter form.  `ParameterControls`
  * is a thin adapter wrapper over this component.
  *
  * @module SchemaForm

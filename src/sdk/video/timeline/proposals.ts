@@ -3,7 +3,7 @@
  *
  * Contains the core proposal types (ProposalState, TimelineProposal,
  * ProposalRuntime, panel contracts, envelope, and import types).
- * These are M3 data contracts consumed by the host proposal UI and
+ * These are data contracts consumed by the host proposal UI and
  * edge-function proposal envelopes.
  *
  * @publicContract
@@ -14,7 +14,7 @@ import type { TimelineProposalInput } from './reader';
 import type { DisposeHandle } from '../../dispose';
 
 // ---------------------------------------------------------------------------
-// M3: TimelineProposal
+// TimelineProposal
 // ---------------------------------------------------------------------------
 
 /** Lifecycle state of a proposal. */
@@ -97,15 +97,15 @@ export interface TimelineProposal {
 export type ProposalListener = (proposal: TimelineProposal) => void;
 
 // ---------------------------------------------------------------------------
-// M3: ProposalRuntime
+// ProposalRuntime
 // ---------------------------------------------------------------------------
 
 /**
  * Provider-scoped proposal runtime.
  *
  * Manages the lifecycle of TimelineProposals: creation, preview, acceptance,
- * rejection, and stale detection. Proposals are in-memory and provider-scoped
- * for M3; page refresh drops unaccepted proposals.
+ * rejection, and stale detection. Proposals are in-memory, provider-scoped; page
+ * refresh drops unaccepted proposals.
  */
 export interface ProposalRuntime {
   /**
@@ -172,7 +172,7 @@ export interface ProposalRuntime {
 }
 
 // ---------------------------------------------------------------------------
-// M3: Host-owned proposal UI contract (surface shape only)
+// Host-owned proposal UI contract (surface shape only)
 // ---------------------------------------------------------------------------
 
 /**
@@ -232,7 +232,7 @@ export interface ProposalEnvelope {
 }
 
 // ---------------------------------------------------------------------------
-// M1: Proposal import contracts
+// Proposal import contracts
 // ---------------------------------------------------------------------------
 
 /** Status of an individual proposal within an import batch. */

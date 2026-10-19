@@ -1,5 +1,5 @@
 /**
- * M10 T21: Tests for CommandPalette component.
+ * Tests for CommandPalette component.
  *
  * Covers:
  *  - Command discovery from commandRegistry
@@ -14,7 +14,6 @@
  *  - Accessible structure
  *
  * @module CommandPalette.test
- * @milestone M10
  */
 
 import { describe, expect, it, vi, beforeEach, afterEach, beforeAll } from 'vitest';

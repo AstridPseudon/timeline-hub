@@ -1,5 +1,5 @@
 /**
- * Tests for ExtensionLoader (T11/T12).
+ * Tests for ExtensionLoader.
  *
  * Covers:
  *  - Factory creation and repository attachment.
@@ -13,7 +13,7 @@
  *  - unload() emits unload lifecycle events.
  *  - Per-pack failure isolation throughout the pipeline.
  *  - No global state ownership.
- *  - T12: Dependency resolution:
+ *  - Dependency resolution:
  *    - Satisfied dependencies.
  *    - Missing required dependencies → blocked.
  *    - Optional degraded activation.
@@ -1722,7 +1722,7 @@ describe('resolveDependencies — edge cases', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T13: Conflict resolution — tested through ExtensionLoader.load()
+// Conflict resolution — tested through ExtensionLoader.load()
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLoader.load — conflict resolution (installed-wins default)', () => {
@@ -2621,7 +2621,7 @@ describe('ExtensionLoader.load — conflict resolution with frozen results', () 
 });
 
 // ---------------------------------------------------------------------------
-// Package state and metadata preservation (M5 T1)
+// Package state and metadata preservation
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLoader.load — package state classification', () => {

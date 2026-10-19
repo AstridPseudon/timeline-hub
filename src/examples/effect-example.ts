@@ -1,5 +1,5 @@
 /**
- * effect-example — M7 trusted component effect contribution example.
+ * effect-example — trusted component effect contribution example.
  *
  * Demonstrates:
  *   1. An `EffectContribution` declared in the extension manifest.

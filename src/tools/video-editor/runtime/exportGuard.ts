@@ -680,11 +680,11 @@ function scanCompositionGraphTargetExportBlockers(
 }
 
 // ---------------------------------------------------------------------------
-// M5 (Effect / Transition) composition graph diagnostics → export blockers
+// Effect / transition composition graph diagnostics → export blockers
 // ---------------------------------------------------------------------------
 
 /**
- * Map an M5 composition diagnostic code to a canonical export diagnostic code.
+ * Map a composition diagnostic code to a canonical export diagnostic code.
  */
 function m5CompositionExportCode(code: string): ExportDiagnostic['code'] | undefined {
   if (isEffectDiagnosticCode(code)) {
@@ -697,11 +697,11 @@ function m5CompositionExportCode(code: string): ExportDiagnostic['code'] | undef
 }
 
 /**
- * Scan composition graph diagnostics for blocking M5 (effect / transition)
+ * Scan composition graph diagnostics for blocking effect / transition
  * diagnostic codes and funnel them into export diagnostics, findings, and
  * blockers.
  *
- * Non-blocking M5 codes (warnings) are also surfaced as findings but do NOT
+ * Non-blocking codes (warnings) are also surfaced as findings but do NOT
  * produce blockers — they are informational only and do not prevent export.
  */
 function scanCompositionGraphM5ExportBlockers(
@@ -1508,7 +1508,7 @@ function pushEffectFindingAndBlocker(
 }
 
 // ---------------------------------------------------------------------------
-// Transition scan helpers (T15)
+// Transition scan helpers
 // ---------------------------------------------------------------------------
 
 /** Routes that the export guard checks independently for each registered transition. */

@@ -7,7 +7,7 @@
  * and generation session contract; execution is host-mediated via
  * proposal-backed tool invocation.
  *
- * **Governance note (M2b):**  No dedicated `AgentContribution` interface
+ * **Governance note:**  No dedicated `AgentContribution` interface
  * exists yet in the SDK public surface.  This module is created as the
  * canonical home for the agent family so that `agent.sdkModules` in
  * `familyDefinitions.ts` and `family-maturity.json` points to an existing

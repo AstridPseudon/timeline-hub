@@ -824,14 +824,14 @@ describe('normalizeExtensionRuntime — inactive reserved contributions', () => 
 
   it('includes milestones in inactive reserved entries', () => {
     const rt = normalizeExtensionRuntime([withReserved]);
-    // effect is M7-active (component-backed) — verify it's not in inactiveReserved
+    // effect is component-backed — verify it's not in inactiveReserved
     const effect = rt.inactiveReserved.find((r) => r.kind === 'effect');
     expect(effect).toBeUndefined();
     // effect is now projected as a descriptor in config.effects
     expect(rt.config.effects).toHaveLength(1);
     expect(rt.config.effects[0].id).toBe('my-effect');
     expect(rt.config.effects[0].effectId).toBe('glow');
-    // transition is M8-active (renderer-backed) — verify it's not in inactiveReserved
+    // transition is renderer-backed — verify it's not in inactiveReserved
     const transition = rt.inactiveReserved.find((r) => r.kind === 'transition');
     expect(transition).toBeUndefined();
     // transition is now projected as a descriptor in config.transitions
@@ -1058,7 +1058,7 @@ describe('normalizeExtensionRuntime — mixed bridged and reserved', () => {
 
   it('separates bridged from reserved contributions', () => {
     const rt = normalizeExtensionRuntime([mixed]);
-    // Bridged: active-btn, active-dlg, future-fx (effect is M7-active)
+    // Bridged: active-btn, active-dlg, future-fx (effect is component-backed)
     expect(rt.config.slots).toHaveProperty('toolbar');
     expect(rt.config.dialogHost.dialogs).toHaveLength(1);
     // future-fx is now active (component-backed effect) — projected as descriptor
@@ -1076,7 +1076,7 @@ describe('normalizeExtensionRuntime — mixed bridged and reserved', () => {
 
   it('includes both bridged and reserved diagnostics', () => {
     const rt = normalizeExtensionRuntime([mixed]);
-    // future-fx is M7-active (component-backed) — no reserved diagnostics
+    // future-fx is component-backed — no reserved diagnostics
     const reserved = diagsOf(rt, 'runtime/contribution-kind-not-yet-bridged');
     expect(reserved).toHaveLength(0);
     // Verify effect appears in config.effects instead
@@ -1252,7 +1252,7 @@ describe('normalizeExtensionRuntime — timelineOverlay', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: Parser contributions (bridged, M6-active)
+// Parser contributions (bridged)
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — M6 parser contributions', () => {
@@ -1354,7 +1354,7 @@ describe('normalizeExtensionRuntime — M6 parser contributions', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: Metadata facet contributions (bridged, M6-active)
+// Metadata facet contributions (bridged)
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — M6 metadata facet contributions', () => {
@@ -1417,7 +1417,7 @@ describe('normalizeExtensionRuntime — M6 metadata facet contributions', () => 
 });
 
 // ---------------------------------------------------------------------------
-// M6: Asset detail section contributions (bridged, M6-active)
+// Asset detail section contributions (bridged)
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — M6 asset detail section contributions', () => {
@@ -1478,7 +1478,7 @@ describe('normalizeExtensionRuntime — M6 asset detail section contributions', 
 });
 
 // ---------------------------------------------------------------------------
-// M6/M12: OutputFormat contributions (reserved, surfaced for planning)
+// OutputFormat contributions (reserved, surfaced for planning)
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — M6 output format contributions', () => {
@@ -1785,7 +1785,7 @@ describe('normalizeExtensionRuntime — M6 output format contributions', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M12: Process contributions (reserved, surfaced as planner-ready descriptors)
+// Process contributions (reserved, surfaced as planner-ready descriptors)
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — M12 process contributions', () => {
@@ -1907,7 +1907,7 @@ describe('normalizeExtensionRuntime — M12 process contributions', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: Search provider contributions (reserved, surfaced as declaration-only)
+// Search provider contributions (reserved, surfaced as declaration-only)
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — M6 search provider contributions', () => {
@@ -2025,7 +2025,7 @@ describe('normalizeExtensionRuntime — M6 search provider contributions', () =>
 });
 
 // ---------------------------------------------------------------------------
-// M6: All contributions — extension-order-respecting ordering
+// All contributions — extension-order-respecting ordering
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — M6 extension-order ordering', () => {
@@ -2115,7 +2115,7 @@ describe('normalizeExtensionRuntime — M6 extension-order ordering', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: DEFAULT config field consistency
+// DEFAULT config field consistency
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — M6 DEFAULT config fields', () => {
@@ -2156,7 +2156,7 @@ describe('normalizeExtensionRuntime — M6 DEFAULT config fields', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M13: Shader contributions
+// Shader contributions
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — M13 shader contributions', () => {
@@ -2270,7 +2270,7 @@ describe('normalizeExtensionRuntime — M13 shader contributions', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: Combined M6 contributions across multiple extensions
+// Combined contributions across multiple extensions
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — M6 combined contributions', () => {
@@ -2295,7 +2295,7 @@ describe('normalizeExtensionRuntime — M6 combined contributions', () => {
     });
     const rt = normalizeExtensionRuntime([extA, extB]);
 
-    // Bridged M6 contributions (extA first)
+    // Bridged contributions (extA first)
     expect(rt.config.assetParsers).toHaveLength(1);
     expect(rt.config.assetParsers[0].id).toBe('a-parser');
     expect(rt.config.metadataFacets).toHaveLength(1);
@@ -2303,7 +2303,7 @@ describe('normalizeExtensionRuntime — M6 combined contributions', () => {
     expect(rt.config.assetDetailSections).toHaveLength(1);
     expect(rt.config.assetDetailSections[0].id).toBe('a-section');
 
-    // Reserved M6 contributions (extB)
+    // Reserved contributions (extB)
     expect(rt.config.outputFormats).toHaveLength(2);
     expect(rt.config.outputFormats[0].id).toBe('b-output');
     expect(rt.config.outputFormats[0].disabled).toBe(false);
@@ -2323,7 +2323,7 @@ describe('normalizeExtensionRuntime — M6 combined contributions', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M5: PackageContributionSummary helpers
+// PackageContributionSummary helpers
 // ---------------------------------------------------------------------------
 
 import {
@@ -2424,7 +2424,7 @@ describe('computePackageContributionSummary', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M5: PackageContributionSummary in normalizeExtensionRuntime
+// PackageContributionSummary in normalizeExtensionRuntime
 // ---------------------------------------------------------------------------
 
 describe('normalizeExtensionRuntime — package contribution summaries', () => {
@@ -3320,15 +3320,15 @@ describe('normalizeExtensionRuntime — mixed all-families', () => {
           { id: 'all-panel' as any, kind: 'panel', order: 10 },
           { id: 'all-inspector' as any, kind: 'inspectorSection', placement: 'before-default' as const, order: 3 },
           { id: 'all-overlay' as any, kind: 'timelineOverlay', order: 7, render: 'render/all-overlay' },
-          // Bridged M6 runtime-bridged
+          // Bridged runtime-bridged
           { id: 'all-parser' as any, kind: 'parser', label: 'All Parser', order: 0 },
           { id: 'all-metadataFacet' as any, kind: 'metadataFacet', fieldPath: 'test.field', displayName: 'Test Field', valueKind: 'string' as const, order: 0 },
           { id: 'all-assetDetailSection' as any, kind: 'assetDetailSection', title: 'All Detail', placement: 'after-default' as const, order: 0 },
-          // Bridged M7/M8/M13 runtime-bridged with metadata
+          // Bridged runtime-bridged with metadata
           { id: 'all-effect' as any, kind: 'effect', effectId: 'all.glow', order: 2 },
           { id: 'all-transition' as any, kind: 'transition', transitionId: 'all.dissolve', order: 2 },
           { id: 'all-shader' as any, kind: 'shader', shaderId: 'shader.all', pass: 'postprocess' as const, order: 2 },
-          // Bridged M10 runtime-bridged
+          // Bridged runtime-bridged
           { id: 'all-agentTool' as any, kind: 'agentTool', toolId: 'all.tool', label: 'All Tool', order: 2 },
           // Reserved delegated
           { id: 'all-outputFormat' as any, kind: 'outputFormat', label: 'All Output', requiresRender: false, outputExtension: 'json', order: 100 },
@@ -3353,7 +3353,7 @@ describe('normalizeExtensionRuntime — mixed all-families', () => {
     expect(rt.config.overlays[0].extensionId).toBe('com.example.all-families');
     expect(rt.config.overlays[0].renderId).toBe('render/all-overlay');
 
-    // M6 bridged
+    // bridged
     expect(rt.config.assetParsers).toHaveLength(1);
     expect(rt.config.assetParsers[0].id).toBe('all-parser');
     expect(rt.config.metadataFacets).toHaveLength(1);
@@ -3361,7 +3361,7 @@ describe('normalizeExtensionRuntime — mixed all-families', () => {
     expect(rt.config.assetDetailSections).toHaveLength(1);
     expect(rt.config.assetDetailSections[0].id).toBe('all-assetDetailSection');
 
-    // M7/M8/M13 bridged with metadata
+    // Bridged with metadata
     expect(rt.config.effects).toHaveLength(1);
     expect(rt.config.effects[0].id).toBe('all-effect');
     expect(rt.config.transitions).toHaveLength(1);
@@ -3369,7 +3369,7 @@ describe('normalizeExtensionRuntime — mixed all-families', () => {
     expect(rt.config.shaders).toHaveLength(1);
     expect(rt.config.shaders[0].id).toBe('all-shader');
 
-    // M10 bridged
+    // bridged
     expect(rt.config.agentTools).toHaveLength(1);
     expect(rt.config.agentTools[0].id).toBe('all-agentTool');
 
@@ -3495,7 +3495,7 @@ describe('normalizeExtensionRuntime — mixed all-families', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T11: Mixed contribution parity — coordinator vs inline path
+// Mixed contribution parity — coordinator vs inline path
 // ---------------------------------------------------------------------------
 
 describe('assembleExtensionRuntime — mixed contribution parity (coordinator vs inline)', () => {
@@ -3505,7 +3505,7 @@ describe('assembleExtensionRuntime — mixed contribution parity (coordinator vs
    * path for mixed contribution sets that include metadataFacet + other
    * families.
    *
-   * The implementation path changed in T11 (metadataFacet now goes
+   * The implementation path changed (metadataFacet now goes
    * through findAdapter when a registry is present), but the output
    * must be byte-for-byte identical for all family kinds.
    */

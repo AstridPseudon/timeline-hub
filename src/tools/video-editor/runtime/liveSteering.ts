@@ -1,9 +1,9 @@
 /**
- * M11 live steering resolver.
+ * Live steering resolver.
  *
  * The resolver is pure: it classifies a proposed GenerationSession
  * reconfiguration into an explicit supersede, fork, or reject decision and
- * returns the activation diagnostics Step 15 must honor before sample delivery.
+ * returns the activation diagnostics must honor before sample delivery.
  */
 
 import type {

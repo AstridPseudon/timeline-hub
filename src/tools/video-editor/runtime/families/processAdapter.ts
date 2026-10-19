@@ -2,8 +2,7 @@
  * Process adapter — real runtime-bridged HostFamilyAdapter.
  *
  * Owns normalization, lifecycle, diagnostics, and conformance reporting
- * for process contributions.  Replaces the delegated M12 placeholder
- * previously registered for this family.
+ * for process contributions.  It replaces the delegated placeholder registered for this family.
  *
  * @module families/processAdapter
  */

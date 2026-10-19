@@ -166,7 +166,7 @@ export function ClipPanelBody({
   const supportsInlineTextEdit = overlayBehavior.supportsInlineTextEdit;
   // Position fallbacks come from the clip-type descriptor — the same canonical
   // box the renderer draws and the gizmo shows for a position-less clip. The
-  // panel used to invent its own (0,0,compW,compH) fallback and disagreed with
+  // panel must not invent its own (0,0,compW,compH) fallback, which would disagree with
   // both other surfaces for text clips.
   const defaultBox = getDefaultBoxForClipType(clip?.clipType, compositionWidth, compositionHeight);
   const commandContext = useMemo(() => (
@@ -190,7 +190,7 @@ export function ClipPanelBody({
   // Touch keeps the header's delete and close at the 44px minimum.
   const headerButtonSize = deviceClass === 'desktop' ? 'h-8 w-8' : 'h-11 w-11';
 
-  // M9 T9: Extension-provided clip inspector section
+  // Extension-provided clip inspector section
   const clipTypeRegistryContext = useOptionalClipTypeRegistryContext();
   const clipTypeRegistryRecord: ClipTypeRegistryRecord | undefined = useMemo(() => {
     if (!clip?.clipType || !clipTypeRegistryContext) return undefined;
@@ -528,7 +528,7 @@ export function ClipPanelBody({
         </fieldset>
       </Tabs>
 
-      {/* M9 T9: Extension-provided clip inspector section after host controls */}
+      {/* Extension-provided clip inspector section after host controls */}
       {clipTypeRegistryRecord?.inspector && (
         <ClipExtensionInspectorSection
           clip={clip}

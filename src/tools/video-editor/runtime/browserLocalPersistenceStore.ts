@@ -1,5 +1,5 @@
 /**
- * Browser-local FullSnapshotStore implementation (T7).
+ * Browser-local FullSnapshotStore implementation.
  *
  * Persists the complete snapshot atomically in IndexedDB and keeps the
  * compact non-proposal fields mirrored in localStorage for v1 compatibility:
@@ -547,7 +547,7 @@ export class BrowserLocalFullSnapshotStore implements FullSnapshotStore {
  * Create a browser-local {@link ExtensionPersistenceService} for the given
  * scope.
  *
- * This is the **single factory entry point** per SD1.  It wires a
+ * This is the **single factory entry point**.  It wires a
  * {@link BrowserLocalFullSnapshotStore} into the shared cache-backed
  * persistence service so callers get the full
  * {@link ExtensionPersistenceService} contract including proposals.

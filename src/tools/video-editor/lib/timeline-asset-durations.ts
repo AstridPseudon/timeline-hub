@@ -10,7 +10,7 @@ export const DEFAULT_VISIBLE_CLIP_SPAN_SECONDS = 5;
 export const EXTERNAL_DROP_VISIBLE_VIDEO_FALLBACK_SECONDS = DEFAULT_VISIBLE_CLIP_SPAN_SECONDS;
 
 /**
- * Sprint 2 keeps registry asset duration separate from visible clip span:
+ * The registry keeps asset duration separate from visible clip span:
  * duplicate-generation style callers preserve the source asset duration on the
  * new registry entry, while external-drop retains its existing five-second
  * visible fallback when media length stays unresolved.

@@ -1103,7 +1103,7 @@ describe('createTimelineReader — edge cases', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Representative timeline snapshots (T9)
+// Representative timeline snapshots
 // ---------------------------------------------------------------------------
 
 describe('createTimelineReader — representative timeline snapshots', () => {
@@ -1342,7 +1342,7 @@ describe('createTimelineReader — representative timeline snapshots', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Provider configVersion behavior (T9)
+// Provider configVersion behavior
 // ---------------------------------------------------------------------------
 
 describe('createTimelineReader — provider configVersion behavior', () => {
@@ -1413,7 +1413,7 @@ describe('createTimelineReader — provider configVersion behavior', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Version-based stale proposal invalidation (T9)
+// Version-based stale proposal invalidation
 // ---------------------------------------------------------------------------
 
 describe('createTimelineReader — version-based stale proposal invalidation', () => {

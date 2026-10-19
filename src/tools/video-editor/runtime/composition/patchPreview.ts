@@ -5,7 +5,7 @@
  * This module provides host-owned preview logic that clones a composition
  * graph input, applies internal patch operations, re-projects the graph,
  * and returns a {@link CompositionGraphPreviewResult}.  No public SDK
- * timeline patch families are added for M1b.
+ * timeline patch families are added.
  *
  * @module composition/patchPreview
  * @hostOwned — NOT exported through public SDK contracts.

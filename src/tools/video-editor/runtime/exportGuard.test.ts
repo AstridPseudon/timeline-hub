@@ -380,7 +380,7 @@ describe('collectExtensionDeclaredIds', () => {
   });
 
   it('ignores bridged contribution kinds (slot, dialog, panel, inspectorSection)', () => {
-    // M1-bridged kinds are skipped — they are active, not inactive
+    // Bridged kinds are skipped — they are active, not inactive
     const contributions: ExtensionContribution[] = [
       { id: 'c1' as any, kind: 'slot', slot: 'toolbar' },
       { id: 'c2' as any, kind: 'dialog' },
@@ -2403,7 +2403,7 @@ describe('scanExportConfig — composition graph target diagnostics', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M5 (Effect / Transition) composition graph diagnostics
+// (Effect / Transition) composition graph diagnostics
 // ---------------------------------------------------------------------------
 
 describe('scanExportConfig — composition graph M5 diagnostics', () => {

@@ -1,13 +1,12 @@
 /**
- * M10: Agent tool invocation adapters.
+ * Agent tool invocation adapters.
  *
  * Defines execution boundaries for browser (local), worker-safe, edge-action,
- * and pre-M12 process invocation. Every adapter uses the shared
+ * and process invocation. Every adapter uses the shared
  * `AgentToolInvocationRequest` / `ToolResult` contract with explicit
  * serializable context slices — never raw provider internals.
  *
  * @module agentToolInvocationAdapters
- * @milestone M10
  */
 
 import type {
@@ -25,19 +24,19 @@ import type { AgentToolRegistry } from '@/tools/video-editor/runtime/agentToolRe
 import type { AgentToolInvocationService } from '@/tools/video-editor/runtime/agentToolInvocationService';
 
 // ---------------------------------------------------------------------------
-// Structured process invocation pending diagnostic (pre-M12 stub)
+// Structured process invocation pending diagnostic
 // ---------------------------------------------------------------------------
 
-/** Stable diagnostic code for pre-M12 process invocation. */
+/** Stable diagnostic code for process invocation. */
 export const PROCESS_INVOCATION_PENDING_CODE = 'agent-tool/process-not-available' as const;
 
-/** Stable diagnostic message for pre-M12 process invocation. */
+/** Stable diagnostic message for process invocation. */
 export const PROCESS_INVOCATION_PENDING_MESSAGE = 'Process invocation is not available until M12.';
 
 /**
  * Create a structured `ToolResultDiagnostic` for a pending process invocation.
  *
- * This diagnostic is always returned by {@link invokeProcess} before M12.
+ * This diagnostic is always returned by {@link invokeProcess} for now.
  * It carries sufficient metadata for UI surface and diagnostic collection
  * without exposing any raw provider internals.
  */
@@ -55,7 +54,7 @@ export function createProcessInvocationPendingDiagnostic(
  * Create a `ToolProcessResult` with a structured pending diagnostic.
  *
  * This is the canonical return value for {@link AgentToolRegistrationService.invokeProcess}
- * before M12 process execution plumbing is available.
+ * until process execution plumbing is available.
  */
 export function createProcessInvocationResult(toolId: string): ToolProcessResult {
   return {
@@ -192,14 +191,14 @@ export function createLocalInvocationAdapter(
  * Adapter for worker-safe tool invocation.
  *
  * Provides both the invocation boundary and serialization helper.
- * For M10, dispatch is delegated to the local registry; true worker
- * plumbing (postMessage + structured clone) is deferred to M12.
+ * Dispatch is delegated to the local registry; true worker
+ * plumbing (postMessage + structured clone) is deferred.
  */
 export interface WorkerInvocationAdapter {
   /**
    * Invoke a tool through the worker boundary.
    *
-   * In M10 this delegates to the local registry. In M12 this will
+   * This delegates to the local registry. The worker path will
    * post the serialized request to a worker and await the result.
    */
   invokeTool(request: AgentToolInvocationRequest): Promise<ToolResult | null>;
@@ -229,7 +228,7 @@ export function createWorkerInvocationAdapter(
 ): WorkerInvocationAdapter {
   return {
     async invokeTool(request: AgentToolInvocationRequest): Promise<ToolResult | null> {
-      // M10: delegate to local registry. M12: postMessage + await.
+      // delegate to local registry. Worker path: postMessage + await.
       if (invocationService) {
         return invocationService.invokeTool(request);
       }
@@ -249,15 +248,15 @@ export function createWorkerInvocationAdapter(
  * Adapter for edge-action tool invocation.
  *
  * Provides both the invocation boundary and serialization helper.
- * For M10, dispatch is delegated to the local registry; remote edge
- * invocation is deferred to M12.
+ * Dispatch is delegated to the local registry; remote edge
+ * invocation is deferred.
  */
 export interface EdgeInvocationAdapter {
   /**
    * Invoke a tool through the edge boundary.
    *
-   * In M10 this delegates to the local registry. In M12 this will
-   * POST the serialized request to an edge function and await the result.
+   * This delegates to the local registry. The edge path will
+   * post the serialized request to an edge function and await the result.
    */
   invokeTool(request: AgentToolInvocationRequest): Promise<ToolResult | null>;
 
@@ -286,7 +285,7 @@ export function createEdgeInvocationAdapter(
 ): EdgeInvocationAdapter {
   return {
     async invokeTool(request: AgentToolInvocationRequest): Promise<ToolResult | null> {
-      // M10: delegate to local registry. M12: fetch to edge function.
+      // delegate to local registry. Edge path: fetch to edge function.
       if (invocationService) {
         return invocationService.invokeTool(request);
       }
@@ -299,27 +298,27 @@ export function createEdgeInvocationAdapter(
 }
 
 // ---------------------------------------------------------------------------
-// Pre-M12 process invocation adapter
+// Process invocation adapter
 // ---------------------------------------------------------------------------
 
 /**
- * Adapter for process-backed tool invocation (pre-M12 stub).
+ * Adapter for process-backed tool invocation.
  *
  * Always returns a `ToolProcessResult` with a structured pending diagnostic.
- * Real process spawning (child_process, stdio-jsonrpc) is deferred to M12.
+ * Real process spawning (child_process, stdio-jsonrpc) is deferred.
  */
 export interface ProcessInvocationAdapter {
   /**
    * Invoke a process-backed tool.
    *
-   * Before M12, always returns a pending diagnostic. The `config` parameter
+   * Always returns a pending diagnostic. The `config` parameter
    * is accepted for forward-compatibility but not executed.
    */
   invokeProcess(toolId: string, config: ProcessSpawnConfig): Promise<ToolProcessResult>;
 }
 
 /**
- * Create a pre-M12 process invocation adapter.
+ * Create a process invocation adapter.
  *
  * The returned adapter always responds with a structured
  * `processInvocationPending` diagnostic — it never spawns a real process.
@@ -338,7 +337,7 @@ export function createProcessInvocationAdapter(): ProcessInvocationAdapter {
 
 /**
  * Create a per-extension `AgentToolRegistrationService` that composes
- * registry-backed handler registration and the pre-M12 process stub.
+ * registry-backed handler registration and the process stub.
  *
  * This factory is the intended way for provider contexts to construct
  * the `agentTools` object passed to {@link createExtensionContext}.

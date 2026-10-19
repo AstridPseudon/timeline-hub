@@ -133,7 +133,7 @@ export const lookupEffect = (
  *
  * Records with `status: 'inactive'` are skipped so deactivated extensions
  * don't leak stale effects into the render tree. Records with `status:
- * 'error'` are still returned because T5 intentionally preserves
+ * 'error'` are still returned because render-time coercion intentionally preserves
  * render-time parameter coercion for already-applied legacy data.
  */
 export function resolveSnapshotEffect(

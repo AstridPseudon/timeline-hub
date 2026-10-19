@@ -180,7 +180,7 @@ function isVideoEditorInternal(relativePath: string, specifier: string): boolean
 }
 
 // ---------------------------------------------------------------------------
-// SDK surface extraction
+// SDK surface exports
 // ---------------------------------------------------------------------------
 
 /** Regex matching `export (type|interface|class|function|const|let|var) Name`. */
@@ -253,8 +253,8 @@ function extractSdkImports(filePath: string): Set<string> {
 // ---------------------------------------------------------------------------
 
 /**
- * Milestone → export-name-pattern mapping used to connect matrix row IDs
- * (e.g. M6-007, M11-001) to the SDK export names those features surface.
+ * Feature-group → export-name-pattern mapping used to connect matrix row IDs
+ * to the SDK export names those features surface.
  *
  * Each entry maps a milestone prefix to a regex that matches the export
  * names belonging to features in that milestone.  The contract-recheck
@@ -263,31 +263,31 @@ function extractSdkImports(filePath: string): Set<string> {
  * every export matching that milestone's pattern is exempt from the
  * example-coverage requirement.
  *
- * Milestones that are entirely deferred (M10–M14) have broad patterns.
- * Milestones that are partially supported (M6–M9) have narrower patterns
+ * Feature groups that are entirely deferred have broad patterns.
+ * Feature groups that are partially supported have narrower patterns
  * that only match the deferred subsets.
  */
 const MILESTONE_EXPORT_PATTERNS: [RegExp, string][] = [
-  // M6 deferred exports (Asset detail sections, search providers, facets,
+  // deferred exports (Asset detail sections, search providers, facets,
   // enrichment status, export service, material read surface, diagnostics,
   // compile-only output contracts)
   [
     /^(AssetDetailSection(Contribution|Descriptor)|AssetGPSMetadata|AssetIntegrityMetadata|AssetConsentMetadata|AssetProvenanceMetadata|AssetReadSurface|CompileOnlyOutput(FormatContribution|Result)|Diagnostic(Collection|SourceRange)?$|EnrichmentStatus|ExportService|MaterialReadSurface|MetadataFacet(Contribution|Descriptor|ValueKind)|OutputFormatRegistrationOptions|SearchMatch|SearchProvider(Contribution|Context|Handler|Result)|createDiagnosticCollection)$/,
     'M6',
   ],
-  // M7 deferred test-coverage exports (effect registry types)
+  // deferred test-coverage exports (effect registry types)
   [/^(Effect(Component|Contribution|ParameterDefinition|ParameterSchema|RegistrationOptions|RegistrationService))$/, 'M7'],
-  // M8 deferred test-coverage exports (transition registry types)
+  // deferred test-coverage exports (transition registry types)
   [/^(Transition(Contribution|ParameterDefinition|ParameterSchema|RegistrationOptions|RegistrationService|Renderer))$/, 'M8'],
-  // M10 deferred agent-tool exports (all agent tool / tool result types)
+  // deferred agent-tool exports (all agent tool / tool result types)
   [/^(AgentTool|Tool(Artifact|Enrichment|Export|Generation|Material|Mutation|Process|Result|Search|Source|UI))/, 'M10'],
-  // M11 deferred live-data-bridge exports
+  // deferred live-data-bridge exports
   [/^(Live|Steering|GenerationSession|Binding)/, 'M11'],
-  // M12 deferred render-planner exports
+  // deferred render-planner exports
   [/^(Process|Sampling|Capability|Route|Integration|RenderArtifact|RenderDependent|Timeline(Effect|Transition|Live|Material|Render|Source|Output|Shader)|getCapability)/, 'M12'],
-  // M13 deferred shader-frontend exports (all Shader* exports)
+  // deferred shader-frontend exports (all Shader* exports)
   [/^Shader/, 'M13'],
-  // M14 deferred extension-packaging exports
+  // deferred extension-packaging exports
   [/^(Dependency|Extension(Dependency|Settings)|Integrity(Algorithm|Hash)|Migration(Hook|Declaration)|InstalledExtension|ManifestValidation|validate(Manifest|Installed))/, 'M14'],
 ];
 
@@ -307,8 +307,8 @@ const MILESTONE_EXPORT_PATTERNS: [RegExp, string][] = [
  *
  * This uses the shared matrix helper predicates (isDeferred / isUnsupported)
  * so the classification is always consistent with the canonical matrix
- * semantics defined by SD1, plus the supported/deferred matrix rows which
- * provide explicit deferral classifications per SD2.
+ * semantics defined by the contract, plus the supported/deferred matrix rows which
+ * provide explicit deferral classifications.
  */
 function buildDeferredUnsupportedExportSet(
   sdkExports: Set<string>,
@@ -468,11 +468,11 @@ describe('Extension example import governance', () => {
     const INTERNAL_EXPORTS = new Set([
       'CONTEXT_DISPOSE_SYMBOL',    // Symbol key, not intended for direct consumer use
       'disposeExtensionContextServices', // Internal lifecycle, not consumer-facing
-      // Registry-derived family helpers (T6) — new infrastructure, examples pending
+      // Registry-derived family helpers — new infrastructure, examples pending
       'getVideoFamilyDefinition',
       'getVideoFamilyConformanceReport',
       'getVideoFamilyLegacyBridgeStatus',
-      // Material planner helpers are public, but example usage will land with M3a consumers.
+      // Material planner helpers are public, but example usage will land with consumers.
       'RENDER_MATERIAL_STATUSES',
       'RENDER_MATERIAL_STATUS_PHASES',
       'RENDER_MATERIAL_STATUS_QUALITIES',
@@ -485,7 +485,7 @@ describe('Extension example import governance', () => {
       'isLiveOnly',
       'isRouteIncompatible',
       'isWeakerProvenance',
-      // Provenance validation helpers (M3a T8) — public, examples pending
+      // Provenance validation helpers — public, examples pending
       'hasProvenance',
       'describeProvenanceGap',
       'ProvenanceGap',
@@ -493,7 +493,7 @@ describe('Extension example import governance', () => {
       // the registry-derived family helpers over milestone-oriented APIs.
       'CONTRIBUTION_KIND_MILESTONE',
       'contributionKindNotYetBridged',
-      // dataKind V1 — consumer examples land with M1
+      // dataKind V1 — consumer examples are pending
       'DataKindContribution',
       'DataShape',
       'DataCoordinateDomain',
@@ -519,7 +519,7 @@ describe('Extension example import governance', () => {
       if (DEFERRED_UNSUPPORTED_EXPORTS.has(exportName)) {
         it(`SKIP: ${exportName} is deferred/unsupported per contract-recheck matrix`, () => {
           // Deferred/unsupported exports are exempt from the example-coverage
-          // requirement per the shared matrix helper classification (SD1/SD2).
+          // requirement per the shared matrix helper classification.
         });
         continue;
       }
@@ -598,7 +598,7 @@ describe('Transcript panel SDK example contract', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M4 command extension example contract
+// command extension example contract
 // ---------------------------------------------------------------------------
 
 describe('M4 command extension example contract', () => {
@@ -677,7 +677,7 @@ describe('M4 command extension example contract', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M2 stage/overlay compatibility example contract
+// stage/overlay compatibility example contract
 // ---------------------------------------------------------------------------
 
 describe('M2 stage and overlay example contract', () => {
@@ -845,7 +845,7 @@ describe('M2 stage and overlay example contract', () => {
             kind: 'timelineOverlay',
             label: 'Placeholder Overlay',
             order: 100,
-            // No render id — the pre-T1.1 placeholder shape.
+            // No render id — the placeholder shape.
           },
         ],
       } as unknown as ExtensionManifest;
@@ -886,7 +886,7 @@ describe('M2 stage and overlay example contract', () => {
 
 
 // ---------------------------------------------------------------------------
-// M6 integrity hash parser example contract
+// integrity hash parser example contract
 // ---------------------------------------------------------------------------
 
 describe('M6 integrity hash parser example contract', () => {
@@ -1021,7 +1021,7 @@ describe('M6 integrity hash parser example contract', () => {
 
 
 // ---------------------------------------------------------------------------
-// M6 metadata-json output example contract
+// metadata-json output example contract
 // ---------------------------------------------------------------------------
 
 describe('M6 metadata-json output example contract', () => {
@@ -1457,7 +1457,7 @@ describe('M6 metadata-json output example contract', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M9 clip-type-keyframed example contract
+// clip-type-keyframed example contract
 // ---------------------------------------------------------------------------
 
 describe('M9 clip-type-keyframed example contract', () => {
@@ -1490,7 +1490,7 @@ describe('M9 clip-type-keyframed example contract', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M9 automation-recording canary example contract
+// automation-recording canary example contract
 // ---------------------------------------------------------------------------
 
 describe('M9 automation-recording canary example contract', () => {

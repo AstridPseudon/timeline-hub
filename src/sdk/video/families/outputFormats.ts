@@ -1,8 +1,7 @@
 /**
  * Output Format family module.
  *
- * Houses the manifest contribution interfaces extracted from the public
- * barrel (src/sdk/index.ts).  Runtime contracts (CompileOnlyOutputResult,
+ * Houses the manifest contribution interfaces.  Runtime contracts (CompileOnlyOutputResult,
  * OutputFormatHandler, OutputFormatContext, ExportService,
  * OutputFormatRegistrationOptions) stay in src/sdk/video/exports/outputFormats.ts
  * as portable runtime contracts.
@@ -42,7 +41,7 @@ void ({} as {
 });
 
 /**
- * M6: An output format contribution declared in an extension manifest.
+ * An output format contribution declared in an extension manifest.
  *
  * Output formats produce an artifact from timeline and asset data.
  * Compile-only formats (requiresRender: false) do not invoke the render
@@ -50,7 +49,7 @@ void ({} as {
  * artifact (e.g. metadata JSON).
  *
  * Render-dependent formats (requiresRender: true) are declaration-only
- * in M6 and appear disabled in the export UI with a diagnostic explaining
+ * and appear disabled in the export UI with a diagnostic explaining
  * that execution is unavailable until render planning activates the route.
  */
 export interface OutputFormatContribution {
@@ -62,7 +61,7 @@ export interface OutputFormatContribution {
   /**
    * When false, this is a compile-only format that does not invoke the
    * render pipeline.  When true, the format requires render planning and
-   * is surfaced as disabled/reserved in M6.
+   * is surfaced as disabled/reserved.
    */
   requiresRender: boolean;
   /** File extension for the output artifact (e.g. 'json', 'xml'). */
@@ -84,19 +83,19 @@ export interface OutputFormatContribution {
   sidecars?: readonly RenderArtifactSidecarDescriptor[];
 }
 
-/** M12: Compile-only output formats never enter render planning. */
+/** Compile-only output formats never enter render planning. */
 export interface CompileOnlyOutputFormatContribution extends OutputFormatContribution {
   requiresRender: false;
   render?: never;
 }
 
-/** M12: Render-dependent output formats require planner-owned route execution. */
+/** Render-dependent output formats require planner-owned route execution. */
 export interface RenderDependentOutputFormatContribution extends OutputFormatContribution {
   requiresRender: true;
   render: RenderDependentOutputDescriptor;
 }
 
-/** M12: Route/process requirements for a render-dependent output format. */
+/** Route/process requirements for a render-dependent output format. */
 export interface RenderDependentOutputDescriptor {
   /** Routes this output can accept after planning. */
   readonly routes: readonly RenderRoute[];

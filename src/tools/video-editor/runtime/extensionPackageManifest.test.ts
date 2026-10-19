@@ -214,7 +214,7 @@ describe('validateWorkspaceSourcePackage', () => {
         contributions: undefined,
       }),
     );
-    // Should be valid — M1 compat
+    // Should be valid (backward compatible)
     expect(result.valid).toBe(true);
     // Should have dev warnings about missing fields
     expect(result.warnings.length).toBeGreaterThan(0);

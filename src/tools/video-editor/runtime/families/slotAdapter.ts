@@ -1,7 +1,7 @@
 /**
  * Slot real compatibility adapter.
  *
- * Preserves M1 host-integrated slot behavior.  The adapter produces
+ * Preserves host-integrated slot behavior.  The adapter produces
  * slot-name → renderer placeholder entries; real render functions are
  * wired during extension activation.
  *

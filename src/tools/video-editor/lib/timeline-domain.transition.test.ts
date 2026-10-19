@@ -1,5 +1,5 @@
 /**
- * Integration tests for transition validation/repair in timeline-domain (T14).
+ * Integration tests for transition validation/repair in timeline-domain.
  *
  * Covers: legacy malformed transitions, removed contributed transitions,
  * no-transition repair behavior, and integration into canonicalize paths.

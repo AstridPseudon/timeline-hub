@@ -1,5 +1,5 @@
 /**
- * transition-example — M8 trusted component transition contribution example.
+ * transition-example — trusted component transition contribution example.
  *
  * Demonstrates:
  *   1. A `TransitionContribution` declared in the extension manifest.

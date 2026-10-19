@@ -15,7 +15,7 @@ import type { IntegrityHash, ExtensionDiagnostic } from '@astrid/editor-sdk';
 // Constants
 // ---------------------------------------------------------------------------
 
-/** The only supported integrity algorithm for M14. */
+/** The only supported integrity algorithm. */
 export const SUPPORTED_ALGORITHM = 'sha256' as const;
 
 // ---------------------------------------------------------------------------
@@ -256,7 +256,7 @@ export function missingIntegrityDiagnostic(extensionId?: string): ExtensionDiagn
 /**
  * Build a blocking diagnostic for an unsupported integrity algorithm.
  *
- * M14 only supports SHA-256; any other algorithm is rejected.
+ * Only SHA-256 is supported; any other algorithm is rejected.
  */
 export function unsupportedAlgorithmDiagnostic(
   algorithm: string,

@@ -396,7 +396,7 @@ function InnerProvider({
   playedCompositionRef.current = playedShotComposition(runtime.userId, runtime.shots);
   const readPlayedComposition = useCallback(() => playedCompositionRef.current, []);
 
-  // ── M3: Provider-backed proposal persistence bridge ─────────────────────
+  // ── Provider-backed proposal persistence bridge ─────────────────────
   // App-shell strategy: resolved synchronously on first render, without the
   // embed host's async initialize() gate.
   const proposalPersistenceRef = useRef<ProposalPersistenceProvider | null | undefined>(undefined);
@@ -854,13 +854,13 @@ export interface VideoEditorProviderProps {
   onSaveStatusChange?: (status: SaveStatus) => void;
   onPendingWorkChange?: (state: ExtensionPendingWorkState) => void;
   extensions?: readonly AstridExtension[];
-  /** Package-state inventory entries propagated from the loader (M5). */
+  /** Package-state inventory entries propagated from the loader. */
   packageStateEntries?: readonly import('@/tools/video-editor/runtime/extensionSurface').PackageStateInventoryEntry[];
-  /** M6b: Host-provided process manager override. When absent, a default
+  /** Host-provided process manager override. When absent, a default
    *  ProcessManager is created from the extension runtime's declared process
    *  specs. */
   processManager?: ProcessManager;
-  /** T22: Provider-owned timeline-overlay feature flag. Explicitly defaults
+  /** Provider-owned timeline-overlay feature flag. Explicitly defaults
    *  to false; hosts opt in by supplying `true`. */
   timelineOverlaysEnabled?: boolean;
   timelineEditability?: TimelineEditability;

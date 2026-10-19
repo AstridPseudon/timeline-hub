@@ -1,5 +1,5 @@
 /**
- * M9: KeyframeInspector — Host-owned keyframe inspector controls.
+ * KeyframeInspector — Host-owned keyframe inspector controls.
  *
  * Provides UI for adding/removing keyframes at the playhead, editing
  * keyframe values, choosing linear/hold interpolation, and showing the

@@ -12,7 +12,7 @@ import type { TimelineClip, TimelineConfig } from '@/tools/video-editor/types/in
  * Why: the composition converts each quantity to frames independently
  * (`round(at·fps)`, `round(duration·fps)`), so two clips that abut *exactly in
  * seconds* are frame-contiguous only when both sit on the grid. With the
- * arbitrary floats the edit paths used to persist — the drag path's 2-decimal
+ * arbitrary floats the edit paths persist — the drag path's 2-decimal
  * rounding (0.01 s is a non-multiple of every common frame duration), the
  * resize path's raw pixel-derived times, keyboard nudges accumulating binary
  * dust — the fractional parts straddle .5 about a quarter of the time:

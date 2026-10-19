@@ -1004,7 +1004,7 @@ describe('compositionGraphProjector', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M5: Effect / transition contribution lookup helpers
+  // Effect / transition contribution lookup helpers
   // -----------------------------------------------------------------------
 
   function effectSummary(
@@ -1294,7 +1294,7 @@ describe('compositionGraphProjector', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M5: Effect consumes edge projection
+  // Effect consumes edge projection
   // -----------------------------------------------------------------------
 
   it('projects consumes edges for clip effects targeting contribution nodes without public effect node kinds', () => {
@@ -1485,7 +1485,7 @@ describe('compositionGraphProjector', () => {
   });
 
   // -----------------------------------------------------------------------
-  // M5: Transition + mask-material consumes edge projection
+  // Transition + mask-material consumes edge projection
   // -----------------------------------------------------------------------
 
   it('projects transition consumes and mask-material consumes edges through the existing consumes kind', () => {

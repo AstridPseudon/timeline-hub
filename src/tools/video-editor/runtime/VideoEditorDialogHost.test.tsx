@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * T7.1 — dialog family host-consumer evidence.
+ * dialog family host-consumer evidence.
  *
  * Mounts the real `VideoEditorDialogHost` with real dialog descriptors and
  * proves the dialog host contract end to end:

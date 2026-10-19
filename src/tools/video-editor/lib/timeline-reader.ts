@@ -122,7 +122,7 @@ function computeClipDuration(meta: ClipMeta): number {
 /**
  * Determine whether a clip is managed by a registered extension.
  *
- * In M3 a clip is "managed" when its `app` record carries an
+ * A clip is "managed" when its `app` record carries an
  * extension namespace (e.g. `app?.managedBy`), or when a
  * `source_uuid` / `generation` provenance link exists.
  */

@@ -13,7 +13,7 @@ import type { TimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { INSTALLED_TIMELINE_THEMES } from '@/tools/video-editor/compositions/installed-themes.ts';
 
 /**
- * Read-only Theme chip (SD-018, SD-019). Renders:
+ * Read-only Theme chip. Renders:
  *
  *   - `Theme: <id>` when the timeline has a theme and the theme registry
  *     contains it.
@@ -23,8 +23,7 @@ import { INSTALLED_TIMELINE_THEMES } from '@/tools/video-editor/compositions/ins
  *
  * Click expands a JSON view of the resolved theme (overrides + base when
  * installed; raw `theme_overrides` only when not installed). NO picker, NO
- * edit form, NO theme switching — those are agent-via-chat surfaces only
- * (SD-018).
+ * edit form, NO theme switching — those are agent-via-chat surfaces only.
  *
  * The registry defaults to the editor's installed timeline themes — the same
  * set the render pipeline resolves against — so the chip reports exactly what

@@ -1,5 +1,5 @@
 /**
- * M2a Barrel-import smoke coverage.
+ * Barrel-import smoke coverage.
  *
  * Verifies that moved core names are importable BOTH from the public barrel
  * (`@/sdk/index`) and from canonical direct module paths.  Each module
@@ -8,7 +8,7 @@
  * The test is intentionally representative rather than exhaustive — it does
  * not attempt to duplicate the full API manifest (the API manifest gate
  * handles that).  It exists to catch import-resolution breakage across the
- * full breadth of moved M2a module families.
+ * full breadth of module families.
  *
  * @publicContract
  */
@@ -41,11 +41,11 @@ import {
   validateInstalledPackage,
   // settings
   createExtensionSettingsService,
-  // M1b CompositionGraph
+  // CompositionGraph
   COMPOSITION_NODE_KINDS,
   COMPOSITION_EDGE_KINDS,
   REFERENCE_STATES,
-  // M7a artifact profile kinds
+  // artifact profile kinds
   ARTIFACT_MANIFEST_PROFILE_KINDS,
   contributionRefKey,
 } from '@/sdk/index';
@@ -130,7 +130,7 @@ import type {
   ProcessLiveSourceBinding,
   ProcessContribution,
   ProcessSpawnConfig,
-  // M2b video families
+  // video families
   MetadataFacetContribution,
   AssetDetailSectionContribution,
   OutputFormatContribution,
@@ -140,21 +140,21 @@ import type {
   ExportService,
   CompileOnlyOutputResult,
   OutputFormatRegistrationOptions,
-  // M2b effect family
+  // effect family
   EffectContribution,
   EffectComponent,
   EffectParameterDefinition,
   EffectParameterSchema,
   EffectRegistrationOptions,
   EffectRegistrationService,
-  // M2b transition family
+  // transition family
   TransitionContribution,
   TransitionRenderer,
   TransitionParameterDefinition,
   TransitionParameterSchema,
   TransitionRegistrationOptions,
   TransitionRegistrationService,
-  // M2b clip-type family
+  // clip-type family
   ClipTypeContribution,
   ClipRenderer,
   ClipInspector,
@@ -162,24 +162,24 @@ import type {
   ClipParameterSchema,
   ClipTypeRegistrationOptions,
   ClipTypeRegistrationService,
-  // M2b automation/keyframe family
+  // automation/keyframe family
   KeyframeInterpolation,
   Keyframe,
   InterpolatedParam,
   AutomationClipTarget,
   AutomationClipParams,
-  // M2b shader family
+  // shader family
   ShaderContribution,
   ShaderRegistrationService,
-  // M2b searchProvider family
+  // searchProvider family
   SearchProviderContribution,
-  // M2b parser family
+  // parser family
   ParserContribution,
-  // M2b command/keybinding/contextMenu families
+  // command/keybinding/contextMenu families
   CommandContribution,
   KeybindingContribution,
   ContextMenuItemContribution,
-  // M11 live data infrastructure
+  // live data infrastructure
   LiveSourceKind,
   LiveSource,
   LiveChannelDescriptor,
@@ -191,12 +191,12 @@ import type {
   BindingResolutionStatus,
   LiveBinding,
   LiveSessionsService,
-  // M3 TimelineOps
+  // TimelineOps
   TimelineOps,
-  // M3 timeline proposal contracts
+  // timeline proposal contracts
   ProposalState,
   ProposalExpiryDetail,
-  // M3 timeline source-map contracts
+  // timeline source-map contracts
   SourceMapRuntime,
   SourceMapEntry,
   GeneratedObjectMeta,
@@ -209,7 +209,7 @@ import type {
   ProposalImportStatus,
   ProposalImportDiagnostic,
   ProposalImportResult,
-  // M1b CompositionGraph types
+  // CompositionGraph types
   CompositionNodeKind,
   CompositionEdgeKind,
   ReferenceState,
@@ -218,7 +218,7 @@ import type {
   CompositionReferenceStateEntry,
   CompositionGraphPreviewResult,
   CompositionGraph,
-  // M7a Output-format route planning types
+  // Output-format route planning types
   OutputFormatRef,
   ArtifactManifestProfile,
   ArtifactManifestProfileKind,
@@ -348,7 +348,7 @@ import type {
   ProcessLogSummary as ProcLogSum_Direct,
 } from '../capabilities';
 
-// M2b video family direct imports
+// video family direct imports
 import type { MetadataFacetContribution as MetadataFacetContribution_Direct } from '../video/families/metadataFacet';
 import type { AssetDetailSectionContribution as AssetDetailSectionContribution_Direct } from '../video/families/assetDetailSections';
 import type {
@@ -440,7 +440,7 @@ import type { CommandContribution as CommandContribution_Direct } from '../video
 import type { KeybindingContribution as KeybindingContribution_Direct } from '../video/families/keybindings';
 import type { ContextMenuItemContribution as ContextMenuItemContribution_Direct } from '../video/families/contextMenuItems';
 
-// M3 timeline proposal contracts (not a contribution family)
+// timeline proposal contracts (not a contribution family)
 import type {
   ProposalState as ProposalState_Direct,
   ProposalExpiryDetail as ProposalExpiryDetail_Direct,
@@ -455,17 +455,17 @@ import type {
   ProposalImportResult as ProposalImportResult_Direct,
 } from '../video/timeline/proposals';
 
-// M3 timeline source-map contracts (not a contribution family)
+// timeline source-map contracts (not a contribution family)
 import type {
   SourceMapRuntime as SourceMapRuntime_Direct,
   SourceMapEntry as SourceMapEntry_Direct,
   GeneratedObjectMeta as GeneratedObjectMeta_Direct,
 } from '../video/timeline/sourceMap';
 
-// M3 TimelineOps (not a contribution family)
+// TimelineOps (not a contribution family)
 import type { TimelineOps as TimelineOps_Direct } from '../video/timeline/timelineOps';
 
-// M11 live data infrastructure (not a contribution family)
+// live data infrastructure (not a contribution family)
 import type {
   LiveSourceKind as LiveSourceKind_Direct,
   LiveSource as LiveSource_Direct,
@@ -480,7 +480,7 @@ import type {
   LiveSessionsService as LiveSessionsService_Direct,
 } from '../video/liveData';
 
-// M1b CompositionGraph direct imports
+// CompositionGraph direct imports
 import {
   type CompositionNodeKind as CompNodeKind_Direct,
   type CompositionEdgeKind as CompEdgeKind_Direct,
@@ -603,7 +603,7 @@ describe('M2a barrel-import smoke — manifest / validation', () => {
     expect(ALL_VALID_PLACEMENTS_Direct).toBe(ALL_VALID_PLACEMENTS);
   });
 
-  // ── M2b direct import coverage: manifest/package contracts ──────────────
+  // ── direct import coverage: manifest/package contracts ──────────────
 
   it('ExtensionManifest is importable from the barrel', () => {
     const manifest: ExtensionManifest = {
@@ -981,7 +981,7 @@ describe('M2a barrel-import smoke — capabilities', () => {
   });
 });
 
-// ── metadataFacet (M2b video family) ───────────────────────────────────────
+// ── metadataFacet ───────────────────────────────────────
 
 describe('M2b barrel-import smoke — metadataFacet', () => {
   it('MetadataFacetContribution is importable from the public barrel', () => {
@@ -1027,7 +1027,7 @@ describe('M2b barrel-import smoke — metadataFacet', () => {
   });
 });
 
-// ── assetDetailSections (M2b video family) ─────────────────────────────────
+// ── assetDetailSections ─────────────────────────────────
 
 describe('M2b barrel-import smoke — assetDetailSections', () => {
   it('AssetDetailSectionContribution is importable from the public barrel', () => {
@@ -1073,7 +1073,7 @@ describe('M2b barrel-import smoke — assetDetailSections', () => {
   });
 });
 
-// ── outputFormats family (M2b video family) ──────────────────────────────────
+// ── outputFormats family ──────────────────────────────────
 
 describe('M2b barrel-import smoke — outputFormats family', () => {
   it('OutputFormatContribution is importable from the public barrel', () => {
@@ -1180,7 +1180,7 @@ describe('M2b barrel-import smoke — outputFormats family', () => {
   });
 });
 
-// ── outputFormats (M2b video family) ────────────────────────────────────────
+// ── outputFormats ────────────────────────────────────────
 
 describe('M2b barrel-import smoke — outputFormats', () => {
   it('ExportService is importable from the public barrel', () => {
@@ -1256,7 +1256,7 @@ describe('M2b barrel-import smoke — outputFormats', () => {
   });
 });
 
-// ── effects family (M2b video family) ──────────────────────────────────────────
+// ── effects family ──────────────────────────────────────────
 
 describe('M2b barrel-import smoke — effects family', () => {
   it('EffectContribution is importable from the public barrel', () => {
@@ -1382,7 +1382,7 @@ describe('M2b barrel-import smoke — effects family', () => {
   });
 });
 
-// ── transitions family (M2b video family) ──────────────────────────────────────
+// ── transitions family ──────────────────────────────────────
 
 describe('M2b barrel-import smoke — transitions family', () => {
   it('TransitionContribution is importable from the public barrel', () => {
@@ -1508,7 +1508,7 @@ describe('M2b barrel-import smoke — transitions family', () => {
   });
 });
 
-// ── clipType family (M2b video family) ────────────────────────────────────────
+// ── clipType family ────────────────────────────────────────
 
 describe('M2b barrel-import smoke — clipType family', () => {
   it('ClipTypeContribution is importable from the public barrel', () => {
@@ -1787,7 +1787,7 @@ describe('M2b barrel-import smoke — shader family', () => {
   });
 });
 
-// ── agentTool family (M2b video family) ───────────────────────────────────────
+// ── agentTool family ───────────────────────────────────────
 
 describe('M2b barrel-import smoke — agentTool family', () => {
   it('AgentToolContribution is importable from the public barrel', () => {
@@ -1915,7 +1915,7 @@ describe('M2b barrel-import smoke — agentTool family', () => {
   });
 });
 
-// ── process family (M2b video family) ───────────────────────────────────────
+// ── process family ───────────────────────────────────────
 
 describe('M2b barrel-import smoke — process family', () => {
   it('ProcessContribution is importable from the public barrel', () => {
@@ -2041,7 +2041,7 @@ describe('M2b barrel-import smoke — process family', () => {
   });
 });
 
-// ── searchProviders (M2b video family) ──────────────────────────────────────
+// ── searchProviders ──────────────────────────────────────
 
 describe('M2b barrel-import smoke — searchProviders', () => {
   it('SearchProviderContribution is importable from the public barrel', () => {
@@ -2083,7 +2083,7 @@ describe('M2b barrel-import smoke — searchProviders', () => {
   });
 });
 
-// ── parsers (M2b video family) ───────────────────────────────────────────────
+// ── parsers ───────────────────────────────────────────────
 
 describe('M2b barrel-import smoke — parsers (family)', () => {
   it('ParserContribution is importable from the public barrel', () => {
@@ -2129,7 +2129,7 @@ describe('M2b barrel-import smoke — parsers (family)', () => {
   });
 });
 
-// ── parsers (M2b video assets — runtime) ─────────────────────────────────────
+// ── parsers (video assets — runtime) ─────────────────────────────────────
 
 describe('M2b barrel-import smoke — parsers (assets/runtime)', () => {
   it('ParserInput is constructable from barrel', () => {
@@ -2177,7 +2177,7 @@ describe('M2b barrel-import smoke — parsers (assets/runtime)', () => {
   });
 });
 
-// ── commands (M2b video family) ───────────────────────────────────────────────
+// ── commands ───────────────────────────────────────────────
 
 describe('M2b barrel-import smoke — commands (family)', () => {
   it('CommandContribution is importable from the public barrel', () => {
@@ -2216,7 +2216,7 @@ describe('M2b barrel-import smoke — commands (family)', () => {
   });
 });
 
-// ── keybindings (M2b video family) ────────────────────────────────────────────
+// ── keybindings ────────────────────────────────────────────
 
 describe('M2b barrel-import smoke — keybindings (family)', () => {
   it('KeybindingContribution is importable from the public barrel', () => {
@@ -2254,7 +2254,7 @@ describe('M2b barrel-import smoke — keybindings (family)', () => {
   });
 });
 
-// ── contextMenuItems (M2b video family) ────────────────────────────────────────
+// ── contextMenuItems ────────────────────────────────────────
 
 describe('M2b barrel-import smoke — contextMenuItems (family)', () => {
   it('ContextMenuItemContribution is importable from the public barrel', () => {
@@ -2294,7 +2294,7 @@ describe('M2b barrel-import smoke — contextMenuItems (family)', () => {
   });
 });
 
-// ── M11 live data infrastructure (not a contribution family) ────────────────
+// ── live data infrastructure (not a contribution family) ────────────────
 
 describe('M2b barrel-import smoke — live data infrastructure', () => {
   it('LiveSourceKind is importable from the public barrel', () => {
@@ -2453,7 +2453,7 @@ describe('M2b barrel-import smoke — live data infrastructure', () => {
   });
 });
 
-// ── M3 timeline proposal contracts ──────────────────────────────────────────
+// ── timeline proposal contracts ──────────────────────────────────────────
 
 describe('M2b barrel-import smoke — proposals', () => {
   it('ProposalState is importable from the public barrel', () => {
@@ -2682,7 +2682,7 @@ describe('M2b barrel-import smoke — proposals', () => {
   });
 });
 
-// ── M3 TimelineOps ──────────────────────────────────────────────────────────
+// ── TimelineOps ──────────────────────────────────────────────────────────
 
 describe('M2b barrel-import smoke — TimelineOps', () => {
   it('TimelineOps is importable from the public barrel', () => {
@@ -2732,7 +2732,7 @@ describe('M2b barrel-import smoke — TimelineOps', () => {
   });
 });
 
-// ── M3 timeline source-map contracts ────────────────────────────────────────
+// ── timeline source-map contracts ────────────────────────────────────────
 
 describe('M2b barrel-import smoke — source maps', () => {
   it('SourceMapRuntime is importable from the public barrel', () => {
@@ -2840,7 +2840,7 @@ describe('M2b barrel-import smoke — source maps', () => {
 });
 
 // ===========================================================================
-// M1b: CompositionGraph barrel-import smoke
+// CompositionGraph barrel-import smoke
 // ===========================================================================
 
 describe('M1b barrel-import smoke — CompositionGraph', () => {
@@ -2989,7 +2989,7 @@ describe('M2a barrel-import smoke — cross-cutting identity', () => {
 });
 
 // ===========================================================================
-// M7a: Output-format route planning barrel-import smoke
+// Output-format route planning barrel-import smoke
 // ===========================================================================
 
 describe('M7a barrel-import smoke — Output-format route planning', () => {

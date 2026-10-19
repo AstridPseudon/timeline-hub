@@ -1,8 +1,7 @@
 /**
  * Metadata Facet family module.
  *
- * Houses the MetadataFacetContribution manifest interface extracted from
- * the public barrel (src/sdk/index.ts).  Descriptor/value contracts
+ * Houses the MetadataFacetContribution manifest interface.  Descriptor/value contracts
  * (MetadataFacetValueKind, MetadataFacetDescriptor) stay in
  * src/sdk/video/assets/metadata.ts as portable public contracts.
  *
@@ -13,7 +12,7 @@ import type { ContributionId } from '../../ids';
 import type { MetadataFacetValueKind } from '../assets/metadata';
 
 /**
- * M6: A metadata facet contribution declared in an extension manifest.
+ * A metadata facet contribution declared in an extension manifest.
  *
  * Metadata facets tell the host how to surface a metadata field
  * as a searchable/filterable facet in the asset panel.

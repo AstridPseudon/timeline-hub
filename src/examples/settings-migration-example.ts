@@ -1,5 +1,5 @@
 /**
- * settings-migration-example — T10 settings schema-version migration example.
+ * settings-migration-example — settings schema-version migration example.
  *
  * Demonstrates:
  *   1. A `MigrationDeclaration` of kind 'settings' in the extension manifest.

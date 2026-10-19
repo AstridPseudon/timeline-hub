@@ -20,7 +20,6 @@
  * - Interactive elements have accessible labels
  *
  * @module CopilotPrompt
- * @milestone M10
  */
 
 import { formatClockTime } from '@/shared/lib/timeFormatting';

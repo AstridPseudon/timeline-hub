@@ -1,8 +1,8 @@
 /**
  * Effect family module.
  *
- * Houses the effect family contracts extracted from the public barrel
- * (src/sdk/index.ts): EffectContribution manifest interface plus the
+ * Houses the effect family contracts:
+ * EffectContribution manifest interface plus the
  * associated service/component types (EffectComponent, EffectParameterDefinition,
  * EffectParameterSchema, EffectRegistrationOptions, EffectRegistrationService).
  *
@@ -16,7 +16,7 @@ import type { ContributionId } from '../../ids';
 import type { DisposeHandle } from '../../dispose';
 
 /**
- * M7: An effect contribution declared in an extension manifest.
+ * An effect contribution declared in an extension manifest.
  *
  * Trusted component effects render in the browser preview and are blocked
  * from browser-export and worker-export unless the contribution declares

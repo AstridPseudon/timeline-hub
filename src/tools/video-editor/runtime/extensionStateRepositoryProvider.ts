@@ -1,10 +1,10 @@
 /**
- * Provider-backed implementation of ExtensionStateRepository (T7).
+ * Provider-backed implementation of ExtensionStateRepository.
  *
  * Stores extension metadata (enablement, dev overrides, settings snapshots,
  * lifecycle events, lock entries) in a provider-backed store using reserved
  * tool-settings keys. Bundle content bytes are NOT stored in provider-backed
- * state per SD2 — they remain in browser-local IndexedDB.
+ * state — they remain in browser-local IndexedDB.
  *
  * Reserved keys:
  *   astrid.ext.state.enablement  — Record<string, ExtensionEnablementState>
@@ -93,7 +93,7 @@ export class InMemoryProviderStore implements ProviderBackedStore {
 // ---------------------------------------------------------------------------
 // localStorage-backed store (for direct local extensions)
 //
-// M1-LOCKED: Settings source of truth remains provider/localStorage with no
+// Settings source of truth remains provider/localStorage with no
 // migration to an alternative backend (IndexedDB, settings sync API, etc.).
 // The ProviderBackedStore interface (get/set/delete) and reserved keys are
 // stable.

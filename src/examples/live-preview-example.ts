@@ -1,5 +1,5 @@
 /**
- * live-preview-example — M11 live data source example.
+ * live-preview-example — live data source example.
  *
  * Demonstrates:
  *   1. A `LiveSource` declaration with kind, label, and permission metadata.

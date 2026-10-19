@@ -1,7 +1,7 @@
 import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
 // @vitest-environment jsdom
 /**
- * T5.1 — end-to-end timeline-overlay platform proof.
+ * end-to-end timeline-overlay platform proof.
  *
  * The critical flow in this suite is deliberately mounted through the real
  * embed-host provider:

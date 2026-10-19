@@ -1,5 +1,5 @@
 /**
- * M10: Agent tool contract validation and conversion helpers.
+ * Agent tool contract validation and conversion helpers.
  *
  * Runtime boundary between arbitrary tool output and host-owned proposal
  * creation. Validates input schemas and ToolResults, creates diagnostics,
@@ -9,7 +9,6 @@
  * ProposalRuntime, DataProvider, or any editor internals.
  *
  * @module agentToolContracts
- * @milestone M10
  */
 
 import type {
@@ -731,7 +730,7 @@ export function validateToolResult(result: unknown): ToolResultDiagnostic[] {
     }
 
     case 'process': {
-      // Must have diagnostics (always present before M12)
+      // Must have diagnostics (always present)
       if (!Array.isArray(r.diagnostics) || r.diagnostics.length === 0) {
         diagnostics.push(
           errorDiagnostic(

@@ -1,5 +1,5 @@
 /**
- * Flagship local extension — M8 transition contribution tests.
+ * Flagship local extension — transition contribution tests.
  *
  * Proves:
  *   1. The extension manifest declares an active transition contribution.

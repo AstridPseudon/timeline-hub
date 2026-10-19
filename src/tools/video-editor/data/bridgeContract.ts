@@ -13,7 +13,7 @@
  * Two rules the parsers below exist to enforce:
  *
  * 1. **Never coerce a malformed payload into a plausible one.** A registry that
- *    fails to parse used to become `{assets: {}}`; the next save then PUT that
+ *    fails to parse must not become `{assets: {}}`; a save would then PUT that
  *    emptied registry back at the bridge — a read-side parse quirk turning into
  *    a data-destroying write. Every parse failure throws instead, and the throw
  *    surfaces as the editor's load-error card.
@@ -29,7 +29,7 @@ import { ASTRID_BRIDGE_REQUEST_TIMEOUT_MS } from '@/tools/video-editor/data/astr
 
 /**
  * Transport deadline for every bridge request. A hung (as opposed to dead)
- * bridge used to park the save badge on `saving` forever, which also disabled
+ * bridge would otherwise park the save badge on `saving` forever and disable
  * the App/Local switcher via `isSwitchBlockedBySave`. With a deadline the hang
  * becomes an ordinary transport failure and feeds the existing save backoff.
  */

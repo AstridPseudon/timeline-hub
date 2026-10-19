@@ -1,5 +1,5 @@
 /**
- * M11: Live permission helper service.
+ * Live permission helper service.
  *
  * Provides browser-gated permission probes and request wrappers for camera,
  * microphone, MIDI, serial, and Bluetooth where the browser exposes the
@@ -11,7 +11,6 @@
  * into the registry and timeline.
  *
  * @module livePermissions
- * @milestone M11
  */
 
 import type {

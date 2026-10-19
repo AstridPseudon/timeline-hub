@@ -1,7 +1,7 @@
 /**
  * command-extension — Extension example with commands, keybindings, and menus.
  *
- * Demonstrates M4 command contributions using only @astrid/editor-sdk:
+ * Demonstrates command contributions using only @astrid/editor-sdk:
  *   - A palette-visible command with category metadata
  *   - A keyboard shortcut contribution
  *   - A clip context-menu item contribution

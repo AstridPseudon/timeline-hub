@@ -31,9 +31,8 @@ import type { FamilyAdapterRegistry } from '@/sdk/core/families/familyAdapter';
  * The projection posture for a single family kind.
  *
  * This is the single source of truth for whether a family kind's
- * contributions should produce runtime descriptors.  Every consumer
- * that previously branched on `getVideoFamilyLegacyBridgeStatus`
- * should instead branch on `ProjectionStatus`.
+ * contributions should produce runtime descriptors.  Consumers branch on
+ * `ProjectionStatus`, not on `getVideoFamilyLegacyBridgeStatus`.
  */
 export interface ProjectionStatus {
   /** The contribution kind this status describes. */
@@ -57,7 +56,7 @@ export interface ProjectionStatus {
   readonly isDelegated: boolean;
 
   /**
-   * Legacy milestone string (e.g. `'M6'`, `'M12'`) when the family
+   * Legacy milestone string when the family
    * is not yet runtime-bridged and has no owning adapter.
    *
    * `null` when the family IS runtime-bridged or is owned by an
@@ -190,7 +189,7 @@ export function evaluateProjectionPolicy(
 
 /**
  * Legacy-compatible contribution runtime status, mirroring the shape
- * previously produced by `getContributionRuntimeStatus` in
+ * produced by `getContributionRuntimeStatus` in
  * `FamilyContributionSequence.ts`.
  *
  * New code should prefer {@link evaluateProjectionPolicy} directly.
@@ -206,7 +205,7 @@ export interface ContributionRuntimeStatus {
  * {@link ContributionRuntimeStatus}.
  *
  * This is a thin wrapper around {@link evaluateProjectionPolicy} that
- * extracts only the fields previously used by the contribution
+ * extracts only the fields used by the contribution
  * sequencing pipeline.
  */
 export function getContributionRuntimeStatus(

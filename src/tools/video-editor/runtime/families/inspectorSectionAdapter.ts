@@ -1,7 +1,7 @@
 /**
  * Inspector section real compatibility adapter.
  *
- * Preserves M1 host-integrated inspector section behavior.
+ * Preserves host-integrated inspector section behavior.
  *
  * @module families/inspectorSectionAdapter
  */

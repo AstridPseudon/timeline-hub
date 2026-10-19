@@ -1,5 +1,5 @@
 /**
- * IndexedDB-backed implementation of ExtensionStateRepository (T6).
+ * IndexedDB-backed implementation of ExtensionStateRepository.
  *
  * Uses the same IndexedDB pattern as syncLedgerIndexedDb.ts (which has
  * passing tests with fake-indexeddb). Each operation opens a fresh

@@ -1,7 +1,7 @@
 /**
  * Timeline overlay real compatibility adapter.
  *
- * Preserves M2 host-integrated timeline overlay behavior through the
+ * Preserves host-integrated timeline overlay behavior through the
  * dedicated {@link buildTimelineOverlayDescriptors} projector: it projects
  * `{ extensionId, id, renderId, order }` directly from collected
  * contributions and never fabricates callable renderers or `render: null`

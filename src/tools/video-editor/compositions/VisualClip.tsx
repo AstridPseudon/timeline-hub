@@ -37,7 +37,7 @@ import {
 } from '@/tools/video-editor/shaders/registry/index.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
-// SD-025 (Sprint 3): inline missing-asset placeholder body. Mirrors the
+// inline missing-asset placeholder body. Mirrors the
 // styling of UnknownClipPlaceholder so the two loud cases look like a pair.
 // Lives inline (not a shared component) because VisualClip already wraps
 // content in a Sequence/AbsoluteFill upstream — we only need the visible
@@ -77,7 +77,7 @@ const MissingAssetBody: FC<{ clipId: string; clipType: string }> = ({ clipId, cl
   </AbsoluteFill>
 );
 
-// SD-032 (Sprint 5): inline missing-transition placeholder body. Renders when
+// inline missing-transition placeholder body. Renders when
 // a clip has a transition type that cannot be resolved through the unified
 // catalog (built-ins + provider registry). The clip content still renders, but
 // without transition styling — the placeholder is rendered as a diagnostic
@@ -293,7 +293,7 @@ function shouldRenderMaterialPlaceholder(status: RenderPlannerMaterialStatus): b
 const VisualAsset: FC<VisualClipProps> = ({ clip, track, fps }) => {
   const { width: compositionWidth, height: compositionHeight } = useVideoConfig();
   const previewMediaFailure = useOptionalPreviewMediaFailure();
-  // SD-025: never silent-null when a built-in clip is missing its asset.
+  // Never silent-null when a built-in clip is missing its asset.
   // Render a labeled red band so the gap is obvious in preview/export.
   if (!clip.assetEntry) {
     return <MissingAssetBody clipId={clip.id} clipType={clip.clipType ?? 'media'} />;

@@ -71,7 +71,7 @@ export function defineExtension(options: DefineExtensionOptions): AstridExtensio
   }
 
   // Validate contribution IDs for uniqueness using scoped keys (kind:contributionId).
-  // Cross-kind reuse of the same bare contributionId is valid per SD3.
+  // Cross-kind reuse of the same bare contributionId is valid.
   if (manifest.contributions && manifest.contributions.length > 0) {
     const seen = new Set<string>();
     for (const contribution of manifest.contributions) {

@@ -19,7 +19,7 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext', () => ({
   useVideoEditorRuntime: () => mockUseVideoEditorRuntime(),
 }));
 
-// The dev-local scratchpad is empty on main; the T2.4 describe pushes fixture
+// The dev-local scratchpad is empty on main; the describe block pushes fixture
 // extensions into the shared hoisted array so the manager's Local extensions
 // section has inventory to render (and to prove inventory does not come from
 // the runtime's enabled-extension list).
@@ -712,7 +712,7 @@ describe('ExtensionManager — concise inventory surface', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Settings persistence tests (T7)
+// Settings persistence tests
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — settings persistence', () => {
@@ -1461,7 +1461,7 @@ describe('ExtensionManager — settings persistence', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T10: SchemaForm vs key-value fallback for settings editing
+// SchemaForm vs key-value fallback for settings editing
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — settings editing: SchemaForm vs key-value fallback (T10)', () => {
@@ -1758,7 +1758,7 @@ describe('ExtensionManager — settings editing: SchemaForm vs key-value fallbac
 });
 
 // ---------------------------------------------------------------------------
-// Diagnostic badge and inline detail tests (T9)
+// Diagnostic badge and inline detail tests
 // ---------------------------------------------------------------------------
 
 /** Build a single Diagnostic object for testing. */
@@ -1802,7 +1802,7 @@ function makeDiagnosticCollection(initial: Diagnostic[] = []) {
 }
 
 // ---------------------------------------------------------------------------
-// T10: Settings notification registry helper for manager tests
+// Settings notification registry helper for manager tests
 // ---------------------------------------------------------------------------
 
 function makeNotificationRegistry() {
@@ -1840,7 +1840,7 @@ function makeNotificationRegistry() {
 }
 
 // ---------------------------------------------------------------------------
-// T10: Settings notification coherence tests
+// Settings notification coherence tests
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — settings notification coherence (T10)', () => {
@@ -2617,7 +2617,7 @@ describe('ExtensionManager — diagnostic badges and inline details', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T11: Direct entry read-only, package inventory card source, and state tests
+// Direct entry read-only, package inventory card source, and state tests
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — direct entry read-only (T11)', () => {
@@ -2892,7 +2892,7 @@ describe('ExtensionManager — direct entry read-only (T11)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T11: Package inventory contribution summary tests
+// Package inventory contribution summary tests
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — contribution summary from inventory (T11)', () => {
@@ -3144,7 +3144,7 @@ describe('ExtensionManager — contribution summary from inventory (T11)', () =>
 });
 
 // ---------------------------------------------------------------------------
-// T11: Empty, error, and mixed state tests
+// Empty, error, and mixed state tests
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — empty, error, and mixed states (T11)', () => {
@@ -3499,7 +3499,7 @@ describe('ExtensionManager — empty, error, and mixed states (T11)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T2.4: DEV-only Local extensions section
+// DEV-only Local extensions section
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — dev-local extensions section (T2.4)', () => {

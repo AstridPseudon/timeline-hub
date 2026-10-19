@@ -1,10 +1,10 @@
 /**
- * postprocess-shader-canary - M13 timeline postprocess WebGL shader canary.
+ * postprocess-shader-canary - timeline postprocess WebGL shader canary.
  *
  * Exercises the public shader SDK path for timeline-scope postprocess shaders:
  * manifest-declared ShaderContribution records, ctx.shaders.registerShader(),
  * uniform defaults, textureRef metadata, registry diagnostics, preview-only
- * renderability, browser preview output, inspector persistence, and M12 planner
+ * renderability, browser preview output, inspector persistence, and planner
  * blockers.
  */
 

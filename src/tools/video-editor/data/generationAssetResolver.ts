@@ -180,7 +180,7 @@ function buildFailure(
  * Resolve one generation's managed media to a same-origin R9 content-route
  * address (`GET /projects/:slug/media/:id/content`, Range/ETag).
  *
- * The signed/public-URL machinery this module used to mint is gone: R9
+ * This module mints no signed or public URLs: R9
  * addresses are unexpired by construction, so there is no refresh ladder —
  * resolution is a single detail read plus deterministic addressing.
  */

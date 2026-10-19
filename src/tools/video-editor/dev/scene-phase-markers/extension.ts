@@ -69,23 +69,12 @@ export const OVERLAY_RENDER_ID = 'scene-phase-markers/overlay';
 /**
  * Hard ceiling on the number of persisted scene markers.
  *
- * Measured 2026-08-11 with the extension's real persisted shape — 36-char
- * crypto.randomUUID ids plus times clamped to
- * `[0, MAX_SCENE_MARKER_SECONDS]` and rounded to 3 decimals (1 ms) via
- * `normalizeMarkerTime()` — the worst-case serialized payload at this
- * ceiling is:
- *
- *   - 800 markers at the clamped maximum (the longest serialized form in
- *     the bounded domain, "9999.999"): 49,601 bytes — 75.7% of the 64 KiB
- *     (65,536 byte) hard entry limit for project-data values, i.e.
- *     ≥ 20% headroom. The total clamp guarantees no accepted input can
- *     serialize longer than that representation, so this is the true
- *     worst case by construction.
- *   - The old 1000-marker pin with realistic unrounded 24fps-snapped float
- *     times measured 67,487 bytes and overflows the limit; the quota test
- *     at the time only exercised rounded values and missed it. The ceiling
- *     therefore lives at 800, where normalization + the count gate keep the
- *     worst case bounded by construction.
+ * Worst-case serialized payload at this ceiling (36-char crypto.randomUUID ids,
+ * times clamped to `[0, MAX_SCENE_MARKER_SECONDS]` and rounded to 3 decimals via
+ * `normalizeMarkerTime()`): 800 markers at the clamped maximum serialize to
+ * 49,601 bytes, 75.7% of the 64 KiB (65,536 byte) hard entry limit. The clamp
+ * bounds every accepted time to that longest representation, so the ceiling is
+ * the worst case by construction.
  *
  * `markPhaseAtPlayhead` refuses to add markers beyond the ceiling (count
  * gate) and `buildMarkersPatch` normalizes every persisted time (single

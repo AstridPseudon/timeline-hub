@@ -19,7 +19,6 @@
  * - Interactive elements have accessible labels
  *
  * @module AgentToolsPanel
- * @milestone M10
  */
 
 import { formatClockTime } from '@/shared/lib/timeFormatting';

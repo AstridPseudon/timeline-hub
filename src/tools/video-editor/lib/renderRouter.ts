@@ -1,4 +1,4 @@
-// Sprint 8 (SD-027 + SD-034): render-button routing.
+// Render-button routing.
 //
 // Decides whether the user's "Render" click should:
 //   * stay in the existing client-side WebCodecs path (`useClientRender`),
@@ -88,7 +88,7 @@ export interface ContributedClipRecord {
 }
 
 /**
- * Sprint 8 (final): provider-id taxonomy used by the render pipeline +
+ * Provider-id taxonomy used by the render pipeline +
  * `renderPipeline.ts`. Each route maps 1:1 onto a provider id so middleware
  * can dispatch on the route without a separate lookup table.
  *
@@ -455,10 +455,10 @@ export function decideRenderRoute(
 
     hasOtherClip = true;
 
-    // M9 T11: Check contributed clip records first. Contributed clip
+    // Check contributed clip records first. Contributed clip
     // code is only allowed in browser-remotion when it explicitly
     // declares browser-export capability. Worker routes are always
-    // blocked for contributed code (SD1).
+    // blocked for contributed code.
     const clipType = clip?.clipType;
 
     // Managed authoring clips must take the Runtime worker route. Sending a

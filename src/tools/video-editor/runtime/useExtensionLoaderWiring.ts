@@ -6,7 +6,7 @@
  * `extensions` prop of VideoEditorProvider / EditorRuntimeProvider.
  *
  * This keeps the loader/lifecycle state scoped to the mounted provider
- * (per SD1) and feeds diagnostics/status surfaces without duplicate
+ * and feeds diagnostics/status surfaces without duplicate
  * activation.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -217,14 +217,14 @@ function contributionsFromInput(input: ExtensionLoaderInput): readonly Extension
 
 
 // ---------------------------------------------------------------------------
-// Bundle content store (separate from metadata repo per SD2)
+// Bundle content store (separate from metadata repo)
 // ---------------------------------------------------------------------------
 
 /**
  * Minimal interface for retrieving installed bundle content bytes.
  *
  * The base ExtensionStateRepository contract does not include bundle
- * storage (per SD2 — bundle bytes are browser-local in IndexedDB).
+ * storage (bundle bytes are browser-local in IndexedDB).
  * Consumers that need to load installed packs must provide an object
  * conforming to this interface.
  */
@@ -248,7 +248,7 @@ export interface UseExtensionLoaderWiringOptions {
    * and settings snapshots.  When null/undefined, only direct extensions
    * are used and the loader is bypassed entirely.
    *
-   * M1-LOCKED: Direct host-supplied extensions that bypass the loader are
+   * Direct host-supplied extensions that bypass the loader are
    * excluded from the manager's package-state inventory.  Only installed
    * packs that pass through the loader populate PackageStateInventoryEntry[].
    */
@@ -258,7 +258,7 @@ export interface UseExtensionLoaderWiringOptions {
    * Store for retrieving installed bundle content bytes.
    *
    * Required when `repository` is provided AND installed packs exist.
-   * This is typically the IndexedDB-backed repository (per SD2).
+   * This is typically the IndexedDB-backed repository.
    */
   bundleStore?: BundleContentStore | null;
 

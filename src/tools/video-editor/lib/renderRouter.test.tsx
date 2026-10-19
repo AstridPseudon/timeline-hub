@@ -1,4 +1,4 @@
-// Sprint 8: render-button router tests.
+// render-button router tests.
 // Mirrors the sprint brief's three cases (pure media, themed, mixed) +
 // the orchestrator dispatch shape.
 
@@ -319,7 +319,7 @@ describe('Sprint 8 render-button router (decideRenderRoute)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M7b T2: Sidecar-export planner / router selection
+// Sidecar-export planner / router selection
 // ---------------------------------------------------------------------------
 
 describe('M7b T2 sidecar-export route selection', () => {
@@ -642,7 +642,7 @@ describe('planner route selection never rides a vacuously unblocked route', () =
 });
 
 // ---------------------------------------------------------------------------
-// M9 T11: Contributed clip routing via dynamic capability records
+// Contributed clip routing via dynamic capability records
 // ---------------------------------------------------------------------------
 
 function makeContributedRecord(
@@ -1500,7 +1500,7 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
 });
 
 // ---------------------------------------------------------------------------
-// B6 T6.1/T6.2: cancel rides the common fenced task route
+// cancel rides the common fenced task route
 // ---------------------------------------------------------------------------
 
 function stubFakeBridge() {

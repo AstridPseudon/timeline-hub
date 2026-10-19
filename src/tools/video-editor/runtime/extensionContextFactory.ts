@@ -7,8 +7,6 @@
  * deliberately kept OUT of `src/sdk/context.ts`, which remains a
  * host-wiring-free contract module.
  *
- * Moved from `src/sdk/contextFactory.ts` as part of M4 SDK boundary closure.
- *
  * @hostContract
  */
 
@@ -49,7 +47,7 @@ import {
   type CreateExtensionSettingsServiceOptions,
 } from '@/sdk/extensionSettingsService';
 
-// M2b family module imports (type-only, compile-erased)
+// Family module imports (type-only, compile-erased)
 import type {
   EffectComponent,
   EffectRegistrationOptions,
@@ -225,7 +223,7 @@ function createExtensionTimelineOps(
 /**
  * Create a concrete ExtensionContext for a given extension.
  *
- * Exposes only the approved M1 members:
+ * Exposes only the approved members:
  * - `apiVersion: 1`
  * - Readonly extension metadata
  * - `chrome` (toast, progress, subscribe, focus, announce)

@@ -1,5 +1,5 @@
 /**
- * Tests for the injectable extension settings service factory (T8 + T9).
+ * Tests for the injectable extension settings service factory.
  *
  * Validates:
  *  - Factory produces a synchronous settings service with get/set/delete/keys
@@ -8,7 +8,7 @@
  *  - Dispose cleans up localStorage keys
  *  - Existing createExtensionContext behavior is preserved
  *
- * T9 additions:
+ * additions:
  *  - Repository-backed snapshot loading before activation
  *  - Manifest defaults preserved beneath snapshot layer
  *  - Legacy localStorage read-through
@@ -194,7 +194,7 @@ describe('getSettingsPrefix', () => {
 });
 
 // ---------------------------------------------------------------------------
-// createExtensionSettingsService — basic (T8)
+// createExtensionSettingsService — basic
 // ---------------------------------------------------------------------------
 
 describe('createExtensionSettingsService', () => {
@@ -390,7 +390,7 @@ describe('createExtensionSettingsService', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T9: Repository-backed snapshot loading
+// Repository-backed snapshot loading
 // ---------------------------------------------------------------------------
 
 describe('T9: Repository-backed settings snapshots', () => {
@@ -572,7 +572,7 @@ describe('T9: Repository-backed settings snapshots', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T9: Legacy localStorage read-through (with and without snapshot)
+// Legacy localStorage read-through (with and without snapshot)
 // ---------------------------------------------------------------------------
 
 describe('T9: Legacy localStorage read-through', () => {
@@ -683,7 +683,7 @@ describe('T9: Legacy localStorage read-through', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T9: Reload-equivalent repository reinitialization
+// Reload-equivalent repository reinitialization
 // ---------------------------------------------------------------------------
 
 describe('T9: Reload-equivalent repository reinitialization', () => {
@@ -860,7 +860,7 @@ describe('T9: Reload-equivalent repository reinitialization', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M3: Repository-backed runtime write-through
+// Repository-backed runtime write-through
 // ---------------------------------------------------------------------------
 
 describe('M3: Repository-backed runtime write-through', () => {
@@ -1143,7 +1143,7 @@ describe('M3: Repository-backed runtime write-through', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T9: Legacy key migration with repository
+// Legacy key migration with repository
 // ---------------------------------------------------------------------------
 
 describe('T9: Legacy key migration with repository', () => {
@@ -1363,7 +1363,7 @@ function disposeContext(ctx: ReturnType<typeof createExtensionContext>): void {
 }
 
 // ---------------------------------------------------------------------------
-// T10: Settings migration integration with the service factory
+// Settings migration integration with the service factory
 // ---------------------------------------------------------------------------
 
 describe('T10: Settings migration during service creation', () => {
@@ -1747,7 +1747,7 @@ describe('T10: Settings migration during service creation', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T8: Settings notification (subscribe) semantics
+// Settings notification (subscribe) semantics
 // ---------------------------------------------------------------------------
 
 describe('T8: Settings notification (subscribe)', () => {
@@ -1959,7 +1959,7 @@ describe('T8: Settings notification (subscribe)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T12: Ajv-backed atomic save behavior
+// Ajv-backed atomic save behavior
 // ---------------------------------------------------------------------------
 
 describe('T12: Ajv-backed atomic save behavior', () => {

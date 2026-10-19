@@ -3,7 +3,7 @@
  * timeline identity, asset registry metadata, consent/provenance, deferred
  * enrichment records, and parser diagnostics into stable JSON.
  *
- * Demonstrates M6 compile-only output formats using only @astrid/editor-sdk:
+ * Demonstrates compile-only output formats using only @astrid/editor-sdk:
  *   - An OutputFormatContribution with requiresRender: false
  *   - An OutputFormatHandler that produces deterministic metadata JSON
  *   - Stable key ordering for byte-identical output across executions
@@ -361,7 +361,7 @@ export const metadataJsonOutputExtension: AstridExtension = defineExtension({
   activate(ctx: ExtensionContext): DisposeHandle {
     // Output format handlers are registered imperatively during activate().
     // The host's export registry associates handlers with the contribution
-    // IDs declared in the manifest.  In M6 the registration surface is
+    // IDs declared in the manifest.  The registration surface is
     // exposed through ctx.creative.export or a dedicated export registry;
     // the exact registration API depends on the host runtime version.
     //

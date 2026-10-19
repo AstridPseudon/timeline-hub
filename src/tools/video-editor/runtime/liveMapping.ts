@@ -1,5 +1,5 @@
 /**
- * M11 live learn-mode mapping runtime.
+ * Live learn-mode mapping runtime.
  *
  * Captures the next sample on a selected source/channel as a generic mapping
  * candidate. The host owns the mapping table shape, but source-specific payload

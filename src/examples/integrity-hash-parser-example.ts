@@ -3,7 +3,7 @@
  * hash, narrow type/extension acceptance, a byte limit, and provenance
  * metadata.
  *
- * Demonstrates M6 parser contributions using only @astrid/editor-sdk:
+ * Demonstrates parser contributions using only @astrid/editor-sdk:
  *   - A ParserContribution with narrow accepted MIME types and extensions
  *   - A maxBytes limit that produces oversized-input diagnostics
  *   - A ParserHandler that computes a SHA-256 content fingerprint and
@@ -161,7 +161,7 @@ export const integrityHashParserExtension: AstridExtension = defineExtension({
   activate(ctx: ExtensionContext): DisposeHandle {
     // Parser handlers are registered imperatively during activate().
     // The host's parser registry associates handlers with the contribution
-    // IDs declared in the manifest.  In M6 the registration surface is
+    // IDs declared in the manifest.  The registration surface is
     // exposed through ctx.creative.assets or a dedicated parser registry;
     // the exact registration API depends on the host runtime version.
     //

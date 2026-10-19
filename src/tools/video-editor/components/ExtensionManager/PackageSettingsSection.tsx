@@ -53,7 +53,7 @@ export function PackageSettingsSection({
   repository: ExtensionStateRepository | null;
   onRefresh: () => void;
   manifest?: ExtensionManifest | null;
-  /** T10: Host-visible notification registry for manager/runtime coherence. */
+  /** Host-visible notification registry for manager/runtime coherence. */
   settingsNotificationRegistry?: ExtensionSettingsNotificationRegistry | null;
 }) {
   const [sectionState, setSectionState] = useState<SettingsSectionState>('collapsed');
@@ -68,11 +68,11 @@ export function PackageSettingsSection({
   const baseValuesRef = useRef<Record<string, unknown>>({});
   const schemaFormRef = useRef<SchemaFormHandle>(null);
   const mountedRef = useRef(true);
-  // T10: Track whether a save is in flight so the notification reload callback
+  // Track whether a save is in flight so the notification reload callback
   // can skip reloading during our own save (avoids redundant re-fetch).
   const savingRef = useRef(false);
 
-  // Fully analyse the manifest schema (T1): returns schema, diagnostics,
+  // Fully analyse the manifest schema: returns schema, diagnostics,
   // unsupportedFields, and editable flag.  Replaces the older
   // adaptManifestSettingsSchema call so we can gate the editable surface and
   // feed the analysis into reconcileSettingsSnapshot.
@@ -87,7 +87,7 @@ export function PackageSettingsSection({
   const hasUnsupportedSchema =
     schemaAnalysis !== null && !schemaAnalysis.editable;
 
-  // ---- Reconciliation derived values (T4) — must be before callbacks that
+  // ---- Reconciliation derived values — must be before callbacks that
   //      reference them to avoid temporal dead zone. ------------------------
   const reconciliationState: ReconciliationState | null =
     reconciliationResult?.state ?? null;
@@ -98,7 +98,7 @@ export function PackageSettingsSection({
     return () => { mountedRef.current = false; };
   }, []);
 
-  // T10: Subscribe to settings change notifications from the shared registry.
+  // Subscribe to settings change notifications from the shared registry.
   // When runtime code writes through settings.set()/settings.delete(), the
   // manager reloads and reconciles the updated values without remounting.
   useEffect(() => {
@@ -203,7 +203,7 @@ export function PackageSettingsSection({
 
       if (!mountedRef.current) return;
 
-      // Run reconciliation (T3) when a manifest is available so the
+      // Run reconciliation when a manifest is available so the
       // manager surface always has a classified state + diagnostics.
       if (manifest) {
         const result = reconcileSettingsSnapshot({ manifest, snapshot });
@@ -269,7 +269,7 @@ export function PackageSettingsSection({
         setSectionState('idle');
         onRefresh();
 
-        // T10: Publish save through the shared notification path so active
+        // Publish save through the shared notification path so active
         // extensions and other host consumers see the update.
         if (settingsNotificationRegistry && !settingsNotificationRegistry.isDisposed) {
           settingsNotificationRegistry.notifySettingsChanged(extensionId);
@@ -376,7 +376,7 @@ export function PackageSettingsSection({
         </div>
       )}
 
-      {/* ---- Reconciliation diagnostic row (T4) ---- */}
+      {/* ---- Reconciliation diagnostic row ---- */}
       {reconciliationResult &&
         (sectionState === 'idle' || sectionState === 'editing') && (
           <SettingsReconciliationRow

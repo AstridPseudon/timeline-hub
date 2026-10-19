@@ -1,6 +1,6 @@
 /**
- * Tests for BrowserLocalFullSnapshotStore (T7) and browser-local
- * persistence service integration (T8).
+ * Tests for BrowserLocalFullSnapshotStore and browser-local
+ * persistence service integration.
  *
  * Validates:
  *  - localStorage keys are scoped by userId and timelineId
@@ -919,7 +919,7 @@ describe('createBrowserLocalExtensionPersistenceService', () => {
   });
 
   // -------------------------------------------------------------------
-  // T8: Reload simulation — state/settings survive service recreate
+  // Reload simulation — state/settings survive service recreate
   // -------------------------------------------------------------------
 
   it('enablement state and settings survive service recreate (simulated reload)', async () => {
@@ -1033,7 +1033,7 @@ describe('createBrowserLocalExtensionPersistenceService', () => {
   });
 
   // -------------------------------------------------------------------
-  // T8: Corrupt localStorage → diagnostics + no partial state
+  // Corrupt localStorage → diagnostics + no partial state
   // -------------------------------------------------------------------
 
   it('future schema version in localStorage emits error diagnostics', async () => {
@@ -1224,7 +1224,7 @@ describe('createBrowserLocalExtensionPersistenceService', () => {
   });
 
   // -------------------------------------------------------------------
-  // T8: Store throws → cache emits diagnostics + fail-closed
+  // Store throws → cache emits diagnostics + fail-closed
   // -------------------------------------------------------------------
 
   it('store-level load failure emits hydration error diagnostic', async () => {
@@ -1265,7 +1265,7 @@ describe('createBrowserLocalExtensionPersistenceService', () => {
   });
 
   // -------------------------------------------------------------------
-  // T8: IndexedDB unavailability — state/settings preserved
+  // IndexedDB unavailability — state/settings preserved
   // -------------------------------------------------------------------
 
   it('state and settings survive when IndexedDB is unavailable', async () => {

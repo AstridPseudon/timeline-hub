@@ -1,6 +1,6 @@
 /**
  * Tests for transition validation and repair utilities.
- * Covers T13: pure transition validation and repair.
+ * Covers pure transition validation and repair.
  */
 import { describe, expect, it } from 'vitest';
 import {

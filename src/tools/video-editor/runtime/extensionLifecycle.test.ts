@@ -1517,7 +1517,7 @@ describe('ExtensionLifecycleHost — diagnostics cleanup', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M3: ExtensionLifecycle — creative.timeline with live TimelineOps
+// ExtensionLifecycle — creative.timeline with live TimelineOps
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLifecycle — creative.timeline with live TimelineOps (M3 public SDK contracts)', () => {
@@ -1838,7 +1838,7 @@ describe('ExtensionLifecycle — creative.timeline with live TimelineOps (M3 pub
 });
 
 // ---------------------------------------------------------------------------
-// M3: ExtensionLifecycle — creative.timeline stubs (unmounted contexts)
+// ExtensionLifecycle — creative.timeline stubs (unmounted contexts)
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLifecycle — creative.timeline stubs (unmounted contexts)', () => {
@@ -1961,7 +1961,7 @@ describe('ExtensionLifecycle — creative.timeline stubs (unmounted contexts)', 
 });
 
 // ---------------------------------------------------------------------------
-// M3: ExtensionLifecycle — creative context internal API boundary
+// ExtensionLifecycle — creative context internal API boundary
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLifecycle — creative context internal API boundary', () => {
@@ -2158,7 +2158,7 @@ describe('ExtensionLifecycle — creative context internal API boundary', () => 
 });
 
 // ---------------------------------------------------------------------------
-// M3: ExtensionLifecycle — mutations only through public SDK contracts
+// ExtensionLifecycle — mutations only through public SDK contracts
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLifecycle — mutations through public SDK contracts only', () => {
@@ -2383,7 +2383,7 @@ describe('ExtensionLifecycle — mutations through public SDK contracts only', (
 
 
 // ---------------------------------------------------------------------------
-// T16: Contribution cleanup matrix — per-contribution-kind DisposeHandle verification
+// Contribution cleanup matrix — per-contribution-kind DisposeHandle verification
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLifecycle — contribution cleanup matrix (T16)', () => {
@@ -2755,7 +2755,7 @@ describe('ExtensionLifecycle — contribution cleanup matrix (T16)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T16: Lifecycle event assertions — activation failure, disable, unload, integrity failure
+// Lifecycle event assertions — activation failure, disable, unload, integrity failure
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLifecycle — lifecycle event assertions (T16)', () => {
@@ -3163,7 +3163,7 @@ describe('ExtensionLifecycle — lifecycle event assertions (T16)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T16: Disable/unload cleanup without provider remount
+// Disable/unload cleanup without provider remount
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLifecycle — cleanup without provider remount (T16)', () => {
@@ -3285,7 +3285,7 @@ describe('ExtensionLifecycle — cleanup without provider remount (T16)', () => 
 });
 
 // ---------------------------------------------------------------------------
-// T16: Lifecycle event assertions for onLifecycleDisposed callback
+// Lifecycle event assertions for onLifecycleDisposed callback
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLifecycleHost — onLifecycleDisposed callback (T16)', () => {
@@ -3395,7 +3395,7 @@ describe('ExtensionLifecycleHost — onLifecycleDisposed callback (T16)', () => 
 
 
 // ---------------------------------------------------------------------------
-// T2: ExtensionLifecycleHost — monotonic recovery-key registry
+// ExtensionLifecycleHost — monotonic recovery-key registry
 // ---------------------------------------------------------------------------
 
 describe('ExtensionLifecycleHost — recovery-key registry (T2)', () => {
@@ -3706,7 +3706,7 @@ describe('ExtensionLifecycleHost — recovery-key registry (T2)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T3.1: ctx.ui render surface (createExtensionContext wiring)
+// ctx.ui render surface (createExtensionContext wiring)
 // ---------------------------------------------------------------------------
 
 describe('ExtensionContext — ctx.ui render surface', () => {

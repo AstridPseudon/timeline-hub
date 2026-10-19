@@ -1,5 +1,5 @@
 /**
- * Tests for Compiler Canary — exercises the full M3 public extension contract.
+ * Tests for Compiler Canary — exercises the full public extension contract.
  *
  * Verifies:
  * 1. Reads timeline via ctx.creative.reader.snapshot()

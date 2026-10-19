@@ -9,13 +9,12 @@
  * This module contains only data-only types and read-only surfaces; no
  * registry, provider, resolver, or DOM behaviour lives here.
  *
- * [CONVERGE-WITH-M1] The closed vocabularies in this module (`DataShape`,
+ * The closed vocabularies in this module (`DataShape`,
  * `DataCoordinateDomain`, `KNOWN_DATA_SHAPES`, `KNOWN_DATA_DOMAINS`) are
- * provisional until the typed-timeline-data epic's M1 freeze locks the
- * envelope field names. The public manifest schema deliberately keeps
- * `shape`/`domain` as open strings — the host validates them against the
- * sets below — so an M1 rename changes only this module and the host
- * validation in `src/sdk/manifest.ts`, never the public manifest contract.
+ * provisional until the envelope field names are frozen. The public manifest
+ * schema keeps `shape`/`domain` as open strings; the host validates them against the
+ * sets below, so a rename changes only this module and the host validation in
+ * `src/sdk/manifest.ts`, never the public manifest contract.
  *
  * @publicContract
  */
@@ -24,11 +23,11 @@ import type { ContributionId } from '../../ids';
 import type { DisposeHandle } from '../../dispose';
 
 // ---------------------------------------------------------------------------
-// Closed V1 vocabularies ([CONVERGE-WITH-M1])
+// Closed V1 vocabularies
 // ---------------------------------------------------------------------------
 
 /**
- * Shape of a data kind's items. Closed V1 set ([CONVERGE-WITH-M1]).
+ * Shape of a data kind's items. Closed V1 set.
  *
  * Open string on the public manifest schema; the host validates declared
  * values against {@link KNOWN_DATA_SHAPES}.
@@ -36,8 +35,7 @@ import type { DisposeHandle } from '../../dispose';
 export type DataShape = 'point' | 'interval' | 'series';
 
 /**
- * Coordinate domain of a data kind's extents. Closed V1 set
- * ([CONVERGE-WITH-M1]).
+ * Coordinate domain of a data kind's extents. Closed V1 set.
  *
  * Open string on the public manifest schema; the host validates declared
  * values against {@link KNOWN_DATA_DOMAINS}.
@@ -112,7 +110,7 @@ export interface DataKindContribution {
 }
 
 // ---------------------------------------------------------------------------
-// Renderer / inspector prop types ([CONVERGE-WITH-M1])
+// Renderer / inspector prop types
 // ---------------------------------------------------------------------------
 
 /**
@@ -121,8 +119,8 @@ export interface DataKindContribution {
  * The host maps source coordinates into timeline space (`timelineStart`/
  * `timelineEnd`); renderers never reimplement trim/speed algebra.
  *
- * [CONVERGE-WITH-M1] Provisional projection of the epic's frozen envelope
- * item; converges on `FrozenDataItem` + `DataLaneItemView` at M1.
+ * Provisional projection of a frozen envelope item; the target shape is
+ * `FrozenDataItem` + `DataLaneItemView`.
  */
 export interface DataLaneRenderItem {
   /** Occurrence id (not the source item id). */

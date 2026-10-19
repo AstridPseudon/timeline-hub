@@ -14,7 +14,7 @@
 import type { ParserDiagnostic } from './parsers';
 
 // ---------------------------------------------------------------------------
-// M6: Search provider runtime types
+// Search provider runtime types
 // ---------------------------------------------------------------------------
 
 /**

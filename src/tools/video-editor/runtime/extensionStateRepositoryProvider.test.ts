@@ -1,5 +1,5 @@
 /**
- * Tests for provider-backed ExtensionStateRepository (T7).
+ * Tests for provider-backed ExtensionStateRepository.
  *
  * Validates:
  *  - All CRUD operations through the ProviderBackedStore interface

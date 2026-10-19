@@ -26,7 +26,7 @@
  * />
  * ```
  *
- * @publicContract — implements M3 managed-object confirmation flow.
+ * @publicContract — implements managed-object confirmation flow.
  */
 
 import { useState, useCallback } from 'react';

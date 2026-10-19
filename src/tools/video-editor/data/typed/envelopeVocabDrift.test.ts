@@ -1,6 +1,6 @@
 // @vitest-environment node
 // dataKind V1 (rework R3): drift guard for the deliberately duplicated
-// [CONVERGE-WITH-M1] vocabularies. `DataShape`/`DataCoordinateDomain` are
+// vocabularies. `DataShape`/`DataCoordinateDomain` are
 // declared twice — SDK (`sdk/video/families/dataKind.ts`, the manifest
 // contract) and host envelope (`data/typed/envelope.ts`, the lane plane) —
 // with import isolation by design. This test fails if they ever diverge:

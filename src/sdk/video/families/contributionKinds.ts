@@ -20,27 +20,27 @@ export type VideoContributionKind =
   | 'panel'
   | 'inspectorSection'
   | 'timelineOverlay'
-  // M4: commands, keybindings, context menus
+  // commands, keybindings, context menus
   | 'command'
   | 'keybinding'
   | 'contextMenuItem'
-  // M6: parser, output format, search provider, metadata facet, asset detail section
+  // parser, output format, search provider, metadata facet, asset detail section
   | 'parser'
   | 'outputFormat'
   | 'searchProvider'
   | 'metadataFacet'
   | 'assetDetailSection'
-  // M12: trusted local process descriptors
+  // trusted local process descriptors
   | 'process'
-  // M7-M9: effect, transition, clip type, automation (bridged in their milestones)
+  // effect, transition, clip type, automation (bridged in their milestones)
   | 'effect'
   | 'transition'
   | 'clipType'
-  // M13: dedicated shader/WebGL contributions
+  // dedicated shader/WebGL contributions
   | 'shader'
-  // M9: automation clip type (host-owned)
+  // automation clip type (host-owned)
   | 'automation'
-  // M10: agent tool contributions (host-mediated, proposal-backed)
+  // agent tool contributions (host-mediated, proposal-backed)
   | 'agentTool'
   // dataKind V1: duration-neutral typed-data lanes (single bind model: ctx.dataKinds.register)
   | 'dataKind'

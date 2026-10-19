@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 //
-// T9 regression tests for soft-tag grouped drag. The legacy useClipDrag.test.tsx
-// imports deleted projection helpers and is scheduled for T15 cleanup; this file
+// regression tests for soft-tag grouped drag. The legacy useClipDrag.test.tsx
+// imports deleted projection helpers and is scheduled for cleanup; this file
 // stands on its own and targets only the pure helpers in multi-drag-utils +
 // pinned-group-projection that back the new grouped-drag commit path.
 

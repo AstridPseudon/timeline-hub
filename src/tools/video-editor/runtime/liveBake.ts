@@ -1,5 +1,5 @@
 /**
- * M11 live bake planner.
+ * Live bake planner.
  *
  * This module is intentionally pure: it reads registry snapshots and returns
  * deterministic replacement metadata, but it never mutates timeline config,

@@ -1,8 +1,8 @@
 /**
  * Automation / keyframe family module.
  *
- * Houses the automation/keyframe data contracts extracted from the public barrel
- * (src/sdk/index.ts): KeyframeInterpolation, Keyframe, InterpolatedParam,
+ * Houses the automation/keyframe data contracts:
+ * KeyframeInterpolation, Keyframe, InterpolatedParam,
  * AutomationClipTarget, and AutomationClipParams.
  *
  * Automation clips are host-owned timeline clips (built-in clip type) with
@@ -17,11 +17,11 @@
  */
 
 // ---------------------------------------------------------------------------
-// M9: Keyframe contracts
+// Keyframe contracts
 // ---------------------------------------------------------------------------
 
 /**
- * M9: Interpolation mode for keyframe curves.
+ * Interpolation mode for keyframe curves.
  *
  * - `linear` — lerp between adjacent keyframe values.
  * - `hold` — step function; value holds until the next keyframe.
@@ -29,7 +29,7 @@
 export type KeyframeInterpolation = 'linear' | 'hold';
 
 /**
- * M9: A single keyframe stored as JSON-serializable timeline data on a clip.
+ * A single keyframe stored as JSON-serializable timeline data on a clip.
  *
  * Keyframes are host-owned timeline data validated against the owning
  * parameter schema, with interpolation performed by the host before
@@ -45,7 +45,7 @@ export interface Keyframe {
 }
 
 /**
- * M9: Interpolated parameter value at a specific time.
+ * Interpolated parameter value at a specific time.
  *
  * Produced by the host keyframe interpolator and passed to clip renderers
  * so extension code never needs to implement timeline interpolation.
@@ -58,11 +58,11 @@ export interface InterpolatedParam {
 }
 
 // ---------------------------------------------------------------------------
-// M9: Automation clip contracts
+// Automation clip contracts
 // ---------------------------------------------------------------------------
 
 /**
- * M9: Target descriptor for an automation clip.
+ * Target descriptor for an automation clip.
  *
  * Automation clips are host-owned timeline clips (clipType: 'automation')
  * that reference target parameters by contribution ID and parameter path.
@@ -77,7 +77,7 @@ export interface AutomationClipTarget {
 }
 
 /**
- * M9: Params stored on an automation clip.
+ * Params stored on an automation clip.
  *
  * Automation clips apply baked keyframe curves to override target
  * extension parameter values during preview and export.

@@ -25,10 +25,10 @@ export const CLIP_ID_ATTR = 'data-clip-id';
 /**
  * `"true"` on a selected clip root, absent otherwise.
  *
- * Selection used to be readable only as a Tailwind accent border, so every
- * out-of-React reader (e2e specs, device probes, DevTools) matched
- * `border-sky-400`/`border-violet-400` — which a theming change silently turns
- * into "0 selected". The attribute is the contract; the border is presentation.
+ * Selection is exposed as an attribute. Out-of-React readers (e2e specs, device
+ * probes, DevTools) must not match the Tailwind accent border: a theming change
+ * silently turns that border into "0 selected". The attribute is the contract; the
+ * border is presentation.
  */
 export const CLIP_SELECTED_ATTR = 'data-selected';
 export const ROW_ID_ATTR = 'data-row-id';

@@ -172,7 +172,7 @@ describe('timeline shader metadata domain helpers', () => {
     });
   });
 
-  // M1b T20: prove legacy shader mutations still work and no public patch family exposure
+  // prove legacy shader mutations still work and no public patch family exposure
   it('assignTimelineClipShader — legacy single-occupancy clip mutation still works', () => {
     const clip = makeClip();
     const result = assignTimelineClipShader(clip, clipShader);

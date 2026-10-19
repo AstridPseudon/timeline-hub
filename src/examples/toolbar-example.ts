@@ -1,5 +1,5 @@
 /**
- * toolbar-example — M2 toolbar slot contribution example.
+ * toolbar-example — toolbar slot contribution example.
  *
  * Demonstrates registering a toolbar slot contribution using only the
  * public @astrid/editor-sdk entrypoint.  This example is SDK-only and

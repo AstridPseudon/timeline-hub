@@ -29,7 +29,7 @@ export type CanonicalShotTimelinePublication = Readonly<{
 
 
 /**
- * Checklist-backed runtime inventory for the host surfaces Sprint 2 is
+ * Checklist-backed runtime inventory for the host surfaces this layer is
  * allowed to depend on directly.
  */
 export const VIDEO_EDITOR_HOST_PORT_NAMES = [

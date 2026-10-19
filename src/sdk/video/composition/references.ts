@@ -97,11 +97,11 @@ export function contributionRefKey(ref: ContributionRef): string {
 }
 
 // ---------------------------------------------------------------------------
-// OutputFormatRef (M7a)
+// OutputFormatRef
 // ---------------------------------------------------------------------------
 
 /**
- * A constrained output-format contribution reference for M7a route planning.
+ * A constrained output-format contribution reference for route planning.
  *
  * `OutputFormatRef` is a structural subtype of {@link ContributionRef} with
  * `kind` fixed to `'outputFormat'`. It is serialized through

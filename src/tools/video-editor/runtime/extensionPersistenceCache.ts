@@ -1,6 +1,6 @@
 /**
- * Cache-backed ExtensionStateRepository adapter (T4) with settings and
- * proposal facades (T5).
+ * Cache-backed ExtensionStateRepository adapter with settings and
+ * proposal facades.
  *
  * Provides a hydrated in-memory cache over an async FullSnapshotStore so
  * that providers (browser-local, Astrid bridge, etc.) can implement a single
@@ -42,7 +42,7 @@
  *    closed with diagnostics.
  *
  * 8. **Proposal facades** — proposals are stored in the same hydrated
- *    snapshot alongside settings, enablement, and pack records.  M2
+ *    snapshot alongside settings, enablement, and pack records.
  *    supports create / read / status-update / list only.
  */
 
@@ -96,7 +96,7 @@ export interface FullSnapshotStore {
   /**
    * Persist the full serialized snapshot.
    *
-   * Overwrites any previously stored snapshot.
+   * Overwrites any stored snapshot.
    */
   saveSnapshot(serialized: string): Promise<void>;
 
@@ -183,7 +183,7 @@ interface CachedState {
   settings: Record<string, ExtensionSettingsSnapshot>;
   events: ExtensionLifecycleEvent[];
   lock: ExtensionLock;
-  /** Proposals keyed by proposal ID (M2 foundation). */
+  /** Proposals keyed by proposal ID. */
   proposals: Record<string, ExtensionProposal>;
 }
 
@@ -324,7 +324,7 @@ export class CachedExtensionStateRepository
   }
 
   // -------------------------------------------------------------------
-  // Migration registration (T5)
+  // Migration registration
   // -------------------------------------------------------------------
 
   /**
@@ -934,7 +934,7 @@ export class CachedExtensionStateRepository
   }
 
   // -------------------------------------------------------------------
-  // Proposals (M2 foundation, T5)
+  // Proposals
   // -------------------------------------------------------------------
 
   /**
@@ -1075,7 +1075,7 @@ export function createCachedExtensionStateRepository(
 }
 
 // ---------------------------------------------------------------------------
-// CachedExtensionPersistenceService (T5)
+// CachedExtensionPersistenceService
 // ---------------------------------------------------------------------------
 
 /**

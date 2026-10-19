@@ -1,5 +1,5 @@
 /**
- * live-generated-frame-canary — M11 generated-frame live-data canary.
+ * live-generated-frame-canary — generated-frame live-data canary.
  *
  * Exercises GenerationSession sample delivery for pending/refining/final
  * generated frames, explicit steering lineage, cancellation, and deterministic

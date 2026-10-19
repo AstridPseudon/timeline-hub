@@ -1,5 +1,5 @@
 /**
- * Core settings contracts for the public SDK (M2a — extracted from index.ts).
+ * Core settings contracts for the public SDK.
  *
  * @publicContract
  */

@@ -1,8 +1,8 @@
 /**
- * ExtensionActivityRegion — M1 shallow placeholder for extension status events.
+ * ExtensionActivityRegion — shallow placeholder for extension status events.
  *
  * Renders between the toolbar and timeline in TimelineEditorShellCore.
- * In M1 this is a contract-only placeholder: it exposes the minimal props and
+ * This is a contract-only placeholder: it exposes the minimal props and
  * renders status events with dismiss behavior but does NOT mount full agent
  * or diagnostic panels (those are later-milestone integrations).
  *
@@ -96,7 +96,7 @@ const KIND_LABEL: Record<ExtensionStatusEventKind, string> = {
 /**
  * Shallow event-rendering placeholder for the extension activity region.
  *
- * In M1 this is intentionally minimal — it renders status events with
+ * This is intentionally minimal — it renders status events with
  * dismiss buttons but does not wire agent invocation feedback, diagnostic
  * panels, or proposal-import status. Those are later-milestone additions.
  */

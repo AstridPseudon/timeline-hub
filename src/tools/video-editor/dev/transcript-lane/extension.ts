@@ -64,7 +64,7 @@ export const TRANSCRIPT_KIND_ID = 'astrid.transcript';
 /**
  * Qualified schema reference. Must equal the host transcript adapter's
  * output schemaRef so segments land in THIS kind's lane instead of an
- * opaque one ([CONVERGE-WITH-M1] literal).
+ * opaque one (literal).
  */
 export const TRANSCRIPT_SCHEMA_REF = 'astrid.transcript_segment/v1';
 export const TRANSCRIPT_CAPTION_TRACK_ID = 'transcript-caption-foundry-track';

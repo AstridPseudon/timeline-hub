@@ -79,7 +79,7 @@ export interface CompositionGraphMediaTrackBinding {
 }
 
 // ---------------------------------------------------------------------------
-// M5: Effect / transition contribution lookup helpers
+// Effect / transition contribution lookup helpers
 // ---------------------------------------------------------------------------
 
 /** Resolved effect or transition contribution lookup result. */

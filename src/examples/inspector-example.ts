@@ -1,5 +1,5 @@
 /**
- * inspector-example — M2 inspectorSection contribution example.
+ * inspector-example — inspectorSection contribution example.
  *
  * Demonstrates registering an inspector section contribution using only
  * the public @astrid/editor-sdk entrypoint.  Inspector sections render

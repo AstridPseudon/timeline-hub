@@ -44,7 +44,7 @@ export function PackageCard({
   onToggleRequest: () => void;
   manifest?: ExtensionManifest | null;
   diagnosticSummary?: PackageDiagnosticSummary;
-  /** T10: Host-visible notification registry for manager/runtime coherence. */
+  /** Host-visible notification registry for manager/runtime coherence. */
   settingsNotificationRegistry?: ExtensionSettingsNotificationRegistry | null;
 }) {
   const { extensionId, packageState, stateReason, packageMetadata } = entry;
@@ -53,7 +53,7 @@ export function PackageCard({
   const publisher = packageMetadata?.publisher;
   const description = packageMetadata?.description;
 
-  // T11: Direct host-supplied extensions are read-only (no install/update/toggle affordances).
+  // Direct host-supplied extensions are read-only (no install/update/toggle affordances).
   const isDirectEntry = entry.packageSource === 'direct'
     || stateReason === 'Direct host-supplied extension';
 
@@ -248,7 +248,7 @@ export function PackageCard({
         />
       )}
 
-      {/* Settings section — visible for all package states (SD3) */}
+      {/* Settings section — visible for all package states */}
       <PackageSettingsSection
         extensionId={extensionId}
         repository={repository}

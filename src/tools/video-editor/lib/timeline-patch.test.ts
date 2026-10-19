@@ -1056,7 +1056,7 @@ describe('validateTimelinePatch — result immutability', () => {
 });
 
 // ===========================================================================
-// T4: Focused validation tests (unknown ops, malformed payloads,
+// Focused validation tests (unknown ops, malformed payloads,
 //     unsupported mutations, overflow diagnostics, reserved ops, namespace ops)
 // ===========================================================================
 
@@ -1860,7 +1860,7 @@ describe('validateTimelinePatch — reserved ops additional edge cases', () => {
 });
 
 // ===========================================================================
-// T6: Merge/Replace semantics validation
+// Merge/Replace semantics validation
 // ===========================================================================
 
 describe('validateTimelinePatch — merge/replace mode validation', () => {
@@ -2052,7 +2052,7 @@ describe('validateTimelinePatch — clip.move before/after anchors', () => {
 });
 
 // ===========================================================================
-// T6: Compile semantics — merge/replace, ordering, anchors
+// Compile semantics — merge/replace, ordering, anchors
 // ===========================================================================
 
 // We need a minimal TimelineData fixture for compile tests
@@ -3468,7 +3468,7 @@ describe('compileTimelinePatch — patch immutability', () => {
 });
 
 // ===========================================================================
-// T7: Pure patch compile/preview tests and golden fixture seeds
+// Pure patch compile/preview tests and golden fixture seeds
 //     covering insert, update, delete, move/reorder, track, asset, app,
 //     extension data, and namespaced extension no-op/example operations.
 // ===========================================================================
@@ -4544,7 +4544,7 @@ describe('compileTimelinePatch — edge cases', () => {
 });
 
 // ============================================================================
-// T29: Extension project-data persistence, replay, rollback, actionable diagnostics
+// Extension project-data persistence, replay, rollback, actionable diagnostics
 // ============================================================================
 
 describe('compileTimelinePatch — tiny DSL/annotation data persistence', () => {
@@ -5260,7 +5260,7 @@ describe('compileTimelinePatch — project-data replay determinism', () => {
 });
 
 // ===========================================================================
-// M1b T20: Graph preview bridge — extractGraphPreviewOps
+// Graph preview bridge — extractGraphPreviewOps
 // ===========================================================================
 
 const clipShaderPayload: TimelineClipShaderMetadata = {
@@ -5473,7 +5473,7 @@ describe('extractGraphPreviewOps — public patch families remain stable', () =>
 });
 
 // ===========================================================================
-// M1b T20: Graph preview bridge — previewTimelinePatchGraphDiagnostics
+// Graph preview bridge — previewTimelinePatchGraphDiagnostics
 // ===========================================================================
 
 describe('previewTimelinePatchGraphDiagnostics — graph preview routing', () => {

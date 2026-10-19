@@ -97,7 +97,7 @@ export function isRouteIncompatible(status: RenderMaterialStatusLike): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Provenance helpers (M3a)
+// Provenance helpers
 // ---------------------------------------------------------------------------
 
 /**
@@ -231,7 +231,7 @@ export interface RenderArtifactManifest {
   readonly id: string;
   readonly schemaVersion: 1;
   /**
-   * Optional explicit M7a profile discriminant.
+   * Optional explicit profile discriminant.
    *
    * Legacy schemaVersion 1 manifests may omit this field. Route-completion
    * paths use an explicit profile and validate profile-specific requirements.
@@ -264,11 +264,11 @@ export interface RenderArtifactManifest {
 }
 
 // ---------------------------------------------------------------------------
-// M7a: Typed artifact manifest profiles
+// Typed artifact manifest profiles
 // ---------------------------------------------------------------------------
 
 /**
- * Discriminant for M7a typed artifact manifest profiles.
+ * Discriminant for typed artifact manifest profiles.
  *
  * Each profile corresponds to a distinct artifact shape produced by a
  * render route. Route completion uses these profiles to validate that
@@ -277,7 +277,7 @@ export interface RenderArtifactManifest {
 export type ArtifactManifestProfileKind = 'video' | 'audio' | 'sidecar' | 'preview' | 'machine-path' | 'executable-package';
 
 /**
- * The canonical ordered set of M7a artifact manifest profile kinds.
+ * The canonical ordered set of artifact manifest profile kinds.
  */
 export const ARTIFACT_MANIFEST_PROFILE_KINDS: readonly ArtifactManifestProfileKind[] = [
   'video',
@@ -289,7 +289,7 @@ export const ARTIFACT_MANIFEST_PROFILE_KINDS: readonly ArtifactManifestProfileKi
 ] as const;
 
 /**
- * Base shape shared by all M7a typed manifest profiles.
+ * Base shape shared by all typed manifest profiles.
  *
  * Every profile carries an explicit `profile` discriminant and a
  * `schemaVersion` of `1`, matching the existing flat manifest contract.
@@ -299,7 +299,7 @@ export const ARTIFACT_MANIFEST_PROFILE_KINDS: readonly ArtifactManifestProfileKi
 export interface ArtifactManifestProfileBase {
   /** The explicit profile discriminant. */
   readonly profile: ArtifactManifestProfileKind;
-  /** Schema version (always 1 for M7a profiles). */
+  /** Schema version (always 1). */
   readonly schemaVersion: 1;
   /** Stable manifest identifier. */
   readonly id: string;
@@ -424,7 +424,7 @@ export interface ExecutablePackageArtifactManifestProfile extends ArtifactManife
 }
 
 /**
- * M7a typed artifact manifest profile (discriminated union).
+ * Typed artifact manifest profile (discriminated union).
  *
  * Each variant enforces profile-specific constraints. Route completion
  * inspects the `profile` discriminant to determine whether all required

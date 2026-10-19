@@ -1,5 +1,5 @@
 /**
- * M9: Provider-scoped clip-type registry for contributed extension clip types.
+ * Provider-scoped clip-type registry for contributed extension clip types.
  *
  * Follows the same ownership / lifecycle / snapshot / freeze / dispose
  * pattern as the EffectRegistry so consumers (activation, UI, render,

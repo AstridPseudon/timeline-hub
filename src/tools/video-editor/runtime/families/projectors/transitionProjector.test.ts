@@ -2,7 +2,7 @@
  * Transition projector — descriptor projection tests.
  *
  * Validates that `buildTransitionDescriptors` correctly normalizes
- * TransitionContribution entries, including M5 material slot declarations,
+ * TransitionContribution entries, including material slot declarations,
  * into frozen VideoEditorTransitionDescriptor objects.
  *
  * @module families/projectors/transitionProjector.test
@@ -161,7 +161,7 @@ describe('buildTransitionDescriptors', () => {
     expect(result).toHaveLength(0);
   });
 
-  // ---- M5: Material slot projection ---------------------------------------
+  // ---- Material slot projection ---------------------------------------
 
   describe('material slot projection (M5)', () => {
     it('projects a single material slot into the descriptor', () => {

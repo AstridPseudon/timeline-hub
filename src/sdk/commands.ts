@@ -1,13 +1,11 @@
 // ---------------------------------------------------------------------------
-// M2a — Core SDK boundary: command contracts
+// Core SDK boundary: command contracts
 // ---------------------------------------------------------------------------
 //
 // These contracts define the type surface for command registration, handler
 // invocation, and target-context discrimination.  The module is kept
 // modality-neutral: it exports only the interface contracts with no runtime
 // dependency on any video-editor subsystem.
-//
-// Extracted from src/sdk/index.ts during M2a Step 9 (T11).
 //
 // @publicContract
 // ---------------------------------------------------------------------------

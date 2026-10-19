@@ -59,7 +59,7 @@ export function isEffectInError(effect: EffectResource): boolean {
   return effect.registryStatus === 'error';
 }
 
-/** Check if an effect resource is read-only (bundled-extension per SD3). */
+/** Check if an effect resource is read-only (bundled-extension). */
 export function isReadOnlyEffect(effect: EffectResource): boolean {
   return effect.readOnly === true;
 }

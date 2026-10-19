@@ -167,7 +167,7 @@ export interface TimelineCommands {
   updateClip: (input: UpdateClipCommandInput) => TimelineCommandResult<{ clipId: string }>;
   /**
    * Move a clip by timeline time and/or track using the canonical config path.
-   * Pinned-group drag semantics stay internal for Sprint 2.
+   * Pinned-group drag semantics stay internal.
    */
   moveClip: (input: MoveClipCommandInput) => TimelineCommandResult<{ clipId: string; trackId: string; time: number }>;
   /**
@@ -212,7 +212,7 @@ export interface TimelineCommands {
 }
 
 /**
- * Sprint 2 public command surface for non-gesture callers.
+ * Public command surface for non-gesture callers.
  *
  * Keep this list narrow so developers and agents mutate timelines through the
  * facade without depending on raw rows/meta/clipOrder internals.
@@ -232,7 +232,7 @@ export const PUBLIC_TIMELINE_COMMAND_NAMES = [
 ] as const satisfies ReadonlyArray<keyof TimelineCommands>;
 
 /**
- * Sprint 2 intentionally keeps the public facade on non-gesture entrypoints.
+ * The public facade intentionally stays on non-gesture entrypoints.
  * Gesture-driven timeline edits continue to reuse shared planners internally.
  */
 export const PUBLIC_TIMELINE_COMMAND_SCOPE = 'non-gesture' as const;
@@ -619,7 +619,7 @@ export function createTimelineCommands(
         return failure('clip_not_found', `Clip '${input.clipId}' was not found.`);
       }
 
-      // --- M3 managed-object guard ---
+      // --- managed-object guard ---
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
 
@@ -679,7 +679,7 @@ export function createTimelineCommands(
         return failure('invalid_argument', 'moveClip requires a target track, a target time, or both.');
       }
 
-      // --- M3 managed-object guard ---
+      // --- managed-object guard ---
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
 
@@ -738,7 +738,7 @@ export function createTimelineCommands(
         return failure('pinned_group_edit_blocked', 'Pinned shot-group clip trimming stays on the internal gesture path in Sprint 2.');
       }
 
-      // --- M3 managed-object guard ---
+      // --- managed-object guard ---
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
 
@@ -812,7 +812,7 @@ export function createTimelineCommands(
         return failure('pinned_group_edit_blocked', 'Pinned shot-group clip splitting stays on the internal gesture path in Sprint 2.');
       }
 
-      // --- M3 managed-object guard ---
+      // --- managed-object guard ---
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
 
@@ -858,7 +858,7 @@ export function createTimelineCommands(
         return failure('pinned_group_edit_blocked', 'Use the shot-group delete flow for pinned shot clips.');
       }
 
-      // --- M3 managed-object guard ---
+      // --- managed-object guard ---
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
 
@@ -1003,7 +1003,7 @@ export function createTimelineCommands(
     setClipParams(input) {
       const readOnly = checkTimelineEditable();
       if (readOnly) return readOnly;
-      // --- M3 managed-object guard ---
+      // --- managed-object guard ---
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
 
@@ -1064,7 +1064,7 @@ export function createTimelineCommands(
 /**
  * Mounted-only public timeline command facade.
  *
- * This is the Sprint 2 recommended mutation surface for non-gesture callers.
+ * This is the recommended mutation surface for non-gesture callers.
  *
  * *Builds* the `TimelineCommands` facade from the store api. Components
  * rendering inside the editor normally want `useTimelineCommands` in

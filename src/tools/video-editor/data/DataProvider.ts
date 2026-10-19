@@ -45,7 +45,7 @@ export interface LoadedTimeline {
   configVersion: number;
   head?: TimelineHeadRevision;
   /**
-   * Persisted data-lane source items ([CONVERGE-WITH-M1] TimelineBundle),
+   * Persisted data-lane source items (TimelineBundle),
    * parsed fail-closed by the provider on load. `null` = nothing persisted;
    * `undefined` = provider has not adopted bundles yet. Views/occurrences are
    * derived at assembly — this carries SOURCE items only.
@@ -100,7 +100,7 @@ export function isProviderUnavailableError(error: unknown): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Extension persistence contracts (M2 Provider Persistence Spine)
+// Extension persistence contracts
 // ---------------------------------------------------------------------------
 
 import type {
@@ -131,7 +131,7 @@ export const PROVIDER_CAPABILITY_EXTENSION_SETTINGS_UNSUPPORTED =
 
 /**
  * Emitted when a {@link DataProvider} does not support extension proposal
- * storage (M3 handoff foundation).
+ * storage.
  */
 export const PROVIDER_CAPABILITY_EXTENSION_PROPOSALS_UNSUPPORTED =
   'provider_capability_extension_proposals_unsupported' as const;
@@ -152,7 +152,7 @@ export interface ExtensionPersistenceScope {
 }
 
 // ---------------------------------------------------------------------------
-// Proposal foundation types (M3 handoff)
+// Proposal foundation types
 // ---------------------------------------------------------------------------
 
 /** The lifecycle status of an extension proposal. */
@@ -182,28 +182,28 @@ export interface ExtensionProposalRecord {
   readonly payload: Record<string, unknown>;
   /** Optional human-readable title for UI surfacing. */
   readonly title?: string;
-  /** Backward-compatible display label used by early M2 cache tests. */
+  /** Backward-compatible display label used by cache tests. */
   readonly label?: string;
   /** Optional structured detail for filtering / display. */
   readonly detail?: Record<string, unknown>;
   /**
    * The timeline config version this proposal was created against.
-   * Used for stale/expired conflict diagnostics (M3).
+   * Used for stale/expired conflict diagnostics.
    */
   readonly baseVersion?: number;
   /**
    * Epoch-ms timestamp when this proposal expires.
-   * `undefined` means no expiry (M3).
+   * `undefined` means no expiry.
    */
   readonly expiresAt?: number;
   /**
    * ISO 8601 timestamp when this proposal was accepted.
-   * Only present when status is `accepted` (M3).
+   * Only present when status is `accepted`.
    */
   readonly acceptedAt?: string;
   /**
    * ISO 8601 timestamp when this proposal was rejected.
-   * Only present when status is `rejected` (M3).
+   * Only present when status is `rejected`.
    */
   readonly rejectedAt?: string;
 }
@@ -254,7 +254,7 @@ export interface ExtensionPersistenceCapabilities {
   readonly state: boolean;
   /** The provider supports extension settings snapshot persistence. */
   readonly settings: boolean;
-  /** The provider supports extension proposal storage (M3 foundation). */
+  /** The provider supports extension proposal storage. */
   readonly proposals: boolean;
 }
 
@@ -277,8 +277,8 @@ export interface ExtensionPersistenceCapabilities {
  * - A settings facade backed by {@link ExtensionSettingsSnapshot} (imported
  *   and reused from `extensionStateRepository.ts` — no parallel settings
  *   model exists).
- * - A proposal storage foundation for M3 handoff (create, read, update
- *   status, list — policy execution is owned by M3).
+ * - A proposal storage foundation (create, read, update
+ *   status, list — policy execution is owned by the proposal runtime).
  *
  * ## Lifecycle
  *
@@ -348,7 +348,7 @@ export interface ExtensionPersistenceService {
   deleteSettings?(extensionId: string): Promise<void>;
 
   // -----------------------------------------------------------------------
-  // Proposal storage foundation (M3 handoff)
+  // Proposal storage foundation
   // -----------------------------------------------------------------------
 
   /**
@@ -407,7 +407,7 @@ export interface DataProvider extends AssetResolver {
   loadCanonicalTimeline?(timelineId: string): Promise<LoadedTimeline>;
 
   /**
-   * Declared capability flags (plan C1-1 T2.4). Callers branch on these
+   * Declared capability flags. Callers branch on these
    * booleans instead of `instanceof` type-sniffing: a provider DECLARES what
    * it supports, so no behavioral fork hides inside a type check. Absent or
    * `false` both mean "not supported".

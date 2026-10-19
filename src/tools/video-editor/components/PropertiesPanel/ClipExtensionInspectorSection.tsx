@@ -6,7 +6,7 @@ import {
   type ContributionErrorInfo,
 } from '@/tools/video-editor/runtime/ContributionErrorBoundary.tsx';
 
-/** M9 T9: Extension-provided clip inspector section, rendered after host controls. */
+/** Extension-provided clip inspector section, rendered after host controls. */
 export function ClipExtensionInspectorSection({
   clip,
   onChange,

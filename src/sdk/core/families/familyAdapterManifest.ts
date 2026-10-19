@@ -63,7 +63,7 @@ export interface FamilyAdapterManifestEntry {
   /** Conformance gaps derived from the family definition. */
   readonly gaps: readonly ConformanceGap[];
 
-  /** Legacy milestone (e.g. `'M1'`, `'M7'`). */
+  /** Legacy milestone. */
   readonly legacyMilestone: string;
 
   /** SDK modules that define this family. */

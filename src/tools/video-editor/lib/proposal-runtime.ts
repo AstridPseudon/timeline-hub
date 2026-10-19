@@ -702,18 +702,18 @@ export function createProposalRuntime(
   }
 
   // ── importProposal (CANONICAL PUBLIC IMPORT API) ──────────────────────
-  // M1-LOCKED: importProposal is the sole canonical public proposal import
+  // importProposal is the sole canonical public proposal import
   // API.  No importEnvelope alias exists or will be introduced — the name
   // contract is settled.  importEdgeProposals serves as the envelope-level
   // wrapper (see bottom of this file).
   //
-  // M3: Import a pre-built TimelineProposal (e.g. from an edge response
+  // Import a pre-built TimelineProposal (e.g. from an edge response
   // envelope) into the runtime, preserving the server-assigned ID and all
   // fields.  Unlike create(), this does NOT auto-generate an ID, does NOT
   // apply replaceForSource semantics, and does NOT trigger an immediate
   // preview.
   //
-  // M1 update: validates the proposal's patch through validateTimelinePatch,
+  // validates the proposal's patch through validateTimelinePatch,
   // rejects malformed proposals before persistence/notification, reports
   // duplicate IDs diagnostically (instead of silently skipping), and returns
   // a status indicator so callers (e.g. importEdgeProposals) can build a
@@ -875,7 +875,7 @@ export function createProposalRuntime(
 }
 
 // ---------------------------------------------------------------------------
-// M3: Edge proposal envelope import helper
+// Edge proposal envelope import helper
 // ---------------------------------------------------------------------------
 
 /**
@@ -886,7 +886,7 @@ export function createProposalRuntime(
  * state, and expiry.  Already-terminal proposals (accepted, rejected) are
  * skipped and diagnostically reported rather than silently dropped.
  *
- * M1 update: returns a structured {@link ProposalImportResult} with
+ * Returns a structured {@link ProposalImportResult} with
  * per-proposal statuses and diagnostics instead of a bare count.
  * Malformed proposals are rejected by importProposal's internal
  * validateTimelinePatch check before persistence or notification.

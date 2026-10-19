@@ -811,12 +811,12 @@ export function assembleExtensionRuntime(
     processDescriptors,
   );
 
-  // ---- Graph-derived shader descriptor shim (M1b) ---------------------------
+  // ---- Graph-derived shader descriptor shim ---------------------------
   // When the composition graph carries shader consumes edges it becomes the
   // authority for which shader contributions produce descriptors.  The
   // independently-built shaderDescriptors array is replaced with a
   // graph-derived projection so it cannot act as a second authority for
-  // M1b shader/ref resolution.
+  // Shader/ref resolution.
   // Graph-absent (edge-less) assembly preserves the adapter-built descriptors
   // and diagnostics exactly as they were, avoiding duplicated diagnostics.
   if (
@@ -837,7 +837,7 @@ export function assembleExtensionRuntime(
   }
 
   // ---- Phase 5: assemble and freeze ----------------------------------------
-  /** Whether any contributions — bridged or M6-reserved — affect the config. */
+  /** Whether any contributions — bridged or reserved — affect the config. */
   const hasAnyConfigurableContent =
     Object.keys(slots).length > 0 ||
     dialogDescriptors.length > 0 ||

@@ -1,9 +1,9 @@
 /**
- * output-format-sidecar-composed-example — EX-04 graph-backed sidecar fixture.
+ * output-format-sidecar-composed-example — graph-backed sidecar fixture.
  *
  * Composes the trusted local process declaration from `process-example`
  * with the metadata JSON output contract from `metadata-json-output-example`
- * into a release-governance fixture for M7b. The fixture stays data-only:
+ * into a release-governance fixture. The fixture stays data-only:
  * it exposes a render-dependent output declaration, typed `requires` and
  * `consumes` graph facts, sidecar-export artifact completion evidence, and
  * a stopped-process repair path without claiming sandboxing or execution.
@@ -244,7 +244,7 @@ const ex04OutputFormatContribution = Object.freeze({
 function noOpActivate(_ctx: ExtensionContext): DisposeHandle {
   return {
     dispose(): void {
-      // EX-04 is a data-only contract fixture; runtime wiring stays external.
+      // This is a data-only contract fixture; runtime wiring stays external.
     },
   };
 }

@@ -1,5 +1,5 @@
 /**
- * Canonical composition diagnostics — M1b composition/ diagnostic codes.
+ * Canonical composition diagnostics — composition diagnostic codes.
  *
  * These codes are produced by the host projector, resolver, and patch
  * preview modules and are surfaced through the graph's `diagnostics` field
@@ -79,7 +79,7 @@ export const COMPOSITION_DIAGNOSTIC_CODE = {
   TARGET_INTERPOLATION_GAP: 'composition/target-interpolation-gap',
 
   // ---------------------------------------------------------------------------
-  // Material (M3a) diagnostic codes
+  // Material diagnostic codes
   // ---------------------------------------------------------------------------
 
   /** A material status/detail combination is structurally invalid. */
@@ -91,7 +91,7 @@ export const COMPOSITION_DIAGNOSTIC_CODE = {
   /** A material exists only as live runtime data with no baked asset. */
   MATERIAL_LIVE_ONLY: 'composition/material-live-only',
 
-  /** A previously baked material is now out of date. */
+  /** A baked material is out of date. */
   MATERIAL_STALE: 'composition/material-stale',
 
   /** Materialization has definitively failed. */
@@ -104,7 +104,7 @@ export const COMPOSITION_DIAGNOSTIC_CODE = {
   MATERIAL_ROUTE_INCOMPATIBLE: 'composition/material-route-incompatible',
 
   // ---------------------------------------------------------------------------
-  // Route-scope (M7a) diagnostic codes
+  // Route-scope diagnostic codes
   // ---------------------------------------------------------------------------
 
   /** A required route has no supporting descriptor (missing or empty route set). */
@@ -117,7 +117,7 @@ export const COMPOSITION_DIAGNOSTIC_CODE = {
   MATERIAL_NOT_RESOLVED: 'composition/material-not-resolved',
 
   // ---------------------------------------------------------------------------
-  // Deterministic capture (M3b) conversion diagnostic codes
+  // Deterministic capture conversion diagnostic codes
   // ---------------------------------------------------------------------------
 
   /** Conversion of a deterministic capture to graph operations has failed. */
@@ -136,7 +136,7 @@ export const COMPOSITION_DIAGNOSTIC_CODE = {
   DETERMINISTIC_CAPTURE_PROVENANCE_MISMATCH: 'composition/deterministic-capture-provenance-mismatch',
 
   // ---------------------------------------------------------------------------
-  // Effect / Transition (M5) reference diagnostic codes
+  // Effect / Transition reference diagnostic codes
   // ---------------------------------------------------------------------------
 
   /** An effect ref has no scoped candidates (missing). */
@@ -256,7 +256,7 @@ export interface CompositionDiagnosticDetail {
   routeScope?: string;
 
   // ---------------------------------------------------------------------------
-  // M7a: Route-scope diagnostic detail fields
+  // Route-scope diagnostic detail fields
   // ---------------------------------------------------------------------------
 
   /** Specific render route being diagnosed. */
@@ -285,7 +285,7 @@ export interface CompositionDiagnosticDetail {
   provenanceHash?: string;
 
   // ---------------------------------------------------------------------------
-  // M5: Effect / Transition / Material slot detail fields
+  // Effect / Transition / Material slot detail fields
   // ---------------------------------------------------------------------------
 
   /** Material slot name when the diagnostic relates to a material slot binding (e.g. 'transition-mask'). */
@@ -338,7 +338,7 @@ const MATERIAL_ERROR_DIAGNOSTIC_CODES = new Set<CompositionDiagnosticCode>([
   COMPOSITION_DIAGNOSTIC_CODE.MATERIAL_NOT_RESOLVED,
 ]);
 
-/** All material diagnostic codes (M3a). */
+/** All material diagnostic codes. */
 const MATERIAL_DIAGNOSTIC_CODES: ReadonlySet<CompositionDiagnosticCode> = new Set([
   COMPOSITION_DIAGNOSTIC_CODE.MATERIAL_MISSING_PROVENANCE,
   COMPOSITION_DIAGNOSTIC_CODE.MATERIAL_LIVE_ONLY,
@@ -350,7 +350,7 @@ const MATERIAL_DIAGNOSTIC_CODES: ReadonlySet<CompositionDiagnosticCode> = new Se
   COMPOSITION_DIAGNOSTIC_CODE.MATERIAL_NOT_RESOLVED,
 ]);
 
-/** All deterministic capture conversion diagnostic codes (M3b). */
+/** All deterministic capture conversion diagnostic codes. */
 const DETERMINISTIC_CAPTURE_CONVERSION_DIAGNOSTIC_CODES: ReadonlySet<CompositionDiagnosticCode> = new Set([
   COMPOSITION_DIAGNOSTIC_CODE.DETERMINISTIC_CAPTURE_CONVERSION_FAILED,
   COMPOSITION_DIAGNOSTIC_CODE.DETERMINISTIC_CAPTURE_TARGET_PATH_UNRESOLVABLE,
@@ -360,10 +360,10 @@ const DETERMINISTIC_CAPTURE_CONVERSION_DIAGNOSTIC_CODES: ReadonlySet<Composition
 ]);
 
 // ---------------------------------------------------------------------------
-// Effect (M5) diagnostic code sets
+// Effect diagnostic code sets
 // ---------------------------------------------------------------------------
 
-/** All effect reference diagnostic codes (M5). */
+/** All effect reference diagnostic codes. */
 const EFFECT_DIAGNOSTIC_CODES: ReadonlySet<CompositionDiagnosticCode> = new Set([
   COMPOSITION_DIAGNOSTIC_CODE.EFFECT_MISSING_REF,
   COMPOSITION_DIAGNOSTIC_CODE.EFFECT_DISABLED_REF,
@@ -394,10 +394,10 @@ const EFFECT_ERROR_DIAGNOSTIC_CODES = new Set<CompositionDiagnosticCode>([
 ]);
 
 // ---------------------------------------------------------------------------
-// Transition (M5) diagnostic code sets
+// Transition diagnostic code sets
 // ---------------------------------------------------------------------------
 
-/** All transition reference diagnostic codes (M5). */
+/** All transition reference diagnostic codes. */
 const TRANSITION_DIAGNOSTIC_CODES: ReadonlySet<CompositionDiagnosticCode> = new Set([
   COMPOSITION_DIAGNOSTIC_CODE.TRANSITION_MISSING_REF,
   COMPOSITION_DIAGNOSTIC_CODE.TRANSITION_DISABLED_REF,
@@ -485,7 +485,7 @@ export function referenceStateSeverity(state: ReferenceState): DiagnosticSeverit
 }
 
 /**
- * Map a {@link ReferenceState} to its M5-specific effect diagnostic code.
+ * Map a {@link ReferenceState} to its effect diagnostic code.
  *
  * Returns `undefined` for `resolved` (no diagnostic emitted).
  */
@@ -521,7 +521,7 @@ export function referenceStateToEffectDiagnosticCode(
 }
 
 /**
- * Map a {@link ReferenceState} to its M5-specific transition diagnostic code.
+ * Map a {@link ReferenceState} to its transition diagnostic code.
  *
  * Returns `undefined` for `resolved` (no diagnostic emitted).
  */
@@ -561,11 +561,11 @@ export function isBlockingTargetCompositionDiagnosticCode(code: string): code is
 }
 
 // ---------------------------------------------------------------------------
-// M5 (Effect / Transition) blocking diagnostic codes
+// Effect / transition blocking diagnostic codes
 // ---------------------------------------------------------------------------
 
 /**
- * M5 composition diagnostic codes that produce error severity and should
+ * Composition diagnostic codes that produce error severity and should
  * block export / render planning until the underlying diagnostic state is
  * resolved (repaired or baked).
  *
@@ -578,7 +578,7 @@ const BLOCKING_M5_COMPOSITION_DIAGNOSTIC_CODES = new Set<CompositionDiagnosticCo
 ]);
 
 /**
- * Type guard: returns `true` when `code` is an M5 (effect or transition)
+ * Type guard: returns `true` when `code` is an effect or transition
  * diagnostic code that should block export until the underlying state is
  * repaired or baked.
  */
@@ -587,7 +587,7 @@ export function isBlockingM5CompositionDiagnosticCode(code: string): code is Com
 }
 
 /**
- * Map an M5 composition diagnostic code to its canonical export-guard
+ * Map a composition diagnostic code to its canonical export-guard
  * blocker reason.
  */
 export function m5CompositionBlockerReason(code: CompositionDiagnosticCode): string {
@@ -627,7 +627,7 @@ export function m5CompositionBlockerReason(code: CompositionDiagnosticCode): str
 }
 
 /**
- * Type guard: returns `true` when `code` is a material (M3a) diagnostic code.
+ * Type guard: returns `true` when `code` is a material diagnostic code.
  */
 export function isMaterialDiagnosticCode(code: string): code is CompositionDiagnosticCode {
   return MATERIAL_DIAGNOSTIC_CODES.has(code as CompositionDiagnosticCode);
@@ -635,7 +635,7 @@ export function isMaterialDiagnosticCode(code: string): code is CompositionDiagn
 
 /**
  * Type guard: returns `true` when `code` is a deterministic capture
- * conversion (M3b) diagnostic code.
+ * conversion diagnostic code.
  *
  * These codes remain separate from material live-only diagnostics so that
  * consumers (export guard, planner) can distinguish material issues from
@@ -646,21 +646,21 @@ export function isDeterministicCaptureConversionDiagnosticCode(code: string): co
 }
 
 /**
- * Type guard: returns `true` when `code` is an effect (M5) diagnostic code.
+ * Type guard: returns `true` when `code` is an effect diagnostic code.
  */
 export function isEffectDiagnosticCode(code: string): code is CompositionDiagnosticCode {
   return EFFECT_DIAGNOSTIC_CODES.has(code as CompositionDiagnosticCode);
 }
 
 /**
- * Type guard: returns `true` when `code` is a transition (M5) diagnostic code.
+ * Type guard: returns `true` when `code` is a transition diagnostic code.
  */
 export function isTransitionDiagnosticCode(code: string): code is CompositionDiagnosticCode {
   return TRANSITION_DIAGNOSTIC_CODES.has(code as CompositionDiagnosticCode);
 }
 
 /**
- * Severity for effect (M5) diagnostic codes.
+ * Severity for effect diagnostic codes.
  *
  * Missing and inactive-reserved produce warnings; all other non-resolved
  * effect states produce errors.
@@ -676,7 +676,7 @@ export function effectDiagnosticSeverity(code: CompositionDiagnosticCode): Diagn
 }
 
 /**
- * Severity for transition (M5) diagnostic codes.
+ * Severity for transition diagnostic codes.
  *
  * Missing and inactive-reserved produce warnings; all other non-resolved
  * transition states produce errors.
@@ -692,7 +692,7 @@ export function transitionDiagnosticSeverity(code: CompositionDiagnosticCode): D
 }
 
 /**
- * Severity for material (M3a) diagnostic codes.
+ * Severity for material diagnostic codes.
  *
  * Invalid status, failed materialization, and route-incompatible materials
  * produce errors; missing provenance, live-only, stale, and weaker-provenance
@@ -748,7 +748,7 @@ export function buildCompositionDiagnostic(
 }
 
 // ---------------------------------------------------------------------------
-// M7a: Route-scope diagnostic helper builders
+// Route-scope diagnostic helper builders
 // ---------------------------------------------------------------------------
 
 /**

@@ -11,7 +11,7 @@ export const requestCenterTimelineClip = (clipId: string): void => {
   }));
 };
 
-// ── M3: Source-map bidirectional navigation events ─────────────────────
+// ── Source-map bidirectional navigation events ─────────────────────
 
 /** Event: navigate from a timeline object to its source range. */
 export const TIMELINE_NAVIGATE_TO_SOURCE_EVENT = 'astrid:timeline-navigate-to-source';

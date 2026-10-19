@@ -1,14 +1,13 @@
 /**
- * ExtensionLoader core (M14, T11/T12).
+ * ExtensionLoader core.
  *
  * Validates, loads, and unloads direct/source and installed extension pack
  * records through manifest/integrity validation, resolves dependencies,
  * isolates per-pack failures, and emits diagnostics/lifecycle events without
  * owning global state.
  *
- * The loader feeds the existing provider-scoped ExtensionLifecycleHost pipeline
- * (SD1): it validates/enriches AstridExtension[] before feeding it to the
- * existing lifecycle host's synchronize() method.
+ * It validates and enriches AstridExtension[] before feeding them to the
+ * provider-scoped ExtensionLifecycleHost's synchronize() method.
  */
 
 import type {

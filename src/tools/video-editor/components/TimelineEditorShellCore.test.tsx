@@ -977,7 +977,7 @@ describe('TimelineEditorShellCore with registered slot renderers', () => {
 
 
 // ---------------------------------------------------------------------------
-// M6: Export dropdown UI — compile-only formats enabled, render-dependent
+// Export dropdown UI — compile-only formats enabled, render-dependent
 // formats disabled with diagnostics, Render button behavior unchanged
 // ---------------------------------------------------------------------------
 
@@ -1193,7 +1193,7 @@ describe('TimelineEditorShellCore — M6 export dropdown', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M5: HostContributionErrorBoundary recovery-key regression tests
+// HostContributionErrorBoundary recovery-key regression tests
 // ---------------------------------------------------------------------------
 
 describe('TimelineEditorShellCore — HostContributionErrorBoundary recovery keys', () => {

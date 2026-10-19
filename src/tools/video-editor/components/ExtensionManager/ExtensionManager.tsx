@@ -5,11 +5,11 @@
  * status badges, metadata, state reasons, and per-package enable/disable
  * controls backed by ExtensionStateRepository.putEnablementState.
  *
- * Scope boundary (SD2): Only manages packages already loaded/supplied by
+ * Scope boundary: Only manages packages already loaded/supplied by
  * the host; does not add external package resolution, install, update,
  * delete, discovery, or marketplace flows.
  *
- * Visibility principle (SD3): Disabled packages remain visible and
+ * Visibility principle: Disabled packages remain visible and
  * inspectable; invalid, incompatible, and duplicate packages are never
  * hidden.
  */

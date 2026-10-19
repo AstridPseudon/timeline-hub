@@ -1,6 +1,6 @@
 /**
  * Tests for transition schema default materialization.
- * Covers T9: apply transition schema defaults when selecting or normalizing
+ * Covers applying transition schema defaults when selecting or normalizing
  * transitions without stored params.
  */
 import { describe, expect, it } from 'vitest';

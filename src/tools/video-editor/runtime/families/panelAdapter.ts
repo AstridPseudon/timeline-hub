@@ -1,7 +1,7 @@
 /**
  * Panel real compatibility adapter.
  *
- * Preserves M1 host-integrated panel behavior.
+ * Preserves host-integrated panel behavior.
  *
  * @module families/panelAdapter
  */

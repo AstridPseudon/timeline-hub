@@ -2462,7 +2462,7 @@ describe('useRenderState export guard', () => {
   });
 
 // ---------------------------------------------------------------------------
-// M6: Export behavior — compile-only formats invoke registry, render-dependent
+// Export behavior — compile-only formats invoke registry, render-dependent
 // formats are rejected, and existing Render behavior is unchanged
 // ---------------------------------------------------------------------------
 
