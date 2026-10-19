@@ -6,11 +6,22 @@ two operations.  These helpers retain the validated parent directory and do
 all subsequent operations relative to that descriptor.  Paths are kept only
 for human-readable receipts and for the lexical identity check; they are never
 re-opened as the authority for a material write.
+
+On Windows, an "fd" is a CRT descriptor owning a native Win32 handle, including
+for directories. NtCreateFile opens children relative to that handle; opened
+handles are checked for reparse points, final-path containment and native file
+identity (volume serial and 64-bit file index). Ordinary CRT I/O and duplication
+remain usable. Path-only external APIs must hold ``filesystem.pinned_path(fd)``
+while using the returned extended-length path. POSIX uses ordinary os descriptors.
 """
 
 from __future__ import annotations
 
 import os as _os
+import ctypes
+import errno
+import functools
+import ntpath
 from pathlib import Path
 import stat
 import time
@@ -27,29 +38,27 @@ _WIN_NONBLOCK = 0
 
 
 class _WindowsFilesystem:
-    """M2 (UNQUALIFIED): Windows dir-fd adapter using pinned directory handles.
+    """Bounded Win32/NT implementation of the descriptor operations below.
 
-    Retained for subsequent M2 qualification; its presence is not an M1
-    security or filesystem portability claim. Do not expand it for M1.
-
-    Windows has no Python ``dir_fd`` support.  A directory descriptor here is
-    a CRT descriptor for a CreateFile handle opened without FILE_SHARE_DELETE;
-    its final path is used for a child operation while the handle prevents the
-    directory (and each opened ancestor) from being renamed.  Reparse points
-    are opened with OPEN_REPARSE_POINT and rejected for directory traversal.
-    This adapter uses only the Windows API and Python's standard library.
+    File descriptors are real CRT descriptors owning native handles, so read,
+    write, fdopen, dup and close keep their usual meaning. Child opens use
+    NtCreateFile's RootDirectory; no child pathname is reopened as authority.
+    Handles share deletion so directory publication/renames remain possible.
+    Every relative open verifies both the parent and child's final paths before
+    exposing the descriptor (and before truncation). Lexical identity checks in
+    validate_parent separately detect replacement of a retained directory.
     """
-
-    def __getattr__(self, name):
-        return getattr(_os, name)
 
     O_DIRECTORY = _WIN_DIRECTORY
     O_NOFOLLOW = _WIN_NOFOLLOW
     O_NONBLOCK = 0
 
+    def __getattr__(self, name):
+        return getattr(_os, name)
+
     @staticmethod
+    @functools.lru_cache(maxsize=1)
     def _api():
-        import ctypes
         import msvcrt
         from ctypes import wintypes
         kernel = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -57,171 +66,407 @@ class _WindowsFilesystem:
                                        wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
         kernel.CreateFileW.restype = wintypes.HANDLE
         kernel.GetFinalPathNameByHandleW.argtypes = [wintypes.HANDLE, wintypes.LPWSTR,
-                                                       wintypes.DWORD, wintypes.DWORD]
+                                                     wintypes.DWORD, wintypes.DWORD]
         kernel.GetFinalPathNameByHandleW.restype = wintypes.DWORD
+        kernel.GetFileInformationByHandle.argtypes = [wintypes.HANDLE, ctypes.POINTER(_WinFileInformation)]
+        kernel.GetFileInformationByHandle.restype = wintypes.BOOL
         kernel.GetFileInformationByHandleEx.argtypes = [wintypes.HANDLE, ctypes.c_int,
-                                                         wintypes.LPVOID, wintypes.DWORD]
+                                                       wintypes.LPVOID, wintypes.DWORD]
         kernel.GetFileInformationByHandleEx.restype = wintypes.BOOL
         kernel.CloseHandle.argtypes = [wintypes.HANDLE]
         kernel.CloseHandle.restype = wintypes.BOOL
         return ctypes, msvcrt, wintypes, kernel
 
+    @staticmethod
+    @functools.lru_cache(maxsize=1)
+    def _nt_api():
+        nt = ctypes.WinDLL("ntdll")
+        nt.NtCreateFile.argtypes = [ctypes.POINTER(ctypes.c_void_p), ctypes.c_uint32,
+                                    ctypes.POINTER(_WinObjectAttributes), ctypes.POINTER(_WinIoStatus),
+                                    ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32,
+                                    ctypes.c_uint32, ctypes.c_void_p, ctypes.c_uint32]
+        nt.NtCreateFile.restype = ctypes.c_int32
+        nt.NtSetInformationFile.argtypes = [ctypes.c_void_p, ctypes.POINTER(_WinIoStatus),
+                                           ctypes.c_void_p, ctypes.c_uint32, ctypes.c_int32]
+        nt.NtSetInformationFile.restype = ctypes.c_int32
+        nt.RtlNtStatusToDosError.argtypes = [ctypes.c_int32]
+        nt.RtlNtStatusToDosError.restype = ctypes.c_uint32
+        return nt
+
     @classmethod
-    def _winerror(cls):
-        ctypes, _msvcrt, _wintypes, _kernel = cls._api()
-        code = ctypes.get_last_error()
-        if code in (2, 3):
-            raise FileNotFoundError(code, _os.strerror(2))
-        if code in (80, 183):
-            raise FileExistsError(code, _os.strerror(17))
-        if code in (5, 32, 33):
-            raise PermissionError(code, _os.strerror(13))
-        raise OSError(code, f"Windows filesystem operation failed (error {code})")
+    def _winerror(cls, code=None):
+        if code is None:
+            code = ctypes.get_last_error()
+        error = {2: errno.ENOENT, 3: errno.ENOENT, 5: errno.EACCES,
+                 32: errno.EACCES, 33: errno.EACCES, 80: errno.EEXIST,
+                 183: errno.EEXIST, 145: errno.ENOTEMPTY, 267: errno.ENOTDIR,
+                 17: errno.EXDEV}.get(code, errno.EIO)
+        exc = OSError(error, f"Windows filesystem operation failed (error {code})")
+        exc.winerror = code
+        raise exc
+
+    @classmethod
+    def _ntcheck(cls, status):
+        if status < 0:
+            cls._winerror(cls._nt_api().RtlNtStatusToDosError(status))
 
     @staticmethod
-    def _final_path(fd):
-        ctypes, msvcrt, wintypes, kernel = _WindowsFilesystem._api()
+    def _normal_path(path):
+        """Canonical comparison spelling; never accepts the Win32 device namespace."""
+        value = _os.fsdecode(path).replace("/", "\\")
+        if value[:8].lower() == "\\\\?\\unc\\":
+            value = "\\\\" + value[8:]
+        elif value.startswith("\\\\?\\"):
+            value = value[4:]
+        drive, tail = ntpath.splitdrive(value)
+        unc_root = drive.startswith("\\\\") and not tail
+        if (not drive or (not tail.startswith("\\") and not unc_root) or "\x00" in value
+                or value.startswith("\\\\.\\") or drive.startswith("\\\\?")):
+            raise OSError(errno.EINVAL, "filesystem path must be a DOS or UNC absolute path")
+        if not (len(drive) == 2 and drive[1] == ":"):
+            # Only a UNC server/share is permitted, never GLOBALROOT or NT devices.
+            if (not drive.startswith("\\\\") or len(drive[2:].split("\\")) != 2
+                    or not all(drive[2:].split("\\"))):
+                raise OSError(errno.EINVAL, "unsupported Windows filesystem namespace")
+        if unc_root:
+            value += "\\"
+        return ntpath.normcase(ntpath.normpath(value))
+
+    @classmethod
+    def _extended_path(cls, path):
+        # Preserve the spelling used to create entries; comparison alone folds case.
+        value = _os.fsdecode(path).replace("/", "\\")
+        cls._normal_path(value)
+        if value[:8].lower() == "\\\\?\\unc\\":
+            value = "\\\\" + value[8:]
+        elif value.startswith("\\\\?\\"):
+            value = value[4:]
+        value = ntpath.normpath(value)
+        if value.startswith("\\\\") and not ntpath.splitdrive(value)[1]:
+            value += "\\"
+        return "\\\\?\\UNC\\" + value[2:] if value.startswith("\\\\") else "\\\\?\\" + value
+
+    @classmethod
+    def _contained(cls, root, child):
+        root, child = cls._normal_path(root), cls._normal_path(child)
+        return child == root or child.startswith(root.rstrip("\\") + "\\")
+
+    @staticmethod
+    def _parts(path):
+        value = _os.fsdecode(path).replace("/", "\\")
+        if value == ".":
+            return ()
+        if not value or ntpath.splitdrive(value)[0] or value.startswith("\\"):
+            raise OSError(errno.EINVAL, "dir_fd path must be relative")
+        parts = tuple(value.split("\\"))
+        for part in parts:
+            stem = part.split(".")[0].upper()
+            if (part in ("", ".", "..") or part.endswith((".", " "))
+                    or any(c in '<>:"|?*' or ord(c) < 32 for c in part)
+                    or stem in {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"}
+                    or stem in {f"{kind}{n}" for kind in ("COM", "LPT") for n in "123456789¹²³"}):
+                raise OSError(errno.EINVAL, "filesystem path escapes or aliases its retained directory")
+        return parts
+
+    @staticmethod
+    def _reject_reparse(attributes, *, nofollow, directory):
+        return bool(attributes & 0x400) and (nofollow or directory)
+
+    @staticmethod
+    def is_reparse_point(path):
+        try:
+            return bool(_os.lstat(path).st_file_attributes & 0x400)
+        except FileNotFoundError:
+            return False
+
+    @classmethod
+    def _information(cls, fd):
+        _ctypes, msvcrt, wintypes, kernel = cls._api()
+        info = _WinFileInformation()
+        if not kernel.GetFileInformationByHandle(wintypes.HANDLE(msvcrt.get_osfhandle(int(fd))), ctypes.byref(info)):
+            cls._winerror()
+        return info
+
+    @staticmethod
+    def _file_identity(info):
+        return int(info.VolumeSerialNumber), (int(info.FileIndexHigh) << 32) | int(info.FileIndexLow)
+
+    @classmethod
+    def _final_path(cls, fd):
+        _ctypes, msvcrt, wintypes, kernel = cls._api()
         handle = msvcrt.get_osfhandle(int(fd))
         size = 512
         while True:
             buffer = ctypes.create_unicode_buffer(size)
             count = kernel.GetFinalPathNameByHandleW(wintypes.HANDLE(handle), buffer, size, 0)
             if not count:
-                _WindowsFilesystem._winerror()
+                cls._winerror()
             if count < size:
-                # Keep the extended-length prefix returned by Win32 so long
-                # paths remain usable by the subsequent absolute operation.
                 return buffer.value
             size = count + 1
 
     @classmethod
     def path_from_fd(cls, fd):
-        """Return the retained handle's final path (Windows-only helper)."""
+        """Display path only. Use pinned_path when an external API must reopen it."""
         return cls._final_path(fd)
 
     @classmethod
-    @contextmanager
-    def _resolved(cls, path, dir_fd=None):
-        """Resolve below a pinned handle, retaining every intermediate dir."""
-        from pathlib import Path
-        value = _os.fspath(path)
+    def _verify_open(cls, fd, parent_fd, parent_path):
+        after = cls._final_path(parent_fd)
+        if (cls._normal_path(after) != cls._normal_path(parent_path)
+                or not cls._contained(parent_path, cls._final_path(fd))):
+            raise OSError(errno.EACCES, "filesystem handle escaped its pinned parent")
+
+    @classmethod
+    def _open_native(cls, path, flags, mode=0o666, *, dir_fd=None, access=None,
+                     disposition=None, allow_reparse=False, share_delete=True):
+        _ctypes, msvcrt, wintypes, kernel = cls._api()
+        directory = bool(flags & cls.O_DIRECTORY)
+        nofollow = bool(flags & cls.O_NOFOLLOW) or directory
+        if access is None:
+            # Use directory-specific rights for NT opens (list/traverse,
+            # read attributes/EA/control and synchronize).
+            access = (0x1200A9 if directory else
+                      0x80000000 | 0x40000000 if flags & _os.O_RDWR else
+                      0x40000000 if flags & _os.O_WRONLY else 0x80000000)
+        access |= 0x80  # FILE_READ_ATTRIBUTES, also for write-only descriptors
+        if disposition is None:
+            disposition = 2 if flags & _os.O_CREAT and flags & _os.O_EXCL else 3 if flags & _os.O_CREAT else 1
+        share = 0x1 | 0x2 | (0x4 if share_delete else 0)
+        parent_path = cls._final_path(dir_fd) if dir_fd is not None else None
         if dir_fd is None:
-            yield value
-            return
-        if Path(value).is_absolute() or Path(value).drive or value == "":
-            raise OSError(22, "dir_fd path must be relative")
-        parts = value.replace("\\", "/").split("/")
-        if any(part in ("", "..") or ":" in part for part in parts):
-            raise OSError(22, "dir_fd path escapes its retained directory")
-        if parts == ["."]:
-            yield cls._final_path(dir_fd)
-            return
-        current_fd = int(dir_fd)
+            creation = {1: 3, 2: 1, 3: 4}[disposition]  # OPEN_EXISTING / CREATE_NEW / OPEN_ALWAYS
+            attributes = 0x02000000 | (0x00200000 if nofollow else 0)  # BACKUP_SEMANTICS / OPEN_REPARSE_POINT
+            handle = kernel.CreateFileW(str(path), access, share, None, creation, attributes, None)
+            if handle == ctypes.c_void_p(-1).value:
+                cls._winerror()
+        else:
+            # The NT namespace reopens RootDirectory with an empty name;
+            # unlike Win32, it does not resolve a literal dot component.
+            native_name = "" if str(path) == "." else str(path)
+            byte_length = len(native_name.encode("utf-16-le"))
+            if byte_length > 65532:
+                raise OSError(errno.ENAMETOOLONG, "filesystem component is too long")
+            text = ctypes.create_unicode_buffer(native_name)
+            name = _WinUnicodeString(byte_length, byte_length + 2, ctypes.cast(text, ctypes.c_void_p))
+            attrs = _WinObjectAttributes(ctypes.sizeof(_WinObjectAttributes), msvcrt.get_osfhandle(int(dir_fd)),
+                                         ctypes.pointer(name), 0x40, None, None)
+            status_block = _WinIoStatus()
+            result = ctypes.c_void_p()
+            # Synchronous handles are required by the CRT; traversals open the
+            # reparse entry itself. Truncation is deliberately deferred below.
+            options = 0x20 | 0x4000 | (0x200000 if nofollow else 0) | (0x1 if directory else 0)
+            cls._ntcheck(cls._nt_api().NtCreateFile(ctypes.byref(result), access | 0x100000,
+                         ctypes.byref(attrs), ctypes.byref(status_block), None, 0x80, share,
+                         disposition, options, None, 0))
+            handle = result.value
+        descriptor = None
+        try:
+            descriptor_flags = flags & (_os.O_WRONLY | _os.O_RDWR | _os.O_APPEND)
+            descriptor_flags |= getattr(_os, "O_BINARY", 0) | getattr(_os, "O_NOINHERIT", 0)
+            descriptor = msvcrt.open_osfhandle(int(handle), descriptor_flags)
+            handle = None
+            info = cls._information(descriptor)
+            if not allow_reparse and cls._reject_reparse(info.FileAttributes, nofollow=nofollow, directory=directory):
+                raise OSError(errno.ELOOP, "reparse point is not allowed")
+            if directory and not info.FileAttributes & 0x10:
+                raise NotADirectoryError(errno.ENOTDIR, str(path))
+            if dir_fd is not None:
+                cls._verify_open(descriptor, dir_fd, parent_path)
+            if flags & _os.O_TRUNC:
+                _os.ftruncate(descriptor, 0)
+            result_fd, descriptor = descriptor, None
+            return result_fd
+        finally:
+            if descriptor is not None:
+                _os.close(descriptor)
+            if handle is not None:
+                kernel.CloseHandle(wintypes.HANDLE(handle))
+
+    @classmethod
+    @contextmanager
+    def _parent(cls, path, dir_fd=None):
+        """Retain the actual parent, resolving one ordinary component at a time."""
         owned = []
         try:
+            if dir_fd is None:
+                value = _os.fsdecode(path)
+                drive, tail = ntpath.splitdrive(value)
+                if drive and not drive.startswith("\\\\") and not tail.startswith(("/", "\\")):
+                    raise OSError(errno.EINVAL, "drive-relative paths are not supported")
+                absolute = cls._extended_path(_os.path.abspath(value))
+                drive, tail = ntpath.splitdrive(absolute)
+                current = cls._open_native(drive + "\\", _os.O_RDONLY | cls.O_DIRECTORY | cls.O_NOFOLLOW)
+                owned.append(current)
+                parts = cls._parts(tail.lstrip("\\")) if tail.lstrip("\\") else ()
+            else:
+                # Keep transient parents immovable until the child operation
+                # finishes, including each component of a multi-part name.
+                current = cls._open_native(".", _os.O_RDONLY | cls.O_DIRECTORY | cls.O_NOFOLLOW,
+                                           dir_fd=int(dir_fd), share_delete=False)
+                owned.append(current)
+                parts = cls._parts(path)
+            root_path = cls._final_path(current)
             for component in parts[:-1]:
-                current_path = _os.path.join(cls._final_path(current_fd), component)
-                current_fd = cls._open_native(
-                    current_path, _os.O_RDONLY | cls.O_DIRECTORY | cls.O_NOFOLLOW,
-                )
-                owned.append(current_fd)
-            yield _os.path.join(cls._final_path(current_fd), parts[-1])
+                current = cls._open_native(component, _os.O_RDONLY | cls.O_DIRECTORY | cls.O_NOFOLLOW,
+                                           dir_fd=current, share_delete=False)
+                owned.append(current)
+                if not cls._contained(root_path, cls._final_path(current)):
+                    raise OSError(errno.EACCES, "filesystem directory escaped its pinned root")
+            yield current, parts[-1] if parts else "."
+        finally:
+            for fd in reversed(owned):
+                _os.close(fd)
+
+    @classmethod
+    @contextmanager
+    def pinned_path(cls, fd):
+        """Lock every lexical ancestor while SQLite/another path-only API runs."""
+        path = cls._final_path(fd)
+        drive, tail = ntpath.splitdrive(cls._extended_path(path))
+        owned = []
+        try:
+            current = cls._open_native(drive + "\\", _os.O_RDONLY | cls.O_DIRECTORY | cls.O_NOFOLLOW,
+                                       share_delete=False)
+            owned.append(current)
+            for component in cls._parts(tail.lstrip("\\")) if tail.lstrip("\\") else ():
+                current = cls._open_native(component, _os.O_RDONLY | cls.O_DIRECTORY | cls.O_NOFOLLOW,
+                                           dir_fd=current, share_delete=False)
+                owned.append(current)
+            if (cls._file_identity(cls._information(current)) != cls._file_identity(cls._information(fd))
+                    or cls._normal_path(cls._final_path(fd)) != cls._normal_path(path)):
+                raise OSError(errno.EACCES, "filesystem lexical directory identity changed")
+            yield path
         finally:
             for descriptor in reversed(owned):
                 _os.close(descriptor)
 
     @classmethod
-    def _open_native(cls, path, flags, mode=0o666):
-        ctypes, msvcrt, wintypes, kernel = cls._api()
-        access = 0
-        if flags & _os.O_RDWR:
-            access = 0x80000000 | 0x40000000 | 0x80
-        elif flags & _os.O_WRONLY:
-            access = 0x40000000 | 0x80
-        else:
-            access = 0x80000000 | 0x80
-        create = bool(flags & (_os.O_CREAT | _os.O_EXCL))
-        if flags & _os.O_EXCL and create:
-            disposition = 1  # CREATE_NEW
-        elif flags & _os.O_TRUNC and create:
-            disposition = 2  # CREATE_ALWAYS
-        elif flags & _os.O_TRUNC:
-            disposition = 5  # TRUNCATE_EXISTING
-        elif create:
-            disposition = 4  # OPEN_ALWAYS
-        else:
-            disposition = 3  # OPEN_EXISTING
-        directory = bool(flags & cls.O_DIRECTORY)
-        nofollow = bool(flags & cls.O_NOFOLLOW)
-        flags &= ~(cls.O_DIRECTORY | cls.O_NOFOLLOW | cls.O_NONBLOCK)
-        attrs = 0x80  # NORMAL
-        if directory:
-            attrs |= 0x02000000  # BACKUP_SEMANTICS
-        if directory or nofollow:
-            attrs |= 0x00200000  # FILE_FLAG_OPEN_REPARSE_POINT
-        # Deliberately omit FILE_SHARE_DELETE: the handle pins directory names.
-        share = 0x1 | 0x2 | (0 if directory else 0x4)
-        handle = kernel.CreateFileW(str(path), access, share, None, disposition, attrs, None)
-        invalid = ctypes.c_void_p(-1).value
-        if handle == invalid:
-            cls._winerror()
-        try:
-            info = (ctypes.c_uint32 * 2)()
-            if not kernel.GetFileInformationByHandleEx(
-                wintypes.HANDLE(handle), 9, ctypes.byref(info), ctypes.sizeof(info)
-            ):
-                cls._winerror()
-            attributes = int(info[0])
-            if (nofollow or directory) and attributes & 0x400:
-                raise OSError(40, "reparse point is not allowed")
-            if directory and not attributes & 0x10:
-                raise NotADirectoryError(str(path))
-            descriptor_flags = flags & (_os.O_RDONLY | _os.O_WRONLY | _os.O_RDWR | _os.O_APPEND)
-            descriptor_flags |= getattr(_os, "O_BINARY", 0) | getattr(_os, "O_NOINHERIT", 0)
-            descriptor = msvcrt.open_osfhandle(int(handle), descriptor_flags)
-            handle = None
-            return descriptor
-        finally:
-            if handle is not None:
-                kernel.CloseHandle(wintypes.HANDLE(handle))
+    @contextmanager
+    def create_file_path_at(cls, directory_fd, name):
+        """Create and pin a fresh file for SQLite's path-only writer.
+
+        Locking only the directory leaves the final entry replaceable by a
+        reparse point before SQLite opens it. This handle denies deletion of
+        that entry until the external writer has closed its connection.
+        """
+        with cls._parent(name, directory_fd) as (parent, leaf):
+            fd = cls._open_native(leaf, _os.O_RDWR | _os.O_CREAT | _os.O_EXCL | cls.O_NOFOLLOW,
+                                  dir_fd=parent, share_delete=False)
+            try:
+                with cls.pinned_path(parent) as root:
+                    yield ntpath.join(root, leaf)
+            finally:
+                _os.close(fd)
+
+    @classmethod
+    @contextmanager
+    def _resolved(cls, path, dir_fd=None):
+        with cls._parent(path, dir_fd) as (parent, name), cls.pinned_path(parent) as root:
+            yield ntpath.join(root, name)
 
     def open(self, path, flags, mode=0o777, *, dir_fd=None):
-        with self._resolved(path, dir_fd) as target:
-            return self._open_native(target, flags, mode)
+        with self._parent(path, dir_fd) as (parent, name):
+            return self._open_native(name, flags, mode, dir_fd=parent)
+
+    @classmethod
+    def fstat(cls, fd):
+        value = _os.fstat(fd)
+        info = cls._information(fd)
+        fields = list(value)
+        fields[1], fields[2] = cls._file_identity(info)[1], cls._file_identity(info)[0]
+        fields[0] = ((stat.S_IFLNK if info.FileAttributes & 0x400 else
+                      stat.S_IFDIR if info.FileAttributes & 0x10 else stat.S_IFREG)
+                     | stat.S_IMODE(value.st_mode))
+        extra = {key: getattr(value, key) for key in ("st_atime", "st_mtime", "st_ctime",
+                 "st_atime_ns", "st_mtime_ns", "st_ctime_ns", "st_birthtime", "st_birthtime_ns",
+                 "st_reparse_tag") if hasattr(value, key)}
+        if hasattr(value, "st_file_attributes"):
+            extra["st_file_attributes"] = int(info.FileAttributes)
+        return _os.stat_result(fields, extra)
 
     def stat(self, path, *, dir_fd=None, follow_symlinks=True):
-        with self._resolved(path, dir_fd) as target:
-            if not follow_symlinks:
-                return _os.lstat(target)
-            return _os.stat(target)
+        if isinstance(path, int):
+            return self.fstat(path)
+        with self._parent(path, dir_fd) as (parent, name):
+            fd = self._open_native(name, 0 if follow_symlinks else self.O_NOFOLLOW,
+                                   dir_fd=parent, access=0x80, allow_reparse=not follow_symlinks)
+            try:
+                return self.fstat(fd)
+            finally:
+                _os.close(fd)
+
+    def lstat(self, path, *, dir_fd=None):
+        return self.stat(path, dir_fd=dir_fd, follow_symlinks=False)
 
     def mkdir(self, path, mode=0o777, *, dir_fd=None):
-        with self._resolved(path, dir_fd) as target:
-            return _os.mkdir(target, mode)
+        with self._parent(path, dir_fd) as (parent, name):
+            fd = self._open_native(name, self.O_DIRECTORY | self.O_NOFOLLOW, mode,
+                                   dir_fd=parent, disposition=2)
+            _os.close(fd)
+
+    @classmethod
+    def _set_information(cls, fd, info, information_class, size=None):
+        _ctypes, msvcrt, _wintypes, _kernel = cls._api()
+        status_block = _WinIoStatus()
+        cls._ntcheck(cls._nt_api().NtSetInformationFile(msvcrt.get_osfhandle(int(fd)),
+                     ctypes.byref(status_block), ctypes.byref(info), size or ctypes.sizeof(info), information_class))
+
+    def _delete(self, path, *, dir_fd=None, directory=False):
+        with self._parent(path, dir_fd) as (parent, name):
+            if name == ".":
+                raise OSError(errno.EINVAL, "cannot remove a retained parent")
+            fd = self._open_native(name, self.O_NOFOLLOW, dir_fd=parent, access=0x10000, allow_reparse=True)
+            try:
+                attributes = self._information(fd).FileAttributes
+                if ((directory and not attributes & 0x10)
+                        or (not directory and attributes & 0x10 and not attributes & 0x400)):
+                    error = NotADirectoryError if directory else IsADirectoryError
+                    raise error(errno.ENOTDIR if directory else errno.EISDIR, str(path))
+                self._set_information(fd, ctypes.c_ubyte(1), 13)  # FileDispositionInformation
+            finally:
+                _os.close(fd)
 
     def unlink(self, path, *, dir_fd=None):
-        with self._resolved(path, dir_fd) as target:
-            return _os.unlink(target)
+        return self._delete(path, dir_fd=dir_fd)
 
     remove = unlink
 
     def rmdir(self, path, *, dir_fd=None):
-        with self._resolved(path, dir_fd) as target:
-            return _os.rmdir(target)
+        return self._delete(path, dir_fd=dir_fd, directory=True)
+
+    def _move(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None, link=False, follow_symlinks=False):
+        with self._parent(src, src_dir_fd) as (source_parent, source_name), self._parent(dst, dst_dir_fd) as (parent, name):
+            if source_name == "." or name == ".":
+                raise OSError(errno.EINVAL, "cannot rename or link a retained parent")
+            fd = self._open_native(source_name, 0 if follow_symlinks else self.O_NOFOLLOW,
+                                   dir_fd=source_parent, access=0x80 if link else 0x10000,
+                                   allow_reparse=not follow_symlinks)
+            try:
+                # The destination is an NT name below the retained directory;
+                # replacing a reparse entry never follows that entry's target.
+                data = name.encode("utf-16-le")
+                buffer = ctypes.create_string_buffer(ctypes.sizeof(_WinNameInformation) + len(data))
+                info = _WinNameInformation.from_buffer(buffer)
+                info.ReplaceIfExists = not link
+                info.RootDirectory = self._api()[1].get_osfhandle(int(parent))
+                info.FileNameLength = len(data)
+                ctypes.memmove(ctypes.addressof(buffer) + _WinNameInformation.FileName.offset, data, len(data))
+                self._set_information(fd, buffer, 11 if link else 10)
+            finally:
+                _os.close(fd)
 
     def rename(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None):
-        with self._resolved(src, src_dir_fd) as source, self._resolved(dst, dst_dir_fd) as target:
-            return _os.replace(source, target)
+        return self._move(src, dst, src_dir_fd=src_dir_fd, dst_dir_fd=dst_dir_fd)
 
-    def replace(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None):
-        with self._resolved(src, src_dir_fd) as source, self._resolved(dst, dst_dir_fd) as target:
-            return _os.replace(source, target)
+    replace = rename
 
     def link(self, src, dst, *, src_dir_fd=None, dst_dir_fd=None, follow_symlinks=True):
-        with self._resolved(src, src_dir_fd) as source, self._resolved(dst, dst_dir_fd) as target:
-            return _os.link(source, target, follow_symlinks=follow_symlinks)
+        return self._move(src, dst, src_dir_fd=src_dir_fd, dst_dir_fd=dst_dir_fd,
+                          link=True, follow_symlinks=follow_symlinks)
 
     def readlink(self, path, *, dir_fd=None):
+        # No target traversal: the path-only API sees a locked ancestor chain.
         with self._resolved(path, dir_fd) as target:
             return _os.readlink(target)
 
@@ -230,38 +475,160 @@ class _WindowsFilesystem:
             return _os.symlink(src, target, target_is_directory=target_is_directory)
 
     def chmod(self, path, mode, *, dir_fd=None, follow_symlinks=True):
-        # The adapter does not pretend POSIX mode bits configure Windows ACLs.
+        # POSIX modes do not configure Windows ACLs; see platform.owner_only.
         return None
-
-    def scandir(self, path="."):
-        if isinstance(path, int):
-            path = self._final_path(path)
-        return _os.scandir(path)
-
-    def listdir(self, path=None):
-        if isinstance(path, int):
-            path = self._final_path(path)
-        return _os.listdir(path)
-
-    @classmethod
-    def fsync(cls, fd):
-        # FlushFileBuffers on directory handles is not supported by Windows.
-        try:
-            _os.fsync(fd)
-        except OSError:
-            ctypes, msvcrt, wintypes, kernel = cls._api()
-            info = (ctypes.c_uint32 * 2)()
-            handle = wintypes.HANDLE(msvcrt.get_osfhandle(int(fd)))
-            if (not kernel.GetFileInformationByHandleEx(handle, 9, ctypes.byref(info), ctypes.sizeof(info))
-                    or not (int(info[0]) & 0x10)):
-                raise
 
     @staticmethod
     def fchmod(fd, mode):
-        # Windows ACLs, not POSIX mode bits, govern access. Runtime's owner-only
-        # boundary is implemented with per-user storage and native ACL policy.
         return None
 
+    def scandir(self, path="."):
+        return _WindowsScandir(self, path)
+
+    def listdir(self, path="."):
+        with self.scandir("." if path is None else path) as entries:
+            return [entry.name for entry in entries]
+
+    @classmethod
+    def fsync(cls, fd):
+        # Windows cannot flush directory handles. File flush errors still fail.
+        if not cls._information(fd).FileAttributes & 0x10:
+            _os.fsync(fd)
+
+
+class _WinUnicodeString(ctypes.Structure):
+    _fields_ = [("Length", ctypes.c_uint16), ("MaximumLength", ctypes.c_uint16), ("Buffer", ctypes.c_void_p)]
+
+
+class _WinObjectAttributes(ctypes.Structure):
+    _fields_ = [("Length", ctypes.c_uint32), ("RootDirectory", ctypes.c_void_p),
+                ("ObjectName", ctypes.POINTER(_WinUnicodeString)), ("Attributes", ctypes.c_uint32),
+                ("SecurityDescriptor", ctypes.c_void_p), ("SecurityQualityOfService", ctypes.c_void_p)]
+
+
+class _WinIoStatus(ctypes.Structure):
+    _fields_ = [("Status", ctypes.c_void_p), ("Information", ctypes.c_size_t)]
+
+
+class _WinNameInformation(ctypes.Structure):
+    _fields_ = [("ReplaceIfExists", ctypes.c_ubyte), ("RootDirectory", ctypes.c_void_p),
+                ("FileNameLength", ctypes.c_uint32), ("FileName", ctypes.c_uint16 * 1)]
+
+
+class _WinFileInformation(ctypes.Structure):
+    _fields_ = [("FileAttributes", ctypes.c_uint32), ("Times", ctypes.c_uint32 * 6),
+                ("VolumeSerialNumber", ctypes.c_uint32), ("FileSizeHigh", ctypes.c_uint32),
+                ("FileSizeLow", ctypes.c_uint32), ("NumberOfLinks", ctypes.c_uint32),
+                ("FileIndexHigh", ctypes.c_uint32), ("FileIndexLow", ctypes.c_uint32)]
+
+
+class _WinDirectoryInformation(ctypes.Structure):
+    _fields_ = [("NextEntryOffset", ctypes.c_uint32), ("FileIndex", ctypes.c_uint32),
+                ("CreationTime", ctypes.c_int64), ("LastAccessTime", ctypes.c_int64),
+                ("LastWriteTime", ctypes.c_int64), ("ChangeTime", ctypes.c_int64),
+                ("EndOfFile", ctypes.c_int64), ("AllocationSize", ctypes.c_int64),
+                ("FileAttributes", ctypes.c_uint32), ("FileNameLength", ctypes.c_uint32),
+                ("EaSize", ctypes.c_uint32), ("ShortNameLength", ctypes.c_ubyte),
+                ("ShortName", ctypes.c_uint16 * 12), ("FileId", ctypes.c_int64),
+                ("FileName", ctypes.c_uint16 * 1)]
+
+
+class _WindowsDirEntry:
+    def __init__(self, root, name, info, volume):
+        self.name = name
+        self.path = ntpath.join(root, name)
+        mode = stat.S_IFLNK if info.FileAttributes & 0x400 else stat.S_IFDIR if info.FileAttributes & 0x10 else stat.S_IFREG
+        times = [(getattr(info, key) - 116444736000000000) * 100 for key in
+                 ("LastAccessTime", "LastWriteTime", "CreationTime")]
+        permissions = 0o777 if info.FileAttributes & 0x10 else 0o666
+        if info.FileAttributes & 0x1:
+            permissions &= ~0o222
+        self._stat = _os.stat_result((mode | permissions, info.FileId & ((1 << 64) - 1), volume,
+                                      1, 0, 0, info.EndOfFile, *(v / 1e9 for v in times)),
+                                     dict(zip(("st_atime_ns", "st_mtime_ns", "st_ctime_ns"), times)))
+
+    def __fspath__(self):
+        return self.path
+
+    def stat(self, *, follow_symlinks=True):
+        if follow_symlinks and self.is_symlink():
+            raise OSError(errno.ELOOP, "reparse point is not allowed")
+        return self._stat
+
+    def inode(self):
+        return self._stat.st_ino
+
+    def is_symlink(self):
+        return stat.S_ISLNK(self._stat.st_mode)
+
+    def is_dir(self, *, follow_symlinks=True):
+        return stat.S_ISDIR(self.stat(follow_symlinks=follow_symlinks).st_mode)
+
+    def is_file(self, *, follow_symlinks=True):
+        return stat.S_ISREG(self.stat(follow_symlinks=follow_symlinks).st_mode)
+
+
+class _WindowsScandir:
+    """Enumerate through a handle, including metadata, without an absolute reopen."""
+
+    def __init__(self, filesystem, path):
+        self._filesystem = filesystem
+        flags = _os.O_RDONLY | filesystem.O_DIRECTORY | filesystem.O_NOFOLLOW
+        self._fd = (filesystem.open(".", flags, dir_fd=path) if isinstance(path, int)
+                    else filesystem.open(path, flags))
+        self._iterator = self._entries()
+
+    def _entries(self):
+        fs = self._filesystem
+        _ctypes, msvcrt, wintypes, kernel = fs._api()
+        try:
+            volume = fs._information(self._fd).VolumeSerialNumber
+            root = fs._final_path(self._fd)
+            buffer = ctypes.create_string_buffer(65536)
+            first = True
+            while True:
+                ok = kernel.GetFileInformationByHandleEx(wintypes.HANDLE(msvcrt.get_osfhandle(self._fd)),
+                                                         11 if first else 10, buffer, len(buffer))
+                first = False
+                if not ok:
+                    code = ctypes.get_last_error()
+                    if code == 18:  # ERROR_NO_MORE_FILES
+                        return
+                    fs._winerror(code)
+                offset = 0
+                while True:
+                    info = _WinDirectoryInformation.from_buffer(buffer, offset)
+                    start = offset + _WinDirectoryInformation.FileName.offset
+                    name = buffer.raw[start:start + info.FileNameLength].decode("utf-16-le")
+                    if name not in (".", ".."):
+                        yield _WindowsDirEntry(root, name, info, volume)
+                    if not info.NextEntryOffset:
+                        break
+                    offset += info.NextEntryOffset
+        finally:
+            self.close()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._fd is None:
+            raise StopIteration
+        return next(self._iterator)
+
+    def close(self):
+        if getattr(self, "_fd", None) is not None:
+            _os.close(self._fd)
+            self._fd = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.close()
+
+    def __del__(self):  # pragma: no cover - interpreter cleanup
+        self.close()
 
 filesystem = _WindowsFilesystem() if _os.name == "nt" else _os
 os = filesystem
@@ -281,7 +648,7 @@ def has_symlink_component(value: str | Path) -> bool:
     for component in path.parts[1:]:
         current /= component
         try:
-            if current.is_symlink():
+            if getattr(os, "is_reparse_point", Path.is_symlink)(current):
                 return True
         except OSError as exc:
             raise ConflictError(f"filesystem path cannot be inspected safely: {path}") from exc
