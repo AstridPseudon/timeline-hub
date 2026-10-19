@@ -1,19 +1,24 @@
 """Contract checks for the Remotion render surface.
 
-These are deliberately dependency-light: the Remotion typecheck requires
-`remotion/node_modules`, which is absent in CI by default, so the typecheck is
-run only as an opportunistic smoke when dependencies are present. The remaining
-checks prove the augmentation import resolves and that the public text-card
+The Remotion typecheck requires `remotion/node_modules`, which is absent in CI
+by default, so that check remains an opportunistic smoke. The text-card check
+requires a provisioned, selected Remotion runtime and proves that the public
 registry component renders visible markup rather than an empty frame.
 """
 
 from __future__ import annotations
 
+import json
+import os
 import re
+import shutil
 import subprocess
 import unittest
-import pytest
 from pathlib import Path
+
+import pytest
+
+from astrid.core.rendering.remotion_runtime import resolve_remotion_project_dir
 
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
@@ -62,10 +67,41 @@ class RemotionAugmentationImportTest(unittest.TestCase):
 
 class TextCardVisibleMarkupTest(unittest.TestCase):
     def test_text_card_renders_visible_markup(self) -> None:
-        import json
-        import os
-        import shutil
         import tempfile
+
+        project_dir = resolve_remotion_project_dir()
+        snapshot_package_path = REMOTION / "package.json"
+        snapshot_lock_path = REMOTION / "package-lock.json"
+        runtime_package_path = project_dir / "package.json"
+        runtime_lock_path = project_dir / "package-lock.json"
+
+        self.assertTrue(
+            runtime_package_path.is_file(),
+            f"selected Remotion runtime is missing package.json: {runtime_package_path}",
+        )
+        self.assertTrue(
+            runtime_lock_path.is_file(),
+            f"selected Remotion runtime is missing package-lock.json: {runtime_lock_path}",
+        )
+        snapshot_package = json.loads(snapshot_package_path.read_text(encoding="utf-8"))
+        runtime_package = json.loads(runtime_package_path.read_text(encoding="utf-8"))
+        snapshot_lock = json.loads(snapshot_lock_path.read_text(encoding="utf-8"))
+        runtime_lock = json.loads(runtime_lock_path.read_text(encoding="utf-8"))
+
+        # The configured runtime owns dependencies, but the wrapper and the
+        # expected package contract must still come from this source snapshot.
+        # Comparing the tracked documents prevents an unrelated installed graph
+        # (for example App's node_modules) from satisfying this SSR test.
+        self.assertEqual(
+            runtime_package,
+            snapshot_package,
+            f"selected Remotion runtime {runtime_package_path} disagrees with snapshot package.json",
+        )
+        self.assertEqual(
+            runtime_lock,
+            snapshot_lock,
+            f"selected Remotion runtime {runtime_lock_path} disagrees with snapshot package-lock.json",
+        )
 
         node = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node")
         if not node:
@@ -89,17 +125,15 @@ class TextCardVisibleMarkupTest(unittest.TestCase):
         self.assertEqual(
             node_version.stdout.strip(),
             "v"
-            + json.loads((REMOTION / "package.json").read_text(encoding="utf-8"))["engines"][
-                "node"
-            ].removeprefix("="),
+            + snapshot_package["engines"]["node"].removeprefix("="),
             msg="SSR contract must resolve the Node version pinned by remotion/package.json",
         )
 
-        node_modules = REMOTION / "node_modules"
+        node_modules = project_dir / "node_modules"
         if not node_modules.is_dir():
             self.fail(
-                "SSR contract dependencies are missing; run `cd remotion && npm ci` "
-                "with the Node version pinned by remotion/package.json"
+                f"SSR contract dependencies are missing from selected runtime {node_modules}; "
+                "provision the process-configured Remotion runtime with the Node version pinned by remotion/package.json"
             )
 
         node_script = r"""
