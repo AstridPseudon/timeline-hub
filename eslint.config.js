@@ -5,7 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 import { dialogEarlyReturnRestrictedSyntax } from "./eslint-rules/dialogEarlyReturnRule.js";
 import { strictLintDebtFiles } from "./eslint.strict-debt.js";
-import { sharedLayerAllowlist } from "./eslint.shared-layer-allowlist.js";
+import { sharedLayerAllowlist, sharedLayerEnforcedFiles } from "./eslint.shared-layer-allowlist.js";
 
 // Plan A (F1): the Runtime's path prefixes come from src/integrations/runtime/connection.ts, which
 // picks the same-origin base or the loopback gateway's. A literal elsewhere would bypass that choice
@@ -16,11 +16,31 @@ const runtimePathRestrictedSyntax = {
   message: "Build Runtime and Astrid paths from connection.ts (runtimeApiBase(), astridBase()) instead of a literal '/api/runtime' or '/api/astrid' path. A literal bypasses the hosted origin.",
 };
 
-// The cloud product is removed; nothing may bring the Supabase SDK back.
+// The cloud product is removed; nothing may bring the Supabase SDK back. This pattern lives on
+// @typescript-eslint/no-restricted-imports, a different rule key from the shared-layer and URL-helper
+// rules below, so it never replaces their options (flat config replaces a rule's options per file).
 const supabaseSdkRestrictedPattern = {
   group: ["@supabase/*"],
   message: "The Supabase client was removed from the App. Use the Runtime or Astrid clients under src/integrations/.",
 };
+
+const urlHelperRestrictedPaths = [
+  {
+    name: "@/shared/lib/utils",
+    importNames: ["getDisplayUrl", "stripQueryParameters"],
+    message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
+  },
+  {
+    name: "./utils",
+    importNames: ["getDisplayUrl", "stripQueryParameters"],
+    message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
+  },
+  {
+    name: "../utils",
+    importNames: ["getDisplayUrl", "stripQueryParameters"],
+    message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
+  },
+];
 
 const strictRefreshFiles = [
   "src/app/**/*.{ts,tsx}",
@@ -128,23 +148,7 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": ["error", {
-        paths: [
-          {
-            name: "@/shared/lib/utils",
-            importNames: ["getDisplayUrl", "stripQueryParameters"],
-            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-          {
-            name: "./utils",
-            importNames: ["getDisplayUrl", "stripQueryParameters"],
-            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-          {
-            name: "../utils",
-            importNames: ["getDisplayUrl", "stripQueryParameters"],
-            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-        ],
+        paths: urlHelperRestrictedPaths,
       }],
     },
   },
@@ -161,23 +165,7 @@ export default tseslint.config(
     ],
     rules: {
       "no-restricted-imports": ["error", {
-        paths: [
-          {
-            name: "@/shared/lib/utils",
-            importNames: ["getDisplayUrl", "stripQueryParameters"],
-            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-          {
-            name: "./utils",
-            importNames: ["getDisplayUrl", "stripQueryParameters"],
-            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-          {
-            name: "../utils",
-            importNames: ["getDisplayUrl", "stripQueryParameters"],
-            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-        ],
+        paths: urlHelperRestrictedPaths,
         patterns: [{
           group: ["@/tools/*", "**/tools/*"],
           message: "shared/ cannot import from tools/. Move the type/utility to shared/, or move the component to tools/. See tasks/2026-02-02-shared-tools-cleanup.md for documented exceptions."
@@ -205,19 +193,24 @@ export default tseslint.config(
       }],
     },
   },
-  // The cloud product is removed: nothing under src/ may bring the Supabase SDK back.
-  // Flat config replaces a rule's options per file, so this block (like the facade block it
-  // replaces) supersedes the shared-layer patterns above for the non-test files it matches.
+  // Where the shared-layer rule is live. Before the cloud removal the Supabase facade block
+  // replaced that rule's options for every `src` file outside its allowlist, so the rule only ever
+  // fired on the files in `sharedLayerEnforcedFiles`; the other `src/shared` files have never been
+  // checked (56 known `shared/ -> domains|features` violations in 51 files, owned debt; the
+  // `shared/ -> tools/` pattern above is likewise replaced by this block's options and never fires).
+  // This block restores exactly that coverage: outside the enforced files only the URL-helper paths
+  // apply. Lift the mask by deleting this block once the 51 files are moved or allowlisted.
   {
-    files: ["src/**/*.{ts,tsx}"],
+    files: ["src/shared/**/*.{ts,tsx}"],
     ignores: [
-      "src/**/__tests__/**/*.{ts,tsx}",
-      "src/**/*.test.ts",
-      "src/**/*.test.tsx",
+      "src/shared/**/__tests__/**/*.{ts,tsx}",
+      "src/shared/**/*.test.ts",
+      "src/shared/**/*.test.tsx",
+      ...sharedLayerEnforcedFiles,
     ],
     rules: {
       "no-restricted-imports": ["error", {
-        patterns: [supabaseSdkRestrictedPattern],
+        paths: urlHelperRestrictedPaths,
       }],
     },
   },
@@ -247,7 +240,7 @@ export default tseslint.config(
         patterns: [{
           group: ["node:*"],
           message: "Node builtins are not available in the browser bundle: Vite externalizes them into stubs that throw at import time. Node-adjacent runtime code belongs under 'src/tools/video-editor/runtime/processes/**' and must resolve the module lazily via `process.getBuiltinModule`, not a static import.",
-        }],
+        }, supabaseSdkRestrictedPattern],
         paths: [
           "child_process", "util", "fs", "path", "os", "net", "stream", "buffer", "worker_threads",
         ].map((name) => ({
@@ -282,7 +275,7 @@ export default tseslint.config(
           group: ["node:*"],
           allowTypeImports: true,
           message: "Resolve node:* modules lazily via `process.getBuiltinModule` (see ProcessManager.ts's loadNodeChildProcess) instead of a static value import -- a static import externalizes into a browser stub that throws at load time. Type-only imports are fine.",
-        }],
+        }, supabaseSdkRestrictedPattern],
         paths: [
           "child_process", "util", "fs", "path", "os", "net", "stream", "buffer", "worker_threads",
         ].map((name) => ({
@@ -290,6 +283,20 @@ export default tseslint.config(
           allowTypeImports: true,
           message: "Resolve Node builtins lazily via `process.getBuiltinModule` instead of a static value import -- a static import externalizes into a browser stub that throws at load time. Type-only imports are fine.",
         })),
+      }],
+    },
+  },
+  // Supabase SDK ban for the src files the Node builtin blocks above ignore (src/test, spec files).
+  {
+    files: ["src/test/**/*.{ts,tsx}", "src/**/*.spec.{ts,tsx}"],
+    ignores: [
+      "src/**/__tests__/**/*.{ts,tsx}",
+      "src/**/*.test.ts",
+      "src/**/*.test.tsx",
+    ],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        patterns: [supabaseSdkRestrictedPattern],
       }],
     },
   }

@@ -1,4 +1,0 @@
-# Ignore Deno files - we don't need them for frontend build
-deno.json
-deno.lock
-

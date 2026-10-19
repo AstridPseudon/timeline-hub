@@ -4,6 +4,8 @@ export const sharedLayerAllowlist = [
   'src/shared/components/ImageGenerationForm/components/ShotSelector.tsx',
   'src/shared/components/ImageGenerationForm/components/reference/ReferenceSection.tsx',
   'src/shared/components/ImageGenerationForm/hooks/useImageGenForm.ts',
+  'src/shared/components/InlineSegmentVideo/types.ts',
+  'src/shared/components/InlineSegmentVideo/useSegmentBadge.ts',
   'src/shared/components/MediaGallery/components/MediaGalleryGrid.tsx',
   'src/shared/components/MediaGallery/components/MediaGalleryHeader.tsx',
   'src/shared/components/MediaGallery/components/MediaGalleryLightbox.tsx',
@@ -35,6 +37,9 @@ export const sharedLayerAllowlist = [
   'src/shared/components/ShotImageManager/utils/external-generation-utils.ts',
   'src/shared/components/ShotImageManager/utils/image-utils.ts',
   'src/shared/components/ShotImageManager/utils/reorder-utils.ts',
+  'src/shared/components/selectors/ShotFilter.tsx',
+  'src/shared/components/selectors/ShotSelector.tsx',
+  'src/shared/components/selectors/ShotSelectorWithAdd.tsx',
   'src/shared/components/ToolsPane/ToolsPane.tsx',
   'src/shared/contexts/GenerationTaskContext.tsx',
   'src/shared/contexts/ShotsContext.tsx',
@@ -49,6 +54,8 @@ export const sharedLayerAllowlist = [
   'src/shared/hooks/shots/cacheUtils.ts',
   'src/shared/hooks/shots/mappers.ts',
   'src/shared/hooks/shots/useShotGenerationMutations.ts',
+  'src/shared/hooks/shots/useShotNavigation.ts',
+  'src/shared/hooks/timeline/useTimelineCore.types.ts',
   'src/shared/hooks/usePendingImageOpen.ts',
   'src/shared/lib/generationTransformers.ts',
   'src/shared/lib/media/mediaTypeHelpers.ts',
@@ -56,4 +63,39 @@ export const sharedLayerAllowlist = [
   'src/shared/components/SettingsModal/sections/ExtensionsSection.test.tsx',
   'src/shared/hooks/tasks/useTaskPrefetch.ts',
   'src/shared/hooks/shots/useShotImages.ts',
+];
+
+// The inverse of the list above: the only `src/shared` files where the shared-layer rule is live.
+// Before the cloud removal the Supabase facade block replaced that rule for every other `src` file, and
+// eslint.config.js keeps the same coverage. Entries leave this list when their file is deleted. Adding a
+// file turns the rule on for it (it must be violation free); lifting the mask for everything is described
+// at the "Where the shared-layer rule is live" block in eslint.config.js.
+export const sharedLayerEnforcedFiles = [
+  'src/shared/components/MediaGallery/hooks/useMediaGalleryLightboxControllers.ts',
+  'src/shared/components/TaskDetails/VideoTravelDetails.tsx',
+  'src/shared/contexts/AuthContext.tsx',
+  'src/shared/contexts/UserSettingsContext.tsx',
+  'src/shared/hooks/projects/useProjectGenerationModesCache.ts',
+  'src/shared/hooks/projects/useProjectGenerations.ts',
+  'src/shared/hooks/projects/useProjectVideoCountsCache.ts',
+  'src/shared/hooks/settings/useToolSettings.ts',
+  'src/shared/hooks/tasks/paginatedTaskRepository.ts',
+  'src/shared/hooks/tasks/usePendingSegmentTasks.ts',
+  'src/shared/hooks/tasks/useTaskCancellation.ts',
+  'src/shared/hooks/tasks/useTaskPlaceholder.ts',
+  'src/shared/hooks/tasks/useTaskStatusCounts.ts',
+  'src/shared/hooks/tasks/useTaskType.ts',
+  'src/shared/hooks/tasks/useTasks.ts',
+  'src/shared/hooks/timeline/timelineMutationService.ts',
+  'src/shared/hooks/useOnboarding.ts',
+  'src/shared/hooks/useUserUIState.ts',
+  'src/shared/hooks/variants/useMarkVariantViewed.ts',
+  'src/shared/hooks/variants/useVariants.ts',
+  'src/shared/lib/debug/debugPolling.ts',
+  'src/shared/lib/logger.ts',
+  'src/shared/lib/media/materializeLocalGeneration.ts',
+  'src/shared/lib/taskCreation/resolution.ts',
+  'src/shared/lib/tasks/generationTaskRepository.ts',
+  'src/shared/lib/timelineFrameBatchPersist.ts',
+  'src/shared/realtime/RealtimeConnection.ts',
 ];

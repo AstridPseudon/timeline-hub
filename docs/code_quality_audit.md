@@ -10,7 +10,7 @@ Last verified: 2026-02-03 (932 source files).
 
 | Dimension | Status | Key metric |
 |-----------|--------|------------|
-| Dependency direction | ⚠️ Rule masked | Zero `shared/ → tools/` violations; the `shared/ → domains/features` ESLint rule is masked for `src` (56 known violations) |
+| Dependency direction | ⚠️ Not enforced | 45 `shared/ → tools/` import lines in 33 non-test files, and 56 `shared/ → domains/features` violations in 51 files; ESLint checks `shared/ → domains/features` in only 27 `src/shared` files and `shared/ → tools/` in none |
 | Data fetching | ✅ Clean | 3 query scopes; mutations separated. ~25 inline query keys |
 | Type safety | ✅ Clean | 94 `any` (17 `: any`, 81 `as any`), all justified |
 | File size | ⚠️ Acceptable | 11 files over 1,000 LOC; each documented |
@@ -26,9 +26,12 @@ Last verified: 2026-02-03 (932 source files).
 
 **Principle:** `tools/` → `shared/`, never reverse.
 
-**Status:** Zero violations. 4 `shared/` files import from `@/tools/index.ts` (the registry barrel, not tool internals): `ToolsPane.tsx`, `useToolSettings.ts`, `usePrefetchToolSettings.ts`, `usePersistentToolState.ts` — all reading `toolsManifest`/`toolsUIManifest`. ESLint `no-restricted-imports` prevents new `shared/ → tools/` violations.
+**Status:** Not enforced. `src/shared` has 45 `from '@/tools/...'` import lines in 33 non-test files (measured with `git grep -E "from ['\"](@/tools/|(\.\./)+tools/)" -- 'src/shared/**'`, tests excluded), and 56 `@/domains/*` or `@/features/*` imports in 51 non-test files. Neither is a regression of the cloud removal: both were already unchecked before it.
 
-**Known gap — masked `shared/ → domains|features` rule (owned debt):** `eslint.config.js` declares a rule that `shared/` must not import `@/domains/*` or `@/features/*`, but the later block that bans the removed cloud SDK for `src/**` replaces that rule's options per file (flat config), exactly as the removed facade blocks did, so the rule does not fire on non-test `src` files. Unmasking it exposes 56 violations (counted during the cloud removal). Not fixed by the cloud removal; fix by merging both patterns into one block and moving or allowlisting the 56 sites (`eslint.shared-layer-allowlist.js` entries only shrink).
+**Known gap — what ESLint actually checks (owned debt):** `eslint.config.js` declares both rules for `src/shared`, but flat config replaces a rule's options per file, so only the last matching block counts.
+- `shared/ → tools/`: the block that declares it is always followed by the `shared/ → domains|features` block for the same files, which replaces its options. The pattern never fires.
+- `shared/ → domains|features`: live only in the 27 files listed in `sharedLayerEnforcedFiles` (`eslint.shared-layer-allowlist.js`), the files the removed Supabase facade allowlist had left uncovered. A block placed after it, with only the URL-helper paths, covers every other non-test `src/shared` file, exactly as the facade block did. The 56 violations sit under that block.
+- Fix: merge the `tools/` and `domains|features` patterns into one block, delete the "Where the shared-layer rule is live" block, then move or allowlist the violating files. `eslint.shared-layer-allowlist.js` entries only shrink, so moving is the default.
 
 ---
 
