@@ -1181,8 +1181,10 @@ def serve_one(world, *, ready=None):
 def test_real_sdk_parent_routes_and_independent_child_progress(world, form, derived):
     host = setup(world, form=form, derived=derived, targeted=True)
     from concurrent.futures import ThreadPoolExecutor
+    ready = threading.Event()
     with ThreadPoolExecutor(max_workers=1) as pool:
-        future = pool.submit(serve_one, world)
+        future = pool.submit(serve_one, world, ready=ready)
+        assert ready.wait(5), "independent child host did not finish discovery"
         c = world.claim
         try:
             result = host.run_task({"task": world.task}, lease_token=c["lease_id"], attempt_id=c["attempt_id"], fence=c["fence"])
@@ -1718,8 +1720,10 @@ def test_existing_object_requires_admitted_parent_custody(world, admitted):
 def test_real_sdk_verified_artifacts_and_managed_outputs(world, form):
     setup(world, form=form, child_file_output=True, targeted=True)
     from concurrent.futures import ThreadPoolExecutor
+    ready = threading.Event()
     with ThreadPoolExecutor(max_workers=1) as pool:
-        future = pool.submit(serve_one, world)
+        future = pool.submit(serve_one, world, ready=ready)
+        assert ready.wait(5), "independent child host did not finish discovery"
         c = world.claim
         try:
             world.host.run_task({"task": world.task}, lease_token=c["lease_id"], attempt_id=c["attempt_id"], fence=c["fence"])
