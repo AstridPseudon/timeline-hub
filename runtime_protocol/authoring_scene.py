@@ -9,7 +9,8 @@ import hashlib
 import threading
 import uuid
 
-from .errors import AuthorizationGuard, AuthorizationError, ConflictError, ValidationError
+from .errors import (AuthoringInvocationRevocationReason, AuthorizationGuard,
+                     AuthorizationError, ConflictError, ValidationError)
 from .timeline_commit import digest, _publisher
 
 
@@ -165,13 +166,21 @@ class RequestSceneEvaluation:
 
     def check(self):
         with self.service.store._mutex:
-            if (
-                self.cancelled.is_set()
-                or self.relay is None
-                or getattr(self.service, "_authoring_scene_relay", None)
-                is not self.relay
-            ):
-                raise AuthorizationError("authoring invocation revoked or unavailable", guard=AuthorizationGuard.AUTHORING_INVOCATION_REVOKED)
+            # Preserve the guard's short-circuit order and capture only its first
+            # failing clause while the original store mutex is held.
+            reason = None
+            if self.cancelled.is_set():
+                reason = AuthoringInvocationRevocationReason.EVALUATION_CANCELLED
+            elif self.relay is None:
+                reason = AuthoringInvocationRevocationReason.CAPTURED_RELAY_ABSENT
+            elif getattr(self.service, "_authoring_scene_relay", None) is not self.relay:
+                reason = AuthoringInvocationRevocationReason.CURRENT_RELAY_REPLACED
+            if reason is not None:
+                raise AuthorizationError(
+                    "authoring invocation revoked or unavailable",
+                    guard=AuthorizationGuard.AUTHORING_INVOCATION_REVOKED,
+                    invocation_reason=reason,
+                )
             if self.relay.config.binding != self.context:
                 raise AuthorizationError("authoring source/owner changed", guard=AuthorizationGuard.AUTHORING_INVOCATION_OWNER_CHANGED)
             self._authority()

@@ -16,7 +16,7 @@ import re
 from .narration import (narration_lines, narration_projection, request_take_refs,
                         validate_take_refs, validate_artifacts, validate_line_take,
                         NarrationTakeRefs, VerifiedNarrationTake)
-from .errors import (AuthorizationGuard, ForbiddenError, AuthorizationError, ConflictError, NotFoundError, ValidationError,
+from .errors import (AuthoringInvocationRevocationReason, AuthorizationGuard, ForbiddenError, AuthorizationError, ConflictError, NotFoundError, ValidationError,
                      CapabilityUnavailableError)
 from .util import canonical_json, now, MANAGED_OUTPUT_ASSOCIATION_KEY
 
@@ -75,8 +75,12 @@ def _record_commit_authorization_failure(exc):
             if type(candidate) is AuthorizationGuard:
                 guard = candidate
         stage, reason = guard.value
-        _LOGGER.error("timeline_commit_failure %s", canonical_json(dict(
-            stage=stage, guard=reason, exception_class=label)))
+        diagnostic = dict(stage=stage, guard=reason, exception_class=label)
+        if guard is AuthorizationGuard.AUTHORING_INVOCATION_REVOKED:
+            candidate = exc._authoring_invocation_reason
+            if type(candidate) is AuthoringInvocationRevocationReason:
+                diagnostic["invocation_reason"] = candidate.value
+        _LOGGER.error("timeline_commit_failure %s", canonical_json(diagnostic))
     except Exception:
         pass  # Keep the original authorization refusal even if the sink fails.
 

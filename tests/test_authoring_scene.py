@@ -11,7 +11,8 @@ from test_storage_preparation_relay import source_composition
 
 from runtime_protocol import authoring_scene as scene
 from runtime_protocol.auth import CredentialStore
-from runtime_protocol.errors import AuthorizationError
+from runtime_protocol.errors import (AuthoringInvocationRevocationReason as Reason,
+                                     AuthorizationError, AuthorizationGuard as Guard)
 from runtime_protocol.timeline_commit import digest
 from test_timeline_accept import wire, acceptance, count
 
@@ -774,3 +775,56 @@ def test_empty_authority_rechecked_at_atomic_accept_after_valid_completion(empty
         pass
     assert count(w.s, "parent_composition_publications") == before
     assert w.s.lookup_request(w.p, "main", body["request_id"]) is None
+
+
+@pytest.mark.parametrize('case, expected', [
+    ('cancelled', Reason.EVALUATION_CANCELLED),
+    ('absent', Reason.CAPTURED_RELAY_ABSENT),
+    ('replaced', Reason.CURRENT_RELAY_REPLACED),
+    ('removed', Reason.CURRENT_RELAY_REPLACED),
+    ('cancelled_absent', Reason.EVALUATION_CANCELLED),
+    ('cancelled_replaced', Reason.EVALUATION_CANCELLED),
+])
+def test_invocation_revocation_reports_first_failing_clause(bound, monkeypatch, case, expected):
+    w = bound
+    if case in {'absent', 'cancelled_absent'}:
+        w.s._authoring_scene_relay = None
+    invocation = scene.RequestSceneEvaluation(w.s, wire(w.p), w.identity)
+    if case.startswith('cancelled'):
+        invocation.close()
+    if case in {'replaced', 'cancelled_replaced'}:
+        w.s._authoring_scene_relay = object()
+    elif case == 'removed':
+        w.s._authoring_scene_relay = None
+    # Revocation must still fail before authority or owner/source checks.
+    monkeypatch.setattr(invocation, '_authority', lambda: pytest.fail('authority checked after revocation'))
+    before = count(w.s, 'parent_composition_publications')
+    try:
+        with pytest.raises(AuthorizationError) as error:
+            invocation.check()
+        assert error.value._authorization_guard is Guard.AUTHORING_INVOCATION_REVOKED
+        assert error.value._authoring_invocation_reason is expected
+        assert error.value.status == 401
+        assert error.value.as_dict() == dict(code='unauthorized',
+            message='authoring invocation revoked or unavailable')
+        assert count(w.s, 'parent_composition_publications') == before
+        assert w.calls == []
+    finally:
+        w.s._authoring_scene_relay = w.relay
+        invocation.close()
+
+
+@pytest.mark.parametrize('field', ['host_instance_id', 'source_digest'])
+def test_invocation_owner_source_change_keeps_adjacent_guard(bound, field):
+    w = bound
+    invocation = scene.RequestSceneEvaluation(w.s, wire(w.p), w.identity)
+    w.relay.config.binding[field] = 'foreign'
+    try:
+        with pytest.raises(AuthorizationError, match='authoring source/owner changed') as error:
+            invocation.check()
+        assert error.value._authorization_guard is Guard.AUTHORING_INVOCATION_OWNER_CHANGED
+        assert error.value._authoring_invocation_reason is None
+        assert error.value.as_dict() == dict(code='unauthorized', message='authoring source/owner changed')
+        assert w.calls == []
+    finally:
+        invocation.close()

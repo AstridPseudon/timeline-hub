@@ -51,6 +51,14 @@ class AuthorizationGuard(Enum):
     TRANSCRIPT_CAPTURE_SCOPE_REQUIRED = ('transcript_capture', 'scope_required')
 
 
+class AuthoringInvocationRevocationReason(Enum):
+    """Internal first-failing clause; never part of the public error envelope."""
+
+    EVALUATION_CANCELLED = "evaluation_cancelled"
+    CAPTURED_RELAY_ABSENT = "captured_relay_absent"
+    CURRENT_RELAY_REPLACED = "current_relay_replaced"
+
+
 class RuntimeErrorBase(Exception):
     code = "runtime_error"
     status = 400
@@ -71,9 +79,13 @@ class AuthorizationError(RuntimeErrorBase):
     code = "unauthorized"
     status = 401
 
-    def __init__(self, message: str, *, details=None, guard=AuthorizationGuard.UNKNOWN):
+    def __init__(self, message: str, *, details=None, guard=AuthorizationGuard.UNKNOWN,
+                 invocation_reason=None):
         super().__init__(message, details=details)
         self._authorization_guard = guard if type(guard) is AuthorizationGuard else AuthorizationGuard.UNKNOWN
+        self._authoring_invocation_reason = (
+            invocation_reason if type(invocation_reason) is AuthoringInvocationRevocationReason else None
+        )
 
 
 class ConflictError(RuntimeErrorBase):

@@ -10,7 +10,8 @@ import pytest
 from http_helpers import Api
 from runtime_protocol import authoring_scene, timeline_commit
 from runtime_protocol.auth import CredentialStore
-from runtime_protocol.errors import AuthorizationError, AuthorizationGuard as Guard
+from runtime_protocol.errors import (AuthoringInvocationRevocationReason as Reason,
+                                     AuthorizationError, AuthorizationGuard as Guard)
 from test_timeline_accept import IDENTITY, fixture, fixture_provider, http_server, wire
 from test_selected_media_commit import snapshot
 
@@ -34,7 +35,7 @@ def test_guard_vocabulary_is_stable_and_source_is_assigned_receiver():
     assert Path(timeline_commit.__file__).resolve() == Path(__file__).resolve().parents[1] / 'runtime_protocol/timeline_commit.py'
 
 
-def diagnostic(caplog):
+def diagnostic(caplog, invocation_reason=None):
     records = [r for r in caplog.records if r.name == timeline_commit.__name__]
     assert len(records) == 1
     record = records[0]
@@ -43,7 +44,11 @@ def diagnostic(caplog):
     prefix = 'timeline_commit_failure '
     assert record.getMessage().startswith(prefix)
     value = json.loads(record.getMessage()[len(prefix):])
-    assert set(value) == {'stage', 'guard', 'exception_class'}
+    expected_keys = {'stage', 'guard', 'exception_class'}
+    if invocation_reason is not None:
+        expected_keys.add('invocation_reason')
+        assert value['invocation_reason'] == invocation_reason
+    assert set(value) == expected_keys
     return value
 
 
@@ -125,8 +130,12 @@ def test_real_commit_route_guard_refusal_is_unchanged_and_redacted(
         assert SECRET not in json.dumps(error.value.detail)
         if sink_fails: assert not caplog.records
         else:
-            assert diagnostic(caplog) == dict(stage=expected_guard.value[0], guard=expected_guard.value[1],
-                                               exception_class='AuthorizationError')
+            expected_diagnostic = dict(stage=expected_guard.value[0], guard=expected_guard.value[1],
+                                       exception_class='AuthorizationError')
+            invocation_reason = 'captured_relay_absent' if case == 'scene' else None
+            if invocation_reason is not None:
+                expected_diagnostic['invocation_reason'] = invocation_reason
+            assert diagnostic(caplog, invocation_reason) == expected_diagnostic
             assert project not in caplog.text and body['session_id'] not in caplog.text
             assert IDENTITY['actor'] not in caplog.text
         assert snapshot(service) == before
@@ -241,3 +250,76 @@ def test_transcript_capture_carries_actual_authority_guard(fixture, case, expect
         assert snapshot(service) == before
     finally:
         port.close()
+
+
+def test_invocation_reason_vocabulary_is_closed():
+    assert {reason.value for reason in Reason} == {
+        'evaluation_cancelled', 'captured_relay_absent', 'current_relay_replaced'}
+    assert len(Reason.__members__) == 3
+
+
+@pytest.mark.parametrize('guard, value', [
+    (Guard.AUTHORING_INVOCATION_REVOKED, SECRET),
+    (Guard.AUTHORING_INVOCATION_REVOKED, {'reason': SECRET}),
+    (Guard.IDENTITY_BEARER_REQUIRED, Reason.EVALUATION_CANCELLED),
+])
+def test_untrusted_or_unrelated_invocation_reason_is_not_logged(caplog, guard, value):
+    exc = AuthorizationError(SECRET, guard=guard, invocation_reason=value)
+    # Also defend the sink if trusted code later overwrites the private field.
+    exc._authoring_invocation_reason = value
+    with caplog.at_level(logging.ERROR, logger=timeline_commit.__name__):
+        timeline_commit._record_commit_authorization_failure(exc)
+    assert diagnostic(caplog) == dict(stage=guard.value[0], guard=guard.value[1],
+                                      exception_class='AuthorizationError')
+
+
+@pytest.mark.parametrize('reason', list(Reason))
+@pytest.mark.parametrize('sink_fails', [False, True])
+def test_real_commit_invocation_reason_stays_internal(
+        fixture, tmp_path, monkeypatch, caplog, reason, sink_fails):
+    service, project = fixture
+    fixture_provider(service, project)
+    relay = SimpleNamespace(config=SimpleNamespace(binding={'canary': SECRET}))
+    service._authoring_scene_relay = None if reason is Reason.CAPTURED_RELAY_ABSENT else relay
+    monkeypatch.setattr(authoring_scene, 'check_binding', lambda *args: None)
+
+    def commit(request, port):
+        if reason is not Reason.CAPTURED_RELAY_ABSENT:
+            port.scene_evaluator({})  # Capture the synthetic relay through the real port.
+            if reason is Reason.EVALUATION_CANCELLED:
+                port.close()
+            else:
+                service._authoring_scene_relay = SimpleNamespace(canary=SECRET)
+        return port.scene_evaluator({})
+
+    service._timeline_commit_provider = SimpleNamespace(commit=commit)
+    if sink_fails:
+        def fail(*args, **kwargs): raise OSError(SECRET)
+        monkeypatch.setattr(timeline_commit._LOGGER, 'error', fail)
+    server, thread, api = http_server(service, tmp_path)
+    body = wire(project, dry_run=True)
+    before = snapshot(service)
+    try:
+        with caplog.at_level(logging.ERROR, logger=timeline_commit.__name__), pytest.raises(RuntimeError) as error:
+            api.request('POST', f'/astrid/v1/projects/{project}/timelines/main/commit', body,
+                        headers={'Idempotency-Key': body['request_id'],
+                                 'X-Astrid-Session': body['session_id'],
+                                 'X-Request-ID': 'fixed-offline-request'})
+        assert error.value.status == 401
+        assert error.value.detail == dict(code='unauthorized',
+            message='authoring invocation revoked or unavailable', request_id='fixed-offline-request')
+        if sink_fails:
+            assert not caplog.records
+        else:
+            assert diagnostic(caplog, reason.value) == dict(stage='authoring_invocation',
+                guard='revoked', exception_class='AuthorizationError', invocation_reason=reason.value)
+            assert project not in caplog.text and body['session_id'] not in caplog.text
+            assert IDENTITY['actor'] not in caplog.text
+        assert snapshot(service) == before
+        assert service.lookup_request(project, 'main', body['request_id']) is None
+    finally:
+        # The synthetic relay has no lifecycle/transport authority.
+        service._authoring_scene_relay = None
+        server.shutdown()
+        server.server_close()
+        thread.join()
