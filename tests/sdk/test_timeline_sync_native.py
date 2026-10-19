@@ -80,15 +80,88 @@ def test_native_move_ingress_matches_existing_move_capture(connected):
     assert open_session(connected).commit(command)['data']['commands'] == [command]
 
 
-def test_native_move_with_default_intent_retries_without_recapture(connected):
+@pytest.mark.parametrize('intent', [{}, {'ripple': 'none'},
+                                 {'ripple': 'none', 'anchor': 'fixed', 'position': 'absolute'}])
+def test_native_move_with_default_intent_retries_without_recapture(connected, intent):
     client, generated, _ = connected
     raw = {'schema_version': 1, 'op': 'clip.move', 'version': '1', 'select': 'parent/clip:a',
-           'args': {'on': 5}, 'intent': {}}
+           'args': {'on': 5}, 'intent': intent}
     generated.lose_ack = True
     with pytest.raises(WorkspaceClientError):
         open_session(connected).commit(raw)
     open_session(connected).commit(raw)
     assert generated.calls[0] == generated.calls[1]
+    assert client.reads == ['r0']
+
+
+@pytest.mark.parametrize('value,changed', [(True, 1), (False, 0)])
+@pytest.mark.parametrize('nested', [False, True])
+def test_native_lost_ack_refuses_changed_json_type_before_send(connected, value, changed, nested):
+    client, generated, path = connected
+    raw = {'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
+           'args': {'row': {'id': 'new', 'kind': 'visual',
+                            'opaque': {'items': [value]} if nested else value}}}
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        open_session(connected).commit(raw, idempotency_key='original')
+    persisted = path.read_bytes()
+    accepted = copy.deepcopy(generated.accepted['original'][1])
+    changed_command = copy.deepcopy(raw)
+    changed_command['args']['row']['opaque'] = {'items': [changed]} if nested else changed
+    session = open_session(connected)
+    with pytest.raises(TimelineEditError, match='pending intent differs'):
+        session.commit(changed_command)
+    assert len(generated.calls) == 1
+    assert path.read_bytes() == persisted
+    retried = session.commit(raw)
+    assert retried['receipt'] == accepted['receipt']
+    assert generated.calls == [(json.loads(persisted)['flight']['body'].encode(), 'original')] * 2
+    assert client.reads == ['r0']
+
+
+@pytest.mark.parametrize('field', ['reads', 'expect'])
+def test_native_lost_ack_refuses_changed_boolean_capture_claim(connected, field):
+    client, generated, path = connected
+    clip = State(generated.bundles['r0']).entity('parent/clip:a')
+    clip.update(enabled=True, app={'astrid': {'fixed_start': True}})
+    raw = {'schema_version': 1, 'op': 'clip.move', 'version': '1', 'select': 'parent/clip:a',
+           'args': {'on': 5}}
+    captured = execute(generated.bundles['r0'], [raw]).commands[0]
+    changed = copy.deepcopy(captured)
+    if field == 'reads':
+        claim = next(read['state'] for read in changed['reads']
+                     if read['ref'] == 'parent/clip:a' and read['path'] == ['enabled'])
+    else:
+        claim = changed['expect']['parent/clip:a::app.astrid.fixed_start']
+    assert claim['value'] is True
+    claim['value'] = 1
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        open_session(connected).commit(captured, idempotency_key='captured')
+    persisted = path.read_bytes()
+    accepted = copy.deepcopy(generated.accepted['captured'][1])
+    session = open_session(connected)
+    with pytest.raises(TimelineEditError, match='pending intent differs'):
+        session.commit(changed)
+    assert len(generated.calls) == 1
+    assert path.read_bytes() == persisted
+    assert session.commit(captured)['receipt'] == accepted['receipt']
+    assert generated.calls[0] == generated.calls[1]
+    assert client.reads == ['r0']
+
+
+def test_native_lost_ack_numeric_equivalence_retries_original_bytes(connected):
+    client, generated, _ = connected
+    raw = {'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
+           'args': {'row': {'id': 'new', 'kind': 'visual', 'opaque': 2}}}
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        open_session(connected).commit(raw, idempotency_key='numeric')
+    accepted = copy.deepcopy(generated.accepted['numeric'][1])
+    raw['args']['row']['opaque'] = 2.0
+    assert open_session(connected).commit(raw)['receipt'] == accepted['receipt']
+    assert generated.calls[0] == generated.calls[1]
+    assert b'"opaque":2}' in generated.calls[1][0]
     assert client.reads == ['r0']
 
 

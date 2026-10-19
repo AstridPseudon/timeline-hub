@@ -195,13 +195,14 @@ class TimelineSession:
 
     def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
         """Capture and flush one native command, or retry its original flight."""
+        from astrid.sdk.timeline._command_state import equal
         from astrid.sdk.timeline.commands import execute
 
         command = _native_command(command)
         self._queue(lambda state: execute(self._bundle(state), [command]).commands[0],
                     lambda pending: len(pending) == 1 and all(
-                        pending[0].get(key) == value for key, value in command.items() if key != "intent")
-                    and all(pending[0]["intent"].get(key) == value
+                        equal(pending[0].get(key), value) for key, value in command.items() if key != "intent")
+                    and all(equal(pending[0]["intent"].get(key), value)
                             for key, value in command.get("intent", {}).items()))
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
