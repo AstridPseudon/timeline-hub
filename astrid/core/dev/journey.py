@@ -530,16 +530,12 @@ class Runner:
 def renderer_install_problem(project: Path) -> str | None:
     """Why the checkout's Remotion project cannot render yet, or ``None``.
 
-    The pack host only binds a source checkout's ``remotion/`` project when its ``node_modules`` exist
-    (host_bootstrap._provision_render_runtime_env); without them ``rendering.render`` is never ready and
-    the failure surfaces much later as "capability is not ready for admission".
+    The source launcher only binds installed projects. Check before starting the
+    journey so a missing install is reported before Runtime and the host launch.
     """
     from astrid.core.rendering.remotion_runtime import remotion_install_problem
 
-    problem = remotion_install_problem(project)
-    if problem is None:
-        return None
-    return f"{problem}; run `npm ci` in {project} with the pinned Node on PATH"
+    return remotion_install_problem(project)
 
 
 def _doctor_ready(value: dict[str, Any]) -> bool:

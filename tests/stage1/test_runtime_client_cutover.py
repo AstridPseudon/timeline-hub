@@ -641,6 +641,7 @@ def test_doctor_and_backup_never_open_local_storage(capsys, monkeypatch, tmp_pat
 
 
 def test_doctor_uses_the_read_only_runtime_observer(capsys, monkeypatch):
+    monkeypatch.setattr("astrid.core.rendering.remotion_runtime.remotion_install_problem", lambda _project: None)
     payload = {
         "healthy": True,
         "recovery_action": "No recovery action required.",
@@ -772,6 +773,7 @@ def test_editor_domain_reads_and_media_relations_use_generated_operations(tmp_pa
 
 
 def test_operational_gateway_uses_typed_runtime_backup_and_lifecycle(tmp_path, monkeypatch, capsys, real_runtime):
+    monkeypatch.setattr("astrid.core.rendering.remotion_runtime.remotion_install_problem", lambda _project: None)
     support = tmp_path / "support" / "runtime"
     daemon = real_runtime(tmp_path / "realm", support_root=support, owner_lock=support / "instance.lock")
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)

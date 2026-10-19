@@ -1145,17 +1145,23 @@ def resolve_remotion_project_dir() -> Path:
 
 
 def remotion_install_problem(project: Path) -> str | None:
-    """Explain which locked Remotion packages or CLI are missing from a project."""
+    """Explain a missing locked Remotion install and how to provision it."""
+    from astrid.core.rendering.node_pin import node_pin
+
     node_modules = project / "node_modules"
+    pin = node_pin(project)
+    fix = f"run `npm ci` in {project} with {f'Node {pin}' if pin else 'the pinned Node'} on PATH"
+    if not node_modules.is_dir():
+        return f"Remotion node_modules is missing: {node_modules}; {fix}"
     missing = [
         f"@banodoco/{name}"
         for name in _REQUIRED_PACKAGES
         if not (node_modules / "@banodoco" / name / "package.json").is_file()
     ]
     if missing:
-        return "required Remotion package(s) missing: " + ", ".join(missing)
+        return "required Remotion package(s) missing: " + ", ".join(missing) + f"; {fix}"
     if not (project / REMOTION_CLI_RELATIVE_PATH).is_file():
-        return f"locked Remotion CLI is missing: {project / REMOTION_CLI_RELATIVE_PATH}"
+        return f"locked Remotion CLI is missing: {project / REMOTION_CLI_RELATIVE_PATH}; {fix}"
     return None
 
 
@@ -1171,10 +1177,18 @@ def remotion_runtime_status(
     """
 
     if require_explicit_project and not os.environ.get(REMOTION_PROJECT_DIR_ENV, "").strip():
+        reason = f"{REMOTION_PROJECT_DIR_ENV} must point to the server-owned Remotion project"
+        # The source launcher deliberately leaves an uninstalled project unbound.
+        # Diagnose that checkout without admitting it as an execution runtime.
+        project = (REPO_ROOT / "remotion").resolve()
+        if (project / "package.json").is_file():
+            install_problem = remotion_install_problem(project)
+            if install_problem:
+                reason += f"; {install_problem}"
         return RemotionRuntimeStatus(
             False,
             None,
-            f"{REMOTION_PROJECT_DIR_ENV} must point to the server-owned Remotion project",
+            reason,
         )
 
     try:

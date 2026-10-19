@@ -127,9 +127,10 @@ def test_thin_launcher_fails_closed_on_conflict_or_interruption(monkeypatch, lau
 
 
 def test_doctor_uses_nonstarting_runtime_observer(monkeypatch, capsys, tmp_path):
-    from astrid.core.gateway import dispatch
     from astrid import runtime_cli
+    from astrid.core.gateway import dispatch
 
+    monkeypatch.setattr("astrid.core.rendering.remotion_runtime.remotion_install_problem", lambda _project: None)
     seen: list[str] = []
 
     class _Runtime:

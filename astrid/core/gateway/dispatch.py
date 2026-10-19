@@ -254,6 +254,10 @@ def _dispatch_doctor(args: list[str]) -> int:
         try:
             from astrid.core.execution.host_log import host_log_section
             from astrid.core.rendering.node_pin import doctor_section
+            from astrid.core.rendering.remotion_runtime import (
+                remotion_install_problem,
+                resolve_remotion_project_dir,
+            )
             from astrid.sdk import visualize_cache
             from astrid.sdk.invocation import _visualize_cache_base
             from astrid.sdk.storage_root import resolve_runtime_data_root as _support_root
@@ -264,9 +268,22 @@ def _dispatch_doctor(args: list[str]) -> int:
             report["executor_skips"] = executor_skip_section()
             report["host_log"] = host_log_section(support)
             report["renderer_node"] = renderer_node = doctor_section(support)
+            remotion_project = resolve_remotion_project_dir()
+            remotion_problem = remotion_install_problem(remotion_project)
+            report["renderer_remotion"] = {
+                "status": "missing" if remotion_problem else "ok",
+                "detail": remotion_problem or "locked Remotion packages and CLI are installed",
+            }
             if renderer_node.get("status") in ("mismatch", "broken"):
                 report["healthy"] = False
                 report["issues"] = [*report.get("issues", []), f"renderer node: {renderer_node['detail']}; fix: {renderer_node['fix']}"]
+                result_code = 1
+            if remotion_problem:
+                report["healthy"] = False
+                report["issues"] = [
+                    *report.get("issues", []),
+                    f"renderer Remotion: {remotion_problem}",
+                ]
                 result_code = 1
             report["visualize_cache"] = visualize_cache.cache_size(_visualize_cache_base())
         except (OSError, ValueError) as exc:
@@ -286,6 +303,12 @@ def _dispatch_doctor(args: list[str]) -> int:
         if renderer_node:
             print(f"renderer node: {renderer_node.get('status', 'unknown')} · {renderer_node.get('detail', '')}"
                   + (f"; fix: {renderer_node['fix']}" if renderer_node.get("fix") else ""))
+        renderer_remotion_section = report.get("renderer_remotion")
+        if renderer_remotion_section:
+            print(
+                f"renderer Remotion: {renderer_remotion_section.get('status', 'unknown')} · "
+                f"{renderer_remotion_section.get('detail', '')}"
+            )
         latch = ((report.get("astrid_observations") or {}).get("cleanupLatch") or {}).get("record") if isinstance(report, dict) else None
         if latch:
             from astrid.core.execution.process_group import describe_cleanup_latch

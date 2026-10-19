@@ -2461,6 +2461,43 @@ def test_render_preflight_requires_the_explicit_execution_runtime(monkeypatch):
     assert "ASTRID_REMOTION_PROJECT_DIR" in record.preflight["remotion"]["reason"]
 
 
+def test_missing_source_remotion_install_registers_actionable_reasons(tmp_path, monkeypatch):
+    from astrid.core.rendering import remotion_runtime
+    from astrid.sdk.host_bootstrap import _provision_render_runtime_env
+
+    source = tmp_path / "checkout"
+    project = source / "remotion"
+    project.mkdir(parents=True)
+    (project / "package.json").write_text(json.dumps({"engines": {"node": "=20.19.4"}}))
+    child_env = {"PATH": ""}
+    _provision_render_runtime_env(source, child_env)
+    assert remotion_runtime.REMOTION_PROJECT_DIR_ENV not in child_env
+    monkeypatch.setattr(remotion_runtime, "REPO_ROOT", source)
+    monkeypatch.delenv(remotion_runtime.REMOTION_PROJECT_DIR_ENV, raising=False)
+    packs = tmp_path / "packs"
+    for capability_id, requires_remotion in (
+        ("rendering.render", True), ("test.preview", True), ("test.offline", False)
+    ):
+        path = _write_manifest(packs / capability_id, capability_id=capability_id)
+        manifest = json.loads(path.read_text())
+        manifest["metadata"].update(adapter_family="cpu", requires_remotion=requires_remotion)
+        path.write_text(json.dumps(manifest))
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[packs], client=runtime)
+
+    host.register()
+
+    registered = {row["capability_id"]: row for row in runtime.registrations[0][1]["capabilities"]}
+    for capability_id in ("rendering.render", "test.preview"):
+        row = registered[capability_id]
+        assert row["status"] == "unavailable"
+        assert row["unavailable_reason"].startswith("remotion:reason=")
+        assert str(project / "node_modules") in row["unavailable_reason"]
+        assert f"run `npm ci` in {project} with Node v20.19.4 on PATH" in row["unavailable_reason"]
+    assert registered["test.offline"]["status"] == "ready"
+    assert registered["test.offline"]["unavailable_reason"] is None
+
+
 def test_adapter_registry_preserves_explicit_empty_matrix_lists(tmp_path):
     _write_manifest(tmp_path / "echo")
     host = GenericPackHost(pack_roots=[tmp_path])

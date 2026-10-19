@@ -102,8 +102,9 @@ def test_threejs_request_cannot_select_project_directory(
 
 
 def test_host_still_requires_explicit_project_configuration(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
+    monkeypatch.setattr(remotion_runtime, "REPO_ROOT", tmp_path)
     monkeypatch.delenv(remotion_runtime.REMOTION_PROJECT_DIR_ENV, raising=False)
     status = remotion_runtime.remotion_runtime_status(require_explicit_project=True)
     assert status.available is False
