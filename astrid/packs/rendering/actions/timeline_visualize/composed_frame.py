@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import os
 import re
 import shutil
@@ -22,21 +21,9 @@ from threading import Timer
 from typing import Any
 
 RENDERER_IDENTITY = "astrid.remotion.frame-capture.v1|backend=1.0.0|remotion=4.0.509|fonts=local-bundle-v1"
-DEFAULT_IDLE_SECONDS = 45.0
 DEFAULT_MAX_ENTRIES = 256
 DEFAULT_MAX_BYTES = 512 * 1024 * 1024
 _EPHEMERAL_ATTEMPT_PATH = re.compile(r"astrid-attempt-[^/]+(?=/)")
-
-
-def warm_owner_idle_seconds() -> float:
-    """Retain five minutes only with an explicit owner memory allocation."""
-    try:
-        budget = int(os.environ.get("ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES", "0"))
-        limit = 300.0 if budget >= 512 * 1024**2 else DEFAULT_IDLE_SECONDS
-        configured = float(os.environ.get("ASTRID_TIMELINE_FRAME_IDLE_SECONDS", str(limit)))
-        return min(limit, max(0.0, configured)) if math.isfinite(configured) else limit
-    except ValueError:
-        return DEFAULT_IDLE_SECONDS
 
 
 def _close_renderer(renderer: object, *, force: bool = False) -> None:
@@ -292,8 +279,10 @@ class FrameCaptureWorker:
         *,
         idle_seconds: float | None = None,
     ) -> None:
+        from astrid.core.execution.remotion_host_session import frame_owner_idle_seconds
+
         self.renderer = renderer
-        self.idle_seconds = warm_owner_idle_seconds() if idle_seconds is None else max(0.0, float(idle_seconds))
+        self.idle_seconds = frame_owner_idle_seconds() if idle_seconds is None else max(0.0, float(idle_seconds))
         self._lock = threading.RLock()
         self._timer: Timer | None = None
         self._timer_generation = 0
@@ -412,6 +401,7 @@ class _SharedRemotionOwner:
     """Own the one process-local browser and serialize all capture requests."""
 
     def __init__(self) -> None:
+        from astrid.core.execution.remotion_host_session import frame_owner_idle_seconds
         from astrid.packs.rendering.rendering.renderers.remotion.run import PersistentRemotionFrameSession
 
         self.session = PersistentRemotionFrameSession()
@@ -420,7 +410,7 @@ class _SharedRemotionOwner:
         self.timer: Timer | None = None
         self.timer_generation = 0
         self.closed = False
-        self.idle_seconds = warm_owner_idle_seconds()
+        self.idle_seconds = frame_owner_idle_seconds()
 
     def acquire(self, context: Mapping[str, Any]) -> "_SharedRemotionHandle":
         with self.lock:

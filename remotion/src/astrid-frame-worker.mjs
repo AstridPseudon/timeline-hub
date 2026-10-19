@@ -365,12 +365,10 @@ async function handleRequest(request) {
   return { ok: true, findings: sessionFindings, ...(diagnostics ? { diagnostics } : {}) };
 }
 
+// The launching Python side passes its one idle policy's seconds.
 function idleSeconds() {
-  const budget = Number(process.env.ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES ?? 0);
-  const admitted = Number.isSafeInteger(budget) && budget >= 512 * 1024 ** 2;
-  const limit = admitted ? 300 : 45;
-  const configured = Number(process.env.ASTRID_TIMELINE_FRAME_IDLE_SECONDS ?? limit);
-  return Number.isFinite(configured) ? Math.min(limit, Math.max(0, configured)) : limit;
+  const configured = Number(process.env.ASTRID_WARM_IDLE_SECONDS ?? 45);
+  return Number.isFinite(configured) && configured >= 0 ? configured : 45;
 }
 
 async function runServer(socketPath) {

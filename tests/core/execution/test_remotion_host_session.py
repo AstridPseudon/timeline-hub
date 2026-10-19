@@ -11,6 +11,8 @@ import threading
 import pytest
 
 from astrid.core.execution import remotion_host_session as host
+from astrid.core.execution.warm_hold import WarmHolds
+from tests.core.execution.test_warm_hold import Timers
 
 
 def environment(tmp_path):
@@ -36,11 +38,12 @@ def request(env, attempt=None):
     }}
 
 
-def owner(tmp_path):
+def owner(tmp_path, timers=None):
     events = []
     return host.HostRemotionSession(track=lambda p: events.append(("track", p)),
                                    untrack=lambda p: events.append(("untrack", p)),
-                                   root_parent=str(tmp_path)), events
+                                   root_parent=str(tmp_path),
+                                   holds=WarmHolds(timer=timers or Timers())), events
 
 
 class Process:
@@ -139,16 +142,50 @@ def test_child_cannot_select_a_different_native_executable_or_project(tmp_path, 
 
 
 def test_idle_expiration_uses_original_shutdown_proof(tmp_path, monkeypatch):
-    manager, _ = owner(tmp_path)
+    timers = Timers()
+    manager, _ = owner(tmp_path, timers)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
     lease = manager.lease(env, attempt=tmp_path)
     manager.request(lease, request(env))
     lease.close()
-    manager._idle_deadline = 0
-    manager._expire()
+    assert timers.live().seconds == 45 and not processes[0].waited
+    timers.fire()
     assert processes[0].waited and manager.process is None
     manager.close()
+
+
+def test_idle_window_keeps_its_defaults_and_a_new_lease_cancels_expiry(tmp_path, monkeypatch):
+    monkeypatch.delenv("ASTRID_WARM_IDLE_SECONDS", raising=False)
+    timers = Timers()
+    manager, _ = owner(tmp_path, timers)
+    env = {**environment(tmp_path), "ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES": str(512 * 1024**2)}
+    processes = fake_native(monkeypatch, manager)
+    first = manager.lease(env, attempt=tmp_path)
+    a = manager.request(first, request(env))
+    first.close()
+    armed = timers.live()
+    assert armed.seconds == 300, "an explicit owner allocation keeps the frame owner five minutes"
+    second = manager.lease(env, attempt=tmp_path, requested_idle=30)
+    assert armed.cancelled
+    assert manager.request(second, request(env))["pid"] == a["pid"] and len(processes) == 1
+    second.close()
+    assert timers.live().seconds == 30, "a request's idle timeout wins for its holder"
+    timers.fire()
+    assert processes[0].waited and manager.process is None
+    manager.close()
+
+
+def test_uncertain_child_is_not_kept_warm(tmp_path, monkeypatch):
+    timers = Timers()
+    manager, _ = owner(tmp_path, timers)
+    env = environment(tmp_path)
+    fake_native(monkeypatch, manager)
+    lease = manager.lease(env, attempt=tmp_path)
+    manager.request(lease, request(env))
+    manager.uncertain = RuntimeError("original Chrome cleanup unresolved")
+    lease.close()
+    assert timers.live() is None and manager._holds.status() == []
 
 
 def test_closed_child_channel_is_not_native_cleanup_proof(tmp_path, monkeypatch):
@@ -177,8 +214,6 @@ def test_raw_primary_and_cleanup_fields_cross_inherited_channel(tmp_path, monkey
         lease.close()
         # This unit substitutes exchange; do not assert native drain here.
         manager._closed = True
-        if manager._timer:
-            manager._timer.cancel()
 
 
 def test_two_public_command_workers_settle_task_leases_then_host_drains_original(tmp_path, monkeypatch):

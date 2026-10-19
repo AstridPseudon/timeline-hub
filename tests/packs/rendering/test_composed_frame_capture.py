@@ -457,16 +457,17 @@ def test_launchd_removal_records_return_code_without_native_cleanup_claim(monkey
 
 
 def test_warm_owner_retention_requires_explicit_allocation(monkeypatch):
-    from astrid.packs.rendering.actions.timeline_visualize.composed_frame import warm_owner_idle_seconds
-    monkeypatch.setenv("ASTRID_TIMELINE_FRAME_IDLE_SECONDS", "300")
+    from astrid.packs.rendering.actions.timeline_visualize.composed_frame import FrameCaptureWorker
+    monkeypatch.delenv("ASTRID_WARM_IDLE_SECONDS", raising=False)
     monkeypatch.delenv("ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES", raising=False)
-    assert warm_owner_idle_seconds() == 45
+    assert FrameCaptureWorker(lambda *args: {}).idle_seconds == 45
     monkeypatch.setenv("ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES", str(512 * 1024**2))
-    assert warm_owner_idle_seconds() == 300
-    monkeypatch.setenv("ASTRID_TIMELINE_FRAME_IDLE_SECONDS", "900")
-    assert warm_owner_idle_seconds() == 300
-    monkeypatch.setenv("ASTRID_TIMELINE_FRAME_IDLE_SECONDS", "nan")
-    assert warm_owner_idle_seconds() == 300
+    assert FrameCaptureWorker(lambda *args: {}).idle_seconds == 300
+    # The one knob for every warm holder overrides the owner's own default.
+    monkeypatch.setenv("ASTRID_WARM_IDLE_SECONDS", "900")
+    assert FrameCaptureWorker(lambda *args: {}).idle_seconds == 900
+    monkeypatch.setenv("ASTRID_WARM_IDLE_SECONDS", "nan")
+    assert FrameCaptureWorker(lambda *args: {}).idle_seconds == 300
 
 
 def test_frame_session_launches_helper_from_selected_project_with_empty_checkout(monkeypatch, tmp_path):

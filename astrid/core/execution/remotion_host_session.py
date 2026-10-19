@@ -6,7 +6,6 @@ executor inherits it, and the host fixes the executable and helper directory.
 from __future__ import annotations
 
 import json
-import math
 import hashlib
 import shutil
 import stat
@@ -22,9 +21,26 @@ from typing import Any, Mapping
 
 from astrid.core.subprocess_env import build_child_subprocess_env
 from .process_group import popen_owned_group, observe_tree, verify_tree_absent, release_group, terminate_tree
+from .warm_hold import WarmHolds, idle_seconds
 
 _LIMIT = 8 * 1024 * 1024
 _client = None
+
+
+def frame_owner_idle_seconds(environment: Mapping[str, str] | None = None, *,
+                             requested: float | None = None) -> float:
+    """How long the Remotion frame owner stays warm after its last task.
+
+    Its own default is 45 s, or 300 s with an explicit owner memory allocation
+    (ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES of at least 512 MiB).  The
+    warm-hold policy (a request, then ASTRID_WARM_IDLE_SECONDS) overrides it.
+    """
+    environment = os.environ if environment is None else environment
+    try:
+        budget = int(environment.get("ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES", "0"))
+    except ValueError:
+        budget = 0
+    return idle_seconds(300.0 if budget >= 512 * 1024 ** 2 else 45.0, requested=requested)
 
 
 def _read(channel):
@@ -75,7 +91,7 @@ def _file_identity(path):
 class HostRemotionSession:
     """One host-owned original Node child, shared by sequential task leases."""
     def __init__(self, *, track, untrack, root_parent=None, account=lambda root: None, retire=lambda root: None,
-                 report=lambda note: None):
+                 report=lambda note: None, holds=None):
         self._lock = threading.RLock()
         self._track, self._untrack = track, untrack
         self._root_parent = root_parent
@@ -87,12 +103,12 @@ class HostRemotionSession:
         self.uncertain = None
         self._closed = False
         self._leases = set()
-        self._timer = None
+        self._holds = holds if holds is not None else WarmHolds()
         self._stderr = bytearray()
         self._stderr_thread = None
         self._idle_seconds = 45.0
 
-    def lease(self, environment, *, attempt):
+    def lease(self, environment, *, attempt, requested_idle=None):
         with self._lock:
             if self._closed:
                 raise RuntimeError("host Remotion owner is closed")
@@ -113,14 +129,10 @@ class HostRemotionSession:
             attempt = Path(attempt).resolve(strict=True)
             if not attempt.is_dir():
                 raise ValueError("renderer task root is unavailable")
-            if self._timer:
-                self._timer.cancel()
-                self._timer = None
-            budget = int(environment.get("ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES", "0"))
-            limit = 300.0 if budget >= 512 * 1024 ** 2 else 45.0
-            requested = float(environment.get("ASTRID_TIMELINE_FRAME_IDLE_SECONDS", str(limit)))
-            self._idle_seconds = min(limit, max(0.0, requested)) if math.isfinite(requested) else limit
+            self._idle_seconds = frame_owner_idle_seconds(environment, requested=requested_idle)
             lease = _HostLease(self, project, node, cli, dict(environment), attempt)
+            # A new task cancels any pending idle expiry of the warm child.
+            lease.hold = self._holds.lease(self, stop=self._expire, lock=self._lock)
             self._leases.add(lease)
             return lease
 
@@ -132,9 +144,6 @@ class HostRemotionSession:
         """
         process, root, error = self.process, self.root, self.uncertain
         note = f"Remotion host session retired ({error}); scratch kept at {root}"
-        if self._timer:
-            self._timer.cancel()
-            self._timer = None
         if process is not None:
             try:
                 terminate_tree(process, grace_seconds=1.0)
@@ -309,29 +318,22 @@ class HostRemotionSession:
     def release(self, lease):
         with self._lock:
             self._leases.discard(lease)
-            if not self._leases and self.process is not None and not self.uncertain and not self._closed:
-                # Same bounded retention as the existing qualified owner; the
-                # caller supplies only the host-projected allocation fields.
-                self._idle_deadline = time.monotonic() + self._idle_seconds
-                self._arm_idle()
-
-    def _arm_idle(self):
-        self._timer = threading.Timer(min(0.5, max(0, self._idle_deadline-time.monotonic())), self._expire)
-        self._timer.daemon = True
-        self._timer.start()
+            if lease.hold is not None:
+                # After the last lease the host's warm hold arms one idle
+                # deadline; an uncertain or absent child is not kept warm.
+                warm = self.process is not None and not self.uncertain and not self._closed
+                self._holds.release(lease.hold, holding="Remotion frame owner" if warm else None,
+                                    idle_seconds=self._idle_seconds)
 
     def _expire(self):
-        with self._lock:
-            if self._leases or self._closed:
-                return
-            try:
-                self._guard()
-                if time.monotonic() < self._idle_deadline:
-                    self._arm_idle()
-                else:
-                    self._close_original()
-            except BaseException as error:
-                self.uncertain = error
+        """Idle expiry: the warm hold runs this under self._lock once no lease remains."""
+        if self._leases or self._closed or self.uncertain:
+            return
+        try:
+            self._guard()
+            self._close_original()
+        except BaseException as error:
+            self.uncertain = error
 
     def _close_original(self, already_exited=False):
         process = self.process
@@ -379,8 +381,6 @@ class HostRemotionSession:
     def close(self):
         with self._lock:
             self._closed = True
-            if self._timer:
-                self._timer.cancel()
             self._close_original()
 
 
@@ -388,6 +388,7 @@ class _HostLease:
     def __init__(self, owner, project, node, cli, environment, attempt):
         self.owner, self.project, self.node, self.cli, self.environment = owner, project, node, cli, environment
         self.attempt = attempt
+        self.hold = None
         self.input_identities = {p: _file_identity(p) for p in (node, cli, project / "src/astrid-frame-worker.mjs")}
         project_stat = project.stat()
         self.selected_identity = (

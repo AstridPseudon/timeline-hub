@@ -32,6 +32,7 @@ from typing import Any, Mapping, Sequence
 from astrid.core import timeline
 from astrid.core.audit import AuditContext
 from astrid.core.element.registry import load_default_registry
+from astrid.core.env_vars import ASTRID_WARM_IDLE_SECONDS
 from astrid.core.element.schema import ElementDefinition
 from astrid.core.foundation.atomic_io import write_json_atomic
 from astrid.core.foundation.paths import REPO_ROOT, WORKSPACE_ROOT
@@ -215,7 +216,7 @@ class PersistentRemotionFrameSession:
     ) -> None:
         """Start the owner outside GenericPackHost's per-task process tree."""
         worker_root = Path(child_environment["ASTRID_FRAME_WORKER_ROOT"])
-        configured_idle = child_environment.get("ASTRID_TIMELINE_FRAME_IDLE_SECONDS")
+        configured_idle = child_environment.get(ASTRID_WARM_IDLE_SECONDS)
         if sys.platform == "darwin" and Path("/bin/launchctl").is_file():
             label = cls._owner_label(socket_path)
             # launchctl submit creates a user launchd child rather than a
@@ -230,10 +231,7 @@ class PersistentRemotionFrameSession:
             )
             env_assignments = [f"ASTRID_FRAME_WORKER_ROOT={worker_root}"]
             if configured_idle is not None:
-                env_assignments.append(f"ASTRID_TIMELINE_FRAME_IDLE_SECONDS={configured_idle}")
-            warm_budget = child_environment.get("ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES")
-            if warm_budget is not None:
-                env_assignments.append(f"ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES={warm_budget}")
+                env_assignments.append(f"{ASTRID_WARM_IDLE_SECONDS}={configured_idle}")
             command = [
                 "/bin/launchctl", "submit", "-l", label,
                 "-o", "/dev/null", "-e", "/dev/null", "--", "/usr/bin/env",
@@ -331,14 +329,9 @@ class PersistentRemotionFrameSession:
                     child_environment["ASTRID_FRAME_WORKER_ROOT"] = str(
                         Path(tempfile.gettempdir()) / "astrid-frame-workers"
                     )
-                    from astrid.packs.rendering.actions.timeline_visualize.composed_frame import warm_owner_idle_seconds
-                    child_environment["ASTRID_TIMELINE_FRAME_IDLE_SECONDS"] = str(warm_owner_idle_seconds())
-                    warm_budget = os.environ.get("ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES")
-                    if warm_budget is not None:
-                        child_environment["ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES"] = warm_budget
-                    configured_idle = os.environ.get("ASTRID_TIMELINE_FRAME_IDLE_SECONDS")
-                    if configured_idle is not None:
-                        child_environment["ASTRID_TIMELINE_FRAME_IDLE_SECONDS"] = str(warm_owner_idle_seconds())
+                    from astrid.core.execution.remotion_host_session import frame_owner_idle_seconds
+                    # The owner idles out on its own after the one Python policy's seconds.
+                    child_environment[ASTRID_WARM_IDLE_SECONDS] = str(frame_owner_idle_seconds())
                     Path(child_environment["ASTRID_FRAME_WORKER_ROOT"]).mkdir(
                         parents=True, exist_ok=True
                     )

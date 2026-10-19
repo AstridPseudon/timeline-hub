@@ -2,6 +2,7 @@
 import threading
 
 from astrid.core.env_vars import ASTRID_WARM_IDLE_SECONDS
+from astrid.core.execution.remotion_host_session import frame_owner_idle_seconds
 from astrid.core.execution.warm_hold import WarmHolds, idle_seconds
 
 
@@ -120,10 +121,14 @@ def test_close_cancels_pending_expiries_and_later_leases_are_inert():
 
 def test_request_wins_then_the_one_knob_then_each_holders_default(monkeypatch):
     monkeypatch.delenv(ASTRID_WARM_IDLE_SECONDS, raising=False)
+    budget = {"ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES": str(512 * 1024**2)}
     assert idle_seconds(600) == 600
+    assert frame_owner_idle_seconds({}) == 45 and frame_owner_idle_seconds(budget) == 300
     monkeypatch.setenv(ASTRID_WARM_IDLE_SECONDS, "120")
     assert idle_seconds(600) == 120
+    assert frame_owner_idle_seconds({}) == 120 and frame_owner_idle_seconds(budget) == 120
     assert idle_seconds(600, requested=30) == 30
+    assert frame_owner_idle_seconds(budget, requested=30) == 30
     for invalid in ("soon", "-1", "nan", "inf"):
         monkeypatch.setenv(ASTRID_WARM_IDLE_SECONDS, invalid)
         assert idle_seconds(600) == 600

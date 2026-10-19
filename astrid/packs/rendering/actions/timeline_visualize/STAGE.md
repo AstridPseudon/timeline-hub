@@ -116,7 +116,8 @@ capture only the planned frames through the same server-owned Remotion
 composition, media registry, fonts, effects, and rational frame clock; they do
 not create a full video. Capture uses a bounded content-addressed PNG cache,
 one serialized lazy worker, and a 45-second idle expiry (set
-`ASTRID_TIMELINE_FRAME_IDLE_SECONDS=0` to disable the timer). The frame index
+`ASTRID_WARM_IDLE_SECONDS`, which applies to every warm holder, to change it;
+`0` releases the worker after each capture). The frame index
 records `evidence_source` (`fresh_capture`, `cache`, or `mixed`), requested and
 resolved frame/time, revision/candidate identity, renderer, and resolution.
 `--mode inputs` remains renderer-free. SDK-injected `filmstrip_authority` is
