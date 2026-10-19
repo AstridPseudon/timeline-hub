@@ -25,8 +25,8 @@ describe('WorkspaceConnectionRecovery on the hosted build', () => {
     expect(screen.queryByText('Workspace connection unavailable')).toBeNull();
     expect(screen.queryByText('Show full connection error')).toBeNull();
     expect(screen.queryByText(/Configured editor origin/)).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Give restart instructions to my agent' })).toBeNull();
-    expect(screen.queryByRole('button', { name: /restart it myself/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Copy restart instructions' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Show restart steps' })).toBeNull();
   });
 
   it('is unchanged same-origin', () => {

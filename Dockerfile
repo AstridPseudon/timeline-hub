@@ -22,8 +22,12 @@ RUN npm install -g npm@11.21.1 --no-audit --no-fund && npm ci --no-audit --no-fu
 
 COPY . .
 
-# Vite inlines ordinary browser client config into the JS bundle. Extension
-# rollout controls are intentionally absent here; the runtime stage writes
+# Vite inlines ordinary browser client config into the JS bundle.
+# The hosted editor reaches each visitor’s existing Runtime through the local
+# authenticated gateway. Compile its origin without enabling the standalone
+# editor-only shell: this image also serves the public site and other app routes.
+# Runtime credentials stay outside the image; visitor identity binds at connection.
+# Extension rollout controls are intentionally absent here; the runtime stage writes
 # those from non-VITE service variables whenever the container starts.
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
@@ -34,6 +38,10 @@ RUN node scripts/build/verify-astrid-vendor-sources.mjs && \
     VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
     VITE_API_TARGET_URL="$VITE_API_TARGET_URL" \
     VITE_APP_ENV="$VITE_APP_ENV" \
+    VITE_RUNTIME_ORIGIN="http://127.0.0.1:17340" \
+    VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID="" \
+    VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID="" \
+    VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID="" \
     NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 FROM node:20.19.4-alpine@sha256:df02558528d3d3d0d621f112e232611aecfee7cbc654f6b375765f72bb262799 AS runtime

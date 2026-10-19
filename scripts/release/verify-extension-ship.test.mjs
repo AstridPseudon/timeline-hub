@@ -100,7 +100,12 @@ describe('extension ship verifier', () => {
     assert.match(dockerfile, /^COPY --chown=node:node --from=build \/app\/dist \.\/dist$/m);
     assert.match(dockerfile, /^USER node$/m);
     assert.match(dockerfile, /^HEALTHCHECK .*\\$/m);
-    assert.match(dockerfile, /NODE_OPTIONS="--max-old-space-size=4096" npm run build/);
+    assert.match(dockerfile, /NODE_OPTIONS="--max-old-space-size=4096" npm run build(?:\s|$)/);
+    assert.match(dockerfile, /VITE_RUNTIME_ORIGIN="http:\/\/127\.0\.0\.1:17340"/);
+    assert.doesNotMatch(dockerfile, /VITE_ASTRID_EDITOR_ONLY|npm run build:hosted/);
+    for (const identity of ['ACTOR_ID', 'REALM_ID', 'INSTANCE_ID']) {
+      assert.match(dockerfile, new RegExp(`VITE_WORKSPACE_RUNTIME_EXPECTED_${identity}=""`));
+    }
     assert.match(dockerfile, /node scripts\/runtime\/write-extension-release-config\.mjs/);
     assert.match(dockerfile, /exec npm run serve/);
     assert.equal(

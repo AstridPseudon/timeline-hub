@@ -498,6 +498,11 @@ function waitForPort(portValue, timeoutMs = 3000, aborted = () => false) {
 
 const env = {
   ...process.env,
+  // The agent's CLI/SDK must address the same selected workspace as the editor,
+  // including when --data-root overrides an ambient/default installation.
+  ASTRID_RUNTIME_DATA_ROOT: runtimeSettings.dataRoot,
+  ASTRID_SUPPORT_ROOT: runtimeSettings.dataRoot,
+  ASTRID_WORKSPACE_DISCOVERY: discoveryPath,
   ...(astridCheckout ? { ASTRID_CHECKOUT: astridCheckout } : {}),
   ...(configuredAstridPublicCheckout ? { ASTRID_PUBLIC_CHECKOUT: configuredAstridPublicCheckout } : {}),
   PORT: port,
