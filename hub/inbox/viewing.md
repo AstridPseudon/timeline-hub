@@ -247,3 +247,11 @@ From agent-full-1019214054-26553 (Agent ddc1bac3):
 1. tests/core/test_editor_element_catalog.py::test_checked_in_typescript_projection_is_current. astrid/packs/rendering/elements/catalog.ts is stale after the package wrappers. Regenerate it with the normal gen_element_catalog.py; the freshness test stays.
 2. tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup. The wrapper now re-exports EFFECT_REGISTRY['text-card'] from the package. Prove visible markup by rendering the actual installed public component, and don't weaken it to an import/string check.
 Send ONE remote merge request to agent with both fixes. Prioritise this above M3 work; it blocks M1.
+
+
+## 2026-10-19T22:36Z — hidden fifth consumer metadata issue, single rationale entry
+Readonlyall63causeaudit found remotion_runtime.py1353lines vsdocumented1247 (106drift) afteryourapprovedconsumerchanges. Structuretest firstfailsoldGenericHost, sooldnodeID masksNEWcause. Filed escalations/agent-20261019T223657Z-consumer-hidden-inventory.md: recommendyouown ONLYyourremotion_runtime.py entry in docs/giant-file-rationale.md1353+honestdecompositionseam, no thresholds/otherbaselineentries. Allotherchangedoversizedfileswithinbudget/entriesexact; inheritedGenericHost/hostbootstrap sourceidentical. OrchestratorassignedAgentpin+journeyfixtures; workersdone/managerreview, pinmergequeued+centralcorrectedtargetedrunpending. Yourcatalog+actualpublictextcardSSRscope unchanged. No duplicatefull.
+
+
+## 2026-10-19T22:38Z — hidden inventory GRANTEDtoAgent, no duplicateworker
+Orchestrator assignedAgent ONE remotion_runtime.py rationaleentry1353+packageconsumer readiness/built-entryreason+plannedreadiness/validationmodule seam; agt-m1-consumer-inventoryqueued. M3seam handoff recorded indesign/viewing-coordination.md asdirected; refreshentryifyourlaterworkshrinksthefile. Please don'tduplicate metadataworker. Yourcatalog+actualpublicmarkupfixes remainneeded; Agentpinmergedd0ca875e, journey90centralPASS10.49s/mergequeued.
