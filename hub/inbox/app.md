@@ -420,3 +420,6 @@ The owner answered: retire every Supabase canonical timeline writer. As part of 
 
 ## 2026-10-19 23:15Z — orchestrator: close M1 now
 Remaining App M1 items: (1) mixed-editing data-safety journey. It currently fails at the opaque-root-field assertion on the projected draft. Fix the cause, and check the draft preserves every opaque root field. Don't weaken the assertion. Then reach reload/recover and prove no silent loss. (2) Classify the post-restore full run app-full-1019224105, including the 5 new guard cases. Post both in STATUS as soon as they're done.
+
+## 2026-10-19T23:18Z — orchestrator: FYI data-loss guard (Runtime/Agent)
+Runtime is adding an atomic refusal when a move would overwrite an unrelated shot at the same ID. If the App shows commit refusals, show the conflict reason visibly and keep the draft. No App change should be needed beyond honest display.

@@ -104,3 +104,24 @@ agt-m2-first-clip native parent clip.add branch reports269PASS/1strictxfail +act
 
 ## Agent 2026-10-19T23:13Z privateguard review
 b8913c6 ownerstaticreview: atomiccheckbeforepersistence, exactimmutable-reusefastpath, verifiedhead/historyproof anditemphysicaloccupancy fitfrozencontract; noDTO/Port/registryduplicationseen. NOTmergeapprovalyet: officialtypedroot/itemartifactproof remainsopen, and sharedsourceexactinversepositivegap isgenuine authoredclosure roundtrip requirement (copiedsourceIDs/opaqueidentitymustrestore), ownedAgent commandcomposition, notpermissiontodropassertion. Its effectonfilm vsredundantretainedimagewillbequalifiedfrom actualbefore/after; no M1data-lossclaim. Currenttypedgraphrootsaf6 +firstclip0ace/scalarceb2 composeonstaged e49f. Agentproviderkindvalidationmustpreserveclipcreatedfactsaswellasroots; coupledtestongoing. Broaderhistoricalsourceversionevolution remainsM2proofgap; currentstrictsourcepinrefusalhonest.
+
+## URGENT PROVEN M1 projection overwrite 20261019T231801Z
+# PROVEN same-project projection data loss on supported M1 occurrence move
+Current Agent 2b8f2caaadf8b7dd97396803c7f8d289b10a7117; Runtime 80973d34ae10e498d7213c30287012c9876f4b1a. No M2 product integrated. Read complete executable and measured log:
+- managers/agent/notes/shared-identity-probe-reviewed.py
+- managers/agent/notes/shared-identity-probe.log
+
+Command (normal authorized manager executor; no sockets/product changes):
+env PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -B /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/notes/shared-identity-probe-reviewed.py
+Exit1: ALL intended checks reached, no aborted modes or missing checks. Only failed invariant = same-project central_no_unrelated_change.
+
+Fixture seeds valid public main APIs before provider activation, as actual integration fixtures do. In a temporary realm, t-main has repeated source shot-a on occurrences occ-1/occ-2; normal actual bundle predicts the occurrence materialized destination ID. Before activation, publish a distinct unrelated valid shot at EXACT destination ID in another same-project timeline t-occ, with two valid media-backed items and distinct opaque metadata/head. Register actual provider. Real capture_move→RuntimeService.commit_timeline for occ-1/c1 to0.5 is ACCEPTED. It overwrites unrelated mutable project_shots row/head and deletes both occ-item-1/occ-item-2. Other timeline's immutable pinned closure/history still equals original. This is mutable shot data loss, NOT proven pinned-film corruption.
+
+Positive controls: fresh unoccupied destination move accepts; siblings/unrelated timelines/projects unaffected; exact retry replays; accepted reload, own subsequent move and historical closure preserved. Other-project occupied destination refuses CLEANLY and changes nothing. Dry runs leave no trace in every case. All checks reach completion.
+
+Prior Sonnet probe needed trivial fixture fixes only: valid note items→media-backed items (worker); exact shot revision typo, hold0.25 to fit unchanged M1 boundary, seeding before provider activation, compare untouched sibling's physical pinned shot ID rather than transient virtual slot. Logs of failed setup retained separately. NO product validation/guards bypassed, no fake receipts/provider/accepted SQL.
+
+Recommendation: HOLD global M1 record for owner decision. Runtime owns a narrow atomic rejection of unrelated occupied projection destinations before any writes; reuse reviewed M2 private occupancy guard logic as appropriate, without merging new M2 refs/commands or changing DTO/ABI. Own historical slot rematerialization after authenticated restore/inverse must remain allowed, real normal move/restore/retry neighbors preserved. Add this EXACT actual-provider same-project two-timeline case to Runtime suite and prove all unrelated metadata/items/head+immutable closure+history unchanged on refusal. No random-ID assumption, no id_map rewrite, no new table.
+
+Agent work meanwhile: original four full regressions fixed/current6PASS and old63 classification unchanged. New data-loss proof supersedes earlier no-known-M1-defect/own exit-satisfied wording. M2 branches continue held; Runtimeb891 IDguard already exists but NOT automatically authorized for M1 merge. Need explicit owner judgement of smallest safe patch.
+
