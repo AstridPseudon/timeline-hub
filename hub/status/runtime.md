@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T21:47:18Z | dispatcher heartbeat 3s -->
+<!-- main | 2026-10-19T21:48:06Z | dispatcher heartbeat 5s -->
 # runtime — 2026-10-19T21:41Z
 Milestone: M1 ACTIVE — walking-skeleton proof PASS; closure WAITS restored2Appjourneys GREEN, allnewfullfailuresfixed/preexisting, nextdeepaudit~22:20 no blocker. Restore7regressions now AUTHORIZED M1preservation; M2 DESIGN ONLY. M0 COMPLETE. No M2 product started.
 Integrated: runtime tl/integration4af7a20; product/contract/artifacts unchanged from browser-tested82df3cf. Durable commit/history/retained inputs, recorder integrity, real bootstrap, generated0.2.1/schema4e52/artifact9b18. Last2merges test-only: authentic pre-v31 fixtures +isolated wheel probe.
