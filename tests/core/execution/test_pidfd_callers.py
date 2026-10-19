@@ -106,6 +106,45 @@ def test_custody_birth_drift_after_open_closes_unadmitted_handle(tmp_path, monke
     runtime_pidfd_provider.pidfd_send_signal.assert_not_called()
 
 
+@pytest.mark.parametrize("entry", ["register", "bind-launch"])
+@pytest.mark.parametrize("stage", ["identity", "inheritability"])
+def test_custody_post_open_failure_closes_untransferred_handle(
+    tmp_path, monkeypatch, runtime_pidfd_provider, entry, stage,
+):
+    provider = runtime_pidfd_provider
+    owner = custody.ProcessCustody(scope_root=tmp_path)
+    process = SimpleNamespace(pid=123)
+    failure = OSError(errno.EIO, f"post-open {stage} failure")
+
+    def identify(pid):
+        if stage == "identity" and provider.pidfd_open.called:
+            raise failure
+        return "child"
+
+    monkeypatch.setattr(groups, "process_birth_identity", lambda pid=None: "actor" if pid is None else identify(pid))
+    monkeypatch.setattr(groups, "held_child_birth_identity", identify)
+    monkeypatch.setattr(custody.os, "set_inheritable", Mock(side_effect=failure if stage == "inheritability" else None))
+    closed = Mock()
+    monkeypatch.setattr(custody.os, "close", closed)
+    with pytest.raises(OSError) as error:
+        if entry == "register":
+            owner.register(process.pid, "child")
+        else:
+            owner.bind_launch(process)
+    assert error.value is failure
+    provider.pidfd_open.assert_called_once_with(123)
+    provider.pidfd_send_signal.assert_not_called()
+    assert not owner._handles
+    closed.assert_called_once_with(73)
+    owner.release_pidfds()
+    closed.assert_called_once_with(73)
+    if entry == "bind-launch":
+        assert owner._uncertain is failure
+        assert process._astrid_tree_uncertain == str(failure)
+    else:
+        assert owner._uncertain is None
+
+
 @pytest.mark.integration
 @pytest.mark.skipif(sys.platform != "linux", reason="Linux retained pidfd custody")
 def test_pack_host_and_retained_custody_without_stdlib_pidfds(tmp_path, without_stdlib_pidfds):

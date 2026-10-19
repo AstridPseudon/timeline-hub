@@ -3121,13 +3121,18 @@ class ProcessCustody:
                         if held:
                             raise
                         return
-                    if identify(pid) != birth:
-                        os.close(descriptor)
-                        if held:
-                            raise CustodyError("descendant changed during pidfd binding")
-                        return
-                    os.set_inheritable(descriptor, False)
-                    self._handles[pid] = (birth, descriptor)
+                    retained = False
+                    try:
+                        if identify(pid) != birth:
+                            if held:
+                                raise CustodyError("descendant changed during pidfd binding")
+                            return
+                        os.set_inheritable(descriptor, False)
+                        self._handles[pid] = (birth, descriptor)
+                        retained = True
+                    finally:
+                        if not retained:
+                            os.close(descriptor)
             except Exception as exc:
                 if sys.platform != "darwin":
                     raise
