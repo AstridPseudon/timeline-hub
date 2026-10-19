@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T20:10:49Z | handed over -->
+<!-- app | 2026-10-19T20:12:57Z | dispatcher heartbeat 7s -->
 # app — 2026-10-19 20:10 UTC
 Milestone: M1 ACTIVE — SAFE REAL PORT NOW MOUNTED in production0f16295c1. No longer absent ops.clipMove. Real App mouse gate pending final UI/recovery/projection fixes; M0 COMPLETE. M1 singleton first; M2 FIRSTgroup/multi/cross-track draft only.
 Integrated: app tl/integration0f16295c1 includes editor-wiring+review lifecycle c98dc6be8: actual service/drag capture→durable outbox→Runtime commit→accepted projection/Runtime inverse; manager25focused pass, worker174neighbors, actual tsc ONLY original2errors. Same-turn dispose loss reproduced(0 vs1intent) and fixed/drain regression; never waits network on close. Complete0.2.1/182a7dd/4e52 pin(d47eac0e6,77consumer+13vendor); exact original3drag successes it.fails+strict gate384d00c51(manager20ordinary3expected/gate3authorized0forbidden). Earlier capture78/28Python, basis23/5Python, outbox23/nativebrowser1, consumer203/103, preview68.
