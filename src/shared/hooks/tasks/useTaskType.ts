@@ -7,8 +7,8 @@ import {
 } from '@/shared/lib/taskTypeConfigFallback';
 
 /**
- * Task-type display config is APP configuration, not bridge data: the old
- * Supabase `task_types` table has no doc-27 §4.1 route, and the versioned
+ * Task-type display config is APP configuration, not bridge data: no
+ * doc-27 §4.1 route serves it, and the versioned
  * local registry (`taskTypeConfigFallback`) is its single surviving source.
  * Both hooks read that one registry — no second authority.
  */
@@ -75,8 +75,7 @@ export const useAllTaskTypesConfig = () => {
   return useQuery({
     queryKey: taskQueryKeys.typesConfigAll,
     queryFn: fetchAllTaskTypesConfig,
-    // Local registry read — no session gating required (the old gate existed
-    // because the supabase table needed an authenticated client).
+    // Local registry read — no session gating required.
     staleTime: 10 * 60 * 1000, // 10 minutes - task types config rarely changes
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,

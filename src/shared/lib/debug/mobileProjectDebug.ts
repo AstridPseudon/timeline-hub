@@ -75,16 +75,6 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
       }
     })());
 
-    // Check Supabase auth state
-    if (window.supabase) {
-      window.supabase.auth.getSession().then((result) => {
-        console.log('- Supabase Session:', !!result.data?.session?.user?.id);
-        console.log('- User ID:', result.data?.session?.user?.id || 'None');
-      });
-    } else {
-      console.log('- Supabase not found');
-    }
-
     // Check localStorage for relevant data
     console.log('- Debug Mode Enabled:', localStorage.getItem('DEBUG_PROJECT_CONTEXT') === 'true');
 
@@ -113,16 +103,6 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
       });
     } catch (e) {
       normalizeAndPresentError(e, { context: 'mobileProjectDebug.forceRecovery', showToast: false });
-    }
-
-    // Try to trigger auth refresh
-    if (window.supabase) {
-      console.log('Refreshing Supabase session...');
-      window.supabase.auth.refreshSession().then(() => {
-        console.log('Session refresh completed');
-      }).catch((error: unknown) => {
-        console.log('Session refresh failed:', error);
-      });
     }
 
     // Force page reload as last resort

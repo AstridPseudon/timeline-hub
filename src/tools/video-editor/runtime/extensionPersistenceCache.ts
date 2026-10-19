@@ -3,7 +3,7 @@
  * proposal facades (T5).
  *
  * Provides a hydrated in-memory cache over an async FullSnapshotStore so
- * that providers (browser-local, Supabase, etc.) can implement a single
+ * that providers (browser-local, Astrid bridge, etc.) can implement a single
  * load-save-delete contract while the cache handles all the CRUD semantics.
  *
  * ## Invariants

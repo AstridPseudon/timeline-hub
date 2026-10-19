@@ -1,60 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHookWithProviders } from '@/test/test-utils';
 
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    auth: {
-      getSession: vi.fn(() =>
-        Promise.resolve({ data: { session: { user: { id: 'user-1' } } } })
-      ),
-    },
-    from: vi.fn((table: string) => {
-      if (table === 'users') {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              maybeSingle: vi.fn(() =>
-                Promise.resolve({ data: { settings: {} }, error: null })
-              ),
-            })),
-          })),
-        };
-      }
-      if (table === 'projects') {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              maybeSingle: vi.fn(() =>
-                Promise.resolve({ data: { settings: {} }, error: null })
-              ),
-            })),
-          })),
-        };
-      }
-      if (table === 'shots') {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() =>
-              Promise.resolve({
-                data: [
-                  { id: 'shot-1', settings: {} },
-                  { id: 'shot-2', settings: {} },
-                ],
-                error: null,
-              })
-            ),
-          })),
-        };
-      }
-      return {
-        select: vi.fn(() => ({
-          eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-      };
-    }),
-  }),
-}));
-
 vi.mock('@/shared/hooks/useSmartPolling', () => ({
   useSmartPollingConfig: vi.fn(() => ({})),
 }));

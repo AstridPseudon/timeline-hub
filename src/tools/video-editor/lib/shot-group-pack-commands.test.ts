@@ -340,7 +340,7 @@ describe('shot-group pack commands', () => {
     expect(runtime.loads).toBe(2);
     expect(runtime.publishes).toEqual(['rev-2']);
     expect(paths).toEqual([]);
-    expect(paths.some((path) => path.includes(forbidden) || path.includes('supabase'))).toBe(false);
+    expect(paths.some((path) => path.includes(forbidden))).toBe(false);
   });
 
   it('refuses the retired promote-primary family before task admission or timeline mutation', async () => {

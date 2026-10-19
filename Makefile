@@ -1,11 +1,9 @@
 SHELL := /bin/sh
 
 PUBLIC_VITE_ENV := \
-	VITE_SUPABASE_URL=https://example.supabase.co \
-	VITE_SUPABASE_ANON_KEY=dummy-anon-key \
 	VITE_API_TARGET_URL=https://example.com
 
-.PHONY: help install-hooks dockerfile-check build-context-check build docker-build deploy-check quality test extensions-check extensions-production-smoke slot-first-unit slot-first-edge slot-first-db slot-first-e2e slot-first-health slot-first-schema-drift slot-first-test-fixture-legacy slot-first-audit release-check ci
+.PHONY: help install-hooks dockerfile-check build-context-check build docker-build deploy-check quality test extensions-check extensions-production-smoke release-check ci
 
 help:
 	@printf '%s\n' \
@@ -19,7 +17,6 @@ help:
 		'  make test                 Run the Vitest suite.' \
 		'  make extensions-check     Run extension contract gates (schema validation, drift, export freeze, packagability, unit tests).  Local-only — no Docker required.' \
 		'  make extensions-production-smoke  Run the production-bundled smoke extension tests (opt-in, statically bundled).  Local-only.' \
-		'  make slot-first-audit     Run M0 slot-first audit-mode tests and gates.' \
 		'  make release-check        Run the full release gate before cutting a deployment.' \
 		'  make install-hooks        Install repo-managed git hooks.' \
 		'  make ci                   Alias for release-check.'
@@ -48,8 +45,6 @@ build:
 
 docker-build:
 	docker build \
-		--build-arg VITE_SUPABASE_URL=https://example.supabase.co \
-		--build-arg VITE_SUPABASE_ANON_KEY=dummy-anon-key \
 		--build-arg VITE_API_TARGET_URL=https://example.com \
 		.
 
@@ -83,30 +78,5 @@ extensions-production-smoke:
 # Docker-required: dockerfile-check, docker-build
 # Local-only:      build-context-check, build, quality, test, extensions-check
 release-check: dockerfile-check build-context-check docker-build build quality test extensions-check
-
-slot-first-unit:
-	npm run test:slot:unit
-
-slot-first-edge:
-	npm run test:slot:edge
-
-# pgTAP-only DB coverage. This target does not run readiness checks.
-slot-first-db:
-	npm run test:slot:db -- --audit
-
-slot-first-e2e:
-	npm run test:slot:e2e
-
-# Readiness diagnostics only. This target must not be counted as DB coverage.
-slot-first-health:
-	npm run slot:first:health -- --audit
-
-slot-first-schema-drift:
-	npm run quality:schema-drift -- --audit
-
-slot-first-test-fixture-legacy:
-	npm run quality:test-fixture-legacy -- --audit
-
-slot-first-audit: slot-first-unit slot-first-edge slot-first-db slot-first-schema-drift slot-first-test-fixture-legacy slot-first-health slot-first-e2e
 
 ci: release-check

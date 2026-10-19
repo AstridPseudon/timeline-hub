@@ -8,7 +8,7 @@
  * events or make business decisions about what to invalidate.
  *
  * Transport: interval diff-poller over `AstridLocalClient` routes (doc-27 §4.1).
- * There is no WebSocket and no Supabase client anywhere in this file.
+ * There is no WebSocket anywhere in this file.
  *
  * State machine: disconnected → connecting → connected ↔ reconnecting → failed.
  * The load-bearing rule: status flips to 'connected' ONLY after the first fully
@@ -590,7 +590,7 @@ const IDENTITY_KEYS: Record<DatabaseTable, readonly string[]> = {
  * - id present in next only → INSERT (`new` = full row)
  * - present in both with changed content → UPDATE (`new` = full row, `old` = prior)
  * - present in prior only → DELETE; `old` PRESERVES the full removed record
- *   (matching Supabase DELETE payloads, whose consumers read `e.old || e.new`)
+ *   (consumers read `e.old || e.new`)
  */
 export function diffTableSnapshots(
   table: DatabaseTable,

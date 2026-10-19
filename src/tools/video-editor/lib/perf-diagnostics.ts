@@ -62,7 +62,7 @@ export function bootDiagnostics() {
       const resourceObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           const res = entry as PerformanceResourceTiming;
-          if (res.duration > 2000 && (res.name.includes('supabase') || res.name.includes('storage'))) {
+          if (res.duration > 2000 && res.name.includes('storage')) {
             logPerf(`slow-resource: ${Math.round(res.duration)}ms | ${res.initiatorType} | ${res.name.slice(0, 120)}`);
           }
         }

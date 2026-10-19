@@ -226,7 +226,7 @@ vi.mock("@/shared/contexts/ProjectContext.tsx", () => ({
 
 // Page routing is covered by useHomeNavigation.test.ts. Keeping that hook real
 // here would mount user-preference persistence, which is outside this page
-// contract and requires an initialized Supabase runtime.
+// contract.
 vi.mock("@/shared/hooks/useHomeNavigation.ts", () => ({
   useHomeNavigation: () => ({
     navigateHome: vi.fn(),

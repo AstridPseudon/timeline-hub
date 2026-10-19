@@ -3,7 +3,7 @@
  *
  * This is deliberately distinct from a transport failure: retrying the same
  * request cannot make an absent route appear. Callers surface the recovery
- * action instead of silently falling back to Supabase or pretending success.
+ * action instead of silently falling back or pretending success.
  */
 export class BridgeCapabilityUnavailableError extends Error {
   readonly code = 'capability_unavailable' as const;

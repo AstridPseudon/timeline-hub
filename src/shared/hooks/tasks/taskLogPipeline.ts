@@ -60,8 +60,7 @@ interface FetchTaskLogDataOptions {
 
 /**
  * Cost entries once came from the `credits_ledger` table; the frozen bridge
- * exposes no ledger route, so log rows carry no costs (deferred surface —
- * see docs/cutover-inventory.md).
+ * exposes no ledger route, so log rows carry no costs (deferred surface).
  */
 interface TaskLogCostEntry {
   task_id: string | null;

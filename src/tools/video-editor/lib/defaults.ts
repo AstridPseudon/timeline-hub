@@ -57,7 +57,7 @@ export function createDefaultTimelineConfig(): TimelineConfig {
  * `getCanvas` in Root.tsx and the ffmpeg `_timeline_canvas` both prefer
  * `theme_overrides.visual.canvas`, then the resolved theme canvas, then a
  * hardcoded default):
- *   1. explicit `output.resolution` / `output.fps` (persisted, Supabase path)
+ *   1. explicit `output.resolution` / `output.fps` (persisted)
  *   2. `theme_overrides.visual.canvas` (per-timeline declared geometry)
  *   3. the installed theme's `visual.canvas` (via `resolveTimelineRenderTheme`)
  *   4. `DEFAULT_OUTPUT` (1280x720@30) — unchanged for timelines that declare

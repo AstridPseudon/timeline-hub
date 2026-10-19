@@ -32,7 +32,7 @@ export function createGenerationDetailQueryOptions(
   return {
     queryKey: runtimeAuthority
       ? ['runtime', 'generation-detail', runtimeProjectId, generationId]
-      : ['supabase', 'generation-detail', projectId, generationId],
+      : ['astrid', 'generation-detail', projectId, generationId],
     queryFn: async () => {
       if (runtimeAuthority) {
         if (!runtimeProjectId) {

@@ -9,10 +9,6 @@ vi.mock('@/shared/lib/taskCreation', () => ({
   generateUUID: vi.fn().mockReturnValue('mock-uuid'),
 }));
 
-vi.mock('@/shared/lib/supabaseSession', () => ({
-  readUserIdFromStorage: vi.fn().mockReturnValue('user-1'),
-}));
-
 import {
   createEmptyClip,
   getCachedClipsCount,
@@ -203,7 +199,7 @@ describe('tryConsumePendingJoinClips', () => {
 
   it('consumes in-memory intents and clears matching storage fallback', async () => {
     const now = Date.now();
-    const activeKey = getPendingJoinClipsStorageKey('project-1', 'user-1');
+    const activeKey = getPendingJoinClipsStorageKey('project-1');
     localStorage.setItem(activeKey, JSON.stringify([
       {
         videoUrl: 'https://example.com/storage.mp4',
@@ -219,9 +215,8 @@ describe('tryConsumePendingJoinClips', () => {
         generationId: 'gen-memory',
         timestamp: now,
         projectId: 'project-1',
-        userId: 'user-1',
       },
-      { projectId: 'project-1', userId: 'user-1' },
+      { projectId: 'project-1' },
     );
 
     const readVideoDuration = vi.fn().mockResolvedValue(7);
@@ -291,8 +286,8 @@ describe('tryConsumePendingJoinClips', () => {
 
   it('consumes scoped queues for the active project only', async () => {
     const now = Date.now();
-    const activeKey = getPendingJoinClipsStorageKey('project-1', 'user-1');
-    const otherProjectKey = getPendingJoinClipsStorageKey('project-2', 'user-1');
+    const activeKey = getPendingJoinClipsStorageKey('project-1');
+    const otherProjectKey = getPendingJoinClipsStorageKey('project-2');
 
     localStorage.setItem(activeKey, JSON.stringify([
       {
@@ -300,7 +295,6 @@ describe('tryConsumePendingJoinClips', () => {
         generationId: 'gen-a',
         timestamp: now,
         projectId: 'project-1',
-        userId: 'user-1',
       },
     ]));
     localStorage.setItem(otherProjectKey, JSON.stringify([
@@ -309,7 +303,6 @@ describe('tryConsumePendingJoinClips', () => {
         generationId: 'gen-b',
         timestamp: now,
         projectId: 'project-2',
-        userId: 'user-1',
       },
     ]));
 

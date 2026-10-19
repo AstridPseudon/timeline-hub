@@ -44,7 +44,7 @@ export function useProjectVideoCountsCache(projectId: string | null) {
     queryKey: projectStatsQueryKeys.videos(effectiveProjectId),
     queryFn: () => fetchProjectShotDataFromDB(projectId!),
     // Neither current authority exposes this capability: the Astrid bridge
-    // has no per-shot counts route and the former Supabase fetcher was removed
+    // has no per-shot counts route and the former fetcher was removed
     // during cutover. Keep the query disabled until a real route is available.
     enabled: false,
     retry: false,

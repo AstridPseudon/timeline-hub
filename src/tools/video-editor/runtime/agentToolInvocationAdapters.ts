@@ -249,8 +249,8 @@ export function createWorkerInvocationAdapter(
  * Adapter for edge-action tool invocation.
  *
  * Provides both the invocation boundary and serialization helper.
- * For M10, dispatch is delegated to the local registry; true edge
- * invocation (fetch to Supabase Edge Function) is deferred to M12.
+ * For M10, dispatch is delegated to the local registry; remote edge
+ * invocation is deferred to M12.
  */
 export interface EdgeInvocationAdapter {
   /**

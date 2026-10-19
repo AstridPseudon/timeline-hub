@@ -37,7 +37,7 @@ export function useOutputController({
     outputSelectionReady ? setSelectedOutputId : undefined,
     // Local Astrid shots already contain the complete document-derived image
     // set. Supplying it prevents the legacy segment/final-video readers from
-    // opening Supabase queries while the established layout is mounted.
+    // issuing their own reads while the established layout is mounted.
     timelineImages,
     timelineImages.at(-1)?.id, // trailingShotGenId: allow trailing segment videos to show
   );

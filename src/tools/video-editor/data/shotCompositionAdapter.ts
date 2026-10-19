@@ -80,7 +80,7 @@ export type ShotCompositionPublishRequest = Readonly<{
  * Product-facing I/O port for the canonical graph.
  *
  * Runtime/bridge clients implement this port. The adapter never imports a
- * transport, Supabase client, or React provider, which keeps all graph tests
+ * transport or React provider, which keeps all graph tests
  * deterministic and makes the expected-head CAS explicit at the boundary.
  */
 export interface ShotCompositionPort {

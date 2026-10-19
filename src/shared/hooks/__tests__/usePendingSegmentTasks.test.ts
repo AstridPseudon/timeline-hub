@@ -2,28 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act } from '@testing-library/react';
 import { renderHookWithProviders } from '@/test/test-utils';
 
-const mockQueryResult = vi.fn();
-
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          in: vi.fn(() => ({
-            in: vi.fn(() => mockQueryResult()),
-          })),
-        })),
-      })),
-    })),
-  }),
-}));
-
 import { usePendingSegmentTasks } from '@/shared/hooks/tasks/usePendingSegmentTasks';
 
 describe('usePendingSegmentTasks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockQueryResult.mockResolvedValue({ data: [], error: null });
   });
 
   it('returns expected shape when disabled', () => {

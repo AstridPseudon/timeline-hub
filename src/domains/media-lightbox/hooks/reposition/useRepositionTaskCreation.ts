@@ -42,7 +42,7 @@ export function useRepositionTaskCreation(
   // variant settlement requires source_object_id to equal the selected
   // source variant object, so it cannot honestly settle this transformed
   // source through the same mask capability yet. Keep the UI fail-closed
-  // rather than reintroducing the legacy Supabase upload path.
+  // rather than reintroducing a legacy upload path.
   const handleGenerateReposition = useCallback(async () => {
     toast.error(
       'Repositioned inpainting is blocked until Astrid publishes derived-source lineage for mask edits.',

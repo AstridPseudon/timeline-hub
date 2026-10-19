@@ -1,10 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-// The logger is local-only: it must never load the Supabase client or ship logs anywhere.
-vi.mock('@/integrations/supabase/client', () => {
-  throw new Error('logger must not load the Supabase client');
-});
-
 // Mock debugConfig used by reactProfilerOnRender
 vi.mock('../debug/debugConfig', () => ({
   debugConfig: {

@@ -4,8 +4,7 @@ import { bridgeTaskSummaryToTask, getBridgeTaskClient } from '@/integrations/ast
 
 /**
  * One task's poll read via the frozen `GET /projects/:slug/tasks/:task_id`
- * route. A missing task is a `null`, never an error — same contract the
- * supabase-js `.maybeSingle()` path had.
+ * route. A missing task is a `null`, never an error.
  */
 export async function fetchTaskInProject(taskId: string, projectId: string): Promise<Task | null> {
   const client = getBridgeTaskClient(projectId);

@@ -16,7 +16,7 @@
  *
  * This adapter uses a simple provider interface that supports get/set/delete
  * for string-keyed JSON state. It is designed to work with any provider that
- * exposes a key-value storage API (localStorage, Supabase tool-settings, etc.).
+ * exposes a key-value storage API (localStorage, a settings service, etc.).
  */
 
 import type {
@@ -39,8 +39,8 @@ import type {
 /**
  * Minimal provider-backed storage interface.
  *
- * Concrete implementations may wrap localStorage (for testing) or the
- * Supabase tool-settings service (for production).
+ * Concrete implementations may wrap localStorage or any other
+ * key-value settings service.
  */
 export interface ProviderBackedStore {
   /** Retrieve a value by key. Returns null when not found. */

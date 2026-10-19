@@ -8,20 +8,6 @@ vi.mock('@/shared/lib/taskCreation', () => ({
   createTask: vi.fn(),
 }));
 
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      update: vi.fn().mockReturnThis(),
-    })),
-    functions: {
-      invoke: vi.fn(),
-    },
-  }),
-}));
-
 const getSettings = () => ({
   prompt: 'A prompt',
   negativePrompt: '',

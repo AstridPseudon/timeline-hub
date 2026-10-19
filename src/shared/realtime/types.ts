@@ -38,7 +38,7 @@ export const INITIAL_CONNECTION_STATE: ConnectionState = {
 };
 
 // =============================================================================
-// Raw Database Events (from Supabase)
+// Raw Database Events (from the bridge poller)
 // =============================================================================
 
 export type DatabaseEventType = 'INSERT' | 'UPDATE' | 'DELETE';
@@ -49,7 +49,7 @@ export type DatabaseTable =
   | 'generation_variants'
   | 'timelines';
 
-/** Raw event from Supabase postgres_changes */
+/** Raw database change event (postgres_changes shape) */
 interface RawDatabaseEventBase {
   table: DatabaseTable;
   eventType: DatabaseEventType;

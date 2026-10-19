@@ -35,8 +35,7 @@ const EMPTY_PAGINATED_TASKS_RESPONSE: PaginatedTasksResponse = {
 
 /**
  * The frozen task-list route is project-scoped by its slug and carries no
- * status/type filters, so filtering that supabase-js did in SQL happens
- * here, over one bridge read.
+ * status/type filters, so filtering happens here, over one bridge read.
  */
 function matchesFilters(task: Task, filters: PaginatedTaskQuery): boolean {
   if (!filters.visibleTaskTypes.includes(task.taskType)) return false;

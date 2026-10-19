@@ -3122,13 +3122,9 @@ describe('VideoEditorProvider', () => {
 
 
 
-  it('keeps the sprint 2 governance inventory markers in the checklist and allowlist', () => {
+  it('keeps the sprint 2 governance inventory markers in the checklist', () => {
     const checklist = readFileSync(
       join(process.cwd(), 'tasks/2026-05-03-video-editor-sprint2-ports-and-commands-checklist.md'),
-      'utf8',
-    );
-    const allowlist = readFileSync(
-      join(process.cwd(), 'eslint.supabase-facade-allowlist.js'),
       'utf8',
     );
 
@@ -3146,9 +3142,6 @@ describe('VideoEditorProvider', () => {
     for (const gestureOnlyHook of INTERNAL_GESTURE_TIMELINE_MUTATIONS) {
       expect(checklist).toContain(gestureOnlyHook);
     }
-    expect(allowlist).toContain('src/tools/video-editor/adapters/app/generationLookup.ts');
-    expect(allowlist).toContain('src/tools/video-editor/adapters/app/useAstridEffectsCatalog.ts');
-    expect(allowlist).toContain('src/tools/video-editor/adapters/app/variantPromotionLookup.ts');
   });
 
   // -------------------------------------------------------------------------

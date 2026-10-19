@@ -6,8 +6,6 @@ import { createRoot } from 'react-dom/client';
 import { Profiler } from 'react';
 import { App } from '@/app/App';
 import { AppErrorBoundary } from '@/app/components/error/AppErrorBoundary';
-import { initializeSupabaseResult } from '@/integrations/supabase/client';
-import { hasSupabaseConfig } from '@/integrations/supabase/config/env';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { initializeToastManager } from '@/shared/runtime/toastRuntime';
 import { installErrorNotifier } from '@/shared/lib/errorHandling/errorNotifier';
@@ -19,7 +17,6 @@ import { initializeProjectSelectionStore } from '@/shared/contexts/projectSelect
 import { initializePreloadingService } from '@/shared/lib/preloading';
 import { initializeNetworkStatusManager } from '@/shared/services/network/networkStatusManager';
 import { initializeLocalTestRuntime, isLocalTestMode } from '@/app/localTestRuntime';
-import { hasRuntimeDocumentSelectors, isRuntimeDocumentMode } from '@/app/runtime/runtimeDocument';
 import '@/index.css';
 
 let presenterInstalled = false;
@@ -68,7 +65,6 @@ export function initializeAppEnvironment(): void {
   initializeLoggerRuntime();
   const env = import.meta.env;
   const localTestMode = isLocalTestMode(env);
-  const runtimeDocumentMode = isRuntimeDocumentMode();
   initializeLocalTestRuntime();
   initializeToastManager();
   registerToastErrorPresenter();
@@ -94,50 +90,22 @@ export function initializeAppEnvironment(): void {
     import('@/shared/lib/simpleCacheValidator');
     import('@/shared/lib/debug/debugPolling');
     import('@/shared/lib/debug/mobileProjectDebug');
+    import('@/shared/realtime/DataFreshnessManager')
+      .then(({ registerDataFreshnessManagerDebugGlobal }) => {
+        registerDataFreshnessManagerDebugGlobal();
+      })
+      .catch((error) => {
+        normalizeAndPresentError(error, {
+          context: 'initializeAppEnvironment.registerDataFreshnessManagerDebugGlobal',
+          showToast: false,
+        });
+        return undefined;
+      });
   }
 
   // Paint the theme before the first frame (no flash of the wrong colours): the time of day where they
   // are, or the moment they chose.
   applyAppTheme(appThemeDarkness(readStoredAppThemeTime()));
-
-  // Local-trust boot (doc 27 §4.7): the covered journey runs against the
-  // Astrid bridge with NO Supabase environment configured. Initializing the
-  // Supabase runtime without config used to throw synchronously and
-  // white-screen the app — skip it entirely when no URL is set.
-  const documentSelection = typeof window !== 'undefined' && hasRuntimeDocumentSelectors(window.location.search);
-  if (!isTestRuntimeEnvironment(env) && !localTestMode && !documentSelection && !runtimeDocumentMode && hasSupabaseConfig()) {
-    const supabaseInitResult = initializeSupabaseResult();
-    if (!supabaseInitResult.ok) {
-      normalizeAndPresentError(supabaseInitResult.error, {
-        context: 'initializeAppEnvironment.initializeSupabase',
-        showToast: false,
-      });
-    }
-    if (supabaseInitResult.ok && shouldLoadDevDebugTools(env)) {
-      import('@/integrations/supabase/support/debug/initializeSupabaseDebugGlobals')
-        .then(({ initializeSupabaseDebugGlobals }) => {
-          initializeSupabaseDebugGlobals();
-        })
-        .catch((error) => {
-          normalizeAndPresentError(error, {
-            context: 'initializeAppEnvironment.initializeSupabaseDebugGlobals',
-            showToast: false,
-          });
-          return undefined;
-        });
-      import('@/shared/realtime/DataFreshnessManager')
-        .then(({ registerDataFreshnessManagerDebugGlobal }) => {
-          registerDataFreshnessManagerDebugGlobal();
-        })
-        .catch((error) => {
-          normalizeAndPresentError(error, {
-            context: 'initializeAppEnvironment.registerDataFreshnessManagerDebugGlobal',
-            showToast: false,
-          });
-          return undefined;
-        });
-    }
-  }
 
   environmentInitialized = true;
 }

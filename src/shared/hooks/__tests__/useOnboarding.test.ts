@@ -1,18 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 
-const {
-  mockGetUser,
-  mockSelect,
-  mockUpdate,
-  mockGetSupabaseClient,
-  checkAvailabilityMock,
-  runtimeSessionMock,
-} = vi.hoisted(() => ({
-  mockGetUser: vi.fn(),
-  mockSelect: vi.fn(),
-  mockUpdate: vi.fn(),
-  mockGetSupabaseClient: vi.fn(),
+const { checkAvailabilityMock, runtimeSessionMock } = vi.hoisted(() => ({
   checkAvailabilityMock: vi.fn(),
   runtimeSessionMock: vi.fn(),
 }));
@@ -26,10 +15,6 @@ vi.mock("@/integrations/runtime/client.ts", () => ({
 
 vi.mock("@/integrations/astrid/doctorAvailability.ts", () => ({
   checkAstridDoctorAvailability: checkAvailabilityMock,
-}));
-
-vi.mock("@/integrations/supabase/client", () => ({
-  getSupabaseClient: mockGetSupabaseClient,
 }));
 
 import { ASTRID_SETUP_COMPLETE_KEY, useOnboarding } from "../useOnboarding";
@@ -68,23 +53,6 @@ describe("useOnboarding", () => {
     window.localStorage.removeItem(ASTRID_SETUP_COMPLETE_KEY);
     checkAvailabilityMock.mockResolvedValue({ status: "available" });
     window.history.replaceState({}, "", "/");
-    mockGetSupabaseClient.mockReturnValue({
-      auth: {
-        getUser: () => mockGetUser(),
-      },
-      from: vi.fn((_table: string) => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: () => mockSelect(),
-          })),
-        })),
-        update: vi.fn(() => ({
-          eq: vi.fn(() => mockUpdate()),
-        })),
-      })),
-    });
-    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
-    window.history.replaceState({}, "", "/");
   });
 
   afterEach(() => {
@@ -93,15 +61,11 @@ describe("useOnboarding", () => {
   });
 
   it("does not show modal initially", () => {
-    mockSelect.mockResolvedValue({
-      data: { onboarding_completed: true },
-      error: null,
-    });
     const { result } = renderHook(() => useOnboarding());
     expect(result.current.showOnboardingModal).toBe(false);
   });
 
-  it("never initializes Supabase in deterministic local-test mode", async () => {
+  it("stays closed in deterministic local-test mode", async () => {
     window.history.replaceState({}, "", "/tools/video-editor?localTest=1");
     const { result } = renderHook(() => useOnboarding());
 
@@ -110,10 +74,8 @@ describe("useOnboarding", () => {
     });
 
     expect(result.current.showOnboardingModal).toBe(false);
-    expect(mockGetSupabaseClient).not.toHaveBeenCalled();
 
     act(() => result.current.closeOnboardingModal());
-    expect(mockGetSupabaseClient).not.toHaveBeenCalled();
   });
 
   it("connected native editor opens without GPU/generation onboarding or a test bypass", async () => {
@@ -131,7 +93,6 @@ describe("useOnboarding", () => {
 
     expect(result.current.showOnboardingModal).toBe(false);
     expect(runtimeSessionMock).toHaveBeenCalled();
-    expect(mockGetSupabaseClient).not.toHaveBeenCalled();
 
     act(() => result.current.closeOnboardingModal());
     expect(window.localStorage.getItem(ASTRID_SETUP_COMPLETE_KEY)).toBeNull();
@@ -172,14 +133,9 @@ describe("useOnboarding", () => {
       await vi.advanceTimersByTimeAsync(600);
     });
     expect(result.current.showOnboardingModal).toBe(false);
-    expect(mockGetSupabaseClient).not.toHaveBeenCalled();
   });
 
   it("shows modal when onboarding not completed after delay", async () => {
-    mockSelect.mockResolvedValue({
-      data: { onboarding_completed: false },
-      error: null,
-    });
     const { result } = renderHook(() => useOnboarding());
 
     await act(async () => {
@@ -189,7 +145,7 @@ describe("useOnboarding", () => {
     expect(result.current.showOnboardingModal).toBe(true);
   });
 
-  it("does not probe Supabase in local Astrid editor mode, and uses negotiated Runtime readiness", async () => {
+  it("uses negotiated Runtime readiness in local Astrid editor mode", async () => {
     window.history.replaceState(
       {},
       "",
@@ -204,11 +160,9 @@ describe("useOnboarding", () => {
 
     expect(result.current.showOnboardingModal).toBe(false);
     expect(runtimeSessionMock).toHaveBeenCalled();
-    expect(mockGetUser).not.toHaveBeenCalled();
-    expect(mockSelect).not.toHaveBeenCalled();
   });
 
-  it("does not probe Supabase under default Astrid authority", async () => {
+  it("shows first-run setup under default Astrid authority", async () => {
     const { result } = renderHook(() => useOnboarding());
 
     await act(async () => {
@@ -216,10 +170,8 @@ describe("useOnboarding", () => {
     });
 
     expect(result.current.showOnboardingModal).toBe(true);
-    expect(mockGetSupabaseClient).not.toHaveBeenCalled();
 
     act(() => result.current.closeOnboardingModal());
-    expect(mockGetSupabaseClient).not.toHaveBeenCalled();
   });
 
   it("keeps showing first-run setup on every launch until it is finished", async () => {
@@ -268,11 +220,6 @@ describe("useOnboarding", () => {
   });
 
   it("closeOnboardingModal hides modal", async () => {
-    mockSelect.mockResolvedValue({
-      data: { onboarding_completed: false },
-      error: null,
-    });
-    mockUpdate.mockResolvedValue({ error: null });
     const { result } = renderHook(() => useOnboarding());
 
     await act(async () => {

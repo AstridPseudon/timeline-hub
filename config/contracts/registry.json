@@ -1,23 +1,6 @@
 {
   "contracts": [
     {
-      "id": "supabase-client-runtime-facade",
-      "class": "runtime_integration",
-      "path": "src/integrations/supabase/client.ts",
-      "requiredTags": [
-        "@publicContract"
-      ],
-      "expectedExports": [
-        "initializeSupabase",
-        "initializeSupabaseResult",
-        "getSupabaseClientResult",
-        "getSupabaseClient",
-        "supabaseClientRegistry",
-        "SupabaseClientAccessResult",
-        "SupabaseClientRegistry"
-      ]
-    },
-    {
       "id": "ui-cn-primitive",
       "class": "ui_primitive",
       "path": "src/shared/components/ui/contracts/cn.ts",

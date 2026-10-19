@@ -2,7 +2,7 @@
  * RuntimeDataProvider assertions inherited from the retired bridge provider.
  *
  * Each test here is the Runtime form of an assertion that
- * the retired bridge provider's tests (and the Supabase wrapper tests) made about
+ * the retired bridge provider's tests made about
  * the DataProvider contract: load defaults, registry resolution, single-publish
  * saves, stale-head conflicts, bundle passthrough, identity validation and
  * load freshness. Bridge-only mechanisms (ULID aliases, PUT /registry, File

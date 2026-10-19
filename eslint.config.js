@@ -5,7 +5,6 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 import { dialogEarlyReturnRestrictedSyntax } from "./eslint-rules/dialogEarlyReturnRule.js";
 import { strictLintDebtFiles } from "./eslint.strict-debt.js";
-import { supabaseFacadeAllowlist } from "./eslint.supabase-facade-allowlist.js";
 import { sharedLayerAllowlist } from "./eslint.shared-layer-allowlist.js";
 
 // Plan A (F1): the Runtime's path prefixes come from src/integrations/runtime/connection.ts, which
@@ -17,9 +16,14 @@ const runtimePathRestrictedSyntax = {
   message: "Build Runtime and Astrid paths from connection.ts (runtimeApiBase(), astridBase()) instead of a literal '/api/runtime' or '/api/astrid' path. A literal bypasses the hosted origin.",
 };
 
+// The cloud product is removed; nothing may bring the Supabase SDK back.
+const supabaseSdkRestrictedPattern = {
+  group: ["@supabase/*"],
+  message: "The Supabase client was removed from the App. Use the Runtime or Astrid clients under src/integrations/.",
+};
+
 const strictRefreshFiles = [
   "src/app/**/*.{ts,tsx}",
-  "src/integrations/supabase/bootstrap/**/*.{ts,tsx}",
   "src/shared/lib/debugPolling.ts",
   "src/shared/lib/mobileProjectDebug.ts",
   "src/shared/components/MediaGallery/hooks/useMediaGalleryDebugTools.ts",
@@ -93,7 +97,6 @@ export default tseslint.config(
       "src/**/*.test.tsx",
       "src/**/__tests__/**/*.{ts,tsx}",
       "src/examples/**/*.{ts,tsx}",
-      "supabase/functions/**/*.test.ts",
       "tests/e2e/local/**/*.ts",
     ],
     rules: {
@@ -202,61 +205,19 @@ export default tseslint.config(
       }],
     },
   },
-  // Supabase facade boundary: block direct facade imports globally.
-  // Existing legacy callsites are temporarily tracked in a dedicated allowlist file.
+  // The cloud product is removed: nothing under src/ may bring the Supabase SDK back.
+  // Flat config replaces a rule's options per file, so this block (like the facade block it
+  // replaces) supersedes the shared-layer patterns above for the non-test files it matches.
   {
     files: ["src/**/*.{ts,tsx}"],
     ignores: [
-      "src/integrations/supabase/**/*.{ts,tsx}",
       "src/**/__tests__/**/*.{ts,tsx}",
       "src/**/*.test.ts",
       "src/**/*.test.tsx",
-      ...supabaseFacadeAllowlist,
     ],
     rules: {
       "no-restricted-imports": ["error", {
-        paths: [{
-          name: "@/integrations/supabase/client",
-          message: "Use integration repositories/gateways under '@/integrations/supabase/repositories/*'. If migration is temporarily blocked, add the file path to eslint.supabase-facade-allowlist.js with a cleanup task.",
-        }],
-      }],
-    },
-  },
-  // Supabase runtime boundary for high-churn modules.
-  // These callsites should consume integration repositories/gateways, not the global client facade.
-  {
-    files: [
-      "src/shared/realtime/RealtimeConnection.ts",
-      "src/shared/hooks/useToolSettings.ts",
-      "src/domains/generation/hooks/useGenerationMutations.ts",
-    ],
-    ignores: [
-      ...supabaseFacadeAllowlist,
-    ],
-    rules: {
-      "no-restricted-imports": ["error", {
-        paths: [{
-          name: "@/integrations/supabase/client",
-          message: "Use an integration repository/gateway under '@/integrations/supabase/repositories/*' instead of importing the global Supabase client facade directly.",
-        }],
-      }],
-    },
-  },
-  // Domain boundary: domain modules should consume integration repositories,
-  // not the global Supabase client facade directly.
-  {
-    files: ["src/domains/**/*.{ts,tsx}"],
-    ignores: [
-      "src/domains/**/*.test.ts",
-      "src/domains/**/*.test.tsx",
-      ...supabaseFacadeAllowlist,
-    ],
-    rules: {
-      "no-restricted-imports": ["error", {
-        paths: [{
-          name: "@/integrations/supabase/client",
-          message: "Use an integration repository under '@/integrations/supabase/repositories/*' instead of importing the global Supabase client facade directly.",
-        }],
+        patterns: [supabaseSdkRestrictedPattern],
       }],
     },
   },

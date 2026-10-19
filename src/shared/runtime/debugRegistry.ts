@@ -1,8 +1,4 @@
-type ManagedDebugGlobalKey =
-  | '__supabase_client__'
-  | 'supabase'
-  | '__RECONNECT_SCHEDULER__'
-  | '__DATA_FRESHNESS_MANAGER__';
+type ManagedDebugGlobalKey = '__DATA_FRESHNESS_MANAGER__';
 
 interface ActiveRegistration {
   owner: string;

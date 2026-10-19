@@ -70,8 +70,8 @@ function taskTimestampMs(task: { createdAt: string; updatedAt?: string }): numbe
 }
 
 /**
- * The three supabase-js head-count queries collapse into ONE bridge list
- * read with in-memory counting — the frozen route has no aggregate form.
+ * The three counters come from ONE bridge list read with in-memory
+ * counting — the frozen route has no aggregate form.
  * A read failure degrades all three counters together (there are no partial
  * failures left to mask).
  */

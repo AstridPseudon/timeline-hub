@@ -11,8 +11,7 @@ import {
 } from './repositoryErrors';
 
 /**
- * Legacy generation-record shape the supabase layer used to return
- * (`Database['public']['Tables']['generations']['Row']` plus JSON extras).
+ * Generation-record shape (the `generations` row columns plus JSON extras).
  * Bridge detail rows are mapped INTO this shape so every downstream consumer
  * keeps its contract; display URLs are resolved to same-origin R9 content
  * routes at this boundary.

@@ -37,8 +37,8 @@ export function useOnboardingFlow() {
     return result;
   }, []);
 
-  // The shots pack has no frozen v1 route, so the old Supabase lookup cannot
-  // choose a "Getting Started" shot in local mode. Check the doctor-owned
+  // The shots pack has no frozen v1 route, so a "Getting Started" shot cannot
+  // be chosen in local mode. Check the doctor-owned
   // runtime instead, then enter the tool without fabricating a shot identity.
   const handleOnboardingClose = useCallback(async () => {
     // Coming back to a Runtime that had stopped: the person was mid-work, so just return them to it.

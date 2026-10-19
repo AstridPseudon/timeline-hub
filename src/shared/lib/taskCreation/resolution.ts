@@ -4,7 +4,7 @@ import { DEFAULT_ASPECT_RATIO, type ProjectResolutionResult } from './types';
 /**
  * Resolution for task admission input sizing.
  *
- * The Supabase-era `projects.aspect_ratio` column has no doc-27 §4.1 route
+ * The project `aspect_ratio` column has no doc-27 §4.1 route
  * (bridge projects are slug+name; layout authority is the timeline document
  * config). Until a declared aspect source exists, resolution degrades to the
  * app default unless the caller passes an explicit custom resolution — a

@@ -12,7 +12,7 @@ describe('shared conversation import boundary', () => {
   it('does not import app-only session, transport, auth, pane or submission modules', () => {
     const source = sourceFiles.map((file) => readFileSync(file, 'utf8')).join('\n');
     expect(source).not.toMatch(/tools\/video-editor|useAgentSession|AgentChatContext/);
-    expect(source).not.toMatch(/AuthContext|supabase|bridgeSession|panesStore|selectionStore/);
+    expect(source).not.toMatch(/AuthContext|bridgeSession|panesStore|selectionStore/);
     expect(source).not.toMatch(/fetch\s*\(|WebSocket|EventSource|useMutation|useQuery/);
   });
 

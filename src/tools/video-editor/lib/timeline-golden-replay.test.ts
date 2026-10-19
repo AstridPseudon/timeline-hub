@@ -6,7 +6,7 @@
  *   validate → preview → compile → serialize → replay
  *
  * They also verify cross-provider fidelity between InMemory (local) and
- * Supabase (mocked adapter) provider modes.
+ * Runtime provider modes.
  *
  * @publicContract
  */
@@ -815,7 +815,7 @@ describe('Golden replay — multi-operation batch', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 15. CROSS-PROVIDER FIDELITY — InMemory vs Supabase equivalence
+// 15. CROSS-PROVIDER FIDELITY — InMemory vs Runtime equivalence
 // ---------------------------------------------------------------------------
 
 describe('Golden replay — cross-provider fidelity', () => {
@@ -886,9 +886,9 @@ describe('Golden replay — cross-provider fidelity', () => {
     expect(c.nextData!.config.tracks!.some((t: any) => t.id === 'A2')).toBe(true);
   });
 
-  it('Supabase adapter mode — same fixture produces equivalent compile output', () => {
+  it('Runtime adapter mode — same fixture produces equivalent compile output', () => {
     // The compiler is pure; the provider just stores/loads config.
-    // Supabase adapter mode is verified by running the same fixture
+    // Runtime adapter mode is verified by running the same fixture
     // through compileTimelinePatch — results must match InMemory mode.
     const c = compileTimelinePatch(sharedPatch, sharedData);
     assertResultSane(c);
@@ -1184,7 +1184,7 @@ describe('Golden replay — replay determinism (comprehensive)', () => {
 // ---------------------------------------------------------------------------
 
 describe('Golden replay — extension namespace data fidelity', () => {
-  it('project-data writes replay identically in InMemory and Supabase modes', () => {
+  it('project-data writes replay identically in InMemory and Runtime modes', () => {
     const data = makeMinimalTimelineData({
       tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
       clips: [],

@@ -2,7 +2,7 @@
  * AuthContext Tests — boot/auth seam over the bridge probe.
  *
  * The provider resolves the fixed local user from a single
- * `/api/astrid/health` probe per boot (no Supabase session machinery).
+ * `/api/astrid/health` probe per boot.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

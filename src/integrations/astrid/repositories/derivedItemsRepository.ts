@@ -45,8 +45,7 @@ function normalizePrompt(params: unknown): string | undefined {
  * R9 content routes.
  *
  * Child generations (rows with `based_on` = this generation) have no listing
- * route in the doc-27 §4.1 v1 set — that half of the surface is dispositioned
- * `defer` in docs/cutover-inventory.md.
+ * route in the doc-27 §4.1 v1 set — that half of the surface is deferred.
  */
 export function mapDerivedItemsFromGenerationDetail(
   detail: BridgeGenerationDetailPayload['generation'],

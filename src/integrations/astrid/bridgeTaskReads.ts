@@ -1,8 +1,7 @@
 /**
  * Bridge-backed task reads for the covered journey's J3/J4 steps (admit,
- * poll, cancel). Slice-A cutover of Batch C3: every consumer here used to
- * read `tasks` rows through supabase-js and now reads the frozen doc-27 §4.1
- * routes through `AstridLocalClient`.
+ * poll, cancel). Every consumer here reads the frozen doc-27 §4.1 routes
+ * through `AstridLocalClient`.
  *
  * The bridge summary → app `Task` projection follows the
  * `GenerationRowDto` + coercer precedent (`generationRowMapper.ts`):

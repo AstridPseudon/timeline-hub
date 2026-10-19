@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-// Mock errorHandler to avoid pulling in toast/Supabase dependencies
+// Mock errorHandler to avoid pulling in toast dependencies
 import {
   getDragType,
   setGenerationDragData,

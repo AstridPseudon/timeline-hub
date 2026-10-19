@@ -6,7 +6,7 @@ interface ShotGenerationJoinRow {
   timeline_frame: number | null;
 }
 
-/** Raw generation data from Supabase */
+/** Raw generation row */
 interface RawGenerationData {
   id: string;
   location: string | null;

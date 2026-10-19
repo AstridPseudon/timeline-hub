@@ -14,7 +14,6 @@
     "scripts/quality/check-sdk-no-barrel-imports.mjs",
     "config/governance/video-editor-sdk-import-allowlist.json",
     "src/shared/lib/errorHandling/runtimeError.ts",
-    "src/integrations/supabase/client.ts",
     "docs/governance/contracts/compatibility-shims.md"
   ],
   "quality:check": [
@@ -27,7 +26,6 @@
     "scripts/quality/check-sdk-no-barrel-imports.mjs",
     "config/governance/video-editor-sdk-import-allowlist.json",
     "config/governance/sdk-public-export-allowlist.json",
-    "src/integrations/supabase/client.ts",
     "src/shared/lib/errorHandling/runtimeError.ts",
     "src/shared/components/ui/contracts/cn.ts"
   ],

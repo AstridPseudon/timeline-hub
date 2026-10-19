@@ -107,7 +107,7 @@ export const settingsMigrationManifest: ExtensionManifest = {
 
 /**
  * A minimal in-memory StateRepository stub that satisfies the SDK contract.
- * Real implementations would persist to IndexedDB, Supabase, or Astrid bridge.
+ * Real implementations would persist to IndexedDB or the Astrid bridge.
  */
 export function createExampleRepository(): StateRepository {
   const disposed = false;

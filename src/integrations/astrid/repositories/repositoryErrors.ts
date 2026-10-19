@@ -34,17 +34,6 @@ export class RepositoryError extends ServerError {
   }
 }
 
-export function isRepositoryNoRowsError(error: unknown): boolean {
-  if (!error || typeof error !== 'object') {
-    return false;
-  }
-  const candidate = error as { code?: unknown; message?: unknown };
-  if (candidate.code === 'PGRST116') {
-    return true;
-  }
-  return typeof candidate.message === 'string' && /0 rows/i.test(candidate.message);
-}
-
 export function createRepositoryQueryError(
   entityName: string,
   cause: unknown,

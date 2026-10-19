@@ -209,7 +209,7 @@ export function transformGeneration(
   }
   
   // Compute stable URL identities for caching/comparison
-  // Supabase URLs have rotating tokens but the file path is stable
+  // Signed media URLs have rotating tokens but the file path is stable
   const urlIdentity = stripQueryParameters(mainUrl);
   const thumbUrlIdentity = stripQueryParameters(thumbnailUrl);
   const url = isLocalGeneration

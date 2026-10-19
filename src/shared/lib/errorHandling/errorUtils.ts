@@ -48,12 +48,3 @@ export function isCancellationError(error: unknown): boolean {
          error.message?.includes('Request was cancelled') ||
          error.message?.includes('signal is aborted');
 }
-
-// ============================================================================
-// Supabase error utilities
-// Re-export from supabaseErrors.ts for convenience
-// ============================================================================
-
-export { SUPABASE_ERROR } from '@/shared/constants/supabaseErrors';
-// Note: isErrorWithCode is defined above for Error instances.
-// For Supabase errors (plain objects), use functions from supabaseErrors.ts directly.
