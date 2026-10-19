@@ -50,7 +50,7 @@ test('PowerShell defaults to hosted manifest and exact hosted source pins', () =
   for (const name of ['runtime', 'agent']) assert.ok(core.includes(`https://github.com/banodoco/astrid-${name}/archive/${context.manifest[name].sha}.tar.gz`));
 }));
 
-for (const repoValue of ['relative/path', '', null, 'https://example.com/source', 'file://remote/tmp/repo', 'file:///tmp/repo?branch=main', 'file:///tmp/repo#main']) {
+for (const repoValue of ['relative/path', '', null, 'https://example.com/source', 'file://remote/tmp/repo', 'file:///tmp/repo?branch=main', 'file:///tmp/repo#main', 'file://user@localhost/tmp/repo', 'file://localhost:123/tmp/repo', 'file://localhost:-1/tmp/repo', 'file://localhost', String.raw`\\server\share\repo`]) {
   test(`PowerShell rejects invalid developer source ${JSON.stringify(repoValue)} without closing iex shell`, () => scenario(async (context, run) => {
     context.manifest.agent.repo = repoValue;
     const result = await run();
@@ -178,4 +178,14 @@ test('PowerShell also accepts uv version output without build metadata', () => s
   alive(result);
   assert.match(result.stdout, /Astrid is ready\./);
   assert.doesNotMatch(result.stdout, /CAUGHT:/);
+}));
+
+test('PowerShell accepts localhost file URLs as local pinned repositories', () => scenario(async (context, run) => {
+  const local = pathToFileURL(path.join(context.root, 'local source with spaces')).href;
+  context.manifest.agent.repo = local.replace('file:///', 'file://localhost/');
+  const result = await run();
+  alive(result);
+  assert.match(result.stdout, /Astrid is ready\./);
+  assert.doesNotMatch(result.stdout, /CAUGHT:/);
+  assert.ok((await context.calls()).at(-1).includes(`git+${local}@${context.manifest.agent.sha}`));
 }));

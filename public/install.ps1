@@ -84,11 +84,16 @@
             }
             if ($Pin.repo -isnot [string] -or -not $Pin.repo) { throw 'Source repo must be an absolute local path or file:// URL.' }
             if ($Pin.repo.StartsWith('file://')) {
+                $RepoAuthority = ($Pin.repo.Substring(7) -split '/', 2)[0]
                 $RepoUrl = [Uri]$Pin.repo
-                if (-not $RepoUrl.IsFile -or $RepoUrl.Host -notin @('', 'localhost') -or $RepoUrl.Query -or $RepoUrl.Fragment) {
+                if (-not $RepoUrl.IsFile -or $RepoAuthority -cnotin @('', 'localhost') -or $RepoUrl.Query -or $RepoUrl.Fragment -or $Pin.repo.IndexOf('/', 7) -lt 0) {
                     throw 'Source file URL must refer to this computer.'
                 }
-                $RepoPath = $RepoUrl.LocalPath
+                # .NET treats even localhost as UNC. Strip the validated local
+                # authority before converting to this computer's native path.
+                $LocalRepoUrl = [UriBuilder]::new($RepoUrl)
+                $LocalRepoUrl.Host = ''
+                $RepoPath = $LocalRepoUrl.Uri.LocalPath
             } else {
                 $RepoPath = $Pin.repo
             }
