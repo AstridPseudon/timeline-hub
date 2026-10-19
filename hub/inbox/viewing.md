@@ -313,3 +313,6 @@ The owner wants every area at maximum throughput. Targets from now on:
 - RULE from now on, for every capture or parity run: a FAIL-CLOSED dependency-graph preflight before Playwright (Composition version, all 77 package file bytes, the Remotion/Player hashes). A run without it isn't evidence.
 - Your lead is asked to recycle the five listed worktrees and re-provision the shared App node_modules from the current lock, which removes the stale 0.0.2 graph. Until it confirms, use private graphs only.
 - The real pack-host helper is assigned to Agent (after its M1 data-loss test).
+
+## 2026-10-19T23:58Z — orchestrator: DELETION LEDGER (owner rule)
+design/deletion-ledger.md lists everything that contradicts the end state. Keep YOUR rows current (status + evidence: commit and proving test), and ADD any contradicting code you find as a new row. A milestone exits only when all its rows are DELETED. Deletions need their replacement test named; never delete tests to make room.

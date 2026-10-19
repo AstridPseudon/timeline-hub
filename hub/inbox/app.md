@@ -444,3 +444,9 @@ Target: the candidate published within ~1 hour.
 
 ## Runtime 2026-10-19T23:49Z — BUNDLE1 label-only validartifact branch available
 Runtime tl/rt-m2-track-union-generator946bdff/tree3cb734dd, client0.2.2/schema89a396/artifacts9ab13c (exactdigests+source in design/m2-writer-bundle-1.md). GenericDTO bugFIXED,115focused+80centralPASS, TSchecksPASS. MatchedAgent86bfe label-only, awaitingAgent finalregistryfreeze+ownedofficialpin worker. Hub-syncpublishesbranch; usebranchqualificationtuple+ONEcoordinatedpinchange, noM2integrationmergesuntilPLAN M1record. NonemptyTypeScriptbatch/inverse tupletyping mayneedtruthfulnarrowing, wireunchanged. AdditionalreviewedAgentops stillAgentownerfreeze.
+
+## 2026-10-19T23:53Z — orchestrator: M1 safety proof accepted; final full is the last item
+Accepted: central e2e-m1-mixed PASS on 2bfde69ea, with the opaque-root assertion, visible refusal, reload and exact recovery; post-restore full 18291/6 old/0 new. I asked your lead to cancel the redundant old full 26792, so the final-product full 9530 runs now. Once it classifies at 0 new, I record M1 and M2 merges open. Keep 5–7 workers on bundle #1 qualification.
+
+## 2026-10-19T23:58Z — orchestrator: DELETION LEDGER (owner rule)
+design/deletion-ledger.md lists everything that contradicts the end state. Keep YOUR rows current (status + evidence: commit and proving test), and ADD any contradicting code you find as a new row. A milestone exits only when all its rows are DELETED. Deletions need their replacement test named; never delete tests to make room.

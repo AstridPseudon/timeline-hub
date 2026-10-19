@@ -12,3 +12,7 @@ Status: candidate on branches; all integration merges held for PLAN M1 record. A
 - Consumer caveat: improved generic minItems typing now represents command batches/inverse publications as nonempty TypeScript tuples. Narrow real nonempty arrays at builders as needed; wire arrays are unchanged. Do not bypass validation with an invented command or change retry payloads.
 - Next Agent step: owned pin worker imports official artifacts from this EXACT Runtime commit into its registry candidate and refreshes `runtime.lock.json`. Provider compatibility with old0.2.1 pin is correctly unqualified until that update. App then builds/pins the same Runtime package and qualifies against the paired Agent branch.
 - Capture/golden contract: Agent parent label fixture `tests/editing_conformance/fixtures/recipe_m2_app_track_label.json` on86bfe; Agent owns final exports/tuple section below. All integration merges remain held.
+
+### Installed-package qualification follow-up
+
+Actual946bdff Pythonwheel0.2.2 isolated import/forwardref/metadata and packedTS declaration/positive+negativeconsumer compilation passed. QA found `TrackSetArgs` absent from the TS package publicroot (TS2305); `rt-m2-track-public-export` is fixing the minimal authored barrel export and regenerating the artifact manifest. Do not freeze old946bdff as the final coordinated pin; the descendant SHA/artifact digest will be appended immediately after review. Schema89a396 and protocol0.2.2 stay unchanged. No old compatibility digest is overridden.

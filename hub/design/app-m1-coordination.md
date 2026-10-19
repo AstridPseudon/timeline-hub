@@ -186,3 +186,28 @@ Read design/app-track-label-handoff.md and tl/agt-m2-label-handoff77b1f0f7. Exac
 Final9c074972c/tree dd1fe6a7 merged as2bfde69ea. FINAL exact-tree mixed native browser PASS1/142s app-m1-draft-opaque-roots-e2e-m1-mixed-1019233523-2561. Direct draft.config opaque-root assertion RESTORED; unit tests preserve null/false/0/arrays/nested unknown roots, strict known-field edits win, exact project/timeline/revision/publication scope only. Actual journey covers reload/recover original CAS/body/key refusal with full raw closure unchanged. Printed actual Agentfc324e83/Runtime9f9b25c includes final occupancy guard; central prebuild ext earlier2b8/809 is distinguished. Integrated source-aware followup pending27568. Full postrestore18291PASS/6 EXACT baseline FAIL/3expected includes5newguard positives; final-product full-source-integration queued9530/integration24066 same tree; no full-green claim. Global M1 record remains orchestrator-owned.
 
 23:48 FINAL INTEGRATED PROOF: app-e2e-m1-mixed-1019234330-27568 PASS1/210s on App2bfde69ea/tree dd1fe6a7. EXT and actual source logs BOTH Agentfc324e83/Runtime9f9b25c/Composition7aa; local git HEADs unchanged through completion. This proof includes final occupancy guard and direct opaque config assertion in native recovered draft, exact retry and no canonical loss. Full queue priority escalation234700; postrestore classification18291PASS/6EXACTOLD/3expected remains final for that tree.
+
+## Agent App add/params capture handoff — held
+
+The authoritative source is the exact App fixture
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-track-rename-fixture-request.json`, whose
+`bundle` is the `parent-only` `authoringBundle.json` closure. Agent goldens are
+in `tests/editing_conformance/fixtures/recipe_m2_app_clip_add.json` and
+`recipe_m2_app_clip_params.json`, with assertions in
+`tests/editing_conformance/test_recipe_m2_app_add_params.py`. The add golden
+uses a complete literal `hold` row; the params golden covers a present empty
+string, a present JSON null, and an explicit clear that leaves the native empty
+params container. Both retain the source runtime document, dependency pins,
+registry, opaque fields, and unrelated parent row byte-for-byte; the tests
+also compare native capture, replay, and exact inverse output.
+
+Targeted Agent evidence: `PYTHONPATH=.
+/home/user/work/venv-agent/bin/python -m pytest -q
+tests/editing_conformance/test_recipe_m2_app_add_params.py
+tests/editing_conformance/test_recipe_m2_clip_add.py
+tests/editing_conformance/test_recipe_scalar_commands.py
+tests/sdk/test_timeline_clip_add_provider.py
+tests/sdk/test_timeline_commit_provider_scalar.py` — 137 passed. This is a
+portable Agent capture handoff only: App native/browser parity, Runtime wire
+qualification, and acceptance are not claimed here. M2 merge remains held
+until the orchestrator records PLAN M1.
