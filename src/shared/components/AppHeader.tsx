@@ -94,9 +94,12 @@ export function AppHeader({
   const NavigationIcon = isToolsNavigation ? LayoutGrid : Home;
 
   return (
+    // `relative z-10` puts the header in the same layer as the app content, above the fixed sky backdrop
+    // (`AppSkyBackground`, z-0 at half opacity). Unpositioned, it painted under the sky, which veiled the
+    // logo, text and buttons.
     <header
       className={cn(
-        'flex w-full min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground',
+        'relative z-10 flex w-full min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground',
         isEditorOnlyWorkspace
           ? 'px-2 pt-2 pb-0 sm:px-4 sm:pt-3 sm:pb-0 lg:px-6 lg:pt-4 lg:pb-0'
           : 'min-h-10 border-b border-border bg-background px-3 py-1.5',

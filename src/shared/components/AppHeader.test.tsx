@@ -59,6 +59,16 @@ describe('AppHeader', () => {
     expect(screen.queryByRole('button', { name: 'Go home' })).toBeNull();
   });
 
+  it('sits in the content layer, above the fixed sky backdrop, in both header variants', () => {
+    const { unmount } = render(<AppHeader />);
+    expect(screen.getByTestId('video-editor-header')).toHaveClass('relative', 'z-10');
+    unmount();
+
+    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
+    render(<AppHeader />);
+    expect(screen.getByTestId('video-editor-header')).toHaveClass('relative', 'z-10');
+  });
+
   it('keeps editor selectors and app settings while removing app navigation in local Astrid mode', () => {
     vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     const settingsEvent = vi.fn();
