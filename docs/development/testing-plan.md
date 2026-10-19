@@ -19,19 +19,19 @@ A standalone plan in Megado format: cards with size, route, inputs, outputs and 
 - What counts: tests that are robust and thorough, assert meaningful behaviour, and do it as elegantly as possible.
 - Not excessive: a test earns its place by catching a failure nothing else catches. Fewer, truer tests beat more tests.
 
-## Status (16 Oct 2026, end of the first execution run)
+## Status (19 Oct 2026, end of the second execution run, all three repos on the renamed mains)
 
 | Card | State | Evidence |
 |---|---|---|
 | LEAK | **Done** | Both suites reap their process groups and fail a session that leaks file descriptors (`tests/lanes.py`). |
-| UA (Astrid) | **Open: every test must pass** | <!-- ASTRID-FINAL --> |
-| UR (Runtime) | **Done** | Default run 1,928 passed, 4 known failures, 0 red (was 88 failed, 2 collection errors). |
-| UP (App) | **Done** | Default run 19,050+ passed, 7 known-failure entries (was 264 failed). <!-- APP-FINAL --> |
+| UA (Astrid) | **Open: every test must pass** | Last full default lane (rebased branch, 19 Oct): 11,139 passed, and its 2 failures are fixed (both files pass). Static gates: ruff 2,233 and mypy 2,079 (exact baselines), structure 15 (was 23), 6 import cycles, repo hygiene, Tool catalog current. |
+| UR (Runtime) | **Done** | Default run 1,952 passed, 0 red (was 88 failed, 2 collection errors). |
+| UP (App) | **Done for the unit lane; the timeline browser suite is owned debt** | Default run 19,577 passed in 1,435 files, 0 red (was 264 failed); 0 `tsc` errors. The timeline e2e suite (`test:e2e:timeline`) is 6 of 38 on the fake Runtime, every failure older than this plan (Owned debt). |
 | C1 | **Done except C1.3** | `artifacts.json` in Runtime and Astrid; vendor locks in the App (4) and Astrid (3), checked locally per push and against the producer's main in a boundary job. C1.3 (timeline packages) is owned debt. |
 | C2 | **Done** | Nine responses recorded from a real daemon; the App's and Astrid's parsers, conflict classifiers and fakes are held to them; the paired relay is checked against every call the App makes. |
 | F1 | **Built, not run end to end** | Generated reference, `--backend`, env scrubbing, disk preflight, revision set, killed-task read-back, `runtime_restart`; 82 plumbing tests. The run needs macOS (Owned debt). |
-| F2 | **Thin slice built on the direct path**; passed 3 of 3 consecutive local runs on this container (Linux, one worker, about 51 s each) | Cases 1-3 in `astrid-app/tests/e2e/local/three-products.spec.ts` (agent → open App; concurrent edit; Runtime restart), Astrid side `astrid/core/dev/cross_client.py`, nightly job `three-products` in `astrid-app/.github/workflows/direct-journey.yml`. Steps 3, 4 and 6 blocked (Owned debt: Remotion gate and Linux custody); relay variant after Plan B M0. |
-| TIDY | **Done where R-1 allows** | Homes written, then deleted: Astrid's m4/m7/m8 gates and artifacts, the CI mirror (`run_ci_checks.sh`, its 25-minute self-test, the sandbox test), the stage-1 cross-repo acceptance and cold-launch matrix (real-daemon homes in `test_runtime_client_cutover.py`), the VLM gate, the timeline agent-benchmark harness (the top-level evals package and its tests), `tests/proofs` and `scripts/proofs`, the unused fresh-clone and runpod smoke scripts, and dead files; Runtime's i06 proof; the App's paired `astrid serve` release gate (its verifier script, spec, validators, vitest wrappers, render worker and `verify-extension-ship` entry: one home added, the host-fingerprint canonicalization case, now in `src/sdk/video/timeline/sourceMap.test.ts`; the serve-owned render evidence and provenance checks are F2's) and real-bridge harness (new tests for recovery retry, promote and duplicate failure toasts, the watchdog banner; the network audit in every timeline spec) and the bridge-latency gate (its 500 ms GET and save SLOs and 10 s deadline were dropped with no home: an owner-sanctioned loss, see Owned debt). Kept with their unblock tests: see Owned debt (including the App's local-project gallery journey). |
+| F2 | **Thin slice built on the direct path**; 3 of 3 on the final App, Astrid and Runtime branches (Linux, one worker); the Plan A direct journey is 40 of 40 on the same trees | Cases 1-3 in `astrid-app/tests/e2e/local/three-products.spec.ts` (agent → open App; concurrent edit; Runtime restart), Astrid side `astrid/core/dev/cross_client.py`, nightly job `three-products` in `astrid-app/.github/workflows/direct-journey.yml`. Steps 3, 4 and 6 blocked (Owned debt: Remotion gate and Linux custody); relay variant after Plan B M0. |
+| TIDY | **Done where R-1 allows** | Homes written, then deleted: Astrid's m4/m7/m8 gates and artifacts, the CI mirror (`run_ci_checks.sh`, its 25-minute self-test, the sandbox test), the stage-1 cross-repo acceptance and cold-launch matrix (real-daemon homes in `test_runtime_client_cutover.py`), the VLM gate, the timeline agent-benchmark harness (the top-level evals package and its tests), `tests/proofs` and `scripts/proofs`, the unused fresh-clone and runpod smoke scripts, and dead files; Runtime's i06 proof; the App's paired `astrid serve` release gate (its verifier script, spec, validators, vitest wrappers, render worker and `verify-extension-ship` entry: one home added, the host-fingerprint canonicalization case, now in `src/sdk/video/timeline/sourceMap.test.ts`; the serve-owned render evidence and provenance checks are F2's) and real-bridge harness (new tests for recovery retry, promote and duplicate failure toasts, the watchdog banner; the network audit in every timeline spec) the `astrid serve` bridge itself (`dev:editor` and the timeline suite run on a seeded fake Runtime held to the recorded Runtime responses; the bridge and Supabase data providers, `useEditorSync` and the capability census are deleted), and the bridge-latency gate (its 500 ms GET and save SLOs and 10 s deadline were dropped with no home: an owner-sanctioned loss, see Owned debt). Kept with their unblock tests: see Owned debt (including the App's local-project gallery journey). |
 
 **Product bugs the tests found and fixed on the way (R-13):**
 - the training pack's schema root;
@@ -45,6 +45,14 @@ A standalone plan in Megado format: cards with size, route, inputs, outputs and 
 - the App reading only the old nested Runtime error body and misreading a 422 as an unavailable capability;
 - four doc commands that did not exist;
 - the CI rewrite had dropped Astrid's release-wheel job (restored).
+
+**Found in the second run (18-19 Oct), while rebasing through the rename:**
+- the App accepted only the Runtime contract digest from before c87d5b9, so it refused a current Runtime (fixed upstream in parallel);
+- the rename turned "no Reigh in the copy" checks into "no Astrid", which rejected the correct copy (fixed upstream in parallel);
+- two vibecomfy modules named `executor.py` were discovered as folder executors and failed to load (structure baseline 23 → 15);
+- a pack edit could leave the whole-Tool catalog stale, and only the App build noticed (a test now fails first);
+- `make structure` ran only with `PYTHONPATH` set;
+- the timeline golden digest had drifted with a deliberate fixture change (`tracks[].role`, fb9e8a31).
 
 **Test-system fixes on the way:** a vendor-lock boundary check now fails only when a vendored file changed (a version-only producer change was failing every consumer); running one test from a file with a known failure no longer trips the stale-entry check; the App's theme test pins the clock (the theme follows the time of day).
 
@@ -283,6 +291,7 @@ Phase outcomes follow R-10.
   - 9 top-level `astrid/` modules and dirs outside the canonical packages;
   - `core/execution/generic_host.py` importing pack internals (6 sites);
   - 3 `sys.modules` registrations that `importlib` legitimately needs, where the rule allows no exemption.
+- **The App's timeline browser suite is 6 of 38** (`npm run test:e2e:timeline`, owner decision 19 Oct to park it). Every failure predates this plan. An Opus audit sorted the 26 cases that use the in-repo dev extensions: keep 9 (the only real-browser proof of overlay pointer ownership, keybinding commands, touch pinch arbitration, shell overflow, per-frame data-lane windows, lane-action chrome, the caption render matrix), merge 6, retire 11 (duplicated by unit tests, testing the fixture rather than the SDK, or vacuous). With the verdicts applied, `examples/extensions/creative-lab` and the Runaway lane's bridge loader have no user left. Product fixes found on the way and not yet landed: tablet-landscape Move (the toolbar resize divider takes the tap), the Inspector opening over the whole phone screen, condensed-toolbar controls covered by the dock. The two H.264 export cases need Chrome (Chromium here has no encoder) and belong in a Chrome-channel lane, not in this one.
 - **Astrid ruff/mypy baselines were reset on 16 Oct** (ruff 1,469 → 2,294; mypy 956 → 2,152). The old CI never reached them, so they had drifted. They now only shrink: since B12 both gates are exact like the structure gate (`scripts/reshape/count_baseline.py`), so a lower count fails until the baseline is rewritten and deleted code cannot leave slack for a later regression. The import-cycle baseline was regenerated from 14 stale pairs to the 6 real ones.
 - **The smoke cannot run off macOS: three product blockers (found 16 Oct while building F1).**
   1. The Runtime launcher (`astrid_runtime up/down/restart`) needs Darwin audit-token custody (`astrid_runtime/custody_broker.py:899`). On Linux its process identity is also `ps-lstart:` while the daemon records `proc-start-ticks:`. A Linux custody provider is a security design decision.
