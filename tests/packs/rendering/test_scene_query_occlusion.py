@@ -16,11 +16,8 @@ from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.timeline import scene_answers
 
 ROOT = Path(__file__).resolve().parents[3]
-PUBLIC_ARTIFACT = Path(
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/"
-    "scratchpad/orch/workers/vw-m3-incoming-public-api/artifacts/"
-    "banodoco-timeline-composition-0.0.9.tgz"
-)
+PUBLIC_ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.9.tgz"
+PUBLIC_ARTIFACT_ENV = "ASTRID_TEST_PUBLIC_ARTIFACT"
 PUBLIC_SHA256 = "fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61"
 
 
@@ -39,22 +36,25 @@ def _stage_artifact(root: Path, artifact: Path) -> Path:
 def installed(tmp_path, monkeypatch):
     for key in ("PYTHONPYCACHEPREFIX", "NODE_OPTIONS", "NODE_PATH"):
         monkeypatch.delenv(key, raising=False)
-    assert PUBLIC_ARTIFACT.is_file()
-    assert hashlib.sha256(PUBLIC_ARTIFACT.read_bytes()).hexdigest() == PUBLIC_SHA256
+    artifact = Path(os.environ.get(PUBLIC_ARTIFACT_ENV, PUBLIC_ARTIFACT))
+    assert artifact.is_file(), f"required public artifact is missing: {artifact}"
+    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == PUBLIC_SHA256
     toolchain = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
-    if not toolchain.ok:
-        pytest.skip(toolchain.problem)
+    assert toolchain.ok, toolchain.problem
     assert toolchain.version == "v20.19.4"
-    package = _stage_artifact(tmp_path, PUBLIC_ARTIFACT)
+    package = _stage_artifact(tmp_path, artifact)
     before = {str(path.relative_to(package)): hashlib.sha256(path.read_bytes()).hexdigest()
               for path in package.rglob("*") if path.is_file()}
+    assert len(before) == 77
     monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs:
                         remotion_runtime.RemotionRuntimeStatus(
                             True, tmp_path, node_executable=Path(toolchain.path), node_version="v20.19.4"))
     yield tmp_path, Path(toolchain.path)
     after = {str(path.relative_to(package)): hashlib.sha256(path.read_bytes()).hexdigest()
              for path in package.rglob("*") if path.is_file()}
+    assert len(after) == 77
     assert after == before
+    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == PUBLIC_SHA256
 
 
 def _public_scene_frames(project: Path, node: Path) -> list[dict]:
