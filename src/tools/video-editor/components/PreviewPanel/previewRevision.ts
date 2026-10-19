@@ -33,4 +33,3 @@ export function previewUnavailableLabel(target: PreviewUnavailableTarget): strin
     ? `Preview of ${target.targetRevisionId} unavailable`
     : 'Preview target unavailable';
 }
-
