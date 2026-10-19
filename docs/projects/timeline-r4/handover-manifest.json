@@ -2173,7 +2173,7 @@
     "private_transfer_files_excluding_zip_reference": 108,
     "public_control_files_excluding_manifest": 44
   },
-  "phase": "prepared; completed final handover audit and receiving corrections recorded",
+  "phase": "published; completed final handover audit and receiving corrections recorded",
   "post_cutoff_counts": {
     "accepted_original_cards": 29,
     "accepted_releases": 0,
