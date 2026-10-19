@@ -1,10 +1,10 @@
-"""Source-level contract checks for the Remotion render surface.
+"""Contract checks for the Remotion render surface.
 
 These are deliberately dependency-light: the Remotion typecheck requires
 `remotion/node_modules`, which is absent in CI by default, so the typecheck is
 run only as an opportunistic smoke when dependencies are present. The remaining
-checks prove the augmentation import resolves and that the builtin text-card
-renders visible markup rather than an empty frame.
+checks prove the augmentation import resolves and that the public text-card
+registry component renders visible markup rather than an empty frame.
 """
 
 from __future__ import annotations
@@ -17,7 +17,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
-TEXT_CARD = ROOT / "astrid" / "packs" / "rendering" / "rendering" / "elements" / "effects" / "text-card" / "component.tsx"
+TEXT_CARD = (
+    ROOT
+    / "astrid"
+    / "packs"
+    / "rendering"
+    / "rendering"
+    / "elements"
+    / "effects"
+    / "text-card"
+    / "component.tsx"
+)
 
 
 class RemotionAugmentationImportTest(unittest.TestCase):
@@ -52,17 +62,168 @@ class RemotionAugmentationImportTest(unittest.TestCase):
 
 class TextCardVisibleMarkupTest(unittest.TestCase):
     def test_text_card_renders_visible_markup(self) -> None:
-        src = TEXT_CARD.read_text(encoding="utf-8")
-        # It must no longer be the empty `() => null` stub.
-        self.assertNotRegex(
-            src.replace("\n", " "),
-            r"export default function \w+\(\)\s*\{\s*return null;\s*\}",
+        import json
+        import os
+        import shutil
+        import tempfile
+
+        node = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node")
+        if not node:
+            self.fail(
+                "SSR contract requires the Node version pinned by remotion/package.json; "
+                "set ASTRID_NODE_EXECUTABLE "
+                "or install the pinned Node toolchain"
+            )
+        node_version = subprocess.run(
+            [node, "--version"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
         )
-        # It must render content via JSX markup keyed off the manifest params.
-        self.assertIn("content", src)
-        self.assertIn("AbsoluteFill", src)
-        self.assertIn("narrowParams", src)
-        self.assertRegex(src, r"<AbsoluteFill")
+        self.assertEqual(
+            node_version.returncode,
+            0,
+            msg=f"could not probe Node executable {node}: {node_version.stderr}",
+        )
+        self.assertEqual(
+            node_version.stdout.strip(),
+            "v"
+            + json.loads((REMOTION / "package.json").read_text(encoding="utf-8"))["engines"][
+                "node"
+            ].removeprefix("="),
+            msg="SSR contract must resolve the Node version pinned by remotion/package.json",
+        )
+
+        node_modules = REMOTION / "node_modules"
+        if not node_modules.is_dir():
+            self.fail(
+                "SSR contract dependencies are missing; run `cd remotion && npm ci` "
+                "with the Node version pinned by remotion/package.json"
+            )
+
+        node_script = r"""
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {EFFECT_REGISTRY} from '@banodoco/timeline-composition/effects.generated';
+import {
+  DEFAULT_THEME,
+  ElementRegistryProvider,
+  resolveElementRegistries,
+  toRuntimeTheme,
+} from '@banodoco/timeline-composition';
+import {Internals} from 'remotion';
+import PublicTextCard from './component.mjs';
+
+const registryTextCard = EFFECT_REGISTRY['text-card'];
+if (PublicTextCard !== registryTextCard) {
+  throw new Error('the rendering wrapper did not re-export the public text-card registry identity');
+}
+
+const composition = {
+  id: 'TextCardSSR',
+  component: () => null,
+  durationInFrames: 90,
+  fps: 30,
+  width: 1920,
+  height: 1080,
+  defaultProps: {},
+};
+const videoConfig = {
+  width: 1920,
+  height: 1080,
+  fps: 30,
+  durationInFrames: 90,
+};
+const manager = {
+  compositions: [composition],
+  folders: [],
+  currentCompositionMetadata: videoConfig,
+  canvasContent: {type: 'composition', compositionId: composition.id},
+};
+const sequence = {
+  absoluteFrom: 0,
+  cumulatedFrom: 0,
+  cumulatedNegativeFrom: 0,
+  relativeFrom: 0,
+  parentFrom: 0,
+  durationInFrames: 90,
+  id: composition.id,
+  width: composition.width,
+  height: composition.height,
+  premounting: false,
+  postmounting: false,
+  premountDisplay: null,
+  postmountDisplay: null,
+};
+const timeline = {
+  frame: {[composition.id]: 0},
+  playing: false,
+  imperativePlaying: {current: false},
+  audioAndVideoTags: {current: []},
+};
+const runtimeTheme = toRuntimeTheme(DEFAULT_THEME);
+const registries = resolveElementRegistries(runtimeTheme);
+const tree = React.createElement(
+  Internals.CanUseRemotionHooks.Provider,
+  {value: true},
+  React.createElement(
+    Internals.CompositionManager.Provider,
+    {value: manager},
+    React.createElement(
+      Internals.SequenceContext.Provider,
+      {value: sequence},
+      React.createElement(
+        Internals.TimelineContext.Provider,
+        {value: timeline},
+        React.createElement(
+          ElementRegistryProvider,
+          {value: registries},
+          React.createElement(PublicTextCard, {
+            clip: {id: 'clip-1', from: 0, to: 90},
+            params: {
+              content: 'Visible SSR text-card contract',
+              align: 'center',
+              entrance: 'none',
+              exit: 'none',
+              typewriter: false,
+            },
+            theme: runtimeTheme,
+            fps: 30,
+          }),
+        ),
+      ),
+    ),
+  ),
+);
+process.stdout.write(renderToStaticMarkup(tree));
+"""
+
+        with tempfile.TemporaryDirectory(prefix="astrid-text-card-ssr-") as temp:
+            stage = Path(temp)
+            (stage / "node_modules").symlink_to(node_modules, target_is_directory=True)
+            (stage / "component.mjs").write_bytes(TEXT_CARD.read_bytes())
+            script = stage / "render.mjs"
+            script.write_text(node_script, encoding="utf-8")
+            result = subprocess.run(
+                [node, str(script)],
+                cwd=stage,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=20,
+            )
+        self.assertEqual(
+            result.returncode,
+            0,
+            msg=f"public text-card SSR failed:\n{result.stdout}\n{result.stderr}",
+        )
+        html = result.stdout
+        self.assertTrue(html.strip(), "text-card SSR must not return empty markup")
+        self.assertIn("Visible SSR text-card contract", html)
+        self.assertRegex(html, r"<div\b[^>]*style=\"[^\"]*position:absolute")
+        self.assertRegex(html, r"<div\b[^>]*style=\"[^\"]*display:flex")
+        self.assertNotIn("opacity:0", html)
 
 
 class RemotionTypecheckSmokeTest(unittest.TestCase):

@@ -76,7 +76,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:392bd8a2cf1fb10e0eaf8163569d89696a060b957ae25e7c53512c08abea289a",
+    "revision": "sha256:d5c66e08523f9a52e58fdf0fdbb506665a46f6068e2ebb0984c2a1c54ab3bff3",
     "runtime": {
       "adapter": "remotion"
     },
@@ -124,7 +124,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:0e1821a352245673fac560d060e3db041ef071657a0fdf45b135fc84acca8880",
+    "revision": "sha256:b3f945f89233a264766a7b2f9eee45a1de381d07889709109d61c5506c89edca",
     "runtime": {
       "adapter": "remotion"
     },
@@ -172,7 +172,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:8677312659c9d5d06b0e1ea9f6f98755ce94d1318658a934cc1c9e1db2256afd",
+    "revision": "sha256:2833cc7a4d9d7c45cea70bc1e0c8c6a82d224cd7dfeb65ef1058a4250d73f9f5",
     "runtime": {
       "adapter": "remotion"
     },
@@ -220,7 +220,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:27b05279d0d40c04f786051db8ac37d451b4ec323d6fb0dc3a4d8d9caaa31027",
+    "revision": "sha256:7bb58fe6873d000c55ca16e715117dad600edda4a5618c2b16328ac18c9adcf6",
     "runtime": {
       "adapter": "remotion"
     },
@@ -268,7 +268,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:6cacd405b0627f048fbb16f7026980c9cb8845e6365c4e1aeca382974dc5bd0d",
+    "revision": "sha256:d3fc405ad86e70968bdfe84f34d8bb413b5360495c3b8d486cad68855fdc6a40",
     "runtime": {
       "adapter": "remotion"
     },
@@ -320,7 +320,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:55d0df45529f868db17db0e4270d0129e07a1a22543403e7cf6e281dc05ed9d1",
+    "revision": "sha256:f6caf670755e590fdf1ba85e421631c9c3ec243ef325dc5f9c118f634a172e96",
     "runtime": {
       "adapter": "remotion"
     },
@@ -5742,7 +5742,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:f9f9342125e12eeaa73dba74e7157564e58f7d7a937d4f3012885f72dcc1b4c6",
+    "revision": "sha256:05749d28c818f8894770884cf52933cceed0e58a6d7d8702033ab4b869d1304b",
     "runtime": {
       "adapter": "remotion"
     },
@@ -6085,7 +6085,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:26d57910390f092f34efab8d311dcb86d5dc30124f992109798fd91de51633dc",
+    "revision": "sha256:568fc1ad4404a8d317ecaf416eadfb2e195cda830a664e74b7c2871a6ff9216c",
     "runtime": {
       "adapter": "remotion"
     },
@@ -6131,7 +6131,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:61044f45e395db18b5ca8b75451ddd78a0435a7f9cad9a2d1cb969e0f1a631a3",
+    "revision": "sha256:df6f5140ce9a6b5b0b0a0d1a6118b53b15183de0beb9df3e5a3aa6da27649749",
     "runtime": {
       "adapter": "remotion"
     },
