@@ -129,6 +129,8 @@ class Installer:
     def run(self, mode: str, manifest: dict, *, delete_data: bool = False) -> None:
         old = current(self.root) or self.backend.existing(self.data)
         if mode == "uninstall":
+            if hasattr(self.backend, "preflight_remove"):
+                self.backend.preflight_remove(self.root, self.data, delete_data=delete_data)
             self.backend.stop(old, self.data)
             self.backend.unregister()
             residue = self.backend.remove(self.root, self.data, delete_data=delete_data)

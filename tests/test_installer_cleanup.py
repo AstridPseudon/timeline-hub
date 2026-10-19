@@ -5,9 +5,12 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from unittest.mock import Mock
+
+import pytest
 
 from astrid.installer.backend import Backend
-from astrid.installer.core import write_json
+from astrid.installer.core import Installer, Version, write_json
 from astrid.installer.service import LABEL, default_program_root
 
 
@@ -67,7 +70,9 @@ def test_custom_root_does_not_remove_a_linked_bootstrap(tmp_path, monkeypatch):
     else:
         bootstrap.symlink_to(external, target_is_directory=True)
 
-    assert backend.remove(root, data, delete_data=False) == [bootstrap]
+    with pytest.raises(ValueError, match="cannot contain links"):
+        backend.remove(root, data, delete_data=False)
+    assert (root / "install.json").is_file()
     assert (external / "sentinel").read_text() == "keep"
     assert (data / "sentinel").read_text() == "keep"
 
@@ -79,3 +84,126 @@ def test_custom_uv_does_not_authorize_removing_default_bootstrap(tmp_path, monke
     assert backend.remove(root, data, delete_data=False) == []
     assert bootstrap.is_dir()
     assert (data / "sentinel").read_text() == "keep"
+
+
+@pytest.mark.parametrize("relation", ["same", "child", "parent"])
+@pytest.mark.parametrize("tree_name", ["program", "bootstrap"])
+def test_support_overlap_is_refused_before_any_removal(tmp_path, monkeypatch, relation, tree_name):
+    backend, root, _, bootstrap = installation(tmp_path, monkeypatch)
+    tree = root if tree_name == "program" else bootstrap
+    data = {"same": tree, "child": tree / "workspace", "parent": tree.parent}[relation]
+    data.mkdir(parents=True, exist_ok=True)
+    sentinel = data / "kept-data"
+    sentinel.write_bytes(b"workspace bytes")
+    before = sentinel.stat().st_mtime_ns
+    remove = Mock(side_effect=AssertionError("no removal may precede preflight"))
+    monkeypatch.setattr(shutil, "rmtree", remove)
+
+    with pytest.raises(ValueError, match="support directory overlaps"):
+        backend.remove(root, data, delete_data=False)
+
+    remove.assert_not_called()
+    assert sentinel.read_bytes() == b"workspace bytes"
+    assert sentinel.stat().st_mtime_ns == before
+    assert (root / "install.json").is_file()
+    assert backend.uv.is_file()
+
+
+@pytest.mark.parametrize("relation", ["same", "child", "parent"])
+@pytest.mark.parametrize("tree_name", ["program", "bootstrap"])
+def test_attached_overlap_is_refused_before_unregister(tmp_path, monkeypatch, relation, tree_name):
+    backend, root, data, bootstrap = installation(tmp_path, monkeypatch)
+    tree = root if tree_name == "program" else bootstrap
+    realm = {"same": tree, "child": tree / "realm", "parent": tree.parent}[relation]
+    realm.mkdir(parents=True, exist_ok=True)
+    sentinel = realm / "kept-film"
+    sentinel.write_bytes(b"media bytes")
+    before = sentinel.stat().st_mtime_ns
+    write_json(data / "runtime/catalog.json", {"test": "Runtime owns interpretation"})
+    monkeypatch.setattr(backend, "workspace", lambda version, support: {"realm_root": str(realm)})
+    stop, unregister = Mock(), Mock()
+    monkeypatch.setattr(backend, "stop", stop)
+    monkeypatch.setattr(backend, "unregister", unregister)
+
+    with pytest.raises(ValueError, match="attached workspace overlaps"):
+        Installer(root, data, backend).run("uninstall", {})
+
+    stop.assert_not_called()
+    unregister.assert_not_called()
+    assert sentinel.read_bytes() == b"media bytes"
+    assert sentinel.stat().st_mtime_ns == before
+    assert (root / "install.json").is_file()
+    assert backend.uv.is_file()
+
+
+def test_unknown_attached_identity_preserves_program_and_bootstrap(tmp_path, monkeypatch):
+    backend, root, data, bootstrap = installation(tmp_path, monkeypatch)
+    write_json(data / "runtime/catalog.json", {"test": "unreadable identity"})
+    monkeypatch.setattr(backend, "workspace", Mock(side_effect=ValueError("identity is ambiguous")))
+    unregister = Mock()
+    monkeypatch.setattr(backend, "unregister", unregister)
+
+    with pytest.raises(ValueError, match="identity is ambiguous"):
+        Installer(root, data, backend).run("uninstall", {})
+
+    unregister.assert_not_called()
+    assert (root / "install.json").is_file()
+    assert backend.uv.is_file()
+    assert (data / "sentinel").read_text() == "keep"
+
+
+def test_partial_uninstall_inspects_kept_catalog_with_bootstrap_runtime(tmp_path, monkeypatch):
+    backend, root, data, bootstrap = installation(tmp_path, monkeypatch)
+    (root / "current").write_text("removed-version\n")
+    write_json(data / "runtime/catalog.json", {"test": "kept catalog"})
+    runtime = Mock(return_value={"ok": True, "realm_id": "kept", "realm_root": str(data)})
+    monkeypatch.setattr(backend, "runtime", runtime)
+
+    assert backend.remove(root, data, delete_data=False) == []
+
+    runtime.assert_called_once_with(None, data, "workspace", "inspect")
+    assert not root.exists() and not bootstrap.exists()
+    assert (data / "sentinel").read_text() == "keep"
+
+
+def test_missing_interpreter_uses_bootstrap_for_workspace_inspection(tmp_path, monkeypatch):
+    backend, root, data, _ = installation(tmp_path, monkeypatch)
+    version = Version(root / "versions/removed", root / "missing/python", root / "profile", {})
+    runtime = Mock(return_value={"ok": True, "realm_id": "kept", "realm_root": str(data)})
+    monkeypatch.setattr(backend, "runtime", runtime)
+
+    assert backend.workspace(version, data)["realm_id"] == "kept"
+    runtime.assert_called_once_with(None, data, "workspace", "inspect")
+
+
+def test_retained_external_identity_is_inspected_after_support_removal(tmp_path, monkeypatch):
+    backend, root, data, _ = installation(tmp_path, monkeypatch)
+    shutil.rmtree(data)
+    realm = tmp_path / "external-realm"
+    realm.mkdir()
+    (realm / "sentinel").write_text("keep")
+    monkeypatch.setattr(backend.service, "recorded", lambda: {
+        "owner": LABEL, "realm_root": str(realm), "realm_id": "kept",
+    })
+    runtime = Mock(return_value={"ok": True, "realm_id": "kept", "realm_root": str(realm)})
+    monkeypatch.setattr(backend, "runtime", runtime)
+
+    assert backend.remove(root, data, delete_data=False) == []
+
+    runtime.assert_called_once_with(None, data, "workspace", "inspect", "--realm-root", str(realm),
+                                    "--expected-realm-id", "kept")
+    assert (realm / "sentinel").read_text() == "keep"
+
+
+def test_already_deleted_recorded_workspace_does_not_block_residue_cleanup(tmp_path, monkeypatch):
+    backend, root, data, _ = installation(tmp_path, monkeypatch)
+    shutil.rmtree(data)
+    monkeypatch.setattr(backend.service, "recorded", lambda: {
+        "owner": LABEL, "realm_root": str(tmp_path / "deleted-realm"), "realm_id": "removed",
+    })
+    runtime = Mock(side_effect=AssertionError("already deleted data needs no inspection"))
+    monkeypatch.setattr(backend, "runtime", runtime)
+
+    assert backend.remove(root, data, delete_data=True) == []
+    runtime.assert_not_called()
+    assert not root.exists()

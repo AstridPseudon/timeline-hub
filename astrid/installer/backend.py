@@ -81,7 +81,7 @@ class Backend:
         environment = absolute(value["runtime_environment"])
         python = venv_python(environment)
         if not python.is_file():
-            raise ValueError("The existing Runtime interpreter is missing; its source environment needs recovery.")
+            return None  # The bootstrap Runtime can inspect a retained workspace.
         # This is an intentional pre-rename compatibility probe, never a new pin.
         module = self.run([python, "-I", "-c", "import importlib.util; print('astrid_runtime' if importlib.util.find_spec('astrid_runtime') else 'banodoco_local')"]).strip()
         return Version(environment.parent, python, profile,
@@ -137,8 +137,9 @@ class Backend:
         )
         return services_path
 
-    def workspace(self, version: Version, data: Path) -> dict:
-        value = self.runtime(version, data, "workspace", "inspect")
+    def workspace(self, version: Version | None, data: Path) -> dict:
+        interpreter = version if version is not None and version.python.is_file() else None
+        value = self.runtime(interpreter, data, "workspace", "inspect")
         if not value.get("realm_id") or not value.get("realm_root"):
             raise ValueError("The selected workspace has no unambiguous identity.")
         absolute(value["realm_root"])
@@ -340,22 +341,49 @@ class Backend:
     def unregister(self) -> None:
         self.service.unregister()
 
+    def preflight_remove(self, root: Path, data: Path, *, delete_data: bool) -> Path | None:
+        """Prove that removing programs cannot also remove a workspace."""
+        root, data = absolute(root), absolute(data)
+        trees = [root]
+        bootstrap = self.service.registry.parent / "bootstrap"
+        if root != bootstrap.parent and self.uv.parent == bootstrap and bootstrap.exists():
+            trees.append(absolute(bootstrap))
+
+        def overlaps(first, second):
+            return first == second or first in second.parents or second in first.parents
+
+        if any(overlaps(data, tree) for tree in trees):
+            raise ValueError("The workspace support directory overlaps a program removal directory.")
+        record = self.service.recorded()
+        recorded_realm = absolute(record["realm_root"]) if record.get("realm_root") else None
+        catalog = data / "runtime" / "catalog.json"
+        version = current(root) or (self.existing(data) if data.exists() else None)
+        realm_root = None
+        if catalog.exists() or (version is not None and data.exists()):
+            realm_root = absolute(self.workspace(version, data)["realm_root"])
+        elif recorded_realm is not None and recorded_realm.exists():
+            # Recover through Runtime's public read-only identity API even if a
+            # previous uninstall already removed the version and support files.
+            args = ["workspace", "inspect", "--realm-root", str(recorded_realm)]
+            if record.get("realm_id"):
+                args += ["--expected-realm-id", record["realm_id"]]
+            value = self.runtime(None, data, *args)
+            if not value.get("realm_id") or not value.get("realm_root"):
+                raise ValueError("The selected workspace has no unambiguous identity.")
+            realm_root = absolute(value["realm_root"])
+        if realm_root is not None and any(overlaps(realm_root, tree) for tree in trees):
+            raise ValueError("The attached workspace overlaps a program removal directory.")
+        return realm_root
+
     def remove(self, root: Path, data: Path, *, delete_data: bool) -> list[Path]:
         residue = []
         # Only directories created and marked by this installer are removable.
         if read_json(root / "install.json").get("owner") != "haus.astrid.runtime":
             raise ValueError("Refusing to remove an unowned installation directory.")
+        realm_root = self.preflight_remove(root, data, delete_data=delete_data)
         data_targets = [data] if delete_data else []
-        if delete_data:
-            version = current(root) or self.existing(data)
-            if version:
-                realm_root = absolute(self.workspace(version, data)["realm_root"])
-                if realm_root != data and data not in realm_root.parents:
-                    # An attached workspace can live outside the support root.
-                    # Inspect its identity before removing the executable.
-                    if realm_root in root.parents or root in realm_root.parents:
-                        raise ValueError("The attached workspace overlaps the program directory.")
-                    data_targets.insert(0, realm_root)
+        if delete_data and realm_root is not None and realm_root != data and data not in realm_root.parents:
+            data_targets.insert(0, realm_root)
         # Keep the ownership/data-root marker until the last owned file is
         # gone, so rerunning the line can finish removal after a Windows lock.
         for path in root.iterdir():
