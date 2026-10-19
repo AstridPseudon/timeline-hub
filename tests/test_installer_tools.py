@@ -10,17 +10,20 @@ import pytest
 
 from astrid.installer import tools
 
+TARGET = "windows-x64" if sys.platform == "win32" else "linux-x64"
+EXE_SUFFIX = ".exe" if sys.platform == "win32" else ""
+
 
 def manifest():
     return {"tools": {
-        name: {"version": version, "assets": {"linux-x64": {"url": f"https://example.invalid/{name}.zip"}}}
+        name: {"version": version, "assets": {TARGET: {"url": f"https://example.invalid/{name}.zip"}}}
         for name, version in (("bun", "1.3.14"), ("node", "20.19.4"), ("ffmpeg", "7.0.2"), ("omp", "12.0.0"))
     }}
 
 
 def media_binary(directory, name):
     directory.mkdir(parents=True, exist_ok=True)
-    executable = directory / name
+    executable = directory / (name + EXE_SUFFIX)
     executable.write_bytes(b"test executable")
     executable.chmod(0o755)
     return executable
@@ -32,6 +35,8 @@ def harness(tmp_path, monkeypatch, *, availability="qualified"):
     other.mkdir()
     ffmpeg = media_binary(existing, "ffmpeg") if availability != "missing" else None
     ffprobe = media_binary(existing / "probe", "ffprobe") if availability not in {"missing", "missing_ffprobe"} else None
+    if sys.platform == "win32":
+        monkeypatch.setenv("PATHEXT", ".exe")
     monkeypatch.setenv("PATH", os.pathsep.join((str(existing), str(existing / "probe"), str(other))))
     root = tmp_path / "installed tools"
     downloads, calls = [], []
@@ -47,7 +52,7 @@ def harness(tmp_path, monkeypatch, *, availability="qualified"):
         executable, *args = [str(value) for value in argv]
         calls.append((executable, args))
         if args == ["--version"]:
-            return "1.3.14" if Path(executable).name == "bun" else "v20.19.4"
+            return "1.3.14" if Path(executable).stem == "bun" else "v20.19.4"
         if args[:2] == ["install", "--global"]:
             media_binary(Path(extra_env["BUN_INSTALL_BIN"]), "omp")
             return ""
@@ -55,7 +60,7 @@ def harness(tmp_path, monkeypatch, *, availability="qualified"):
         if host and availability == "broken_ffprobe" and executable == str(ffprobe):
             raise subprocess.CalledProcessError(1, executable)
         if args == ["-version"]:
-            name = Path(executable).name
+            name = Path(executable).stem
             if host and availability == "unidentifiable":
                 return "unknown tool"
             return f"{name} version {'6.1.2-system' if host else '7.0.2-static'} Copyright test"
@@ -74,7 +79,7 @@ def harness(tmp_path, monkeypatch, *, availability="qualified"):
 def test_qualified_path_media_tools_are_selected_and_recorded(tmp_path, monkeypatch):
     root, ffmpeg, ffprobe, other, downloads, calls, run = harness(tmp_path, monkeypatch)
 
-    env = tools.install_tools(manifest(), root, "linux-x64", run)
+    env = tools.install_tools(manifest(), root, TARGET, run)
 
     assert downloads == ["https://example.invalid/bun.zip", "https://example.invalid/node.zip"]
     assert env["ASTRID_FFMPEG_EXECUTABLE"] == str(ffmpeg)
@@ -96,7 +101,7 @@ def test_generated_service_environment_satisfies_the_rendering_probe(tmp_path, m
     from astrid.core.rendering.remotion_runtime import RemotionValidationError, probe_context
 
     root, *_unused, run = harness(tmp_path, monkeypatch)
-    env = tools.install_tools(manifest(), root, "linux-x64", run)
+    env = tools.install_tools(manifest(), root, TARGET, run)
     environment = {"HOME": str(tmp_path), **env}
 
     context = probe_context(environment=environment, python_executable=sys.executable)
@@ -114,9 +119,10 @@ def test_generated_service_environment_satisfies_the_rendering_probe(tmp_path, m
 def test_absent_or_unqualified_media_tools_download_pinned_fallback(tmp_path, monkeypatch, availability):
     root, host_ffmpeg, host_ffprobe, _other, downloads, calls, run = harness(tmp_path, monkeypatch, availability=availability)
 
-    env = tools.install_tools(manifest(), root, "linux-x64", run)
+    env = tools.install_tools(manifest(), root, TARGET, run)
 
-    ffmpeg, ffprobe = root / "ffmpeg" / "bundle" / "ffmpeg", root / "ffmpeg" / "bundle" / "ffprobe"
+    ffmpeg = root / "ffmpeg" / "bundle" / ("ffmpeg" + EXE_SUFFIX)
+    ffprobe = root / "ffmpeg" / "bundle" / ("ffprobe" + EXE_SUFFIX)
     assert downloads == [f"https://example.invalid/{name}.zip" for name in ("bun", "node", "ffmpeg")]
     assert env["ASTRID_FFMPEG_EXECUTABLE"] == str(ffmpeg)
     assert env["ASTRID_FFPROBE_EXECUTABLE"] == str(ffprobe)
@@ -141,7 +147,7 @@ def test_downloaded_media_tools_still_require_every_capability(tmp_path, monkeyp
         return output
 
     with pytest.raises(ValueError, match="loudnorm"):
-        tools.install_tools(manifest(), root, "linux-x64", missing_filter)
+        tools.install_tools(manifest(), root, TARGET, missing_filter)
 
 
 def test_an_older_managed_version_cannot_supply_media_tools_to_its_successor(tmp_path, monkeypatch):
@@ -153,7 +159,7 @@ def test_an_older_managed_version_cannot_supply_media_tools_to_its_successor(tmp
     monkeypatch.setenv("PATH", str(old_media))
     root = versions / "new" / "tools"
 
-    env = tools.install_tools(manifest(), root, "linux-x64", run)
+    env = tools.install_tools(manifest(), root, TARGET, run)
 
     assert env["ASTRID_INSTALL_FFMPEG_SOURCE"] == "download"
     assert Path(env["ASTRID_FFMPEG_EXECUTABLE"]).is_relative_to(root)

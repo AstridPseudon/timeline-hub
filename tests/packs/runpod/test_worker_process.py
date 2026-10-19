@@ -216,7 +216,7 @@ def test_stop_native_pidfd_failure_keeps_exact_handle_and_closes_it(
     monkeypatch.delattr(os, "pidfd_open", raising=False)
     monkeypatch.delattr(signal, "pidfd_send_signal", raising=False)
     monkeypatch.setattr(os, "kill", lambda *_: pytest.fail("numeric PID fallback"))
-    monkeypatch.setattr(os, "killpg", lambda *_: pytest.fail("numeric process-group fallback"))
+    monkeypatch.setattr(os, "killpg", lambda *_: pytest.fail("numeric process-group fallback"), raising=False)
     opened = Mock(side_effect=OSError(error, "native pidfd failure")) if operation == "open" else Mock(return_value=77)
     sent = Mock(side_effect=OSError(error, "native pidfd failure"))
     monkeypatch.setattr(subject.platform, "pidfd_open", opened)

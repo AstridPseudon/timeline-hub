@@ -32,7 +32,7 @@ def runtime_pidfd_provider(without_stdlib_pidfds, monkeypatch):
     monkeypatch.setattr(platform, "pidfd_open", provider.pidfd_open)
     monkeypatch.setattr(platform, "pidfd_send_signal", provider.pidfd_send_signal)
     monkeypatch.setattr(os, "kill", lambda *_: pytest.fail("numeric PID fallback"))
-    monkeypatch.setattr(os, "killpg", lambda *_: pytest.fail("numeric process-group fallback"))
+    monkeypatch.setattr(os, "killpg", lambda *_: pytest.fail("numeric process-group fallback"), raising=False)
     return provider
 
 
