@@ -710,14 +710,35 @@ def prepare_filmstrip(
     if 'output' not in components['resolved'] and timeline_row is not None and not exact:
         if not (timeline_row.get('head_revision_id') or timeline_row.get('parent_revision_id')):
             _fail('Timeline has no canonical current parent head.')
+        timeline_identity_keys = (
+            'timeline_id', 'slug', 'config_version', 'head_event_id', 'head_hash',
+            'config_hash', 'registry_hash',
+        )
         if isinstance(inputs.get('authoring_preview'), Mapping):
             config, registry, closure = _open_candidate_input_closure(
                 client, project_id=project_id, preview=inputs['authoring_preview'])
         else:
+            requested_revision = inputs.get('revision_id')
+            if requested_revision not in (None, '') and (
+                not isinstance(requested_revision, str) or not requested_revision.strip()
+            ):
+                _fail('Input inspection revision_id must be a non-empty revision string.')
+            selected_row = dict(timeline_row)
+            if requested_revision not in (None, ''):
+                # The listing is the mutable current-head scope. Replace only
+                # its parent selector; the exact closure reader below verifies
+                # that Runtime returned this immutable requested revision.
+                selected_row['head_revision_id'] = str(requested_revision)
+                selected_row['parent_revision_id'] = str(requested_revision)
+                # These fields describe the mutable listing, not the exact
+                # historical closure. Do not carry them beside old content.
+                timeline_identity_keys = ('timeline_id', 'slug')
             config, registry, closure = _open_current_input_closure(
-                client, project_id=project_id, timeline_row=timeline_row,
+                client, project_id=project_id, timeline_row=selected_row,
                 config={}, registry={'assets': {}},
             )
+            if requested_revision not in (None, '') and closure.get('parent_revision_id') != str(requested_revision):
+                _fail('Input inspection resolved a different immutable parent than the requested revision.')
         from astrid.core.timeline.duration import timeline_duration_frames
         canvas = config.get('theme_overrides', {}).get('visual', {}).get('canvas', {})
         fps = canvas.get('fps', 30) if isinstance(canvas, Mapping) else 30
@@ -754,7 +775,7 @@ def prepare_filmstrip(
                     },
                     'timeline_identity': {
                         key: timeline_row.get(key)
-                        for key in ('timeline_id', 'slug', 'config_version', 'head_event_id', 'head_hash', 'registry_hash')
+                        for key in timeline_identity_keys
                         if timeline_row.get(key) is not None
                     },
                     **({'parent_revision_id': closure['parent_revision_id']} if closure else {}),
