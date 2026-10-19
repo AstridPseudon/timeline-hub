@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { POLL_INTERVAL_MS } from '@/integrations/runtime/RuntimeConnectionProvider';
+import { RUNTIME_SCHEMA_DIGEST } from '@/integrations/runtime/contract-metadata';
 
 const { probeBridgeSessionMock } = vi.hoisted(() => ({ probeBridgeSessionMock: vi.fn() }));
 vi.mock('@/shared/auth/bridgeSession', () => ({
@@ -68,12 +69,13 @@ describe('AuthProvider on the hosted build', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     Reflect.deleteProperty(navigator, 'permissions');
   });
 
   it('resolves the local user from the gate when the Runtime is connected, without the bridge probe, and invalidates Runtime queries', async () => {
     stubPermission('granted');
-    stubGateway(() => new Response(JSON.stringify({ status: 'ok' }), { status: 200 }));
+    stubGateway(() => new Response(JSON.stringify({ status: 'ok', schema_digest: RUNTIME_SCHEMA_DIGEST }), { status: 200 }));
     const { queryClient } = await renderHosted();
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
 

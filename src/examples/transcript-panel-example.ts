@@ -5,6 +5,8 @@
  */
 import type {
   ImmutableProjectPackageDescriptor,
+  PanelFrameAnchor,
+  PanelPreviewService,
   PanelRenderProps,
   PanelVideoAdapter,
   ProjectObjectMetadata,
@@ -147,6 +149,13 @@ export function createTranscriptPanelExampleAdapter(): TranscriptPanelAdapter {
 export function readTranscriptPanelExample(props: PanelRenderProps): TranscriptPanelSnapshot | undefined {
   const video: PanelVideoAdapter | undefined = props.video;
   return video?.transcript?.getSnapshot();
+}
+
+/** Show a host-rendered frame while visible; dispose the returned handle when the hover ends. */
+export function previewTranscriptFrame(props: PanelRenderProps, seconds: number, anchor: PanelFrameAnchor) {
+  if (!props.visible) return undefined;
+  const preview: PanelPreviewService | undefined = props.video?.preview;
+  return preview?.showFrame({ seconds, anchor });
 }
 
 /** Import a transcript package through immutable host storage and keep its digest as the revision. */
