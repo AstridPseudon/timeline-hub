@@ -2532,7 +2532,14 @@ class RuntimeService:
         row = self.store.conn.execute("SELECT * FROM parent_composition_revisions WHERE id=? AND project_id=? AND timeline_id=?", (revision, project["id"], timeline_id)).fetchone()
         if not row:
             raise NotFoundError("parent composition revision not found", details={"timeline_id": timeline_id, "revision": revision})
-        return {"revision_id": row["id"], "project_id": row["project_id"], "timeline_id": row["timeline_id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"]), "created_at": row["created_at"]}
+        result = {"revision_id": row["id"], "project_id": row["project_id"], "timeline_id": row["timeline_id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"]), "created_at": row["created_at"]}
+        # A non-null manifest is the acceptance layer's proof that this
+        # immutable revision has a verified closure.  Legacy rows either do
+        # not have the column or leave it NULL, so keep their historical read
+        # shape instead of guessing pins from mutable payloads.
+        if "commit_manifest_json" in row.keys() and row["commit_manifest_json"] is not None:
+            result["dependency_manifest"] = json.loads(row["commit_manifest_json"])
+        return result
 
     def list_project_parent_composition_revisions(self, project_id, timeline_id, *, cursor=None, limit=PAGE_DEFAULT_LIMIT):
         """List immutable canonical history for one project timeline."""
@@ -2694,6 +2701,11 @@ class RuntimeService:
                               limit=PAGE_DEFAULT_LIMIT, authorize):
         from .timeline_commit import CommitRejected
         from .timeline_commit_port import public_failure
+        # The public HTTP query is text, while the commit store deliberately
+        # accepts only an already-validated integer.  Keep cursor validation
+        # and fixed-head binding in the commit store; this call only normalizes
+        # the independent public limit argument.
+        limit, _ = _page_args(None, limit)
         check = self._timeline_authorize(project_id, timeline_id, authorize, mutation=False)
         commits, _ = self._timeline_commits()
         try:
