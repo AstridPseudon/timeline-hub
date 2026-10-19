@@ -829,6 +829,29 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.swap-media"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "select": {
+                "type": "string",
+                "pattern": "^parent/clip:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipSwapMediaArgs"
+              }
+            }
+          }
         }
       ]
     },
@@ -866,6 +889,51 @@
         "type": "string"
       },
       "description": "Normalized property tokens, not entity collection positions. Empty array means the whole entity. Numeric array tokens use canonical decimal strings; provider validates pinned parent-container types before traversal."
+    },
+    "MediaSelection": {
+      "description": "Exact five-field selection from Runtime ABI 1 selected_media; metadata is supplied by the scoped provider port, never command arguments.",
+      "type": "object",
+      "properties": {
+        "asset": {
+          "$ref": "#/$defs/ID"
+        },
+        "generation_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "variant_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "object_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "catalog_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "required": [
+        "asset",
+        "generation_id",
+        "variant_id",
+        "object_id",
+        "catalog_digest"
+      ],
+      "additionalProperties": false
+    },
+    "ClipSwapMediaArgs": {
+      "type": "object",
+      "required": [
+        "old_media",
+        "media"
+      ],
+      "properties": {
+        "old_media": {
+          "$ref": "#/$defs/MediaSelection"
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

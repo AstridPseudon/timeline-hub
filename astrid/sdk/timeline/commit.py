@@ -427,6 +427,13 @@ class RuntimeCommitService:
         current = None
         try:
             calls = request["commands"]
+            verified_media = []
+            for call in calls:
+                if call['op'] == 'clip.swap-media':
+                    from .commands import validate_command
+                    validate_command(call)
+                    for key in ('old_media', 'media'):
+                        verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
             restore = any(call["op"] == "timeline.restore" for call in calls)
             if restore:
                 current = port.head()
@@ -525,7 +532,8 @@ class RuntimeCommitService:
             if not closures:
                 _hydrate(port, bundle)
             original = execute(bundle, calls, inverse_records=inverse_records,
-                               intervening_records=inverse_intervening, closures=closures)
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media)
             for attempt in range(3):
                 if attempt:
                     current = port.head()
@@ -541,7 +549,8 @@ class RuntimeCommitService:
                         _hydrate(port, head_bundle)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
-                                      entries, CommitRejected, base, current)], closures=closures)
+                                      entries, CommitRejected, base, current)], closures=closures,
+                                  verified_media=verified_media)
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources)
                 prepared = {

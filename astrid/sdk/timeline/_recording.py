@@ -14,7 +14,7 @@ def active(row):
 
 
 def selection(state, key, owner, members=()):
-    if key == "move.target":
+    if key in ("move.target", "media.target"):
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
     elif key in KINDS:
         result = order(state, owner, KINDS[key])
@@ -35,8 +35,9 @@ def selection(state, key, owner, members=()):
 
 
 class Recording:
-    def __init__(self, bundle, command, ordinal, *, closures=None):
+    def __init__(self, bundle, command, ordinal, *, closures=None, verified_media=()):
         self.state = State(bundle, closures=closures)
+        self.verified_media = copy.deepcopy(verified_media)
         self.input_state = None
         parent = bundle['parent']
         config = parent.get('config')
