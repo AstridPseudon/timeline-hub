@@ -78,6 +78,8 @@ export type VisualSeamReport = Readonly<{
   cues: readonly BoundaryCue[];
   warningCount: number;
   blocked: boolean;
+  /** Preserves bounded diagnostics returned by an independently validating Runtime. */
+  rawDiagnostics?: Readonly<Record<string, unknown>>;
 }>;
 
 export type VisualSeamAnalysisOptions = Readonly<{
@@ -125,6 +127,12 @@ const AUXILIARY_CLIP_TYPES = new Set([
   'effect-layer',
   'frame-overlay',
   'end-spanning-layer',
+  'text',
+  'audio',
+]);
+
+const BUILTIN_PICTURE_CLIP_TYPES = new Set([
+  'media', 'hold', 'video', 'image', 'animated-media-transform', 'haus.astrid.liveScene',
 ]);
 
 function record(value: unknown): JsonRecord | undefined {
@@ -157,11 +165,23 @@ function clipType(clip: ResolvedTimelineClip): string {
   return text(clip.clipType) ?? 'media';
 }
 
-function isPrimaryVisualClip(clip: ResolvedTimelineClip, track: TrackDefinition | undefined): boolean {
-  if (track?.kind !== 'visual' || AUXILIARY_CLIP_TYPES.has(clipType(clip))) return false;
-  if (!['media', 'hold', 'video', 'image', 'animated-media-transform', 'haus.astrid.liveScene'].includes(clipType(clip))) return false;
+function isPrimaryVisualClip(
+  clip: ResolvedTimelineClip,
+  track: TrackDefinition | undefined,
+  pictureTracks: ReadonlySet<string>,
+): boolean {
+  if (track?.kind !== 'visual' || track.role === 'source' || AUXILIARY_CLIP_TYPES.has(clipType(clip))) return false;
   const elementKind = record(clip.elementRef)?.kind;
-  return !['effect', 'animation', 'transition'].includes(String(elementKind));
+  if (['effect', 'animation', 'transition'].includes(String(elementKind))) return false;
+  return BUILTIN_PICTURE_CLIP_TYPES.has(clipType(clip)) || pictureTracks.has(track.id);
+}
+
+function declaredTrackPolicy(config: ResolvedTimelineConfig, key: 'pictureTracks' | 'continuityTracks'): Set<string> | undefined {
+  const contract = record(record(config.app)?.visualSeamContract);
+  const value = contract?.[key];
+  return Array.isArray(value)
+    ? new Set(value.filter((track): track is string => typeof track === 'string'))
+    : undefined;
 }
 
 function ownerPath(clip: ResolvedTimelineClip): { ownerId: string; path: readonly string[] } {
@@ -303,6 +323,7 @@ function cuesNearFrame(cues: readonly Cue[], frame: number, guardFrames: number)
 
 function buildSpans(config: ResolvedTimelineConfig): ClipSpan[] {
   const tracks = trackMap(config);
+  const pictureTracks = declaredTrackPolicy(config, 'pictureTracks') ?? new Set<string>();
   const fps = finite(config.output.fps) && config.output.fps > 0 ? config.output.fps : 30;
   return config.clips
     .filter(active)
@@ -315,7 +336,7 @@ function buildSpans(config: ResolvedTimelineConfig): ClipSpan[] {
         track,
         startFrame,
         endFrame: startFrame + durationFrames,
-        primary: isPrimaryVisualClip(clip, track),
+        primary: isPrimaryVisualClip(clip, track, pictureTracks),
       };
     });
 }
@@ -339,8 +360,14 @@ function buildCues(spans: readonly ClipSpan[], owners: readonly DisclosedOwner[]
   return cues;
 }
 
-function continuityTracksFor(spans: readonly ClipSpan[], options: VisualSeamAnalysisOptions): Set<string> {
+function continuityTracksFor(
+  spans: readonly ClipSpan[],
+  options: VisualSeamAnalysisOptions,
+  config: ResolvedTimelineConfig,
+): Set<string> {
   if (options.continuityTracks) return new Set(options.continuityTracks);
+  const authoredTracks = declaredTrackPolicy(config, 'continuityTracks');
+  if (authoredTracks) return authoredTracks;
   const candidateTracks = new Set<string>();
   for (const span of spans) {
     if (span.primary) candidateTracks.add(span.clip.track);
@@ -363,7 +390,7 @@ function projectedOccurrenceId(id: string): string {
 
 function visualGapEdges(config: ResolvedTimelineConfig): VisualGapEdge[] {
   const spans = buildSpans(config);
-  const tracks = continuityTracksFor(spans, {});
+  const tracks = continuityTracksFor(spans, {}, config);
   const spansByTrack = new Map<string, ClipSpan[]>();
   for (const span of spans) {
     if (!span.primary || !span.track || !tracks.has(span.clip.track)) continue;
@@ -452,7 +479,7 @@ export function analyzeVisualSeams(
   const cues = buildCues(spans, owners).sort((left, right) => left.frame - right.frame);
   const opaqueElements = opaqueSpans.map(opaqueElement);
   const gaps = record(record(config.app)?.visualSeamContract)?.gaps;
-  const continuityTracks = continuityTracksFor(spans, options);
+  const continuityTracks = continuityTracksFor(spans, options, config);
   const candidates: BoundaryCandidate[] = [];
   const structuralIssues: string[] = [];
   const spansByTrack = new Map<string, ClipSpan[]>();

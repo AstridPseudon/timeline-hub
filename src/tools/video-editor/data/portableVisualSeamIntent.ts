@@ -8,12 +8,20 @@ const record = (v: unknown): Json => v && typeof v === 'object' && !Array.isArra
 const number = (v: unknown, fallback = 0): number => typeof v === 'number' && Number.isFinite(v) ? v : fallback;
 export type DisclosedOwner = IntentOwner & {clipId: string; ownerId: string; primary: boolean; disclosure: BoundaryDisclosure};
 const PICTURE = new Set(['media', 'hold', 'video', 'image', 'animated-media-transform', 'haus.astrid.liveScene']);
+const NON_PICTURE = new Set(['effect-layer', 'frame-overlay', 'end-spanning-layer', 'text', 'audio']);
+
+function declaredPictureTracks(config: ResolvedTimelineConfig): Set<string> {
+  const contract = record(record(config.app).visualSeamContract);
+  const tracks = contract.pictureTracks;
+  return new Set(Array.isArray(tracks) ? tracks.filter((track): track is string => typeof track === 'string') : []);
+}
 
 /** Closed metadata adapter shared by normal preflight and portable authoring.
  * Normal analysis uses resolved source metadata only and never reads registry. */
 export function visualSeamOwners(config: ResolvedTimelineConfig, metadataOnly = false): DisclosedOwner[] {
   const fps = config.output.fps;
-  const tracks = new Map(config.tracks.map(t => [t.id, t.kind]));
+  const tracks = new Map(config.tracks.map(t => [t.id, t]));
+  const pictureTracks = declaredPictureTracks(config);
   const owners: DisclosedOwner[] = [];
   const timelineEffects = new Set<string>();
   const add = (clip: Json, path: string[], clipId: string, ownerId: string, startFrame: number, endFrame: number,
@@ -43,8 +51,13 @@ export function visualSeamOwners(config: ResolvedTimelineConfig, metadataOnly = 
     const local = Array.isArray(clip.effects) ? clip.effects.slice(0, number(scope.localCount, clip.effects.length)) : [];
     const normalized = {...authored, clipType: clip.clipType ?? 'media', at, speed: number(clip.speed, 1),
       ...(Array.isArray(scope.timeline) ? {effects: local} : {})};
+    const track = tracks.get(clip.track);
+    const elementKind = record(clip.elementRef).kind;
+    const isPicture = PICTURE.has(normalized.clipType)
+      || pictureTracks.has(clip.track) && !NON_PICTURE.has(normalized.clipType);
     add(normalized, path, clip.id, occurrence ?? clip.id, start, end, start, binding, sourceType,
-      tracks.get(clip.track) === 'visual' && PICTURE.has(normalized.clipType));
+      track?.kind === 'visual' && track.role !== 'source' && isPicture
+        && !['effect', 'animation', 'transition'].includes(String(elementKind)));
     local.forEach((raw, index) => {
       const effect = record(raw);
       const effectId = String(effect.id ?? index);
@@ -55,7 +68,7 @@ export function visualSeamOwners(config: ResolvedTimelineConfig, metadataOnly = 
     if (Array.isArray(scope.timeline) && occurrence) {
       const timing = record(clip.app?.canonicalTiming);
       const offset = number(timing.occurrenceStartMs) / 1000;
-      const upper = Math.ceil((offset + number(timing.occurrenceDurationMs) / 1000) * fps - 1e-9);
+      const upper = Math.round((offset + number(timing.occurrenceDurationMs) / 1000) * fps);
       scope.timeline.forEach((raw, index) => {
         const effect = record(raw);
         const effectId = String(effect.id ?? index);
