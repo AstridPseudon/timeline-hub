@@ -175,8 +175,8 @@ def document_from_bundle(bundle, *, document_pins=None):
     for occurrence in parent["occurrences"]:
         identity = occurrence["shot_id"]
         shot = bundle["shots"][identity]
-        origin = bundle["source_mapping"]["shots"][identity]
-        if (shot["payload"] == shot["base_payload"]
+        origin = bundle["source_mapping"]["shots"].get(identity)
+        if (origin is not None and shot["payload"] == shot["base_payload"]
                 and shot["internal_timeline"] == shot["base_internal_timeline"]
                 and origin.get("revision_id") in shot_index):
             occurrence["shot_id"] = origin["shot_id"]
@@ -317,6 +317,30 @@ def _records(entries, rejected, base, current):
 def _check_reservations(port, plan, current, rejected, base):
     from astrid.sdk.timeline.commands import CommandError
 
+    from ._command_state import root_identity
+
+    def valid(item):
+        if (not isinstance(item, Mapping) or set(item) != {'ref', 'kind', 'owner'}
+                or not _id(item['ref']) or not _id(item['kind'])):
+            return False
+        root = root_identity(item['ref'])
+        if root is not None:
+            return (item['kind'] == root[0]
+                    and item['owner'] == (None if root[0] == 'shot' else 'parent'))
+        owner = item['owner']
+        if not _id(owner) or not (owner == 'parent' or (
+                root_identity(owner) is not None and root_identity(owner)[0] == 'occurrence')):
+            return False
+        return (item['kind'] == 'track' and item['ref'].startswith(owner + '/track:')
+                and re.fullmatch(r'(?!.*::)[^/]+', item['ref'][len(owner + '/track:'):]) is not None)
+
+    for record in plan.records:
+        if (any(not valid(item) for item in record['created'])
+                or record['command'].get('created') != [item['ref'] for item in record['created']]):
+            raise CommandError('invalid created identity scope', kind='identity_collision')
+
+    # This scan is timeline-local. Runtime atomic admission must additionally
+    # check project-wide shot occupancy/reservations before persisting a closure.
     # Inverse creates restore authenticated accepted writes. Ordinary creates
     # must never claim an identity retired by an earlier accepted publication.
     created = [item["ref"] for record in plan.records
@@ -334,11 +358,7 @@ def _check_reservations(port, plan, current, rejected, base):
         for record in _records([entry], rejected, base, current):
             items = record["created"]
             if (not isinstance(items, list)
-                    or any(not isinstance(item, Mapping)
-                           or set(item) != {"ref", "kind", "owner"}
-                           or not all(_id(item[key]) for key in ("ref", "kind", "owner"))
-                           or not item["ref"].startswith(item["owner"] + "/" + item["kind"] + ":")
-                           for item in items)
+                    or any(not valid(item) for item in items)
                     or not isinstance(record["command"], Mapping)
                     or record["command"].get("created") != [item["ref"] for item in items]):
                 raise rejected(_failure("history_unavailable", "created identity history is unavailable",

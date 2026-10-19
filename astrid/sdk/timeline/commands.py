@@ -59,7 +59,7 @@ def validate_command(command):
         raise CommandError(errors[0].message)
     if command['version'] != '1':
         raise CommandError("unsupported operation version", kind='unsupported_version')
-    if command['op'] not in ('clip.move', 'track.create', 'timeline.inverse', 'timeline.restore'):
+    if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
     if operation is not None:

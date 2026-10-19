@@ -122,6 +122,11 @@ def one(rows, key, identity, *, optional=False):
     return matches[0]
 
 
+def root_identity(ref):
+    match = re.fullmatch(r'(shot|occurrence):((?!.*::)[^/]+)', ref) if isinstance(ref, str) else None
+    return match.groups() if match and match[2].strip() else None
+
+
 class State:
     def __init__(self, bundle, *, closures=None):
         self.bundle = bundle
@@ -150,6 +155,17 @@ class State:
             return one(self.collection(owner, kind), "id", identity, optional=optional)
         if ref == "parent":
             return self.bundle["parent"]
+        root = root_identity(ref)
+        if root is not None:
+            kind, identity = root
+            if kind == 'occurrence':
+                return one(self.bundle['placements'], 'occurrence_id', identity, optional=optional)
+            shot = self.bundle['shots'].get(identity)
+            if shot is None:
+                if optional:
+                    return None
+                raise CommandError('missing shot root', kind='identity_conflict', ref=ref)
+            return {key: copy.deepcopy(shot[key]) for key in ('payload', 'internal_timeline')}
         if ref.endswith('/registry'):
             owner = ref.removesuffix('/registry')
             if owner == "parent":
@@ -161,6 +177,9 @@ class State:
         if ref.endswith('/shot'):
             owner = ref.removesuffix('/shot')
             row = self.occurrence(owner)
+            if (row['shot_id'] not in self.bundle['source_mapping']['shots']
+                    and self.bundle['shots'][row['shot_id']].get('_created') is True):
+                return {'shot_id': row['shot_id']}
             source = self.bundle['source_mapping']['shots'][row['shot_id']]['shot_id']
             from astrid.core.timeline.authoring_bundle import _authoring_shot_id
             identity = _authoring_shot_id(
@@ -170,9 +189,24 @@ class State:
                 raise CommandError('occurrence authoring owner changed', kind='identity_conflict',
                                    ref=owner, path=['shot_id'])
             return {"shot_id": source}
-        if ref.startswith("occurrence:") and '/' not in ref:
-            return self.occurrence(ref)
         raise CommandError(f"unsupported entity reference {ref!r}")
+
+    def validate_root(self, ref, value):
+        root = root_identity(ref)
+        if root is None or not isinstance(value, dict):
+            raise CommandError('invalid authored root', ref=ref)
+        kind, identity = root
+        if kind == 'shot':
+            if (set(value) != {'payload', 'internal_timeline'}
+                    or not all(isinstance(child, dict) for child in value.values())):
+                raise CommandError('shot root requires payload and internal_timeline objects', ref=ref)
+        elif (value.get('occurrence_id') != identity
+              or not isinstance(value.get('shot_id'), str)
+              or root_identity('shot:' + value['shot_id']) is None
+              or any(key in value for key in ('revision_id', 'shot_revision_id'))):
+            raise CommandError('invalid authored occurrence identity or revision', ref=ref)
+        elif value['shot_id'] not in self.bundle['shots']:
+            raise CommandError('occurrence references missing shot', kind='identity_conflict', ref=ref)
 
     def get(self, ref, path):
         if ref == "timeline":
@@ -223,6 +257,46 @@ class State:
             self.bundle.clear()
             self.bundle.update(replacement)
             return
+        root = root_identity(ref)
+        if root is not None and (not path or root[0] == 'shot'):
+            kind, identity = root
+            if path:
+                raise CommandError('shot writes require the complete authored aggregate', ref=ref, path=path)
+            if state['state'] == 'present':
+                self.validate_root(ref, state['value'])
+            if kind == 'occurrence':
+                existing = self.entity(ref, optional=True)
+                rows = self.bundle['placements']
+                if existing is not None:
+                    index = rows.index(existing)
+                    if state['state'] == 'absent':
+                        rows.pop(index)
+                    else:
+                        rows[index] = copy.deepcopy(state['value'])
+                elif state['state'] == 'present':
+                    rows.append(copy.deepcopy(state['value']))
+            elif state['state'] == 'absent':
+                if any(row['shot_id'] == identity for row in self.bundle['placements']):
+                    raise CommandError('shot has surviving occurrences', kind='surviving_dependents', ref=ref)
+                self.bundle['shots'].pop(identity, None)
+            else:
+                shot = self.bundle['shots'].get(identity)
+                if shot is None:
+                    # Reopening the exact input recovers compiler baselines for
+                    # an existing root restored after removal, never latest data.
+                    source = self.bundle['source_mapping'].get('_runtime_document')
+                    if identity in self.bundle['source_mapping']['shots']:
+                        if source is None:
+                            raise CommandError('restoring a source shot requires its exact input closure',
+                                               kind='history_unavailable', ref=ref)
+                        from .commit import bundle_from_document
+                        shot = bundle_from_document(source)['shots'].get(identity)
+                    if shot is None:
+                        shot = {'shot_id': identity}
+                self.bundle['shots'][identity] = {**shot, **copy.deepcopy(state['value'])}
+            return
+        if root is None and ref.startswith(('shot:', 'occurrence:')) and '/' not in ref:
+            raise CommandError('invalid authored root reference', ref=ref)
         if not path:
             owner, entity = ref.rsplit('/', 1)
             kind, identity = entity.split(':', 1)

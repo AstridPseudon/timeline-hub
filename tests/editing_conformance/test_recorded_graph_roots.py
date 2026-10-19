@@ -1,0 +1,241 @@
+"""Root groundwork through the native executor; fixture ops are never public."""
+from __future__ import annotations
+
+import copy
+
+import pytest
+
+from astrid.core.timeline.authoring_bundle import AuthoringBundleError
+from astrid.sdk.timeline import commands
+from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
+from astrid.sdk.timeline._recording import Recording
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.rebase import replay
+from tests.sdk.test_timeline_commit_provider_document import document_fixture
+
+
+@pytest.fixture
+def root_ops(monkeypatch):
+    def create(ctx, command):
+        for root in command['args']['roots']:
+            ctx.create_entity(**root)
+
+    original = commands.operations
+    monkeypatch.setattr(commands, 'operations', lambda: {
+        **original(), 'test.create-roots': commands.Operation({
+            'type': 'object', 'required': ['roots'], 'additionalProperties': False,
+            'properties': {'roots': {'type': 'array'}},
+        }, create, {}),
+    })
+
+
+def root_values():
+    return [
+        {'ref': 'shot:new-shot', 'kind': 'shot', 'owner': None, 'value': {
+            'payload': {'name': 'New shot', 'items': [], 'unknown': {
+                'pinnedShotGroups': None, 'clipType': 'shot', 'empty': {}, 'ordered': [None, False, 0]},
+                'metadata': None},
+            'internal_timeline': {'tracks': [{'id': 'picture', 'kind': 'visual', 'unknown': None}],
+                                  'clips': [{'id': 'title', 'track': 'picture', 'at': 0,
+                                             'hold': 2, 'text': 'Hello', 'unknown': [None]}],
+                                  'output': {'fps': {'numerator': 30000, 'denominator': 1001}},
+                                  'unknown': {'null': None, 'empty': []}},
+        }},
+        {'ref': 'occurrence:new-occ', 'kind': 'occurrence', 'owner': 'parent', 'value': {
+            'occurrence_id': 'new-occ', 'shot_id': 'new-shot', 'track': 'picture',
+            'placement': {'start_ms': 20000, 'track': 'picture'}, 'duration_ms': 2000,
+            'source_offset': 0, 'speed': 1, 'gain': None,
+            'provenance': {'group_migration': {'opaque': [None, {'clipType': 'shot'}]}},
+        }},
+    ]
+
+
+def create_command(roots=None):
+    return {'schema_version': 1, 'op': 'test.create-roots', 'version': '1',
+            'select': 'parent', 'args': {'roots': root_values() if roots is None else roots}}
+
+
+def test_missing_roots_are_tagged_absent():
+    state = State(bundle_from_document(document_fixture()))
+    for ref in ('shot:missing', 'occurrence:missing'):
+        assert state.entity(ref, optional=True) is None
+        assert state.get(ref, []) == ABSENT
+        assert state.get(ref, ['unknown']) == ABSENT
+
+
+def test_executor_creates_full_roots_replays_and_compiles_without_source_pins(root_ops):
+    original = bundle_from_document(document_fixture())
+    before = copy.deepcopy(original)
+    roots = root_values()
+    plan = commands.execute(original, [create_command()])
+    assert original == before
+    state = State(plan.bundle)
+    for root in roots:
+        assert state.get(root['ref'], []) == present(root['value'])
+    assert state.get('occurrence:new-occ/shot', ['shot_id']) == present('new-shot')
+    assert plan.bundle['source_mapping'] == before['source_mapping']
+    record = plan.records[0]
+    assert record['created'] == [{key: root[key] for key in ('ref', 'kind', 'owner')} for root in roots]
+    assert record['reads'] == [{'ref': root['ref'], 'path': [], 'state': ABSENT} for root in roots]
+    assert record['writes'] == [{'ref': root['ref'], 'path': [], 'before': ABSENT,
+                                 'after': present(root['value'])} for root in roots]
+    assert record['dependencies'] == []
+    recaptured = replay(plan, before)
+    assert recaptured.records == plan.records
+    assert recaptured.bundle == plan.bundle
+    document = document_from_bundle(plan.bundle)
+    assert document_from_bundle(plan.bundle) == document
+    assert document_from_bundle(bundle_from_document(document)) == document
+
+
+def test_main_bundle_new_roots_compile_without_runtime_bookkeeping(root_ops):
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+    from tests.editing_conformance.test_recipe_m1_commands import bundle
+
+    original = bundle()
+    before = copy.deepcopy(original)
+    plan = commands.execute(original, [create_command()])
+    publication = compile_authoring_candidate(plan.bundle).publication
+    assert any(row['shot_id'] == 'new-shot' for row in publication['shot_revisions'])
+    assert publication['parent_composition']['occurrences'][-1]['occurrence_id'] == 'new-occ'
+    assert original == before
+    roots = [dict(root_values()[0], ref='shot:chapter-shot')]
+    source_id = next(iter(original['source_mapping']['shots'].values()))['shot_id']
+    roots[0]['ref'] = 'shot:' + source_id
+    with pytest.raises(CommandError, match='occupied'):
+        commands.execute(original, [create_command(roots)])
+    assert original == before
+
+
+def test_root_replace_remove_and_existing_baseline_recovery_are_lossless(root_ops):
+    original = bundle_from_document(document_fixture(shared=False))
+    plan = commands.execute(original, [create_command()])
+    state = State(plan.bundle)
+    root = root_values()[0]
+    changed = copy.deepcopy(root['value'])
+    changed['payload']['unknown']['empty'] = None
+    state.set(root['ref'], [], present(changed))
+    assert state.get(root['ref'], []) == present(changed)
+    state.set(root['ref'], [], present(root['value']))
+    with pytest.raises(CommandError, match='surviving'):
+        state.set(root['ref'], [], ABSENT)
+    for ref in ('occurrence:new-occ', 'shot:new-shot'):
+        state.set(ref, [], ABSENT)
+        assert state.get(ref, []) == ABSENT
+    assert plan.bundle == original
+    occurrence = state.get('occurrence:occ-a', [])
+    shot = state.get('shot:chapter-shot', [])
+    state.set('occurrence:occ-a', [], ABSENT)
+    state.set('shot:chapter-shot', [], ABSENT)
+    state.set('shot:chapter-shot', [], shot)
+    state.set('occurrence:occ-a', [], occurrence)
+    assert plan.bundle == original
+    assert document_from_bundle(plan.bundle) == document_fixture(shared=False)
+
+
+@pytest.mark.parametrize('ref,kind,owner', [
+    ('shot:bad/name', 'shot', None), ('shot:x::y', 'shot', None), ('shot:', 'shot', None),
+    ('shot: ', 'shot', None), ('shot:new-shot', 'occurrence', 'parent'),
+    ('shot:new-shot', 'shot', 'parent'), ('occurrence:new-occ', 'occurrence', None),
+    ('parent/track:new', 'track', 'parent'), ('parent', 'shot', None),
+])
+def test_invalid_root_scope_refuses_before_mutation(ref, kind, owner):
+    bundle = bundle_from_document(document_fixture())
+    before = copy.deepcopy(bundle)
+    ctx = Recording(bundle, {}, 0)
+    with pytest.raises(CommandError):
+        ctx.create_entity(ref, kind=kind, owner=owner, value=root_values()[0]['value'])
+    assert bundle == before
+    assert ctx.record['created'] == ctx.record['reads'] == ctx.record['writes'] == []
+
+
+@pytest.mark.parametrize('damage', ['duplicate', 'bad-occurrence', 'occupied', 'virtual-slot', 'source-shot'])
+def test_batch_refusal_is_atomic(root_ops, damage):
+    bundle = bundle_from_document(document_fixture())
+    before = copy.deepcopy(bundle)
+    roots = root_values()
+    if damage == 'duplicate':
+        roots.append(copy.deepcopy(roots[0]))
+    elif damage == 'bad-occurrence':
+        roots[1]['value']['shot_id'] = 'missing'
+    elif damage == 'occupied':
+        roots[1]['ref'] = 'occurrence:occ-a'
+        roots[1]['value']['occurrence_id'] = 'occ-a'
+    elif damage == 'virtual-slot':
+        roots[0]['ref'] = 'shot:' + bundle['placements'][0]['shot_id']
+    else:
+        roots[0]['ref'] = 'shot:chapter-shot'
+        assert roots[0]['ref'][5:] not in bundle['shots']  # Opening shared shots only made slots.
+    with pytest.raises(CommandError):
+        commands.execute(bundle, [create_command(roots)])
+    assert bundle == before
+
+
+def test_root_envelopes_and_leaf_writes_cannot_edit_compiler_bookkeeping():
+    bundle = bundle_from_document(document_fixture())
+    before = copy.deepcopy(bundle)
+    ctx = Recording(bundle, {}, 0)
+    for value in (None, {'payload': {}, 'internal_timeline': None},
+                  {**root_values()[0]['value'], 'base_payload': {}},
+                  {**root_values()[0]['value'], 'source_mapping': {}}):
+        with pytest.raises(CommandError):
+            ctx.create_entity('shot:new-shot', kind='shot', owner=None, value=value)
+    with pytest.raises(CommandError):
+        State(bundle).set('shot:' + bundle['placements'][0]['shot_id'], ['payload'], present({}))
+    assert bundle == before
+    assert ctx.record['writes'] == []
+
+
+def test_unrecorded_or_orphan_shot_cannot_be_compiled(root_ops):
+    original = bundle_from_document(document_fixture())
+    ctx = Recording(original, {}, 0)
+    ctx.write('shot:new-shot', [], root_values()[0]['value'])
+    assert ctx.record['created'] == []
+    with pytest.raises(AuthoringBundleError, match='source_mapping'):
+        document_from_bundle(original)
+    original = bundle_from_document(document_fixture())
+    plan = commands.execute(original, [create_command(root_values()[:1])])
+    with pytest.raises(AuthoringBundleError, match='require an occurrence'):
+        document_from_bundle(plan.bundle)
+
+
+def inverse_command():
+    return {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
+            'args': {'publications': ['trusted-records-fixture']}}
+
+
+def test_creation_inverse_restores_original_root_absence(root_ops):
+    original = bundle_from_document(document_fixture())
+    plan = commands.execute(original, [create_command()])
+    undone = commands.execute(plan.bundle, [inverse_command()], inverse_records=plan.records)
+    assert undone.bundle == original
+    assert document_from_bundle(undone.bundle) == document_fixture()
+
+
+@pytest.mark.xfail(strict=True, reason='M2 staged inverse must guard authored roots across compiled revision links')
+def test_creation_inverse_after_compiled_reload_restores_original_absence(root_ops):
+    original = bundle_from_document(document_fixture())
+    plan = commands.execute(original, [create_command()])
+    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
+    undone = commands.execute(reloaded, [inverse_command()], inverse_records=plan.records)
+    assert document_from_bundle(undone.bundle) == document_fixture()
+
+
+@pytest.mark.xfail(strict=True, reason='M2 staged inverse must restore shot/occurrence roots through create_entity')
+def test_creation_inverse_redo_reuses_exact_roots(root_ops):
+    original = bundle_from_document(document_fixture())
+    plan = commands.execute(original, [create_command()])
+    undone = commands.execute(plan.bundle, [inverse_command()], inverse_records=plan.records)
+    redone = commands.execute(undone.bundle, [inverse_command()], inverse_records=undone.records)
+    assert redone.bundle == plan.bundle
+    assert document_from_bundle(redone.bundle) == document_from_bundle(plan.bundle)
+
+
+def test_public_registry_and_closed_track_args_are_unchanged():
+    for op in ('test.create-roots', 'shot.create', 'occurrence.create'):
+        with pytest.raises(CommandError, match='unsupported operation'):
+            commands.validate_command({**create_command(), 'op': op})
+    with pytest.raises(CommandError):
+        commands.validate_command({'schema_version': 1, 'op': 'track.create', 'version': '1',
+                                   'select': 'parent', 'args': {'row': {'id': 'v', 'kind': 'visual'},
+                                                             'payload': {}}})
