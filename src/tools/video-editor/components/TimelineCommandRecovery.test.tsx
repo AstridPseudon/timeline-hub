@@ -119,4 +119,44 @@ describe('TimelineCommandRecovery', () => {
     rerender(<TimelineCommandRecovery commandSession={session({ status: 'saved', recoverableOwners: [], ownerId: 'owner-a' })} />);
     expect(screen.queryByTestId('timeline-command-recovery')).toBeNull();
   });
+
+  it('names the supplied scoped targets and property paths without hiding retained work', () => {
+    render(<TimelineCommandRecovery commandSession={session({
+      status: 'conflict', recoverableOwners: [], ownerId: 'owner-a',
+      error: 'internal protocol message and private document',
+      conflicts: [
+        { kind: 'dependency_changed', ref: 'parent/clip:x', path: ['at'] },
+        { kind: 'dependency_changed', ref: 'occurrence:opening/clip:y', path: ['text', 'content'] },
+        { kind: 'identity_changed', ref: 'parent/track:V1', path: [] },
+      ],
+    })} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Your changes are retained and need resolution before they can be saved.');
+    const locations = screen.getByRole('list', { name: 'Changed timeline properties' });
+    expect(locations).toHaveTextContent('Changed target: parent/clip:x · Property: at');
+    expect(locations).toHaveTextContent('Changed target: occurrence:opening/clip:y · Property: text.content');
+    expect(locations).toHaveTextContent('Changed target: parent/track:V1 · Target itself changed');
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.getByRole('alert')).not.toHaveTextContent(/internal protocol|private document|dependency_changed|identity_changed/);
+    expect(screen.queryByRole('button', { name: 'Retry save' })).toBeNull();
+  });
+
+  it.each([undefined, []])('keeps the generic retained-work message without conflict locations: %j', (conflicts) => {
+    render(<TimelineCommandRecovery commandSession={session({
+      status: 'conflict', recoverableOwners: [], ownerId: 'owner-a', conflicts,
+    })} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Your changes are retained and need resolution before they can be saved.');
+    expect(screen.queryByRole('list', { name: 'Changed timeline properties' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Retry save' })).toBeNull();
+  });
+
+  it.each(['retry', 'error', 'recovery'] as const)('hides conflict locations in %s state', (status) => {
+    render(<TimelineCommandRecovery commandSession={session({
+      status, ownerId: 'owner-a', recoverableOwners: status === 'recovery' ? ['owner-b'] : [],
+      conflicts: [{ kind: 'dependency_changed', ref: 'parent/clip:x', path: ['at'] }],
+    })} />);
+    expect(screen.queryByRole('list', { name: 'Changed timeline properties' })).toBeNull();
+    expect(screen.getByRole('alert')).not.toHaveTextContent(/parent\/clip:x|property|clash|conflict/i);
+    expect(screen.getByRole('button', { name: status === 'recovery' ? 'Recover saved edits' : 'Retry save' })).toBeInTheDocument();
+  });
 });

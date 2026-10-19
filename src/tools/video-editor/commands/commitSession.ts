@@ -1,4 +1,4 @@
-import type { CommitRequest, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CommitFailureDetails, CommitRequest, Conflict, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
@@ -15,6 +15,7 @@ export type CommandSessionState = {
   ownerId: string | null;
   recoverableOwners: string[];
   canUndo: boolean;
+  conflicts?: Array<Pick<Conflict, 'kind' | 'ref' | 'path'>>;
 };
 type Options = {
   scope: OutboxScope;
@@ -28,6 +29,22 @@ type Options = {
 const sameHead = (a: OutboxHead, b: OutboxHead) => a.revisionId === b.revisionId && a.publicationId === b.publicationId;
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 const json = (value: unknown): JSON => JSON.parse(JSON.stringify(value)) as JSON;
+
+function retainedConflictDetails(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+  const details = value as Partial<CommitFailureDetails>;
+  if (details.status !== 'conflict' || typeof details.reason !== 'string' || !details.reason
+    || !Array.isArray(details.conflicts)) return;
+  // Keep target locations, never arbitrary authored values or resolution commands.
+  const conflicts: NonNullable<CommandSessionState['conflicts']> = details.conflicts.flatMap((value: unknown) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+    const conflict = value as Partial<Conflict>;
+    if (typeof conflict.kind !== 'string' || !conflict.kind || typeof conflict.ref !== 'string' || !conflict.ref
+      || !Array.isArray(conflict.path) || !conflict.path.every((part) => typeof part === 'string' && part.length > 0)) return [];
+    return [{ kind: conflict.kind, ref: conflict.ref, path: [...conflict.path] }];
+  });
+  return { status: details.status, reason: details.reason, conflicts };
+}
 
 /** One browser-lock lifetime, one durable prefix, original guarded suffixes. */
 export async function createTimelineCommandSession(options: Options) {
@@ -56,9 +73,9 @@ export async function createTimelineCommandSession(options: Options) {
   const undos: string[] = latestOwn ? [latestOwn.publication_id] : [];
   const prepared = new Map<string, { payload: Payload; generation: number; basis: OutboxBasis }>();
   let state: CommandSessionState = { status: 'loading', error: null, ownerId: null, recoverableOwners: [], canUndo: false };
-  function publish(status: CommandSessionState['status'], error: string | null = null) {
+  function publish(status: CommandSessionState['status'], error: string | null = null, conflicts?: CommandSessionState['conflicts']) {
     if (stopped) return;
-    state = { ...state, status, error, canUndo: !persistenceFailed
+    state = { ...state, status, error, conflicts, canUndo: !persistenceFailed
       && ((status === 'saved' && !!undos.length) || (status === 'dirty' && !!record?.intents.length && !record.pending)) };
     options.changed(state);
   }
@@ -66,8 +83,9 @@ export async function createTimelineCommandSession(options: Options) {
     const failure = record?.pending?.outcome?.kind === 'rejected'
       ? record.pending.outcome.error : record?.intents[0]?.conflict;
     if (failure === undefined) return false;
-    const error = failure as { kind?: string; message?: string } | null;
-    publish(error?.kind === 'conflict' ? 'conflict' : 'error', error?.message ?? 'Timeline command was refused');
+    const error = failure as { kind?: string; message?: string; details?: unknown } | null;
+    const details = error?.kind === 'conflict' ? retainedConflictDetails(error.details) : undefined;
+    publish(error?.kind === 'conflict' ? 'conflict' : 'error', error?.message ?? 'Timeline command was refused', details?.conflicts);
     return true;
   }
   function assertReady() {
@@ -115,8 +133,10 @@ export async function createTimelineCommandSession(options: Options) {
             return { kind: 'accepted', head: result.accepted, value: json(result) };
           } catch (error) {
             const kind = error instanceof ApiError && error.status >= 500 ? 'unknown' : classifyRuntimeCommitFailure(error);
+            const details = kind === 'conflict' && error instanceof ApiError && error.status === 409
+              ? retainedConflictDetails(error.details) : undefined;
             return { kind: kind === 'unknown' || kind === 'storage' ? 'retry' : 'rejected',
-              error: { kind, message: message(error) } };
+              error: { kind, message: message(error), ...(details ? { details } : {}) } };
           }
         });
         if (stopped) return;

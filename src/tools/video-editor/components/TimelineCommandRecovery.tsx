@@ -88,6 +88,15 @@ export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecov
     >
       <div className="min-w-0">
         <p>{message}</p>
+        {isConflict && !hasRecoveryChoices && !!state.conflicts?.length && (
+          <ul className="mt-1 text-xs text-muted-foreground" aria-label="Changed timeline properties">
+            {state.conflicts.map((conflict, index) => (
+              <li key={index}>
+                Changed target: {conflict.ref}{conflict.path.length > 0 ? ` · Property: ${conflict.path.join('.')}` : ' · Target itself changed'}
+              </li>
+            ))}
+          </ul>
+        )}
         {stateError && stateError !== message && hasRetainedWork && !hasRecoveryChoices && !isConflict && (
           <p className="mt-1 text-xs text-muted-foreground">{stateError}</p>
         )}
