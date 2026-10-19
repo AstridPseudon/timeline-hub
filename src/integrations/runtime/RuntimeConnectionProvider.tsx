@@ -13,7 +13,7 @@
  *
  * A changed realm or identity asks for a restart at once. Otherwise two failed readings show setup help, or start
  * help if this browser connected before or the gateway answered. Background probes leave the current panel in place
- * while they run. Non-Chromium desktop browsers have no permission prompt, so they probe at once. Once connected the
+ * while they run. Browsers without this permission probe directly. Once connected the
  * state is sticky: a Runtime that stops later shows a recovery card, keeping the editor and its unsaved work mounted.
  *
  * The first connection also marks this browser as one that chose the app (`rememberAppEntryPreference`), so the next
@@ -29,7 +29,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { requireContextValue } from '@/shared/contexts/contextGuard';
 import { rememberAppEntryPreference } from '@/app/entryClassification';
-import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 import {
   queryLocalNetworkPermission,
   watchLocalNetworkPermission,
@@ -41,7 +40,7 @@ import {
   runtimeOrigin,
   type RuntimeConnectionState,
 } from './connection.ts';
-import { appUrlFromHealth } from './gatewayHealth.ts';
+import { appUrlFromHealth, type RuntimeRefusalCode } from './gatewayHealth.ts';
 import { setRuntimeAppUrl } from './runtimeAppUrl.ts';
 import { autoConnectRequested, takeAutoConnectRequest } from './autoConnectRequest.ts';
 import type { Realm } from './generated.ts';
@@ -49,6 +48,12 @@ import type { Realm } from './generated.ts';
 const POLL_INTERVAL_MS = 3000;
 const PROBE_TIMEOUT_MS = 5000;
 const CONNECTED_BEFORE_KEY = 'astrid.runtime.connectedBefore';
+const GATEWAY_REFUSAL_OUTCOMES: Readonly<Record<RuntimeRefusalCode, 'down' | 'restart'>> = Object.freeze({
+  runtime_unavailable: 'down',
+  runtime_discovery_invalid: 'down',
+  realm_changed: 'restart',
+  runtime_identity_mismatch: 'restart',
+});
 
 type RealmSummary = Pick<Realm, 'realm_id' | 'display_name'>;
 
@@ -69,8 +74,7 @@ async function readJson(response: Response): Promise<unknown> {
 
 /**
  * Asks the Runtime who it is, the way the gateway does: health, then realm. Never throws. An answer that is not
- * an Astrid gateway's (another server on the port, a bad body) is `silent`. Error bodies prove the gateway answered,
- * regardless of their HTTP status.
+ * documented refusal codes at their refusal statuses count; unrelated servers and malformed responses are `silent`.
  */
 export async function probeRuntime(
   signal?: AbortSignal,
@@ -85,8 +89,9 @@ export async function probeRuntime(
       return { kind: 'silent' };
     }
     const body = await readJson(response);
-    if (typeof body === 'object' && body !== null && 'error' in body) {
-      return { kind: body.error === 'realm_changed' || body.error === 'runtime_identity_mismatch' ? 'restart' : 'down' };
+    if ((response.status === 502 || response.status === 503) && typeof body === 'object' && body !== null && 'error' in body) {
+      const kind = typeof body.error === 'string' ? GATEWAY_REFUSAL_OUTCOMES[body.error] : undefined;
+      if (kind) return { kind };
     }
     if (response.status !== 200) return { kind: 'silent' };
     return { body };
@@ -189,11 +194,6 @@ export function RuntimeConnectionProvider({
   // The permission, and every change the browser reports to it.
   useEffect(() => {
     if (!gated) return undefined;
-    const scenario = detectInstallScenario();
-    if (scenario === 'safari' || scenario === 'unsupported') {
-      setPermission('granted');
-      return undefined;
-    }
     let cancelled = false;
     let unwatch: () => void = () => {};
     void (async () => {

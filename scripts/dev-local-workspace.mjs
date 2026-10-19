@@ -25,6 +25,7 @@ import {
   gatewayChildArgs,
   resolveLoopbackPort,
   loadLocalRuntimeEnvironment,
+  shellQuote,
 } from './dev-local-workspace-options.mjs';
 
 // What the person sees is a few friendly lines. Everything technical is behind `--verbose` (or ASTRID_VERBOSE=1), and every
@@ -38,7 +39,9 @@ const NOT_SET_UP = `Astrid isn't set up on this computer yet. Install guide: ${I
 const ENGINE_STOPPED = "Astrid's engine isn't running. Start it first: astrid-runtime up --profile astrid";
 const PROGRAM_IN_THE_WAY = "Another program is in the way, so Astrid can't start. Close it and try again.";
 const OTHER_ASTRID_RUNNING = 'Another Astrid is already running in another window. Stop it there with Ctrl+C first.';
-const startCommand = process.env.ASTRID_START_COMMAND || 'npm run dev:local';
+const startCommand = process.env.ASTRID_START_COMMAND
+  ? shellQuote(process.env.ASTRID_START_COMMAND)
+  : 'npm run dev:local';
 const ASTRID_STOPPED = `Astrid stopped. Start it again with ${startCommand}.`;
 const AGENT_CHAT_STOPPED = `Agent chat stopped. Start Astrid again with ${startCommand}.`;
 const BAD_HOSTED_ORIGIN = '--hosted-origin must be an https:// address, like https://astrid.haus';
@@ -262,6 +265,69 @@ function resolveHostedOrigin({ explicit, configPath }) {
   return requireExactHttpsOrigin(configured, message, CANT_START);
 }
 
+/** Identify the gateway before Runtime verification can start a replacement Runtime. */
+function probeGatewayPort(portValue, origin, realmId) {
+  return new Promise((resolveProbe) => {
+    const parseBody = (chunks) => {
+      try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return null; }
+    };
+    const readResponse = (response, onBody) => {
+      const chunks = [];
+      let size = 0;
+      response.on('data', (chunk) => {
+        if (size < 16_384) {
+          const accepted = chunk.subarray(0, 16_384 - size);
+          chunks.push(accepted);
+          size += accepted.length;
+        }
+      });
+      response.on('error', () => resolveProbe({ kind: 'program', details: `port ${portValue} answered and then dropped the connection` }));
+      response.on('end', () => onBody(response.statusCode, parseBody(chunks)));
+    };
+    const requestPath = (path, onBody) => {
+      const request = httpRequest({ hostname: '127.0.0.1', port: Number(portValue), path, method: 'GET', headers: { Origin: origin }, timeout: 2000 }, (response) => readResponse(response, onBody));
+      request.on('timeout', () => { request.destroy(); resolveProbe({ kind: 'program', details: `port ${portValue} did not answer in time` }); });
+      request.on('error', (error) => resolveProbe(error.code === 'ECONNREFUSED'
+        ? { kind: 'free' }
+        : { kind: 'program', details: `port ${portValue} is not usable: ${error.message}` }));
+      request.end();
+    };
+    requestPath('/api/runtime/v1/health', (status, body) => {
+      const error = typeof body?.error === 'string' ? body.error : '';
+      if ((status === 502 || status === 503) && ['runtime_unavailable', 'runtime_discovery_invalid'].includes(error)) {
+        resolveProbe({ kind: 'engine_stopped', details: `gateway on port ${portValue} answered HTTP ${status} with ${error}` });
+      } else if ((status === 502 || status === 503) && ['realm_changed', 'runtime_identity_mismatch'].includes(error)) {
+        resolveProbe({ kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another realm (${error})` });
+      } else if (status === 403 && error === 'hosted_origin_required') {
+        resolveProbe({ kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another origin` });
+      } else if (status === 200 && body?.status === 'ok' && body?.protocol === 'workspace.v1') {
+        if (!realmId) {
+          resolveProbe({ kind: 'ours' });
+          return;
+        }
+        requestPath('/api/runtime/v1/realm', (realmStatus, realm) => {
+          if (realmStatus === 200 && typeof realm?.realm_id === 'string') {
+            resolveProbe(realm.realm_id === realmId
+              ? { kind: 'ours' }
+              : { kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another realm` });
+          } else {
+            resolveProbe({ kind: 'program', details: `port ${portValue} is already in use by a program that is not the gateway for ${origin} (HTTP ${realmStatus})` });
+          }
+        });
+      } else {
+        resolveProbe({ kind: 'program', details: `port ${portValue} is already in use by a program that is not the gateway for ${origin} (HTTP ${status})` });
+      }
+    });
+  });
+}
+
+function printOpenBlock(origin) {
+  console.log('');
+  console.log(bold(`  Open ${origin}`));
+  console.log('');
+  console.log('Keep this window open while you work. Press Ctrl+C to stop.');
+}
+
 function readJson(path, label, friendly = CANT_START) {
   try {
     return JSON.parse(readFileSync(path, 'utf8'));
@@ -452,6 +518,19 @@ if (Number.isInteger(discovery?.pid) && discovery.pid > 0) {
 }
 let selected = discovery ? validateDiscovery(discovery) : null;
 if (discovery && !selected) exit(1);
+if (hostedOrigin && loopbackPort !== '0' && !checkOnly && !buildOnly) {
+  const holder = await probeGatewayPort(loopbackPort, hostedOrigin, selected?.expectedIdentity.realmId);
+  if (holder.kind === 'engine_stopped') {
+    exit(fail('Astrid is running, but its engine stopped. Stop the other Astrid (Ctrl+C in its window) and run this again.', holder.details) ? 1 : 1);
+  }
+  if (holder.kind === 'ours') {
+    console.log('Astrid is already running in another window.');
+    printOpenBlock(hostedOrigin);
+    exit(0);
+  }
+  if (holder.kind === 'other_astrid') exit(fail(OTHER_ASTRID_RUNNING, holder.details) ? 1 : 1);
+  if (holder.kind === 'program') exit(fail(PROGRAM_IN_THE_WAY, holder.details) ? 1 : 1);
+}
 let verified = selected ? await verifyRuntime(selected.endpoint, selected.credential.token, selected.expectedIdentity, !checkOnly && !buildOnly) : NOT_RUNNING;
 if (interrupted) exit(130);
 if (verified === NOT_RUNNING && !checkOnly && !buildOnly) {
@@ -565,64 +644,6 @@ const COULDNT_START = `Astrid couldn't start. Run ASTRID_VERBOSE=1 ${startComman
 /** How long Vite may take to listen, and the gateway after it printed that it does. */
 const VITE_START_TIMEOUT_MS = 60_000;
 const GATEWAY_START_TIMEOUT_MS = 15_000;
-
-/** The one block that tells a person where to go. Printed only once Astrid is reachable, never before. */
-function printOpenBlock() {
-  console.log('');
-  console.log(bold(`  Open ${hostedOrigin}`));
-  console.log('');
-  console.log('Keep this window open while you work. Press Ctrl+C to stop.');
-}
-
-/**
- * Who answers on the gateway's port? The holder is asked who it serves the way the hosted page would (its realm, with the
- * hosted Origin). Nothing listening is `free`; this realm is `ours` (a second launcher in another window); a gateway for
- * another realm is `other_astrid`; anything else is `program`.
- */
-function probeGatewayPort(portValue, origin, realmId) {
-  return new Promise((resolveProbe) => {
-    const request = httpRequest({ hostname: '127.0.0.1', port: Number(portValue), path: '/api/runtime/v1/realm', method: 'GET', headers: { Origin: origin }, timeout: 2000 }, (response) => {
-      const chunks = [];
-      response.on('data', (chunk) => { if (chunks.length < 64) chunks.push(chunk); });
-      response.on('error', () => resolveProbe({ kind: 'program', details: `port ${portValue} answered and then dropped the connection` }));
-      response.on('end', () => {
-        let body = null;
-        try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { /* not a gateway */ }
-        if (response.statusCode === 200 && typeof body?.realm_id === 'string') {
-          resolveProbe(body.realm_id === realmId
-            ? { kind: 'ours' }
-            : { kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another realm` });
-        } else if (response.statusCode === 403 && body?.error === 'hosted_origin_required') {
-          resolveProbe({ kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another origin` });
-        } else if (response.statusCode === 503 && ['realm_changed', 'runtime_identity_mismatch'].includes(body?.error)) {
-          resolveProbe({ kind: 'other_astrid', details: `port ${portValue} is already served by a gateway for another realm (${body.error})` });
-        } else {
-          resolveProbe({ kind: 'program', details: `port ${portValue} is already in use by a program that is not the gateway for ${origin} (HTTP ${response.statusCode})` });
-        }
-      });
-    });
-    request.on('timeout', () => { request.destroy(); resolveProbe({ kind: 'program', details: `port ${portValue} did not answer in time` }); });
-    request.on('error', (error) => resolveProbe(error.code === 'ECONNREFUSED'
-      ? { kind: 'free' }
-      : { kind: 'program', details: `port ${portValue} is not usable: ${error.message}` }));
-    request.end();
-  });
-}
-
-if (hostedOrigin && loopbackPort !== '0') {
-  const holder = await probeGatewayPort(loopbackPort, hostedOrigin, expectedIdentity.realmId);
-  if (holder.kind === 'ours') {
-    // A second launcher for the same Astrid: the first one is serving, so start nothing and point to the same place.
-    console.log('Astrid is already running in another window.');
-    printOpenBlock();
-    // This invocation may have started the Runtime before discovering the existing gateway.
-    // The gateway already owns that Runtime lifecycle, so final cleanup must leave it running.
-    ownedRuntime = undefined;
-    exit(0);
-  }
-  if (holder.kind === 'other_astrid') exit(fail(OTHER_ASTRID_RUNNING, holder.details) ? 1 : 1);
-  if (holder.kind === 'program') exit(fail(PROGRAM_IN_THE_WAY, holder.details) ? 1 : 1);
-}
 
 // The app's own port, checked the way the gateway's was: if anything already listens there, Vite (`--strictPort`) cannot
 // start, and whatever answers would otherwise look like Astrid's app. No App services have started; cleanup releases any owned Runtime.
@@ -790,7 +811,7 @@ if (hostedOrigin) {
     // exited (its port taken after the check above) leaves another program answering, and that is not Astrid's app.
     const viteAlive = child.exitCode === null && child.signalCode === null;
     if (reachable && viteAlive && !shuttingDown) {
-      printOpenBlock();
+      printOpenBlock(hostedOrigin);
       flushHeld();
     } else {
       stopWith(COULDNT_START, `nothing listened on 127.0.0.1:${gatewayPort} and 127.0.0.1:${port} in time`);

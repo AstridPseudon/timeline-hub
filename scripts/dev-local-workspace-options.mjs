@@ -227,6 +227,12 @@ export function resolveLoopbackPort(value) {
   return value?.trim() || DEFAULT_LOOPBACK_PORT;
 }
 
+/** Quote one command path for the shell snippets shown to the person. */
+export function shellQuote(value) {
+  const command = String(value);
+  return /^[A-Za-z0-9_./:=-]+$/.test(command) ? command : `'${command.replaceAll("'", "'\"'\"'")}'`;
+}
+
 /**
  * Arguments for `scripts/astrid-loopback-gateway.ts`. ACP auto-approves tool calls and can open terminals, so the
  * gateway gets `--acp-endpoint` only when the developer passed `--acp` to the launcher. `appPort` is the local app's port: the

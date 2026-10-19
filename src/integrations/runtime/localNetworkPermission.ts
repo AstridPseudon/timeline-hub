@@ -3,9 +3,8 @@
  *
  * The permission name is `local-network-access` (checked in Chromium 141; `local-network` and
  * `loopback-network` throw). `granted` means probe at once, `prompt` means send nothing until the
- * person presses Connect, `denied` means the browser blocked it. Anything that stops us learning
- * the state (no Permissions API, an unknown name, a throwing query) counts as `prompt`: the safe
- * answer is to fetch nothing until the person asks.
+ * person presses Connect, `denied` means the browser blocked it. Browsers without the Permissions API
+ * or this permission name have no local-network permission to ask about, so they probe as `granted`.
  */
 
 export type LocalNetworkPermissionState = 'granted' | 'prompt' | 'denied';
@@ -42,12 +41,12 @@ export async function queryLocalNetworkPermissionStatus(
   }
 }
 
-/** The current state: `granted`, `prompt` or `denied`. A missing or throwing query is `prompt`. */
+/** The current state: `granted`, `prompt` or `denied`. Missing or unsupported permission queries mean no prompt exists. */
 export async function queryLocalNetworkPermission(
   permissions?: PermissionsLike,
 ): Promise<LocalNetworkPermissionState> {
   const status = await queryLocalNetworkPermissionStatus(permissions);
-  return normalize(status?.state);
+  return status ? normalize(status.state) : 'granted';
 }
 
 /**

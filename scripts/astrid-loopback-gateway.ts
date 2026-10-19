@@ -17,7 +17,7 @@ import { pathToFileURL } from 'node:url';
 import { classifyPairedRoute } from '../config/vite/pairedRoutePolicy';
 import { objectCacheControl } from '../config/vite/objectCachePolicy.mjs';
 import { currentRuntime } from './runtime-discovery-proxy.mjs';
-import { withAppUrl } from '../src/integrations/runtime/gatewayHealth.ts';
+import { withAppUrl, type RuntimeRefusalCode } from '../src/integrations/runtime/gatewayHealth.ts';
 
 /** The gateway's well-known port (Plan A D1). Tests pass `--port 0` or listen on 0 themselves. */
 export const DEFAULT_GATEWAY_PORT = 17340;
@@ -53,7 +53,7 @@ export function loopbackEndpoint(raw: string): URL {
 }
 /** The Runtime base under the gateway origin (the App's `runtimeApiBase()`). */
 export const GATEWAY_RUNTIME_PREFIX = '/api/runtime';
-export type RuntimeRefusalCode = 'runtime_unavailable' | 'realm_changed' | 'runtime_identity_mismatch' | 'runtime_discovery_invalid';
+export type { RuntimeRefusalCode };
 /** Why the Runtime cannot be used right now. Always answered as 503, with `code` as the body's `error`. */
 export class RuntimeRefusal extends Error {
   constructor(readonly code: RuntimeRefusalCode, message: string) { super(message); }

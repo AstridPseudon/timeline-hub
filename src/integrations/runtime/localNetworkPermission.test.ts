@@ -21,14 +21,14 @@ describe('queryLocalNetworkPermission', () => {
     expect(LOCAL_NETWORK_PERMISSION_NAME).toBe('local-network-access');
   });
 
-  it('counts a throwing query as prompt', async () => {
+  it('counts an unsupported permission name as granted', async () => {
     const permissions: PermissionsLike = { query: async () => { throw new TypeError('unknown permission name'); } };
-    await expect(queryLocalNetworkPermission(permissions)).resolves.toBe('prompt');
+    await expect(queryLocalNetworkPermission(permissions)).resolves.toBe('granted');
   });
 
-  it('counts a synchronously throwing query as prompt', async () => {
+  it('counts a synchronously throwing unsupported query as granted', async () => {
     const permissions: PermissionsLike = { query: () => { throw new Error('boom'); } };
-    await expect(queryLocalNetworkPermission(permissions)).resolves.toBe('prompt');
+    await expect(queryLocalNetworkPermission(permissions)).resolves.toBe('granted');
   });
 
   it('counts an unrecognised state as prompt', async () => {
@@ -36,8 +36,8 @@ describe('queryLocalNetworkPermission', () => {
     await expect(queryLocalNetworkPermission(permissions)).resolves.toBe('prompt');
   });
 
-  it('counts a missing Permissions API as prompt', async () => {
-    await expect(queryLocalNetworkPermission({} as PermissionsLike)).resolves.toBe('prompt');
+  it('counts a missing Permissions API as granted', async () => {
+    await expect(queryLocalNetworkPermission({} as PermissionsLike)).resolves.toBe('granted');
   });
 });
 

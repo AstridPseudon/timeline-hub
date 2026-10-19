@@ -19,6 +19,7 @@ import {
   resolveLoopbackPort,
   loadLocalRuntimeEnvironment,
   LOCAL_RUNTIME_ENV_KEYS,
+  shellQuote,
 } from './dev-local-workspace-options.mjs';
 
 const temporaryDirectories = [];
@@ -42,6 +43,11 @@ test('local launcher settings persist without importing app secrets or overridin
   assert.equal(parseDevLocalWorkspaceArgs([], env).acp, true);
   assert.equal(parseDevLocalWorkspaceArgs([], { ASTRID_APP_ACP_ENABLED: '0' }).acp, false);
   assert.equal(parseDevLocalWorkspaceArgs(['--data-root', '/explicit'], env).dataRoot, '/explicit');
+});
+
+test('launcher shell snippets quote command paths containing spaces', () => {
+  assert.equal(shellQuote('/installed/Astrid App/start'), "'/installed/Astrid App/start'");
+  assert.equal(shellQuote('npm-run_dev:local'), 'npm-run_dev:local');
 });
 
 afterEach(async () => {
@@ -686,17 +692,18 @@ test('a second launcher for the same Astrid says so, prints the same Open block,
   } finally { await first.stop(); }
 });
 
-test('a second launcher keeps the Runtime it just started when the matching gateway is already live', async () => {
+test('a second launcher does not start a Runtime when the existing gateway reports its engine stopped', async () => {
   const port = String(await freePort());
   const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: port } });
   const secondFixture = await launchFixture({ discoveryState: 'missing', configuredOrigin: 'https://hosted.test' });
   try {
-    const result = await run([], { ...secondFixture.env, ASTRID_APP_LOOPBACK_PORT: port });
-    assert.equal(result.code, 0, result.stderr);
-    assert.match(result.stdout, /Astrid is already running in another window/);
-    const lifecycle = readFileSync(secondFixture.env.FAKE_RUNTIME_CLI_LOG, 'utf8');
-    assert.match(lifecycle, /"action":"up"/);
-    assert.doesNotMatch(lifecycle, /"action":"down"/, 'the newly started Runtime remains available to the live gateway');
+    writeFileSync(first.fixture.discovery, '{invalid discovery');
+    const result = await launcherEnds({ fixture: secondFixture, env: { ASTRID_APP_LOOPBACK_PORT: port } });
+    assert.equal(result.code, 1, result.stdout + result.stderr);
+    assert.equal(result.stderr.split('\n')[0], 'Astrid is running, but its engine stopped. Stop the other Astrid (Ctrl+C in its window) and run this again.');
+    assert.match(result.stderr.split('\n')[1], /^Details: gateway on port \d+ answered HTTP 503 with runtime_discovery_invalid$/);
+    assert.equal(result.spawned, '', 'no Runtime CLI, discovery proxy, ACP bridge or Vite was started');
+    assert.equal(existsSync(secondFixture.env.FAKE_RUNTIME_CLI_LOG), false, 'Runtime up was never invoked');
   } finally {
     await first.stop();
     await secondFixture.close();
@@ -734,9 +741,9 @@ test('a second launcher for another Astrid says to stop the first one', async ()
   }
 });
 
-test('the gateway stopping later is one friendly line, then the details', async () => {
+test('the gateway stopping later quotes an installed start command containing spaces', async () => {
   const port = await freePort();
-  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(port), ASTRID_START_COMMAND: '/installed/Astrid/start' } });
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(port), ASTRID_START_COMMAND: '/installed/Astrid App/start' } });
   try {
     const pids = execFileSync('pgrep', ['-f', `astrid-loopback-gateway.ts.*--port ${port}`], { encoding: 'utf8' }).split('\n').filter(Boolean).map(Number);
     assert(pids.length > 0, 'the gateway process');
@@ -744,7 +751,7 @@ test('the gateway stopping later is one friendly line, then the details', async 
     await started.closed;
     assert.equal(started.child.exitCode, 1);
     const lines = started.seen.stderr.split('\n');
-    assert.equal(lines[0], 'Astrid stopped. Start it again with /installed/Astrid/start.');
+    assert.equal(lines[0], "Astrid stopped. Start it again with '/installed/Astrid App/start'.");
     assert.match(lines[1], /^Details: loopback gateway exited with SIGKILL; the hosted app cannot reach this computer/);
   } finally { await started.stop(); }
 });

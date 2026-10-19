@@ -11,7 +11,6 @@ import {
 import type { PermissionsLike } from './localNetworkPermission.ts';
 import { autoConnectRequested, requestAutoConnect } from './autoConnectRequest.ts';
 import { runtimeAppUrl, setRuntimeAppUrl } from './runtimeAppUrl.ts';
-import * as installScenario from '@/pages/Home/installScenario.ts';
 import { RuntimeConnectionPanel } from '@/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx';
 
 const REALM = { realm_id: 'realm-1', display_name: 'Direct Journey' };
@@ -99,7 +98,6 @@ beforeEach(() => {
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
   );
   setRuntimeAppUrl(null);
-  vi.spyOn(installScenario, 'detectInstallScenario').mockReturnValue('chromium');
 });
 
 afterEach(() => {
@@ -164,14 +162,14 @@ describe('granted', () => {
     expect(latest.isBooting).toBe(false);
   });
 
-  it.each(['safari', 'unsupported'] as const)('%s bypasses the Chromium permission prompt and probes directly', async (scenario) => {
-    vi.mocked(installScenario.detectInstallScenario).mockReturnValue(scenario);
+  it('keeps the permission prompt for any browser that supports the local-network permission', async () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 Firefox/153.0');
     const gateway = fakeGateway();
     const permissions = fakePermissions('prompt');
     renderProvider(gateway, permissions.permissions);
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalled());
-    expect(permissions.permissions.query).not.toHaveBeenCalled();
-    await waitFor(() => expect(status()).toBe('connected'));
+    await waitFor(() => expect(latest.awaitingConnect).toBe(true));
+    expect(permissions.permissions.query).toHaveBeenCalled();
+    expect(gateway.fetchImpl).not.toHaveBeenCalled();
   });
 
   it('background polls do not change the rendered panel while a reading is pending', async () => {
@@ -253,17 +251,15 @@ describe('granted', () => {
     expect(latest.state).toEqual({ status: 'set_up' });
   });
 
-  it('classifies an error body as down regardless of HTTP status', async () => {
+  it('a foreign Not found error stays silent, so two readings still show setup', async () => {
     const gateway = fakeGateway();
-    gateway.routes['/v1/health'] = () => json({ error: 'hosted_origin_required' }, 403);
-    renderProvider(gateway, fakePermissions('granted').permissions);
-    await waitFor(() => expect(status()).toBe('not_running'));
-    expect(latest.state).toEqual({ status: 'not_running' });
-
-    const other = fakeGateway();
-    other.routes['/v1/health'] = () => new Response('<html></html>', { status: 200 });
-    renderProvider(other, fakePermissions('granted').permissions);
-    await waitFor(() => expect(screen.getAllByTestId('status').map((node) => node.textContent)).toEqual(['not_running', 'set_up']));
+    gateway.routes['/v1/health'] = () => json({ error: 'Not found' }, 404);
+    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    expect(status()).toBe('connecting');
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(status()).toBe('set_up'));
+    expect(latest.state).toEqual({ status: 'set_up' });
   });
 
   it('recovers by the interval, with no reload, and stops probing once connected', async () => {
@@ -418,14 +414,14 @@ describe('prompt', () => {
     expect(latest.state).toEqual({ status: 'connected', realm: REALM });
   });
 
-  it('a Permissions API that throws counts as prompt: nothing is sent', async () => {
+  it('an unsupported local-network permission query counts as granted and probes directly', async () => {
     const gateway = fakeGateway();
     const throwing: PermissionsLike = { query: vi.fn(async () => { throw new TypeError('unknown permission name'); }) };
     renderProvider(gateway, throwing);
 
-    await waitFor(() => expect(latest.isBooting).toBe(false));
-    expect(latest.awaitingConnect).toBe(true);
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(latest.awaitingConnect).toBe(false);
+    expect(gateway.fetchImpl).toHaveBeenCalled();
   });
 
   it('a refusal during connect() is read from the permission: denied becomes blocked', async () => {

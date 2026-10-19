@@ -13,6 +13,9 @@ export const gatewayHealthSchema = z.object({
   app_url: z.string().regex(GATEWAY_APP_URL_PATTERN).optional(),
 }).passthrough();
 
+/** The `error` codes of the gateway's Runtime refusals: the only error bodies the page reads as the gateway's. */
+export type RuntimeRefusalCode = 'runtime_unavailable' | 'realm_changed' | 'runtime_identity_mismatch' | 'runtime_discovery_invalid';
+
 /** The local app address in a health body, or null when it is absent or not a loopback app address. */
 export function appUrlFromHealth(body: unknown): string | null {
   const parsed = gatewayHealthSchema.safeParse(body);
