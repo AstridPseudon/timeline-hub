@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 
 from . import __version__
+from .capture_result import PUBLIC_ERROR_CODES, safe_fields
 from .bootstrap import (
     BootstrapConfig,
     BootstrapError,
@@ -247,6 +248,54 @@ def _typed_health(paths: RuntimePaths) -> Mapping[str, Any]:
     return _json_value(value)
 
 
+class _LocalWorkerHTTPRefusal(BootstrapError):
+    """Keep the response private; only the sealed finite projection is printable."""
+
+    def __init__(self, *, result_bytes: bytes, projected_bytes: bytes):
+        super().__init__("Runtime refused local Worker launch.")
+        self.__result_bytes = result_bytes
+        self.__projected_bytes = projected_bytes
+
+    def safe_error(self) -> dict[str, Any]:
+        return safe_fields(self.__projected_bytes)
+
+
+def _worker_http_refusal(exc: urllib.error.HTTPError) -> _LocalWorkerHTTPRefusal:
+    # The response is never persisted/stringified. Oversized/malformed data has
+    # no body-derived projection; HTTP status and a valid header remain usable.
+    try:
+        result_bytes = exc.read(1_048_577)
+        if type(result_bytes) is not bytes:
+            result_bytes = b""
+    except Exception:
+        result_bytes = b""
+    finally:
+        try:
+            exc.close()
+        except Exception:
+            pass
+    fields = safe_fields(result_bytes)
+    projected: dict[str, Any] = {}
+    if type(exc.code) is int and 100 <= exc.code <= 599:
+        projected["status"] = exc.code
+    if fields.get("code") in PUBLIC_ERROR_CODES:
+        projected["code"] = fields["code"]
+    body_id = fields.get("request_id")
+    try:
+        header_id = safe_fields(json.dumps({"request_id": exc.headers.get("X-Request-ID")},
+            ensure_ascii=True, allow_nan=False).encode("ascii")).get("request_id")
+    except Exception:
+        header_id = None
+    # Disagreement is retained as an absent correlation ID, never guessed.
+    if body_id and (not header_id or header_id == body_id):
+        projected["request_id"] = body_id
+    elif header_id and not body_id:
+        projected["request_id"] = header_id
+    projected_bytes = json.dumps(projected, sort_keys=True, separators=(",", ":"),
+        ensure_ascii=True, allow_nan=False).encode("ascii")
+    return _LocalWorkerHTTPRefusal(result_bytes=result_bytes, projected_bytes=projected_bytes)
+
+
 def _start_local_worker(paths: RuntimePaths, *, profile_id: str, expected_workspace_uuid: str) -> Mapping[str, Any]:
     _validate_support_paths(paths)
     discovery = _read_support_json(paths.discovery_path)
@@ -270,11 +319,7 @@ def _start_local_worker(paths: RuntimePaths, *, profile_id: str, expected_worksp
         with urllib.request.urlopen(request, timeout=30) as response:
             value = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        try:
-            detail = json.loads(exc.read().decode("utf-8"))
-        except Exception:
-            detail = {"message": str(exc)}
-        raise BootstrapError(str(detail.get("message") or detail)) from exc
+        raise _worker_http_refusal(exc) from exc
     if not isinstance(value, Mapping):
         raise BootstrapError("Runtime returned invalid local Worker launch metadata.")
     return value
@@ -450,7 +495,8 @@ def main(argv: list[str] | None = None) -> int:
             _emit(value, json_mode=args.json)
             return 0
     except (BootstrapError, ValueError, OSError) as exc:
-        _emit({"ok": False, "error": str(exc)}, json_mode=True)
+        error = exc.safe_error() if type(exc) is _LocalWorkerHTTPRefusal else str(exc)
+        _emit({"ok": False, "error": error}, json_mode=True)
         return 1
     except Exception as exc:
         # Generated clients expose typed ApiError; keep that import lazy so
