@@ -1,3 +1,7 @@
+# RATIFIED23:06 — canonical incoming, compiled outgoing; one conversion
+
+Orchestrator ratified canonical parent/internal clip.transition as INCOMING for all producers. Native compiled TimelineConfig retains OUTGOING default. Implement ONE deterministic canonical→compiled conversion shared by preview/export, including first/gap/overlap/oversized/aliases; half-open/no inclusive extra frame. Prefer compiled conversion to caller-selected TransitionInputPolicy; policy option requires proof existing compiled form cannot carry it. Agent owns predecessor validator and quantifies historical outgoing canonical publications before deciding recorded guarded migration. No silent immutable rewrite. The design below is prior source evidence and conditional proposal; its caller-selection preference is SUPERSEDED. Worker vw-m3-incoming-public-api redirected before final implementation, no consumer/pin/integration change.
+
 # Incoming transition policy — decision required before implementation
 
 Design only, 2026-10-19; Composition base `63ab6e0`. PLAN and the approved 0.0.9 defaults apply. Reuses the five cases in [viewing-final-route.md](viewing-final-route.md); no probes or tests repeated.
