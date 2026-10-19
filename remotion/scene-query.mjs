@@ -8,22 +8,30 @@ try {
   const require = createRequire(path.join(process.argv[2], 'package.json'));
   const {prepareScene, querySceneFrame} = await import(pathToFileURL(
     require.resolve('@banodoco/timeline-composition/evaluation')));
-  const {scene, frames} = JSON.parse(readFileSync(0, 'utf8'));
-  const {tracks, assets, fps, width, height, roles, elements} = scene;
-  if (!Array.isArray(tracks) || !Array.isArray(frames) || !assets?.assets) {
-    throw new Error('scene_inputs_invalid');
-  }
-  for (const {track, clips, transitions} of tracks) {
-    if (track?.kind !== 'visual' || !Array.isArray(clips) || !Array.isArray(transitions)
-      || transitions.length !== Math.max(0, clips.length - 1)
-      || clips.some((clip, i) => i > 0 && clip.at < clips[i - 1].at)
-      || transitions.some(t => t !== null && (!Number.isFinite(t.T) || t.T <= 0
-        || !['dip', 'dissolve'].includes(t.kind) || !['start', 'center', 'end'].includes(t.align)))) {
-      throw new Error('scene_requires_renderer_order_and_resolved_transitions');
+  const {scene, props, basis, roles: hostRoles, frames} = JSON.parse(readFileSync(0, 'utf8'));
+  if (!Array.isArray(frames)) throw new Error('scene_frames_invalid');
+  let prepared;
+  if (props) {
+    const {loadHostScene} = await import('./native-scene.mjs');
+    const prepare = await loadHostScene(process.argv[2]);
+    prepared = prepare(props, basis, hostRoles ?? {});
+  } else {
+    const {tracks, assets, fps, width, height, roles, elements} = scene;
+    if (!Array.isArray(tracks) || !Array.isArray(frames) || !assets?.assets) {
+      throw new Error('scene_inputs_invalid');
     }
+    for (const {track, clips, transitions} of tracks) {
+      if (track?.kind !== 'visual' || !Array.isArray(clips) || !Array.isArray(transitions)
+        || transitions.length !== Math.max(0, clips.length - 1)
+        || clips.some((clip, i) => i > 0 && clip.at < clips[i - 1].at)
+        || transitions.some(t => t !== null && (!Number.isFinite(t.T) || t.T <= 0
+          || !['dip', 'dissolve'].includes(t.kind) || !['start', 'center', 'end'].includes(t.align)))) {
+        throw new Error('scene_requires_renderer_order_and_resolved_transitions');
+      }
+    }
+    prepared = prepareScene(tracks, assets, fps, width, height,
+      {roles, elements: new Set(elements ?? [])});
   }
-  const prepared = prepareScene(tracks, assets, fps, width, height,
-    {roles, elements: new Set(elements ?? [])});
   process.stdout.write(JSON.stringify(frames.map(frame => querySceneFrame(prepared, frame))));
 } catch (error) {
   process.stderr.write(`scene evaluation unavailable: ${error.message}\n`);

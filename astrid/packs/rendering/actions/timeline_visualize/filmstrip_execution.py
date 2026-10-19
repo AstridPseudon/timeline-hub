@@ -1775,6 +1775,7 @@ def execute_filmstrip(args, *, authority=None):
             project_dir=Path(os.environ.get('ASTRID_REMOTION_PROJECT_DIR') or (REPO_ROOT / 'remotion')),
             materialized_root=getattr(args, 'materialized_root', None),
             materialized_objects=getattr(args, 'materialized_objects', None),
+            scene_labels=True,
         )
     # Older/unit-test authorities may omit the timing envelope.  Real managed
     # renders always carry it; leave incomplete test authorities untouched so
@@ -1882,7 +1883,8 @@ def execute_filmstrip(args, *, authority=None):
                 surface['standalone_input_pages'] = [path.name for path in input_pages]
                 try:
                     persisted_index = compact_render_receipt(frame_index, snapshot, pack_root)
-                    attach_frame_addresses(persisted_index, snapshot, frame_index['cards'])
+                    attach_frame_addresses(persisted_index, snapshot, frame_index['cards'],
+                                           label_batches=getattr(frame_provider, 'label_batches', None))
                 except (KeyError, TypeError, ValueError):
                     # Keep admission-focused/unit-test builders and historical
                     # minimal fixtures readable; real packs always satisfy the
@@ -1896,7 +1898,8 @@ def execute_filmstrip(args, *, authority=None):
         # they use the same bounded receipt contract.
         try:
             persisted_index = compact_render_receipt(result['frame_index'], snapshot, pack_root)
-            attach_frame_addresses(persisted_index, snapshot, result['frame_index']['cards'])
+            attach_frame_addresses(persisted_index, snapshot, result['frame_index']['cards'],
+                                   label_batches=getattr(frame_provider, 'label_batches', None))
         except (KeyError, TypeError, ValueError):
             persisted_index = result['frame_index']
         (pack_root / 'frame-index.json').write_text(

@@ -405,6 +405,7 @@ class _SharedRemotionOwner:
                 frame_resolution=tuple(resolution) if resolution is not None else None,
                 frame_session=self.session,
                 frame_session_identity=renderer_environment_identity(),
+                **({"on_scene_props": context["on_scene_props"]} if context.get("on_scene_props") else {}),
             )
 
     def release(self, *, force: bool = False) -> None:
@@ -487,6 +488,7 @@ class RemotionFrameProvider:
         materialized_root: Path | None = None,
         materialized_objects: Mapping[str, str] | None = None,
         cache: FrameCaptureCache | None = None,
+        scene_labels: bool = False,
         renderer: Callable[[Sequence[int], Path, Sequence[int] | None], Mapping[int, Path]] | None = None,
     ) -> None:
         self.snapshot = snapshot
@@ -496,6 +498,9 @@ class RemotionFrameProvider:
         self.materialized_root = Path(materialized_root) if materialized_root else None
         self.materialized_objects = materialized_objects
         self.cache = cache or FrameCaptureCache()
+        self.label_batches: dict[int, list] = {}
+        self.label_canvas: dict | None = None
+        self.scene_unavailable: str | None = None
         if renderer is None:
             renderer = _acquire_shared_remotion_handle(
                 context={
@@ -504,11 +509,32 @@ class RemotionFrameProvider:
                     "project_dir": self.project_dir,
                     "materialized_root": self.materialized_root,
                     "materialized_objects": self.materialized_objects,
+                    **({"on_scene_props": self._scene_labels} if scene_labels else {}),
                 }
             )
 
         self.worker = FrameCaptureWorker(renderer)
         self.wants_bounds = snapshot_wants_bounds(snapshot)
+
+    def _scene_labels(self, props: Mapping[str, Any], frames: Sequence[int]) -> None:
+        """Observe actual prepared capture props while their staging is alive."""
+        from fractions import Fraction
+
+        from .overlays.labels import canvas_of, labels_batch
+
+        try:
+            canvas = ((props["timeline"].get("theme_overrides") or {}).get("visual") or {}).get("canvas")
+            canvas = canvas if canvas is not None else props["theme"]["visual"]["canvas"]
+            if not isinstance(canvas, Mapping) or any(key not in canvas for key in ("fps", "width", "height")):
+                raise ValueError("captured Root props do not retain the full canvas/frame basis")
+            fps = canvas["fps"]
+            if fps != float(Fraction(*self.snapshot["fps_rational"])):
+                raise ValueError("captured Root frame rate differs from the frozen snapshot")
+            self.label_canvas = canvas_of(props["timeline"], props["theme"])
+            self.label_batches.update(labels_batch(props["timeline"], list(frames), fps, self.label_canvas,
+                                                   assets=props["assets"], theme=props["theme"]))
+        except Exception as exc:  # noqa: BLE001 - advisory labels cannot change capture success
+            self.scene_unavailable = str(exc)
 
     def close(self, *, force: bool = False) -> None:
         self.worker.close(force=force)
@@ -519,6 +545,9 @@ class RemotionFrameProvider:
         out_root: Path,
         resolution: Sequence[int] | None = None,
     ) -> dict[str, Any]:
+        self.label_batches.clear()
+        self.label_canvas = None
+        self.scene_unavailable = None
         out_root = Path(out_root)
         frames_dir = out_root / "frames"
         frames_dir.mkdir(parents=True, exist_ok=True)
@@ -582,6 +611,7 @@ class RemotionFrameProvider:
             "resolution": list(resolution) if resolution is not None else None,
             "cache_root": str(self.cache.root),
             "notes": notes,
+            **({"scene_unavailable": self.scene_unavailable} if self.scene_unavailable else {}),
             "worker": {
                 "batches": self.worker.capture_batches,
                 "serialized": True,

@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
 from typing import Any
 
 from astrid.core.rendering.remotion_runtime import (
@@ -30,6 +31,10 @@ def frames_at(scene: Mapping[str, Any], frames: Iterable[int]) -> list[dict[str,
     No component capabilities, modifier declarations or media alpha evidence are
     synthesized here. Canonical UNKNOWN findings pass through unchanged.
     """
+    return _query({"scene": dict(scene)}, frames)
+
+
+def _query(payload: dict[str, Any], frames: Iterable[int]) -> list[dict[str, Any]]:
     try:
         runtime = remotion_runtime_status(require_explicit_project=True)
         if not runtime.available or runtime.project_dir is None or runtime.node_executable is None:
@@ -38,11 +43,21 @@ def frames_at(scene: Mapping[str, Any], frames: Iterable[int]) -> list[dict[str,
         helper.relative_to(runtime.project_dir.resolve())
         if not helper.is_file():
             raise SceneQueryUnavailable("scene query helper is not a file")
+        if "props" in payload:
+            for name in ("native-scene.mjs", "src/host-scene.ts"):
+                entry = (runtime.project_dir / name).resolve(strict=True)
+                entry.relative_to(runtime.project_dir.resolve())
+                if not entry.is_file():
+                    raise SceneQueryUnavailable(f"scene host entry is not a file: {name}")
         requested = list(frames)
         environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+        # Status validated this selector as part of the renderer's registry
+        # context. The alias resolver must see that same admitted pack set.
+        if "ASTRID_PACKS_PATH" in os.environ:
+            environment["ASTRID_PACKS_PATH"] = os.environ["ASTRID_PACKS_PATH"]
         result = subprocess.run(
             [str(runtime.node_executable), str(helper), str(runtime.project_dir)],
-            input=json.dumps({"scene": dict(scene), "frames": requested}, allow_nan=False),
+            input=json.dumps({**payload, "frames": requested}, allow_nan=False),
             cwd=runtime.project_dir, env=environment, capture_output=True, text=True, timeout=30,
         )
         if result.returncode:
@@ -55,3 +70,60 @@ def frames_at(scene: Mapping[str, Any], frames: Iterable[int]) -> list[dict[str,
         return answers
     except (OSError, ValueError, TypeError, subprocess.SubprocessError, RemotionValidationError) as exc:
         raise SceneQueryUnavailable(f"scene evaluation unavailable: {exc}") from exc
+
+
+@dataclass(frozen=True)
+class Span:
+    start_frame: int
+    end_frame: int
+    cls: str
+    content: str | None
+    clips: tuple[str, ...]
+    findings: tuple[str, ...] = ()
+
+
+def host_frames_at(props: Mapping[str, Any], basis: Mapping[str, Any],
+                   frames: Iterable[int]) -> list[dict[str, Any]]:
+    """Prepare exact Root props with the admitted host's complete element maps.
+
+    The caller retains the loaded revision, registry and runtime-resolved theme.
+    Missing inputs are unavailable, never an empty registry or a config theme slug.
+    """
+    from astrid.core.timeline.scene_roles import element_coverage, role_of
+
+    timeline = props.get("timeline")
+    if (not isinstance(timeline, Mapping) or not isinstance(timeline.get("tracks"), list)
+            or not isinstance(timeline.get("clips"), list)
+            or not isinstance(props.get("assets"), Mapping)
+            or not isinstance(props["assets"].get("assets"), Mapping)
+            or not isinstance(props.get("theme"), Mapping)
+            or not isinstance(props["theme"].get("visual"), Mapping)):
+        raise SceneQueryUnavailable("exact Root timeline, assets registry and resolved runtime theme required")
+    clips = timeline["clips"]
+    if any(not isinstance(c, Mapping) or not isinstance(c.get("id"), str) for c in clips):
+        raise SceneQueryUnavailable("scene requires compiled clips with their exact IDs")
+    declarations = element_coverage({c.get("clipType", "") for c in clips})
+    roles = {c["id"]: role_of(c, c.get("track"), declarations) for c in clips}
+    return _query({"props": dict(props), "basis": dict(basis), "roles": roles}, frames)
+
+
+def coverage(props: Mapping[str, Any], basis: Mapping[str, Any], *,
+             start_frame: int, end_frame: int) -> list[Span]:
+    """Run-length encode one batch of public frame answers, including UNKNOWN."""
+    return spans_from_frames(host_frames_at(props, basis, range(start_frame, end_frame)))
+
+
+def spans_from_frames(answers: Iterable[Mapping[str, Any]]) -> list[Span]:
+    spans: list[Span] = []
+    for answer in answers:
+        frame = answer["frame"]
+        cls, content = answer["coverage"], answer["content"]
+        clips = tuple(layer["clipId"] for layer in answer["layers"] if layer["visible"] is not False)
+        findings = tuple(dict.fromkeys(f["code"] for f in answer["findings"]))
+        if (spans and (spans[-1].cls, spans[-1].content, spans[-1].clips, spans[-1].findings)
+                == (cls, content, clips, findings)):
+            previous = spans[-1]
+            spans[-1] = Span(previous.start_frame, frame + 1, cls, content, clips, findings)
+        else:
+            spans.append(Span(frame, frame + 1, cls, content, clips, findings))
+    return spans

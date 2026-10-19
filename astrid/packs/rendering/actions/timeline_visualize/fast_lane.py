@@ -721,12 +721,12 @@ def _compose_page(rows: Sequence[Mapping[str, Any]], path: Path, *, title: str,
 
 def _labelled_tiles(
     snapshots: Mapping[str, Mapping[str, Any]], frame: int, fps: float,
-    paths: Mapping[str, str | Path | None], out_dir: Path, index: int,
+    paths: Mapping[str, str | Path | None], out_dir: Path, index: int, *, label_batches=None,
 ) -> dict[str, str]:
     """Create labeled display copies; retain the decoded files for pixel comparison."""
     from PIL import Image
 
-    from .overlays.labels import overlay_labels_frame
+    from .overlays.labels import canvas_of, overlay_labels_frame
 
     labelled: dict[str, str] = {}
     for side, path in paths.items():
@@ -739,7 +739,9 @@ def _labelled_tiles(
         with Image.open(path) as source:
             tile = source.convert("RGB")
         target = out_dir / f"labelled-{index}-{side}.png"
-        overlay_labels_frame(tile, config, frame, fps).save(target)
+        overlay_labels_frame(tile, config, frame, fps,
+                             layers=(label_batches or {}).get(side, {}).get(frame),
+                             canvas=canvas_of(config, snapshot.get("theme"))).save(target)
         labelled[side] = str(target)
     return labelled
 
@@ -818,6 +820,12 @@ def verify(
         rows = []
         base_config = pair["base_snapshot"].get("config") or {}
         working_config = pair["working_snapshot"].get("config") or {}
+        label_batches = None
+        if labels:
+            from .overlays.labels import snapshot_labels
+
+            label_batches = {side: snapshot_labels(pair[key], frames) for side, key in
+                             (("published", "base_snapshot"), ("working", "working_snapshot"))}
         for index, moment in enumerate(selected):
             frame = frame_of(moment.t, fps)
             pub_path, work_path = published[frame], working[frame]
@@ -863,7 +871,7 @@ def verify(
             if labels:
                 row["labelled"] = _labelled_tiles(
                     {"published": pair["base_snapshot"], "working": pair["working_snapshot"]},
-                    frame, fps, {"published": pub_path, "working": work_path}, run_dir, index,
+                    frame, fps, {"published": pub_path, "working": work_path}, run_dir, index, label_batches=label_batches,
                 )
                 for side, labelled_path in row["labelled"].items():
                     row[f"{side}_display"] = labelled_path

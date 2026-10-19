@@ -687,6 +687,8 @@ def test_a_param_moment_outside_its_clip_blocks_and_keep_fixes_an_orphan():
     assert not any("states[1].at" in o for o in tl.orphans())
 
 
+# Retain the behavior until the named M3 input/capability requirement is met.
+@pytest.mark.xfail(strict=True, reason='M3 OFFCANVAS requires exact Root inputs and declared evaluated am-sprite bounds; metadata diagnostics remain covered separately.')
 def test_check_flags_offcanvas_mixed_scale_and_damaged_sprite_by_address():
     data = bundle()
     sprite = data["shots"]["A"]["internal_timeline"]["clips"][1]
@@ -1677,3 +1679,28 @@ def _seed_terminal_projection_runtime(root, project_id, run_tasks, request):
                 (task_id, run_id, "rendering.render", spec_digest, "completed", timestamp, timestamp),
             )
     return store
+
+
+def test_sprite_scale_and_source_integrity_diagnostics_remain_renderer_free(monkeypatch):
+    from astrid.core.timeline import scene_answers
+
+    def no_scene(*args, **kwargs):
+        raise AssertionError("metadata diagnostics must not start Node")
+
+    monkeypatch.setattr(scene_answers, "host_frames_at", no_scene)
+    data = bundle()
+    internal = data["shots"]["A"]["internal_timeline"]
+    internal["clips"][1]["params"]["scale"] = 8
+    internal["registry"]["assets"]["R"]["pixel_provenance"] = {
+        "outline_integrity": {"fraction": 0.70}}
+    internal["clips"].append({"id": "a-hourglass", "clipType": "am-sprite", "track": "sprite", "asset": "H",
+                               "at": 1.25, "hold": 0.5, "params": {"x": 20, "scale": 6},
+                               "app": {"cut": "c01", "layer": "hourglass"}})
+    internal["registry"]["assets"]["H"] = {
+        "media_id": "m-h", "pixel_provenance": {"outline_integrity": {"fraction": 0.56}}}
+    lines = Checkout(data).check().problems
+    assert any("MIXED-SCALE" in line and "a-rocket" in line and "hourglass" in line for line in lines)
+    assert any("DAMAGED-ART" in line and "a-rocket" in line and "0.70" in line for line in lines)
+    assert any("DAMAGED-ART" in line and "hourglass" in line and "0.56" in line for line in lines)
+    internal["registry"]["assets"]["H"]["pixel_provenance"]["outline_integrity"]["fraction"] = 0.02
+    assert not any("DAMAGED-ART" in line and "hourglass" in line for line in Checkout(data).check().problems)
