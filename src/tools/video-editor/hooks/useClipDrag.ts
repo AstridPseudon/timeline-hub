@@ -1,3 +1,4 @@
+import { toast } from '@/shared/components/ui/toast.tsx';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { getPublishedTimelineRowLayout, getTimelineDomNodes } from '@/tools/video-editor/lib/drop-position.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
@@ -41,13 +42,8 @@ const CROSS_TRACK_THRESHOLD_PX = 10;
 
 interface UseClipDragLatest {
   coordinator: TimelineEditorDataContextValue['coordinator'];
-  moveClipToRow: TimelineEditorOpsContextValue['moveClipToRow'];
-  applyResolvedClipMove: TimelineEditorOpsContextValue['applyResolvedClipMove'];
-  createTrackAndMoveClip: TimelineEditorOpsContextValue['createTrackAndMoveClip'];
-  selectClip: TimelineEditorOpsContextValue['selectClip'];
-  selectClips: TimelineEditorOpsContextValue['selectClips'];
+  clipMove: TimelineEditorOpsContextValue['clipMove'];
   selectedClipIdsRef: TimelineEditorDataContextValue['selectedClipIdsRef'];
-  applyEdit: TimelineEditorOpsContextValue['applyEdit'];
   additiveSelectionRef: TimelineEditorDataContextValue['additiveSelectionRef'];
   deviceClass: TimelineEditorDataContextValue['deviceClass'];
   interactionMode: TimelineEditorDataContextValue['interactionMode'];
@@ -119,13 +115,8 @@ export const useClipDrag = (): UseClipDragResult => {
   // when zoom/scale or any other store slice changes.
   const latest: UseClipDragLatest = {
     coordinator,
-    moveClipToRow: ops.moveClipToRow,
-    applyResolvedClipMove: ops.applyResolvedClipMove,
-    createTrackAndMoveClip: ops.createTrackAndMoveClip,
-    selectClip: ops.selectClip,
-    selectClips: ops.selectClips,
+    clipMove: ops.clipMove,
     selectedClipIdsRef,
-    applyEdit: ops.applyEdit,
     additiveSelectionRef,
     deviceClass,
     interactionMode,
@@ -221,7 +212,9 @@ export const useClipDrag = (): UseClipDragResult => {
           start: dragState.latestStart,
           end: dragState.latestEnd,
           trackId: nextPosition.trackId ?? session.sourceRowId,
-          rejected: Boolean(nextPosition.isReject),
+          rejected: Boolean(nextPosition.isReject || session.moveCaptureError
+            || nextPosition.isNewTrack
+            || (session.moveCapture && nextPosition.trackId && nextPosition.trackId !== session.moveCapture.trackId)),
         });
       }
 
@@ -348,6 +341,7 @@ export const useClipDrag = (): UseClipDragResult => {
         dragAllowed,
         inputModality,
         pixelsPerSecond: pixelsPerSecondRef.current,
+        clipMove: latestRef.current.clipMove,
       });
       actionDragStateRef.current = actionDragState;
 
@@ -400,22 +394,14 @@ export const useClipDrag = (): UseClipDragResult => {
           if (!session.groupDragEntry && crossTrackActiveRef.current && session.draggedClipIds.length === 1) {
             upEvent.preventDefault();
           }
-          const { deferDeactivate } = commitDraggingSession({
+          const { deferDeactivate, refusal } = commitDraggingSession({
             session,
             nextStart,
             dropPosition,
             crossTrackActive: crossTrackActiveRef.current,
-            liveData: dataRef.current,
             lastPlan: latestRef.current.coordinator.lastPlan,
-            callbacks: {
-              moveClipToRow: latestRef.current.moveClipToRow,
-              applyResolvedClipMove: latestRef.current.applyResolvedClipMove,
-              createTrackAndMoveClip: latestRef.current.createTrackAndMoveClip,
-              selectClip: latestRef.current.selectClip,
-              selectClips: latestRef.current.selectClips,
-              applyEdit: latestRef.current.applyEdit,
-            },
           });
+          if (refusal) toast.error('Clip move unavailable', { description: refusal });
           endSession({ deferDeactivate });
           return;
         }

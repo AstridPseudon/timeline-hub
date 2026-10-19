@@ -44,6 +44,7 @@ import {
 } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 
 export type TimelineCommandErrorCode =
   | 'editor_not_mounted'
@@ -166,8 +167,7 @@ export interface TimelineCommands {
    */
   updateClip: (input: UpdateClipCommandInput) => TimelineCommandResult<{ clipId: string }>;
   /**
-   * Move a clip by timeline time and/or track using the canonical config path.
-   * Pinned-group drag semantics stay internal for Sprint 2.
+   * Capture a fixed, same-track clip.move v1 through the host command outbox.
    */
   moveClip: (input: MoveClipCommandInput) => TimelineCommandResult<{ clipId: string; trackId: string; time: number }>;
   /**
@@ -673,7 +673,7 @@ export function createTimelineCommands(
         return failure('clip_not_found', `Clip '${input.clipId}' was not found.`);
       }
       if (isPinnedGroupClip(current, input.clipId)) {
-        return failure('pinned_group_edit_blocked', 'Pinned shot-group clip movement stays on the internal gesture path in Sprint 2.');
+        return failure('pinned_group_edit_blocked', 'clip.move v1 does not support group moves.');
       }
       if (input.trackId === undefined && input.time === undefined) {
         return failure('invalid_argument', 'moveClip requires a target track, a target time, or both.');
@@ -694,27 +694,14 @@ export function createTimelineCommands(
         return failure('invalid_argument', `Clip '${input.clipId}' cannot be moved to ${targetTrack.kind} track '${targetTrack.id}'.`);
       }
 
-      const nextTime = input.time === undefined ? clip.at : Math.max(0, roundTimelineValue(input.time));
-      const nextConfig = updateClipInConfig(current.resolvedConfig, input.clipId, (existingClip) => ({
-        ...existingClip,
-        at: nextTime,
-        track: nextTrackId,
-      }));
-
-      return applyValidatedMutation(
-        store,
-        current,
-        {
-          type: 'config',
-          resolvedConfig: nextConfig,
-        },
-        { clipId: input.clipId, trackId: nextTrackId, time: nextTime },
-        {
-          selectedClipId: input.clipId,
-          selectedTrackId: nextTrackId,
-          semantic: true,
-        },
-      );
+      const nextTime = input.time ?? clip.at;
+      try {
+        const captured = captureClipMove(state.ops.clipMove, current, input.clipId);
+        submitClipMove(captured, nextTime, { trackId: nextTrackId });
+        return success({ clipId: input.clipId, trackId: nextTrackId, time: nextTime });
+      } catch (cause) {
+        return failure('mutation_failed', cause instanceof Error ? cause.message : 'Clip move failed.', { cause });
+      }
     },
 
     trimClip(input) {
