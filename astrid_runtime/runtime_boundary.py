@@ -24,6 +24,7 @@ from typing import Any, Mapping
 from urllib.parse import urlsplit
 
 from .bootstrap import BootstrapCustodyUncertain, BootstrapError, SourceProfile
+from .loopback_http import urlopen_loopback
 from .custody_broker import (
     ACTIVE_CAPABILITY_NAME,
     CustodyError,
@@ -102,7 +103,7 @@ class RuntimeConnection:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=5) as response:
+            with urlopen_loopback(request, timeout=5) as response:
                 return json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             try:
@@ -550,7 +551,7 @@ class LocalRuntimeBoundary:
             return None
         request = urllib.request.Request(str(endpoint).rstrip("/") + "/v1/health", headers={"Accept": "application/json"})
         try:
-            with urllib.request.urlopen(request, timeout=LocalRuntimeBoundary.HEALTH_TIMEOUT_SECONDS) as response:
+            with urlopen_loopback(request, timeout=LocalRuntimeBoundary.HEALTH_TIMEOUT_SECONDS) as response:
                 value = json.loads(response.read().decode("utf-8"))
             if isinstance(value, dict) and value.get("protocol") == WIRE_PROTOCOL:
                 status = value.get("status")
@@ -617,7 +618,7 @@ class LocalRuntimeBoundary:
                 str(endpoint).rstrip("/") + "/v1/realm",
                 headers={"Accept": "application/json", "Authorization": f"Bearer {token}"},
             )
-            with urllib.request.urlopen(request, timeout=self.HEALTH_TIMEOUT_SECONDS) as response:
+            with urlopen_loopback(request, timeout=self.HEALTH_TIMEOUT_SECONDS) as response:
                 realm = json.loads(response.read().decode("utf-8"))
             if not isinstance(realm, Mapping) or not realm.get("realm_id"):
                 return {}

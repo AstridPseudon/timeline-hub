@@ -33,7 +33,10 @@ def test_http_health_allows_bounded_startup_latency(monkeypatch):
         observed["timeout"] = timeout
         return _Response()
 
-    monkeypatch.setattr("urllib.request.urlopen", delayed_health)
+    monkeypatch.setattr(
+        "urllib.request.OpenerDirector.open",
+        lambda _self, request, data=None, timeout=None: delayed_health(request, timeout=timeout),
+    )
 
     assert LocalRuntimeBoundary._http_health("http://127.0.0.1:61217") is True
     assert observed["timeout"] == LocalRuntimeBoundary.HEALTH_TIMEOUT_SECONDS

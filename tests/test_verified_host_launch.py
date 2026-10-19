@@ -1,4 +1,4 @@
-"""Fake/offline G1b vectors; no selected interpreter, host or kernel launch."""
+"""Fake/offline vectors; no selected interpreter, host or kernel launch."""
 import ast
 import copy
 import hashlib

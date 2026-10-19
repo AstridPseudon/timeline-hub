@@ -89,7 +89,7 @@ class ParkedRemoteHost:
     executor_incarnation: str
 
     def recovery_qualification(self) -> dict[str, Any]:
-        """The existing T12 transition's unclaimable replacement proof."""
+        """The existing transition's unclaimable replacement proof."""
         return {
             "target": dict(self.target), "verified": True,
             "evidence_digest": self.evidence_digest,
@@ -202,7 +202,7 @@ class QualifiedRemoteWorkerLauncher:
             raise ConflictError("remote observation is not canonical") from exc
 
     def park(self, reference: DeploymentReference, *, target: Mapping[str, Any]) -> ParkedRemoteHost:
-        """Prepare replacement while unclaimable; return proof for T12 recovery."""
+        """Prepare replacement while unclaimable; return proof for recovery."""
         if self.activation_state == "unknown":
             raise ConflictError("remote process custody is unresolved")
         if not isinstance(reference, DeploymentReference):

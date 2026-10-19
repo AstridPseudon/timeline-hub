@@ -17,6 +17,14 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
 
 
+def _patch_opener(monkeypatch, open_response):
+    """Replace the network step of the client's loopback opener, keeping the opener itself real."""
+    monkeypatch.setattr(
+        urllib.request.OpenerDirector, "open",
+        lambda self, request, data=None, timeout=None: open_response(request, timeout=timeout),
+    )
+
+
 class _AcquisitionStream(io.BytesIO):
     def __init__(self, body, chunk=None):
         super().__init__(body)
@@ -46,7 +54,7 @@ def test_acquisition_reader_stream_bounds_and_closure(monkeypatch, error, chunk,
         if error:
             raise urllib.error.HTTPError(request.full_url, 409, "Conflict", {}, stream)
         return stream
-    monkeypatch.setattr(urllib.request, "urlopen", open_response)
+    _patch_opener(monkeypatch, open_response)
     def reader(response):
         result = bytearray()
         while True:
@@ -56,7 +64,7 @@ def test_acquisition_reader_stream_bounds_and_closure(monkeypatch, error, chunk,
                 raise ValueError("overflow")
             if not data:
                 return bytes(result)
-    client = WorkspaceClient("http://runtime", "token", timeout=7)
+    client = WorkspaceClient("http://127.0.0.1:9", "token", timeout=7)
     if extra > 0:
         with pytest.raises(ValueError, match="overflow"):
             client._request("GET", "/probe", headers={"X-Request-ID": "selected-request"}, response_reader=reader)
@@ -80,19 +88,19 @@ def test_acquisition_reader_policy_exception_propagates_and_closes(monkeypatch, 
         if http_error:
             raise urllib.error.HTTPError(request.full_url, 400, "Bad", {}, stream)
         return stream
-    monkeypatch.setattr(urllib.request, "urlopen", open_response)
+    _patch_opener(monkeypatch, open_response)
     def reader(response):
         raise failure
     with pytest.raises(type(failure)) as caught:
-        WorkspaceClient("http://runtime")._request("GET", "/probe", response_reader=reader)
+        WorkspaceClient("http://127.0.0.1:9")._request("GET", "/probe", response_reader=reader)
     assert caught.value is failure
     assert stream.closed and not stream.read_sizes
 
 
 def test_acquisition_reader_default_behavior_and_four_argument_transport(monkeypatch):
     stream = _AcquisitionStream(b"{}")
-    monkeypatch.setattr(urllib.request, "urlopen", lambda request, timeout: stream)
-    assert WorkspaceClient("http://runtime")._request("GET", "/probe")[2] == b"{}"
+    _patch_opener(monkeypatch, lambda request, timeout: stream)
+    assert WorkspaceClient("http://127.0.0.1:9")._request("GET", "/probe")[2] == b"{}"
     assert stream.read_sizes == [-1] and stream.closed
     calls = []
     def transport(method, path, headers, body):
@@ -509,14 +517,14 @@ def test_client_applies_bounded_timeout_to_stdlib_transport(monkeypatch) -> None
         observed["request_id"] = request.headers["X-request-id"]
         return Response()
 
-    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
-    client = WorkspaceClient("http://runtime", timeout=1.5)
+    _patch_opener(monkeypatch, urlopen)
+    client = WorkspaceClient("http://127.0.0.1:9", timeout=1.5)
     assert client.health().status == "ok"
     assert client.health().runtime_instance_id == "runtime-instance-1"
     assert observed["timeout"] == 1.5
     assert observed["request_id"].startswith("request-")
     with pytest.raises(ValueError, match="finite and positive"):
-        WorkspaceClient("http://runtime", timeout=0)
+        WorkspaceClient("http://127.0.0.1:9", timeout=0)
 
 
 def test_claim_capability_unavailable_is_typed_waiting_result() -> None:
@@ -654,7 +662,7 @@ def test_distinct_tasks_reader_reads_expired_task_as_requeued_with_fence(tmp_pat
         assert reader_identity["actor"] != "executor-a"
 
         readback = WorkspaceClient(daemon.endpoint, reader_token).get_task(admitted["task_id"])
-        # A read applies the claim path's lease expiry (B4): the dead
+        # A read applies the claim path's lease expiry: the dead
         # attempt's task is requeued, keeping its fence, with no live deadline.
         assert readback.state == "queued"
         assert readback.lease_fence == claimed.fence

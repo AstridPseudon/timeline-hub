@@ -1,4 +1,4 @@
-"""D18 deterministic fixtures; every realm/CAS here is pytest-owned temporary data."""
+"""Deterministic fixtures; every realm/CAS here is pytest-owned temporary data."""
 from __future__ import annotations
 
 import base64
@@ -622,7 +622,7 @@ def test_external_parent_run_cancellation_contains_delegated_children(runtime):
     with pytest.raises(LeaseError):
         admit(service, receipt, key="after-run-cancel")
 
-# B01/D18/M04: producing-child snapshots use the actual Human Review ID,
+# Producing-child snapshots use the actual Human Review ID,
 # with deterministic local capability bytes and two independent worker actors.
 HUMAN_REVIEW = "editorial.human_review"
 REVIEWER_IDENTITY = {**copy.deepcopy(IDENTITY), "actor": "reviewer"}
@@ -1058,7 +1058,7 @@ def test_snapshot_is_not_a_settled_stage_output_even_after_submit(runtime):
             lineage=child["spec"]["delegated_parent"])
 
 
-# B01/M21: discovery selects one historical tuple; execution authority remains D18.
+# Discovery selects one historical tuple; execution authority is unchanged.
 def discovery_parent_body(runtime):
     service, project = runtime
     selected = parent(runtime, key="discovery-selected")

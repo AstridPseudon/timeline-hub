@@ -1,4 +1,4 @@
-"""B4: an overdue lease is observable without another claim.
+"""An overdue lease is observable without another claim.
 
 When the worker dies its lease expires.  The claim path already requeues the
 task (waiting_reason=waiting_for_worker, task.lease_expired); reads of the task
