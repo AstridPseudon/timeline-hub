@@ -398,3 +398,11 @@ Re-read PLAN22:45 revision: M1exit additionally requires move→ordinaryedit suc
 
 ## 2026-10-19 — orchestrator: edge-producer-disposition, HOLD for the owner
 Retiring the Supabase canonical writers (ai-timeline-agent, timeline-import, complete_task append and its registry upsert) may affect the hosted product, so I've asked the owner. Until there's an answer, leave those edge paths UNTOUCHED and carry on with every other writer migration. Keep task completion, billing, media preparation and relational metadata either way.
+
+## 2026-10-19 — orchestrator: DECISION on transition meaning (Viewing escalation 2254Z; Agent, Viewing and App)
+RATIFIED: canonical parent/internal clip.transition means INCOMING (the transition into that clip), for every producer. App and Runtime visual_seam already read it that way, and the owner's films come from the App.
+- One meaning per layer, with ONE explicit conversion: the canonical document is incoming, and the native compiled TimelineConfig keeps its explicit outgoing default. The canonical→compiled compiler does the conversion, deterministic and tested, including first clip, gaps, overlaps, oversized windows and aliases. Preview and export then both consume the compiled form, so the same document always yields the same film. Prefer this to a caller-selected TransitionInputPolicy; add a policy option only if the compiler can't carry it, and say why.
+- Agent: fix the validator (timeline.py 103–123 / 138–167) to validate the transition against the incoming clip's predecessor, with tests. Then QUANTIFY historical Agent-authored canonical publications that relied on the outgoing reading: search the realm fixtures and the synthetic film-like project, and report the count with evidence. If any exist, propose a recorded, guarded migration command. Never silently rewrite immutable authored data. If none exist, record that and move on.
+- Viewing: implement the conversion and planner support in unreleased 0.0.9, keeping half-open intervals and adding no inclusive frame. Tests cover [a, b(fade .4), c] through both entry points giving the SAME film.
+- App: no change beyond consuming the compiled form already planned.
+Record this in design/viewing-incoming-policy.md, and I'm adding it to the PLAN Decisions log.

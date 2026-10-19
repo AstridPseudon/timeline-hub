@@ -71,8 +71,7 @@ for a in $AREAS; do
   for f in hub/escalations/closed/$a-*.md; do [ -e "$f" ] && [ -e $ORCH/escalations/$(basename $f) ] && mv $ORCH/escalations/$(basename $f) $ORCH/escalations/closed/; done
   # inbox in (remote machines): append hub items not yet in the local inbox
   if [ $M != main ] && [ -f hub/inbox/$a.md ]; then
-    n_loc=$(wc -c < $ORCH/managers/$a/INBOX.md 2>/dev/null || echo 0); n_hub=$(wc -c < hub/inbox/$a.md)
-    [ $n_hub -gt $n_loc ] && cp hub/inbox/$a.md $ORCH/managers/$a/INBOX.md
+    python3 -I $ORCH/bin/inbox-merge hub/inbox/$a.md $ORCH/managers/$a/INBOX.md   # append new sections; keeps local lead notes
   fi
 done
 if [ $M = main ]; then

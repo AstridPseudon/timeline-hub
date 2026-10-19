@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+# inbox-merge HUB LOCAL: append to LOCAL every "## " section of HUB whose header line LOCAL doesn't contain (never removes local notes).
+import sys
+hub, loc = sys.argv[1], sys.argv[2]
+try: lt = open(loc).read()
+except FileNotFoundError: lt = ""
+ht = open(hub).read()
+secs, cur = [], []
+for line in ht.splitlines(keepends=True):
+    if line.startswith("## ") and cur: secs.append("".join(cur)); cur = []
+    cur.append(line)
+if cur: secs.append("".join(cur))
+have = set(l.strip() for l in lt.splitlines() if l.startswith("## "))
+new = [s for s in secs if s.startswith("## ") and s.splitlines()[0].strip() not in have]
+if new:
+    with open(loc, "a") as f:
+        for s in new: f.write(("" if lt.endswith("\n\n") else "\n") + s)
