@@ -38,7 +38,8 @@ from collections.abc import Mapping
 from functools import wraps
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from .errors import AuthorizationError, ConflictError, NotFoundError, ValidationError, LeaseError, InvalidRequestError, RealmAdmissionError
+from urllib.parse import quote
+from .errors import RuntimeErrorBase, AuthorizationError, ForbiddenError, ConflictError, NotFoundError, ValidationError, LeaseError, InvalidRequestError, RealmAdmissionError
 from .contract_metadata import PROTOCOL, SCHEMA_DIGEST
 from .dirfd import close_pinned as _close_pinned, mkdir_chain_at as _mkdir_chain_at, open_directory_chain as _open_directory_chain, pin_directory as _pin_directory, write_bytes_at as _write_bytes_at
 from .shot_dependencies import analyze_invalidation
@@ -486,6 +487,10 @@ class RuntimeService:
         self._verified = False
         self._admission_failure = None
         self._readiness_callback = None
+        self._timeline_commit_provider = None
+        self._timeline_commit_started = False
+        self._timeline_commit_store = None
+        self._timeline_commit_coordinator = None
         try:
             if not self.store.admission_report.get("ok"):
                 raise RealmAdmissionError(
@@ -1346,8 +1351,9 @@ class RuntimeService:
         if not row: raise NotFoundError("timeline not found")
         shots = [dict(x) for x in self.store.conn.execute("SELECT * FROM timeline_shots WHERE timeline_id=?", (timeline_id,))]
         refs = [dict(x) for x in self.store.conn.execute("SELECT * FROM timeline_references WHERE timeline_id=?", (timeline_id,))]
-        head = self.store.conn.execute("SELECT revision_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, row["project_id"])).fetchone()
+        head = self.store.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, row["project_id"])).fetchone()
         result = {"timeline_id": row["id"], "project_id": row["project_id"], "version": row["version"], "name": row["name"], "head_revision_id": head["revision_id"] if head else None, "archived": bool(row["archived_at"]), "shots": [{"shot_id": x["id"], "start_ms": x["start_ms"], "duration_ms": x["duration_ms"], "reference_ids": json.loads(x["reference_ids_json"])} for x in shots], "references": [{"reference_id": x["id"], "object_id": x["object_id"], **({"role": x["role"]} if x["role"] else {})} for x in refs]}
+        result["head_publication_id"] = head["publication_id"] if head else None
         document = self.store.conn.execute("SELECT content_json, version FROM project_documents WHERE id=? AND project_id=?", (f"timeline:{timeline_id}", row["project_id"])).fetchone()
         if document:
             content = json.loads(document["content_json"])
@@ -1902,6 +1908,10 @@ class RuntimeService:
         self._record_timeline_revision(timeline_id, resource)
         self._record_legacy_timeline_revision(timeline_id, resource)
         event_id = self.store._append_timeline_event(timeline_id, "timeline.created", {"project_id": project["id"]})
+        if self._timeline_commit_provider is not None:
+            commits, _ = self._timeline_commits()
+            commits.bootstrap(project["id"], timeline_id, authorize=self._assert_mutation_admitted)
+            resource = self._timeline_resource(timeline_id)
         event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
         return self._command_record(
             "timeline.create", "timelines", idempotency_key, request_hash,
@@ -2016,7 +2026,7 @@ class RuntimeService:
         else:
             result = self._publication_replay_result(row) if row["command_kind"] == "parent_composition.publish" else command_result(
                 row["result_json"], kind=row["command_kind"], connection=self.store.conn,
-                created_at=None if row["command_kind"] in {"object.ingest", "media.import"} else row["created_at"],
+                created_at=None if row["command_kind"] in {"object.ingest", "media.import", "timeline.commit"} else row["created_at"],
             )
         return {
             "receipt_id": row["txn_id"],
@@ -2130,7 +2140,7 @@ class RuntimeService:
             raise ConflictError("idempotency key was already used with different input")
         result = self._publication_replay_result(prior) if kind == "parent_composition.publish" else command_result(
             prior["result_json"], kind=kind, connection=self.store.conn,
-            created_at=None if kind in {"object.ingest", "media.import"} else prior["created_at"],
+            created_at=None if kind in {"object.ingest", "media.import", "timeline.commit"} else prior["created_at"],
             window_seconds=SESSION_IDEMPOTENCY_WINDOW_SECONDS if kind in {"task.claim", "executor.register"} else IDEMPOTENCY_RESULT_WINDOW_SECONDS,
         )
         if project_id is not None and with_receipt:
@@ -2548,170 +2558,187 @@ class RuntimeService:
             skip_after=lambda key, after: key >= after,
         )
 
-    @_durable_mutation
-    def restore_project_parent_composition_revision(self, project_id, timeline_id, revision, body, *, idempotency_key=None):
-        """Restore an exact historical closure by publishing it as a new head."""
+    def register_timeline_commit_provider(self, provider):
+        from .timeline_commit_port import validate_provider
+        validate_provider(provider)
+        from .timeline_commit import CommitRejected
+        with self.store._mutex:
+            if self._timeline_commit_started or self._timeline_commit_provider is not None:
+                raise ValidationError("timeline provider registration is startup-only")
+            commits, _ = self._timeline_commits()
+            # Install verified legacy facts before serving requests. Preview
+            # and rejected edits must never persist baseline/history rows.
+            heads = self.store.conn.execute(
+                "SELECT project_id, timeline_id FROM parent_composition_heads "
+                "WHERE revision_id IS NOT NULL AND publication_id IS NULL",
+            ).fetchall()
+            for head in heads:
+                try:
+                    commits.install_verified_baseline(head["project_id"], head["timeline_id"],
+                                                      authorize=self._assert_mutation_admitted)
+                except (CommitRejected, ConflictError):
+                    pass  # An unprovable existing timeline stays read-only.
+            self._timeline_commit_provider = provider
+
+    def _timeline_commits(self):
+        from .timeline_commit_validation import validate_commit_value
+        from .timeline_commit_execution import CommitExecutionCoordinator
+        from .timeline_commit_store import TimelineCommitStore
+        with self.store._mutex:
+            if self._timeline_commit_store is None:
+                self._timeline_commit_store = TimelineCommitStore(
+                    self.store, validate_prepared=lambda value: validate_commit_value(value, "PreparedCommit"),
+                )
+                self._timeline_commit_coordinator = CommitExecutionCoordinator(self._timeline_commit_store)
+            return self._timeline_commit_store, self._timeline_commit_coordinator
+
+    def _timeline_authorize(self, project_id, timeline_id, authorize, *, mutation=True):
+        if not callable(authorize):
+            raise AuthorizationError("authenticated timeline authority callback is required")
+        def check():
+            authorize()
+            if mutation:
+                self._assert_mutation_admitted()
+            project = self.store.get_project(project_id)
+            if project["id"] != project_id or project["realm_id"] != self.realm["id"]:
+                raise AuthorizationError("canonical project identity is required")
+            if timeline_id is not None:
+                row = self.store.conn.execute(
+                    "SELECT 1 FROM timelines WHERE id=? AND project_id=? AND archived_at IS NULL",
+                    (timeline_id, project_id),
+                ).fetchone()
+                if row is None:
+                    raise NotFoundError("timeline not found")
+        with self.store._mutex:
+            check()
+        return check
+
+    def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key,
+                        publisher, invocation_path, authorize):
+        from .timeline_commit_port import detached, route_path, validate_request
+        body = detached(body)
+        validate_request(body)
+        if (body["project_id"], body["timeline_id"]) != (project_id, timeline_id):
+            raise ValidationError("commit path and body identities must agree")
+        if invocation_path != route_path(project_id, timeline_id):
+            raise ValidationError("commit invocation must use its canonical Runtime path")
+        return self._execute_timeline_commit(
+            project_id, timeline_id, body, body, operation="commitTimeline",
+            idempotency_key=idempotency_key, publisher=publisher,
+            invocation_path=invocation_path, authorize=authorize,
+        )
+
+    def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
+                                 operation, idempotency_key, publisher, invocation_path, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        if not isinstance(publisher, str) or not publisher:
+            raise AuthorizationError("authenticated publisher is required")
         idempotency_key = require_idempotency_key(idempotency_key)
-        self._require_object_body(body)
-        allowed = {"expected_head"}
-        unexpected = set(body) - allowed
-        if unexpected:
-            raise ValidationError("parent composition restore contains unsupported fields", details={"fields": sorted(unexpected)})
-        if "expected_head" not in body:
-            raise ValidationError("expected_head is required for parent composition restore")
-        expected_head = body.get("expected_head")
-        if expected_head is not None:
-            self._revision_id(expected_head, "expected_head")
-        project = self.store.get_project(project_id)
-        source = self.get_project_parent_composition_revision(project["id"], timeline_id, revision)
-        parent_payload = source["payload"]
-        if self._revision_digest(parent_payload) != source["content_digest"]:
-            raise ConflictError(
-                "historical parent composition failed immutable verification",
-                details={"revision_id": revision},
-            )
-        canonical_parent_payload = self._complete_parent_payload(copy.deepcopy(parent_payload))
-        if canonical_json(canonical_parent_payload) != canonical_json(parent_payload):
-            raise ConflictError(
-                "historical parent composition is non-canonical and cannot be restored exactly",
-                details={"revision_id": revision},
-            )
-        occurrences = parent_payload.get("occurrences") if isinstance(parent_payload, dict) else None
-        if not isinstance(occurrences, list):
-            raise ValidationError("historical parent composition occurrences must be a list")
+        check = self._timeline_authorize(project_id, timeline_id, authorize)
+        invocation = {"operation": operation, "path": invocation_path, "body": detached(original_body)}
+        request_hash = hashlib.sha256(canonical_json({
+            "operation": operation, "path": invocation_path,
+            "publisher": publisher, "request": invocation["body"],
+        }).encode()).hexdigest()
+        context = {"request": detached(request), "invocation": invocation,
+                   "request_hash": request_hash, "idempotency_key": idempotency_key,
+                   "publisher": publisher, "realm_id": self.realm["id"]}
+        commits, coordinator = self._timeline_commits()
+        with self.store._mutex:
+            self._timeline_commit_started = True
+            provider = self._timeline_commit_provider
+        def port_factory(bound_context):
+            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
+            return RequestCommitPort(self, commits, bound_context, check)
+        try:
+            if provider is None:
+                replay = commits.lookup(context, authorize=check)
+                if replay is not None:
+                    return replay
+                raise CommitUnavailable()
+            outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+            if "http_status" in outcome:
+                raise public_failure(outcome)
+            return outcome
+        except CommitRejected as exc:
+            raise public_failure(exc.failure) from exc
+        except (AuthorizationError, ForbiddenError, NotFoundError, ValidationError, ConflictError):
+            raise
+        except RuntimeErrorBase:
+            raise
+        except Exception as exc:
+            raise CommitUnavailable() from exc
 
-        # Restore the exact historical dependency closure only after the
-        # store's existing publication-ledger validator proves the source
-        # rows. This preserves manifest-only declared media without treating
-        # raw dependency rows as provenance or creating a second validator.
-        integrity = self.store.integrity_report(
-            timeout_seconds=self.store.admission_timeout,
-        )
-        checks = integrity.get("checks", {}) if isinstance(integrity, dict) else {}
-        revision_check = checks.get("revisions", {})
-        event_check = checks.get("event_chain", {})
-        revision_errors = revision_check.get("errors", []) if isinstance(revision_check, dict) else []
-        event_errors = event_check.get("errors", []) if isinstance(event_check, dict) else []
-        integrity_shape_ok = (
-            isinstance(revision_check, dict)
-            and "ok" in revision_check
-            and isinstance(revision_errors, list)
-            and isinstance(event_check, dict)
-            and "ok" in event_check
-            and event_check.get("reason") != "not_checked"
-            and isinstance(event_errors, list)
-        )
-        if not isinstance(revision_errors, list):
-            revision_errors = []
-        if not isinstance(event_errors, list):
-            event_errors = []
-        source_errors = [
-            error for error in revision_errors
-            if isinstance(error, dict)
-            and (
-                str(error.get("identity", "")) == revision
-                or str(error.get("identity", "")).startswith(revision + ":")
-            )
-        ]
-        source_errors.extend(
-            error for error in event_errors
-            if isinstance(error, dict) and error.get("timeline_id") == timeline_id
-        )
-        if not integrity_shape_ok:
-            source_errors.append({"reason": "integrity_report_unavailable"})
-        if source_errors:
-            raise ConflictError(
-                "historical parent composition dependency closure failed immutable verification",
-                details={"revision_id": revision, "errors": source_errors},
-            )
-        verified_dependencies = self.store.conn.execute(
-            "SELECT dependency_kind, dependency_id FROM composition_revision_dependencies "
-            "WHERE parent_revision_id=? ORDER BY ordinal",
-            (revision,),
-        ).fetchall()
-
-        shot_revisions = {}
-        internal_revisions = {}
-        media = {
-            row["dependency_id"]
-            for row in verified_dependencies
-            if row["dependency_kind"] == "media"
-        }
-        for occurrence in occurrences:
-            if not isinstance(occurrence, dict):
-                raise ValidationError("historical parent composition occurrence must be an object")
-            shot_id = occurrence.get("shot_id")
-            shot_revision_id = occurrence.get("shot_revision_id")
-            if not isinstance(shot_id, str) or not isinstance(shot_revision_id, str):
-                raise ValidationError("historical occurrence is missing its pinned shot identity")
-            shot_key = (shot_id, shot_revision_id)
-            if shot_key in shot_revisions:
-                continue
-            shot = self.store.conn.execute(
-                "SELECT * FROM shot_revisions WHERE id=? AND project_id=? AND shot_id=?",
-                (shot_revision_id, project["id"], shot_id),
+    def _ensure_timeline_commit_baseline(self, commits, project_id, timeline_id, authorize):
+        with self.store._mutex:
+            authorize()
+            row = self.store.conn.execute(
+                "SELECT publication_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?",
+                (project_id, timeline_id),
             ).fetchone()
-            if shot is None:
-                raise ConflictError("historical shot revision dependency is missing", details={"revision_id": shot_revision_id})
-            shot_payload = json.loads(shot["payload_json"])
-            if self._revision_digest(shot_payload) != shot["content_digest"]:
-                raise ConflictError("historical shot revision failed immutable verification", details={"revision_id": shot_revision_id})
-            internal_id = shot["internal_timeline_revision_id"]
-            internal = self.store.conn.execute(
-                "SELECT * FROM internal_timeline_revisions WHERE id=? AND project_id=?",
-                (internal_id, project["id"]),
-            ).fetchone()
-            if internal is None:
-                raise ConflictError("historical internal timeline dependency is missing", details={"revision_id": internal_id})
-            internal_payload = json.loads(internal["payload_json"])
-            if self._revision_digest(internal_payload) != internal["content_digest"]:
-                raise ConflictError("historical internal timeline revision failed immutable verification", details={"revision_id": internal_id})
-            shot_revisions[shot_key] = {
-                "shot_id": shot_id,
-                "revision_id": shot_revision_id,
-                "internal_timeline_revision_id": internal_id,
-                "content_digest": shot["content_digest"],
-                "payload": shot_payload,
-            }
-            internal_revisions[(internal["timeline_id"], internal_id)] = {
-                "timeline_id": internal["timeline_id"],
-                "revision_id": internal_id,
-                "content_digest": internal["content_digest"],
-                "payload": internal_payload,
-            }
-            media.update(self._collect_digest_media(shot_payload))
-            media.update(self._collect_digest_media(internal_payload))
+            if row is None or row["publication_id"] is None:
+                commits.head(project_id, timeline_id)
 
-        dependency_manifest = {
-            "shots": [
-                {key: value[key] for key in ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest")}
-                for value in sorted(shot_revisions.values(), key=lambda item: (item["shot_id"], item["revision_id"]))
-            ],
-            "internal_timelines": [
-                {key: value[key] for key in ("timeline_id", "revision_id", "content_digest")}
-                for value in sorted(internal_revisions.values(), key=lambda item: (item["timeline_id"], item["revision_id"]))
-            ],
-            "media": sorted(media),
-        }
-        parent_revision_id = "restore-" + hashlib.sha256(canonical_json({
-            "project_id": project["id"],
-            "timeline_id": timeline_id,
-            "source_revision_id": revision,
-            "expected_head": expected_head,
-            "idempotency_key": idempotency_key,
-        }).encode()).hexdigest()[:48]
-        publication = {
-            "project_id": project["id"],
-            "timeline_id": timeline_id,
-            "expected_head": expected_head,
-            "parent_revision_id": parent_revision_id,
-            "parent_composition": parent_payload,
-            "shot_revisions": list(shot_revisions.values()),
-            "internal_timeline_revisions": list(internal_revisions.values()),
-            "dependency_manifest": dependency_manifest,
-        }
-        return self.publish_parent_composition(
-            project["id"], timeline_id, publication, idempotency_key=idempotency_key,
+    def list_timeline_commits(self, project_id, timeline_id, *, cursor=None,
+                              limit=PAGE_DEFAULT_LIMIT, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import public_failure
+        check = self._timeline_authorize(project_id, timeline_id, authorize, mutation=False)
+        commits, _ = self._timeline_commits()
+        try:
+            with self.store._mutex:
+                check()
+                self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
+                # The store's opaque cursor includes the original fixed head.
+                if cursor is None:
+                    through = commits.head(project_id, timeline_id)
+                else:
+                    try:
+                        decoded = json.loads(base64.urlsafe_b64decode(cursor.encode()))
+                        scope = decoded["scope"]
+                        if scope[:2] != [project_id, timeline_id] or scope[3] is not None:
+                            raise ValueError()
+                        through = scope[2]
+                    except (ValueError, KeyError, TypeError, IndexError) as exc:
+                        raise ValidationError("invalid commit history cursor") from exc
+                return commits.history(project_id, timeline_id, through, cursor=cursor, limit=limit)
+        except CommitRejected as exc:
+            raise public_failure(exc.failure) from exc
+
+    def get_project_media_selection(self, project_id, selectors, *, authorize):
+        from .timeline_commit_port import MediaReads, detached
+        selectors = detached(selectors)
+        if not isinstance(selectors, dict) or set(selectors) not in (
+                {"asset", "generation_id", "variant_id"}, {"association_id", "object_id", "version"}):
+            raise ValidationError("exactly one complete media selector form is required")
+        check = self._timeline_authorize(project_id, None, authorize, mutation=False)
+        with self.store._mutex:
+            check()
+            return MediaReads(self).selection(project_id, **selectors)
+
+    def restore_project_parent_composition_revision(self, project_id, timeline_id, revision, body, *,
+                                                    idempotency_key=None, publisher=None,
+                                                    invocation_path=None, authorize=None):
+        from .timeline_commit_port import detached, route_path
+        body = detached(body)
+        if not isinstance(body, dict) or set(body) != {"expected_head", "expected_publication_id"}:
+            raise ValidationError("restore requires expected_head and expected_publication_id only")
+        if any(not isinstance(value, str) or not value for value in body.values()):
+            raise ValidationError("restore requires both nonempty head guards")
+        expected_path = route_path(project_id, timeline_id,
+                                   "composition-revisions/" + quote(revision, safe="") + "/restore")
+        if invocation_path != expected_path:
+            raise ValidationError("restore invocation must use its canonical Runtime path")
+        request = {"api_version": 1, "project_id": project_id, "timeline_id": timeline_id,
+                   "base_revision_id": body["expected_head"],
+                   "base_publication_id": body["expected_publication_id"], "dry_run": False,
+                   "commands": [{"schema_version": 1, "op": "timeline.restore", "version": "1",
+                                 "select": None, "args": {"revision_id": revision}}]}
+        return self._execute_timeline_commit(
+            project_id, timeline_id, request, body, operation="restoreProjectParentCompositionRevision",
+            idempotency_key=idempotency_key, publisher=publisher,
+            invocation_path=invocation_path, authorize=authorize,
         )
 
     def inspect_timeline(self, project, timeline_id, options=None):
@@ -3127,7 +3154,10 @@ class RuntimeService:
         timeline = self.store.conn.execute("SELECT * FROM timelines WHERE id=?", (timeline_id,)).fetchone()
         if timeline and timeline["project_id"] != project["id"]:
             raise ConflictError("timeline belongs to a different project")
-        current_head_row = self.store.conn.execute("SELECT revision_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, project["id"])).fetchone()
+        current_head_row = self.store.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, project["id"])).fetchone()
+        if current_head_row is not None and current_head_row["publication_id"] is not None:
+            raise ConflictError("tracked timeline publication requires a timeline command",
+                                details={"status": "refused", "reason": "timeline_commit_required"})
         current_head = current_head_row["revision_id"] if current_head_row else None
         if current_head != expected_head:
             # details.reason is the stable machine-readable discriminator for a lost
@@ -3441,7 +3471,7 @@ class RuntimeService:
             else:
                 self.store.conn.execute("UPDATE shot_revision_heads SET revision_id=?, updated_at=? WHERE shot_id=? AND project_id=?", (value["revision_id"], timestamp, value["shot_id"], project["id"]))
         self.store.conn.execute("INSERT OR IGNORE INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, NULL, ?)", (timeline_id, project["id"], timestamp))
-        changed = self.store.conn.execute("UPDATE parent_composition_heads SET revision_id=?, updated_at=? WHERE timeline_id=? AND project_id=? AND revision_id IS ?", (parent_revision_id, timestamp, timeline_id, project["id"], expected_head)).rowcount
+        changed = self.store.conn.execute("UPDATE parent_composition_heads SET revision_id=?, publication_id=NULL, updated_at=? WHERE timeline_id=? AND project_id=? AND revision_id IS ?", (parent_revision_id, timestamp, timeline_id, project["id"], expected_head)).rowcount
         if changed != 1:
             raise ConflictError("parent composition head is stale", details={"reason": "stale_head", "expected_head": expected_head})
         event_payload = {"project_id": project["id"], "timeline_id": timeline_id, "old_head": expected_head, "new_head": parent_revision_id, "content_digest": parent_digest, "dependency_manifest": manifest}
