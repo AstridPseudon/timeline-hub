@@ -274,3 +274,35 @@ def test_exact_published_show_uses_loaded_revision_after_head_moves(monkeypatch,
     payload = json.loads(capsys.readouterr().out)["data"]
     assert code == 0
     assert payload["revision_id"] == "accepted-revision"
+
+
+def test_exact_published_show_rejects_a_different_loaded_revision(capsys):
+    doc = bundle()
+    doc["base_parent"]["revision_id"] = "loaded-revision"
+
+    def open_wrong(project, ref, revision_id=None):
+        return DomainResult.success({"bundle": copy.deepcopy(doc), "project_id": "p", "timeline_id": "t"})
+
+    code = cli._print_cut_table(ns(published=True, revision_id="requested-revision"), open_wrong)
+    captured = capsys.readouterr()
+    out = captured.out + captured.err
+
+    assert code == 1
+    assert "different revision than requested" in out
+
+
+def test_published_show_rejects_missing_immutable_revision_identity(capsys):
+    doc = bundle()
+    doc["base_parent"].pop("revision_id")
+
+    def open_missing(project, ref, revision_id=None):
+        return DomainResult.success({
+            "bundle": copy.deepcopy(doc), "revision_id": revision_id, "head_revision_id": revision_id,
+        })
+
+    code = cli._print_cut_table(ns(published=True, revision_id="requested-revision"), open_missing)
+    captured = capsys.readouterr()
+    out = captured.out + captured.err
+
+    assert code == 1
+    assert "omitted its revision identity" in out

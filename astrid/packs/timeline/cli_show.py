@@ -22,9 +22,9 @@ from astrid.sdk.contracts import ErrorObject
 def _loaded_revision(data: Mapping[str, Any]) -> str | None:
     """Return the immutable revision represented by the loaded bundle.
 
-    ``revision_id`` in an adapter envelope can be the requested pin or a
-    known head label. The canonical bundle's parent image is the actual
-    readback identity, so it wins whenever present.
+    Only the immutable parent image proves which revision was loaded.
+    Envelope fields may repeat the requested id or a moving head label and
+    therefore cannot establish readback identity.
     """
     bundle = data.get("bundle")
     if isinstance(bundle, Mapping):
@@ -33,15 +33,21 @@ def _loaded_revision(data: Mapping[str, Any]) -> str | None:
             revision = parent.get("revision_id")
             if isinstance(revision, str) and revision:
                 return revision
-        parent = bundle.get("parent")
-        if isinstance(parent, Mapping):
-            revision = parent.get("revision_id")
-            if isinstance(revision, str) and revision:
-                return revision
-    for key in ("revision_id", "accepted_revision_id"):
-        revision = data.get(key)
-        if isinstance(revision, str) and revision:
-            return revision
+    return None
+
+
+def _readback_error(data: Mapping[str, Any], requested_revision: str | None) -> DomainResult | None:
+    loaded_revision = _loaded_revision(data)
+    if loaded_revision is None:
+        return DomainResult.failure(
+            ErrorObject("protocol_error", "immutable timeline read omitted its revision identity", {})
+        )
+    if requested_revision is not None and loaded_revision != requested_revision:
+        return DomainResult.failure(ErrorObject(
+            "protocol_error",
+            "immutable timeline read returned a different revision than requested",
+            {"requested_revision_id": requested_revision, "loaded_revision_id": loaded_revision},
+        ))
     return None
 
 
@@ -70,11 +76,11 @@ def show_checkout(parsed: argparse.Namespace, bundle_opener: Any) -> tuple[Any, 
         return print_result(DomainResult.failure(
             ErrorObject("protocol_error", "immutable timeline read omitted its bundle", {})
         ), as_json=False)
+    readback_error = _readback_error(opened.data, getattr(parsed, "revision_id", None))
+    if readback_error is not None:
+        return print_result(readback_error, as_json=False)
     loaded_revision = _loaded_revision(opened.data)
-    if loaded_revision is None:
-        return print_result(DomainResult.failure(
-            ErrorObject("protocol_error", "immutable timeline read omitted its revision identity", {})
-        ), as_json=False)
+    assert loaded_revision is not None
     tl = Checkout(dict(bundle))
     return tl, f"PUBLISHED {short_rev(loaded_revision)}"
 
@@ -183,11 +189,11 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
         return print_result(DomainResult.failure(
             ErrorObject("protocol_error", "immutable timeline read omitted its bundle", {})
         ), as_json=bool(parsed.json))
+    readback_error = _readback_error(data, getattr(parsed, "revision_id", None))
+    if readback_error is not None:
+        return print_result(readback_error, as_json=bool(parsed.json))
     loaded_revision = _loaded_revision(data)
-    if loaded_revision is None:
-        return print_result(DomainResult.failure(
-            ErrorObject("protocol_error", "immutable timeline read omitted its revision identity", {})
-        ), as_json=bool(parsed.json))
+    assert loaded_revision is not None
     # The working copy (unpublished draft) is what show reads unless --published or an exact revision is asked for.
     working = None
     if not getattr(parsed, "published", False) and not getattr(parsed, "revision_id", None):
@@ -205,9 +211,12 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
             f"WORKING COPY · {clips_changed(len(changes))} vs published {working['base_revision']} · "
             "--published for the live version"
         ]
-    is_current_head = data.get("is_current_head")
-    if loaded_revision and data.get("head_revision_id"):
-        is_current_head = loaded_revision == data.get("head_revision_id")
+    head_revision_id = data.get("head_revision_id")
+    is_current_head = (
+        loaded_revision == head_revision_id
+        if isinstance(head_revision_id, str) and head_revision_id
+        else None
+    )
     if parsed.json:
         payload = cut_table_payload(bundle, table)
         payload.update({
@@ -225,7 +234,12 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
             as_json=True,
         )
     revision = str(loaded_revision or "")
-    state = "current head" if is_current_head else f"saved revision (current head is {data.get('head_revision_id')})"
+    if is_current_head is True:
+        state = "current head"
+    elif head_revision_id:
+        state = f"saved revision (current head is {head_revision_id})"
+    else:
+        state = "saved revision (current head is unavailable)"
     title = f"Timeline {data.get('timeline_id')} · project {parsed.project or data.get('project_id')} · {state}\n  revision {revision}"
     project = str(parsed.project or data.get("project_id"))
     timeline = str(parsed.ref or data.get("timeline_id"))
@@ -308,7 +322,7 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
     if info is not None:
         lines.insert(len(lines) - 1, paging_hint(table, rows, shown, info))
     visual = ["python3", "-m", "astrid", "timelines", "visualize", timeline, "--project", project]
-    if not data.get("is_current_head"):
+    if is_current_head is not True:
         visual += ["--revision-id", revision]
     if shown and (getattr(parsed, "range", None) or getattr(parsed, "shot", None) or info is not None):
         low, high = shown[0]["start"], shown[-1]["end"]

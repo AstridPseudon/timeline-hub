@@ -25,7 +25,6 @@ CANNOT_LIST = (
     "this Runtime cannot list revisions (it serves a composition revision by id and names no parent, "
     "so history cannot walk back from the head)"
 )
-_UNREPORTED_PROVENANCE = object()
 
 
 @dataclass(frozen=True)
@@ -37,36 +36,12 @@ class Revision:
     message: str | None
     publication_id: str | None = None
     previous_publication_id: str | None = None
-    restored_from_revision_id: str | None = None
-    provenance: Mapping[str, Any] | None = None
-    is_current_head: bool | None = None
-    content_digest: str | None = None
 
 
-def publisher_identity(provenance: Any) -> str | None:
-    """Return accepted publisher identity from Runtime provenance, if present."""
-    if not isinstance(provenance, Mapping):
-        return None
-    publisher = provenance.get("publisher")
-    if isinstance(publisher, str) and publisher:
-        return publisher
-    if isinstance(publisher, Mapping):
-        kind, identity = publisher.get("kind"), publisher.get("id")
-        if kind in {"agent", "human"} and isinstance(identity, str) and identity:
-            return f"{kind}:{identity}"
-    return None
-
-
-def revision_source(revision_id: str, provenance: Any = _UNREPORTED_PROVENANCE) -> str:
-    """Classify a revision, preferring explicit accepted publication provenance."""
-    if isinstance(provenance, Mapping):
-        if _text(provenance.get("via")):
-            return provenance["via"]
-        source = provenance.get("source")
-        if isinstance(source, Mapping) and _text(source.get("via")):
-            return source["via"]
-    if provenance is not _UNREPORTED_PROVENANCE:
-        return "other"
+def revision_source(revision_id: str, source: Any = None) -> str:
+    """Classify a revision, preferring the accepted source label when present."""
+    if isinstance(source, Mapping) and _text(source.get("via")):
+        return source["via"]
     for prefix, source in _SOURCE_PREFIXES:
         if revision_id.startswith(prefix):
             return source
@@ -107,18 +82,8 @@ class RuntimeRevisions(RevisionStore):
         commits = self._commit_reader(project, timeline)
         if commits is not None:
             page = self._result_data(commits(project, timeline, cursor=None, limit=1),
-                                      timeline=timeline, operation="read")
-            head_data = page.get("head") if page else None
-            head = _text(head_data.get("revision_id")) if isinstance(head_data, Mapping) else None
-            if head is not None:
-                return head
-        compact = getattr(self._client, "head_canonical", None) or getattr(self._client, "head", None)
-        if callable(compact):
-            result = compact(project, timeline)
-            data = getattr(result, "data", result)
-            if not getattr(result, "ok", True) or not isinstance(data, Mapping):
-                raise TimelineEditError(f"could not read the head of {timeline!r} in {project!r}")
-            head = _text(data.get("revision_id") or data.get("head_revision_id"))
+                                     timeline=timeline, operation="read")
+            head = self._head_pair(page, timeline=timeline)[0]
         else:
             data = self._open(project, timeline, None)
             summary = data.get("summary") or {}
@@ -130,24 +95,15 @@ class RuntimeRevisions(RevisionStore):
     def get(self, project: str, timeline: str, revision_id: str) -> Revision:
         data = self._open(project, timeline, revision_id)
         summary = data.get("summary") or {}
-        provenance = summary.get("provenance", _UNREPORTED_PROVENANCE)
         actual_id = _text(summary.get("revision_id")) or revision_id
-        head_id = _text(summary.get("head_revision_id"))
-        current = summary.get("is_current_head") if isinstance(summary.get("is_current_head"), bool) else (
-            actual_id == head_id if head_id is not None else None
-        )
         return Revision(
             id=actual_id,
-            source=revision_source(actual_id, provenance),
+            source=revision_source(actual_id),
             created_at=_text(summary.get("created_at")) or _text(summary.get("accepted_at")),
             parent=_text(summary.get("previous_revision_id")) or _text(summary.get("parent_revision_id")),
             message=_text(summary.get("message")) or _text(summary.get("label")),
             publication_id=_text(summary.get("publication_id")),
             previous_publication_id=_text(summary.get("previous_publication_id")),
-            restored_from_revision_id=_text(summary.get("restored_from_revision_id")),
-            provenance=None if provenance is _UNREPORTED_PROVENANCE else provenance,
-            is_current_head=current,
-            content_digest=_text(summary.get("content_digest")),
         )
 
     def list(self, project: str, timeline: str, *, limit: int = 50) -> list[Revision] | None:
@@ -162,39 +118,18 @@ class RuntimeRevisions(RevisionStore):
         current = head
         while current.parent is not None and len(out) < limit:
             if current.parent in seen:  # a cycle in stored data must not loop forever
-                break
+                raise TimelineEditError(f"{timeline!r} in {project!r} has cyclic revision ancestry")
             current = self.get(project, timeline, current.parent)
             seen.add(current.id)
             out.append(current)
         return out
 
     def _commit_reader(self, project: str, timeline: str) -> Any | None:
-        """Find the frozen commit-history read on direct or wrapped clients."""
+        """Find the public frozen commit-history method, if this client has it."""
         direct = getattr(self._client, "list_timeline_commits", None)
         if callable(direct):
             return direct
-
-        # RemoteTimelines is the product adapter around WorkspaceClient. The
-        # generated client is intentionally not edited in this repo; consume
-        # its new read method when Runtime integration supplies it.
-        workspace = getattr(self._client, "_client", None)
-        generated = getattr(workspace, "_generated", None)
-        generated_reader = getattr(generated, "list_timeline_commits", None)
-        if not callable(generated_reader):
-            return None
-        project_id, timeline_id = project, timeline
-        resolve_scope = getattr(self._client, "resolve_scope", None)
-        if callable(resolve_scope):
-            scope = resolve_scope(project, timeline)
-            scope_data = self._result_data(scope, timeline=timeline, operation="resolve")
-            if scope_data is not None:
-                project_id = scope_data.get("project_id") or scope_data.get("project_ref") or project
-                timeline_id = scope_data.get("timeline_id") or timeline
-
-        def read(_project: str, _timeline: str, *, cursor: str | None = None, limit: int = 50) -> Any:
-            return generated_reader(project_id, timeline_id, cursor=cursor, limit=limit)
-
-        return read
+        return None
 
     @staticmethod
     def _result_data(result: Any, *, timeline: str, operation: str) -> Mapping[str, Any] | None:
@@ -212,35 +147,78 @@ class RuntimeRevisions(RevisionStore):
             return None
         raise TimelineEditError(f"Runtime {operation} returned an invalid revision page")
 
-    @classmethod
-    def _history_revision(cls, row: Mapping[str, Any], *, head: Mapping[str, Any] | None) -> Revision:
+    @staticmethod
+    def _head_pair(page: Mapping[str, Any] | None, *, timeline: str) -> tuple[str, str]:
+        head = page.get("head") if isinstance(page, Mapping) else None
+        if not isinstance(head, Mapping):
+            raise TimelineEditError(f"Runtime revision history omitted its head for {timeline!r}")
+        revision_id = _text(head.get("revision_id"))
+        publication_id = _text(head.get("publication_id"))
+        if revision_id is None or publication_id is None:
+            raise TimelineEditError(f"Runtime revision history returned an incomplete head for {timeline!r}")
+        return revision_id, publication_id
+
+    @staticmethod
+    def _history_item(row: Mapping[str, Any], *, timeline: str) -> tuple[str, str, str | None, str | None]:
+        required = ("publication_id", "revision_id", "previous", "receipt", "intent",
+                    "records", "provider_version", "compiler_version", "publisher")
+        missing = [key for key in required if key not in row]
+        if missing:
+            raise TimelineEditError(
+                f"Runtime revision history item omitted required field(s): {', '.join(missing)}"
+            )
+        publication_id = _text(row.get("publication_id"))
+        revision_id = _text(row.get("revision_id"))
+        if publication_id is None or revision_id is None:
+            raise TimelineEditError(f"Runtime revision history returned an invalid item for {timeline!r}")
+        previous = row.get("previous")
+        if previous is None:
+            previous_publication = previous_revision = None
+        elif isinstance(previous, Mapping):
+            previous_publication = _text(previous.get("publication_id"))
+            previous_revision = _text(previous.get("revision_id"))
+            if previous_publication is None or previous_revision is None:
+                raise TimelineEditError(f"Runtime revision history returned an incomplete previous head for {timeline!r}")
+        else:
+            raise TimelineEditError(f"Runtime revision history returned an invalid previous head for {timeline!r}")
+        if not isinstance(row.get("receipt"), Mapping):
+            raise TimelineEditError(f"Runtime revision history returned an invalid receipt for {timeline!r}")
+        if row.get("intent") not in {"recorded", "legacy_unknown", "bootstrap"}:
+            raise TimelineEditError(f"Runtime revision history returned an invalid intent for {timeline!r}")
+        if row.get("records") is not None and not isinstance(row.get("records"), Mapping):
+            raise TimelineEditError(f"Runtime revision history returned invalid records for {timeline!r}")
+        for key in ("provider_version", "compiler_version", "publisher"):
+            value = row.get(key)
+            if value is not None and not isinstance(value, str):
+                raise TimelineEditError(f"Runtime revision history returned an invalid {key} for {timeline!r}")
+        source = row.get("source")
+        if source is not None and (
+            not isinstance(source, Mapping)
+            or source.get("via") not in {"cli", "python", "app", "script", "sheet"}
+            or ("detail" in source and not isinstance(source.get("detail"), str))
+        ):
+            raise TimelineEditError(f"Runtime revision history returned an invalid source for {timeline!r}")
+        return publication_id, revision_id, previous_publication, previous_revision
+
+    @staticmethod
+    def _history_revision(row: Mapping[str, Any]) -> Revision:
         revision_id = _text(row.get("revision_id"))
         if revision_id is None:
             raise TimelineEditError("Runtime revision history omitted a revision id")
         previous = row.get("previous")
-        if not isinstance(previous, Mapping):
+        if previous is None:
             previous = {}
         receipt = row.get("receipt")
-        if not isinstance(receipt, Mapping):
-            receipt = {}
-        source = row.get("source", _UNREPORTED_PROVENANCE)
-        provenance = row.get("provenance", source)
-        head_revision = _text((head or {}).get("revision_id"))
-        head_publication = _text((head or {}).get("publication_id"))
-        publication_id = _text(row.get("publication_id"))
+        assert isinstance(previous, Mapping)
+        assert isinstance(receipt, Mapping)
         return Revision(
             id=revision_id,
-            source=revision_source(revision_id, provenance),
-            created_at=_text(row.get("created_at")) or _text(receipt.get("created_at")),
-            parent=_text(previous.get("revision_id")) or _text(row.get("previous_revision_id")),
-            message=_text(row.get("message")) or _text(row.get("label")),
-            publication_id=publication_id,
-            previous_publication_id=_text(previous.get("publication_id")) or _text(row.get("previous_publication_id")),
-            restored_from_revision_id=_text(row.get("restored_from_revision_id")),
-            provenance=None if provenance is _UNREPORTED_PROVENANCE else provenance,
-            is_current_head=(publication_id == head_publication if head_publication is not None
-                             else revision_id == head_revision if head_revision is not None else None),
-            content_digest=_text(row.get("content_digest")),
+            source=revision_source(revision_id, row.get("source")),
+            created_at=_text(receipt.get("created_at")),
+            parent=_text(previous.get("revision_id")),
+            message=_text(row.get("label")),
+            publication_id=_text(row.get("publication_id")),
+            previous_publication_id=_text(previous.get("publication_id")),
         )
 
     @classmethod
@@ -254,51 +232,66 @@ class RuntimeRevisions(RevisionStore):
         if limit <= 0:
             return []
         rows: list[Mapping[str, Any]] = []
-        head: Mapping[str, Any] | None = None
+        head_pair: tuple[str, str] | None = None
         cursor: str | None = None
-        seen_cursors: set[str] = set()
+        seen_cursors: set[str | None] = {None}
         while True:
             page = cls._result_data(reader(project, timeline, cursor=cursor, limit=min(200, max(50, limit))),
                                      timeline=timeline, operation="list")
             if page is None:
-                return None
+                raise TimelineEditError(f"Runtime revision history returned no page for {timeline!r}")
+            current_head = cls._head_pair(page, timeline=timeline)
+            if head_pair is None:
+                head_pair = current_head
+            elif current_head != head_pair:
+                raise TimelineEditError(f"Runtime revision history changed its head while paging {timeline!r}")
             raw_items = page.get("items")
             if not isinstance(raw_items, list):
                 raise TimelineEditError("Runtime revision history returned invalid items")
-            rows.extend(row for row in raw_items if isinstance(row, Mapping))
-            raw_head = page.get("head")
-            if isinstance(raw_head, Mapping):
-                head = raw_head
+            for row in raw_items:
+                if not isinstance(row, Mapping):
+                    raise TimelineEditError(f"Runtime revision history returned an invalid item for {timeline!r}")
+                cls._history_item(row, timeline=timeline)
+                rows.append(row)
             next_cursor = page.get("next_cursor")
-            if not isinstance(next_cursor, str) or not next_cursor or next_cursor in seen_cursors:
+            if next_cursor is not None and not isinstance(next_cursor, str):
+                raise TimelineEditError(f"Runtime revision history returned an invalid cursor for {timeline!r}")
+            if next_cursor is None:
                 break
+            if not next_cursor or next_cursor in seen_cursors:
+                raise TimelineEditError(f"Runtime revision history cursor loop for {timeline!r}")
             seen_cursors.add(next_cursor)
             cursor = next_cursor
 
-        revisions = [cls._history_revision(row, head=head) for row in rows]
-        by_publication = {revision.publication_id: revision for revision in revisions
-                          if revision.publication_id is not None}
-        head_publication = _text((head or {}).get("publication_id"))
-        if head_publication is not None and head_publication in by_publication:
-            ordered: list[Revision] = []
-            seen: set[str] = set()
-            current = by_publication[head_publication]
-            while current.publication_id is not None and current.publication_id not in seen:
-                seen.add(current.publication_id)
-                ordered.append(current)
-                previous = by_publication.get(current.previous_publication_id)
-                if previous is None:
-                    break
-                current = previous
-            revisions = ordered + [revision for revision in revisions
-                                   if revision.publication_id not in seen]
-        elif head is not None:
-            # Legacy-shaped pages may mark the head without publication IDs.
-            head_revision = _text(head.get("revision_id"))
-            marked = next((revision for revision in revisions
-                           if revision.id == head_revision or revision.is_current_head is True), None)
-            if marked is not None:
-                revisions = [marked, *[revision for revision in revisions if revision is not marked]]
+        assert head_pair is not None
+        head_revision_id, head_publication_id = head_pair
+        by_publication: dict[str, Mapping[str, Any]] = {}
+        for row in rows:
+            publication_id = row["publication_id"]
+            if publication_id in by_publication:
+                raise TimelineEditError(f"Runtime revision history repeated publication {publication_id!r}")
+            by_publication[publication_id] = row
+        current = by_publication.get(head_publication_id)
+        if current is None or current["revision_id"] != head_revision_id:
+            raise TimelineEditError(f"Runtime revision history head is not present in its items for {timeline!r}")
+        ordered_rows: list[Mapping[str, Any]] = []
+        seen_publications: set[str] = set()
+        while current is not None:
+            publication_id = current["publication_id"]
+            if publication_id in seen_publications:
+                raise TimelineEditError(f"Runtime revision history contains a publication cycle for {timeline!r}")
+            seen_publications.add(publication_id)
+            ordered_rows.append(current)
+            previous = current["previous"]
+            if previous is None:
+                current = None
+                continue
+            current = by_publication.get(previous["publication_id"])
+            if current is None or current["revision_id"] != previous["revision_id"]:
+                raise TimelineEditError(f"Runtime revision history has a missing or conflicting ancestor for {timeline!r}")
+        if len(seen_publications) != len(by_publication):
+            raise TimelineEditError(f"Runtime revision history contains a disconnected or incomplete chain for {timeline!r}")
+        revisions = [cls._history_revision(row) for row in ordered_rows]
         return revisions[:limit]
 
 
