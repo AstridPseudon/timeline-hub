@@ -7,16 +7,18 @@ from dataclasses import replace
 
 import pytest
 
-from runtime_protocol.errors import ConflictError, NotFoundError
+from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_inputs import (
     CapturedDocument,
+    DocumentInputLink,
     capture_document_input,
     content_digest,
     initialize_document_input_schema,
     persist_document_input_links,
     reachable_document_input_pins,
+    validate_captured_document_inputs,
 )
 
 
@@ -275,3 +277,131 @@ def test_retained_lookup_requires_reachability_and_rejects_missing_or_corrupt_by
             service.store.conn, project["id"], pin, reachable_pins=reachable,
             expected_kind="media.transcript", expected_schema="media.transcript/v1",
         )
+
+
+@pytest.mark.parametrize("corruption, message", [("missing", "missing"), ("corrupt", "digest|corrupt")])
+def test_retained_capture_does_not_heal_missing_or_corrupt_content(service, corruption, message):
+    project = _project(service, "No healing")
+    media_id = _media(service, project["id"])
+    resource, _ = _transcript(service, project["id"], media_id)
+    _retain(service, project["id"], resource, publication="pub-existing", revision="rev-existing")
+    pin = _pin(resource)
+    reachable = reachable_document_input_pins(
+        service.store.conn, project["id"], "timeline-1", revision_ids=["rev-existing"]
+    )
+    capture = capture_document_input(
+        service.store.conn, project["id"], pin, reachable_pins=reachable,
+        expected_kind="media.transcript", expected_schema="media.transcript/v1",
+    )
+
+    if corruption == "missing":
+        service.store.conn.execute("PRAGMA foreign_keys=OFF")
+        service.store.conn.execute(
+            "DELETE FROM timeline_document_input_contents WHERE content_digest=?", (pin["content_digest"],)
+        )
+        service.store.conn.commit()
+        service.store.conn.execute("PRAGMA foreign_keys=ON")
+    else:
+        service.store.conn.execute(
+            "UPDATE timeline_document_input_contents SET content_json=? WHERE content_digest=?",
+            ('{"schema":"media.transcript/v1","media_id":"sha256:' + "0" * 64 + '","source_id":"default"}',
+             pin["content_digest"]),
+        )
+    service.store.conn.commit()
+
+    with pytest.raises(ConflictError, match=message):
+        validate_captured_document_inputs(service.store.conn, [capture])
+    with pytest.raises(ConflictError, match=message):
+        persist_document_input_links(
+            service.store.conn,
+            project_id=project["id"], timeline_id="timeline-1",
+            publication_id="pub-new", revision_id="rev-new",
+            links=[DocumentInputLink(capture, "transcript", 0)],
+        )
+    assert service.store.conn.execute(
+        "SELECT COUNT(*) FROM timeline_document_input_links WHERE publication_id='pub-new'"
+    ).fetchone()[0] == 0
+    stored = service.store.conn.execute(
+        "SELECT content_json FROM timeline_document_input_contents WHERE content_digest=?", (pin["content_digest"],)
+    ).fetchone()
+    if corruption == "missing":
+        assert stored is None
+    else:
+        assert stored is not None
+        assert '"media_id":"sha256:' + "0" * 64 + '"' in stored[0]
+
+
+def test_stored_source_header_mismatch_is_refused_at_accept(service):
+    project = _project(service, "Source header")
+    media_id = _media(service, project["id"])
+    resource, _ = _transcript(service, project["id"], media_id)
+    _retain(service, project["id"], resource, publication="pub-existing", revision="rev-existing")
+    pin = _pin(resource)
+    capture = capture_document_input(
+        service.store.conn, project["id"], pin,
+        reachable_pins=reachable_document_input_pins(
+            service.store.conn, project["id"], "timeline-1", revision_ids=["rev-existing"]
+        ),
+        expected_kind="media.transcript", expected_schema="media.transcript/v1",
+    )
+    service.store.conn.execute(
+        "UPDATE timeline_document_input_bindings SET source_media_id=? "
+        "WHERE project_id=? AND document_id=? AND document_version=? AND content_digest=?",
+        ("sha256:" + "f" * 64, project["id"], pin["document_id"], pin["version"], pin["content_digest"]),
+    )
+    service.store.conn.commit()
+
+    with pytest.raises(ConflictError, match="source identity"):
+        validate_captured_document_inputs(service.store.conn, [capture])
+    with pytest.raises(ConflictError, match="source identity"):
+        persist_document_input_links(
+            service.store.conn,
+            project_id=project["id"], timeline_id="timeline-1",
+            publication_id="pub-new", revision_id="rev-new",
+            links=[DocumentInputLink(capture, "transcript", 0)],
+        )
+
+
+@pytest.mark.parametrize("column, value", [("updated_at", "race-updated"), ("kind", "media.other")])
+def test_first_use_capture_rechecks_exact_header(service, column, value):
+    project = _project(service, "Header race")
+    media_id = _media(service, project["id"])
+    resource, _ = _transcript(service, project["id"], media_id)
+    capture = capture_document_input(
+        service.store.conn, project["id"], _pin(resource),
+        expected_kind="media.transcript", expected_schema="media.transcript/v1",
+    )
+    service.store.conn.execute(
+        f"UPDATE project_documents SET {column}=? WHERE project_id=? AND id=?",
+        (value, project["id"], resource["document_id"]),
+    )
+    service.store.conn.commit()
+
+    with pytest.raises(ConflictError, match="header|kind"):
+        validate_captured_document_inputs(service.store.conn, [capture])
+    with pytest.raises(ConflictError, match="header|kind"):
+        persist_document_input_links(
+            service.store.conn,
+            project_id=project["id"], timeline_id="timeline-race",
+            publication_id="pub-race", revision_id="rev-race",
+            links=[DocumentInputLink(capture, "transcript", 0)],
+        )
+    assert _counts(service.store.conn) == (0, 0, 0)
+
+
+def test_document_input_link_instance_is_strictly_validated(service):
+    project = _project(service, "Link validation")
+    media_id = _media(service, project["id"])
+    resource, _ = _transcript(service, project["id"], media_id)
+    capture = capture_document_input(
+        service.store.conn, project["id"], _pin(resource),
+        expected_kind="media.transcript", expected_schema="media.transcript/v1",
+    )
+
+    for link in (DocumentInputLink(capture, "other", 0), DocumentInputLink(capture, "transcript", True)):
+        with pytest.raises(ValidationError):
+            persist_document_input_links(
+                service.store.conn,
+                project_id=project["id"], timeline_id="timeline-link",
+                publication_id="pub-link", revision_id="rev-link", links=[link],
+            )

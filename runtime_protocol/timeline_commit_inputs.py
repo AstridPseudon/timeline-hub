@@ -252,7 +252,11 @@ def _load_content(connection: sqlite3.Connection, digest: str) -> Any:
         content = json.loads(encoded)
     except (AttributeError, TypeError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
         raise ConflictError("retained document content is corrupt") from exc
-    if len(raw) != size or _content_bytes(content)[0] != digest or _content_bytes(content)[1] != encoded:
+    try:
+        loaded_digest, loaded_encoded, _ = _content_bytes(content)
+    except ValidationError as exc:
+        raise ConflictError("retained document content is corrupt") from exc
+    if len(raw) != size or loaded_digest != digest or loaded_encoded != encoded:
         raise ConflictError("retained document content digest or canonical bytes failed")
     return content
 
@@ -269,6 +273,8 @@ def _binding_document(connection: sqlite3.Connection, row: sqlite3.Row,
         expected_schema=expected_schema,
         connection=connection,
     )
+    if (row["source_media_id"], row["source_id"]) != (media_id, source_id):
+        raise ConflictError("retained document source identity does not match its content")
     document = {
         "document_id": row["document_id"],
         "project_id": row["project_id"],
@@ -289,8 +295,6 @@ def _binding_document(connection: sqlite3.Connection, row: sqlite3.Row,
         expected_kind=expected_kind,
         expected_schema=expected_schema,
     )
-
-
 def _current_document(connection: sqlite3.Connection, project_id: str, document_id: str) -> sqlite3.Row:
     row = connection.execute(
         "SELECT * FROM project_documents WHERE project_id=? AND id=?",
@@ -385,10 +389,6 @@ def capture_document_input(connection: sqlite3.Connection, project_id: str,
         raise
 
 
-# A descriptive alias for the RuntimeCommitPort adapters.
-capture_consumed_document = capture_document_input
-
-
 def reachable_document_input_pins(connection: sqlite3.Connection, project_id: str,
                                   timeline_id: str, *,
                                   revision_ids: Iterable[str] | None = None,
@@ -419,23 +419,41 @@ def reachable_document_input_pins(connection: sqlite3.Connection, project_id: st
     return [{"document_id": row[0], "version": int(row[1]), "content_digest": row[2]} for row in rows]
 
 
-def _revalidate_capture(connection: sqlite3.Connection, capture: CapturedDocument) -> None:
+def _capture_source(
+    connection: sqlite3.Connection, capture: CapturedDocument
+) -> tuple[tuple[str | None, str | None], str]:
     pin = _pin(capture.pin)
     document = capture.document
-    if not isinstance(document, dict) or document.get("project_id") is None:
+    if not isinstance(document, dict) or not isinstance(document.get("project_id"), str):
         raise ValidationError("captured document is malformed")
-    _document_source(
+    if document.get("document_id") != pin["document_id"]:
+        raise ConflictError("captured document does not match its pin")
+    if not isinstance(document.get("kind"), str):
+        raise ValidationError("captured document kind is malformed")
+    version = document.get("version")
+    if isinstance(version, bool) or not isinstance(version, int) or version < 1:
+        raise ValidationError("captured document version is malformed")
+    source = _document_source(
         document.get("content"),
         project_id=document["project_id"],
         document_id=document.get("document_id"),
         kind=document.get("kind"),
-        expected_kind=document.get("kind"),
+        expected_kind=capture.expected_kind,
         expected_schema=capture.expected_schema,
         connection=connection,
     )
     digest, encoded, _ = _content_bytes(document["content"])
-    if digest != pin["content_digest"] or int(document.get("version", 0)) != pin["version"]:
+    if digest != pin["content_digest"] or version != pin["version"]:
         raise ConflictError("captured document does not match its pin")
+    if source != (capture.source_media_id, capture.source_id):
+        raise ConflictError("captured document source identity changed")
+    return source, encoded
+
+
+def _revalidate_capture(connection: sqlite3.Connection, capture: CapturedDocument) -> None:
+    source, encoded = _capture_source(connection, capture)
+    pin = _pin(capture.pin)
+    document = capture.document
     if capture.retained:
         row = connection.execute(
             "SELECT * FROM timeline_document_input_bindings WHERE project_id=? AND document_id=? AND document_version=? AND content_digest=?",
@@ -447,16 +465,53 @@ def _revalidate_capture(connection: sqlite3.Connection, capture: CapturedDocumen
             ("kind", "kind"), ("document_created_at", "created_at"), ("document_updated_at", "updated_at"),
         )):
             raise ConflictError("retained document header changed")
+        if (row["source_media_id"], row["source_id"]) != source:
+            raise ConflictError("retained document source identity changed")
+        stored_content = _load_content(connection, pin["content_digest"])
+        _, stored_encoded, _ = _content_bytes(stored_content)
+        if stored_encoded != encoded:
+            raise ConflictError("retained document content changed")
         return
+    if capture.live_version != pin["version"] or capture.live_digest != pin["content_digest"]:
+        raise ConflictError("captured live document metadata does not match its pin")
     current = _current_document(connection, document["project_id"], document["document_id"])
-    current_content = json.loads(current["content_json"])
+    try:
+        current_content = json.loads(current["content_json"])
+    except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise ConflictError("live document content is corrupt") from exc
     current_digest, current_encoded, _ = _content_bytes(current_content)
-    if int(current["version"]) != capture.live_version or current_digest != capture.live_digest:
+    if (int(current["version"]) != capture.live_version or current_digest != capture.live_digest
+            or current_digest != pin["content_digest"] or current_encoded != encoded):
         raise ConflictError("document changed while the commit was being prepared")
-    if current_digest != pin["content_digest"] or current_encoded != encoded:
-        raise ConflictError("document changed while the commit was being prepared")
-    if current["kind"] != document["kind"] or current["created_at"] != document["created_at"]:
+    current_source = _document_source(
+        current_content,
+        project_id=current["project_id"],
+        document_id=current["id"],
+        kind=current["kind"],
+        expected_kind=capture.expected_kind,
+        expected_schema=capture.expected_schema,
+        connection=connection,
+    )
+    if current_source != source:
+        raise ConflictError("document source identity changed while the commit was being prepared")
+    if any(current[key] != document[field] for key, field in (
+        ("id", "document_id"), ("project_id", "project_id"), ("kind", "kind"),
+        ("created_at", "created_at"), ("updated_at", "updated_at"),
+    )):
         raise ConflictError("document header changed while the commit was being prepared")
+def validate_captured_document_inputs(connection: sqlite3.Connection,
+                                      captures: Iterable[CapturedDocument]) -> None:
+    """Validate every detached input against current authority and stored bytes.
+
+    This is the acceptance-layer preflight hook. It performs no writes and
+    must run for the complete capture set before the caller allocates any
+    retained content or publication links.
+    """
+    values = list(captures)
+    for capture in values:
+        if not isinstance(capture, CapturedDocument):
+            raise ValidationError("captured document input is invalid")
+        _revalidate_capture(connection, capture)
 
 
 @contextmanager
@@ -477,8 +532,10 @@ def _write_transaction(connection: sqlite3.Connection):
 
 def _link_item(item: Any, index: int) -> DocumentInputLink:
     if isinstance(item, DocumentInputLink):
-        return item
-    if isinstance(item, Mapping):
+        capture = item.capture
+        dependency_kind = item.dependency_kind
+        ordinal = item.ordinal
+    elif isinstance(item, Mapping):
         capture = item.get("capture")
         dependency_kind = item.get("dependency_kind")
         ordinal = item.get("ordinal", index)
@@ -489,10 +546,15 @@ def _link_item(item: Any, index: int) -> DocumentInputLink:
         raise ValidationError("document input links must identify a capture and dependency kind")
     if not isinstance(capture, CapturedDocument):
         raise ValidationError("document input link capture is invalid")
-    if not isinstance(dependency_kind, str) or not dependency_kind.strip():
-        raise ValidationError("document input dependency_kind must be a non-empty string")
+    if dependency_kind not in {"transcript", "source"}:
+        raise ValidationError("document input dependency_kind must be transcript or source")
     if isinstance(ordinal, bool) or not isinstance(ordinal, int) or ordinal < 0:
         raise ValidationError("document input link ordinal must be a non-negative integer")
+    kind = capture.document.get("kind") if isinstance(capture.document, dict) else None
+    if dependency_kind == "transcript" and kind != TRANSCRIPT_KIND:
+        raise ValidationError("transcript links require a transcript document")
+    if dependency_kind == "source" and (not isinstance(kind, str) or not kind.endswith(".config")):
+        raise ValidationError("source links require a config document")
     return DocumentInputLink(capture, dependency_kind, ordinal)
 
 
@@ -514,7 +576,7 @@ def persist_document_input_links(connection: sqlite3.Connection, *, project_id: 
         for item in items:
             if item.capture.document.get("project_id") != project_id:
                 raise ConflictError("captured document belongs to a different project")
-            _revalidate_capture(connection, item.capture)
+        validate_captured_document_inputs(connection, (item.capture for item in items))
         timestamp = now()
         results = []
         for item in items:
@@ -586,6 +648,3 @@ def persist_document_input(connection: sqlite3.Connection, capture: CapturedDocu
         revision_id=revision_id,
         links=[DocumentInputLink(capture, dependency_kind, ordinal)],
     )
-
-
-persist_consumed_document = persist_document_input
