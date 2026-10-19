@@ -224,9 +224,10 @@ export class RuntimeDataProvider implements DataProvider {
       return entries;
     },
     restoreHistory: async (request) => {
-      const inspection = await this.inspectCanonicalTimelineHead(request.projectId, request.parentDocumentId);
-      const expectedHead = nullableString(inspection.head_revision_id, 'canonical timeline inspection.head_revision_id');
-      const expectedPublication = optionalNullableString((inspection as unknown as RuntimeRecord).head_publication_id, 'canonical timeline inspection.head_publication_id');
+      const timeline = await this.client.getProjectTimeline(request.projectId, request.parentDocumentId);
+      assertRuntimeIdentity(timeline, request.projectId, request.parentDocumentId, 'timeline');
+      const expectedHead = optionalNullableString(timeline.head_revision_id, 'timeline.head_revision_id');
+      const expectedPublication = optionalNullableString(timeline.head_publication_id, 'timeline.head_publication_id');
       if (!expectedHead || !expectedPublication) {
         throw new ShotCompositionUnavailableError('Workspace Runtime timeline requires a verified revision and publication before restoring history');
       }
