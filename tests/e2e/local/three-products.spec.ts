@@ -519,7 +519,7 @@ async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: T
   expect(bodyA).toMatchObject({ base_revision_id: before.head.revision_id, base_publication_id: before.head.publication_id,
     commands: [{ op: 'clip.move', select: `parent/clip:${seed.appClipId}`, args: { on: 5 } }] });
   expect(position(a.data.canonical_document, seed.appClipId)).toBe(5);
-  expect(await currentHead(harness)).toBe(pinOf(a).revision_id);
+  expect((await history(harness, seed)).head.revision_id).toBe(pinOf(a).revision_id);
   // The second pointerdown observes the actual optimistic authored bundle A.
   await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 5, 7, THREE_PRODUCTS_REFERENCE_AT, async () => {
     expect(wire.attempts, 'B stays unsent behind unacknowledged A').toBe(1);
@@ -567,7 +567,7 @@ test('M1 real gesture: lost durable ACK, dependent B, reopen, Runtime restart, e
   const { wire, before, a, owner } = await prepareDependentMoves(page, harness, seed3);
   const realmBefore = await expectSameRealm(page, harness, astrid);
   // track.create is the supported structural proof; it does not alter the moved clip or its lane.
-  const c = await astrid.commitCaptured(a.data.canonical_document, pinOf(a), { kind: 'track', id: 'f2-independent-C' }, 'f2-independent-C');
+  const c = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(a), { kind: 'track', id: 'f2-independent-C' }, 'f2-independent-C');
   expect(c.data.publisher).not.toBe(a.data.publisher);
   expect(position(c.data.canonical_document, seed3.appClipId)).toBe(5);
   await wire.loseAck();
@@ -654,11 +654,11 @@ test('M1 real gesture: lost durable ACK, dependent B, reopen, Runtime restart, e
   }
   // An intentional same-value write is a new publication of the same immutable revision.
   const revisionCount = (await allRevisions(harness, seed3)).length;
-  const same = await astrid.commitCaptured(undone.data.canonical_document, pinOf(undone),
+  const same = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(undone),
     { kind: 'move', clipId: seed3.appClipId, on: 5 }, 'f2-same-value');
   expect(pinOf(same).revision_id).toBe(pinOf(undone).revision_id);
   expect(pinOf(same).publication_id).not.toBe(pinOf(undone).publication_id);
-  expect(await astrid.commitCaptured(undone.data.canonical_document, pinOf(undone),
+  expect(await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(undone),
     { kind: 'move', clipId: seed3.appClipId, on: 5 }, 'f2-same-value')).toEqual(same);
   expect((await allRevisions(harness, seed3)).length).toBe(revisionCount);
   const finalHistory = await history(harness, seed3);
@@ -690,7 +690,7 @@ test('M1 real dependency conflict retains B original guards and pending identity
   let c!: CommitAcceptedMutation;
   const { wire, before, owner } = await prepareDependentMoves(page, harness, seed3, async (a) => {
     // Change the actual guard after pointerdown, before drop; B must not recapture it.
-    c = await astrid.commitCaptured(a.data.canonical_document, pinOf(a), { kind: 'move', clipId: seed3.appClipId, on: 6 }, 'f2-dependent-C');
+    c = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(a), { kind: 'move', clipId: seed3.appClipId, on: 6 }, 'f2-dependent-C');
   });
   journey.facts.sameRealm = await expectSameRealm(page, harness, astrid);
   await wire.loseAck();
@@ -715,7 +715,7 @@ test('M1 real dependency conflict retains B original guards and pending identity
   expect(retained.pending?.request.body).toBe(wire.posts[2].body);
   expect(JSON.parse(wire.posts[2].body).commands).toEqual(commandsOf(owner.intents[1].payload));
   expect(wire.posts[2].key).not.toBe(wire.posts[0].key);
-  expect(await currentHead(harness)).toBe(pinOf(c).revision_id);
+  expect((await history(harness, seed3)).head.revision_id).toBe(pinOf(c).revision_id);
   expect((await history(harness, seed3)).items).toHaveLength(before.items.length + 2);
   await page.reload();
   await expectConnected(page);
