@@ -17,6 +17,7 @@ from tests.editing_conformance.test_recipe_m1_commands import accepted_boundarie
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
 FIXTURE = Path(__file__).parent / 'fixtures/recipe_clip_delete.json'
+APP_FIXTURE = Path(__file__).parent / 'fixtures/recipe_app_clip_delete.json'
 
 
 def delete_document():
@@ -51,6 +52,55 @@ def portable_golden():
     plan = execute(bundle, [command])
     return {'bundle': bundle, 'select': select, 'command': command,
             'after_bundle': plan.bundle, 'records': plan.records}
+
+
+def test_app_track_rename_bundle_deletes_only_the_scoped_parent_row():
+    fixture = json.loads(APP_FIXTURE.read_text())
+    original = copy.deepcopy(fixture['bundle'])
+    target = original['parent']['clips'][0]
+    assert fixture['select'] == 'parent/clip:parent-clip'
+    assert target['app']['on'] is None
+    assert original['parent']['clips'] == original['parent']['config']['clips']
+
+    command = capture_clip_delete(original, fixture['select'])
+    plan = execute(original, [command])
+    after = plan.bundle
+
+    assert command == fixture['command']
+    assert after == fixture['after_bundle']
+    assert all(row['id'] != 'parent-clip' for row in after['parent']['clips'])
+    assert all(row['id'] != 'parent-clip' for row in after['parent']['config']['clips'])
+    assert after['parent']['clips'] == after['parent']['config']['clips'] == []
+    assert after['parent']['unknown'] == original['parent']['unknown']
+    assert after['parent']['config']['tracks'] == original['parent']['config']['tracks']
+    assert after['parent']['registry'] == original['parent']['registry']
+    assert (after['source_mapping']['_runtime_document']['dependency_manifest']
+            == original['source_mapping']['_runtime_document']['dependency_manifest'])
+    assert original == fixture['bundle']
+
+
+def test_app_scoped_delete_restores_the_complete_raw_row_and_order():
+    original = json.loads(APP_FIXTURE.read_text())['bundle']
+    original = copy.deepcopy(original)
+    target = copy.deepcopy(original['parent']['clips'][0])
+    before = dict(copy.deepcopy(target), id='before', at=0,
+                  opaque={'ordered': [None, False, 0]})
+    after = dict(copy.deepcopy(target), id='after', at=3,
+                 opaque={'ordered': [0, False, None]})
+    rows = [before, target, after]
+    original['parent']['clips'] = copy.deepcopy(rows)
+    original['parent']['config']['clips'] = copy.deepcopy(rows)
+
+    command = capture_clip_delete(original, 'parent/clip:parent-clip')
+    plan = execute(original, [command])
+    assert [row['id'] for row in plan.bundle['parent']['clips']] == ['before', 'after']
+    assert plan.bundle['parent']['clips'] == plan.bundle['parent']['config']['clips']
+
+    restored = inverse(reload(plan.bundle), plan.records).bundle
+    assert restored['parent'] == original['parent']
+    assert [row['id'] for row in restored['parent']['clips']] == [
+        'before', 'parent-clip', 'after']
+    assert restored['parent']['clips'][1] == target
 
 
 @pytest.mark.parametrize('identity', ['clip-a', 'clip-b', 'clip-c'])

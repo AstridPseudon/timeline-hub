@@ -4,6 +4,7 @@ import copy
 import json
 import sys
 import types
+from pathlib import Path
 
 import pytest
 
@@ -11,6 +12,7 @@ from astrid.sdk.timeline.commit import (
     _digest,
     bundle_from_document,
     create_runtime_commit_service,
+    document_from_bundle,
 )
 from tests.editing_conformance.staging_recipes import (
     install_staging_operations,
@@ -65,12 +67,14 @@ class DetachedRealm:
 
     def __init__(self, document=None):
         document = document or document_fixture()
+        self.project_id = document["project_id"]
+        self.timeline_id = document["timeline_id"]
         revision = document["parent_revision"]["revision_id"]
         self.documents = {revision: detached(document)}
         self.head = {"revision_id": revision, "publication_id": "bootstrap"}
         receipt = {"receipt_id": "bootstrap", "command_kind": "timeline.create",
                    "idempotency_key": "bootstrap-key", "request_hash": _digest(document),
-                   "project_id": "project-1", "project_seq": [0], "event_ids": ["event-bootstrap"],
+                   "project_id": self.project_id, "project_seq": [0], "event_ids": ["event-bootstrap"],
                    "result": {"parent_revision_id": revision}, "created_at": "2026-10-18T00:00:00Z"}
         self.entries = [{"publication_id": "bootstrap", "revision_id": revision,
                          "previous": None, "intent": "bootstrap", "records": None, "receipt": receipt,
@@ -83,12 +87,13 @@ class DetachedRealm:
 
     def context(self, calls, *, base=None, dry_run=False):
         base = base or self.head
-        body = {"api_version": 1, "project_id": "project-1", "timeline_id": "film",
+        body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
                 "base_revision_id": base["revision_id"],
                 "base_publication_id": base["publication_id"], "commands": detached(calls),
                 "dry_run": dry_run, "source": {"via": "python"}, "rationale": "test intent"}
         invocation = {"operation": "commitTimeline",
-                      "path": "/v1/projects/project-1/timelines/film/commit", "body": body}
+                      "path": f"/v1/projects/{self.project_id}/timelines/{self.timeline_id}/commit",
+                      "body": body}
         self.request_count += 1
         return {"request": body, "invocation": invocation,
                 "idempotency_key": "request-" + str(self.request_count),
@@ -220,7 +225,7 @@ class DetachedPort:
         publication = "publication-" + str(len(realm.entries))
         receipt = {"receipt_id": publication, "command_kind": "timeline.commit",
                    "idempotency_key": self.context["idempotency_key"],
-                   "request_hash": self.context["request_hash"], "project_id": "project-1",
+                   "request_hash": self.context["request_hash"], "project_id": realm.project_id,
                    "project_seq": [len(realm.entries)], "event_ids": ["event-" + publication],
                    "result": data, "created_at": "2026-10-19T00:00:00Z"}
         result = {"data": data, "receipt": receipt}
@@ -1297,6 +1302,49 @@ def test_native_delete_stale_disjoint_opaque_publications_preserve_both():
     assert rows[0] == original['parent_revision']['payload']['clips'][0]
     assert rows[1]['earlier'] == {'nullable': None}
     assert rows[1]['opaque'] == {'literal': 'parent/clip:clip-a', 'nullable': None}
+
+
+@pytest.mark.usefixtures('native_staging_operations')
+def test_native_app_clip_delete_restores_exact_row_and_retains_pins():
+    from astrid.sdk.timeline.capture import capture_clip_delete
+
+    fixture_path = (Path(__file__).parents[1] / 'editing_conformance' / 'fixtures'
+                    / 'recipe_app_clip_delete.json')
+    fixture = json.loads(fixture_path.read_text())
+    document = document_from_bundle(fixture['bundle'])
+    realm = DetachedRealm(document)
+    original = detached(document)
+    pin = document['dependency_manifest']['documents'][0]
+    source = {'pin': pin, 'document': {
+        'document_id': pin['document_id'], 'project_id': document['project_id'],
+        'kind': 'settings.config', 'version': pin['version'], 'content': {'clear': None}}}
+    assert _digest(source['document']['content']) == pin['content_digest']
+    realm.live_sources[_digest(pin)] = source
+    command = capture_clip_delete(bundle_from_document(document), fixture['select'])
+
+    deleted = realm.call([command])
+    assert deleted['data']['commands'] == [fixture['command']]
+    removed = deleted['data']['canonical_document']
+    assert removed['parent_revision']['payload']['clips'] == []
+    assert removed['parent_revision']['payload']['config']['clips'] == []
+    assert removed['parent_revision']['payload']['registry'] == original['parent_revision']['payload']['registry']
+    assert removed['dependency_manifest'] == original['dependency_manifest']
+
+    create = {'schema_version': 1, 'op': 'fixture.clip-create', 'version': '1',
+              'select': 'parent',
+              'args': {'row': original['parent_revision']['payload']['clips'][0]}}
+    head, count = detached(realm.head), len(realm.accepted)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([create])
+    assert error.value.failure['details']['reason'] == 'identity_collision'
+    assert realm.head == head and len(realm.accepted) == count
+
+    undone = realm.call([inverse([deleted['receipt']['receipt_id']])])
+    restored = undone['data']['canonical_document']
+    assert restored['parent_revision']['payload'] == original['parent_revision']['payload']
+    assert restored['dependency_manifest'] == original['dependency_manifest']
+    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
+    assert redone['data']['canonical_document'] == removed
 
 
 @pytest.mark.parametrize('change', ['membership', 'order-aba', 'dependency-aba', 'target-source-aba'])
