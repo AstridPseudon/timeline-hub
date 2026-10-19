@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T21:43:49Z | dispatcher heartbeat 4s -->
+<!-- main | 2026-10-19T21:47:18Z | dispatcher heartbeat 3s -->
 # agent — 2026-10-19T21:41Z
 Milestone: M1 ACTIVE — real skeleton PASS; overall closure HOLD for authorized restore preservation, App restored two journeys, failure classification and next deep audit. M0 COMPLETE. M2 DESIGN ONLY until orchestrator records M1.
 Integrated: Agent tl/integration ddc1bac3 (restore9b40d163 atop7a7acc0e). Sole recorder/executor timeline.restore v1 + guarded inverse/redo via verified immutable revision/digest pins, strict head-pair/no rebase, retained inputs, exact historical closure/opaque fields, ordinary ID reservations. No schema/ABI/client/renderer/journal change. Six core/provider files ~80net product lines.

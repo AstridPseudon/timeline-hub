@@ -243,6 +243,10 @@ The new collection query keys are a deliberate versioned **semantic** addition
 in the existing open `AgentSelection.key` field; register/validate them in
 Agent and mirror capture parity in App. They are not already implemented.
 No synthetic path such as `tracks.$order`, new ref kind or hidden index field.
+The later authorized M1 restore adapter (Agent9b40d163, integrationddc1bac3)
+adds a whole-timeline immutable pin read/write; it is a deliberate semantic
+restore, not an ordering primitive. Never use that root to rewind unrelated
+rows while undoing collection membership/order.
 If implementation cannot reconstruct exact stage/order from these authenticated
 inputs, stop and report the counterexample; do not silently add record fields.
 
