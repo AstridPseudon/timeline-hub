@@ -11,7 +11,6 @@ import type { GeneratedImageWithMetadata } from '../types';
 interface MediaGalleryState {
   // Lightbox state
   activeLightboxMedia: GeneratedImageWithMetadata | null;
-  autoEnterEditMode: boolean;
   selectedImageForDetails: GeneratedImageWithMetadata | null;
   showTaskDetailsModal: boolean;
   pendingLightboxTarget: 'first' | 'last' | null;
@@ -43,7 +42,6 @@ interface MediaGalleryState {
 
 type SettableMediaGalleryFields = {
   activeLightboxMedia: MediaGalleryState['activeLightboxMedia'];
-  autoEnterEditMode: MediaGalleryState['autoEnterEditMode'];
   selectedImageForDetails: MediaGalleryState['selectedImageForDetails'];
   showTaskDetailsModal: MediaGalleryState['showTaskDetailsModal'];
   pendingLightboxTarget: MediaGalleryState['pendingLightboxTarget'];
@@ -85,7 +83,6 @@ const createInitialState = (
 ): MediaGalleryState => ({
   // Lightbox state
   activeLightboxMedia: null,
-  autoEnterEditMode: false,
   selectedImageForDetails: null,
   showTaskDetailsModal: false,
   pendingLightboxTarget: null,
@@ -257,7 +254,6 @@ interface UseMediaGalleryStateReturn {
   
   // Actions
   setActiveLightboxMedia: (media: GeneratedImageWithMetadata | null) => void;
-  setAutoEnterEditMode: (value: boolean) => void;
   setSelectedImageForDetails: (image: GeneratedImageWithMetadata | null) => void;
   setShowTaskDetailsModal: (show: boolean) => void;
   setPendingLightboxTarget: (target: 'first' | 'last' | null) => void;
@@ -312,7 +308,6 @@ export const useMediaGalleryState = ({
   // Memoized action creators to prevent unnecessary re-renders
   const actions = useMemo(() => ({
     setActiveLightboxMedia: createFieldSetter(dispatch, 'activeLightboxMedia'),
-    setAutoEnterEditMode: createFieldSetter(dispatch, 'autoEnterEditMode'),
     setSelectedImageForDetails: createFieldSetter(dispatch, 'selectedImageForDetails'),
     setShowTaskDetailsModal: createFieldSetter(dispatch, 'showTaskDetailsModal'),
     setPendingLightboxTarget: createFieldSetter(dispatch, 'pendingLightboxTarget'),
@@ -396,12 +391,9 @@ export const useMediaGalleryState = ({
         const urlChanged = updatedImage.url !== state.activeLightboxMedia.url;
 
         if (nameChanged || starredChanged || urlChanged) {
-          const autoEnterFlag = state.activeLightboxMedia.metadata?.__autoEnterEditMode as boolean | undefined;
           actions.setActiveLightboxMedia({
             ...updatedImage,
-            metadata: autoEnterFlag === undefined
-              ? updatedImage.metadata
-              : { ...updatedImage.metadata, __autoEnterEditMode: autoEnterFlag },
+            metadata: updatedImage.metadata,
           });
         }
       }

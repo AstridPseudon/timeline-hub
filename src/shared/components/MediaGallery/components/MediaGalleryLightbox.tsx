@@ -10,12 +10,9 @@ import type { TaskDetailsData } from '@/shared/lib/taskDetails/taskDetailsContra
 import type { MediaGalleryLightboxMedia } from '../utils/lightboxMedia';
 import { useLocalMediaUrl } from '@/shared/media/localMediaResolver';
 import { LocalMediaPermissionOverlay } from '@/features/gallery/components/GenerationsPane/components/LocalMediaPermissionOverlay';
-import { isAudioMedia, isVideoMedia } from '@/shared/lib/media/mediaTypeFilters';
 
 export interface MediaGalleryLightboxSession {
-  activeLightboxMedia: GeneratedImageWithMetadata | null;
   lightboxMedia: MediaGalleryLightboxMedia | null;
-  autoEnterEditMode?: boolean;
   onClose: () => void;
   filteredImages: GeneratedImageWithMetadata[];
   isServerPagination: boolean;
@@ -29,7 +26,6 @@ export interface MediaGalleryLightboxSession {
   handleOpenExternalGeneration: (generationId: string, derivedContext?: string[]) => Promise<void>;
   onDelete?: LightboxActionHandlers['onDelete'];
   isDeleting?: LightboxActionHandlers['isDeleting'];
-  onApplySettings?: LightboxActionHandlers['onApplySettings'];
   simplifiedShotOptions: { id: string; name: string }[];
   selectedShotIdLocal: string;
   selectedShotIdForLightbox?: string;
@@ -46,12 +42,10 @@ export interface MediaGalleryLightboxSession {
   optimisticUnpositionedIds?: Set<string>;
   onOptimisticPositioned?: (imageId: string, shotId: string) => void;
   onOptimisticUnpositioned?: (imageId: string, shotId: string) => void;
-  isMobile: boolean;
   showTaskDetailsModal: boolean;
   setShowTaskDetailsModal: (show: boolean) => void;
   selectedImageForDetails: GeneratedImageWithMetadata | null;
   setSelectedImageForDetails: (image: GeneratedImageWithMetadata | null) => void;
-  onShowTaskDetails?: () => void;
   task?: Task | null;
   isLoadingTask?: boolean;
   taskError?: Error | null;
@@ -60,7 +54,6 @@ export interface MediaGalleryLightboxSession {
   taskDetailsData: TaskDetailsData | null;
   onCreateShot?: (shotName: string, files: File[]) => Promise<void>;
   onNavigateToShot?: (shot: Shot) => void;
-  toolTypeOverride?: string;
   setActiveLightboxIndex?: (index: number) => void;
 }
 
@@ -72,9 +65,7 @@ export const MediaGalleryLightbox: React.FC<MediaGalleryLightboxProps> = ({
   session,
 }) => {
   const {
-    activeLightboxMedia,
     lightboxMedia,
-    autoEnterEditMode = false,
     onClose,
     onNext,
     onPrevious,
@@ -84,7 +75,6 @@ export const MediaGalleryLightbox: React.FC<MediaGalleryLightboxProps> = ({
     handleOpenExternalGeneration,
     onDelete,
     isDeleting,
-    onApplySettings,
     simplifiedShotOptions,
     selectedShotIdLocal,
     selectedShotIdForLightbox,
@@ -101,16 +91,13 @@ export const MediaGalleryLightbox: React.FC<MediaGalleryLightboxProps> = ({
     optimisticUnpositionedIds,
     onOptimisticPositioned,
     onOptimisticUnpositioned,
-    isMobile,
     showTaskDetailsModal,
     setShowTaskDetailsModal,
     selectedImageForDetails,
     setSelectedImageForDetails,
-    onShowTaskDetails,
     taskDetailsData,
     onCreateShot,
     onNavigateToShot,
-    toolTypeOverride,
   } = session;
 
   const [resolverRefreshToken, setResolverRefreshToken] = useState(0);
@@ -120,11 +107,6 @@ export const MediaGalleryLightbox: React.FC<MediaGalleryLightboxProps> = ({
     setResolverRefreshToken(0);
     setMaterializedLocationOverride(null);
   }, [lightboxMedia?.id]);
-
-  const effectiveAutoEnterEditMode = useMemo(() => {
-    const fromMetadata = activeLightboxMedia?.metadata?.__autoEnterEditMode as boolean | undefined;
-    return fromMetadata ?? autoEnterEditMode ?? false;
-  }, [activeLightboxMedia?.metadata?.__autoEnterEditMode, autoEnterEditMode]);
 
   const resolvedLocalMedia = useLocalMediaUrl(lightboxMedia, { refreshToken: resolverRefreshToken });
   const handlePermissionGranted = useCallback(() => {
@@ -174,7 +156,6 @@ export const MediaGalleryLightbox: React.FC<MediaGalleryLightboxProps> = ({
           media={effectiveLightboxMedia}
           onClose={onClose}
           shotId={selectedShotIdLocal !== 'all' ? selectedShotIdLocal : undefined}
-          toolTypeOverride={toolTypeOverride}
           navigation={{
             onNext,
             onPrevious,
@@ -204,21 +185,16 @@ export const MediaGalleryLightbox: React.FC<MediaGalleryLightboxProps> = ({
           actions={{
             onDelete,
             isDeleting,
-            onApplySettings,
             starred: effectiveLightboxMedia.starred ?? false,
           }}
           customOverlay={localMediaOverlay}
           features={{
             showTaskDetails: true,
-            showImageEditTools: !isVideoMedia(activeLightboxMedia ?? effectiveLightboxMedia) && !isAudioMedia(effectiveLightboxMedia),
             showDownload: true,
-            showMagicEdit: false,
-            initialEditActive: effectiveAutoEnterEditMode,
           }}
           taskDetailsData={taskDetailsData ?? undefined}
           showTickForImageId={showTickForImageId}
           showTickForSecondaryImageId={showTickForSecondaryImageId}
-          videoProps={{ onShowTaskDetails: isMobile ? onShowTaskDetails : undefined }}
         />
       )}
 

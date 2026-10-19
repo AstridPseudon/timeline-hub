@@ -4,8 +4,6 @@ import type {
   LightboxFeatureFlags,
   LightboxNavigationProps,
   LightboxShotWorkflowProps,
-  SegmentSlotModeData,
-  VideoLightboxProps,
   VideoLightboxPropsWithMedia,
 } from '../types';
 import type { ImageLightboxEnvironment } from './useImageLightboxEnvironment';
@@ -28,7 +26,6 @@ interface BuildImageSharedLightboxInputArgs {
     onOpenExternalGeneration?: (generationId: string, derivedContext?: string[]) => Promise<void>;
   };
   env: ImageLightboxEnvironment;
-  modeSnapshot: { isInpaintMode: boolean; isMagicEditMode: boolean };
   handleSlotNavNext: () => void;
   handleSlotNavPrev: () => void;
 }
@@ -36,7 +33,6 @@ interface BuildImageSharedLightboxInputArgs {
 export function buildImageSharedLightboxInput({
   props,
   env,
-  modeSnapshot,
   handleSlotNavNext,
   handleSlotNavPrev,
 }: BuildImageSharedLightboxInputArgs): SharedLightboxInput {
@@ -58,17 +54,14 @@ export function buildImageSharedLightboxInput({
       hasPrevious: props.navigation?.hasPrevious ?? false,
       handleSlotNavNext,
       handleSlotNavPrev,
-      swipeDisabled: modeSnapshot.isMagicEditMode || (props.readOnly ?? false),
+      swipeDisabled: props.readOnly ?? false,
     },
     shots: {
       shotId: props.shotId,
       shotWorkflow: props.shotWorkflow,
     },
     layout: {
-      showTaskDetails: props.features?.showTaskDetails,
-      isSpecialEditMode: modeSnapshot.isMagicEditMode,
-      isInpaintMode: modeSnapshot.isInpaintMode,
-      isMagicEditMode: modeSnapshot.isMagicEditMode,
+      showTaskDetails: props.features?.showTaskDetails ?? true,
     },
     actions: {
       isCloudMode: env.isCloudMode,
@@ -77,13 +70,9 @@ export function buildImageSharedLightboxInput({
       setIsDownloading: env.setIsDownloading,
       onDelete: props.actions?.onDelete,
       isDeleting: props.actions?.isDeleting,
-      isUpscaling: env.upscaleHook.isUpscaling,
-      handleUpscale: () => {
-        void env.upscaleHook.handleUpscale({ scaleFactor: 2, noiseScale: 0.1 });
-      },
     },
     media: {
-      effectiveImageUrl: env.upscaleHook.effectiveImageUrl,
+      effectiveImageUrl: props.media.imageUrl || props.media.location || '',
       imageDimensions: env.imageDimensions || { width: 1024, height: 1024 },
       projectAspectRatio: env.projectAspectRatio,
     },
@@ -122,17 +111,14 @@ export function buildVideoSharedLightboxInput(params: {
       hasPrevious: modeModel.hasPrevious,
       handleSlotNavNext: modeModel.handleSlotNavNext,
       handleSlotNavPrev: modeModel.handleSlotNavPrev,
-      swipeDisabled: env.videoEditSubMode !== null || readOnly,
+      swipeDisabled: readOnly,
     },
     shots: {
       shotId: props.shotId,
       shotWorkflow: sw,
     },
     layout: {
-      showTaskDetails: feat?.showTaskDetails ?? false,
-      isSpecialEditMode: env.videoEditSubMode !== null,
-      isInpaintMode: false,
-      isMagicEditMode: false,
+      showTaskDetails: feat?.showTaskDetails ?? true,
     },
     actions: {
       isCloudMode: env.isCloudMode,
@@ -141,8 +127,6 @@ export function buildVideoSharedLightboxInput(params: {
       setIsDownloading: env.setIsDownloading,
       onDelete: act?.onDelete,
       isDeleting: act?.isDeleting,
-      isUpscaling: false,
-      handleUpscale: () => {},
     },
     media: {
       effectiveImageUrl: env.effectiveImageUrl,
@@ -152,24 +136,4 @@ export function buildVideoSharedLightboxInput(params: {
     starred: act?.starred,
     onOpenExternalGeneration: props.onOpenExternalGeneration,
   };
-}
-
-export function buildVariantSegmentImages(
-  segmentSlotMode?: SegmentSlotModeData,
-  currentSegmentImages?: NonNullable<VideoLightboxProps['videoProps']>['currentSegmentImages'],
-) {
-  if (segmentSlotMode?.pairData) {
-    return {
-      startUrl: segmentSlotMode.pairData.startImage?.url,
-      endUrl: segmentSlotMode.pairData.endImage?.url,
-      startGenerationId: segmentSlotMode.pairData.startImage?.generationId,
-      endGenerationId: segmentSlotMode.pairData.endImage?.generationId,
-      startShotGenerationId: segmentSlotMode.pairData.startImage?.id,
-      endShotGenerationId: segmentSlotMode.pairData.endImage?.id,
-      startVariantId: segmentSlotMode.pairData.startImage?.primaryVariantId,
-      endVariantId: segmentSlotMode.pairData.endImage?.primaryVariantId,
-    };
-  }
-
-  return currentSegmentImages;
 }

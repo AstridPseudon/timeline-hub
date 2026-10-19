@@ -46,18 +46,14 @@ export interface LightboxNavigationProps {
 
 /** Feature toggles: which UI elements to show */
 export interface LightboxFeatureFlags {
-  showImageEditTools?: boolean;
   showDownload?: boolean;
-  showMagicEdit?: boolean;
-  initialEditActive?: boolean;
   showTaskDetails?: boolean;
 }
 
-/** Action handlers: delete, star, apply settings */
+/** Action handlers: delete, star, and timeline placement */
 export interface LightboxActionHandlers {
   onDelete?: LightboxDeleteHandler;
   isDeleting?: string | null;
-  onApplySettings?: (metadata: GenerationRow['metadata']) => void;
   onToggleStar?: (id: string, starred: boolean) => void;
   starred?: boolean;
   onAddToVideoEditor?: () => void;
@@ -220,23 +216,7 @@ export interface SegmentSlotModeData {
 
 /** Video-specific props that don't fit into shared groups */
 export interface VideoLightboxVideoProps {
-  initialVideoTrimMode?: boolean;
   fetchVariantsForSelf?: boolean;
-  currentSegmentImages?: {
-    startUrl?: string;
-    endUrl?: string;
-    startGenerationId?: string;
-    endGenerationId?: string;
-    startShotGenerationId?: string;
-    endShotGenerationId?: string;
-    activeChildGenerationId?: string;
-    startVariantId?: string;
-    endVariantId?: string;
-  };
-  onSegmentFrameCountChange?: (pairShotGenerationId: string, frameCount: number) => void;
-  currentFrameCount?: number;
-  onTrimModeChange?: (isTrimMode: boolean) => void;
-  onShowTaskDetails?: () => void;
 }
 
 export interface VideoLightboxProps {

@@ -155,7 +155,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
   const {
     showShare = true,
     showDelete = true,
-    showEdit = true,
     showStar = true,
     showAddToShot = true,
     enableSingleClick = false,
@@ -564,12 +563,10 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
             isTogglingStar={isTogglingStar}
             isDeleting={isCurrentDeleting}
             showStar={showStar}
-            showEdit={showEdit && !isAudioContent}
             showDelete={showDelete}
             onToggleStar={onToggleStar}
             setIsTogglingStar={setIsTogglingStar}
             setLocalStarred={setLocalStarred}
-            onOpenLightbox={onOpenLightbox}
             onDelete={onDelete}
           />
       </div>)

@@ -3,17 +3,13 @@ import { useDeviceInfo } from '@/shared/hooks/mobile';
 interface UseLayoutModeParams {
   isMobile: boolean;
   showTaskDetails: boolean;
-  isSpecialEditMode: boolean;
   isVideo: boolean;
-  isInpaintMode: boolean;
-  isMagicEditMode: boolean;
 }
 
 interface UseLayoutModeReturn {
   isTabletOrLarger: boolean;
   isTouchLikeDevice: boolean;
   shouldShowSidePanel: boolean;
-  isUnifiedEditMode: boolean;
   isPortraitMode: boolean;
 }
 
@@ -23,27 +19,20 @@ interface UseLayoutModeReturn {
  */
 export const useLayoutMode = ({
   showTaskDetails,
-  isSpecialEditMode,
   isVideo,
-  isInpaintMode,
-  isMagicEditMode
 }: UseLayoutModeParams): UseLayoutModeReturn => {
   // Use shared device detection hook for all device/orientation detection
   const { isTabletOrLarger, isPortraitMode: isPortrait, isTouchDevice: isTouchLikeDevice } = useDeviceInfo();
 
-  // Unified special mode check - both inpaint and magic edit use the same layout
-  const isUnifiedEditMode = isInpaintMode || isMagicEditMode;
-
-  // Show sidebar on tablet/larger for: task details (even if loading), special edit modes, OR videos (always on iPad)
+  // Show sidebar on tablet/larger for task details or video metadata.
   // Note: We show sidebar immediately for showTaskDetails to prevent layout jump while task loads
   // Exception: On portrait tablets (like vertical iPad), use mobile layout for better UX
-  const shouldShowSidePanel = !isPortrait && ((showTaskDetails && isTabletOrLarger) || (isSpecialEditMode && isTabletOrLarger) || (isVideo && isTabletOrLarger));
+  const shouldShowSidePanel = !isPortrait && isTabletOrLarger && (showTaskDetails || isVideo);
 
   return {
     isTabletOrLarger,
     isTouchLikeDevice,
     shouldShowSidePanel,
-    isUnifiedEditMode,
     isPortraitMode: isPortrait
   };
 };

@@ -1,7 +1,7 @@
 import { useCallback, useRef, useEffect } from 'react';
 import { useLastAffectedShot } from '@/shared/hooks/shots/useLastAffectedShot';
 import { toast } from '@/shared/components/ui/runtime/sonner';
-import type { GeneratedImageWithMetadata, DisplayableMetadata } from '../types';
+import type { GeneratedImageWithMetadata } from '../types';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import type { AddToShotHandler, AsyncImageDeleteHandler } from '@/shared/types/imageHandlers';
@@ -15,13 +15,11 @@ import {
 
 interface UseMediaGalleryActionsProps {
   onDelete?: AsyncImageDeleteHandler;
-  onApplySettings?: (metadata: DisplayableMetadata | undefined) => void;
   onAddToLastShot?: AddToShotHandler;
   onAddToLastShotWithoutPosition?: AddToShotHandler;
   onToggleStar?: (id: string, starred: boolean) => void;
   activeLightboxMedia: GeneratedImageWithMetadata | null;
   setActiveLightboxMedia: (media: GeneratedImageWithMetadata | null) => void;
-  setAutoEnterEditMode: (value: boolean) => void;
   markOptimisticDeleted: (imageId: string) => void;
   markOptimisticDeletedWithBackfill: (imageId: string) => void;
   removeOptimisticDeleted: (imageId: string) => void;
@@ -59,7 +57,6 @@ export const useMediaGalleryActions = ({
   onDelete,
   activeLightboxMedia,
   setActiveLightboxMedia,
-  setAutoEnterEditMode,
   markOptimisticDeleted,
   markOptimisticDeletedWithBackfill,
   removeOptimisticDeleted,
@@ -190,7 +187,7 @@ export const useMediaGalleryActions = ({
     onPageBoundsExceeded
   ]);
 
-  const handleOpenLightbox = useCallback((image: GeneratedImageWithMetadata, autoEnterEditMode = false) => {
+  const handleOpenLightbox = useCallback((image: GeneratedImageWithMetadata) => {
     const generationId = getGenerationId(image);
 
     setActiveLightboxMedia({
@@ -200,17 +197,14 @@ export const useMediaGalleryActions = ({
       type: image.type ?? (image.isVideo ? 'video_travel_output' : 'single_image'),
       metadata: {
         ...image.metadata,
-        __autoEnterEditMode: autoEnterEditMode,
         based_on: image.based_on,
       },
     });
-    setAutoEnterEditMode(autoEnterEditMode);
-  }, [setActiveLightboxMedia, setAutoEnterEditMode]);
+  }, [setActiveLightboxMedia]);
 
   const handleCloseLightbox = useCallback(() => {
     setActiveLightboxMedia(null);
-    setAutoEnterEditMode(false);
-  }, [setActiveLightboxMedia, setAutoEnterEditMode]);
+  }, [setActiveLightboxMedia]);
 
   const handleDownloadImage = useCallback(async (rawUrl: string, filename: string, imageId?: string, isVideo?: boolean, originalContentType?: string) => {
     const currentDownloadId = imageId || filename;

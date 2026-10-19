@@ -2,25 +2,20 @@ import { useState, useRef, useMemo, useLayoutEffect } from 'react';
 import { shallow } from 'zustand/shallow';
 import type { GenerationRow } from '@/domains/generation/types';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
-import { useLoraManager } from '@/domains/lora/hooks/useLoraManager';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { useChangedDepsLogger } from '@/shared/lib/debug/debugRendering';
 import { usePanesStore } from '@/shared/state/panesStore';
-import { useUpscale } from './useUpscale';
-import { useEditSettingsPersistence } from './persistence/useEditSettingsPersistence';
 import { extractDimensionsFromMedia } from '../utils/dimensions';
 
 interface UseImageLightboxEnvironmentProps {
   media: GenerationRow;
-  shotId?: string;
   tasksPaneOpen?: boolean;
   tasksPaneWidth?: number;
 }
 
 export function useImageLightboxEnvironment(props: UseImageLightboxEnvironmentProps) {
-  const { media, shotId, tasksPaneOpen, tasksPaneWidth } = props;
+  const { media, tasksPaneOpen, tasksPaneWidth } = props;
 
   const isMobile = useIsMobile();
   const projectState = useProjectSelectionContext();
@@ -28,7 +23,6 @@ export function useImageLightboxEnvironment(props: UseImageLightboxEnvironmentPr
   const projectAspectRatio = project?.aspectRatio;
 
   const isCloudMode = true;
-  const isLocalGeneration = false;
 
   const panesState = usePanesStore((state) => ({
     isTasksPaneOpen: state.isTasksPaneOpen,
@@ -45,12 +39,9 @@ export function useImageLightboxEnvironment(props: UseImageLightboxEnvironmentPr
   const effectiveTasksPaneWidth = tasksPaneWidth ?? tasksPaneWidthContext;
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
   const variantsSectionRef = useRef<HTMLDivElement>(null);
 
   const [isDownloading, setIsDownloading] = useState(false);
-  const [replaceImages, setReplaceImages] = useState(true);
-  const [, setVariantParamsToLoad] = useState<Record<string, unknown> | null>(null);
 
   const actualGenerationId = getGenerationId(media);
   const variantFetchGenerationId = media.parent_generation_id || actualGenerationId;
@@ -70,89 +61,40 @@ export function useImageLightboxEnvironment(props: UseImageLightboxEnvironmentPr
     });
   }, [media]);
 
-  const upscaleHook = useUpscale({ media, selectedProjectId, isVideo: false, shotId });
-
-  const editSettingsPersistence = useEditSettingsPersistence({
-    generationId: actualGenerationId,
-    projectId: selectedProjectId,
-    enabled: true,
-  });
-
-  const publicLorasState = usePublicLoras();
-  const { data: availableLoras } = publicLorasState;
-  const editLoraManager = useLoraManager(availableLoras, {
-    projectId: selectedProjectId || undefined,
-    persistenceScope: 'none',
-    enableProjectPersistence: false,
-    disableAutoLoad: true,
-  });
-
-  const effectiveEditModeLoras = useMemo(() => {
-    if (editLoraManager.selectedLoras.length > 0) {
-      return editLoraManager.selectedLoras.map((lora) => ({
-        url: lora.path,
-        strength: lora.strength,
-      }));
-    }
-    return editSettingsPersistence.editModeLoras;
-  }, [editLoraManager.selectedLoras, editSettingsPersistence.editModeLoras]);
-
   const env = useMemo(() => ({
     isMobile,
     selectedProjectId,
     projectAspectRatio,
     isCloudMode,
-    isLocalGeneration,
     isTasksPaneLocked,
     effectiveTasksPaneOpen,
     effectiveTasksPaneWidth,
     contentRef,
-    imageContainerRef,
     variantsSectionRef,
     isDownloading,
     setIsDownloading,
-    replaceImages,
-    setReplaceImages,
-    setVariantParamsToLoad,
     actualGenerationId,
     variantFetchGenerationId,
     imageDimensions,
     setImageDimensions,
-    upscaleHook,
-    editSettingsPersistence,
-    availableLoras,
-    editLoraManager,
-    effectiveEditModeLoras,
   }), [
     isMobile,
     selectedProjectId,
     projectAspectRatio,
     isCloudMode,
-    isLocalGeneration,
     isTasksPaneLocked,
     effectiveTasksPaneOpen,
     effectiveTasksPaneWidth,
     isDownloading,
-    replaceImages,
     actualGenerationId,
     variantFetchGenerationId,
     imageDimensions,
-    upscaleHook,
-    editSettingsPersistence,
-    availableLoras,
-    editLoraManager,
-    effectiveEditModeLoras,
   ]);
 
   useChangedDepsLogger('useImageLightboxEnvironment.inputs', {
     useIsMobile: isMobile,
     useProjectSelectionContext: projectState,
     usePanes: panesState,
-    usePublicLoras_data: availableLoras,
-    useLoraManager: editLoraManager,
-    useUpscale: upscaleHook,
-    useEditSettingsPersistence: editSettingsPersistence,
-    effectiveEditModeLoras,
   });
   useChangedDepsLogger('useImageLightboxEnvironment.env', { env });
 

@@ -64,8 +64,6 @@ vi.mock('@/domains/media-lightbox/MediaLightbox', async () => {
       LightboxShell,
       {
         onClose,
-        hasCanvasOverlay: false,
-        isRepositionMode: false,
         isMobile: false,
         isTabletOrLarger: true,
         overlayViewport: {
@@ -106,7 +104,6 @@ function buildSession(image: GeneratedImageWithMetadata | null, onClose: () => v
   return {
     activeLightboxMedia: image,
     lightboxMedia: image ? toGenerationRow(image) : null,
-    autoEnterEditMode: false,
     onClose,
     filteredImages: images,
     isServerPagination: false,
@@ -170,7 +167,6 @@ function GalleryViewerHarness() {
   const actionsHook = useMediaGalleryActions({
     activeLightboxMedia: stateHook.state.activeLightboxMedia,
     setActiveLightboxMedia: stateHook.setActiveLightboxMedia,
-    setAutoEnterEditMode: stateHook.setAutoEnterEditMode,
     markOptimisticDeleted: stateHook.markOptimisticDeleted,
     markOptimisticDeletedWithBackfill: stateHook.markOptimisticDeletedWithBackfill,
     removeOptimisticDeleted: stateHook.removeOptimisticDeleted,

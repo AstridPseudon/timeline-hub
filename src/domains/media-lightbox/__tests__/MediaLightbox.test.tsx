@@ -79,7 +79,6 @@ describe('MediaLightbox', () => {
       <MediaLightbox
         onClose={vi.fn()}
         media={media}
-        toolTypeOverride="inpainting"
         onNavigateToGeneration={onNavigateToGeneration}
       />,
     );
@@ -88,7 +87,6 @@ describe('MediaLightbox', () => {
     expect(mocks.imageLightbox).toHaveBeenCalledWith(
       expect.objectContaining({
         media,
-        toolTypeOverride: 'inpainting',
         onNavigateToGeneration,
       }),
     );

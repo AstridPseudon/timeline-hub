@@ -86,6 +86,7 @@ export const PanelCloseButton: React.FC<PanelCloseButtonProps> = ({
   className,
 }) => (
   <Button
+    aria-label="Close viewer"
     variant="ghost"
     size="sm"
     onClick={(event) => {

@@ -20,7 +20,6 @@ import {
 } from './useTimelineViewportController';
 import { useUnifiedDrop } from '../drag/useUnifiedDrop';
 import type { GenerationRow } from '@/domains/generation/types';
-import type { PairData } from '../../TimelineContainer/types';
 import type { Resource } from '@/features/resources/hooks/useResources';
 import type { PrimaryStructureVideo, StructureVideoConfigWithMetadata } from '@/shared/lib/tasks/travelBetweenImages';
 import type { DragType } from '@/shared/lib/dnd/dragDrop';
@@ -119,7 +118,6 @@ interface UseTimelineOrchestratorReturn {
   computed: {
     currentPositions: Map<string, number>;
     pairInfo: ReturnType<typeof getPairInfo>;
-    pairDataByIndex: Map<number, PairData>;
     localShotGenPositions: Map<string, number>;
     showPairLabels: boolean;
   };
@@ -345,7 +343,6 @@ export function useTimelineOrchestrator({
   const currentPositions = dynamicPositions();
   const {
     pairInfo,
-    pairDataByIndex,
     localShotGenPositions,
     showPairLabels,
   } = useComputedTimelineData({
@@ -399,7 +396,6 @@ export function useTimelineOrchestrator({
     computed: {
       currentPositions,
       pairInfo,
-      pairDataByIndex,
       localShotGenPositions,
       showPairLabels,
     },

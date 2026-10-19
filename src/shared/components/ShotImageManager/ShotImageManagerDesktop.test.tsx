@@ -65,7 +65,7 @@ vi.mock('./components/BatchDropZone', () => ({
 
 vi.mock('./components/DesktopLightboxOverlay', () => ({
   DesktopLightboxOverlay: ({ lightbox, externalGens, managerProps, setLightboxSelectedShotId }: {
-    lightbox: { lightboxIndex: number | null; setLightboxIndex: (i: number | null) => void; setShouldAutoEnterInpaint: (v: boolean) => void; currentImages: unknown[] };
+    lightbox: { lightboxIndex: number | null; setLightboxIndex: (i: number | null) => void; currentImages: unknown[] };
     externalGens: { setDerivedNavContext: (v: null) => void; setTempDerivedGenerations: (v: unknown[]) => void };
     managerProps: { selectedShotId?: string };
     setLightboxSelectedShotId?: (id: string | undefined) => void;
@@ -76,7 +76,6 @@ vi.mock('./components/DesktopLightboxOverlay', () => ({
           data-testid="close-lightbox"
           onClick={() => {
             lightbox.setLightboxIndex(null);
-            lightbox.setShouldAutoEnterInpaint(false);
             externalGens.setDerivedNavContext(null);
             externalGens.setTempDerivedGenerations([]);
             setLightboxSelectedShotId?.(managerProps.selectedShotId);
@@ -172,8 +171,6 @@ describe('ShotImageManagerDesktop', () => {
       lightboxIndex: null as number | null,
       currentImages: [...baseImages],
       setLightboxIndex: vi.fn(),
-      shouldAutoEnterInpaint: false,
-      setShouldAutoEnterInpaint: vi.fn(),
       handleNext: vi.fn(),
       handlePrevious: vi.fn(),
     };
@@ -267,7 +264,6 @@ describe('ShotImageManagerDesktop', () => {
     fireEvent.click(screen.getByTestId('close-lightbox'));
 
     expect(props.lightbox.setLightboxIndex).toHaveBeenCalledWith(null);
-    expect(props.lightbox.setShouldAutoEnterInpaint).toHaveBeenCalledWith(false);
     expect(props.externalGens.setDerivedNavContext).toHaveBeenCalledWith(null);
     expect(props.externalGens.setTempDerivedGenerations).toHaveBeenCalledWith([]);
     expect(props.setLightboxSelectedShotId).toHaveBeenCalledWith('shot-1');

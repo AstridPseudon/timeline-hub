@@ -4,7 +4,6 @@ interface BuildVideoLightboxLayoutStateInput {
   isTabletOrLarger: boolean;
   isPortraitMode: boolean;
   shouldShowSidePanel: boolean;
-  isAnyVideoEditMode: boolean;
   hasSegmentVideo: boolean;
   showTaskDetails: boolean;
   isSegmentSlotMode: boolean;
@@ -13,7 +12,7 @@ interface BuildVideoLightboxLayoutStateInput {
 }
 
 interface VideoLightboxLayoutState {
-  shouldShowSidePanelWithTrim: boolean;
+  shouldShowSidePanel: boolean;
   showPanel: boolean;
   needsFullscreenLayout: boolean;
   needsTasksPaneOffset: boolean;
@@ -23,28 +22,27 @@ interface VideoLightboxLayoutState {
 export function buildVideoLightboxLayoutState(
   input: BuildVideoLightboxLayoutStateInput,
 ): VideoLightboxLayoutState {
-  const shouldShowSidePanelWithTrim = input.shouldShowSidePanel
-    || ((!input.isPortraitMode && input.isTabletOrLarger) && input.isAnyVideoEditMode);
+  const shouldShowSidePanel = input.shouldShowSidePanel;
 
-  const showPanel = shouldShowSidePanelWithTrim
-    || ((input.showTaskDetails || input.isAnyVideoEditMode || (input.isSegmentSlotMode && input.hasSegmentVideo)) && input.isMobile);
+  const showPanel = shouldShowSidePanel
+    || input.showTaskDetails
+    || ((input.isSegmentSlotMode && input.hasSegmentVideo) && input.isMobile);
 
   const needsFullscreenLayout = input.isMobile
     || input.isFormOnlyMode
-    || input.shouldShowSidePanel
-    || shouldShowSidePanelWithTrim;
+    || shouldShowSidePanel;
 
   const needsTasksPaneOffset = needsFullscreenLayout
     && (input.effectiveTasksPaneOpen || input.isTasksPaneLocked)
     && !input.isPortraitMode
     && input.isTabletOrLarger;
 
-  const panelVariant = (shouldShowSidePanelWithTrim && !input.isMobile)
+  const panelVariant = (shouldShowSidePanel && !input.isMobile)
     ? 'desktop'
     : 'mobile';
 
   return {
-    shouldShowSidePanelWithTrim,
+    shouldShowSidePanel,
     showPanel,
     needsFullscreenLayout,
     needsTasksPaneOffset,

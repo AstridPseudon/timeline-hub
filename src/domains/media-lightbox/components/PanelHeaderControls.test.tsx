@@ -30,7 +30,9 @@ describe('PanelHeaderControls', () => {
     const onClose = vi.fn();
     render(<PanelCloseButton isMobile={false} onClose={onClose} />);
 
-    fireEvent.click(screen.getByRole('button'));
+    const closeButton = screen.getByRole('button', { name: 'Close viewer' });
+    expect(closeButton).toBeInTheDocument();
+    fireEvent.click(closeButton);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

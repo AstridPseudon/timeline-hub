@@ -352,7 +352,6 @@ function SegmentLightboxModal({
         hasPrevious: segmentLightbox.segmentChildSlotIndices.length > 1,
       }}
       features={{
-        showImageEditTools: false,
         showDownload: true,
         showTaskDetails: true,
       }}
@@ -363,9 +362,6 @@ function SegmentLightboxModal({
       readOnly={readOnly}
       videoProps={{
         fetchVariantsForSelf: true,
-        currentSegmentImages: {
-          startShotGenerationId: segmentLightbox.currentSegmentSlot?.pairShotGenerationId,
-        },
       }}
     />
   );

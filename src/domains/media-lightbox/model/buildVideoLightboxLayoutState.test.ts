@@ -8,7 +8,6 @@ function makeInput(overrides: Partial<Parameters<typeof buildVideoLightboxLayout
     isTabletOrLarger: true,
     isPortraitMode: false,
     shouldShowSidePanel: false,
-    isAnyVideoEditMode: false,
     hasSegmentVideo: false,
     showTaskDetails: false,
     isSegmentSlotMode: false,
@@ -26,7 +25,7 @@ describe('buildVideoLightboxLayoutState', () => {
     }));
 
     expect(state).toEqual({
-      shouldShowSidePanelWithTrim: true,
+      shouldShowSidePanel: true,
       showPanel: true,
       needsFullscreenLayout: true,
       needsTasksPaneOffset: true,
@@ -34,15 +33,15 @@ describe('buildVideoLightboxLayoutState', () => {
     });
   });
 
-  it('returns mobile panel layout when editing on mobile', () => {
+  it('returns mobile panel layout when showing task details on mobile', () => {
     const state = buildVideoLightboxLayoutState(makeInput({
       isMobile: true,
       isTabletOrLarger: false,
-      isAnyVideoEditMode: true,
+      showTaskDetails: true,
     }));
 
     expect(state).toEqual({
-      shouldShowSidePanelWithTrim: false,
+      shouldShowSidePanel: false,
       showPanel: true,
       needsFullscreenLayout: true,
       needsTasksPaneOffset: false,
@@ -54,7 +53,7 @@ describe('buildVideoLightboxLayoutState', () => {
     const state = buildVideoLightboxLayoutState(makeInput());
 
     expect(state).toEqual({
-      shouldShowSidePanelWithTrim: false,
+      shouldShowSidePanel: false,
       showPanel: false,
       needsFullscreenLayout: false,
       needsTasksPaneOffset: false,

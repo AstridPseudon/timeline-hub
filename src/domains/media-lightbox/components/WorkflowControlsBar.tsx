@@ -1,18 +1,13 @@
 import React from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
-import { Settings, FilmIcon, Check } from 'lucide-react';
+import { FilmIcon, Check } from 'lucide-react';
 import { ShotSelectorControls } from './ShotSelectorControls';
-import type { LightboxDeleteHandler } from '../types';
 import type { ShotSelectorControlsProps } from './ShotSelectorControls';
 
 export interface WorkflowControlsBarProps {
   core: {
-    onDelete?: LightboxDeleteHandler;
-    onApplySettings?: (metadata: Record<string, unknown>) => void;
-    isSpecialEditMode: boolean;
     isVideo: boolean;
-    handleApplySettings: () => void;
     onAddToVideoEditor?: () => void;
     addToVideoEditorPhase?: 'idle' | 'staged';
   };
@@ -21,20 +16,20 @@ export interface WorkflowControlsBarProps {
 
 /**
  * WorkflowControlsBar Component
- * The bottom bar containing shot selector controls and apply settings button
+ * The bottom bar containing shot selector and timeline controls
  * Used across all layout variants (Desktop Side Panel, Mobile Stacked, Regular)
  */
 export const WorkflowControlsBar: React.FC<WorkflowControlsBarProps> = ({
   core,
   shotSelector,
 }) => {
-  if (core.isSpecialEditMode || !(shotSelector || core.onDelete || core.onApplySettings || core.onAddToVideoEditor)) {
+  if (!(shotSelector || core.onAddToVideoEditor)) {
     return null;
   }
 
   const isStaged = core.addToVideoEditorPhase === 'staged';
   const hasBottomBar = Boolean(
-    (shotSelector && shotSelector.allShots.length > 0 && !core.isVideo) || core.onApplySettings,
+    shotSelector && shotSelector.allShots.length > 0 && !core.isVideo,
   );
 
   return (
@@ -47,6 +42,7 @@ export const WorkflowControlsBar: React.FC<WorkflowControlsBarProps> = ({
                 <Button
                   variant="secondary"
                   size="sm"
+                  aria-label={isStaged ? 'Jump to video editor' : 'Add to video editor timeline'}
                   onClick={core.onAddToVideoEditor}
                   className={
                     isStaged
@@ -73,22 +69,6 @@ export const WorkflowControlsBar: React.FC<WorkflowControlsBarProps> = ({
             <ShotSelectorControls {...shotSelector} />
           )}
 
-          {/* Apply Settings */}
-          {core.onApplySettings && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={core.handleApplySettings}
-                  className="bg-purple-600/80 hover:bg-purple-600 text-white h-8 px-3"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Apply settings</TooltipContent>
-            </Tooltip>
-          )}
         </div>
       </div>
       )}

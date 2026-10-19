@@ -101,7 +101,6 @@ export const ShotImageManagerDesktop: React.FC<ShotImageManagerDesktopProps> = (
   images,
   shotId,
   projectId,
-  toolTypeOverride,
   allShots,
   selectedShotId,
   onShotChange,
@@ -176,7 +175,6 @@ export const ShotImageManagerDesktop: React.FC<ShotImageManagerDesktopProps> = (
   const lightboxManagerProps = {
     images,
     shotId,
-    toolTypeOverride,
     allShots,
     selectedShotId,
     onShotChange,

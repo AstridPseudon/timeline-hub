@@ -81,12 +81,10 @@ export function useTimelineLightboxOrchestrator({
 
   const {
     lightboxIndex,
-    initialEditActive,
     goNext,
     goPrev,
     closeLightbox: closeBaseLightbox,
     openLightbox,
-    openLightboxWithInpaint,
     handleDesktopDoubleClick,
     handleMobileTap,
     showNavigation,
@@ -230,10 +228,8 @@ export function useTimelineLightboxOrchestrator({
   return {
     lightbox: {
       lightboxIndex,
-      initialEditActive,
       showNavigation,
       openLightbox,
-      openLightboxWithInpaint,
       closeLightbox,
       handleDesktopDoubleClick,
       handleMobileTap,

@@ -29,7 +29,6 @@ interface MobileImageGridActionsModel {
   onDeleteImage: (shotImageEntryId: string) => void;
   onMoveHere: (index: number) => void;
   onOpenLightbox?: (index: number) => void;
-  onInpaintClick?: (index: number) => void;
   onImageDuplicate: BaseShotImageManagerProps['onImageDuplicate'];
   duplicatingImageId: BaseShotImageManagerProps['duplicatingImageId'];
   duplicateSuccessImageId: BaseShotImageManagerProps['duplicateSuccessImageId'];
@@ -186,7 +185,6 @@ export function MobileImageGrid({
                 onDelete={() => actions.onDeleteImage(image.id)}
                 onDuplicate={actions.onImageDuplicate}
                 onOpenLightbox={actions.onOpenLightbox ? () => actions.onOpenLightbox?.(index) : undefined}
-                onInpaintClick={actions.onInpaintClick ? () => actions.onInpaintClick?.(index) : undefined}
                 hideDeleteButton={selection.selectedIds.length > 0 || actions.readOnly}
                 duplicatingImageId={actions.duplicatingImageId}
                 duplicateSuccessImageId={actions.duplicateSuccessImageId}

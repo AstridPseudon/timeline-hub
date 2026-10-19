@@ -95,7 +95,6 @@ describe('useMediaGalleryViewInteractions', () => {
       showDelete: true,
       showDownload: true,
       showShare: false,
-      showEdit: true,
       showStar: true,
       showAddToShot: true,
       enableSingleClick: false,

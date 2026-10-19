@@ -14,7 +14,6 @@ import { DesktopScrubbingPreview } from '@/shared/components/ShotImageManager/co
 import { InlineSegmentVideo } from '@/shared/components/InlineSegmentVideo';
 import { TIMELINE_HORIZONTAL_PADDING } from './constants';
 
-import type { PairData } from '@/shared/types/pairData';
 import type { SegmentSlot } from '@/shared/hooks/segments';
 import { useSegmentOutputStrip } from './hooks/segment/useSegmentOutputStrip';
 
@@ -43,8 +42,6 @@ interface SegmentOutputStripProps {
   hasPendingTask?: (pairShotGenerationId: string | null | undefined) => boolean;
   onOpenPairSettings?: (pairIndex: number) => void;
   selectedParentId?: string | null;
-  pairDataByIndex?: Map<number, PairData>;
-  onSegmentFrameCountChange?: (pairShotGenerationId: string, frameCount: number) => void;
   trailingSegmentMode?: {
     imageId: string;
     imageFrame: number;
@@ -71,8 +68,6 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
   hasPendingTask: hasPendingTaskProp,
   onOpenPairSettings,
   selectedParentId,
-  pairDataByIndex,
-  onSegmentFrameCountChange,
   trailingSegmentMode,
   readOnly = false,
   onAddTrailingSegment,
@@ -103,8 +98,6 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
     handleScrubbingStart,
     // Lightbox
     lightboxMedia,
-    lightboxCurrentSegmentImages,
-    lightboxCurrentFrameCount,
     currentLightboxMedia,
     childSlotIndices,
     handleSegmentClick,
@@ -123,12 +116,10 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
     pairInfo,
     rawSegmentSlots,
     trailingSegmentMode,
-    pairDataByIndex,
     hasPendingTaskProp,
     readOnly,
     onTrailingVideoInfo,
     selectedParentId,
-    onSegmentFrameCountChange,
     isMultiImage,
     lastImageFrame,
   });
@@ -261,7 +252,6 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
             hasPrevious: childSlotIndices.length > 1,
           }}
           features={{
-            showImageEditTools: false,
             showDownload: true,
             showTaskDetails: true,
           }}
@@ -271,9 +261,6 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
           shotId={shotId}
           videoProps={{
             fetchVariantsForSelf: true,
-            currentSegmentImages: lightboxCurrentSegmentImages,
-            onSegmentFrameCountChange,
-            currentFrameCount: lightboxCurrentFrameCount,
           }}
         />
       )}

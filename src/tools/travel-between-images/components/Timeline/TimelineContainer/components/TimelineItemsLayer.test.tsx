@@ -60,7 +60,6 @@ describe('TimelineItemsLayer', () => {
       actions: {
         onImageDelete: vi.fn(),
         onImageDuplicate: vi.fn(),
-        onInpaintClick: vi.fn(),
         duplicatingImageId: 'img-1',
         duplicateSuccessImageId: null,
       },

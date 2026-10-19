@@ -48,12 +48,6 @@ export function useVideoLightboxActions({
     await invokeLightboxDelete(actions.onDelete, media.id, 'VideoLightbox.delete');
   }, [actions, media]);
 
-  const handleApplySettings = useCallback(() => {
-    if (actions?.onApplySettings && media) {
-      actions.onApplySettings(media.metadata);
-    }
-  }, [actions, media]);
-
   const handleNavigateToShotFromSelector = useCallback((shot: { id: string; name: string }) => {
     if (!shotWorkflow?.onNavigateToShot) {
       return;
@@ -66,7 +60,6 @@ export function useVideoLightboxActions({
   return {
     handleDownload,
     handleDelete,
-    handleApplySettings,
     handleNavigateToShotFromSelector,
   };
 }

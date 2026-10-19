@@ -175,7 +175,6 @@ function buildProps(overrides: Record<string, unknown> = {}) {
       showShare: true,
       showDelete: true,
       showDownload: true,
-      showEdit: true,
       showStar: true,
       showAddToShot: true,
       enableSingleClick: false,

@@ -23,7 +23,6 @@ interface MediaLightboxCoreProps {
   onClose: () => void;
   segmentSlotMode?: SegmentSlotModeData;
   readOnly?: boolean;
-  toolTypeOverride?: string;
   onNavigateToGeneration?: (generationId: string) => void;
   onOpenExternalGeneration?: (generationId: string, derivedContext?: string[]) => Promise<void>;
   shotId?: string;
@@ -124,7 +123,6 @@ export const MediaLightbox: React.FC<MediaLightboxProps> = (props) => {
     <ImageLightbox
       {...sharedContainerProps}
       media={media}
-      toolTypeOverride={props.toolTypeOverride}
       onNavigateToGeneration={props.onNavigateToGeneration}
     />
   );

@@ -1,5 +1,5 @@
 import React, { type MutableRefObject } from 'react';
-import { Check, Copy, Maximize2, Pencil, Trash2 } from 'lucide-react';
+import { Check, Copy, Maximize2, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { VariantBadge } from '@/shared/components/VariantBadge';
 import type { GenerationRow } from '@/domains/generation/types';
@@ -12,7 +12,6 @@ interface TimelineItemActionButtonsProps {
   isSelected: boolean;
   isTouchDevice: boolean;
   onMobileTap?: () => void;
-  onInpaintClick?: () => void;
   onDuplicateClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onDeleteClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   duplicatingImageId?: string;
@@ -30,7 +29,6 @@ export const TimelineItemActionButtons: React.FC<TimelineItemActionButtonsProps>
   isSelected,
   isTouchDevice,
   onMobileTap,
-  onInpaintClick,
   onDuplicateClick,
   onDeleteClick,
   duplicatingImageId,
@@ -75,44 +73,6 @@ export const TimelineItemActionButtons: React.FC<TimelineItemActionButtonsProps>
 
       {!isDragging && !readOnly && (
         <>
-          {onInpaintClick && (
-            <div
-              data-click-blocker="edit-button"
-              className="absolute bottom-0 left-0 h-7 w-7 z-[19]"
-              onMouseDown={markButtonInteraction}
-              onPointerDown={markButtonInteraction}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            />
-          )}
-
-          {onInpaintClick && (
-            <Button
-              variant="secondary"
-              size="icon"
-              className="absolute bottom-1 left-1 h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.nativeEvent.stopImmediatePropagation();
-                onInpaintClick();
-              }}
-              onMouseDown={markButtonInteraction}
-              onPointerDown={markButtonInteraction}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-              }}
-              title="Edit image"
-            >
-              <Pencil className="!h-3 !w-3" />
-            </Button>
-          )}
-
           <VariantBadge
             derivedCount={image.derivedCount}
             unviewedVariantCount={image.unviewedVariantCount}

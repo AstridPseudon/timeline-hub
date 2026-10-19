@@ -25,7 +25,6 @@ interface TimelineItemActionModel {
   onDuplicate?: (imageId: string, timeline_frame: number) => void;
   onVariantDrop?: (params: VariantDropParams) => Promise<void>;
   onVariantDropTargetChange?: (targetId: string | null) => void;
-  onInpaintClick?: () => void;
   duplicatingImageId?: string;
   duplicateSuccessImageId?: string;
 }

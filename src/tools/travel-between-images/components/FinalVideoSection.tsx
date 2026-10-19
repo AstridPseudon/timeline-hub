@@ -97,7 +97,6 @@ export const FinalVideoSection: React.FC<FinalVideoSectionProps> = (props) => {
             hasPrevious: false,
           }}
           features={{
-            showImageEditTools: false,
             showDownload: true,
             showTaskDetails: true,
           }}

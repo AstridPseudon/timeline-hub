@@ -35,14 +35,6 @@ interface LightboxShellProps {
   children: React.ReactNode;
   onClose: () => void;
 
-  // Edit mode
-  /** Canvas/brush edit overlay is active (inpaint, annotate, reposition, text).
-   *  Used to allow canvas touch events to pass through. */
-  hasCanvasOverlay: boolean;
-  /** Reposition (move) mode — the only edit mode that blocks background click-to-close
-   *  (because dragging could cause accidental closes). */
-  isRepositionMode: boolean;
-
   // Responsive
   isMobile: boolean;
   isTabletOrLarger: boolean;
@@ -61,8 +53,6 @@ interface LightboxShellProps {
 export const LightboxShell: React.FC<LightboxShellProps> = ({
   children,
   onClose,
-  hasCanvasOverlay,
-  isRepositionMode,
   isMobile,
   isTabletOrLarger,
   overlayViewport,
@@ -85,8 +75,6 @@ export const LightboxShell: React.FC<LightboxShellProps> = ({
     handleTouchEvent,
     handleTouchCancel,
   } = useLightboxShellInteractionHandlers({
-    hasCanvasOverlay,
-    isRepositionMode,
     isMobile,
     onClose,
     popupRef: contentRef,

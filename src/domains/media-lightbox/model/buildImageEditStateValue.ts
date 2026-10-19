@@ -1,9 +1,7 @@
 /**
  * buildImageEditStateValue — shared factory for constructing ImageEditState.
  *
- * Both useImageEditOrchestrator (lightbox) and useInlineEditState (inline editor)
- * build the same ~60-field ImageEditState from the same four hooks.
- * This factory eliminates that duplication.
+ * Assembles the image editor state from its editing hooks.
  */
 
 import type { ImageEditState } from '../contexts/ImageEditContext';

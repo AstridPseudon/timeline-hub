@@ -132,15 +132,12 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
   const layout = useLayoutMode({
     isMobile,
     showTaskDetails: layoutInput.showTaskDetails ?? false,
-    isSpecialEditMode: layoutInput.isSpecialEditMode,
     isVideo,
-    isInpaintMode: layoutInput.isInpaintMode ?? false,
-    isMagicEditMode: layoutInput.isMagicEditMode ?? false,
   });
 
   // --- Button group ---
 
-  const { showDownload, isDownloading, onDelete, isDeleting, isUpscaling, handleUpscale } = actions;
+  const { showDownload, isDownloading, onDelete, isDeleting } = actions;
 
   const handleDelete = useCallback(async () => {
     if (!onDelete) return;
@@ -158,10 +155,6 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
         onClose,
       },
       bottomLeft: {
-        isUpscaling,
-        handleUpscale: async () => {
-          handleUpscale();
-        },
         localStarred: star.localStarred,
         handleToggleStar: star.handleToggleStar,
         toggleStarPending: star.toggleStarMutation.isPending,
@@ -183,8 +176,6 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
       handleDelete,
       isDeleting,
       onClose,
-      isUpscaling,
-      handleUpscale,
       star.localStarred,
       star.handleToggleStar,
       star.toggleStarMutation.isPending,
@@ -275,7 +266,6 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
       isTabletOrLarger: layout.isTabletOrLarger,
       isTouchLikeDevice: layout.isTouchLikeDevice,
       shouldShowSidePanel: layout.shouldShowSidePanel,
-      isUnifiedEditMode: layout.isUnifiedEditMode,
       isPortraitMode: layout.isPortraitMode,
     },
     buttonGroupProps,

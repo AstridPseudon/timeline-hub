@@ -1,5 +1,5 @@
 import React from "react";
-import { Trash2, Star, Pencil } from "lucide-react";
+import { Trash2, Star } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { getGenerationId } from "@/shared/lib/media/mediaTypeHelpers";
@@ -11,12 +11,10 @@ interface ActionButtonsProps {
   isTogglingStar: boolean;
   isDeleting: boolean;
   showStar: boolean;
-  showEdit: boolean;
   showDelete: boolean;
   onToggleStar?: (id: string, starred: boolean) => void;
   setIsTogglingStar: (toggling: boolean) => void;
   setLocalStarred: (starred: boolean) => void;
-  onOpenLightbox: (image: GeneratedImageWithMetadata, autoEnterEditMode?: boolean) => void;
   onDelete?: (id: string) => void;
 }
 
@@ -26,12 +24,10 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   isTogglingStar,
   isDeleting,
   showStar,
-  showEdit,
   showDelete,
   onToggleStar,
   setIsTogglingStar,
   setLocalStarred,
-  onOpenLightbox,
   onDelete,
 }) => {
   const handleStarClick = (e: React.MouseEvent) => {
@@ -60,11 +56,6 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
     }
   };
 
-  const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onOpenLightbox(image, true);
-  };
-
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onDelete?.(image.id!);
@@ -85,21 +76,6 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             disabled={isTogglingStar}
           >
             <Star className={`h-3.5 w-3.5 ${localStarred ? 'fill-current' : ''}`} />
-          </Button>
-        )}
-      </div>
-
-      {/* Edit Button - Center (only visible on hover) */}
-      <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-        {!image.isVideo && showEdit && (
-          <Button
-            variant="secondary"
-            size="icon"
-            className="h-7 w-7 p-0 rounded-full bg-black/50 hover:bg-black/70 text-white"
-            onClick={handleEditClick}
-            title="Edit image"
-          >
-            <Pencil className="h-3.5 w-3.5" />
           </Button>
         )}
       </div>

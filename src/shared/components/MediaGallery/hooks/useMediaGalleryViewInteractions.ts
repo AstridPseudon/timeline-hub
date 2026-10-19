@@ -12,7 +12,7 @@ import type { MouseEvent } from 'react';
 
 interface MediaGalleryViewActionsHook {
   handleCloseLightbox: () => void;
-  handleOpenLightbox: (image: GeneratedImageWithMetadata, autoEnterEditMode?: boolean) => void;
+  handleOpenLightbox: (image: GeneratedImageWithMetadata) => void;
   handleShotChange: (shotId: string) => void;
   handleShowTick: (imageId: string) => void;
   handleShowSecondaryTick: (imageId: string) => void;
@@ -72,7 +72,6 @@ interface UseMediaGalleryViewInteractionsParams {
   showDelete: boolean;
   showDownload: boolean;
   showShare: boolean;
-  showEdit: boolean;
   showStar: boolean;
   showAddToShot: boolean;
   enableSingleClick: boolean;
@@ -104,7 +103,6 @@ export function useMediaGalleryViewInteractions(params: UseMediaGalleryViewInter
     showDelete,
     showDownload,
     showShare,
-    showEdit,
     showStar,
     showAddToShot,
     enableSingleClick,
@@ -165,7 +163,6 @@ export function useMediaGalleryViewInteractions(params: UseMediaGalleryViewInter
     showDelete,
     showDownload,
     showShare,
-    showEdit,
     showStar,
     showAddToShot,
     enableSingleClick,

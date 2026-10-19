@@ -49,8 +49,6 @@ vi.mock('./useSegmentLightbox', () => ({
     lightboxIndex: null,
     setLightboxIndex,
     lightboxMedia: null,
-    lightboxCurrentSegmentImages: null,
-    lightboxCurrentFrameCount: null,
     currentLightboxMedia: null,
     childSlotIndices: [],
     handleLightboxNext: vi.fn(),

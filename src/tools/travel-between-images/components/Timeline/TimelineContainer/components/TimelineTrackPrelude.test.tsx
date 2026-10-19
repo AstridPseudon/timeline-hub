@@ -3,7 +3,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PairData } from '@/shared/types/pairData';
 import { TimelineMediaProvider } from '../../TimelineMediaContext';
 import { TimelineTrackPrelude } from './TimelineTrackPrelude';
 
@@ -64,31 +63,6 @@ describe('TimelineTrackPrelude', () => {
   });
 
   function buildProps(): React.ComponentProps<typeof TimelineTrackPrelude> {
-    const pairDataByIndex = new Map<number, PairData>([
-      [0, {
-        index: 0,
-        frames: 61,
-        startFrame: 0,
-        endFrame: 61,
-        startImage: {
-          id: 'img-1',
-          generationId: 'gen-1',
-          primaryVariantId: 'variant-1',
-          url: 'image-1.png',
-          thumbUrl: 'thumb-1.png',
-          position: 1,
-        },
-        endImage: {
-          id: 'img-2',
-          generationId: 'gen-2',
-          primaryVariantId: 'variant-2',
-          url: 'image-2.png',
-          thumbUrl: 'thumb-2.png',
-          position: 2,
-        },
-      }],
-    ]);
-
     return {
       timeline: {
         shotId: 'shot-1',
@@ -115,7 +89,6 @@ describe('TimelineTrackPrelude', () => {
           contextStart: 61,
           contextEnd: 71,
         }],
-        pairDataByIndex,
         localShotGenPositions: new Map([['img-1', 0], ['img-2', 61]]),
         segmentSlots: [{ id: 'slot-1' }] as never,
         isSegmentsLoading: false,
@@ -123,7 +96,6 @@ describe('TimelineTrackPrelude', () => {
         selectedOutputId: 'output-1',
         onPairClick: vi.fn<(pairIndex: number) => void>(),
         onOpenPairSettings: vi.fn<(pairIndex: number) => void>(),
-        onSegmentFrameCountChange: vi.fn(),
         onTrailingEndFrameChange: vi.fn(),
         onTrailingVideoInfo: vi.fn(),
         onFileDrop: vi.fn(),
