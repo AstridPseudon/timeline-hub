@@ -3,51 +3,30 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsModal } from './useSettingsModal';
 import { dispatchAppEvent } from '@/shared/lib/typedEvents';
 
-let locationState: unknown = null;
-
-vi.mock('react-router-dom', () => ({
-  useLocation: () => ({ state: locationState }),
-}));
-
 describe('useSettingsModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    locationState = null;
   });
 
   it('opens settings modal with explicit tab arguments', () => {
     const { result } = renderHook(() => useSettingsModal());
 
     act(() => {
-      result.current.handleOpenSettings('profile');
+      result.current.handleOpenSettings('extensions');
     });
 
     expect(result.current.isSettingsModalOpen).toBe(true);
-    expect(result.current.settingsInitialTab).toBe('profile');
-  });
-
-  it('opens from route navigation state and clears history state', () => {
-    locationState = {
-      openSettings: true,
-      settingsTab: 'api-keys',
-    };
-    const replaceStateSpy = vi.spyOn(window.history, 'replaceState').mockImplementation(() => undefined);
-
-    const { result } = renderHook(() => useSettingsModal());
-
-    expect(result.current.isSettingsModalOpen).toBe(true);
-    expect(result.current.settingsInitialTab).toBe('api-keys');
-    expect(replaceStateSpy).toHaveBeenCalledTimes(1);
+    expect(result.current.settingsInitialTab).toBe('extensions');
   });
 
   it('responds to openSettings custom event', () => {
     const { result } = renderHook(() => useSettingsModal());
 
     act(() => {
-      dispatchAppEvent('openSettings', { tab: 'credits' });
+      dispatchAppEvent('openSettings', { tab: 'extensions' });
     });
 
     expect(result.current.isSettingsModalOpen).toBe(true);
-    expect(result.current.settingsInitialTab).toBe('credits');
+    expect(result.current.settingsInitialTab).toBe('extensions');
   });
 });

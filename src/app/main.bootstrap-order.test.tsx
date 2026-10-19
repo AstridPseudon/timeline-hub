@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -48,6 +48,10 @@ describe('main entry bootstrap order', () => {
     window.history.replaceState({}, '', '/tools/video-editor?localTest=1');
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('initializes the extension runtime before rendering the app', async () => {
     bootstrapMocks.migrateAstridBrowserStorage.mockResolvedValue({ success: true });
     const order: string[] = [];
@@ -95,19 +99,23 @@ describe('main entry bootstrap order', () => {
     expect(bootstrapMocks.renderApp).toHaveBeenCalledWith(root);
   });
 
-  it('injects no remote font link: typography is self-hosted', async () => {
-    bootstrapMocks.migrateAstridBrowserStorage.mockResolvedValue({ success: true });
-    bootstrapMocks.initializeVideoEditorExtensionRuntime.mockResolvedValue(undefined);
-    const root = document.createElement('div');
-    root.id = 'root';
-    document.body.append(root);
+  it.each(['WEB', 'APP', 'DEV', 'LOCAL', 'PRODUCTION'])(
+    'injects no remote font link in a %s build: typography is self-hosted',
+    async (appEnvironment) => {
+      vi.stubEnv('VITE_APP_ENV', appEnvironment);
+      bootstrapMocks.migrateAstridBrowserStorage.mockResolvedValue({ success: true });
+      bootstrapMocks.initializeVideoEditorExtensionRuntime.mockResolvedValue(undefined);
+      const root = document.createElement('div');
+      root.id = 'root';
+      document.body.append(root);
 
-    await import('@/app/main');
-    await vi.waitFor(() => expect(bootstrapMocks.renderApp).toHaveBeenCalledOnce());
+      await import('@/app/main');
+      await vi.waitFor(() => expect(bootstrapMocks.renderApp).toHaveBeenCalledOnce());
 
-    const remoteHrefs = [...document.querySelectorAll('link')]
-      .map((link) => link.getAttribute('href') ?? '')
-      .filter((href) => /^https:\/\/(fonts\.(googleapis|gstatic)\.com|unpkg\.com|cdn\.jsdelivr\.net)/.test(href));
-    expect(remoteHrefs).toEqual([]);
-  });
+      const remoteHrefs = [...document.querySelectorAll('link')]
+        .map((link) => link.getAttribute('href') ?? '')
+        .filter((href) => /^https:\/\/(fonts\.(googleapis|gstatic)\.com|unpkg\.com|cdn\.jsdelivr\.net)/.test(href));
+      expect(remoteHrefs).toEqual([]);
+    },
+  );
 });

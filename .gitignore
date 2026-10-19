@@ -101,9 +101,6 @@ type_safety_review*.json
 # Localhost dev logs (already covered by *.log but be explicit)
 localhost-*.log
 
-# Supabase CLI artifacts
-supabase/.temp/
-supabase/.branches/
 .claude/worktrees/
 
 this.env

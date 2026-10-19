@@ -271,6 +271,9 @@ export function buildExtensionLifecycleOperationalEvents(
  * Browser boundary for the app's analytics adapter. The payload has already
  * passed the fixed privacy schema before it reaches this event, so listeners
  * cannot accidentally receive timeline content, prompts, paths, or URLs.
+ * The App itself registers no listener: the event is kept deliberately as the
+ * documented release-observability boundary (docs/extensions/extension-release-runbook.md,
+ * "Observability and privacy boundary") for an embedding page or adapter to subscribe to.
  */
 export function dispatchExtensionOperationalEvent(event: ExtensionOperationalEvent): void {
   if (typeof window === 'undefined') return;

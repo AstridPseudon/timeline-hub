@@ -390,7 +390,7 @@ source of truth for export blocking, diagnostics, or release gating.
 
 - `src/examples/output-format-sidecar-composed-example.ts`
   composes the trusted-process and metadata JSON output examples into
-  `EX-04/output-format-sidecar-composed`, keeping the graph vocabulary to
+  `output-format-sidecar-composed/graph-path`, keeping the graph vocabulary to
   `requires` and `consumes` while exporting route-scoped ready and
   stopped-process scenarios.
 - Graph-path markers now prove the exact sidecar route chain:

@@ -2,7 +2,6 @@ import { useCallback, type ChangeEvent } from 'react';
 
 import { requireCloudBackend } from '@/shared/lib/cloudBackend';
 import type { CharacterAnimateBaseState } from './useCharacterAnimateBaseState';
-import { uploadVideoWithPoster } from '../uploadMedia';
 import {
   isSupportedImageType,
   isSupportedVideoType,
@@ -52,7 +51,9 @@ export function useCharacterAnimateHandlers(state: CharacterAnimateBaseState) {
 
   const processVideoUpload = useCallback(async (file: File) => {
     await videoUpload.execute(async () => {
-      const uploaded = await attemptCloudBackend(() => uploadVideoWithPoster(file));
+      const uploaded = await attemptCloudBackend<{ videoUrl: string; posterUrl: string }>(
+        () => requireCloudBackend('character-animate upload'),
+      );
       if (!uploaded) return;
       const { videoUrl, posterUrl } = uploaded;
       setMotionVideoLoaded(false);
