@@ -4,6 +4,18 @@ Frozen authority: commit-contract.md §4.1 and Agent edit-command.schema.json. N
 
 Ownership: rt-m1-wire owns timeline_commit.py DTO/Protocol/errors + contract/generation; rt-m1-acceptance owns commit store/execution modules and minimal store schema/pruning changes; rt-m1-inputs owns consumed-input helper. Later Runtime route/startup integration consumes these. Product semantics stay Agent-owned.
 
+## rt-m1-read-basis — App first-edit read recipe
+
+The first edit's immutable basis is assembled only from existing public reads:
+
+1. Call generated `listTimelineCommits(projectId, timelineId, { limit: 50 })` and retain its `head` pair exactly as `{ revision_id, publication_id }`. The page and every cursor continuation remain bound to that returned pair; do not replace it with the current timeline head.
+2. Call `getProjectParentCompositionRevision(projectId, timelineId, head.revision_id)`. A verified revision returns the stored `dependency_manifest` unchanged, including its `documents` array. If the field is absent, the revision is legacy/unverified and is read-only for edit-basis purposes; do not synthesize a manifest from payload keys or child heads.
+3. Use the manifest pins exactly: for each `shots` entry call `getProjectShotRevision(projectId, pin.shot_id, pin.revision_id)`; for each `internal_timelines` entry call `getProjectTimelineRevision(projectId, pin.timeline_id, pin.revision_id)`. Do not read mutable child heads or latest revisions.
+4. Project the returned immutable images into `CanonicalDocument`: retain `revision_id`, `content_digest`, and `payload`; retain the manifest as returned; add the manifest's `shot_id`, `internal_timeline_revision_id`, or `timeline_id` ownership fields from the exact pin. Strip only storage `created_at` and project/scope header fields (`project_id`, plus the GET owner fields after using them to verify the pin). Preserve every payload key, unknown field, and explicit `null`.
+5. The resulting document is the local authoring basis. Its digest must be computed over that exact projection using the Agent canonical JSON convention. A missing/unverified manifest, a foreign-scope GET, or any pin mismatch is a closed failure—not an empty-document default.
+
+This recipe works for the verified legacy baseline (its original receipt/publication pair), empty bootstrap, and recorded commit heads. The parent GET reads the stored manifest directly; it does not replay a compacted receipt, expand the closure through the evaluator, call a provider, or write storage. Consumer GETs can therefore be performed after the head is pinned and after unrelated later commits without changing the original basis.
+
 ## rt-m1-inputs — exact consumed-input retention seam
 
 Implemented in `runtime_protocol/timeline_commit_inputs.py`; focused evidence is `tests/test_timeline_commit_inputs.py`. The acceptance migration should include the module's `DOCUMENT_INPUT_SCHEMA_SQL` (or call `initialize_document_input_schema(connection)`) as part of the canonical schema migration. The exact table names are:
@@ -228,3 +240,11 @@ Orchestrator cross-source-tests decision ACK: runtime commit-integration lane ad
 ## Manager executable finding — authoritative recorder corruption
 
 Original rt-m1-acceptance is HELD/superseded by rt-m1-record-integrity. Probe: valid JSON modification writes[0].before.value=99 after real acceptance; history returns99, integrity_errors[], exact retry succeeds. Follow-up binds full Recorder to existing hash-chained acceptance event (one digest, no new DTO/receipt framework) and checks all durable reads. No root commit writer merged yet and no original realm affected. realpath/create-review should consume corrected source once available; other schema/DTO/port shapes unchanged. Escalated data-integrity finding as required, fixing locally without waiting.
+
+## Manager first-edit read recipe / narrow owner task
+
+rt-m1-read-basis branches from held port, owns ONLY service.get_project_parent_composition_revision + list_timeline_commits and new read-basis tests. No create overlap. Return existing ImmutableRevision.dependency_manifest from VERIFIED commit_manifest_json (schema already supports it), no new DTO/endpoint/digest; normalize HTTP limit via _page_args(None,limit), preserve commit cursor own format. App uses history fixed head H → parentGET(H.revision) → exact shot/internal GETs from manifest (internal timeline IDs from manifest, no guesses), strips storage headers and preserves raw payload into CanonicalDocument. Unverified manifest not fabricated. Works when original baseline receipt result is compacted; no scene replay. Final service merge must combine create-review + read-basis disjoint hunks.
+
+## Approved schema correction owner — rt-m1-raw-schema
+
+Orchestrator approved/refined raw vs compiled correction (Runtime INBOX). rt-m1-raw-schema owns one official schema/types/digest/artifact refresh + dated commit-contract note, leaves pinned timeline-config bytes unchanged. Raw immutable payload containers match main codec/preserve authored and opaque siblings; no compiled Player completeness requirement; closed command/envelope validation stays. Actual realpath four tests remain UNMODIFIED and must rerun with real provider. Agent/App notified final pin will change once; no new DTO fields/endpoint/ABI/writer/scene dependency.
