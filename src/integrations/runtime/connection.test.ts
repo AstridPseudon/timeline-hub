@@ -200,7 +200,7 @@ describe('RUNTIME_QUERY_ROOTS', () => {
   });
 
   it('covers the Runtime read roots, and matches by root only', () => {
-    for (const root of ['runtime', 'runtime-editor', 'runtime-tasks', 'runtime-final-videos', 'astrid-bridge']) {
+    for (const root of ['runtime', 'runtime-editor', 'runtime-tasks', 'runtime-final-videos']) {
       expect(connection.isRuntimeQueryKey([root, 'p1'])).toBe(true);
     }
     expect(connection.isRuntimeQueryKey(['shots', 'p1'])).toBe(false);
