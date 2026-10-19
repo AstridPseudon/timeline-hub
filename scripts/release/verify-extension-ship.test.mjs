@@ -211,10 +211,10 @@ describe('extension ship verifier', () => {
     );
 
     const unsafeTag = structuredClone(manifest);
-    unsafeTag.astrid.releaseTag = '../mutable';
+    unsafeTag.app.releaseTag = '../mutable';
     assert.throws(
       () => validateReleaseManifest(unsafeTag),
-      /astrid\.releaseTag must be a safe annotated-tag name/,
+      /app\.releaseTag must be a safe annotated-tag name/,
     );
   });
 
