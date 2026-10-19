@@ -64,17 +64,17 @@
     "packages/python/astrid_runtime_client/__init__.py": "sha256:0ec98414f0410da5db816e2dcb3204207046902026902db5283251c168a19c6d",
     "packages/python/astrid_runtime_client/contract_metadata.py": "sha256:da9eee6eb475f4414ee47cffb2e4ac7c9018711b64dfb06cd6b997203bb1209a",
     "packages/python/astrid_runtime_client/generated.py": "sha256:227cdfe6477e0d7a0b9ff08ebe6bb5f2a82457a659d82c473ec49bbe3e7ce81c",
-    "packages/python/astrid_runtime_client/timeline_commit_types.py": "sha256:2c6cb0a9c9319badfa4f4b740d5d778f0ec2725899ff73a7ade9d18a46a21c4b",
+    "packages/python/astrid_runtime_client/timeline_commit_types.py": "sha256:b1920babcf9c24ba8128ae75e397502f87c3f46a2e4283774550e3a044440209",
     "packages/python/pyproject.toml": "sha256:a89351ed2ca4d94a753acd00b166d7f7d5ea739984cdfd3cc77683b8a7cc8c08",
     "packages/typescript/package-lock.json": "sha256:e1d3c8ef1c5ef5d7ccf638f901a3dd88c5cd7fcb9d5fe9972a16af065b059576",
     "packages/typescript/package.json": "sha256:b5d6cd892e5b43020d3079474dec332227a7c87d52158c990f2ac5fa331e06e7",
     "packages/typescript/src/contract-metadata.ts": "sha256:bc552359d4d682e7e3bfd0e365c124a876b200e0cbc9cb93dfc5eb5bec63ccec",
     "packages/typescript/src/generated.ts": "sha256:a98eddf3560097d4ad5547efe7d923576f1bc7cf449da28d7ae49393630e838c",
     "packages/typescript/src/index.ts": "sha256:6b6dff85e4199007c8890802e0c228171285114fa2f862999c6741c632c5d1a5",
-    "packages/typescript/src/timeline-commit-types.ts": "sha256:e7a9c9a369263093ea5f9eb0f08087964ca5be8ed8b7dd7e27c69514d7deb1b0",
+    "packages/typescript/src/timeline-commit-types.ts": "sha256:624b0fbfb31b056ffb15931ead92ea8b2ce61087aab16d034b47776ee34a6d37",
     "packages/typescript/tsconfig.json": "sha256:48bc718286b70c7ff5af00d1adfea37ad7c7f8820d3050117dc9d6aea239181b",
     "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:67add31efbfa6e2b96a5dd9ae99e442691add36d79dfc76deee4d401d21b2621"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:8612c939eb58ff821074d3cdf92dbe23488b6a360fb80ca3c0d7bc845c8f73a3"
+  "version": "sha256:9ab13c7a3b05ea32d7f2170c62727acb0cef7e51c8f6914399794cde236c9c71"
 }
