@@ -1,9 +1,9 @@
-# Astrid App local Astrid ACP bridge
+# Astrid App and the agent-owned chat service
 
-The Astrid App ACP bridge is a user-machine process. It keeps only ephemeral
+The chat endpoint is an agent-owned user-machine service. It keeps only ephemeral
 connection handles in memory; each selected agent remains the authority for its
-profiles, opaque session IDs, and session storage. The browser never receives the bearer
-token or starts a child process.
+profiles, opaque session IDs, and session storage. The browser never receives the
+bearer token or starts a child process.
 
 The service belongs to [astrid-agent](https://github.com/banodoco/astrid-agent/blob/main/docs/reference/services.md).
 The Runtime starts and supervises it from the agent's service declaration. It
@@ -12,11 +12,10 @@ runs with Bun 1.3.14, registers its loopback endpoint and private credential in
 The bridge launches the installed `astrid` command; Astrid owns the packaged
 profile, OMP build, credentials, and session identity.
 
-For app development, use `npm run dev:local` with the configured Runtime.
-`--astrid /absolute/path/to/astrid-agent` selects a local agent checkout for
-app source resolution; the Runtime's source profile selects the services.
-`--acp` remains accepted for existing launcher scripts. Chat starts with the
-Runtime regardless of that flag. The app never launches an ACP bridge.
+For local app development, follow the startup and Runtime selection instructions
+in the [repository README](../../README.md). On an installed computer, the
+Runtime starts and supervises the chat service declared by Astrid Agent; Astrid
+App does not launch or own that service.
 
 `ASTRID_ACP_SESSION_DIR` is optional. When omitted, the installed OMP build
 owns its canonical cwd-derived session directory, allowing ACP session
@@ -27,18 +26,20 @@ left in place, but OMP 17.3.5 ACP discovery does not search that arbitrary
 directory in a new process, so use it only when the original process remains
 live.
 
-The local app's discovery proxy re-reads the agent's `chat.json` for every
-ACP request, including after chat restarts or credential rotation. Missing or
-invalid registration returns `acp_unavailable`. The hosted page reaches chat
-through the Runtime door; both paths retain the credential and protocol header.
+In local development, the app's discovery proxy routes ACP requests through the
+selected Runtime door. The door re-reads the agent's `chat.json` registration for
+each request, including after chat restarts or credential rotation, and forwards
+the request to the agent-owned service. The hosted page reaches the same service
+through the door. Missing or invalid registration returns `acp_unavailable`.
+Both paths retain the credential and protocol header outside browser code.
 
-The existing `/api/astrid` REST routes remain on the Astrid bridge port. ACP
-requests use `/api/astrid/acp`, which the Vite proxy forwards to the local ACP
-bridge with the existing bearer boundary and protocol header. The browser
-controls create, resume, cancel, close, and reconnect sessions, but do not
-persist connection or session IDs. Reconnect while the host is live reuses the
-same ACP process and opaque session authority; it does not create a second
-session registry.
+The existing `/api/astrid` REST routes remain on the Astrid service port. ACP
+requests use `/api/astrid/acp`; in local development Vite forwards them through
+Runtime discovery, and the hosted app sends them through the Runtime door. The
+browser controls create, resume, cancel, close, and reconnect sessions, but do
+not persist connection or session IDs. Reconnect while the service is live
+reuses the same ACP process and opaque session authority; it does not create a
+second session registry.
 
 ## Agent readiness and selection
 
@@ -157,8 +158,9 @@ context.
 ## Canonical Runtime editor entry
 
 The editor's canonical local data path is the existing authenticated Runtime
-proxy, not the legacy Astrid REST timeline route. Start Astrid App with
-`VITE_WORKSPACE_RUNTIME_URL` and `WORKSPACE_RUNTIME_TOKEN_FILE`, then open:
+proxy, not the legacy Astrid REST timeline route. Follow the local app startup
+instructions in the [repository README](../../README.md), select the intended
+Runtime workspace, then open:
 
 `/tools/video-editor?project=<Runtime project_id>&timeline=<timeline_id>`
 

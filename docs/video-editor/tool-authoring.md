@@ -109,8 +109,8 @@ catalog by hand. A stale digest or wrong source selection is a failed
 candidate: keep it closed, restore the intended source or regenerate from the
 intended source, run `--check`, rebuild, and only then open it.
 
-For the deterministic editor preview, run `npm run dev:editor` from Astrid App
-with the same `ASTRID_CHECKOUT` environment. Open the printed existing
+For the deterministic editor preview, follow the [repository README](../../README.md)
+and use the same `ASTRID_CHECKOUT` environment. Open the printed existing
 `/tools/video-editor` URL. This dev launcher uses an in-memory demo project and
 enables the development timeline-overlay canary; that does not enable a
 production query override. The production host remains a statically built

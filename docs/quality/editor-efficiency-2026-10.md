@@ -93,17 +93,9 @@ Deploy succeeded 11:16Z 16 Oct (`2f6c730ef`).
 
 **Follow-ups:** alert on failed Railway deploys; collapse the three vendored Astrid copies (`astrid-browser`, `astrid-build-inputs/primary`, `astrid-build-inputs/public`), which dev, local build and Docker each used differently.
 
-## Running the built editor locally (UNVERIFIED recipe)
+## Running the built editor locally (historical, unverified)
 
-Recovered from session notes, never run end to end (the sandbox blocked the build). The launcher flags exist (`scripts/dev-local-workspace.mjs`, `scripts/dev-local-workspace-options.mjs`); `dev:local -- --check` worked.
-
-```sh
-export NODE_OPTIONS=--max-old-space-size=4096        # build OOMs at the default heap on an 8 GB Mac
-export ASTRID_CHECKOUT=<astrid checkout> ASTRID_PYTHON=<astrid venv python>
-export ASTRID_WORKSPACE_DISCOVERY=<runtime discovery.json>
-npm run dev:local -- --build                         # emits dist/
-PORT=2241 npm run dev:local -- --preview --preview-dir "$PWD/dist"   # absolute path required
-```
+The session recipe was never run end to end and used launcher settings that have since changed. Use the current [repository README](../../README.md) for supported local app startup and launcher options.
 
 ### Sharing a local editor through the paired relay (UNVERIFIED)
 
@@ -113,7 +105,7 @@ Two halves; the hosted half holds no Runtime credential.
 |---|---|
 | Build | `npm run build -- --outDir <share-dist>` with `VITE_WORKSPACE_RUNTIME_URL`, `VITE_WORKSPACE_RUNTIME_EXPECTED_{ACTOR,REALM,INSTANCE}_ID` baked in from the live discovery file |
 | Hosted | `ASTRID_APP_PAIRED_RELAY_ORIGIN=<https tunnel url> __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=<tunnel host> npm run preview -- --host 127.0.0.1 --port 2223 --strictPort --outDir <share-dist>`; tunnel points at 2223 |
-| User-local | `ASTRID_APP_PAIRED_RELAY_ORIGIN=<same> ASTRID_APP_PAIRED_PRODUCT_ACTOR=... ASTRID_APP_PAIRED_REALM_ID=... ASTRID_PRODUCT_TOKEN_FILE=... ASTRID_APP_PAIRED_CONNECTOR_STATE=... npm run dev:local -- --paired --reset-pairing` (connector dials out to the relay) |
+| User-local | Start the paired connector with the settings and launcher options in the [repository README](../../README.md); it dials out to the relay |
 
 ## Smells (App-relevant)
 

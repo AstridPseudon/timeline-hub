@@ -1,11 +1,11 @@
-# Reuse an existing local Runtime from the hosted editor
+# Connect the hosted app to Astrid on this computer
 
 ## Connection screens
 
 | # | Situation | Signal | Screen |
 |---|---|---|---|
-| 1 | First visit, never installed | `prompt` → Connect → Allow → 2× `silent` | permission → pending → set_up |
-| 2 | Installed, never connected from this browser (a cleared browser, a private window, another browser) | as 1 | set_up. It says only "you might not be set up yet"; the setup block searches for an install, then a checkout, before installing. |
+| 1 | First visit, no local install | `prompt` → Connect → Allow → 2× `silent` | permission → pending → set_up |
+| 2 | Installed, but this browser has not connected before (cleared data, private window, another browser) | as 1 | set_up. It says only "you might not be set up yet" and shows the same installer line. |
 | 3 | Returning, Astrid stopped | `granted`, 2× `silent`, `connectedBefore` | not_running |
 | 4 | Astrid starting | fewer than 2 failed readings | connecting → app. If slower, row 3 or row 1 until ready. |
 | 5 | Launcher up, Runtime down | `down` | not_running, whatever the history |
@@ -13,8 +13,8 @@
 | 7 | Chrome's prompt open | `prompt`, Connect probe in flight | pending |
 | 8 | Prompt dismissed | still `prompt` | permission again |
 | 9 | Permission denied | `denied`, nothing sent | blocked |
-| 10 | Launcher started for another origin | 403 before CORS → `silent` | set_up or not_running. The agent's command then hits G2. |
-| 11 | Another program on 17340 | `silent` | set_up or not_running. `astrid-runtime up` names it, and the launcher says "Another program is in the way"; the agent reports it. |
+| 10 | Astrid started for another origin | 403 before CORS → `silent` | set_up or not_running; rerun the installer from the page's origin. |
+| 11 | Another program on the local port | `silent` | set_up or not_running; the installer reports the conflict. |
 | 12 | Realm or identity changed, before connecting | `restart` | restart_needed |
 | 13 | Phone or tablet | `isMobileDevice()` | phone |
 | 14 | Safari or Firefox | scenario not `chromium` | rows 1–5, no permission screens (G5) |
@@ -29,65 +29,26 @@ The page polls every three seconds and on focus. A `restart` signal shows immedi
 probe gave a `down` reading, and `set_up` otherwise. Background checks do not change visible content until
 the screen itself changes. Non-Chromium desktop browsers skip the Chrome permission step.
 
-Both agent blocks (`copy.ts`, `AGENT_SEARCHES`) look before they act: first for an install folder (its
-`install.json` carries `astrid.local-source-install`; it starts with `<folder>/start`), then, only if there is none,
-for an astrid-app checkout (`scripts/dev-local-workspace.mjs`; `npm run dev:local`). More than one: ask which. The
-setup block installs only when it finds nothing and no sign that Astrid ran here before; the start block asks.
-
-Run `npm run dev:local` from this App checkout, then open
-`https://astrid.haus/tools/video-editor`. The Runtime's own door on port 17340
-(opened by `astrid-runtime up`) connects the hosted page to the selected Runtime. Runtime credentials stay on this
-computer; the browser receives no product token.
+The `set_up`, `not_running`, and `restart_needed` screens show the same OS-specific
+installer line for install, repair, or restart. `update_needed` shows the update
+form of that line. The installer starts Astrid on this computer and opens
+`https://astrid.haus/?connect=1`, which enters the hosted app and its Runtime
+connection gate. Runtime credentials stay on this computer; the browser receives
+no product token. See the [repository README](../README.md) only when developing
+the app source locally.
 
 For an existing installation, inspect its saved Runtime selection and source
-profile before launching. Keep its support root, realm, profile and credential.
+profile before repair. Keep its support root, realm, profile and credential.
 Do not infer the selected workspace from a checkout name or substitute an empty
 default root. `astrid doctor --json` reports Astrid's resolved selection, and
 `astrid-runtime workspace inspect --data-root <existing-root> --json` checks the
-explicit installation.
-
-Persist the verified selection in this checkout's ignored `.env.local`:
-
-```dotenv
-ASTRID_RUNTIME_DATA_ROOT="/absolute/existing/support-root"
-ASTRID_RUNTIME_CHECKOUT="/absolute/existing/Runtime-checkout"
-ASTRID_RUNTIME_PYTHON="/absolute/existing/environment/bin/python"
-ASTRID_CHECKOUT="/absolute/existing/Astrid-checkout"
-ASTRID_APP_ACP_ENABLED=1
-```
-
-`ASTRID_APP_ACP_ENABLED=1` explicitly enables the existing local agent connection
-for the hosted origin, equivalent to `--acp`. Omit it to leave that connection
-disabled. The launcher reads only its documented Runtime path settings and this
-agent switch from `.env.local`; it does not import unrelated app credentials or
-port settings. Shell variables take precedence over the local file, and explicit
-launcher path arguments take precedence over both. Keep secrets out of `VITE_`
-variables. `ASTRID_SUPPORT_ROOT`, `ASTRID_WORKSPACE_DISCOVERY`, and
-`ASTRID_RUNTIME_SOURCE_MANIFEST` are also supported local launcher settings.
-When the installation already uses a credential file or a specific pack-host
-interpreter, preserve those paths with `ASTRID_ENV_FILE` and
-`ASTRID_PACK_HOST_PYTHON`. The launcher passes paths, never reads or copies the
-credential values. Existing credentials remain managed by Astrid's resolver.
-
-The same one-command restart reuses the configured Runtime, starts the local App,
-and passes that exact root and discovery path to the agent. Stop
-the App launcher with Ctrl+C before restarting it; a separately running Runtime
-remains owned by its existing launcher.
+explicit installation. Preserve the installed named agent profile when repairing
+its source configuration; the Runtime and agent own their services and credentials.
 
 Verify `/api/runtime/v1/health`, realm identity, projects and timelines through
-the Runtime's door using the configured hosted Origin. Verify the selected agent by a
-small read-only prompt. A connection can be healthy while a workspace is empty;
-never create demo records to hide a wrong selection.
-
-If a saved source profile points to a deleted temporary checkout, preserve its
-original configuration and update its source paths to the actual current
-installation through the Runtime's supported source-manifest/lifecycle flow.
-Run supported `upgrade` for schema changes and honor its integrity checks.
-An editable installation whose package was renamed may need its existing
-editable finder mappings repaired to the current package paths; record exactly
-which environment and aliases changed, rather than reinstalling or silently
-changing interpreters. Preserve the installed named agent profile and verify its
-instructions hash before and after recovery.
+the Runtime's door using the configured hosted Origin. A connection can be
+healthy while a workspace is empty; don't create demo records to hide a wrong
+selection.
 
 ## Managed media requests
 
@@ -115,11 +76,11 @@ backward and forward seeking, and transition boundaries; ordinary seeded media
 alone does not exercise pack-owned native requests. Inspect the browser's actual
 request and console when an image fails, not only a server-side GET.
 
-## Saved chat after a bridge restart
+## Saved chat after the agent chat service restarts
 
-An ACP connection ID belongs to one bridge process. If that process restarts,
+An ACP connection ID belongs to one agent chat service process. If that service restarts,
 the client retires a missing connection and retries the read-only saved
-transcript load once with a fresh connection. This includes the older bridge's
+transcript load once with a fresh connection. This includes an older service's
 specific `not_found` / `ACP connection is not available; reconnect` response;
 an unknown saved session remains an error. Prompts are never automatically
 resent by this recovery. Restored unconfirmed messages stay paused until the
