@@ -9,13 +9,13 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-from urllib.parse import urlparse
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from fractions import Fraction
 from pathlib import Path
 from typing import Any, Callable
 
+from astrid.core.path_utils import has_url_scheme
 from astrid.core.subprocess_env import build_child_subprocess_env
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]
@@ -91,7 +91,7 @@ def require_runtime_materialized_file(
     """
 
     text = str(value).strip()
-    if not text or urlparse(text).scheme:
+    if not text or has_url_scheme(text):
         raise ValueError(f"{label} must be an absolute runtime-materialized file, not a URL")
     path = Path(text).expanduser()
     if not path.is_absolute():

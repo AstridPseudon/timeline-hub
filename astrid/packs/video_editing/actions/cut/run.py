@@ -19,8 +19,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
-from urllib.parse import urlparse
 
+from astrid.core.path_utils import has_url_scheme
 from astrid.core.cli_choices import add_choice_arg
 from astrid.core.contracts.errors import AstridError
 from astrid.core.foundation.hash import sha256_file
@@ -159,7 +159,7 @@ def _resolve_theme_path(theme_value: str | None) -> Path | None:
         return None
     raw = str(theme_value).strip()
     candidate = Path(raw).expanduser()
-    if urlparse(raw).scheme or not candidate.is_absolute():
+    if has_url_scheme(raw) or not candidate.is_absolute():
         raise AstridError(
             "cut requires --theme to be an explicit absolute runtime-materialized theme.json file; "
             "theme slugs, directories, URLs, and relative paths are not supported",

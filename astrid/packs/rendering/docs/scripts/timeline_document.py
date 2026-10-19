@@ -4,9 +4,10 @@ import argparse
 import json
 import shlex
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 
 from astrid.sdk import AstridClient
+from astrid.core.path_utils import file_uri_to_path
 from astrid.sdk.authoring_bundle import (
     import_authoring_media,
     diff_authoring_candidate,
@@ -44,7 +45,7 @@ def reject_local_media_inputs(value, base_directory, path="candidate"):
                 )
             if key in {"file", "path", "src"} and isinstance(child, str):
                 parsed = urlparse(child)
-                local_value = unquote(parsed.path) if parsed.scheme == "file" else child
+                local_value = file_uri_to_path(child) if parsed.scheme == "file" else child
                 local_path = Path(local_value)
                 if parsed.scheme == "file" or local_path.is_absolute():
                     resolved_path = local_path

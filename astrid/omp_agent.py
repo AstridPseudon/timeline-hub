@@ -262,7 +262,7 @@ def _omp_model_snapshot(omp_bin: str) -> dict[str, Any]:
         env["ASTRID_OMP_MODELS_RESULT"] = str(result_file)
         result = subprocess.run(
             [omp_bin, "models", "ls", "--json", "-e", str(extension)],
-            capture_output=True, text=True, env=env, check=False,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", env=env, check=False,
         )
         if not result_file.is_file():
             raise ValueError("OMP could not report its providers; run `omp models ls --json` for details")
@@ -301,7 +301,7 @@ def _save_default_model(omp_bin: str, selector: str) -> None:
         # isolates the profile's global roles from project-specific overrides.
         result = subprocess.run(
             [omp_bin, "config", "get", "modelRoles", "--json"], cwd=directory,
-            capture_output=True, text=True, check=False,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
         )
         if result.returncode:
             raise ValueError("OMP could not read modelRoles; run `omp config get modelRoles` for details")
@@ -311,7 +311,7 @@ def _save_default_model(omp_bin: str, selector: str) -> None:
             raise ValueError("OMP returned invalid modelRoles")
         result = subprocess.run(
             [omp_bin, "config", "set", "modelRoles", json.dumps({**roles, "default": selector}), "--json"],
-            cwd=directory, capture_output=True, text=True, check=False,
+            cwd=directory, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
         )
         payload = json.loads(result.stdout) if not result.returncode else None
         saved = payload.get("value") if isinstance(payload, dict) else None
@@ -331,7 +331,7 @@ def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
         command += ["--model", catalog_model]
     result = subprocess.run(
         command, input='{"id":"astrid-login-providers","type":"get_login_providers"}\n',
-        capture_output=True, text=True, check=False,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
     )
     if result.returncode:
         raise ValueError("OMP could not list sign-in providers; run `omp` for details")
@@ -370,7 +370,8 @@ def _add_model_usage(omp_bin: str, snapshot: dict[str, Any]) -> None:
     """Attach OMP's optional quota reports, retaining only non-identity fields."""
     try:
         result = subprocess.run(
-            [omp_bin, "usage", "--json", "--redact"], capture_output=True, text=True, check=False,
+            [omp_bin, "usage", "--json", "--redact"], capture_output=True, text=True,
+            encoding="utf-8", errors="replace", check=False,
         )
         if result.returncode:
             return

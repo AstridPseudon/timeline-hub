@@ -8,8 +8,8 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from urllib.parse import urlparse
 
+from astrid.core.path_utils import has_url_scheme
 
 from .config import (
     STEP_ORDER,
@@ -25,7 +25,7 @@ from .config import (
 def _resolve_theme_arg(value: object) -> Path:
     """Resolve only an explicitly supplied, materialized theme document."""
     text = str(value).strip()
-    if not text or urlparse(text).scheme:
+    if not text or has_url_scheme(text):
         usage_error("astrid: theme must be an explicit runtime-materialized theme.json file")
     candidate = Path(text).expanduser().resolve()
     if not candidate.is_file() or candidate.name != "theme.json":
@@ -133,13 +133,13 @@ def resolve_args(argv: list[str] | None = None) -> argparse.Namespace:
     args = argparse.Namespace(**merged)
     args.theme_explicit = theme_explicit
     video_value = getattr(args, "video", None)
-    if video_value is not None and urlparse(str(video_value)).scheme:
+    if video_value is not None and has_url_scheme(str(video_value)):
         usage_error("astrid: --video must be a runtime-materialized file, not a URL")
     args.video = None if video_value is None else Path(video_value).expanduser().resolve()
     args.out = Path(args.out).expanduser().resolve()
     args.brief = Path(args.brief).expanduser().resolve()
     audio_value = getattr(args, "audio", args.video if args.video is not None else None)
-    if audio_value is not None and urlparse(str(audio_value)).scheme:
+    if audio_value is not None and has_url_scheme(str(audio_value)):
         usage_error("astrid: --audio must be a runtime-materialized file, not a URL")
     args.audio = None if audio_value is None else Path(audio_value).expanduser().resolve()
     args.target_duration = getattr(args, "target_duration", None)

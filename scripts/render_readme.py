@@ -116,7 +116,7 @@ def main() -> None:
     plain_box = render_box()
     html_box = render_box(html=True)
     out = Path(__file__).resolve().parents[1] / "README.md"
-    out.write_text(README.format(box=html_box))
+    out.write_text(README.format(box=html_box), encoding="utf-8")
     print(plain_box)
     print(f"\n[OK] aligned box ({len(plain_box.splitlines())} rows, width {len(plain_box.splitlines()[0])}) → {out}")
 

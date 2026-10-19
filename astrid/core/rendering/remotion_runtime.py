@@ -379,7 +379,7 @@ _INTERACTIVE_GIT_ENV = frozenset({
 
 
 def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dict[str, str]:
-    from astrid.core.subprocess_env import _SAFE_BASE_ENV
+    from astrid.core.subprocess_env import _SAFE_BASE_ENV, _WINDOWS_BASE_ENV
     probe_context(environment=environment, python_executable=sys.executable)
     if any((k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV) or k in {'PYTHONSTARTUP'}
            for k in environment):
@@ -392,6 +392,8 @@ def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dic
     if environment.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in environment['PYTHONPATH'].split(os.pathsep)):
         raise RemotionValidationError('registry import paths require absolute launch-known locations')
     keys = set(_SAFE_BASE_ENV) | {'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
+    if sys.platform == 'win32':
+        keys.update(_WINDOWS_BASE_ENV)
     if not generator:
         keys.update((*_REGISTRY_SELECTORS, 'PYTHONPATH', 'XDG_CONFIG_HOME'))
     context = {k: environment[k] for k in sorted(keys) if k in environment}

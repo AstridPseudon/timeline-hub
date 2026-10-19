@@ -470,10 +470,17 @@ def media_seconds(project: str, media: Any, *, client: Any = None) -> float | No
                     return w.getnframes() / float(w.getframerate())
             except (wave.Error, EOFError):
                 pass
-        with tempfile.NamedTemporaryFile(suffix=Path(kind.replace("/", ".")).suffix or ".bin") as tmp:
-            tmp.write(data)
-            tmp.flush()
-            return float(ffprobe_duration_seconds(tmp.name))
+        tmp_path: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                suffix=Path(kind.replace("/", ".")).suffix or ".bin", delete=False
+            ) as tmp:
+                tmp.write(data)
+                tmp_path = Path(tmp.name)
+            return float(ffprobe_duration_seconds(tmp_path))
+        finally:
+            if tmp_path is not None:
+                tmp_path.unlink(missing_ok=True)
 
     try:
         return _with_client(client, run)
@@ -625,7 +632,7 @@ def import_media(path: Path, project: Any) -> dict[str, Any]:
     import sys
 
     out = subprocess.run([sys.executable, "-m", "astrid", "media", "import", str(path), "--project", str(project), "--json"],
-                         capture_output=True, text=True)
+                         capture_output=True, text=True, encoding="utf-8", errors="replace")
     try:
         data = json.loads(out.stdout)["data"]
     except Exception as exc:

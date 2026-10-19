@@ -175,6 +175,16 @@ from astrid.core.util.secrets import load_local_api_key_with_source
 from astrid.sdk.execution_request import normalize_execution_request
 from astrid.sdk.workspace_client import WorkspaceClientError, validate_runtime_endpoint
 
+
+def _managed_input_staging_name(port: str, digest: str, original_name: str | None) -> str:
+    """Build a stable managed-input path without using the supplied filename."""
+
+    suffix = Path(original_name or "").suffix
+    if not re.fullmatch(r"\.[A-Za-z0-9]{1,16}", suffix):
+        suffix = ""
+    port_digest = hashlib.sha256(port.encode("utf-8")).hexdigest()[:16]
+    return f"managed-{port_digest}-{digest}{suffix.lower()}"
+
 if TYPE_CHECKING:
     from astrid.core.execution.executor.schema import ExecutorDefinition
 
@@ -1693,10 +1703,18 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
     A render in any other context is refused by ``_validated_runtime``.
     """
     from astrid.core.rendering.remotion_runtime import _NODE_ENV_KEYS, _UNSUPPORTED_PYTHON_STARTUP, _REGISTRY_SELECTORS
-    from astrid.core.subprocess_env import _SAFE_BASE_ENV, _is_secret_name, _normalize_secret_names
+    from astrid.core.subprocess_env import (
+        _SAFE_BASE_ENV,
+        _WINDOWS_BASE_ENV,
+        _is_secret_name,
+        _normalize_secret_names,
+    )
     from astrid.core.execution.executor.folder import discover_folder_executor_roots, load_folder_executor
     from astrid.core.execution.executor.schema import ExecutorValidationError
     matrix = GenericPackHost._load_matrix(capability_matrix)
+    safe_base_env = set(_SAFE_BASE_ENV)
+    if sys.platform == "win32":
+        safe_base_env.update(_WINDOWS_BASE_ENV)
     records: dict[str, CapabilityRecord] = {}
     for root in pack_roots:
         for executor_root in discover_folder_executor_roots(root):
@@ -1748,7 +1766,7 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
                  if '{' not in str(v) and '}' not in str(v)} if command is not None else {}
         fixed = _fixed_worker_environment(record, fixed, environment)
         relevant = {k: v for k, v in fixed.items()
-                    if k in set(_NODE_ENV_KEYS) | set(_SAFE_BASE_ENV) | set(_REGISTRY_SELECTORS) | set(_UNSUPPORTED_PYTHON_STARTUP) | {'XDG_CONFIG_HOME', 'PYTHONPATH'}
+                    if k in set(_NODE_ENV_KEYS) | safe_base_env | set(_REGISTRY_SELECTORS) | set(_UNSUPPORTED_PYTHON_STARTUP) | {'XDG_CONFIG_HOME', 'PYTHONPATH'}
                     or k.startswith(('DYLD_', 'LD_'))
                     or k in {'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME',
                              'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'}}
@@ -2056,6 +2074,8 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
             ["git", "-C", str(checkout), "status", "--porcelain=v1"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=True,
             timeout=5,
         )
@@ -2063,6 +2083,8 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
             ["git", "-C", str(checkout), "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=True,
             timeout=5,
         ).stdout.strip()
@@ -4212,6 +4234,8 @@ def _vcs_revision(root: Path) -> str:
             ["git", "-C", str(checkout), "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=True,
             timeout=5,
         )
@@ -6730,7 +6754,9 @@ class GenericPackHost:
             snapshot_registry_path.parent.mkdir(parents=True, exist_ok=True)
             snapshot_registry_path.write_text(json.dumps(snapshot_registry, sort_keys=True), encoding="utf-8")
             values["assets_registry"] = str(snapshot_registry_path)
-        if "materialized_root" in values or "materialized_objects" in values:
+        if any(key in values for key in (
+            "materialized_root", "materialized_objects", "materialized_input_metadata"
+        )):
             raise HostError("materialized media handoff is host-owned and cannot be caller supplied")
         input_digests = input_spec.get("input_digests", ())
         for item in input_digests if isinstance(input_digests, list) else ():
@@ -6790,6 +6816,7 @@ class GenericPackHost:
         managed_root = attempt / "managed-objects"
         managed_root.mkdir(parents=True, exist_ok=True)
         materialized_objects: dict[str, str] = {}
+        materialized_input_metadata: dict[str, dict[str, str | None]] = {}
         fetched_objects: dict[tuple[str, str], Path] = {}
         scratch_limit = (
             int(storage_estimate["scratch_bytes"])
@@ -6838,11 +6865,12 @@ class GenericPackHost:
             payload = bytes(data)
             if hashlib.sha256(payload).hexdigest() != normalized:
                 raise HostError(f"input object hash mismatch for {name}")
-            destination = managed_root / (
-                filename
-                if filename is not None
-                else f"{len(list(managed_root.iterdir())):04d}-{hashlib.sha256(reference.encode()).hexdigest()[:16]}"
+            staging_name = (
+                "theme.json"
+                if filename == "theme.json"
+                else _managed_input_staging_name(name, normalized, filename)
             )
+            destination = managed_root / staging_name
             write_scratch(destination, payload, name=name)
             fetched_objects[cache_key] = destination
             return destination
@@ -6880,6 +6908,11 @@ class GenericPackHost:
                     )
                 normalized = require_authorized(str(digest), str(name))
                 if str(name) == "theme":
+                    original_name = value.get("filename") if isinstance(value, Mapping) else None
+                    materialized_input_metadata[str(name)] = {
+                        "digest": normalized,
+                        "filename": original_name if isinstance(original_name, str) else None,
+                    }
                     destination = fetch_object(
                         str(value.get("object_id") or "theme"),
                         str(digest),
@@ -6891,32 +6924,36 @@ class GenericPackHost:
                     materialized_objects[str(digest).removeprefix("sha256:")] = str(destination)
                     continue
                 input_name = Path("theme.json") if str(name) == "theme" else Path(str(name))
-                # Preserve a managed file object's safe filename when the
-                # capability consumes it as a normal file port.  The logical
-                # port name (for example ``source_video``) is not necessarily
-                # a usable media suffix; losing ``.mp4`` here makes downstream
-                # Comfy loaders reject an otherwise valid managed object.
+                raw_filename: str | None = None
                 if str(name) in file_input_names and isinstance(value, Mapping):
-                    raw_filename = value.get("filename")
+                    candidate_filename = value.get("filename")
                     if (
-                        isinstance(raw_filename, str)
-                        and raw_filename
-                        and Path(raw_filename).name == raw_filename
-                        and not Path(raw_filename).is_absolute()
-                        and ".." not in Path(raw_filename).parts
+                        isinstance(candidate_filename, str)
+                        and candidate_filename
+                        and Path(candidate_filename).name == candidate_filename
+                        and not Path(candidate_filename).is_absolute()
+                        and ".." not in Path(candidate_filename).parts
                     ):
-                        input_name = Path(raw_filename)
+                        raw_filename = candidate_filename
                 if str(name) in cas_names:
                     filename = value.get("filename") if isinstance(value, Mapping) else None
                     if not isinstance(filename, str) or not filename or Path(filename).name != filename:
                         raise HostError(
                             f"CAS parameter {name!r} requires a safe filename"
                         )
-                    if len(ordered_cas_ports) > 1:
-                        # Preserve role identity even when two CAS objects
-                        # arrive with the same user filename.
-                        filename = f"{name}--{filename}"
-                    input_name = Path(filename)
+                    raw_filename = filename
+                materialized_input_metadata[str(name)] = {
+                    "digest": normalized,
+                    "filename": value.get("filename")
+                    if isinstance(value, Mapping) and isinstance(value.get("filename"), str)
+                    else None,
+                }
+                # User filenames remain input metadata, never path components.
+                # Keep only a conservative extension for decoders that infer
+                # media type from the staged path.
+                input_name = Path(
+                    _managed_input_staging_name(str(name), normalized, raw_filename)
+                )
                 input_root = (attempt / "inputs").resolve()
                 path = (input_root / input_name).resolve()
                 if not path.is_relative_to(input_root):
@@ -6944,7 +6981,13 @@ class GenericPackHost:
             derived_assets: dict[str, Any] = {}
             for key, raw in registry["assets"].items():
                 object_id, digest_hex = _managed_asset_identity(str(key), raw)
-                destination = fetch_object(object_id, digest_hex, str(key))
+                original_name = raw.get("filename") if isinstance(raw, Mapping) else None
+                destination = fetch_object(
+                    object_id,
+                    digest_hex,
+                    str(key),
+                    filename=original_name if isinstance(original_name, str) else None,
+                )
                 materialized_objects[object_id] = str(destination)
                 materialized_objects[digest_hex] = str(destination)
                 entry = dict(raw)
@@ -6958,6 +7001,12 @@ class GenericPackHost:
         if materialized_objects:
             values["materialized_root"] = str(managed_root)
             values["materialized_objects"] = materialized_objects
+        if materialized_input_metadata:
+            metadata_path = attempt / "inputs" / "managed-input-metadata.json"
+            metadata_path.parent.mkdir(parents=True, exist_ok=True)
+            metadata_path.write_text(
+                json.dumps(materialized_input_metadata, sort_keys=True), encoding="utf-8"
+            )
         return values
 
     def _start_network_broker(
@@ -8050,7 +8099,8 @@ class GenericPackHost:
             launch = popen_owned_group if render_scope else spawn_task_scope
             process = launch(
                 _network_sandbox_argv(argv, attempt, broker_endpoint), cwd=str(cwd), env=env,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, pass_fds=inherited_fds,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                errors="replace", pass_fds=inherited_fds,
             )
         except BaseException as exc:
             if remotion_lease is not None:
@@ -8304,7 +8354,8 @@ class GenericPackHost:
             launch = popen_owned_group if render_scope else spawn_task_scope
             process = launch(
                 _network_sandbox_argv(argv, attempt_path, broker_endpoint), cwd=str(attempt_path), env=env,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, pass_fds=inherited_fds,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                errors="replace", pass_fds=inherited_fds,
             )
         except BaseException as exc:
             if remotion_lease is not None:
@@ -12944,7 +12995,7 @@ class _NativeEngineGraph:
                 or "sha256:" + hashlib.sha256((root / "config.json").read_bytes()).hexdigest() != self.profile["session_config_digest"]):
             raise HostError("owned engine readiness registry differs from selected launch")
         endpoint = urlsplit(self.profile["engine_endpoint"])
-        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-a", "-p", str(listener_pid), "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, timeout=2, check=False)
+        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-a", "-p", str(listener_pid), "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
         if observation.returncode != 0 or f":{endpoint.port} (LISTEN)" not in observation.stdout:
             raise HostError("selected listener socket ownership is uncertain")
         for broker in (self.engine, self.listener):
@@ -12994,7 +13045,7 @@ class _NativeEngineGraph:
         verify_tree_absent(self.process)
         root = Path(self.profile["engine_launch"]["session_root"])
         endpoint = urlsplit(self.profile["engine_endpoint"])
-        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-t", "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, timeout=2, check=False)
+        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-t", "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
         if observation.returncode != 1 or observation.stdout.strip() or observation.stderr.strip():
             raise CleanupUncertainError("engine endpoint cleanup is not verified")
         # Registry files are historical evidence only; successful census and
