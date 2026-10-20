@@ -152,6 +152,67 @@ def occlusions_from_frames(answers: Iterable[Mapping[str, Any]],
                       expected_count=len(target_rows))
 
 
+def host_motion_counts(props: Mapping[str, Any], basis: Mapping[str, Any], *,
+                       ranges: list[list[int]], clip_ids: list[str], keys: list[str],
+                       max_frames: int) -> dict[str, Any]:
+    """Inactive internal transport for a future trusted frozen-provider owner join.
+
+    Supply the exact Root props and compiled IDs; this does not certify their
+    source or activate a provider. Numeric public facts retain their own meaning.
+    One host preparation folds explicit half-open ranges without retaining rows.
+    """
+    def integer(value: Any) -> bool:
+        return type(value) is int and 0 <= value <= 2**53 - 1
+
+    def names(values: Any) -> bool:
+        return (isinstance(values, list) and bool(values)
+                and all(isinstance(v, str) and v for v in values)
+                and len(set(values)) == len(values))
+
+    if (not integer(max_frames) or not 1 <= max_frames <= 3600
+            or not names(clip_ids) or not names(keys) or len(clip_ids) * len(keys) > 64
+            or not isinstance(ranges, list) or not 1 <= len(ranges) <= 64):
+        raise SceneQueryUnavailable("invalid scene motion request")
+    total, previous_end = 0, 0
+    for span in ranges:
+        if (not isinstance(span, list) or len(span) != 2 or not all(integer(f) for f in span)
+                or span[0] >= span[1] or span[0] < previous_end):
+            raise SceneQueryUnavailable("invalid scene motion ranges")
+        total += span[1] - span[0]
+        previous_end = span[1]
+    if total > max_frames:
+        raise SceneQueryUnavailable("scene motion frame limit exceeded")
+    motion = {"ranges": ranges, "clipIds": clip_ids, "keys": keys, "maxFrames": max_frames}
+    answer = _run_query({"query": "motion", "props": dict(props), "basis": dict(basis),
+                         "motion": motion}, expected_count=1)[0]
+    counts = answer.get("counts")
+    pairs = [(clip_id, key) for clip_id in clip_ids for key in keys]
+    if (not integer(answer.get("totalFrames")) or answer["totalFrames"] != total
+            or answer.get("ranges") != ranges
+            or any(type(f) is not int for span in answer["ranges"] for f in span)
+            or not isinstance(counts, list)
+            or len(counts) != len(pairs)):
+        raise SceneQueryUnavailable("invalid scene motion response")
+    for row, (clip_id, key) in zip(counts, pairs):
+        if (not isinstance(row, dict) or row.get("clipId") != clip_id or row.get("key") != key
+                or not all(integer(row.get(k)) for k in ("totalFrames", "unknownFrames", "absentFrames"))
+                or row["totalFrames"] != total or not isinstance(row.get("values"), list)
+                or len(row["values"]) > total):
+            raise SceneQueryUnavailable("invalid scene motion counts")
+        subtotal = row["unknownFrames"] + row["absentFrames"]
+        previous_value = -math.inf
+        for entry in row["values"]:
+            if (not isinstance(entry, dict) or type(entry.get("value")) not in (int, float)
+                    or not math.isfinite(entry["value"]) or entry["value"] <= previous_value
+                    or not integer(entry.get("count")) or entry["count"] == 0):
+                raise SceneQueryUnavailable("invalid scene motion values")
+            previous_value = entry["value"]
+            subtotal += entry["count"]
+        if subtotal != total:
+            raise SceneQueryUnavailable("scene motion counts do not conserve frames")
+    return answer
+
+
 @dataclass(frozen=True)
 class Span:
     start_frame: int

@@ -24,6 +24,14 @@ try {
       return querySceneOcclusion(answer, target.clip_id, target.min_fraction);
     });
     process.stdout.write(JSON.stringify(results));
+  } else if (input.query === 'motion') {
+    if (typeof querySceneFrame !== 'function') throw new Error('scene_motion_export_missing');
+    if (!props) throw new Error('scene_motion_requires_root_props');
+    const {loadHostScene, foldSceneMotion} = await import('./native-scene.mjs');
+    const prepare = await loadHostScene(process.argv[2]);
+    const prepared = prepare(props, basis, hostRoles ?? {});
+    const folded = foldSceneMotion(prepared, querySceneFrame, input.motion);
+    process.stdout.write(JSON.stringify([{...folded, ranges: input.motion.ranges}]));
   } else {
   if (!Array.isArray(frames)) throw new Error('scene_frames_invalid');
   let prepared;
