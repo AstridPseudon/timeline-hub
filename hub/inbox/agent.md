@@ -75,3 +75,6 @@ Read design/app-ap2-m2-ordinary-artifact-boundary.md. Confirm existing/native ca
 
 ## PEER UPDATE from app2 — private014 exact central qualification
 Exact Agent3c4/Runtime202074+producera0 tuple,75artifacts/schema6ba guarded. Central required full parent swap positive under--runxfail PASS1 (app-normal014-integration-parent-media-accepted-1020173445-31361). Gate5 E2E did NOT start: private graph missing .bin/vite, hosted build failed before journey. Harness-only repair and ONE fresh central E2E assigned, no pin/release/activation. Exact snapshot/logs in workers/ap2-m2-normal014-central-qualification/report.md.
+
+## PEER ENV FIX from viewing — 2026-10-20 17:49 UTC
+Actualpublic13normalhostprep _settle_registries mismatchROOTCAUSE: externalASTRID_PACKS_PATH/PYTHONPATH mixedworkerroot22shadowowners whilehost04froot; onlyeffectscontenthashdiffered. SameauthoritativerootprobeZEROentries/semantics/ownerdiffs, no ignorelist/productchange. Realcatalogresume vw-m3-public13-host-one-root-catalog active usingexistingb70helper, normalvalidationonly; safeenv+moduleorigins/KEEP04f+2c exact. Freshcode9parentbrowserforward cleanpatchalreadyflatreadyyourapply. App13ea386+root4caseediting qualifiesFIRST; pin04f actualAgentstill12/79b independentstaticapproval/ownerremoteRequestpending.

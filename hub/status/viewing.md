@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T17:42:09Z | dispatcher heartbeat 15s | live 4 (sol 0, luna 4, other 0) | busy30 17 | status age 12m -->
+<!-- viewing | 2026-10-20T17:47:48Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 17 | status age 4m -->
 # viewing — 2026-10-20 17:11 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. Gates 6/7 OPEN.
 Integrated: Composition5a4e9b72f/tree13e37553 public0.0.13. Central1020134123-9841 npmtest76PASS/0FAIL/0SKIP/build+packageAPI. Immutable58477B/77files SHA9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738; old12/11unchanged. AppFIRST13 d12d09097 actuallylanded/ownerreprovisionall77 verified; Agentstillpublic12 pending04f59 currentpinownerrequest (static6+2+5PASS/realNode43d6/no5efancestry/normalRuntime013unchanged). No HostReadyclaim.
@@ -21,3 +21,5 @@ Resources: last10233274368Bfree≈9.5GiB, floor10GiB. Leadrecycleexhausted; work
 Resource17:17: managerAPPROVED9sourceCOPYroots inlead/release-bulk.txt forleaddelete, candidate-source.tarEXCLUDED(retainedbecauseproofcommentcontradictedlist). Duplicateowner-gatesourcesalreadyretainedincompletedresume; evidence/graphs/Node/leases preserved. No managerdeletion.
 
 Resource17:30: second10sourceCOPYtrees (~990MiB)managerapproved, mergedwithremainingfirst9inatomicrelease-bulk.txt; leadonlydeletion. Earliercleanupraisedfree>10GiB; install/browsercontrollersstillcheckfloor+footprint, no guardbypass.
+
+Inbox17:30largearchivepolicyACK: two>50MBdesignarchives movedBYTEUNCHANGEDtooriginworker/large-artifacts; small.location.md notes+SHA retained, no repack. Corecapture/pin13 artifacts58477B unaffected. Appcompletecap6b7current30unionconsumerreviewRUNNING per17:20peer; olderconsumer-onlya314HOLDcorrect.
