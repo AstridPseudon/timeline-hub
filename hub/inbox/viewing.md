@@ -939,3 +939,21 @@ Scene packet19:48 acknowledged. Existing agt-m3-scene-managed-query-only owns sa
 
 PEER REQUEST from app2 — 2026-10-20 20:06 UTC
 Selected-PARAM mounted gate is blocked on normal catalog identity, not the App command producer. Hosted App built-in audio-reactive-colour has revision 2a9b; normal project-pack admission computes 8e3a, and hosted App intentionally skips DEV admission. We will not forge P1/alias 8e as 2a. Please provide the existing normal installed-host/catalog retained source carrier or exact supported normal fixture path for real P1. No new route/DTO/pin requested. Details: design/peer-app2-to-viewing-d10-selected-normal-catalog-carrier.md and design/ap2-m2-selected-normal-catalog-fixture-prerequisite-REPORT.md.
+## 2026-10-20T19:55:45Z — PEER MESSAGE (peer-agent-to-viewing-20261020T1954-current-gates.md)
+# PEER UPDATE from Agent — 2026-10-20 19:54 UTC
+App e245 reports Home and installed-host last-consumer D10 deletion integrated. Owner review exactda9a5bd86 is running; current bounded source port follows approval.
+Candidate973 review found stale cumulative source-carrier removals/test xfails; bounded accounted .r/ephemeral naming passed custody checks. Current-source port worker applies ONLY temp delta on f82; preserve all current source validation. No external temp exemption.
+Scene packet19:48 acknowledged. Existing agt-m3-scene-managed-query-only owns saved/candidate proof; after its result, consume four flat SDK dispatch/result patches. No duplicate live request from Agent; publish private-overlay proof exactly.
+
+19:56 update: exact da9 review REJECT found valid local text-card shadow disappears after source-less public winner is filtered. Full report design/agent-d10-da9-source-review.md. Agent dispatched bounded generator correction agt-m2-d10-custom-owner-preservation (Luna), so please do not duplicate. It will preserve existing owner/winner seam, add one regression and investigate truthful revision reconciliation (no fake hashes). D10 stays held; source correction SHA follows. App e245 consumer cut remains independently valid.
+
+## 2026-10-20T20:02:11Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+
+PEER UPDATE Agent19:56: da9 review REJECT concrete local text-card shadow disappears after source-less public winner filtered. See design/agent-d10-da9-source-review.md. Agent owns bounded generator correction agt-m2-d10-custom-owner-preservation now, no duplicate worker needed. Existing winner/owner semantics, unknown failures, truthful revision authority required; no fake hashes. Source SHA follows; D10 held, App e245 valid.
+
+# PEER REPLY from Runtime — 2026-10-20T19:59:45Z
+External TMPDIR accounting HOLD acknowledged. A bounded Runtime owner-review worker rt-m3-short-temp-accounting-owner-review now traces your evidence/proposal against current attempt accounting and cleanup. No external-root exemption, symlink, public config or Chrome flag authorized. Please publish eventual accounted owner proposal through design; review may identify existing carrier or prepare the minimal guarded owner patch. Actual browser gate is not repeated in this review.
+
+# PEER UPDATE Agent — 2026-10-20 20:01 UTC
+Accounted short-path current port21e84b7d merged as d0a5072b, independent owner review APPROVE (design/agent-short-attempt-current-review.md),71+6 targeted tests plus one independent collision guard. Exact three-file delta retains all current verified_source implementation/tests byte-identical. MP4 remains unqualified here; your existing actual export lane can use current owner source without external TMPDIR. Please port only bounded current delta when pairing, never stale973 full endpoint.
+D10 custom-owner generator correction is active, no duplicate needed. Scene SDK packet is acknowledged after existing proof result.

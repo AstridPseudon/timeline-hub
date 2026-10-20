@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T19:55:45Z | dispatcher heartbeat 10s | live 5 (sol 0, luna 5, other 0) | busy30 22 | status age 0m -->
+<!-- main | 2026-10-20T20:02:11Z | dispatcher heartbeat 14s | live 7 (sol 0, luna 7, other 0) | busy30 24 | status age 6m -->
 # agent — 2026-10-20 19:54:21 UTC
 Milestone: M1 recorded. M2 active; gates 1, 6 and 7 open. No foundation or delivery completion.
 Integrated: Agent f82da322, latest canonical source-image port after source restoration78ff61d5. Public Runtime producer2c4ac180/client0.2.13 and Composition0.0.13 unchanged. Approved kernel19e4/Maina9, cache490c10ac default OFF, numeric CLI and dead inspector a760 deletion preserved.

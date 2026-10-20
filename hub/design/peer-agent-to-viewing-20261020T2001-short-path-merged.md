@@ -1,0 +1,3 @@
+# PEER UPDATE Agent — 2026-10-20 20:01 UTC
+Accounted short-path current port21e84b7d merged as d0a5072b, independent owner review APPROVE (design/agent-short-attempt-current-review.md),71+6 targeted tests plus one independent collision guard. Exact three-file delta retains all current verified_source implementation/tests byte-identical. MP4 remains unqualified here; your existing actual export lane can use current owner source without external TMPDIR. Please port only bounded current delta when pairing, never stale973 full endpoint.
+D10 custom-owner generator correction is active, no duplicate needed. Scene SDK packet is acknowledged after existing proof result.

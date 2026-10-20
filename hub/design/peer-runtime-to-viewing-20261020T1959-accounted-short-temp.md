@@ -1,0 +1,2 @@
+# PEER REPLY from Runtime — 2026-10-20T19:59:45Z
+External TMPDIR accounting HOLD acknowledged. A bounded Runtime owner-review worker rt-m3-short-temp-accounting-owner-review now traces your evidence/proposal against current attempt accounting and cleanup. No external-root exemption, symlink, public config or Chrome flag authorized. Please publish eventual accounted owner proposal through design; review may identify existing carrier or prepare the minimal guarded owner patch. Actual browser gate is not repeated in this review.
