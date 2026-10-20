@@ -1,6 +1,13 @@
 # App trim capture current inert prerequisite
 
-Status: **SOURCE-ONLY READY; production activation remains intentionally open.**
+Status: **SOURCE-ONLY APPROVED; production activation remains intentionally open.**
+
+The source-only approval boundary is limited to the donor-identical helper,
+its existing tests, and the two existing fixtures landing inert. The
+independent HOLD found an incorrect report claim, not a new App helper
+difference. This does not approve Runtime receipt/persistence, UI or session
+activation, gesture/dispatcher wiring, or writer retirement; those remain
+OPEN.
 
 This ports the approved 'aa0531ec704d3f14500c7f0d54c02e424acd0b67' capture
 closure onto current App integration. It adds only the helper, its existing
@@ -65,9 +72,14 @@ parent/config publication mirrors, and specified refusals. Canonical exported
 'd623533182f684c1b6b6196beda71ffc704dfb9eec3da5bf6bcc9481ea32c212'
 
 The independently reviewed old exact-Python-integer issue was checked against
-8130 source, not relabeled silently: native and model both accept exact
-'D=9007199254740995' at the inward representable endpoint
-'9007199254740994.0', and both refuse raw 'D+1' before mutation. The 17
+8130 source, not relabeled silently. With exact
+'D=9007199254740995' and raw 'D+1=9007199254740996', native accepts raw D at
+'9007199254740994.0' and also accepts raw D+1 at '9007199254740996.0'; the
+model accepts raw D at '9007199254740994.0' but refuses raw D+1 with the
+source-range error. The native/model discrepancy is explained by
+'astrid/sdk/timeline/capture.py:24-35', where 'number()' converts the raw
+integer to float before '_trim_commands.py' checks the range. This report does
+not claim that endpoint fixed, skip an assertion, or change an input. The 17
 Agent-only huge-integer vectors remain upstream Agent evidence and are not
 added to this App prerequisite.
 
@@ -91,7 +103,9 @@ Integer-bound check against current Agent8130 source:
     PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<private Agent8130 archive> /home/user/work/venv-agent/bin/python <inline native/model probe>
 
 Result: exact raw 'D' applies inward to '9007199254740994.0'; raw 'D+1'
-refuses in native and model paths, exit 0.
+is accepted by native as '9007199254740996.0' and refused by the model with
+the source-range error, exit 0. This is the recorded Agent8130 discrepancy;
+no App numeric change was made.
 
 Scoped lint and whitespace:
 
@@ -106,6 +120,8 @@ not modified.
 
 No full suite, project TypeScript check, install, build, browser, live socket,
 Runtime receipt/persistence qualification, or production UI/session activation
-was run. App2 may consume the exact helper exports above for its ordinary
-membership work; any session/gesture port and writer retirement remain
-separate tasks and gates.
+was run. The helper may land only as the inert source-only prerequisite.
+App2 may consume the exact helper exports above for its ordinary membership
+work; any session/gesture port, dispatcher/writer activation, and Runtime
+qualification remain separate OPEN tasks and gates. Agent owns the unresolved
+raw-integer endpoint; no App fix is claimed here.
