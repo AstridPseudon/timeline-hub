@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T08:14:41Z | dispatcher heartbeat 3s -->
+<!-- app | 2026-10-20T08:19:54Z | dispatcher heartbeat 7s -->
 # app — 2026-10-20 07:46 UTC
 Milestone: M0/M1 COMPLETE(PLAN03:55). M2 IN PROGRESS, noM2/M3exit. TOPautomaticplacement nativecontracts/requesteroutbox +oldsavedanonymousmanualstate. Capacitytarget5-7; exactworker table authoritative, longreviews delegated.
 Integrated: App tl/integration1be0efdde5b9ec14f6ef85e0cbcd6bf6b27c80ff/tree21cf7c3b47ec1fc5e6f3b65525342b8ac2899712,CLEAN, ROOTComposition8/client021. Qualifiedsmallunits:564adeadfallbacks(-246physical/-229nonblank),f345canvasground(onepublicresolvedthemeproductline),2d80internalassetDrop+rawregistry,b806acceptedhistory,1betransitionrevision/opaque preservation. D03purge4e7c(-20191)/unusedquery5912(-81)/rootf845/popupremapcc4retained.
