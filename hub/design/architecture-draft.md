@@ -10,7 +10,7 @@ Acceptance is ledger-first: exact scope/key/request-hash replay is resolved befo
 
 Slow producers store immutable artifacts and task proposals. They do not publish timeline edits: the requesting client supplies requester authority through a verified settled-attempt/proposal-digest guard, then submits commands through the same commit path. A dry run is a semantic plan, not a mutation receipt.
 
-The current tuple is deliberately split: Runtime server `a51267e` is a compatible patch; it does not replace the immutable generated-client artifact producer `2c4ac18` / contract `0.2.13` and requires no second client pin. Agent public Composition `0.0.12` and coordinated App adoption/current-pair qualification remain pending.
+The current tuple is deliberately split: Runtime server `c1fb9ef` is a compatible patch; it does not replace the immutable generated-client artifact producer `2c4ac18` / contract `0.2.13` and requires no second client pin. Agent public Composition `0.0.12` is integrated; coordinated App adoption and current-pair qualification remain pending.
 
 **Open gaps, stated plainly:** legacy/fallback writers are not yet all retired; capture/`RenderRequest` propagation and native capture authority are not fully qualified; audio and frame parity, final export qualification, and the owner-film viewing gate remain open. These gaps do not justify a second writer, evaluator or save-time renderer.
 
