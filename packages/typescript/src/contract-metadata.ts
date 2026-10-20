@@ -1,6 +1,6 @@
 /** Generated contract metadata; do not edit by hand. */
 
-export const CONTRACT_VERSION = "0.2.10" as const;
+export const CONTRACT_VERSION = "0.2.11" as const;
 export const PROTOCOL = "workspace.v1" as const;
 export const COMPONENT_MANIFEST_SHA256 = "sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5";
 export const SCHEMA_DIGEST = "sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c";

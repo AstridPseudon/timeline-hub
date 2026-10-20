@@ -230,3 +230,158 @@ test("semantic conflict preserves the live binding and generated error", async t
   assert.equal(handle.isCurrentIdentity(identity), true);
   assert.deepEqual(await handle.getRecoverableIdentity(), identity);
 });
+
+test("public handshake snapshot cannot forge actor/scopes during realm await", async t => {
+  const { host, replies } = fixture(t);
+  replies.set("/v1/handshake", () => response({
+    protocol: PROTOCOL, schema_digest: "schema", actor_id: identity.actorId,
+    realm_id: identity.realmId, scopes: [],
+  }));
+  const entered = deferred(), gate = deferred();
+  replies.set("/v1/realm", () => { entered.resolve(); return gate.promise; });
+  const handle = host.bind(connection);
+  const opening = negotiate(handle);
+  await entered.promise;
+  assert.equal(handle.client.handshakeInfo.actor_id, identity.actorId);
+  assert.deepEqual(handle.client.handshakeInfo.scopes, []);
+  handle.client.handshakeInfo.actor_id = "forged-actor";
+  handle.client.handshakeInfo.scopes.push("projects:write");
+  gate.resolve(response({ realm_id: identity.realmId }));
+  await assert.rejects(opening, /did not establish/);
+  assert.equal(handle.isCurrentIdentity({ actorId: "forged-actor", realmId: identity.realmId }), false);
+  await assert.rejects(transmit(handle), OperationRetiredError);
+});
+
+test("scope string containing requested scope must fail closed", async t => {
+  const { host, replies } = fixture(t);
+  replies.set("/v1/handshake", () => response({
+    protocol: PROTOCOL, schema_digest: "schema", actor_id: identity.actorId,
+    realm_id: identity.realmId, scopes: "not-projects:write-granted",
+  }));
+  const handle = host.bind(connection);
+  await assert.rejects(negotiate(handle), /did not establish/);
+  assert.equal(handle.isCurrentIdentity(identity), false);
+  await assert.rejects(transmit(handle), OperationRetiredError);
+});
+
+test("non-string schema digest must fail closed", async t => {
+  const { host, replies } = fixture(t);
+  replies.set("/v1/health", () => response({ status: "ok", protocol: PROTOCOL, schema_digest: 42 }));
+  replies.set("/v1/handshake", () => response({
+    protocol: PROTOCOL, schema_digest: 42, actor_id: identity.actorId,
+    realm_id: identity.realmId, scopes: ["projects:write"],
+  }));
+  const handle = host.bind(connection);
+  await assert.rejects(negotiate(handle), /did not establish/);
+  assert.equal(handle.isCurrentIdentity(identity), false);
+});
+
+test("handshake authority is captured before public assignment and promise propagation", async t => {
+  const { host } = fixture(t);
+  const handle = host.bind(connection);
+  let snapshot;
+  Object.defineProperty(handle.client, "handshakeInfo", {
+    get: () => snapshot,
+    set: value => {
+      snapshot = value;
+      value.actor_id = "forged-actor";
+      value.realm_id = "forged-realm";
+      value.schema_digest = "forged-schema";
+      value.scopes.length = 0;
+    },
+  });
+  assert.deepEqual(await negotiate(handle), identity);
+  assert.equal(snapshot.actor_id, "forged-actor");
+  assert.equal(handle.isCurrentIdentity(identity), true);
+  assert.equal(handle.isCurrentIdentity({ actorId: "forged-actor", realmId: "forged-realm" }), false);
+});
+
+for (const [path, field, value] of [
+  ["health", "schema_digest", ""], ["health", "schema_digest", "  "],
+  ["handshake", "schema_digest", null], ["handshake", "schema_digest", "  "],
+  ["handshake", "actor_id", 42], ["handshake", "actor_id", "  "],
+  ["handshake", "realm_id", 42], ["handshake", "realm_id", ""],
+  ["realm", "realm_id", 42], ["realm", "realm_id", "  "],
+  ["handshake", "scopes", null], ["handshake", "scopes", ["projects:write", 42]],
+  ["handshake", "scopes", ["not-projects:write-granted"]],
+]) {
+  test(`malformed ${path}.${field} ${JSON.stringify(value)} retires negotiation`, async t => {
+    const { host, replies } = fixture(t);
+    const valid = {
+      health: { status: "ok", protocol: PROTOCOL, schema_digest: "schema" },
+      handshake: {
+        protocol: PROTOCOL, schema_digest: "schema", actor_id: identity.actorId,
+        realm_id: identity.realmId, scopes: ["projects:write"],
+      },
+      realm: { realm_id: identity.realmId },
+    };
+    replies.set(`/v1/${path}`, () => response({ ...valid[path], [field]: value }));
+    const handle = host.bind(connection);
+    await assert.rejects(negotiate(handle), /did not establish/);
+    assert.equal(handle.isCurrentIdentity(identity), false);
+    await assert.rejects(transmit(handle), OperationRetiredError);
+  });
+}
+
+for (const stage of ["health", "handshake", "getRealm"]) {
+  test(`retirement during ${stage} promise propagation blocks negotiation continuation`, async t => {
+    const { host, calls } = fixture(t);
+    const handle = host.bind(connection);
+    const original = handle.client[stage].bind(handle.client);
+    handle.client[stage] = (...args) => {
+      const pending = original(...args);
+      pending.then(() => handle.retire());
+      return pending;
+    };
+    await assert.rejects(negotiate(handle), OperationRetiredError);
+    assert.equal(calls.length, ["health", "handshake", "getRealm"].indexOf(stage) + 1);
+    assert.equal(handle.isCurrentIdentity(identity), false);
+  });
+}
+
+for (const stage of ["health", "handshake", "realm"]) {
+  for (const wait of ["response", "body"]) {
+    test(`retirement during ${stage} ${wait} await blocks negotiation continuation`, async t => {
+      const { host, calls, replies } = fixture(t);
+      const handle = host.bind(connection);
+      const entered = deferred(), gate = deferred();
+      replies.set(`/v1/${stage}`, () => {
+        if (wait === "response") { entered.resolve(); return gate.promise; }
+        return {
+          status: 200, headers: new Headers(),
+          arrayBuffer: () => { entered.resolve(); return gate.promise; },
+        };
+      });
+      const pending = negotiate(handle);
+      await entered.promise;
+      handle.retire();
+      const body = {
+        status: "ok", protocol: PROTOCOL, schema_digest: "schema", actor_id: identity.actorId,
+        realm_id: identity.realmId, scopes: ["projects:write"],
+      };
+      gate.resolve(wait === "response" ? response(body) : new TextEncoder().encode(JSON.stringify(body)).buffer);
+      await assert.rejects(pending, OperationRetiredError);
+      assert.equal(calls.length, ["health", "handshake", "realm"].indexOf(stage) + 1);
+      assert.equal(handle.isCurrentIdentity(identity), false);
+    });
+  }
+}
+
+test("unsupported fetch wrapper that awaits forwarding can dispatch after retirement", async t => {
+  const { host, calls } = fixture(t);
+  const direct = globalThis.fetch;
+  const entered = deferred(), gate = deferred();
+  globalThis.fetch = async (url, options) => {
+    if (new URL(url).pathname === "/v1/tasks/task") { entered.resolve(); await gate.promise; }
+    return direct(url, options);
+  };
+  const handle = host.bind(connection);
+  await negotiate(handle);
+  const pending = handle.client.getTask("task");
+  await entered.promise;
+  handle.retire();
+  assert.equal(calls.some(call => call.url.endsWith("/v1/tasks/task")), false);
+  gate.resolve();
+  await assert.rejects(pending, OperationRetiredError);
+  assert.equal(calls.some(call => call.url.endsWith("/v1/tasks/task")), true);
+});
