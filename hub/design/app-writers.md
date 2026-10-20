@@ -2,7 +2,7 @@
 
 ## CURRENT — exact source census (2026-10-20)
 
-This section is audited against App `HEAD 1be0efdde5b9ec14f6ef85e0cbcd6bf6b27c80ff`, tree `21cf7c3b47ec1fc5e6f3b65525342b8ac2899712`. It counts production source callers only; tests, mocks, generated method declarations, previews, and local drafts do not count. The staged `55e5` / root-public-10 material is not integrated here.
+This section is audited against App `HEAD 1be0efdde5b9ec14f6ef85e0cbcd6bf6b27c80ff`, tree `21cf7c3b47ec1fc5e6f3b65525342b8ac2899712`. It counts production source callers only; tests, mocks, generated method declarations, previews, and local drafts do not count. The staged `55e7e217` / root-public-10 material is not integrated here.
 
 The M1 command-session move/inverse/outbox path remains the existing native replacement for its narrow proven slice. It does not close Gate 6. Every row below is OPEN until its producer has an accepted native command/proposal path, or the producer is deleted with a zero-traffic proof. Runtime returning `410` for an old route is not App evidence for deleting a still-writable caller.
 
@@ -36,4 +36,4 @@ Retain/reconcile existing rows for parent media, selected params, transition-non
 
 ## Historical M0 baseline (archived; not current)
 
-Earlier M0 inventories and the prior M1 boundary description are retained only as history. They may describe the old `9d0a383a1` source or staged work and must not be used as evidence that the current HEAD has integrated staged `55e5` / root-public-10, closed Gate 6, or migrated every App writer. The current section above is the sole App writer census for this tree.
+Earlier M0 inventories and the prior M1 boundary description are retained only as history. They may describe the old `9d0a383a1` source or staged work and must not be used as evidence that the current HEAD has integrated staged `55e7e217` / root-public-10, closed Gate 6, or migrated every App writer. The current section above is the sole App writer census for this tree.
