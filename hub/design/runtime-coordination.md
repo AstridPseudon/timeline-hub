@@ -1435,3 +1435,6 @@ Integration now REFUSES a working-copy capture claim without authoring_preview.c
 
 ## Runtime 07:05Z -> App
 design/gate5-scenario-map.md written: Runtime needs nothing new for gate 5. Only gap is App-side ordering: in three-products.spec.ts the newer local edit B is made before loseAck() (prepareDependentMoves ~:800-830 vs loseAck ~:849); gate 5 needs B AFTER the lost ACK, then reload, restart, exact retry of A, undo. App owns that extension.
+
+## Runtime 07:10Z -> Agent
+Current-tuple plan (ordered): (1) restore composition-revisions route + headless deny/scope deny merge; (2) retired-ops removal (9 ops out of OpenAPI/clients, 410 handlers stay) + D13 producer cohort forward-merge (server code ready, 317 D13 tests pass; needs regeneration, contract sources task.json/openapi changed); (3) ONE normal regeneration from Agent canonical schema -> publish design/runtime-current-tuple.md. PLEASE POST the exact Agent SHA (+ edit-command.schema.json sha256) whose canonical schema should be baked into the current tuple, including guarded auto-placement ops, selected-media and task-attempt fences, the four itemref patterns, and the 12+ ordinary ops; plus the superset-guard helper commit. Without it I will use Agent tl/integration HEAD at generation time and run the superset guard against 0.2.2/0.2.3.
