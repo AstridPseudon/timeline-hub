@@ -74,6 +74,46 @@ def shared_editing(request, tmp_path, monkeypatch):
         edit.service.close()
 
 
+def test_shared_slot_move_inverse_redo_and_rematerialization(shared_editing):
+    from test_timeline_commit_integration import inverse
+
+    edit, index = shared_editing
+    original = edit.document()
+    baseline_history = copy.deepcopy(edit.history())
+    baseline_closures = [edit.document(entry["revision_id"]) for entry in baseline_history]
+    transcript = edit.service.get_document(edit.project, edit.film.fixture.transcript_document_id)
+    binding = edit.service.get_project_shot_text_binding(edit.project, edit.film.fixture.text_binding_id)
+    owner = f"occurrence:occurrence-{index}/clip:clip-{index}"
+    move = edit.agent.move(edit.agent.bundle(original), owner, 3.5)
+    first = edit.commit(edit.body([move]), "shared-first-move")
+    edit.assert_readback(first)
+    undone = edit.commit(edit.body([inverse(first["receipt"]["receipt_id"])]), "shared-undo")
+    assert undone["data"]["canonical_document"] == original
+    redone = edit.commit(edit.body([inverse(undone["receipt"]["receipt_id"])]), "shared-redo")
+    assert redone["data"]["canonical_document"] == first["data"]["canonical_document"]
+    undone_again = edit.commit(edit.body([inverse(redone["receipt"]["receipt_id"])]), "shared-undo-again")
+    assert undone_again["data"]["canonical_document"] == original
+    move = edit.agent.move(edit.agent.bundle(edit.document()), owner, 3.6)
+    rematerialized = edit.commit(edit.body([move]), "shared-rematerialize")
+    assert {s["shot_id"] for s in rematerialized["data"]["canonical_document"]["shot_revisions"]} == {
+        s["shot_id"] for s in first["data"]["canonical_document"]["shot_revisions"]}
+    for accepted in (first, undone, redone, undone_again, rematerialized):
+        edit.assert_readback(accepted)
+        for sibling in [*(f"occurrence-{n}" for n in range(1, 4) if n != index), "repeated-third"]:
+            assert occurrence_image(accepted["data"]["canonical_document"], sibling) == occurrence_image(original, sibling)
+    history = edit.history()
+    assert history[:len(baseline_history)] == baseline_history
+    assert [edit.document(entry["revision_id"]) for entry in baseline_history] == baseline_closures
+    accepted_results = (first, undone, redone, undone_again, rematerialized)
+    assert len(history) == len(baseline_history) + len(accepted_results)
+    for entry, accepted in zip(history[len(baseline_history):], accepted_results):
+        assert entry["receipt"] == accepted["receipt"]
+        assert entry["revision_id"] == accepted["data"]["accepted_revision_id"]
+        assert edit.document(entry["revision_id"]) == accepted["data"]["canonical_document"]
+    assert edit.service.get_document(edit.project, edit.film.fixture.transcript_document_id) == transcript
+    assert edit.service.get_project_shot_text_binding(edit.project, edit.film.fixture.text_binding_id) == binding
+
+
 def test_shared_inverse_preserves_newer_disjoint_parent_edit(shared_editing):
     from test_timeline_commit_integration import inverse
 
@@ -133,3 +173,28 @@ def test_shared_inverse_refuses_touching_aba_atomically(shared_editing):
     assert edit.document() == document
     assert edit.history() == history
     assert rows(edit.service) == stored
+
+
+def test_shared_redo_refuses_intervening_aba_after_exact_undo(shared_editing):
+    from runtime_protocol.errors import RuntimeErrorBase
+    from test_timeline_commit_integration import inverse, rows
+
+    edit, index = shared_editing
+    original = edit.document()
+    owner = f"occurrence:occurrence-{index}/clip:clip-{index}"
+    moved = edit.commit(edit.body([edit.agent.move(edit.agent.bundle(original), owner, 3.5)]), "shared-move")
+    undone = edit.commit(edit.body([inverse(moved["receipt"]["receipt_id"])]), "shared-undo")
+    assert undone["data"]["canonical_document"] == original
+    touched = edit.commit(edit.body([edit.agent.move(edit.agent.bundle(edit.document()), owner, 3.6)]),
+                          "shared-touch")
+    restored = edit.commit(edit.body([inverse(touched["receipt"]["receipt_id"])]), "shared-touch-undo")
+    assert restored["data"]["canonical_document"] == original
+    history, stored = edit.history(), rows(edit.service)
+    with pytest.raises(RuntimeErrorBase) as error:
+        edit.commit(edit.body([inverse(undone["receipt"]["receipt_id"])]), "shared-aba-redo")
+    assert error.value.details["reason"] == "intervening_write"
+    assert edit.document() == original
+    assert edit.history() == history
+    assert rows(edit.service) == stored
+    for accepted in (moved, undone, touched, restored):
+        edit.assert_readback(accepted)
