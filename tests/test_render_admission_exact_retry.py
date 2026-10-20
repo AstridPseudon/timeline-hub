@@ -56,13 +56,15 @@ def _reopen(f):
     return f["service"]
 
 
-# Restore Timeline render admission ACK recovery using retained request identity.
-@pytest.mark.xfail(strict=True, raises=ConflictError, reason="render admission replay must precede current-head freezing")
 @pytest.mark.parametrize("status", ["queued", "running", "cancelled"])
-def test_original_admission_after_new_head_and_restart(canonical_scene, status):
+@pytest.mark.parametrize("pinned", [True, False])
+def test_original_admission_after_new_head_and_restart(canonical_scene, status, pinned):
     f = canonical_scene
     _publish(f)
     request = _request(f)
+    if not pinned:
+        request["spec"]["params"].pop("expected_version")
+        request["spec"]["params"].pop("canonical_head_revision_id")
     admitted = f["service"].create_task(copy.deepcopy(request))
     frozen = copy.deepcopy(admitted["task"]["spec"])
     snapshot = _snapshot(f["service"], frozen)
@@ -90,8 +92,6 @@ def test_original_admission_after_new_head_and_restart(canonical_scene, status):
         service.close()
 
 
-# Restore Timeline render admission ACK recovery at the authenticated door.
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="exact createTask retransmission must return the original admission")
 def test_door_lost_admission_ack_new_head_restart(canonical_scene, tmp_path, monkeypatch):
     f = canonical_scene
     _publish(f)
@@ -213,3 +213,245 @@ def test_new_key_validates_current_head_version_and_objects(canonical_scene):
     assert f["C_media"]["object_id"] in current["task"]["spec"]["input_object_ids"]
     assert f["package"]["object_id"] not in current["task"]["spec"]["input_object_ids"]
     assert _snapshot(f["service"], current["task"]["spec"])["config"]["app"] == {"sentinel": "C"}
+
+
+@pytest.mark.parametrize("receipt", ["current", "stale", "absent", "partial_current", "partial_stale"])
+def test_normalized_replay_after_restart_reconstructs_receipt(canonical_scene, receipt):
+    from test_task_admission_replay_identity import _receipt_state
+
+    f = canonical_scene
+    _publish(f)
+    request = _request(f)
+    admitted = f["service"].create_task(copy.deepcopy(request))
+    media = admitted["task"]["spec"]["spec"]["inputs"]["timeline_authority"]["input_object_ids"]
+    _advance(f)
+    service = _reopen(f)
+    try:
+        _receipt_state(service.store, receipt)
+        before = _state(service.store)
+        for patch in ({"spec": {**request["spec"], "inputs": None}},
+                      {"spec": {**request["spec"], "inputs": {"timeline_ref": "main", "selector": "rendering.remotion"}}},
+                      {"input_object_ids": [oid.removeprefix("sha256:") for oid in media]},
+                      {"storage_estimate": {"scratch_bytes": 0, "output_bytes": 0}},
+                      {"execution_request": None}):
+            replay = service.create_task({**copy.deepcopy(request), **patch})
+            assert replay["task"]["id"] == admitted["task"]["id"]
+            assert replay["run"]["id"] == admitted["run"]["id"]
+            assert replay["task"]["spec"] == admitted["task"]["spec"]
+        after = _state(service.store)
+        assert {k: v for k, v in after["rows"].items() if k not in {"command_idempotency", "project_sequences"}} == {
+            k: v for k, v in before["rows"].items() if k not in {"command_idempotency", "project_sequences"}}
+        assert after["files"] == before["files"]
+        assert service.create_task(copy.deepcopy(request))["task"]["id"] == admitted["task"]["id"]
+        assert _state(service.store) == after
+    finally:
+        service.close()
+
+
+@pytest.mark.parametrize("changed", ["output", "null-param", "execution-request", "digest", "effect", "snapshot", "media", "storage"])
+def test_changed_request_after_restart_has_zero_writes(canonical_scene, changed):
+    f = canonical_scene
+    _publish(f)
+    request = _request(f)
+    admitted = f["service"].create_task(copy.deepcopy(request))
+    _advance(f)
+    service = _reopen(f)
+    try:
+        if changed == "output":
+            request["spec"]["params"]["output_name"] = "changed.mp4"
+        elif changed == "null-param":
+            request["spec"]["params"]["profile"] = None
+        elif changed == "execution-request":
+            request["execution_request"] = {"schema_version": 1, "target": {"kind": "default"}, "inputs": []}
+        elif changed == "digest":
+            request["capability_digest"] = digest("changed")
+        elif changed == "effect":
+            request["settlement_effect"] = {"effect_type": "fixture.changed"}
+        elif changed == "snapshot":
+            request["spec"]["authority_context"] = {"capture_snapshot": {"config": {"clips": []}, "registry": {}}}
+        elif changed == "media":
+            request["input_object_ids"] = [f["C_media"]["object_id"]]
+        else:
+            request["storage_estimate"] = {k: v + 1 for k, v in admitted["task"]["spec"]["storage_estimate"].items()}
+        before = _state(service.store)
+        with pytest.raises(ConflictError):
+            service.create_task(request)
+        assert _state(service.store) == before
+    finally:
+        service.close()
+
+
+def test_oversized_storage_override_does_not_make_default_equivalent(canonical_scene):
+    f = canonical_scene
+    _publish(f)
+    original = _request(f)
+    first = f["service"].create_task(copy.deepcopy(original))
+    request = _request(f, key="oversized")
+    request["storage_estimate"] = {k: v + 1 for k, v in first["task"]["spec"]["storage_estimate"].items()}
+    admitted = f["service"].create_task(copy.deepcopy(request))
+    assert admitted["task"]["id"] != first["task"]["id"]
+    _advance(f)
+    service = _reopen(f)
+    try:
+        before = _state(service.store)
+        assert service.create_task(copy.deepcopy(request))["task"]["id"] == admitted["task"]["id"]
+        for estimate in (None, {"scratch_bytes": 0, "output_bytes": 0}):
+            changed = copy.deepcopy(request)
+            if estimate is None:
+                changed.pop("storage_estimate")
+            else:
+                changed["storage_estimate"] = estimate
+            with pytest.raises(ConflictError, match="different input"):
+                service.create_task(changed)
+            assert _state(service.store) == before
+    finally:
+        service.close()
+
+
+def test_render_alias_replays_original_revision_and_rejects_changes(canonical_scene):
+    f = canonical_scene
+    _publish(f)
+    admitted = f["service"].create_task(_request(f))
+    alias = _request(f, key="render-alias")
+    assert f["service"].create_task(copy.deepcopy(alias))["task"]["id"] == admitted["task"]["id"]
+    _advance(f)
+    service = _reopen(f)
+    try:
+        before = _state(service.store)
+        assert service.create_task(copy.deepcopy(alias))["task"]["spec"] == admitted["task"]["spec"]
+        changed = copy.deepcopy(alias)
+        changed["spec"]["authority_context"] = {"capture_snapshot": {"config": {"clips": []}, "registry": {}}}
+        with pytest.raises(ConflictError, match="different input"):
+            service.create_task(changed)
+        assert _state(service.store) == before
+    finally:
+        service.close()
+
+
+def test_proven_render_replay_repairs_original_snapshot_after_head_advance(canonical_scene):
+    from runtime_protocol.cas import ContentAddressedStore
+
+    f = canonical_scene
+    _publish(f)
+    request = _request(f)
+    admitted = f["service"].create_task(copy.deepcopy(request))
+    snapshot = _snapshot(f["service"], admitted["task"]["spec"])
+    _advance(f)
+    service = _reopen(f)
+    try:
+        bare = admitted["task"]["spec"]["spec"]["timeline_snapshot_ref"]["digest"].removeprefix("sha256:")
+        # Controlled loss of an actual published snapshot, as in inline repair tests.
+        with service.store._transaction():
+            service.store.conn.execute("DELETE FROM project_objects WHERE digest=?", (bare,))
+            service.store.conn.execute("DELETE FROM objects WHERE digest=?", (bare,))
+        ContentAddressedStore(service.store.cas_root).path_for(bare).unlink()
+        before = _state(service.store)
+        changed = copy.deepcopy(request)
+        changed["spec"]["params"]["output_name"] = "changed.mp4"
+        with pytest.raises(ConflictError, match="different input"):
+            service.create_task(changed)
+        assert _state(service.store) == before
+        replay = service.create_task(copy.deepcopy(request))
+        assert replay["task"]["id"] == admitted["task"]["id"]
+        assert replay["run"]["id"] == admitted["run"]["id"]
+        assert replay["task"]["spec"] == admitted["task"]["spec"]
+        assert _snapshot(service, replay["task"]["spec"]) == snapshot
+        after = _state(service.store)
+        assert after["rows"]["tasks"] == before["rows"]["tasks"]
+        assert after["rows"]["runs"] == before["rows"]["runs"]
+        assert after["rows"]["events"] == before["rows"]["events"]
+    finally:
+        service.close()
+
+
+def test_old_admission_without_retained_floor_requires_current_full_equivalence(canonical_scene, monkeypatch):
+    f = canonical_scene
+    _publish(f)
+    store = f["service"].store
+    original = store._store_spec
+
+    def legacy_spec(spec):
+        spec = dict(spec)
+        spec.pop("_runtime_render_admission", None)
+        return original(spec)
+
+    # Persist the older spec shape through real admission, without inventing history.
+    request = _request(f)
+    request["spec"]["params"].pop("expected_version")
+    request["spec"]["params"].pop("canonical_head_revision_id")
+    with monkeypatch.context() as patch:
+        patch.setattr(store, "_store_spec", legacy_spec)
+        admitted = f["service"].create_task(copy.deepcopy(request))
+    before = _state(store)
+    assert f["service"].create_task(copy.deepcopy(request)) == admitted
+    assert _state(store) == before
+    _advance(f)
+    service = _reopen(f)
+    try:
+        before = _state(service.store)
+        with pytest.raises(ConflictError):
+            service.create_task(copy.deepcopy(request))
+        assert _state(service.store) == before
+    finally:
+        service.close()
+
+
+def test_replay_uses_saved_digest_but_fresh_key_still_checks_readiness(canonical_scene):
+    from runtime_protocol.errors import CapabilityUnavailableError
+
+    f = canonical_scene
+    _publish(f)
+    admitted = f["service"].create_task(_request(f))
+    head = _advance(f)
+    service = _reopen(f)
+    try:
+        service.register_capability({"capability_id": "rendering.render", "definition_digest": _request(f)["capability_digest"],
+                                     "status": "unavailable", "unavailable_reason": "fixture-renderer-offline"})
+        before = _state(service.store)
+        replay = service.create_task(_request(f), enforce_readiness=True)
+        assert replay["task"]["id"] == admitted["task"]["id"]
+        assert replay["task"]["spec"] == admitted["task"]["spec"]
+        assert _state(service.store) == before
+        fresh = _request(f, head=head["revision_id"], key="fresh-offline")
+        fresh["spec"]["params"]["expected_version"] = service.store.conn.execute(
+            "SELECT version FROM timelines WHERE id='main' AND project_id=?", (f["project"],),
+        ).fetchone()[0]
+        with pytest.raises(CapabilityUnavailableError):
+            service.create_task(fresh, enforce_readiness=True)
+        after = _state(service.store)
+        for table in ("tasks", "runs", "events"):
+            assert after["rows"][table] == before["rows"][table]
+    finally:
+        service.close()
+
+
+def test_bound_execution_request_and_effect_keep_independent_replay_identity(canonical_scene):
+    f = canonical_scene
+    _publish(f)
+    first = f["service"].create_task(_request(f))
+    request = _request(f, key="bound-render")
+    request["input_object_ids"] = first["task"]["spec"]["spec"]["inputs"]["timeline_authority"]["input_object_ids"]
+    request["execution_request"] = {
+        "schema_version": 1, "target": {"kind": "machine", "machine_id": "render-machine"},
+        "creative_options": {"value": True},
+    }
+    request["settlement_effect"] = {"effect_type": "fixture.effect", "value": True}
+    admitted = f["service"].create_task(copy.deepcopy(request))
+    _advance(f)
+    service = _reopen(f)
+    try:
+        before = _state(service.store)
+        replay = service.create_task(copy.deepcopy(request))
+        assert replay["task"]["id"] == admitted["task"]["id"]
+        assert replay["task"]["spec"] == admitted["task"]["spec"]
+        assert replay["task"]["execution_request"] == admitted["task"]["execution_request"]
+        assert replay["task"]["expected_effect"] == request["settlement_effect"]
+        for field in ("execution_request", "settlement_effect"):
+            changed = copy.deepcopy(request)
+            value = changed[field] if field == "settlement_effect" else changed[field]["creative_options"]
+            value["value"] = 1  # JSON true and 1 remain distinct after normalization.
+            with pytest.raises(ConflictError, match="different input"):
+                service.create_task(changed)
+            assert _state(service.store) == before
+    finally:
+        service.close()
