@@ -94,6 +94,7 @@ with tempfile.TemporaryDirectory(prefix="empty-layer-design-") as directory:
 
     filtered = []
     totals = []
+    window = FrameWindow(150, 180, (30, 1))
     for hold in (10, 20):
         payload = {"tracks": [{"id": key, "kind": "visual", "label": key} for key in ("bottom", "top")],
                    "clips": [{"id": "plate", "track": "bottom", "asset": "plate", "at": 0, "hold": hold}]}

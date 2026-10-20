@@ -3061,5 +3061,13 @@
       "current_base_byte_equal_approved_carry_start": "56409ab287007ed44eede6fd634096421c824951"
     },
     "tests/packs/rendering/test_scene_source_carry.py": "new in CURRENT and approved donor delta"
-  }
+  },
+  "all_2995_regular_source_files_byte_equal_after_tests": true,
+  "candidate_branch_still_matches": true,
+  "untracked_or_ignored_new_files": [],
+  "tests_script_exit": 0,
+  "tests_total_passed": 229,
+  "tests_existing_xfailed": 9,
+  "tests_render_fixture_deselected": 3,
+  "worktree_clean_after_tests": true
 }

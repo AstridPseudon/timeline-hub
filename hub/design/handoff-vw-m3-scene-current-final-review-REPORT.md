@@ -1,0 +1,32 @@
+# APPROVE — CURRENT-Agent scene source carry
+
+Independent read-only review of actual frozen harness commit **de62afbbb44ff261ab2b0366141208fccddd3580**, tree **335e955decc7250e01f32446cee56d26e5ab6954**, on CURRENT base **931d7ec56dadffc2efdc893fec80b4c4aadf8a8e**. The base matches the producer meta (`931d7ec56`). Read PLAN, COMMON, both briefs and the donor final approval. **No blocking defect found; approve this bounded source join for the Agent owner's integration process.** No source files were changed by this reviewer.
+
+The diff contains exactly five paths: `astrid/sdk/timeline_filmstrip.py`; `astrid/packs/rendering/actions/timeline_visualize/{composed_frame,filmstrip_execution,filmstrip_cards}.py`; and `tests/packs/rendering/test_scene_source_carry.py`. It is **811 additions / 19 removals**, including 582 new test lines and 229 product additions. All five final files are byte-identical to approved donor **28d4e515da6c8c8c9180c7cd0076eec0f510989c**. The carry's starting bytes also match: CURRENT base composed_frame equals approved prerequisite **630c9d0a9be66cf4969b857eeb97930ab8a14f79**; the other three product starts equal donor base **56409ab287007ed44eede6fd634096421c824951**. Thus the NEW carry delta is identical, without re-porting the existing prerequisite.
+
+The complete CaptureSceneLabels class, labels formatter and prerequisite test file are byte-preserved against 630. Existing final-props callback (`run.py`), scene transport, Root, package/lock, pyproject and every other CURRENT/M2 path remain unchanged. The candidate is one ordinary commit with the CURRENT base as its sole parent; donor 28d4e515 is not an ancestor. Ancestry nuance: 56409ab28 and 630c9d0a were already ancestors of CURRENT base and remain so; the port introduces no donor ancestry. Full file hashes, base comparisons and ancestry exit codes are in [source verification](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-scene-current-final-review-source.json).
+
+Review and direct tests establish retained exact revision/candidate compilation through the actual SDK/compiler/projector/profile/provider, including opaque source/occurrence IDs and audio clips; later heads do not replace the selected source. Both adapters preserve the existing final-props callback. The same materialized timeline/registry, resolved theme, canonical basis, media digests and staged assets are checked before observation. Fresh scene facts become available only after complete successful copies. Cache-only/mixed fallback, unknown geometry/opacity/visibility, UNKNOWN/GAP distinctions, explicit transport EMPTY, wrong-source refusal and failure cleanup remain covered. No source factory, DTO, second projector, private geometry, colon parser or weakened expectation was added.
+
+Executed exactly:
+
+`bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-scene-current-final-review-commands.sh`
+
+Exit **0**. The [command script](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-scene-current-final-review-commands.sh) contains every exact pytest nodeid, option and environment; [complete output](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-scene-current-final-review-tests.log).
+
+| Direct lane | Result |
+|---|---|
+| test_scene_source_carry.py + test_capture_scene_labels.py, all native/transport parameters | 79 passed, 17.47s |
+| Six neighboring capture/labels/SDK/cards files, `-k 'not test_pack_'` | 125 passed / 3 rendering-fixture cases deselected, 6.05s |
+| Four exact executor nodeids, parameterized | 7 passed, 1.15s |
+| tests/sdk/test_capture_closure_source.py | 18 passed / 9 existing strict xfailed, 112.76s |
+| Ruff `--no-cache --isolated --select E4,E7,E9,F,I,BLE` on direct tests and preserved labels formatter | All checks passed |
+| `git diff --check 931d7ec56dadffc2efdc893fec80b4c4aadf8a8e de62afbbb44ff261ab2b0366141208fccddd3580` | Exit 0 |
+
+Total **229 passed, 9 existing xfailed, zero failures**. The closure-source test file and all nine strict xfail expectations are unchanged from CURRENT base; their Runtime publication/verified-source requirements remain unresolved. No tests or thresholds were changed.
+
+All tests ran in this reviewer's clean frozen worktree with PYTHONPATH bound to it, shared venv read-only, bytecode/pytest caching disabled and temporary files in this worker's directory. [Import probe](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-scene-current-final-review-imports.json) verifies nine actual SDK/compiler/projector/profile/provider/cards/executor/backend/run modules plus REPO_ROOT resolve here and match committed bytes. All **2,995 ordinary tracked files** were byte-equal to the committed source before tests and unchanged afterward; no extra regular or ignored files appeared. The producer ref still resolves to the reviewed SHA. Temporary test artifacts were removed; worktree remains clean.
+
+The live thin adapter exercised host_frames_at → scene-query.mjs / in-memory native-scene.mjs → prepareHostScene → public preparation/query on exact pinned **public 0.0.10**, artifact SHA256 **cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7**, Node **20.19.4**. [Overlay topology](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-scene-current-final-review-overlay.json) records two private overlays with REAL @remotion/@banodoco scopes, their own extracted Composition package and read-only peer leaf links. Runtime-status admission is doubled, and frame completion uses synthetic PNGs. Shared dependency graphs and caches were not modified.
+
+No blocker or new protocol decision. No full suite, make check, install, browser, socket, actual render, network, remote request, central request, git mutation or push. This is not native-host/runtime admission, public12 adoption, pixel/audio parity, D09 deletion or M3/Gate 6 qualification. Both shared graphs remain DISQUALIFIED. Agent owns the merge: recommend accepting this exact candidate through its owner/harness merge request, while holding runtime/pixel qualification for repaired dependency graphs and the matching consumer cohort. No repository reports or product changes were created; commit-msg and DONE are prepared for the harness.
