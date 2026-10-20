@@ -4,6 +4,16 @@ kind: effect
 pack_id: astrid_motion
 short_description: Animated pixel presenter overlay with mouth, blinks, bob, punch and crisp REC/label chrome.
 description: Draws the speaker's pixel mouth (closed, half, open on a 3-frame cycle in word spans), blinks, a 1 px bob on stressed words and an optional zoom punch over an am-snap-plate presenter plate. Pixels use the plate's view geometry. The plate needs the same zoom, focus, punchAt, words, seed and bob, with pan 0. Also draws the label chip, crop marks, REC timecode and a status chip.
+# Scene diagnostics: prepareSceneCapability publishes the existing motionAt
+# scalars at the supplied component frame, already speed-remapped by the scene.
+# motion.ts exports MOUTH_LEVEL: closed=0, half=0.5, open=1. Human labels apply
+# only to the resolved astrid_motion/effects/am-presenter source and revision;
+# foreign motion.mouth scalars and other values have unknown labels.
+# diagnostics.mouth uses the shared erase rectangle and presenterAt transform:
+# an inspection footprint, including closed pose, not occupied pixels or alpha.
+# Mosaic makes the region unknown; the public scene invalidates it for
+# unsupported outer geometry. Presence is unknown; opaqueSupport is none.
+# No underlying plate, asset alpha, face or text region is inferred.
 keywords:
 - presenter
 - talking-head
