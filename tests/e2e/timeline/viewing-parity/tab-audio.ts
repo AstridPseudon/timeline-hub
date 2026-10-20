@@ -84,7 +84,7 @@ export async function recordTabStream(
       }
     };
     const observePage = (label: string) => ({
-      media: Array.from(document.querySelectorAll('audio,video')).map((element: HTMLMediaElement) => ({
+      media: Array.from(document.querySelectorAll<HTMLMediaElement>('audio,video')).map(element => ({
         label, readyState: element.readyState, paused: element.paused, currentTime: element.currentTime,
         muted: element.muted, volume: element.volume,
       })),
@@ -215,12 +215,20 @@ export function assertNativePts(probe: TabCaptureProbe): void {
   const video = probe.streams.filter(stream => stream.codec_type === 'video');
   const audio = probe.streams.filter(stream => stream.codec_type === 'audio');
   if (video.length !== 1 || audio.length !== 1) throw new Error(`expected one video and one audio stream, got ${video.length}/${audio.length}`);
-  const packets = probe.packets.filter(packet => packet.codec_type === 'video' || packet.codec_type === 'audio');
-  if (packets.length < 2) throw new Error('capture must retain native packet timestamps');
-  for (const type of ['video', 'audio']) {
-    const values = packets.filter(packet => packet.codec_type === type).map(packet => Number(packet.pts));
+  const streams = { video: video[0], audio: audio[0] };
+  for (const [type, stream] of Object.entries(streams)) {
+    if (typeof stream.time_base !== 'string' || !/^\d+\/[1-9]\d*$/.test(stream.time_base)) {
+      throw new Error(`${type} stream is missing a native time base`);
+    }
+    const packets = probe.packets.filter(packet => Number(packet.stream_index) === Number(stream.index)
+      || (packet.stream_index === undefined && packet.codec_type === type));
+    if (packets.length === 0) throw new Error(`capture has no native ${type} packets`);
+    const values = packets.map(packet => Number(packet.pts));
     if (values.some(value => !Number.isFinite(value))) throw new Error(`${type} packet is missing native pts`);
+    const times = packets.map(packet => Number(packet.pts_time));
+    if (times.some(value => !Number.isFinite(value))) throw new Error(`${type} packet is missing finite native pts_time`);
     if (values.some((value, index) => index > 0 && value < values[index - 1])) throw new Error(`${type} packet pts are not monotonic`);
+    if (times.some((value, index) => index > 0 && value < times[index - 1])) throw new Error(`${type} packet pts_time is not monotonic`);
   }
 }
 
