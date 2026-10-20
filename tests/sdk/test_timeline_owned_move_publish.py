@@ -9,7 +9,7 @@ import pytest
 
 from astrid.core.timeline.authoring_bundle import open_authoring_bundle
 from astrid.sdk.timeline import commands, store
-from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import TimelineSession
@@ -68,6 +68,30 @@ def test_parent_publish_captures_source_hold_set_and_undoes_without_legacy_write
     assert loaded.clip('parent/clip:a').data == dict(original, hold=4)
     loaded.undo([accepted['receipt']['receipt_id']])
     assert loaded.clip('parent/clip:a').data == original
+    assert client.reads
+
+
+def test_parent_publish_captures_asset_clear_and_undoes_without_legacy_writer(connected):
+    client, generated, _ = connected
+    generated.bundles['r0'] = bundle_from_document(media_document())
+    generated.bundles['r0'].update(project_id='p', timeline_id='t')
+    tl = Checkout.attach(open_session(connected))
+    original = copy.deepcopy(tl.clip('parent/clip:clip-a').data)
+
+    clip = tl.clip('parent/clip:clip-a')
+    clip.clear_asset()
+    command = state(connected)['pending'][0]
+    assert command['op'] == 'clip.set'
+    assert command['select'] == 'parent/clip:clip-a'
+    assert command['args'] == {'values': {}, 'clear': ['asset']}
+    assert 'asset' not in clip.data
+
+    accepted = tl.publish('Clear the source', idempotency_key='owned-asset-clear')
+    assert json.loads(generated.calls[-1][0])['commands'] == [command]
+    loaded = Checkout.attach(open_session(connected))
+    assert 'asset' not in loaded.clip('parent/clip:clip-a').data
+    loaded.undo([accepted['receipt']['receipt_id']])
+    assert loaded.clip('parent/clip:clip-a').data == original
     assert client.reads
 
 
@@ -151,6 +175,82 @@ def test_parent_publish_captures_delete_retries_reloads_and_undoes(connected, mo
     assert undone['data']['status'] == 'accepted'
     assert loaded.clip('parent/clip:a').data == original
     assert client.reads
+
+
+def test_parent_publish_captures_split_retries_reloads_and_undoes_exact_rows(connected, monkeypatch):
+    client, generated, _ = connected
+    document = media_document(
+        hold=4,
+        app={'astrid': {'opaque': [None, False]},
+             'org.example': {'literal': 'clip-a', 'clear': None}},
+        opaque={'nested': [None, False, 0, {}, []]},
+    )
+    generated.bundles['r0'] = bundle_from_document(document)
+    generated.bundles['r0'].update(project_id='p', timeline_id='t')
+    original_rows = copy.deepcopy(generated.bundles['r0']['parent']['clips'])
+    original_config_rows = copy.deepcopy(generated.bundles['r0']['parent']['config']['clips'])
+    original = copy.deepcopy(State(generated.bundles['r0']).entity('parent/clip:clip-a'))
+    tl = Checkout.attach(open_session(connected))
+    generated.bundles['peer'] = copy.deepcopy(generated.bundles['r0'])
+    State(generated.bundles['peer']).entity('parent/track:picture')['label'] = 'Peer'
+    generated.head = {'revision_id': 'peer', 'publication_id': 'peer-publication'}
+
+    clip = tl.clip('parent/clip:clip-a')
+    clip.split(2, id='right')
+    command = state(connected)['pending'][0]
+    assert command['op'] == 'clip.split'
+    assert command['select'] == 'parent/clip:clip-a'
+    assert command['args'] == {'on': 2, 'right_id': 'right'}
+    assert command['created'] == ['parent/clip:right']
+    right = State(tl.bundle).entity('parent/clip:right')
+    assert right['opaque'] == original['opaque']
+    assert right['speed'] == original['speed'] == 2
+    assert (right['at'], right['from'], right['to'], right['hold']) == (2, 4, 6, 2)
+
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        tl.publish('Split the opening', idempotency_key='owned-split')
+    first = copy.deepcopy(generated.calls[-1])
+    loaded = Checkout.attach(open_session(connected))
+
+    def no_capture(*args):
+        pytest.fail('split retry attempted to recapture intent')
+
+    monkeypatch.setattr(commands, 'execute', no_capture)
+    accepted = loaded.publish()
+    assert generated.calls[-1] == first
+    assert accepted['message'] == 'Split the opening'
+    assert loaded.clip('parent/clip:right').data == right
+    assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer'
+
+    undone = loaded.undo([accepted['receipt']['receipt_id']])
+    assert undone['data']['status'] == 'accepted'
+    assert loaded.bundle['parent']['clips'] == original_rows
+    assert loaded.bundle['parent']['config']['clips'] == original_config_rows
+    assert loaded.clip('parent/clip:clip-a').data == original
+    assert State(loaded.bundle).entity('parent/clip:right', optional=True) is None
+    assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer'
+    assert client.reads
+
+
+def test_parent_split_dependency_refusal_keeps_draft_atomic(connected):
+    _, generated, path = connected
+    generated.bundles['r0'] = bundle_from_document(media_document(
+        hold=4,
+        app={'astrid': {'opaque': [None, False]},
+             'org.example': {'literal': 'clip-a', 'clear': None}},
+    ))
+    generated.bundles['r0'].update(project_id='p', timeline_id='t')
+    for rows in (generated.bundles['r0']['parent']['clips'],
+                 generated.bundles['r0']['parent']['config']['clips']):
+        rows[1]['transition'] = 'fade'
+    tl = Checkout.attach(open_session(connected))
+    before, draft = path.read_bytes(), copy.deepcopy(tl.bundle)
+    with pytest.raises(CommandError, match='parent transitions'):
+        tl.clip('parent/clip:clip-a').split(2, id='right')
+    assert path.read_bytes() == before
+    assert tl.bundle == draft
+    assert generated.calls == []
 
 
 def test_parent_publish_restart_keeps_exact_request_key_and_rationale(connected, monkeypatch):

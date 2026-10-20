@@ -88,6 +88,59 @@ class RemotionElementGenerationTest(unittest.TestCase):
         self.assertIn("'rendering': PUBLIC_EFFECT_REGISTRY['text-card']", generated)
         self.assertNotIn("@pack-rendering-elements-effects/text-card/component", generated)
 
+    def test_source_less_transition_keeps_catalog_defaults_and_precedence(self) -> None:
+        from astrid.core.element.registry import ElementRegistry
+        from astrid.core.element.schema import ElementDefinition
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            public_root = root / "rendering" / "fade"
+            public_root.mkdir(parents=True)
+            shadow_root = root / "local" / "fade"
+            shadow_root.mkdir(parents=True)
+            custom_root = root / "probe-fade"
+            custom_root.mkdir(parents=True)
+            component = shadow_root / "component.tsx"
+            component.write_text(
+                "export default () => ({presentation: null, timing: null});\n",
+                encoding="utf-8",
+            )
+            custom_component = custom_root / "component.tsx"
+            custom_component.write_text(component.read_text(encoding="utf-8"), encoding="utf-8")
+            winner = ElementDefinition(
+                id="fade", kind="transitions", root=public_root, source="pack:rendering",
+                editable=False, priority=30, component=public_root / "retired.tsx",
+                schema={}, defaults={"durationFrames": 8}, metadata={},
+            )
+            shadow = ElementDefinition(
+                id="fade", kind="transitions", root=shadow_root, source="pack:local",
+                editable=True, priority=100, component=component,
+                schema={}, defaults={"durationFrames": 24}, metadata={},
+            )
+            custom = ElementDefinition(
+                id="probe-fade", kind="transitions", root=custom_root, source="pack:probe",
+                editable=True, priority=30, component=custom_component,
+                schema={}, defaults={"durationFrames": 6}, metadata={},
+            )
+            with mock.patch.object(
+                gen_effect_registry,
+                "_element_registry",
+                return_value=ElementRegistry((winner, shadow, custom)),
+            ), mock.patch.object(
+                gen_effect_registry,
+                "_public_registry_ids",
+                return_value={"transitions": {"fade"}},
+            ):
+                generated = gen_effect_registry.generate_element_registry("transitions")
+
+        self.assertIn("'fade': {\"durationFrames\":8}", generated)
+        self.assertIn("'probe-fade': {\"durationFrames\":6}", generated)
+        self.assertNotIn('durationFrames\":24', generated)
+        self.assertNotIn("@pack-rendering-elements-transitions/fade/component", generated)
+        self.assertNotIn("@pack-local-elements-transitions/fade/component", generated)
+        self.assertIn("@pack-probe-elements-transitions/probe-fade/component", generated)
+        self.assertIn("TRANSITION_IDS = ['fade', 'probe-fade']", generated)
+
     def test_public_membership_uses_composition_registry_api(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

@@ -188,6 +188,79 @@ def test_media_timeline_selects_ffmpeg_without_remotion_configuration(
     }
 
 
+def test_admitted_theme_reaches_executor_without_changing_materialized_handoff(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "render-project").mkdir(parents=True, exist_ok=True)
+    task = _task(root=tmp_path)
+    theme_path = tmp_path / "staging" / "managed-objects" / "theme.json"
+    theme_path.write_text('{"id":"admitted-theme"}\n', encoding="utf-8")
+    materialized_objects = dict(task.spec["params"]["materialized_objects"])
+    materialized_objects["theme"] = str(theme_path)
+    task.spec["params"] = {
+        **task.spec["params"],
+        "materialized_objects": materialized_objects,
+    }
+    captured: dict[str, Any] = {}
+
+    def fake_run_executor(request: Any, _registry: Any) -> Any:
+        captured.update(request.inputs)
+        output = Path(request.out) / request.inputs["output_name"]
+        output.write_bytes(b"\x00\x00\x00\x18ftyp")
+        return SimpleNamespace(ok=True, error=None, payload={}, outputs={"video": output})
+
+    monkeypatch.setattr(task_adapter_module, "run_executor", fake_run_executor)
+    monkeypatch.setattr(task_adapter_module, "load_default_registry", lambda: object())
+
+    execute_render_export_task(task=task, staging_dir=tmp_path / "staging")
+
+    assert captured["theme"] == str(theme_path)
+    assert captured["materialized_objects"] == materialized_objects
+
+
+def test_unbound_theme_path_does_not_override_builtin_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "render-project").mkdir(parents=True, exist_ok=True)
+    task = _task(root=tmp_path)
+    forged_theme = tmp_path / "forged-theme.json"
+    forged_theme.write_text('{"id":"forged-theme"}\n', encoding="utf-8")
+    task.spec["params"] = {
+        **task.spec["params"],
+        "theme": str(forged_theme),
+    }
+    captured: dict[str, Any] = {}
+
+    def fake_run_executor(request: Any, _registry: Any) -> Any:
+        captured.update(request.inputs)
+        output = Path(request.out) / request.inputs["output_name"]
+        output.write_bytes(b"\x00\x00\x00\x18ftyp")
+        return SimpleNamespace(ok=True, error=None, payload={}, outputs={"video": output})
+
+    monkeypatch.setattr(task_adapter_module, "run_executor", fake_run_executor)
+    monkeypatch.setattr(task_adapter_module, "load_default_registry", lambda: object())
+
+    execute_render_export_task(task=task, staging_dir=tmp_path / "staging")
+
+    assert "theme" not in captured
+
+
+def test_theme_outside_materialization_root_is_refused(tmp_path: Path) -> None:
+    (tmp_path / "render-project").mkdir(parents=True, exist_ok=True)
+    task = _task(root=tmp_path)
+    forged_theme = tmp_path / "outside-theme.json"
+    forged_theme.write_text('{"id":"forged-theme"}\n', encoding="utf-8")
+    materialized_objects = dict(task.spec["params"]["materialized_objects"])
+    materialized_objects["theme"] = str(forged_theme)
+    task.spec["params"] = {
+        **task.spec["params"],
+        "materialized_objects": materialized_objects,
+    }
+
+    with pytest.raises(RenderExportRefused, match="beneath the host materialization root"):
+        RenderExportTaskAdapter().execute(task=task, staging_dir=tmp_path / "staging")
+
+
 def test_renderer_inputs_are_inode_isolated_and_cleaned(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

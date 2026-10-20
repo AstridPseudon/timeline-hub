@@ -14,6 +14,7 @@ import pytest
 from astrid.packs.timeline.cli import build_parser
 from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._track_commands import capture_track_set
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
@@ -112,6 +113,19 @@ def seed_tiny_cut_parent(runtime):
                                if row['id'] == 'b-type'))
     receipt = seed_trusted_parent(runtime.service(), document, idempotency_key='native-sheet-cut-parent')
     return document, target, receipt
+
+
+def seed_labeled_tiny_cut_parent(runtime):
+    """Use the real tiny closure while giving the label-clear edit a prior value."""
+    document = tiny_cut_parent(runtime.service(), runtime.project)
+    payload = document['parent_composition']
+    track = next(row for row in payload['config']['tracks'] if row['id'] == 'plate')
+    track['label'] = 'Source'
+    clip = next(row for row in payload['clips'] if row['id'] == 'b-plate')
+    clip['opaque'] = {'source_token': ['fixture', None, False, 7]}
+    payload['config']['clips'] = copy.deepcopy(payload['clips'])
+    receipt = seed_trusted_parent(runtime.service(), document, idempotency_key='native-sheet-label-parent')
+    return document, receipt
 
 
 def test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed_selection(
@@ -240,6 +254,69 @@ def test_http_cut_owned_native_sheet_hold_reloads_and_undoes(runtime):
     restored = bundle_from_document(undone['data']['canonical_document'])
     assert State(restored).entity(target) == original_target
     assert State(restored).entity('parent/track:type')['label'] == 'Peer'
+
+
+@pytest.mark.parametrize('entry', ['python', 'cli', 'sheet'])
+def test_http_connected_label_clear_is_lossless_across_native_frontends(
+        runtime, capsys, entry, monkeypatch):
+    _document, setup = seed_labeled_tiny_cut_parent(runtime)
+    runtime.restart()
+    session = runtime.session(name=entry)
+    loaded = session.client.timelines.open_bundle(runtime.project, 'film')
+    assert loaded.ok
+    before = loaded.data['bundle']
+    track_ref = 'parent/track:plate'
+    clip_ref = 'parent/clip:b-plate'
+    original_clip = copy.deepcopy(State(before).entity(clip_ref))
+    original_registry = copy.deepcopy(before['parent']['registry'])
+    assert State(before).entity(track_ref)['label'] == 'Source'
+    assert original_clip['asset'] == 'Q'
+    assert original_clip['opaque'] == {'source_token': ['fixture', None, False, 7]}
+    assert setup['data']['accepted_revision_id'] == runtime.history()['head']['revision_id']
+
+    def forbidden_legacy_publish(*args, **kwargs):
+        pytest.fail('connected frontend used retired publish_parent_composition')
+
+    # The guard applies to the restarted RuntimeService instances too.
+    monkeypatch.setattr(type(runtime.service()), 'publish_parent_composition', forbidden_legacy_publish)
+
+    clear = capture_track_set(before, track_ref, clear=['label'])
+    if entry == 'python':
+        result = session.commit(clear)
+    elif entry == 'cli':
+        assert run(runtime, 'edit', 'track-label', 'film', '--track', track_ref, '--clear') == 0
+        result = json.loads(capsys.readouterr().out)
+    else:
+        sheet = NativeSheet.export(session)
+        edited = edit_cell(sheet.text, track_ref, 'clear', label=True)
+        assert sheet.preview(edited).commands == [clear]
+        result = sheet.apply(edited, session=session, dry_run=False)
+
+    body = json.loads(runtime.calls[-1][0])
+    assert body['commands'] == [clear]
+    assert body['source'] == {'via': entry}
+    accepted = bundle_from_document(result['data']['canonical_document'])
+    assert State(accepted).entity(track_ref).get('label') is None
+    assert State(accepted).entity(clip_ref) == original_clip
+    assert accepted['parent']['registry'] == original_registry
+    assert len(runtime.calls) == 1
+
+    runtime.restart()
+    reloaded = runtime.session(name=f'{entry}-reloaded')
+    stored = reloaded.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=result['data']['accepted_revision_id'])
+    assert stored.ok
+    stored_bundle = stored.data['bundle']
+    assert State(stored_bundle).entity(track_ref).get('label') is None
+    assert State(stored_bundle).entity(clip_ref) == original_clip
+    assert stored_bundle['parent']['registry'] == original_registry
+
+    undone = reloaded.undo([result['receipt']['receipt_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert State(restored).entity(track_ref)['label'] == 'Source'
+    assert State(restored).entity(clip_ref) == original_clip
+    assert restored['parent']['registry'] == original_registry
+    assert len(runtime.calls) == 2
 
 
 @pytest.mark.parametrize('entry', ['python', 'cli', 'sheet-python', 'sheet-cli'])

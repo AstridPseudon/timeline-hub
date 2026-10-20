@@ -59,6 +59,33 @@ def trim_film(film):
 
 
 @pytest.fixture
+def split_film(trim_film):
+    """Reuse the verified-media trim closure with an explicit source window."""
+    from runtime_protocol.service import RuntimeService
+
+    fixture, original, _ = trim_film
+    parent = copy.deepcopy(original)
+    clip = parent['clips'][0]
+    clip.pop('app', None)
+    clip.pop('effects', None)
+    clip.update({'from': 0, 'to': 5.5, 'hold': 5.5, 'speed': 2})
+    parent['config']['clips'] = copy.deepcopy(parent['clips'])
+    service = RuntimeService(fixture.duplicate_root)
+    try:
+        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)['head_revision_id']
+        baseline = service.publish_parent_composition(
+            fixture.project_id, fixture.timeline_id,
+            {'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
+             'expected_head': head, 'parent_revision_id': 'owned-split-baseline',
+             'parent_composition': parent},
+            idempotency_key='owned-split-baseline',
+        )
+    finally:
+        service.close()
+    return fixture, parent, baseline
+
+
+@pytest.fixture
 def delete_film(trim_film):
     """Reuse the trim harness with its occurrence dependencies removed."""
     from runtime_protocol.service import RuntimeService
@@ -131,6 +158,57 @@ def test_http_original_sdk_parent_hold_publish_reload_and_undo(runtime):
     assert loaded.clip(REF).data == original
 
 
+def test_http_original_sdk_parent_asset_clear_lost_ack_reload_retry_undo(
+    tmp_path, trim_film, wire, real_runtime,
+):
+    fixture, _, _ = trim_film
+    observed, lose = wire
+    support = tmp_path / 'support'
+    outbox = tmp_path / 'owned-asset-clear.json'
+
+    def start(port=0):
+        return real_runtime(fixture.duplicate_root, support_root=support,
+                            port=port, authoring_profile='astrid')
+
+    daemon = start()
+    client = m1.open_client(daemon)
+    tl = Checkout.attach(TimelineSession.open(
+        fixture.project_id, fixture.timeline_id, client=client, outbox_path=outbox))
+    original = copy.deepcopy(tl.clip('parent/clip:music-bed').data)
+    tl.clip('parent/clip:music-bed').clear_asset()
+    captured = json.loads(outbox.read_bytes())['pending']
+    assert captured[0]['op'] == 'clip.set'
+    assert captured[0]['select'] == 'parent/clip:music-bed'
+    assert captured[0]['args'] == {'values': {}, 'clear': ['asset']}
+    assert 'asset' not in tl.clip('parent/clip:music-bed').data
+
+    lose.add('owned-asset-clear')
+    with pytest.raises(WorkspaceClientError):
+        tl.publish('Clear the source', idempotency_key='owned-asset-clear')
+    first = copy.deepcopy(observed[-1])
+    durable = json.loads(outbox.read_bytes())
+    assert json.loads(first['body'])['commands'] == captured
+    assert json.loads(first['body'])['rationale'] == 'Clear the source'
+    assert durable['flight']['body'].encode() == first['body']
+    assert durable['flight']['key'] == 'owned-asset-clear'
+
+    port = daemon.httpd.server_port
+    daemon.stop()
+    daemon = start(port)
+    loaded = Checkout.attach(TimelineSession.open(
+        fixture.project_id, fixture.timeline_id, client=m1.open_client(daemon),
+        outbox_path=outbox))
+    retried = loaded.publish()
+    assert observed[-1]['body'] == first['body']
+    assert observed[-1]['key'] == first['key']
+    assert retried['receipt'] == first['response']['receipt']
+    assert retried['message'] == 'Clear the source'
+    assert 'asset' not in loaded.clip('parent/clip:music-bed').data
+
+    loaded.undo([retried['receipt']['receipt_id']])
+    assert loaded.clip('parent/clip:music-bed').data == original
+
+
 def test_http_original_sdk_parent_trim_stale_rebase_lost_ack_reload_retry_undo(
     tmp_path, trim_film, wire, real_runtime,
 ):
@@ -194,6 +272,71 @@ def test_http_original_sdk_parent_trim_stale_rebase_lost_ack_reload_retry_undo(
     loaded.undo([retried['receipt']['receipt_id']])
     assert loaded.clip('parent/clip:music-bed').data == original
     assert loaded.clip('music-other').start == 2
+
+
+def test_http_original_sdk_parent_split_stale_rebase_lost_ack_reload_retry_undo(
+    tmp_path, split_film, wire, real_runtime,
+):
+    fixture, _, _ = split_film
+    observed, lose = wire
+    support = tmp_path / 'support'
+    outbox = tmp_path / 'owned-split.json'
+
+    def start(port=0):
+        return real_runtime(fixture.duplicate_root, support_root=support,
+                            port=port, authoring_profile='astrid')
+
+    daemon = start()
+    client = m1.open_client(daemon)
+    session = TimelineSession.open(fixture.project_id, fixture.timeline_id,
+                                   client=client, outbox_path=outbox)
+    tl = Checkout.attach(session)
+    original = copy.deepcopy(tl.clip('parent/clip:music-bed').data)
+    peer = TimelineSession.open(fixture.project_id, fixture.timeline_id,
+                                client=client, outbox_path=tmp_path / 'peer.json')
+    peer.commit(ingress.label('Peer label'), idempotency_key='owned-split-peer')
+
+    clip = tl.clip('parent/clip:music-bed')
+    clip.split(1, id='music-bed-right')
+    captured = json.loads(outbox.read_bytes())['pending']
+    assert captured[0]['op'] == 'clip.split'
+    assert captured[0]['select'] == 'parent/clip:music-bed'
+    assert captured[0]['args'] == {'on': 1, 'right_id': 'music-bed-right'}
+    assert captured[0]['created'] == ['parent/clip:music-bed-right']
+    assert tl.clip('parent/clip:music-bed-right').data['speed'] == original['speed'] == 2
+    assert tl.clip('parent/clip:music-bed-right').data['hold'] == 3.5
+
+    lose.add('owned-split')
+    with pytest.raises(WorkspaceClientError):
+        tl.publish('Split the opening', idempotency_key='owned-split')
+    first = copy.deepcopy(observed[-1])
+    durable = json.loads(outbox.read_bytes())
+    assert json.loads(first['body'])['commands'] == captured
+    assert json.loads(first['body'])['rationale'] == 'Split the opening'
+    assert durable['flight']['body'].encode() == first['body']
+    assert durable['flight']['key'] == 'owned-split'
+
+    port = daemon.httpd.server_port
+    daemon.stop()
+    daemon = start(port)
+    loaded = Checkout.attach(TimelineSession.open(
+        fixture.project_id, fixture.timeline_id, client=m1.open_client(daemon),
+        outbox_path=outbox))
+    retried = loaded.publish()
+    assert observed[-1]['body'] == first['body']
+    assert observed[-1]['key'] == first['key']
+    assert retried['receipt'] == first['response']['receipt']
+    assert retried['message'] == 'Split the opening'
+    assert retried['receipt']['result']['status'] == 'rebased'
+    assert loaded.clip('parent/clip:music-bed-right').data['from'] == 2
+    assert loaded.clip('parent/clip:music-bed-right').data['to'] == 5.5
+    assert loaded.clip('parent/clip:music-bed-right').data['hold'] == 3.5
+    assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer label'
+
+    loaded.undo([retried['receipt']['receipt_id']])
+    assert loaded.clip('parent/clip:music-bed').data == original
+    assert State(loaded.bundle).entity('parent/clip:music-bed-right', optional=True) is None
+    assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer label'
 
 
 def test_http_original_sdk_parent_delete_stale_rebase_lost_ack_reload_retry_undo(
