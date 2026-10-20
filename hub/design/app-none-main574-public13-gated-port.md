@@ -4,7 +4,7 @@
 
 - Target commit: `1c9da5c159c75d778ff74f314c549efb9b218fc7`
 - Target HEAD tree: `cbfc15d3f775e0817b038333291172ce960cfafe`
-- Candidate worktree tree (including uncommitted changes): `f5de50dcd56fad16ec99d0a57b583b1cc247873a`
+- Candidate worktree tree (including uncommitted changes): `4054ea8fe15f6a87bfc5169c04a0ab944e0c632c`
 - Frozen source: `46c15aee5fd08aa71a49b0378eb694491f8482da`, tree `93042fb19a46d121a9a843a75a9fe85b426fe67a`
 - Port boundary: only `3599fc49ad76dfdd7847ab4c813fc9317a0304eb..46c15aee5fd08aa71a49b0378eb694491f8482da`:
   - `d36fe2e9d` — command-backed scalar/native-None capture, preview, outbox, recovery and two-case gate.
@@ -18,6 +18,7 @@
 - Added the `clip.update.clear` preview type and preserved recorded ABSENT-vs-present guards.
 - Kept single and atomic bulk transition clears on the command session; the fallback callback remains only for standalone controls with no capture port.
 - Preserved MAIN574 Inspector/touch tabs, TrackInspector, registry/display-name behavior, PCM13 progress, restored tests, and the original three drag markers.
+- Included the required test-only TrackInspector prerequisite from `590c197..d821e5587e4d428e9e3e3dfbe5b7195e192bd00e`: the real Inspector command-path tests and touch selection assertions, without importing its unrelated ancestry.
 - Merged the source prop joins into current MAIN574 files only:
   - `ClipPanelBody.tsx`: scalar capture prop flows through the current Inspector body to effects.
   - `PropertiesPanel.tsx`: current single/bulk Inspector entry points supply scalar capture ports.
@@ -67,6 +68,17 @@ node --require .../runner.cjs node_modules/vitest/vitest.mjs run --config config
 
 Result: 13 files, 536 passed, 0 failed.
 
+TrackInspector prerequisite targeted suite:
+
+```
+node --require .../runner.cjs node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --configLoader=runner --no-cache --maxWorkers=1 --no-file-parallelism \
+  src/tools/video-editor/components/PropertiesPanel/TrackInspector.test.tsx \
+  src/tools/video-editor/components/TimelineEditor/TimelineCanvas.test.tsx \
+  src/tools/video-editor/components/TimelineEditor/TrackListRenderer.test.tsx
+```
+
+Result: 3 files, 120 passed, 0 failed.
+
 Additional checks:
 
 - `node --test --test-concurrency=1 scripts/testing/current013-integration.test.mjs`: 1 passed.
@@ -74,9 +86,10 @@ Additional checks:
 - `node --test --test-concurrency=1 tests/e2e/local/support/native-transition-clear.contract.test.mjs`: 1 passed.
 - Scoped ESLint over all changed TS/TSX and native-None support files with `--max-warnings 0`: passed.
 - `git diff --check`: passed.
-- Exact frozen-source additions were hash-checked against source `46c15aee5): passed.
+- Exact frozen-source additions were hash-checked against source `46c15aee5`: passed.
+- Scoped ESLint over the three prerequisite test files with `--max-warnings 0`: passed.
 
 ## Not run / next step
 
-No browser/live-socket run was launched locally, per the orchestration rule. The configured central suite list has native-None suites hardcoded to the older public12/source trees; it has no exact MAIN574/public13 two-case entry. Running one of those would not be valid evidence. The orchestrator should register/run the new wrapper against candidate tree `f5de50dcd56fad16ec99d0a57b583b1cc247873a`, Agent8130, Runtime2c4, public13 archive 0.0.13, private cache, and Chromium141. That is the remaining evidence for actual reload, inverse, lost-ACK/restart exact retry, real 409 draft retention, and zero legacy traffic. No full suite, build, TSC, install, or shared dependency write was run.
+No browser/live-socket run was launched locally, per the orchestration rule. The configured central suite list has native-None suites hardcoded to the older public12/source trees; it has no exact MAIN574/public13 two-case entry. Running one of those would not be valid evidence. The orchestrator should register/run the new wrapper against candidate tree `4054ea8fe15f6a87bfc5169c04a0ab944e0c632c`, Agent8130, Runtime2c4, public13 archive 0.0.13, private cache, and Chromium141. That is the remaining evidence for actual reload, inverse, lost-ACK/restart exact retry, real 409 draft retention, and zero legacy traffic. No full suite, build, TSC, install, or shared dependency write was run.
 
