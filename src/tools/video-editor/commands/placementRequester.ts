@@ -17,12 +17,21 @@ import {
 type Admission = Parameters<WorkspaceClient['admitTask']>[0];
 type Identity = Pick<OutboxScope, 'realmId' | 'actorId'>;
 type Client = Pick<WorkspaceClient, 'admitTask' | 'getTask' | 'listManagedOutputs' | 'getProjectMediaSelection'> & {
+  getProjectVerifiedMedia?: WorkspaceClient['getProjectVerifiedMedia'];
   // The authenticated host adapter checks its live lifecycle, including invalidation, synchronously.
   // A generated client or a cached handshake alone cannot supply this binding.
   isCurrentIdentity?(expected: Identity): boolean;
 };
 type Output = { group_key: string; variant_key: string; output_port: string; ordinal: number };
 export type PlacementRequest = Omit<OutboxPlacementInput, 'output'> & { output: Output };
+export type PlacementCaptureContext = {
+  client: Pick<Client, 'getProjectVerifiedMedia'>;
+  check(): Promise<void>;
+  assertCurrent(): void;
+};
+// Opt in explicitly; existing callbacks keep their exact two-argument contract.
+export type PlacementRequesterCapture = ((original: OutboxPlacementContinuation, scope: OutboxScope,
+  context?: PlacementCaptureContext) => ReturnType<OutboxPlacementCapture>) & { requesterContext?: true };
 export type PlacementProgress = {
   ownerId: string;
   scope: OutboxScope;
@@ -122,7 +131,7 @@ export function createPlacementRequester(options: {
   getRecoverableIdentity(): Promise<Identity>;
   outboxes?: ReturnType<typeof createCommitOutbox>;
   // Existing storage semantic port plus its saved owner scope, never the active editor.
-  capture?: (original: OutboxPlacementContinuation, scope: OutboxScope) => ReturnType<OutboxPlacementCapture>;
+  capture?: PlacementRequesterCapture;
   build(intent: OutboxIntent, head: OutboxHead, scope: OutboxScope): ReturnType<OutboxRequestBuilder>;
   transmit(request: OutboxRequest, scope: OutboxScope): Promise<OutboxOutcome>;
 }) {
@@ -220,7 +229,9 @@ export function createPlacementRequester(options: {
           throw new PlacementRefusal('Saved immutable media selection changed');
         }
         await authorize(scope, box);
-        original = await box.capturePlacement(id, pin, (saved) => options.capture!(saved, scope),
+        original = await box.capturePlacement(id, pin, (saved) => options.capture!.requesterContext ? options.capture!(saved, scope, {
+          client: options.client, check: () => authorize(scope, box), assertCurrent: () => assertCurrent(scope, box),
+        }) : options.capture!(saved, scope),
           () => authorize(scope, box), () => assertCurrent(scope, box));
         if (original.conflict !== undefined) return progress('conflict');
       }
