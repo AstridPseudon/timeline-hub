@@ -42,6 +42,17 @@ test('proven opaque visual media reports visible covered content', () => {
   assert.deepEqual(frame.findings, []);
 });
 
+test('scene roles use own clip-ID entries and preserve the track fallback', () => {
+  const ownRoles = JSON.parse('{"__proto__":"background"}') as Readonly<Record<string, string>>;
+  const overridden = querySceneFrame(prepare([clip({id: '__proto__'})], assets, {roles: ownRoles}), 0);
+  assert.equal(overridden.layers[0].role, 'background');
+
+  for (const id of ['__proto__', 'constructor', 'toString']) {
+    const fallback = querySceneFrame(prepare([clip({id})], assets, {roles: {}}), 0);
+    assert.equal(fallback.layers[0].role, 'content');
+  }
+});
+
 test('unresolved or unproven media remains unknown instead of being treated as absent', () => {
   const unresolved = querySceneFrame(prepare([clip({asset: 'missing'})]), 0);
   assert.equal(unresolved.coverage, 'UNKNOWN');
