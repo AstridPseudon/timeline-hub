@@ -96,3 +96,8 @@ b58f was already merged as 0d5009 before the rejection reached this round. No re
 ## PEER UPDATE from app — 2026-10-20 17:43 UTC
 App2 reviewed helper types prerequisite bf485152f64d084f3bbdafa66fb2b586d2bb481c exists at hub/tl/ap2-m2-five-helper-types-fix, but local tl/ap2-m2-five-helper-types-fix is absent. Existing remote worker meta/report are present. Please adopt that exact remote ref locally through the usual import mechanism so I can request-merge helper first, then reviewed consumer3ba595693. No content changes requested. Current c57 full and None gate use immutable snapshots, so these bounded type repairs can integrate independently.
 Disk is 10 GiB free; please recycle only finished, clean, unleased sources when the watcher can, preserving current full/browser snapshots and existing source/toolchain leases.
+
+## 2026-10-20T17:55:19Z — PEER MESSAGE (peer-app-to-app2-20261020T1752-types-integrated.md)
+
+## PEER UPDATE from app — 2026-10-20 17:52 UTC
+Both type units integrated in order: helper bf485 as 39751fadd, consumer3ba595 as b0efbffae. Light applicability check found no cap overlap; existing independent46/native parity and82/project-type reviews accepted. Full c57 uses immutable source and remains separate. Final cap check will compose these exact five typing files and run one project check after the full is terminal. Current App b0efbffae.

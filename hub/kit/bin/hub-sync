@@ -10,19 +10,20 @@ W=/home/user/work
 #   remote writes hub/status/<area>.READY -> main stops its local manager, publishes final STATUS/INBOX,
 #   marks $ORCH/managers/<area>/REMOTE and writes hub/status/<area>.HANDOVER -> remote starts its manager.
 # Until then main keeps the area (and its home repo) local.
-declare -A REPO_OF=( [app]=app [viewing]=composition [app2]=app )
+declare -A REPO_OF=( [app]=app [viewing]=composition [app2]=app [agent]=agent )
 case $M in
-  main)    AREAS="runtime agent"; HOME_REPOS="agent runtime"; REMOTE_AREAS=""
-           for a in app viewing app2; do
+  main)    AREAS="runtime"; HOME_REPOS="runtime"; REMOTE_AREAS=""
+           for a in agent app viewing app2; do
              [ $a = app2 ] && [ ! -e $ORCH/managers/app2/REMOTE ] && continue   # app2 only ever runs remotely
              if [ -e $ORCH/managers/$a/REMOTE ]; then REMOTE_AREAS="$REMOTE_AREAS $a"
              else AREAS="$AREAS $a"; HOME_REPOS="$HOME_REPOS ${REPO_OF[$a]}"; fi
            done;;
   app)     AREAS="app";           HOME_REPOS="app";           REMOTE_AREAS="";;
   viewing) AREAS="viewing";       HOME_REPOS="composition";   REMOTE_AREAS="";;
+  agent)   AREAS="agent";         HOME_REPOS="agent";         REMOTE_AREAS="";;   # Agent's own machine (2026-10-20), via the normal handover
   # app2: a second App machine (2026-10-20). Owns NO repo: its app branches merge through the App home via merge requests. No handover.
   app2)    AREAS="app2";          HOME_REPOS="";              REMOTE_AREAS=""; mkdir -p $ORCH/managers/app2; touch $ORCH/managers/app2/HANDOVER_DONE;;
-  *) echo "usage: hub-sync main|app|viewing|app2"; exit 2;;
+  *) echo "usage: hub-sync main|app|viewing|app2|agent"; exit 2;;
 esac
 # on a remote machine, home repos count as mine only once the handover arrived
 [ $M != main ] && [ ! -e $ORCH/managers/$AREAS/HANDOVER_DONE ] && HOME_REPOS=""
@@ -44,7 +45,7 @@ mkdir -p hub/status hub/escalations/closed hub/inbox hub/design hub/merge-reques
 
 # --- handover handshake ---
 if [ $M = main ]; then
-  for a in app viewing; do
+  for a in agent app viewing; do
     [ -e $ORCH/managers/$a/REMOTE ] && continue
     [ -e hub/status/$a.READY ] || continue
     p=$(pgrep -f "bin/run-manager $a" | head -1)
@@ -53,6 +54,8 @@ if [ $M = main ]; then
     sleep 5; rm -f $ORCH/managers/$a/running
     { echo "<!-- main | $now | handed over -->"; cat $ORCH/managers/$a/STATUS.md; } > hub/status/$a.md
     cp $ORCH/managers/$a/INBOX.md hub/inbox/$a.md
+    # publish the area's home repo integration one last time, so the new home starts from the true tip
+    retry git -C $W/${REPO_OF[$a]} push -q hub refs/heads/tl/integration:refs/heads/timeline/${REPO_OF[$a]}/tl/integration
     touch $ORCH/managers/$a/REMOTE; echo "$now" > hub/status/$a.HANDOVER
     echo "- $now handover: $a manager stopped on main; area now runs on the $a machine" >> $ORCH/STATE.md
     AREAS=$(echo " $AREAS " | sed "s/ $a / /"); REMOTE_AREAS="$REMOTE_AREAS $a"
@@ -63,6 +66,7 @@ elif [ ! -e $ORCH/managers/$AREAS/HANDOVER_DONE ]; then
   [ -e $ORCH/managers/$a/READY ] && [ ! -e hub/status/$a.READY ] && echo "$now" > hub/status/$a.READY
   if [ -e hub/status/$a.HANDOVER ]; then
     tail -n +2 hub/status/$a.md > $ORCH/managers/$a/STATUS.md; cp hub/inbox/$a.md $ORCH/managers/$a/INBOX.md
+    R=$W/${REPO_OF[$a]}; git -C $R fetch -q hub "+refs/heads/timeline/${REPO_OF[$a]}/*:refs/remotes/hub/*" && { [ "$(git -C $R symbolic-ref -q --short HEAD)" = tl/integration ] && git -C $R merge -q --ff-only hub/tl/integration || git -C $R branch -f tl/integration hub/tl/integration; }
     touch $ORCH/managers/$a/HANDOVER_DONE; HOME_REPOS=${REPO_OF[$a]}
   else AREAS=""; fi   # not mine yet: publish nothing about the area
 fi
@@ -107,8 +111,8 @@ fi
 
 # worker evidence for handed-over areas: main publishes its workers' report/meta/exit/commit.log + log tail and
 # the area's test-service results; the remote machine copies them into its $ORCH/workers and $ORCH/tests (no overwrite)
-declare -A PFX=( [app]=app [viewing]=vw [app2]=ap2 )
-declare -A TREPO=( [app]=app [viewing]=composition [app2]=app )
+declare -A PFX=( [app]=app [viewing]=vw [app2]=ap2 [agent]=agt )
+declare -A TREPO=( [app]=app [viewing]=composition [app2]=app [agent]=agent )
 if [ $M = main ]; then
   for a in $REMOTE_AREAS; do
     for d in $ORCH/workers/${PFX[$a]}-*; do [ -d "$d" ] || continue; w=$(basename $d); mkdir -p hub/workers/$w
@@ -152,7 +156,7 @@ for r in agent runtime app composition; do
     [ $b = tl/integration ] && ! echo " $HOME_REPOS " | grep -q " $r " && continue
     # a worker branch is published only by the machine that ran the worker (never by one that imported it)
     if [ $b != tl/integration ]; then w=${b#tl/}; [ -f $ORCH/workers/$w/meta ] && [ ! -e $ORCH/workers/$w/IMPORTED ] || continue; fi
-    refs="$refs +refs/heads/$b:refs/heads/timeline/$r/$b"
+    if [ $b = tl/integration ]; then refs="$refs refs/heads/$b:refs/heads/timeline/$r/$b"; else refs="$refs +refs/heads/$b:refs/heads/timeline/$r/$b"; fi   # integration: fast-forward only
   done
   [ -n "$refs" ] && retry git -C $R push -q hub $refs
   git -C $R fetch -q hub "+refs/heads/timeline/$r/*:refs/remotes/hub/*" 2>/dev/null
