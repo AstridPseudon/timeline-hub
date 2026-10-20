@@ -2,6 +2,7 @@
 // These inspect markup and declared regions, never decoded pixels or lip-sync statistics.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
@@ -49,15 +50,7 @@ const basis = {width: 1920, height: 1080, fps: 30};
 // Composition 0.0.12's package default is Agent's navy theme. The historical
 // SSR hashes intentionally use this explicit pre-12 theme so the presenter
 // preservation check does not silently turn an old fixture into a new default.
-assert.deepEqual(DEFAULT_THEME, {
-  id: 'banodoco-default',
-  visual: {
-    color: {fg: '#FAFAFA', bg: '#050814', accent: '#67E8F9'},
-    type: {families: {heading: 'Arial', body: 'Arial', mono: 'monospace'},
-      size: {base: 32, small: 22, large: 84}, weight: {normal: 400, bold: 600}, lineHeight: 1.2},
-    motion: {fadeMs: 450}, canvas: {width: 1920, height: 1080, fps: 30},
-  },
-});
+assert.deepEqual(DEFAULT_THEME, JSON.parse(readFileSync(path.join(project, 'builtin-default-theme.json'), 'utf8')));
 const theme = {
   id: 'banodoco-default',
   visual: {
