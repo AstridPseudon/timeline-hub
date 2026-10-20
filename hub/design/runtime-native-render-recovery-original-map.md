@@ -1,7 +1,9 @@
 # Runtime native render recovery map
 
 Worker: `rt-m2-complete-native-render-recovery-map`  
-Runtime tree: `740fc9db023c79b9a2fab793d72083f2cdc0caeb`  
+Runtime product source: `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`  
+Publication test source: `6b43f95ff6abffc7c935685879e38b58472b733d`  
+Recovery test source: `4f1cee463d844bab4a800483492f18c79c7b5234`  
 Agent source used by the native fixture: `3c4f6de4fa777323b3386c01c7266b619b86af6d`  
 Fixture source: Runtime branch `tl/rt-m2-native-publication-fixture-slim`, commit `6b43f95`
 
@@ -48,3 +50,22 @@ No old publication test, product code, artifact, schema, or generated client was
 No full, browser, registered-real-MP4, or neighboring 86-test suite was run. The fixture
 does not claim renderer execution or external requester outbox process death; it proves the
 Runtime acceptance/checkpoint/replay and pinned render-admission boundary.
+
+## Central selected-lane evidence
+
+The worker-specific named suite `native-map-marked-gate-agent3c4f-integration` was registered
+and run once through the central test service on 2026-10-20. Its exact command was:
+
+```text
+test "$(git -C /home/user/work/wt/agt-pin-3c4f6de4 rev-parse HEAD)" = 3c4f6de4fa777323b3386c01c7266b619b86af6d && test -z "$(git -C /home/user/work/wt/agt-pin-3c4f6de4 status --porcelain)" && env ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-3c4f6de4 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-3c4f6de4 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -m pytest -q -p no:cacheprovider -m integration tests/test_render_commit_publication_positive.py tests/test_render_commit_recovery_positive.py
+```
+
+Result: **4 passed in 1.73s**, exit 0. The central snapshot recorded Runtime tree
+`e5060cdfa57696ef8f04c76d7c12135869da541c`; its external-source record was Agent
+`0b2f662e32e1a6818d58f9cf12130f0a89fb5a3b`, App
+`8ffd2164bde532a50007d41376b0e10ce4d67473`, and Composition
+`5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8`. The test command itself additionally
+asserted the clean, exact Agent checkout above. This proves the four selected Runtime
+publication/recovery cases against the pinned Agent provider and exact Runtime snapshot;
+it does not prove the legacy three-positive tests, registered MP4/outbox whole journey,
+renderer execution, browser/live suites, or neighboring tests.

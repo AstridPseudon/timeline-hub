@@ -1,0 +1,7 @@
+#!/bin/bash
+# request-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — ask the dispatcher for a NEW read-only installed-Agent child venv
+# /home/user/work/NAME (venv-agent-child-<suffix>) at an exact Agent commit, optionally with a "<NAME>-full" suite cloned from
+# BASE_SUITE using RUNTIME. Result in $ORCH/queue/done/childvenv-NAME. No escalation needed.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+[ -n "$2" ] || { echo "usage: request-child-venv venv-agent-child-<suffix> AGENT_SHA [BASE_SUITE RUNTIME]"; exit 2; }
+echo "CHILDVENV $*" > $O/queue/pending/childvenv-$1; echo "child venv $1 queued; result in $O/queue/done/childvenv-$1"

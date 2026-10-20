@@ -1,0 +1,21 @@
+#!/bin/bash
+# make-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — run by the dispatcher (network). Builds a NEW read-only installed-Agent
+# child venv /home/user/work/<NAME> (NAME = venv-agent-child-<suffix>): Python 3.13, the exact pinned set from
+# tests/provision/venv-agent-child-s2.txt (--no-deps), plus astrid installed NON-editably from `git archive` of AGENT_SHA.
+# With BASE_SUITE and RUNTIME: adds suite "<NAME>-full" = BASE_SUITE's line with venv-agent-child-s2 -> NAME and
+# agent-remotion-0012 -> RUNTIME. Never touches an existing venv.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; A=/home/user/work/agent; W=/home/user/work
+N=$1; S=$2; BS=$3; RT=$4; case "$N" in venv-agent-child-[a-z0-9-]*) ;; *) echo "REFUSED: name must be venv-agent-child-<suffix>"; exit 2;; esac
+D=$W/$N; [ -e $D ] && { echo "exists: $D (child venvs are immutable; pick a new name)"; exit 0; }
+git -C $A cat-file -e "$S^{commit}" 2>/dev/null || git -C $A fetch -q hub 2>/dev/null; git -C $A cat-file -e "$S^{commit}" || { echo "unknown agent commit $S"; exit 1; }
+F=$O/tests/provision/venv-agent-child-s2.txt; T=$D.partial; SRC=$(mktemp -d)
+rm -rf $T; python3.13 -m venv $T && P=$T/bin/python && $P -m pip install -q --no-cache-dir 'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3' \
+ && grep -v -e '^astrid @' -e '^pip==' -e '^setuptools==' -e '^wheel==' $F > $T/.provision-requirements.txt \
+ && $P -m pip install -q --no-cache-dir --no-deps -r $T/.provision-requirements.txt \
+ && git -C $A archive "$S" | tar -x -C $SRC && $P -m pip install -q --no-cache-dir --no-deps $SRC || { echo "build failed"; rm -rf $T $SRC; exit 1; }
+rm -rf $SRC; echo "$S" > $T/.astrid-source-commit
+# venvs record their own path in scripts: rebuild in place is not possible, so fix shebangs/activate for the final path
+grep -rl "$T" $T/bin 2>/dev/null | xargs -r sed -i "s#$T#$D#g"; mv $T $D
+$D/bin/python -m pip freeze --all > $O/tests/provision/$N.txt; chmod -R a-w $D
+if [ -n "$BS" ] && [ -n "$RT" ]; then grep -q "^agent $N-full " $O/tests/suites.conf || { L=$(grep "^agent $BS " $O/tests/suites.conf) && [ -n "$L" ] && echo "$L" | sed "s#^agent $BS #agent $N-full #; s#venv-agent-child-s2#$N#g; s#agent-remotion-0012#$RT#g" >> $O/tests/suites.conf; }; fi
+echo "created $D (astrid from ${S:0:12}, $(wc -l < $O/tests/provision/$N.txt) pins, read-only)$( [ -n "$BS" ] && echo "; suite $N-full")"; $D/bin/python -c 'import astrid; print("astrid import ok")'
