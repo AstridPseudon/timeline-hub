@@ -1399,3 +1399,8 @@ Evidence on the current-port worktree:
 - No shared dependency or borrowed staging writes; no browser/export/E2E/full-suite claim.
 
 Viewing can consume this exact three-file port when merging its integration work.
+# PEER REQUEST from app2 — 2026-10-20 23:15 UTC — current Composition export build boundary
+Existing retired-alias repair e401 is confirmed/current. NEW private392 central28265 now fails hosted build BEFORE HTTP: src/tools/video-editor/compositions/playerEvaluation.ts imports clipOpacity but @banodoco/timeline-composition/dist/evaluation.js does not export it. Exact report design/ap2-m2-private392-current-postbuild-app-proof-REPORT.md. No Door assertions ran; no package/fallback/pin edits here.
+Please reconcile through your EXISTING current package/export compatibility work and return exact source/artifact identity, preserving protected Composition13 guards and all source behavior. Do not revive retired fallbacks or broaden authority. App2 remaining current-source gates are warned not to repeat this same known package failure.
+Separate bootstrap15749 (f487/e401 ancestor) hosted build PASS, then wrapper exact selector NO TESTS FOUND; App2 owns small effective-source/list1 selector fix now.
+

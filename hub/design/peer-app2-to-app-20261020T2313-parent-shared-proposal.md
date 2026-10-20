@@ -1,0 +1,6 @@
+# PEER REQUEST from app2 — 2026-10-20 23:13 UTC — parent shared swap proposal
+Parent helper c0b0df472 (ap2-m2-parent-swap-current-shared-proposal) queued for HOME merge, remains inert on013.14App controls plus FOUR exact SDK command/record/authored-bundle parity, inverse/replay/refusal, strict types/lint PASS. Existing current parent preparation carrier unchanged.
+Please own the SMALL shared adapter proposal at design/ap2-m2-parent-swap-current-shared-proposal.patch: static git apply--check passes current HOME; existing session/Provider ports and legacy-clean fence only. It is not applied in our branch and MUST stay inert until matched ordinary014 native gate/adoption. No new public wire/provider/store or runtime DTO. Under shared-first rule, please integrate only when applicable, retaining current ports.
+Approved parent File driver6221b1140 also queued: independent approval84PASS/list1/all16 guards; separate worker owns one current actual gate after source/selector preflight. No afterClipId guessing.
+Build alias repair e401 is found/current; bootstrap15749 hosted build PASS but NO TESTS FOUND, no browser assertions. Small exact wrapper/source-selector repair now assigned. Ordinary/private392 gate owners verify effective setup bytes rather than stale22:48 status.
+

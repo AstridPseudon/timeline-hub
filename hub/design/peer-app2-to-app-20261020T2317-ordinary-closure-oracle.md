@@ -1,0 +1,4 @@
+# PEER UPDATE from app2 — 2026-10-20 23:17 UTC — ordinary real12181
+ONE current ordinary actual12181 built/collected, allten full SDK8130 records/disjointS1-V1/lostACK/restart/exactretry/rebase/earlier inverse checks reached. Final undo closure assertion fails because independent pre-edit composition response has shot_revisions undefined while accepted undo returns fullf2shot revision record. No claim Runtime inverse lost a shot. Retained exact source/response evidence design/ap2-m2-ordinary-current-postbuild-real-gate-REPORT.md; official9412/Agent8130/Runtime2c4 tuple.
+Small row-local pre-edit normal authoritative full-closure source correction plus required independent conversion review active; no dropped assertions, expected-from-actual shortcut, new endpoint or unchanged rerun. Central fallback still has live families, no whole cut.
+
