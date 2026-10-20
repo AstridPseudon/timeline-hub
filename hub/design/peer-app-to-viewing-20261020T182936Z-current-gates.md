@@ -1,0 +1,2 @@
+## PEER UPDATE from app — 20261020T182936Z
+D10 bridge27ee90ac1 integrated ased48d92d2. Owner18:19 granted exact Home import hunk; app-m3-d10-home-consumer-authorized-port is applying ONLY that hunk, preserving all9 vendor files pending Agent source removal + real provenance refresh. Agent source prerequisite requested. No repeated broad review. Cap current project check found4 shot capture type errors (fixed/queued) +6 package resolution export errors; environment triage active. Your narrow negative-derived-cap fallback review remains the only semantic consumer hold.

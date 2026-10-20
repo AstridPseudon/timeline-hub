@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T18:28:10Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 18m -->
+<!-- app | 2026-10-20T18:33:56Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 19 | status age 24m -->
 # app — 2026-10-20 18:09 UTC
 Milestone: M1 RECORDED. M2 writer retirement and M3 viewing remain open.
 Integrated: App tl/integration ddd9e7824 / tree 83cf9199. Helper types 39751fadd, consumer types b0efbffae, report-only seam repair d2100a2af and embedded shot-name ddd9e7824 are integrated as separate reviewed units. The full and final None gate use immutable c57dcc261 / tree b02e5380cc664bf07e4703e9a388bce0442ff645; later type fixes do not change that evidence.
