@@ -36,6 +36,20 @@ test('controller accepts an externally selected literal current App source/tree'
   assertCandidateTuple({ app, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }, app);
 });
 
+test('controller refuses an explicitly empty App source/tree selection', () => {
+  assert.throws(() => readAppSourceSelection({
+    TIMELINE_VIEWING_APP_SOURCE: '',
+    TIMELINE_VIEWING_APP_TREE: '',
+  }), /must be supplied together/);
+});
+
+test('controller refuses an explicitly whitespace-only App source/tree selection', () => {
+  assert.throws(() => readAppSourceSelection({
+    TIMELINE_VIEWING_APP_SOURCE: '   ',
+    TIMELINE_VIEWING_APP_TREE: '\t\n',
+  }), /must be supplied together/);
+});
+
 test('controller refuses an externally selected mismatched App source', () => {
   const app = readAppSourceSelection({
     TIMELINE_VIEWING_APP_SOURCE: '20ea14c26526fe4924354f10a177aebbaf6002bc',

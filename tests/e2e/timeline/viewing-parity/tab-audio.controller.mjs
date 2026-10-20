@@ -105,9 +105,11 @@ function sha256(bytes) {
 /** Keep the frozen APP13 fact intact while allowing a manager to select a later
  * clean App checkout by supplying both literal identities at invocation time. */
 export function readAppSourceSelection(env = process.env) {
+  const sourcePresent = Object.prototype.hasOwnProperty.call(env, APP_SOURCE_ENV);
+  const treePresent = Object.prototype.hasOwnProperty.call(env, APP_TREE_ENV);
+  if (!sourcePresent && !treePresent) return APP13;
   const source = env[APP_SOURCE_ENV]?.trim();
   const tree = env[APP_TREE_ENV]?.trim();
-  if (!source && !tree) return APP13;
   if (!source || !tree) throw new Error(`${APP_SOURCE_ENV} and ${APP_TREE_ENV} must be supplied together`);
   if (!FULL_SHA.test(source) || !FULL_SHA.test(tree)) {
     throw new Error(`${APP_SOURCE_ENV} and ${APP_TREE_ENV} must be full 40-character lowercase SHAs`);
