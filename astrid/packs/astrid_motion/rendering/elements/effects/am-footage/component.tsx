@@ -12,6 +12,8 @@ import {
   type ElementComponentProps,
 } from '../../_shared/am';
 import {footageVolume} from './volume';
+import {footageField, insetOf, type Inset} from './helper';
+import {prepareFootageScene} from './scene';
 import {MosaicImage, mosaicBlockAt, paintMosaic, type MosaicRamp, type Rect} from '../../_shared/mosaic';
 
 // am-footage: a REAL-FOOTAGE SLOT. It shows a filmed shot (video or still on
@@ -34,7 +36,6 @@ import {MosaicImage, mosaicBlockAt, paintMosaic, type MosaicRamp, type Rect} fro
 // inside the rect; the label sits under it.
 
 type Zone = {x: number; y: number; w: number; h: number};
-type Inset = {x: number; y: number; w: number; h: number; radius?: number; shadow?: boolean | string; border?: string};
 type Params = {
   src?: string;
   slot?: string;
@@ -67,28 +68,7 @@ type Params = {
   inset?: Inset | null;
 };
 
-const SOFT_SHADOW = '0 28px 64px rgba(21, 19, 17, 0.18), 0 3px 8px rgba(21, 19, 17, 0.10)';
-
-const insetOf = (value: unknown, width: number, height: number): (Required<Pick<Inset, 'x' | 'y' | 'w' | 'h' | 'radius'>> & {shadow: string; border: string | null}) | null => {
-  if (!value || typeof value !== 'object') return null;
-  const v = value as Inset;
-  const w = Math.round(clamp(finiteNumber(v.w, 0), 0, width));
-  const h = Math.round(clamp(finiteNumber(v.h, 0), 0, height));
-  if (w < 2 || h < 2) return null;
-  const shadow = v.shadow === false ? 'none' : typeof v.shadow === 'string' ? v.shadow : SOFT_SHADOW;
-  return {
-    x: Math.round(finiteNumber(v.x, (width - w) / 2)),
-    y: Math.round(finiteNumber(v.y, (height - h) / 2)),
-    w,
-    h,
-    radius: Math.max(0, finiteNumber(v.radius, 12)),
-    shadow,
-    border: typeof v.border === 'string' ? v.border : null,
-  };
-};
-
 const MONO = `'${FAMILY.label}', monospace`;
-const CARD_BG = '#1F1F1F';
 const GUIDE = '#FFFEFA';
 
 const parseSize = (value: unknown): {w: number; h: number} | null => {
@@ -182,7 +162,7 @@ const labelStyle: CSSProperties = {
   opacity: 0.9,
 };
 
-export default function AmFootage(props: ElementComponentProps): ReactElement | null {
+function AmFootage(props: ElementComponentProps): ReactElement | null {
   const frame = useCurrentFrame();
   const {width, height, fps: compositionFps} = useVideoConfig();
   const p = narrowParams<Params>(props.params);
@@ -194,7 +174,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
   const hand = p.handMark && typeof p.handMark === 'object' ? p.handMark : null;
   const placeholder = p.placeholder === true || !url;
   const label = typeof p.label === 'string' ? p.label : `PLACEHOLDER · REAL FOOTAGE${slot ? ` · ${slot}` : ''}`;
-  const background = p.background ?? CARD_BG;
+  const {background, style: field} = footageField(p.background);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const block = mosaicBlockAt(frame, total, p.mosaicIn, p.mosaicOut);
@@ -210,7 +190,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
       }
     }
     return (
-      <AbsoluteFill style={{background, overflow: 'hidden'}}>
+      <AbsoluteFill style={field}>
         {dots}
         <Guides face={face} hand={hand} />
         <div style={{position: 'absolute', left: 96, top: 84, fontFamily: MONO, fontSize: 30, lineHeight: '36px', letterSpacing: '0.12em', color: GUIDE}}>
@@ -282,7 +262,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
       : {...labelStyle, left: inset.x + 16, top: inset.y + inset.h - 46, bottom: undefined};
     const ring = inset.border ? `0 0 0 1px ${inset.border}` : null;
     return (
-      <AbsoluteFill style={{background, overflow: 'hidden'}}>
+      <AbsoluteFill style={field}>
         <div
           style={{
             position: 'absolute',
@@ -306,7 +286,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
   }
 
   return (
-    <AbsoluteFill style={{background, overflow: 'hidden'}}>
+    <AbsoluteFill style={field}>
       {picture}
       {tintLayer}
       {p.guides ? <Guides face={face} hand={hand} /> : null}
@@ -314,3 +294,5 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
     </AbsoluteFill>
   );
 }
+
+export default Object.assign(AmFootage, {prepareSceneCapability: prepareFootageScene});
