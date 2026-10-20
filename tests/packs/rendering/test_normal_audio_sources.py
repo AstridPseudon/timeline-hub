@@ -232,24 +232,62 @@ def test_successful_files_survive_until_the_attempt_owner_cleans_up(stage):
 
 @pytest.mark.parametrize("tracks", [None, ("A1",)], ids=["window", "layer"])
 def test_actual_slice_needs_original_compiled_clip_transport(stage, tracks):
-    """Ordinary RED: source owner must join the actual pre-slice compiled input."""
+    """The inactive adapter retains the compiled input across the host slice."""
     from astrid.core.rendering.contracts import FrameWindow
-    from astrid.core.rendering.service import RenderService
 
     props, prepare, attempt, _, _ = stage
     props["timeline"]["clips"][0].update(at=0, speed=1, **{"from": 0, "to": 2})
     props["timeline"]["clips"][0]["params"] = {"fadeIn": 0.5, "fadeOut": 0.5}
-    props["timeline"] = RenderService._window_timeline(
-        props["timeline"], FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1)),
+    before = copy.deepcopy(props)
+    output = prepare(
+        props, window=FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1)),
         tracks=tracks,
     )
-    output = prepare(props)
     url = output["timeline"]["clips"][0]["audio"]["render_source"]["file"]
     wav = (attempt.parent / url.removeprefix("http://attempt.invalid/")).read_bytes()
-    # Host app metadata alone cannot prove which compiled original was sliced.
-    # Keep this positive requirement until the source owner carries the original
-    # through pair validation and serializer into the real producer invocation.
     assert struct.unpack_from("<ff", wav, 44 + 15000 * 8) == (0.25, -0.125)
+    assert output["timeline"]["clips"][0]["from"] == 0.5
+    assert props == before
+
+
+@pytest.mark.parametrize("fps", [30, 30000 / 1001])
+def test_window_transports_explicit_envelope_without_slice_origin_metadata(stage, fps):
+    from astrid.core.rendering.contracts import FrameWindow
+
+    props, prepare, attempt, _, _ = stage
+    props["compiledTransitions"]["fps"] = fps
+    clip = props["timeline"]["clips"][0]
+    clip.update(id="sound_15_45", at=0, **{"from": 0.05, "to": 2})
+    clip.pop("params")
+    clip["audio"] = {"envelope": {"keyframes": [
+        {"at": 0, "value": 0, "curve": "equal-power"}, {"at": 0.5, "value": 1},
+    ]}}
+    # A different track's invalid asset must never enter this layer's decode.
+    props["timeline"]["tracks"].append({"id": "A2", "kind": "audio"})
+    props["timeline"]["clips"].append({**clip, "id": "excluded", "track": "A2", "asset": "missing"})
+    before = copy.deepcopy(props)
+    selected = copy.deepcopy(props)
+    selected["timeline"]["clips"].pop()
+    whole = prepare(selected)
+    sliced = prepare(props, window=FrameWindow(
+        start_frame=15, end_frame=45,
+        fps_rational=(30, 1) if fps == 30 else (30000, 1001),
+    ), tracks=("A1",))
+
+    def pcm(value):
+        source = value["timeline"]["clips"][0]["audio"]["render_source"]
+        return (attempt.parent / source["file"].removeprefix("http://attempt.invalid/")).read_bytes()[44:]
+
+    for actual, expected in zip(struct.iter_unpack("<f", pcm(sliced)),
+                                struct.iter_unpack("<f", pcm(whole)), strict=True):
+        assert actual[0] == pytest.approx(expected[0], abs=1e-7)
+    sliced_clip = sliced["timeline"]["clips"][0]
+    assert "astrid_slice_origin" not in sliced_clip["app"]
+    assert sliced_clip["audio"]["render_source"]["source_from"] == round(sliced_clip["from"] * fps) / fps
+    assert sliced_clip["audio"]["render_source"]["playback_rate"] == 1.5
+    assert sliced["timeline"]["tracks"] == [props["timeline"]["tracks"][0]]
+    assert len(sliced["timeline"]["clips"]) == 1
+    assert props == before
 
 
 def test_exact_asset_keys_bind_distinct_managed_bytes_to_their_own_wav_urls(stage):

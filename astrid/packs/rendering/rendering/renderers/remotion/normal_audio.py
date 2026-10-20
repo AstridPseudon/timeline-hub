@@ -14,12 +14,14 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 from astrid.core.rendering.assets import AssetMaterializer, AssetURLResolver
+from astrid.core.rendering.contracts import FrameWindow
 from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools, probe_context
+from astrid.core.rendering.service import RenderService
 
 
 def prepare_normal_audio_sources(
@@ -27,6 +29,7 @@ def prepare_normal_audio_sources(
     asset_server: AssetURLResolver, attempt_directory: Path,
     project_dir: Path, runtime_tools: RemotionRuntimeTools,
     original_clips: Mapping[str, Mapping[str, Any]] | None = None,
+    window: FrameWindow | None = None, tracks: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     """Copy Root props and prepare each audio clip from its managed original.
 
@@ -35,12 +38,30 @@ def prepare_normal_audio_sources(
     internal input, not authority. Never construct it from caller app metadata.
     The owner must thread this seam through source validation and serialization
     before activating window/layer rendering. Omitting it is for unsliced input.
+    Alternatively, ``window`` takes that unsliced input and retains the originals
+    across the existing host slicer here; ``tracks`` optionally selects a layer.
+    Neither form validates source authority or activates a rendering route.
 
     The caller owns an attempt directory under materializer.serving_root and
     keeps it and the server alive through consumption, usually via ExitStack.
     Successful WAVs live there until caller cleanup; failed batches remove only
     their own directory. Authored files and the original registry are untouched.
     """
+    if window is not None:
+        if original_clips is not None:
+            raise ValueError("window preparation requires the unsliced compiled input")
+        # Match the disposable IDs emitted by the host slicer. Retain full
+        # compiled occurrences; caller app.astrid_slice_origin is not authority.
+        original_clips = {
+            f"{clip.get('id', 'clip')}_{window.start_frame}_{window.end_frame}": copy.deepcopy(clip)
+            for clip in props["timeline"]["clips"]
+        }
+        props = {**props, "timeline": RenderService._window_timeline(
+            props["timeline"], window, tracks=tracks,
+        )}
+    elif tracks is not None:
+        raise ValueError("track selection requires a window")
+
     def encode(value: Any) -> str:
         return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
