@@ -13,6 +13,19 @@ import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.t
 import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+import {
+  captureElementBasis,
+  finishElementEdit,
+  selectForClip,
+  type ElementCaptureBasis,
+  type ElementCapturePort,
+  type ElementEdit,
+} from './elementGesture.ts';
+import {
+  captureGenericPatch,
+  type GenericPatchBasis,
+  type GenericPatchCapturePort,
+} from './genericPatchCapture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -322,6 +335,40 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const elementPort: ElementCapturePort = {
+    capture({ clipId, current, edit }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const select = selectForClip(current, clipId);
+      const captured = captureElementBasis(bundle, select, edit);
+      const localBasis: OutboxBasis = lastIntent ? { after: lastIntent } : { head: copy(known.head) };
+      return Object.freeze({ clipId, select, edit: copy(edit) as ElementEdit, capture: captured,
+        before: bundle, localGeneration, localBasis, previewVersion: current.configVersion }) as ElementCaptureBasis;
+    },
+    finish(basis, edit) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the element edit');
+      const result = finishElementEdit(basis, edit);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: basis.before, after: result.bundle, preview: result.preview,
+      }, generation: localGeneration, basis: basis.localBasis as OutboxBasis });
+      return { command: result.command, preview: result.preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Element edit was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Element edit requires its exact preview');
+      prepared.delete(key);
+      enqueue({ ...entry.payload, preview }, preview, entry.basis);
+    },
+  };
   function resolveOwnedClipRef(clipId: string, identity: Partial<CanonicalProjectedClipIdentity> | undefined,
     requestedOwner: string | undefined, refusal: string): string {
     const parentRef = `parent/clip:${clipId}`;
@@ -339,7 +386,6 @@ export async function createTimelineCommandSession(options: Options) {
       if (!identity || typeof identity.occurrenceId !== 'string'
         || identity.ownerRef !== ownerRef || ownerRef !== `occurrence:${identity.occurrenceId}`
         || typeof identity.rawClipId !== 'string' || select !== `${ownerRef}/clip:${identity.rawClipId}`
-        // Confirm the projector's output ID only after binding the explicit owner.
         || clipId !== `${identity.occurrenceId}:${identity.rawClipId}` || raw.entity(parentRef, true)
         || identity.projectId !== options.scope.projectId || identity.parentDocumentId !== options.scope.timelineId) {
         throw new Error(refusal);
@@ -397,7 +443,6 @@ export async function createTimelineCommandSession(options: Options) {
       }
       const command = captureClipSet(originalBundle, original.select, args);
       originalBundle = executeClipSet(originalBundle, command).bundle;
-      // Re-execute original claims on current bytes; an ACK never refreshes them.
       after = executeClipSet(after, command).bundle;
       return command;
     });
@@ -418,6 +463,57 @@ export async function createTimelineCommandSession(options: Options) {
     prepared.delete(key);
     enqueue({ ...entry.payload, preview }, preview, entry.basis);
   }
+  type CapturedGenericPatchBasis = GenericPatchBasis & { bundle: AuthoredBundle };
+  const genericPatchPort: GenericPatchCapturePort = {
+    capture({ patch, current }) {
+      assertReady();
+      if (patch.version !== 0 && patch.version !== current.configVersion) {
+        throw new Error('Native patch has a stale local version');
+      }
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const snapshot = copy(current);
+      const capture = captureGenericPatch(bundle, patch, (operation) => {
+        if (operation.op === 'track.update') {
+          if (snapshot.resolvedConfig.tracks.filter((track) => track.id === operation.target).length !== 1
+            || hasChildTrack(bundle, operation.target)) {
+            throw new Error('Native patch track owner is unavailable');
+          }
+          return `parent/track:${operation.target}`;
+        }
+        const matches = snapshot.resolvedConfig.clips.filter((clip) => clip.id === operation.target);
+        if (matches.length !== 1) throw new Error('Native patch clip owner is unavailable');
+        const identity = matches[0].app?.canonical as { clipRef?: string } | undefined;
+        return identity?.clipRef ?? `parent/clip:${operation.target}`;
+      });
+      const localBasis: OutboxBasis = lastIntent ? { after: lastIntent } : { head: copy(known.head) };
+      return Object.freeze({ current: snapshot, capture, localGeneration, localBasis, bundle }) as CapturedGenericPatchBasis;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the native patch');
+      const captured = basis as CapturedGenericPatchBasis;
+      const key = JSON.stringify(captured.capture.commands);
+      prepared.set(key, { payload: {
+        commands: captured.capture.commands, before: captured.bundle, after: captured.capture.bundle,
+        preview: captured.capture.preview,
+      }, generation: localGeneration, basis: captured.localBasis });
+      return { commands: captured.capture.commands.slice(), preview: captured.capture.preview };
+    },
+    submit({ commands, preview }) {
+      assertReady();
+      const key = JSON.stringify(commands);
+      const entry = prepared.get(key);
+      if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Native patch was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Native patch requires its exact combined preview');
+      enqueue(entry.payload, entry.payload.preview, entry.basis);
+      prepared.delete(key);
+    },
+  };
   async function resolveRejected(keepLabel: boolean) {
     if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
     const label = keepLabel ? labelIntent() : undefined;
@@ -521,8 +617,10 @@ export async function createTimelineCommandSession(options: Options) {
   } else await claim();
   return {
     port,
-    trackLabelPort,
     clipScalarPort,
+    elementPort,
+    genericPatchPort,
+    trackLabelPort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,

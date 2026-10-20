@@ -14,9 +14,11 @@ import type { TimelineConfig } from '../types';
 import type { Checkpoint } from '../types/history';
 import type {
   TimelineDiff,
+  TimelinePatch,
   TimelinePatchValidationResult,
   TimelinePreviewResult,
 } from '@/sdk/video/timeline/patch.ts';
+import type { GenericPatchCapturePort } from '../commands/genericPatchCapture.ts';
 
 // ---------------------------------------------------------------------------
 // Fixture helpers
@@ -74,6 +76,74 @@ function makeBaseTimelineData(overrides: Partial<TimelineConfig> = {}): Timeline
 // ---------------------------------------------------------------------------
 
 describe('useTimelineOps', () => {
+  it('routes a complete native patch through one command-session port', () => {
+    const dataRef = { current: makeBaseTimelineData() };
+    const commitData = vi.fn();
+    const preview: TimelinePatch = {
+      version: 1,
+      source: 'timeline.native-label-hold',
+      operations: [{ op: 'track.update', target: 'V1', payload: { label: 'Native label' } }],
+    };
+    const genericPatchPort = {
+      capture: vi.fn(() => ({})),
+      finish: vi.fn(() => ({ commands: [], preview })),
+      submit: vi.fn(),
+    } as unknown as GenericPatchCapturePort;
+    const { result } = renderHook(() => useTimelineOps({
+      dataRef,
+      commitData,
+      genericPatchPort,
+      createManualCheckpoint: vi.fn(),
+      jumpToCheckpoint: vi.fn(),
+      checkpoints: [],
+    }));
+
+    const diff = result.current.apply({
+      version: 1,
+      operations: [{ op: 'track.update', target: 'V1', payload: { label: 'Native label' } }],
+    });
+
+    expect(genericPatchPort.capture).toHaveBeenCalledOnce();
+    expect(genericPatchPort.finish).toHaveBeenCalledOnce();
+    expect(genericPatchPort.submit).toHaveBeenCalledWith({ commands: [], preview });
+    expect(commitData).not.toHaveBeenCalled();
+    expect(diff.entries).toEqual(expect.arrayContaining([
+      expect.objectContaining({ target: 'V1' }),
+    ]));
+  });
+
+  it('keeps standalone compiler data on the guarded snapshot path', () => {
+    const dataRef = { current: makeBaseTimelineData() };
+    const commitData = vi.fn();
+    const genericPatchPort = {
+      capture: vi.fn(),
+      finish: vi.fn(),
+      submit: vi.fn(),
+    } as unknown as GenericPatchCapturePort;
+    const { result } = renderHook(() => useTimelineOps({
+      dataRef,
+      commitData,
+      genericPatchPort,
+      createManualCheckpoint: vi.fn(),
+      jumpToCheckpoint: vi.fn(),
+      checkpoints: [],
+    }));
+
+    act(() => result.current.apply({
+      version: 1,
+      operations: [{
+        op: 'project-data.write',
+        target: 'com.example.compiler-canary',
+        payload: { key: 'source', value: { dsl: 'clip x' } },
+      }],
+    }));
+
+    expect(genericPatchPort.capture).not.toHaveBeenCalled();
+    expect(genericPatchPort.finish).not.toHaveBeenCalled();
+    expect(genericPatchPort.submit).not.toHaveBeenCalled();
+    expect(commitData).toHaveBeenCalledWith(expect.anything(), { save: true, semantic: true });
+  });
+
   describe('flush — durable host acknowledgement', () => {
     it('keeps apply synchronous and awaits exactly the host barrier receipt', async () => {
       let acknowledge!: (version: number) => void;

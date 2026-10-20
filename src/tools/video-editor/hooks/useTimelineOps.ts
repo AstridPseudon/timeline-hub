@@ -28,6 +28,10 @@ import {
 } from '@/tools/video-editor/lib/timeline-patch';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability';
+import {
+  classifyGenericPatch,
+  type GenericPatchCapturePort,
+} from '../commands/genericPatchCapture.ts';
 import type { CommitDataOptions } from '@/tools/video-editor/hooks/useTimelineCommit';
 import type { Checkpoint } from '@/tools/video-editor/types/history';
 import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors.ts';
@@ -74,6 +78,9 @@ export interface UseTimelineOpsArgs {
 
   /** Original authored track-label capture and the shared command outbox. */
   trackLabelPort?: TrackLabelCapturePort;
+
+  /** One atomic native batch port; unsupported operation families refuse as one patch. */
+  genericPatchPort?: GenericPatchCapturePort;
 
   /** Host checkpoint creation (async fire-and-forget). */
   createManualCheckpoint: (label?: string) => Promise<void>;
@@ -123,6 +130,7 @@ export function useTimelineOps({
   getConfigVersion,
   flushPendingSave,
   trackLabelPort,
+  genericPatchPort,
   createManualCheckpoint,
   jumpToCheckpoint,
   checkpoints,
@@ -256,6 +264,16 @@ export function useTimelineOps({
         );
       }
 
+      // Retain the guarded snapshot/draft route for standalone operations
+      // until their command migration lands. Mixed patches must reach the
+      // native port so its whole-batch refusal remains atomic.
+      if (genericPatchPort && classifyGenericPatch(patch) !== 'unsupported') {
+        const captured = genericPatchPort.capture({ patch, current });
+        const finished = genericPatchPort.finish(captured);
+        genericPatchPort.submit(finished);
+        return previewTimelinePatch(finished.preview, current).diff;
+      }
+
       // 1. Validate the full batch
       const validation = validateTimelinePatch(patch);
       if (!validation.valid) {
@@ -305,7 +323,7 @@ export function useTimelineOps({
       // 4. Return the semantic diff
       return compiled.diff;
     },
-    [assertTimelineEditable, commitData, dataRef, getCanonicalVersion, trackLabelPort],
+    [assertTimelineEditable, commitData, dataRef, genericPatchPort, getCanonicalVersion, trackLabelPort],
   );
 
   // ---- checkpoint ---------------------------------------------------------
