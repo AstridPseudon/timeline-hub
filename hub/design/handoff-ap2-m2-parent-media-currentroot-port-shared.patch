@@ -1,0 +1,20 @@
+# Proposal only; no current-root shared-session or producer hunk is applicable.
+#
+# The port is intentionally source-only. The current TimelineCommands.addClip /
+# prepared-media producers do not expose the original five-field MediaSelection
+# and detached Runtime-verified response required by captureParentClipAddMedia.
+# Adding a shared-session or producer patch here would fabricate media
+# provenance and claim a consumer qualification that this task does not prove.
+#
+# Future App-owned adapter at the existing parent media producer boundary:
+#   1. retain the current exact media read and Runtime verification;
+#   2. reserve the raw clip ID and authored asset alias once;
+#   3. call captureParentClipAddMedia(bundle, row, media, verifiedMedia);
+#   4. submit finishParentClipAddMedia(basis) through the existing commit
+#      session/outbox and preserve the existing local preview;
+#   5. keep the legacy producer until acceptance, reload, guarded undo/redo,
+#      lost-ack/restart exact retry, and zero legacy traffic are all proven.
+#
+# No changes to commitSession, useTimelineCommandSession, useTimelineOps, the
+# Runtime door, outbox, manual recovery ADD, generated contracts, pins, or
+# dependencies are authorized by this source-only port.
