@@ -168,7 +168,7 @@ class VibeComfyStructuredMetadataTest(unittest.TestCase):
             cases = ([root / "missing.png"], [])
             for inventory in cases:
                 with (
-                    self.subTest(inventory=inventory),
+                    self.subTest(inventory=[str(path) for path in inventory]),
                     patch.object(
                         production_engine,
                         "run_workflow_path",
