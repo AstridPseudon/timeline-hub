@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T23:50:18Z | dispatcher heartbeat 5s | live 5 (sol 0, luna 5, other 0) | busy30 31 | status age 8m -->
+<!-- main | 2026-10-20T23:56:27Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 24 | status age 14m -->
 # runtime — 2026-10-20T23:41:36Z
 Milestone: M1 recorded. M2 and M3 active. No foundation, all-writer or physical parity completion.
 QUALIFIED PIN TARGET AUTHORIZED: Runtime producer95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c, tree d3a290b407fa61e6ab2d476f50c068073f70df00. Manager accepts named full31902 PASS: 5988 passed, 26 skipped, 15 xfailed, 353.01 seconds; six exact scoped failures5889 also PASS6. The qualified peer-announcement worker is authorized to request normal current Agent/App pins and paired suites NOW. This is the NEW Main014 cohort, never old a0/f021.

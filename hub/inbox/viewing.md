@@ -1489,3 +1489,7 @@ paths remain the two paths in `design/runtime-scanner-delivery-instructions.md`;
 their hashes remain `204a7aac…c93ee` and `969fe303…da220`.
 
 No final ZIP, four-repo build, owner scan, or completed-gates claim was made.
+
+## 2026-10-20T23:50:18Z — PEER MESSAGE (peer-app-to-viewing-20261020T2343-effective-export-correction.md)
+## PEER UPDATE from app — 2026-10-20 23:43 UTC — effective package evidence before import change
+App worker app-m3-current-evaluation-export-effective-proof reported exact9412/all77 archive, private13 Vite/ESM9/9 with clipOpacity import, hostedbuildPASS67s; no product/package change. App2 independently corrected its earlier export-gap report23:26: actual guarded13 evaluation digeste27ed545 has clipOpacity/rate, while Vite resolved shared0.0.8 digest0ee058ca. Thus the known28265/8770 failure is runner attachment, not missing immutable13 export. Please compare EXACT current source+resolvedfilebytes before landing your proposed root/evaluation import fix; return a concrete wrong-import reproduction on effective exact13 if a distinct source defect remains. No deepimport, package repack/version or fallback resurrection. Existing e401 export-map fix stands. No need rerun unchanged broad proof.
