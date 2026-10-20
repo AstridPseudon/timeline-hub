@@ -76,6 +76,52 @@ def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, mon
     assert generated.calls == []
 
 
+def test_ordinary_edit_occurrence_move_keeps_legacy_owner_resolution(command, monkeypatch):
+    run, generated = command
+    from tests.editing_conformance.test_recipe_m2_clip_trim import bundle as trim_bundle
+
+    generated.bundles['r0'] = trim_bundle()
+
+    def legacy(*args, **kwargs):
+        raise RuntimeError("legacy occurrence resolution")
+
+    monkeypatch.setattr(cli, "_edit_checkout", legacy)
+    with pytest.raises(RuntimeError, match="legacy occurrence resolution"):
+        run("edit", "t", "--clip", "occurrence:occ-b/clip:clip-a", "--on", "5")
+    assert generated.calls == []
+
+
+def test_ordinary_edit_move_with_draft_keeps_legacy_draft(command, monkeypatch):
+    from astrid.sdk.timeline import store
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    run, generated = command
+    monkeypatch.setattr(store, "find_draft", lambda *args, **kwargs: generated.path)
+    monkeypatch.setattr(TimelineSession, "open",
+                        lambda *args, **kwargs: pytest.fail("draft opened through native session"))
+
+    def legacy(*args, **kwargs):
+        raise RuntimeError("legacy draft resolution")
+
+    monkeypatch.setattr(cli, "_edit_checkout", legacy)
+    with pytest.raises(RuntimeError, match="legacy draft resolution"):
+        run("edit", "t", "--clip", "a", "--on", "5")
+    assert generated.calls == []
+
+
+@pytest.mark.parametrize("extra", [("--trim-out", "4"), ("--set", "x=2"), ("--verify",)])
+def test_ordinary_edit_move_with_unsupported_flags_keeps_legacy(command, monkeypatch, extra):
+    run, generated = command
+
+    def legacy(*args, **kwargs):
+        raise RuntimeError("legacy mixed move")
+
+    monkeypatch.setattr(cli, "_edit_checkout", legacy)
+    with pytest.raises(RuntimeError, match="legacy mixed move"):
+        run("edit", "t", "--clip", "a", "--on", "5", *extra)
+    assert generated.calls == []
+
+
 def test_move_preview_uses_current_project_and_does_not_claim_publication(command, capsys):
     run, generated = command
     assert run("edit", "move", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run") == 0
