@@ -20,8 +20,21 @@ from astrid.core.timeline import Timeline, scene_answers
 pytest_plugins = ("tests.packs.rendering.test_scene_host",)
 
 ROOT = Path(__file__).resolve().parents[3]
-ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz"
 SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+_COMPOSITION_PACKAGE = "@banodoco/timeline-composition"
+
+
+def _composition_archive() -> Path:
+    package = json.loads((ROOT / "remotion/package.json").read_text(encoding="utf-8"))
+    dependency = package["dependencies"][_COMPOSITION_PACKAGE]
+    assert isinstance(dependency, str) and dependency.startswith("file:"), dependency
+    archive = (ROOT / "remotion" / dependency.removeprefix("file:")).resolve()
+    try:
+        archive.relative_to((ROOT / "remotion").resolve())
+    except ValueError as error:
+        raise AssertionError(f"composition archive escapes Remotion root: {archive}") from error
+    assert archive.is_file(), archive
+    return archive
 
 
 @pytest.fixture
@@ -34,10 +47,11 @@ def installed(tmp_path, monkeypatch):
     assert toolchain.ok, toolchain.problem
     node = str(toolchain.path)
     assert toolchain.version == "v20.19.4"
-    assert hashlib.sha256(ARTIFACT.read_bytes()).hexdigest() == SHA256
+    artifact = _composition_archive()
+    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
     package = tmp_path / "node_modules/@banodoco/timeline-composition"
     package.parent.mkdir(parents=True)
-    with tarfile.open(ARTIFACT) as archive:
+    with tarfile.open(artifact) as archive:
         archive.extractall(tmp_path, filter="data")
     (tmp_path / "package").rename(package)
     (tmp_path / "package.json").write_text('{"type":"module"}')
@@ -285,8 +299,7 @@ def test_prepared_host_query_uses_final_root_inside_lock(monkeypatch, tmp_path):
         yield (props, tmp_path / ".props.json")
         events.append("prepare-exit")
 
-    from astrid.core.rendering import profile
-    from astrid.core.rendering import verified_source
+    from astrid.core.rendering import profile, verified_source
     from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
     from astrid.packs.rendering.rendering.renderers.remotion import root_preparation
 
@@ -382,7 +395,7 @@ class _PreparedPairSource:
 
 
 def _real_runtime_tools(project, node):
-    peers = Path(os.environ["ASTRID_TEST_NODE_MODULES"])
+    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", ROOT / "remotion/node_modules"))
     cli = project / "node_modules/@remotion/cli"
     if not cli.exists():
         cli.symlink_to((peers / "@remotion/cli").resolve(), target_is_directory=True)
@@ -399,9 +412,8 @@ def test_prepared_host_query_runs_registered_public_node_inside_real_root(
     node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
     assert node.ok and node.version == "v20.19.4"
 
-    from astrid.packs.rendering.rendering.renderers.remotion import run
-
     from astrid.core.rendering import verified_source
+    from astrid.packs.rendering.rendering.renderers.remotion import run
     monkeypatch.setattr(verified_source, "inherited_source",
                         lambda *args, **kwargs: _PreparedPairSource())
     monkeypatch.setattr(run, "_available_remotion_port", lambda: 32101)
@@ -464,9 +476,8 @@ def test_prepared_host_query_cleans_after_real_public_query_exception(
     node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
     assert node.ok and node.version == "v20.19.4"
 
-    from astrid.packs.rendering.rendering.renderers.remotion import run
-
     from astrid.core.rendering import verified_source
+    from astrid.packs.rendering.rendering.renderers.remotion import run
     monkeypatch.setattr(verified_source, "inherited_source",
                         lambda *args, **kwargs: _PreparedPairSource())
     monkeypatch.setattr(run, "_available_remotion_port", lambda: 32101)
