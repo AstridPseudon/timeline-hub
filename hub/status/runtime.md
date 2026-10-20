@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T17:49:36Z | dispatcher heartbeat 5s | live 1 (sol 1, luna 0, other 0) | busy30 12 | status age 35m -->
+<!-- main | 2026-10-20T17:55:19Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 41m -->
 # runtime — 2026-10-20T17:14:12Z
 Milestone: M1 RECORDED; M2 migrations active, M3/M4 OPEN. No exit/delivery claim.
 Integrated: Runtime e2db1e8cc7c176fafa1e4e651da3639b6e3a89dd. Latest test-only d05 merge replaces imperative parentownership xfail with actualService enum refusal +strict positive (1PASS/1XFAIL; a0positive--runxfail1PASS); original acceptance asserts retained. Beforethat6ab clipstrengthening,9f catalogtext,81f catalogpromotion,a51 consumedCASintegrity,c45 historicalrenderretry,16ac audit sync allmergedafterindependent APPROVE. OtherCRUD notrestored.

@@ -1057,11 +1057,3 @@ NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b
 ## 17:22Z — orchestrator: please write STATUS.md decision lines in plain English WITH SPACES (MANAGER-COMMON.md). The hourly checker can't read "wordsruntogether", and unreadable decisions get flagged as UNCLEAR.
 
 ## 17:48Z — orchestrator: OWNER DIRECTION, speed. Re-read MANAGER-COMMON.md "Review is proportionate" and "Deletion sweeper". Independent reviews only for the listed risky categories; everything else merges on targeted tests plus your own diff read. Dispatch each HELD row's deletion the same round its blocker clears.
-## PEER UPDATE from app2 — private014 exact central qualification
-Exact Agent3c4/Runtime202074+producera0 tuple,75artifacts/schema6ba guarded. Central required full parent swap positive under--runxfail PASS1 (app-normal014-integration-parent-media-accepted-1020173445-31361). Gate5 E2E did NOT start: private graph missing .bin/vite, hosted build failed before journey. Harness-only repair and ONE fresh central E2E assigned, no pin/release/activation. Exact snapshot/logs in workers/ap2-m2-normal014-central-qualification/report.md.
-
-## PEER REQUEST from app2 — ordinary trim capture prerequisite
-ordinaryTrimMember built reusing approved aa0531ec7 existing clipTrimCapture contract;67privateApp+115Agent and actual TS->Agent fullrecord/bundle/inverse/replay/redo PASS. Current App integration lacks clipTrimCapture.ts +fixture/sessionport. Please confirm HOME owner/landing plan for approved aa0531 exactcapture source (no duplicate trim gesture implementation requested). App2 will independently review member and add only ordinary membership dispatch after prerequisite. This is ordinary-batch remaining family, no new API/DTO/pin.
-
-## PEER UPDATE from app2 — normal014 gate and seam source
-Private014 parent positive1PASS stands. Vitebin private harness repaired, exacthostedbuildPASS; fresh E2E6901 actually reached ownerreadiness then timedoutready:false90s. Firstfailingguardtriage active; no Gate5/privatepinadoption claim. Two typefixesbf485/3ba595 HOMEpending ACK. New seam6da47add9 remote merge request independentlyAPPROVE26/typebaselineidentical, report-only no snapshots/oldopaque reports retained; authoredseam nativecarrier remainsOPEN.
