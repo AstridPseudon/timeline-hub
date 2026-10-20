@@ -18,6 +18,7 @@ import {
   assertFrameWithinBound, capturePlayerFrame, compareRgbFrames, decodeExportFrame,
 } from './frames';
 import { captureActualPlayerTab, installTabAudioObservation } from './tab-audio';
+import { compareNativeAudio, decodeNativeAudio } from './audio-join';
 
 import { ORIGINAL_640, readCanvasFrameMarker, type ParityCanvas } from './canvas';
 
@@ -281,6 +282,15 @@ export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): v
       const capture = await captureActualPlayerTab(page, testInfo);
       expect(capture.probe.streams.filter(stream => stream.codec_type === 'video')).toHaveLength(1);
       expect(capture.probe.streams.filter(stream => stream.codec_type === 'audio')).toHaveLength(1);
+      const capturedAudio = await decodeNativeAudio(capture.path, 'actual Player audio capture');
+      const exportedAudio = await decodeNativeAudio(render.exportPath, 'same normal MP4 export');
+      const audioComparison = compareNativeAudio(capturedAudio, exportedAudio);
+      const plantedHalfGain = {
+        ...capturedAudio,
+        pcm: Int16Array.from(capturedAudio.pcm, sample => Math.round(sample * 0.5)),
+      };
+      expect(() => compareNativeAudio(plantedHalfGain, exportedAudio))
+        .toThrow(/captured output gain mismatch/);
       expect(capture.lifecycle.events.indexOf('recorder:start')).toBeLessThan(capture.lifecycle.events.indexOf('warm'));
       expect(capture.lifecycle.events.indexOf('warm')).toBeLessThan(capture.lifecycle.events.indexOf('readiness'));
       expect(capture.lifecycle.events.indexOf('readiness')).toBeLessThan(capture.lifecycle.events.indexOf('play'));
@@ -291,6 +301,14 @@ export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): v
         lifecycle: capture.lifecycle,
         streams: capture.probe.streams,
         format: capture.probe.format,
+        audioComparison: {
+          ...audioComparison,
+          capture: { path: capturedAudio.path, sampleCount: capturedAudio.sampleCount,
+            stream: capturedAudio.probe.streams.find(stream => stream.codec_type === 'audio') },
+          export: { path: exportedAudio.path, sampleCount: exportedAudio.sampleCount,
+            stream: exportedAudio.probe.streams.find(stream => stream.codec_type === 'audio') },
+          plantedNegative: 'half-gain mutation of captured Player PCM rejected after the positive comparison',
+        },
       });
       await completeResult(page, pageLogs, { ...render.result, decodedFrames: [{ frame: 0, decoded: await decodeExportFrame(render.exportPath, 0) }] });
       expect((await pageLogs.result()).failures).toEqual([]);
