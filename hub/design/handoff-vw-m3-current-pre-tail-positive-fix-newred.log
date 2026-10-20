@@ -1,0 +1,107 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+____ test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-78/test_fully_covered_pre_tail_la0')
+
+    def test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive(tmp_path: Path) -> None:
+        """The current filtered-native route must retain the old bounded positive.
+    
+        The legacy route is the frozen 2019d7e69 behavior: it slices this exact
+        layer/window, clears the native window, and Root accepts the source-window
+        metadata with a 30-frame composition.  The current route retains the
+        original clock and uses native bounds, so it must accept the same request
+        without treating the filtered clip extent as authored clock authority.
+        """
+    
+        request, adapted, selected = _segment(tmp_path)
+        raw = _timeline()
+        assert timeline_duration_frames(raw, 30) == 300
+        assert timeline_render_duration_frames(raw, 30) == 330
+        assert timeline_duration_frames(selected, 30) == 30
+        assert selected["app"]["astrid_render_clock"] == _clock()
+        assert adapted.metadata[_EXTENT_KEY] == "330"
+        assert adapted.window is request.window
+    
+        legacy = RenderService._window_timeline(raw, request.window, tracks=("top",))
+        legacy.setdefault("metadata", {})["astrid_layer"] = {"z": 1, "alpha": True}
+        assert legacy["clips"] == [
+            {"id": "top_0_30", "track": "top", "asset": "base", "at": 0.0, "from": 0.0, "to": 1.0}
+        ]
+        assert timeline_duration_frames(legacy, 30) == 30
+        assert remotion._native_window_argument(None, legacy, _profile()) is None
+        legacy_tree = _root_probe(tmp_path, _props(legacy))
+        assert legacy_tree["metadata"] == {
+            "width": 320,
+            "height": 180,
+            "fps": 30,
+            "durationInFrames": 30,
+        }
+        assert legacy_tree["sequence"]["from"] == 30
+        assert legacy_tree["video"]["trimBefore"] == 300
+        assert legacy_tree["video"]["trimAfter"] == 330
+    
+>       native = remotion._native_window_argument(
+            adapted.window,
+            selected,
+            _profile(),
+            composition_duration_frames=remotion._composition_duration_from_request(adapted),
+        )
+
+tests/packs/rendering/test_remotion_layer_tail_compat.py:274: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+window = FrameWindow(start_frame=0, end_frame=30, fps_rational=(30, 1), source_range=None, speed=None)
+timeline_data = {'app': {'astrid_render_clock': {'authored_duration_frames': 300, 'render_duration_frames': 330, 'tail': {'end_frame':...'from': 0, 'id': 'top', ...}], 'metadata': {'astrid_layer': {'alpha': True, 'z': 1}}, 'theme': 'banodoco-default', ...}
+profile = RenderProfile(width=320, height=180, fps_rational=(30, 1), time_base=(1, 90000), video_codec='h264', pixel_format='yuv...level=None, container='mp4', audio_codec=None, audio_sample_rate=None, audio_channel_layout=None, duration_tolerance=1)
+
+    def _native_window_argument(
+        window: FrameWindow | None,
+        timeline_data: Mapping[str, Any],
+        profile: RenderProfile,
+        *,
+        composition_duration_frames: int | None = None,
+    ) -> str | None:
+        """Select absolute frames of the untouched composition, with half-open input."""
+        metadata = timeline_data.get("metadata")
+        if composition_duration_frames is not None:
+            if (type(composition_duration_frames) is not int
+                    or not 1 <= composition_duration_frames <= 9007199254740991):
+                raise ValueError("composition duration must be a positive safe integer")
+            layer = metadata.get("astrid_layer") if isinstance(metadata, Mapping) else None
+            if (window is None or not isinstance(layer, Mapping)
+                    or type(layer.get("z")) is not int or layer["z"] < 0
+                    or type(layer.get("alpha")) is not bool or layer["alpha"] != (layer["z"] > 0)):
+                raise ValueError("composition duration requires a native isolated layer window")
+            app = timeline_data.get("app")
+            if ((isinstance(metadata, Mapping) and "source_window_start_seconds" in metadata)
+                    or (isinstance(app, Mapping) and "astrid_render_clock" in app)):
+>               raise ValueError("composition duration conflicts with an existing render clock")
+E               ValueError: composition duration conflicts with an existing render clock
+
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-pre-tail-positive-fix-before-run.py:920: ValueError
+_______ test_fully_covered_pre_tail_root_callback_accepts_native_extent ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-78/test_fully_covered_pre_tail_ro0')
+
+    def test_fully_covered_pre_tail_root_callback_accepts_native_extent(tmp_path: Path) -> None:
+        """Root's real callbacks must accept the service's original extent grant."""
+    
+        _, adapted, selected = _segment(tmp_path)
+        tree = _root_probe(
+            tmp_path,
+            _props(selected, extent=remotion._composition_duration_from_request(adapted)),
+        )
+        # The selected clip covers the native request; the tail starts at the
+        # exclusive end and therefore contributes no frames to [0, 30).
+>       assert tree.get("error") is None, tree
+E       AssertionError: {'error': 'composition duration conflicts with an existing render clock'}
+E       assert 'composition duration conflicts with an existing render clock' is None
+E        +  where 'composition duration conflicts with an existing render clock' = <built-in method get of dict object at 0x7f2c910fe980>('error')
+E        +    where <built-in method get of dict object at 0x7f2c910fe980> = {'error': 'composition duration conflicts with an existing render clock'}.get
+
+tests/packs/rendering/test_remotion_layer_tail_compat.py:293: AssertionError
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_fully_covered_pre_tail_root_callback_accepts_native_extent
+2 failed, 20 deselected in 3.69s

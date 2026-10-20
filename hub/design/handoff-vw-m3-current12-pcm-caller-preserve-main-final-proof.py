@@ -2,7 +2,6 @@ from pathlib import Path
 import ast
 import difflib
 import hashlib
-import importlib.util
 import json
 import subprocess
 
@@ -51,7 +50,15 @@ for name in sorted(changed):
         assert result.returncode==1
         tracked+=result.stdout
 Path(PREFIX+'composed-source.patch').write_bytes(tracked)
-spec=importlib.util.spec_from_file_location('caller_setup',PREFIX+'setup.py')
+project=TASK/'audio-project'
+package=project/'node_modules/@banodoco/timeline-composition'
+manifest=json.loads(Path(PREFIX+'composition77.json').read_text())
+assert len(manifest)==77
+assert set(manifest)=={str(p.relative_to(package)) for p in package.rglob('*') if p.is_file()}
+for name,digest in manifest.items():
+    assert hashlib.sha256((package/name).read_bytes()).hexdigest()==digest,name
+for name in ['attempt-envelope-pcm.mjs','compiled-audio-source-clock.mjs','normal-audio-sources.mjs','package.json','package-lock.json']:
+    assert (project/name).read_bytes()==(REPO/'remotion'/name).read_bytes(),name
 # Load the helper definition without re-running its mutating setup body.
 setup_ast=ast.parse(Path(PREFIX+'setup.py').read_text())
 namespace={}

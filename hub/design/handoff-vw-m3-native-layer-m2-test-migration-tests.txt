@@ -1,0 +1,35 @@
+Working directory: /home/user/work/wt/vw-m3-native-layer-m2-test-migration
+Base: 626eed656edf2a6398703e9e5318343069e47019
+
+ORIGINAL RED (exit 1):
+env -u PYTHONPATH -u NODE_OPTIONS -u NODE_PATH PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_live_scene_composition.py -k 'not real_render'
+5 failed, 10 passed, 1 deselected in 12.97s
+Log: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-layer-m2-test-migration-original-red.log
+
+INITIAL NEW POSITIVES (exit 1; fixture declarations corrected):
+env -u PYTHONPATH -u NODE_OPTIONS -u NODE_PATH PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_live_scene_composition.py -k 'not real_render'
+2 failed, 15 passed, 1 deselected in 17.52s
+Log: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-layer-m2-test-migration-initial-new-positive.log
+
+FINAL NONBROWSER GREEN (exit 0):
+env -u PYTHONPATH -u NODE_OPTIONS -u NODE_PATH PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_live_scene_composition.py -k 'not real_render'
+17 passed, 1 deselected in 17.27s
+Log: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-layer-m2-test-migration-nonbrowser.log
+
+DIRECT EXTENT/ADAPTER CONTROLS (exit 0):
+env -u PYTHONPATH -u NODE_OPTIONS -u NODE_PATH PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_remotion_native_window.py tests/packs/rendering/test_remotion_capture_scene_props.py
+109 passed in 4.29s
+Log: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-layer-m2-test-migration-direct.log
+
+SERVICE CONTROLS (exit 0):
+env -u PYTHONPATH -u NODE_OPTIONS -u NODE_PATH PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/core/rendering/test_service.py -k 'window_timeline or segment_request'
+5 passed, 47 deselected in 0.28s
+Log: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-layer-m2-test-migration-service.log
+
+LINT (exit 0):
+env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m ruff check --no-cache tests/packs/rendering/test_live_scene_composition.py
+All checks passed!
+Log: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-layer-m2-test-migration-lint.log
+
+git diff --check
+exit 0

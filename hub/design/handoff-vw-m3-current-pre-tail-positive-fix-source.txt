@@ -1,0 +1,16 @@
+Base: 626eed656edf2a6398703e9e5318343069e47019
+Permanent regression: e2d926319718c396fe579236eb9c8de5fb00f19f
+Frozen legacy source: 2019d7e69
+
+Final source SHA256:
+5c3cd96bf8561eebc369090fe3c520fac40457802458959827c7903464837269  /home/user/work/wt/vw-m3-current-pre-tail-positive-fix/astrid/packs/rendering/rendering/renderers/remotion/run.py
+afde359fcf7324f0885543e3f3292372bd1b94bb3f219477bd15a2a4ee704f90  /home/user/work/wt/vw-m3-current-pre-tail-positive-fix/remotion/src/Root.tsx
+e41b4dcb9c2f2e804a2bddc7960d24af2d6605d35e878f40c5828badb26cf73e  /home/user/work/wt/vw-m3-current-pre-tail-positive-fix/tests/packs/rendering/test_remotion_layer_tail_compat.py
+
+Only these three repository paths are changed.
+The three original permanent test functions are AST-identical.
+Only the fixture archive selection moved from held public12 to CURRENT locked public10.
+Their chunk-SE4TPVLW.js duration sources are byte-identical.
+Source-probe oldgreen loads frozen 2019 service/run/Root; other imports use CURRENT dependencies.
+Source-probe newred loads base 626eed656 run/Root and actual unchanged CURRENT service.
+Finalgreen uses actual CURRENT worktree service/run/Root, with no source substitution.

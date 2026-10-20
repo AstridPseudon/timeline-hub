@@ -1,0 +1,13 @@
+{
+  "changed_files": {
+    "tests/packs/rendering/test_normal_audio_http.py": "468bbc3227dc32b4fa0f8d4f52e610757bb59b5007060957e032e837fb1ac05e"
+  },
+  "collected_tests": 22,
+  "central_request": "vw-m3-pcm-http-portable-test-integration-viewing-normal-pcm-http-portable-1020095009-3822",
+  "central_result": "3 passed, 19 failed: initial private project omitted attempt-envelope-pcm.mjs; corrected afterward; no second central request",
+  "project": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-http-portable-test/project",
+  "composition_artifact_sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+  "composition_archive_files": 77,
+  "composition_peer_root": "/home/user/work/composition/node_modules",
+  "composition_leaf_links": 22
+}
