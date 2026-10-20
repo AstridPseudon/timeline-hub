@@ -1,4 +1,5 @@
 import { TimelineItemSelectionSummary } from './TimelineItemSelectionSummary.tsx';
+import { useClipScalarControl, useClipScalarControls } from '@/tools/video-editor/hooks/useClipScalarControl.ts';
 import { EMPTY_TIMELINE_DATA_ITEMS } from '@/shared/state/selectionStore.ts';
 import { memo, useEffect, useMemo, useRef, type ComponentType, type ReactNode } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -241,11 +242,13 @@ function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
     patchRegistry,
   });
   const { addVariantAsGenerationAfterClip, isPending: isAddingVariantAsGenerationPending } = useAddVariantAsGeneration();
+  const captureScalarEdit = useClipScalarControl(selectedClip?.id);
   // Touch starts on the clip's own tab, including an initial selection in the retained panel.
   const prevClipIdRef = useRef(deviceClass === 'desktop' ? selectedClip?.id : undefined);
   const wasVisibleRef = useRef(false);
   const selectedDataItems = selectedDataItemsSnapshot ?? EMPTY_TIMELINE_DATA_ITEMS;
   const selectedClipIdsList = useMemo(() => [...selectedClipIds], [selectedClipIds]);
+  const captureScalarEdits = useClipScalarControls(selectedClipIdsList);
   // dataKind V2: resolve lane items from the SAME patched lane plane the
   // canvas renders — the render-side `useDataLanes` merge — never the
   // store's frozen-empty `dataLanes` default. Fetching goes through the
@@ -519,6 +522,7 @@ function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
           />
         ) : selectedClipIds.size > 1 ? (
           <BulkClipPanel
+            onScalarEditsStart={captureScalarEdits}
             clips={bulkSelectedClips}
             visibleTabs={bulkVisibleTabs}
             compositionWidth={compositionSize.width}
@@ -559,6 +563,7 @@ function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
             deviceClass={deviceClass}
             hasPredecessor={selectedClipHasPredecessor}
             onChange={handleSelectedClipChange}
+            onScalarEditStart={captureScalarEdit}
             onResetPosition={handleResetClipPosition}
             onClose={clearSelection}
             onDelete={selectedClip ? () => {
