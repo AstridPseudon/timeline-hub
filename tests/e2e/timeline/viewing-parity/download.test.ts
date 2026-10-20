@@ -75,12 +75,14 @@ function mockPage() {
   return Object.assign(new EventEmitter(), { url: () => `${pageOrigin}/tools/video-editor` });
 }
 function emit(page: EventEmitter, proof: DownloadTransfer, type: 'location' | 'object', options: {
-  resourceType?: string; body?: () => Promise<Buffer>;
+  resourceType?: string; body?: () => Promise<Buffer>; allHeaders?: () => Promise<Record<string, string | undefined>>;
 } = {}) {
   const read = proof[type];
   page.emit('response', { url: () => read.url, status: () => read.status,
     request: () => ({ method: () => read.method, resourceType: () => options.resourceType ?? read.resourceType,
-      headers: () => ({ origin: read.origin, range: read.range, authorization: 'must never be retained' }),
+      headers: () => { assert.fail('provisional request headers must not be used'); },
+      allHeaders: options.allHeaders ?? (async () => ({ origin: read.origin, range: read.range,
+        authorization: 'must never be retained' })),
       redirectedFrom: () => read.redirected ? {} : null }),
     body: options.body ?? (async () => type === 'object' ? proof.object.bytes
       : Buffer.from(JSON.stringify({ object_id: proof.location.objectId, digest: proof.location.digest,
@@ -100,6 +102,66 @@ test('collector observes responses without intercepting and retains no private l
   } finally { observer.stop(); }
   assert.deepEqual(page.eventNames(), []);
 });
+test('collector awaits complete headers and bodies while preserving response arrival order', async () => {
+  const page = mockPage(); const proof = transfer();
+  const observer = observeDownloadTransfer(page as unknown as Page, runtimeBase, projectId, video);
+  let resolveHeaders!: (headers: Record<string, string>) => void;
+  let resolveBody!: (bytes: Buffer) => void;
+  const headers = new Promise<Record<string, string>>(resolve => { resolveHeaders = resolve; });
+  const body = new Promise<Buffer>(resolve => { resolveBody = resolve; });
+  try {
+    emit(page, proof, 'location', { allHeaders: () => headers });
+    emit(page, proof, 'object', { body: () => body });
+    let finished = false;
+    const finishing = observer.finish().then(result => { finished = true; return result; });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(finished, false);
+    resolveBody(bytes);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(finished, false);
+    resolveHeaders({ origin: pageOrigin, authorization: 'must never be retained' });
+    const observed = await finishing;
+    validate(observed);
+    assert.doesNotMatch(JSON.stringify(observed), /must never|authorization|local_path/);
+  } finally { observer.stop(); }
+});
+for (const target of ['location', 'object'] as const) {
+  test(`collector propagates failed ${target} complete headers without an unhandled rejection`, async () => {
+    const page = mockPage(); const proof = transfer();
+    const observer = observeDownloadTransfer(page as unknown as Page, runtimeBase, projectId, video);
+    const failure = new Error('complete headers failed');
+    try {
+      for (const type of ['location', 'object'] as const) emit(page, proof, type, type === target
+        ? { allHeaders: async () => { throw failure; } } : {});
+      await new Promise(resolve => setImmediate(resolve));
+      await assert.rejects(observer.finish(), error => error === failure);
+    } finally { observer.stop(); }
+  });
+  for (const origin of [undefined, 'https://wrong.test']) {
+    test(`collector refuses ${target} complete Origin ${origin ?? 'missing'}`, async () => {
+      const page = mockPage(); const proof = transfer();
+      const observer = observeDownloadTransfer(page as unknown as Page, runtimeBase, projectId, video);
+      try {
+        for (const type of ['location', 'object'] as const) emit(page, proof, type, type === target
+          ? { allHeaders: async () => ({ origin }) } : {});
+        const observed = await observer.finish();
+        assert.equal(observed[target].origin, origin);
+        assert.throws(() => validate(observed));
+      } finally { observer.stop(); }
+    });
+  }
+  test(`collector retains and refuses ${target} complete Range`, async () => {
+    const page = mockPage(); const proof = transfer();
+    const observer = observeDownloadTransfer(page as unknown as Page, runtimeBase, projectId, video);
+    try {
+      for (const type of ['location', 'object'] as const) emit(page, proof, type, type === target
+        ? { allHeaders: async () => ({ origin: pageOrigin, range: 'bytes=0-' }) } : {});
+      const observed = await observer.finish();
+      assert.equal(observed[target].range, 'bytes=0-');
+      assert.throws(() => validate(observed));
+    } finally { observer.stop(); }
+  });
+}
 for (const kind of ['missing location', 'missing object', 'repeated location', 'repeated object', 'reversed order', 'failed body'] as const) {
   test(`collector refuses ${kind}`, async () => {
     const page = mockPage(); const proof = transfer();
