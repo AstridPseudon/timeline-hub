@@ -7,5 +7,12 @@
  */
 import type { AstridExtension } from '@astrid/editor-sdk';
 import { ASTRID_EDITOR_EXTENSIONS } from '@astrid/packs/rendering/editor/catalog';
+import { scenePhaseMarkersExtension } from './scene-phase-markers/extension';
 
-export const devLocalExtensions: AstridExtension[] = [...ASTRID_EDITOR_EXTENSIONS];
+// Scene Phase Markers remains an App-owned reviewed extension. Keep the
+// generated Astrid pack catalog intact while admitting this existing editor
+// surface to the normal host in which its project-data producer is exercised.
+export const devLocalExtensions: AstridExtension[] = [
+  ...ASTRID_EDITOR_EXTENSIONS,
+  scenePhaseMarkersExtension,
+];
