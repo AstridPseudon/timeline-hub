@@ -102,6 +102,54 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
     return ref
 
 
+def _timeline_reference(ctx, owner, row, pin, binding):
+    """Attach one bounded source reference to an occurrence media birth.
+
+    The media selection remains the authority for the object identity.  This
+    binding only records the stable reference identity and the occurrence-local
+    asset alias that already resolves through that selection.
+    """
+    if binding is None:
+        return
+    if binding['asset'] != row.get('asset') or binding['asset'] != pin['asset']:
+        raise CommandError('timeline reference asset must equal the selected occurrence asset',
+                           kind='dependency_changed')
+
+    owners = ctx.select('collection.occurrences', 'parent')
+    for other in owners:
+        if other == owner:
+            continue
+        prior = ctx.read(other, ['provenance'])
+        if not isinstance(prior, dict):
+            continue
+        namespace = prior.get('astrid')
+        existing = namespace.get('timeline_reference') if isinstance(namespace, dict) else None
+        if isinstance(existing, dict) and existing.get('reference_id') == binding['reference_id']:
+            raise CommandError('timeline reference identity is already occupied',
+                               kind='identity_collision', ref=other)
+
+    state = ctx.state.get(owner, ['provenance'])
+    provenance = state.get('value') if state['state'] == 'present' else {}
+    if provenance is None or not isinstance(provenance, dict):
+        raise CommandError('occurrence provenance must be an object', kind='dependency_changed', ref=owner)
+    namespace = provenance.get('astrid', {})
+    if namespace is None or not isinstance(namespace, dict):
+        raise CommandError('occurrence astrid provenance must be an object', kind='dependency_changed', ref=owner)
+    existing = namespace.get('timeline_reference')
+    if existing is not None and not equal(existing, binding):
+        raise CommandError('timeline reference binding differs from the existing identity',
+                           kind='dependency_changed', ref=owner)
+
+    ctx.bind('reference.owner', owner)
+    ctx.bind('reference.source', owner + '/shot')
+    ctx.bind('reference.media', owner + '/asset:' + binding['asset'], dependencies=['media.new'])
+    ctx.object(owner, ['provenance'])
+    ctx.object(owner, ['provenance', 'astrid'])
+    ctx.object(owner, ['provenance', 'astrid', 'timeline_reference'])
+    for key in ('version', 'reference_id', 'role', 'asset'):
+        ctx.write(owner, ['provenance', 'astrid', 'timeline_reference', key], binding[key])
+
+
 def _clip(ctx, owner, row, limit, kind, verified, *, raw_window=False):
     if row.get('clipType') not in ('media', kind) or not isinstance(row.get('asset'), str):
         raise CommandError('media edit requires one matching media clip')
@@ -166,6 +214,7 @@ def add_media(ctx, command):
         raise CommandError('child asset must equal the reserved selection alias')
     _clip(ctx, owner, row, limit, kind, [value])
     _registry(ctx, owner, pin, kind, create=True)
+    _timeline_reference(ctx, owner, row, pin, command['args'].get('timeline_reference'))
     ctx.create(owner, 'clip', row)
 
 
@@ -201,12 +250,14 @@ def _swap(ctx, command, owner, limit):
     ctx.write(ref, ['asset'], pin['asset'])
 
 
-def capture_occurrence_add_media(bundle, owner, row, media, *, verified_media, consumed=()):
+def capture_occurrence_add_media(bundle, owner, row, media, *, verified_media, consumed=(), timeline_reference=None):
     """Caller keeps the selected asset alias and allocates row.id before capture."""
     from .commands import execute
     args = {'row': copy.deepcopy(row), 'media': copy.deepcopy(media)}
     if consumed:
         args['consumed'] = list(consumed)
+    if timeline_reference is not None:
+        args['timeline_reference'] = copy.deepcopy(timeline_reference)
     return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.add-media', 'version': capture_version(bundle, owner),
                              'select': owner, 'args': args, 'intent': MEDIA_INTENT}], verified_media=verified_media).commands[0]
 

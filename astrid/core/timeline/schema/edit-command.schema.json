@@ -2433,6 +2433,10 @@
             "pattern": "^(?!.*::)[^/]+$"
           },
           "description": "Raw IDs of existing occurrence clips whose rows an automatic builder read to choose the start or lane; each row is recorded as a guard."
+        },
+        "timeline_reference": {
+          "$ref": "#/$defs/TimelineReferenceBinding",
+          "description": "Optional source reference attached to this occurrence-owned media birth; it never creates a placement by itself."
         }
       },
       "additionalProperties": false
@@ -3298,6 +3302,32 @@
           "description": "Positive authored occurrence duration in integer milliseconds."
         }
       }
+    },
+    "TimelineReferenceBinding": {
+      "type": "object",
+      "required": [
+        "version",
+        "reference_id",
+        "role",
+        "asset"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "reference_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)(?=.*\\S)[^/]+$"
+        },
+        "role": {
+          "const": "source"
+        },
+        "asset": {
+          "type": "string",
+          "pattern": "^(?!.*::)(?=.*\\S)[^/]+$"
+        }
+      },
+      "additionalProperties": false
     }
   }
 }
