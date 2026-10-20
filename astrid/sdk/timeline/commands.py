@@ -47,6 +47,7 @@ def operations():
         parent_swap_media,
         swap_media,
     )
+    from .native_occurrence_resize import OCCURRENCE_RESIZE_INTENT, occurrence_resize
     from .native_parent_media_commands import add_media as parent_add_media
     from .native_parent_media_commands import assembled_target
     from .native_placement_commands import (
@@ -79,6 +80,8 @@ def operations():
             'shot.pool': Operation(_SCHEMA['$defs']['ShotPoolArgs'], shot_pool, POOL_INTENT, True),
             'occurrence.duplicate': Operation(_SCHEMA['$defs']['OccurrenceDuplicateArgs'], occurrence_duplicate,
                                               OCCURRENCE_INTENT, True),
+            'occurrence.resize': Operation(_SCHEMA['$defs']['OccurrenceResizeArgs'], occurrence_resize,
+                                           OCCURRENCE_RESIZE_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
             'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
             'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),

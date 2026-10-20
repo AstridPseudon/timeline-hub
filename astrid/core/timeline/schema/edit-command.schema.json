@@ -2310,6 +2310,41 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.resize"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)occurrence:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceResizeArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -3209,6 +3244,20 @@
           "type": "string",
           "pattern": "^(?!.*::)occurrence:[^/]+/track:[^/]+$",
           "description": "Explicit existing raw child lane; caller may precede with typed track.create in this batch."
+        }
+      }
+    },
+    "OccurrenceResizeArgs": {
+      "type": "object",
+      "required": [
+        "duration_ms"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Positive authored occurrence duration in integer milliseconds."
         }
       }
     }
