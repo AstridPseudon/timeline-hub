@@ -593,7 +593,7 @@ def range_cuts(tl: Any, text: str) -> list[str]:
     return [cut_id for cut_id in order if cut_id in chosen]
 
 
-def apply_sheet(tl: Checkout, text: str) -> list[str]:
+def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
     """Apply a full sheet or fragment atomically and return the checkout's change summary.
 
     A sheet exported from an earlier version merges three-way (what the sheet changed since it was exported,
@@ -601,7 +601,7 @@ def apply_sheet(tl: Checkout, text: str) -> list[str]:
     parsed = parse_sheet(text)
     before = Checkout(copy.deepcopy(tl.bundle))
     if parsed.get("version") and parsed["version"] != sheet_version(tl):
-        base = find_version(tl, parsed["version"])
+        base = find_version(tl, parsed["version"], client=client)
         if base is None:
             raise SheetError(f"this sheet was exported from version {parsed['version']}, which this working copy no longer "
                              f"has (it is now {sheet_version(tl)}): re-export it (timelines show TL --as sheet) and make "
@@ -615,16 +615,19 @@ def apply_sheet(tl: Checkout, text: str) -> list[str]:
         raise
 
 
-def find_version(tl: Any, version: str) -> Any:
-    """The Checkout this working copy was at ``version``: now, an earlier saved edit (undo history), or its
-    published base. None when it is not kept any more."""
+def find_version(tl: Any, version: str, *, client: Any = None) -> Any:
+    """Find a sheet basis in unsent drafts or retained Runtime revisions.
+
+    Local snapshots belong only to this published base. With a client, older
+    accepted bases are read from Runtime, never from the local undo stack.
+    """
     from astrid.sdk.timeline_checkout import Checkout, _history_dir, _read_step
     from astrid.sdk.timeline_cuts import base_bundle
 
     if sheet_version(tl) == version:
         return tl
     kept = (getattr(tl, "_exported", None) or {}).get(version)
-    if kept is not None:
+    if kept is not None and kept.get("base_parent") == tl.bundle.get("base_parent"):
         return Checkout(copy.deepcopy(kept))
     candidates: list[Any] = []
     path = getattr(tl, "path", None)
@@ -643,7 +646,7 @@ def find_version(tl: Any, version: str) -> Any:
             other = Checkout(other.bundle)
         except Exception:  # noqa: BLE001 - an unreadable step is skipped
             continue
-        if sheet_version(other) == version:
+        if other.bundle.get("base_parent") == tl.bundle.get("base_parent") and sheet_version(other) == version:
             return other
     try:
         base = Checkout(base_bundle(tl.document()))
@@ -651,6 +654,21 @@ def find_version(tl: Any, version: str) -> Any:
             return base
     except Exception:  # noqa: BLE001
         pass
+    if client is not None:
+        cursor = None
+        while True:
+            result = client.timelines.history(tl.bundle["project_id"], tl.bundle["timeline_id"],
+                                              limit=100, cursor=cursor)
+            if not result.ok:
+                raise SheetError(f"could not read retained sheet basis: {result.error}")
+            for row in result.data["items"]:
+                other = Checkout.open(tl.bundle["project_id"], tl.bundle["timeline_id"],
+                                      revision_id=row["revision_id"], client=client)
+                if sheet_version(other) == version:
+                    return other
+            cursor = result.data.get("next_cursor")
+            if cursor is None:
+                break
     return None
 
 

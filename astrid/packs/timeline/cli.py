@@ -3585,6 +3585,10 @@ def _cmd_undo(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_redo(parsed: argparse.Namespace) -> int:
+    if getattr(parsed, "publication", None):
+        return _cmd_commit_edit(parsed, undo=True)
+    if any(getattr(parsed, name, None) for name in ("dry_run", "idempotency_key", "json")):
+        raise _VerbError("--publication is required with commit redo options", 2)
     tl=_edit_checkout(parsed); labels=tl.redo(parsed.steps)
     print("redid "+"; ".join(labels)); return 0
 
@@ -3853,11 +3857,11 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("steps", nargs="?", type=_positive_int, default=None, help="How many edits (default 1).")
     subparser.add_argument("--steps", dest="steps_option", type=_positive_int, default=None, help="The same, as an option.")
-    if handler is _cmd_undo:
-        subparser.add_argument("--publication", action="append", help="Undo an accepted publication; repeat oldest first.")
-        subparser.add_argument("--dry-run", action="store_true")
-        _add_idempotency_key(subparser)
-        _add_json_flag(subparser, default=False)
+    subparser.add_argument("--publication", action="append",
+                           help="Reverse an accepted publication (for redo, name the undo publication); repeat oldest first.")
+    subparser.add_argument("--dry-run", action="store_true")
+    _add_idempotency_key(subparser)
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
 
 
@@ -3919,7 +3923,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
     CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
     CommandSpec("undo", help="Undo an accepted publication or edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
-    CommandSpec("redo", help="Redo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
+    CommandSpec("redo", help="Reverse an accepted undo publication or redo unsent draft edits.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
     CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),
     CommandSpec("status", help="Show the canonical head and an existing working copy.", configure=_configure_status),
     CommandSpec("publish", help="Publish an existing working copy through the SDK merge/CAS boundary.", configure=_configure_publish),
