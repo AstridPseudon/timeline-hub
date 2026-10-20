@@ -1,9 +1,36 @@
 """Conservative test-only containment; unsupported changes require explicit review."""
 from __future__ import annotations
 
+import copy
 import json
 
 from jsonschema import Draft202012Validator
+
+
+def legacy_022_compatibility_errors(previous, current):
+    """Prove the five 0.2.2 regex widenings, then check the complete schema.
+
+    Removing only the new alternatives yields a subset of the candidate's
+    language. It must equal the exact old pattern; arbitrary regex rewrites
+    still fail the ordinary conservative checker.
+    """
+    projected = copy.deepcopy(current)
+    for name in ('ScopedId', 'EntityRef', 'TargetKey', 'AnchorIdentity'):
+        node = projected.get('$defs', {}).get(name, {})
+        old = previous['$defs'][name]['pattern']
+        widened = old.replace('(?:clip|track)', '(?:clip|track|asset)').replace(
+            '|occurrence:[^/]+(?:/shot)?', '|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?')
+        if node.get('pattern') == widened:
+            node['pattern'] = old
+    for condition in projected.get('$defs', {}).get('EditCommand', {}).get('allOf', []):
+        if condition.get('if', {}).get('properties', {}).get('op', {}).get('const') == 'track.set':
+            node = condition.get('then', {}).get('properties', {}).get('select', {})
+            old = next(c for c in previous['$defs']['EditCommand']['allOf']
+                       if c['if']['properties']['op']['const'] == 'track.set')
+            pattern = old['then']['properties']['select']['pattern']
+            if node.get('pattern') == pattern.replace('parent/track:', '(?:parent|occurrence:[^/]+)/track:'):
+                node['pattern'] = pattern
+    return compatibility_errors(previous, projected)
 
 
 def compatibility_errors(previous, current):

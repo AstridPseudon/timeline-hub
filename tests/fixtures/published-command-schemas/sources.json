@@ -19,5 +19,19 @@
     "path": "astrid/core/timeline/schema/edit-command.schema.json",
     "version": "withdrawn; never a release floor",
     "sha256": "10c1610b61ad151259149c97061493d9e36ae0a9220ba4983b45f22e8ac7e3b1"
+  },
+  "runtime-0.2.10.json": {
+    "repository": "runtime",
+    "commit": "6023cfb10307b4c0004642b5fa1995d72ba4f6d1",
+    "path": "contract/schemas/edit-command.json",
+    "version": "0.2.10",
+    "sha256": "472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9"
+  },
+  "agent-0a0ac7ba.json": {
+    "repository": "agent",
+    "commit": "0a0ac7baaa74e15485b10bcbaa80eda1afe48c00",
+    "path": "astrid/core/timeline/schema/edit-command.schema.json",
+    "version": "manager freeze 2026-10-20 09:47 UTC",
+    "sha256": "30da4fde84c328e7cb44035b50eb53fd2cd9637a14a0c948f4412f6469ce34bd"
   }
 }

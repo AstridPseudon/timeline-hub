@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from generators.command_schema_compatibility import compatibility_errors
+from generators.command_schema_compatibility import compatibility_errors, legacy_022_compatibility_errors
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / 'tests/fixtures/published-command-schemas'
@@ -166,6 +166,8 @@ def test_an_unconstrained_root_does_not_preserve_published_definitions():
     ('runtime-0.2.2', '460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388'),
     ('runtime-0.2.3', '472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9'),
     ('withdrawn-10c', '10c1610b61ad151259149c97061493d9e36ae0a9220ba4983b45f22e8ac7e3b1'),
+    ('runtime-0.2.10', '472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9'),
+    ('agent-0a0ac7ba', '30da4fde84c328e7cb44035b50eb53fd2cd9637a14a0c948f4412f6469ce34bd'),
 ])
 def test_frozen_fixture_digests(name, digest):
     assert hashlib.sha256((FIXTURES / (name + '.json')).read_bytes()).hexdigest() == digest
@@ -248,4 +250,57 @@ def test_normal_generation_refuses_a_modified_floor_before_any_write(tmp_path):
     result = run_generator(tmp_path, False)
     assert result.returncode != 0
     assert 'published command schema floor digest mismatch' in result.stderr
+    assert file_bytes(tmp_path) == before
+
+
+@pytest.mark.parametrize('name', ['runtime-0.2.2', 'runtime-0.2.3', 'runtime-0.2.10', 'agent-0a0ac7ba'])
+def test_current_union_preserves_each_exact_floor(name):
+    current = json.loads((ROOT / 'contract/schemas/edit-command.json').read_bytes())
+    check = legacy_022_compatibility_errors if name == 'runtime-0.2.2' else compatibility_errors
+    assert check(baseline(name), current) == []
+
+
+@pytest.mark.parametrize('name', ['ScopedId', 'EntityRef', 'TargetKey', 'AnchorIdentity'])
+def test_legacy_regex_proof_does_not_hide_other_constraints(name):
+    current = baseline('agent-0a0ac7ba')
+    current['$defs'][name]['maxLength'] = 1
+    assert legacy_022_compatibility_errors(baseline('runtime-0.2.2'), current)
+    current = baseline('agent-0a0ac7ba')
+    current['$defs'][name]['pattern'] = '^parent$'
+    assert legacy_022_compatibility_errors(baseline('runtime-0.2.2'), current)
+
+
+def test_legacy_regex_proof_does_not_hide_track_selection_narrowing():
+    current = baseline('agent-0a0ac7ba')
+    condition = next(c for c in current['$defs']['EditCommand']['allOf']
+                     if c['if']['properties']['op']['const'] == 'track.set')
+    condition['then']['properties']['select']['pattern'] = '^parent/track:only$'
+    assert legacy_022_compatibility_errors(baseline('runtime-0.2.2'), current)
+
+
+@pytest.mark.parametrize('name', list(baseline('agent-0a0ac7ba')['$defs']))
+def test_frozen_union_rejects_each_lost_definition(name):
+    current = baseline('agent-0a0ac7ba')
+    del current['$defs'][name]
+    assert compatibility_errors(baseline('agent-0a0ac7ba'), current)
+
+
+@pytest.mark.parametrize('op', [c['if']['properties']['op']['const'] for c in
+                              baseline('agent-0a0ac7ba')['$defs']['EditCommand']['allOf']])
+def test_frozen_union_rejects_each_lost_operation(op):
+    current = baseline('agent-0a0ac7ba')
+    current['$defs']['EditCommand']['allOf'] = [
+        c for c in current['$defs']['EditCommand']['allOf']
+        if c['if']['properties']['op']['const'] != op]
+    assert compatibility_errors(baseline('agent-0a0ac7ba'), current)
+
+
+@pytest.mark.parametrize('check', [False, True], ids=['regenerate', 'check'])
+def test_normal_generation_refuses_old_ordinary_schema_before_any_write(tmp_path, check):
+    generator_checkout(tmp_path)
+    shutil.copyfile(FIXTURES / 'runtime-0.2.10.json', tmp_path / 'contract/schemas/edit-command.json')
+    before = file_bytes(tmp_path)
+    result = run_generator(tmp_path, check)
+    assert result.returncode != 0
+    assert 'command schema compatibility failed against agent-0a0ac7ba.json' in result.stderr
     assert file_bytes(tmp_path) == before

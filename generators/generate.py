@@ -93,27 +93,35 @@ def operation_index(manifest_path: Path = MANIFEST) -> list[str]:
 
 
 def validate_command_schema() -> None:
-    """Require the candidate to contain the latest ordinary published schema.
+    """Require the candidate to contain published schemas and the Agent freeze.
 
     Keep older snapshots immutable; advance this floor only after an authorized
     publication passes against the previous floor. Unsupported structural or
     regex rewrites require review, not sample-based compatibility guesses.
     """
-    from generators.command_schema_compatibility import compatibility_errors
+    from generators.command_schema_compatibility import compatibility_errors, legacy_022_compatibility_errors
 
     fixtures = ROOT / "tests/fixtures/published-command-schemas"
-    filename = "runtime-0.2.3.json"
-    source = json.loads(_regular(fixtures / "sources.json", "published schema sources"))[filename]
-    previous = _regular(fixtures / filename, "published command schema")
-    if hashlib.sha256(previous).hexdigest() != source["sha256"]:
-        raise SystemExit("published command schema floor digest mismatch")
-    candidate = _regular(ROOT / "contract/schemas/edit-command.json", "candidate command schema")
-    errors = compatibility_errors(json.loads(previous), json.loads(candidate))
-    if errors:
-        raise SystemExit(
-            f"command schema compatibility failed against {filename}:\n  "
-            + "\n  ".join(errors)
-        )
+    sources = json.loads(_regular(fixtures / "sources.json", "published schema sources"))
+    candidate = json.loads(_regular(ROOT / "contract/schemas/edit-command.json", "candidate command schema"))
+    # The Agent freeze is a staging floor, not a published Runtime release.
+    floors = {
+        "runtime-0.2.3.json": "472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9",
+        "runtime-0.2.10.json": "472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9",
+        "runtime-0.2.2.json": "460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388",
+        "agent-0a0ac7ba.json": "30da4fde84c328e7cb44035b50eb53fd2cd9637a14a0c948f4412f6469ce34bd",
+    }
+    for filename, digest in floors.items():
+        previous = _regular(fixtures / filename, "published command schema")
+        if hashlib.sha256(previous).hexdigest() != digest or sources[filename]["sha256"] != digest:
+            raise SystemExit("published command schema floor digest mismatch")
+        check = legacy_022_compatibility_errors if filename == "runtime-0.2.2.json" else compatibility_errors
+        errors = check(json.loads(previous), candidate)
+        if errors:
+            raise SystemExit(
+                f"command schema compatibility failed against {filename}:\n  "
+                + "\n  ".join(errors)
+            )
 
 
 def render_python_client(manifest_path: Path = MANIFEST) -> str:
@@ -139,9 +147,12 @@ def render_python_client(manifest_path: Path = MANIFEST) -> str:
 def render_typescript_client() -> str:
     """Render the source-frame thumbnail operations into the typed TS client."""
     source = _regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")
-    native_exports = 'export type { ClipAddArgs, ClipDeleteArgs, ClipMoveArgs, ClipSetArgs, ClipSetParamsArgs, ClipSplitArgs, ClipTrimArgs, InverseArgs, OccurrenceAddMediaArgs, OccurrenceSwapMediaArgs, RestoreArgs, TrackCreateArgs, TrackSetArgs, DocumentPin, VerifiedDocument, VerifiedDocumentObject } from "./timeline-commit-types.js";'
-    if native_exports not in source:
-        source = native_exports + "\n" + source
+    agent = json.loads(_regular(ROOT / "contract/schemas/edit-command.json", "command schema"))["$defs"]
+    native_types = [name for name in agent if name.endswith("Args") or name.startswith("Producer")]
+    native_types += ["ElementRef", "SettledProducerProposal", "DocumentPin", "VerifiedDocument", "VerifiedDocumentObject"]
+    native_exports = 'export type { ' + ', '.join(native_types) + ' } from "./timeline-commit-types.js";'
+    source = re.sub(r'^export type \{ [^\n]*\bClipAddArgs\b[^\n]* from "\./timeline-commit-types.js";\n', '', source, flags=re.MULTILINE)
+    source = native_exports + "\n" + source
     child_authority_types = (
         'export interface ChildAuthorityChild { child_id: string; capability_id: string; capability_digest: string }\n'
         'export interface DerivedInputDescriptor { name: string; output_port: string; filename: string; object_id: string; size: number; media_type: string }\n'
