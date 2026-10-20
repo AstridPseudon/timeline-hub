@@ -36,6 +36,22 @@ export const PRODUCT_SCOPES = ['handshake', 'projects:read', 'projects:write', '
 export const BIG_DOWNLOAD_BYTES = 60 * 1024 * 1024;
 export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
 
+const SELECTED_PARAM_ACTOR = 'astrid-selected-param';
+
+/** Use the existing three-product CLI context to bind the credential file to its issuing Runtime. */
+export function selectedParamCliEnv(base: NodeJS.ProcessEnv, credentialFile: string, target: Pick<DirectHarness, 'runtimeUrl' | 'realmId'>): NodeJS.ProcessEnv {
+  return {
+    ...base,
+    ASTRID_RUNTIME_ENDPOINT: target.runtimeUrl,
+    ASTRID_RUNTIME_CREDENTIAL: credentialFile,
+    // open_from_launcher selects its endpoint before reading ASTRID_RUNTIME_CREDENTIAL.
+    ASTRID_TIMELINE_EVAL_ENDPOINT: target.runtimeUrl,
+    ASTRID_TIMELINE_EVAL_CREDENTIAL: credentialFile,
+    ASTRID_TIMELINE_EVAL_REALM_ID: target.realmId,
+    ASTRID_TIMELINE_EVAL_ACTOR_ID: SELECTED_PARAM_ACTOR,
+  };
+}
+
 export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT
   ?? [path.join(REPO_ROOT, '..', 'astrid-runtime'), path.join(REPO_ROOT, '../..', 'runtime')]
     .find((dir) => existsSync(path.join(dir, 'runtime_protocol', 'cli.py')))
@@ -627,15 +643,13 @@ export class DirectHarness {
     const verifier = path.join(this.tmp, 'selected-element-build-verifier.py');
     mkdirSync(sourceRoot, { recursive: true, mode: 0o700 });
     mkdirSync(artifactRoot, { recursive: true, mode: 0o700 });
-    const token = await this.provisionCredential('astrid-selected-param', path.basename(credentialFile));
+    await this.provisionCredential(SELECTED_PARAM_ACTOR, path.basename(credentialFile));
     writeFileSync(verifier, "import hashlib,json,sys\nfrom pathlib import Path\np=Path(sys.argv[1])\nselection=json.loads(p.read_text())\nprint(json.dumps({'schema':'astrid.element-build/v1','selectionDigest':'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest(),'elements':[{'projectId':e['projectId'],**{k:e['descriptor'][k] for k in ('packId','id','kind','revision')}} for e in selection['elements']]}))\n");
     this.selectedParamPython = python;
     this.selectedParamVerifier = verifier;
     this.selectedParamEnv = {
-      ...process.env,
+      ...selectedParamCliEnv(process.env, credentialFile, this),
       ...this.runtimeEnv(),
-      ASTRID_RUNTIME_ENDPOINT: this.runtimeUrl,
-      ASTRID_RUNTIME_CREDENTIAL: token,
       ASTRID_PROJECT_PACKS_ROOT: sourceRoot,
       ASTRID_ELEMENT_ARTIFACT_ROOT: artifactRoot,
       ASTRID_ELEMENT_BUILD_COMMAND: JSON.stringify([python, verifier]),
