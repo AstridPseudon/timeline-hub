@@ -1,0 +1,10 @@
+{
+  "decision": "PENDING_AGENT_REVIEW_DO_NOT_GRANT",
+  "native_fixture_sha256": "e30ed3303532e3d73adfd07670e04d1312003b7e10d2c5c008629b8b9bffad46",
+  "agent_repo": "Agent's reviewed source repository",
+  "agent_revision": "corrected native six-row implementation SHA (not fd82 reconstructed draft)",
+  "compiled_output": "absolute path to ONE actual Agent-compiled output JSON; tracks/assets/fps/theme/width/height public-package input",
+  "compiled_sha256": "SHA256 of those exact bytes",
+  "composition_artifact": "absolute path to the SAME reviewed package artifact used by that Agent output",
+  "composition_artifact_sha256": "SHA256 of those exact 77 package files in the retained tarball"
+}
