@@ -29,7 +29,7 @@ from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestErr
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .cas import ContentAddressedStore
 from .dirfd import remove_tree_at
-from .snapshot_refs import publish_snapshot, rewrite_spec_snapshots, snapshot_digest, working_copy_binding
+from .snapshot_refs import prepare_snapshot, publish_snapshot, rewrite_spec_snapshots, validate_capture_scope, working_copy_binding
 from .util import canonical_json, new_id, now
 from .visual_seam import (
     admit_closure,
@@ -510,65 +510,50 @@ class RealmStore:
         return publish_snapshot(self.conn, self.cas_root, self.staging_root,
                                 snapshot, provenance, project_id)
 
-    def _prepare_spec_snapshot(self, snapshot, provenance, project_id):
-        """Compute the publication identity without writing DB, CAS, or staging."""
-        revision_id = provenance.get("revision_id")
-        revision_digest = provenance.get("revision_digest")
-        source_kind = provenance.get("source_kind") or ("revision" if revision_id else "cas")
-        if revision_id is not None and source_kind != "working_copy":
-            revision = self.conn.execute(
-                "SELECT content_digest FROM parent_composition_revisions "
-                "WHERE id=? AND project_id=? AND timeline_id=?",
-                (revision_id, project_id, provenance.get("timeline_id")),
-            ).fetchone()
-            if revision is not None and revision_digest is None:
-                revision_digest = revision[0]
-        return {"digest": snapshot_digest(snapshot), "project_id": project_id,
-                "timeline_id": provenance.get("timeline_id"), "revision_id": revision_id,
-                "revision_digest": revision_digest, "source_kind": source_kind,
-                **({"working_copy": provenance["working_copy"]} if source_kind == "working_copy" else {})}
-
-    @staticmethod
-    def _spec_snapshot_refs(spec, project_id):
+    def _validate_spec_snapshot_refs(self, spec, project_id, *, prepared=None, capture_validator=None):
+        prepared = prepared or {}
         inner = spec.get("spec") if isinstance(spec.get("spec"), dict) else spec
         locations = (inner, inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {})
         refs = [location["timeline_snapshot_ref"] for location in locations
                 if isinstance(location.get("timeline_snapshot_ref"), dict)]
         context = inner.get("authority_context") if isinstance(inner.get("authority_context"), dict) else {}
-        refs.extend(context[key] for key in
+        if not context and isinstance(spec.get("authority_context"), dict):
+            context = spec["authority_context"]
+        capture_refs = [context[key] for key in
                     ("filmstrip_snapshot_ref", "input_snapshot_ref", "capture_snapshot_ref")
-                    if isinstance(context.get(key), dict))
+                    if isinstance(context.get(key), dict)]
+        refs.extend(capture_refs)
+        ids = []
         for ref in refs:
             digest = ref.get("digest")
             if (not isinstance(digest, str) or OBJECT_ID_RE.fullmatch(digest) is None
                     or ref.get("project_id") not in (None, project_id)):
                 raise ValidationError("timeline snapshot reference has an invalid digest or project")
-        return refs
-
-    def _validate_spec_snapshot_refs(self, spec, project_id):
-        ids = []
-        for ref in self._spec_snapshot_refs(spec, project_id):
-            digest = ref.get("digest")
             bare = OBJECT_ID_RE.fullmatch(digest).group(1)
             object_row = self.conn.execute("SELECT size FROM objects WHERE digest=?", (bare,)).fetchone()
             try:
                 intact = object_row is not None and self._cas_digest(bare) == bare
             except (FileNotFoundError, OSError):
                 intact = False
-            if not intact:
+            if not intact and (digest not in prepared or object_row is not None):
                 raise NotFoundError("timeline snapshot reference object is missing or corrupt")
-            if project_id is not None and self.conn.execute(
+            if digest not in prepared and project_id is not None and self.conn.execute(
                 "SELECT 1 FROM project_objects WHERE project_id=? AND digest=? AND relation='managed'",
                 (project_id, bare),
             ).fetchone() is None:
                 raise ConflictError("timeline snapshot reference is outside the task project")
             revision_id = ref.get("revision_id")
             source_kind = ref.get("source_kind") or ("revision" if revision_id else "cas")
-            if source_kind == "working_copy":
+            snapshot = None
+            if ref in capture_refs or source_kind == "working_copy":
                 try:
-                    snapshot = json.loads(ContentAddressedStore(self.cas_root).read(bare))
+                    snapshot = (prepared[digest] if digest in prepared else
+                                json.loads(ContentAddressedStore(self.cas_root).read(bare)))
                 except (OSError, ValueError, TypeError) as exc:
-                    raise ValidationError("working-copy snapshot object is malformed") from exc
+                    raise ValidationError("capture snapshot object is malformed") from exc
+                if ref in capture_refs:
+                    validate_capture_scope(snapshot, ref, context)
+            if source_kind == "working_copy":
                 binding = working_copy_binding(snapshot, revision_id) if isinstance(snapshot, dict) else None
                 if binding is None or binding != ref.get("working_copy") or ref.get("revision_digest") != binding["candidate_digest"]:
                     raise ValidationError("working-copy snapshot binding differs from CAS content")
@@ -589,8 +574,22 @@ class RealmStore:
                 ).fetchone()
                 if revision is None or revision[0] != ref.get("revision_digest"):
                     raise NotFoundError("timeline snapshot reference parent revision is missing or changed")
+            if ref in capture_refs and capture_validator is not None:
+                capture_validator(snapshot, ref)
             ids.append(digest)
         return ids
+
+    def _admitted_spec_replay(self, project_id, idempotency_key, spec):
+        """Whether this idempotency key already admitted exactly this spec."""
+        if not idempotency_key:
+            return False
+        old = self.conn.execute(
+            "SELECT * FROM runs WHERE project_id IS ? AND idempotency_key=?", (project_id, idempotency_key),
+        ).fetchone()
+        if old is None or old["spec_digest"] is None:
+            return False
+        return (canonical_json(canonical_task_spec_for_compare(self._spec(old)))
+                == canonical_json(canonical_task_spec_for_compare(spec)))
 
     def _load_spec(self, digest):
         if digest is None:
@@ -2218,7 +2217,7 @@ class RealmStore:
                 return False
         return True
 
-    def create_task(self, capability, spec, project=None, idempotency_key=None, expected_effect=None, capability_digest=None, *, enforce_readiness=False, execution_request=None):
+    def create_task(self, capability, spec, project=None, idempotency_key=None, expected_effect=None, capability_digest=None, *, enforce_readiness=False, execution_request=None, capture_validator=None):
         if not capability:
             raise ValidationError("capability is required")
         if not isinstance(spec, dict):
@@ -2263,13 +2262,6 @@ class RealmStore:
                 ).fetchone()
                 if not replay:
                     self._settlement_effect_kind(expected_effect)
-            snapshots = []
-
-            def prepare_snapshot(snapshot, provenance):
-                ref = self._prepare_spec_snapshot(snapshot, provenance, project_id)
-                snapshots.append((snapshot, provenance))
-                return ref
-
             replay_spec = None
             if capability == "rendering.render" and idempotency_key:
                 prior = self.conn.execute(
@@ -2321,18 +2313,30 @@ class RealmStore:
                     admitted_spec["inputs"]["timeline_authority"]["storage_estimate"] = derived_storage
                     spec["storage_estimate"] = derived_storage
                     authority = admitted_spec["inputs"]["timeline_authority"]
-                    admitted_spec["timeline_snapshot_ref"] = prepare_snapshot(
-                        frozen_snapshot,
-                        {"project_id": project_id, "timeline_id": authority["timeline_id"],
-                         "revision_id": authority.get("parent_revision_id"),
-                         "revision_digest": authority.get("parent_content_digest")},
-                    )
-            spec, _ = rewrite_spec_snapshots(spec, prepare_snapshot)
-            snapshot_ids = [ref.get("digest") for ref in self._spec_snapshot_refs(spec, project_id)]
+                    admitted_spec["timeline_snapshot"] = frozen_snapshot
+            publications = []
+            prepared = {}
+
+            def preflight(snapshot, provenance):
+                ref = prepare_snapshot(self.conn, snapshot, provenance, project_id)
+                publications.append((snapshot, ref))
+                prepared[ref["digest"]] = snapshot
+                return ref
+
+            spec, _ = rewrite_spec_snapshots(spec, preflight)
+            captures = []
+            snapshot_ids = self._validate_spec_snapshot_refs(
+                spec, project_id, prepared=prepared,
+                capture_validator=lambda snapshot, ref: captures.append((snapshot, ref)),
+            )
             if snapshot_ids:
                 # Only specs that reference snapshots change shape; any other spec keeps its exact
                 # bytes, so its admission identity (and legacy replay) is unchanged.
                 spec["input_object_ids"] = list(dict.fromkeys([*spec.get("input_object_ids", []), *snapshot_ids]))
+            # An exact retry returns its original admission; only a new one is checked for capture authority.
+            if capture_validator is not None and not self._admitted_spec_replay(project_id, idempotency_key, spec):
+                for snapshot, ref in captures:
+                    capture_validator(snapshot, ref)
             predecessors = self._continuation_predecessors(spec)
             with self._transaction():
                 request_hash = hashlib.sha256(canonical_json({"capability": capability, "spec": task_spec_for_request_hash(spec), "execution_request": execution_request, "project_id": project_id, "expected_effect": expected_effect, "capability_digest": capability_digest}).encode()).hexdigest()
@@ -2399,8 +2403,8 @@ class RealmStore:
                 if old is None and receipt is None:
                     if expected_effect is not None and expected_effect != {}:
                         self._settlement_effect_kind(expected_effect)
-                for snapshot, provenance in snapshots:
-                    self._publish_spec_snapshot(snapshot, provenance, project_id)
+                for snapshot, ref in publications:
+                    self._publish_spec_snapshot(snapshot, ref, project_id)
                 self._validate_spec_snapshot_refs(spec, project_id)
                 if isinstance(expected_effect, dict) and expected_effect.get("effect_type") == "generation.publish_v1":
                     # The typed GEN publication plan is admitted against the task

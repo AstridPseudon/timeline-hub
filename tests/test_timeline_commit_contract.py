@@ -323,6 +323,42 @@ def test_generated_python_rejects_mismatched_preview_and_preserves_errors():
     assert caught.value.details["reason"] == "overlap"
 
 
+def test_verified_media_public_contract_and_generated_python_adapter():
+    from urllib.parse import parse_qs, urlsplit
+
+    from astrid_runtime_client import MediaSelection, VerifiedMedia
+
+    openapi = yaml.safe_load((ROOT / "contract/openapi/workspace-v1.yaml").read_text())
+    operation = openapi["paths"]["/v1/projects/{project_id}/media-selection/verified"]["get"]
+    assert operation["operationId"] == "getProjectVerifiedMedia"
+    parameters = [parameter for parameter in operation["parameters"] if parameter.get("in") == "query"]
+    assert {parameter["name"] for parameter in parameters} == MediaSelection.__required_keys__
+    assert all(parameter["required"] for parameter in parameters)
+    assert openapi["components"]["schemas"]["VerifiedMedia"] == {
+        "$ref": "./schemas/timeline-commit.json#/$defs/VerifiedMedia",
+    }
+    assert get_type_hints(WorkspaceClient.get_project_verified_media) == {
+        "project_id": str, "selection": MediaSelection, "return": VerifiedMedia,
+    }
+    selection = {"asset": "alias/ &", "generation_id": "g", "variant_id": "v",
+                 "object_id": DIGEST, "catalog_digest": DIGEST}
+    response = {"selection": selection, "media_type": "video/mp4", "size": 42, "duration_seconds": 2}
+    calls = []
+
+    def transport(method, path, headers, body):
+        calls.append(path)
+        assert method == "GET" and body is None
+        assert headers["Authorization"] == "Bearer token"
+        assert "Idempotency-Key" not in headers
+        assert urlsplit(path).path == "/v1/projects/project%2Fone/media-selection/verified"
+        assert parse_qs(urlsplit(path).query) == {key: [value] for key, value in selection.items()}
+        return 200, {}, json.dumps(response).encode()
+
+    assert WorkspaceClient("http://runtime", "token", transport=transport).get_project_verified_media("project/one", selection) == response
+    assert len(calls) == 1
+    assert validator("VerifiedMedia").is_valid(response)
+
+
 def test_generated_python_history_media_and_restore_adapters():
     calls = []
 
@@ -514,7 +550,7 @@ def test_all_generated_dto_annotations_resolve():
 
     for name, value in vars(dto).items():
         if isinstance(value, type) and hasattr(value, "__required_keys__"):
-            assert get_type_hints(value), name
+            assert set(get_type_hints(value)) == value.__required_keys__ | value.__optional_keys__, name
     assert dto.TimelineCommitPage(items=[], next_cursor=None, head={}) == {
         "items": [],
         "next_cursor": None,

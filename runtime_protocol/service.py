@@ -2470,6 +2470,14 @@ class RuntimeService:
             check()
             return MediaReads(self).selection(project_id, **selectors)
 
+    def get_project_verified_media(self, project_id, selection, *, authorize):
+        from .timeline_commit_port import MediaReads, detached
+        selection = detached(selection)
+        check = self._timeline_authorize(project_id, None, authorize, mutation=False)
+        with self.store._mutex:
+            check()
+            return MediaReads(self).selected(project_id, selection)
+
     def restore_project_parent_composition_revision(self, project_id, timeline_id, revision, body, *,
                                                     idempotency_key=None, publisher=None,
                                                     invocation_path=None, authorize=None):
@@ -4324,7 +4332,10 @@ class RuntimeService:
             task_spec["required_facts"] = normalize_execution_facts(body["required_facts"], field="required_facts")
         if "storage_estimate" in body:
             task_spec["storage_estimate"] = self.store._validate_storage_estimate(body["storage_estimate"])
-        value = self.store.create_task(capability, task_spec, body.get("project"), body.get("idempotency_key"), body.get("settlement_effect"), digest, enforce_readiness=enforce_readiness, execution_request=execution_request)
+        from .capture_validation import validate_capture
+        inputs = task_spec_value.get("inputs") if isinstance(task_spec_value.get("inputs"), dict) else {}
+        value = self.store.create_task(capability, task_spec, body.get("project"), body.get("idempotency_key"), body.get("settlement_effect"), digest, enforce_readiness=enforce_readiness, execution_request=execution_request,
+                                       capture_validator=lambda snapshot, ref: validate_capture(self, snapshot, ref, inputs))
         return value
 
     def _live_delegating_parent(self, attempt_id, lease, *, identity):
@@ -5921,6 +5932,8 @@ class RuntimeService:
             # Return the immutable admitted spec alongside the lease. Workers
             # must execute exactly what was claimed, without a racy second read.
             admitted_spec, generation_intent = public_task_spec(task.get("spec") or {})
+            from .capture_validation import claim_capture_view
+            admitted_spec = claim_capture_view(self, admitted_spec)
             if task.get("generation_intent") is not None:
                 generation_intent = task["generation_intent"]
             result = {"attempt_id": attempt_id, "task_id": row["id"], "run_id": value["run"]["id"], "project_id": value["run"].get("project_id"), "lease_id": lease_id, "fence": fence, "lease_expires_at": expires, "runtime_epoch": epoch, "input_object_ids": list(admitted_spec.get("input_object_ids") or []), "spec": admitted_spec}

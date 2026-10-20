@@ -170,6 +170,55 @@ def test_schema_owned_values_preserve_opaque_null_absence_and_defaults():
 
 
 @pytest.mark.parametrize(
+    "args",
+    [
+        {"values": {"label": "Picture é 🎬"}, "clear": []},
+        {"values": {"label": ""}, "clear": []},
+        {"values": {}, "clear": ["label"]},
+    ],
+)
+@pytest.mark.parametrize("before", [{"state": "absent"}, {"state": "present", "value": "Old"}])
+def test_packaged_track_set_accepts_labels_and_clear_without_changing_input(args, before):
+    value = request()
+    value["commands"][0].update(
+        op="track.set",
+        select="parent/track:picture",
+        args=copy.deepcopy(args),
+        expect={"label": copy.deepcopy(before)},
+    )
+    original = copy.deepcopy(value)
+    validate_commit_value(value, "CommitRequest")
+    assert value == original
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        {},
+        {"values": {"label": "Picture"}},
+        {"clear": ["label"]},
+        {"values": {}, "clear": []},
+        {"values": {"label": None}, "clear": []},
+        {"values": {"label": False}, "clear": []},
+        {"values": {"label": 1}, "clear": []},
+        {"values": {"volume": 1}, "clear": []},
+        {"values": [], "clear": ["label"]},
+        {"values": {}, "clear": None},
+        {"values": {}, "clear": ["volume"]},
+        {"values": {}, "clear": ["label", "label"]},
+        {"values": {"label": "Picture"}, "clear": [], "unknown": None},
+    ],
+)
+def test_packaged_track_set_rejects_malformed_args(args):
+    value = request()
+    value["commands"][0].update(
+        op="track.set", select="parent/track:picture", args=args
+    )
+    with pytest.raises(ValidationError):
+        validate_commit_value(value, "CommitRequest")
+
+
+@pytest.mark.parametrize(
     "mutate",
     [
         lambda v: v.update(unknown=True),

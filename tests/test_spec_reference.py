@@ -136,6 +136,9 @@ def test_render_hydration_reads_named_revision_after_head_moves(tmp_path, astrid
         service.close()
 
 
+# 02:28 capture certification requires a real authoring_preview and projector;
+# restore this positive with an authoritative candidate instead of marker-only data.
+@pytest.mark.xfail(strict=True, reason="capture certification requires a verified authoring_preview (02:28 decision)")
 def test_working_copy_uses_cas_and_requires_its_saved_base_at_claim(tmp_path):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()

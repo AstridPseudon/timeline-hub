@@ -1,7 +1,7 @@
 /** Consumer imports resolve through the published package exports and declarations. */
 import {
   CONTRACT_VERSION, WorkspaceClient,
-  type Health, type Handshake, type PreferenceResource, type MutationResult,
+  type Health, type Handshake, type PreferenceResource, type MutationResult, type TrackSetArgs,
   type MutationReceipt as MainMutationReceipt,
 } from "@astrid/runtime-client";
 import type { MutationReceipt as CommitMutationReceipt } from "../src/timeline-commit-types.js";
@@ -17,4 +17,22 @@ declare const mainReceipt: MainMutationReceipt;
 const mainReceiptFromCommit: MainMutationReceipt = commitReceipt;
 const commitReceiptFromMain: CommitMutationReceipt = mainReceipt;
 const projectSequence: [number, number] = commitReceipt.project_seq;
-void [health, handshake, preference, mutation, mainReceiptFromCommit, commitReceiptFromMain, projectSequence];
+const labeledTrack: TrackSetArgs = { values: { label: "Picture" }, clear: [] };
+const clearedTrack: TrackSetArgs = { values: {}, clear: ["label"] };
+
+// @ts-expect-error Both shared fields are required.
+const missingTrackFields: TrackSetArgs = {};
+// @ts-expect-error Label setting still requires the clear field.
+const missingTrackClear: TrackSetArgs = { values: { label: "Picture" } };
+// @ts-expect-error Explicit clear still requires the values field.
+const missingTrackValues: TrackSetArgs = { clear: ["label"] };
+// @ts-expect-error Track labels must be strings.
+const invalidTrackLabel: TrackSetArgs = { values: { label: false }, clear: [] };
+// @ts-expect-error Track clears only accept the label field.
+const invalidTrackClear: TrackSetArgs = { values: {}, clear: ["volume"] };
+
+void [
+  health, handshake, preference, mutation, mainReceiptFromCommit, commitReceiptFromMain,
+  projectSequence, labeledTrack, clearedTrack, missingTrackFields, missingTrackClear,
+  missingTrackValues, invalidTrackLabel, invalidTrackClear,
+];

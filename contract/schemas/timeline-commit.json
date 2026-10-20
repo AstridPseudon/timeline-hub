@@ -1285,6 +1285,35 @@
       ],
       "additionalProperties": false
     },
+    "VerifiedDocumentObject": {
+      "type": "object",
+      "properties": {
+        "object_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "media_type": {
+          "const": "application/json"
+        },
+        "bytes_base64": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "object_id",
+        "digest",
+        "size",
+        "media_type",
+        "bytes_base64"
+      ],
+      "additionalProperties": false
+    },
     "ManagedTakeRef": {
       "type": "object",
       "properties": {
