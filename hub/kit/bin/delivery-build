@@ -76,10 +76,10 @@ def is_test(path):
             or ".test." in name or ".spec." in name)
 
 
-def line_split(repo, base):
+def line_split(repo, base, tip):
     """{'product': [files, added, deleted], 'tests': [...]} for origin/main -> tl/integration."""
     totals = {"product": [0, 0, 0], "tests": [0, 0, 0]}
-    for line in git(repo, "diff", "--numstat", "--no-renames", base, BRANCH).splitlines():
+    for line in git(repo, "diff", "--numstat", "--no-renames", base, tip).splitlines():
         added, deleted, path = line.split("\t", 2)
         total = totals["tests" if is_test(path) else "product"]
         total[0] += 1
@@ -116,20 +116,21 @@ def squash(name, repo, base, tip, ranged, ahead, patches, tmp):
     return subjects
 
 
-def verify(name, repo, base, bundle, patches, ranged, tmp, problems):
+def verify(name, repo, base, tip, bundle, patches, ranged, tmp, problems):
     """Re-apply the patch to a fresh repo holding origin/main, and check the bundle.
 
     Both resulting trees must equal tl/integration's tree. Problems are appended to `problems`,
     so the README can say what failed.
     """
-    want = git(repo, "rev-parse", f"{BRANCH}^{{tree}}")
+    want = git(repo, "rev-parse", f"{tip}^{{tree}}")
 
     main = fresh_repo(os.path.join(tmp, name, "main"))
     # Keep the prerequisite as a local branch, just as a fresh checkout does.
     # The immutable base ID also makes this independent of source ref layout.
-    fetch = ["fetch", "-q", "--no-tags"]
-    if ranged:
-        fetch += ["--depth=1"]
+    # Keep the source's real base ancestry: merged side branches can make an
+    # older ancestor another bundle prerequisite.  Accept existing shallow
+    # boundaries from the source without inventing a new depth-1 boundary.
+    fetch = ["fetch", "-q", "--no-tags", "--update-shallow"]
     fetch += [repo, f"{base}:refs/heads/main"]
     attempt(problems, "fetch origin/main", git, main, *fetch)
     attempt(problems, "checkout main", git, main, "checkout", "-q", "main")
@@ -140,6 +141,9 @@ def verify(name, repo, base, bundle, patches, ranged, tmp, problems):
     attempt(problems, "bundle verify", git, bundle_dir, "bundle", "verify", bundle)
     attempt(problems, "bundle fetch", git, bundle_dir,
             "fetch", "-q", "--no-tags", bundle, f"refs/heads/{BRANCH}:refs/delivery/tip")
+    bundle_tip = attempt(problems, "bundle tip", git, bundle_dir, "rev-parse", "refs/delivery/tip^{commit}")
+    if bundle_tip is not None and bundle_tip != tip:
+        problems.append(f"bundle tip {bundle_tip} != pinned {BRANCH} {tip}")
     bundle_tree = attempt(problems, "bundle tree", git, bundle_dir, "rev-parse", "refs/delivery/tip^{tree}")
 
     series = sorted(glob.glob(os.path.join(patches, "*.patch")))
@@ -158,6 +162,7 @@ def verify(name, repo, base, bundle, patches, ranged, tmp, problems):
         "want_tree": want,
         "applied_tree": applied_tree,
         "bundle_tree": bundle_tree,
+        "bundle_tip": bundle_tip,
         "applied": len(series),
     }
 
@@ -174,7 +179,7 @@ def build_repo(name, staging, tmp):
         "ahead": int(git(repo, "rev-list", "--count", f"{base}..{tip}")),
         "ranged": ranged,
         "shortstat": git(repo, "diff", "--shortstat", base, tip),
-        "split": line_split(repo, base),
+        "split": line_split(repo, base, tip),
     }
     problems = []
 
@@ -189,7 +194,12 @@ def build_repo(name, staging, tmp):
     bundle_args = ["bundle", "create", bundle, BRANCH, *([f"^{base}"] if ranged else [])]
     attempt(problems, "bundle create", git, repo, *bundle_args)
 
-    result.update(verify(name, repo, base, bundle, patches, ranged, tmp, problems))
+    result.update(verify(name, repo, base, tip, bundle, patches, ranged, tmp, problems))
+    for ref, pinned in ((BASE, base), (BRANCH, tip)):
+        current = attempt(problems, f"recheck {ref}", git, repo, "rev-parse", f"{ref}^{{commit}}")
+        if current is not None and current != pinned:
+            problems.append(f"{ref} moved from pinned {pinned} to {current}")
+    result["status"] = "PASS" if not problems else "FAIL"
     result["problems"] = problems
     return result
 

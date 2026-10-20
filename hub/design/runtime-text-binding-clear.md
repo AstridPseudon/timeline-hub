@@ -61,3 +61,9 @@ Legacy custody correction (same representation):
 Qualification still requires independent correction review and the normal
 full-schema native Agent pair; this Runtime acceptance fixture does not complete
 those gates, publish an artifact, retire a writer or qualify destructive GC.
+
+Correction evidence at source tree de8f95b2ab0485b3a4d9625d60da3899307c0042:
+unchanged legacy reviewer probes 2 PASS; permanent local text cohort 69 PASS;
+central restore/text/history/backup neighbors 233 PASS, 4 unchanged strict xfail,
+1 deselected; central commit integration 9 PASS. Commands and limitations are in
+workers/rt-m2-text-clear-legacy-custody-fix/DetailedReport.md.

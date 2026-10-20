@@ -1623,3 +1623,68 @@ Independent review design/runtime-text-clear-independent-review.md REJECTS bfec4
 ## rt-m2-text-clear-legacy-custody-fix — direct Agent coordination
 
 Both unchanged reviewer legacy probes reproduce on bfec49af: clearing authentic main text/plain and inverse restoration after canonical replacement fail in verify_text_object. The repair keeps text_selection strictly canonical. Projection will authorize ONLY exact text/plain reuse from a prior PRESENT event in the same project/shot/kind/slot binding, verifying the complete existing hash chain, stored size/MIME, managed ownership and exact CAS UTF-8 bytes. Compact main events carry binding_id/media_id/content_hash; missing metadata derives from the unchanged binding identity + immutable objects row, never inline text. Before and after descriptors are both checked; absent events alone cannot authorize reuse. Accepted closure/recorder history remains the provider's source of inverse descriptors/position and existing port manifest authority. No public surface or MIME/byte normalization. Agent retained-pair owner: please use this worktree for the bounded Runtime correction; retain the normal full-schema pair requirement and report any custody mismatch here.
+
+rt-m2-text-clear-legacy-custody-fix final candidate source tree de8f95b2ab0485b3a4d9625d60da3899307c0042: unchanged reviewer legacy probes 2 PASS (review Git source path redirected only after its worktree was recycled), local text 69 PASS including 17 permanent authentic-main legacy controls; central commit-integration 1020113629-27736 9 PASS. Central restore neighbors 1020113620-20746 queued; detailed commands/results at workers/rt-m2-text-clear-legacy-custody-fix/DetailedReport.md. Agent retained-pair report confirms it already uses exact accepted before/after and calls text_selection only for NEW inputs; its two native legacy positives should be rerun against reviewed Runtime correction with the normal full-schema candidate. No public tuple, retirement or native completion claim.
+
+## Runtime11:39 — current capture lane correction
+rt-m3-capture-s2-current-gate mistakenly omitted --files on named capture lane and launched broad marked tests27712; do NOT claim that as bounded qualification or infer new regressions from unrelated setup errors. Manager corrected exact requested141 selection30103; exact6 identity29820 plus original19alias selections separately requested (1020113927 prefix, see tests). No duplicate full; no original assertion changes. Unit remains held until those exact-current results are green; prior860 evidence is not relabeled final2c qualification.
+
+
+## Runtime normal image/video completion fence ACK — 2026-10-20T11:40Z
+
+`rt-m2-media-completion-fence-audit`, Runtime base **2c4ac180**; tested tree
+**446d9278f9912ee254335e21b4ad98c40c57b881**. **ACK existing declared five-field
+MediaSelection / MediaReads.selected at capture AND transactional acceptance
+for normal API invalidations; no product/public artifact repair needed.**
+Plain completions have no authoring_proposal: do not invent producer.guard.
+
+Real service/acceptance tests: original image/video pins refuse after task
+retry, replacement executor/higher fence, cancel-after-retry and selected-output
+promote/pin/lease, with identical complete SQL/CAS snapshots on refusal.
+Separate corrupt-settlement/provenance/catalog/ownership/scope probes refuse at
+both phases. Completed cancellation is main's no-op; completed historical lease
+expiry, restart/global epoch advance and executor refresh are NOT invalidations.
+Primary variant append with identical bytes, viewed state and unrelated output
+changes preserve the original exact selection. Worker heartbeat/fail/settle
+cannot mutate a settled attempt. Accepted replay after task retry+restart is
+ledger-first, same result/receipt, zero provider calls/writes; changed payload
+under same key and fresh stale-media submission refuse.
+
+The hypothesized same-attempt task executor/fence/epoch mutation is absent from
+normal APIs: claim/resume replace the attempt; retry clears completion/current
+authority; restart/reaper recover active work only; placement recovery requires
+failed/cancelled work. Main **29d0954b** has the same lifecycle. Source:
+`timeline_commit_port.py::MediaReads._output_selection_binding` (653),
+`_selected_project_media` (709), `selected` (803),
+`RequestCommitPort.selected_media` (267), `validate` (387);
+`timeline_commit_store.py::accept` (672); coordinator execute's first ledger
+lookup; `store.py::begin_runtime_session`, `_overdue_lease_rows`, `_settle_attempt`,
+`cancel_task`, and `service.py::retry_task`, `_validate_attempt_lease`.
+Full race classification: **design/runtime-media-completion-fence.md**.
+
+Exact commands from the assigned worktree (ORCH is this scratchpad/orch directory):
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-runtime/bin/python -m pytest -q -p no:cacheprovider tests/test_timeline_media_completion_fence.py tests/test_timeline_media_selection.py tests/test_timeline_verified_media.py
+$ORCH/bin/request-test rt-m2-media-completion-fence-audit targeted --files "tests/test_timeline_media_completion_fence.py tests/test_timeline_media_selection.py tests/test_timeline_verified_media.py tests/test_timeline_verified_media_http.py tests/test_timeline_commit_port.py tests/test_timeline_commit_acceptance.py tests/test_timeline_producer_guards.py tests/test_generation_publish_v1_settlement.py tests/test_generation_variant_append_settlement.py tests/test_placement_recovery.py"
+$ORCH/bin/wait-test rt-m2-media-completion-fence-audit-targeted-1020113424-2460
+git diff --check
+```
+**133 local PASS; 307 central PASS / 1 existing integration-marker deselection;
+exit 0; diff check PASS.** Central log/snapshot: tests/rt-m2-media-completion-fence-audit-targeted-1020113424-2460/.
+92 new cases; no full, no native Agent/App activation claim. Existing expectations
+unchanged; shared dependencies/caches untouched.
+
+Separate limitation for owner triage: attempting a second GEN D1 completion of
+the same retried task/group hit the existing generation-ID UNIQUE constraint at
+`store._apply_settlement_effect:4781`, before replacement completion. This is
+an availability limitation, not an accepted stale pin, and is not encoded as
+intended behavior. Report records the failed exploratory probe. App can resume
+its original declared selection/native capture work with its existing local
+approval/request/claim fences; actual native capture, host/ingress and complete
+auto-placement journey qualification remain App/Agent work. No new wire fields,
+provenance or guard operation is needed for this normal-media Runtime fence.
+
+## Runtime11:41 — ACK registered producer preservation + retained MIME
+Owner11:36 redirects ACK: rt-m2-registered-render-canonical-target dispatched on published2c4. Evaluate canonical head target lookup ONLY first, trace all downstream effects, retain sole-commit authority/worker scope/ordinal duplicate-CAS semantics; normal createTimeline+actual host positive required, not SQL legacy fixture. If lookup cannot safely restore behavior without another writer, report exact bounded native-first gap. Shared family mapping with Agent requested. Retained legacy MIME already active in rt-m2-text-clear-legacy-custody-fix, exact owner constraints match our independent review failure; no caller flag/public field/normalization.
+
+rt-m2-text-clear-legacy-custody-fix central neighbors COMPLETE: restore-integration1020113620-20746 **233 PASS / 4 unchanged strict xfail / 1 deselected**, commit-integration1020113629-27736 **9 PASS**, exact tree de8f95b2ab0485b3a4d9625d60da3899307c0042. Local69 + unchanged-reviewer2 PASS. DetailedReport.md and both commit-msg files ready; bounded correction complete, independent review and full-schema native pair still required before any completion/retirement/publication claim.
