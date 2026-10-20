@@ -66,6 +66,8 @@ def command(version: Version, data: Path, *, windows: bool = False, log: Path | 
     # console. pythonw executes the foreground Runtime in this same process.
     script = "import json,os,sys\nfrom pathlib import Path\n"
     if windows:
+        if log is None:
+            raise ValueError("A log path is required for the Windows Runtime service.")
         log = log.with_name("runtime-service.log")
         script += (f"os.environ.update({version.env!r})\n"
                    f"sys.stdout=sys.stderr=open({str(log)!r},'a',encoding='utf-8',buffering=1)\n")
