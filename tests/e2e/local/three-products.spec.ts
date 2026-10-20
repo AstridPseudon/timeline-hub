@@ -1337,7 +1337,7 @@ function expectTransitionClear(request: CommitRequest, base: HeadPin, original: 
       args: { values: {}, clear: ['transition'] } });
     expect(command.args).toEqual({ values: {}, clear: ['transition'] });
     expect(command.expect?.[`${command.select}::transition`]).toEqual({ state: 'present', value: original[id].transition });
-    expect(command.bindings).toMatchObject({ 'scalar.owner': 'parent', 'scalar.target': command.select });
+    expect(command.bindings).toStrictEqual({ 'scalar.target': command.select });
     expect(command.reads!.length).toBeGreaterThan(0);
   }
 }
