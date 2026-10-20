@@ -1,0 +1,693 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/provenance.py b/astrid/packs/rendering/actions/timeline_visualize/provenance.py
+index 8c2f2f6a5..e37d168dd 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/provenance.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/provenance.py
+@@ -2,8 +2,12 @@
+ 
+ from __future__ import annotations
+ 
++import json
+ from collections.abc import Mapping
+-from typing import Any
++from typing import TYPE_CHECKING, Any
++
++if TYPE_CHECKING:
++    from astrid.core.rendering.verified_source import VerifiedTimelineSource
+ 
+ 
+ def _first_string(*values: Any) -> str | None:
+@@ -32,7 +36,7 @@ def _candidate_markers(
+     canonical: Mapping[str, Any],
+     capture: Mapping[str, Any],
+ ) -> list[Mapping[str, Any]]:
+-    """Return admission-owned candidate markers from either render path."""
++    """Return candidate identity hints; these never confer admission."""
+     markers: list[Mapping[str, Any]] = []
+     for source in (metadata, canonical, capture):
+         for key in ("working_copy", "authoring_preview"):
+@@ -43,7 +47,7 @@ def _candidate_markers(
+ 
+ 
+ def _marker_base_revision(marker: Mapping[str, Any]) -> tuple[str | None, bool]:
+-    """Read only the accepted base from a candidate marker.
++    """Read only the claimed base from a candidate marker.
+ 
+     The other parent fields in a candidate authority identify the unpublished
+     candidate (for example ``candidate_parent_revision_id`` / ``parent_revision_id``);
+@@ -66,7 +70,7 @@ def _marker_base_revision(marker: Mapping[str, Any]) -> tuple[str | None, bool]:
+ def _candidate_base_revision(
+     markers: list[Mapping[str, Any]],
+ ) -> tuple[str | None, bool]:
+-    """Return a shared accepted base, or mark contradictory markers invalid."""
++    """Return a shared claimed base, or mark contradictory markers invalid."""
+     bases: set[str] = set()
+     contradictory = False
+     for marker in markers:
+@@ -77,20 +81,45 @@ def _candidate_base_revision(
+     return (next(iter(bases), None) if len(bases) <= 1 else None), contradictory or len(bases) > 1
+ 
+ 
+-def snapshot_label(snapshot: Mapping[str, Any] | None) -> dict[str, Any]:
+-    """Describe the revision represented by an admitted visualize snapshot.
++def snapshot_label(
++    snapshot: Mapping[str, Any] | None, *, source: VerifiedTimelineSource | None = None,
++) -> dict[str, Any]:
++    """Label the exact frozen input, using only host-minted source for authority.
+ 
+-    The snapshot's canonical authority is the only source of revision identity.
+-    In particular, ``requested_revision_id`` and current-head fields are not
+-    used: they can describe a request or a later mutable state rather than the
+-    bytes that were actually rendered.
++    Metadata without that source is useful as a draft/base hint, never proof of
++    an accepted revision. Runtime owns admission; this consumer only checks that
++    its snapshot is the one paired with the internal source.
+     """
++    if source is not None:
++        from astrid.core.rendering.verified_source import VerifiedTimelineSource
++
++        if type(source) is not VerifiedTimelineSource:
++            raise ValueError("snapshot label requires a host-owned verified source")
++        binding = source.read()
++
++        def encoded(value):
++            return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
++
++        if encoded(snapshot) != encoded(binding["snapshot"]):
++            raise ValueError("snapshot label differs from verified source snapshot")
++        ref = binding["ref"]
++        if ref["source_kind"] == "revision":
++            actual = ref["revision_id"]
++            return {
++                "status": "committed", "label": f"committed revision {actual}",
++                "actual_revision_id": actual, "base_revision_id": None,
++            }
++        if ref["source_kind"] == "working_copy":
++            base = ref["working_copy"]["base_revision_id"]
++            return {
++                "status": "candidate", "label": f"unsaved candidate based on committed revision {base}",
++                "actual_revision_id": None, "base_revision_id": base,
++            }
++        raise ValueError("snapshot label requires an admitted revision or working copy")
+     if not isinstance(snapshot, Mapping):
+         return {
+-            "status": "unavailable",
+-            "label": "revision unavailable",
+-            "actual_revision_id": None,
+-            "base_revision_id": None,
++            "status": "unavailable", "label": "revision unavailable",
++            "actual_revision_id": None, "base_revision_id": None,
+         }
+ 
+     metadata = snapshot.get("metadata")
+@@ -99,56 +128,26 @@ def snapshot_label(snapshot: Mapping[str, Any] | None) -> dict[str, Any]:
+     canonical = canonical if isinstance(canonical, Mapping) else {}
+     capture = metadata.get("capture_authority")
+     capture = capture if isinstance(capture, Mapping) else {}
+-    input_only_parent = None
+-    if (
+-        str(metadata.get("selection") or "").strip().lower() == "input_only"
+-        and metadata.get("authority") == "canonical_parent_revision_closure"
+-    ):
+-        input_only_parent = metadata.get("parent_revision_id")
+-    # A composed capture has its own authority block; ordinary managed renders
+-    # use canonical_timeline. Prefer the capture block only when it carries the
+-    # immutable parent, never a requested/current-head hint.
+-    authority = capture if _first_string(
+-        capture.get("parent_revision_id"), capture.get("head_revision_id"), capture.get("revision_id")
+-    ) else canonical
+-    actual = _first_string(
+-        input_only_parent,
+-        authority.get("parent_revision_id"), authority.get("head_revision_id"), authority.get("revision_id")
+-    )
+     markers = _candidate_markers(metadata, canonical, capture)
+-    candidate = _is_candidate(metadata, authority) or bool(markers)
+-    if candidate:
++    if _is_candidate(metadata, canonical) or _is_candidate(metadata, capture) or markers:
+         base, contradictory = _candidate_base_revision(markers)
++        draft = _first_string(*(marker.get("candidate_parent_revision_id") for marker in markers))
++        label = "UNCERTIFIED unsaved candidate" + (f" {draft}" if draft else "")
+         if contradictory:
+-            return {
+-                "status": "unavailable",
+-                "label": "candidate revision unavailable",
+-                "actual_revision_id": None,
+-                "base_revision_id": None,
+-            }
+-        if base is None:
+-            return {
+-                "status": "candidate",
+-                "label": "unsaved candidate (committed base unavailable)",
+-                "actual_revision_id": None,
+-                "base_revision_id": None,
+-            }
+-        return {
+-            "status": "candidate",
+-            "label": f"unsaved candidate based on committed revision {base}",
+-            "actual_revision_id": None,
+-            "base_revision_id": base,
+-        }
+-    if actual is None:
++            label += " (base revision unavailable: contradictory markers)"
++        else:
++            label += f" (base {base})" if base else " (base revision unavailable)"
+         return {
+-            "status": "unavailable",
+-            "label": "revision unavailable",
+-            "actual_revision_id": None,
+-            "base_revision_id": None,
++            "status": "uncertified", "label": label,
++            "actual_revision_id": None, "base_revision_id": base if not contradictory else None,
+         }
++    claimed = _first_string(
++        metadata.get("parent_revision_id"),
++        *(authority.get(key) for authority in (capture, canonical)
++          for key in ("parent_revision_id", "head_revision_id", "revision_id")),
++    )
+     return {
+-        "status": "committed",
+-        "label": f"committed revision {actual}",
+-        "actual_revision_id": actual,
+-        "base_revision_id": None,
++        "status": "uncertified",
++        "label": "UNCERTIFIED preview" + (f" (claimed revision {claimed})" if claimed else " (revision unavailable)"),
++        "actual_revision_id": None, "base_revision_id": None,
+     }
+diff --git a/tests/packs/rendering/test_fast_lane.py b/tests/packs/rendering/test_fast_lane.py
+index 55dc91b0e..eaa06fa23 100644
+--- a/tests/packs/rendering/test_fast_lane.py
++++ b/tests/packs/rendering/test_fast_lane.py
+@@ -1,4 +1,8 @@
+-"""Unit-level fast-lane timing and snapshot provenance checks."""
++"""Unit-level fast-lane timing and snapshot provenance checks.
++
++VW-LABEL: metadata-only/legacy inputs remain usable as UNCERTIFIED previews.
++The host-minted positive path is covered in test_live_source_label_native.py.
++"""
+ 
+ from __future__ import annotations
+ 
+@@ -49,9 +53,9 @@ def test_historical_snapshot_label_uses_the_revision_actually_rendered():
+     label = snapshot_label(_snapshot("R1", requested_revision_id="R2", current_head_revision_id="R2"))
+ 
+     assert label == {
+-        "status": "committed",
+-        "label": "committed revision R1",
+-        "actual_revision_id": "R1",
++        "status": "uncertified",
++        "label": "UNCERTIFIED preview (claimed revision R1)",
++        "actual_revision_id": None,
+         "base_revision_id": None,
+     }
+ 
+@@ -70,9 +74,9 @@ def test_input_only_parent_closure_label_uses_immutable_parent_not_current_head(
+     )
+ 
+     assert label == {
+-        "status": "committed",
+-        "label": "committed revision R1",
+-        "actual_revision_id": "R1",
++        "status": "uncertified",
++        "label": "UNCERTIFIED preview (claimed revision R1)",
++        "actual_revision_id": None,
+         "base_revision_id": None,
+     }
+ 
+@@ -90,10 +94,11 @@ def test_input_only_candidate_uses_only_working_copy_base_parent():
+         }
+     )
+ 
+-    assert label["status"] == "candidate"
++    assert label["status"] == "uncertified"
+     assert label["base_revision_id"] == "R1"
+     assert label["actual_revision_id"] is None
+-    assert "R2" not in label["label"]
++    assert "R2" in label["label"]
++    assert "committed" not in label["label"]
+ 
+ 
+ def test_managed_candidate_label_uses_marker_base_not_candidate_parent():
+@@ -111,8 +116,8 @@ def test_managed_candidate_label_uses_marker_base_not_candidate_parent():
+     )
+ 
+     assert label == {
+-        "status": "candidate",
+-        "label": "unsaved candidate based on committed revision R1",
++        "status": "uncertified",
++        "label": "UNCERTIFIED unsaved candidate C1 (base R1)",
+         "actual_revision_id": None,
+         "base_revision_id": "R1",
+     }
+@@ -134,9 +139,10 @@ def test_composed_candidate_label_uses_working_copy_base_not_capture_parent():
+         }
+     )
+ 
+-    assert label["status"] == "candidate"
++    assert label["status"] == "uncertified"
+     assert label["base_revision_id"] == "R1"
+-    assert "C1" not in label["label"]
++    assert "C1" in label["label"]
++    assert "committed" not in label["label"]
+ 
+ 
+ def test_candidate_with_missing_marker_base_stays_unsaved_without_fabricating_candidate_id():
+@@ -153,8 +159,8 @@ def test_candidate_with_missing_marker_base_stays_unsaved_without_fabricating_ca
+     )
+ 
+     assert label == {
+-        "status": "candidate",
+-        "label": "unsaved candidate (committed base unavailable)",
++        "status": "uncertified",
++        "label": "UNCERTIFIED unsaved candidate C1 (base revision unavailable)",
+         "actual_revision_id": None,
+         "base_revision_id": None,
+     }
+@@ -170,7 +176,7 @@ def test_authoring_preview_only_is_candidate_and_uses_its_marker_base():
+         }
+     )
+ 
+-    assert label["status"] == "candidate"
++    assert label["status"] == "uncertified"
+     assert label["base_revision_id"] == "R1"
+ 
+ 
+@@ -185,8 +191,8 @@ def test_conflicting_admitted_candidate_bases_are_unavailable():
+     )
+ 
+     assert label == {
+-        "status": "unavailable",
+-        "label": "candidate revision unavailable",
++        "status": "uncertified",
++        "label": "UNCERTIFIED unsaved candidate C1 (base revision unavailable: contradictory markers)",
+         "actual_revision_id": None,
+         "base_revision_id": None,
+     }
+@@ -195,7 +201,7 @@ def test_conflicting_admitted_candidate_bases_are_unavailable():
+ def test_requested_revision_without_actual_snapshot_identity_is_unavailable():
+     label = snapshot_label(_snapshot(None, requested_revision_id="R2"))
+ 
+-    assert label["status"] == "unavailable"
++    assert label["status"] == "uncertified"
+     assert label["actual_revision_id"] is None
+     assert "R2" not in label["label"]
+ 
+@@ -218,7 +224,7 @@ def test_mismatched_requested_revision_cannot_relabel_actual_snapshot():
+         requested_revision_id="R2",
+     )
+ 
+-    assert snapshot_label(snapshot)["label"] == "committed revision R1"
++    assert snapshot_label(snapshot)["label"] == "UNCERTIFIED preview (claimed revision R1)"
+ 
+ 
+ def test_renderer_outage_status_says_output_is_unavailable():
+diff --git a/tests/packs/rendering/test_timeline_filmstrip_cards.py b/tests/packs/rendering/test_timeline_filmstrip_cards.py
+index 906cd8a31..660a42d4d 100644
+--- a/tests/packs/rendering/test_timeline_filmstrip_cards.py
++++ b/tests/packs/rendering/test_timeline_filmstrip_cards.py
+@@ -243,9 +243,9 @@ def test_pack_uses_rendered_frames_without_html_artifact(tmp_path, monkeypatch):
+         assert r > 200 and g < 30 and b < 30
+     assert Path(result['paths']['png'][0]).exists()
+     markdown = Path(result['paths']['markdown']).read_text()
+-    assert '# Rendered filmstrip · committed revision R1' in markdown
+-    assert 'Revision: `committed revision R1`' in markdown
+-    assert any('committed revision R1' in text for text in drawn_text)
++    assert '# Rendered filmstrip · UNCERTIFIED preview (claimed revision R1)' in markdown
++    assert 'Revision: `UNCERTIFIED preview (claimed revision R1)`' in markdown
++    assert any('UNCERTIFIED preview (claimed revision R1)' in text for text in drawn_text)
+     assert '</script><script>alert' not in markdown
+     assert not list((tmp_path / 'pack').glob('*.svg'))
+ 
+diff --git a/tests/packs/rendering/test_timeline_filmstrip_execution.py b/tests/packs/rendering/test_timeline_filmstrip_execution.py
+index 449691901..b64c67d9d 100644
+--- a/tests/packs/rendering/test_timeline_filmstrip_execution.py
++++ b/tests/packs/rendering/test_timeline_filmstrip_execution.py
+@@ -57,12 +57,12 @@ def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path, monke
+     assert 'navigation' not in index
+     assert result['outputs']['pages']
+     assert all(Path(page).name.startswith('filmstrip-') for page in result['outputs']['pages'])
+-    assert result['snapshot_label']['label'] == 'committed revision R1'
++    assert result['snapshot_label']['label'] == 'UNCERTIFIED preview (claimed revision R1)'
+     assert index['provenance']['revision'] == result['snapshot_label']
+     markdown = (manifest_path.parent / 'filmstrip.md').read_text()
+-    assert '# Input filmstrip · committed revision R1' in markdown
+-    assert 'Revision: `committed revision R1`' in markdown
+-    assert any('committed revision R1' in text for text in drawn_text)
++    assert '# Input filmstrip · UNCERTIFIED preview (claimed revision R1)' in markdown
++    assert 'Revision: `UNCERTIFIED preview (claimed revision R1)`' in markdown
++    assert any('UNCERTIFIED preview (claimed revision R1)' in text for text in drawn_text)
+     assert (manifest_path.parent / 'render-snapshot.json').is_file()
+     assert len(json.dumps(index, separators=(',', ':')).encode()) < 8192
+ 
+diff --git a/tests/packs/rendering/test_live_source_label_native.py b/tests/packs/rendering/test_live_source_label_native.py
+new file mode 100644
+index 000000000..ed9f032ed
+--- /dev/null
++++ b/tests/packs/rendering/test_live_source_label_native.py
+@@ -0,0 +1,348 @@
++"""Native retained closure -> Runtime capture -> host inputs -> normal Root lifetime.
++
++No renderer or successful capture is supplied by these read-only source tests.
++"""
++from __future__ import annotations
++
++import hashlib
++import io
++import json
++import wave
++from copy import deepcopy
++from pathlib import Path
++
++import pytest
++from PIL import Image
++
++from astrid.core.execution.generic_host import HostError
++from astrid.core.rendering.verified_source import PreparedTimelineInputs, inherited_source
++from astrid.core.timeline.authoring_bundle import open_authoring_bundle, preview_authoring_candidate
++from astrid.packs.rendering.actions.timeline_visualize.provenance import snapshot_label
++from astrid.sdk.timeline_filmstrip import prepare_filmstrip
++from tests.helpers.runtime import use_runtime
++from tests.sdk.test_capture_source_runtime import CAPABILITY, CAPABILITY_DIGEST, CaptureRuntime
++from tests.timeline.test_authoring_bundle import AUDIO, OLD, _closure, _replace_values
++
++pytestmark = pytest.mark.integration
++
++
++def canonical(value):
++    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
++
++
++@pytest.fixture
++def native_runtime(tmp_path):
++    use_runtime()
++    from runtime_protocol.service import RuntimeService
++    from runtime_protocol.store import RealmStore
++    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
++    from runtime_protocol.timeline_commit_validation import digest
++
++    root = tmp_path / "realm"
++    RealmStore.initialize(root).close()
++    service = RuntimeService(root)
++    service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
++    try:
++        project = service.create_project({"slug": "native-source", "name": "Native source"})["id"]
++        service.create_timeline(project, "main", idempotency_key="timeline")
++        picture, audio = io.BytesIO(), io.BytesIO()
++        Image.new("RGB", (16, 16), (240, 240, 240)).save(picture, format="PNG")
++        with wave.open(audio, "wb") as stream:
++            stream.setparams((1, 2, 44100, 0, "NONE", "not compressed"))
++            stream.writeframes(b"\0\0" * 44100)
++        replacements = {}
++        for old, data, media_type in ((OLD, picture.getvalue(), "image/png"),
++                                      (AUDIO, audio.getvalue(), "audio/wav")):
++            replacements[old] = service.ingest(project, data, media_type=media_type,
++                idempotency_key="media-" + old[7:])["data"]["object_id"]
++        parent, shots, internals = (_replace_values(part, replacements) for part in _closure(shared=True))
++        for row in (parent, *shots, *internals):
++            row["project_id"] = project
++        shots[0]["payload"]["text_bindings"] = []
++        # Select renderable fields before retention; never repair an admitted snapshot.
++        parent["payload"]["config"].pop("opaque_parent_config")
++        for config in (parent["payload"]["config"], internals[0]["payload"]):
++            for entry in (parent["payload"]["registry"] if config is parent["payload"]["config"]
++                          else config["registry"])["assets"].values():
++                entry["content_sha256"] = entry["media_id"]
++            for track in config["tracks"]:
++                track["label"] = track["id"]
++                track.pop("opaque_track", None)
++            for clip in config["clips"]:
++                clip.pop("opaque_clip", None)
++                clip.pop("rect", None)
++        parent["payload"]["config"]["output"] = {"fps": 30, "resolution": "200x100", "file": "source.mp4"}
++        for clip in internals[0]["payload"]["clips"]:
++            clip.setdefault("app", {})["astrid"] = {"cut": "c08", "layer": clip["id"]}
++        for row in (parent, *shots, *internals):
++            row["content_digest"] = digest(row["payload"])
++        # Same closure shape as the native retained-fixture setup; no history/head writes.
++        parent = {key: parent[key] for key in ("revision_id", "payload", "content_digest")}
++        shots = [{key: row[key] for key in ("shot_id", "revision_id", "payload", "content_digest",
++                                           "internal_timeline_revision_id")} for row in shots]
++        internals = [{key: row[key] for key in ("timeline_id", "revision_id", "payload", "content_digest")}
++                     for row in internals]
++        document = {"schema_version": 1, "project_id": project, "timeline_id": "main",
++                    "parent_revision": parent, "shot_revisions": shots, "internal_timeline_revisions": internals,
++                    "dependency_manifest": {
++                        "shots": [{key: row[key] for key in ("shot_id", "revision_id", "content_digest",
++                                                            "internal_timeline_revision_id")} for row in shots],
++                        "internal_timelines": [{key: row[key] for key in ("timeline_id", "revision_id", "content_digest")}
++                                               for row in internals],
++                        "media": sorted([{"media_id": pin, "content_digest": pin} for pin in replacements.values()],
++                                        key=lambda row: row["media_id"]), "documents": []}}
++        commits = service._timeline_commits()[0]
++        initial = commits.head(project, "main")
++        # The existing inactive native fixture seam persists retained inputs only.
++        with service.store._mutex, service.store._transaction():
++            commits._validate_closure(document)
++            commits._persist_closure(document)
++        assert commits.head(project, "main") == initial
++        runtime = CaptureRuntime(service, project)
++        runtime.authoring_preview = None
++        runtime.document = document
++        runtime.commits = commits
++        runtime.restore = lambda revision, key: restore(runtime, revision, key)
++        accepted = runtime.restore(document["parent_revision"], "restore-r1")
++        runtime.r1 = accepted["data"]["accepted_revision_id"]
++        assert canonical(accepted["data"]["canonical_document"]) == canonical(document)
++        service.register_capability({"capability_id": CAPABILITY, "definition_digest": CAPABILITY_DIGEST})
++        service.register_executor({"executor_id": "probe", "capabilities": [CAPABILITY]})
++        yield runtime
++    finally:
++        service.close()
++
++
++def restore(runtime, revision, key):
++    head = runtime.commits.head(runtime.project_id, "main")
++    return runtime.service.commit_timeline(runtime.project_id, "main", {
++        "api_version": 1, "project_id": runtime.project_id, "timeline_id": "main",
++        "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
++        "commands": [{"schema_version": 1, "op": "timeline.restore", "version": "1", "select": None,
++                      "args": {"revision_id": revision["revision_id"], "content_digest": revision["content_digest"]}}],
++    }, idempotency_key=key, publisher="fixture-owner-test",
++        invocation_path=f"/v1/projects/{runtime.project_id}/timelines/main/commit",
++        authorize=runtime.service._assert_mutation_admitted)
++
++
++def snapshot(runtime, *, candidate=False):
++    inputs = {"composed_capture": True, "timeline_ref": "main", "revision_id": runtime.r1}
++    if candidate:
++        doc = runtime.document
++        parent = runtime.get_project_parent_composition_revision(runtime.project_id, "main", runtime.r1)
++        shots = [runtime.get_project_shot_revision(runtime.project_id, row["shot_id"], row["revision_id"])
++                 for row in doc["shot_revisions"]]
++        internals = [runtime.get_project_timeline_revision(runtime.project_id, "main", row["revision_id"])
++                     for row in doc["internal_timeline_revisions"]]
++        bundle = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
++        bundle["parent"]["config"]["output"]["file"] = "unsaved.mp4"
++        runtime.authoring_preview = preview_authoring_candidate(bundle)
++        inputs["authoring_preview"] = runtime.authoring_preview
++    return prepare_filmstrip(inputs, project=runtime.project_id, client=runtime)["capture_snapshot"]
++
++
++@pytest.mark.parametrize("candidate", [False, True])
++def test_runtime_capture_ref_reaches_existing_host_source(native_runtime, tmp_path, candidate):
++    runtime = native_runtime
++    original = snapshot(runtime, candidate=candidate)
++    raw = canonical(original)
++    task = runtime.admit(original, inline=True)
++    ref = task["spec"]["spec"]["authority_context"]["capture_snapshot_ref"]
++    assert runtime.service.object(ref["digest"])[1] == raw
++    values = runtime.materialize(task, tmp_path / "attempt")
++    source = values.timeline_source
++    assert source is not None
++    assert canonical(source.read()["snapshot"]) == raw
++    assert canonical(json.loads(Path(values["timeline"]).read_bytes())) == canonical(original["config"])
++    source.validate(values["timeline"], values["assets_registry"])
++    label = snapshot_label(original, source=source)
++    assert label["status"] == ("candidate" if candidate else "committed")
++    assert label["base_revision_id"] == (runtime.r1 if candidate else None)
++    assert label["actual_revision_id"] == (None if candidate else runtime.r1)
++    assert snapshot_label(original)["status"] == "uncertified"
++    if candidate:
++        assert task["spec"]["spec"]["inputs"]["authoring_preview"] == runtime.authoring_preview
++        assert original["config"]["output"]["file"] == "unsaved.mp4"
++
++
++@pytest.mark.parametrize("changed", ["config", "registry", "expansion", "missing-media"])
++def test_forged_capture_refuses_before_any_writes(native_runtime, changed):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    runtime = native_runtime
++    value = snapshot(runtime)
++    if changed == "config":
++        value["config"]["clips"][0]["hold"] = 99
++    elif changed == "registry":
++        value["registry"]["forged"] = True
++    elif changed == "expansion":
++        value["metadata"]["capture_authority"]["expansion"]["shots"][0]["content_digest"] = "sha256:" + "0" * 64
++    else:
++        next(iter(value["registry"]["assets"].values()))["media_id"] = "sha256:" + "0" * 64
++    request = runtime.request(value, inline=True)
++    before_sql = list(runtime.service.store.conn.iterdump())
++    root = Path(runtime.service.store.root)
++    before = {str(path.relative_to(root)): path.read_bytes() for directory in ("cas", "staging")
++              for path in (root / directory).rglob("*") if path.is_file()}
++    with pytest.raises(RuntimeErrorBase):
++        runtime.service.create_task(request)
++    assert list(runtime.service.store.conn.iterdump()) == before_sql
++    assert {str(path.relative_to(root)): path.read_bytes() for directory in ("cas", "staging")
++            for path in (root / directory).rglob("*") if path.is_file()} == before
++
++
++@pytest.mark.parametrize("changed", ["config", "metadata", "registry", "source", "ref", "prepared"])
++def test_replacement_refuses_before_label(native_runtime, tmp_path, monkeypatch, changed):
++    runtime = native_runtime
++    original = snapshot(runtime)
++    task = runtime.admit(original, inline=True)
++    values = runtime.materialize(task, tmp_path / "attempt")
++    source = values.timeline_source
++    value = deepcopy(original)
++    if changed in {"config", "metadata", "registry"}:
++        value[changed]["forged"] = True
++    elif changed == "source":
++        source = source.read()["ref"]
++    elif changed == "ref":
++        forged = deepcopy(task["spec"])
++        forged["spec"]["authority_context"]["capture_snapshot_ref"]["revision_id"] = "R2"
++        with pytest.raises(HostError):
++            runtime.materialize({"spec": forged}, tmp_path / "forged-attempt")
++        return
++    else:
++        env = {}
++        PreparedTimelineInputs.handoff_source(values, env)
++        monkeypatch.setenv("ASTRID_VERIFIED_TIMELINE_SOURCE", env["ASTRID_VERIFIED_TIMELINE_SOURCE"])
++        Path(values["timeline"]).write_text("{}")
++        with pytest.raises(ValueError, match="prepared timeline bytes differ"):
++            inherited_source(values["timeline"], values["assets_registry"])
++        return
++    with pytest.raises(ValueError):
++        snapshot_label(value, source=source)
++
++
++@pytest.mark.parametrize("candidate", [False, True])
++def test_cas_and_unclaimed_inputs_stay_uncertified(native_runtime, tmp_path, candidate):
++    runtime = native_runtime
++    value = snapshot(runtime, candidate=candidate)
++    task = runtime.admit(value, forward_candidate=False, uncertified=True)
++    values = runtime.materialize(task, tmp_path / "attempt")
++    assert values.timeline_source is None
++    label = snapshot_label(value, source=values.timeline_source)
++    assert label["status"] == "uncertified" and label["actual_revision_id"] is None
++    if candidate:
++        assert label["base_revision_id"] == runtime.r1
++        assert value["metadata"]["working_copy"]["candidate_parent_revision_id"] in label["label"]
++
++
++@pytest.mark.parametrize("candidate", [False, True])
++def test_retained_source_reaches_exact_final_root_inside_normal_lifetime(
++    native_runtime, tmp_path, monkeypatch, candidate,
++):
++    import os
++    import sys
++    import uuid
++    from urllib.request import urlopen
++
++    from astrid.core.rendering.profile import resolve_render_profile
++    from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
++    from astrid.core.timeline import Timeline, scene_answers
++    from astrid.core.timeline.duration import timeline_duration_frames
++    from astrid.packs.rendering.rendering.renderers.remotion import lock, run
++
++    project = Path(os.environ["ASTRID_REMOTION_PROJECT_DIR"])
++    runtime = native_runtime
++    original = snapshot(runtime, candidate=candidate)
++    original_bytes = canonical(original)
++    task = runtime.admit(original, inline=True)
++    ref = task["spec"]["spec"]["authority_context"]["capture_snapshot_ref"]
++    # Advance the actual accepted head after retaining R1/the unsaved candidate.
++    head = runtime.commits.head(runtime.project_id, "main")
++    newer = runtime.service.commit_timeline(runtime.project_id, "main", {
++        "api_version": 1, "project_id": runtime.project_id, "timeline_id": "main",
++        "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
++        "commands": [{"schema_version": 1, "op": "track.create", "version": "1", "select": "parent",
++                      "args": {"row": {"id": "new-head-track", "kind": "visual"}}}],
++    }, idempotency_key="advance-r2", publisher="fixture-owner-test",
++        invocation_path=f"/v1/projects/{runtime.project_id}/timelines/main/commit",
++        authorize=runtime.service._assert_mutation_admitted)
++    r2 = newer["data"]["accepted_revision_id"]
++    assert r2 != runtime.r1
++    values = runtime.materialize(task, tmp_path / "attempt")
++    env = {}
++    PreparedTimelineInputs.handoff_source(values, env)
++    for key, value in env.items():
++        monkeypatch.setenv(key, value)
++    timeline, registry = Path(values["timeline"]), Path(values["assets_registry"])
++    source = inherited_source(timeline, registry)
++    assert source.read()["ref"] == ref
++    profile = resolve_render_profile(original["config"], original["registry"])
++    basis = {"width": profile.width, "height": profile.height,
++             "fps": profile.fps_rational[0] / profile.fps_rational[1]}
++    extent = timeline_duration_frames(original["config"], basis["fps"])
++    addresses = original["metadata"]["scene_clips"]
++    expected_theme = run._resolved_theme_for_render(timeline, None)
++    expected = Timeline.from_config(original["config"]).for_render(default_theme=expected_theme["id"]).to_json_data()
++    # Qualify the real host environment through its normal owned launch path.
++    environment = dict(os.environ)
++    validation = prepare_remotion_validation(
++        artifact_directory=tmp_path / "runtime-admission", host_environment=environment,
++        python_executable=sys.executable, launch_id=uuid.uuid4().hex, contexts={"host": environment},
++    )
++    for key, value in validation.items():
++        monkeypatch.setenv(key, value)
++    with lock.remotion_render_lock(), run._prepared_remotion_root(
++        timeline, registry, tmp_path / "unused.mp4", provenance_out_path=tmp_path / "provenance.json",
++        project_dir=project, composition_id=run.DEFAULT_COMPOSITION_ID, theme_path=None, min_free_gb=None,
++        materialized_root=Path(values["materialized_root"]), materialized_objects=values["materialized_objects"],
++        frame_numbers=(0, 30, extent), frame_output_dir=tmp_path / "uncaptured-frames",
++    ) as prepared:
++        props, props_path = prepared[:2]
++        source.validate(timeline, registry)
++        source.validate_snapshot(original)
++        assert canonical(source.read()["snapshot"]) == original_bytes
++        assert canonical(props["timeline"]) == canonical(expected)
++        assert props["theme"] == expected_theme
++        assert json.loads(props_path.read_bytes()) == props
++        actual_profile = resolve_render_profile(props["timeline"], props["assets"], theme=props["theme"])
++        assert (actual_profile.width, actual_profile.height, actual_profile.fps_rational) == (
++            profile.width, profile.height, profile.fps_rational)
++        assert set(addresses) == {clip["id"] for clip in props["timeline"]["clips"]}
++        for key, asset in props["assets"]["assets"].items():
++            original_asset = original["registry"]["assets"][key]
++            assert {name: value for name, value in asset.items() if name != "file"} == original_asset
++            with urlopen(asset["file"], timeout=5) as response:
++                data = response.read()
++            pin = original_asset["content_sha256"]
++            assert hashlib.sha256(data).hexdigest() == pin.removeprefix("sha256:")
++        answers = scene_answers.host_frames_at(props, basis, (0, 30, extent))
++        assert [answer["frame"] for answer in answers] == [0, 30, extent]
++        # Existing media facts establish neither opaque coverage nor media alpha.
++        assert answers[0]["coverage"] == "UNKNOWN"
++        assert answers[0]["layers"][0]["clipId"] == "occ-1:picture-1"
++        assert addresses["occ-1:picture-1"]["address"] == "c08.picture-1"
++        assert addresses["occ-2:picture-1"]["occurrence_id"] == "occ-2"
++        assert answers[1]["layers"][0]["clipId"] == "occ-2:picture-1"
++        assert answers[-1]["layers"] == []
++        label = snapshot_label(original, source=source)
++        assert label["actual_revision_id"] == (None if candidate else runtime.r1)
++        assert label["base_revision_id"] == (runtime.r1 if candidate else None)
++        assert r2 not in label["label"]
++        assert runtime.commits.head(runtime.project_id, "main")["revision_id"] == r2
++    assert not props_path.exists() and not prepared[6].exists()
++    assert not list((tmp_path / "uncaptured-frames").glob("*.png"))
++    assert runtime.service.object(ref["digest"])[1] == original_bytes
++
++
++@pytest.mark.parametrize("legacy", [False, True])
++def test_recorded_snapshot_and_bundle_bytes_are_never_recertified(tmp_path, legacy):
++    from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import (
++        inspect_filmstrip,
++    )
++    from tests.packs.rendering.test_timeline_offline_inspection import make_bundle
++
++    manifest, _ = make_bundle(tmp_path, legacy=legacy)
++    before = {path: path.read_bytes() for path in tmp_path.rglob("*") if path.is_file()}
++    assert inspect_filmstrip(manifest)["ok"]
++    assert inspect_filmstrip(manifest, section="placements")["ok"]
++    assert {path: path.read_bytes() for path in before} == before

@@ -1,0 +1,491 @@
+--- a/src/tools/video-editor/lib/canonicalRenderBounds.ts
++++ b/src/tools/video-editor/lib/canonicalRenderBounds.ts
+@@ -2,6 +2,7 @@
+ import type { ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
+ 
+ type JsonRecord = Record<string, unknown>;
++type OccurrenceDurationSource = 'effective' | 'stored';
+ 
+ function record(value: unknown): JsonRecord | null {
+   return value !== null && typeof value === 'object' && !Array.isArray(value)
+@@ -16,13 +17,21 @@
+  */
+ export function boundCanonicalClipToOccurrence(
+   clip: ResolvedTimelineClip,
++  occurrenceDurationSource: OccurrenceDurationSource = 'effective',
+ ): ResolvedTimelineClip | null {
+   if (clip.enabled === false || clip.active === false || clip.disabled === true
+     || clip.hidden === true || clip.deleted === true) return null;
+   const app = record(clip.app);
+   const timing = record(app?.canonicalTiming);
+   const occurrenceStartMs = timing?.occurrenceStartMs;
+-  const occurrenceDurationMs = timing?.occurrenceDurationMs;
++  const storedOccurrenceDurationMs = timing?.storedOccurrenceDurationMs;
++  const useStoredOccurrenceDuration = occurrenceDurationSource === 'stored'
++    && typeof storedOccurrenceDurationMs === 'number'
++    && Number.isFinite(storedOccurrenceDurationMs)
++    && storedOccurrenceDurationMs >= 0;
++  const occurrenceDurationMs = useStoredOccurrenceDuration
++    ? storedOccurrenceDurationMs
++    : timing?.occurrenceDurationMs;
+   if (typeof occurrenceStartMs !== 'number' || !Number.isFinite(occurrenceStartMs)
+     || typeof occurrenceDurationMs !== 'number' || !Number.isFinite(occurrenceDurationMs)) {
+     return clip;
+@@ -37,8 +46,14 @@
+   if (duration <= 0) return null;
+ 
+   const speed = typeof clip.speed === 'number' && clip.speed > 0 ? clip.speed : 1;
++  // The private stored-cap copy must carry the selected end into the public
++  // evaluator too. The source clip and its editor projection remain intact.
++  const nextApp = useStoredOccurrenceDuration
++    ? { ...(app ?? {}), canonicalTiming: { ...timing, occurrenceDurationMs } }
++    : null;
+   const nextClip: ResolvedTimelineClip = {
+     ...clip,
++    ...(nextApp ? { app: nextApp as ResolvedTimelineClip['app'] } : {}),
+     at: start,
+     ...(typeof clip.hold === 'number'
+       ? { hold: duration * speed }
+@@ -60,9 +75,10 @@
+ 
+ export function boundCanonicalConfigClips(
+   clips: readonly ResolvedTimelineClip[],
++  occurrenceDurationSource: OccurrenceDurationSource = 'effective',
+ ): ResolvedTimelineClip[] {
+   return clips.flatMap((clip) => {
+-    const bounded = boundCanonicalClipToOccurrence(clip);
++    const bounded = boundCanonicalClipToOccurrence(clip, occurrenceDurationSource);
+     return bounded ? [bounded] : [];
+   });
+ }
+--- a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts
++++ b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts
+@@ -2,14 +2,30 @@
+ import { useOptionalVideoEditorRuntime } from '../../contexts/VideoEditorRuntimeContext.tsx';
+ import { resolveCanonicalComposition } from '../../data/canonicalCompositionState.ts';
+ import { projectOutputTimelineConfig } from '../../data/timelineOutputProjection.ts';
++import { boundCanonicalConfigClips } from '../../lib/canonicalRenderBounds.ts';
+ import type { TimelineData } from '../../lib/timeline-data.ts';
+ import type { ResolvedTimelineConfig } from '../../types/index.ts';
+ 
++type PreviewCompositionResolution = ReturnType<typeof resolveCanonicalComposition> & {
++  /** The exact config/fact pair selected for delivery, including its private copy. */
++  pairedConfig: ResolvedTimelineConfig | null;
++};
++
++function hasStoredOccurrenceCap(config: ResolvedTimelineConfig): boolean {
++  return config.clips.some((clip) => {
++    const timing = clip.app?.canonicalTiming;
++    const stored = timing && typeof timing === 'object' && !Array.isArray(timing)
++      ? (timing as Record<string, unknown>).storedOccurrenceDurationMs
++      : undefined;
++    return typeof stored === 'number' && Number.isFinite(stored) && stored >= 0;
++  });
++}
++
+ /** Both the stage and panel stills include in-progress edits inside placed shots. */
+ export function useVideoEditorPreviewComposition(
+   resolvedConfig: ResolvedTimelineConfig | null | undefined,
+   timelineData?: TimelineData | null,
+-) {
++): PreviewCompositionResolution {
+   const runtime = useOptionalVideoEditorRuntime();
+   const hasShotClips = Boolean(resolvedConfig?.clips.some((clip) => clip.clipType === 'shot'));
+   const composition = runtime?.userId === null
+@@ -26,9 +42,10 @@
+     baseConfig: resolvedConfig,
+   }), [hasShotClips, composition, compositionErrorDependency, resolvedConfig,
+     runtime?.shots?.shotComposition, runtime?.userId]);
+-  const projectedConfig = timelineData?.editProjection ? timelineData.resolvedConfig : null;
++  const projectionFact = timelineData?.editProjection;
++  const projectedConfig = projectionFact ? timelineData.resolvedConfig : null;
+   return useMemo(() => {
+-    if (!projectedConfig) return canonical;
++    if (!projectedConfig) return { ...canonical, pairedConfig: null };
+     // Command acceptance already flattens the returned pinned closure. Shot
+     // shells would load unrelated latest children; they cannot carry its fact.
+     const output = projectOutputTimelineConfig(projectedConfig).config;
+@@ -36,13 +53,25 @@
+       && (!(clip.asset || clip.clipType === 'media') || Boolean(clip.assetEntry?.src)));
+     // The command producer pairs this config with its canonical projection
+     // fact, independently of whether an older shot graph has loaded.
+-    if (complete) return { source: 'canonical' as const, status: 'ready' as const, config: projectedConfig, error: null };
++    if (complete) {
++      const config = hasStoredOccurrenceCap(projectedConfig)
++        ? { ...projectedConfig, clips: boundCanonicalConfigClips(projectedConfig.clips, 'stored') }
++        : projectedConfig;
++      return {
++        source: 'canonical' as const,
++        status: 'ready' as const,
++        config,
++        pairedConfig: config,
++        error: null,
++      };
++    }
+     const cached = canonical.source === 'canonical' ? canonical.config : null;
+     return {
+       ...canonical,
+       status: cached ? 'ready' as const : 'error' as const,
+       config: cached,
++      pairedConfig: null,
+       error: new Error('The command projection has unresolved shot content or media.'),
+     };
+-  }, [canonical, projectedConfig]);
++  }, [canonical, projectionFact, projectedConfig]);
+ }
+--- a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
+@@ -42,7 +42,7 @@
+     ? compilePlayerTransitions(previewConfig) : undefined, [previewConfig, previewSource]);
+   const previewRevision = useMemo<PreviewRevision>(() => {
+     const fact = timelineData?.editProjection;
+-    const paired = fact && previewConfig === timelineData.resolvedConfig;
++    const paired = fact && previewConfig !== null && previewConfig === compositionResolution.pairedConfig;
+     const error = runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null;
+     const unavailableTarget = fact && !paired
+       ? {
+@@ -105,7 +105,7 @@
+     return unavailableTarget
+       ? { kind: 'unavailable', unavailableTarget }
+       : { kind: 'unknown', reason: 'The loaded timeline has no committed revision identity.' };
+-  }, [compositionResolution.error?.message, previewConfig, previewSource, runtime?.shots?.canonicalComposition,
++  }, [compositionResolution.error?.message, compositionResolution.pairedConfig, previewConfig, previewSource, runtime?.shots?.canonicalComposition,
+     runtime?.shots?.canonicalCompositionError, runtime?.shots?.canonicalDraft, runtime?.userId,
+     saveStatus, timelineData]);
+   const {
+--- a/src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
+@@ -1,4 +1,5 @@
+ import { memo, useMemo, useRef } from 'react';
++import { compilePlayerTransitions } from '../../compositions/playerEvaluation.ts';
+ import AssetPanel from '@/tools/video-editor/components/PropertiesPanel/AssetPanel.tsx';
+ import {
+   useTimelineEditorData,
+@@ -15,6 +16,8 @@
+ import { ExtensionPanelHost, getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
+ import { bindTranscriptPanelVideo } from '@/tools/video-editor/lib/transcript-panel-binding.ts';
+ import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
++import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
++import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
+ import type { PanelRenderProps, PanelVideoAdapter } from '@astrid/editor-sdk';
+ import { TimelineFramePreview, usePanelFramePreview } from '../PreviewPanel/TimelineFramePreview.tsx';
+ import { useVideoEditorPreviewComposition } from '../PreviewPanel/useVideoEditorPreviewComposition.ts';
+@@ -37,7 +40,14 @@
+   const store = useTimelineStoreApiSafe();
+   const view = runtime?.timelineViewStore;
+   const { data, preferences, resolvedConfig } = useTimelineEditorData();
+-  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig);
++  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig, data);
++  const compiledTransitions = useMemo(() => previewComposition.source === 'canonical' && previewComposition.config
++    ? compilePlayerTransitions(previewComposition.config) : undefined, [previewComposition.config, previewComposition.source]);
++  const boundedDurationInFrames = useMemo(() => {
++    if (!previewComposition.config) return undefined;
++    const output = projectOutputTimelineConfig(previewComposition.config).config;
++    return getTimelineDurationInFrames(output, output.output.fps);
++  }, [previewComposition.config]);
+   const framePreview = usePanelFramePreview();
+   const surfaceRef = useRef<HTMLDivElement>(null);
+   const latestRuntime = useRef(runtime);
+@@ -103,7 +113,15 @@
+     <div ref={surfaceRef} className="flex h-full min-h-0 flex-col">
+       {builtInPanel}
+       <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} settingsByPanelKey={settingsByPanelKey} onError={handleContributionError} />
+-      <TimelineFramePreview config={previewComposition.config} request={framePreview.request} bounds={surfaceRef} />
++      <TimelineFramePreview
++        config={previewComposition.config}
++        request={framePreview.request}
++        bounds={surfaceRef}
++        compiledTransitions={compiledTransitions}
++        boundedDurationInFrames={boundedDurationInFrames}
++        pairedConfig={previewComposition.pairedConfig}
++        projectionFact={data?.editProjection}
++      />
+     </div>
+   );
+ }
+--- a/src/tools/video-editor/hooks/useClientRender.ts
++++ b/src/tools/video-editor/hooks/useClientRender.ts
+@@ -2,6 +2,7 @@
+ import type { ComponentType, Dispatch, SetStateAction } from 'react';
+ import { toast } from '@/shared/components/ui/toast.tsx';
+ import { TimelineRenderer } from '@/tools/video-editor/compositions/TimelineRenderer.tsx';
++import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition/evaluation';
+ import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+ import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+ import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
+@@ -19,6 +20,7 @@
+ 
+ interface UseClientRenderOptions {
+   resolvedConfig: ResolvedTimelineConfig | null;
++  compiledTransitions?: CompiledCanonicalTransitions;
+   metadata: CompositionMetadata | null;
+   setRenderStatus: Dispatch<SetStateAction<RenderStatus>>;
+   setRenderProgress: Dispatch<SetStateAction<RenderProgress>>;
+@@ -194,6 +196,7 @@
+ 
+ export function useClientRender({
+   resolvedConfig,
++  compiledTransitions,
+   metadata,
+   setRenderStatus,
+   setRenderProgress,
+@@ -258,6 +261,7 @@
+         id: 'video-editor-timeline-renderer',
+         component: TimelineRenderer as ComponentType<{
+           config: ResolvedTimelineConfig;
++          compiledTransitions?: CompiledCanonicalTransitions;
+           astridElementHost?: AstridElementHost;
+         }>,
+         fps: metadata.fps,
+@@ -268,7 +272,7 @@
+ 
+       const renderResult = await renderMediaOnWeb({
+         composition,
+-        inputProps: { config: resolvedConfig, astridElementHost: runtime?.astridElementHost },
++        inputProps: { config: resolvedConfig, compiledTransitions, astridElementHost: runtime?.astridElementHost },
+         licenseKey: FREE_LICENSE_KEY,
+         videoCodec: resolvedVideoCodec,
+         audioCodec: resolvedAudioCodec,
+@@ -309,6 +313,7 @@
+     }
+   }, [
+     metadata,
++    compiledTransitions,
+     resolvedConfig,
+     runtime?.astridElementHost,
+     setRenderDirty,
+--- a/src/tools/video-editor/hooks/useRenderState.ts
++++ b/src/tools/video-editor/hooks/useRenderState.ts
+@@ -1,5 +1,6 @@
+ import { useCallback, useContext, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
+ import type { AstridLocalClient } from '@/integrations/astrid/client.ts';
++import { compilePlayerTransitions } from '@/tools/video-editor/compositions/playerEvaluation.ts';
+ import { isLocalTestMode } from '@/app/localTestRuntime.ts';
+ import { useClientRender } from '@/tools/video-editor/hooks/useClientRender.ts';
+ import type { CompositionMetadata } from '@/tools/video-editor/hooks/useDerivedTimeline.ts';
+@@ -32,6 +33,9 @@
+ import type { RenderExportDestination } from '@/tools/video-editor/lib/renderRouter.ts';
+ import { resolveCanonicalComposition } from '@/tools/video-editor/data/canonicalCompositionState.ts';
+ import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
++import { useVideoEditorPreviewComposition } from '@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts';
++import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
++import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
+ import type { BridgeTaskDetailPayload } from '@/tools/video-editor/data/bridgeContract.ts';
+ import type {
+   CapabilityFinding,
+@@ -531,6 +535,7 @@
+   flushPendingSave?: () => Promise<number>,
+   persistVisualSeamConfig?: PersistVisualSeamConfig,
+   canPersistVisualSeamConfig = true,
++  timelineData?: TimelineData | null,
+ ) {
+   const [renderStatus, setRenderStatus] = useState<RenderStatus>('idle');
+   const [renderLog, setRenderLog] = useState('');
+@@ -566,7 +571,7 @@
+   }, [extensionRuntime]);
+   const runtimeContext = useContext(VideoEditorRuntimeContext);
+   const hasShotClips = Boolean(resolvedConfig?.clips.some((clip) => clip.clipType === 'shot'));
+-  const compositionResolution = useMemo(() => resolveCanonicalComposition({
++  const canonicalResolution = useMemo(() => resolveCanonicalComposition({
+     userId: runtimeContext?.userId,
+     hasShotClips,
+     hasShotComposition: Boolean(runtimeContext?.shots?.shotComposition),
+@@ -574,9 +579,24 @@
+     compositionError: runtimeContext?.userId === null ? runtimeContext.shots?.canonicalCompositionError : null,
+     baseConfig: resolvedConfig,
+   }), [hasShotClips, resolvedConfig, runtimeContext]);
++  const commandResolution = useVideoEditorPreviewComposition(resolvedConfig, timelineData);
++  const compositionResolution = timelineData?.editProjection ? commandResolution : canonicalResolution;
+   const canonicalLane = compositionResolution.source === 'canonical';
+   const renderConfig = compositionResolution.config;
+   const renderProjectionError = compositionResolution.error;
++  const compiledTransitions = useMemo(() => canonicalLane && renderConfig
++    ? compilePlayerTransitions(renderConfig) : undefined, [canonicalLane, renderConfig]);
++  const effectiveRenderMetadata = useMemo(() => {
++    if (!renderConfig || !renderMetadata) return renderMetadata;
++    const fps = renderConfig.output.fps;
++    const { width, height } = parseResolution(renderConfig.output.resolution);
++    return {
++      fps,
++      durationInFrames: getTimelineDurationInFrames(projectOutputTimelineConfig(renderConfig).config, fps),
++      compositionWidth: Math.max(1, width),
++      compositionHeight: Math.max(1, height),
++    };
++  }, [renderConfig, renderMetadata]);
+   const diagnosticCollection = runtimeContext?.diagnosticCollection;
+   const processStatuses = runtimeContext?.processStatuses;
+   const processResultAttachRecords = runtimeContext?.processResultAttachRecords;
+@@ -620,7 +640,8 @@
+ 
+   const startClientRender = useClientRender({
+     resolvedConfig: renderConfig,
+-    metadata: renderMetadata,
++    compiledTransitions,
++    metadata: effectiveRenderMetadata,
+     setRenderStatus,
+     setRenderProgress,
+     setRenderLog,
+@@ -788,7 +809,7 @@
+       // executor-attempt projection.
+       const progress = asDiagnosticRecord(task.progress)
+         ?? (task.attempts?.at(-1)?.diagnostics.progress as Record<string, unknown> | undefined);
+-      const total = Math.max(1, progressNumber(progress, 'total') ?? renderMetadata?.durationInFrames ?? 1);
++      const total = Math.max(1, progressNumber(progress, 'total') ?? effectiveRenderMetadata?.durationInFrames ?? 1);
+       const reportedPercent = progressNumber(progress, 'percent');
+       const current = Math.max(0, Math.min(
+         total,
+@@ -825,7 +846,7 @@
+         void pollAstridRender(client, taskId, generation);
+       }, 3_000);
+     }
+-  }, [commitRenderResult, renderConfig?.output?.file, renderMetadata?.durationInFrames, runtimeContext?.timelineId]);
++  }, [commitRenderResult, effectiveRenderMetadata?.durationInFrames, renderConfig?.output?.file, runtimeContext?.timelineId]);
+ 
+   const startAstridRender = useCallback(async (): Promise<boolean> => {
+     const projectId = runtimeContext?.project?.projectId;
+@@ -865,7 +886,7 @@
+     setRenderStatus('rendering');
+     setRenderProgress({
+       current: 0,
+-      total: renderMetadata?.durationInFrames ?? 1,
++      total: effectiveRenderMetadata?.durationInFrames ?? 1,
+       percent: 0,
+       phase: 'admitting',
+     });
+@@ -929,7 +950,7 @@
+     const generation = ++renderPollGenerationRef.current;
+     await pollAstridRender(client, admission.task_id, generation);
+     return true;
+-  }, [flushPendingSave, pollAstridRender, renderConfig, renderDestination, renderMetadata?.durationInFrames, renderProjectionError, runtimeContext]);
++  }, [effectiveRenderMetadata?.durationInFrames, flushPendingSave, pollAstridRender, renderConfig, renderDestination, renderProjectionError, runtimeContext]);
+ 
+   const eligibleSeamFrames = useMemo(() => {
+     if (!visualSeamReport?.blocked || visualSeamReport.structuralIssues.length > 0 || !renderConfig || !persistVisualSeamConfig || !canPersistVisualSeamConfig
+@@ -1137,7 +1158,7 @@
+       setRenderStatus('rendering');
+       setRenderProgress({
+         current: 0,
+-        total: renderMetadata?.durationInFrames ?? 1,
++        total: effectiveRenderMetadata?.durationInFrames ?? 1,
+         percent: 0,
+         phase: 'validating',
+       });
+@@ -1164,8 +1185,8 @@
+         setRenderProgress(progress.progress == null
+           ? null
+           : {
+-            current: Math.round((renderMetadata?.durationInFrames ?? 1) * progress.progress),
+-            total: renderMetadata?.durationInFrames ?? 1,
++            current: Math.round((effectiveRenderMetadata?.durationInFrames ?? 1) * progress.progress),
++            total: effectiveRenderMetadata?.durationInFrames ?? 1,
+             percent: Math.round(progress.progress * 100),
+             phase: progress.phase,
+           });
+@@ -1198,7 +1219,7 @@
+     processResultAttachRecords,
+     processStatuses,
+     commitRenderResult,
+-    renderMetadata?.durationInFrames,
++    effectiveRenderMetadata?.durationInFrames,
+     renderConfig,
+     startClientRender,
+     startAstridRender,
+--- a/src/tools/video-editor/hooks/useTimelineState.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.ts
+@@ -688,6 +688,7 @@
+     save.flushPendingSave,
+     persistVisualSeamConfig,
+     canPersistVisualSeamConfig,
++    save.data,
+   );
+   const assetOperations = useAssetOperations(
+     runtime.provider,
+--- a/src/tools/video-editor/components/PreviewPanel/TimelineFramePreview.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/TimelineFramePreview.tsx
+@@ -1,6 +1,7 @@
+ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type RefObject } from 'react';
+ import { createPortal } from 'react-dom';
+ import { Thumbnail } from '@remotion/player';
++import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
+ import type { PanelFrameAnchor, PanelPreviewService } from '@/sdk/ui.ts';
+ import { TimelineRenderer } from '../../compositions/TimelineRenderer.tsx';
+ import { useOptionalVideoEditorRuntime } from '../../contexts/VideoEditorRuntimeContext.tsx';
+@@ -9,11 +10,25 @@
+ import { formatTime } from '../../lib/coordinate-utils.ts';
+ import { cloneFrame, FramePreviewCache, timelineSecondsToFrame } from '../../lib/frame-preview-cache.ts';
+ import { areShotsSettling } from '../../lib/shots-settling.ts';
++import type { TimelineEditProjection } from '../../lib/timeline-data.ts';
+ import { getAdmittedElementReadiness, getAdmittedElementSelection, subscribeAdmittedElementReadiness, subscribeAdmittedElements } from '../../runtime/admitted-elements.ts';
+ import type { ResolvedTimelineConfig } from '../../types/index.ts';
+ 
+ interface FrameRequest { seconds: number; anchor: PanelFrameAnchor }
+ 
++type TimelineFramePreviewProps = {
++  config: ResolvedTimelineConfig | null;
++  request: FrameRequest | null;
++  bounds?: RefObject<HTMLElement | null>;
++  /** The vector already compiled for this private preview composition. */
++  compiledTransitions?: CompiledCanonicalTransitions;
++  /** The same bounded extent delivered to the Player/client render path. */
++  boundedDurationInFrames?: number;
++  /** Identity pair for the config and its command projection fact. */
++  pairedConfig?: ResolvedTimelineConfig | null;
++  projectionFact?: TimelineEditProjection | null;
++};
++
+ /** Moving between words keeps the card up, so skimming a line never blinks. */
+ const LINGER_MS = 250;
+ 
+@@ -101,12 +116,28 @@
+ }
+ 
+ /** One reusable Remotion still, with bounded frozen DOM frames for return visits. */
+-export function TimelineFramePreview({ config, request, bounds }: { config: ResolvedTimelineConfig | null; request: FrameRequest | null; bounds?: RefObject<HTMLElement | null> }) {
++export function TimelineFramePreview({
++  config,
++  request,
++  bounds,
++  compiledTransitions,
++  boundedDurationInFrames,
++  pairedConfig,
++  projectionFact,
++}: TimelineFramePreviewProps) {
+   const runtime = useOptionalVideoEditorRuntime();
+   const admission = useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
+   const readiness = useSyncExternalStore(subscribeAdmittedElementReadiness, getAdmittedElementReadiness, getAdmittedElementReadiness);
+   const output = useMemo(() => config ? projectOutputTimelineConfig(config).config : null, [config]);
+-  const revision = useMemo(() => ({ output, admission, readiness, host: runtime?.astridElementHost }), [output, admission, readiness, runtime?.astridElementHost]);
++  const revision = useMemo(() => ({
++    output,
++    admission,
++    readiness,
++    host: runtime?.astridElementHost,
++    compiledTransitions,
++    pairedConfig,
++    projectionFact,
++  }), [admission, compiledTransitions, output, pairedConfig, projectionFact, readiness, runtime?.astridElementHost]);
+   const [cache] = useState(() => new FramePreviewCache<HTMLElement>());
+   const [delivery, setDelivery] = useState<{ revision: object; frame: number } | null>(null);
+   const [, refresh] = useState(0);
+@@ -121,14 +152,18 @@
+     if (!(width > 0 && height > 0)) return null;
+     return {
+       fps, compositionWidth: width, compositionHeight: height,
+-      durationInFrames: Math.max(1, ...output.clips.map((clip) => secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps))),
++      durationInFrames: boundedDurationInFrames ?? Math.max(1, ...output.clips.map((clip) => secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps))),
+     };
+-  }, [output]);
++  }, [boundedDurationInFrames, output]);
+   const frame = request && metadata ? timelineSecondsToFrame(request.seconds, metadata.fps, metadata.durationInFrames) : null;
+   const cached = frame === null ? undefined : cache.get(revision, frame);
+   const preparing = Boolean(output && runtime?.project?.projectId && runtime.astridElementHost?.isPreviewPreparing?.(runtime.project.projectId, output.clips));
+   const settling = areShotsSettling(runtime?.shots);
+-  const inputProps = useMemo(() => ({ config: output!, ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}) }), [output, runtime?.astridElementHost]);
++  const inputProps = useMemo(() => ({
++    config: output!,
++    compiledTransitions,
++    ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}),
++  }), [compiledTransitions, output, runtime?.astridElementHost]);
+ 
+   useEffect(() => {
+     if (frame !== null && !cached) setDelivery({ revision, frame });

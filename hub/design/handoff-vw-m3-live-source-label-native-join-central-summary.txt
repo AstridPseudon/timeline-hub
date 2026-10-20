@@ -1,0 +1,6 @@
+test vw-m3-live-source-label-native-join-integration-viewing-live-source-label-native-1020142658-20591: pass exit=0 in 99s — integration-viewing-live-source-label-native on vw-m3-live-source-label-native-join (agent tree 1e6fc112e17e8b811e7aaf206a556ebfa63551f3)
+cmd: /home/user/work/venv-agent/bin/python -B /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-live-source-label-native-join/run-integration.py
+counts: 18 passed in 96.60s (0:01:36) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/vw-m3-live-source-label-native-join-integration-viewing-live-source-label-native-1020142658-20591/log.txt ---
+..................                                                       [100%]
+18 passed in 96.60s (0:01:36)

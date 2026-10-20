@@ -1,0 +1,25 @@
+```sh
+APP=/home/user/banodoco/reigh-app
+CAND=35e3ebdf2ca74a6a1bbdb1486d503b7f5b3c744a
+PIN=2b3c431fb0efb967c59662c50f5a5bd694f9157e
+REPAIR=70e378e3f780308628bd98b55405115d74288a48
+
+git -C "$APP" diff --check "$PIN" "$CAND"
+git -C "$APP" diff --quiet "$PIN" "$CAND" -- package.json package-lock.json \
+  vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz
+# Verify the archive blob SHA256 is 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738,
+# then tar-scan it: 77 unique package/ regular safe members.
+
+git -C "$APP" show "$CAND:src/tools/video-editor/compositions/AudioTrack.tsx" \
+  | rg 'applyAudioEnvelope|audioEnvelopeWav|compileAudioEnvelope|computeMediaTrim|encodedEnvelopeSource|response\\.body|getReader|preparationProgress'
+
+git -C "$APP" diff "$REPAIR" "$CAND" -- \
+  src/tools/video-editor/compositions/AudioTrack.tsx \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
+# Review removed preparation chunk renewal and dropped consumer-level PCM groups.
+
+# Private public13 archive probe (no App copy, no install):
+# import dist/evaluation.js and assert the six public operations, rounded trim,
+# sanitized rate, full-source WAV, one matching prepared URL, and four forged
+# prepared-source refusals.
+```
