@@ -1460,6 +1460,35 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "producer.guard"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "null"
+              },
+              "args": {
+                "$ref": "#/$defs/ProducerGuardArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -1539,6 +1568,15 @@
         },
         "media": {
           "$ref": "#/$defs/MediaSelection"
+        },
+        "consumed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*::)[^/]+$"
+          },
+          "description": "Raw IDs of existing occurrence clips whose rows an automatic builder read to choose the start or lane; each row is recorded as a guard."
         }
       },
       "additionalProperties": false
@@ -1609,6 +1647,15 @@
         },
         "media": {
           "$ref": "#/$defs/MediaSelection"
+        },
+        "consumed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*::)[^/]+$"
+          },
+          "description": "Raw IDs of existing occurrence clips whose rows an automatic builder read to choose the start or lane; each row is recorded as a guard."
         }
       }
     },
@@ -1777,9 +1824,155 @@
       "additionalProperties": false,
       "description": "Exact original admitted project-pack Document pin for selected parameter validation."
     },
-    "OccurrenceDeleteArgs": {
+    "ProducerAdmittedTarget": {
       "type": "object",
-      "properties": {},
+      "properties": {
+        "project_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "timeline_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "base_revision_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "base_publication_id": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "project_id",
+        "timeline_id",
+        "base_revision_id",
+        "base_publication_id"
+      ],
+      "additionalProperties": false
+    },
+    "ProducerIdentity": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "attempt_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "executor_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "fence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "runtime_epoch": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "task_id",
+        "attempt_id",
+        "executor_id",
+        "fence",
+        "runtime_epoch"
+      ],
+      "additionalProperties": false
+    },
+    "ProducerAttemptPin": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "attempt_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "executor_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "fence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "runtime_epoch": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "admitted_target": {
+          "$ref": "#/$defs/ProducerAdmittedTarget"
+        },
+        "proposal_digest": {
+          "$ref": "#/$defs/Digest",
+          "minLength": 71,
+          "maxLength": 71
+        }
+      },
+      "required": [
+        "task_id",
+        "attempt_id",
+        "executor_id",
+        "fence",
+        "runtime_epoch",
+        "admitted_target",
+        "proposal_digest"
+      ],
+      "additionalProperties": false
+    },
+    "ProducerGuardArgs": {
+      "type": "object",
+      "properties": {
+        "pin": {
+          "$ref": "#/$defs/ProducerAttemptPin"
+        }
+      },
+      "required": [
+        "pin"
+      ],
+      "additionalProperties": false
+    },
+    "SettledProducerProposal": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "producer": {
+          "$ref": "#/$defs/ProducerIdentity"
+        },
+        "admitted_target": {
+          "$ref": "#/$defs/ProducerAdmittedTarget"
+        },
+        "commands": {
+          "$ref": "#/$defs/CommandBatch"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "proposal_digest": {
+          "$ref": "#/$defs/Digest",
+          "minLength": 71,
+          "maxLength": 71
+        }
+      },
+      "required": [
+        "schema_version",
+        "producer",
+        "admitted_target",
+        "commands",
+        "rationale",
+        "proposal_digest"
+      ],
       "additionalProperties": false
     }
   }

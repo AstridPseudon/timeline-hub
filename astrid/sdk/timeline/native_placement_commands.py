@@ -19,7 +19,7 @@ from ._command_state import CommandError
 from ._delete_commands import RELATIONS, _unrelated
 from ._media_inputs import _verified
 from .capture import _duration, move, move_intent, number, occurrence_start, rate
-from .native_occurrence_media_commands import _owner, add_media
+from .native_occurrence_media_commands import _exclusive, _owner, add_media
 
 PLACEMENT_INTENT = {'ownership': 'occurrence'}
 
@@ -78,11 +78,6 @@ def capture_placement(bundle, owner, clip_id, on, *, ownership):
                              'intent': move_intent(ref)}]).commands[0]
 
 
-def _exclusive(ctx, owner):
-    if ctx.select('placement.owners', owner) != [owner]:
-        raise CommandError('shared authored placement is unsupported', kind='unsupported_ownership', ref=owner)
-
-
 def placement_create(ctx, command):
     """Image-only expression at an absolute time; the wrapper adds no media semantics."""
     owner, _ = _owner(ctx, command['select'])
@@ -100,7 +95,8 @@ def placement_create(ctx, command):
     at = float(Fraction(frame, 1) / fps) - occurrence_start(row)
     clip = {'id': args['id'], 'clipType': 'image', 'asset': args['media']['asset'], 'track': lane,
             'at': at, 'hold': args['hold']}
-    add_media(ctx, {'select': owner, 'args': {'row': clip, 'media': args['media']}})
+    add_media(ctx, {'select': owner, 'args': {'row': clip, 'media': args['media'],
+                                                  'consumed': args.get('consumed', [])}})
 
 
 def placement_unplace(ctx, command):
@@ -134,15 +130,17 @@ def _raw_clip_id(clip_id):
     return clip_id
 
 
-def capture_placement_create(bundle, owner, clip_id, media, on, hold, *, ownership, verified_media):
+def capture_placement_create(bundle, owner, clip_id, media, on, hold, *, ownership, verified_media,
+                             consumed=()):
     """Caller reserves clip_id and supplies the exact five-field Runtime media selection."""
     from .commands import execute
 
     _explicit_occurrence(owner, ownership)
+    args = {'id': _raw_clip_id(clip_id), 'on': on, 'hold': hold, 'media': copy.deepcopy(media)}
+    if consumed:
+        args['consumed'] = list(consumed)
     return execute(bundle, [{'schema_version': 1, 'op': 'placement.create', 'version': '1',
-                             'select': owner, 'args': {'id': _raw_clip_id(clip_id), 'on': on, 'hold': hold,
-                                                       'media': copy.deepcopy(media)},
-                             'intent': dict(PLACEMENT_INTENT)}], verified_media=verified_media).commands[0]
+                             'select': owner, 'args': args, 'intent': dict(PLACEMENT_INTENT)}], verified_media=verified_media).commands[0]
 
 
 def capture_placement_unplace(bundle, owner, clip_id, *, ownership):

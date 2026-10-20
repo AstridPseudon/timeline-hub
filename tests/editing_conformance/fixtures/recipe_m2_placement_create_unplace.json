@@ -246,6 +246,19 @@
           },
           {
             "path": [],
+            "ref": "occurrence:occ-a/collection:clip",
+            "state": {
+              "state": "present",
+              "value": {
+                "members": {
+                  "state": "present",
+                  "value": []
+                }
+              }
+            }
+          },
+          {
+            "path": [],
             "ref": "occurrence:occ-a/collection:track",
             "state": {
               "state": "present",
@@ -273,19 +286,6 @@
             "ref": "occurrence:occ-a/asset:reserved-new",
             "state": {
               "state": "absent"
-            }
-          },
-          {
-            "path": [],
-            "ref": "occurrence:occ-a/collection:clip",
-            "state": {
-              "state": "present",
-              "value": {
-                "members": {
-                  "state": "present",
-                  "value": []
-                }
-              }
             }
           },
           {
@@ -337,21 +337,6 @@
           },
           {
             "boundaries": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "key": "collection.tracks",
-            "members": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "order": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "owner": "occurrence:occ-a",
-            "policy": "guard-membership",
-            "query_version": 1
-          },
-          {
-            "boundaries": [
               "occurrence:occ-a/clip:clip-a",
               "occurrence:occ-a/clip:clip-b"
             ],
@@ -363,6 +348,21 @@
             "order": [
               "occurrence:occ-a/clip:clip-a",
               "occurrence:occ-a/clip:clip-b"
+            ],
+            "owner": "occurrence:occ-a",
+            "policy": "guard-membership",
+            "query_version": 1
+          },
+          {
+            "boundaries": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "key": "collection.tracks",
+            "members": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "order": [
+              "occurrence:occ-a/track:picture"
             ],
             "owner": "occurrence:occ-a",
             "policy": "guard-membership",
@@ -1058,6 +1058,12 @@
           },
           {
             "dependencies": [],
+            "key": "collection.owner:collection.clips",
+            "policy": "fixed",
+            "ref": "occurrence:occ-a"
+          },
+          {
+            "dependencies": [],
             "key": "collection.owner:collection.tracks",
             "policy": "fixed",
             "ref": "occurrence:occ-a"
@@ -1071,12 +1077,6 @@
           {
             "dependencies": [],
             "key": "create.owner",
-            "policy": "fixed",
-            "ref": "occurrence:occ-a"
-          },
-          {
-            "dependencies": [],
-            "key": "collection.owner:collection.clips",
             "policy": "fixed",
             "ref": "occurrence:occ-a"
           }
@@ -1326,6 +1326,19 @@
             },
             {
               "path": [],
+              "ref": "occurrence:occ-a/collection:clip",
+              "state": {
+                "state": "present",
+                "value": {
+                  "members": {
+                    "state": "present",
+                    "value": []
+                  }
+                }
+              }
+            },
+            {
+              "path": [],
               "ref": "occurrence:occ-a/collection:track",
               "state": {
                 "state": "present",
@@ -1353,19 +1366,6 @@
               "ref": "occurrence:occ-a/asset:reserved-new",
               "state": {
                 "state": "absent"
-              }
-            },
-            {
-              "path": [],
-              "ref": "occurrence:occ-a/collection:clip",
-              "state": {
-                "state": "present",
-                "value": {
-                  "members": {
-                    "state": "present",
-                    "value": []
-                  }
-                }
               }
             },
             {
@@ -1417,21 +1417,6 @@
             },
             {
               "boundaries": [
-                "occurrence:occ-a/track:picture"
-              ],
-              "key": "collection.tracks",
-              "members": [
-                "occurrence:occ-a/track:picture"
-              ],
-              "order": [
-                "occurrence:occ-a/track:picture"
-              ],
-              "owner": "occurrence:occ-a",
-              "policy": "guard-membership",
-              "query_version": 1
-            },
-            {
-              "boundaries": [
                 "occurrence:occ-a/clip:clip-a",
                 "occurrence:occ-a/clip:clip-b"
               ],
@@ -1443,6 +1428,21 @@
               "order": [
                 "occurrence:occ-a/clip:clip-a",
                 "occurrence:occ-a/clip:clip-b"
+              ],
+              "owner": "occurrence:occ-a",
+              "policy": "guard-membership",
+              "query_version": 1
+            },
+            {
+              "boundaries": [
+                "occurrence:occ-a/track:picture"
+              ],
+              "key": "collection.tracks",
+              "members": [
+                "occurrence:occ-a/track:picture"
+              ],
+              "order": [
+                "occurrence:occ-a/track:picture"
               ],
               "owner": "occurrence:occ-a",
               "policy": "guard-membership",
@@ -1684,6 +1684,19 @@
           },
           {
             "path": [],
+            "ref": "occurrence:occ-a/collection:clip",
+            "state": {
+              "state": "present",
+              "value": {
+                "members": {
+                  "state": "present",
+                  "value": []
+                }
+              }
+            }
+          },
+          {
+            "path": [],
             "ref": "occurrence:occ-a/collection:track",
             "state": {
               "state": "present",
@@ -1711,19 +1724,6 @@
             "ref": "occurrence:occ-a/asset:reserved-new",
             "state": {
               "state": "absent"
-            }
-          },
-          {
-            "path": [],
-            "ref": "occurrence:occ-a/collection:clip",
-            "state": {
-              "state": "present",
-              "value": {
-                "members": {
-                  "state": "present",
-                  "value": []
-                }
-              }
             }
           },
           {
@@ -1770,21 +1770,6 @@
           },
           {
             "boundaries": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "key": "collection.tracks",
-            "members": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "order": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "owner": "occurrence:occ-a",
-            "policy": "guard-membership",
-            "query_version": 1
-          },
-          {
-            "boundaries": [
               "occurrence:occ-a/clip:clip-a",
               "occurrence:occ-a/clip:clip-b"
             ],
@@ -1796,6 +1781,21 @@
             "order": [
               "occurrence:occ-a/clip:clip-a",
               "occurrence:occ-a/clip:clip-b"
+            ],
+            "owner": "occurrence:occ-a",
+            "policy": "guard-membership",
+            "query_version": 1
+          },
+          {
+            "boundaries": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "key": "collection.tracks",
+            "members": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "order": [
+              "occurrence:occ-a/track:picture"
             ],
             "owner": "occurrence:occ-a",
             "policy": "guard-membership",
