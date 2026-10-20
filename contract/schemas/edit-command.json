@@ -782,6 +782,35 @@
           "if": {
             "properties": {
               "op": {
+                "const": "timeline.init"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/TimelineInitArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
                 "const": "clip.delete"
               }
             },
@@ -1975,6 +2004,56 @@
         "commands",
         "rationale",
         "proposal_digest"
+      ],
+      "additionalProperties": false
+    },
+    "TimelineInitArgs": {
+      "type": "object",
+      "description": "App empty-timeline defaults only. Requires authenticated original bootstrap publication; never a root replacement or repair.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "resolution": {
+              "type": "string",
+              "const": "1280x720"
+            },
+            "fps": {
+              "type": "integer",
+              "const": 30
+            },
+            "file": {
+              "type": "string",
+              "const": "output.mp4"
+            },
+            "background": {
+              "type": "null"
+            },
+            "background_scale": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "resolution",
+            "fps",
+            "file",
+            "background",
+            "background_scale"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "slug",
+        "output"
       ],
       "additionalProperties": false
     }

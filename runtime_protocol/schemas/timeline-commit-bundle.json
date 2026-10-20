@@ -802,6 +802,35 @@
               "if": {
                 "properties": {
                   "op": {
+                    "const": "timeline.init"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/TimelineInitArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  },
+                  "select": {
+                    "const": "parent"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
                     "const": "clip.delete"
                   }
                 },
@@ -2264,6 +2293,56 @@
           "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token.",
           "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
           "type": "string"
+        },
+        "TimelineInitArgs": {
+          "additionalProperties": false,
+          "description": "App empty-timeline defaults only. Requires authenticated original bootstrap publication; never a root replacement or repair.",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "output": {
+              "additionalProperties": false,
+              "properties": {
+                "background": {
+                  "type": "null"
+                },
+                "background_scale": {
+                  "type": "null"
+                },
+                "file": {
+                  "const": "output.mp4",
+                  "type": "string"
+                },
+                "fps": {
+                  "const": 30,
+                  "type": "integer"
+                },
+                "resolution": {
+                  "const": "1280x720",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "resolution",
+                "fps",
+                "file",
+                "background",
+                "background_scale"
+              ],
+              "type": "object"
+            },
+            "slug": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "slug",
+            "output"
+          ],
+          "type": "object"
         },
         "TokenPath": {
           "description": "Normalized property tokens, not entity collection positions. Empty array means the whole entity. Numeric array tokens use canonical decimal strings; provider validates pinned parent-container types before traversal.",

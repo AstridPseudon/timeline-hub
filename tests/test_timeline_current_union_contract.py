@@ -28,6 +28,9 @@ CASES = ORDINARY_CASES + [
     ("occurrence.duplicate", "occurrence:o", {"occurrence_id": "new", "shot_id": "new-shot"}),
     ("occurrence.delete", "occurrence:o", {}),
     ("producer.guard", None, {"pin": PIN}),
+    ("timeline.init", "parent", {"name": "Main", "slug": "main", "output": {
+        "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+        "background": None, "background_scale": None}}),
 ]
 
 
@@ -37,9 +40,9 @@ def command(op, select, args):
 
 def test_exact_frozen_schema_and_operation_inventory_are_packaged():
     raw = (ROOT / "contract/schemas/edit-command.json").read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == "a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef"
+    assert hashlib.sha256(raw).hexdigest() == "e29c4542a79e5c2098251ac3ff80a47883d08878b79592aa920f1e3321274159"
     schema = json.loads(raw)
-    assert len(schema["$defs"]) == 48
+    assert len(schema["$defs"]) == 49
     assert {c["if"]["properties"]["op"]["const"] for c in schema["$defs"]["EditCommand"]["allOf"]} == {c[0] for c in CASES}
     bundle = json.loads((ROOT / "runtime_protocol/schemas/timeline-commit-bundle.json").read_bytes())
     assert bundle["resources"]["https://astrid.haus/workspace/v1/schemas/edit-command.json"] == schema
@@ -143,7 +146,7 @@ def test_recorder_target_key_patterns_are_retained(key, valid):
 
 def test_s2_only_adds_the_optional_retained_element_document_pin_to_s1():
     s1 = json.loads((ROOT / "tests/fixtures/published-command-schemas/agent-0a0ac7ba.json").read_bytes())
-    s2 = json.loads((ROOT / "contract/schemas/edit-command.json").read_bytes())
+    s2 = json.loads((ROOT / "tests/fixtures/published-command-schemas/agent-26ef2bbb.json").read_bytes())
     before = copy.deepcopy(s2)
     element = s2["$defs"]["ClipSetElementArgs"]
     assert element["properties"].pop("schema_source") == {"$ref": "#/$defs/DocumentPin"}
@@ -167,3 +170,37 @@ def test_element_schema_source_keeps_existing_document_pin_constraints(pin, vali
     else:
         with pytest.raises(ValidationError):
             validate_commit_value(value, "EditCommand")
+
+
+def test_private_init_schema_is_exactly_additive_to_the_complete_s2_floor():
+    s2 = json.loads((ROOT / "tests/fixtures/published-command-schemas/agent-26ef2bbb.json").read_bytes())
+    candidate = json.loads((ROOT / "contract/schemas/edit-command.json").read_bytes())
+    assert len(s2["$defs"]) == 48
+    assert len(s2["$defs"]["EditCommand"]["allOf"]) == 22
+    assert len(candidate["$defs"]["EditCommand"]["allOf"]) == 23
+    assert candidate["$defs"].pop("TimelineInitArgs")["additionalProperties"] is False
+    conditions = candidate["$defs"]["EditCommand"]["allOf"]
+    conditions[:] = [c for c in conditions if c["if"]["properties"]["op"]["const"] != "timeline.init"]
+    assert candidate == s2
+
+
+@pytest.mark.parametrize("mutation", ["missing-null", "extra-output", "extra-arg", "fps-bool", "fps-rational", "resolution", "select"])
+def test_private_init_preserves_closed_exact_default_arguments(mutation):
+    _, select, args = next(c for c in CASES if c[0] == "timeline.init")
+    value = command("timeline.init", select, args)
+    if mutation == "missing-null":
+        del value["args"]["output"]["background"]
+    elif mutation == "extra-output":
+        value["args"]["output"]["extra"] = None
+    elif mutation == "extra-arg":
+        value["args"]["pristine"] = True
+    elif mutation == "fps-bool":
+        value["args"]["output"]["fps"] = True
+    elif mutation == "fps-rational":
+        value["args"]["output"]["fps"] = {"num": 30, "den": 1}
+    elif mutation == "resolution":
+        value["args"]["output"]["resolution"] = "1920x1080"
+    else:
+        value["select"] = None
+    with pytest.raises(ValidationError):
+        validate_commit_value(value, "EditCommand")
