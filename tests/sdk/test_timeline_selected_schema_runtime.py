@@ -150,6 +150,101 @@ def raw_params(case, values, clear=()):
             'args': {'values': values, 'clear': list(clear), 'schema_source': case.pin}}
 
 
+def select_source(case, pin):
+    return {'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': REF,
+            'args': {'elementRef': case.selected, 'schema_source': pin}}
+
+
+@pytest.fixture
+def unchanged_selection(retained_pack):
+    case = retained_pack
+    first = copy.deepcopy(case.pin)
+    case.submit(case.request([select_source(case, first)]), 'retain-first-selection')
+    manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
+    test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
+    admitted = packs.admit_project_pack('realm', case.project)
+    assert case.selected in [{key: item['descriptor'][key] for key in case.selected}
+                             for item in admitted['elements']]
+    document = case.service.get_document(case.project, first['document_id'])
+    second = {'document_id': document['document_id'], 'version': document['version'],
+              'content_digest': commit._digest(document['content'])}
+    assert second['version'] > first['version']
+    body = case.request([select_source(case, first)])
+    before = case.bundle()
+    target = case.submit(body, 'unchanged-selection')
+    assert case.bundle() == before
+    return case, first, second, body, target
+
+
+def accepted_state(case):
+    head = case.head()
+    store = case.service._timeline_commits()[0]
+    document = store.revision_closure(case.project, 'film', head['revision_id'])
+    history = case.service.list_timeline_commits(case.project, 'film', authorize=lambda: None)
+    database = tuple(case.service.store.conn.iterdump())
+    objects = {str(path.relative_to(case.service.cas.root)): path.read_bytes()
+               for path in case.service.cas.root.rglob('*') if path.is_file()}
+    return head, document, history, database, objects
+
+
+@pytest.mark.parametrize('reselect', ['same-pin', 'new-pin'])
+def test_native_inverse_refuses_earlier_unchanged_selection_atomically(
+        unchanged_selection, monkeypatch, reselect):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    case, first, second, body, target = unchanged_selection
+    publication = target['receipt']['receipt_id']
+    record = case.service._timeline_commits()[0].history_entry(
+        case.project, 'film', publication)['records']['commands'][0]
+    assert record['writes'] and all(write['before'] == write['after'] for write in record['writes'])
+    before = accepted_state(case)
+    changes = case.service.store.conn.total_changes
+    request = case.request([select_source(case, first if reselect == 'same-pin' else second),
+                            inverse(publication)])
+    original = copy.deepcopy(request)
+    with pytest.raises(RuntimeErrorBase) as error:
+        case.submit(request, 'staged-selection-inverse')
+    assert error.value.status == 409
+    assert error.value.details['reason'] == 'intervening_write'
+    assert request == original
+    assert accepted_state(case) == before
+    assert case.service.store.conn.total_changes == changes
+    with monkeypatch.context() as retry:
+        retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('retry executed semantics'))
+        assert case.submit(body, 'unchanged-selection') == target
+    assert accepted_state(case) == before
+
+
+@pytest.mark.parametrize('grouped', [False, True])
+def test_native_disjoint_staged_label_and_inverse_preserve_opaque(unchanged_selection, grouped):
+    case, _, _, _, target = unchanged_selection
+    before = case.bundle()
+    undo = inverse(target['receipt']['receipt_id'])
+    if grouped:
+        params = case.submit(case.request([raw_params(case, {'seed': 8})]), 'grouped-params')
+        undo['args']['publications'].append(params['receipt']['receipt_id'])
+    label = capture_track_set(before, 'parent/track:picture', values={'label': 'staged label'})
+    result = case.submit(case.request([label, undo]), 'staged-label-inverse')
+    expected = copy.deepcopy(before)
+    State(expected).entity('parent/track:picture')['label'] = 'staged label'
+    assert result['data']['canonical_document'] == commit.document_from_bundle(expected)
+    assert State(case.bundle()).entity(REF)['params']['future'] == {'keep': [None, False, {}]}
+
+
+def test_native_inverse_then_selection_and_params_use_staged_pin(unchanged_selection):
+    case, _, second, _, target = unchanged_selection
+    case.pin = second
+    result = case.submit(case.request([inverse(target['receipt']['receipt_id']),
+                                      select_source(case, second), raw_params(case, {'seed': 8})]),
+                         'inverse-selection-params')
+    assert State(commit.bundle_from_document(result['data']['canonical_document'])).entity(
+        REF)['params'] == {'seed': 8, 'future': {'keep': [None, False, {}]}}
+    entry = case.service._timeline_commits()[0].history_entry(
+        case.project, 'film', result['receipt']['receipt_id'])
+    assert next(dependency['pin'] for dependency in entry['records']['commands'][2]['dependencies']
+                if dependency['key'] == 'params.schema') == second
+
+
 def test_mixed_pack_readmission_keeps_old_and_new_native_param_sources(retained_pack, monkeypatch):
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService

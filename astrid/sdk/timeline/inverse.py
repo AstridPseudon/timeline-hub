@@ -381,12 +381,14 @@ def _validate_inputs(state, record, records):
                 raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
 
 
-def apply_inverse(ctx, records, intervening_records):
+def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     if not records:
         raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
     if any(not isinstance(record, dict) or 'writes' not in record for record in records):
         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
     check_intervening(records, intervening_records, state=ctx.state)
+    # Earlier batch commands are intervening writes, not part of this undo group.
+    check_intervening(records, staged_records, state=ctx.state)
     changes = coalesce(records, ctx.state)
     caches = clip_cache_stages(records)
     guarded_changes = coalesce(records, ctx.state, cache_stages=caches)
