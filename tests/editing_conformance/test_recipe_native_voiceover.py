@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import copy
 
+import pytest
+
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.native_voiceover import capture_draft_voiceover
@@ -68,3 +70,56 @@ def test_original_voiceover_outcome_lowers_to_audio_and_metadata_commands_with_i
         prepared["candidate"]["shots"]["shot-shared"]["payload"]["metadata"][vo.KEY]
     assert replay(plan, authored, verified_media=verified).records == plan.records
     assert inverse(plan.bundle, plan.records).bundle == before
+
+
+@pytest.mark.xfail(
+    strict=True, raises=AssertionError,
+    reason="RIPPLE lowering requires a guarded existing-occurrence duration_ms command carrier",
+)
+def test_prepared_ripple_timing_and_padding_survive_lowering_inverse_and_redo():
+    # Restore this positive when a separately approved duration carrier exists;
+    # media/metadata round trips alone do not establish RIPPLE preservation.
+    authored = bundle()
+    shot = authored["shots"][authored["placements"][0]["shot_id"]]
+    shot["payload"]["metadata"][vo.KEY] = copy.deepcopy(
+        fixture()[0]["shots"]["s1"]["payload"]["metadata"][vo.KEY])
+    shot["payload"]["metadata"][vo.KEY]["clip_id"] = "voice-1"
+    State(authored).entity("occurrence:occ-1/clip:voice-1").update(
+        {"from": 0, "to": 4, "hold": 4})
+    shot["internal_timeline"]["registry"]["assets"]["voice"]["media_id"] = OLD
+    scripts = {"revision_id": authored["base_parent"]["revision_id"], "occurrences": [
+        {"occurrence_id": "occ-1", "status": "present", "text": "Long new narration"}]}
+    before = copy.deepcopy(authored)
+    prepared = vo.prepare_draft_voiceover(
+        authored, scripts, synthesize=synthesis, timing_policy="ripple",
+        padding_seconds=.15, occurrence_ids=["occ-1"])
+    assert prepared["candidate"]["placements"][0]["duration_ms"] == 4150
+    assert prepared["candidate"]["placements"][1]["placement"]["start_ms"] == 14150
+
+    old = {"asset": "voice", "generation_id": "generation-old", "variant_id": "variant-old",
+           "object_id": OLD, "catalog_digest": "sha256:" + "a" * 64}
+    new = {"asset": "draft-voiceover-vo", "generation_id": "generation-new", "variant_id": "variant-new",
+           "object_id": NEW, "catalog_digest": "sha256:" + "b" * 64}
+    verified = [{"selection": copy.deepcopy(media), "media_type": "audio/wav", "size": 4,
+                 "duration_seconds": 4} for media in (old, new)]
+    lowered = capture_draft_voiceover(
+        authored, prepared, media_by_occurrence={"occ-1": new},
+        old_media_by_occurrence={"occ-1": old}, verified_media=verified)
+    plan = execute(authored, lowered["commands"], verified_media=verified)
+    assert authored == before
+    assert replay(plan, authored, verified_media=verified).records == plan.records
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == before
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+
+    def timing(candidate, padding):
+        state = State(candidate)
+        return {
+            "occurrence:occ-1::duration_ms": state.occurrence("occurrence:occ-1")["duration_ms"],
+            "occurrence:occ-2::placement.start_ms": state.occurrence("occurrence:occ-2")["placement"]["start_ms"],
+            "occurrence:occ-1/clip:picture-1::hold": state.entity("occurrence:occ-1/clip:picture-1")["hold"],
+            "padding_seconds": padding,
+        }
+
+    assert timing(plan.bundle, lowered["capture"].get("padding_seconds")) == timing(
+        prepared["candidate"], prepared["padding_seconds"])
