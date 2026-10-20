@@ -17,7 +17,7 @@ claim that App's pinned official artifact accepts it. The old move source note
 naming `sdk/timeline/capture.py::move` is recipe provenance, not a package pin.
 
 Only the three capture/golden files were copied from `961197e84`; its mistakenly
-repo-local design document was moved here. The original golden is byte-identical.
+repo-local design document was moved here. The original golden is byte-identical. The copied selection literal is now typed as generated `AgentSelection`; its old readonly-array inference did not typecheck against the current official types.
 Two copied-capture parity gaps were corrected against that exact native source:
 `Recording.compile_mirrors` records an empty final collection, and `State.set`
 preserves colons within raw IDs. App now does both, with a regression test.
@@ -27,6 +27,13 @@ Runtime generated artifact with an exact source tuple. App pins are unchanged:
 client 0.2.1, schema
 `4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`,
 Composition 0.0.8. No schema guessing or compatibility writer is introduced.
+
+Verification correction: direct `./node_modules/.bin/tsc --noEmit -p
+tsconfig.app.json` exits 2 with only the two pre-existing diagnostics,
+TS7053 at `RuntimeConnectionProvider.tsx:90` and TS2550 at
+`AgentChatNewChatButton.tsx:80`. The earlier `npm exec tsc` PASS claim was
+incorrect; before the App capture type fix, the direct check also reported the
+new TS2345 at `clipDeleteCapture.ts:92-103`.
 
 ## Native contract and guards
 
