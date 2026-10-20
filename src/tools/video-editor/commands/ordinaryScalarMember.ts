@@ -233,26 +233,39 @@ function holdExtent(ctx: MoveRecording, ref: string, values: Record<string, JSON
   return [durationPaths, duration];
 }
 
-function scalarArgs(command: EditCommand): OrdinaryScalarOptions {
+type OrdinaryScalarCommandArgs = {
+  readonly values: OrdinaryScalarValues;
+  readonly clear: readonly OrdinaryScalarClear[];
+};
+
+function scalarArgs(command: EditCommand): OrdinaryScalarCommandArgs {
   if (command.schema_version !== 1 || command.op !== 'clip.set' || command.version !== '1'
     || (command.intent !== undefined && !equal(command.intent, {}))
     || !object(command.args) || !object(command.args.values) || !Array.isArray(command.args.clear)
     || !equal(Object.keys(command.args).sort(), ['clear', 'values'])) {
     throw new ClipMoveError('unsupported clip.set v1 scalar member');
   }
-  const values = command.args.values as Record<string, JSON>;
-  const clear = command.args.clear as JSON[];
+  const values = command.args.values;
+  const clear = command.args.clear;
+  const hasHold = Object.prototype.hasOwnProperty.call(values, 'hold');
+  const hold = values.hold;
   if (Object.keys(values).some((key) => key !== 'hold') ||
     Object.keys(values).some((key) => clear.includes(key)) ||
     clear.some((key) => typeof key !== 'string' || !CLEAR_FIELDS.includes(key as OrdinaryScalarClear)) ||
     new Set(clear).size !== clear.length || (!Object.keys(values).length && !clear.length)) {
     throw new ClipMoveError('clip.set scalar member contains an unsupported field');
   }
-  if (has(values, 'hold') &&
-    (typeof values.hold !== 'number' || !Number.isFinite(values.hold) || values.hold <= 0)) {
-    throw new ClipMoveError('hold must be a finite positive number', 'unsupported_timing');
+  const typedValues: OrdinaryScalarValues = {};
+  if (hasHold) {
+    if (typeof hold !== 'number' || !Number.isFinite(hold) || hold <= 0) {
+      throw new ClipMoveError('hold must be a finite positive number', 'unsupported_timing');
+    }
+    typedValues.hold = hold;
   }
-  return { values: values as OrdinaryScalarValues, clear: clear as OrdinaryScalarClear[] };
+  return {
+    values: typedValues,
+    clear: clear.filter((key): key is OrdinaryScalarClear => typeof key === 'string'),
+  };
 }
 
 function target(ctx: MoveRecording, ref: string): string {
@@ -307,10 +320,15 @@ function executeClear(bundle: AuthoredBundle, command: EditCommand) {
     ctx.read(`${ref.slice(0, ref.lastIndexOf('/'))}/registry`, ['assets', asset, 'content_sha256']);
   }
   const [durationPaths, duration] = has(values, 'hold') || clear.includes('hold')
-    ? holdExtent(ctx, ref, values as Record<string, JSON>, clear)
+    ? holdExtent(ctx, ref, { ...values }, clear)
     : [[], 0];
   for (const path of durationPaths) ctx.write(ref, path, duration);
-  for (const key of Object.keys(values).sort()) ctx.write(ref, [key], values[key]!);
+  for (const key of Object.keys(values).sort()) {
+    if (key !== 'hold' || values.hold === undefined) {
+      throw new ClipMoveError('clip.set scalar member contains an unsupported field');
+    }
+    ctx.write(ref, [key], values.hold);
+  }
   for (const key of [...clear].sort()) ctx.clear(ref, [key]);
   ctx.compile();
   return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record };

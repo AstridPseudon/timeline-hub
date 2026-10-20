@@ -33,13 +33,13 @@ function object(value: unknown): value is Record<string, JSON> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function assertOperation(operation: TimelinePatchOperation): asserts operation is OrdinaryMoveOperation {
-  if (operation.op !== 'clip.move' || typeof operation.target !== 'string' || !operation.target
+function assertOperation(operation: unknown): asserts operation is OrdinaryMoveOperation {
+  if (!object(operation) || operation.op !== 'clip.move' || typeof operation.target !== 'string' || !operation.target
     || !object(operation.payload) || Object.keys(operation.payload).length !== 1
     || !Object.prototype.hasOwnProperty.call(operation.payload, 'at')
     || typeof operation.payload.at !== 'number' || !Number.isFinite(operation.payload.at)
     || operation.payload.at < 0
-    || (operation.order !== undefined && !Number.isFinite(operation.order))) {
+    || (operation.order !== undefined && (typeof operation.order !== 'number' || !Number.isFinite(operation.order)))) {
     throw new ClipMoveError('ordinary clip.move requires one finite non-negative absolute at value');
   }
 }
@@ -76,10 +76,9 @@ export function finishOrdinaryMoveMember(
     || !object(basis.move)) {
     throw new ClipMoveError('incomplete ordinary clip.move basis');
   }
-  assertOperation(basis.operation as TimelinePatchOperation);
-  const move = basis.move as ClipMoveBasis;
-  const prepared = finishClipMove(move, basis.operation.payload.at);
-  return result(basis.operation as OrdinaryMoveOperation, prepared, ordinal);
+  assertOperation(basis.operation);
+  const prepared = finishClipMove(basis.move, basis.operation.payload.at);
+  return result(basis.operation, prepared, ordinal);
 }
 
 /** Re-execute the captured SDK command on a supplied authored bundle. */

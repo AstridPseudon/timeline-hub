@@ -10,6 +10,8 @@ import {
 import {
   captureOrdinaryScalarMember,
   executeOrdinaryScalarMember,
+  type OrdinaryScalarClear,
+  type OrdinaryScalarValues,
 } from './ordinaryScalarMember.ts';
 import {
   AuthoredState,
@@ -40,19 +42,38 @@ export class GenericPatchRefusal extends Error {
   }
 }
 
-function scalarPatchPayload(operation: TimelinePatchOperation): boolean {
+function scalarPatchArgs(operation: TimelinePatchOperation): {
+  readonly values: OrdinaryScalarValues;
+  readonly clear: readonly OrdinaryScalarClear[];
+} | undefined {
+  if (operation.op !== 'clip.update') return undefined;
   const payload = operation.payload;
   if (!object(payload) || !equal(Object.keys(payload).sort(), ['clear', 'values'])
-    || !object(payload.values) || !Array.isArray(payload.clear)) return false;
+    || !object(payload.values) || !Array.isArray(payload.clear)) return undefined;
   const values = payload.values;
   const clear = payload.clear;
-  if (Object.keys(values).some((key) => key !== 'hold')
-    || (has(values, 'hold') && (typeof values.hold !== 'number' || !Number.isFinite(values.hold) || values.hold <= 0))
-    || clear.some((key) => typeof key !== 'string' || !['hold', 'asset', 'transition'].includes(key))
-    || new Set(clear).size !== clear.length
-    || Object.keys(values).some((key) => clear.includes(key))
-    || (!Object.keys(values).length && !clear.length)) return false;
-  return true;
+  if (Object.keys(values).some((key) => key !== 'hold') || (!Object.keys(values).length && !clear.length)) return undefined;
+  const hasHold = Object.prototype.hasOwnProperty.call(values, 'hold');
+  const hold = values.hold;
+  const typedValues: OrdinaryScalarValues = {};
+  if (hasHold) {
+    if (typeof hold !== 'number' || !Number.isFinite(hold) || hold <= 0) return undefined;
+    typedValues.hold = hold;
+  }
+  const typedClear: OrdinaryScalarClear[] = [];
+  for (const key of clear) {
+    if (key !== 'hold' && key !== 'asset' && key !== 'transition') return undefined;
+    typedClear.push(key);
+  }
+  if (new Set(typedClear).size !== typedClear.length || (hasHold && typedClear.includes('hold'))) return undefined;
+  return {
+    values: typedValues,
+    clear: typedClear,
+  };
+}
+
+function scalarPatchPayload(operation: TimelinePatchOperation): boolean {
+  return scalarPatchArgs(operation) !== undefined;
 }
 
 function qualified(operation: TimelinePatchOperation): boolean {
@@ -342,8 +363,7 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
     || !equal(Object.keys(command.args.values), ['hold']) || !equal(command.args.clear, [])) {
     throw new ClipMoveError('native clip.set supports only a hold value with an explicit empty clear');
   }
-  const hold = command.args.values.hold;
-  number(hold, 'hold', true);
+  const hold = number(command.args.values.hold, 'hold', true);
   const ctx = new MoveRecording(bundle, { ...command, intent: {} });
   const ref = clipTarget(ctx, command);
   clipBasis(ctx, ref);
@@ -470,21 +490,20 @@ export function captureGenericPatch(
         const move = finishOrdinaryMoveMember(basis, commands.length);
         result = move;
         previewOperations.push({ op: operation.op, target: operation.target, payload: { at: move.previewAt } });
-      } else if (object(operation.payload) && (has(operation.payload, 'values') || has(operation.payload, 'clear'))) {
-        const values = operation.payload.values as Record<string, JSON>;
-        const clear = operation.payload.clear as string[];
-        if (clear.length) {
-          const command = captureOrdinaryScalarMember(after, { select: owners[index], values, clear });
-          result = executeOrdinaryScalarMember(after, command, commands.length);
-        } else {
-          result = executeClipSet(after, captureClipSet(after, owners[index], values.hold as number), commands.length);
-        }
-        previewOperations.push({ op: operation.op, target: operation.target, payload: {
-          values: copy(values), clear: [...clear],
-        } });
       } else {
-        result = executeClipSet(after, captureClipSet(after, owners[index], operation.payload!.hold as number), commands.length);
-        previewOperations.push({ op: operation.op, target: operation.target, payload: { hold: operation.payload!.hold } });
+        const scalar = scalarPatchArgs(operation);
+        if (scalar?.clear.length) {
+          const command = captureOrdinaryScalarMember(after, { select: owners[index], ...scalar });
+          result = executeOrdinaryScalarMember(after, command, commands.length);
+        } else if (scalar) {
+          const hold = number(scalar.values.hold, 'hold', true);
+          result = executeClipSet(after, captureClipSet(after, owners[index], hold), commands.length);
+        } else {
+          result = executeClipSet(after, captureClipSet(after, owners[index], number(operation.payload!.hold, 'hold', true)), commands.length);
+        }
+        previewOperations.push({ op: operation.op, target: operation.target, payload: scalar
+          ? { values: copy(scalar.values), clear: [...scalar.clear] }
+          : { hold: operation.payload!.hold } });
       }
       result.record.ordinal = commands.length;
       result.record.derived_writes.forEach((write) => { write.cause = commands.length; });
@@ -531,12 +550,17 @@ export function projectGenericPatchPreview(patch: TimelinePatch, current: Timeli
       const rows = operation.op === 'track.update' ? target.tracks ?? [] : target.clips;
       const matches = rows.filter((row) => row.id === operation.target);
       if (matches.length !== 1) throw new Error('Native patch preview requires one displayed target');
-      if (operation.op === 'clip.update' && object(operation.payload)
-        && (has(operation.payload, 'values') || has(operation.payload, 'clear'))) {
-        const values = object(operation.payload.values) ? operation.payload.values : {};
-        const clear = Array.isArray(operation.payload.clear) ? operation.payload.clear : [];
-        Object.assign(matches[0], copy(values));
-        for (const key of clear) delete matches[0][key];
+      const scalar = scalarPatchArgs(operation);
+      if (scalar) {
+        const clips = target.clips.filter((row) => row.id === operation.target);
+        if (clips.length !== 1) throw new Error('Native patch preview requires one displayed clip target');
+        const clip = clips[0];
+        Object.assign(clip, copy(scalar.values));
+        for (const key of scalar.clear) {
+          if (key === 'hold') delete clip.hold;
+          else if (key === 'asset') delete clip.asset;
+          else delete clip.transition;
+        }
       } else {
         Object.assign(matches[0], copy(operation.payload));
       }
