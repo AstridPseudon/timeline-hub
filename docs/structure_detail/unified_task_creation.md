@@ -23,6 +23,15 @@ it does not use a Supabase append/import route or publish a whole timeline
 configuration. Immutable CAS media returned by Runtime can still be referenced
 by a normal guarded timeline command.
 
+Editor automatic image placement keeps its original approval, raw occurrence,
+lane, anchor, reserved IDs and canonical closure in the command session's outbox
+before admission. The shared Runtime task-event cursor wakes that session's
+requester; reconnect reads and explicit owner recovery also resume it. Native
+capture uses the saved closure and exact verified output selection. The same
+session pump submits the captured commands, projects the accepted receipt's
+closure and registers its Runtime publication for Undo before reporting saved.
+Task-event cache entries only wake reads; they grant no placement authority.
+
 ## Retired legacy boundary
 
 `supabase/functions/create-task` now performs only CORS/auth bootstrap. An authenticated POST returns the stable non-retryable `410 legacy_task_endpoint_removed` response before any task, route, materialization, or recovery database operation.

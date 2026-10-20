@@ -43,7 +43,7 @@ export type PlacementProgress = {
   continuation?: OutboxPlacementContinuation;
 };
 
-/** Matches generated admitTask serialization. No production caller prepares placement yet. */
+/** Matches generated admitTask serialization. */
 export function preparePlacementTask(input: Admission, key: string): OutboxRequest {
   return { method: 'POST', path: '/v1/tasks', body: JSON.stringify({ schema_version: '1', ...input }), key };
 }
@@ -134,6 +134,8 @@ export function createPlacementRequester(options: {
   outboxes?: ReturnType<typeof createCommitOutbox>;
   // Existing storage semantic port plus its saved owner scope, never the active editor.
   capture?: PlacementRequesterCapture;
+  // The claimed editor session drains captured intents through its normal pump.
+  deferCommit?: boolean;
   build(intent: OutboxIntent, head: OutboxHead, scope: OutboxScope): ReturnType<OutboxRequestBuilder>;
   transmit(request: OutboxRequest, scope: OutboxScope): Promise<OutboxOutcome>;
 }) {
@@ -203,6 +205,8 @@ export function createPlacementRequester(options: {
     });
     try {
       await box.read();
+      if (original.placement?.accepted) return progress('accepted');
+      if (original.placement?.cancelled) return progress('cancelled');
       if (original.conflict !== undefined) return progress('conflict');
       if (!original.placement) {
         const prepared = admission(original.input, scope);
@@ -249,6 +253,7 @@ export function createPlacementRequester(options: {
       const intent = record.intents.find((v) => v.id === original!.placement?.intentId);
       if (intent?.conflict !== undefined) return progress('conflict');
       if (record.intents[0]?.id !== intent?.id || !intent) return progress('queued');
+      if (options.deferCommit) return progress('queued');
       await authorize(scope, box);
       record = await box.dispatch((intent, head) => options.build(intent, head, scope), async (request) => {
         await authorize(scope, box);

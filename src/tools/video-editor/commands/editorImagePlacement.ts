@@ -5,10 +5,14 @@ import type { TimelineCommandBasis } from '../data/DataProvider.ts';
 import { captureAutoBasis } from './autoCapture.ts';
 import { AuthoredState, copy, equal, type AuthoredBundle } from './clipMovePrimitives.ts';
 import type { ClaimedOutbox, OutboxJson, OutboxPlacementContinuation, OutboxScope } from './commitOutbox.ts';
+import type { RuntimeOperation } from '@/integrations/runtime/operationHost.ts';
 
 export const IMAGE_PLACEMENT_UNAVAILABLE = 'Automatic placement is unavailable: the editor operation host/session binding is not qualified. Keep this draft, or uncheck placement to generate for manual use.';
 export type EditorImagePlacementHost = {
   client: NonNullable<CreateTaskOptions['client']>;
+  operation?: RuntimeOperation;
+  taskEventsReady?(): Promise<void>;
+  subscribe?(changed: () => void): () => void;
   isCurrentIdentity(scope: OutboxScope): boolean;
   /** Retires the operation before the editor releases its claimed session. */
   retire?(): void;
@@ -19,6 +23,8 @@ export function createEditorImagePlacement(options: {
   scope: OutboxScope;
   host?: EditorImagePlacementHost;
   current(): { box: ClaimedOutbox; basis: TimelineCommandBasis; bundle: AuthoredBundle };
+  ready?(): void;
+  reserved?(): Promise<void>;
 }): ImageGenerationPlacement {
   const scope = Object.freeze({ ...options.scope });
   function assertCurrent(box: ClaimedOutbox) {
@@ -36,6 +42,9 @@ export function createEditorImagePlacement(options: {
       if (!options.host) throw new Error(IMAGE_PLACEMENT_UNAVAILABLE);
       const { box, basis, bundle } = options.current();
       assertCurrent(box);
+      await options.host.taskEventsReady?.();
+      assertCurrent(box);
+      options.ready?.();
       if (!/^occurrence:[^/]+$/.test(target.ownerRef) || target.ownerRef.includes('::')
         || !target.lane || /\/|::/.test(target.lane)) throw new Error('Choose an explicit raw occurrence and lane');
       const savedTarget = copy(target);
@@ -114,6 +123,7 @@ export function createEditorImagePlacement(options: {
               autoApprove: true, createdIds: [(policy as { clipId: string }).clipId],
             }, () => assertCurrent(box));
             assertCurrent(box);
+            await options.reserved?.();
           },
         },
       };

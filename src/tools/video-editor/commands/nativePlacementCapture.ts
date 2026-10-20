@@ -61,7 +61,7 @@ export async function readNativePlacementCapture(original: OutboxPlacementContin
   return finishAutoCapture(basis, media, verified);
 }
 
-/** Inactive requester callback; exact selected media is rechecked at Runtime acceptance. */
+/** Requester callback; exact selected media is rechecked at Runtime acceptance. */
 export function createNativePlacementCapture(readOriginal: OriginalPlacementRead) {
   const capture = async (original: OutboxPlacementContinuation, scope: OutboxScope, context?: PlacementCaptureContext) => {
     if (!context) throw new Error('Requester effect context is unavailable');

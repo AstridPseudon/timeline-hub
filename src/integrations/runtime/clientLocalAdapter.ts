@@ -128,6 +128,7 @@ export function createEditorImagePlacementHost(operation: RuntimeOperation, proj
   const client = createOperationLocalClient(operation, projectId);
   return {
     client,
+    operation,
     isCurrentIdentity: (scope: OutboxScope) => operation.isCurrentIdentity(scope),
     retire: operation.retire,
   };
