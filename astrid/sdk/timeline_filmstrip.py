@@ -831,19 +831,17 @@ def prepare_filmstrip(
                 _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
             except Exception as exc:
                 _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
-        # The parent projection carries canonical media identities, but the
-        # generic host only accepts a runtime-admitted registry snapshot. Keep
-        # this composed-capture path aligned with managed render admission so
-        # every asset is authorized and materializable before Remotion runs.
+        # The parent projection carries canonical media identities. Check them
+        # against managed render admission so every asset is authorized and
+        # materializable before Remotion runs, but send the projection itself:
+        # Runtime admits a capture only when its registry equals that projection.
         from astrid.packs.rendering.actions.render.managed_timeline import (
             _runtime_snapshot_registry,
         )
         registry_client = remote if callable(
             getattr(getattr(remote, 'media', None), 'list', None)
         ) else client
-        registry = _runtime_snapshot_registry(
-            registry, project_ref=canonical_project, client=registry_client
-        )
+        _runtime_snapshot_registry(registry, project_ref=canonical_project, client=registry_client)
         parent_revision = (
             closure.get('parent_revision_id')
             or capture_row.get('head_revision_id')

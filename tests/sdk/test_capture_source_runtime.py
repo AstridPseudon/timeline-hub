@@ -1,7 +1,7 @@
 """Real CAS/public Runtime admission -> claim -> Agent source materialization.
 
-No SQL fixtures, admission doubles, renderer or sockets. The strict xfails keep
-the canonical-source requirement visible until Runtime verifies capture content.
+No SQL fixtures, admission doubles, renderer or sockets. Runtime certifies capture
+content at admission, so forged captures are refused before any task exists.
 """
 import hashlib
 import json
@@ -210,9 +210,6 @@ def test_missing_candidate_explicit_cas_preview_stays_uncertified(runtime, tmp_p
     assert "authoring_preview" not in task["spec"]["spec"]["inputs"]
 
 
-# Runtime admits a working-copy marker without its candidate today. Restored by Runtime's candidate
-# preflight before any write (rt-m3-capture-candidate-actual-pair; not yet on tl/integration).
-@pytest.mark.xfail(strict=True, reason="Runtime admits a working-copy capture without its candidate certificate")
 @pytest.mark.parametrize("inline", [False, True])
 def test_missing_candidate_certificate_refuses_before_admission_writes(runtime, inline):
     from runtime_protocol.errors import RuntimeErrorBase
@@ -231,10 +228,6 @@ def test_missing_candidate_certificate_refuses_before_admission_writes(runtime, 
             for directory in ("cas", "staging") for path in (root / directory).rglob("*")} == files
 
 
-# All 12 cases are proven admitted: Runtime's public capture admission checks the parent revision row and the
-# working-copy marker, not config/registry/shot digests against the saved or candidate closure. Restored by
-# Runtime verifying capture content (design/runtime-coordination.md "capture content certification").
-@pytest.mark.xfail(strict=True, reason="Runtime admits changed capture content/pins as canonical source")
 @pytest.mark.parametrize("field", ["config", "registry", "shot_digest"])
 @pytest.mark.parametrize("inline", [False, True])
 @pytest.mark.parametrize("working_copy", [False, True])
@@ -261,13 +254,14 @@ def test_arbitrary_capture_cannot_acquire_canonical_source(runtime, tmp_path, fi
     assert values.timeline_source is None
 
 
-def test_replaced_duplicate_capture_ref_is_refused_at_host(runtime, tmp_path):
+def test_replaced_duplicate_capture_ref_is_refused_at_admission(runtime):
+    from runtime_protocol.errors import ValidationError
+
     snapshot = runtime.snapshot()
     replacement = deepcopy(snapshot)
     replacement["config"]["clips"][0]["hold"] = 123
-    task = runtime.admit(snapshot, duplicate=runtime.ref(replacement))
-    with pytest.raises(HostError, match="differs from admitted context"):
-        runtime.materialize(task, tmp_path / "attempt")
+    with pytest.raises(ValidationError, match="differs from admitted authority context"):
+        runtime.admit(snapshot, duplicate=runtime.ref(replacement))
 
 
 def test_native_compiled_capture_does_not_acquire_canonical_source(runtime, tmp_path):
