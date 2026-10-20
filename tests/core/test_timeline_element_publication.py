@@ -63,6 +63,7 @@ def setup_owner(monkeypatch, configured):
                                  'hash', project, (1, 1), (), data, '2026-10-20T00:00:00Z')
         return DomainResult.success(data, receipt=receipt, idempotency_key=kwargs['idempotency_key'])
 
+    owner.schema_inputs = inputs
     owner.commit.side_effect = commit
     return owner, bundle, ref
 
@@ -80,7 +81,8 @@ def test_sameclip_exacthead_publication_preserves_closure_and_user_params(monkey
     body = owner.commit.call_args.args[2]
     assert body['base_revision_id'] == 'head' and body['base_publication_id'] == 'publication'
     assert [c['op'] for c in body['commands']] == ['clip.set-element', 'clip.set', 'clip.set-params']
-    assert body['commands'][0]['args'] == {'elementRef': ref}
+    assert body['commands'][0]['args'] == {
+        'elementRef': ref, 'schema_source': body['commands'][2]['args']['schema_source']}
     assert body['commands'][1]['args'] == {'values': {'hold': 6}, 'clear': []}
     assert body['commands'][2]['args']['values'] == {'chaos': .8}
     assert body['commands'][2]['args']['schema_source']['document_id'] in {
@@ -95,7 +97,7 @@ def test_sameclip_exacthead_publication_preserves_closure_and_user_params(monkey
     assert result.receipt.receipt_id == 'accepted-receipt'
     assert result.idempotency_key == 'edit-element'
     # Mirrors are compiler projections. This helper never patches or prunes them.
-    plan = execute(bundle, body['commands'][:2])
+    plan = execute(bundle, body['commands'][:2], schema_inputs=owner.schema_inputs, realm_id='realm')
     assert plan.bundle['parent']['clips'][1] == bundle['parent']['clips'][1]
     assert plan.bundle['parent']['clips'][0]['opaque'] == {'keep': [None, False]}
     config = plan.bundle['parent']['config']
@@ -151,8 +153,10 @@ def test_element_only_and_same_revision_keep_unknown_props(monkeypatch, configur
     assert result.ok, result.error
     assert result.data['duration'] == 2 and result.data['params'] == clip['params']
     calls = owner.commit.call_args.args[2]['commands']
-    assert [c['op'] for c in calls] == ['clip.set-element', 'clip.set-params']
-    assert calls[-1]['args']['values'] == clip['params'] and calls[-1]['args']['schema_source']
+    assert [c['op'] for c in calls] == ['clip.set-element']
+    assert calls[0]['args']['schema_source']
+    plan = execute(bundle, calls, schema_inputs=owner.schema_inputs, realm_id='realm')
+    assert all(write['path'][0] != 'params' for record in plan.records for write in record['writes'])
 
 
 @pytest.mark.parametrize('params', [{'seed': float('nan')}, {'seed': object()}, [], {'large': 'x' * 16385}])
@@ -163,15 +167,22 @@ def test_invalid_json_params_refuse_before_commit(monkeypatch, configured, param
     owner.commit.assert_not_called()
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
-    'Native clip.set-params requires a value or clear; element-only empty params needs '
-    'a native retained declaration validation operation (outside WC4 scope)'))
-def test_element_only_without_existing_params(monkeypatch, configured):
+@pytest.mark.parametrize('params', [None, {}])
+@pytest.mark.parametrize('existing', [None, {}])
+def test_element_only_without_existing_params(monkeypatch, configured, params, existing):
     owner, bundle, ref = setup_owner(monkeypatch, configured)
-    bundle['parent']['clips'][0].pop('params')
-    result = update(owner, ref)
+    clip = bundle['parent']['clips'][0]
+    clip.pop('params')
+    if existing is not None:
+        clip['params'] = existing
+    result = update(owner, ref, params=params)
     assert result.ok, result.error
     assert result.data['params'] == {}
+    calls = owner.commit.call_args.args[2]['commands']
+    assert [call['op'] for call in calls] == ['clip.set-element']
+    plan = execute(bundle, calls, schema_inputs=owner.schema_inputs, realm_id='realm')
+    assert ('params' in plan.bundle['parent']['clips'][0]) == (existing is not None)
+    assert all(write['path'][0] != 'params' for record in plan.records for write in record['writes'])
 
 
 def test_invalid_known_param_is_validated_in_native_commit(monkeypatch, configured):
@@ -183,9 +194,10 @@ def test_invalid_known_param_is_validated_in_native_commit(monkeypatch, configur
     owner._typed.assert_not_called()
 
 
-def test_wrong_revision_cannot_use_an_admitted_sibling_schema(monkeypatch, configured):
+@pytest.mark.parametrize('params', [None, {}, {'seed': 8}])
+def test_wrong_revision_cannot_use_an_admitted_sibling_schema(monkeypatch, configured, params):
     owner, _, ref = setup_owner(monkeypatch, configured)
-    result = update(owner, {**ref, 'revision': 'sha256:' + '0' * 64}, params={'seed': 8})
+    result = update(owner, {**ref, 'revision': 'sha256:' + '0' * 64}, params=params)
     assert not result.ok and result.error.code == 'validation_error'
     assert owner.commit.call_count == 1
 

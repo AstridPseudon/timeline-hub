@@ -621,13 +621,16 @@
       "properties": {
         "elementRef": {
           "$ref": "#/$defs/ElementRef"
+        },
+        "schema_source": {
+          "$ref": "#/$defs/DocumentPin"
         }
       },
       "required": [
         "elementRef"
       ],
       "additionalProperties": false,
-      "description": "Replace an existing clip elementRef with another revision of the same element id and kind. The retired element_ref alias is removed. There is no clear: a clip keeps its element."
+      "description": "Replace an existing clip elementRef with another revision of the same element id, kind and selected pack owner. Admitted revisions require the exact retained schema_source declaration pin. The retired element_ref alias is removed. There is no clear: a clip keeps its element."
     },
     "ClipAddArgs": {
       "type": "object",

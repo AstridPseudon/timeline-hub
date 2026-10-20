@@ -12,6 +12,7 @@ from astrid.core.element import project_packs as packs
 from astrid.core.receipts.contract import CommandReceipt
 from astrid.sdk.contracts import DomainResult
 from astrid.sdk.timeline import commands, commit
+from astrid.sdk.timeline._clip_commands import capture_clip_add
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._scalar_commands import capture_track_set
 from astrid.sdk.timeline_elements import update_parent_element
@@ -135,7 +136,7 @@ def test_native_element_update_reload_guarded_inverse_and_exact_retry(retained_p
     assert case.head() == head
 
 
-@pytest.mark.parametrize('damage', ['params', 'revision'])
+@pytest.mark.parametrize('damage', ['params', 'revision', 'element-only-revision'])
 def test_native_element_batch_refusal_is_atomic(retained_pack, monkeypatch, damage):
     from runtime_protocol.errors import RuntimeErrorBase
 
@@ -147,6 +148,110 @@ def test_native_element_batch_refusal_is_atomic(retained_pack, monkeypatch, dama
     with pytest.raises(RuntimeErrorBase):
         update_parent_element(owner, case.project, 'film', realm='realm', clip_id='effect',
             element=selected, expected_head=head['revision_id'], duration=6,
-            params={'seed': 11 if damage == 'params' else 8}, idempotency_key='refused-element')
+            params=(None if damage == 'element-only-revision' else
+                    {'seed': 11 if damage == 'params' else 8}), idempotency_key='refused-element')
     assert len(requests) == 1
     assert case.head() == head and case.bundle() == original
+
+
+@pytest.mark.parametrize('existing', [None, {}])
+@pytest.mark.parametrize('params', [None, {}])
+def test_element_only_retained_declaration_survives_removal_restart_and_replay(
+        retained_pack, monkeypatch, existing, params):
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    case = retained_pack
+    row = copy.deepcopy(State(case.bundle()).entity(REF))
+    row.update(id='empty-effect', at=3, opaque={'keep': [None, {}, False]})
+    row.pop('params')
+    if existing is not None:
+        row['params'] = existing
+    ref = 'parent/clip:empty-effect'
+    case.submit(case.request([capture_clip_add(case.bundle(), 'parent', row)]), 'empty-effect')
+    before = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
+    case.definition['schema']['properties']['seed']['maximum'] = 20
+    case.path.write_text(yaml.safe_dump(case.definition))
+    admitted = packs.admit_project_pack('realm', case.project)
+    selected = {key: admitted['elements'][0]['descriptor'][key]
+                for key in ('id', 'kind', 'packId', 'revision')}
+    assert selected['revision'] != row['elementRef']['revision']
+    source = case.service.get_document(case.project, admitted['documentId'])
+    pin = {'document_id': source['document_id'], 'version': source['version'],
+           'content_digest': commit._digest(source['content'])}
+    snapshot = next(item['snapshot_object'] for item in source['content']['admissions']
+                    if item['revision'] == selected['revision'])
+    reads = []
+    original_object = RequestCommitPort.document_object
+
+    def read(port, source_pin, object_id):
+        reads.append((copy.deepcopy(source_pin), object_id))
+        return original_object(port, source_pin, object_id)
+
+    monkeypatch.setattr(RequestCommitPort, 'document_object', read)
+    owner, requests = owner_for(case, monkeypatch)
+    result = update_parent_element(owner, case.project, 'film', realm='realm', clip_id='empty-effect',
+        element=selected, expected_head=case.head()['revision_id'], params=params,
+        idempotency_key='element-only')
+    assert result.ok, result.error
+    assert [call['op'] for call in requests[0]['commands']] == ['clip.set-element']
+    assert requests[0]['commands'][0]['args']['schema_source'] == pin
+    assert reads == [(pin, snapshot['object_id'])]
+    accepted = case.submit(requests[0], 'element-only')
+    document = accepted['data']['canonical_document']
+    assert State(commit.bundle_from_document(document)).entity(ref) == {**row, 'elementRef': selected}
+    assert document['dependency_manifest']['documents'] == [pin]
+    entry = case.service._timeline_commits()[0].history_entry(
+        case.project, 'film', accepted['receipt']['receipt_id'])
+    record = entry['records']['commands'][0]
+    assert [write['path'] for write in record['writes']] == [['elementRef']]
+    assert next(dep['pin'] for dep in record['dependencies'] if dep['key'] == 'params.snapshot') == {
+        'source': pin, 'element': selected, 'object': snapshot}
+    # A later declaration and removal of current selection cannot retarget history.
+    case.definition['schema']['properties']['seed']['maximum'] = 30
+    case.path.write_text(yaml.safe_dump(case.definition))
+    newer = packs.admit_project_pack('realm', case.project)
+    assert newer['elements'][0]['descriptor']['revision'] != selected['revision']
+    current = case.service.get_document(case.project, source['document_id'])
+    case.service.update_document(case.project, current['document_id'], {
+        'expected_version': current['version'], 'content': {**current['content'], 'admissions': []}},
+        idempotency_key='remove-current-selection')
+    shutil.rmtree(case.source_root)
+    shutil.rmtree(case.artifact_root)
+    case.service.close()
+    case.service = RuntimeService(case.root)
+    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    assert case.bundle()['source_mapping']['_runtime_document'] == document
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError('element-only used launcher, local source, cache, or renderer')
+
+    monkeypatch.setattr(packs, '_open_client', forbidden)
+    monkeypatch.setattr(packs, 'resolve_admitted_element', forbidden)
+    monkeypatch.setattr(packs, 'artifact_root', forbidden)
+    monkeypatch.setattr(packs, 'authoring_root', forbidden)
+    with monkeypatch.context() as retry:
+        retry.setattr(commands, 'execute', forbidden)
+        assert case.submit(requests[0], 'element-only') == accepted
+    reads.clear()
+    undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-element-only')
+    restored = undone['data']['canonical_document']
+    assert restored['parent_revision']['payload'] == before['parent_revision']['payload']
+    assert restored['dependency_manifest']['documents'] == [pin]
+    assert reads == [(pin, snapshot['object_id'])]
+    # A fresh intent is based on a closure that authorizes this retained pin.
+    replay_body = case.request(requests[0]['commands'])
+    case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
+                                               values={'label': 'Newer'})]), 'concurrent-label')
+    reads.clear()
+    replayed = case.submit(replay_body, 'replay-element-only')
+    assert replayed['data']['status'] == 'rebased'
+    replayed_document = replayed['data']['canonical_document']
+    replayed_state = State(commit.bundle_from_document(replayed_document))
+    assert replayed_state.entity(ref) == {**row, 'elementRef': selected}
+    assert replayed_state.entity('parent/track:picture')['label'] == 'Newer'
+    assert replayed_document['dependency_manifest']['documents'] == [pin]
+    assert reads and all(item == (pin, snapshot['object_id']) for item in reads)
+    undone = case.submit(case.request([inverse(replayed['receipt']['receipt_id'])]), 'undo-replay')
+    redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'redo-element-only')
+    assert redone['data']['canonical_document'] == replayed_document

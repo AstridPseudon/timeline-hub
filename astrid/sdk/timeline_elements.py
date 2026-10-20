@@ -12,8 +12,7 @@ from typing import Any
 from astrid.core.element.project_packs import _json_digest, _read_document
 from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.documents import Documents
-from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set, capture_clip_set_element
-from astrid.sdk.timeline.commands import execute, validate_command
+from astrid.sdk.timeline.commands import validate_command
 
 
 def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str, clip_id: str,
@@ -61,15 +60,13 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
                 or isinstance(before.get('hold'), bool) or not isinstance(before.get('hold'), (int, float))
                 or any(k in before for k in ('asset', 'file', 'src', 'source', 'from', 'to'))):
             raise ValueError('Update requires an existing generated hold effect without media source trimming')
-        if not isinstance(element, dict) or element.get('kind') != 'effect' or element.get('id') != old_ref.get('id'):
+        if (not isinstance(element, dict) or element.get('kind') != 'effect'
+                or element.get('id') != old_ref.get('id')
+                or old_ref.get('packId') is not None and old_ref['packId'] != element.get('packId')):
             raise ValueError('Update must preserve the existing effect identity')
         target = f'parent/clip:{clip_id}'
-        calls = [capture_clip_set_element(bundle, target, element=element)]
-        if duration is not None:
-            state = execute(bundle, calls).bundle
-            calls.append(capture_clip_set(state, target, values={'hold': duration}))
-        # Read only the selected declaration. Runtime resolves and validates its
-        # retained snapshot at the params stage, after the element revision write.
+        # Runtime validates the selected declaration through its retained snapshot,
+        # even when no params are authored in this edit.
         client = SimpleNamespace(documents=Documents(owner._client))
         document_id, document = _read_document(client, realm, project_id)
         if document is None or document['content']['pack_id'] != element.get('packId'):
@@ -78,10 +75,14 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
             raise ValueError('Element owner/revision is not admitted for this project')
         pin = {'document_id': document_id, 'version': document['version'],
                'content_digest': _json_digest(document['content'])}
-        # An unchanged params write also validates an element-only revision change.
-        calls.append({'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': target,
-                      'args': {'values': copy.deepcopy(params or before.get('params') or {}),
-                               'clear': [], 'schema_source': pin}})
+        calls = [{'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': target,
+                  'args': {'elementRef': copy.deepcopy(element), 'schema_source': pin}}]
+        if duration is not None:
+            calls.append({'schema_version': 1, 'op': 'clip.set', 'version': '1', 'select': target,
+                          'args': {'values': {'hold': duration}, 'clear': []}})
+        if params:
+            calls.append({'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': target,
+                          'args': {'values': copy.deepcopy(params), 'clear': [], 'schema_source': pin}})
         for call in calls:
             validate_command(call)
         committed = owner.commit(project_id, timeline_id, {
