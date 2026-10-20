@@ -681,7 +681,7 @@ def test_catalog_head_fences_each_authenticated_legacy_slot(realm, monkeypatch, 
 
 
 @pytest.mark.parametrize("claim", ["v2", "typed-item"])
-def test_current_door_schema_holds_new_carrier_claims_before_provider(realm, monkeypatch, claim):
+def test_normal_door_admits_carrier_shape_but_still_refuses_invalid_args_before_execution(realm, monkeypatch, claim):
     from runtime_protocol.errors import ValidationError
     from runtime_protocol.timeline_commit_port import route_path
 
@@ -694,11 +694,23 @@ def test_current_door_schema_holds_new_carrier_claims_before_provider(realm, mon
     else:
         command["created"] = ["shot:destination/item:destination-item"]
     body["commands"] = [command]
+    assert not PUBLIC_COMMAND_VALIDATOR.is_valid(command)
     before = snapshot(service)
-    monkeypatch.setattr(service, "_execute_timeline_commit",
-                        lambda *_args, **_kwargs: pytest.fail("held schema claim reached execution"))
+    observed = []
+    def reached_execution(*_args, **_kwargs):
+        observed.append(True)
+        raise RuntimeError("normal carrier reached semantic execution")
+    monkeypatch.setattr(service, "_execute_timeline_commit", reached_execution)
+    with pytest.raises(RuntimeError, match="normal carrier reached semantic execution"):
+        service.commit_timeline(project, "main", body, idempotency_key="held-carrier",
+                                publisher="author", invocation_path=route_path(project, "main"),
+                                authorize=lambda: None)
+    assert observed == [True]
+    assert snapshot(service) == before
+    command["args"]["unknown"] = None
     with pytest.raises(ValidationError):
         service.commit_timeline(project, "main", body, idempotency_key="held-carrier",
                                 publisher="author", invocation_path=route_path(project, "main"),
                                 authorize=lambda: None)
+    assert observed == [True]
     assert snapshot(service) == before

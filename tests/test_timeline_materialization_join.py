@@ -9,6 +9,7 @@ import copy
 import json
 
 import pytest
+from jsonschema import Draft202012Validator
 
 from runtime_protocol.errors import ValidationError
 from runtime_protocol.timeline_commit import CommitRejected
@@ -16,6 +17,7 @@ from runtime_protocol.timeline_commit_port import RequestCommitPort
 from runtime_protocol.timeline_commit_store import digest, request_identity
 from runtime_protocol.timeline_materialization import materialization_join
 from test_timeline_commit_acceptance import realm  # noqa: F401
+from test_command_schema_compatibility import baseline
 from test_timeline_projection_occupancy import (
     accept, image, media_item, proposal, refresh, snapshot, with_media,
 )
@@ -441,11 +443,14 @@ def test_private_port_joins_record_bindings_to_the_sealed_request(realm, damage)
 
 
 @pytest.mark.parametrize("boundary", ["port", "store"])
-def test_current_artifact_holds_source_bound_admission_until_normal_generation(realm, boundary):
+def test_normal_artifact_admits_source_bound_preview_while_public_floor_refuses(realm, boundary):
     pair = seal(joined(realm), preview=True)
     before = snapshot(realm[0])
-    # Pure/private join proofs above do not widen the installed command schema.
-    with pytest.raises(CommitRejected) as error:
-        evaluate(realm, pair, boundary)
-    assert error.value.failure["details"]["reason"] == "invalid_prepared"
+    public = Draft202012Validator(baseline("agent-26ef2bbb"))
+    assert all(not public.is_valid(record["command"]) for record in pair[1]["records"]["commands"])
+    result = evaluate(realm, pair, boundary)
+    assert result["data"]["status"] == "preview"
+    assert result["data"]["canonical_document"] == pair[1]["canonical_document"]
+    assert result["data"]["id_map"] == pair[1]["id_map"]
+    assert result["receipt"] is None
     assert snapshot(realm[0]) == before

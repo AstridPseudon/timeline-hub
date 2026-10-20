@@ -3,7 +3,9 @@ from __future__ import annotations
 import importlib
 import json
 import subprocess
+import sys
 from pathlib import Path
+from types import ModuleType
 from typing import TypedDict, Union, get_args, get_origin, get_type_hints, is_typeddict
 
 import pytest
@@ -73,7 +75,9 @@ def test_object_unions_keep_shared_and_branch_required_fields(tmp_path, monkeypa
     }}}))
     monkeypatch.setattr(timeline_commit_types, "ROOT", tmp_path)
     outputs = timeline_commit_types.render()
-    namespace = {}
+    module = ModuleType("isolated_commit_dtos")
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    namespace = vars(module)
     exec(outputs["runtime_protocol/timeline_commit_types.py"], namespace)
     set_value, clear_value = union_members(namespace["ChangeArgs"], namespace)
     assert set_value.__required_keys__ == {"target", "value"}
@@ -101,4 +105,48 @@ def test_typescript_track_label_positive_and_negative_fixtures():
     subprocess.run([
         "tsc", "--noEmit", "--strict", "--module", "NodeNext", "--target", "ES2022",
         str(ROOT / "tests/fixtures/timeline-commit-types.mts"),
+    ], check=True)
+
+
+@pytest.mark.parametrize(
+    "module_name",
+    ["runtime_protocol.timeline_commit_types", "astrid_runtime_client.timeline_commit_types"],
+)
+def test_registered_command_union_preserves_every_source_branch(module_name):
+    dto = importlib.import_module(module_name)
+    schema = json.loads((ROOT / "contract/schemas/edit-command.json").read_text())
+    for name in schema["$defs"]:
+        assert hasattr(dto, name), name
+    members = union_members(dto.EditCommand, vars(dto))
+    expected = []
+    for clause in schema["$defs"]["EditCommand"]["allOf"]:
+        op = clause["if"]["properties"]["op"]["const"]
+        then = clause["then"]
+        for branch in then.get("anyOf", [then]):
+            expected.append((op, branch["properties"]))
+    assert len(members) == len(expected) == 41
+    assert len({op for op, _ in expected}) == 29
+    for member, (op, properties) in zip(members, expected):
+        hints = get_type_hints(member)
+        assert get_args(hints["op"]) == (op,)
+        version = properties.get("version", {}).get("const")
+        assert get_args(hints["version"]) == ((version,) if version else ())
+        if version is None:
+            assert hints["version"] is str
+        name = properties["args"]["$ref"].rsplit("/", 1)[1]
+        holder = TypedDict("Holder", {"args": getattr(dto, name)})
+        assert hints["args"] == get_type_hints(holder, vars(dto))["args"]
+        assert member.__required_keys__ == {"schema_version", "op", "version", "select", "args"}
+        assert get_args(hints["reads"]) == (dto.AgentRead,)
+    text, clear = union_members(dto.TextBindingSetArgs, vars(dto))
+    assert text.__required_keys__ == {"binding", "text"}
+    assert clear.__required_keys__ == {"binding", "clear"}
+    for branch in (text, clear):
+        assert set(get_type_hints(branch)) == {"binding", "text", "clear"}
+
+
+def test_typescript_registered_command_versions_args_and_public_exports():
+    subprocess.run([
+        "tsc", "--noEmit", "--strict", "--module", "NodeNext", "--target", "ES2022",
+        str(ROOT / "tests/fixtures/timeline-current-union-types.mts"),
     ], check=True)

@@ -140,6 +140,14 @@ def test_union_cannot_hide_sibling_constraints_and_unknown_changes_require_revie
     assert compatibility_errors(previous, baseline())
 
 
+def test_unknown_keyword_with_null_value_is_not_treated_as_absent():
+    previous = baseline('runtime-0.2.2')
+    current = copy.deepcopy(previous)
+    current['$defs']['ID']['unrecognizedValidationKeyword'] = None
+    assert compatibility_errors(previous, current)
+    assert legacy_022_compatibility_errors(previous, current)
+
+
 def test_equivalent_refs_pass_but_unproductive_ref_cycles_require_review():
     current = baseline()
     current['$defs']['Alias'] = copy.deepcopy(current['$defs']['ClipMoveArgs'])
@@ -316,4 +324,23 @@ def test_normal_generation_refuses_s1_without_s2_element_pin_before_any_write(tm
     assert result.returncode != 0
     assert 'command schema compatibility failed against agent-26ef2bbb.json' in result.stderr
     assert '/ClipSetElementArgs/properties/schema_source' in result.stderr
+    assert file_bytes(tmp_path) == before
+
+
+@pytest.mark.parametrize('check', [False, True], ids=['regenerate', 'check'])
+def test_normal_generation_refuses_unreviewed_source_without_writes(tmp_path, check):
+    generator_checkout(tmp_path)
+    candidate = json.loads((ROOT / 'contract/schemas/edit-command.json').read_bytes())
+    candidate['description'] = 'Compatible content is insufficient without exact frozen bytes.'
+    source = tmp_path / 'unreviewed-source.json'
+    source.write_text(json.dumps(candidate))
+    before = file_bytes(tmp_path)
+    result = subprocess.run(
+        [sys.executable, str(tmp_path / 'generators/generate.py'),
+         '--agent-command-schema', str(source), *(['--check'] if check else [])],
+        cwd=tmp_path, env={**os.environ, 'PYTHONDONTWRITEBYTECODE': '1'},
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode != 0
+    assert 'does not match the reviewed private freeze' in result.stderr
     assert file_bytes(tmp_path) == before

@@ -1,4 +1,4 @@
-"""Conservative test-only containment; unsupported changes require explicit review."""
+"""Conservative schema containment; unsupported changes require explicit review."""
 from __future__ import annotations
 
 import copy
@@ -8,29 +8,26 @@ from jsonschema import Draft202012Validator
 
 
 def legacy_022_compatibility_errors(previous, current):
-    """Prove the five 0.2.2 regex widenings, then check the complete schema.
+    """Prove containment directly or through the five 0.2.2 regex widenings.
 
-    Removing only the new alternatives yields a subset of the candidate's
-    language. It must equal the exact old pattern; arbitrary regex rewrites
-    still fail the ordinary conservative checker.
+    Adding only these historical alternatives produces a superset of the old
+    schema. The ordinary checker must then prove that this entire intermediate
+    schema is contained in the candidate, including retained union branches.
+    No candidate constraints are removed or rewritten.
     """
-    projected = copy.deepcopy(current)
+    direct = compatibility_errors(previous, current)
+    if not direct:
+        return []
+    intermediate = copy.deepcopy(previous)
     for name in ('ScopedId', 'EntityRef', 'TargetKey', 'AnchorIdentity'):
-        node = projected.get('$defs', {}).get(name, {})
-        old = previous['$defs'][name]['pattern']
-        widened = old.replace('(?:clip|track)', '(?:clip|track|asset)').replace(
+        node = intermediate['$defs'][name]
+        node['pattern'] = node['pattern'].replace('(?:clip|track)', '(?:clip|track|asset)').replace(
             '|occurrence:[^/]+(?:/shot)?', '|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?')
-        if node.get('pattern') == widened:
-            node['pattern'] = old
-    for condition in projected.get('$defs', {}).get('EditCommand', {}).get('allOf', []):
-        if condition.get('if', {}).get('properties', {}).get('op', {}).get('const') == 'track.set':
-            node = condition.get('then', {}).get('properties', {}).get('select', {})
-            old = next(c for c in previous['$defs']['EditCommand']['allOf']
-                       if c['if']['properties']['op']['const'] == 'track.set')
-            pattern = old['then']['properties']['select']['pattern']
-            if node.get('pattern') == pattern.replace('parent/track:', '(?:parent|occurrence:[^/]+)/track:'):
-                node['pattern'] = pattern
-    return compatibility_errors(previous, projected)
+    for condition in intermediate['$defs']['EditCommand']['allOf']:
+        if condition['if']['properties']['op']['const'] == 'track.set':
+            node = condition['then']['properties']['select']
+            node['pattern'] = node['pattern'].replace('parent/track:', '(?:parent|occurrence:[^/]+)/track:')
+    return compatibility_errors(intermediate, current)
 
 
 def compatibility_errors(previous, current):
@@ -84,7 +81,8 @@ def compatibility_errors(previous, current):
         for key in old.keys() | new.keys():
             a, b = old.get(key), new.get(key)
             at = f'{path}/{key}'
-            if same(a, b) or key in {'title', 'description', '$comment', 'examples', 'default'}:
+            if (key in old and key in new and same(a, b)) or key in {
+                    'title', 'description', '$comment', 'examples', 'default'}:
                 continue
             if key == '$defs':
                 for name, value in (a or {}).items():

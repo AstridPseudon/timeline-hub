@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import yaml
@@ -12,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _refine(base: dict, branch: dict) -> dict:
     """Keep shared object fields when a union branch narrows their constraints."""
+    if "$ref" in branch or "$ref" in base and "type" in branch:
+        return deepcopy(branch)
     result = {**base, **branch}
     if "properties" in base or "properties" in branch:
         properties = base.get("properties", {})
@@ -42,13 +45,32 @@ def render() -> dict[str, str]:
     definitions["MutationReceipt"] = openapi["components"]["schemas"][
         "CommittedMutation"
     ]["properties"]["receipt"]
+    # The registered operation clauses narrow the common envelope. Emit those
+    # complete branches, including both versions where the source admits them.
+    command = definitions.get("EditCommand", {})
+    if "allOf" in command:
+        base = {key: value for key, value in command.items() if key != "allOf"}
+        variants = []
+        operations = set()
+        for clause in command["allOf"]:
+            condition = clause.get("if", {})
+            op = condition.get("properties", {}).get("op", {}).get("const")
+            if (not isinstance(op, str) or op in operations
+                    or set(clause) != {"if", "then"}
+                    or condition != {"properties": {"op": {"const": op}}, "required": ["op"]}):
+                raise ValueError("unsupported EditCommand operation conditional")
+            operations.add(op)
+            narrowed = _refine(base, {"properties": {"op": {"const": op}}})
+            then = clause["then"]
+            variants.extend(_refine(narrowed, branch) for branch in then.get("anyOf", [then]))
+        definitions["EditCommand"] = {"anyOf": variants}
     pending = list(definitions)
     for name in pending:
         schema = definitions[name]
         for keyword in ("oneOf", "anyOf"):
             base = {key: value for key, value in schema.items() if key != keyword}
             for index, variant in enumerate(schema.get(keyword, [])):
-                if "properties" in variant:
+                if "properties" in variant or "properties" in base and "required" in variant:
                     variant = _refine({"type": "object", **base}, variant)
                     variant_name = f"{name}Variant{index + 1}"
                     definitions[variant_name] = variant
@@ -83,7 +105,7 @@ def render() -> dict[str, str]:
                     for token in path:
                         value = value[token.replace("~1", "/").replace("~0", "~")]
                     return expression(value, language)
-                return repr(name) if py else name
+                return f"ForwardRef({name!r}, module=__name__)" if py else name
             # Canonical payloads remain open, owned by their existing schemas.
             return "dict[str, Any]" if py else "Record<string, unknown>"
         if "const" in schema or "enum" in schema:
@@ -174,7 +196,7 @@ def render() -> dict[str, str]:
     python = [
         '"""Generated timeline commit DTOs; do not edit by hand."""',
         "",
-        "from typing import Any, Literal, NotRequired, TypedDict, Union",
+        "from typing import Any, ForwardRef, Literal, NotRequired, TypedDict, Union",
         "",
     ]
     typescript = ["/** Generated timeline commit DTOs; do not edit by hand. */", ""]

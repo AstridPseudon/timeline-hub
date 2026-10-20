@@ -5,7 +5,7 @@ import copy
 import hashlib
 import json
 from pathlib import Path
-from typing import get_args, get_type_hints
+from typing import TypedDict, get_args, get_type_hints
 
 import astrid_runtime_client as client
 import pytest
@@ -46,7 +46,7 @@ def command(op, select, args):
 
 def test_exact_frozen_schema_and_operation_inventory_are_packaged():
     raw = (ROOT / "contract/schemas/edit-command.json").read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
+    assert hashlib.sha256(raw).hexdigest() == "613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3"
     schema = json.loads(raw)
     assert len(schema["$defs"]) == 55
     assert len(schema["$defs"]["EditCommand"]["allOf"]) == 29
@@ -121,8 +121,12 @@ def test_public_python_union_types_and_nested_item_references_resolve():
     assert get_type_hints(dto.ProducerGuardArgs)["pin"] is dto.ProducerAttemptPin
     assert get_type_hints(dto.ProducerAttemptPin)["admitted_target"] is dto.ProducerAdmittedTarget
     assert get_type_hints(dto.SettledProducerProposal)["producer"] is dto.ProducerIdentity
-    assert get_args(get_type_hints(dto.SettledProducerProposal)["commands"]) == (dto.EditCommand,)
-    assert get_args(get_type_hints(dto.EditCommand)["reads"]) == (dto.AgentRead,)
+    holder = TypedDict("Holder", {"command": dto.EditCommand})
+    resolved_command = get_type_hints(holder, vars(dto))["command"]
+    assert get_args(get_type_hints(dto.SettledProducerProposal)["commands"]) == (resolved_command,)
+    branches = get_args(resolved_command)
+    for branch in branches:
+        assert get_args(get_type_hints(branch)["reads"]) == (dto.AgentRead,)
     assert get_args(get_type_hints(dto.AgentRead)["path"]) == (str,)
     assert get_args(get_type_hints(dto.PlacementCreateArgs)["consumed"]) == (str,)
     assert get_type_hints(dto.OccurrenceAddMediaArgs)["row"] is dto.ClipAddArgsRow
@@ -178,3 +182,40 @@ def test_element_schema_source_keeps_existing_document_pin_constraints(pin, vali
     else:
         with pytest.raises(ValidationError):
             validate_commit_value(value, "EditCommand")
+
+
+NEW_OPERATION_CASES = [
+    ("timeline.assembled-target", "parent", {"replace_clips": []}),
+    ("clip.add-media", "parent", {"row": {"id": "c", "clipType": "media", "track": "v", "at": 0, "hold": 1}, "media": MEDIA}),
+    ("timeline.init", "parent", {"name": "", "slug": "t", "output": {"resolution": "1280x720", "fps": 30, "file": "output.mp4", "background": None, "background_scale": None}}),
+    ("clip.anchor", "parent/clip:c", {"field": "on", "declaration": None, "choice": None}),
+    ("occurrence.create", "parent", {"occurrence_id": "o", "shot_id": "s", "name": "", "track": "v", "on": 0, "duration": 1}),
+    ("clip.swap-media", "parent/clip:c", {"old_media": MEDIA, "media": MEDIA}),
+    ("text-binding.set", "occurrence:o", {"binding": {"kind": "voiceover_script", "slot": None}, "clear": True}),
+]
+
+
+def test_all_frozen_version_branches_accept_native_args_and_remain_closed():
+    schema = json.loads((ROOT / "contract/schemas/edit-command.json").read_bytes())
+    examples = {op: (select, args) for op, select, args in CASES + NEW_OPERATION_CASES}
+    assert len(examples) == 29
+    v2_operations = set()
+    for clause in schema["$defs"]["EditCommand"]["allOf"]:
+        op = clause["if"]["properties"]["op"]["const"]
+        select, args = examples[op]
+        then = clause["then"]
+        versions = [v["properties"].get("version", {}).get("const", "1") for v in then.get("anyOf", [then])]
+        for version in versions:
+            value = {**command(op, select, args), "version": version}
+            before = copy.deepcopy(value)
+            validate_commit_value(value, "EditCommand")
+            assert value == before
+            value["args"]["unknown"] = None
+            with pytest.raises(ValidationError):
+                validate_commit_value(value, "EditCommand")
+        if "2" in versions:
+            v2_operations.add(op)
+        if op != "track.create":  # The frozen source leaves its version open.
+            with pytest.raises(ValidationError):
+                validate_commit_value({**command(op, select, args), "version": "3"}, "EditCommand")
+    assert len(v2_operations) == 12

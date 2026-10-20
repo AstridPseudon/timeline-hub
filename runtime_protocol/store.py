@@ -2830,6 +2830,16 @@ class RealmStore:
         if not isinstance(dependencies, dict):
             raise ValidationError("runtime_dependencies must be an object")
         edges = dependencies.get("edges")
+        if (
+            "edges" not in dependencies
+            and set(dependencies) == {"publication"}
+            and isinstance(dependencies["publication"], dict)
+            and set(dependencies["publication"]) == {"admitted_target"}
+        ):
+            # A normal producer can retain the original publication target
+            # alongside explicit CAS inputs.  Only the edge-bearing shape is
+            # the bounded two-predecessor continuation form below.
+            return ()
         if not isinstance(edges, list) or len(edges) != 2:
             raise ValidationError("runtime continuation requires exactly two ordered dependency edges")
         aggregation = dependencies.get("aggregation")

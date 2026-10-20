@@ -92,7 +92,7 @@ def operation_index(manifest_path: Path = MANIFEST) -> list[str]:
     return [line.split(":", 1)[1].strip() for line in text.splitlines() if re.match(r"^\s+operationId:", line)]
 
 
-def validate_command_schema() -> None:
+def validate_command_schema(source_path: Path | None = None) -> None:
     """Require the candidate to contain published schemas and the Agent freeze.
 
     Keep older snapshots immutable; advance this floor only after an authorized
@@ -103,7 +103,7 @@ def validate_command_schema() -> None:
 
     fixtures = ROOT / "tests/fixtures/published-command-schemas"
     sources = json.loads(_regular(fixtures / "sources.json", "published schema sources"))
-    candidate = json.loads(_regular(ROOT / "contract/schemas/edit-command.json", "candidate command schema"))
+    candidate = json.loads(_regular(source_path or ROOT / "contract/schemas/edit-command.json", "candidate command schema"))
     # The Agent freeze is a staging floor, not a published Runtime release.
     floors = {
         "runtime-0.2.3.json": "472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9",
@@ -123,6 +123,15 @@ def validate_command_schema() -> None:
                 f"command schema compatibility failed against {filename}:\n  "
                 + "\n  ".join(errors)
             )
+
+
+def command_source(path: Path) -> bytes:
+    """Import only the reviewed private Agent freeze, without rewriting it."""
+    raw = _regular(path, "Agent command source")
+    pin = json.loads(_regular(ROOT / "generators/agent-command-source.json", "Agent command source pin"))
+    if hashlib.sha256(raw).hexdigest() != pin["sha256"]:
+        raise SystemExit("Agent command source does not match the reviewed private freeze")
+    return raw
 
 
 def render_python_client(manifest_path: Path = MANIFEST) -> str:
@@ -150,7 +159,7 @@ def render_typescript_client() -> str:
     source = _regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")
     agent = json.loads(_regular(ROOT / "contract/schemas/edit-command.json", "command schema"))["$defs"]
     native_types = [name for name in agent if name.endswith("Args") or name.startswith("Producer")]
-    native_types += ["ElementRef", "SettledProducerProposal", "DocumentPin", "VerifiedDocument", "VerifiedDocumentObject"]
+    native_types += ["ElementRef", "SettledProducerProposal", "WordAnchor", "DocumentPin", "VerifiedDocument", "VerifiedDocumentObject"]
     native_exports = 'export type { ' + ', '.join(native_types) + ' } from "./timeline-commit-types.js";'
     source = re.sub(r'^export type \{ [^\n]*\bClipAddArgs\b[^\n]* from "\./timeline-commit-types.js";\n', '', source, flags=re.MULTILINE)
     source = native_exports + "\n" + source
@@ -271,11 +280,22 @@ def render(manifest_path: Path = MANIFEST, component_path: Path = COMPONENT_MANI
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="fail if generated metadata differs")
+    parser.add_argument("--agent-command-schema", type=Path, help="read-only schema from the reviewed private Agent freeze")
     parser.add_argument("--component-manifest", default=str(COMPONENT_MANIFEST))
     parser.add_argument("--python-output", default=str(PYTHON_CLIENT_OUTPUT), help="Python client output path (for isolated checks)")
     args = parser.parse_args()
     sys.path.insert(0, str(ROOT))
-    validate_command_schema()
+    validate_command_schema(args.agent_command_schema)
+    if args.agent_command_schema is not None:
+        raw = command_source(args.agent_command_schema)
+        output = ROOT / "contract/schemas/edit-command.json"
+        if args.check:
+            if _regular(output, "command schema") != raw:
+                print("stale generated file: contract/schemas/edit-command.json")
+                return 1
+        else:
+            output.write_bytes(raw)
+    command_source(ROOT / "contract/schemas/edit-command.json")
     sys.path.insert(0, str(ROOT / "generators"))
     from timeline_commit_types import render as render_commit_types
     generated = render_commit_types()
