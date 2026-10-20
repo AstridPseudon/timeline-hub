@@ -1,0 +1,2 @@
+# Current PCM worker scopes — 07:34 UTC
+vw-m3-pcm-producer-red-fix owns Python normal_audio.py and slice transport/phase tests. vw-m3-long-source-current-tests owns Node decoder helper and NEW large/gapless test file only. Both base same currentproducer; no other edits without written coordination here. Longsource worker must inspect existing Nodehelper before changing: if >64MiB/MP3 fixes already included, tests-only is sufficient. Integrate narrow disjoint diffs after review. Source activation remains held until actual trusted caller/servedWAV.
