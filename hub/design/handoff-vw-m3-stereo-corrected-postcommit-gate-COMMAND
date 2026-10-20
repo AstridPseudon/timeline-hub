@@ -1,0 +1,31 @@
+# Stereo corrected post-commit gate command
+
+The exact App ref is `6323b5bd6fdfc1bb680eba6f8a1a46f21acf6adb` on
+`tl/vw-m3-stereo-owned-state-guard-fix`. The prior source worktree was
+recycled, so this command is intentionally **not run by this worker**.
+
+After the manager rehydrates a clean worktree at that exact commit, the
+literal no-grant pure preflight is:
+
+```bash
+APP=/home/user/work/wt/vw-m3-stereo-owned-state-guard-fix
+TAB_AUDIO_RUN_MODE=stereo \
+TAB_AUDIO_LOCK_PATH=/tmp/timeline-viewing-browser.lock \
+TAB_AUDIO_RUN=0 \
+bash "$APP/tests/e2e/timeline/setup-tab-audio-capture.sh"
+```
+
+Required checks before accepting its output:
+
+- `APP` is clean and remains at the exact commit/tree above;
+- `node_modules` is an own symlink to the readonly private12 graph;
+- Node resolves to the admitted existing `v20.19.4` binary and hash;
+- output reports the full tracked hash, 19-file input hash, private12/public12
+  graph, six peer files, Chrome155 full tree, one-test discovery, flock,
+  10-GiB floor, and owned `0700` short temp;
+- no grant, browser, capture, render, network, install, or full suite is
+  introduced by this command.
+
+The manager must publish a fresh fingerprint and create a fresh manager-only
+grant after reviewing that output. It must not reuse any prior grant, marker,
+source path, or Node alias.

@@ -1,0 +1,13 @@
+# Exact delta manifest
+
+Base App: `30b8df2895536c471e270faf83ce710acd847065` / tree `0bf9c9f7fb849cb0938bf29fc72eca069014f623`.
+
+| Unit | Immutable source | Paths | Scope |
+| --- | --- | ---: | --- |
+| Stored cap | `4720a864c81dc7002a9e95dbacf10cec8df5da81` + `1fe351b9847d35db66ab294a6edf631447fa78ce` + `93696b62f` | 22 | App cap source/tests only; final ES2020 own-property corrections included |
+| Native fixture | `e4c7a3792` over `b1ef4b9b9` | 5 | source-attributed three-media fixture/harness/tests only |
+| Tab source | `247bfce2721e4fd0804faf8313b394e94157c2ee` over `c60cef9470d0e02abc42c4850cdbd4d1112e7c76` over `b1ef4b9b9` | 6 | original four-case parity + fifth tab case + corrected fail-closed guard |
+
+Final changed path set is exactly the union of those three source path sets (33 paths). Controller tuple literals are the only source-freeze rebinding: App13 is the full `30b8df2895536c471e270faf83ce710acd847065` and tree `0bf9c9f7fb849cb0938bf29fc72eca069014f623`; Composition13 source is full `af98594dce80c0350a1fc21dfc44839b2279edf1`. No other source path was added.
+
+Never merge this composite wholesale. Individual units remain owner-gated.

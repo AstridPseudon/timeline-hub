@@ -1,0 +1,61 @@
+{
+  "verdict": "NARROW_REJECT",
+  "appCommit": "6323b5bd6fdfc1bb680eba6f8a1a46f21acf6adb",
+  "appParent": "bca5ed45cb741e0cb7ea47ed81baad914dfe983c",
+  "appTree": "132ed7f49cc42398676c3d32f80d445ca106e9be",
+  "patchSha256": "89832a12796edb0b5f9c748980bf5d7cc8e16b1205cb87b6844c59a7aaf4c171",
+  "controllerSha256": "0558f709f631ce1103a3404b1c8688fbbf9f6e2c00e025b865707d7bfa698f2e",
+  "launcherSha256": "1842baf2582b3dd4aa5e58f1d1d3683fd08bd59c834c261c37935c10eec4a2af",
+  "sourceWorktree": {
+    "path": "/home/user/work/wt/vw-m3-stereo-owned-state-guard-fix",
+    "exists": false,
+    "prepare": "NOT_RUN"
+  },
+  "source": {
+    "trackedFileCount": 5835,
+    "fullTrackedHash": "dc912e773a36c40271b13ab0abdeac6824cef394790d26658952e7c5763630fb",
+    "inputFileCount": 19,
+    "inputHash": "a75115d344f8e67d94401c144a740700cc82a365d94c03ae776f2c3bfc1adba6",
+    "instrumentFileCount": 8,
+    "instrumentFiles": [
+      "tests/e2e/timeline/setup-tab-audio-capture.sh",
+      "tests/e2e/timeline/tab-audio-capture.analysis.mjs",
+      "tests/e2e/timeline/tab-audio-capture.analysis.test.mjs",
+      "tests/e2e/timeline/tab-audio-capture.config.ts",
+      "tests/e2e/timeline/tab-audio-capture.controller.mjs",
+      "tests/e2e/timeline/tab-audio-capture.controller.test.mjs",
+      "tests/e2e/timeline/tab-audio-capture.environment.test.mjs",
+      "tests/e2e/timeline/tab-audio-capture.probe.ts"
+    ]
+  },
+  "node": {
+    "version": "v20.19.4",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node",
+    "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "exists": true
+  },
+  "privateGraph": {"sha256": "4a54ed6f3300cba740b377e3c780f330996ead23147647f9c963ed4dd5bdd7a4", "fileCount": 32382},
+  "compositionPublic12": {"sha256": "71b44e67e4eeffb0f904bb3a21e24d12ba06c4b2e41d43592a859aced3bb3139", "fileCount": 77},
+  "packageGraphSha256": "c433236a7e8626217be122d71db0bccd980db4c04c03f45d5cf2d5c9c86039fb",
+  "chrome155": {
+    "version": "155.0.8059.84",
+    "packageVersion": "155.0.8059.84-1",
+    "executableSha256": "cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76",
+    "treeSha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e",
+    "treeFileCount": 255
+  },
+  "discovery": {
+    "testCount": 1,
+    "outputSha256": "3016ab8e145a5913225475b1ec9967e674e475503a7ec0861c1f92cd74fb6d44"
+  },
+  "operational": {
+    "freeBytes": 12240584704,
+    "flockReentry": "refused-held-lock",
+    "shortTempMode": "0700",
+    "quietGuardsVisible": false,
+    "grant": "NOT_CREATED",
+    "browser": "NOT_LAUNCHED",
+    "capture": "NOT_RUN"
+  },
+  "targetedTests": {"analysisControllerEnvironment": "PASS", "syntax": "PASS", "playwrightList": "PASS"}
+}

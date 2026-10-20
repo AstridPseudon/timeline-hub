@@ -1,0 +1,22 @@
+# Source-freeze command handoff
+
+App source: `30b8df2895536c471e270faf83ce710acd847065`, candidate working-tree tree: `0be6372fcd92744fe72d447e35a78d1dfab49d4d`.
+
+Offline discovery (allowed now):
+
+```sh
+PWTEST_CACHE_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-reviewed-fourcase-cohort-compose/pw-cache \
+PLAYWRIGHT_OUTPUT_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-reviewed-fourcase-cohort-compose/pw-output \
+node tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs --discover /home/user/work/wt/vw-m3-reviewed-fourcase-cohort-compose
+```
+
+Future manager-only readiness probe after App-first qualification, fresh private graph, Node20.19.4, fresh grant, and one-shot marker are all available:
+
+```sh
+node tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs --ready \
+  /home/user/work/wt/vw-m3-reviewed-fourcase-cohort-compose \
+  /home/user/work/agent \
+  /home/user/work/runtime
+```
+
+This worker did not request the central actual suite. `--ready` currently refuses because App13 consumer adoption is still pending.
