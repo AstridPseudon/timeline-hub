@@ -921,7 +921,7 @@ async function expectFreshPreviewUnavailable(page: Page, astrid: AstridCli, harn
     const targetRevision = target.data.accepted_revision_id;
     await expect(page.getByTestId('preview-revision-label')).toHaveText(`Committed ${retainedRevision}`, CEILING);
     await expect(page.getByTestId('preview-revision-unavailable'))
-      .toHaveText(`Preview of ${targetRevision} unavailable`, CEILING);
+      .toHaveText('Preview target unavailable', CEILING);
     return targetRevision;
   } finally {
     await page.unroute(/\/timelines\/[^/]+\/composition-revisions\/[^/]+$/);
