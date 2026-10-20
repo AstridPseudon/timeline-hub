@@ -86,7 +86,7 @@ acceptance. This proves same project, durable available/promoted lifecycle,
 unique registered variant and exact completed settlement provenance. An assembler
 role flag, bare CAS digest, or a lookup of today's primary is insufficient. Keep
 ordinary generation publication/settlement; do not synthesize missing variants.
-The new test's role filter is **not** a registered-lifecycle authorization proof.
+The prior assembler spike's role filter is **not** a registered-lifecycle authorization proof.
 
 ## Exact settled proposal and closed command carrier
 
@@ -310,10 +310,29 @@ orchestration and session-recovery neighbors were also run:
 PYTHONPATH=/home/user/work/wt/agt-m2-render-producer-plan PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_assemble_timeline.py tests/packs/video_editing/test_runtime_publication_chain.py::test_render_publication_worker_has_no_project_or_task_write_scope tests/packs/video_editing/test_runtime_publication_chain.py::test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke tests/packs/video_editing/test_runtime_orchestration.py tests/sdk/test_timeline_sync.py
 ```
 
-**83 passed in 8.20s.** Steps 1–3 above are the required future acceptance recipe,
+**Prior worker: 83 passed in 8.20s.** Steps 1–6 above are the required future acceptance recipe,
 not executed evidence. Socket/browser/full suites, production credentials and
 Runtime retry were not exercised. Use the central test service for paired/socket
 tests, e.g. after implementation:
 `request-test <implementation-worker> targeted --files "tests/editing_conformance/test_commit_runtime_m1.py tests/packs/video_editing/test_runtime_publication_chain.py"`,
 then `wait-test <returned-result-dir>`; extend these real suites with the cases
 above rather than add an isolated fake acceptance harness.
+
+
+Settled-contract worker verification (2026-10-20; current worktree, no installs):
+
+```sh
+PYTHONPATH=/home/user/work/wt/agt-m2-settled-proposal-contract PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_settled_proposal_contract.py tests/editing_conformance/test_recipe_m1_commands.py
+```
+
+**86 passed in 3.22s** (30 new proposal/carrier/hash cases + 56 existing recipe
+cases). The first run exposed a test's wrong schema root (EditCommand instead of
+CommandBatch); corrected to the existing CommandBatch definition, no schema or
+product change. Digest mutations demonstrate binding, not Runtime refusal.
+The envelope/recorder case proves the existing closed carrier and authority
+output shape only; the proposed guard is not registered or executed.
+Re-ran the prior exact 83-case command above with only PYTHONPATH changed to this
+worktree: **83 passed in 8.17s**. Existing source tests were not rewritten.
+Touched test Ruff and `git diff --check` passed. Full/make check, socket/browser,
+real-credential acceptance, cancellation/one-shot races and render admission were
+not run. Product implementation and all M2 merges remain held for PLAN M1.

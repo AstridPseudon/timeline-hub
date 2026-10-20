@@ -303,3 +303,140 @@ Current `config_source` rejects this actual document kind and cannot supply
 resource bytes: full save wiring and flipping three end-to-end proof xfails
 remain blocked until the owned agreed seam exists. Pure resolver/real-admission
 fixture proofs proceed now. All M2 integration merges remain held for PLAN M1.
+
+## Runtime selected-pack worker — proposed existing source carrier (Agent agreement needed)
+
+`rt-m2-selected-pack-input` proposes extending ONLY `config_source(DocumentPin)` to
+also accept the actual `astrid.project-pack` kind, returning the unchanged
+`VerifiedDocument {pin, document}` with schema `astrid.project-pack/v1` and binding
+`project-packs`. Existing declared-pin or authorized closure/history reachability
+checks remain mandatory; accepted manifest `documents` and recorder `source`
+dependencies retain the complete exact Document in existing retention tables.
+Pin discovery belongs to authoring: existing `resolve_admitted_element` binding
+already gives documentId/documentVersion/contentDigest; carry its ordinary
+DocumentPin through the existing command/dependency carrier, never inline schema.
+Runtime can validate the existing pack payload structure, stable project-scoped
+Document identity, owner and admission identities/digests. Agent must still select
+exact packId/id/kind/revision and verify the existing snapshot with its resolver.
+
+Important source fact: existing admission Documents contain only
+`{schema,pack_id,source_binding_key,relative_manifest,admissions}`; each admission
+is `{id,kind,revision,snapshot_digest}`. Declaration/source files and build receipt
+are local Agent artifact files, absent from Runtime CAS. No existing DocumentPin
+identifies those bytes. Please agree how the existing immutable snapshot is
+captured/retained without a new manifest format or caller-inline schema. Runtime
+will not pretend retaining the admission digest alone retains the declaration.
+The bounded host seam can be implemented/tested while Agent factors resolution;
+no artifact/schema/client pin bump or integration merge is included.
+
+
+## Agent settled-proposal worker — golden and admitted-target location
+
+Consumed Runtime concrete-contract reply above; aligned with
+`producer-commit-port.md` exact method/return/pin, unique `result.outputs` descriptor
+`authoring_proposal`, verified CAS size/raw SHA and canonical payload recheck,
+private capture/record/request bijection, checkpoint receipt in same acceptance
+transaction, and once-per-TASK consumption (undo/new attempt does not reset).
+Source/evidence and updated acceptance recipe are in
+`design/m2-render-producer-contract.md`; previous 83-pass record preserved.
+Golden `tests/editing_conformance/fixtures/settled_proposal_move.json` on
+`tl/agt-m2-settled-proposal-contract`: canonical proposal digest
+`sha256:a4939d8873bd3bdc4f8eb79fc973267b0b1e37bb468d89f9ea9ca3d635de0a1b`.
+Existing captured rational-fps clip.move only; no assembled-media claim.
+
+Proposed exact admitted original head location for OWNER review:
+`spec.runtime_dependencies.publication.admitted_target` = the same closed four-field
+object in pin/proposal, alongside existing `publication.render`. Existing task spec
+is open capability data; no new Task/CommitRequest DTO. Runtime must compare run
+project/admission project + any legacy timeline aliases and original request base;
+missing pair refuses, never infer it from numeric expected_version. Existing
+`build_stitch_admission` does not yet emit this pair: future coordinated builder
+work, not claimed present. Please include this path in your port doc/review.
+
+Canonical numeric profile deliberately reuses Agent `_json`/Runtime canonical_json
+with finite validation, not JCS: float 1.0 differs from integer 1, exponent spelling
+follows Python, Unicode scalars sort without NFC. Plain App JSON.stringify will
+not preserve all such representations. App must qualify exact output forwarding
+with these vectors; do not silently normalize/recapture between settlement and
+commit. No product consumer changed. Keep cancellation withdrawal and persisted
+completed-epoch restart questions visible for manager resolution as in Runtime's
+doc; they do not restore the superseded live-delivery/lease requirement.
+
+
+## Agent selected-schema worker — reply to Runtime carrier proposal
+
+Agree extending existing `config_source(DocumentPin)` for the actual pack kind,
+unchanged VerifiedDocument and existing declaration/reachability/retention checks.
+Do not freeze a new port method/DTO. Pure Agent API now at
+`/home/user/work/wt/agt-m2-pack-schema-capture/astrid/core/element/project_packs.py`
+`admitted_element_descriptor(realm, project, reference, verified, files, build_receipt)`.
+`files` is an internal Python map of canonical pack-relative paths to immutable
+bytes; `build_receipt` is existing receipt JSON bytes, not a proposed port carrier.
+Parser/revision code is shared with the existing resolver; no schema copy.
+Current real-admission neighbors pass (19 passed, three original strict xfails).
+
+Confirmed blocker needing owner judgment: current snapshot resources/build receipt
+are local Agent cache ONLY, absent from Runtime CAS and VerifiedDocument. Retaining
+only `snapshot_digest` cannot prove retained source bytes. No authorized existing
+carrier was found to obtain these bytes server-side; I will not invent one or
+wire a filesystem/launcher read into the deterministic handler. Runtime can finish
+its bounded document capture, but Agent cannot honestly flip the three save proof
+xfails until the source custody/retention seam is real. Please surface this to both
+managers with a recommendation to use an existing artifact/CAS ownership path,
+whose exact capture contract must be supplied by its owner. Keep existing
+positive selected-schema test and original four clear xfails unchanged meanwhile.
+
+Runtime clarification after reading Agent request: existing Runtime CAS stores
+managed object bytes, while existing Document retention stores exact JSON. The
+actual admission implementation never ingests snapshot resources/build receipt
+into Runtime CAS; its `snapshot_digest` hashes the existing sorted resource
+list, not a CAS object that presently exists. Therefore merely admitting the
+kind in `config_source` cannot satisfy declaration retention. A new portable
+snapshot descriptor/carrier or host artifact-source ownership contract is needed
+to retain those resource bytes (especially build receipt, outside closure).
+This is an evidence-backed missing prerequisite, not permission to forge content.
+I can qualify exact pack-Document host-boundary capture and retention now; full
+snapshot capture and Agent end-to-end qualification stay blocked pending manager
+agreement on the source and persistence representation. Please confirm the narrow
+Document-only stage, or specify the existing concrete snapshot/CAS carrier.
+
+## Agent manager00:35 review notes on producer port draft
+Settled-first00:40decision ACK; agt-m2-settled-proposal-contract owns exactcarrier/golden and alreadyaligns producer.guard+pin/hash in thisdoc. No live-delivery seamneeded. Exactpaired interface_version1+contract_digest and callable producer_attempt failclosed are sufficient forrelease; avoidaddinga newfeature-negotiationDTO/framework. Producerpin originaladmittedheadpair mustnotbe silently relabelled to a requester'snewsessionbase; preserveoriginalcapturedcommands and letserverrebase. Pendingunrelatedoutboxflight mustfinishfirst. Runtime owns cancel-of-completed semantics decision/gap and one-shotatomiccheckpointproof. Agent exactschemaworker is agt-m2-pack-schema-capture (alreadypostedsource/inputseam below), base32332d70.
+
+## Runtime selected-pack worker — bounded Document implementation, not release-qualified
+
+Agent worker's pure resolver and explicit agreement to finish the bounded
+Document capture are acknowledged. Staged source is
+`/home/user/work/wt/rt-m2-selected-pack-input/runtime_protocol/timeline_commit_port.py`
+and `timeline_commit_inputs.py`: existing `config_source(DocumentPin)` returns
+unchanged VerifiedDocument and preserves actual kind/schema. It checks the
+existing payload, stable default/named project Document identity, canonical
+realm/project/owner binding path and admission identity/digest grammar, then
+uses existing source dependency/manifest documents/retention tables unchanged.
+No alternate pin discovery or new method/DTO is frozen. The authoring binding
+from resolve_admitted_element remains the proposed ordinary DocumentPin source;
+actual command carrier/provider wiring is held pending snapshot custody.
+
+Direct Runtime neighbors: 67 passed, 7 integration deselected. New real-admission
+host tests are ready for one central bounded run: normal Agent admit writes to
+actual Runtime Documents, existing exact resolver selects from the port-returned
+Document, then acceptance/retention, new admission, restart and historical read
+still resolve V1 from the existing local artifact cache. Wrong selected owner,
+id, kind, revision and corrupt resource/build receipt refuse before writes.
+This intentionally does NOT claim Runtime retained snapshot bytes or native
+Agent inverse/known-param qualification; those remain blocked by the custody
+prerequisite above. Both worker owners should keep params held.
+
+
+## Agent selected-schema worker — bounded stage agreement
+
+Agree Runtime should qualify the narrow Document-only host-boundary stage with
+actual `astrid.project-pack`, exact selected admissions and old Document retention.
+That is useful partial evidence. Tests resolving retained V1 from the local cache
+are not snapshot-CAS retention or Agent save/replay/undo qualification; keep those
+claims separate as proposed. Agent's shared pure resolver and real-admission
+fixtures are implemented; the existing I/O resolver now checks through it too.
+No generic snapshot carrier/manifest/DTO or native provider wiring is invented.
+Managers must align actual immutable artifact custody/retention before wiring
+changed-known-param execution and flipping the three original strict xfails.
+No existing behavior test is weakened; all seven baseline strict xfails remain.
