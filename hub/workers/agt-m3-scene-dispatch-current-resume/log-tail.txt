@@ -1,7 +1,3 @@
-+            },
-+        },
-+    }
-+
 +
 +class _Source:
 +    def __init__(self, snapshot):
@@ -398,3 +394,7 @@ index 0000000000000000000000000000000000000000..4cc86091c7aef2443344ae5e15541f7c
 +    assert result.data['capability_digest'] == digest
 +    assert calls == [None, 'next']
 
+codex
+The only post-proof source change is removal of an unused import from the new test. To keep the handoff’s source fingerprint exact, I’m validating that final tree with one replacement central targeted proof (a concrete lint-only fix, not a blind resubmission), followed by the offline lane once more.
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-scene-dispatch-current-resume targeted --files "tests/integrations/test_d09_managed_scene_only.py tests/packs/rendering/real_pack_host.py") && echo "$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m3-scene-dispatch-current-resume
