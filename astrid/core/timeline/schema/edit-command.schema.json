@@ -405,6 +405,63 @@
       ],
       "additionalProperties": false
     },
+    "TimelineInitArgs": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "resolution": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*x[1-9][0-9]*$"
+            },
+            "fps": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "file": {
+              "type": "string",
+              "minLength": 1
+            },
+            "background": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "background_scale": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "resolution",
+            "fps",
+            "file",
+            "background",
+            "background_scale"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "slug",
+        "output"
+      ],
+      "additionalProperties": false,
+      "description": "One-time initialization of a pristine empty parent: authored output, name, slug and the empty asset registry. Not a root replace."
+    },
     "EditCommand": {
       "type": "object",
       "properties": {
@@ -560,6 +617,37 @@
               },
               "args": {
                 "$ref": "#/$defs/RestoreArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "timeline.init"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/TimelineInitArgs"
               },
               "intent": {
                 "type": "object",

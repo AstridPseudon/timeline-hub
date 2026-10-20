@@ -33,9 +33,11 @@ class Operation:
 
 def operations():
     """M1 native recipe entries; the full extensible registry belongs to M2."""
+    from ._init_commands import timeline_init
     from .capture import MOVE_INTENT, move, track_create
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
-            'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {})}
+            'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+            'timeline.init': Operation(_SCHEMA['$defs']['TimelineInitArgs'], timeline_init, {})}
 
 
 @dataclass
@@ -59,7 +61,8 @@ def validate_command(command):
         raise CommandError(errors[0].message)
     if command['version'] != '1':
         raise CommandError("unsupported operation version", kind='unsupported_version')
-    if command['op'] not in ('clip.move', 'track.create', 'timeline.inverse', 'timeline.restore'):
+    if command['op'] not in ('clip.move', 'track.create', 'timeline.init',
+                             'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
     if operation is not None:
