@@ -1,0 +1,7 @@
+Repository: /home/user/work/wt/vw-m3-scene-known-cliplook-source-proposal
+
+Focused verification:
+  /home/user/work/app/node_modules/.bin/tsc -p typescript/tsconfig.test.json --noEmit --pretty false
+  /home/user/work/app/node_modules/.bin/tsc -p typescript/tsconfig.test.json --pretty false
+  /home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/animations.test.js typescript/test-dist/tests/clip-opacity.test.js typescript/test-dist/tests/registries.test.js typescript/test-dist/tests/scene-evaluation.test.js typescript/test-dist/tests/scene-diagnostics.test.js typescript/test-dist/tests/transition-policy.test.js
+  git diff --check

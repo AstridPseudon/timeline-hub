@@ -1,0 +1,10 @@
+cd /home/user/work/wt/vw-m3-known-cliplook-source-independent-review
+git show --stat --oneline 7e38f9c4e5359ab1e9d6670af00d2ec743e292f3
+git diff --find-renames --find-copies e7ef7a0729a2d7dad3c0ae60da9e6bb8f844d332 7e38f9c4e5359ab1e9d6670af00d2ec743e292f3
+npm run build:test
+node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/scene-evaluation.test.js typescript/test-dist/tests/scene-diagnostics.test.js
+node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/animations.test.js typescript/test-dist/tests/registries.test.js typescript/test-dist/tests/evaluation.test.js typescript/test-dist/tests/clip-opacity.test.js
+node --import ./typescript/tests/register-extensionless.mjs --input-type=module  # FadeUp/ScaleIn SSR probe
+npm run gen-registry:check
+npm run build:ts
+git diff --check HEAD^ HEAD

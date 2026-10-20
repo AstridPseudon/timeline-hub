@@ -1,0 +1,320 @@
+diff --git a/typescript/src/builtins/animations/fade-up/component.tsx b/typescript/src/builtins/animations/fade-up/component.tsx
+index de002e9bd..d6e87635c 100644
+--- a/typescript/src/builtins/animations/fade-up/component.tsx
++++ b/typescript/src/builtins/animations/fade-up/component.tsx
+@@ -1,22 +1,16 @@
+ import type {ReactElement} from 'react';
+-import {interpolate, spring} from 'remotion';
+ import type {WrapperAnimationProps} from '../../../effects-types';
++import {builtinClipLookStyle} from '../../../lib/clip-look';
+ 
+ export const FadeUp = ({
+   children,
+   fps,
+   durationFrames,
+   elapsedFrames,
+-  progress: explicitProgress,
++  progress: suppliedProgress,
++  easing,
+ }: WrapperAnimationProps): ReactElement => {
+-  const progress = explicitProgress ?? spring({
+-    frame: elapsedFrames,
+-    fps,
+-    from: 0,
+-    to: 1,
+-    durationInFrames: durationFrames,
+-    config: {damping: 14, stiffness: 110},
+-  });
++  const style = builtinClipLookStyle('fade-up', elapsedFrames, durationFrames, fps, easing, suppliedProgress);
+   return (
+     <div
+       style={{
+@@ -25,8 +19,8 @@ export const FadeUp = ({
+         display: 'flex',
+         alignItems: 'center',
+         justifyContent: 'center',
+-        opacity: progress,
+-        transform: `translateY(${explicitProgress === undefined ? interpolate(progress, [0, 1], [40, 0]) : 40 * (1 - progress)}px)`,
++        opacity: style.opacity,
++        transform: style.transform,
+       }}
+     >
+       {children}
+diff --git a/typescript/src/builtins/animations/scale-in/component.tsx b/typescript/src/builtins/animations/scale-in/component.tsx
+index e1a3371b2..ac0534d66 100644
+--- a/typescript/src/builtins/animations/scale-in/component.tsx
++++ b/typescript/src/builtins/animations/scale-in/component.tsx
+@@ -1,22 +1,16 @@
+ import type {ReactElement} from 'react';
+-import {interpolate, spring} from 'remotion';
+ import type {WrapperAnimationProps} from '../../../effects-types';
++import {builtinClipLookStyle} from '../../../lib/clip-look';
+ 
+ export const ScaleIn = ({
+   children,
+   fps,
+   durationFrames,
+   elapsedFrames,
+-  progress: explicitProgress,
++  progress: suppliedProgress,
++  easing,
+ }: WrapperAnimationProps): ReactElement => {
+-  const progress = explicitProgress ?? spring({
+-    frame: elapsedFrames,
+-    fps,
+-    from: 0,
+-    to: 1,
+-    durationInFrames: durationFrames,
+-    config: {damping: 14, stiffness: 110},
+-  });
++  const style = builtinClipLookStyle('scale-in', elapsedFrames, durationFrames, fps, easing, suppliedProgress);
+   return (
+     <div
+       style={{
+@@ -25,8 +19,8 @@ export const ScaleIn = ({
+         display: 'flex',
+         alignItems: 'center',
+         justifyContent: 'center',
+-        opacity: progress,
+-        transform: `scale(${explicitProgress === undefined ? interpolate(progress, [0, 1], [0.85, 1]) : 0.85 + 0.15 * progress})`,
++        opacity: style.opacity,
++        transform: style.transform,
+         transformOrigin: 'center center',
+       }}
+     >
+diff --git a/typescript/src/lib/clip-look.ts b/typescript/src/lib/clip-look.ts
+index 5fa2f80e6..1500c1d2c 100644
+--- a/typescript/src/lib/clip-look.ts
++++ b/typescript/src/lib/clip-look.ts
+@@ -1,12 +1,14 @@
+-// Pure clip-look and animation-shape helpers. No remotion/react imports so the
+-// node tests can compile and run this module directly.
++// Pure clip-look and animation-shape helpers. No React imports; Remotion is
++// used only for its pure animation math so render and scene share the result.
+ 
+ import type {TimelineClip} from '../types';
+ import {getClipDurationInFrames, secondsToFrames} from './duration';
+ import {normalizeRenderCropValues} from './render-bounds';
++import {interpolate, spring} from 'remotion';
++import {animationProgress} from './animation-easing';
+ 
+ // Structurally identical to effects-types AnimationReferenceList (kept local so
+-// this module imports nothing that pulls in react or remotion).
++// this module does not pull in React component trees).
+ export type AnimationReferenceItem = string | {
+   id: string;
+   durationFrames?: number;
+@@ -179,3 +181,19 @@ export const remappedFrame = (frame: number, speed: unknown): number => {
+   const s = clipSpeed(speed);
+   return s === 1 ? frame : Math.floor(frame * s);
+ };
++
++export type BuiltinClipLookStyle = {opacity: number; transform: string; translateY?: number; scale?: number};
++
++/** Shared by the rendered wrapper and the scene geometry query. */
++export const builtinClipLookStyle = (id: 'fade-up' | 'scale-in', elapsedFrames: number,
++  durationFrames: number, fps: number, easing?: unknown, suppliedProgress?: number): BuiltinClipLookStyle => {
++  const explicitProgress = suppliedProgress ?? animationProgress(elapsedFrames, durationFrames, easing);
++  const progress = explicitProgress ?? spring({frame: elapsedFrames, fps, from: 0, to: 1,
++    durationInFrames: durationFrames, config: {damping: 14, stiffness: 110}});
++  if (id === 'fade-up') {
++    const translateY = explicitProgress === undefined ? interpolate(progress, [0, 1], [40, 0]) : 40 * (1 - progress);
++    return {opacity: progress, translateY, transform: `translateY(${translateY}px)`};
++  }
++  const scale = explicitProgress === undefined ? interpolate(progress, [0, 1], [0.85, 1]) : 0.85 + 0.15 * progress;
++  return {opacity: progress, scale, transform: `scale(${scale})`};
++};
+diff --git a/typescript/src/scene-evaluation.ts b/typescript/src/scene-evaluation.ts
+index e2a0606d6..5d61f8db7 100644
+--- a/typescript/src/scene-evaluation.ts
++++ b/typescript/src/scene-evaluation.ts
+@@ -1,13 +1,15 @@
+ /** Pure requested-frame scene answers. Undeclared component pixels remain unknown. */
+ import {prepareTrack, queryTrackFrame, type PreparedTrack, type TransitionSpec, type IncomingTransitionSpec} from './evaluation';
+ import {getClipDurationInFrames} from './lib/duration';
+-import {clipOpacity, fadeMultiplier, remappedFrame} from './lib/clip-look';
++import {animationElapsed, builtinClipLookStyle, clipOpacity, fadeMultiplier, normalizeAnimationRefs, remappedFrame,
++  type AnimationReferenceItem} from './lib/clip-look';
+ import {admitModifiers} from './lib/modifier-admission';
+ import {mediaModifierBounds} from './lib/modifier-bounds';
+ import type {AssetRegistry, TimelineClip, TrackDefinition} from './types';
+ import {provenOpaqueMedia, type SceneCapabilities, type ComponentDiagnostics} from './scene-capabilities';
+ import type {ModifierRegistry, ModifierBounds} from './modifier-types';
+-import type {RenderBounds} from './lib/render-bounds';
++import {ANIMATION_DEFAULTS} from './animations.generated';
++import {computeRenderBounds, getVisibleBoundsFromCrop, type RenderBounds} from './lib/render-bounds';
+ 
+ export type SceneFinding = {code: string; clipId: string; reason: string; instanceId?: string; element?: string};
+ export type SceneTrackInput = {track: TrackDefinition; clips: readonly TimelineClip[];
+@@ -68,6 +70,46 @@ const clippedRect = (bounds: ModifierBounds, width: number, height: number): Ren
+     height: Math.max(0, Math.min(height, rect.y + rect.height) - y)};
+ };
+ 
++type ClipLookEntrance = {status: 'inactive'} | {status: 'active'; opacity: number;
++  translateY?: number; scale?: number} | {status: 'unknown'; reason: string};
++
++const clipLookEntrance = (clip: TimelineClip, frame: number, fps: number): ClipLookEntrance => {
++  if (clip.entrance === undefined) return {status: 'inactive'};
++  try {
++    const normalized = normalizeAnimationRefs(clip.entrance, fps);
++    const refs = normalized === undefined ? [] : Array.isArray(normalized) ? normalized : [normalized];
++    if (refs.length !== 1) return {status: 'unknown', reason: 'Entrance animation composition is undeclared'};
++    const ref = refs[0] as AnimationReferenceItem;
++    const id = typeof ref === 'string' ? ref : ref.id;
++    if (id !== 'fade-up' && id !== 'scale-in') {
++      return {status: 'unknown', reason: `Entrance animation '${id}' is undeclared`};
++    }
++    const configured = typeof ref === 'string' ? undefined : ref.durationFrames;
++    const duration = configured ?? ANIMATION_DEFAULTS[id]?.durationFrames;
++    if (typeof duration !== 'number' || !Number.isFinite(duration) || duration < 0) {
++      return {status: 'unknown', reason: `Entrance animation '${id}' has no valid duration`};
++    }
++    const elapsed = animationElapsed('entrance', frame, getClipDurationInFrames(clip, fps), duration);
++    if (elapsed === null) return {status: 'inactive'};
++    const easing = typeof ref === 'string' ? undefined : ref.easing ?? ref.params?.easing;
++    return {status: 'active', ...builtinClipLookStyle(id, elapsed, duration, fps, easing)};
++  } catch (error) {
++    return {status: 'unknown', reason: error instanceof Error ? error.message : String(error)};
++  }
++};
++
++const transformBounds = (bounds: ModifierBounds, style: Extract<ClipLookEntrance, {status: 'active'}>,
++  width: number, height: number): ModifierBounds => {
++  if (bounds.status !== 'known') return bounds;
++  const rect = style.scale === undefined ? {...bounds.rect, y: bounds.rect.y + (style.translateY ?? 0)} : {
++    x: width / 2 + (bounds.rect.x - width / 2) * style.scale,
++    y: height / 2 + (bounds.rect.y - height / 2) * style.scale,
++    width: bounds.rect.width * style.scale,
++    height: bounds.rect.height * style.scale,
++  };
++  return {status: 'known', rect: computeRenderBounds(rect, width, height)};
++};
++
+ // Shared by visibility and the public threshold query. Upper layers are front first.
+ const occlusionForLayer = (target: SceneLayer | undefined, upper: readonly SceneLayer[],
+   width: number, height: number, minimumFraction: number): SceneOcclusion => {
+@@ -175,16 +217,35 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
+       let bounds = targetBounds;
+       let opacity: number | null = Math.min(1, Math.max(0, track.opacity ?? 1))
+         * clipOpacity(clip, draw.contentFrame, scene.fps) * draw.opacity;
++      let clipLookChanged = false;
++      const instances = clip.modifiers ?? [];
+       // An assetless native layer draws nothing; an unresolved referenced asset
+       // is still unknown and cannot acquire valid absence from missing media.
+       const absent = support?.presence === 'absent' || clip.clipType === 'effect-layer' || (!element && !clip.asset);
+       if (element && !absent && (!support || support.presence === 'unknown' || support.opaqueSupport === 'unknown')) unknown('unknown-component-internals', 'Final component alpha and support are undeclared');
+-      if (clip.entrance !== undefined || clip.exit !== undefined
+-          || (element && [clip.cropTop, clip.cropBottom, clip.cropLeft, clip.cropRight].some(value => value !== undefined && value !== 0))) {
+-        unknown('unknown-animation-geometry', 'Animation does not declare evaluated support and alpha');
+-        bounds = {status: 'unknown', reason: 'Animation geometry is undeclared'};
++      const hasCrop = [clip.cropTop, clip.cropBottom, clip.cropLeft, clip.cropRight]
++        .some(value => value !== undefined && value !== 0);
++      if (element && hasCrop && !instances.length && bounds.status === 'known') {
++        const visible = getVisibleBoundsFromCrop(bounds.rect, clip);
++        bounds = {status: 'known', rect: computeRenderBounds(visible, scene.width, scene.height)};
++        clipLookChanged = true;
++      } else if (element && hasCrop && instances.length) {
++        unknown('unknown-animation-geometry', 'Element crop inside a custom modifier is undeclared');
++        bounds = {status: 'unknown', reason: 'Element crop inside a custom modifier is undeclared'};
++      }
++      const entrance = clipLookEntrance(clip, draw.contentFrame, scene.fps);
++      if (entrance.status === 'unknown') {
++        unknown('unknown-animation-geometry', entrance.reason);
++        bounds = {status: 'unknown', reason: entrance.reason};
++      } else if (entrance.status === 'active') {
++        opacity = opacity === null ? null : Math.min(1, Math.max(0, opacity * entrance.opacity));
++        bounds = transformBounds(bounds, entrance, scene.width, scene.height);
++        clipLookChanged = true;
++      }
++      if (clip.exit !== undefined) {
++        unknown('unknown-animation-geometry', 'Exit animation does not declare evaluated support and alpha');
++        bounds = {status: 'unknown', reason: 'Exit animation geometry is undeclared'};
+       }
+-      const instances = clip.modifiers ?? [];
+       if (targetBounds.status === 'unknown' && !absent) {
+         unknown(instances.length ? 'unknown-target-bounds' : 'unknown-component-bounds', targetBounds.reason);
+       }
+@@ -232,7 +293,8 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
+       const dip = !absent && (((plan.fadeIn?.kind === 'dip' || plan.fadeOut?.kind === 'dip') && draw.opacity < 1)
+         || fadeMultiplier(clip, draw.contentFrame, scene.fps) < 1);
+       const geometryReason = bounds.status === 'unknown' ? bounds.reason
+-        : instances.length ? 'Modifiers do not declare internal region positions or text size' : undefined;
++        : instances.length ? 'Modifiers do not declare internal region positions or text size'
++        : clipLookChanged ? 'Clip look changes outer geometry or alpha' : undefined;
+       const diagnostics = support?.diagnostics === undefined ? undefined : componentDiagnostics(support.diagnostics,
+         geometryReason, reason => unknown('invalid-component-diagnostics', reason));
+       layers.push({clipId: clip.id, track: track.id, clipIndex: draw.clipIndex, z: 0,
+diff --git a/typescript/tests/scene-diagnostics.test.ts b/typescript/tests/scene-diagnostics.test.ts
+index 83f978016..e8c72efd1 100644
+--- a/typescript/tests/scene-diagnostics.test.ts
++++ b/typescript/tests/scene-diagnostics.test.ts
+@@ -130,12 +130,16 @@ const modifier = (bounds: 'preserve' | 'unknown'): ModifierRegistry => ({shift:
+ }});
+ 
+ test('animation and undeclared modifier geometry cannot manufacture opaque occlusion', () => {
+-  for (const upper of [clip('upper', {entrance: 'fade-up'}), clip('upper', {cropTop: .1}),
+-    clip('upper', {modifiers: [{id: 'shift', element: 'shift', params: {}}]})]) {
++  for (const upper of [clip('upper', {entrance: 'fade-up'}), clip('upper', {cropTop: .1})]) {
+     const answer = querySceneFrame(prepare([clip('target'), upper], modifier('unknown')), 10);
+     assert.equal(answer.layers[0].visible, true);
+-    assert.equal(querySceneOcclusion(answer, 'target', .9).status, 'unknown');
++    assert.equal(querySceneOcclusion(answer, 'target', .9).status, 'known');
+   }
++  const answer = querySceneFrame(prepare([clip('target'), clip('upper', {
++    modifiers: [{id: 'shift', element: 'shift', params: {}}],
++  })], modifier('unknown')), 10);
++  assert.equal(answer.layers[0].visible, true);
++  assert.equal(querySceneOcclusion(answer, 'target', .9).status, 'unknown');
+ });
+ 
+ test('opaque occlusion uses the actual transition and track opacity, modifier support and blend facts', () => {
+diff --git a/typescript/tests/scene-evaluation.test.ts b/typescript/tests/scene-evaluation.test.ts
+index a3526e3b1..f88cd13dc 100644
+--- a/typescript/tests/scene-evaluation.test.ts
++++ b/typescript/tests/scene-evaluation.test.ts
+@@ -53,6 +53,45 @@ test('scene roles use own clip-ID entries and preserve the track fallback', () =
+   }
+ });
+ 
++test('scene clip-look uses render crop and builtin entrance geometry with half-open clocks', () => {
++  const support = {identity: 'plate@1', frame: () => ({presence: 'present' as const,
++    opaqueSupport: 'rect' as const, bounds: {status: 'known' as const, rect: {x: 0, y: 0, width: 1920, height: 1080}}})};
++  const sceneFor = (overrides: Partial<TimelineClip>) => prepareScene([{track: visualTrack,
++    clips: [{...clip({id: 'plate', clipType: 'plate', ...overrides})} as TimelineClip], transitions: [null]}], assets, 30, 1920, 1080,
++  {elements: new Set(['plate']), capabilities: {components: {plate: support}}});
++
++  const cropped = querySceneFrame(sceneFor({cropTop: .1}), 0).layers[0];
++  assert.deepEqual(cropped.bounds, {status: 'known', rect: {x: 0, y: 108, width: 1920, height: 972}});
++  assert.equal(cropped.fullFrame, false);
++
++  const scaledEarly = querySceneFrame(sceneFor({entrance: {id: 'scale-in', durationFrames: 18}}), 0).layers[0];
++  assert.deepEqual(scaledEarly.bounds, {status: 'known', rect: {x: 144, y: 81, width: 1632, height: 918}});
++  assert.equal(scaledEarly.opacity, 0);
++  assert.deepEqual(querySceneFrame(sceneFor({entrance: 'scale-in'}), 18).layers[0].bounds,
++    {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}});
++
++  const fadedEarly = querySceneFrame(sceneFor({entrance: 'fade-up'}), 0).layers[0];
++  assert.deepEqual(fadedEarly.bounds, {status: 'known', rect: {x: 0, y: 40, width: 1920, height: 1040}});
++  assert.equal(fadedEarly.opacity, 0);
++  assert.deepEqual(querySceneFrame(sceneFor({entrance: 'fade-up'}), 18).layers[0].bounds,
++    {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}});
++});
++
++test('known clip-look does not manufacture geometry through an unknown custom modifier', () => {
++  const modifier: ModifierDeclaration = {kind: 'modifier', element: 'custom', hosts: ['composition'],
++    bounds: 'unknown', alpha: 'preserve', support: 'preserve',
++    wrap: (_instance, _context, children) => createElement('span', null, children)};
++  const scene = prepareScene([{track: visualTrack, clips: [clip({id: 'plate', clipType: 'plate', entrance: 'fade-up',
++    modifiers: [{id: 'custom', element: 'custom', params: {}}]})], transitions: [null]}], assets, 30, 1920, 1080,
++  {elements: new Set(['plate']), modifiers: {custom: modifier}, capabilities: {components: {plate: {
++    identity: 'plate@1', frame: () => ({presence: 'present', opaqueSupport: 'rect',
++      bounds: {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}}}),
++  }}}});
++  const layer = querySceneFrame(scene, 0).layers[0];
++  assert.equal(layer.bounds.status, 'unknown');
++  assert.ok(layer.findings.some(finding => finding.code === 'unknown-modifier-bounds'));
++});
++
+ test('unresolved or unproven media remains unknown instead of being treated as absent', () => {
+   const unresolved = querySceneFrame(prepare([clip({asset: 'missing'})]), 0);
+   assert.equal(unresolved.coverage, 'UNKNOWN');
