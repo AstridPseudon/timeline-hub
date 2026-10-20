@@ -1,6 +1,6 @@
 """D13 settled-proposal contract at the real Runtime port/acceptance boundary.
 
-Pin/carrier: orch/design/producer-commit-port.md (00:40 decision). These are
+Pin/carrier: orch/design/producer-commit-port.md (PIN-ONLY numeric decision). These are
 unmarked requirements, intentionally red until the additive port is implemented.
 The prepared provider exercises Runtime authority, not Agent command semantics.
 It enters the existing coordinator directly: producer.guard's official command
@@ -12,6 +12,7 @@ import base64
 import copy
 import hashlib
 import json
+import subprocess
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
@@ -41,6 +42,14 @@ def _digest(raw):
     return "sha256:" + hashlib.sha256(raw).hexdigest()
 
 
+def _node_roundtrip(value):
+    result = subprocess.run(
+        ["node", "-e", 'process.stdout.write(JSON.stringify(JSON.parse(require("fs").readFileSync(0, "utf8"))))'],
+        input=_bytes(value), capture_output=True, check=True,
+    )
+    return json.loads(result.stdout)
+
+
 @pytest.fixture
 def producer(tmp_path):
     root = tmp_path / "realm"
@@ -53,6 +62,7 @@ def producer(tmp_path):
         service.create_timeline(project, "main", idempotency_key="timeline")
         service.test_project = project
         body = request(service)
+        body["commands"][0]["args"]["on"] = 1.0
         target = {key: body[key] for key in
                   ("project_id", "timeline_id", "base_revision_id", "base_publication_id")}
         capability_digest = _digest(CAPABILITY.encode())
@@ -60,7 +70,7 @@ def producer(tmp_path):
         service.register_executor({"executor_id": EXECUTOR, "capabilities": [CAPABILITY]},
                                   idempotency_key="register-worker")
         # A test capability takes the agreed target object as its immutable
-        # inputs. This does not choose the assembler's still-unsettled spec
+        # inputs. This does not qualify the assembler's production spec
         # nesting for the original base pair or add a Task wire field.
         spec = {"capability_id": CAPABILITY, "kind": "executor", "inputs": target,
                 "outputs": {"authoring_proposal": {"type": "file", "artifact_type": "timeline/authoring-proposal"}}}
@@ -97,7 +107,7 @@ def _settle(producer, *, proposal=None, name="authoring_proposal"):
 def _body(producer):
     return {"api_version": 1, **copy.deepcopy(producer.pin["admitted_target"]),
             "commands": [{"schema_version": 1, "op": "producer.guard", "version": "1", "select": None,
-                          "args": {"pin": copy.deepcopy(producer.pin), "proposal": copy.deepcopy(producer.proposal)}},
+                          "args": {"pin": copy.deepcopy(producer.pin)}},
                          *copy.deepcopy(producer.proposal["commands"])], "rationale": producer.proposal["rationale"]}
 
 
@@ -198,6 +208,8 @@ def test_fixture_has_real_admission_settlement_and_managed_cas_output(producer):
     raw = producer.service.cas.read(output["digest"][7:])
     assert _digest(raw) == output["digest"] and len(raw) == output["size"]
     assert json.loads(raw) == producer.proposal
+    assert _digest(_bytes({key: value for key, value in json.loads(raw).items()
+                          if key != "proposal_digest"})) == producer.pin["proposal_digest"]
     assert output["digest"] != producer.pin["proposal_digest"]
     assert producer.service.store.timeline_render_publication(producer.task) is None
 
@@ -235,6 +247,48 @@ def test_current_settled_proposal_accepts_and_records_exact_authority(producer):
     assert entry["records"]["commands"][0]["dependencies"] == [{
         "key": "producer_attempt:" + producer.task, "kind": "authority", "policy": "exact", "pin": producer.pin}]
     assert "lease_id" not in canonical_json(entry["records"])
+
+
+def test_node_forwarded_integral_float_accepts_using_original_artifact_digest(producer):
+    _settle(producer)
+    body = _body(producer)
+    assert set(body["commands"][0]["args"]) == {"pin"}
+    assert type(body["commands"][1]["args"]["on"]) is float
+    forwarded = _node_roundtrip(body)
+    assert type(forwarded["commands"][1]["args"]["on"]) is int
+    assert forwarded["commands"][1]["args"]["on"] == 1
+    assert forwarded["commands"][1:] == producer.proposal["commands"]
+    assert forwarded["commands"][0]["args"] == {"pin": producer.pin}
+
+    output, = producer.service.task(producer.task)["task"]["result"]["outputs"]
+    raw = producer.service.cas.read(output["digest"][7:])
+    assert _digest(raw) == output["digest"] and len(raw) == output["size"]
+    authoritative = json.loads(raw)
+    unsigned = {key: value for key, value in authoritative.items() if key != "proposal_digest"}
+    assert _digest(_bytes(unsigned)) == authoritative["proposal_digest"] == producer.pin["proposal_digest"]
+    # Rehashing the caller's numerically equal commands loses the original
+    # digest. Only Runtime's immutable settled artifact can establish it.
+    unsigned["commands"] = forwarded["commands"][1:]
+    assert _digest(_bytes(unsigned)) != producer.pin["proposal_digest"]
+
+    accepted = _execute(producer, body=forwarded)
+    assert accepted["data"]["status"] == "accepted"
+    assert accepted["data"]["commands"] == forwarded["commands"]
+    history = producer.service.list_timeline_commits(producer.project, "main", authorize=lambda: None)
+    assert history["items"][-1]["records"]["commands"][0]["dependencies"][0]["pin"] == producer.pin
+    assert producer.service.cas.read(output["digest"][7:]) == raw
+
+
+@pytest.mark.parametrize("on", [1.5, True], ids=["changed-number", "boolean-is-not-number"])
+def test_node_forwarded_changed_value_refuses_without_writes(producer, on):
+    _settle(producer)
+    body = _body(producer)
+    body["commands"][1]["args"]["on"] = on
+    forwarded = _node_roundtrip(body)
+    assert type(forwarded["commands"][1]["args"]["on"]) is type(on)
+    assert forwarded["commands"][0]["args"] == {"pin": producer.pin}
+    _assert_refused(producer.service, lambda: _execute(producer, body=forwarded),
+                    {"producer_attempt_mismatch", "producer_dependency_unavailable"})
 
 
 def test_preview_does_not_consume_settled_proposal(producer):
@@ -345,12 +399,12 @@ def test_settled_artifact_cannot_widen_immutable_admitted_target(producer, scope
                     {"producer_attempt_mismatch", "producer_dependency_unavailable"})
 
 
-@pytest.mark.parametrize("damage", ["proposal", "commands", "rationale", "request-target"])
+@pytest.mark.parametrize("damage", ["extra-commands", "commands", "rationale", "request-target"])
 def test_request_must_match_entire_settled_proposal(producer, damage):
     _settle(producer)
     body = _body(producer)
-    if damage == "proposal":
-        body["commands"][0]["args"]["proposal"]["rationale"] += " changed"
+    if damage == "extra-commands":
+        body["commands"].append(copy.deepcopy(body["commands"][1]))
     elif damage == "commands":
         body["commands"][1]["args"]["on"] = 99
     elif damage == "rationale":
@@ -361,7 +415,8 @@ def test_request_must_match_entire_settled_proposal(producer, damage):
                     {"producer_attempt_mismatch", "producer_dependency_unavailable"})
 
 
-@pytest.mark.parametrize("damage", ["wrong-output-name", "incorrect-proposal-hash", "changed-cas-bytes"])
+@pytest.mark.parametrize("damage", ["wrong-output-name", "incorrect-proposal-hash", "changed-cas-bytes",
+                                   "same-size-cas-tamper"])
 def test_real_settled_artifact_is_required_not_just_caller_digest(producer, damage):
     proposal = copy.deepcopy(producer.proposal)
     if damage == "incorrect-proposal-hash":
@@ -371,6 +426,15 @@ def test_real_settled_artifact_is_required_not_just_caller_digest(producer, dama
     if damage == "changed-cas-bytes":
         output, = producer.service.task(producer.task)["task"]["result"]["outputs"]
         producer.service.cas.path_for(output["digest"][7:]).write_bytes(b"damaged proposal")
+    elif damage == "same-size-cas-tamper":
+        output, = producer.service.task(producer.task)["task"]["result"]["outputs"]
+        path = producer.service.cas.path_for(output["digest"][7:])
+        original = path.read_bytes()
+        tampered = original.replace(b'"on":1.0', b'"on":1e0', 1)
+        assert len(tampered) == len(original) == output["size"]
+        assert _digest(tampered) != output["digest"]
+        assert _bytes(json.loads(tampered)) == _bytes(json.loads(original))
+        path.write_bytes(tampered)
     _assert_refused(producer.service, lambda: _execute(producer),
                     {"producer_attempt_mismatch", "producer_dependency_unavailable"})
 
