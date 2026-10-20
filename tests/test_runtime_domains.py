@@ -10,6 +10,7 @@ import pytest
 
 from astrid_runtime_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
+from runtime_protocol.errors import RetiredRouteError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 
@@ -169,7 +170,7 @@ def test_project_shot_reference_routes_reject_non_object_json_as_typed_400(tmp_p
         daemon.stop()
 
 
-@pytest.mark.xfail(strict=True, reason="RT02/D04 held: direct shot writes and legacy timeline publication are retired (410); restored by their /v1 commit replacements")
+@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02/D04 held: direct shot writes and legacy timeline publication are retired (410); restored by their /v1 commit replacements")
 def test_generated_python_client_exercises_versioned_domains_on_real_daemon(tmp_path):
     RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
@@ -272,7 +273,7 @@ def test_timeline_document_replay_is_retired_after_runtime_restart(tmp_path):
         second.stop()
 
 
-@pytest.mark.xfail(strict=True, reason="RT02 held: direct shot writes are retired (410); restored by the recorded-command replacement")
+@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="RT02 held: direct shot writes are retired (410); restored by the recorded-command replacement")
 def test_project_media_mutations_roll_back_before_idempotency_replay(tmp_path, monkeypatch):
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
@@ -297,7 +298,7 @@ def test_project_media_mutations_roll_back_before_idempotency_replay(tmp_path, m
     service.close()
 
 
-@pytest.mark.xfail(strict=True, reason="RT02/D04 held: direct shot writes and legacy timeline publication are retired (410); restored by their /v1 commit replacements")
+@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02/D04 held: direct shot writes and legacy timeline publication are retired (410); restored by their /v1 commit replacements")
 def test_generated_domains_preserve_project_media_and_timeline_recovery(tmp_path):
     RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
