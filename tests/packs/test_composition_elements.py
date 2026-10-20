@@ -33,8 +33,9 @@ def _timeline_composition_source() -> Path:
 class CompositionElementTest(unittest.TestCase):
     def _assert_animation_plugin(self, animation_id: str, kind: str) -> None:
         root = ROOT / "astrid" / "packs" / "rendering" / "rendering" / "elements" / "animations" / animation_id
-        for filename in ("component.tsx", "element.yaml"):
+        for filename in ("element.yaml",):
             self.assertTrue((root / filename).is_file(), f"{root / filename} missing")
+        self.assertFalse((root / "component.tsx").exists())
         self.assertEqual(effects_catalog.read_animation_meta(animation_id)["kind"], kind)
         self.assertIn("durationFrames", effects_catalog.read_animation_defaults(animation_id))
 
@@ -68,8 +69,9 @@ class CompositionElementTest(unittest.TestCase):
         self.assertEqual(set(expected), set(effects_catalog.list_animation_ids()))
         for animation_id, kind in expected.items():
             root = ROOT / "astrid" / "packs" / "rendering" / "rendering" / "elements" / "animations" / animation_id
-            for filename in ("component.tsx", "element.yaml"):
+            for filename in ("element.yaml",):
                 self.assertTrue((root / filename).is_file(), f"{root / filename} missing")
+            self.assertFalse((root / "component.tsx").exists())
             self.assertEqual(effects_catalog.read_animation_meta(animation_id)["kind"], kind)
 
     def test_transition_plugin_is_discoverable_and_validated(self) -> None:
@@ -92,10 +94,11 @@ class CompositionElementTest(unittest.TestCase):
         animations = gen_effect_registry.generate_element_registry("animations", include_local=False)
         transitions = gen_effect_registry.generate_element_registry("transitions", include_local=False)
 
-        self.assertIn("'text-card'", effects)
-        self.assertRegex(effects, r"@pack-rendering-elements-effects/text-card/component")
-        self.assertRegex(animations, r"@pack-rendering-elements-animations/fade-up/component")
-        self.assertRegex(transitions, r"@pack-rendering-elements-transitions/cross-fade/component")
+        self.assertNotIn("'text-card'", effects)
+        self.assertNotIn("@pack-rendering-elements-effects/text-card/component", effects)
+        self.assertNotIn("@pack-rendering-elements-animations/fade-up/component", animations)
+        self.assertNotIn("@pack-rendering-elements-transitions/cross-fade/component", transitions)
+        self.assertIn("'audio-reactive-colour'", effects)
 
     def test_hype_composition_preserves_absolute_sequence_path_with_transition_series(self) -> None:
         source_path = _timeline_composition_source()

@@ -6,7 +6,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[3]
 GENERATOR = ROOT / "scripts" / "gen_effect_registry.py"
 
@@ -24,9 +23,48 @@ class RemotionElementGenerationTest(unittest.TestCase):
             generated = gen_effect_registry.generate_element_registry(kind)
             self.assertIn("@banodoco/timeline-composition/theme-api", generated)
             self.assertNotIn("./effects.types", generated)
-            self.assertRegex(generated, r"@(pack-(local|rendering)|managed)-elements-")
             self.assertNotIn("@workspace-", generated)
             self.assertNotIn("primitive-root", generated)
+        self.assertIn("@pack-rendering-elements-effects/audio-reactive-colour/component", gen_effect_registry.generate_element_registry("effects"))
+
+    def test_source_less_public_descriptor_yields_to_component_override(self) -> None:
+        from astrid.core.element.registry import ElementRegistry
+        from astrid.core.element.schema import ElementDefinition
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            override_root = root / "local" / "fade"
+            override_root.mkdir(parents=True)
+            component = override_root / "component.tsx"
+            component.write_text("export default function FadeOverride() { return null; }\n", encoding="utf-8")
+            public_root = root / "public" / "fade"
+            public_root.mkdir(parents=True)
+
+            public_descriptor = ElementDefinition(
+                id="fade", kind="animations", root=public_root, source="pack:rendering",
+                editable=False, priority=30, component=public_root / "component.tsx",
+                schema={}, defaults={"durationFrames": 12},
+                metadata={"pack_id": "rendering", "kind": "wrapper"},
+                runtime={"adapter": "remotion"},
+            )
+            override = ElementDefinition(
+                id="fade", kind="animations", root=override_root, source="pack:local",
+                editable=True, priority=0, component=component, schema={},
+                defaults={"durationFrames": 24}, metadata={"pack_id": "local"},
+                runtime={"adapter": "remotion"},
+            )
+            old_registry = gen_effect_registry._element_registry
+            gen_effect_registry._element_registry = lambda: ElementRegistry(
+                (public_descriptor, override)
+            )
+            try:
+                generated = gen_effect_registry.generate_element_registry("animations")
+            finally:
+                gen_effect_registry._element_registry = old_registry
+
+        self.assertIn("'fade'", generated)
+        self.assertIn("@pack-local-elements-animations/fade/component", generated)
+        self.assertNotIn("@pack-rendering-elements-animations/fade/component", generated)
 
     def test_remotion_alias_files_do_not_reference_workspace_element_aliases(self) -> None:
         checked = [

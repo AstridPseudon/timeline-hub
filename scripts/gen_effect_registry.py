@@ -96,6 +96,11 @@ def discover_plugins(
             ]
             if definitions
         )
+    # The public Composition package owns the bundled wrapper implementations.
+    # Their descriptors remain in the normal element registry so authored
+    # defaults, metadata and validation stay discoverable, but a source-less
+    # descriptor must not produce a host import for a file that was retired.
+    elements = tuple(element for element in elements if element.component.is_file())
     for element in elements:
         plugins[element.id] = _plugin_from_element(element)
     return plugins
