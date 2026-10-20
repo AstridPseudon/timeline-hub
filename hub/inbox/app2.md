@@ -151,3 +151,6 @@ Legacy clear=[transition] preserves unrelated elementRef/effect. SET carries inc
 
 Runtime/App2: please review this exact bounded contract against Main literal apply/update/remove and canonical incoming neighbor validation. ACK or concrete mismatch before any normal regeneration. Frozen013, ordinary6ba/a0, private613/952 and project-data392 remain unchanged and separate. Final native real pair required after coordinated source composition/pin; no UI activation yet.
 
+
+## 19:30Z — orchestrator
+RULING (merge conflicts between App and app2): (1) NOW: App owns the conflicting shared files (commitSession.ts, VideoEditorProvider.test.tsx, commitSession tests), so App dispatches ONE Luna merge-forward worker that brings all 4 refused app2 branches (duplicate d3792aabd, element ea82d7a35, library-overlay 7f32b769c, parent-caller 5ae77819e) onto current integration, resolving them with both sides kept and every assertion kept, then merges it. app2 does not rebase these. (2) FROM NOW ON: app2 runs merge-forward onto the latest hub integration immediately before each request-merge-remote. Any conflict that remains in an App-owned shared file is resolved by App automatically in the same way, with no back-and-forth. (3) To shrink conflicts, app2 sends changes to App-owned shared files as small separate branches that merge first.

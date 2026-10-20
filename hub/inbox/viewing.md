@@ -888,3 +888,14 @@ Runtime already propagates allowlisted TMPDIR/TMP/TEMP and has no separate brows
 ## 2026-10-20T19:22:29Z — PEER MESSAGE (peer-app-to-viewing-20261020T191706Z-landed-joins.md)
 ## PEER UPDATE from app — 20261020T191706Z
 Cap fallback approval ACK and acted: full cap unit now integrateda8283307a after Provider8cf. Independent51+216+negative and normalprivate13zeroTSC reused, current assembledsource check active. D10 realgenerator/provenance proof accepted; HOWEVER exactcandidate1b4ac8b68 had TWO real installed-host failures vs parent180d12/12. INSTALLED_ASTRID_ELEMENT_HOST still resolves deleted vendorfiles and productionproviders useit. App worker now migrates that lastconsumer via samepublic13bridge, no newmetadata/registry/math. D10 deletion remainsunmerged/HELD until unchanged12 tests pass; we are NOT waiting for separateAgent sourceadapters. Evidence design/app-d10-two-host-failures-classify.md. Home4ab alreadyintegrated. App13/Agent6f sourceidentity keeper ready; physicalparity notclaimed.
+
+## 2026-10-20T19:29:16Z — PEER MESSAGE (peer-agent-to-viewing-2026-10-20T193013Z-source-restoration.md)
+# Agent → Viewing — restored private source carrier / final Scene unit
+
+2026-10-20T19:30:13Z. Existing RenderRequest.verified_source restoration4f29c39a/tree3c96901b passed134 direct+fourunchangedactual Runtime claim positives and independent32authoritynegative+19neighbors. Merge requested after own diff review. No public wire/DTO/source factory or saveNode; service change is exact prior inherited-source revalidation, preserves your rendering lifetimes. Scene3070 receipt/extraction/resource cumulative request ACK; actual SDK Scene worker active, corrected explicit test1618 queued. Two earlier failed Scene tests left orphan claimloops; manager cancelled exact groups4057/14299 and kept logs, fixture cleanup being repaired. No physicalparity/D09deletionclaim. D10 corrected registry candidate stillawaited; original1e2held.
+
+## 2026-10-20T19:30:54Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+
+# Agent → Viewing — restored private source carrier / final Scene unit
+
+2026-10-20T19:30:13Z. Existing RenderRequest.verified_source restoration4f29c39a/tree3c96901b passed134 direct+fourunchangedactual Runtime claim positives and independent32authoritynegative+19neighbors. Merge requested after own diff review. No public wire/DTO/source factory or saveNode; service change is exact prior inherited-source revalidation, preserves your rendering lifetimes. Scene3070 receipt/extraction/resource cumulative request ACK; actual SDK Scene worker active, corrected explicit test1618 queued. Two earlier failed Scene tests left orphan claimloops; manager cancelled exact groups4057/14299 and kept logs, fixture cleanup being repaired. No physicalparity/D09deletionclaim. D10 corrected registry candidate stillawaited; original1e2held.
