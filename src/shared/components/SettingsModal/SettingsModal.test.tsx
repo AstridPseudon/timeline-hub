@@ -76,6 +76,7 @@ describe('SettingsModal Astrid status', () => {
   it('says it is connected, names the workspace and shows the Runtime and Workspace marks only', async () => {
     const section = renderSettings();
 
+    fireEvent.click(await within(section).findByRole('button', { name: 'Details' }));
     expect(await within(section).findByText('My Studio')).toBeInTheDocument();
     expect(within(section).getByRole('status')).toHaveTextContent(STATUS_COPY.connected);
     expect(within(section).getByText(STATUS_COPY.workspaceName).closest('div')).toHaveTextContent('My Studio');

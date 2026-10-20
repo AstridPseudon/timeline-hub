@@ -28,6 +28,10 @@ vi.mock('@/shared/lib/browser/clipboard.ts', () => ({
   writeClipboardTextSafe: mocks.clipboard,
 }));
 
+async function openDetails() {
+  fireEvent.click(await screen.findByRole('button', { name: 'Details' }));
+}
+
 describe('AstridStatusSection', () => {
   beforeEach(() => {
     mocks.connection.state = { status: 'connected', realm: { realm_id: 'realm-1', display_name: 'Studio' } };
@@ -56,6 +60,10 @@ describe('AstridStatusSection', () => {
 
   it('keeps Runtime and Workspace checks in the single status section', async () => {
     render(<AstridStatusSection isOpen />);
+    // Runtime and Workspace marks stay visible; the workspace name waits behind Details.
+    expect(screen.getByText('Runtime')).toHaveAttribute('data-state', 'pass');
+    expect(screen.queryByText('Studio')).not.toBeInTheDocument();
+    await openDetails();
     expect(await screen.findByText('Studio')).toBeInTheDocument();
     expect(screen.getByText('Runtime')).toHaveAttribute('data-state', 'pass');
     expect(document.querySelector('[data-check="workspace"]')).toHaveAttribute('data-state', 'pass');
@@ -83,6 +91,7 @@ describe('AstridStatusSection', () => {
   it('shows the connected workspace and readable service states without inventing versions', async () => {
     render(<AstridStatusSection isOpen />);
 
+    await openDetails();
     expect(await screen.findByText('Studio')).toBeInTheDocument();
     expect(screen.getByText('workspace.v1')).toBeInTheDocument();
     expect(screen.queryByText('Versions')).not.toBeInTheDocument();
@@ -117,6 +126,7 @@ describe('AstridStatusSection', () => {
     });
     render(<AstridStatusSection isOpen />);
 
+    await openDetails();
     const customWorker = await screen.findByText('custom-worker');
     expect(customWorker.closest('li')?.querySelector('span.basis-full')).toBeNull();
     expect(screen.queryByText(/Last exit code|Reason:|exited/)).not.toBeInTheDocument();
@@ -177,6 +187,7 @@ describe('AstridStatusSection', () => {
   it('does not show the update status while the local service is up to date', async () => {
     render(<AstridStatusSection isOpen />);
 
+    await openDetails();
     expect(await screen.findByText('Studio')).toBeInTheDocument();
     expect(screen.queryByText('Needs an update')).not.toBeInTheDocument();
     expect(screen.queryByText(/Astrid on this computer needs an update/)).not.toBeInTheDocument();
@@ -213,12 +224,45 @@ describe('AstridStatusSection', () => {
     mocks.readStatus.mockReset().mockResolvedValueOnce(first).mockResolvedValueOnce(second);
     const view = render(<AstridStatusSection isOpen />);
 
+    await openDetails();
     expect(await screen.findByText('Running')).toBeInTheDocument();
     view.rerender(<AstridStatusSection isOpen={false} />);
     view.rerender(<AstridStatusSection isOpen />);
 
+    await openDetails();
     expect(await screen.findByText("Part of Astrid isn't working. Run this line to restart it.")).toBeInTheDocument();
     expect(await screen.findByText('Failed')).toBeInTheDocument();
     expect(mocks.readStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the workspace, connection details and services behind a closed Details toggle', async () => {
+    render(<AstridStatusSection isOpen />);
+
+    await waitFor(() => expect(mocks.readStatus).toHaveBeenCalled());
+    const toggle = await screen.findByRole('button', { name: 'Details' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    for (const hidden of ['Studio', 'workspace.v1', 'Task host']) expect(screen.queryByText(hidden)).not.toBeInTheDocument();
+    expect(screen.queryByText('Workspace', { selector: 'h3' })).not.toBeInTheDocument();
+    // What the person needs stays in view: the status and the Runtime and Workspace marks.
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText('Runtime')).toHaveAttribute('data-state', 'pass');
+    expect(document.querySelector('[data-check="workspace"]')).toHaveAttribute('data-state', 'pass');
+  });
+
+  it('shortens the schema digest inside Details and keeps the full value as its tooltip', async () => {
+    render(<AstridStatusSection isOpen />);
+
+    await openDetails();
+    const short = await screen.findByText(`sha256:${'a'.repeat(8)}…${'a'.repeat(6)}`);
+    expect(short).toHaveAttribute('title', `sha256:${'a'.repeat(64)}`);
+  });
+
+  it('keeps the update command outside Details when an update is needed', async () => {
+    mocks.connection.localServiceOutOfDate = true;
+    render(<AstridStatusSection isOpen />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Needs an update');
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
   });
 });

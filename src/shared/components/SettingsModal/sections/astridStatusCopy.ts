@@ -11,6 +11,7 @@ export const ASTRID_STATUS_COPY = {
   notRunning: 'Not running',
   updateNeeded: 'Needs an update',
   blocked: "Blocked by your browser's settings",
+  detailsToggle: 'Details',
   workspace: 'Workspace',
   workspaceName: 'Name',
   connectionDetails: 'Connection details',

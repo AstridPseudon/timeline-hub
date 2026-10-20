@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle2, CircleAlert, Loader2 } from 'lucide-react';
+import { CheckCircle2, ChevronRight, CircleAlert, Loader2 } from 'lucide-react';
 import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import type { Health, Realm, ServiceStatus } from '@/integrations/runtime/generated.ts';
@@ -8,6 +8,7 @@ import { SetupStatusLine } from '@/shared/components/OnboardingModal/components/
 import { RUNTIME_CONNECTION_COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import { connectionStatus } from './ConnectionSection.tsx';
 import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/components/ui/collapsible';
 import { Card } from '@/shared/components/ui/card';
 import { CopyInstallCommand } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
 import { ASTRID_STATUS_COPY as COPY, connectionStatusCopy } from './astridStatusCopy.ts';
@@ -32,11 +33,17 @@ function statusIcon(status: string) {
   return <CircleAlert className="h-4 w-4 text-muted-foreground" aria-hidden />;
 }
 
-function StatusRow({ label, value }: { label: string; value: string | number }) {
+/** `sha256:ec06fbc6…94f6b9`: enough to compare by eye; the full value is the tooltip and is selectable. */
+function shortDigest(digest: string): string {
+  const colon = digest.indexOf(':') + 1;
+  return digest.length - colon > 16 ? `${digest.slice(0, colon + 8)}…${digest.slice(-6)}` : digest;
+}
+
+function StatusRow({ label, value, title }: { label: string; value: string | number; title?: string }) {
   return (
     <div className="flex items-center justify-between gap-4 text-sm">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 break-all text-right font-medium">{value}</dd>
+      <dd className="min-w-0 break-all text-right font-medium" title={title}>{value}</dd>
     </div>
   );
 }
@@ -129,7 +136,12 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
             )}
 
             {connected && details && (
-              <div className="space-y-4 border-t pt-3">
+              <Collapsible className="border-t pt-2">
+                <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                  <ChevronRight className="h-3 w-3 transition-transform group-data-[panel-open]:rotate-90" aria-hidden />
+                  {COPY.detailsToggle}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 pt-3">
                 <div>
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{COPY.workspace}</h3>
                   <dl className="space-y-1.5">
@@ -140,7 +152,7 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{COPY.connectionDetails}</h3>
                   <dl className="space-y-1.5">
                     <StatusRow label={COPY.protocol} value={details.health.protocol} />
-                    <StatusRow label={COPY.schema} value={details.health.schema_digest} />
+                    <StatusRow label={COPY.schema} value={shortDigest(details.health.schema_digest)} title={details.health.schema_digest} />
                   </dl>
                 </div>
                 <div>
@@ -168,7 +180,8 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
                     </ul>
                   )}
                 </div>
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
             )}
           </div>
         </div>
