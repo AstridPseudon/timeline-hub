@@ -9,6 +9,8 @@ import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.t
 import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+import { captureShotSet, finishShotSet } from './shotSetCapture.ts';
+import type { ShotSetCapturePort } from './shotSetGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -318,6 +320,40 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const shotSetPort: ShotSetCapturePort = {
+    capture({ occurrenceId, current }) {
+      assertReady();
+      if (current.projectId !== options.scope.projectId || current.parentDocumentId !== options.scope.timelineId
+        || current.headRevisionId !== displayHead.revisionId || !displayHead.publicationId) {
+        throw new Error('Displayed shot does not match the verified raw authoring basis');
+      }
+      const select = `occurrence:${occurrenceId}/shot`;
+      return json({ ...captureShotSet(bundle, select), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } });
+    },
+    finish(basis, args) {
+      assertReady();
+      const captured = basis as unknown as { localGeneration?: number };
+      if (captured.localGeneration !== localGeneration) throw new Error('Timeline changed during the shot name edit');
+      const result = finishShotSet(basis, args);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle,
+        after: result.bundle, preview: null,
+      }, generation: localGeneration,
+      basis: (basis as unknown as { localBasis: OutboxBasis }).localBasis });
+      return { command: result.command, bundle: result.bundle };
+    },
+    submit({ command }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'shot.set' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('shot.set was not captured by this session');
+      }
+      prepared.delete(key);
+      enqueue(entry.payload, null, entry.basis);
+    },
+  };
   async function resolveRejected(keepLabel: boolean) {
     if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
     const label = keepLabel ? labelIntent() : undefined;
@@ -422,6 +458,7 @@ export async function createTimelineCommandSession(options: Options) {
   return {
     port,
     trackLabelPort,
+    shotSetPort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,

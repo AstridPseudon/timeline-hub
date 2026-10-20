@@ -16,6 +16,7 @@ interface UseNameEditingProps {
   };
   actions: ShotEditorActions;
   onUpdateShotName?: (name: string) => void;
+  onBeforeNameEdit?: () => void;
 }
 
 interface UseNameEditingReturn {
@@ -30,6 +31,7 @@ export function useNameEditing({
   state,
   actions,
   onUpdateShotName,
+  onBeforeNameEdit,
 }: UseNameEditingProps): UseNameEditingReturn {
   const syncedShotIdRef = useRef<string | null>(selectedShot?.id ?? null);
 
@@ -54,10 +56,11 @@ export function useNameEditing({
 
   const handleNameClick = useCallback(() => {
     if (onUpdateShotName) {
+      onBeforeNameEdit?.();
       actions.setEditingNameValue(selectedShot?.name || '');
       actions.setEditingName(true);
     }
-  }, [onUpdateShotName, selectedShot?.name, actions]);
+  }, [onBeforeNameEdit, onUpdateShotName, selectedShot?.name, actions]);
 
   const handleNameSave = useCallback(() => {
     if (onUpdateShotName && state.editingName.trim() && state.editingName.trim() !== selectedShot?.name) {
