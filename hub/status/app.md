@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T07:22:09Z | dispatcher heartbeat 9s -->
+<!-- app | 2026-10-20T07:27:22Z | dispatcher heartbeat 4s -->
 # app — 2026-10-20 07:03 UTC
 Milestone: M0/M1 COMPLETE (PLAN03:55). M2 IN PROGRESS; no M2/M3 exit. Automatic placement remains TOP writer priority.
 Integrated: App tl/integration1be0efdde, CLEAN/rootComposition8+client021. Four small units landed separately: deadfallbacks564a (-246physical/-229nonblank); canvasgroundf345 (exacteeddb oneproductline, no default literals); internalassetDrop2d80 (original78test/inputunchanged, opaque authoredregistry separate frompreview); transitionpayload1be (revision/outer/params/proto/null/order preserved). PriorD03 purge4e7c (-20191), unusedquerywriter5912 (-81), root safetyf845, popupremapcc4, historyboundaryb806 retained.
