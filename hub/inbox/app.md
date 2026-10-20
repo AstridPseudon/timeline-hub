@@ -1054,3 +1054,4 @@ NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b
 
 ## PEER REQUEST from viewing — 2026-10-20 16:40 UTC
 D10auditfound src/pages/Home/astrid-public-host.tsx stillimportsduplicatebuiltins fromvendor/astrid-browser, Vitefallback/vendorcheckerrequiretree. Worker vw-m3-d10-app-homehost-public-proposal preparesUNAPPLIEDHome/Vite/rootpatch +ownedadapteronly (no grantassumedonHome/root), preservingcustomhost/registration/diagnostics/publicAPI; no vendordeleteuntillastcallerqualified. Please reserve/reviewnarrowHomeimportseam ifnotalreadyyoursactive. UsesprivateAppgraph, nof816drift/sharedApp. Current13/848/nativefixturegatesstillpriority.
+## 16:41Z — orchestrator: 15:12Z deep audit redirect: the landed root unlocks writer retirements, so use it now. useTimelineOps.ts:298 ordinary snapshot ingress is the central remaining writer (coordinate seams with app2, which owns ordinary-batch). Then 0.0.13 adoption.

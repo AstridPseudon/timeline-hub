@@ -1,6 +1,41 @@
 # Agent Main custody security review
 
-**HOLD** on `f511038ded7a0ae49e2935efc37800b63038d0b3`. The owner’s 16:16 exact retained-pidfd exit-proof condition is not satisfied under descriptor invalidation/reuse. Existing Linux tests pass; their green result does not cover this counterexample. No product or test changes were made by this review.
+**SUCCESSOR READY FOR FRESH REVIEW**. The `f511038ded7a0ae49e2935efc37800b63038d0b3` HOLD remains in force until a separate Sol security review examines the harness-committed successor and the real D13 current join. The successor closes the demonstrated proof gap without changing signaling, adoption, session, or public custody APIs.
+
+## Corrected successor
+
+The successor changes two paths relative to `f511038ded7a0ae49e2935efc37800b63038d0b3` (`+86/-7`):
+
+- `ProcessCustody` records a minimal `(dev, inode, mode, /proc fd type)` fingerprint for each real Linux pidfd at bind time. Exit proof requires that exact retained descriptor to still have the fingerprint and `anon_inode:[pidfd]` identity both before and after polling.
+- Poll results must contain exactly one event for that descriptor and be either `POLLIN` or `POLLIN|POLLHUP`; `POLLNVAL`, `POLLERR`, ordinary-file readiness, and poll errors fail closed.
+- `_PIDFD_RELEASED` is exit proof only when `release_pidfds(only_exited=True)` first established the birth-bound terminal observation. Unconditional release never fabricates terminal provenance.
+- Existing `object.__new__` fake-custody admission fixtures remain compatible, but without a real pidfd fingerprint they cannot produce exit proof.
+
+Source hashes at the final uncommitted worker snapshot:
+
+- `astrid/core/execution/custody_broker.py`: `3ff9ff42cbf073bbc66eeedb4f36ba4e3ee1ba45cad734227447698b1d62e3ce`
+- `astrid/core/execution/process_group.py`: `df8d111c415b2700d1421a1a592bce38267b939395945adbf7600412db8d1cb1` (unchanged by successor delta)
+- `tests/core/execution/test_process_group.py`: `bac8f1dcff761a55396def90cf9d339b89944c5c80329ed89ab82bae4bbe938e`
+- central source snapshot: `3313970eba94cebaa108851dc7e96138ab008578`
+
+The direct test file adds two Linux-only tests: a real live child with a closed descriptor and `/dev/null` descriptor reuse both refuse exit proof and conditional release; a genuinely exited child produces positive proof and retains that provenance after conditional release. All original assertions remain unchanged.
+
+Final evidence:
+
+- central `root-prep-current-integration --files "tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py"`: **629 passed, 16 skipped** in 29.46s, exit 0, 0 deselected;
+- local focused pidfd/reuse selection: **3 passed, 66 deselected** in 0.32s;
+- local strict compatibility check for the pre-existing fake Linux admission case plus reuse tests: **3 passed, 642 deselected** in 1.66s;
+- updated `probe_pidfd.py`: all live/closed/reused/release/genuine-exit controls passed, including refusal of the synthetic replacement census after descriptor loss/substitution.
+
+The first central run of the successor exposed and the follow-up fix corrected lazy bookkeeping initialization for an existing `object.__new__` fixture; the final central run above is the qualifying result. Darwin-native tests remain skipped on this Linux host. No full suite was run.
+
+## Previous review (superseded)
+
+**HOLD** on `f511038ded7a0ae49e2935efc37800b63038d0b3`. The owner’s 16:16 exact retained-pidfd exit-proof condition was not satisfied under descriptor invalidation/reuse. Existing Linux tests passed; their green result did not cover this counterexample. The correction above addresses that finding.
+
+## Historical HOLD details (previous-review evidence)
+
+The remaining sections preserve the exact source, counterexample, guards, and commands from the original HOLD review. Their old counterexample results describe `f511038d`, not the corrected successor above.
 
 ## Exact source and scope
 
