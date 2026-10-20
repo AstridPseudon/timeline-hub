@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T18:11:20Z | dispatcher heartbeat 1s | live 4 (sol 0, luna 4, other 0) | busy30 28 | status age 3m -->
+<!-- app2 | 2026-10-20T18:12:12Z | dispatcher heartbeat 7s | live 4 (sol 0, luna 4, other 0) | busy30 28 | status age 4m -->
 # app2 — 2026-10-20 18:07 UTC
 Milestone: M2 — ordinary snapshot ingress priority; no app2 row DELETED or milestone exit.
 Integrated: latest worker-inspected HOME b0efbffae (supersedesc57/f301); ordinary052b resolved3e24 and original helper/literal/overlay waves landed. HOME fixes merged stale b58f forward using reviewed42e (carrier now present unchanged in475). Public013/Composition13; no014activation.
