@@ -122,3 +122,33 @@ for (const [name, selected] of [['full', explicit], ['partial nested override wi
     assert.deepEqual(selected, before);
   });
 }
+
+test('public Composition consumes a custom Runtime-pinned theme carrier', () => {
+  const selected = structuredClone(explicit);
+  const markup = render(createElement(TimelineComposition, {
+    timeline: {theme: 'film-pinned', tracks: [track], clips: [clip]}, assets, theme: selected,
+  }));
+
+  assert.match(markup, /^<div style="[^"]*background-color:#234567(?:;|")/);
+  assert.match(markup, /color:#123456/);
+  assert.match(markup, /font-family:Film Heading/);
+  assert.match(markup, /font-size:51px/);
+  assert.match(markup, /font-weight:300/);
+  assert.match(markup, /line-height:1.7/);
+  assert.deepEqual(selected, explicit);
+});
+
+test('public Composition consumes nested-merged theme fields without default fallback', () => {
+  const selected = structuredClone(partialOverride);
+  const markup = render(createElement(TimelineComposition, {
+    timeline: {theme: 'film-pinned', tracks: [track], clips: [clip]}, assets, theme: selected,
+  }));
+
+  assert.match(markup, /^<div style="[^"]*background-color:#234567(?:;|")/);
+  assert.match(markup, /color:#123456/);
+  assert.match(markup, /font-family:Film Heading/);
+  assert.match(markup, /font-size:51px/);
+  assert.match(markup, /font-weight:300/);
+  assert.match(markup, /line-height:1.7/);
+  assert.deepEqual(selected, partialOverride);
+});
