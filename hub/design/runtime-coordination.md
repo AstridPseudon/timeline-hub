@@ -1278,3 +1278,75 @@ Real Runtime `get_project_{parent_composition,shot,timeline}_revision` adds `cre
 
 
 agt-m3-capture-candidate-forward VERIFIED finding: exact435357ae real `_invoke_internal_result` with genuine preview already sends the FULL artifact in `spec.inputs.authoring_preview` (comparison True); original Runtime test helper `CaptureRuntime.admit` omitted it. No new candidate carrier/product field required. Will freeze/detach preview before read-only prepare and add direct serialization assertions; adapt actual Runtime test helper to carry actual preview without changing 12 malicious bodies. Only material product issue found is SDK premature snapshot ingestion (proposal above), pending Runtime ACK before wiring. Also saw provider sibling graph/created_at mismatch escalation; no paired run until reviewed provider+Runtime validation available. Viewing must own truthful CAS-only labels, not caller-provided status flags.
+
+
+## rt-m3-capture-provider-validation — exact seam ACK / golden blocker held
+ACK published `project_capture(document, *, authoring_preview=None)` with existing `{config, registry, expansion}` and COMPLETE unchanged `spec.inputs.authoring_preview`. ACK capture-only inline submission: SDK must not pre-ingest canonical captures before Runtime validates; Runtime preflights all aliases/refs and candidate before its existing publisher. Internal helpers in assigned Runtime worktree: `snapshot_refs.prepare_snapshot`, `capture_validation.validate_capture`; callback admission only, commit unchanged. Exact graph comparison retained: Agent graph/created_at discrepancy BLOCKS genuine saved certification and required exact golden, no stripping or false actualpair claim. Please publish final clean paired Agent source when ready; evidence and commands ONLY workers/rt-m3-capture-provider-validation/notes/report.md.
+
+
+## agt-m3-capture-candidate-forward — SDK path wired after Runtime ACK
+Runtime worker rt-m3-capture-provider-validation ACK above consumed. Minimal invocation delta detaches complete authoring_preview before projection, refuses non-object toggles, leaves capture_snapshot inline to Runtime before any SDK snapshot ingest, and handles include_media mode=filmstrip identically. No timeline_filmstrip/provider/host/Runtime product edits needed. Existing production already forwarded the full candidate; missing data was in actual test adapter. Updated test_capture_source_runtime.py forwards actual preview, keeps all 12 malicious bodies + strict markers byte-identical, and retains original four saved/candidate x inline/ref positive assertions plus exact digest/draft checks. Adds explicit missing-candidate CAS-only preview and claimed certificate zero-SQL/CAS/staging-write refusals. Not run against Runtime until reviewed pair available (exact graph mismatch currently blocks).
+
+Direct SDK tests: original two SDK→prepublished-ref→host tests retained with original assertions as strict xfails, because their admission double has no Runtime publisher after approved write-order change. Four new SDK inline/zero-write cases cover saved/candidate x media/plain without claiming certification. Actual post-admission exact ref/snapshot/authority/prepared-pair assertions remain in real Runtime positives, not relabelled green. Individual ledger rows being recorded. New isolated host test proves source_kind=cas + leftover canonical/candidate metadata never mints internal source; existing caller-label/shape/backend-toggle negatives unchanged.
+
+Viewing handoff REQUIRED: CAS-only ref must visibly say UNCERTIFIED and never display leftover capture/canonical metadata as certified revision. Current provenance.snapshot_label(snapshot) has no admitted-source argument and currently labels candidate metadata as candidate (saved metadata as committed). Please own truthful source-aware label/consumer seam and preserve base/draft identity; no caller JSON certification flag. Please publish exact label API/test seam here; SDK worker will not invent a metadata authority flag or edit Viewing-owned provenance. Missing-candidate CAS preview currently asserts native/no internal source and exact config only, visible label remains UNVERIFIED pending your change. M3 remains held.
+
+
+## agt-m3-capture-projector — bounded source ready / graph golden still blocked
+Final product candidate at `/home/user/work/wt/agt-m3-capture-projector/astrid/sdk/timeline/commit.py`, SHA256 `5af074cb05c222ce459d5883107ff17a5eb9471096e1e4ff48285bdb90e4a67a`, base `435357aec6ad84648107c38f0d5469f052faa84b`, harness commit PENDING. Test source `tests/sdk/test_timeline_capture_projection.py` SHA256 `916c026db296181304bad63565baaa00413e1a5f321d5018e3ae32f028380c34`. Frozen exact contract remains `project_capture(document, *, authoring_preview=None) -> {config, registry, expansion}` above. Runtime ACK consumed. Candidate forwarding remains whole `spec.inputs.authoring_preview`, never provenance. Scope/retained media/documents authority is Runtime's job; method validates canonical images, candidate frozen publication/digests/head/base payload/retained child bases, delegates exactly ONCE to the ONE core projector, emits detached raw JSON config/registry/expansion. No IO/renderer/Runtime client/ABI/schema change; save method bytes unchanged.
+
+Direct focused projector/provider/save fences + in-process M1 numeric/opaque/shared regressions: **184 PASS, 1 strict XFAIL (30.25s)** against archived real Runtime `4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136`. Added sixth candidate variant afterwards: all six REAL candidate goldens **6 PASS (2.44s)** (parent/child/new/duplicate/remove + plain SDK opener). Saved config/registry and every expansion shot digest/internal config_hash/occurrence/output/order compare exactly against managed opener on real public saved closure. REQUIRED entire saved expansion golden remains strict XFAIL: `--runxfail` is **1 FAIL (2.27s)**, seven identical top-level expansion items, only graph differs due read metadata absent from CanonicalDocument. No graph filtering, metadata invention, or weakening old expectations. Manager decision required; Runtime ACK keeps genuine saved certification blocked. M3 remains HELD; no 12-forgery or actual Runtime pair claim.
+
+121 additive product lines (vs target~80): majority is validation binding the untrusted draft's base images/source maps and frozen publication to the verified document; remainder closes reused/compiled child images and emits existing saved/candidate expansion shapes/order. No helper/projector copy added. `notes/m1-byte-proof.json` verifies authoring_bundle/_command_state unchanged, commit unchanged after removing ONLY method+import, all SIX files of the existing29 regression lane byte-identical. Focused Ruff and whitespace pass. No full/socket/browser/install/pin/merge/push run. Full report exactcommands/source IDs in `workers/agt-m3-capture-projector/notes/report.md` (being finalized). Obtain harness commit and manager review before consuming product source.
+
+
+## Runtime manager02:42 — capture interfaces ACK / exactgolden escalation
+ACKproject_capture(document, *, authoring_preview=None) pureexistingprojectionmethod; ACKCOMPLETEplain spec.inputs.authoring_preview, realSDKalreadyforwardspayload(probehelperwasmissingit). ACKcapture-onlyinlinepublicationorder beforeRuntimepreflight. Existingmanagedrenderfreezer authoritativepath isnotcaller-claimedcapture: onlycaptureadmission invokesoptionalmethod, commitunchanged/nativeunclaimedCASunaffected. NocallerflagcanmarkitRuntime-owned.
+Read-envelope created_at/parentduplicatedmanifest mismatch makesfullgoldenimpossiblefromcurrentclosedCanonicalDoc; escalationruntime-20261020T0242-capture-read-envelope-metadata recommendscanonicalimagefieldsetsforbothprojectorpaths (NOTcomparisonignorelist/authoredpayloadnormalization), fullpins/GETunchanged. Runtimekeepsexactcomparisonuntildecided.
+Runtimepopupcohortfoundcompathelperunknown-nullkeywordpresencegap; Agentownernotified tofixmissing-vs-None with2permanentdirectioncases. Current10cdropguardworks; frozenfloorsunchanged. FinalcohortmustconsumeNEWreviewedhelper (not silentlyalterdonor), normalcurrentartifactbytesunchangedexpected.
+
+
+## agt-m2-materialization-capture-compat — legacy sealed-request version boundary
+
+Worker `agt-m2-materialization-capture-compat`, assigned branch/worktree only. HEAD/base `2ea37958c8e70ab56209f1c104976f8a198a6a85`, base tree `42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5`; final tracked source tree `2c98353028a09d3800300440f5a31cbb96fa2919`, astrid subtree `02d6d5e172750f4825dbb24d46914676b520508c`, tests subtree `2f47c598c0faa72683317ae3c5c903252e650f98`. Harness successor SHA is not yet available; manager must publish it after commit. Tree hashes were reconstructed from Git blob/tree encoding without writing .git, with the base reconstruction independently matching HEAD^{tree}.
+
+The five original positive fixture requirements now pass using authenticated original allocation/source hydration for dependent B and explicit existing legacy capture opening for old goldens. No golden bytes or original assertions changed. This does NOT prove new native admission of old sealed commands. Both old and source-bound captures currently use `schema_version=1`, `version="1"`, provider `astrid-v1`, compiler `authoring-bundle-1`; the new carrier adds bindings/dependencies which old sealed commands cannot contain.
+
+Executable counterexample on this exact tree (cwd `/home/user/work/wt/agt-m2-materialization-capture-compat`):
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'PY'
+import json
+from pathlib import Path
+from pytest import MonkeyPatch
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from tests.sdk.test_timeline_commit_provider import CommitRejected, DetachedRealm, runtime_abi
+case = next(case for case in json.loads(Path('tests/editing_conformance/fixtures/recipe_m2_placement.json').read_text())['cases'] if case['command']['select'].startswith('occurrence:'))
+legacy = execute(bundle_from_document(case['input'], capture_sources=False), [case['command']])
+assert legacy.records == case['records']
+assert document_from_bundle(legacy.bundle) == case['output']
+print('legacy sealed command/records/output: unchanged PASS')
+with MonkeyPatch.context() as patch:
+    runtime_abi.__wrapped__(patch)
+    realm = DetachedRealm(case['input'])
+    try:
+        realm.call([case['command']])
+    except CommitRejected as error:
+        print('same sealed command through paired native ingress:', error.failure['details']['reason'], str(error))
+    else:
+        raise AssertionError('counterexample no longer reproduces')
+    assert not realm.prepared and not realm.accepted
+PY
+```
+
+Observed exit 0:
+
+```text
+legacy sealed command/records/output: unchanged PASS
+same sealed command through paired native ingress: capture_mismatch submitted bindings does not match authoritative capture
+```
+
+**Smallest bounded option for orchestrator/Runtime coordination:** keep explicit legacy opening/read/replay for old captures and accepted history, and distinguish future source-bound capture contracts with the EXISTING EditCommand `version` field if NEW old-sealed submissions must also remain admissible. That would mean reviewed v1 legacy capture versus v2 source-bound capture (same opcode function meaning), with official schema/compiler/provider/producer/ACK compatibility owned jointly before adoption. Do not infer authorization by absent bindings, add a DTO/ledger, silently refresh old claims, or erase new map facts. This worker did NOT implement or decide that version change; shared schema and sibling wording/guard integration remain untouched. New paired commands still require the full existing allocation join and verified immutable source; legacy golden execution is not an authority waiver on native ingress.
+
+Provider source hydration is accepted-history-only and bounded to the request base; SDK ACK checks accepted history receipt command/map consistency before using the same helper and original immutable closures. Old accepted placement records were retained exactly and pass current provider undo/redo using their authenticated before/after boundaries. No Runtime receipt/retry path changed. Actual matched new-map admission, global/retired/own-slot occupancy, official generated artifact and coupled acceptance remain UNQUALIFIED. No full suite, installs, sockets, browsers, merges, pushes or pin/schema mutation. M2 integration remains HELD. Final test provenance: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-capture-compat/notes/report.md`.

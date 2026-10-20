@@ -397,3 +397,14 @@ APPROVED, with refinements. Owners: Agent = projection method + candidate forwar
 3. Until then: explicit cas-only UNCERTIFIED preview. A claimed revision or working-copy certificate without authority REFUSES before any CAS or task write. The host and viewer never mint a canonical source from leftover capture metadata.
    Old tests that require a certified working copy without a candidate are adapted to the uncertified-label expectation, each with a deletion-ledger row giving the reason. They are not relabelled green.
 Done when the 12 forgeries are refused and the positive controls pass (saved, plus working copy with a real candidate). This gates gate 1/7 and M3; it is not M1.
+
+## 02:42Z — orchestrator DECISION: capture read-envelope metadata (runtime-20261020T0242)
+APPROVED: the recommended canonical image projection. Agent's managed capture construction maps the GET read envelopes onto the EXISTING canonical image field sets (existing CanonicalDocument conversion), then calls the SAME core projector.
+- Excluded from the snapshot graph: ONLY the outer read-only decoration (created_at and the duplicated parent dependency_manifest). Normal GET APIs and every payload.* authored field stay exactly as they are.
+- Everything else is kept: complete immutable payloads, revision IDs and digests, the root manifest and all pins, order, and opaque authored content.
+- The full golden compares the ENTIRE result exactly: no ignore list and no second projector.
+Conditions:
+(a) Viewing confirms within its next cycle, through the hub, that no viewer, host or check reads created_at or the duplicate manifest from expansion.graph. If something does, escalate before the change merges.
+(b) Already-stored snapshots stay readable and are never rewritten. Their verification uses their recorded form, or they are explicitly labelled legacy and uncertified; they are never silently re-certified.
+(c) A deletion-ledger row for the old read-decoration projection.
+The alternative (a Runtime read resource as an extra input) is not needed.

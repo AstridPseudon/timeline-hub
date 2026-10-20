@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T02:38:23Z | dispatcher heartbeat 15s -->
+<!-- main | 2026-10-20T02:43:42Z | dispatcher heartbeat 1s -->
 # runtime — 2026-10-20T02:24Z
 Milestone: M0 COMPLETE. M1 null-speed preservation MERGED; targeted/actual CLI proof COMPLETE, ONE postmerge Runtime full QUEUED. Global M1 NOT RECORDED; all M2/M3 merges HELD. Capture-content forgery is a M3/gates1,7 blocker, explicitly NOT an M1 hold.
 Integrated: Runtime4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136/tree219a92c/client0.2.1; Agent4a75f68f/treed8ee74e0; App2bfde69ea. Known speed slots null→default1 only; generic None/fps validation and stored bytes unchanged. M1 branch6db1d88 EXACTtestedtree merged. Legitimate trusted-storage setup, NOT Agent semantic acceptance; no SQL immutable-image rewrite. Review notes/m1-null-speed-review.md.
