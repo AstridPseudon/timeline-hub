@@ -59,36 +59,12 @@ function assertElement(value: unknown): asserts value is ElementRef {
   }
 }
 
-function assertPin(value: unknown): asserts value is DocumentPin {
-  if (!object(value) || typeof value.document_id !== 'string' || !Number.isInteger(value.version) ||
-    typeof value.content_digest !== 'string') {
-    throw new ClipMoveError('element capture requires an exact schema_source DocumentPin');
-  }
-}
-
-function retainedPin(bundle: AuthoredBundle, pin: DocumentPin): boolean {
-  const mapping = object(bundle.source_mapping) ? bundle.source_mapping : undefined;
-  const document = object(mapping?._runtime_document) ? mapping._runtime_document : undefined;
-  const manifest = object(document?.dependency_manifest) ? document.dependency_manifest : undefined;
-  const retained = Array.isArray(manifest?.documents) ? manifest.documents : [];
-  return retained.some((candidate) => equal(candidate, pin)) &&
-    (Array.isArray(mapping?.pinned_documents) ? mapping.pinned_documents : [])
-      .some((capture) => object(capture) && equal(capture.pin, pin));
-}
-
-function schemaSource(bundle: AuthoredBundle, element: ElementRef, supplied?: DocumentPin): DocumentPin | undefined {
+function schemaSource(element: ElementRef, supplied?: DocumentPin): DocumentPin | undefined {
   if (!element.packId) {
     if (supplied !== undefined) throw new ClipMoveError('schema_source requires a selected project pack element');
     return undefined;
   }
-  if (supplied !== undefined) {
-    assertPin(supplied);
-    if (!retainedPin(bundle, supplied)) {
-      throw new ClipMoveError('schema_source must be a retained immutable document pin');
-    }
-    return copy(supplied);
-  }
-  throw new ClipMoveError('selected project pack requires the retained schema_source DocumentPin');
+  throw new ClipMoveError('selected project pack capture requires authoritative Agent schema capture');
 }
 
 function targetContext(bundle: AuthoredBundle, command: EditCommand): MoveRecording {
@@ -128,18 +104,16 @@ function applyElement(bundle: AuthoredBundle, supplied: EditCommand): ElementCap
   assertFiniteJson(supplied.args);
   const ctx = targetContext(bundle, supplied);
   const ref = supplied.select;
-  // The native provider records `element.targets`; this local recorder only
-  // supports the ordinary move selections, so do not approximate it with a
-  // different membership query.
-  for (const key of ['clipType', 'hold', 'asset', 'file', 'src', 'source', 'from', 'to']) ctx.read(ref, [key]);
-  const before = ctx.read(ref, ['elementRef']) ?? ctx.read(ref, ['element_ref']);
+  const selected = ctx.read(ref, ['elementRef']);
+  const alias = ctx.read(ref, ['element_ref']);
+  const before = selected ?? alias;
   assertElement(before);
   const next = supplied.args.elementRef;
   if (before.id !== next.id || before.kind !== next.kind ||
     (before.packId !== undefined && before.packId !== next.packId)) {
     throw new ClipMoveError('clip.set-element must keep the element id, kind and selected pack owner');
   }
-  const pin = schemaSource(bundle, next, supplied.args.schema_source as DocumentPin | undefined);
+  const pin = schemaSource(next, supplied.args.schema_source as DocumentPin | undefined);
   if (pin) {
     ctx.dependency('element.schema', 'source', pin);
     ctx.bind('element.target', ref, ['element.schema']);
@@ -167,13 +141,15 @@ export function captureClipElement(bundle: AuthoredBundle, select: string, args:
   assertFiniteJson(args);
   assertElement(args.elementRef);
   const snapshot = copy(bundle);
-  const pin = schemaSource(snapshot, args.elementRef, args.schema_source);
   const command: EditCommand = {
     schema_version: 1,
     op: 'clip.set-element',
     version: '1',
     select,
-    args: { elementRef: copy(args.elementRef), ...(pin ? { schema_source: pin } : {}) },
+    args: {
+      elementRef: copy(args.elementRef),
+      ...(args.schema_source !== undefined ? { schema_source: copy(args.schema_source) } : {}),
+    },
   };
   const result = applyElement(snapshot, command);
   return freezeJson({ bundle: snapshot, command: result.command });
@@ -189,8 +165,7 @@ export function finishClipElement(basis: unknown, args: ElementCaptureArgs): Ele
   }
   const command = copy(basis.command as EditCommand);
   const expectedPin = object(command.args) ? command.args.schema_source : undefined;
-  const requestedPin = schemaSource(basis.bundle as AuthoredBundle, args.elementRef,
-    args.schema_source ?? expectedPin as DocumentPin | undefined);
+  const requestedPin = schemaSource(args.elementRef, args.schema_source ?? expectedPin as DocumentPin | undefined);
   if (!equal(expectedPin, requestedPin) || !equal(command.args.elementRef, args.elementRef)) {
     throw new ClipMoveError('element capture changed after original capture', 'capture_mismatch');
   }
@@ -203,86 +178,23 @@ export function captureClipElementParams(bundle: AuthoredBundle, select: string,
   const ref = new AuthoredState(bundle).entity(select);
   const selected = ref && (ref.elementRef ?? ref.element_ref);
   if (object(selected) && selected.packId) {
-    const pin = schemaSource(bundle, selected as ElementRef, args.schema_source);
-    const command = captureSelectedParams(bundle, select, args, pin);
-    return freezeJson({ bundle: copy(bundle), command });
+    throw new ClipMoveError('selected project pack capture requires authoritative Agent schema capture');
   }
   if (args.schema_source !== undefined) throw new ClipMoveError('schema_source requires a selected project pack element');
   return captureClipParams(bundle, select, args);
 }
 
-function applySelectedParams(bundle: AuthoredBundle, supplied: EditCommand): ElementParamsResult {
-  assertTarget(supplied.select);
-  if (supplied.schema_version !== 1 || supplied.op !== 'clip.set-params' || supplied.version !== '1' ||
-    !object(supplied.args) || !has(supplied.args, 'schema_source') || !has(supplied.args, 'values') ||
-    !has(supplied.args, 'clear')) throw new ClipMoveError('unsupported selected clip.set-params v1 command');
-  assertPin(supplied.args.schema_source);
-  const values = supplied.args.values;
-  const clear = supplied.args.clear;
-  if (!object(values) || !Array.isArray(clear) || clear.some((key) => typeof key !== 'string') ||
-    new Set(clear).size !== clear.length || Object.keys(values).some((key) => clear.includes(key)) ||
-    (!Object.keys(values).length && !clear.length)) {
-    throw new ClipMoveError('clip parameters require non-empty values or explicit clears');
-  }
-  assertFiniteJson(values);
-  const ctx = targetContext(bundle, supplied);
-  const selected = ctx.read(supplied.select, ['elementRef']) ?? ctx.read(supplied.select, ['element_ref']);
-  assertElement(selected);
-  if (!selected.packId || !retainedPin(bundle, supplied.args.schema_source)) {
-    throw new ClipMoveError('selected project pack requires a retained immutable schema_source');
-  }
-  for (const key of ['clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id', 'elementRef', 'element_ref']) {
-    if (key !== 'elementRef' && key !== 'element_ref') ctx.read(supplied.select, [key]);
-  }
-  ctx.dependency('params.schema', 'source', supplied.args.schema_source);
-  ctx.bind('params.element', supplied.select, ['params.schema']);
-  if (Object.keys(values).length) ctx.object(supplied.select, ['params']);
-  for (const key of Object.keys(values).sort()) ctx.write(supplied.select, ['params', key], values[key]);
-  for (const key of [...clear].sort()) {
-    const params = ctx.state.get(supplied.select, ['params']);
-    if (params.state === 'present' && params.value !== null) ctx.clear(supplied.select, ['params', key]);
-    else {
-      ctx.read(supplied.select, ['params']);
-      const address = `${supplied.select}::params.${key}`;
-      ctx.command.expect![address] = { state: 'absent' };
-      ctx.command.authorship![address] = 'direct';
-      ctx.record.writes.push({ ref: supplied.select, path: ['params', key], before: { state: 'absent' }, after: { state: 'absent' } });
-    }
-  }
-  ctx.compile();
-  for (const key of CLAIMS) {
-    if (has(supplied, key) && !equal(supplied[key], ctx.command[key])) {
-      throw new ClipMoveError(`submitted ${key} does not match original capture`, 'capture_mismatch');
-    }
-  }
-  return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record };
-}
-
-function captureSelectedParams(bundle: AuthoredBundle, select: string, args: ElementParamsArgs, pin: DocumentPin): EditCommand {
-  if (!object(args) || !equal(Object.keys(args).sort(), ['clear', 'schema_source', 'values']) ||
-    !object(args.values) || !Array.isArray(args.clear) || args.clear.some((key) => typeof key !== 'string') ||
-    new Set(args.clear).size !== args.clear.length || Object.keys(args.values).some((key) => args.clear.includes(key)) ||
-    (!Object.keys(args.values).length && !args.clear.length)) {
-    throw new ClipMoveError('clip parameters require non-empty values or explicit clears');
-  }
-  const command: EditCommand = {
-    schema_version: 1, op: 'clip.set-params', version: '1', select,
-    args: { values: copy(args.values), clear: [...args.clear], schema_source: copy(pin) },
-  };
-  return applySelectedParams(bundle, command).command;
-}
-
 export function finishClipElementParams(basis: unknown, args: ElementParamsArgs): ElementParamsResult {
-  if (object(basis) && object(basis.command) && basis.command.op === 'clip.set-params' &&
-    object(basis.command.args) && has(basis.command.args, 'schema_source')) {
-    assertFiniteJson(args);
-    const pin = args.schema_source ?? basis.command.args.schema_source as DocumentPin;
-    if (!equal(basis.command.args.schema_source, pin)) {
-      throw new ClipMoveError('element parameter capture changed its retained schema pin', 'capture_mismatch');
+  if (object(basis) && object(basis.command) && object(basis.bundle) &&
+    typeof basis.command.select === 'string') {
+    const selected = new AuthoredState(basis.bundle as AuthoredBundle).entity(basis.command.select);
+    const element = selected?.elementRef ?? selected?.element_ref;
+    if (object(element) && element.packId) {
+      throw new ClipMoveError('selected project pack capture requires authoritative Agent schema capture');
     }
-    const command = copy(basis.command as EditCommand);
-    command.args = { ...command.args, values: copy(args.values), clear: [...args.clear], schema_source: copy(pin) };
-    return applySelectedParams(basis.bundle as AuthoredBundle, command);
+    if (object(basis.command.args) && has(basis.command.args, 'schema_source')) {
+      throw new ClipMoveError('selected project pack capture requires authoritative Agent schema capture');
+    }
   }
   if (args.schema_source !== undefined) throw new ClipMoveError('schema_source requires a selected project pack element');
   return finishClipParams(basis, args);

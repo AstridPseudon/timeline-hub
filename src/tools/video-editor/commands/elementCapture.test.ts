@@ -68,35 +68,31 @@ describe('bounded native existing-clip element capture', () => {
     expect(clip(paramsBasis.bundle).params).toEqual({ keep: { nested: [null, false, 'opaque'] }, value: 1 });
   });
 
-  it('retains the exact selected pack pin and owner while changing only revision', () => {
+  it('refuses selected-pack capture without Agent authority and preserves the draft', () => {
     const input = selectedBundle();
+    const snapshot = structuredClone(input);
     const args = {
       elementRef: { id: 'effect', kind: 'effect', packId: 'pack', revision: 'sha256:new' },
       schema_source: pin,
     } as const;
-    const basis = captureClipElement(input, 'parent/clip:effect', args);
-    expect(basis.command.args.schema_source).toEqual(pin);
-    const result = finishClipElement(basis, args);
-    expect(clip(result.bundle).elementRef).toEqual(args.elementRef);
-    expect(result.command.expect?.['parent/clip:effect::elementRef']).toEqual({
-      state: 'present', value: { id: 'effect', kind: 'effect', packId: 'pack', revision: 'sha256:old' },
-    });
-    const paramsBasis = captureClipElementParams(result.bundle, 'parent/clip:effect', {
+    expect(() => captureClipElement(input, 'parent/clip:effect', args))
+      .toThrow(/authoritative Agent schema capture/);
+    expect(input).toEqual(snapshot);
+    expect(() => captureClipElementParams(input, 'parent/clip:effect', {
       values: { literal: { unknown: [null, false] } }, clear: ['value'], schema_source: pin,
-    });
-    expect(paramsBasis.command.args.schema_source).toEqual(pin);
-    expect((paramsBasis.command.args.values as Record<string, unknown>).literal).toEqual({ unknown: [null, false] });
+    })).toThrow(/authoritative Agent schema capture/);
+    expect(input).toEqual(snapshot);
   });
 
   it('refuses fabricated or missing retained pins and unsafe identity changes', () => {
     const input = selectedBundle();
     expect(() => captureClipElement(input, 'parent/clip:effect', {
       elementRef: { id: 'effect', kind: 'effect', packId: 'pack', revision: 'sha256:new' },
-    })).toThrow(/retained schema_source/);
+    })).toThrow(/authoritative Agent schema capture/);
     expect(() => captureClipElement(input, 'parent/clip:effect', {
       elementRef: { id: 'effect', kind: 'effect', packId: 'pack', revision: 'sha256:new' },
       schema_source: { document_id: 'fake', version: 1, content_digest: 'sha256:fake' },
-    })).toThrow(/retained immutable/);
+    })).toThrow(/authoritative Agent schema capture/);
     expect(() => captureClipElement(input, 'parent/clip:effect', {
       elementRef: { id: 'other', kind: 'effect', packId: 'pack', revision: 'sha256:new' },
       schema_source: pin,
