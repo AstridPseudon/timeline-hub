@@ -306,6 +306,45 @@ def test_preview_is_validated_and_reserves_nothing(realm):
     assert counts(service) == before
 
 
+@pytest.mark.parametrize("aliases", ["equal", "parent-empty", "config-empty"])
+def test_parent_clip_aliases_preserve_opaque_values_and_exact_retry(realm, monkeypatch, aliases):
+    import runtime_protocol.visual_seam as visual_seam
+
+    def unavailable(*args, **kwargs):
+        pytest.fail("commit evaluated a scene")
+    monkeypatch.setattr(visual_seam, "evaluate_closure", unavailable)
+    service, commits, project, head, _ = realm
+    ctx = context(service, project, head)
+    value = prepared(commits, ctx)
+    parent = value["canonical_document"]["parent_revision"]
+    payload = parent["payload"]
+    payload["opaque"] = {"clips": None, "pinned": {"clips": [{"value": None}]}}
+    payload["config"]["app"] = {"clips": [{"opaque": None}]}
+    payload["config"]["clips"] = copy.deepcopy(payload["clips"])
+    if aliases == "parent-empty":
+        payload["clips"] = []
+    elif aliases == "config-empty":
+        payload["config"]["clips"] = []
+    parent["content_digest"] = digest(payload)
+    value["document_digest"] = digest(value["canonical_document"])
+    original = copy.deepcopy(value)
+    before = tuple(service.store.conn.iterdump())
+    preview_ctx = context(service, project, head, dry_run=True)
+    preview = commits.preview(preview_ctx, value, authorize=lambda: None)
+    assert preview["data"]["canonical_document"] == value["canonical_document"]
+    assert tuple(service.store.conn.iterdump()) == before
+    accepted = accept(commits, ctx, value)
+    assert accepted["data"]["canonical_document"] == value["canonical_document"]
+    assert commits.revision_closure(project, "main", parent["revision_id"]) == value["canonical_document"]
+    assert value == original
+    # The exact ledger retry must precede candidate structure validation.
+    value["canonical_document"]["parent_revision"]["payload"]["config"]["clips"] = [{"id": "contradictory"}]
+    monkeypatch.setattr(visual_seam, "parent_clips", unavailable)
+    before = tuple(service.store.conn.iterdump())
+    assert accept(commits, ctx, value) == accepted
+    assert tuple(service.store.conn.iterdump()) == before
+
+
 def test_history_pages_keep_fixed_bounds_and_reject_foreign_cursor(realm):
     service, commits, project, head, _ = realm
     for i in range(3):
