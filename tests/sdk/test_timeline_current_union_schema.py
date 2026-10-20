@@ -66,6 +66,7 @@ def test_only_reviewed_producer_and_consumed_additions_change_current_schema():
     for definition in ('OccurrenceAddMediaArgs', 'PlacementCreateArgs'):
         del candidate['$defs'][definition]['properties']['consumed']
     candidate['$defs']['ClipSetElementArgs'] = previous['$defs']['ClipSetElementArgs']
+    candidate['$defs']['ClipSetArgs'] = previous['$defs']['ClipSetArgs']
     assert candidate == previous
 
 
@@ -81,6 +82,7 @@ def test_s2_only_adds_the_reviewed_optional_element_source_to_frozen_s1():
         'schema_source declaration pin. The retired element_ref alias is removed. '
         'There is no clear: a clip keeps its element.')
     element['description'] = previous['$defs']['ClipSetElementArgs']['description']
+    candidate['$defs']['ClipSetArgs'] = previous['$defs']['ClipSetArgs']
     assert candidate == previous
     assert len(_SCHEMA['$defs']) == 48
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 22
@@ -96,7 +98,20 @@ def test_existing_argument_narrowing_still_fails(name):
 def test_canonical_schema_is_byte_identical_to_approved_s2():
     path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        'a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef')
+        'ca4c59d47127e4846a7a7ae4cce2c02b097a73a051391677f5df40d468664f22')
+
+
+def test_private_transition_successor_is_an_additive_clip_set_carrier():
+    args = _SCHEMA['$defs']['ClipSetArgs']
+    assert set(args['properties']) == {'values', 'clear', 'schema_source'}
+    assert set(args['properties']['values']['properties']) == {'hold', 'transition', 'elementRef'}
+    transition = args['properties']['values']['properties']['transition']
+    assert transition['required'] == ['type', 'duration']
+    assert transition['properties']['id'] is False
+    assert transition['properties']['durationFrames'] is False
+    assert transition['properties']['align'] is False
+    assert transition['properties']['incomingPolicy'] is False
+    assert args['properties']['clear']['items']['enum'] == ['hold', 'asset', 'transition']
 
 
 def test_all_published_floors_preserve_every_field_with_only_historical_pattern_widening():

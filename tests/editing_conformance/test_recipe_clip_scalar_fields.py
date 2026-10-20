@@ -367,3 +367,53 @@ def test_hold_after_move_retains_half_open_occurrence_and_frame_guards():
     with pytest.raises(CommandError) as error:
         capture_clip_set(moved, REF, values={'hold': 17.98})
     assert error.value.kind == 'occurrence_boundary'
+
+
+def test_private_transition_set_update_remove_pairs_element_ref_and_roundtrips():
+    from astrid.core.element.catalog import list_element_descriptors
+
+    descriptor = next(item for item in list_element_descriptors('transitions')
+                      if item['id'] == 'cross-fade')
+    element = {key: descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
+    original = app_bundle()
+    original_clip = clip(original, PARENT)
+    original_clip['element_ref'] = {'id': 'legacy', 'kind': 'transition', 'revision': 'old'}
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+    values = {'elementRef': element,
+              'transition': {'type': element['id'], 'duration': .75,
+                             'revision': element['revision'],
+                             'params': {'opaque': [None, False, 0]},
+                             'future': {'literal': 'kept'}}}
+    plan = execute(original, [capture_clip_set(original, PARENT, values=values)])
+    assert clip(plan.bundle, PARENT)['transition'] == values['transition']
+    assert clip(plan.bundle, PARENT)['elementRef'] == element
+    assert 'element_ref' not in clip(plan.bundle, PARENT)
+    assert [write['path'] for write in plan.records[0]['writes']] == [
+        ['elementRef'], ['transition'], ['element_ref']]
+    assert inverse(plan.bundle, plan.records).bundle == original
+    assert replay(plan, original).records == plan.records
+
+    updated = dict(values['transition'], duration=1.25,
+                   params={'opaque': [None, False, 0], 'new': ''})
+    changed = execute(plan.bundle, [capture_clip_set(plan.bundle, PARENT,
+        values={'elementRef': element, 'transition': updated})])
+    assert clip(changed.bundle, PARENT)['transition'] == updated
+    assert clip(changed.bundle, PARENT)['elementRef'] == element
+    removed = execute(changed.bundle, [capture_clip_set(changed.bundle, PARENT,
+        clear=['transition'])])
+    assert all(key not in clip(removed.bundle, PARENT) for key in ('transition', 'elementRef', 'element_ref'))
+    assert {tuple(write['path']) for write in removed.records[0]['writes']} == {
+        ('transition',), ('elementRef',)}
+    assert inverse(removed.bundle, removed.records).bundle == changed.bundle
+
+
+@pytest.mark.parametrize('values', [
+    {'transition': {'type': 'cross-fade', 'duration': .75}},
+    {'transition': {'type': 'cross-fade', 'duration': .5},
+     'elementRef': {'id': 'other', 'kind': 'transition', 'revision': 'r'}},
+    {'transition': {'type': 'cross-fade', 'duration': .01},
+     'elementRef': {'id': 'cross-fade', 'kind': 'transition', 'revision': 'r'}},
+])
+def test_private_transition_set_refuses_unpaired_or_invalid_values(values):
+    with pytest.raises(CommandError):
+        capture_clip_set(app_bundle(), PARENT, values=values)

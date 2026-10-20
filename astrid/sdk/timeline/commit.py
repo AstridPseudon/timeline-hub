@@ -350,7 +350,7 @@ def _hydrate(port, bundle, calls=()):
     pins = copy.deepcopy(document["dependency_manifest"]["documents"])
     for call in calls:
         pin = call.get('args', {}).get('schema_source')
-        if call['op'] in ('clip.set-params', 'clip.set-element') and pin is not None:
+        if call['op'] in ('clip.set-params', 'clip.set-element', 'clip.set') and pin is not None:
             pin = _document_pin(pin)
             if pin not in pins:
                 pins.append(pin)
@@ -411,9 +411,9 @@ def _schema_resolver(port, inputs, inverse_records, *, context, through):
                 if 'schema_source' not in command['args']:
                     raise CommandError('selected project pack requires exact schema_source',
                                        ref=command['select'])
-        if command['op'] in ('clip.set-params', 'clip.set-element') and 'schema_source' in command['args']:
+        if command['op'] in ('clip.set-params', 'clip.set-element', 'clip.set') and 'schema_source' in command['args']:
             row = ctx.state.entity(command['select'])
-            selected = (command['args']['elementRef'] if command['op'] == 'clip.set-element'
+            selected = (command['args']['elementRef'] if command['op'] in ('clip.set-element', 'clip.set')
                         else row.get('elementRef') or row.get('element_ref'))
             if isinstance(selected, dict) and selected.get('packId'):
                 required.append((command['args']['schema_source'], selected))

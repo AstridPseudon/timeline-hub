@@ -1723,6 +1723,43 @@
               "type": "number",
               "exclusiveMinimum": 0,
               "description": "Positive finite source seconds; timeline duration is hold/speed."
+            },
+            "transition": {
+              "type": "object",
+              "required": [
+                "type",
+                "duration"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "duration": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "revision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  }
+                },
+                "id": false,
+                "durationFrames": false,
+                "align": false,
+                "incomingPolicy": false
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/JSON"
+              }
+            },
+            "elementRef": {
+              "$ref": "#/$defs/ElementRef"
             }
           },
           "additionalProperties": false
@@ -1737,6 +1774,9 @@
             ]
           },
           "uniqueItems": true
+        },
+        "schema_source": {
+          "$ref": "#/$defs/DocumentPin"
         }
       },
       "required": [
@@ -1760,7 +1800,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set hold in source seconds or atomically set an incoming transition with its matching elementRef; explicitly remove hold, asset or transition. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media. Selected pack transitions require an exact schema_source."
     },
     "ClipTrimArgs": {
       "type": "object",
