@@ -146,15 +146,11 @@ function ShotTimelineEditorSurface({
   hardDurationSeconds,
   editorHeadState,
   onActiveConfigChange,
-  occurrenceMediaPort,
-  occurrenceId,
 }: {
   config: ResolvedTimelineConfig;
   hardDurationSeconds?: number;
   editorHeadState: { current: ShotTimelineEditorHeadState };
   onActiveConfigChange?: (config: ResolvedTimelineConfig) => void;
-  occurrenceMediaPort?: OccurrenceMediaCapturePort;
-  occurrenceId: string;
 }) {
   const chrome = useTimelineChromeContext();
   const { previewRef, playerContainerRef, currentTime, onPreviewTimeUpdate } = useTimelinePlaybackContext();
@@ -654,8 +650,6 @@ export function ShotTimelinePreview({
           hardDurationSeconds={hardDurationSeconds}
           editorHeadState={editorHeadStateRef}
           onActiveConfigChange={handleActiveConfigChange}
-          occurrenceMediaPort={occurrenceMediaPort}
-          occurrenceId={occurrenceId}
         />
       </VideoEditorProvider>
     </section>
