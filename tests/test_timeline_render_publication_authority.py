@@ -2,6 +2,14 @@
 from __future__ import annotations
 
 import hashlib
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tarfile
+import textwrap
 
 import pytest
 
@@ -42,6 +50,63 @@ def _refused(service, attempt, body, reason):
 def _track(service, project):
     commits = service._timeline_commits()[0]
     return commits.bootstrap(project, "main", authorize=lambda: None)
+
+
+def _prepare_pre_retirement_publication(root, archive_root):
+    """Create a real accepted checkpoint with the pre-retirement current Runtime."""
+    archive = subprocess.run(
+        ["git", "-C", str(Path(__file__).resolve().parents[1]), "archive", "a020a1c"],
+        check=True,
+        capture_output=True,
+    )
+    archive_root.mkdir()
+    with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as source:
+        source.extractall(archive_root, filter="data")
+
+    setup = textwrap.dedent(
+        """
+        import json
+        import sys
+        from pathlib import Path
+
+        from runtime_protocol.service import RuntimeService
+        from test_timeline_render_publication import _publication_body, _ready_authoring_attempt
+
+        root = Path(sys.argv[1])
+        service = RuntimeService(root)
+        try:
+            project, author, attempt, render_digest = _ready_authoring_attempt(service)
+            body = {**_publication_body(attempt, render_digest),
+                    "config": {"clips": [], "tracks": []}, "registry": {}}
+            result = service.publish_timeline_render(
+                attempt["attempt_id"], body, idempotency_key="publish",
+            )
+            print(json.dumps({
+                "project_id": project["id"],
+                "authoring_task_id": author["task"]["id"],
+                "attempt_id": attempt["attempt_id"],
+                "body": body,
+                "result": result,
+            }))
+        finally:
+            service.close()
+        """
+    )
+    environment = {
+        **os.environ,
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": os.pathsep.join((str(archive_root), str(archive_root / "tests"))),
+    }
+    completed = subprocess.run(
+        [sys.executable, "-c", setup, str(root)],
+        cwd=archive_root,
+        env=environment,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+    return json.loads(completed.stdout)
 
 
 def _publication_checkpoint(service, author, attempt, body, *, state, result=None):
@@ -197,20 +262,28 @@ def test_prepared_checkpoint_remains_retired_without_recovery_write(service):
 
 
 def test_exact_published_checkpoint_replays_before_live_target_changes(service):
-    project, author, attempt, render_digest = _ready_authoring_attempt(service)
-    body = {**_publication_body(attempt, render_digest), "config": {"clips": [], "tracks": []}, "registry": {}}
-    result = service.publish_timeline_render(attempt["attempt_id"], body, idempotency_key="publish")
-    _track(service, project["id"])
-    service.cancel_task_canonical(author["task"]["id"], {}, idempotency_key="cancel")
-    # Fault injection: replay must not depend on even the spec/target remaining live.
-    service.store.conn.execute("UPDATE tasks SET spec_digest=NULL WHERE id=?", (author["task"]["id"],))
-    service.store.conn.execute("UPDATE timelines SET archived_at=created_at WHERE id='main'")
-    before, changes = _state(service), service.store.conn.total_changes
-    assert service.publish_timeline_render(attempt["attempt_id"], body, idempotency_key="replay") == result
-    with pytest.raises(ConflictError, match="payload changed"):
-        service.publish_timeline_render(attempt["attempt_id"], {**body, "config": {}}, idempotency_key="changed")
-    assert _state(service) == before
-    assert service.store.conn.total_changes == changes
+    root = service.store.root
+    service.close()
+    prepared = _prepare_pre_retirement_publication(root, root.parent / "runtime-a020")
+    service = RuntimeService(root)
+    body = prepared["body"]
+    result = prepared["result"]
+    _track(service, prepared["project_id"])
+    service.cancel_task_canonical(prepared["authoring_task_id"], {}, idempotency_key="cancel")
+    service.close()
+    service = RuntimeService(root)
+    try:
+        # Fault injection: replay must not depend on even the spec/target remaining live.
+        service.store.conn.execute("UPDATE tasks SET spec_digest=NULL WHERE id=?", (prepared["authoring_task_id"],))
+        service.store.conn.execute("UPDATE timelines SET archived_at=created_at WHERE id='main'")
+        before, changes = _state(service), service.store.conn.total_changes
+        assert service.publish_timeline_render(prepared["attempt_id"], body, idempotency_key="replay") == result
+        with pytest.raises(ConflictError, match="payload changed"):
+            service.publish_timeline_render(prepared["attempt_id"], {**body, "config": {}}, idempotency_key="changed")
+        assert _state(service) == before
+        assert service.store.conn.total_changes == changes
+    finally:
+        service.close()
 
 
 def test_tracking_is_scoped_to_the_publication_target(service):
