@@ -3,7 +3,8 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { compilePlayerTransitions } from './playerEvaluation.ts';
 import { TimelineRenderer as TimelineRendererImplementation } from '@/tools/video-editor/compositions/TimelineRenderer';
-import { resolveTimelineRenderTheme } from '@/tools/video-editor/compositions/installed-themes';
+import { DEFAULT_THEME } from '@banodoco/timeline-composition/theme-api';
+import { toRuntimeTheme } from '@banodoco/timeline-composition';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 import type { ClipRendererProps } from '@/tools/video-editor/clip-types/ClipTypeRegistry';
 import type { ComponentProps, FC, PropsWithChildren } from 'react';
@@ -83,91 +84,6 @@ vi.mock('remotion', async () => {
     Video: ({ ...props }: Record<string, unknown>) => <video {...props} />,
     Audio: ({ ...props }: Record<string, unknown>) => <audio {...props} />,
     Easing: {},
-  };
-});
-
-vi.mock('@banodoco/timeline-composition/theme-api', async () => {
-  const reactModule = await import('react');
-  const runtimeThemeValue = {
-    color: {
-      accent: '#ffffff',
-      bg: '#000000',
-      fg: '#ffffff',
-    },
-    type: {
-      families: {
-        heading: 'Georgia, serif',
-        body: 'Inter, system-ui, sans-serif',
-        mono: 'JetBrains Mono, ui-monospace, monospace',
-      },
-      size: {
-        base: 56,
-        small: 32,
-        large: 128,
-      },
-      weight: {
-        normal: 300,
-        bold: 500,
-      },
-      lineHeight: 1.1,
-    },
-    motion: {
-      fadeMs: 500,
-    },
-    canvas: {
-      width: 1920,
-      height: 1080,
-      fps: 30,
-    },
-  };
-
-  const DEFAULT_THEME = {
-    id: 'default',
-    visual: runtimeThemeValue,
-  };
-
-  const toRuntimeTheme = (value: unknown) => {
-    if (
-      value
-      && typeof value === 'object'
-      && 'visual' in value
-      && value.visual
-      && typeof value.visual === 'object'
-    ) {
-      return {
-        ...runtimeThemeValue,
-        ...value.visual,
-        color: {
-          ...runtimeThemeValue.color,
-          ...(typeof value.visual.color === 'object' ? value.visual.color : {}),
-        },
-        type: {
-          ...runtimeThemeValue.type,
-          ...(typeof value.visual.type === 'object' ? value.visual.type : {}),
-          families: {
-            ...runtimeThemeValue.type.families,
-            ...(typeof value.visual.type === 'object' && typeof value.visual.type.families === 'object'
-              ? value.visual.type.families
-              : {}),
-          },
-        },
-      };
-    }
-    return runtimeThemeValue;
-  };
-
-  const ThemeContext = reactModule.createContext(runtimeThemeValue);
-
-  return {
-    DEFAULT_THEME,
-    ThemeProvider: ({
-      children,
-      value,
-    }: PropsWithChildren<{ value: typeof DEFAULT_THEME }>) => (
-      <ThemeContext.Provider value={toRuntimeTheme(value)}>{children}</ThemeContext.Provider>
-    ),
-    useTheme: () => reactModule.useContext(ThemeContext),
-    composeAnimations: () => ({}),
   };
 });
 
@@ -261,38 +177,6 @@ vi.mock('@/tools/video-editor/shaders/registry/index.ts', async () => {
   };
 });
 
-vi.mock('@banodoco/timeline-composition/theme-api', async () => {
-  const React = await import('react');
-  const DEFAULT_THEME = {
-    id: 'default',
-    visual: {
-      color: {
-        accent: '#ffffff',
-        bg: '#000000',
-      },
-      type: {
-        families: {
-          heading: 'Georgia, serif',
-        },
-      },
-    },
-  };
-  const ThemeContext = React.createContext(DEFAULT_THEME.visual);
-  return {
-    DEFAULT_THEME,
-    ThemeProvider: ({
-      children,
-      value,
-    }: PropsWithChildren<{ value: unknown }>) => (
-      <ThemeContext.Provider value={(value as typeof DEFAULT_THEME)?.visual ?? DEFAULT_THEME.visual}>
-        {children}
-      </ThemeContext.Provider>
-    ),
-    useTheme: () => React.useContext(ThemeContext),
-    composeAnimations: () => ({}),
-  };
-});
-
 vi.mock('@banodoco/timeline-composition/registry.generated', async () => {
   const React = await import('react');
   const RegisteredSequence = ({
@@ -318,6 +202,7 @@ vi.mock('@banodoco/timeline-composition/registry.generated', async () => {
       data-accent={theme.color.accent}
       data-bg={theme.color.bg}
       data-heading={theme.type.families.heading}
+      data-theme={JSON.stringify(theme)}
       data-fps={fps}
       data-previews={JSON.stringify(params?.previews ?? [])}
       data-preview-asset-keys={JSON.stringify(params?.previewAssetKeys ?? [])}
@@ -731,16 +616,17 @@ describe('TimelineRenderer registered sequences', () => {
     expect(sequence).toHaveAttribute('data-heading', "'Sixtyfour', 'Sixtyfour Variable', monospace");
   });
 
-  it('uses the DEFAULT_THEME fallback when the timeline has no theme', async () => {
+  // Owner policy: implicit preview uses the public navy/Arial/cyan export default.
+  it('uses the complete public DEFAULT_THEME when the timeline has no theme', async () => {
     render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig()} />);
 
-    const resolvedTheme = resolveTimelineRenderTheme(buildConfig());
     const sequence = screen.getByTestId('registered-sequence');
-    expect(sequence).toHaveAttribute('data-accent', resolvedTheme.visual.color.accent);
-    expect(sequence).toHaveAttribute('data-bg', resolvedTheme.visual.color.bg);
-    expect(sequence).toHaveAttribute('data-heading', resolvedTheme.visual.type.families.heading);
+    expect(JSON.parse(sequence.getAttribute('data-theme') ?? 'null')).toEqual(toRuntimeTheme(DEFAULT_THEME));
+    expect(sequence).toHaveAttribute('data-accent', DEFAULT_THEME.visual.color.accent);
+    expect(sequence).toHaveAttribute('data-bg', DEFAULT_THEME.visual.color.bg);
+    expect(sequence).toHaveAttribute('data-heading', DEFAULT_THEME.visual.type.families.heading);
     expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({
-      backgroundColor: resolvedTheme.visual.color.bg,
+      backgroundColor: DEFAULT_THEME.visual.color.bg,
     });
   });
 

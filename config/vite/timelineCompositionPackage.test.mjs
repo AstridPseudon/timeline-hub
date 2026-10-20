@@ -19,17 +19,17 @@ const configs = [
   'scripts/astrid-landing/public-host-browser/vite.config.ts',
 ];
 
-test('root and lock use the approved immutable public10 artifact', () => {
-  const artifact = 'vendor/artifacts/banodoco-timeline-composition-0.0.10.tgz';
+test('root and lock use the approved immutable public12 artifact', () => {
+  const artifact = 'vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz';
   const bytes = fs.readFileSync(path.join(appRoot, artifact));
   const root = JSON.parse(fs.readFileSync(path.join(appRoot, 'package.json'), 'utf8'));
   const lock = JSON.parse(fs.readFileSync(path.join(appRoot, 'package-lock.json'), 'utf8'));
   const installed = lock.packages[`node_modules/${packageName}`];
-  assert.equal(bytes.length, 58008);
-  assert.equal(createHash('sha256').update(bytes).digest('hex'), 'cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7');
+  assert.equal(bytes.length, 58444);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), '0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3');
   assert.equal(root.dependencies[packageName], `file:${artifact}`);
   assert.equal(lock.packages[''].dependencies[packageName], root.dependencies[packageName]);
-  assert.equal(installed.version, '0.0.10');
+  assert.equal(installed.version, '0.0.12');
   assert.equal(installed.resolved, `file:${artifact}`);
   assert.equal(installed.integrity, `sha512-${createHash('sha512').update(bytes).digest('base64')}`);
   assert.equal(root.dependencies['@remotion/layout-utils'], '4.0.509');
@@ -49,7 +49,7 @@ for (const configFile of configs) {
         path.join(appRoot, 'src/tools/video-editor/compositions/TimelineRenderer.tsx'),
         path.join(checkout, 'remotion/src/ThreeTimelineComposition.tsx'),
       ];
-      assert.equal(manifest.version, '0.0.10');
+      assert.equal(manifest.version, '0.0.12');
       for (const [subpath, entry] of Object.entries(manifest.exports)) {
         if (subpath === './package.json') continue;
         const specifier = packageName + subpath.slice(1);
