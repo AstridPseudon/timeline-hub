@@ -266,19 +266,25 @@ def evaluate(bundle, sources, bindings, policy):
                         raise TimingCompileError("bound word is outside the half-open source clip interval")
                     words.append(SimpleNamespace(text=word["text"], segment=segment, index=index,
                                                  start=start, end=end))
-                context = _Context(fps, words=words, in_point=source_start - source_in / speed)
-                # Selection was captured by identity. Text only validates that binding; no search
-                # outside these exact IDs, no occurrence re-selection and no repair fallback.
-                selected = replace(moment, line=None, n=None)
                 if moment.line is not None and any(w.segment != moment.line for w in words):
                     raise TimingCompileError("bound words do not belong to the declared line")
-                if len([t for t in moment.text.split() if mo._norm(t)]) != len(words):
+                want = [mo._norm(t) for t in moment.text.split() if mo._norm(t)]
+                if len(want) != len(words):
                     raise TimingCompileError("binding must cover the whole declared phrase")
+                if want != [mo._norm(word.text) for word in words]:
+                    raise TimingCompileError("bound words do not match the declared phrase")
+                # Exact IDs already selected the phrase. Resolve its edge directly;
+                # even a bounded text search must not select the anchor again.
+                t = words[-1].end if moment.edge == "end" else words[0].start
+                if (in_point and moment.edge == "start" and words[0].index == 0
+                        and not moment.offset_s and not moment.offset_frames):
+                    t = source_start - source_in / speed
+                else:
+                    t += moment.offset_s + moment.offset_frames / fps
             else:
                 t = values[dependencies[0]]
                 context = _Context(fps, own=(t, t), cuts={cut: (t, t)})
-                selected = moment
-            t = mo.resolve(selected, context, in_point=in_point)
+                t = mo.resolve(moment, context, in_point=in_point)
             # main's floor_frame tolerance, using units' exact quantizer at rational fps.
             return Fraction(quantize_time(t + Fraction(str(mo.FRAME_EPSILON)) / fps,
                                           fps, policy="floor")) / fps
