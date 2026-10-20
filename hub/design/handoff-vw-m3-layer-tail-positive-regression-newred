@@ -1,0 +1,10 @@
+Targeted result on base finalnativeextentproducer HEAD 61f1a420f:
+
+2 failed, 55 passed in 4.81s
+
+The two new assertions fail at the intended current behavior:
+- native layer bounds raise `composition duration conflicts with an existing render clock`;
+- the actual Root metadata callback returns the same clock-conflict error for the service's original extent grant.
+
+The ordinary full-tail/no-clock-control test passed (1 passed, 2 deselected). Ruff and git diff --check passed.
+

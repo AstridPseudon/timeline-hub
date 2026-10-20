@@ -1,0 +1,10 @@
+Base: 61f1a420f fix(rendering): retain original extent for native layer windows
+Frozen comparison reference: 2019d7e69
+
+Changed repository path only:
+- tests/packs/rendering/test_remotion_layer_tail_compat.py
+
+The test uses the real RenderService._segment_request and _window_timeline, real timeline_duration_frames/timeline_render_duration_frames, real Remotion native-window bounds, and a no-browser Node probe that transpiles the actual remotion/src/Root.tsx and invokes both registered calculateMetadata callbacks and the actual 2D tail component tree. The duration helper is extracted at test time from the tracked remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz into pytest's private temporary directory.
+
+No product file, existing test, policy, clock data, evaluator, renderer, pixel/audio path, or shared dependency was changed.
+

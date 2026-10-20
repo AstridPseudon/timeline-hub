@@ -1,0 +1,16 @@
+# Bounded native layer-tail regression
+
+Added `tests/packs/rendering/test_remotion_layer_tail_compat.py` only.
+
+The fixture is deliberately narrow: a sparse top layer has a clip covering the complete [0,30) pre-tail window, while the unchanged render clock is authored [0,300) and rendered [0,330), with tail source [300,330). The old slicer/native-null route is green and the actual Root metadata/tail callbacks show duration 30 and tail start 30. The current filtered-native route is intentionally red: native bounds and Root reject the retained render clock alongside the original extent grant.
+
+Evidence:
+- oldgreen: focused frozen-old-route positive passed;
+- newred: 2 new failures, 55 neighboring tests passed;
+- ordinary full-tail/no-clock controls passed;
+- Ruff and `git diff --check` passed.
+
+Decisions: no empty/gap case was included because the handoff classifies those as pre-existing failures; no broad layered-tail, ownership, pixel, audio, or render claim is made. The red test is held for the orchestrator's product fix and is not merge-ready by itself.
+
+Unverified: full suite, browser/socket paths, actual render output, pixels/audio, arbitrary FPS/media, and end-to-end layer composition.
+

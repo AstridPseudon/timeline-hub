@@ -1,0 +1,6 @@
+Focused frozen-old-route characterization:
+
+frozen-2019d7e69 bounded covered pre-tail route: PASS
+
+The check used the actual current service's unchanged legacy slicer, actual native-bound helper with window=None, the locked public12 duration chunk, and both Root metadata callbacks. It asserted the covered [0,30) layer had Root duration 30, tail Sequence.from 30, and tail source trim [300,330).
+

@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T09:28:01Z | dispatcher heartbeat 2s -->
+<!-- viewing | 2026-10-20T09:33:15Z | dispatcher heartbeat 14s -->
 # viewing — 2026-10-20 09:16 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active, M4 incomplete. Gate6/7 OPEN; no current Player/export parity or foundation claim.
 Integrated: Composition46bd700b2 (Makefile024f69501 +legacyAPI/runtimeexport smoke44e9). ONE postbatch integration:composition full1020085808-8575 npm test69PASS/0FAIL/0SKIP. Fresh immutable12 package smoke1020085340-3498 PASS5s (ESM/SSR/scopedregistries/strictNodeNext/installedimmutability; each missingregistryexport negativeFAIL). Artifact77members/58444B SHA0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3 unchanged; old11immutable. Agent fullnavydefault equality prior1020064710-23557 PASS. App shims564a21805 and canvasf3459863a owner-merged; Agent callbacks56409ab2/630f758 and presenter0458f003 owner-merged, sourceactivation not assumed.

@@ -1,0 +1,16 @@
+Native extent + Root regression test unit evidence
+
+Working source:
+  ROOT_SOURCE_DIR="$PWD/src" /tmp/vw-m3-agent-gate-node20.19.4/bin/node tests/root-metadata.test.cjs
+  PASS: 7 tests, 7 passed, 0 failed
+
+Frozen review candidate:
+  ROOT_SOURCE_DIR="/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-native-extent-final-review/candidate/remotion/src" /tmp/vw-m3-agent-gate-node20.19.4/bin/node tests/root-metadata.test.cjs
+  PASS: 7 tests, 7 passed, 0 failed
+
+Python targeted command:
+  env -u PYTHONPATH -u NODE_OPTIONS -u NODE_PATH PYTHONDONTWRITEBYTECODE=1 ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_REMOTION_PROJECT_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-native-extent-final-review/audio-project /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_remotion_native_window.py tests/packs/rendering/test_normal_audio_run.py tests/packs/rendering/test_normal_audio_sources.py tests/packs/rendering/test_normal_audio_source_phase.py
+  PASS: 127 passed in 13.62s
+
+Initial omitted-environment attempt: not evidence; 18 setup errors and 21 failures caused by missing ASTRID_REMOTION_PROJECT_DIR and retained PYTHONPATH. No source files were changed by that attempt.
+

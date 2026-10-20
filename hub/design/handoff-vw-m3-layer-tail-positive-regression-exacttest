@@ -1,0 +1,9 @@
+cwd=/home/user/work/wt/vw-m3-layer-tail-positive-regression
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_remotion_layer_tail_compat.py tests/packs/rendering/test_native_layer_extent.py
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/rendering/test_remotion_layer_tail_compat.py
+git diff --check
+
+No full suite, browser, socket, install, render, network, or git mutation was run.
+

@@ -1,0 +1,21 @@
+{
+  "worker": "vw-m3-native-extent-root-test-unit",
+  "worktree": "/home/user/work/wt/vw-m3-native-extent-root-test-unit",
+  "source_commit": "61f1a420f1f355ee0d16ffb0dbeb617b83b1b044",
+  "base_branch": "tl/vw-m3-native-layer-extent-fix",
+  "base_commit": "61f1a420f1f355ee0d16ffb0dbeb617b83b1b044",
+  "base_parent": "abd41eb2a6a8fe9224028018ac65225018e490bd",
+  "root_reference_branch": "tl/vw-m3-root-extent-regressions",
+  "root_reference_commit": "cfb7d7c4e79dc6fbc25437430d124af77aa5547b",
+  "working_tree_status": "HEAD plus one untracked new test file",
+  "changed_paths": [
+    "remotion/tests/root-metadata.test.cjs"
+  ],
+  "product_paths_changed": false,
+  "new_test_lines": 227,
+  "new_test_blob": "b7c49bbf35883de0e75d863fd84e7f96624ca138",
+  "new_test_sha256": "181950efa7e91f646d57496b33897e4e40ec6723c695f6bb6d8ffe940443b6cc",
+  "precision_for_render": "HELD; unchanged and not approved by the extent grant",
+  "other_claims": "Tail, Runtime/public12, HTTP/MP4, graph, parity, and whole-unit merge readiness remain held/out of scope"
+}
+
