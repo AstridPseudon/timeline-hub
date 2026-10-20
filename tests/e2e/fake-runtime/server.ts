@@ -76,6 +76,7 @@ function buildWorld(epoch: number, eventSequenceStart: number): World {
         headRevisionId: `seed-r${epoch}`,
         priorRevisions: [],
         parentComposition: seeded.parentComposition,
+        parentDependencyManifest: seeded.dependencyManifest,
         objects: store,
         recordRequests: false,
       }),

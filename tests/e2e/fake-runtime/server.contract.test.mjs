@@ -231,6 +231,24 @@ describe('projects, timelines and the seed', () => {
     }
   });
 
+  test('each seeded parent carries the exact empty non-shot closure and registry media pins', async () => {
+    for (const timelineId of [FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID]) {
+      const { payload, dependency_manifest: manifest } = await revision(timelineId, await head(timelineId));
+      assert.deepEqual(manifest.shots, []);
+      assert.deepEqual(manifest.internal_timelines, []);
+      assert.deepEqual(manifest.documents, []);
+      assert.deepEqual(
+        manifest.media,
+        Object.values(payload.registry.assets).map((entry) => ({
+          media_id: entry.media_id,
+          content_digest: entry.content_sha256,
+        })),
+      );
+      assert.equal(payload.dependency_manifest, undefined);
+      assert.deepEqual(payload.occurrences, []);
+    }
+  });
+
   test('every seeded asset resolves through /v1/objects/sha256:... with Range, HEAD and an ETag equal to its id', async () => {
     const ids = new Set();
     for (const timelineId of [FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID]) {

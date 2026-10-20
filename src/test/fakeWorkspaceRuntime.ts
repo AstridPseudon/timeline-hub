@@ -78,6 +78,7 @@ type FixtureRevision = {
   payload: FixtureParentComposition;
   createdAt: string;
   contentDigest: string;
+  dependencyManifest?: FixtureParentComposition['dependency_manifest'];
 };
 
 export type RuntimeFixtureOptions = {
@@ -88,6 +89,8 @@ export type RuntimeFixtureOptions = {
   initialConfig?: Partial<TimelineConfig> & Record<string, unknown>;
   parentExtensions?: Record<string, unknown>;
   parentComposition?: FixtureParentComposition;
+  /** The verified closure pins returned beside, not inside, the immutable parent payload. */
+  parentDependencyManifest?: FixtureParentComposition['dependency_manifest'];
   /** The one project and timeline this instance serves. Defaults keep the vitest values. */
   projectId?: string;
   timelineId?: string;
@@ -129,6 +132,7 @@ export function runtimeFixture(options: RuntimeFixtureOptions = {}) {
     clips: structuredClone(config.clips),
     occurrences: [],
   };
+  const initialDependencyManifest = options.parentDependencyManifest;
   config = initialParentComposition.config;
   registry = initialParentComposition.registry;
   // The revision list and restore derive from this map (oldest first in `revisionOrder`), so history can
@@ -147,9 +151,15 @@ export function runtimeFixture(options: RuntimeFixtureOptions = {}) {
       payload: prior.parentComposition ?? structuredClone(initialParentComposition),
       createdAt: prior.createdAt ?? FIXTURE_CREATED_AT,
       contentDigest: prior.contentDigest ?? FIXTURE_DIGEST_2,
+      ...(initialDependencyManifest ? { dependencyManifest: structuredClone(initialDependencyManifest) } : {}),
     });
   }
-  addRevision(headRevisionId, { payload: initialParentComposition, createdAt: FIXTURE_CREATED_AT, contentDigest: FIXTURE_DIGEST_1 });
+  addRevision(headRevisionId, {
+    payload: initialParentComposition,
+    createdAt: FIXTURE_CREATED_AT,
+    contentDigest: FIXTURE_DIGEST_1,
+    ...(initialDependencyManifest ? { dependencyManifest: structuredClone(initialDependencyManifest) } : {}),
+  });
   let objectSequence = 0;
   const objects: FakeObjectStore = options.objects ?? new Map<string, FixtureObject>();
   const mediaEtag = options.mediaEtag;
@@ -371,6 +381,7 @@ export function runtimeFixture(options: RuntimeFixtureOptions = {}) {
           timeline_id: timelineId,
           content_digest: revision.contentDigest,
           payload: revision.payload,
+          ...(revision.dependencyManifest ? { dependency_manifest: revision.dependencyManifest } : {}),
           created_at: revision.createdAt,
         }),
       };

@@ -206,6 +206,34 @@ describe('RuntimeDataProvider', () => {
       && request.path.endsWith(`/composition-revisions/parent-r1`))).toHaveLength(1);
   });
 
+  it('loads a parent-only command basis from an explicit empty dependency closure', async () => {
+    const fixture = runtimeFixture({
+      priorRevisions: [],
+      headRevisionId: 'seed-r1',
+      parentComposition: compactParentComposition(),
+      parentDependencyManifest: { shots: [], internal_timelines: [], media: [], documents: [] },
+    });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+
+    await expect(provider.loadTimelineCommandBasis(TIMELINE_ID)).resolves.toMatchObject({
+      head: { revisionId: 'seed-r1', publicationId: 'bootstrap-seed-r1' },
+      canonicalDocument: {
+        dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] },
+      },
+    });
+    expect(fixture.requests.filter((request) => request.method === 'GET'
+      && (request.path.endsWith('/shots') || request.path.includes('/revisions/')))).toEqual([]);
+  });
+
+  it('refuses a parent revision that omits its dependency closure', async () => {
+    const fixture = runtimeFixture({ priorRevisions: [], headRevisionId: 'seed-r1' });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+
+    await expect(provider.loadTimelineCommandBasis(TIMELINE_ID)).rejects.toThrow(
+      'verified parent dependency manifest',
+    );
+  });
+
   it('shares the in-flight parent revision between placements and the graph', async () => {
     const fixture = runtimeFixture();
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });

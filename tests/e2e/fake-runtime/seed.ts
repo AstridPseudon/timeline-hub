@@ -27,7 +27,18 @@ type RegistryEntry = BridgeTimelineFixtures['registry']['assets'][string];
 export type SeededTimeline = {
   summary: Record<string, unknown> & { timeline_id: string };
   /** The parent composition the timeline starts from (registry rewritten to sha256 identities). */
-  parentComposition: { config: Record<string, unknown>; registry: Record<string, unknown>; clips: unknown[]; occurrences: unknown[] };
+  parentComposition: {
+    config: Record<string, unknown>;
+    registry: Record<string, unknown>;
+    clips: unknown[];
+    occurrences: unknown[];
+  };
+  dependencyManifest: {
+    shots: unknown[];
+    internal_timelines: unknown[];
+    media: Array<{ media_id: string; content_digest: string }>;
+    documents: unknown[];
+  };
   /**
    * The canonical shot composition of the audio-reactive timelines (the demo timeline has none). It is
    * not part of the parent: the parent's clips are the non-shot clips the canonical projection keeps
@@ -68,6 +79,10 @@ function seedTimeline(fixture: BridgeTimelineFixtures & { shotComposition?: Brid
       throw new Error(`seed ${fixture.timelineSummary.timeline_id}: the canonical audio digest ${declared.join(', ')} is not the digest of the WAV served from public/ (${String(served)})`);
     }
   }
+  const media = Object.values(assets).map((entry) => ({
+    media_id: entry.media_id,
+    content_digest: entry.content_sha256,
+  }));
   return {
     summary: fixture.timelineSummary,
     ...(fixture.shotComposition ? { shotComposition: fixture.shotComposition } : {}),
@@ -77,6 +92,7 @@ function seedTimeline(fixture: BridgeTimelineFixtures & { shotComposition?: Brid
       clips: structuredClone(fixture.config.clips),
       occurrences: [],
     },
+    dependencyManifest: { shots: [], internal_timelines: [], media, documents: [] },
   };
 }
 
