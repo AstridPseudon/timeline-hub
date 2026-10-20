@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-# inbox-merge HUB LOCAL: append to LOCAL every "## " section of HUB whose header line LOCAL doesn't contain (never removes local notes).
-import sys
+# inbox-merge HUB LOCAL: append to LOCAL every "## " section of HUB whose header line LOCAL doesn't contain, AND, for sections
+# whose header LOCAL already has, any non-blank lines appended to them later on the hub (as a "(continued)" section).
+# Idempotent: a line already present anywhere in LOCAL is never appended again. Never removes local notes.
+import sys, datetime
 hub, loc = sys.argv[1], sys.argv[2]
 try: lt = open(loc).read()
 except FileNotFoundError: lt = ""
@@ -10,8 +12,17 @@ for line in ht.splitlines(keepends=True):
     if line.startswith("## ") and cur: secs.append("".join(cur)); cur = []
     cur.append(line)
 if cur: secs.append("".join(cur))
-have = set(l.strip() for l in lt.splitlines() if l.startswith("## "))
-new = [s for s in secs if s.startswith("## ") and s.splitlines()[0].strip() not in have]
-if new:
+have_hdr = set(l.strip() for l in lt.splitlines() if l.startswith("## "))
+have_line = set(l.strip() for l in lt.splitlines() if l.strip())
+out = []
+for s in secs:
+    if not s.startswith("## "): continue
+    hdr = s.splitlines()[0].strip()
+    if hdr not in have_hdr: out.append(s); continue
+    extra = [l for l in s.splitlines()[1:] if l.strip() and l.strip() not in have_line]
+    if extra:
+        now = datetime.datetime.now(datetime.timezone.utc).strftime("%H:%MZ")
+        out.append(hdr + f" (continued, delivered {now})\n" + "\n".join(extra) + "\n")
+if out:
     with open(loc, "a") as f:
-        for s in new: f.write(("" if lt.endswith("\n\n") else "\n") + s)
+        for s in out: f.write(("" if lt.endswith("\n\n") else "\n") + s)
