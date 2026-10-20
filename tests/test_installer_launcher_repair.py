@@ -2,13 +2,17 @@
 
 import json
 import os
+import runpy
+import signal
 import subprocess
 import sys
+import venv
 from pathlib import Path
 
 import pytest
 from runtime_protocol.door import DEFAULT_DOOR_PORT
 
+from astrid import _process
 from astrid.installer.backend import Backend
 from astrid.installer.core import Installer, VerificationError, Version, write_json
 from astrid.installer.launcher import install
@@ -75,6 +79,108 @@ def test_absolute_launcher_works_with_clean_home_and_unchanged_path(tmp_path):
     result = subprocess.run([str(launcher)], cwd=tmp_path, env=env,
                             check=True, capture_output=True, text=True)
     assert json.loads(result.stdout)["managed"] == "new"
+
+
+def test_generated_runner_windows_handoff_waits_and_keeps_argv_and_environment(tmp_path, monkeypatch):
+    root = tmp_path / "Astrid Program Folder"
+    version_root = root / "versions" / "v1"
+    python = version_root / "py" / "Scripts" / "python.exe"
+    write_json(version_root / "version.json", {
+        "root": str(version_root), "python": str(python), "env": {"MANAGED": "selected version"},
+    })
+    (root / "current").write_text("v1\n", encoding="utf-8")
+    _, runner = install(root)
+    arguments = ["documents", "create", 'a title with "quotes"', ""]
+    monkeypatch.setattr(sys, "argv", [str(runner), *arguments])
+    monkeypatch.setattr(_process.sys, "platform", "win32")
+    monkeypatch.delenv("MANAGED", raising=False)
+    for name in ("execvpe", "execvp", "execve"):
+        monkeypatch.setattr(_process.os, name, lambda *_a: pytest.fail("Windows runner must wait"))
+    captured = {}
+
+    def run(argv, **kwargs):
+        captured.update(argv=argv, kwargs=kwargs)
+        signal.raise_signal(signal.SIGINT)
+        return subprocess.CompletedProcess(argv, 41)
+
+    monkeypatch.setattr(_process.subprocess, "run", run)
+    previous_handler = signal.getsignal(signal.SIGINT)
+    with pytest.raises(SystemExit) as exc:
+        runpy.run_path(str(runner), run_name="__main__")
+    assert exc.value.code == 41
+    assert captured["argv"] == [str(python), "-I", "-m", "astrid.omp_agent", *arguments]
+    assert captured["kwargs"] == {
+        "env": {**os.environ, "MANAGED": "selected version", "ASTRID_INSTALL_PROGRAM_ROOT": str(root)},
+        "check": False,
+    }
+    assert "MANAGED" not in os.environ
+    assert signal.getsignal(signal.SIGINT) is previous_handler
+
+
+@pytest.mark.parametrize("platform", [None, "win32"], ids=["native", "windows-wait"])
+@pytest.mark.parametrize("credential", [False, True], ids=["agent", "credential"])
+def test_generated_runner_supports_selected_older_package_under_isolation(tmp_path, platform, credential):
+    root = tmp_path / "Astrid Program Folder"
+    version_root = root / "versions" / "v1"
+    environment = version_root / "py"
+    venv.EnvBuilder(with_pip=False).create(environment)
+    python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    site_packages = subprocess.run(
+        [str(python), "-I", "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    package = Path(site_packages) / "astrid"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    # The selected version predates this installer and has no process helper.
+    assert not (package / "_process.py").exists()
+    (package / "omp_agent.py").write_text(
+        "import json, os, sys\n"
+        "print(json.dumps({'args': sys.argv[1:], 'isolated': sys.flags.isolated, "
+        "'managed': os.environ['MANAGED'], 'root': os.environ['ASTRID_INSTALL_PROGRAM_ROOT']}))\n"
+        "sys.exit(37)\n",
+        encoding="utf-8",
+    )
+    core = package / "core"
+    util = core / "util"
+    util.mkdir(parents=True)
+    (core / "__init__.py").write_text("", encoding="utf-8")
+    (util / "__init__.py").write_text("", encoding="utf-8")
+    (util / "credential_store.py").write_text(
+        "import json, os, sys\n"
+        "def main(args):\n"
+        "    print(json.dumps({'args': args, 'isolated': sys.flags.isolated, "
+        "'managed': os.environ['MANAGED'], 'root': os.environ['ASTRID_INSTALL_PROGRAM_ROOT']}))\n"
+        "    return 37\n",
+        encoding="utf-8",
+    )
+    write_json(version_root / "version.json", {
+        "root": str(version_root), "python": str(python), "env": {"MANAGED": "selected version"},
+    })
+    (root / "current").write_text("v1\n", encoding="utf-8")
+    _, runner = install(root)
+    ambient = tmp_path / "ambient"
+    (ambient / "astrid").mkdir(parents=True)
+    (ambient / "astrid" / "__init__.py").write_text("raise AssertionError('ambient import')\n", encoding="utf-8")
+    arguments = ["documents", "create", 'a title with "quotes"', "", "trailing\\"]
+    # Import subprocess before patching the platform: on POSIX its native
+    # implementation still launches a real child while exercising our wait path.
+    bootstrap = (
+        "import runpy, subprocess, sys; "
+        + ("sys.platform = 'win32'; " if platform else "")
+        + "sys.argv = sys.argv[1:]; runpy.run_path(sys.argv[0], run_name='__main__')"
+    )
+    request = ["credential", *arguments] if credential else arguments
+    result = subprocess.run(
+        [str(python), "-I", "-c", bootstrap, str(runner), *request],
+        env={**os.environ, "PYTHONPATH": str(ambient)}, cwd=ambient,
+        check=False, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 37, result.stderr
+    assert json.loads(result.stdout) == {
+        "args": arguments, "isolated": 1, "managed": "selected version", "root": str(root),
+    }
+    assert not (package / "_process.py").exists()
 
 
 @pytest.mark.parametrize("service_state,raises", [("running", False), ("failed", True)])

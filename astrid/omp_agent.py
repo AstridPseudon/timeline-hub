@@ -18,6 +18,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from ._process import replace_process
 from .core.auth import AUTH_COMMANDS, contributor_auth_system_notice, run_auth
 from .version import ASTRID_VERSION
 
@@ -554,8 +555,8 @@ def _exec_omp_with_packaged_profile(omp_bin: str, flags: list[str], message: lis
     if message:
         exec_argv += ["--print", *message]
         _print_one_shot_header(DEFAULT_AGENT)
-    os.execvp(omp_bin, exec_argv)
-    return 1  # pragma: no cover - execvp replaces the process
+    replace_process(exec_argv)
+    return 1  # pragma: no cover - hand-off exits or replaces the process
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -626,8 +627,8 @@ def main(argv: list[str] | None = None) -> int:
         if omp_bin is None or not _omp_supports_onboard(omp_bin):
             print("astrid: this OMP build does not support native onboarding", file=sys.stderr)
             return 1
-        os.execvp(omp_bin, [omp_bin, "onboard"])
-        return 1  # pragma: no cover - execvp replaces the process
+        replace_process([omp_bin, "onboard"])
+        return 1  # pragma: no cover - hand-off exits or replaces the process
 
     flags, message = _split_flags(rest)
     if not message and _HELP_FLAGS.intersection(flags):
@@ -666,8 +667,8 @@ def main(argv: list[str] | None = None) -> int:
     if message:
         exec_argv += ["--print", *message]
         _print_one_shot_header(agent)
-    os.execvp(str(launcher), exec_argv)
-    return 1  # pragma: no cover - execvp replaces the process
+    replace_process(exec_argv)
+    return 1  # pragma: no cover - hand-off exits or replaces the process
 
 
 if __name__ == "__main__":  # pragma: no cover

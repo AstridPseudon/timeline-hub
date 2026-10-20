@@ -5,8 +5,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-_RUNNER = '''from __future__ import annotations
-import json, os, re, sys
+from .. import _process
+
+_RUNNER = '''import json, os, re, sys
 from pathlib import Path
 
 root = Path(__file__).resolve().parent
@@ -25,7 +26,7 @@ if sys.argv[1:2] == ["credential"]:
     os.environ.update(env)
     from astrid.core.util.credential_store import main
     raise SystemExit(main(sys.argv[2:]))
-os.execve(python, [python, "-I", "-m", "astrid.omp_agent", *sys.argv[1:]], env)
+replace_process([python, "-I", "-m", "astrid.omp_agent", *sys.argv[1:]], env)
 '''
 
 
@@ -33,7 +34,11 @@ def install(root: Path) -> tuple[Path, ...]:
     """Write stable launchers that follow root/current without changing PATH."""
     root = Path(root).absolute()
     runner = root / "run_astrid.py"
-    runner.write_text(_RUNNER, encoding="utf-8", newline="\n")
+    # This launcher is rewritten before repair/update, while the selected
+    # version may predate the helper. Embed its authoritative implementation
+    # so the runner also works after a failed update or rollback.
+    process_source = Path(_process.__file__).read_text(encoding="utf-8")
+    runner.write_text(process_source + "\n" + _RUNNER, encoding="utf-8", newline="\n")
     if os.name == "nt":
         launcher = root / "run-astrid.cmd"
         launcher.write_text(
