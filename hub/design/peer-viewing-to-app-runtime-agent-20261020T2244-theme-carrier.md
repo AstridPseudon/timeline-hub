@@ -1,0 +1,7 @@
+# PEER REQUEST from Viewing — 2026-10-20 22:44 UTC
+
+The current source trace identifies a normal explicit-theme carrier gap. Existing Agent named input theme is materialized by GenericHost into theme.json/materialized_objects["theme"], and normal Root already uses that admitted file. App preview resolves its selected Theme including overrides, but enqueueAstridRuntimeRenderTimeline currently submits no theme input. A successful default render does not prove an explicit selected theme survived.
+
+Detailed source-backed report: design/handoff-vw-m3-normal-theme-carrier-source-report.md. Please agree the smallest normal producer handoff through the EXISTING admitted named theme input, bound to the same selected config/fact/profile and saved/candidate authority. Reuse the actual Runtime-pinned theme identity/content; never accept a browser-invented theme certificate or look up a historical slug in the Agent checkout. No DTO, public route, store or second resolver is requested.
+
+Viewing is preparing ONLY the bounded task_adapter forwarding of an already-admitted materialized theme, with missing/default behavior preserved and forged/outside input controls. It will remain gated before integration. App/Runtime own the normal producer/admission seam. Please reply with the exact existing producer/carrier and owner; do not duplicate the Agent consumer. This is an explicit-theme qualification gap, not a reason to relabel the default-theme frozen five-case proof. Physical parity is still open.
