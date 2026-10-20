@@ -5,7 +5,6 @@ import {
   chownSync,
   existsSync,
   lstatSync,
-  mkdirSync,
   mkdtempSync,
   readFileSync,
   realpathSync,
@@ -122,38 +121,72 @@ function assertSelectedGraph() {
 
 function privateDirectoryLifecycle() {
   if (process.getuid?.() !== 0) throw new Error('Private Pulse lifecycle preflight requires the original root launcher UID');
-  const root = mkdtempSync('/tmp/timeline-private-pulse-preflight-');
-  const paths = {
-    root,
-    runtime: join(root, 'runtime'),
-    home: join(root, 'home'),
-    cookieDir: join(root, 'cookie'),
+  const parent = '/tmp';
+  const parentBefore = lstatSync(parent);
+  const privatePaths = [];
+  const allocatePrivatePath = (prefix) => {
+    const path = mkdtempSync(prefix);
+    privatePaths.push(path);
+    return path;
   };
-  const cookie = join(paths.cookieDir, 'cookie');
+  let paths;
   try {
-    chmodSync(root, 0o700);
-    for (const path of [paths.runtime, paths.home, paths.cookieDir]) {
-      mkdirSync(path, {mode: 0o700});
+    paths = {
+      runtime: allocatePrivatePath('/tmp/timeline-private-pulse-uid-runtime-'),
+      home: allocatePrivatePath('/tmp/timeline-private-pulse-uid-home-'),
+      cookieDir: allocatePrivatePath('/tmp/timeline-private-pulse-uid-cookie-'),
+    };
+    const cookie = join(paths.cookieDir, 'cookie');
+    for (const path of privatePaths) {
       chmodSync(path, 0o700);
+      const fresh = lstatSync(path);
+      if (!fresh.isDirectory() || fresh.uid !== 0 || fresh.gid !== 0 || (fresh.mode & 0o077) !== 0
+        || realpathSync(path) !== path || dirname(path) !== parent) {
+        throw new Error(`Private Pulse scope is not a fresh root-owned 0700 directory: ${path}`);
+      }
       chownSync(path, DAEMON_UID, DAEMON_GID);
     }
     writeFileSync(cookie, randomBytes(32), {flag: 'wx', mode: 0o600});
     chmodSync(cookie, 0o600);
     chownSync(cookie, DAEMON_UID, DAEMON_GID);
-    for (const path of [paths.runtime, paths.home, paths.cookieDir]) {
+    for (const path of privatePaths) {
       const stat = lstatSync(path);
       if (!stat.isDirectory() || stat.uid !== DAEMON_UID || stat.gid !== DAEMON_GID || (stat.mode & 0o077) !== 0) {
         throw new Error(`Private Pulse directory is not nobody-owned and 0700: ${path}`);
       }
       if (realpathSync(path) !== path) throw new Error(`Private Pulse directory is not a real scope: ${path}`);
+      command('runuser', ['-u', DAEMON_USER, '--', 'test', '-r', path]);
     }
-    const cookieStat = statSync(cookie);
+    const cookieStat = lstatSync(cookie);
     if (!cookieStat.isFile() || cookieStat.uid !== DAEMON_UID || cookieStat.gid !== DAEMON_GID || (cookieStat.mode & 0o077) !== 0) {
       throw new Error('Private Pulse cookie is not nobody-owned and private');
     }
-    return {directoryMode: '0700', cookieMode: '0600', privateOwner: `${DAEMON_USER}:${DAEMON_GID}`};
+    command('runuser', ['-u', DAEMON_USER, '--', 'test', '-r', cookie]);
+    const parentAfterChown = lstatSync(parent);
+    if (parentAfterChown.uid !== 0 || parentAfterChown.gid !== 0 || parentAfterChown.mode !== parentBefore.mode) {
+      throw new Error('The /tmp parent changed ownership or mode during private Pulse setup');
+    }
+    return {
+      directoryMode: '0700',
+      cookieMode: '0600',
+      privateOwner: `${DAEMON_USER}:${DAEMON_GID}`,
+      privatePaths,
+      privateReadProbe: 'runuser -u nobody -- test -r <private-path>',
+    };
   } finally {
-    rmSync(root, {recursive: true, force: true});
+    for (const path of privatePaths) {
+      if (existsSync(path)) {
+        if (!lstatSync(path).isDirectory() || realpathSync(path) !== path || dirname(path) !== parent) {
+          throw new Error(`Refusing to clean a non-private Pulse scope: ${path}`);
+        }
+        rmSync(path, {recursive: true, force: true});
+      }
+    }
+    if (privatePaths.some((path) => existsSync(path))) throw new Error('Private Pulse scopes were not cleaned up');
+    const parentAfterCleanup = lstatSync(parent);
+    if (parentAfterCleanup.uid !== 0 || parentAfterCleanup.gid !== 0 || parentAfterCleanup.mode !== parentBefore.mode) {
+      throw new Error('The /tmp parent changed ownership or mode during private Pulse cleanup');
+    }
   }
 }
 
@@ -162,9 +195,34 @@ function assertNobodyDrop() {
   if (record[0] !== DAEMON_USER || record[2] !== String(DAEMON_UID) || record[3] !== String(DAEMON_GID)) {
     throw new Error(`getent passwd ${DAEMON_UID} must resolve to nobody:${DAEMON_UID}:${DAEMON_GID}`);
   }
-  const uid = command('runuser', ['--user', DAEMON_USER, '--', 'id', '-u']);
+  const uid = command('runuser', ['-u', DAEMON_USER, '--', 'id', '-u']);
   if (uid !== String(DAEMON_UID)) throw new Error(`runuser -u ${DAEMON_USER} -- id -u returned ${uid}, expected ${DAEMON_UID}`);
   return {daemonUser: DAEMON_USER, daemonUid: DAEMON_UID, daemonGid: DAEMON_GID, runuserProbe: `runuser -u ${DAEMON_USER} -- id -u`};
+}
+
+export function uidWitness() {
+  const parentUidBefore = process.getuid?.();
+  const parentGidBefore = process.getgid?.();
+  if (parentUidBefore !== 0 || parentGidBefore !== 0) {
+    throw new Error('Pure UID witness requires the original root launcher UID/GID');
+  }
+  if (process.env.TAB_AUDIO_RUN === '1') throw new Error('Pure UID witness cannot run a capture');
+  if (process.env.TAB_AUDIO_GRANT_PATH) throw new Error('Pure UID witness must not read a grant');
+  const identity = assertNobodyDrop();
+  const lifecycle = privateDirectoryLifecycle();
+  if (process.getuid?.() !== 0 || process.getgid?.() !== 0) {
+    throw new Error('Original root launcher UID/GID changed during the pure UID witness');
+  }
+  return {
+    status: 'READY_PURE_UID_WITNESS',
+    parentUidBefore,
+    parentUidAfter: process.getuid(),
+    parentGidBefore,
+    parentGidAfter: process.getgid(),
+    ...identity,
+    ...lifecycle,
+    cleanupVerified: lifecycle.privatePaths.every((path) => !existsSync(path)),
+  };
 }
 
 function outputPath(path) {
@@ -172,8 +230,9 @@ function outputPath(path) {
   const absolute = resolve(path);
   const parent = dirname(absolute);
   const parentStat = existsSync(parent) ? statSync(parent) : undefined;
+  const realParent = parentStat ? realpathSync(parent) : undefined;
   if (!parentStat || parentStat.uid !== process.getuid?.() || (parentStat.mode & 0o022) !== 0
-    || realpathSync(parent).startsWith(`${FROZEN_PRIVATE_GRAPH.root}/`)) {
+    || realParent === FROZEN_PRIVATE_GRAPH.root || realParent?.startsWith(`${FROZEN_PRIVATE_GRAPH.root}/`)) {
     throw new Error('Pure preflight output must use an existing owned scope outside the dependency graph');
   }
   return absolute;
@@ -270,5 +329,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const action = process.argv[2] ?? '--prepare';
   if (action === '--prepare') console.log(JSON.stringify(prepare(), null, 2));
   else if (action === '--preflight') console.log(JSON.stringify(preflight(), null, 2));
+  else if (action === '--uid-witness') console.log(JSON.stringify(uidWitness(), null, 2));
   else throw new Error(`Unknown controller command: ${action}`);
 }
