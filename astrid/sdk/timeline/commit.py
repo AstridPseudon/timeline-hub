@@ -353,7 +353,7 @@ def _hydrate(port, bundle, calls=()):
     pins = copy.deepcopy(document["dependency_manifest"]["documents"])
     for call in calls:
         pin = call.get('args', {}).get('schema_source')
-        if call['op'] == 'clip.set-params' and pin is not None:
+        if call['op'] in ('clip.set-params', 'clip.set-element') and pin is not None:
             pin = _document_pin(pin)
             if pin not in pins:
                 pins.append(pin)
@@ -401,9 +401,10 @@ def _schema_resolver(port, inputs, inverse_records):
     def resolve(ctx):
         command = ctx.record['command']
         required = []
-        if command['op'] == 'clip.set-params' and 'schema_source' in command['args']:
+        if command['op'] in ('clip.set-params', 'clip.set-element') and 'schema_source' in command['args']:
             row = ctx.state.entity(command['select'])
-            selected = row.get('elementRef') or row.get('element_ref')
+            selected = (command['args']['elementRef'] if command['op'] == 'clip.set-element'
+                        else row.get('elementRef') or row.get('element_ref'))
             if isinstance(selected, dict) and selected.get('packId'):
                 required.append((command['args']['schema_source'], selected))
         elif command['op'] == 'timeline.inverse':
@@ -760,6 +761,7 @@ class RuntimeCommitService:
         from astrid.sdk.timeline._command_state import State
         from astrid.sdk.timeline.commands import CommandError, execute
         from astrid.sdk.timeline.inverse import check_intervening
+        from astrid.sdk.timeline.producer import capture_producer
         from astrid.sdk.timeline.rebase import replay
 
         context = copy.deepcopy(context)
@@ -773,6 +775,8 @@ class RuntimeCommitService:
             verified_media = []
             for call in calls:
                 validate_command(call)
+            verified_producer = capture_producer(port, request)
+            for call in calls:
                 if call['op'] in ('occurrence.add-media', 'occurrence.swap-media', 'placement.create',
                                 'shot.pool'):
                     for key in ('old_media', 'media'):
@@ -879,7 +883,7 @@ class RuntimeCommitService:
             original = execute(bundle, calls, inverse_records=inverse_records,
                                intervening_records=inverse_intervening, closures=closures,
                                verified_media=verified_media, realm_id=context['realm_id'],
-                               resolve_inputs=resolve_inputs)
+                               resolve_inputs=resolve_inputs, verified_producer=verified_producer)
             for attempt in range(3):
                 if attempt:
                     current = port.head()
@@ -898,7 +902,7 @@ class RuntimeCommitService:
                                   intervening_records=[*inverse_intervening, *_records(
                                       entries, CommitRejected, base, current)], closures=closures,
                                   verified_media=verified_media, realm_id=context['realm_id'],
-                                  resolve_inputs=resolve_inputs)
+                                  resolve_inputs=resolve_inputs, verified_producer=verified_producer)
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)

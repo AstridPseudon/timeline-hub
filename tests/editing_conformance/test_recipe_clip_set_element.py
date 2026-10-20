@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import json
+from functools import partial
 from pathlib import Path
 
 import pytest
@@ -13,19 +14,32 @@ from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, pres
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.rebase import replay
-from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse, later
+from tests.editing_conformance.test_recipe_m1_commands import bundle as _bundle
+from tests.editing_conformance.test_recipe_m1_commands import clip, inverse, later
 
 FIXTURES = Path(__file__).parent / 'fixtures'
 REF = 'occurrence:occ-1/clip:picture-1'
 PATH = ['elementRef']
 DRAFT = {'id': 'reveal', 'kind': 'effect', 'revision': 'draft-reveal'}
-ADMITTED = {'id': 'reveal', 'kind': 'effect', 'packId': 'project_owner', 'revision': 'sha256:' + 'a' * 64}
+GOLDEN = json.loads((FIXTURES / 'recipe_m2_clip_set_element.json').read_text())
+ADMITTED = GOLDEN['request']['args']['elementRef']
+PIN = GOLDEN['request']['args']['schema_source']
+INPUTS = {'schema_inputs': GOLDEN['schema_inputs'], 'realm_id': 'realm'}
+execute = partial(execute, **INPUTS)
+replay = partial(replay, **INPUTS)
+capture_clip_set_element = partial(capture_clip_set_element, schema_source=PIN, **INPUTS)
 OTHER = {**ADMITTED, 'revision': 'sha256:' + 'b' * 64}
 
 
 def call(element, ref=REF):
     return {'schema_version': 1, 'op': 'clip.set-element', 'version': '1',
-            'select': ref, 'args': {'elementRef': copy.deepcopy(element)}}
+            'select': ref, 'args': {'elementRef': copy.deepcopy(element), 'schema_source': PIN}}
+
+
+def bundle():
+    original = _bundle()
+    original['source_mapping']['pinned_documents'] = [copy.deepcopy(GOLDEN['schema_inputs'][0][0])]
+    return original
 
 
 def seeded(field='elementRef', element=DRAFT):
@@ -83,9 +97,10 @@ def test_changed_write_aba_refuses_inverse_but_rebases():
 
 
 @pytest.mark.parametrize('element', [
-    {**ADMITTED, 'id': 'other'}, {**ADMITTED, 'kind': 'transition'}])
+    {**ADMITTED, 'id': 'other'}, {**ADMITTED, 'kind': 'transition'},
+    {**ADMITTED, 'packId': 'other-owner'}, {k: v for k, v in ADMITTED.items() if k != 'packId'}])
 def test_element_identity_must_not_change(element):
-    original = seeded()
+    original = seeded(element=ADMITTED)
     snapshot = copy.deepcopy(original)
     with pytest.raises(CommandError, match='id and kind'):
         execute(original, [call(element)])
@@ -176,3 +191,28 @@ def test_portable_capture_golden():
     schema = json.loads((Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json').read_text())
     Draft202012Validator(schema).validate(fixture['command'])
     assert inverse(plan.bundle, plan.records).bundle == fixture['bundle']
+
+
+@pytest.mark.parametrize('damage', ['missing-pin', 'stale-pin', 'missing-input', 'missing-object',
+                                   'corrupt-object', 'unadmitted-revision'])
+def test_selected_declaration_is_required_without_param_writes(damage):
+    original = seeded()
+    command = call(ADMITTED)
+    inputs = copy.deepcopy(INPUTS)
+    if damage == 'missing-pin':
+        del command['args']['schema_source']
+    elif damage == 'stale-pin':
+        command['args']['schema_source'] = {**PIN, 'version': PIN['version'] + 1}
+    elif damage == 'missing-input':
+        inputs['schema_inputs'] = []
+    elif damage == 'missing-object':
+        inputs['schema_inputs'][0][1].clear()
+    elif damage == 'corrupt-object':
+        for obj in inputs['schema_inputs'][0][1].values():
+            obj['bytes_base64'] = 'e30='
+    else:
+        command['args']['elementRef']['revision'] = 'sha256:' + '0' * 64
+    snapshot = copy.deepcopy(original)
+    with pytest.raises(CommandError):
+        execute(original, [command], **inputs)
+    assert original == snapshot
