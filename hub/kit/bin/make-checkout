@@ -1,0 +1,14 @@
+#!/bin/bash
+# make-checkout REPO SHA [reason] — run by the dispatcher (outside the sandbox). Creates a read-only-by-convention, KEEP-marked,
+# DETACHED checkout of an exact commit at /home/user/work/wt/<pfx>-pin-<sha8> (e.g. for vendor_lock.update / producer pins),
+# with a worker record so recycle/leases treat it like any KEEP worktree. Idempotent.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+R=$1; S=$2; shift 2; declare -A P=( [agent]=agt [runtime]=rt [app]=app [composition]=vw )
+[ -n "${P[$R]:-}" ] && [ -n "$S" ] || { echo "usage: make-checkout agent|runtime|app|composition SHA reason"; exit 2; }
+full=$(git -C /home/user/work/$R rev-parse -q --verify "$S^{commit}") || { git -C /home/user/work/$R fetch -q hub 2>/dev/null; full=$(git -C /home/user/work/$R rev-parse -q --verify "$S^{commit}"); } || { echo "unknown commit $S in $R"; exit 1; }
+N=${P[$R]}-pin-${full:0:8}; WT=/home/user/work/wt/$N; D=$O/workers/$N
+[ -d $WT ] && [ "$(git -C $WT rev-parse HEAD 2>/dev/null)" = "$full" ] && { echo "exists: $WT at $full"; exit 0; }
+git -C /home/user/work/$R worktree add -q --detach $WT $full || { echo "worktree add failed"; exit 1; }
+mkdir -p $D; touch $D/KEEP; echo "requested producer checkout of $R $full: $*" > $D/brief.md
+printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=none\neffort=none\nheavy=0\nworktree=%s\nstarted=%s\n' $N $R ${full:0:8} ${full:0:8} $WT $(date -u +%FT%TZ) > $D/meta
+echo "created $WT (detached at $full, KEEP)"
