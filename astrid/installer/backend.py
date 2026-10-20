@@ -328,9 +328,12 @@ class Backend:
         else:
             # The offline restore API is the same authenticated implementation
             # behind `astrid-runtime restore`, without starting a damaged schema.
-            script = ("from runtime_protocol.backup import restore_backup; import sys; "
-                      "restore_backup(sys.argv[1],sys.argv[2])")
-            self.run([old.python, "-I", "-c", script, destination / "realm", restored], extra_env=old.env)
+            script = ("from pathlib import Path; from runtime_protocol.backup import restore_backup; import sys; "
+                      "key=Path(sys.argv[3]); "
+                      "restore_backup(sys.argv[1],sys.argv[2],**({'key_path':key} if key.is_file() else {}))")
+            retained_key = destination / "support" / "runtime" / "backup-auth.key"
+            self.run([old.python, "-I", "-c", script, destination / "realm", restored, retained_key],
+                     extra_env=old.env)
         failed = realm_root.with_name(realm_root.name + ".failed-" + uuid.uuid4().hex[:8])
         # Recovery may replay after a process was killed between the two
         # renames. In that state the original is already absent and restoring
