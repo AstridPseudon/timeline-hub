@@ -1,4 +1,4 @@
-"""Composition region policy over actual prepared public9 scene answers."""
+"""Composition region policy over actual prepared public scene answers."""
 import copy
 import hashlib
 import json
@@ -15,6 +15,7 @@ from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.timeline.cuts import occurrences_from_snapshot
 from astrid.core.timeline.shot_composition_projection import project_shot_composition
 from astrid.packs.rendering.actions.timeline_visualize.motion import lint, model
+from tests.packs.rendering.test_scene_query_occlusion import admitted_public_artifact
 
 ROOT = Path(__file__).resolve().parents[3]
 CUT = {"index": 1, "start": 0, "end": 1}
@@ -43,14 +44,11 @@ def messages(found, code):
 
 @pytest.fixture(scope="module")
 def public_diagnostics(tmp_path_factory):
-    artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
-        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.9.tgz")))
-    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
-        "fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61")
+    artifact, _version = admitted_public_artifact("ASTRID_COMPOSITION_TEST_ARTIFACT")
     peers = Path(os.environ.get("ASTRID_COMPOSITION_TEST_NODE_MODULES", str(ROOT / "remotion/node_modules"))).resolve()
     node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
     assert node.ok, node.problem
-    assert artifact.is_file(), "requires the public9 Composition artifact with component diagnostics"
+    assert artifact.is_file(), "requires an admitted Composition artifact with component diagnostics"
     assert peers.is_dir(), "requires the qualified locked peer graph"
     project = tmp_path_factory.mktemp("motion-diagnostics-public")
     modules = project / "node_modules"
