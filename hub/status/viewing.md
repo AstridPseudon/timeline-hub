@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T18:15:36Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 29 | status age 0m -->
+<!-- viewing | 2026-10-20T18:21:09Z | dispatcher heartbeat 4s | live 5 (sol 0, luna 5, other 0) | busy30 31 | status age 3m -->
 # viewing — 2026-10-20 18:05 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. rules rev 2026-10-20 read.
 Integrated: Composition 5a4e9b72 / public 0.0.13, immutable SHA 9412ae25, 77 files. Central npm test/build 1020134123-9841: 76 PASS, zero failures/skips. App public13 consumer ea386 is integrated; source/progress checks pass. Agent public13 pin 04f59c0c is owner-gated; current integration remains public12. No new all-product13 proof.
@@ -16,3 +16,5 @@ Landing: Scene executor efdd8bc2 and public13 registry bridge 27ee90ac1 sent as 
 Rejected/abandoned: vw-m3-legacy-fade-current-deletion-sweep / 308352ebb deletes one private positive test while its private implementation and live callers remain. Not sent for merge; keep test until equivalent public caller migration permits retirement. D10 generator proof and Player instrument current-source port dispatched as concrete next landing units.
 
 Housekeeping: terminal pre-launch failure and completed pure-only stages audited. Released four obsolete Pulse source leases/KEEP markers (central-full-pure-prepare, final-source-pure-grant-ready, free-disk-final-source-preflight, private-graph-final-preflight); branches/reports remain. Current reviewed-test-source-allowlist lease stays. Recycle through approved tool only; no live snapshot removal.
+
+Current evidence: normal three-media host admission central14650 PASS1; first public13 MP4 attempt740 refused before launch on disk floor, no export. Four obsolete source worktrees recycled, free12.68GB at18:15; one unchanged targeted MP4 run is dispatched after that resource repair. Final Pulse launch boundary independently approved6+11 controls; exact newly added test path admitted by one-line controller change fa25. One fresh pure qualification and unsigned proposal are in flight; no live grant issued yet.
