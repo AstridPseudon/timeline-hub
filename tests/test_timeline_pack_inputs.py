@@ -271,7 +271,14 @@ def admitted_pack(service, tmp_path, astrid_importable, monkeypatch):
                 idempotency_key=idempotency_key,
             )["data"])
 
-    client = SimpleNamespace(documents=Documents())
+    class Media:
+        def import_bytes(self, *, project, data, filename, media_type, idempotency_key):
+            return DomainResult.success(service.ingest(
+                project, data, media_type=media_type, original_name=filename,
+                idempotency_key=idempotency_key,
+            )["data"])
+
+    client = SimpleNamespace(documents=Documents(), media=Media())
     realm, project = service.realm["id"], service.test_project
     context = packs.init_project_pack(realm, project, client=client)
     root = Path(context["packRoot"])

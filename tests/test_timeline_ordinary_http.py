@@ -57,7 +57,8 @@ def test_ordinary_http_empty_bootstrap_must_be_reachable(
     from astrid.sdk.timeline import commit as agent
 
     assert Path(agent.__file__).resolve().is_relative_to(astrid_importable)
-    assert CONTRACT_VERSION == "0.2.6"
+    release = json.loads((Path(__file__).resolve().parents[1] / "generators/release.json").read_text())
+    assert CONTRACT_VERSION == release["contract_version"]
     assert CLIENT_SCHEMA_DIGEST == SCHEMA_DIGEST
     agent_metadata = (astrid_importable / "astrid_runtime_client" / "contract_metadata.py").read_text()
     assert f"CONTRACT_VERSION = {CONTRACT_VERSION!r}" in agent_metadata

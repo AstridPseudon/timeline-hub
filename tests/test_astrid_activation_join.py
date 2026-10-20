@@ -94,6 +94,10 @@ def astrid_root(tmp_path):
     source = astrid_checkout() / "astrid"
     root = tmp_path / "astrid-checkout"
     shutil.copytree(source, root / "astrid", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    # astrid imports the vendored Runtime client and reads its source version from pyproject.toml beside the package.
+    shutil.copytree(astrid_checkout() / "astrid_runtime_client", root / "astrid_runtime_client",
+                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    shutil.copy2(astrid_checkout() / "pyproject.toml", root / "pyproject.toml")
     return root
 
 

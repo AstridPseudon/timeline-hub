@@ -11,7 +11,7 @@ import json
 from types import SimpleNamespace
 
 import pytest
-from test_canonical_render_admission import _digest, _publication, _snapshot
+from test_canonical_render_admission import _accept_publication, _digest, _publication, _snapshot
 from test_canonical_render_admission import (
     canonical_scene as canonical_scene,  # noqa: PLC0414 (shared pytest fixture)
 )
@@ -20,13 +20,21 @@ from runtime_protocol.errors import ConflictError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
-from runtime_protocol.util import canonical_json
+from runtime_protocol.util import canonical_json, now
 
 pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
-def historical(canonical_scene, astrid_importable):
+def astrid_provider(astrid_importable, monkeypatch):
+    # Provider registration is startup-only: the scene must bootstrap with Agent's real provider.
+    import test_canonical_render_admission as scene
+
+    monkeypatch.setattr(scene, "PreparedProvider", lambda: load_timeline_commit_provider("astrid"))
+
+
+@pytest.fixture
+def historical(astrid_provider, canonical_scene, astrid_importable):
     from astrid.sdk.timeline.capture import capture_move
     from astrid.sdk.timeline.commit import bundle_from_document
 
@@ -40,9 +48,8 @@ def historical(canonical_scene, astrid_importable):
                    "hold": 3, "track": "audio"}],
         "occurrences": [],
     }
-    # Existing publication API is fixture bootstrap only; measured A/C use commits.
-    seed_receipt = service.publish_parent_composition(project, "main", seed, idempotency_key="seed")
-    service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+    # The fixture's acceptance boundary seeds the parent; measured A/C use commits.
+    seed_receipt = _accept_publication(f, seed, idempotency_key="seed")["accepted"]
     service.create_timeline(project, "other", idempotency_key="other-timeline")
     foreign = service.create_project({"slug": "foreign", "name": "Foreign"})["id"]
 
@@ -379,8 +386,9 @@ def test_archived_timeline_refuses_first_admission_and_replay(historical, admitt
     request = _request(case)
     if admitted:
         case.service.create_task(request)
-    version = case.service.get_project_timeline(case.project, "main")["version"]
-    case.service.archive_timeline("main", {"expected_version": version}, idempotency_key="archive")
+    # archive_timeline is a retired legacy writer; archive the row directly to reach the admission guard.
+    with case.service.store._transaction():
+        case.service.store.conn.execute("UPDATE timelines SET archived_at=? WHERE id='main'", (now(),))
     before = _state(case.service)
     with pytest.raises(ConflictError):
         case.service.create_task(request)
@@ -415,9 +423,9 @@ def test_historical_replay_never_repairs_a_missing_or_corrupt_snapshot(historica
 def test_real_retained_legacy_publication_uses_verified_source(historical):
     case = historical
     selected = {"project_id": case.project, "timeline_id": "main",
-                "revision_id": case.seed["data"]["parent_revision_id"],
+                "revision_id": case.seed["data"]["accepted_revision_id"],
                 "publication_id": case.seed["receipt"]["receipt_id"],
-                "content_digest": case.seed["data"]["content_digest"]}
+                "content_digest": case.seed["data"]["canonical_document"]["parent_revision"]["content_digest"]}
     request = _request(case)
     request["spec"]["params"]["canonical_revision"] = selected
     admitted = case.service.create_task(request)
