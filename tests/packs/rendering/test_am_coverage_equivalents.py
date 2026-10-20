@@ -2,7 +2,8 @@
 
 These exercise the supported incoming transition representation and the exact
 legacy independent-fades film against the selected public artifact. MAIN's
-locked 0.0.6 renderer has not qualified this candidate golden.
+locked 0.0.6 renderer is opaque; the owner's v0.0.7 clip look intentionally
+adds the DIP. Merge still requires the granted actual MAIN/unified pixel proof.
 """
 import hashlib
 import json
@@ -115,7 +116,7 @@ def test_actual_am_public_incoming_crossfade_stays_covered(am_coverage_query):
     assert 0 < overlap["layers"][1]["opacity"] < 1
 
 
-def test_actual_am_legacy_independent_fades_have_a_public_artifact_dip(am_coverage_query):
+def test_actual_am_intended_clip_look_independent_fades_have_a_public_artifact_dip(am_coverage_query):
     config = _independent_fades_config()
     result = am_coverage_query("legacy-crossfade", timeline=config)
     assert result["props"]["timeline"] == config

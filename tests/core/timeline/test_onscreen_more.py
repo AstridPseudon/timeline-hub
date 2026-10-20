@@ -39,9 +39,9 @@ def _independent_fades_config():
     ])
 
 
-# Candidate native8 golden only. Approval remains held until MAIN's locked
-# 0.0.6 Root proves the same DIP; component SSR under native8 is insufficient.
-def test_native8_independent_full_plate_fades_have_a_dip():
+# The owner's v0.0.7 clip look intentionally adds this DIP to opaque MAIN6.
+# 03:59 approval still requires the real MAIN/unified pixel proof before merge.
+def test_intended_clip_look_independent_full_plate_fades_have_a_dip():
     config = _independent_fades_config()
     spans = coverage(config, FPS, CANVAS, ELEMENTS, end_frame=45)
     assert [(s.start_frame, s.end_frame, s.cls, s.content) for s in spans] == [
