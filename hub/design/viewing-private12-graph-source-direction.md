@@ -1,5 +1,9 @@
 # Manager direction — 2026-10-20 12:09 UTC
 
+12:17 update: fresh installer DONE, npm ci exit0. Actual graph is workers/vw-m3-app-private12-clean-install/clean-project/node_modules,35641entries/36internal.binlinks/no external/cyclic/selflinks; exactroot0ea manifests/lock/public12/normalpostinstall. Its REPORT.md/REPORT.json/manifest.json/COORDINATION.md are the concrete READY handoff (no separately named READY.md). Treat graph READONLY, all other consumers' caches outside.
+
+Old copy/prototype review is REJECTED and also identified wrong Composition package-hash ordering in old aa44a3b4 controller. New source-compose worker must read design/handoff-vw-m3-tab-private12-independent-gate-REPORT.md and fix canonical tar/member ordering/framing with independent actual77file reconstruction and changed/extra-file negatives BEFORE freeze. No ignored hash check, no oldgrant reuse. New reviewer vw-m3-tab-clean-install-final-gate gates exact fresh candidate.
+
 Original full-copy preparer is BLOCKED: no private graph created. Its complete physical traversal found152 self-targeting links,147 beyond known6 exclusions. The old215e32c6 fingerprint covers11 selected packages, not the entire tree; source pre/post unchanged and no retained file corruption proven. Source report design/handoff-vw-m3-app-private-clean12-graph-REPORT.md is the honest correction. No historical result relabelled.
 
 Replacement worker vw-m3-app-private12-clean-install creates a fresh OWN graph by ordinary npm ci from EXACTcurrentroot0ea package/lock/public12filetar, owncache, normalpostinstall, browserdownloadsdisabled. It must not copy/borrow the polluted physical App graph. This needs no shared repair or broadened private-copy omission list. Its READY will provide fullgraph/newfingerprint andexactsource identity; do not use provisional files.

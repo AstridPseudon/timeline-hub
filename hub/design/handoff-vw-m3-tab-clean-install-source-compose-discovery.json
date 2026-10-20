@@ -1,0 +1,145 @@
+{
+  "sourceSha": "0ea988bdd2907c876b82fd2620820e3fb6d6ea84",
+  "sourceTree": "e71d670ca010fe0aab0ff26842cbaf0eb08edf2a",
+  "fullTrackedHash": "14f1c4d334a4b8dc4cd529637973771abdeaafcdc2aa54c6f8ecc117b4ab51fa",
+  "trackedFileCount": 5835,
+  "inputHash": "730bb8d9d9e16bce8c025ae5db90518353ddaa13cc7cc58ba3b0ecbfc75815d1",
+  "inputFiles": [
+    "package-lock.json",
+    "package.json",
+    "playwright.config.ts",
+    "tests/e2e/fake-runtime/acp.ts",
+    "tests/e2e/fake-runtime/launch.mjs",
+    "tests/e2e/fake-runtime/runaway.ts",
+    "tests/e2e/fake-runtime/seed.ts",
+    "tests/e2e/fake-runtime/server.contract.test.mjs",
+    "tests/e2e/fake-runtime/server.ts",
+    "tests/e2e/fake-runtime/tsconfig.json",
+    "tests/e2e/timeline/setup-tab-audio-capture.sh",
+    "tests/e2e/timeline/support.ts",
+    "tests/e2e/timeline/tab-audio-capture.analysis.mjs",
+    "tests/e2e/timeline/tab-audio-capture.analysis.test.mjs",
+    "tests/e2e/timeline/tab-audio-capture.config.ts",
+    "tests/e2e/timeline/tab-audio-capture.controller.mjs",
+    "tests/e2e/timeline/tab-audio-capture.controller.test.mjs",
+    "tests/e2e/timeline/tab-audio-capture.environment.test.mjs",
+    "tests/e2e/timeline/tab-audio-capture.probe.ts"
+  ],
+  "node": {
+    "version": "v20.19.4",
+    "executable": "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+    "executableSha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"
+  },
+  "browser": {
+    "executable": "/opt/google/chrome/chrome",
+    "version": "155.0.8059.84",
+    "packageVersion": "155.0.8059.84-1",
+    "executableSha256": "cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76",
+    "tree": {
+      "sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e",
+      "fileCount": 255
+    }
+  },
+  "packages": {
+    "@playwright/test": {
+      "version": "1.60.0",
+      "tree": {
+        "sha256": "f60bd1f10036df0b0ef01bc3ac410d6ffb103be61b6d3fad19e8adb05805eb7e",
+        "fileCount": 11
+      }
+    },
+    "playwright": {
+      "version": "1.60.0",
+      "tree": {
+        "sha256": "01324f07c148278641a19b627ed2f80a608858807abbd3cfefb45b7997af7bf7",
+        "fileCount": 62
+      }
+    },
+    "playwright-core": {
+      "version": "1.60.0",
+      "tree": {
+        "sha256": "6a78060c81886b7ba6f631d5b1193d50f0362c779f5b2dff2d784a31a6acc46d",
+        "fileCount": 106
+      }
+    },
+    "react": {
+      "version": "18.3.1",
+      "tree": {
+        "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+        "fileCount": 20
+      }
+    },
+    "react-dom": {
+      "version": "18.3.1",
+      "tree": {
+        "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+        "fileCount": 32
+      }
+    },
+    "remotion": {
+      "version": "4.0.509",
+      "tree": {
+        "sha256": "d5e4274cbb682d097d1caf9ffef7a9e410073e12c18bcad9a305d2b405ed087a",
+        "fileCount": 400
+      }
+    },
+    "@remotion/player": {
+      "version": "4.0.509",
+      "tree": {
+        "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+        "fileCount": 108
+      }
+    },
+    "@remotion/media": {
+      "version": "4.0.509",
+      "tree": {
+        "sha256": "a79082c432c9e57c46b4ad9c80c6d795e564d844fe0c3743370cb85b8ce297ad",
+        "fileCount": 784
+      }
+    },
+    "@remotion/web-renderer": {
+      "version": "4.0.509",
+      "tree": {
+        "sha256": "cfa5ffb399b0974899de70c62935aa3df7a8510c16e7d65f1840360d2a59544f",
+        "fileCount": 96
+      }
+    },
+    "@remotion/layout-utils": {
+      "version": "4.0.509",
+      "tree": {
+        "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a",
+        "fileCount": 13
+      }
+    },
+    "@banodoco/timeline-composition": {
+      "version": "0.0.12",
+      "tree": {
+        "sha256": "71b44e67e4eeffb0f904bb3a21e24d12ba06c4b2e41d43592a859aced3bb3139",
+        "fileCount": 77
+      }
+    }
+  },
+  "packageGraphHash": "c433236a7e8626217be122d71db0bccd980db4c04c03f45d5cf2d5c9c86039fb",
+  "renderGraphHashes": {
+    "@remotion/player/dist/cjs/PlayerUI.js": "5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb",
+    "@remotion/player/dist/cjs/use-player-methods.js": "ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46",
+    "@remotion/player/dist/cjs/use-playback.js": "6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0",
+    "@remotion/player/dist/esm/index.mjs": "d3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12",
+    "remotion/dist/esm/index.mjs": "5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28",
+    "remotion/dist/cjs/audio/shared-audio-tags.js": "949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8"
+  },
+  "privateGraph": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules",
+    "tree": {
+      "sha256": "4a54ed6f3300cba740b377e3c780f330996ead23147647f9c963ed4dd5bdd7a4",
+      "fileCount": 32382
+    }
+  },
+  "discovery": {
+    "testCount": 1,
+    "cli": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/playwright/cli.js",
+    "cliSha256": "5e79302a6aad7d835d92d5ae6b4244c91cf61b28e94d7917279090e6c231f7a1",
+    "sha256": "36d9095a4343bc9b677dc21b0f7bf3ada8765dd27b1749a90f0adf37dfd75377",
+    "output": "Listing tests:\n  [native-codec-chrome155-tab-audio] › tab-audio-capture.probe.ts:222:1 › captures whole-tab video and tab audio in one Chrome155 MediaRecorder clock\nTotal: 1 test in 1 file\n"
+  }
+}

@@ -1,0 +1,85 @@
+[
+  {
+    "command": [
+      "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "tests/e2e/timeline/tab-audio-capture.analysis.test.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "tests/e2e/timeline/tab-audio-capture.controller.test.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "tests/e2e/timeline/tab-audio-capture.environment.test.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "node_modules/typescript/bin/tsc",
+      "--noEmit",
+      "--target",
+      "ES2022",
+      "--lib",
+      "ES2023,DOM",
+      "--module",
+      "ESNext",
+      "--moduleResolution",
+      "bundler",
+      "--strict",
+      "--skipLibCheck",
+      "--allowJs",
+      "--resolveJsonModule",
+      "--types",
+      "node",
+      "tests/e2e/timeline/tab-audio-capture.probe.ts",
+      "tests/e2e/timeline/tab-audio-capture.config.ts"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "node_modules/eslint/bin/eslint.js",
+      "--no-cache",
+      "tests/e2e/timeline/tab-audio-capture.probe.ts",
+      "tests/e2e/timeline/tab-audio-capture.config.ts",
+      "tests/e2e/timeline/tab-audio-capture.analysis.mjs",
+      "tests/e2e/timeline/tab-audio-capture.analysis.test.mjs",
+      "tests/e2e/timeline/tab-audio-capture.controller.mjs",
+      "tests/e2e/timeline/tab-audio-capture.controller.test.mjs",
+      "tests/e2e/timeline/tab-audio-capture.environment.test.mjs",
+      "--max-warnings",
+      "0"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-source-compose/pure-preflight.config.mjs",
+      "--configLoader=runner",
+      "--no-cache",
+      "src/tools/video-editor/compositions/playerEvaluation.test.ts"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "bash",
+      "-n",
+      "tests/e2e/timeline/setup-tab-audio-capture.sh"
+    ],
+    "exit": 0
+  }
+]

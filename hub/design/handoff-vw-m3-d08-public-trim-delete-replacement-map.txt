@@ -1,0 +1,10 @@
+D08 bounded math deletion
+src/tools/video-editor/lib/config-utils.ts:43 getSanitizedMediaTrimProps private formula (16 lines) -> one compatibility re-export of @banodoco/timeline-composition/evaluation.computeMediaTrim.
+Existing consumers retained: compositions/VisualClip.tsx:317 and compositions/AudioTrack.tsx:295; time-grid-conformance tests retain the old name.
+Original config-utils trim/invalid-prop positives unchanged; 20 fixed expected-value vectors were first run against BOTH the original formula and actual public12 (43 tests pass), then against the public re-export (part of 211 tests pass).
+Rounding/finite/negative/nonfinite/endpoints/invalid-fps -> config-utils.test.ts added table; no copied formula or adapter.
+Frame window/end clocks -> lib/time-grid-conformance.test.ts (unchanged).
+Visual/video clock/premount/speed/gain/transition positives -> compositions/VisualClip.evaluation.test.tsx and VisualClip.test.tsx (unchanged).
+Audio trim/clock/fade/mute/boost/readiness/retry positives -> compositions/AudioTrack.test.tsx (unchanged).
+Public composition native-media clocks and bounds -> compositions/TimelineComposition.media-conformance.test.tsx (unchanged).
+Public planner source identity and duration -> compositions/playerEvaluation.test.ts (unchanged).

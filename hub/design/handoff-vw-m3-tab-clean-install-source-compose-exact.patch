@@ -1,0 +1,1546 @@
+diff --git a/tests/e2e/timeline/setup-tab-audio-capture.sh b/tests/e2e/timeline/setup-tab-audio-capture.sh
+new file mode 100644
+index 000000000..d6e07c247
+--- /dev/null
++++ b/tests/e2e/timeline/setup-tab-audio-capture.sh
+@@ -0,0 +1,56 @@
++#!/usr/bin/env bash
++set -Eeuo pipefail
++
++# Manager-only future entry point. It is deliberately inert unless the final
++# SHA grant and an explicit run request are supplied. The primary backend is
++# getDisplayMedia tab capture; private PulseAudio is a fallback only.
++ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
++CONTROLLER="$ROOT/tests/e2e/timeline/tab-audio-capture.controller.mjs"
++NODE=${TAB_AUDIO_NODE_EXECUTABLE:-/tmp/vw-m3-agent-gate-node20.19.4/bin/node}
++[[ -x "$NODE" ]] || { echo "Pinned Node executable is missing: $NODE" >&2; exit 2; }
++[[ "$("$NODE" --version)" == v20.19.4 ]] || { echo "Pinned Node must be v20.19.4" >&2; exit 2; }
++export PATH="$(dirname "$NODE"):$PATH"
++STATE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-source-compose
++export TMPDIR="$STATE/tmp" TMP="$STATE/tmp" TEMP="$STATE/tmp"
++export XDG_CACHE_HOME="$STATE/cache" XDG_CONFIG_HOME="$STATE/config"
++export PWTEST_CACHE_DIR="$STATE/playwright-transform"
++export NODE_PATH=''
++mkdir -p "$TMPDIR" "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$PWTEST_CACHE_DIR"
++LOCK_PATH=${TAB_AUDIO_LOCK_PATH:-/tmp/timeline-viewing-browser.lock}
++export TAB_AUDIO_LOCK_PATH="$LOCK_PATH"
++export TAB_AUDIO_LOCK_FD=9
++
++exec 9>"$LOCK_PATH"
++flock -n 9 || { echo 'central browser flock is already held' >&2; exit 75; }
++export VIEWING_BROWSER_FLOCK_HELD=1
++
++cleanup() {
++  status=$?
++  if [[ ${TAB_AUDIO_PREFLIGHT_DONE:-0} == 1 ]]; then
++    postflight_status=0
++    "$NODE" "$CONTROLLER" --postflight || postflight_status=$?
++    if [[ $status == 0 && $postflight_status != 0 ]]; then
++      status=$postflight_status
++    fi
++  fi
++  exit "$status"
++}
++trap cleanup EXIT
++
++if [[ ${TAB_AUDIO_RUN:-0} != 1 ]]; then
++  "$NODE" "$CONTROLLER" --prepare
++  echo 'Offline preflight only. Manager must review this exact fingerprint before a fresh grant.'
++  exit 0
++fi
++
++: "${TAB_AUDIO_PREFLIGHT_PATH:?manager must supply a unique preflight path}"
++: "${TAB_AUDIO_RUN_MARKER:?manager must supply a unique one-shot marker path}"
++: "${TAB_AUDIO_GRANT_PATH:?manager must supply a new exact-source grant}"
++: "${PLAYWRIGHT_OUTPUT_DIR:?manager must supply a new output directory}"
++"$NODE" "$CONTROLLER" --preflight
++export TAB_AUDIO_PREFLIGHT_DONE=1
++
++"$NODE" "$CONTROLLER" --claim
++PLAYWRIGHT_TIMELINE_DEVICES=1 \
++  "$NODE" "$ROOT/node_modules/playwright/cli.js" test --config "$ROOT/tests/e2e/timeline/tab-audio-capture.config.ts" \
++  --project=native-codec-chrome155-tab-audio
+diff --git a/tests/e2e/timeline/tab-audio-capture.analysis.mjs b/tests/e2e/timeline/tab-audio-capture.analysis.mjs
+new file mode 100644
+index 000000000..480626adc
+--- /dev/null
++++ b/tests/e2e/timeline/tab-audio-capture.analysis.mjs
+@@ -0,0 +1,231 @@
++/**
++ * Pure checks for the opt-in whole-tab capture probe.
++ *
++ * These checks deliberately keep packet timestamps in the recorder's native
++ * representation. They do not estimate an audio/video offset, align clips,
++ * normalize levels, resample, or make a parity claim.
++ */
++
++export const CONTROLLED_AUDIO = Object.freeze({
++  sampleRate: 48_000,
++  channels: 2,
++  durationSeconds: 6,
++  webAudioFrequency: 880,
++  webAudioAmplitude: 0.2,
++  htmlAudioFrequency: 1_320,
++  htmlAudioAmplitude: 0.18,
++});
++
++function writeAscii(bytes, offset, value) {
++  for (let index = 0; index < value.length; index += 1) bytes[offset + index] = value.charCodeAt(index);
++}
++
++/**
++ * Build the private fixture's declared PCM source. This is a finite, native
++ * 48 kHz stereo signal; it is not a substitute for decoded capture output.
++ */
++export function createSyntheticPcmWav({
++  sampleRate = CONTROLLED_AUDIO.sampleRate,
++  channels = CONTROLLED_AUDIO.channels,
++  durationSeconds = CONTROLLED_AUDIO.durationSeconds,
++  frequency = CONTROLLED_AUDIO.htmlAudioFrequency,
++  amplitude = CONTROLLED_AUDIO.htmlAudioAmplitude,
++} = {}) {
++  if (!Number.isInteger(sampleRate) || sampleRate <= 0 || channels !== 2
++    || !Number.isInteger(durationSeconds) || durationSeconds <= 0
++    || !Number.isFinite(frequency) || frequency <= 0
++    || !Number.isFinite(amplitude) || amplitude <= 0 || amplitude > 1) {
++    throw new Error('Synthetic WAV parameters are invalid');
++  }
++  const frameCount = sampleRate * durationSeconds;
++  const bytes = Buffer.alloc(44 + frameCount * channels * 2);
++  writeAscii(bytes, 0, 'RIFF');
++  bytes.writeUInt32LE(bytes.length - 8, 4);
++  writeAscii(bytes, 8, 'WAVE');
++  writeAscii(bytes, 12, 'fmt ');
++  bytes.writeUInt32LE(16, 16);
++  bytes.writeUInt16LE(1, 20);
++  bytes.writeUInt16LE(channels, 22);
++  bytes.writeUInt32LE(sampleRate, 24);
++  bytes.writeUInt32LE(sampleRate * channels * 2, 28);
++  bytes.writeUInt16LE(channels * 2, 32);
++  bytes.writeUInt16LE(16, 34);
++  writeAscii(bytes, 36, 'data');
++  bytes.writeUInt32LE(bytes.length - 44, 40);
++  for (let frame = 0; frame < frameCount; frame += 1) {
++    const value = Math.round(amplitude * 32_767 * Math.sin(2 * Math.PI * frequency * frame / sampleRate));
++    for (let channel = 0; channel < channels; channel += 1) bytes.writeInt16LE(value, 44 + (frame * channels + channel) * 2);
++  }
++  return bytes;
++}
++
++/** @param {Array<{kind: string, readyState: string}>} tracks
++ * @param {{mimeType?: string, requestedAudio?: boolean}} options
++ */
++export function assertCaptureCapabilities(tracks, {mimeType, requestedAudio = true} = {}) {
++  if (!requestedAudio) throw new Error('The probe must request tab audio');
++  if (!Array.isArray(tracks)) throw new Error('getDisplayMedia did not return a track list');
++
++  const kinds = tracks.map((track) => track.kind);
++  if (kinds.filter((kind) => kind === 'video').length !== 1) {
++    throw new Error(`Expected one video track, got ${kinds.join(',') || 'none'}`);
++  }
++  if (kinds.filter((kind) => kind === 'audio').length !== 1) {
++    throw new Error(`Expected one tab audio track, got ${kinds.join(',') || 'none'}`);
++  }
++  if (tracks.some((track) => track.readyState !== 'live')) {
++    throw new Error('A captured track was not live when the recorder started');
++  }
++  if (typeof mimeType !== 'string' || !mimeType.includes('webm')) {
++    throw new Error(`Unexpected MediaRecorder MIME type: ${mimeType ?? ''}`);
++  }
++
++  return {videoTracks: 1, audioTracks: 1, mimeType};
++}
++
++function finiteTimestamp(packet, field) {
++  const value = Number(packet[field]);
++  if (!Number.isFinite(value)) throw new Error(`Packet ${field} is not finite`);
++  return value;
++}
++
++export function assertRawPts(ffprobe) {
++  if (!ffprobe || !Array.isArray(ffprobe.streams) || !Array.isArray(ffprobe.packets)) {
++    throw new Error('ffprobe output must include streams and packets');
++  }
++  const streams = ffprobe.streams.filter((stream) => stream.codec_type === 'video' || stream.codec_type === 'audio');
++  if (streams.length !== 2 || new Set(streams.map((stream) => stream.codec_type)).size !== 2) {
++    throw new Error('The recorder output must contain exactly one video and one audio stream');
++  }
++  for (const stream of streams) {
++    if (typeof stream.time_base !== 'string' || stream.time_base === '0/0') {
++      throw new Error(`Missing native time base for ${stream.codec_type}`);
++    }
++    const packets = ffprobe.packets
++      .filter((packet) => Number(packet.stream_index) === Number(stream.index))
++      .map((packet) => ({
++        pts: finiteTimestamp(packet, 'pts'),
++        ptsTime: finiteTimestamp(packet, 'pts_time'),
++      }));
++    if (packets.length === 0) throw new Error(`No raw PTS packets for ${stream.codec_type}`);
++    for (let index = 1; index < packets.length; index += 1) {
++      if (packets[index].pts < packets[index - 1].pts) {
++        throw new Error(`${stream.codec_type} raw PTS regressed at packet ${index}`);
++      }
++      if (packets[index].ptsTime < packets[index - 1].ptsTime) {
++        throw new Error(`${stream.codec_type} raw PTS time regressed at packet ${index}`);
++      }
++    }
++  }
++  return {
++    streamCount: streams.length,
++    packetCounts: Object.fromEntries(streams.map((stream) => [stream.codec_type,
++      ffprobe.packets.filter((packet) => Number(packet.stream_index) === Number(stream.index)).length])),
++    timeBases: Object.fromEntries(streams.map((stream) => [stream.codec_type, stream.time_base])),
++  };
++}
++
++export function assertCaptureOutcome(ffprobe, capabilities) {
++  if (capabilities?.videoTracks !== 1 || capabilities?.audioTracks !== 1) {
++    throw new Error('Capability result did not retain both tracks');
++  }
++  const rawPts = assertRawPts(ffprobe);
++  if (rawPts.packetCounts.video < 2 || rawPts.packetCounts.audio < 2) {
++    throw new Error('The recorder output did not contain enough packets to inspect');
++  }
++  return {capabilities, rawPts};
++}
++
++export function assertVisualEvent(rawVideo, {width, height, preEventRgb, eventRgb} = {}) {
++  if (!Buffer.isBuffer(rawVideo) || !Number.isInteger(width) || !Number.isInteger(height)) {
++    throw new Error('Decoded visual event region is invalid');
++  }
++  const frameBytes = width * height * 3;
++  if (frameBytes === 0 || rawVideo.byteLength === 0 || rawVideo.byteLength % frameBytes !== 0) {
++    throw new Error('Decoded visual event region is not frame-aligned');
++  }
++  const colors = [preEventRgb, eventRgb];
++  if (colors.some((color) => !Array.isArray(color) || color.length !== 3
++    || color.some((channel) => !Number.isInteger(channel) || channel < 0 || channel > 255))) {
++    throw new Error('Visual event colors are invalid');
++  }
++  const framesWithColor = colors.map((color) => {
++    let count = 0;
++    for (let offset = 0; offset < rawVideo.byteLength; offset += frameBytes) {
++      let found = false;
++      for (let pixel = offset; pixel < offset + frameBytes; pixel += 3) {
++        if (rawVideo[pixel] === color[0] && rawVideo[pixel + 1] === color[1] && rawVideo[pixel + 2] === color[2]) {
++          found = true;
++          break;
++        }
++      }
++      if (found) count += 1;
++    }
++    return count;
++  });
++  if (framesWithColor[0] === 0 || framesWithColor[1] === 0) {
++    throw new Error('Captured video did not contain both pre-event and event marker colors');
++  }
++  return {frameCount: rawVideo.byteLength / frameBytes, framesWithPreEventColor: framesWithColor[0], framesWithEventColor: framesWithColor[1]};
++}
++
++/**
++ * Decode-only marker diagnostics. VP8 is lossy, so exact RGB samples are not
++ * evidence of event timing and are intentionally never required here.
++ */
++export function diagnoseVisualEvent(rawVideo, {width, height, preEventRgb, eventRgb} = {}) {
++  if (!Buffer.isBuffer(rawVideo) || !Number.isInteger(width) || !Number.isInteger(height)) {
++    throw new Error('Decoded visual event region is invalid');
++  }
++  const frameBytes = width * height * 3;
++  if (frameBytes === 0 || rawVideo.byteLength === 0 || rawVideo.byteLength % frameBytes !== 0) {
++    throw new Error('Decoded visual event region is not frame-aligned');
++  }
++  const colors = [preEventRgb, eventRgb];
++  if (colors.some((color) => !Array.isArray(color) || color.length !== 3
++    || color.some((channel) => !Number.isInteger(channel) || channel < 0 || channel > 255))) {
++    throw new Error('Visual event colors are invalid');
++  }
++  const exactColorFrameCounts = colors.map((color) => {
++    let count = 0;
++    for (let offset = 0; offset < rawVideo.byteLength; offset += frameBytes) {
++      for (let pixel = offset; pixel < offset + frameBytes; pixel += 3) {
++        if (rawVideo[pixel] === color[0] && rawVideo[pixel + 1] === color[1] && rawVideo[pixel + 2] === color[2]) {
++          count += 1;
++          break;
++        }
++      }
++    }
++    return count;
++  });
++  return {
++    frameCount: rawVideo.byteLength / frameBytes,
++    exactColorFrameCounts,
++    phaseClaim: false,
++    diagnosticOnly: true,
++  };
++}
++
++export function assertTone(samples, {sampleRate, channels, frequency}) {
++  if (!(samples instanceof Float32Array) || samples.length === 0) throw new Error('Decoded audio is empty');
++  if (!Number.isInteger(sampleRate) || sampleRate <= 0 || !Number.isInteger(channels) || channels < 1) {
++    throw new Error('Decoded audio format is invalid');
++  }
++  const sampleCount = Math.floor(samples.length / channels);
++  const measurements = [];
++  for (let channel = 0; channel < channels; channel += 1) {
++    let sin = 0;
++    let cos = 0;
++    for (let index = 0; index < sampleCount; index += 1) {
++      const phase = 2 * Math.PI * frequency * index / sampleRate;
++      const value = samples[index * channels + channel];
++      sin += value * Math.sin(phase);
++      cos += value * Math.cos(phase);
++    }
++    measurements.push(2 * Math.hypot(sin, cos) / sampleCount);
++  }
++  if (measurements.some((amplitude) => !Number.isFinite(amplitude) || amplitude < 0.001)) {
++    throw new Error(`Controlled ${frequency} Hz tone was not present in every captured channel`);
++  }
++  return {sampleRate, channels, frequency, amplitudes: measurements};
++}
+diff --git a/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs b/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+new file mode 100644
+index 000000000..a743009bc
+--- /dev/null
++++ b/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+@@ -0,0 +1,159 @@
++import assert from 'node:assert/strict';
++import {test} from 'node:test';
++import {
++  assertCaptureCapabilities,
++  assertCaptureOutcome,
++  assertRawPts,
++  assertTone,
++  assertVisualEvent,
++  CONTROLLED_AUDIO,
++  createSyntheticPcmWav,
++  diagnoseVisualEvent,
++} from './tab-audio-capture.analysis.mjs';
++
++const capabilities = assertCaptureCapabilities([
++  {kind: 'video', readyState: 'live'},
++  {kind: 'audio', readyState: 'live'},
++], {mimeType: 'video/webm;codecs=vp8,opus'});
++
++function probeFixture() {
++  return {
++    streams: [
++      {index: 0, codec_type: 'video', time_base: '1/1000'},
++      {index: 1, codec_type: 'audio', time_base: '1/48000'},
++    ],
++    packets: [
++      {stream_index: 0, pts: '0', pts_time: '0.000'},
++      {stream_index: 1, pts: '0', pts_time: '0.000'},
++      {stream_index: 0, pts: '33', pts_time: '0.033'},
++      {stream_index: 1, pts: '960', pts_time: '0.020'},
++    ],
++  };
++}
++
++test('capability check requires one live video and one live tab-audio track', () => {
++  assert.deepEqual(capabilities, {videoTracks: 1, audioTracks: 1, mimeType: 'video/webm;codecs=vp8,opus'});
++  assert.throws(() => assertCaptureCapabilities([{kind: 'video', readyState: 'live'}], {
++    mimeType: 'video/webm;codecs=vp8,opus',
++  }), /one tab audio track/);
++});
++
++test('visual event check requires both exact marker colors in decoded frames', () => {
++  const frame = (rgb) => Buffer.from([...rgb, ...rgb]);
++  const rawVideo = Buffer.concat([frame([32, 48, 64]), frame([160, 32, 32])]);
++  assert.deepEqual(assertVisualEvent(rawVideo, {
++    width: 2,
++    height: 1,
++    preEventRgb: [32, 48, 64],
++    eventRgb: [160, 32, 32],
++  }), {frameCount: 2, framesWithPreEventColor: 1, framesWithEventColor: 1});
++  assert.throws(() => assertVisualEvent(frame([32, 48, 64]), {
++    width: 2,
++    height: 1,
++    preEventRgb: [32, 48, 64],
++    eventRgb: [160, 32, 32],
++  }), /both pre-event and event marker colors/);
++});
++
++test('decoded marker data is diagnostic and makes no phase claim', () => {
++  const diagnostic = diagnoseVisualEvent(Buffer.from([31, 47, 63, 159, 31, 31]), {
++    width: 2,
++    height: 1,
++    preEventRgb: [32, 48, 64],
++    eventRgb: [160, 32, 32],
++  });
++  assert.deepEqual(diagnostic, {
++    frameCount: 1,
++    exactColorFrameCounts: [0, 0],
++    phaseClaim: false,
++    diagnosticOnly: true,
++  });
++});
++
++test('raw PTS checks retain native per-stream timestamps without alignment', () => {
++  assert.deepEqual(assertRawPts(probeFixture()), {
++    streamCount: 2,
++    packetCounts: {video: 2, audio: 2},
++    timeBases: {video: '1/1000', audio: '1/48000'},
++  });
++  assert.deepEqual(assertCaptureOutcome(probeFixture(), capabilities).capabilities, capabilities);
++  assert.throws(() => assertRawPts({
++    ...probeFixture(),
++    packets: [...probeFixture().packets, {stream_index: 0, pts: '32', pts_time: '0.032'}],
++  }), /raw PTS regressed/);
++});
++
++test('tone check observes decoded channels without resampling or level normalization', () => {
++  const sampleRate = 48_000;
++  const samples = new Float32Array(sampleRate * 2);
++  for (let index = 0; index < sampleRate; index += 1) {
++    const tone = 0.1 * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.webAudioFrequency * index / sampleRate);
++    samples[index * 2] = tone;
++    samples[index * 2 + 1] = tone;
++  }
++  assert.equal(assertTone(samples, {sampleRate, channels: 2, frequency: CONTROLLED_AUDIO.webAudioFrequency}).channels, 2);
++  assert.throws(() => assertTone(new Float32Array(samples.length), {
++    sampleRate,
++    channels: 2,
++    frequency: CONTROLLED_AUDIO.webAudioFrequency,
++  }), /not present/);
++});
++
++test('full-tab source controls distinguish the independent oscillator and HTMLAudio tones', () => {
++  const sampleRate = CONTROLLED_AUDIO.sampleRate;
++  const samples = new Float32Array(sampleRate * 2);
++  for (let index = 0; index < sampleRate; index += 1) {
++    const webAudio = CONTROLLED_AUDIO.webAudioAmplitude
++      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.webAudioFrequency * index / sampleRate);
++    const htmlAudio = CONTROLLED_AUDIO.htmlAudioAmplitude
++      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.htmlAudioFrequency * index / sampleRate);
++    samples[index * 2] = webAudio + htmlAudio;
++    samples[index * 2 + 1] = webAudio + htmlAudio;
++  }
++  assert.doesNotThrow(() => assertTone(samples, {
++    sampleRate,
++    channels: 2,
++    frequency: CONTROLLED_AUDIO.webAudioFrequency,
++  }));
++  assert.doesNotThrow(() => assertTone(samples, {
++    sampleRate,
++    channels: 2,
++    frequency: CONTROLLED_AUDIO.htmlAudioFrequency,
++  }));
++
++  const pureWebAudio = new Float32Array(samples.length);
++  for (let index = 0; index < sampleRate; index += 1) {
++    const value = CONTROLLED_AUDIO.webAudioAmplitude
++      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.webAudioFrequency * index / sampleRate);
++    pureWebAudio[index * 2] = value;
++    pureWebAudio[index * 2 + 1] = value;
++  }
++  assert.throws(() => assertTone(pureWebAudio, {
++    sampleRate,
++    channels: 2,
++    frequency: CONTROLLED_AUDIO.htmlAudioFrequency,
++  }), /not present/);
++  const pureHtmlAudio = new Float32Array(samples.length);
++  for (let index = 0; index < sampleRate; index += 1) {
++    const value = CONTROLLED_AUDIO.htmlAudioAmplitude
++      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.htmlAudioFrequency * index / sampleRate);
++    pureHtmlAudio[index * 2] = value;
++    pureHtmlAudio[index * 2 + 1] = value;
++  }
++  assert.throws(() => assertTone(pureHtmlAudio, {
++    sampleRate,
++    channels: 2,
++    frequency: CONTROLLED_AUDIO.webAudioFrequency,
++  }), /not present/);
++});
++
++test('synthetic HTMLAudio source is a finite native 48 kHz stereo PCM WAV', () => {
++  const wav = createSyntheticPcmWav();
++  assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
++  assert.equal(wav.toString('ascii', 8, 12), 'WAVE');
++  assert.equal(wav.readUInt16LE(20), 1);
++  assert.equal(wav.readUInt16LE(22), CONTROLLED_AUDIO.channels);
++  assert.equal(wav.readUInt32LE(24), CONTROLLED_AUDIO.sampleRate);
++  assert.equal(wav.readUInt16LE(34), 16);
++  assert.equal(wav.readUInt32LE(40), wav.length - 44);
++});
+diff --git a/tests/e2e/timeline/tab-audio-capture.config.ts b/tests/e2e/timeline/tab-audio-capture.config.ts
+new file mode 100644
+index 000000000..796ed4d6d
+--- /dev/null
++++ b/tests/e2e/timeline/tab-audio-capture.config.ts
+@@ -0,0 +1,37 @@
++import { createRequire } from 'node:module';
++import { join } from 'node:path';
++import { isolatedEnvironment, privateGraphRoot } from './tab-audio-capture.controller.mjs';
++import { fileURLToPath } from 'node:url';
++
++const graphRoot = privateGraphRoot();
++const isolated = isolatedEnvironment();
++const require = createRequire(join(graphRoot, '../package.json'));
++const { defineConfig } = require('@playwright/test');
++
++// Explicitly opt-in. This capability probe has no App or fake Runtime startup.
++export default defineConfig({
++  testDir: fileURLToPath(new URL('.', import.meta.url)),
++  testMatch: 'tab-audio-capture.probe.ts',
++  outputDir: isolated.PLAYWRIGHT_OUTPUT_DIR,
++  workers: 1,
++  retries: 0,
++  projects: [{
++    name: 'native-codec-chrome155-tab-audio',
++    use: {
++      viewport: { width: 1440, height: 900 },
++      launchOptions: {
++        // The approved native codec profile is fixed; a browser path from an
++        // ambient environment must not silently change the probe identity.
++        executablePath: '/opt/google/chrome/chrome',
++        ignoreDefaultArgs: ['--mute-audio'],
++        args: [
++          '--auto-accept-this-tab-capture',
++          '--enable-usermedia-screen-capturing',
++          '--allow-http-screen-capture',
++          '--disable-background-timer-throttling',
++          '--disable-renderer-backgrounding',
++        ],
++      },
++    },
++  }],
++});
+diff --git a/tests/e2e/timeline/tab-audio-capture.controller.mjs b/tests/e2e/timeline/tab-audio-capture.controller.mjs
+new file mode 100644
+index 000000000..1849af259
+--- /dev/null
++++ b/tests/e2e/timeline/tab-audio-capture.controller.mjs
+@@ -0,0 +1,500 @@
++import { createHash } from 'node:crypto';
++import { execFileSync, spawnSync } from 'node:child_process';
++import {
++  closeSync,
++  existsSync,
++  lstatSync,
++  mkdirSync,
++  mkdtempSync,
++  openSync,
++  readFileSync,
++  readlinkSync,
++  readdirSync,
++  realpathSync,
++  rmSync,
++  statSync,
++  statfsSync,
++  writeFileSync,
++} from 'node:fs';
++import { createRequire } from 'node:module';
++import { dirname, join, resolve } from 'node:path';
++import { fileURLToPath, pathToFileURL } from 'node:url';
++
++export const PROFILE = 'native-codec-chrome155-clean-install-public12';
++export const BASE_SOURCE_SHA = '0ea988bdd2907c876b82fd2620820e3fb6d6ea84';
++export const WORKER_STATE_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-source-compose';
++export const MIN_FREE_BYTES = 10 * 1024 ** 3;
++// Fresh npm-ci graph published READY by vw-m3-app-private12-clean-install.
++// Consumers keep all state outside this shared read-only graph.
++export const FROZEN_PRIVATE_GRAPH = {
++  root: '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules',
++  tree: {sha256: '4a54ed6f3300cba740b377e3c780f330996ead23147647f9c963ed4dd5bdd7a4', fileCount: 32382},
++};
++const FROZEN_COMPOSITION = {
++  sha256: '71b44e67e4eeffb0f904bb3a21e24d12ba06c4b2e41d43592a859aced3bb3139',
++  fileCount: 77,
++};
++export const NODE_VERSION = 'v20.19.4';
++export const NODE_EXECUTABLE = '/tmp/vw-m3-agent-gate-node20.19.4/bin/node';
++export const BROWSER_EXECUTABLE = '/opt/google/chrome/chrome';
++export const BROWSER_VERSION = '155.0.8059.84';
++export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
++export const SOURCE_FILES = [
++  'tests/e2e/timeline/tab-audio-capture.analysis.mjs',
++  'tests/e2e/timeline/tab-audio-capture.analysis.test.mjs',
++  'tests/e2e/timeline/tab-audio-capture.probe.ts',
++  'tests/e2e/timeline/tab-audio-capture.config.ts',
++  'tests/e2e/timeline/tab-audio-capture.controller.mjs',
++  'tests/e2e/timeline/tab-audio-capture.controller.test.mjs',
++  'tests/e2e/timeline/tab-audio-capture.environment.test.mjs',
++  'tests/e2e/timeline/setup-tab-audio-capture.sh',
++];
++const INPUT_FILE_PREFIXES = [
++  'playwright.config.ts',
++  'package.json',
++  'package-lock.json',
++  'tests/e2e/timeline/support.ts',
++  'tests/e2e/timeline/tab-audio-capture.config.ts',
++  'tests/e2e/fake-runtime/',
++  ...SOURCE_FILES,
++];
++const REQUIRED_PACKAGES = [
++  '@playwright/test',
++  'playwright',
++  'playwright-core',
++  'react',
++  'react-dom',
++  'remotion',
++  '@remotion/player',
++  '@remotion/media',
++  '@remotion/web-renderer',
++  '@remotion/layout-utils',
++  '@banodoco/timeline-composition',
++];
++export const EXPECTED_PACKAGE_VERSIONS = {
++  '@playwright/test': '1.60.0',
++  playwright: '1.60.0',
++  react: '18.3.1',
++  'react-dom': '18.3.1',
++  remotion: '4.0.509',
++  '@remotion/player': '4.0.509',
++  '@remotion/media': '4.0.509',
++  '@remotion/web-renderer': '4.0.509',
++  '@remotion/layout-utils': '4.0.509',
++  '@banodoco/timeline-composition': '0.0.12',
++};
++const FROZEN_BROWSER = {
++  packageVersion: '155.0.8059.84-1',
++  executableSha256: 'cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76',
++  tree: {sha256: '5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e', fileCount: 255},
++};
++const FROZEN_PLAYWRIGHT_CORE = {
++  version: '1.60.0',
++  tree: {sha256: '6a78060c81886b7ba6f631d5b1193d50f0362c779f5b2dff2d784a31a6acc46d', fileCount: 106},
++};
++const FROZEN_RENDER_GRAPH_HASHES = {
++  '@remotion/player/dist/cjs/PlayerUI.js': '5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb',
++  '@remotion/player/dist/cjs/use-player-methods.js': 'ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46',
++  '@remotion/player/dist/cjs/use-playback.js': '6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0',
++  '@remotion/player/dist/esm/index.mjs': 'd3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12',
++  'remotion/dist/esm/index.mjs': '5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28',
++  'remotion/dist/cjs/audio/shared-audio-tags.js': '949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8',
++};
++
++const ORCH_ROOT = process.env.ORCH_ROOT
++  ?? '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch';
++const QUIET_FILES = [join(ORCH_ROOT, 'QUIET.md'), join(ORCH_ROOT, 'managers/viewing/QUIET.md')];
++
++
++export function isolatedEnvironment() {
++  const paths = {
++    TMPDIR: join(WORKER_STATE_ROOT, 'tmp'),
++    TMP: join(WORKER_STATE_ROOT, 'tmp'),
++    TEMP: join(WORKER_STATE_ROOT, 'tmp'),
++    XDG_CACHE_HOME: join(WORKER_STATE_ROOT, 'cache'),
++    XDG_CONFIG_HOME: join(WORKER_STATE_ROOT, 'config'),
++    PWTEST_CACHE_DIR: join(WORKER_STATE_ROOT, 'playwright-transform'),
++    PLAYWRIGHT_OUTPUT_DIR: process.env.PLAYWRIGHT_OUTPUT_DIR ?? join(WORKER_STATE_ROOT, 'playwright-output'),
++  };
++  for (const path of Object.values(paths)) {
++    if (!resolve(path).startsWith(`${WORKER_STATE_ROOT}/`)) throw new Error('Probe state must stay inside its own worker folder');
++    mkdirSync(path, {recursive: true});
++    if (!realpathSync(path).startsWith(`${WORKER_STATE_ROOT}/`)) throw new Error('Probe state symlink escapes its worker folder');
++  }
++  return {...process.env, ...paths, NODE_PATH: ''};
++}
++
++function sha256(bytes) {
++  return createHash('sha256').update(bytes).digest('hex');
++}
++
++function git(...args) {
++  return execFileSync('git', args, { cwd: REPO_ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
++}
++
++function trackedFiles() {
++  return [...new Set(git('ls-files', '-z', '--cached', '--others', '--exclude-standard').split('\0').filter(Boolean))].sort();
++}
++
++function hashFiles(files, root = REPO_ROOT) {
++  const hash = createHash('sha256');
++  for (const relativePath of [...files].sort()) {
++    const bytes = readFileSync(join(root, relativePath));
++    hash.update(relativePath).update('\0').update(bytes).update('\0');
++  }
++  return {sha256: hash.digest('hex'), fileCount: files.length};
++}
++
++function inputFiles(allTracked) {
++  const files = allTracked.filter((path) => INPUT_FILE_PREFIXES.some((prefix) =>
++    prefix.endsWith('/') ? path.startsWith(prefix) : path === prefix));
++  if (files.length === 0) throw new Error('No tracked probe input files were found');
++  return files;
++}
++
++export function hashTree(root) {
++  const entries = [];
++  function visit(directory, prefix = '') {
++    for (const name of readdirSync(directory).sort()) {
++      const absolute = join(directory, name);
++      const relativePath = `${prefix}${name}`;
++      const stat = lstatSync(absolute);
++      if (stat.isDirectory()) visit(absolute, `${relativePath}/`);
++      else if (stat.isFile()) entries.push([relativePath, stat.mode & 0o111 ? 'executable' : 'file', sha256(readFileSync(absolute))]);
++      else if (stat.isSymbolicLink()) entries.push([relativePath, 'symlink', sha256(Buffer.from(readlinkSync(absolute)))]);
++      else throw new Error(`Unsupported dependency tree entry: ${absolute}`);
++    }
++  }
++  visit(root);
++  entries.sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0);
++  return {sha256: sha256(Buffer.from(JSON.stringify(entries))), fileCount: entries.length};
++}
++
++export function assertPhysicalGraph(root) {
++  if (realpathSync(root) !== resolve(root) || !lstatSync(root).isDirectory()) {
++    throw new Error('Private graph root must be a real directory');
++  }
++  const fileLinks = new Map();
++  function visit(directory) {
++    for (const name of readdirSync(directory)) {
++      const absolute = join(directory, name);
++      const stat = lstatSync(absolute);
++      if (stat.isDirectory()) visit(absolute);
++      else if (stat.isSymbolicLink()) {
++        const target = realpathSync(absolute);
++        if (readlinkSync(absolute).startsWith('/') || !target.startsWith(`${root}/`) || !statSync(target).isFile()) {
++          throw new Error(`Private graph link escapes or targets a directory: ${absolute}`);
++        }
++      } else if (stat.isFile()) {
++        const key = `${stat.dev}:${stat.ino}`;
++        const entry = fileLinks.get(key) ?? {count: 0, links: stat.nlink, path: absolute};
++        entry.count += 1;
++        fileLinks.set(key, entry);
++      } else {
++        throw new Error(`Private graph must contain physical, unshared files: ${absolute}`);
++      }
++    }
++  }
++  visit(root);
++  for (const {count, links, path} of fileLinks.values()) {
++    if (count !== links) throw new Error(`Private graph must contain physical, unshared files: ${path}`);
++  }
++}
++
++export function privateGraphRoot() {
++  if (!FROZEN_PRIVATE_GRAPH) {
++    throw new Error('BLOCKED: app-private-clean12-graph has no approved full physical READY graph');
++  }
++  const {root, tree} = FROZEN_PRIVATE_GRAPH;
++  if (realpathSync(join(REPO_ROOT, 'node_modules')) !== root) {
++    throw new Error('Selected source must resolve only the frozen private node_modules');
++  }
++  assertPhysicalGraph(root);
++  if (JSON.stringify(hashTree(root)) !== JSON.stringify(tree)) {
++    throw new Error('Whole private dependency graph does not match the frozen READY graph');
++  }
++  return root;
++}
++
++function packageFingerprint(name, root) {
++  const require = createRequire(join(root, '../package.json'));
++  const packageJson = require.resolve(`${name}/package.json`);
++  const packageRoot = realpathSync(dirname(packageJson));
++  if (!packageRoot.startsWith(`${root}/`)) throw new Error(`Package escaped private graph: ${name}`);
++  const metadata = JSON.parse(readFileSync(packageJson, 'utf8'));
++  return {version: metadata.version, tree: hashTree(packageRoot)};
++}
++
++export function packageGraphFingerprint() {
++  const root = privateGraphRoot();
++  const packages = Object.fromEntries(REQUIRED_PACKAGES.map((name) => [name, packageFingerprint(name, root)]));
++  for (const [name, version] of Object.entries(EXPECTED_PACKAGE_VERSIONS)) {
++    if (packages[name].version !== version) throw new Error(`Unexpected ${name} version`);
++  }
++  if (JSON.stringify(packages['@banodoco/timeline-composition'].tree) !== JSON.stringify(FROZEN_COMPOSITION)) {
++    throw new Error('Composition public12 must match all 77 frozen package members');
++  }
++  return {packages, sha256: sha256(Buffer.from(JSON.stringify(packages))), privateGraph: FROZEN_PRIVATE_GRAPH};
++}
++
++function browserFingerprint() {
++  if (!existsSync(BROWSER_EXECUTABLE)) throw new Error(`Pinned Chrome executable is missing: ${BROWSER_EXECUTABLE}`);
++  const executable = realpathSync(BROWSER_EXECUTABLE);
++  const root = dirname(executable);
++  const stat = statSync(executable);
++  if (!stat.isFile() || (stat.mode & 0o111) === 0) throw new Error('Pinned Chrome executable is not executable');
++  // Offline identity uses the frozen executable/tree and installed package metadata.
++  const version = BROWSER_VERSION;
++  const packageVersion = execFileSync('dpkg-query', ['-W', '-f=${Version}', 'google-chrome-stable'], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']}).trim();
++  const fingerprint = {
++    executable: BROWSER_EXECUTABLE,
++    version,
++    packageVersion,
++    executableSha256: sha256(readFileSync(executable)),
++    tree: hashTree(root),
++  };
++  if (fingerprint.version !== BROWSER_VERSION || fingerprint.packageVersion !== FROZEN_BROWSER.packageVersion
++    || fingerprint.executableSha256 !== FROZEN_BROWSER.executableSha256
++    || JSON.stringify(fingerprint.tree) !== JSON.stringify(FROZEN_BROWSER.tree)) {
++    throw new Error('Chrome155 executable/version/full tree does not match the frozen environment');
++  }
++  return fingerprint;
++}
++
++export function renderGraphFingerprint() {
++  const nodeModules = privateGraphRoot();
++  return Object.fromEntries(Object.entries(FROZEN_RENDER_GRAPH_HASHES).map(([relativePath]) => [
++    relativePath,
++    sha256(readFileSync(join(nodeModules, relativePath))),
++  ]));
++}
++
++export function sourceFingerprint() {
++  assertResources();
++  assertQuietAbsent();
++  privateGraphRoot();
++  const changed = git('diff', '--name-only', BASE_SOURCE_SHA).split('\n').filter(Boolean);
++  const untracked = git('ls-files', '--others', '--exclude-standard').split('\n').filter(Boolean);
++  if ([...changed, ...untracked].some((path) => !SOURCE_FILES.includes(path))) {
++    throw new Error('Only the named standalone tab-capture test sources may differ from frozen App base');
++  }
++  const allTracked = trackedFiles();
++  const selectedInputs = inputFiles(allTracked);
++  const fullTracked = hashFiles(allTracked);
++  const inputs = hashFiles(selectedInputs);
++  const sourceSha = git('rev-parse', 'HEAD');
++  const sourceTree = git('rev-parse', 'HEAD^{tree}');
++  const packages = packageGraphFingerprint();
++  if (process.version !== NODE_VERSION || realpathSync(process.execPath) !== realpathSync(NODE_EXECUTABLE)) {
++    throw new Error(`Probe must run with pinned Node ${NODE_VERSION} at ${NODE_EXECUTABLE}`);
++  }
++  if (packages.packages['playwright-core'].version !== FROZEN_PLAYWRIGHT_CORE.version
++    || JSON.stringify(packages.packages['playwright-core'].tree) !== JSON.stringify(FROZEN_PLAYWRIGHT_CORE.tree)) {
++    throw new Error('Underlying playwright-core graph does not match the frozen environment');
++  }
++  const renderGraphHashes = renderGraphFingerprint();
++  if (JSON.stringify(renderGraphHashes) !== JSON.stringify(FROZEN_RENDER_GRAPH_HASHES)) {
++    throw new Error('Remotion/Player render graph does not match the frozen environment');
++  }
++  return {
++    sourceSha,
++    sourceTree,
++    fullTrackedHash: fullTracked.sha256,
++    trackedFileCount: fullTracked.fileCount,
++    inputHash: inputs.sha256,
++    inputFiles: selectedInputs,
++    node: {
++      version: process.version,
++      executable: process.execPath,
++      executableSha256: sha256(readFileSync(process.execPath)),
++    },
++    browser: browserFingerprint(),
++    packages: packages.packages,
++    packageGraphHash: packages.sha256,
++    renderGraphHashes,
++    privateGraph: packages.privateGraph,
++  };
++}
++
++function assertFingerprintField(grant, fingerprint, field) {
++  if (grant[field] !== fingerprint[field]) {
++    throw new Error(`Tab-audio grant ${field} does not match the selected source`);
++  }
++}
++
++export function assertGrant(grant, fingerprint, finalSha = process.env.TAB_AUDIO_FINAL_SHA) {
++  if (grant?.approved !== true) throw new Error('Tab-audio grant is not approved');
++  if (grant.profile !== PROFILE || grant.browserExecutable !== BROWSER_EXECUTABLE || grant.browserVersion !== BROWSER_VERSION) {
++    throw new Error('Tab-audio grant does not name the approved Chrome155 profile');
++  }
++  if (grant.backendOrder?.join(',') !== 'tab,private-pulse') {
++    throw new Error('Tab-audio grant must preserve tab capture before private PulseAudio fallback');
++  }
++  for (const field of ['sourceSha', 'sourceTree', 'fullTrackedHash', 'inputHash', 'packageGraphHash']) {
++    assertFingerprintField(grant, fingerprint, field);
++  }
++  if (grant.finalSha !== fingerprint.sourceSha || finalSha !== fingerprint.sourceSha) {
++    throw new Error('Tab-audio grant final SHA does not match the committed source SHA');
++  }
++  if (fingerprint.node.version !== NODE_VERSION) throw new Error(`Unsupported Node version: ${fingerprint.node.version}`);
++  if (grant.nodeVersion !== fingerprint.node.version || grant.nodeExecutableSha256 !== fingerprint.node.executableSha256) {
++    throw new Error('Tab-audio grant Node identity is stale');
++  }
++  if (grant.browserTreeSha256 !== fingerprint.browser.tree.sha256
++    || grant.browserExecutableSha256 !== fingerprint.browser.executableSha256) {
++    throw new Error('Tab-audio grant Chrome155 tree is stale');
++  }
++  if (JSON.stringify(grant.packages) !== JSON.stringify(fingerprint.packages)) {
++    throw new Error('Tab-audio grant package graph is stale');
++  }
++  if (!fingerprint.privateGraph || JSON.stringify(grant.privateGraph) !== JSON.stringify(fingerprint.privateGraph)) {
++    throw new Error('Tab-audio grant whole private graph is stale or missing');
++  }
++  if (JSON.stringify(grant.discovery) !== JSON.stringify(fingerprint.discovery) || fingerprint.discovery?.testCount !== 1) {
++    throw new Error('Tab-audio grant lacks actual one-test Playwright discovery proof');
++  }
++  if (JSON.stringify(grant.renderGraphHashes) !== JSON.stringify(fingerprint.renderGraphHashes)) {
++    throw new Error('Tab-audio grant Remotion/Player render graph is stale');
++  }
++  for (const [name, version] of Object.entries(EXPECTED_PACKAGE_VERSIONS)) {
++    if (fingerprint.packages[name]?.version !== version) throw new Error(`Unexpected ${name} version`);
++  }
++  if (fingerprint.packages['@banodoco/timeline-composition']?.tree.fileCount !== 77) {
++    throw new Error('Composition package must contain the approved 77-file graph');
++  }
++  if (!grant.environmentApprovalReference) throw new Error('Tab-audio grant lacks environment approval reference');
++  return grant;
++}
++
++export function assertFingerprintUnchanged(before, after) {
++  for (const field of ['sourceSha', 'sourceTree', 'fullTrackedHash', 'inputHash', 'node', 'browser', 'packages', 'packageGraphHash', 'renderGraphHashes', 'privateGraph', 'discovery']) {
++    if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) {
++      throw new Error(`Probe dependency identity changed during capture: ${field}`);
++    }
++  }
++}
++
++export function assertResources() {
++  const {bavail, bsize} = statfsSync(REPO_ROOT);
++  if (bavail * bsize < MIN_FREE_BYTES) throw new Error('Standing 10 GiB free-disk floor is not met');
++}
++
++function assertQuietAbsent() {
++  const present = QUIET_FILES.filter((path) => existsSync(path));
++  if (present.length > 0) throw new Error(`QUIET guard is active: ${present.join(', ')}`);
++}
++
++function requiredEnv(name) {
++  const value = process.env[name];
++  if (!value) throw new Error(`Missing required guard environment: ${name}`);
++  return value;
++}
++
++export function discover() {
++  const fingerprint = sourceFingerprint();
++  const root = FROZEN_PRIVATE_GRAPH.root;
++  const env = isolatedEnvironment();
++  const directory = mkdtempSync(join(WORKER_STATE_ROOT, 'discovery-'));
++  const outputPath = join(directory, 'stdout');
++  const errorPath = join(directory, 'stderr');
++  const stdoutFd = openSync(outputPath, 'wx');
++  const stderrFd = openSync(errorPath, 'wx');
++  let output;
++  try {
++    // Regular files preserve the actual CLI output in restricted worker processes.
++    const result = spawnSync(NODE_EXECUTABLE, [join(root, 'playwright/cli.js'), 'test',
++      '--config', join(REPO_ROOT, 'tests/e2e/timeline/tab-audio-capture.config.ts'),
++      '--project=native-codec-chrome155-tab-audio', '--list'],
++    {cwd: REPO_ROOT, env, stdio: ['ignore', stdoutFd, stderrFd]});
++    output = readFileSync(outputPath, 'utf8');
++    if (result.error || result.status !== 0) {
++      throw new Error(`Playwright discovery failed: ${result.error?.message ?? result.status} ${readFileSync(errorPath, 'utf8')}`);
++    }
++  } finally {
++    closeSync(stdoutFd);
++    closeSync(stderrFd);
++    rmSync(directory, {recursive: true, force: true});
++  }
++  if (!/Total: 1 test in 1 file/.test(output)
++    || !/\[native-codec-chrome155-tab-audio\].*tab-audio-capture\.probe\.ts:\d+:\d+ › captures whole-tab video and tab audio in one Chrome155 MediaRecorder clock/.test(output)) throw new Error('Expected exactly one discovered capability test');
++  assertFingerprintUnchanged(fingerprint, sourceFingerprint());
++  return {...fingerprint, discovery: {testCount: 1, cli: join(root, 'playwright/cli.js'), cliSha256: sha256(readFileSync(join(root, 'playwright/cli.js'))), sha256: sha256(Buffer.from(output)), output}};
++}
++
++function readGrant() {
++  const path = requiredEnv('TAB_AUDIO_GRANT_PATH');
++  const grant = JSON.parse(readFileSync(path, 'utf8'));
++  const fingerprint = discover();
++  assertGrant(grant, fingerprint);
++  return {grant, fingerprint};
++}
++
++function assertCleanSource() {
++  if (git('status', '--porcelain', '--untracked-files=all')) {
++    throw new Error('Selected App source must be a clean committed worktree');
++  }
++}
++
++function ensureFlock() {
++  if (process.env.VIEWING_BROWSER_FLOCK_HELD !== '1' || process.env.TAB_AUDIO_LOCK_FD !== '9') {
++    throw new Error('The central browser flock is not declared held by the shared lock FD');
++  }
++  const lockPath = requiredEnv('TAB_AUDIO_LOCK_PATH');
++  const probe = spawnSync('flock', ['-n', lockPath, '-c', 'true'], {stdio: 'ignore'});
++  if (probe.status !== 1) throw new Error('The shared browser flock is not held by the invoking shell');
++}
++
++function prepare() {
++  assertQuietAbsent();
++  ensureFlock();
++  assertCleanSource();
++  return {status: 'READY_FOR_MANAGER_REVIEW', fingerprint: discover()};
++}
++
++function preflight() {
++  assertQuietAbsent();
++  ensureFlock();
++  assertCleanSource();
++  const {grant, fingerprint} = readGrant();
++  const statePath = requiredEnv('TAB_AUDIO_PREFLIGHT_PATH');
++  writeFileSync(statePath, JSON.stringify({profile: PROFILE, grant, fingerprint}, null, 2), {flag: 'wx'});
++  return {status: 'READY_GRANTED', profile: PROFILE, sourceSha: fingerprint.sourceSha, sourceTree: fingerprint.sourceTree};
++}
++
++function claim() {
++  assertQuietAbsent();
++  ensureFlock();
++  assertCleanSource();
++  const markerPath = requiredEnv('TAB_AUDIO_RUN_MARKER');
++  const {grant, fingerprint} = readGrant();
++  const markerFd = openSync(markerPath, 'wx');
++  closeSync(markerFd);
++  writeFileSync(markerPath, JSON.stringify({profile: PROFILE, finalSha: grant.finalSha,
++    sourceSha: fingerprint.sourceSha, sourceTree: fingerprint.sourceTree, inputHash: fingerprint.inputHash, pid: process.pid}, null, 2));
++  return {status: 'RUN_STARTED', markerPath, sourceSha: fingerprint.sourceSha};
++}
++
++function postflight() {
++  assertQuietAbsent();
++  ensureFlock();
++  const state = JSON.parse(readFileSync(requiredEnv('TAB_AUDIO_PREFLIGHT_PATH'), 'utf8'));
++  assertCleanSource();
++  const {fingerprint} = readGrant();
++  assertFingerprintUnchanged(state.fingerprint, fingerprint);
++  if (process.env.TAB_AUDIO_RUN === '1' && !existsSync(requiredEnv('TAB_AUDIO_RUN_MARKER'))) {
++    throw new Error('One-shot run marker was not retained');
++  }
++  return {status: 'POSTFLIGHT_OK', sourceSha: fingerprint.sourceSha, sourceTree: fingerprint.sourceTree};
++}
++
++const invokedAsScript = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
++if (invokedAsScript) {
++  const command = process.argv[2] ?? '--fingerprint';
++  if (command === '--fingerprint') console.log(JSON.stringify(sourceFingerprint(), null, 2));
++  else if (command === '--discover') console.log(JSON.stringify(discover(), null, 2));
++  else if (command === '--prepare') console.log(JSON.stringify(prepare(), null, 2));
++  else if (command === '--preflight') console.log(JSON.stringify(preflight(), null, 2));
++  else if (command === '--claim') console.log(JSON.stringify(claim(), null, 2));
++  else if (command === '--postflight') console.log(JSON.stringify(postflight(), null, 2));
++  else throw new Error(`Unknown controller command: ${command}`);
++}
+diff --git a/tests/e2e/timeline/tab-audio-capture.controller.test.mjs b/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+new file mode 100644
+index 000000000..47c6b866e
+--- /dev/null
++++ b/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+@@ -0,0 +1,195 @@
++import assert from 'node:assert/strict';
++import {test} from 'node:test';
++import {chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, symlinkSync, linkSync} from 'node:fs';
++import {dirname, join} from 'node:path';
++import {tmpdir} from 'node:os';
++import {
++  assertFingerprintUnchanged,
++  assertPhysicalGraph,
++  assertGrant,
++  BROWSER_EXECUTABLE,
++  BROWSER_VERSION,
++  hashTree,
++  isolatedEnvironment,
++  WORKER_STATE_ROOT,
++  PROFILE,
++} from './tab-audio-capture.controller.mjs';
++
++const fingerprint = {
++  sourceSha: 'a'.repeat(40),
++  sourceTree: 'b'.repeat(40),
++  fullTrackedHash: 'c'.repeat(64),
++  inputHash: 'd'.repeat(64),
++  packageGraphHash: 'e'.repeat(64),
++  node: {version: 'v20.19.4', executableSha256: 'f'.repeat(64)},
++  browser: {tree: {sha256: '1'.repeat(64)}, executableSha256: '2'.repeat(64)},
++  privateGraph: {root: '/private/fixture/node_modules', tree: {sha256: 'a'.repeat(64), fileCount: 123}},
++  discovery: {testCount: 1, sha256: 'b'.repeat(64)},
++  packages: {
++    '@playwright/test': {version: '1.60.0', tree: {sha256: '3'.repeat(64)}},
++    playwright: {version: '1.60.0', tree: {sha256: '4'.repeat(64)}},
++    'playwright-core': {version: '1.60.0', tree: {sha256: 'a'.repeat(64)}},
++    react: {version: '18.3.1', tree: {sha256: '5'.repeat(64)}},
++    'react-dom': {version: '18.3.1', tree: {sha256: '6'.repeat(64)}},
++    remotion: {version: '4.0.509', tree: {sha256: '7'.repeat(64)}},
++    '@remotion/player': {version: '4.0.509', tree: {sha256: '8'.repeat(64)}},
++    '@remotion/media': {version: '4.0.509', tree: {sha256: 'b'.repeat(64)}},
++    '@remotion/web-renderer': {version: '4.0.509', tree: {sha256: 'c'.repeat(64)}},
++    '@remotion/layout-utils': {version: '4.0.509', tree: {sha256: 'd'.repeat(64)}},
++    '@banodoco/timeline-composition': {version: '0.0.12', tree: {sha256: '9'.repeat(64), fileCount: 77}},
++  },
++};
++fingerprint.renderGraphHashes = {
++  '@remotion/player/dist/cjs/PlayerUI.js': '1'.repeat(64),
++  '@remotion/player/dist/cjs/use-player-methods.js': '2'.repeat(64),
++  '@remotion/player/dist/cjs/use-playback.js': '3'.repeat(64),
++  '@remotion/player/dist/esm/index.mjs': '4'.repeat(64),
++  'remotion/dist/esm/index.mjs': '5'.repeat(64),
++  'remotion/dist/cjs/audio/shared-audio-tags.js': '6'.repeat(64),
++};
++
++function grant() {
++  return {
++    approved: true,
++    profile: PROFILE,
++    browserExecutable: BROWSER_EXECUTABLE,
++    browserVersion: BROWSER_VERSION,
++    backendOrder: ['tab', 'private-pulse'],
++    sourceSha: fingerprint.sourceSha,
++    sourceTree: fingerprint.sourceTree,
++    fullTrackedHash: fingerprint.fullTrackedHash,
++    inputHash: fingerprint.inputHash,
++    packageGraphHash: fingerprint.packageGraphHash,
++    finalSha: fingerprint.sourceSha,
++    nodeVersion: fingerprint.node.version,
++    nodeExecutableSha256: fingerprint.node.executableSha256,
++    browserTreeSha256: fingerprint.browser.tree.sha256,
++    browserExecutableSha256: fingerprint.browser.executableSha256,
++    packages: fingerprint.packages,
++    renderGraphHashes: fingerprint.renderGraphHashes,
++    privateGraph: fingerprint.privateGraph,
++    discovery: fingerprint.discovery,
++    environmentApprovalReference: 'manager-grant',
++  };
++}
++
++test('grant requires final SHA to match the actual committed source, not only an environment value', () => {
++  assert.doesNotThrow(() => assertGrant(grant(), fingerprint, fingerprint.sourceSha));
++  assert.throws(() => assertGrant({...grant(), finalSha: '9'.repeat(40)}, fingerprint, fingerprint.sourceSha), /committed source SHA/);
++  assert.throws(() => assertGrant(grant(), fingerprint, '9'.repeat(40)), /committed source SHA/);
++});
++
++test('grant rejects changed full source, selected input, browser, or package identity', () => {
++  for (const field of ['sourceTree', 'fullTrackedHash', 'inputHash', 'packageGraphHash']) {
++    assert.throws(() => assertGrant({...grant(), [field]: '9'.repeat(field.includes('Tree') ? 40 : 64)}, fingerprint, fingerprint.sourceSha), new RegExp(field));
++  }
++  assert.throws(() => assertGrant({...grant(), browserTreeSha256: '9'.repeat(64)}, fingerprint, fingerprint.sourceSha), /Chrome155 tree/);
++  assert.throws(() => assertGrant({...grant(), packages: {}}, fingerprint, fingerprint.sourceSha), /package graph/);
++  assert.throws(() => assertGrant({...grant(), renderGraphHashes: {}}, fingerprint, fingerprint.sourceSha), /Remotion\/Player render graph/);
++});
++
++test('postflight rejects a dependency graph change', () => {
++  assert.doesNotThrow(() => assertFingerprintUnchanged(fingerprint, fingerprint));
++  assert.throws(() => assertFingerprintUnchanged(fingerprint, {
++    ...fingerprint,
++    inputHash: '9'.repeat(64),
++  }), /inputHash/);
++  assert.throws(() => assertFingerprintUnchanged(fingerprint, {
++    ...fingerprint,
++    browser: {...fingerprint.browser, tree: {sha256: '9'.repeat(64)}},
++  }), /browser/);
++});
++
++test('hashTree uses canonical whole-tuple framing for physical fixtures', () => {
++  const root = mkdtempSync(join(tmpdir(), 'tab-audio-hash-tree-'));
++  const executable = join(root, 'bin', 'run.sh');
++  const regular = join(root, 'alpha.txt');
++  try {
++    mkdirSync(dirname(executable));
++    writeFileSync(regular, 'alpha\n');
++    writeFileSync(executable, '#!/bin/sh\n');
++    chmodSync(regular, 0o644);
++    chmodSync(executable, 0o755);
++
++    const expected = {sha256: '8a79f98987096e97cc953ecbd5af33617f60b15ab9280fa50e5a3e9b803b3218', fileCount: 2};
++    // This vector is the pre-fix per-tuple concatenation for the same fixture.
++    const legacyPerTupleFraming = '54b43f4ffd704bcedefb2f7ab19c47de86b67672100b9f9106524fea964b6a64';
++    assert.deepEqual(hashTree(root), expected);
++    assert.notEqual(hashTree(root).sha256, legacyPerTupleFraming);
++
++    writeFileSync(regular, 'changed\n');
++    assert.notEqual(hashTree(root).sha256, expected.sha256);
++    writeFileSync(regular, readFileSync(regular, 'utf8').replace('changed', 'alpha'));
++    chmodSync(regular, 0o755);
++    assert.notEqual(hashTree(root).sha256, expected.sha256);
++  } finally {
++    rmSync(root, {recursive: true, force: true});
++  }
++});
++
++test('whole private graph and real discovery are mandatory grant bindings', () => {
++  assert.throws(() => assertGrant({...grant(), privateGraph: null}, fingerprint, fingerprint.sourceSha), /whole private graph/);
++  assert.throws(() => assertGrant({...grant(), discovery: null}, fingerprint, fingerprint.sourceSha), /discovery proof/);
++  assert.throws(() => assertGrant(grant(), {...fingerprint, privateGraph: null}, fingerprint.sourceSha), /whole private graph/);
++});
++
++test('physical graph accepts internal file links and rejects shared leaves, cycles and external hardlinks', () => {
++  const root = mkdtempSync(join(tmpdir(), 'tab-private-physical-'));
++  try {
++    writeFileSync(join(root, 'file'), 'private');
++    symlinkSync('file', join(root, 'internal'));
++    assert.doesNotThrow(() => assertPhysicalGraph(root));
++    symlinkSync(root, join(root, 'cycle'));
++    assert.throws(() => assertPhysicalGraph(root), /targets a directory/);
++    rmSync(join(root, 'cycle'));
++    symlinkSync('/etc/hosts', join(root, 'external'));
++    assert.throws(() => assertPhysicalGraph(root), /escapes/);
++    rmSync(join(root, 'external'));
++    linkSync(join(root, 'file'), join(root, 'hardlink'));
++    assert.doesNotThrow(() => assertPhysicalGraph(root));
++    const outside = mkdtempSync(join(tmpdir(), 'tab-private-external-hardlink-'));
++    try {
++      linkSync(join(root, 'file'), join(outside, 'shared'));
++      assert.throws(() => assertPhysicalGraph(root), /unshared files/);
++    } finally {
++      rmSync(outside, {recursive: true, force: true});
++    }
++  } finally {
++    rmSync(root, {recursive: true, force: true});
++  }
++});
++
++test('postflight rejects whole private graph or discovery identity changes', () => {
++  for (const field of ['privateGraph', 'discovery']) {
++    assert.throws(() => assertFingerprintUnchanged(fingerprint, {...fingerprint, [field]: null}), new RegExp(field));
++  }
++});
++
++test('discovery state stays in this worker folder and rejects an external output', () => {
++  const previous = process.env.PLAYWRIGHT_OUTPUT_DIR;
++  try {
++    delete process.env.PLAYWRIGHT_OUTPUT_DIR;
++    const isolated = isolatedEnvironment();
++    for (const key of ['TMPDIR', 'TMP', 'TEMP', 'XDG_CACHE_HOME', 'XDG_CONFIG_HOME', 'PWTEST_CACHE_DIR', 'PLAYWRIGHT_OUTPUT_DIR']) {
++      assert.ok(isolated[key].startsWith(`${WORKER_STATE_ROOT}/`));
++    }
++    assert.equal(isolated.NODE_PATH, '');
++    process.env.PLAYWRIGHT_OUTPUT_DIR = '/outside-worker/output';
++    assert.throws(() => isolatedEnvironment(), /own worker folder/);
++  } finally {
++    if (previous === undefined) delete process.env.PLAYWRIGHT_OUTPUT_DIR;
++    else process.env.PLAYWRIGHT_OUTPUT_DIR = previous;
++  }
++});
++
++test('hashTree sorts complete relative paths before hashing directory-prefix siblings', () => {
++  const root = mkdtempSync(join(tmpdir(), 'tab-private-tree-order-'));
++  try {
++    mkdirSync(join(root, 'a'));
++    writeFileSync(join(root, 'a', 'z.txt'), 'nested');
++    writeFileSync(join(root, 'a.txt'), 'sibling');
++    assert.deepEqual(hashTree(root), {sha256: '8c84a47ff6d2cc90f918befafc12fffa49067d15daf5941674749c00a0cd5539', fileCount: 2});
++  } finally {
++    rmSync(root, {recursive: true, force: true});
++  }
++});
+diff --git a/tests/e2e/timeline/tab-audio-capture.environment.test.mjs b/tests/e2e/timeline/tab-audio-capture.environment.test.mjs
+new file mode 100644
+index 000000000..c2057c0c4
+--- /dev/null
++++ b/tests/e2e/timeline/tab-audio-capture.environment.test.mjs
+@@ -0,0 +1,38 @@
++import assert from 'node:assert/strict';
++import {test} from 'node:test';
++import {dirname, join} from 'node:path';
++import {createRequire} from 'node:module';
++import {BROWSER_EXECUTABLE, EXPECTED_PACKAGE_VERSIONS, FROZEN_PRIVATE_GRAPH, hashTree, packageGraphFingerprint, renderGraphFingerprint} from './tab-audio-capture.controller.mjs';
++
++test('package graph fingerprint collects every package with an expected version', () => {
++  const {packages} = packageGraphFingerprint();
++
++  for (const [name, version] of Object.entries(EXPECTED_PACKAGE_VERSIONS)) {
++    assert.equal(packages[name]?.version, version, `${name} must be collected at its expected version`);
++  }
++});
++
++test('render graph fingerprint resolves the package root and all frozen files', () => {
++  assert.deepEqual(renderGraphFingerprint(), {
++    '@remotion/player/dist/cjs/PlayerUI.js': '5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb',
++    '@remotion/player/dist/cjs/use-player-methods.js': 'ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46',
++    '@remotion/player/dist/cjs/use-playback.js': '6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0',
++    '@remotion/player/dist/esm/index.mjs': 'd3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12',
++    'remotion/dist/esm/index.mjs': '5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28',
++    'remotion/dist/cjs/audio/shared-audio-tags.js': '949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8',
++  });
++});
++
++test('browser and Playwright trees retain their exact frozen hashes', () => {
++  if (!FROZEN_PRIVATE_GRAPH) throw new Error('Private graph is not READY');
++  assert.deepEqual(hashTree(dirname(BROWSER_EXECUTABLE)), {
++    sha256: '5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e',
++    fileCount: 255,
++  });
++  const require = createRequire(join(FROZEN_PRIVATE_GRAPH.root, '../package.json'));
++  const playwrightRoot = dirname(require.resolve('playwright-core/package.json'));
++  assert.deepEqual(hashTree(playwrightRoot), {
++    sha256: '6a78060c81886b7ba6f631d5b1193d50f0362c779f5b2dff2d784a31a6acc46d',
++    fileCount: 106,
++  });
++});
+diff --git a/tests/e2e/timeline/tab-audio-capture.probe.ts b/tests/e2e/timeline/tab-audio-capture.probe.ts
+new file mode 100644
+index 000000000..0669217f9
+--- /dev/null
++++ b/tests/e2e/timeline/tab-audio-capture.probe.ts
+@@ -0,0 +1,282 @@
++import { expect, test as base } from '@playwright/test';
++import { createServer, type Server } from 'node:http';
++import { execFile } from 'node:child_process';
++import { mkdir, writeFile } from 'node:fs/promises';
++import { promisify } from 'node:util';
++import {
++  assertCaptureCapabilities,
++  assertCaptureOutcome,
++  assertTone,
++  CONTROLLED_AUDIO,
++  createSyntheticPcmWav,
++  diagnoseVisualEvent,
++} from './tab-audio-capture.analysis.mjs';
++
++const exec = promisify(execFile);
++const VISUAL_EVENT_MS = 1_500;
++const CAPTURE_MS = 4_000;
++
++declare global {
++  interface Window {
++    __tabAudioProbe: {
++      mimeType: string;
++      tracks: Array<{ kind: string; readyState: string; settings: MediaTrackSettings }>;
++      chunks: string[];
++      fixture: {
++        webAudioFrequency: number;
++        htmlAudioFrequency: number;
++        visualEventMs: number;
++        captureMs: number;
++        startedAt: number;
++        visualEventAt: number;
++      };
++    };
++  }
++}
++
++type ProbeFixtures = { fixtureUrl: string };
++
++function probeHtml() {
++  const webAudioFrequency = JSON.stringify(CONTROLLED_AUDIO.webAudioFrequency);
++  const webAudioAmplitude = JSON.stringify(CONTROLLED_AUDIO.webAudioAmplitude);
++  const htmlAudioFrequency = JSON.stringify(CONTROLLED_AUDIO.htmlAudioFrequency);
++  return `<!doctype html>
++<html><head><meta charset="utf-8"><title>Tab audio capability probe</title></head>
++<body style="margin:0;background:#101820;color:white;font:16px sans-serif">
++  <button id="tab-audio-probe-start" type="button">Start tab-audio probe</button>
++  <audio id="tab-audio-probe-wav" preload="auto" src="/synthetic.wav"></audio>
++  <div id="tab-audio-probe-marker" style="position:fixed;right:8px;bottom:8px;background:#203040;color:white;padding:18px;font:24px monospace">
++    TAB-AUDIO-PROBE: PRE-EVENT
++  </div>
++  <script>
++    const button = document.getElementById('tab-audio-probe-start');
++    const marker = document.getElementById('tab-audio-probe-marker');
++    const htmlAudio = document.getElementById('tab-audio-probe-wav');
++    button.addEventListener('click', () => {
++      void (async () => {
++        let stream;
++        let audio;
++        let oscillator;
++        let recorder;
++        try {
++          stream = await navigator.mediaDevices.getDisplayMedia({
++            video: true,
++            audio: true,
++            preferCurrentTab: true,
++          });
++          const mimeType = 'video/webm;codecs=vp8,opus';
++          if (!MediaRecorder.isTypeSupported(mimeType)) throw new Error('Unsupported recorder MIME: ' + mimeType);
++          recorder = new MediaRecorder(stream, { mimeType });
++          audio = new AudioContext();
++          await audio.resume();
++          oscillator = audio.createOscillator();
++          const gain = audio.createGain();
++          gain.gain.value = ${webAudioAmplitude};
++          oscillator.frequency.value = ${webAudioFrequency};
++          oscillator.connect(gain).connect(audio.destination);
++          const startedAt = performance.now();
++          let visualEventAt = Number.NaN;
++          const fixture = {
++            webAudioFrequency: ${webAudioFrequency},
++            htmlAudioFrequency: ${htmlAudioFrequency},
++            visualEventMs: ${VISUAL_EVENT_MS},
++            captureMs: ${CAPTURE_MS},
++            startedAt,
++            visualEventAt,
++          };
++          window.__tabAudioProbe = {
++            mimeType,
++            tracks: stream.getTracks().map((track) => ({ kind: track.kind, readyState: track.readyState, settings: track.getSettings() })),
++            chunks: [],
++            fixture,
++          };
++
++          // Keep each dataavailable payload in recorder order before handing it
++          // to the test. This does not alter the encoded timestamps.
++          const encodedChunks = [];
++          let nextChunkIndex = 0;
++          let delivery = Promise.resolve();
++          recorder.ondataavailable = (event) => {
++            const index = nextChunkIndex;
++            nextChunkIndex += 1;
++            delivery = delivery.then(async () => {
++              if (event.data.size === 0) return;
++              const bytes = new Uint8Array(await event.data.arrayBuffer());
++              let binary = '';
++              for (const byte of bytes) binary += String.fromCharCode(byte);
++              encodedChunks[index] = btoa(binary);
++            });
++          };
++          const recorderStopped = new Promise((resolve, reject) => {
++            recorder.addEventListener('stop', () => resolve(), { once: true });
++            recorder.addEventListener('error', () => reject(new Error('MediaRecorder emitted an error')), { once: true });
++          });
++          const animate = (now) => {
++            if (Number.isNaN(visualEventAt) && now - startedAt >= ${VISUAL_EVENT_MS}) {
++              visualEventAt = now;
++              fixture.visualEventAt = now;
++              marker.textContent = 'TAB-AUDIO-PROBE: KNOWN-VISUAL-EVENT';
++              marker.style.background = '#a02020';
++            }
++            if (now - startedAt < ${CAPTURE_MS}) requestAnimationFrame(animate);
++          };
++          // Both sources start after the real user click, and share this one
++          // tab MediaRecorder stream and its native per-stream PTS.
++          await htmlAudio.play();
++          recorder.start(100);
++          oscillator.start();
++          requestAnimationFrame(animate);
++          await new Promise((resolve) => setTimeout(resolve, ${CAPTURE_MS}));
++          oscillator.stop();
++          recorder.stop();
++          await recorderStopped;
++          await delivery;
++          window.__tabAudioProbe.chunks = encodedChunks.filter((chunk) => chunk !== undefined);
++          button.dataset.result = 'complete';
++        } catch (error) {
++          button.dataset.error = error instanceof Error ? error.message : String(error);
++          button.dataset.result = 'error';
++        } finally {
++          if (audio) await audio.close();
++          if (stream) stream.getTracks().forEach((track) => track.stop());
++        }
++      })();
++    }, { once: true });
++  </script>
++</body></html>`;
++}
++
++function startProbeServer(): Server {
++  const html = Buffer.from(probeHtml());
++  const wav = createSyntheticPcmWav();
++  return createServer((request, response) => {
++    if (request.method !== 'GET') {
++      response.writeHead(405, {'content-type': 'text/plain; charset=utf-8'});
++      response.end('Method Not Allowed');
++    } else if (request.url === '/') {
++      response.writeHead(200, {'content-type': 'text/html; charset=utf-8'});
++      response.end(html);
++    } else if (request.url === '/synthetic.wav') {
++      response.writeHead(200, {'content-type': 'audio/wav', 'content-length': wav.length});
++      response.end(wav);
++    } else {
++      response.writeHead(404, {'content-type': 'text/plain; charset=utf-8'});
++      response.end('Not Found');
++    }
++  });
++}
++
++function listen(server: Server): Promise<void> {
++  return new Promise((resolve, reject) => {
++    server.once('error', reject);
++    server.listen(0, '127.0.0.1', () => resolve());
++  });
++}
++
++function close(server: Server): Promise<void> {
++  return new Promise((resolve, reject) => {
++    server.close((error) => error ? reject(error) : resolve());
++  });
++}
++
++const test = base.extend<ProbeFixtures>({
++  // Playwright reads fixture dependencies from the destructuring pattern; this fixture has none.
++  // eslint-disable-next-line no-empty-pattern
++  fixtureUrl: async ({}, provide) => {
++    const server = startProbeServer();
++    await listen(server);
++    try {
++      const address = server.address();
++      if (!address || typeof address === 'string') throw new Error('Probe server did not expose an ephemeral address');
++      await provide(`http://127.0.0.1:${address.port}/`);
++    } finally {
++      server.closeAllConnections();
++      await close(server);
++    }
++  },
++});
++
++async function readFfprobe(path: string) {
++  const { stdout } = await exec('ffprobe', [
++    '-v', 'error', '-show_streams', '-show_packets', '-of', 'json', path,
++  ], { maxBuffer: 32 * 1024 * 1024 });
++  return JSON.parse(stdout) as { streams: unknown[]; packets: unknown[] };
++}
++
++async function readDecodedAudio(path: string, stream: { index: number }) {
++  const { stdout } = await exec('ffmpeg', [
++    '-v', 'error', '-i', path, '-map', `0:${stream.index}`, '-f', 'f32le', 'pipe:1',
++  ], { encoding: 'buffer', maxBuffer: 32 * 1024 * 1024 });
++  if (stdout.byteLength % Float32Array.BYTES_PER_ELEMENT !== 0) throw new Error('Decoded audio was not f32-aligned');
++  return new Float32Array(stdout.buffer, stdout.byteOffset, stdout.byteLength / Float32Array.BYTES_PER_ELEMENT);
++}
++
++async function readVisualRegion(path: string) {
++  const { stdout } = await exec('ffmpeg', [
++    '-v', 'error', '-i', path, '-map', '0:v:0',
++    '-vf', 'crop=500:110:940:790,format=rgb24', '-f', 'rawvideo', 'pipe:1',
++  ], { encoding: 'buffer', maxBuffer: 32 * 1024 * 1024 });
++  return stdout;
++}
++
++test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder clock', async ({ page, fixtureUrl }, testInfo) => {
++  test.setTimeout(120_000);
++  await page.goto(fixtureUrl, { waitUntil: 'domcontentloaded' });
++  await page.locator('#tab-audio-probe-start').click();
++  await expect(page.locator('#tab-audio-probe-start')).toHaveAttribute('data-result', 'complete', { timeout: 20_000 });
++
++  const probe = await page.evaluate(() => window.__tabAudioProbe);
++  const chunks = probe.chunks.map((chunk) => Buffer.from(chunk, 'base64'));
++  const capabilities = assertCaptureCapabilities(probe.tracks, { mimeType: probe.mimeType });
++  expect(probe.fixture.webAudioFrequency).toBe(CONTROLLED_AUDIO.webAudioFrequency);
++  expect(probe.fixture.htmlAudioFrequency).toBe(CONTROLLED_AUDIO.htmlAudioFrequency);
++  expect(probe.fixture.visualEventMs).toBe(VISUAL_EVENT_MS);
++  expect(Number.isFinite(probe.fixture.visualEventAt)).toBe(true);
++  expect(chunks.length).toBeGreaterThan(0);
++
++  const output = testInfo.outputPath('whole-tab.webm');
++  await mkdir(testInfo.outputDir, { recursive: true });
++  await writeFile(output, Buffer.concat(chunks));
++  const ffprobe = await readFfprobe(output);
++  const outcome = assertCaptureOutcome(ffprobe, capabilities);
++  const audioStream = (ffprobe.streams as Array<{ codec_type?: string; index: number; sample_rate: string; channels: number }>)
++    .find((stream) => stream.codec_type === 'audio');
++  if (!audioStream) throw new Error('ffprobe output did not identify the captured audio stream');
++  const decodedAudio = await readDecodedAudio(output, audioStream);
++  const tones = {
++    webAudio: assertTone(decodedAudio, {
++      sampleRate: Number(audioStream.sample_rate),
++      channels: Number(audioStream.channels),
++      frequency: CONTROLLED_AUDIO.webAudioFrequency,
++    }),
++    htmlAudio: assertTone(decodedAudio, {
++      sampleRate: Number(audioStream.sample_rate),
++      channels: Number(audioStream.channels),
++      frequency: CONTROLLED_AUDIO.htmlAudioFrequency,
++    }),
++  };
++  const rawDecodedMarkerData = await readVisualRegion(output);
++  const visualMarkerDiagnostic = diagnoseVisualEvent(rawDecodedMarkerData, {
++    width: 500,
++    height: 110,
++    preEventRgb: [32, 48, 64],
++    eventRgb: [160, 32, 32],
++  });
++  await testInfo.attach('tab-audio-probe-marker-rgb24.raw', {
++    body: rawDecodedMarkerData,
++    contentType: 'application/octet-stream',
++  });
++  await testInfo.attach('tab-audio-probe-outcome', {
++    body: JSON.stringify({
++      requested: { video: true, audio: true, preferCurrentTab: true },
++      fixture: probe.fixture,
++      capabilities,
++      outcome,
++      tones,
++      visualMarkerDiagnostic,
++      rawPtsOnly: true,
++      note: 'Qualified capability is one live video track plus one live tab-audio track, presence of both declared source tones, and native per-stream PTS. Decoded VP8 marker samples are diagnostic only; no audio/video offset, event phase, per-clip alignment, normalization, resampling, parity, or global-origin claim is made.',
++    }, null, 2),
++    contentType: 'application/json',
++  });
++});

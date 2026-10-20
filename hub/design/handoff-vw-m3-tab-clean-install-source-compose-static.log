@@ -1,0 +1,148 @@
+COMMAND ["/tmp/vw-m3-agent-gate-node20.19.4/bin/node", "tests/e2e/timeline/tab-audio-capture.analysis.test.mjs"]
+TAP version 13
+# Subtest: capability check requires one live video and one live tab-audio track
+ok 1 - capability check requires one live video and one live tab-audio track
+  ---
+  duration_ms: 1.746286
+  ...
+# Subtest: visual event check requires both exact marker colors in decoded frames
+ok 2 - visual event check requires both exact marker colors in decoded frames
+  ---
+  duration_ms: 0.42002
+  ...
+# Subtest: decoded marker data is diagnostic and makes no phase claim
+ok 3 - decoded marker data is diagnostic and makes no phase claim
+  ---
+  duration_ms: 0.193082
+  ...
+# Subtest: raw PTS checks retain native per-stream timestamps without alignment
+ok 4 - raw PTS checks retain native per-stream timestamps without alignment
+  ---
+  duration_ms: 0.358892
+  ...
+# Subtest: tone check observes decoded channels without resampling or level normalization
+ok 5 - tone check observes decoded channels without resampling or level normalization
+  ---
+  duration_ms: 19.186923
+  ...
+# Subtest: full-tab source controls distinguish the independent oscillator and HTMLAudio tones
+ok 6 - full-tab source controls distinguish the independent oscillator and HTMLAudio tones
+  ---
+  duration_ms: 27.089874
+  ...
+# Subtest: synthetic HTMLAudio source is a finite native 48 kHz stereo PCM WAV
+ok 7 - synthetic HTMLAudio source is a finite native 48 kHz stereo PCM WAV
+  ---
+  duration_ms: 14.43481
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 71.17026
+EXIT 0
+COMMAND ["/tmp/vw-m3-agent-gate-node20.19.4/bin/node", "tests/e2e/timeline/tab-audio-capture.controller.test.mjs"]
+TAP version 13
+# Subtest: grant requires final SHA to match the actual committed source, not only an environment value
+ok 1 - grant requires final SHA to match the actual committed source, not only an environment value
+  ---
+  duration_ms: 1.401609
+  ...
+# Subtest: grant rejects changed full source, selected input, browser, or package identity
+ok 2 - grant rejects changed full source, selected input, browser, or package identity
+  ---
+  duration_ms: 0.39384
+  ...
+# Subtest: postflight rejects a dependency graph change
+ok 3 - postflight rejects a dependency graph change
+  ---
+  duration_ms: 0.255046
+  ...
+# Subtest: hashTree uses canonical whole-tuple framing for physical fixtures
+ok 4 - hashTree uses canonical whole-tuple framing for physical fixtures
+  ---
+  duration_ms: 5.529005
+  ...
+# Subtest: whole private graph and real discovery are mandatory grant bindings
+ok 5 - whole private graph and real discovery are mandatory grant bindings
+  ---
+  duration_ms: 0.235054
+  ...
+# Subtest: physical graph accepts internal file links and rejects shared leaves, cycles and external hardlinks
+ok 6 - physical graph accepts internal file links and rejects shared leaves, cycles and external hardlinks
+  ---
+  duration_ms: 2.929361
+  ...
+# Subtest: postflight rejects whole private graph or discovery identity changes
+ok 7 - postflight rejects whole private graph or discovery identity changes
+  ---
+  duration_ms: 0.226956
+  ...
+# Subtest: discovery state stays in this worker folder and rejects an external output
+ok 8 - discovery state stays in this worker folder and rejects an external output
+  ---
+  duration_ms: 1.003509
+  ...
+# Subtest: hashTree sorts complete relative paths before hashing directory-prefix siblings
+ok 9 - hashTree sorts complete relative paths before hashing directory-prefix siblings
+  ---
+  duration_ms: 1.675811
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22.445007
+EXIT 0
+COMMAND ["/tmp/vw-m3-agent-gate-node20.19.4/bin/node", "tests/e2e/timeline/tab-audio-capture.environment.test.mjs"]
+TAP version 13
+# Subtest: package graph fingerprint collects every package with an expected version
+ok 1 - package graph fingerprint collects every package with an expected version
+  ---
+  duration_ms: 1135.695647
+  ...
+# Subtest: render graph fingerprint resolves the package root and all frozen files
+ok 2 - render graph fingerprint resolves the package root and all frozen files
+  ---
+  duration_ms: 1017.981175
+  ...
+# Subtest: browser and Playwright trees retain their exact frozen hashes
+ok 3 - browser and Playwright trees retain their exact frozen hashes
+  ---
+  duration_ms: 527.835123
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2689.357537
+EXIT 0
+COMMAND ["/tmp/vw-m3-agent-gate-node20.19.4/bin/node", "node_modules/typescript/bin/tsc", "--noEmit", "--target", "ES2022", "--lib", "ES2023,DOM", "--module", "ESNext", "--moduleResolution", "bundler", "--strict", "--skipLibCheck", "--allowJs", "--resolveJsonModule", "--types", "node", "tests/e2e/timeline/tab-audio-capture.probe.ts", "tests/e2e/timeline/tab-audio-capture.config.ts"]
+EXIT 0
+COMMAND ["/tmp/vw-m3-agent-gate-node20.19.4/bin/node", "node_modules/eslint/bin/eslint.js", "--no-cache", "tests/e2e/timeline/tab-audio-capture.probe.ts", "tests/e2e/timeline/tab-audio-capture.config.ts", "tests/e2e/timeline/tab-audio-capture.analysis.mjs", "tests/e2e/timeline/tab-audio-capture.analysis.test.mjs", "tests/e2e/timeline/tab-audio-capture.controller.mjs", "tests/e2e/timeline/tab-audio-capture.controller.test.mjs", "tests/e2e/timeline/tab-audio-capture.environment.test.mjs", "--max-warnings", "0"]
+EXIT 0
+COMMAND ["/tmp/vw-m3-agent-gate-node20.19.4/bin/node", "node_modules/vitest/vitest.mjs", "run", "--config", "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-source-compose/pure-preflight.config.mjs", "--configLoader=runner", "--no-cache", "src/tools/video-editor/compositions/playerEvaluation.test.ts"]
+
+ RUN  v4.1.5 /home/user/work/wt/vw-m3-tab-clean-install-source-compose
+
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  12:20:22
+   Duration  766ms (transform 345ms, setup 0ms, import 565ms, tests 18ms, environment 0ms)
+
+EXIT 0
+COMMAND ["bash", "-n", "tests/e2e/timeline/setup-tab-audio-capture.sh"]
+EXIT 0

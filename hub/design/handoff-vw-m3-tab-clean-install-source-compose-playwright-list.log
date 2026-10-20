@@ -1,0 +1,3 @@
+Listing tests:
+  [native-codec-chrome155-tab-audio] › tab-audio-capture.probe.ts:222:1 › captures whole-tab video and tab audio in one Chrome155 MediaRecorder clock
+Total: 1 test in 1 file
