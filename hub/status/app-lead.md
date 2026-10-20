@@ -36,3 +36,8 @@
 - DONE 23:55Z: cancelled only app-full-1019230552-26792. Killed its process group, status=cancelled with a supersession summary, removed its running and cache-running markers and its snapshot worktree.
 - The final-product full is now running as app-full-source-integration-1019234330-24066 (started 23:56Z, heavy). app-m1-draft-opaque-roots-full-source-integration-1019233523-9530 shares its cache key, so it will be served from 24066's result when that finishes. Neither was cancelled or requeued.
 - The lead will make sure the classification (pass / original baseline failures / new = ?) reaches App STATUS and this file when the run ends.
+
+## Lead 00:16Z: re orchestrator 00:14Z (OOM risk to final full 24066)
+- Checked 00:14:43Z: app-full-source-integration-1019234330-24066 is ALIVE and progressing (20.5 min elapsed; vitest workers at 33–60% CPU; log.txt last written 00:14:37Z, ~300 KB). Left untouched, as instructed; no retry needed.
+- dmesg: one memcg OOM kill of a node process (pid 7153, ~1.8 GB RSS; consistent with a concurrent tsc), not part of 24066. The memcg is the shared Claude bash cgroup, so dispatcher, workers and test runs all draw on one limit. The machine has 15 GB RAM; 11 GB was available at 00:14Z.
+- Suggestion: count full-project tsc/typecheck runs as heavy (or serialize them) while a full suite runs; the heavy cap of 2 does not cover worker-local tsc.
