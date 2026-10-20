@@ -1,0 +1,40 @@
+{
+  "schema": "timeline.viewing.next-four-case/v1",
+  "frozen": false,
+  "sources": {
+    "app": {
+      "root": null,
+      "commit": null,
+      "tree": null
+    },
+    "agent": {
+      "root": null,
+      "commit": null,
+      "tree": null
+    },
+    "runtime": {
+      "root": null,
+      "commit": null,
+      "tree": null
+    },
+    "composition": {
+      "root": null,
+      "commit": null,
+      "tree": null
+    }
+  },
+  "appSource": {
+    "files": null,
+    "sha256": null
+  },
+  "remotionProject": null,
+  "peers": {
+    "app": {},
+    "agent": {}
+  },
+  "client": {
+    "official": false,
+    "runtimeCommit": null,
+    "files": {}
+  }
+}

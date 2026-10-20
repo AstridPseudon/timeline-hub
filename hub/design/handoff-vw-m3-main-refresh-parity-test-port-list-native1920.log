@@ -1,6 +1,6 @@
 Listing tests:
-  [native-codec-chrome155] › viewing-parity/cases.ts:214:5 › ordinary media: mounted App Player versus real task export › normal App Render action downloads a valid native-size MP4 without a parity comparison
-  [native-codec-chrome155] › viewing-parity/cases.ts:231:5 › ordinary media: mounted App Player versus real task export › fixture readiness seeks actual managed Player video and captures native frames without export
-  [native-codec-chrome155] › viewing-parity/cases.ts:252:5 › ordinary media: mounted App Player versus real task export › compares native-size actual Player frames with decoded real CPU Remotion task output
-  [native-codec-chrome155] › viewing-parity/cases.ts:262:5 › ordinary media: mounted App Player versus real task export › picture-only one-host patch is reported as a mismatch after the full passing baseline
+  [native-codec-chrome155] › viewing-parity/cases.ts:227:5 › ordinary media: mounted App Player versus real task export › normal App Render action downloads a valid native-size MP4 without a parity comparison
+  [native-codec-chrome155] › viewing-parity/cases.ts:244:5 › ordinary media: mounted App Player versus real task export › fixture readiness seeks actual managed Player video and captures native frames without export
+  [native-codec-chrome155] › viewing-parity/cases.ts:265:5 › ordinary media: mounted App Player versus real task export › compares native-size actual Player frames with decoded real CPU Remotion task output
+  [native-codec-chrome155] › viewing-parity/cases.ts:275:5 › ordinary media: mounted App Player versus real task export › picture-only one-host patch is reported as a mismatch after the full passing baseline
 Total: 4 tests in 1 file

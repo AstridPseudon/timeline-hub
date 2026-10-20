@@ -1,0 +1,65 @@
+{
+  "status": "UNQUALIFIED_STAGING_READY_ONLY_NO_GRANT",
+  "source": {
+    "app_base_commit": "667498cc49b4ec2b1ccd3a515eb87311c5126c93",
+    "app_base_tree": "74d6c8033b1e006e8dbd4accc361b4e1288093e9",
+    "decoder_delta": "4360c7591819425b0163cdc907ee54b1ee56860d",
+    "product_render_download_preview_packages_pins": "READ_ONLY"
+  },
+  "source_tuple_env": "VIEWING_FRAME_SOURCE_TUPLE",
+  "source_tuple_schema": "timeline.viewing.next-four-case/v1",
+  "pending_inputs": [
+    "final committed App consumer12 commit/tree and App content freeze after test port and any source refresh",
+    "final Agent consumer12 commit/tree and owner-approved real_pack_host helper",
+    "official matching Runtime commit and generated.ts byte pins",
+    "both actual selected 0.0.12 artifacts/77 installed files",
+    "owner-published six-file Remotion/Player peer manifest for each consumer",
+    "private selected Agent Remotion graph root; frozen absolute Python/source paths",
+    "final reviewed environment freeze (Node20.19.4, full Chrome155/export-browser/Playwright directories)",
+    "fresh manager run controller/grant with finally postflight, source identity checks, exclusive flock and QUIET; no old grant reuse"
+  ],
+  "composition": {
+    "version": "0.0.12",
+    "artifact_sha256": "sha256:0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "files": 77
+  },
+  "configs": [
+    "playwright.viewing-parity.config.ts",
+    "playwright.viewing-parity.normal-profile-native1920.config.ts"
+  ],
+  "fixture": {
+    "baseline": "original640 unchanged",
+    "native": "1920x1080 explicit; unchanged 640x360 VP8 input",
+    "cases": 4,
+    "frames": [
+      0,
+      37,
+      44,
+      45,
+      52,
+      89,
+      90,
+      120,
+      121,
+      135,
+      143,
+      164
+    ],
+    "max_channel_error": 2,
+    "outside_fraction": 0.001,
+    "png": "unmodified"
+  },
+  "environment": {
+    "node": "20.19.4",
+    "player_browser": "155.0.8059.84",
+    "export_browser": "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
+    "flock": "/tmp/timeline-viewing-browser.lock",
+    "quiet": "managers/viewing/QUIET.md must be absent"
+  },
+  "run_policy": {
+    "actual_run": false,
+    "grant": false,
+    "browser_runtime_render_http_central_run": false,
+    "controller_mode": "--check-ready only"
+  }
+}
