@@ -13,7 +13,7 @@ from tests.editing_conformance.test_commit_runtime_m1 import (
 pytestmark = pytest.mark.integration
 # Keep this bounded real-HTTP qualification on the exact catalog-visibility
 # candidate; do not switch either side of the public handshake to a fake route.
-CATALOG_RUNTIME = "ca1f1b6df9a4df9a7febd03c4d3b3f9cd2260b99"
+CATALOG_RUNTIME = "3b900c377e7126e14eeb92dc2ce73114cbda5a0e"
 RUNTIME = use_runtime(CATALOG_RUNTIME)
 import runtime_protocol  # noqa: F401  # lock the daemon fixture to CATALOG_RUNTIME
 
@@ -299,9 +299,10 @@ def test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_re
 
         # Repeat the catalog lifecycle through the explicit current version;
         # the exact archive/recover receipts remain replayable.
+        archive_again_version = recovered_absent.data["version"]
         archived_again = client.timelines.archive(
             fixture.project_id, fixture.timeline_id,
-            expected_version=recovered_absent.data["version"],
+            expected_version=archive_again_version,
             idempotency_key="catalog-archive-2",
         )
         assert archived_again.ok, archived_again.as_dict()
@@ -318,7 +319,7 @@ def test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_re
         ).data == accepted_history.data
         assert client.timelines.archive(
             fixture.project_id, fixture.timeline_id,
-            expected_version=archived_again.data["version"],
+            expected_version=archive_again_version,
             idempotency_key="catalog-archive-2",
         ).data == archived_again.data
         assert client.timelines.recover(

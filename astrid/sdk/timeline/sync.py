@@ -360,6 +360,12 @@ class TimelineSession:
                 self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
             ))
         except Exception as exc:
+            if (
+                isinstance(exc, WorkspaceClientError)
+                and exc.code == "transport_error"
+                and any(command.get("op") == "timeline.restore" for command in body.get("commands", []))
+            ):
+                raise ConnectionError(exc.message) from exc
             details = getattr(exc, "details", {})
             if isinstance(details, dict) and details.get("status") in {"conflict", "refused"}:
                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
