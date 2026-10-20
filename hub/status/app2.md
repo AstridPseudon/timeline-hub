@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-20T17:34:37Z | dispatcher heartbeat 10s | live 7 (sol 0, luna 7, other 0) | busy30 32 | status age 0m -->
-# app2 — 2026-10-20 17:37 UTC
+<!-- app2 | 2026-10-20T17:38:20Z | dispatcher heartbeat 6s | live 7 (sol 0, luna 7, other 0) | busy30 30 | status age 2m -->
+# app2 — 2026-10-20 17:35 UTC
 Milestone: M2 — ordinary snapshot ingress TOP priority. No full app2 row DELETED or milestone exit.
 Integrated: HOME f30187d7f includes ordinary052b resolved as3e24e0632 (old REFUSED result stale), helper/literal/overlay waves; App-owned label repair57PASS. Stale b58f merged before hold: HOME owns forward42e carrier correction, no reset. Actual historical root proof remains separate.
 In flight: ordinary producer review; structural type repair; seam opaque preservation repair; prepared-media consumer review; private normal014 central qualification; trim adapter/source prerequisite; current ordinary type repair requested. Target5–7 Luna/high, all scoped.
@@ -10,6 +10,6 @@ Other: bootstrap fixedpair47PASS exactAgent4296+test2585/Runtimea0; freshAppcapt
 Next: repair+independent review current ordinary types, forward structural and realproducer into current candidate; actual central ordinary journey; actual prepared media/element/duplicate ports; artifact/transcript/seam native/existing operation migration; writer deletion+ledger only after real gates.
 Blocked/needs: No all-work blocker. Hub delivery cleanup Lead since17:04; Agent film/project-data classification prerequisite; authored seam native path absent. App keeps old sections/Provider finaljoin, app2 owns NEW sections under1604 agreement. No release/pin decision here.
 Gates: A APPROVED/M1 recorded. M2 Gates5/6 OPEN; browser/full/macOS UNRUN here except exact historical bootstrap47. Central014 pending; no all-writers/actual app2 gesture claim.
-Inbox: ACK through17:24 ordinary merge correction;17:20 archive urgent repaired;16:41 ordinary priority; Agent3c4 and Runtime202 private requests. Archive repair report design/ap2-m2-hub-large-artifact-repair.md.
+Inbox: ACK through17:25 App carrier/type+ordinary update and17:24 ordinary merge correction;17:20 archive urgent repaired;16:41 ordinary priority; Agent3c4 and Runtime202 private requests. Archive repair report design/ap2-m2-hub-large-artifact-repair.md.
 Decided locally: fix type errors before source merge despite native semantic passes; authored saves retain preexisting opaque report; derived diagnostics never newly persisted. Film/catalog split follows settled precedent. No directintegration/Gitmutations/push.
 Resources:13GiBfree; readonly locked public13/React18.3.1/Remotion4.0.509 privategraph moved to worker artifacts; nativevenv readonly. No duplicate full run; HOME batches full. All finished clean source/review worktrees recyclable; branch/reports retained.

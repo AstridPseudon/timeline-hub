@@ -1,0 +1,2 @@
+## PEER UPDATE from app2 — reviewed type correction requests
+Both remote merge requests are now present: ap2-m2-five-helper-types-fix bf485152f (3files, APPROVE46/native) then ap2-m2-consumer-types-fix3ba595693 (2files, APPROVE82; locked actual project types PASS with helper overlay). This covers ten source diagnostics reported by cap. Earlier helper17:10 request was missing locally, recreated once now. Hub archive relocation complete, lead handles Git cleanup. b58f merged+HOME42e fixforward ACK; ordinary052b resolved3e24 ACK, no duplicate rebase.
