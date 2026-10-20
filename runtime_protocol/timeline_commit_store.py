@@ -44,8 +44,21 @@ _SHELL_SCOPE_TABLES = ("timeline_shots", "timeline_references", "timeline_render
                        "timeline_document_input_links", "timeline_commit_history")
 
 
-def timeline_scope_is_empty(conn, timeline_id):
-    """True when nothing is authored under the timeline: no scoped rows, dependencies, occurrences or non-empty snapshot."""
+def has_authored_content(value):
+    if isinstance(value, dict):
+        return any(has_authored_content(item) for item in value.values())
+    if isinstance(value, list):
+        return any(has_authored_content(item) for item in value)
+    return value is not None
+
+
+def timeline_scope_is_empty(conn, timeline_id, *, project_id=None):
+    """True when nothing is authored under the timeline or its legacy document."""
+    if project_id is not None:
+        document = conn.execute("SELECT content_json FROM project_documents WHERE id=? AND project_id=?",
+                                (f"timeline:{timeline_id}", project_id)).fetchone()
+        if document is not None and has_authored_content(json.loads(document["content_json"])):
+            return False
     # Any row keyed to the timeline is authored data.
     for table in _SHELL_SCOPE_TABLES:
         if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone() and \
@@ -893,7 +906,7 @@ class TimelineCommitStore:
                                         (project_id, timeline_id)).fetchone()
             if current is None or current["revision_id"] is None or current["publication_id"] is not None:
                 reject("history_unavailable")
-            if not timeline_scope_is_empty(self.conn, timeline_id):
+            if not timeline_scope_is_empty(self.conn, timeline_id, project_id=project_id):
                 reject("history_unavailable")
             plan = bootstrap_install_plan(self.conn, project_id, timeline_id,
                                           read_object=ContentAddressedStore(self.store.cas_root).read)
