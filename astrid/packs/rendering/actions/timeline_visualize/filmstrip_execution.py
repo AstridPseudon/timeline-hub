@@ -13,6 +13,7 @@ from collections.abc import Mapping
 from copy import deepcopy
 from fractions import Fraction
 from pathlib import Path
+from typing import Any
 
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 
@@ -1753,13 +1754,15 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
             if isinstance(bound_metadata, Mapping)
             else None
         )
-        if (not isinstance(capture_identity, str) or not capture_identity
+        if (not isinstance(capture_identity, str)
+                or len(capture_identity) != 71
+                or not capture_identity.startswith("sha256:")
+                or any(char not in "0123456789abcdef" for char in capture_identity[7:])
                 or bound_snapshot.get("video_digest") != capture_identity):
             raise SceneQueryUnavailable("verified source has no exact capture identity")
         source_timeline_id = bound_snapshot.get("timeline_id")
-        if source_timeline_id is not None and (
-                not isinstance(source_timeline_id, str) or not source_timeline_id):
-            raise SceneQueryUnavailable("verified source has an invalid timeline identity")
+        if not isinstance(source_timeline_id, str) or not source_timeline_id:
+            raise SceneQueryUnavailable("verified source has no exact timeline identity")
         out_root.mkdir(parents=True, exist_ok=True)
         project_dir = Path(
             os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or (REPO_ROOT / "remotion")
@@ -1798,9 +1801,10 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
         # unchanged host-owned binding; never copy them from outer metadata.
         label = snapshot_label(bound_snapshot, source=source)
         scene_clips_output = dict(scene_clips)
-        receipt_provenance = {"video_digest": capture_identity}
-        if source_timeline_id is not None:
-            receipt_provenance["timeline_id"] = source_timeline_id
+        receipt_provenance = {
+            "video_digest": capture_identity,
+            "timeline_id": source_timeline_id,
+        }
     except (SceneQueryUnavailable, OSError, TypeError, ValueError, KeyError):
         answers = []
         scene_clips_output = {}

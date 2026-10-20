@@ -72,6 +72,9 @@ def test_scene_only_queries_full_extent_and_uses_existing_bundle(tmp_path, monke
     args = _args(tmp_path)
     authority = _authority(scene_clips={"forged": {"address": "wrong.layer"}})
     bound_snapshot = _authority()["capture_snapshot"]
+    authority["capture_snapshot"]["video_digest"] = "sha256:" + "f" * 64
+    authority["capture_snapshot"]["timeline_id"] = "outer-forged-timeline"
+    authority["capture_snapshot"]["metadata"]["capture_identity"] = "sha256:" + "f" * 64
     if binding == "candidate":
         bound_snapshot["metadata"]["working_copy"] = {
             "base_parent": {"revision_id": "base-revision"},
@@ -165,17 +168,28 @@ def test_scene_only_unavailable_is_advisory_and_has_no_partial_answers(tmp_path,
     assert "provenance" not in bundle_receipt
 
 
-@pytest.mark.parametrize("identity_field", ["capture_identity", "video_digest"])
-def test_scene_only_missing_prepared_capture_identity_is_unavailable(
-    tmp_path, monkeypatch, identity_field,
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("capture_identity", None),
+        ("video_digest", None),
+        ("capture_identity", "forged"),
+        ("video_digest", "forged"),
+        ("timeline_id", None),
+        ("timeline_id", ""),
+    ],
+)
+def test_scene_only_incomplete_prepared_receipt_identity_is_unavailable(
+    tmp_path, monkeypatch, field, value,
 ):
     args = _args(tmp_path)
     authority = _authority()
     bound_snapshot = authority["capture_snapshot"]
-    if identity_field == "capture_identity":
-        del bound_snapshot["metadata"][identity_field]
+    target = bound_snapshot["metadata"] if field == "capture_identity" else bound_snapshot
+    if value is None:
+        del target[field]
     else:
-        del bound_snapshot[identity_field]
+        target[field] = value
     source = _Source(bound_snapshot=bound_snapshot)
     monkeypatch.setattr(
         "astrid.core.rendering.verified_source.inherited_source",
@@ -192,6 +206,9 @@ def test_scene_only_missing_prepared_capture_identity_is_unavailable(
     assert result["returncode"] == 0
     assert payload["answers"] == [] and payload["scene_clips"] == {}
     assert payload["snapshot_label"]["status"] == "unavailable"
+    host_manifest = json.loads((args.out / "manifest.json").read_text(encoding="utf-8"))
+    bundle_receipt = next(row for row in host_manifest["outputs"] if row["name"] == "filmstrip_bundle")
+    assert "provenance" not in bundle_receipt
 
 
 @pytest.mark.parametrize("clips", [None, [{"id": ""}], [{"id": "a"}, {"id": "a"}], ["not-a-clip"]])
