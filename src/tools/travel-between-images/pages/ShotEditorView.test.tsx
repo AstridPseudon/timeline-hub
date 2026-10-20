@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import assert from 'node:assert/strict';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ShotEditorView } from './ShotEditorView.tsx';
@@ -14,8 +14,12 @@ import { toRuntimePublication } from '@/integrations/runtime/dataProvider.ts';
 import { createEntityStore } from '@/shared/state/createEntityStore';
 import { normalizeVideoTravelSettings } from '../settings';
 
-const capture = vi.hoisted(() => ({ persistence: null as any, onName: null as any, errors: vi.fn() }));
-vi.mock('../components/ShotEditor', () => ({ ShotSettingsEditor: (props: any) => { capture.onName = props.onUpdateShotName; return null; } }));
+const capture = vi.hoisted(() => ({ persistence: null as any, onName: null as any, beforeName: null as any, legacyName: null as any, errors: vi.fn() }));
+vi.mock('../components/ShotEditor', () => ({ ShotSettingsEditor: (props: any) => {
+  capture.onName = props.onUpdateShotName;
+  capture.beforeName = props.onBeforeNameEdit;
+  return null;
+} }));
 vi.mock('../providers', () => ({
   VideoTravelSettingsProvider: (props: any) => { capture.persistence = props.shotSettingsPersistence; return props.children; },
   useVideoTravelSettingsMutations: () => ({ settings: {}, status: 'loading' }),
@@ -25,7 +29,11 @@ vi.mock('../components/VideoTravelFloatingOverlay', () => ({ VideoTravelFloating
 vi.mock('@/shared/state/selectionStore', () => ({ useCurrentShot: () => ({ setCurrentShotId: vi.fn() }) }));
 vi.mock('@/shared/hooks/mobile', () => ({ useIsMobile: () => false }));
 vi.mock('@/shared/hooks/shots/useShotNavigation', () => ({ useShotNavigation: () => ({ navigateToPreviousShot: vi.fn(), navigateToNextShot: vi.fn() }) }));
-vi.mock('@/shared/hooks/shots', () => ({ useUpdateShotName: () => ({ mutate: vi.fn() }) }));
+vi.mock('@/shared/hooks/shots', () => ({ useUpdateShotName: () => {
+  const mutate = vi.fn();
+  capture.legacyName = mutate;
+  return { mutate };
+} }));
 vi.mock('@/shared/hooks/shots/useShotImages', () => ({ usePrimeShotImagesCache: () => undefined }));
 vi.mock('@/shared/hooks/invalidation/useGenerationInvalidation', () => ({ useEnqueueGenerationsInvalidation: () => vi.fn() }));
 vi.mock('@/shared/hooks/projects/useProjectVideoCountsCache', () => ({ useProjectVideoCountsCache: () => ({ getFinalVideoCount: vi.fn(), getHasStructureVideo: vi.fn() }) }));
@@ -37,9 +45,46 @@ vi.mock('../hooks/useOperationTracking', () => ({ useOperationTracking: () => ({
 vi.mock('@/shared/state/panesStore', () => ({ usePanesStore: (select: any) => select({}) }));
 vi.mock('@/shared/lib/errorHandling/runtimeError.ts', () => ({ normalizeAndPresentError: capture.errors }));
 
-afterEach(() => { cleanup(); capture.errors.mockClear(); capture.persistence = null; capture.onName = null; });
+afterEach(() => { cleanup(); capture.errors.mockClear(); capture.persistence = null; capture.onName = null; capture.beforeName = null; capture.legacyName = null; });
 
-async function setup(input = fixture) {
+function namePort() {
+  const command = {
+    schema_version: 1,
+    op: 'shot.set',
+    version: '1',
+    select: 'occurrence:occ-1/shot',
+    args: { values: { name: 'Original' }, clear: [] },
+  };
+  return {
+    capture: vi.fn(() => ({ bundle: {}, command })),
+    finish: vi.fn((_basis: unknown, args: unknown) => ({ command: { ...command, args }, bundle: {} })),
+    submit: vi.fn(async () => {}),
+  };
+}
+
+function expectMissingNameAuthority(state: Awaited<ReturnType<typeof setup>>, draft: string) {
+  expect(() => capture.onName(draft)).toThrow('Mounted shot.set name authority is unavailable; draft kept.');
+  expect(capture.errors).toHaveBeenCalledWith(
+    expect.any(Error),
+    expect.objectContaining({ toastTitle: 'Shot name draft kept' }),
+  );
+  expect(state.publish).not.toHaveBeenCalled();
+  expect(capture.legacyName).not.toHaveBeenCalled();
+}
+
+async function submitNativeName(port: ReturnType<typeof namePort>, name: string) {
+  capture.beforeName();
+  await capture.onName(name);
+  expect(port.capture).toHaveBeenCalledWith(expect.objectContaining({ occurrenceId: 'occ-1' }));
+  expect(port.finish).toHaveBeenCalledWith(expect.anything(), { values: { name }, clear: [] });
+  expect(port.submit).toHaveBeenCalledWith({
+    command: expect.objectContaining({
+      op: 'shot.set', select: 'occurrence:occ-1/shot', args: { values: { name }, clear: [] },
+    }),
+  });
+}
+
+async function setup(input = fixture, shotSetPort?: any) {
   let current = structuredClone(input);
   const publications: Record<string, any>[] = [];
   const publish = vi.fn(async (request: ShotCompositionPublishRequest) => {
@@ -55,7 +100,7 @@ async function setup(input = fixture) {
     <ShotEditorView shotToEdit={{ id: 'shot-alpha', name: 'Original', images: [] } as unknown as Shot}
       selectedProjectId="project-001" isNewlyCreatedShot={false} shotFromState={undefined} shots={[]}
       availableLoras={[]} canonicalComposition={base} canonicalShotComposition={adapter}
-      canonicalOccurrence={occurrence} />
+      canonicalOccurrence={occurrence} shotSetPort={shotSetPort} />
   </MemoryRouter>);
   return { base, publish, publications, read: () => current, compete: (graph: typeof current) => { current = graph; } };
 }
@@ -69,14 +114,25 @@ describe('current App shot editing base', () => {
       : await updateCanonicalShotSettings(state.base.contract, 'occ-1', { prompt: 'Competing prompt' });
     state.compete(competing as typeof fixture);
     if (field === 'name') {
-      capture.onName('My older name');
-      await waitFor(() => expect(capture.errors).toHaveBeenCalled());
-      expect(capture.errors.mock.calls[0]?.[0]).toBeInstanceOf(StaleWriteError);
+      const draft = 'My older name';
+      expectMissingNameAuthority(state, draft);
+      expect(state.read()).toEqual(competing);
+
+      cleanup();
+      capture.errors.mockClear();
+      const port = namePort();
+      const native = await setup(competing as typeof fixture, port);
+      await submitNativeName(port, draft);
+      expect(capture.errors).not.toHaveBeenCalled();
+      expect(native.publish).not.toHaveBeenCalled();
+      expect(capture.legacyName).not.toHaveBeenCalled();
+      expect(native.read()).toEqual(competing);
+      return;
     } else {
       await expect(capture.persistence.save('shot-alpha', { prompt: 'My older prompt' })).rejects.toBeInstanceOf(StaleWriteError);
+      expect(state.publish).toHaveBeenCalledWith(expect.objectContaining({ expectedHeadRevisionId: state.base.headRevisionId }));
+      expect(state.read()).toEqual(competing);
     }
-    expect(state.publish).toHaveBeenCalledWith(expect.objectContaining({ expectedHeadRevisionId: state.base.headRevisionId }));
-    expect(state.read()).toEqual(competing);
   });
 
   it('keeps the immutable editing head for an independent competing field too', async () => {
@@ -90,9 +146,19 @@ describe('current App shot editing base', () => {
   it.each(['name', 'settings'] as const)('publishes an uncontended %s edit from its captured head', async (field) => {
     const state = await setup();
     if (field === 'name') {
-      capture.onName('My name');
-      await waitFor(() => expect(state.publish).toHaveBeenCalledOnce());
+      const draft = 'My name';
+      expectMissingNameAuthority(state, draft);
+
+      cleanup();
+      capture.errors.mockClear();
+      const port = namePort();
+      const native = await setup(undefined, port);
+      await submitNativeName(port, draft);
       expect(capture.errors).not.toHaveBeenCalled();
+      expect(native.publish).not.toHaveBeenCalled();
+      expect(capture.legacyName).not.toHaveBeenCalled();
+      expect(native.read()).toEqual(fixture);
+      return;
     } else {
       await capture.persistence.load('shot-alpha');
       await capture.persistence.save('shot-alpha', { prompt: 'First prompt' });
@@ -146,9 +212,22 @@ describe('direct shot writer raw payload preservation', () => {
     const state = await setup(input);
     const source = state.base.occurrences.find((row) => row.occurrenceId === 'occ-1')!.revision as Record<string, any>;
     if (field === 'name') {
-      capture.onName('Renamed');
-      await waitFor(() => expect(state.publications).toHaveLength(1));
+      const draft = 'Renamed';
+      expectMissingNameAuthority(state, draft);
+      expect(state.read()).toEqual(before);
+      assert.deepStrictEqual(input, before);
+
+      cleanup();
+      capture.errors.mockClear();
+      const port = namePort();
+      const native = await setup(input, port);
+      await submitNativeName(port, draft);
       expect(capture.errors).not.toHaveBeenCalled();
+      expect(native.publish).not.toHaveBeenCalled();
+      expect(capture.legacyName).not.toHaveBeenCalled();
+      expect(native.read()).toEqual(before);
+      assert.deepStrictEqual(input, before);
+      return;
     } else {
       const loaded = await capture.persistence.load('shot-alpha');
       expect(Object.hasOwn(loaded, 'not_namespaced')).toBe(false);
