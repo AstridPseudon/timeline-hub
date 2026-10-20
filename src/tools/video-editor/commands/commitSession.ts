@@ -1,4 +1,6 @@
-import type { CommitRequest, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import { captureOccurrenceAddMedia } from './occurrenceMediaCapture.ts';
+import { equal, freezeJson } from './clipMovePrimitives.ts';
+import type { CommitRequest, EditCommand, JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
@@ -283,6 +285,32 @@ export async function createTimelineCommandSession(options: Options) {
   } else await claim();
   return {
     port,
+    scope: freezeJson(json(options.scope)) as unknown as OutboxScope,
+    /** Explicit manual choice only; the existing owner/outbox remains the sole writer. */
+    async addOccurrenceMedia(input: {
+      basis: TimelineCommandBasis; ownerRef: string; row: Record<string, JSON>;
+      media: MediaSelection; verifiedMedia: VerifiedMedia;
+      assertCurrent(): void;
+    }): Promise<TimelineCommandBasis> {
+      const original = await authoringBundleFromDocument(input.basis.canonicalDocument);
+      input.assertCurrent();
+      assertReady();
+      if (state.status !== 'saved' || sending || record?.intents.length || pendingAppends.length
+        || localGeneration !== appendedGeneration || !sameHead(input.basis.head, known.head)
+        || !sameHead(input.basis.head, displayHead) || !equal(input.basis.canonicalDocument, acceptedBasis.canonicalDocument)
+        || !equal(original, bundle)
+        || input.basis.canonicalDocument.project_id !== options.scope.projectId
+        || input.basis.canonicalDocument.timeline_id !== options.scope.timelineId) {
+        throw new Error('Manual placement requires the unchanged selected head and an idle command owner');
+      }
+      const captured = captureOccurrenceAddMedia(bundle, input.ownerRef, input.row, input.media, [input.verifiedMedia]);
+      // No optimistic Placed state or compatibility writer. Publish only the normal accepted closure.
+      enqueue({ commands: [captured.command], before: bundle, after: captured.bundle, preview: null }, null);
+      await chain;
+      await pump();
+      if (state.status !== 'saved') throw new Error(state.error ?? 'Manual placement is not acknowledged; draft kept');
+      return acceptedBasis;
+    },
     getState: () => state,
     async recover(ownerId: string) {
       if (!state.recoverableOwners.includes(ownerId)) throw new Error('Unknown persisted outbox owner');

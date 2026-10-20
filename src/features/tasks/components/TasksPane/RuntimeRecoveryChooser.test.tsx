@@ -103,6 +103,21 @@ function gate() {
   return { promise, release };
 }
 
+it.each(['edit', 'unmount'])('cancels a connected callback before capture on chooser %s', async (change) => {
+  const pending = gate();
+  callback.mockImplementation(() => pending.promise);
+  const mounted = render(element({ onRequestPlacement: callback }));
+  await choose();
+  fireEvent.click(screen.getByRole('button', { name: 'Request placement' }));
+  await waitFor(() => expect(callback).toHaveBeenCalledOnce());
+  const signal = callback.mock.calls[0][1] as AbortSignal;
+  expect(signal.aborted).toBe(false);
+  if (change === 'unmount') mounted.unmount();
+  else fireEvent.change(screen.getByLabelText('Timeline start (seconds)'), { target: { value: '4' } });
+  expect(signal.aborted).toBe(true);
+  await act(async () => { pending.release(); await pending.promise; });
+});
+
 describe('Runtime recovery destination reads', () => {
   it('uses the real provider and normal transport; raw child tracks stay distinct from parent lanes and shared shot IDs', async () => {
     const read = await loadRuntimeRecoveryDestinations(new RuntimeDataProvider({ projectId }), new AstridRuntimeClient(), projectId, timelineId);

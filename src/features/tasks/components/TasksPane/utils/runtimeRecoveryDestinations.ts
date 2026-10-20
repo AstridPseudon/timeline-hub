@@ -134,7 +134,7 @@ export async function assertRuntimeRecoveryHead(
   }
 }
 
-export async function assertRuntimeRecoverySource(client: AstridRuntimeClient, projectId: string, source: RuntimeRecoverySource) {
+export async function assertRuntimeRecoverySource(client: Pick<AstridRuntimeClient, 'getTask' | 'getManagedOutput' | 'getProjectMediaSelection'>, projectId: string, source: RuntimeRecoverySource) {
   const [task, output] = await Promise.all([
     client.getTask(source.task.task_id), client.getManagedOutput(source.output.association_id),
   ]);

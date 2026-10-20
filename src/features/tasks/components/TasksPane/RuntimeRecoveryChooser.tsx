@@ -15,7 +15,7 @@ export interface RuntimeRecoveryChooserProps {
   source: RuntimeRecoverySource;
   // No current App service exposes a qualified native ADD callback. TasksPane
   // leaves this absent; the typed local seam carries no commit authority.
-  onRequestPlacement?: (draft: RuntimeRecoveryPlacementDraft) => Promise<void>;
+  onRequestPlacement?: (draft: RuntimeRecoveryPlacementDraft, signal?: AbortSignal) => Promise<void>;
 }
 
 export function RuntimeRecoveryChooser(props: RuntimeRecoveryChooserProps) {
@@ -38,8 +38,9 @@ function RecoverySelection({ projectId, timelineId, source, onRequestPlacement }
   const [valid, setValid] = useState(false);
   const [pending, setPending] = useState(false);
   const active = useRef<object | null>(null);
+  const placementRequest = useRef<AbortController | null>(null);
   const editVersion = useRef(0);
-  const changed = () => { editVersion.current++; };
+  const changed = () => { editVersion.current++; placementRequest.current?.abort(); };
 
   useEffect(() => {
     const scope = {};
@@ -76,7 +77,7 @@ function RecoverySelection({ projectId, timelineId, source, onRequestPlacement }
     };
     void check();
     const interval = window.setInterval(() => { void check(); }, 5_000);
-    return () => { active.current = null; window.clearInterval(interval); };
+    return () => { active.current = null; placementRequest.current?.abort(); window.clearInterval(interval); };
   }, [client, provider, projectId, timelineId, source]);
 
   const destination = read?.bindings.find((row) => row.id === destinationId);
@@ -87,6 +88,8 @@ function RecoverySelection({ projectId, timelineId, source, onRequestPlacement }
     if (!complete || !valid || !read || !destination || !projectId || !timelineId || !onRequestPlacement || pending) return;
     const version = editVersion.current;
     const scope = active.current;
+    const controller = new AbortController();
+    placementRequest.current = controller;
     setPending(true);
     try {
       await Promise.all([
@@ -95,7 +98,7 @@ function RecoverySelection({ projectId, timelineId, source, onRequestPlacement }
       ]);
       if (!scope || active.current !== scope || editVersion.current !== version) return;
       await onRequestPlacement(freezeRecoveryValue(structuredClone({ projectId, timelineId, basis: read.basis, source,
-        destination, on: numbers[0], sourceWindow: { from: numbers[1], to: numbers[2] } })));
+        destination, on: numbers[0], sourceWindow: { from: numbers[1], to: numbers[2] } })), controller.signal);
       // Acceptance/placement presentation belongs to the qualified service.
     } catch {
       if (active.current === scope && editVersion.current === version) {
