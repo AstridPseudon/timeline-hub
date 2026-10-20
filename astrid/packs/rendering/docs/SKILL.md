@@ -138,33 +138,34 @@ font/resource provenance. Do not install a browser or renderer from this
 skill; missing host/native prerequisites must be reported by the owning Sol
 lane.
 
-## Edit an existing timeline as a JSON document
+## Edit an existing timeline
 
-For the everyday edit loop (checkout, cut sheet, moments, check, publish), start with
-[the editing front door](references/editing.md). This section is the low-level document route.
+For the everyday read/check loop, start with [the editing front door](references/editing.md).
+Native writes use the registered command route and the durable session outbox:
 
-For “check it out, edit it in a text document, then check it back in”, use the
-[complete checkout/edit/check-in recipe](references/document-checkout.md) and
-its runnable [SDK example](scripts/timeline_document.py). Start with the
-connected runtime's project and timeline slugs: export the complete pinned
-composition, edit its JSON, validate and inspect the diff, then publish one
-revision against the original head. The example defines every variable; no
-pre-supplied `target`, `pinned_parent`, or `runtime_writer` is needed.
-Temporary local media paths in the edited document are rejected by the
-read-only check. Import new media first through the public media client, then
-use its managed digest in the checkout before validating and publishing.
-Image, video, and audio imports appear in the ordinary gallery; audio keeps its
-own type and native playback controls. An unchanged checkout has an empty diff.
+```python
+from astrid.sdk.timeline.sync import TimelineSession
 
-This bundle includes parent layers, shot placements, and internal clips.
-Narration is read through `timelines script`, which resolves the selected composition's pinned text bindings in occurrence order. Rendering is optional:
-a saved revision can be reviewed in Astrid App. The recipe includes the authoritative
-field map, media/gallery distinction, and common recovery paths.
+shown = client.timelines.open_composition(project, timeline, detail=True)
+assert shown.ok
+session = TimelineSession.open(project, timeline, client=client)
+result = session.move("parent/clip:opening", 1.5, idempotency_key="move-42")
+```
 
-For ordinary candidate edits, use the [timeline editing helper catalog](references/document-checkout.md#editing-helper-catalog).
-It groups media/track changes, timing and ripple operations, layout helpers,
-and occurrence moves. Helpers mutate only the detached JSON candidate; the
-same `check` → diff → `publish` boundary remains authoritative.
+The session captures original guards once, persists the exact in-flight request,
+and retries the same identity after an ambiguous failure or restart. Use
+`session.commit`/`commit_many` for registered commands, `session.trim` for a
+literal source trim, and `session.queue_proposal(proposal)` followed by
+`session.flush(...)` for a settled producer proposal. A dry run validates but
+does not publish. Keep the returned Runtime receipt and accepted revision.
+
+The complete detached JSON checkout and helper catalog remain useful for
+read/validation, media inspection, and migration. Their broad mutation and
+whole-candidate publication path is held on this base; do not treat the
+runnable [SDK example](scripts/timeline_document.py) as the general timeline
+writer. Temporary local media paths are still rejected: import media through
+the public Runtime media client and use its managed identity. Narration remains
+readable through `timelines script`, and rendering remains optional.
 
 For repeatable draft narration synchronization, use `video_editing.sync_draft_voiceover` as documented in the [video editing skill](../../video_editing/docs/SKILL.md). It reads the timeline's pinned script, synthesizes through `generation.generate_speech`, and publishes one validated revision. Empty scripts are skipped and existing final or unadopted audio stays protected. For a one-off manual import, see the [placeholder voiceover recipe](references/placeholder-voiceover.md). Neither workflow needs a video render.
 
@@ -174,28 +175,28 @@ Use `timelines check <timeline> --project <project> --sweep` for bounded checks 
 
 Use `timelines log <timeline> --project <project> --verify --json` to verify the journal hash chain. A broken chain returns 1 with `error.code: validation_error`; a missing journal returns 0. See the [timeline editing guide](../../../../docs/timeline-editing-guide.md) for filters and details.
 
-For direct detached-draft editing, the public CLI uses the existing timeline
-SDK checkout operations:
+For native edits, use the command registry and its durable outbox:
 
 ```bash
-python3 -m astrid timelines status <timeline> --project <project>
-python3 -m astrid timelines checkout <timeline> --project <project> --draft recovered --fresh
-python3 -m astrid timelines edit <timeline> --project <project> --replace-line vo-03 --take vo/vo-03.wav --words vo/vo-03.words.json
-python3 -m astrid timelines edit <timeline> --project <project> --insert-line vo-04 --after vo-03 --take vo/vo-04.wav --words vo/vo-04.words.json
-python3 -m astrid timelines edit <timeline> --project <project> --from-script script.json --takes vo --gaps
-python3 -m astrid timelines check <timeline> --project <project>
-python3 -m astrid timelines publish <timeline> --project <project> -m "<what changed>" --idempotency-key edit-42
+python3 -m astrid timelines show <timeline> --project <project> --json
+python3 -m astrid timelines edit move <timeline> --project <project> \
+  --clip parent/clip:<id> --on 1.5 --idempotency-key move-42 --json
+python3 -m astrid timelines edit track-label <timeline> --project <project> \
+  --track parent/track:<id> --set "Dialogue" --idempotency-key label-42 --json
 ```
 
-`status` reports the canonical head and an existing draft's base, edits,
-validation, and whether its base head moved, without creating a draft or
-rendering. A dirty selected draft is kept intact when `checkout --fresh`
-refuses; use a new `--draft` name to start from the current head. `publish`
-requires an existing draft and calls the SDK
-once. If structure was published but narration binding is pending, preserve the
-returned receipt and reconcile it explicitly; the CLI does not retry. There is
-no passive timeline-scoped latest-render reader here, so `status` has no
-`--render` option.
+The session captures original guards once, persists the exact request and
+retry identity, and does not recapture against a newer head after a lost
+acknowledgement. `--dry-run` validates without accepting a publication.
+
+`status`, `checkout`, cut-sheet `edit`, `check`, and `publish` remain available
+for detached working-copy capabilities that have not migrated. `publish` is a
+held legacy whole-candidate writer; `apply --native` is the only sheet route
+to use when its operation is covered. Do not use `--force` or the legacy
+three-way merge as a substitute for a native command. A dirty draft is kept
+when `checkout --fresh` refuses, and unsupported edits must be reported rather
+than silently routed through that writer. There is no passive timeline-scoped
+latest-render reader here, so `status` has no `--render` option.
 
 
 ## Agent operating contract
@@ -307,59 +308,38 @@ the scope explicit:
 
 `config.app.structure` is the intentional timeline extension point; an
 unregistered top-level `config.structure` is invalid. These maps are retained
-by the detached authoring bundle and published through the same validation,
-diff, preview, and compare-and-swap boundary. They are storage extensions, so
+by the detached authoring bundle for read/validation and migration. They are
+not arbitrary native writes on this base, so
 the browser/editor needs an explicit projection before it can display or edit
 an arbitrary key. Use a namespaced object such as `metadata["delivery"]` for
 agent-owned state. If a shot revision is placed more than once, keep different
 per-occurrence state in that placement's `provenance` rather than overwriting
 shared shot metadata.
 
-For a repeatable pass, use canonical `timelines show`/`open_composition` to pin
-the current head and enumerate occurrence identities, then open the same
-coordinator-issued target as a detached bundle. The target's
-`head_revision_id` must equal the inspected `summary.head_revision_id`:
+For a repeatable read-only pass, use canonical `timelines show`/
+`open_composition` to pin the current head and enumerate occurrence identities.
+For a supported mutation, open a `TimelineSession` and submit a registered
+command; do not turn the projection into a whole-candidate writer:
 
 ```python
-shown = client.timelines.open_composition(project_id, timeline_ref, detail=True)
+from astrid.sdk.timeline.sync import TimelineSession
+
+shown = client.timelines.open_composition(project, timeline, detail=True)
 assert shown.ok
-inspection = shown.data
-assert target["head_revision_id"] == inspection["summary"]["head_revision_id"]
-
-bound = client.open_authoring_target(target)  # same project/timeline/head
-work = bound.open()                          # exact immutable closure
-work["parent"].setdefault("config", {}).setdefault("app", {}).setdefault(
-    "structure", {}
-)["delivery_pass"] = {"version": 1, "status": "queued"}
-
-for index, placement in enumerate(work["placements"]):
-    shot = work["shots"][placement["shot_id"]]
-    clips = shot["internal_timeline"].get("clips", [])
-    shot["payload"].setdefault("metadata", {})["delivery"] = {
-        "instructions": "Match the approved reference and preserve the cut.",
-        "status": "queued",
-        "source_head": inspection["summary"]["head_revision_id"],
-        "clip_count": len(clips),
-    }
-    placement.setdefault("provenance", {})["delivery_index"] = index
-
-bound.validate(work)
-diff = bound.diff(work)       # inspect requested paths before saving
-frozen = bound.preview(work)  # candidate JSON; no pixels are rendered
-receipt = bound.publish(work, idempotency_key=frozen["candidate_digest"])
+session = TimelineSession.open(project, timeline, client=client)
+receipt = session.move("parent/clip:opening", 1.5, idempotency_key="move-42")
 ```
 
-This is one candidate and one publication, so the status ledger and timeline
-change share one head. On a stale-head/CAS error, discard the detached
-candidate, run `timelines show` again, and rerun the deterministic pass. Do not
-merge stale JSON or publish one shot at a time. For a report-only pass, walk
-the ordered occurrences in `inspection`; for an item-level report or edit, use
-the same `work["shots"][...]["internal_timeline"]` closure:
+The session captures original guards, persists the exact request and retry
+identity in its real outbox, and leaves newer local commands pending until the
+first flight is acknowledged. On a stale-head or unsupported-command error,
+retain the draft/outbox and report the limitation. For a report-only pass, walk
+the ordered occurrences in `shown.data`:
 
 ```python
 report = []
-for placement in work["placements"]:
-    shot = work["shots"][placement["shot_id"]]
+for placement in shown.data["placements"]:
+    shot = shown.data["shots"][placement["shot_id"]]
     for clip in shot["internal_timeline"].get("clips", []):
         report.append({
             "occurrence_id": placement["occurrence_id"],
@@ -369,16 +349,12 @@ for placement in work["placements"]:
             "from": clip.get("from"),
             "to": clip.get("to"),
         })
-        clip.setdefault("app", {})["report_label"] = placement["occurrence_id"]
-
-# For duration changes, use retime/quantize helpers with an explicit policy;
-# then repeat validate -> diff -> preview -> publish on this same candidate.
-bound.validate(work)
+        # Arbitrary report labels are read-only until a native command exists.
 ```
 
-Stable Runtime identities remain immutable; compilation and CAS publication
-allocate or reuse revisions as appropriate. The full extension-field example
-and report/edit guide are in
+Stable Runtime identities remain immutable; accepted commands allocate or reuse
+revisions as appropriate. The full extension-field read example and report/edit
+guide are in
 [`docs/timeline-editing-guide.md`](../../../../docs/timeline-editing-guide.md).
 
 ### Renderer and skill boundary
@@ -616,55 +592,44 @@ not install Astrid. When the runtime package is installed, the public SDK
 import below is the supported API; a checkout-only environment must report
 that import/runtime capability as unavailable rather than inventing it.
 
-### Canonical edit bundle
+### Canonical command session
 
 Use the same pinned parent composition for direct edits and code-driven batch
-edits. `timelines show` opens a read-only inspection projection; it is not the
-editable bundle. For an exact parent-media replacement, use the supported
-`timelines replace-parent-media` command only when the case-specific target
-receipt declares that route and supplies its required locator. For other
-supported edits, use ordinary Python against the detached same-schema bundle:
+edits. `timelines show` opens a read-only inspection projection. Python uses
+the durable native session:
 
 ```python
-from astrid.sdk.authoring_bundle import (
-    open_authoring_bundle, validate_authoring_candidate,
-    diff_authoring_candidate, preview_authoring_candidate,
-    publish_authoring_candidate,
-)
+from astrid.sdk.timeline.sync import TimelineSession
 
-candidate = open_authoring_bundle(
-    pinned_parent, shot_revisions=pinned_shots,
-    internal_timeline_revisions=pinned_internal_timelines,
+shown = client.timelines.open_composition(project, timeline, detail=True)
+assert shown.ok
+session = TimelineSession.open(project, timeline, client=client)
+publication = session.commit(
+    command, idempotency_key="edit-42", via="python"
 )
-# Make the requested small edit or run a deterministic batch transform here.
-validate_authoring_candidate(candidate)
-diff = diff_authoring_candidate(candidate)
-frozen = preview_authoring_candidate(candidate)  # freezes candidate JSON; no pixels are rendered
-publication = publish_authoring_candidate(candidate, writer, idempotency_key=run_id)
-# Retain the receipt; reopen its exact closure only if a later check needs it.
 ```
 
-Keep the exact publication response, including its `new_head` and complete
-`dependency_manifest`. If readback is needed, reopen that returned closure
-rather than a seed map or an agent-authored snapshot. These operations are
-public where documented; an unsupported case-specific route must be reported
-as unavailable, not inferred from the composition's shape.
+`command` must be a registered `EditCommand`; for a convenience path use
+`session.move(...)` or `session.trim(...)`. The session captures and verifies
+original claims, stores the request in its outbox, and retains newer local
+commands until the first flight is acknowledged. Keep the Runtime receipt and
+accepted revision for readback.
 
-`preview_authoring_candidate` and `render_authoring_candidate_preview` are
-deliberately different operations. The former freezes a deterministic JSON
-candidate for validation/diff/publication; it does not render pixels or prove
-that a backend can play the result. The latter consumes that frozen candidate,
-renders pixels through the runtime, and returns a render receipt/evidence
-identity. Use the public `astrid.sdk.authoring_bundle` import shown above; do
-not reach through `astrid.core` as a substitute public API.
+For a producer, use the settled proposal returned by Runtime:
 
-For an explicitly requested composed preview, import
-`render_authoring_candidate_preview` from that public module and render the
-frozen candidate. Check its success and inspect/deliver the output before
-publication when the user asks for that order (as in A01). If the required
-preview fails, do not save. See the
-[target-bound editing guide](../../../../docs/timeline-editing-guide.md) for
-the optional preview branch and current source/artifact access limitations.
+```python
+session.queue_proposal(settled_proposal)
+publication = session.flush(idempotency_key="proposal-42", via="producer")
+```
+
+The proposal's original target, authority pin, guards, and command identities
+are not regenerated. A proposal artifact or dry run is not a publication.
+
+Detached authoring-bundle validation, diff, preview, and render helpers remain
+available for read/migration workflows. Their broad mutation and
+whole-candidate publication path is held on this base; do not use it as the
+general writer or invent a target/writer object when a native command is not
+available.
 
 Keep authoring-bundle `placements` distinct from parent `occurrences`.
 Placements are candidate rows describing where an item is placed in the
@@ -676,11 +641,11 @@ Start timing normally uses `row["placement"]["start_ms"]`; an existing
 uses **`row["duration_ms"]` at the row level**, not inside `placement`.
 
 Do not reconstruct or save a legacy whole-document `config`/`registry` payload
-from `timelines show`. Use the detached checkout recipe above so the complete
-parent/shot/internal closure, managed media identities, validation diff, and
-compare-and-swap publication stay together. For reusable project shots, use
-the nested `timelines shots` product only where its command is explicitly
-available.
+from `timelines show`. Use the native command session for supported edits. The
+complete detached parent/shot/internal closure remains a read/validation and
+migration surface; its broad publication writer is held. For reusable project
+shots, use the nested `timelines shots` product only where its command is
+explicitly available.
 
 The current public CLI does not expose a group command under `timelines shots`
 or a route that groups existing timeline clips into a named shot. Use the supported
@@ -726,9 +691,10 @@ layers. Ripple rejects overlapping shot placements, source offsets or non-unit
 speed, parent or internal audio that would need stretching, and parameterized
 layers without an explicit `app.draft_voiceover_timing="stretch"` declaration.
 Inspect its detached plan and diff before deciding whether to apply it. It does
-not render a preview or change the live timeline while preparing speech; a
-successful apply validates the candidate and saves one revision through the
-authoring bundle's head check.
+not render a preview or change the live timeline while preparing speech. The
+workflow's broad candidate publication remains a held legacy seam until its
+edit families have native commands; do not present it as the native session
+route.
 
 Publication accepts registered text descriptors in `shot["payload"]["text_bindings"]`.
 The descriptor's `binding_id`, `head`, `media_id`, `content_hash`, and byte size pin
@@ -885,10 +851,10 @@ Use `client.timelines.visualize` for declared-input or composed-output evidence
 and `client.timelines.show` / `client.timelines.open_composition` for bounded
 text inspection. Composed visualization captures from the exact saved
 composition without requiring a video render; use `rendering.render` when an
-MP4 output is needed. Programmatic edits use the detached authoring-bundle
-validate/publish path above; mutable whole-document timeline saves are retired.
-Keep `project` explicit and
-use returned runtime IDs, manifests, and receipts for durable navigation.
+MP4 output is needed. Programmatic edits use the native command session above;
+the detached authoring-bundle validate/publish path is held for migration.
+Keep `project` explicit and use returned Runtime IDs, manifests, and receipts
+for durable navigation.
 
 ## Renderer authoring
 

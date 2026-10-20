@@ -1,13 +1,15 @@
-# Check out a timeline, edit JSON, check it in
+# Timeline document inspection and held checkout reference
 
-Use this for an ordinary user-authorized edit starting with a project and
-timeline slug, without a coordinator-supplied target. A checkout is a detached
-snapshot, not a lock. The runtime remains authoritative until publication.
+Use this page for the complete closure's read/validation shape, media
+inventory, and migration notes. A checkout is a detached snapshot, not a lock.
+The native write path is a guarded `TimelineSession` command commit; the broad
+checkout publication described below remains held on this base.
 
 The complete executable example is
 [`../scripts/timeline_document.py`](../scripts/timeline_document.py). It defines
-all connection, discovery, immutable-closure, validation, and writer variables;
-read it when adapting the workflow. `AstridClient.open_from_launcher` resolves
+connection, discovery, immutable-closure, validation, and legacy-writer
+variables; read it only when adapting migration tooling. It is not the general
+timeline writer. `AstridClient.open_from_launcher` resolves
 project/timeline names and pins the head. The public launcher receipt and
 `WorkspaceClient` supply the revision reads and publication port that the
 high-level client does not yet expose as a general checkout method. It never
@@ -20,30 +22,22 @@ Do not guess another root when the expected project is absent. Use project and
 timeline **slugs or IDs**, not display titles.
 
 ```bash
-# From this skill directory; replace the two names with the selected scope.
-python3 scripts/timeline_document.py checkout \
-  --project astrid-intro --timeline main-final-blackend2 \
-  --file /tmp/timeline-edit.json
-
-# Edit /tmp/timeline-edit.json with a text editor or a Python transformation.
-python3 scripts/timeline_document.py check --file /tmp/timeline-edit.json
-
-# After inspecting the resulting .check.json and completing the requested edit:
-python3 scripts/timeline_document.py publish --file /tmp/timeline-edit.json \
-  --idempotency-key intro-edit-pass-01
+python3 -m astrid timelines show <timeline> --project <project> --json
+python3 -m astrid timelines edit move <timeline> --project <project> \
+  --clip parent/clip:<id> --on 1.5 --idempotency-key move-42 --json
+python3 -m astrid timelines edit track-label <timeline> --project <project> \
+  --track parent/track:<id> --set "Dialogue" --idempotency-key label-42 --json
 ```
 
-`checkout` reads the full pinned parent → shot revisions → internal timelines,
-not the bounded `timelines show` projection. `check` probes every referenced
-local file, prepares a detached copy with calculated media digests, validates,
-and diffs locally. It does not connect to or write runtime state. Its `.check.json`
-lists the files and import keys that publication will use. `publish` repeats
-that preflight, rechecks the selected head, imports through the existing project
-catalog, validates the durable result, and sends one parent-CAS publication.
-Keep its `.prepared.json` durable rewrite, `.imports.json` catalog receipts,
-and `.publication.json` receipt,
-including `new_head` and `dependency_manifest`; use a new checkout for the next
-edit. Choose a distinct idempotency key for each intended publication.
+`show` reads the bounded canonical projection. The native commands open a
+session, capture original guards, persist the exact request and retry identity
+in its real outbox, and commit through Runtime. Use a fresh idempotency key for
+each new intent; repeat the original request/key only to retry an ambiguous
+flight. `--dry-run` validates without publishing.
+
+The script's `checkout`/`check`/`publish` flow is retained for migration and
+read-only closure inspection. Its broad parent-CAS writer, local prepared
+document, and whole-candidate merge are not the current general write path.
 
 After publication, report the returned `update`: it counts selected clips by
 identity, with additions/replacements/removals separate in `summary`, and keeps
@@ -98,18 +92,18 @@ pixels or audio playback, and these suggestions do not start a render.
 
 ## The control map
 
-The normal inspection loop is deliberately short:
+The normal inspection/native-edit loop is deliberately short:
 
 ```text
 timelines show       authored structure and timing
         ↓
 timelines visualize  composed pixels, with synchronized input lanes
         ↓
-checkout             detached, editable JSON at the current head
+EditCommand          original guards and deterministic intent
         ↓
-check                local validation and a readable diff
+TimelineSession      real outbox and exact retry identity
         ↓
-publish              one parent compare-and-swap publication
+Runtime /v1 commit   one accepted command publication
 ```
 
 Both inspection commands print the next useful command in human output and
@@ -117,7 +111,8 @@ return the complete set of copyable commands in `data.navigation` (or
 `outputs.navigation` for a render-backed result). The visual route retains
 `exact_frame`, sampling, range, resolution, lane, and inspection commands in
 that structured object, so a compact terminal footer does not hide detail.
-The edit guide and helper catalog below are the stable route for changes.
+The edit guide and helper catalog below describe the detached shape for
+inspection and migration. They are not permission to use a second writer.
 
 ## Where to edit
 
@@ -190,12 +185,12 @@ the first import. Repeated references share an import; retries have stable
 import keys and reuse matching imported catalog entries. A different imported
 filename retains its distinct import provenance even when bytes match.
 
-Imports and parent publication are separate existing transactions. If a later
-import or parent CAS fails, the timeline is unchanged; completed imports remain
-ordinary project catalog media. Keep the source JSON and retry after resolving
-the failure. If the parent head advanced, check out a fresh document and reapply
-the edit. The helper preserves the editable source JSON and writes the durable
-rewrite separately.
+Imports and any legacy parent publication are separate existing transactions.
+If a later import or held parent-CAS attempt fails, the timeline is unchanged;
+completed imports remain ordinary project catalog media. Keep the source JSON
+for migration/debugging and use a native command for supported edits. If the
+parent head advanced, do not merge stale JSON or refresh its guards; inspect the
+new head and capture a fresh command.
 
 ## Review and recover
 
@@ -207,8 +202,8 @@ rewrite separately.
   evidence; a frozen candidate JSON is not a visual preview.
 - **Empty or wrong project list:** check the launcher/runtime selection before
   creating a new project or importing data.
-- **Stale head:** check out a new file and reapply the intended edits. Do not
-  overwrite the base head in the old file to force publication.
+- **Stale head:** inspect the new head and capture a fresh native command. Do
+  not overwrite the base head in an old file or force a held publication.
 - **Missing media selector:** use the temporary local input fields above or
   import explicitly through `WorkspaceClient.import_project_media`, then use
   its returned managed identity. `media.import_file` alone manages project bytes
@@ -224,9 +219,10 @@ rewrite separately.
 
 The public `astrid.sdk.timeline_editing` helpers operate on the detached
 candidate only. They do not publish, rewrite Runtime history, or bypass the
-checkout's provenance fields. Use them for ordinary transformations, then run
-`check` and inspect the diff before `publish`. The catalog is grouped by the
-kind of edit it expresses and mirrors the module's `__all__` export list.
+checkout's provenance fields. Use them for inspection/migration preparation,
+then run `check` and inspect the diff; publication requires a native command
+where one exists. The catalog is grouped by the kind of edit it expresses and
+mirrors the module's `__all__` export list.
 
 ### Components and media
 
