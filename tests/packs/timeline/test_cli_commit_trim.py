@@ -53,6 +53,27 @@ def test_ordinary_trim_matches_python_capture_and_main_afterstate(trim, monkeypa
     assert output['data']['show_command'].endswith('--published --revision-id r1')
 
 
+def test_ordinary_trim_forwards_to_session_preflight(trim, monkeypatch, capsys):
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    run, generated, original = trim
+    calls = []
+    session_trim = TimelineSession.trim
+
+    def forwarded(session, select, **options):
+        calls.append((select, options))
+        return session_trim(session, select, **options)
+
+    monkeypatch.setattr(TimelineSession, 'trim', forwarded)
+    assert run('edit', 't', '--clip', 'a', '--trim-out', '5', '--json') == 0
+    capsys.readouterr()
+
+    assert calls == [(REF, {'in_s': None, 'out_s': 5.0, 'idempotency_key': None,
+                            'dry_run': False, 'via': 'cli'})]
+    assert json.loads(generated.calls[0][0])['commands'] == [
+        capture_clip_trim(original, REF, out_s=5.0)]
+
+
 def test_trim_lost_ack_keeps_original_flight_and_undo(trim, capsys):
     run, generated, _ = trim
     generated.lose_ack = True

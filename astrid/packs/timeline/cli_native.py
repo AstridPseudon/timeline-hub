@@ -60,7 +60,6 @@ def _trim_selector(bundle, parsed):
 
 def commit_trim(session, parsed, options):
     from astrid.sdk.timeline._command_state import CommandError
-    from astrid.sdk.timeline._trim_commands import capture_clip_trim
 
     with session.outbox.locked():
         state = session._state()
@@ -72,12 +71,11 @@ def commit_trim(session, parsed, options):
         return NotImplemented
     if not state['pending']:
         try:
-            command = capture_clip_trim(bundle, select, in_s=parsed.trim_in, out_s=parsed.trim_out)
+            return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
         except CommandError:
             if parsed.clip == select:  # Explicit native identities report native errors.
                 raise
             return NotImplemented
-        return session.commit(command, **options)
     return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
 
 def configure_track_label(parser):
