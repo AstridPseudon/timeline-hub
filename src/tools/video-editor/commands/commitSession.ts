@@ -6,7 +6,7 @@ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
-import { AuthoredState, copy, equal, object } from './clipMovePrimitives.ts';
+import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
 import { captureClipDelete, executeClipDelete, finishClipDelete } from './clipDeleteCapture.ts';
@@ -330,11 +330,6 @@ export async function createTimelineCommandSession(options: Options) {
       }
       const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
       if (matches.length !== 1) throw new Error('Delete requires one raw parent clip identity');
-      const identity = matches[0].app?.canonical;
-      if (identity != null && (!object(identity) || identity.clipRef !== `parent/clip:${clipId}`
-        || identity.rawClipId !== clipId || identity.ownerRef !== 'parent')) {
-        throw new Error('Delete requires one raw parent clip identity');
-      }
       return json({ ...captureClipDelete(bundle, `parent/clip:${clipId}`), localGeneration,
         localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<ClipDeleteCapturePort['capture']>;
     },

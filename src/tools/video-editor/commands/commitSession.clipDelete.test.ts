@@ -15,8 +15,7 @@ import { environment, scope, document } from './__tests__/commitSessionEnvironme
 import { createTimelineCommandSession } from './commitSession.ts';
 
 // Offline operation/session proof. This is not a real Runtime acceptance test.
-async function deleteEnvironment() {
-  const raw = document();
+async function deleteEnvironment(raw = document()) {
   const parent = raw.parent_revision.payload;
   (parent.clips as unknown[]).push({ id: 'y', track: 'V1', at: 9, hold: 1,
     text: { content: 'unrelated' }, opaque: { literal: 'parent/clip:x', nullable: null } });
@@ -79,7 +78,33 @@ async function deleteEnvironment() {
       submitClipDeleteEdit(captureClipDeleteEdit(session.clipDeletePort, current, 'x')) };
 }
 
+async function opaqueCanonicalDeleteEnvironment() {
+  const raw = document();
+  const parent = raw.parent_revision.payload;
+  (parent.clips as Record<string, unknown>[])[0]!.app = {
+    canonical: { ownerRef: 'opaque-owner', clipRef: 'literal', rawClipId: 'literal' },
+  };
+  (parent.config as Record<string, unknown>).clips = structuredClone(parent.clips);
+  raw.parent_revision.content_digest = fixtureDigest(parent);
+  return deleteEnvironment(raw);
+}
+
 describe('native parent clip delete in the shared durable command session', () => {
+  it('accepts an authored parent row with opaque app.canonical metadata', async () => {
+    const env = await opaqueCanonicalDeleteEnvironment();
+    const session = await env.mount();
+    env.remove(session);
+    await session.flush();
+    expect(env.calls[0].request.commands[0]).toMatchObject({
+      op: 'clip.delete', select: 'parent/clip:x', args: {},
+      expect: { 'parent/clip:x::': { state: 'present', value: {
+        app: { canonical: { ownerRef: 'opaque-owner', clipRef: 'literal', rawClipId: 'literal' } },
+      } } },
+    });
+    expect(env.current().config.clips.map((clip) => clip.id)).toEqual(['y']);
+    await session.dispose();
+  });
+
   it('recovers move → label → delete in one queue without replacing either port or refreshing guards', async () => {
     const env = await deleteEnvironment();
     const first = await env.mount();
@@ -222,8 +247,8 @@ describe('native parent clip delete in the shared durable command session', () =
       const session = await env.mount();
       const current = structuredClone(env.current());
       if (fault === 'ambiguous') current.resolvedConfig.clips.push(current.resolvedConfig.clips[0]);
-      else if (fault === 'occurrence' || fault === 'unaddressable') current.resolvedConfig.clips[0].app = {
-        canonical: { ownerRef: 'occurrence:o', rawClipId: 'x', clipRef: fault === 'occurrence' ? 'occurrence:o/clip:x' : null } };
+      else if (fault === 'occurrence' || fault === 'unaddressable') current.resolvedConfig.clips[0].id =
+        fault === 'occurrence' ? 'occurrence:o/clip:x' : 'x::unaddressable';
       else current.head![fault] = 'other';
       expect(() => captureClipDeleteEdit(session.clipDeletePort, current, 'x')).toThrow();
       expect(env.calls).toHaveLength(0);
