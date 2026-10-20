@@ -19,6 +19,7 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
 from runtime_protocol.errors import ConflictError, NotFoundError, RetiredRouteError, RuntimeErrorBase, ValidationError
 from runtime_protocol.service import RuntimeService
+from runtime_protocol.timeline_commit_port import CommitUnavailable
 
 
 # Direct replace_timeline_clip is retired (ledger D04; refusal asserted in
@@ -640,6 +641,45 @@ def test_rt02_project_shot_crud_native_replacement_retries_after_restart(native_
         assert reopened.store.conn.execute(
             "SELECT COUNT(*) FROM command_idempotency WHERE command_kind='timeline.commit'",
         ).fetchone()[0] == before_receipts + 1
+    finally:
+        reopened.close()
+
+
+@pytest.mark.integration
+def test_rt02_native_occurrence_swap_rolls_back_before_restart_retry(native_editing, monkeypatch):
+    """A persistence failure leaves the occurrence-owned shot untouched before retry."""
+    service = native_editing.service
+    commits, _ = service._timeline_commits()
+    body = _native_body(service, native_editing.project, [_native_swap(native_editing)])
+    before_rows = _native_rows(service)
+    before_head = service.get_project_timeline(native_editing.project, "film")
+    original_persist = commits._persist_closure
+
+    def fail_after_persist(document):
+        original_persist(document)
+        raise RuntimeError("injected native persistence failure")
+
+    monkeypatch.setattr(commits, "_persist_closure", fail_after_persist)
+    with pytest.raises(CommitUnavailable, match="exact request"):
+        _native_commit(service, native_editing.project, body, "rt02-native-rollback")
+    assert _native_rows(service) == before_rows
+    assert service.get_project_timeline(native_editing.project, "film") == before_head
+
+    monkeypatch.undo()
+    service.close()
+    reopened = RuntimeService(native_editing.root)
+    try:
+        reopened.register_timeline_commit_provider(native_editing.native.load_timeline_commit_provider("astrid"))
+        accepted = _native_commit(
+            reopened, native_editing.project, body, "rt02-native-rollback",
+        )
+        assert accepted["data"]["status"] == "accepted"
+        assert _native_payload(accepted["data"]["canonical_document"], "internal")["clips"][0]["asset"] == native_editing.new["asset"]
+        after_accept = _native_rows(reopened)
+        assert _native_commit(
+            reopened, native_editing.project, body, "rt02-native-rollback",
+        ) == accepted
+        assert _native_rows(reopened) == after_accept
     finally:
         reopened.close()
 
