@@ -90,6 +90,29 @@ def test_quantize_interval_reports_rounding_and_rejects_collapsed_ranges():
         quantize_interval(0.01, 0.02, 24)
 
 
+def test_public_time_helpers_lazily_resolve_to_relocated_units():
+    from astrid.sdk import (
+        frame_time as public_frame_time,
+        grid as public_grid,
+        quantize_interval as public_quantize_interval,
+        quantize_time as public_quantize_time,
+        source_to_timeline_time as public_source_to_timeline_time,
+        timeline_to_source_time as public_timeline_to_source_time,
+    )
+    from astrid.sdk.timeline import units
+
+    for public, name in (
+        (public_frame_time, "frame_time"),
+        (public_source_to_timeline_time, "source_to_timeline_time"),
+        (public_timeline_to_source_time, "timeline_to_source_time"),
+        (public_quantize_time, "quantize_time"),
+        (public_quantize_interval, "quantize_interval"),
+        (public_grid, "grid"),
+    ):
+        assert public is getattr(units, name)
+        assert public.__module__ == "astrid.sdk.timeline.units"
+
+
 def test_canonical_source_trim_speed_and_move_intervals():
     candidate = _candidate()
     track = add_track(candidate, kind="visual")

@@ -45,10 +45,11 @@ negotiation remain explicit caller responsibilities. The SDK exposes exact
 source/local-timeline conversion helpers (`source_to_timeline_time` and
 `timeline_to_source_time`) using half-open arithmetic and positive playback
 rates. `quantize_interval` returns requested and applied frame/second
-boundaries and rejects collapsed ranges. For an intentional timing shift,
-`retime_with_ripple(..., scope="track")` moves only later visual clips on that
-track; it rejects audio/voice/music tracks and makes parent-duration overflow
-explicit (`preserve`, `extend`, or `trim`).
+boundaries and rejects collapsed ranges. Native timing edits use recorded
+`clip.trim` and `clip.move` commands. A track-scoped ripple is an explicit
+command group: change the first visual clip's endpoint, record moves for later
+visual siblings on that track, and leave audio/voice/music rows untouched; the
+compiler's parent end is then the explicit extension boundary.
 
 `authoring_contract()["capabilities"]` is the machine-readable version of the
 field table above. It distinguishes editable fields, derived fields, guarded
@@ -58,9 +59,8 @@ without rediscovering the compiler rules.
 | Helper | Use |
 | --- | --- |
 | `place_media` | Add an admitted media item using canonical `at`, source `from`/`to`, optional `hold`, and `speed`. |
-| `move` / `retime` | Change a clip's timeline interval while preserving its source origin and playback speed. |
+| `clip.trim` / `clip.move` | Change a clip's source window or timeline placement while preserving recorded intent and playback speed. |
 | `sequence` / `align` | Arrange supplied clips on explicit half-open timeline intervals. |
-| `retime_with_ripple` | Shift following visual clips on the same track with an explicit duration policy; audio is never moved. |
 | `move_occurrence_group` | Move one whole occurrence immediately before another in a contiguous sequence; child shot/clip bindings and durations stay attached to the occurrence. |
 | `fit_duration` | Extend or trim the timeline duration to cover its clips. |
 | `quantize_interval` | Convert requested boundaries to exact frames and report any rounding. |

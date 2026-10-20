@@ -148,8 +148,8 @@ and per-shot base/source fields. They are checkout provenance, not editable
 content. Let compilation allocate revisions, digests, occurrence revision pins,
 and the dependency manifest. `parent.occurrences` is derived from `placements`.
 Keep unrelated and unknown payload fields for a lossless round trip. State the
-ripple/quantization policy when retiming; changing a duration does not implicitly
-move later placements or extend parent overlays.
+ripple/quantization policy for timing changes; changing a duration does not
+implicitly move later placements or extend parent overlays.
 
 ## Add or replace local media
 
@@ -247,11 +247,10 @@ kind of edit it expresses and mirrors the module's `__all__` export list.
 ### Timing and frame policy
 
 - `move(container, clip_id, track=..., start=..., end=...)` — move one clip.
-- `retime(clip, start=..., end=..., ripple="none")` — change one interval;
-  the default leaves later placements where they are.
-- `retime_with_ripple(...)` — opt into a narrow ripple on one visual track;
-  later clips on that same track move with the changed duration. Audio,
-  voice, music, other tracks, and parent occurrences are not moved.
+- Native command batches use `clip.trim` for source endpoints and `clip.move`
+  for timeline placement. Record later same-track visual moves explicitly
+  when a duration change is intended to ripple; audio, voice, music, other
+  tracks, and parent occurrences remain unchanged unless separately commanded.
 - `sequence(clips, start=..., durations=..., gap=...)` — lay out clips in
   order; `fit_duration(container, mode="extend")` updates the container to
   the resulting end.
@@ -260,23 +259,8 @@ kind of edit it expresses and mirrors the module's `__all__` export list.
 - `quantize_time(seconds, fps, policy=...)` and
   `quantize_interval(...)` — make frame rounding explicit at the boundary.
 
-For example, to move a visual clip and intentionally ripple later clips on its
-same track:
-
-```python
-from astrid.sdk.timeline_editing import retime_with_ripple
-
-retime_with_ripple(
-    work["shots"]["shot-terminal"]["internal_timeline"],
-    "clip-terminal",
-    start=20.5,
-    end=24.0,
-    parent_duration="extend",
-)
-```
-
-State the policy in the edit note. A duration change never implicitly moves
-later placements, overlays, or audio.
+State the policy in the command-group rationale. A duration change never
+implicitly moves later placements, overlays, or audio.
 
 ### Layout and layers
 

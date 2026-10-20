@@ -134,8 +134,8 @@ for placement in work["placements"]:
         })
         clip.setdefault("app", {})["report_label"] = placement["occurrence_id"]
 
-# For duration changes, call retime/quantize with an explicit frame/ripple
-# policy rather than inventing renderer-specific timing keys.
+# For duration changes, record clip.trim/clip.move commands with an explicit
+# frame/ripple policy rather than inventing renderer-specific timing keys.
 bound.validate(work)
 diff = bound.diff(work)
 frozen = bound.preview(work)
@@ -299,9 +299,10 @@ Important defaults are explicit:
 - Clip intervals are half-open `[start, end)` in the containing timeline.
 - Use `quantize_interval(start, end, fps, policy=...)` when boundaries are not exactly representable; it reports requested/applied frames and rejects collapsed intervals.
 - Absolute placement does not move neighbours. Ripple is never implicit.
-- If shifting following visual clips is intended, call `retime_with_ripple` with
-  `scope="track"` and an explicit `parent_duration` policy. It never ripples
-  audio, voice, music, or another track.
+- If shifting following visual clips is intended, group a `clip.trim` endpoint
+  change with recorded `clip.move` commands for later siblings on that track.
+  Leave audio, voice, music, and other tracks unchanged, and state the
+  parent-duration extension policy in the command group.
 - `duplicate` allocates fresh editable identities and remaps internal references; immutable media can remain shared.
 - `replace_media` selects the supplied asset and preserves the existing interval unless instructed otherwise.
 - `reorder_layers` changes stacking order; `sequence` changes chronology.
@@ -309,9 +310,8 @@ Important defaults are explicit:
 | Helper | Effect |
 | --- | --- |
 | `place_media` | Adds one admitted media reference with `at`, source `from`/`to`, and optional `speed`. |
-| `move` / `retime` | Changes timeline placement/length while retaining source origin and speed. |
+| `clip.trim` / `clip.move` | Changes source endpoints or timeline placement while retaining recorded source and speed. |
 | `sequence` / `align` | Arranges supplied clips without affecting unrelated clips. |
-| `retime_with_ripple` | Shifts later visual clips on the same track under an explicit duration policy. |
 | `fit_duration` | Sets or extends the container duration to cover its clips. |
 | `quantize_interval` | Reports exact requested and frame-applied half-open boundaries. |
 | `duplicate` / `replace_media` / `remove` | Copies identity, changes selected media, or removes an authored object. |
