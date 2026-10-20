@@ -104,5 +104,5 @@ def clip_set(ctx, command):
 
 
 def capture_clip_set(bundle, select, *, values=None, clear=()):
-    """Capture source hold set/clear and explicit raw asset/transition removal."""
+    """Capture bounded raw hold/opacity writes and explicit field removal."""
     return _capture(bundle, 'clip.set', select, values, clear)

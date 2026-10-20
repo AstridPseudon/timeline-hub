@@ -129,6 +129,73 @@ def test_closed_bounded_fields_and_disjoint_set_clear(values, clear):
         capture_clip_set(bundle(), REF, values=values, clear=clear)
 
 
+@pytest.mark.parametrize('before', [ABSENT, present(None), present(0), present(0.4)])
+@pytest.mark.parametrize('value', [0, 0.4, 1])
+def test_opacity_set_preserves_exact_presence_and_undo(before, value):
+    original = bundle()
+    if before != ABSENT:
+        clip(original, REF)['opacity'] = copy.deepcopy(before['value'])
+    command = capture_clip_set(original, REF, values={'opacity': value})
+    assert command['expect'] == {REF + '::opacity': before}
+    plan = execute(original, [command])
+    assert State(plan.bundle).get(REF, ['opacity']) == present(value)
+    assert plan.records[0]['writes'] == [
+        {'ref': REF, 'path': ['opacity'], 'before': before, 'after': present(value)}]
+    assert inverse(plan.bundle, plan.records).bundle == original
+    assert inverse(inverse(plan.bundle, plan.records).bundle,
+                   inverse(plan.bundle, plan.records).records).bundle == plan.bundle
+
+
+def test_actual_app_update_clip_opacity_uses_the_clip_set_golden_shape():
+    original = app_bundle()
+    ref = 'parent/clip:f2-app-clip'
+    clip(original, ref)['opacity'] = 0.9
+    command = capture_clip_set(original, ref, values={'opacity': 0.4})
+    assert command['op'] == 'clip.set'
+    assert command['select'] == ref
+    assert command['args'] == {'values': {'opacity': 0.4}, 'clear': []}
+    assert command['expect'] == {ref + '::opacity': present(0.9)}
+    assert set(command['authorship']) == {ref + '::opacity'}
+    assert command['resolved'] == [ref]
+    assert execute(original, [command]).bundle['parent']['clips'][0]['opacity'] == 0.4
+
+
+@pytest.mark.parametrize('before', [ABSENT, present(None), present(0), present(0.4)])
+def test_opacity_clear_removes_only_the_leaf_and_restores_null_or_zero(before):
+    original = bundle()
+    if before != ABSENT:
+        clip(original, REF)['opacity'] = copy.deepcopy(before['value'])
+    clip(original, REF)['app'] = {'opaque': {'keep': [None, False]}, 'astrid': {'dynamic': True}}
+    sibling = copy.deepcopy(clip(original, 'occurrence:occ-2/clip:picture-1'))
+    plan = execute(original, [capture_clip_set(original, REF, clear=['opacity'])])
+    assert State(plan.bundle).get(REF, ['opacity']) == ABSENT
+    assert clip(plan.bundle, REF)['app'] == clip(original, REF)['app']
+    assert clip(plan.bundle, 'occurrence:occ-2/clip:picture-1') == sibling
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+@pytest.mark.parametrize('values,clear', [({'opacity': None}, []), ({'opacity': ''}, []),
+    ({'opacity': False}, []), ({'opacity': -0.01}, []), ({'opacity': 1.01}, []),
+    ({'opacity': 0.5}, ['opacity']), ({'unknown': 0.5}, []), ({}, ['unknown'])])
+def test_opacity_closed_shape_rejects_non_ui_values_and_unknown_fields(values, clear):
+    with pytest.raises(CommandError):
+        capture_clip_set(bundle(), REF, values=values, clear=clear)
+
+
+def test_opacity_original_guard_refuses_aba_and_allows_disjoint_parameter_rebase():
+    original = bundle()
+    command = capture_clip_set(original, REF, values={'opacity': 0.4})
+    plan = execute(original, [command])
+    changed = execute(plan.bundle, [capture_clip_set(plan.bundle, REF, values={'opacity': 0.6})])
+    back = execute(changed.bundle, [capture_clip_set(changed.bundle, REF, values={'opacity': 0.4})])
+    with pytest.raises(CommandError):
+        inverse(back.bundle, plan.records, [later(REF, ['opacity'], 0.4)])
+    other = execute(original, [capture_clip_set_params(original, REF, values={'opaque': {'keep': 1}})])
+    rebased = replay(plan, other.bundle, intervening_records=other.records)
+    assert State(rebased.bundle).get(REF, ['opacity']) == present(0.4)
+    assert State(rebased.bundle).get(REF, ['params', 'opaque']) == present({'keep': 1})
+
+
 @pytest.mark.parametrize('fps', [30, {'numerator': 30000, 'denominator': 1001}])
 def test_source_hold_speed_two_rational_fps_boundary_and_no_implicit_rewrites(fps):
     original = bundle(fps=fps)

@@ -1222,6 +1222,12 @@
               "type": "number",
               "exclusiveMinimum": 0,
               "description": "Positive finite source seconds; timeline duration is hold/speed."
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Raw visual opacity fraction in the inclusive range 0..1."
             }
           },
           "additionalProperties": false
@@ -1232,7 +1238,8 @@
             "enum": [
               "hold",
               "asset",
-              "transition"
+              "transition",
+              "opacity"
             ]
           },
           "uniqueItems": true
@@ -1259,7 +1266,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; explicitly remove hold, asset, incoming transition or opacity. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
     },
     "ClipTrimArgs": {
       "type": "object",
