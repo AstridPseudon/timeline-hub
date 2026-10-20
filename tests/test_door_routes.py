@@ -38,6 +38,7 @@ PRODUCT_CALLS = [
     ("GET", runtime(f"/v1/projects/{P}"), "runtime"),
     ("PATCH", runtime(f"/v1/projects/{P}"), "runtime"),
     ("GET", runtime(f"/v1/projects/{P}/timelines?limit=50"), "runtime"),
+    ("POST", runtime(f"/v1/projects/{P}/timelines"), "runtime"),  # createTimeline
     ("GET", runtime(f"/v1/projects/{P}/timelines/{T}"), "runtime"),
     ("PATCH", runtime(f"/v1/projects/{P}/timelines/{T}"), "runtime"),  # renameTimeline
     ("GET", runtime(f"/v1/projects/{P}/timelines/{T}/revisions/{R}"), "runtime"),

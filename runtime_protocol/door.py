@@ -154,7 +154,7 @@ WORKSPACE_ROUTES = (
     _entry("GET", "/v1/realm"),
     _entry("GET,POST", "/v1/projects"),
     _entry("GET,PATCH", "/v1/projects/:"),
-    _entry("GET", "/v1/projects/:/timelines"),
+    _entry("GET,POST", "/v1/projects/:/timelines"),
     _entry("GET,PATCH", "/v1/projects/:/timelines/:"),
     _entry("POST", "/v1/projects/:/timelines/:/commit"),
     _entry("GET", "/v1/projects/:/timelines/:/commits"),
