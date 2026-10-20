@@ -1,0 +1,38 @@
+diff --git a/src/tools/video-editor/contexts/VideoEditorProvider.tsx b/src/tools/video-editor/contexts/VideoEditorProvider.tsx
+--- a/src/tools/video-editor/contexts/VideoEditorProvider.tsx
++++ b/src/tools/video-editor/contexts/VideoEditorProvider.tsx
+@@ -745,6 +745,7 @@
+   const onClipEdgeResizeEnd: TimelineClipEdgeResizeEnd = editor.onClipEdgeResizeEnd;
+ 
+   const editorOps = useMemo<TimelineEditorOpsContextValue>(() => ({
++    occurrenceDuplicate: editor.occurrenceDuplicate,
+     trackLabel: editor.trackLabel,
+     clipScalar: editor.clipScalar,
+     transcriptHost,
+diff --git a/src/tools/video-editor/contexts/VideoEditorProvider.test.tsx b/src/tools/video-editor/contexts/VideoEditorProvider.test.tsx
+--- a/src/tools/video-editor/contexts/VideoEditorProvider.test.tsx
++++ b/src/tools/video-editor/contexts/VideoEditorProvider.test.tsx
+@@ -216,6 +216,7 @@
+       },
+       timelineRef: { current: null },
+       timelineWrapperRef: { current: null },
++      occurrenceDuplicate: { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() },
+       setInputModality: mocks.setInputModality,
+       setInputModalityFromPointerType: mocks.setInputModalityFromPointerType,
+       setInteractionMode: mocks.setInteractionMode,
+@@ -347,6 +348,7 @@
+       <span>{typeof editorData.additiveSelectionRef?.current}</span>
+       <span>{typeof editorOps.selectClip}</span>
+       <span>{typeof editorOps.selectClips}</span>
++      <span data-testid="occurrence-duplicate-port-state">{editorOps.occurrenceDuplicate ? 'mounted' : 'missing'}</span>
+       <span>{chrome.saveStatus}</span>
+       <span>{playback.currentTime}</span>
+       <span data-testid="agent-chat-timeline-id">{agentChatBridge.timelineId}</span>
+@@ -1456,6 +1458,7 @@
+     }));
+     expect(screen.getByText('false')).toBeInTheDocument();
+     expect(screen.getByText('boolean')).toBeInTheDocument();
++    expect(screen.getByTestId('occurrence-duplicate-port-state')).toHaveTextContent('mounted');
+     expect(screen.getAllByText('function')).toHaveLength(3);
+     expect(screen.getByText('saved')).toBeInTheDocument();
+     expect(screen.getByText('12.5')).toBeInTheDocument();
