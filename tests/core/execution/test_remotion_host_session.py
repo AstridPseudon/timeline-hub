@@ -405,7 +405,7 @@ def test_retire_records_group_that_cannot_be_confirmed_gone(tmp_path, monkeypatc
         fresh.close()
 
 
-@pytest.mark.parametrize("change", ["cli", "environment", "props", "temp"])
+@pytest.mark.parametrize("change", ["cli", "environment", "project", "props", "temp"])
 def test_task_cannot_modify_host_scope_inputs_or_escape_attempt(tmp_path, monkeypatch, change):
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
@@ -414,6 +414,9 @@ def test_task_cannot_modify_host_scope_inputs_or_escape_attempt(tmp_path, monkey
     value = request(env)
     if change == "cli": value['request']['remotionCli'] = '/unadmitted/cli.js'
     if change == "environment": value['request']['environment'] = {'NODE_OPTIONS':'--require=/foreign.js'}
+    if change == "project":
+        value['request']['environment'] = {
+            'ASTRID_REMOTION_PROJECT_DIR': env['ASTRID_REMOTION_PROJECT_DIR']}
     if change == "props": value['request']['propsPath'] = str(tmp_path.parent/'outside.json')
     if change == "temp": value['request']['environment'] = {'TMPDIR':str(tmp_path.parent)}
     try:

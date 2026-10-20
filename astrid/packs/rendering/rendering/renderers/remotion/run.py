@@ -1135,7 +1135,12 @@ def _execute_remotion_locked(
             # root.  Ambient PYTHONPATH entries can point at editable
             # worktrees and must never be inherited by the render child.
             remotion_env_additions["PYTHONPATH"] = schema_pythonpath
-        remotion_env_additions["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir.resolve())
+        # The ephemeral CLI receives the project through its environment. A
+        # native frame session already binds and checks the exact project in
+        # the host lease, so forwarding this redundant field would be refused
+        # by the host-owned request projection.
+        if not (frame_mode and frame_session is not None):
+            remotion_env_additions["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir.resolve())
         remotion_args = [
             str(runtime_tools.node_executable),
             str(runtime_tools.remotion_cli),

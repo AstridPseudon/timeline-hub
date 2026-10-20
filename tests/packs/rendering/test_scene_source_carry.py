@@ -552,6 +552,7 @@ def test_sdk_source_reaches_real_final_staging_callback(source_query, tmp_path, 
 
     class Session:
         def render(self, **kwargs):
+            assert "ASTRID_REMOTION_PROJECT_DIR" not in kwargs["environment"]
             props = json.loads(kwargs["props_path"].read_text())
             assert p.scene_capture is None  # queried, but no successful pixels yet
             assert p._pending_scene is not None
