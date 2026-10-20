@@ -15,10 +15,10 @@ from ._command_state import (
     root_identity,
 )
 from ._recording import Recording, guard, selection
-from ._root_inverse import arrange_restored, occurrence_orders, recover_source
+from ._root_inverse import arrange_restored, clip_cache_stages, occurrence_orders, recover_source
 
 
-def _patch(state, path, replacement):
+def _patch(state, path, replacement, *, insertion_order=None):
     if not path:
         return copy.deepcopy(replacement)
     if state == ABSENT or state.get('value') is None:
@@ -57,6 +57,15 @@ def _patch(state, path, replacement):
                 node.pop(indices[0])
         elif indices:
             node[indices[0]] = copy.deepcopy(replacement['value'])
+        elif insertion_order is not None and identity in insertion_order:
+            identities = [row.get('id') for row in node]
+            if (len(identities) != len(set(identities))
+                    or any(item not in insertion_order for item in identities)
+                    or identities != [item for item in insertion_order if item in identities]):
+                raise CommandError('collection alias order differs from history', kind='history_unavailable')
+            following = set(insertion_order[insertion_order.index(identity) + 1:])
+            index = next((i for i, row in enumerate(node) if row.get('id') in following), len(node))
+            node.insert(index, copy.deepcopy(replacement['value']))
         else:
             raise CommandError('collection alias insertion needs historical order', kind='history_unavailable')
         return present(value)
@@ -115,7 +124,7 @@ def _root_addresses(records, state=None):
     return address
 
 
-def coalesce(records, state=None):
+def coalesce(records, state=None, *, cache_stages=None):
     """Retain first-before/last-after, folding descendants into authored roots."""
     root_address = _root_addresses(records, state)
 
@@ -129,14 +138,21 @@ def coalesce(records, state=None):
 
     result = []
     for record in records:
-        for raw in record['writes']:
+        for raw in [*record['writes'], *(cache_stages or {}).get(id(record), [])]:
             write = copy.deepcopy(raw)
             address = value_address(write)
             ancestor = next((old for old in result if value_address(old)[0] == address[0]
                              and address[1][:len(value_address(old)[1])] == value_address(old)[1]), None)
             if ancestor is not None:
+                insertion_order = None
+                entity = member(write['ref'])
+                if entity is not None and not write['path'] and write['before'] == ABSENT:
+                    # A root born earlier in the batch can gain child rows. Use
+                    # the same recorded append/boundary proof as staged inverse.
+                    orders = restoration_orders(records, only=record)
+                    insertion_order = [member(ref)[2] for ref in orders[entity[:2]][1]]
                 ancestor['after'] = _patch(ancestor['after'], address[1][len(value_address(ancestor)[1]):],
-                                           write['after'])
+                                           write['after'], insertion_order=insertion_order)
                 continue
             descendants = [old for old in result
                            if value_address(old)[0] == address[0]
@@ -255,11 +271,17 @@ def _asset_dependents(state, ref):
         if isinstance(value, dict):
             return ((local and any(value.get(key) == identity for key in ('asset', 'asset_id')))
                     or any(value.get(key) == ref for key in ('asset_ref', 'owner_ref'))
-                    or any(references(child, local) for child in value.values()))
+                    or any(references(value.get(key), local) for key in
+                           ('clips', 'children', 'audio', 'effects', 'audio_bindings')))
         return isinstance(value, list) and any(references(child, local) for child in value)
 
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in state.bundle['placements'])]
-    return (any(references(state.config(other), other == owner) for other in owners)
+    # During reversal the parent mirror may still contain the swapped asset.
+    # Dependents use the authoritative raw rows, just as normal selection does.
+    parent = {**state.bundle['parent'], 'clips': state.collection('parent', 'clip'),
+              'config': {**state.config('parent'), 'clips': state.collection('parent', 'clip')}}
+    return (any(references(node, owner == 'parent') for node in (parent, parent['config']))
+            or any(references(state.config(other), other == owner) for other in owners[1:])
             or any(references(shot['payload'], False) for shot in state.bundle['shots'].values()))
 
 
@@ -354,6 +376,8 @@ def apply_inverse(ctx, records, intervening_records):
         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
     check_intervening(records, intervening_records, state=ctx.state)
     changes = coalesce(records, ctx.state)
+    caches = clip_cache_stages(records)
+    guarded_changes = coalesce(records, ctx.state, cache_stages=caches)
     ctx.capture_input()
     root_orders = occurrence_orders(ctx.state, records, changes)
     orders = restoration_orders(records)
@@ -362,13 +386,16 @@ def apply_inverse(ctx, records, intervening_records):
         if actual != expected:
             raise CommandError('inverse collection membership/order changed',
                                kind='selection_changed', ref=owner)
-    for write in changes:
+    for write in guarded_changes:
         guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
     scratch = State(copy.deepcopy(ctx.state.bundle), closures=ctx.state.closures)
     for record in reversed(records):
         staged = Recording(scratch.bundle, record['command'], record['ordinal'], closures=scratch.closures)
         scratch = staged.state
         staged_orders = restoration_orders(records, only=record)
+        for write in reversed(caches.get(id(record), [])):
+            guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+            scratch.set(write['ref'], write['path'], write['before'])
         for write in reversed(record['writes']):
             guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
             if not write['path'] and write['before'] == ABSENT:
@@ -399,7 +426,10 @@ def apply_inverse(ctx, records, intervening_records):
         for read in record['reads']:
             ctx.read(read['ref'], read['path'])
         for selected in record['selections']:
-            ctx.select(selected['key'], selected['owner'], selected['members'])
+            if selected['key'].endswith('.after'):
+                ctx.select(selected['key'].removesuffix('.after'), selected['owner'])
+            else:
+                ctx.select(selected['key'], selected['owner'], selected['members'])
     for write in reversed(changes):
         ctx.read(write['ref'], write['path'])
         # An absent-to-absent edge still records authored intent, but restores
@@ -419,6 +449,10 @@ def apply_inverse(ctx, records, intervening_records):
         else:
             ctx.assign(write['ref'], write['path'], write['before'])
     for (owner, kind), (original, _) in orders.items():
+        if ctx.state.entity(owner, optional=True) is None and any(
+                write['ref'] == owner and not write['path'] and write['before'] == ABSENT
+                for write in changes):
+            continue  # Reversing the owner's birth also removes its collections.
         arrange(ctx.state, owner, kind, original)
 
     for record in reversed(records):

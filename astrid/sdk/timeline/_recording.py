@@ -25,10 +25,11 @@ def selection(state, key, owner, members=()):
                     "order": result, "boundaries": insertion_boundary(result, members),
                     "policy": "guard-membership"}
     elif key == 'placement.owners':
-        shot = state.occurrence(owner)['shot_id']
+        origin = state.entity(owner, optional=True)
+        shot = origin['shot_id'] if origin is not None else None
         result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
                   if row['shot_id'] == shot]
-        boundaries = ['shot:' + shot]
+        boundaries = ['shot:' + shot] if shot is not None else []
     elif key == "move.blockers":
         origin = state.occurrence(owner)
         lane = (origin.get('placement') or {}).get('track', origin.get('track'))
@@ -199,7 +200,8 @@ class Recording:
         from astrid.core.timeline.authoring_bundle import _digest
         for capture in mapping.get('pinned_documents', []):
             pin = capture['pin']
-            if pin in retained:
+            # An inverse may reopen an exact pin from an accepted removed clip.
+            if pin in retained or self.record['command']['op'] == 'timeline.inverse':
                 kind = 'transcript' if capture['document']['kind'] == 'media.transcript' else 'source'
                 self.dependency('compile.document:' + _digest(pin), kind, pin)
 
