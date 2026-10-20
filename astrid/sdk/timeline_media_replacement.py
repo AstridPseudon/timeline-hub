@@ -216,12 +216,11 @@ def _pending_matches(command, *, owner, clip_id, source_object_id, old_media, me
             return False
     if original_new["object_id"] != source_object_id or original_old["object_id"] == source_object_id:
         return False
-    if isinstance(old_media, Mapping) or isinstance(media, Mapping):
-        if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
-            return False
-        if dict(old_media) != dict(original_old) or dict(media) != dict(original_new):
-            return False
-    return True
+    if old_media is None and media is None:
+        return True
+    if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
+        return False
+    return dict(old_media) == dict(original_old) and dict(media) == dict(original_new)
 
 
 def replace_selected_media(timelines, project, ref, *, occurrence_id, clip_id, source_object_id,

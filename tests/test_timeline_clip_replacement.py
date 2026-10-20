@@ -157,6 +157,50 @@ def test_exact_pending_swap_retry_survives_restart_and_keeps_opaque_body(monkeyp
     assert restored.flush_calls == [(None, [command])]
 
 
+@pytest.mark.parametrize("kind", ["bool", "list", "str", "number", "nullmix"])
+def test_pending_swap_rejects_non_mapping_selections_without_flush(monkeypatch, kind):
+    command, _, new = _pending_occurrence_swap()
+    TimelineSession, session = _pending_session(command)
+    before = copy.deepcopy(session.state)
+    outbox_before = copy.deepcopy(session.outbox.state)
+    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
+    invalid = {
+        "bool": (True, False),
+        "list": ([], []),
+        "str": ("bad", "bad"),
+        "number": (7, 7),
+        "nullmix": (None, new),
+    }[kind]
+
+    result = RemoteTimelines(object()).replace_parent_media(
+        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
+        source_object_id=new["object_id"], expected_head="parent-1",
+        expected_publication="publication-1", old_media=invalid[0], media=invalid[1],
+        idempotency_key="original-key",
+    )
+
+    assert (not result.ok and session.flush_calls == [] and session.state == before
+            and session.outbox.state == outbox_before)
+
+
+@pytest.mark.parametrize("supplied", [False, True], ids=["none-pair", "exact-mapping-pair"])
+def test_pending_swap_accepts_only_omitted_or_exact_selections(monkeypatch, supplied):
+    command, old, new = _pending_occurrence_swap()
+    TimelineSession, session = _pending_session(command)
+    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
+    selections = {"old_media": old, "media": new} if supplied else {}
+
+    result = RemoteTimelines(object()).replace_parent_media(
+        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
+        source_object_id=new["object_id"], expected_head="parent-1",
+        expected_publication="publication-1", idempotency_key="original-key",
+        **selections,
+    )
+
+    assert result.ok, result.error
+    assert session.flush_calls == [("original-key", [command])]
+
+
 def test_remote_timelines_replace_clip_is_typed_410() -> None:
     class Transport:
         def replace_timeline_clip(self, *args, **kwargs):
