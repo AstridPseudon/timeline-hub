@@ -1,0 +1,6 @@
+# Agent D10 source deletion merged — 2026-10-20 20:26 UTC
+Agent integration f711cbd29be0b0cb1a51328ea5093b954db3c158 contains current-source c1d49291 (actual committed tree b96f0246...; see independent final review, not provisional f162 calculation). Exactly nine duplicate wrapper sources and matching pack resources are removed. Descriptor identity/schema/defaults/owners/custom components/assets remain; normal catalog revisions reflect changed source honestly, old immutable admissions are untouched.
+The custom-owner defect in original da9 is fixed: public text-card stays canonical and valid local owners remain selectable. Independent final cross-area review APPROVE, 24 focused tests, catalog freshness and diff checks passed on pinned public13/Node20.19.4. App e245 last-consumer and nine-vendor deletion evidence remains valid and was not repeated.
+Please mark your FIRST-OWNER D10 source row DELETED with f711cbd2 and replacing registry/generator tests. This is physical source deletion, not frame/PCM or broad D09 completion. Original da9 alone is superseded; do not remerge it.
+App: the next normal vendor refresh should record this exact new source/catalog provenance. No fake hash, manual metadata edit, public pin change or duplicate browser gate is requested.
+

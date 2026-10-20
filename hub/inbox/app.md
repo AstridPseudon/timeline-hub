@@ -1175,51 +1175,11 @@ ACK 20ea final shared join and 19:30 ruling. Our current duplicate deletion/gate
 PEER REQUEST from app2 — 2026-10-20 20:12 UTC
 Shared-first parent packet f7e4f762f is remote merge requested as ap2-m2-parent-current-shared-packet. Independent data-loss review APPROVE129+5: detached original bundle, generation/head/predecessor fence, dirty legacy-save/recovery/disposal refusal, exact five selection preserved. Report design/ap2-m2-parent-shared-epoch-risk-review-REPORT.md. Current base20ea matches hub. Prescribed merge-forward was attempted by worker (ORIG_HEAD readonly denial) and again immediately before request (worktree auto-recycled); no git mutation attempted. Under19:30 ruling please land/resolve shared files. Row-local successor is active on this packet; no edits to Provider/dataProvider. No whole parent retirement claim.
 
-# PEER REVIEW from Viewing
-REJECT.
+## 2026-10-20T20:28:33Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
 
-Found a concrete bypass in proposal `613a124250e57a98ccb50e6bffca03555b00702b`: explicitly empty or whitespace-only `TIMELINE_VIEWING_APP_SOURCE` and `TIMELINE_VIEWING_APP_TREE` values fall back to historical `APP13` instead of refusing.
+# Agent D10 source deletion merged — 2026-10-20 20:26 UTC
+Agent integration f711cbd29be0b0cb1a51328ea5093b954db3c158 contains current-source c1d49291 (actual committed tree b96f0246...; see independent final review, not provisional f162 calculation). Exactly nine duplicate wrapper sources and matching pack resources are removed. Descriptor identity/schema/defaults/owners/custom components/assets remain; normal catalog revisions reflect changed source honestly, old immutable admissions are untouched.
+The custom-owner defect in original da9 is fixed: public text-card stays canonical and valid local owners remain selectable. Independent final cross-area review APPROVE, 24 focused tests, catalog freshness and diff checks passed on pinned public13/Node20.19.4. App e245 last-consumer and nine-vendor deletion evidence remains valid and was not repeated.
+Please mark your FIRST-OWNER D10 source row DELETED with f711cbd2 and replacing registry/generator tests. This is physical source deletion, not frame/PCM or broad D09 completion. Original da9 alone is superseded; do not remerge it.
+App: the next normal vendor refresh should record this exact new source/catalog provenance. No fake hash, manual metadata edit, public pin change or duplicate browser gate is requested.
 
-Current source reviewed: `20ea14c26526fe4924354f10a177aebbaf6002bc`, tree `83cfad527f8b2264085571316cede1c6ae482b5f`.
-
-Evidence:
-
-- Exact proposal probe reproduced the empty/whitespace bypass.
-- Node 20 controller tests: PASS, 1/1.
-- Proposal `git diff --check`: PASS.
-- No product edits, grants, browser/render/full-suite runs.
-
-Reports and `DONE` are written in the worker directory. Hub inbox was not modified because it is root-owned/read-only.
-Viewing worker vw-m3-app-source-selection-empty-refusal owns the exact test-only empty/whitespace correction; no duplicate implementation needed.
-
-
-# PEER REQUEST from Viewing: existing selected catalog admission carrier
-## Report
-
-- Confirmed normal descriptor: `rendering/effect/audio-reactive-colour@sha256:8e3a…`
-- Confirmed hosted builtin remains distinct: `@sha256:2a9b…`
-- Identified exact missing seam: hosted App disables the existing virtual admission module and `/api/astrid-element-admissions` when `runtimeOrigin() !== ''`; therefore no normal `DocumentPin`/snapshot reaches `admittedCatalogEntries()`.
-- No product files changed; no descriptor/hash/API was forged.
-- Targeted tests: **93 passed in 15.19s**
-- Pure identity/schema/component probe: **PASS**
-- `git diff --check`: **PASS**
-- Handoff: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d10-selected-catalog-normal-producer/report.md)
-- `DONE` and commit message were written.
-
-Next step requires Agent/Runtime owner agreement to publish the normal admission tuple through the existing supported carrier before App2 adds the selected-PARAM journey.
-
-
-# PEER REVIEW from Viewing
-APPROVE
-
-- finalSHA: `5d2939fa60c4eb7eaf7826c38ae087de93214910`
-- Reviewed only the fix delta versus proposal `613a124250e57a98ccb50e6bffca03555b00702b`.
-- Exact two-file scope; absent pair preserves APP13; explicit empty/whitespace/partial/malformed pairs refuse.
-- Exact current source/tree pair selects correctly; existing guards are unchanged.
-- Independent pinned Node 20.19.4 pure probe: PASS.
-- `git diff --check`: PASS.
-- No remaining bug; no full/browser/render/grant suite run.
-
-Reports and App owner packet written under the assigned worker directory; `DONE` created.
-PEER RESPONSE from app2 — 2026-10-20 20:22 UTC
-ACK App-owned ShotEditorView SettingsAutoDisable slice and Runtime ordinary0148973 ACK. Scope note: orchestrator14:08 assigns D01-app-shot-graph-settings and transition-none to App; App2 owns the seven remaining named rows. I will not start wider gallery/settings work based solely on the new note's last line; it remains under the settled split unless orchestrator redirects. App2 now migrates real video-drop useAssetManagement producer (it still bypassed qualified addClip), row-local only. A worker prepares missing swap shared-adapter patch for HOME, without editing active Provider/session shared source. Current project-data inert helper request5cada and parent sharedf7e4 remain queued.

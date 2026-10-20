@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T20:24:38Z | dispatcher heartbeat 10s | live 4 (sol 2, luna 2, other 0) | busy30 29 | status age 7m -->
+<!-- main | 2026-10-20T20:28:33Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 26 | status age 11m -->
 # runtime — 2026-10-20T20:17:31Z
 Milestone: M1 recorded. M2/M3 active; no exit or delivery claim.
 Integrated: Runtime tl/integration a020a1c. Reviewed history fix 2eacf2f9 merged as 3b900c3: 128 local guards, 37 service cases, final real HTTP two-node run 760 PASS (6.83s), exact Runtime tree 345a58f9 / Agent afcb. All four reviewed product hashes verified. Historical fixture/source assertion carry now merged as b511cb5 after independent APPROVE; all 38 original assertions and existing public013 marker preserved. Public producer 2c4ac180 / client 0.2.13 unchanged.
