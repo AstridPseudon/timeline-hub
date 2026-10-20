@@ -456,7 +456,7 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     from astrid.sdk.timeline.capture import capture_move
     from astrid.sdk.timeline.store import fetch_bundle
     from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
-    from astrid.sdk.workspace_client import WorkspaceClient
+    from astrid.sdk.workspace_client import WorkspaceClient, WorkspaceClientError
     from tests.helpers.runtime import use_runtime
     from tests.helpers.trusted_seed import seed_trusted_parent
 
@@ -645,26 +645,48 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
 
     original_send = RuntimeHandler._send
     lost = {'done': False}
+    undo_wire = []
 
     def lose_undo_ack(handler, status, payload=None, **kwargs):
-        result = original_send(handler, status, payload, **kwargs)
         if (status == 200 and handler.command == 'POST' and handler.path.endswith('/commit')
-                and handler.headers.get('Idempotency-Key') == 'wc6-undo' and not lost['done']):
+                and handler.headers.get('Idempotency-Key') == 'wc6-undo'
+                and getattr(handler, '_defer_response', False) and not lost['done']):
+            undo_wire.append({
+                'key': handler.headers['Idempotency-Key'],
+                'body': handler._prefetched_body,
+            })
             lost['done'] = True
-            raise ConnectionError('WC6 proof lost undo acknowledgement after durable acceptance')
-        return result
+            # Match the M1 real-HTTP seam: commit_timeline has durably
+            # accepted the edit, but no response bytes have been sent.
+            raise ConnectionError('WC6 proof dropped undo response after durable acceptance')
+        if (handler.command == 'POST' and handler.path.endswith('/commit')
+                and handler.headers.get('Idempotency-Key') == 'wc6-undo'
+                and getattr(handler, '_defer_response', False)):
+            undo_wire.append({
+                'key': handler.headers['Idempotency-Key'],
+                'body': handler._prefetched_body,
+            })
+        return original_send(handler, status, payload, **kwargs)
 
     monkeypatch.setattr(RuntimeHandler, '_send', lose_undo_ack)
     undo_outbox = tmp_path / 'undo.outbox.json'
     undo_session = TimelineSession.open(
         project, 'film', client=client, outbox_path=undo_outbox,
     )
-    with pytest.raises(Exception, match='lost undo acknowledgement|transport'):
+    with pytest.raises(WorkspaceClientError) as transport_error:
         undo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-undo')
+    assert transport_error.value.status == 0
+    assert transport_error.value.code == 'transport_error'
     flight = json.loads(undo_outbox.read_text())['flight']
     assert flight['key'] == 'wc6-undo'
+    assert flight['body'].encode() == undo_wire[0]['body']
+    restart_port = daemon.httpd.server_port
     daemon.stop()
-    restarted = real_runtime(realm, commit='7f6dd89', authoring_profile='astrid')
+    # Keep the stale disjoint session on the same HTTP endpoint across the
+    # restart; the M1 real-HTTP proof uses this convention as well.
+    restarted = real_runtime(
+        realm, port=restart_port, commit='7f6dd89', authoring_profile='astrid'
+    )
     client2 = open_client(restarted)
     retry_session = TimelineSession.open(
         project, 'film', client=client2, outbox_path=undo_outbox,
@@ -672,6 +694,18 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     undone = retry_session.flush(idempotency_key='wc6-undo')
     assert undone['data']['canonical_document'] == baseline
     assert lost['done'] is True
+    assert len(undo_wire) == 2
+    assert undo_wire[1] == undo_wire[0]
+    undo_receipt = undone['receipt']
+    assert undo_receipt['receipt_id'] == undone['data']['accepted_publication_id']
+    undo_history = client2.timelines.history(project, 'film', limit=100).data
+    assert undo_history['head']['revision_id'] == undone['data']['accepted_revision_id']
+    assert undo_history['head']['publication_id'] == undo_receipt['receipt_id']
+    assert any(
+        row['publication_id'] == undo_receipt['receipt_id']
+        and row['receipt']['receipt_id'] == undo_receipt['receipt_id']
+        for row in undo_history['items']
+    )
 
     # This stale session is intentionally committed after undo.  It is
     # unrelated to the media occurrence and must rebase without changing the
@@ -702,8 +736,15 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     redo_session = TimelineSession.open(
         project, 'film', client=client2, outbox_path=tmp_path / 'redo.outbox.json',
     )
+    # Re-read the exact Runtime-verified inputs after restart; this preserves
+    # the F1 media guard while replaying the unchanged command record.
+    redo_verified_media = [
+        transport.get_project_verified_media(project, record['args'][key])
+        for key in ('old_media', 'media')
+    ]
     redone = redo_session.commit_many(
         [record], idempotency_key='wc6-aba-rebind', via='python',
+        verified_media=redo_verified_media,
     )
     assert redone['data']['canonical_document']['shot_revisions'][0]['payload']['items'][0]['media_id'] == new_digest
     aba_before = client2.timelines.history(project, 'film', limit=100).data
