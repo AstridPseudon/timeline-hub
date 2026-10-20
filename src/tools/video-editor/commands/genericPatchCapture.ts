@@ -303,7 +303,7 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
     throw new ClipMoveError('native clip.set supports only a hold value with an explicit empty clear');
   }
   const hold = command.args.values.hold;
-  number(hold, 'hold', true);
+  const validatedHold = number(hold, 'hold', true);
   const ctx = new MoveRecording(bundle, { ...command, intent: {} });
   const ref = clipTarget(ctx, command);
   clipBasis(ctx, ref);
@@ -312,8 +312,8 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
   if (typeof asset === 'string') {
     ctx.read(`${ref.slice(0, ref.lastIndexOf('/'))}/registry`, ['assets', asset, 'content_sha256']);
   }
-  clipHold(ctx, ref, hold);
-  ctx.write(ref, ['hold'], hold);
+  clipHold(ctx, ref, validatedHold);
+  ctx.write(ref, ['hold'], validatedHold);
   ctx.compile();
   return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record };
 }

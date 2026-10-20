@@ -210,7 +210,8 @@ function clearParam(ctx: MoveRecording, ref: string, key: string): void {
 }
 
 function applyLiteralParams(bundle: AuthoredBundle, supplied: EditCommand): ElementParamsResult {
-  assertTarget(supplied.select);
+  const select = supplied.select;
+  assertTarget(select);
   if (supplied.schema_version !== 1 || supplied.op !== 'clip.set-params' || supplied.version !== '1' ||
     (supplied.intent !== undefined && !equal(supplied.intent, {})) || !object(supplied.args)) {
     throw new ClipMoveError('unsupported clip.set-params v1 command');
@@ -222,28 +223,28 @@ function applyLiteralParams(bundle: AuthoredBundle, supplied: EditCommand): Elem
   const ctx = targetContext(bundle, supplied);
   const identity: Record<string, JSON | undefined> = {};
   for (const key of ['clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id']) {
-    identity[key] = ctx.read(supplied.select, [key]);
+    identity[key] = ctx.read(select, [key]);
   }
   // Agent's clip.set-params recorder reads both element aliases after the
   // scalar identity fields, even when the first alias is present.
-  identity.elementRef = ctx.read(supplied.select, ['elementRef']);
-  identity.element_ref = ctx.read(supplied.select, ['element_ref']);
+  identity.elementRef = ctx.read(select, ['elementRef']);
+  identity.element_ref = ctx.read(select, ['element_ref']);
   const element = identity.elementRef ?? identity.element_ref;
   if (object(element) && element.packId) {
     throw new ClipMoveError('selected project pack capture requires authoritative Agent schema capture');
   }
   const selector = ['asset', 'asset_id', 'media_id', 'object_id'].find((key) =>
-    has(ctx.state.entity(supplied.select)!, key));
+    has(ctx.state.entity(select)!, key));
   if ((selector === 'asset' || selector === 'asset_id') && typeof identity[selector] === 'string') {
-    const owner = supplied.select.slice(0, supplied.select.lastIndexOf('/'));
+    const owner = select.slice(0, select.lastIndexOf('/'));
     for (const key of ['media_id', 'object_id', 'digest', 'content_digest']) {
       ctx.read(`${owner}/registry`, ['assets', identity[selector] as string, key]);
     }
   }
   const values = supplied.args.values as Record<string, JSON>;
-  if (Object.keys(values).length) ctx.object(supplied.select, ['params']);
-  for (const key of Object.keys(values).sort()) ctx.write(supplied.select, ['params', key], values[key]);
-  for (const key of [...supplied.args.clear].sort()) clearParam(ctx, supplied.select, key);
+  if (Object.keys(values).length) ctx.object(select, ['params']);
+  for (const key of Object.keys(values).sort()) ctx.write(select, ['params', key], values[key]);
+  for (const key of [...supplied.args.clear].sort()) clearParam(ctx, select, key);
   ctx.compile();
   for (const key of CLAIMS) {
     if (has(supplied, key) && !equal(supplied[key], ctx.command[key])) {
