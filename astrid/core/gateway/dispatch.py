@@ -113,7 +113,7 @@ def _dispatch_status(args: list[str]) -> int:
             "error": str(exc),
             "effects": ["observe"],
             "authorization_required": False,
-            "next_action": "astrid setup",
+            "next_action": "run the Astrid install line again",
         }
         if parsed.diagnostic:
             from astrid.core.gateway.diagnostics import build_diagnostic, _failure_from
@@ -136,7 +136,7 @@ def _dispatch_status(args: list[str]) -> int:
         if parsed.json:
             print(json.dumps(payload, indent=2, sort_keys=True))
         else:
-            print("Astrid status\nruntime: unavailable\nnext action: astrid setup")
+            print("Astrid status\nruntime: unavailable\nnext action: run the Astrid install line again")
         return 1
     if parsed.diagnostic:
         print(json.dumps(diagnostic, indent=2, sort_keys=True))
@@ -165,7 +165,7 @@ def _dispatch_status(args: list[str]) -> int:
         for key, value in payload["readiness"].items():
             print(f"{key.replace('_', ' ')}: {value}")
         if not payload["ok"]:
-            print("next action: astrid setup")
+            print("next action: run the Astrid install line again")
     return 0 if payload["ok"] else 1
 
 
@@ -214,7 +214,7 @@ def _dispatch_doctor(args: list[str]) -> int:
             "ok": False,
             "problem_code": getattr(exc, "code", "runtime_unavailable"),
             "state": "runtime_unavailable",
-            "next_action": "astrid-runtime up",
+            "next_action": "run the Astrid install line again",
             "effects": ["observe"],
             "authorization_required": False,
             "error": str(exc),
@@ -385,7 +385,7 @@ def _dispatch_backup(args: list[str]) -> int:
         parser.error("backup export does not support --out; the SDK export API has no destination")
     json_mode = "--json" in args
     if parsed.operation is None:
-        payload = {"ok": False, "state": "unavailable", "next_action": "astrid-runtime up --profile astrid", "error": "backup operation is required"}
+        payload = {"ok": False, "state": "unavailable", "next_action": "run the Astrid install line again", "error": "backup operation is required"}
         if json_mode:
             print(json.dumps(payload, indent=2, sort_keys=True))
         else:
@@ -453,7 +453,7 @@ def _dispatch_backup(args: list[str]) -> int:
             "ok": False,
             "state": "unavailable",
             "next_action": exc.details.get(
-                "next_action", "astrid-runtime up --profile astrid"
+                "next_action", "run the Astrid install line again"
             ),
             "error": str(exc),
         }

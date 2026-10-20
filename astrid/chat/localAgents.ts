@@ -40,12 +40,13 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {
     name: 'Claude Code',
     signInLine: 'Run `claude auth login`, then come back.',
     notInstalledLine: 'Install with `curl -fsSL https://claude.ai/install.sh | bash`',
-    windowsNotInstalledLine: 'Install with `npm install -g @anthropic-ai/claude-code`',
+    windowsNotInstalledLine: 'In PowerShell, run `irm https://claude.ai/install.ps1 | iex`',
   },
   codex: {
     name: 'Codex',
     signInLine: 'Run `codex login`, then come back.',
-    notInstalledLine: 'Install with `npm install -g @openai/codex`',
+    notInstalledLine: 'Install with `curl -fsSL https://chatgpt.com/codex/install.sh | sh`',
+    windowsNotInstalledLine: 'In PowerShell, run `irm https://chatgpt.com/codex/install.ps1 | iex`',
   },
 };
 

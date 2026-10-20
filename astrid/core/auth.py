@@ -100,7 +100,7 @@ def _resolve_auth_cli(*, provision_if_missing: bool) -> list[str]:
         except Exception as exc:
             raise AuthCommandError(
                 "Astrid could not install the Hivemind authentication helper. "
-                "Run `python3 -m astrid.setup` and retry."
+                "Run the Astrid install line again, then retry."
             ) from exc
         for candidate in _auth_cli_candidates():
             if _supports_auth(candidate):
@@ -108,7 +108,7 @@ def _resolve_auth_cli(*, provision_if_missing: bool) -> list[str]:
 
     raise AuthCommandError(
         "Astrid's Hivemind authentication helper is unavailable. "
-        "Run `python3 -m astrid.setup` once, then retry `astrid login`."
+        "Run the Astrid install line again, then retry `astrid login`."
     )
 
 

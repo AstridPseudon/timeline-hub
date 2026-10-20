@@ -13,12 +13,11 @@ python3 -m astrid.skills.cli install --all
 
 `--all` only writes to harnesses whose home directory exists; missing harnesses are skipped silently.
 
-The gateway also recognizes external packs selected by managed setup. Run
-`python3 -m astrid.setup` to provision the pinned defaults and compose their
-skills; discovery and `skills sync` do not download code. If a user removes a
-managed default skill with `skills uninstall`, Astrid records that choice and
-leaves it removed. A missing link that was still installed is treated as drift
-and is restored by the normal auto-heal path or `skills sync`.
+Once an external pack is installed and selected, Astrid can compose its skill
+files. Discovery and `skills sync` do not install or download pack code. If a
+user removes an installed skill with `skills uninstall`, Astrid records that
+choice and leaves it removed. A missing link for a skill that remains installed
+is treated as drift and is restored by the normal auto-heal path or `skills sync`.
 
 The external pack manifest must be strict v2. Default selection belongs to the
 setup declaration, not to an installer-specific manifest field such as

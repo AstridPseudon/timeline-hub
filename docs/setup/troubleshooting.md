@@ -1,11 +1,19 @@
 # Get help
 
 Astrid is used at [astrid.haus](https://astrid.haus). If setup does not finish,
-keep the message shown by the installer and the page, then follow the
-instructions there or contact the person who provided the installer.
+read the log at the installer's `Details:` path. Open Terminal on macOS or
+Linux, or PowerShell on Windows, when you run an installer command below.
 
 The supported setup commands are listed in [Getting Started](../getting-started.md).
 Do not clone or install `astrid-app` to troubleshoot a user installation.
+
+## Asking for help
+
+For help, open [Astrid issues](https://github.com/banodoco/astrid-agent/issues)
+and attach the doctor bundle. By default, it is saved to your Desktop (or
+Downloads if Desktop is unavailable) and its folder opens in Finder or File
+Explorer. It contains installer logs and service states, with home paths, user
+names, and secrets redacted. It excludes Runtime, chat, and service logs.
 
 ## Update Astrid
 
@@ -35,8 +43,9 @@ Windows, in PowerShell:
 & ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --doctor
 ```
 
-The command prints the bundle path. If Astrid has not finished installing or
-has already been removed, attach the install log instead.
+The command prints the bundle path and opens its folder. If Astrid has not
+finished installing or has already been removed, attach the install log
+instead.
 
 ## Uninstall Astrid
 

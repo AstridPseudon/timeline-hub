@@ -21,6 +21,10 @@ python = str(Path(record["python"]))
 env = dict(os.environ)
 env.update({str(key): str(value) for key, value in record["env"].items()})
 env["ASTRID_INSTALL_PROGRAM_ROOT"] = str(root)
+if sys.argv[1:2] == ["credential"]:
+    os.environ.update(env)
+    from astrid.core.util.credential_store import main
+    raise SystemExit(main(sys.argv[2:]))
 os.execve(python, [python, "-I", "-m", "astrid.omp_agent", *sys.argv[1:]], env)
 '''
 

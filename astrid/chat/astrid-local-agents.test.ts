@@ -5,6 +5,7 @@ import { tmpdir, userInfo } from 'node:os';
 import { join } from 'node:path';
 import { formatAstridSignInLine, LOCAL_AGENT_TABLE } from './localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
+import { processHasExited } from './testProcess.ts';
 import { defaultShellFromPasswd, discoverLocalAgents, executableNames, localAgentLaunch, windowsLoginPath } from './astrid-local-agents.ts';
 
 function executable(directory: string, name: string, contents: string): string {
@@ -47,6 +48,10 @@ test('reports Not installed when external CLIs are absent and has no adapter fie
       { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'not-installed', line: LOCAL_AGENT_TABLE['claude-code'].notInstalledLine },
       { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.codex.notInstalledLine },
     ]);
+    assert.equal(LOCAL_AGENT_TABLE['claude-code'].windowsNotInstalledLine, 'In PowerShell, run `irm https://claude.ai/install.ps1 | iex`');
+    assert.equal(LOCAL_AGENT_TABLE.codex.notInstalledLine, 'Install with `curl -fsSL https://chatgpt.com/codex/install.sh | sh`');
+    assert.equal(LOCAL_AGENT_TABLE.codex.windowsNotInstalledLine, 'In PowerShell, run `irm https://chatgpt.com/codex/install.ps1 | iex`');
+    assert.doesNotMatch(JSON.stringify(LOCAL_AGENT_TABLE), /npm install -g/);
     assert.equal('adapterInstalled' in agents[1]!, false);
     assert.equal('installCommand' in agents[1]!, false);
   } finally { rmSync(directory, { recursive: true, force: true }); }
@@ -68,7 +73,8 @@ test('Windows PATH uses expanded user and machine registry values without starti
   ]);
   assert.deepEqual(executableNames('claude', 'win32', '.CMD;.EXE;.BAT'), ['claude.CMD', 'claude.EXE', 'claude.BAT', 'claude']);
   const missing = await discoverLocalAgents({ env: { ...process.env, PATH: '' }, platform: 'win32', registryReader: async () => '' });
-  assert.equal(missing.find(agent => agent.id === 'claude-code')?.line, 'Install with `npm install -g @anthropic-ai/claude-code`');
+  assert.equal(missing.find(agent => agent.id === 'claude-code')?.line, 'In PowerShell, run `irm https://claude.ai/install.ps1 | iex`');
+  assert.equal(missing.find(agent => agent.id === 'codex')?.line, 'In PowerShell, run `irm https://chatgpt.com/codex/install.ps1 | iex`');
 });
 
 test('Windows discovery finds a user CLI .cmd shim from the registry PATH', async () => {
@@ -307,10 +313,13 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {
       const children = readFileSync(calls, 'utf8').trim().split('\n').map(line => JSON.parse(line) as { pid: number; args: string[] });
       assert.equal(children.length, 1, 'a timed-out Claude JSON probe must not start a text probe');
       assert.deepEqual(children[0]!.args, probe === 'codex' ? ['login', 'status'] : probe === 'claude-text' ? ['auth', 'status', '--text'] : ['auth', 'status']);
-      for (const child of children) assert.throws(() => process.kill(child.pid, 0), { code: 'ESRCH' });
+      for (const child of children) assert.equal(processHasExited(child.pid), true);
     } finally {
       if (existsSync(calls)) for (const line of readFileSync(calls, 'utf8').trim().split('\n')) {
-        try { process.kill((JSON.parse(line) as { pid: number }).pid, 'SIGKILL'); } catch { /* Already reaped. */ }
+        const pid = (JSON.parse(line) as { pid: number }).pid;
+        if (!processHasExited(pid)) {
+          try { process.kill(pid, 'SIGKILL'); } catch { /* Already reaped. */ }
+        }
       }
       rmSync(directory, { recursive: true, force: true });
     }

@@ -7,11 +7,11 @@ import sys
 from pathlib import Path
 
 import pytest
+from runtime_protocol.door import DEFAULT_DOOR_PORT
 
 from astrid.installer.backend import Backend
 from astrid.installer.core import Installer, VerificationError, Version, write_json
 from astrid.installer.launcher import install
-from runtime_protocol.door import DEFAULT_DOOR_PORT
 
 
 def test_absolute_launcher_works_with_clean_home_and_unchanged_path(tmp_path):
@@ -29,10 +29,12 @@ def test_absolute_launcher_works_with_clean_home_and_unchanged_path(tmp_path):
     launcher, runner = install(root)
     assert launcher.is_absolute() and runner.is_file()
 
+    source_root = str(Path(__file__).resolve().parents[1])
     fake_python = (
         f"#!{sys.executable}\n"
         "import json, os, runpy, sys\n"
         "if len(sys.argv) > 2 and sys.argv[1] == '-I' and sys.argv[2].endswith('run_astrid.py'):\n"
+        f"    sys.path.insert(0, {source_root!r})\n"
         "    script = sys.argv[2]; sys.argv = [script, *sys.argv[3:]]; runpy.run_path(script, run_name='__main__')\n"
         "else:\n"
         "    print(json.dumps({'args': sys.argv[1:], 'path': os.environ['PATH'], 'home': os.environ['HOME'], 'managed': os.environ['ASTRID_TEST_MANAGED'], 'root': os.environ['ASTRID_INSTALL_PROGRAM_ROOT']}))\n"
@@ -53,6 +55,13 @@ def test_absolute_launcher_works_with_clean_home_and_unchanged_path(tmp_path):
         "managed": "yes",
         "root": str(root),
     }
+
+    credentials = subprocess.run(
+        [str(launcher), "credential", "--help"], cwd=tmp_path, env=env,
+        check=True, capture_output=True, text=True,
+    )
+    assert "usage: astrid-credential" in credentials.stdout
+    assert "prompt for and store a provider credential" in credentials.stdout
 
     next_root = root / "versions" / "v2"
     next_python = next_root / "py" / "bin" / "python"

@@ -9,10 +9,10 @@ On macOS or Linux:
 curl -fsSL https://astrid.haus/install | sh
 ```
 
-On Windows, from PowerShell 5.1 or later:
+On Windows, open PowerShell and run:
 
 ```powershell
-& ([scriptblock]::Create((Invoke-RestMethod https://astrid.haus/install.ps1)))
+irm https://astrid.haus/install.ps1 | iex
 ```
 
 Run the same line to repair or restart an existing installation. It keeps the
@@ -36,9 +36,8 @@ and whether they came from `PATH` or a download; doctor bundles include those
 fields. Tools inside an older managed version are downloaded again so updates
 can remove that older version safely.
 
-`astrid install --uninstall` stops and unregisters the service and removes owned
-program files. It keeps data unless you explicitly add `--delete-data`; locked
-files are reported for removal after their processes exit.
+To remove an installed copy, run the same install line with `--uninstall`. It
+keeps data unless you explicitly add `--delete-data`.
 
 Run the line with `--doctor` to write a redacted support bundle using the installed
 version and its recorded workspace. An optional path after `--doctor` selects the
@@ -104,20 +103,36 @@ untouched and ignores worktree edits and untracked files. Git archive attributes
 apply. Source trees containing tracked symlinks or submodules are rejected.
 Git must be on `PATH` for local source overrides; hosted installs do not need it.
 
-With a disposable test home, separate empty program and data directories, and
-the release manifest's pinned uv executable, invoke the shared entry point from
-an agent development environment:
+With a disposable test home and separate empty program and data directories,
+serve the directory containing the local manifest on localhost. In that
+directory, start:
 
 ```sh
-/absolute/path/to/astrid-agent/.venv/bin/python -m astrid install \
-  --manifest /absolute/path/to/local-install-manifest.json \
-  --uv /absolute/path/to/pinned/uv \
+python -m http.server 17605 --bind 127.0.0.1
+```
+
+In another terminal, set the manifest URL in the install process and run the
+normal install line:
+
+```sh
+curl -fsSL https://astrid.haus/install | ASTRID_INSTALL_MANIFEST_URL=http://127.0.0.1:17605/local-install-manifest.json sh -s -- \
   --root /absolute/path/to/test/program \
   --data-root /absolute/path/to/test/data
 ```
 
+On Windows, pass the same arguments in PowerShell:
+
+```powershell
+$env:ASTRID_INSTALL_MANIFEST_URL = 'http://127.0.0.1:17605/local-install-manifest.json'
+& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) `
+  --root C:\path\to\test\program `
+  --data-root C:\path\to\test\data
+```
+
+Stop the local HTTP server after installation with Ctrl+C.
+
 This still downloads and installs the manifest's real tools and Python packages,
 registers the platform service, and verifies the installed Runtime. The selected
-manifest is recorded in the managed version directory. An existing installation
-uses its installed version during repair; pass `--update` to qualify new source
-pins against an existing workspace, including the normal backup and rollback.
+manifest is recorded in the managed version directory. For an existing
+installation, add `--update` to qualify new source pins against an existing
+workspace, including the normal backup and rollback.

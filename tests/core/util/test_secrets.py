@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import shlex
 from contextlib import redirect_stdout
 from pathlib import Path
 
@@ -121,6 +122,19 @@ def test_missing_key_error_is_actionable_and_never_leaks_other_values(
     assert "env file" in message
     assert SENTINEL not in message
     assert "set ASTRID_T34_MISSING" in exc_info.value.recovery_command
+
+
+def test_missing_key_recovery_uses_the_absolute_installed_launcher(monkeypatch, tmp_path: Path) -> None:
+    launcher = tmp_path / "Owner's Astrid" / "run-astrid"
+    monkeypatch.setenv("ASTRID_INSTALL_PROGRAM_ROOT", str(launcher.parent))
+    monkeypatch.setenv("ASTRID_ENV_FILE", str(tmp_path / "absent.env"))
+    monkeypatch.delenv("ASTRID_T34_MISSING", raising=False)
+
+    with pytest.raises(AstridError) as exc_info:
+        load_api_key("ASTRID_T34_MISSING")
+
+    expected = f"{shlex.quote(str(launcher))} credential set ASTRID_T34_MISSING"
+    assert expected in exc_info.value.recovery_command
 
 
 def test_missing_giphy_key_recovery_links_dashboard(monkeypatch, tmp_path: Path) -> None:

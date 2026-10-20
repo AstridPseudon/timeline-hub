@@ -36,10 +36,11 @@ Tools and knowledge for agents and humans to make art with open models.
 
 <!-- END GENERATED AGENT BANNER -->
 
-**Set up Astrid:** run the installer for your operating system, then open
+**Set up Astrid:** open Terminal on macOS or Linux, or PowerShell on Windows;
+run the installer for your operating system, then open
 [astrid.haus](https://astrid.haus).
 
-**Want step-by-step instructions?** [Set up Astrid →](docs/setup/README.md)
+**Want step-by-step instructions?** [Set up Astrid →](docs/getting-started.md)
 
 **Testing the installer?** Follow the [tester guide](docs/testing/TESTING.md), which records a known chat-history
 gap in the currently published agent engine.

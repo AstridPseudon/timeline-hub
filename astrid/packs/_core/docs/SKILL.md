@@ -30,7 +30,9 @@ Choose the route by the requested result. Read only that route's guidance:
 Using an existing workflow and building a reusable extension are different
 requests: pack builder handles the latter, including deciding what to reuse.
 
-On a new machine, install Astrid on this computer using the command for its OS.
+On a new machine, open Terminal on macOS or Linux, or PowerShell on Windows,
+then run the install line for its OS. Running the line again repairs or restarts
+Astrid and keeps existing work.
 On macOS or Linux, run:
 
 ```sh
@@ -99,11 +101,7 @@ new machine, follow the setup path above and open astrid.haus.
 python3 -m astrid doctor --json
 ```
 
-If the runtime is not already configured, the explicit operator command is:
-
-```bash
-astrid-runtime up --profile astrid
-```
+If Astrid isn't running, run the install line again.
 
 The gateway is the stable command surface. Begin with its census, then inspect
 one family when needed:

@@ -17,20 +17,27 @@ reference, never the key itself.
 
 ## Store or replace the local key
 
-Use the hidden prompt; do not paste the key into chat, shell history, or a
-command argument:
+Use the hidden prompt through the absolute Astrid launcher path shown by a
+missing-key message. The default macOS/Linux path is
+`$HOME/.local/share/astrid/run-astrid`; the default Windows path is
+`%LOCALAPPDATA%\Astrid\run-astrid.cmd`. Do not paste the key into chat, shell
+history, or a command argument:
 
 ```bash
-astrid-credential set runpod
+"$HOME/.local/share/astrid/run-astrid" credential set runpod
 ```
+
+In PowerShell:
+
+```powershell
+& "$env:LOCALAPPDATA\Astrid\run-astrid.cmd" credential set runpod
+```
+
+If you chose a different program folder, run the absolute launcher command
+printed in the missing-key message.
 
 Astrid writes the value to the shared file with owner-only permissions and
-preserves other entries. If the command is not installed in the current
-checkout, run it through the Astrid Python environment:
-
-```bash
-uv run python -m astrid.core.util.credential_store set runpod
-```
+preserves other entries.
 
 The setter changes only the selected shared credential file; it does not
 migrate or delete old credential files or project data. After the replacement

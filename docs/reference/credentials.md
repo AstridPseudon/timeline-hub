@@ -14,20 +14,33 @@ Otherwise Astrid uses `$ASTRID_HOME/astrid.env` when `ASTRID_HOME` is set, or
 
 ## Set a key
 
-Run the hidden prompt once for each provider:
+Use the hidden local prompt through Astrid's absolute launcher path. A missing
+key message prints the exact command for this installation; run that command
+with the provider name you need. The default macOS/Linux path is
+`$HOME/.local/share/astrid/run-astrid`, and the default Windows path is
+`%LOCALAPPDATA%\Astrid\run-astrid.cmd`:
 
-```bash
-astrid-credential set runpod
-astrid-credential set openai
-astrid-credential set huggingface
+```sh
+"$HOME/.local/share/astrid/run-astrid" credential set runpod
+"$HOME/.local/share/astrid/run-astrid" credential set openai
+"$HOME/.local/share/astrid/run-astrid" credential set huggingface
 ```
+
+In PowerShell:
+
+```powershell
+& "$env:LOCALAPPDATA\Astrid\run-astrid.cmd" credential set openai
+```
+
+These are the default install paths. If you chose a different program folder,
+run the absolute launcher command printed in the missing-key message.
 
 The command updates only that key, preserves other settings, and reports the
 file it wrote. It does not prove that the key authenticates successfully; use
 the provider's read-only validation step after saving it.
 
 For a profile-specific or app-specific secret, pass its uppercase environment
-variable name instead, such as `astrid-credential set HUGGING_FACE_HUB_TOKEN`.
+variable name instead, such as `credential set HUGGING_FACE_HUB_TOKEN`.
 For environment-based tools, `astrid-with-credential` resolves the same shared
 file and passes the value only to the child process. For example:
 

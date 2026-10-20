@@ -29,12 +29,25 @@ Enter secrets locally through the selected integration’s configuration. Keep t
 
 ## Store a provider key once
 
-Use the hidden local prompt for the provider you need:
+Use the hidden local prompt for the provider you need. Run the absolute launcher
+path shown in the missing-key message, followed by `credential set` and the
+provider name. For example, the default macOS/Linux launcher is
+`$HOME/.local/share/astrid/run-astrid` and the default Windows launcher is
+`%LOCALAPPDATA%\Astrid\run-astrid.cmd`:
 
-```bash
-astrid-credential set runpod
-astrid-credential set openai
+```sh
+"$HOME/.local/share/astrid/run-astrid" credential set runpod
+"$HOME/.local/share/astrid/run-astrid" credential set openai
 ```
+
+In PowerShell, use the command form:
+
+```powershell
+& "$env:LOCALAPPDATA\Astrid\run-astrid.cmd" credential set openai
+```
+
+These are the default install paths. If you chose a different program folder,
+run the absolute launcher command printed in the missing-key message.
 
 The command updates that key in `~/.astrid/astrid.env`, preserves other settings, and applies owner-only permissions. This file belongs to your login on this computer and is shared across local Astrid projects and checkouts. Do not commit it or copy it to another computer.
 

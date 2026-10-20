@@ -1,8 +1,8 @@
 # Getting Started with Astrid
 
-Install Astrid on this computer, then use it at
-[astrid.haus](https://astrid.haus). Do not install or clone `astrid-app` to use
-Astrid; that repository is for app developers.
+Open Terminal on macOS or Linux, or PowerShell on Windows. Install Astrid on
+this computer, then use it at [astrid.haus](https://astrid.haus). Do not
+install or clone `astrid-app` to use Astrid; that repository is for developers.
 
 On macOS or Linux, run:
 

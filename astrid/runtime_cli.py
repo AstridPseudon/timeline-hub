@@ -432,7 +432,7 @@ def main(argv: list[str] | None = None) -> int:
             "ok": False,
             "problem_code": getattr(exc, "code", "runtime_unavailable"),
             "error": str(exc),
-            "next_action": "astrid-runtime up" if getattr(exc, "code", "") != "workspace_missing" else "astrid setup",
+            "next_action": "run the Astrid install line again",
         }
         _emit(payload, json_mode=getattr(args, "json", False))
         return 1
