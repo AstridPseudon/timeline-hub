@@ -24,7 +24,7 @@ const row: Record<string, JSON> = { id: 'caller-reserved', track: 'V1', clipType
   app: { astrid: { on: null, opaque: ['caller-reserved', false] }, 'org.example': { literal: null } },
   opaque: { id: 'caller-reserved', ordered: [null, false, 0, {}, []] } };
 const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
-type Call = { method: string; path: string; key?: string; body?: CommitRequest };
+type Call = { method: string; path: string; key?: string; body?: CommitRequest; bodyBytes?: number[] };
 
 // Fake unit transport with local native replay: App queue/preview proof only, never Runtime acceptance.
 async function setup() {
@@ -37,10 +37,12 @@ async function setup() {
   const calls: Call[] = [];
   const accepted = new Map<string, { request: CommitRequest; response: CommitAcceptedMutation }>();
   const transport: Transport = async (method, path, headers, body) => {
-    if (body && !(body instanceof Uint8Array)) throw new Error('Unit transport requires bytes');
-    const request = body ? JSON.parse(new TextDecoder().decode(body)) as CommitRequest : undefined;
+    // TextEncoder's bytes may belong to a different realm from jsdom's Uint8Array.
+    const wire = body && ArrayBuffer.isView(body) ? new Uint8Array(body.buffer, body.byteOffset, body.byteLength) : undefined;
+    if (body && !wire) throw new Error('Unit transport requires bytes');
+    const request = wire ? JSON.parse(new TextDecoder().decode(wire)) as CommitRequest : undefined;
     const key = headers['Idempotency-Key'];
-    calls.push({ method, path, key, body: request });
+    calls.push({ method, path, key, body: request, bodyBytes: wire ? Array.from(wire) : undefined });
     const ok = (value: unknown) => ({ status: 200, headers: {}, body: bytes(value) });
     if (path === '/v1/health') return ok({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST,
       runtime_epoch: 1, runtime_instance_id: 'parent-add-unit' });
@@ -160,6 +162,7 @@ describe('native nonmedia parent birth in the one durable session', () => {
       created: ['parent/clip:caller-reserved'], expect: { 'parent/clip:caller-reserved::': { state: 'absent' } },
       selections: [{ key: 'collection.clips', owner: 'parent', members: [], order: [], boundaries: [], policy: 'guard-membership', query_version: 1 }] });
     expect(JSON.parse(stored.pending!.request.body)).toEqual(request.body);
+    expect(Array.from(new TextEncoder().encode(stored.pending!.request.body))).toEqual(request.bodyBytes);
     expect(stored.pending!.request.key).toBe(request.key);
     const reopened = await env.mount(await env.provider.loadTimelineCommandBasis(scope.timelineId));
     expect(reopened.getState().status).toBe('recovery');

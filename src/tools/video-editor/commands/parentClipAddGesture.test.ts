@@ -96,6 +96,27 @@ describe('parent nonmedia add gesture and lossless birth preview', () => {
     expect(() => projectParentClipAddPreview(parentClipAddPreview(row), next)).toThrow('Invalid');
   });
 
+  it('keeps snapshot metadata and the accepted base while marking a birth as local', () => {
+    const before = current();
+    before.head = { projectId: 'project', timelineId: 'timeline', headRevisionId: 'r0', headPublicationId: 'p0' };
+    before.editProjection = { kind: 'accepted', head: { revisionId: 'r0', publicationId: 'p0' } };
+    before.dataLanes = [{ id: 'retained-lane' }] as typeof before.dataLanes;
+    before.transcriptReferences = {} as typeof before.transcriptReferences;
+    const next = projectParentClipAddPreview(parentClipAddPreview(row), before)!;
+    expect(next.head).toBe(before.head);
+    expect(next.configVersion).toBe(before.configVersion);
+    expect(next.dataLanes).toBe(before.dataLanes);
+    expect(next.transcriptReferences).toBe(before.transcriptReferences);
+    expect(next.sourceItemsBySchemaRef).toBe(before.sourceItemsBySchemaRef);
+    expect(next.registry).toBe(before.registry);
+    expect(next.assetMap).toBe(before.assetMap);
+    expect(next.editProjection).toEqual({ kind: 'local', base: before.editProjection.head, generation: 0 });
+    expect(before.editProjection.kind).toBe('accepted');
+    const again = projectParentClipAddPreview(parentClipAddPreview({ ...row, id: 'second' }), next)!;
+    expect(again.editProjection).toBe(next.editProjection);
+    expect(again.dataLanes).toBe(before.dataLanes);
+  });
+
   it('leaves other sources to the existing compiler and rejects partial, retargeted or multi-row births', () => {
     const data = current();
     expect(projectParentClipAddPreview({ ...parentClipAddPreview(row), source: 'clip.trim' }, data)).toBeUndefined();

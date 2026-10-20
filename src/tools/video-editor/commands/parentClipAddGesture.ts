@@ -61,6 +61,12 @@ export function projectParentClipAddPreview(patch: TimelinePatch, current: Timel
   }
   const clip = structuredClone(row) as unknown as TimelineClip;
   const config = { ...current.config, clips: [...current.config.clips, clip] };
-  return assembleTimelineData({ ...current, config,
+  const assembled = assembleTimelineData({ ...current, config,
     resolvedConfig: { ...current.resolvedConfig, clips: [...current.resolvedConfig.clips, clip] } });
+  const base = current.editProjection?.kind === 'accepted' ? current.editProjection.head
+    : current.head?.headRevisionId && current.head.headPublicationId
+      ? { revisionId: current.head.headRevisionId, publicationId: current.head.headPublicationId } : undefined;
+  return { ...current, ...assembled, dataLanes: current.dataLanes,
+    editProjection: current.editProjection?.kind === 'local' ? current.editProjection
+      : base ? { kind: 'local', base, generation: 0 } : undefined };
 }

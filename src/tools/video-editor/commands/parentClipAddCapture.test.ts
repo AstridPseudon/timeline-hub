@@ -5,7 +5,8 @@ import { AuthoredState, ClipMoveError, copy } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
 import fixture from './fixtures/recipe_m2_parent_clip_add.json';
 
-// Native fixtures generated at Agent 0ace5c0bd; source-reconciled with frozen Agent 027bd16d.
+// Native fixtures generated at Agent 0ace5c0bd; executed against frozen Agent 027bd16d
+// by fixtures/parent_clip_add_parity.py (full commands, records and after-bundles).
 // The first case matches its unchanged recipe_m2_clip_add.json command/record (standalone ordinal/cause 0).
 type Golden = {
   name: string; bundle: AuthoredBundle; select: string; row: Record<string, JSON>;
