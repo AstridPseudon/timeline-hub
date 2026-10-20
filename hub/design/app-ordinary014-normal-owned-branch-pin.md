@@ -88,3 +88,44 @@ The Composition config-resolution test was attempted without installation. Its r
 No full suite, project `tsc`, install, network, build, browser, localhost/socket, actual Runtime/Agent consumer journey, release, activation, merge, or integration-pin movement was performed. The pin check is source/byte qualification only and is not actual paired-consumer proof.
 
 Next authorized gate: privately qualify Runtime server `202074110717146fc7f08af2306a8dd7f695b0b1` with Agent source `3c4f6de4fa777323b3386c01c7266b619b86af6d`, retaining the exact `6ba7…` schema and `f021…` artifact tuple; carry the `cd0` strict marker transition before integration adoption/owner release confirmation. Keep this App branch staging-only until that gate and orchestrator authorization.
+
+## Independent review — 2026-10-20
+
+**Disposition: APPROVE for branch staging only.** This review does not approve
+integration adoption, release, activation, public pin movement, or the actual
+Runtime/Agent cohort gate.
+
+Reviewed App `HEAD ed9728ead0676a04ebd4d413e9f2574da037723c` against parent
+`0d5009e18bee8e29f894dabf5db501a0fcea750f` / tree
+`b323667662d565526d7c2395733f26e2c6380378`. The exact producer checkout was
+clean at Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7` / tree
+`4b7dd0fe44be973c344bab3de568eaf0bdd28476`. The normal updater was exercised
+in a private consumer copy after perturbing a vendored byte and its lock hash;
+`update` restored the bytes and a producer-backed `check` passed.
+
+Independent byte/structure checks passed: 75 producer artifacts and all 13
+consumer destinations matched working bytes, committed bytes, manifest hashes,
+and lock hashes; raw `edit-command.json` is `6ba7b51e…768f2d` with 55 `$defs`
+and 29 command `allOf` operations; OpenAPI has 133 operations; artifact
+version is `f021e771…f20fa0`; manifest is `ecda762e…2d815`; and wire schema is
+`ce3781c2…30d59`. The generated metadata operation line is byte-identical to
+parent (133 operations), including the unchanged three local-door-only calls
+`commitTimeline`, `listTimelineCommits`, and `getProjectMediaSelection`.
+The narrow paired-policy controls passed for both relay aliases and the three
+local-door refusals. The diff contains only the four intended generated/lock
+files. No Composition/package/lock path changed; the public13 tarball remains
+`9412ae25…f54738`.
+
+The five reported fake-runtime failures are preexisting, not pin regressions.
+An exact parent checkout and this branch both produced 64 passing / 5 failing
+tests in `src/integrations/runtime/dataProvider.test.ts`; the same five named
+media-import tests fail at the unchanged fake-runtime fallback
+`src/test/fakeWorkspaceRuntime.ts:501` for the unhandled
+`GET /v1/projects/project-r1/media-selection?...`. No assertion was changed,
+skipped, weakened, or marked expected-to-fail.
+
+Remaining gate: privately qualify Runtime `202074110717146fc7f08af2306a8dd7f695b0b1`
+with Agent `3c4f6de4fa777323b3386c01c7266b619b86af6d`, then complete the `cd0`
+strict marker transition before integration adoption or owner release
+confirmation. Full, project `tsc`, build/install, browser/network/socket, and
+actual paired-consumer qualification were intentionally not run here.
