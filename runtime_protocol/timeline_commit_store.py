@@ -13,7 +13,7 @@ import json
 import math
 import re
 
-from .errors import ProtocolError, ValidationError
+from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
 from .util import canonical_json, new_id, now
 
@@ -396,9 +396,15 @@ class TimelineCommitStore:
         return {"revision_id": row["id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"])}
 
     def _validate_closure(self, document):
+        from .visual_seam import parent_clips
+
         project_id, timeline_id = document["project_id"], document["timeline_id"]
         self._membership(project_id, timeline_id)
         parent = document["parent_revision"]
+        try:
+            parent_clips(parent["payload"])
+        except (ConflictError, ValidationError) as exc:
+            reject("invalid_closure", str(exc), status=422)
         shots, internals = document["shot_revisions"], document["internal_timeline_revisions"]
         manifest = document["dependency_manifest"]
         for clip in parent["payload"]["clips"]:

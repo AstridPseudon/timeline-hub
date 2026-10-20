@@ -12,11 +12,12 @@ from types import SimpleNamespace
 
 import pytest
 
+from precut_realm_fixture import load_precut_realm_fixture
 from runtime_protocol.contract_metadata import SCHEMA_DIGEST
 from runtime_protocol.errors import AuthorizationError, RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.timeline_commit_port import RequestCommitPort, digest, route_path
-from timeline_commit_film_fixture import build_film_fixture
+from timeline_commit_film_fixture import FilmFixture
 
 pytestmark = pytest.mark.integration
 
@@ -64,40 +65,28 @@ def retained(request, tmp_path, astrid_importable, monkeypatch):
     from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
 
     assert Path(agent.__file__).resolve().is_relative_to(astrid_importable)
-    film = build_film_fixture(tmp_path)
+    captured = load_precut_realm_fixture(tmp_path, variant="anchor")
+    pins = captured.pins
+    film = FilmFixture(
+        source_root=captured.copy_roots[0],
+        duplicate_root=captured.copy_roots[1],
+        project_id=pins["project_id"],
+        timeline_id=pins["timeline_id"],
+        parent_revision_id=pins["parent_revision_id"],
+        media_ids=pins["media_ids"],
+        transcript_document_id=pins["transcript_document_id"],
+        text_binding_id=pins["text_binding_id"],
+    )
     service = RuntimeService(film.duplicate_root)
     try:
         transcript = service.get_document(film.project_id, film.transcript_document_id)
-        config = service.create_document(
-            film.project_id, {"document_id": "film.config", "kind": "film.config", "content": {
-                "schema": "film.config/v1", "enabled": True, "opaque": [None, {"keep": True}],
-                "source": {"media_id": transcript["content"]["media_id"],
-                           "source_id": transcript["content"]["source_id"], "word_id": "word-1"},
-                "time_map": {"source_offset": 0, "speed": 1},
-            }}, idempotency_key="config-v1",
-        )["data"]
+        config = service.get_document(film.project_id, "film.config")
         sources = [config, transcript]
         captures = [{"pin": {"document_id": source["document_id"], "version": source["version"],
                               "content_digest": digest(source["content"])}, "document": source}
                     for source in sources]
         selected = captures[1 if request.param == "transcript" else 0]
         source, pin = selected["document"], selected["pin"]
-        parent = service.get_project_parent_composition_revision(
-            film.project_id, film.timeline_id, film.parent_revision_id,
-        )["payload"]
-        # Keep a real authored word anchor, including both legacy intent spellings.
-        parent["clips"][0]["at"] = 0.25
-        parent["clips"][0]["app"] = {
-            "on": "word:word-1", "astrid": {"on": "word:word-1", "fixed_start": False, "for": 5.5},
-        }
-        parent["config"]["clips"] = copy.deepcopy(parent["clips"])
-        service.publish_parent_composition(
-            film.project_id, film.timeline_id,
-            {"project_id": film.project_id, "timeline_id": film.timeline_id,
-             "expected_head": film.parent_revision_id, "parent_revision_id": "input-anchor-baseline",
-             "parent_composition": parent}, idempotency_key="input-anchor-baseline",
-        )
-
         class InitialInputAcceptance:
             provider_id = "astrid-v1"
             interface_version = 1

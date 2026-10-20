@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from precut_realm_fixture import load_precut_realm_fixture
 from runtime_protocol.errors import ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.timeline_commit_baseline import verify_baseline
@@ -20,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_prepared_accepts_exact_api_produced_raw_immutable_images(tmp_path):
     film = build_film_fixture(tmp_path)
+    captured = load_precut_realm_fixture(tmp_path, variant="raw")
     service = RuntimeService(film.duplicate_root)
     try:
         original = verify_baseline(
@@ -50,21 +52,20 @@ def test_prepared_accepts_exact_api_produced_raw_immutable_images(tmp_path):
         for occurrence in parent["occurrences"]:
             if occurrence["shot_revision_id"] == old_shot_revision:
                 occurrence["shot_revision_id"] = shot["revision_id"]
-        service.publish_parent_composition(
-            film.project_id, film.timeline_id,
-            {"project_id": film.project_id, "timeline_id": film.timeline_id,
-             "expected_head": film.parent_revision_id,
-             "parent_revision_id": "raw-parent", "parent_composition": parent,
-             "internal_timeline_revisions": [{key: internal[key] for key in
-                                              ("timeline_id", "revision_id", "payload")}],
-             "shot_revisions": [{key: shot[key] for key in
-                                 ("shot_id", "revision_id", "internal_timeline_revision_id", "payload")}]},
-            idempotency_key="raw-publication",
-        )
-        document = verify_baseline(
+        service.close()
+        service = RuntimeService(captured.copy_roots[1])
+        baseline = verify_baseline(
             service.store.conn, film.project_id, film.timeline_id,
             read_object=service.cas.read,
-        )["canonical_document"]
+        )
+        assert baseline["head"] == {
+            "revision_id": "raw-parent",
+            "publication_id": captured.pins["publication_receipt_id"],
+        }
+        receipt = baseline["entries"][-1]["receipt"]
+        assert receipt["idempotency_key"] == "raw-publication"
+        assert receipt["event_ids"] == list(captured.pins["publication_event_ids"])
+        document = baseline["canonical_document"]
         value = prepared()
         value["canonical_document"] = document
         value["document_digest"] = service._revision_digest(document)
