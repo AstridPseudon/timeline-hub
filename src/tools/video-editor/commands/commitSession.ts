@@ -118,7 +118,7 @@ export async function createTimelineCommandSession(options: Options) {
       if (projectionPending === basis) projectionPending = undefined;
     } finally { projecting = false; }
   }
-  async function pump() {
+  async function pump(retryPending = true) {
     if (sending) return sending;
     sending = (async () => {
       await chain;
@@ -133,6 +133,12 @@ export async function createTimelineCommandSession(options: Options) {
       }
       if (publishRefusal()) return;
       while (!stopped && record.intents.length && record.intents[0].conflict === undefined) {
+        if (record.pending && !retryPending) {
+          const outcome = record.pending.outcome;
+          publish('retry', outcome && outcome.kind !== 'accepted'
+            ? String((outcome.error as { message?: string } | null)?.message ?? 'Commit outcome is unknown; retry the exact request') : null);
+          return;
+        }
         publish('saving');
         const priorAccepted = record.accepted?.intentId;
         record = await box.dispatch((intent, head) => {
@@ -229,7 +235,7 @@ export async function createTimelineCommandSession(options: Options) {
     pendingAppends.push({ localId, predecessor, head: capturedBasis && 'head' in capturedBasis ? capturedBasis.head : known.head, generation,
       payload: { ...payload, displayBasis: acceptedBasis } });
     chain = chain.then(persistAppends);
-    void chain.then(() => pump());
+    void chain.then(() => pump(false));
   }
   const intentIds = new Map<string, string>();
   const port: ClipMoveCapturePort = {
@@ -370,6 +376,7 @@ export async function createTimelineCommandSession(options: Options) {
       box = claimed;
       state = { ...state, ownerId, recoverableOwners: [] };
       record = await box.read();
+      if (owner && !editorWork(record)) throw new Error('Outbox requires its original requester recovery');
       if (record.intents.length) {
         lastIntent = record.intents[record.intents.length - 1].id;
         const payload = record.intents[record.intents.length - 1].payload as unknown as Payload;
@@ -408,7 +415,17 @@ export async function createTimelineCommandSession(options: Options) {
       throw error;
     }
   }
-  const owners = (await storage.list(options.scope)).filter((owner) => owner.intents.length || owner.pending);
+  function editorWork(owner: OutboxRecord) {
+    // Creation/init and task-only continuations belong to their explicit requester.
+    // These local shapes route recovery; they never prove an initialization completed.
+    return owner.intents.length > 0 && owner.intents.every((intent) => {
+      const payload = intent.payload;
+      return !('create' in intent.basis) && payload !== null && typeof payload === 'object' && !Array.isArray(payload)
+        && payload.kind !== 'timeline-init' && 'before' in payload && 'after' in payload;
+    }) && (!owner.pending || (owner.pending.request.method === 'POST'
+      && owner.pending.request.path === `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`));
+  }
+  const owners = (await storage.list(options.scope)).filter(editorWork);
   if (owners.length) {
     state = { ...state, recoverableOwners: owners.map((owner) => owner.ownerId) };
     publish('recovery', 'Choose the persisted editor owner to recover its exact pending request');

@@ -8,6 +8,9 @@ import {
   type OutboxIntent,
   type OutboxOutcome,
   type OutboxRequest,
+  type OutboxRenderTarget,
+  type OutboxPlacementInput,
+  type OutboxPlacementContinuation,
 } from './commitOutbox.ts';
 
 const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project', timelineId: 'timeline' };
@@ -28,6 +31,29 @@ const build = (intent: OutboxIntent, base: OutboxHead) => ({
 const accepted = (head = ha): Extract<OutboxOutcome, { kind: 'accepted' }> => ({
   kind: 'accepted', head, value: { receipt: { receipt_id: head.publicationId }, closure: { opaque: null } },
 });
+const renderIntent = { format: 'video', settings: { fps: 24 }, opaque: null };
+// Opaque, adapter-prevalidated bytes: this suite tests persistence, not admission DTOs.
+const admission: OutboxRequest = {
+  method: 'POST', path: '/v1/tasks', body: ' { "local_test_target": "RA/PA" }\n', key: 'original-render-key',
+};
+const taskLocator = { task: 'original-task', run: 'original-run' };
+// Local examples only; the future Agent/Runtime adapter validates these opaque pins/policies.
+const placementInput: OutboxPlacementInput = {
+  request: { ...admission, body: ' { "local_test_output": "approved-output" }\n', key: 'placement-admission-key' },
+  head: h0, readClosure: { immutable: ['original-read-pin'] }, ownerRef: 'parent/shot:owner',
+  anchor: { ref: 'parent/clip:anchor' }, lane: { ref: 'parent/track:lane' }, fallback: null,
+  policy: { placement: 'anchor-after', fallback: 'append' }, output: { selector: 'approved-output', ordinal: 0 },
+  autoApprove: true, createdIds: ['reserved-birth-id'],
+};
+const placementLocator = { projectId: scope.projectId, taskId: 'generation-task', runId: 'generation-run' };
+const mediaPin = { immutable: 'selected-managed-media-pin' };
+const placementCapture = {
+  mediaPin,
+  payload: {
+    commands: move(5).commands.map((command) => ({ ...command, created: placementInput.createdIds.map((id) => ({ id })) })),
+    mediaPin,
+  },
+};
 function deferred<T>() {
   let resolve!: (value: T) => void;
   const promise = new Promise<T>((done) => { resolve = done; });
@@ -89,6 +115,176 @@ function environment() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('durable command outbox', () => {
+  it('retains rejected placement dependencies and cancels their links on explicit disposition without rearming', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      await box.reservePlacementAdmission('placement', placementInput);
+      await box.recordPlacementTask('placement', placementInput.request, placementLocator);
+      const captured = await box.capturePlacement('placement', mediaPin, async () => placementCapture.payload);
+      const a = captured.placement!.intentId;
+      const b = await box.append(move(7), { after: a });
+      const rejected = await box.dispatch(build, async () => ({ kind: 'rejected', error: { reason: 'original-anchor-changed' } }));
+      expect(rejected.intents.map((intent) => intent.conflict)).toEqual([
+        { reason: 'original-anchor-changed' }, { reason: 'original-anchor-changed' },
+      ]);
+      expect(rejected.placementContinuations![0].placement).toEqual({ intentId: a });
+      env.fault.abortNextWrite = true;
+      await expect(box.resolveRejected([a, b])).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(rejected);
+      const disposed = await box.resolveRejected([a, b]);
+      expect(disposed.placementContinuations![0]).toEqual({ ...captured, placement: { intentId: a, cancelled: true } });
+      const recapture = vi.fn(async () => placementCapture.payload);
+      await box.capturePlacement('placement', mediaPin, recapture);
+      expect(recapture).not.toHaveBeenCalled();
+      expect((await box.read()).intents).toEqual([]);
+    });
+  });
+
+  it('checkpoints the original init atomically and keeps it after later edits, inverse ACKs and reopen', async () => {
+    const env = environment();
+    let owner = '';
+    let initialization: Awaited<ReturnType<ClaimedOutbox['read']>>['initialization'];
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      const init = await box.append({ kind: 'timeline-init', commands: ['original-guards'] }, { head: h0 });
+      const dependent = await box.append(move(7), { after: init });
+      let original!: OutboxRequest;
+      await expect(box.dispatch(build, async (request) => {
+        original = request;
+        env.fault.abortNextWrite = true;
+        return accepted();
+      })).rejects.toThrow('aborted');
+      const before = await box.read();
+      expect(before.initialization).toBeUndefined();
+      expect(before.pending!.request).toEqual(original);
+      expect(before.intents.map((intent) => intent.id)).toEqual([init, dependent]);
+      const after = await box.dispatch(() => { throw new Error('Must retry exact init'); }, async (request) => {
+        expect(request).toEqual(original);
+        return accepted();
+      });
+      initialization = structuredClone(after.initialization);
+      expect(initialization).toEqual({ intent: before.intents[0], request: original, head: ha, value: accepted().value });
+      expect(after.intents[0].readyBase).toEqual(ha);
+      after.initialization!.request.key = 'detached-mutation';
+      await box.dispatch(build, async () => accepted({ revisionId: 'RB', publicationId: 'PB' }));
+      expect((await box.read()).initialization).toEqual(initialization);
+      await box.append({ commands: ['timeline.inverse'] }, { after: dependent });
+      await box.dispatch(build, async () => accepted({ revisionId: h0.revisionId, publicationId: 'inverse-p3' }));
+      expect((await box.read()).accepted?.head).toEqual({ revisionId: h0.revisionId, publicationId: 'inverse-p3' });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      expect((await box.read()).initialization).toEqual(initialization);
+      expect((await box.read()).intents).toEqual([]);
+    });
+  });
+
+  it('preserves existing render and placement continuation JSON during init and later ACKs', async () => {
+    const env = environment();
+    let owner = '';
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      await box.append({ kind: 'timeline-init' }, { head: h0 });
+    });
+    const continuations = {
+      renderContinuations: [{ intent: { opaque: [null, 'render'] }, accepted: { intentId: 'older', head: h0, value: {} } }],
+      placementContinuations: [{ id: 'placement', input: { opaque: [null, 'placement'] },
+        placement: { intentId: 'cancelled-placement', cancelled: true } }],
+    };
+    // Older/future owner fields are opaque to this bounded storage branch.
+    await new Promise<void>((resolve) => {
+      const request = env.factory.open('astrid.command-outbox', 1);
+      request.addEventListener('success', () => {
+        const db = request.result;
+        const records = db.recordsByStore.get('owners');
+        for (const [key, record] of records) records.set(key, { ...record, ...structuredClone(continuations) });
+        db.close();
+        resolve();
+      });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const init = await box.dispatch(build, async () => accepted());
+      expect(init).toMatchObject(continuations);
+      const link = init.initialization;
+      await box.append(move(9), { after: init.accepted!.intentId });
+      const later = await box.dispatch(build, async () => accepted({ revisionId: 'later', publicationId: 'later-p' }));
+      expect(later).toMatchObject(continuations);
+      expect(later.initialization).toEqual(link);
+    });
+  });
+
+  const createRequest: OutboxRequest = { method: 'POST', path: '/v1/projects/project/timelines',
+    body: '{"timeline_id":"timeline","name":"Main"}', key: 'astrid-first-timeline-project' };
+
+  it('persists pre-create identity and defaults before sending, including a lost or unpersisted create ACK', async () => {
+    const env = environment();
+    const defaults = { name: 'Main', output: { background: null }, tracks: ['V1', 'A1'] };
+    let owner = '';
+    let original!: OutboxRequest;
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      await box.reserveCreate(defaults, createRequest);
+      original = (await box.read()).pending!.request;
+      await box.dispatch(() => { throw new Error('No invented head'); }, async (request) => {
+        expect((await env.open().list(scope))[0].pending!.request).toEqual(request);
+        throw new Error('ACK lost');
+      });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      await expect(box.dispatch(() => { throw new Error('No recapture'); }, async (request) => {
+        expect(request).toEqual(original);
+        env.fault.abortNextWrite = true;
+        return accepted(h0);
+      })).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(before);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const next = await box.dispatch(() => { throw new Error('No recapture'); }, async (request) => {
+        expect(request).toEqual(original);
+        return accepted(h0);
+      });
+      expect(next.accepted).toMatchObject({ head: h0, creation: { request: original, payload: defaults } });
+      expect(next.pending).toBeUndefined();
+      expect(next.intents).toEqual([]);
+      const a = await box.append(move(5), { after: next.accepted!.intentId });
+      expect((await box.read()).intents[0]).toMatchObject({ id: a, readyBase: h0 });
+    });
+  });
+
+  it('does not send or lose earlier work if the pre-create reservation cannot persist', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const original = await box.read();
+      env.fault.abortNextWrite = true;
+      await expect(box.reserveCreate({ defaults: null }, createRequest)).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(original);
+      const transmit = vi.fn(async () => accepted(h0));
+      await expect(box.dispatch(build, transmit)).rejects.toThrow('empty');
+      expect(transmit).not.toHaveBeenCalled();
+      await box.reserveCreate({ defaults: null }, createRequest);
+      const reserved = await box.read();
+      await expect(box.reserveCreate({}, createRequest)).rejects.toThrow('unused');
+      await expect(box.cancel(reserved.pending!.intentId)).rejects.toThrow('uncertain');
+      expect(await box.read()).toEqual(reserved);
+    });
+  });
+
+  it('refuses cross-scope, changed-route, extra-wire-field and fabricated-head creation reservations', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const original = await box.read();
+      for (const request of [
+        { ...createRequest, path: '/v1/projects/other/timelines' },
+        { ...createRequest, method: 'PUT' },
+        { ...createRequest, key: 'invalid key' },
+        { ...createRequest, body: '{"timeline_id":"other"}' },
+        { ...createRequest, body: '{"timeline_id":"timeline","head_revision_id":"fake"}' },
+      ]) await expect(box.reserveCreate({}, request)).rejects.toThrow('Noncanonical');
+      await expect(box.append({}, { create: true })).rejects.toThrow('reserved');
+      expect(await box.read()).toEqual(original);
+    });
+  });
+
   it('never disposes an unknown flight, including before transmission completes', async () => {
     const env = environment();
     await env.open().create(scope, async (box) => {
@@ -171,6 +367,599 @@ describe('durable command outbox', () => {
         await expect(old.resolveRejected([a], { payload: move(9), head: ha })).rejects.toThrow('Stale');
         expect(await current.read()).toEqual(original);
         await current.resolveRejected([a]);
+      });
+    });
+  });
+
+  it('retains requester refusal atomically without replacing a linked placement or earlier conflict', async () => {
+    const env = environment();
+    let owner = '';
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      await box.reservePlacementAdmission('generation', placementInput);
+      env.fault.abortNextWrite = true;
+      await expect(box.recordPlacementConflict('generation', { message: 'task rejected' })).rejects.toThrow('aborted');
+      expect((await box.read()).placementContinuations![0].conflict).toBeUndefined();
+      await box.recordPlacementConflict('generation', { message: 'task rejected' });
+      const original = await box.recordPlacementConflict('generation', { message: 'replacement' });
+      expect(original.conflict).toEqual({ message: 'task rejected' });
+      await box.reservePlacementAdmission('linked', { ...placementInput, request: { ...placementInput.request, key: 'other-key' } });
+      await box.recordPlacementTask('linked', { ...placementInput.request, key: 'other-key' }, placementLocator);
+      const linked = await box.capturePlacement('linked', mediaPin, async () => placementCapture.payload);
+      expect(await box.recordPlacementConflict('linked', { message: 'late completion' })).toEqual(linked);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      expect((await box.read()).placementContinuations![0].conflict).toEqual({ message: 'task rejected' });
+    });
+  });
+  it('discovers task-only and accepted-only placement owners with the original scope after restart', async () => {
+    const env = environment();
+    let owner = '';
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      const saved = await box.reservePlacementAdmission('generation', placementInput);
+      expect(saved).toEqual({ id: 'generation', input: placementInput });
+      expect((await box.read()).intents).toEqual([]);
+    });
+    for (let restart = 0; restart < 2; restart += 1) {
+      const [listed] = await env.open().list(scope);
+      expect(listed.ownerId).toBe(owner);
+      expect(listed.placementContinuations).toEqual([{ id: 'generation', input: placementInput }]);
+      await env.open().recover(scope, owner, async (box) => {
+        // Before send and unknown POST outcome both replay these exact prepared bytes/key.
+        expect((await box.reservePlacementAdmission('generation', placementInput)).input.request).toEqual(placementInput.request);
+      });
+    }
+    await env.open().recover(scope, owner, async (box) => {
+      await box.recordPlacementTask('generation', placementInput.request, placementLocator);
+      await box.capturePlacement('generation', mediaPin, async (original) => {
+        expect(original).toEqual({ id: 'generation', input: placementInput, taskLocator: placementLocator, mediaPin });
+        return placementCapture.payload;
+      });
+      const intent = (await box.read()).intents[0];
+      expect(intent).toMatchObject({ payload: placementCapture.payload, basis: { head: h0 }, readyBase: h0 });
+      const after = await box.dispatch(build, async () => accepted());
+      expect(after.intents).toEqual([]);
+      expect(after.placementContinuations![0].placement).toEqual({ intentId: intent.id,
+        accepted: { intentId: intent.id, head: ha, value: accepted().value } });
+    });
+    const [acceptedOwner] = await env.open().list(scope);
+    expect(acceptedOwner.ownerId).toBe(owner);
+    expect(acceptedOwner.placementContinuations![0].placement?.accepted?.head).toEqual(ha);
+    for (const field of ['realmId', 'actorId', 'projectId', 'timelineId']) {
+      expect(await env.open().list({ ...scope, [field]: 'other' })).toEqual([]);
+      const work = vi.fn();
+      await expect(env.open().recover({ ...scope, [field]: 'other' }, owner, work)).rejects.toThrow('explicit claim');
+      expect(work).not.toHaveBeenCalled();
+    }
+    for (const other of [{ ...scope, timelineId: 'other' }, { ...scope, projectId: 'other' }]) {
+      await env.open().create(other, async (box) => { await box.reservePlacementAdmission('generation', placementInput); });
+    }
+    expect(await env.open().list({ realmId: scope.realmId, actorId: scope.actorId })).toHaveLength(3);
+    expect(await env.open().list({ realmId: scope.realmId, actorId: scope.actorId, projectId: scope.projectId })).toHaveLength(2);
+    expect(await env.open().list({ realmId: 'other', actorId: scope.actorId })).toEqual([]);
+    expect(await env.open().list({ realmId: scope.realmId, actorId: 'other' })).toEqual([]);
+    await expect(env.open().list({ realmId: scope.realmId, actorId: '' })).rejects.toThrow('scope');
+    expect(await env.open().list(scope)).toHaveLength(1);
+  });
+
+  it('refuses missing approval/bindings or failed storage before the caller can POST', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const post = vi.fn();
+      const reserveThenPost = async (input: OutboxPlacementInput) => {
+        const saved = await box.reservePlacementAdmission('generation', input);
+        post(saved.input.request);
+      };
+      for (const field of Object.keys(placementInput)) {
+        const missing: Partial<OutboxPlacementInput> = { ...placementInput };
+        delete missing[field as keyof OutboxPlacementInput];
+        await expect(reserveThenPost(missing as OutboxPlacementInput)).rejects.toThrow();
+      }
+      for (const changed of [
+        { autoApprove: false }, { ownerRef: '' }, { head: { revisionId: 'R0', publicationId: '' } },
+        { readClosure: null }, { policy: null }, { output: null }, { createdIds: [] },
+        { createdIds: ['same', 'same'] }, { createdIds: [''] }, { readClosure: { invalid: Infinity } },
+        { request: { ...placementInput.request, key: '' } },
+        { request: { ...placementInput.request, method: 'GET' } },
+        { request: { ...placementInput.request, path: '/v1/other/tasks' } },
+      ]) await expect(reserveThenPost({ ...placementInput, ...changed } as OutboxPlacementInput)).rejects.toThrow();
+      env.fault.abortNextWrite = true;
+      await expect(reserveThenPost(placementInput)).rejects.toThrow('aborted');
+      expect(post).not.toHaveBeenCalled();
+      expect((await box.read()).placementContinuations).toBeUndefined();
+      const unsaved = await box.append(move(5), { head: h0 });
+      await expect(reserveThenPost(placementInput)).rejects.toThrow('Acknowledge');
+      await box.cancel(unsaved);
+      await box.reservePlacementAdmission('generation', { ...placementInput, anchor: null, lane: null, fallback: null });
+    });
+  });
+
+  it('freezes prepared bytes, head, raw policy, closure, IDs and locator without trusting changed completion inputs', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      await expect(box.recordPlacementTask('unknown', placementInput.request, placementLocator)).rejects.toThrow('Unknown');
+      await box.reservePlacementAdmission('generation', placementInput);
+      const before = await box.read();
+      for (const changed of [
+        { head: ha }, { readClosure: { immutable: ['current-C'] } }, { ownerRef: 'other-owner' },
+        { anchor: null }, { lane: null }, { fallback: 'new-fallback' }, { policy: 'other' },
+        { output: 'other' }, { createdIds: ['replacement-id'] },
+        ...['method', 'path', 'body', 'key'].map((field) => ({ request: { ...placementInput.request, [field]: 'changed' } })),
+      ]) {
+        await expect(box.reservePlacementAdmission('generation', { ...placementInput, ...changed })).rejects.toThrow();
+      }
+      await expect(box.reservePlacementAdmission('another-id', placementInput)).rejects.toThrow('already reserved');
+      for (const field of ['method', 'path', 'body', 'key']) {
+        await expect(box.recordPlacementTask('generation', { ...placementInput.request, [field]: 'changed' }, placementLocator))
+          .rejects.toThrow('exact reserved');
+      }
+      for (const changed of [{ projectId: 'other' }, { taskId: '' }, { runId: '' }]) {
+        await expect(box.recordPlacementTask('generation', placementInput.request, { ...placementLocator, ...changed }))
+          .rejects.toThrow('locator');
+      }
+      expect(await box.read()).toEqual(before);
+      const capture = vi.fn(async () => placementCapture.payload);
+      await expect(box.capturePlacement('generation', mediaPin, capture)).rejects.toThrow('saved task locator');
+      expect(capture).not.toHaveBeenCalled();
+      env.fault.abortNextWrite = true;
+      await expect(box.recordPlacementTask('generation', placementInput.request, placementLocator)).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(before);
+      await box.recordPlacementTask('generation', placementInput.request, placementLocator);
+      await expect(box.recordPlacementTask('generation', placementInput.request, { ...placementLocator, taskId: 'replacement' }))
+        .rejects.toThrow('cannot change');
+      await box.recordPlacementTask('generation', placementInput.request, placementLocator);
+    });
+  });
+
+  it.each(['before append', 'after append', 'lost commit ACK', 'aborted commit ACK'] as const)(
+    'keeps zero or one linked placement through %s and never recaptures after B/C/undo', async (window) => {
+      const env = environment();
+      let owner = '';
+      let originalRequest: OutboxRequest | undefined;
+      let intentId = '';
+      const capture = vi.fn(async (original: OutboxPlacementContinuation) => {
+        expect(original.input.head).toEqual(h0);
+        expect(original.input.createdIds).toEqual(['reserved-birth-id']);
+        expect(original.mediaPin).toEqual(mediaPin);
+        if (window === 'before append' && capture.mock.calls.length === 1) env.fault.abortNextWrite = true;
+        return placementCapture.payload;
+      });
+      await env.open().create(scope, async (box, ownerId) => {
+        owner = ownerId;
+        await box.reservePlacementAdmission('generation', placementInput);
+        await box.recordPlacementTask('generation', placementInput.request, placementLocator);
+        // An intervening acceptance must never replace the original capture basis.
+        await box.append(move(7), { head: h0 });
+        await box.dispatch(build, async () => accepted({ revisionId: 'REMOTE-C', publicationId: 'REMOTE-C' }));
+        if (window === 'before append') {
+          await expect(box.capturePlacement('generation', mediaPin, capture)).rejects.toThrow('aborted');
+          expect((await box.read()).intents).toEqual([]);
+          expect((await box.read()).placementContinuations![0].placement).toBeUndefined();
+          return;
+        }
+        intentId = (await box.capturePlacement('generation', mediaPin, capture)).placement!.intentId;
+        if (window === 'after append') return;
+        const sending = box.dispatch(build, async (request) => {
+          originalRequest = request;
+          if (window === 'lost commit ACK') throw new Error('unknown commit result');
+          env.fault.abortNextWrite = true;
+          return accepted();
+        });
+        if (window === 'aborted commit ACK') await expect(sending).rejects.toThrow('aborted');
+        else await sending;
+      });
+      await env.open().recover(scope, owner, async (box) => {
+        const saved = await box.capturePlacement('generation', mediaPin, capture);
+        if (intentId) expect(saved.placement!.intentId).toBe(intentId);
+        intentId = saved.placement!.intentId;
+        const queued = await box.read();
+        expect(queued.intents).toEqual([{ id: intentId, payload: placementCapture.payload, basis: { head: h0 }, readyBase: h0 }]);
+        await box.capturePlacement('generation', mediaPin, capture);
+        const mustNotBuild = vi.fn(() => { throw new Error('do not refresh guards or head'); });
+        await box.dispatch(originalRequest ? mustNotBuild : build, async (request) => {
+          if (originalRequest) expect(request).toEqual(originalRequest);
+          expect(JSON.parse(request.body)).toEqual(build(queued.intents[0], h0).body);
+          return accepted();
+        });
+        expect(mustNotBuild).not.toHaveBeenCalled();
+        const retained = (await box.read()).placementContinuations![0];
+        for (const op of ['B', 'C', 'timeline.inverse']) {
+          await box.append({ commands: [{ op }] }, { head: ha });
+          await box.dispatch(build, async () => accepted({ revisionId: op, publicationId: op }));
+          expect(await box.capturePlacement('generation', mediaPin, capture)).toEqual(retained);
+        }
+      });
+      await env.open().recover(scope, owner, async (box) => {
+        const duplicate = vi.fn(async () => { throw new Error('duplicate completion must not capture'); });
+        const saved = await box.capturePlacement('generation', mediaPin, duplicate);
+        expect(duplicate).not.toHaveBeenCalled();
+        expect(saved.placement).toEqual({ intentId, accepted: { intentId, head: ha, value: accepted().value } });
+        expect((await box.read()).intents).toEqual([]);
+      });
+      expect(capture).toHaveBeenCalledTimes(window === 'before append' ? 2 : 1);
+    },
+  );
+
+  it('retains cancelled placement linkage and visible failed captures instead of rearming completion', async () => {
+    const env = environment();
+    let owner = '';
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      await box.reservePlacementAdmission('cancelled', placementInput);
+      await box.recordPlacementTask('cancelled', placementInput.request, placementLocator);
+      const saved = await box.capturePlacement('cancelled', mediaPin, async () => placementCapture.payload);
+      await box.cancel(saved.placement!.intentId);
+      await box.reservePlacementAdmission('failed', { ...placementInput, request: { ...placementInput.request, key: 'failed-key' } });
+      await box.recordPlacementTask('failed', { ...placementInput.request, key: 'failed-key' }, { ...placementLocator, taskId: 'failed-task' });
+      const failed = await box.capturePlacement('failed', mediaPin, async () => { throw new Error('original anchor selection changed'); });
+      expect(failed.conflict).toEqual({ reason: 'placement_capture_failed', message: 'original anchor selection changed' });
+      expect(failed.input).toEqual({ ...placementInput, request: { ...placementInput.request, key: 'failed-key' } });
+      expect((await box.read()).intents).toEqual([]);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const capture = vi.fn(async () => placementCapture.payload);
+      expect((await box.capturePlacement('cancelled', mediaPin, capture)).placement?.cancelled).toBe(true);
+      expect((await box.capturePlacement('failed', mediaPin, capture)).conflict).toBeDefined();
+      expect(capture).not.toHaveBeenCalled();
+      expect((await box.read()).intents).toEqual([]);
+    });
+  });
+
+  it('detaches placement carriers, excludes unrelated authority fields and serializes capture callbacks', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const input = { ...structuredClone(placementInput), credential: 'exclude', lease: 'exclude' };
+      const reserving = box.reservePlacementAdmission('generation', input);
+      input.createdIds[0] = 'mutated';
+      input.request.body = 'mutated';
+      (await reserving).input.head.revisionId = 'mutated';
+      const locator = { ...placementLocator, credential: 'exclude', lease: 'exclude' };
+      const recording = box.recordPlacementTask('generation', placementInput.request, locator);
+      locator.taskId = 'mutated';
+      (await recording).taskLocator!.runId = 'mutated';
+      const started = deferred<void>();
+      const complete = deferred<typeof placementCapture.payload>();
+      const capturing = box.capturePlacement('generation', mediaPin, async (original) => {
+        expect(original.input).toEqual(placementInput);
+        expect(original.taskLocator).toEqual(placementLocator);
+        original.input.createdIds[0] = 'mutated';
+        started.resolve();
+        return complete.promise;
+      });
+      await started.promise;
+      const duplicate = vi.fn(async () => placementCapture.payload);
+      await expect(box.capturePlacement('generation', mediaPin, duplicate)).rejects.toThrow('already running');
+      expect(duplicate).not.toHaveBeenCalled();
+      complete.resolve(structuredClone(placementCapture.payload));
+      const captured = await capturing;
+      captured.mediaPin = 'mutated';
+      const stored = (await box.read()).placementContinuations![0];
+      expect(stored.input).toEqual(placementInput);
+      expect(stored.taskLocator).toEqual(placementLocator);
+      expect(stored.mediaPin).toEqual(mediaPin);
+    });
+  });
+
+  it('commits the selected pin before capture, retains it across append failure and refuses a refreshed pin', async () => {
+    const env = environment();
+    let owner = '';
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      await box.reservePlacementAdmission('generation', placementInput);
+      await box.recordPlacementTask('generation', placementInput.request, placementLocator);
+      const capture = vi.fn(async () => placementCapture.payload);
+      env.fault.abortNextWrite = true;
+      await expect(box.capturePlacement('generation', mediaPin, capture)).rejects.toThrow('aborted');
+      expect(capture).not.toHaveBeenCalled();
+      expect((await box.read()).placementContinuations![0].mediaPin).toBeUndefined();
+      await expect(box.capturePlacement('generation', mediaPin, async (original) => {
+        expect(original.mediaPin).toEqual(mediaPin);
+        expect((await box.read()).placementContinuations![0].mediaPin).toEqual(mediaPin);
+        env.fault.abortNextWrite = true;
+        return placementCapture.payload;
+      })).rejects.toThrow('aborted');
+      expect((await box.read()).intents).toEqual([]);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const original = (await box.read()).placementContinuations![0];
+      expect(original.mediaPin).toEqual(mediaPin);
+      const capture = vi.fn(async () => placementCapture.payload);
+      await expect(box.capturePlacement('generation', { immutable: 'refreshed-selection' }, capture)).rejects.toThrow('pin cannot change');
+      await expect(box.capturePlacement('generation', null, capture)).rejects.toThrow('immutable media pin');
+      await expect(box.capturePlacement('generation', { invalid: Infinity }, capture)).rejects.toThrow('finite JSON');
+      expect(capture).not.toHaveBeenCalled();
+      expect((await box.read()).placementContinuations![0]).toEqual(original);
+      const linked = await box.capturePlacement('generation', original.mediaPin!, capture);
+      expect(linked.mediaPin).toEqual(mediaPin);
+      expect((await box.read()).intents).toHaveLength(1);
+    });
+  });
+
+  it('retains original placement intent after an invalid capture, including an aborted conflict write', async () => {
+    const env = environment();
+    let owner = '';
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      await box.reservePlacementAdmission('generation', placementInput);
+      await box.recordPlacementTask('generation', placementInput.request, placementLocator);
+      await expect(box.capturePlacement('generation', mediaPin, async () => {
+        env.fault.abortNextWrite = true;
+        return { invalid: NaN };
+      })).rejects.toThrow('aborted');
+      const original = (await box.read()).placementContinuations![0];
+      expect(original.mediaPin).toEqual(mediaPin);
+      expect(original.conflict).toBeUndefined();
+      expect(original.placement).toBeUndefined();
+      expect((await box.read()).intents).toEqual([]);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const failed = await box.capturePlacement('generation', mediaPin, async () => ({ invalid: NaN }));
+      expect(failed.conflict).toEqual({ reason: 'placement_capture_failed', message: 'Outbox values must be finite JSON' });
+      expect(failed.input).toEqual(placementInput);
+      expect(failed.mediaPin).toEqual(mediaPin);
+      expect((await box.read()).intents).toEqual([]);
+      const capture = vi.fn(async () => placementCapture.payload);
+      await box.capturePlacement('generation', mediaPin, capture);
+      expect(capture).not.toHaveBeenCalled();
+    });
+  });
+
+  it('fences all placement methods and late capture results after a released or superseded claim', async () => {
+    const env = environment();
+    const service = createCommitOutbox({ indexedDB: env.factory, exclusiveLock: async (_name, work) => work() });
+    let stale!: ClaimedOutbox;
+    let owner = '';
+    await service.create(scope, async (old, ownerId) => {
+      stale = old;
+      owner = ownerId;
+      await old.reservePlacementAdmission('generation', placementInput);
+      await old.recordPlacementTask('generation', placementInput.request, placementLocator);
+      const started = deferred<void>();
+      const complete = deferred<typeof placementCapture.payload>();
+      const late = old.capturePlacement('generation', mediaPin, async () => { started.resolve(); return complete.promise; });
+      await started.promise;
+      await service.recover(scope, owner, async (box) => {
+        const before = await box.read();
+        await expect(old.reservePlacementAdmission('generation', placementInput)).rejects.toThrow('Stale');
+        await expect(old.recordPlacementTask('generation', placementInput.request, placementLocator)).rejects.toThrow('Stale');
+        const fenced = expect(late).rejects.toThrow('Stale');
+        complete.resolve(placementCapture.payload);
+        await fenced;
+        expect(await box.read()).toEqual(before);
+        await box.capturePlacement('generation', mediaPin, async () => placementCapture.payload);
+      });
+    });
+    await expect(stale.reservePlacementAdmission('generation', placementInput)).rejects.toThrow('Stale');
+    await expect(stale.recordPlacementTask('generation', placementInput.request, placementLocator)).rejects.toThrow('Stale');
+    await expect(stale.capturePlacement('generation', mediaPin, async () => placementCapture.payload)).rejects.toThrow('Stale');
+  });
+
+  it.each(['lost ACK', 'aborted ACK'] as const)(
+    'reopens the original A request after %s and atomically retains its requested render before pruning', async (window) => {
+      const env = environment();
+      let owner = '';
+      let a = '';
+      let b = '';
+      let original!: OutboxRequest;
+      await env.open().create(scope, async (box, ownerId) => {
+        owner = ownerId;
+        a = await box.append(move(5), { head: h0 }, renderIntent);
+        b = await box.append(move(7), { after: a });
+        const sending = box.dispatch(build, async (request) => {
+          original = request;
+          if (window === 'lost ACK') throw new Error('unknown outcome');
+          env.fault.abortNextWrite = true;
+          return accepted();
+        });
+        if (window === 'aborted ACK') await expect(sending).rejects.toThrow('aborted');
+        else await sending;
+      });
+      await env.open().recover(scope, owner, async (box) => {
+        const before = await box.read();
+        expect(before.pending?.request).toEqual(original);
+        expect(before.renderContinuations).toBeUndefined();
+        expect(before.intents.map((intent) => intent.id)).toEqual([a, b]);
+        expect(before.intents[0].afterAcceptRender).toEqual(renderIntent);
+        // Local storage must replay the reserved request without consulting today's live state.
+        // Runtime's accepted-before-producer-check ordering is separately qualified there.
+        const liveChecks = vi.fn(() => { throw new Error('must not rebuild from head C or check producer eligibility'); });
+        const after = await box.dispatch(liveChecks, async (request) => {
+          expect(request).toEqual(original);
+          return accepted();
+        });
+        expect(liveChecks).not.toHaveBeenCalled();
+        expect(after.pending).toBeUndefined();
+        expect(after.intents).toEqual([{ ...before.intents[1], readyBase: ha }]);
+        expect(after.renderContinuations).toEqual([
+          { intent: renderIntent, accepted: { intentId: a, head: ha, value: accepted().value } },
+        ]);
+      });
+      // Crash after local ACK and before any admission: a fresh owner claim still exposes A.
+      await env.open().recover(scope, owner, async (box) => {
+        const retainedA = (await box.read()).renderContinuations![0];
+        await box.dispatch(build, async () => ({ kind: 'retry', error: 'render unavailable; B still independent' }));
+        expect((await box.read()).renderContinuations).toEqual([retainedA]);
+        await box.dispatch(build, async () => accepted({ revisionId: 'RB', publicationId: 'PB' }));
+        await box.append(move(9), { head: { revisionId: 'RB', publicationId: 'PB' } }, { format: 'other-render' });
+        const afterC = await box.dispatch(build, async () => accepted({ revisionId: 'RC', publicationId: 'PC' }));
+        expect(afterC.accepted?.head).toEqual({ revisionId: 'RC', publicationId: 'PC' });
+        expect(afterC.renderContinuations).toHaveLength(2);
+        expect(afterC.renderContinuations![0]).toEqual(retainedA);
+        expect(afterC.intents).toEqual([]);
+        expect(afterC.pending).toBeUndefined();
+      });
+      await env.open().recover(scope, owner, async (box) => {
+        const render = await box.reserveRenderAdmission({ intentId: a, head: ha }, admission);
+        expect(render.accepted).toEqual({ intentId: a, head: ha, value: accepted().value });
+        expect(render.admission).toEqual({ request: admission });
+        const send = vi.fn(async () => accepted());
+        await expect(box.dispatch(build, send)).rejects.toThrow('empty');
+        expect(send).not.toHaveBeenCalled();
+        expect((await box.read()).renderContinuations).toHaveLength(2);
+      });
+    },
+  );
+
+  it('reopens every admission write window and commits the original task locator before marking admission complete', async () => {
+    const env = environment();
+    let owner = '';
+    let target!: OutboxRenderTarget;
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      target = { intentId: await box.append(move(5), { head: h0 }, renderIntent), head: ha };
+      await box.dispatch(build, async () => accepted());
+      env.fault.abortNextWrite = true;
+      await expect(box.reserveRenderAdmission(target, admission)).rejects.toThrow('aborted');
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      expect((await box.read()).renderContinuations![0].admission).toBeUndefined();
+      const render = await box.reserveRenderAdmission(target, admission);
+      expect(render.admission).toEqual({ request: admission });
+    });
+    // Crash after reservation/before send, or admission ACK lost: both retain the exact bytes/key.
+    for (let restart = 0; restart < 2; restart += 1) {
+      await env.open().recover(scope, owner, async (box) => {
+        const before = await box.read();
+        expect(before.renderContinuations![0].admission).toEqual({ request: admission });
+        expect((await box.reserveRenderAdmission(target, admission)).admission?.request).toEqual(admission);
+        expect(await box.read()).toEqual(before);
+      });
+    }
+    await env.open().recover(scope, owner, async (box) => {
+      env.fault.abortNextWrite = true;
+      await expect(box.recordRenderTask(target, admission, taskLocator)).rejects.toThrow('aborted');
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      expect(before.renderContinuations![0].admission).toEqual({ request: admission });
+      const completed = await box.recordRenderTask(target, admission, taskLocator);
+      expect(completed.admission).toEqual({ request: admission, taskLocator });
+      expect(completed.accepted).toEqual(before.renderContinuations![0].accepted);
+      expect((await box.read()).accepted).toEqual(before.accepted);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      await box.recordRenderTask(target, admission, taskLocator);
+      await box.reserveRenderAdmission(target, admission);
+      await expect(box.recordRenderTask(target, admission, { task: 'replacement' })).rejects.toThrow('cannot change');
+      expect(await box.read()).toEqual(before);
+      expect(before.renderContinuations![0].admission).toEqual({ request: admission, taskLocator });
+    });
+  });
+
+  it('refuses changed admission bytes, identity, target and scope without replacing the original reservation', async () => {
+    const env = environment();
+    let owner = '';
+    let target!: OutboxRenderTarget;
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      target = { intentId: await box.append(move(5), { head: h0 }, renderIntent), head: ha };
+      await expect(box.reserveRenderAdmission(target, admission)).rejects.toThrow('accepted intent and head');
+      await box.dispatch(build, async () => accepted());
+      await expect(box.recordRenderTask(target, admission, taskLocator)).rejects.toThrow('exact reserved');
+      await box.reserveRenderAdmission(target, admission);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      for (const changed of [
+        { ...admission, body: admission.body.trim() },
+        { ...admission, body: '{ "local_test_target": "RC/PC" }' },
+        { ...admission, method: 'PUT' },
+        { ...admission, path: '/v1/other-project/tasks' },
+        { ...admission, key: 'new-render-identity' },
+      ]) {
+        await expect(box.reserveRenderAdmission(target, changed)).rejects.toThrow('cannot change');
+        await expect(box.recordRenderTask(target, changed, taskLocator)).rejects.toThrow('exact reserved');
+      }
+      for (const changed of [
+        { ...target, intentId: 'other-intent' },
+        { ...target, head: { ...ha, revisionId: 'RC' } },
+        { ...target, head: { ...ha, publicationId: 'PC' } },
+      ]) {
+        await expect(box.reserveRenderAdmission(changed, admission)).rejects.toThrow('accepted intent and head');
+        await expect(box.recordRenderTask(changed, admission, taskLocator)).rejects.toThrow('accepted intent and head');
+      }
+      expect(await box.read()).toEqual(before);
+    });
+    for (const field of ['realmId', 'actorId', 'projectId', 'timelineId']) {
+      const work = vi.fn(async (box: ClaimedOutbox) => box.reserveRenderAdmission(target, admission));
+      await expect(env.open().recover({ ...scope, [field]: 'other' }, owner, work)).rejects.toThrow('explicit claim');
+      expect(work).not.toHaveBeenCalled();
+    }
+    await env.open().create(scope, async (box) => {
+      await expect(box.reserveRenderAdmission(target, admission)).rejects.toThrow('accepted intent and head');
+    });
+  });
+
+  it('detaches render inputs and results, rejects nonfinite local carriers and fences released render writers', async () => {
+    const env = environment();
+    let owner = '';
+    let target!: OutboxRenderTarget;
+    let stale!: ClaimedOutbox;
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      stale = box;
+      await expect(box.append(move(5), { head: h0 }, { fps: Infinity })).rejects.toThrow('finite JSON');
+      const intent = structuredClone(renderIntent);
+      target = { intentId: await box.append(move(5), { head: h0 }, intent), head: { ...ha } };
+      intent.settings.fps = 999;
+      await box.dispatch(build, async () => accepted());
+      const request = { ...admission };
+      const reserving = box.reserveRenderAdmission(target, request);
+      request.body = 'mutated';
+      target.head.revisionId = 'mutated';
+      const reserved = await reserving;
+      target.head = { ...ha };
+      reserved.intent = 'mutated';
+      reserved.accepted.head.revisionId = 'mutated';
+      reserved.admission!.request.key = 'mutated';
+      await expect(box.recordRenderTask(target, admission, { progress: NaN })).rejects.toThrow('finite JSON');
+      const locator = { ...taskLocator };
+      const completing = box.recordRenderTask(target, admission, locator);
+      locator.task = 'mutated';
+      (await completing).admission!.taskLocator = 'mutated';
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      await expect(stale.reserveRenderAdmission(target, admission)).rejects.toThrow('Stale');
+      await expect(stale.recordRenderTask(target, admission, taskLocator)).rejects.toThrow('Stale');
+      expect(await box.read()).toEqual(before);
+      expect(before.renderContinuations).toEqual([{
+        intent: renderIntent, accepted: { ...target, value: accepted().value }, admission: { request: admission, taskLocator },
+      }]);
+    });
+  });
+
+  it('creates continuations only for explicit accepted render intents, never for cancelled or rejected work', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const cancelled = await box.append(move(5), { head: h0 }, renderIntent);
+      await box.cancel(cancelled);
+      await box.append(move(7), { head: h0 });
+      await box.dispatch(build, async () => accepted());
+      expect((await box.read()).renderContinuations).toBeUndefined();
+      await box.append(move(9), { head: ha }, renderIntent);
+      await box.dispatch(build, async () => ({ kind: 'rejected', error: { reason: 'Runtime producer refusal' } }));
+      expect((await box.read()).renderContinuations).toBeUndefined();
+      expect((await box.read()).intents[0].afterAcceptRender).toEqual(renderIntent);
+      expect((await box.read()).accepted?.head).toEqual(ha);
+    });
+  });
+
+  it('fences a still-active render writer by persisted generation even if its browser lock is lost', async () => {
+    const env = environment();
+    const service = createCommitOutbox({ indexedDB: env.factory, exclusiveLock: async (_name, work) => work() });
+    await service.create(scope, async (old, owner) => {
+      const target = { intentId: await old.append(move(5), { head: h0 }, renderIntent), head: ha };
+      await old.dispatch(build, async () => accepted());
+      await old.reserveRenderAdmission(target, admission);
+      await service.recover(scope, owner, async (box) => {
+        const before = await box.read();
+        await expect(old.reserveRenderAdmission(target, admission)).rejects.toThrow('Stale');
+        await expect(old.recordRenderTask(target, admission, taskLocator)).rejects.toThrow('Stale');
+        expect(await box.read()).toEqual(before);
+        await box.recordRenderTask(target, admission, taskLocator);
       });
     });
   });

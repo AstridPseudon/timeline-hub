@@ -7,6 +7,7 @@ import { captureClipMove, submitClipMove } from './semanticGestures.ts';
 import { environment, scope, document } from './__tests__/commitSessionEnvironment.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
 import type { OutboxRecord } from './commitOutbox.ts';
+import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
 
 async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (record: OutboxRecord) => void) {
   await new Promise<void>((resolve, reject) => {
@@ -30,6 +31,59 @@ async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (
 }
 
 describe('real clip move session through the Runtime HTTP boundary', () => {
+  it('never hands a saved task request to ordinary commit transport even with an older editor payload', async () => {
+    const env = await environment();
+    const session = await env.mount();
+    env.move(session, 5);
+    await session.dispose();
+    await editOwner(env, (record) => {
+      record.pending = { intentId: record.intents[0].id,
+        request: { method: 'POST', path: '/v1/tasks', body: '{}', key: 'task-request-key' } };
+    });
+    const before = (await env.outboxes.list(scope))[0];
+    const reopened = await env.mount();
+    expect(reopened.getState().recoverableOwners).toEqual([]);
+    await reopened.flush();
+    await reopened.dispose();
+    expect(env.commits()).toEqual([]);
+    expect((await env.outboxes.list(scope)).find((owner) => owner.ownerId === before.ownerId)).toEqual(before);
+  });
+
+  it.each(['create', 'init', 'task-only', 'accepted-only', 'render-only'] as const)(
+    'leaves %s owners discoverable without replaying them through ordinary commit transport', async (phase) => {
+      const env = await environment();
+      let owner = '';
+      await env.outboxes.create(scope, async (box, id) => {
+        owner = id;
+        if (phase === 'create') {
+          await box.reserveCreate({ name: 'Main' }, { method: 'POST',
+            path: `/v1/projects/${scope.projectId}/timelines`,
+            body: JSON.stringify({ timeline_id: scope.timelineId }), key: 'saved-create-key' });
+        } else if (phase === 'init') {
+          await box.append({ kind: 'timeline-init' }, { head: env.initial.head });
+        } else if (phase === 'task-only') {
+          await box.reservePlacementAdmission('saved-task', {
+            request: { method: 'POST', path: '/v1/tasks', body: '{}', key: 'saved-task-key' },
+            head: env.initial.head, readClosure: {}, ownerRef: 'parent', anchor: null, lane: null, fallback: null,
+            policy: {}, output: {}, autoApprove: true, createdIds: ['saved-birth'],
+          });
+        } else {
+          await box.append({}, { head: env.initial.head }, phase === 'render-only' ? { format: 'video' } : undefined);
+          await box.dispatch(() => ({ method: 'POST',
+            path: `/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`, body: {} }),
+          async () => ({ kind: 'accepted', head: env.initial.head, value: {} }));
+        }
+      });
+      const before = (await env.outboxes.list(scope))[0];
+      const session = await env.mount();
+      expect(session.getState()).toMatchObject({ status: 'saved', recoverableOwners: [] });
+      await expect(session.recover(owner)).rejects.toThrow('Unknown persisted');
+      await session.flush();
+      await session.dispose();
+      expect(env.commits()).toEqual([]);
+      expect((await env.outboxes.list(scope)).find((record) => record.ownerId === owner)).toEqual(before);
+    });
+
   it('drains a just-submitted gesture on dispose without flushing or starting a request', async () => {
     const env = await environment();
     const session = await env.mount();
@@ -229,6 +283,118 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     expect(b.body?.base_publication_id).toBe('p1');
     expect(b.body?.commands[0].expect?.['parent/clip:x::at']).toEqual({ state: 'present', value: 5 });
     await reopened.dispose();
+  });
+  it.each(['accepted', 'conflict'] as const)(
+    'queues B authored after uncertain A without retransmitting, then recovers exact A: %s', async (outcome) => {
+      const env = await environment();
+      const first = await env.mount();
+      env.setFault('lost');
+      env.move(first, 5);
+      await vi.waitFor(() => expect(first.getState().status).toBe('retry'));
+      const [original] = await env.outboxes.list(scope);
+      const requestA = original.pending!.request;
+      const wireA = structuredClone(env.commits()[0]);
+      expect(wireA).toMatchObject({ method: requestA.method, path: requestA.path,
+        bodyText: requestA.body, key: requestA.key });
+      // The fake transport has already accepted A, but the session still displays H0 + A.
+      const acceptedA = await env.provider.loadTimelineCommandBasis(scope.timelineId);
+      expect(acceptedA.head).toEqual({ revisionId: 'r1', publicationId: 'p1' });
+      expect(env.current().head?.headPublicationId).toBe('p0');
+      expect(env.current().config.clips[0].at).toBe(5);
+      expect(env.projected).toHaveLength(0);
+      for (const head of [ { ...env.current().head!, headRevisionId: 'other' },
+        { ...env.current().head!, headPublicationId: 'other' } ]) {
+        expect(() => captureClipMove(first.port, { ...env.current(), head }, 'x')).toThrow('Displayed timeline');
+      }
+      const captured = captureClipMove(first.port, env.current(), 'x');
+      const originalCapture = structuredClone(captured.basis);
+      const finish = vi.spyOn(first.port, 'finish');
+      submitClipMove(captured, 7);
+      const commandB = structuredClone(finish.mock.results[0].value.command) as EditCommand;
+      expect(commandB.expect!['parent/clip:x::at']).toEqual({ state: 'present', value: 5 });
+      expect(commandB.reads!.length).toBeGreaterThan(0);
+      expect(commandB.selections!.length).toBeGreaterThan(0);
+      await vi.waitFor(() => expect(first.getState().status).toBe('retry'));
+      const [queued] = await env.outboxes.list(scope);
+      expect(env.commits()).toEqual([wireA]);
+      expect(queued.pending).toEqual(original.pending);
+      expect(queued.intents).toHaveLength(2);
+      expect(queued.intents[0]).toEqual(original.intents[0]);
+      expect(queued.intents[1]).toMatchObject({ basis: { after: original.intents[0].id },
+        payload: { commands: [commandB], displayBasis: env.initial } });
+      expect(queued.intents[1].readyBase).toBeUndefined();
+      expect(captured.basis).toEqual(originalCapture);
+      expect(() => submitClipMove(captured, 9)).toThrow('Timeline changed during the move');
+      await expect(first.undo()).rejects.toThrow('uncertain');
+      await expect(env.outboxes.recover(scope, queued.ownerId, async () => {})).rejects.toThrow('claimed');
+      for (const field of ['realmId', 'actorId', 'projectId', 'timelineId']) {
+        const other = { ...scope, [field]: 'other' };
+        expect(await env.outboxes.list(other)).toEqual([]);
+        await expect(env.outboxes.recover(other, queued.ownerId, async () => {})).rejects.toThrow('explicit claim');
+      }
+      await first.dispose();
+      expect((await env.outboxes.list(scope))[0].intents).toEqual(queued.intents);
+      const recovered = await env.mount(acceptedA);
+      expect(recovered.getState()).toMatchObject({ status: 'recovery', recoverableOwners: [queued.ownerId] });
+      expect(env.commits()).toEqual([wireA]);
+      if (outcome === 'conflict') env.setFault('conflict');
+      await recovered.recover(queued.ownerId);
+      expect(env.project.mock.calls[0]).toEqual([env.initial, queued.intents.map((intent) => (intent.payload as { preview: unknown }).preview)]);
+      expect(env.commits()[1]).toEqual(wireA);
+      expect(finish.mock.results.map((result) => result.type)).toEqual(['return', 'throw']);
+      if (outcome === 'accepted') {
+        expect(env.commits()).toHaveLength(3);
+        const wireB = env.commits()[2];
+        expect(wireB.body).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', commands: [commandB] });
+        expect(wireB.body?.commands).toEqual([commandB]);
+        expect(wireB.key).not.toBe(wireA.key);
+        expect(wireB.path).toBe(wireA.path);
+        expect(recovered.getState()).toMatchObject({ status: 'saved', canUndo: true });
+        expect(env.current().config.clips[0].at).toBe(7);
+        expect(env.project.mock.calls.at(-1)?.[0].head).toEqual({ revisionId: 'r2', publicationId: 'p2' });
+        expect(env.project.mock.calls.at(-1)?.[0].canonicalDocument.parent_revision.payload.clips).toMatchObject([{ id: 'x', at: 7 }]);
+        await recovered.undo();
+        await recovered.flush();
+        expect(env.commits()[3].body).toMatchObject({ base_revision_id: 'r2', base_publication_id: 'p2',
+          commands: [{ op: 'timeline.inverse', args: { publications: ['p2'] } }] });
+        expect(env.commits()[3].key).not.toBe(wireB.key);
+      } else {
+        expect(recovered.getState()).toMatchObject({ status: 'conflict', canUndo: false });
+        const [retained] = await env.outboxes.list(scope);
+        expect(retained.intents.map(({ conflict, ...intent }) => intent)).toEqual(queued.intents);
+        expect(retained.intents.every((intent) => intent.conflict !== undefined)).toBe(true);
+        expect(retained.pending?.request).toEqual(requestA);
+        expect(retained.intents[1].readyBase).toBeUndefined();
+        await recovered.retry();
+        await expect(recovered.flush()).rejects.toThrow('conflict');
+        expect(env.commits()).toHaveLength(2);
+      }
+      await recovered.dispose();
+    });
+  it('retains an unsaved B preview after uncertain A without an ephemeral transmission', async () => {
+    const env = await environment();
+    const session = await env.mount();
+    env.setFault('lost');
+    env.move(session, 5);
+    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
+    const [original] = await env.outboxes.list(scope);
+    const wireA = structuredClone(env.commits()[0]);
+    const open = env.factory.open.bind(env.factory);
+    env.factory.open = () => { throw new Error('disk full'); };
+    env.move(session, 7);
+    await vi.waitFor(() => expect(session.getState().status).toBe('error'));
+    expect(session.getState()).toMatchObject({ error: 'Unsaved move: disk full', canUndo: false });
+    expect(env.current().config.clips[0].at).toBe(7);
+    expect(env.commits()).toEqual([wireA]);
+    env.factory.open = open;
+    const [retained] = await env.outboxes.list(scope);
+    expect(retained.intents).toEqual(original.intents);
+    expect(retained.pending).toEqual(original.pending);
+    await session.retry();
+    expect(env.commits()[1]).toEqual(wireA);
+    expect(env.commits()[2].body?.commands[0].expect?.['parent/clip:x::at']).toEqual({ state: 'present', value: 5 });
+    expect(session.getState().status).toBe('saved');
+    await session.dispose();
   });
   it.each([true, false])('recovers legacy work only with a matching original document: %s', async (matching) => {
     const env = await environment();
