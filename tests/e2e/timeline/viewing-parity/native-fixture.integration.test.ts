@@ -7,6 +7,8 @@ import { tmpdir } from 'node:os';
 import { delimiter, join, relative } from 'node:path';
 import { test } from 'node:test';
 import { AstridLocalClient } from '../../../../src/integrations/astrid/client';
+import type { Task } from '../../../../src/integrations/runtime/generated';
+import { assertTaskAuthority } from './authority';
 
 const FROZEN_SOURCES = {
   runtime: {
@@ -553,9 +555,6 @@ test('native retained frame fixture restores and admits one normal render task',
     assert.equal(actualRequest.data.capability_id, 'rendering.render');
     assert.equal(actualRequest.data.spec.spec.params.timeline_ref, fixture.timelineId);
     assert.equal(actualRequest.data.spec.spec.params.selector, 'rendering.remotion');
-    assert.equal(actualRequest.data.spec.spec.params.canonical_project_id, fixture.projectId);
-    assert.equal(actualRequest.data.spec.spec.params.canonical_head_revision_id, fixture.headRevisionId);
-    assert.deepEqual(actualRequest.data.spec.spec.params.canonical_occurrence_ids, [fixture.occurrenceId]);
     assert.deepEqual(actualRequest.data.spec.spec.output_policy, {
       format: 'mp4', destination: 'download', filename: built.payload!.output_filename,
     });
@@ -567,15 +566,9 @@ test('native retained frame fixture restores and admits one normal render task',
     assert.equal(actualInitialSpec.spec.params.selector, 'rendering.remotion');
     assert.equal(actualInitialSpec.spec.params.timeline_ref, fixture.timelineId);
     assert.deepEqual(actualInitialSpec.spec.output_policy, actualRequest.data.spec.spec.output_policy);
-    const actualAuthority = actualInitialSpec.spec.inputs.timeline_authority as Record<string, unknown>;
-    assert.equal(actualAuthority.project_id, fixture.projectId);
-    assert.equal(actualAuthority.timeline_id, fixture.timelineId);
-    assert.equal(actualAuthority.parent_revision_id, fixture.headRevisionId);
-    assert.equal(actualAuthority.parent_content_digest, fixture.parent.content_digest);
-    assert.deepEqual(actualAuthority.input_object_ids, fixture.media.map(pin => pin.objectId));
-    assert.deepEqual(actualAuthority.managed_media_admissions, Object.fromEntries(
-      fixture.media.map(pin => [pin.objectId, pin.digest]),
-    ));
+    const actualFrozen = assertTaskAuthority(actualInitial as unknown as Task, fixture,
+      String(actualInitial.capability_digest));
+    const actualAuthority = actualFrozen.authority;
 
     let actualTask = actualInitial;
     const deadline = Date.now() + 240_000;
