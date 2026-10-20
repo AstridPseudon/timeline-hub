@@ -81,13 +81,19 @@ test('original640 stays the default; only the separately named config selects na
   assertFrameWithinBound(compareRgbFrames(legacy, legacy, 0));
 });
 
-test('both entries register the same four bodies with all twelve baseline frames before the picture negative', async () => {
+test('both entries register all five bodies with all twelve baseline frames before the picture negative', async () => {
   assert.equal(await readFile(new URL('../player-export-frame-parity.spec.ts', base), 'utf8'),
     "import { registerFrameParityCases } from './viewing-parity/cases';\n\nregisterFrameParityCases();\n");
   assert.equal(await readFile(new URL('../player-export-normal-profile-native1920.spec.ts', base), 'utf8'),
     "import { registerFrameParityCases } from './viewing-parity/cases';\nimport { NORMAL_PROFILE_NATIVE1920 } from './viewing-parity/canvas';\n\nregisterFrameParityCases(NORMAL_PROFILE_NATIVE1920);\n");
   const cases = await readFile(new URL('cases.ts', base), 'utf8');
-  assert.equal([...cases.matchAll(/\btest\('/g)].length, 4);
+  assert.deepEqual([...cases.matchAll(/\btest\('([^']+)'/g)].map(match => match[1]), [
+    'normal App Render action downloads a valid native-size MP4 without a parity comparison',
+    'fixture readiness seeks actual managed Player video and captures native frames without export',
+    'compares native-size actual Player frames with decoded real CPU Remotion task output',
+    'captures the actual Player page as one native-PTS VP8/Opus tab stream without a physical-mix claim',
+    'picture-only one-host patch is reported as a mismatch after the full passing baseline',
+  ]);
   assert.deepEqual([...PARITY_FRAMES], [0, 37, 44, 45, 52, 89, 90, 120, 121, 135, 143, 164]);
   const negative = cases.slice(cases.indexOf("test('picture-only"));
   assert.ok(negative.indexOf('await compareAllFrames(page, exportPath, testInfo)') < negative.indexOf('patch.dataset.testOnlyPictureMismatch'));
