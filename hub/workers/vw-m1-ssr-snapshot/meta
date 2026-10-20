@@ -2,4 +2,4 @@ name=vw-m1-ssr-snapshot
 repo=agent
 base=tl/integration
 base_sha=0422a8172869628f7276b4f01db94ea214972f35
-remote_request=timeline/agent/tl/vw-m1-ssr-snapshot\ f8164bef\ viewing\ URGENT\ M1\ cumulative\ f816\ supersedes\ held0422:\ ONLY\ normal\ catalog\ regen\ +\ actual\ public\ wrapper\ TextCard\ SSR\ with\ existing\ configured\ runtime\;\ final\ CENTRAL\ clean-snapshot4PASS6.06s/gencheckPASS\ +\ both\ checkoutfallbacks1PASS\ each\;\ managerreview\ no\ newRuff20vs21base\;\ provision\ exact\ runtime+Node\ via\ existing\ env\,\ no\ newskip/product/pin/test-run\ edits.\ Merge\ this\ descendant\ ONCE\,\ never0422\ separately
+remote_request='timeline/agent/tl/vw-m1-ssr-snapshot\ f8164bef\ viewing\ URGENT\ M1\ cumulative\ f816\ supersedes\ held0422:\ ONLY\ normal\ catalog\ regen\ +\ actual\ public\ wrapper\ TextCard\ SSR\ with\ existing\ configured\ runtime\;\ final\ CENTRAL\ clean-snapshot4PASS6.06s/gencheckPASS\ +\ both\ checkoutfallbacks1PASS\ each\;\ managerreview\ no\ newRuff20vs21base\;\ provision\ exact\ runtime+Node\ via\ existing\ env\,\ no\ newskip/product/pin/test-run\ edits.\ Merge\ this\ descendant\ ONCE\,\ never0422\ separately'

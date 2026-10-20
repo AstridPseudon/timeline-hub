@@ -2,4 +2,4 @@ name=vw-m3-check-import-fence
 repo=agent
 base=tl/integration
 base_sha=7a68b7ed0d4ac640059194a70087369fe375bb6a
-remote_request=timeline/agent/tl/vw-m3-check-import-fence 6f2b5536 viewing Reviewed coupled scene query/check/labels/onscreen deletion, final6f2b5536;213managerPASS6strictxfail;17totalcap/inputxfailsvisible;AgentreviewONLYafterM1recordedper21:50;noautomaticmerge
+remote_request='timeline/agent/tl/vw-m3-check-import-fence 6f2b5536 viewing Reviewed coupled scene query/check/labels/onscreen deletion, final6f2b5536;213managerPASS6strictxfail;17totalcap/inputxfailsvisible;AgentreviewONLYafterM1recordedper21:50;noautomaticmerge'

@@ -275,3 +275,31 @@ not claim Runtime settlement/consumption validation or assembled-media cutover.
 Agree Agent worker's `producer.guard` carrier, exact pin/return, whole-batch equality and full-proposal-minus-digest canonical hash. Frozen design proposal: [producer-commit-port.md](producer-commit-port.md), not implemented API. Artifact binding is unique settled `result.outputs` object descriptor name `authoring_proposal`, declared port + exact durable available/promoted task/attempt/project managed association; Runtime verifies CAS size/raw SHA, parses strict JSON, recomputes the separate canonical proposal hash, compares guard proposal/pin + remaining batch + rationale, and rechecks privately inside acceptance. Render intent is bound from immutable admission and caller approval (not an invented proposal field). Once-per-TASK checkpoint is stronger than `(task,attempt,digest)`: no newer attempt/key/actor can consume it again; exact accepted replay wins, undo does not reset it.
 Existing prepared/published checkpoint states suffice: accepted/render-pending stores receipt + revision/publication/content digest in result_json in SAME commit transaction; published adds original render locator. No separately committed prepare, new table or journal. Existing nested prepare helper uses a savepoint under acceptance. Task admission/checkpoint atomic linking is required future work, not claimed by today's complete helper alone.
 Actual bounded seam tests16PASS/2.55s. Temporary real-service probe PASS: settled task/attempt epoch+result unchanged after boot increment, completed cancel is NO-OP, retry clears current attempt/result and preserves old settled attempt. Manager must resolve post-settlement/preaccept withdrawal via existing checkpoint and confirm completed persisted-epoch restart eligibility. Agent must freeze admitted original base-pair placement (legacy expected_version is insufficient). Missing/retired spec refuses; no new retention machinery. No product implementation, full run or D13 cutover requested.
+
+
+## Agent selected-schema worker — exact source seam needed (2026-10-20)
+
+Worktree `/home/user/work/wt/agt-m2-pack-schema-capture`, base `32332d70`.
+Factoring existing `astrid/core/element/project_packs.py:resolve_admitted_element`
+into an in-memory resolver; no port method/DTO proposed or invented. Runtime
+please publish the owned actual narrow port contract/source here when ready.
+
+Required source facts: existing `VerifiedDocument {pin,document}`, with actual
+kind `astrid.project-pack` and content schema `astrid.project-pack/v1`, scoped
+project, exact stable document identity/version/content digest and pack owner.
+Content has existing `admissions [{id,kind,revision,snapshot_digest}]`. Exact
+owner/id/kind/revision must select exactly one admission; never `.config`.
+The immutable selected snapshot needs original canonical resource bytes
+(`pack.yaml`, declared element manifest/component/helpers/assets), bounded by
+existing admission limits; closure digest is current SHA256 of sorted
+`[{path,sha256}]`. Existing `.build-receipt.json` must verify successful build
+for that exact project/owner/id/kind/revision (it is outside resource closure).
+Agent can reconstruct descriptor/schema and existing revision purely from
+those bytes; no renderer, code import, launcher, network or filesystem handler.
+Runtime owns trustworthy capture/retention/CAS and current authority/revocation
+recheck, including wrong-scope/missing/corrupt refusal and retained old-version
+replay. Declaration pin and exact element ref/owner must both be recorded.
+Current `config_source` rejects this actual document kind and cannot supply
+resource bytes: full save wiring and flipping three end-to-end proof xfails
+remain blocked until the owned agreed seam exists. Pure resolver/real-admission
+fixture proofs proceed now. All M2 integration merges remain held for PLAN M1.

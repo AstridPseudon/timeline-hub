@@ -2,4 +2,4 @@ name=vw-m3-agent-gate
 repo=agent
 base=tl/integration
 base_sha=7a68b7ed0d4ac640059194a70087369fe375bb6a
-remote_request=timeline/agent/tl/vw-m3-agent-gate 7a68b7ed viewing Reviewed chain cbd91c3b+9e240a25+7a68b7ed: immutable Composition0.0.8, built-entry readiness/gate; manager140pass + central79pass4skip, exactNode20.19.4/npm10.8.2 ci/typecheck/bundle/SSR/77filesunchanged. Orchestrator53: theme git tags source identical except manifest, manager verifying; archiveSHA512 not reverified403. Agent owns freeze ordering/review before integration.
+remote_request='timeline/agent/tl/vw-m3-agent-gate 7a68b7ed viewing Reviewed chain cbd91c3b+9e240a25+7a68b7ed: immutable Composition0.0.8, built-entry readiness/gate; manager140pass + central79pass4skip, exactNode20.19.4/npm10.8.2 ci/typecheck/bundle/SSR/77filesunchanged. Orchestrator53: theme git tags source identical except manifest, manager verifying; archiveSHA512 not reverified403. Agent owns freeze ordering/review before integration.'

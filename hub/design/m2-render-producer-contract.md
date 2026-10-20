@@ -1,11 +1,15 @@
 # M2 writer bundle 3: render producer contract
 
 Design + feasibility only, 2026-10-20. Governing decisions: PLAN §4.1/4.2,
-Agent INBOX “render-producer-authority”, deletion ledger D13. Reviewed Agent
+Agent INBOX 00:35 “render-handoff-contract” + 00:40 “producer-attempt-guard”,
+deletion ledger D13. These settled-result decisions supersede live delivery and
+running-lease eligibility. No new coordinator is required. Reviewed Agent
 `fc324e838fd668fc06cae906e8bcfccace86ad62`, Runtime
 `9f9b25c000485e919f30f1411831fe2d5a3c1316`.
 **Old endpoint 410 HELD; all M2 integration merges HELD pending PLAN's M1 record.**
 No product code, schema, endpoint, permission, DTO, table or generated client changes here.
+Updated by `agt-m2-settled-proposal-contract`, based on `43567f56`; contract goldens
+exercise existing commands only, not an installed producer guard or media cutover.
 
 ## Next implementation slice (one screen)
 
@@ -17,11 +21,13 @@ No product code, schema, endpoint, permission, DTO, table or generated client ch
    explicit populated-target intent. It uses the same insertion primitive and
    records the exact removed authored content. No generic whole-document save.
    Unsupported target shapes refuse with the original proposal retained.
-3. Agent + Runtime: prove a proposal reaches the **existing caller-authorized
-   parent** while the assembler attempt is still live, then `commitTimeline`
-   revalidates its authority dependency inside acceptance. This delivery seam
-   and guard are absent today: they are prerequisites, not a claimed capability.
-4. Agent: add captured batch queueing (the public session currently exposes
+3. Producer settles a proposal as its **normal task output**. The **requesting
+   App/CLI/SDK session** reads it and commits through its existing durable outbox
+   with its own authority. Add ordinary registered `producer.guard` plus the
+   Runtime-owned additive `producer_attempt` port check below. Acceptance checks
+   the current completed/settled result and consumes it once, after exact replay.
+   No live proposal channel, borrowed credential or new coordinator.
+4. Requester: add captured batch queueing (the public session currently exposes
    move/inverse), and make ACK handling durably retain the accepted receipt and
    pending revision-pinned render before clearing the command flight. Reuse the
    outbox writer and existing separated task prepare/dispatch. Keep the exact
@@ -41,15 +47,17 @@ Paths below are relative to the named checkout; Agent is
 | Agent `astrid/packs/rendering/actions/assemble_timeline/run.py:build_authoring_proposal`, `_candidate_outputs` | Exactly ordinal 0/1, distinct task IDs bound to succeeded fenced edges; one primary video each. Ignores `is_primary:false` and metadata `status:superseded`; rejects ambiguity. Child completion/list order does not choose clip order. Emits visual track, clips at 0/first duration, source [0,duration), two continuation-derived clip IDs and two asset aliases even for identical media. Registry entries include media ID, unprefixed SHA, type, duration, `origin:immutable-public`. |
 | Agent `astrid/core/execution/generic_host.py:run_task`, `_publish_assembled_timeline` (~8401, 9632) | Validates attempt-local proposal path; target/version/render come from immutable admitted spec, not proposal labels. Calls publication **before** uploading/settling assembler outputs; lease pump still runs. Key is `timeline-publication-<author task ID>`. |
 | Runtime `runtime_protocol/service.py:publish_timeline_render` (~7613) | Checks worker/executor identity. Exact published checkpoint replay wins before live lease checks, even after cancellation; changed semantic payload refuses. Unfinished work checks lease/fence/epoch, running/current attempt, admitted two-child continuation and target project; prepares durably, rechecks after prepare, then atomically updates projection config/registry/version, creates frozen render task and publishes checkpoint. It does not create an EditCommand parent revision/history. |
-| Agent `astrid/sdk/invocation.py:_invoke_local_orchestrator`; `astrid/packs/video_editing/shared/runtime_orchestration.py:admit_runtime_handoff`, `admit_runtime_stitch`, `read_runtime_events` | Existing parent stays in the caller process and uses its connected client for child admission. Route approvals/proposals through that parent, with its actual authenticated actor/project. The stitch helpers are supported seams, not proof of a live end-to-end coordinator loop: repository search finds no production caller of `admit_runtime_stitch` or `publish_stitched_render`. |
-| Authority | `RuntimeProtocolClient.WORKER_SCOPES` (~4412) includes worker execution/CAS, excludes `projects:write`, `tasks:write`, admin. Runtime `server.py:_timeline_commit` requires `projects:write`; ordinary task admission requires `tasks:write`. The parent must already possess those scopes; unavailable parent authority leaves a proposal pending. Never lend its credential to the worker or fabricate an owner client. |
+| Agent `astrid/core/execution/generic_host.py:_typed_outputs`, `_upload_outputs`, `run_task`; Runtime `store.py:_settle_attempt`, `_task_resource` | Existing normal execution artifacts are uploaded with task/attempt/project custody, settled as `result.outputs`, and read by the requesting client. New proposal content uses this return path; it does not require an in-process coordinator or pre-settlement delivery. Existing host publication runs before this settlement and must be removed only after its replacement qualifies. |
+| Authority | `RuntimeProtocolClient.WORKER_SCOPES` (~4412) includes worker execution/CAS, excludes `projects:write`, `tasks:write`, admin. Runtime `server.py:_timeline_commit` requires `projects:write`; ordinary task admission requires `tasks:write`. The requesting client must already possess those scopes; unavailable requester authority leaves a proposal pending. Never lend its credential to the worker or fabricate an owner client. |
 | Official acceptance | Agent `astrid/sdk/timeline/commit.py:RuntimeCommitService.commit` -> Runtime `service.py:commit_timeline` -> `timeline_commit_execution.py:CommitExecutionCoordinator.execute` -> `timeline_commit_store.py:TimelineCommitStore.accept`. Accepted receipt lookup precedes preparation/live dependency reads; acceptance has the outer transaction. `timeline_commit_port.py:RequestCommitPort.validate` rechecks captured media there. |
 
 ## Proposed commands and guards (design names, not implemented APIs)
 
 Use the existing `EditCommand`/`CommitRequest` envelope, `args`, recorder,
 `AgentDependency(kind="authority", policy="exact", pin=<JSON>)`, and grouping.
-No new top-level wire fields or provider ABI are needed by this proposal.
+No new top-level wire fields or ABI major version are proposed. The additive port
+method and normal registered command schema require coordinated official artifact
+generation and consumer pins; today’s installed API does not implement them.
 
 * Empty target: `track.create(parent, visual row)` and two official media-add
   commands in one commit. Each add captures a five-field Runtime selection,
@@ -69,7 +77,7 @@ No new top-level wire fields or provider ABI are needed by this proposal.
   recompiles timing and guards intervening writes including A→B→A and later
   references to newly created entities. No inverse may remove a reused binding.
 
-The coordinator resolves each child's exact managed association through existing
+The requester resolves each child's exact managed association through existing
 `managed_output_page` / `managed_output` and
 `timeline_commit_port.py:MediaReads.selection(association_id,object_id,version)`.
 The result is `{asset,generation_id,variant_id,object_id,catalog_digest}`;
@@ -80,60 +88,177 @@ role flag, bare CAS digest, or a lookup of today's primary is insufficient. Keep
 ordinary generation publication/settlement; do not synthesize missing variants.
 The new test's role filter is **not** a registered-lifecycle authorization proof.
 
-## Authority fence and durable handoff
+## Exact settled proposal and closed command carrier
 
-Before sending, parent approval must bind the original head pair, proposal
-bytes/digest, ordered child identities/selections, reserved IDs and render intent
-in its existing outbox. Freeze exact commit bytes/key under realm/actor/project/
-timeline scope. Include an authority dependency for the assembler task/attempt,
-executor, fence/epoch and its admitted target/dependency snapshot. Runtime checks
-the actual lease row/liveness internally; never put a lease token in history. Runtime
-must verify these against real task/admission rows inside
-`TimelineCommitStore.accept` through `RequestCommitPort.validate`, **after**
-accepted replay lookup and **before** writes. Do not trust a provider-supplied
-dependency as authorization. Invalidated lease, cancellation, superseded attempt,
-wrong project or changed admitted proposal must atomically refuse without render.
-This is internal validation work in the existing commit lane, not a worker scope
-grant; ordinary editing commits without producer authority remain unaffected.
+Proposed JSON object (all objects closed; version 1 is integer, command versions
+remain strings; nonempty IDs, positive non-bool fence/epoch):
 
-Two concrete blockers must be proven away before wiring the producer:
+```json
+{
+  "schema_version": 1,
+  "producer": {
+    "task_id": "assembler-task", "attempt_id": "assembler-attempt",
+    "executor_id": "render-worker", "fence": 7, "runtime_epoch": 3
+  },
+  "admitted_target": {
+    "project_id": "p", "timeline_id": "main",
+    "base_revision_id": "pr", "base_publication_id": "bootstrap-publication"
+  },
+  "commands": ["<nonempty array of captured existing EditCommand objects>"],
+  "rationale": "Move the clip to 4 seconds; preserve café and source timing.",
+  "proposal_digest": "sha256:<64 lowercase hex>"
+}
+```
 
-* The port currently has no task-authority validation. Preflight reads cannot
-  close the cancel/accept race. `_validate_attempt_lease` explicitly refuses a
-  settled attempt: **settle proposal, then commit** is not an equivalent handoff.
-  A parent must receive the already-produced artifact while the original attempt
-  and lease pump remain live. Existing post-settlement task result downloads do
-  not provide that seam. The local candidates to inspect are caller-owned
-  `OrchestratorRunRequest.run_root` and `GenericPackHost._allocate_attempt_root`
-  (configured attempt base gives `<task>-<attempt>/outputs/authoring-proposal.json`).
-  Their accessibility/association is not yet an authenticated handoff. Prove
-  delivery using this existing parent/host execution boundary before claiming
-  feasibility; do not overload reboot-only
-  `checkpoint_attempt` or introduce an endpoint/credential to fill this gap.
-* `astrid/sdk/timeline/sync.py:TimelineSession.flush` validates ACK then atomically
-  advances base/deletes pending/clears flight, retaining neither receipt nor
-  pending render. Extend that **same durable ACK transition** for producers:
-  accepted receipt + revision/publication/digest + approved render intent must
-  survive before flight clearing. A callback after `flush()` returns is too late.
+The command placeholder is illustrative only. The complete, executable JSON is
+`tests/editing_conformance/fixtures/settled_proposal_move.json` in
+`/home/user/work/wt/agt-m2-settled-proposal-contract`. It embeds the unchanged
+captured command from `recipe_m1_move.json` with its rational-fps timing and
+unknown/null authoring state. Golden proposal digest:
+`sha256:a4939d8873bd3bdc4f8eb79fc973267b0b1e37bb468d89f9ea9ca3d635de0a1b`.
+This is a move golden, **not assembled media insertion/replacement evidence**;
+those actual commands await bundle 2 and the parent-owner work above.
 
-Recovery order: unknown commit outcome -> exact original commit retry; known
-acceptance -> never recommit, resume pending render. Build through
-`RemoteTasks.prepare_admission`, durably retain its exact arguments/key using the
-existing outbox writer, then `dispatch_admission`; persist task/run identity before
-clearing pending admission. `sdk/recovery.py:AdmissionReceipt` demonstrates these
-separated admission boundaries; do not stack another journal on top.
+Hash the ENTIRE proposal except its own top-level `proposal_digest` with existing
+`astrid.sdk.timeline.commit._digest` / `_json`: sorted object keys, compact
+separators, `ensure_ascii=False`, `allow_nan=False`, UTF-8, SHA-256 prefixed
+`sha256:`. Retain command order, every capture/guard/reserved identity, rationale,
+metadata, null and absence. No stripping recorder claims, path normalization,
+recapture or default insertion before hashing. Reject duplicate/non-string keys,
+nonfinite numbers and unpaired surrogates at ingress; preserve Unicode scalars
+without NFC. This is the existing Python JSON profile, **not RFC 8785**: `1` and
+`1.0`, `-0.0` and `0` have different digest bytes. The tests pin a finite-float and
+Unicode vector. App must preserve/forward this exact proposal representation;
+plain `JSON.stringify` is not an implementation of this profile. Future App
+qualification must include fractional/exponent/integral-float capture values.
+The raw CAS artifact digest is separate: whitespace/key layout can change that
+raw digest without changing the canonical proposal digest.
 
-Use normal `rendering.render` with `params.timeline_ref`, project/timeline guards
-and `canonical_head_revision_id=<accepted revision>`. Runtime owns the snapshot
-and authority tuple. Head C before first admission may visibly refuse; keep A's
-render pending, never render C or silently repin. Runtime's current reference lane
-does not promise arbitrary historical admission. Once A's task was accepted, a
-lost ACK + C + restart + exact admission retry must return that **original task**;
-Runtime owns the `store.py:create_task` freeze-before-replay bug/test. This worker
-does not duplicate it. After commit acceptance cancellation cannot erase accepted
-history; retain/recover the pending render and use ordinary task cancellation for
-an already admitted task. Exact accepted commit replay must not require a live
-producer lease. Until all these transitions are proven, retain the old endpoint.
+`AgentDependency` is recorder output, **not** an accepted EditCommand input field.
+Therefore propose the minimal ordinary registered command `producer.guard` v1:
+
+```text
+request.commands = [
+  {schema_version:1, op:"producer.guard", version:"1", select:null,
+   args:{pin:<ProducerAttemptPin>, proposal:<exact settled object>}},
+  ...proposal.commands
+]
+pin = {...proposal.producer, admitted_target:proposal.admitted_target,
+       proposal_digest:proposal.proposal_digest}
+```
+
+The future registry entry has closed args `{pin,proposal}` and empty intention
+policy. No rationale/string binding/unknown intent encodes authority. It is the
+first and only guard in the batch; nested guards, inverse, restore and extra
+sibling edits refuse. `proposal.commands` contains ordinary registered edits;
+unknown operations fail closed under normal registry validation. Guard envelope
+validation alone is not evidence that this operation is installed.
+
+Provider validates the WHOLE original request before execution: recomputed hash,
+exact pin, `request.commands[1:] == proposal.commands` under the same canonical
+profile, request rationale == proposal rationale, and request project/timeline/
+original base pair == admitted_target. A requester cannot replace commands, alter
+capture claims/IDs/reasons/groups, reorder/add/remove edits, or recompute a forged
+digest and retain authority. Runtime independently compares the actual settled
+artifact, not just the requester's digest. Client source/actor attribution comes
+from the request's authenticated scope; rationale never grants it authority.
+
+Provider calls the agreed additive `producer_attempt(pin) -> {pin:<verified pin>}`.
+It passes this detached verified pin into pure execution as a private immutable
+input, similar to authenticated inverse closures. The guard handler has no clock,
+lease read, credential or Runtime call; it uses `Recording.dependency` to emit
+`{key:"producer_attempt:"+task_id,kind:"authority",policy:"exact",pin}` and no
+writes. Following commands execute normally at ordinals 1..N with their existing
+records/guards/created IDs; the entire commit is one undo step. No nested record
+format or invented child writes. Inverse/redo operate accepted authored records,
+not a new consumption of the old proposal. Rebase retains the original admitted
+base and exact commands; only normal provider replay updates expected_head.
+
+The immutable admission must bind the same original head pair. Proposed semantic
+location in the EXISTING open task spec is
+`spec.runtime_dependencies.publication.admitted_target`, containing exactly the
+four target fields above, alongside existing `publication.render`. This is
+capability-owned spec data, not a Task/CommitRequest DTO addition. Legacy numeric
+`expected_version` cannot stand in for either revision or publication. Scope and
+any legacy timeline aliases must agree; missing base pair refuses. This exact
+placement is sent to Runtime for owner review; no builder/schema change is made
+here and no old task is upgraded by inference.
+
+## Settled authority and durable handoff
+
+Runtime's aligned design is `design/producer-commit-port.md` (see the review
+exchange in ABSOLUTE `design/runtime-coordination.md`). Exact pin spellings are
+`task_id`, `attempt_id`, `executor_id`, `fence`, `runtime_epoch`,
+`admitted_target:{project_id,timeline_id,base_revision_id,base_publication_id}`,
+`proposal_digest`. Never persist a lease token. The requesting session retains
+the original proposal/batch, base pair, approved render intent and exact scoped
+commit bytes/key in its existing outbox before sending.
+
+Runtime resolves the UNIQUE normal settled `result.outputs` object descriptor
+named `authoring_proposal`, matches its immutable declared output port and actual
+project/task/attempt managed association, durable available/promoted lifecycle,
+raw digest and size, then reads verified CAS bytes and recomputes proposal_digest.
+No worker-local path, caller URL, bare hash or today's primary output is proof.
+The port captures this evidence privately; acceptance rechecks it and the exact
+request/recorder/capture pin bijection. Caller-supplied recorder data alone cannot
+authorize a producer edit. Assembly's ordered child/selection/reserved-ID checks
+remain additional requirements; the move golden does not exercise them.
+
+Inside `TimelineCommitStore.accept`, AFTER current user authorization and exact
+accepted-ledger lookup, BEFORE any write, Runtime must require:
+
+* task's CURRENT attempt equals pin; task completed (`succeeded` publicly),
+  attempt settled=1, and neither cancelled nor superseded;
+* exact persisted executor/fence/epoch, admitted target and settled digest match;
+  no RUNNING/unsettled eligibility, current live lease or lease pump requirement;
+* unconsumed proposal. Reuse the existing publication checkpoint keyed by
+  authoring task, consuming once per task (also prevents another key/actor/attempt
+  consuming that digest again), in the SAME transaction as revision/history and
+  receipt. Rollback/preview do not consume. Undo does not reset consumption.
+
+Cancel/retry and acceptance serialize in that same transaction/mutex: invalidation
+first refuses atomically; acceptance first preserves the edit. Exact accepted
+replay bypasses fresh producer checks after cancellation, lease expiry, head
+advance or restart, subject to the requester's current ordinary authority. No
+producer checks in the replay authorization callback or port construction.
+Compare completed epoch with its persisted attempt identity; requiring current
+boot/live executor would recreate the removed lease-state assumption. Runtime
+manager confirmation for an unconsumed proposal across boot remains requested.
+
+**Concrete implementation gap, not a delivery blocker:** Runtime
+`store.cancel_task` currently returns unchanged for completed tasks. A future
+implementation must make post-settlement/preaccept withdrawal durable through
+existing checkpoint/lifecycle machinery so the ratified cancelled refusal is
+real. Runtime owns that decision and proof. No new endpoint/table/journal is
+proposed by this worker, and the policy is not relaxed to fit today's no-op.
+
+Reuse `timeline_render_publications`: discriminator in prepared_json distinguishes
+the new command handoff from legacy rows; accepted receipt + revision/publication/
+content digest + approved pending render consume the proposal in acceptance.
+State prepared means accepted/render-pending for that format; published retains
+original render task/run. Runtime must atomically link admission and checkpoint;
+today's completion helper alone is not proof. Retain old-format replay unchanged.
+No separately committed preparation or second receipt journal.
+
+`TimelineSession.flush` currently advances base/deletes pending/clears flight
+without retaining the receipt. Extend that SAME durable ACK transition to retain
+accepted receipt/immutable selector + pending render BEFORE clearing the flight.
+Unknown outcome -> exact original commit retry. Known acceptance -> never
+recommit; resume pending render. Use `RemoteTasks.prepare_admission`, freeze its
+exact arguments/key durably in the existing outbox, then `dispatch_admission`;
+persist the returned task/run locator before clearing admission. `AdmissionReceipt`
+in `sdk/recovery.py` demonstrates the existing prepare/dispatch boundary.
+
+Historical render is approved ADDITIVE on the existing admission spec: immutable
+accepted revision + receipt publication/digest, separately named from
+`canonical_head_revision_id` (a current-head expectation, not a historical
+selector). Runtime owns the exact selector, retained closure resolution and
+normal generated artifacts/pin coordination; see `render-historical-admission.md`.
+It closes commit A -> first admission after C. For accepted render admission A,
+lost ACK + C + restart + exact retry must return A's ORIGINAL task; Runtime owns
+the separate freeze-before-replay bug/fix and permanent test. Never silently repin
+to C. Render failure/cancellation leaves accepted edit and pending recovery intact.
+No credential lending, extra write scopes, new coordinator or live proposal API.
 
 ## Acceptance recipe and evidence
 
@@ -143,18 +268,35 @@ producer lease. Until all these transitions are proven, retain the old endpoint.
    empty insertion and explicit populated replacement. Assert golden authored
    state, recorder reads/order/created IDs, deterministic replay, unknown/null
    round trip, guarded inverse/redo, later dependencies and A→B→A refusal.
-2. Paired Agent/Runtime integration: real production worker credential, real
-   caller-authorized parent; renderer stopped. Assert worker commit/admission
-   denied, parent commit succeeds with correct attribution, zero legacy publish
-   calls, reload/show/undo work. Race cancellation after capture/inside acceptance;
-   retry stale attempt/epoch/project; assert no partial revision or render task.
-3. Fault injection at before send, accepted-before-response, ACK fsync, after ACK
-   before admission freeze, after freeze before send, accepted admission before
-   response and task-locator fsync; restart parent and Runtime. Assert one accepted
-   edit, original IDs/receipt and one task pinned to A. Add head C both before first
-   admission (visible refusal retained) and after accepted admission (original
-   task on retry). Runtime supplies the latter permanent test. Keep the old
-   publication-chain positive behaviors until the replacement passes them.
+2. Agent guard tests after implementation: closed args and private verified pin;
+   changed command/guard/identity/rationale, missing/extra/reordered siblings,
+   substituted or recomputed digest, nested guard/inverse/restore, missing original
+   base pair, wrong project/timeline and old-port support all refuse. Actual
+   provider dry-run records authority without consuming; replay preserves original
+   guards. Guarded grouped inverse/redo never consumes again.
+3. Runtime existing port/acceptance suites: real settled artifact success; running,
+   unsettled, failed, cancelled, superseded/current-attempt-NULL refusal; wrong
+   executor/fence/epoch/target, missing/ambiguous/foreign artifact, raw/CAS/canonical
+   digest mismatch and missing/extra/forged authority record refusal. Race cancel
+   after capture/inside acceptance and supersede after capture: zero partial
+   revision/history/receipt/checkpoint/task. Test both serialization orders.
+4. One-shot: two different commit keys/actors race for the same proposal, only one
+   accepts; another commit after undo still refuses. Exact accepted commit retry
+   returns original result after cancel/lease expiry/boot/head C without producer
+   reads, while changed payload at the same key refuses. Failure before/after
+   checkpoint persistence rolls back consumption WITH the receipt. Preview never
+   consumes; unconsumed completed epoch across boot follows the owner-reviewed
+   persisted-identity rule.
+5. Paired real worker/requester lane with renderer stopped: worker retains denied
+   commit/admission write scopes, requester commits under its own attribution,
+   normal settled output is the delivery seam, zero legacy calls, reload/show/undo.
+   Keep existing publication-chain positive tests until replacement qualifies.
+6. Faults before send, accepted-before-response, ACK fsync, ACK before admission
+   freeze, freeze before send, accepted admission before response and task-locator
+   fsync: restart requester/Runtime, retain one edit/receipt and one render of A.
+   Include head C before FIRST historical admission and after accepted admission
+   ACK loss; Runtime owns historical selector + original-task retry proofs. App
+   must qualify the same digest vectors and numeric representations on the wire.
 
 Executable spike added only to Agent's existing suites:
 `test_assembly_keeps_ordered_clip_and_asset_ids_when_inactive_outputs_precede_primary`
