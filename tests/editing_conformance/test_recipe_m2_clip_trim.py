@@ -9,11 +9,17 @@ from types import SimpleNamespace
 import pytest
 from jsonschema import Draft202012Validator
 
-from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip_timeline_duration
+from astrid.core.timeline.duration import (
+    clip_end_frame,
+    clip_start_frame,
+    clip_timeline_duration,
+    timeline_duration_seconds,
+)
 from astrid.sdk.timeline._command_state import ABSENT, CommandError, State
+from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline._trim_commands import capture_clip_trim
-from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.rebase import replay
 from astrid.sdk.timeline_checkout import Clip
 from tests.editing_conformance.test_recipe_m1_commands import inverse, later
@@ -82,6 +88,42 @@ def test_trim_hold_is_source_time_and_playback_duration_applies_speed(monkeypatc
     assert clip_timeline_duration(clip(plan.bundle)) == pytest.approx(4 / speed)
     assert clip(plan.bundle)['from'] == 1
     assert clip(plan.bundle)['to'] == 5
+
+
+def test_native_group_replaces_track_ripple_and_compiles_parent_extension():
+    original = bundle()
+    original['parent']['config']['output'] = {'fps': 30}
+    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+        rows[0].update(at=0, **{'from': 3, 'to': 4, 'hold': 1, 'speed': 1})
+        rows[1].update(at=1, **{'from': 8, 'to': 9, 'hold': 1, 'speed': 1})
+        rows.append({'id': 'music', 'track': 'music', 'asset': 'music', 'clipType': 'media',
+                     'at': 0, 'from': 0, 'to': 2, 'hold': 2})
+    original['parent']['config']['tracks'].append({'id': 'music', 'kind': 'audio'})
+    original['parent']['registry']['assets']['music'] = {
+        'media_id': 'sha256:' + '2' * 64, 'type': 'audio', 'duration': 2,
+    }
+    audio_before = next(row for row in original['parent']['clips'] if row['id'] == 'music').copy()
+
+    group = {'group_id': 'visual-ripple',
+             'rationale': 'ripple=track; parent_duration=extend'}
+    trim = capture_clip_trim(original, REF, in_s=3, out_s=4.5)
+    intermediate = execute(original, [trim]).bundle
+    move = capture_move(intermediate, 'parent/clip:clip-b', 1.5)
+    trim.update(group)
+    move.update(group)
+    plan = execute(original, [trim, move])
+
+    rows = {row['id']: row for row in plan.bundle['parent']['clips']}
+    assert (rows['clip-a']['at'], rows['clip-a']['from'], rows['clip-a']['to']) == (0, 3.0, 4.5)
+    assert (rows['clip-b']['at'], rows['clip-b']['from'], rows['clip-b']['to']) == (1.5, 8, 9)
+    assert {command['group_id'] for command in plan.commands} == {'visual-ripple'}
+    assert {command['rationale'] for command in plan.commands} == {group['rationale']}
+    assert {key: rows['music'][key] for key in ('at', 'from', 'to')} == {
+        key: audio_before[key] for key in ('at', 'from', 'to')
+    }
+
+    compiled = document_from_bundle(plan.bundle)['parent_revision']['payload']
+    assert timeline_duration_seconds(compiled, 30) == pytest.approx(2.5)
 
 
 def test_windowless_trim_uses_file_not_hold_and_length_helper_stays_windowless():
