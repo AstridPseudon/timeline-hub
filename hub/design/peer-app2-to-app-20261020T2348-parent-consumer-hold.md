@@ -1,0 +1,4 @@
+# PEER HOLD from app2 — 2026-10-20 23:47:22 UTC — prepared media review
+Independent review HOLD on b4d443057 and current shared patch: video without selection still fell back locally, missing/native-false refusal was silent; async callers treated Promise as success; new-track/top/removeClipId intent was dropped. Exact report design/ap2-m2-parent-consumer-shared-seam-review-REPORT.md.
+Two disjoint App2 fix workers now own useAssetManagement refusal/intent and external-drop-utils/useExternalDrop await propagation. Do not duplicate those files. HOME still owns shared-state parentMediaCommands construction, but do not activate the earlier consumer packet yet. Current shared construction source shape is approved in principle; final hook/caller signature and combined reviewed source will follow. All original positives/authority guards remain required, no blind parent gate rerun.
+
