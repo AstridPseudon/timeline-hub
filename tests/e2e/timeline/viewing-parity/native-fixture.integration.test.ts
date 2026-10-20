@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFileSync, realpathSync } from 'node:fs';
-import { mkdtemp, readdir, readFile, rm, symlink, unlink } from 'node:fs/promises';
+import { readFileSync, realpathSync, statfsSync } from 'node:fs';
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { delimiter, join, relative } from 'node:path';
 import { test } from 'node:test';
@@ -77,11 +77,67 @@ function pythonSourceProof(python: string, runtime: string, agent: string) {
 }
 
 const QUALIFIED_NODE_SHA256 = '43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490';
+const QUALIFIED_CHROME_SHA256 = 'cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76';
 const QUALIFIED_HOST_ENV = {
   ASTRID_REMOTION_PROJECT_DIR: '/tmp/vw-m3-public13-host-one-root-catalog-stage/remotion',
   ASTRID_NODE_EXECUTABLE: '/tmp/vw-m3-public13-host-one-root-catalog-stage/toolchain/node-v20.19.4-linux-x64/bin/node',
+  ASTRID_REMOTION_BROWSER_EXECUTABLE: '/opt/google/chrome/chrome',
   ASTRID_TIMELINE_SCHEMA_PYTHONPATH: '/home/user/work/venv-agent/lib/python3.11/site-packages',
 } as const;
+const BROWSER_LOCK = '/tmp/timeline-viewing-browser.lock';
+const MIN_FREE_BYTES = 10 * 1024 * 1024 * 1024;
+const ARTIFACT_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-normal-three-media-public13-mp4';
+
+function assertFreeDiskFloor(path: string): void {
+  const stats = statfsSync(path);
+  assert.ok(stats.bavail * stats.bsize >= MIN_FREE_BYTES,
+    `free disk below 10 GiB floor at ${path}: ${stats.bavail * stats.bsize} bytes`);
+}
+
+function acquireBrowserLock(): ReturnType<typeof spawn> {
+  const locker = spawn('flock', ['-x', BROWSER_LOCK, 'sleep', '300'], { stdio: 'ignore' });
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const probe = spawnSync('flock', ['-n', BROWSER_LOCK, 'true'], { stdio: 'ignore' });
+    if (probe.status !== 0) return locker;
+    spawnSync('sleep', ['0.05'], { stdio: 'ignore' });
+  }
+  locker.kill('SIGTERM');
+  assert.fail(`could not acquire ${BROWSER_LOCK}`);
+}
+
+function artifactPath(name: string): string {
+  return join(ARTIFACT_ROOT, name);
+}
+
+function compositionArtifactProof(root: string): { sha256: string; members: number } {
+  const artifact = join(root, 'remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz');
+  const members = execFileSync('tar', ['-tzf', artifact], { encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+  return { sha256: createHash('sha256').update(readFileSync(artifact)).digest('hex'), members: members.length };
+}
+
+function assertProcessGroupGone(pid: number): void {
+  try {
+    process.kill(-pid, 0);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === 'ESRCH') return;
+    throw error;
+  }
+  assert.fail(`owned pack-host process group ${pid} survived cleanup`);
+}
+
+function qualifiedToolchainProof(): { node: { path: string; sha256: string }; browser: { path: string; version: string; sha256: string } } {
+  const node = requiredPath('ASTRID_NODE_EXECUTABLE');
+  const browser = requiredPath('ASTRID_REMOTION_BROWSER_EXECUTABLE');
+  const version = execFileSync(browser, ['--product-version'], { encoding: 'utf8' }).trim();
+  assert.equal(version, '155.0.8059.84', `unexpected Chrome155 version: ${version}`);
+  const browserSha256 = createHash('sha256').update(readFileSync(browser)).digest('hex');
+  assert.equal(browserSha256, QUALIFIED_CHROME_SHA256, `Chrome155 executable changed: ${browser}`);
+  return {
+    node: { path: node, sha256: createHash('sha256').update(readFileSync(node)).digest('hex') },
+    browser: { path: browser, version, sha256: browserSha256 },
+  };
+}
 
 function requiredPath(name: string): string {
   const value = process.env[name] ?? QUALIFIED_HOST_ENV[name as keyof typeof QUALIFIED_HOST_ENV];
@@ -115,6 +171,7 @@ function cleanHostEnvironment(runtime: string, agent: string): Record<string, st
     PYTHONPATH: [runtime, agent].join(delimiter),
     ASTRID_RUNTIME_CHECKOUT: runtime,
     ASTRID_CHECKOUT: agent,
+    ASTRID_REMOTION_BROWSER_EXECUTABLE: requiredPath('ASTRID_REMOTION_BROWSER_EXECUTABLE'),
     ASTRID_TIMELINE_SCHEMA_PYTHONPATH: QUALIFIED_HOST_ENV.ASTRID_TIMELINE_SCHEMA_PYTHONPATH,
   };
 }
@@ -199,7 +256,10 @@ test('native retained frame fixture restores and admits one normal render task',
   let productionHost: { hostPid: number; readyCapabilities: string[] } | undefined;
   let productionHostStopped = false;
   let productionHostCleanupError: unknown;
+  let browserLock: ReturnType<typeof spawn> | undefined;
   try {
+    assertFreeDiskFloor(tmpdir());
+    browserLock = acquireBrowserLock();
     const archived = await archiveFrozenSources(sourceTemp);
     const runtimePython = process.env.ASTRID_RUNTIME_PYTHON ?? '/home/user/work/venv-runtime/bin/python';
     const agentPython = process.env.ASTRID_PYTHON ?? '/home/user/work/venv-agent/bin/python';
@@ -225,8 +285,11 @@ test('native retained frame fixture restores and admits one normal render task',
         remotion: remotionPackage.dependencies?.remotion,
         timelineComposition: remotionPackage.dependencies?.['@banodoco/timeline-composition'],
       },
+      toolchain: qualifiedToolchainProof(),
+      compositionArtifact: compositionArtifactProof(archived.agent.root),
       moduleProof,
     };
+    assert.equal(before.compositionArtifact.members, 77);
     console.log(`[native-frame-source-proof] before ${JSON.stringify(before)}`);
     harness = new DirectHarness();
     await harness.start({ seed: false, beforeRuntimeStart: async current => {
@@ -445,19 +508,160 @@ test('native retained frame fixture restores and admits one normal render task',
     [{ path: '/v1/tasks', status: 201, origin: harness.origin }]);
     assert.equal(harness.audit().some(entry => entry.path.toLowerCase().includes('stitch')), false);
     await assertPinnedFrameParityFixture(harness, fixture);
+
+    // The preceding admission is deliberately paused/cancelled. Continue this
+    // same owned host only after those assertions and prove one normal CPU run.
+    process.kill(-productionHost.hostPid, 'SIGCONT');
+    const actualObserved: Array<{ url: string; method: string; status: number; body: unknown }> = [];
+    const actualOriginalFetch = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(input instanceof Request ? input.url : String(input), 'http://localhost');
+      const headers = new Headers(init?.headers);
+      if (url.pathname.startsWith('/api/astrid/')) {
+        assert.equal(headers.has('Authorization'), false, 'normal export admission must use the door credential');
+        headers.set('Origin', harness!.origin);
+      }
+      const response = await actualOriginalFetch(input, { ...init, headers });
+      if (url.pathname.startsWith('/api/astrid/')) {
+        actualObserved.push({ url: url.toString(), method: init?.method ?? 'GET', status: response.status,
+          body: await response.clone().json() });
+      }
+      return response;
+    }) as typeof fetch;
+    let actualTaskId: string | undefined;
+    try {
+      const actual = await enqueueAstridRuntimeRenderTimeline(built.payload!, {
+        client: new AstridLocalClient({
+          projectSlug: fixture.projectId,
+          baseUrl: `http://127.0.0.1:${harness.doorPort}/api/astrid`,
+        }),
+        idempotencyKey: 'normal-three-media-cpu-export',
+      });
+      assert.equal(actual.status, 'queued', actual.message);
+      assert.ok(actual.task_id);
+      actualTaskId = actual.task_id;
+    } finally {
+      globalThis.fetch = actualOriginalFetch;
+    }
+    const actualAdmission = actualObserved.find(entry => entry.method === 'POST' && entry.url.endsWith('/v1/tasks'));
+    assert.ok(actualAdmission, 'normal CPU export must perform the Runtime task admission');
+    assert.equal(actualAdmission.status, 201);
+    const actualRequest = actualAdmission.body as {
+      data: { task_id: string; capability_id: string; spec: { params: Record<string, unknown>; output_policy: Record<string, unknown> } };
+    };
+    assert.equal(actualRequest.data.task_id, actualTaskId);
+    assert.equal(actualRequest.data.capability_id, 'rendering.render');
+    assert.equal(actualRequest.data.spec.params.timeline_ref, fixture.timelineId);
+    assert.equal(actualRequest.data.spec.params.selector, 'rendering.remotion');
+    assert.equal(actualRequest.data.spec.params.canonical_project_id, fixture.projectId);
+    assert.equal(actualRequest.data.spec.params.canonical_head_revision_id, fixture.headRevisionId);
+    assert.deepEqual(actualRequest.data.spec.params.canonical_occurrence_ids, [fixture.occurrenceId]);
+    assert.deepEqual(actualRequest.data.spec.output_policy, {
+      format: 'mp4', destination: 'download', filename: built.payload!.output_filename,
+    });
+
+    const actualTaskPath = `/v1/tasks/${encodeURIComponent(actualTaskId!)}`;
+    const actualInitial = await readRuntimeJson<Record<string, unknown>>(harness, actualTaskPath);
+    const actualInitialSpec = actualInitial.spec as { spec: { params: Record<string, unknown>; inputs: Record<string, unknown>; output_policy: Record<string, unknown> } };
+    assert.equal(actualInitial.capability_id, 'rendering.render');
+    assert.equal(actualInitialSpec.spec.params.selector, 'rendering.remotion');
+    assert.equal(actualInitialSpec.spec.params.timeline_ref, fixture.timelineId);
+    assert.deepEqual(actualInitialSpec.spec.output_policy, actualRequest.data.spec.output_policy);
+    const actualAuthority = actualInitialSpec.spec.inputs.timeline_authority as Record<string, unknown>;
+    assert.equal(actualAuthority.project_id, fixture.projectId);
+    assert.equal(actualAuthority.timeline_id, fixture.timelineId);
+    assert.equal(actualAuthority.parent_revision_id, fixture.headRevisionId);
+    assert.equal(actualAuthority.parent_content_digest, fixture.parent.content_digest);
+    assert.deepEqual(actualAuthority.input_object_ids, fixture.media.map(pin => pin.objectId));
+    assert.deepEqual(actualAuthority.managed_media_admissions, Object.fromEntries(
+      fixture.media.map(pin => [pin.objectId, pin.digest]),
+    ));
+
+    let actualTask = actualInitial;
+    const deadline = Date.now() + 240_000;
+    while (actualTask.state !== 'succeeded') {
+      assert.notEqual(actualTask.state, 'failed', `normal CPU render failed: ${JSON.stringify(actualTask)}`);
+      assert.notEqual(actualTask.state, 'cancelled', `normal CPU render cancelled: ${JSON.stringify(actualTask)}`);
+      assert.ok(Date.now() < deadline, `normal CPU render did not finish: ${JSON.stringify(actualTask)}`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      actualTask = await readRuntimeJson<Record<string, unknown>>(harness, actualTaskPath);
+    }
+    const actualCompleted = await readRuntimeJson<Record<string, unknown>>(harness, actualTaskPath);
+    assert.deepEqual(actualCompleted.spec, actualInitial.spec, 'normal task spec changed while rendering');
+    const outputs = await readRuntimeJson<{ items: Array<Record<string, unknown>> }>(harness,
+      `${actualTaskPath}/managed-outputs?limit=50`);
+    const videoOutput = outputs.items.find(item => String(item.filename ?? '').endsWith('.mp4'));
+    assert.ok(videoOutput, `normal task has no MP4 output: ${JSON.stringify(outputs)}`);
+    assert.equal(videoOutput.task_id, actualTaskId);
+    assert.equal(videoOutput.project_id, fixture.projectId);
+    assert.equal(videoOutput.media_type, 'video/mp4');
+    const videoObjectId = String(videoOutput.object_id);
+    const videoResponse = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(videoObjectId)}`);
+    assert.equal(videoResponse.status, 200);
+    const videoBytes = new Uint8Array(await videoResponse.arrayBuffer());
+    assert.ok(videoBytes.byteLength > 1_000);
+    await mkdir(ARTIFACT_ROOT, { recursive: true });
+    const exportPath = artifactPath(`task-${actualTaskId}.mp4`);
+    await writeFile(exportPath, videoBytes);
+    assert.equal((await stat(exportPath)).size, videoBytes.byteLength);
+
+    const probe = spawnSync('ffprobe', [
+      '-v', 'error', '-count_frames', '-show_streams', '-show_format', '-of', 'json', exportPath,
+    ], { encoding: 'utf8' });
+    assert.equal(probe.status, 0, `ffprobe failed: ${probe.stderr}`);
+    assert.equal(probe.stderr, '');
+    const metadata = JSON.parse(probe.stdout) as { streams: Array<Record<string, unknown>>; format: Record<string, unknown> };
+    const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
+    const audioStream = metadata.streams.find(stream => stream.codec_type === 'audio');
+    assert.ok(videoStream, 'normal output must contain a video stream');
+    assert.ok(audioStream, 'normal output must contain an audio stream');
+    assert.deepEqual({ codec_name: videoStream.codec_name, width: videoStream.width, height: videoStream.height,
+      r_frame_rate: videoStream.r_frame_rate, nb_read_frames: videoStream.nb_read_frames },
+    { codec_name: 'h264', width: 640, height: 360, r_frame_rate: '30/1', nb_read_frames: '165' });
+    assert.equal(Number(videoStream.duration), 5.5);
+    assert.deepEqual({ codec_name: audioStream.codec_name, sample_rate: audioStream.sample_rate,
+      channels: audioStream.channels }, { codec_name: 'aac', sample_rate: '48000', channels: 2 });
+    assert.ok(Number(audioStream.duration) >= 5.4 && Number(audioStream.duration) <= 5.6);
+    assert.ok(Number(metadata.format.duration) >= 5.4 && Number(metadata.format.duration) <= 5.6);
+    const decode = spawnSync('ffmpeg', ['-v', 'error', '-i', exportPath, '-f', 'null', '-'], { encoding: 'utf8' });
+    assert.equal(decode.status, 0, `ffmpeg decode failed: ${decode.stderr}`);
+    assert.equal(decode.stderr, '', 'normal MP4 must be playable without decoder errors');
+
+    const provenanceOutput = outputs.items.find(item => String(item.filename ?? '').endsWith('.provenance.json'));
+    assert.ok(provenanceOutput, 'normal task must publish renderer provenance');
+    const provenanceResponse = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(String(provenanceOutput.object_id))}`);
+    assert.equal(provenanceResponse.status, 200);
+    const provenance = JSON.parse(await provenanceResponse.text()) as Record<string, unknown>;
+    assert.equal(provenance.engine, 'rendering.remotion');
+    assert.deepEqual(provenance.canonical_timeline, actualAuthority);
+    const backend = (provenance.backend_fragments as Record<string, Record<string, unknown>>)['rendering.remotion'];
+    assert.deepEqual(backend, {
+      ...backend,
+      renderer: 'remotion', composition_id: 'TimelineComposition',
+      project_dir: requiredPath('ASTRID_REMOTION_PROJECT_DIR'),
+    });
+    await writeFile(artifactPath(`task-${actualTaskId}.ffprobe.json`), `${JSON.stringify(metadata, null, 2)}\n`);
+    await writeFile(artifactPath(`task-${actualTaskId}.provenance.json`), `${JSON.stringify(provenance, null, 2)}\n`);
+    await assertPinnedFrameParityFixture(harness, fixture);
+    assert.equal(productionHostStopped, false, 'owned pack host must remain available until task evidence is read');
     } finally {
       await viteServer.close();
     }
     await stopProductionPackHost(harness, productionHost.hostPid, agentPython, archived.agent.root, archived.runtime.root);
     productionHostStopped = true;
+    assertProcessGroupGone(productionHost.hostPid);
     await harness.stop();
     harness = undefined;
     const after = {
       runtime: await sourceManifest(archived.runtime.root),
       agent: await sourceManifest(archived.agent.root),
+      toolchain: qualifiedToolchainProof(),
+      compositionArtifact: compositionArtifactProof(archived.agent.root),
     };
     assert.deepEqual(after.runtime, before.runtime.manifest);
     assert.deepEqual(after.agent, before.agent.manifest);
+    assert.deepEqual(after.toolchain, before.toolchain);
+    assert.deepEqual(after.compositionArtifact, before.compositionArtifact);
     console.log(`[native-frame-source-proof] after ${JSON.stringify(after)}`);
   } finally {
     if (productionHost && !productionHostStopped && harness) {
@@ -476,6 +680,7 @@ test('native retained frame fixture restores and admits one normal render task',
     }
     Object.assign(process.env, previousEnv);
     await rm(sourceTemp, { recursive: true, force: true });
+    browserLock?.kill('SIGTERM');
     if (productionHostCleanupError) throw productionHostCleanupError;
   }
 });
