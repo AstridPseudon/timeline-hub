@@ -115,3 +115,8 @@ No plan decisions changed. Used an ordinary worktree-only forward port because i
 ## Handoff
 
 No remaining task blocker. Harness should commit the worktree using the supplied commit message, confirm the resulting commit tree is `42d59104ef24fc745a56c55d81694a1cdb932f91`, then submit that exact descendant through the orchestrator's normal merge queue. App pairing/normal source activation remains separate work.
+
+
+## Manager landing — 2026-10-20 09:36 UTC
+
+APPROVED and MERGED as Agent tl/integration ed60bf15, source5f6c8130. Exact artifact SHA2560a7b6152…/58444B verified independently; lock byte-identical to reviewed ce2510034 and shared0012 runtime. Only Composition dependency changes in lock; Runtime94114269 lock bytes preserved. Central47presenter +292readiness passed. Real equality consumes BUILTIN_DEFAULT_THEME. Current SDK/source carry untouched; old10archive removed. App may pair0.0.12 with the same published Runtime94114269; next Runtime schema release remains separate. Normal PCM/source activation, browser current-tuple and gate6 not claimed. One final Agent batch full to follow identity-fixture merge.

@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T09:34:41Z | dispatcher heartbeat 5s -->
+<!-- main | 2026-10-20T09:39:35Z | dispatcher heartbeat 11s -->
 # runtime — 2026-10-20T09:33:59Z
 Milestone: M1 RECORDED; M2 TOP PRIORITY data-safety closure. Independent review reproduced F1 legacypublication clobbers unrelated sameprojectshot/items and F2 shelladoption ignores nonemptyprojectdocument; escalated09:33, separate fixes active. F3UNCERTIFIEDaliaslabel pending nextslot. No merge this session yet.
 Integrated: Runtime tl/integration 6023cfb; contract/client 0.2.10, schema 3e5e78d0…, artifacts 4984423c…. D13 branch full 1020082104-3297: 5111 passed / 7 baseline fail / 18 skip / 25 xfail. Integration full 1020082220-678 at94114269: 4971 passed / same7 baseline. Dedup branch full1020082220-2410:4967 passed / same7 baseline. These are default-filter runs, NOT marked integration proof.

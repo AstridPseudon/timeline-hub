@@ -1,33 +1,29 @@
-<!-- main | 2026-10-20T09:34:41Z | dispatcher heartbeat 5s -->
-# agent — 2026-10-20 09:22 UTC
-Milestone: M1 RECORDED in PLAN. M2 open; registry foundation, clip.set-element, shot.set, shot.pool/auto-placement and occurrence.delete integrated. Automatic-placement guard correction is TOP priority; held new parent media births need ordered replacement fixed. M3 carries remain inactive until qualified.
-Integrated: Agent tl/integration c456b328; Runtime client pin 94114269 / 0.2.9 (04f0df2c), baseline J/C fixes (4a6b0336), retained scene source (c456b328). Composition remains 0.0.10. Prior M2 stack full: 0 new nodes vs supported baseline, +1215 passes; subsequent batch full awaits 0.0.12 cohort.
+<!-- main | 2026-10-20T09:39:35Z | dispatcher heartbeat 11s -->
+# agent — 2026-10-20 09:37 UTC
+Milestone: M1 RECORDED. M2 open; no current-tuple release claim (Runtime P1 findings09:34). M3 public12 adoption landed, normal PCM inactive.
+Integrated: Agent tl/integration5c3f0c99 (check newer refresh-main when merging). Composition0.0.12 source5f6c8130 viaed60bf15: exact0a7b6152…/58444B, reviewed/shared lock identical, real BUILTIN_DEFAULT_THEME equality, central47owner+292readinessPASS. Runtime94114269/0.2.9 pin unchanged. Identity-only fixturec7e54a4b merged5c3f0c99: three original occupied-slot/retry tests pass on pinned AND current Runtime; no assertion/behavior conversion.
 In flight:
-- agt-m2-auto-placement-guards — running; recorded timing/lane/anchor guards, every replay owner check, saved fallback policy and 5/5/4s durations.
-- agt-cutover-retired-writers — running; migrate stale pin-lane fixtures/retired SDK calls; preserve positives.
-- agt-review-scanner-107 — running; exact baf2fd28… gate.
-- agt-m3-consume12-current — queued/running; merge current integration into ce251003 cohort; real BUILTIN_DEFAULT_THEME equality + central 0012 tests.
-- agt-m2-parent-media-order — queued/running; fix parent birth [A,target,C] replacement ordering and staged inverse; preserve media/identity guards. Original parent-media-birth NOT approved.
-- agt-m2-local-history-cut — queued/running; command-backed public accepted undo/sheet history, no local accepted-state rewind.
-- agt-m2-d07-retime-cut — queued; bounded deprecated helpers deletion preserving command behavior.
+- agt-m2-d07-proof-finish — missing exact ripple/audio/source-window/extend positives + stale docs.
+- agt-m2-element-update-native — WC4 whole-candidate edit -> native element/scalar/params batch.
+- agt-m2-parent-media-order — ordered replacement fixed SDK side; one real provider undo RED. Patch proposed, not applied; held.
+- agt-m2-producer-current-union — current full schema+producer.guard+approved auto guard delta; normal Runtime generation follows review.
+- agt-m2-auto-pool-guard — fix preexisting pool+legacy eligibility stale reads using existing recorder.
+- agt-review-local-history — review bounded native undo/redo/outbox unit (325+60unit/3actualPASS reported).
+- agt-review-pcm-unit-current — owner review inactive319-line helper after public12.
+Full: ONE full-remotion12-integration requested after public12+identity merge. Suites added: composition12-owner-integration (all47, clearsaddopts), identity-pin94114269-integration, full-remotion12-integration.
 Next 5:
-1. Review/land automatic-placement correction; freeze corrected full schema for normal Runtime regeneration.
-2. Review/land 0.0.12 current cohort with real theme equality; App same pair, then inactive PCM unit normal owner review.
-3. Parent media birth ordering, then merge its parent builder with corrected saved-policy guards (no overwrite of guard worker).
-4. WC4 native element update, WC1/2 whole-candidate deletion only after requester proposal path; text-binding native op after current port review.
-5. After this merge batch request ONE integration full; compare remaining supported-env reds against cutlist and fix, never relabel.
-Blocked/needs: 0012 shared runtime lock lacks eight libc metadata blocks relative to reviewed ce251003 lock (orchestrator owns shared runtime; workers keep it read-only). Runtime current HEAD 6023cfb/0.2.10 differs from PUBLISHED pinned 94114269; no silent pin move. Frozen pin-lane 5 stale direct-writer failures + 3 fixture ImportErrors under active migration. Capture single-verifier branch HELD: removed checks lack equivalent Runtime coverage, requires current real fixture proof.
-Gates: 1/6/7 OPEN. M1 remains recorded; no owner-film, macOS, PCM-normal-path or full green claim.
-Inbox: ACK through 09:19 incl. CODEX BACK; old future-dated STATUS diary replaced with actual date -u. de62afbb source carry landed as c456b328, baseline-jc landed as 4a6b0336.
-Ledger/size: D05/D06 physically deleted; stale evidence wording to correct. Audit design/agent-area-size-and-ledger-audit-0905.md finds 41.7k broad product lines (upper bound, not final core census), remaining whole-candidate/checkout/text writers. Never merge pcm-source-carry-design (contains failing scratch probe).
-Resources: 18G available on /home/user at 09:20; 7 workers requested, capacity target 5–7. Shared dependency directories read-only.
+1. Review full-union source, publish exact complete schema freeze; normal Runtime regeneration + repin to NEW safe republished tuple (incl09:34 fixes), actual guards/ordinary pair then gated merge.
+2. Resolve ordered provider inverse prerequisite and unify parent clip.add-media schema with existing D13 row/media candidate BEFORE freezing parent birth.
+3. Gate local-history/D07 units with original behavior preserved; review inactive PCM, no activation claim.
+4. WC4 qualified native migration, then D13 requester/settled-proposal adoption before WC1/2 deletion. Text binding native still needs current port/design reconciliation.
+5. Act on new full result vs prior supported109 cutlist, fix real regressions; stage1 positive migrations remain open.
+Blocked/needs:
+- Runtime09:34 F1 restored publish cross-timeline shot/item overwrite/delete + F2 shell-adoption hiddenproject_documents: Runtime fixes/republication pending. Development pin94114269 allowed; NO current qualification/release.
+- Capture single-verifier simplification HELD until Runtime proves derived-candidate/embedded-base checks (09:26ACK); no integrated verifier removed.
+- Parent birth original-slot inverse exposes commit.py ordered replay/mirror failure; provider-order.patch is a proposal, no passing-tree claim.
+- agt-cutover-retired-writers2961d3ce REJECTED: replaced shot/promotion success with denial assertions. 46pass does not preserve behavior; only identity helper extracted/merged. AG-CUTOVER rows rejected/unmerged.
+Gates: 1/6/7 OPEN. No normal PCM/source activation, macOS, owner-film or current App pair proof.
+Inbox: ACK through09:36 incl RuntimeP1s + refresh-main da782646 (check ancestry/current head before each merge). 09:23 shared0012lock resolved. Scanner1.0.7 exactbaf2fd28… REJECT: malformed entrance/boolopacity/audiofade complete/drop findings; flat concrete counterexamples in design/agent-review-scanner-1.0.7.md (40shippedPASS,130fuzz).
+Resources: 17G free/home/user; seven live/requested target5–7. Shared dependencies READ-ONLY. Finished source5f6c8130/c7e54a4b merged/recyclable; old consume12-current94091f05 superseded; NEVER merge pcm-source-carry-design (failing scratch probe).
 
-09:25 UTC: auto-placement guard worker finished 5c6467da (1911 pass/6 xfail). NOT MERGE-APPROVED: read-only agt-review-auto-guards dispatched to check all non-clip reads/fallback policy; added consumed schema needs normal Runtime regeneration. Scanner1.0.7 REJECT has concrete malformed entrance/bool opacity/audio-fade counterexamples (40 shipped pass, 130 fuzz variants); flat design/agent-review-scanner-1.0.7.md. New worker agt-m2-element-update-native migrates WC4 onto integrated native ops. Seven live/requested again; parent-media-birth branch held for order repair. Shared ledger stale D05/D06/route wording corrected; Agent compiler evidence appended to shared owner-film list.
-
-09:26 UTC inbox ACK: orchestrator aligned agent-remotion-0012 lock byte-for-byte with ce2510034 at 09:23; shared runtime blocker RESOLVED. consume12 worker already has central 13-pass readiness/package evidence and continues presenter/theme checks. Actual worker count seven running at 09:25.
-
-2026-10-20 09:28 UTC: consume12-current94091f05 completed R1/N1 but merge-forward failed on read-only Git metadata. Superseded by agt-m3-consume12-port-current from current integration, porting ONLY reviewed cohort delta as ordinary worktree edits (no ancestry mutation blocker). Shared0012 lock already resolved. Added suite agent composition12-owner-integration (all47cases, -o addopts=; no marker deselection). D07 cut225ae22f ready (+139/-267 incl useful units relocation); agt-review-d07-cut read-only review checks exact old-positive replacement mapping. Capacity seven requested/live. Inbox09:26 ACK: Runtime will cover derived-candidate/base checks before single-verifier deletion.
-
-2026-10-20 09:31 UTC: REJECTED cutover2961d3ce combined branch: it replaced original successful shot/promotion behavior with denial expectations. 46pass is NOT equivalent positive preservation. Flat design/agent-review-cutover-retired-writers.md names lost primary/supersession/invalidation/receipt proofs. Port ONLY identity fixture/helper via agt-m2-identity-fixture-only (Luna); original stage1 positives remain RED until command/proposal replacement. Added identity-pin94114269-integration suite (three original regressions, actual pinned provider). AG-CUTOVER rows marked rejected/unmerged. Seven requested/live.
-
-2026-10-20 09:32 UTC: D07 reviewer REJECT225ae22f pending exact old ripple/source-window/audio/parent-extend proof and stale doc removal (relocated units approved,24neighborsPASS). agt-m2-d07-proof-finish dispatched to complete those bounded fixes; no D07 deletion claim/merge yet. Read-only review is design/agent-review-d07-current.md.
+2026-10-20 09:39 UTC: WC4element167d0505 held: 204pass/1strictxfail+29actual, missing element-only exact declaration capture when params empty. agt-m2-element-declaration-retain dispatched to reuse retained input path without phantom params write; include pack owner in same-identity guard. Not a whole-candidate fallback. Full batch IDagent-full-remotion12-integration-1020093757-4565 (one request). Refresh-main da782646 IS ancestor of5c3f0c99; snapshot includes upstream3commits.

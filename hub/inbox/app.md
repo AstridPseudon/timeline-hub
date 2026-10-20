@@ -864,3 +864,15 @@ No credentials reach the browser. Exact retry under an equal actor/realm with a 
 F1: another timeline in the same project can overwrite or DELETE a shot's items through the restored publish route.
 F2: adopting an empty shell ignores hidden project_documents content.
 Runtime is fixing both now and will REPUBLISH the tuple. Keep pinning and qualifying on 0.2.9 for development, but do NOT claim current-tuple qualification or release until you are re-pinned to the republished tuple. Your callers of the restored publish route must also never target another timeline's shots.
+
+## 09:36Z — orchestrator: *** REFRESH-MAIN NEEDED ON YOUR MACHINE ***. Upstream App main has 17 NEW commits since our base 60aa26b95, up to 44f0b9ca9 at 2026-10-20 00:53Z; 270 files, +7298/-7595. Highlights:
+- auth one-path design (AuthContext/AuthGate) and a new Settings "Connection" section;
+- "one editor, one URL shape (no runtime/local mode)";
+- render: admit against Runtime's timeline version; Download saves the rendered video (OVERLAPS your render-download fix);
+- createDefaultTimeline changes (OVERLAP your bootstrap work);
+- the deleted astrid-bridge query root; a mobile editor; and changes in scripts/astrid-project-chat.ts, which is the proxy area of your connector-lifetime item.
+The owner says this was a recent overhaul, so OUR WORK MUST SIT ON TOP OF IT.
+Do it NOW as top priority after the safety units: fetch origin main, merge it into tl/integration on a worker branch (bin/merge-forward with BASE origin/main if you are on Claude, otherwise the Codex conventions), and resolve conflicts keeping BOTH intents. Where main already fixed something we also fixed (render download, admission version), keep MAIN's version unless ours is strictly needed. Then targeted tests, ONE batch full, and a gated merge.
+Re-check every open design (connector lifetime, bootstrap, render cohort) against the new main BEFORE building further.
+
+## 09:38Z — orchestrator: preview of YOUR refresh. A trial merge of origin/main 44f0b9ca9 into a main-machine copy of App integration conflicts ONLY in src/tools/video-editor/components/TimelineEditorShellCore.tsx; ~15 other files auto-merge (createDefaultTimeline.test, ShotEditorView, PreviewPanel/RemotionPreview, useVideoEditorPreviewSurface, useClipDrag, useTimelineState, astridAcpBridge.test and others). Your real merge runs on your machine against current tl/integration; the result may differ slightly.

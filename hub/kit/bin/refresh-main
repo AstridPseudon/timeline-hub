@@ -1,12 +1,20 @@
 #!/bin/bash
-# refresh-main — fetch origin/main for agent/runtime/app and MERGE it into tl/integration (under the per-repo merge lock). Run by the orchestrator (needs network).
+# refresh-main [--check] — fetch upstream main (explicit refspec, so origin/main really updates) and MERGE it into tl/integration
+# under the per-repo merge lock. Areas handed to another machine (managers/<area>/REMOTE) are NOT merged here: their lead refreshes
+# on its own machine; this script only reports how far behind the hub copy of their integration is.
+# --check: report only, no merge. Run by the orchestrator (needs network). Never pushes.
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
-declare -A SRC=([agent]=/home/user/peteromallet/astrid-agent [runtime]=/home/user/banodoco/banodoco-workspace-runtime [app]=/home/user/banodoco/reigh-app)
-for r in agent runtime app; do
-  git -C ${SRC[$r]} fetch -q --depth 3000 origin "+refs/heads/main:refs/remotes/origin/main" || { echo "$r: fetch failed"; continue; }
-  n=$(git -C /home/user/work/$r rev-list --count tl/integration..origin/main)
-  [ "$n" = 0 ] && { echo "$r: up to date"; continue; }
+declare -A AREA=([agent]=agent [runtime]=runtime [app]=app [composition]=viewing)
+CHECK=0; [ "$1" = --check ] && CHECK=1
+for r in agent runtime app composition; do
+  W=/home/user/work/$r
+  git -C $W fetch -q origin "+refs/heads/main:refs/remotes/origin/main" || { echo "$r: fetch failed"; continue; }
+  ref=tl/integration; remote=0
+  if [ -f $O/managers/${AREA[$r]}/REMOTE ]; then remote=1; git -C $W fetch -q hub "+refs/heads/timeline/$r/*:refs/remotes/hub/*" 2>/dev/null; ref=hub/tl/integration; fi
+  n=$(git -C $W rev-list --count $ref..origin/main 2>/dev/null)
+  [ "$n" = 0 ] && { echo "$r: up to date with main $(git -C $W rev-parse --short origin/main)"; continue; }
+  if [ $remote = 1 ] || [ $CHECK = 1 ]; then echo "$r: BEHIND main by $n commits (main $(git -C $W rev-parse --short origin/main))$([ $remote = 1 ] && echo ' — REMOTE area: its lead/manager refreshes on its machine')"; continue; fi
   ( exec 9>/home/user/work/.$r.merge.lock; flock -w 600 9
-    if git -C /home/user/work/$r merge --no-ff -q -m "Merge current main ($n commits) into tl/integration" origin/main; then echo "$r: merged $n main commits -> $(git -C /home/user/work/$r rev-parse --short HEAD)"; echo "$(date -u +%FT%TZ) $r main-refresh $(git -C /home/user/work/$r rev-parse --short HEAD)" >> $O/merges.log
-    else git -C /home/user/work/$r merge --abort; echo "$r: CONFLICT merging $n main commits — aborted; dispatch a worker (via the owning manager) to resolve on a branch"; fi )
+    if git -C $W merge --no-ff -q -m "Merge current main ($n commits) into tl/integration" origin/main; then echo "$r: merged $n main commits -> $(git -C $W rev-parse --short HEAD)"; echo "$(date -u +%FT%TZ) $r main-refresh $(git -C $W rev-parse --short HEAD)" >> $O/merges.log
+    else echo "$r: CONFLICT in: $(git -C $W diff --name-only --diff-filter=U | tr '\n' ' ')"; git -C $W merge --abort; echo "$r: aborted; the owning manager dispatches a worker to merge origin/main on a branch"; fi )
 done
