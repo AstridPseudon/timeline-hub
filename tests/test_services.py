@@ -9,15 +9,19 @@ import pytest
 from astrid.services import service_declaration
 
 
-def test_declaration_matches_runtime_contract_with_space_containing_paths(tmp_path):
+def test_declaration_matches_runtime_contract_with_space_containing_paths(tmp_path, monkeypatch):
     source = tmp_path / "agent checkout"
     root = tmp_path / "workspace data"
     python = str(tmp_path / "python environment" / "python")
     bun = str(tmp_path / "Bun tools" / "bun")
+    program = str(tmp_path / "custom Astrid program")
+    monkeypatch.setenv("ASTRID_INSTALL_PROGRAM_ROOT", program)
     declaration = service_declaration(source_checkout=source, data_root=root, python=python, bun=bun)
     schema = json.loads((Path(__file__).parent / "fixtures" / "services.schema.json").read_text())
     jsonschema.validate(declaration, schema)
     host, chat = declaration["services"]
+    assert host["env"]["ASTRID_INSTALL_PROGRAM_ROOT"] == program
+    assert chat["env"]["ASTRID_INSTALL_PROGRAM_ROOT"] == program
     assert host["argv"][0] == python
     assert host["argv"][host["argv"].index("--source-checkout") + 1] == str(source)
     assert host["argv"][host["argv"].index("--support-root") + 1] == str(root / "runtime")

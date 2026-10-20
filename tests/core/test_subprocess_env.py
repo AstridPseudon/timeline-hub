@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from astrid.core import subprocess_env
 from astrid.core.execution.executor import runner as executor_runner
 from astrid.core.rendering import transport as rendering_transport
@@ -34,11 +36,14 @@ def test_non_windows_child_environment_does_not_admit_windows_only_variables(mon
     assert env == {}
 
 
-def test_render_process_group_marker_survives_executor_and_transport(
-    tmp_path: Path, monkeypatch
+@pytest.mark.parametrize("marker,value", [
+    ("ASTRID_RENDER_INHERIT_PROCESS_GROUP", "1"),
+    ("ASTRID_INSTALL_PROGRAM_ROOT", "/custom/Astrid program"),
+])
+def test_parent_marker_survives_executor_and_transport(
+    tmp_path: Path, monkeypatch, marker: str, value: str,
 ) -> None:
-    marker = "ASTRID_RENDER_INHERIT_PROCESS_GROUP"
-    monkeypatch.setenv(marker, "1")
+    monkeypatch.setenv(marker, value)
     monkeypatch.setattr(executor_runner, "_external_pack_pythonpath_env", lambda *_: {})
     monkeypatch.setattr(executor_runner, "_project_subprocess_env", lambda *_: {})
     monkeypatch.setattr(executor_runner, "_emit_scoped_config_env", lambda *_: {})
@@ -53,7 +58,7 @@ def test_render_process_group_marker_survives_executor_and_transport(
     executor_environment = executor_runner._command_subprocess_env(
         executor, request, {}
     )
-    assert executor_environment[marker] == "1"
+    assert executor_environment[marker] == value
 
     launched = {}
 
@@ -96,5 +101,5 @@ def test_render_process_group_marker_survives_executor_and_transport(
     )
 
     assert report.supported is True
-    assert launched["start_new_session"] is False
-    assert launched["env"][marker] == "1"
+    assert launched["start_new_session"] is (marker != "ASTRID_RENDER_INHERIT_PROCESS_GROUP")
+    assert launched["env"][marker] == value
