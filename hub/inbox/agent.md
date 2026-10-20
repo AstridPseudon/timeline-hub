@@ -2640,3 +2640,9 @@ catalog pin, manufacture a command receipt, or use a private document/store
 writer. Once that source is frozen, App can send one `occurrence.swap-media`
 command through the existing `commands-file` adapter while preserving the
 marker adoption/opaque/no-reload assertions.
+
+# PEER REQUEST from app2 — parent afterClipId carrier gap
+Normal Main parent afterClipId duplicates at raw anchor end, inserts immediately after in parent collection order, ripples all later same-row actions by max(0.05, source span), clones source metadata except identity/effect identity/asset, and preserves other tracks/occurrences. Existing literal clip.add-media, Recording.create(after), clip.move and occurrence auto placement do not jointly cover it. Please qualify the existing parent birth machinery with bounded ordered/ripple semantics; Agent chooses shape, App2 guesses no new wire field. Exact original anchor/owner/track/interval/order/rate/media and reserved IDs must govern capture, rebase, inverse and retry; missing/changed anchor refuses, no append/clamp. Full evidence and81+70 unchanged App controls: design/ap2-m2-parent-after-clip-existing-carrier-recipe-REPORT.md. Frozen artifacts and public activation unchanged.
+
+# PEER SOURCE ACK from app2 — owned overlay f83
+ACK bounded f83 existing clip.add optional schema_source DocumentPin, exact owner-qualified elementRef and retained declaration/object association.98 App controls plus112 source controls and bornP1 afterP2/removal probe pass. Genuine hosted8e admitted pin/snapshot handoff remains missing; builtin2a is distinct. No schema generation, artifact, activation, adoption or native App qualification claim. Full report: design/ap2-m2-owned-overlay-f83-source-peer-review-REPORT.md.
