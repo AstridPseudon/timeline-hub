@@ -1432,6 +1432,7 @@ def ensure_pack_host(
         os.fchmod(lock_handle.fileno(), 0o600)
     except OSError as exc:
         raise PackHostBootstrapError(f"generic Astrid pack host lock is unavailable; {reconfigure_action}") from exc
+    process = None
     try:
         try:
             import fcntl
@@ -1606,17 +1607,10 @@ def ensure_pack_host(
             "remotion_validation": {k: v for k, v in child_env.items() if k.startswith("ASTRID_REMOTION_VALIDATION_")} or None,
         }
         if not process_state["process_birth_id"]:
-            process.poll()
             raise PackHostBootstrapError(f"generic Astrid pack host identity could not be captured; {reconfigure_action}")
         # Register at once: if this CLI dies before the host is ready, the next
         # Astrid process finds the registration and retires the orphan.
         _write_object(state_path, process_state)
-
-        def _abandon() -> None:
-            try:
-                _retire_host_locked(process_state)
-            finally:
-                process.poll()
 
         now = time.monotonic()
         deadline = now + startup_idle_seconds
@@ -1626,40 +1620,35 @@ def ensure_pack_host(
         terminal_failure = None
         exit_status = None
         hung = False
-        try:
-            while True:
-                now = time.monotonic()
-                if now >= next_probe:
-                    token = _host_progress_token(process, log_path, ready_path)
-                    if token != last_token:
-                        last_token = token
-                        deadline = now + startup_idle_seconds
-                    next_probe = now + _PROGRESS_PROBE_INTERVAL_SECONDS
-                if now >= deadline:
-                    hung = True
-                    break
-                ready = _read_object(ready_path)
-                if ready and str(ready.get("status")) == "ready":
-                    break
-                if (
-                    ready
-                    and str(ready.get("status")) == "failed"
-                    and ready.get("terminal") is True
-                    and str(ready.get("pid")) == str(process.pid)
-                    and str(ready.get("process_birth_id"))
-                    == str(process_state["process_birth_id"])
-                ):
-                    terminal_failure = ready
-                    break
-                exit_status = process.poll()
-                if exit_status is not None:
-                    break
-                time.sleep(0.05)
-        except BaseException:
-            _abandon()
-            raise
+        while True:
+            now = time.monotonic()
+            if now >= next_probe:
+                token = _host_progress_token(process, log_path, ready_path)
+                if token != last_token:
+                    last_token = token
+                    deadline = now + startup_idle_seconds
+                next_probe = now + _PROGRESS_PROBE_INTERVAL_SECONDS
+            if now >= deadline:
+                hung = True
+                break
+            ready = _read_object(ready_path)
+            if ready and str(ready.get("status")) == "ready":
+                break
+            if (
+                ready
+                and str(ready.get("status")) == "failed"
+                and ready.get("terminal") is True
+                and str(ready.get("pid")) == str(process.pid)
+                and str(ready.get("process_birth_id"))
+                == str(process_state["process_birth_id"])
+            ):
+                terminal_failure = ready
+                break
+            exit_status = process.poll()
+            if exit_status is not None:
+                break
+            time.sleep(0.05)
         if terminal_failure is not None:
-            _abandon()
             error = terminal_failure.get("error")
             diagnostic = error if isinstance(error, Mapping) else {}
             code = str(diagnostic.get("code") or "host_registration_failed")[:128]
@@ -1679,7 +1668,6 @@ def ensure_pack_host(
                 or str(ready.get("process_birth_id")) != str(process_state["process_birth_id"])
                 or not all(ready.get(key) == expected_value for key, expected_value in expected.items())
                 or process.poll() is not None):
-            _abandon()
             cause = _host_failure_cause(log_path)
             detail = f": {cause}" if cause else ""
             if hung:
@@ -1705,6 +1693,28 @@ def ensure_pack_host(
             "host_boot_manifest_path": str(boot_manifest_path),
             "host_boot_manifest_hash": boot_manifest_hash,
         }
+    except BaseException:
+        if process is not None:
+            # The returned child already has incarnation-bound custody, even
+            # when birth capture or registration failed. Never recover cleanup
+            # authority from a possibly replaced registration.
+            try:
+                terminate_group(process)
+            finally:
+                process.poll()
+            identity = {
+                **expected,
+                "pid": process.pid,
+                "process_birth_id": getattr(process, "_astrid_process_birth", None),
+            }
+            if identity["process_birth_id"]:
+                for marker in (ready_path, state_path):
+                    registered = _read_object(marker)
+                    if registered and all(
+                        registered.get(key) == item for key, item in identity.items()
+                    ):
+                        marker.unlink(missing_ok=True)
+        raise
     finally:
         try:
             import fcntl

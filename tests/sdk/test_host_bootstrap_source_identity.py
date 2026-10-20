@@ -301,7 +301,7 @@ def test_bootstrap_stops_on_correlated_terminal_registration_failure(
     monkeypatch.setattr(generic_host, "RuntimeProtocolClient", FakeRuntimeClient)
     ready: dict[str, object] = {}
     launches: list[list[str]] = []
-    terminated: list[dict[str, object]] = []
+    terminated: list[object] = []
 
     class FakeProcess:
         pid = 4242
@@ -338,8 +338,8 @@ def test_bootstrap_stops_on_correlated_terminal_registration_failure(
     )
     monkeypatch.setattr(
         host_bootstrap,
-        "_terminate_old_host",
-        lambda current: terminated.append(dict(current)),
+        "terminate_group",
+        lambda process: terminated.append(process),
     )
 
     with pytest.raises(host_bootstrap.PackHostBootstrapError) as caught:
@@ -623,8 +623,8 @@ def test_startup_budget_polling_preserves_identity_and_original_cleanup(
     monkeypatch.setattr(host_bootstrap, "_RETAINED_HOSTS", {})
     monkeypatch.setattr(host_bootstrap, "_read_object", read)
     monkeypatch.setattr(host_bootstrap, "_host_birth_identity", lambda _pid: "birth")
-    # A host that fails to register is retired by its registration.
-    monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda state: cleanup.append("retired"))
+    # A failed launch is cleaned through its original owned process handle.
+    monkeypatch.setattr(host_bootstrap, "terminate_group", lambda owned: cleanup.append("retired") if owned is process else pytest.fail("different child"))
     _mock_host_launch(monkeypatch, launch)
     # Injected progress source: advances while the host is "making progress".
     monkeypatch.setattr(host_bootstrap, "_host_progress_token",
