@@ -138,7 +138,12 @@ class Client:
                                      "summary": {"head_revision_id": self.generated.head["revision_id"]}})
 
     def open_bundle(self, project, timeline, *, revision_id):
+        from astrid.sdk.timeline.commit import bundle_from_document
+
         self.reads.append(revision_id)
+        for _, result in self.generated.accepted.values():
+            if result['data']['accepted_revision_id'] == revision_id:
+                return DomainResult.success({'bundle': bundle_from_document(result['data']['canonical_document'])})
         return DomainResult.success({"bundle": copy.deepcopy(self.generated.bundles[revision_id])})
 
 
@@ -689,6 +694,88 @@ def test_paired_ack_verifies_known_commands_original_source_and_output_closure()
     result, body, flight, identity, original = paired_ack()
     assert _ack(json.loads(json.dumps(result)), body, flight, identity,
                 source_bundle=original) == (result['data'], result['receipt'])
+
+
+@pytest.mark.parametrize('damage', [None, 'history-receipt', 'original-source'])
+def test_dependent_paired_ack_after_lost_ack_reload_and_disjoint_child_edit(tmp_path, monkeypatch, damage):
+    from astrid.core.receipts.contract import CommandReceipt
+    from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+    from astrid.sdk.timeline._command_state import State
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+    from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service
+    from astrid.sdk.timeline.outbox import Outbox
+    from tests.editing_conformance.test_materialization_identity import source
+    from tests.sdk.test_timeline_commit_provider import DetachedPort, DetachedRealm, runtime_abi
+
+    runtime_abi.__wrapped__(monkeypatch)
+    realm = DetachedRealm(source())
+    identity = {'realm_id': 'realm', 'actor_id': 'actor-1'}
+    outbox = Outbox(tmp_path / 'dependent.json')
+    outbox.write({'scope': {**identity, 'project_id': 'project-1', 'timeline_id': 'film'},
+                  'base': copy.deepcopy(realm.head), 'pending': [], 'flight': None})
+    sent, accepted = [], {}
+
+    def commit(project, timeline, body, *, idempotency_key):
+        sent.append((request_bytes(body), idempotency_key))
+        if idempotency_key not in accepted:
+            context = realm.context(body['commands'], base={
+                'revision_id': body['base_revision_id'], 'publication_id': body['base_publication_id']})
+            context['request'] = {**body, 'rationale': ''}
+            context['idempotency_key'] = idempotency_key
+            context['request_hash'] = hashlib.sha256(canonical_json({
+                'operation': 'commitTimeline', 'path': '/v1/projects/project-1/timelines/film/commit',
+                'publisher': 'actor-1', 'request': body}).encode()).hexdigest()
+            accepted[idempotency_key] = create_runtime_commit_service().commit(context, DetachedPort(realm, context))
+            accepted[idempotency_key]['receipt']['project_seq'] *= 2
+            if len(accepted) == 1:
+                raise ConnectionError('lost A acknowledgement')
+        return DomainResult.success(copy.deepcopy(accepted[idempotency_key]['data']),
+                                    receipt=CommandReceipt.from_dict(accepted[idempotency_key]['receipt']))
+
+    def history(*args, **kwargs):
+        entries = copy.deepcopy(realm.entries)
+        if damage == 'history-receipt' and len(accepted) > 1:
+            entries[1]['receipt']['result']['id_map'] = {}
+        return DomainResult.success({'items': entries, 'next_cursor': None})
+
+    def open_bundle(project, timeline, *, revision_id):
+        document = copy.deepcopy(realm.documents[revision_id])
+        if damage == 'original-source' and len(accepted) > 1 and revision_id == 'parent-1':
+            document['shot_revisions'][0]['payload']['name'] = 'forged immutable source'
+        return DomainResult.success({'bundle': bundle_from_document(document)})
+
+    client = SimpleNamespace(
+        _remote=SimpleNamespace(_transport=SimpleNamespace(_last_handshake=identity)),
+        timelines=SimpleNamespace(commit=commit, history=history, open_bundle=open_bundle))
+
+    def reload():
+        return TimelineSession(client, Outbox(outbox.path), identity, 'project-1', 'film')
+
+    session = reload()
+    ref = 'occurrence:occ-a/clip:clip-a'
+    session.queue_move(ref, 3.003)
+    with pytest.raises(ConnectionError):
+        session.flush(idempotency_key='original-A')
+    local = session._bundle(outbox.read())
+    b = session.queue(capture_clip_set(local, ref, values={'hold': 4}))
+    reload().flush()
+    assert sent[0] == sent[1]
+    assert outbox.read()['pending'] == [b]
+    head = bundle_from_document(realm.documents[realm.head['revision_id']])
+    realm.call([capture_clip_set_params(head, ref, values={'x': 3})])
+    if damage:
+        with pytest.raises((TimelineEditError, ValueError)):
+            reload().flush()
+        assert outbox.read()['pending'] == [b] and outbox.read()['flight']
+    else:
+        result = reload().flush()
+        assert result['data']['status'] == 'rebased'
+        assert result['data']['commands'] == [b]
+        assert sent[-1][1] != sent[0][1]
+        assert outbox.read()['pending'] == [] and outbox.read()['flight'] is None
+        current = bundle_from_document(result['data']['canonical_document'])
+        assert State(current).entity(ref)['params'] == {'x': 3}
+        assert State(current).entity(ref)['hold'] == 4
 
 
 @pytest.mark.parametrize('damage', ['missing', 'extra', 'wrong', 'commands', 'owner', 'item', 'scope', 'source'])

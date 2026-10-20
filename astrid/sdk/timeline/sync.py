@@ -59,7 +59,8 @@ def _native_command(command):
     return command
 
 
-def _ack(result, body, flight, identity, *, source_bundle=None, inverse_records=(), closures=None):
+def _ack(result, body, flight, identity, *, source_bundle=None, inverse_records=(), closures=None,
+         materializations=()):
     """Check acceptance identity, leaving full closure validation to Runtime."""
     from astrid.sdk.timeline._command_state import equal
     from astrid.sdk.timeline.commands import validate_command
@@ -111,7 +112,7 @@ def _ack(result, body, flight, identity, *, source_bundle=None, inverse_records=
             from ._materialization import id_map
 
             original = execute(source_bundle, body['commands'], inverse_records=inverse_records,
-                               closures=closures)
+                               closures=closures, materializations=materializations)
             require(equal(original.commands, data['commands']))
             known = original.records
             mapping = id_map(known)
@@ -330,24 +331,32 @@ class TimelineSession:
             raise  # Ambiguous failure: never replace the durable flight.
         from ._command_state import equal
 
-        source_bundle, inverse_records, closures = None, [], {}
+        source_bundle, inverse_records, closures, materializations = None, [], {}, []
         inverse = len(body['commands']) == 1 and body['commands'][0]['op'] == 'timeline.inverse'
-        if inverse or any(key.startswith('materialization.owner:')
-                          for command in body['commands'] for key in command.get('bindings', {})):
+        paired = any(key.startswith('materialization.owner:')
+                     for command in body['commands'] for key in command.get('bindings', {}))
+        if inverse or paired:
             from .store import fetch_bundle
             source_bundle = fetch_bundle(self.project_id, self.timeline_id,
                                          revision_id=body['base_revision_id'], client=self.client)
-        if inverse:
-            targets = body['commands'][0]['args']['publications']
-            from ._materialization import id_map
+        if inverse or paired:
+            targets = body['commands'][0]['args']['publications'] if inverse else []
+            from ._materialization import accepted_context, id_map
             entries, cursor = {}, None
             while True:
                 page = _response(self.client.timelines.history(
                     self.project_id, self.timeline_id, cursor=cursor, limit=200))['data']
                 entries.update({entry['publication_id']: entry for entry in page['items']})
                 cursor = page['next_cursor']
-                if all(target in entries for target in targets) or cursor is None:
+                if (inverse and all(target in entries for target in targets)) or (
+                        paired and body['base_publication_id'] in entries) or cursor is None:
                     break
+            if paired:
+                if body['base_publication_id'] not in entries:
+                    raise TimelineEditError('acknowledgement requires the original accepted publication')
+                through = list(entries).index(body['base_publication_id']) + 1
+                targets = [key for key in list(entries)[:through]
+                           if (entries[key].get('records') or {}).get('commands')]
             for target in targets:
                 entry = entries.get(target, {})
                 records = (entry.get('records') or {}).get('commands', [])
@@ -356,9 +365,9 @@ class TimelineSession:
                         or not equal(receipt.get('result', {}).get('commands'), [r['command'] for r in records])
                         or {key: value for key, value in receipt.get('result', {}).get('id_map', {}).items()
                             if key != value} != id_map(records)):
-                    raise TimelineEditError('inverse acknowledgement requires verified accepted history')
+                    raise TimelineEditError('acknowledgement requires verified accepted history')
                 inverse_records.extend(records)
-            for record in inverse_records:
+            for record in (inverse_records if inverse else ()):
                 for dep in record['dependencies']:
                     if dep['key'].startswith('materialization.source:'):
                         revision = dep['pin']['parent']['revision_id']
@@ -373,8 +382,13 @@ class TimelineSession:
 
             inverse_records = AcceptedRecords([entries[target] for target in targets],
                                               inverse_records, load_boundary)
+            if paired:
+                materializations, closures = accepted_context(
+                    inverse_records, body['commands'], lambda revision: fetch_bundle(
+                        self.project_id, self.timeline_id, revision_id=revision, client=self.client))
+                inverse_records = []
         data, receipt = _ack(result, body, flight, self.identity, source_bundle=source_bundle,
-                             inverse_records=inverse_records, closures=closures)
+                             inverse_records=inverse_records, closures=closures, materializations=materializations)
         with self.outbox.locked():
             state = self._state()
             # A duplicate send may finish after another send acknowledged this

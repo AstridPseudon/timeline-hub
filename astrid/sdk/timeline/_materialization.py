@@ -13,7 +13,7 @@ def allocations(bundle):
     result = []
     # The paired carrier requires a verified Runtime closure; frozen M1 bundles
     # without that input keep their legacy claims and identity maps.
-    if not any(key in bundle['source_mapping'] for key in ('_runtime_document', '_source_closure')):
+    if '_source_closure' not in bundle['source_mapping']:
         return result
     for row in bundle['placements']:
         destination = row['shot_id']
@@ -85,6 +85,22 @@ def capture(ctx, originals=()):
             ctx.bind(shot + '/item:' + identity, 'shot:' + pin['source']['shot_id'] + '/item:' + raw,
                      dependencies=[key])
         ctx.bind('materialization.owner:' + shot, owner, dependencies=[key])
+
+
+def accepted_context(records, commands, load):
+    """Select original allocations from authenticated history, never from claims."""
+    bindings = {key: value for command in commands for key, value in command.get('bindings', {}).items()
+                if key.startswith('materialization.owner:')}
+    selected, closures = [], {}
+    for record in records:
+        if not any(b['key'] in bindings and b['ref'] == bindings[b['key']] for b in record['bindings']):
+            continue
+        for _, _, pin in recorded_allocations([record]):
+            revision = pin['parent']['revision_id']
+            if revision not in closures:
+                closures[revision] = load(revision)
+        selected.append(record)
+    return selected, closures
 
 
 def id_map(records):

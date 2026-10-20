@@ -35,15 +35,10 @@ def capture(bundle, owner='parent', clip_id='clip-a', on=4.004):
                              ownership='parent' if owner == 'parent' else 'occurrence')
 
 
-# Legacy capture compatibility is pending; the new carrier has a separate versioned capture.
-@pytest.mark.parametrize('fixture_path', [
-    pytest.param(FIXTURE, marks=pytest.mark.xfail(
-        strict=True, reason='legacy sealed capture compatibility after materialization carrier')),
-    MATERIALIZATION_FIXTURE,
-])
+@pytest.mark.parametrize('fixture_path', [FIXTURE, MATERIALIZATION_FIXTURE])
 def test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo(fixture_path):
     for case in json.loads(fixture_path.read_text())['cases']:
-        original = bundle_from_document(case['input'])
+        original = bundle_from_document(case['input'], capture_sources=fixture_path == MATERIALIZATION_FIXTURE)
         before = copy.deepcopy(original)
         command = capture_placement(original, **case['request'])
         assert command == case['command']
@@ -76,6 +71,31 @@ def test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo(fixture
         redone = inverse(undone.bundle, undone.records, closures={original['base_parent']['revision_id']: original})
         assert document_from_bundle(redone.bundle) == case['output']
         assert command['created'] == []
+
+
+def test_legacy_accepted_capture_history_remains_undoable_without_new_source_claims(monkeypatch):
+    from tests.sdk.test_timeline_commit_provider import DetachedPort, DetachedRealm, runtime_abi
+    from tests.sdk.test_timeline_commit_provider import inverse as inverse_call
+
+    runtime_abi.__wrapped__(monkeypatch)
+    case = next(case for case in json.loads(FIXTURE.read_text())['cases']
+                if case['command']['select'].startswith('occurrence:'))
+    realm = DetachedRealm(case['input'])
+    original = copy.deepcopy(case['records'])
+    context = realm.context([case['command']])
+    # Retain an old accepted edge through the existing detached port; the new
+    # provider must use its authenticated before/after boundaries unchanged.
+    accepted = DetachedPort(realm, context).accept({
+        'expected_head': copy.deepcopy(realm.head), 'canonical_document': case['output'],
+        'document_digest': _digest(case['output']),
+        'records': {'schema_version': 1, 'commands': original, 'undo_of': [], 'restored_from': None},
+        'id_map': {}, 'semantic_events': [], 'provider_version': 'astrid-v1',
+        'compiler_version': 'authoring-bundle-1'})
+    undone = realm.call([inverse_call([accepted['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == case['input']
+    assert realm.entries[1]['records']['commands'] == case['records']
+    redone = realm.call([inverse_call([undone['receipt']['receipt_id']])])
+    assert redone['data']['canonical_document'] == case['output']
 
 
 @pytest.mark.parametrize('owner,on', [('parent', 4.004), ('occurrence:occ-a', 12.012)])

@@ -143,7 +143,7 @@ def _verify_document(document):
                  row["timeline_id"], row["revision_id"])), "closure images must be sorted")
 
 
-def bundle_from_document(document):
+def bundle_from_document(document, *, capture_sources=True):
     """Open a complete immutable Runtime document without a Runtime dependency."""
     document = copy.deepcopy(document)
     _verify_document(document)
@@ -153,6 +153,7 @@ def bundle_from_document(document):
         shot_revisions=[{**row, "project_id": project} for row in document["shot_revisions"]],
         internal_timeline_revisions=[{**row, "project_id": project}
                                      for row in document["internal_timeline_revisions"]],
+        capture_sources=capture_sources,
     )
     bundle["source_mapping"]["_runtime_document"] = document
     return bundle
@@ -736,6 +737,17 @@ class RuntimeCommitService:
                                                    CommitRejected, base, current),
                                           state=State(_load(port, context, entry['revision_id'])))
             source_closures = {source['base_parent']['revision_id']: source for source in inverse_sources}
+            materializations = []
+            if not undo_of and any(key.startswith('materialization.owner:')
+                                  for call in calls for key in call.get('bindings', {})):
+                from ._materialization import accepted_context
+
+                entries = [entry for entry in _history(port, base, None, CommitRejected, base)
+                           if entry.get('intent') == 'recorded']
+                materializations, sources = accepted_context(
+                    _records(entries, CommitRejected, base, current), calls,
+                    lambda revision: _load(port, context, revision))
+                source_closures.update(sources)
             for record in inverse_records:
                 for dependency in record['dependencies']:
                     if dependency['key'].startswith('materialization.source:'):
@@ -773,6 +785,7 @@ class RuntimeCommitService:
             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
             original = execute(bundle, calls, inverse_records=inverse_records,
                                intervening_records=inverse_intervening, closures={**source_closures, **closures},
+                               materializations=materializations,
                                verified_media=verified_media, realm_id=context['realm_id'],
                                resolve_inputs=resolve_inputs)
             for attempt in range(3):

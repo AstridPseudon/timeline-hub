@@ -61,9 +61,9 @@ def inputs(kind='image'):
     return document, old, new, verified
 
 
-def captured(operation, kind='image'):
+def captured(operation, kind='image', *, capture_sources=True):
     document, old, new, verified = inputs(kind)
-    bundle = bundle_from_document(document)
+    bundle = bundle_from_document(document, capture_sources=capture_sources)
     if operation == 'add':
         row = {'id': 'reserved-child', 'clipType': kind, 'asset': new['asset'], 'track': 'picture',
                'at': .125, 'hold': 4 if kind == 'video' else 1.25,
@@ -100,15 +100,11 @@ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
 
 
 @pytest.mark.parametrize('operation', ['add', 'swap'])
-# Legacy capture compatibility is pending; the new carrier has a separate versioned capture.
-@pytest.mark.parametrize('fixture_path', [
-    pytest.param(FIXTURE, marks=pytest.mark.xfail(
-        strict=True, reason='legacy sealed capture compatibility after materialization carrier')),
-    MATERIALIZATION_FIXTURE,
-])
+@pytest.mark.parametrize('fixture_path', [FIXTURE, MATERIALIZATION_FIXTURE])
 def test_portable_goldens(operation, fixture_path):
     golden = json.loads(fixture_path.read_text())[operation]
-    document, bundle, command, verified = captured(operation, 'video')
+    document, bundle, command, verified = captured(
+        operation, 'video', capture_sources=fixture_path == MATERIALIZATION_FIXTURE)
     plan = execute(bundle, [command], verified_media=verified)
     assert golden == {'input': document, 'verified_media': verified, 'commands': [command],
                       'records': plan.records, 'output': document_from_bundle(plan.bundle)}
