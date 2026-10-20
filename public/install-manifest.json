@@ -39,8 +39,10 @@
       }
     },
     "omp": {
-      "source": "@oh-my-pi/pi-coding-agent@17.4.2",
-      "_comment": "See LANDING.md: select the fixed producer after owner landing."
+      "source": {
+        "repo": "https://github.com/peteromallet/oh-my-pi",
+        "sha": "9e282751c0059e37d2f6fbc14ffa0b450710bd23"
+      }
     },
     "node": {
       "version": "20.19.4",
