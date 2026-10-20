@@ -1,4 +1,4 @@
-"""Public10 host transport with current generated maps and renderer aliases.
+"""Public13 host transport with current generated maps and renderer aliases.
 
 Status is replaced here; supplied props are not source-admission or pixel proof.
 """
@@ -33,7 +33,7 @@ def host_project(tmp_path_factory):
     project = project_root / "remotion"
     (project / "src").mkdir(parents=True)
     (project_root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
-    # Reuse a coherent peer graph read-only, with the actual pinned public12
+    # Reuse a coherent peer graph read-only, with the actual pinned public13
     # extracted into this test's private project. No install or shared mutation.
     peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
     assert (peers / "esbuild").is_dir(), "requires provisioned renderer peers"
@@ -48,9 +48,9 @@ def host_project(tmp_path_factory):
         target = modules / peer
         target.parent.mkdir(parents=True, exist_ok=True)
         target.symlink_to(source.resolve(), target_is_directory=True)
-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
+    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
-        "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3")
+        "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738")
     with tarfile.open(artifact) as archive:
         archive.extractall(project, filter="data")
     package = modules / "@banodoco/timeline-composition"
@@ -63,14 +63,16 @@ def host_project(tmp_path_factory):
     pack = project_root / "probe"
     elements = list(gen_effect_registry._element_registry().list())
     rendering = {}
-    for kind, element_id in (("effects", "custom"), ("animations", "fade-up"), ("transitions", "fade")):
+    for kind, element_id in (("effects", "custom"), ("animations", "fade-up"),
+                             ("transitions", "fade"), ("transitions", "probe-fade")):
         element = pack / kind / element_id
         element.mkdir(parents=True)
         source = (REMOTION / "tests" / f"custom-{kind}.tsx").read_text()
         if element_id == "custom":
             source = "import {probeWidth} from 'probe-dependency';\n" + source.replace("width: 1920", "width: probeWidth")
         (element / "component.tsx").write_text(source)
-        (element / "element.yaml").write_text(f"id: {element_id}\nkind: {kind[:-1]}\n")
+        (element / "element.yaml").write_text(
+            f"id: {element_id}\nkind: {kind[:-1]}\ndefaults:\n  durationFrames: 8\n")
         rendering[f"{kind}/{element_id}"] = {"type": "element", "path": f"{kind}/{element_id}/element.yaml"}
         elements.append(ElementDefinition(
             id=element_id, kind=kind, root=element, source="pack:probe", editable=True,
@@ -83,11 +85,14 @@ def host_project(tmp_path_factory):
     (dependency / "package.json").write_text('{"type":"module","exports":"./index.js"}')
     (dependency / "index.js").write_text('export const probeWidth = 1920;')
     registry = ElementRegistry(elements)
+    assert registry.get("transitions", "fade").source == "pack:rendering"
+    assert registry.get("transitions", "fade").defaults == {"durationFrames": 8}
+    assert registry.get("transitions", "probe-fade").source == "pack:probe"
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(gen_effect_registry, "_element_registry", lambda: registry)
         for kind in ("effects", "animations", "transitions"):
             (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
-    assert json.loads((package / "package.json").read_text())["version"] == "0.0.12"
+    assert json.loads((package / "package.json").read_text())["version"] == "0.0.13"
     def hashes():
         return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in package.rglob("*") if p.is_file()}
@@ -177,6 +182,41 @@ def test_native_host_resolves_custom_transition_defaults_and_boundaries(native_h
     clips[0]["transition"] = "not-admitted"
     with pytest.raises(scene_answers.SceneQueryUnavailable, match="Unknown transition"):
         scene_answers.host_frames_at(props(clips), BASIS, [0])
+
+
+def test_native_host_transition_catalog_custom_and_package_defaults(native_host):
+    script = """
+import {loadHostScene} from './native-scene.mjs';
+import {DEFAULT_THEME, prepareCompositionScene} from '@banodoco/timeline-composition';
+import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
+import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';
+const prepare = await loadHostScene(process.cwd());
+const track = {id: 'plate', kind: 'visual'};
+const clips = [
+  {id: 'first', track: 'plate', clipType: 'custom', at: 0, hold: 1,
+    transition: {id: 'fade', align: 'end'}},
+  {id: 'next', track: 'plate', clipType: 'custom', at: 1, hold: 1},
+];
+const props = {timeline: {tracks: [track], clips}, assets: {assets: {}}, theme: DEFAULT_THEME};
+const basis = {width: 1920, height: 1080, fps: 30};
+const frames = [17, 18, 21, 22, 29, 30, 59, 60];
+const active = scene => frames.filter(frame =>
+  querySceneFrame(scene, frame).layers.some(layer => layer.clipId === 'next'));
+const bundled = prepareCompositionScene([{track, clips}], props.assets, 30, DEFAULT_THEME, 1920, 1080);
+const catalog = prepare(props, basis, {});
+clips[0].transition.id = 'probe-fade';
+const custom = prepare(props, basis, {});
+console.log(JSON.stringify({
+  packageDefault: resolveElementRegistries(DEFAULT_THEME).transitionDefaults.fade.durationFrames,
+  bundled: active(bundled), catalog: active(catalog), custom: active(custom),
+}));
+"""
+    result = subprocess.run([str(scene_answers.remotion_runtime_status().node_executable), "--input-type=module", "-e", script],
+                            cwd=native_host, check=True, text=True, capture_output=True, timeout=30)
+    assert json.loads(result.stdout) == {
+        "packageDefault": 12, "bundled": [18, 21, 22, 29, 30, 59],
+        "catalog": [22, 29, 30, 59], "custom": [22, 29, 30, 59],
+    }
 
 
 def test_large_native_batch_is_not_truncated(native_host):

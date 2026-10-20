@@ -397,9 +397,18 @@ def generate_element_registry(
         f"  '{plugin_id}': {_component_name(plugin_id)},"
         for plugin_id in plugin_ids
     ]
+    defaults = {plugin_id: plugins[plugin_id].defaults for plugin_id in plugin_ids}
+    if kind == "transitions":
+        # Catalog defaults still own bundled transitions whose implementations
+        # moved to Composition. Omitting their imports must not drop defaults.
+        defaults = {
+            element.id: element.defaults
+            for element in _element_registry().list(kind=kind)
+            if include_local or element.source != "pack:local"
+        }
     defaults_entries = [
-        f"  '{plugin_id}': {_ts_json(plugins[plugin_id].defaults)},"
-        for plugin_id in plugin_ids
+        f"  '{plugin_id}': {_ts_json(value)},"
+        for plugin_id, value in sorted(defaults.items())
     ]
     meta_entries = [
         f"  '{plugin_id}': {_ts_json(plugins[plugin_id].meta)},"
@@ -428,7 +437,7 @@ def generate_element_registry(
         f"export const {registry_name}: Record<{type_name}, {component_type}> = {{",
         *registry_entries,
         "};",
-        f"export const {defaults_name}: Record<{type_name}, Record<string, unknown>> = {{",
+        f"export const {defaults_name}: Record<{'string' if kind == 'transitions' else type_name}, Record<string, unknown>> = {{",
         *defaults_entries,
         "};",
         f"export const {meta_name}: Record<{type_name}, {meta_type}> = {{",
