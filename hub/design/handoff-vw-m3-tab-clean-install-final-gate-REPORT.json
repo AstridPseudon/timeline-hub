@@ -1,0 +1,38 @@
+{
+  "verdict": "APPROVE_STATIC_FROZEN_CANDIDATE_AND_GRAPH",
+  "sourceSha": "a7b8a8137ec06d7f767cece75a1a4577fb5c7b68",
+  "sourceTree": "df8dacedcf74fab8118ac70f0457eea78e32b687",
+  "controllerSha256": "50bbcd0aff447a97f3e21feeddbd783d07c4f6bf7e4a104656cf75f99901dd3b",
+  "probeSha256": "51de3cb5b6f024171f5079c6f11b42f92c2b1f22e648052f879c5f5c1bffec8d",
+  "fullTrackedHash": "14f1c4d334a4b8dc4cd529637973771abdeaafcdc2aa54c6f8ecc117b4ab51fa",
+  "inputHash": "730bb8d9d9e16bce8c025ae5db90518353ddaa13cc7cc58ba3b0ecbfc75815d1",
+  "privateGraph": {
+    "sha256": "4a54ed6f3300cba740b377e3c780f330996ead23147647f9c963ed4dd5bdd7a4",
+    "fileCount": 32382
+  },
+  "physicalProjectManifestSha256": "d20a148e05c14ba3e0cbb31ba3accf3b349fd95c21529e6a7df38633e8a02a46",
+  "physicalEntries": 35641,
+  "physicalRegularFiles": 32417,
+  "internalBinLinks": 36,
+  "sourceProductAndPinsUnchanged": true,
+  "canonicalArchive77AndMutationControlsPassed": true,
+  "all11ResolveInsidePrivateGraph": true,
+  "privateGraphUnchanged": true,
+  "sharedGraphUnchanged": true,
+  "browserLaunched": false,
+  "listenerStarted": false,
+  "grantIssued": false,
+  "managerPostcommitPrepareRun": false,
+  "reviewerDiscoveryConfig": "reviewer-owned state paths; byte-identical frozen probe",
+  "reviewerControllerSuite": {
+    "passed": 8,
+    "failed": 1,
+    "reason": "Reviewer write boundary refused producer-owned cache/tmp creation; original expectations preserved"
+  },
+  "producerIdenticalControllerSuite": {
+    "passed": 9,
+    "failed": 0
+  },
+  "minimumRecordedFreeBytes": 11395899392,
+  "finalAuditFreeBytes": 11656921088
+}

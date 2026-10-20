@@ -1,32 +1,60 @@
 
  RUN  v4.1.5 /home/user/work/wt/vw-m3-app-continuous-pcm-consumer
 
- ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx (0 test)
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx (6 tests | 5 failed) 139ms
+     × plays a matching prepared positive with one constant half-track gain 32ms
+     × refuses wrong envelope instead of ignoring its prepared claim 8ms
+     × refuses raw fractional origin instead of ignoring its prepared claim 3ms
+     × refuses wrong child rate instead of ignoring its prepared claim 3ms
+     × refuses non-attempt URL instead of ignoring its prepared claim 4ms
 
-⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
 
- FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx [ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx ]
-Error: Failed to resolve import "@astrid/packs/rendering/shared/managed-media-policy" from "src/shared/lib/media/mediaCrossOrigin.ts". Does the file exist?
-  Plugin: vite:import-analysis
-  File: /home/user/work/wt/vw-m3-app-continuous-pcm-consumer/src/shared/lib/media/mediaCrossOrigin.ts:2:35
-  1  |  import { isGatewayUrl } from "@/integrations/runtime/connection";
-  2  |  import { isManagedObjectUrl } from "@astrid/packs/rendering/shared/managed-media-policy";
-     |                                      ^
-  3  |  function isHttpGatewayUrl(url) {
-  4  |  	if (!url) return false;
- ❯ TransformPluginContext._formatLog ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30375:39
- ❯ TransformPluginContext.error ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30372:14
- ❯ normalizeUrl ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27654:18
- ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27717:30
- ❯ TransformPluginContext.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27685:4
- ❯ EnvironmentPluginContainer.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30164:14
- ❯ loadAndTransform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24512:26
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx > continuousPCM policy / both-consumer contract: prepared source admission > plays a matching prepared positive with one constant half-track gain
+Error: expect(element).toHaveAttribute("src", "https://example.test/attempt-envelope.wav") // element.getAttribute("src") === "https://example.test/attempt-envelope.wav"
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+Expected the element to have attribute:
+  src="https://example.test/attempt-envelope.wav"
+Received:
+  src="https://example.test/original.wav"
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx:68:41
+     66|     render(<AudioTrack track={{ id: 'A1', kind: 'audio', volume: 0.5 }}
+     67|       clips={[{ ...clip, audio: { render_source: prepared } }]} fps={3…
+     68|     expect(screen.getByTestId('audio')).toHaveAttribute('src', prepare…
+       |                                         ^
+     69|     expect(captures.audio.at(-1)).toMatchObject({ volume: 0.4, trimBef…
+     70|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx > continuousPCM policy / both-consumer contract: prepared source admission > refuses wrong envelope instead of ignoring its prepared claim
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx > continuousPCM policy / both-consumer contract: prepared source admission > refuses raw fractional origin instead of ignoring its prepared claim
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx > continuousPCM policy / both-consumer contract: prepared source admission > refuses wrong child rate instead of ignoring its prepared claim
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx > continuousPCM policy / both-consumer contract: prepared source admission > refuses non-attempt URL instead of ignoring its prepared claim
+AssertionError: expected <audio data-testid="audio" …(1)></audio> to be null
+
+- Expected:
+null
+
++ Received:
+<audio
+  data-testid="audio"
+  src="https://example.test/original.wav"
+/>
+
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx:80:43
+     78|     render(<AudioTrack track={{ id: 'A1', kind: 'audio' }}
+     79|       clips={[{ ...clip, audio: { render_source: { ...prepared, ...cha…
+     80|     expect(screen.queryByTestId('audio')).toBeNull();
+       |                                           ^
+     81|     expect(captures.report).toHaveBeenCalledWith({ clipId: clip.id, so…
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
 
 
  Test Files  1 failed | 1 passed (2)
-      Tests  18 passed (18)
-   Start at  12:27:08
-   Duration  1.52s (transform 530ms, setup 277ms, import 129ms, tests 197ms, environment 1.36s)
+      Tests  5 failed | 19 passed (24)
+   Start at  12:28:19
+   Duration  2.77s (transform 783ms, setup 673ms, import 886ms, tests 517ms, environment 2.31s)
 

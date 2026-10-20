@@ -1,51 +1,9 @@
 
  RUN  v4.1.5 /home/user/work/wt/vw-m3-app-continuous-pcm-consumer
 
- ❯ src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx (0 test)
- ❯ src/tools/video-editor/compositions/AudioTrack.test.tsx (0 test)
 
-⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
-
- FAIL  src/tools/video-editor/compositions/AudioTrack.test.tsx [ src/tools/video-editor/compositions/AudioTrack.test.tsx ]
-Error: Failed to resolve import "@astrid/packs/rendering/shared/managed-media-policy" from "src/shared/lib/media/mediaCrossOrigin.ts". Does the file exist?
-  Plugin: vite:import-analysis
-  File: /home/user/work/wt/vw-m3-app-continuous-pcm-consumer/src/shared/lib/media/mediaCrossOrigin.ts:2:35
-  1  |  import { isGatewayUrl } from "@/integrations/runtime/connection";
-  2  |  import { isManagedObjectUrl } from "@astrid/packs/rendering/shared/managed-media-policy";
-     |                                      ^
-  3  |  function isHttpGatewayUrl(url) {
-  4  |  	if (!url) return false;
- ❯ TransformPluginContext._formatLog ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30375:39
- ❯ TransformPluginContext.error ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30372:14
- ❯ normalizeUrl ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27654:18
- ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27717:30
- ❯ TransformPluginContext.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27685:4
- ❯ EnvironmentPluginContainer.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30164:14
- ❯ loadAndTransform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24512:26
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
-
- FAIL  src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx [ src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx ]
-Error: Failed to resolve import "virtual:astrid-element-admissions" from "src/tools/video-editor/runtime/admitted-elements.ts". Does the file exist?
-  Plugin: vite:import-analysis
-  File: /home/user/work/wt/vw-m3-app-continuous-pcm-consumer/src/tools/video-editor/runtime/admitted-elements.ts:1:25
-  1  |  import * as initial from "virtual:astrid-element-admissions";
-     |                            ^
-  2  |  import { ASTRID_BRIDGE_REQUEST_TIMEOUT_MS } from "../data/astridBridgeWire";
-  3  |  import { runtimeOrigin } from "@/integrations/runtime/connection.ts";
- ❯ TransformPluginContext._formatLog ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30375:39
- ❯ TransformPluginContext.error ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30372:14
- ❯ normalizeUrl ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27654:18
- ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27717:30
- ❯ TransformPluginContext.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27685:4
- ❯ EnvironmentPluginContainer.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30164:14
- ❯ loadAndTransform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24512:26
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
-
-
- Test Files  2 failed (2)
-      Tests  no tests
-   Start at  12:27:07
-   Duration  1.75s (transform 1.33s, setup 287ms, import 0ms, tests 0ms, environment 832ms)
+ Test Files  3 passed (3)
+      Tests  91 passed (91)
+   Start at  12:28:17
+   Duration  5.87s (transform 3.59s, setup 1.08s, import 5.79s, tests 3.69s, environment 1.78s)
 

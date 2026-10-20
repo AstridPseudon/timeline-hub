@@ -1,0 +1,17 @@
+failed to load config from /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/vitest.config.mjs
+
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+ReferenceError: __dirname is not defined
+    at eval (/home/user/work/wt/vw-m3-app-continuous-pcm-consumer/config/testing/vitest.config.ts:14:59)
+    at async ESModulesEvaluator.runInlinedModule (file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/module-runner.js:992:3)
+    at async ModuleRunner.directRequest (file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/module-runner.js:1247:59)
+    at async ModuleRunner.cachedRequest (file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/module-runner.js:1154:73)
+    at async eval (/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/vitest.config.mjs:4:31)
+    at async ESModulesEvaluator.runInlinedModule (file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/module-runner.js:992:3)
+    at async ModuleRunner.directRequest (file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/module-runner.js:1247:59)
+    at async ModuleRunner.cachedRequest (file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/module-runner.js:1154:73)
+    at async ModuleRunner.import (file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/module-runner.js:1104:10)
+    at async runnerImport (file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:33754:18)
+
+
+

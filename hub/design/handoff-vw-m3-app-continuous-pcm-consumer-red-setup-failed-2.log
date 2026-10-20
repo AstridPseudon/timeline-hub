@@ -1,0 +1,32 @@
+
+ RUN  v4.1.5 /home/user/work/wt/vw-m3-app-continuous-pcm-consumer
+
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx [ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx ]
+Error: Failed to resolve import "@astrid/packs/rendering/shared/managed-media-policy" from "src/shared/lib/media/mediaCrossOrigin.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/user/work/wt/vw-m3-app-continuous-pcm-consumer/src/shared/lib/media/mediaCrossOrigin.ts:2:35
+  1  |  import { isGatewayUrl } from "@/integrations/runtime/connection";
+  2  |  import { isManagedObjectUrl } from "@astrid/packs/rendering/shared/managed-media-policy";
+     |                                      ^
+  3  |  function isHttpGatewayUrl(url) {
+  4  |  	if (!url) return false;
+ ❯ TransformPluginContext._formatLog ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30375:39
+ ❯ TransformPluginContext.error ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30372:14
+ ❯ normalizeUrl ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27654:18
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27717:30
+ ❯ TransformPluginContext.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27685:4
+ ❯ EnvironmentPluginContainer.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30164:14
+ ❯ loadAndTransform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24512:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  18 passed (18)
+   Start at  12:27:08
+   Duration  1.52s (transform 530ms, setup 277ms, import 129ms, tests 197ms, environment 1.36s)
+

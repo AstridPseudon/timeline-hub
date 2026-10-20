@@ -1,0 +1,8 @@
+git rev-parse HEAD
+git rev-parse 0ea988bdd2907c876b82fd2620820e3fb6d6ea84
+git diff --name-status 0ea988bdd2907c876b82fd2620820e3fb6d6ea84 3812ff4c8c8fb9ccc2546f8d575e96a5a3493ac9
+node --input-type=module  # direct 20 before-vs-public12 trim vectors
+node node_modules/vitest/vitest.mjs run --config /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d08-trim-final-gate/vitest.clean.config.mts --configLoader bundle --no-cache src/tools/video-editor/lib/config-utils.test.ts src/tools/video-editor/lib/time-grid-conformance.test.ts src/tools/video-editor/compositions/VisualClip.test.tsx src/tools/video-editor/compositions/VisualClip.evaluation.test.tsx src/tools/video-editor/compositions/AudioTrack.test.tsx src/tools/video-editor/compositions/playerEvaluation.test.ts src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx
+node node_modules/eslint/bin/eslint.js src/tools/video-editor/lib/config-utils.ts src/tools/video-editor/lib/config-utils.test.ts --max-warnings 0
+node node_modules/typescript/bin/tsc -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d08-trim-final-gate/tsconfig.clean.trim.json
+git diff --check

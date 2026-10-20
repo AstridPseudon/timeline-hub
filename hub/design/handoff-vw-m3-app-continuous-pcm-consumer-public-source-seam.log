@@ -1,0 +1,25 @@
+{
+  "version": "0.0.12",
+  "evaluation": {
+    "compileAudioEnvelope": "function",
+    "computeMediaTrim": "function",
+    "getSanitizedPlaybackRate": "function",
+    "applyAudioEnvelope": "function",
+    "audioEnvelopeWav": "function",
+    "encodedEnvelopeSource": "undefined",
+    "useAudioEnvelopeSource": "undefined"
+  },
+  "root": {
+    "compileAudioEnvelope": "undefined",
+    "computeMediaTrim": "undefined",
+    "getSanitizedPlaybackRate": "undefined",
+    "applyAudioEnvelope": "undefined",
+    "audioEnvelopeWav": "undefined",
+    "encodedEnvelopeSource": "undefined",
+    "useAudioEnvelopeSource": "undefined"
+  },
+  "deepImport": {
+    "dist/lib/audio-envelope.js": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+    "dist/lib/use-audio-envelope.js": "ERR_PACKAGE_PATH_NOT_EXPORTED"
+  }
+}

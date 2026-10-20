@@ -1,0 +1,100 @@
+{
+  "product_files_changed": [],
+  "artifacts": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-REPORT.md",
+      "bytes": 7743,
+      "sha256": "a70af9568b952b5bb821b99bc183dd9a017fde9386bd9113cb9617154ad784e0"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-baseline-setup-failed-2.log",
+      "bytes": 5627,
+      "sha256": "f4cfcba4cbeede46029564f77b1682985e419baffa09c91d0d188a526bd8cabb"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-baseline-setup-failed-3.log",
+      "bytes": 2629,
+      "sha256": "8c35c5c640d7b04c17bf96fd54254ddeccc109b01d37962c4c048337a82627f9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-baseline-setup-failed.log",
+      "bytes": 5821,
+      "sha256": "495d3592a98cffec70b3933f55da73eff763a618aecf2e44ac16c996d45abf7d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-baseline.log",
+      "bytes": 242,
+      "sha256": "36da397356ea75142d1039273d929433a24f40786e5185c412febd1cc9d53b5e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-compiledAudioSourceClock.test.ts",
+      "bytes": 4728,
+      "sha256": "481f0682b983bdd44daf6e7c38f4ab319c210f77871c88aef3cdb810618eb228"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-compiledAudioSourceClock.ts",
+      "bytes": 553,
+      "sha256": "aa06f7e314fd0465213f6e6b2a4cbfe1e2c6913285455efa31aca4a8f328e0f4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-continuousPCM.contract.test.tsx",
+      "bytes": 4305,
+      "sha256": "4cf277aa25053f5d52ed9aa4e45a87028e4e977785148f8c97d9d55dcab65197"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-exact.patch",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-graph-check.json",
+      "bytes": 215,
+      "sha256": "de8fb6e5494b7fb2284eab0a82447f734cf5d9ff65d49642bfe519b6e82e5970"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-public-source-seam.log",
+      "bytes": 787,
+      "sha256": "8f4a2d515a346a6e561decbd107ae7384a13ab9b62eeb7da73f13cadb9facceb"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-public-source-seam.mjs",
+      "bytes": 978,
+      "sha256": "78a714adedf0d8e2119e44b90fd40e019ad66374fdd7ca60a1ed2ff25a0a179f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-red-proposal.patch",
+      "bytes": 10600,
+      "sha256": "10baf34bff5d8f8d9e391459053bfecda9d6f1799091f4bdf1229260e99d70b4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-red-setup-failed-2.log",
+      "bytes": 3291,
+      "sha256": "091dc0b0c404995b3e237473b319e7d60d96d974e890ee85cd72585838842436"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-red-setup-failed-3.log",
+      "bytes": 2629,
+      "sha256": "8c35c5c640d7b04c17bf96fd54254ddeccc109b01d37962c4c048337a82627f9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-red-setup-failed.log",
+      "bytes": 6885,
+      "sha256": "b8ab4d0a37412eeb4864694e06ec1eea0a72c62b3d9dcf68f64f41748dc26720"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-red.log",
+      "bytes": 4307,
+      "sha256": "e65f128241f2989f2b367341d2d538f7bf6bb9bf5cf708808d09bcd7e3f38f43"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-testmap.md",
+      "bytes": 1798,
+      "sha256": "35c7f89c37bcba6b335324b7f5e2bb4fb7a8b6321e628d1c2e5ce73a5444256f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-continuous-pcm-consumer-vitest.config.mjs",
+      "bytes": 5919,
+      "sha256": "ed11b4abba9baeb6a05ed5250cda1c03a175d455fa2caf67e3ace60dac9d4acf"
+    }
+  ]
+}
