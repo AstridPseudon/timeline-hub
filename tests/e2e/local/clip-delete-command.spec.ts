@@ -7,6 +7,7 @@ import {
   commandOutboxes, expectConnected, openApp, openSeededTimeline, revisionBody, test as appTest,
 } from './support/app.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, revisionSet } from './support/astrid.ts';
+import { traceDeleteKeyboard } from './support/delete-keyboard-trace.ts';
 import type {
   CanonicalDocument, CommitAcceptedMutation, CommitRequest, HeadPin, HistoryPage, Manifest,
 } from '../../../src/integrations/runtime/timeline-commit-types.ts';
@@ -217,9 +218,14 @@ test('M2 current013 real parent DELETE: lost ACK, reload, Runtime restart, exact
   await expect(clip).toHaveAttribute('data-selected', 'true');
   await clip.focus();
   await expect(clip).toBeFocused();
-  await page.keyboard.press('Delete');
-  // Missing nativeDelete composition must fail here; a legacy save cannot satisfy this.
-  await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+  const finishKeyboardTrace = await traceDeleteKeyboard(page, testInfo);
+  try {
+    await page.keyboard.press('Delete');
+    // Missing nativeDelete composition must fail here; a legacy save cannot satisfy this.
+    await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+  } finally {
+    await finishKeyboardTrace?.();
+  }
   const deletion = accepted(wire.posts[0]);
   expect(deletion.data.status).toBe('accepted');
   const request = JSON.parse(wire.posts[0].body) as CommitRequest;
@@ -369,7 +375,7 @@ test('M2 current013 real parent DELETE: lost ACK, reload, Runtime restart, exact
   }, null, 2)) });
 });
 
-test('M2 current013 parent DELETE conflict: same-property Agent move wins while the original delete request is held and draft is retained', async ({ page, harness, astrid, seed3 }) => {
+test('M2 current013 parent DELETE conflict: same-property Agent move wins while the original delete request is held and draft is retained', async ({ page, harness, astrid, seed3 }, testInfo) => {
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   await astrid.preflight();
   const before = await history(harness, seed3);
@@ -383,8 +389,13 @@ test('M2 current013 parent DELETE conflict: same-property Agent move wins while 
   await expect(clip).toHaveAttribute('data-selected', 'true');
   await clip.focus();
   await expect(clip).toBeFocused();
-  await page.keyboard.press('Delete');
-  await expect.poll(() => wire.request(), CEILING).toBeTruthy();
+  const finishKeyboardTrace = await traceDeleteKeyboard(page, testInfo);
+  try {
+    await page.keyboard.press('Delete');
+    await expect.poll(() => wire.request(), CEILING).toBeTruthy();
+  } finally {
+    await finishKeyboardTrace?.();
+  }
   const held = wire.request()!;
   const heldRequest = JSON.parse(held.body) as CommitRequest;
   expect(heldRequest.commands[0]).toMatchObject({ op: 'clip.delete', select: `parent/clip:${seed3.appClipId}` });
