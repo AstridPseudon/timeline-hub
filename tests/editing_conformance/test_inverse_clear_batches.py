@@ -7,7 +7,7 @@ import pytest
 
 from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.inverse import _patch, coalesce
+from astrid.sdk.timeline.inverse import _patch, _validate_inputs, coalesce
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.staging_recipes import install_staging_operations
 from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse
@@ -16,6 +16,20 @@ REF = 'occurrence:occ-1/clip:picture-1'
 PATH = ['params', 'nested', 'leaf']
 CONTAINERS = [ABSENT, present(None), present({}), present({'nested': None}),
               present({'nested': {'leaf': None, 'sibling': [False, None]}, 'opaque': {}})]
+
+
+def test_matching_child_write_cannot_prove_absent_ancestor_read():
+    state = State(bundle())
+    state.set(REF, ['params'], present({'nested': {'leaf': 1}, 'opaque': True}))
+    record = {'command': {'op': 'fixture.properties'}, 'ordinal': 0,
+              'reads': [{'ref': REF, 'path': ['params'], 'state': ABSENT}],
+              'writes': [{'ref': REF, 'path': PATH, 'before': present(1), 'after': present(1)}],
+              'selections': [], 'bindings': [], 'created': []}
+    before = copy.deepcopy(state.bundle)
+    with pytest.raises(CommandError) as error:
+        _validate_inputs(state, record, [record])
+    assert error.value.kind == 'inverse_dependency_changed'
+    assert state.bundle == before
 
 
 def change(path, state, ref=REF):

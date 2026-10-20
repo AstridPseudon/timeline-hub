@@ -248,6 +248,53 @@ class MediaRealm(DetachedRealm):
         return create_runtime_commit_service().commit(context, MediaPort(self, context))
 
 
+@pytest.fixture
+def same_alias_realm():
+    document, old, new, verified = inputs()
+    new['asset'] = old['asset']
+    verified[1]['selection']['asset'] = old['asset']
+    document['shot_revisions'][0]['payload']['unknown']['keep'] = True
+    document['shot_revisions'][0]['content_digest'] = _digest(document['shot_revisions'][0]['payload'])
+    document['dependency_manifest'] = _manifest(document['shot_revisions'],
+        document['internal_timeline_revisions'], document['dependency_manifest']['media'], [])
+    realm = MediaRealm(document, verified)
+    command = capture_occurrence_swap_media(bundle_from_document(document), TARGET, old, new,
+                                            verified_media=verified)
+    created = realm.call([command])
+    return realm, document, created
+
+
+def test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo(same_alias_realm):
+    realm, document, created = same_alias_realm
+    undo = realm.call([inverse_call([created['receipt']['receipt_id']])])
+    assert undo['data']['canonical_document'] == document
+    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])])
+    assert redo['data']['canonical_document'] == created['data']['canonical_document']
+
+
+@pytest.mark.parametrize('damage', ['opaque-number', 'item-identity', 'compiler-link', 'source'])
+def test_same_alias_materialized_payload_still_guards_all_other_input(same_alias_realm, damage):
+    from tests.editing_conformance.test_occurrence_media_manifest_inverse import accepted_records
+
+    realm, _, created = same_alias_realm
+    records = accepted_records(realm, realm.entries[-1])
+    bundle = bundle_from_document(created['data']['canonical_document'])
+    shot = State(bundle).occurrence(OWNER)['shot_id']
+    payload = bundle['shots'][shot]['payload']
+    if damage == 'opaque-number':
+        payload['unknown']['keep'] = 1
+    elif damage == 'item-identity':
+        payload['items'][0]['item_id'] = 'unverified-item'
+    elif damage == 'compiler-link':
+        payload['internal_timeline_revision_id'] = 'unverified-link'
+    else:
+        bundle['source_mapping']['shots'][shot]['shot_id'] = 'unverified-shot'
+    before = copy.deepcopy((bundle, realm.head, realm.entries))
+    with pytest.raises(CommandError):
+        inverse(bundle, records)
+    assert (bundle, realm.head, realm.entries) == before
+
+
 @pytest.mark.parametrize('operation', ['add', 'swap'])
 def test_provider_exact_reload_inverse_redo_and_retired_asset_reservation(operation):
     document, _, command, verified = captured(operation, 'video')

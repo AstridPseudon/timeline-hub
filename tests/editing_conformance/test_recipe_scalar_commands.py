@@ -32,6 +32,33 @@ def call(op, ref, values=None, clear=()):
             'args': {'values': {} if values is None else values, 'clear': list(clear)}}
 
 
+@pytest.mark.parametrize('aba', [False, True])
+def test_inverse_refuses_same_batch_unchanged_or_aba_scalar_write(aba):
+    ref = 'parent/track:picture'
+    target = execute(bundle(), [call('track.set', ref, {'label': 'target'})])
+    undo = inverse(target.bundle, target.records).commands[0]
+    staged = ([call('track.set', ref, {'label': 'away'})] if aba else [])
+    staged.append(call('track.set', ref, {'label': 'target'}))
+    before = copy.deepcopy((target.bundle, target.records))
+    with pytest.raises(CommandError) as error:
+        execute(target.bundle, [*staged, undo], inverse_records=target.records)
+    assert error.value.kind == 'intervening_write'
+    assert (target.bundle, target.records) == before
+
+
+def test_inverse_allows_later_explicit_write_and_disjoint_prior_stages():
+    ref, other = 'parent/track:picture', 'occurrence:occ-1/track:picture'
+    target = execute(bundle(), [call('track.set', ref, {'label': 'target'})])
+    undo = inverse(target.bundle, target.records).commands[0]
+    plan = execute(target.bundle, [call('track.set', other, {'label': 'disjoint'}), undo,
+                                   call('track.set', ref, {'label': 'later'})],
+                   inverse_records=target.records)
+    assert State(plan.bundle).entity(ref)['label'] == 'later'
+    assert State(plan.bundle).entity(other)['label'] == 'disjoint'
+    assert replay(plan, target.bundle, inverse_records=target.records).records == plan.records
+    assert inverse(plan.bundle, plan.records).bundle == target.bundle
+
+
 @pytest.fixture
 def admitted_param_revisions(configured_project_pack):
     # Main's real admission/registry path, including its immutable source snapshots.
