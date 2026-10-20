@@ -2141,6 +2141,7 @@ _RENDERER_WORKSPACE_MARKERS = (
     ".render-service",
     ".render-inputs-",
     ".remotion-runtime-",
+    ".r-",
     "astrid-render-assets-",
 )
 
@@ -5284,9 +5285,16 @@ class GenericPackHost:
             if root.exists() or root.is_symlink():
                 raise HostError(f"attempt-base allocation already exists: {root.name}")
             root.mkdir()
+            root.chmod(0o700)
             return root.resolve()
-        root = self.attempt_root or Path(tempfile.mkdtemp(prefix=f"astrid-attempt-{task_id}-")).resolve()
+        # The lease and progress marker carry the task/attempt/fence identity;
+        # do not put those values in an ephemeral filesystem basename.  Keep
+        # the established reclaim prefix so storage_ownership still finds
+        # crash-abandoned roots.
+        root = self.attempt_root or Path(tempfile.mkdtemp(prefix="astrid-attempt-")).resolve()
         root.mkdir(parents=True, exist_ok=True)
+        if self.attempt_root is None:
+            root.chmod(0o700)
         return root
 
     @property

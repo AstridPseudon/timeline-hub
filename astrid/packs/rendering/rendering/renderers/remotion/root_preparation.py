@@ -3,14 +3,61 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Iterator, Mapping, Sequence, cast
 
+from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
 from astrid.core.rendering.contracts import FrameWindow
 from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools
+
+
+def _accounted_attempt_root(
+    staging_parent: Path,
+    provenance_out_path: Path,
+) -> Path | None:
+    """Return the host-owned attempt root proved by its progress marker.
+
+    The progress path is an existing internal invocation carrier.  Requiring
+    the real, owner-only marker parent to contain both the service workspace
+    and output prevents a caller from selecting an unrelated short directory.
+    Direct callers and failed/foreign proofs retain the existing workspace
+    parent.
+    """
+    if os.environ.get(ASTRID_INTERNAL_INVOCATION) != "1":
+        return None
+    raw_progress = os.environ.get("ASTRID_PROGRESS_PATH")
+    if not raw_progress:
+        return None
+    progress = Path(raw_progress)
+    if not progress.is_absolute() or progress.name != ".astrid-progress.json":
+        return None
+    try:
+        if (progress.is_symlink() or not progress.parent.is_dir()
+                or staging_parent.is_symlink() or not staging_parent.is_dir()
+                or any(part.is_symlink() for part in (staging_parent, *staging_parent.parents))
+                or any(part.is_symlink() for part in (provenance_out_path, *provenance_out_path.parents))):
+            return None
+        if any(part.is_symlink() for part in (progress.parent, *progress.parent.parents)):
+            return None
+        attempt = progress.parent.resolve(strict=True)
+        facts = attempt.stat()
+        if (not attempt.is_dir() or facts.st_uid != os.getuid()
+                or facts.st_mode & 0o077):
+            return None
+        staging = staging_parent.resolve(strict=True)
+        output = provenance_out_path.resolve(strict=False)
+    except OSError:
+        return None
+    if (staging.parent != attempt
+            or not output.is_relative_to(attempt)
+            or not staging.is_relative_to(attempt)
+            or not output.parent.name == "outputs"):
+        return None
+    return attempt
 
 
 @contextmanager
@@ -78,11 +125,18 @@ def _prepared_remotion_root(
     staged_public_root = project_dir / "public" / "astrid-effects" / render_hash
     with ExitStack() as asset_lifecycle:
         try:
-            temp_parent = (staging_parent or provenance_out_path.parent).resolve()
+            requested_parent = staging_parent or provenance_out_path.parent
+            attempt_root = _accounted_attempt_root(
+                requested_parent, provenance_out_path,
+            )
+            temp_parent = attempt_root or requested_parent.resolve()
             temp_parent.mkdir(parents=True, exist_ok=True)
             remotion_temp_root = Path(
                 asset_lifecycle.enter_context(
-                    TemporaryDirectory(prefix=".remotion-runtime-", dir=str(temp_parent))
+                    TemporaryDirectory(
+                        prefix=".r-" if attempt_root is not None else ".remotion-runtime-",
+                        dir=str(temp_parent),
+                    )
                 )
             )
             backend._assert_outside_public(remotion_temp_root, project_dir)
