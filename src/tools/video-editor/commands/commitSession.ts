@@ -1,4 +1,6 @@
 import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
+import { captureClipDelete, executeClipDelete, finishClipDelete } from './clipDeleteCapture.ts';
+import { clipDeletePreview, type ClipDeleteCapturePort } from './clipDeleteGesture.ts';
 import { captureClipTrim, executeClipTrim } from './clipTrimCapture.ts';
 import { clipScalarPreview, type ClipScalarCapturePort } from './clipScalarGesture.ts';
 import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
@@ -362,6 +364,53 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue(entry.payload, preview, entry.basis);
     },
   };
+  const clipDeletePort: ClipDeleteCapturePort = {
+    capture({ clipId, current, ownerRef }) {
+      assertReady();
+      if (bundle.project_id !== options.scope.projectId || bundle.timeline_id !== options.scope.timelineId
+        || current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      const raw = new AuthoredState(bundle);
+      if (matches.length !== 1 || ownerRef !== 'parent'
+        || !/^parent\/clip:(?!.*::)[^/]+$/.test(`parent/clip:${clipId}`)
+        || !raw.entity(`parent/clip:${clipId}`, true)) {
+        throw new Error('Delete requires one raw parent clip identity');
+      }
+      // Parent ownership is an explicit request; authored app.canonical JSON is never authority.
+      return freezeJson(json({ ...captureClipDelete(bundle, `parent/clip:${clipId}`), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<ClipDeleteCapturePort['capture']>;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the delete');
+      const original = finishClipDelete(basis);
+      // Verify original whole-row and dependency claims without refreshing them after an ACK.
+      const result = executeClipDelete(bundle, original.command);
+      const preview = clipDeletePreview(result.command.select!.slice('parent/clip:'.length));
+      freezeJson(result.command);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      assertFiniteJson(command);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.delete' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Delete was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Delete requires its exact same-clip removal preview');
+      prepared.delete(key);
+      const localPreview = freezeJson(copy(preview));
+      enqueue({ ...entry.payload, preview: localPreview }, localPreview, entry.basis);
+    },
+  };
   function resolveOwnedClipRef(clipId: string, identity: Partial<CanonicalProjectedClipIdentity> | undefined,
     requestedOwner: string | undefined, refusal: string): string {
     const parentRef = `parent/clip:${clipId}`;
@@ -660,6 +709,7 @@ export async function createTimelineCommandSession(options: Options) {
     clipScalarPort,
     clipParamsPort,
     parentClipAddPort,
+    clipDeletePort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,

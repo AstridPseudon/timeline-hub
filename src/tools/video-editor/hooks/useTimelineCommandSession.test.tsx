@@ -24,6 +24,7 @@ import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLa
 import { captureClipParamsEdit, submitClipParamsEdit } from '../commands/clipParamsGesture.ts';
 import { captureClipScalarEdit, submitClipScalarEdit } from '../commands/clipScalarGesture.ts';
 import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
+import { captureClipDeleteEdit, clipDeletePreview, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -101,6 +102,40 @@ async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
 }
 
 describe('mounted timeline command session', () => {
+  it('exposes only explicit parent deletion and fences capture, finish and submit behind earlier saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipDeletePort!;
+    const current = hook.result.current.commit.data!;
+    expect(port).toBeDefined();
+    setLegacyClean(false);
+    expect(() => captureClipDeleteEdit(port, current, 'x', 'parent')).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const captured = captureClipDeleteEdit(port, current, 'x', 'parent');
+    setLegacyClean(false);
+    expect(() => submitClipDeleteEdit(captured)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const { command } = port.finish(captured.basis);
+    setLegacyClean(false);
+    expect(() => port.submit({ command, preview: clipDeletePreview('x') })).toThrow('earlier timeline saves');
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('keeps the local deletion preview when the command is refused', async () => {
+    const { env, hook } = await scoped();
+    env.setFault('conflict');
+    const current = hook.result.current.commit.data!;
+    act(() => submitClipDeleteEdit(captureClipDeleteEdit(hook.result.current.commands.clipDeletePort!, current, 'x', 'parent')));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    expect(hook.result.current.commit.data!.config.clips).toEqual([]);
+    expect(hook.result.current.commit.data!.resolvedConfig.clips).toEqual([]);
+    expect(hook.result.current.commit.data!.dataLanes).toBe(current.dataLanes);
+    expect(hook.result.current.commit.data!.editProjection).toMatchObject({ kind: 'local', base: {
+      revisionId: current.head!.headRevisionId, publicationId: current.head!.headPublicationId } });
+    expect(env.commits()).toHaveLength(1);
+    expect(env.commits()[0].body!.commands[0]).toMatchObject({ op: 'clip.delete', select: 'parent/clip:x' });
+    hook.unmount();
+  });
   it('exposes the scalar port and fences capture, finish and submit behind earlier legacy saves', async () => {
     const { env, hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.clipScalarPort!;
