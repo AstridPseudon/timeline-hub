@@ -1,10 +1,12 @@
 import { createHash } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import {
   closeSync,
   existsSync,
+  lstatSync,
   openSync,
   readFileSync,
+  readlinkSync,
   readdirSync,
   realpathSync,
   statSync,
@@ -16,6 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const PROFILE = 'native-codec-chrome155';
 export const NODE_VERSION = 'v20.19.4';
+export const NODE_EXECUTABLE = '/tmp/vw-m3-agent-gate-node20.19.4/bin/node';
 export const BROWSER_EXECUTABLE = '/opt/google/chrome/chrome';
 export const BROWSER_VERSION = '155.0.8059.84';
 export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -39,6 +42,7 @@ const INPUT_FILE_PREFIXES = [
 const REQUIRED_PACKAGES = [
   '@playwright/test',
   'playwright',
+  'playwright-core',
   'react',
   'react-dom',
   'remotion',
@@ -52,7 +56,27 @@ const EXPECTED_PACKAGE_VERSIONS = {
   'react-dom': '18.3.1',
   remotion: '4.0.509',
   '@remotion/player': '4.0.509',
+  '@remotion/media': '4.0.509',
+  '@remotion/web-renderer': '4.0.509',
+  '@remotion/layout-utils': '4.0.509',
   '@banodoco/timeline-composition': '0.0.8',
+};
+const FROZEN_BROWSER = {
+  packageVersion: '155.0.8059.84-1',
+  executableSha256: 'cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76',
+  tree: {sha256: '5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e', fileCount: 255},
+};
+const FROZEN_PLAYWRIGHT_CORE = {
+  version: '1.60.0',
+  tree: {sha256: '6a78060c81886b7ba6f631d5b1193d50f0362c779f5b2dff2d784a31a6acc46d', fileCount: 106},
+};
+const FROZEN_RENDER_GRAPH_HASHES = {
+  '@remotion/player/dist/cjs/PlayerUI.js': '5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb',
+  '@remotion/player/dist/cjs/use-player-methods.js': 'ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46',
+  '@remotion/player/dist/cjs/use-playback.js': '6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0',
+  '@remotion/player/dist/esm/index.mjs': 'd3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12',
+  'remotion/dist/esm/index.mjs': '5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28',
+  'remotion/dist/cjs/audio/shared-audio-tags.js': '949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8',
 };
 
 const ORCH_ROOT = process.env.ORCH_ROOT
@@ -91,27 +115,22 @@ function inputFiles(allTracked) {
 function hashTree(root) {
   const entries = [];
   function visit(directory, prefix = '') {
-    for (const entry of readdirSync(directory, {withFileTypes: true}).sort((a, b) => a.name.localeCompare(b.name))) {
-      const absolute = join(directory, entry.name);
-      const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
-      if (entry.isDirectory()) visit(absolute, relativePath);
-      else if (entry.isFile()) entries.push({path: relativePath, bytes: readFileSync(absolute)});
-      else if (entry.isSymbolicLink()) {
-        const target = realpathSync(absolute);
-        const targetStat = statSync(target);
-        if (!targetStat.isFile()) throw new Error(`Expected regular file in dependency tree: ${absolute}`);
-        entries.push({path: relativePath, bytes: readFileSync(target)});
-      } else throw new Error(`Unsupported dependency tree entry: ${absolute}`);
+    for (const name of readdirSync(directory).sort()) {
+      const absolute = join(directory, name);
+      const relativePath = `${prefix}${name}`;
+      const stat = lstatSync(absolute);
+      if (stat.isDirectory()) visit(absolute, `${relativePath}/`);
+      else if (stat.isFile()) entries.push({path: relativePath, kind: stat.mode & 0o111 ? 'executable' : 'file', bytes: readFileSync(absolute)});
+      else if (stat.isSymbolicLink()) entries.push({path: relativePath, kind: 'symlink', bytes: Buffer.from(readlinkSync(absolute))});
+      else throw new Error(`Unsupported dependency tree entry: ${absolute}`);
     }
   }
   visit(root);
   const hash = createHash('sha256');
-  let totalBytes = 0;
   for (const entry of entries) {
-    hash.update(entry.path).update('\0').update(entry.bytes).update('\0');
-    totalBytes += entry.bytes.byteLength;
+    hash.update(JSON.stringify([entry.path, entry.kind, sha256(entry.bytes)]));
   }
-  return {sha256: hash.digest('hex'), fileCount: entries.length, totalBytes};
+  return {sha256: hash.digest('hex'), fileCount: entries.length};
 }
 
 function packageFingerprint(name) {
@@ -132,18 +151,39 @@ function packageGraphFingerprint() {
   };
 }
 
+function renderGraphFingerprint() {
+  const nodeModules = dirname(dirname(require.resolve('@remotion/player/package.json')));
+  return Object.fromEntries(Object.entries(FROZEN_RENDER_GRAPH_HASHES).map(([relativePath]) => [
+    relativePath,
+    sha256(readFileSync(join(nodeModules, relativePath))),
+  ]));
+}
+
 function browserFingerprint() {
   if (!existsSync(BROWSER_EXECUTABLE)) throw new Error(`Pinned Chrome executable is missing: ${BROWSER_EXECUTABLE}`);
   const executable = realpathSync(BROWSER_EXECUTABLE);
   const root = dirname(executable);
   const stat = statSync(executable);
   if (!stat.isFile() || (stat.mode & 0o111) === 0) throw new Error('Pinned Chrome executable is not executable');
-  return {
+  const versionOutput = execFileSync(BROWSER_EXECUTABLE, ['--version'], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  });
+  const version = versionOutput.match(/Chrome\s+(\d+\.\d+\.\d+\.\d+)/)?.[1];
+  const packageVersion = execFileSync('dpkg-query', ['-W', '-f=${Version}', 'google-chrome-stable'], {encoding: 'utf8'}).trim();
+  const fingerprint = {
     executable: BROWSER_EXECUTABLE,
-    version: BROWSER_VERSION,
+    version,
+    packageVersion,
     executableSha256: sha256(readFileSync(executable)),
     tree: hashTree(root),
   };
+  if (fingerprint.version !== BROWSER_VERSION || fingerprint.packageVersion !== FROZEN_BROWSER.packageVersion
+    || fingerprint.executableSha256 !== FROZEN_BROWSER.executableSha256
+    || JSON.stringify(fingerprint.tree) !== JSON.stringify(FROZEN_BROWSER.tree)) {
+    throw new Error('Chrome155 executable/version/full tree does not match the frozen environment');
+  }
+  return fingerprint;
 }
 
 export function sourceFingerprint() {
@@ -154,6 +194,17 @@ export function sourceFingerprint() {
   const sourceSha = git('rev-parse', 'HEAD');
   const sourceTree = git('rev-parse', 'HEAD^{tree}');
   const packages = packageGraphFingerprint();
+  if (process.version !== NODE_VERSION || realpathSync(process.execPath) !== realpathSync(NODE_EXECUTABLE)) {
+    throw new Error(`Probe must run with pinned Node ${NODE_VERSION} at ${NODE_EXECUTABLE}`);
+  }
+  if (packages.packages['playwright-core'].version !== FROZEN_PLAYWRIGHT_CORE.version
+    || JSON.stringify(packages.packages['playwright-core'].tree) !== JSON.stringify(FROZEN_PLAYWRIGHT_CORE.tree)) {
+    throw new Error('Underlying playwright-core graph does not match the frozen environment');
+  }
+  const renderGraphHashes = renderGraphFingerprint();
+  if (JSON.stringify(renderGraphHashes) !== JSON.stringify(FROZEN_RENDER_GRAPH_HASHES)) {
+    throw new Error('Remotion/Player render graph does not match the frozen environment');
+  }
   return {
     sourceSha,
     sourceTree,
@@ -169,6 +220,7 @@ export function sourceFingerprint() {
     browser: browserFingerprint(),
     packages: packages.packages,
     packageGraphHash: packages.sha256,
+    renderGraphHashes,
   };
 }
 
@@ -203,6 +255,9 @@ export function assertGrant(grant, fingerprint, finalSha = process.env.TAB_AUDIO
   if (JSON.stringify(grant.packages) !== JSON.stringify(fingerprint.packages)) {
     throw new Error('Tab-audio grant package graph is stale');
   }
+  if (JSON.stringify(grant.renderGraphHashes) !== JSON.stringify(fingerprint.renderGraphHashes)) {
+    throw new Error('Tab-audio grant Remotion/Player render graph is stale');
+  }
   for (const [name, version] of Object.entries(EXPECTED_PACKAGE_VERSIONS)) {
     if (fingerprint.packages[name]?.version !== version) throw new Error(`Unexpected ${name} version`);
   }
@@ -214,7 +269,7 @@ export function assertGrant(grant, fingerprint, finalSha = process.env.TAB_AUDIO
 }
 
 export function assertFingerprintUnchanged(before, after) {
-  for (const field of ['sourceSha', 'sourceTree', 'fullTrackedHash', 'inputHash', 'node', 'browser', 'packages', 'packageGraphHash']) {
+  for (const field of ['sourceSha', 'sourceTree', 'fullTrackedHash', 'inputHash', 'node', 'browser', 'packages', 'packageGraphHash', 'renderGraphHashes']) {
     if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) {
       throw new Error(`Probe dependency identity changed during capture: ${field}`);
     }
@@ -247,9 +302,12 @@ function assertCleanSource() {
 }
 
 function ensureFlock() {
-  if (process.env.VIEWING_BROWSER_FLOCK_HELD !== '1') {
-    throw new Error('The central browser flock is not declared held');
+  if (process.env.VIEWING_BROWSER_FLOCK_HELD !== '1' || process.env.TAB_AUDIO_LOCK_FD !== '9') {
+    throw new Error('The central browser flock is not declared held by the shared lock FD');
   }
+  const lockPath = requiredEnv('TAB_AUDIO_LOCK_PATH');
+  const probe = spawnSync('flock', ['-n', lockPath, '-c', 'true'], {stdio: 'ignore'});
+  if (probe.status !== 1) throw new Error('The shared browser flock is not held by the invoking shell');
 }
 
 function preflight() {

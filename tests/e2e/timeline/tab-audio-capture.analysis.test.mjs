@@ -6,6 +6,7 @@ import {
   assertRawPts,
   assertTone,
   assertVisualEvent,
+  diagnoseVisualEvent,
 } from './tab-audio-capture.analysis.mjs';
 
 const capabilities = assertCaptureCapabilities([
@@ -50,6 +51,21 @@ test('visual event check requires both exact marker colors in decoded frames', (
     preEventRgb: [32, 48, 64],
     eventRgb: [160, 32, 32],
   }), /both pre-event and event marker colors/);
+});
+
+test('decoded marker data is diagnostic and makes no phase claim', () => {
+  const diagnostic = diagnoseVisualEvent(Buffer.from([31, 47, 63, 159, 31, 31]), {
+    width: 2,
+    height: 1,
+    preEventRgb: [32, 48, 64],
+    eventRgb: [160, 32, 32],
+  });
+  assert.deepEqual(diagnostic, {
+    frameCount: 1,
+    exactColorFrameCounts: [0, 0],
+    phaseClaim: false,
+    diagnosticOnly: true,
+  });
 });
 
 test('raw PTS checks retain native per-stream timestamps without alignment', () => {

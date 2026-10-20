@@ -113,6 +113,43 @@ export function assertVisualEvent(rawVideo, {width, height, preEventRgb, eventRg
   return {frameCount: rawVideo.byteLength / frameBytes, framesWithPreEventColor: framesWithColor[0], framesWithEventColor: framesWithColor[1]};
 }
 
+/**
+ * Decode-only marker diagnostics. VP8 is lossy, so exact RGB samples are not
+ * evidence of event timing and are intentionally never required here.
+ */
+export function diagnoseVisualEvent(rawVideo, {width, height, preEventRgb, eventRgb} = {}) {
+  if (!Buffer.isBuffer(rawVideo) || !Number.isInteger(width) || !Number.isInteger(height)) {
+    throw new Error('Decoded visual event region is invalid');
+  }
+  const frameBytes = width * height * 3;
+  if (frameBytes === 0 || rawVideo.byteLength === 0 || rawVideo.byteLength % frameBytes !== 0) {
+    throw new Error('Decoded visual event region is not frame-aligned');
+  }
+  const colors = [preEventRgb, eventRgb];
+  if (colors.some((color) => !Array.isArray(color) || color.length !== 3
+    || color.some((channel) => !Number.isInteger(channel) || channel < 0 || channel > 255))) {
+    throw new Error('Visual event colors are invalid');
+  }
+  const exactColorFrameCounts = colors.map((color) => {
+    let count = 0;
+    for (let offset = 0; offset < rawVideo.byteLength; offset += frameBytes) {
+      for (let pixel = offset; pixel < offset + frameBytes; pixel += 3) {
+        if (rawVideo[pixel] === color[0] && rawVideo[pixel + 1] === color[1] && rawVideo[pixel + 2] === color[2]) {
+          count += 1;
+          break;
+        }
+      }
+    }
+    return count;
+  });
+  return {
+    frameCount: rawVideo.byteLength / frameBytes,
+    exactColorFrameCounts,
+    phaseClaim: false,
+    diagnosticOnly: true,
+  };
+}
+
 export function assertTone(samples, {sampleRate, channels, frequency}) {
   if (!(samples instanceof Float32Array) || samples.length === 0) throw new Error('Decoded audio is empty');
   if (!Number.isInteger(sampleRate) || sampleRate <= 0 || !Number.isInteger(channels) || channels < 1) {

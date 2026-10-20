@@ -6,8 +6,13 @@ set -Eeuo pipefail
 # getDisplayMedia tab capture; private PulseAudio is a fallback only.
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 CONTROLLER="$ROOT/tests/e2e/timeline/tab-audio-capture.controller.mjs"
+NODE=${TAB_AUDIO_NODE_EXECUTABLE:-/tmp/vw-m3-agent-gate-node20.19.4/bin/node}
+[[ -x "$NODE" ]] || { echo "Pinned Node executable is missing: $NODE" >&2; exit 2; }
+[[ "$("$NODE" --version)" == v20.19.4 ]] || { echo "Pinned Node must be v20.19.4" >&2; exit 2; }
+export PATH="$(dirname "$NODE"):$PATH"
 LOCK_PATH=${TAB_AUDIO_LOCK_PATH:-/tmp/timeline-viewing-browser.lock}
 export TAB_AUDIO_LOCK_PATH="$LOCK_PATH"
+export TAB_AUDIO_LOCK_FD=9
 : "${TAB_AUDIO_PREFLIGHT_PATH:?manager must supply a unique preflight path}"
 : "${TAB_AUDIO_RUN_MARKER:?manager must supply a unique one-shot marker path}"
 
@@ -19,7 +24,7 @@ cleanup() {
   status=$?
   if [[ ${TAB_AUDIO_PREFLIGHT_DONE:-0} == 1 ]]; then
     postflight_status=0
-    node "$CONTROLLER" --postflight || postflight_status=$?
+    "$NODE" "$CONTROLLER" --postflight || postflight_status=$?
     if [[ $status == 0 && $postflight_status != 0 ]]; then
       status=$postflight_status
     fi
@@ -28,7 +33,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-node "$CONTROLLER" --preflight
+"$NODE" "$CONTROLLER" --preflight
 export TAB_AUDIO_PREFLIGHT_DONE=1
 
 if [[ ${TAB_AUDIO_RUN:-0} != 1 ]]; then
@@ -36,7 +41,7 @@ if [[ ${TAB_AUDIO_RUN:-0} != 1 ]]; then
   exit 0
 fi
 
-node "$CONTROLLER" --claim
+"$NODE" "$CONTROLLER" --claim
 PLAYWRIGHT_TIMELINE_DEVICES=1 \
-  npm exec -- playwright test --config "$ROOT/tests/e2e/timeline/tab-audio-capture.config.ts" \
+  "$NODE" "$ROOT/node_modules/playwright/cli.js" test --config "$ROOT/tests/e2e/timeline/tab-audio-capture.config.ts" \
   --project=native-codec-chrome155-tab-audio

@@ -19,12 +19,24 @@ const fingerprint = {
   packages: {
     '@playwright/test': {version: '1.60.0', tree: {sha256: '3'.repeat(64)}},
     playwright: {version: '1.60.0', tree: {sha256: '4'.repeat(64)}},
+    'playwright-core': {version: '1.60.0', tree: {sha256: 'a'.repeat(64)}},
     react: {version: '18.3.1', tree: {sha256: '5'.repeat(64)}},
     'react-dom': {version: '18.3.1', tree: {sha256: '6'.repeat(64)}},
     remotion: {version: '4.0.509', tree: {sha256: '7'.repeat(64)}},
     '@remotion/player': {version: '4.0.509', tree: {sha256: '8'.repeat(64)}},
+    '@remotion/media': {version: '4.0.509', tree: {sha256: 'b'.repeat(64)}},
+    '@remotion/web-renderer': {version: '4.0.509', tree: {sha256: 'c'.repeat(64)}},
+    '@remotion/layout-utils': {version: '4.0.509', tree: {sha256: 'd'.repeat(64)}},
     '@banodoco/timeline-composition': {version: '0.0.8', tree: {sha256: '9'.repeat(64), fileCount: 77}},
   },
+};
+fingerprint.renderGraphHashes = {
+  '@remotion/player/dist/cjs/PlayerUI.js': '1'.repeat(64),
+  '@remotion/player/dist/cjs/use-player-methods.js': '2'.repeat(64),
+  '@remotion/player/dist/cjs/use-playback.js': '3'.repeat(64),
+  '@remotion/player/dist/esm/index.mjs': '4'.repeat(64),
+  'remotion/dist/esm/index.mjs': '5'.repeat(64),
+  'remotion/dist/cjs/audio/shared-audio-tags.js': '6'.repeat(64),
 };
 
 function grant() {
@@ -45,6 +57,7 @@ function grant() {
     browserTreeSha256: fingerprint.browser.tree.sha256,
     browserExecutableSha256: fingerprint.browser.executableSha256,
     packages: fingerprint.packages,
+    renderGraphHashes: fingerprint.renderGraphHashes,
     environmentApprovalReference: 'manager-grant',
   };
 }
@@ -61,6 +74,7 @@ test('grant rejects changed full source, selected input, browser, or package ide
   }
   assert.throws(() => assertGrant({...grant(), browserTreeSha256: '9'.repeat(64)}, fingerprint, fingerprint.sourceSha), /Chrome155 tree/);
   assert.throws(() => assertGrant({...grant(), packages: {}}, fingerprint, fingerprint.sourceSha), /package graph/);
+  assert.throws(() => assertGrant({...grant(), renderGraphHashes: {}}, fingerprint, fingerprint.sourceSha), /Remotion\/Player render graph/);
 });
 
 test('postflight rejects a dependency graph change', () => {

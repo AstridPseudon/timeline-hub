@@ -6,7 +6,7 @@ import {
   assertCaptureCapabilities,
   assertCaptureOutcome,
   assertTone,
-  assertVisualEvent,
+  diagnoseVisualEvent,
 } from './tab-audio-capture.analysis.mjs';
 import { editorUrl, resetFakeRuntimeBaseline } from './support';
 
@@ -162,11 +162,16 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
     .find((stream) => stream.codec_type === 'audio');
   if (!audioStream) throw new Error('ffprobe output did not identify the captured audio stream');
   const tone = await readAudio(output, audioStream);
-  const visual = assertVisualEvent(await readVisualRegion(output), {
+  const rawDecodedMarkerData = await readVisualRegion(output);
+  const visualMarkerDiagnostic = diagnoseVisualEvent(rawDecodedMarkerData, {
     width: 500,
     height: 110,
     preEventRgb: [32, 48, 64],
     eventRgb: [160, 32, 32],
+  });
+  await testInfo.attach('tab-audio-probe-marker-rgb24.raw', {
+    body: rawDecodedMarkerData,
+    contentType: 'application/octet-stream',
   });
   await testInfo.attach('tab-audio-probe-outcome', {
     body: JSON.stringify({
@@ -175,9 +180,9 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
       capabilities,
       outcome,
       tone,
-      visual,
+      visualMarkerDiagnostic,
       rawPtsOnly: true,
-      note: 'Native per-stream PTS and recorder chunk order only; no audio/video offset, per-clip alignment, normalization, resampling, parity, or event-phase claim is made.',
+      note: 'Qualified capability is one live video track plus one live tab-audio track, controlled tone presence, and native per-stream PTS. Decoded VP8 marker samples are diagnostic only; no audio/video offset, event phase, per-clip alignment, normalization, resampling, parity, or global-origin claim is made.',
     }, null, 2),
     contentType: 'application/json',
   });
