@@ -1,4 +1,6 @@
-Agent INBOX 10:35 vector is ready for Viewing confirmation. Product source is unchanged. No MAIN visible result is claimed.
+HOLD — owner 11:08 decision supersedes the proposed raw-clock render expectation. This is diagnostic source/public-evaluation evidence only. MAIN source predicts projected opacity 0.5; real MAIN pixels must settle the reference. Do not merge 27e3b3b1, promote raw opacity 1 as a product golden, or activate renderConfig meanwhile.
+
+Agent INBOX 10:35 diagnostic vector is ready for Viewing confirmation. Product source is unchanged. No MAIN visible result is claimed.
 
 The corpus is `tests/editing_conformance/fixtures/visual_compile_contract.json`, key `cap_fade_closure` (schema 4), with contract section 3 in `docs/design/visual-compile-contract.md`. It includes the verbatim frozen App fixture, its provenance/blob, the explicit 5 s image + 1 s fade-out mutation, and the complete actual raw/default projected clip objects. Existing editor clamp positives remain passing.
 

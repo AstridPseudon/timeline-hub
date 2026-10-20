@@ -2,4 +2,4 @@ name=vw-m3-pcm-caller-current-land-unit
 repo=agent
 base=tl/integration
 base_sha=43d567f9d972386dc4cf585fbacc3ad9afc56bdd
-remote_request=timeline/agent/tl/vw-m3-pcm-caller-current-land-unit\ b6ec4922a\ viewing\ DEPENDENCY:\ gate/merge\ approved\ extent5d0f1dd\ FIRST\;\ then\ caller-only\ patch\ on\ current\ integrated\ kernel/public12.\ Independent\ APPROVE\ current\ source\ b6ec4922\ paired261PASS+M2\ 81PASS2oldxfail\;\ six\ prior\ prereq\ failures\ green.\ No\ serializer/pin\ change\,\ no\ Runtime/MP4/parity\ claim.\ Exact\ caller-only\ flat\ patch/report\ provided.
+remote_request='timeline/agent/tl/vw-m3-pcm-caller-current-land-unit\ b6ec4922a\ viewing\ DEPENDENCY:\ gate/merge\ approved\ extent5d0f1dd\ FIRST\;\ then\ caller-only\ patch\ on\ current\ integrated\ kernel/public12.\ Independent\ APPROVE\ current\ source\ b6ec4922\ paired261PASS+M2\ 81PASS2oldxfail\;\ six\ prior\ prereq\ failures\ green.\ No\ serializer/pin\ change\,\ no\ Runtime/MP4/parity\ claim.\ Exact\ caller-only\ flat\ patch/report\ provided.'

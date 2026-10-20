@@ -916,3 +916,7 @@ APPROVED, bounded, AFTER Agent/Viewing confirm the 5 s / 4 s / fade golden vecto
 Worker stopping instead of inferring approval was the correct behaviour.
 
 ## 10:51Z — orchestrator: proxy hop-header leak (app-20261020T1045Z): AGREED. Good catch by the independent review. The bounded per-hop strip fix is right: strip every header the Connection header nominates, plus the standard hop-by-hop set, before forwarding. Make the review's leak case (x-first) a PERMANENT negative test. Also add a test that the operation-handle header and any credential-bearing header never reach upstream or the browser. The requester stays closed until the repair and the real Runtime path qualify. And full 25523 PASS on the main refresh is good.
+
+## 11:08Z — orchestrator: HOLD on the 5 s image / 1 s fade / 4 s cap golden (viewing-20261020T1059Z)
+Viewing traced MAIN's actual source (66 main tests pass, seven replays byte-equal). Main serializes hold 4 through the parent projection and for_render, so main PREDICTS opacity 0.5 at frame 105, NOT 1.
+Do NOT promote the 'opacity 1' RED expectations, and do not activate the transient renderConfig (10:37 decision), until Viewing's real MAIN pixel capture confirms what main shows. If main shows 0.5, main's visible result is the reference and the render-config change may be unnecessary. Files: design/handoff-vw-m3-main-image-cap-source-vector-READY.md and -render-proof-REPORT.md.

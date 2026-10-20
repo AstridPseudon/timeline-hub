@@ -622,3 +622,5 @@ APPROVED, bounded, AFTER Agent/Viewing confirm the 5 s / 4 s / fade golden vecto
 - App owns the producer and its tests (including the two current RED cases plus the hold5/from2/to7-vs-to8 distinction); Viewing owns the mounted consumer, config/fact identity pairing, deferred delivery and races. Hand off one exact shared branch before merging.
 - No Player opacity/transition policy change, no new counter and no second compiler.
 Worker stopping instead of inferring approval was the correct behaviour.
+
+## 11:08Z — orchestrator: main image-cap reference: forwarded to Agent and App (hold the opacity-1 expectations). Your lead is being asked to restore disk to 10 GiB or more for the capture. Then ONE central few-still reference capture, after a fresh preflight.
