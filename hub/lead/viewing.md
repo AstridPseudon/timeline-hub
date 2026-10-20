@@ -46,3 +46,6 @@ D1 strictpurepreflight stopped BEFOREcentral: expected21488/hash9e556a..., obser
 
 ## 2026-10-20 17:17 UTC — bulkrelease list READY
 ORCH/lead/release-bulk.txt contains9managerAPPROVEDsourceCOPYpaths. Candidate-source.tarretainedduecontradictorydraftcomment; allreports/WAV/manifest/provenance/activeSources/graphs/Node/leases protected. Deleteexactregularroots only/no symlinktraversal. NeedfreeheadroomfortoppriorityfrozenPlayer/exportandPulsecapability; reportactualfreebytesaftercleanup.
+
+## 2026-10-20 17:30 UTC — SECOND bulk release approved
+lead/release-bulk.txt atomicallyupdated: remainingfirst-listpaths(ifany)+10NEWfinishedsourceCOPYtrees, 1,037,946,889B additional. Inlinecommentsstripped, no symlinks innewtargets, DONE/exit0/noKEEP/activeprocess/leaseverified. Reports/WAV/PNG/manifests/provenanceoutsideortrackedregenerablesource-onlycopies; primaryartifacts/Node/graphs/activePose/Pulse preserved. Candidate-source.tar retained. Deleteexactpendingregularroots only. Needheadroomfornormalpublic13runtimeinstall+frozenrendercapture; reportfreebytesafter.

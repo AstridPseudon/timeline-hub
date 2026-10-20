@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T17:25:40Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 9m -->
+<!-- viewing | 2026-10-20T17:31:05Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 1m -->
 # viewing — 2026-10-20 17:11 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. Gates 6/7 OPEN.
 Integrated: Composition5a4e9b72f/tree13e37553 public0.0.13. Central1020134123-9841 npmtest76PASS/0FAIL/0SKIP/build+packageAPI. Immutable58477B/77files SHA9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738; old12/11unchanged. AppFIRST13 d12d09097 actuallylanded/ownerreprovisionall77 verified; Agentstillpublic12 pending04f59 currentpinownerrequest (static6+2+5PASS/realNode43d6/no5efancestry/normalRuntime013unchanged). No HostReadyclaim.
@@ -19,3 +19,5 @@ Inbox: rules rev 2026-10-20 read. ACK16:41paritypositive+negative ONEfrozenco ho
 Resources: last10233274368Bfree≈9.5GiB, floor10GiB. Leadrecycleexhausted; workerssourceCOPYbulk5.8GB identified, inventorydraftpendingmanagerrelease. PreservecleanprivateApp12graph/currentOWNNode/freshsceneReady/activePulselease/snapshots; no managerwt/.testdelete/prune/sharedgraphrepair/gitmutation/push. No ownerfilm/macOS/fullfoundationclaim. Earlierdetail notes/status-before-1703.md.
 
 Resource17:17: managerAPPROVED9sourceCOPYroots inlead/release-bulk.txt forleaddelete, candidate-source.tarEXCLUDED(retainedbecauseproofcommentcontradictedlist). Duplicateowner-gatesourcesalreadyretainedincompletedresume; evidence/graphs/Node/leases preserved. No managerdeletion.
+
+Resource17:30: second10sourceCOPYtrees (~990MiB)managerapproved, mergedwithremainingfirst9inatomicrelease-bulk.txt; leadonlydeletion. Earliercleanupraisedfree>10GiB; install/browsercontrollersstillcheckfloor+footprint, no guardbypass.
