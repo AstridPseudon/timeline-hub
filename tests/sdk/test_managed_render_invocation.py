@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from astrid.sdk import invocation
+from astrid.sdk import timeline_filmstrip
 import astrid.core.rendering.storage as storage_module
 
 
@@ -27,6 +28,45 @@ def _filmstrip_invoke_fixtures(monkeypatch, authority):
     monkeypatch.setattr(invocation, "_sdk_module", lambda: fake_sdk)
     monkeypatch.setattr(invocation, "_validate_timeline_visualize_inputs", lambda *_, **__: authority)
     return capability
+
+
+def test_scene_only_private_preflight_repreparation_keeps_carrier_without_video(monkeypatch):
+    seen = {"inputs": None}
+
+    def prepare(values, *, project, client):
+        seen["prepared_include_media"] = values["include_media"]
+        return {
+            "capture_snapshot": {
+                "project_slug": project,
+                "config": {"clips": []},
+                "video_digest": VIDEO_DIGEST,
+                "metadata": {
+                    "capture_identity": VIDEO_DIGEST,
+                    "capture_authority": {"parent_revision_id": "r1"},
+                    "scene_clips": {"clip": {"address": "c1.picture"}},
+                },
+            },
+            "capture_identity": VIDEO_DIGEST,
+            "video_digest": VIDEO_DIGEST,
+            "video_object_id": VIDEO_DIGEST,
+            "managed_object_reference": VIDEO_DIGEST,
+            "timeline_id": "main",
+        }
+
+    def invoke(capability_id, **kwargs):
+        seen["inputs"] = kwargs["inputs"]
+        return SimpleNamespace(ok=False)
+
+    monkeypatch.setattr(timeline_filmstrip, "prepare_filmstrip", prepare)
+    monkeypatch.setattr(invocation, "_invoke_internal_result", invoke)
+    spans, _ = timeline_filmstrip._invoke_scene_only(
+        {"timeline_ref": "main"}, project="project-1", client=SimpleNamespace()
+    )
+
+    assert spans[0].cls == "UNAVAILABLE"
+    assert seen["prepared_include_media"] is False
+    assert seen["inputs"]["mode"] == "scene_only"
+    assert "rendered_video" not in seen["inputs"]
 
 
 def test_private_filmstrip_backend_preflight_enrichment_reaches_kernel(monkeypatch):

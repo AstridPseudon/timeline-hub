@@ -55,6 +55,65 @@ def _private(path: Path, *shared: Path) -> None:
             raise RuntimeError(f"private path resolves into shared input: {resolved}")
 
 
+def _apply_private_sdk_scene_patch(payload: bytes) -> bytes:
+    """Apply the qualified owner SDK patch only to the private proof graph."""
+    source = payload.decode("utf-8")
+
+    def replace(old: str, new: str) -> None:
+        nonlocal source
+        if source.count(old) != 1:
+            raise RuntimeError("qualified SDK owner patch no longer matches SDK9b")
+        source = source.replace(old, new, 1)
+
+    replace(
+        '''    if not all(isinstance(context.get(key), str) and context[key] for key in (\n'''
+        '''        "video_digest", "video_object_id", "managed_object_reference", "capture_identity",\n'''
+        '''    )):\n'''
+        '''        return None\n''',
+        '''    if snapshot.get("video_digest") != capture_identity:\n'''
+        '''        return None\n''',
+    )
+    replace(
+        '''        "video_digest": context["video_digest"],\n'''
+        '''        "video_object_id": context["video_object_id"],\n'''
+        '''        "managed_object_reference": context["managed_object_reference"],\n''',
+        "",
+    )
+    replace(
+        '''    candidates = [\n'''
+        '''        getattr(result, "outputs", None),\n'''
+        '''        getattr(result, "raw_result", None),\n'''
+        '''        result if isinstance(result, Mapping) else None,\n'''
+        '''    ]\n''',
+        '''    outputs = getattr(result, "outputs", None)\n'''
+        '''    candidates = [outputs] if isinstance(outputs, Mapping) and outputs else [\n'''
+        '''        getattr(result, "raw_result", None),\n'''
+        '''        result if isinstance(result, Mapping) else None,\n'''
+        '''    ]\n''',
+    )
+    replace(
+        '            scene_name = entrypoints.get("scene_answers") if isinstance(entrypoints, Mapping) else None',
+        '            scene_name = entrypoints.get("scene") if isinstance(entrypoints, Mapping) else None',
+    )
+    replace(
+        '''    invoke_result = getattr(client, "invoke_result", None)\n'''
+        '''    if not callable(invoke_result):\n'''
+        '''        return _scene_only_unavailable(context, reason="managed visualization invocation unavailable"), context\n'''
+        '''    result = invoke_result(\n'''
+        '''        "rendering.timeline_visualize", kind="executor", project=project,\n'''
+        '''        inputs=request, wait=True, read_managed_outputs=True,\n'''
+        '''    )\n''',
+        '''    from astrid.sdk.invocation import _invoke_internal_result\n'''
+        '''\n'''
+        '''    result = _invoke_internal_result(\n'''
+        '''        "rendering.timeline_visualize", kind="executor", project=project,\n'''
+        '''        inputs=request, client=client, wait=True, read_managed_outputs=True,\n'''
+        '''    )\n''',
+    )
+    replace('        "include_media": True,', '        "include_media": False,')
+    return source.encode("utf-8")
+
+
 def _overlay(repo: Path, stage: Path) -> Path:
     overlay = stage / "agent-overlay"
     shutil.copytree(
@@ -67,6 +126,8 @@ def _overlay(repo: Path, stage: Path) -> Path:
         ("23db420c1", "astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py"),
     ):
         payload = subprocess.check_output(["git", "-C", str(repo), "show", f"{reference}:{relative}"])
+        if relative == "astrid/sdk/timeline_filmstrip.py":
+            payload = _apply_private_sdk_scene_patch(payload)
         target = overlay / relative
         target.write_bytes(payload)
     return overlay
