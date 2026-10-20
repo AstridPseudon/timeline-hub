@@ -391,9 +391,21 @@ describe('paired route policy vs the App\'s Workspace v1 calls', () => {
 
   // Reached through /api/astrid (nativeEditorConnection.ts:6); the Runtime alias deliberately has no capability catalog.
   const astridOnly = new Set(['listCapabilities']);
-  const localDoorOnly = new Set(['commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection']);
+  const localDoorOnly = new Set([
+    'commitTimeline',
+    'listTimelineCommits',
+    'getProjectMediaSelection',
+    'getProjectVerifiedMedia',
+    'getProjectVerifiedDocument',
+    'getProjectVerifiedDocumentObject',
+  ]);
   const pairedCalls = calls.filter(({ op }) => !localDoorOnly.has(op));
-  const localDoorOnlyCalls = calls.filter(({ op }) => localDoorOnly.has(op));
+  const localDoorOnlyCalls = [
+    ...calls.filter(({ op }) => localDoorOnly.has(op)),
+    ...['getProjectVerifiedMedia', 'getProjectVerifiedDocument', 'getProjectVerifiedDocumentObject']
+      .filter((op) => !calls.some((call) => call.op === op))
+      .flatMap((op) => derive(op)),
+  ];
 
   it('derives the App\'s calls from source, including the B1 routes', () => {
     const derived = calls.map(({ method, path }) => `${method} ${path.split('?')[0]}`);
@@ -406,7 +418,7 @@ describe('paired route policy vs the App\'s Workspace v1 calls', () => {
     expect(calls.every(({ path }) => path.startsWith('/v1/') && !path.includes('${'))).toBe(true);
     expect(calls.flatMap((call) => call.headers)).toEqual(expect.arrayContaining(['content-type', 'idempotency-key', 'x-original-name', 'range']));
     expect(new Set(localDoorOnlyCalls.map(({ op }) => op))).toEqual(localDoorOnly);
-    expect(localDoorOnlyCalls).toHaveLength(3);
+    expect(localDoorOnlyCalls).toHaveLength(6);
   });
 
   describe.each(pairedCalls)('$op: $method $path', ({ method, path, op }) => {
