@@ -17,8 +17,8 @@ from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.timeline import scene_answers
 
 ROOT = Path(__file__).resolve().parents[3]
-ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz"
-SHA256 = "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7"
+ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz"
+SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
 
 
 @pytest.fixture
