@@ -11,6 +11,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 from contextlib import nullcontext
@@ -198,8 +199,11 @@ def _root_probe(tmp_path: Path, props: dict[str, object]) -> dict[str, object]:
     duration_path.write_bytes(extract.stdout)
     node = shutil.which("node")
     assert node is not None, "Root callback probe requires Node"
-    typescript = "/home/user/work/app/node_modules/typescript/lib/typescript.js"
-    assert Path(typescript).is_file(), "Root callback probe requires TypeScript"
+    typescript = Path(os.environ.get(
+        "ASTRID_TEST_NODE_MODULES",
+        "/home/user/work/app/node_modules",
+    )) / "typescript/lib/typescript.js"
+    assert typescript.is_file(), f"Root callback probe requires TypeScript: {typescript}"
     completed = subprocess.run(
         [
             node,
@@ -208,7 +212,7 @@ def _root_probe(tmp_path: Path, props: dict[str, object]) -> dict[str, object]:
             str(_ROOT_TSX),
             str(duration_path),
             json.dumps(props),
-            typescript,
+            str(typescript),
         ],
         check=False,
         capture_output=True,
