@@ -1,0 +1,117 @@
+{
+  "base": "df2739f903edac02bd36b4446deeea847524c040",
+  "candidate": "da10b0b7690a8c2a4032e75eb3d4a3e988121997",
+  "parent": "df2739f903edac02bd36b4446deeea847524c040",
+  "candidate_tree": "6e7d0e29cb4a70f8707163547f7b33664d29e181",
+  "harness_exit": 0,
+  "producer_done": true,
+  "archive_all_blob_bytes_equal": true,
+  "archive_blob_count": 3009,
+  "changed_files": [
+    "astrid/core/rendering/service.py",
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "remotion/src/Root.tsx",
+    "remotion/tests/root-metadata.test.cjs",
+    "tests/packs/rendering/test_live_scene_composition.py",
+    "tests/packs/rendering/test_native_layer_extent.py",
+    "tests/packs/rendering/test_remotion_layer_tail_compat.py"
+  ],
+  "exact_approved_sources": {
+    "astrid/core/rendering/service.py": {
+      "reference": "626eed656",
+      "byte_equal": true,
+      "sha256": "930cb134e96d005816e8c2c3f690574c3c9f3097d5da216be43a8037b6c73dff"
+    },
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": {
+      "reference": "883549d3",
+      "byte_equal": true,
+      "sha256": "5c3cd96bf8561eebc369090fe3c520fac40457802458959827c7903464837269"
+    },
+    "remotion/src/Root.tsx": {
+      "reference": "883549d3",
+      "byte_equal": true,
+      "sha256": "afde359fcf7324f0885543e3f3292372bd1b94bb3f219477bd15a2a4ee704f90"
+    },
+    "tests/packs/rendering/test_native_layer_extent.py": {
+      "reference": "626eed656",
+      "byte_equal": true,
+      "sha256": "1498d7008bcc6534eeda639b5580c737c51853d1507aebb76dc54afcf4ae8ce2"
+    },
+    "remotion/tests/root-metadata.test.cjs": {
+      "reference": "20d4ab1aa9",
+      "byte_equal": true,
+      "sha256": "181950efa7e91f646d57496b33897e4e40ec6723c695f6bb6d8ffe940443b6cc"
+    },
+    "tests/packs/rendering/test_remotion_layer_tail_compat.py": {
+      "reference": "883549d3",
+      "byte_equal": true,
+      "sha256": "e41b4dcb9c2f2e804a2bddc7960d24af2d6605d35e878f40c5828badb26cf73e"
+    },
+    "tests/packs/rendering/test_live_scene_composition.py": {
+      "reference": "c068503e",
+      "byte_equal": true,
+      "sha256": "99a726a4326a5492fc112f32c85fcb8eb13de366c76909174dd50f5a609248c5"
+    }
+  },
+  "protected_files": {
+    "astrid/core/timeline/banodoco_composer.py": {
+      "git_blob": "03b0d7a2a67b1b873311b46705c640cb4ebe150e",
+      "sha256": "c18ae06fc3ae7bd660dd3001a388b89a886e1680f6f6c14fa6182c2dd74c4461",
+      "bytes": 12476
+    },
+    "astrid/core/timeline/duration.py": {
+      "git_blob": "81c3751aba46c8e32bc179eb160fa3a2e46c533c",
+      "sha256": "cbdb18bffebc6c9d5a07a3d144fcbfa558ba6249fda5c2a8dd8016b87a3fd3db",
+      "bytes": 15511
+    },
+    "astrid/core/rendering/contracts.py": {
+      "git_blob": "d5b3044c0090c7d48cfacb1c79220f8738f11dfb",
+      "sha256": "605da1d2879c46de65aabe03a029d93cacdcf307d461bddb988be85dc0797bb2",
+      "bytes": 88349
+    },
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py": "absent at both",
+    "astrid/packs/rendering/rendering/renderers/threejs/run.py": {
+      "git_blob": "31d8ce0ee5526d868b9ab033d4fb0d833ee22ce1",
+      "sha256": "99331d5fd0044a49f0bd285bbe807ae19fc33ede68c3baf32c83ff9f4ddddd01",
+      "bytes": 29951
+    },
+    "tests/packs/rendering/test_remotion_capture_scene_props.py": {
+      "git_blob": "27450082a3f6efa83be33612ccc686e4ee778ac1",
+      "sha256": "683d7e26aad313b5712ae26966f30f220c46d5122c2e33cf3d54dddd3a024f9d",
+      "bytes": 13766
+    },
+    "tests/packs/rendering/test_remotion_native_window.py": {
+      "git_blob": "a0cd8188fc2c4e0d90166bbe917f8a13d9c44fbe",
+      "sha256": "a24318bffb5c2970d8517fea8bb748313b19bbb4c58195c92e3799d5945cf901",
+      "bytes": 13873
+    },
+    "remotion/package.json": {
+      "git_blob": "ce124300f1723b33c7e254f4318504130addbe66",
+      "sha256": "58460ce59e2473d74f44238a2e5e78e2d4bd8a79a0bd94e430f7ae5eb6c2778a",
+      "bytes": 1165
+    },
+    "remotion/package-lock.json": {
+      "git_blob": "5d3c765daa707065e8da5db94f3f06d21d37b7a2",
+      "sha256": "cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597",
+      "bytes": 151350
+    },
+    "remotion/normal-audio-sources.mjs": "absent at both",
+    "remotion/attempt-envelope-pcm.mjs": "absent at both"
+  },
+  "render_clock_tail_unchanged": true,
+  "ast_changed_functions": {
+    "astrid/core/rendering/service.py": [
+      "_segment_request"
+    ],
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": [
+      "_composition_duration_from_request",
+      "_execute_remotion",
+      "_execute_remotion_locked",
+      "_native_window_argument",
+      "_protocol_render",
+      "support"
+    ]
+  },
+  "archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-review/candidate",
+  "composition_pin": "file:artifacts/banodoco-timeline-composition-0.0.12.tgz"
+}

@@ -1,0 +1,8 @@
+{
+  "producer_ref": "df2739f903edac02bd36b4446deeea847524c040",
+  "producer_DONE": true,
+  "producer_exit": "0",
+  "producer_running_marker": true,
+  "producer_commit_log": false,
+  "required_freeze_not_ready": true
+}

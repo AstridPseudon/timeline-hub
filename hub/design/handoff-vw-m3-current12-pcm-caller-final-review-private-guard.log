@@ -1,0 +1,1 @@
+PASS: private candidate has only 8 approved fixture changes + 4 extent/tail changes; caller/M2/serializer/client/pins retained; no temporary or backup files

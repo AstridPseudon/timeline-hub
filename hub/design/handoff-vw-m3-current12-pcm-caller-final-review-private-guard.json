@@ -1,0 +1,49 @@
+{
+  "candidate_delta_from_reviewed_caller": {
+    "tests/packs/rendering/test_scene_host.py": "6f04c7ea5778165ea1f6b2b66b1c2427b6f480e5efafbbfee498922996710bff",
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": "0772991fed294460cac33106e8be78e7b61582cce8325fd9f42134302437adcd",
+    "tests/packs/rendering/test_composition_package.py": "b623befbcfb717f395b3caf6b68786e61687abe2a6a97fef63bb9a3e842958c9",
+    "tests/core/timeline/test_clip_fields.py": "46690e0f0ecb84aa6e47a66fb7d68df954ff53e48b2c201964de1d32d78fdfc5",
+    "tests/packs/rendering/test_presenter_scene_capability.py": "bbe8feb39d0580295af82582b94e2778063f207dc4ba106559dffef5789b5a43",
+    "tests/packs/rendering/test_live_scene_composition.py": "99a726a4326a5492fc112f32c85fcb8eb13de366c76909174dd50f5a609248c5",
+    "tests/packs/rendering/test_remotion_layer_tail_compat.py": "e41b4dcb9c2f2e804a2bddc7960d24af2d6605d35e878f40c5828badb26cf73e",
+    "tests/packs/rendering/test_render_export_task_adapter.py": "bd4fd749668c0f935821746a6510120e77f7177e05bd2e90c6c52731d715e81d",
+    "tests/packs/rendering/presenter_scene_capability.mjs": "267c504dbd8fccaf46ea1a33d45a6daa42bb99a5a7e0a3e91480eccd8c8216ef",
+    "tests/packs/rendering/test_scene_answers.py": "a2e845047192a82c84427ec968e772fce3f74dd9611abbfe839dc1ee342a10c4",
+    "remotion/src/Root.tsx": "afde359fcf7324f0885543e3f3292372bd1b94bb3f219477bd15a2a4ee704f90",
+    "tests/journeys/test_journey_plumbing.py": "a55345d510b0a47bc2ea4c057993f66875af494810d6329485a1c09169d6298d"
+  },
+  "no_other_candidate_file_changed": true,
+  "old10_fixture_retained_from_reviewed_staging_head": "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz",
+  "fixture_overlay": {
+    "source": "5f6c81309d96e7cd7abc2f22b32a377621c29092",
+    "paths": {
+      "tests/core/timeline/test_clip_fields.py": "46690e0f0ecb84aa6e47a66fb7d68df954ff53e48b2c201964de1d32d78fdfc5",
+      "tests/journeys/test_journey_plumbing.py": "a55345d510b0a47bc2ea4c057993f66875af494810d6329485a1c09169d6298d",
+      "tests/packs/rendering/test_composition_package.py": "b623befbcfb717f395b3caf6b68786e61687abe2a6a97fef63bb9a3e842958c9",
+      "tests/packs/rendering/test_render_export_task_adapter.py": "bd4fd749668c0f935821746a6510120e77f7177e05bd2e90c6c52731d715e81d",
+      "tests/packs/rendering/test_scene_answers.py": "a2e845047192a82c84427ec968e772fce3f74dd9611abbfe839dc1ee342a10c4",
+      "tests/packs/rendering/test_scene_host.py": "6f04c7ea5778165ea1f6b2b66b1c2427b6f480e5efafbbfee498922996710bff",
+      "tests/packs/rendering/presenter_scene_capability.mjs": "267c504dbd8fccaf46ea1a33d45a6daa42bb99a5a7e0a3e91480eccd8c8216ef",
+      "tests/packs/rendering/test_presenter_scene_capability.py": "bbe8feb39d0580295af82582b94e2778063f207dc4ba106559dffef5789b5a43"
+    },
+    "whole_owner_commit_not_applied": true
+  },
+  "extent_overlay": {
+    "source": "completed exit-0/DONE sealed source patch; harness commit pending",
+    "base": "df2739f903edac02bd36b4446deeea847524c040",
+    "paths": {
+      "astrid/core/rendering/service.py": "930cb134e96d005816e8c2c3f690574c3c9f3097d5da216be43a8037b6c73dff",
+      "astrid/packs/rendering/rendering/renderers/remotion/run.py": "5c3cd96bf8561eebc369090fe3c520fac40457802458959827c7903464837269",
+      "remotion/src/Root.tsx": "afde359fcf7324f0885543e3f3292372bd1b94bb3f219477bd15a2a4ee704f90",
+      "remotion/tests/root-metadata.test.cjs": "181950efa7e91f646d57496b33897e4e40ec6723c695f6bb6d8ffe940443b6cc",
+      "tests/packs/rendering/test_native_layer_extent.py": "1498d7008bcc6534eeda639b5580c737c51853d1507aebb76dc54afcf4ae8ce2",
+      "tests/packs/rendering/test_remotion_layer_tail_compat.py": "e41b4dcb9c2f2e804a2bddc7960d24af2d6605d35e878f40c5828badb26cf73e",
+      "tests/packs/rendering/test_live_scene_composition.py": "99a726a4326a5492fc112f32c85fcb8eb13de366c76909174dd50f5a609248c5"
+    },
+    "extent_patch_sha256": "ae4695c47b3a2ee2a92da76cff774a7ec2ae9f1ebb134ac835580e58dd1ca77c",
+    "caller_patch_sha256": "b6a6e45df1ed8be8ea6c1c623404e1c3de0cdcc3b2ade081f3fa2c391be57619",
+    "verbatim_patch_applied": true,
+    "exact_caller_helper_test_and_executor_body": true
+  }
+}

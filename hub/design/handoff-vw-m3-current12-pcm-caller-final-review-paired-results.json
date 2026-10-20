@@ -1,0 +1,59 @@
+[
+  {
+    "tree": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-caller-final-review/baseline",
+    "argv": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--tb=short",
+      "tests/packs/rendering/test_scene_source_carry.py",
+      "tests/packs/rendering/test_live_scene_composition.py",
+      "tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme",
+      "tests/packs/rendering/test_remotion_native_window.py",
+      "tests/packs/rendering/test_native_layer_extent.py",
+      "tests/packs/rendering/test_remotion_capture_scene_props.py",
+      "tests/packs/rendering/test_remotion_layer_tail_compat.py",
+      "tests/packs/rendering/test_normal_audio_sources.py",
+      "tests/packs/rendering/test_normal_audio_source_phase.py",
+      "-k",
+      "not real_render"
+    ],
+    "exit_code": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current12-pcm-caller-final-review-final-baseline.log"
+  },
+  {
+    "tree": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-caller-final-review/candidate",
+    "argv": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--tb=short",
+      "tests/packs/rendering/test_scene_source_carry.py",
+      "tests/packs/rendering/test_live_scene_composition.py",
+      "tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme",
+      "tests/packs/rendering/test_remotion_native_window.py",
+      "tests/packs/rendering/test_native_layer_extent.py",
+      "tests/packs/rendering/test_remotion_capture_scene_props.py",
+      "tests/packs/rendering/test_remotion_layer_tail_compat.py",
+      "tests/packs/rendering/test_normal_audio_sources.py",
+      "tests/packs/rendering/test_normal_audio_source_phase.py",
+      "tests/packs/rendering/test_normal_audio_run.py",
+      "-k",
+      "not real_render"
+    ],
+    "exit_code": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current12-pcm-caller-final-review-final-candidate.log"
+  }
+]

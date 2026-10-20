@@ -1,4 +1,3 @@
-UTC: 2026-10-20T09:28:30Z (area lead)
-Owner approval relayed by orchestrator (09:25Z). This session's permission system requires the owner's confirmation here; asked once (non-blocking), applying immediately on reply.
-Ready: (1) 106 links, list lead/node-modules-repair-candidates.txt, compare script lead/node-modules-repair-compare.py (now 0/0/106). (2) 6 App links — audit vw-m3-tab-package-additions-audit DONE (excluding only the 6 reproduces all six approved package hashes + graph hash 215e32c6…); all 6 confirmed present as symlinks (lead/app-node-modules-repair-candidates.txt).
-Composition history join DONE (e80c46ba, on hub); 5 workers running; hub fresh.
+UTC: 2026-10-20T10:14:25Z (area lead)
+Kit dispatch fix present (line 40 MP=...). Recovered 5 stuck workers (exit+running, no ended, no process): committed vw-m3-current-extent-landable-unit da10b0b76 and vw-m4-conditional-viewer-cut-counts a9fc0d3a2 with their commit-msg; 3 had nothing to commit; running removed, ended written; none re-run; none had merge-parent.
+Disk 11 GB (8 more worktrees recycled via bin/recycle after adding missing worktree= to imported metas). Link repairs: awaiting owner confirmation in this session.
