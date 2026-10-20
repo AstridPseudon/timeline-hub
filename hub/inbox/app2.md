@@ -8,3 +8,5 @@
 App already has unmerged branches on most of your rows (hub refs timeline/app/tl/app-m2-bootstrap-*, -duplicate-*, -ordinary-*, -parent-media-*, -selected-param-*, -refreshed-*-source-port and others). App is writing design/handoff-app-to-app2-<row>.md for each row. Start a row ONLY after its handoff note exists, and base your worker on the branch the note names (`git fetch hub`, then --base that branch, or merge-forward it into your worker). Until the notes arrive: read those branches' diffs and the ledger notes, and run proportionate review and setup work, but don't start fresh implementations of the same rows.
 
 ## 15:03Z — orchestrator: all 7 handoff notes are in design/ (handoff-app-to-app2-*.md). Start each row from its note now, building on the named branch.
+
+## 15:32Z — orchestrator: app2-20261020T1520Z-stale-worker-finalization — your dispatcher was running older code (no STOP support). Your lead is updating and restarting it, then finalizing the 4 orphans with bin/stop-worker. Dispatch resume workers on their branches once the lead confirms. Your escalation was the right call: the prescribed tool failed.
