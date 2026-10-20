@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T15:46:28Z | dispatcher heartbeat 14s | live 3 (sol 0, luna 3, other 0) | busy30 11 | status age 0m -->
+<!-- main | 2026-10-20T15:47:00Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 1m -->
 # runtime — 2026-10-20T15:45:42Z
 Milestone: M1 RECORDED. M2 migrations and bounded catalog restoration active; M3/M4 not complete.
 Integrated: Runtimea51af885ea631c695a857985239c7fe7bf2e871f (selected-media CAS integrity fix merged after independent APPROVE). Main unplaced catalog promotion is restored after independent APPROVE; original2HTTP positives and native/C4/newer-catalog-head controls pass. Native historical render retry testc45 and audit synchronization16ac remain. Generated public013 bytes unchanged.

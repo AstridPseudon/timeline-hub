@@ -86,11 +86,12 @@ framerate, non-finite output, and unsupported/non-WAV audio produce an omitted
 inspection, not decoding, scene evaluation, or rendering, and introduces no
 launcher, ffprobe invocation, or external dependency into save.
 
-The normal CLI/SDK preflight remains unchanged: `client.media.show` reads the
-existing object descriptor, and Main's `media_seconds` may use its existing
-WAV-header path and, outside Runtime save, its existing ffprobe fallback. That
-preflight is useful for an early user-facing refusal but is never authority and
-never forwards a duration in the commit request.
+The normal CLI/SDK object/media-info preflight remains unchanged:
+`client.media.show` reads the existing object descriptor and Main's
+`media_seconds` may use its existing WAV-header path and, outside Runtime save,
+its existing ffprobe fallback. That preflight is useful for an early
+user-facing refusal but is never authority and never forwards a duration in
+the commit request; it does not become a new public endpoint or DTO.
 
 ## Capture, acceptance, and replay
 
