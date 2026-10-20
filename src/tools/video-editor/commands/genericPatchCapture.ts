@@ -44,6 +44,15 @@ function supported(operation: TimelinePatchOperation): boolean {
     && typeof payload.hold === 'number' && Number.isFinite(payload.hold) && payload.hold > 0;
 }
 
+export type GenericPatchSupport = 'supported' | 'unsupported' | 'mixed';
+
+/** Classify the complete patch before native capture or owner resolution. */
+export function classifyGenericPatch(patch: TimelinePatch): GenericPatchSupport {
+  const supportedCount = patch.operations.filter(supported).length;
+  if (supportedCount === 0) return 'unsupported';
+  return supportedCount === patch.operations.length ? 'supported' : 'mixed';
+}
+
 function commandArgs(command: EditCommand): TrackLabelArgs {
   if (!object(command.args) || !object(command.args.values) || !Array.isArray(command.args.clear)) {
     throw new Error('Unsupported track.set command arguments');
@@ -293,8 +302,7 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
     || !equal(Object.keys(command.args.values), ['hold']) || !equal(command.args.clear, [])) {
     throw new ClipMoveError('native clip.set supports only a hold value with an explicit empty clear');
   }
-  const hold = command.args.values.hold;
-  number(hold, 'hold', true);
+  const hold = number(command.args.values.hold, 'hold', true);
   const ctx = new MoveRecording(bundle, { ...command, intent: {} });
   const ref = clipTarget(ctx, command);
   clipBasis(ctx, ref);

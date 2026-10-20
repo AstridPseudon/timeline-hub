@@ -10,6 +10,11 @@ import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
 import {
+  captureGenericPatch,
+  type GenericPatchBasis,
+  type GenericPatchCapturePort,
+} from './genericPatchCapture.ts';
+import {
   captureElementBasis,
   finishElementEdit,
   selectForClip,
@@ -326,6 +331,57 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  type CapturedGenericPatchBasis = GenericPatchBasis & { bundle: AuthoredBundle };
+  const genericPatchPort: GenericPatchCapturePort = {
+    capture({ patch, current }) {
+      assertReady();
+      if (patch.version !== 0 && patch.version !== current.configVersion) {
+        throw new Error('Native patch has a stale local version');
+      }
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const snapshot = copy(current);
+      const capture = captureGenericPatch(bundle, patch, (operation) => {
+        if (operation.op === 'track.update') {
+          if (snapshot.resolvedConfig.tracks.filter((track) => track.id === operation.target).length !== 1
+            || hasChildTrack(bundle, operation.target)) {
+            throw new Error('Native patch track owner is unavailable');
+          }
+          return `parent/track:${operation.target}`;
+        }
+        const matches = snapshot.resolvedConfig.clips.filter((clip) => clip.id === operation.target);
+        if (matches.length !== 1) throw new Error('Native patch clip owner is unavailable');
+        const identity = matches[0].app?.canonical as { clipRef?: string } | undefined;
+        return identity?.clipRef ?? `parent/clip:${operation.target}`;
+      });
+      const localBasis: OutboxBasis = lastIntent ? { after: lastIntent } : { head: copy(known.head) };
+      return Object.freeze({ current: snapshot, capture, localGeneration, localBasis, bundle }) as CapturedGenericPatchBasis;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the native patch');
+      const captured = basis as CapturedGenericPatchBasis;
+      const key = JSON.stringify(captured.capture.commands);
+      prepared.set(key, { payload: {
+        commands: captured.capture.commands, before: captured.bundle, after: captured.capture.bundle,
+        preview: captured.capture.preview,
+      }, generation: localGeneration, basis: captured.localBasis });
+      return { commands: captured.capture.commands.slice(), preview: captured.capture.preview };
+    },
+    submit({ commands, preview }) {
+      assertReady();
+      const key = JSON.stringify(commands);
+      const entry = prepared.get(key);
+      if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Native patch was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Native patch requires its exact combined preview');
+      enqueue(entry.payload, entry.payload.preview, entry.basis);
+      prepared.delete(key);
+    },
+  };
   const elementPort: ElementCapturePort = {
     capture({ clipId, current, edit }) {
       assertReady();
@@ -464,6 +520,7 @@ export async function createTimelineCommandSession(options: Options) {
   return {
     port,
     elementPort,
+    genericPatchPort,
     trackLabelPort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),

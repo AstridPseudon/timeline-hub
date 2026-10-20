@@ -3,6 +3,7 @@ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import {
   captureGenericPatch,
+  classifyGenericPatch,
   executeGenericPatch,
   GenericPatchRefusal,
   projectGenericPatchPreview,
@@ -21,6 +22,20 @@ async function authoredBundle() {
 }
 
 describe('bounded native generic patch capture', () => {
+  it('classifies the complete patch before native capture', () => {
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'track.update', target: 'V1', payload: { label: 'Native' } },
+      { op: 'clip.update', target: 'x', payload: { hold: 1.25 } },
+    ] })).toBe('supported');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'track.update', target: 'V1', payload: { label: 'Native' } },
+      { op: 'project-data.write', target: 'extension', payload: { value: 1 } },
+    ] })).toBe('mixed');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'project-data.write', target: 'extension', payload: { value: 1 } },
+    ] })).toBe('unsupported');
+  });
+
   it('captures one ordered command list against one sequential authored bundle', async () => {
     const { bundle } = await authoredBundle();
     const input = nativePatch(1.23456789);
