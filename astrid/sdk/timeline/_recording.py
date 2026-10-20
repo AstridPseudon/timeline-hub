@@ -48,9 +48,10 @@ def selection(state, key, owner, members=()):
 
 class Recording:
     def __init__(self, bundle, command, ordinal, *, closures=None, verified_media=(),
-                 schema_inputs=(), realm_id=None):
+                 schema_inputs=(), realm_id=None, verified_producer=None):
         self.state = State(bundle, closures=closures)
         self.verified_media = copy.deepcopy(verified_media)
+        self.verified_producer = copy.deepcopy(verified_producer)
         self.schema_inputs, self.realm_id = schema_inputs, realm_id
         self.input_state = None
         self.command_input = State(copy.deepcopy(bundle), closures=closures)
