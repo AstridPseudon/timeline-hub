@@ -8,6 +8,7 @@ import {
   getTrackById,
   isHoldClip,
   roundTimelineValue,
+  canSplitClipAtTime,
   splitClipAtPlayhead,
   updateClipInConfig,
 } from '@/tools/video-editor/lib/editor-utils.ts';
@@ -44,6 +45,7 @@ import {
 } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import { splitParentClip } from '../commands/clipSplitGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 
 export type TimelineCommandErrorCode =
@@ -802,6 +804,19 @@ export function createTimelineCommands(
       // --- M3 managed-object guard ---
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
+
+      if (state.ops.clipSplit?.supports?.({ clipId: input.clipId, current })) {
+        if (!canSplitClipAtTime(clip, input.time)) {
+          return failure('invalid_argument', 'The requested split time is outside the clip’s playable range.');
+        }
+        try {
+          const nextClipId = splitParentClip(state.ops.clipSplit, current, input.clipId, input.time);
+          state.ops.selectClip(nextClipId);
+          return success({ clipId: input.clipId, nextClipId });
+        } catch (cause) {
+          return failure('mutation_failed', cause instanceof Error ? cause.message : 'Clip split failed.', { cause });
+        }
+      }
 
       const splitResult = splitClipAtPlayhead(current.resolvedConfig, input.clipId, input.time);
       if (!splitResult.nextSelectedClipId) {
