@@ -1,0 +1,30 @@
+TAP version 13
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/tests/gapless-mp3-source-origin.test.mjs
+ok 1 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/tests/gapless-mp3-source-origin.test.mjs
+  ---
+  duration_ms: 2431.009652
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/tests/long-audio-source.test.mjs
+ok 2 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/tests/long-audio-source.test.mjs
+  ---
+  duration_ms: 4295.745305
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/tests/normal-audio-native-sources.test.mjs
+ok 3 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/tests/normal-audio-native-sources.test.mjs
+  ---
+  duration_ms: 5931.30833
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/tests/normal-audio-sources.test.mjs
+ok 4 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/tests/normal-audio-sources.test.mjs
+  ---
+  duration_ms: 1688.648303
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5941.524393

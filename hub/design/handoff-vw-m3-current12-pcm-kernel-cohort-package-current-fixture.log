@@ -1,0 +1,23 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_locked_release_is_built_and_requires_no_separate_schema_or_theme _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-66/test_locked_release_is_built_a0')
+
+    def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
+        artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz"
+        assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
+        lock = json.loads((REMOTION / "package-lock.json").read_text())
+        package = lock["packages"]["node_modules/@banodoco/timeline-composition"]
+>       assert package["version"] == "0.0.10"
+E       AssertionError: assert '0.0.12' == '0.0.10'
+E         
+E         - 0.0.10
+E         ?      ^
+E         + 0.0.12
+E         ?      ^
+
+tests/packs/rendering/test_composition_package.py:42: AssertionError
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+1 failed, 5 deselected in 0.14s

@@ -1,0 +1,123 @@
+astrid/core/rendering/remotion_runtime.py:8:1: I001 [*] Import block is un-sorted or un-formatted
+   |
+ 6 |   """
+ 7 |
+ 8 | / from __future__ import annotations
+ 9 | |
+10 | | import os
+11 | | import hashlib
+12 | | import json
+13 | | import secrets
+14 | | import stat
+15 | | import re
+16 | | import subprocess
+17 | | import sys
+18 | | import tempfile
+19 | | import time
+20 | | from functools import wraps
+21 | | from dataclasses import dataclass
+22 | | from pathlib import Path
+23 | | from typing import Any, Mapping
+24 | |
+25 | | from astrid.core.env_vars import (
+26 | |     ASTRID_NODE_EXECUTABLE,
+27 | |     ASTRID_PACKS_PATH,
+28 | |     ASTRID_REMOTION_VALIDATION_PATH,
+29 | |     ASTRID_REMOTION_VALIDATION_SHA256,
+30 | |     ASTRID_REMOTION_VALIDATION_LAUNCH,
+31 | |     ASTRID_REMOTION_VALIDATION_ROLE,
+32 | |
+33 | |     ASTRID_REMOTION_PROJECT_DIR,
+34 | |     ASTRID_TIMELINE_SCHEMA_PYTHONPATH,
+35 | | )
+36 | | from astrid.core.foundation.paths import REPO_ROOT
+   | |__________________________________________________^ I001
+37 |
+38 |   REMOTION_PROJECT_DIR_ENV = ASTRID_REMOTION_PROJECT_DIR
+   |
+   = help: Organize imports
+
+astrid/core/rendering/remotion_runtime.py:142:24: BLE001 Do not catch blind exception: `Exception`
+    |
+140 |                                       "elapsed_ms": round((time.monotonic() - started) * 1000)}),
+141 |                           file=sys.stderr, flush=True)
+142 |                 except Exception:
+    |                        ^^^^^^^^^ BLE001
+143 |                     pass  # Optional diagnostics never replace validation failures.
+144 |         return measured
+    |
+
+astrid/core/rendering/remotion_runtime.py:151:5: I001 [*] Import block is un-sorted or un-formatted
+    |
+149 |   def _owned_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
+150 |                    timeout: float) -> tuple[subprocess.CompletedProcess, dict[str, Any]]:
+151 | /     from astrid.core.execution.process_group import (
+152 | |         popen_owned_group, terminate_group, verify_tree_absent,
+153 | |     )
+    | |_____^ I001
+154 |
+155 |       # The existing launch primitive treats an empty mapping as ambient env.
+    |
+    = help: Organize imports
+
+astrid/core/rendering/remotion_runtime.py:529:16: BLE001 Do not catch blind exception: `Exception`
+    |
+527 |             implied.update(_resolved_path_text(str(source.pack_root))
+528 |                            for source in active_source_inventory(verify=False).sources)
+529 |         except Exception:
+    |                ^^^^^^^^^ BLE001
+530 |             pass  # Unknown managed roots stay distinct contexts.
+531 |         # Relative entries resolve against the probe's own root; they stay distinct.
+    |
+
+astrid/core/rendering/remotion_runtime.py:590:5: I001 [*] Import block is un-sorted or un-formatted
+    |
+588 |   def _registry_observation() -> dict[str, Any]:
+589 |       """Fresh discovery under this process's actual renderer/generator context."""
+590 | /     import importlib
+591 | |     import shutil
+592 | |     import astrid
+593 | |     from astrid.core.element.registry import clear_default_registry_cache
+594 | |     from astrid.core.pack.source_setup import active_source_inventory, source_state_path
+595 | |     from astrid.core.pack.discovery import discover_pack_metadata
+596 | |     from astrid.packs.rendering.rendering.renderers.remotion import lock
+    | |________________________________________________________________________^ I001
+597 |       config_files = _registry_config_files(os.environ)
+598 |       _refuse_git_config_indirection(config_files)
+    |
+    = help: Organize imports
+
+astrid/core/rendering/remotion_runtime.py:590:12: F401 [*] `importlib` imported but unused
+    |
+588 | def _registry_observation() -> dict[str, Any]:
+589 |     """Fresh discovery under this process's actual renderer/generator context."""
+590 |     import importlib
+    |            ^^^^^^^^^ F401
+591 |     import shutil
+592 |     import astrid
+    |
+    = help: Remove unused import: `importlib`
+
+astrid/core/rendering/remotion_runtime.py:794:5: I001 [*] Import block is un-sorted or un-formatted
+    |
+792 | @_validation_timing("registry_settle")
+793 | def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, *, expected_state: Any = None) -> dict[bytes, Any]:
+794 |     from astrid.packs.rendering.rendering.renderers.remotion import run, lock
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ I001
+795 |     if not lock.remotion_render_lock_held():
+796 |         raise RemotionValidationError('registry settling requires the original held Remotion lock')
+    |
+    = help: Organize imports
+
+astrid/core/rendering/remotion_runtime.py:1077:16: BLE001 Do not catch blind exception: `BaseException`
+     |
+1075 |                 stream.write(_canonical(record))
+1076 |             error.validation_evidence = str(evidence)
+1077 |         except BaseException as persistence:
+     |                ^^^^^^^^^^^^^ BLE001
+1078 |             error.validation_evidence_error = type(persistence).__name__
+1079 |         raise
+     |
+
+Found 8 errors.
+[*] 5 fixable with the `--fix` option.

@@ -1,0 +1,136 @@
+diff --git a/tests/core/timeline/test_clip_fields.py b/tests/core/timeline/test_clip_fields.py
+index 8c0471be6..02199a012 100644
+--- a/tests/core/timeline/test_clip_fields.py
++++ b/tests/core/timeline/test_clip_fields.py
+@@ -395,7 +395,7 @@ def test_render_status_clip_type_entry_wins_over_element_kind():
+ 
+ 
+ def test_render_status_defaults_to_pinned_union_composition():
+-    # The receiving lock pins timeline-composition 0.0.10; 0.0.7 remains an
++    # The receiving lock pins timeline-composition 0.0.12; 0.0.7 remains an
+     # explicit compatibility case above, not the receiving default.
+     assert cf.render_status("am-type", "opacity") == "renders"
+     assert cf.render_status("am-type", "opacity", "0.0.7") == "renders"
+diff --git a/tests/journeys/test_journey_plumbing.py b/tests/journeys/test_journey_plumbing.py
+index a7b946f16..2f456cf2e 100644
+--- a/tests/journeys/test_journey_plumbing.py
++++ b/tests/journeys/test_journey_plumbing.py
+@@ -125,7 +125,7 @@ def test_renderer_install_problem_names_the_missing_install_and_the_fix(tmp_path
+         (package / "dist" / f"{filename}.js").write_text("export {};\n")
+     (package / "package.json").write_text(json.dumps({
+         "name": "@banodoco/timeline-composition",
+-        "version": "0.0.10",
++        "version": "0.0.12",
+         "exports": exports,
+     }))
+ 
+diff --git a/tests/packs/rendering/test_composition_package.py b/tests/packs/rendering/test_composition_package.py
+index d706fc146..dff0237e2 100644
+--- a/tests/packs/rendering/test_composition_package.py
++++ b/tests/packs/rendering/test_composition_package.py
+@@ -16,8 +16,8 @@ from scripts import gen_effect_registry
+ 
+ ROOT = Path(__file__).resolve().parents[3]
+ REMOTION = ROOT / "remotion"
+-SHA256 = "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7"
+-INTEGRITY = "sha512-SmJAoem9f+86D+eO+PvBAz3JydlefpUUwcOOkG7SU9k2ZPKpjXLWKHm/N4424TO5HNQtCHMt5T6Jy2Y5zA6Ycg=="
++SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
++INTEGRITY = "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA=="
+ REQUIRED_EXPORTS = (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
+                     "./animations.generated", "./transitions.generated", "./registry.generated")
+ 
+@@ -28,19 +28,19 @@ def _stage_locked_package(project: Path) -> tuple[Path, dict]:
+     cli.write_text("// CLI")
+     package = project / "node_modules/@banodoco/timeline-composition"
+     package.parent.mkdir(parents=True)
+-    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz") as archive:
++    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz") as archive:
+         archive.extractall(project)
+     (project / "package").rename(package)
+     return package, json.loads((package / "package.json").read_text())
+ 
+ 
+ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
+-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz"
++    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
+     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
+     lock = json.loads((REMOTION / "package-lock.json").read_text())
+     package = lock["packages"]["node_modules/@banodoco/timeline-composition"]
+-    assert package["version"] == "0.0.10"
+-    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.10.tgz"
++    assert package["version"] == "0.0.12"
++    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.12.tgz"
+     assert package["integrity"] == INTEGRITY
+     with tarfile.open(artifact) as archive:
+         manifest_file = archive.extractfile("package/package.json")
+diff --git a/tests/packs/rendering/test_render_export_task_adapter.py b/tests/packs/rendering/test_render_export_task_adapter.py
+index 001d67fd2..5ef5b59fc 100644
+--- a/tests/packs/rendering/test_render_export_task_adapter.py
++++ b/tests/packs/rendering/test_render_export_task_adapter.py
+@@ -41,7 +41,7 @@ from astrid.sdk.workspace_client import WorkspaceClient
+ FIXTURE_VIDEO = Path(__file__).resolve().parents[2] / "fixtures" / "reshape" / "hype_regression" / "broll.mp4"
+ TS = "2026-08-25T00:00:00.000000+00:00"
+ COMPOSITION_ARTIFACT = (Path(remotion_runtime.REPO_ROOT) /
+-                        "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz")
++                        "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz")
+ 
+ 
+ def _install_composition_package(runtime: Path) -> Path:
+diff --git a/tests/packs/rendering/test_scene_answers.py b/tests/packs/rendering/test_scene_answers.py
+index 2f43c0385..af9bd2a23 100644
+--- a/tests/packs/rendering/test_scene_answers.py
++++ b/tests/packs/rendering/test_scene_answers.py
+@@ -17,8 +17,8 @@ from astrid.core.rendering.node_pin import resolve_pinned_node
+ from astrid.core.timeline import scene_answers
+ 
+ ROOT = Path(__file__).resolve().parents[3]
+-ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz"
+-SHA256 = "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7"
++ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz"
++SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+ 
+ 
+ @pytest.fixture
+diff --git a/tests/packs/rendering/test_scene_host.py b/tests/packs/rendering/test_scene_host.py
+index f1d4107d6..630815e49 100644
+--- a/tests/packs/rendering/test_scene_host.py
++++ b/tests/packs/rendering/test_scene_host.py
+@@ -33,7 +33,7 @@ def host_project(tmp_path_factory):
+     project = project_root / "remotion"
+     (project / "src").mkdir(parents=True)
+     (project_root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+-    # Reuse a coherent peer graph read-only, with the actual pinned public10
++    # Reuse a coherent peer graph read-only, with the actual pinned public12
+     # extracted into this test's private project. No install or shared mutation.
+     peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+     assert (peers / "esbuild").is_dir(), "requires provisioned renderer peers"
+@@ -48,9 +48,9 @@ def host_project(tmp_path_factory):
+         target = modules / peer
+         target.parent.mkdir(parents=True, exist_ok=True)
+         target.symlink_to(source.resolve(), target_is_directory=True)
+-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz"
++    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
+     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
+-        "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7")
++        "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3")
+     with tarfile.open(artifact) as archive:
+         archive.extractall(project, filter="data")
+     package = modules / "@banodoco/timeline-composition"
+@@ -87,7 +87,7 @@ def host_project(tmp_path_factory):
+         patch.setattr(gen_effect_registry, "_element_registry", lambda: registry)
+         for kind in ("effects", "animations", "transitions"):
+             (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
+-    assert json.loads((package / "package.json").read_text())["version"] == "0.0.10"
++    assert json.loads((package / "package.json").read_text())["version"] == "0.0.12"
+     def hashes():
+         return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
+                 for p in package.rglob("*") if p.is_file()}
+@@ -215,7 +215,7 @@ def test_native_host_preserves_root_painter_order_and_current_roles(native_host)
+     assert answer["coverage"] == "COVERED" and answer["content"] == "CONTENT"
+ 
+ 
+-def test_native_host_passes_public10_compiled_transitions_unchanged(native_host):
++def test_native_host_passes_public12_compiled_transitions_unchanged(native_host):
+     p = props([
+         {"id": "occ:first", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1},
+         {"id": "occ:next", "track": "plate", "clipType": "custom-alias", "at": 1, "hold": 1},

@@ -1,0 +1,26 @@
+PASS: unchanged real admission code accepts the private public12 package
+node:internal/modules/esm/resolve:322
+  return new ERR_PACKAGE_PATH_NOT_EXPORTED(
+         ^
+
+Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: No "exports" main defined in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/node_modules/@remotion/media/package.json
+    at exportsNotFound (node:internal/modules/esm/resolve:322:10)
+    at packageExportsResolve (node:internal/modules/esm/resolve:613:13)
+    at resolveExports (node:internal/modules/cjs/loader:636:36)
+    at Module._findPath (node:internal/modules/cjs/loader:716:31)
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1198:27)
+    at Function.resolve (node:internal/modules/helpers:193:19)
+    at file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/public-runtime.mjs:11:40
+    at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'
+}
+
+Node.js v20.19.4
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current12-pcm-kernel-cohort-package-probe.py", line 41, in <module>
+    subprocess.run([NODE, str(probe)], cwd=PROJECT, check=True, env=os.environ)
+  File "/usr/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/tmp/vw-m3-agent-gate-node20.19.4/bin/node', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-kernel-cohort/checks/remotion/public-runtime.mjs']' returned non-zero exit status 1.

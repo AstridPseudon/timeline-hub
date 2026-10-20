@@ -1,0 +1,40 @@
+Independent review checks — 2026-10-20
+
+Final commit: 8cef91fa8d2603d26403defae6c26118f0467cdf
+Final tree:   84461f34344977181d5ee3eeaf58c1e372e9b607
+Passing central snapshot: 84461f34344977181d5ee3eeaf58c1e372e9b607
+Passing result: vw-m3-pcm-http-corrected-final-gate-targeted-1020093304-8154
+Behavior result (reviewed, not rerun): 19 passed in 23.37s
+
+Static/collection commands:
+  env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
+    /home/user/work/venv-agent/bin/python -B -m pytest -p no:cacheprovider \
+    --collect-only -q tests/packs/rendering/test_normal_audio_http.py
+  -> 19 tests collected in 0.34s
+
+  /home/user/work/venv-agent/bin/ruff check \
+    tests/packs/rendering/test_normal_audio_http.py
+  -> All checks passed!
+
+  git diff --check
+  -> PASS
+
+Overlay:
+  public12 archive sha256:
+    0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3
+  archive regular files: 77
+  archive byte mismatches: []
+  normal-audio-sources.mjs sha256:
+    dc260d6980f3fc6ff0340b364d810cd4310cc3c663db836ab9c84f6ee5dd14e4
+  peer links: Composition node_modules only; package link points to private
+    producer public12 extraction.
+
+Historical central results:
+  pre-HTTP fixture: tree 2f2ebbb13832ccb5548c75b1528b22447072b23b,
+    19 failed before HTTP on unsupported clips[*].opaque.
+  stale integration-named corrected request: tree
+    4e19d403901565109f52f04ee54f1bfb34d52c71,
+    16 failed / 3 passed on pre-final source.
+  intermediate targeted corrected request: tree
+    8a062be7843635686362e87aa6fa8e0ace5e02c1,
+    19 failed on inherited loader variables.

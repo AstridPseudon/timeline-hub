@@ -12,9 +12,9 @@ from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
 def test_original_layer_span_is_renderable(tmp_path, hold, sparse):
     raw = {"theme": "banodoco-default", "tracks": [
         {"id": t, "kind": "visual", "label": t} for t in ("plate", "top")],
-        "clips": [{"id": "plate", "track": "plate", "at": 0, "hold": hold}]}
+        "clips": [{"id": "plate", "clipType": "am-sprite", "track": "plate", "at": 0, "hold": hold}]}
     if sparse:
-        raw["clips"].append({"id": "early", "track": "top", "at": 0, "hold": 1})
+        raw["clips"].append({"id": "early", "clipType": "am-sprite", "track": "top", "at": 0, "hold": 1})
     path = tmp_path / "timeline.json"
     path.write_text(json.dumps(raw))
     before = path.read_bytes()

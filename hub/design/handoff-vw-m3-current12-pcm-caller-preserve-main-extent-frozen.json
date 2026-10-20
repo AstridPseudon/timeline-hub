@@ -1,0 +1,12 @@
+{
+  "sha": "626eed656edf2a6398703e9e5318343069e47019",
+  "base": "c456b3281497653cecf44f61acd6fa30565d83c8",
+  "status": "BLOCKED: five unchanged M2 test expectations conflict with native filtering",
+  "files": [
+    "astrid/core/rendering/service.py",
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "remotion/src/Root.tsx",
+    "remotion/tests/root-metadata.test.cjs",
+    "tests/packs/rendering/test_native_layer_extent.py"
+  ]
+}

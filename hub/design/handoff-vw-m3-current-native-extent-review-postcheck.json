@@ -1,0 +1,18 @@
+{
+  "all_2997_tracked_blobs_equal_after_tests": true,
+  "candidate_ref_still_frozen": "626eed656edf2a6398703e9e5318343069e47019",
+  "reviewer_head": "c456b3281497653cecf44f61acd6fa30565d83c8",
+  "reviewer_checkout_clean": true,
+  "private_modules_exact_leaves": [
+    "typescript"
+  ],
+  "node_version": "v20.19.4",
+  "typescript_version": "5.9.3",
+  "typescript_js_sha256": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675",
+  "composition_pin": "0.0.10",
+  "artifact_sha256": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
+  "artifact_matches_lock_sha512": true,
+  "extracted_duration_chunk_sha256": "887441a18596fd09bd145381f6745ca986372cd32fb59278733f6b8d161f494b",
+  "held_tail_original_sha256": "f4bdead08a44791188e66b3e479941513689703da9480a20c6c8dc1815c9b792",
+  "held_tail_changes": "only source-root location and pinned tarball path; appended legacy-positive test; original three expectations unchanged"
+}

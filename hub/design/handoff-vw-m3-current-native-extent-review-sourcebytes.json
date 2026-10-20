@@ -1,0 +1,97 @@
+{
+  "base": "c456b3281497653cecf44f61acd6fa30565d83c8",
+  "candidate": "626eed656edf2a6398703e9e5318343069e47019",
+  "candidate_tree": "845db31a54bde351a46fcac9967d430980ef4729",
+  "parent": "c456b3281497653cecf44f61acd6fa30565d83c8",
+  "producer_exit": 0,
+  "archive_all_blob_bytes_equal": true,
+  "archive_blob_count": 2997,
+  "changed_files": {
+    "astrid/core/rendering/service.py": {
+      "git_blob": "0d132b2f9435a179bae070be41f55fbc0f03f3c4",
+      "sha256": "930cb134e96d005816e8c2c3f690574c3c9f3097d5da216be43a8037b6c73dff",
+      "bytes": 97111
+    },
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": {
+      "git_blob": "fea6b9e399a2977ef98543a412f267b5fc741d62",
+      "sha256": "26e24b2cfc1bebc4da99fab0d813e4a09724c9fe530f8b38b40bc6c174e17ae7",
+      "bytes": 84529
+    },
+    "remotion/src/Root.tsx": {
+      "git_blob": "e278c986c4f5b3b3e93fe88bd7826754b9c314b6",
+      "sha256": "321736875ffe7aec5b85a32f60be27af7663fd7a56544765584962e82e9f0407",
+      "bytes": 6832
+    },
+    "remotion/tests/root-metadata.test.cjs": {
+      "git_blob": "b7c49bbf35883de0e75d863fd84e7f96624ca138",
+      "sha256": "181950efa7e91f646d57496b33897e4e40ec6723c695f6bb6d8ffe940443b6cc",
+      "bytes": 7532
+    },
+    "tests/packs/rendering/test_native_layer_extent.py": {
+      "git_blob": "ff3bf744f134d75fd605e2fee514924f3aa877d9",
+      "sha256": "1498d7008bcc6534eeda639b5580c737c51853d1507aebb76dc54afcf4ae8ce2",
+      "bytes": 16940
+    }
+  },
+  "unchanged_critical_files": {
+    "astrid/core/timeline/banodoco_composer.py": {
+      "git_blob": "03b0d7a2a67b1b873311b46705c640cb4ebe150e",
+      "sha256": "c18ae06fc3ae7bd660dd3001a388b89a886e1680f6f6c14fa6182c2dd74c4461",
+      "bytes": 12476
+    },
+    "astrid/core/timeline/duration.py": {
+      "git_blob": "81c3751aba46c8e32bc179eb160fa3a2e46c533c",
+      "sha256": "cbdb18bffebc6c9d5a07a3d144fcbfa558ba6249fda5c2a8dd8016b87a3fd3db",
+      "bytes": 15511
+    },
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py": "absent at both",
+    "astrid/packs/rendering/rendering/renderers/threejs/run.py": {
+      "git_blob": "31d8ce0ee5526d868b9ab033d4fb0d833ee22ce1",
+      "sha256": "99331d5fd0044a49f0bd285bbe807ae19fc33ede68c3baf32c83ff9f4ddddd01",
+      "bytes": 29951
+    },
+    "tests/packs/rendering/test_remotion_capture_scene_props.py": {
+      "git_blob": "27450082a3f6efa83be33612ccc686e4ee778ac1",
+      "sha256": "683d7e26aad313b5712ae26966f30f220c46d5122c2e33cf3d54dddd3a024f9d",
+      "bytes": 13766
+    },
+    "tests/packs/rendering/test_live_scene_composition.py": {
+      "git_blob": "d495957cd4d6930f962e6750da45b99ef8576551",
+      "sha256": "c7faa408865db4da111ec05b3c67cb3372bfcd2eadb53ec599f0715396c36210",
+      "bytes": 16595
+    },
+    "remotion/package.json": {
+      "git_blob": "d2fbca46303086374e1248ee6c5e737f4848b24e",
+      "sha256": "386eb4123f8f926c6f3a1c6ea9357fd2f3e4991291718e09771bab64d2f76510",
+      "bytes": 1165
+    },
+    "remotion/package-lock.json": {
+      "git_blob": "862b83215b5bc1b3ca766d4524d13d2a677aec6e",
+      "sha256": "390a29eed8c4c95e448807c522622fc7bc174e1daedd92d93d811ff7372708d7",
+      "bytes": 151350
+    },
+    "remotion/normal-audio-sources.mjs": "absent at both",
+    "remotion/attempt-envelope-pcm.mjs": "absent at both"
+  },
+  "ast_changed_methods": {
+    "astrid/core/rendering/service.py": [
+      "_segment_request"
+    ],
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": [
+      "_composition_duration_from_request",
+      "_execute_remotion",
+      "_execute_remotion_locked",
+      "_native_window_argument",
+      "_protocol_render",
+      "support"
+    ]
+  },
+  "root_exact_test_sha256": "181950efa7e91f646d57496b33897e4e40ec6723c695f6bb6d8ffe940443b6cc",
+  "root_matches_approved_extent": true,
+  "private_graph": {
+    "typescript_leaf": "/home/user/work/app/node_modules/typescript",
+    "typescript_version": "5.9.3",
+    "node": "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+    "composition_pin": "file:artifacts/banodoco-timeline-composition-0.0.10.tgz"
+  }
+}
