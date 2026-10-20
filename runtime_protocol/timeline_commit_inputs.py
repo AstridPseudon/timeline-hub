@@ -13,12 +13,15 @@ import copy
 import hashlib
 import json
 import math
+import os
 import re
 import sqlite3
+import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Sequence
 
+from .cas import file_identity
 from .errors import ConflictError, NotFoundError, ValidationError
 from .util import canonical_json, now
 
@@ -27,6 +30,8 @@ DOCUMENT_INPUT_SCHEMA_VERSION = 1
 TRANSCRIPT_KIND = "media.transcript"
 TRANSCRIPT_SCHEMA = "media.transcript/v1"
 TRANSCRIPT_PREFIX = "transcript:"
+PROJECT_PACK_KIND = "astrid.project-pack"
+PROJECT_PACK_SCHEMA = "astrid.project-pack/v1"
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _MEDIA_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
@@ -194,6 +199,8 @@ def _document_source(content: Any, *, project_id: str, document_id: str, kind: s
                      connection: sqlite3.Connection) -> tuple[str | None, str | None]:
     if expected_kind is not None and kind != expected_kind:
         raise ConflictError("document kind is not authorized for this input")
+    if kind == PROJECT_PACK_KIND:
+        _project_pack_source(connection, project_id, document_id, content)
     if kind == TRANSCRIPT_KIND:
         if not isinstance(content, dict) or content.get("schema") != TRANSCRIPT_SCHEMA:
             raise ConflictError("transcript document schema is not authorized")
@@ -221,6 +228,99 @@ def _document_source(content: Any, *, project_id: str, document_id: str, kind: s
         if not isinstance(content, dict) or content.get("schema") != expected_schema:
             raise ConflictError("document schema is not authorized for this input")
     return None, None
+
+
+def _project_pack_source(connection: sqlite3.Connection, project_id: str,
+                         document_id: str, content: Any) -> None:
+    if not isinstance(content, dict) or set(content) != {
+        "schema", "pack_id", "source_binding_key", "relative_manifest", "admissions",
+    } or content.get("schema") != PROJECT_PACK_SCHEMA or content.get("source_binding_key") != "project-packs":
+        raise ConflictError("project pack schema/source binding is not authorized")
+    owner = content["pack_id"]
+    if not isinstance(owner, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", owner):
+        raise ConflictError("project pack owner is invalid")
+    project = connection.execute("SELECT realm_id FROM projects WHERE id=?", (project_id,)).fetchone()
+    if project is None:
+        raise ConflictError("project pack project binding is missing")
+    default_owner = "project_" + hashlib.sha256(f"{project['realm_id']}:{project_id}:default".encode()).hexdigest()[:20]
+    collections = [owner, "default"] if owner == default_owner else [owner]
+    identities = {
+        "document:" + str(uuid.uuid5(uuid.NAMESPACE_URL, json.dumps([project_id, PROJECT_PACK_KIND, collection])))
+        for collection in collections
+    }
+    if document_id not in identities or content["relative_manifest"] != (
+        f"{project['realm_id']}/{project_id}/packs/{owner}/pack.yaml"
+    ):
+        raise ConflictError("project pack document identity is outside its project binding")
+    admissions = content["admissions"]
+    if not isinstance(admissions, list):
+        raise ConflictError("project pack admissions are invalid")
+    seen = set()
+    for admission in admissions:
+        if (not isinstance(admission, dict) or not {"id", "kind", "revision", "snapshot_digest"} <= set(admission)
+                or set(admission) - {"id", "kind", "revision", "snapshot_digest", "snapshot_object"}
+                or not isinstance(admission["id"], str) or not admission["id"]
+                or not isinstance(admission["kind"], str) or admission["kind"] not in {"effect", "animation", "transition"}
+                or not isinstance(admission["revision"], str) or not _DIGEST_RE.fullmatch(admission["revision"])
+                or not isinstance(admission["snapshot_digest"], str)
+                or not re.fullmatch(r"[0-9a-f]{64}", admission["snapshot_digest"])):
+            raise ConflictError("project pack admission identity/digest is invalid")
+        identity = admission["id"], admission["kind"], admission["revision"]
+        if identity in seen:
+            raise ConflictError("project pack admission identity is ambiguous")
+        seen.add(identity)
+    validate_pack_snapshot_objects(connection, project_id, content)
+
+
+def pack_snapshot_objects(content: Any) -> list[dict[str, Any]]:
+    """Return the optional portable descriptors; missing means legacy admission."""
+    descriptors = []
+    if not isinstance(content, dict) or not isinstance(content.get("admissions"), list):
+        return descriptors
+    for admission in content["admissions"]:
+        if not isinstance(admission, dict) or "snapshot_object" not in admission:
+            continue
+        value = admission["snapshot_object"]
+        if (not isinstance(value, dict) or set(value) != {"object_id", "digest", "size", "media_type"}
+                or not isinstance(value["object_id"], str) or not _DIGEST_RE.fullmatch(value["object_id"])
+                or value["digest"] != value["object_id"]
+                or type(value["size"]) is not int or value["size"] <= 0
+                or value["media_type"] != "application/json"):
+            raise ValidationError("project pack snapshot_object descriptor is invalid")
+        descriptors.append(copy.deepcopy(value))
+    return descriptors
+
+
+def validate_pack_snapshot_objects(connection: sqlite3.Connection, project_id: str,
+                                   content: Any) -> None:
+    for descriptor in pack_snapshot_objects(content):
+        row = connection.execute(
+            "SELECT o.size, o.media_type FROM objects o JOIN project_objects po ON po.digest=o.digest "
+            "WHERE po.project_id=? AND o.digest=? AND po.relation='managed'",
+            (project_id, descriptor["object_id"].removeprefix("sha256:")),
+        ).fetchone()
+        if row is None or row["size"] != descriptor["size"] or row["media_type"] != descriptor["media_type"]:
+            raise ConflictError("project pack snapshot object metadata or managed project association is invalid")
+
+
+def read_pack_snapshot_object(connection: sqlite3.Connection, cas, project_id: str,
+                              descriptor: Mapping[str, Any], *, max_bytes: int):
+    """Read managed CAS bytes and their file identity, never a source/cache path."""
+    validate_pack_snapshot_objects(connection, project_id, {"admissions": [{"snapshot_object": descriptor}]})
+    if descriptor["size"] > max_bytes:
+        raise ValidationError("project pack snapshot object exceeds the object byte limit")
+    try:
+        with cas.open(descriptor["object_id"].removeprefix("sha256:")) as stream:
+            identity = file_identity(os.fstat(stream.fileno()))
+            if identity[2] != descriptor["size"]:
+                raise ConflictError("project pack snapshot object size is corrupt")
+            data = stream.read(descriptor["size"] + 1)
+            if (len(data) != descriptor["size"] or file_identity(os.fstat(stream.fileno())) != identity
+                    or "sha256:" + hashlib.sha256(data).hexdigest() != descriptor["digest"]):
+                raise ConflictError("project pack snapshot object bytes are corrupt or changed")
+    except (OSError, NotFoundError) as exc:
+        raise ConflictError("project pack snapshot object bytes are unavailable") from exc
+    return data, identity
 
 
 def _reachable(pin: Mapping[str, Any], reachable_pins: Iterable[Any] | None) -> bool:
@@ -553,8 +653,9 @@ def _link_item(item: Any, index: int) -> DocumentInputLink:
     kind = capture.document.get("kind") if isinstance(capture.document, dict) else None
     if dependency_kind == "transcript" and kind != TRANSCRIPT_KIND:
         raise ValidationError("transcript links require a transcript document")
-    if dependency_kind == "source" and (not isinstance(kind, str) or not kind.endswith(".config")):
-        raise ValidationError("source links require a config document")
+    if dependency_kind == "source" and (not isinstance(kind, str) or not (
+            kind.endswith(".config") or kind == PROJECT_PACK_KIND)):
+        raise ValidationError("source links require a config or project pack document")
     return DocumentInputLink(capture, dependency_kind, ordinal)
 
 
