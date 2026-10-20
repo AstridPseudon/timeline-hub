@@ -23,7 +23,7 @@ Replaced the unapproved blanket `xfail` direction with two bounded tests in
 | No current-positive test | `test_current_typed_item_creation_claim_is_accepted_and_reserved` | Matched f802 typed claim accepts, is recorded, and remains reserved on reuse. |
 | `test_other_timeline_occupied_shot_and_compiler_slot_refuse_atomically` | Unchanged | Occupied destination still refuses atomically, including claimed destination. |
 | `test_complete_item_write_set_refuses_before_any_revision` | Unchanged | Existing invalid/occupied item write-set controls remain strict. |
-| `test_checker_rejects_each_join_concern[wrong-owner]` (materialization neighbour) | Unchanged | Existing wrong-owner materialization refusal remains strict. |
+| `test_checker_rejects_each_join_concern_without_early_schema_gate[wrong-owner]` (materialization neighbour) | Unchanged | Existing wrong-owner materialization refusal remains strict. |
 
 The RT08 ledger remains HELD; this patch makes no public pin, product schema,
 provider, or source-authority change.
@@ -32,6 +32,8 @@ provider, or source-authority change.
 
 - `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider --basetemp=/tmp/rt-m2-carrier-public-floor-final tests/test_timeline_projection_ownership.py -k 'not current_typed_item_creation_claim_is_accepted_and_reserved' tests/test_timeline_projection_occupancy.py`
   - **68 passed, 4 deselected** on the parent ade60 tree.
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider --basetemp=/tmp/rt-m2-carrier-public-floor-owner-control tests/test_timeline_materialization_join.py -k 'checker_rejects_each_join_concern_without_early_schema_gate'`
+  - **28 passed, 87 deselected**; the wrong-owner control remains strict.
 - Isolated f802 probe, using committed Agent3730 schema SHA256
   `f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f` in an
   in-memory registry with the current Runtime code:
