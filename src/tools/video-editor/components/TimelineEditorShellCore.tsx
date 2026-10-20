@@ -21,7 +21,6 @@ import { useVideoEditorPreviewSurface } from '@/tools/video-editor/components/Pr
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx';
 import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManager';
 import {
-  HOST_EXTENSIONS_PANEL_KEY,
   HOST_PROPERTIES_PANEL_KEY,
   VideoEditorRightPanelDock,
   type VideoEditorRightPanelTab,
@@ -67,8 +66,6 @@ import {
   useTimelineShellDividerDrag,
 } from './useTimelineShellDividerDrag.ts';
 import { useVideoEditorShellSlots } from './useVideoEditorShellSlots.tsx';
-import { useVideoEditorAssetPanels } from '@/tools/video-editor/runtime/useVideoEditorRenderContext.ts';
-import { getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import {
   AppHeader,
@@ -521,14 +518,13 @@ function TimelineEditorShellCoreComponent({
     dialogsSlot,
   } = useVideoEditorShellSlots();
 
-  const availableRightPanels = useVideoEditorAssetPanels();
   const savedPanelId = editorData.preferences?.selectedRightPanelId === undefined
     ? HOST_PROPERTIES_PANEL_KEY
     : editorData.preferences.selectedRightPanelId;
-  const availableRightPanelIds = new Set(availableRightPanels.map(getPanelKey));
-  const selectedRightPanelExists = savedPanelId === HOST_PROPERTIES_PANEL_KEY
-    || savedPanelId === HOST_EXTENSIONS_PANEL_KEY
-    || (savedPanelId !== null && availableRightPanelIds.has(savedPanelId));
+  // Only "Closed" (null) closes the pane. A selected extension panel that is not
+  // registered (disabled in the Extension Manager, or not activated yet on boot)
+  // keeps the pane open on the Extensions tab; the dock falls back to another panel.
+  const rightPanelOpen = savedPanelId !== null;
   const rightPanelLayoutSlots = editorData.preferences?.rightPanelLayoutSlotsByPanelId ?? {};
   // The host slot is the shared placement for the whole right-panel surface.
   // Per-panel values remain as a migration fallback for older saved settings,
@@ -537,14 +533,14 @@ function TimelineEditorShellCoreComponent({
     ?? (savedPanelId ? rightPanelLayoutSlots[savedPanelId] : undefined)
     ?? 'dock';
   const hasCustomRightPanelSlot = Boolean(rightPanelSlot || inspectorPanelSlot);
-  const hostPaneClosed = !hasCustomRightPanelSlot && !selectedRightPanelExists;
+  const hostPaneClosed = !hasCustomRightPanelSlot && !rightPanelOpen;
   const showFullHeightHostDock = !hasCustomRightPanelSlot
-    && selectedRightPanelExists
+    && rightPanelOpen
     && rightPanelLayout === 'dock';
   const showCompactHostDock = !hasCustomRightPanelSlot
     && !condensed
     && !mobileSinglePane
-    && selectedRightPanelExists
+    && rightPanelOpen
     && rightPanelLayout === 'compact';
   const workAreaGridColumn = leftPanelSlot ? '2 / span 2' : '1 / span 2';
   const hostPanelInset = showFullHeightHostDock
