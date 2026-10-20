@@ -31,6 +31,21 @@ async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (
 }
 
 describe('real clip move session through the Runtime HTTP boundary', () => {
+  it('fences parent-media preparation across a newer local session generation', async () => {
+    const env = await environment();
+    const session = await env.mount();
+    const addPreparation = session.parentClipAddMediaPort.prepare();
+    const swapPreparation = session.parentClipSwapMediaPort.prepare();
+
+    env.move(session, 5);
+
+    expect(() => session.parentClipAddMediaPort.assertPreparationCurrent(addPreparation))
+      .toThrow('parent clip.add-media preparation');
+    expect(() => session.parentClipSwapMediaPort.assertPreparationCurrent(swapPreparation))
+      .toThrow('parent clip.swap-media preparation');
+    await session.dispose();
+  });
+
   it('queues one literal overlay command through the native port and preserves its exact retry payload', async () => {
     const env = await environment();
     const session = await env.mount();
