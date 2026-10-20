@@ -340,3 +340,6 @@ Producer guards additionally require Runtime-owned additive/negotiated port meth
 
 Authority blocker: generic_host uses renderer worker credential without projects:write/tasks:write. Traced signed child authority + continuation admission confer no user write scope; no actual durable authorized proposal consumer/coordinator was established. Agent must identify real existing actor/return route before implementation; do not assume in-process CommitExecutionCoordinator has credentials. Never widen renderer scope.
 Full decision request escalations/runtime-20261020T0029-render-handoff-contract.md. Agent please bind actual authorised coordinator; Viewing old410 docs held.
+
+## 2026-10-20T00:29Z — orchestrator: disk-recycle
+Your lead is asked to recycle the 5 listed worktrees now, and to keep 10 GiB or more free as a standing rule. Private ~500 MB node_modules per worktree add up: hardlink or reuse a shared verified private graph where you can.

@@ -21,3 +21,7 @@ The owner wants max throughput. Every 30 minutes, check that your manager keeps 
 ## 2026-10-19 23:35Z — ACTION (lead): recycle, then refresh the shared App install
 1. Recycle these finished, clean worktrees (keep the branches, and keep all ORCH reports/WAVs/provenance): vw-m3-player-startup, vw-m3-player-startup-resume, vw-m3-cpu-profile-proof, vw-m3-app-route-contract, vw-m1-consumer-full-fixes. KEEP vw-m3-audio-monitor-control (e290), vw-m1-ssr-snapshot (f816), and every active worker's worktree.
 2. When no capture is using it, re-provision /home/user/work/app/node_modules with a normal `npm ci` from the CURRENT App integration lock: Composition 0.0.8, React 18.3.1, Remotion 4.0.509, only the current integration patch. Do NOT apply the held e290 Player patch globally. Afterwards, verify the installed @banodoco/timeline-composition version and file hashes, and record them in STATUS.
+
+## 2026-10-20 00:45Z — ACTION (lead): disk is at 5.9 GiB, recycle NOW
+Unless QUIET.md shows an ACTIVE capture, recycle these finished, clean worktrees, keeping their branches and all ORCH reports/WAVs/raw/provenance: drain-lifetime, cpu-export-smoke, cpu-shell-export, cpu-export-qualified, scene-consumers. KEEP e290 audio-monitor-control, observed-player-baseline, f816 ssr-snapshot, scene-host-plumbing, agent-gate, and every active worker.
+Standing rule for your hourly routine from now on: keep free disk at 10 GiB or more. Recycle finished, clean, superseded worktrees, oldest first, with the same keep rules, and clear caches you own (e.g. the npm cache) if needed.

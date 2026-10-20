@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T00:29:23Z | dispatcher heartbeat 7s -->
+<!-- main | 2026-10-20T00:29:45Z | dispatcher heartbeat 13s -->
 # runtime — 2026-10-20T00:28Z
 Milestone: Runtime M1 exit COMPLETE, accepted23:34. Global M1 waits App final full classification/orchestrator PLAN record. M0 COMPLETE. ALL M2 integration merges HELD.
 Integrated: Runtime tl/integration9f9b25c000485e919f30f1411831fe2d5a3c1316 /tree5c3a7e71. Narrow occupied-destination refusal before persistence +two-project isolation. Client0.2.1/schema4e52/artifact9b18 unchanged. Agent nowf6fbe741 metadata-only descendant of qualifiedfc324; App2bfde69ea/Composition7aa.
