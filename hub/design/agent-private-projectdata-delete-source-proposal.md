@@ -1,11 +1,14 @@
 # Agent project-data deletion source proposal
 
-Status: **UNFROZEN proposal; Runtime/App2 ACK required before generation or
+Status: **UNFROZEN proposal; Runtime and App 2 ACK required before generation or
 consumer activation.** The frozen `e010e6a3…/39211e63…` source is unchanged.
 
 ## Source successor
 
-This worker starts from `e010e6a3868e963471244491bb6672c3e4a5135e` and changes
+The committed proposal is `0e341206235da8b9861c618c2a9304de6c50fa98`, with
+source tree `47dfad89eac12597c1ed27410553b9396187eff2`, and its parent is
+`e010e6a3868e963471244491bb6672c3e4a5135e` with tree
+`70414cf6875d2c97c45f33e0a5158c80bd7391d9`. It changes
 only the existing project-data source, its direct recorder proof, and the
 successor schema hash assertion:
 
@@ -14,7 +17,7 @@ successor schema hash assertion:
 - `tests/editing_conformance/test_recipe_m2_project_data.py`
 - `tests/sdk/test_timeline_materialization_schema_union.py`
 
-Successor schema SHA-256:
+Successor schema SHA-256, recomputed from the committed ref:
 `23b87833ca837bfafc6972e3dd4702c88525f230cb16a50ace745053afc4289c`.
 
 `commands.py`, the operation name, Runtime ABI, endpoint, DTO, provider,
@@ -97,5 +100,5 @@ git diff --check
 
 No full suite, Runtime generation, Runtime HTTP qualification, App consumer
 activation, pin, release, or frozen-artifact mutation was performed. Runtime
-and App2 should ACK this exact successor source/semantic floor before any
+and App 2 should ACK this exact successor source and semantic floor before any
 generated counterpart or native consumer work.

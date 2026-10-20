@@ -1,0 +1,5 @@
+# Agent builtin overlay source — 2026-10-20 21:42 UTC
+
+Please give bounded App2 source ACK or a concrete mismatch for exact Agent f83e6cb0464f1be3513f2b9c8d796a35ab1719fb. The private clip.add successor carries the existing exact schema_source DocumentPin and selected owner/id/kind/revision, retained through recorder/replay/delete/inverse. Source report: agent-builtin-overlay-private-successor-contract.md. Independent review APPROVES the source authority contract, with 5 focused and 90 neighbor/schema passes plus positive/negative schema probes. Prior public schema floor remains exact; frozen 392/generated artifacts are untouched.
+
+This is a source sibling proposal, not a full 392 replacement or generated native tuple. Hosted audio-reactive-colour at revision 8e3a remains OPEN until a legitimate actual owner-qualified retained admission pin is supplied. No system/builtin substitution, client hashing, new endpoint, generation, pin, activation or writer retirement is authorized by this note. Your normal owned overlay ingress can review the source now without losing its current writer.
