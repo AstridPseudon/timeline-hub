@@ -1,0 +1,65 @@
+diff --git a/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx b/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx
+index 70e826915..f3f52b81b 100644
+--- a/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx
+@@ -4,6 +4,9 @@ import { Button } from '@/shared/components/ui/button.tsx';
+ import { cn } from '@/shared/components/ui/contracts/cn.ts';
+ import { Input } from '@/shared/components/ui/input.tsx';
+ import type { EditorVariantPicker } from '@/tools/video-editor/runtime/editorHostObservations.ts';
++import type { DocumentPin } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { TimelineOps } from '@/sdk/video/timeline/timelineOps.ts';
++import type { CommandSessionState } from '@/tools/video-editor/commands/commitSession.ts';
+ import type { EffectCreatorPanelProps } from '@/tools/video-editor/components/EffectCreatorPanel.tsx';
+ import type { GenerationVariant } from '@/shared/hooks/variants/useVariants.ts';
+ import { NumberInput } from '@/shared/components/ui/number-input.tsx';
+@@ -45,6 +48,10 @@ export { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
+ export { FieldLabel, NO_EFFECT, NO_TRANSITION, TAB_COLUMNS_CLASS } from './clip-panel-primitives.tsx';
+ 
+ export interface ClipPanelProps {
++  /** Optional source-stage authority supplied by the authenticated command session. */
++  retainedDocumentPin?: DocumentPin;
++  timelineOps?: TimelineOps;
++  commandState?: CommandSessionState;
+   readOnly?: boolean;
+   clip: ResolvedTimelineClip | null;
+   track: TrackDefinition | null;
+
+diff --git a/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx b/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx
+index ad686aac6..5d82dd3a7 100644
+--- a/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx
+@@ -4,7 +4,7 @@ import { memo, useEffect, useMemo, useRef, type ComponentType, type ReactNode }
+ import { Button } from '@/shared/components/ui/button.tsx';
+ import { BulkClipPanel } from '@/tools/video-editor/components/PropertiesPanel/BulkClipPanel.tsx';
+ import { TrackInspector } from './TrackInspector.tsx';
+-import { ClipPanel, getVisibleClipTabs, NO_EFFECT } from '@/tools/video-editor/components/PropertiesPanel/ClipPanel.tsx';
++import { ClipPanel, getVisibleClipTabs, NO_EFFECT, type ClipPanelProps } from '@/tools/video-editor/components/PropertiesPanel/ClipPanel.tsx';
+ import { OpaqueDataItemInspector } from '@/tools/video-editor/components/PropertiesPanel/OpaqueDataItemInspector';
+ import type { DataItemInspectorProps } from '@/sdk/video/families/dataKind';
+ import type { DataLaneItemView, DataLaneView } from '@/tools/video-editor/data/typed/envelope';
+@@ -184,13 +184,15 @@ function ShotOccurrenceInspectorSection({ target }: { target: NonNullable<Timeli
+ }
+ 
+ export interface PropertiesPanelProps {
++  /** Source-stage selected-PARAM inputs are supplied by the command-session owner. */
++  selectedParam?: Pick<ClipPanelProps, 'retainedDocumentPin' | 'timelineOps' | 'commandState'>;
+   /** Retained panels can reopen without changing the selected clip. */
+   visible?: boolean;
+   /** @deprecated Kept for host compatibility; the editor no longer renders an Assets panel. */
+   assetPanel?: ReactNode;
+ }
+ 
+-function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
++function PropertiesPanelComponent({ visible = true, selectedParam }: PropertiesPanelProps) {
+   useRenderDiagnostic('PropertiesPanel');
+   const {
+     data,
+@@ -554,6 +556,7 @@ function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
+           />
+         ) : (
+           <ClipPanel
++            {...selectedParam}
+             clip={selectedClip}
+             track={selectedTrack}
+             deviceClass={deviceClass}
+
