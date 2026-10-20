@@ -63,6 +63,7 @@ from astrid.core.rendering.remotion_runtime import (
 )
 from astrid.core.rendering.storage import h264_encoder_bitrates
 from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay
+from astrid.packs.rendering.rendering.renderers.remotion.normal_audio import prepare_normal_audio_sources
 from astrid.core.subprocess_env import build_child_subprocess_env
 from astrid.packs.rendering.shared import rendering_backend as _shared
 from astrid.packs.rendering.shared.rendering_backend import (
@@ -1215,6 +1216,20 @@ def _execute_remotion_locked(
                 composition_clip_types=composition_clip_types,
                 asset_registry=resolved_registry,
             )
+            if not frame_mode and composition_id == DEFAULT_COMPOSITION_ID:
+                audio_attempt = Path(asset_lifecycle.enter_context(TemporaryDirectory(
+                    prefix="normal-audio-attempt-",
+                    dir=materializer.serving_root if asset_server is not None else remotion_temp_root,
+                )))
+                audio_profile = _canonical_profile(
+                    timeline_path, _load_registry_mapping(assets_path), theme_path,
+                )
+                merged_props = prepare_normal_audio_sources(
+                    merged_props, materializer=materializer, asset_server=asset_server,
+                    attempt_directory=audio_attempt, project_dir=project_dir,
+                    runtime_tools=runtime_tools,
+                    fps=audio_profile.fps_rational[0] / audio_profile.fps_rational[1],
+                )
             staged_video.parent.mkdir(parents=True, exist_ok=True)
             props_path.write_text(json.dumps(merged_props), encoding="utf-8")
             if on_scene_props is not None and frame_numbers is not None:
