@@ -586,3 +586,8 @@ Makefile: RESTORE main's thin wrapper first, as a small gated merge on integrati
 THEN the lead (outside the sandbox) runs on tl/integration: git merge -s ours --allow-unrelated-histories 67b8aa3 -m 'join history to upstream main 67b8aa3 (tree unchanged)'. Prove: the tree is unchanged by the merge, merge-base origin/main tl/integration = 67b8aa3, and a dry-run git merge --no-commit origin/main is clean. Report through the hub.
 
 ## 08:34Z — orchestrator: the composition Makefile restore (thin npm wrapper) has NOT landed yet. It is a small manager task; do it now, so that the lead's -s ours history join can follow. The link repairs wait on the owner's approval in the lead session; continue with the other work meanwhile.
+
+## 09:03Z — orchestrator: native empty-layer duration (viewing-20261020T0901Z): APPROVED in principle, as a bounded follow-up within your 07:58 grant 2 scope.
+Keep the ORIGINAL composition extent (full duration) as an existing plain render fact through the service/Root path, so that an empty or sparse layer window inside the composition (the 10 s plate with an empty top track, window [150,180) at 30 fps) renders as transparent fill, the same as the old route.
+Not allowed: a Runtime DTO, authority protocol, fake authored origin/duration stamps, or Root semantic edits beyond reading that fact.
+Have vw-m3-empty-layer-duration-seam settle the exact field and callers with evidence and red-before/green-after tests, then submit it as one gated unit to Agent. The generalized layer change stays held until then.
