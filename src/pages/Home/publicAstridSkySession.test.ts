@@ -72,14 +72,11 @@ describe('public Astrid sky session', () => {
     session.destroy();
   });
 
-  it('pauses review and visual scheduling when the environment is hidden or reduced-motion', () => {
+  it('pauses visual scheduling when the environment is hidden or reduced-motion', () => {
     const session = createPublicAstridSkySession({ environment, now: () => 1_000, performanceNow: () => 1_000 });
     session.mount();
-    expect(session.startReviewDay()).toBe(true);
-    expect(session.getSnapshot().reviewPlaying).toBe(true);
 
     session.setEnvironment({ ...environment, visible: false });
-    expect(session.getSnapshot().reviewPlaying).toBe(false);
     expect(session.getSnapshot().visible).toBe(false);
 
     session.setEnvironment({ ...environment, visible: true, reducedMotion: true });
@@ -99,7 +96,6 @@ describe('public Astrid sky session', () => {
     });
     expect(current?.getSnapshot().reducedMotion).toBe(true);
     expect(current?.getSnapshot().phone).toBe(true);
-    expect(current?.startReviewDay()).toBe(false);
     act(() => current?.setManualHours(12));
     expect(current?.getSnapshot().hours).toBe(12);
     view.unmount();

@@ -48,6 +48,14 @@ function restoreStoredCap<T extends TimelineClip>(serialized: T, rawClip: Record
   return { ...serialized, app };
 }
 
+function hasDerivedStoredCap(config: ResolvedTimelineConfig): boolean {
+  return config.clips.some((clip) => {
+    const timing = clip.app?.canonicalTiming;
+    return timing !== null && typeof timing === 'object' && !Array.isArray(timing)
+      && Object.prototype.hasOwnProperty.call(timing, 'storedOccurrenceDurationMs');
+  });
+}
+
 /** Resolve counterparts from the retained graph's identity map, never a display prefix. */
 export function projectedClipCounterparts(composition: PreparedShotComposition, clips: readonly TimelineClip[] = []) {
   const { clipIdentities } = projectCanonicalComposition(composition, undefined, { clampToOccurrenceDuration: false });
@@ -121,6 +129,9 @@ export const serializeForDisk = (
   extras?: Pick<TimelineConfig, 'theme' | 'theme_overrides' | 'generation_defaults' | 'app'>,
   rawComposition?: PreparedShotComposition | null,
 ): TimelineConfig => {
+  if (rawComposition === undefined && hasDerivedStoredCap(resolved)) {
+    throw new Error('The projected timeline has no verified raw serialization basis; keep the draft');
+  }
   const resolvedExtras = extras ?? resolved;
   const serialized: TimelineConfig = {
     // `output` is DERIVED (theme.visual.canvas), not persisted: the bridge

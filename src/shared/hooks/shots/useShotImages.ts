@@ -10,8 +10,6 @@ import { QUERY_PRESETS, STANDARD_RETRY, STANDARD_RETRY_DELAY } from '@/shared/li
 import { generationQueryKeys } from '@/shared/lib/queryKeys/generations';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import React from 'react';
-import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
-import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
 
 import { mapShotGenerationToRow } from '@/shared/hooks/shots';
 import {
@@ -23,25 +21,11 @@ import { assertDeferredCloudShotOperation } from './shotAuthority';
 
 /** Loads all shot_generations (positioned + unpositioned) for a shot. */
 const useAllShotGenerations = (
-  shotId: string | null,
-  options?: {
-    // When true, prevents query from refetching during sensitive operations (drag, persist, etc.)
-    disableRefetch?: boolean;
-  }
+  shotId: string | null
 ): UseQueryResult<GenerationRow[]> => {
   const stableShotId = React.useMemo(() => shotId, [shotId]);
-  const isEnabled = React.useMemo(() => {
-    if (options?.disableRefetch) {
-      return false;
-    }
-    // Local Astrid shots are document-derived and are already supplied by the
-    // local timeline adapter. Never fall through to the retired relational
-    // shot_generations read path for those URLs.
-    return !!stableShotId && isDeferredCloudDataAuthority() && !hasRuntimeDocumentIdentity(
-      typeof window === 'undefined' ? '' : window.location.search,
-    );
-  }, [stableShotId, options?.disableRefetch]);
-  
+  const isEnabled = false;
+
   const queryClient = useQueryClient();
 
   const mainQuery = useQuery<GenerationRow[], Error>({

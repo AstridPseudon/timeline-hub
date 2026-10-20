@@ -197,6 +197,17 @@ export function useTimelineCommandSession(options: {
           finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
           submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
         };
+        const scalarPort = session.clipScalarPort;
+        const requireCleanScalarEdit = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing clip fields');
+        };
+        session.clipScalarPort = {
+          capture(input) { requireCleanScalarEdit(); return scalarPort.capture(input); },
+          finish(basis, args) { requireCleanScalarEdit(); return scalarPort.finish(basis, args); },
+          submit(input) { requireCleanScalarEdit(); scalarPort.submit(input); },
+          finishBatch(bases, args) { requireCleanScalarEdit(); return scalarPort.finishBatch!(bases, args); },
+          submitBatch(input) { requireCleanScalarEdit(); scalarPort.submitBatch!(input); },
+        };
         sessionRef.current = session;
         setState({ ...session.getState() });
       }
@@ -271,6 +282,7 @@ export function useTimelineCommandSession(options: {
     genericPatchPort: sessionRef.current?.genericPatchPort,
     elementPort: sessionRef.current?.elementPort,
     trackLabelPort: sessionRef.current?.trackLabelPort,
+    clipScalarPort: sessionRef.current?.clipScalarPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>

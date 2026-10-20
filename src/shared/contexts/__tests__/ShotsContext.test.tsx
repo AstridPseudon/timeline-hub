@@ -36,7 +36,6 @@ vi.mock('@/shared/hooks/shots', () => ({
 }));
 
 import { AstridShotsProvider, useShots } from '../ShotsContext';
-import { DeferredCloudShotsProvider } from '../DeferredCloudShotsProvider';
 
 // Test consumer component
 function ShotsConsumer() {
@@ -66,51 +65,6 @@ describe('ShotsContext', () => {
       expect(() => {
         render(<BadConsumer />);
       }).toThrow('useShots must be used within a shots context provider');
-    });
-  });
-
-  describe('DeferredCloudShotsProvider', () => {
-    it('renders children', () => {
-      render(
-        <DeferredCloudShotsProvider>
-          <div data-testid="child">Hello</div>
-        </DeferredCloudShotsProvider>
-      );
-
-      expect(screen.getByTestId('child')).toHaveTextContent('Hello');
-    });
-
-    it('provides shots data from hooks', () => {
-      render(
-        <DeferredCloudShotsProvider>
-          <ShotsConsumer />
-        </DeferredCloudShotsProvider>
-      );
-
-      expect(screen.getByTestId('shotCount')).toHaveTextContent('2');
-      expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
-      expect(screen.getByTestId('allImagesCount')).toHaveTextContent('10');
-      expect(screen.getByTestId('noShotImagesCount')).toHaveTextContent('3');
-    });
-
-    it('exposes refetchShots function', () => {
-      function RefetchConsumer() {
-        const { refetchShots } = useShots();
-        return (
-          <button data-testid="refetch" onClick={() => refetchShots()}>
-            Refetch
-          </button>
-        );
-      }
-
-      render(
-        <DeferredCloudShotsProvider>
-          <RefetchConsumer />
-        </DeferredCloudShotsProvider>
-      );
-
-      screen.getByTestId('refetch').click();
-      expect(mockRefetch).toHaveBeenCalled();
     });
   });
 

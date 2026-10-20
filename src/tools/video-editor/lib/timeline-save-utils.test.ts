@@ -360,7 +360,13 @@ describe('timeline save utils regression coverage', () => {
 
     expect(data.config).toBe(config);
     expect(data.registry).toBe(registry);
-    expect(data.resolvedConfig).toBe(resolvedConfig);
+    expect(data.resolvedConfig).toStrictEqual({
+      ...resolvedConfig,
+      clips: [
+        { ...resolvedConfig.clips[0], label: 'video.mp4' },
+        { ...resolvedConfig.clips[1], label: 'audio.mp3' },
+      ],
+    });
     expect(data.configVersion).toBe(7);
     expect(data.output).toEqual(config.output);
     expect(data.assetMap).toEqual({
@@ -754,8 +760,8 @@ describe('timeline save utils regression coverage', () => {
         ],
       },
     ]);
-    expect(data.signature).toBe(getConfigSignature(data.resolvedConfig));
     expect(data.signature).toBe(getConfigSignature(unprojectedResolvedConfig));
+    expect(data.signature).not.toBe(getConfigSignature(data.resolvedConfig));
   });
 
   it('repairs legacy pinned groups to soft-tag `clipIds` without re-projecting clip geometry', () => {
@@ -799,6 +805,25 @@ describe('timeline save utils regression coverage', () => {
       }] as unknown as TimelineConfig['pinnedShotGroups'],
     }, current);
 
+    const expectedResolvedConfig = buildResolvedConfig({
+      output: { resolution: '1920x1080', fps: 30, file: 'next.mp4' },
+      tracks: [makeTrack('V1')],
+      clips: [
+        { id: 'clip-1', at: 9, track: 'V1', clipType: 'hold', asset: 'asset-2', hold: 2 },
+        { id: 'clip-2', at: 4, track: 'V1', clipType: 'hold', asset: 'asset-2', hold: 3 },
+      ],
+      pinnedShotGroups: [{
+        shotId: 'shot-1',
+        trackId: 'V1',
+        clipIds: ['clip-2', 'clip-1'],
+        mode: 'images',
+      }],
+    }, buildResolvedRegistry(currentRegistry));
+    expectedResolvedConfig.clips = expectedResolvedConfig.clips.map((clip) => ({
+      ...clip,
+      at: clip.id === 'clip-1' ? 7 : 4,
+    }));
+
     expect(data.config.pinnedShotGroups?.[0]).toEqual(expect.objectContaining({
       clipIds: ['clip-2', 'clip-1'],
     }));
@@ -806,7 +831,7 @@ describe('timeline save utils regression coverage', () => {
       expect.objectContaining({ id: 'clip-2', at: 4, hold: 3 }),
       expect.objectContaining({ id: 'clip-1', at: 7, hold: 2 }),
     ]));
-    expect(data.signature).toBe(getConfigSignature(data.resolvedConfig));
+    expect(data.signature).toBe(getConfigSignature(expectedResolvedConfig));
   });
 
   it('keeps the stable signature unchanged when only resolved asset URLs change', () => {

@@ -66,8 +66,6 @@ export function buildFakeRuntimeEnv({ port, tokenFile, token }) {
     // A same-origin, auto-bound Runtime build: no gateway origin (it refuses a compiled identity), no
     // deferred-cloud authority, and the normal app shell.
     VITE_RUNTIME_ORIGIN: '',
-    VITE_DATA_AUTHORITY: '',
-    VITE_ASTRID_EDITOR_ONLY: '',
     FAKE_RUNTIME_PORT: String(port),
     FAKE_RUNTIME_TOKEN_FILE: tokenFile,
   };

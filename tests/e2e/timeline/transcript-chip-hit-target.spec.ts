@@ -3,7 +3,7 @@ import { editorUrl } from './support.ts';
 
 const EXPECTED_CAPTIONS = 4;
 const EXPECTED_RENDERED_SEGMENTS = 5;
-const EDITOR_URL = editorUrl({ params: { transcriptLaneFixture: 'render-matrix', runawayTimelineProject: 'runaway-8085' } });
+const EDITOR_URL = editorUrl({ params: { transcriptLaneFixture: 'render-matrix' } });
 
 test.describe('transcript overlap hit targets', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
@@ -18,7 +18,7 @@ test.describe('transcript overlap hit targets', () => {
     await page.locator('.timeline-canvas-edit-area').evaluate((scroller) => {
       scroller.scrollTop = scroller.scrollHeight;
     });
-    const chips = transcriptRow.getByTestId('transcript-lane-chip');
+    const chips = transcriptRow.getByTestId('transcript-lane-occurrence');
     // The matrix includes one intentional whitespace-only source segment to
     // prove the materializer's empty-text filter. The lane keeps that source
     // visible as a diagnostic `(no text)` chip; the four meaningful Unicode
@@ -63,10 +63,9 @@ test.describe('transcript overlap hit targets', () => {
       }
     }
 
-    const inspector = page.getByTestId('transcript-item-inspector');
-    for (const { id, label } of chipData) {
+    for (const { label } of chipData) {
       await page.getByLabel(label!, { exact: true }).click();
-      await expect(inspector.locator(':scope > div').first()).toHaveText(`id: ${id}`);
+      await expect(page.getByLabel(label!, { exact: true })).toHaveAttribute('aria-pressed', 'true');
     }
     await testInfo.attach('transcript-overlap-hit-targets', {
       body: await page.screenshot(),

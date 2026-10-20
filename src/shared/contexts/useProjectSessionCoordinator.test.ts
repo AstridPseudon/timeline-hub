@@ -83,7 +83,6 @@ describe('useProjectSessionCoordinator', () => {
     });
     expect(mocks.useProjectDefaults).toHaveBeenCalledWith({
       userId: 'user-1',
-      selectedProjectId: 'project-1',
       isLoadingProjects: false,
       projects: crud.projects,
       fetchProjects: crud.fetchProjects,
@@ -127,7 +126,7 @@ describe('useProjectSessionCoordinator', () => {
       expect.objectContaining({ userId: null, selectedProjectId: null }),
     );
     expect(mocks.useProjectDefaults).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: null, selectedProjectId: null }),
+      expect.objectContaining({ userId: null }),
     );
     expect(result.current.userId).toBeNull();
   });

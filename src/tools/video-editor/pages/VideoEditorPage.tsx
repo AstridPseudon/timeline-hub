@@ -69,8 +69,7 @@ import { RuntimeDataProvider } from "@/integrations/runtime/dataProvider.ts";
 import type { SaveStatus } from "@/tools/video-editor/hooks/useTimelinePersistence.ts";
 import { publishLocalTestExtensionDiagnostics } from "@/app/localTestRuntime.ts";
 import {
-  getExtensionReleaseFlags,
-  selectReleaseEnabledExtensions,
+  selectReviewedExtensions,
 } from "@/tools/video-editor/runtime/extensionReleaseControls.ts";
 
 type ProviderSelection = {
@@ -159,36 +158,22 @@ export default function VideoEditorPage() {
     getDevDisabledSnapshot,
   );
 
-  const extensionReleaseFlags = getExtensionReleaseFlags();
   const smokeDirectExtensions = useMemo(() => {
     // The routed native editor uses the same admitted catalog for every backend.
     const disabled = import.meta.env.DEV ? devDisabledIds : new Set<string>();
     // Arbitrary scratchpad manifests remain usable in DEV. Production alone
-    // applies the frozen reviewed inventory in addition to the runtime flags.
-    const releaseEnabledExtensions = (
+    // applies the frozen reviewed inventory.
+    const admittedExtensions = (
       import.meta.env.DEV
         ? devLocalExtensions
-        : selectReleaseEnabledExtensions(
-            devLocalExtensions,
-            extensionReleaseFlags,
-          )
+        : selectReviewedExtensions(devLocalExtensions)
     ).filter((extension) => !disabled.has(extension.manifest.id as string));
-    const direct = [...releaseEnabledExtensions];
+    const direct = [...admittedExtensions];
     return direct.length > 0 ? direct : undefined;
-  }, [
-    searchParams,
-    devDisabledIds,
-    extensionReleaseFlags.extensionHostEnabled,
-    extensionReleaseFlags.transcriptCaptionFoundryEnabled,
-    extensionReleaseFlags.runawayTypedTimelineEnabled,
-  ]);
+  }, [devDisabledIds]);
 
-  // ---- Timeline-overlay host gate -----------------------------------------
-  // An enabled, reviewed overlay contribution turns on the host in every
-  // environment. The URL canary remains DEV-only and cannot bypass the parent
-  // deployment kill switch.
+  // Extensions contribute overlays in every build.
   const timelineOverlaysEnabled =
-    extensionReleaseFlags.extensionHostEnabled &&
     (smokeDirectExtensions ?? []).some((ext) =>
       ext.manifest.contributions?.some(
         (contribution) => contribution.kind === "timelineOverlay",
@@ -825,8 +810,8 @@ export default function VideoEditorPage() {
             onPendingWorkChange={onPendingWorkChange}
             extensions={resolvedExtensions}
             timelineOverlaysEnabled={timelineOverlaysEnabled}
-            extensionHostEnabled={extensionReleaseFlags.extensionHostEnabled}
-            extensionReleaseRevision={extensionReleaseFlags.configurationRevision}
+            extensionHostEnabled
+            extensionReleaseRevision="shipped"
           >
             <AstridVideoEditorShell
               mode="full"

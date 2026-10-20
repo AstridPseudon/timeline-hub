@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createAstridAcpHttpServer, resolveAstridAcpBridgeConfig, assertLocalMediaOnly } from './astrid-acp-bridge.ts';
+import { createAstridAcpHttpServer, resolveAstridAcpBridgeConfig, assertLocalMediaOnly, type AstridAcpBridge } from './astrid-acp-bridge.ts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,6 +13,19 @@ function deferred<T = void>() {
   let resolve!: (value: T) => void;
   const promise = new Promise<T>(yes => { resolve = yes; });
   return { promise, resolve };
+}
+
+function directInvoker(bridge: AstridAcpBridge) {
+  return async (url: string, body?: unknown) => {
+    const request = Object.assign(Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]), {
+      method: body === undefined ? 'GET' : 'POST', url,
+      headers: { authorization: 'Bearer test', 'x-astrid-bridge-version': 'v1' },
+    });
+    let output = '';
+    const response = { statusCode: 200, setHeader() {}, end(value: string) { output = value; } };
+    await bridge.handle(request as never, response as never);
+    return { status: response.statusCode, body: JSON.parse(output) as Json };
+  };
 }
 
 const mediaForms = [
@@ -93,6 +106,135 @@ test('PATCH chat rename route validates the body without opening a listener', as
     server.close();
   }
 });
+
+test('session model and thought-level routes use advertised config IDs and refresh options without a socket', async () => {
+  for (const [agent, effortId] of [['codex', 'reasoning_effort'], ['claude-code', 'effort'], ['astrid', 'thinking'], ['hermes', null]] as const) {
+    const sessionId = agent === 'astrid' ? 'omp-session' : `${agent}:session`;
+    let model = 'a';
+    let effort = 'low';
+    const forwarded: Array<{ method: string; params: Json }> = [];
+    const snapshot = () => ({ sessionId, ...(effortId ? { configOptions: [
+      { id: 'model-picker', category: 'model', type: 'select', currentValue: model, options: [{ value: 'a', name: 'A' }, { value: 'b', name: 'B' }] },
+      { id: effortId, name: 'Effort', category: 'thought_level', type: 'select', currentValue: effort,
+        options: model === 'b' ? [{ value: 'high', name: 'High' }] : [{ value: 'low', name: 'Low' }] },
+    ] } : { models: { currentModelId: model, availableModels: [{ modelId: 'a', name: 'A' }, { modelId: 'b', name: 'B' }] } }) });
+    const host = {
+      initialize: async () => ({}), dispose: async () => undefined,
+      request: async (method: string, params: Json) => {
+        forwarded.push({ method, params });
+        if (method === 'session/set_config_option') {
+          if (params.configId === 'model-picker') model = String(params.value);
+          else effort = String(params.value);
+        }
+        if (method === 'session/set_model') model = String(params.modelId);
+        return snapshot();
+      },
+    };
+    const { server, bridge } = createAstridAcpHttpServer({
+      config: { token: 'test', port: 0, cwd: '/tmp/local' }, idFactory: () => 'c',
+      hostFactory: () => host as never, localAgentHostFactory: async () => host as never,
+    });
+    const invoke = async (url: string, body?: unknown) => {
+      const request = Object.assign(Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]), {
+        method: body === undefined ? 'GET' : 'POST', url, headers: { authorization: 'Bearer test', 'x-astrid-bridge-version': 'v1' },
+      });
+      let output = '';
+      const response = { statusCode: 200, setHeader() {}, end(value: string) { output = value; } };
+      await bridge.handle(request as never, response as never);
+      return { status: response.statusCode, body: JSON.parse(output) as Json };
+    };
+    try {
+      assert.equal((await invoke('/model', { model: 'b' })).status, 404);
+      assert.equal((await invoke('/connect', { agent })).status, 200);
+      assert.equal((await invoke('/c/rpc', { method: 'session/new', params: {} })).status, 200);
+      assert.equal((await invoke('/c/model', { sessionId, modelId: 'b' })).status, 200);
+      if (effortId) {
+        assert.equal((await invoke('/c/rpc', { method: 'session/set_config_option', params: { sessionId, configId: effortId, value: 'high' } })).status, 200);
+        const models = (await invoke(`/c/models?sessionId=${sessionId}`)).body.models as Json;
+        assert.equal((models.thoughtLevel as Json).currentValue, 'high');
+        assert.equal((await invoke('/c/rpc', { method: 'session/set_config_option', params: { sessionId, configId: effortId, value: 'low' } })).status, 400);
+        assert.deepEqual(forwarded.filter(call => call.method.startsWith('session/set_')), [
+          { method: 'session/set_config_option', params: { sessionId, configId: 'model-picker', value: 'b' } },
+          { method: 'session/set_config_option', params: { sessionId, configId: effortId, value: 'high' } },
+        ]);
+      } else {
+        const models = (await invoke(`/c/models?sessionId=${sessionId}`)).body.models as Json;
+        assert.equal(models.thoughtLevel, undefined);
+        assert.deepEqual(forwarded.filter(call => call.method.startsWith('session/set_')), [{ method: 'session/set_model', params: { sessionId, modelId: 'b' } }]);
+      }
+      const [first, second] = await Promise.all([
+        invoke('/c/model', { sessionId, modelId: 'a' }),
+        invoke('/c/model', { sessionId, modelId: 'b' }),
+      ]);
+      assert.equal(first.status, 200);
+      assert.equal(second.status, 200);
+    } finally { await bridge.close(); server.close(); }
+  }
+});
+
+for (const selection of ['config model', 'legacy model', 'thinking level'] as const) {
+  for (const busyMethod of ['session/list', 'session/load', 'session/prompt'] as const) {
+    test(`${selection} ${busyMethod === 'session/prompt' ? 'refuses an active prompt' : `waits for ${busyMethod}`} without a socket`, async () => {
+      const sessionId = 'claude-code:race';
+      const started = deferred();
+      const finish = deferred();
+      let model = 'a';
+      const setters: string[] = [];
+      const snapshot = () => ({ sessionId,
+        models: { currentModelId: model, availableModels: [{ modelId: 'a', name: 'A' }, { modelId: 'b', name: 'B' }] },
+        configOptions: [
+          ...(selection === 'config model' ? [{ id: 'model', category: 'model', type: 'select', currentValue: model, options: [{ value: 'a' }, { value: 'b' }] }] : []),
+          { id: 'effort', category: 'thought_level', type: 'select', currentValue: 'low', options: [{ value: 'low' }, { value: 'high' }] },
+        ],
+      });
+      const host = {
+        initialize: async () => ({}), dispose: async () => undefined,
+        request: async (method: string, params: Json) => {
+          if (method === busyMethod) { started.resolve(); await finish.promise; }
+          if (method === 'session/set_model' || method === 'session/set_config_option') {
+            setters.push(method);
+            if (method === 'session/set_model') model = String(params.modelId);
+            else if (params.configId === 'model') model = String(params.value);
+          }
+          return { ...snapshot(), ...(method === 'session/list' ? { sessions: [{ sessionId }] } : {}) };
+        },
+      };
+      const { server, bridge } = createAstridAcpHttpServer({
+        config: { token: 'test', port: 0, cwd: '/tmp/local' }, idFactory: () => 'c',
+        localAgentHostFactory: async () => host as never,
+      });
+      const invoke = directInvoker(bridge);
+      const change = () => selection === 'thinking level'
+        ? invoke('/c/rpc', { method: 'session/set_config_option', params: { sessionId, configId: 'effort', value: 'high' } })
+        : invoke('/c/model', { sessionId, modelId: 'b' });
+      try {
+        assert.equal((await invoke('/connect', { agent: 'claude-code' })).status, 200);
+        assert.equal((await invoke('/c/rpc', { method: busyMethod === 'session/load' ? 'session/list' : 'session/new', params: {} })).status, 200);
+        const busy = invoke('/c/rpc', { method: busyMethod, params: { sessionId, prompt: [] } });
+        await started.promise;
+        let settled = false;
+        const changing = change().then(result => { settled = true; return result; });
+        if (busyMethod === 'session/prompt') {
+          const rejected = await changing;
+          assert.equal(rejected.status, 409);
+          assert.equal(rejected.body.error, 'acp_request_in_progress');
+          assert.match(String(rejected.body.detail), /Wait for the current ACP request to finish/);
+        } else {
+          // Drain request-body processing without a timing threshold.
+          await new Promise<void>(resolve => setImmediate(resolve));
+          assert.equal(settled, false);
+        }
+        assert.deepEqual(setters, []);
+        assert.equal((await invoke('/c/events')).status, 200);
+        finish.resolve();
+        assert.equal((await busy).status, 200);
+        if (busyMethod !== 'session/prompt') assert.equal((await changing).status, 200);
+        else assert.equal((await change()).status, 200);
+        assert.deepEqual(setters, [selection === 'legacy model' ? 'session/set_model' : 'session/set_config_option']);
+      } finally { finish.resolve(); await bridge.close(); server.close(); }
+    });
+  }
+}
 
 async function listen(server: import('node:http').Server) {
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));

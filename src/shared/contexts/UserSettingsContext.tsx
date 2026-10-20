@@ -1,172 +1,36 @@
-import {
-  createContext,
-  useState,
-  useContext,
-  ReactNode,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo
-} from 'react';
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
-import { UserPreferences } from '@/shared/settings/userPreferences';
-import { updateToolSettingsSupabase } from '@/shared/hooks/settings/useToolSettings';
-import { useMobileTimeoutFallback } from '@/shared/hooks/useMobileTimeoutFallback';
-import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
-import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
-import { ToolSettingsError } from '@/shared/settings';
-import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
-import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
-import { useAuth } from './AuthContext';
+import { createContext, useContext, type ReactNode } from 'react';
+import type { UserPreferences } from '@/shared/settings/userPreferences';
 import { requireContextValue } from './contextGuard';
 
 interface UserSettingsContextType {
-  /** User settings from the server (cross-device, account-level) */
+  /** Account settings, unavailable under Astrid authority */
   userSettings: UserPreferences | undefined;
   /** Whether settings are currently loading */
   isLoadingSettings: boolean;
   /** Fetch user settings from the server */
   fetchUserSettings: () => Promise<void>;
-  /** Update user settings (persisted to server, syncs across devices) */
+  /** Account settings updates are unavailable under Astrid authority */
   updateUserSettings: (scope: 'user', patch: Partial<UserPreferences>) => Promise<void>;
 }
 
 const UserSettingsContext = createContext<UserSettingsContextType | undefined>(undefined);
 
-/**
- * UserSettingsProvider manages server-persisted user settings.
- * These settings sync across devices (stored in users.settings['user-preferences']).
- *
- * Features:
- * - [MobileStallFix] Timeout and recovery handling for settings loading
- * - Optimistic updates for better UX
- * - Depends on AuthContext for userId
- */
-export const UserSettingsProvider = ({ children }: { children: ReactNode }) => {
-  const { userId } = useAuth();
-  const isLocalMode = hasRuntimeDocumentIdentity(
-    typeof window === 'undefined' ? '' : window.location.search,
-  );
-  const isDeferredCloudMode = isDeferredCloudDataAuthority();
-
-  const [userSettings, setUserSettings] = useState<UserPreferences | undefined>(undefined);
-  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
-  const userSettingsRef = useRef<UserPreferences | undefined>(undefined);
-
-  // Settings fetching
-  const fetchUserSettings = useCallback(async () => {
-    if (!userId || isLocalMode || !isDeferredCloudMode) return;
-
-    setIsLoadingSettings(true);
-
-    try {
-      // Read the settings JSON for the current user
-      const { data, error } = await supabase().from('users')
-        .select('settings')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-
-      const settings = (data?.settings as Record<string, unknown> | null)?.[SETTINGS_IDS.USER_PREFERENCES] as UserPreferences ?? {};
-      setUserSettings(settings);
-      userSettingsRef.current = settings;
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'UserSettingsContext', showToast: false });
-      // Set empty settings on error instead of leaving undefined
-      setUserSettings({});
-      userSettingsRef.current = {};
-    } finally {
-      setIsLoadingSettings(false);
-    }
-  }, [isDeferredCloudMode, isLocalMode, userId]);
-
-  // Update user settings directly using the global write queue
-  const updateUserSettings = useCallback(async (_scope: 'user', patch: Partial<UserPreferences>) => {
-    if (isLocalMode || !isDeferredCloudMode) return;
-
-    if (!userId) {
-      const authError = new ToolSettingsError(
-        'auth_required',
-        'Authentication required for user settings update',
-      );
-      normalizeAndPresentError(authError, {
-        context: 'UserSettingsContext.updateUserSettings',
-        showToast: false,
-      });
-      throw authError;
-    }
-
-    try {
-      // Use the global queue - it handles read-modify-write internally
-      await updateToolSettingsSupabase({
-        scope: 'user',
-        id: userId,
-        toolId: SETTINGS_IDS.USER_PREFERENCES,
-        patch,
-      });
-
-      // Update local state optimistically
-      setUserSettings(prev => {
-        const merged = { ...prev, ...patch };
-        userSettingsRef.current = merged;
-        return merged;
-      });
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'UserSettingsContext', showToast: false });
-      throw error;
-    }
-  }, [isDeferredCloudMode, isLocalMode, userId]);
-
-  // Fetch settings when user changes
-  useEffect(() => {
-    if (isLocalMode || !isDeferredCloudMode) {
-      setUserSettings(undefined);
-      userSettingsRef.current = undefined;
-      setIsLoadingSettings(false);
-    } else if (userId) {
-      fetchUserSettings();
-    } else {
-      setUserSettings(undefined);
-      userSettingsRef.current = undefined;
-      setIsLoadingSettings(false);
-    }
-  }, [fetchUserSettings, isDeferredCloudMode, isLocalMode, userId]);
-
-  // [MobileStallFix] Fallback recovery: set empty defaults if settings loading stalls
-  const handleSettingsTimeout = useCallback(() => {
-    setIsLoadingSettings(false);
-    setUserSettings({});
-    userSettingsRef.current = {};
-  }, []);
-
-  useMobileTimeoutFallback({
-    isLoading: isLoadingSettings,
-    onTimeout: handleSettingsTimeout,
-    mobileTimeoutMs: 10000,
-    desktopTimeoutMs: 5000,
-    enabled: !!userId && !isLocalMode && isDeferredCloudMode,
-  });
-
-  const contextValue = useMemo(
-    () => ({
-      userSettings,
-      isLoadingSettings,
-      fetchUserSettings,
-      updateUserSettings,
-    }),
-    [userSettings, isLoadingSettings, fetchUserSettings, updateUserSettings]
-  );
-
-  return (
-    <UserSettingsContext.Provider value={contextValue}>
-      {children}
-    </UserSettingsContext.Provider>
-  );
+const astridUserSettings: UserSettingsContextType = {
+  userSettings: undefined,
+  isLoadingSettings: false,
+  fetchUserSettings: async () => {},
+  updateUserSettings: async () => {},
 };
 
+/** Account settings are unavailable under Astrid authority. */
+export const UserSettingsProvider = ({ children }: { children: ReactNode }) => (
+  <UserSettingsContext.Provider value={astridUserSettings}>
+    {children}
+  </UserSettingsContext.Provider>
+);
+
 /**
- * Hook to access user settings (server-persisted, cross-device).
+ * Hook to access the account settings compatibility view.
  *
  * For device-local preferences (like sound on/off), use useLocalPreferences instead.
  *

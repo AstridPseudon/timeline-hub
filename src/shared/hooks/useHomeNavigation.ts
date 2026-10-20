@@ -7,7 +7,6 @@ import { shotListLocation } from '@/shared/lib/tooling/toolRoutes.ts';
 import { useToolSettings } from '@/shared/hooks/settings/useToolSettings';
 import { useUserUIState } from '@/shared/hooks/useUserUIState';
 import {
-  getCurrentAppEnv,
   isHomeToolPathActive,
   resolveHomeToolPath,
 } from '@/shared/lib/tooling/homeNavigation';
@@ -32,9 +31,6 @@ export function useHomeNavigation() {
     () =>
       resolveHomeToolPath({
         preferredToolId: defaultTool.toolId,
-        currentEnv: getCurrentAppEnv(),
-        isCloudGenerationEnabled: true,
-        isLoadingGenerationMethods: false,
         videoEditorTimelineId: videoEditorProjectSettings?.lastTimelineId,
       }),
     [

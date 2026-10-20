@@ -2,13 +2,9 @@ import { DEMO_PROJECT_ID, DEMO_TIMELINE_ID } from '@/shared/dev/devSession.ts';
 
 export type BrowserEntryOwner = 'public' | 'app';
 
-export interface BrowserEntryEnvironment {
-  VITE_APP_ENV?: string;
-}
-
 const PUBLIC_WEB_PATHS = new Set(['/', '/home']);
-/** Public pages served by the dedicated public entry in web, dev and local builds. */
-const PUBLIC_PAGE_PATHS = new Set(['/home', '/vision']);
+/** Public pages served by the dedicated public entry in every build. */
+const PUBLIC_PAGE_PATHS = new Set(['/', '/home', '/vision']);
 
 export function isRecognizedOAuthCallbackUrl(url: URL): boolean {
   if (!PUBLIC_WEB_PATHS.has(url.pathname)) {
@@ -24,16 +20,14 @@ export function isRecognizedOAuthCallbackUrl(url: URL): boolean {
 
 export function classifyBrowserEntry(
   url: URL,
-  environment: BrowserEntryEnvironment,
 ): BrowserEntryOwner {
-  const appEnvironment = (environment.VITE_APP_ENV || 'WEB').toLowerCase();
   if (isRecognizedOAuthCallbackUrl(url)) {
     return 'app';
   }
-  if (PUBLIC_PAGE_PATHS.has(url.pathname) && ['web', 'dev', 'local'].includes(appEnvironment)) {
+  if (PUBLIC_PAGE_PATHS.has(url.pathname)) {
     return 'public';
   }
-  return appEnvironment === 'web' && url.pathname === '/' ? 'public' : 'app';
+  return 'app';
 }
 
 /**

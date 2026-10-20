@@ -1032,6 +1032,8 @@ describe('verified projection serialization', () => {
     const before = JSON.stringify(config);
     expect(() => serializeProjectedTimelineConfig(config, null)).toThrow('verified raw');
     expect(() => serializeForDisk(config, undefined, undefined, null)).toThrow('verified raw');
+    expect(() => serializeForDisk(config)).toThrow('verified raw');
+    expect(() => serializeResolvedTimelineEdit(config)).toThrow('verified raw');
     expect(() => serializeClipForDisk(config.clips.find((clip) => clip.id === 'occ-1:alpha-video')!, null)).toThrow('verified raw');
     expect(JSON.stringify(config)).toBe(before);
   });

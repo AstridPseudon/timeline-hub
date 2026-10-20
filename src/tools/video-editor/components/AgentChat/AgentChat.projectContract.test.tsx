@@ -68,8 +68,15 @@ class HostTransport {
     if (route === '/acp/agents') return response({ agents: ['astrid', 'codex'].map(id => ({ id, name: id === 'astrid' ? 'Astrid' : 'Codex', state: 'ready', line: null })) });
     if (route === '/acp/models') return response({ currentModel: this.currentModel, providers: [{ id: 'openai', name: 'OpenAI', signedIn: true,
       models: [{ id: 'model-a', name: 'Model A' }, { id: 'model-b', name: 'Model B' }] }] });
-    if (route === '/acp/model') { this.currentModel = body.model; return response({ currentModel: this.currentModel }); }
-    if (route.includes('/models?')) return response({ models: { currentModelId: 'codex-default', availableModels: [{ modelId: 'codex-default', name: 'Codex Default' }] } });
+    if (/^\/acp\/connection-\d+\/model$/.test(route)) {
+      this.currentModel = body.modelId;
+      return response({ models: { currentModelId: this.currentModel, availableModels: [{ modelId: this.currentModel, name: 'Model B' }] } });
+    }
+    if (route.includes('/models?')) {
+      const astrid = this.connectionAgents.get(route.split('/')[2]) === 'astrid';
+      return response({ models: astrid ? { currentModelId: this.currentModel, availableModels: [{ modelId: this.currentModel, name: this.currentModel.endsWith('model-b') ? 'Model B' : 'Model A' }] }
+        : { currentModelId: 'codex-default', availableModels: [{ modelId: 'codex-default', name: 'Codex Default' }] } });
+    }
     if (route === '/acp/connect') {
       if (this.connectFailure) throw this.connectFailure;
       const id = `connection-${++this.connections}`;
@@ -199,7 +206,8 @@ describe('real panel → real hooks → owned ACP transport', () => {
     if (choice === 'agent') expect(newId).toMatch(/^codex:/);
     await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
     await waitFor(() => expect(fixture.calls.some(c => c.body.params?.sessionId === newId)).toBe(true));
-    if (choice === 'model') await waitFor(() => expect(fixture.calls).toContainEqual({ route: '/acp/model', body: { model: 'openai/model-b' } }));
+    if (choice === 'model') await waitFor(() => expect(fixture.calls).toContainEqual({ route: expect.stringMatching(/^\/acp\/connection-\d+\/model$/), body: { sessionId: newId, modelId: 'openai/model-b', project_id: 'p1' } }));
+    expect(fixture.calls.some(call => call.route === '/acp/model')).toBe(false);
     expect(fixture.calls.some(c => c.route.endsWith('/chat/main'))).toBe(false);
     view.unmount();
     await freshModules();

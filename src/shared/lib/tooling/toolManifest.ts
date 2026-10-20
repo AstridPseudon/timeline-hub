@@ -1,6 +1,5 @@
 import { Paintbrush, Video, Edit, Users, Link2, Film, Clapperboard, type LucideIcon } from 'lucide-react';
 
-import { AppEnv, type AppEnvValue } from '@/types/env';
 import { characterAnimateSettings } from '@/tools/character-animate/settings';
 import { editImagesSettings } from '@/tools/edit-images/settings';
 import { editVideoSettings } from '@/tools/edit-video/settings/editVideoDefaults';
@@ -18,7 +17,6 @@ export interface ToolUIDefinition {
   name: string;
   path: string;
   description: string;
-  environments: AppEnvValue[];
   icon: LucideIcon;
   gradient: string;
   accent: string;
@@ -35,7 +33,6 @@ export const toolRuntimeManifest: ToolUIDefinition[] = [
     name: 'Generate Images',
     path: '/tools/image-generation',
     description: 'Structure, LoRAs + prompt control.',
-    environments: [AppEnv.LOCAL, AppEnv.WEB],
     icon: Paintbrush,
     gradient: 'from-wes-pink via-wes-lavender to-wes-dusty-blue',
     accent: 'wes-pink',
@@ -50,7 +47,6 @@ export const toolRuntimeManifest: ToolUIDefinition[] = [
     name: 'Travel Between Images',
     path: '/tools/travel-between-images',
     description: 'Image anchors with structure + LoRA control!',
-    environments: [AppEnv.LOCAL, AppEnv.WEB],
     icon: Video,
     gradient: 'from-wes-mint via-wes-sage to-wes-dusty-blue',
     accent: 'wes-mint',
@@ -65,7 +61,6 @@ export const toolRuntimeManifest: ToolUIDefinition[] = [
     name: 'Animate Characters',
     path: '/tools/character-animate',
     description: 'Drive motion from reference video.',
-    environments: [AppEnv.LOCAL, AppEnv.WEB],
     icon: Users,
     gradient: 'from-wes-sage via-wes-mint to-wes-lavender',
     accent: 'wes-sage',
@@ -80,7 +75,6 @@ export const toolRuntimeManifest: ToolUIDefinition[] = [
     name: 'Join Clips',
     path: '/tools/join-clips',
     description: 'AI-generated transitions between clips.',
-    environments: [AppEnv.LOCAL, AppEnv.WEB],
     icon: Link2,
     gradient: 'from-wes-dusty-blue via-wes-lavender to-wes-pink',
     accent: 'wes-dusty-blue',
@@ -95,7 +89,6 @@ export const toolRuntimeManifest: ToolUIDefinition[] = [
     name: 'Video Editor',
     path: '/tools/video-editor',
     description: 'Multi-track timeline + custom effects.',
-    environments: [AppEnv.LOCAL, AppEnv.WEB],
     icon: Clapperboard,
     gradient: 'from-emerald-400 via-cyan-400 to-sky-500',
     accent: 'wes-mint',
@@ -110,7 +103,6 @@ export const toolRuntimeManifest: ToolUIDefinition[] = [
     name: 'Edit Images',
     path: '/tools/edit-images',
     description: 'Prompt edits, inpaint, restyle + transforms.',
-    environments: [AppEnv.LOCAL, AppEnv.WEB],
     icon: Edit,
     gradient: 'from-wes-yellow via-wes-salmon to-wes-pink',
     accent: 'wes-yellow',
@@ -125,7 +117,6 @@ export const toolRuntimeManifest: ToolUIDefinition[] = [
     name: 'Edit Videos',
     path: '/tools/edit-video',
     description: 'Regenerate + fix video segments.',
-    environments: [AppEnv.LOCAL, AppEnv.WEB],
     icon: Film,
     gradient: 'from-wes-coral via-wes-salmon to-wes-pink',
     accent: 'wes-coral',
@@ -140,7 +131,6 @@ export const toolRuntimeManifest: ToolUIDefinition[] = [
     name: 'Training Data Helper',
     path: '/tools/training-data-helper',
     description: 'Prepare and segment training data assets.',
-    environments: [AppEnv.LOCAL, AppEnv.WEB],
     icon: Film,
     gradient: 'from-wes-lavender via-wes-dusty-blue to-wes-sage',
     accent: 'wes-lavender',

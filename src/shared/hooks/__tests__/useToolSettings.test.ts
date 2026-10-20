@@ -14,9 +14,6 @@ import { queryKeys } from '@/shared/lib/queryKeys';
 const { normalizeAndPresentErrorMock } = vi.hoisted(() => ({
   normalizeAndPresentErrorMock: vi.fn(),
 }));
-const { isDeferredCloudDataAuthorityMock } = vi.hoisted(() => ({
-  isDeferredCloudDataAuthorityMock: vi.fn(() => true),
-}));
 
 // ============================================================================
 // Tests for exported pure helper functions
@@ -243,10 +240,6 @@ vi.mock('@/shared/lib/errorHandling/runtimeError', async () => {
   };
 });
 
-vi.mock('@/app/runtime/dataAuthority', () => ({
-  isDeferredCloudDataAuthority: isDeferredCloudDataAuthorityMock,
-}));
-
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
@@ -264,7 +257,6 @@ describe('useToolSettings hook', () => {
     vi.mocked(enqueueSettingsWrite).mockClear();
     vi.mocked(fetchToolSettingsSupabase).mockClear();
     normalizeAndPresentErrorMock.mockClear();
-    isDeferredCloudDataAuthorityMock.mockReturnValue(true);
     const mod = await import('@/shared/hooks/settings/useToolSettings');
     useToolSettings = mod.useToolSettings;
   });
@@ -303,7 +295,6 @@ describe('useToolSettings hook', () => {
   });
 
   it('does not fetch or re-present cached settings errors in local editor mode', () => {
-    isDeferredCloudDataAuthorityMock.mockReturnValue(false);
     const previousUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     window.history.replaceState(
       {},
@@ -341,7 +332,6 @@ describe('useToolSettings hook', () => {
   });
 
   it('does not fetch or present stale errors under Astrid authority', () => {
-    isDeferredCloudDataAuthorityMock.mockReturnValue(false);
     const wrapper = createWrapper();
     const { result } = renderHook(() => useToolSettings('test-tool'), { wrapper });
 
@@ -362,21 +352,5 @@ describe('useToolSettings hook', () => {
       // Just verify it doesn't crash with custom projectId
       expect(result.current).toHaveProperty('settings');
     });
-  });
-
-  it('throws auth_required for user-scope updates without an authenticated user', async () => {
-    const toolSettingsService = await import('@/shared/settings');
-    vi.mocked(toolSettingsService.resolveAndCacheUserId).mockResolvedValueOnce({
-      data: { user: null },
-      error: null,
-    });
-
-    const wrapper = createWrapper();
-    const { result } = renderHook(() => useToolSettings<Record<string, unknown>>('test-tool'), { wrapper });
-
-    await expect(result.current.update('user', { prompt: 'test' })).rejects.toMatchObject({
-      code: 'auth_required',
-    });
-    expect(enqueueSettingsWrite).not.toHaveBeenCalled();
   });
 });

@@ -130,20 +130,23 @@ export async function revisionBody(harness: DirectHarness, revisionId: string) {
 
 /** Read the real browser outbox without creating, claiming or modifying an owner. */
 export async function commandOutboxes(page: Page, timelineId: string): Promise<OutboxRecord[]> {
-  return page.evaluate(async (id) => {
-    if (!(await indexedDB.databases()).some((db) => db.name === 'astrid.command-outbox')) return [];
-    return new Promise<OutboxRecord[]>((resolve, reject) => {
+  // Playwright's by-value result decoder intentionally omits __proto__ keys;
+  // carry the browser's JSON bytes across the inspection boundary instead.
+  const encoded = await page.evaluate(async (id) => {
+    if (!(await indexedDB.databases()).some((db) => db.name === 'astrid.command-outbox')) return '[]';
+    return new Promise<string>((resolve, reject) => {
       const opening = indexedDB.open('astrid.command-outbox');
       opening.onerror = () => reject(opening.error);
       opening.onsuccess = () => {
         const db = opening.result;
         const tx = db.transaction('owners', 'readonly');
         const read = tx.objectStore('owners').getAll();
-        tx.oncomplete = () => { db.close(); resolve((read.result as OutboxRecord[]).filter((record) => record.scope.timelineId === id)); };
+        tx.oncomplete = () => { db.close(); resolve(JSON.stringify((read.result as OutboxRecord[]).filter((record) => record.scope.timelineId === id))); };
         tx.onabort = () => { db.close(); reject(tx.error); };
       };
     });
   }, timelineId);
+  return JSON.parse(encoded) as OutboxRecord[];
 }
 
 /** Actual pointerdown/move/drop: scale comes from the two rendered parent clips. */

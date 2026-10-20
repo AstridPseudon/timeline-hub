@@ -44,7 +44,7 @@ import { AgentTaskResults } from './AgentTaskResults';
 import { AgentChatSessionSelector } from './AgentChatSessionSelector';
 import { AgentChatNewChatButton, type NewChatAgentModels } from './AgentChatNewChatButton';
 import { AgentIcon, agentNames } from './agentIdentity';
-import { readAgentModels, readChatModels, rememberAgentModels, rememberChatModel } from './chatModelMemory';
+import { readAgentModels, readChatModels, rememberAgentModels, rememberChatModel, readModelThoughtLevels, rememberModelThoughtLevel } from './chatModelMemory';
 import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
 
 export type ToolCallPair = {
@@ -289,11 +289,29 @@ function AvailableAgentChatPanel({
   const chatModelName = useMemo(() => {
     const catalog = modelCatalog.data;
     if (!catalog) return null;
-    if (chatAgent !== 'astrid') return catalog.localModels?.availableModels.find(model => model.modelId === catalog.localModels?.currentModelId)?.name ?? null;
+    const sessionModel = catalog.localModels?.availableModels.find(model => model.modelId === catalog.localModels?.currentModelId);
+    if (sessionModel) return sessionModel.name;
+    if (chatAgent !== 'astrid') return null;
     const current = catalog.providers.flatMap(provider => provider.models.map(model => ({ id: `${provider.id}/${model.id}`, name: model.name })))
       .find(model => model.id === catalog.currentModel);
     return current?.name ?? catalog.currentModel;
   }, [chatAgent, modelCatalog.data]);
+  const chatThoughtLevel = modelCatalog.data?.localModels?.thoughtLevel;
+  // "Opus 5.5 · High"; Claude's bare "Default" level adds nothing.
+  const chatModelDescription = [chatModelName, chatThoughtLevel?.currentValue === 'default' ? null : chatThoughtLevel?.options.find(level => level.value === chatThoughtLevel.currentValue)?.name].filter(Boolean).join(' · ');
+  const [modelThoughtLevels, setModelThoughtLevels] = useState(() => Object.fromEntries(
+    (['astrid', ...EXTERNAL_AGENT_IDS] as LocalAgentId[]).map(agent => [agent, readModelThoughtLevels(agent)]),
+  ) as Record<LocalAgentId, ReturnType<typeof readModelThoughtLevels>>);
+  type CatalogLocalModels = NonNullable<typeof modelCatalog.data>['localModels'];
+  const rememberThoughtLevels = useCallback((agent: LocalAgentId, models: CatalogLocalModels) => {
+    if (!models) return;
+    setModelThoughtLevels(current => {
+      const level = models.thoughtLevel ?? null;
+      if (JSON.stringify(current[agent][models.currentModelId]) === JSON.stringify(level)) return current;
+      return { ...current, [agent]: rememberModelThoughtLevel(agent, models.currentModelId, models.thoughtLevel) };
+    });
+  }, []);
+  useEffect(() => { rememberThoughtLevels(chatAgent, modelCatalog.data?.localModels); }, [chatAgent, modelCatalog.data, rememberThoughtLevels]);
   const [chatModels, setChatModels] = useState(readChatModels);
   useEffect(() => {
     if (activeSessionId && chatModelName && chatModels[activeSessionId] !== chatModelName) setChatModels(rememberChatModel(activeSessionId, chatModelName));
@@ -335,7 +353,7 @@ function AvailableAgentChatPanel({
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
   const [startingAgent, setStartingAgent] = useState<LocalAgentId | null>(null);
-  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; model?: string; details: string } | null>(null);
+  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; details: string } | null>(null);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
   // and decoupled from pane open state so the close-path bug from the rev-4
   // setIsTasksPaneOpenProgrammatic approach can't recur.
@@ -396,9 +414,15 @@ function AvailableAgentChatPanel({
   useEffect(() => {
     if (browseAgent) rememberModelList(browseAgent, browseModels.data ? browseModels.data.localModels?.availableModels ?? [] : undefined);
   }, [browseAgent, browseModels.data, rememberModelList]);
+  useEffect(() => {
+    if (browseAgent) rememberThoughtLevels(browseAgent, browseModels.data?.localModels);
+  }, [browseAgent, browseModels.data, rememberThoughtLevels]);
   // Another tab may have seen this agent's models since this one loaded.
   useEffect(() => {
-    if (!browseAgent || browseAgent === 'astrid') return;
+    if (!browseAgent) return;
+    const levels = readModelThoughtLevels(browseAgent);
+    setModelThoughtLevels(current => JSON.stringify(current[browseAgent]) === JSON.stringify(levels) ? current : { ...current, [browseAgent]: levels });
+    if (browseAgent === 'astrid') return;
     const stored = readAgentModels(browseAgent);
     if (stored.length) setAgentModelLists(current => JSON.stringify(current[browseAgent]) === JSON.stringify(stored) ? current : { ...current, [browseAgent]: stored });
   }, [browseAgent]);
@@ -409,8 +433,8 @@ function AvailableAgentChatPanel({
       return {
         agent: 'astrid',
         models: (catalog?.providers ?? []).filter(provider => provider.signedIn || provider.models.length > 0)
-          .flatMap(provider => provider.models.map(model => ({ id: `${provider.id}/${model.id}`, name: model.name, detail: provider.name }))),
-        defaultModel: catalog?.currentModel ?? null,
+          .flatMap(provider => provider.models.map(model => ({ id: `${provider.id}/${model.id}`, name: model.name, detail: provider.name, thoughtLevel: modelThoughtLevels.astrid[`${provider.id}/${model.id}`] }))),
+        defaultModel: savedLocalAgentModel('astrid') ?? catalog?.currentModel ?? null,
         loading: browseModels.isLoading,
         note: browseModels.error ? 'Could not load Astrid models.' : 'No models available.',
       };
@@ -418,12 +442,12 @@ function AvailableAgentChatPanel({
     const remembered = agentModelLists[browseAgent];
     return {
       agent: browseAgent,
-      models: remembered.map(model => ({ id: model.id, name: model.name, detail: model.description })),
+      models: remembered.map(model => ({ id: model.id, name: model.name, detail: model.description, thoughtLevel: modelThoughtLevels[browseAgent][model.id] })),
       defaultModel: savedLocalAgentModel(browseAgent) ?? null,
       loading: remembered.length === 0 && Boolean(browseSessionId) && !browseModels.error && (browseModels.isLoading || browseModels.isFetching),
-      note: `${agentNames[browseAgent]} lists its models once it has a chat. Start one, then pick a model inside it.`,
+      note: `${agentNames[browseAgent]} lists its models after its first chat starts. Pick a model here for the next chat.`,
     };
-  }, [agentModelLists, browseAgent, browseModels.data, browseModels.error, browseModels.isFetching, browseModels.isLoading, browseSessionId]);
+  }, [agentModelLists, modelThoughtLevels, browseAgent, browseModels.data, browseModels.error, browseModels.isFetching, browseModels.isLoading, browseSessionId]);
   const agentCanBrowse = useMemo(() => ({
     ...Object.fromEntries(EXTERNAL_AGENT_IDS.filter(agent => agent !== 'hermes').map(agent => [agent, true])),
     hermes: agentModelLists.hermes.length > 0,
@@ -565,7 +589,8 @@ function AvailableAgentChatPanel({
   const isProcessing = activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active);
   const showKillSwitch = !isFollower && (activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active));
   const composerLockedRef = useRef(false);
-  composerLockedRef.current = isFollower || startingAgent !== null;
+  const configurationFailed = Boolean(startFailure?.sessionId && startFailure.sessionId === activeSessionId);
+  composerLockedRef.current = isFollower || startingAgent !== null || configurationFailed;
   useEffect(() => {
     if (isFollower || startingAgent) voiceRef.current.cancelRecording();
   }, [isFollower, startingAgent]);
@@ -909,6 +934,7 @@ function AvailableAgentChatPanel({
     if (
       sendingRef.current
       || startingAgent !== null
+      || configurationFailed
       || isFollower
       || isProcessing
       || sendMessage.isPending
@@ -933,7 +959,7 @@ function AvailableAgentChatPanel({
         // Leave the failed head in place; pausedQueueHeadId will prevent further drains.
       }
     })();
-  }, [queue, pausedQueueHeadId, startingAgent, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
+  }, [queue, pausedQueueHeadId, startingAgent, configurationFailed, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
   const handleNewSession = useCallback(async (): Promise<string | null> => {
     if (!projectId) return null;
@@ -953,33 +979,27 @@ function AvailableAgentChatPanel({
     return sessionId ?? null;
   }, [createNewSession, projectId, setIsTasksPaneOpen]);
 
-  // Choosing an agent starts a chat with it; the main New click reuses the last one. A model picked in
-  // the submenu is applied to the new chat as soon as it reports its models.
-  const pendingModelRef = useRef<{ sessionId: string; model: string } | null>(null);
-  const startChatWith = useCallback(async (agent?: LocalAgentId, model?: string) => {
+  // Keep startup locked until the model and its freshly reported thinking level are applied.
+  const startChatWith = useCallback(async (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => {
     const chosen = agent ?? defaultAgent;
+    let sessionId: string | null = null;
     setStartFailure(null);
     setStartingAgent(chosen);
     try {
       if (chosen !== defaultAgent) await setLocalAgent.mutateAsync(chosen);
-      // Without a pick, Claude Code and Codex start on their remembered default when it is still on offer.
-      const saved = chosen === 'astrid' ? undefined : savedLocalAgentModel(chosen);
-      const target = model ?? (saved && chosen !== 'astrid' && agentModelLists[chosen].some(choice => choice.id === saved) ? saved : undefined);
-      const sessionId = await handleNewSession();
-      if (sessionId && target) pendingModelRef.current = { sessionId, model: target };
+      // Without a pick, reuse this agent's remembered model when it is still on offer.
+      const saved = savedLocalAgentModel(chosen);
+      const target = model ?? (saved && (chosen === 'astrid' || agentModelLists[chosen].some(choice => choice.id === saved)) ? saved : undefined);
+      sessionId = await handleNewSession();
+      // The selection mutation awaits this session's first options read before
+      // setting the model, refreshing its options, and applying the level.
+      if (sessionId) await setAgentModel.mutateAsync({ sessionId, model: target, thoughtLevel });
     } catch (error) {
-      setStartFailure({ agent: chosen, model, details: error instanceof Error ? error.message : String(error) });
+      setStartFailure({ agent: chosen, model, thoughtLevel, sessionId: sessionId ?? undefined, details: error instanceof Error ? error.message : String(error) });
     } finally {
       setStartingAgent(null);
     }
-  }, [agentModelLists, defaultAgent, handleNewSession, setLocalAgent]);
-  useEffect(() => {
-    const pending = pendingModelRef.current;
-    if (!pending || pending.sessionId !== activeSessionId || !modelCatalog.data || setAgentModel.isPending) return;
-    pendingModelRef.current = null;
-    const current = chatAgent === 'astrid' ? modelCatalog.data.currentModel : modelCatalog.data.localModels?.currentModelId;
-    if (current !== pending.model) void setAgentModel.mutateAsync(pending.model).catch(() => undefined);
-  }, [activeSessionId, chatAgent, modelCatalog.data, setAgentModel]);
+  }, [agentModelLists, defaultAgent, handleNewSession, setAgentModel, setLocalAgent]);
 
   // ==========================================================================
   // Actions registry — exposes stable handlers the parent (TasksPane split
@@ -1052,7 +1072,7 @@ function AvailableAgentChatPanel({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent className="text-xs normal-case">
-                  <div>{chatModelName}</div>
+                  <div>{chatModelDescription}</div>
                   <div className="text-muted-foreground">To use another model, start a new chat.</div>
                 </TooltipContent>
               </Tooltip>
@@ -1109,7 +1129,7 @@ function AvailableAgentChatPanel({
             onMenuOpenChange={(open) => { if (open) void localAgents.refetch(); }}
             onBrowseAgent={setBrowseAgent}
             agentModels={newChatModels}
-            onNewChat={(agent, model) => void startChatWith(agent, model)}
+            onNewChat={(agent, model, thoughtLevel) => void startChatWith(agent, model, thoughtLevel)}
             attachExisting={projectId ? { open: showAttachSessions, toggle: () => setShowAttachSessions((open) => !open) } : undefined}
           />
         </div>
@@ -1118,7 +1138,7 @@ function AvailableAgentChatPanel({
         <div role="alert" className="border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           <p>{agentNames[startFailure.agent]} didn't start.</p>
           <p>Details: {startFailure.details}</p>
-          <button type="button" className="mt-1 underline" onClick={() => void startChatWith(startFailure.agent, startFailure.model)}>Try again</button>
+          <button type="button" className="mt-1 underline" onClick={() => void startChatWith(startFailure.agent, startFailure.model, startFailure.thoughtLevel)}>Try again</button>
         </div>
       )}
       {showAttachSessions && projectId && (
@@ -1424,7 +1444,7 @@ function AvailableAgentChatPanel({
               rows={isExpanded ? 8 : 4}
               placeholder={inputPlaceholder}
               className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 text-sm leading-5 [@media(pointer:coarse)]:text-base [@media(max-height:500px)]:max-h-[4.75rem] outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
-              disabled={startingAgent !== null || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
+              disabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault();
@@ -1443,7 +1463,7 @@ function AvailableAgentChatPanel({
                     ? 'relative h-full w-full rounded-xl bg-red-500 text-white transition-colors hover:bg-red-600'
                     : 'relative h-full w-full rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
                   onClick={() => voice.isRecording ? voice.stopRecording() : voice.startRecording()}
-                  disabled={startingAgent !== null || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending}
+                  disabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending}
                   title={voice.isRecording ? 'Stop recording' : 'Voice input (Cmd+Shift+R)'}
                 >
                   {voice.isRecording ? <Square className="h-3 w-3" /> : <Mic className="h-3.5 w-3.5" />}
@@ -1469,7 +1489,7 @@ function AvailableAgentChatPanel({
                   variant="default"
                   className="h-full w-full rounded-xl"
                   onClick={() => void handleSend()}
-                  disabled={startingAgent !== null || isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
+                  disabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
                   title="Send"
                 >
                   <Send className="h-4 w-4" />

@@ -1,15 +1,11 @@
 import type { AstridExtension } from '@astrid/editor-sdk';
 import type { VideoEditorTelemetryHost } from './ports';
 
-export const TRANSCRIPT_RELEASE_EXTENSION_ID = 'haus.astrid.transcript-lane';
-export const RUNAWAY_RELEASE_EXTENSION_ID = 'haus.astrid-runaway-timeline';
-
 /** Frozen production admission allowlist; unreviewed extension IDs fail closed. */
 export const REVIEWED_PRODUCTION_EXTENSION_IDS = Object.freeze([
   'haus.astrid.live-scenes',
   'haus.astrid.scene-phase-markers',
-  TRANSCRIPT_RELEASE_EXTENSION_ID,
-  RUNAWAY_RELEASE_EXTENSION_ID,
+  'haus.astrid.transcript-lane',
   'haus.astrid.creative-lab.pulse-map',
   'haus.astrid.creative-lab.soundtrack-cartographer',
   'haus.astrid.creative-lab.caption-safe-zone-orchestra',
@@ -23,11 +19,13 @@ export const REVIEWED_PRODUCTION_EXTENSION_IDS = Object.freeze([
 ] as const);
 const REVIEWED_PRODUCTION_EXTENSION_ID_SET = new Set<string>(REVIEWED_PRODUCTION_EXTENSION_IDS);
 
-export interface ExtensionReleaseFlags {
-  readonly extensionHostEnabled: boolean;
-  readonly transcriptCaptionFoundryEnabled: boolean;
-  readonly runawayTypedTimelineEnabled: boolean;
-  readonly configurationRevision: string;
+/** Admit only reviewed bundled extensions in production. */
+export function selectReviewedExtensions(
+  extensions: readonly AstridExtension[],
+): readonly AstridExtension[] {
+  return Object.freeze(extensions.filter((extension) =>
+    REVIEWED_PRODUCTION_EXTENSION_ID_SET.has(extension.manifest.id as string),
+  ));
 }
 
 const readRevision = (value: unknown): string => {
@@ -35,45 +33,6 @@ const readRevision = (value: unknown): string => {
   const normalized = value.trim();
   return /^[A-Za-z0-9._-]{1,64}$/.test(normalized) ? normalized : 'invalid';
 };
-
-/**
- * The extension host and the Transcript panel ship in every build: there is no
- * deployment switch, runtime-config fetch or bootstrap wait. The runaway typed
- * timeline stays off here until its wiring is deleted.
- */
-const SHIPPED_EXTENSION_RELEASE_FLAGS: ExtensionReleaseFlags = Object.freeze({
-  extensionHostEnabled: true,
-  transcriptCaptionFoundryEnabled: true,
-  runawayTypedTimelineEnabled: false,
-  configurationRevision: 'shipped',
-});
-
-export function getExtensionReleaseFlags(): ExtensionReleaseFlags {
-  return SHIPPED_EXTENSION_RELEASE_FLAGS;
-}
-
-/** Apply parent/child rollout gates to the reviewed bundled extension set. */
-export function selectReleaseEnabledExtensions(
-  extensions: readonly AstridExtension[],
-  flags: ExtensionReleaseFlags,
-): readonly AstridExtension[] {
-  if (!flags.extensionHostEnabled) return Object.freeze([]);
-  return Object.freeze(extensions.filter((extension) => {
-    const id = extension.manifest.id as string;
-    if (!REVIEWED_PRODUCTION_EXTENSION_ID_SET.has(id)) return false;
-    return isExtensionReleaseEnabled(id, flags);
-  }));
-}
-
-/** Resolve a reviewed extension's child rollout gate by extension ID. */
-export function isExtensionReleaseEnabled(extensionId: string, flags: ExtensionReleaseFlags): boolean {
-  if (!flags.extensionHostEnabled) return false;
-  const rolloutByExtensionId: Readonly<Record<string, boolean>> = {
-    [TRANSCRIPT_RELEASE_EXTENSION_ID]: flags.transcriptCaptionFoundryEnabled,
-    [RUNAWAY_RELEASE_EXTENSION_ID]: flags.runawayTypedTimelineEnabled,
-  };
-  return rolloutByExtensionId[extensionId] ?? true;
-}
 
 export const EXTENSION_OPERATIONAL_EVENT_NAMES = Object.freeze([
   'host.activation',

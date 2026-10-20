@@ -96,7 +96,6 @@ describe('extension ship verifier', () => {
       assert.doesNotMatch(dockerfile, new RegExp(`${retiredKey}="\\$${retiredKey}"`));
     }
     assert.match(dockerfile, /^COPY --chown=node:node config \.\/config$/m);
-    assert.match(dockerfile, /^COPY scripts\/runtime \.\/scripts\/runtime$/m);
     assert.match(dockerfile, /^COPY --chown=node:node --from=build \/app\/dist \.\/dist$/m);
     assert.match(dockerfile, /^USER node$/m);
     assert.match(dockerfile, /^HEALTHCHECK .*\\$/m);
@@ -106,26 +105,12 @@ describe('extension ship verifier', () => {
     for (const identity of ['ACTOR_ID', 'REALM_ID', 'INSTANCE_ID']) {
       assert.match(dockerfile, new RegExp(`VITE_WORKSPACE_RUNTIME_EXPECTED_${identity}=""`));
     }
-    assert.match(dockerfile, /node scripts\/runtime\/write-extension-release-config\.mjs/);
-    assert.match(dockerfile, /exec npm run serve/);
-    assert.equal(
-      packageJson.scripts['start:railway'],
-      'node scripts/runtime/write-extension-release-config.mjs && npm run serve',
-    );
-    assert.doesNotMatch(packageJson.scripts['start:railway'], /npm run build/);
+    assert.match(dockerfile, /^CMD \["npm", "run", "serve"\]$/m);
+    assert.match(dockerfile, /fetch\('http:\/\/127\.0\.0\.1:'\+process\.env\.PORT\+'\/'/);
+    assert.equal(packageJson.scripts['start:railway'], undefined);
     assert.deepEqual(ASTRID_APP_GATE_PROFILE[0].args, [
       'ci', '--no-audit', '--no-fund',
     ]);
-    assert.ok(ASTRID_APP_GATE_PROFILE.some((gate) => (
-      gate.id === 'runtime-rollout'
-      && gate.command === 'npm'
-      && gate.args.join(' ') === 'run test:extensions:runtime-rollout'
-    )));
-    assert.ok(ASTRID_APP_GATE_PROFILE.some((gate) => (
-      gate.id === 'container-runtime'
-      && gate.command === 'npm'
-      && gate.args.join(' ') === 'run verify:extension-container'
-    )));
     assert.ok(ASTRID_APP_GATE_PROFILE.some((gate) => (
       gate.id === 'cross-browser-e2e'
       && gate.command === 'npm'

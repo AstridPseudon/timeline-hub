@@ -97,8 +97,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
 
   // Shots data for lightbox
   // Consume the authority-selected context. Astrid mode intentionally exposes
-  // an empty compatibility view; the explicit supabase-deferred provider owns
-  // the legacy relational query. This pane is mounted in the global shell, so
+  // an empty compatibility view under Astrid authority.
   // a direct useListShots call here would leak a cloud request on every route.
   const { shots } = useShots();
   const { currentShotId } = useCurrentShot();

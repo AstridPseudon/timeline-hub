@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AppHeader } from '@/shared/components/AppHeader.tsx';
-import { GlobalProcessingWarning } from '@/shared/components/ProcessingWarnings';
 import { useHeaderState } from '@/shared/contexts/ToolPageHeaderContext';
 import { useHomeNavigation } from '@/shared/hooks/useHomeNavigation';
 import { isHomeToolPathActive } from '@/shared/lib/tooling/homeNavigation';
@@ -10,34 +9,17 @@ import { cn } from '@/shared/components/ui/contracts/cn';
 import { useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
-import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority.ts';
 import { TOOL_ROUTES } from '@/shared/lib/tooling/toolRoutes';
-import { isAstridEditorOnlyShellPath } from '@/app/localWorkspaceShell';
 
 interface LayoutMainContentProps {
   isMobileSplitView: boolean;
-  onOpenSettings: (initialTab?: string, creditsTab?: 'purchase' | 'history') => void;
-}
-
-/**
- * The processing warning belongs to the deferred legacy cloud shell.  Astrid
- * authority has no credits/account-settings surface, and mounting the warning
- * would execute its Supabase-backed hooks even when the user is in the local
- * application. Keep this decision at the layout boundary so the legacy
- * component is not mounted (and its hooks cannot issue requests) at all.
- */
-function shouldRenderGlobalProcessingWarning(
-  search: string = typeof window === 'undefined' ? '' : window.location.search,
-): boolean {
-  return isDeferredCloudDataAuthority(search);
 }
 
 export function LayoutMainContent(props: LayoutMainContentProps) {
-  const { isMobileSplitView, onOpenSettings } = props;
+  const { isMobileSplitView } = props;
   const { pathname } = useLocation();
   const { isEditorRoute, isVideoEditorShellActive } = useVideoEditorRouteState();
-  const isAstridEditorOnlyShell = isAstridEditorOnlyShellPath(pathname);
-  const isFullEditorSurface = isVideoEditorShellActive || isAstridEditorOnlyShell;
+  const isFullEditorSurface = isVideoEditorShellActive;
   const { navigateHome, targetPath } = useHomeNavigation();
   const isEditorPaneLocked = usePanesStore((state) => state.isEditorPaneLocked);
   const effectiveEditorPaneHeight = usePanesStore((state) => state.effectiveEditorPaneHeight);
@@ -59,7 +41,7 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
 
   const contentStyle = {
     marginRight: isTasksPaneLocked ? `${tasksPaneWidth}px` : '0px',
-    marginLeft: !isAstridEditorOnlyShell && isShotsPaneLocked ? `${shotsPaneWidth}px` : '0px',
+    marginLeft: isShotsPaneLocked ? `${shotsPaneWidth}px` : '0px',
     paddingTop: isEditorPaneLocked && isVideoEditorShellActive ? `${effectiveEditorPaneHeight}px` : '0px',
     paddingBottom: isMobileSplitView || isImageGenerationPage || paneControlsHosted
       ? '0px'
@@ -76,14 +58,12 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
 
   return (
     <>
-      {!isAstridEditorOnlyShell && (
-        <AppHeader
-          navigationMode={isHomeToolPathActive(pathname, targetPath) ? 'tools' : 'home'}
-          onNavigate={isEditorRoute ? undefined : navigateHome}
-          navigationControls={globalHeaderContent}
-          showProjectControls={!isEditorRoute}
-        />
-      )}
+      <AppHeader
+        navigationMode={isHomeToolPathActive(pathname, targetPath) ? 'tools' : 'home'}
+        onNavigate={isEditorRoute ? undefined : navigateHome}
+        navigationControls={globalHeaderContent}
+        showProjectControls={!isEditorRoute}
+      />
 
       <div
         className={cn(
@@ -94,13 +74,8 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
         )}
         data-video-editor-route={isEditorRoute ? 'true' : 'false'}
         data-video-editor-shell-active={isFullEditorSurface ? 'true' : 'false'}
-        data-astrid-editor-only-shell={isAstridEditorOnlyShell ? 'true' : 'false'}
         style={contentStyle}
       >
-        {!isFullEditorSurface && shouldRenderGlobalProcessingWarning() && (
-          <GlobalProcessingWarning onOpenSettings={onOpenSettings} />
-        )}
-
         <main
           className={cn(
             isFullEditorSurface

@@ -1,7 +1,7 @@
 /**
  * Pack-authored editor extensions admitted by Astrid's generated catalog.
  *
- * `VideoEditorPage` applies deployment-owned release flags before activating
+ * `VideoEditorPage` admits only reviewed extensions before activating
  * these entries in production. DEV honors the Extension Manager's local
  * disabled-ID store. Host-only smoke checks remain separate from this catalog.
  */

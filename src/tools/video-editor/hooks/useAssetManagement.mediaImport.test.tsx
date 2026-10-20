@@ -139,6 +139,10 @@ describe('useAssetManagement Runtime media imports', () => {
       variantType: 'video',
       mediaId: 'sha256:object',
       imageUrl: 'https://runtime.test/object.mp4',
+      metadata: {
+        content_type: 'video/mp4',
+        original_filename: 'object.mp4',
+      },
       mediaImport: {
         provider: 'runtime',
         project: 'runtime-project-id',
