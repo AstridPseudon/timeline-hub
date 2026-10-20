@@ -18,6 +18,26 @@ from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 
 
+class _RetiredTimelineUpdate(ApiError):
+    """Marker for the one direct timeline writer expected to remain retired."""
+
+
+def _retired_timeline_update(client, payload):
+    try:
+        return legacy_call(client, "PATCH", "/v1/timelines/timeline", payload, key="timeline-update")
+    except ApiError as error:
+        if (
+            error.status == 410
+            and error.code == "retired_route"
+            and error.message == "legacy timeline writes are retired; submit EditCommands through commitTimeline"
+            and error.details.get("reason") == "timeline_commit_required"
+        ):
+            raise _RetiredTimelineUpdate(
+                error.status, error.code, error.message, error.request_id, error.details
+            ) from error
+        raise
+
+
 def _digest(value: str) -> str:
     return "sha256:" + hashlib.sha256(value.encode()).hexdigest()
 
@@ -389,27 +409,46 @@ def test_generated_timeline_visibility_is_project_catalog_state(tmp_path):
         daemon.stop()
 
 
-def test_generated_historical_timeline_recover_refuses_before_writes(tmp_path):
+@pytest.mark.parametrize("timeline_state", ("tracked", "fresh", "unused"))
+def test_generated_historical_timeline_recover_refuses_before_writes(tmp_path, monkeypatch, timeline_state):
     RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
     try:
         client = WorkspaceClient(daemon.endpoint, daemon.token)
         project = client.create_project("Settings", idempotency_key="project", slug="settings", metadata={"theme": "dark"})
-        created = client.create_timeline(project.project_id, "timeline", idempotency_key="timeline")
-        archived = client.archive_timeline("timeline", expected_version=created["version"], idempotency_key="archive")
-        before = client.get_project_timeline(project.project_id, "timeline")
+        timeline = timeline_state
+        if timeline_state == "unused":
+            expected_version, target_version = 1, 1
+        else:
+            created = client.create_timeline(project.project_id, timeline, idempotency_key=timeline)
+            archived = client.archive_timeline(timeline, expected_version=created["version"], idempotency_key=f"{timeline}-archive")
+            expected_version, target_version = archived["version"], created["version"]
+        before = client.get_project_timeline(project.project_id, timeline) if timeline_state != "unused" else None
+        before_store = daemon.service.store.conn.total_changes
+
+        def replay(*args, **kwargs):
+            pytest.fail("historical recover consulted an accepted retry")
+
+        monkeypatch.setattr(daemon.service, "_command_replay", replay)
         with pytest.raises(ApiError) as error:
-            client.recover_timeline("timeline", expected_version=archived["version"], version=created["version"], idempotency_key="historical-recover")
-        assert error.value.status == 410
-        assert error.value.code == "retired_route"
-        assert "timeline.restore" in error.value.message
-        assert error.value.details["replacement"] == "timeline.restore"
-        assert client.get_project_timeline(project.project_id, "timeline") == before
+            client.recover_timeline(timeline, expected_version=expected_version, version=target_version,
+                                    idempotency_key=f"{timeline}-historical-recover")
+        if timeline_state == "unused":
+            assert error.value.status == 404
+            assert error.value.code == "not_found"
+        else:
+            assert error.value.status == 410
+            assert error.value.code == "retired_route"
+            assert "timeline.restore" in error.value.message
+            assert error.value.details["replacement"] == "timeline.restore"
+            assert client.get_project_timeline(project.project_id, timeline) == before
+        assert daemon.service.store.conn.total_changes == before_store
     finally:
         daemon.stop()
 
 
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="direct timeline, shot and reference writers remain retired")
+@pytest.mark.xfail(strict=True, raises=_RetiredTimelineUpdate,
+                  reason="direct timeline update writer remains retired")
 def test_generated_direct_timeline_shot_reference_writers_remain_retired(tmp_path):
     """Keep the former direct-writer expectations until their command paths land."""
     RealmStore.initialize(tmp_path / "realm").close()
@@ -419,7 +458,9 @@ def test_generated_direct_timeline_shot_reference_writers_remain_retired(tmp_pat
         project = client.create_project("Settings", idempotency_key="project", slug="settings", metadata={"theme": "dark"})
         object_row = client.ingest_project_object(project.project_id, b"managed", media_type="application/octet-stream", idempotency_key="media", filename="managed.bin")
         client.create_timeline(project.project_id, "timeline", idempotency_key="timeline")
-        saved = legacy_call(client, "PATCH", "/v1/timelines/timeline", {"expected_version": 1, "shots": [{"shot_id": "shot", "start_ms": 0, "duration_ms": 100}]}, key="timeline-update")
+        saved = _retired_timeline_update(
+            client, {"expected_version": 1, "shots": [{"shot_id": "shot", "start_ms": 0, "duration_ms": 100}]}
+        )
         history, _ = client.list_timeline_history("timeline")
         assert [item["version"] for item in history] == [1, 2]
         assert client.diff_timeline("timeline", from_version=1, to_version=2)["changes"]["shots"]["added"]
