@@ -1,6 +1,6 @@
 # Visual compile contract
 
-Status: contract draft for the Agent compiler, from the 2026-10-20 03:46 orchestrator decision (popup projection consistency), the 03:59 decision (clip look), the 04:44 correction (exact native fixture) and the 04:57 item 5 (vector 1 is exactly native; vector 2 is an explicitly labelled overhang closure). Golden vectors: `tests/editing_conformance/fixtures/visual_compile_contract.json`, run by `tests/editing_conformance/test_compile_contracts.py`.
+Status: settled MAIN image-cap reference for the Agent visual contract, from the 2026-10-20 popup/clip-look decisions, the exact native fixture, and the owner 11:59 reference. Golden vectors: `tests/editing_conformance/fixtures/visual_compile_contract.json`, run by `tests/editing_conformance/test_compile_contracts.py`. The settled pixel source is ORCH/design `viewing-main-image-cap-actual-reference.md`, operation `vw-m3-main-cap-locked-theme-stage-e2e-viewing-main6-locked-theme-image-cap-three-stills-1020115023-5447`.
 
 Reference for "visible today": `origin/main` e51595c6. The compiler is `astrid/core/timeline/shot_composition_projection.py`, identical to main's file in this tree. The renderer is Composition 0.0.6 (`remotion/package.json:18` on main).
 
@@ -63,7 +63,7 @@ This is a deliberate difference, not lost behaviour (03:59 decision).
 - **Main (Composition 0.0.6).** Effect clips are dispatched straight to the effect component and skip the wrapper. `docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx:121-132` returns `<EffectComponent/>` directly. Media clips go through `VisualClip`, which applies the fade (`VisualClip.tsx:57`, `lib/fade.ts:27-`).
 - **Composition 0.0.7** (`6bd784d`, "clip look (opacity, crop, fades, entrance/exit) on element clips"). `TimelineComposition.tsx:81` in `v0.0.7` wraps effect clips in `<ClipLook kind="element">`. `ClipLook.tsx:40-48` applies opacity and crop to element clips only. Media clips get no opacity or crop from ClipLook, because `VisualClip` already handles their fade. But `ClipLook` wraps media clips too (`TimelineComposition.tsx:99,104,119`), so entrance and exit animations apply to media clips as well. Full list of 0.0.7 differences: `docs/design/owner-film-differences.md`.
 - **Consequence.** Overlapping independent element clips with fades now DIP where main drew them opaque. The 16-30 DIP golden is approved as intended. Viewing lists the owner's films with overlapping element clips that use fades, opacity or entrance/exit (03:59 condition 3).
-- **This tree.** `remotion/package.json:18` pins `file:artifacts/banodoco-timeline-composition-0.0.8.tgz` on the integration tree, so the intended change is already in the pin. `test_render_pin_gives_element_clips_the_clip_look` asserts the pin is at least 0.0.7.
+- **This tree.** `remotion/package.json:18` pins `file:artifacts/banodoco-timeline-composition-0.0.12.tgz` on current integration, so the intended change is already in the pin. `test_render_pin_gives_element_clips_the_clip_look` asserts the pin is at least 0.0.7.
 
 ### Proof still owed (not in this contract)
 
@@ -71,9 +71,110 @@ This is a deliberate difference, not lost behaviour (03:59 decision).
 
 Also in the same 0.0.7 release, per-boundary transitions (dissolve vs dip) changed. The vectors here do not cover that.
 
+## 3. Editor fade-clock analog (vector 3)
+
+`cap_fade_closure` retains the full, opaque App `shotComposition.fixture.json`
+from App commit `35ebae007d848ff22d8da89461bdb66efc93472f`, plus the explicit
+synthetic child replacement from the independent review: an image at 0 s,
+authored `hold: 5`, and `effects: {fade_out: 1}`. The existing
+`withOccurrenceRevision` shape replaces only occ-1's child clips. This is a
+synthetic counterexample, unlike vector 1's native ADD output; the original
+external test bytes were not retained.
+
+The authored occurrence still says 2000 ms. App derives the effective 4000 ms
+cap from occ-2's next start on the same lane, against 5000 ms of content. The
+corpus includes the actual default editor projection and the raw projection
+from that frozen source. Both retain `canonicalTiming.durationMs: 5000` and
+`canonicalTiming.occurrenceDurationMs: 4000`; their only clip difference is
+`hold` (4 versus 5). The raw projection was obtained with the existing App
+option as a diagnostic, not as a proposed per-call clamp policy.
+
+The Agent analog receives the already-derived cap explicitly; it does not
+reproduce App's lane-cap policy. The editor/read projection remains positively
+clamped to `hold: 4`, while the authored source remains `hold: 5`. The fixture
+preserves both complete projected objects and the original opaque fixture
+fields.
+
+| Input to public evaluation, 30 fps | Authored duration | Draw interval | Clip opacity at frame 105 (3.5 s) |
+|---|---|---|---|
+| Clamped editor analog: projected `hold: 4`, cap 4000 ms | 120 frames | [0, 120) | **0.5** |
+| Raw `hold: 5` public-evaluator observation | 150 frames | [0, 120) | 1 (diagnostic only) |
+
+The raw opacity `1` calculation is retained solely to document the pinned
+public evaluator's authored-clock observation; it is not a product golden.
+The analog agrees with the MAIN-confirmed `0.5`; the exact MAIN closure is
+vector 4 below. Both draw plans contain frame 119 and exclude frame 120. The
+`opacity` column is clip opacity, not a pixel/occlusion claim or the track
+plan's transition opacity.
+The contract tests extract this tree's pinned public package into a private
+temporary directory and execute its pure `prepareScene`, `clipOpacity` and
+`queryTrackFrame` exports with the incoming vector `[null]`. They use no local
+fade formula. The Agent editor test supplies the already-derived 4000 ms cap to
+the existing projector, preserves its positive clamp, and checks the authored
+source graph remains unchanged. It does not force a cap in a production proof
+or call the static playable-media analog an actual pipeline.
+
+## 4. Exact single-occurrence MAIN cap (vector 4)
+
+`single_occurrence_cap_closure` references the byte-identical
+`fixtures/main_image_cap_raw_closure.json`, SHA256
+`ad3d0ad35876665489080703c2323a8840c9187428dbe28a913e8ab4ada53f04`.
+This is Viewing's captured synthetic MAIN closure: one occurrence with stored
+`duration_ms: 4000`, placement start 0, and a pinned image with authored
+`hold: 5` / `fade_out: 1`. There is no next occurrence. It is distinct from
+vector 3, whose stored duration is 2000 ms and whose next cut is at 4000 ms.
+The shared fixture includes the complete actual projected config, managed
+registry and serialized timeline, without filtering opaque fields.
+
+**The stored occurrence duration is the existing Agent render cap.** In
+`astrid/core/timeline/shot_composition_projection.py`, `_occurrence_window`
+reads `placement.start_ms` and `duration_ms`, giving [0, 4) seconds.
+`project_runtime_parent_composition` passes that end to `_project_clip`, which
+uses `min(child end, occurrence end)` and converts the visible duration back
+to source units. Thus the projected image has hold4 and unchanged fade_out1.
+The authored pinned child remains hold5. Neither content extent nor another
+occurrence is consulted to derive this cap.
+
+The executable regression `test_single_occurrence_cap_through_normal_managed_projection`
+starts from those exact raw bytes through the existing in-process `_Runtime`
+read fixture. It calls the normal `resolve_managed_render_snapshot` →
+`_project_exact_parent_head` → `project_runtime_parent_composition` path in
+`astrid/packs/rendering/actions/render/managed_timeline.py`, validates the
+snapshot and materializes it. The normal `_serialize_timeline` in
+`astrid/packs/rendering/shared/rendering_backend/__init__.py` invokes
+`Timeline.for_render` and retains hold4. Direct projection and the managed
+path must both equal the full shared fixture. No cap or occurrence is
+injected into this test, and input bytes and objects must remain unchanged.
+
+The actual serialized clips and managed registry then enter the pinned
+Composition 0.0.12 public `prepareScene`, `queryTrackFrame` and `clipOpacity`
+exports, extracted into a private temporary directory. This closure has no
+transitions; preparation receives no synthesized incoming cap metadata.
+Results at numeric30fps: own/draw duration120, f90 opacity1, f105 opacity0.5,
+f119 present with opacity1/30, f120 absent. Calling `clipOpacity` on the raw
+hold5 child gives1 at105; that is explicitly diagnostic only.
+
+This replaces candidate6749e542's strict production xfail, which evaluated
+raw hold5 directly and therefore did not exercise the production join.
+The real pipeline already satisfies the required0.5, so no Agent product,
+SDK timing compiler, package pin, field or default changes are needed.
+The existing prepared-editor positive in section3 remains unchanged.
+
+The original MAIN pixel reference is
+`viewing-main-image-cap-actual-reference.md` in the orchestrator design
+folder, central operation
+`vw-m3-main-cap-locked-theme-stage-e2e-viewing-main6-locked-theme-image-cap-three-stills-1020115023-5447`.
+Frame90 RGB240 and frame105 RGB122/124/130 over background5/8/20 support
+opacity0.5; frame105 PNG SHA256 is
+`c0b0adc7856e2750137315451a9657661925436746d0da1e9cd6a2527d14431b`.
+The reference's exact PNG hashes are retained in the shared fixture.
+No pixels were rerun here. This pure preparation/evaluation proof does not
+claim live Runtime acceptance, renderer execution, App preview/export
+parity, audio or Gate6 closure.
+
 ## Vectors
 
-The render-facing rows are the source-window child of each occurrence. Vector 1 is the six native rows (section 1). Vector 2 is the overhang closure (section 1b). Each row is a frame value from the projected clip (`shot_occurrence_id` plus `app.astrid_shot_composition.source_clip_id` = `clip-a`). A row with `closure` = `overhang` is vector 2. A row with `clamp` = `off` is the unclamped expectation, which the compiler does not emit.
+The original frame rows are the source-window child of each occurrence. Vector 1 is the six native rows (section 1). Vector 2 is the overhang closure (section 1b). Each row is a frame value from the projected clip (`shot_occurrence_id` plus `app.astrid_shot_composition.source_clip_id` = `clip-a`). A row with `closure` = `overhang` is vector 2. Vector 3 is stored separately as `cap_fade_closure` and checks the raw authored fade clock against the bounded draw interval (section 3). Vector 4 is `single_occurrence_cap_closure`, the exact MAIN closure through normal managed preparation (section 4).
 
 | id | Occurrence / child | Field | Expect | Status |
 |---|---|---|---|---|
@@ -91,10 +192,17 @@ The render-facing rows are the source-window child of each occurrence. Vector 1 
 | overhang-clamp-on-end-frame | vector 2, occ-c / clip-a (visible end 3.5 s) | end_frame | 105 | pass |
 | overhang-clamp-on-duration-frames | vector 2, occ-c / clip-a | duration_frames | 15 | pass |
 | `test_overhang_child_is_clamped_to_its_occurrence_end` | vector 2, occ-c / clip-a | at, visible duration | 3.0 s, 0.5 s | pass |
+| `test_cap_fade_editor_projection_keeps_clamped_timing_and_authored_source` | vector 3, occ-1 / overlong-child | projected hold / authored hold | 4 s / 5 s | pass |
+| `test_cap_fade_public_source_clock_and_half_open_draw_cap[clamped-analog]` | vector 3, clamped editor analog | 0.5 / 120 / 120; frame 119 present, frame 120 absent | pass |
+| `test_cap_fade_public_source_clock_and_half_open_draw_cap[editor]` | vector 3, editor projection | 0.5 / 120 / 120; frame 119 present, frame 120 absent | pass |
+| `test_cap_fade_public_source_clock_and_half_open_draw_cap[raw-diagnostic]` | vector 3, raw authored input | 1 / 150 / 120; diagnostic only | pass |
+| `test_single_occurrence_cap_through_normal_managed_projection` | vector 4, exact stored4000/hold5 closure | projected hold4; f90=1, f105=0.5, f119 present, f120 absent | pass |
 
 The six native rows are unchanged. Every clamp-on row is produced on this branch, and the clip look is already in this tree. No rows were added or kept as xfails for clamp off: the compiler has no unclamped mode, and the decision does not add one.
 
-Measured on this branch with `tests/editing_conformance/test_compile_contracts.py`, `targeted` request `agt-visual-vector2-targeted-1020050917-11665`: 26 passed, 4 xfailed (before the clamp-off drop). After the drop, `targeted` request `agt-m3-mouth-product-and-xfail-drop-targeted-1020062459-10614`: 27 passed, 2 xfailed. The 2 xfails are the audio vectors 10-11.
+The settled focused run is recorded in the worker report. Its two pre-existing
+strict xfails are audio vectors 10–11. The single-occurrence visual cap
+regression is an ordinary passing assertion.
 
 ## Open
 
@@ -102,9 +210,17 @@ Measured on this branch with `tests/editing_conformance/test_compile_contracts.p
    - Whether an unclamped mode is wanted at all. Decided 06:18: the 03:46 decision holds, so the clamp-off rows are dropped rather than kept as xfails.
    - MAIN's default clamp (Viewing's probe) does not match the compiler on vector 1. MAIN cuts A's children at B's start (10 s); the compiler cuts at A's end (18 s). Viewing's evidence says the MAIN clamp for the native closure ends at 10 s, not 18 s. Not verified from source here.
 2. **Overlapping occurrence spans on the picture lane.** A (8-18 s) and B (10-20 s) overlap by 8 s. Main accepts it, and the source-window children do not overlap. App confirms the spans through the hub (orchestrator asked, 04:57). Vector 1 stays as native until then.
-3. **Physical reference.** Viewing produces it (analog, MAIN at `Fraction(30000, 1001)`) for both closures and checks the rows against it. Not done here. The overhang closure's reference is `pending` in the fixture.
+3. **App single-occurrence effective duration.** The App report
+   `app-main-cap-half-golden.md` shows that its current consumer replaces the
+   exact stored4000ms cap with content5000ms when no next occurrence exists.
+   Agent already honors stored4000ms through normal preparation. App policy
+   reconciliation belongs to the App owner/orchestrator; preserve its original
+   stored2000ms/next4000ms editor positive as well as this exact closure.
 
 ## Not verified
 
-- No media was generated, no frames were rendered and no pixels were compared. The vectors test the compiler's output fields only.
+- The Agent worker did not rerun MAIN capture; the settled pixel values and
+  hashes are imported from the ORCH/design reference named above. The vectors
+  test normal Agent managed projection/materialization/serialization and the
+  pinned public evaluator; no renderer/browser or live Runtime was started.
 - App's tests were not run from this worktree. App's own clamp replica (`src/tools/video-editor/data/shotCompositionProjection.ts:437-449`) and its `clampToOccurrenceDuration: false` callers were not changed here.
