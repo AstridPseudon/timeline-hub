@@ -157,7 +157,7 @@ def test_an_exception_is_an_edit_record_rolled_back_with_its_message(draft):
     assert _text(draft) == text
 
 
-def test_publish_does_not_duplicate_accepted_history_in_the_local_journal(draft, monkeypatch):
+def test_publish_records_the_message_as_reason_and_the_new_head_as_evidence(draft, monkeypatch):
     with draft.edit("move"):
         draft.clip("c1.rocket").set(x=90)
     published: dict = {}
@@ -179,9 +179,11 @@ def test_publish_does_not_duplicate_accepted_history_in_the_local_journal(draft,
     monkeypatch.setattr(_store, "publish_bundle", fake_publish)
     monkeypatch.setattr(_store, "fetch_bundle", fake_fetch)
     monkeypatch.setattr(draft, "_publish_narration", lambda key, client=None: {})
-    receipt = draft.publish("move the rocket")
-    assert receipt["new_head"] == "rev-1"
-    assert [record.kind for record in _records()] == ["checkout", "save"]
+    draft.publish("move the rocket")
+    rec = _records()[-1]
+    assert (rec.kind, rec.outcome, rec.label) == ("publish", "changed", "publish")
+    assert rec.reason == "move the rocket"
+    assert rec.evidence == ({"kind": "revision", "id": "rev-1"},)
 
 
 def test_the_actor_comes_from_astrid_actor_and_astrid_session(draft, monkeypatch):

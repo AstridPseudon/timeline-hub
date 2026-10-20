@@ -15,6 +15,7 @@ from astrid.sdk import timeline_intent as intent
 from astrid.sdk import (
     timeline_transcripts as _transcripts,  # module access: its functions resolve at call time
 )
+from astrid.sdk.timeline import journal as _journal
 from astrid.sdk.timeline import store as _store
 from astrid.sdk.timeline._common import EDITABLE_NOTE, TimelineEditError, _num, _r
 from astrid.sdk.timeline.doc import _row_start, _set_length, _strip_derived
@@ -77,7 +78,16 @@ class _PublishMixin:
             if item["status"] == "skipped":
                 print(f"note: narration transcript {item['label']}: {item.get('reason', 'skipped')}", file=sys.stderr)
         if self.path:  # publish resets the base: this working copy is the new head, with no changes (AUDIT bug 6)
+            # WC7's legacy whole-document publisher has no reason/rationale
+            # carrier in the Runtime publication history. Keep this local
+            # publish note until that consumer migrates; accepted ancestry and
+            # sheet bases still come from authenticated Runtime history.
+            before = _journal.document_digest(self.document())
             self._reset_base(client=client)
+            _journal.record_or_note(self, Path(self.path), kind="publish", outcome="changed", label="publish",
+                                    reason=message or None, before=before,
+                                    after=_journal.document_digest(self.document()),
+                                    evidence=({"kind": "revision", "id": receipt.get("new_head")},))
         receipt["message"] = message
         return receipt
 
