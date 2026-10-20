@@ -10,6 +10,8 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
+from .launcher import install as install_launcher
+
 
 class VerificationError(RuntimeError):
     """The installed Runtime's browser door did not pass its readiness check."""
@@ -52,6 +54,8 @@ def read_json(path: Path) -> dict:
 
 
 def write_json(path: Path, value: dict) -> None:
+    from runtime_protocol.platform import durable_replace
+
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
     with temporary.open("w", encoding="utf-8", newline="\n") as stream:
@@ -59,7 +63,7 @@ def write_json(path: Path, value: dict) -> None:
         stream.write("\n")
         stream.flush()
         os.fsync(stream.fileno())
-    os.replace(temporary, path)
+    durable_replace(temporary, path)
 
 
 def find_data_root(recorded: Path | None, requested: Path | None,
@@ -119,6 +123,8 @@ def current(root: Path) -> Version | None:
 
 
 def switch(root: Path, version: Version) -> None:
+    from runtime_protocol.platform import durable_replace
+
     name = version_id(version.root.name)
     if version.root != root / "versions" / name:
         raise ValueError("The current pointer must name a managed version.")
@@ -127,16 +133,58 @@ def switch(root: Path, version: Version) -> None:
         stream.write(name + "\n")
         stream.flush()
         os.fsync(stream.fileno())
-    os.replace(pointer, root / "current")
+    durable_replace(pointer, root / "current")
 
 
 class Installer:
     def __init__(self, root: Path, data: Path, backend, *, say=print):
         self.root, self.data, self.backend, self.say = root, data, backend, say
 
+    def _save_update(self, transaction: dict, step: str, **details) -> None:
+        transaction.update(step=step, **details)
+        write_json(absolute(self.root / "update-transaction.json"), transaction)
+
+    def _recover_update(self) -> None:
+        """Replay rollback from its retained image before inspecting mutable support."""
+        transaction = read_json(absolute(self.root / "update-transaction.json"))
+        if not transaction or transaction.get("step") in {"complete", "rolled_back"}:
+            return
+        if (transaction.get("format") != "astrid-install-update/v1"
+                or not re.fullmatch(r"[0-9a-f]{32}", str(transaction.get("operation_id", "")))
+                or absolute(transaction["data_root"]) != absolute(self.data)):
+            raise ValueError("The interrupted update identity does not match this installation.")
+        old = Version.load(transaction["old"])
+        candidate = Version.load(transaction["candidate"]) if transaction.get("candidate") else None
+        realm = transaction["realm"]
+        absolute(realm["realm_root"])
+        backup = transaction.get("backup")
+        if backup and "root" in backup:
+            retained = absolute(backup["root"])
+            if retained.parent != absolute(self.root / "backups"):
+                raise ValueError("The interrupted update backup is outside this installation.")
+        self.say("Recovering the interrupted Astrid update from its retained backup.")
+        self._save_update(transaction, "recovering")
+        # These actions can themselves be interrupted. Keep the transaction and
+        # image until the old owner has passed verification; restore is replayable.
+        self.backend.stop(candidate or old, self.data)
+        if backup is not None:
+            self.backend.restore(old, self.data, realm, backup)
+        if old.root.parent == self.root / "versions":
+            switch(self.root, old)
+        else:
+            (self.root / "current").unlink(missing_ok=True)
+        self.backend.register(old, self.data)
+        self.backend.start(old, self.data)
+        self.backend.verify(old, self.data, realm["realm_id"])
+        self._save_update(transaction, "rolled_back")
+
     def run(self, mode: str, manifest: dict, *, delete_data: bool = False,
             bundle: Path | None = None) -> None:
+        if mode not in {"doctor", "uninstall"}:
+            self._recover_update()
         old = current(self.root)
+        if old is not None and mode not in {"doctor", "uninstall"}:
+            install_launcher(self.root)
         if old is not None and not old.python.is_file():
             old = None
         old = old or self.backend.existing(self.data)
@@ -190,19 +238,31 @@ class Installer:
         candidate = None
         stopped = False
         switched = False
+        transaction = None
         try:
             if old:
+                transaction = {
+                    "format": "astrid-install-update/v1", "operation_id": uuid.uuid4().hex,
+                    "data_root": str(self.data), "old": old.document(), "realm": realm,
+                    "backup": None, "candidate": None,
+                }
+                self._save_update(transaction, "prepared")
                 self.say("Stopping Astrid before the update.")
                 # A stop can fail after stopping the manager: recovery must run.
                 stopped = True
                 self.backend.stop(old, self.data)
+                self._save_update(transaction, "stopped")
                 self.say("Backing up your workspace.")
                 backup = self.backend.backup(old, self.data, realm)
+                self._save_update(transaction, "backed_up", backup=backup)
             self.say("Installing the pinned Astrid version.")
             candidate = self.backend.stage(manifest, self.root, self.data)
             if old:
+                assert transaction is not None
+                self._save_update(transaction, "staged", candidate=candidate.document())
                 self.say("Updating the workspace with Astrid Runtime.")
                 self.backend.upgrade(candidate, self.data)
+                self._save_update(transaction, "upgraded")
                 # upgrade owns its temporary daemon; hand back to the login service.
                 self.backend.stop(candidate, self.data)
             elif reinstall:
@@ -211,24 +271,38 @@ class Installer:
                 realm = self.backend.create(candidate, self.data)
             switch(self.root, candidate)
             switched = True
+            install_launcher(self.root)
+            if transaction is not None:
+                self._save_update(transaction, "switched")
             self.say("Starting Astrid at sign-in.")
             self.backend.register(candidate, self.data)
+            if transaction is not None:
+                self._save_update(transaction, "registered")
             self.backend.start(candidate, self.data)
+            if transaction is not None:
+                self._save_update(transaction, "started")
             self.backend.verify(candidate, self.data, realm["realm_id"])
+            if transaction is not None:
+                self._save_update(transaction, "verified")
             self.backend.finish(old, candidate, backup)
+            if transaction is not None:
+                self._save_update(transaction, "complete")
         except (Exception, KeyboardInterrupt) as failure:
             if old and stopped:
                 try:
                     self.backend.stop(candidate or old, self.data)
                     if backup is not None:
                         self.backend.restore(old, self.data, realm, backup)
-                    if switched and old.root.parent == self.root / "versions":
+                    pointer_changed = switched or current(self.root) not in (None, old)
+                    if pointer_changed and old.root.parent == self.root / "versions":
                         switch(self.root, old)
-                    elif switched:
+                    elif pointer_changed:
                         (self.root / "current").unlink(missing_ok=True)
                     self.backend.register(old, self.data)
                     self.backend.start(old, self.data)
                     self.backend.verify(old, self.data, realm["realm_id"])
+                    if transaction is not None:
+                        self._save_update(transaction, "rolled_back")
                 except (Exception, KeyboardInterrupt) as recovery:
                     raise RuntimeError(f"Update failed ({failure}); recovery also failed ({recovery}).") from failure
             elif candidate is not None:
