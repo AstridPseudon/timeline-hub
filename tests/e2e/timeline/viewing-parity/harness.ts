@@ -5,7 +5,7 @@ import { access, lstat, readFile, readdir, readlink, realpath } from 'node:fs/pr
 import { join, relative, resolve } from 'node:path';
 import { DirectHarness, harnessUnavailableReason, REPO_ROOT } from '../../local/support/harness';
 import { startRealPackHost } from './bootstrap';
-import { prepareFrameParityFixture, type FrameParityFixture, readRuntimeJson } from './fixture';
+import { nativeFrameParitySetup, prepareFrameParityFixture, prepareNativeFrameParityRealm, type FrameParityFixture, readRuntimeJson } from './fixture';
 import { mediaHash } from './media';
 import { ORIGINAL_640, type ParityCanvas } from './canvas';
 import type { Capability } from '../../../../src/integrations/runtime/generated';
@@ -248,8 +248,7 @@ export const test = base.extend<object, {
   harness: DirectHarness; fixture: FrameParityFixture; browser: Browser; parityCanvas: ParityCanvas;
 }>({
   parityCanvas: [ORIGINAL_640, { scope: 'worker', option: true }],
-  // eslint-disable-next-line no-empty-pattern
-  harness: [async ({}, provide, workerInfo) => {
+  harness: [async ({ parityCanvas }, provide, workerInfo) => {
     await assertRunBoundary();
     const reason = harnessUnavailableReason();
     if (reason) throw new Error(reason);
@@ -258,7 +257,9 @@ export const test = base.extend<object, {
     const harness = new DirectHarness();
     const failures: unknown[] = [];
     try {
-      await harness.start();
+      await harness.start({ seed: false, beforeRuntimeStart: async current => {
+        await prepareNativeFrameParityRealm(current, parityCanvas);
+      }});
       await provide(harness);
     } catch (error) { failures.push(error); }
     finally {
@@ -271,8 +272,8 @@ export const test = base.extend<object, {
     if (failures.length) throw new AggregateError(failures, 'Runtime fixture or final source postflight failed');
   }, { scope: 'worker', timeout: 240_000 }],
   fixture: [async ({ harness, parityCanvas }, provide) => {
-    const fixture = await prepareFrameParityFixture(harness, parityCanvas);
     await harness.enableTimelineAuthoring(requiredEnv('ASTRID_PYTHON'));
+    const fixture = await prepareFrameParityFixture(harness, parityCanvas, nativeFrameParitySetup(harness));
     // Browser/export qualification still requires the approved Agent helper
     // and adoption of the frozen consumer graph.
     const host = await startRealPackHost(harness, () => readyRenderCapability(harness));
