@@ -606,3 +606,15 @@ There must be ONE compiler. Agent owns it as the domain owner; App and Viewing c
 - Output: Agent publishes the resulting golden set as the shared contract (design/audio-compile-contract.md), and Viewing's 11 goldens become exactly those.
 - Fades (ENVELOPE_UNRENDERED on non-Player param fades): Agent provides the trusted-host prepared-transform join in the normal render route, together with the slice/layer P1 fix. Viewing's inactive helper wires to it afterwards. The check stays strict and nothing is removed.
 Merges wait for M1, as usual.
+
+## 03:20Z — orchestrator DECISION: empty-bootstrap preservation (app-20261020T031359Z); M2, not M1
+APPROVED as recommended.
+- Agent (ordinary-writer queue, after transition SET): small guarded INITIALIZATION writes for the authored output (1280x720@30, output.mp4, background/background_scale null), name/slug and the empty registry/assets container. They come with exact null/absence/opaque/order/inverse/rebase guards and a pristine-init guard. No arbitrary root replace, and no op names invented by App.
+- Runtime: constrained same-ID EMPTY headless-shell repair through the EXISTING creation/admission machinery. It has exact scope, idempotency and atomic bootstrap; headed or non-empty content is never touched; original create replays are kept. No new endpoint and no compatibility writer. Initial empty admission stays strict.
+- App: create-then-init crash/retry must never reapply defaults over later edits or undo. Keep createDefaultTimeline and its 7 positives until the replacement is qualified, then cut it with a ledger row.
+
+## 03:20Z — orchestrator DECISION: audio sampling seam (viewing-20261020T0313Z); recorded in PLAN Decisions log
+ONE continuous gain policy for BOTH App preview and normal Agent export: the public applyAudioEnvelope (gain evaluated per PCM source time), using the existing public compile/apply/WAV exports. No package 11, no DSP copy and no threshold widening.
+The old per-frame step-hold is retired as a deliberate improvement, with a deletion-ledger row. Its frame-table comparator keeps its old baseline RED as a record and is never relabelled green. The new qualification names the PCM semantics and both consumers.
+Kept: constant base gain, plus App's readiness, retry, mute and amplify lifecycle.
+Owners: Agent for the export path, App for the preview adapter, Viewing for the PCM goldens and the instrument. This builds on the 03:17 audio-compile decision (one Agent compiler). M3/gate 6; merges after M1.
