@@ -105,19 +105,21 @@ export type OutboxRequestBuilder = (
 
 export interface ClaimedOutbox {
   read(): Promise<OutboxRecord>;
+  assertActive(): void;
   reserveCreate(payload: OutboxJson, request: OutboxRequest): Promise<string>;
   append(payload: OutboxJson, basis: OutboxBasis, afterAcceptRender?: OutboxJson): Promise<string>;
   cancel(intentId: string): Promise<void>;
   resolveRejected(intentIds: string[], replacement?: { payload: OutboxJson; head: OutboxHead }, isCurrent?: () => boolean): Promise<OutboxRecord>;
   reserveRenderAdmission(target: OutboxRenderTarget, request: OutboxRequest): Promise<OutboxRenderContinuation>;
   recordRenderTask(target: OutboxRenderTarget, request: OutboxRequest, taskLocator: OutboxJson): Promise<OutboxRenderContinuation>;
-  reservePlacementAdmission(id: string, input: OutboxPlacementInput): Promise<OutboxPlacementContinuation>;
-  recordPlacementTask(id: string, request: OutboxRequest, taskLocator: NonNullable<OutboxPlacementContinuation['taskLocator']>): Promise<OutboxPlacementContinuation>;
-  recordPlacementConflict(id: string, error: OutboxJson): Promise<OutboxPlacementContinuation>;
-  capturePlacement(id: string, mediaPin: OutboxJson, capture: OutboxPlacementCapture, check?: () => Promise<void>): Promise<OutboxPlacementContinuation>;
+  reservePlacementAdmission(id: string, input: OutboxPlacementInput, assertCurrent?: () => void): Promise<OutboxPlacementContinuation>;
+  recordPlacementTask(id: string, request: OutboxRequest, taskLocator: NonNullable<OutboxPlacementContinuation['taskLocator']>, assertCurrent?: () => void): Promise<OutboxPlacementContinuation>;
+  recordPlacementConflict(id: string, error: OutboxJson, assertCurrent?: () => void): Promise<OutboxPlacementContinuation>;
+  capturePlacement(id: string, mediaPin: OutboxJson, capture: OutboxPlacementCapture, check?: () => Promise<void>, assertCurrent?: () => void): Promise<OutboxPlacementContinuation>;
   dispatch(
     build: OutboxRequestBuilder,
     transmit: (request: OutboxRequest) => Promise<OutboxOutcome>,
+    assertCurrent?: () => void,
   ): Promise<OutboxRecord>;
 }
 
@@ -291,6 +293,10 @@ export function createCommitOutbox(options: {
       let dispatching = false;
       const capturing = new Set<string>();
 
+      function assertActive(): void {
+        if (!active) throw new Error('Stale outbox claim');
+      }
+
       function access<T>(mode: IDBTransactionMode, change: (record: OutboxRecord) => T): Promise<T> {
         let failure: unknown;
         return transaction<T>(mode, (store, finish) => {
@@ -314,6 +320,7 @@ export function createCommitOutbox(options: {
 
       const outbox: ClaimedOutbox = {
         read: () => access('readonly', detached),
+        assertActive,
         async reserveCreate(payload, request) {
           const intent = newIntent(payload, { create: true });
           const exact = detached(request);
@@ -408,10 +415,11 @@ export function createCommitOutbox(options: {
             return detached(render);
           });
         },
-        async reservePlacementAdmission(id, input) {
+        async reservePlacementAdmission(id, input, assertCurrent) {
           if (typeof id !== 'string' || !id) throw new Error('Missing placement continuation identity');
           const frozen = placementInput(input);
           return access('readwrite', (record) => {
+            assertCurrent?.();
             const existing = record.placementContinuations?.find((item) => item.id === id);
             if (existing) {
               if (JSON.stringify(existing.input) !== JSON.stringify(frozen)) throw new Error('Placement reservation cannot change');
@@ -426,7 +434,7 @@ export function createCommitOutbox(options: {
             return detached(continuation);
           });
         },
-        async recordPlacementTask(id, requestInput, locatorInput) {
+        async recordPlacementTask(id, requestInput, locatorInput, assertCurrent) {
           const request = renderRequest(requestInput);
           const { projectId, runId, taskId } = locatorInput;
           const locator = detached({ projectId, runId, taskId });
@@ -434,6 +442,7 @@ export function createCommitOutbox(options: {
             throw new Error('Incomplete or wrong-scope placement task locator');
           }
           return access('readwrite', (record) => {
+            assertCurrent?.();
             const continuation = placementFor(record, id);
             if (!sameRequest(continuation.input.request, request)) throw new Error('Placement task requires the exact reserved request');
             if (continuation.taskLocator && JSON.stringify(continuation.taskLocator) !== JSON.stringify(locator)) {
@@ -443,21 +452,23 @@ export function createCommitOutbox(options: {
             return detached(continuation);
           });
         },
-        async recordPlacementConflict(id, error) {
+        async recordPlacementConflict(id, error, assertCurrent) {
           const conflict = detached(error);
           return access('readwrite', (record) => {
+            assertCurrent?.();
             const continuation = placementFor(record, id);
             if (!continuation.placement && continuation.conflict === undefined) continuation.conflict = conflict;
             return detached(continuation);
           });
         },
-        async capturePlacement(id, mediaPinInput, capture, check) {
+        async capturePlacement(id, mediaPinInput, capture, check, assertCurrent) {
           const mediaPin = detached(mediaPinInput);
           if (mediaPin === null) throw new Error('Placement capture requires an immutable media pin');
           if (capturing.has(id)) throw new Error('Placement capture is already running');
           capturing.add(id);
           try {
             const original = await access('readwrite', (record) => {
+              assertCurrent?.();
               const continuation = placementFor(record, id);
               if (!continuation.taskLocator) throw new Error('Placement capture requires the saved task locator');
               if (continuation.mediaPin !== undefined && JSON.stringify(continuation.mediaPin) !== JSON.stringify(mediaPin)) {
@@ -467,8 +478,9 @@ export function createCommitOutbox(options: {
               return detached(continuation);
             });
             if (original.placement || original.conflict !== undefined) return original;
-            if (!active) throw new Error('Stale outbox claim');
             await check?.();
+            assertActive();
+            assertCurrent?.();
             let payload: OutboxJson | undefined;
             let conflict: OutboxJson | undefined;
             try {
@@ -479,6 +491,7 @@ export function createCommitOutbox(options: {
             // Lifecycle interruption must escape without linking a payload or a semantic refusal.
             await check?.();
             return await access('readwrite', (record) => {
+              assertCurrent?.();
               const continuation = placementFor(record, id);
               if (continuation.placement || continuation.conflict !== undefined) return detached(continuation);
               if (conflict !== undefined) continuation.conflict = conflict;
@@ -494,11 +507,12 @@ export function createCommitOutbox(options: {
             capturing.delete(id);
           }
         },
-        async dispatch(build, transmit) {
+        async dispatch(build, transmit, assertCurrent) {
           if (dispatching) throw new Error('Outbox request is already being transmitted');
           dispatching = true;
           try {
             const pending = await access('readwrite', (record) => {
+              assertCurrent?.();
               if (record.pending) {
                 if (record.pending.outcome?.kind === 'rejected') throw new Error('Outbox has a rejected prefix');
                 return detached(record.pending);
@@ -516,7 +530,8 @@ export function createCommitOutbox(options: {
               return detached(record.pending);
             });
             // The reservation's transaction has completed before any network callback.
-            if (!active) throw new Error('Stale outbox claim');
+            assertActive();
+            assertCurrent?.();
             let outcome: OutboxOutcome;
             try {
               outcome = detached(await transmit(detached(pending.request)));
@@ -524,6 +539,8 @@ export function createCommitOutbox(options: {
               outcome = { kind: 'retry', error: { reason: 'transport_error' } };
             }
             return await access('readwrite', (record) => {
+              // Retry bookkeeping keeps the exact uncertain request; only a live identity may consume it.
+              if (outcome.kind !== 'retry') assertCurrent?.();
               if (record.pending?.request.key !== pending.request.key
                 || record.intents[0]?.id !== pending.intentId) throw new Error('Stale outbox completion');
               if (outcome.kind === 'accepted') {

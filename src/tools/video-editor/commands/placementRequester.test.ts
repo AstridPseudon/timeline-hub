@@ -44,7 +44,7 @@ function deferred() {
 }
 function environment() {
   const factory = createFakeIndexedDB();
-  const fault = { abortNextWrite: false };
+  const fault: { abortNextWrite: boolean; beforeWrite?: () => void } = { abortNextWrite: false };
   const open = factory.open.bind(factory);
   // Match the rollback fixture in commitOutbox.test.ts; this fake needs explicit rollback.
   factory.open = (...args: unknown[]) => {
@@ -54,6 +54,21 @@ function environment() {
       const transaction = db.transaction.bind(db);
       db.transaction = (store: string, mode: string) => {
         const tx = transaction(store, mode);
+        const objectStore = tx.objectStore.bind(tx);
+        tx.objectStore = (name: string) => {
+          const value = objectStore(name);
+          const get = value.get.bind(value);
+          value.get = (key: string) => {
+            const request = get(key);
+            if (mode === 'readwrite') request.addEventListener('success', () => {
+              const beforeWrite = fault.beforeWrite;
+              delete fault.beforeWrite;
+              beforeWrite?.();
+            });
+            return request;
+          };
+          return value;
+        };
         const records = db.recordsByStore.get(store);
         const before = new Map(records);
         const dispatch = tx.dispatch.bind(tx);
@@ -106,7 +121,11 @@ function environment() {
     }
     return { status, headers: {}, body: new TextEncoder().encode(JSON.stringify(body)) };
   });
-  const client = new WorkspaceClient('', undefined, transport);
+  const client = Object.assign(new WorkspaceClient('', undefined, transport), {
+    isCurrentIdentity(expected: Pick<OutboxScope, 'realmId' | 'actorId'>) {
+      return state.identity.actorId === expected.actorId && state.identity.realmId === expected.realmId;
+    },
+  });
   // Opaque semantic fixture only: these tests do not implement or qualify automatic placement commands.
   const capture = vi.fn<OutboxPlacementCapture>(async (original) => ({ fixture: 'Agent-owned guarded payload', media: original.mediaPin!, ids: original.input.createdIds }));
   const build = vi.fn((intent: OutboxIntent, base: OutboxHead, originalScope: OutboxScope = scope) => ({ method: 'POST',
@@ -990,5 +1009,450 @@ describe('composed requester fences with dependent recovery', () => {
     });
     await recoverChain(env, ownerId, saved);
     expect(env.capture).toHaveBeenCalledTimes(1);
+  });
+});
+
+// The read wrapper only delays delivery of a real successful, generation-checked IDB read.
+describe('independent residual fence counterexamples', () => {
+  it.each(['actorId', 'realmId'] as const)('does not POST after %s changes during the final authorization read', async (field) => {
+    const env = environment();
+    const reading = deferred(), complete = deferred();
+    let checks = 0;
+    let pauseRead = false;
+    const dispatchIdentities: unknown[] = [];
+    const admit = env.client.admitTask.bind(env.client);
+    vi.spyOn(env.client, 'admitTask').mockImplementation(async (...args) => {
+      dispatchIdentities.push({ ...env.state.identity });
+      return admit(...args);
+    });
+    const requester = createPlacementRequester({ client: env.client, outboxes: env.storage(),
+      getRecoverableIdentity: async () => {
+        checks += 1;
+        if (checks === 3) pauseRead = true; // resume, advance, then POST authorization
+        return { ...env.state.identity };
+      }, capture: env.capture, build: env.build, transmit: env.transmit });
+    await env.storage().create(scope, async (box) => {
+      await env.reserve(box);
+      const read = box.read.bind(box);
+      vi.spyOn(box, 'read').mockImplementation(async () => {
+        const record = await read();
+        if (pauseRead) { pauseRead = false; reading.resolve(); await complete.promise; }
+        return record;
+      });
+      const advancing = requester.resume(box);
+      await reading.promise;
+      env.state.identity = { ...env.state.identity, [field]: 'different' };
+      complete.resolve();
+      const result = await advancing;
+      const retained = await read();
+      console.info('RESIDUAL_POST', JSON.stringify({ field, result: result[0].status, dispatchIdentities,
+        posted: env.calls.filter((c) => c.method === 'POST'), retained: retained.placementContinuations }));
+      // Recovery is possible under the original identity, with exactly the original body/key/IDs.
+      env.state.identity = { realmId: scope.realmId, actorId: scope.actorId };
+      expect(await requester.resume(box)).toMatchObject([{ status: 'accepted' }]);
+      expect(env.calls.filter((c) => c.method === 'POST')).toEqual([prepared]);
+      expect(env.capture.mock.calls[0][0]).toMatchObject({ input, mediaPin: pin });
+      expect(dispatchIdentities).toEqual([{ realmId: scope.realmId, actorId: scope.actorId }]);
+      // Safety expectation: the late old-identity authorization should have prevented this POST.
+      expect(env.calls.filter((c) => c.method === 'POST').slice(0, -1)).toEqual([]);
+    });
+  });
+
+  it.each([{field:'actorId', refusal:false}, {field:'realmId', refusal:false}, {field:'actorId', refusal:true}, {field:'realmId', refusal:true}] as const)('does not change capture storage at $field refusal=$refusal during the post-capture read', async ({field, refusal}) => {
+      const env = environment();
+      const reading = deferred(), complete = deferred();
+      let pauseRead = false, arm = false;
+      const capture = env.capture.getMockImplementation()!;
+      env.capture.mockImplementationOnce(async (saved) => {
+        arm = true;
+        if (refusal) throw new Error('original semantic capture refused');
+        return capture(saved);
+      });
+      const requester = createPlacementRequester({ client: env.client, outboxes: env.storage(),
+        getRecoverableIdentity: async () => {
+          if (arm) { arm = false; pauseRead = true; }
+          return { ...env.state.identity };
+        }, capture: env.capture, build: env.build, transmit: env.transmit });
+      await env.storage().create(scope, async (box) => {
+        const read = box.read.bind(box);
+        vi.spyOn(box, 'read').mockImplementation(async () => {
+          const record = await read();
+          if (pauseRead) { pauseRead = false; reading.resolve(); await complete.promise; }
+          return record;
+        });
+        const advancing = requester.request(box, 'request', input);
+        await reading.promise;
+        const before = await read();
+        env.state.identity = { ...env.state.identity, [field]: 'different' };
+        complete.resolve();
+        const result = await advancing;
+        const after = await read();
+        console.info('RESIDUAL_CAPTURE', JSON.stringify({ field, refusal, status: result.status,
+          before: before.placementContinuations, after: after.placementContinuations, intents: after.intents }));
+        expect(env.transmit).not.toHaveBeenCalled();
+        expect(after.placementContinuations![0].input).toEqual(input);
+        env.state.identity = { realmId: scope.realmId, actorId: scope.actorId };
+        if (!refusal) {
+          expect(await requester.resume(box)).toMatchObject([{ status: 'accepted' }]);
+          expect(env.capture).toHaveBeenCalledTimes(2);
+        } else {
+          expect(await requester.resume(box)).toMatchObject([{ status: 'accepted' }]);
+          expect(env.capture).toHaveBeenCalledTimes(2);
+        }
+        expect(after.placementContinuations).toEqual(before.placementContinuations);
+      });
+  });
+
+  it.each([{field:'actorId', kind:'accepted'}, {field:'realmId', kind:'accepted'}, {field:'actorId', kind:'rejected'}, {field:'realmId', kind:'rejected'}] as const)('does not consume $kind at $field change during the final transmit read', async ({field, kind}) => {
+      const env = environment();
+      const reading = deferred(), complete = deferred();
+      let pauseRead = false, arm = false;
+      env.transmit.mockImplementationOnce(async () => {
+        arm = true;
+        return kind === 'accepted' ? acceptance('A') : { kind: 'rejected', error: { reason: 'original conflict' } };
+      });
+      const requester = createPlacementRequester({ client: env.client, outboxes: env.storage(),
+        getRecoverableIdentity: async () => {
+          if (arm) { arm = false; pauseRead = true; }
+          return { ...env.state.identity };
+        }, capture: env.capture, build: env.build, transmit: env.transmit });
+      await env.storage().create(scope, async (box) => {
+        const read = box.read.bind(box);
+        vi.spyOn(box, 'read').mockImplementation(async () => {
+          const record = await read();
+          if (pauseRead) { pauseRead = false; reading.resolve(); await complete.promise; }
+          return record;
+        });
+        const advancing = requester.request(box, 'request', input);
+        await reading.promise;
+        const before = await read();
+        env.state.identity = { ...env.state.identity, [field]: 'different' };
+        complete.resolve();
+        const result = await advancing;
+        const after = await read();
+        console.info('RESIDUAL_ACK', JSON.stringify({ field, kind, status: result.status, before, after }));
+        expect(before.pending!.request).toEqual(env.transmit.mock.calls[0][0]);
+        env.state.identity = { realmId: scope.realmId, actorId: scope.actorId };
+        expect(await requester.resume(box)).toMatchObject([{ status: 'accepted' }]);
+        expect(env.transmit.mock.calls.map(([request]) => request)).toEqual([before.pending!.request, before.pending!.request]);
+        expect(env.capture).toHaveBeenCalledTimes(1);
+        expect(env.build).toHaveBeenCalledTimes(1);
+        expect(after.pending?.request).toEqual(before.pending!.request);
+        expect(after.intents).toEqual(before.intents);
+      });
+  });
+
+  it.each(['actorId', 'realmId'] as const)('does not persist API refusal after %s changes during the refusal authorization read', async (field) => {
+    const env = environment();
+    const reading = deferred(), complete = deferred();
+    let pauseRead = false, arm = false;
+    env.state.admissionFailure = 403;
+    const admit = env.client.admitTask.bind(env.client);
+    vi.spyOn(env.client, 'admitTask').mockImplementationOnce(async (...args) => {
+      try { return await admit(...args); } finally { arm = true; }
+    });
+    const requester = createPlacementRequester({ client: env.client, outboxes: env.storage(),
+      getRecoverableIdentity: async () => {
+        if (arm) { arm = false; pauseRead = true; }
+        return { ...env.state.identity };
+      }, capture: env.capture, build: env.build, transmit: env.transmit });
+    await env.storage().create(scope, async (box) => {
+      const read = box.read.bind(box);
+      vi.spyOn(box, 'read').mockImplementation(async () => {
+        const record = await read();
+        if (pauseRead) { pauseRead = false; reading.resolve(); await complete.promise; }
+        return record;
+      });
+      const advancing = requester.request(box, 'request', input);
+      await reading.promise;
+      const before = await read();
+      env.state.identity = { ...env.state.identity, [field]: 'different' };
+      complete.resolve();
+      const result = await advancing;
+      const after = await read();
+      console.info('RESIDUAL_REFUSAL', JSON.stringify({ field, status: result.status,
+        before: before.placementContinuations, after: after.placementContinuations }));
+      env.state.identity = { realmId: scope.realmId, actorId: scope.actorId };
+      env.state.admissionFailure = 0;
+      expect(await requester.resume(box)).toMatchObject([{ status: 'accepted' }]);
+      expect(env.calls.filter((c) => c.method === 'POST')).toEqual([prepared, prepared]);
+      expect(env.capture).toHaveBeenCalledTimes(1);
+      expect(after.placementContinuations).toEqual(before.placementContinuations);
+    });
+  });
+});
+
+describe('independent claim and microtask handoffs', () => {
+  it('never POSTs from a claim released by a promise reaction to the final read', async () => {
+    const env = environment();
+    const release = deferred();
+    const held = new Set<string>();
+    let ownerReleased = false;
+    const storage = createCommitOutbox({ indexedDB: env.factory, exclusiveLock: async (name, work) => {
+      if (held.has(name)) throw new Error('Outbox is already claimed');
+      held.add(name);
+      try { return await work(); } finally { held.delete(name); ownerReleased = true; }
+    } });
+    let checks = 0, handoff = false, claimReturned = false;
+    let late!: ReturnType<ReturnType<typeof createPlacementRequester>['resume']>;
+    let ownerId!: string;
+    const posts: unknown[] = [];
+    const admit = env.client.admitTask.bind(env.client);
+    vi.spyOn(env.client, 'admitTask').mockImplementation(async (...args) => {
+      posts.push({ claimReturned, ownerReleased, identity: { ...env.state.identity } });
+      return admit(...args);
+    });
+    const requester = createPlacementRequester({ client: env.client, outboxes: storage,
+      getRecoverableIdentity: async () => {
+        checks += 1;
+        if (checks === 3) handoff = true;
+        return { ...env.state.identity };
+      }, capture: env.capture, build: env.build, transmit: env.transmit });
+    await storage.create(scope, async (box, id) => {
+      ownerId = id;
+      await env.reserve(box);
+      const read = box.read.bind(box);
+      vi.spyOn(box, 'read').mockImplementation(() => {
+        const pending = read();
+        if (!handoff) return pending;
+        handoff = false;
+        return pending.then((record) => {
+          release.resolve(); // ordinary promise reaction releases the claim callback
+          return Promise.resolve(record);
+        });
+      });
+      late = requester.resume(box);
+      await release.promise;
+      claimReturned = true;
+    });
+    const result = await late;
+    await storage.recover(scope, ownerId, async (box) => {
+      console.info('MICROTASK_POST', JSON.stringify({ posts, result, saved: await box.read() }));
+      expect((await box.read()).placementContinuations![0].taskLocator).toBeUndefined();
+      expect(await requester.resume(box)).toMatchObject([{ status: 'accepted' }]);
+    });
+    expect(posts.slice(0, -1)).toEqual([]);
+  });
+
+  it.each(['capture', 'transmit', 'refusal'] as const)('does not mutate %s after a promise reaction releases the claim following its final read', async (stage) => {
+    const env = environment();
+    const release = deferred();
+    let arm = false, handoff = false;
+    let late!: Promise<unknown>;
+    let ownerId!: string;
+    let before!: Awaited<ReturnType<ClaimedOutbox['read']>>;
+    const requester = createPlacementRequester({ client: env.client, outboxes: env.storage(),
+      getRecoverableIdentity: async () => {
+        if (arm) { arm = false; handoff = true; }
+        return { ...env.state.identity };
+      }, capture: env.capture, build: env.build, transmit: env.transmit });
+    if (stage === 'capture') {
+      const capture = env.capture.getMockImplementation()!;
+      env.capture.mockImplementationOnce(async (saved) => { arm = true; return capture(saved); });
+    } else if (stage === 'transmit') env.transmit.mockImplementationOnce(async () => { arm = true; return acceptance('A'); });
+    else {
+      env.state.admissionFailure = 403;
+      const admit = env.client.admitTask.bind(env.client);
+      vi.spyOn(env.client, 'admitTask').mockImplementationOnce(async (...args) => {
+        try { return await admit(...args); } finally { arm = true; }
+      });
+    }
+    await env.storage().create(scope, async (box, id) => {
+      ownerId = id;
+      const read = box.read.bind(box);
+      vi.spyOn(box, 'read').mockImplementation(() => {
+        const pending = read();
+        if (!handoff) return pending;
+        handoff = false;
+        return pending.then((record) => {
+          before = record;
+          release.resolve();
+          return record;
+        });
+      });
+      late = requester.request(box, 'request', input);
+      await release.promise;
+    });
+    await late;
+    await env.storage().recover(scope, ownerId, async (box) => {
+      const after = await box.read();
+      console.info('MICROTASK_MUTATION', JSON.stringify({ stage, before, after }));
+      expect(after).toEqual({ ...before, generation: 2 });
+      env.state.admissionFailure = 0;
+      expect(await requester.resume(box)).toMatchObject([{ status: 'accepted' }]);
+      if (stage === 'transmit') {
+        expect(env.transmit.mock.calls.map(([request]) => request)).toEqual([before.pending!.request, before.pending!.request]);
+        expect(env.build).toHaveBeenCalledTimes(1);
+        expect(env.capture).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+});
+
+describe('requester checks at the mutation and callback boundaries', () => {
+  it.each(['actorId', 'realmId'] as const)('revalidates %s in the actual storage callback', async (field) => {
+    for (const stage of ['locator', 'capture', 'capture-refusal', 'accepted', 'rejected', 'api-refusal'] as const) {
+      const env = environment();
+      let arm = false, delayWrite = false;
+      const requester = createPlacementRequester({ client: env.client, outboxes: env.storage(),
+        getRecoverableIdentity: async () => {
+          if (arm) { arm = false; delayWrite = true; }
+          return { ...env.state.identity };
+        }, capture: env.capture, build: env.build, transmit: env.transmit });
+      if (stage === 'locator' || stage === 'api-refusal') {
+        if (stage === 'api-refusal') env.state.admissionFailure = 403;
+        const admit = env.client.admitTask.bind(env.client);
+        vi.spyOn(env.client, 'admitTask').mockImplementationOnce(async (...args) => {
+          try { return await admit(...args); } finally { arm = true; }
+        });
+      } else if (stage === 'capture' || stage === 'capture-refusal') {
+        const capture = env.capture.getMockImplementation()!;
+        env.capture.mockImplementationOnce(async (saved) => {
+          arm = true;
+          if (stage === 'capture-refusal') throw new Error('Original semantic refusal');
+          return capture(saved);
+        });
+      } else env.transmit.mockImplementationOnce(async () => {
+        arm = true;
+        return stage === 'accepted' ? acceptance('A') : { kind: 'rejected', error: { reason: 'original conflict' } };
+      });
+      await env.storage().create(scope, async (box) => {
+        let before!: Awaited<ReturnType<ClaimedOutbox['read']>>;
+        const read = box.read.bind(box);
+        vi.spyOn(box, 'read').mockImplementation(async () => {
+          const record = await read();
+          if (delayWrite) {
+            delayWrite = false;
+            before = record;
+            // Run before the real mutation's get-success handler, after every authorization read.
+            env.fault.beforeWrite = () => { env.state.identity = { ...env.state.identity, [field]: 'different' }; };
+          }
+          return record;
+        });
+        expect((await requester.request(box, 'request', input)).status).toBe('retry');
+        expect(await read()).toEqual(before);
+        expect(before.placementContinuations![0].input).toEqual(input);
+        if (stage === 'accepted' || stage === 'rejected') expect(before.pending!.request).toEqual(env.transmit.mock.calls[0][0]);
+        env.state.identity = { realmId: scope.realmId, actorId: scope.actorId };
+        env.state.admissionFailure = 0;
+        expect(await requester.resume(box)).toMatchObject([{ status: 'accepted' }]);
+        if (stage === 'accepted' || stage === 'rejected') {
+          expect(env.transmit.mock.calls.map(([request]) => request)).toEqual([before.pending!.request, before.pending!.request]);
+          expect(env.build).toHaveBeenCalledTimes(1);
+        }
+        expect(env.capture.mock.lastCall![0]).toMatchObject({ input, mediaPin: pin });
+        expect(env.calls.filter((call) => call.method === 'POST')).toEqual(
+          stage === 'locator' || stage === 'api-refusal' ? [prepared, prepared] : [prepared]);
+      });
+    }
+  });
+
+  it.each(['capture', 'transmit'] as const)('never invokes %s after its final read releases the claim in a promise reaction', async (stage) => {
+    const env = environment();
+    const release = deferred();
+    let arm = false, handoff = false, ownerId = '';
+    let late!: Promise<unknown>;
+    const requester = createPlacementRequester({ client: env.client, outboxes: env.storage(),
+      getRecoverableIdentity: async () => {
+        if (arm) { arm = false; handoff = true; }
+        return { ...env.state.identity };
+      }, capture: env.capture, build: env.build, transmit: env.transmit });
+    await env.storage().create(scope, async (box, id) => {
+      ownerId = id;
+      if (stage === 'capture') {
+        const capture = box.capturePlacement.bind(box);
+        vi.spyOn(box, 'capturePlacement').mockImplementation((...args) => { arm = true; return capture(...args); });
+      } else {
+        const build = env.build.getMockImplementation()!;
+        env.build.mockImplementationOnce((...args) => { arm = true; return build(...args); });
+      }
+      const read = box.read.bind(box);
+      vi.spyOn(box, 'read').mockImplementation(() => {
+        const pending = read();
+        if (!handoff) return pending;
+        handoff = false;
+        return pending.then((record) => {
+          release.resolve();
+          return Promise.resolve(record);
+        });
+      });
+      late = requester.request(box, 'request', input);
+      await release.promise;
+    });
+    await late;
+    expect(env.transmit).not.toHaveBeenCalled();
+    if (stage === 'capture') expect(env.capture).not.toHaveBeenCalled();
+    await env.storage().recover(scope, ownerId, async (box) => {
+      const before = await box.read();
+      expect(before.generation).toBe(2);
+      expect(before.placementContinuations![0].conflict).toBeUndefined();
+      expect(await requester.resume(box)).toMatchObject([{ status: 'accepted' }]);
+      if (stage === 'transmit') {
+        expect(env.transmit.mock.lastCall![0]).toEqual(before.pending!.request);
+        expect(env.build).toHaveBeenCalledTimes(1);
+      }
+      expect(env.capture).toHaveBeenCalledTimes(1);
+      expect(env.calls.filter((call) => call.method === 'POST')).toEqual([prepared]);
+    });
+  });
+
+  it('leaves the helper inactive when the authenticated host lifecycle binding is missing', async () => {
+    const env = environment();
+    const { admitTask, getTask, listManagedOutputs, getProjectMediaSelection } = env.client;
+    const requester = createPlacementRequester({ client: {
+      admitTask: admitTask.bind(env.client), getTask: getTask.bind(env.client),
+      listManagedOutputs: listManagedOutputs.bind(env.client), getProjectMediaSelection: getProjectMediaSelection.bind(env.client),
+    }, outboxes: env.storage(), getRecoverableIdentity: async () => ({ ...env.state.identity }), capture: env.capture,
+    build: env.build, transmit: env.transmit });
+    await env.storage().create(scope, async (box) => {
+      const before = await box.read();
+      await expect(requester.request(box, 'request', input)).rejects.toThrow('identity lifecycle binding is unavailable');
+      expect(await box.read()).toEqual(before);
+      await env.reserve(box);
+    });
+    expect(await requester.recover()).toMatchObject([{ status: 'retry', message: 'Authenticated requester identity lifecycle binding is unavailable' }]);
+    expect(env.calls).toEqual([]);
+    expect(env.capture).not.toHaveBeenCalled();
+    expect(env.transmit).not.toHaveBeenCalled();
+  });
+
+  it('rejects an asynchronous host check instead of treating its promise as live identity', async () => {
+    const env = environment();
+    Object.assign(env.client, { isCurrentIdentity: async () => true });
+    await env.storage().create(scope, async (box) => {
+      const before = await box.read();
+      await expect(env.requester().request(box, 'request', input)).rejects.toThrow('identity changed or is unavailable');
+      expect(await box.read()).toEqual(before);
+      expect(env.calls).toEqual([]);
+    });
+  });
+
+  it('honors host invalidation even when the actor and realm strings are unchanged', async () => {
+    const env = environment();
+    const checking = deferred(), complete = deferred();
+    let invalidated = false, arm = false;
+    const isCurrent = env.client.isCurrentIdentity.bind(env.client);
+    env.client.isCurrentIdentity = (identity) => !invalidated && isCurrent(identity);
+    env.transmit.mockImplementationOnce(async () => { arm = true; return acceptance('A'); });
+    const requester = createPlacementRequester({ client: env.client, outboxes: env.storage(),
+      getRecoverableIdentity: async () => {
+        if (arm) { arm = false; checking.resolve(); await complete.promise; }
+        return { ...env.state.identity };
+      }, capture: env.capture, build: env.build, transmit: env.transmit });
+    await env.storage().create(scope, async (box) => {
+      const advancing = requester.request(box, 'request', input);
+      await checking.promise;
+      const before = await box.read();
+      invalidated = true;
+      complete.resolve();
+      expect((await advancing).status).toBe('retry');
+      const retained = await box.read();
+      expect(retained.pending!.request).toEqual(before.pending!.request);
+      expect(retained.intents).toEqual(before.intents);
+      expect(retained.placementContinuations).toEqual(before.placementContinuations);
+      invalidated = false; // explicit authenticated host recovery, with the original identity
+      expect(await requester.resume(box)).toMatchObject([{ status: 'accepted' }]);
+      expect(env.transmit.mock.calls.map(([request]) => request)).toEqual([before.pending!.request, before.pending!.request]);
+    });
   });
 });

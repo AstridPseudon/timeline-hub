@@ -16,7 +16,11 @@ import {
 
 type Admission = Parameters<WorkspaceClient['admitTask']>[0];
 type Identity = Pick<OutboxScope, 'realmId' | 'actorId'>;
-type Client = Pick<WorkspaceClient, 'admitTask' | 'getTask' | 'listManagedOutputs' | 'getProjectMediaSelection'>;
+type Client = Pick<WorkspaceClient, 'admitTask' | 'getTask' | 'listManagedOutputs' | 'getProjectMediaSelection'> & {
+  // The authenticated host adapter checks its live lifecycle, including invalidation, synchronously.
+  // A generated client or a cached handshake alone cannot supply this binding.
+  isCurrentIdentity?(expected: Identity): boolean;
+};
 type Output = { group_key: string; variant_key: string; output_port: string; ordinal: number };
 export type PlacementRequest = Omit<OutboxPlacementInput, 'output'> & { output: Output };
 export type PlacementProgress = {
@@ -123,6 +127,13 @@ export function createPlacementRequester(options: {
   transmit(request: OutboxRequest, scope: OutboxScope): Promise<OutboxOutcome>;
 }) {
   const storage = options.outboxes ?? createCommitOutbox();
+  function assertCurrent(scope: OutboxScope, box?: ClaimedOutbox) {
+    box?.assertActive();
+    if (!options.client.isCurrentIdentity) throw new Error('Authenticated requester identity lifecycle binding is unavailable');
+    try {
+      if (options.client.isCurrentIdentity(scope) !== true) throw new Error('Identity lifecycle is not current');
+    } catch { throw new Error('Authenticated requester identity changed or is unavailable'); }
+  }
   async function authorize(scope: OutboxScope, box?: ClaimedOutbox) {
     let identity: Identity;
     try { identity = await options.getRecoverableIdentity(); }
@@ -132,6 +143,7 @@ export function createPlacementRequester(options: {
     }
     // Read through the live claim after identity work; a saved generation is not authority.
     if (box) await box.read();
+    assertCurrent(scope, box);
   }
   async function selectedMedia(task: Task, original: OutboxPlacementContinuation, scope: OutboxScope, box: ClaimedOutbox): Promise<MediaSelection> {
     if (!task.attempt_id) throw new PlacementRefusal('Completed task has no settled attempt');
@@ -142,6 +154,7 @@ export function createPlacementRequester(options: {
     const seen = new Set<string>();
     for (let count = 0; count < 100; count += 1) {
       await authorize(scope, box);
+      assertCurrent(scope, box);
       const page = await options.client.listManagedOutputs(task.task_id, cursor);
       candidates.push(...page.items.filter((v) => matches(v, selected)));
       if (page.next_cursor === null) {
@@ -156,6 +169,7 @@ export function createPlacementRequester(options: {
           throw new PlacementRefusal('Managed output differs from the completed task/publication');
         }
         await authorize(scope, box);
+        assertCurrent(scope, box);
         return selectionPin(await options.client.getProjectMediaSelection(scope.projectId, {
           association_id: managed.association_id, object_id: managed.object_id, version: lifecycle.version as number,
         }), variant);
@@ -183,14 +197,16 @@ export function createPlacementRequester(options: {
         const prepared = admission(original.input, scope);
         if (!original.taskLocator) {
           await authorize(scope, box);
+          assertCurrent(scope, box);
           const task = await options.client.admitTask(prepared, original.input.request.key);
           validateTask(task, original, scope);
           await authorize(scope, box);
           original = await box.recordPlacementTask(id, original.input.request, {
             projectId: scope.projectId, taskId: task.task_id, runId: task.run_id,
-          });
+          }, () => assertCurrent(scope, box));
         }
         await authorize(scope, box);
+        assertCurrent(scope, box);
         const task = await options.client.getTask(original.taskLocator!.taskId);
         await authorize(scope, box);
         validateTask(task, original, scope);
@@ -205,7 +221,7 @@ export function createPlacementRequester(options: {
         }
         await authorize(scope, box);
         original = await box.capturePlacement(id, pin, (saved) => options.capture!(saved, scope),
-          () => authorize(scope, box));
+          () => authorize(scope, box), () => assertCurrent(scope, box));
         if (original.conflict !== undefined) return progress('conflict');
       }
       if (original.placement?.accepted) return progress('accepted');
@@ -217,9 +233,10 @@ export function createPlacementRequester(options: {
       await authorize(scope, box);
       record = await box.dispatch((intent, head) => options.build(intent, head, scope), async (request) => {
         await authorize(scope, box);
+        assertCurrent(scope, box);
         try { return await options.transmit(request, scope); }
         finally { await authorize(scope, box); }
-      });
+      }, () => assertCurrent(scope, box));
       original = record.placementContinuations!.find((v) => v.id === id)!;
       return progress(original.placement?.accepted ? 'accepted'
         : record.pending?.outcome?.kind === 'rejected' ? 'conflict' : 'retry');
@@ -227,7 +244,7 @@ export function createPlacementRequester(options: {
       try {
         await authorize(scope, box);
         if (error instanceof PlacementRefusal || (error instanceof ApiError && error.status < 500 && ![408, 429].includes(error.status))) {
-          original = await box.recordPlacementConflict(id, { reason: 'placement_refused', message: error.message });
+          original = await box.recordPlacementConflict(id, { reason: 'placement_refused', message: error.message }, () => assertCurrent(scope, box));
           return progress('conflict', error.message);
         }
       } catch (interrupted) {
@@ -242,7 +259,7 @@ export function createPlacementRequester(options: {
       await authorize(scope, box);
       admission(input, scope);
       // No task POST may run until this strict-durability transaction completes.
-      await box.reservePlacementAdmission(id, input);
+      await box.reservePlacementAdmission(id, input, () => assertCurrent(scope, box));
       return advance(box, id);
     },
     async resume(box: ClaimedOutbox) {
