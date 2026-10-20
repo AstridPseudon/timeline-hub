@@ -1,0 +1,24 @@
+# Agent public13 normal-pin prep commands
+
+All commands were run from `/home/user/work/wt/vw-m3-agent13-normal-pin-prep`.
+
+```sh
+sha256sum remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+wc -c remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+cmp remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256 \
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256
+PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python3 -B -m pytest -q \
+  tests/packs/rendering/test_composition_package.py -m 'not integration'
+PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python3 -B -m pytest -q \
+  tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition \
+  tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix
+git diff --check
+```
+
+Results: artifact `9412ae25…d54738`, 58,477 bytes, sidecar `cmp` passed;
+package lane 6 passed / 1 integration deselected; readiness neighbors 2
+passed; diff check passed.
+
+The initial system-Python attempt (`python3 -B -m pytest ...`) could not
+import pytest; the documented shared Agent venv command above was the actual
+targeted run. No full or central suite was requested.

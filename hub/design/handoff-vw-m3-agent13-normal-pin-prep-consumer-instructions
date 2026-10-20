@@ -1,0 +1,21 @@
+# Agent public13 consumer instructions
+
+This is a held source candidate, not an adoption signal. Owner13:25 order is
+App FIRST, then Agent. Wait for the App owner to publish the qualified13
+consumer source and its exact checksum.
+
+Owner-gated provisioning, not run by this worker:
+
+```sh
+# In an owner-controlled private Agent13 renderer leaf only, after App approval:
+cp /path/to/qualified13/banodoco-timeline-composition-0.0.13.tgz \
+  /path/to/private-agent13/remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+sha256sum -c /path/to/private-agent13/remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256
+(cd /path/to/private-agent13/remotion && npm ci --ignore-scripts)
+```
+
+Before any adoption request, verify the private leaf’s package/lock/archive
+identity, all 77 regular archive members, the direct readiness positives and
+missing-export negative, and the public13 valid/four-forged API smoke. Do not
+postinstall into linked peers or alter `/home/user/work/app/node_modules`,
+shared runtimes, or shared virtual environments.

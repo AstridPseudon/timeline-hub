@@ -1,0 +1,18 @@
+# Agent public13 normal-pin prep files
+
+Product worktree:
+
+- `astrid/core/rendering/remotion_runtime.py`
+- `remotion/package.json`
+- `remotion/package-lock.json`
+- `remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz`
+- `remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256`
+- `tests/core/timeline/test_clip_fields.py`
+- `tests/journeys/test_journey_plumbing.py`
+- `tests/packs/rendering/test_capture_scene_labels.py`
+- `tests/packs/rendering/test_composition_package.py`
+
+The public12 artifact remains at
+`remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz` with SHA-256
+`0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3`.
+Explicit public12 fixtures in scene/presenter/render tests were not changed.
