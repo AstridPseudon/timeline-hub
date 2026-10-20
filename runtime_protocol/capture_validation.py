@@ -10,7 +10,6 @@ from .timeline_commit import CommitRejected
 from .timeline_commit_port import detached, digest
 from .util import canonical_json
 
-
 RESEND_HINT = 'send it as source_kind "cas" (explicit UNCERTIFIED) or forward the real authoring_preview.candidate'
 
 
@@ -122,26 +121,36 @@ def claim_capture_view(service, spec):
     labelled CAS-only (uncertified legacy preview) instead.
     """
     inner = spec.get("spec") if isinstance(spec.get("spec"), dict) else {}
-    context = inner.get("authority_context") if isinstance(inner.get("authority_context"), dict) else {}
+    context = inner.get("authority_context") if isinstance(inner.get("authority_context"), dict) else None
+    outer_context = spec.get("authority_context") if isinstance(spec.get("authority_context"), dict) else None
+    if context is None:
+        context = outer_context
+    contexts = [context] if context is not None else []
+    # Admission and host materialization prefer the nested context, but old
+    # task envelopes can retain an outer context as well.  Inspect both so an
+    # active alias in the non-preferred location cannot evade certification.
+    if outer_context is not None and outer_context is not context:
+        contexts.append(outer_context)
     inputs = inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {}
     labels = {}
-    for key in SNAPSHOT_KEYS:
-        ref = context.get(key + "_ref")
-        if not isinstance(ref, dict) or source_kind_of(ref) not in {"revision", "working_copy"}:
-            continue
-        try:
-            snapshot = json.loads(service.object(ref["digest"])[1])
-            certified = validate_capture(service, snapshot, ref, inputs)
-        except (RuntimeErrorBase, OSError, KeyError, TypeError, ValueError):
-            certified = False
-        if not certified:
-            # Match by carrier and object digest so a duplicate authority
-            # value (including the argv/filmstrip JSON) cannot retain the
-            # rejected revision claims while each carrier keeps its own bytes.
-            labels[(key + "_ref", ref.get("digest"))] = {
-                "digest": ref["digest"], "project_id": ref.get("project_id"),
-                "timeline_id": ref.get("timeline_id"), "source_kind": "cas",
-            }
+    for context in contexts:
+        for key in SNAPSHOT_KEYS:
+            ref = context.get(key + "_ref")
+            if not isinstance(ref, dict) or source_kind_of(ref) not in {"revision", "working_copy"}:
+                continue
+            try:
+                snapshot = json.loads(service.object(ref["digest"])[1])
+                certified = validate_capture(service, snapshot, ref, inputs)
+            except (RuntimeErrorBase, OSError, KeyError, TypeError, ValueError):
+                certified = False
+            if not certified:
+                # Match by carrier and object digest so a duplicate authority
+                # value (including the argv/filmstrip JSON) cannot retain the
+                # rejected revision claims while each carrier keeps its own bytes.
+                labels[(key + "_ref", ref.get("digest"))] = {
+                    "digest": ref["digest"], "project_id": ref.get("project_id"),
+                    "timeline_id": ref.get("timeline_id"), "source_kind": "cas",
+                }
 
     if not labels:
         return spec
