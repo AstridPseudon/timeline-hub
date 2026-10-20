@@ -1,3 +1,4 @@
+import { projectOccurrenceMediaPreview, type VerifiedMediaRead } from '../commands/occurrenceMediaGesture.ts';
 import { projectClipTrimPreview } from '../commands/clipTrimGesture.ts';
 import { projectParentClipAddPreview } from '../commands/parentClipAddGesture.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
@@ -17,7 +18,7 @@ import type { VideoEditorShotsHost } from '../runtime/ports.ts';
 export function useTimelineCommandSession(options: {
   legacyClean: () => boolean;
   snapshotWriteBlockedRef: MutableRefObject<boolean>;
-  provider: DataProvider;
+  provider: DataProvider & { getProjectVerifiedMedia?: VerifiedMediaRead };
   timelineId: string;
   commit: UseTimelineCommitResult;
   resolveAssetUrl: (file: string) => Promise<string>;
@@ -94,7 +95,7 @@ export function useTimelineCommandSession(options: {
         let data = await buildTimelineData(config, registry, resolve,
           context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
         for (const preview of previews) {
-          const nativePreview = projectParentClipAddPreview(preview, data) ?? projectClipTrimPreview(preview, data);
+          const nativePreview = projectOccurrenceMediaPreview(preview, data, provider.shotComposition) ?? projectParentClipAddPreview(preview, data) ?? projectClipTrimPreview(preview, data);
           const compiled = nativePreview ? { valid: true, nextData: nativePreview } : compileTimelinePatch(preview, data);
           if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
           data = compiled.nextData;
@@ -127,12 +128,14 @@ export function useTimelineCommandSession(options: {
           return fresh;
         },
         send: (request, key) => provider.commitTimeline!(request, key),
+        getProjectVerifiedMedia: provider.getProjectVerifiedMedia
+          ? (selection) => provider.getProjectVerifiedMedia!(selection) : undefined,
         changed,
         preview: (patch) => {
           if (disposed) throw new Error('Timeline command session is closed');
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
-          const nativePreview = projectParentClipAddPreview(patch, commit.dataRef.current) ?? projectClipTrimPreview(patch, commit.dataRef.current);
+          const nativePreview = projectOccurrenceMediaPreview(patch, commit.dataRef.current, provider.shotComposition) ?? projectParentClipAddPreview(patch, commit.dataRef.current) ?? projectClipTrimPreview(patch, commit.dataRef.current);
           const compiled = nativePreview ? { valid: true, nextData: nativePreview } : compileTimelinePatch(patch, commit.dataRef.current);
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
           projectGeneration++;
@@ -197,6 +200,35 @@ export function useTimelineCommandSession(options: {
           capture(input) { requireCleanTrim(); return trimPort.capture(input); },
           finish(basis, args) { requireCleanTrim(); return trimPort.finish(basis, args); },
           submit(input) { requireCleanTrim(); trimPort.submit(input); },
+        };
+        const mediaPort = session.occurrenceMediaPort;
+        const mediaDisplays = new WeakMap<object, TimelineData>();
+        const mediaCommands = new WeakMap<object, TimelineData>();
+        const requireCurrentMedia = (basis?: object) => {
+          if (disposed || sessionRef.current !== session || latest.current.provider !== provider
+            || latest.current.timelineId !== timelineId) throw new Error('Timeline media session is closed');
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing occurrence media');
+          const current = latest.current.commit.dataRef.current;
+          if (!current || (basis && mediaDisplays.get(basis) !== current)) throw new Error('Displayed timeline changed during the media read');
+          return current;
+        };
+        session.occurrenceMediaPort = {
+          capture(input) {
+            if (input.current !== requireCurrentMedia()) throw new Error('Media capture requires the current displayed timeline');
+            const basis = mediaPort.capture(input);
+            mediaDisplays.set(basis, input.current);
+            return basis;
+          },
+          async finish(basis) {
+            requireCurrentMedia(basis);
+            const result = await mediaPort.finish(basis);
+            mediaCommands.set(result.command, requireCurrentMedia(basis));
+            return result;
+          },
+          submit(input) {
+            if (mediaCommands.get(input.command) !== requireCurrentMedia()) throw new Error('Displayed timeline changed before the media preview');
+            mediaPort.submit(input);
+          },
         };
         sessionRef.current = session;
         setState({ ...session.getState() });
@@ -273,6 +305,7 @@ export function useTimelineCommandSession(options: {
     clipScalarPort: sessionRef.current?.clipScalarPort,
     clipParamsPort: sessionRef.current?.clipParamsPort,
     parentClipAddPort: sessionRef.current?.parentClipAddPort,
+    occurrenceMediaPort: sessionRef.current?.occurrenceMediaPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
