@@ -51,6 +51,88 @@ def test_checkout_reload_undo_cli_redo_uses_retained_history(
         assert Checkout.open(fixture.project_id, fixture.timeline_id, client=client).base_revision == redone['data']['accepted_revision_id']
 
 
+def test_open_bundle_keeps_http_rows_raw_and_round_trips_canonical_images(
+    tmp_path, monkeypatch, film, real_runtime,
+):
+    from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+    from astrid.sdk.timeline.commit import (
+        INTERNAL_IMAGE_FIELDS,
+        PARENT_IMAGE_FIELDS,
+        SHOT_IMAGE_FIELDS,
+    )
+
+    fixture, _, _ = film
+    daemon = real_runtime(
+        fixture.duplicate_root,
+        support_root=tmp_path / "support",
+        authoring_profile="astrid",
+    )
+    with open_client(daemon) as client:
+        transport = client._remote._transport
+        revision = client.timelines.history(
+            fixture.project_id, fixture.timeline_id, limit=1,
+        ).data["head"]["revision_id"]
+        parent = transport.get_project_parent_composition_revision(
+            fixture.project_id, fixture.timeline_id, revision,
+        )
+        shots = {}
+        internals = {}
+        for occurrence in parent["payload"]["occurrences"]:
+            shot_revision = occurrence["shot_revision_id"]
+            shot = transport.get_project_shot_revision(
+                fixture.project_id, occurrence["shot_id"], shot_revision,
+            )
+            shots[shot_revision] = shot
+            internal_revision = shot["internal_timeline_revision_id"]
+            internals[internal_revision] = transport.get_project_timeline_revision(
+                fixture.project_id, fixture.timeline_id, internal_revision,
+            )
+        raw_rows = (copy.deepcopy(parent), copy.deepcopy(shots), copy.deepcopy(internals))
+
+        opened = client.timelines.open_bundle(
+            fixture.project_id, fixture.timeline_id, revision_id=revision,
+        )
+        assert opened.ok, opened.as_dict()
+        expected = open_authoring_bundle(
+            {
+                **{key: parent[key] for key in PARENT_IMAGE_FIELDS},
+                "project_id": fixture.project_id,
+                "timeline_id": fixture.timeline_id,
+            },
+            shot_revisions=[
+                {
+                    **{key: row[key] for key in SHOT_IMAGE_FIELDS},
+                    "project_id": row.get("project_id", fixture.project_id),
+                }
+                for row in shots.values()
+            ],
+            internal_timeline_revisions=[
+                {
+                    **{key: row[key] for key in INTERNAL_IMAGE_FIELDS},
+                    "project_id": row.get("project_id", fixture.project_id),
+                }
+                for row in internals.values()
+            ],
+        )
+        assert opened.data["bundle"] == expected
+
+        assert transport.get_project_parent_composition_revision(
+            fixture.project_id, fixture.timeline_id, revision,
+        ) == raw_rows[0]
+        assert {
+            revision: transport.get_project_shot_revision(
+                fixture.project_id, row["shot_id"], revision,
+            )
+            for revision, row in shots.items()
+        } == raw_rows[1]
+        assert {
+            revision: transport.get_project_timeline_revision(
+                fixture.project_id, row["timeline_id"], revision,
+            )
+            for revision, row in internals.items()
+        } == raw_rows[2]
+
+
 def test_retained_restore_does_not_reopen_consumed_draft_steps(
     tmp_path, monkeypatch, film, renderer_off, real_runtime,
 ):
