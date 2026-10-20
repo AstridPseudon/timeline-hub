@@ -7,11 +7,16 @@ import type {
 import type { ApplyEditOptions } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import type { TimelineSelectedTrack } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 
+import type { ClipDeleteCapturePort } from '../../commands/clipDeleteGesture.ts';
+import type { TimelineEditability } from '../../lib/timeline-editability.ts';
+
 export type DeleteClipOptions = {
   allowPinnedGroupDelete?: boolean;
 };
 
 export interface ClipEditingContext {
+  clipDeletePort?: ClipDeleteCapturePort;
+  editability?: TimelineEditability;
   dataRef: MutableRefObject<TimelineData | null>;
   resolvedConfig: TimelineData['resolvedConfig'] | null;
   selectedClipId: string | null;

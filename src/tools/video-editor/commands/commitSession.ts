@@ -6,9 +6,11 @@ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
-import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
+import { AuthoredState, copy, equal, object } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+import { captureClipDelete, executeClipDelete, finishClipDelete } from './clipDeleteCapture.ts';
+import type { ClipDeleteCapturePort } from './clipDeleteGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -318,6 +320,50 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const clipDeletePort: ClipDeleteCapturePort = {
+    capture({ clipId, current }) {
+      assertReady();
+      if (bundle.project_id !== options.scope.projectId || bundle.timeline_id !== options.scope.timelineId
+        || current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1) throw new Error('Delete requires one raw parent clip identity');
+      const identity = matches[0].app?.canonical;
+      if (identity != null && (!object(identity) || identity.clipRef !== `parent/clip:${clipId}`
+        || identity.rawClipId !== clipId || identity.ownerRef !== 'parent')) {
+        throw new Error('Delete requires one raw parent clip identity');
+      }
+      return json({ ...captureClipDelete(bundle, `parent/clip:${clipId}`), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<ClipDeleteCapturePort['capture']>;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the delete');
+      const original = finishClipDelete(basis);
+      // Verify the original claims against today's closure without refreshing any guards.
+      const result = executeClipDelete(bundle, original.command);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview: null,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.delete' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Delete was not captured by this session or the timeline changed');
+      }
+      const clipId = command.select!.slice('parent/clip:'.length);
+      if (preview.version !== 1 || !equal(preview.operations, [{ op: 'clip.remove', target: clipId }])) {
+        throw new Error('Delete requires one removal preview for the same clip');
+      }
+      prepared.delete(key);
+      enqueue({ ...entry.payload, preview }, preview, entry.basis);
+    },
+  };
   async function resolveRejected(keepLabel: boolean) {
     if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
     const label = keepLabel ? labelIntent() : undefined;
@@ -422,6 +468,7 @@ export async function createTimelineCommandSession(options: Options) {
   return {
     port,
     trackLabelPort,
+    clipDeletePort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,
