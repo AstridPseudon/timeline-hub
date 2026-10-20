@@ -88,7 +88,9 @@ def render() -> dict[str, str]:
         ):
             schema["required"] = list(properties)
         for key, value in properties.items():
-            if value.get("type") == "object" and "properties" in value:
+            if value.get("type") == "object" and (
+                "properties" in value or value.get("additionalProperties") is False
+            ):
                 nested_name = f"{name}{key[0].upper()}{key[1:]}"
                 definitions[nested_name] = value
                 pending.append(nested_name)
@@ -146,10 +148,10 @@ def render() -> dict[str, str]:
                 return "[" + ", ".join([item] * min_items) + f", ...Array<{item}>]"
             return f"list[{item}]" if py else f"Array<{item}>"
         if kind == "object":
-            if "properties" in schema:
+            if "properties" in schema or schema.get("additionalProperties") is False:
                 required = schema.get("required", [])
                 fields = []
-                for key, value in schema["properties"].items():
+                for key, value in schema.get("properties", {}).items():
                     item = expression(value, language)
                     if py:
                         if key not in required:
@@ -204,7 +206,9 @@ def render() -> dict[str, str]:
         value = expression(schema, "python")
         if schema.get("$ref", "").startswith("#/$defs/"):
             value = schema["$ref"].rsplit("/", 1)[1]
-        if schema.get("type") == "object" and "properties" in schema:
+        if schema.get("type") == "object" and (
+            "properties" in schema or schema.get("additionalProperties") is False
+        ):
             python.append(f"{name} = TypedDict({name!r}, {value})")
         else:
             python.append(f"{name} = {value}")

@@ -138,6 +138,12 @@ def test_registered_command_union_preserves_every_source_branch(module_name):
         assert hints["args"] == get_type_hints(holder, vars(dto))["args"]
         assert member.__required_keys__ == {"schema_version", "op", "version", "select", "args"}
         assert get_args(hints["reads"]) == (dto.AgentRead,)
+    delete = next(member for member in members if get_args(get_type_hints(member)["op"]) == ("clip.delete",))
+    delete_intent = get_type_hints(delete, vars(dto))["intent"]
+    assert is_typeddict(delete_intent)
+    assert get_type_hints(delete_intent) == {}
+    assert delete_intent.__required_keys__ == set()
+    assert delete_intent.__optional_keys__ == set()
     text, clear = union_members(dto.TextBindingSetArgs, vars(dto))
     assert text.__required_keys__ == {"binding", "text"}
     assert clear.__required_keys__ == {"binding", "clear"}
