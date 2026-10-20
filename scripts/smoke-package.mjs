@@ -76,6 +76,17 @@ assert.strictEqual(root.querySceneOcclusion, evaluation.querySceneOcclusion);
 const api = await import('@banodoco/timeline-composition/theme-api');
 const helpers = await import('@banodoco/timeline-composition/registries');
 const themes = await import('@banodoco/timeline-composition/registry.generated');
+const expectedThemeClipTypes = ['art-card', 'cta-card', 'resource-card', 'section-hook'];
+assert.deepEqual(themes.THEME_PACKAGE_CLIP_TYPES, expectedThemeClipTypes);
+assert.deepEqual(Object.keys(themes.THEME_PACKAGE_REGISTRY).sort(), [...expectedThemeClipTypes].sort());
+for (const clipType of expectedThemeClipTypes) {
+  assert.equal(typeof themes.THEME_PACKAGE_REGISTRY[clipType].component, 'function');
+  assert.deepEqual(themes.THEME_PACKAGE_REGISTRY[clipType], {
+    component: themes.THEME_PACKAGE_REGISTRY[clipType].component,
+    themeId: '2rp',
+    source: 'bundled:2rp@0.1.0',
+  });
+}
 for (const name of ['effects', 'animations', 'transitions']) await import('@banodoco/timeline-composition/' + name + '.generated');
 assert.strictEqual(root.ThemeProvider, api.ThemeProvider);
 assert.strictEqual(root.useTheme, api.useTheme);
