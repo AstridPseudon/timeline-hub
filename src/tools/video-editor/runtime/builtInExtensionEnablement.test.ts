@@ -1,5 +1,5 @@
 /**
- * devExtensionEnablement — unit tests for the stable external store:
+ * builtInExtensionEnablement — unit tests for the stable external store:
  * stable snapshot identity, notification-free no-op writes, corrupt-storage
  * recovery, and browser storage-event synchronization.
  */
@@ -10,12 +10,12 @@ const DISABLED_KEY = 'astrid.dev-extensions.disabled';
 
 // Each test gets a fresh module instance (cache + listeners) so snapshot
 // identity and notification counts are fully isolated.
-let store: typeof import('./devExtensionEnablement');
+let store: typeof import('./builtInExtensionEnablement');
 
 beforeEach(async () => {
   vi.resetModules();
   localStorage.clear();
-  store = await import('./devExtensionEnablement');
+  store = await import('./builtInExtensionEnablement');
 });
 
 afterEach(() => {
@@ -30,13 +30,13 @@ describe('getSnapshot', () => {
   it('returns the same identity for repeated unchanged reads', () => {
     const first = store.getSnapshot();
     expect(first).toBe(store.getSnapshot());
-    expect(first).toBe(store.getDisabledDevExtensionIds());
+    expect(first).toBe(store.getSnapshot());
     expect(first).toBe(store.getSnapshot());
   });
 
   it('returns a new identity once the underlying storage changes', () => {
     const before = store.getSnapshot();
-    store.setDevExtensionEnabled('ext-a', false);
+    store.setBuiltInExtensionEnabled('ext-a', false);
     const after = store.getSnapshot();
     expect(after).not.toBe(before);
     expect([...after]).toEqual(['ext-a']);
@@ -65,8 +65,8 @@ describe('no-op writes', () => {
 
     // Disabling an already-disabled extension and enabling an
     // already-enabled extension are both no-ops.
-    store.setDevExtensionEnabled('ext-a', false);
-    store.setDevExtensionEnabled('ext-b', true);
+    store.setBuiltInExtensionEnabled('ext-a', false);
+    store.setBuiltInExtensionEnabled('ext-b', true);
 
     expect(listener).not.toHaveBeenCalled();
     expect(localStorage.getItem(DISABLED_KEY)).toBe('["ext-a"]');
@@ -77,7 +77,7 @@ describe('no-op writes', () => {
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
 
-    store.setDevExtensionEnabled('ext-a', false);
+    store.setBuiltInExtensionEnabled('ext-a', false);
 
     expect(listener).toHaveBeenCalledTimes(1);
     expect(store.getSnapshot().has('ext-a')).toBe(true);
@@ -92,7 +92,7 @@ describe('corrupt storage', () => {
     const snapshot = store.getSnapshot();
     expect(snapshot).toBeInstanceOf(Set);
     expect(snapshot.size).toBe(0);
-    expect(store.getDisabledDevExtensionIds().size).toBe(0);
+    expect(store.getSnapshot().size).toBe(0);
   });
 
   it('treats non-array JSON as an empty snapshot', () => {
@@ -116,7 +116,7 @@ describe('corrupt storage', () => {
     localStorage.setItem(DISABLED_KEY, '{broken');
     expect(store.getSnapshot().size).toBe(0);
 
-    store.setDevExtensionEnabled('ext-a', false);
+    store.setBuiltInExtensionEnabled('ext-a', false);
 
     expect(JSON.parse(localStorage.getItem(DISABLED_KEY)!)).toEqual(['ext-a']);
     expect(store.getSnapshot().has('ext-a')).toBe(true);
@@ -170,7 +170,7 @@ describe('storage event synchronization', () => {
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
 
-    store.setDevExtensionEnabled('ext-a', false);
+    store.setBuiltInExtensionEnabled('ext-a', false);
 
     expect(listener).toHaveBeenCalledTimes(1);
     unsubscribe();
@@ -183,7 +183,7 @@ describe('subscribe', () => {
     const unsubscribe = store.subscribe(listener);
     unsubscribe();
 
-    store.setDevExtensionEnabled('ext-a', false);
+    store.setBuiltInExtensionEnabled('ext-a', false);
 
     expect(listener).not.toHaveBeenCalled();
   });
@@ -194,7 +194,7 @@ describe('subscribe', () => {
     unsubscribe();
     unsubscribe();
 
-    store.setDevExtensionEnabled('ext-a', false);
+    store.setBuiltInExtensionEnabled('ext-a', false);
 
     expect(listener).not.toHaveBeenCalled();
   });
@@ -205,7 +205,7 @@ describe('subscribe', () => {
     const unsubscribeFirst = store.subscribe(first);
     const unsubscribeSecond = store.subscribe(second);
 
-    store.setDevExtensionEnabled('ext-a', false);
+    store.setBuiltInExtensionEnabled('ext-a', false);
 
     expect(first).toHaveBeenCalledTimes(1);
     expect(second).toHaveBeenCalledTimes(1);
@@ -218,7 +218,7 @@ describe('subscribe', () => {
     const unsubscribeFirst = store.subscribe(listener);
     const unsubscribeSecond = store.subscribe(listener);
 
-    store.setDevExtensionEnabled('ext-a', false);
+    store.setBuiltInExtensionEnabled('ext-a', false);
 
     expect(listener).toHaveBeenCalledTimes(1);
     unsubscribeFirst();
@@ -226,17 +226,17 @@ describe('subscribe', () => {
   });
 });
 
-describe('setDevExtensionEnabled', () => {
+describe('setBuiltInExtensionEnabled', () => {
   it('persists a sorted JSON array of disabled ids', () => {
-    store.setDevExtensionEnabled('z-ext', false);
-    store.setDevExtensionEnabled('a-ext', false);
+    store.setBuiltInExtensionEnabled('z-ext', false);
+    store.setBuiltInExtensionEnabled('a-ext', false);
     expect(localStorage.getItem(DISABLED_KEY)).toBe('["a-ext","z-ext"]');
   });
 
   it('removes an id when re-enabled', () => {
-    store.setDevExtensionEnabled('ext-a', false);
-    store.setDevExtensionEnabled('ext-b', false);
-    store.setDevExtensionEnabled('ext-a', true);
+    store.setBuiltInExtensionEnabled('ext-a', false);
+    store.setBuiltInExtensionEnabled('ext-b', false);
+    store.setBuiltInExtensionEnabled('ext-a', true);
 
     expect(JSON.parse(localStorage.getItem(DISABLED_KEY)!)).toEqual(['ext-b']);
     expect(store.getSnapshot().has('ext-a')).toBe(false);
@@ -248,9 +248,9 @@ describe('SSR safety', () => {
     vi.stubGlobal('localStorage', undefined);
 
     expect(store.getSnapshot().size).toBe(0);
-    expect(() => store.setDevExtensionEnabled('ext-a', false)).not.toThrow();
+    expect(() => store.setBuiltInExtensionEnabled('ext-a', false)).not.toThrow();
     expect(store.getSnapshot().size).toBe(0);
-    expect(store.getDisabledDevExtensionIds().size).toBe(0);
+    expect(store.getSnapshot().size).toBe(0);
   });
 
   it('skips attaching a storage listener when the browser has no storage events', () => {

@@ -54,7 +54,7 @@ import {
   AgentChatProvider,
   useAgentChatBridge,
 } from "@/shared/contexts/AgentChatContext.tsx";
-import { setDevExtensionEnabled } from "@/tools/video-editor/dev/devExtensionEnablement.ts";
+import { setBuiltInExtensionEnabled } from "@/tools/video-editor/runtime/builtInExtensionEnablement.ts";
 
 const browserStorage = new Map<string, string>();
 const localStorageFixture: Storage = {
@@ -2079,11 +2079,56 @@ describe("VideoEditorPage", () => {
       expect(state.lastTimelineOverlaysEnabled).toBe(true);
 
       act(() => {
-        setDevExtensionEnabled(OVERLAY_EXT_ID, false);
+        setBuiltInExtensionEnabled(OVERLAY_EXT_ID, false);
       });
 
       await waitFor(() => {
         expect(state.lastTimelineOverlaysEnabled).toBe(false);
+      });
+    });
+
+    it("applies the built-in enablement store in production so the ExtensionManager toggle takes effect", async () => {
+      (import.meta.env as Record<string, unknown>).DEV = false;
+      // A reviewed bundled id: production admits only the frozen reviewed inventory.
+      const REVIEWED_ID = "haus.astrid.transcript-lane";
+      state.devLocalExtensions.push({
+        manifest: {
+          id: REVIEWED_ID,
+          version: "0.1.0",
+          label: "Transcript",
+          description: "A reviewed built-in overlay for production enablement tests.",
+          apiVersion: 1,
+          contributions: [
+            {
+              id: `${REVIEWED_ID}-overlay`,
+              kind: "timelineOverlay",
+              render: `${REVIEWED_ID}-overlay`,
+              order: 5,
+              label: "Transcript",
+            },
+          ],
+        },
+        activate: vi.fn(() => ({ dispose: vi.fn() })),
+      });
+      renderPage(
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
+      );
+
+      await screen.findByTestId("video-editor-provider");
+      expect(state.lastTimelineOverlaysEnabled).toBe(true);
+
+      act(() => {
+        setBuiltInExtensionEnabled(REVIEWED_ID, false);
+      });
+      await waitFor(() => {
+        expect(state.lastTimelineOverlaysEnabled).toBe(false);
+      });
+
+      act(() => {
+        setBuiltInExtensionEnabled(REVIEWED_ID, true);
+      });
+      await waitFor(() => {
+        expect(state.lastTimelineOverlaysEnabled).toBe(true);
       });
     });
 
@@ -2156,7 +2201,7 @@ describe("VideoEditorPage", () => {
       // subscription; the smokeDirectExtensions memo must update from the
       // snapshot without any URL or loader-refresh change.
       act(() => {
-        setDevExtensionEnabled(DEV_LOCAL_ID, false);
+        setBuiltInExtensionEnabled(DEV_LOCAL_ID, false);
       });
 
       await waitFor(() => {
@@ -2168,7 +2213,7 @@ describe("VideoEditorPage", () => {
 
     it("does not mount a dev-local extension that is disabled before the page renders", async () => {
       act(() => {
-        setDevExtensionEnabled(DEV_LOCAL_ID, false);
+        setBuiltInExtensionEnabled(DEV_LOCAL_ID, false);
       });
       state.devLocalExtensions.push(makeDevLocalExtension());
       renderPage(
@@ -2193,7 +2238,7 @@ describe("VideoEditorPage", () => {
 
       // Disable → teardown (exactly one disposal).
       act(() => {
-        setDevExtensionEnabled(DEV_LOCAL_ID, false);
+        setBuiltInExtensionEnabled(DEV_LOCAL_ID, false);
       });
       await waitFor(() => {
         expect(state.lastProviderExtensions ?? []).toHaveLength(0);
@@ -2204,7 +2249,7 @@ describe("VideoEditorPage", () => {
       // recorded for the re-add (1 initial + 1 re-enable), with no extra
       // disposal from the re-add itself.
       act(() => {
-        setDevExtensionEnabled(DEV_LOCAL_ID, true);
+        setBuiltInExtensionEnabled(DEV_LOCAL_ID, true);
       });
 
       await waitFor(() => {

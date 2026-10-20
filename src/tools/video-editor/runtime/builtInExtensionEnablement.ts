@@ -1,8 +1,9 @@
 /**
- * devExtensionEnablement — a stable external store for enable/disable of
- * dev-local direct extensions, backed by localStorage.
+ * builtInExtensionEnablement — a stable external store for enable/disable of
+ * the bundled (built-in) direct extensions, backed by localStorage. It is the
+ * single enablement source for both DEV and production builds.
  *
- * Direct extensions (devLocalExtensions) are not packages, so they never
+ * Direct extensions (bundled catalog entries) are not packages, so they never
  * appear in the ExtensionManager's package inventory. This module gives them
  * a minimal on/off switch as a small external store:
  *
@@ -13,7 +14,7 @@
  * - `subscribe(listener)` registers a change listener and returns an
  *   idempotent unsubscribe. Listeners are notified only when the disabled
  *   set actually changes; no-op writes persist nothing and notify nothing.
- * - `setDevExtensionEnabled(id, enabled)` flips one extension and persists
+ * - `setBuiltInExtensionEnabled(id, enabled)` flips one extension and persists
  *   the sorted ID list.
  * - A `storage` event listener (attached lazily on first subscribe, only
  *   when the browser provides storage events) wakes subscribers exactly once
@@ -22,8 +23,9 @@
  *   which always agrees with the event payload in real browsers.
  *
  * Storage key: `astrid.dev-extensions.disabled` — a JSON array of extension
- * IDs. Absent, malformed, or corrupt values read back as a valid empty
- * snapshot; the next real toggle write self-heals the stored value.
+ * IDs. The key keeps its original name so choices saved in DEV carry over
+ * into production. Absent, malformed, or corrupt values read back as a valid
+ * empty snapshot; the next real toggle write self-heals the stored value.
  *
  * SSR-safe: on the server (no window/localStorage) the snapshot is always
  * empty, writes are no-ops, and subscribing never touches global listeners.
@@ -135,20 +137,12 @@ function handleStorageEvent(event: StorageEvent): void {
 }
 
 /**
- * Backward-compatible alias for `getSnapshot()`. Direct extensions are
- * filtered through this set before mounting.
- */
-export function getDisabledDevExtensionIds(): ReadonlySet<string> {
-  return getSnapshot();
-}
-
-/**
- * Enables or disables one dev-local extension.
+ * Enables or disables one built-in extension.
  *
  * A no-op write (the extension is already in the requested state) persists
  * nothing and sends zero notifications.
  */
-export function setDevExtensionEnabled(extensionId: string, enabled: boolean): void {
+export function setBuiltInExtensionEnabled(extensionId: string, enabled: boolean): void {
   if (typeof localStorage === 'undefined') {
     return;
   }

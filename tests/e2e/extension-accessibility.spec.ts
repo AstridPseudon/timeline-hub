@@ -64,9 +64,9 @@ async function openExtensionsPanel(page: Page): Promise<Locator> {
     await extensionsTab.click();
     await expect(extensionsTab).toHaveAttribute('aria-selected', 'true');
   }
-  const inventory = page.getByRole('region', { name: 'Local extensions' });
+  const inventory = page.getByRole('region', { name: 'Built-in' });
   await expect(inventory).toBeVisible();
-  await expect(inventory.locator('[data-video-editor-dev-local-extension]')).toHaveCount(EXTENSION_COUNT);
+  await expect(inventory.locator('[data-video-editor-built-in-extension]')).toHaveCount(EXTENSION_COUNT);
   return inventory;
 }
 
@@ -82,10 +82,10 @@ async function expectViewportContained(page: Page, width: number): Promise<void>
 }
 
 async function expectToggleSemantics(inventory: Locator): Promise<void> {
-  const rows = inventory.locator('[data-video-editor-dev-local-extension]');
-  const toggles = inventory.locator('[data-video-editor-dev-local-toggle]');
+  const rows = inventory.locator('[data-video-editor-built-in-extension]');
+  const toggles = inventory.locator('[data-video-editor-built-in-toggle]');
   const ids = await rows.evaluateAll((elements) => elements.map((element) => (
-    element.getAttribute('data-video-editor-dev-local-extension')
+    element.getAttribute('data-video-editor-built-in-extension')
   )));
   expect(ids).toHaveLength(EXTENSION_COUNT);
   expect(new Set(ids).size).toBe(EXTENSION_COUNT);
@@ -116,7 +116,7 @@ test('the bundled extensions expose state and retain keyboard focus through disa
   await expectToggleSemantics(inventory);
 
   const transcriptId = 'haus.astrid.transcript-lane';
-  const toggle = inventory.locator(`[data-video-editor-dev-local-toggle="${transcriptId}"]`);
+  const toggle = inventory.locator(`[data-video-editor-built-in-toggle="${transcriptId}"]`);
   // WebKit models Safari's macOS default, where Option+Tab reaches every
   // control while plain Tab follows the system's reduced tab-stop preference.
   const tabKey = testInfo.project.name === 'webkit' ? 'Alt+Tab' : 'Tab';

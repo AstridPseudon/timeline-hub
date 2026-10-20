@@ -19,10 +19,10 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext', () => ({
   useVideoEditorRuntime: () => mockUseVideoEditorRuntime(),
 }));
 
-// The dev-local scratchpad is empty on main; the T2.4 describe pushes fixture
-// extensions into the shared hoisted array so the manager's Local extensions
-// section has inventory to render (and to prove inventory does not come from
-// the runtime's enabled-extension list).
+// The bundled catalog is stubbed; the built-in describe pushes fixture
+// extensions into the shared hoisted array so the manager's Built-in section
+// has inventory to render (and to prove inventory does not come from the
+// runtime's enabled-extension list).
 const devLocalState = vi.hoisted(() => ({ extensions: [] as any[] }));
 
 vi.mock('@/tools/video-editor/dev/localExtensions', () => ({
@@ -3499,10 +3499,10 @@ describe('ExtensionManager — empty, error, and mixed states (T11)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T2.4: DEV-only Local extensions section
+// T2.4: Built-in extensions section (every build)
 // ---------------------------------------------------------------------------
 
-describe('ExtensionManager — dev-local extensions section (T2.4)', () => {
+describe('ExtensionManager — built-in extensions section (T2.4)', () => {
   const LOCAL_ID = 'haus.astrid.dev.local-fixture';
   const DISABLED_LOCAL_ID = 'haus.astrid.dev.local-disabled';
   const DISABLED_STORAGE_KEY = 'astrid.dev-extensions.disabled';
@@ -3532,7 +3532,7 @@ describe('ExtensionManager — dev-local extensions section (T2.4)', () => {
 
   function localRow(id: string): HTMLElement | null {
     return document.querySelector(
-      `[data-video-editor-dev-local-extension="${id}"]`,
+      `[data-video-editor-built-in-extension="${id}"]`,
     );
   }
 
@@ -3547,7 +3547,7 @@ describe('ExtensionManager — dev-local extensions section (T2.4)', () => {
     window.localStorage.clear();
   });
 
-  it('renders a Local extensions section with inventory from devLocalExtensions', () => {
+  it('renders a Built-in section with inventory from the bundled catalog', () => {
     devLocalState.extensions.push(makeLocalExtension(LOCAL_ID, 'Local Fixture'));
     mockUseVideoEditorRuntime.mockReturnValue({
       extensionRuntime: makeRuntime([], [
@@ -3559,9 +3559,9 @@ describe('ExtensionManager — dev-local extensions section (T2.4)', () => {
 
     render(<ExtensionManager />);
 
-    const section = screen.getByTestId('dev-local-extensions');
+    const section = screen.getByTestId('built-in-extensions');
     expect(section).toBeInTheDocument();
-    expect(screen.getByText('Local extensions')).toBeInTheDocument();
+    expect(screen.getByText('Built-in')).toBeInTheDocument();
 
     const row = localRow(LOCAL_ID);
     expect(row).toBeInTheDocument();
@@ -3647,7 +3647,7 @@ describe('ExtensionManager — dev-local extensions section (T2.4)', () => {
     // The enabled local is still listed as active alongside it.
     expect(localRow(LOCAL_ID)).toHaveTextContent('Enabled');
 
-    // Re-enable through the dev store.
+    // Re-enable through the built-in store.
     await user.click(enableToggle);
 
     await waitFor(() => {
@@ -3663,7 +3663,7 @@ describe('ExtensionManager — dev-local extensions section (T2.4)', () => {
     ).toEqual([]);
   });
 
-  it('toggles through setDevExtensionEnabled when disabling an active local', async () => {
+  it('toggles through setBuiltInExtensionEnabled when disabling an active built-in', async () => {
     const user = userEvent.setup();
     devLocalState.extensions.push(makeLocalExtension(LOCAL_ID, 'Local Fixture'));
     mockUseVideoEditorRuntime.mockReturnValue({
@@ -3703,13 +3703,13 @@ describe('ExtensionManager — dev-local extensions section (T2.4)', () => {
 
     render(<ExtensionManager />);
 
-    // The dev-local pack catalog renders independently of package inventory.
-    expect(screen.getByTestId('dev-local-extensions')).toBeInTheDocument();
+    // The built-in catalog renders independently of package inventory.
+    expect(screen.getByTestId('built-in-extensions')).toBeInTheDocument();
     expect(localRow(LOCAL_ID)).toBeInTheDocument();
     expect(screen.queryByText('No packages in inventory.')).not.toBeInTheDocument();
   });
 
-  it('shows an empty note when devLocalExtensions has no entries', () => {
+  it('shows a quiet line when no extensions are installed at all', () => {
     mockUseVideoEditorRuntime.mockReturnValue({
       extensionRuntime: makeRuntime([]),
       extensionStateRepository: null,
@@ -3718,25 +3718,81 @@ describe('ExtensionManager — dev-local extensions section (T2.4)', () => {
 
     render(<ExtensionManager />);
 
-    expect(screen.getByTestId('dev-local-extensions')).toHaveTextContent(
-      'No local extensions in this workspace.',
-    );
+    expect(screen.queryByTestId('built-in-extensions')).not.toBeInTheDocument();
+    expect(screen.getByText('No extensions are installed.')).toBeInTheDocument();
   });
 
-  it('hides the Local extensions section when DEV is off', () => {
-    devLocalState.extensions.push(makeLocalExtension(LOCAL_ID, 'Local Fixture'));
-    (import.meta.env as Record<string, unknown>).DEV = false;
-    mockUseVideoEditorRuntime.mockReturnValue({
-      extensionRuntime: makeRuntime([], [
-        { manifest: makeLocalExtension(LOCAL_ID, 'Local Fixture').manifest },
-      ]),
-      extensionStateRepository: null,
-      triggerExtensionRefresh: undefined,
+  describe('production build (DEV off)', () => {
+    // A reviewed bundled id: production admits only the frozen reviewed inventory.
+    const REVIEWED_ID = 'haus.astrid.transcript-lane';
+
+    beforeEach(() => {
+      (import.meta.env as Record<string, unknown>).DEV = false;
     });
 
-    render(<ExtensionManager />);
+    it('renders the built-in rows in production, not only in DEV', () => {
+      devLocalState.extensions.push(
+        makeLocalExtension(REVIEWED_ID, 'Transcript'),
+        makeLocalExtension(LOCAL_ID, 'Local Fixture'),
+      );
+      mockUseVideoEditorRuntime.mockReturnValue({
+        extensionRuntime: makeRuntime([], [
+          { manifest: makeLocalExtension(REVIEWED_ID, 'Transcript').manifest },
+        ]),
+        extensionStateRepository: null,
+        triggerExtensionRefresh: undefined,
+      });
 
-    expect(screen.queryByTestId('dev-local-extensions')).not.toBeInTheDocument();
-    expect(localRow(LOCAL_ID)).toBeNull();
+      render(<ExtensionManager />);
+
+      expect(screen.getByTestId('built-in-extensions')).toBeInTheDocument();
+      expect(screen.getByText('Built-in')).toBeInTheDocument();
+      // Only reviewed built-ins are offered in production, matching the page.
+      const row = localRow(REVIEWED_ID);
+      expect(row).toHaveTextContent('Transcript');
+      expect(row).toHaveTextContent('1 contribution');
+      expect(row).toHaveTextContent('Enabled');
+      expect(localRow(LOCAL_ID)).toBeNull();
+      expect(screen.queryByText('No extensions are installed.')).not.toBeInTheDocument();
+    });
+
+    it('toggles a built-in off and back on through the shared store in production', async () => {
+      const user = userEvent.setup();
+      devLocalState.extensions.push(makeLocalExtension(REVIEWED_ID, 'Transcript'));
+      mockUseVideoEditorRuntime.mockReturnValue({
+        extensionRuntime: makeRuntime([]),
+        extensionStateRepository: null,
+        triggerExtensionRefresh: undefined,
+      });
+
+      render(<ExtensionManager />);
+
+      await user.click(screen.getByRole('button', {
+        name: /disable haus\.astrid\.transcript-lane/i,
+      }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', {
+          name: /enable haus\.astrid\.transcript-lane/i,
+        })).toBeInTheDocument();
+      });
+      expect(
+        JSON.parse(window.localStorage.getItem(DISABLED_STORAGE_KEY)!),
+      ).toEqual([REVIEWED_ID]);
+    });
+
+    it('shows the built-in section with no installed packages and no runtime extensions', () => {
+      devLocalState.extensions.push(makeLocalExtension(REVIEWED_ID, 'Transcript'));
+      mockUseVideoEditorRuntime.mockReturnValue({
+        extensionRuntime: makeRuntime([]),
+        extensionStateRepository: null,
+        triggerExtensionRefresh: undefined,
+      });
+
+      render(<ExtensionManager />);
+
+      expect(localRow(REVIEWED_ID)).toBeInTheDocument();
+      expect(localRow(REVIEWED_ID)).toHaveTextContent('Inactive');
+      expect(screen.queryByText('No extensions are installed.')).not.toBeInTheDocument();
+    });
   });
 });
