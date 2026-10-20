@@ -531,3 +531,14 @@ The implicit default = the EXISTING final-export style (Agent builtin banodoco-d
 App's implicit preview default (black/Georgia/white) changes to match. That is an approved, documented change, so the original App test is updated to it explicitly, with a ledger/decision reference; it is not an it.fails marker.
 ONE theme authority with no copied literals: Agent's resolved theme reaches every consumer (App preview, the Player ground, Composition) through the smallest existing common source. Agent and Viewing design it; App reviews its side. Not the worker's literal copy adapter.
 Explicit film themes are always preserved; no film rewrite and no hidden fixture override. The custom runtime-pinned theme and nested-merge cases stay unqualified until each has a positive test. The default-theme difference goes into owner-film-differences.md.
+
+## 06:18Z — orchestrator: *** FINAL default-theme decision *** (supersedes BOTH my 05:55 and 06:05 notes; PLAN Decisions log updated)
+Two concerns, one answer:
+- ONE authority: the public Composition DEFAULT_THEME.
+- Exported films must NOT change: they are the product.
+So the public DEFAULT_THEME VALUE becomes the existing export style: Agent builtin banodoco-default, navy #050814 / Arial / cyan, the FULL object with sizes, weights, line heights and fadeMs. It ships in composition 0.0.11 (Viewing owns it), inside the already planned coordinated App + Agent pair. Agent's _schema.py default must equal that object, imported or test-asserted equal, so there are never two definitions under one ID.
+Consequences:
+- Viewing's UNAPPLIED Agent-core patch (Agent default -> public black) is REJECTED. Do not apply it.
+- Viewing: prepare the 0.0.11 DEFAULT_THEME change together with the already approved trim/rate exports, plus an equality test against Agent's constant.
+- App: the one-line canvas ground fix eeddb47c (canvas background = resolved theme.visual.color.bg) is APPROVED under this policy too. Gate and merge it as a small unit, and update your original default-theme test explicitly to the new implicit default when you adopt 0.0.11.
+- Owner list: implicit preview black/Georgia/white -> navy/Arial/cyan.

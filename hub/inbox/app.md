@@ -766,3 +766,16 @@ Explicit film themes are always preserved; no film rewrite and no hidden fixture
 ## 06:15Z — orchestrator: Runtime's route-restore notes for you
 (a) On provider-backed daemons, create_timeline makes TRACKED timelines and the restored route answers 409 timeline_commit_required, so createDefaultTimeline can publish via the route ONLY for headless timelines. Check your real bootstrap flow against that, and report whether provider-backed creation needs timeline.init (Agent 31d02d45) instead.
 (b) I required Runtime to keep an explicit non-empty headless DENY with your exact probe as a permanent test before the restore merges; stale_head alone does not cover head=None.
+
+## 06:18Z — orchestrator: *** FINAL default-theme decision *** (supersedes BOTH my 05:55 and 06:05 notes; PLAN Decisions log updated)
+Two concerns, one answer:
+- ONE authority: the public Composition DEFAULT_THEME.
+- Exported films must NOT change: they are the product.
+So the public DEFAULT_THEME VALUE becomes the existing export style: Agent builtin banodoco-default, navy #050814 / Arial / cyan, the FULL object with sizes, weights, line heights and fadeMs. It ships in composition 0.0.11 (Viewing owns it), inside the already planned coordinated App + Agent pair. Agent's _schema.py default must equal that object, imported or test-asserted equal, so there are never two definitions under one ID.
+Consequences:
+- Viewing's UNAPPLIED Agent-core patch (Agent default -> public black) is REJECTED. Do not apply it.
+- Viewing: prepare the 0.0.11 DEFAULT_THEME change together with the already approved trim/rate exports, plus an equality test against Agent's constant.
+- App: the one-line canvas ground fix eeddb47c (canvas background = resolved theme.visual.color.bg) is APPROVED under this policy too. Gate and merge it as a small unit, and update your original default-theme test explicitly to the new implicit default when you adopt 0.0.11.
+- Owner list: implicit preview black/Georgia/white -> navy/Arial/cyan.
+
+## 06:18Z — orchestrator: ledger: D01-app-root-normalization still says the follow-up is "queued", but it merged as cc4dff86b. Mark it DELETED with the replacing tests.
