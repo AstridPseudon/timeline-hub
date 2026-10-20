@@ -17,6 +17,7 @@ const OPERATION_PREFIX = '/runtime-config/v1/operation';
 const TASK_PATH = `${OPERATION_PREFIX}/runtime/v1/tasks`;
 const COMMIT_PATH = new RegExp(`${OPERATION_PREFIX}/runtime/v1/projects/[^/]+/timelines/[^/]+/commit$`);
 const LEGACY_POST = /^\/api\/runtime\/.*$/;
+const PLACEMENT_LANE = 'V2';
 const CEILING = { timeout: 60_000 };
 const test = appTest.extend<{ workspace: Workspace }>({
   workspace: [async ({ harness }, use) => {
@@ -131,7 +132,8 @@ program = "import base64,hashlib,json; from pathlib import Path; out=Path('{out}
     'outputs': [
         {'name': 'generated_images', 'type': 'file', 'path_template': '{out}/generated.png', 'artifact_type': 'image/png'},
     ],
-    'metadata': {'adapter_family': 'cpu', 'resource_keys': ['cpu'], 'output_result_manifest': True,
+    'metadata': {'adapter_family': 'cpu', 'resource_keys': ['cpu'], 'estimated_scratch_bytes': 1048576,
+                 'estimated_output_bytes': 1048576, 'output_result_manifest': True,
                  'generation_publication': {'version': 1, 'modality': 'image', 'output_port': 'generated_images'}},
 }))
 endpoint, token = resolve_runtime_connection(os.environ['ASTRID_TIMELINE_EVAL_ENDPOINT'], Path(sys.argv[2]))
@@ -162,11 +164,22 @@ async function canonicalImage(harness: DirectHarness, seed: ThreeProductsSeed, o
   const shot = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/shots/${seed.shotId}/revisions/${occurrence.shot_revision_id}`)).body;
   const inner = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/revisions/${shot.internal_timeline_revision_id}`)).body.payload;
   const clip = inner.clips.find((item: any) => inner.registry.assets[item.asset]?.media_id === objectId && item.clipType === 'image');
-  expect(clip, 'accepted canonical occurrence image').toMatchObject({ track: 'S1', hold: 5, clipType: 'image' });
+  expect(clip, 'accepted canonical occurrence image').toMatchObject({ track: PLACEMENT_LANE, hold: 5, clipType: 'image' });
 }
 
 async function clickRecovery(page: Page, ownerId: string): Promise<void> {
   await page.getByRole('button', { name: /^Recover saved edits/ }).and(page.locator(`[data-owner-id="${ownerId}"]`)).click();
+}
+
+async function chooseTextGeneration(page: Page): Promise<void> {
+  const textSource = page.getByRole('radio', { name: 'Just text', exact: true });
+  await expect(textSource).toBeVisible(CEILING);
+  await textSource.click();
+  await expect(textSource).toHaveAttribute('aria-checked', 'true');
+  const textModel = page.getByRole('radio', { name: 'Qwen Image 2512', exact: true });
+  await expect(textModel).toBeVisible(CEILING);
+  await textModel.click();
+  await expect(textModel).toHaveAttribute('aria-checked', 'true');
 }
 
 async function expectConnectedWithDiagnostics(page: Page, diagnostics: string[]): Promise<void> {
@@ -226,8 +239,9 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   expect((await commandOutboxes(page, seed.timelineId)).flatMap((item) => item.placementContinuations ?? [])).toHaveLength(0);
   await approval.check();
   await expect(approval).toBeChecked();
+  await chooseTextGeneration(page);
   await page.locator('label').filter({ hasText: 'Raw occurrence reference' }).locator('input').fill(`occurrence:${seed.occurrenceId}`);
-  await page.locator('label').filter({ hasText: 'Raw lane ID' }).locator('input').fill('S1');
+  await page.locator('label').filter({ hasText: 'Raw lane ID' }).locator('input').fill(PLACEMENT_LANE);
   await page.locator('label').filter({ hasText: 'Raw anchor clip ID' }).locator('input').fill('');
   await page.getByRole('radio', { name: /Managed/ }).click();
   const promptSummary = page.getByText(/Click to add prompts|currently active/).first();
@@ -257,7 +271,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
     ].join('\n'));
   }
   const owner = (reserved ?? []).find((item) => item.placementContinuations?.length);
-  expect(owner?.placementContinuations?.[0].input).toMatchObject({ ownerRef: `occurrence:${seed.occurrenceId}`, lane: 'S1', anchor: null });
+  expect(owner?.placementContinuations?.[0].input).toMatchObject({ ownerRef: `occurrence:${seed.occurrenceId}`, lane: PLACEMENT_LANE, anchor: null });
   expect(owner?.placementContinuations?.[0].input.request).toEqual({ method: 'POST', path: '/v1/tasks', body: taskPost!.body, key: taskPost!.key });
   expect(owner?.placementContinuations?.[0].input.readClosure).toEqual(expect.objectContaining({ head: expect.anything(), savedCanonicalDocument: expect.anything() }));
 
