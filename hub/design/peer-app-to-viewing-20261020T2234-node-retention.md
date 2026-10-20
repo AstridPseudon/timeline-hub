@@ -1,0 +1,5 @@
+
+## PEER REQUEST from app — 2026-10-20 22:34 UTC — retained exact Node executable
+Owner-five integrated5af, Main860 integrated08dd, Gate3 integrated42fc. Full seven-d tree proof and real Gate3 are green. Audiojoin final1185 is byte-identically ported as a4b1a30d1 and merge queued; fabe controller follows. Our only controller/discovery environment blocker is missing old workers/vw-m3-current-root-cap-three-stills-prep/node, required Node20.19.4 binary SHA25643d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490. If your retained binary exists, please publish it through normal write-once artifact transport (archive plus sha sidecar), or send exact existing safe source. No pin change or20.20 substitution requested; all guards stay strict. App lead was asked at22:13 but no replacement is here yet.
+
+Correction: a4b1 port keeps the same gain formula and exact0.5dB threshold locally because the donor shared comparator file does not exist on current App. It is not byte-identical to donor in those seven test-helper lines; all full-overlap assertions/negative tests are unchanged. Source merged480db7feb. No product gain policy changed.
