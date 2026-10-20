@@ -3,7 +3,7 @@ import { createFakeIndexedDB } from 'fake-indexeddb';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import { RUNTIME_SCHEMA_DIGEST } from '@/integrations/runtime/contract-metadata.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
-import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, Transport } from '@/integrations/runtime/generated.ts';
+import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, Transport } from '@/integrations/runtime/generated.ts';
 import { buildTimelineData } from '../../lib/timeline-data.ts';
 import type { TimelineCommandBasis } from '../../data/DataProvider.ts';
 import { createCommitOutbox } from '../commitOutbox.ts';
@@ -41,7 +41,7 @@ function storage() {
   } });
   return { outbox, factory };
 }
-export async function environment(initialDocument = document()) {
+export async function environment(initialDocument = document(), applyParams?: (document: CanonicalDocument, command: EditCommand) => CanonicalDocument) {
   let serverDocument = structuredClone(initialDocument);
   let serverHead = h0;
   let fault: 'lost' | 'busy' | 'conflict' | 'unavailable' | 'refused' | 'validation' | 'authorization' | null = null;
@@ -91,7 +91,11 @@ export async function environment(initialDocument = document()) {
       response.data.previous_revision_id = serverHead.revisionId;
       response.data.previous_publication_id = serverHead.publicationId;
       const before = structuredClone(serverDocument);
-      if (request.commands[0].op === 'clip.move' || request.commands[0].op === 'track.set') {
+      if (request.commands[0].op === 'clip.set-params' && applyParams) {
+        serverDocument = applyParams(serverDocument, request.commands[0]);
+        serverDocument.parent_revision.revision_id = next;
+        serverDocument.parent_revision.content_digest = fixtureDigest(serverDocument.parent_revision.payload);
+      } else if (request.commands[0].op === 'clip.move' || request.commands[0].op === 'track.set') {
         let result;
         try {
           const bundle = await authoringBundleFromDocument(serverDocument);

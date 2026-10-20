@@ -1,4 +1,7 @@
-import type { CommitRequest, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CommitRequest, DocumentPin, EditCommand, JSON, VerifiedDocument, VerifiedDocumentObject } from '@/integrations/runtime/timeline-commit-types.ts';
+import { readRetainedParamInputs } from '@/integrations/runtime/retainedParamInputs.ts';
+import { selectedParamsCommand } from './clipParamsCapture.ts';
+import type { ClipParamsCapturePort } from './clipParamsGesture.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
@@ -6,14 +9,20 @@ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
-import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
+import { AuthoredState, assertFiniteJson, copy, equal, freezeJson, object } from './clipMovePrimitives.ts';
+import type { CanonicalProjectedClipIdentity } from '../data/shotCompositionProjection.ts';
+import { stableOutputIdentity } from '../data/shotComposition.ts';
+import type { AuthoringBundle } from './authoringBundle.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 
-type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
+type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle | null; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis;
+  // Local recovery data only. The normal commit body carries just commands and base.
+  selectedParams?: { basis: ReturnType<ClipParamsCapturePort['capture']>;
+    schema_inputs: [VerifiedDocument, Record<string, VerifiedDocumentObject>][]; realm_id: string } };
 export type CommandSessionState = {
-  status: 'loading' | 'saved' | 'dirty' | 'saving' | 'retry' | 'conflict' | 'error' | 'recovery';
+  status: 'loading' | 'saved' | 'dirty' | 'pending' | 'saving' | 'retry' | 'conflict' | 'error' | 'recovery';
   error: string | null;
   ownerId: string | null;
   recoverableOwners: string[];
@@ -30,9 +39,11 @@ type Options = {
   preview(patch: TimelinePatch): void;
   project(basis: TimelineCommandBasis, previews: TimelinePatch[]): Promise<void>;
   changed(state: CommandSessionState): void;
+  paramReadClient?: Parameters<typeof readRetainedParamInputs>[0];
 };
 const sameHead = (a: OutboxHead, b: OutboxHead) => a.revisionId === b.revisionId && a.publicationId === b.publicationId;
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
+const paramsPending = 'Selected parameters PENDING provider acceptance; draft preserved';
 const json = (value: unknown): JSON => JSON.parse(JSON.stringify(value)) as JSON;
 const hasChildTrack = (bundle: AuthoredBundle, trackId: string) => Object.values(bundle.shots).some((shot) =>
   Array.isArray(shot.internal_timeline.tracks) && shot.internal_timeline.tracks.some((track) =>
@@ -42,6 +53,7 @@ const hasChildTrack = (bundle: AuthoredBundle, trackId: string) => Object.values
 export async function createTimelineCommandSession(options: Options) {
   const storage = options.outboxes ?? createCommitOutbox();
   let bundle = await authoringBundleFromDocument(options.initial.canonicalDocument) as AuthoredBundle;
+  let acceptedBundle = bundle;
   let known = options.initial;
   let acceptedBasis = options.initial;
   let displayHead = options.initial.head;
@@ -62,6 +74,9 @@ export async function createTimelineCommandSession(options: Options) {
   let appendedGeneration = 0;
   let persistenceFailed = false;
   let persistenceError: string | undefined;
+  let paramsReadGeneration = 0;
+  let paramsCapture: { basis: ReturnType<ClipParamsCapturePort['capture']>; displayBasis: TimelineCommandBasis; pin?: DocumentPin;
+    inputs: [VerifiedDocument, Record<string, VerifiedDocumentObject>][] } | undefined;
   const latestOwn = options.initial.history?.next_cursor == null ? options.initial.history?.items.slice().reverse().find((entry) => entry.publisher === options.scope.actorId
     && entry.intent === 'recorded' && entry.records) : undefined;
   const undos: string[] = latestOwn ? [latestOwn.publication_id] : [];
@@ -130,10 +145,17 @@ export async function createTimelineCommandSession(options: Options) {
         await project(target, []);
         known = target;
         acceptedBasis = target;
+        acceptedBundle = bundle;
       }
       if (publishRefusal()) return;
       while (!stopped && record.intents.length && record.intents[0].conflict === undefined) {
-        publish('saving');
+        const intent = record.intents[0];
+        const payload = intent.payload as unknown as Payload;
+        if (payload.selectedParams && (payload.selectedParams.basis.acceptedBasisAvailable !== true || 'after' in intent.basis)) {
+          publish('pending', 'Selected parameters PENDING an accepted original basis; unsent draft preserved');
+          return;
+        }
+        publish(payload.selectedParams ? 'pending' : 'saving', payload.selectedParams ? paramsPending : null);
         const priorAccepted = record.accepted?.intentId;
         record = await box.dispatch((intent, head) => {
           const commands = (intent.payload as unknown as Payload).commands;
@@ -160,6 +182,7 @@ export async function createTimelineCommandSession(options: Options) {
         if (record.accepted && record.accepted.intentId !== priorAccepted) {
           const result = record.accepted.value as unknown as TimelineCommitResult;
           acceptedBasis = { head: result.accepted, canonicalDocument: result.canonicalDocument, graph: result.graph };
+          acceptedBundle = await authoringBundleFromDocument(result.canonicalDocument) as AuthoredBundle;
           const previous = result.response.data;
           const followsKnown = sameHead(known.head, result.accepted) || sameHead(known.head, {
             revisionId: previous.previous_revision_id, publicationId: previous.previous_publication_id,
@@ -168,12 +191,20 @@ export async function createTimelineCommandSession(options: Options) {
           const commands = result.response.data.commands;
           if (commands.some((command) => command.op === 'timeline.inverse')) undos.pop();
           else if (undos[undos.length - 1] !== result.accepted.publicationId) undos.push(result.accepted.publicationId);
+          if (payload.selectedParams && (record.intents.length || appendedGeneration !== localGeneration)) {
+            // Only the accepted closure supplies PARAM after-state; retain newer previews.
+            await chain;
+            record = await box.read();
+            await project(acceptedBasis, record.intents.map((entry) => (entry.payload as unknown as Payload).preview)
+              .filter((patch): patch is TimelinePatch => patch !== null));
+          }
           // A's ACK cannot erase B, including B whose durable append is still queued.
           if (!record.intents.length && appendedGeneration === localGeneration) {
             const nextBundle = await authoringBundleFromDocument(known.canonicalDocument) as AuthoredBundle;
             if (!stopped && !record.intents.length && appendedGeneration === localGeneration) {
               const generation = localGeneration;
               acceptedBasis = known;
+              acceptedBundle = nextBundle;
               bundle = nextBundle;
               await project(known, []);
               if (generation === localGeneration) lastIntent = undefined;
@@ -220,14 +251,14 @@ export async function createTimelineCommandSession(options: Options) {
     const generation = ++localGeneration;
     const previousBundle = bundle;
     // Advance authored bytes synchronously, before the next capture/service call.
-    bundle = payload.after;
-    publish('dirty');
+    bundle = payload.after ?? bundle;
+    publish(payload.selectedParams ? 'pending' : 'dirty', payload.selectedParams ? paramsPending : null);
     try { if (preview) options.preview(preview); }
     catch (error) { bundle = previousBundle; localGeneration--; publish('error', message(error)); throw error; }
     const localId = crypto.randomUUID();
     lastIntent = localId;
     pendingAppends.push({ localId, predecessor, head: capturedBasis && 'head' in capturedBasis ? capturedBasis.head : known.head, generation,
-      payload: { ...payload, displayBasis: acceptedBasis } });
+      payload: { ...payload, displayBasis: payload.displayBasis ?? acceptedBasis } });
     chain = chain.then(persistAppends);
     void chain.then(() => pump());
   }
@@ -312,6 +343,108 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const clipParamsPort: ClipParamsCapturePort = {
+    capture({ clipId, current }) {
+      paramsReadGeneration++;
+      paramsCapture = undefined;
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1 || current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))) {
+        throw new Error('Clip parameters require one unambiguous raw clip identity');
+      }
+      const raw = new AuthoredState(bundle);
+      const parentRef = `parent/clip:${clipId}`;
+      const identity = matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+      const parent = !clipId.includes('/') && !clipId.includes('::') && raw.entity(parentRef, true);
+      const select = parent ? parentRef : identity?.clipRef;
+      if (typeof select !== 'string' || !/^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(select) || select.includes('::')) {
+        throw new Error('Clip parameters require explicit raw ownership');
+      }
+      if (!parent) {
+        const owner = select.slice(0, select.lastIndexOf('/'));
+        if (!identity || owner !== identity.ownerRef || owner !== `occurrence:${identity.occurrenceId}`
+          || select !== `${owner}/clip:${identity.rawClipId}` || clipId !== `${identity.occurrenceId}:${identity.rawClipId}`
+          || identity.projectId !== options.scope.projectId || identity.parentDocumentId !== options.scope.timelineId) {
+          throw new Error('Clip parameters require explicit occurrence ownership');
+        }
+        const occurrence = raw.occurrence(owner);
+        const source = (bundle as AuthoringBundle).source_mapping.shots[String(occurrence.shot_id)];
+        if (!source || identity.shotId !== source.shot_id || identity.revisionId !== source.revision_id
+          || identity.internalTimelineRevisionId !== source.internal_timeline_revision_id
+          || identity.outputIdentity !== stableOutputIdentity(options.scope.projectId, options.scope.timelineId, identity.occurrenceId!)) {
+          throw new Error('Clip parameters require matching occurrence source pins');
+        }
+      }
+      const target = raw.entity(select)!;
+      const selected = object(target.elementRef) && Object.keys(target.elementRef).length ? target.elementRef : target.element_ref;
+      if (!object(selected) || typeof selected.packId !== 'string' || !selected.packId) {
+        throw new Error('This route requires a selected project pack element');
+      }
+      const basis = json({ bundle: copy(bundle), select, localGeneration,
+        acceptedBasisAvailable: !lastIntent && equal(bundle, acceptedBundle),
+        localBasis: lastIntent ? { after: lastIntent } : { head: acceptedBasis.head } }) as ReturnType<ClipParamsCapturePort['capture']>;
+      paramsCapture = { basis: freezeJson(basis), displayBasis: acceptedBasis, inputs: [] };
+      return paramsCapture.basis;
+    },
+    invalidatePrefetch() { paramsReadGeneration++; paramsCapture = undefined; },
+    async prefetch(basis, originalPin) {
+      assertReady();
+      if (!options.paramReadClient) throw new Error('Selected clip parameter input reads are unavailable; draft preserved');
+      if (!paramsCapture || !equal(paramsCapture.basis, basis) || basis.localGeneration !== localGeneration) {
+        throw new Error('Selected clip parameter capture changed; draft preserved');
+      }
+      const captured = paramsCapture, generation = ++paramsReadGeneration;
+      const head = known.head, projection = projectionGeneration;
+      const pin = freezeJson(copy(originalPin));
+      if (captured.pin && !equal(captured.pin, pin)) throw new Error('Selected parameters cannot refresh the original schema_source');
+      captured.pin = pin;
+      const target = new AuthoredState(basis.bundle as AuthoredBundle).entity(basis.select as string)!;
+      const selected = object(target.elementRef) && Object.keys(target.elementRef).length ? target.elementRef : target.element_ref;
+      const inputs = await readRetainedParamInputs(options.paramReadClient,
+        { project_id: options.scope.projectId, realm_id: options.scope.realmId }, pin, selected);
+      assertFiniteJson(inputs);
+      assertReady();
+      if (captured !== paramsCapture || generation !== paramsReadGeneration || basis.localGeneration !== localGeneration
+        || !sameHead(head, known.head) || projection !== projectionGeneration) {
+        throw new Error('Selected clip parameter capture changed during loading; draft preserved');
+      }
+      captured.inputs = freezeJson([[copy(inputs.verified), copy(inputs.objects)]]);
+      return freezeJson({ basis: captured.basis, schema_source: pin, schema_inputs: copy(captured.inputs), realm_id: options.scope.realmId });
+    },
+    finish(basis, args) {
+      assertReady();
+      if (!paramsCapture || !equal(paramsCapture.basis, basis) || basis.localGeneration !== localGeneration) {
+        throw new Error('Selected clip parameter capture changed; draft preserved');
+      }
+      const command = selectedParamsCommand(basis.select as string, args);
+      if (paramsCapture.pin && !equal(paramsCapture.pin, args.schema_source)) {
+        throw new Error('Selected clip parameters require the original retained schema_source');
+      }
+      paramsCapture.pin = freezeJson(copy(args.schema_source!));
+      prepared.set(JSON.stringify(command), { payload: { commands: [command], before: basis.bundle as AuthoredBundle,
+        after: null, preview: null, displayBasis: paramsCapture.displayBasis,
+        selectedParams: { basis: copy(basis), schema_inputs: copy(paramsCapture.inputs), realm_id: options.scope.realmId } },
+      generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command, previewParams: null };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      assertFiniteJson(command);
+      const key = JSON.stringify(command), entry = prepared.get(key);
+      if (!entry?.payload.selectedParams || entry.generation !== localGeneration || preview !== null
+        || !paramsCapture || !equal(paramsCapture.basis, entry.payload.selectedParams.basis)) {
+        throw new Error('Selected clip parameters require the original command and no local preview');
+      }
+      prepared.delete(key);
+      paramsReadGeneration++;
+      paramsCapture = undefined;
+      enqueue(entry.payload, null, entry.basis);
+    },
+  };
   async function resolveRejected(keepLabel: boolean) {
     if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
     const label = keepLabel ? labelIntent() : undefined;
@@ -350,6 +483,7 @@ export async function createTimelineCommandSession(options: Options) {
       bundle = payload?.after ?? before;
       known = fresh;
       acceptedBasis = fresh;
+      acceptedBundle = before;
       await project(fresh, payload?.preview ? [payload.preview] : []);
       resolving = false;
       publish(payload ? 'dirty' : 'saved');
@@ -373,7 +507,7 @@ export async function createTimelineCommandSession(options: Options) {
       if (record.intents.length) {
         lastIntent = record.intents[record.intents.length - 1].id;
         const payload = record.intents[record.intents.length - 1].payload as unknown as Payload;
-        bundle = payload.after;
+        bundle = payload.after ?? payload.before;
         // Repaint original local intent; do not replace it with a new capture on today's head.
         const first = record.intents[0].payload as unknown as Payload;
         const original = first.before.source_mapping as { _runtime_document?: JSON };
@@ -390,11 +524,13 @@ export async function createTimelineCommandSession(options: Options) {
         }
         acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
           : displayBasis;
+        acceptedBundle = await authoringBundleFromDocument(acceptedBasis.canonicalDocument) as AuthoredBundle;
         // Submission advances with A's ACK; B's display retains its original closure.
         await project(displayBasis,
           record.intents.map((intent) => (intent.payload as unknown as Payload).preview).filter((patch): patch is TimelinePatch => patch !== null));
       }
-      if (!publishRefusal()) publish(record.intents.length ? 'dirty' : 'saved');
+      if (!publishRefusal()) publish(record.intents.some((entry) => (entry.payload as unknown as Payload).selectedParams) ? 'pending'
+        : record.intents.length ? 'dirty' : 'saved');
       ready();
       await new Promise<void>((resolve) => { release = resolve; if (stopped) resolve(); });
     };
@@ -416,6 +552,7 @@ export async function createTimelineCommandSession(options: Options) {
   return {
     port,
     trackLabelPort,
+    clipParamsPort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,
@@ -475,6 +612,7 @@ export async function createTimelineCommandSession(options: Options) {
           if (!stopped && known === remote && !record?.intents.length && generation === localGeneration) {
             bundle = next as AuthoredBundle;
             acceptedBasis = remote;
+            acceptedBundle = bundle;
             await project(remote, []);
             publish('saved');
           }

@@ -14,11 +14,13 @@ import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
+import { captureClipParamsEdit, submitClipParamsEdit } from '../commands/clipParamsGesture.ts';
+import type { ClipSetParamsArgs } from '@/integrations/runtime/timeline-commit-types.ts';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-async function setup(raw = document()) {
-  const env = await environment(raw);
+async function setup(raw = document(), applyParams?: Parameters<typeof environment>[1]) {
+  const env = await environment(raw, applyParams);
   vi.stubGlobal('indexedDB', env.factory);
   const held = new Set<string>();
   vi.stubGlobal('navigator', { locks: { request: async (key: string, _options: unknown, work: (lock: unknown) => Promise<unknown>) => {
@@ -82,6 +84,55 @@ const assertRoots = (data: TimelineData, opaque: Record<string, unknown>) => {
 };
 
 describe('atomic command projection facts', () => {
+  it('shows selected PARAM PENDING without changing the accepted display, then atomically projects ACK and keeps an ordinary suffix', async () => {
+    const raw = document();
+    for (const rows of [raw.parent_revision.payload.clips, raw.parent_revision.payload.config.clips]) {
+      Object.assign(rows[0], { clipType: 'text', elementRef: { packId: 'fixture', id: 'text', kind: 'effect', revision: 'v1' },
+        params: { seed: 4, opaque: [null, false, {}] } });
+    }
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    // Synthetic normal-port acceptance only; native validation has its own provider probe.
+    const { env, mount } = await setup(raw, (before, command) => {
+      const next = structuredClone(before);
+      const row = next.parent_revision.payload.clips[0];
+      row.params = { ...row.params, ...(command.args as ClipSetParamsArgs).values };
+      next.parent_revision.payload.config.clips = structuredClone(next.parent_revision.payload.clips);
+      return next;
+    });
+    const mounted = mount();
+    await waitFor(() => expect(mounted.hook.result.current.commands.clipParamsPort).toBeDefined());
+    const snapshotSaves = vi.fn();
+    mounted.eventBus.on('scheduleSave', snapshotSaves);
+    const save = vi.spyOn(env.provider, 'saveTimeline');
+    const saveAtHead = vi.spyOn(env.provider, 'saveTimelineAtHead');
+    const pause = env.pause();
+    const captured = captureClipParamsEdit(mounted.hook.result.current.commands.clipParamsPort,
+      mounted.hook.result.current.commit.data!, 'x');
+    act(() => submitClipParamsEdit(captured, { values: { seed: 8 }, clear: [],
+      schema_source: { document_id: 'retained-v1', version: 1, content_digest: `sha256:${'1'.repeat(64)}` } }));
+    await waitFor(() => expect(mounted.hook.result.current.commands.state.status).toBe('pending'));
+    expect(mounted.hook.result.current.commands.state.error).toContain('PENDING');
+    expect(mounted.hook.result.current.commands.activeRef.current).toBe(true);
+    expect(mounted.hook.result.current.commit.data!.config.clips[0].params.seed).toBe(4);
+    expect(mounted.hook.result.current.commit.data!.editProjection).toEqual({ kind: 'accepted', head: originalBase });
+    await waitFor(() => expect(env.commits()).toHaveLength(1));
+    act(() => mounted.move(5));
+    expect(mounted.hook.result.current.commit.data!.config.clips[0]).toMatchObject({ at: 5, params: { seed: 4 } });
+    pause.resolve();
+    await act(async () => { await mounted.hook.result.current.commands.flush(); });
+    const final = mounted.hook.result.current.commit.data!;
+    expect(final.config.clips[0]).toMatchObject({ at: 5, params: { seed: 8, opaque: [null, false, {}] } });
+    expect(final.editProjection).toEqual({ kind: 'accepted', head: { revisionId: 'r2', publicationId: 'p2' } });
+    expect(mounted.installed.some(({ data }) => data.config.clips[0].params.seed === 8
+      && data.config.clips[0].at === 5 && data.editProjection?.kind === 'local')).toBe(true);
+    expect(env.commits()[1].body).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1',
+      commands: [{ op: 'clip.move', expect: { 'parent/clip:x::at': { state: 'present', value: 1 } } }] });
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
+    expect(saveAtHead).not.toHaveBeenCalled();
+    mounted.hook.unmount();
+  });
+
   it('projects the exact verified initial config, registry and head with no commands or graph', async () => {
     const raw = document();
     const opaque = opaqueRoots();
