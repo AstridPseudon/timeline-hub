@@ -5,7 +5,7 @@ from unittest.mock import Mock
 import pytest
 
 from astrid.installer import core
-from astrid.installer.core import Installer, Version, current, find_data_root, switch, write_json
+from astrid.installer.core import Installer, Version, current, switch, write_json
 
 
 def make_version(root: Path, name: str) -> Version:
@@ -228,28 +228,6 @@ def test_failed_rollback_is_reported_and_does_not_claim_success(installation):
         installer.run('update', {})
     assert 'start-old' not in backend.calls
     assert 'open' not in backend.calls
-
-
-@pytest.mark.parametrize('which', ['recorded', 'requested', 'default', 'legacy', 'fresh'])
-def test_find_install_precedence_and_never_falls_back_from_explicit_selection(tmp_path, which):
-    recorded, requested, default, legacy = [tmp_path / name for name in ('recorded', 'requested', 'default', 'banodoco_local')]
-    if which not in {'legacy', 'fresh'}:
-        write_json(default / 'runtime/catalog.json', {})
-    if which != 'fresh':
-        write_json(legacy / 'runtime/catalog.json', {})
-    found, migrate = find_data_root(recorded if which == 'recorded' else None,
-                                    requested if which == 'requested' else None, default, [legacy])
-    assert found == {'recorded': recorded, 'requested': requested, 'default': default,
-                     'legacy': legacy, 'fresh': default}[which]
-    assert migrate is (which == 'legacy')
-
-
-def test_multiple_old_workspaces_fail_with_selection_instruction(tmp_path):
-    roots = [tmp_path / 'old-a', tmp_path / 'old-b']
-    for root in roots:
-        write_json(root / 'runtime/catalog.json', {})
-    with pytest.raises(ValueError, match='--data-root'):
-        find_data_root(None, None, tmp_path / 'new', roots)
 
 
 def test_current_is_a_small_atomic_file_and_retains_previous_version(installation):
