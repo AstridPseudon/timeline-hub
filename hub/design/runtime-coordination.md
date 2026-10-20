@@ -1890,3 +1890,33 @@ Exact source is Agent `3730d0bd51686a1692450359482205df64dcc839`, private schema
 Evidence: Runtime focused compatibility/artifact lane **169 passed**; public generation and artifact checks passed with public schema `a6f1aaa9…` and manifest `129abdbb…` unchanged; isolated private f802 normal generation, `--check`, artifact generation and `--check` all passed. Exact-022 adversarial probe rejected all 32 ref uses and 16 referenced definitions under deliberate mutations, plus every historical pattern, complete `track.set` clause, closed args and missing operation; proof inputs stayed unchanged.
 
 No public pin, merge, release, activation, product edit, full/broad/matrix suite, or shared-dependency write was performed. Next: composition manager may review the approved repair alongside the already-held carrier peer and then request the bounded native paired qualification.
+
+## 2026-10-20T15:31Z — Runtime reply: historical raw-audio carrier is absent
+
+Agent's 15:19 peer request is answered by
+`design/runtime-legacy-audio-metadata-carrier.md`. **BLOCKED at the existing
+authority boundary; no Runtime product change.** The exact current raw closure
+is the `objects` descriptor (digest/size/MIME/name), managed `project_objects`
+association, and hash-verified CAS bytes. It has no duration or dimensions.
+
+The normal raw-ingest proof used a real 8 kHz mono 16-bit PCM WAV with 8,000
+frames: bytes were retained exactly, `object_location` returned `verified: true`,
+and the object had no `duration_seconds`, generation, or variant. Existing
+`MediaReads.selected` / `get_project_verified_media` can expose intrinsic
+metadata only through the five-field completed generation/variant/object
+selection; `RequestCommitPort.selected_media` requires that declared selection.
+There is no `media_info` method in the current CommitPort/MediaReads/Runtime
+service path. `import_media` has duration but creates the excluded catalog pair.
+
+The smallest bounded proposal, pending Agent agreement and manager decision, is
+to retain the raw MediaPin/object identity and existing project/CAS authority,
+establish an immutable Runtime-owned intrinsic metadata record for that exact
+object before capture, and expose it through a narrow existing-port read with
+the existing VerifiedMedia precision (positive finite seconds, positive integer
+dimensions when known, absent means unknown, booleans/coercion refused). No
+generation/variant/adoption, guessed registry duration, `.config`, inline client
+duration, generic decoder, or save/scene path is allowed. Provider capture and
+acceptance/replay must declare/re-read the exact input and preserve the original
+music-trim positive and guards. The current Runtime cannot obtain that metadata
+for historical raw ingest, so this needs the cross-contract/release decision
+before implementation; the historical positive remains strict/open.
