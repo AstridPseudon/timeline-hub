@@ -16,3 +16,7 @@
 ## Lead 05:24Z: recycle-on-finish handed to the kit
 - Kit bin/dispatch (recycle-on-finish) and the MANAGER-COMMON "Disk: recycle-on-finish" section arrived on the app machine. The lead watcher's every-5-min sweep is now only a fallback when disk is below 10 GB (same safety rules).
 - Race fixed: the lead sweep had recycled app-m2-opaque-root-writer-closure, app-m3-label-opaque-cohort-compose and app-m3-render-download-current-review up to 6 min before the manager's KEEP markers landed. All three worktrees were recreated at their branch heads (1516cc31b, 1ae5c5785, f08c3b976), clean, with node_modules linked.
+
+## Lead 05:52Z: re orchestrator 05:52Z (stop full 22121)
+- DONE: stopped only app-m2-post-opaque-full-clean-source-full-post-opaque-m1-compat-integration-1020053346-22121 (its process session; 0 processes left). status=cancelled; summary says INVALID ENVIRONMENT (node_modules.compat8 made Vitest treat libraries as app code; the 21 AgentChat projectContract failures are environmental). log.txt, snap, ext, request and runner.log kept; exit=130 written. Only its own .test snapshot was removed, with no prune. No other worker or test was touched.
+- The manager may request ONE corrected full on the same cc4/tree 0bf (Agent 4a75, Runtime 4bb), changing only the ignored node_modules symlink to the standard read-only cache, as authorized by the orchestrator.
