@@ -1,0 +1,108 @@
+# App current013 exact-pair browser gate preparation
+
+Status: READY-ONLY. This is a launcher/preflight for the existing M1
+renderer-off three-products journey. It is not a qualification result and it
+does not invoke a browser, build, render, Runtime socket, or four-case frame
+parity lane.
+
+## What landed in the App worktree
+
+- `scripts/testing/current013-integration.mjs`: a small central wrapper.
+- `scripts/testing/current013-integration.test.mjs`: pure input-guard tests.
+- The central test-service allow-list has the named suite
+  `app e2e-current013-integration`.
+
+The wrapper delegates to the existing `npm run test:e2e:three-products`
+configuration and `tests/e2e/local/three-products.spec.ts`; it does not change
+any of the six existing cases, the 21 existing helpers, or their assertions.
+That suite includes the additive M2 after-ACK Gate 5 case already present in
+the 0ea/current source. It does not invoke `viewing-parity` or any frame grant.
+
+## Exact ready command
+
+Run centrally, only after the manager supplies the actual final Agent SHA and
+App tree and approves this M1 renderer-off lane:
+
+```sh
+flock -w 600 /home/user/work/.app-m1-browser.lock env \
+  TIMELINE_CURRENT013_RUN=1 \
+  TIMELINE_CURRENT013_APP_TREE="$FINAL_APP_TREE" \
+  TIMELINE_CURRENT013_AGENT_SHA="$FINAL_AGENT_SHA" \
+  TIMELINE_CURRENT013_RUNTIME_SHA=2c4ac180c2220bdad966bc01e95ad230e99ce26a \
+  TIMELINE_CURRENT013_RUNTIME_PRODUCER_CHECKOUT=/home/user/work/wt/rt-m2-pin-2c4ac180 \
+  ASTRID_CHECKOUT="$FINAL_AGENT_CHECKOUT" \
+  ASTRID_RUNTIME_CHECKOUT="$FINAL_RUNTIME_CHECKOUT" \
+  ASTRID_PYTHON="$FINAL_AGENT_PYTHON" \
+  ASTRID_RUNTIME_PYTHON="$FINAL_RUNTIME_PYTHON" \
+  node scripts/testing/current013-integration.mjs
+```
+
+The named central suite invokes the same wrapper:
+
+```text
+app e2e-current013-integration flock -w 600 /home/user/work/.app-m1-browser.lock env TIMELINE_CURRENT013_RUN=1 node scripts/testing/current013-integration.mjs
+```
+
+The wrapper refuses missing inputs, refuses the old/moving checkout defaults,
+rejects `ASTRID_APP_DIRECT_DIST`, and passes the validated Agent/Runtime SHAs
+to the existing three-products source guard as
+`TIMELINE_BUNDLE_AGENT_HEAD` and `TIMELINE_BUNDLE_RUNTIME_HEAD`.
+
+## Required source inputs and checks
+
+Before the suite starts, and again after it ends, the wrapper requires and
+checks:
+
+- `TIMELINE_CURRENT013_APP_TREE`: exact 40-character App tree. App HEAD is
+  intentionally not required to equal a pin; a central snapshot commit may
+  differ while its tree matches this value.
+- `ASTRID_CHECKOUT` and `TIMELINE_CURRENT013_AGENT_SHA`: the actual Agent
+  checkout and exact matching HEAD.
+- `ASTRID_RUNTIME_CHECKOUT` and
+  `TIMELINE_CURRENT013_RUNTIME_SHA`: the actual Runtime checkout and the
+  published Runtime SHA `2c4ac180c2220bdad966bc01e95ad230e99ce26a`.
+- `TIMELINE_CURRENT013_RUNTIME_PRODUCER_CHECKOUT`: the read-only producer
+  checkout at that same Runtime SHA. The exact path is an input, not a moving
+  repo default.
+- `ASTRID_PYTHON` and `ASTRID_RUNTIME_PYTHON`: existing executable files.
+
+It compares both App and Agent normal Runtime locks to the published current
+tuple: source `2c4ac180...`, contract `0.2.13`, schema
+`sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4`,
+component manifest
+`sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5`,
+and artifact manifest version
+`sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56`
+with 75 entries. It runs the existing App `vendor-lock.mjs` and Agent
+`vendor_lock.py` checks against the supplied producer checkout.
+
+It also checks the immutable Composition 0.0.12 archive in both consumers:
+77 regular `package/` members and archive SHA-256
+`0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3`.
+
+The start/end fingerprints include the source roots, exact consumer metadata,
+Runtime manifest, lock bytes, and both Composition archive identities. Any
+change fails closed. The existing three-products suite additionally records
+and checks its Runtime/Agent source tuple at start/end.
+
+The existing `tests/e2e/local/global-setup.ts` remains the build authority. The
+wrapper deliberately forbids `ASTRID_APP_DIRECT_DIST`, so a stale caller-supplied
+dist cannot bypass its normal freshness check.
+
+## Still pending
+
+- Agent’s final matching public12/current-tuple SHA is not supplied.
+- The App normal-pin worker’s final App tree is not supplied; the current
+  worktree tree is `e71d670ca010fe0aab0ff26842cbaf0eb08edf2a` before this
+  wrapper is committed and is not a final-pair claim.
+- No exact final Runtime checkout path/Python paths were supplied for the
+  future central invocation.
+- The current App lock/metadata and Agent checkout are intentionally not
+  current 0.2.13/Agent-pair values, so this wrapper is expected to fail closed
+  until the manager supplies the final pair.
+- Actual M1 renderer-off browser evidence, Gate 5 acceptance, and any later
+  frame/audio parity grant remain unrun.
+
+Frame parity remains a separate gate and requires its own fresh grant; this
+wrapper never requests or implies that grant.
+
