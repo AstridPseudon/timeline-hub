@@ -161,7 +161,10 @@ def _verify_claims(ctx, command):
         ref, path = address(key, command.get('resolved', []))
         guard(ctx.state, ref, path, expected)
     for read in command.get('reads', []):
-        guard(ctx.state, read['ref'], read['path'], read['state'])
+        if read['ref'].startswith('media:'):
+            ctx.verify_media_read(read)
+        else:
+            guard(ctx.state, read['ref'], read['path'], read['state'])
     for selected in command.get('selections', []):
         actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
         if not selection_matches(selected, actual):

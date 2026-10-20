@@ -123,7 +123,26 @@ def test_raw_audio_trim_uses_request_metadata_without_persisting_a_duration():
     assert 'duration' not in plan.bundle['parent']['registry']['assets']['voice']
     assert command['args'] == {'in_s': 1, 'out_s': 5}
     assert 'verified_media' not in command
+    assert [read for read in command['reads']
+            if read['ref'] == 'media:' + pin and read['path'] == ['duration_seconds']] == [{
+                'ref': 'media:' + pin, 'path': ['duration_seconds'],
+                'state': {'state': 'present', 'value': 8},
+            }]
+    assert replay(plan, original, verified_media=[metadata]).records == plan.records
     assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_raw_audio_trim_replay_refuses_changed_request_duration_before_writes():
+    original, pin = raw_audio_bundle()
+    captured = {'object_id': pin, 'media_type': 'audio/wav', 'size': 1234,
+                'duration_seconds': 8}
+    command = capture_clip_trim(original, REF, in_s=0, out_s=8,
+                                verified_media=[captured])
+    plan = execute(original, [command], verified_media=[captured])
+    changed = {**captured, 'duration_seconds': 7}
+    with pytest.raises(CommandError, match='original media read changed'):
+        replay(plan, original, verified_media=[changed])
+    assert clip(plan.bundle)['to'] == 8
 
 
 def test_raw_audio_trim_pin_is_the_exact_retained_base_pin():

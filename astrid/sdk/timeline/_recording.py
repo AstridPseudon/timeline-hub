@@ -98,6 +98,47 @@ class Recording:
             self.record['reads'].append(read)
         return copy.deepcopy(value.get('value'))
 
+    def _verified_media(self, media_id):
+        matches = [value for value in self.verified_media
+                   if isinstance(value, dict) and 'selection' not in value
+                   and value.get('object_id') == media_id]
+        if not matches or any(not equal(value, matches[0]) for value in matches):
+            raise CommandError('media read requires exact Runtime-verified media metadata',
+                               kind='dependency_changed', ref='media:' + media_id)
+        return matches[0]
+
+    def media_state(self, ref, path):
+        if not isinstance(ref, str) or not ref.startswith('media:'):
+            raise CommandError('invalid media read reference', ref=ref)
+        media_id = ref.removeprefix('media:')
+        if not media_id:
+            raise CommandError('media read requires an exact media identity', ref=ref)
+        if list(path) != ['duration_seconds']:
+            raise CommandError('unsupported media read', ref=ref, path=path)
+        value = self._verified_media(media_id)
+        duration = value.get('duration_seconds')
+        return (present(duration) if duration is not None else copy.deepcopy(ABSENT))
+
+    def read_media(self, pin, path):
+        if not isinstance(pin, dict):
+            raise CommandError('media read requires an exact media pin', kind='dependency_changed')
+        media_id = pin.get('media_id')
+        if not isinstance(media_id, str) or pin.get('content_digest', media_id) != media_id:
+            raise CommandError('media read requires an exact media pin', kind='dependency_changed')
+        ref = 'media:' + media_id
+        state = self.media_state(ref, path)
+        read = {'ref': ref, 'path': list(path), 'state': state}
+        if not any(equal(read, prior) for prior in self.record['reads']):
+            self.record['reads'].append(read)
+        return copy.deepcopy(state.get('value'))
+
+    def verify_media_read(self, read):
+        actual = self.media_state(read['ref'], read['path'])
+        if not equal(actual, read['state']):
+            raise CommandError('original media read changed', kind='dependency_changed',
+                               ref=read['ref'], path=read['path'],
+                               base=read['state'], theirs=actual)
+
     def select(self, key, owner, members=()):
         value = selection(self.input_state or self.state, key, owner, members)
         if value not in self.record['selections']:
@@ -244,7 +285,9 @@ class Recording:
             # observations made between the deterministic recipe's own writes.
             command['reads'], command['selections'] = [], []
             for read in self.record['reads']:
-                claim = {**read, 'state': self.command_input.get(read['ref'], read['path'])}
+                state = (read['state'] if read['ref'].startswith('media:')
+                         else self.command_input.get(read['ref'], read['path']))
+                claim = {**read, 'state': state}
                 if not any(equal(claim, prior) for prior in command['reads']):
                     command['reads'].append(claim)
             for selected in self.record['selections']:

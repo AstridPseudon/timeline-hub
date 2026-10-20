@@ -44,8 +44,12 @@ def _verified_source_duration(ctx, source, expected_kind):
             or type(value.get('size')) is not int or value['size'] <= 0:
         raise CommandError('trim source media metadata is not exact audio media',
                            kind='unsupported_media')
-    number(value.get('duration_seconds'), 'intrinsic duration', positive=True)
-    return value['duration_seconds'], value
+    media_id = source.get('media_id') or object_id
+    content_digest = source.get('content_digest') or source.get('digest') or media_id
+    pin = {'media_id': media_id, 'content_digest': content_digest}
+    limit = ctx.read_media(pin, ['duration_seconds'])
+    number(limit, 'intrinsic duration', positive=True)
+    return limit, value
 
 
 def clip_trim(ctx, command):
