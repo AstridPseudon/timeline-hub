@@ -1,6 +1,6 @@
 # Visual compile contract
 
-Status: contract draft for the Agent compiler, from the 2026-10-20 03:46 orchestrator decision (popup projection consistency), the 03:59 decision (clip look), the 04:44 correction (exact native fixture) and the 04:57 item 5 (vector 1 is exactly native; vector 2 is an explicitly labelled overhang closure). Golden vectors: `tests/editing_conformance/fixtures/visual_compile_contract.json`, run by `tests/editing_conformance/test_compile_contracts.py`.
+Status: contract draft for the Agent compiler, from the 2026-10-20 03:46 orchestrator decision (popup projection consistency), the 03:59 decision (clip look), the 04:44 correction (exact native fixture), the 04:57 item 5 (vector 1 is exactly native; vector 2 is an explicitly labelled overhang closure), and the 10:35 raw-source/fade vector (section 3). Golden vectors: `tests/editing_conformance/fixtures/visual_compile_contract.json`, run by `tests/editing_conformance/test_compile_contracts.py`.
 
 Reference for "visible today": `origin/main` e51595c6. The compiler is `astrid/core/timeline/shot_composition_projection.py`, identical to main's file in this tree. The renderer is Composition 0.0.6 (`remotion/package.json:18` on main).
 
@@ -71,9 +71,73 @@ This is a deliberate difference, not lost behaviour (03:59 decision).
 
 Also in the same 0.0.7 release, per-boundary transitions (dissolve vs dip) changed. The vectors here do not cover that.
 
+## 3. Authored fade clock and occurrence draw cap (vector 3)
+
+`cap_fade_closure` contains the verbatim App `shotComposition.fixture.json` at
+`35ebae007d848ff22d8da89461bdb66efc93472f`, plus the explicit child replacement
+from the independent review's counterexample: an image at 0 s, `hold: 5`,
+`effects: {fade_out: 1}`. The existing App `withOccurrenceRevision` helper
+replaces only occ-1's child clips. This reproduces the described counterexample;
+the original external test's bytes were not retained. It is synthetic, unlike
+vector 1's native ADD output.
+
+The authored occurrence still says 2000 ms. App derives the effective 4000 ms
+cap from occ-2's next start on the same lane, against 5000 ms of content. The
+corpus includes the actual default editor projection and the raw projection
+from that frozen source. Both retain `canonicalTiming.durationMs: 5000` and
+`canonicalTiming.occurrenceDurationMs: 4000`; their only clip difference is
+`hold` (4 versus 5). The raw projection was obtained with the existing App
+option as a diagnostic, not as a proposed per-call clamp policy.
+
+The render contract supplies the raw authored source and the existing cap to
+the one public Composition planner. The editor/read projection remains clamped.
+Clamping the draw interval must not shorten the clock used for authored fades.
+
+| Input to public evaluation, 30 fps | Authored duration | Draw interval | Clip opacity at frame 105 (3.5 s) |
+|---|---|---|---|
+| Render input: `hold: 5`, occurrence cap 4000 ms | 150 frames | [0, 120) | 1 |
+| Editor projection: `hold: 4`, same cap | 120 frames | [0, 120) | 0.5 |
+
+The public `clipOpacity` evaluates the raw fade over frames 120–150, so frame
+105 is fully opaque. The shortened clock moves it to frames 90–120. Both draw
+plans contain frame 119 and exclude frame 120. The `opacity` column is clip
+opacity, not a pixel/occlusion claim or the track plan's transition opacity.
+The contract tests extract this tree's pinned public package into a private
+temporary directory and execute its pure `prepareScene`, `clipOpacity` and
+`queryTrackFrame` exports with the incoming vector `[null]`. They use no local
+fade formula. The Agent editor test supplies the already-derived 4000 ms cap
+to the existing projector, preserves its positive clamp, and checks the
+authored source graph remains unchanged. It does not reproduce App's lane-cap
+derivation or qualify a render consumer.
+
+### Product seam and MAIN confirmation still owed
+
+The reviewed App callers `useTimelineCommandSession.ts:82` and
+`canonicalCompositionState.ts:61` use the default clamped projection;
+`shotCompositionProjection.ts:440–449` shortens `hold`/`to` before
+`playerEvaluation.ts` and `VisualClip.tsx:301` evaluate the fade. A rendering
+adapter must carry raw source timing plus the cap into the public compiler,
+while keeping the editor/read clamped assertions. No global default change,
+second compiler or per-call timing policy follows from this vector.
+
+Agent also shortens `hold`/`to` in `_project_clip` in
+`astrid/core/timeline/shot_composition_projection.py`. Its managed render
+closure in `astrid/packs/rendering/actions/render/managed_timeline.py` and
+provider projection in `astrid/sdk/timeline/commit.py` consume that projector.
+Any correction needs review at those source boundaries; no product change is
+made by this contract addition.
+
+MAIN `e51595c6` has the same source-shortening branch and pins Composition
+0.0.6, whose fade helper uses the supplied clip duration. Consequently the raw
+opacity of 1 is **not established as MAIN's visible result**. Viewing must
+replay the actual MAIN render route and confirm the reference (or report a
+policy discrepancy to the orchestrator). `physical_reference` stays pending.
+No generated playable media, decoded pixels, App renderer mount or Runtime
+acceptance is claimed here.
+
 ## Vectors
 
-The render-facing rows are the source-window child of each occurrence. Vector 1 is the six native rows (section 1). Vector 2 is the overhang closure (section 1b). Each row is a frame value from the projected clip (`shot_occurrence_id` plus `app.astrid_shot_composition.source_clip_id` = `clip-a`). A row with `closure` = `overhang` is vector 2. A row with `clamp` = `off` is the unclamped expectation, which the compiler does not emit.
+The original frame rows are the source-window child of each occurrence. Vector 1 is the six native rows (section 1). Vector 2 is the overhang closure (section 1b). Each row is a frame value from the projected clip (`shot_occurrence_id` plus `app.astrid_shot_composition.source_clip_id` = `clip-a`). A row with `closure` = `overhang` is vector 2. Vector 3 is stored separately as `cap_fade_closure` and checks the raw authored fade clock against the bounded draw interval (section 3).
 
 | id | Occurrence / child | Field | Expect | Status |
 |---|---|---|---|---|
@@ -91,6 +155,9 @@ The render-facing rows are the source-window child of each occurrence. Vector 1 
 | overhang-clamp-on-end-frame | vector 2, occ-c / clip-a (visible end 3.5 s) | end_frame | 105 | pass |
 | overhang-clamp-on-duration-frames | vector 2, occ-c / clip-a | duration_frames | 15 | pass |
 | `test_overhang_child_is_clamped_to_its_occurrence_end` | vector 2, occ-c / clip-a | at, visible duration | 3.0 s, 0.5 s | pass |
+| `test_cap_fade_editor_projection_keeps_clamped_timing_and_authored_source` | vector 3, occ-1 / overlong-child | projected hold / authored hold | 4 s / 5 s | pass |
+| `test_cap_fade_public_source_clock_and_half_open_draw_cap[render]` | vector 3, raw source + cap | opacity at 105 / own duration / draw duration | 1 / 150 / 120 | pass |
+| `test_cap_fade_public_source_clock_and_half_open_draw_cap[editor]` | vector 3, editor projection | opacity at 105 / own duration / draw duration | 0.5 / 120 / 120 | pass |
 
 The six native rows are unchanged. Every clamp-on row is produced on this branch, and the clip look is already in this tree. No rows were added or kept as xfails for clamp off: the compiler has no unclamped mode, and the decision does not add one.
 

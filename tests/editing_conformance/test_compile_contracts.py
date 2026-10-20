@@ -1,4 +1,4 @@
-"""Shared compile-contract vectors: occurrence -> clip, as main's projection emits them.
+"""Shared compile-contract vectors for projected timing and public source clocks.
 
 The vectors are fixtures/audio_compile_contract.json and fixtures/visual_compile_contract.json;
 the design is docs/design/audio-compile-contract.md and docs/design/visual-compile-contract.md.
@@ -7,6 +7,9 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
+import tarfile
+from copy import deepcopy
 from fractions import Fraction
 from pathlib import Path
 
@@ -153,6 +156,71 @@ def test_overhang_child_is_clamped_to_its_occurrence_end():
     assert clip['at'] == pytest.approx(3.0)
     assert clip_timeline_duration(clip) == pytest.approx(0.5)
     assert clip['at'] + clip_timeline_duration(clip) == pytest.approx(3.5)
+
+
+def test_cap_fade_editor_projection_keeps_clamped_timing_and_authored_source():
+    vector = VISUAL['cap_fade_closure']
+    graph = deepcopy(vector['app_fixture'])
+    occurrence = next(o for o in graph['occurrences']
+                      if o['occurrence_id'] == vector['base']['occurrence_id'])
+    # App derives this cap from the next same-lane cut. This Agent analog
+    # receives that cap explicitly; it does not implement App's lane policy.
+    occurrence.update(at_ms=vector['occurrence_cap']['start_ms'],
+                      duration_ms=vector['occurrence_cap']['duration_ms'])
+    revision = _revision(graph, vector['base']['shot_id'], vector['base']['revision_id'])
+    revision['internal_timeline_revision']['timeline']['clips'] = [deepcopy(vector['child'])]
+    before = deepcopy(graph)
+    projection = project_shot_composition(graph)
+    clip = _source_clip(projection, occurrence['occurrence_id'], vector['child']['id'])
+    editor = vector['editor_projection']
+    for field in ('id', 'at', 'track', 'clipType', 'asset', 'hold', 'effects'):
+        assert clip[field] == editor[field]
+    assert clip_end_frame(clip, vector['fps']) == vector['end_frame']
+    assert graph == before
+    assert _clips(_revision(projection.graph, vector['base']['shot_id'],
+                            vector['base']['revision_id'])) == [vector['child']]
+
+
+@pytest.fixture(scope='module')
+def public_visual_evaluation(tmp_path_factory):
+    package = json.loads((REPO / 'remotion/package.json').read_text(encoding='utf-8'))
+    pin = package['dependencies']['@banodoco/timeline-composition']
+    assert pin.startswith('file:')
+    # Evaluate the shipped public package in a private temp directory. Its
+    # pure evaluation entry needs no install, shared dependencies or cache.
+    with tarfile.open(REPO / 'remotion' / pin.removeprefix('file:')) as archive:
+        destination = tmp_path_factory.mktemp('visual-contract-package')
+        members = [m for m in archive.getmembers() if m.isfile() and (
+            m.name == 'package/package.json' or m.name.startswith('package/dist/'))]
+        archive.extractall(destination, members=members, filter='data')
+    return (destination / 'package/dist/evaluation.js').as_uri()
+
+
+@pytest.mark.parametrize('view', ['render', 'editor'])
+def test_cap_fade_public_source_clock_and_half_open_draw_cap(view, public_visual_evaluation):
+    vector = VISUAL['cap_fade_closure']
+    clip = vector['render_input' if view == 'render' else 'editor_projection']
+    result = subprocess.run(
+        ['node', '--input-type=module', '-e', '''
+import {readFileSync} from 'node:fs';
+const {clipOpacity, prepareScene, queryTrackFrame} = await import(process.argv[1]);
+const {clip, fps, sample, last, end} = JSON.parse(readFileSync(0, 'utf8'));
+const scene = prepareScene([{track: {id: clip.track, kind: 'visual'}, clips: [clip],
+  transitions: [], incomingTransitions: [null]}], {assets: {}}, fps, 1920, 1080);
+const prepared = scene.tracks[0].prepared;
+const plan = prepared.plans[0];
+console.log(JSON.stringify({opacity: clipOpacity(clip, sample, fps),
+  own_duration_frames: plan.ownDuration, draw_duration_frames: plan.drawDuration,
+  last_clip_indices: queryTrackFrame(prepared, last).layers.map(l => l.clipIndex),
+  end_layers: queryTrackFrame(prepared, end).layers}));
+''', public_visual_evaluation],
+        input=json.dumps({'clip': clip, 'fps': vector['fps'], 'sample': vector['sample_frame'],
+                          'last': vector['last_draw_frame'], 'end': vector['end_frame']}),
+        text=True, capture_output=True, check=True, timeout=30,
+    )
+    assert json.loads(result.stdout) == {
+        **vector['expect'][view], 'last_clip_indices': [0], 'end_layers': [],
+    }
 
 
 def test_render_pin_gives_element_clips_the_clip_look():
