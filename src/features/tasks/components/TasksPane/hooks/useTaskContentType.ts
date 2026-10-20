@@ -30,7 +30,7 @@ interface UseTaskContentTypeOptions {
  * Accepts taskTypeInfo as a prop to avoid duplicate useTaskType queries
  * when the parent already fetches it.
  */
-export function useTaskContentType({ task, taskParams, taskTypeInfo }: UseTaskContentTypeOptions): TaskContentTypeInfo {
+export function useTaskContentType({ task, taskTypeInfo }: UseTaskContentTypeOptions): TaskContentTypeInfo {
   return useMemo(() => {
     const dbContentType = taskTypeInfo?.content_type;
 
@@ -42,10 +42,7 @@ export function useTaskContentType({ task, taskParams, taskTypeInfo }: UseTaskCo
     const isVideoTask = contentType === 'video';
     const isImageTask = contentType === 'image';
 
-    // For individual_travel_segment tasks with child_generation_id, show button even without outputLocation
-    // (because the variant may not be primary, so outputLocation won't be synced to the task)
-    const hasChildGenerationId = task.taskType === 'individual_travel_segment' && !!taskParams.parsed?.child_generation_id;
-    const isCompletedVideoTask = isVideoTask && task.status === 'Complete' && (!!task.outputLocation || hasChildGenerationId);
+    const isCompletedVideoTask = isVideoTask && task.status === 'Complete';
     const isCompletedImageTask = isImageTask && task.status === 'Complete';
 
     // Show tooltips for all video and image tasks
@@ -61,5 +58,5 @@ export function useTaskContentType({ task, taskParams, taskTypeInfo }: UseTaskCo
       showsTooltip,
       contentType,
     };
-  }, [taskTypeInfo?.content_type, task.status, task.outputLocation, task.taskType, taskParams.parsed?.child_generation_id]);
+  }, [taskTypeInfo?.content_type, task.status, task.taskType]);
 }

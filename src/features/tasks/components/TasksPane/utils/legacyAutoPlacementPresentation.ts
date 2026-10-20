@@ -1,23 +1,21 @@
 import type { TaskStatus } from '@/types/tasks';
 
 export const LEGACY_AUTO_PLACEMENT_LABEL = 'Not placed: place manually';
+export const LEGACY_UNCONFIRMED_PLACEMENT_LABEL = 'Placement unconfirmed: place manually';
 
 interface LegacyAutoPlacementTaskInput {
   id: string;
   status: TaskStatus;
   params: Record<string, unknown>;
-  /**
-   * The legacy complete_task result_data projection, when a caller has it.
-   * Current task-list mappers do not carry this marker to TaskItem. Until a
-   * supported read supplies it, the not-placed label must remain inactive.
-   */
+  /** Existing Runtime result or legacy complete_task result_data, when readable. */
   resultData?: unknown;
+  generationIntent?: unknown;
   hasAsset: boolean;
 }
 
 export interface LegacyAutoPlacementPresentation {
   taskId: string;
-  label: typeof LEGACY_AUTO_PLACEMENT_LABEL;
+  label: typeof LEGACY_AUTO_PLACEMENT_LABEL | typeof LEGACY_UNCONFIRMED_PLACEMENT_LABEL;
   /** The completed output remains available to the existing gallery/lightbox. */
   assetRetained: true;
   action: 'place-manually';
@@ -25,6 +23,10 @@ export interface LegacyAutoPlacementPresentation {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function hasLegacyPlacementIntent(params: Record<string, unknown>): boolean {
+  return isRecord(params.placement_intent) || isRecord(params.timeline_placement);
 }
 
 function hasRetiredCompletionMarker(resultData: unknown): boolean {
@@ -53,15 +55,20 @@ export function getLegacyAutoPlacementPresentation(
     return null;
   }
 
+  if (task.generationIntent != null || task.params.generation_intent != null) {
+    return null;
+  }
+
   // Request parameters survive successful historical placement and can also be
   // retained by modern requests. Intent alone says nothing about the outcome.
-  if (!hasRetiredCompletionMarker(task.resultData)) {
+  const retired = hasRetiredCompletionMarker(task.resultData);
+  if (!retired && !hasLegacyPlacementIntent(task.params)) {
     return null;
   }
 
   return {
     taskId: task.id,
-    label: LEGACY_AUTO_PLACEMENT_LABEL,
+    label: retired ? LEGACY_AUTO_PLACEMENT_LABEL : LEGACY_UNCONFIRMED_PLACEMENT_LABEL,
     assetRetained: true,
     action: 'place-manually',
   };

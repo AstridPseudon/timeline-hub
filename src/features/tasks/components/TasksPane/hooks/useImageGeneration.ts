@@ -24,8 +24,8 @@ export function useImageGeneration({
 }: UseImageGenerationOptions) {
   // Check if this is a successful image task with output
   const hasGeneratedImage = useMemo(() => {
-    return isImageTask && task.status === 'Complete' && !!task.outputLocation;
-  }, [isImageTask, task.status, task.outputLocation]);
+    return isImageTask && task.status === 'Complete';
+  }, [isImageTask, task.status]);
 
   // Fetch generation data - checks both generations and generation_variants tables
   const { data: generationResult, isLoading: isLoadingGeneration, error: generationError } = useQuery({
@@ -41,7 +41,7 @@ export function useImageGeneration({
           }
         : null;
     },
-    enabled: hasGeneratedImage && !!task.outputLocation,
+    enabled: hasGeneratedImage,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 

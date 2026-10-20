@@ -1,10 +1,20 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
 import { bridgeTaskSummaryToTask } from '@/integrations/astrid/bridgeTaskReads';
 import { runtimeTaskToDetail, runtimeTaskToSummary } from '@/integrations/astrid/runtimeReadModels';
 import { runtimeTaskReadResourceSchema } from '@/integrations/astrid/taskReadSchemas';
+
+const getTask = vi.hoisted(() => vi.fn());
+vi.mock('@/integrations/runtime/client', () => ({
+  AstridRuntimeClient: class { getTask = getTask; },
+}));
+beforeEach(() => {
+  getTask.mockReset().mockResolvedValue({
+    task_id: 'task-1', project_id: 'project-1', state: 'succeeded',
+  });
+});
 
 const output = vi.hoisted(() => ({
   id: 'gen-1', location: 'https://cdn.example.com/tasks/task-1/out.png',
@@ -60,7 +70,7 @@ describe('TaskItem', () => {
       anchor_generation_id: 'gen-source-1', anchor_variant_id: 'variant-source-1',
       relation: 'after', preferred_track_id: 'V1', fallback_at: 22.25, fallback_track_id: 'V1',
     } },
-  ])('keeps the lightbox available without calling placed history unplaced: %j', (params) => {
+  ])('keeps the lightbox available without calling placed history unplaced: %j', async (params) => {
     const task = {
       id: 'task-1', taskType: 'image_generation', projectId: 'project-1',
       status: 'Complete' as const, params, outputLocation: output.location,
@@ -75,9 +85,11 @@ describe('TaskItem', () => {
       </QueryClientProvider>,
     );
     expect(screen.queryByText('Not placed: place manually')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /place .* manually/i })).not.toBeInTheDocument();
+    expect(await screen.findByText('Placement unconfirmed: place manually')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '' }));
     expect(onOpenImageLightbox).toHaveBeenCalledWith(task, output, 'variant-1');
+    fireEvent.click(screen.getByRole('button', { name: /place .* manually/i }));
+    expect(onOpenImageLightbox).toHaveBeenCalledTimes(2);
   });
 
   it('does not infer old placement from a modern task after the actual read projections', () => {
@@ -101,6 +113,7 @@ describe('TaskItem', () => {
         media_type: 'image/png', size: 42,
       }] },
     });
+    getTask.mockResolvedValue(resource);
     const summary = runtimeTaskToSummary(resource, 'test');
     const task = bridgeTaskSummaryToTask(summary);
     expect(runtimeTaskToDetail(resource, 'test').result).toEqual(resource.result);

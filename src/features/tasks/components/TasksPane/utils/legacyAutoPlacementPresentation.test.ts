@@ -29,13 +29,13 @@ describe('getLegacyAutoPlacementPresentation', () => {
     });
   });
 
-  it('does not infer a placement outcome from a reachable old request', () => {
+  it('keeps an old request outcome unconfirmed', () => {
     expect(getLegacyAutoPlacementPresentation({
       id: 'task-intent',
       status: 'Complete',
       params: { placement_intent: { timeline_id: 'old-timeline', anchor_clip_id: 'old-clip' } },
       hasAsset: true,
-    })).toBeNull();
+    })?.label).toBe('Placement unconfirmed: place manually');
   });
 
   it('keeps the presentation scoped to the task and output item', () => {
@@ -53,7 +53,7 @@ describe('getLegacyAutoPlacementPresentation', () => {
       hasAsset: true,
     });
 
-    expect(first).toBeNull();
+    expect(first?.label).toBe('Placement unconfirmed: place manually');
     expect(second?.taskId).toBe('task-b');
     expect(first).not.toBe(second);
   });
@@ -104,7 +104,7 @@ describe('getLegacyAutoPlacementPresentation', () => {
   ])('does not call successfully placed history unplaced for %j', (params) => {
     expect(getLegacyAutoPlacementPresentation({
       id: 'task-1', status: 'Complete', params, resultData: {}, hasAsset: true,
-    })).toBeNull();
+    })?.label).toBe('Placement unconfirmed: place manually');
   });
 
   it('does not classify a request by retained generation parameters', () => {
@@ -115,5 +115,25 @@ describe('getLegacyAutoPlacementPresentation', () => {
         generation_intent: { output_selection: { variant_key: 'v1' } },
       },
     })).toBeNull();
+  });
+  it('keeps an actual top-level generation binding out of manual recovery', () => {
+    expect(getLegacyAutoPlacementPresentation({
+      id: 'task-bound', status: 'Complete', hasAsset: true,
+      params: { placement_intent: { timeline_id: 'timeline-1' } },
+      generationIntent: { version: 1, modality: 'image' },
+      resultData: retiredCompletionResultData,
+    })).toBeNull();
+  });
+
+  it.each([
+    {},
+    { completion_follow_up: { status: 'ok', issues: retiredCompletionResultData.completion_follow_up.issues } },
+    { completion_follow_up: { status: 'degraded', issues: [{ step: 'timeline_placement', code: 'other' }] } },
+    { completion_follow_up: { status: 'degraded', issues: [{ step: 'other', code: 'automatic_timeline_placement_retired' }] } },
+  ])('keeps incomplete retirement evidence unconfirmed: %j', (resultData) => {
+    expect(getLegacyAutoPlacementPresentation({
+      id: 'task-unknown', status: 'Complete', hasAsset: true,
+      params: { timeline_placement: {} }, resultData,
+    })?.label).toBe('Placement unconfirmed: place manually');
   });
 });

@@ -82,7 +82,8 @@ export function useVideoGenerations({
       const genRecord = gen as Record<string, unknown>;
       // Individual segments have their parent_generation_id on the generation itself (from DB)
       // Other video tasks may have it in task params or on the generation
-      const effectiveParentGenId = (genRecord.parent_generation_id as string | undefined) || taskParentGenerationId;
+      const effectiveParentGenId = (genRecord.parent_generation_id as string | undefined)
+        || (genRecord._is_fallback ? taskParentGenerationId : undefined);
       const location = (genRecord.location as string | null | undefined) ?? null;
       const thumbnailUrl = (genRecord.thumbnail_url as string | null | undefined) ?? null;
       const type = (genRecord.type as string | null | undefined) ?? 'video';

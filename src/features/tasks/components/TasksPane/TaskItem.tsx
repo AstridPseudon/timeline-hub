@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { AstridRuntimeClient } from '@/integrations/runtime/client';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { toast } from '@/shared/components/ui/runtime/sonner';
@@ -23,7 +24,7 @@ import { TaskItemActions } from './components/TaskItemActions';
 import { TaskItemTooltip } from './components/TaskItemTooltip';
 import { TaskItemPreview } from './components/TaskItemPreview';
 import type { TaskLightboxHandlers } from './types';
-import { getLegacyAutoPlacementPresentation } from './utils/legacyAutoPlacementPresentation';
+import { getLegacyAutoPlacementPresentation, hasLegacyPlacementIntent, LEGACY_AUTO_PLACEMENT_LABEL } from './utils/legacyAutoPlacementPresentation';
 
 interface TaskItemProps extends TaskLightboxHandlers {
   task: Task;
@@ -172,12 +173,25 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
     onMobileActiveChange,
   });
 
-  const legacyAutoPlacement = useMemo(() => getLegacyAutoPlacementPresentation({
-    id: task.id,
-    status: task.status,
-    params: task.params,
-    hasAsset: Boolean(task.outputLocation || generationData || videoOutputs?.length),
-  }), [generationData, task.id, task.outputLocation, task.params, task.status, videoOutputs]);
+  // Read the existing task resource before labelling retained legacy params:
+  // a modern bound request may still carry exactly the same params.
+  const { data: placementTask } = useQuery({
+    queryKey: [...taskQueryKeys.result(task.id), task.projectId, task.updatedAt],
+    queryFn: () => new AstridRuntimeClient().getTask(task.id),
+    enabled: task.status === 'Complete' && hasLegacyPlacementIntent(task.params),
+  });
+  const legacyAutoPlacement = useMemo(() => placementTask
+    && placementTask.task_id === task.id
+    && placementTask.project_id === task.projectId
+    && placementTask.state === 'succeeded'
+    ? getLegacyAutoPlacementPresentation({
+      id: task.id,
+      status: task.status,
+      params: task.params,
+      resultData: placementTask.result,
+      generationIntent: placementTask.generation_intent,
+      hasAsset: Boolean(generationData || videoOutputs?.length),
+    }) : null, [generationData, placementTask, task.id, task.projectId, task.params, task.status, videoOutputs]);
 
   const handlePlaceLegacyAssetManually = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     if (taskInfo.isImageTask) {
@@ -258,7 +272,7 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
       {legacyAutoPlacement && (
         <div
           className="mt-2 flex items-center justify-between gap-2 rounded border border-amber-400/30 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-100"
-          data-legacy-auto-placement="not-placed"
+          data-legacy-auto-placement={legacyAutoPlacement.label === LEGACY_AUTO_PLACEMENT_LABEL ? 'not-placed' : 'unconfirmed'}
           data-task-id={legacyAutoPlacement.taskId}
           role="status"
         >
@@ -354,6 +368,10 @@ const TaskItem = React.memo(TaskItemComponent, (prevProps, nextProps) => {
   return (
     prevProps.task.id === nextProps.task.id
     && prevProps.task.status === nextProps.task.status
+    && prevProps.task.projectId === nextProps.task.projectId
+    && prevProps.task.updatedAt === nextProps.task.updatedAt
+    && prevProps.task.params === nextProps.task.params
+    && prevProps.task.outputLocation === nextProps.task.outputLocation
     && prevProps.task.errorMessage === nextProps.task.errorMessage
     && prevProps.isNew === nextProps.isNew
     && prevProps.isActive === nextProps.isActive
