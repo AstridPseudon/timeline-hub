@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { queryDrawFrame, querySceneFrame, queryTrackFrame } from '@banodoco/timeline-composition/evaluation';
-import { playerEvaluationClip, preparePlayerTrack } from './playerEvaluation.ts';
+import { playerEvaluationClip, preparePlayerClipOpacity, preparePlayerTrack } from './playerEvaluation.ts';
 import type { ResolvedTimelineClip, TrackDefinition } from '../types/index.ts';
 
 const track: TrackDefinition = { id: 'V1', kind: 'visual', label: 'Picture' };
@@ -11,6 +11,28 @@ const image = (id: string, at: number, overrides: Partial<ResolvedTimelineClip> 
 const prepare = (clips: ResolvedTimelineClip[]) => preparePlayerTrack(track, clips, 30, 1920, 1080);
 
 describe('Player planning with the built Composition evaluator', () => {
+  it('evaluates authored opacity and object/array fades on the native content clock', () => {
+    for (const fps of [24, 30, 24000 / 1001]) {
+      for (const effects of [{ fade_in: 12 / fps, fade_out: 12 / fps },
+        [{ fade_in: 12 / fps }, { fade_out: 12 / fps }]]) {
+        const clip = image('fading', 30 / fps, { clipType: 'media', from: 90 / fps, to: 330 / fps,
+          hold: 60 / fps, speed: 2, opacity: 0.4, effects });
+        const original = structuredClone(clip);
+        const opacityAt = preparePlayerClipOpacity(clip, fps);
+        for (const [frame, multiplier] of [[-1, 0], [0, 0], [6, 0.5], [12, 1], [24, 0.5], [29, 1 / 12], [30, 0], [42, 0]]) {
+          expect(opacityAt(frame)).toBeCloseTo(0.4 * multiplier, 12);
+        }
+        // A native transition can extend the content clock past the own span.
+        expect(preparePlayerClipOpacity({ ...clip, effects: { fade_in: 12 / fps } }, fps)(42)).toBe(0.4);
+        expect(preparePlayerClipOpacity({ ...clip, effects: { fade_in: 60 / fps, fade_out: 60 / fps } }, fps)(15))
+          .toBeCloseTo(0.4 / 16, 12);
+        expect(preparePlayerClipOpacity({ ...clip, effects: { fade_in: -1, fade_out: NaN } }, fps)(6)).toBe(0.4);
+        expect(preparePlayerClipOpacity({ ...clip, opacity: 0 }, fps)(12)).toBe(0);
+        expect(clip).toEqual(original);
+      }
+    }
+  });
+
   it('keeps cuts and excluded ends half-open without an extra overlap frame', () => {
     const { scene, plans, clips } = prepare([image('b', 1), image('a', 0)]);
     expect(clips.map(clip => clip.id)).toEqual(['a', 'b']);

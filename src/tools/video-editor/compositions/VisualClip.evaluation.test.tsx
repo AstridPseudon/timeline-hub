@@ -43,15 +43,15 @@ vi.mock('remotion', async () => {
 
 vi.mock('@astrid/packs/rendering/shared/readiness-image', async () => {
   const { useCurrentFrame } = await import('remotion');
-  return { ReadinessImage: ({ mediaId }: { mediaId: string }) => (
-    <div data-testid="picture" data-clip-id={mediaId} data-frame={useCurrentFrame()} />
+  return { ReadinessImage: ({ mediaId, style }: { mediaId: string; style?: CSSProperties }) => (
+    <div data-testid="picture" data-clip-id={mediaId} data-frame={useCurrentFrame()} style={style} />
   ) };
 });
 vi.mock('./ReadinessVideo.tsx', async () => {
   const { useCurrentFrame } = await import('remotion');
   return { ReadinessVideo: (props: Record<string, unknown>) => {
     videoProps({ ...props, frame: useCurrentFrame() });
-    return <div data-testid="video" data-clip-id={props.clipId as string} />;
+    return <div data-testid="video" data-clip-id={props.clipId as string} style={props.style as CSSProperties} />;
   } };
 });
 
@@ -67,6 +67,33 @@ beforeEach(() => {
 });
 
 describe('VisualClip shared draw plans', () => {
+  it('composes native image/video fades with authored alpha, layout, host transitions and effects', () => {
+    for (const type of ['image/png', 'video/mp4']) {
+      for (const fit of ['contain', 'manual'] as const) {
+        const clip = image('fading', 1, { opacity: 0.4, effects: [{ fade_in: 0.4 }, { fade_out: 0.4 }],
+          transition: { type: 'crossfade', duration: 0.4 }, continuous: { type: 'slow-zoom', params: {} },
+          assetEntry: { type, src: 'https://example.test/fading' } });
+        currentFrame = 24;
+        const view = render(<VisualClipSequence clip={clip} predecessor={image('previous', 0)}
+          track={{ ...track, fit }} fps={30} />);
+        const media = view.container.querySelector<HTMLElement>('[data-clip-id="fading"]')!;
+        if (type.startsWith('image')) expect(media).toHaveAttribute('data-frame', '6');
+        else expect(videoProps).toHaveBeenLastCalledWith(expect.objectContaining({ frame: 6 }));
+        let opacity = 1;
+        let hasTransform = false;
+        for (let node: HTMLElement | null = media; node; node = node.parentElement) {
+          if (node.style.opacity) opacity *= Number(node.style.opacity);
+          if (node.style.transform) hasTransform = true;
+        }
+        expect(opacity).toBeCloseTo(0.4 * 0.5 * 0.5, 12);
+        expect(hasTransform).toBe(true);
+        expect(screen.queryByTestId('freeze')).not.toBeInTheDocument();
+        if (fit === 'manual') expect(media.parentElement).toHaveStyle({ overflow: 'hidden', opacity: 0.2 });
+        view.unmount();
+      }
+    }
+  });
+
   it.each(['crossfade', 'cross-fade'])('mounts the image before its %s boundary with shared opacity and the correct own clock', type => {
     const previous = image('a', 2);
     const clip = image('b', 3, { transition: { type, duration: 0.4 } });

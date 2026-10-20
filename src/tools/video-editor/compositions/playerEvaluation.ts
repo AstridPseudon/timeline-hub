@@ -2,6 +2,7 @@ import { compileCanonicalTransitions, prepareCompositionScene, toRuntimeTheme } 
 import {
   declareAppTransition,
   prepareScene,
+  querySceneFrame,
   type DrawPlan,
   type CompiledCanonicalTransitions,
   type TransitionSpec,
@@ -21,6 +22,26 @@ export const playerEvaluationClip = (clip: ResolvedTimelineClip): EvaluationClip
   speed: getSanitizedPlaybackRate(clip.speed),
   hold: getClipTimelineDuration(clip) * getSanitizedPlaybackRate(clip.speed),
 });
+
+/** Evaluate the native opacity surface, without making claims about media alpha. */
+export const preparePlayerClipOpacity = (clip: ResolvedTimelineClip, fps: number) => {
+  const surface = 'app-native-opacity';
+  const scene = prepareScene([{ track: { id: clip.track, kind: 'visual', label: surface }, transitions: [], clips: [{
+    id: clip.id, track: clip.track, at: 0, clipType: surface,
+    hold: playerEvaluationClip(clip).hold, speed: getSanitizedPlaybackRate(clip.speed),
+    opacity: clip.opacity, effects: clip.effects,
+  }] }], { assets: {} }, fps, 1, 1, { capabilities: { components: {
+    [clip.id]: { identity: surface, frame: () => ({ presence: 'present', opaqueSupport: 'none',
+      bounds: { status: 'known', rect: { x: 0, y: 0, width: 1, height: 1 } } }) },
+  } } });
+  // The surface follows the caller's content clock even through native pre-roll
+  // and host overlap frames. Keep the authored duration on the clip for fades.
+  const plan = scene.tracks[0].prepared.plans[0];
+  scene.tracks[0].prepared = { plans: [{ ...plan,
+    ownDuration: Number.MAX_SAFE_INTEGER, drawDuration: Number.MAX_SAFE_INTEGER,
+  }] };
+  return (frame: number): number => querySceneFrame(scene, Math.max(0, frame)).layers[0].opacity!;
+};
 
 const isNativeMedia = (clip: ResolvedTimelineClip): boolean => (
   (!clip.elementRef || clip.elementRef.kind === 'transition')

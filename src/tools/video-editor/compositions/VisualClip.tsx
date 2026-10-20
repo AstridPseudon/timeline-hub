@@ -37,7 +37,7 @@ import {
   type ShaderEffectRegistrySnapshot,
 } from '@/tools/video-editor/shaders/registry/index.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
-import { preparePlayerTrack } from './playerEvaluation.ts';
+import { preparePlayerClipOpacity, preparePlayerTrack } from './playerEvaluation.ts';
 
 // SD-025 (Sprint 3): inline missing-asset placeholder body. Mirrors the
 // styling of UnknownClipPlaceholder so the two loud cases look like a pair.
@@ -207,6 +207,7 @@ const getClipBoxStyle = (
   track: TrackDefinition,
   compositionWidth: number,
   compositionHeight: number,
+  opacity: number,
 ): CSSProperties => {
   const hasPositionOverride = (
     clip.x !== undefined
@@ -227,13 +228,13 @@ const getClipBoxStyle = (
         width: clip.width ?? compositionWidth,
         height: clip.height ?? compositionHeight,
         objectFit: 'cover',
-        opacity: clip.opacity ?? 1,
+        opacity,
       }
     : {
         width: '100%',
         height: '100%',
         objectFit: fit,
-        opacity: clip.opacity ?? 1,
+        opacity,
       };
   const cropTop = clip.cropTop ?? 0;
   const cropRight = clip.cropRight ?? 0;
@@ -296,6 +297,9 @@ function shouldRenderMaterialPlaceholder(status: RenderPlannerMaterialStatus): b
 const VisualAsset: FC<VisualClipProps> = ({ clip, track, fps }) => {
   const { width: compositionWidth, height: compositionHeight } = useVideoConfig();
   const previewMediaFailure = useOptionalPreviewMediaFailure();
+  const frame = useCurrentFrame();
+  const opacityAt = useMemo(() => clip.effects ? preparePlayerClipOpacity(clip, fps) : null, [clip, fps]);
+  const opacity = opacityAt ? opacityAt(frame) : clip.opacity ?? 1;
   // SD-025: never silent-null when a built-in clip is missing its asset.
   // Render a labeled red band so the gap is obvious in preview/export.
   if (!clip.assetEntry) {
@@ -357,7 +361,7 @@ const VisualAsset: FC<VisualClipProps> = ({ clip, track, fps }) => {
   const useViewportLayout = fit === 'manual' || hasPositionOverride;
 
   if (!useViewportLayout) {
-    const style = getClipBoxStyle(clip, track, compositionWidth, compositionHeight);
+    const style = getClipBoxStyle(clip, track, compositionWidth, compositionHeight, opacity);
     const sharedStyle: CSSProperties = {
       ...style,
       mixBlendMode: track.blendMode && track.blendMode !== 'normal' ? track.blendMode : undefined,
@@ -419,7 +423,7 @@ const VisualAsset: FC<VisualClipProps> = ({ clip, track, fps }) => {
     width: viewportLayout.renderBounds.width,
     height: viewportLayout.renderBounds.height,
     overflow: 'hidden',
-    opacity: clip.opacity ?? 1,
+    opacity,
   };
   const mediaStyle: CSSProperties = {
     position: 'absolute',

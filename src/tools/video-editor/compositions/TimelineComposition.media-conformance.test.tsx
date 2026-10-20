@@ -211,10 +211,7 @@ describe('public compiled media adapter conformance (no decoded AV claim)', () =
   });
 
   for (const entrypoint of ['public', 'App']) {
-    // M3 must restore effects.fade_in/fade_out opacity in App's native VisualClip.
-    // Keep the positive expectation until the manager reviews a product fix.
-    const test = entrypoint === 'App' ? it.fails : it;
-    test.each([24, 30, 24000 / 1001])(`${entrypoint} keeps video fades separate from native audio gain and mute at fps %s`, fps => {
+    it.each([24, 30, 24000 / 1001])(`${entrypoint} keeps video fades separate from native audio gain and mute at fps %s`, fps => {
       for (const gain of [0.5, 2]) {
         for (const muted of [false, true]) {
           const clip = { ...media('fading-video', 'V1', 30, fps, gain),
