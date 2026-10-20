@@ -35,7 +35,7 @@ def _settle(service, attempt, key, value):
     )
 
 
-def _ready_authoring_attempt(service):
+def _ready_authoring_attempt(service, *, publication=None, legacy_parent=False):
     project = service.create_project({"slug": "publication", "name": "Publication"})
     child_cap, author_cap, render_cap = "test.child", "rendering.assemble_timeline", "rendering.render"
     digests = {cap: _digest(cap) for cap in (child_cap, author_cap, render_cap)}
@@ -46,6 +46,12 @@ def _ready_authoring_attempt(service):
         idempotency_key="register-worker",
     )
     service.create_timeline(project["id"], "main", idempotency_key="create-timeline")
+    if legacy_parent:
+        service.publish_parent_composition(project["id"], "main", {
+            "project_id": project["id"], "timeline_id": "main", "expected_head": None,
+            "parent_revision_id": "legacy-parent",
+            "parent_composition": {"config": {}, "registry": {}, "clips": [], "occurrences": []},
+        }, idempotency_key="legacy-parent")
     # publish_timeline_render still reads the timeline's config document; the retired
     # create_timeline_document route was the only writer, so seed that row directly.
     timestamp = now()
@@ -64,7 +70,9 @@ def _ready_authoring_attempt(service):
     author = service.create_task({
         "project": project["id"], "capability_id": author_cap, "capability_digest": digests[author_cap],
         "input_object_ids": [], "idempotency_key": "author",
-        "spec": {"runtime_dependencies": {"edges": [
+        "spec": {"runtime_dependencies": {
+            "publication": {"timeline_id": "main", "expected_version": 1} if publication is None else publication,
+            "edges": [
             {"from_task_id": task_id, "to": "self", "requires_event": "task.succeeded", "fence": "runtime_task"}
             for task_id in child_ids
         ], "aggregation": {"kind": "ordered_cas_inputs"}}},

@@ -6691,9 +6691,36 @@ class RuntimeService:
             finally:
                 self._discard_staged_outputs(staged)
 
+    def _assert_legacy_render_publication_target(self, task, project_id, timeline_id):
+        try:
+            publication = self.store._spec(task)["spec"]["runtime_dependencies"]["publication"]
+            target_id = publication["timeline_id"]
+            if not isinstance(target_id, str) or not target_id.strip():
+                raise ValueError()
+            if "admitted_target" in publication:
+                target = publication["admitted_target"]
+                if (not isinstance(target, dict)
+                        or set(target) != {"project_id", "timeline_id", "base_revision_id", "base_publication_id"}
+                        or any(not isinstance(value, str) or not value.strip() for value in target.values())
+                        or target["project_id"] != project_id or target["timeline_id"] != target_id):
+                    raise ValueError()
+        except (KeyError, TypeError, ValueError, ValidationError) as exc:
+            raise ConflictError("authoring task publication target is unavailable",
+                                details={"reason": "publication_target_unavailable"}) from exc
+        if target_id != timeline_id:
+            raise ConflictError("timeline does not match the admitted publication target",
+                                details={"reason": "publication_target_mismatch"})
+        head = self.store.conn.execute(
+            "SELECT publication_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?",
+            (project_id, timeline_id),
+        ).fetchone()
+        if head is not None and head["publication_id"] is not None:
+            raise ConflictError("tracked timeline publication requires a timeline command",
+                                details={"status": "refused", "reason": "timeline_commit_required"})
+
     @_verified_mutation
     def publish_timeline_render(self, attempt_id, body, *, idempotency_key=None, identity=None):
-        """Publish one canonical timeline revision and its render task once.
+        """Publish one untracked legacy timeline document and render task once.
 
         The checkpoint is keyed by the authoring task rather than an attempt,
         so an exact retry may resume after a worker crash.  Every unfinished
@@ -6763,6 +6790,7 @@ class RuntimeService:
                 raise NotFoundError("timeline not found")
             if timeline["project_id"] != project_id:
                 raise ConflictError("timeline is outside the authoring task project")
+            self._assert_legacy_render_publication_target(task, project_id, timeline_id)
             self.store.prepare_timeline_render_publication(
                 authoring_task_id, attempt_id, body["fence"], body["runtime_epoch"], request_hash, frozen
             )
@@ -6778,6 +6806,9 @@ class RuntimeService:
                 checkpoint = self.store.timeline_render_publication(authoring_task_id)
                 if checkpoint["state"] == "published":
                     return checkpoint["result"]
+                # The prepare checkpoint commits separately; canonical tracking
+                # may have changed before this publication transaction began.
+                self._assert_legacy_render_publication_target(task, project_id, timeline_id)
                 document_id = f"timeline:{timeline_id}"
                 document = self.store.conn.execute(
                     "SELECT * FROM project_documents WHERE id=? AND project_id=?", (document_id, project_id)
