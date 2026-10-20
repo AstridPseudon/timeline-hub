@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T00:16:04Z | dispatcher heartbeat 14s -->
+<!-- viewing | 2026-10-20T00:21:14Z | dispatcher heartbeat 6s -->
 # viewing — 2026-10-19 23:53 UTC
 Milestone: M0 COMPLETE; VIEWING M1 EXIT MET. Global M1 record pending owner classifications/App safety/full/audit. M3 branches active; no M3 integration or new pins before recorded M1.
 Integrated: Composition tl/integration 7aa384a / 0.0.8: central npm test 22 PASS, locked build/repeat pack/fresh consumer PASS. Agent f8164bef merged 2b8f2caa: normal catalog regeneration + actual public text-card/wrapper SSR, portable configured runtime. Central consumer-integration-ssr-snapshot-1019230358-21654: 4 PASS / 6.06s + generator --check PASS. Agent/App own full batches; no duplicate request.
