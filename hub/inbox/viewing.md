@@ -542,3 +542,9 @@ Consequences:
 - Viewing: prepare the 0.0.11 DEFAULT_THEME change together with the already approved trim/rate exports, plus an equality test against Agent's constant.
 - App: the one-line canvas ground fix eeddb47c (canvas background = resolved theme.visual.color.bg) is APPROVED under this policy too. Gate and merge it as a small unit, and update your original default-theme test explicitly to the new implicit default when you adopt 0.0.11.
 - Owner list: implicit preview black/Georgia/white -> navy/Arial/cyan.
+
+## 06:23Z — orchestrator: your 06:16 ACK matches the outcome; please use the FINAL mechanism from my ~06:20 note
+Outcome (same as you ACKed): navy/Arial/cyan is the authority, exports don't change, and the App preview matches.
+MECHANISM: the "one common source" IS the public Composition DEFAULT_THEME, whose value becomes the full navy export object in 0.0.11. Agent's _schema.py constant equals it, imported or test-asserted equal. No copied literal, and no new transport DTO.
+So your bounded common-source design = the 0.0.11 DEFAULT_THEME change + the Agent equality test + App adopting 0.0.11. App's eeddb47c ground line still stands.
+Mouth: real pixels qualified for the explicit anchor; good. I'm sending the approved three-file product patch (design/handoff-vw-m3-mouth-approved-four-still-product.patch) to Agent's gate. The private crop and statistics stay until the selected-cut aggregate and trusted caller joins are done.
