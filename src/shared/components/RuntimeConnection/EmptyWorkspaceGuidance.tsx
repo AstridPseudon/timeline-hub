@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
+import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
-import { AGENT_SEARCHES, RUNTIME_CONNECTION_COPY } from './copy.ts';
+import { installCommand, RUNTIME_CONNECTION_COPY } from './copy.ts';
 
 type WorkspaceIdentity = { name: string; realmId: string };
 
@@ -17,10 +18,10 @@ function emptyWorkspaceDiagnostic(identity: WorkspaceIdentity, pageOrigin: strin
     `The page open at ${pageOrigin} is connected to Astrid on this computer, but there are no projects in its workspace, "${identity.name}" (ID ${identity.realmId}, reached through ${endpoint}). I expected to see my work, so it may be in another Astrid on this computer.`,
     '',
     '1. Find out which Astrid is running now, and the folder it runs from.',
-    '2. Look for the others. Each Astrid install keeps its own workspace:',
-    `     ${AGENT_SEARCHES.install}`,
-    `   A developer setup may also keep one in ${AGENT_SEARCHES.runtimeDataFolder}.`,
-    "3. Tell me what you found, and ask me which one holds my work before you change anything. To switch, stop the Astrid that's running and start that one (an install starts with <folder>/start, where <folder> holds its install.json). Then I'll reload this page.",
+    '2. Look for other install.json files and check whether they contain "owner": "haus.astrid.runtime". Each Astrid install keeps its own workspace.',
+    '3. Tell me what you found, and ask me which one holds my work before you change anything.',
+    `4. This install line uses the Astrid installation saved for sign-in, or the default install folder if none is saved. It keeps the saved workspace; otherwise it checks the default and old workspace locations. It does not select the folder I choose here: ${installCommand('install')}`,
+    "   Check that those choices match the Astrid I chose before running it. If they differ, stop and explain what needs to change. Don't reset, replace or delete any existing data. Then I'll reload this page.",
     '',
     'Never create, reset or delete a workspace, project or install to work around this.',
   ].join('\n');
@@ -31,6 +32,7 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
   const [showDetails, setShowDetails] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const [didCopy, setDidCopy] = useState(false);
+  const { connectedBefore } = useRuntimeConnection();
   const copiedTimer = useRef<number | null>(null);
   const identity = useQuery({
     queryKey: ['runtime', 'empty-workspace-identity'],
@@ -72,6 +74,7 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
   };
 
   // The card around this already says "No projects yet", so the guidance starts at the question it answers.
+  if (!connectedBefore) return null;
   return <div className="space-y-3 text-sm text-muted-foreground">
     <p>Expected to see your work? It may be in another Astrid folder on this computer.</p>
     <details onToggle={event => setShowDetails(event.currentTarget.open)}>
@@ -81,7 +84,7 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
         {identity.error && <p role="status">Astrid's details aren't available right now.</p>}
         <div className="flex flex-wrap gap-2">
           {identity.data && <Button variant="outline" onClick={() => void handleCopy()}>
-            {copyState === 'copied' ? copy.copied : copy.copy}
+            {copyState === 'copied' ? copy.copied : 'Copy steps for your agent'}
           </Button>}
           <Button variant="outline" onClick={handleCheckAgain}>Check again</Button>
         </div>

@@ -25,6 +25,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { packageManagerInvocation } from './node-package-manager.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..');
@@ -61,7 +62,8 @@ function countTsErrors() {
   // expected, steady-state outcome here (the baseline is never 0 today), so we
   // read stdout/stderr regardless of the exit code rather than treating a
   // nonzero status as a script failure.
-  const result = spawnSync('npx', ['tsc', '-p', tsconfigPath, '--noEmit'], {
+  const invocation = packageManagerInvocation('npx', ['tsc', '-p', tsconfigPath, '--noEmit']);
+  const result = spawnSync(invocation.command, invocation.args, {
     cwd: repoRoot,
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 64,

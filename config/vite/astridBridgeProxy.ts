@@ -101,6 +101,7 @@ export function createAstridBridgeProxyOptions(
 export function createAstridAcpBridgeProxyOptions(
   policy: AstridBridgeProxyPolicy,
   port: number,
+  viaDiscoveryProxy = false,
 ): ProxyOptions {
   return {
     target: `http://127.0.0.1:${port}`,
@@ -108,7 +109,7 @@ export function createAstridAcpBridgeProxyOptions(
     headers: astridBridgeUpstreamHeaders(policy, policy.acpToken),
     timeout: ASTRID_ACP_REQUEST_TIMEOUT_MS,
     proxyTimeout: ASTRID_ACP_REQUEST_TIMEOUT_MS,
-    rewrite: (incomingPath) => incomingPath.replace(/^\/api\/astrid\/acp/, ''),
+    rewrite: (incomingPath) => incomingPath.replace(/^\/api\/astrid\/acp/, viaDiscoveryProxy ? '/acp' : ''),
     configure: (proxy) => {
       proxy.on('proxyReq', (proxyRequest, incomingRequest) => {
         const incomingOrigin = typeof incomingRequest.headers.origin === 'string'

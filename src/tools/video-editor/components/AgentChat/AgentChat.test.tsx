@@ -23,9 +23,8 @@ const mocks = vi.hoisted(() => ({
   useAgentSession: vi.fn(),
   useSendMessage: vi.fn(),
   useAgentModels: vi.fn(),
-  useSetAgentModel: vi.fn(),
+  useConfigureAgentSession: vi.fn(),
   useLocalAgents: vi.fn(),
-  useSetLocalAgent: vi.fn(),
   modelRefetch: vi.fn(),
   useCancelSession: vi.fn(),
   useTakeOverSession: vi.fn(),
@@ -63,9 +62,8 @@ vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({
   useAgentSession: (...args: unknown[]) => mocks.useAgentSession(...args),
   useSendMessage: (...args: unknown[]) => mocks.useSendMessage(...args),
   useAgentModels: (...args: unknown[]) => mocks.useAgentModels(...args),
-  useSetAgentModel: (...args: unknown[]) => mocks.useSetAgentModel(...args),
+  useConfigureAgentSession: (...args: unknown[]) => mocks.useConfigureAgentSession(...args),
   useLocalAgents: (...args: unknown[]) => mocks.useLocalAgents(...args),
-  useSetLocalAgent: (...args: unknown[]) => mocks.useSetLocalAgent(...args),
   useCancelSession: (...args: unknown[]) => mocks.useCancelSession(...args),
   useTakeOverSession: (...args: unknown[]) => mocks.useTakeOverSession(...args),
 }));
@@ -238,10 +236,8 @@ function mockFromState(state: ReturnType<typeof createState>) {
     isLoading: false,
     error: (state as typeof state & { activeError?: Error }).activeError ?? null,
   }));
-  mocks.useAgentModels.mockImplementation(() => ({ data: { currentModel: 'openai/gpt-5', providers: [{ id: 'openai', name: 'OpenAI', signedIn: true, models: [{ id: 'gpt-5', name: 'GPT 5' }, { id: 'gpt-5-mini', name: 'GPT 5 Mini' }] }] }, isLoading: false, error: null, refetch: mocks.modelRefetch }));
-  mocks.useSetAgentModel.mockImplementation(() => ({ mutateAsync: vi.fn().mockResolvedValue({ currentModel: 'openai/gpt-5-mini' }), isPending: false, error: null }));
-  mocks.useLocalAgents.mockImplementation(() => ({ data: { agents: [], selectedAgent: 'astrid' }, isLoading: false, error: null, refetch: vi.fn() }));
-  mocks.useSetLocalAgent.mockImplementation(() => ({ mutateAsync: vi.fn().mockResolvedValue(undefined), isPending: false, error: null }));
+  mocks.useAgentModels.mockImplementation(() => ({ data: { currentModel: null, providers: [], localModels: { currentModelId: 'openai/gpt-5', availableModels: [{ modelId: 'openai/gpt-5', name: 'GPT 5' }] } }, isLoading: false, error: null, refetch: mocks.modelRefetch }));
+  mocks.useLocalAgents.mockImplementation(() => ({ data: { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null, models: [{ modelId: 'openai/gpt-5', name: 'GPT 5' }], defaultModel: 'openai/gpt-5' }], defaultAgent: 'astrid' }, isLoading: false, error: null, refetch: vi.fn() }));
   mocks.useSendMessage.mockImplementation(() => state.sendMessage);
   mocks.useCancelSession.mockImplementation(() => state.cancelSession);
   mocks.useTakeOverSession.mockImplementation(() => state.takeOverSession);
@@ -278,6 +274,7 @@ function getQueuedTexts() {
 
 describe('AgentChat', () => {
   beforeEach(() => {
+    mocks.useConfigureAgentSession.mockReturnValue({ mutateAsync: vi.fn().mockResolvedValue(undefined) });
     vi.clearAllMocks();
     mocks.agentSessionsAvailable = true;
     // Default: pane is locked so the engagement gate is satisfied and the
@@ -308,7 +305,7 @@ describe('AgentChat', () => {
     });
   });
 
-  it('shows a quiet agent name and reveals the model only in its info tooltip', async () => {
+  it('shows the fixed agent and model with its thinking level in an info tooltip', async () => {
     const state = createState();
     const sessionId = 'codex:session-1';
     const projectId = 'project-1';
@@ -334,14 +331,11 @@ describe('AgentChat', () => {
       error: null,
       refetch: mocks.modelRefetch,
     }));
-    const mutateAsync = vi.fn().mockResolvedValue(undefined);
-    mocks.useSetAgentModel.mockImplementation(() => ({ mutateAsync, isPending: false, error: null }));
 
     renderAgentChat();
     const identity = await screen.findByTestId('agent-chat-identity');
-    expect(identity).toHaveTextContent(/^Codex$/);
-    expect(identity).toHaveClass('text-xs');
-    expect(identity.parentElement).toHaveClass('text-muted-foreground');
+    expect(identity).toHaveTextContent('Codex · Codex Current');
+    expect(identity).toHaveClass('text-sm');
     expect(screen.queryByText('Codex Current', { exact: true })).toBeNull();
     const user = userEvent.setup();
     await user.hover(screen.getByRole('button', { name: 'Chat model information' }));
@@ -351,12 +345,12 @@ describe('AgentChat', () => {
 
     await waitFor(() => {
       expect(mocks.useAgentModels).toHaveBeenCalledWith(true, sessionId, projectId);
-      expect(mocks.useSetAgentModel).toHaveBeenCalledWith(sessionId, projectId);
     });
-    expect(mutateAsync).not.toHaveBeenCalled();
   });
 
-  it('starts a chat with another agent from the New chat menu and shows what an empty chat runs with', async () => {
+  it.each([
+    ['astrid', 'Astrid'], ['claude-code', 'Claude Code'], ['codex', 'Codex'],
+  ])('starts a %s chat with a model from the service catalog', async (agent, name) => {
     const state = createState();
     state.createSession.mutateAsync.mockImplementationOnce(async () => {
       state.projectChats['project-1'] = {
@@ -368,23 +362,20 @@ describe('AgentChat', () => {
       return { id: 'codex:session-2' };
     });
     mockFromState(state);
-    const setAgent = vi.fn().mockResolvedValue(undefined);
     mocks.useLocalAgents.mockImplementation(() => ({
-      data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null }], selectedAgent: 'astrid' },
+      data: { agents: [{ id: agent, name, state: 'ready', line: null, models: [{ modelId: 'vendor/exact', name: 'Exact model' }], defaultModel: 'vendor/exact' }], defaultAgent: 'astrid' },
       isLoading: false, error: null, refetch: vi.fn(),
     }));
-    mocks.useSetLocalAgent.mockImplementation(() => ({ mutateAsync: setAgent, isPending: false, error: null }));
 
     renderAgentChat();
     const identity = await screen.findByTestId('agent-chat-identity');
-    expect(identity).toHaveTextContent(/^Astrid$/);
+    expect(identity).toHaveTextContent('Astrid · GPT 5');
     expect(screen.getByRole('button', { name: 'Chat model information' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
-    fireEvent.click(await screen.findByRole('option', { name: /Codex/ }));
-    await waitFor(() => expect(setAgent).toHaveBeenCalledWith('codex'));
-    await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalled());
-    expect(setAgent.mock.invocationCallOrder[0]).toBeLessThan(state.createSession.mutateAsync.mock.invocationCallOrder[0]);
-    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('codex:session-2', 'project-1'));
+    fireEvent.click(await screen.findByRole('option', { name: new RegExp(name) }));
+    expect(state.createSession.mutateAsync).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole('option', { name: /Exact model/ }));
+    await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledWith({ operationId: expect.any(String), agent, defaultModelId: 'vendor/exact' }));
   });
 
   it('omits model information when no model is known', async () => {
@@ -418,7 +409,8 @@ describe('AgentChat', () => {
     let resolve!: () => void;
     let reject!: (error: Error) => void;
     const selection = vi.fn(() => new Promise<void>((yes, no) => { resolve = yes; reject = no; }));
-    mocks.useSetAgentModel.mockReturnValue({ mutateAsync: selection });
+    mocks.useConfigureAgentSession.mockReturnValue({ mutateAsync: selection });
+    mocks.useLocalAgents.mockReturnValue({ data: { defaultAgent: 'codex', agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'sol', name: 'Sol', thoughtLevel: { configId: 'reasoning_effort', name: 'Effort', currentValue: 'low', recommendedValue: 'high', options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] } }], defaultModel: 'sol' }] }, refetch: vi.fn() });
     renderAgentChat();
     await screen.findByRole('button', { name: 'Chat model information' });
     fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
@@ -449,7 +441,7 @@ describe('AgentChat', () => {
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise((yes, no) => { resolve = yes; reject = no; }));
     mockFromState(state);
     mocks.useLocalAgents.mockReturnValue({
-      data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null }], selectedAgent: 'astrid' },
+      data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'sol', name: 'Sol', thoughtLevel: { configId: 'reasoning_effort', name: 'Effort', currentValue: 'low', recommendedValue: 'high', options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] } }], defaultModel: 'sol' }], defaultAgent: 'astrid' },
       isLoading: false, error: null, refetch: vi.fn(),
     });
     renderAgentChat();
@@ -458,6 +450,7 @@ describe('AgentChat', () => {
     expect(screen.getByText('Previous chat transcript')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
     fireEvent.click(await screen.findByRole('option', { name: /Codex/ }));
+    fireEvent.click(await screen.findByRole('option', { name: /^Sol/ }));
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalled());
     vi.useFakeTimers();
     try {
@@ -485,11 +478,11 @@ describe('AgentChat', () => {
       expect(input).toHaveValue('Retain this draft');
       if (outcome === 'failure') {
         expect(screen.getByRole('alert')).toHaveTextContent("Codex didn't start.");
-        expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent(/^Astrid$/);
+        expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent(/^Astrid · GPT 5$/);
         expect(screen.getByText('Previous chat transcript')).toBeInTheDocument();
         expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1');
       } else {
-        expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent(/^Codex$/);
+        expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent(/^Codex · GPT 5$/);
         expect(screen.queryByText('Previous chat transcript')).toBeNull();
         expect(mocks.useAgentSession).toHaveBeenLastCalledWith('codex:session-2', 'project-1');
       }
@@ -498,26 +491,39 @@ describe('AgentChat', () => {
     }
   });
 
+  it('leaves choices out of plain New so the service repeats its remembered agent and model', async () => {
+    const state = createState();
+    mockFromState(state);
+    mocks.useLocalAgents.mockReturnValue({
+      data: { defaultAgent: 'codex', agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'remembered', name: 'Remembered' }], defaultModel: 'remembered' }] },
+      isLoading: false, error: null, refetch: vi.fn(),
+    });
+    renderAgentChat();
+    expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid · GPT 5');
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+    await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledWith({ operationId: expect.any(String) }));
+  });
+
   it('shows the failed agent start details and retries the same new chat', async () => {
     const state = createState();
     state.createSession.mutateAsync.mockRejectedValueOnce(new Error('adapter failed'));
     mockFromState(state);
     mocks.useLocalAgents.mockImplementation(() => ({
-      data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null }], selectedAgent: 'astrid' },
+      data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'vendor/exact', name: 'Exact model' }], defaultModel: 'vendor/exact' }], defaultAgent: 'astrid' },
       isLoading: false, error: null, refetch: vi.fn(),
     }));
-    const setAgent = vi.fn().mockResolvedValue(undefined);
-    mocks.useSetLocalAgent.mockImplementation(() => ({ mutateAsync: setAgent, isPending: false, error: null }));
 
     renderAgentChat();
     fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
     fireEvent.click(await screen.findByRole('option', { name: /Codex/ }));
+    fireEvent.click(await screen.findByRole('option', { name: /Exact model/ }));
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent("Codex didn't start.");
     expect(alert).toHaveTextContent('Details: adapter failed');
     state.createSession.mutateAsync.mockResolvedValueOnce({ id: 'codex:session-2' });
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledTimes(2));
+    expect(state.createSession.mutateAsync.mock.calls[1]).toEqual(state.createSession.mutateAsync.mock.calls[0]);
   });
 
   it.each([
@@ -1127,8 +1133,6 @@ describe('AgentChat', () => {
     state.activeSessionData.control = { role: 'follower', active: false, activeRequestId: null };
     mockFromState(state);
 
-    const modelSelection = vi.fn();
-    mocks.useSetAgentModel.mockReturnValue({ mutateAsync: modelSelection, isPending: false, error: null });
     const localModels = { currentModelId: 'vendor/alpha-precise', availableModels: [
       { modelId: 'vendor/alpha-precise', name: 'Alpha Precise', description: 'Careful code review' },
       { modelId: 'vendor/beta-fast', name: 'Beta Fast', description: 'Quick drafts' },
@@ -1142,14 +1146,12 @@ describe('AgentChat', () => {
 
     renderAgentChat();
     const identity = screen.getByTestId('agent-chat-identity');
-    expect(identity).toHaveTextContent(/^Codex$/);
+    expect(identity).toHaveTextContent('Codex · Alpha Precise');
     await userEvent.setup().hover(screen.getByRole('button', { name: 'Chat model information' }));
     expect(await screen.findByText('Alpha Precise', { exact: true })).toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'Agent model' })).toBeNull();
     expect(mocks.useAgentModels).toHaveBeenCalledWith(true, sessionId, 'project-1');
-    expect(mocks.useSetAgentModel).toHaveBeenLastCalledWith(sessionId, 'project-1');
     expect(screen.getByRole('button', { name: 'Active in another tab — take over' })).toBeEnabled();
-    expect(modelSelection).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Active in another tab — take over' }));
     expect(state.takeOverSession.mutate).toHaveBeenCalledTimes(1);
@@ -1242,7 +1244,7 @@ describe('project draft consumer ownership', () => {
     const key = ['project-agent-chat', 'project-1'];
     client.setQueryData(key, state.projectChats['project-1']);
     mocks.useProjectChat.mockImplementation(() => useQuery({ queryKey: key, queryFn: async () => state.projectChats['project-1'], enabled: false }));
-    mocks.useLocalAgents.mockReturnValue({ data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null }], selectedAgent: 'astrid' }, refetch: vi.fn() });
+    mocks.useLocalAgents.mockReturnValue({ data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'codex-default', name: 'Codex Default' }], defaultModel: 'codex-default' }], defaultAgent: 'astrid' }, refetch: vi.fn() });
     let finish!: (session: { id: string }) => void;
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
     const newId = choice === 'plain' ? 'session-2' : 'codex:session-2';
@@ -1255,6 +1257,7 @@ describe('project draft consumer ownership', () => {
     else {
       fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
       fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
+      fireEvent.click(await screen.findByRole('option', { name: /Codex Default/ }));
     }
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledOnce());
     // useCreateSession publishes its registry receipt before handleNewSession's

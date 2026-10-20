@@ -11,6 +11,8 @@
  * getters are lazy, so local mode only needs them to exist.
  */
 import { spawn } from 'node:child_process';
+import { packageManagerInvocation } from './node-package-manager.mjs';
+import { terminateProcessTree } from './terminate-process-tree.mjs';
 
 import { fakeRuntimeEnv } from '../tests/e2e/fake-runtime/launch.mjs';
 
@@ -43,8 +45,11 @@ const env = {
 };
 
 const children = [
-  spawn('node', ['tests/e2e/fake-runtime/launch.mjs', '--serve'], { stdio: 'inherit', env }),
-  spawn('npm', ['run', 'dev', '--', '--host', '127.0.0.1', '--port', PORT], { stdio: 'inherit', env }),
+  spawn(process.execPath, ['tests/e2e/fake-runtime/launch.mjs', '--serve'], { stdio: 'inherit', env, detached: process.platform !== 'win32' }),
+  (() => {
+    const invocation = packageManagerInvocation('npm', ['run', 'dev', '--', '--host', '127.0.0.1', '--port', PORT], { env });
+    return spawn(invocation.command, invocation.args, { stdio: 'inherit', env, detached: process.platform !== 'win32' });
+  })(),
 ];
 
 console.log([
@@ -59,9 +64,10 @@ let shuttingDown = false;
 const shutdown = (signal) => {
   if (shuttingDown) return;
   shuttingDown = true;
-  for (const child of children) {
-    if (child.exitCode === null) child.kill(signal);
-  }
+  void Promise.all(children.map((child) => terminateProcessTree(child, signal))).catch((error) => {
+    console.error(`Could not stop the dev environment: ${error.message}`);
+    process.exitCode = 1;
+  });
 };
 
 process.on('SIGINT', () => shutdown('SIGINT'));
@@ -70,7 +76,7 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 // If either process dies the other is useless — take the whole thing down.
 for (const child of children) {
   child.on('exit', (code) => {
+    if (!shuttingDown) process.exitCode = code ?? 0;
     shutdown('SIGTERM');
-    process.exitCode = code ?? 0;
   });
 }

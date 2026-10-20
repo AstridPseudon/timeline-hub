@@ -3,11 +3,13 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveHostedRuntimeOrigin } from '../../../scripts/hosted-build-origin.mjs';
+import { packageManagerInvocation } from '../../../scripts/node-package-manager.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-const INPUTS = ['src', 'config', 'public', 'vendor', 'index.html', 'package.json', 'package-lock.json', 'tsconfig.json'];
-/** The Runtime door's origin `npm run build:hosted` compiles in (package.json). A dist without it came from another mode. */
-const HOSTED_ORIGIN = 'http://127.0.0.1:17340';
+const INPUTS = ['src', 'config', 'public', 'vendor', 'scripts/build-hosted.mjs', 'scripts/hosted-build-origin.mjs', 'index.html', 'package.json', 'package-lock.json', 'tsconfig.json'];
+/** The Runtime door's origin `npm run build:hosted` compiles in. A dist without it came from another mode. */
+const HOSTED_ORIGIN = resolveHostedRuntimeOrigin();
 
 function newestMtime(entry: string): number {
   let stat;
@@ -42,7 +44,9 @@ export default function globalSetup() {
     console.log('[direct] hosted dist is current; skipping the build');
     return;
   }
-  console.log('[direct] building the hosted production bundle (npm run build:hosted)');
-  execFileSync('npm', ['run', 'build:hosted'], { cwd: root, stdio: 'inherit', env: { ...process.env, NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=4096' } });
+  console.log(`[direct] building the hosted production bundle for ${HOSTED_ORIGIN} (npm run build:hosted)`);
+  const env = { ...process.env, NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=4096' };
+  const invocation = packageManagerInvocation('npm', ['run', 'build:hosted'], { env });
+  execFileSync(invocation.command, invocation.args, { cwd: root, stdio: 'inherit', env });
   if (!distIsHosted()) throw new Error(`npm run build:hosted did not compile ${HOSTED_ORIGIN} into dist/assets`);
 }

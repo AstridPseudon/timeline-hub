@@ -255,6 +255,8 @@ export class AstridRuntimeClient {
   private readonly usesRuntimeConfig: boolean;
   private readonly readOnly: boolean;
   private discoveryIdentity: RuntimeIdentityBinding | undefined;
+  /** A status-only session can read the workspace while its cold Runtime is degraded. */
+  private statusSession: Promise<RuntimeSession> | null = null;
   private readonly identityStore: ObservedRuntimeIdentities;
   /** A private slot (token, transport or injected store); undefined means the page-shared slot for the current base. */
   private readonly ownSlot: SessionSlot | undefined;
@@ -416,6 +418,39 @@ export class AstridRuntimeClient {
     return slot.current;
   }
 
+  /** Read current health without reusing the session's cached health snapshot. */
+  async readStatus(): Promise<{ health: Health; realm: Realm }> {
+    let session: RuntimeSession;
+    if (!this.slot.current && this.statusSession) {
+      session = await this.statusSession;
+    } else {
+      try {
+        session = await this.ensureSession();
+      } catch (error) {
+        if (!(error instanceof RuntimeUnavailableError && error.causeCode === 'runtime_unhealthy')) throw error;
+        if (!this.statusSession) {
+          const opening: Promise<RuntimeSession> = this.openSession(true).catch((statusError) => {
+            if (this.statusSession === opening) this.statusSession = null;
+            throw statusError;
+          });
+          this.statusSession = opening;
+        }
+        session = await this.statusSession;
+      }
+    }
+    const health = await this.client.health();
+    const instanceId = AstridRuntimeClient.instanceIdOf(health);
+    const expectedInstanceId = this.expectedIdentity?.runtimeInstanceId ?? AstridRuntimeClient.instanceIdOf(session.health);
+    if (!instanceId || instanceId !== expectedInstanceId) {
+      throw new RuntimeCompatibilityError('Runtime status belongs to a different instance than the connected workspace', this.baseUrl);
+    }
+    if (this.expectedIdentity && session.realm.realm_id !== this.expectedIdentity.realmId) {
+      throw new RuntimeCompatibilityError('Runtime status belongs to a different realm than the selected Astrid profile', this.baseUrl);
+    }
+    this.checkObservedIdentity(health, session.handshake);
+    return { health, realm: session.realm };
+  }
+
   /** Force the existing client through a fresh authenticated handshake. */
   async reconnect(): Promise<RuntimeSession> {
     this.slot.current = null;
@@ -431,7 +466,7 @@ export class AstridRuntimeClient {
     return { actorId: handshake.actor_id, realmId: handshake.realm_id };
   }
 
-  private async openSession() {
+  private async openSession(allowDegradedHealth = false) {
     try {
       // Health and handshake are independent, so they share one round trip.
       // Validation below still runs in the original order; a rejection that loses
@@ -441,7 +476,7 @@ export class AstridRuntimeClient {
       const handshakeRead = this.client.handshake('astrid-browser', RUNTIME_CLIENT_VERSION, RUNTIME_CLIENT_SCOPES);
       for (const pending of [healthRead, handshakeRead]) pending.catch(() => undefined);
       const health = await healthRead;
-      if (health.status !== 'ok') {
+      if (health.status !== 'ok' && !(allowDegradedHealth && health.status === 'degraded')) {
         throw new ApiError(503, 'runtime_unhealthy', `Runtime health is ${health.status}`, '', { health });
       }
       const handshake = await handshakeRead;

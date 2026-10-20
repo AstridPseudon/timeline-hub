@@ -1,25 +1,21 @@
-# Astrid App local Astrid ACP bridge
+# Astrid App and the agent-owned chat service
 
-The Astrid App ACP bridge is a user-machine process. It keeps only ephemeral
+The chat endpoint is an agent-owned user-machine service. It keeps only ephemeral
 connection handles in memory; each selected agent remains the authority for its
-profiles, opaque session IDs, and session storage. The browser never receives the bearer
-token or starts a child process.
+profiles, opaque session IDs, and session storage. The browser never receives the
+bearer token or starts a child process.
 
-In one terminal, start the bridge with explicit host-owned paths. The bridge
-launches the real `astrid` command, not a separate raw `omp` profile; Astrid
-therefore remains the authority for the named agent, system prompt, branded
-OMP build, credentials, and session identity:
+The service belongs to [astrid-agent](https://github.com/banodoco/astrid-agent/blob/main/docs/reference/services.md).
+The Runtime starts and supervises it from the agent's service declaration. It
+runs with Bun 1.3.14, registers its loopback endpoint and private credential in
+`chat.json` beside Runtime discovery, and removes its own registration on exit.
+The bridge launches the installed `astrid` command; Astrid owns the packaged
+profile, OMP build, credentials, and session identity.
 
-```sh
-export ASTRID_BRIDGE_TOKEN='use-the-same-local-token-as-vite'
-ASTRID_ACP_CWD="$PWD" \
-npm run dev:astrid-acp
-
-# Optional: set ASTRID_ACP_PROFILE to use an isolated Astrid/OMP profile. By
-# default the real `astrid` launcher uses the machine's normal configuration.
-ASTRID_ACP_CWD="$PWD" ASTRID_ACP_PROFILE='isolated' \
-npm run dev:astrid-acp
-```
+For local app development, follow the startup and Runtime selection instructions
+in the [repository README](../../README.md). On an installed computer, the
+Runtime starts and supervises the chat service declared by Astrid Agent; Astrid
+App does not launch or own that service.
 
 `ASTRID_ACP_SESSION_DIR` is optional. When omitted, the installed OMP build
 owns its canonical cwd-derived session directory, allowing ACP session
@@ -30,26 +26,25 @@ left in place, but OMP 17.3.5 ACP discovery does not search that arbitrary
 directory in a new process, so use it only when the original process remains
 live.
 
-In a second terminal, start Astrid App and point the ACP proxy at its separate
-loopback port:
+In local development, the app's discovery proxy routes ACP requests through the
+selected Runtime door. The door re-reads the agent's `chat.json` registration for
+each request, including after chat restarts or credential rotation, and forwards
+the request to the agent-owned service. The hosted page reaches the same service
+through the door. Missing or invalid registration returns `acp_unavailable`.
+Both paths retain the credential and protocol header outside browser code.
 
-```sh
-export ASTRID_BRIDGE_TOKEN='use-the-same-local-token-as-vite'
-VITE_ASTRID_ACP_BRIDGE_PORT=17335 npm run dev
-```
-
-The existing `/api/astrid` REST routes remain on the Astrid bridge port. ACP
-requests use `/api/astrid/acp`, which the Vite proxy forwards to the local ACP
-bridge with the existing bearer boundary and protocol header. The browser
-controls create, resume, cancel, close, and reconnect sessions, but do not
-persist connection or session IDs. Reconnect while the host is live reuses the
-same ACP process and opaque session authority; it does not create a second
-session registry.
+The existing `/api/astrid` REST routes remain on the Astrid service port. ACP
+requests use `/api/astrid/acp`; in local development Vite forwards them through
+Runtime discovery, and the hosted app sends them through the Runtime door. The
+browser controls create, resume, cancel, close, and reconnect sessions, but do
+not persist connection or session IDs. Reconnect while the service is live
+reuses the same ACP process and opaque session authority; it does not create a
+second session registry.
 
 ## Agent readiness and selection
 
 The New chat menu reads `GET /acp/agents` whenever it opens and when the window
-regains focus. The bridge finds `claude` and `codex` on the person's login-shell
+regains focus. The bridge finds `claude`, `codex`, and `hermes` on the person's login-shell
 PATH (`$SHELL -lic`), then falls back to its own PATH. It asks
 `claude auth status` (with a text fallback) and `codex login status` whether
 each is signed in. Claude Code uses your Claude login; Codex uses your Codex
@@ -57,20 +52,17 @@ CLI login, including ChatGPT. Unknown sign-in counts as ready. Status errors
 and child diagnostics never cross into the App.
 
 The service reports one state per agent: **Ready**, **Sign in**, or
-**Not installed**. A ready row starts a chat. Clicking either other row copies
-its displayed recovery line and shows **Copied**. The lines are:
-
-- Claude Code sign-in: Run `claude auth login`, then come back.
-- Claude Code not installed: Install with `curl -fsSL https://claude.ai/install.sh | bash`.
-- Codex sign-in: Run `codex login`, then come back.
-- Codex not installed: Install with `npm install -g @openai/codex`.
-- Astrid without a signed-in provider: Run `omp`, then `/login`.
+**Not installed**. A ready row opens its service-owned model catalog. The main
+New button repeats the service's last successful agent and model. Each command
+inside a non-ready row has a **Copy command** button; only the command is copied.
+Install and sign-in lines come from the service, including the installed Astrid
+launcher and platform-specific Hermes instructions.
 
 OpenAI documents the Codex CLI install command in its [Codex setup guide](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex).
 Use the same `--profile` as the bridge when configured.
 
 The bridge launches each ACP adapter through Bun, pinned in
-`scripts/astrid-local-agent-adapters.ts`:
+the agent’s `astrid/chat/astrid-local-agent-adapters.ts`:
 
 ```sh
 bun x --bun @agentclientprotocol/claude-agent-acp@0.93.0
@@ -86,25 +78,26 @@ chat starts, the menu reports **Getting Claude Code ready…** (or the chosen
 agent); a failed start shows **Claude Code didn't start.**, its details, and
 **Try again**.
 
-The header shows plain text such as `Claude Code · Sonnet 4.5`, with the
-tooltip “To use another model, start a new chat.” Model choice is available in
-the New chat menu. Existing model-list plumbing remains in place: Astrid's
-provider catalog is loaded from `astrid agent models --json`, and Claude Code
-and Codex lists are remembered after a session reports them.
+The header shows the fixed agent and model, with an information tooltip for the
+chosen thinking level. Model choice is available only in the New chat menu.
+The service owns each catalog and its defaults, bootstrapping discovery when
+needed; the browser does not keep another model list or model preference.
+Models expose a thinking-level submenu only after that exact model has advertised
+one. Startup validates the newly created chat's live options before applying the
+chosen level, and keeps its composer locked until the agent confirms it.
 
-The choice is saved in this App origin's local settings and applies to new
-chats. Existing project chats keep their original agent. Only external session
-IDs are prefixed (`claude-code:` or `codex:`) at the bridge boundary, so native
-IDs from different stores cannot collide; the prefix never reaches an adapter.
-OMP's IDs and model default are unchanged. External agents use their own
-default model; the OMP model list applies only to Astrid.
+Existing project chats keep their original agent and model. External session IDs
+are prefixed (`claude-code:`, `codex:`, or `hermes:`) at the bridge boundary; the
+prefix never reaches an adapter. New chats attach their regular browser connection
+before a temporary creator connection is released, retaining the live native host
+even when an empty chat has not been saved by its adapter yet.
 
-Every external turn receives the installed Astrid packaged profile from
-`astrid --agent-profile-file`, the editor integration instructions, and the same
-scoped editor context. Astrid skills installed by the setup guide remain
-available to the local agent; chat never installs skills or changes global
-agent configuration. Project associations, replay, cancellation, and terminal
-and permission callbacks use the existing ACP bridge.
+Each new external chat receives the installed Astrid packaged profile from
+`astrid --agent-profile-file` and the editor integration instructions once. Each
+turn receives the same scoped editor context, refreshed for the captured selection.
+Chat never installs skills or changes global agent configuration. Project
+associations, replay, cancellation, and terminal and permission callbacks use the
+existing ACP bridge.
 
 The external profile and media policy are prompt context, rather than an
 adapter-enforced system policy. The OMP overlay that disables native image
@@ -123,7 +116,7 @@ remain an explicit same-process limitation.
 
 ## Sharing a chat between tabs
 
-The bridge keeps one native ACP session for every live chat, across all three
+The bridge keeps one native ACP session for every live chat, across all four
 agents. A second tab loading that chat follows the existing host's transcript
 and updates without opening another native writer. Each browser connection
 has its own event queue, so polling one tab never drains another tab's stream.
@@ -165,10 +158,11 @@ context.
 ## Canonical Runtime editor entry
 
 The editor's canonical local data path is the existing authenticated Runtime
-proxy, not the legacy Astrid REST timeline route. Start Astrid App with
-`VITE_WORKSPACE_RUNTIME_URL` and `WORKSPACE_RUNTIME_TOKEN_FILE`, then open:
+proxy, not the legacy Astrid REST timeline route. Follow the local app startup
+instructions in the [repository README](../../README.md), select the intended
+Runtime workspace, then open:
 
-`/tools/video-editor?runtime=1&runtimeProject=<Runtime project_id>&runtimeTimeline=<timeline_id>`
+`/tools/video-editor?project=<Runtime project_id>&timeline=<timeline_id>`
 
 For disposable Runtime setup, use the generated client's atomic
 `createTimelineDocument` operation with the chosen project and timeline IDs.

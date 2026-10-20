@@ -179,6 +179,14 @@ export function previewTranscriptWordOnHover(
   const handle = preview.showFrame({ seconds: word.timelineStart, anchor });
   return () => { handle.dispose(); };
 }
+
+/** Show a host-rendered frame while visible; dispose the returned handle when the hover ends. */
+export function previewTranscriptFrame(props: PanelRenderProps, seconds: number, anchor: PanelFrameAnchor) {
+  if (!props.visible) return undefined;
+  const preview: PanelPreviewService | undefined = props.video?.preview;
+  return preview?.showFrame({ seconds, anchor });
+}
+
 /** Import a transcript package through immutable host storage and keep its digest as the revision. */
 export async function ingestTranscriptPackage(
   storage: ProjectObjectStorage,

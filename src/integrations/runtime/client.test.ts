@@ -4,6 +4,7 @@ import type { Transport } from './generated.ts';
 import { AstridRuntimeClient, RuntimeCompatibilityError, isRuntimeCanonicalPayloadConflict, isRuntimeConflict, type ObservedRuntimeIdentities } from './client.ts';
 import { ApiError } from './generated.ts';
 import {
+  RUNTIME_ACCEPTED_SCHEMA_DIGESTS,
   RUNTIME_SCHEMA_DIGEST,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
 } from './contract-metadata.ts';
@@ -380,7 +381,15 @@ describe('AstridRuntimeClient canonical Runtime reads and browser task seam', ()
     expect(fixture.requests.filter(({ path }) => path === '/v1/realm')).toHaveLength(1);
   });
 
-  it('accepts exactly the vendored Runtime contract digest during handshake', async () => {
+  it.each(RUNTIME_ACCEPTED_SCHEMA_DIGESTS)('negotiates the compatible Runtime contract %s', async (schemaDigest) => {
+    const client = clientFor(createTransport({ schemaDigest }));
+    const session = await client.ensureSession();
+    expect(session.health.schema_digest).toBe(schemaDigest);
+    expect(session.handshake.schema_digest).toBe(schemaDigest);
+    expect(session.realm.realm_id).toBe(EXPECTED_IDENTITY.realmId);
+  });
+
+  it('accepts the vendored current Runtime contract digest during handshake', async () => {
     // The digest comes from the vendored contract metadata; runtime.lock.json pins those bytes to the producer.
     const selectedRuntimeDigest = RUNTIME_SCHEMA_DIGEST;
     expect(selectedRuntimeDigest).toMatch(/^sha256:[0-9a-f]{64}$/);

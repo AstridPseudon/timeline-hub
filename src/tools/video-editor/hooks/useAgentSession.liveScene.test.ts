@@ -42,7 +42,7 @@ describe('actual ACP store scene roundtrip', () => {
     const pending: unknown[] = [];
     let calls = 0;
     let scope: Record<string, unknown>;
-    port.registration('haus.astrid.live-scenes')!.register(async (request) => {
+    port.registration('haus.astrid.threejs-live-editor')!.register(async (request) => {
       if (request.action === 'read') return { kind: 'read', capture: {
         projectId: 'p', timelineId: 't', capturedTimelineVersion: 7,
         packageRevision: `sha256:${'a'.repeat(64)}`, entryRevision: `sha256:${'b'.repeat(64)}`, packageObjectId: 'package', entryObjectId: 'entry',

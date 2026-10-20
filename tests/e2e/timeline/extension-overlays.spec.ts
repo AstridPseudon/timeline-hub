@@ -46,7 +46,7 @@ const SCENE_PHASE_EXTENSION_ID = 'haus.astrid.scene-phase-markers';
 const CANARY_URL = editorUrl({ params: { timelineOverlayCanary: '1' } });
 const EDIT_AREA_SELECTOR = '.timeline-canvas-edit-area';
 const STRIP_SELECTOR = '[data-testid="timeline-extension-ruler-overlay-strip"]';
-const DISABLE_TOGGLE_SELECTOR = `[data-video-editor-dev-local-toggle="${SCENE_PHASE_EXTENSION_ID}"]`;
+const DISABLE_TOGGLE_SELECTOR = `[data-video-editor-built-in-toggle="${SCENE_PHASE_EXTENSION_ID}"]`;
 const SCENE_MARKER_LAYER_SELECTOR =
   `[data-testid="timeline-marker-layer"][data-marker-layer-key="${SCENE_PHASE_EXTENSION_ID}:scene-markers-overlay"]`;
 

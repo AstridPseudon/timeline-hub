@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { z } from 'zod';
@@ -137,28 +137,36 @@ describe('Astrid bridge transport boundary', () => {
   });
 
   it('aborts a slow bridge request and releases the client request', async () => {
+    let requestStarted: () => void = () => undefined;
+    const started = new Promise<void>((resolve) => { requestStarted = resolve; });
     let requestClosed: () => void = () => undefined;
     const closed = new Promise<void>((resolve) => { requestClosed = resolve; });
-    const timer = { value: undefined as ReturnType<typeof setTimeout> | undefined };
-    const server = createServer((request, response) => {
-      request.once('close', requestClosed);
-      timer.value = setTimeout(() => {
-        response.writeHead(200, { 'Content-Type': 'application/json' });
-        response.end(JSON.stringify({ ok: true }));
-      }, 1_000);
+    const server = createServer((_request, response) => {
+      response.once('close', requestClosed);
+      requestStarted();
     });
     const baseUrl = await listen(server);
+    // Under load a wall-clock deadline can expire before the request reaches
+    // the server, leaving no response to observe closing. Control the deadline
+    // after dispatch while retaining the real fetch/socket cancellation check.
+    const deadline = new AbortController();
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(deadline.signal);
     try {
       const transport = new AstridBridgeTransport({ baseUrl, timeoutMs: 25 });
-      await expect(transport.requestJson(
+      const rejected = expect(transport.requestJson(
         '/health',
         {},
         z.object({ ok: z.boolean() }),
         'health',
       )).rejects.toBeInstanceOf(BridgeTransportFailure);
+      await started;
+      expect(timeout).toHaveBeenCalledWith(25);
+      deadline.abort(new DOMException('The operation timed out', 'TimeoutError'));
+      await rejected;
       await expect(closed).resolves.toBeUndefined();
     } finally {
-      if (timer.value) clearTimeout(timer.value);
+      deadline.abort();
+      timeout.mockRestore();
       await close(server);
     }
   });

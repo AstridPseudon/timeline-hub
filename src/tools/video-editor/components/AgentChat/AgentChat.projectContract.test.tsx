@@ -41,7 +41,7 @@ class HostTransport {
   expiredConnection: string | null = null;
   private connections = 0;
   private readonly connectionAgents = new Map<string, string>();
-  private currentModel = 'openai/model-a';
+  private readonly connectionModels = new Map<string, string>();
   onPrompt: (() => Promise<void>) | null = null;
   onLoad: (() => Promise<void>) | null = null;
   assistant = 'Done.';
@@ -65,22 +65,18 @@ class HostTransport {
     const route = String(url).replace('/api/astrid', '');
     const body = JSON.parse(String(init?.body ?? '{}'));
     this.calls.push({ route, body });
-    if (route === '/acp/agents') return response({ agents: ['astrid', 'codex'].map(id => ({ id, name: id === 'astrid' ? 'Astrid' : 'Codex', state: 'ready', line: null })) });
-    if (route === '/acp/models') return response({ currentModel: this.currentModel, providers: [{ id: 'openai', name: 'OpenAI', signedIn: true,
-      models: [{ id: 'model-a', name: 'Model A' }, { id: 'model-b', name: 'Model B' }] }] });
-    if (/^\/acp\/connection-\d+\/model$/.test(route)) {
-      this.currentModel = body.modelId;
-      return response({ models: { currentModelId: this.currentModel, availableModels: [{ modelId: this.currentModel, name: 'Model B' }] } });
+    if (route === '/acp/agents') return response({ defaultAgent: 'astrid', agents: ['astrid', 'codex'].map(id => ({ id, name: id === 'astrid' ? 'Astrid' : 'Codex', state: 'ready', line: null, models: [{ modelId: 'openai/model-a', name: 'Model A' }, { modelId: 'openai/model-b', name: 'Model B' }], defaultModel: 'openai/model-a' })) });
+    if (route.includes('/models?sessionId=')) {
+      const session = [...this.chats.values()].flatMap(chat => chat.sessions).find(session => session.id === decodeURIComponent(route.split('sessionId=')[1]));
+      const model = session?.model_id ?? 'openai/model-a';
+      return response({ models: { currentModelId: model, availableModels: [{ modelId: model, name: model.endsWith('model-b') ? 'Model B' : 'Model A' }] } });
     }
-    if (route.includes('/models?')) {
-      const astrid = this.connectionAgents.get(route.split('/')[2]) === 'astrid';
-      return response({ models: astrid ? { currentModelId: this.currentModel, availableModels: [{ modelId: this.currentModel, name: this.currentModel.endsWith('model-b') ? 'Model B' : 'Model A' }] }
-        : { currentModelId: 'codex-default', availableModels: [{ modelId: 'codex-default', name: 'Codex Default' }] } });
-    }
+    if (init?.method === 'DELETE') return response({ connection_id: route.split('/').at(-1), closed: true });
     if (route === '/acp/connect') {
       if (this.connectFailure) throw this.connectFailure;
       const id = `connection-${++this.connections}`;
       this.connectionAgents.set(id, body.agent ?? 'astrid');
+      this.connectionModels.set(id, body.defaultModelId ?? 'openai/model-a');
       return response({ connection_id: id, initialize: {} });
     }
     if (this.expiredConnection && route.startsWith(`/acp/${this.expiredConnection}/`)) {
@@ -112,7 +108,7 @@ class HostTransport {
       if (body.mode === 'new' || !chat.selected_session_id) {
         const prefix = this.connectionAgents.get(body.connection_id) === 'codex' ? 'codex:' : '';
         const id = `${prefix}session-${project}-${++this.sequence}`;
-        this.seed(project, id); chat.revision++;
+        this.seed(project, id); chat.sessions.find(session => session.id === id)!.model_id = this.connectionModels.get(body.connection_id); chat.revision++;
         if (body.mode === 'new') chat.main_session_id = id;
       }
       return response({ ...chat, operation_session_id: chat.selected_session_id });
@@ -194,7 +190,10 @@ describe('real panel → real hooks → owned ACP transport', () => {
       fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
     } else {
       fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
-      if (choice === 'agent') fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
+      if (choice === 'agent') {
+        fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
+        fireEvent.click(await screen.findByRole('option', { name: /Model A/ }));
+      }
       else {
         fireEvent.click(await screen.findByRole('button', { name: 'Choose a Astrid model' }));
         fireEvent.click(await screen.findByRole('option', { name: /Model B/ }));
@@ -206,7 +205,8 @@ describe('real panel → real hooks → owned ACP transport', () => {
     if (choice === 'agent') expect(newId).toMatch(/^codex:/);
     await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
     await waitFor(() => expect(fixture.calls.some(c => c.body.params?.sessionId === newId)).toBe(true));
-    if (choice === 'model') await waitFor(() => expect(fixture.calls).toContainEqual({ route: expect.stringMatching(/^\/acp\/connection-\d+\/model$/), body: { sessionId: newId, modelId: 'openai/model-b', project_id: 'p1' } }));
+    if (choice === 'model') expect(fixture.calls).toContainEqual({ route: '/acp/connect', body: { agent: 'astrid', defaultModelId: 'openai/model-b' } });
+    expect(fixture.calls.some(call => /\/model$/.test(call.route))).toBe(false);
     expect(fixture.calls.some(call => call.route === '/acp/model')).toBe(false);
     expect(fixture.calls.some(c => c.route.endsWith('/chat/main'))).toBe(false);
     view.unmount();
@@ -404,7 +404,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     const prompt = fixture.calls.filter(c => c.route.endsWith('/prompt'));
     expect(prompt).toHaveLength(1);
     expect(prompt[0]).toMatchObject({ route: '/acp/projects/p1/chat/prompt', body: {
-      connection_id: 'connection-1', session_id: fixture.chat('p1').selected_session_id,
+      connection_id: 'connection-2', session_id: fixture.chat('p1').selected_session_id,
       prompt: [{ type: 'text', text: 'Change only the cube color to teal.' }, { type: 'text', text: expect.any(String) }],
     } });
     const captured = JSON.parse(prompt[0].body.prompt[1].text.replace('<astrid_editor_context>', '').replace('</astrid_editor_context>', ''));
@@ -418,7 +418,9 @@ describe('real panel → real hooks → owned ACP transport', () => {
     mount();
     await screen.findByText('Change only the cube color to teal.');
     await screen.findByText('Done.');
-    expect(fixture.calls.filter(c => c.route === '/acp/connect')).toHaveLength(2);
+    // Omitted creation choices have no reported connection agent. Release those temporary hosts;
+    // explicitly connect to the saved chat's original agent for loading/prompting and after reload.
+    expect(fixture.calls.filter(c => c.route === '/acp/connect').map(c => c.body)).toEqual([{}, { agent: 'astrid' }, {}, { agent: 'astrid' }]);
     expect(fixture.calls.filter(c => c.route.endsWith('/prompt'))).toHaveLength(1);
     expect(fixture.chat('p1').sessions).toHaveLength(2);
   });

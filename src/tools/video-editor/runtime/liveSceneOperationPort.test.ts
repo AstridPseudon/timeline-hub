@@ -39,7 +39,7 @@ function fixture() {
     revision: `sha256:${'c'.repeat(64)}`, entryRevision: `sha256:${'d'.repeat(64)}`,
     affectedPlacements: ['scene-a'], acknowledgedTimelineVersion: 8, flushReceipt: { version: 8 },
   });
-  const registration = port.registration('haus.astrid.live-scenes')!;
+  const registration = port.registration('haus.astrid.threejs-live-editor')!;
   const binding = registration.register(handler);
   const controller = new AbortController();
   return { gate, load, port, current, handler, registration, binding, controller };

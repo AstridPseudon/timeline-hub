@@ -26,12 +26,10 @@ import { isTimelineAgentSessionsAvailable, useProjectAgentTaskLinks } from '@/to
 const GATEWAY = 'http://127.0.0.1:17340';
 const chat = {
   project_id: 'project-1', scope_key: 'realm:project-1', revision: 0,
-  selected_session_id: null, sessions: [], draft: { text: '', revision: 0 },
+  selected_session_id: 'saved-chat', sessions: [{ id: 'saved-chat', model_id: 'openai-codex/gpt-5.6-sol' }], draft: { text: '', revision: 0 },
 };
-const models = {
-  currentModel: 'openai-codex/gpt-5.6-sol',
-  providers: [{ id: 'openai-codex', name: 'OpenAI Codex', signedIn: true, models: [{ id: 'gpt-5.6-sol', name: 'GPT 5.6 Sol' }] }],
-};
+const model = { modelId: 'openai-codex/gpt-5.6-sol', name: 'GPT 5.6 Sol' };
+const agents = { defaultAgent: 'astrid', agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null, models: [model], defaultModel: model.modelId }] };
 
 function withQueryClient({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -44,8 +42,9 @@ describe('agent chat on the hosted build', () => {
   beforeEach(() => {
     fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
-      const body = url.endsWith('/acp/models') ? models : url.endsWith('/chat') ? chat
-        : url.endsWith('/agents') ? { agents: [] }
+      const body = url.includes('/models?sessionId=') ? { models: { currentModelId: model.modelId, availableModels: [model] } } : url.endsWith('/chat') ? chat
+        : url.endsWith('/agents') ? agents
+        : url.endsWith('/rpc') ? { result: {} }
         : url.endsWith('/connect') ? { connection_id: 'connection-1', initialize: {} }
         : url.endsWith('/events') ? { notifications: [], disconnected: false } : null;
       return new Response(JSON.stringify(body), { status: body ? 200 : 404 });
@@ -66,12 +65,12 @@ describe('agent chat on the hosted build', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.queryByText("Agent chat isn't on this page yet.")).toBeNull();
     expect(screen.queryByRole('link', { name: 'Open the full editor' })).toBeNull();
-    await waitFor(() => expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid'));
+    await waitFor(() => expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid · GPT 5.6 Sol'));
     const user = userEvent.setup();
     await user.hover(screen.getByRole('button', { name: 'Chat model information' }));
     expect(await screen.findByText('GPT 5.6 Sol', { exact: true })).toBeInTheDocument();
     const urls = fetchSpy.mock.calls.map(([url]) => String(url));
-    expect(urls).toContain(`${GATEWAY}/api/astrid/acp/models`);
+    await waitFor(() => expect(fetchSpy.mock.calls.map(([url]) => String(url))).toContain(`${GATEWAY}/api/astrid/acp/connection-1/models?sessionId=saved-chat`));
     expect(urls).toContain(`${GATEWAY}/api/astrid/acp/agents`);
     expect(urls).toContain(`${GATEWAY}/api/astrid/acp/projects/project-1/chat`);
     expect(urls.every(url => url.startsWith(`${GATEWAY}/api/astrid/acp/`))).toBe(true);

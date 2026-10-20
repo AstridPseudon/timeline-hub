@@ -28,6 +28,7 @@ import { createBundleBudgetPlugin } from "./bundleBudget";
 import { createRemoteFontModePlugin } from "./remoteFonts";
 import { createPairedRelayPlugin, resolvePairedRelayConfig } from "./pairedRelay";
 import { createShareMetaPlugin } from "./shareMeta";
+import { createInstallerAssetsPlugin } from "./installerAssets";
 
 export { createRemoteFontModePlugin, stripRemoteFontLinks } from "./remoteFonts";
 
@@ -109,6 +110,22 @@ export default defineConfig(() => {
     readDocument:async(projectId:string,id:string)=>{try{return await elementRuntime.getDocument(projectId,id);}catch(error){if((error as {status?:number}).status===404)return null;throw error;}},
   }:undefined;
   const disableRemoteFonts = process.env.VITE_DISABLE_REMOTE_FONTS === "1";
+  const generatedRegistryPath = path.resolve(
+    __dirname,
+    "../../node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts",
+  );
+  const generatedRegistryFallbackPath = path.resolve(
+    __dirname,
+    "../../src/tools/video-editor/lib/registry.generated.fallback.ts",
+  );
+  const themeApiPath = path.resolve(
+    __dirname,
+    "../../node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts",
+  );
+  const themeApiFallbackPath = path.resolve(
+    __dirname,
+    "../../src/tools/video-editor/lib/theme-api.fallback.tsx",
+  );
   const timelineSchemaPath = path.resolve(
     __dirname,
     "../../vendor/timeline-schema/typescript/dist/src/index.js",
@@ -146,6 +163,7 @@ export default defineConfig(() => {
       astridBridgeAuthPlugin,
       createRemoteFontModePlugin(disableRemoteFonts),
       createShareMetaPlugin(process.env.ASTRID_SITE_ORIGIN?.trim() || undefined),
+      createInstallerAssetsPlugin(),
       react(),
       createBundleBudgetPlugin(),
     ].filter(Boolean),
@@ -161,6 +179,12 @@ export default defineConfig(() => {
         "remotion": path.resolve(__dirname, "../../node_modules/remotion"),
         "@remotion/layout-utils": path.resolve(__dirname, "../../node_modules/@remotion/layout-utils"),
         "@remotion/media": path.resolve(__dirname, "../../node_modules/@remotion/media"),
+        "@banodoco/timeline-composition/registry.generated": fs.existsSync(generatedRegistryPath)
+          ? generatedRegistryPath
+          : generatedRegistryFallbackPath,
+        "@banodoco/timeline-composition/theme-api": fs.existsSync(themeApiPath)
+          ? themeApiPath
+          : themeApiFallbackPath,
         "@banodoco/timeline-schema": fs.existsSync(timelineSchemaPath)
           ? timelineSchemaPath
           : timelineSchemaFallbackPath,

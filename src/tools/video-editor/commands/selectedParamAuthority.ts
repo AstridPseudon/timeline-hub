@@ -362,5 +362,3 @@ export function resolveSelectedParamAuthority(input: SelectedParamAuthorityInput
   if (!authority) fail('Selected PARAM authority is unavailable; draft preserved');
   return { ...authority };
 }
-
-

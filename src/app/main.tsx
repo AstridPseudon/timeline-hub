@@ -1,6 +1,7 @@
 import {
   classifyBrowserEntry,
   prefersAppEntry,
+  resolveInstallerConnectEntry,
   resolveReturningAppEntry,
 } from '@/app/entryClassification.ts';
 import { setRuntimeOrigin } from '@/integrations/runtime/connection.ts';
@@ -43,7 +44,15 @@ async function main(): Promise<void> {
     throw new Error("Failed to render app: element with id 'root' was not found.");
   }
 
-  const returningAppEntry = resolveReturningAppEntry(new URL(window.location.href), prefersAppEntry());
+  const currentUrl = new URL(window.location.href);
+  const installConnectEntry = resolveInstallerConnectEntry(currentUrl);
+  if (installConnectEntry) {
+    window.history.replaceState(window.history.state, '', installConnectEntry);
+  }
+
+  const returningAppEntry = installConnectEntry
+    ? null
+    : resolveReturningAppEntry(new URL(window.location.href), prefersAppEntry());
   if (returningAppEntry) {
     window.history.replaceState(window.history.state, '', returningAppEntry);
   }

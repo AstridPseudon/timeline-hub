@@ -39,6 +39,7 @@ import { stageCanaryExample } from '../examples/stage-canary-example';
 import {
   createTranscriptPanelExampleAdapter,
   ingestTranscriptPackage,
+  previewTranscriptFrame,
   readTranscriptPanelExample,
   previewTranscriptWordOnHover,
 } from '../examples/transcript-panel-example';
@@ -536,6 +537,31 @@ describe('Extension example import governance', () => {
 // ---------------------------------------------------------------------------
 
 describe('Transcript panel SDK example contract', () => {
+  it('requests host frame previews for visible panels and returns their disposal handle', () => {
+    const anchor = { left: 10, top: 20, width: 100, height: 30 };
+    const requests: unknown[] = [];
+    let disposed = false;
+    const handle = { dispose: () => { disposed = true; } };
+    const props = {
+      instanceId: 'transcript-example',
+      visible: true,
+      video: {
+        view: {} as never,
+        seek: () => undefined,
+        preview: { showFrame: (input: unknown) => { requests.push(input); return handle; } },
+      },
+    };
+
+    const preview = previewTranscriptFrame(props, 2.5, anchor);
+    expect(requests).toEqual([{ seconds: 2.5, anchor }]);
+    expect(preview).toBe(handle);
+    preview?.dispose();
+    expect(disposed).toBe(true);
+    expect(previewTranscriptFrame({ ...props, visible: false }, 3, anchor)).toBeUndefined();
+    expect(previewTranscriptFrame({ ...props, video: undefined }, 3, anchor)).toBeUndefined();
+    expect(requests).toHaveLength(1);
+  });
+
   it('reads a typed panel snapshot and imports transcript bytes through immutable project storage', async () => {
     const adapter = createTranscriptPanelExampleAdapter();
     const snapshot = readTranscriptPanelExample({

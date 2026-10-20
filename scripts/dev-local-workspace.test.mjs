@@ -3,22 +3,21 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync, appendFileSync, rmSync, mkdirSync, chmodSync, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, appendFileSync, rmSync, mkdirSync, chmodSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, it, test } from 'node:test';
 import { readGeneratedSchemaDigest } from './runtime-schema-guard.mjs';
+import { terminateProcessTree } from './terminate-process-tree.mjs';
+import { listenOnTestPort } from './test-port.mjs';
 
 import {
   parseDevLocalWorkspaceArgs,
   validatePreviewOutputDirectory,
   viteChildArgs,
   resolveWorkspaceDiscoveryPath,
+  resolveRuntimeDataRoot,
   resolveRuntimeCommand,
-  chatRegistrationPath,
-  chatRegistration,
-  writeChatRegistration,
-  removeChatRegistration,
   loadLocalRuntimeEnvironment,
   LOCAL_RUNTIME_ENV_KEYS,
   shellQuote,
@@ -48,8 +47,30 @@ test('local launcher settings persist without importing app secrets or overridin
 });
 
 test('launcher shell snippets quote command paths containing spaces', () => {
-  assert.equal(shellQuote('/installed/Astrid App/start'), "'/installed/Astrid App/start'");
-  assert.equal(shellQuote('npm-run_dev:local'), 'npm-run_dev:local');
+  assert.equal(shellQuote('/installed/Astrid App/start', 'linux'), "'/installed/Astrid App/start'");
+  assert.equal(shellQuote('npm-run_dev:local', 'linux'), 'npm-run_dev:local');
+  assert.equal(shellQuote("C:\\Users\\Ada's App\\start.cmd", 'win32'), "'C:\\Users\\Ada''s App\\start.cmd'");
+});
+
+test('Runtime Python and data roots follow the selected platform', () => {
+  const windowsPython = 'C:\\Users\\Ada Lovelace\\Astrid Runtime';
+  assert.deepEqual(resolveRuntimeCommand({
+    runtimeCheckout: windowsPython,
+    platform: 'win32',
+    exists: (path) => path === 'C:\\Users\\Ada Lovelace\\Astrid Runtime\\.venv\\Scripts\\python.exe',
+  }), {
+    command: 'C:\\Users\\Ada Lovelace\\Astrid Runtime\\.venv\\Scripts\\python.exe',
+    args: ['-m', 'astrid_runtime.cli'],
+    cwd: windowsPython,
+  });
+  assert.throws(() => resolveRuntimeCommand({
+    runtimeCheckout: windowsPython, platform: 'win32', exists: () => false,
+  }), /\.venv\/Scripts\/python\.exe/);
+  assert.equal(resolveRuntimeDataRoot({ platform: 'win32', env: { LOCALAPPDATA: 'C:\\Users\\Ada\\AppData\\Local' }, home: 'C:\\Users\\Ada' }),
+    'C:\\Users\\Ada\\AppData\\Local\\Astrid Runtime');
+  assert.equal(resolveWorkspaceDiscoveryPath({ platform: 'win32', env: { LOCALAPPDATA: 'C:\\Users\\Ada\\AppData\\Local' }, home: 'C:\\Users\\Ada' }),
+    'C:\\Users\\Ada\\AppData\\Local\\Astrid Runtime\\runtime\\discovery.json');
+  assert.equal(resolveRuntimeDataRoot({ platform: 'linux', env: { XDG_DATA_HOME: '/home/ada/data' }, home: '/home/ada' }), '/home/ada/data/astrid-runtime');
 });
 
 afterEach(async () => {
@@ -64,49 +85,6 @@ async function emittedDirectory({ entry = true } = {}) {
   if (entry) await writeFile(join(directory, 'assets', 'index-test.js'), '');
   return directory;
 }
-
-describe('dev-local chat registration', () => {
-  it('sits next to discovery.json as chat.json', () => {
-    assert.equal(chatRegistrationPath('/d/discovery.json'), join('/d', 'chat.json'));
-  });
-
-  it('is the exact endpoint and token the Runtime door reads', () => {
-    assert.deepEqual(chatRegistration(17335, 'token-value'), { endpoint: 'http://127.0.0.1:17335', token: 'token-value' });
-  });
-
-  it('refuses a bad bridge port or an empty credential', () => {
-    for (const port of ['0', '70000', 'x']) {
-      assert.throws(() => chatRegistration(port, 'token-value'), /chat bridge port/, port);
-    }
-    assert.throws(() => chatRegistration('17335', ''), /needs a credential/);
-  });
-
-  it('writes the registration owner-only, parseable, with no temporary file left behind', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'astrid-chat-registration-test-'));
-    temporaryDirectories.push(directory);
-    const path = join(directory, 'chat.json');
-    const registration = chatRegistration(17335, 'token-value');
-    writeChatRegistration(path, registration);
-    assert.equal(statSync(path).mode & 0o777, 0o600);
-    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), registration);
-    assert.deepEqual(readdirSync(directory), ['chat.json']);
-  });
-
-  it('removes only a registration the predicate owns, and tolerates missing or unparsable files', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'astrid-chat-remove-test-'));
-    temporaryDirectories.push(directory);
-    const path = join(directory, 'chat.json');
-    writeChatRegistration(path, chatRegistration(17335, 'token-value'));
-    removeChatRegistration(path, (registration) => registration.token === 'someone-else');
-    assert.equal(existsSync(path), true, 'a registration another service owns is left alone');
-    removeChatRegistration(path, (registration) => registration.token === 'token-value');
-    assert.equal(existsSync(path), false);
-    assert.doesNotThrow(() => removeChatRegistration(path, () => true));
-    writeFileSync(path, '{not json');
-    assert.doesNotThrow(() => removeChatRegistration(path, () => true));
-    assert.equal(existsSync(path), true, 'an unparsable file is not ours to remove');
-  });
-});
 
 describe('dev-local preview options', () => {
   it('parses preview mode only with an explicit output directory', () => {
@@ -303,10 +281,10 @@ async function launchFixture(overrides = {}) {
     if (req.url === '/v1/realm') return json({ realm_id: overrides.realmResponseId ?? realmId, display_name: 'Astrid test realm', version: 1, created_at: '2026-09-11T00:00:00Z' });
     res.writeHead(404); res.end();
   });
-  await new Promise(r => runtime.listen(0, '127.0.0.1', r));
+  await listenOnTestPort(runtime);
   // The Runtime's browser door: a stand-in listener on its own port, recorded in discovery as the hosted page's door.
   const door = createServer((_req, res) => { res.writeHead(404); res.end(); });
-  await new Promise(r => door.listen(0, '127.0.0.1', r));
+  await listenOnTestPort(door);
   const discovery = join(fixture, 'discovery.json');
   const discoveryDocument = JSON.stringify({
     endpoint: `http://127.0.0.1:${runtime.address().port}`,
@@ -349,7 +327,9 @@ async function launchFixture(overrides = {}) {
     FAKE_RUNTIME_CATALOG_JSON: readFileSync(catalog, 'utf8'),
     FAKE_RUNTIME_DISCOVERY_PATH: discovery,
     FAKE_RUNTIME_APP_ENV: join(fixture, 'app-env.json'),
+    npm_execpath: join(noSpawnBin, 'npm-cli.js'),
   };
+  writeFileSync(env.npm_execpath, `require('node:fs').writeFileSync(${JSON.stringify(spawnMarker)}, 'spawned');\n`);
   writeFileSync(env.FAKE_RUNTIME_LIFECYCLE_LOG, '');
   const fakeRuntimeCli = `#!${process.execPath}
 const fs = require('node:fs');
@@ -487,7 +467,7 @@ test('local launcher rejects credential, profile, and Runtime identity substitut
 
 test('Runtime discovery selection ignores source checkout and rejects ambiguous roots', () => {
   const home = '/home/fixture';
-  assert.equal(resolveWorkspaceDiscoveryPath({ home }), '/home/fixture/Library/Application Support/Astrid Runtime/runtime/discovery.json');
+  assert.equal(resolveWorkspaceDiscoveryPath({ home, env: {}, platform: 'linux' }), '/home/fixture/.local/share/astrid-runtime/runtime/discovery.json');
   assert.equal(resolveWorkspaceDiscoveryPath({ home, supportRoot: '/selected/root', dataRoot: '/selected/root' }), '/selected/root/runtime/discovery.json');
   assert.equal(resolveWorkspaceDiscoveryPath({ home, discovery: '/selected/discovery.json', supportRoot: '/unused/root' }), '/selected/discovery.json');
   assert.throws(() => resolveWorkspaceDiscoveryPath({ home, supportRoot: '/one', dataRoot: '/two' }), /different roots/);
@@ -498,9 +478,15 @@ test('build handoff carries verified identity into the emitted browser build wit
   const fixture = await launchFixture();
   const captured = join(fixture.fixture, 'build-environment.json');
   const fakeNpm = join(fixture.fixture, 'bin', 'npm');
+  const fakeNpmJs = join(fixture.fixture, 'bin', 'npm-cli.js');
+  const fakeNpmScript = `const fs = require('node:fs');
+fs.writeFileSync(${JSON.stringify(captured)}, JSON.stringify({args:process.argv.slice(2), actor:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID, realm:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID, instance:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID}));
+`;
   writeFileSync(fakeNpm, `#!${process.execPath}
 require('node:fs').writeFileSync(${JSON.stringify(captured)}, JSON.stringify({args:process.argv.slice(2), actor:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID, realm:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID, instance:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID}));
 `, { mode: 0o700 });
+  writeFileSync(fakeNpmJs, fakeNpmScript);
+  fixture.env.npm_execpath = fakeNpmJs;
   try {
     const result = await run(['--build'], fixture.env);
     assert.equal(result.code, 0, result.stderr);
@@ -518,7 +504,7 @@ test('build handoff rejects a Runtime instance change during compilation', async
   });
   try {
     const result = await run(['--build'], fixture.env);
-    assert.equal(result.code, 1);
+    assert.equal(result.code, 1, result.stderr);
     assert.match(result.stderr, /instance does not match/);
     assert.equal(healthReads, 2);
     assert.equal(existsSync(fixture.spawnMarker), true, 'fixture compiler must run between identity checks');
@@ -529,12 +515,11 @@ test('build handoff rejects a Runtime instance change during compilation', async
 
 // The whole launcher against a fake Runtime, with a fake long-lived `npm` for ACP and Vite. The fake Vite listens on the app's
 // port (PORT), so the launcher's Open block, which waits for it, is reached; it also records every spawn.
-function freePort() {
-  return new Promise((resolvePort, reject) => {
-    const server = createServer();
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => { const { port } = server.address(); server.close(() => resolvePort(port)); });
-  });
+async function freePort() {
+  const server = createServer();
+  const port = await listenOnTestPort(server);
+  await new Promise((resolve) => server.close(resolve));
+  return port;
 }
 
 const FAKE_NPM = (spawnLog) => `#!${process.execPath}
@@ -546,7 +531,16 @@ fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, kind + ':start\\n');
 if (kind === 'vite') fs.writeFileSync(process.env.FAKE_RUNTIME_APP_ENV, JSON.stringify({ args, astridCheckout: process.env.ASTRID_CHECKOUT, dataRoot: process.env.ASTRID_RUNTIME_DATA_ROOT, supportRoot: process.env.ASTRID_SUPPORT_ROOT, discovery: process.env.ASTRID_WORKSPACE_DISCOVERY }));
 console.log(['fake-npm', ...args].join(' '));
 if (kind === 'vite' && process.env.FAKE_NPM_VITE_EXIT) process.exit(Number(process.env.FAKE_NPM_VITE_EXIT));
-if (args.includes('dev') || args.includes('preview')) require('node:http').createServer((request, response) => {
+if (process.env.FAKE_NPM_TREE_PIDS) {
+  fs.appendFileSync(process.env.FAKE_NPM_TREE_PIDS, process.pid + '\\n');
+  const server = ${JSON.stringify(`
+    const fs = require('node:fs');
+    fs.appendFileSync(process.env.FAKE_NPM_TREE_PIDS, process.pid + String.fromCharCode(10));
+    require('node:http').createServer((_request, response) => response.end('descendant server')).listen(Number(process.env.PORT), '127.0.0.1', () => fs.writeFileSync(process.env.FAKE_NPM_TREE_READY, 'ready'));
+  `)};
+  const middle = 'require("node:fs").appendFileSync(process.env.FAKE_NPM_TREE_PIDS, process.pid + String.fromCharCode(10)); require("node:child_process").spawn(process.execPath, ["-e", ' + JSON.stringify(server) + '], { stdio: "inherit" });';
+  require('node:child_process').spawn(process.execPath, ['-e', middle], { stdio: 'inherit' });
+} else if (args.includes('dev') || args.includes('preview')) require('node:http').createServer((request, response) => {
   if (request.url !== '/runtime-config/v1/workspace.json') { response.writeHead(404); response.end(); return; }
   response.writeHead(200, { 'Content-Type': 'application/json' });
   response.end(JSON.stringify({ realmId: process.env.FAKE_VITE_REALM_ID || process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID }));
@@ -567,6 +561,15 @@ setInterval(() => {}, 1000);
 `;
 
 const OPEN_BLOCK_END = 'Keep this window open while you work. Press Ctrl+C to stop.';
+// Windows kill(SIGINT/SIGTERM) forcibly exits Node; deliver the event inside the
+// launcher there. POSIX tests continue sending real signals.
+const SIGNAL_CONTROL = `data:text/javascript,${encodeURIComponent(`
+process.on('message', (signal) => {
+  process.emit(signal);
+  process.send(signal);
+});
+process.channel.unref();
+`)}`;
 
 /**
  * The launcher against a fake Runtime. Resolves once `until(stdout, stderr, exitCode)` holds, with what it printed; `stop()`
@@ -576,11 +579,15 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
   const fixture = given ?? await launchFixture(fixtureOverrides);
   const spawnLog = join(fixture.fixture, 'spawn.log');
   writeFileSync(spawnLog, '');
-  writeFileSync(join(fixture.fixture, 'bin', 'npm'), FAKE_NPM(spawnLog), { mode: 0o700 });
+  const fakeNpm = FAKE_NPM(spawnLog);
+  writeFileSync(join(fixture.fixture, 'bin', 'npm'), fakeNpm, { mode: 0o700 });
+  const fakeNpmJs = join(fixture.fixture, 'bin', 'npm-cli.js');
+  writeFileSync(fakeNpmJs, fakeNpm.slice(fakeNpm.indexOf('\n') + 1));
   const { ASTRID_VERBOSE: _verbose, ...inherited } = cleanInheritedEnvironment();
   const env = {
     ...inherited,
     ...fixture.env,
+    npm_execpath: fakeNpmJs,
     PORT: String(await freePort()),
     VITE_ASTRID_DYNAMIC_PROXY_PORT: String(await freePort()),
     VITE_ASTRID_ACP_BRIDGE_PORT: String(await freePort()),
@@ -588,17 +595,24 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
   };
   // The shipped config/hosted-origin.json is read only when a case asks for it; the fixture config is the default otherwise.
   if (shippedConfig) delete env.ASTRID_APP_HOSTED_ORIGIN_CONFIG;
-  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...args], { env, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
+  const controlArgs = process.platform === 'win32' ? ['--import', SIGNAL_CONTROL] : [];
+  const child = spawn(process.execPath, [...controlArgs, 'scripts/dev-local-workspace.mjs', ...args], { env, stdio: process.platform === 'win32' ? ['ignore', 'pipe', 'pipe', 'ipc'] : ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
   const seen = { stdout: '', stderr: '' };
   child.stdout.on('data', c => { seen.stdout += c; }); child.stderr.on('data', c => { seen.stderr += c; });
   const closed = new Promise(resolveClose => child.once('close', resolveClose));
+  const requestSignal = (name) => new Promise((resolveSignal, reject) => {
+    if (child.exitCode !== null) return resolveSignal();
+    if (process.platform !== 'win32') { child.kill(name); return resolveSignal(); }
+    child.once('message', resolveSignal);
+    child.send(name, (error) => { if (error) reject(error); });
+  });
   const stop = async () => {
-    if (child.exitCode === null) child.kill('SIGTERM');
+    await requestSignal('SIGTERM');
     await closed;
     if (!given) await fixture.close();
   };
   const signal = async (name) => {
-    if (child.exitCode === null) child.kill(name);
+    await requestSignal(name);
     await closed;
   };
   try {
@@ -609,7 +623,7 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
       }
       await new Promise(r => setTimeout(r, 50));
     }
-    return { stdout: seen.stdout, stderr: seen.stderr, child, closed, env, fixture, spawnLog, stop, signal, seen };
+    return { stdout: seen.stdout, stderr: seen.stderr, child, closed, env, fixture, spawnLog, stop, signal, requestSignal, seen };
   } catch (error) {
     await stop();
     throw error;
@@ -651,7 +665,7 @@ test('the Open block is bold on a terminal only', async () => {
   try { assert(!started.stdout.includes('\x1b['), JSON.stringify(started.stdout)); } finally { await started.stop(); }
 });
 
-test('--verbose prints the technical lines after the Open block, and ASTRID_VERBOSE=1 does the same', async () => {
+test('--verbose prints the technical lines after the Open block, and ASTRID_VERBOSE=1 remains supported', async () => {
   for (const options of [{ args: ['--verbose'], env: {} }, { args: [], env: { ASTRID_VERBOSE: '1' } }]) {
     const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
     const doorEndpoint = JSON.parse(fixture.discoveryDocument).door_endpoint;
@@ -703,7 +717,7 @@ test('the app port taken by another program: one friendly line, the details, no 
   // Something that is not Astrid's app already listens on the app's port. Vite would not start, and whatever answers must
   // never be taken for it: the launcher refuses before it prints "Starting Astrid…" or an address.
   const holder = createServer((_req, res) => { res.writeHead(200); res.end('not the app'); });
-  await new Promise(r => holder.listen(0, '127.0.0.1', r));
+  await listenOnTestPort(holder);
   const appPort = String(holder.address().port);
   try {
     const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { PORT: appPort } });
@@ -768,42 +782,29 @@ test('a second launcher for another Astrid says to stop the first one', async ()
   }
 });
 
-test('the agent chat bridge stopping later quotes an installed start command containing spaces', async () => {
-  const result = await launcherEnds({
-    configuredOrigin: 'https://hosted.test',
-    env: { FAKE_ACP_EXIT_MS: '200', ASTRID_START_COMMAND: '/installed/Astrid App/start' },
-  });
-  assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], "Astrid: Agent chat stopped. Start Astrid again with '/installed/Astrid App/start'.");
-  assert.match(result.stderr.split('\n')[1], /^Details: Astrid ACP bridge exited with code 3; ACP is offline/);
+test('agent chat is supervised independently of the app launcher', async () => {
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test',
+    env: { FAKE_ACP_EXIT_MS: '200', ASTRID_START_COMMAND: '/installed/Astrid App/start' } });
+  try { assert(!readFileSync(started.spawnLog, 'utf8').includes('dev:astrid-acp')); }
+  finally { await started.stop(); }
 });
 
-test('the agent chat bridge stopping is its own friendly line', async () => {
-  const result = await launcherEnds({
-    configuredOrigin: 'https://hosted.test',
-    env: { FAKE_ACP_EXIT_MS: '200', ASTRID_START_COMMAND: '/installed/Astrid/start' },
-  });
-  assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], 'Astrid: Agent chat stopped. Start Astrid again with /installed/Astrid/start.');
-  assert.match(result.stderr.split('\n')[1], /^Details: Astrid ACP bridge exited with code 3; ACP is offline/);
-});
-
-test('a failed app start uses ASTRID_VERBOSE with the installed start command', async () => {
+test('a failed app start recommends --verbose with the installed start command', async () => {
   const result = await launcherEnds({
     configuredOrigin: 'https://hosted.test',
     env: { ASTRID_START_COMMAND: '/installed/Astrid/start', FAKE_NPM_VITE_EXIT: '7' },
   });
   assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run ASTRID_VERBOSE=1 /installed/Astrid/start to see why.");
+  assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run /installed/Astrid/start --verbose to see why.");
 });
 
-test('a failed app start uses the default npm command with ASTRID_VERBOSE', async () => {
+test('a failed app start recommends a portable verbose npm command', async () => {
   const result = await launcherEnds({
     configuredOrigin: 'https://hosted.test',
     env: { FAKE_NPM_VITE_EXIT: '7' },
   });
   assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run ASTRID_VERBOSE=1 npm run dev:local to see why.");
+  assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run npm run dev:local -- --verbose to see why.");
 });
 
 test('a machine without Astrid set up points to the install guide, and every error line names Astrid once', async () => {
@@ -838,80 +839,21 @@ function assertOpenAfterStart(stdout, origin) {
   assert.equal(stdout, HEALTHY_OUTPUT(origin));
 }
 
-test('the hosted page reaches the chat bridge through the Runtime door only with --acp', async () => {
-  const chatPort = String(await freePort());
-  const acpToken = 'synthetic-acp-bridge-token';
-  // Without --acp: no registration is written, so the door answers that chat is unavailable.
-  {
-    const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
-    let started;
-    try {
-      started = await startLauncher({ fixture, env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort } });
-      assert.equal(existsSync(join(fixture.fixture, 'chat.json')), false, 'no chat registration without --acp');
-    } finally {
-      if (started) await started.stop();
-      await fixture.close();
-    }
-  }
-  // With --acp: the registration names the bridge and carries its credential, owner-only, and is removed on stop.
-  const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
-  const chatFile = join(fixture.fixture, 'chat.json');
-  let started;
-  try {
-    started = await startLauncher({ fixture, args: ['--acp'], env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort, ASTRID_ACP_BRIDGE_TOKEN: acpToken } });
-    // Written once the bridge answers with this launcher's credential, which can come just after the Open block.
-    for (let attempt = 0; attempt < 600 && !existsSync(chatFile); attempt += 1) await new Promise(r => setTimeout(r, 50));
-    assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), { endpoint: `http://127.0.0.1:${chatPort}`, token: acpToken });
-    assert.equal(statSync(chatFile).mode & 0o777, 0o600);
-    assert(!started.stdout.includes(acpToken) && !started.stderr.includes(acpToken), `${started.stdout}${started.stderr}`);
-    await started.stop();
-    assert.equal(existsSync(chatFile), false, 'chat.json is removed when the launcher stops');
-  } finally {
-    if (started) await started.stop();
-    await fixture.close();
-  }
-});
-
-test("a launcher whose chat bridge cannot bind leaves the running bridge's registration in place", async () => {
-  // Another launcher's bridge already holds the port and answers only its own credential.
-  const theirs = createServer((_req, res) => { res.writeHead(401); res.end(); });
-  await new Promise(r => theirs.listen(0, '127.0.0.1', r));
-  const chatPort = String(theirs.address().port);
-  const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
-  const chatFile = join(fixture.fixture, 'chat.json');
-  const registration = { endpoint: `http://127.0.0.1:${chatPort}`, token: 'their-bridge-token' };
-  writeFileSync(chatFile, JSON.stringify(registration), { mode: 0o600 });
-  try {
-    const result = await launcherEnds({ fixture, args: ['--acp'], env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort, ASTRID_ACP_BRIDGE_TOKEN: 'our-bridge-token', FAKE_ACP_EXIT_MS: '300' } });
-    assert.equal(result.code, 1, result.stdout + result.stderr);
-    assert.equal(result.stderr.split('\n')[0], 'Astrid: Agent chat stopped. Start Astrid again with npm run dev:local.');
-    assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), registration, 'the running bridge keeps its registration');
-  } finally {
-    await new Promise(r => theirs.close(r));
-    await fixture.close();
-  }
-});
-
-test('a stale chat.json naming this bridge is removed at start, and one naming another port is left in place', async () => {
-  const chatPort = String(await freePort());
-  const cases = [
-    ['this bridge', `http://127.0.0.1:${chatPort}`, false],
-    ['another port', 'http://127.0.0.1:1', true],
-  ];
-  for (const [label, endpoint, kept] of cases) {
+test('the launcher leaves agent chat registration and lifecycle to the Runtime', async () => {
+  for (const args of [[], ['--acp']]) {
     const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
     const chatFile = join(fixture.fixture, 'chat.json');
-    const stale = JSON.stringify({ endpoint, token: 'stale-token' });
-    writeFileSync(chatFile, stale);
+    const registration = { endpoint: 'http://127.0.0.1:17335', token: 'agent-service-token' };
+    writeFileSync(chatFile, JSON.stringify(registration), { mode: 0o600 });
     let started;
     try {
-      started = await startLauncher({ fixture, env: { VITE_ASTRID_ACP_BRIDGE_PORT: chatPort } });
-      assert.equal(existsSync(chatFile), kept, label);
-      if (kept) assert.equal(readFileSync(chatFile, 'utf8'), stale, label);
-    } finally {
-      if (started) await started.stop();
-      await fixture.close();
-    }
+      started = await startLauncher({ fixture, args });
+      assert(!readFileSync(started.spawnLog, 'utf8').includes('dev:astrid-acp'));
+      assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), registration);
+      await started.stop();
+      assert.deepEqual(JSON.parse(readFileSync(chatFile, 'utf8')), registration);
+      assert(!started.stdout.includes(registration.token) && !started.stderr.includes(registration.token));
+    } finally { if (started) await started.stop(); await fixture.close(); }
   }
 });
 
@@ -1216,14 +1158,50 @@ test('shutdown stops Vite and bridge services before Runtime down', async () => 
     started = await startLauncher({ fixture, args: ['--acp'], env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' } });
     await started.stop();
     const lifecycle = readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8').trim().split('\n');
-    assert(lifecycle.indexOf('vite:stop') >= 0, lifecycle.join('\n'));
-    assert(lifecycle.indexOf('acp:stop') >= 0, lifecycle.join('\n'));
+    assert(lifecycle.includes('vite:start'), lifecycle.join('\n'));
+    assert.equal(lifecycle.indexOf('acp:stop'), -1, 'chat is owned by the Runtime');
     const down = lifecycle.find((line) => line.startsWith('runtime:down '));
     assert(down, lifecycle.join('\n'));
-    assert(lifecycle.indexOf('vite:stop') < lifecycle.indexOf('acp:stop'), lifecycle.join('\n'));
-    assert(lifecycle.indexOf('acp:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
+    // taskkill forcibly terminates Windows children; their signal handlers cannot log a stop.
+    if (process.platform === 'win32') assert.equal(lifecycle.includes('vite:stop'), false);
+    else assert(lifecycle.indexOf('vite:stop') >= 0 && lifecycle.indexOf('vite:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
     assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false');
   } finally { if (started) await started.stop(); await fixture.close(); }
+});
+
+test('startup timeout closes the real child/grandchild server and inherited pipes on native platforms', { timeout: 20_000 }, async () => {
+  const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
+  const pidsFile = join(fixture.fixture, 'tree-pids');
+  const ready = join(fixture.fixture, 'tree-ready');
+  // The Runtime passes validation, but its browser door becomes unavailable.
+  // That startup failure triggers shutdown internally, without console Ctrl+C.
+  await new Promise((resolve) => fixture.door.close(resolve));
+  let started;
+  const pids = () => existsSync(pidsFile) ? readFileSync(pidsFile, 'utf8').trim().split('\n').map(Number) : [];
+  const alive = (pid) => {
+    try { process.kill(pid, 0); return true; }
+    catch (error) { if (error.code === 'ESRCH') return false; throw error; }
+  };
+  try {
+    started = await startLauncher({ fixture, args: ['--verbose'], env: { FAKE_NPM_TREE_PIDS: pidsFile, FAKE_NPM_TREE_READY: ready }, until: () => existsSync(ready) });
+    assert.equal(pids().length, 3, 'the owned process must have a real child and grandchild');
+    assert(pids().every(alive), 'all three processes must be alive before cleanup');
+    assert.equal(await (await fetch(`http://127.0.0.1:${started.env.PORT}`)).text(), 'descendant server');
+    const deadline = Date.now() + 10_000;
+    while (started.child.exitCode === null || pids().some(alive)) {
+      assert(Date.now() < deadline, `tree cleanup did not finish: ${started.seen.stdout}${started.seen.stderr}`);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    await started.closed;
+    assert.equal(started.child.exitCode, 1, started.seen.stderr);
+    assert.match(started.seen.stderr, /nothing listened on/);
+    await assert.rejects(fetch(`http://127.0.0.1:${started.env.PORT}`, { signal: AbortSignal.timeout(1000) }));
+    await assert.rejects(fetch(`http://127.0.0.1:${started.env.VITE_ASTRID_DYNAMIC_PROXY_PORT}`, { signal: AbortSignal.timeout(1000) }));
+  } finally {
+    for (const pid of pids()) if (alive(pid)) await terminateProcessTree({ pid, exitCode: null, signalCode: null });
+    if (started) await started.stop();
+    await fixture.close();
+  }
 });
 
 test('SIGINT stops services and then shuts down the Runtime this launcher started', async () => {
@@ -1234,10 +1212,11 @@ test('SIGINT stops services and then shuts down the Runtime this launcher starte
     await started.signal('SIGINT');
     assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up', 'down']);
     const lifecycle = readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8').trim().split('\n');
-    assert(lifecycle.indexOf('vite:stop') >= 0, lifecycle.join('\n'));
+    assert(lifecycle.includes('vite:start'), lifecycle.join('\n'));
     const down = lifecycle.find((line) => line.startsWith('runtime:down '));
     assert(down, lifecycle.join('\n'));
-    assert(lifecycle.indexOf('vite:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
+    if (process.platform === 'win32') assert.equal(lifecycle.includes('vite:stop'), false);
+    else assert(lifecycle.indexOf('vite:stop') >= 0 && lifecycle.indexOf('vite:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
     assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false');
   } finally { if (started) await started.stop(); await fixture.close(); }
 });
@@ -1259,7 +1238,7 @@ test('SIGINT during Runtime up waits for ownership handoff, then brings that Run
       until: () => existsSync(startedMarker),
     });
     assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
-    if (process.platform === 'win32') started.child.kill('SIGINT');
+    if (process.platform === 'win32') await started.requestSignal('SIGINT');
     else process.kill(-started.child.pid, 'SIGINT');
     appendFileSync(releaseFile, ' release Runtime up');
     await started.closed;

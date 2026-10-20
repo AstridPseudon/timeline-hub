@@ -328,7 +328,7 @@ describe('public Site lifecycle and navigation ownership', () => {
 
   it('closes Home’s native dialog before moving focus to Vision and cancels replay', async () => {
     await mountedHome();
-    fireEvent.click(screen.getByRole('button', { name: 'Install Astrid' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Set up Astrid' }));
     const dialog = document.querySelector('dialog')!;
     expect(dialog.open).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Watch a day go by' }));

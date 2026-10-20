@@ -177,6 +177,3 @@ describe('resolveSelectedParamAuthority', () => {
     expect(() => resolveSelectedParamAuthority(input)).toThrow('authority is unavailable');
   });
 });
-
-
-

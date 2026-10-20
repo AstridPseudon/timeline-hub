@@ -2876,7 +2876,7 @@ describe('EditorRuntimeProvider effect replay and Fast Refresh', () => {
   const sceneId = 'haus.astrid.liveScene';
 
   it('keeps the real scene renderer, import command, and sibling services usable after StrictMode replay, selection and disable/re-enable', async () => {
-    const { liveSceneExtension, LIVE_SCENE_IMPORT_COMMAND_ID } = await import('@astrid/packs/rendering/ui/live-scenes/extension');
+    const { threejsLiveEditorExtension, LIVE_SCENE_IMPORT_COMMAND_ID } = await import('@astrid/packs/rendering/ui/threejs-live-editor/extension');
     let latestRuntime!: ReturnType<typeof useVideoEditorRuntime>;
     let clips!: ReturnType<typeof useClipTypeRegistryContext>;
     const persistence = {
@@ -2890,7 +2890,7 @@ describe('EditorRuntimeProvider effect replay and Fast Refresh', () => {
       clips = useClipTypeRegistryContext();
       return null;
     }
-    const node = (enabled = true) => <StrictMode><EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={dataProvider} timelineId="replay-scene" extensions={enabled ? [liveSceneExtension] : []}><Capture /></EditorRuntimeProvider></StrictMode>;
+    const node = (enabled = true) => <StrictMode><EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={dataProvider} timelineId="replay-scene" extensions={enabled ? [threejsLiveEditorExtension] : []}><Capture /></EditorRuntimeProvider></StrictMode>;
     const view = render(node());
     await act(async () => {});
     const firstClips = clips.registry;
@@ -2937,7 +2937,7 @@ describe('EditorRuntimeProvider effect replay and Fast Refresh', () => {
     expect(persistence.dispose).toHaveBeenCalledTimes(1);
     subscription.dispose();
     // A true remount creates distinct owners; the old finalizer cannot remove them.
-    render(<EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={{} as DataProvider} timelineId="replay-scene" extensions={[liveSceneExtension]}><Capture /></EditorRuntimeProvider>);
+    render(<EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={{} as DataProvider} timelineId="replay-scene" extensions={[threejsLiveEditorExtension]}><Capture /></EditorRuntimeProvider>);
     await act(async () => {});
     expect(clips.registry).not.toBe(firstClips);
     expect(clips.registry.resolve(sceneId)?.status).toBe('active');
@@ -2999,7 +2999,7 @@ describe('EditorRuntimeProvider effect replay and Fast Refresh', () => {
 
   it('retains provider refs and real scene registration after an actual Fast Refresh family update', async () => {
     const { registerExportsForReactRefresh, validateRefreshBoundaryAndEnqueueUpdate } = await import('@test-react-refresh');
-    const { liveSceneExtension, LIVE_SCENE_IMPORT_COMMAND_ID } = await import('@astrid/packs/rendering/ui/live-scenes/extension');
+    const { threejsLiveEditorExtension, LIVE_SCENE_IMPORT_COMMAND_ID } = await import('@astrid/packs/rendering/ui/threejs-live-editor/extension');
     let latestRuntime!: ReturnType<typeof useVideoEditorRuntime>;
     let registry!: ReturnType<typeof useClipTypeRegistryContext>['registry'];
     function Capture() { latestRuntime = useVideoEditorRuntime(); registry = useClipTypeRegistryContext().registry; return null; }
@@ -3011,7 +3011,7 @@ describe('EditorRuntimeProvider effect replay and Fast Refresh', () => {
     const dataProvider = { createExtensionPersistenceService: vi.fn(() => persistence) } as unknown as DataProvider;
     const family = 'editor-runtime-replay-regression';
     registerExportsForReactRefresh(family, { EditorRuntimeProvider });
-    const view = render(<EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={dataProvider} timelineId="refresh-scene" extensions={[liveSceneExtension]}><Capture /></EditorRuntimeProvider>);
+    const view = render(<EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={dataProvider} timelineId="refresh-scene" extensions={[threejsLiveEditorExtension]}><Capture /></EditorRuntimeProvider>);
     const before = registry;
     const live = latestRuntime.liveDataRegistry;
     const permission = latestRuntime.livePermissionService;

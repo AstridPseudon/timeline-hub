@@ -132,7 +132,7 @@ function scenePort(projectId: string, timelineId: string, baseVersion: number, h
     acknowledgedTimelineVersion: baseVersion + 1,
     flushReceipt: { version: baseVersion + 1 },
   });
-  const binding = port.registration('haus.astrid.live-scenes')!.register(operation);
+  const binding = port.registration('haus.astrid.threejs-live-editor')!.register(operation);
   return { port, current, handler: operation, binding };
 }
 

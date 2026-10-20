@@ -852,7 +852,7 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(screen.getByRole('button', { name: 'Render' }).nextElementSibling).toBe(control);
     expect(control).toHaveClass('video-editor-panel-reopen-motion');
     expect(screen.queryByRole('tablist', { name: 'Right panel surface' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Active extension' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Displayed extension' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Manage extensions' })).toBeNull();
     expect(screen.getByTestId('video-editor-right-panel-dock')).toHaveAttribute('aria-hidden', 'true');
     control.focus();
@@ -878,7 +878,7 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(dock).toHaveAttribute('data-responsive', 'false'); expect(dock).toHaveAttribute('data-open', 'true');
     expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
     fireEvent.click(screen.getByRole('tab', { name: 'Extensions' }));
-    expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Active · Transcript');
+    expect(screen.getByRole('button', { name: 'Displayed extension' })).toHaveTextContent('Display: Transcript');
     rerender(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(screen.getByRole('region', { name: 'Video editor right panel' })).toBe(dock);
     expect(dock).toHaveAttribute('data-responsive', 'false');
@@ -888,7 +888,7 @@ describe('TimelineEditorShellCore surface slots', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByTestId('properties-panel')).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Active extension' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Displayed extension' })).toBeNull();
     fireEvent.click(screen.getByRole('tab', { name: 'Extensions' })); expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('haus.astrid.transcript-lane:transcript-lane-panel');
   });
 
@@ -1767,7 +1767,7 @@ describe('TimelineEditorShellCore — phone layout', () => {
       expect(player).toHaveAttribute('data-playing', 'true');
       fireEvent.click(screen.getByRole('tab', { name: /Inspector/ }));
       fireEvent.click(screen.getByRole('tab', { name: 'Extensions' }));
-      expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Transcript');
+      expect(screen.getByRole('button', { name: 'Displayed extension' })).toHaveTextContent('Transcript');
       expect(screen.getByTestId('asset-panel-surface')).toBeVisible();
       fireEvent.click(screen.getByRole('tab', { name: 'Video' }));
       expect(screen.getByTestId('preview-panel')).toBe(preview);

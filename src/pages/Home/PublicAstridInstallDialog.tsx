@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Check, Link2, Monitor, Share, X } from 'lucide-react';
 import {
   APP_ENTRY_PATH,
@@ -9,10 +9,23 @@ import { runInstallPrompt, useInstallPromptSignals } from '@/shared/hooks/platfo
 import { detectInstallScenario, type InstallScenario } from './installScenario.ts';
 import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
 import { useSendLinkToComputer } from './useSendLinkToComputer.ts';
+import { CopyInstallCommand } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
+import { withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import './PublicAstridInstallDialog.css';
 
 const AVATAR_SRC = '/astrid-app-icon-192.png';
 const HOME_PATH = '/home';
+
+/** Landing page wording is kept together here for the product copy pass. */
+export const SET_UP_ASTRID_COPY = {
+  title: 'Set up Astrid',
+  subtitle: 'Run one line in a terminal to set up Astrid on your computer.',
+  copyCommand: 'Copy',
+  browserShortcut: 'Add a browser shortcut',
+  installNow: 'Add the shortcut',
+  useHere: 'Already set up? Open Astrid',
+  useHereInstalled: 'Open Astrid in this tab',
+};
 
 function useInstallScenario(): InstallScenario {
   return useMemo(detectInstallScenario, []);
@@ -122,15 +135,15 @@ function SafariVisual() {
 
 const DESKTOP_COPY: Record<Exclude<InstallScenario, 'mobile'>, { lede: string; steps: string[] }> = {
   chromium: {
-    lede: 'Astrid installs straight from your browser, into its own window and your dock.',
+    lede: 'Give Astrid its own window, like any other app.',
     steps: ['Click the install icon at the right end of the address bar, up here.', 'Choose Install.'],
   },
   safari: {
-    lede: 'Astrid installs straight from Safari, into its own window and your dock.',
+    lede: 'Give Astrid its own window in your Dock, like any other app.',
     steps: ['Click the Share button in the top-right of the toolbar.', 'Choose Add to Dock.'],
   },
   unsupported: {
-    lede: 'This browser can’t install web apps. Open this page in Chrome, Edge or Safari to install Astrid, or use it right here.',
+    lede: 'This browser can’t add shortcuts. Chrome, Edge and Safari can.',
     steps: [],
   },
 };
@@ -149,7 +162,7 @@ function MobileContent({ onClose, active }: { onClose: () => void; active: boole
         <span className="astrid-install-desk-laptop"><span /></span>
       </div>
       <p className="astrid-install-lede">
-        Astrid is made for a computer for now. Open this page in Chrome, Edge or Safari on your desktop to install it.
+        Astrid runs on a computer. Open this page there to copy the line.
       </p>
       <div className="astrid-install-actions">
         <button type="button" className="astrid-button astrid-button-primary" onClick={sendToComputer}>
@@ -233,6 +246,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
   const desktop = scenario !== 'mobile';
   const copy = desktop ? DESKTOP_COPY[scenario] : null;
   const pointsUp = scenario === 'chromium' || scenario === 'safari';
+  const [shortcutExpanded, setShortcutExpanded] = useState(false);
 
   return (
     <dialog
@@ -253,7 +267,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
       }}
     >
       <div className="astrid-install-card">
-        {open && pointsUp && !installed ? (
+        {open && shortcutExpanded && pointsUp && !installed ? (
           <ToolbarPointer label={scenario === 'safari' ? 'Share, up here' : 'Up here'} />
         ) : null}
         <button ref={closeButtonRef} type="button" className="astrid-install-close" onClick={requestClose} aria-label="Close">
@@ -262,8 +276,8 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
         <header className="astrid-install-header">
           <img className="astrid-install-avatar" src={AVATAR_SRC} alt="" />
           <div>
-            <h2 id="astrid-install-title">{installed ? 'Astrid is installed' : 'Install Astrid'}</h2>
-            <p>{desktop ? (installed ? 'Open it from your dock or apps.' : 'The app, one click from your dock.') : 'Desktop only, for now'}</p>
+            <h2 id="astrid-install-title">{SET_UP_ASTRID_COPY.title}</h2>
+            <p>{withCommandShell(SET_UP_ASTRID_COPY.subtitle)}</p>
           </div>
         </header>
 
@@ -271,30 +285,22 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
 
         {desktop && copy ? (
           <>
-            {installed ? null : (
-              <div className="astrid-install-body">
-                {scenario === 'chromium' ? <ChromiumVisual /> : null}
-                {scenario === 'safari' ? <SafariVisual /> : null}
-                <div className="astrid-install-guide">
-                  <p className="astrid-install-lede">{copy.lede}</p>
-                  {copy.steps.length ? (
-                    <ol className="astrid-install-steps">
-                      {copy.steps.map((step) => <li key={step}>{step}</li>)}
-                    </ol>
-                  ) : null}
-                </div>
-              </div>
-            )}
+            <CopyInstallCommand label={SET_UP_ASTRID_COPY.copyCommand} />
             <div className="astrid-install-actions">
-              {canPrompt && !installed ? (
-                <button type="button" className="astrid-button astrid-button-primary" onClick={promptInstall}>
-                  <span>Install now</span>
-                  <Monitor size={17} aria-hidden="true" />
-                </button>
-              ) : null}
+              <details className="astrid-install-guide" onToggle={event => setShortcutExpanded(event.currentTarget.open)}>
+                <summary>{SET_UP_ASTRID_COPY.browserShortcut}</summary>
+                <div className="astrid-install-body">
+                  {scenario === 'chromium' ? <ChromiumVisual /> : null}
+                  {scenario === 'safari' ? <SafariVisual /> : null}
+                  <div>
+                    <p className="astrid-install-lede">{copy.lede}</p>
+                    {copy.steps.length ? <ol className="astrid-install-steps">{copy.steps.map((step) => <li key={step}>{step}</li>)}</ol> : null}
+                    {canPrompt && !installed ? <button type="button" className="astrid-button astrid-button-primary" onClick={promptInstall}>{SET_UP_ASTRID_COPY.installNow} <Monitor size={17} aria-hidden="true" /></button> : null}
+                  </div>
+                </div>
+              </details>
               <button type="button" className="astrid-button astrid-install-here" onClick={openInBrowser}>
-                <span>{installed ? 'Use it here instead' : 'Or use it right here, in the browser'}</span>
-                <ArrowRight size={17} aria-hidden="true" />
+                <span>{installed ? SET_UP_ASTRID_COPY.useHereInstalled : SET_UP_ASTRID_COPY.useHere}</span><ArrowRight size={17} aria-hidden="true" />
               </button>
             </div>
           </>
