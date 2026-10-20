@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import { WorkspaceClient, type Task, type ManagedOutput, type Transport } from '@/integrations/runtime/generated.ts';
-import type { CanonicalDocument, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
-import { createCommitOutbox, type OutboxPlacementContinuation } from './commitOutbox.ts';
+import type { CanonicalDocument, CommitRequest, JSON, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+import { createCommitOutbox, type OutboxIntent, type OutboxHead, type OutboxOutcome, type OutboxPlacementContinuation, type OutboxRequest, type OutboxScope } from './commitOutbox.ts';
 import { createPlacementRequester, preparePlacementTask, type PlacementCaptureContext } from './placementRequester.ts';
 import { createNativePlacementCapture, readNativePlacementCapture, type OriginalPlacementRead } from './nativePlacementCapture.ts';
 
@@ -28,7 +28,7 @@ function original(): OutboxPlacementContinuation {
     taskLocator: { projectId: scope.projectId, taskId: 'task', runId: 'run' }, mediaPin: structuredClone(golden.media) };
 }
 function fixture() {
-  const state = { current: true, claimed: true, verified: structuredClone(golden.verified) };
+  const state = { current: true, claimed: true, verified: structuredClone(golden.verified) as VerifiedMedia };
   const context: PlacementCaptureContext = {
     client: { getProjectVerifiedMedia: vi.fn(async () => structuredClone(state.verified)) },
     check: vi.fn(async () => {
@@ -182,9 +182,12 @@ describe('native requester read/capture stage (trusted fixtures, no Runtime acce
     env.read.mockImplementation(async () => { env.state.current = false; throw new Error('transport failed'); });
     await expect(readNativePlacementCapture(original(), scope, env.context, env.read)).rejects.toThrow('interrupted');
   });
-  it('never returns bare native commands as a requester payload', async () => {
-    const env = fixture();
-    await expect(createNativePlacementCapture(env.read)(original(), scope, env.context)).rejects.toThrow('task/attempt guard is unavailable');
+  it('returns the original native commands and all claims as the requester payload', async () => {
+    const env = fixture(), saved = original(), before = structuredClone(saved);
+    const payload = await createNativePlacementCapture(env.read)(saved, scope, env.context);
+    expect(Object.keys(payload)).toEqual(['commands']);
+    expect(hash(payload.commands)).toBe(golden.commands);
+    expect(saved).toEqual(before);
     expect(env.context.client.getProjectVerifiedMedia).toHaveBeenCalledTimes(1);
   });
 });
@@ -193,7 +196,7 @@ function requesterFixture() {
   const env = fixture(), saved = original();
   // The normal managed-selection API uses the registered variant as asset.
   const pin = { ...golden.media, asset: golden.media.variant_id };
-  env.state.verified.selection = pin;
+  env.state.verified.selection = structuredClone(pin);
   const task: Task = { task_id: 'task', run_id: 'run', project_id: scope.projectId, state: 'succeeded', version: 9,
     capability_id: 'image.generate', capability_digest: `sha256:${'c'.repeat(64)}`, idempotency_key: request.key,
     created_at: '', updated_at: '', attempt_id: 'settled-attempt', runtime_epoch: 1, input_object_ids: [], spec: {},
@@ -222,50 +225,130 @@ function requesterFixture() {
   });
   const nativeCapture = createNativePlacementCapture(env.read);
   const capture = Object.assign(vi.fn(nativeCapture), { requesterContext: nativeCapture.requesterContext });
-  const build = vi.fn(() => { throw new Error('Blocked capture must not build'); });
-  const transmit = vi.fn(async () => { throw new Error('Blocked capture must not transmit'); });
-  const storage = createCommitOutbox({ indexedDB: createFakeIndexedDB() as unknown as IDBFactory,
+  // Source-only request/ACK fixtures, never a production binding or Runtime acceptance.
+  const build = vi.fn((intent: OutboxIntent, base: OutboxHead, savedScope: OutboxScope) => ({ method: 'POST',
+    path: `/v1/projects/${savedScope.projectId}/timelines/${savedScope.timelineId}/commit`,
+    body: { api_version: 1, project_id: savedScope.projectId, timeline_id: savedScope.timelineId,
+      base_revision_id: base.revisionId, base_publication_id: base.publicationId,
+      commands: (intent.payload as { commands: CommitRequest['commands'] }).commands, source: { via: 'app' },
+    } satisfies CommitRequest,
+  }));
+  const transmit = vi.fn<(request: OutboxRequest) => Promise<OutboxOutcome>>(async () => {
+    throw new Error('Fixture lost ACK');
+  });
+  const indexedDB = createFakeIndexedDB() as unknown as IDBFactory;
+  const storage = () => createCommitOutbox({ indexedDB,
     exclusiveLock: async (_name, work) => work() });
-  const requester = () => createPlacementRequester({ client, outboxes: storage, capture, build, transmit,
+  const requester = () => createPlacementRequester({ client, outboxes: storage(), capture, build, transmit,
     getRecoverableIdentity: async () => ({ realmId: scope.realmId, actorId: scope.actorId }),
   });
   return { ...env, saved, pin, calls, client, afterVerified, capture, build, transmit, storage, requester };
 }
 
 describe('same requester/outbox callback without commit activation', () => {
-  it('retains approval/pin/IDs and a visible guard gap across reconnect with zero queued writes', async () => {
+  it.each(['image', 'video'])('durably captures original %s commands/pin/IDs and retries exact saved bytes after reopen', async (kind) => {
     const env = requesterFixture();
+    env.state.verified.media_type = kind + '/fixture';
+    if (kind === 'video') env.state.verified.duration_seconds = 12;
+    const expected = await readNativePlacementCapture({ ...env.saved, mediaPin: env.pin }, scope, env.context, env.read);
+    env.read.mockClear();
     let owner = '';
-    await env.storage.create(scope, async (box) => {
+    let sent!: OutboxRequest;
+    env.transmit.mockImplementationOnce(async (request) => {
+      const [record] = await env.storage().list(scope);
+      expect(record.pending?.request).toEqual(request);
+      expect(record.intents[0].payload).toEqual({ commands: expected.commands });
+      sent = structuredClone(request);
+      throw new Error('Fixture lost ACK');
+    });
+    await env.storage().create(scope, async (box) => {
       owner = (await box.read()).ownerId;
       await box.reservePlacementAdmission(env.saved.id, env.saved.input);
       await box.recordPlacementTask(env.saved.id, request, env.saved.taskLocator!);
       const [progress] = await env.requester().resume(box);
-      expect(progress.status).toBe('conflict');
+      expect(progress.status).toBe('retry');
       const record = await box.read();
+      expect(record.intents).toEqual([{ id: expect.any(String), basis: { head }, readyBase: head,
+        payload: { commands: expected.commands } }]);
+      expect(record.pending?.request).toEqual(sent);
+      expect(record.placementContinuations).toEqual([{ ...env.saved, mediaPin: env.pin,
+        placement: { intentId: record.intents[0].id } }]);
+      expect(env.capture.mock.calls[0][2]!.client).toBe(env.client);
+      expect(env.read).toHaveBeenCalledExactlyOnceWith({ ...env.saved, mediaPin: env.pin }, scope);
+    });
+    expect(JSON.parse(sent.body)).toEqual({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+      base_revision_id: head.revisionId, base_publication_id: head.publicationId, commands: expected.commands, source: { via: 'app' } });
+    expect(expected.commands[0].created).toContain('occurrence:occ-a/clip:placed');
+    expect(expected.commands[0].args.media).toEqual(env.pin);
+    for (const claim of ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const) {
+      expect(expected.commands[0][claim]).toBeDefined();
+    }
+    const calls = [...env.calls];
+    env.read.mockRejectedValue(new Error('Original read must not run again'));
+    env.state.verified.selection.catalog_digest = `sha256:${'f'.repeat(64)}`;
+    env.transmit.mockResolvedValue({ kind: 'accepted', head: { revisionId: 'fixture-accepted', publicationId: 'fixture-publication' }, value: {} });
+    await env.storage().recover(scope, owner, async (box) => {
+      const reopened = await box.read();
+      expect(reopened.pending?.request).toEqual(sent);
+      expect(reopened.intents[0].payload).toEqual({ commands: expected.commands });
+      expect(reopened.placementContinuations![0]).toMatchObject({ input: env.saved.input, mediaPin: env.pin });
+      expect((await env.requester().resume(box))[0].status).toBe('accepted');
+      const record = await box.read();
+      expect(record.placementContinuations![0]).toMatchObject({ input: env.saved.input, mediaPin: env.pin,
+        placement: { accepted: { head: { revisionId: 'fixture-accepted', publicationId: 'fixture-publication' } } } });
       expect(record.intents).toEqual([]);
       expect(record.pending).toBeUndefined();
-      expect(record.placementContinuations).toEqual([{ ...env.saved, mediaPin: env.pin,
-        conflict: { reason: 'placement_capture_failed', message: expect.stringContaining('task/attempt guard is unavailable') } }]);
-      expect(env.capture.mock.calls[0][2]!.client).toBe(env.client);
     });
-    const calls = [...env.calls];
-    await env.storage.recover(scope, owner, async (box) => {
-      expect((await env.requester().resume(box))[0].status).toBe('conflict');
-      expect((await box.read()).placementContinuations![0].input).toEqual(env.saved.input);
-    });
+    expect((await env.requester().recover())[0].status).toBe('accepted');
     expect(env.calls).toEqual(calls);
     expect(env.capture).toHaveBeenCalledTimes(1);
-    expect(env.build).not.toHaveBeenCalled();
-    expect(env.transmit).not.toHaveBeenCalled();
+    expect(env.read).toHaveBeenCalledTimes(1);
+    expect(env.build).toHaveBeenCalledTimes(1);
+    expect(env.transmit.mock.calls.map(([request]) => request)).toEqual([sent, sent]);
     expect(env.calls.some((call) => call.startsWith('POST'))).toBe(false);
     expect(env.calls.filter((call) => call.includes('media-selection/verified'))).toHaveLength(1);
+  });
+
+  it.each(['capture', 'commit'])('retains a genuine %s refusal without recapture or refreshing pin/guards on reopen', async (stage) => {
+    const env = requesterFixture();
+    if (stage === 'capture') env.state.verified.size = 0;
+    else env.transmit.mockResolvedValue({ kind: 'rejected', error: { kind: 'conflict', message: 'original anchor changed' } });
+    let owner = '';
+    await env.storage().create(scope, async (box) => {
+      owner = (await box.read()).ownerId;
+      await box.reservePlacementAdmission(env.saved.id, env.saved.input);
+      await box.recordPlacementTask(env.saved.id, request, env.saved.taskLocator!);
+      expect((await env.requester().resume(box))[0].status).toBe('conflict');
+    });
+    const [before] = await env.storage().list(scope);
+    expect(before.placementContinuations![0]).toMatchObject({ input: env.saved.input, mediaPin: env.pin });
+    if (stage === 'capture') {
+      expect(before.placementContinuations![0].conflict).toMatchObject({ reason: 'placement_capture_failed' });
+      expect(before.intents).toEqual([]);
+      expect(before.pending).toBeUndefined();
+      expect(env.build).not.toHaveBeenCalled();
+      expect(env.transmit).not.toHaveBeenCalled();
+    } else {
+      expect(before.intents[0].conflict).toBeDefined();
+      expect(before.pending?.outcome?.kind).toBe('rejected');
+      expect(env.transmit).toHaveBeenCalledTimes(1);
+    }
+    const calls = [...env.calls];
+    env.state.verified.size = golden.verified.size;
+    env.state.verified.selection.catalog_digest = `sha256:${'f'.repeat(64)}`;
+    for (let pass = 0; pass < 2; pass++) expect((await env.requester().recover())[0].status).toBe('conflict');
+    const [after] = await env.storage().list(scope);
+    expect({ ...after, generation: before.generation }).toEqual(before);
+    expect(env.calls).toEqual(calls);
+    expect(env.capture).toHaveBeenCalledTimes(1);
+    expect(env.read).toHaveBeenCalledTimes(1);
+    expect(env.transmit).toHaveBeenCalledTimes(stage === 'capture' ? 0 : 1);
   });
 
   it('retains a retryable continuation when identity changes inside the verified-media effect', async () => {
     const env = requesterFixture();
     env.afterVerified.mockImplementation(() => { env.state.current = false; });
-    await env.storage.create(scope, async (box) => {
+    await env.storage().create(scope, async (box) => {
       await box.reservePlacementAdmission(env.saved.id, env.saved.input);
       await box.recordPlacementTask(env.saved.id, request, env.saved.taskLocator!);
       expect((await env.requester().resume(box))[0].status).toBe('retry');

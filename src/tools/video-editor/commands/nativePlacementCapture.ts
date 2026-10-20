@@ -61,16 +61,13 @@ export async function readNativePlacementCapture(original: OutboxPlacementContin
   return finishAutoCapture(basis, media, verified);
 }
 
-/** Safe requester callback until a normal media-completion task guard exists. */
+/** Inactive requester callback; exact selected media is rechecked at Runtime acceptance. */
 export function createNativePlacementCapture(readOriginal: OriginalPlacementRead) {
-  const capture = async (original: OutboxPlacementContinuation, scope: OutboxScope, context?: PlacementCaptureContext): Promise<never> => {
+  const capture = async (original: OutboxPlacementContinuation, scope: OutboxScope, context?: PlacementCaptureContext) => {
     if (!context) throw new Error('Requester effect context is unavailable');
-    await readNativePlacementCapture(original, scope, context, readOriginal);
+    const { commands } = await readNativePlacementCapture(original, scope, context, readOriginal);
     context.assertCurrent();
-    // Agent 0a0ac7ba producer.guard binds an EXACT settled authoring proposal.
-    // Runtime 86093334 requires its commands/rationale unchanged. Media-only
-    // completion has no such proposal; task/attempt IDs cannot replace that pin.
-    throw new Error('Original approval retained for manual review: normal media-completion task/attempt guard is unavailable');
+    return { commands };
   };
   return Object.assign(capture, { requesterContext: true as const });
 }
