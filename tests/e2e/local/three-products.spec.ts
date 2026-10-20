@@ -901,6 +901,33 @@ async function expectPreviewRevision(page: Page, revision: string) {
   journey.facts.previewLabel = await label.first().innerText();
 }
 
+async function expectFreshPreviewUnavailable(page: Page, astrid: AstridCli, harness: DirectHarness,
+  seed: ThreeProductsSeed, retainedRevision: string) {
+  // Keep the already-delivered revision readable while the next real Runtime
+  // head is observed. The failed fresh read exercises the production preview
+  // boundary: cached pixels stay labelled, but the new target is unavailable.
+  await page.route(/\/timelines\/[^/]+\/composition-revisions\/[^/]+$/, async (route) => {
+    if (route.request().method() !== 'GET') return route.fallback();
+    const revision = new URL(route.request().url()).pathname.split('/').pop();
+    if (revision === retainedRevision) return route.fallback();
+    return route.abort('failed');
+  });
+  try {
+    const retained = (await history(harness, seed)).head;
+    expect(retained.revision_id).toBe(retainedRevision);
+    const target = await astrid.commitCaptured(harness.seed.projectId, seed.timelineId,
+      { revision_id: retainedRevision, publication_id: retained.publication_id },
+      { kind: 'track', id: 'f2-gate3-preview-unavailable' }, 'f2-gate3-preview-unavailable');
+    const targetRevision = target.data.accepted_revision_id;
+    await expect(page.getByTestId('preview-revision-label')).toHaveText(`Committed ${retainedRevision}`, CEILING);
+    await expect(page.getByTestId('preview-revision-unavailable'))
+      .toHaveText('Preview target unavailable', CEILING);
+    return targetRevision;
+  } finally {
+    await page.unroute(/\/timelines\/[^/]+\/composition-revisions\/[^/]+$/);
+  }
+}
+
 test('M1 real gesture: lost durable ACK, dependent B, reopen, Runtime restart, exact retry and UI undo preserve independent Agent work', async ({ page, context, harness, astrid, seed3 }) => {
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
@@ -1776,10 +1803,12 @@ nativeNoneTest('M2 native None single: ordinary default crossfade clears raw mir
   await selectClip(page, seed3.transitionClipId);
   await page.getByRole('tab', { name: 'Effects', exact: true }).click();
   await expect(transitionSelect(page)).toContainText('crossfade');
+  const unavailableTarget = await expectFreshPreviewUnavailable(page, astrid, harness, seed3, pinOf(undone).revision_id);
   expect((await revisionState(harness, seed3, pinOf(undone).revision_id)).parent).toEqual(original.parent);
   await expectOpaqueDataKept(harness, seed3);
   expect(wire.legacy).toEqual([]);
-  journey.facts = { ...journey.facts, cleared: pinOf(cleared), undone: pinOf(undone), renderer: 'not started', legacySaveCount: 0 };
+  journey.facts = { ...journey.facts, cleared: pinOf(cleared), undone: pinOf(undone), unavailableTarget,
+    renderer: 'not started', legacySaveCount: 0 };
   await sniff.expectClean(page, seed3.timelineId);
 });
 
