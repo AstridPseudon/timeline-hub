@@ -60,7 +60,7 @@ for (const repoValue of ['relative/path', '', null, 'https://example.com/source'
     context.manifest.agent.repo = repoValue;
     const result = await run(context);
     assert.equal(result.code, 1);
-    assert.equal((result.stderr.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
+    assert.equal((result.stderr.match(/Astrid couldn't finish\. Your work is kept\./g) || []).length, 1);
     assert.equal((await context.calls()).filter((args) => args.includes('--with')).length, 0);
   }));
 }
@@ -81,7 +81,7 @@ for (const env of [{ MOCK_FETCH_EXIT: '7' }, { MOCK_PYTHON_EXIT: '17' }]) {
   test(`POSIX reports one pre-core failure for ${JSON.stringify(env)}`, () => scenario(async (context) => {
     const result = await run(context, [], env);
     assert.equal(result.code, 1);
-    assert.equal((result.stderr.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
+    assert.equal((result.stderr.match(/Astrid couldn't finish\. Your work is kept\./g) || []).length, 1);
     assert.equal((result.stderr.match(/Details:/g) || []).length, 1);
   }));
 }
@@ -97,7 +97,8 @@ test('POSIX preserves the core failure paragraph and nonzero status once', () =>
 test('POSIX preserves the installer low-space failure without adding a second error', () => scenario(async (context) => {
   const result = await run(context, [], { MOCK_CORE_DISK_FAILURE: '1' });
   assert.equal(result.code, 1);
-  assert.equal((result.stdout.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
+  assert.equal((result.stdout.match(/Astrid couldn't finish\. Your work is kept\./g) || []).length, 1);
+  assert.match(result.stdout, /Your work is kept\.\r?\nThere is not enough free disk space to back up your workspace\.\r?\nDetails:/);
   assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
   assert.doesNotMatch(result.stderr, /Astrid could not get ready/);
 }));
@@ -144,7 +145,7 @@ test('POSIX streams an unbuffered installer stage before the transaction can fin
 test('POSIX preserves a native core exit code without the core failure paragraph', () => scenario(async (context) => {
   const result = await run(context, [], { MOCK_CORE_RAW_EXIT: '27' });
   assert.equal(result.code, 27);
-  assert.equal((result.stderr.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
+  assert.equal((result.stderr.match(/Astrid couldn't finish\. Your work is kept\./g) || []).length, 1);
   assert.equal((result.stderr.match(/Details:/g) || []).length, 1);
   assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /raw core diagnostic/);
 }));

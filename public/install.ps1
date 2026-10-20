@@ -33,7 +33,7 @@
         $Info.RedirectStandardError = $true
         $Info.StandardOutputEncoding = [Text.UTF8Encoding]::new($false)
         $Info.StandardErrorEncoding = [Text.UTF8Encoding]::new($false)
-        return [AstridInstallerProcessV3]::Run($Info, $Log, $LogOutput.IsPresent, $StreamOutput.IsPresent)
+        return [AstridInstallerProcessV4]::Run($Info, $Log, $LogOutput.IsPresent, $StreamOutput.IsPresent)
     }
 
     function Initialize-PrivateDirectory([string]$Path) {
@@ -108,15 +108,15 @@ public static class AstridInstallerDirectoryV1 {
         if ($Enforced) {
             throw 'An organization execution policy may block setup. Process-level Bypass cannot override Group Policy; ask your administrator to allow the Astrid installer.'
         }
-        if (-not ('AstridInstallerProcessV3' -as [type])) {
+        if (-not ('AstridInstallerProcessV4' -as [type])) {
             Add-Type -TypeDefinition @'
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-public sealed class AstridInstallerProcessV3 {
+public sealed class AstridInstallerProcessV4 {
     private static readonly string[] FailureMarkers = new string[] {
-        "Astrid couldn't finish. Nothing in your workspace was changed or removed."
+        "Astrid couldn't finish. Your work is kept."
     };
     public int ExitCode;
     public string Output;
@@ -135,7 +135,7 @@ public sealed class AstridInstallerProcessV3 {
             writer.Write(text);
         }
     }
-    public static AstridInstallerProcessV3 Run(ProcessStartInfo info, string log, bool logOutput, bool streamOutput) {
+    public static AstridInstallerProcessV4 Run(ProcessStartInfo info, string log, bool logOutput, bool streamOutput) {
         var output = new StringBuilder();
         var errors = new StringBuilder();
         var gate = new object();
@@ -176,7 +176,7 @@ public sealed class AstridInstallerProcessV3 {
                         failureDisplayed = true;
                     }
                 }
-                return new AstridInstallerProcessV3 { ExitCode = process.ExitCode, Output = output.ToString(), FailureDisplayed = failureDisplayed };
+                return new AstridInstallerProcessV4 { ExitCode = process.ExitCode, Output = output.ToString(), FailureDisplayed = failureDisplayed };
             } finally {
                 Console.CancelKeyPress -= onCancel;
             }
@@ -257,7 +257,7 @@ public sealed class AstridInstallerProcessV3 {
         $NativeExitCode = $Result.ExitCode
         $global:LASTEXITCODE = $NativeExitCode
         if ($Result.ExitCode -ne 0) {
-            $FailureStart = [AstridInstallerProcessV3]::FindFailureStart($Result.Output)
+            $FailureStart = [AstridInstallerProcessV4]::FindFailureStart($Result.Output)
             if ($FailureStart -ge 0) {
                 $CoreFailure = $Result.Output.Substring($FailureStart).TrimEnd()
             }
@@ -294,7 +294,7 @@ public sealed class AstridInstallerProcessV3 {
             $ErrorStream = [IO.FileStream]::new($Log, [IO.FileMode]::Append, [IO.FileAccess]::Write, [IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete)
             try { $ErrorStream.Write($ErrorBytes, 0, $ErrorBytes.Length) } finally { $ErrorStream.Dispose() }
         } catch { }
-        $Message = if ($CoreFailure) { $CoreFailure } elseif ($PreparationFailure) { $PreparationFailure } elseif (-not $LogReady) { $FailureMessage } else { "Astrid couldn't finish. Nothing in your workspace was changed or removed.`nDetails: $Log" }
+        $Message = if ($CoreFailure) { $CoreFailure } elseif ($PreparationFailure) { $PreparationFailure } elseif (-not $LogReady) { $FailureMessage } else { "Astrid couldn't finish. Your work is kept.`nDetails: $Log" }
         $global:LASTEXITCODE = $NativeExitCode
         if ($FileInvocation) {
             [Console]::Error.WriteLine($Message)

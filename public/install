@@ -23,7 +23,7 @@ fetch() {
         wget -q "$1" -O "$2"
     fi
 }
-fail() { echo "Astrid couldn't finish. Nothing in your workspace was changed or removed." >&2; echo "Details: $log" >&2; exit 1; }
+fail() { echo "Astrid couldn't finish. Your work is kept." >&2; echo "Details: $log" >&2; exit 1; }
 echo 'Getting Astrid ready. The first time takes a few minutes.'
 manifest_url=${ASTRID_INSTALL_MANIFEST_URL:-https://astrid.haus/install-manifest.json}
 fetch "$manifest_url" "$tmp/manifest.json" 2>>"$log" || fail
@@ -91,8 +91,8 @@ os.execv(args[0], args)
 ' "$tmp/manifest.json" "$@" <&3 >"$tmp/progress" 2>>"$log"; then status=0; else status=$?; fi
 wait "$progress_pid"
 if [ "$status" -ne 0 ]; then
-    if ! grep -Fq "Astrid couldn't finish. Nothing in your workspace was changed or removed." "$tmp/core.out"; then
-        echo "Astrid couldn't finish. Nothing in your workspace was changed or removed." >&2
+    if ! grep -Fq "Astrid couldn't finish. Your work is kept." "$tmp/core.out"; then
+        echo "Astrid couldn't finish. Your work is kept." >&2
         echo "Details: $log" >&2
     fi
     exit "$status"

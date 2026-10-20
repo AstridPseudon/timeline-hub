@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 
 const execute = promisify(execFile);
 export const repo = fileURLToPath(new URL('../../', import.meta.url));
-export const failure = "Astrid couldn't finish. Nothing in your workspace was changed or removed.";
+export const failure = "Astrid couldn't finish. Your work is kept.";
 export const preparation = 'Getting Astrid ready. The first time takes a few minutes.';
 const mockUv = `#!/usr/bin/env python3
 import json, os, pathlib, shutil, subprocess, sys, time
@@ -61,8 +61,8 @@ if os.environ.get('MOCK_CORE_RAW_EXIT'):
     print('raw core diagnostic', file=sys.stderr)
     sys.exit(int(os.environ['MOCK_CORE_RAW_EXIT']))
 if os.environ.get('MOCK_CORE_DISK_FAILURE'):
-    print('There is not enough free disk space to back up your workspace.', file=sys.stderr)
     print(${JSON.stringify(failure)})
+    print('There is not enough free disk space to back up your workspace.')
     print('Details: ' + os.environ['MOCK_LOG'])
     sys.exit(1)
 if os.environ.get('MOCK_REMOVE_BOOTSTRAP'):
