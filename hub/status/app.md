@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T19:31:43Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 16 | status age 0m -->
+<!-- app | 2026-10-20T19:37:29Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 6m -->
 # app — 2026-10-20 19:31 UTC
 Milestone: M1 RECORDED. M2 writers and M3 viewing remain open; no exit claimed.
 Integrated: App tl/integration e245a4791f9270177408a7745d8397ad7b6f81a1. MAIN bebadd ancestry, bootstrap four assertions b66, recovery retry 9b14, inert trim 180d, ordinary packet 059, Provider ports 8cf, full cap a828, embedded name fallback cut dcb9, D10 nine-copy/installed-host deletion e245 integrated as separate gated units.
