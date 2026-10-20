@@ -138,6 +138,7 @@ def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tm
         daemon.stop()
 
 
+@pytest.mark.xfail(strict=True, reason="D13 removes the pre-settlement whole-candidate publication hook; native consumer is required")
 def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke(tmp_path):
     """The registered authoring host hook has one Runtime publication route."""
     proposal_path = tmp_path / "attempt" / "outputs" / "authoring-proposal.json"
@@ -178,6 +179,7 @@ def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invo
 
 
 @pytest.mark.integration
+@pytest.mark.xfail(strict=True, reason="D13 removes legacy assembler publication; native registered consumer is required")
 def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch, real_runtime):
     """Run the complete two-child continuation through the real pack host."""
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None or shutil.which("node") is None:
