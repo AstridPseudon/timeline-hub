@@ -1,0 +1,315 @@
+diff --git a/src/integrations/runtime/client.ts b/src/integrations/runtime/client.ts
+index 49b46ca4c..164d12354 100644
+--- a/src/integrations/runtime/client.ts
++++ b/src/integrations/runtime/client.ts
+@@ -27,6 +27,7 @@ import {
+   type MediaSelectionQuery,
+   type Transport,
+   type RequestBody,
++  type DocumentPin,
+ } from './generated.ts';
+ import {
+   RUNTIME_ACCEPTED_SCHEMA_DIGESTS,
+@@ -588,6 +589,36 @@ export class AstridRuntimeClient {
+ 
+   async listDocuments(projectId: string, cursor?: string, limit = 50, kind?: string) { return this.withSession(() => this.client.listDocuments(projectId, cursor, limit, kind)); }
+   async getDocument(projectId: string, documentId: string) { return this.withSession(() => this.client.getDocument(projectId, documentId)); }
++  async getProjectVerifiedDocument(projectId: string, pin: DocumentPin) {
++    const originalPin = { ...pin };
++    return this.withRetainedRead((client) => client.getProjectVerifiedDocument(projectId, originalPin));
++  }
++
++  async getProjectVerifiedDocumentObject(projectId: string, pin: DocumentPin, objectId: string) {
++    const originalPin = { ...pin };
++    return this.withRetainedRead((client) => client.getProjectVerifiedDocumentObject(projectId, originalPin, objectId));
++  }
++
++  private async withRetainedRead<T>(read: (client: WorkspaceClient) => Promise<T>): Promise<T> {
++    const base = this.baseUrl, client = this.client;
++    return this.withSession(async () => {
++      const slot = this.slot, opening = slot.current;
++      const assertCurrent = () => {
++        this.assertNotFenced();
++        if (this.baseUrl !== base || this.client !== client || this.slot !== slot || slot.current !== opening) {
++          throw new RuntimeCompatibilityError('Retained input session changed; draft preserved', base);
++        }
++      };
++      assertCurrent();
++      const session = await opening!;
++      this.checkObservedIdentity(session.health, session.handshake);
++      assertCurrent();
++      const result = await read(client);
++      assertCurrent();
++      this.checkObservedIdentity(session.health, session.handshake);
++      return result;
++    });
++  }
+   async createDocument(projectId: string, documentId: string, kind: string, content: unknown, key: string) { return this.withMutation(() => this.client.createDocument(projectId, documentId, kind, content, key)); }
+   async updateDocument(projectId: string, documentId: string, version: number, content: unknown, key: string) { return this.withMutation(() => this.client.updateDocument(projectId, documentId, version, key, content)); }
+ 
+diff --git a/src/integrations/runtime/dataProvider.test.ts b/src/integrations/runtime/dataProvider.test.ts
+index 4e49ef265..623e70b21 100644
+--- a/src/integrations/runtime/dataProvider.test.ts
++++ b/src/integrations/runtime/dataProvider.test.ts
+@@ -13,6 +13,7 @@ import { sanitizeTimelineClipSnapshot } from '@/tools/video-editor/lib/timeline-
+ import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
+ import type { ProjectObjectMetadata } from '@astrid/editor-sdk';
+ import { MANAGED_OBJECT_DIGEST, MANAGED_OBJECT_ID, PROJECT_ID, TIMELINE_ID, json, runtimeFixture, sha256Digest } from '@/test/fakeWorkspaceRuntime.ts';
++import type { HistoryPage } from './generated.ts';
+ 
+ const MANAGED_OBJECT_URL = `http://runtime.test/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
+ 
+@@ -853,6 +854,26 @@ describe('RuntimeDataProvider', () => {
+     expect(requests).toContain('GET /v1/generations/generation-lightbox/variants?limit=200&cursor=variants-page-2');
+   });
+ 
++  it.each([
++    ['the first page', (provider: RuntimeDataProvider) => {
++      vi.spyOn(provider, 'listTimelineCommits').mockResolvedValue({ items: [], next_cursor: null } as unknown as HistoryPage);
++    }],
++    ['a later page', (provider: RuntimeDataProvider) => {
++      const head = { revision_id: 'parent-r1', publication_id: 'publication-current' };
++      vi.spyOn(provider, 'listTimelineCommits')
++        .mockResolvedValueOnce({ items: [], next_cursor: 'history-page-2', head })
++        .mockResolvedValueOnce({ items: [], next_cursor: null } as unknown as HistoryPage);
++    }],
++  ])('refuses a malformed history head on %s with a visible schema error', async (_page, setup) => {
++    const fixture = runtimeFixture();
++    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
++    setup(provider);
++
++    const failure = provider.loadTimelineCommandBasis(TIMELINE_ID);
++    await expect(failure).rejects.toThrow(TimelineSchemaIncompatibleError);
++    await expect(failure).rejects.toThrow('malformed timeline history head');
++  });
++
+   it('uses the authenticated generated client for canonical read/save/readback/reload', async () => {
+     const fixture = runtimeFixture();
+     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+diff --git a/src/integrations/runtime/dataProvider.ts b/src/integrations/runtime/dataProvider.ts
+index 0f8ace6e0..30adbd39f 100644
+--- a/src/integrations/runtime/dataProvider.ts
++++ b/src/integrations/runtime/dataProvider.ts
+@@ -329,6 +329,16 @@ export class RuntimeDataProvider implements DataProvider {
+ 
+   private readonly projectId: string;
+   private readonly client: AstridRuntimeClient;
++  readonly paramReadClient: NonNullable<DataProvider['paramReadClient']> = {
++    getProjectVerifiedDocument: (projectId, pin) => {
++      if (projectId !== this.projectId) throw new Error('Retained document read belongs to another project');
++      return this.client.getProjectVerifiedDocument(this.projectId, pin);
++    },
++    getProjectVerifiedDocumentObject: (projectId, pin, objectId) => {
++      if (projectId !== this.projectId) throw new Error('Retained document object read belongs to another project');
++      return this.client.getProjectVerifiedDocumentObject(this.projectId, pin, objectId);
++    },
++  };
+   private readonly onRuntimeError?: (error: RuntimeConnectorError) => void;
+   private activeRegistry: AssetRegistry | null = null;
+   private readonly canonicalTimelineState = new Map<string, CanonicalTimelineState>();
+@@ -776,7 +786,37 @@ export class RuntimeDataProvider implements DataProvider {
+ 
+   /** Public verified history pins plus scoped immutable reads, never projected rows. */
+   async loadTimelineCommandBasis(timelineId: string): Promise<TimelineCommandBasis> {
+-    const history = await this.listTimelineCommits(timelineId);
++    const firstHistory = await this.listTimelineCommits(timelineId);
++    const pages = [firstHistory];
++    const seenCursors = new Set<string>();
++    const requireHead = (page: HistoryPage): HistoryPage['head'] => {
++      const head = page?.head;
++      if (!head || typeof head.revision_id !== 'string' || !head.revision_id
++        || typeof head.publication_id !== 'string' || !head.publication_id) {
++        throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a malformed timeline history head');
++      }
++      return head;
++    };
++    const firstHead = requireHead(firstHistory);
++    while (pages[pages.length - 1]!.next_cursor !== null) {
++      const cursor = pages[pages.length - 1]!.next_cursor!;
++      if (seenCursors.has(cursor)) {
++        throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a cyclic timeline history cursor');
++      }
++      seenCursors.add(cursor);
++      const nextPage = await this.listTimelineCommits(timelineId, cursor);
++      const nextHead = requireHead(nextPage);
++      if (nextHead.revision_id !== firstHead.revision_id
++        || nextHead.publication_id !== firstHead.publication_id) {
++        throw new TimelineSchemaIncompatibleError('Workspace Runtime changed the captured timeline history head');
++      }
++      pages.push(nextPage);
++    }
++    const history: HistoryPage = {
++      ...firstHistory,
++      items: pages.flatMap((page) => page.items),
++      next_cursor: null,
++    };
+     const head = history.head;
+     if (!head?.revision_id || !head.publication_id) {
+       throw new TimelineSchemaIncompatibleError('Timeline has no verified authoring history head');
+diff --git a/src/tools/video-editor/commands/selectedParamAuthority.test.ts b/src/tools/video-editor/commands/selectedParamAuthority.test.ts
+index 78b3f0b2c..72b9d3c0b 100644
+--- a/src/tools/video-editor/commands/selectedParamAuthority.test.ts
++++ b/src/tools/video-editor/commands/selectedParamAuthority.test.ts
+@@ -95,6 +95,24 @@ describe('resolveSelectedParamAuthority', () => {
+     expect(resolveSelectedParamAuthority(input)).toEqual(p1);
+   });
+ 
++  it('uses the existing occurrence graph when its canonical materialization is not duplicated', () => {
++    const occurrenceSelect = 'occurrence:occ-a/clip:effect';
++    const root = entry('p0', 'r0', null, [], 'bootstrap');
++    const selected = entry('p1', 'r1', { publication_id: 'p0', revision_id: 'r0' }, [
++      record(p1, 'clip.set-element', {}, occurrenceSelect),
++    ]);
++    const input = selectedHistory(root, selected);
++    input.select = occurrenceSelect;
++    Object.assign(input, {
++      graph: {
++        occurrences: [{ occurrence_id: 'occ-a', shot_id: 'shot-a', revision_id: 'shot-a-r1' }],
++        shot_revisions: [{ shot_id: 'shot-a', revision_id: 'shot-a-r1',
++          internal_timeline_revision: { clips: [structuredClone(input.rawClip)] } }],
++      },
++    });
++    expect(resolveSelectedParamAuthority(input)).toEqual(p1);
++  });
++
+   it('refuses an occurrence pin when its concrete shot materialization is missing', () => {
+     const occurrenceSelect = 'occurrence:occ-a/clip:effect';
+     const root = entry('p0', 'r0', null, [], 'bootstrap');
+diff --git a/src/tools/video-editor/data/DataProvider.ts b/src/tools/video-editor/data/DataProvider.ts
+index a8f3775fc..6be6d7b36 100644
+--- a/src/tools/video-editor/data/DataProvider.ts
++++ b/src/tools/video-editor/data/DataProvider.ts
+@@ -25,8 +25,11 @@ import type {
+   CanonicalDocument,
+   CommitAcceptedMutation,
+   CommitRequest,
++  DocumentPin,
+   HistoryPage,
+   MutationReceipt,
++  VerifiedDocument,
++  VerifiedDocumentObject,
+ } from '@/integrations/runtime/generated.ts';
+ export type {
+   AssetProfile,
+@@ -440,6 +443,11 @@ export interface DataProvider extends AssetResolver {
+   commitTimeline?(request: CommitRequest, idempotencyKey: string): Promise<TimelineCommitResult>;
+   undoTimeline?(base: TimelineHeadRevision, publications: readonly string[], idempotencyKey: string): Promise<TimelineCommitResult>;
+   getRecoverableIdentity?(): Promise<TimelineRecoveryIdentity>;
++  /** Exact retained inputs through this provider's authenticated project session. */
++  readonly paramReadClient?: {
++    getProjectVerifiedDocument(projectId: string, pin: DocumentPin): Promise<VerifiedDocument>;
++    getProjectVerifiedDocumentObject(projectId: string, pin: DocumentPin, objectId: string): Promise<VerifiedDocumentObject>;
++  };
+   documents?: import('@/sdk/context.ts').ProjectDocumentSurface;
+   projectTranscripts?: import('./typed/projectTranscript.ts').ProjectTranscriptRepository;
+   /** When present, writes MUST use this immutable-head CAS path, never numeric versions. */
+diff --git a/src/tools/video-editor/hooks/useTimelineCommandSession.ts b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+index c6854a3fa..aff5b26f5 100644
+--- a/src/tools/video-editor/hooks/useTimelineCommandSession.ts
++++ b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+@@ -11,6 +11,8 @@ import { createTimelineCommandSession, type CommandSessionState, type TimelineCo
+ import type { UseTimelineCommitResult } from './useTimelineCommit.ts';
+ import type { TimelineStoreApi } from './timelineStore.ts';
+ import type { VideoEditorShotsHost } from '../runtime/ports.ts';
++import { resolveSelectedParamAuthority as resolveSelectedParamAuthorityFromHistory } from '../commands/selectedParamAuthority.ts';
++import type { DocumentPin } from '@/integrations/runtime/timeline-commit-types.ts';
+ 
+ export function useTimelineCommandSession(options: {
+   legacyClean: () => boolean;
+@@ -35,6 +37,7 @@ export function useTimelineCommandSession(options: {
+   const activeRef = useRef(false);
+   const ownsHistoryRef = useRef(false);
+   const readGenerationRef = useRef(0);
++  const basisRef = useRef<TimelineCommandBasis>();
+   const [attempt, setAttempt] = useState(0);
+   const [state, setState] = useState<CommandSessionState>({ status: 'loading', error: null,
+     ownerId: null, recoverableOwners: [], canUndo: false });
+@@ -42,6 +45,7 @@ export function useTimelineCommandSession(options: {
+   const enabled = !!(provider.loadTimelineCommandBasis && provider.commitTimeline && provider.getRecoverableIdentity);
+   useEffect(() => {
+     if (!enabled || !initialReadReady) return;
++    basisRef.current = undefined;
+     let disposed = false;
+     let session: TimelineCommandSession | undefined;
+     let projectGeneration = 0;
+@@ -69,6 +73,7 @@ export function useTimelineCommandSession(options: {
+         || (initialHead?.timelineId === timelineId && initialHead.projectId !== basis.canonicalDocument.project_id)) {
+         throw new Error('Initialization requires a verified closure in the current project and timeline');
+       }
++      basisRef.current = basis;
+       const project = async (accepted: TimelineCommandBasis, previews: TimelinePatch[], initial = false) => {
+         if (disposed) return;
+         const generation = initial ? projectGeneration : ++projectGeneration;
+@@ -123,6 +128,7 @@ export function useTimelineCommandSession(options: {
+           const fresh = await provider.loadTimelineCommandBasis!(timelineId);
+           invalidateReads();
+           if (disposed) throw new Error('Timeline command session is closed');
++          basisRef.current = fresh;
+           return fresh;
+         },
+         send: (request, key) => provider.commitTimeline!(request, key),
+@@ -188,6 +194,7 @@ export function useTimelineCommandSession(options: {
+         setState({ ...session.getState() });
+       }
+     })().catch((error) => {
++      basisRef.current = undefined;
+       disposeSession();
+       changed({ status: 'error', error: error instanceof Error ? error.message : String(error),
+         ownerId: null, recoverableOwners: [], canUndo: false });
+@@ -195,6 +202,7 @@ export function useTimelineCommandSession(options: {
+     return () => {
+       disposed = true;
+       invalidateReads();
++      basisRef.current = undefined;
+       ownsHistoryRef.current = false;
+       projectGeneration++;
+       sessionRef.current = null;
+@@ -212,14 +220,17 @@ export function useTimelineCommandSession(options: {
+     void provider.loadTimelineCommandBasis!(timelineId).then((basis) => {
+       if (cancelled || sessionRef.current !== session || generation !== readGenerationRef.current) return;
+       const currentHead = latest.current.headRevisionRef.current;
+-      if (currentHead !== priorHead && (currentHead?.headRevisionId !== basis.head.revisionId
+-        || currentHead.headPublicationId !== basis.head.publicationId)) return;
++      if (!currentHead || !priorHead
++        || currentHead.headRevisionId !== priorHead.headRevisionId
++        || currentHead.headPublicationId !== priorHead.headPublicationId
++        || currentHead.headRevisionId !== basis.head.revisionId
++        || currentHead.headPublicationId !== basis.head.publicationId
++        || currentHead.projectId !== basis.canonicalDocument.project_id
++        || currentHead.timelineId !== timelineId
++        || basis.canonicalDocument.timeline_id !== timelineId) return;
+       if (!cancelled) {
+-        if (currentHead?.projectId === basis.canonicalDocument.project_id && currentHead.timelineId === timelineId
+-          && basis.canonicalDocument.timeline_id === timelineId
+-          && currentHead.headRevisionId === basis.head.revisionId && currentHead.headPublicationId === basis.head.publicationId) {
+-          latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config);
+-        }
++        latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config);
++        basisRef.current = basis;
+         session.observe(basis);
+       }
+     }).catch((error) => {
+@@ -253,8 +264,23 @@ export function useTimelineCommandSession(options: {
+   }, [requireSession]);
+   const useLatest = useCallback(() => resolve(false), [resolve]);
+   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
++  const resolveSelectedParamAuthority = useCallback((input: {
++    select: string;
++    rawClip: Record<string, unknown> | null | undefined;
++  }): DocumentPin => {
++    const basis = basisRef.current;
++    if (!basis?.history) throw new Error('Selected PARAM authority is unavailable; draft preserved');
++    return resolveSelectedParamAuthorityFromHistory({
++      history: basis.history,
++      head: basis.head,
++      canonicalDocument: basis.canonicalDocument as unknown as Record<string, unknown>,
++      graph: basis.graph,
++      ...input,
++    });
++  }, []);
+   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
+     elementPort: sessionRef.current?.elementPort,
++    resolveSelectedParamAuthority,
+     trackLabelPort: sessionRef.current?.trackLabelPort,
+     retry, undo, flush, recover, useLatest, keepLabelChanges };
+ }

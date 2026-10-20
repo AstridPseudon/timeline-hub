@@ -1,5 +1,15 @@
 # AP2 M2 native-helper strict-TypeScript differential
 
+## Snapshot location
+
+The finished baseline/current snapshots used for this differential are
+retained outside the synced design root at:
+
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-hub-large-artifact-repair/artifacts/ap2-m2-native-helper-strict-diff/`
+
+The old `design/ap2-m2-native-helper-strict-diff/` path is intentionally
+absent. Snapshot contents and shared dependency symlinks were not changed.
+
 ## Result
 
 The four helper units introduce **5 new TypeScript diagnostics** under the real
