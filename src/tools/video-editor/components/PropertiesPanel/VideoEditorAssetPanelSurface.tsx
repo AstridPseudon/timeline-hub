@@ -55,7 +55,11 @@ function VideoEditorAssetPanelSurfaceComponent({
       view,
       seek: (seconds: number) => { store.getState().ops.onClickTimeArea(seconds); },
     } : undefined);
-    return base && store ? bindTranscriptPanelVideo(store, { ...base, preview: base.preview ?? framePreview.preview }, () => playedAssetRegistry(
+    return base && store ? bindTranscriptPanelVideo(store, {
+      ...base,
+      preview: base.preview ?? framePreview.preview,
+      select: base.select ?? ((clipIds: readonly string[]) => { store.getState().ops.selectClips([...clipIds]); }),
+    }, () => playedAssetRegistry(
       playedShotComposition(latestRuntime.current?.userId, latestRuntime.current?.shots),
       store.getState().data.data?.resolvedConfig,
     )) : base;

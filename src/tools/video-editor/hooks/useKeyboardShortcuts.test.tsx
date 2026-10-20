@@ -4,6 +4,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import {
   useKeyboardShortcuts,
   normalizeKeyboardEvent,
+  isActivatableTarget,
 } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 import {
   VideoEditorRuntimeContext,
@@ -421,5 +422,154 @@ describe('concurrent editor keyboard ownership', () => {
     fullButton.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }));
     expect(fullOptions.undo).toHaveBeenCalledOnce();
     fullView.unmount(); full.remove(); dialog.remove();
+  });
+});
+
+const ACTIVATABLE_CASES: Array<[string, () => HTMLElement]> = [
+  ['button', () => document.createElement('button')],
+  ['[role=button]', () => { const el = document.createElement('div'); el.setAttribute('role', 'button'); return el; }],
+  ['a[href]', () => { const el = document.createElement('a'); el.setAttribute('href', '#x'); return el; }],
+  ['summary', () => document.createElement('summary')],
+  ['[role=checkbox]', () => { const el = document.createElement('div'); el.setAttribute('role', 'checkbox'); return el; }],
+  ['[role=switch]', () => { const el = document.createElement('button'); el.setAttribute('role', 'switch'); return el; }],
+  ['[role=radio]', () => { const el = document.createElement('div'); el.setAttribute('role', 'radio'); return el; }],
+  ['[role=tab]', () => { const el = document.createElement('div'); el.setAttribute('role', 'tab'); return el; }],
+  ['[role=slider]', () => { const el = document.createElement('div'); el.setAttribute('role', 'slider'); return el; }],
+];
+
+describe('useKeyboardShortcuts activatable targets', () => {
+  it.each(ACTIVATABLE_CASES)('leaves Space to a focused %s', (_name, make) => {
+    const togglePlayPause = vi.fn();
+    const el = make();
+    el.tabIndex = 0;
+    document.body.appendChild(el);
+    try {
+      mountShortcuts({ options: makeOptions({ togglePlayPause }) });
+      el.focus();
+      const event = dispatchKey(el, { key: ' ', code: 'Space' });
+      expect(event.defaultPrevented).toBe(false);
+      expect(togglePlayPause).not.toHaveBeenCalled();
+    } finally {
+      el.remove();
+    }
+  });
+
+  it('leaves Space to a child nested inside an activatable control', () => {
+    const togglePlayPause = vi.fn();
+    const button = document.createElement('button');
+    const inner = document.createElement('span');
+    button.append(inner);
+    document.body.appendChild(button);
+    try {
+      mountShortcuts({ options: makeOptions({ togglePlayPause }) });
+      const event = dispatchKey(inner, { key: ' ', code: 'Space' });
+      expect(event.defaultPrevented).toBe(false);
+      expect(togglePlayPause).not.toHaveBeenCalled();
+    } finally {
+      button.remove();
+    }
+  });
+
+  it.each(ACTIVATABLE_CASES)('leaves Enter to a focused %s (no extension Enter binding runs)', async (_name, make) => {
+    const registry = createCommandRegistry();
+    const handler = registerShortcutCommand({ registry, key: 'Enter' });
+    const el = make();
+    el.tabIndex = 0;
+    document.body.appendChild(el);
+    try {
+      mountShortcuts({ registry });
+      el.focus();
+      const event = dispatchKey(el, { key: 'Enter', code: 'Enter' });
+      expect(event.defaultPrevented).toBe(false);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(handler).not.toHaveBeenCalled();
+    } finally {
+      el.remove();
+    }
+  });
+
+  it('still runs an Enter extension binding on a non-activatable target', async () => {
+    const registry = createCommandRegistry();
+    const handler = registerShortcutCommand({ registry, key: 'Enter' });
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    try {
+      mountShortcuts({ registry });
+      dispatchKey(div, { key: 'Enter', code: 'Enter' });
+      await waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
+    } finally {
+      div.remove();
+    }
+  });
+
+  it('still toggles playback on Space from an empty target', () => {
+    const togglePlayPause = vi.fn();
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    try {
+      mountShortcuts({ options: makeOptions({ togglePlayPause }) });
+      const event = dispatchKey(div, { key: ' ', code: 'Space' });
+      expect(event.defaultPrevented).toBe(true);
+      expect(togglePlayPause).toHaveBeenCalledTimes(1);
+    } finally {
+      div.remove();
+    }
+  });
+
+  it('still seeks on ArrowRight with a focused button', () => {
+    const seekRelative = vi.fn();
+    const button = document.createElement('button');
+    document.body.appendChild(button);
+    try {
+      mountShortcuts({ options: makeOptions({ seekRelative }) });
+      button.focus();
+      dispatchKey(button, { key: 'ArrowRight' });
+      expect(seekRelative).toHaveBeenCalledWith(1);
+    } finally {
+      button.remove();
+    }
+  });
+
+  it('isActivatableTarget matches controls and rejects plain elements and null', () => {
+    const button = document.createElement('button');
+    const div = document.createElement('div');
+    expect(isActivatableTarget(button)).toBe(true);
+    expect(isActivatableTarget(div)).toBe(false);
+    expect(isActivatableTarget(null)).toBe(false);
+    expect(isActivatableTarget(window)).toBe(false);
+  });
+});
+
+describe('useKeyboardShortcuts Escape in a popped-out panel', () => {
+  it('leaves Escape alone inside a popout frame', () => {
+    const clearSelection = vi.fn();
+    const frame = document.createElement('div');
+    frame.setAttribute('data-panel-popout-frame', '');
+    const inner = document.createElement('div');
+    inner.tabIndex = 0;
+    frame.append(inner);
+    document.body.appendChild(frame);
+    try {
+      mountShortcuts({ options: makeOptions({ clearSelection }) });
+      const event = dispatchKey(inner, { key: 'Escape' });
+      expect(clearSelection).not.toHaveBeenCalled();
+      expect(event.defaultPrevented).toBe(false);
+    } finally {
+      frame.remove();
+    }
+  });
+
+  it('still clears the selection and prevents default on Escape elsewhere', () => {
+    const clearSelection = vi.fn();
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    try {
+      mountShortcuts({ options: makeOptions({ clearSelection }) });
+      const event = dispatchKey(div, { key: 'Escape' });
+      expect(clearSelection).toHaveBeenCalledTimes(1);
+      expect(event.defaultPrevented).toBe(true);
+    } finally {
+      div.remove();
+    }
   });
 });

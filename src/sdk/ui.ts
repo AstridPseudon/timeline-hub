@@ -36,6 +36,9 @@ export interface PanelVideoAdapter {
   readonly preview?: PanelPreviewService;
   /** Seek through the host player. The adapter owns validation/projection. */
   seek(seconds: number): void;
+  /** Select these clips in the timeline, replacing the current selection. Unknown ids
+   *  are ignored; an empty list clears it. Optional: absent where the host has no timeline. */
+  select?(clipIds: readonly string[]): void;
 }
 
 /** Props supplied to a registered trusted React panel renderer. */

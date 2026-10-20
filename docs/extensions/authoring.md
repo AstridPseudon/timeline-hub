@@ -322,6 +322,13 @@ Rules for panel authors:
 3. Mark the panel's first focus target with the `data-autofocus` attribute. On
    open, focus goes to that element, or else to the first tabbable element.
 
+## Selecting clips from a panel
+
+`PanelVideoAdapter` (`props.video`) has an optional `select(clipIds)`. It replaces
+the timeline selection with those clips, through the editor's own selection ops;
+unknown ids are ignored and an empty list clears the selection. Call it as
+`props.video?.select?.([clipId])`, for example to select a clip the panel just added.
+
 ## Import-Boundary Rules
 
 Extension code uses:

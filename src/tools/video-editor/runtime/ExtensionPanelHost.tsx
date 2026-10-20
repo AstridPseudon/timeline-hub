@@ -79,9 +79,21 @@ function PanelSlot({ panel, panelKey, instanceId, dockedVisible, popped, frameBo
     return el;
   });
   const mountRef = useRef<HTMLDivElement>(null);
+  const wasPoppedRef = useRef(false);
+  const openerRef = useRef<Element | null>(null);
   useLayoutEffect(() => {
+    // Read before the move: an appendChild fallback drops focus from the node.
+    if (popped && !wasPoppedRef.current) openerRef.current = document.activeElement;
     const parent = popped ? frameBody() : mountRef.current;
     if (parent) placePanelNode(node, parent);
+    if (!popped && wasPoppedRef.current) {
+      // The frame returns focus to its opener; when the opener is gone (a control that
+      // only exists while docked), the panel's own first target takes it instead.
+      const opener = openerRef.current;
+      if (!(opener instanceof HTMLElement && opener.isConnected)) node.querySelector<HTMLElement>('[data-autofocus]')?.focus({ preventScroll: true });
+      openerRef.current = null;
+    }
+    wasPoppedRef.current = popped;
   });
   useLayoutEffect(() => () => { node.remove(); }, [node]);
   const visible = dockedVisible || popped;

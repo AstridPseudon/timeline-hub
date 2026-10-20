@@ -143,6 +143,62 @@ describe('ExtensionPanelHost pop-out', () => {
   });
 });
 
+describe('ExtensionPanelHost focus on bring-back', () => {
+  function focusPanel(): VideoEditorPanelDescriptor {
+    return {
+      id: 'focus',
+      extensionId: EXT,
+      label: 'Focus',
+      placement: 'asset-panel',
+      render: (props) => {
+        seen.set('focus', props);
+        return <input aria-label="Panel field" data-autofocus="" />;
+      },
+    };
+  }
+
+  function mountWithOpener() {
+    const opener = document.createElement('button');
+    opener.textContent = 'Open';
+    document.body.appendChild(opener);
+    attached.push(opener);
+    render(<Host panels={[focusPanel()]} visible={new Set([`${EXT}:focus`])} />);
+    opener.focus();
+    expect(document.activeElement).toBe(opener);
+    return opener;
+  }
+
+  async function popOutAndSettle() {
+    await act(async () => {
+      seen.get('focus')!.popout!.onOpenChange(true);
+      await Promise.resolve();
+    });
+  }
+
+  it('focuses the panel [data-autofocus] element when the opener was removed while popped out', async () => {
+    const opener = mountWithOpener();
+    await popOutAndSettle();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    opener.remove();
+    act(() => seen.get('focus')!.popout!.onOpenChange(false));
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Panel field' }));
+  });
+
+  it('returns focus to the opener when it is still connected', async () => {
+    const opener = mountWithOpener();
+    await popOutAndSettle();
+
+    act(() => seen.get('focus')!.popout!.onOpenChange(false));
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(opener.isConnected).toBe(true);
+    expect(document.activeElement).toBe(opener);
+  });
+});
+
 describe('placePanelNode', () => {
   function connectedNodeAndParent() {
     const source = document.createElement('div');

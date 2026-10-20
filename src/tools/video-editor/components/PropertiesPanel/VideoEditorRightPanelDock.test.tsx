@@ -64,12 +64,12 @@ it('separates Inspector/Extensions, limits tools to admitted panels and retains 
   const active = screen.getByRole('button', {name:'Displayed extension'});
   const manage = screen.getByRole('button', {name:'Manage extensions'});
   expect(active).toHaveTextContent('Display: Transcript');
-  expect(manage).toHaveTextContent('Manage');
-  expect(active).toHaveClass('flex-1'); expect(manage.parentElement).toHaveClass('flex-1');
+  expect(manage).not.toHaveTextContent('Manage');
+  expect(active).toHaveClass('flex-1'); expect(manage.parentElement).toHaveClass('shrink-0');
   expect(screen.getByRole('button', {name:'Displayed extension'}).parentElement).not.toContainElement(screen.getByRole('button', {name:'Panel display'}));
   const draft = screen.getByRole('textbox', {name:'Retained draft'}); fireEvent.change(draft, {target:{value:'Unsent draft'}});
   screen.getByRole('button',{name:'Displayed extension'}).focus(); await user.keyboard('{ArrowDown}');
-  expect(screen.getByRole('menuitemradio',{name:'Transcript'})).toBeTruthy(); expect(screen.getByRole('menuitemradio',{name:'Beat Cue'})).toBeTruthy(); expect(screen.queryByRole('menuitemradio',{name:'Properties'})).toBeNull(); expect(screen.queryByRole('menuitemradio',{name:'Closed'})).toBeNull();
+  expect(screen.getByRole('menuitemradio',{name:/^Transcript/})).toBeTruthy(); expect(screen.getByRole('menuitemradio',{name:/^Beat Cue/})).toBeTruthy(); expect(screen.queryByRole('menuitemradio',{name:'Properties'})).toBeNull(); expect(screen.queryByRole('menuitemradio',{name:'Closed'})).toBeNull();
   await user.keyboard('{Escape}'); await user.click(screen.getByRole('tab',{name:'Inspector'})); expect(draft).not.toBeVisible();
   await user.click(screen.getByRole('tab',{name:'Extensions'})); expect(screen.getByRole('textbox',{name:'Retained draft'})).toBe(draft);
   screen.getByRole('button',{name:'Panel display'}).focus(); await user.keyboard('{ArrowDown}'); await user.click(screen.getByRole('menuitemradio',{name:'Compact'}));
@@ -293,7 +293,7 @@ it('on touch, the Extensions picker lists the Transcript panel', async () => {
   render(<TouchHarness />);
   await user.click(screen.getByRole('tab', { name: 'Extensions' }));
   await user.click(screen.getByRole('button', { name: 'Displayed extension' }));
-  expect(await screen.findByRole('menuitemradio', { name: 'Transcript' })).toBeInTheDocument();
+  expect(await screen.findByRole('menuitemradio', { name: /^Transcript/ })).toBeInTheDocument();
 });
 
 it('pops the active extension out through the header control into the surface', async () => {
@@ -321,7 +321,7 @@ it('replaces the popped panel when a different tool is popped out', async () => 
   expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
   screen.getByRole('button', { name: 'Displayed extension' }).focus();
   await user.keyboard('{ArrowDown}');
-  await user.click(screen.getByRole('menuitemradio', { name: 'Beat Cue' }));
+  await user.click(screen.getByRole('menuitemradio', { name: /^Beat Cue/ }));
   expect(screen.getByRole('button', { name: 'Pop out Beat Cue' })).toHaveAttribute('aria-pressed', 'false');
   await user.click(screen.getByRole('button', { name: 'Pop out Beat Cue' }));
   expect(screen.getByTestId('popped-key')).toHaveTextContent('example:beat');
@@ -346,7 +346,7 @@ it('lists an enabled extension without panels, shows its info view, and runs its
   ];
   render(<Harness />);
   await user.click(screen.getByRole('button', { name: 'Displayed extension' }));
-  await user.click(await screen.findByRole('menuitemradio', { name: 'Three.js Live Editor' }));
+  await user.click(await screen.findByRole('menuitemradio', { name: /^Three\.js Live Editor/ }));
   expect(state.preferences.selectedRightPanelId).toBe('host:extensions');
   expect(screen.getByRole('button', { name: 'Displayed extension' })).toHaveTextContent('Display: Three.js Live Editor');
   const info = screen.getByTestId('extension-info-view');
@@ -382,4 +382,57 @@ it('resolves a saved panel key to its extension label', () => {
   ];
   render(<Harness initialPreferences={{ selectedRightPanelId: 'example:beat', lastExtensionPanelId: 'example:beat', rightPanelTab: 'extensions' }} />);
   expect(screen.getByRole('button', { name: 'Displayed extension' })).toHaveTextContent('Display: Beat Cue');
+});
+
+it('Manage is an icon-only button named Manage extensions, with a tooltip on hover and focus', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  const manage = screen.getByRole('button', { name: 'Manage extensions' });
+  expect(manage).toHaveAttribute('aria-label', 'Manage extensions');
+  expect((manage.textContent ?? '').trim()).toBe('');
+  expect(manage.querySelector('svg')).not.toBeNull();
+
+  await user.hover(manage);
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Manage extensions');
+  await user.unhover(manage);
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
+  fireEvent.focus(manage);
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Manage extensions');
+});
+
+it('the Displayed extension menu lists each extension panel names on a muted second line', async () => {
+  const user = userEvent.setup();
+  state.panels = [
+    { extensionId: 'haus.astrid.transcript-lane', id: 'transcript-lane-panel', label: 'Transcript' },
+    { extensionId: 'haus.astrid.transcript-lane', id: 'second', label: 'Second View' },
+    { extensionId: 'example', id: 'beat', label: 'Beat Cue' },
+  ];
+  render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Displayed extension' }));
+  const transcript = await screen.findByRole('menuitemradio', { name: /^Transcript/ });
+  expect(within(transcript).getByTestId('extension-menu-panels')).toHaveTextContent('Transcript / Second View');
+  expect(within(transcript).getByTestId('extension-menu-panels').className).toContain('text-muted-foreground');
+  const beat = screen.getByRole('menuitemradio', { name: /^Beat Cue/ });
+  expect(within(beat).getByTestId('extension-menu-panels')).toHaveTextContent(/^Beat Cue$/);
+});
+
+it('the Pop out button shows a tooltip on hover and focus, and clicking hides it and still pops out', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  const pop = screen.getByRole('button', { name: 'Pop out Transcript' });
+
+  await user.hover(pop);
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Pop out Transcript');
+  await user.unhover(pop);
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
+  fireEvent.focus(pop);
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Pop out Transcript');
+  fireEvent.blur(pop);
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
+  await user.hover(pop);
+  expect(screen.getByRole('tooltip')).toBeTruthy();
+  await user.click(pop);
+  expect(screen.queryByRole('tooltip')).toBeNull();
+  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
 });

@@ -182,6 +182,13 @@ export function isEditorKeyboardEvent(event: KeyboardEvent, root: HTMLElement | 
   return target instanceof Node && root.contains(target);
 }
 
+/** Controls whose native Space/Enter activation the editor's shortcuts must not take. */
+const ACTIVATABLE_TARGET = 'button, [role=button], a[href], summary, [role=checkbox], [role=switch], [role=radio], [role=tab], [role=slider]';
+
+export function isActivatableTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(ACTIVATABLE_TARGET) !== null;
+}
+
 export function useKeyboardShortcuts({
   hasSelectedClip,
   canMoveSelectedClipToTrack,
@@ -214,6 +221,13 @@ export function useKeyboardShortcuts({
       // A panel handled this key before it bubbled to window (this listener
       // is bubble-phase, not capture), so leave it to that panel.
       if (event.defaultPrevented) return;
+      // Space and Enter belong to a focused button, link, tab or slider (panels and
+      // Transcript included); only an unfocused timeline plays on Space.
+      if ((event.key === ' ' || event.key === 'Enter') && isActivatableTarget(event.target)) return;
+
+      // Esc inside a popped-out panel docks it (the frame listens after this hook, and
+      // would see our preventDefault); it must not also clear the timeline selection.
+      if (event.key === 'Escape' && event.target instanceof Element && event.target.closest('[data-panel-popout-frame]')) return;
 
       const isModifierPressed = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();

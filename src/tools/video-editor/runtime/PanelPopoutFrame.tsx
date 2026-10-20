@@ -35,7 +35,7 @@ export interface PanelPopoutSize {
 }
 
 export const MIN_POPOUT_WIDTH = 640;
-export const MIN_POPOUT_HEIGHT = 420;
+export const MIN_POPOUT_HEIGHT = 460;
 export const POPOUT_SIZES_STORAGE_KEY = 'video-editor:popout-sizes';
 
 const NO_SIZES: Readonly<Record<string, PanelPopoutSize>> = {};
@@ -66,7 +66,7 @@ const HANDLES: readonly { readonly name: string; readonly edges: readonly Edge[]
   { name: 'w', edges: ['w'], className: 'bottom-2 left-0 top-2 w-1.5 cursor-ew-resize' },
   { name: 'nw', edges: ['n', 'w'], className: 'left-0 top-0 h-3 w-3 cursor-nwse-resize' },
   { name: 'ne', edges: ['n', 'e'], className: 'right-0 top-0 h-3 w-3 cursor-nesw-resize' },
-  { name: 'se', edges: ['s', 'e'], className: 'bottom-0 right-0 h-3 w-3 cursor-nwse-resize' },
+  { name: 'se', edges: ['s', 'e'], className: 'bottom-0 right-0 h-4 w-4 cursor-nwse-resize' },
   { name: 'sw', edges: ['s', 'w'], className: 'bottom-0 left-0 h-3 w-3 cursor-nesw-resize' },
 ];
 
@@ -259,6 +259,7 @@ export const PanelPopoutFrame = forwardRef<HTMLDivElement, PanelPopoutFrameProps
     setFilled(true);
   };
 
+  // The app's pane handles ("Open Action pane", its lock, bottom floating toolbar) are fixed at z-[100016] (see shared/config/panes.ts); the frame must stack above them.
   const frame = (
     <div
       ref={frameRef}
@@ -267,10 +268,10 @@ export const PanelPopoutFrame = forwardRef<HTMLDivElement, PanelPopoutFrameProps
       aria-label={title}
       data-panel-popout-frame
       className={cn(
-        'absolute z-40 flex min-h-0 flex-col overflow-hidden border border-border bg-background text-foreground shadow-lg',
+        'absolute flex min-h-0 flex-col overflow-hidden border border-border bg-background text-foreground shadow-lg',
         touch
-          ? 'inset-0 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]'
-          : 'rounded-lg',
+          ? 'z-40 inset-0 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]'
+          : 'z-[100017] rounded-lg',
       )}
       style={touch ? undefined : { left: rect.x, top: rect.y, width: rect.width, height: rect.height }}
     >
@@ -323,7 +324,13 @@ export const PanelPopoutFrame = forwardRef<HTMLDivElement, PanelPopoutFrameProps
           aria-hidden="true"
           onPointerDown={(event) => startGesture(event, handle.edges)}
           className={cn('absolute z-10', handle.className)}
-        />
+        >
+          {handle.name === 'se' && (
+            <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" aria-hidden="true" className="pointer-events-none absolute bottom-1 right-1 h-2 w-2 text-muted-foreground/50">
+              <path d="M7 3L3 7M7 6L6 7" />
+            </svg>
+          )}
+        </div>
       ))}
     </div>
   );

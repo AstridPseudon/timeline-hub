@@ -89,6 +89,8 @@ export function VideoEditorRightPanelDock({
   const [localManagerOpen, setLocalManagerOpen] = useState(false);
   const [manageTooltipOpen, setManageTooltipOpen] = useState(false);
   const manageTooltipId = useId();
+  const [popoutTooltipOpen, setPopoutTooltipOpen] = useState(false);
+  const popoutTooltipId = useId();
   const selected = preferences.selectedRightPanelId;
   const tab = video?.activeTab ?? (selected ? selected === HOST_PROPERTIES_PANEL_KEY ? 'inspector' : 'extensions' : preferences.rightPanelTab ?? 'inspector');
   const remembered = panels.find((panel) => getPanelKey(panel) === preferences.lastExtensionPanelId) ?? panels[0];
@@ -171,20 +173,31 @@ export function VideoEditorRightPanelDock({
     else setLocalManagerOpen(true);
   };
   const extensionsHeader = tab === 'extensions' && <div className={`flex shrink-0 items-center border-b border-border/60 p-2 ${touch ? 'gap-2' : 'gap-1.5'}`} style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
-    <DropdownMenu><DropdownMenuTrigger className={`${touch ? touchControl : control} flex-1 justify-between`} aria-label="Displayed extension"><span className="min-w-0 truncate">Display: {activeExtensionLabel ?? (enabledExtensionLabels.length ? 'Choose extension' : 'None')}</span><ChevronDown className="h-3 w-3 shrink-0" /></DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="max-w-[calc(100vw-24px)] min-w-48"><DropdownMenuRadioGroup value={activeExtensionId ?? ''} onValueChange={chooseExtension}>{enabledExtensionLabels.map(({ key, label }) => <DropdownMenuRadioItem key={key} value={key}>{label}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+    <DropdownMenu><DropdownMenuTrigger className={`${touch ? touchControl : control} min-w-0 flex-1 justify-between`} aria-label="Displayed extension"><span className="min-w-0 truncate">Display: {activeExtensionLabel ?? (enabledExtensionLabels.length ? 'Choose extension' : 'None')}</span><ChevronDown className="h-3 w-3 shrink-0" /></DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-w-[calc(100vw-24px)] min-w-48"><DropdownMenuRadioGroup value={activeExtensionId ?? ''} onValueChange={chooseExtension}>{enabledExtensionLabels.map(({ key, label }) => {
+        const panelNames = panels.filter((panel) => panel.extensionId === key).map((panel) => panel.label || panel.id);
+        return <DropdownMenuRadioItem key={key} value={key}><span className="flex min-w-0 flex-col">
+          <span>{label}</span>
+          {panelNames.length > 0 && <span data-testid="extension-menu-panels" className="block text-[11px] text-muted-foreground">{panelNames.join(' / ')}</span>}
+        </span></DropdownMenuRadioItem>;
+      })}</DropdownMenuRadioGroup></DropdownMenuContent>
     </DropdownMenu>
-    {!infoActive && tool && toolKey && <button type="button" className={touch ? cn(touchControl, 'w-9 shrink-0 justify-center px-0') : `${control} shrink-0 justify-center px-2`} aria-label={`Pop out ${tool.label || tool.id}`} aria-pressed={poppedPanelKey === toolKey} onClick={() => setPoppedPanelKey(toolKey)}><PictureInPicture2 className="h-4 w-4 shrink-0" /></button>}
-    <div className={touch ? 'relative shrink-0' : 'relative flex-1'} onPointerEnter={() => setManageTooltipOpen(true)} onPointerLeave={() => setManageTooltipOpen(false)} onFocusCapture={() => setManageTooltipOpen(true)} onBlurCapture={() => setManageTooltipOpen(false)} onPointerDownCapture={() => setManageTooltipOpen(false)} onClickCapture={() => setManageTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setManageTooltipOpen(false); }}>
-      <button type="button" className={touch ? cn(touchControl, 'w-9 justify-center px-0') : `${control} w-full justify-center`} aria-label="Manage extensions" aria-haspopup="dialog" aria-expanded={managerOpen} aria-describedby={manageTooltipOpen ? manageTooltipId : undefined} onClick={openManager}>
-        {/* Touch: an icon, so the active panel's name keeps the row. */}
-        <Settings2 className="h-4 w-4 shrink-0" />{!touch && <span>Manage</span>}
+    {!infoActive && tool && toolKey && <div className="relative shrink-0" onPointerEnter={() => setPopoutTooltipOpen(true)} onPointerLeave={() => setPopoutTooltipOpen(false)} onFocusCapture={() => setPopoutTooltipOpen(true)} onBlurCapture={() => setPopoutTooltipOpen(false)} onPointerDownCapture={() => setPopoutTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setPopoutTooltipOpen(false); }}>
+      <button type="button" className={touch ? cn(touchControl, 'w-9 shrink-0 justify-center px-0') : `${control} shrink-0 justify-center px-2`} aria-label={`Pop out ${tool.label || tool.id}`} aria-describedby={popoutTooltipOpen ? popoutTooltipId : undefined} aria-pressed={poppedPanelKey === toolKey} onClick={() => { setPopoutTooltipOpen(false); setPoppedPanelKey(toolKey); }}><PictureInPicture2 className="h-4 w-4 shrink-0" /></button>
+      {popoutTooltipOpen && <div id={popoutTooltipId} role="tooltip" className="absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md">Pop out {tool.label || tool.id}</div>}
+    </div>}
+    <div className="relative shrink-0" onPointerEnter={() => setManageTooltipOpen(true)} onPointerLeave={() => setManageTooltipOpen(false)} onFocusCapture={() => setManageTooltipOpen(true)} onBlurCapture={() => setManageTooltipOpen(false)} onPointerDownCapture={() => setManageTooltipOpen(false)} onClickCapture={() => setManageTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setManageTooltipOpen(false); }}>
+      <button type="button" className={touch ? cn(touchControl, 'w-9 shrink-0 justify-center px-0') : `${control} w-8 shrink-0 justify-center px-0`} aria-label="Manage extensions" aria-haspopup="dialog" aria-expanded={managerOpen} aria-describedby={manageTooltipOpen ? manageTooltipId : undefined} onClick={openManager}>
+        <Settings2 className="h-4 w-4 shrink-0" />
       </button>
       {manageTooltipOpen && <div id={manageTooltipId} role="tooltip" className="absolute right-0 top-full z-50 mt-2 max-h-64 max-w-64 overflow-auto rounded-md border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md">
-        <span className="font-medium">Enabled extensions</span>
-        {enabledExtensionLabels.length
-          ? <ul className="mt-1 list-inside list-disc">{enabledExtensionLabels.map(({ key, label }) => <li key={key}>{label}</li>)}</ul>
-          : <p className="mt-1">No extensions are currently enabled.</p>}
+        <span className="block font-medium">Manage extensions</span>
+        <div className="mt-1.5 text-[11px] text-muted-foreground">
+          <span className="block">Enabled extensions</span>
+          {enabledExtensionLabels.length
+            ? <ul className="mt-1 list-inside list-disc">{enabledExtensionLabels.map(({ key, label }) => <li key={key}>{label}</li>)}</ul>
+            : <p className="mt-1">No extensions are currently enabled.</p>}
+        </div>
       </div>}
     </div>
   </div>;
@@ -207,7 +220,7 @@ export function VideoEditorRightPanelDock({
     data-testid="video-editor-right-panel-dock" data-layout={video ? 'dock' : layout} data-open={String(open)} data-responsive={String(responsive)}
     {...shellRegionAttrs('rightPanel')}
     data-placement={touch ? 'picture' : compactInGrid ? 'upper-right-grid' : dock ? 'full-height-grid' : 'overlay'}
-    className={`video-editor-right-panel-motion ${touch ? 'relative h-full w-full' : inGrid ? 'row-span-full' : 'absolute z-40'} ${hidden ? 'hidden' : 'flex'} min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95 ${inGrid || touch ? '' : 'shadow-xl'}`}
+    className={`video-editor-right-panel-motion ${touch ? 'relative h-full w-full' : inGrid ? 'row-span-full' : 'absolute z-40'} ${hidden ? 'hidden' : 'flex'} min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95 ${inGrid || touch ? '' : 'shadow-xl'} ${touch ? '' : 'pr-3.5'}`}
     style={touch ? undefined : inGrid
       ? { gridColumn: leftPanelPresent ? 3 : 2, gridRow: '1 / -1', alignSelf: 'start', width: 'calc(100% - 12px)', marginInlineStart: 12, height: measuredHeight && measuredHeight > 0 ? measuredHeight : '100%', maxHeight: '100%', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }
       : dock
