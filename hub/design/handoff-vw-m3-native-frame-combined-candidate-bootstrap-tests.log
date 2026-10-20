@@ -1,0 +1,107 @@
+TAP version 13
+# Subtest: passes exact harness argv and parent environment; waits for catalog readiness; stop is idempotent
+ok 1 - passes exact harness argv and parent environment; waits for catalog readiness; stop is idempotent
+  ---
+  duration_ms: 12.100079
+  ...
+(node:3) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: helper and catalog share one startup budget (120ms + 70ms, budget 200ms)
+ok 2 - helper and catalog share one startup budget (120ms + 70ms, budget 200ms)
+  ---
+  duration_ms: 5.993755
+  ...
+# Subtest: helper and catalog share one startup budget (120ms + 100ms, budget 200ms)
+ok 3 - helper and catalog share one startup budget (120ms + 100ms, budget 200ms)
+  ---
+  duration_ms: 2.738385
+  ...
+# Subtest: fails closed for absent or non-frozen source selection without spawning
+ok 4 - fails closed for absent or non-frozen source selection without spawning
+  ---
+  duration_ms: 2.175502
+  ...
+# Subtest: rejects failed and cleans the owned helper without exposing output
+ok 5 - rejects failed and cleans the owned helper without exposing output
+  ---
+  duration_ms: 3.15273
+  ...
+# Subtest: rejects malformed and cleans the owned helper without exposing output
+ok 6 - rejects malformed and cleans the owned helper without exposing output
+  ---
+  duration_ms: 6.567888
+  ...
+# Subtest: rejects invalid-ready and cleans the owned helper without exposing output
+ok 7 - rejects invalid-ready and cleans the owned helper without exposing output
+  ---
+  duration_ms: 2.279478
+  ...
+# Subtest: rejects eof and cleans the owned helper without exposing output
+ok 8 - rejects eof and cleans the owned helper without exposing output
+  ---
+  duration_ms: 102.760957
+  ...
+# Subtest: rejects exit and cleans the owned helper without exposing output
+ok 9 - rejects exit and cleans the owned helper without exposing output
+  ---
+  duration_ms: 2.5699
+  ...
+# Subtest: rejects spawn-error and cleans the owned helper without exposing output
+ok 10 - rejects spawn-error and cleans the owned helper without exposing output
+  ---
+  duration_ms: 3.222842
+  ...
+# Subtest: rejects oversize and cleans the owned helper without exposing output
+ok 11 - rejects oversize and cleans the owned helper without exposing output
+  ---
+  duration_ms: 9.274265
+  ...
+# Subtest: catalog refusal cleans the ready helper and redacts external exceptions
+ok 12 - catalog refusal cleans the ready helper and redacts external exceptions
+  ---
+  duration_ms: 2.996709
+  ...
+# Subtest: stop propagates missing-ack cleanup failure
+ok 13 - stop propagates missing-ack cleanup failure
+  ---
+  duration_ms: 1.99436
+  ...
+# Subtest: stop propagates wrong-pid cleanup failure
+ok 14 - stop propagates wrong-pid cleanup failure
+  ---
+  duration_ms: 2.879454
+  ...
+# Subtest: stop propagates bad-exit cleanup failure
+ok 15 - stop propagates bad-exit cleanup failure
+  ---
+  duration_ms: 1.801048
+  ...
+# Subtest: stop propagates timeout cleanup failure
+ok 16 - stop propagates timeout cleanup failure
+  ---
+  duration_ms: 17.70789
+  ...
+# Subtest: stop propagates ack-without-exit cleanup failure
+ok 17 - stop propagates ack-without-exit cleanup failure
+  ---
+  duration_ms: 15.684588
+  ...
+# Subtest: startup timeout closes stdin, waits for cleanup and reaps only the helper
+ok 18 - startup timeout closes stdin, waits for cleanup and reaps only the helper
+  ---
+  duration_ms: 19.885298
+  ...
+# Subtest: abort during startup cleans helper; pre-aborted startup never spawns
+ok 19 - abort during startup cleans helper; pre-aborted startup never spawns
+  ---
+  duration_ms: 6.040641
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 230.626009

@@ -1,0 +1,1077 @@
+diff --git a/tests/e2e/timeline/player-export-frame-parity.spec.ts b/tests/e2e/timeline/player-export-frame-parity.spec.ts
+index a59dfaa1e..25d1241e5 100644
+--- a/tests/e2e/timeline/player-export-frame-parity.spec.ts
++++ b/tests/e2e/timeline/player-export-frame-parity.spec.ts
+@@ -1,273 +1,3 @@
+-import { expect, type Page, type TestInfo } from '@playwright/test';
+-import { execFile } from 'node:child_process';
+-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+-import { promisify } from 'node:util';
+-import type { ManagedOutput, Task } from '../../../src/integrations/runtime/generated';
+-import type { DirectHarness } from '../local/support/harness';
+-import { assertTaskAuthority, record } from './viewing-parity/authority';
+-import { waitForRenderAdmission } from './viewing-parity/admission';
+-import { assertDownloadTransfer, observeDownloadTransfer } from './viewing-parity/download';
+-import { collectPageDiagnostics } from './viewing-parity/diagnostics';
+-import { test as parityTest, readyRenderCapability, sourceVersions } from './viewing-parity/harness';
+-import { mediaHash, readFrameMarker, VIDEO_START_FRAME } from './viewing-parity/media';
+-import {
+-  assertPinnedFrameParityFixture, PARITY_FPS, PARITY_FRAMES, PARITY_HEIGHT, PARITY_WIDTH,
+-  readRuntimeJson, type FrameParityFixture,
+-} from './viewing-parity/fixture';
+-import {
+-  assertFrameWithinBound, capturePlayerFrame, compareRgbFrames, decodeExportFrame,
+-} from './viewing-parity/frames';
++import { registerFrameParityCases } from './viewing-parity/cases';
+ 
+-const exec = promisify(execFile);
+-
+-const test = parityTest.extend<{ pageLogs: ReturnType<typeof collectPageDiagnostics> }>({
+-  pageLogs: [async ({ page, harness, fixture }, provide, testInfo) => {
+-    const logs = collectPageDiagnostics(page, harness.doorBase, fixture.projectId);
+-    await logs.observeMediaErrors();
+-    try { await provide(logs); } finally {
+-      logs.stop();
+-      if (testInfo.status !== testInfo.expectedStatus) logs.discardResult();
+-      const diagnostics = await logs.result();
+-      await saveEvidence(testInfo, 'page-diagnostics', diagnostics);
+-      expect(diagnostics.failures).toEqual([]);
+-    }
+-  }, { auto: true }],
+-});
+-
+-async function saveEvidence(testInfo: TestInfo, name: string, value: unknown): Promise<void> {
+-  await mkdir(testInfo.outputPath('viewing-parity'), { recursive: true });
+-  await writeFile(testInfo.outputPath(`viewing-parity/${name}.json`), `${JSON.stringify(value, null, 2)}\n`);
+-}
+-
+-async function openParityEditor(page: Page, harness: DirectHarness, fixture: FrameParityFixture): Promise<void> {
+-  const params = new URLSearchParams({ runtime: '1', runtimeProject: fixture.projectId, runtimeTimeline: fixture.timelineId });
+-  await page.goto(`${harness.origin}/tools/video-editor?${params}`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+-  const connect = page.getByRole('button', { name: 'Connect', exact: true });
+-  await expect.poll(async () => await connect.isVisible()
+-    || await page.locator('[data-testid="runtime-connection-status"][data-state="connected"]').isVisible(),
+-  { timeout: 45_000 }).toBe(true);
+-  if (await connect.isVisible()) await connect.click();
+-  await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected');
+-  await expect(page.getByTestId('preview-revision-label')).toHaveText(`Committed ${fixture.headRevisionId}`);
+-  await expect(page.getByTestId('video-editor-preview-surface')).toBeVisible();
+-  await expect(page.getByRole('button', { name: 'Render', exact: true })).toBeEnabled();
+-}
+-
+-async function renderAndDownload(page: Page, harness: DirectHarness, fixture: FrameParityFixture, testInfo: TestInfo) {
+-  const versions = await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile);
+-  await assertPinnedFrameParityFixture(harness, fixture);
+-  const capability = await readyRenderCapability(harness);
+-  const polls: string[] = [];
+-  const legacyWrites: string[] = [];
+-  const onRequest = (request: import('@playwright/test').Request) => {
+-    const path = new URL(request.url()).pathname;
+-    if (request.method() === 'GET' && /\/v1\/tasks\/[^/?]+$/.test(path)) polls.push(request.url());
+-    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method())
+-      && /\/(?:composition-revisions|documents)(?:\/|$)/.test(path)) legacyWrites.push(`${request.method()} ${path}`);
+-  };
+-  page.on('request', onRequest);
+-  try {
+-    const admissionUrl = `${new URL(harness.doorBase).origin}/api/astrid/v1/tasks`;
+-    const response = await waitForRenderAdmission(page, admissionUrl,
+-      () => page.getByRole('button', { name: 'Render', exact: true }).click({ timeout: 30_000 }));
+-    expect([200, 201]).toContain(response.status());
+-    const request = response.request().postDataJSON();
+-    expect(request).toMatchObject({ project: fixture.projectId, capability_id: 'rendering.render',
+-      capability_digest: capability.definition_digest, input_object_ids: [], spec: { params: {
+-        timeline_ref: fixture.timelineId, selector: 'rendering.remotion', canonical_project_id: fixture.projectId,
+-        canonical_parent_document_id: fixture.timelineId, canonical_head_revision_id: fixture.headRevisionId,
+-        canonical_occurrence_ids: [fixture.occurrenceId],
+-      } } });
+-    expect(request.spec.params.expected_version).toBeGreaterThan(0);
+-    expect(request.spec.inputs).toBeUndefined();
+-    const admitted = (await response.json()).data as Task;
+-    expect(admitted.task_id).toBeTruthy();
+-    const taskPath = `/v1/tasks/${encodeURIComponent(admitted.task_id)}`;
+-    const initial = await readRuntimeJson<Task>(harness, taskPath);
+-    const frozen = assertTaskAuthority(initial, fixture, capability.definition_digest);
+-    const snapshotResponse = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(String(frozen.snapshot.digest))}`);
+-    expect(snapshotResponse.status).toBe(200);
+-    const snapshotBytes = new Uint8Array(await snapshotResponse.arrayBuffer());
+-    expect(mediaHash(snapshotBytes)).toBe(frozen.authority.snapshot_digest);
+-    const snapshot = record(JSON.parse(Buffer.from(snapshotBytes).toString('utf8')));
+-    const assets = Object.values(record(record(snapshot.registry).assets)).map(record);
+-    expect(Object.fromEntries(assets.map(asset => [asset.media_id, `sha256:${asset.content_sha256}`])))
+-      .toEqual(Object.fromEntries(fixture.media.map(pin => [pin.objectId, pin.digest])));
+-
+-    const downloadLink = page.getByRole('link', { name: 'Download', exact: true });
+-    const blocker = page.locator('[data-video-editor-render-blocker="true"]');
+-    await expect.poll(async () => {
+-      const task = await readRuntimeJson<Task>(harness, taskPath);
+-      if (['failed', 'cancelled'].includes(task.state)) return `error:task-${task.state}`;
+-      const error = (await blocker.allTextContents()).join('\n').trim();
+-      if (error) return `error:${error}`;
+-      return task.state === 'succeeded' && await downloadLink.isVisible() ? 'done' : 'pending';
+-    }, { timeout: 240_000, message: 'mounted App Render action must finish through the real generic pack host' }).toBe('done');
+-    expect(polls.some(url => url.endsWith(taskPath)), 'App must poll its admitted task').toBe(true);
+-    expect(legacyWrites, 'Render must not publish through a legacy writer').toEqual([]);
+-    const completed = await readRuntimeJson<Task>(harness, taskPath);
+-    expect(completed.spec).toEqual(initial.spec);
+-    expect(assertTaskAuthority(completed, fixture, capability.definition_digest)).toEqual(frozen);
+-    const outputs = await readRuntimeJson<{ items: ManagedOutput[] }>(harness, `${taskPath}/managed-outputs?limit=50`);
+-    expect(outputs.items.filter(item => item.filename.endsWith('.mp4'))).toHaveLength(1);
+-    const video = outputs.items.find(item => item.filename.endsWith('.mp4'));
+-    expect(video, 'real task must own its MP4 output association').toBeDefined();
+-    expect(video).toMatchObject({ task_id: admitted.task_id, project_id: fixture.projectId, media_type: 'video/mp4' });
+-    expect(outputs.items.filter(item => item.filename.endsWith('.provenance.json'))).toHaveLength(1);
+-    const provenanceOutput = outputs.items.find(item => item.filename.endsWith('.provenance.json'));
+-    expect(provenanceOutput, 'real renderer provenance sidecar').toBeDefined();
+-    const provenanceResponse = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(provenanceOutput!.object_id)}`);
+-    expect(provenanceResponse.status).toBe(200);
+-    const provenanceBytes = new Uint8Array(await provenanceResponse.arrayBuffer());
+-    expect(mediaHash(provenanceBytes)).toBe(provenanceOutput!.digest);
+-    const provenance = JSON.parse(Buffer.from(provenanceBytes).toString('utf8'));
+-    expect(provenance.canonical_timeline).toEqual(frozen.authority);
+-    expect(provenance.engine).toBe('rendering.remotion');
+-    expect(record(provenance.backend_fragments)['rendering.remotion']).toMatchObject({
+-      renderer: 'remotion', composition_id: 'TimelineComposition', project_dir: versions.remotionProject,
+-    });
+-
+-    const downloadHref = await downloadLink.getAttribute('href');
+-    expect(downloadHref).toBe(`${new URL(harness.doorBase).origin}/api/astrid/v1/objects/${encodeURIComponent(video!.object_id)}`);
+-    const transferObserver = observeDownloadTransfer(page, harness.doorBase, fixture.projectId, video!);
+-    const downloading = page.waitForEvent('download', { timeout: 30_000 });
+-    let download: import('@playwright/test').Download;
+-    let downloadTransfer: Awaited<ReturnType<typeof transferObserver.finish>>;
+-    try {
+-      await downloadLink.click();
+-      download = await downloading;
+-      downloadTransfer = await transferObserver.finish();
+-    } finally { transferObserver.stop(); }
+-    await mkdir(testInfo.outputPath('viewing-parity'), { recursive: true });
+-    const exportPath = testInfo.outputPath('viewing-parity/final-export.mp4');
+-    await download.saveAs(exportPath);
+-    expect(await download.failure()).toBeNull();
+-    expect((await stat(exportPath)).size).toBeGreaterThan(1_000);
+-    expect((await stat(exportPath)).size).toBe(video!.size);
+-    const bytes = await readFile(exportPath);
+-    assertDownloadTransfer(downloadTransfer, harness.doorBase, fixture.projectId, video!, bytes, download.url(), new URL(page.url()).origin);
+-    expect(bytes.subarray(4, 8).toString('ascii')).toBe('ftyp');
+-    expect(mediaHash(bytes), 'UI download must be the admitted task output').toBe(video!.digest);
+-    const { stdout, stderr: probeStderr } = await exec('ffprobe', ['-v', 'error', '-count_frames', '-show_streams', '-show_format', '-of', 'json', exportPath]);
+-    expect(probeStderr).toBe('');
+-    const metadata = JSON.parse(stdout) as { streams: Array<Record<string, unknown>>; format: Record<string, unknown> };
+-    expect(metadata.streams.find(stream => stream.codec_type === 'video')).toMatchObject({ codec_name: 'h264',
+-      width: PARITY_WIDTH, height: PARITY_HEIGHT, r_frame_rate: `${PARITY_FPS}/1`, nb_read_frames: '165' });
+-    // Normal Agent output_policy uses 48kHz AAC; the managed source is 44.1kHz.
+-    expect(metadata.streams.find(stream => stream.codec_type === 'audio')).toMatchObject({ codec_name: 'aac', sample_rate: '48000', channels: 2 });
+-    await assertPinnedFrameParityFixture(harness, fixture);
+-    expect(await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile)).toEqual(versions);
+-    const { stdout: ffmpeg } = await exec('ffmpeg', ['-version']);
+-    await saveEvidence(testInfo, 'real-render', { versions, ffmpeg: ffmpeg.split('\n')[0], capability,
+-      taskId: admitted.task_id, authority: frozen, outputs: outputs.items, provenance, metadata, downloadHash: mediaHash(bytes),
+-      downloadTransfer: { ...downloadTransfer, object: { ...downloadTransfer.object, bytes: undefined,
+-        size: downloadTransfer.object.bytes.length, digest: mediaHash(downloadTransfer.object.bytes) } }, polls, legacyWrites });
+-    return { exportPath, taskId: admitted.task_id, authority: frozen, versions, capabilityDigest: capability.definition_digest,
+-      result: { initial, completed, fixture, capabilityDigest: capability.definition_digest, video: video!,
+-        provenanceOutput: provenanceOutput!, provenanceBytes, downloadBytes: bytes, downloadFailure: await download.failure(),
+-        downloadHref: downloadHref!, downloadUrl: download.url(), downloadTransfer, metadata, probeStderr, remotionProject: versions.remotionProject } };
+-  } finally { page.off('request', onRequest); }
+-}
+-
+-async function assertRenderUnchanged(harness: DirectHarness, fixture: FrameParityFixture,
+-  render: Awaited<ReturnType<typeof renderAndDownload>>) {
+-  await assertPinnedFrameParityFixture(harness, fixture);
+-  const task = await readRuntimeJson<Task>(harness, `/v1/tasks/${encodeURIComponent(render.taskId)}`);
+-  expect(assertTaskAuthority(task, fixture, render.capabilityDigest)).toEqual(render.authority);
+-  expect(await sourceVersions(render.versions.playerBrowser.profile)).toEqual(render.versions);
+-}
+-
+-async function compareAllFrames(page: Page, exportPath: string, testInfo: TestInfo) {
+-  const comparisons = [];
+-  const decodedFrames = [];
+-  for (const frame of PARITY_FRAMES) {
+-    const player = await capturePlayerFrame(page, frame, testInfo, 'positive');
+-    const exported = await decodeExportFrame(exportPath, frame);
+-    const comparison = compareRgbFrames(player, exported, frame);
+-    assertFrameWithinBound(comparison);
+-    comparisons.push(comparison);
+-    decodedFrames.push({ frame, decoded: exported });
+-  }
+-  await saveEvidence(testInfo, 'comparisons', { fps: PARITY_FPS, dimensions: [PARITY_WIDTH, PARITY_HEIGHT], comparisons });
+-  return { comparisons, decodedFrames };
+-}
+-
+-test.describe('ordinary media: mounted App Player versus real task export', () => {
+-  test('normal App Render action downloads a valid native-size MP4 without a parity comparison', async ({ page, harness, fixture, pageLogs }, testInfo) => {
+-    await openParityEditor(page, harness, fixture);
+-    const render = await renderAndDownload(page, harness, fixture, testInfo);
+-    const firstFrame = await decodeExportFrame(render.exportPath, 0);
+-    expect(firstFrame.width).toBe(PARITY_WIDTH);
+-    expect(firstFrame.height).toBe(PARITY_HEIGHT);
+-    expect(firstFrame.bytes).toHaveLength(PARITY_WIDTH * PARITY_HEIGHT * 3);
+-    await assertRenderUnchanged(harness, fixture, render);
+-    await saveEvidence(testInfo, 'normal-render-action', {
+-      proof: 'normal App Render route and downloaded MP4 only; no Player/frame/audio parity or source-policy claim',
+-      revision: fixture.headRevisionId, taskId: render.taskId, authority: render.authority,
+-      firstFrame: { width: firstFrame.width, height: firstFrame.height, hash: mediaHash(firstFrame.bytes) },
+-    });
+-    await pageLogs.completeResult({ ...render.result, decodedFrames: [{ frame: 0, decoded: firstFrame }] });
+-    expect((await pageLogs.result()).failures).toEqual([]);
+-  });
+-
+-  test('fixture readiness seeks actual managed Player video and captures native frames without export', async ({ page, browser, harness, fixture, pageLogs }, testInfo) => {
+-    const requests: Array<{ url: string; status: number }> = [];
+-    page.on('response', response => {
+-      if (decodeURIComponent(response.url()).includes(fixture.sourceVideoMediaId)) requests.push({ url: response.url(), status: response.status() });
+-    });
+-    await openParityEditor(page, harness, fixture);
+-    const captures = [];
+-    for (const frame of [...PARITY_FRAMES, 135]) {
+-      const capture = await capturePlayerFrame(page, frame, testInfo, `fixture-${captures.length}`);
+-      const marker = frame >= VIDEO_START_FRAME ? readFrameMarker(capture.bytes) : null;
+-      if (frame >= VIDEO_START_FRAME) expect(marker).toBe(frame - VIDEO_START_FRAME);
+-      captures.push({ frame, hash: mediaHash(capture.bytes), marker });
+-    }
+-    expect(new Set(captures.filter(capture => capture.frame >= VIDEO_START_FRAME).map(capture => capture.hash)).size).toBe(5);
+-    expect(requests.some(request => [200, 206].includes(request.status)), 'actual App managed video fetch').toBe(true);
+-    await assertPinnedFrameParityFixture(harness, fixture);
+-    expect((await pageLogs.result()).failures).toEqual([]);
+-    await saveEvidence(testInfo, 'fixture-readiness', { proof: 'fixture readiness only; no export comparison',
+-      fixture, versions: await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile), browser: browser.version(), captures, requests });
+-  });
+-
+-  test('compares native-size actual Player frames with decoded real CPU Remotion task output', async ({ page, harness, fixture, pageLogs }, testInfo) => {
+-    await openParityEditor(page, harness, fixture);
+-    const render = await renderAndDownload(page, harness, fixture, testInfo);
+-    const { exportPath } = render;
+-    const { comparisons, decodedFrames } = await compareAllFrames(page, exportPath, testInfo);
+-    await assertRenderUnchanged(harness, fixture, render);
+-    await pageLogs.completeResult({ ...render.result, decodedFrames, comparisons });
+-    expect((await pageLogs.result()).failures).toEqual([]);
+-  });
+-
+-  test('picture-only one-host patch is reported as a mismatch after the full passing baseline', async ({ page, harness, fixture, pageLogs }, testInfo) => {
+-    await openParityEditor(page, harness, fixture);
+-    const render = await renderAndDownload(page, harness, fixture, testInfo);
+-    const { exportPath } = render;
+-    const { comparisons, decodedFrames } = await compareAllFrames(page, exportPath, testInfo);
+-    const selectedFrame = 52;
+-    const before = await capturePlayerFrame(page, selectedFrame, testInfo, 'negative-before-patch');
+-    const exported = await decodeExportFrame(exportPath, selectedFrame);
+-    const baseline = compareRgbFrames(before, exported, selectedFrame);
+-    assertFrameWithinBound(baseline);
+-    const exportHash = mediaHash(await readFile(exportPath));
+-    await page.locator('[data-testid="video-editor-preview-surface"] .__remotion-player').evaluate(element => {
+-      const patch = document.createElement('div');
+-      patch.dataset.testOnlyPictureMismatch = 'true';
+-      Object.assign(patch.style, { position: 'absolute', inset: '0', background: 'rgb(255, 0, 255)', zIndex: '2147483647' });
+-      element.appendChild(patch);
+-    });
+-    const patched = await capturePlayerFrame(page, selectedFrame, testInfo, 'negative-patched');
+-    const comparison = compareRgbFrames(patched, exported, selectedFrame);
+-    expect(() => assertFrameWithinBound(comparison)).toThrow(/frame 52: \d+\/230400 pixels exceed 2\/255; max channel error=/);
+-    await assertRenderUnchanged(harness, fixture, render);
+-    expect(mediaHash(await readFile(exportPath))).toBe(exportHash);
+-    expect(comparison.pixelsOutsideBound).toBeGreaterThan(0);
+-    expect(comparison.outsideBoundFraction).toBeGreaterThan(0.001);
+-    expect(comparison.maxChannelError).toBeGreaterThan(2);
+-    await saveEvidence(testInfo, 'negative-comparison', { revision: fixture.headRevisionId, selectedFrame, baseline, exportHash, comparison });
+-    await pageLogs.completeResult({ ...render.result, decodedFrames, comparisons });
+-    expect((await pageLogs.result()).failures).toEqual([]);
+-  });
+-});
++registerFrameParityCases();
+diff --git a/tests/e2e/timeline/viewing-parity/compare.ts b/tests/e2e/timeline/viewing-parity/compare.ts
+index 38b140da4..5e5b33934 100644
+--- a/tests/e2e/timeline/viewing-parity/compare.ts
++++ b/tests/e2e/timeline/viewing-parity/compare.ts
+@@ -1,4 +1,4 @@
+-import { PARITY_HEIGHT, PARITY_WIDTH } from './media';
++import { ORIGINAL_640, type ParityCanvas } from './canvas';
+ 
+ export type RgbFrame = {
+   readonly width: number;
+@@ -15,10 +15,10 @@ export type FrameComparison = {
+   readonly meanChannelError: number;
+ };
+ 
+-export function compareRgbFrames(expected: RgbFrame, actual: RgbFrame, frame: number): FrameComparison {
++export function compareRgbFrames(expected: RgbFrame, actual: RgbFrame, frame: number, canvas: ParityCanvas = ORIGINAL_640): FrameComparison {
+   for (const [host, image] of [['Player', expected], ['export', actual]] as const) {
+-    if (image.width !== PARITY_WIDTH || image.height !== PARITY_HEIGHT
+-      || image.bytes.length !== PARITY_WIDTH * PARITY_HEIGHT * 3) {
++    if (image.width !== canvas.width || image.height !== canvas.height
++      || image.bytes.length !== canvas.width * canvas.height * 3) {
+       throw new Error(`frame ${frame}: invalid ${host} RGB frame dimensions/bytes: ${image.width}x${image.height}, ${image.bytes.length} bytes`);
+     }
+   }
+@@ -46,8 +46,8 @@ export function compareRgbFrames(expected: RgbFrame, actual: RgbFrame, frame: nu
+   };
+ }
+ 
+-export function assertFrameWithinBound(comparison: FrameComparison): void {
+-  if (!Number.isFinite(comparison.outsideBoundFraction) || comparison.pixels !== PARITY_WIDTH * PARITY_HEIGHT) {
++export function assertFrameWithinBound(comparison: FrameComparison, canvas: ParityCanvas = ORIGINAL_640): void {
++  if (!Number.isFinite(comparison.outsideBoundFraction) || comparison.pixels !== canvas.width * canvas.height) {
+     throw new Error(`frame ${comparison.frame}: invalid comparison`);
+   }
+   if (comparison.outsideBoundFraction > 0.001) {
+diff --git a/tests/e2e/timeline/viewing-parity/diagnostics.ts b/tests/e2e/timeline/viewing-parity/diagnostics.ts
+index f661733af..db9aefc25 100644
+--- a/tests/e2e/timeline/viewing-parity/diagnostics.ts
++++ b/tests/e2e/timeline/viewing-parity/diagnostics.ts
+@@ -3,8 +3,9 @@ import type { ManagedOutput, Task } from '../../../../src/integrations/runtime/g
+ import { assertDownloadTransfer, type DownloadTransfer } from './download';
+ import { assertTaskAuthority, record } from './authority';
+ import { PARITY_FRAMES, type FrameParityFixture } from './fixture';
+-import { mediaHash, PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH } from './media';
++import { mediaHash, PARITY_FPS } from './media';
+ import { assertFrameWithinBound, type FrameComparison, type RgbFrame } from './compare';
++import { ORIGINAL_640, type ParityCanvas } from './canvas';
+ import type { ConsoleMessage, Page, Request, Response } from '@playwright/test';
+ 
+ export const ACP_RESOURCE_ERROR = 'Failed to load resource: the server responded with a status of 503 (Service Unavailable)';
+@@ -31,7 +32,7 @@ export interface ResultPreviewProof {
+ }
+ 
+ /** Concrete same-case results, supplied only after all case assertions finish. */
+-export function assertCompleteResult(proof: ResultPreviewProof, origin: string, projectId: string): string {
++export function assertCompleteResult(proof: ResultPreviewProof, origin: string, projectId: string, canvas: ParityCanvas = ORIGINAL_640): string {
+   const { initial, completed, fixture, video, provenanceOutput, metadata, media } = proof;
+   assert.equal(fixture.projectId, projectId);
+   assert.equal(completed.state, 'succeeded');
+@@ -76,18 +77,18 @@ export function assertCompleteResult(proof: ResultPreviewProof, origin: string,
+   const a = metadata.streams.find(stream => stream.codec_type === 'audio');
+   assert.ok(v && a);
+   assert.deepEqual([v.codec_name, v.width, v.height, v.r_frame_rate, v.nb_read_frames],
+-    ['h264', PARITY_WIDTH, PARITY_HEIGHT, `${PARITY_FPS}/1`, '165']);
++    ['h264', canvas.width, canvas.height, `${PARITY_FPS}/1`, '165']);
+   assert.deepEqual([a.codec_name, a.sample_rate, a.channels], ['aac', '48000', 2]);
+   assert.equal(metadata.format.size, String(video.size));
+   assert.deepEqual(proof.decodedFrames.map(item => item.frame), proof.comparisons ? [...PARITY_FRAMES] : [0]);
+   if (proof.comparisons) {
+     assert.deepEqual(proof.comparisons.map(item => item.frame), [...PARITY_FRAMES]);
+-    proof.comparisons.forEach(assertFrameWithinBound);
++    proof.comparisons.forEach(comparison => assertFrameWithinBound(comparison, canvas));
+   }
+   for (const { decoded } of proof.decodedFrames) {
+-    assert.equal(decoded.width, PARITY_WIDTH);
+-    assert.equal(decoded.height, PARITY_HEIGHT);
+-    assert.equal(decoded.bytes.length, PARITY_WIDTH * PARITY_HEIGHT * 3);
++    assert.equal(decoded.width, canvas.width);
++    assert.equal(decoded.height, canvas.height);
++    assert.equal(decoded.bytes.length, canvas.width * canvas.height * 3);
+   }
+   const url = `${new URL(origin).origin}/api/astrid/v1/objects/${encodeURIComponent(video.object_id)}`;
+   assert.equal(proof.downloadHref, url);
+@@ -100,10 +101,10 @@ export function assertCompleteResult(proof: ResultPreviewProof, origin: string,
+ }
+ 
+ function resultPreviewAbort(raw: readonly PageDiagnostic[], proof: ResultPreviewProof | undefined,
+-  origin: string, projectId: string): PageDiagnostic[] {
++  origin: string, projectId: string, canvas: ParityCanvas): PageDiagnostic[] {
+   if (!proof) return [];
+   let url: string;
+-  try { url = assertCompleteResult(proof, origin, projectId); } catch { return []; }
++  try { url = assertCompleteResult(proof, origin, projectId, canvas); } catch { return []; }
+   const matching = raw.filter(item => item.kind === 'requestfailed' && item.url === url);
+   if (matching.length !== 1) return [];
+   const item = matching[0];
+@@ -131,7 +132,7 @@ function unavailableBody(body: string | undefined): boolean {
+ }
+ 
+ /** Keep raw failures; qualify only paired ACP errors or a fully checked result preview. */
+-export function classifyPageDiagnostics(raw: readonly PageDiagnostic[], origin: string, projectId: string, proof?: ResultPreviewProof) {
++export function classifyPageDiagnostics(raw: readonly PageDiagnostic[], origin: string, projectId: string, proof?: ResultPreviewProof, canvas: ParityCanvas = ORIGINAL_640) {
+   const optional = new Set<PageDiagnostic>();
+   const responses = raw.filter(item => item.kind === 'response');
+   for (const item of raw) {
+@@ -147,14 +148,14 @@ export function classifyPageDiagnostics(raw: readonly PageDiagnostic[], origin:
+     if (response) { optional.add(response); optional.add(item); }
+   }
+   // Other errors also prevent qualification; a complete file does not excuse them.
+-  const candidates = resultPreviewAbort(raw, proof, origin, projectId);
++  const candidates = resultPreviewAbort(raw, proof, origin, projectId, canvas);
+   const qualifiedResultPreviews = raw.every(item => optional.has(item) || candidates.includes(item)) ? candidates : [];
+   return { raw: [...raw], optionalAcp: raw.filter(item => optional.has(item)), qualifiedResultPreviews,
+     failures: raw.filter(item => !optional.has(item) && !qualifiedResultPreviews.includes(item)) };
+ }
+ 
+ /** Observe real traffic without intercepting requests or changing product readiness. */
+-export function collectPageDiagnostics(page: Page, origin: string, projectId: string) {
++export function collectPageDiagnostics(page: Page, origin: string, projectId: string, canvas: ParityCanvas = ORIGINAL_640) {
+   const raw: PageDiagnostic[] = [];
+   const pending = new Set<Promise<void>>();
+   const responses = new WeakMap<Request, NonNullable<Extract<PageDiagnostic, { kind: 'requestfailed' }>['response']>>();
+@@ -218,7 +219,7 @@ export function collectPageDiagnostics(page: Page, origin: string, projectId: st
+       const media = await liveMedia();
+       assert.ok(observingMedia && media, 'result requires document media-error observation and a live video');
+       assert.equal(value.downloadTransfer.pageOrigin, new URL(page.url()).origin);
+-      assertCompleteResult({ ...value, media }, origin, projectId);
++      assertCompleteResult({ ...value, media }, origin, projectId, canvas);
+       proof = value;
+     },
+     discardResult() { proof = undefined; },
+@@ -229,7 +230,7 @@ export function collectPageDiagnostics(page: Page, origin: string, projectId: st
+       }
+       const media = proof ? await liveMedia() : undefined;
+       if (media?.error) raw.push({ kind: 'mediaerror', url: media.currentSrc, ...media.error });
+-      return classifyPageDiagnostics(raw, origin, projectId, proof && media ? { ...proof, media } : undefined);
++      return classifyPageDiagnostics(raw, origin, projectId, proof && media ? { ...proof, media } : undefined, canvas);
+     },
+     stop() {
+       page.off('pageerror', onPageError);
+diff --git a/tests/e2e/timeline/viewing-parity/fixture.ts b/tests/e2e/timeline/viewing-parity/fixture.ts
+index 156c5ddc5..f645c27c4 100644
+--- a/tests/e2e/timeline/viewing-parity/fixture.ts
++++ b/tests/e2e/timeline/viewing-parity/fixture.ts
+@@ -6,7 +6,8 @@ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { promisify } from 'node:util';
+ import { compositionPublication, type DirectHarness } from '../../local/support/harness';
+-import { generatePlayableVideo, mediaHash, PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH } from './media';
++import { generatePlayableVideo, mediaHash, PARITY_FPS } from './media';
++import { ORIGINAL_640, type ParityCanvas } from './canvas';
+ 
+ export { PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH } from './media';
+ export const PARITY_FRAMES = [0, 37, 44, 45, 52, 89, 90, 120, 121, 135, 143, 164] as const;
+@@ -67,7 +68,7 @@ async function readClosure(harness: DirectHarness, fixture: Pick<FrameParityFixt
+ }
+ 
+ /** Existing M1 fixture setup before authoring/Render; not an authoring-path proof. */
+-export async function prepareFrameParityFixture(harness: DirectHarness): Promise<FrameParityFixture> {
++export async function prepareFrameParityFixture(harness: DirectHarness, canvas: ParityCanvas = ORIGINAL_640): Promise<FrameParityFixture> {
+   const directory = await mkdtemp(join(tmpdir(), 'real-frame-parity-'));
+   try {
+     const source = await generatePlayableVideo(directory);
+@@ -106,7 +107,7 @@ export async function prepareFrameParityFixture(harness: DirectHarness): Promise
+         speed: 1, volume: 0.8, effects: [{ fade_in: 0.1, fade_out: 0.1 }] },
+     ];
+     Object.assign(publication.parent_composition, {
+-      config: { output: { resolution: `${PARITY_WIDTH}x${PARITY_HEIGHT}`, fps: PARITY_FPS, file: 'frame-parity.mp4' },
++      config: { output: { resolution: `${canvas.width}x${canvas.height}`, fps: PARITY_FPS, file: 'frame-parity.mp4' },
+         tracks: [{ id: 'S1', kind: 'visual', label: 'S1' }], clips: [] },
+       occurrences: [{ occurrence_id: occurrenceId, shot_id: shotId, shot_revision_id: shotRevisionId,
+         placement: { start_ms: 0 }, source_offset: 0, duration_ms: 5500, speed: 1, track: 'S1',
+diff --git a/tests/e2e/timeline/viewing-parity/frames.ts b/tests/e2e/timeline/viewing-parity/frames.ts
+index afc406565..7dcb22eb4 100644
+--- a/tests/e2e/timeline/viewing-parity/frames.ts
++++ b/tests/e2e/timeline/viewing-parity/frames.ts
+@@ -4,10 +4,7 @@ import type { PlayerRef } from '@remotion/player';
+ import { readFrameMarker, VIDEO_START_FRAME } from './media';
+ import { promisify } from 'node:util';
+ import { expect, type Page, type TestInfo } from '@playwright/test';
+-import {
+-  PARITY_HEIGHT,
+-  PARITY_WIDTH,
+-} from './media';
++import { ORIGINAL_640, type ParityCanvas } from './canvas';
+ import { type RgbFrame } from './compare';
+ export { assertFrameWithinBound, compareRgbFrames, type FrameComparison, type RgbFrame } from './compare';
+ 
+@@ -24,22 +21,22 @@ async function ffprobeDimensions(path: string): Promise<{ width: number; height:
+   return { width: stream.width, height: stream.height };
+ }
+ 
+-async function decodeRgb(path: string, args: string[]): Promise<RgbFrame> {
++async function decodeRgb(path: string, args: string[], canvas: ParityCanvas): Promise<RgbFrame> {
+   const dimensions = await ffprobeDimensions(path);
+   const { stdout } = await execFileAsync('ffmpeg', [
+     '-v', 'error', '-i', path, ...args, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', 'pipe:1',
+-  ], { encoding: 'buffer', maxBuffer: PARITY_WIDTH * PARITY_HEIGHT * 3 + 1024 });
++  ], { encoding: 'buffer', maxBuffer: canvas.width * canvas.height * 3 + 1024 });
+   const bytes = Buffer.isBuffer(stdout) ? stdout : Buffer.from(stdout);
+   expect(bytes).toHaveLength(dimensions.width * dimensions.height * 3);
+   return { ...dimensions, bytes };
+ }
+ 
+-export async function decodeExportFrame(exportPath: string, frame: number): Promise<RgbFrame> {
+-  return decodeRgb(exportPath, ['-map', '0:v:0', '-an', '-vf', `select=eq(n\\,${frame})`]);
++export async function decodeExportFrame(exportPath: string, frame: number, canvas: ParityCanvas = ORIGINAL_640): Promise<RgbFrame> {
++  return decodeRgb(exportPath, ['-map', '0:v:0', '-an', '-vf', `select=eq(n\\,${frame})`], canvas);
+ }
+ 
+-export async function decodePlayerCapture(path: string): Promise<RgbFrame> {
+-  return decodeRgb(path, []);
++export async function decodePlayerCapture(path: string, canvas: ParityCanvas = ORIGINAL_640): Promise<RgbFrame> {
++  return decodeRgb(path, [], canvas);
+ }
+ 
+ declare global {
+@@ -76,7 +73,7 @@ export async function seekPlayerFrame(page: Page, frame: number): Promise<void>
+   })), { timeout: 10_000 }).toEqual({ frame, playing: false });
+ }
+ 
+-async function waitForRequestedMedia(page: Page, frame: number): Promise<void> {
++async function waitForRequestedMedia(page: Page, frame: number, canvas: ParityCanvas): Promise<void> {
+   await page.evaluate(() => document.fonts.ready);
+   await expect.poll(() => page.locator(PLAYER_COMPOSITION).evaluate((element) =>
+     Array.from(element.querySelectorAll('img')).every(image => image.complete && image.naturalWidth > 0),
+@@ -87,10 +84,10 @@ async function waitForRequestedMedia(page: Page, frame: number): Promise<void> {
+     // bit source-frame marker. Bound: 10 seconds, then fail; never use this
+     // source readback as the Player/export screenshot comparator.
+     await expect.poll(async () => {
+-      const bytes = await page.locator(PLAYER_COMPOSITION).evaluate((element) => {
++      const bytes = await page.locator(PLAYER_COMPOSITION).evaluate((element, dimensions) => {
+         const media = Array.from(element.querySelectorAll('canvas, video')).find(node => {
+           const box = node.getBoundingClientRect();
+-          return box.width === 640 && box.height === 360 && getComputedStyle(node).visibility !== 'hidden';
++          return box.width === dimensions.width && box.height === dimensions.height && getComputedStyle(node).visibility !== 'hidden';
+         }) as HTMLCanvasElement | HTMLVideoElement | undefined;
+         if (!media) return [];
+         if (media instanceof HTMLVideoElement && (media.readyState < 2 || media.seeking)) return [];
+@@ -101,7 +98,7 @@ async function waitForRequestedMedia(page: Page, frame: number): Promise<void> {
+         if (!context) throw new Error('Cannot inspect decoded media marker');
+         context.drawImage(media, 0, 0);
+         return Array.from(context.getImageData(0, 0, 640, 48).data);
+-      });
++      }, canvas);
+       // Canvas readback is RGBA; marker inspection uses the RGB source domain.
+       const rgb = new Uint8Array(bytes.length / 4 * 3);
+       for (let i = 0; i < bytes.length / 4; i++) rgb.set(bytes.slice(i * 4, i * 4 + 3), i * 3);
+@@ -117,7 +114,7 @@ async function waitForRequestedMedia(page: Page, frame: number): Promise<void> {
+ }
+ 
+ /** Capture only the native composition viewport after exact Player/media seek. */
+-export async function capturePlayerFrame(page: Page, frame: number, testInfo: TestInfo, name: string): Promise<RgbFrame> {
++export async function capturePlayerFrame(page: Page, frame: number, testInfo: TestInfo, name: string, canvas: ParityCanvas = ORIGINAL_640): Promise<RgbFrame> {
+   await seekPlayerFrame(page, frame);
+   const composition = page.locator(PLAYER_COMPOSITION).first();
+   await expect(composition).toBeVisible();
+@@ -125,7 +122,7 @@ export async function capturePlayerFrame(page: Page, frame: number, testInfo: Te
+   // test host to the composition's native box. A fixed, raised host escapes
+   // the editor panel's overflow clipping and sibling chrome; sizing alone can
+   // capture those siblings over an otherwise ready decoded frame.
+-  await page.evaluate(() => {
++  await page.evaluate((dimensions) => {
+     const host = window.__frameParityPlayer.getContainerNode();
+     if (!host) throw new Error('Mounted Player has no container');
+     host.dataset.frameParityNativeHost = 'true';
+@@ -135,26 +132,26 @@ export async function capturePlayerFrame(page: Page, frame: number, testInfo: Te
+     style.textContent = `[data-frame-parity-native-host="true"] {
+       position: fixed !important; left: 32px !important; top: 32px !important;
+       z-index: 2147483647 !important;
+-      width: 640px !important; height: 360px !important;
+-      min-width: 640px !important; min-height: 360px !important;
+-      flex: 0 0 640px !important;
++      width: ${dimensions.width}px !important; height: ${dimensions.height}px !important;
++      min-width: ${dimensions.width}px !important; min-height: ${dimensions.height}px !important;
++      flex: 0 0 ${dimensions.width}px !important;
+     }`;
+     document.head.appendChild(style);
+-  });
++  }, canvas);
+   await expect.poll(async () => {
+     const box = await composition.boundingBox();
+     return box ? [box.width, box.height] : null;
+-  }, { timeout: 5_000 }).toEqual([PARITY_WIDTH, PARITY_HEIGHT]);
++  }, { timeout: 5_000 }).toEqual([canvas.width, canvas.height]);
+ 
+   expect(await page.evaluate(() => window.__frameParityPlayer.getScale())).toBe(1);
+-  await waitForRequestedMedia(page, frame);
++  await waitForRequestedMedia(page, frame, canvas);
+   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(1);
+   const output = playerCapturePath(testInfo, frame, name);
+   await mkdir(testInfo.outputPath('viewing-parity'), { recursive: true });
+   await composition.screenshot({ path: output, animations: 'disabled' });
+-  const decoded = await decodePlayerCapture(output);
+-  expect(decoded.width).toBe(PARITY_WIDTH);
+-  expect(decoded.height).toBe(PARITY_HEIGHT);
++  const decoded = await decodePlayerCapture(output, canvas);
++  expect(decoded.width).toBe(canvas.width);
++  expect(decoded.height).toBe(canvas.height);
+   return decoded;
+ }
+ 
+diff --git a/tests/e2e/timeline/viewing-parity/harness.ts b/tests/e2e/timeline/viewing-parity/harness.ts
+index f8d750a57..a59ffe57a 100644
+--- a/tests/e2e/timeline/viewing-parity/harness.ts
++++ b/tests/e2e/timeline/viewing-parity/harness.ts
+@@ -7,6 +7,7 @@ import { DirectHarness, harnessUnavailableReason, REPO_ROOT } from '../../local/
+ import { startRealPackHost } from './bootstrap';
+ import { prepareFrameParityFixture, type FrameParityFixture, readRuntimeJson } from './fixture';
+ import { mediaHash } from './media';
++import { ORIGINAL_640, type ParityCanvas } from './canvas';
+ import type { Capability } from '../../../../src/integrations/runtime/generated';
+ import { browserExecutableHash, playerBrowserProfile, verifyPlayerBrowser } from './browser-profile';
+ 
+@@ -215,8 +216,9 @@ export async function readyRenderCapability(harness: DirectHarness): Promise<Cap
+ }
+ 
+ export const test = base.extend<object, {
+-  harness: DirectHarness; fixture: FrameParityFixture; browser: Browser;
++  harness: DirectHarness; fixture: FrameParityFixture; browser: Browser; parityCanvas: ParityCanvas;
+ }>({
++  parityCanvas: [ORIGINAL_640, { scope: 'worker', option: true }],
+   // eslint-disable-next-line no-empty-pattern
+   harness: [async ({}, provide, workerInfo) => {
+     const reason = harnessUnavailableReason();
+@@ -225,8 +227,8 @@ export const test = base.extend<object, {
+     const harness = await new DirectHarness().start();
+     try { await provide(harness); } finally { await harness.stop(); }
+   }, { scope: 'worker', timeout: 240_000 }],
+-  fixture: [async ({ harness }, provide) => {
+-    const fixture = await prepareFrameParityFixture(harness);
++  fixture: [async ({ harness, parityCanvas }, provide) => {
++    const fixture = await prepareFrameParityFixture(harness, parityCanvas);
+     await harness.enableTimelineAuthoring(requiredEnv('ASTRID_PYTHON'));
+     // Browser/export qualification still requires the approved Agent helper
+     // and adoption of the frozen consumer graph.
+@@ -259,9 +261,9 @@ export const test = base.extend<object, {
+     }
+     if (failure !== undefined) throw failure;
+   }, { scope: 'worker' }],
+-  context: async ({ browser, harness }, provide) => {
++  context: async ({ browser, harness, parityCanvas }, provide) => {
+     const context = await browser.newContext({ ...harness.contextOptions,
+-      viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1, acceptDownloads: true });
++      viewport: parityCanvas.viewport, deviceScaleFactor: 1, acceptDownloads: true });
+     try { await provide(context); } finally { await context.close(); }
+   },
+ });
+diff --git a/tests/e2e/timeline/viewing-parity/tsconfig.json b/tests/e2e/timeline/viewing-parity/tsconfig.json
+index 63db775b7..4d8e4cbdc 100644
+--- a/tests/e2e/timeline/viewing-parity/tsconfig.json
++++ b/tests/e2e/timeline/viewing-parity/tsconfig.json
+@@ -1,4 +1,4 @@
+ {
+   "extends": "../../../../tsconfig.node.json",
+-  "include": ["*.ts", "../player-export-frame-parity.spec.ts", "../../../../playwright.viewing-parity*.config.ts"]
++  "include": ["*.ts", "../player-export-frame-parity.spec.ts", "../player-export-normal-profile-native1920.spec.ts", "../../../../playwright.viewing-parity*.config.ts"]
+ }
+diff --git a/playwright.viewing-parity.normal-profile-native1920.config.ts b/playwright.viewing-parity.normal-profile-native1920.config.ts
+new file mode 100644
+index 000000000..da8f8540e
+--- /dev/null
++++ b/playwright.viewing-parity.normal-profile-native1920.config.ts
+@@ -0,0 +1,7 @@
++import { defineConfig } from '@playwright/test';
++import nativeCodec from './playwright.viewing-parity.native-codec.config';
++
++export default defineConfig({
++  ...nativeCodec,
++  testMatch: 'player-export-normal-profile-native1920.spec.ts',
++});
+diff --git a/tests/e2e/timeline/player-export-normal-profile-native1920.spec.ts b/tests/e2e/timeline/player-export-normal-profile-native1920.spec.ts
+new file mode 100644
+index 000000000..a73b000d7
+--- /dev/null
++++ b/tests/e2e/timeline/player-export-normal-profile-native1920.spec.ts
+@@ -0,0 +1,4 @@
++import { registerFrameParityCases } from './viewing-parity/cases';
++import { NORMAL_PROFILE_NATIVE1920 } from './viewing-parity/canvas';
++
++registerFrameParityCases(NORMAL_PROFILE_NATIVE1920);
+diff --git a/tests/e2e/timeline/viewing-parity/canvas.test.ts b/tests/e2e/timeline/viewing-parity/canvas.test.ts
+new file mode 100644
+index 000000000..edf62c115
+--- /dev/null
++++ b/tests/e2e/timeline/viewing-parity/canvas.test.ts
+@@ -0,0 +1,94 @@
++import assert from 'node:assert/strict';
++import { readFile } from 'node:fs/promises';
++import { test } from 'node:test';
++import baseline from '../../../../playwright.viewing-parity.config';
++import nativeCodec from '../../../../playwright.viewing-parity.native-codec.config';
++import native1920 from '../../../../playwright.viewing-parity.normal-profile-native1920.config';
++import { NORMAL_PROFILE_NATIVE1920, ORIGINAL_640, readCanvasFrameMarker } from './canvas';
++import { assertFrameWithinBound, compareRgbFrames } from './compare';
++import { PARITY_FRAMES } from './fixture';
++import { PARITY_HEIGHT, PARITY_WIDTH, readFrameMarker } from './media';
++
++const base = new URL('./', import.meta.url);
++
++for (const canvas of [ORIGINAL_640, NORMAL_PROFILE_NATIVE1920]) {
++  const { width, height } = canvas;
++  const image = () => ({ width, height, bytes: Buffer.alloc(width * height * 3, 64) });
++
++  test(`${width}: native dimensions reject the other canvas and invalid RGB on both hosts`, () => {
++    const other = canvas === ORIGINAL_640 ? NORMAL_PROFILE_NATIVE1920 : ORIGINAL_640;
++    const invalid = [
++      { ...other, bytes: Buffer.alloc(other.width * other.height * 3) },
++      { ...image(), bytes: Buffer.alloc(width * height * 3 - 1) },
++      { ...image(), bytes: Buffer.alloc(width * height * 3 + 1) },
++      { ...image(), width: height, height: width },
++    ];
++    for (const frame of invalid) {
++      assert.throws(() => compareRgbFrames(frame, image(), 52, canvas), /invalid Player RGB frame/);
++      assert.throws(() => compareRgbFrames(image(), frame, 52, canvas), /invalid export RGB frame/);
++    }
++    assert.throws(() => assertFrameWithinBound(compareRgbFrames(image(), image(), 52, canvas), other), /invalid comparison/);
++  });
++
++  test(`${width}: unchanged 2/255 and .001 bounds accept the baseline before rejecting a picture patch`, () => {
++    const reference = image();
++    const player = image();
++    player.bytes.fill(66);
++    assertFrameWithinBound(compareRgbFrames(player, reference, 52, canvas), canvas);
++    const allowed = Math.floor(width * height * 0.001);
++    for (let pixel = 0; pixel < allowed; pixel++) player.bytes[pixel * 3] = 67;
++    assertFrameWithinBound(compareRgbFrames(player, reference, 52, canvas), canvas);
++    player.bytes[allowed * 3] = 67;
++    assert.throws(() => assertFrameWithinBound(compareRgbFrames(player, reference, 52, canvas), canvas),
++      new RegExp(`${allowed + 1}/${width * height} pixels exceed 2/255`));
++    player.bytes.fill(255);
++    assert.throws(() => assertFrameWithinBound(compareRgbFrames(player, reference, 52, canvas), canvas), /pixels exceed 2\/255/);
++    assert.ok(reference.bytes.every(value => value === 64));
++  });
++
++  test(`${width}: readiness reads all 45 original source markers directly in native RGB`, () => {
++    const bytes = Buffer.alloc(width * height * 3);
++    const white = (x: number) => {
++      const offset = ((24 * height / PARITY_HEIGHT) * width + x * width / PARITY_WIDTH) * 3;
++      bytes.fill(255, offset, offset + 3);
++    };
++    assert.equal(readCanvasFrameMarker(bytes, canvas), null);
++    for (let frame = 0; frame < 45; frame++) {
++      bytes.fill(0);
++      white(250);
++      for (let bit = 0; bit < 6; bit++) if (frame & (1 << bit)) white(24 + bit * 40);
++      assert.equal(readCanvasFrameMarker(bytes, canvas), frame);
++      if (canvas === ORIGINAL_640) assert.equal(readCanvasFrameMarker(bytes), readFrameMarker(bytes));
++    }
++    assert.equal(readCanvasFrameMarker(Buffer.alloc(0), canvas), null);
++    if (canvas === NORMAL_PROFILE_NATIVE1920) assert.equal(readCanvasFrameMarker(bytes.subarray(3), canvas), null);
++  });
++}
++
++test('original640 stays the default; only the separately named config selects native1920 with Chrome155', () => {
++  assert.deepEqual(ORIGINAL_640, { width: 640, height: 360, viewport: { width: 1600, height: 1000 } });
++  assert.deepEqual(NORMAL_PROFILE_NATIVE1920, { width: 1920, height: 1080, viewport: { width: 2000, height: 1200 } });
++  assert.equal(baseline.testMatch, 'player-export-frame-parity.spec.ts');
++  assert.equal(nativeCodec.testMatch, baseline.testMatch);
++  assert.equal(native1920.testMatch, 'player-export-normal-profile-native1920.spec.ts');
++  assert.deepEqual(native1920.projects, nativeCodec.projects);
++  const { testMatch: _match, ...shared } = native1920;
++  const { testMatch: _original, ...expected } = nativeCodec;
++  assert.deepEqual(shared, expected);
++  const legacy = { width: 640, height: 360, bytes: Buffer.alloc(640 * 360 * 3) };
++  assert.deepEqual(compareRgbFrames(legacy, legacy, 0), compareRgbFrames(legacy, legacy, 0, ORIGINAL_640));
++  assertFrameWithinBound(compareRgbFrames(legacy, legacy, 0));
++});
++
++test('both entries register the same four bodies with all twelve baseline frames before the picture negative', async () => {
++  assert.equal(await readFile(new URL('../player-export-frame-parity.spec.ts', base), 'utf8'),
++    "import { registerFrameParityCases } from './viewing-parity/cases';\n\nregisterFrameParityCases();\n");
++  assert.equal(await readFile(new URL('../player-export-normal-profile-native1920.spec.ts', base), 'utf8'),
++    "import { registerFrameParityCases } from './viewing-parity/cases';\nimport { NORMAL_PROFILE_NATIVE1920 } from './viewing-parity/canvas';\n\nregisterFrameParityCases(NORMAL_PROFILE_NATIVE1920);\n");
++  const cases = await readFile(new URL('cases.ts', base), 'utf8');
++  assert.equal([...cases.matchAll(/\btest\('/g)].length, 4);
++  assert.deepEqual([...PARITY_FRAMES], [0, 37, 44, 45, 52, 89, 90, 120, 121, 135, 143, 164]);
++  const negative = cases.slice(cases.indexOf("test('picture-only"));
++  assert.ok(negative.indexOf('await compareAllFrames(page, exportPath, testInfo)') < negative.indexOf('patch.dataset.testOnlyPictureMismatch'));
++  assert.ok(negative.indexOf('assertFrameWithinBound(baseline, canvas)') < negative.indexOf('patch.dataset.testOnlyPictureMismatch'));
++});
+diff --git a/tests/e2e/timeline/viewing-parity/canvas.ts b/tests/e2e/timeline/viewing-parity/canvas.ts
+new file mode 100644
+index 000000000..febeb537c
+--- /dev/null
++++ b/tests/e2e/timeline/viewing-parity/canvas.ts
+@@ -0,0 +1,25 @@
++import { PARITY_HEIGHT, PARITY_WIDTH, readFrameMarker } from './media';
++
++export const ORIGINAL_640 = Object.freeze({ width: PARITY_WIDTH, height: PARITY_HEIGHT,
++  viewport: Object.freeze({ width: 1600, height: 1000 }) });
++export const NORMAL_PROFILE_NATIVE1920 = Object.freeze({ width: 1920, height: 1080,
++  viewport: Object.freeze({ width: 2000, height: 1200 }) });
++export type ParityCanvas = typeof ORIGINAL_640 | typeof NORMAL_PROFILE_NATIVE1920;
++
++/** Read readiness cells directly in native RGB; compared pictures are never resized. */
++export function readCanvasFrameMarker(bytes: Uint8Array, canvas: ParityCanvas = ORIGINAL_640): number | null {
++  if (canvas.width === PARITY_WIDTH && canvas.height === PARITY_HEIGHT) return readFrameMarker(bytes);
++  if (bytes.length !== canvas.width * canvas.height * 3) return null;
++  const sample = (x: number, y: number) => {
++    const offset = ((y * canvas.height / PARITY_HEIGHT) * canvas.width + x * canvas.width / PARITY_WIDTH) * 3;
++    return Array.from(bytes.slice(offset, offset + 3));
++  };
++  if (!sample(250, 24).every(value => value > 220)) return null;
++  let frame = 0;
++  for (let bit = 0; bit < 6; bit++) {
++    const rgb = sample(24 + bit * 40, 24);
++    if (rgb.every(value => value > 220)) frame |= 1 << bit;
++    else if (!rgb.every(value => value < 35)) return null;
++  }
++  return frame;
++}
+diff --git a/tests/e2e/timeline/viewing-parity/cases.ts b/tests/e2e/timeline/viewing-parity/cases.ts
+new file mode 100644
+index 000000000..35fc2c034
+--- /dev/null
++++ b/tests/e2e/timeline/viewing-parity/cases.ts
+@@ -0,0 +1,279 @@
++import { expect, type Page, type TestInfo } from '@playwright/test';
++import { execFile } from 'node:child_process';
++import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
++import { promisify } from 'node:util';
++import type { ManagedOutput, Task } from '../../../../src/integrations/runtime/generated';
++import type { DirectHarness } from '../../local/support/harness';
++import { assertTaskAuthority, record } from './authority';
++import { waitForRenderAdmission } from './admission';
++import { assertDownloadTransfer, observeDownloadTransfer } from './download';
++import { collectPageDiagnostics } from './diagnostics';
++import { test as parityTest, readyRenderCapability, sourceVersions } from './harness';
++import { mediaHash, VIDEO_START_FRAME } from './media';
++import {
++  assertPinnedFrameParityFixture, PARITY_FPS, PARITY_FRAMES,
++  readRuntimeJson, type FrameParityFixture,
++} from './fixture';
++import {
++  assertFrameWithinBound, capturePlayerFrame, compareRgbFrames, decodeExportFrame,
++} from './frames';
++
++import { ORIGINAL_640, readCanvasFrameMarker, type ParityCanvas } from './canvas';
++
++const exec = promisify(execFile);
++
++export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): void {
++  const test = parityTest.extend<{ pageLogs: ReturnType<typeof collectPageDiagnostics> }>({
++    pageLogs: [async ({ page, harness, fixture }, provide, testInfo) => {
++      const logs = collectPageDiagnostics(page, harness.doorBase, fixture.projectId, canvas);
++      await logs.observeMediaErrors();
++      try { await provide(logs); } finally {
++        logs.stop();
++        if (testInfo.status !== testInfo.expectedStatus) logs.discardResult();
++        const diagnostics = await logs.result();
++        await saveEvidence(testInfo, 'page-diagnostics', diagnostics);
++        expect(diagnostics.failures).toEqual([]);
++      }
++    }, { auto: true }],
++  });
++
++  test.use({ parityCanvas: canvas });
++
++  async function saveEvidence(testInfo: TestInfo, name: string, value: unknown): Promise<void> {
++    await mkdir(testInfo.outputPath('viewing-parity'), { recursive: true });
++    await writeFile(testInfo.outputPath(`viewing-parity/${name}.json`), `${JSON.stringify(value, null, 2)}\n`);
++  }
++
++  async function openParityEditor(page: Page, harness: DirectHarness, fixture: FrameParityFixture): Promise<void> {
++    const params = new URLSearchParams({ runtime: '1', runtimeProject: fixture.projectId, runtimeTimeline: fixture.timelineId });
++    await page.goto(`${harness.origin}/tools/video-editor?${params}`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
++    const connect = page.getByRole('button', { name: 'Connect', exact: true });
++    await expect.poll(async () => await connect.isVisible()
++      || await page.locator('[data-testid="runtime-connection-status"][data-state="connected"]').isVisible(),
++    { timeout: 45_000 }).toBe(true);
++    if (await connect.isVisible()) await connect.click();
++    await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected');
++    await expect(page.getByTestId('preview-revision-label')).toHaveText(`Committed ${fixture.headRevisionId}`);
++    await expect(page.getByTestId('video-editor-preview-surface')).toBeVisible();
++    await expect(page.getByRole('button', { name: 'Render', exact: true })).toBeEnabled();
++  }
++
++  async function renderAndDownload(page: Page, harness: DirectHarness, fixture: FrameParityFixture, testInfo: TestInfo) {
++    const versions = await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile);
++    await assertPinnedFrameParityFixture(harness, fixture);
++    const capability = await readyRenderCapability(harness);
++    const polls: string[] = [];
++    const legacyWrites: string[] = [];
++    const onRequest = (request: import('@playwright/test').Request) => {
++      const path = new URL(request.url()).pathname;
++      if (request.method() === 'GET' && /\/v1\/tasks\/[^/?]+$/.test(path)) polls.push(request.url());
++      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method())
++        && /\/(?:composition-revisions|documents)(?:\/|$)/.test(path)) legacyWrites.push(`${request.method()} ${path}`);
++    };
++    page.on('request', onRequest);
++    try {
++      const admissionUrl = `${new URL(harness.doorBase).origin}/api/astrid/v1/tasks`;
++      const response = await waitForRenderAdmission(page, admissionUrl,
++        () => page.getByRole('button', { name: 'Render', exact: true }).click({ timeout: 30_000 }));
++      expect([200, 201]).toContain(response.status());
++      const request = response.request().postDataJSON();
++      expect(request).toMatchObject({ project: fixture.projectId, capability_id: 'rendering.render',
++        capability_digest: capability.definition_digest, input_object_ids: [], spec: { params: {
++          timeline_ref: fixture.timelineId, selector: 'rendering.remotion', canonical_project_id: fixture.projectId,
++          canonical_parent_document_id: fixture.timelineId, canonical_head_revision_id: fixture.headRevisionId,
++          canonical_occurrence_ids: [fixture.occurrenceId],
++        } } });
++      expect(request.spec.params.expected_version).toBeGreaterThan(0);
++      expect(request.spec.inputs).toBeUndefined();
++      const admitted = (await response.json()).data as Task;
++      expect(admitted.task_id).toBeTruthy();
++      const taskPath = `/v1/tasks/${encodeURIComponent(admitted.task_id)}`;
++      const initial = await readRuntimeJson<Task>(harness, taskPath);
++      const frozen = assertTaskAuthority(initial, fixture, capability.definition_digest);
++      const snapshotResponse = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(String(frozen.snapshot.digest))}`);
++      expect(snapshotResponse.status).toBe(200);
++      const snapshotBytes = new Uint8Array(await snapshotResponse.arrayBuffer());
++      expect(mediaHash(snapshotBytes)).toBe(frozen.authority.snapshot_digest);
++      const snapshot = record(JSON.parse(Buffer.from(snapshotBytes).toString('utf8')));
++      const assets = Object.values(record(record(snapshot.registry).assets)).map(record);
++      expect(Object.fromEntries(assets.map(asset => [asset.media_id, `sha256:${asset.content_sha256}`])))
++        .toEqual(Object.fromEntries(fixture.media.map(pin => [pin.objectId, pin.digest])));
++
++      const downloadLink = page.getByRole('link', { name: 'Download', exact: true });
++      const blocker = page.locator('[data-video-editor-render-blocker="true"]');
++      await expect.poll(async () => {
++        const task = await readRuntimeJson<Task>(harness, taskPath);
++        if (['failed', 'cancelled'].includes(task.state)) return `error:task-${task.state}`;
++        const error = (await blocker.allTextContents()).join('\n').trim();
++        if (error) return `error:${error}`;
++        return task.state === 'succeeded' && await downloadLink.isVisible() ? 'done' : 'pending';
++      }, { timeout: 240_000, message: 'mounted App Render action must finish through the real generic pack host' }).toBe('done');
++      expect(polls.some(url => url.endsWith(taskPath)), 'App must poll its admitted task').toBe(true);
++      expect(legacyWrites, 'Render must not publish through a legacy writer').toEqual([]);
++      const completed = await readRuntimeJson<Task>(harness, taskPath);
++      expect(completed.spec).toEqual(initial.spec);
++      expect(assertTaskAuthority(completed, fixture, capability.definition_digest)).toEqual(frozen);
++      const outputs = await readRuntimeJson<{ items: ManagedOutput[] }>(harness, `${taskPath}/managed-outputs?limit=50`);
++      expect(outputs.items.filter(item => item.filename.endsWith('.mp4'))).toHaveLength(1);
++      const video = outputs.items.find(item => item.filename.endsWith('.mp4'));
++      expect(video, 'real task must own its MP4 output association').toBeDefined();
++      expect(video).toMatchObject({ task_id: admitted.task_id, project_id: fixture.projectId, media_type: 'video/mp4' });
++      expect(outputs.items.filter(item => item.filename.endsWith('.provenance.json'))).toHaveLength(1);
++      const provenanceOutput = outputs.items.find(item => item.filename.endsWith('.provenance.json'));
++      expect(provenanceOutput, 'real renderer provenance sidecar').toBeDefined();
++      const provenanceResponse = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(provenanceOutput!.object_id)}`);
++      expect(provenanceResponse.status).toBe(200);
++      const provenanceBytes = new Uint8Array(await provenanceResponse.arrayBuffer());
++      expect(mediaHash(provenanceBytes)).toBe(provenanceOutput!.digest);
++      const provenance = JSON.parse(Buffer.from(provenanceBytes).toString('utf8'));
++      expect(provenance.canonical_timeline).toEqual(frozen.authority);
++      expect(provenance.engine).toBe('rendering.remotion');
++      expect(record(provenance.backend_fragments)['rendering.remotion']).toMatchObject({
++        renderer: 'remotion', composition_id: 'TimelineComposition', project_dir: versions.remotionProject,
++      });
++
++      const downloadHref = await downloadLink.getAttribute('href');
++      expect(downloadHref).toBe(`${new URL(harness.doorBase).origin}/api/astrid/v1/objects/${encodeURIComponent(video!.object_id)}`);
++      const transferObserver = observeDownloadTransfer(page, harness.doorBase, fixture.projectId, video!);
++      const downloading = page.waitForEvent('download', { timeout: 30_000 });
++      let download: import('@playwright/test').Download;
++      let downloadTransfer: Awaited<ReturnType<typeof transferObserver.finish>>;
++      try {
++        await downloadLink.click();
++        download = await downloading;
++        downloadTransfer = await transferObserver.finish();
++      } finally { transferObserver.stop(); }
++      await mkdir(testInfo.outputPath('viewing-parity'), { recursive: true });
++      const exportPath = testInfo.outputPath('viewing-parity/final-export.mp4');
++      await download.saveAs(exportPath);
++      expect(await download.failure()).toBeNull();
++      expect((await stat(exportPath)).size).toBeGreaterThan(1_000);
++      expect((await stat(exportPath)).size).toBe(video!.size);
++      const bytes = await readFile(exportPath);
++      assertDownloadTransfer(downloadTransfer, harness.doorBase, fixture.projectId, video!, bytes, download.url(), new URL(page.url()).origin);
++      expect(bytes.subarray(4, 8).toString('ascii')).toBe('ftyp');
++      expect(mediaHash(bytes), 'UI download must be the admitted task output').toBe(video!.digest);
++      const { stdout, stderr: probeStderr } = await exec('ffprobe', ['-v', 'error', '-count_frames', '-show_streams', '-show_format', '-of', 'json', exportPath]);
++      expect(probeStderr).toBe('');
++      const metadata = JSON.parse(stdout) as { streams: Array<Record<string, unknown>>; format: Record<string, unknown> };
++      expect(metadata.streams.find(stream => stream.codec_type === 'video')).toMatchObject({ codec_name: 'h264',
++        width: canvas.width, height: canvas.height, r_frame_rate: `${PARITY_FPS}/1`, nb_read_frames: '165' });
++      // Normal Agent output_policy uses 48kHz AAC; the managed source is 44.1kHz.
++      expect(metadata.streams.find(stream => stream.codec_type === 'audio')).toMatchObject({ codec_name: 'aac', sample_rate: '48000', channels: 2 });
++      await assertPinnedFrameParityFixture(harness, fixture);
++      expect(await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile)).toEqual(versions);
++      const { stdout: ffmpeg } = await exec('ffmpeg', ['-version']);
++      await saveEvidence(testInfo, 'real-render', { versions, ffmpeg: ffmpeg.split('\n')[0], capability,
++        taskId: admitted.task_id, authority: frozen, outputs: outputs.items, provenance, metadata, downloadHash: mediaHash(bytes),
++        downloadTransfer: { ...downloadTransfer, object: { ...downloadTransfer.object, bytes: undefined,
++          size: downloadTransfer.object.bytes.length, digest: mediaHash(downloadTransfer.object.bytes) } }, polls, legacyWrites });
++      return { exportPath, taskId: admitted.task_id, authority: frozen, versions, capabilityDigest: capability.definition_digest,
++        result: { initial, completed, fixture, capabilityDigest: capability.definition_digest, video: video!,
++          provenanceOutput: provenanceOutput!, provenanceBytes, downloadBytes: bytes, downloadFailure: await download.failure(),
++          downloadHref: downloadHref!, downloadUrl: download.url(), downloadTransfer, metadata, probeStderr, remotionProject: versions.remotionProject } };
++    } finally { page.off('request', onRequest); }
++  }
++
++  async function assertRenderUnchanged(harness: DirectHarness, fixture: FrameParityFixture,
++    render: Awaited<ReturnType<typeof renderAndDownload>>) {
++    await assertPinnedFrameParityFixture(harness, fixture);
++    const task = await readRuntimeJson<Task>(harness, `/v1/tasks/${encodeURIComponent(render.taskId)}`);
++    expect(assertTaskAuthority(task, fixture, render.capabilityDigest)).toEqual(render.authority);
++    expect(await sourceVersions(render.versions.playerBrowser.profile)).toEqual(render.versions);
++  }
++
++  async function compareAllFrames(page: Page, exportPath: string, testInfo: TestInfo) {
++    const comparisons = [];
++    const decodedFrames = [];
++    for (const frame of PARITY_FRAMES) {
++      const player = await capturePlayerFrame(page, frame, testInfo, 'positive', canvas);
++      const exported = await decodeExportFrame(exportPath, frame, canvas);
++      const comparison = compareRgbFrames(player, exported, frame, canvas);
++      assertFrameWithinBound(comparison, canvas);
++      comparisons.push(comparison);
++      decodedFrames.push({ frame, decoded: exported });
++    }
++    await saveEvidence(testInfo, 'comparisons', { fps: PARITY_FPS, dimensions: [canvas.width, canvas.height], comparisons });
++    return { comparisons, decodedFrames };
++  }
++
++  test.describe('ordinary media: mounted App Player versus real task export', () => {
++    test('normal App Render action downloads a valid native-size MP4 without a parity comparison', async ({ page, harness, fixture, pageLogs }, testInfo) => {
++      await openParityEditor(page, harness, fixture);
++      const render = await renderAndDownload(page, harness, fixture, testInfo);
++      const firstFrame = await decodeExportFrame(render.exportPath, 0, canvas);
++      expect(firstFrame.width).toBe(canvas.width);
++      expect(firstFrame.height).toBe(canvas.height);
++      expect(firstFrame.bytes).toHaveLength(canvas.width * canvas.height * 3);
++      await assertRenderUnchanged(harness, fixture, render);
++      await saveEvidence(testInfo, 'normal-render-action', {
++        proof: 'normal App Render route and downloaded MP4 only; no Player/frame/audio parity or source-policy claim',
++        revision: fixture.headRevisionId, taskId: render.taskId, authority: render.authority,
++        firstFrame: { width: firstFrame.width, height: firstFrame.height, hash: mediaHash(firstFrame.bytes) },
++      });
++      await pageLogs.completeResult({ ...render.result, decodedFrames: [{ frame: 0, decoded: firstFrame }] });
++      expect((await pageLogs.result()).failures).toEqual([]);
++    });
++
++    test('fixture readiness seeks actual managed Player video and captures native frames without export', async ({ page, browser, harness, fixture, pageLogs }, testInfo) => {
++      const requests: Array<{ url: string; status: number }> = [];
++      page.on('response', response => {
++        if (decodeURIComponent(response.url()).includes(fixture.sourceVideoMediaId)) requests.push({ url: response.url(), status: response.status() });
++      });
++      await openParityEditor(page, harness, fixture);
++      const captures = [];
++      for (const frame of [...PARITY_FRAMES, 135]) {
++        const capture = await capturePlayerFrame(page, frame, testInfo, `fixture-${captures.length}`, canvas);
++        const marker = frame >= VIDEO_START_FRAME ? readCanvasFrameMarker(capture.bytes, canvas) : null;
++        if (frame >= VIDEO_START_FRAME) expect(marker).toBe(frame - VIDEO_START_FRAME);
++        captures.push({ frame, hash: mediaHash(capture.bytes), marker });
++      }
++      expect(new Set(captures.filter(capture => capture.frame >= VIDEO_START_FRAME).map(capture => capture.hash)).size).toBe(5);
++      expect(requests.some(request => [200, 206].includes(request.status)), 'actual App managed video fetch').toBe(true);
++      await assertPinnedFrameParityFixture(harness, fixture);
++      expect((await pageLogs.result()).failures).toEqual([]);
++      await saveEvidence(testInfo, 'fixture-readiness', { proof: 'fixture readiness only; no export comparison',
++        fixture, versions: await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile), browser: browser.version(), captures, requests });
++    });
++
++    test('compares native-size actual Player frames with decoded real CPU Remotion task output', async ({ page, harness, fixture, pageLogs }, testInfo) => {
++      await openParityEditor(page, harness, fixture);
++      const render = await renderAndDownload(page, harness, fixture, testInfo);
++      const { exportPath } = render;
++      const { comparisons, decodedFrames } = await compareAllFrames(page, exportPath, testInfo);
++      await assertRenderUnchanged(harness, fixture, render);
++      await pageLogs.completeResult({ ...render.result, decodedFrames, comparisons });
++      expect((await pageLogs.result()).failures).toEqual([]);
++    });
++
++    test('picture-only one-host patch is reported as a mismatch after the full passing baseline', async ({ page, harness, fixture, pageLogs }, testInfo) => {
++      await openParityEditor(page, harness, fixture);
++      const render = await renderAndDownload(page, harness, fixture, testInfo);
++      const { exportPath } = render;
++      const { comparisons, decodedFrames } = await compareAllFrames(page, exportPath, testInfo);
++      const selectedFrame = 52;
++      const before = await capturePlayerFrame(page, selectedFrame, testInfo, 'negative-before-patch', canvas);
++      const exported = await decodeExportFrame(exportPath, selectedFrame, canvas);
++      const baseline = compareRgbFrames(before, exported, selectedFrame, canvas);
++      assertFrameWithinBound(baseline, canvas);
++      const exportHash = mediaHash(await readFile(exportPath));
++      await page.locator('[data-testid="video-editor-preview-surface"] .__remotion-player').evaluate(element => {
++        const patch = document.createElement('div');
++        patch.dataset.testOnlyPictureMismatch = 'true';
++        Object.assign(patch.style, { position: 'absolute', inset: '0', background: 'rgb(255, 0, 255)', zIndex: '2147483647' });
++        element.appendChild(patch);
++      });
++      const patched = await capturePlayerFrame(page, selectedFrame, testInfo, 'negative-patched', canvas);
++      const comparison = compareRgbFrames(patched, exported, selectedFrame, canvas);
++      expect(() => assertFrameWithinBound(comparison, canvas)).toThrow(new RegExp(`frame 52: \\d+/${canvas.width * canvas.height} pixels exceed 2/255; max channel error=`));
++      await assertRenderUnchanged(harness, fixture, render);
++      expect(mediaHash(await readFile(exportPath))).toBe(exportHash);
++      expect(comparison.pixelsOutsideBound).toBeGreaterThan(0);
++      expect(comparison.outsideBoundFraction).toBeGreaterThan(0.001);
++      expect(comparison.maxChannelError).toBeGreaterThan(2);
++      await saveEvidence(testInfo, 'negative-comparison', { revision: fixture.headRevisionId, selectedFrame, baseline, exportHash, comparison });
++      await pageLogs.completeResult({ ...render.result, decodedFrames, comparisons });
++      expect((await pageLogs.result()).failures).toEqual([]);
++    });
++  });
++}

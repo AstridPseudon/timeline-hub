@@ -1,0 +1,300 @@
+TAP version 13
+# Subtest: binds the actual Runtime alias, same-project location and full bytes to the native same-page blob
+ok 1 - binds the actual Runtime alias, same-project location and full bytes to the native same-page blob
+  ---
+  duration_ms: 57.514525
+  ...
+# Subtest: refuses location method mismatch
+ok 2 - refuses location method mismatch
+  ---
+  duration_ms: 0.320438
+  ...
+# Subtest: refuses location resourceType mismatch
+ok 3 - refuses location resourceType mismatch
+  ---
+  duration_ms: 0.18262
+  ...
+# Subtest: refuses location status mismatch
+ok 4 - refuses location status mismatch
+  ---
+  duration_ms: 0.145266
+  ...
+# Subtest: refuses location range mismatch
+ok 5 - refuses location range mismatch
+  ---
+  duration_ms: 0.141824
+  ...
+# Subtest: refuses location origin mismatch
+ok 6 - refuses location origin mismatch
+  ---
+  duration_ms: 0.134122
+  ...
+# Subtest: refuses location redirected mismatch
+ok 7 - refuses location redirected mismatch
+  ---
+  duration_ms: 0.144639
+  ...
+# Subtest: refuses location HTTP 403
+ok 8 - refuses location HTTP 403
+  ---
+  duration_ms: 0.17261
+  ...
+# Subtest: refuses location HTTP 401
+ok 9 - refuses location HTTP 401
+  ---
+  duration_ms: 0.17991
+  ...
+# Subtest: refuses location HTTP 500
+ok 10 - refuses location HTTP 500
+  ---
+  duration_ms: 0.37839
+  ...
+# Subtest: requires concrete location origin
+ok 11 - requires concrete location origin
+  ---
+  duration_ms: 0.257562
+  ...
+# Subtest: requires concrete location method
+ok 12 - requires concrete location method
+  ---
+  duration_ms: 0.166127
+  ...
+# Subtest: requires concrete location status
+ok 13 - requires concrete location status
+  ---
+  duration_ms: 0.194248
+  ...
+# Subtest: requires concrete location resourceType
+ok 14 - requires concrete location resourceType
+  ---
+  duration_ms: 0.19116
+  ...
+# Subtest: requires concrete location redirected
+ok 15 - requires concrete location redirected
+  ---
+  duration_ms: 0.225797
+  ...
+# Subtest: refuses location URL suffix ?other=1
+ok 16 - refuses location URL suffix ?other=1
+  ---
+  duration_ms: 0.257787
+  ...
+# Subtest: refuses location URL suffix /other
+ok 17 - refuses location URL suffix /other
+  ---
+  duration_ms: 0.16187
+  ...
+# Subtest: refuses object method mismatch
+ok 18 - refuses object method mismatch
+  ---
+  duration_ms: 0.213278
+  ...
+# Subtest: refuses object resourceType mismatch
+ok 19 - refuses object resourceType mismatch
+  ---
+  duration_ms: 0.198101
+  ...
+# Subtest: refuses object status mismatch
+ok 20 - refuses object status mismatch
+  ---
+  duration_ms: 0.128063
+  ...
+# Subtest: refuses object range mismatch
+ok 21 - refuses object range mismatch
+  ---
+  duration_ms: 0.12519
+  ...
+# Subtest: refuses object origin mismatch
+ok 22 - refuses object origin mismatch
+  ---
+  duration_ms: 0.123798
+  ...
+# Subtest: refuses object redirected mismatch
+ok 23 - refuses object redirected mismatch
+  ---
+  duration_ms: 0.109235
+  ...
+# Subtest: refuses object HTTP 403
+ok 24 - refuses object HTTP 403
+  ---
+  duration_ms: 0.104763
+  ...
+# Subtest: refuses object HTTP 401
+ok 25 - refuses object HTTP 401
+  ---
+  duration_ms: 0.094055
+  ...
+# Subtest: refuses object HTTP 500
+ok 26 - refuses object HTTP 500
+  ---
+  duration_ms: 0.105678
+  ...
+# Subtest: requires concrete object origin
+ok 27 - requires concrete object origin
+  ---
+  duration_ms: 0.106599
+  ...
+# Subtest: requires concrete object method
+ok 28 - requires concrete object method
+  ---
+  duration_ms: 0.098018
+  ...
+# Subtest: requires concrete object status
+ok 29 - requires concrete object status
+  ---
+  duration_ms: 0.09361
+  ...
+# Subtest: requires concrete object resourceType
+ok 30 - requires concrete object resourceType
+  ---
+  duration_ms: 7.987973
+  ...
+# Subtest: requires concrete object redirected
+ok 31 - requires concrete object redirected
+  ---
+  duration_ms: 0.332536
+  ...
+# Subtest: refuses object URL suffix ?other=1
+ok 32 - refuses object URL suffix ?other=1
+  ---
+  duration_ms: 0.240618
+  ...
+# Subtest: refuses object URL suffix /other
+ok 33 - refuses object URL suffix /other
+  ---
+  duration_ms: 5.332864
+  ...
+# Subtest: refuses other project
+ok 34 - refuses other project
+  ---
+  duration_ms: 0.281225
+  ...
+# Subtest: refuses other alias
+ok 35 - refuses other alias
+  ---
+  duration_ms: 0.170836
+  ...
+# Subtest: refuses other object
+ok 36 - refuses other object
+  ---
+  duration_ms: 0.158443
+  ...
+# Subtest: refuses wrong digest
+ok 37 - refuses wrong digest
+  ---
+  duration_ms: 0.159117
+  ...
+# Subtest: refuses wrong size
+ok 38 - refuses wrong size
+  ---
+  duration_ms: 0.153015
+  ...
+# Subtest: refuses truncation
+ok 39 - refuses truncation
+  ---
+  duration_ms: 0.154124
+  ...
+# Subtest: refuses corruption
+ok 40 - refuses corruption
+  ---
+  duration_ms: 6.721503
+  ...
+# Subtest: refuses other Runtime
+ok 41 - refuses other Runtime
+  ---
+  duration_ms: 0.369103
+  ...
+# Subtest: refuses other page
+ok 42 - refuses other page
+  ---
+  duration_ms: 0.202416
+  ...
+# Subtest: collector observes responses without intercepting and retains no private location or credentials
+ok 43 - collector observes responses without intercepting and retains no private location or credentials
+  ---
+  duration_ms: 0.874759
+  ...
+# Subtest: collector awaits complete headers and bodies while preserving response arrival order
+ok 44 - collector awaits complete headers and bodies while preserving response arrival order
+  ---
+  duration_ms: 44.764737
+  ...
+# Subtest: collector propagates failed location complete headers without an unhandled rejection
+ok 45 - collector propagates failed location complete headers without an unhandled rejection
+  ---
+  duration_ms: 0.778899
+  ...
+# Subtest: collector refuses location complete Origin missing
+ok 46 - collector refuses location complete Origin missing
+  ---
+  duration_ms: 0.497094
+  ...
+# Subtest: collector refuses location complete Origin https://wrong.test
+ok 47 - collector refuses location complete Origin https://wrong.test
+  ---
+  duration_ms: 0.24849
+  ...
+# Subtest: collector retains and refuses location complete Range
+ok 48 - collector retains and refuses location complete Range
+  ---
+  duration_ms: 0.313962
+  ...
+# Subtest: collector propagates failed object complete headers without an unhandled rejection
+ok 49 - collector propagates failed object complete headers without an unhandled rejection
+  ---
+  duration_ms: 0.624687
+  ...
+# Subtest: collector refuses object complete Origin missing
+ok 50 - collector refuses object complete Origin missing
+  ---
+  duration_ms: 0.362152
+  ...
+# Subtest: collector refuses object complete Origin https://wrong.test
+ok 51 - collector refuses object complete Origin https://wrong.test
+  ---
+  duration_ms: 3.73108
+  ...
+# Subtest: collector retains and refuses object complete Range
+ok 52 - collector retains and refuses object complete Range
+  ---
+  duration_ms: 0.2744
+  ...
+# Subtest: collector refuses missing location
+ok 53 - collector refuses missing location
+  ---
+  duration_ms: 0.25761
+  ...
+# Subtest: collector refuses missing object
+ok 54 - collector refuses missing object
+  ---
+  duration_ms: 0.166877
+  ...
+# Subtest: collector refuses repeated location
+ok 55 - collector refuses repeated location
+  ---
+  duration_ms: 4.737434
+  ...
+# Subtest: collector refuses repeated object
+ok 56 - collector refuses repeated object
+  ---
+  duration_ms: 0.479317
+  ...
+# Subtest: collector refuses reversed order
+ok 57 - collector refuses reversed order
+  ---
+  duration_ms: 0.231217
+  ...
+# Subtest: collector refuses failed body
+ok 58 - collector refuses failed body
+  ---
+  duration_ms: 0.147088
+  ...
+1..58
+# tests 58
+# suites 0
+# pass 58
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 163.252305

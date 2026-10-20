@@ -1,0 +1,35 @@
+TAP version 13
+# Subtest: verifies independent consumer graphs against frozen file bytes
+ok 1 - verifies independent consumer graphs against frozen file bytes
+  ---
+  duration_ms: 56.75064
+  ...
+# Subtest: fails closed when a frozen target is missing
+ok 2 - fails closed when a frozen target is missing
+  ---
+  duration_ms: 2.800717
+  ...
+# Subtest: fails closed when installed bytes or the exact package set changes
+ok 3 - fails closed when installed bytes or the exact package set changes
+  ---
+  duration_ms: 2.002106
+  ...
+# Subtest: fails postflight when a declared dependency graph changes
+ok 4 - fails postflight when a declared dependency graph changes
+  ---
+  duration_ms: 6.899259
+  ...
+# Subtest: fails postflight when the selected browser profile or executable bytes change
+ok 5 - fails postflight when the selected browser profile or executable bytes change
+  ---
+  duration_ms: 1.065407
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 77.888416

@@ -1,0 +1,30 @@
+TAP version 13
+# Subtest: original config defaults to Chromium 141 and retains all four original cases
+ok 1 - original config defaults to Chromium 141 and retains all four original cases
+  ---
+  duration_ms: 1.222668
+  ...
+# Subtest: Chrome 155 is a separate named environment using the identical four-case suite
+ok 2 - Chrome 155 is a separate named environment using the identical four-case suite
+  ---
+  duration_ms: 0.17986
+  ...
+# Subtest: unknown profiles refuse before source reads or browser launch, without a fallback
+ok 3 - unknown profiles refuse before source reads or browser launch, without a fallback
+  ---
+  duration_ms: 0.912369
+  ...
+# Subtest: executable hash covers the full file including bytes past the first chunk
+ok 4 - executable hash covers the full file including bytes past the first chunk
+  ---
+  duration_ms: 64.812768
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 71.20047

@@ -1,0 +1,405 @@
+{
+  "schema_version": 1,
+  "project_id": "project-1",
+  "timeline_id": "film",
+  "parent_revision": {
+    "revision_id": "authoring-parent-revision-42658224c1e68d235fde4217283034a46083238d6c9b5b4f4075d12360536a6f",
+    "content_digest": "sha256:a934be0ee43751cc3f510fde219e5bc57d766aed62bdd25a295ad8d883a8939a",
+    "payload": {
+      "config": {
+        "tracks": [
+          {
+            "id": "picture",
+            "kind": "visual"
+          }
+        ],
+        "clips": [
+          {
+            "id": "clip-a",
+            "track": "picture",
+            "asset": "picture",
+            "clipType": "media",
+            "at": 1,
+            "hold": 2,
+            "app": {
+              "org.example": {
+                "literal": "clip-a",
+                "clear": null
+              }
+            }
+          },
+          {
+            "id": "clip-b",
+            "track": "picture",
+            "asset": "picture",
+            "clipType": "media",
+            "at": 5,
+            "hold": 2,
+            "app": {
+              "org.example": {
+                "literal": "clip-a",
+                "clear": null
+              }
+            }
+          }
+        ],
+        "output": {
+          "fps": 29.97002997002997
+        },
+        "opaque": {
+          "timestamp": "authored timestamp",
+          "v": [
+            null,
+            false,
+            0
+          ]
+        }
+      },
+      "clips": [
+        {
+          "id": "clip-a",
+          "track": "picture",
+          "asset": "picture",
+          "clipType": "media",
+          "at": 1,
+          "hold": 2,
+          "app": {
+            "org.example": {
+              "literal": "clip-a",
+              "clear": null
+            }
+          }
+        },
+        {
+          "id": "clip-b",
+          "track": "picture",
+          "asset": "picture",
+          "clipType": "media",
+          "at": 5,
+          "hold": 2,
+          "app": {
+            "org.example": {
+              "literal": "clip-a",
+              "clear": null
+            }
+          }
+        }
+      ],
+      "registry": {
+        "assets": {
+          "picture": {
+            "media_id": "sha256:490a1419a083a4238fb33dd685cf234c86fc3dda3b078ba98c3ba00e6279ecce",
+            "type": "video"
+          }
+        }
+      },
+      "name": "Renamed Film",
+      "unknown": {
+        "opaque": [
+          "parent-1",
+          null
+        ]
+      },
+      "occurrences": [
+        {
+          "occurrence_id": "occ-a",
+          "shot_id": "shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f",
+          "placement": {
+            "start_ms": 8000,
+            "track": "picture"
+          },
+          "duration_ms": 10000,
+          "source_offset": 0,
+          "speed": 1,
+          "track": "picture",
+          "unknown": {
+            "literal": "chapter-shot"
+          },
+          "shot_revision_id": "authoring-shot-revision-e0bb9513655c6d7ffa070b4d3a43438fe1673c47e4a7f76a590d4fd7573f2386"
+        },
+        {
+          "occurrence_id": "occ-b",
+          "shot_id": "chapter-shot",
+          "placement": {
+            "start_ms": 10000,
+            "track": "picture"
+          },
+          "duration_ms": 10000,
+          "source_offset": 0,
+          "speed": 1,
+          "track": "picture",
+          "unknown": {
+            "literal": "chapter-shot"
+          },
+          "shot_revision_id": "shot-1"
+        }
+      ]
+    }
+  },
+  "shot_revisions": [
+    {
+      "shot_id": "chapter-shot",
+      "revision_id": "shot-1",
+      "internal_timeline_revision_id": "internal-1",
+      "payload": {
+        "name": "Chapter One",
+        "internal_timeline_revision_id": "internal-1",
+        "items": [
+          {
+            "item_id": "item-1",
+            "media_id": "sha256:490a1419a083a4238fb33dd685cf234c86fc3dda3b078ba98c3ba00e6279ecce",
+            "metadata": {
+              "opaque_literal": "item-1"
+            }
+          }
+        ],
+        "text_bindings": [
+          {
+            "slot": "narration",
+            "text": "A chapter"
+          }
+        ],
+        "metadata": {
+          "chapter": true
+        },
+        "unknown": {
+          "keep": null
+        }
+      },
+      "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775"
+    },
+    {
+      "shot_id": "shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f",
+      "revision_id": "authoring-shot-revision-e0bb9513655c6d7ffa070b4d3a43438fe1673c47e4a7f76a590d4fd7573f2386",
+      "internal_timeline_revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
+      "payload": {
+        "name": "Chapter One",
+        "internal_timeline_revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
+        "items": [
+          {
+            "item_id": "shot-item-placement-cb1bf5d05853ca0713af2d9450cfbb2f3d41bbda49e6b17c2d62b854e0b1c993",
+            "media_id": "sha256:490a1419a083a4238fb33dd685cf234c86fc3dda3b078ba98c3ba00e6279ecce",
+            "metadata": {
+              "opaque_literal": "item-1"
+            }
+          }
+        ],
+        "text_bindings": [
+          {
+            "slot": "narration",
+            "text": "A chapter"
+          }
+        ],
+        "metadata": {
+          "chapter": true
+        },
+        "unknown": {
+          "keep": null
+        }
+      },
+      "content_digest": "sha256:4b8459769a3dcff9fb25ea929fc10e99451f28b89d79e737675e4ccaef2b41c7"
+    }
+  ],
+  "internal_timeline_revisions": [
+    {
+      "revision_id": "internal-1",
+      "timeline_id": "chapter-1",
+      "payload": {
+        "tracks": [
+          {
+            "id": "picture",
+            "kind": "visual"
+          }
+        ],
+        "clips": [
+          {
+            "id": "clip-a",
+            "track": "picture",
+            "asset": "picture",
+            "clipType": "media",
+            "at": 1,
+            "hold": 4,
+            "app": {
+              "org.example": {
+                "literal": "clip-a",
+                "clear": null
+              }
+            },
+            "from": 2,
+            "to": 6,
+            "speed": 2
+          },
+          {
+            "id": "clip-b",
+            "track": "picture",
+            "asset": "picture",
+            "clipType": "media",
+            "at": 5,
+            "hold": 2,
+            "app": {
+              "org.example": {
+                "literal": "clip-a",
+                "clear": null
+              }
+            }
+          }
+        ],
+        "output": {
+          "fps": 29.97002997002997
+        },
+        "opaque": {
+          "timestamp": "authored timestamp",
+          "v": [
+            null,
+            false,
+            0
+          ]
+        },
+        "registry": {
+          "assets": {
+            "picture": {
+              "media_id": "sha256:490a1419a083a4238fb33dd685cf234c86fc3dda3b078ba98c3ba00e6279ecce",
+              "type": "video"
+            }
+          }
+        },
+        "unknown": [
+          1,
+          2
+        ]
+      },
+      "content_digest": "sha256:0693a443fc594c55a609396fbb0f92114b7a6bf1d880230818a76226c9648622"
+    },
+    {
+      "timeline_id": "film",
+      "revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
+      "payload": {
+        "tracks": [
+          {
+            "id": "picture",
+            "kind": "visual"
+          }
+        ],
+        "clips": [
+          {
+            "id": "clip-a",
+            "track": "picture",
+            "asset": "picture",
+            "clipType": "media",
+            "at": 1,
+            "hold": 4,
+            "app": {
+              "org.example": {
+                "literal": "clip-a",
+                "clear": null
+              }
+            },
+            "from": 2,
+            "to": 6,
+            "speed": 2
+          },
+          {
+            "id": "clip-b",
+            "track": "picture",
+            "asset": "picture",
+            "clipType": "media",
+            "at": 5,
+            "hold": 2,
+            "app": {
+              "org.example": {
+                "literal": "clip-a",
+                "clear": null
+              }
+            }
+          },
+          {
+            "id": "reserved-child",
+            "clipType": "media",
+            "asset": "reserved-new",
+            "track": "picture",
+            "at": 0.125,
+            "hold": 4,
+            "params": null,
+            "opaque": [
+              null,
+              false,
+              {}
+            ],
+            "from": 2,
+            "to": 6,
+            "speed": 2
+          }
+        ],
+        "output": {
+          "fps": 29.97002997002997
+        },
+        "opaque": {
+          "timestamp": "authored timestamp",
+          "v": [
+            null,
+            false,
+            0
+          ]
+        },
+        "registry": {
+          "assets": {
+            "picture": {
+              "media_id": "sha256:490a1419a083a4238fb33dd685cf234c86fc3dda3b078ba98c3ba00e6279ecce",
+              "type": "video"
+            },
+            "reserved-new": {
+              "media_id": "sha256:16bf35911a05050ea3c0300f3a35a6cf3a34701c24d7053d42620a81a59247c9",
+              "type": "video",
+              "generationId": "generation-new",
+              "variantId": "variant-new"
+            }
+          }
+        },
+        "unknown": [
+          1,
+          2
+        ]
+      },
+      "content_digest": "sha256:675451b17a8a1de14ed75d2160d3b975e6fb6e77fffcd6716905ca446b789029"
+    }
+  ],
+  "dependency_manifest": {
+    "shots": [
+      {
+        "shot_id": "chapter-shot",
+        "revision_id": "shot-1",
+        "internal_timeline_revision_id": "internal-1",
+        "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775"
+      },
+      {
+        "shot_id": "shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f",
+        "revision_id": "authoring-shot-revision-e0bb9513655c6d7ffa070b4d3a43438fe1673c47e4a7f76a590d4fd7573f2386",
+        "internal_timeline_revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
+        "content_digest": "sha256:4b8459769a3dcff9fb25ea929fc10e99451f28b89d79e737675e4ccaef2b41c7"
+      }
+    ],
+    "internal_timelines": [
+      {
+        "timeline_id": "chapter-1",
+        "revision_id": "internal-1",
+        "content_digest": "sha256:0693a443fc594c55a609396fbb0f92114b7a6bf1d880230818a76226c9648622"
+      },
+      {
+        "timeline_id": "film",
+        "revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
+        "content_digest": "sha256:675451b17a8a1de14ed75d2160d3b975e6fb6e77fffcd6716905ca446b789029"
+      }
+    ],
+    "media": [
+      {
+        "media_id": "sha256:490a1419a083a4238fb33dd685cf234c86fc3dda3b078ba98c3ba00e6279ecce",
+        "content_digest": "sha256:490a1419a083a4238fb33dd685cf234c86fc3dda3b078ba98c3ba00e6279ecce"
+      },
+      {
+        "media_id": "sha256:16bf35911a05050ea3c0300f3a35a6cf3a34701c24d7053d42620a81a59247c9",
+        "content_digest": "sha256:16bf35911a05050ea3c0300f3a35a6cf3a34701c24d7053d42620a81a59247c9"
+      }
+    ],
+    "documents": []
+  }
+}

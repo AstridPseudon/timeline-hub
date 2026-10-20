@@ -1,0 +1,50 @@
+TAP version 13
+# Subtest: 640: native dimensions reject the other canvas and invalid RGB on both hosts
+ok 1 - 640: native dimensions reject the other canvas and invalid RGB on both hosts
+  ---
+  duration_ms: 12.456322
+  ...
+# Subtest: 640: unchanged 2/255 and .001 bounds accept the baseline before rejecting a picture patch
+ok 2 - 640: unchanged 2/255 and .001 bounds accept the baseline before rejecting a picture patch
+  ---
+  duration_ms: 78.728105
+  ...
+# Subtest: 640: readiness reads all 45 original source markers directly in native RGB
+ok 3 - 640: readiness reads all 45 original source markers directly in native RGB
+  ---
+  duration_ms: 1.985642
+  ...
+# Subtest: 1920: native dimensions reject the other canvas and invalid RGB on both hosts
+ok 4 - 1920: native dimensions reject the other canvas and invalid RGB on both hosts
+  ---
+  duration_ms: 106.514515
+  ...
+# Subtest: 1920: unchanged 2/255 and .001 bounds accept the baseline before rejecting a picture patch
+ok 5 - 1920: unchanged 2/255 and .001 bounds accept the baseline before rejecting a picture patch
+  ---
+  duration_ms: 140.033009
+  ...
+# Subtest: 1920: readiness reads all 45 original source markers directly in native RGB
+ok 6 - 1920: readiness reads all 45 original source markers directly in native RGB
+  ---
+  duration_ms: 20.732929
+  ...
+# Subtest: original640 stays the default; only the separately named config selects native1920 with Chrome155
+ok 7 - original640 stays the default; only the separately named config selects native1920 with Chrome155
+  ---
+  duration_ms: 13.750328
+  ...
+# Subtest: both entries register the same four bodies with all twelve baseline frames before the picture negative
+ok 8 - both entries register the same four bodies with all twelve baseline frames before the picture negative
+  ---
+  duration_ms: 5.833347
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 389.147118
