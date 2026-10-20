@@ -241,7 +241,9 @@ def test_registered_plate_ssr_preserves_existing_draw_and_default_theme(prepared
     props, basis, _ = prepared_root([plate()])
     cases = {
         "empty": {}, "fill": {"fill": "paper"}, "token": {"fill": "  ink  "},
-        "image": {"src": SRC}, "background": {"src": SRC, "background": "#123456"},
+        "image": {"src": SRC},
+        # Explicit background still wins over fill, while the image remains drawn.
+        "background": {"src": SRC, "fill": "ink", "background": "#123456"},
         "transparent": {"fill": "transparent", "background": "transparent"},
         "tint": {"src": SRC, "tint": {"color": "#123456", "opacity": 0.4}},
         "wipe": {"src": SRC, "enter": "blockWipe", "exitWipe": "blockWipe"},
@@ -265,6 +267,15 @@ def test_registered_plate_ssr_preserves_existing_draw_and_default_theme(prepared
         "wipe": "087dfc0b1c79e255db26e347d8e0195032045ee8db0fe986c3637ddf2621543e",
     }
     assert result["registered"] is True
+    # These are the extracted plateSurface decisions exercised by the actual
+    # registered component, rather than source-location checks: a fill can
+    # paint an assetless plate, an asset still draws over its backing, and an
+    # explicit background wins over fill.
+    assert 'background-color:#F7F4ED' in result["result"]["fill"]["first"]
+    assert '<img' not in result["result"]["fill"]["first"]
+    assert 'background-color:#25241F' in result["result"]["token"]["first"]
+    assert '<img' in result["result"]["image"]["first"]
+    assert 'background-color:#123456' in result["result"]["background"]["first"]
     assert 'background-color:#F7F4ED' in result["result"]["image"]["first"]
     assert '<img' not in result["result"]["empty"]["first"]
 
