@@ -33,6 +33,7 @@ PATTERNS = [
     "packages/typescript/src/timeline-commit-types.ts",
     "runtime_protocol/schemas/*.json",
     "packages/typescript/src/index.ts",
+    "packages/typescript/src/operation-handle.ts",
     "packages/typescript/package.json",
     "packages/typescript/package-lock.json",
     "packages/typescript/tsconfig.json",

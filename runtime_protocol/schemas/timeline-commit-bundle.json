@@ -639,6 +639,22 @@
           ],
           "type": "object"
         },
+        "ClipSetElementArgs": {
+          "additionalProperties": false,
+          "description": "Replace an existing clip elementRef with another revision of the same element id, kind and selected pack owner. Admitted revisions require the exact retained schema_source declaration pin. The retired element_ref alias is removed. There is no clear: a clip keeps its element.",
+          "properties": {
+            "elementRef": {
+              "$ref": "#/$defs/ElementRef"
+            },
+            "schema_source": {
+              "$ref": "#/$defs/DocumentPin"
+            }
+          },
+          "required": [
+            "elementRef"
+          ],
+          "type": "object"
+        },
         "ClipSetParamsArgs": {
           "additionalProperties": false,
           "anyOf": [
@@ -842,6 +858,41 @@
               "if": {
                 "properties": {
                   "op": {
+                    "const": "shot.set"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/ShotSetArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "select": {
+                    "pattern": "^occurrence:(?!.*::)[^/]+/shot$",
+                    "type": "string"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
                     "const": "clip.set-params"
                   }
                 },
@@ -853,6 +904,36 @@
                 "properties": {
                   "args": {
                     "$ref": "#/$defs/ClipSetParamsArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  },
+                  "select": {
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$",
+                    "type": "string"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
+                    "const": "clip.set-element"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/ClipSetElementArgs"
                   },
                   "intent": {
                     "additionalProperties": false,
@@ -1123,6 +1204,111 @@
               "if": {
                 "properties": {
                   "op": {
+                    "const": "placement.create"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/PlacementCreateArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "select": {
+                    "pattern": "^occurrence:(?!.*::)[^/]+$",
+                    "type": "string"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
+                    "const": "placement.unplace"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/PlacementUnplaceArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "select": {
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$",
+                    "type": "string"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
+                    "const": "shot.pool"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/ShotPoolArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "select": {
+                    "pattern": "^occurrence:(?!.*::)[^/]+$",
+                    "type": "string"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
                     "const": "track.create"
                   }
                 },
@@ -1221,6 +1407,105 @@
                   "select": {
                     "pattern": "^(?!.*::)parent/clip:[^/]+$",
                     "type": "string"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
+                    "const": "occurrence.duplicate"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceDuplicateArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "select": {
+                    "pattern": "^occurrence:(?!.*::)[^/]+$",
+                    "type": "string"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
+                    "const": "occurrence.delete"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceDeleteArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "select": {
+                    "pattern": "^occurrence:(?!.*::)[^/]+$",
+                    "type": "string"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
+                    "const": "producer.guard"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/ProducerGuardArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  },
+                  "select": {
+                    "type": "null"
                   },
                   "version": {
                     "const": "1"
@@ -1327,6 +1612,30 @@
             "version",
             "select",
             "args"
+          ],
+          "type": "object"
+        },
+        "ElementRef": {
+          "additionalProperties": false,
+          "description": "The clip elementRef field, exactly as stored: draft refs carry no packId, admitted pack refs do.",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/ID"
+            },
+            "kind": {
+              "$ref": "#/$defs/ID"
+            },
+            "packId": {
+              "$ref": "#/$defs/ID"
+            },
+            "revision": {
+              "$ref": "#/$defs/ID"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "revision"
           ],
           "type": "object"
         },
@@ -1444,6 +1753,15 @@
         "OccurrenceAddMediaArgs": {
           "additionalProperties": false,
           "properties": {
+            "consumed": {
+              "description": "Raw IDs of existing occurrence clips whose rows an automatic builder read to choose the start or lane; each row is recorded as a guard.",
+              "items": {
+                "pattern": "^(?!.*::)[^/]+$",
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
             "media": {
               "$ref": "#/$defs/MediaSelection"
             },
@@ -1454,6 +1772,29 @@
           "required": [
             "row",
             "media"
+          ],
+          "type": "object"
+        },
+        "OccurrenceDeleteArgs": {
+          "additionalProperties": false,
+          "properties": {},
+          "type": "object"
+        },
+        "OccurrenceDuplicateArgs": {
+          "additionalProperties": false,
+          "properties": {
+            "occurrence_id": {
+              "pattern": "^(?!.*::)[^/]+$",
+              "type": "string"
+            },
+            "shot_id": {
+              "pattern": "^(?!.*::)[^/]+$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "occurrence_id",
+            "shot_id"
           ],
           "type": "object"
         },
@@ -1470,6 +1811,166 @@
           "required": [
             "old_media",
             "media"
+          ],
+          "type": "object"
+        },
+        "PlacementCreateArgs": {
+          "additionalProperties": false,
+          "properties": {
+            "consumed": {
+              "description": "Raw IDs of existing occurrence clips whose rows an automatic builder read to choose the start or lane; each row is recorded as a guard.",
+              "items": {
+                "pattern": "^(?!.*::)[^/]+$",
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            "hold": {
+              "description": "Literal occurrence-local image duration in seconds.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "id": {
+              "description": "Caller-reserved raw child clip ID; an occupied ID refuses.",
+              "pattern": "^(?!.*::)[^/]+$",
+              "type": "string"
+            },
+            "media": {
+              "$ref": "#/$defs/MediaSelection"
+            },
+            "on": {
+              "description": "Absolute timeline seconds; quantized once with pinned rational fps, then made occurrence-local.",
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "on",
+            "hold",
+            "media"
+          ],
+          "type": "object"
+        },
+        "PlacementUnplaceArgs": {
+          "additionalProperties": false,
+          "properties": {},
+          "type": "object"
+        },
+        "ProducerAdmittedTarget": {
+          "additionalProperties": false,
+          "properties": {
+            "base_publication_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "base_revision_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "project_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "timeline_id": {
+              "pattern": "\\S",
+              "type": "string"
+            }
+          },
+          "required": [
+            "project_id",
+            "timeline_id",
+            "base_revision_id",
+            "base_publication_id"
+          ],
+          "type": "object"
+        },
+        "ProducerAttemptPin": {
+          "additionalProperties": false,
+          "properties": {
+            "admitted_target": {
+              "$ref": "#/$defs/ProducerAdmittedTarget"
+            },
+            "attempt_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "executor_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "fence": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "proposal_digest": {
+              "$ref": "#/$defs/Digest",
+              "maxLength": 71,
+              "minLength": 71
+            },
+            "runtime_epoch": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "task_id": {
+              "pattern": "\\S",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "attempt_id",
+            "executor_id",
+            "fence",
+            "runtime_epoch",
+            "admitted_target",
+            "proposal_digest"
+          ],
+          "type": "object"
+        },
+        "ProducerGuardArgs": {
+          "additionalProperties": false,
+          "properties": {
+            "pin": {
+              "$ref": "#/$defs/ProducerAttemptPin"
+            }
+          },
+          "required": [
+            "pin"
+          ],
+          "type": "object"
+        },
+        "ProducerIdentity": {
+          "additionalProperties": false,
+          "properties": {
+            "attempt_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "executor_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "fence": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "runtime_epoch": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "task_id": {
+              "pattern": "\\S",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "attempt_id",
+            "executor_id",
+            "fence",
+            "runtime_epoch"
           ],
           "type": "object"
         },
@@ -1497,6 +1998,267 @@
         "ScopedId": {
           "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$",
           "type": "string"
+        },
+        "SettledProducerProposal": {
+          "additionalProperties": false,
+          "properties": {
+            "admitted_target": {
+              "$ref": "#/$defs/ProducerAdmittedTarget"
+            },
+            "commands": {
+              "$ref": "#/$defs/CommandBatch"
+            },
+            "producer": {
+              "$ref": "#/$defs/ProducerIdentity"
+            },
+            "proposal_digest": {
+              "$ref": "#/$defs/Digest",
+              "maxLength": 71,
+              "minLength": 71
+            },
+            "rationale": {
+              "type": "string"
+            },
+            "schema_version": {
+              "const": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "schema_version",
+            "producer",
+            "admitted_target",
+            "commands",
+            "rationale",
+            "proposal_digest"
+          ],
+          "type": "object"
+        },
+        "ShotPoolArgs": {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "description": "add appends the media alias to the shot pool and binds it; remove drops the alias and keeps the binding.",
+              "enum": [
+                "add",
+                "remove"
+              ]
+            },
+            "media": {
+              "$ref": "#/$defs/MediaSelection"
+            }
+          },
+          "required": [
+            "action",
+            "media"
+          ],
+          "type": "object"
+        },
+        "ShotSetArgs": {
+          "additionalProperties": false,
+          "anyOf": [
+            {
+              "properties": {
+                "values": {
+                  "minProperties": 1
+                }
+              }
+            },
+            {
+              "properties": {
+                "clear": {
+                  "minItems": 1
+                }
+              }
+            }
+          ],
+          "description": "Occurrence-owned raw shot payload fields: canonical root name and bounded scalar settings roots. Null is a value; clear removes presence. Unmentioned fields survive. Compound settings roots (steerableMotionSettings, phaseConfig, pairConfigs, shotImageIds, loras, structureVideo, modelSettingsByModel) are unsupported.",
+          "properties": {
+            "clear": {
+              "items": {
+                "enum": [
+                  "name",
+                  "settings.videoControlMode",
+                  "settings.prompt",
+                  "settings.negativePrompt",
+                  "settings.dimensionSource",
+                  "settings.generationMode",
+                  "settings.selectedModel",
+                  "settings.motionMode",
+                  "settings.selectedPhasePresetId",
+                  "settings.textBeforePrompts",
+                  "settings.textAfterPrompts",
+                  "settings.generationTypeMode",
+                  "settings.batchVideoFrames",
+                  "settings.batchVideoSteps",
+                  "settings.customWidth",
+                  "settings.customHeight",
+                  "settings.guidanceScale",
+                  "settings.amountOfMotion",
+                  "settings.enhancePrompt",
+                  "settings.turboMode",
+                  "settings.advancedMode",
+                  "settings.smoothContinuations",
+                  "settings.ltxHdResolution"
+                ]
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            "values": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "settings": {
+                  "additionalProperties": false,
+                  "minProperties": 1,
+                  "properties": {
+                    "advancedMode": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "amountOfMotion": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "batchVideoFrames": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "batchVideoSteps": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "customHeight": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "customWidth": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "dimensionSource": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "enhancePrompt": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "generationMode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "generationTypeMode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "guidanceScale": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "ltxHdResolution": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "motionMode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "negativePrompt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "prompt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "selectedModel": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "selectedPhasePresetId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "smoothContinuations": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "textAfterPrompts": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "textBeforePrompts": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "turboMode": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "videoControlMode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "values",
+            "clear"
+          ],
+          "type": "object"
         },
         "TargetKey": {
           "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token.",

@@ -17,6 +17,9 @@ from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest
 from runtime_protocol.util import canonical_json
 
 from astrid_runtime_client import WorkspaceClient
+from http_helpers import Api
+from test_timeline_authority_door import _snapshot
+from runtime_protocol.timeline_view import markdown, png
 from test_timeline_commit_acceptance import accept, context, prepared, validate_prepared
 
 
@@ -867,23 +870,33 @@ def test_markdown_png_custody_and_dedup(tmp_path):
     try:
         _publish(service, project, _publication(project), idempotency_key="publish-1")
         options = {"occurrence": "second", "neighbors": 1, "formats": ["md", "png"]}
-        result = service.create_timeline_view(project, "main", options)
-        again = service.create_timeline_view(project, "main", options)
-        assert result["artifacts"]["md"] == again["artifacts"]["md"]
+        result = service.create_timeline_view(project, "main", options, idempotency_key="view-1")
+        again = service.create_timeline_view(project, "main", options, idempotency_key="view-1")
+        assert result == again
+        count = service.store.conn.execute("SELECT COUNT(*) FROM objects").fetchone()[0]
+        assert service.create_timeline_view(project, "main", options, idempotency_key="view-2") == result
+        assert service.store.conn.execute("SELECT COUNT(*) FROM objects").fetchone()[0] == count
+        before = _snapshot(service)
+        with pytest.raises(ConflictError, match="different input"):
+            service.create_timeline_view(project, "main", {"formats": ["md"]}, idempotency_key="view-1")
+        assert _snapshot(service) == before
         assert result["formats"]["png"]["status"] == "available"
         object_id = result["artifacts"]["md"]["object_id"]
         assert service.object_location(project, object_id)["verified"] is True
         _, content = service.object(object_id)
+        assert content == markdown(result["inspection"])
         assert b"Parent revision: parent-1" in content
         assert b"first" in content and b"second" in content and b"third" in content
         assert b"A &#124; &lt;B&gt;" in content
         png_id = result["artifacts"]["png"]["object_id"]
+        assert service.object(png_id)[1] == png(result["inspection"])
         assert service.object(png_id)[1].startswith(b"\x89PNG\r\n\x1a\n")
-        assert "png" in service.create_timeline_view(project, "main", {"formats": ["png"]})["artifacts"]
+        assert "png" in service.create_timeline_view(project, "main", {"formats": ["png"]}, idempotency_key="view-png")["artifacts"]
     finally:
         service.close()
     reopened = RuntimeService(root)
     try:
+        assert reopened.create_timeline_view(project, "main", options, idempotency_key="view-1") == result
         assert reopened.object_location(project, object_id)["verified"] is True
         assert reopened.object(object_id)[1] == content
         assert reopened.object_location(project, png_id)["verified"] is True
@@ -902,7 +915,7 @@ def test_daemon_generated_client_without_executor_catalog(tmp_path):
         client = WorkspaceClient(daemon.endpoint, daemon.token)
         inspection = client.inspect_timeline(project, "main", {"occurrence": "second", "neighbors": 1})
         assert inspection["revision_id"] == "parent-1"
-        view = client.create_timeline_view(project, "main", {"occurrence": "second", "formats": ["md", "png"]})
+        view = client.create_timeline_view(project, "main", {"occurrence": "second", "formats": ["md", "png"]}, idempotency_key="client-view")
         assert view["formats"]["png"]["status"] == "available"
         assert b"second" in client.get_object(view["artifacts"]["md"]["object_id"]).data
         assert daemon.service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0
@@ -969,7 +982,7 @@ def test_canonical_head_names_and_parent_targets_are_distinct_from_occurrences(t
         selected = service.inspect_timeline(project, "main", {"clip": "effect-code-only"})
         assert selected["target_count"] == 0
         assert [clip["clip_id"] for clip in selected["selected_parent_clips"]] == ["effect-code-only"]
-        view = service.create_timeline_view(project, "main", {"clip": "effect-code-only", "formats": ["md"]})
+        view = service.create_timeline_view(project, "main", {"clip": "effect-code-only", "formats": ["md"]}, idempotency_key="view-effect")
         assert view["inspection"]["authority"] == "runtime_parent_composition"
         assert [clip["clip_id"] for clip in view["inspection"]["selected_parent_clips"]] == ["effect-code-only"]
     finally:
@@ -1036,3 +1049,66 @@ def test_occurrence_speed_discrepancy_keeps_authored_values_and_marks_missing_pr
     assert 'render_timing' not in projected[0]
     assert 'does not apply occurrence speed/source_offset' in projected[0]['render_timing_unknown']
     assert projected[0]['authored_fields']['hold'] == 2
+
+
+def test_view_write_authority_and_key_before_any_persistence(tmp_path, monkeypatch):
+    service, project, root = _service(tmp_path)
+    try:
+        _publish(service, project, _publication(project), idempotency_key="publish-1")
+    finally:
+        service.close()
+    daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
+    try:
+        reader, _ = daemon.credentials.provision("view-reader", ["projects:read"])
+        writer, _ = daemon.credentials.provision("view-writer", ["projects:write"])
+        path = f"/v1/projects/{project}/timelines/main/views"
+        options = {"formats": ["md", "png"]}
+        with monkeypatch.context() as denied:
+            def no_ingest(*args, **kwargs):
+                pytest.fail("refused view reached CAS ingestion")
+            denied.setattr(daemon.service, "ingest", no_ingest)
+            before = _snapshot(daemon.service)
+            for token, key, status in (
+                (reader, "reader-view", 401), (reader, None, 401),
+                (writer, None, 400), (writer, "", 400), (writer, "bad key", 400),
+            ):
+                with pytest.raises(RuntimeError) as caught:
+                    Api(daemon.endpoint, token).request(
+                        "POST", path, options,
+                        headers={"Idempotency-Key": key} if key is not None else {},
+                    )
+                assert caught.value.status == status
+                assert _snapshot(daemon.service) == before
+            inspection = Api(daemon.endpoint, reader).request(
+                "POST", f"/v1/projects/{project}/timelines/main/inspect", options,
+            )
+            assert inspection["revision_id"] == "parent-1"
+            assert _snapshot(daemon.service) == before
+        owner = WorkspaceClient(daemon.endpoint, daemon.token)
+        result = owner.create_timeline_view(project, "main", options, idempotency_key="owner-view")
+        assert owner.create_timeline_view(project, "main", options, idempotency_key="owner-view") == result
+        for kind, render in (("md", markdown), ("png", png)):
+            artifact = result["artifacts"][kind]
+            assert owner.get_object(artifact["object_id"]).data == render(result["inspection"])
+            assert daemon.service.object_location(project, artifact["object_id"])["verified"] is True
+        # View persistence needs no independent objects:write authority.
+        assert WorkspaceClient(daemon.endpoint, writer).create_timeline_view(
+            project, "main", options, idempotency_key="writer-view",
+        ) == result
+    finally:
+        daemon.stop()
+
+
+def test_view_retry_keeps_original_revision_after_head_advances(tmp_path):
+    service, project, _ = _service(tmp_path)
+    try:
+        _publish(service, project, _publication(project), idempotency_key="publish-1")
+        original = service.create_timeline_view(project, "main", idempotency_key="view-head")
+        publication = _publication(project, revision="parent-2", expected_head="parent-1")
+        _publish(service, project, publication, idempotency_key="publish-2")
+        assert service.inspect_timeline(project, "main")["revision_id"] == "parent-2"
+        before = _snapshot(service)
+        assert service.create_timeline_view(project, "main", idempotency_key="view-head") == original
+        assert _snapshot(service) == before
+    finally:
+        service.close()

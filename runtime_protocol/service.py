@@ -2550,9 +2550,17 @@ class RuntimeService:
         with self.store._mutex:
             return inspect_timeline_closure(self.store.conn, project_row["id"], timeline_id, options)
 
-    def create_timeline_view(self, project, timeline_id, options=None):
+    @_durable_mutation
+    def create_timeline_view(self, project, timeline_id, options=None, *, idempotency_key=None):
         """Persist deterministic declared-input views as project-owned objects."""
+        idempotency_key = require_idempotency_key(idempotency_key)
         project_row = self.store.get_project(project)
+        request_hash = hashlib.sha256(canonical_json({
+            "project_id": project_row["id"], "timeline_id": timeline_id, "options": options or {},
+        }).encode()).hexdigest()
+        replay = self._command_replay("timeline.view", timeline_id, idempotency_key, request_hash, with_receipt=False)
+        if replay is not None:
+            return replay
         inspection = self.inspect_timeline(project_row["id"], timeline_id, options)
         formats = inspection["selectors"].get("formats") or ["md"]
         artifacts = {}
@@ -2579,13 +2587,14 @@ class RuntimeService:
                 "digest": resource["digest"], "size": resource["size"],
                 "media_type": resource["media_type"], "filename": resource.get("filename"),
             }
-        return {
+        result = {
             "inspection": inspection,
             "evidence_kind": "declared_inputs",
             "render_requested": False,
             "formats": {kind: {"status": value["status"], "object_id": value["object_id"]} for kind, value in artifacts.items()},
             "artifacts": artifacts,
         }
+        return self._command_record("timeline.view", timeline_id, idempotency_key, request_hash, result, with_receipt=False)
 
     @_durable_mutation
     def replace_parent_composition_media(self, project_id, timeline_id, body, *, idempotency_key=None):
