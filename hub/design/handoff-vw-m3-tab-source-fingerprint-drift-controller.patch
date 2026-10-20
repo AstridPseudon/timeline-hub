@@ -1,0 +1,61 @@
+diff --git a/tests/e2e/timeline/tab-audio-capture.controller.mjs b/tests/e2e/timeline/tab-audio-capture.controller.mjs
+index 744334082..3b05ec0c2 100644
+--- a/tests/e2e/timeline/tab-audio-capture.controller.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.controller.mjs
+@@ -151,14 +151,6 @@ function packageGraphFingerprint() {
+   };
+ }
+ 
+-function renderGraphFingerprint() {
+-  const nodeModules = dirname(dirname(require.resolve('@remotion/player/package.json')));
+-  return Object.fromEntries(Object.entries(FROZEN_RENDER_GRAPH_HASHES).map(([relativePath]) => [
+-    relativePath,
+-    sha256(readFileSync(join(nodeModules, relativePath))),
+-  ]));
+-}
+-
+ function browserFingerprint() {
+   if (!existsSync(BROWSER_EXECUTABLE)) throw new Error(`Pinned Chrome executable is missing: ${BROWSER_EXECUTABLE}`);
+   const executable = realpathSync(BROWSER_EXECUTABLE);
+@@ -186,6 +178,14 @@ function browserFingerprint() {
+   return fingerprint;
+ }
+ 
++export function renderGraphFingerprint() {
++  const nodeModules = dirname(dirname(dirname(require.resolve('@remotion/player/package.json'))));
++  return Object.fromEntries(Object.entries(FROZEN_RENDER_GRAPH_HASHES).map(([relativePath]) => [
++    relativePath,
++    sha256(readFileSync(join(nodeModules, relativePath))),
++  ]));
++}
++
+ export function sourceFingerprint() {
+   const allTracked = trackedFiles();
+   const selectedInputs = inputFiles(allTracked);
+diff --git a/tests/e2e/timeline/tab-audio-capture.controller.test.mjs b/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+index a8a5e9d9a..d46aaf5d4 100644
+--- a/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+@@ -6,6 +6,7 @@ import {
+   BROWSER_EXECUTABLE,
+   BROWSER_VERSION,
+   PROFILE,
++  renderGraphFingerprint,
+ } from './tab-audio-capture.controller.mjs';
+ 
+ const fingerprint = {
+@@ -88,3 +89,14 @@ test('postflight rejects a dependency graph change', () => {
+     browser: {...fingerprint.browser, tree: {sha256: '9'.repeat(64)}},
+   }), /browser/);
+ });
++
++test('render graph fingerprint resolves the package root and all frozen files', () => {
++  assert.deepEqual(renderGraphFingerprint(), {
++    '@remotion/player/dist/cjs/PlayerUI.js': '5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb',
++    '@remotion/player/dist/cjs/use-player-methods.js': 'ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46',
++    '@remotion/player/dist/cjs/use-playback.js': '6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0',
++    '@remotion/player/dist/esm/index.mjs': 'd3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12',
++    'remotion/dist/esm/index.mjs': '5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28',
++    'remotion/dist/cjs/audio/shared-audio-tags.js': '949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8',
++  });
++});

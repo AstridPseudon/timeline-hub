@@ -11,8 +11,12 @@ Readonly scan preparation: workers/vw-m3-owner-film-cliplook-scan/ORCHREPORT.md.
 
 04:33 supersedes the earlier input request: owner data is NOT a project blocker and must not be requested again. Portable tools package preparation vw-m4-portable-owner-film-scanner will provide the exact local command; until then no portable run is claimed. Existing scanner source imports absolute ORCH helper and is not ready to ship unchanged.
 
-## 4. Shared public default theme (approved 2026-10-20 05:57 UTC)
+## 4. SUPERSEDED public-default proposal (05:57, reversed by 06:07 decision)
 
 The implicit render default now follows the public Composition DEFAULT_THEME. Historical Agent exports used navy #050814, Arial, cyan accents, smaller text and450ms fades; the public default uses black, Georgia, white accents, its published text sizes and250ms fades. Preview and export must receive the same resolved theme. Explicit pinned or authored film themes stay explicit; partial overrides inherit the approved shared default. This intentional visible change needs owner viewing for films relying on implicit theme values.
 
 The read-only scanner covers curves, element clip look, continuous audio and declaration inventories; it does not prove theme appearance or classify every implicit-theme dependency. Inspect uncovered contain sidebands and theme-aware text/effects in the duplicate film. App ground must paint the selected resolved background, including explicit nonblack themes. Arbitrary runtime host-theme transport and cross-consumer nested override differences remain unqualified; do not interpret a matching theme slug as matching resolved style.
+
+## 5. Shared resolved export theme (approved 2026-10-20 06:07 UTC; supersedes section4)
+
+Existing final-export style is authoritative: Agent builtin banodoco-default navy#050814, Arial, cyan and the complete existing style remain. Implicit App preview black/Georgia/white changes to match the SAME resolved theme source, with no copied literals. Explicit film themes are always preserved; no film rewrite or hidden fixture override. Review previews of films relying on implicit style, including contain sidebands and theme-aware text/effects. Custom runtime-pinned theme transport and nested-merge behavior remain unqualified until actual positives. Section4 is historical and is NOT the adopted style. The scanner does not prove theme appearance or classify every implicit-style dependency.

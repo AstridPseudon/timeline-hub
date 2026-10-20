@@ -1,0 +1,38 @@
+diff --git a/remotion/scene-query.mjs b/remotion/scene-query.mjs
+index 820003554..7c0002a66 100644
+--- a/remotion/scene-query.mjs
++++ b/remotion/scene-query.mjs
+@@ -31,7 +31,7 @@ try {
+       }
+     }
+     prepared = prepareScene(tracks, assets, fps, width, height,
+-      {roles, elements: new Set(elements ?? [])});
++      {roles: Object.assign(Object.create(null), roles), elements: new Set(elements ?? [])});
+   }
+   process.stdout.write(JSON.stringify(frames.map(frame => querySceneFrame(prepared, frame))));
+ } catch (error) {
+diff --git a/tests/packs/rendering/test_scene_answers.py b/tests/packs/rendering/test_scene_answers.py
+index eb7b67eb3..2f43c0385 100644
+--- a/tests/packs/rendering/test_scene_answers.py
++++ b/tests/packs/rendering/test_scene_answers.py
+@@ -138,6 +138,20 @@ def test_resolved_painter_order_and_compiled_payload_are_preserved(installed, mo
+     assert [layer["clipId"] for layer in answers[0]["layers"]] == ["exact:first", "front:exact-id"]
+ 
+ 
++@pytest.mark.parametrize("clip_id", ["__proto__", "constructor", "toString"])
++@pytest.mark.parametrize("role", [None, "background"])
++def test_reserved_clip_ids_use_only_authored_role_overrides(installed, clip_id, role):
++    payload = scene(clips=[
++        {"id": clip_id, "track": "plate", "clipType": "custom", "at": 0, "hold": 1},
++    ], transitions=[])
++    if role is not None:
++        payload["roles"] = {clip_id: role}
++    answer = scene_answers.frames_at(payload, [0])[0]
++    assert answer["layers"][0]["clipId"] == clip_id
++    assert answer["layers"][0]["role"] == (role or "picture")
++    assert answer["coverage"] == "UNKNOWN"
++
++
+ def test_unknown_custom_modifier_and_unresolved_media_stay_unknown(installed):
+     payload = scene(clips=[
+         {"id": "custom", "at": 0, "hold": 1, "clipType": "my-component",
