@@ -54,10 +54,8 @@ from tests.sdk.test_timeline_commit_provider import source_fixture
 context = json.load(sys.stdin)
 literal = recipe.legacy_document()
 source = source_fixture('transcript')
-recipe.MEDIA = context['media']
-recipe.source_fixture = lambda kind: {'pin': context['pin']}
-bound = recipe.legacy_document()
-bound['project_id'] = context['project']
+bound = recipe.legacy_document(project_id=context['project'], media_id=context['media'],
+                               transcript_pin=context['pin'])
 assert literal == json.loads(recipe.FIXTURE.read_text())['input']
 print(json.dumps({'literal': literal, 'literal_source': source, 'bound': bound}))
 """
@@ -80,7 +78,7 @@ print(json.dumps({'literal': literal, 'literal_source': source, 'bound': bound})
         service.close()
 
 
-def test_bound_factory_parent_with_runtime_supported_source_reads_back_exactly(legacy):
+def test_bound_factory_parent_with_runtime_supported_source_reads_back_exactly(legacy, monkeypatch):
     # This qualifies the raw-parent/storage seam with an ordinary Runtime
     # transcript. It does NOT qualify Agent's detached lines-shaped source;
     # its separate exact-source refusal below remains a handoff blocker.
@@ -92,6 +90,14 @@ def test_bound_factory_parent_with_runtime_supported_source_reads_back_exactly(l
     expected_payload = copy.deepcopy(literal_payload)
     expected_payload["registry"]["assets"]["image"]["media_id"] = source["content"]["media_id"]
     assert document["parent_revision"]["payload"] == expected_payload
+    from timeline_trusted_bootstrap import request_identity
+
+    def captured_request_identity(context):
+        assert context["request"]["commands"][0]["created"] == []
+        assert context["invocation"]["body"] == context["request"]
+        return request_identity(context)
+
+    monkeypatch.setattr("timeline_trusted_bootstrap.request_identity", captured_request_identity)
     result = seed_trusted_legacy_parent(service, document, idempotency_key="legacy-setup")
     assert document == original
     assert result["data"]["canonical_document"] == original
@@ -123,6 +129,7 @@ def test_bound_factory_parent_with_runtime_supported_source_reads_back_exactly(l
         assert setup["provider_version"] == "test-only-trusted-bootstrap"
         record = setup["records"]["commands"][0]
         assert record["command"]["op"] == "test.trusted-legacy-bootstrap"
+        assert record["command"]["created"] == record["created"] == []
         assert record["writes"][0]["after"]["value"] == parent["payload"]
         assert record["dependencies"][0]["pin"] == pin
         inspected = runtime.inspect_timeline(project, timeline, {"detail": True})

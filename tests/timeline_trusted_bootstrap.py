@@ -50,7 +50,7 @@ def seed_trusted_legacy_parent(service, document, *, idempotency_key):
         raise ValidationError("trusted setup requires an empty bootstrap ancestry")
     original_head = {"revision_id": base["revision_id"], "publication_id": base["publication_id"]}
     command = {"schema_version": 1, "op": "test.trusted-legacy-bootstrap", "version": "1",
-               "select": "parent", "args": {"document_digest": digest(document)}}
+               "select": "parent", "args": {"document_digest": digest(document)}, "created": []}
     request = {"api_version": 1, "project_id": project, "timeline_id": timeline,
                "base_revision_id": original_head["revision_id"],
                "base_publication_id": original_head["publication_id"], "commands": [command],
