@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T22:30:26Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 0m -->
+<!-- viewing | 2026-10-20T22:36:15Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 6m -->
 # viewing — 2026-10-20 22:29 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3/M4 open. Rules rev 2026-10-20 read.
 Integrated: Composition 4f325f1e1; public source 5a4e9b72 /0.0.13, archive9412ae25/all77, npm test76 PASS. Broad D10 DELETED: Agentf711, App copiese245 and normal provenancead1b. Dead inspector a760 and renderPipeline971e are DELETED. D08 runtime factory candidate429d merged as35814b16a (3935 is a different App merge); D08e ledger DELETED,14 lines removed,140 tests/no assertion retirement.
