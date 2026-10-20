@@ -1,19 +1,20 @@
 """Slicing an audio clip must preserve its original fade phase.
 
-The slicer rewrites at/from/to, so two different originals can slice to the
-same clip; the host therefore records the original phase on the slice.  The
-PCM requirements need the trusted prepared-source producer, which this tree
-does not have yet (docs/design/audio-compile-contract.md, join plan).
+The inactive producer retains the original compiled clip across the host
+slice. These local WAV tests do not qualify HTTP serving or normal rendering.
 """
 
 import copy
+import struct
 
 import pytest
 
 from astrid.core.rendering.contracts import FrameWindow
 from astrid.core.rendering.service import RenderService
+from tests.packs.rendering import test_normal_audio_sources
 
 WINDOW = FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1))
+stage = test_normal_audio_sources.stage
 
 
 def _timeline():
@@ -53,14 +54,37 @@ def test_slice_origin_is_host_owned_and_only_for_fading_clips():
 
 @pytest.mark.parametrize("asset", ["sound", "other"])
 @pytest.mark.parametrize("tracks", [None, ("A1", "A2")], ids=["window", "layer"])
-@pytest.mark.xfail(
-    strict=True,
-    raises=ImportError,
-    reason="Agent source owner: trusted prepared-source producer "
-    "(normal_audio) must translate the recorded origin so the 0..2s clip "
-    "sliced at .5s with fadeIn .5 keeps (.25, -.125) at source .5",
-)
-def test_half_second_slice_pcm_equals_original_on_host_served_wav(tracks, asset):
-    from astrid.packs.rendering.rendering.renderers.remotion.normal_audio import (  # noqa: F401
-        prepare_normal_audio_sources,
-    )
+def test_half_second_slice_pcm_equals_original_on_attempt_wav(stage, tracks, asset):
+    props, prepare, attempt, _, _ = stage
+    props["timeline"]["clips"] = _timeline()["clips"]
+    clip = props["timeline"]["clips"][0]
+    clip["asset"] = asset
+    clip["volume"] = 3
+    clip["app"] = {"astrid_slice_origin": {"id": "forged", "from": 99, "to": 100}}
+    before = copy.deepcopy(props)
+    whole = prepare(props)
+    sliced = prepare(props, window=WINDOW, tracks=tracks)
+
+    def wav(value):
+        source = value["timeline"]["clips"][0]["audio"]["render_source"]
+        path = attempt.parent / source["file"].removeprefix("http://attempt.invalid/")
+        path.relative_to(attempt)
+        assert source["playback_rate"] == 1
+        return path.read_bytes()
+
+    whole_wav, slice_wav = wav(whole), wav(sliced)
+    assert len(slice_wav) == len(whole_wav) == 44 + 30000 * 2 * 4
+    for actual, expected in zip(struct.iter_unpack("<f", slice_wav[44:]),
+                                struct.iter_unpack("<f", whole_wav[44:]), strict=True):
+        assert actual[0] == pytest.approx(expected[0], abs=1e-7)
+    expected = (0.25, -0.125) if asset == "sound" else (-0.5, 0.0625)
+    assert struct.unpack_from("<ff", slice_wav, 44 + 15000 * 8) == expected
+    sliced_clip = sliced["timeline"]["clips"][0]
+    assert sliced_clip["audio"]["render_source"]["source_from"] == 0.5
+    assert sliced_clip["app"]["astrid_slice_origin"] == {
+        "id": "sound", "at": 0, "from": 0, "to": 2,
+    }
+    assert sliced_clip["volume"] == 3
+    assert sliced["timeline"]["tracks"][0]["volume"] == 0.5
+    assert sliced["assets"] == props["assets"]
+    assert props == before
