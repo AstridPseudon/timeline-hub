@@ -79,6 +79,7 @@ def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path):
 
     class FakeProcess:
         pid = 123
+        returncode = None
 
         def poll(self):
             return None
@@ -104,8 +105,15 @@ def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path):
             pass
 
     boundary = LocalRuntimeBoundary()
+    # The fake broker and wrapper environment assertions cover the broker-backed
+    # launch path; Linux otherwise correctly uses native custody and has no
+    # broker-provided environment to inspect.
+    monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setattr("astrid_runtime.runtime_boundary.RoleBoundCustodyBroker", FakeBroker)
-    monkeypatch.setattr("astrid_runtime.runtime_boundary.default_process_identity", lambda _pid: {"birth_id": "birth"})
+    monkeypatch.setattr(
+        "astrid_runtime.runtime_boundary.default_process_identity",
+        lambda pid: {"pid": pid, "uid": os.getuid(), "birth_id": "birth"},
+    )
     monkeypatch.setattr("astrid_runtime.runtime_boundary.publish_active_capability", lambda *_a, **_k: None)
     monkeypatch.setattr("astrid_runtime.runtime_boundary.subprocess.Popen", fake_popen)
     monkeypatch.setattr(boundary, "_wait_endpoint", lambda _support, _process: "http://127.0.0.1:1")
