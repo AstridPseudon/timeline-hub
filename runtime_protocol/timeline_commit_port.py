@@ -320,6 +320,8 @@ class RequestCommitPort:
 
     def validate(self, prepared):
         from .timeline_commit_inputs import validate_captured_document_inputs
+        if self.__closed:
+            raise AuthorizationError("timeline commit port is closed")
         self.__authorize()
         for revision, captured in self.__closures.items():
             if self.__store.revision_closure(self.__project, self.__timeline, revision) != captured:
