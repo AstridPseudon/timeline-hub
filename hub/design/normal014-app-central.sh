@@ -30,9 +30,13 @@ overlay="$run_root/app"
 mkdir -p "$overlay"
 cp -a "$app_root"/. "$overlay"/
 rm -rf "$overlay/node_modules"
-node_modules=$(realpath "$LOCKED_GRAPH/node_modules")
-test "$node_modules" = "$LOCKED_GRAPH/node_modules"
-ln -s "$node_modules" "$overlay/node_modules"
+source_node_modules=$(realpath "$LOCKED_GRAPH/node_modules")
+test "$source_node_modules" = "$LOCKED_GRAPH/node_modules"
+private_node_modules="$run_root/private-node-modules"
+prepare_private_node_graph "$source_node_modules" "$private_node_modules"
+test -x "$private_node_modules/.bin/vite"
+test "$(realpath "$private_node_modules")" = "$private_node_modules"
+ln -s "$private_node_modules" "$overlay/node_modules"
 
 OVERLAY="$overlay" RUNTIME_SHA="$RUNTIME_SHA" node --input-type=module - <<'JS'
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -54,10 +58,35 @@ test "$(sha256sum src/integrations/runtime/generated.ts | cut -d' ' -f1)" = c422
 test "$(sha256sum src/integrations/runtime/timeline-commit-types.ts | cut -d' ' -f1)" = f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
 test "$(sha256sum vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json | cut -d' ' -f1)" = f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1
 
+mkdir -p "$run_root/npm-cache" "$run_root/pw-cache" "$run_root/browser-output" "$run_root/tmp" "$run_root/vite-cache"
+export ASTRID_CHECKOUT="$agent"
+export ASTRID_PYTHON="$NORMAL014_PYTHON"
+export ASTRID_RUNTIME_CHECKOUT="$runtime"
+export ASTRID_RUNTIME_PYTHON="$NORMAL014_PYTHON"
+export TIMELINE_BUNDLE_AGENT_HEAD="$AGENT_SHA"
+export TIMELINE_BUNDLE_RUNTIME_HEAD="$RUNTIME_SHA"
+export PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+export PWTEST_CACHE_DIR="$run_root/pw-cache"
+export PLAYWRIGHT_OUTPUT_DIR="$run_root/browser-output"
+export npm_config_cache="$run_root/npm-cache"
+export VITE_CACHE_DIR="$run_root/vite-cache"
+export TMPDIR="$run_root/tmp"
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONNOUSERSITE=1
+
+# Exercise the same hosted build that Playwright's global setup invokes, before
+# any browser work.  The output is in the disposable overlay and Vite's
+# node_modules/.vite cache is private because the graph above is private.
+cd "$overlay"
+npm run build:hosted
+test -f "$overlay/dist/index.html"
+test "$(realpath "$overlay/dist")" = "$overlay/dist"
+test -f "$private_node_modules/.bin/vite"
+echo "normal014 App PRE-browser: private npm/Vite caches and hosted build output verified"
+
 if [ "$mode" = preflight ]; then
   mkdir -p "$run_root/vitest-cache" "$run_root/tmp"
   printf '%s\n' "const path = require('node:path');" "global.__dirname = path.resolve(process.cwd(), 'config/testing');" > "$run_root/vitest-runner.cjs"
-  cd "$overlay"
   TMPDIR="$run_root/tmp" VITE_CACHE_DIR="$run_root/vitest-cache" \
     node --require "$run_root/vitest-runner.cjs" node_modules/vitest/vitest.mjs list \
       --config config/testing/vitest.config.ts --configLoader=runner --no-cache \
@@ -77,22 +106,6 @@ if [ "$mode" = preflight ]; then
   echo "normal014 App preflight: private vendor-lock, provider collection, Chromium, Playwright collection, and tuple/artifact bytes verified"
   exit 0
 fi
-
-mkdir -p "$run_root/npm-cache" "$run_root/pw-cache" "$run_root/browser-output" "$run_root/tmp" "$run_root/vite-cache"
-export ASTRID_CHECKOUT="$agent"
-export ASTRID_PYTHON="$NORMAL014_PYTHON"
-export ASTRID_RUNTIME_CHECKOUT="$runtime"
-export ASTRID_RUNTIME_PYTHON="$NORMAL014_PYTHON"
-export TIMELINE_BUNDLE_AGENT_HEAD="$AGENT_SHA"
-export TIMELINE_BUNDLE_RUNTIME_HEAD="$RUNTIME_SHA"
-export PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
-export PWTEST_CACHE_DIR="$run_root/pw-cache"
-export PLAYWRIGHT_OUTPUT_DIR="$run_root/browser-output"
-export npm_config_cache="$run_root/npm-cache"
-export VITE_CACHE_DIR="$run_root/vite-cache"
-export TMPDIR="$run_root/tmp"
-export PYTHONDONTWRITEBYTECODE=1
-export PYTHONNOUSERSITE=1
 
 exec flock -w 600 /home/user/work/.app-m1-browser.lock \
   node node_modules/playwright/cli.js test --config playwright.three-products.config.ts \

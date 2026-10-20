@@ -85,6 +85,84 @@ if (trim.trimBefore !== 15 || trim.trimAfter !== 45) throw new Error(`unexpected
 JS
 }
 
+prepare_private_node_graph() {
+  source_node_modules=$1
+  private_node_modules=$2
+  test "$source_node_modules" != "$private_node_modules"
+  test "$(realpath "$source_node_modules")" = "$source_node_modules"
+  test ! -e "$private_node_modules"
+  SOURCE_NODE_MODULES="$source_node_modules" PRIVATE_NODE_MODULES="$private_node_modules" node --input-type=module - <<'JS'
+import { lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, symlinkSync } from 'node:fs';
+import path from 'node:path';
+
+const source = realpathSync(process.env.SOURCE_NODE_MODULES);
+const destination = path.resolve(process.env.PRIVATE_NODE_MODULES);
+if (source === destination) throw new Error('private node graph must not be the locked source graph');
+mkdirSync(destination, { recursive: true });
+const binDirectory = path.join(destination, '.bin');
+mkdirSync(binDirectory);
+
+const packageDirectories = [];
+for (const entry of readdirSync(source, { withFileTypes: true })) {
+  if (entry.name === '.bin') continue;
+  if (entry.name.startsWith('@')) {
+    const scopeSource = path.join(source, entry.name);
+    if (!statSync(scopeSource).isDirectory()) continue;
+    const scopeDestination = path.join(destination, entry.name);
+    mkdirSync(scopeDestination);
+    for (const scopedEntry of readdirSync(scopeSource, { withFileTypes: true })) {
+      if (scopedEntry.name === '.bin') continue;
+      const sourcePackage = path.join(scopeSource, scopedEntry.name);
+      const destinationPackage = path.join(scopeDestination, scopedEntry.name);
+      symlinkSync(sourcePackage, destinationPackage, 'dir');
+      packageDirectories.push([`${entry.name}/${scopedEntry.name}`, destinationPackage]);
+    }
+    continue;
+  }
+  const sourcePackage = path.join(source, entry.name);
+  const destinationPackage = path.join(destination, entry.name);
+  symlinkSync(sourcePackage, destinationPackage, 'dir');
+  packageDirectories.push([entry.name, destinationPackage]);
+}
+
+let bins = 0;
+for (const [directoryName, packageDirectory] of packageDirectories) {
+  let packageJson;
+  try {
+    packageJson = JSON.parse(readFileSync(path.join(packageDirectory, 'package.json'), 'utf8'));
+  } catch (error) {
+    if (error?.code === 'ENOENT') continue;
+    throw error;
+  }
+  const declaration = packageJson.bin;
+  if (!declaration) continue;
+  const declaredBins = typeof declaration === 'string'
+    ? { [String(packageJson.name ?? directoryName).split('/').pop()]: declaration }
+    : declaration;
+  if (!declaredBins || typeof declaredBins !== 'object' || Array.isArray(declaredBins)) {
+    throw new Error(`invalid bin declaration in ${directoryName}`);
+  }
+  for (const [command, target] of Object.entries(declaredBins)) {
+    if (!command || typeof target !== 'string' || !target) {
+      throw new Error(`invalid bin declaration in ${directoryName}`);
+    }
+    const resolvedTarget = path.resolve(packageDirectory, target);
+    const packageRoot = path.resolve(packageDirectory);
+    if (resolvedTarget !== packageRoot && !resolvedTarget.startsWith(`${packageRoot}${path.sep}`)) {
+      throw new Error(`bin target escapes ${directoryName}: ${target}`);
+    }
+    lstatSync(resolvedTarget);
+    const link = path.join(binDirectory, command);
+    if (lstatSync(link, { throwIfNoEntry: false })) continue;
+    symlinkSync(path.relative(binDirectory, path.join(packageDirectory, target)), link);
+    bins += 1;
+  }
+}
+
+console.log(`private node graph: packages=${packageDirectories.length} bins=${bins}`);
+JS
+}
+
 prepare_private_python() {
   run_root=$1
   base=${NORMAL014_PYTHON_BASE:-/home/user/work/venv-app2-native/bin/python}
