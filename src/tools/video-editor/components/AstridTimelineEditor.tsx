@@ -182,10 +182,12 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     applyEdit,
     prepareGenerationAsset,
     registerGenerationAsset,
+    parentClipAddMedia,
   } = useTimelineOpsSelector((ops) => ({
     applyEdit: ops.applyEdit,
     prepareGenerationAsset: ops.prepareGenerationAsset,
     registerGenerationAsset: ops.registerGenerationAsset,
+    parentClipAddMedia: ops.parentClipAddMedia,
   }), shallow);
 
   const assetGenerationMap = useMemo<Record<string, string>>(() => {
@@ -580,6 +582,10 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
 
     setDuplicatingClipId(clipId);
     try {
+      // Capture the raw film/session basis before generation duplication. The
+      // native add path also captures later, but that is too late to protect
+      // this producer await from a pending local edit.
+      const originalPreparation = parentClipAddMedia?.prepare();
       const duplicatedGeneration = await duplicateGenerationAsset({
         generationId,
         projectId: selectedProjectId,
@@ -592,6 +598,10 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
         || JSON.stringify(latest.head) !== JSON.stringify(originalSnapshot.head)
         || JSON.stringify(latest.editProjection) !== JSON.stringify(originalSnapshot.projection)) {
         throw new Error('The timeline changed while duplicating the generation; the duplicate was not inserted.');
+      }
+
+      if (originalPreparation) {
+        parentClipAddMedia?.assertPreparationCurrent(originalPreparation);
       }
 
       const preparedAsset = prepareGenerationAsset({
@@ -623,7 +633,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     } finally {
       setDuplicatingClipId((currentClipId) => (currentClipId === clipId ? null : currentClipId));
     }
-  }, [commands, dataRef, prepareGenerationAsset, selectedProjectId]);
+  }, [commands, dataRef, parentClipAddMedia, prepareGenerationAsset, selectedProjectId]);
 
   return (
     <>

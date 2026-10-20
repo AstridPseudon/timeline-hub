@@ -10,6 +10,10 @@ const mocks = vi.hoisted(() => ({
   duplicateGenerationAsset: vi.fn(),
   prepareGenerationAsset: vi.fn(),
   registerGenerationAsset: vi.fn(),
+  parentClipAddMedia: undefined as {
+    prepare: () => unknown;
+    assertPreparationCurrent: (preparation: unknown) => void;
+  } | undefined,
   addClip: vi.fn(),
   reloadFromServer: vi.fn(async () => undefined),
   galleryGet: vi.fn(async () => ({
@@ -93,6 +97,7 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
     registerAsset: vi.fn(),
     prepareGenerationAsset: mocks.prepareGenerationAsset,
     registerGenerationAsset: mocks.registerGenerationAsset,
+    parentClipAddMedia: mocks.parentClipAddMedia,
     reloadFromServer: mocks.reloadFromServer,
   }),
   useTimelineChromeSelector: (selector: (value: unknown) => unknown) => selector({
@@ -189,6 +194,7 @@ describe('AstridTimelineEditor document-derived shot consumer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.canonicalMode = false;
+    mocks.parentClipAddMedia = undefined;
   });
 
   it('holds a just-published graph only while the host still reports a known pre-publish head', () => {
@@ -293,6 +299,62 @@ describe('AstridTimelineEditor document-derived shot consumer', () => {
     expect(mocks.prepareGenerationAsset).not.toHaveBeenCalled();
     expect(mocks.addClip).not.toHaveBeenCalled();
     dataRef.current = data;
+  });
+
+  it('refuses a duplicate when a pending native move advances the session generation during preparation', async () => {
+    const presenter = vi.fn(() => true);
+    installRuntimeErrorPresenter(presenter);
+    let sessionGeneration = 0;
+    const preparation = { localGeneration: 0 };
+    mocks.parentClipAddMedia = {
+      prepare: vi.fn(() => preparation),
+      assertPreparationCurrent: vi.fn((captured) => {
+        if ((captured as typeof preparation).localGeneration !== sessionGeneration) {
+          throw new Error('Timeline changed during parent clip.add-media preparation');
+        }
+      }),
+    };
+    let resolveDuplicate!: (value: {
+      generationId: string;
+      variantId: string;
+      variantType: 'video';
+      imageUrl: string;
+      thumbUrl: string;
+      mediaSelection: Record<string, string>;
+    }) => void;
+    mocks.duplicateGenerationAsset.mockImplementationOnce(() => new Promise((resolve) => {
+      resolveDuplicate = resolve;
+    }));
+    render(<AstridTimelineEditor />);
+
+    fireEvent.click(screen.getByText('Duplicate generation'));
+    // The pending native move changes only the session-local generation; the
+    // accepted film head is intentionally unchanged.
+    sessionGeneration = 1;
+    resolveDuplicate({
+      generationId: 'generation-duplicated',
+      variantId: 'variant-duplicated',
+      variantType: 'video',
+      imageUrl: 'https://example.test/duplicated.mp4',
+      thumbUrl: 'https://example.test/duplicated-thumb.jpg',
+      mediaSelection: {
+        asset: 'asset-duplicated',
+        generation_id: 'generation-duplicated',
+        variant_id: 'variant-duplicated',
+        object_id: `sha256:${'e'.repeat(64)}`,
+        catalog_digest: `sha256:${'f'.repeat(64)}`,
+      },
+    });
+
+    await waitFor(() => expect(presenter).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('parent clip.add-media preparation') }),
+      'Failed to duplicate generation',
+    ));
+    expect(mocks.parentClipAddMedia.prepare).toHaveBeenCalledOnce();
+    expect(mocks.parentClipAddMedia.assertPreparationCurrent).toHaveBeenCalledOnce();
+    expect(mocks.prepareGenerationAsset).not.toHaveBeenCalled();
+    expect(mocks.addClip).not.toHaveBeenCalled();
+    expect(mocks.registerGenerationAsset).not.toHaveBeenCalled();
   });
 
   it('surfaces the native exact-placement refusal and does not write the legacy registry', async () => {
