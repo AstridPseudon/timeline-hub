@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from runtime_protocol.errors import ConflictError
+from runtime_protocol.errors import ConflictError, RetiredRouteError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from test_timeline_render_publication import _publication_body, _ready_authoring_attempt
@@ -39,6 +39,18 @@ def _refused(service, attempt, body, reason):
 def _track(service, project):
     commits = service._timeline_commits()[0]
     return commits.bootstrap(project, "main", authorize=lambda: None)
+
+
+def test_retired_writer_refuses_before_lookup_without_writes(service):
+    before = _state(service)
+    with pytest.raises(RetiredRouteError) as error:
+        service.publish_timeline_render("missing-attempt", None)
+    assert error.value.status == 410
+    assert error.value.details == {
+        "reason": "command_required",
+        "replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/commit",
+    }
+    assert _state(service) == before
 
 
 def test_tracked_target_refuses_without_invalidating_canonical_history(service):
