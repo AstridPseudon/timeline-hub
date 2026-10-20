@@ -206,9 +206,33 @@ def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editi
 
     # The WC3 SDK adapter submits the original head pair and selected pins.
     # Use an already existing alias after redo: no new allocation is needed.
+    from astrid.sdk.contracts import DomainResult
     class Transport:
+        _last_handshake = {'realm_id': 'realm-1', 'actor_id': 'media-editor'}
+
         def list_timelines(self, project, *, cursor=None, limit=50):
             return ([{'project_id': project, 'timeline_id': 'film', 'slug': 'film'}], None)
+
+        def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+            return editing.service.get_project_parent_composition_revision(
+                project_id, timeline_id, revision)
+
+        def get_project_shot_revision(self, project_id, shot_id, revision):
+            return editing.service.get_project_shot_revision(project_id, shot_id, revision)
+
+        def get_project_timeline_revision(self, project_id, timeline_id, revision):
+            return editing.service.get_project_timeline_revision(project_id, timeline_id, revision)
+
+        def get_project_media_selection(self, project_id, selector):
+            for pin in (editing.old, editing.new):
+                if all(pin.get(key) == selector.get(key) for key in (
+                        'asset', 'generation_id', 'variant_id')):
+                    return copy.deepcopy(pin)
+            raise KeyError(selector)
+
+        def get_project_verified_media(self, project_id, selection):
+            return editing.service.get_project_verified_media(
+                project_id, selection, authorize=editing.authorize)
 
         def publish_parent_composition(self, *args, **kwargs):
             pytest.fail('selected SDK adapter published a whole closure')
@@ -218,6 +242,11 @@ def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editi
             return commit(editing, request, idempotency_key)
 
     head = body(editing)
+    monkeypatch.setattr(RemoteTimelines, 'open_composition', lambda self, *args, **kwargs: DomainResult.success({
+        'native_inspection': {'project_id': editing.project, 'timeline_id': 'film',
+                              'head_revision_id': head['base_revision_id']},
+        'summary': {'head_revision_id': head['base_revision_id']},
+    }))
     result = RemoteTimelines(Transport()).replace_parent_media(
         editing.project, 'film', occurrence_id=None, clip_id='clip-a',
         source_object_id=editing.old['object_id'], expected_head=head['base_revision_id'],
@@ -225,6 +254,226 @@ def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editi
         media=editing.old, idempotency_key='sdk-swap-back')
     assert result.ok, result.error
     assert State(bundle_from_document(result.data['canonical_document'])).entity(TARGET)['asset'] == editing.old['asset']
+
+
+def test_public_parent_swap_real_http_lost_ack_restart_exact_retry_and_guards(
+        editing, real_runtime, tmp_path, monkeypatch,
+):
+    """Qualify the public adapter against the real generated client and door."""
+    import json
+
+    from astrid.sdk.timeline._command_state import State
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.sync import TimelineSession
+    from tests.editing_conformance import test_commit_runtime_m1 as m1
+
+    from runtime_protocol.server import RuntimeHandler
+
+    initial = editing.service._timeline_commits()[0].revision_closure(
+        editing.project, 'film', editing.service.get_project_timeline(
+            editing.project, 'film')['head_revision_id']
+    )
+    source_target = State(bundle_from_document(initial)).entity('parent/clip:clip-a')
+    TARGET = 'parent/clip:wc3-http'
+    old = editing.service.get_project_media_selection(
+        editing.project,
+        {
+            'asset': 'wc3-old',
+            'generation_id': editing.old['generation_id'],
+            'variant_id': editing.old['variant_id'],
+        },
+        authorize=editing.authorize,
+    )
+    new = editing.new
+    media_fields = {'asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'}
+    assert set(old) == set(new) == media_fields
+
+    # Add one fresh parent row through the existing native command builder so
+    # the HTTP proof starts from a real immutable five-field old selection;
+    # the captured historical row itself predates that binding.
+    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
+
+    bundle = bundle_from_document(initial)
+    parent_track = {'id': 'wc3-http-track', 'kind': 'visual', 'role': 'output'}
+    commit(
+        editing,
+        body(editing, [capture_track_create(bundle, 'parent', parent_track)]),
+        'wc3-fixture-track',
+    )
+    initial = editing.service._timeline_commits()[0].revision_closure(
+        editing.project, 'film', editing.service.get_project_timeline(
+            editing.project, 'film')['head_revision_id']
+    )
+    bundle = bundle_from_document(initial)
+    row = copy.deepcopy(source_target)
+    row['id'], row['asset'] = 'wc3-http', old['asset']
+    row['track'] = parent_track['id']
+    row['opaque'] = {'values': [None, False, {}, []], 'literal': TARGET}
+    verified_old = editing.service.get_project_verified_media(
+        editing.project, old, authorize=editing.authorize,
+    )
+    add = capture_clip_add_media(
+        bundle, row, old, verified_media=[verified_old],
+    )
+    commit(editing, body(editing, [add]), 'wc3-fixture-add')
+    baseline = editing.service._timeline_commits()[0].revision_closure(
+        editing.project, 'film', editing.service.get_project_timeline(
+            editing.project, 'film')['head_revision_id']
+    )
+    head = editing.service.get_project_timeline(editing.project, 'film')
+    baseline_target = copy.deepcopy(State(bundle_from_document(baseline)).entity(TARGET))
+    assert baseline_target['asset'] == old['asset']
+    expected_base = (head['head_revision_id'], head['head_publication_id'])
+
+    # The fixture service holds the same realm that the HTTP daemon opens.
+    # Close that read connection before handing the realm to RuntimeDaemon.
+    editing.service.close()
+    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
+    support = tmp_path / 'support'
+    daemon = real_runtime(editing.root, support_root=support, authoring_profile='astrid')
+    client = m1.open_client(daemon)
+    original_send = RuntimeHandler._send
+    commits = []
+    lost = False
+
+    def observe_send(handler, status, payload=None, **kwargs):
+        nonlocal lost
+        if handler.command == 'POST' and handler.path.endswith('/commit'):
+            commits.append({
+                'body': bytes(handler._prefetched_body),
+                'key': handler.headers['Idempotency-Key'],
+                'path': handler.path,
+                'request_id': handler._request_id(),
+                'response': copy.deepcopy(payload),
+            })
+            if not lost and status == 200:
+                lost = True
+                raise ConnectionError('parent media acknowledgement lost after durable acceptance')
+        return original_send(handler, status, payload, **kwargs)
+
+    monkeypatch.setattr(RuntimeHandler, '_send', observe_send)
+    first_key = 'parent-media-real-http'
+    first = client.timelines.replace_parent_media(
+        editing.project, 'film', occurrence_id=None, clip_id='wc3-http',
+        source_object_id=new['object_id'], expected_head=expected_base[0],
+        expected_publication=expected_base[1], old_media=old, media=new,
+        idempotency_key=first_key,
+    )
+    assert not first.ok
+    assert len(commits) == 1, first.as_dict()
+    first_wire = copy.deepcopy(commits[0])
+    first_body = json.loads(first_wire['body'])
+    assert first_wire['path'] == f'/v1/projects/{editing.project}/timelines/film/commit'
+    assert first_wire['key'] == first_key
+    assert first_wire['request_id']
+    assert (first_body['base_revision_id'], first_body['base_publication_id']) == expected_base
+    command = first_body['commands'][0]
+    assert command['select'] == TARGET
+    assert command['args'] == {'old_media': old, 'media': new}
+    assert set(command['args']['old_media']) == set(command['args']['media']) == media_fields
+    accepted = first_wire['response']
+    assert accepted['receipt']['idempotency_key'] == first_key
+    outbox = TimelineSession.open(editing.project, 'film', client=client).outbox.path
+    lost_state = json.loads(outbox.read_bytes())
+    assert lost_state['flight']['key'] == first_key
+    assert lost_state['flight']['body'].encode() == first_wire['body']
+    assert lost_state['pending'] == [command]
+
+    port = daemon.httpd.server_port
+    daemon.stop()
+    daemon = real_runtime(editing.root, support_root=support, port=port, authoring_profile='astrid')
+    client = m1.open_client(daemon)
+    retried = client.timelines.replace_parent_media(
+        editing.project, 'film', occurrence_id=None, clip_id='wc3-http',
+        source_object_id=new['object_id'], expected_head=expected_base[0],
+        expected_publication=expected_base[1], old_media=old, media=new,
+    )
+    assert retried.ok, retried.as_dict()
+    assert {key: value for key, value in retried.data.items()
+            if key not in {'accepted_publication_id', 'show_command'}} == accepted['data']
+    assert retried.data['accepted_publication_id'] == accepted['receipt']['receipt_id']
+    assert retried.receipt.as_dict() == accepted['receipt']
+    retry_count = len(commits) - 1
+    assert retry_count >= 1
+    assert all({key: entry[key] for key in ('path', 'key', 'body')} == {
+        key: first_wire[key] for key in ('path', 'key', 'body')
+    } for entry in commits[1:])
+    assert json.loads(outbox.read_bytes())['flight'] is None
+    assert json.loads(outbox.read_bytes())['pending'] == []
+    replaced = State(bundle_from_document(accepted['data']['canonical_document'])).entity(TARGET)
+    assert replaced == {**baseline_target, 'asset': new['asset']}
+    parent = accepted['data']['canonical_document']['parent_revision']['payload']
+    assert [clip['id'] for clip in parent['clips']] == [clip['id'] for clip in baseline['parent_revision']['payload']['clips']]
+    assert parent['config']['clips'] == parent['clips']
+    assert replaced['opaque'] == baseline_target['opaque']
+
+    # Advance the real head through a separate outbox, then replay the already
+    # acknowledged request at its original base and key. Runtime must return
+    # the original receipt without accepting a new revision.
+    later = TimelineSession.open(
+        editing.project, 'film', client=client, outbox_path=tmp_path / 'later.json',
+    )
+    later_result = later.move('parent/clip:clip-b', 1, idempotency_key='parent-media-later')
+    later_head = later_result['data']['accepted_revision_id']
+    assert later_head != accepted['data']['accepted_revision_id']
+    before_replay = len(commits)
+    replayed = client.timelines.replace_parent_media(
+        editing.project, 'film', occurrence_id=None, clip_id='wc3-http',
+        source_object_id=new['object_id'], expected_head=expected_base[0],
+        expected_publication=expected_base[1], old_media=old, media=new,
+        idempotency_key=first_key,
+    )
+    assert replayed.ok
+    assert {key: value for key, value in replayed.data.items()
+            if key not in {'accepted_publication_id', 'show_command'}} == accepted['data']
+    assert replayed.data['accepted_publication_id'] == accepted['receipt']['receipt_id']
+    assert replayed.receipt.as_dict() == accepted['receipt']
+    assert len(commits) > before_replay  # keyed replay A
+    assert all({key: entry[key] for key in ('path', 'key', 'body')} == {
+        key: first_wire[key] for key in ('path', 'key', 'body')
+    } for entry in commits[before_replay:])
+    assert client.timelines.history(editing.project, 'film').data['head']['revision_id'] == later_head
+
+    reloaded = client.timelines.open_bundle(editing.project, 'film', revision_id=accepted['data']['accepted_revision_id'])
+    assert reloaded.ok, reloaded.as_dict()
+    reloaded_bundle = reloaded.data['bundle']
+    reloaded_target = State(reloaded_bundle).entity(TARGET)
+    assert reloaded_target == replaced
+    assert State(reloaded_bundle).collection('parent', 'clip') == State(bundle_from_document(accepted['data']['canonical_document'])).collection('parent', 'clip')
+    assert reloaded_bundle['parent']['clips'] == reloaded_bundle['parent']['config']['clips']
+
+    guarded = TimelineSession.open(
+        editing.project, 'film', client=client, outbox_path=tmp_path / 'guarded.json',
+    )
+    undone = guarded.undo([accepted['receipt']['receipt_id']], idempotency_key='parent-media-undo')
+    undone_target = State(bundle_from_document(undone['data']['canonical_document'])).entity(TARGET)
+    assert undone_target == baseline_target
+    assert State(bundle_from_document(undone['data']['canonical_document'])).entity('parent/clip:clip-b')['at'] == 1
+    redone = guarded.undo([undone['receipt']['receipt_id']], idempotency_key='parent-media-redo')
+    assert State(bundle_from_document(redone['data']['canonical_document'])).entity(TARGET) == replaced
+    assert State(bundle_from_document(redone['data']['canonical_document'])).entity('parent/clip:clip-b')['at'] == 1
+
+    # A malformed or unrelated persisted intent must fail before a POST and
+    # preserve the exact durable outbox bytes.
+    for pending, kwargs in (
+        ({**command, 'select': 'parent/clip:clip-b'}, {'old_media': old, 'media': new}),
+        (command, {'old_media': True, 'media': False}),
+    ):
+        invalid_state = copy.deepcopy(lost_state)
+        invalid_state['pending'] = [pending]
+        outbox.write_bytes(json.dumps(invalid_state, sort_keys=True).encode())
+        before = outbox.read_bytes()
+        sent = len(commits)
+        refused = client.timelines.replace_parent_media(
+            editing.project, 'film', occurrence_id=None, clip_id='wc3-http',
+            source_object_id=new['object_id'], expected_head=expected_base[0],
+            expected_publication=expected_base[1], idempotency_key=first_key,
+            **kwargs,
+        )
+        assert not refused.ok
+        assert len(commits) == sent
+        assert outbox.read_bytes() == before
 
 
 @pytest.mark.parametrize('side', ['old_media', 'media'])
