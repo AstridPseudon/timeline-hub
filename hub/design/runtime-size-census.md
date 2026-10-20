@@ -1,108 +1,86 @@
 # Runtime Timeline-core size census
 
-Pinned for M4 on 2026-10-20. This is a rough-guide measurement, not a gate or
-a target to optimize against. It follows PLAN's settled boundary: authored
-Runtime product code implementing Timeline Read/See/Edit. It excludes untouched
-worker/execution/catalog/custody infrastructure, generated contracts/clients,
-tests, fixtures, and package data.
+Status: **provisional, pre-adoption; not an M4-complete claim**. This is an
+honest source census, not a threshold, target, gate, or deletion instruction.
+It uses the PLAN boundary: authored Runtime code for Timeline Read/See/Edit,
+limited to acceptance, history, projection, capture, and Timeline adapters.
 
-## Exact source revisions
+## Source pins
 
-The current-integration measurement is pinned to the task's assigned base,
-`cc3796a`; the mutable `tl/integration` ref advanced while this census was in
-progress and is deliberately not used as an input. The private `a6a` candidate
-is measured separately and was not merged.
-
-| label | commit | tree | commit date |
+| scope | commit | tree | source used |
 |---|---|---|---|
-| main baseline (`origin/main`) | `240d5bb202af709294551045554012f079fd06ca` | `2e77d0df220885e978c5fbdf5d6072292ac07284` | `2026-10-20T17:31:38+02:00` |
-| current integration snapshot | `cc3796a0c333b956b171c68dc876d41f40f6219f` | `18e037810a8b61551c23fc33e5639775b7da8623` | `2026-10-20T17:58:50+00:00` |
-| private `a6a` snapshot (not merged) | `a6a11a806a51262192447fdeccc726b01ffd78fb` | `8c027992e34ddf9a940d3e90cd38f7b9e11e4c25` | `2026-10-20T17:53:10+00:00` |
+| Main baseline | `b535646faaad2f8ae7968dfe0f4fa3057f960264` | `76613f05f9c7da7bcd555d972cf685d59b7501b9` | `origin/main` |
+| final candidate | `4dd643808e93be431f8250c0b6d34320918776ec` | `d396f8f4f2caa956a8b6689c9af09e9088fb8c27` | final `4dd` tree |
+| approved catalog add-on | `c81c0eb5aed4fa6b5cd23705aa84dfdf2b9922ed` | `9504b7b62574866bdfee45e4e159943f508152a9` | only the authority guard below |
 
-## Boundary and method
+`c81c0eb` is not a descendant of `4dd6438` (its parent is
+`82918cdb...`). Its restored catalog/Main infrastructure is therefore not
+folded into the current total. Only its separately approved Timeline
+authority guard is reported as an additive current-scope row.
 
-Counts are committed-blob physical source lines (`splitlines`, blank lines
-included), with one manifest applied to all three revisions. For mixed files,
-the manifest selects named top-level AST methods and counts each selected node's
-inclusive `lineno..end_lineno` range. Overlapping ranges are unioned. This
-keeps whole `service.py`, `store.py`, and `server.py` totals from being
-presented as Timeline code.
+## Counts
 
-Single-purpose handwritten Timeline modules are counted in full. The private
-`runtime_protocol/timeline_materialization.py` module is included because it is
-authored source-bound Edit-path product code; it is zero in main and current.
-The generated `runtime_protocol/timeline_commit_types.py`,
-`runtime_protocol/schemas/timeline-commit-bundle.json`, contract schemas,
-generated Python/TypeScript clients and metadata, and all tests/fixtures are
-excluded.
+Physical counts include blank lines. Nonblank counts include a line iff
+`line.strip()` is nonempty. A `full` row counts the committed blob; a mixed
+file counts only the named fragments in the manifest below.
 
-### Selected-range census
+| path | baseline P/N | final `4dd` P/N | delta P/N |
+|---|---:|---:|---:|
+| `runtime_protocol/capture_validation.py` | 0 / 0 | 225 / 205 | +225 / +205 |
+| `runtime_protocol/managed_render_snapshot.py` | 217 / 194 | 217 / 194 | 0 / 0 |
+| `runtime_protocol/seam_intent.py` | 88 / 69 | 88 / 69 | 0 / 0 |
+| `runtime_protocol/shot_dependencies.py` | 155 / 131 | 155 / 131 | 0 / 0 |
+| `runtime_protocol/snapshot_refs.py` | 224 / 202 | 278 / 246 | +54 / +44 |
+| `runtime_protocol/timeline_catalog.py` | 0 / 0 | 98 / 90 | +98 / +90 |
+| `runtime_protocol/timeline_commit.py` | 0 / 0 | 55 / 44 | +55 / +44 |
+| `runtime_protocol/timeline_commit_baseline.py` | 0 / 0 | 440 / 394 | +440 / +394 |
+| `runtime_protocol/timeline_commit_execution.py` | 0 / 0 | 115 / 102 | +115 / +102 |
+| `runtime_protocol/timeline_commit_inputs.py` | 0 / 0 | 707 / 645 | +707 / +645 |
+| `runtime_protocol/timeline_commit_port.py` | 0 / 0 | 941 / 852 | +941 / +852 |
+| `runtime_protocol/timeline_commit_producer.py` | 0 / 0 | 285 / 254 | +285 / +254 |
+| `runtime_protocol/timeline_commit_producer_checkpoint.py` | 0 / 0 | 163 / 147 | +163 / +147 |
+| `runtime_protocol/timeline_commit_provider.py` | 0 / 0 | 93 / 77 | +93 / +77 |
+| `runtime_protocol/timeline_commit_store.py` | 0 / 0 | 1,026 / 964 | +1,026 / +964 |
+| `runtime_protocol/timeline_commit_validation.py` | 0 / 0 | 103 / 83 | +103 / +83 |
+| `runtime_protocol/timeline_cutover.py` | 217 / 200 | 217 / 200 | 0 / 0 |
+| `runtime_protocol/timeline_inspection.py` | 845 / 785 | 844 / 784 | −1 / −1 |
+| `runtime_protocol/timeline_view.py` | 214 / 196 | 214 / 196 | 0 / 0 |
+| `runtime_protocol/visual_boundary.py` | 228 / 203 | 228 / 203 | 0 / 0 |
+| `runtime_protocol/visual_seam.py` | 465 / 428 | 471 / 432 | +6 / +4 |
+| `runtime_protocol/server.py` (selected AST methods) | 673 / 673 | 797 / 791 | +124 / +118 |
+| `runtime_protocol/store.py` (selected AST methods) | 117 / 115 | 117 / 115 | 0 / 0 |
+| `runtime_protocol/service.py` (selected AST methods) | 1,942 / 1,920 | 1,681 / 1,675 | −261 / −245 |
+| `runtime_protocol/canonical_schema.py` (Timeline SQL ranges) | 121 / 121 | 139 / 139 | +18 / +18 |
+| `runtime_protocol/cli.py` (Timeline audit ranges) | 37 / 36 | 37 / 36 | 0 / 0 |
+| **final candidate total** | **5,543 / 5,273** | **9,734 / 9,068** | **+4,191 / +3,795** |
+| `service.py:_require_project_shot_scope` from approved `c81c0eb` | — | 6 / 5 | +6 / +5 |
+| **current approved-scope total** | **5,543 / 5,273** | **9,740 / 9,073** | **+4,197 / +3,800** |
 
-| path | main | current `cc3796a` | delta | private `a6a` | delta | selection |
-|---|---:|---:|---:|---:|---:|---|
-| `runtime_protocol/canonical_schema.py` | 121 | 139 | +18 | 139 | +18 | explicit Timeline SQL ranges; current commit schema included |
-| `runtime_protocol/cli.py` | 37 | 37 | 0 | 37 | 0 | `audit-timelines` parser/handler ranges |
-| `runtime_protocol/server.py` | 670 | 794 | +124 | 794 | +124 | selected `RuntimeHandler` helpers, commit routing, and `_route` |
-| `runtime_protocol/service.py` | 2,112 | 1,729 | −383 | 1,729 | −383 | selected `RuntimeService` Timeline/commit/projection/view methods |
-| `runtime_protocol/store.py` | 117 | 117 | 0 | 117 | 0 | selected Timeline projector/publication/event methods |
-| `runtime_protocol/capture_validation.py` | 0 | 225 | +225 | 225 | +225 | full handwritten capture module |
-| `runtime_protocol/managed_render_snapshot.py` | 217 | 217 | 0 | 217 | 0 | full handwritten Timeline See module |
-| `runtime_protocol/seam_intent.py` | 88 | 88 | 0 | 88 | 0 | full handwritten Timeline See module |
-| `runtime_protocol/shot_dependencies.py` | 155 | 155 | 0 | 155 | 0 | full handwritten Timeline See module |
-| `runtime_protocol/snapshot_refs.py` | 224 | 278 | +54 | 278 | +54 | full handwritten Timeline snapshot/projector module |
-| `runtime_protocol/timeline_commit.py` | 0 | 55 | +55 | 59 | +59 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_baseline.py` | 0 | 441 | +441 | 441 | +441 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_execution.py` | 0 | 115 | +115 | 115 | +115 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_inputs.py` | 0 | 707 | +707 | 707 | +707 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_port.py` | 0 | 941 | +941 | 1,041 | +1,041 | full handwritten commit port |
-| `runtime_protocol/timeline_commit_producer.py` | 0 | 285 | +285 | 285 | +285 | full handwritten producer module |
-| `runtime_protocol/timeline_commit_producer_checkpoint.py` | 0 | 163 | +163 | 163 | +163 | full handwritten producer module |
-| `runtime_protocol/timeline_commit_provider.py` | 0 | 93 | +93 | 93 | +93 | full handwritten provider module |
-| `runtime_protocol/timeline_commit_store.py` | 0 | 1,008 | +1,008 | 1,184 | +1,184 | full handwritten commit store |
-| `runtime_protocol/timeline_commit_validation.py` | 0 | 103 | +103 | 103 | +103 | full handwritten validation module |
-| `runtime_protocol/timeline_cutover.py` | 217 | 217 | 0 | 217 | 0 | full handwritten Timeline audit module |
-| `runtime_protocol/timeline_inspection.py` | 845 | 844 | −1 | 844 | −1 | full handwritten Timeline Read module |
-| `runtime_protocol/timeline_view.py` | 214 | 214 | 0 | 214 | 0 | full handwritten Timeline Read/See module |
-| `runtime_protocol/visual_boundary.py` | 228 | 228 | 0 | 228 | 0 | full handwritten Timeline See module |
-| `runtime_protocol/visual_seam.py` | 465 | 471 | +6 | 471 | +6 | full handwritten Timeline See/projector module |
-| `runtime_protocol/timeline_materialization.py` | 0 | 0 | 0 | 183 | +183 | full private handwritten source-bound materialization join |
-| **selected Timeline-core total** | **5,710** | **9,664** | **+3,954** | **10,127** | **+4,417** | |
+The additive catalog guard is the only `c81c0eb` code counted. Its call-site
+changes and the restored catalog/Main service, lifecycle, worker, execution,
+custody, and platform infrastructure remain excluded.
 
-The current and private revisions share the same selected baseline product
-surface except for the private source-bound candidate. Relative to current,
-private `a6a` adds **+463 selected product lines**: `timeline_commit.py` +4,
-`timeline_commit_port.py` +100, `timeline_commit_store.py` +176, and the new
-`timeline_materialization.py` +183.
+## Exact manifest
 
-### AST method manifest for mixed files
+The full-blob paths are exactly the 21 dedicated paths in the first 21 rows
+above. `runtime_protocol/timeline_commit_types.py`, contracts, generated
+clients/metadata, tests, fixtures, package data, `astrid_runtime/`, and
+untouched Main worker/execution infrastructure are excluded.
 
-The following exact method names are the shared-file manifest. Each name is
-resolved in the indicated class at each source revision; a missing name at the
-main baseline contributes zero. The count is the AST node's inclusive source
-range, not a guessed percentage of its containing file.
-
-`runtime_protocol/server.py`, class `RuntimeHandler`:
+Mixed-file AST fragments:
 
 ```text
+server.py / RuntimeHandler:
 _project_mutation_body, _timeline_options, _commit_body, _restore_body,
 _commit_idempotency_key, _authorize_timeline_commit, _authorize_timeline_read,
 _timeline_path, _timeline_commit, _is_timeline_commit, _route
-```
 
-The baseline has only `_project_mutation_body`, `_timeline_options`, and
-`_route`; current/private-only names are skipped at the baseline.
-
-`runtime_protocol/store.py`, class `RealmStore`:
-
-```text
+store.py / RealmStore:
 _project_output_timeline, timeline_render_publication,
 prepare_timeline_render_publication, complete_timeline_render_publication,
 _append_timeline_event
-```
 
-`runtime_protocol/service.py`, class `RuntimeService`:
-
-```text
+service.py / RuntimeService:
 _project_resource, _timeline_resource, _timeline_public_resource,
 _legacy_timeline_payload, _record_legacy_timeline_revision,
 _record_internal_revision, _shot_revision_payload, _record_legacy_shot_revision,
@@ -112,11 +90,11 @@ _verify_shot_head_projection, _record_timeline_revision, _timeline_revision,
 _verified_source_media, _authored_clip_interval, _require_timeline_command,
 update_timeline, replace_timeline_clip, _timeline_name, rename_timeline,
 create_timeline, _adopt_empty_shell_create, create_timeline_document,
-list_timelines, _shot_resource, _reference_resource,
-_publication_replay_result, committed_receipt, _open_publication_directory,
-_begin_cas_publication_journal, _remove_publication_journal_at,
-_publication_committed, _recover_cas_publication_journals, _revision_digest,
-_revision_id, _revision_payload, _complete_internal_timeline_payload,
+list_timelines, _shot_resource, _reference_resource, _publication_replay_result,
+committed_receipt, _open_publication_directory, _begin_cas_publication_journal,
+_remove_publication_journal_at, _publication_committed,
+_recover_cas_publication_journals, _revision_digest, _revision_id,
+_revision_payload, _complete_internal_timeline_payload,
 _validate_timeline_track_roles, _complete_shot_payload, _complete_parent_payload,
 get_project_shot_revision, get_project_timeline_revision, get_project_timeline,
 get_project_parent_composition_revision,
@@ -125,111 +103,74 @@ restore_project_parent_composition_revision, inspect_timeline,
 create_timeline_view, replace_parent_composition_media, _finite_number,
 _normalize_occurrence, _validate_media_dependencies, _collect_digest_media,
 publish_parent_composition, list_timeline_history, _diff_items, diff_timeline,
-archive_timeline, recover_timeline, publish_timeline_render,
-register_timeline_commit_provider, _timeline_commits, _timeline_authorize,
-commit_timeline, _execute_timeline_commit, _ensure_timeline_commit_baseline,
+archive_timeline, recover_timeline, register_timeline_commit_provider,
+_timeline_commits, _timeline_authorize, commit_timeline,
+_execute_timeline_commit, _ensure_timeline_commit_baseline,
 list_timeline_commits, get_project_media_selection, get_project_verified_media,
 get_project_verified_document_object, get_project_verified_document
 ```
 
-`server._route`, selected service replay/publication helpers, and selected
-store projector helpers are shared with non-Timeline concerns inside one AST
-node. Their complete node ranges are retained so the result is reproducible;
-their generic portions are an explicit allocation uncertainty, not silently
-reported as Timeline-only precision. Dedicated modules have no such mixed-file
-allocation. This is why the total is a rough guide and must not be used as a
-threshold or a deletion instruction.
-
-The module-level non-AST ranges are also explicit:
+Revision-specific non-AST ranges:
 
 ```text
-origin/main canonical_schema.py: 112-124, 153-165, 276-290, 322-388, 403-415
-current/private canonical_schema.py: 12-27, 131-144, 172-184, 295-309,
-  341-408, 424-436
-origin/main cli.py: 124-139, 181-201
-current/private cli.py: 125-140, 182-202
+b535646:
+  canonical_schema.py 112-124, 153-165, 276-290, 322-388, 403-415
+  cli.py              124-139, 181-201
+4dd6438:
+  canonical_schema.py 12-27, 131-144, 172-184, 295-309, 341-408, 424-436
+  cli.py              125-140, 182-202
+c81c0eb add-on:
+  service.py:_require_project_shot_scope, inclusive function body (6/5)
 ```
 
-## Private generator versus product delta
-
-The complete `a6a`-versus-assigned-current diff is 35 files (+5,167/−683
-physical lines), but only four handwritten product paths contribute the +463
-selected-line delta above. The remaining changes are private generator source,
-contract/schema data, generated Python/TypeScript clients and metadata, or
-tests/fixtures. They are deliberately not counted as Runtime Timeline-core
-product lines. In particular, a generated command union or its checked-in
-schema is not evidence of additional authored Read/See/Edit implementation.
-
-The private source-bound join is therefore reported twice only in the useful
-sense: its handwritten Runtime implementation is counted in the private
-product total, while its generated contract/client consequences remain outside
-the total. `a6a` is a private qualification candidate, not current
-integration, and this census makes no consumer-adoption or release claim.
-
-## Existing post-D01 cuts and holds
-
-These are already named Runtime ledger rows, recorded here for size context;
-they are not new deletion proposals and this documentation task performs none
-of them. See
-`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.runtime.md`.
-
-| ledger row | existing named cut/hold | current decision boundary |
-|---|---|---|
-| `D04` | legacy canonical timeline publication bodies | held until both App D01 and Agent whole-candidate/`clip.set-element` migration qualify; no speculative removal here |
-| `D13` / `RT07` | producer-uncustodied render admission and the legacy `publish_timeline_render` direct writer | authority primitives are merged, but the registered replacement remains open; cut only after accepted proposal/custody, duplicate-CAS, lost-ACK/restart, and revision-pinned proof |
-| `RT08` | blanket identity-only `id_map` admission / missing source-bound allocation join | open/held current cohort; private `a6a` is the separately measured candidate, not an integrated cut |
-| `WC10` | restored `publish_parent_composition` route | held until its named `remote.create_empty`, `reference_realm.py`, and `shot_composition_migration.py` consumers migrate |
-
-`RT06` commit-path deduplication is already recorded as merged, not an
-additional post-D01 size claim. No threshold, target, gate, or ledger status is
-changed by this census.
-
-## Reproduction
-
-Pin identities without checking out either revision:
+Counting command, run from this Runtime checkout without checking out a
+revision: use `git show REV:path`, parse Python with `ast.parse`, resolve the
+class/method names above, count each selected node's inclusive
+`lineno..end_lineno` range, union overlapping ranges, and add the full-blob
+and explicit-range counts. This is the reproducible arithmetic command:
 
 ```sh
-for rev in \
-  240d5bb202af709294551045554012f079fd06ca \
-  cc3796a0c333b956b171c68dc876d41f40f6219f \
-  a6a11a806a51262192447fdeccc726b01ffd78fb
-do
-  git show -s --format='%H %T %cI' "$rev"
-done
+python - <<'PY'
+import ast, subprocess
+
+REV = {"baseline": "b535646", "final": "4dd6438"}
+FULL = {"runtime_protocol/capture_validation.py", "runtime_protocol/managed_render_snapshot.py",
+        "runtime_protocol/seam_intent.py", "runtime_protocol/shot_dependencies.py",
+        "runtime_protocol/snapshot_refs.py", "runtime_protocol/visual_boundary.py",
+        "runtime_protocol/visual_seam.py"}
+for p in subprocess.check_output(["git", "ls-tree", "-r", "--name-only", "4dd6438", "runtime_protocol"], text=True).splitlines():
+    if p.startswith("runtime_protocol/timeline_") and p != "runtime_protocol/timeline_commit_types.py": FULL.add(p)
+MIX = {
+ "runtime_protocol/server.py": ("RuntimeHandler", "_project_mutation_body _timeline_options _commit_body _restore_body _commit_idempotency_key _authorize_timeline_commit _authorize_timeline_read _timeline_path _timeline_commit _is_timeline_commit _route"),
+ "runtime_protocol/store.py": ("RealmStore", "_project_output_timeline timeline_render_publication prepare_timeline_render_publication complete_timeline_render_publication _append_timeline_event"),
+ "runtime_protocol/service.py": ("RuntimeService", "_project_resource _timeline_resource _timeline_public_resource _legacy_timeline_payload _record_legacy_timeline_revision _record_internal_revision _shot_revision_payload _record_legacy_shot_revision _validate_published_shot_payload _validate_published_text_bindings _apply_published_shot_projection _shot_projection_matches_revision _verify_shot_head_projection _record_timeline_revision _timeline_revision _verified_source_media _authored_clip_interval _require_timeline_command update_timeline replace_timeline_clip _timeline_name rename_timeline create_timeline _adopt_empty_shell_create create_timeline_document list_timelines _shot_resource _reference_resource _publication_replay_result committed_receipt _open_publication_directory _begin_cas_publication_journal _remove_publication_journal_at _publication_committed _recover_cas_publication_journals _revision_digest _revision_id _revision_payload _complete_internal_timeline_payload _validate_timeline_track_roles _complete_shot_payload _complete_parent_payload get_project_shot_revision get_project_timeline_revision get_project_timeline get_project_parent_composition_revision list_project_parent_composition_revisions restore_project_parent_composition_revision inspect_timeline create_timeline_view replace_parent_composition_media _finite_number _normalize_occurrence _validate_media_dependencies _collect_digest_media publish_parent_composition list_timeline_history _diff_items diff_timeline archive_timeline recover_timeline register_timeline_commit_provider _timeline_commits _timeline_authorize commit_timeline _execute_timeline_commit _ensure_timeline_commit_baseline list_timeline_commits get_project_media_selection get_project_verified_media get_project_verified_document_object get_project_verified_document")}
+RANGES = {"b535646": {"runtime_protocol/canonical_schema.py": [(112,124),(153,165),(276,290),(322,388),(403,415)], "runtime_protocol/cli.py": [(124,139),(181,201)]}, "4dd6438": {"runtime_protocol/canonical_schema.py": [(12,27),(131,144),(172,184),(295,309),(341,408),(424,436)], "runtime_protocol/cli.py": [(125,140),(182,202)]}}
+def show(rev, path):
+    try: return subprocess.check_output(["git", "show", f"{rev}:{path}"], text=True, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError: return None
+def count(rev, path):
+    text = show(rev, path)
+    if text is None: return (0, 0)
+    lines = set(range(1, len(text.splitlines()) + 1))
+    if path in MIX:
+        lines = set()
+        tree = ast.parse(text); cls, names = MIX[path]; names = set(names.split())
+        owner = next(n for n in ast.walk(tree) if isinstance(n, ast.ClassDef) and n.name == cls)
+        for node in owner.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in names:
+                lines.update(range(node.lineno, node.end_lineno + 1))
+    elif path in RANGES[rev]:
+        lines = {n for a,b in RANGES[rev][path] for n in range(a,b + 1)}
+    raw = text.splitlines()
+    return len(lines), sum(bool(raw[n - 1].strip()) for n in lines)
+for label, rev in REV.items():
+    total = tuple(sum(count(rev, p)[i] for p in FULL | set(MIX) | set(RANGES[rev])) for i in (0,1))
+    print(label, total)
+print("approved catalog add-on: 6 5; current: 9740 9073")
+PY
 ```
 
-For the selected total, run Python's `ast.parse` on each
-`git show REV:path` blob, resolve the exact class/method names in the manifest
-above, sum inclusive `lineno..end_lineno` ranges after unioning overlaps, and
-add `splitlines()` counts for the dedicated-module paths in the table. Apply
-the explicit module-level ranges exactly as listed. The reproducible result is:
-
-```text
-                         main     current cc3796a     private a6a
-selected Timeline core   5,710    9,664 (+3,954)      10,127 (+4,417)
-```
-
-The same committed path family counted as complete blobs, solely as context,
-is 19,917 lines at main, 24,304 at current, and 24,767 at private. Those
-whole-file figures include generic code inside mixed files and must not be
-compared with the selected total or used as a target.
-
-## Exclusions and evidence status
-
-- `runtime_protocol/local_*`, `remote_worker_*`, `verified_host_launch.py`,
-  `astrid_runtime/`, and generic auth/backup/CAS/platform/lifecycle paths are
-  outside the Timeline Read/See/Edit boundary.
-- Contract/OpenAPI schemas, generated clients/metadata,
-  `runtime_protocol/timeline_commit_types.py`,
-  `runtime_protocol/schemas/timeline-commit-bundle.json`, conformance output,
-  tests, fixtures, archives, and package data are excluded even when
-  Timeline-named.
-- Project-shot/reference catalog CRUD and generic media/catalog/task execution
-  code are not counted as Timeline core; only the selected projection,
-  publication, history, commit, and Timeline route ranges are included.
-- This refresh changed no product repository, dependency, cache, branch, or
-  ref. No product tests or full suite were run; only read-only Git/blob and
-  AST arithmetic was performed.
-- This document makes no architecture-complete, delivery-complete, target-met,
-  or gate-met claim. Known mixed-node allocation uncertainty and the exclusion
-  of generated/test surfaces remain explicit omission bounds.
+No product files, tests, dependencies, caches, branches, or refs were
+changed. No full or product suite was run; this task is source/blob arithmetic
+only. The census remains provisional until the Runtime scope is adopted and
+re-measured against the then-authoritative integration source.

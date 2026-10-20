@@ -43,7 +43,7 @@ Runtime candidate's native result:
 | Consumer proof | Frozen source actually used | Result and boundary |
 | --- | --- | --- |
 | Agent registered cohort `1020194213-7012` | Agent `7b3e1205a374443c46bad6b18753ef146e1e42c6`, tree `7d807bc27b1b237de7138c13672d2fa814a22f3f`; lock source `a0dca169…`, producer `f021…` | **2 passed / 300.96s**; registered proposal/requester outbox retry and restart, historical render admission, CAS/ffprobe, and guarded undo |
-| App2 Gate `58973` (service `1020195447-8973`) | Agent `3c4f6de4fa777323b3386c01c7266b619b86af6d`, tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`; lock source `a0dca169…`, producer `f021…` | **1 passed / 32.4s**; lost acknowledgement, newer local intent, exact retry, restart, undo, and zero-legacy traffic |
+| App2 private historical Gate 5 run `8973` (`ap2-m2-private014-enabled-runtime-final-candidate-normal014-integration-e2e-gate5-1020195447-8973`) | App tree `171d388a9a093f139e1a2519663133ec9ced2f67`; Agent `3c4f6de4fa777323b3386c01c7266b619b86af6d`, tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`; Runtime `202074110717146fc7f08af2306a8dd7f695b0b1`, tree `ee39286bd0eb27d4075074cc4785d6d15e33f243`; producer `a0dca169…`, artifact `f021…`, schema `6ba7…`, Composition `0.0.13` | **PASS: 1 test / 32.4s**; lost acknowledgement, newer local intent, exact retry, restart, undo, and zero-legacy traffic. Private historical consumer proof only; no public pin or adoption |
 
 Both locks read from actual files as `source_commit: a0dca169…` and
 `producer_version: sha256:f021…`; neither proof authorizes adoption by itself.

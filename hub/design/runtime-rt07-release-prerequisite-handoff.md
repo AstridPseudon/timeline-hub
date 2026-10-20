@@ -47,11 +47,16 @@ RT07 deleted.
 - Agent registered cohort `7012` is an exact historical proof on Agent
   `7b3e1205a374443c46bad6b18753ef146e1e42c6`, tree
   `7d807bc27b1b237de7138c13672d2fa814a22f3f`: **2 passed in 300.96s**.
-  App2 Gate `58973` is the exact historical consumer proof on Agent
-  `3c4f6de4fa777323b3386c01c7266b619b86af6d`, tree
-  `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`: **1 passed in 32.4s**. These
-  gates remain valid exact evidence and must not be rerun merely for staging;
-  they do not authorize a pin or adoption.
+  App2 private historical Gate 5 run `8973` is the exact consumer proof,
+  test `ap2-m2-private014-enabled-runtime-final-candidate-normal014-integration-e2e-gate5-1020195447-8973`,
+  on App tree `171d388a9a093f139e1a2519663133ec9ced2f67`, Agent
+  `3c4f6de4fa777323b3386c01c7266b619b86af6d` / tree
+  `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`, and Runtime
+  `202074110717146fc7f08af2306a8dd7f695b0b1` / tree
+  `ee39286bd0eb27d4075074cc4785d6d15e33f243`: **PASS, 1 test in 32.4s**.
+  The packet is `design/ap2-m2-private014-enabled-runtime-final-candidate-REPORT.md`.
+  These gates remain valid exact historical evidence and must not be rerun
+  merely for staging; they do not authorize a pin or adoption.
 - The corrected current86 full result `21387` is **5,540 passed, 7 inherited
   baseline failures, 18 skipped, 18 xfailed**, with no new assertion or storage
   failures. The earlier `8649` result remains environment-invalid because of
@@ -79,9 +84,9 @@ RT07 deleted.
    pin, release, activation, or merge.
 
 No renderer, browser, or unchanged registered-render positive is outstanding
-for rerun. The recorded `7012` and `58973` evidence remains attached to its
-exact historical tuples. RT07 code-only `40e7` remains held; only a later
-actual merge can change the ledger status.
+for rerun. The recorded `7012` and App2 private historical Gate 5 run `8973`
+remain attached to their exact historical tuples. RT07 code-only `40e7` remains
+held; only a later actual merge can change the ledger status.
 
 ## Lifecycle and future contract item
 
