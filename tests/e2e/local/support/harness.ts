@@ -644,7 +644,7 @@ export class DirectHarness {
       // The normal native apply carrier starts from the unowned draft ref;
       // Agent's accepted update-element command attaches the real P1 owner and
       // its exact schema/object dependencies to history.
-      { id: clipId, at: 0, track: 'FX', clipType: elementId, hold: 3, elementRef: { id: elementId, kind: 'effect', revision: p1.revision }, params: { amount: 4 } },
+      { id: clipId, at: 0, track: 'FX', clipType: elementId, hold: 3, elementRef: { id: elementId, kind: 'effect', revision: 'draft-1' }, params: { amount: 4 } },
     ];
     const publication = compositionPublication({ projectId, timelineId }, this.seed.headRevisionId, 'Selected PARAM', 30);
     publication.parent_composition.config = { ...publication.parent_composition.config, clips, tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'FX', kind: 'visual', label: 'FX' }] } as typeof publication.parent_composition.config;
@@ -652,9 +652,16 @@ export class DirectHarness {
     publication.parent_composition.registry = { assets: { 'selected-image': { file: 'selected-image.png', type: 'image/png', media_id: image.objectId, content_sha256: image.digest } } } as unknown as typeof publication.parent_composition.registry;
     const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
     if (published.status !== 200) throw new Error(`selected PARAM timeline: ${published.status} ${JSON.stringify(published.body)}`);
-    this.agentCommand(['timelines', 'update-element', '--project', projectId, timelineId, '--realm', this.realmId,
+    const applied = this.agentCommand(['timelines', 'update-element', '--project', projectId, timelineId, '--realm', this.realmId,
       '--clip-id', clipId, '--pack', p1.packId, '--element', p1.id, '--kind', p1.kind, '--revision', p1.revision,
       '--expected-head', published.body.data.new_head, '--params-json', JSON.stringify({ amount: 4 }), '--json']);
+    const history = await this.runtimeJson<any>('GET', `/v1/projects/${projectId}/timelines/${timelineId}/commits?limit=50`);
+    if (history.status !== 200) throw new Error(`selected PARAM history: ${history.status} ${JSON.stringify(history.body)}`);
+    const accepted = history.body.items?.find((entry: any) => entry.revision_id === applied.new_head);
+    const operations = accepted?.receipt?.result?.commands?.map((command: any) => command.op);
+    if (JSON.stringify(operations) !== JSON.stringify(['clip.set-element', 'clip.set-params'])) {
+      throw new Error(`selected PARAM P1 did not use the native element producer: ${JSON.stringify(operations)}`);
+    }
     const p1DocumentPin = this.selectedParamDocumentPin(this.projectPackCommand(['resolve', '--realm', this.realmId, '--project', projectId, '--pack', p1.packId, '--element', p1.id, '--kind', p1.kind, '--revision', p1.revision]));
     this.selectedParamDevSeed = {
       projectId, projectSlug: (project.body.data ?? project.body).slug, timelineId, clipId, packId: p1.packId, elementId, p1,
