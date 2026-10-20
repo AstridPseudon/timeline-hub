@@ -22,6 +22,7 @@ from astrid.sdk.timeline.commit import (
 )
 from tests.editing_conformance import test_recipe_scalar_commands as scalar_recipes
 from tests.editing_conformance.test_recipe_m2_clip_add import empty_document
+from tests.helpers.selected_param_legacy import accepted_params
 from tests.sdk.test_timeline_commit_provider import (
     CommitRejected,
     DetachedPort,
@@ -211,20 +212,35 @@ def test_selected_pack_refuses_a_port_without_document_object(selected_effect, m
     assert (realm.head, realm.entries, realm.documents) == before
 
 
-@pytest.mark.xfail(strict=True, reason='owner12:16: alias-bearing birth needs proven selection without erasing the alias before this legacy-inverse scenario')
-def test_inverse_of_older_param_record_uses_only_selected_identity(selected_effect, monkeypatch):
-    realm, selected, _ = selected_effect
-    row = copy.deepcopy(State(current(realm)).entity(REF))
-    row['id'] = 'legacy-alias'
+def test_inverse_of_older_param_record_uses_only_selected_identity(monkeypatch):
+    historical = accepted_params()
+
+    class HistoricalRealm(DetachedRealm):
+        def context(self, *args, **kwargs):
+            context = super().context(*args, **kwargs)
+            context['request']['project_id'] = historical['project']
+            context['invocation']['path'] = f"/v1/projects/{historical['project']}/timelines/film/commit"
+            context['request_hash'] = _digest(context['invocation'])
+            return context
+
+    # Detached compatibility boundary: these are unmodified reads from an old
+    # real Runtime acceptance, not a newly authorized first PARAM. The native
+    # companion restores its authenticated backup and tests current authority.
+    realm = HistoricalRealm()
+    realm.head, realm.entries, realm.documents = (
+        historical['head'], historical['entries'], historical['documents'])
+    realm.schema_options = historical['options']
+    verified, realm.snapshot_objects = realm.schema_options['schema_inputs'][0]
+    realm.retained_sources[_digest(verified['pin'])] = verified
+    selected, row, accepted = historical['selected'], historical['row'], historical['accepted']
     # The ignored alias names another real admitted revision in this same pin.
     admissions = realm.schema_options['schema_inputs'][0][0]['document']['content']['admissions']
     other = next(item for item in admissions if item['revision'] != selected['revision'])
-    row['element_ref'] = {key: other[key] for key in ('id', 'kind', 'revision')}
-    row['element_ref']['packId'] = selected['packId']
+    assert row['elementRef'] == selected
+    assert row['element_ref'] == {**{key: other[key] for key in ('id', 'kind', 'revision')},
+                                 'packId': selected['packId']}
     ref = 'parent/clip:legacy-alias'
-    commit(realm, [capture_clip_add(current(realm), 'parent', row)])
-    accepted = commit(realm, [capture_clip_set_params(
-        current(realm), ref, values={'seed': 8}, **realm.schema_options)])
+    assert State(current(realm)).entity(ref) == {**row, 'params': {**row['params'], 'seed': 8}}
     # Represent the predecessor's accepted record shape, preserving all its
     # original source pin, authored writes, identity reads and expectations.
     record = realm.entries[-1]['records']['commands'][0]

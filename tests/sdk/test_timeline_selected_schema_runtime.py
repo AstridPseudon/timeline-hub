@@ -8,6 +8,7 @@ import shutil
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
+from zipfile import ZipFile
 
 import pytest
 import yaml
@@ -22,10 +23,80 @@ from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, captur
 from astrid.sdk.timeline.capture import capture_track_create
 from tests.core import test_project_packs
 from tests.helpers.runtime import use_runtime
+from tests.helpers.selected_param_legacy import ARCHIVE, accepted_params
 
 pytestmark = pytest.mark.integration
 REF = 'parent/clip:effect'
 configured_project_pack = test_project_packs.configured
+
+
+def test_pre_enforcement_alias_history_reopens_with_current_authority(tmp_path, monkeypatch):
+    use_runtime()
+    from runtime_protocol.backup import restore_backup
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_port import RequestCommitPort, route_path
+
+    historical = accepted_params()
+    extracted = tmp_path / 'historical'
+    with ZipFile(ARCHIVE) as archive:
+        archive.extractall(extracted)
+    root = tmp_path / 'realm'
+    restore_backup(extracted / 'backup', root, key=(extracted / 'backup-auth.key').read_bytes())
+    project, ref = historical['project'], 'parent/clip:legacy-alias'
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+
+    def head():
+        resource = service.get_project_timeline(project, 'film')
+        return {'revision_id': resource['head_revision_id'],
+                'publication_id': resource['head_publication_id']}
+
+    def submit(calls, key):
+        return service.commit_timeline(
+            project, 'film', {'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+                             'base_revision_id': head()['revision_id'],
+                             'base_publication_id': head()['publication_id'], 'commands': calls},
+            idempotency_key=key, publisher='author', invocation_path=route_path(project, 'film'),
+            authorize=lambda: None)
+
+    reads = []
+    original = RequestCommitPort.document_object
+
+    def read(port, pin, object_id):
+        reads.append((pin, object_id))
+        return original(port, pin, object_id)
+
+    monkeypatch.setattr(RequestCommitPort, 'document_object', read)
+    try:
+        store = service._timeline_commits()[0]
+        assert head() == historical['head']
+        assert store.history(project, 'film', head())['items'] == historical['entries']
+        assert service.commit_timeline(
+            project, 'film', historical['request'], idempotency_key='legacy-params',
+            publisher='author', invocation_path=route_path(project, 'film'),
+            authorize=lambda: None) == historical['accepted']
+        pin = historical['options']['schema_source']
+        params = {'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': ref,
+                  'args': {'values': {'seed': 16}, 'clear': [], 'schema_source': pin}}
+        # The ignored alias is max20; selected identity remains the retained max10.
+        with pytest.raises(RuntimeErrorBase, match='10|16'):
+            submit([params], 'legacy-invalid')
+        assert head() == historical['head']
+        undone = submit([inverse(historical['accepted']['receipt']['receipt_id'])], 'legacy-undo')
+        assert State(commit.bundle_from_document(undone['data']['canonical_document'])).entity(ref) == historical['row']
+        redone = submit([inverse(undone['receipt']['receipt_id'])], 'legacy-redo')
+        assert redone['data']['canonical_document'] == historical['accepted']['data']['canonical_document']
+        # A genuinely accepted old complete PARAM supplies authority for new edits.
+        changed = submit([{**params, 'args': {**params['args'], 'values': {'seed': 9}}}], 'legacy-new')
+        assert State(commit.bundle_from_document(changed['data']['canonical_document'])).entity(ref) == {
+            **historical['row'], 'params': {**historical['row']['params'], 'seed': 9}}
+        admissions = historical['options']['schema_inputs'][0][0]['document']['content']['admissions']
+        selected_object = next(item['snapshot_object']['object_id'] for item in admissions
+                               if item['revision'] == historical['selected']['revision'])
+        assert reads and all(item == (pin, selected_object) for item in reads)
+    finally:
+        service.close()
 
 
 @pytest.fixture
