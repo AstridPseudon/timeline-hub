@@ -45,7 +45,7 @@ export function AstridElementParams({
     const next = { params: { ...params, ...nextParams } };
     const reference = clip.elementRef;
     if (!reference?.packId && editorData?.data && editorOps?.element) {
-      const edit = { params: { values: next.params as Record<string, JSON>, clear: [] } } as const;
+      const edit = { params: { values: next.params as Record<string, JSON>, clear: [] } };
       const captured = captureClipElementEdit(editorOps.element, editorData.data, clip.id, edit);
       submitClipElementEdit(captured, edit);
       return;
