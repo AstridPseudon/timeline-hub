@@ -15,6 +15,7 @@ from astrid.sdk.timeline.native_placement_commands import (
     capture_placement_unplace,
 )
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse, later
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
 from tests.sdk.test_timeline_commit_provider import (
@@ -62,7 +63,7 @@ def plain(command):
 
 @pytest.mark.parametrize('operation', ['create', 'unplace'])
 def test_portable_goldens(operation):
-    golden = json.loads(FIXTURE.read_text())[operation]
+    golden = load_fixture(FIXTURE)[operation]
     document, bundle, command, verified = case(operation)
     plan = execute(bundle, [command], verified_media=verified)
     assert golden == {'input': document, 'verified_media': verified, 'commands': [command],

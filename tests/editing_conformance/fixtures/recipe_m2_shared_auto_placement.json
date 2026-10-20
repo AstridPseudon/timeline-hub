@@ -323,60 +323,201 @@
             }
           },
           {
-            "path": [],
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-a",
             "state": {
               "state": "present",
-              "value": {
-                "app": {
-                  "org.example": {
-                    "clear": null,
-                    "literal": "clip-a"
-                  }
-                },
-                "asset": "picture",
-                "at": 1,
-                "clipType": "media",
-                "hold": 2,
-                "id": "clip-a",
-                "track": "picture"
-              }
+              "value": 1
             }
           },
           {
-            "path": [],
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": "picture"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": 2
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-b",
             "state": {
               "state": "present",
-              "value": {
-                "app": {
-                  "org.example": {
-                    "clear": null,
-                    "literal": "clip-a"
-                  }
-                },
-                "asset": "picture",
-                "at": 5,
-                "clipType": "media",
-                "hold": 2,
-                "id": "clip-b",
-                "track": "picture"
-              }
+              "value": 5
             }
           },
           {
-            "path": [],
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "present",
+              "value": "picture"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "present",
+              "value": 2
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-c",
             "state": {
               "state": "present",
-              "value": {
-                "asset": "picture",
-                "at": 1,
-                "clipType": "media",
-                "hold": 8,
-                "id": "clip-c",
-                "track": "overlay"
-              }
+              "value": 1
+            }
+          },
+          {
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "present",
+              "value": "overlay"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "present",
+              "value": 8
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
             }
           },
           {
@@ -828,60 +969,201 @@
             }
           },
           {
-            "path": [],
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-a",
             "state": {
               "state": "present",
-              "value": {
-                "app": {
-                  "org.example": {
-                    "clear": null,
-                    "literal": "clip-a"
-                  }
-                },
-                "asset": "picture",
-                "at": 1,
-                "clipType": "media",
-                "hold": 2,
-                "id": "clip-a",
-                "track": "picture"
-              }
+              "value": 1
             }
           },
           {
-            "path": [],
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": "picture"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": 2
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-b",
             "state": {
               "state": "present",
-              "value": {
-                "app": {
-                  "org.example": {
-                    "clear": null,
-                    "literal": "clip-a"
-                  }
-                },
-                "asset": "picture",
-                "at": 5,
-                "clipType": "media",
-                "hold": 2,
-                "id": "clip-b",
-                "track": "picture"
-              }
+              "value": 5
             }
           },
           {
-            "path": [],
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "present",
+              "value": "picture"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "present",
+              "value": 2
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-c",
             "state": {
               "state": "present",
-              "value": {
-                "asset": "picture",
-                "at": 1,
-                "clipType": "media",
-                "hold": 8,
-                "id": "clip-c",
-                "track": "overlay"
-              }
+              "value": 1
+            }
+          },
+          {
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "present",
+              "value": "overlay"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "present",
+              "value": 8
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
             }
           },
           {
@@ -1341,63 +1623,204 @@
             }
           },
           {
-            "path": [],
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-a",
             "state": {
               "state": "present",
-              "value": {
-                "app": {
-                  "org.example": {
-                    "clear": null,
-                    "literal": "clip-a"
-                  }
-                },
-                "asset": "picture",
-                "at": 1,
-                "clipType": "media",
-                "from": 2,
-                "hold": 4,
-                "id": "clip-a",
-                "speed": 2,
-                "to": 6,
-                "track": "picture"
-              }
+              "value": 1
             }
           },
           {
-            "path": [],
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": "picture"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": 4
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": 2
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": 6
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": 2
+            }
+          },
+          {
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-b",
             "state": {
               "state": "present",
-              "value": {
-                "app": {
-                  "org.example": {
-                    "clear": null,
-                    "literal": "clip-a"
-                  }
-                },
-                "asset": "picture",
-                "at": 5,
-                "clipType": "media",
-                "hold": 2,
-                "id": "clip-b",
-                "track": "picture"
-              }
+              "value": 5
             }
           },
           {
-            "path": [],
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "present",
+              "value": "picture"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "present",
+              "value": 2
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-c",
             "state": {
               "state": "present",
-              "value": {
-                "asset": "picture",
-                "at": 1,
-                "clipType": "media",
-                "hold": 8,
-                "id": "clip-c",
-                "track": "overlay"
-              }
+              "value": 1
+            }
+          },
+          {
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "present",
+              "value": "overlay"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "present",
+              "value": 8
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
             }
           },
           {
@@ -1857,63 +2280,204 @@
             }
           },
           {
-            "path": [],
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-a",
             "state": {
               "state": "present",
-              "value": {
-                "app": {
-                  "org.example": {
-                    "clear": null,
-                    "literal": "clip-a"
-                  }
-                },
-                "asset": "picture",
-                "at": 1,
-                "clipType": "media",
-                "from": 2,
-                "hold": 4,
-                "id": "clip-a",
-                "speed": 2,
-                "to": 6,
-                "track": "picture"
-              }
+              "value": 1
             }
           },
           {
-            "path": [],
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": "picture"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": 4
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": 2
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": 6
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": 2
+            }
+          },
+          {
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-b",
             "state": {
               "state": "present",
-              "value": {
-                "app": {
-                  "org.example": {
-                    "clear": null,
-                    "literal": "clip-a"
-                  }
-                },
-                "asset": "picture",
-                "at": 5,
-                "clipType": "media",
-                "hold": 2,
-                "id": "clip-b",
-                "track": "picture"
-              }
+              "value": 5
             }
           },
           {
-            "path": [],
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "present",
+              "value": "picture"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "present",
+              "value": 2
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "at"
+            ],
             "ref": "occurrence:occ-a/clip:clip-c",
             "state": {
               "state": "present",
-              "value": {
-                "asset": "picture",
-                "at": 1,
-                "clipType": "media",
-                "hold": 8,
-                "id": "clip-c",
-                "track": "overlay"
-              }
+              "value": 1
+            }
+          },
+          {
+            "path": [
+              "at_ms"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "track"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "present",
+              "value": "overlay"
+            }
+          },
+          {
+            "path": [
+              "hold"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "present",
+              "value": 8
+            }
+          },
+          {
+            "path": [
+              "from"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "to"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "speed"
+            ],
+            "ref": "occurrence:occ-a/clip:clip-c",
+            "state": {
+              "state": "absent"
             }
           },
           {

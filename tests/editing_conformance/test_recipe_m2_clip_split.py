@@ -26,6 +26,7 @@ from astrid.sdk.timeline.commit import (
     document_from_bundle,
 )
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse, later
 from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
 
@@ -328,7 +329,7 @@ def test_create_after_is_generic_native_recording_not_a_split_undo(kind, predece
 
 
 def test_portable_golden_capture_and_accepted_record_output():
-    golden = json.loads(FIXTURE.read_text())
+    golden = load_fixture(FIXTURE)
     original = bundle_from_document(golden['input'])
     plan = execute(original, golden['commands'])
     assert plan.records == golden['records']
