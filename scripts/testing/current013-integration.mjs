@@ -116,6 +116,18 @@ function checkClean(root, label) {
   if (status) fail(`${label} source is dirty:\n${status}`);
 }
 
+/**
+ * The test service gives App a synthetic commit for its snapshot. The full
+ * source tree remains the identity guard; the synthetic HEAD is evidence to
+ * report, not a second expected pin. Agent and Runtime use checkHead below.
+ */
+export function assertAppSnapshotIdentity(expectedTree, observed) {
+  if (!FULL_SHA.test(observed.head)) fail(`App HEAD is not a full 40-character SHA: ${observed.head}`);
+  if (observed.tree !== expectedTree) fail(`App source tree changed: expected ${expectedTree}, got ${observed.tree}`);
+  if (observed.status) fail(`App source is dirty:\n${observed.status}`);
+  return Object.freeze({ expectedTree, head: observed.head, tree: observed.tree, clean: true });
+}
+
 function checkLock(root, label) {
   const file = path.join(root, 'runtime.lock.json');
   const lock = jsonFile(file);
@@ -179,14 +191,17 @@ function runVendorCheck(input, root, command, label) {
 
 export function checkCurrent013Sources(input, { vendor = true } = {}) {
   if (git(input.app, 'rev-parse', '--show-toplevel') !== input.app) fail(`App root is not the current checkout: ${input.app}`);
-  if (git(input.app, 'rev-parse', 'HEAD^{tree}') !== input.appTree) fail(`App source tree changed: expected ${input.appTree}`);
+  const appIdentity = assertAppSnapshotIdentity(input.appTree, {
+    head: git(input.app, 'rev-parse', 'HEAD'),
+    tree: git(input.app, 'rev-parse', 'HEAD^{tree}'),
+    status: git(input.app, 'status', '--porcelain', '--untracked-files=normal'),
+  });
   const agentTree = git(input.agent, 'rev-parse', 'HEAD^{tree}');
   const runtimeTree = git(input.runtime, 'rev-parse', 'HEAD^{tree}');
   const producerTree = git(input.runtimeProducer, 'rev-parse', 'HEAD^{tree}');
   checkHead(input.agent, input.agentSha, 'Agent');
   checkHead(input.runtime, input.runtimeSha, 'Runtime');
   checkHead(input.runtimeProducer, input.runtimeSha, 'Runtime producer');
-  checkClean(input.app, 'App');
   checkClean(input.agent, 'Agent');
   checkClean(input.runtime, 'Runtime');
   checkClean(input.runtimeProducer, 'Runtime producer');
@@ -202,7 +217,7 @@ export function checkCurrent013Sources(input, { vendor = true } = {}) {
     runVendorCheck(input, input.agent, input.agentPython, 'Agent');
   }
   return Object.freeze({
-    app: { root: input.app, tree: input.appTree, lock: appLock, metadata: appMetadata, composition: appComposition },
+    app: { root: input.app, ...appIdentity, lock: appLock, metadata: appMetadata, composition: appComposition },
     agent: { root: input.agent, commit: input.agentSha, tree: agentTree, lock: agentLock, metadata: agentMetadata, composition: agentComposition },
     runtime: { root: input.runtime, commit: input.runtimeSha, tree: runtimeTree },
     runtimeProducer: { root: input.runtimeProducer, commit: input.runtimeSha, tree: producerTree, manifest: runtimeManifest },

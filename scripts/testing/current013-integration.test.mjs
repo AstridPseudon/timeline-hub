@@ -10,7 +10,7 @@ import { promisify } from 'node:util';
 import { after, mock, test } from 'node:test';
 import {
   checkCurrent013Sources, CURRENT013_COMPOSITION, CURRENT013_RUNTIME,
-  readCurrent013Inputs, runCurrent013Integration,
+  readCurrent013Inputs, runCurrent013Integration, assertAppSnapshotIdentity,
 } from './current013-integration.mjs';
 
 const scratch = mkdtempSync(path.join(os.tmpdir(), 'current013-wrapper-'));
@@ -111,6 +111,19 @@ test('accepts an App snapshot identity by tree and pins Runtime to the published
   assert.equal(input.runtimeSha, CURRENT013_RUNTIME.commit);
 });
 
+test('accepts a synthetic App HEAD only for the expected clean source tree', () => {
+  const expectedTree = 'a'.repeat(40);
+  assert.deepEqual(assertAppSnapshotIdentity(expectedTree, {
+    head: 'd'.repeat(40), tree: expectedTree, status: '',
+  }), { expectedTree, head: 'd'.repeat(40), tree: expectedTree, clean: true });
+  assert.throws(() => assertAppSnapshotIdentity(expectedTree, {
+    head: 'd'.repeat(40), tree: 'e'.repeat(40), status: '',
+  }), /App source tree changed/);
+  assert.throws(() => assertAppSnapshotIdentity(expectedTree, {
+    head: 'd'.repeat(40), tree: expectedTree, status: ' M scripts/testing/current013-integration.mjs',
+  }), /App source is dirty/);
+});
+
 test('refuses a different Runtime publication before any child launch', () => {
   const values = env();
   values.TIMELINE_CURRENT013_RUNTIME_SHA = 'c'.repeat(40);
@@ -177,7 +190,7 @@ test('same-tree snapshot and ignored output pass both boundaries; original comma
     assert.equal(child.options.env.TIMELINE_BUNDLE_AGENT_HEAD, env().TIMELINE_CURRENT013_AGENT_SHA);
     assert.equal(child.options.env.TIMELINE_BUNDLE_RUNTIME_HEAD, CURRENT013_RUNTIME.commit);
     assert.equal(calls.filter(({ root, op }) => root === roots.app && op?.startsWith('status ')).length, 2);
-    assert.equal(calls.some(({ root, op }) => root === roots.app && op === 'rev-parse HEAD'), false);
+    assert.equal(calls.some(({ root, op }) => root === roots.app && op === 'rev-parse HEAD'), true);
   }, { mutate: () => write(roots.app, 'dist/ignored-output', 'normal build output') });
 });
 
