@@ -1,0 +1,541 @@
+--- a/owner_film_cliplook_scan.py
++++ b/owner_film_cliplook_scan.py
+@@ -44,7 +44,24 @@
+     "fade_in": "params.fadeInCurve",
+     "fade_out": "params.fadeOutCurve",
+ }
+-_LOOK_NAMES = ("opacity", "entrance", "exit", "fade_in", "fade_out")
++_LOOK_NAMES = (
++    "opacity",
++    "entrance",
++    "exit",
++    "fade_in",
++    "fade_out",
++    "crop_top",
++    "crop_right",
++    "crop_bottom",
++    "crop_left",
++    "speed",
++)
++_MEDIA_LOOK_NAMES = ("entrance", "exit")
++_NOT_COVERED = (
++    "transition_conversion",
++    "media_clip_look_overlap",
++    "renderer_presence_alpha_pixel_coverage",
++)
+ _REFERENCE_FIELDS = (
+     "project_id",
+     "timeline_id",
+@@ -255,12 +272,19 @@
+         and isinstance(row.get("shot_id"), str)
+         and isinstance(row.get("revision_id"), str)
+     }
++    internal_rows = _rows(document.get("internal_timeline_revisions"))
+     internals = {
+         row.get("revision_id"): row
+-        for row in _rows(document.get("internal_timeline_revisions"))
++        for row in internal_rows
++        if isinstance(row, Mapping) and isinstance(row.get("revision_id"), str)
++    }
++    # Keep the source position from the canonical list, not the de-duplicated
++    # revision-id mapping. Occurrence-prefixed keys preserve occurrence identity.
++    internal_indexes = {
++        row.get("revision_id"): index
++        for index, row in enumerate(internal_rows)
+         if isinstance(row, Mapping) and isinstance(row.get("revision_id"), str)
+     }
+-    internal_indexes = {revision_id: index for index, revision_id in enumerate(internals)}
+     for occurrence in _rows(payload.get("occurrences")):
+         if not isinstance(occurrence, Mapping):
+             continue
+@@ -299,13 +323,17 @@
+     return paths
+ 
+ 
+-def _look_source_paths(clip: Mapping[str, Any], base: str | None) -> dict[str, str]:
++def _look_source_paths(clip: Mapping[str, Any], base: str | None, clip_fields: Any) -> dict[str, str]:
+     if not base:
+         return {}
+     paths: dict[str, str] = {}
+-    for name in ("opacity", "entrance", "exit", "fade_in", "fade_out"):
+-        if name in clip:
+-            paths[name] = f"{base}.{name}"
++    for name in (*_LOOK_NAMES, "transition"):
++        spec = clip_fields.FIELDS.get(name)
++        if spec is None:
++            continue
++        stored_path = spec.stored_at
++        if _dotted(clip, stored_path) is not None:
++            paths[name] = f"{base}.{stored_path}"
+     if isinstance(clip.get("entrance"), Mapping) and clip["entrance"].get("type") == "fade":
+         paths.setdefault("fade_in", f"{base}.entrance")
+     if isinstance(clip.get("exit"), Mapping) and clip["exit"].get("type") == "fade":
+@@ -419,22 +447,17 @@
+     known = isinstance(role, str) and role.lower() in _AUDIO_ROLES and (
+         normalized_type in _AUDIO_ASSET_TYPES or normalized_type.startswith("audio/")
+     )
+-    source_paths = [f"config.tracks[{track_index}].role"]
++    source_paths = [f"projected.config.tracks[{track_index}].role"]
+     if isinstance(asset_id, str):
+-        source_paths.append(f"registry.assets[{asset_id!r}].type")
++        source_paths.append(f"projected.registry.assets[{asset_id!r}].type")
+     return known, source_paths
+ 
+ 
+ def _audio_fade_observations(
+     clip: Mapping[str, Any], *, fps: float, config: Mapping[str, Any], registry: Mapping[str, Any], api: Mapping[str, Any]
+-) -> list[tuple[str, bool, list[str], list[str], bool]]:
+-    clip_fields = api["clip_fields"]
++) -> list[tuple[str, bool, bool, list[str], list[str], bool]]:
+     audio_curves = api["audio_curves"]
+-    try:
+-        described = clip_fields.describe(clip, fps=fps)
+-    except Exception:  # noqa: BLE001 - malformed authored fields remain unknown
+-        described = {}
+-    observations: list[tuple[str, bool, list[str], list[str], bool]] = []
++    observations: list[tuple[str, bool, bool, list[str], list[str], bool]] = []
+     audio_known, audio_paths = _track_and_asset_context(clip, config, registry)
+     for name, fade_path in _AUDIO_FADE_PATHS.items():
+         duration = _dotted(clip, fade_path)
+@@ -444,6 +467,7 @@
+             continue
+         properties = [name, fade_path]
+         source_paths = [fade_path]
++        curve_present = raw_curve is not None and raw_curve != "linear"
+         curve_known = True
+         if raw_curve is not None:
+             properties.append(curve_path)
+@@ -452,12 +476,56 @@
+                 audio_curves.validate(raw_curve)
+             except (TypeError, ValueError):
+                 curve_known = False
+-        elif name not in described:
+-            curve_known = False
+-        observations.append((name, curve_known, properties, [*source_paths, *audio_paths], audio_known))
++        observations.append((name, curve_present, curve_known, properties, [*source_paths, *audio_paths], audio_known))
+     return observations
+ 
+ 
++def _look_inventory(
++    record: Mapping[str, Any], properties: Sequence[str], source_paths: Sequence[str], errors: list[str]
++) -> dict[str, Any]:
++    result = _public_refs(record, errors)
++    result.update(
++        {
++            "knowledge": "known",
++            "properties": _dedupe(properties),
++            "source_paths": _dedupe(source_paths),
++            "interval_frames": list(record["interval_frames"]),
++        }
++    )
++    return result
++
++
++def _transition_inventory(
++    clip: Mapping[str, Any], record: Mapping[str, Any], *, fps: float, api: Mapping[str, Any], errors: list[str]
++) -> dict[str, Any] | None:
++    try:
++        transition = api["clip_fields"].read(clip, "transition", fps=fps)
++    except Exception:  # noqa: BLE001 - malformed transition remains unreported
++        return None
++    if not isinstance(transition, Mapping):
++        return None
++    transition_id = transition.get("id")
++    if not isinstance(transition_id, str) or not transition_id:
++        return None
++    result = _public_refs(record, errors)
++    result.update(
++        {
++            "transition_id": transition_id,
++            "transition_type": transition_id,
++            "semantics": "incoming",
++            "interval_frames": list(record["interval_frames"]),
++            "source_paths": _dedupe(
++                [
++                    f"{record['source_path']}.transition"
++                    if isinstance(record.get("source_path"), str)
++                    else ""
++                ]
++            ),
++        }
++    )
++    return result
++
++
+ def _closure_error(
+     document: Mapping[str, Any], errors: Sequence[str], refs: Mapping[str, Any] | None = None
+ ) -> dict[str, Any]:
+@@ -469,6 +537,9 @@
+         "input_authority": "runtime_canonical_document",
+         "evidence_kind": "synthetic_or_unverified_canonical_input",
+         "semantic_categories": list(SEMANTIC_CATEGORIES),
++        "not_covered": list(_NOT_COVERED),
++        "transition_boundaries": [],
++        "media_look_inventory": [],
+         "finding_count": 0,
+         "findings": [],
+         "clean_claim": False,
+@@ -548,6 +619,8 @@
+         _add_error(errors, f"source paths unavailable: {type(exc).__name__}")
+     records: list[tuple[Mapping[str, Any], dict[str, Any]]] = []
+     element_candidates: list[dict[str, Any]] = []
++    transition_boundaries: list[dict[str, Any]] = []
++    media_look_inventory: list[dict[str, Any]] = []
+     for clip in config.get("clips", []):
+         if not isinstance(clip, Mapping):
+             continue
+@@ -569,14 +642,29 @@
+         if isinstance(clip_id, str):
+             record["clip_id"] = clip_id
+         records.append((clip, record))
++        try:
++            described = api["clip_fields"].describe(clip, fps=fps)
++        except Exception:  # noqa: BLE001 - malformed authored look remains unknown
++            described = {}
++        if clip.get("clipType", clip.get("clip_type", "media")) in {"media", "video", "image"}:
++            media_properties = [name for name in _MEDIA_LOOK_NAMES if name in described]
++            if media_properties:
++                look_paths = _look_source_paths(clip, source.get("source_path"), api["clip_fields"])
++                media_look_inventory.append(
++                    _look_inventory(
++                        record,
++                        media_properties,
++                        [look_paths[name] for name in media_properties if name in look_paths],
++                        errors,
++                    )
++                )
++        transition = _transition_inventory(clip, record, fps=fps, api=api, errors=errors)
++        if transition is not None:
++            transition_boundaries.append(transition)
+         info = _element_info(clip, registry, api["root"])
+         if info["classification"] != "not_element":
+-            try:
+-                described = api["clip_fields"].describe(clip, fps=fps)
+-            except Exception:  # noqa: BLE001 - malformed authored look remains unknown
+-                described = {}
+             look_properties = [name for name in _LOOK_NAMES if name in described]
+-            look_paths = _look_source_paths(clip, source.get("source_path"))
++            look_paths = _look_source_paths(clip, source.get("source_path"), api["clip_fields"])
+             element_candidates.append(
+                 {
+                     **record,
+@@ -592,7 +680,7 @@
+     projected_registry = projected.registry if isinstance(projected.registry, Mapping) else {}
+     for clip, record in records:
+         refs = _public_refs(record, errors)
+-        for name, curve_known, properties, paths, audio_known in _audio_fade_observations(
++        for name, curve_present, curve_known, properties, paths, audio_known in _audio_fade_observations(
+             clip, fps=fps, config=config, registry=projected_registry, api=api
+         ):
+             findings.append(
+@@ -606,50 +694,65 @@
+                     interval_frames=record["interval_frames"],
+                 )
+             )
+-            findings.append(
+-                _finding(
+-                    category="curve_honoured",
+-                    known=audio_known and curve_known,
+-                    properties=properties,
+-                    source_paths=paths,
+-                    refs=refs,
+-                    errors=errors,
+-                    interval_frames=record["interval_frames"],
++            if curve_present:
++                findings.append(
++                    _finding(
++                        category="curve_honoured",
++                        known=audio_known and curve_known,
++                        properties=properties,
++                        source_paths=paths,
++                        refs=refs,
++                        errors=errors,
++                        interval_frames=record["interval_frames"],
++                    )
+                 )
+-            )
+-    by_track: dict[str, list[dict[str, Any]]] = {}
+     for candidate in element_candidates:
+-        track_id = candidate.get("track_id")
+-        by_track.setdefault(track_id if isinstance(track_id, str) else "", []).append(candidate)
+-    for rows in by_track.values():
+-        for left, right in combinations(rows, 2):
+-            start = max(left["interval_frames"][0], right["interval_frames"][0])
+-            end = min(left["interval_frames"][1], right["interval_frames"][1])
+-            if start >= end:
+-                continue
+-            known = left["classification"] == right["classification"] == "registered_element"
+-            findings.append(
+-                _finding(
+-                    category="element_clip_look_overlap",
+-                    known=known,
+-                    properties=[*left["properties"], *right["properties"]],
+-                    source_paths=[*left["source_paths"], *right["source_paths"]],
+-                    refs={
+-                        **scope_refs,
+-                        "clip_ids": [left.get("clip_id"), right.get("clip_id")],
+-                        "occurrence_ids": _dedupe([left.get("occurrence_id"), right.get("occurrence_id")]),
+-                        "source_kinds": _dedupe([left.get("source_kind"), right.get("source_kind")]),
+-                    },
+-                    errors=errors,
+-                    interval_frames=[start, end],
+-                    compile_availability=(
+-                        "available"
+-                        if known
+-                        and left["compile_availability"] == right["compile_availability"] == "available"
+-                        else "unknown"
+-                    ),
+-                )
++        if not candidate["properties"]:
++            continue
++        known = candidate["classification"] == "registered_element"
++        findings.append(
++            _finding(
++                category="element_clip_look_overlap",
++                known=known,
++                properties=candidate["properties"],
++                source_paths=candidate["source_paths"],
++                refs={**scope_refs, "clip_ids": [candidate.get("clip_id")]},
++                errors=errors,
++                interval_frames=candidate["interval_frames"],
++                compile_availability=(
++                    "available" if known and candidate["compile_availability"] == "available" else "unknown"
++                ),
++            )
++        )
++    for left, right in combinations(element_candidates, 2):
++        if not left["properties"] and not right["properties"]:
++            continue
++        start = max(left["interval_frames"][0], right["interval_frames"][0])
++        end = min(left["interval_frames"][1], right["interval_frames"][1])
++        if start >= end:
++            continue
++        known = left["classification"] == right["classification"] == "registered_element"
++        findings.append(
++            _finding(
++                category="element_clip_look_overlap",
++                known=known,
++                properties=[*left["properties"], *right["properties"]],
++                source_paths=[*left["source_paths"], *right["source_paths"]],
++                refs={
++                    **scope_refs,
++                    "clip_ids": [left.get("clip_id"), right.get("clip_id")],
++                    "occurrence_ids": _dedupe([left.get("occurrence_id"), right.get("occurrence_id")]),
++                    "source_kinds": _dedupe([left.get("source_kind"), right.get("source_kind")]),
++                },
++                errors=errors,
++                interval_frames=[start, end],
++                compile_availability=(
++                    "available"
++                    if known and left["compile_availability"] == right["compile_availability"] == "available"
++                    else "unknown"
++                ),
+             )
++        )
+     result = {
+         "version": VERSION,
+         "status": "incomplete" if errors else "complete",
+@@ -658,6 +761,9 @@
+         "input_authority": "runtime_canonical_document",
+         "evidence_kind": "synthetic_or_unverified_canonical_input",
+         "semantic_categories": list(SEMANTIC_CATEGORIES),
++        "not_covered": list(_NOT_COVERED),
++        "transition_boundaries": transition_boundaries,
++        "media_look_inventory": media_look_inventory,
+         "finding_count": len(findings),
+         "findings": findings,
+         "clean_claim": False,
+@@ -739,3 +845,4 @@
+ 
+ if __name__ == "__main__":
+     raise SystemExit(main())
++
+--- a/tests/test_owner_film_cliplook_scan.py
++++ b/tests/test_owner_film_cliplook_scan.py
+@@ -13,7 +13,9 @@
+ 
+ import pytest
+ 
+-SCANNER_PATH = Path(__file__).resolve().parents[1] / "owner_film_cliplook_scan.py"
++SCANNER_PATH = Path(__file__).resolve().with_name("owner_film_cliplook_scan.py")
++if not SCANNER_PATH.is_file():
++    SCANNER_PATH = Path(__file__).resolve().parents[1] / "owner_film_cliplook_scan.py"
+ SPEC = importlib.util.spec_from_file_location("owner_film_cliplook_scan", SCANNER_PATH)
+ assert SPEC is not None and SPEC.loader is not None
+ SCANNER = importlib.util.module_from_spec(SPEC)
+@@ -37,6 +39,7 @@
+         "asset": asset,
+         "clipType": "media",
+         "opaqueSecret": "must-not-appear-in-output",
++        "credential": "SYNTHETIC_CREDENTIAL_MARKER",
+     }
+     if element is not None:
+         result["elementRef"] = {"id": element, "kind": "effect"}
+@@ -53,6 +56,8 @@
+             asset="video-a",
+             element="am-footage",
+             opacity=0.8,
++            cropLeft=0.1,
++            speed=1.5,
+             entrance={"type": "fade", "duration": 0.5},
+         ),
+         _clip(
+@@ -61,6 +66,7 @@
+             "picture",
+             asset="video-b",
+             element="am-footage",
++            transition={"id": "cross-fade", "durationFrames": 6},
+             exit={"type": "fade", "duration": 0.5},
+         ),
+         _clip(
+@@ -95,6 +101,13 @@
+             clipType="audio",
+             params={"fadeOut": 0.25, "fadeOutCurve": "not-a-registered-curve"},
+         ),
++        _clip(
++            "media-look",
++            14,
++            "picture",
++            asset="video-a",
++            entrance={"type": "fade", "duration": 0.5},
++        ),
+     ]
+     payload: dict[str, Any] = {
+         "config": {
+@@ -195,23 +208,34 @@
+     assert child["internal_timeline_revision_id"] == "internal-revision-1"
+     unknown = next(row for row in _findings(result, "curve_honoured") if row["clip_id"] == "audio-unknown")
+     assert unknown["knowledge"] == "unknown"
++    assert not any(row["clip_id"] == "audio-default-curve" for row in _findings(result, "curve_honoured"))
++    transition = next(row for row in result["transition_boundaries"] if row["clip_id"] == "element-b")
++    assert transition["transition_id"] == transition["transition_type"] == "cross-fade"
++    assert transition["semantics"] == "incoming"
++    assert transition["interval_frames"] == [60, 120]
++    assert "transition_conversion" in result["not_covered"]
+ 
+ 
+ def test_defaults_overlap_scope_and_opaque_data_are_bounded(agent_root: Path) -> None:
+     result = SCANNER.scan(synthetic_document(), agent_root=agent_root)
+-    default_curve = next(
+-        row for row in _findings(result, "curve_honoured") if row["clip_id"] == "audio-default-curve"
+-    )
+-    assert default_curve["knowledge"] == "known"
+-    assert "params.fadeOutCurve" not in default_curve["properties"]
+-    overlaps = _findings(result, "element_clip_look_overlap")
++    assert not any(row["clip_id"] == "audio-default-curve" for row in _findings(result, "curve_honoured"))
++    overlaps = [row for row in _findings(result, "element_clip_look_overlap") if len(row["clip_ids"]) == 2]
+     assert {tuple(row["clip_ids"]) for row in overlaps} == {
+         ("element-a", "element-b"),
+         ("element-b", "element-unknown"),
+     }
+     assert next(row for row in overlaps if row["clip_ids"] == ["element-b", "element-unknown"])["knowledge"] == "unknown"
++    element_a = next(row for row in _findings(result, "element_clip_look_overlap") if row["clip_ids"] == ["element-a"])
++    assert {"crop_left", "speed"} <= set(element_a["properties"])
++    media = next(row for row in result["media_look_inventory"] if row["clip_id"] == "media-look")
++    assert media["properties"] == ["entrance"]
++    assert media["knowledge"] == "known"
++    assert "projected.config.tracks[1].role" in next(
++        row for row in _findings(result, "continuous_audio_fade") if row["clip_id"] == "audio-curved"
++    )["source_paths"]
+     encoded = json.dumps(result)
+     assert "must-not-appear-in-output" not in encoded
++    assert "SYNTHETIC_CREDENTIAL_MARKER" not in encoded
+     assert "opaqueSecret" not in encoded
+     assert '"raw"' not in encoded
+ 
+@@ -223,16 +247,46 @@
+     assert result["clean_claim"] is False
+ 
+ 
+-def test_element_overlap_is_limited_to_one_track(agent_root: Path) -> None:
++def test_element_overlap_includes_cross_track_half_open_intervals(agent_root: Path) -> None:
++    document = synthetic_document()
++    payload = document["parent_revision"]["payload"]
++    payload["config"]["tracks"].append({"id": "other-picture", "role": "picture"})
++    payload["clips"][2]["track"] = "other-picture"
++    result = SCANNER.scan(document, agent_root=agent_root)
++    overlaps = [row for row in _findings(result, "element_clip_look_overlap") if len(row["clip_ids"]) == 2]
++    assert {tuple(row["clip_ids"]) for row in overlaps} == {
++        ("element-a", "element-b"),
++        ("element-b", "element-unknown"),
++    }
++
++
++def test_cross_track_boundary_is_half_open_no_overlap(agent_root: Path) -> None:
+     document = synthetic_document()
+     payload = document["parent_revision"]["payload"]
+     payload["config"]["tracks"].append({"id": "other-picture", "role": "picture"})
+     payload["clips"][2]["track"] = "other-picture"
++    payload["clips"][2]["at"] = 4
+     result = SCANNER.scan(document, agent_root=agent_root)
+-    overlaps = _findings(result, "element_clip_look_overlap")
++    overlaps = [row for row in _findings(result, "element_clip_look_overlap") if len(row["clip_ids"]) == 2]
+     assert {tuple(row["clip_ids"]) for row in overlaps} == {("element-a", "element-b")}
+ 
+ 
++def test_pair_without_a_declared_look_is_omitted(agent_root: Path) -> None:
++    document = synthetic_document()
++    clips = document["parent_revision"]["payload"]["clips"]
++    clips.extend(
++        [
++            _clip("plain-a", 17, "picture", asset="video-a", element="am-footage"),
++            _clip("plain-b", 18, "picture", asset="video-b", element="am-footage"),
++        ]
++    )
++    result = SCANNER.scan(document, agent_root=agent_root)
++    assert not any(
++        set(row["clip_ids"]) == {"plain-a", "plain-b"}
++        for row in _findings(result, "element_clip_look_overlap")
++    )
++
++
+ def test_missing_and_unprojectable_closure_fail_closed(agent_root: Path) -> None:
+     result = SCANNER.scan({"project_id": "synthetic-project"}, agent_root=agent_root)
+     assert result["status"] == "incomplete"
+@@ -302,8 +356,13 @@
+     assert errors == ["source_path reference must be a string"]
+ 
+ 
+-@pytest.mark.parametrize("curve", [None, "linear", "equal-power"])
+-def test_curve_not_guessed_from_clip_name(agent_root: Path, curve: str | None) -> None:
++@pytest.mark.parametrize(
++    ("curve", "knowledge"),
++    [(None, None), ("linear", None), ("equal-power", "known"), ("not-a-registered-curve", "unknown")],
++)
++def test_curve_requires_explicit_non_linear_value(
++    agent_root: Path, curve: str | None, knowledge: str | None
++) -> None:
+     document = synthetic_document()
+     clip = document["parent_revision"]["payload"]["clips"][3]
+     clip["id"] = "name-that-looks-like-a-curve"
+@@ -312,8 +371,22 @@
+         clip["params"]["fadeInCurve"] = curve
+     result = SCANNER.scan(document, agent_root=agent_root)
+     rows = [row for row in _findings(result, "curve_honoured") if row["clip_id"] == clip["id"]]
+-    assert len(rows) == 1
+-    assert rows[0]["knowledge"] == "known"
++    assert len(rows) == (0 if knowledge is None else 1)
++    if knowledge is not None:
++        assert rows[0]["knowledge"] == knowledge
++    assert len([row for row in _findings(result, "continuous_audio_fade") if row["clip_id"] == clip["id"]]) == 1
++
++
++def test_duplicate_internal_positions_keep_occurrence_identity() -> None:
++    document = synthetic_document()
++    duplicate = json.loads(json.dumps(document["internal_timeline_revisions"][0]))
++    duplicate["payload"]["clips"][0]["id"] = "duplicate-child"
++    document["internal_timeline_revisions"].insert(0, duplicate)
++    paths = SCANNER._raw_clip_sources(document)
++    assert paths["occurrence-1:child-audio"]["source_path"] == (
++        "internal_timeline_revisions[1].payload.clips[0]"
++    )
++    assert paths["occurrence-1:child-audio"]["occurrence_id"] == "occurrence-1"
+ 
+ 
+ def test_cli_runs_from_relocated_directory_without_orch_environment(agent_root: Path, tmp_path: Path) -> None:
+@@ -378,3 +451,4 @@
+     rejected(symlink)
+     assert hashlib.sha256(input_path.read_bytes()).hexdigest() == original_hash
+     assert input_path.stat().st_mtime_ns == original_mtime_ns
++
+
