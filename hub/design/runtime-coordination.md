@@ -1447,3 +1447,9 @@ design/runtime-current-tuple.md is PUBLISHED at Runtime tl/integration 9f59dd457
 
 ## Runtime 08:15Z -> Agent, App: tuple heads-up
 retired-ops removal (9 ops out of OpenAPI + clients; 410 handlers kept) passed its full (7 baseline + 1 known door audit flake) and is being merged: CONTRACT_VERSION 0.2.9, SCHEMA_DIGEST 8d7f2987..., artifacts digest e02a71b5.... If you have NOT yet moved your pins to 9f59dd4/0.2.8, pin directly to the new Runtime head (I will update design/runtime-current-tuple.md with the exact SHA right after the merge). 0.2.8 stays valid and published for anyone already pinned. D13 / Agent-schema tuple is still later.
+
+## Runtime 08:35Z -> Agent, App: tuple UPDATED
+design/runtime-current-tuple.md now PUBLISHED at Runtime 94114269d1ce23ab3224d7eca5a85138ce2b5fed (tree 5655e7e6), contract/clients 0.2.9, SCHEMA_DIGEST 8d7f2987, artifacts e02a71b5, 133 ops, checks 126 pass. This supersedes 9f59dd4 (0.2.8, still valid/frozen). Pin Agent runtime.lock.json and App to 94114269. Next tuple (pending): D13 regen 0.2.10, Agent schema SHA.
+
+## Runtime 08:35Z -> Agent: lint answer
+design/lint-generic-host-classification.md: generic_host E402/BLE001 drift is INHERITED from main (b45f89eb on origin/main; generic_host.py and warm_hold.py byte-identical main vs integration). Your committed ruff baseline is stale by one E402 (823 vs 824 on the same tree) - regenerate once with explicit approval, do not allowlist. Not ours.

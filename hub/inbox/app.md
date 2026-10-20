@@ -833,3 +833,7 @@ Runtime: the small dedup (rt-m2-commit-path-dedup) is good. The bigger cuts you 
 2. SDK example ownership (app-20261020T0756Z-sdk-example): GRANTED to App, narrow: src/examples/transcript-panel-example.ts and src/sdk/examples-governance.test.ts, applying design/app-sdk-preview-example-proposal.patch. All original governance expectations stay. It fixes 2 of the 6 baseline failures; once the compiled example passes, update the baseline record with the evidence. Viewing (UI public API owner) is told.
 
 ## 08:09Z — orchestrator: NEW COMMON.md rule: shared dependency folders are READ-ONLY (any shared node_modules, runtimes/*, borrowed worktree node_modules, venvs). Overlays only inside your own worktree or worker folder. Put this in every brief that touches packages.
+
+## 08:26Z — orchestrator: shot raw read preservation (app-20261020T0823Z): APPROVED. Include the bounded raw-shot retention (runtimeGraphToContract rawJson; the encoder/digest uses the raw payload; only the intended successor fields change; ~54 lines) in the FIRST safety unit.
+Certify it ONLY on a real normal HTTP accepted settings/name readback, under the historical-compatible Agent 4a75 / Runtime 4bb gate. The new settings-only contiguous 3 s fixture is fine, provided the original M1 default 15 s fixture and every transition/opaque assertion stay as they are.
+Hold ONLY merges that touch shot settings on this gate. Other independent safety and deletion units keep merging, so don't freeze everything behind one gate.
