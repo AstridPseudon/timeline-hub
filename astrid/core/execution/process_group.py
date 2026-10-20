@@ -567,7 +567,17 @@ def _observe_tree(process: subprocess.Popen, *, deadline: float | None = None) -
             **({"deadline": deadline} if deadline is not None else {}),
         )
         # Fresh reconciliation observations must survive subsequent reparenting.
-        known.update({pid: birth for pid, (birth, _) in custody._handles.items()})
+        # A Linux child can exit between the census and pidfd binding; register
+        # deliberately declines that already-gone candidate because no retained
+        # kernel handle exists. Do not keep that unowned census row in the
+        # ancestry map, or a later PID reuse would be mistaken for its identity.
+        retained = {pid: birth for pid, (birth, _) in custody._handles.items()}
+        for pid in tuple(known):
+            if pid not in retained:
+                del known[pid]
+        known.update(retained)
+        live = {pid: birth for pid, birth in live.items()
+                if retained.get(pid) == birth}
         if sys.platform == "darwin" and getattr(getattr(custody, "_launch_broker", None), "role", None) == "command":
             process._astrid_cleanup_semantics = {
                 "coverage": "retained_observed_set_and_final_owned_group_checks",
