@@ -246,17 +246,48 @@ def test_preview_does_not_consume_settled_proposal(producer):
     assert _execute(producer)["data"]["status"] == "accepted"
 
 
-@pytest.mark.parametrize("state", ["unsettled", "cancelled", "cancelled-after-settle", "superseded", "retried-without-current"])
+@pytest.mark.parametrize("state", ["unsettled", "cancelled", "superseded", "retried-without-current"])
 def test_noncurrent_or_ineligible_attempt_refuses_without_writes(producer, state):
     if state != "unsettled" and state != "cancelled":
         _settle(producer)
     if state.startswith("cancelled"):
-        # Completed cancellation is currently a no-op. The settled withdrawal
-        # requirement remains; Runtime must settle its storage policy.
         _cancel(producer)
     elif state in {"superseded", "retried-without-current"}:
         _supersede(producer, claim=state == "superseded")
     _assert_refused(producer.service, lambda: _execute(producer), {"producer_attempt_mismatch", "producer_dependency_unavailable"})
+
+
+def _completed_task_and_attempt(producer):
+    task = copy.deepcopy(producer.service.task(producer.task)["task"])
+    attempt = producer.service.store.conn.execute(
+        "SELECT * FROM attempts WHERE id=?", (producer.attempt["attempt_id"],)
+    ).fetchone()
+    return task, dict(attempt)
+
+
+def test_completed_cancel_is_noop_and_proposal_remains_eligible(producer):
+    _settle(producer)
+    before = _completed_task_and_attempt(producer)
+    _cancel(producer)
+    assert _completed_task_and_attempt(producer) == before
+
+    accepted = _execute(producer)
+    assert accepted["data"]["status"] == "accepted"
+
+
+def test_completed_cancel_after_capture_is_noop_and_proposal_accepts(producer):
+    _settle(producer)
+    before = _completed_task_and_attempt(producer)
+    observed = []
+
+    def cancel_after_capture():
+        _cancel(producer)
+        observed.append(_completed_task_and_attempt(producer))
+
+    accepted = _execute(producer, provider=_provider(after_capture=cancel_after_capture))
+    assert observed == [before]
+    assert _completed_task_and_attempt(producer) == before
+    assert accepted["data"]["status"] == "accepted"
 
 
 @pytest.mark.parametrize("field", ["task_id", "attempt_id", "executor_id", "fence", "runtime_epoch", "proposal_digest",
@@ -384,12 +415,11 @@ def test_two_new_commit_keys_cannot_consume_one_settled_proposal_twice(producer)
     assert _state(producer.service) == before
 
 
-@pytest.mark.parametrize("invalidation", ["cancel", "supersede"])
-def test_invalidation_after_capture_before_accept_is_rechecked_atomically(producer, invalidation):
+def test_supersession_after_capture_before_accept_is_rechecked_atomically(producer):
     _settle(producer)
     observed = []
     def invalidate_after_capture():
-        (_cancel if invalidation == "cancel" else _supersede)(producer)
+        _supersede(producer)
         observed.append(_state(producer.service))
     provider = _provider(after_capture=invalidate_after_capture)
     # The deterministic interleaving changes real task state after a verified
