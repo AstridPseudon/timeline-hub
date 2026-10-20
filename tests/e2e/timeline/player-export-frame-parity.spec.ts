@@ -96,7 +96,7 @@ async function renderAndDownload(page: Page, harness: DirectHarness, fixture: Fr
     await expect.poll(async () => {
       const task = await readRuntimeJson<Task>(harness, taskPath);
       if (['failed', 'cancelled'].includes(task.state)) return `error:${JSON.stringify(task.result)}`;
-      const error = (await blocker.textContent().catch(() => null))?.trim();
+      const error = (await blocker.allTextContents()).join('\n').trim();
       if (error) return `error:${error}`;
       return task.state === 'succeeded' && await downloadLink.isVisible() ? 'done' : 'pending';
     }, { timeout: 240_000, message: 'mounted App Render action must finish through the real generic pack host' }).toBe('done');
