@@ -823,10 +823,24 @@ class TimelineCommitStore:
                                         (project_id, timeline_id)).fetchone()
             if current is None or current["revision_id"] is None or current["publication_id"] is not None:
                 reject("history_unavailable")
+            # Only a shell with no authored scope is empty: any row keyed to the timeline is authored data.
+            for table in self._SHELL_SCOPE_TABLES:
+                if self.conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone() and \
+                        self.conn.execute(f"SELECT 1 FROM {table} WHERE timeline_id=? LIMIT 1", (timeline_id,)).fetchone():
+                    reject("history_unavailable")
+            # create_timeline snapshots the empty shell as timeline_revisions v1; only a non-empty snapshot is authored.
+            if self.conn.execute("SELECT 1 FROM timeline_revisions WHERE timeline_id=? AND (shots_json!='[]' OR references_json!='[]') LIMIT 1",
+                                 (timeline_id,)).fetchone() or \
+                    self.conn.execute("SELECT 1 FROM composition_revision_occurrences o JOIN parent_composition_revisions r "
+                                 "ON r.id=o.parent_revision_id WHERE r.timeline_id=? LIMIT 1", (timeline_id,)).fetchone():
+                reject("history_unavailable")
             plan = bootstrap_install_plan(self.conn, project_id, timeline_id,
                                           read_object=ContentAddressedStore(self.store.cas_root).read)
             self._install_entries(project_id, timeline_id, plan)
             return plan["entries"][0]["receipt"]["event_ids"][0]
+
+    _SHELL_SCOPE_TABLES = ("timeline_shots", "timeline_references", "timeline_render_publications",
+                           "timeline_document_input_links", "timeline_commit_history")
 
     def bootstrap(self, project_id, timeline_id, *, authorize):
         from .cas import ContentAddressedStore
