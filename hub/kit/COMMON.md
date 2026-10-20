@@ -21,3 +21,4 @@ Rules:
 
 ## Never encode lost behaviour (orchestrator rule, 2026-10-19)
 Never rewrite a passing behaviour test so that it expects the behaviour to be refused or missing. If your change temporarily removes a behaviour, keep the original expectation and mark only those tests as expected-to-fail: `it.fails` in vitest, `@pytest.mark.xfail(strict=True)` in pytest. Add a comment naming the requirement that restores them. Never skip or delete them.
+- design/ is for documents (it syncs to every machine through GitHub). Never put archives, tarballs, node_modules or files over a few MB there; keep them in your worker folder.
