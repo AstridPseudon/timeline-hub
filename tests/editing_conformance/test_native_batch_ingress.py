@@ -42,7 +42,7 @@ class MemorySocket:
 
 
 @pytest.fixture
-def runtime(tmp_path, monkeypatch):
+def runtime(tmp_path, monkeypatch, request):
     use_runtime(vendored_runtime_commit())
     from runtime_protocol.auth import CredentialStore
     from runtime_protocol.server import RuntimeHandler
@@ -54,8 +54,12 @@ def runtime(tmp_path, monkeypatch):
     from astrid.sdk.client import AstridClient
     from astrid_runtime_client.generated import WorkspaceClient
 
+    film = None
     root = tmp_path / 'realm'
-    RealmStore.initialize(root).close()
+    if getattr(request, 'param', None) == 'historical':
+        root, film = request.getfixturevalue('historical_sheet_film')
+    else:
+        RealmStore.initialize(root).close()
     credentials = CredentialStore(tmp_path / 'credentials')
     token, _ = credentials.provision('owner', ['admin', 'handshake', 'projects:read',
                                              'projects:write', 'objects:read', 'objects:write',
@@ -94,8 +98,9 @@ def runtime(tmp_path, monkeypatch):
                         lambda endpoint, credential: WorkspaceClient(endpoint, credential, transport=transport))
     monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client'))
     restart()
-    world.project = server.runtime.create_project({'slug': 'batch', 'name': 'Batch'})['id']
-    server.runtime.create_timeline(world.project, 'film', idempotency_key='bootstrap')
+    world.project = film if film else server.runtime.create_project({'slug': 'batch', 'name': 'Batch'})['id']
+    if film is None:
+        server.runtime.create_timeline(world.project, 'film', idempotency_key='bootstrap')
 
     def client():
         return AstridClient.open(endpoint='http://127.0.0.1:1', credential=token,
@@ -107,9 +112,12 @@ def runtime(tmp_path, monkeypatch):
                                     outbox_path=tmp_path / (name + '.json'), **(base or {}))
 
     world.client, world.session, world.restart = client, session, restart
+    world.service = lambda: server.runtime
     world.history = lambda: server.runtime.list_timeline_commits(world.project, 'film', authorize=lambda: None)
-    head = world.history()['head']
-    world.base = {'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id']}
+    # Read without adopting a historical head into command history before its seed.
+    resource = server.runtime.get_project_timeline(world.project, 'film')
+    world.base = {'base_revision_id': resource['head_revision_id'],
+                  'base_publication_id': resource['head_publication_id']}
     world.path = tmp_path / 'outbox.json'
     try:
         yield world

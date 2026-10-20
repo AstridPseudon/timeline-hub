@@ -1701,6 +1701,18 @@
             "--draft": {
               "required": false
             },
+            "--dry-run": {
+              "required": false
+            },
+            "--idempotency-key": {
+              "required": false
+            },
+            "--json": {
+              "required": false
+            },
+            "--native": {
+              "required": false
+            },
             "--project": {
               "required": false
             }
@@ -2549,7 +2561,19 @@
             "--draft": {
               "required": false
             },
+            "--dry-run": {
+              "required": false
+            },
+            "--idempotency-key": {
+              "required": false
+            },
+            "--json": {
+              "required": false
+            },
             "--project": {
+              "required": false
+            },
+            "--publication": {
               "required": false
             },
             "--steps": {
@@ -2959,6 +2983,9 @@
               "required": false
             },
             "--limit": {
+              "required": false
+            },
+            "--native": {
               "required": false
             },
             "--occurrence": {
