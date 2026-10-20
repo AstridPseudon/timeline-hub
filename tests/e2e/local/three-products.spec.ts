@@ -1163,7 +1163,10 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
   const wrongSelectionRoute = /\/media-selection\/verified\?/;
   await page.route(wrongSelectionRoute, async (route) => {
     const url = new URL(route.request().url());
-    url.searchParams.set('object_id', 'sha256:wrong-selection');
+    const originalObjectId = url.searchParams.get('object_id');
+    expect(originalObjectId).toMatch(/^sha256:[0-9a-f]{64}$/);
+    const lastHex = originalObjectId!.at(-1)!;
+    url.searchParams.set('object_id', `${originalObjectId!.slice(0, -1)}${lastHex === '0' ? '1' : '0'}`);
     await route.continue({ url: url.toString() });
   });
   await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 20);
