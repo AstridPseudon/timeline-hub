@@ -4,6 +4,7 @@ import { createAstridAcpHttpServer, resolveAstridAcpBridgeConfig, assertLocalMed
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
 import { ProjectChatRegistry } from './astrid-project-chat.ts';
 import { ApiError, type Project } from '../src/integrations/runtime/generated.ts';
 import type { AcpProcessHostCallbacks } from '../src/tools/video-editor/runtime/processes/acpProcessHost.ts';
@@ -42,6 +43,55 @@ test('ACP uses dedicated token, legacy fallback, explicit hosted-only policy and
   assert.throws(() => resolveAstridAcpBridgeConfig({ ...env, ASTRID_ACP_LOCAL_MEDIA_ONLY: 'yes' }));
   for (const part of mediaForms) assert.throws(() => assertLocalMediaOnly({ prompt: [part] }), /Hosted local-only ACP/);
   assert.doesNotThrow(() => assertLocalMediaOnly({ prompt: textMetadata }));
+});
+
+test('PATCH chat rename route validates the body without opening a listener', async () => {
+  let project: Project = { project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', metadata: {
+    astrid_agent_chat_v1: { 'http-test': { revision: 0, selected_session_id: 's1', main_session_id: null, sessions: [{ id: 's1' }], draft: { text: '', revision: 0, queued_messages: [] } } },
+  }, version: 1, created_at: '', updated_at: '' };
+  const registry = new ProjectChatRegistry({
+    getProject: async () => structuredClone(project),
+    listProjects: async () => ({ items: [structuredClone(project)], next_cursor: null }),
+    updateProject: async (_id, _key, version, _name, metadata) => {
+      assert.equal(version, project.version);
+      project = { ...project, version: version + 1, metadata: metadata! };
+      return structuredClone(project);
+    },
+  }, 'http-test');
+  const { server, bridge } = createAstridAcpHttpServer({
+    config: { token: 'direct-test', port: 0, cwd: '/tmp/local' }, chatRegistry: registry,
+  });
+  const invoke = async (body: unknown) => {
+    const request = Object.assign(Readable.from([Buffer.from(JSON.stringify(body))]), {
+      method: 'PATCH', url: '/projects/p/chat', headers: {
+        authorization: 'Bearer direct-test', 'x-astrid-bridge-version': 'v1', 'content-type': 'application/json',
+      },
+    });
+    let responseBody = '';
+    const response = {
+      statusCode: 200, headers: {} as Record<string, string>,
+      setHeader(name: string, value: string | number) { this.headers[name] = String(value); },
+      end(value?: string) { responseBody = value ?? ''; },
+    };
+    await bridge.handle(request as never, response as never);
+    return { status: response.statusCode, body: JSON.parse(responseBody) as Json };
+  };
+  try {
+    assert.equal((await invoke({ expected_revision: 0, session_id: 's1', title: ' First ' })).status, 200);
+    assert.equal((await invoke({ expected_revision: 0, session_id: 's1', title: 'stale' })).status, 409);
+    assert.equal((await invoke({ expected_revision: 1, session_id: 's1', title: '   ' })).status, 400);
+    assert.equal((await invoke({ expected_revision: 1, session_id: 's1', title: 'x'.repeat(121) })).status, 400);
+    assert.equal((await invoke({ expected_revision: 1, session_id: 'foreign', title: 'Nope' })).status, 403);
+    const malformed = await invoke({ expected_revision: 1, session_id: 's1', title: 5, selected_session_id: null });
+    assert.equal(malformed.status, 400);
+    const saved = await registry.get('p');
+    assert.equal(saved.selected_session_id, 's1');
+    assert.equal(saved.sessions[0]?.title, 'First');
+    assert.equal(saved.revision, 1);
+  } finally {
+    await bridge.close();
+    server.close();
+  }
 });
 
 async function listen(server: import('node:http').Server) {
@@ -126,6 +176,14 @@ test('real HTTP bridge enforces RPC and project policy for hosted calls and pres
     assert.equal(created.status, 200);
     assert.equal((await created.json()).operation_session_id, 's1');
     assert.equal((await registry.get('p1')).selected_session_id, 's1');
+    const createdState = await registry.get('p1');
+    const rename = (projectId: string, expected_revision: number, session_id: string, title: string) => call(`/projects/${projectId}/chat`, { expected_revision, session_id, title }, 'PATCH');
+    assert.equal((await rename('p1', createdState.revision, 's1', '  First chat  ')).status, 200);
+    assert.equal((await registry.get('p1')).sessions[0]?.title, 'First chat');
+    assert.equal((await rename('p1', createdState.revision, 's1', 'Stale')).status, 409);
+    const renamedState = await registry.get('p1');
+    for (const title of ['', '   ', 'x'.repeat(121)]) assert.equal((await rename('p1', renamedState.revision, 's1', title)).status, 400);
+    assert.equal((await rename('p2', 0, 's1', 'Foreign')).status, 403);
     const rpc = (connection: string, configId: string, value: string, sessionId = 's1') => call(`/${connection}/rpc`, { method: 'session/set_config_option', params: { sessionId, configId, value } });
     assert.equal((await rpc('c1', 'model', 'model-a')).status, 200);
     assert.equal((await rpc('c1', 'thinking', 'high')).status, 200);

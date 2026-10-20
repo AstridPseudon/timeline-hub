@@ -200,7 +200,7 @@ describe('useVideoEditorPreviewSurface', () => {
     expect(previewElement.props.previewRevision.revisionId).toBeUndefined();
   });
 
-  it('retains the preview key across config updates and remounts for a physical slot move', () => {
+  it('retains the preview key across config updates and physical slot moves', () => {
     mocks.timeline = {
       resolvedConfig: {
         output: {resolution: '1280x720', fps: 30, file: 'preview.mp4'},
@@ -236,9 +236,13 @@ describe('useVideoEditorPreviewSurface', () => {
     expect(configPortal.children.key).toBe(firstKey);
 
     const secondSlot = document.createElement('div');
+    act(() => result.current.slotRef(null));
+    expect(result.current.portal).not.toBeNull();
     act(() => result.current.slotRef(secondSlot));
     const movedPortal = result.current.portal as unknown as {children: React.ReactElement};
-    expect(movedPortal.children.key).not.toBe(firstKey);
+    expect(movedPortal.children.key).toBe(firstKey);
+    expect(firstSlot).toBeEmptyDOMElement();
+    expect(secondSlot.childElementCount).toBe(1);
   });
 
   it('remounts the preview across project or timeline scopes so deferred footage cannot leak', () => {

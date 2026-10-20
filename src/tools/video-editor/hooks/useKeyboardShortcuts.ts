@@ -1,6 +1,6 @@
 import { useEffect, useContext } from 'react';
 import { isEditableTarget } from '@/tools/video-editor/lib/coordinate-utils.ts';
-import { resolveKeyboardNudgeSeconds } from '@/tools/video-editor/lib/keyboard-nudge.ts';
+import { COARSE_TIME_NUDGE_SECONDS } from '@/tools/video-editor/lib/keyboard-nudge.ts';
 import {
   VideoEditorRuntimeContext,
   type VideoEditorRuntimeContextValue,
@@ -157,9 +157,7 @@ function buildPredicateContext(
 interface UseKeyboardShortcutsOptions {
   hasSelectedClip: boolean;
   canMoveSelectedClipToTrack: boolean;
-  precisionEnabled: boolean;
   selectedClipIds: ReadonlySet<string>;
-  timelineFps: number;
   moveSelectedClipsToTrack: (direction: 'up' | 'down', selectedClipIds: ReadonlySet<string>) => void;
   /** Translate the whole selection along the time axis (Alt+Arrow). */
   nudgeSelectedClipsInTime: (deltaSeconds: number) => void;
@@ -187,9 +185,7 @@ export function isEditorKeyboardEvent(event: KeyboardEvent, root: HTMLElement | 
 export function useKeyboardShortcuts({
   hasSelectedClip,
   canMoveSelectedClipToTrack,
-  precisionEnabled,
   selectedClipIds,
-  timelineFps,
   moveSelectedClipsToTrack,
   nudgeSelectedClipsInTime,
   undo,
@@ -234,24 +230,22 @@ export function useKeyboardShortcuts({
       }
 
       // Alt+Arrow is the time axis of the ArrowUp/Down track move: with a
-      // selection it nudges the clips, without one it stays the precision seek
-      // it has always been (that seek is the only other Alt combo in this file).
+      // selection it nudges the clips; without one it seeks like a plain arrow.
       if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && event.altKey && hasSelectedClip) {
         event.preventDefault();
-        const step = resolveKeyboardNudgeSeconds(precisionEnabled, timelineFps);
-        nudgeSelectedClipsInTime(event.key === 'ArrowLeft' ? -step : step);
+        nudgeSelectedClipsInTime(event.key === 'ArrowLeft' ? -COARSE_TIME_NUDGE_SECONDS : COARSE_TIME_NUDGE_SECONDS);
         return;
       }
 
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        seekRelative(event.altKey && precisionEnabled ? -(1 / timelineFps) : -1);
+        seekRelative(-1);
         return;
       }
 
       if (event.key === 'ArrowRight') {
         event.preventDefault();
-        seekRelative(event.altKey && precisionEnabled ? (1 / timelineFps) : 1);
+        seekRelative(1);
         return;
       }
 
@@ -349,14 +343,12 @@ export function useKeyboardShortcuts({
     hasSelectedClip,
     moveSelectedClipsToTrack,
     nudgeSelectedClipsInTime,
-    precisionEnabled,
     redo,
     seekRelative,
     selectAllClips,
     selectedClipIds,
     splitSelectedClip,
     runtime?.shellRootRef,
-    timelineFps,
     toggleMute,
     togglePlayPause,
     undo,

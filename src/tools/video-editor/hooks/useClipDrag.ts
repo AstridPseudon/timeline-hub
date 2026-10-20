@@ -8,12 +8,11 @@ import { shallow } from 'zustand/shallow';
 import { userSelectTimelineClip, getSelectedTimelineDataItems } from '@/shared/state/selectionStore.ts';
 import { computeSecondaryGhosts } from '@/tools/video-editor/lib/multi-drag-utils.ts';
 import { createAutoScroller } from '@/tools/video-editor/lib/auto-scroll.ts';
-import { TIMELINE_START_LEFT } from '@/tools/video-editor/lib/coordinate-utils.ts';
+import { getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { notifyInteractionEndIfIdle } from '@/tools/video-editor/lib/interaction-state.ts';
 import {
   shouldPreserveTouchSelectionForMove,
   shouldAllowTouchClipDrag,
-  shouldToggleTouchSelection,
 } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import {
   CLIP_ACTION_SELECTOR,
@@ -108,7 +107,7 @@ export const useClipDrag = (): UseClipDragResult => {
   const { pixelsPerSecondRef } = useTimelineScale({
     scale,
     scaleWidth,
-    startLeft: TIMELINE_START_LEFT,
+    startLeft: getTimelineLabelWidth(deviceClass),
   });
 
   // Keep volatile values in refs so the effect doesn't re-run mid-drag
@@ -406,13 +405,7 @@ export const useClipDrag = (): UseClipDragResult => {
           return;
         }
 
-        if (shouldToggleTouchSelection(
-          latestRef.current.deviceClass,
-          session.inputModality,
-          latestRef.current.interactionMode,
-        )) {
-          userSelectTimelineClip(session.clipId, { additive: true }, selectionOwner);
-        } else if (
+        if (
           shouldPreserveTouchSelectionForMove(
             latestRef.current.deviceClass,
             session.inputModality,

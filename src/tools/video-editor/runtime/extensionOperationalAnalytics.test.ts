@@ -42,7 +42,7 @@ describe('extension operational analytics browser sink', () => {
 
   it('never installs transport for a local editor URL without localTest', async () => {
     const previousUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    window.history.replaceState({}, '', '/tools/video-editor?localProject=desert-plant-growth&localTimeline=01KYPVKMW5STB4W6FE05ED8242');
+    window.history.replaceState({}, '', '/tools/video-editor?project=desert-plant-growth&timeline=01KYPVKMW5STB4W6FE05ED8242');
     try {
       const invoke = vi.fn().mockResolvedValue(undefined);
       const sink = installExtensionOperationalAnalyticsSink({ invoke, flushDelayMs: 0 });
@@ -66,7 +66,7 @@ describe('extension operational analytics browser sink', () => {
       const sink = installExtensionOperationalAnalyticsSink({ invoke, flushDelayMs: 60_000 });
       window.dispatchEvent(new CustomEvent(EXTENSION_OPERATIONAL_EVENT_DOM_NAME, { detail: event }));
 
-      window.history.replaceState({}, '', '/tools/video-editor?localProject=desert-plant-growth&localTimeline=01KYPVKMW5STB4W6FE05ED8242');
+      window.history.replaceState({}, '', '/tools/video-editor?project=desert-plant-growth&timeline=01KYPVKMW5STB4W6FE05ED8242');
       window.dispatchEvent(new CustomEvent(EXTENSION_OPERATIONAL_EVENT_DOM_NAME, { detail: event }));
       await sink.flush();
 

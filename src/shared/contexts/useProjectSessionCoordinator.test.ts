@@ -133,7 +133,7 @@ describe('useProjectSessionCoordinator', () => {
   });
 
   it('does not expose the bridge identity to cloud project orchestration in local mode', () => {
-    window.history.replaceState({}, '', '/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline');
+    window.history.replaceState({}, '', '/tools/video-editor?project=demo-project&timeline=demo-timeline');
     const selection = {
       selectedProjectId: null,
       handleProjectsLoaded: vi.fn(),

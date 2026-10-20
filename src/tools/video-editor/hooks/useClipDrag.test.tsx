@@ -496,59 +496,6 @@ describe('useClipDrag', () => {
     }
   });
 
-  it('toggles touch selection in select mode without desktop modifier keys', () => {
-
-    const selectClip = vi.fn();
-    const { clip, wrapper, cleanup } = setupDom();
-    const timelineWrapperRef = { current: wrapper };
-    const dataRef = { current: makeData() };
-
-    try {
-      renderClipDrag({
-        timelineWrapperRef,
-        dataRef,
-
-        deviceClass: 'phone',
-        interactionMode: 'select',
-        gestureOwner: 'none',
-        setGestureOwner: vi.fn(),
-        setInputModalityFromPointerType: vi.fn(() => 'touch'),
-        moveClipToRow: vi.fn(),
-        createTrackAndMoveClip: vi.fn(),
-        selectClip,
-        selectClips: vi.fn(),
-        selectedClipIdsRef: { current: new Set<string>() },
-        additiveSelectionRef: { current: false },
-        applyEdit: vi.fn(),
-        coordinator: makeCoordinator(),
-        scale: 1,
-        scaleWidth: 100,
-      });
-
-      act(() => {
-        fireEvent.pointerDown(clip, {
-          button: 0,
-          pointerId: 12,
-          pointerType: 'touch',
-          clientX: 24,
-          clientY: 12,
-        });
-      });
-
-      act(() => {
-        fireEvent.pointerUp(window, {
-          pointerId: 12,
-          clientX: 24,
-          clientY: 12,
-        });
-      });
-
-      expect(selectionMocks.userSelectTimelineClip).toHaveBeenCalledWith('clip-1', { additive: true }, undefined);
-    } finally {
-      cleanup();
-    }
-  });
-
   it('preserves additive touch selection on move-mode taps that do not start a drag', () => {
 
     const selectClip = vi.fn();

@@ -14,6 +14,7 @@ import {
   useCancelSession,
   useCreateSession,
   useProjectChat,
+  useRenameProjectSession,
   useSaveProjectDraft,
   useSelectProjectSession,
   useSetMainProjectSession,
@@ -22,11 +23,13 @@ import {
   useAgentModels,
   useSetAgentModel,
   useTakeOverSession,
+  useLocalAgents,
+  localAgentsQueryKey,
   agentSessionQueryKey,
 } from './useAgentSession.ts';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
-import { LOCAL_AGENT_SETTING_KEY, LOCAL_AGENT_TABLE, localAgentModelSettingKey, savedLocalAgentModel } from '@/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_IDS, LOCAL_AGENT_SETTING_KEY, LOCAL_AGENT_TABLE, localAgentModelSettingKey, saveLocalAgent, savedLocalAgent, savedLocalAgentModel } from '@/integrations/astrid/localAgents.ts';
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -60,7 +63,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   testStorage.removeItem(LOCAL_AGENT_SETTING_KEY);
-  for (const agent of ['astrid', 'claude-code', 'codex'] as const) testStorage.removeItem(localAgentModelSettingKey(agent));
+  for (const agent of LOCAL_AGENT_IDS) testStorage.removeItem(localAgentModelSettingKey(agent));
   vi.unstubAllGlobals();
 });
 
@@ -245,23 +248,43 @@ describe('timeline agent ACP chat', () => {
     await expect(store.setAgent('claude-code')).rejects.toThrow('not installed');
   });
 
-  it('routes saved sessions by their original agent while new sessions use the current default', async () => {
-    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'claude-code');
+  it('updates mounted agent selection when the shared default saver runs', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    vi.spyOn(AstridAgentSessionStore.prototype, 'agents').mockImplementation(async () => ({
+      agents: [{ id: 'hermes', name: 'Hermes', state: 'ready', line: null }],
+      selectedAgent: savedLocalAgent(),
+    }));
+    client.setQueryData(localAgentsQueryKey, {
+      agents: [{ id: 'hermes', name: 'Hermes', state: 'ready' as const, line: null }],
+      selectedAgent: 'astrid' as const,
+    });
+    const hook = renderHook(() => useLocalAgents(), { wrapper: wrapperWithClient(client) });
+    await waitFor(() => expect(hook.result.current.data?.selectedAgent).toBe('astrid'));
+
+    act(() => saveLocalAgent('hermes'));
+    await waitFor(() => expect(hook.result.current.data?.selectedAgent).toBe('hermes'));
+    expect(localStorage.getItem(LOCAL_AGENT_SETTING_KEY)).toBe('hermes');
+    hook.unmount();
+  });
+
+  it.each(['claude-code', 'codex', 'hermes'] as const)('routes saved sessions by their original agent while new sessions use the saved %s default', async (agent) => {
+    saveLocalAgent(agent);
+    const newSessionId = `${agent}:new-1`;
     const connects: Array<string | undefined> = [];
     const projectChat = { project_id: 'p', revision: 1, selected_session_id: null, main_session_id: null, sessions: [], draft: { revision: 1 } };
     const acp = {
       connect: vi.fn(async (agent?: string) => { connects.push(agent); return { connection_id: `conn-${agent ?? 'astrid'}` }; }),
-      createProjectSession: vi.fn(async (_project: string, _connection: string) => ({ ...projectChat, operation_session_id: 'claude-code:new-1', selected_session_id: 'claude-code:new-1', sessions: [{ id: 'claude-code:new-1' }] })),
-      projectChat: vi.fn(async (project: string) => ({ ...projectChat, project_id: project, sessions: [{ id: 'astrid-old' }, { id: 'claude-code:new-1' }] })),
+      createProjectSession: vi.fn(async (_project: string, _connection: string) => ({ ...projectChat, operation_session_id: newSessionId, selected_session_id: newSessionId, sessions: [{ id: newSessionId }] })),
+      projectChat: vi.fn(async (project: string) => ({ ...projectChat, project_id: project, sessions: [{ id: 'astrid-old' }, { id: newSessionId }] })),
       loadSession: vi.fn(async () => ({})),
       events: vi.fn(async () => ({ disconnected: false, notifications: [] })),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
     await store.create('p', 'new', 'op-1');
     await store.get('p', 'astrid-old');
-    await store.get('p', 'claude-code:new-1');
-    expect(connects).toEqual(['claude-code', undefined]);
-    expect(acp.loadSession.mock.calls.map(call => call[0])).toEqual(['conn-astrid', 'conn-claude-code']);
+    await store.get('p', newSessionId);
+    expect(connects).toEqual([agent, undefined]);
+    expect(acp.loadSession.mock.calls.map(call => call[0])).toEqual(['conn-astrid', `conn-${agent}`]);
   });
 
   it('lists saved Astrid chats without connecting to an unavailable selected default', async () => {
@@ -669,15 +692,18 @@ describe('timeline agent ACP chat', () => {
       projectChat: vi.fn(async () => chat),
       saveProjectDraft: vi.fn(async () => chat),
       selectProjectSession: vi.fn(async () => chat),
+      renameProjectSession: vi.fn(async () => chat),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
 
     await expect(store.projectChat('project-1')).resolves.toBe(chat);
     await expect(store.saveProjectDraft('project-1', 2, 'new draft', [])).resolves.toBe(chat);
     await expect(store.selectProjectSession('project-1', 4, null)).resolves.toBe(chat);
+    await expect(store.renameProjectSession('project-1', 5, 'session-1', 'Renamed')).resolves.toBe(chat);
     expect(acp.projectChat).toHaveBeenCalledWith('project-1');
     expect(acp.saveProjectDraft).toHaveBeenCalledWith('project-1', 2, 'new draft', []);
     expect(acp.selectProjectSession).toHaveBeenCalledWith('project-1', 4, null);
+    expect(acp.renameProjectSession).toHaveBeenCalledWith('project-1', 5, 'session-1', 'Renamed');
   });
 
   it('keeps chat association order stable when selected and Main pointers change', async () => {
@@ -701,6 +727,23 @@ describe('timeline agent ACP chat', () => {
     await act(async () => result.current.mutateAsync({expectedRevision: 4, sessionId: 'chosen'}));
     expect(assign).toHaveBeenCalledWith('project-1', 4, 'chosen');
     expect(client.getQueryData(projectChatQueryKey('project-1'))).toEqual(chat);
+    unmount();
+    client.clear();
+  });
+
+  it('renames a project session and refreshes the scoped chat cache, while preserving errors', async () => {
+    const chat = {project_id: 'project-1', revision: 6, sessions: [{id: 'session-2', title: 'Renamed'}]} as ProjectChatState;
+    const rename = vi.spyOn(AstridAgentSessionStore.prototype, 'renameProjectSession').mockResolvedValue(chat);
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
+    const {result, unmount} = renderHook(() => useRenameProjectSession('project-1'), {wrapper: wrapperWithClient(client)});
+    await act(async () => result.current.mutateAsync({expectedRevision: 5, sessionId: 'session-2', title: 'Renamed'}));
+    expect(rename).toHaveBeenCalledWith('project-1', 5, 'session-2', 'Renamed');
+    expect(client.getQueryData(projectChatQueryKey('project-1'))).toBe(chat);
+
+    const conflict = new BridgeRouteError('Rename project chat session', 409, {error: 'revision_conflict'});
+    rename.mockRejectedValueOnce(conflict);
+    await expect(act(async () => result.current.mutateAsync({expectedRevision: 4, sessionId: 'session-2', title: 'Stale'}))).rejects.toBe(conflict);
+    expect(client.getQueryData(projectChatQueryKey('project-1'))).toBe(chat);
     unmount();
     client.clear();
   });

@@ -1,135 +1,70 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card.tsx';
-import { useAstridBridgeDiscovery } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
+import { useRuntimeEditorDiscovery, chooseRuntimeTimeline } from '@/tools/video-editor/hooks/useRuntimeEditorDiscovery.ts';
 import { LocalTimelineShotBrowser } from './LocalTimelineShotBrowser.tsx';
 
-function chooseTimeline(
-  timelines: Array<{
-    timeline_id: string;
-    timeline_ulid?: string;
-    slug?: string;
-    is_default?: boolean;
-  }>,
-) {
-  return timelines.find((timeline) => timeline.is_default)
-    ?? timelines.find((timeline) => timeline.slug === 'main')
-    ?? timelines.find((timeline) => timeline.slug === 'rough-cut')
-    ?? timelines[0]
-    ?? null;
-}
-
-/**
- * Astrid-first entry route for Travel Between Images.
- *
- * Project/timeline URL parameters are selection state, not an authority
- * switch. A project selected from the shared header resolves its primary
- * timeline here, then the document-native shot browser owns the page.
- */
+/** Travel consumes the canonical editor selection and opens its Runtime timeline. */
 export function AstridTravelRoute() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const projectSlug = searchParams.get('localProject')?.trim() || null;
-  const timelineRef = searchParams.get('localTimeline')?.trim() || null;
-  const discovery = useAstridBridgeDiscovery({
-    open: true,
-    currentLocal: true,
-    selectedProjectSlug: projectSlug,
-  });
-  const timelines = discovery.timelinesQuery.data?.timelines ?? null;
-  const selectedProject = useMemo(
-    () => discovery.projectsQuery.data?.projects?.find((project) => (
-      project.slug === projectSlug || project.project_id === projectSlug
-    )) ?? null,
-    [discovery.projectsQuery.data?.projects, projectSlug],
-  );
-  const resolvedProjectSlug = selectedProject?.slug ?? projectSlug;
-  const defaultTimeline = useMemo(
-    () => timelines ? chooseTimeline(timelines) : null,
-    [timelines],
-  );
+  const projectRef = searchParams.get('project')?.trim() || null;
+  const timelineRef = searchParams.get('timeline')?.trim() || null;
+  const discovery = useRuntimeEditorDiscovery({ enabled: true, projectId: projectRef, open: true });
+  const project = discovery.project;
+  const timelines = discovery.timelinesQuery.data ?? [];
+  const selectedTimeline = timelines.find((t) => t.timeline_id === timelineRef) ?? null;
+  const defaultTimeline = project ? chooseRuntimeTimeline(project, timelines) : undefined;
+  const activeTimeline = selectedTimeline ?? (!timelineRef ? defaultTimeline : null);
 
   useEffect(() => {
-    if (
-      !projectSlug
-      || timelineRef
-      || discovery.timelinesQuery.isLoading
-      || discovery.timelinesQuery.error
-      || !defaultTimeline
-    ) {
-      return;
-    }
+    const projectId = project?.project_id;
+    const timelineId = activeTimeline?.timeline_id;
+    if (!projectId || !timelineId) return;
+    const nextSearchParams = new URLSearchParams(location.search);
+    nextSearchParams.set('project', projectId);
+    nextSearchParams.set('timeline', timelineId);
+    const search = `?${nextSearchParams.toString()}`;
+    if (search === location.search) return;
+    navigate({ ...location, search }, { replace: true });
+  }, [activeTimeline?.timeline_id, location, navigate, project?.project_id]);
 
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      next.set('localProject', projectSlug);
-      next.set('localTimeline', defaultTimeline.timeline_ulid ?? defaultTimeline.timeline_id);
-      return next;
-    }, { replace: true });
-  }, [
-    defaultTimeline,
-    discovery.timelinesQuery.error,
-    discovery.timelinesQuery.isLoading,
-    projectSlug,
-    setSearchParams,
-    timelineRef,
-  ]);
-
-  const projectDiscoveryReady = !discovery.projectsQuery.isLoading
-    && !discovery.projectsQuery.error
-    && Boolean(selectedProject);
-
-  useEffect(() => {
-    // Normalize UUID deep links emitted by older Runtime-backed surfaces to
-    // the slug used by the shared project/chat context. Preserve the hash so
-    // the selected shot remains open after the URL repair.
-    if (!projectSlug || !selectedProject?.slug || selectedProject.slug === projectSlug) return;
-    const next = new URLSearchParams(searchParams);
-    next.set('localProject', selectedProject.slug);
-    navigate(`${location.pathname}?${next.toString()}${location.hash}`, { replace: true });
-  }, [location.hash, location.pathname, navigate, projectSlug, searchParams, selectedProject?.slug]);
-
-  if (projectSlug && timelineRef && projectDiscoveryReady) {
-    return (
-      <LocalTimelineShotBrowser
-        projectSlug={resolvedProjectSlug ?? projectSlug}
-        projectId={selectedProject?.project_id}
-        timelineRef={timelineRef}
-      />
-    );
+  if (project && activeTimeline) {
+    return <LocalTimelineShotBrowser projectSlug={project.slug} projectId={project.project_id} timelineRef={activeTimeline.timeline_id} />;
   }
 
   let title = 'Select an Astrid project';
   let description = 'Choose a project from the header to open its primary timeline.';
-
-  if (discovery.healthQuery.isLoading || discovery.projectsQuery.isLoading) {
+  if (discovery.projectsQuery.isLoading) {
     title = 'Loading Astrid projects';
     description = 'Connecting to the local Astrid workspace…';
-  } else if (discovery.bridgeDown) {
+  } else if (discovery.projectsQuery.error) {
     title = 'Astrid is unavailable';
-    description = discovery.healthQuery.error?.message ?? 'Start the Astrid bridge, then refresh this page.';
-  } else if (projectSlug && !selectedProject && discovery.projectsQuery.data) {
+    description = discovery.projectsQuery.error.message;
+  } else if (projectRef && !project) {
     title = 'Astrid project not found';
-    description = `No project named “${projectSlug}” was returned by the Astrid workspace.`;
-  } else if (projectSlug && discovery.timelinesQuery.isLoading) {
+    description = `No project matching “${projectRef}” was returned by the Runtime.`;
+  } else if (project && discovery.timelinesQuery.isLoading) {
     title = 'Loading project timelines';
     description = 'Finding the primary timeline for this Astrid project…';
-  } else if (projectSlug && timelines?.length === 0) {
+  } else if (project && timelineRef && !selectedTimeline) {
+    title = 'Astrid timeline not found';
+    description = `No timeline matching “${timelineRef}” was returned for this project.`;
+  } else if (project && !timelines.length && !discovery.timelinesQuery.error) {
     title = 'No timelines in this project';
-    description = 'Create a timeline with Astrid, then refresh this page.';
-  } else if (projectSlug && discovery.timelinesQuery.error) {
+    description = 'Create a timeline in the video editor, then return here.';
+  } else if (discovery.timelinesQuery.error) {
     title = 'Unable to load project timelines';
     description = discovery.timelinesQuery.error.message;
   }
-
   return (
     <div className="flex h-full min-h-0 items-center justify-center px-6">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {discovery.bridgeDown && <AlertCircle className="h-4 w-4 text-destructive" />}
+            {discovery.projectsQuery.error && <AlertCircle className="h-4 w-4 text-destructive" />}
             {title}
           </CardTitle>
           <CardDescription>{description}</CardDescription>

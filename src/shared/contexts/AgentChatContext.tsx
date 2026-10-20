@@ -66,11 +66,15 @@ export type AgentChatActionsValue = {
   markEngaged: () => void;
   isRecording: boolean;
   isProcessing: boolean;
+  /** An agent turn is running (sent, answering, or queued behind one): the chat's "Thinking...". */
+  isAgentWorking: boolean;
 };
+
+type AgentChatActionsState = Pick<AgentChatActionsValue, 'isRecording' | 'isProcessing' | 'isAgentWorking'>;
 
 export type AgentChatActionsRegistry = {
   registerHandlers: (handlers: AgentChatActionsHandlers) => void;
-  publishState: (state: { isRecording: boolean; isProcessing: boolean }) => void;
+  publishState: (state: AgentChatActionsState) => void;
   unregister: () => void;
 };
 
@@ -151,14 +155,19 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
   // panel-side closures even after the AgentChatPanel re-renders. Reactive state
   // (isRecording/isProcessing) is the only thing that re-renders consumers.
   const handlersRef = useRef<AgentChatActionsHandlers | null>(null);
-  const [reactiveState, setReactiveState] = useState<{ isRecording: boolean; isProcessing: boolean } | null>(null);
+  const [reactiveState, setReactiveState] = useState<AgentChatActionsState | null>(null);
 
   const registerHandlers = useCallback((handlers: AgentChatActionsHandlers) => {
     handlersRef.current = handlers;
   }, []);
-  const publishState = useCallback((state: { isRecording: boolean; isProcessing: boolean }) => {
+  const publishState = useCallback((state: AgentChatActionsState) => {
     setReactiveState((prev) => {
-      if (prev && prev.isRecording === state.isRecording && prev.isProcessing === state.isProcessing) {
+      if (
+        prev
+        && prev.isRecording === state.isRecording
+        && prev.isProcessing === state.isProcessing
+        && prev.isAgentWorking === state.isAgentWorking
+      ) {
         return prev;
       }
       return state;
@@ -183,6 +192,7 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
       markEngaged: () => handlersRef.current?.markEngaged(),
       isRecording: reactiveState.isRecording,
       isProcessing: reactiveState.isProcessing,
+      isAgentWorking: reactiveState.isAgentWorking,
     };
   }, [reactiveState]);
 

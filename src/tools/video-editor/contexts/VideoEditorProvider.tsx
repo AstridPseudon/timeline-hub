@@ -580,6 +580,9 @@ export function VideoEditorRuntimeContent({
             variantType: generation.type === 'video' ? 'video' : 'image',
             imageUrl: generation.location ?? generation.imageUrl ?? '',
             thumbUrl: generation.thumbUrl ?? generation.imageUrl ?? generation.location ?? '',
+            // A Runtime generation's type is its MIME type (`video/mp4`), not the word `video`:
+            // without it a Runtime video registers as a still image and plays black.
+            metadata: { content_type: generation.type },
           });
           if (!registrationPlan.ok) {
             runtime.toast.error('Could not register asset');
@@ -743,7 +746,6 @@ export function VideoEditorRuntimeContent({
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
     setInteractionMode: editor.setInteractionMode,
     setGestureOwner: editor.setGestureOwner,
-    setPrecisionEnabled: editor.setPrecisionEnabled,
     setContextTarget: editor.setContextTarget,
     setInspectorTarget: editor.setInspectorTarget,
     isClipSelected: editor.isClipSelected,

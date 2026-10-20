@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Loader2, Paperclip } from 'lucide-react';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Loader2, Paperclip } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
@@ -30,6 +30,8 @@ interface AgentChatNewChatButtonProps {
   agents?: LocalAgentChoice[];
   /** Current model names when existing model-list plumbing has reported them. */
   agentModelNames?: Partial<Record<LocalAgentId, string | null>>;
+  /** Hide model drill-in for agents that have no reported or queryable model list. */
+  agentCanBrowse?: Partial<Record<LocalAgentId, boolean>>;
   agentsLoading?: boolean;
   agentsError?: string | null;
   disabled?: boolean;
@@ -45,19 +47,35 @@ interface AgentChatNewChatButtonProps {
 
 const matches = (query: string, text: string) => query.toLowerCase().split(/\s+/).filter(Boolean).every(token => text.toLowerCase().includes(token));
 
-function AgentLine({ line }: { line: string }) {
-  return <>{line.split(/`([^`]+)`/g).map((part, index) => index % 2 === 1
-    ? <code key={index} className={KEYCAP}>{part}</code>
-    : part)}</>;
+function AgentLine({ agent, line, copiedCommands, onCopy }: { agent: LocalAgentId; line: string; copiedCommands: Set<string>; onCopy: (command: string, index: number) => void }) {
+  return <>{line.split(/`([^`]+)`/g).map((part, index) => {
+    if (index % 2 === 0) return part;
+    const commandIndex = (index - 1) / 2;
+    const isCopied = copiedCommands.has(`${agent}:${commandIndex}`);
+    const Icon = isCopied ? Check : Copy;
+    return (
+      <Fragment key={index}>
+        <code className={KEYCAP}>{part}</code>
+        <button type="button" tabIndex={0} aria-label="Copy command" title="Copy command"
+          className="ml-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-background/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); }}
+          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') event.stopPropagation(); }}
+          onClick={(event) => { event.preventDefault(); event.stopPropagation(); onCopy(part, commandIndex); }}>
+          <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      </Fragment>
+    );
+  })}</>;
 }
 
 /** "New chat" with the last-used agent; its menu starts a chat with any agent, or drills into one to pick the model too. */
-export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, agentsLoading = false, agentsError = null, disabled = false, onNewChat, onMenuOpenChange, onBrowseAgent, agentModels = null, attachExisting }: AgentChatNewChatButtonProps) {
+export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, agentCanBrowse, agentsLoading = false, agentsError = null, disabled = false, onNewChat, onMenuOpenChange, onBrowseAgent, agentModels = null, attachExisting }: AgentChatNewChatButtonProps) {
   const [open, setOpen] = useState(false);
   const [browsing, setBrowsing] = useState<LocalAgentId | null>(null);
   const [highlighted, setHighlighted] = useState(`agent:${defaultAgent}`);
   const [query, setQuery] = useState('');
-  const [copied, setCopied] = useState<LocalAgentId | null>(null);
+  const [copiedCommands, setCopiedCommands] = useState<Set<string>>(() => new Set());
+  const copyTimeouts = useRef(new Map<string, number>());
   const root = useRef<HTMLDivElement>(null);
   const landOnModel = useRef(false);
   const browse = (agent: LocalAgentId | null) => {
@@ -76,13 +94,12 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
   };
   const start = (agent?: LocalAgentId, model?: string) => { changeOpen(false); onNewChat(agent, model); };
   const availability = (id: LocalAgentId) => agentAvailability(agents?.find(choice => choice.id === id));
-  const copyLine = async (id: LocalAgentId, line: string) => {
-    const text = line.replaceAll('`', '');
+  const copyLine = async (id: LocalAgentId, command: string, index: number) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(command);
     } catch {
       const input = document.createElement('textarea');
-      input.value = text;
+      input.value = command;
       input.style.position = 'fixed';
       input.style.opacity = '0';
       document.body.append(input);
@@ -91,8 +108,18 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
       input.remove();
       if (!copiedText) return;
     }
-    setCopied(id);
-    window.setTimeout(() => setCopied(current => current === id ? null : current), 1_500);
+    const key = `${id}:${index}`;
+    const existingTimeout = copyTimeouts.current.get(key);
+    if (existingTimeout !== undefined) window.clearTimeout(existingTimeout);
+    setCopiedCommands(current => new Set(current).add(key));
+    copyTimeouts.current.set(key, window.setTimeout(() => {
+      setCopiedCommands(current => {
+        const next = new Set(current);
+        next.delete(key);
+        return next;
+      });
+      copyTimeouts.current.delete(key);
+    }, 1_500));
   };
 
   // The agent list has no search field, so it holds focus for the arrow keys (the popover focuses it on
@@ -104,7 +131,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!browsing && event.key === 'ArrowRight') {
       const agent = AGENT_IDS.find(id => `agent:${id}` === highlighted);
-      if (agent && availability(agent).usable) { event.preventDefault(); browse(agent); }
+      if (agent && availability(agent).usable && agentCanBrowse?.[agent] !== false) { event.preventDefault(); browse(agent); }
     } else if (browsing && event.key === 'ArrowLeft' && query === '') {
       event.preventDefault();
       browse(null);
@@ -112,6 +139,15 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
   };
 
   const submenu = browsing && agentModels?.agent === browsing ? agentModels : null;
+  useEffect(() => {
+    if (browsing !== 'hermes' || !submenu || submenu.loading || submenu.models.length > 0) return;
+    // Hermes may not publish a model catalog. Return to the agent list once an
+    // empty result is known, so the menu never leaves an empty model picker open.
+    setBrowsing(null);
+    setQuery('');
+    setHighlighted('agent:hermes');
+    onBrowseAgent?.(null);
+  }, [browsing, onBrowseAgent, submenu]);
   // A submenu opens on the agent's default model (or its first), not on the back row.
   useEffect(() => {
     if (!landOnModel.current || !submenu || submenu.models.length === 0) return;
@@ -125,7 +161,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
   return (
     <div className="flex shrink-0 items-center rounded-md">
       <button type="button" disabled={disabled} aria-label="New chat" title={`New chat with ${agentNames[defaultAgent]}`}
-        className={cn(SEGMENT, 'gap-1.5 rounded-l-md pl-2 pr-1')} onClick={() => onNewChat()}>
+        className={cn(SEGMENT, 'gap-1.5 rounded-l-md pl-2 pr-1')} onClick={() => availability(defaultAgent).usable ? onNewChat() : changeOpen(true)}>
         {/* Narrow panels keep the label short and leave the agent to the tooltip. */}
         <AgentIcon agent={defaultAgent} className="hidden h-3.5 w-3.5 shrink-0 @[24rem]/agent-header:block" />
         <span className="normal-case">New<span className="hidden @[24rem]/agent-header:inline"> chat</span></span>
@@ -152,19 +188,19 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
                     return (
                       <Fragment key={id}>
                         <CommandItem value={`agent:${id}`} aria-current={last ? 'true' : undefined}
-                          className="items-start gap-2 pr-1" onSelect={() => state.usable ? start(id) : state.line && void copyLine(id, state.line)}>
+                          className="items-start gap-2 pr-1" onSelect={() => { if (state.usable) start(id); }}>
                           <AgentIcon agent={id} className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', state.usable ? 'text-foreground/80' : 'text-muted-foreground/60')} />
                           <span className="flex min-w-0 flex-1 flex-col">
                             <span className="flex items-baseline gap-2">
                               <span className="normal-case">{agentNames[id]}</span>
                               {last && <Check className="h-3 w-3 shrink-0 self-center text-muted-foreground" aria-label="Last used" />}
                               <span aria-label={state.usable && agentModelNames?.[id] ? `Ready, using ${agentModelNames[id]}` : undefined} className="ml-auto shrink-0 text-[10px] text-muted-foreground normal-case">
-                                {copied === id ? 'Copied' : state.usable ? agentModelNames?.[id] ?? 'Ready' : state.state === 'sign-in' ? 'Sign in' : 'Not installed'}
+                                {state.usable ? agentModelNames?.[id] ?? 'Ready' : state.state === 'sign-in' ? 'Sign in' : 'Not installed'}
                               </span>
                             </span>
-                            {state.line && <span className="text-[11px] text-muted-foreground normal-case"><AgentLine line={state.line} /></span>}
+                            {state.line && <span className="text-[11px] text-muted-foreground normal-case"><AgentLine agent={id} line={state.line} copiedCommands={copiedCommands} onCopy={(command, index) => void copyLine(id, command, index)} /></span>}
                           </span>
-                          {state.usable && (
+                          {state.usable && agentCanBrowse?.[id] !== false && (
                             <button type="button" tabIndex={-1} aria-label={`Choose a ${agentNames[id]} model`} title="Choose a model (→)"
                               className="-my-0.5 shrink-0 self-center rounded p-1 text-muted-foreground hover:bg-background/40 hover:text-foreground"
                               onPointerDown={(event) => event.preventDefault()}

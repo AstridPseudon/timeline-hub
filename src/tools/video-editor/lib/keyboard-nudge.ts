@@ -9,27 +9,10 @@ import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { allowTimelineEdits, type TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
 
 /**
- * Time-axis step for a keyboard nudge without precision. Coarse on purpose: the
- * frame-accurate step is what `precision` buys, and 0.5s is one arrow press worth
- * of visible movement at the default zoom.
+ * Time-axis step for a keyboard nudge. Coarse on purpose: 0.5s is one arrow
+ * press worth of visible movement at the default zoom.
  */
 export const COARSE_TIME_NUDGE_SECONDS = 0.5;
-
-/**
- * One frame with precision on, `COARSE_TIME_NUDGE_SECONDS` without — the same
- * precision distinction the playhead seek in `useKeyboardShortcuts` already makes
- * (`Alt+Arrow` seeks `1 / fps` when precision is on).
- */
-export function resolveKeyboardNudgeSeconds(
-  precisionEnabled: boolean,
-  timelineFps: number,
-): number {
-  if (precisionEnabled && Number.isFinite(timelineFps) && timelineFps > 0) {
-    return 1 / timelineFps;
-  }
-
-  return COARSE_TIME_NUDGE_SECONDS;
-}
 
 /**
  * Translate every selected clip along the time axis by `requestedDeltaSeconds`.

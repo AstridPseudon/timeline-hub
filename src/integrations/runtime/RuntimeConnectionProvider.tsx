@@ -43,7 +43,7 @@ import {
 import { autoConnectRequested, takeAutoConnectRequest } from './autoConnectRequest.ts';
 import type { Realm } from './generated.ts';
 
-const POLL_INTERVAL_MS = 3000;
+export const POLL_INTERVAL_MS = 3000;
 const PROBE_TIMEOUT_MS = 5000;
 const CONNECTED_BEFORE_KEY = 'astrid.runtime.connectedBefore';
 /** The `error` codes of the Runtime door's refusals (astrid-runtime runtime_protocol/door.py): the only error bodies the page reads as the door's. */
@@ -56,7 +56,7 @@ const GATEWAY_REFUSAL_OUTCOMES: Readonly<Record<RuntimeRefusalCode, 'down' | 're
 type RealmSummary = Pick<Realm, 'realm_id' | 'display_name'>;
 
 export type RuntimeProbeOutcome =
-  | { kind: 'connected'; realm: RealmSummary }
+  | { kind: 'connected'; realm: RealmSummary; schemaDigest: string | null }
   | { kind: 'restart' }
   | { kind: 'down' }
   | { kind: 'silent' };
@@ -87,7 +87,7 @@ export async function probeRuntime(
     }
     const body = await readJson(response);
     if ((response.status === 502 || response.status === 503) && typeof body === 'object' && body !== null && 'error' in body) {
-      const kind = typeof body.error === 'string' ? GATEWAY_REFUSAL_OUTCOMES[body.error] : undefined;
+      const kind = Object.entries(GATEWAY_REFUSAL_OUTCOMES).find(([code]) => code === body.error)?.[1];
       if (kind) return { kind };
     }
     if (response.status !== 200) return { kind: 'silent' };
@@ -99,11 +99,14 @@ export async function probeRuntime(
   if (typeof health.body !== 'object' || health.body === null || typeof (health.body as { status?: unknown }).status !== 'string') {
     return { kind: 'silent' };
   }
+  const schemaDigest = typeof (health.body as { schema_digest?: unknown }).schema_digest === 'string'
+    ? (health.body as { schema_digest: string }).schema_digest
+    : null;
   const realm = await get('/v1/realm');
   if ('kind' in realm) return realm;
   const { realm_id, display_name } = (realm.body ?? {}) as Partial<RealmSummary>;
   if (typeof realm_id !== 'string' || typeof display_name !== 'string') return { kind: 'silent' };
-  return { kind: 'connected', realm: { realm_id, display_name } };
+  return { kind: 'connected', realm: { realm_id, display_name }, schemaDigest };
 }
 
 function readConnectedBefore(): boolean {
@@ -135,6 +138,8 @@ export interface RuntimeConnectionValue {
   awaitingConnect: boolean;
   /** The connected Runtime's realm display name, for the pill. */
   realmName: string | null;
+  /** The health digest seen by the provider's existing probe, when the Runtime reports one. */
+  schemaDigest: string | null;
   /** Probes now without a timeout, so Chrome's permission prompt can stay open. No-op when connected, denied or checking. */
   connect: () => void;
 }
@@ -293,14 +298,15 @@ export function RuntimeConnectionProvider({
         isChecking: false,
         awaitingConnect: false,
         realmName: null,
+        schemaDigest: null,
         connect,
       };
     }
     const base = { gated: true, isChecking, connect } as const;
     if (outcome?.kind === 'connected') {
-      return { ...base, state: { status: 'connected', realm: outcome.realm }, isConnected: true, isBooting: false, awaitingConnect: false, realmName: outcome.realm.display_name };
+      return { ...base, state: { status: 'connected', realm: outcome.realm }, isConnected: true, isBooting: false, awaitingConnect: false, realmName: outcome.realm.display_name, schemaDigest: outcome.schemaDigest };
     }
-    const notConnected = { ...base, isConnected: false, realmName: null, awaitingConnect: permission === 'prompt' };
+    const notConnected = { ...base, isConnected: false, realmName: null, schemaDigest: null, awaitingConnect: permission === 'prompt' };
     if (permission === null) return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
     if (permission === 'denied') return { ...notConnected, state: { status: 'blocked' }, isBooting: false };
     if (permission === 'prompt') return { ...notConnected, state: { status: 'connecting' }, isBooting: false };

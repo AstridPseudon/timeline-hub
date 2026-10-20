@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
  
-import React, { forwardRef, useImperativeHandle } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -20,6 +20,8 @@ const useKeyboardShortcutsMock = vi.fn();
 const useVideoEditorRenderContextMock = vi.fn();
 const useVideoEditorSlotRenderersMock = vi.fn();
 const useVideoEditorAssetPanelsMock = vi.fn();
+const previewMounted = vi.fn();
+const previewUnmounted = vi.fn();
 let editorDataValue: any;
 let editorOpsValue: any;
 let chromeValue: any;
@@ -158,6 +160,11 @@ vi.mock('@/tools/video-editor/components/ThemeChip', () => ({
 
 vi.mock('@/tools/video-editor/components/PreviewPanel/RemotionPreview', () => ({
   RemotionPreview: forwardRef(function MockRemotionPreview({ compact = false, config }: any, ref) {
+    const [playing, setPlaying] = useState(false);
+    useEffect(() => {
+      previewMounted();
+      return () => { previewUnmounted(); };
+    }, []);
     const api = {
       seek: vi.fn(),
       play: vi.fn(),
@@ -177,7 +184,8 @@ vi.mock('@/tools/video-editor/components/PreviewPanel/RemotionPreview', () => ({
 
     return (
       <div data-testid="mock-preview">
-        <div data-testid="mock-player" data-compact={compact ? 'true' : 'false'} />
+        <div data-testid="mock-player" data-compact={compact ? 'true' : 'false'} data-playing={String(playing)} />
+        <button type="button" onClick={() => setPlaying((value) => !value)}>Mock playback</button>
         {!compact && config?.output?.resolution ? <div>{config.output.resolution}</div> : null}
       </div>
     );
@@ -286,8 +294,8 @@ vi.mock('@/tools/video-editor/runtime/useVideoEditorRenderContext', async () => 
   };
 });
 
-function renderShell(mode: 'compact' | 'full') {
-  return render(
+function shellTree(mode: 'compact' | 'full') {
+  return (
     <TimelineStoreProvider store={timelineStore}>
       <MemoryRouter
         initialEntries={['/tools/video-editor?timeline=timeline-1']}
@@ -295,11 +303,17 @@ function renderShell(mode: 'compact' | 'full') {
       >
         <VideoEditorShellComponent mode={mode} timelineId="timeline-1" />
       </MemoryRouter>
-    </TimelineStoreProvider>,
+    </TimelineStoreProvider>
   );
 }
 
+function renderShell(mode: 'compact' | 'full') {
+  return render(shellTree(mode));
+}
+
 beforeEach(() => {
+  previewMounted.mockClear();
+  previewUnmounted.mockClear();
   timelineStore = createTimelineStore();
   overlayEditorProps = null;
   slotRenderersValue = {};
@@ -312,7 +326,6 @@ beforeEach(() => {
   const setInspectorTarget = vi.fn();
   const setContextTarget = vi.fn();
   const setInteractionMode = vi.fn();
-  const setPrecisionEnabled = vi.fn();
   const setInputModalityFromPointerType = vi.fn(() => 'touch');
   const setGestureOwner = vi.fn();
 
@@ -343,7 +356,6 @@ beforeEach(() => {
     inputModality: 'mouse',
     interactionMode: 'select',
     gestureOwner: 'none',
-    precisionEnabled: false,
     inspectorTarget: { kind: 'timeline' },
     trackScaleMap: {},
     compositionSize: { width: 1280, height: 720 },
@@ -363,7 +375,6 @@ beforeEach(() => {
     setSelectedRightPanelId: vi.fn(),
     setRightPanelLayoutSlot: vi.fn(),
     setInteractionMode,
-    setPrecisionEnabled,
     setInputModalityFromPointerType,
     setGestureOwner,
     onOverlayChange: vi.fn(),
@@ -431,6 +442,7 @@ beforeEach(() => {
   usePanesStoreMock.mockReturnValue({
     isEditorPaneLocked: false,
     isGenerationsPaneLocked: false,
+    isGenerationsPaneOpen: false,
     setIsGenerationsPaneLocked: vi.fn(),
   });
 
@@ -453,24 +465,9 @@ beforeAll(async () => {
 }, 120_000);
 
 describe('VideoEditorShell preview persistence', () => {
-  it('uses a safe fallback fps before resolved config is available', () => {
-    editorDataValue = {
-      ...editorDataValue,
-      resolvedConfig: null,
-      compositionSize: null,
-    };
-    useTimelineEditorDataMock.mockReturnValue(editorDataValue);
-
-    renderShell('full');
-
-    expect(useKeyboardShortcutsMock).toHaveBeenCalled();
-    expect(useKeyboardShortcutsMock.mock.calls.at(-1)?.[0]).toMatchObject({
-      timelineFps: 30,
-    });
-  });
-
   it('keeps one shared preview player active across compact/full transitions', () => {
     const view = renderShell('compact');
+    const player = screen.getByTestId('mock-player');
 
     expect(screen.getByTestId('mock-player')).toHaveAttribute('data-compact', 'true');
     expect(screen.queryByText('1280x720')).not.toBeInTheDocument();
@@ -487,8 +484,69 @@ describe('VideoEditorShell preview persistence', () => {
     );
 
     expect(screen.getAllByTestId('mock-player')).toHaveLength(1);
+    expect(screen.getByTestId('mock-player')).toBe(player);
+    expect(previewMounted).toHaveBeenCalledTimes(1);
+    expect(previewUnmounted).not.toHaveBeenCalled();
     expect(screen.getByTestId('mock-player')).toHaveAttribute('data-compact', 'false');
     expect(screen.getByTitle('Settings')).toBeInTheDocument();
+  });
+
+  it('moves the playing preview into the first selected Video tab when locked and restores it on unlock', () => {
+    const view = renderShell('full');
+    const player = screen.getByTestId('mock-player');
+    const previewApi = playbackValue.previewRef.current;
+    fireEvent.click(screen.getByRole('button', { name: 'Mock playback' }));
+
+    usePanesStoreMock.mockReturnValue({ isGenerationsPaneLocked: true, isGenerationsPaneOpen: true });
+    view.rerender(shellTree('full'));
+
+    const sidebar = screen.getByRole('region', { name: 'Video editor right panel' });
+    const tabs = within(sidebar).getAllByRole('tab');
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Video', 'Inspector', 'Extensions']);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    expect(within(sidebar).getByTestId('video-editor-preview-surface')).toContainElement(player);
+    expect(screen.getByTestId('mock-player')).toBe(player);
+    expect(player).toHaveAttribute('data-playing', 'true');
+    expect(playbackValue.previewRef.current).toBe(previewApi);
+    expect(screen.queryByRole('region', { name: 'Preview panel' })).not.toBeInTheDocument();
+
+    usePanesStoreMock.mockReturnValue({ isGenerationsPaneLocked: false, isGenerationsPaneOpen: true });
+    view.rerender(shellTree('full'));
+
+    expect(screen.queryByRole('tab', { name: 'Video' })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Preview panel' })).toContainElement(player);
+    expect(screen.getByTestId('mock-player')).toBe(player);
+    expect(player).toHaveAttribute('data-playing', 'true');
+    expect(previewMounted).toHaveBeenCalledTimes(1);
+    expect(previewUnmounted).not.toHaveBeenCalled();
+  });
+
+  // Desktop only: touch (phone and tablet) keeps the picture in its own shell and never pins the gallery.
+  it('keeps Video selected on desktop clip selection and retains the player across tab switches', () => {
+    const deviceClass = 'desktop';
+    useTimelineEditorDataMock.mockReturnValue({ ...editorDataValue, deviceClass });
+    usePanesStoreMock.mockReturnValue({ isGenerationsPaneLocked: true, isGenerationsPaneOpen: true });
+    const view = renderShell('full');
+    const player = screen.getByTestId('mock-player');
+
+    useTimelineEditorDataMock.mockReturnValue({
+      ...editorDataValue,
+      deviceClass,
+      selectedClipIds: new Set(['clip-1']),
+      selectedClipId: 'clip-1',
+    });
+    view.rerender(shellTree('full'));
+
+    expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Inspector — selection available' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByTestId('inspector-selection-hint')).toBeVisible();
+    expect(screen.getByTestId('inspector-selection-hint')).toHaveClass('bg-[var(--video-editor-accent-border-strong)]');
+    fireEvent.click(screen.getByRole('tab', { name: 'Inspector — selection available' }));
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Video' }));
+    expect(screen.getByTestId('mock-player')).toBe(player);
+    expect(previewMounted).toHaveBeenCalledTimes(1);
+    expect(previewUnmounted).not.toHaveBeenCalled();
   });
 
   it('preserves the default shell fallbacks when no slot overrides are provided', () => {
@@ -544,53 +602,26 @@ describe('VideoEditorShell preview persistence', () => {
     expect(screen.getByTestId('properties-panel')).toBeInTheDocument();
   });
 
-  it('shows the phone mode bar and routes mode changes through editor ops', () => {
-    const setInspectorTarget = vi.fn();
-    const setContextTarget = vi.fn();
-    const setInteractionMode = vi.fn();
-    const setPrecisionEnabled = vi.fn();
-
+  it('gives the phone no mode bar: Render sits in the document row and a clip is reached by tapping it', () => {
     useTimelineEditorDataMock.mockReturnValue({
       ...editorDataValue,
       deviceClass: 'phone',
       interactionMode: 'browse',
-      precisionEnabled: false,
       selectedClipIds: new Set(['clip-1']),
       selectedClipId: 'clip-1',
       inspectorTarget: { kind: 'clip', clipId: 'clip-1' },
     });
-    useTimelineEditorOpsMock.mockReturnValue({
-      ...editorOpsValue,
-      setInspectorTarget,
-      setContextTarget,
-      setInteractionMode,
-      setPrecisionEnabled,
-    });
 
     renderShell('full');
 
-    expect(screen.getByRole('toolbar', { name: 'Phone timeline mode bar' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Browse' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Select' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Trim' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Precision' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Move' }).className).toContain('min-h-11');
-    expect(screen.getByRole('button', { name: 'Precision' }).className).toContain('min-h-11');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Move' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Precision' }));
-
-    expect(setInteractionMode).toHaveBeenCalledWith('move');
-    expect(setPrecisionEnabled).toHaveBeenCalledWith(true);
-    expect(setContextTarget).toHaveBeenCalled();
-    expect(setInspectorTarget).toHaveBeenCalled();
+    for (const label of ['Browse', 'Select', 'Move', 'Trim', 'Clip', 'Inspector']) {
+      expect(screen.queryByRole('button', { name: label })).not.toBeInTheDocument();
+    }
+    const row = document.querySelector('[data-toolbar-layout="touch"]') as HTMLElement;
+    expect(within(row).getByRole('button', { name: 'Render' })).toBeInTheDocument();
   });
 
-  it('uses a selection-aware inspector affordance in compact tablet layout', () => {
-    const setInspectorTarget = vi.fn();
-    const setContextTarget = vi.fn();
-
+  it('points a compact tablet selection at the Inspector tab, not a duplicate overlay button', () => {
     useTimelineEditorDataMock.mockReturnValue({
       ...editorDataValue,
       deviceClass: 'tablet',
@@ -598,21 +629,13 @@ describe('VideoEditorShell preview persistence', () => {
       selectedClipId: 'clip-1',
       inspectorTarget: { kind: 'clip', clipId: 'clip-1' },
     });
-    useTimelineEditorOpsMock.mockReturnValue({
-      ...editorOpsValue,
-      setInspectorTarget,
-      setContextTarget,
-    });
 
     renderShell('compact');
 
-    const inspectorButtons = screen.getAllByRole('button', { name: 'Clip' });
-    expect(inspectorButtons.length).toBeGreaterThan(0);
-
-    fireEvent.click(inspectorButtons[0]);
-
-    expect(setInspectorTarget).toHaveBeenCalled();
-    expect(setContextTarget).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Clip' })).toBeNull();
+    expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Inspector — selection available' }));
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('passes preview interaction policy into the overlay editor and announces preview state', () => {
@@ -622,7 +645,6 @@ describe('VideoEditorShell preview persistence', () => {
       inputModality: 'touch',
       interactionMode: 'trim',
       gestureOwner: 'preview',
-      precisionEnabled: true,
       selectedClipId: 'clip-1',
       selectedClipIds: new Set(['clip-1']),
     });
@@ -631,8 +653,8 @@ describe('VideoEditorShell preview persistence', () => {
 
     expect(screen.getByRole('region', { name: 'Preview panel' })).toBeInTheDocument();
     expect(screen.getByText(/Preview overlay transform active\./)).toBeInTheDocument();
-    expect(screen.getByText(/Mode trim\. Precision enabled\./)).toBeInTheDocument();
-    expect(screen.getByText(/Timeline mode trim\. Precision enabled\. Preview transform active\./)).toBeInTheDocument();
+    expect(screen.getByText(/Mode trim\./)).toBeInTheDocument();
+    expect(screen.getByText(/Timeline mode trim\. Preview transform active\./)).toBeInTheDocument();
     expect(screen.getByTestId('overlay-editor')).toHaveAttribute('data-device-class', 'phone');
     expect(screen.getByTestId('overlay-editor')).toHaveAttribute('data-gesture-owner', 'preview');
     expect(screen.getByTestId('overlay-editor')).toHaveAttribute('data-input-modality', 'touch');

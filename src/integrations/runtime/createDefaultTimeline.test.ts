@@ -90,6 +90,69 @@ describe('ensureProjectHasTimeline', () => {
     expect(client.updateProject).not.toHaveBeenCalled();
   });
 
+  it('returns the canonical ID when the project primary metadata contains a timeline alias', async () => {
+    const client = runtimeClient([
+      { timeline_id: 'timeline-canonical', timeline_ulid: 'timeline-alias', head_revision_id: 'head' },
+    ]);
+    vi.mocked(client.getProject).mockResolvedValue({
+      version: 1,
+      metadata: { default_timeline_id: 'timeline-alias' },
+    } as never);
+
+    await expect(ensureProjectHasTimeline('project-id', client)).resolves.toBe('timeline-canonical');
+    expect(client.updateProject).not.toHaveBeenCalled();
+  });
+
+  it('prefers an exact canonical ID over another timeline alias collision', async () => {
+    const client = runtimeClient([
+      { timeline_id: 'alias-match', timeline_ulid: 'shared-ref', head_revision_id: 'alias-head' },
+      { timeline_id: 'shared-ref', timeline_ulid: 'other-alias', head_revision_id: 'canonical-head' },
+    ]);
+    vi.mocked(client.getProject).mockResolvedValue({
+      version: 1,
+      metadata: { default_timeline_id: 'shared-ref' },
+    } as never);
+
+    await expect(ensureProjectHasTimeline('project-id', client)).resolves.toBe('shared-ref');
+    expect(client.updateProject).not.toHaveBeenCalled();
+  });
+
+  it('refetches timelines and preserves a concurrent primary assignment by canonical ID', async () => {
+    const client = runtimeClient([
+      { timeline_id: 'original', head_revision_id: 'old-head' },
+    ]);
+    vi.mocked(client.getProject)
+      .mockResolvedValueOnce({ version: 1, metadata: {} } as never)
+      .mockResolvedValueOnce({ version: 2, metadata: { default_timeline_id: 'new-alias' } } as never);
+    vi.mocked(client.listTimelines)
+      .mockResolvedValueOnce([{ timeline_id: 'original', head_revision_id: 'old-head' }] as never)
+      .mockResolvedValueOnce([{
+        timeline_id: 'concurrent-canonical',
+        timeline_ulid: 'new-alias',
+        head_revision_id: 'new-head',
+      }] as never);
+
+    await expect(ensureProjectHasTimeline('project-id', client)).resolves.toBe('concurrent-canonical');
+    expect(client.updateProject).not.toHaveBeenCalled();
+    expect(client.listTimelines).toHaveBeenCalledTimes(2);
+  });
+
+  it('throws a retryable error instead of returning an unresolved concurrent alias', async () => {
+    const client = runtimeClient([{ timeline_id: 'original', head_revision_id: 'old-head' }]);
+    vi.mocked(client.getProject)
+      .mockResolvedValueOnce({ version: 1, metadata: {} } as never)
+      .mockResolvedValueOnce({ version: 2, metadata: { default_timeline_id: 'unresolved-alias' } } as never)
+      .mockResolvedValueOnce({ version: 2, metadata: { default_timeline_id: 'unresolved-alias' } } as never);
+    vi.mocked(client.listTimelines)
+      .mockResolvedValueOnce([{ timeline_id: 'original', head_revision_id: 'old-head' }] as never)
+      .mockResolvedValueOnce([{ timeline_id: 'original', head_revision_id: 'old-head' }] as never);
+
+    await expect(ensureProjectHasTimeline('project-id', client)).rejects.toThrow(
+      'could not be resolved to a canonical timeline ID; retry',
+    );
+    expect(client.updateProject).not.toHaveBeenCalled();
+  });
+
   it('merges a newly created Main pointer with concurrent chat metadata after a CAS conflict', async () => {
     const client = runtimeClient([]);
     vi.mocked(client.getProject).mockResolvedValueOnce({ version: 1, metadata: {} } as never)

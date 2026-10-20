@@ -66,7 +66,7 @@ Then summarise what's set up and ask what I'd like to make.`;
  * the person both ways to use Astrid: from inside another agent through the Astrid skill, or in Astrid's
  * own CLI agent by running `astrid`.
  */
-export const AGENT_SETUP_BRIEF = `Please set up Astrid (a local-first creative tool + agent) on this computer, then get Astrid's own agent running. Do the work yourself, step by step, checking each result; don't just describe steps or hand them back to me. Ask me one question at a time, suggest a default, and skip anything that doesn't apply.
+const AGENT_SETUP_BRIEF_TEMPLATE = `Please set up Astrid (a local-first creative tool + agent) on this computer, then get Astrid's own agent running. Do the work yourself, step by step, checking each result; don't just describe steps or hand them back to me. Ask me one question at a time, suggest a default, and skip anything that doesn't apply.
 
 Use Astrid's main branch. Follow its setup skill and the guide it links to:
 ${SETUP_SKILL_URL}
@@ -75,7 +75,7 @@ If you can't open web links, clone ${ASTRID_REPO} and read docs/setup/SKILL.md t
 
 Ask me first:
 - Which folder to install into (suggest ~/astrid-local).
-Assume you are the agent I'll use Astrid from, and sync your own skills, unless I name another (Claude Code, Codex or Hermes).
+{{agentAssumption}}
 
 Rules:
 - Only macOS is validated so far. On Linux or Windows, tell me which step is unsupported before going further.
@@ -100,6 +100,18 @@ End by telling me briefly what's ready, then offer me the two ways to use Astrid
 1. Inside an agent I already use, like you: through the Astrid skill you installed, I can just ask for Astrid there.
 2. In Astrid's own dedicated agent: run astrid in a terminal.
 Finish your reply with those two options.`;
+
+export const AGENT_SETUP_BRIEF = AGENT_SETUP_BRIEF_TEMPLATE.replace(
+  '{{agentAssumption}}',
+  "Assume you are the agent I'll use Astrid from, and sync your own skills, unless I name another (Claude Code, Codex or Hermes)."
+);
+
+export function agentSetupBriefFor(agentName?: string): string {
+  const assumption = agentName
+    ? `I'll use Astrid from ${agentName}, so sync Astrid's skills into ${agentName}.`
+    : "Assume you are the agent I'll use Astrid from, and sync your own skills, unless I name another (Claude Code, Codex or Hermes).";
+  return AGENT_SETUP_BRIEF_TEMPLATE.replace('{{agentAssumption}}', assumption);
+}
 
 export interface ManualSetupStep {
   title: string;

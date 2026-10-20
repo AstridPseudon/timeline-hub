@@ -38,7 +38,6 @@ import {
 } from '@/tools/video-editor/lib/generated-lanes.ts';
 import { materializeSequenceConfig } from '@/tools/video-editor/sequences/materialize.ts';
 import {
-  assertVisualSeamAdmission,
   type VisualBoundaryBehavior,
   type VisualSeamParticipant,
   type VisualSeamReport,
@@ -864,22 +863,6 @@ export function buildRenderTimelinePayload(
   }
   const outputConfig = outputProjection.config;
   const managedInputs = managedInputObjectIds(outputConfig);
-  const seamContract = outputConfig.app?.visualSeamContract;
-  if (seamContract && typeof seamContract === 'object' && !Array.isArray(seamContract)
-    && (seamContract as { mode?: unknown }).mode === 'enforced') {
-    try {
-      assertVisualSeamAdmission(outputConfig, { enforceIntent: true });
-    } catch (error) {
-      const seamReport = error && typeof error === 'object' && 'report' in error
-        ? (error as { report?: VisualSeamReport }).report
-        : undefined;
-      return {
-        error: error instanceof Error ? error.message : 'visual seam admission blocked',
-        ...(seamReport ? { seamReport } : {}),
-      };
-    }
-  }
-
 
   if (managedInputs.error) return { error: managedInputs.error };
 
@@ -914,22 +897,19 @@ export type RenderExportDestination = 'download' | 'project-media';
 export interface EnqueueRenderOptions {
   /** Injected in tests; production constructs the client from the payload. */
   client?: AstridLocalClient;
-  bridgeBaseUrl?: string;
   /** Stable identity for one explicit export intent; reuse it for transport retries. */
   operationId?: string;
   idempotencyKey?: string;
   destination?: RenderExportDestination;
-  expectedVersion?: number;
 }
 
 function renderAdmissionKey(payload: AstridRuntimeRenderTimelinePayload, options: EnqueueRenderOptions): string {
   if (options.idempotencyKey) return options.idempotencyKey;
-  const version = options.expectedVersion ?? 'head';
   const destination = options.destination ?? 'download';
   if (options.operationId) {
-    return `astrid.render:v2:${options.operationId}:${payload.timeline_id}:${version}:${destination}:${payload.output_filename}`;
+    return `astrid.render:v3:${options.operationId}:${payload.timeline_id}:${destination}:${payload.output_filename}`;
   }
-  return `astrid.render:v1:${payload.timeline_id}:${version}:${destination}:${payload.output_filename}`;
+  return `astrid.render:v1:${payload.timeline_id}:${destination}:${payload.output_filename}`;
 }
 
 function canonicalAdmissionMetadata(timeline: unknown): Record<string, unknown> {
@@ -962,14 +942,7 @@ export async function enqueueAstridRuntimeRenderTimeline(
   options: EnqueueRenderOptions = {},
 ): Promise<EnqueueRenderResult> {
   try {
-    if (options.expectedVersion !== undefined
-      && (!Number.isSafeInteger(options.expectedVersion) || options.expectedVersion < 1)) {
-      throw new Error('render admission requires a positive acknowledged timeline version');
-    }
-    const client = options.client ?? new AstridLocalClient({
-      projectSlug: payload.project_id,
-      baseUrl: options.bridgeBaseUrl,
-    });
+    const client = options.client ?? new AstridLocalClient({ projectSlug: payload.project_id });
     const capability = await client.catalog.get(MANAGED_RENDER_CAPABILITY_ID);
     const destination = options.destination ?? 'download';
     const request: BridgeTaskAdmissionRequest = {
@@ -986,9 +959,6 @@ export async function enqueueAstridRuntimeRenderTimeline(
         family: MANAGED_RENDER_CAPABILITY_ID,
         params: {
           timeline_ref: payload.timeline_id,
-          ...(options.expectedVersion !== undefined
-            ? { expected_version: options.expectedVersion }
-            : {}),
           selector: managedRenderSelector(payload.timeline),
           output_name: payload.output_filename,
           ...canonicalAdmissionMetadata(payload.timeline),
@@ -1009,17 +979,15 @@ export async function enqueueAstridRuntimeRenderTimeline(
       request,
       renderAdmissionKey(payload, options),
     );
+    const seamReport = readRuntimeVisualSeamReportFromAdmittedTask(result.task);
     return {
       status: 'queued',
       task_id: result.task.id,
       correlation_id: payload.correlation_id,
       message: 'Render queued in Runtime. Progress and output are read from the common task ledger.',
+      ...(seamReport ? { seamReport } : {}),
     };
   } catch (error) {
-    const stale = describeStaleTimelineRejection(error);
-    if (stale) {
-      return { status: 'error', correlation_id: payload.correlation_id, message: stale };
-    }
     const seamReport = readRuntimeVisualSeamReport(error);
     return {
       status: 'error',
@@ -1194,21 +1162,12 @@ function readRuntimeVisualSeamReport(error: unknown): VisualSeamReport | undefin
   return normalizeRuntimeVisualSeamReport(jsonRecord(details)?.report);
 }
 
-/**
- * Runtime rejects a render whose `expected_version` is not the canonical
- * timeline version with 409
- * `{error: {code: 'conflict', message: 'render expected_version does not match
- * the canonical timeline', details: {expected, actual}}}`. Tell the user what
- * happened instead of a bare "409 Conflict".
- */
-function describeStaleTimelineRejection(error: unknown): string | null {
-  if (!(error instanceof BridgeRouteError) || error.status !== 409) return null;
-  if (!error.detail?.includes('expected_version')) return null;
-  const details = (error.envelope as { details?: { expected?: unknown; actual?: unknown } } | null)?.details;
-  const versions = typeof details?.expected === 'number' && typeof details?.actual === 'number'
-    ? ` (this editor has version ${details.expected}; the latest is ${details.actual})`
-    : '';
-  return `The timeline changed since this editor last loaded it${versions}. Reload to adopt the latest version, then render again.`;
+function readRuntimeVisualSeamReportFromAdmittedTask(task: unknown): VisualSeamReport | undefined {
+  const taskSpec = jsonRecord(jsonRecord(task)?.spec);
+  const runtimeSpec = jsonRecord(taskSpec?.spec);
+  const inputs = jsonRecord(runtimeSpec?.inputs);
+  const timelineAuthority = jsonRecord(inputs?.timeline_authority);
+  return normalizeRuntimeVisualSeamReport(timelineAuthority?.visual_seam_report);
 }
 
 /** Cancel a queued/running render through the common fenced task route. */

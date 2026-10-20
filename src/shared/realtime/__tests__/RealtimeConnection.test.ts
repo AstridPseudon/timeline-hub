@@ -233,7 +233,7 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
 
   it('uses the Runtime query as the sole task-list poller in a Runtime document', async () => {
     const originalUrl = `${window.location.pathname}${window.location.search}`;
-    window.history.replaceState({}, '', '/tools/video-editor?runtime=1&runtimeProject=demo-project&runtimeTimeline=timeline-1');
+    window.history.replaceState({}, '', '/tools/video-editor?project=demo-project&timeline=timeline-1');
     try {
       const router = createFakeRuntimeRouter();
       installRouter(router);

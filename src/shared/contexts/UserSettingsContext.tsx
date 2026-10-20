@@ -15,7 +15,7 @@ import { useMobileTimeoutFallback } from '@/shared/hooks/useMobileTimeoutFallbac
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
 import { ToolSettingsError } from '@/shared/settings';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
 import { useAuth } from './AuthContext';
 import { requireContextValue } from './contextGuard';
@@ -44,7 +44,7 @@ const UserSettingsContext = createContext<UserSettingsContextType | undefined>(u
  */
 export const UserSettingsProvider = ({ children }: { children: ReactNode }) => {
   const { userId } = useAuth();
-  const isLocalMode = hasLocalModeUrlParams(
+  const isLocalMode = hasRuntimeDocumentIdentity(
     typeof window === 'undefined' ? '' : window.location.search,
   );
   const isDeferredCloudMode = isDeferredCloudDataAuthority();

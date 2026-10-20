@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentTurn } from '@/tools/video-editor/types/agent-session';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   useSaveProjectDraft: vi.fn(),
   useSelectProjectSession: vi.fn(),
   useSetMainProjectSession: vi.fn(),
+  useRenameProjectSession: vi.fn(),
   useUnassignedProjectSessions: vi.fn(),
   useAssociateProjectSession: vi.fn(),
   useCreateSession: vi.fn(),
@@ -54,6 +56,7 @@ vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({
   useSaveProjectDraft: (...args: unknown[]) => mocks.useSaveProjectDraft(...args),
   useSelectProjectSession: (...args: unknown[]) => mocks.useSelectProjectSession(...args),
   useSetMainProjectSession: (...args: unknown[]) => mocks.useSetMainProjectSession(...args),
+  useRenameProjectSession: (...args: unknown[]) => mocks.useRenameProjectSession(...args),
   useUnassignedProjectSessions: (...args: unknown[]) => mocks.useUnassignedProjectSessions(...args),
   useAssociateProjectSession: (...args: unknown[]) => mocks.useAssociateProjectSession(...args),
   useCreateSession: (...args: unknown[]) => mocks.useCreateSession(...args),
@@ -226,6 +229,7 @@ function mockFromState(state: ReturnType<typeof createState>) {
   }) }));
   mocks.useSelectProjectSession.mockImplementation(() => ({ mutateAsync: vi.fn().mockResolvedValue(undefined) }));
   mocks.useSetMainProjectSession.mockImplementation(() => ({ isPending: false, mutateAsync: vi.fn().mockResolvedValue(undefined) }));
+  mocks.useRenameProjectSession.mockImplementation(() => ({ mutateAsync: vi.fn().mockResolvedValue(undefined) }));
   mocks.useUnassignedProjectSessions.mockImplementation(() => ({ data: undefined, isLoading: false }));
   mocks.useAssociateProjectSession.mockImplementation(() => ({ mutate: vi.fn(), isPending: false }));
   mocks.useCreateSession.mockImplementation(() => state.createSession);
@@ -304,7 +308,7 @@ describe('AgentChat', () => {
     });
   });
 
-  it('shows the active agent and model as a fixed plain header label', async () => {
+  it('shows a quiet agent name and reveals the model only in its info tooltip', async () => {
     const state = createState();
     const sessionId = 'codex:session-1';
     const projectId = 'project-1';
@@ -334,8 +338,14 @@ describe('AgentChat', () => {
 
     renderAgentChat();
     const identity = await screen.findByTestId('agent-chat-identity');
-    expect(identity).toHaveTextContent('Codex · Codex Current');
-    expect(identity).toHaveAttribute('title', 'To use another model, start a new chat.');
+    expect(identity).toHaveTextContent(/^Codex$/);
+    expect(identity).toHaveClass('text-xs');
+    expect(identity.parentElement).toHaveClass('text-muted-foreground');
+    expect(screen.queryByText('Codex Current', { exact: true })).toBeNull();
+    const user = userEvent.setup();
+    await user.hover(screen.getByRole('button', { name: 'Chat model information' }));
+    const tooltip = (await screen.findByText('Codex Current', { exact: true })).parentElement;
+    expect(tooltip).toHaveTextContent('To use another model, start a new chat.');
     expect(screen.queryByRole('combobox', { name: 'Agent model' })).toBeNull();
 
     await waitFor(() => {
@@ -347,6 +357,15 @@ describe('AgentChat', () => {
 
   it('starts a chat with another agent from the New chat menu and shows what an empty chat runs with', async () => {
     const state = createState();
+    state.createSession.mutateAsync.mockImplementationOnce(async () => {
+      state.projectChats['project-1'] = {
+        ...state.projectChats['project-1'],
+        revision: 2,
+        selected_session_id: 'codex:session-2',
+        sessions: [{ id: 'session-1' }, { id: 'codex:session-2' }],
+      };
+      return { id: 'codex:session-2' };
+    });
     mockFromState(state);
     const setAgent = vi.fn().mockResolvedValue(undefined);
     mocks.useLocalAgents.mockImplementation(() => ({
@@ -357,13 +376,22 @@ describe('AgentChat', () => {
 
     renderAgentChat();
     const identity = await screen.findByTestId('agent-chat-identity');
-    expect(identity).toHaveTextContent('Astrid · GPT 5');
-    expect(identity).toHaveAttribute('title', 'To use another model, start a new chat.');
+    expect(identity).toHaveTextContent(/^Astrid$/);
+    expect(screen.getByRole('button', { name: 'Chat model information' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
     fireEvent.click(await screen.findByRole('option', { name: /Codex/ }));
     await waitFor(() => expect(setAgent).toHaveBeenCalledWith('codex'));
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalled());
     expect(setAgent.mock.invocationCallOrder[0]).toBeLessThan(state.createSession.mutateAsync.mock.invocationCallOrder[0]);
+    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('codex:session-2', 'project-1'));
+  });
+
+  it('omits model information when no model is known', async () => {
+    mockFromState(createState());
+    mocks.useAgentModels.mockReturnValue({ data: undefined, isLoading: false });
+    renderAgentChat();
+    expect(await screen.findByTestId('agent-chat-identity')).toHaveTextContent(/^Astrid$/);
+    expect(screen.queryByRole('button', { name: 'Chat model information' })).toBeNull();
   });
 
   it('shows the failed agent start details and retries the same new chat', async () => {
@@ -461,6 +489,7 @@ describe('AgentChat', () => {
       { id: 'session-1', status: 'waiting_user' },
       { id: 'session-2', status: 'waiting_user' },
     ];
+    state.projectChats['project-1'].sessions = [{ id: 'session-1' }, { id: 'session-2' }];
     mockFromState(state);
     const selectSession = vi.fn().mockResolvedValue(undefined);
     const onSelectorOpenChange = vi.fn();
@@ -470,7 +499,7 @@ describe('AgentChat', () => {
 
     const selectors = screen.getAllByRole('combobox', { name: 'Project chat session' });
     expect(selectors).toHaveLength(1);
-    expect(selectors[0]).toHaveClass('w-[5.5rem]', 'min-w-0', 'shrink', 'bg-card/80', 'focus-visible:ring-2');
+    expect(selectors[0]).toHaveClass('max-w-40', 'min-w-0', 'shrink', 'bg-card/80', 'focus-visible:ring-2');
     expect(screen.getByTestId('agent-chat-header')).toHaveClass('min-w-0');
     expect(selectors[0]).toHaveTextContent('Chat 1');
     expect(screen.queryByText('session-1')).not.toBeInTheDocument();
@@ -485,6 +514,28 @@ describe('AgentChat', () => {
     await user.click(screen.getByRole('option', { name: /^Chat 2/ }));
     await waitFor(() => expect(selectSession).toHaveBeenCalledWith({ expectedRevision: 1, sessionId: 'session-2' }));
     expect(onSelectorOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('uses registry titles and creation numbers even when inventory is reordered or missing a chat', async () => {
+    const state = createState();
+    state.sessionsData = [{ id: 'unregistered', status: 'waiting_user' }, { id: 'missing', status: 'waiting_user' }, { id: 'session-1', status: 'waiting_user' }];
+    Object.assign(state.projectChats['project-1'], {
+      selected_session_id: 'session-3', main_session_id: 'session-3',
+      sessions: [{ id: 'session-1', title: 'Planning' }, { id: 'missing', missing: true }, { id: 'session-3' }],
+    });
+    mockFromState(state);
+    const view = renderAgentChat();
+    const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 3'));
+    await userEvent.setup().click(selector);
+    expect(screen.getAllByRole('option').map(row => row.textContent)).toEqual([
+      expect.stringContaining('Planning'), expect.stringContaining('Chat 3'),
+    ]);
+    state.sessionsData = [{ id: 'session-4', status: 'waiting_user' }, ...state.sessionsData];
+    state.projectChats['project-1'].sessions.push({ id: 'session-4' });
+    rerenderAgentChat(view.rerender);
+    expect(selector).toHaveTextContent('Chat 3');
+    expect(screen.getByRole('option', { name: /^Chat 4/ })).toBeInTheDocument();
   });
 
   it('opens on Main, preserves a local chat choice across refetch, and can promote that chat', async () => {
@@ -694,6 +745,10 @@ describe('AgentChat', () => {
       { id: 'cancelled-session', status: 'cancelled' },
       { id: 'predispatch-cancel-session', status: 'waiting_user' },
     ];
+    Object.assign(state.projectChats['project-1'], {
+      selected_session_id: null, main_session_id: null,
+      sessions: [{ id: 'cancelled-session' }, { id: 'predispatch-cancel-session' }],
+    });
     mockFromState(state);
 
     renderAgentChat();
@@ -983,8 +1038,9 @@ describe('AgentChat', () => {
 
     renderAgentChat();
     const identity = screen.getByTestId('agent-chat-identity');
-    expect(identity).toHaveTextContent('Codex · Alpha Precise');
-    expect(identity).toHaveAttribute('title', 'To use another model, start a new chat.');
+    expect(identity).toHaveTextContent(/^Codex$/);
+    await userEvent.setup().hover(screen.getByRole('button', { name: 'Chat model information' }));
+    expect(await screen.findByText('Alpha Precise', { exact: true })).toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'Agent model' })).toBeNull();
     expect(mocks.useAgentModels).toHaveBeenCalledWith(true, sessionId, 'project-1');
     expect(mocks.useSetAgentModel).toHaveBeenLastCalledWith(sessionId, 'project-1');
@@ -1068,39 +1124,65 @@ describe('project draft consumer ownership', () => {
     } finally { view.unmount(); }
   });
 
-  it('opens the created chat immediately while registry refresh still lists the previous Main, retaining the composer', async () => {
+  it.each(['plain', 'another agent'])('keeps New (%s) on the new registry snapshot while the sessions cache is stale', async (choice) => {
     vi.clearAllMocks();
+    Element.prototype.scrollIntoView ??= vi.fn();
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { configurable: true, value: vi.fn() });
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => { callback(0); return 1; });
     const state = createState();
     mockFromState(state);
     const openPane = vi.fn();
     mocks.panesState.setIsTasksPaneOpen = openPane;
     state.projectChats['project-1'] = { ...state.projectChats['project-1'], main_session_id: 'session-1' } as typeof state.projectChats['project-1'];
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const key = ['project-agent-chat', 'project-1'];
+    client.setQueryData(key, state.projectChats['project-1']);
+    mocks.useProjectChat.mockImplementation(() => useQuery({ queryKey: key, queryFn: async () => state.projectChats['project-1'], enabled: false }));
+    mocks.useLocalAgents.mockReturnValue({ data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null }], selectedAgent: 'astrid' }, refetch: vi.fn() });
+    let finish!: (session: { id: string }) => void;
+    state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const newId = choice === 'plain' ? 'session-2' : 'codex:session-2';
     mocks.useAgentSession.mockImplementation((id: string) => ({ data: { id, status: 'waiting_user', turns: [] }, isLoading: false }));
-    const view = render(<AgentChatPanel />);
+    const view = render(<QueryClientProvider client={client}><AgentChatPanel /></QueryClientProvider>);
     const composer = screen.getByRole('textbox');
     fireEvent.change(composer, { target: { value: 'Keep my unsent draft' } });
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
-    fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
-    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-2', 'project-1'));
-    expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Chat 2');
-    Object.assign(state.projectChats['project-1'], {
-      selected_session_id: 'session-2',
-      main_session_id: 'session-1',
-      sessions: [{ id: 'session-1' }, { id: 'session-2' }],
+    if (choice === 'plain') fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
+    else {
+      fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
+      fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
+    }
+    await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledOnce());
+    // useCreateSession publishes its registry receipt before handleNewSession's
+    // local selection applies. Commit that snapshot while the separate 5s
+    // sessions query still contains only Chat 1, with no creation receipt in UI state.
+    const created = {
+      ...state.projectChats['project-1'],
+      selected_session_id: newId,
+      main_session_id: newId,
+      sessions: [{ id: 'session-1' }, { id: newId }],
       revision: state.projectChats['project-1'].revision + 1,
-    });
-    state.sessionsData = [...state.sessionsData, { id: 'session-2', status: 'waiting_user' }];
-    view.rerender(<AgentChatPanel />);
-    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-2', 'project-1'));
+    };
+    await act(async () => { client.setQueryData(key, created); });
+    const selector = screen.getByRole('combobox', { name: 'Project chat session' });
+    fireEvent.click(selector);
+    expect(await screen.findByRole('option', { name: /^Chat 2/ })).toHaveTextContent('Main');
+    fireEvent.click(selector);
+    await act(async () => { finish({ id: newId }); });
+    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith(newId, 'project-1'));
+    expect(selector).toHaveTextContent('Chat 2');
+    view.rerender(<QueryClientProvider client={client}><AgentChatPanel isExpanded /></QueryClientProvider>);
+    expect(mocks.useAgentSession).toHaveBeenLastCalledWith(newId, 'project-1');
     expect(state.createSession.mutate).not.toHaveBeenCalled();
     expect(composer).toHaveValue('Keep my unsent draft');
     expect(openPane).toHaveBeenCalledWith(true);
     expect(composer).toHaveFocus();
     expect(state.sessionsData).toEqual([
       { id: 'session-1', status: 'waiting_user' },
-      { id: 'session-2', status: 'waiting_user' },
     ]);
     expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
+    view.unmount();
+    client.clear();
   });
   it.each([false, true])('ignores a delayed New completion after a project transition (return to origin: %s)', async (returnToOrigin) => {
     const state = createState();

@@ -9,11 +9,11 @@ import { mapShotGenerationToRow } from './mappers';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import { assertDeferredCloudShotOperation } from './shotAuthority';
 
 function canReadCloudShots(): boolean {
-  return isDeferredCloudDataAuthority() && !hasLocalModeUrlParams(
+  return isDeferredCloudDataAuthority() && !hasRuntimeDocumentIdentity(
     typeof window === 'undefined' ? '' : window.location.search,
   );
 }

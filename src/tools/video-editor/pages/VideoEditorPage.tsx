@@ -11,9 +11,6 @@ import {
  * Internal Astrid App route adapter for the in-app video editor page.
  * Not part of the supported public SDK surface.
  */
-import { resolveRuntimeProjectId } from "@/integrations/runtime/resolveProjectSelector.ts";
-import { useRecoveryCardShowing } from "@/integrations/runtime/recoveryCard.ts";
-import { RUNTIME_CONNECTION_COPY } from "@/shared/components/RuntimeConnection/copy.ts";
 import {
   useCallback,
   useEffect,
@@ -23,7 +20,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useHomeNavigation } from "@/shared/hooks/useHomeNavigation.ts";
 import { isHomeToolPathActive } from "@/shared/lib/tooling/homeNavigation.ts";
 import { Button } from "@/shared/components/ui/button.tsx";
@@ -34,11 +31,9 @@ import {
   CardTitle,
   CardDescription,
 } from "@/shared/components/ui/card.tsx";
-import { Skeleton } from "@/shared/components/ui/skeleton.tsx";
 import { useOptionalAgentChatRegistry } from "@/shared/contexts/AgentChatContext.tsx";
 import { useOptionalGlobalHeaderSlot } from "@/shared/contexts/ToolPageHeaderContext.tsx";
 import { toast } from "@/shared/components/ui/toast.tsx";
-import type { AstridBridgeRequestObservation } from "@/integrations/astrid/transport.ts";
 import type { DataProvider } from "@/tools/video-editor/data/DataProvider.ts";
 import { VideoEditorProvider } from "@/tools/video-editor/contexts/VideoEditorProvider.tsx";
 import { devLocalExtensions } from "@/tools/video-editor/dev/localExtensions.ts";
@@ -52,16 +47,12 @@ import {
 } from "@/tools/video-editor/dev/devExtensionEnablement.ts";
 import { useExtensionLoaderWiring } from "@/tools/video-editor/runtime/useExtensionLoaderWiring";
 import { AstridVideoEditorShell } from "@/tools/video-editor/components/AstridVideoEditorShell.tsx";
-import { AstridAcpSessionControls } from "@/tools/video-editor/components/AstridAcpSessionControls.tsx";
 import {
-  ProjectTimelineSelectors,
   ProjectTimelinePicker,
 } from "@/shared/components/ProjectTimelineSelectors.tsx";
 import { ProjectHeaderActions } from "@/shared/components/ProjectHeaderActions.tsx";
-import { MinkCircle } from "@/pages/Home/components/MinkCircle/MinkCircle.tsx";
 import {
   AstridRuntimeClient,
-  RuntimeAuthenticationError,
   RuntimeUnavailableError,
   type RuntimeConnectorError,
 } from "@/integrations/runtime/client.ts";
@@ -72,20 +63,15 @@ import {
 import { ApiError } from "@/integrations/runtime/generated.ts";
 import { generateUUID } from "@/shared/lib/taskCreation/ids.ts";
 import { AppHeader } from "@/shared/components/AppHeader.tsx";
-import { WorkspaceConnectionRecovery } from "@/tools/video-editor/components/WorkspaceConnectionRecovery.tsx";
 import { runtimeOrigin } from "@/integrations/runtime/connection.ts";
-import { useAstridBridgeDiscovery } from "@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts";
+import { RuntimeConnectorRecoveryBanner } from "@/shared/components/RuntimeConnection/RuntimeConnectorRecoveryBanner.tsx";
 import { RuntimeDataProvider } from "@/integrations/runtime/dataProvider.ts";
 import type { SaveStatus } from "@/tools/video-editor/hooks/useTimelinePersistence.ts";
 import { publishLocalTestExtensionDiagnostics } from "@/app/localTestRuntime.ts";
 import {
-  createHostOwnedExtensionOperationalEmitter,
-  dispatchExtensionOperationalEvent,
   getExtensionReleaseFlags,
   selectReleaseEnabledExtensions,
 } from "@/tools/video-editor/runtime/extensionReleaseControls.ts";
-
-type VideoEditorMode = "local" | "runtime";
 
 type ProviderSelection = {
   dataProvider: DataProvider;
@@ -98,45 +84,11 @@ type ProviderSelection = {
   runtimeReconnect?: () => Promise<void>;
 };
 
-/**
- * Dev canary gate for the `timelineOverlay` family (plan step 22).
- *
- * The overlay host is a rollout-qualification canary: it mounts only when
- * BOTH the dev build AND the explicit `?timelineOverlayCanary=1` query are
- * present. The literal `import.meta.env.DEV` guard means production builds
- * drop the branch entirely, so the query is never honored outside DEV and
- * the default (no param) stays dark even in DEV.
- */
-
-/** Keep the manual ACP lifecycle inspector out of normal editor chrome. */
-const ACP_DEBUG_PARAM = "acpDebug";
-const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
-
-function subscribeToReducedMotion(onChange: () => void): () => void {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function")
-    return () => undefined;
-  const query = window.matchMedia(REDUCED_MOTION_QUERY);
-  if (query.addEventListener) {
-    query.addEventListener("change", onChange);
-    return () => query.removeEventListener("change", onChange);
-  }
-  query.addListener(onChange);
-  return () => query.removeListener(onChange);
-}
-
-function getReducedMotionSnapshot(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    typeof window.matchMedia === "function" &&
-    window.matchMedia(REDUCED_MOTION_QUERY).matches
-  );
-}
-
-/** Browser-local resume state for the URL-owned Astrid workspace selector. */
-export const LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY =
+/** Keep existing browser resume preferences; values are now canonical IDs. */
+export const LAST_OPENED_PROJECT_STORAGE_KEY =
   "astrid:lastOpenedLocalProjectSlug";
 
-type LocalAstridProject = {
+type EditorProject = {
   slug: string;
   name: string;
   created_at?: string;
@@ -144,9 +96,9 @@ type LocalAstridProject = {
   metadata?: Record<string, unknown>;
 };
 
-function mostRecentlyCreatedLocalProject(
-  projects: LocalAstridProject[],
-): LocalAstridProject | null {
+function mostRecentlyCreatedProject(
+  projects: EditorProject[],
+): EditorProject | null {
   return (
     projects
       .map((project) => ({
@@ -155,233 +107,40 @@ function mostRecentlyCreatedLocalProject(
           ? Date.parse(project.created_at)
           : Number.NaN,
       }))
-      .filter(({ createdAt }) => Number.isFinite(createdAt))
       .sort(
         (left, right) =>
-          right.createdAt - left.createdAt ||
+          (Number.isFinite(right.createdAt) ? right.createdAt : -Infinity) -
+          (Number.isFinite(left.createdAt) ? left.createdAt : -Infinity) ||
           left.project.slug.localeCompare(right.project.slug),
       )[0]?.project ?? null
   );
 }
 
-export function RuntimeConnectorRecoveryBanner({
-  error,
-  onRetry,
-  retrying = false,
-}: {
-  error: RuntimeConnectorError;
-  onRetry: () => void | Promise<void>;
-  retrying?: boolean;
-}) {
-  // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
-  const recoveryCardShowing = useRecoveryCardShowing();
-  const hosted = runtimeOrigin() !== "";
-  if (hosted && recoveryCardShowing) return null;
-  const authenticationFailed = error instanceof RuntimeAuthenticationError;
-  const runtimeUnavailable = error instanceof RuntimeUnavailableError;
-  // On the hosted build a person never reads the engineer titles or `recoveryAction`: one friendly line stands in.
-  const title = hosted
-    ? RUNTIME_CONNECTION_COPY.loadFailed.title
-    : authenticationFailed
-    ? "Workspace Runtime authentication failed"
-    : runtimeUnavailable && error.failureKind === "admission"
-      ? "Workspace Runtime failed its startup checks"
-      : runtimeUnavailable && error.failureKind === "storage"
-        ? "Workspace Runtime reported a storage failure"
-        : "Workspace Runtime is unavailable";
-
-  return (
-    <div
-      className="flex items-center justify-between gap-4 border-b border-destructive/30 bg-destructive/5 px-4 py-3"
-      data-testid="runtime-connector-alert"
-      role="alert"
-    >
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground">{title}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {hosted ? RUNTIME_CONNECTION_COPY.loadFailed.sentence : error.recoveryAction}
-        </p>
-      </div>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        onClick={() => void onRetry()}
-        disabled={retrying}
-      >
-        {hosted
-          ? (retrying ? RUNTIME_CONNECTION_COPY.loadFailed.retrying : RUNTIME_CONNECTION_COPY.loadFailed.button)
-          : (retrying ? "Retrying Runtime connection…" : "Retry Runtime connection")}
-      </Button>
-    </div>
-  );
-}
-
-function useResolvedRuntimeProjectId(selector: string | null): {
-  projectId: string | null;
-  notFound: Error | null;
-  error: Error | null;
-  pending: boolean;
-} {
-  const [state, setState] = useState<{
-    selector: string;
-    projectId: string | null;
-    error: Error | null;
-    notFound: boolean;
-  } | null>(null);
-  useEffect(() => {
-    if (!selector) return;
-    let cancelled = false;
-    resolveRuntimeProjectId(selector).then(
-      (projectId) => {
-        if (!cancelled)
-          setState({ selector, projectId, error: null, notFound: false });
-      },
-      (error: unknown) => {
-        if (cancelled) return;
-        const err = error instanceof Error ? error : new Error(String(error));
-        setState({
-          selector,
-          projectId: null,
-          error: err,
-          notFound: /not found$/.test(err.message),
-        });
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [selector]);
-  // A result for a previous selector must never be used for the current one.
-  const current = selector && state?.selector === selector ? state : null;
-  // Only a positive "not found" vetoes the selector. If resolution fails for
-  // another reason (Runtime down), the editor mounts from the URL value and
-  // its own Runtime provider reports the failure. While the single getProject
-  // call is in flight nothing is mounted, and the copy says "Connecting".
-  return {
-    projectId: !current || current.notFound ? null : (current.projectId ?? selector),
-    notFound: current?.notFound ? current.error : null,
-    error: current?.error ?? null,
-    pending: !!selector && !current,
-  };
-}
-
 function useVideoEditorProviderSelection({
-  mode,
-  localProjectSlug,
-  localProjectId,
-  localTimelineId,
-  localTimelineName,
-  runtimeProjectId,
-  runtimeProjectSlug,
-  runtimeTimelineId,
-  runtimeTimelineName,
-  onRuntimeError,
+  projectId, projectSlug, timelineId, timelineName, onRuntimeError,
 }: {
-  mode: VideoEditorMode;
-  localProjectSlug: string | null;
-  localProjectId: string | null;
-  localTimelineId: string | null;
-  localTimelineName: string | null;
-  runtimeProjectId: string | null;
-  runtimeProjectSlug?: string | null;
-  runtimeTimelineId: string | null;
-  runtimeTimelineName?: string | null;
-  onRuntimeError?: (error: RuntimeConnectorError) => void;
+  projectId: string | null;
+  projectSlug: string | null;
+  timelineId: string | null;
+  timelineName: string | null;
+  onRuntimeError: (error: RuntimeConnectorError) => void;
 }): ProviderSelection | null {
-  const providerKind = mode === "runtime" ? "runtime" : "local-runtime";
-  const providerProjectId =
-    mode === "runtime" ? runtimeProjectId : localProjectId;
-  const providerTimelineId =
-    mode === "runtime" ? runtimeTimelineId : localTimelineId;
-
-  // Display metadata can refresh while the editor and its pending reads stay
-  // mounted. Keep their stateful provider owned by the effective authority.
-  const providerConnection = useMemo<Pick<
-    ProviderSelection,
-    "dataProvider" | "runtimeReconnect"
-  > | null>(() => {
-    if (!providerProjectId || !providerTimelineId) {
-      return null;
-    }
-    const dataProvider = new RuntimeDataProvider({
-      projectId: providerProjectId,
-      onRuntimeError,
-    });
+  // Only a document identity change replaces the stateful provider. Display
+  // metadata and connection recovery must leave pending reads and drafts mounted.
+  const connection = useMemo(() => {
+    if (!projectId || !timelineId) return null;
+    const dataProvider = new RuntimeDataProvider({ projectId, onRuntimeError });
     return { dataProvider, runtimeReconnect: () => dataProvider.reconnect() };
-  }, [
-    providerKind,
-    providerProjectId,
-    providerTimelineId,
-    onRuntimeError,
-  ]);
-
-  return useMemo(() => {
-    if (!providerConnection) {
-      return null;
-    }
-    if (mode === "runtime") {
-      if (!runtimeProjectId || !runtimeTimelineId) {
-        return null;
-      }
-      return {
-        ...providerConnection,
-        projectId: runtimeProjectId,
-        projectSlug: runtimeProjectSlug ?? runtimeProjectId,
-        timelineId: runtimeTimelineId,
-        timelineName: runtimeTimelineName ?? null,
-        // Runtime authentication is owned by the connector/proxy. Keep the
-        // app user null so cloud-only catalogs cannot become a second authority.
-        userId: null,
-        remountKey: `runtime:${runtimeProjectId}:${runtimeTimelineId}`,
-      };
-    }
-
-    if (mode === "local") {
-      if (!localProjectSlug || !localTimelineId) {
-        return null;
-      }
-      // Workspace v1 writes use the canonical id; the slug/name are display
-      // metadata and can change without replacing the authority's provider.
-      if (!localProjectId) {
-        return null;
-      }
-      return {
-        ...providerConnection,
-        projectId: localProjectId,
-        projectSlug: localProjectSlug,
-        timelineId: localTimelineId,
-        timelineName: localTimelineName,
-        // No user in local mode: a fabricated id would be truthy and enable
-        // the auth-gated catalog queries (effects, resources) against a
-        // backend that local mode must never touch. `null` keeps them off.
-        userId: null,
-        remountKey: `local-runtime:${localProjectId}:${localTimelineId}`,
-      };
-    }
-    return null;
-  }, [
-    providerConnection,
-    localProjectSlug,
-    localProjectId,
-    localTimelineId,
-    localTimelineName,
-    mode,
-    runtimeProjectId,
-    runtimeTimelineId,
-    runtimeProjectSlug,
-    runtimeTimelineName,
-  ]);
+  }, [projectId, timelineId, onRuntimeError]);
+  return useMemo(() => connection && projectId && timelineId ? {
+    ...connection, projectId, projectSlug, timelineId, timelineName,
+    userId: null,
+    remountKey: `runtime:${projectId}:${timelineId}`,
+  } : null, [connection, projectId, projectSlug, timelineId, timelineName]);
 }
 
 export default function VideoEditorPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const prefersReducedMotion = useSyncExternalStore(
-    subscribeToReducedMotion,
-    getReducedMotionSnapshot,
-    () => true,
-  );
-
   // ---- Reviewed extension bundle + smoke wiring ----------------------------
   // Production defaults closed and can only be enabled by the deployment-owned
   // runtime document loaded before React mounts. DEV defaults open for authoring. URL or browser
@@ -403,32 +162,6 @@ export default function VideoEditorPage() {
   const extensionReleaseFlags = getExtensionReleaseFlags({
     development: import.meta.env.DEV,
   });
-  const bridgeOperationalEmitter = useMemo(
-    () =>
-      createHostOwnedExtensionOperationalEmitter(
-        {
-          releaseRevision: extensionReleaseFlags.configurationRevision,
-          extensionVersions: new Map(),
-        },
-        dispatchExtensionOperationalEvent,
-      ),
-    [extensionReleaseFlags.configurationRevision],
-  );
-  const onBridgeRequest = useCallback(
-    (observation: AstridBridgeRequestObservation) => {
-      if (!extensionReleaseFlags.extensionHostEnabled) return;
-      bridgeOperationalEmitter.emit({
-        event: "bridge.request",
-        outcome: observation.outcome,
-        durationMs: observation.durationMs,
-        ...(observation.errorClass
-          ? { errorClass: observation.errorClass }
-          : {}),
-      });
-    },
-    [bridgeOperationalEmitter, extensionReleaseFlags.extensionHostEnabled],
-  );
-
   const smokeDirectExtensions = useMemo(() => {
     // The routed native editor uses the same admitted catalog for every backend.
     const disabled = import.meta.env.DEV ? devDisabledIds : new Set<string>();
@@ -471,7 +204,6 @@ export default function VideoEditorPage() {
   const {
     resolvedExtensions,
     diagnostics: loaderDiagnostics,
-    isResolving: loaderIsResolving,
   } = useExtensionLoaderWiring({
     directExtensions: smokeDirectExtensions,
     repository: null,
@@ -480,199 +212,62 @@ export default function VideoEditorPage() {
   useEffect(() => {
     publishLocalTestExtensionDiagnostics("loader", loaderDiagnostics);
   }, [loaderDiagnostics]);
-  const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { navigateHome, targetPath } = useHomeNavigation();
+  const { targetPath } = useHomeNavigation();
   const globalHeaderSlot = useOptionalGlobalHeaderSlot();
   const hasGlobalHeader = globalHeaderSlot.hasProvider;
 
-  // Runtime mode is an explicit authenticated connector entry. It remains
-  // separate from the local workspace route because it uses a different
-  // transport, not a different project authority.
-  // `runtimeProject` may be a slug or a canonical id; it is resolved to the
-  // canonical id (B8) before the provider is built.
-  const runtimeProjectSelector = searchParams.get("runtimeProject");
-  const runtimeTimelineId = searchParams.get("runtimeTimeline");
-  const runtimeMode = searchParams.get("runtime") === "1";
-  const {
-    projectId: runtimeProjectId,
-    notFound: runtimeProjectNotFound,
-    pending: runtimeProjectResolving,
-  } = useResolvedRuntimeProjectId(runtimeMode ? runtimeProjectSelector : null);
-  const acpDebugEnabled =
-    runtimeMode && searchParams.get(ACP_DEBUG_PARAM) === "1";
-  const localProjectSlug = searchParams.get("localProject");
-  const localTimelineId = searchParams.get("localTimeline");
-  const mode: VideoEditorMode = runtimeMode ? "runtime" : "local";
+  const projectId = searchParams.get("project")?.trim() || null;
+  const timelineId = searchParams.get("timeline")?.trim() || null;
   const isHomeTool = isHomeToolPathActive(pathname, targetPath);
-
-  // Selector dropdown open state drives discovery refetch-on-open + polling.
   const [selectorsOpen, setSelectorsOpen] = useState(false);
-  const discovery = useAstridBridgeDiscovery({
-    open: selectorsOpen && mode === "local",
-    currentLocal: mode === "local",
-    selectedProjectSlug: localProjectSlug,
-    onBridgeRequest,
-  });
-
   const runtimeDiscovery = useRuntimeEditorDiscovery({
-    enabled: runtimeMode,
-    projectId: runtimeProjectId,
-    open: selectorsOpen,
+    enabled: true, projectId, open: selectorsOpen,
   });
-  const selectedRuntimeProject = runtimeDiscovery.project;
-  const selectedRuntimeTimeline =
-    runtimeDiscovery.timelinesQuery.data?.find(
-      (t) => t.timeline_id === runtimeTimelineId,
-    ) ?? null;
+  const projects = runtimeDiscovery.projectsQuery.data;
+  const timelines = runtimeDiscovery.timelinesQuery.data;
+  const selectedProject = runtimeDiscovery.project;
+  const selectedTimeline = timelines?.find(t => t.timeline_id === timelineId) ?? null;
+
   useEffect(() => {
-    if (
-      !runtimeMode ||
-      !selectedRuntimeProject ||
-      runtimeTimelineId ||
-      runtimeDiscovery.timelinesQuery.isLoading ||
-      runtimeDiscovery.timelinesQuery.error
-    )
-      return;
-    const nextTimeline = chooseRuntimeTimeline(
-      selectedRuntimeProject,
-      runtimeDiscovery.timelinesQuery.data ?? [],
-    );
-    if (!nextTimeline) return;
-    setSearchParams(
-      (current) => {
-        if (
-          current.get("runtimeProject") !== runtimeProjectSelector ||
-          current.has("runtimeTimeline")
-        )
-          return current;
-        const next = new URLSearchParams(current);
-        next.set("runtimeTimeline", nextTimeline.timeline_id);
-        return next;
-      },
-      { replace: true },
-    );
-  }, [
-    runtimeMode,
-    selectedRuntimeProject,
-    runtimeProjectSelector,
-    runtimeTimelineId,
-    runtimeDiscovery.timelinesQuery.data,
-    runtimeDiscovery.timelinesQuery.isLoading,
-    runtimeDiscovery.timelinesQuery.error,
-    setSearchParams,
-  ]);
+    if (projectId || timelineId || !projects || runtimeDiscovery.projectsQuery.error) return;
+    let previous: string | null = null;
+    try { previous = window.localStorage.getItem(LAST_OPENED_PROJECT_STORAGE_KEY); } catch { /* Storage is optional. */ }
+    const project = projects.find(p => p.project_id === previous)
+      ?? projects.find(p => p.slug === previous)
+      ?? mostRecentlyCreatedProject(projects);
+    if (!project?.project_id) return;
+    setSearchParams(current => {
+      if (current.has("project")) return current;
+      const next = new URLSearchParams(current);
+      next.set("project", project.project_id!);
+      return next;
+    }, { replace: true });
+  }, [projectId, timelineId, projects, runtimeDiscovery.projectsQuery.error, setSearchParams]);
 
-  const localProjects = discovery.projectsQuery.data?.projects ?? null;
-  const selectedLocalProject =
-    localProjects?.find((project) => project.slug === localProjectSlug) ?? null;
-  const localProjectId = selectedLocalProject?.project_id ?? null;
-  const localProjectListPending =
-    discovery.healthQuery.isLoading ||
-    discovery.projectsQuery.isLoading ||
-    discovery.projectsQuery.isFetching ||
-    !discovery.projectsQuery.data;
-
-  // The editor route is URL-owned, so resume its local Runtime project only
-  // after the authoritative project list has loaded. An explicit URL always
-  // wins, including an explicit stale slug that should be reported as missing.
   useEffect(() => {
-    if (
-      mode !== "local" ||
-      localProjectSlug ||
-      discovery.bridgeDown ||
-      discovery.projectsQuery.error ||
-      localProjectListPending ||
-      !localProjects
-    ) {
-      return;
-    }
+    if (!selectedProject) return;
+    try { window.localStorage.setItem(LAST_OPENED_PROJECT_STORAGE_KEY, selectedProject.project_id); } catch { /* Storage is optional. */ }
+  }, [selectedProject]);
 
-    let lastOpenedSlug: string | null = null;
-    try {
-      lastOpenedSlug = window.localStorage.getItem(
-        LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY,
-      );
-    } catch {
-      // Storage can be disabled; deterministic newest-project fallback still works.
-    }
-    const projectToRestore =
-      localProjects.find((project) => project.slug === lastOpenedSlug) ??
-      mostRecentlyCreatedLocalProject(localProjects);
-    if (!projectToRestore) return;
-
-    setSearchParams(
-      (current) => {
-        // Protect a project URL written by a user action in the same render turn.
-        if (current.has("localProject")) return current;
-        const next = new URLSearchParams(current);
-        next.set("localProject", projectToRestore.slug);
-        return next;
-      },
-      { replace: true },
-    );
-  }, [
-    discovery.bridgeDown,
-    discovery.projectsQuery.error,
-    localProjectListPending,
-    localProjects,
-    localProjectSlug,
-    mode,
-    setSearchParams,
-  ]);
-
-  // Directly opening a valid local URL also updates local resume state. A stale
-  // explicit URL never replaces the last valid selection.
-  useEffect(() => {
-    if (mode !== "local" || !localProjectSlug || !selectedLocalProject) return;
-    try {
-      window.localStorage.setItem(
-        LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY,
-        localProjectSlug,
-      );
-    } catch {
-      // The project remains selected in the URL if browser storage is unavailable.
-    }
-  }, [localProjectSlug, mode, selectedLocalProject]);
-
-  // Project chat is available even when the selected project has no timeline.
-  // The mounted editor adds its live timeline/Elements context as a higher layer.
+  // Chat, the gallery and the editor all use the same canonical project,
+  // including projects which have not created their first timeline yet.
   const agentChatRegistry = useOptionalAgentChatRegistry();
-  const chatProjectId =
-    mode === "runtime"
-      ? (selectedRuntimeProject?.project_id ?? null)
-      : localProjectId;
-  const chatProjectSlug =
-    mode === "runtime"
-      ? (selectedRuntimeProject?.slug ?? null)
-      : localProjectSlug;
+  const chatProjectId = projectId;
+  const chatProjectSlug = selectedProject?.slug ?? null;
   useEffect(() => {
     if (!agentChatRegistry) return;
     agentChatRegistry.registerProject({
       timelineId: null,
-      editorContext: chatProjectId
-        ? {
-            tool: "video-editor",
-            projectId: chatProjectId,
-            projectSlug: chatProjectSlug,
-            timelineId: null,
-            timelineName: null,
-            deepLink:
-              typeof globalThis.location?.href === "string"
-                ? globalThis.location.href
-                : null,
-          }
-        : null,
+      editorContext: chatProjectId ? {
+        tool: "video-editor", projectId: chatProjectId, projectSlug: chatProjectSlug,
+        timelineId: null, timelineName: null,
+        deepLink: typeof globalThis.location?.href === "string" ? globalThis.location.href : null,
+      } : null,
     });
     return agentChatRegistry.unregisterProject;
   }, [agentChatRegistry, chatProjectId, chatProjectSlug]);
 
-  const selectedLocalTimeline =
-    discovery.timelinesQuery.data?.timelines?.find(
-      (timeline) =>
-        timeline.timeline_id === localTimelineId ||
-        timeline.timeline_ulid === localTimelineId,
-    ) ?? null;
   const [mountedSaveStatus, setMountedSaveStatus] =
     useState<SaveStatus>("saved");
   const [settingPrimaryTimelineId, setSettingPrimaryTimelineId] = useState<
@@ -689,12 +284,12 @@ export default function VideoEditorPage() {
     null,
   );
   const timelineSelectionRef = useRef({
-    projectId: localProjectId,
-    timelineId: localTimelineId,
+    projectId: projectId,
+    timelineId: timelineId,
   });
   timelineSelectionRef.current = {
-    projectId: localProjectId,
-    timelineId: localTimelineId,
+    projectId: projectId,
+    timelineId: timelineId,
   };
   const attemptedFirstTimelineProjects = useRef(new Set<string>());
   const pendingAdditionalTimeline = useRef<{
@@ -702,49 +297,18 @@ export default function VideoEditorPage() {
     timelineId: string;
     name: string;
   } | null>(null);
-  const localTimelineName = selectedLocalTimeline?.name ?? null;
-  const resolvedLocalProjectSlug = selectedLocalProject
-    ? localProjectSlug
-    : null;
-  const runtimeProjectsPending =
-    runtimeProjectResolving ||
-    (!runtimeDiscovery.projectsQuery.data && !runtimeDiscovery.projectsQuery.error);
-  const runtimeTimelinesPending =
-    !!selectedRuntimeProject &&
-    !runtimeDiscovery.timelinesQuery.data &&
-    !runtimeDiscovery.timelinesQuery.error;
-  const runtimeWorkspaceSettling =
-    !runtimeProjectNotFound &&
-    !runtimeDiscovery.projectsQuery.error &&
-    !runtimeDiscovery.timelinesQuery.error &&
-    (runtimeProjectsPending || runtimeTimelinesPending);
-  // The URL owns the Runtime selection. Discovery can only veto it once it has
-  // resolved and positively lacks the id; while pending or failed, the editor
-  // mounts from the URL like main, and its own Runtime provider reports errors.
-  const runtimeProjectMissing =
-    !!runtimeProjectId &&
-    !!runtimeDiscovery.projectsQuery.data &&
-    !selectedRuntimeProject;
-  const runtimeTimelineMissing =
-    !!runtimeTimelineId &&
-    !!runtimeDiscovery.timelinesQuery.data &&
-    !selectedRuntimeTimeline;
-  const runtimeSelectionVetoed = runtimeProjectMissing || runtimeTimelineMissing;
-  const effectiveProviderKind =
-    mode === "runtime" ? "runtime" : "local-runtime";
-  const effectiveProviderProjectId =
-    mode === "runtime"
-      ? runtimeSelectionVetoed ? null : runtimeProjectId
-      : localProjectId;
-  const effectiveProviderTimelineId =
-    mode === "runtime"
-      ? runtimeSelectionVetoed ? null : runtimeTimelineId
-      : selectedLocalTimeline?.timeline_id ?? null;
-  const connectorScope = JSON.stringify([
-    effectiveProviderKind,
-    effectiveProviderProjectId,
-    effectiveProviderTimelineId,
-  ]);
+  const projectsPending = !projects && !runtimeDiscovery.projectsQuery.error;
+  const timelinesPending = !!selectedProject && !timelines && !runtimeDiscovery.timelinesQuery.error;
+  const projectMissing = !!projectId && !!projects && !selectedProject;
+  const timelineMissing = !!timelineId && !!timelines && !selectedTimeline;
+  // Resolve both identities before mounting a document. Cached discovery data
+  // stays available during connection failures, preserving an already mounted
+  // editor, but an unverified or cross-project URL must never open a provider.
+  const selectionVerified = !!selectedProject && !!selectedTimeline;
+  const workspaceSettling = !runtimeDiscovery.projectsQuery.error && !runtimeDiscovery.timelinesQuery.error
+    && (projectsPending || timelinesPending || (!projectId && !timelineId && (projects?.length ?? 0) > 0)
+      || (!!selectedProject && !timelineId && (timelines?.some(t => !t.is_shot) ?? false)));
+  const connectorScope = JSON.stringify([projectId, timelineId]);
   const currentConnectorScope = useRef(connectorScope);
   currentConnectorScope.current = connectorScope;
   const reportNativeFailure = useRef<() => void>(() => undefined);
@@ -755,22 +319,10 @@ export default function VideoEditorPage() {
     reportNativeFailure.current();
   }, [connectorScope]);
   const providerSelection = useVideoEditorProviderSelection({
-    mode,
-    localProjectSlug: resolvedLocalProjectSlug,
-    localProjectId,
-    localTimelineId: selectedLocalTimeline?.timeline_id ?? null,
-    localTimelineName,
-    runtimeProjectId: runtimeSelectionVetoed ? null : runtimeProjectId,
-    runtimeTimelineId: runtimeSelectionVetoed ? null : runtimeTimelineId,
-    runtimeProjectSlug: selectedRuntimeProject?.slug ?? runtimeProjectSelector,
-    runtimeTimelineName:
-      selectedRuntimeTimeline?.name ||
-      selectedRuntimeTimeline?.slug ||
-      (selectedRuntimeTimeline?.timeline_id &&
-      !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(selectedRuntimeTimeline.timeline_id)
-        ? selectedRuntimeTimeline.timeline_id
-        : null) ||
-      "Untitled timeline",
+    projectId: selectionVerified ? projectId : null,
+    projectSlug: selectedProject?.slug ?? projectId,
+    timelineId: selectionVerified ? timelineId : null,
+    timelineName: selectedTimeline?.name?.trim() || selectedTimeline?.slug || "Untitled timeline",
     onRuntimeError,
   });
 
@@ -809,7 +361,7 @@ export default function VideoEditorPage() {
     setRuntimeConnectorError(null);
     setNativeRecoveryError(null);
     setRuntimeRetrying(false);
-  }, [mode, providerSelection?.remountKey]);
+  }, [providerSelection?.remountKey]);
 
   const handleRuntimeRetry = useCallback(async () => {
     if (runtimeRetrying || nativeRecovery.retrying) {
@@ -823,8 +375,10 @@ export default function VideoEditorPage() {
         await providerSelection.runtimeReconnect();
       await runtimeDiscovery.reconnect();
       nativeRecovery.completeRecovery(attempt);
-    } catch {
-      // RuntimeDataProvider reports the typed failure through onRuntimeError.
+    } catch (error) {
+      if (currentConnectorScope.current !== attempt.scope) return;
+      nativeRecovery.reportFailure();
+      setNativeRecoveryError(error instanceof Error ? error.message : String(error));
     } finally {
       setRuntimeRetrying(false);
     }
@@ -890,135 +444,52 @@ export default function VideoEditorPage() {
     return true;
   }, [mountedSaveStatus, providerSelection, extensionWriting, extensionUnsaved]);
 
-  const handleSelectRuntimeProject = useCallback(
-    (id: string) => {
-      if (
-        id === runtimeProjectId ||
-        !runtimeDiscovery.projectsQuery.data?.some(
-          (p) => p.project_id === id,
-        ) ||
-        !confirmEditorRemount()
-      )
-        return;
-      setSearchParams(
-        (current) => {
-          const next = new URLSearchParams(current);
-          next.set("runtime", "1");
-          next.set("runtimeProject", id);
-          next.delete("runtimeTimeline");
-          next.delete("localProject");
-          next.delete("localTimeline");
-          return next;
-        },
-        { replace: true },
-      );
-    },
-    [
-      runtimeProjectId,
-      runtimeDiscovery.projectsQuery.data,
-      confirmEditorRemount,
-      setSearchParams,
-    ],
-  );
-  const handleSelectRuntimeTimeline = useCallback(
-    (id: string) => {
-      if (
-        id === runtimeTimelineId ||
-        !runtimeDiscovery.timelinesQuery.data?.some(
-          (t) => t.timeline_id === id,
-        ) ||
-        !confirmEditorRemount()
-      )
-        return;
-      setSearchParams(
-        (current) => {
-          if (current.get("runtimeProject") !== runtimeProjectSelector)
-            return current;
-          const next = new URLSearchParams(current);
-          next.set("runtimeTimeline", id);
-          return next;
-        },
-        { replace: true },
-      );
-    },
-    [
-      runtimeTimelineId,
-      runtimeProjectSelector,
-      runtimeDiscovery.timelinesQuery.data,
-      confirmEditorRemount,
-      setSearchParams,
-    ],
-  );
+  const confirmRemountRef = useRef(confirmEditorRemount);
+  confirmRemountRef.current = confirmEditorRemount;
+  useEffect(() => setFirstTimelineError(null), [projectId]);
 
-  const handleSelectProject = useCallback(
-    (slug: string) => {
-      if (!slug || slug === localProjectSlug) {
-        return;
-      }
-      if (!confirmEditorRemount()) {
-        return;
-      }
-      try {
-        window.localStorage.setItem(
-          LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY,
-          slug,
-        );
-      } catch {
-        // The selection still proceeds through the URL when browser storage is unavailable.
-      }
-      setSearchParams(
-        (current) => {
-          const next = new URLSearchParams(current);
-          next.set("localProject", slug);
-          next.delete("localTimeline");
-          return next;
-        },
-        { replace: true },
-      );
-    },
-    [confirmEditorRemount, localProjectSlug, setSearchParams],
-  );
-
-  const handleSelectTimeline = useCallback(
-    (timelineId: string) => {
-      if (!timelineId || timelineId === localTimelineId) {
-        return;
-      }
-      if (!confirmEditorRemount()) {
-        return;
-      }
-      setSearchParams(
-        (current) => {
-          const next = new URLSearchParams(current);
-          next.set("localTimeline", timelineId);
-          return next;
-        },
-        { replace: true },
-      );
-    },
-    [confirmEditorRemount, localTimelineId, setSearchParams],
-  );
+  const handleSelectProject = useCallback((id: string) => {
+    if (id === projectId || !projects?.some(p => p.project_id === id) || !confirmEditorRemount()) return;
+    setSearchParams(current => {
+      const next = new URLSearchParams(current);
+      next.set("project", id);
+      next.delete("timeline");
+      return next;
+    }, { replace: true });
+  }, [projectId, projects, confirmEditorRemount, setSearchParams]);
+  const handleSelectTimeline = useCallback((id: string) => {
+    if (id === timelineId || !timelines?.some(t => t.timeline_id === id) || !confirmEditorRemount()) return;
+    setSearchParams(current => {
+      if (current.get("project") !== projectId) return current;
+      const next = new URLSearchParams(current);
+      next.set("timeline", id);
+      return next;
+    }, { replace: true });
+  }, [timelineId, timelines, projectId, confirmEditorRemount, setSearchParams]);
 
   const handleCreateFirstTimeline = useCallback(async () => {
-    if (!localProjectSlug || !localProjectId || creatingFirstTimeline) {
+    if (!selectedProject || !projectId || creatingFirstTimeline || isSwitchBlockedBySave) {
       return;
     }
     setCreatingFirstTimeline(true);
     setFirstTimelineError(null);
     try {
       const timelineRef = await ensureProjectHasTimeline(
-        localProjectId,
+        projectId,
         new AstridRuntimeClient(),
       );
       await Promise.all([
-        discovery.projectsQuery.refetch(),
-        discovery.timelinesQuery.refetch(),
+        runtimeDiscovery.projectsQuery.refetch(),
+        runtimeDiscovery.timelinesQuery.refetch(),
       ]);
       if (
-        timelineSelectionRef.current.projectId === localProjectId &&
+        timelineSelectionRef.current.projectId === projectId &&
         !timelineSelectionRef.current.timelineId
       ) {
-        handleSelectTimeline(timelineRef);
+        setSearchParams(current => {
+          if (current.get("project") !== projectId || current.has("timeline")) return current;
+          const next = new URLSearchParams(current); next.set("timeline", timelineRef); return next;
+        }, { replace: true });
       }
       toast.success("Timeline ready");
     } catch (error) {
@@ -1030,81 +501,86 @@ export default function VideoEditorPage() {
             : error instanceof Error
               ? error.name
               : "unknown error";
-      setFirstTimelineError(safeDetail);
+      if (timelineSelectionRef.current.projectId === projectId) setFirstTimelineError(safeDetail);
       toast.error("Could not create the first timeline. You can retry here.");
     } finally {
       setCreatingFirstTimeline(false);
     }
   }, [
     creatingFirstTimeline,
-    discovery.projectsQuery,
-    discovery.timelinesQuery,
-    handleSelectTimeline,
-    localProjectId,
-    localProjectSlug,
+    runtimeDiscovery.projectsQuery,
+    runtimeDiscovery.timelinesQuery,
+    setSearchParams,
+    projectId,
+    selectedProject,
+    isSwitchBlockedBySave,
   ]);
 
   // Only authoritative empty project results trigger setup. Bound attempts per
   // mounted project prevent failed creation from becoming a background loop.
   useEffect(() => {
     if (
-      mode !== "local" ||
-      !localProjectId ||
-      localTimelineId ||
-      discovery.timelinesQuery.isLoading ||
-      discovery.timelinesQuery.isFetching ||
-      discovery.timelinesQuery.error ||
-      discovery.timelinesQuery.data?.timelines?.length !== 0 ||
+      !projectId ||
+      timelineId ||
+      runtimeDiscovery.timelinesQuery.isLoading ||
+      runtimeDiscovery.timelinesQuery.isFetching ||
+      runtimeDiscovery.timelinesQuery.error ||
+      runtimeDiscovery.timelinesQuery.data?.length !== 0 ||
       creatingFirstTimeline ||
-      attemptedFirstTimelineProjects.current.has(localProjectId)
+      attemptedFirstTimelineProjects.current.has(projectId)
     )
       return;
-    attemptedFirstTimelineProjects.current.add(localProjectId);
+    attemptedFirstTimelineProjects.current.add(projectId);
     void handleCreateFirstTimeline();
   }, [
-    mode,
-    localProjectId,
-    localTimelineId,
-    discovery.timelinesQuery.data,
-    discovery.timelinesQuery.isLoading,
-    discovery.timelinesQuery.isFetching,
-    discovery.timelinesQuery.error,
+    projectId,
+    timelineId,
+    runtimeDiscovery.timelinesQuery.data,
+    runtimeDiscovery.timelinesQuery.isLoading,
+    runtimeDiscovery.timelinesQuery.isFetching,
+    runtimeDiscovery.timelinesQuery.error,
     creatingFirstTimeline,
     handleCreateFirstTimeline,
   ]);
 
   const handleCreateAdditionalTimeline = useCallback(async () => {
-    if (!localProjectSlug || !localProjectId || creatingFirstTimeline) {
+    if (!selectedProject || !projectId || creatingFirstTimeline || isSwitchBlockedBySave) {
       return;
     }
     setCreatingFirstTimeline(true);
     setFirstTimelineError(null);
-    const knownTimelines = discovery.timelinesQuery.data?.timelines ?? [];
+    const startingTimelineId = timelineId;
+    const knownTimelines = runtimeDiscovery.timelinesQuery.data ?? [];
     const timelineCount = knownTimelines.filter(
       (timeline) => !timeline.is_shot,
     ).length;
     const pending =
-      pendingAdditionalTimeline.current?.projectId === localProjectId
+      pendingAdditionalTimeline.current?.projectId === projectId
         ? pendingAdditionalTimeline.current
         : {
-            projectId: localProjectId,
+            projectId: projectId,
             timelineId: generateUUID(),
             name: `Timeline ${timelineCount + 1}`,
           };
     pendingAdditionalTimeline.current = pending;
     try {
       const timelineRef = await createCanonicalTimeline(
-        localProjectId,
+        projectId,
         {
           name: pending.name,
           timelineId: pending.timelineId,
-          idempotencyKey: `astrid-timeline-create-${localProjectId}-${pending.timelineId}`,
+          idempotencyKey: `astrid-timeline-create-${projectId}-${pending.timelineId}`,
         },
         new AstridRuntimeClient(),
       );
-      await discovery.timelinesQuery.refetch();
+      await runtimeDiscovery.timelinesQuery.refetch();
       pendingAdditionalTimeline.current = null;
-      handleSelectTimeline(timelineRef);
+      if (timelineSelectionRef.current.projectId === projectId && timelineSelectionRef.current.timelineId === startingTimelineId && confirmRemountRef.current()) {
+        setSearchParams(current => {
+          if (current.get("project") !== projectId) return current;
+          const next = new URLSearchParams(current); next.set("timeline", timelineRef); return next;
+        }, { replace: true });
+      }
       toast.success("Timeline ready");
     } catch (error) {
       const safeDetail =
@@ -1115,32 +591,40 @@ export default function VideoEditorPage() {
             : error instanceof Error
               ? error.name
               : "unknown error";
-      setFirstTimelineError(safeDetail);
+      if (timelineSelectionRef.current.projectId === projectId) setFirstTimelineError(safeDetail);
       toast.error(`Could not create timeline (${safeDetail}). Retry here.`);
     } finally {
       setCreatingFirstTimeline(false);
     }
   }, [
     creatingFirstTimeline,
-    discovery.timelinesQuery,
-    handleSelectTimeline,
-    localProjectId,
-    localProjectSlug,
+    runtimeDiscovery.timelinesQuery,
+    setSearchParams,
+    projectId,
+    timelineId,
+    selectedProject,
+    isSwitchBlockedBySave,
   ]);
 
   const handleSetPrimaryTimeline = useCallback(
-    async (timelineId: string) => {
-      if (!providerSelection?.dataProvider.setPrimaryTimeline || !timelineId) {
+    async (primaryTimelineId: string) => {
+      if (!providerSelection?.dataProvider.setPrimaryTimeline || !timelines?.some(t => t.timeline_id === primaryTimelineId) || isSwitchBlockedBySave || settingPrimaryTimelineId !== null) {
         return;
       }
-      setSettingPrimaryTimelineId(timelineId);
+      const startingTimelineId = timelineId;
+      setSettingPrimaryTimelineId(primaryTimelineId);
       try {
-        await providerSelection.dataProvider.setPrimaryTimeline(timelineId);
+        await providerSelection.dataProvider.setPrimaryTimeline(primaryTimelineId);
         await Promise.all([
-          discovery.projectsQuery.refetch(),
-          discovery.timelinesQuery.refetch(),
+          runtimeDiscovery.projectsQuery.refetch(),
+          runtimeDiscovery.timelinesQuery.refetch(),
         ]);
-        handleSelectTimeline(timelineId);
+        if (timelineSelectionRef.current.projectId === projectId && timelineSelectionRef.current.timelineId === startingTimelineId && confirmRemountRef.current()) {
+          setSearchParams(current => {
+            if (current.get("project") !== projectId) return current;
+            const next = new URLSearchParams(current); next.set("timeline", primaryTimelineId); return next;
+          }, { replace: true });
+        }
         toast.success("Primary timeline updated");
       } catch (error) {
         console.error("[video-editor] Failed to set primary timeline", error);
@@ -1150,126 +634,29 @@ export default function VideoEditorPage() {
       }
     },
     [
-      discovery.projectsQuery,
-      discovery.timelinesQuery,
+      runtimeDiscovery.projectsQuery,
+      runtimeDiscovery.timelinesQuery,
       providerSelection,
-      handleSelectTimeline,
-    ],
-  );
-
-  // Local timeline auto-pick: when a local project is selected without a
-  // timeline (or the current one no longer exists under that project), retain
-  // the current id if it is still valid. Runtime v1 has projects whose stored
-  // default still points at an old reference document, so prefer the explicit
-  // default only when present, then the canonical `main`, then a named
-  // `rough-cut`, before falling back to the first timeline.
-  useEffect(() => {
-    if (mode !== "local" || !localProjectSlug) {
-      return;
-    }
-    const localTimelines = discovery.timelinesQuery.data?.timelines;
-    if (
-      discovery.timelinesQuery.isLoading ||
-      discovery.timelinesQuery.error ||
-      !localTimelines
-    ) {
-      return;
-    }
-    if (localTimelines.length === 0) {
-      return;
-    }
-    // The URL may carry either the canonical id or its ULID alias (the
-    // dropdown selects `timeline_ulid ?? timeline_id`), so validate against both.
-    if (localTimelineId) return;
-    // Runtime v1 currently does not populate `is_default` for every existing
-    // Astrid document. Prefer the explicit default, then the canonical `main`
-    // slug, then a project-level rough cut, before falling back to the first
-    // available document. This keeps reference/source timelines from winning
-    // merely because they were created first.
-    const nextTimeline =
-      localTimelines.find((timeline) => timeline.is_default) ??
-      localTimelines.find((timeline) => timeline.slug === "main") ??
-      localTimelines.find((timeline) => timeline.slug === "rough-cut") ??
-      localTimelines[0];
-    if (!nextTimeline) {
-      return;
-    }
-    setSearchParams(
-      (current) => {
-        const next = new URLSearchParams(current);
-        next.set("localProject", localProjectSlug);
-        // Prefer the ULID: it is the routable address for timeline requests,
-        // while the canonical timeline_id is identity only.
-        next.set(
-          "localTimeline",
-          nextTimeline.timeline_ulid ?? nextTimeline.timeline_id,
-        );
-        return next;
-      },
-      { replace: true },
-    );
-  }, [
-    discovery.timelinesQuery.data,
-    discovery.timelinesQuery.error,
-    discovery.timelinesQuery.isLoading,
-    localProjectSlug,
-    localTimelineId,
-    mode,
-    setSearchParams,
-  ]);
-
-  // Until the auto-pick above writes ?localTimeline=, a loaded list that has
-  // timelines is still resolving: show loading, not "No timeline yet". The
-  // list has no archived flag (only projects do), so every listed timeline is
-  // treated as active, matching the auto-pick candidates.
-  const localTimelinesPending =
-    discovery.timelinesQuery.isPending ||
-    (!localTimelineId &&
-      (discovery.timelinesQuery.data?.timelines?.length ?? 0) > 0);
-
-  const selectors = useMemo(
-    () => (
-      <ProjectTimelineSelectors
-        localProjectSlug={localProjectSlug}
-        localTimelineId={localTimelineId}
-        localTimelineName={localTimelineName}
-        discovery={discovery}
-        onSelectProject={handleSelectProject}
-        onSelectTimeline={handleSelectTimeline}
-        onSetPrimaryTimeline={handleSetPrimaryTimeline}
-        onCreateTimeline={
-          (discovery.timelinesQuery.data?.timelines?.length ?? 0) > 0
-            ? handleCreateAdditionalTimeline
-            : undefined
-        }
-        creatingTimeline={creatingFirstTimeline}
-        settingPrimaryTimelineId={settingPrimaryTimelineId}
-        disabled={isSwitchBlockedBySave}
-        showProjectSelector={false}
-        onOpenChange={setSelectorsOpen}
-      />
-    ),
-    [
-      discovery.bridgeDown,
-      discovery.healthQuery.error,
-      discovery.healthQuery.isLoading,
-      discovery.projectsQuery.data,
-      discovery.projectsQuery.isLoading,
-      discovery.timelinesQuery.data,
-      discovery.timelinesQuery.isLoading,
-      handleSelectProject,
-      handleSelectTimeline,
-      handleSetPrimaryTimeline,
-      handleCreateAdditionalTimeline,
-      hasGlobalHeader,
+      timelines,
       isSwitchBlockedBySave,
-      creatingFirstTimeline,
-      localProjectSlug,
-      localTimelineId,
-      localTimelineName,
       settingPrimaryTimelineId,
+      projectId,
+      timelineId,
+      setSearchParams,
     ],
   );
+
+  // Only an absent timeline is auto-selected. Explicit unknown or cross-project
+  // selections remain errors instead of opening a different document.
+  useEffect(() => {
+    if (!selectedProject || timelineId || !timelines || runtimeDiscovery.timelinesQuery.error) return;
+    const timeline = chooseRuntimeTimeline(selectedProject, timelines);
+    if (!timeline) return;
+    setSearchParams(current => {
+      if (current.get("project") !== projectId || current.has("timeline")) return current;
+      const next = new URLSearchParams(current); next.set("timeline", timeline.timeline_id); return next;
+    }, { replace: true });
+  }, [selectedProject, timelineId, timelines, runtimeDiscovery.timelinesQuery.error, projectId, setSearchParams]);
 
   const runtimePickerProps = {
     projects: (runtimeDiscovery.projectsQuery.data ?? []).map((p) => ({
@@ -1280,7 +667,7 @@ export default function VideoEditorPage() {
     timelines: (runtimeDiscovery.timelinesQuery.data ?? [])
       .map((t, index) => {
         const name =
-          t.name ||
+          t.name?.trim() ||
           t.slug ||
           (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(t.timeline_id)
             ? t.timeline_id
@@ -1291,6 +678,7 @@ export default function VideoEditorPage() {
         return {
           id: t.timeline_id,
           name,
+          isPrimary: t.is_default,
           detail: validDate
             ? `edited ${formatDistanceToNowStrict(validDate, { addSuffix: true })}`
             : undefined,
@@ -1299,7 +687,7 @@ export default function VideoEditorPage() {
       })
       .filter((row, index) => {
         const timeline = runtimeDiscovery.timelinesQuery.data?.[index];
-        return !!timeline && (!timeline.is_shot || timeline.timeline_id === runtimeTimelineId);
+        return !!timeline && (!timeline.is_shot || timeline.timeline_id === timelineId);
       })
       .sort((a, b) => {
         if (a.editTime === null && b.editTime !== null) return 1;
@@ -1309,28 +697,33 @@ export default function VideoEditorPage() {
         return a.name.localeCompare(b.name);
       })
       .map(({ editTime: _editTime, ...row }) => row),
-    projectId: runtimeProjectId,
-    timelineId: runtimeTimelineId,
-    projectName: selectedRuntimeProject?.name,
+    projectId: projectId,
+    timelineId: timelineId,
+    projectName: selectedProject?.name,
     timelineName:
-      selectedRuntimeTimeline?.name || selectedRuntimeTimeline?.slug,
+      selectedTimeline?.name?.trim() || selectedTimeline?.slug,
     projectsLoading:
-      runtimeProjectResolving || runtimeDiscovery.projectsQuery.isLoading,
+      runtimeDiscovery.projectsQuery.isLoading,
     // The timeline list waits on the project list; a timeline named by the URL
     // is still loading until then, never "unavailable".
     timelinesLoading:
-      runtimeProjectResolving ||
-      (!!runtimeTimelineId && runtimeDiscovery.projectsQuery.isLoading) ||
-      (!!selectedRuntimeProject && runtimeDiscovery.timelinesQuery.isLoading),
+      (!!timelineId && runtimeDiscovery.projectsQuery.isLoading) ||
+      (!!selectedProject && runtimeDiscovery.timelinesQuery.isLoading),
     projectsError: runtimeDiscovery.projectsQuery.error?.message,
     timelinesError: runtimeDiscovery.timelinesQuery.error?.message,
-    onSelectProject: handleSelectRuntimeProject,
-    onSelectTimeline: handleSelectRuntimeTimeline,
+    onSelectProject: handleSelectProject,
+    onSelectTimeline: handleSelectTimeline,
     onRenameTimeline: async (timelineId: string, name: string) => {
-      if (!runtimeProjectId) throw new Error("No Runtime project is selected.");
-      await new AstridRuntimeClient().renameTimeline(runtimeProjectId, timelineId, name);
+      if (!selectedProject || !timelines?.some(t => t.timeline_id === timelineId)) {
+        throw new Error("This timeline is no longer available in the selected project.");
+      }
+      await new AstridRuntimeClient().renameTimeline(selectedProject.project_id, timelineId, name);
       await runtimeDiscovery.timelinesQuery.refetch();
     },
+    onCreateTimeline: timelines?.some(t => !t.is_shot) ? handleCreateAdditionalTimeline : handleCreateFirstTimeline,
+    creatingTimeline: creatingFirstTimeline,
+    onSetPrimaryTimeline: handleSetPrimaryTimeline,
+    settingPrimaryTimelineId,
     onRetry: () => void handleRuntimeRetry(),
     disabled: isSwitchBlockedBySave,
     onOpenChange: setSelectorsOpen,
@@ -1350,10 +743,11 @@ export default function VideoEditorPage() {
         showTimelineSelector={false}
       />
       <ProjectHeaderActions
-        selectedProject={selectedRuntimeProject}
+        selectedProject={selectedProject}
         onProjectCreated={() => void runtimeDiscovery.projectsQuery.refetch()}
         onProjectUpdated={() => void runtimeDiscovery.projectsQuery.refetch()}
-        disabled={runtimeDiscovery.projectsQuery.isLoading}
+        disabled={isSwitchBlockedBySave || runtimeDiscovery.projectsQuery.isLoading}
+        confirmNavigation={() => confirmRemountRef.current()}
       />
     </div>
   );
@@ -1363,95 +757,20 @@ export default function VideoEditorPage() {
         {...runtimePickerProps}
         showProjectSelector={false}
       />
-      {acpDebugEnabled && <AstridAcpSessionControls enabled />}
     </>
   );
 
-  const localNavigationControls = useMemo(
-    () => (
-      <div className="flex min-w-0 flex-col gap-2 xl:flex-row xl:items-center">
-        <div className="min-w-0 flex-1">{selectors}</div>
-      </div>
-    ),
-    [selectors],
-  );
-  const localProjectControls = useMemo(
-    () => (
-      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
-        <img
-          src="/astrid-favicon.svg"
-          alt="Astrid"
-          className="h-[30px] w-[30px] shrink-0"
-          data-testid="astrid-project-row-logo"
-          data-boot-mink-target=""
-        />
-        <ProjectTimelineSelectors
-          localProjectSlug={localProjectSlug}
-          localProjectName={selectedLocalProject?.name ?? null}
-          localTimelineId={localTimelineId}
-          localTimelineName={localTimelineName}
-          discovery={discovery}
-          onSelectProject={handleSelectProject}
-          onSelectTimeline={handleSelectTimeline}
-          disabled={isSwitchBlockedBySave}
-          showProjectSelector
-          showProjectLabel={false}
-          showTimelineSelector={false}
-          onOpenChange={setSelectorsOpen}
-        />
-        <ProjectHeaderActions
-          selectedProject={selectedLocalProject}
-          onProjectCreated={() => {
-            void discovery.projectsQuery.refetch();
-          }}
-          onProjectUpdated={() => {
-            void discovery.projectsQuery.refetch();
-          }}
-          disabled={discovery.projectsQuery.isLoading}
-        />
-      </div>
-    ),
-    [
-      discovery,
-      handleSelectProject,
-      handleSelectTimeline,
-      isSwitchBlockedBySave,
-      localProjectSlug,
-      localTimelineId,
-      localTimelineName,
-      selectedLocalProject,
-    ],
-  );
-  const projectHeaderControls =
-    mode === "runtime" ? runtimeProjectControls : localProjectControls;
-  const timelinePreviewControls =
-    mode === "runtime" ? runtimeTimelineControls : localNavigationControls;
+  const projectHeaderControls = runtimeProjectControls;
+  const timelinePreviewControls = runtimeTimelineControls;
   const headerControlsRef = useRef(projectHeaderControls);
   headerControlsRef.current = projectHeaderControls;
   const headerIdentity = JSON.stringify([
-    mode,
-    runtimeProjectId,
-    runtimeTimelineId,
-    runtimeDiscovery.projectsQuery.data,
-    runtimeDiscovery.timelinesQuery.data,
-    runtimeDiscovery.projectsQuery.isLoading,
-    runtimeDiscovery.timelinesQuery.isLoading,
-    runtimeDiscovery.projectsQuery.error?.message,
-    runtimeDiscovery.timelinesQuery.error?.message,
-    localProjectSlug,
-    localTimelineId,
-    localProjectNameForHeader(),
-    discovery.projectsQuery.data,
-    discovery.timelinesQuery.data,
-    discovery.healthQuery.isLoading,
-    discovery.bridgeDown,
-    isSwitchBlockedBySave,
-    extensionUnsaved,
-    mountedSaveStatus,
+    projectId, timelineId, projects, timelines,
+    runtimeDiscovery.projectsQuery.isLoading, runtimeDiscovery.timelinesQuery.isLoading,
+    runtimeDiscovery.projectsQuery.error?.message, runtimeDiscovery.timelinesQuery.error?.message,
+    isSwitchBlockedBySave, extensionUnsaved, mountedSaveStatus, creatingFirstTimeline, settingPrimaryTimelineId,
+    runtimeRetrying, nativeRecovery.retrying,
   ]);
-  function localProjectNameForHeader() {
-    return selectedLocalProject?.name ?? null;
-  }
 
   useEffect(() => {
     if (!hasGlobalHeader) {
@@ -1479,346 +798,87 @@ export default function VideoEditorPage() {
     />
   ) : null;
 
-  if (mode === "runtime") {
-    return (
-      <div className="flex h-full w-full flex-col overflow-hidden bg-transparent">
-        {runtimeConnectorError && (
-          <RuntimeConnectorRecoveryBanner
-            error={runtimeConnectorError}
-            onRetry={handleRuntimeRetry}
-            retrying={runtimeRetrying || nativeRecovery.retrying}
-          />
-        )}
-        {providerSelection ? (
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <VideoEditorProvider
-              key={providerSelection.remountKey}
-              dataProvider={pageDataProvider ?? providerSelection.dataProvider}
-              projectId={providerSelection.projectId}
-              projectSlug={providerSelection.projectSlug}
-              timelineId={providerSelection.timelineId}
-              timelineName={providerSelection.timelineName}
-              userId={providerSelection.userId}
-              onSaveStatusChange={setMountedSaveStatus}
-              onPendingWorkChange={onPendingWorkChange}
-              extensions={resolvedExtensions}
-              timelineOverlaysEnabled={timelineOverlaysEnabled}
-              extensionHostEnabled={extensionReleaseFlags.extensionHostEnabled}
-              extensionReleaseRevision={
-                extensionReleaseFlags.configurationRevision
-              }
-            >
-              <AstridVideoEditorShell
-                mode="full"
-                timelineId={providerSelection.timelineId}
-                onCreateTimeline={() => navigate("/")}
-                headerNavigationControls={
-                  hasGlobalHeader ? undefined : projectHeaderControls
-                }
-                previewNavigationControls={timelinePreviewControls}
-                navigationMode={isHomeTool ? "tools" : "home"}
-                showHeader={!hasGlobalHeader}
-              />
-            </VideoEditorProvider>
-          </div>
-        ) : (
-          <>
-            {!providerSelection && selectorsHeader}
-            {/* While the workspace answers, the header alone holds the page: no
-                status card or instructions, and nothing that moves when the
-                editor takes over. Errors and real empty states still show. On a
-                first load the boot layer stays up meanwhile (data-boot-hold, see
-                main.tsx) and dissolves straight into the editor's frame. */}
-            {runtimeWorkspaceSettling && <span data-boot-hold="" hidden />}
-            {!runtimeWorkspaceSettling && (
-              <>
-                <div className="px-4 py-2">{timelinePreviewControls}</div>
-                <div className="flex flex-1 items-center justify-center px-6">
-                  <Card className="w-full max-w-md">
-                    <CardHeader>
-                      <CardTitle>
-                        {runtimeProjectNotFound
-                          ? "Project not found"
-                          : runtimeProjectsPending
-                          ? "Connecting to workspace…"
-                          : runtimeDiscovery.projectsQuery.error
-                            ? "Workspace unavailable"
-                            : !runtimeProjectId
-                              ? "Select a project"
-                              : !selectedRuntimeProject
-                                ? "Project not found"
-                                : runtimeDiscovery.timelinesQuery.error
-                                  ? "Timelines unavailable"
-                                  : runtimeTimelinesPending
-                                    ? "Loading timelines…"
-                                    : runtimeTimelineId && !selectedRuntimeTimeline
-                                      ? "Timeline not found"
-                                      : (runtimeDiscovery.timelinesQuery.data
-                                            ?.length ?? 0) === 0
-                                        ? "No timelines yet"
-                                        : "Select a timeline"}
-                      </CardTitle>
-                      <CardDescription>
-                        {runtimeProjectNotFound
-                          ? runtimeProjectNotFound.message
-                          : "Choose a project in the header and a timeline above the preview."}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        {runtimeProjectsPending
-                          ? "Loading the projects in your workspace."
-                          : runtimeDiscovery.projectsQuery.error?.message ||
-                            runtimeDiscovery.timelinesQuery.error?.message ||
-                            (runtimeProjectMissing
-                              ? "The selected project is not available in this workspace. Choose an existing project."
-                              : runtimeTimelinesPending
-                                ? "Loading the timelines for this project."
-                                : runtimeTimelineMissing
-                                  ? "The selected timeline is not available in this project. Choose another timeline."
-                                  : "Your editor opens after a project and timeline are selected.")}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </>
-            )}
-          </>
-        )}
-      </div>
-    );
-  }
-
-  if (mode === "local") {
-    // On the hosted build the connection gate, the "Astrid stopped" card and the restart card cover every way the
-    // connection can fail, so this technical recovery card never renders there and never hides the editor.
-    const connectionFailed =
-      runtimeOrigin() === "" &&
-      (discovery.bridgeDown || !!runtimeConnectorError || !!nativeRecoveryError);
-    const recovery = (
-      <WorkspaceConnectionRecovery
-        projectSlug={localProjectSlug}
-        timelineId={localTimelineId}
-        failureSummary="The editor could not connect to its configured workspace."
-        retrying={discovery.healthQuery.isFetching || runtimeRetrying || nativeRecovery.retrying}
-        error={
-          nativeRecoveryError ??
-          runtimeConnectorError?.message ??
-          discovery.healthQuery.error?.message ??
-          "The workspace has not responded."
-        }
-        connectionUrl={typeof location === "undefined" ? null : location.origin}
-        onRetry={async () => {
-          const attempt = nativeRecovery.beginManualAttempt();
-          setRuntimeRetrying(true);
-          try {
-            await assertNativeEditorConnection();
-            await providerSelection?.runtimeReconnect?.();
-            await discovery.healthQuery.refetch();
-            await discovery.projectsQuery.refetch();
-            if (localProjectSlug) await discovery.timelinesQuery.refetch();
-            nativeRecovery.completeRecovery(attempt);
-          } catch (error) {
-            if (currentConnectorScope.current !== attempt.scope) return;
-            nativeRecovery.reportFailure();
-            setNativeRecoveryError(
-              error instanceof Error ? error.message : String(error),
-            );
-          } finally {
-            setRuntimeRetrying(false);
-          }
-        }}
-      />
-    );
-    const projectDiscoveryPending =
-      !discovery.bridgeDown &&
-      !(discovery.projectsQuery.error && !discovery.projectsQuery.data) &&
-      localProjectListPending &&
-      (!localProjectSlug || !selectedLocalProject);
-
-    return (
-      <div className="flex h-full w-full flex-col overflow-hidden bg-transparent">
-        {(!providerSelection || connectionFailed) && selectorsHeader}
-        {providerSelection && connectionFailed && recovery}
-        {!providerSelection && selectedLocalProject && (
-          <div className="px-4 py-2">{timelinePreviewControls}</div>
-        )}
-        {providerSelection ? (
-          <div
-            hidden={connectionFailed}
-            className="min-h-0 flex-1 overflow-hidden p-2 sm:px-4 sm:pt-2 sm:pb-4 lg:px-6 lg:pt-0 lg:pb-6"
+  const discoveryError = runtimeDiscovery.projectsQuery.error ?? runtimeDiscovery.timelinesQuery.error;
+  const recoveryError = runtimeConnectorError ?? discoveryError;
+  const connectionFailed = !!(recoveryError || nativeRecoveryError);
+  return (
+    <div className="flex h-full w-full flex-col overflow-hidden bg-transparent">
+      {connectionFailed && (
+        <RuntimeConnectorRecoveryBanner
+          error={recoveryError ?? new Error(nativeRecoveryError ?? "Workspace unavailable")}
+          onRetry={handleRuntimeRetry}
+          retrying={runtimeRetrying || nativeRecovery.retrying}
+          projectId={projectId}
+          timelineId={timelineId}
+          connectionUrl={runtimeOrigin() || (typeof location === "undefined" ? null : location.origin)}
+        />
+      )}
+      {providerSelection ? (
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <VideoEditorProvider
+            key={providerSelection.remountKey}
+            dataProvider={pageDataProvider ?? providerSelection.dataProvider}
+            projectId={providerSelection.projectId}
+            projectSlug={providerSelection.projectSlug}
+            timelineId={providerSelection.timelineId}
+            timelineName={providerSelection.timelineName}
+            userId={providerSelection.userId}
+            onSaveStatusChange={setMountedSaveStatus}
+            onPendingWorkChange={onPendingWorkChange}
+            extensions={resolvedExtensions}
+            timelineOverlaysEnabled={timelineOverlaysEnabled}
+            extensionHostEnabled={extensionReleaseFlags.extensionHostEnabled}
+            extensionReleaseRevision={extensionReleaseFlags.configurationRevision}
           >
-            <VideoEditorProvider
-              key={providerSelection.remountKey}
-              dataProvider={pageDataProvider ?? providerSelection.dataProvider}
-              projectId={providerSelection.projectId}
-              projectSlug={providerSelection.projectSlug}
+            <AstridVideoEditorShell
+              mode="full"
               timelineId={providerSelection.timelineId}
-              timelineName={providerSelection.timelineName}
-              userId={providerSelection.userId}
-              onSaveStatusChange={setMountedSaveStatus}
-              onPendingWorkChange={onPendingWorkChange}
-              extensions={resolvedExtensions}
-              timelineOverlaysEnabled={timelineOverlaysEnabled}
-              extensionHostEnabled={extensionReleaseFlags.extensionHostEnabled}
-              extensionReleaseRevision={
-                extensionReleaseFlags.configurationRevision
-              }
-            >
-              <AstridVideoEditorShell
-                mode="full"
-                timelineId={providerSelection.timelineId}
-                onCreateTimeline={() => navigate("/")}
-                headerNavigationControls={
-                  hasGlobalHeader ? undefined : projectHeaderControls
-                }
-                previewNavigationControls={timelinePreviewControls}
-                navigationMode={isHomeTool ? "tools" : "home"}
-                showHeader={!hasGlobalHeader}
-              />
-            </VideoEditorProvider>
-          </div>
-        ) : (
-          <>
-            <div className={discovery.bridgeDown
-              ? "flex min-h-0 flex-1 overflow-hidden"
-              : "flex flex-1 items-center justify-center px-6"}>
-              {discovery.bridgeDown ? (
-                recovery
-              ) : discovery.healthQuery.isLoading ? (
-                <div className="w-full max-w-4xl space-y-4">
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                </div>
-              ) : discovery.projectsQuery.error &&
-                (!discovery.projectsQuery.data ||
-                  !localProjectSlug ||
-                  !selectedLocalProject) ? (
+              onCreateTimeline={() => void handleCreateAdditionalTimeline()}
+              headerNavigationControls={hasGlobalHeader ? undefined : projectHeaderControls}
+              previewNavigationControls={timelinePreviewControls}
+              navigationMode={isHomeTool ? "tools" : "home"}
+              showHeader={!hasGlobalHeader}
+            />
+          </VideoEditorProvider>
+        </div>
+      ) : (
+        <>
+          {selectorsHeader}
+          {workspaceSettling ? <span data-boot-hold="" hidden /> : (
+            <>
+              <div className="px-4 py-2">{timelinePreviewControls}</div>
+              <div className="flex flex-1 items-center justify-center px-6">
                 <Card className="w-full max-w-md">
                   <CardHeader>
-                    <CardTitle>Unable to load Astrid projects</CardTitle>
-                    <CardDescription>
-                      Retry project discovery from the selector above.
-                    </CardDescription>
+                    <CardTitle>{projectMissing ? "Project not found"
+                      : discoveryError ? selectedProject ? "Timelines unavailable" : "Workspace unavailable"
+                      : !projectId ? projects?.length === 0 ? "No projects yet" : "Select a project"
+                      : timelineMissing ? "Timeline not found"
+                      : "No timeline yet"}</CardTitle>
+                    <CardDescription>{projectMissing
+                      ? `“${projectId}” is not available in this workspace. Choose an existing project or create one.`
+                      : timelineMissing ? "The selected timeline is not available in this project. Choose another timeline."
+                      : discoveryError ? discoveryError.message
+                      : !projectId ? "Create a project with New project above, or choose an existing project."
+                      : "Create a blank timeline for this project to open it in the editor."}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button
-                      type="button"
-                      onClick={() => void discovery.projectsQuery.refetch()}
-                    >
-                      Retry project discovery
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : projectDiscoveryPending ? (
-                <Card className="w-full max-w-md" role="status">
-                  <CardHeader className="flex-row items-center gap-3">
-                    <MinkCircle
-                      reducedMotion={prefersReducedMotion}
-                      size={48}
-                    />
-                    <div className="min-w-0 space-y-1">
-                      <CardTitle className="text-lg">
-                        {localProjectSlug
-                          ? "Loading project…"
-                          : "Loading projects…"}
-                      </CardTitle>
-                      <CardDescription>
-                        Restoring the local Astrid workspace selection.
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ) : !localProjectSlug ? (
-                localProjects?.length === 0 ? (
-                  <Card className="w-full max-w-md">
-                    <CardHeader>
-                      <CardTitle>No projects yet</CardTitle>
-                      <CardDescription>
-                        Create a project with New project above, then open its
-                        timeline here.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <EmptyWorkspaceGuidance onRefresh={() => void discovery.projectsQuery.refetch()} />
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="w-full max-w-md">
-                    <CardHeader>
-                      <CardTitle>Select a project and timeline</CardTitle>
-                      <CardDescription>
-                        Choose a local Astrid project from the selector above.
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                )
-              ) : !selectedLocalProject ? (
-                <Card className="w-full max-w-md">
-                  <CardHeader>
-                    <CardTitle>Project not found</CardTitle>
-                    <CardDescription>
-                      “{localProjectSlug}” is not in the local Astrid workspace.
-                      Choose a project above or create one.
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              ) : discovery.timelinesQuery.isLoading || localTimelinesPending ? (
-                <Card className="w-full max-w-md" role="status">
-                  <CardHeader>
-                    <CardTitle>Loading timelines…</CardTitle>
-                    <CardDescription>Reading this project's timelines from the workspace.</CardDescription>
-                  </CardHeader>
-                </Card>
-              ) : discovery.timelinesQuery.error ? (
-                <Card className="w-full max-w-md" role="alert">
-                  <CardHeader>
-                    <CardTitle>Timelines unavailable</CardTitle>
-                    <CardDescription>{discovery.timelinesQuery.error.message}</CardDescription>
-                  </CardHeader>
-                  <CardContent><Button onClick={() => void discovery.timelinesQuery.refetch()}>Retry timeline discovery</Button></CardContent>
-                </Card>
-              ) : !localTimelineId ? (
-                <Card className="w-full max-w-md">
-                  <CardHeader>
-                    <CardTitle>No timeline yet</CardTitle>
-                    <CardDescription>
-                      Create a blank timeline for this project to open it in the
-                      editor.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      type="button"
+                    {!projectId && projects?.length === 0 && <EmptyWorkspaceGuidance onRefresh={() => void runtimeDiscovery.projectsQuery.refetch()} />}
+                    {selectedProject && !timelineId && !discoveryError && <Button
                       onClick={() => void handleCreateFirstTimeline()}
-                      disabled={!localProjectId || creatingFirstTimeline}
-                    >
-                      {creatingFirstTimeline
-                        ? "Creating timeline…"
-                        : "Create first timeline"}
-                    </Button>
-                    {firstTimelineError && (
-                      <p className="mt-3 text-xs text-destructive" role="alert">
-                        Timeline setup failed ({firstTimelineError}). Retry here
-                        or check the connected Astrid Runtime.
-                      </p>
-                    )}
+                      disabled={creatingFirstTimeline}
+                    >{creatingFirstTimeline ? "Creating timeline…" : "Create first timeline"}</Button>}
+                    {firstTimelineError && <p className="mt-3 text-xs text-destructive" role="alert">
+                      Timeline setup failed ({firstTimelineError}). Retry here or check the connected Astrid Runtime.
+                    </p>}
+                    {discoveryError && <Button onClick={() => void handleRuntimeRetry()}>Retry workspace discovery</Button>}
                   </CardContent>
                 </Card>
-              ) : (
-                <Card className="w-full max-w-md">
-                  <CardHeader>
-                    <CardTitle>Timeline not found</CardTitle>
-                    <CardDescription>
-                      No such project/timeline under the bridge projects root.
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-    );
-  }
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
 }

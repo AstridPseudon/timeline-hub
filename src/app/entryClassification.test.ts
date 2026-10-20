@@ -84,7 +84,7 @@ describe('browser entry classification', () => {
     rememberAppEntryPreference();
     expect(prefersAppEntry()).toBe(true);
     expect(resolveReturningAppEntry(new URL('https://astrid.test/?ref=x'), true))
-      .toBe('/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline');
+      .toBe('/tools/video-editor?project=demo-project-id&timeline=demo-timeline');
   });
 
   it('keeps the landing page for first visits, /home and OAuth callbacks', () => {

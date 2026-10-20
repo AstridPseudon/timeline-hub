@@ -47,12 +47,8 @@ export interface DataLaneListProps {
   readonly readOnly?: boolean;
   /** Read-only host timeline snapshot used to mark every playing occurrence. */
   readonly timelineViewStore?: TimelineViewStore;
-  /**
-   * Optional call-site symmetry with the track rows; lane rows never consume
-   * it (their gutter sits in-flow, so the canvas origin IS t=0) and renderer
-   * props always carry `startLeft: 0` (rework round-2 F1). Defaults to 0.
-   */
-  readonly startLeft?: number;
+  /** Width of the sticky track-name gutter the lane rows reserve (the timeline's `startLeft`). */
+  readonly startLeft: number;
   /** Shared px-per-second scale — same value the ruler and tracks use. */
   readonly pixelsPerSecond: number;
   /** Measured timeline scroll viewport used for time-based item virtualization. */
@@ -78,6 +74,7 @@ export function DataLaneList({
   sortable = false,
   readOnly = false,
   timelineViewStore,
+  startLeft,
   pixelsPerSecond,
   viewport,
   onRequestItemIntoView,
@@ -135,6 +132,7 @@ export function DataLaneList({
         const ownerExtensionId = kindRecord?.ownerExtensionId;
         const rowProps: DataLaneRowProps = {
           lane,
+          labelWidth: startLeft,
           pixelsPerSecond,
           playheadTime: timelineSnapshot.playhead.time,
           isPlaying: timelineSnapshot.playhead.isPlaying,

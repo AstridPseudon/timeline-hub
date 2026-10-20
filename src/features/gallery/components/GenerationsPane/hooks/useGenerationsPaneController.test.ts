@@ -312,14 +312,14 @@ describe('useGenerationsPaneController', () => {
     mocks.useNavigate.mockReturnValue(navigate);
     mocks.useLocation.mockReturnValue({
       pathname: '/tools/travel-between-images',
-      search: '?localProject=desert-plant-growth&localTimeline=01KYPVKMW5STB4W6FE05ED8242',
+      search: '?project=desert-plant-growth&timeline=01KYPVKMW5STB4W6FE05ED8242',
     });
 
     const { result } = renderHook(() => useGenerationsPaneController());
     act(() => result.current.navigation.handleNavigateToImageGeneration());
 
     expect(navigate).toHaveBeenCalledWith(
-      '/tools/image-generation?localProject=desert-plant-growth&localTimeline=01KYPVKMW5STB4W6FE05ED8242',
+      '/tools/image-generation?project=desert-plant-growth&timeline=01KYPVKMW5STB4W6FE05ED8242',
     );
   });
 
@@ -359,7 +359,7 @@ describe('useGenerationsPaneController', () => {
   it('loads the Runtime gallery as soon as the pane is locked', () => {
     mocks.useLocation.mockReturnValue({
       pathname: '/tools/video-editor',
-      search: '?runtime=1&runtimeProject=project-1&runtimeTimeline=timeline-1',
+      search: '?project=project-1&timeline=timeline-1',
     });
     mocks.panesState = buildPanesState({
       isGenerationsPaneOpen: false,
@@ -392,7 +392,7 @@ describe('useGenerationsPaneController', () => {
     mocks.selectedEditor = { projectId: 'project-B', timelineId: 'timeline-B' };
     mocks.useLocation.mockReturnValue({
       pathname: '/tools/video-editor',
-      search: '?runtime=1&runtimeProject=project-A&runtimeTimeline=timeline-A&timeline=timeline-A',
+      search: '?project=project-A&timeline=timeline-A&timeline=timeline-A',
     });
     mocks.useNavigate.mockReturnValue(navigate);
 
@@ -402,8 +402,8 @@ describe('useGenerationsPaneController', () => {
     const target = navigate.mock.calls[0][0];
     const params = new URLSearchParams(target.search);
     expect(target.pathname).toBe('/tools/video-editor');
-    expect(params.get('runtimeProject')).toBe('project-A');
-    expect(params.get('runtimeTimeline')).toBe('timeline-A');
+    expect(params.get('project')).toBe('project-A');
+    expect(params.get('timeline')).toBe('timeline-A');
     expect(params.get('addGenerationProject')).toBe('project-B');
     expect(params.get('addGenerationTimeline')).toBe('timeline-B');
   });

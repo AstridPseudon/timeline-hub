@@ -42,7 +42,6 @@ function PreviewPanelComponent({
     inputModality,
     interactionMode,
     gestureOwner,
-    precisionEnabled,
   } = useTimelineDataSelector((timeline) => ({
     data: timeline.data,
     resolvedConfig: timeline.resolvedConfig,
@@ -53,7 +52,6 @@ function PreviewPanelComponent({
     inputModality: timeline.inputModality,
     interactionMode: timeline.interactionMode,
     gestureOwner: timeline.gestureOwner,
-    precisionEnabled: timeline.precisionEnabled,
   }), shallow);
   const {
     onOverlayChange,
@@ -109,8 +107,8 @@ function PreviewPanelComponent({
 
   const interactionStateLabel = gestureOwner === 'preview'
     ? 'Preview overlay transform active.'
-    : (isTouchTimelineInput(deviceClass, inputModality) && deviceClass === 'phone'
-        ? 'Phone touch preview uses inspector-first overlay editing.'
+    : (isTouchTimelineInput(deviceClass, inputModality)
+        ? 'Touch preview uses inspector-first overlay editing.'
         : 'Preview overlay transforms are available in the preview.');
 
   return (
@@ -156,7 +154,7 @@ function PreviewPanelComponent({
             <div className="sr-only" aria-live="polite" aria-atomic="true">
               {interactionStateLabel}
               {' '}
-              Mode {interactionMode}. Precision {precisionEnabled ? 'enabled' : 'disabled'}.
+              Mode {interactionMode}.
             </div>
             {overlay}
             <div

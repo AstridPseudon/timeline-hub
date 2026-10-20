@@ -88,8 +88,8 @@ describe('useLoadVariantImages', () => {
   });
 
   it.each([
-    '/tools/video-editor?localProject=local-project&localTimeline=timeline-1',
-    '/tools/image-generation?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+    '/tools/video-editor?project=local-project&timeline=timeline-1',
+    '/tools/image-generation?project=runtime-project&timeline=timeline-1',
   ])('does not read or write legacy variants on %s', async (path) => {
     window.history.replaceState({}, '', path);
     const { result } = renderHookWithProviders(() => useLoadVariantImages({

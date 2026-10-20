@@ -79,7 +79,7 @@ describe('useShotNavigation', () => {
     window.history.replaceState(
       {},
       '',
-      '/tools/travel-between-images?localProject=demo&localTimeline=timeline-1',
+      '/tools/travel-between-images?project=demo&timeline=timeline-1',
     );
     const { result } = renderHook(() => useShotNavigation());
 
@@ -88,7 +88,7 @@ describe('useShotNavigation', () => {
     });
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      '/tools/travel-between-images?localProject=demo&localTimeline=timeline-1#shot-local',
+      '/tools/travel-between-images?project=demo&timeline=timeline-1#shot-local',
       expect.objectContaining({ state: expect.objectContaining({ fromShotClick: true }) }),
     );
   });

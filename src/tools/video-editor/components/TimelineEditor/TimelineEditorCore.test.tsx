@@ -7,7 +7,7 @@ import {
   createTimelineStore,
   TimelineStoreProvider,
 } from '@/tools/video-editor/hooks/timelineStore';
-import { TIMELINE_START_LEFT } from '@/tools/video-editor/lib/coordinate-utils';
+import { getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils';
 import { EDIT_AREA_SELECTOR } from '@/tools/video-editor/lib/timeline-dom';
 import { computeTimelineExtent, maxClipEndSeconds } from '@/tools/video-editor/lib/timeline-scale';
 import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotCompositionAdapter';
@@ -113,7 +113,6 @@ function createOverlayTestStore(options: {
       inputModality: 'mouse' as const,
       interactionMode: 'browse' as const,
       gestureOwner: 'none' as const,
-      precisionEnabled: false,
       contextTarget: 'timeline' as const,
       inspectorTarget: options.inspectorTarget ?? 'none' as const,
       interactionPolicy: {
@@ -121,7 +120,6 @@ function createOverlayTestStore(options: {
         inputModality: 'mouse' as const,
         interactionMode: 'browse' as const,
         gestureOwner: 'none' as const,
-        precisionEnabled: false,
         contextTarget: 'timeline' as const,
         inspectorTarget: options.inspectorTarget ?? 'none' as const,
       },
@@ -500,7 +498,7 @@ describe('TimelineEditorCore — geometry', () => {
       maxEndSeconds: maxClipEndSeconds(defaultData.rows),
       scale: 30,
       scaleWidth: 30,
-      startLeft: TIMELINE_START_LEFT,
+      startLeft: getTimelineLabelWidth('desktop'),
     });
 
     const rulerContent = screen.getByTestId('timeline-ruler').firstElementChild;
@@ -516,7 +514,7 @@ describe('TimelineEditorCore — geometry', () => {
       throw new Error('expected a rendered ruler, grid and scroll footer');
     }
 
-    expect(totalWidth).toBeGreaterThan(TIMELINE_START_LEFT);
+    expect(totalWidth).toBeGreaterThan(getTimelineLabelWidth('desktop'));
     expect(rulerContent.style.width).toBe(`${totalWidth}px`);
     expect(grid.style.width).toBe(`${totalWidth}px`);
     expect(scrollContentFooter.style.width).toBe(`${totalWidth}px`);

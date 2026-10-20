@@ -11,11 +11,10 @@ import {
   DATA_LANE_ITEM_SELECTOR,
 } from '@/tools/video-editor/lib/timeline-dom.ts';
 import {
-  shouldAllowTouchMarquee,
+  isTouchTimelineInput,
   type TimelineDeviceClass,
   type TimelineGestureOwner,
   type TimelineInputModality,
-  type TimelineInteractionMode,
 } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 
 const MARQUEE_THRESHOLD_PX = 4;
@@ -31,7 +30,6 @@ interface UseMarqueeSelectArgs {
   editAreaRef: MutableRefObject<HTMLElement | null>;
   selectionOwner?: symbol;
   deviceClass: TimelineDeviceClass;
-  interactionMode: TimelineInteractionMode;
   gestureOwner: TimelineGestureOwner;
   setGestureOwner: (owner: TimelineGestureOwner) => void;
   /** Clear host-owned inspector/context targets together with clip selection. */
@@ -76,7 +74,6 @@ export function useMarqueeSelect({
   editAreaRef,
   selectionOwner,
   deviceClass,
-  interactionMode,
   gestureOwner,
   setGestureOwner,
   onClearSelection,
@@ -131,7 +128,7 @@ export function useMarqueeSelect({
     }
 
     const inputModality = setInputModalityFromPointerType(event.pointerType);
-    if (!shouldAllowTouchMarquee(deviceClass, inputModality, interactionMode)) {
+    if (isTouchTimelineInput(deviceClass, inputModality)) {
       return;
     }
 
@@ -337,7 +334,6 @@ export function useMarqueeSelect({
     selectionOwner,
     deviceClass,
     editAreaRef,
-    interactionMode,
     onClearSelection,
     setGestureOwner,
     setInputModalityFromPointerType,

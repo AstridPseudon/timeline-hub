@@ -171,7 +171,7 @@ export function handleTextToolDrop({
 
 /**
  * Places an effect-layer clip on a visual track. Shared by the desktop drop
- * handler and the touch tool button, which has no drag position to resolve.
+ * handler and the editor's `onAddEffectLayerAt`, which has no drag position to resolve.
  */
 export function insertEffectLayerAt({
   dataRef,

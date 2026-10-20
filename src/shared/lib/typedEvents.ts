@@ -8,6 +8,8 @@ interface AppCustomEvents {
   'app:scrollToTop': { behavior?: ScrollBehavior };
   mobilePaneOpen: { side: string | null };
   openGenerationsPane: void;
+  /** Open the Tasks pane on the agent chat with its composer focused. */
+  openAgentComposer: void;
   openGenerationModal: void;
   closeGenerationModal: void;
 

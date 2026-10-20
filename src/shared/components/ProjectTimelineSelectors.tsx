@@ -14,7 +14,7 @@ import {
 } from '@/shared/components/ui/command.tsx';
 import { Check, ChevronsUpDown, Pencil, Plus, Star } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
-import type { UseAstridBridgeDiscoveryResult } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Input } from '@/shared/components/ui/input.tsx';
 import {
@@ -26,188 +26,30 @@ import {
 } from '@/shared/components/ui/dialog.tsx';
 import { toast } from '@/shared/components/ui/toast.tsx';
 
-interface ProjectTimelineSelectorsProps {
-  localProjectSlug: string | null;
-  localProjectName?: string | null;
-  localTimelineId: string | null;
-  localTimelineName: string | null;
-  /** Result of `useAstridBridgeDiscovery` (owned by the page). */
-  discovery: UseAstridBridgeDiscoveryResult;
-  /** Called with the selected Astrid project slug. */
-  onSelectProject: (projectSlug: string) => void;
-  onSelectTimeline: (timelineId: string) => void;
-  /** Persists the project-level primary timeline selection. */
-  onSetPrimaryTimeline?: (timelineId: string) => void;
-  /** Creates a new canonical timeline in the selected local project. */
-  onCreateTimeline?: () => void;
-  creatingTimeline?: boolean;
-  /** Canonical timeline id currently being promoted, if any. */
-  settingPrimaryTimelineId?: string | null;
-  /** Disables the triggers while a save is in flight. */
-  disabled?: boolean;
-  /** The app-wide header already owns the project selector in the live shell. */
-  showProjectSelector?: boolean;
-  /** Keeps the selector accessible while omitting a redundant visible label. */
-  showProjectLabel?: boolean;
-  /** The shared app header omits the editor timeline picker outside the editor. */
-  showTimelineSelector?: boolean;
-  /** Reports whether any dropdown is open (drives discovery refetch/polling). */
-  onOpenChange?: (open: boolean) => void;
-}
-
 const triggerClass = cn(
   'flex h-7 min-w-0 items-center gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs',
   'text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
   'disabled:pointer-events-none disabled:opacity-50',
+  COARSE_TOUCH_TARGET,
 );
-
-/**
- * Picker rows follow the shared Select: a fixed leading check slot (pl-8) and a
- * soft neutral tint for the current choice, distinct from the accent used for
- * the keyboard/hover highlight (which still wins on the current row).
- */
 const rowClass = cn(
-  'group gap-2 py-1.5 pl-8 pr-1.5',
+  'group gap-2 py-1.5 pl-8 pr-1.5 [@media(pointer:coarse)]:min-h-11',
   'data-[current=true]:bg-muted data-[current=true]:font-medium',
   'data-[current=true]:data-[selected=true]:bg-accent',
 );
-
-/** Row actions stay hidden until the row is hovered/highlighted or the action is focused. */
 const rowActionClass = cn(
   'h-6 w-6 shrink-0 rounded-sm text-muted-foreground [&_svg]:size-3.5',
   'hover:bg-foreground/5 hover:text-foreground focus-visible:ring-offset-0',
   'opacity-0 transition-opacity focus-visible:opacity-100',
   'group-hover:opacity-100 group-data-[selected=true]:opacity-100',
   '[@media(hover:none)]:opacity-100',
+  '[@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9',
 );
-
-/**
- * The rename field edits the name exactly as stored, so undo the user-text
- * lowercase display rule from index.css here (same selector, more specific).
- */
 const renameInputClass =
   '[:root:not(.preserve-user-text)_&.preserve-case]:!normal-case';
 
-const timelineRecency = (timeline: {
-  created_at?: string;
-  updated_at?: string;
-}): number | null => {
-  const value = timeline.updated_at ?? timeline.created_at;
-  if (!value) return null;
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) ? timestamp : null;
-};
-
-export function ProjectTimelineSelectors(props: ProjectTimelineSelectorsProps) {
-  const {
-    discovery,
-    localProjectSlug,
-    localTimelineId,
-    localProjectName,
-    localTimelineName,
-  } = props;
-  const projects = discovery.projectsQuery.data?.projects ?? [];
-  const timelines = (discovery.timelinesQuery.data?.timelines ?? [])
-    .filter(
-      (t) =>
-        !t.is_shot ||
-        t.timeline_id === localTimelineId ||
-        t.timeline_ulid === localTimelineId,
-    )
-    .map((t, index) => ({ t, index }))
-    .sort(
-      (a, b) =>
-        (timelineRecency(b.t) ?? b.index) - (timelineRecency(a.t) ?? a.index),
-    )
-    .map(({ t }) => t);
-  const [lastName, setLastName] = useState<{ id: string; name: string } | null>(
-    null,
-  );
-  const projectName =
-    localProjectName?.trim() ||
-    projects.find((p) => p.slug === localProjectSlug)?.name?.trim();
-  useEffect(() => {
-    if (localProjectSlug && projectName)
-      setLastName({ id: localProjectSlug, name: projectName });
-  }, [localProjectSlug, projectName]);
-  const pending =
-    !discovery.bridgeDown &&
-    !discovery.projectsQuery.error &&
-    (discovery.healthQuery.isLoading ||
-      discovery.projectsQuery.isLoading ||
-      discovery.projectsQuery.isFetching ||
-      !discovery.projectsQuery.data);
-  const fallback =
-    lastName?.id === localProjectSlug &&
-    (!discovery.projectsQuery.data || discovery.projectsQuery.isFetching)
-      ? lastName.name
-      : undefined;
-  return (
-    <ProjectTimelinePicker
-      projects={projects.map((p) => ({
-        id: p.slug,
-        name: p.name,
-        detail: p.slug,
-      }))}
-      timelines={timelines.map((t) => ({
-        id: t.timeline_ulid ?? t.timeline_id,
-        name: t.name,
-        canonicalId: t.timeline_id,
-        isPrimary: t.is_default,
-      }))}
-      projectId={localProjectSlug}
-      timelineId={localTimelineId}
-      projectName={
-        projectName ||
-        fallback ||
-        (localProjectSlug
-          ? pending
-            ? 'Loading project…'
-            : discovery.projectsQuery.error
-              ? localProjectSlug
-              : 'Project not found'
-          : pending
-            ? 'Loading projects…'
-            : 'Select project')
-      }
-      timelineName={
-        localTimelineName ||
-        timelines.find(
-          (t) =>
-            t.timeline_id === localTimelineId ||
-            t.timeline_ulid === localTimelineId,
-        )?.name ||
-        // Until the name arrives (or if it never does) a neutral word, never the raw id.
-        (localTimelineId ? 'Timeline' : null)
-      }
-      projectsLoading={
-        discovery.healthQuery.isLoading || discovery.projectsQuery.isLoading
-      }
-      timelinesLoading={discovery.timelinesQuery.isLoading}
-      projectsError={
-        discovery.projectsQuery.error?.message ||
-        (discovery.bridgeDown
-          ? 'Unable to connect to the local workspace. Start the installed Runtime and reopen the editor.'
-          : undefined)
-      }
-      timelinesError={discovery.timelinesQuery.error?.message}
-      onSelectProject={props.onSelectProject}
-      onSelectTimeline={props.onSelectTimeline}
-      onSetPrimaryTimeline={props.onSetPrimaryTimeline}
-      settingPrimaryTimelineId={props.settingPrimaryTimelineId}
-      onCreateTimeline={props.onCreateTimeline}
-      creatingTimeline={props.creatingTimeline}
-      disabled={props.disabled}
-      showProjectSelector={props.showProjectSelector}
-      showTimelineSelector={props.showTimelineSelector}
-      showProjectLabel={props.showProjectLabel}
-      onOpenChange={props.onOpenChange}
-    />
-  );
-}
-
-/** Backend-neutral presentation shared by the native Runtime and local selectors. */
+/** Shared project and timeline picker used by the editor and app header. */
 export interface EditorProjectChoice {
   id: string;
   name: string;
@@ -219,7 +61,6 @@ export interface EditorTimelineChoice {
   /** Secondary metadata under the name, e.g. "edited 5 minutes ago". */
   detail?: string;
   isPrimary?: boolean;
-  canonicalId?: string;
 }
 export function ProjectTimelinePicker({
   projects,
@@ -348,11 +189,29 @@ export function ProjectTimelinePicker({
                 </div>
               )}
               {!loading && !error && !rows.length && (
-                <p className="p-3 text-xs text-muted-foreground">
-                  {kind === 'project'
-                    ? 'No projects available.'
-                    : 'No timelines for this project yet.'}
-                </p>
+                <div className="space-y-2 p-3 text-xs text-muted-foreground">
+                  <p>
+                    {kind === 'project'
+                      ? 'No projects available.'
+                      : 'No timelines for this project yet.'}
+                  </p>
+                  {kind === 'timeline' && onCreateTimeline && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      disabled={disabled || creatingTimeline}
+                      onClick={() => {
+                        setOpen(false);
+                        onCreateTimeline();
+                      }}
+                    >
+                      <Plus className="mr-1.5 h-3.5 w-3.5" />
+                      {creatingTimeline ? 'Creating timeline…' : 'Create first timeline'}
+                    </Button>
+                  )}
+                </div>
               )}
               {rows.map((row) => {
                 const current = selected === row.id;
@@ -383,8 +242,8 @@ export function ProjectTimelinePicker({
                       </span>
                     )}
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate preserve-case" title={row.name}>
-                        {row.name}
+                        <span className="truncate preserve-case" title={row.name || row.detail || row.id}>
+                        {row.name?.trim() || row.detail?.trim() || (kind === 'timeline' ? 'Untitled timeline' : 'Untitled project')}
                       </span>
                       {(primary || row.detail) && (
                         <span className="truncate text-[11px] font-normal leading-4 text-muted-foreground">
@@ -407,7 +266,7 @@ export function ProjectTimelinePicker({
                             onClick={(event) => {
                               event.preventDefault();
                               event.stopPropagation();
-                              onSetPrimaryTimeline?.(row.canonicalId ?? row.id);
+                              onSetPrimaryTimeline?.(row.id);
                             }}
                           >
                             <Star aria-hidden="true" />
@@ -477,7 +336,7 @@ export function ProjectTimelinePicker({
           projectsError,
         )}
       {showTimelineSelector && (
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="text-xs font-medium text-muted-foreground" data-picker-label="">
           Timeline
         </span>
       )}
@@ -503,11 +362,11 @@ export function ProjectTimelinePicker({
           type="button"
           aria-label="New timeline"
           disabled={disabled || creatingTimeline}
-          className={triggerClass}
+          className={cn(triggerClass, 'shrink-0 whitespace-nowrap')}
           onClick={onCreateTimeline}
         >
           <Plus className="h-3.5 w-3.5" />
-          New timeline
+          <span data-picker-label="">New timeline</span>
         </button>
       )}
     </div>

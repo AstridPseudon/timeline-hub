@@ -18,7 +18,7 @@ import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/re
 import { useStaleVariants } from '@/tools/video-editor/hooks/useStaleVariants.ts';
 import { useAddVariantAsGeneration } from '@/tools/video-editor/hooks/useAddVariantAsGeneration.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
-import { getFallbackClipTab, getSelectionDefaultClipTab } from '@/tools/video-editor/lib/clip-inspector.ts';
+import { getFallbackClipTab, getSelectionDefaultClipTab, getTrackMoveTargets } from '@/tools/video-editor/lib/clip-inspector.ts';
 import { getBulkVisibleTabs, getSharedNestedValue, getSharedValue } from '@/tools/video-editor/lib/bulk-utils.ts';
 import { getTimelinePostprocessShader } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
@@ -195,8 +195,6 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     selectedClipIds,
     selectedDataItems: selectedDataItemsSnapshot,
     deviceClass,
-    interactionMode,
-    precisionEnabled,
     selectedTrack,
     selectedTrackId,
     selectedClipHasPredecessor,
@@ -224,7 +222,6 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     setActiveClipTab,
     setInspectorTarget,
     setInteractionMode,
-    setPrecisionEnabled,
     patchRegistry,
     setSelectedTrackId,
     applyEdit,
@@ -235,7 +232,9 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     patchRegistry,
   });
   const { addVariantAsGenerationAfterClip, isPending: isAddingVariantAsGenerationPending } = useAddVariantAsGeneration();
-  const prevClipIdRef = useRef(selectedClip?.id);
+  // At a desk the panel stays mounted and a new clip is a change it sees. On touch the clip sheet
+  // mounts the panel for the clip just tapped, so that clip counts as new and opens on its own tab.
+  const prevClipIdRef = useRef(deviceClass === 'desktop' ? selectedClip?.id : undefined);
   const selectedDataItems = selectedDataItemsSnapshot ?? EMPTY_TIMELINE_DATA_ITEMS;
   const selectedClipIdsList = useMemo(() => [...selectedClipIds], [selectedClipIds]);
   // dataKind V2: resolve lane items from the SAME patched lane plane the
@@ -396,7 +395,7 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     const isClipChange = selectedClip?.id !== prevClipIdRef.current;
 
     if (isClipChange && selectedClip) {
-      setActiveClipTab(getSelectionDefaultClipTab(selectedClip, selectedTrack));
+      setActiveClipTab(getSelectionDefaultClipTab(selectedClip, selectedTrack, deviceClass !== 'desktop'));
     } else if (!nextVisibleTabs.includes(preferences.activeClipTab)) {
       setActiveClipTab(getFallbackClipTab(preferences.activeClipTab, nextVisibleTabs));
     }
@@ -404,6 +403,7 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     prevClipIdRef.current = selectedClip?.id;
   }, [
     bulkVisibleTabs,
+    deviceClass,
     preferences.activeClipTab,
     selectedClip,
     selectedClipIds.size,
@@ -414,6 +414,7 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
   if (!data) {
     return null;
   }
+  const trackMoves = getTrackMoveTargets(resolvedConfig?.tracks ?? [], selectedClip?.track);
 
   const hasSelection = selectedClipIds.size + selectedDataItems.length > 0;
   const readOnlyItemSelection = selectedDataItems.length > 0 && selectedDataItems.length + selectedClipIds.size > 1;
@@ -437,10 +438,6 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
                 Use explicit inspector controls for touch editing instead of relying on timeline gestures.
               </div>
             </div>
-            <div className="text-[11px] uppercase tracking-[0.12em] text-[color:var(--video-editor-accent-text)]">
-              {interactionMode}
-              {precisionEnabled ? ' + precision' : ''}
-            </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Button type="button" variant="secondary" size="sm" className="justify-start" onClick={() => focusInspectorMode('trim')}>
@@ -461,19 +458,6 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
             <Button type="button" variant="outline" size="sm" className="justify-start" onClick={() => handleToggleMuteClips(selectedClipIdsList)}>
               Mute or unmute
             </Button>
-            <Button
-              type="button"
-              variant={precisionEnabled ? 'secondary' : 'outline'}
-              size="sm"
-              className="justify-start"
-              onClick={() => {
-                setInspectorTarget(inspectorSelectionTarget);
-                setContextTarget(inspectorSelectionTarget);
-                setPrecisionEnabled(!precisionEnabled);
-              }}
-            >
-              {precisionEnabled ? 'Disable precision' : 'Enable precision'}
-            </Button>
             <Button type="button" variant="destructive" size="sm" className="justify-start" onClick={() => handleDeleteClips(selectedClipIdsList)}>
               Delete selection
             </Button>
@@ -481,7 +465,10 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
         </div>
       )}
       {!readOnlyItemSelection && <InspectorRegistrySections placement="before-default" selection={inspectorSelectionTarget} />}
-      <div className={`min-h-0 flex-1 overflow-auto rounded-xl border bg-card/80 p-3 transition-colors ${hasSelection ? 'border-[color:var(--video-editor-accent-border)] ring-1 ring-[var(--video-editor-accent-ring)]' : 'border-border'}`}>
+      {/* On touch the clip sheet is the surface; a card inside it would be a box in a box. */}
+      <div className={deviceClass !== 'desktop'
+        ? 'min-h-0 flex-1 overflow-auto'
+        : `min-h-0 flex-1 overflow-auto rounded-xl border bg-card/80 p-3 transition-colors ${hasSelection ? 'border-[color:var(--video-editor-accent-border)] ring-1 ring-[var(--video-editor-accent-ring)]' : 'border-border'}`}>
         {/* dataKind V1 rework R3c: a data target owns the body — the data
             inspector / lane summary renders INSTEAD of the clip panels. The
             multi-select check deliberately comes after this branch. */}
@@ -536,8 +523,6 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
             clip={selectedClip}
             track={selectedTrack}
             deviceClass={deviceClass}
-            interactionMode={interactionMode}
-            precisionEnabled={precisionEnabled}
             hasPredecessor={selectedClipHasPredecessor}
             onChange={handleSelectedClipChange}
             onResetPosition={handleResetClipPosition}
@@ -550,17 +535,12 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
               setContextTarget(inspectorSelectionTarget);
               handleSplitSelectedClip();
             }}
-            onMoveTrackUp={() => moveSelectedClipsToTrack('up', selectedClipIds)}
-            onMoveTrackDown={() => moveSelectedClipsToTrack('down', selectedClipIds)}
+            onMoveTrackUp={trackMoves.up ? () => moveSelectedClipsToTrack('up', selectedClipIds) : undefined}
+            onMoveTrackDown={trackMoves.down ? () => moveSelectedClipsToTrack('down', selectedClipIds) : undefined}
             onSetInteractionMode={(mode) => {
               setInspectorTarget(inspectorSelectionTarget);
               setContextTarget(inspectorSelectionTarget);
               setInteractionMode(mode);
-            }}
-            onSetPrecisionEnabled={(enabled) => {
-              setInspectorTarget(inspectorSelectionTarget);
-              setContextTarget(inspectorSelectionTarget);
-              setPrecisionEnabled(enabled);
             }}
             compositionWidth={compositionSize.width}
             compositionHeight={compositionSize.height}

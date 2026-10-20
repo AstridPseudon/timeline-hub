@@ -2,8 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession.ts';
-import { withLocalModeParams } from '@/shared/dev/localModeUrl.ts';
+import { withRuntimeDocumentParams } from '@/app/runtime/runtimeDocument';
 import { shotListLocation } from '@/shared/lib/tooling/toolRoutes.ts';
 import { useToolSettings } from '@/shared/hooks/settings/useToolSettings';
 import { useUserUIState } from '@/shared/hooks/useUserUIState';
@@ -51,11 +50,8 @@ export function useHomeNavigation() {
       location.pathname === '/tools/travel-between-images' &&
       location.hash
     ) {
-      // Local Astrid project/timeline identity lives in the query string.
-      // Clear only the shot deep-link; dropping the query here loses the
-      // selected project when returning to the travel overview.
       navigate(
-        hasLocalModeUrlParams(location.search)
+        (new URLSearchParams(location.search).has('project') || new URLSearchParams(location.search).has('timeline'))
           ? shotListLocation(location.pathname, location.search)
           : location.pathname,
         { replace: true, state: { fromShotClick: false } },
@@ -69,10 +65,7 @@ export function useHomeNavigation() {
     }
 
     setIsShotsPaneLocked(false);
-    // Local mode (DEV, no session) rides along on the target path via its URL
-    // params, so the destination renders the full app shell instead of being
-    // dumped to /home by the auth gate. No-op in app mode.
-    navigate(withLocalModeParams(targetPath, location.search));
+    navigate(withRuntimeDocumentParams(targetPath, location.search));
   }, [location.hash, location.pathname, location.search, navigate, setIsShotsPaneLocked, targetPath]);
 
   return {

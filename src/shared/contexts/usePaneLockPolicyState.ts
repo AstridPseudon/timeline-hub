@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUserUIState } from '@/shared/hooks/useUserUIState';
 import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
+import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
 
 type PaneLockKey = 'shots' | 'tasks' | 'gens' | 'editor';
 
@@ -21,7 +22,10 @@ const UNLOCKED_PANES: PaneLocksState = {
 export function usePaneLockPolicyState() {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
-  const isSmallMobile = isMobile && !isTablet;
+  // Phones, and pages that host the pane entry points themselves (paneControlsHost.ts),
+  // never lock panes. A lock saved elsewhere is kept, not applied, and returns on leaving.
+  const paneControlsHosted = usePaneControlsHosted();
+  const transientPanes = (isMobile && !isTablet) || paneControlsHosted;
 
   const { value: paneLocks, update: savePaneLocks, isLoading } = useUserUIState('paneLocks', UNLOCKED_PANES);
   const [locks, setLocks] = useState(paneLocks);
@@ -31,8 +35,10 @@ export function usePaneLockPolicyState() {
   const [isTasksPaneOpenState, setIsTasksPaneOpenState] = useState(false);
 
   useEffect(() => {
-    if (isSmallMobile) {
+    if (transientPanes) {
       setLocks(UNLOCKED_PANES);
+      // A Tasks pane held open by a saved lock closes with it.
+      setIsTasksPaneOpenState(false);
       return;
     }
 
@@ -53,7 +59,7 @@ export function usePaneLockPolicyState() {
       setLocks(newLocks);
       setIsTasksPaneOpenState(newLocks.tasks);
     }
-  }, [isLoading, paneLocks, isSmallMobile, isTablet]);
+  }, [isLoading, paneLocks, transientPanes, isTablet]);
 
   const createPaneLockSetter = useCallback(
     (lockKey: PaneLockKey) => (isLocked: boolean) => {
@@ -68,7 +74,7 @@ export function usePaneLockPolicyState() {
           : { ...prev, [lockKey]: isLocked };
       });
 
-      if (!isSmallMobile) {
+      if (!transientPanes) {
         const exclusiveLock = (isMobile || isTablet) && isLocked;
         savePaneLocks(
           exclusiveLock
@@ -83,7 +89,7 @@ export function usePaneLockPolicyState() {
         setIsTasksPaneOpenState(false);
       }
     },
-    [isMobile, isTablet, isSmallMobile, savePaneLocks],
+    [isMobile, isTablet, transientPanes, savePaneLocks],
   );
 
   const setIsGenerationsPaneLocked = useMemo(() => createPaneLockSetter('gens'), [createPaneLockSetter]);
@@ -100,10 +106,10 @@ export function usePaneLockPolicyState() {
   }, []);
 
   const setIsTasksPaneOpen = useCallback((isOpen: boolean) => {
-    if (!isSmallMobile) {
+    if (!transientPanes) {
       setIsTasksPaneOpenState(isOpen);
     }
-  }, [isSmallMobile]);
+  }, [transientPanes]);
 
   const resetAllPaneLocks = useCallback(() => {
     setLocks(UNLOCKED_PANES);

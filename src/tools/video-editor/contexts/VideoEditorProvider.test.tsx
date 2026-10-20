@@ -58,10 +58,8 @@ import {
 } from '@/tools/video-editor/hooks/timelineStore';
 import {
   shouldAllowTouchClipDrag,
-  shouldAllowTouchMarquee,
   shouldExpandTouchTrimHandles,
   shouldPreserveTouchSelectionForMove,
-  shouldToggleTouchSelection,
 } from '@/tools/video-editor/lib/mobile-interaction-model';
 import { configToRows, type TimelineData } from '@/tools/video-editor/lib/timeline-data';
 import { runLiveSceneAcpRoundtrip } from '@/tools/video-editor/runtime/liveSceneAcpRoundtrip';
@@ -100,7 +98,6 @@ const mocks = {
   setInputModalityFromPointerType: vi.fn(() => 'touch'),
   setInteractionMode: vi.fn(),
   setGestureOwner: vi.fn(),
-  setPrecisionEnabled: vi.fn(),
   setContextTarget: vi.fn(),
   setInspectorTarget: vi.fn(),
   selectClip: vi.fn(),
@@ -180,7 +177,6 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
       inputModality: 'mouse',
       interactionMode: 'select',
       gestureOwner: 'timeline',
-      precisionEnabled: false,
       contextTarget: { kind: 'timeline' },
       inspectorTarget: { kind: 'clip', clipId: 'clip-1' },
       interactionPolicy: {
@@ -188,7 +184,6 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
         inputModality: 'mouse',
         interactionMode: 'select',
         gestureOwner: 'timeline',
-        precisionEnabled: false,
         contextTarget: { kind: 'timeline' },
         inspectorTarget: { kind: 'clip', clipId: 'clip-1' },
       },
@@ -225,7 +220,6 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
       setInputModalityFromPointerType: mocks.setInputModalityFromPointerType,
       setInteractionMode: mocks.setInteractionMode,
       setGestureOwner: mocks.setGestureOwner,
-      setPrecisionEnabled: mocks.setPrecisionEnabled,
       setContextTarget: mocks.setContextTarget,
       setInspectorTarget: mocks.setInspectorTarget,
       isClipSelected: vi.fn(() => true),
@@ -367,7 +361,6 @@ function Consumer() {
           editorOps.setInputModalityFromPointerType('touch');
           editorOps.setInteractionMode('trim');
           editorOps.setGestureOwner('trim');
-          editorOps.setPrecisionEnabled(true);
           editorOps.setContextTarget({ kind: 'clip', clipId: 'clip-1' });
           editorOps.setInspectorTarget({ kind: 'selection', clipIds: ['clip-1'] });
         }}
@@ -1453,7 +1446,6 @@ describe('VideoEditorProvider', () => {
       inputModality: 'mouse',
       interactionMode: 'select',
       gestureOwner: 'timeline',
-      precisionEnabled: false,
       contextTarget: { kind: 'timeline' },
       inspectorTarget: { kind: 'clip', clipId: 'clip-1' },
     }));
@@ -1474,7 +1466,6 @@ describe('VideoEditorProvider', () => {
     expect(mocks.setInputModalityFromPointerType).toHaveBeenCalledWith('touch');
     expect(mocks.setInteractionMode).toHaveBeenCalledWith('trim');
     expect(mocks.setGestureOwner).toHaveBeenCalledWith('trim');
-    expect(mocks.setPrecisionEnabled).toHaveBeenCalledWith(true);
     expect(mocks.setContextTarget).toHaveBeenCalledWith({ kind: 'clip', clipId: 'clip-1' });
     expect(mocks.setInspectorTarget).toHaveBeenCalledWith({ kind: 'selection', clipIds: ['clip-1'] });
     expect(__getSelectionStateForTests().clipDataById.get('clip-1')).toEqual(expect.objectContaining({
@@ -1990,27 +1981,19 @@ describe('VideoEditorProvider', () => {
     expect(selectionState.gallery.selectedGalleryIds).toEqual(new Set(['gallery-1']));
   });
 
-  it('matches the touch interaction decision table for drag, marquee, trim, and selection routing', () => {
+  it('matches the touch interaction decision table for drag, trim, and selection routing', () => {
     expect({
       phoneTouchDragInSelect: shouldAllowTouchClipDrag('phone', 'touch', 'select'),
       phoneTouchDragInMove: shouldAllowTouchClipDrag('phone', 'touch', 'move'),
-      tabletTouchMarqueeInSelect: shouldAllowTouchMarquee('tablet', 'touch', 'select'),
-      tabletTouchMarqueeInMove: shouldAllowTouchMarquee('tablet', 'touch', 'move'),
-      tabletMouseMarqueeInSelect: shouldAllowTouchMarquee('tablet', 'mouse', 'select'),
       phoneTouchTrimHandlesInTrim: shouldExpandTouchTrimHandles('phone', 'touch', 'trim'),
       phoneTouchTrimHandlesInSelect: shouldExpandTouchTrimHandles('phone', 'touch', 'select'),
-      phoneTouchToggleSelectionInSelect: shouldToggleTouchSelection('phone', 'touch', 'select'),
       tabletTouchPreserveSelectionInMove: shouldPreserveTouchSelectionForMove('tablet', 'touch', 'move'),
       tabletMousePreserveSelectionInMove: shouldPreserveTouchSelectionForMove('tablet', 'mouse', 'move'),
     }).toEqual({
       phoneTouchDragInSelect: false,
       phoneTouchDragInMove: true,
-      tabletTouchMarqueeInSelect: true,
-      tabletTouchMarqueeInMove: false,
-      tabletMouseMarqueeInSelect: true,
       phoneTouchTrimHandlesInTrim: true,
       phoneTouchTrimHandlesInSelect: false,
-      phoneTouchToggleSelectionInSelect: true,
       tabletTouchPreserveSelectionInMove: true,
       tabletMousePreserveSelectionInMove: false,
     });

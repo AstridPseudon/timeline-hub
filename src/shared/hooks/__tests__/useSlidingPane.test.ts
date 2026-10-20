@@ -22,6 +22,8 @@ vi.mock('@/shared/lib/typedEvents', () => ({
 }));
 
 import { useSlidingPane } from '../useSlidingPane';
+import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
+import { acquirePaneControlsHost } from '@/shared/state/paneControlsHost';
 
 describe('useSlidingPane', () => {
   const mockToggleLock = vi.fn();
@@ -329,6 +331,28 @@ describe('useSlidingPane', () => {
     });
 
     expect(result.current.showBackdrop).toBe(false);
+  });
+
+  it('gives a tablet transient panes while the page hosts the pane entry points', () => {
+    vi.useFakeTimers();
+    vi.mocked(useIsMobile).mockReturnValue(true);
+    vi.mocked(useIsTablet).mockReturnValue(true);
+    const release = acquirePaneControlsHost();
+    try {
+      const { result } = renderHook(() => useSlidingPane({ side: 'right', isLocked: false, onToggleLock: mockToggleLock }));
+      act(() => result.current.openPane());
+      // A backdrop takes the tap outside; a pointer leaving does not close it.
+      expect(result.current.showBackdrop).toBe(true);
+      act(() => result.current.handlePaneLeave());
+      act(() => vi.advanceTimersByTime(1000));
+      expect(result.current.isOpen).toBe(true);
+      act(() => result.current.closePane());
+      expect(result.current.isOpen).toBe(false);
+    } finally {
+      release();
+      vi.mocked(useIsMobile).mockReturnValue(false);
+      vi.mocked(useIsTablet).mockReturnValue(false);
+    }
   });
 
   it('calls onOpenChange when state changes', () => {

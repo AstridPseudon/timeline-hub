@@ -11,6 +11,7 @@ import {
 import type { PermissionsLike } from './localNetworkPermission.ts';
 import { autoConnectRequested, requestAutoConnect } from './autoConnectRequest.ts';
 import { RuntimeConnectionPanel } from '@/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx';
+import { SCHEMA_DIGEST } from './generated-contract-metadata.ts';
 
 const REALM = { realm_id: 'realm-1', display_name: 'Direct Journey' };
 const STORAGE_KEY = 'astrid.runtime.connectedBefore';
@@ -25,7 +26,7 @@ function json(body: unknown, status = 200): Response {
 function fakeGateway() {
   const calls: string[] = [];
   const routes: Record<string, Route> = {
-    '/v1/health': () => json({ status: 'ok', protocol: 'workspace.v1' }),
+    '/v1/health': () => json({ status: 'ok', protocol: 'workspace.v1', schema_digest: SCHEMA_DIGEST }),
     '/v1/realm': () => json(REALM),
   };
   const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
@@ -41,7 +42,7 @@ function fakeGateway() {
     };
   };
   const up = () => {
-    routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1' });
+    routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1', schema_digest: SCHEMA_DIGEST });
   };
   const gatewayDown = (error: string, status = 503) => {
     routes['/v1/health'] = () => json({ error }, status);
@@ -112,6 +113,7 @@ describe('granted', () => {
     await waitFor(() => expect(status()).toBe('connected'));
     expect(latest.state).toEqual({ status: 'connected', realm: REALM });
     expect(latest.realmName).toBe('Direct Journey');
+    expect(latest.schemaDigest).toBe(SCHEMA_DIGEST);
     expect(latest.isBooting).toBe(false);
     expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health', '/v1/realm']);
     expect(onConnected).toHaveBeenCalledTimes(1);

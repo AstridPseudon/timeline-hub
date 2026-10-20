@@ -71,7 +71,7 @@ export function GenerationsPaneControls({
 
   return (
     <div className="px-2 pt-3 pb-2 space-y-2">
-      <div className="flex items-center justify-between min-w-0 mx-2">
+      <div className="flex flex-wrap items-center justify-between gap-y-2 min-w-0 mx-2">
         <div
           className={cn(
             'flex items-center gap-2 min-w-0 flex-shrink',
@@ -133,7 +133,7 @@ export function GenerationsPaneControls({
                   filters.onSearchOpenChange(true);
                   setTimeout(() => filters.searchInputRef.current?.focus(), 0);
                 }}
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-white hover:bg-zinc-700"
+                className="h-9 w-9 sm:h-7 sm:w-7 p-0 text-zinc-400 hover:text-white hover:bg-zinc-700"
                 aria-label="Search prompts"
               >
                 <Search className="h-4 w-4" />
@@ -177,7 +177,7 @@ export function GenerationsPaneControls({
             interaction.isInteractionDisabled && 'pointer-events-none opacity-70',
           )}
         >
-          <div className="flex h-6 items-center overflow-hidden rounded-md border border-zinc-700 text-[10px] font-medium">
+          <div className="flex h-9 sm:h-6 items-center overflow-hidden rounded-md border border-zinc-700 text-[10px] font-medium">
             <button
               type="button"
               className={cn(

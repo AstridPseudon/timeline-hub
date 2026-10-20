@@ -1,18 +1,18 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { WorkspaceConnectionRecovery, buildWorkspaceRestartBrief } from './WorkspaceConnectionRecovery';
+import { RuntimeConnectorRecoveryBanner, buildWorkspaceRestartBrief } from './RuntimeConnectorRecoveryBanner';
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
 
-describe('WorkspaceConnectionRecovery', () => {
+describe('RuntimeConnectorRecoveryBanner', () => {
   it('offers retry and both restart paths, with a truthful idle and retrying state', () => {
     const onRetry = vi.fn();
-    const view = render(<WorkspaceConnectionRecovery retrying={false} error="Connection refused." onRetry={onRetry} />);
+    const view = render(<RuntimeConnectorRecoveryBanner retrying={false} error={new Error("Connection refused.")} onRetry={onRetry} />);
 
-    expect(screen.getByRole('heading', { name: 'Workspace connection unavailable' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Workspace Runtime is unavailable' })).toBeInTheDocument();
     expect(screen.getByTestId('workspace-connection-summary')).toHaveTextContent('The editor could not complete workspace discovery.');
     expect(screen.getByTestId('workspace-connection-diagnostic')).toHaveTextContent('Connection refused.');
     expect(screen.getByTestId('workspace-connection-diagnostic').closest('details')).not.toHaveAttribute('open');
@@ -20,19 +20,19 @@ describe('WorkspaceConnectionRecovery', () => {
     expect(screen.getByTestId('workspace-connection-diagnostic').closest('details')).toHaveAttribute('open');
     expect(screen.getByRole('button', { name: 'Copy restart instructions' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Show restart steps' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry Runtime connection' }));
     expect(onRetry).toHaveBeenCalledOnce();
 
-    view.rerender(<WorkspaceConnectionRecovery retrying error="Connection refused." onRetry={onRetry} />);
-    expect(screen.getByRole('button', { name: 'Reconnecting to Runtime…' })).toBeDisabled();
+    view.rerender(<RuntimeConnectorRecoveryBanner retrying error={new Error("Connection refused.")} onRetry={onRetry} />);
+    expect(screen.getByRole('button', { name: 'Retrying Runtime connection…' })).toBeDisabled();
   });
 
   it('copies instructions for the same existing Runtime, sanitizing the optional configured URL', async () => {
     const writeText = vi.fn(async (_text: string) => undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
-    render(<WorkspaceConnectionRecovery
+    render(<RuntimeConnectorRecoveryBanner
       retrying={false}
-      error="Runtime health check failed."
+      error={new Error("Runtime health check failed.")}
       connectionUrl="http://user:secret@localhost:22894/runtime?token=secret#private"
       onRetry={vi.fn()}
     />);
@@ -55,7 +55,7 @@ describe('WorkspaceConnectionRecovery', () => {
       configurable: true,
       value: { writeText: vi.fn(async () => { throw new Error('Clipboard denied'); }) },
     });
-    render(<WorkspaceConnectionRecovery retrying={false} error="Bridge timeout." onRetry={vi.fn()} />);
+    render(<RuntimeConnectorRecoveryBanner retrying={false} error={new Error("Bridge timeout.")} onRetry={vi.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy restart instructions' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Clipboard access is unavailable'));
@@ -63,7 +63,7 @@ describe('WorkspaceConnectionRecovery', () => {
   });
 
   it('reveals manual restart steps that preserve the existing installation and Runtime data', () => {
-    render(<WorkspaceConnectionRecovery retrying={false} error="Runtime is offline." onRetry={vi.fn()} />);
+    render(<RuntimeConnectorRecoveryBanner retrying={false} error={new Error("Runtime is offline.")} onRetry={vi.fn()} />);
     expect(screen.queryByText(/Return to the same Astrid App checkout/)).toBeNull();
     const toggle = screen.getByRole('button', { name: 'Show restart steps' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
@@ -93,7 +93,7 @@ describe('WorkspaceConnectionRecovery', () => {
   it('includes the current project and timeline route identity in the agent brief', () => {
     const brief = buildWorkspaceRestartBrief({
       error: 'Timeline lookup timed out.',
-      projectSlug: 'newblanktimeline3',
+      projectId: 'newblanktimeline3',
       timelineId: 'timeline-a',
     });
 

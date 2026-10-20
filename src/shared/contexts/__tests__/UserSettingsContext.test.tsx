@@ -139,7 +139,7 @@ describe('UserSettingsContext', () => {
     });
 
     it('does not read or write Supabase in local Astrid editor mode', async () => {
-      window.history.replaceState({}, '', '/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline');
+      window.history.replaceState({}, '', '/tools/video-editor?project=demo-project&timeline=demo-timeline');
 
       function UpdateConsumer() {
         const { updateUserSettings } = useUserSettings();

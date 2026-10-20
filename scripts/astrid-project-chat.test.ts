@@ -5,6 +5,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ProjectChatRegistry } from './astrid-project-chat.ts';
 import { ApiError, type Project } from '../src/integrations/runtime/generated.ts';
+import { isExternalAgentSession, sessionAgentId } from '../src/integrations/astrid/localAgents.ts';
+
+test('routes prefixed external sessions, including Hermes, to their own agent identity', () => {
+  assert.equal(isExternalAgentSession('hermes:session-1'), true);
+  assert.equal(isExternalAgentSession('hermes:session-1', 'hermes'), true);
+  assert.equal(isExternalAgentSession('astrid:session-1'), false);
+  assert.equal(sessionAgentId('hermes:session-1'), 'hermes');
+  assert.equal(sessionAgentId('codex:session-1'), 'codex');
+});
 
 function registryFor(project: Project) {
   const claimDirectory = mkdtempSync(join(tmpdir(), 'project-chat-test-'));
@@ -20,7 +29,7 @@ function registryFor(project: Project) {
   return { registry, cleanup: () => rmSync(claimDirectory, { recursive: true, force: true }) };
 }
 
-test('New selects the created chat without changing the project Main chat', async () => {
+test('New selects and promotes the created chat to Main', async () => {
   const project: Project = {
     project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', version: 1,
     created_at: '', updated_at: '', metadata: {
@@ -32,22 +41,87 @@ test('New selects the created chat without changing the project Main chat', asyn
   };
   const { registry, cleanup } = registryFor(project);
   try {
-    const result = await registry.create('p', 'new', 'new-operation', async () => ({ sessionId: 'new-session' }));
+    let creates = 0;
+    const create = async () => { creates++; return { sessionId: 'new-session' }; };
+    const result = await registry.create('p', 'new', 'new-operation', create);
     assert.equal(result.selected_session_id, 'new-session');
-    assert.equal(result.main_session_id, 'main');
+    assert.equal(result.main_session_id, 'new-session');
     assert.deepEqual(result.sessions.map(session => session.id), ['main', 'old', 'new-session']);
+    const replay = await registry.create('p', 'new', 'new-operation', create);
+    assert.equal(creates, 1);
+    assert.equal(replay.main_session_id, 'new-session');
+    assert.equal(replay.selected_session_id, 'new-session');
+    await registry.setMain('p', replay.revision, 'old');
+    const delayedReplay = await registry.create('p', 'new', 'new-operation', create);
+    assert.equal(creates, 1);
+    assert.equal(delayedReplay.operation_session_id, 'new-session');
+    assert.equal(delayedReplay.main_session_id, 'old');
   } finally {
     cleanup();
   }
 });
 
-test('New does not assign Main when the project has no Main chat', async () => {
+test('New assigns Main when the project has no previous Main chat', async () => {
   const project: Project = { project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', metadata: {}, version: 1, created_at: '', updated_at: '' };
   const { registry, cleanup } = registryFor(project);
   try {
     const result = await registry.create('p', 'new', 'new-operation', async () => ({ sessionId: 'new-session' }));
     assert.equal(result.selected_session_id, 'new-session');
-    assert.equal(result.main_session_id, null);
+    assert.equal(result.main_session_id, 'new-session');
+  } finally {
+    cleanup();
+  }
+});
+
+test('New preserves a concurrent Make Main choice while selecting its created chat', async () => {
+  const project: Project = {
+    project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', version: 1,
+    created_at: '', updated_at: '', metadata: {
+      astrid_agent_chat_v1: { test: {
+        revision: 2, selected_session_id: 'main', main_session_id: 'main',
+        sessions: [{ id: 'main' }, { id: 'other' }], draft: { text: '', revision: 0, queued_messages: [] },
+      } },
+    },
+  };
+  const { registry, cleanup } = registryFor(project);
+  try {
+    let finish!: (value: { sessionId: string }) => void;
+    let started!: () => void;
+    const beginning = new Promise<void>(resolve => { started = resolve; });
+    const pending = registry.create('p', 'new', 'deferred-new', () => {
+      started();
+      return new Promise(resolve => { finish = resolve; });
+    });
+    await beginning;
+    const explicitMain = await registry.setMain('p', (await registry.get('p')).revision, 'other');
+    finish({ sessionId: 'new-session' });
+    const completed = await pending;
+    assert.equal(explicitMain.main_session_id, 'other');
+    assert.equal(completed.main_session_id, 'other');
+    assert.equal(completed.selected_session_id, 'new-session');
+    assert.deepEqual(completed.sessions.map(session => session.id), ['main', 'other', 'new-session']);
+  } finally {
+    cleanup();
+  }
+});
+
+test('rename trims titles, enforces ownership, and advances the project chat revision', async () => {
+  const project: Project = { project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', metadata: {
+    astrid_agent_chat_v1: { test: { revision: 2, selected_session_id: 's1', main_session_id: null, sessions: [{ id: 's1' }], draft: { text: '', revision: 0, queued_messages: [] } } },
+  }, version: 1, created_at: '', updated_at: '' };
+  const { registry, cleanup } = registryFor(project);
+  try {
+    const renamed = await registry.rename('p', 2, 's1', '  Planning  ');
+    assert.equal(renamed.sessions[0]?.title, 'Planning');
+    assert.equal(renamed.revision, 3);
+    await assert.rejects(registry.rename('p', 2, 's1', 'stale'), (error: unknown) => Boolean(error && typeof error === 'object' && 'status' in error && error.status === 409));
+    for (const title of ['', '   ', 'x'.repeat(121)]) {
+      await assert.rejects(registry.rename('p', 3, 's1', title), (error: unknown) => Boolean(error && typeof error === 'object' && 'status' in error && error.status === 400));
+    }
+    await assert.rejects(registry.rename('p', 3, 'foreign', 'Owned?'), (error: unknown) => Boolean(error && typeof error === 'object' && 'status' in error && error.status === 403));
+    const title = 'x'.repeat(120);
+    await registry.rename('p', 3, 's1', `  ${title}  `);
+    assert.equal((await registry.get('p')).sessions[0]?.title, title);
   } finally {
     cleanup();
   }

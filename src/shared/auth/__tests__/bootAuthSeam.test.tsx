@@ -4,15 +4,14 @@
  * (a) The covered journey's boot surface (AuthProvider → AuthGate → Layout
  *     gates) renders with ZERO Supabase environment configured: auth is
  *     resolved by the `/api/astrid` bridge probe alone.
- * (b) A failing probe renders a degraded-but-alive state — never a redirect
- *     loop: Layout route access passes on the probe result, and the failure
- *     path settles after exactly one probe.
+ * (b) A failing probe offers recovery at the requested URL, holding the
+ *     workspace back until an explicit retry verifies the connection.
  */
 
 // @vitest-environment jsdom
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { probeBridgeSessionMock } = vi.hoisted(() => ({
@@ -29,9 +28,15 @@ import { probeBridgeSession } from '@/shared/auth/bridgeSession';
 
 const probeMock = vi.mocked(probeBridgeSession);
 
+function RouteProbe() {
+  const { pathname, search } = useLocation();
+  return <output data-testid="boot-route">{pathname}{search}</output>;
+}
+
 function BootSurface() {
   return (
     <MemoryRouter initialEntries={['/tools/video-editor?timeline=local-timeline']}>
+      <RouteProbe />
       <AuthProvider>
         <AuthGate>
           <div data-testid="booted-shell">editor shell</div>
@@ -85,13 +90,17 @@ describe('env-free boot over the bridge probe', () => {
     await waitFor(() => {
       expect(probeMock).toHaveBeenCalledTimes(1);
     });
-    // Failure is terminal for this boot: exactly one probe. The gate opens
-    // (isLoading=false) so the shell stays ALIVE and degraded — no redirect,
-    // no re-probe loop.
-    await waitFor(() => {
-      expect(screen.getByTestId('booted-shell')).toBeInTheDocument();
-    });
+    expect(await screen.findByTestId('runtime-connector-alert')).toBeInTheDocument();
+    expect(screen.queryByTestId('booted-shell')).not.toBeInTheDocument();
+    expect(screen.getByTestId('boot-route')).toHaveTextContent('/tools/video-editor?timeline=local-timeline');
     await new Promise((r) => setTimeout(r, 0));
     expect(probeMock).toHaveBeenCalledTimes(1);
+
+    probeMock.mockResolvedValue({ ok: true, userId: 'local-user' });
+    fireEvent.click(screen.getByRole('button', { name: 'Retry Runtime connection' }));
+    expect(await screen.findByTestId('booted-shell')).toBeInTheDocument();
+    expect(screen.queryByTestId('runtime-connector-alert')).toBeNull();
+    expect(probeMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId('boot-route')).toHaveTextContent('/tools/video-editor?timeline=local-timeline');
   });
 });

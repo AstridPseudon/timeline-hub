@@ -4,11 +4,11 @@ import { Home, LayoutGrid, Settings } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
 import { dispatchAppEvent } from '@/shared/lib/typedEvents.ts';
-import { ProjectTimelineSelectors } from '@/shared/components/ProjectTimelineSelectors.tsx';
+import { ProjectTimelinePicker } from '@/shared/components/ProjectTimelineSelectors.tsx';
 import { ProjectHeaderActions } from '@/shared/components/ProjectHeaderActions.tsx';
-import { useAstridBridgeDiscovery } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
-import { useQueryClient } from '@tanstack/react-query';
+import { useRuntimeEditorDiscovery } from '@/tools/video-editor/hooks/useRuntimeEditorDiscovery.ts';
 import { isAstridEditorOnlyWorkspace } from '@/app/localWorkspaceShell';
 
 export type AppHeaderNavigationMode = 'home' | 'tools';
@@ -22,32 +22,25 @@ interface AppHeaderProps {
 }
 
 function AppHeaderProjectControls() {
-  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const localProjectSlug = searchParams.get('localProject');
-  const localTimelineId = searchParams.get('localTimeline');
+  const projectId = searchParams.get('project');
   const [selectorsOpen, setSelectorsOpen] = useState(false);
-  const discovery = useAstridBridgeDiscovery({
+  const discovery = useRuntimeEditorDiscovery({
+    enabled: true,
+    projectId,
     open: selectorsOpen,
-    // Astrid is the product authority. URL parameters select a project and
-    // timeline; they do not switch the header between cloud and local modes.
-    currentLocal: true,
-    selectedProjectSlug: localProjectSlug,
   });
-  const selectedProject = discovery.projectsQuery.data?.projects?.find(
-    (project) => project.slug === localProjectSlug,
-  ) ?? null;
+  const selectedProject = discovery.project;
 
   const refreshProjects = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ['astrid-bridge', 'projects'] });
-  }, [queryClient]);
+    void discovery.projectsQuery.refetch();
+  }, [discovery.projectsQuery]);
 
-  const handleProjectChange = useCallback((nextProjectSlug: string) => {
-    if (nextProjectSlug) {
+  const handleProjectChange = useCallback((nextProjectId: string) => {
+    if (nextProjectId) {
       setSearchParams((current) => {
         const next = new URLSearchParams(current);
-        next.set('localProject', nextProjectSlug);
-        next.delete('localTimeline');
+        next.set('project', nextProjectId);
         next.delete('timeline');
         return next;
       }, { replace: true });
@@ -57,11 +50,15 @@ function AppHeaderProjectControls() {
   return (
     <>
       <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
-        <ProjectTimelineSelectors
-          localProjectSlug={localProjectSlug}
-          localTimelineId={localTimelineId}
-          localTimelineName={null}
-          discovery={discovery}
+        <ProjectTimelinePicker
+          projects={(discovery.projectsQuery.data ?? []).map((p) => ({ id: p.project_id, name: p.name, detail: p.slug }))}
+          timelines={[]}
+          projectId={selectedProject?.project_id ?? projectId}
+          timelineId={null}
+          projectName={selectedProject?.name ?? (projectId ? 'Project unavailable' : 'Select project')}
+          projectsLoading={discovery.projectsQuery.isLoading}
+          projectsError={discovery.projectsQuery.error?.message}
+          onRetry={() => void discovery.reconnect()}
           onSelectProject={handleProjectChange}
           onSelectTimeline={() => undefined}
           disabled={false}
@@ -98,11 +95,14 @@ export function AppHeader({
   const NavigationIcon = isToolsNavigation ? LayoutGrid : Home;
 
   return (
+    // `relative z-10` puts the header in the same layer as the app content, above the fixed sky backdrop
+    // (`AppSkyBackground`, z-0 at half opacity). Unpositioned, it painted under the sky, which veiled the
+    // logo, text and buttons.
     <header
       className={cn(
-        'flex w-full min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground',
+        'relative z-10 flex w-full min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground',
         isEditorOnlyWorkspace
-          ? 'px-2 pt-2 pb-0 sm:px-4 sm:pt-3 sm:pb-0 lg:px-6 lg:pt-4 lg:pb-0'
+          ? 'px-3 pt-2 pb-0 sm:px-4 sm:pt-3 sm:pb-0 lg:px-6 lg:pt-4 lg:pb-0'
           : 'min-h-10 border-b border-border bg-background px-3 py-1.5',
       )}
       data-testid="video-editor-header"
@@ -145,7 +145,7 @@ export function AppHeader({
         type="button"
         variant="ghost"
         size="icon"
-        className="ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+        className={cn('ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground', COARSE_TOUCH_TARGET)}
         onClick={() => dispatchAppEvent('openSettings', {})}
         title={isEditorOnlyWorkspace ? 'App settings' : 'Settings'}
         aria-label={isEditorOnlyWorkspace ? 'App settings' : 'Settings'}

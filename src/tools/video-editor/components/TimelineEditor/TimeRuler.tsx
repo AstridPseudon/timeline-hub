@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { formatTime } from '@/tools/video-editor/lib/coordinate-utils.ts';
+import { formatTime, formatTimeCompact } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { useTimelineScale } from '@/tools/video-editor/hooks/useTimelineScale.ts';
 import type { TimelineGestureOwner, TimelineInputModality } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 
 const POINTER_DRAG_THRESHOLD_PX = 3;
 const OVERSCAN_STEPS = 4;
-/** Widest a major-tick label gets at this font (`0:00.00` in 10px mono + padding). */
-const MAJOR_LABEL_WIDTH_PX = 52;
 
 export interface TimeRulerProps {
   scale: number;
@@ -20,16 +18,8 @@ export interface TimeRulerProps {
   onCursorDrag: (time: number) => void;
   setGestureOwner: (owner: TimelineGestureOwner) => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
-  /**
-   * Right-hand strip of the ruler *viewport* that is covered by floating chrome
-   * (today: the touch tool cluster docked at `right-2 top-1` in `TimelineCanvas`).
-   * A label that would land under it is not rendered at all — half a timecode
-   * behind a button reads as a glitch, and it returns as soon as you scroll.
-   *
-   * This trims labels only. Tick lines, `contentWidth` and the scroll extent are
-   * untouched, so the ruler still agrees with the grid (Key Invariant 4).
-   */
-  labelRightInsetPx?: number;
+  /** Label major ticks as `m:ss` (phone) instead of `m:ss.cc`. */
+  compactLabels?: boolean;
 }
 
 interface PointerSession {
@@ -53,7 +43,7 @@ export function TimeRuler({
   onCursorDrag,
   setGestureOwner,
   setInputModalityFromPointerType,
-  labelRightInsetPx = 0,
+  compactLabels = false,
 }: TimeRulerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pointerSessionRef = useRef<PointerSession | null>(null);
@@ -114,22 +104,15 @@ export function TimeRuler({
         break;
       }
 
-      // `viewportWidth === 0` means the ruler has not been measured yet (or there
-      // is no ResizeObserver, e.g. jsdom) — draw every label rather than guess.
-      const occluded =
-        labelRightInsetPx > 0 &&
-        viewportWidth > 0 &&
-        left - scrollLeft + MAJOR_LABEL_WIDTH_PX > viewportWidth - labelRightInsetPx;
-
       ticks.push({
         key: `major-${index}`,
         left,
-        label: occluded ? null : formatTime(index * scale),
+        label: (compactLabels ? formatTimeCompact : formatTime)(index * scale),
       });
     }
 
     return ticks;
-  }, [contentWidth, labelRightInsetPx, safeSplitCount, scale, scaleWidth, scrollLeft, startLeft, viewportWidth, visibleRange.firstMinorIndex, visibleRange.lastMinorIndex]);
+  }, [compactLabels, contentWidth, safeSplitCount, scale, scaleWidth, startLeft, visibleRange.firstMinorIndex, visibleRange.lastMinorIndex]);
 
   const minorTicks = useMemo(() => {
     const ticks: Array<{ key: string; left: number; isMajor: boolean }> = [];

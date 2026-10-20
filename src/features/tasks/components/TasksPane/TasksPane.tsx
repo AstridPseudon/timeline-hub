@@ -37,7 +37,9 @@ import { useTasksPaneSlidingPane } from './hooks/useTasksPaneSlidingPane';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
 import { usePanesStore } from '@/shared/state/panesStore';
+import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
 import { isElementWithinKnownOverlay } from '@/shared/components/ui/overlay';
+import { useAppEventListener } from '@/shared/lib/typedEvents';
 
 interface TasksPaneProps {
   onOpenSettings: () => void;
@@ -61,17 +63,16 @@ function readPersistedRuntimeHistoryPinned(): boolean {
 const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
   useRenderBudget('TasksPane', 5);
   const { pathname, search } = useLocation();
+  const paneControlsHosted = usePaneControlsHosted();
   const runtimeParams = useMemo(() => new URLSearchParams(search), [search]);
   const selectedEditor = useOptionalAgentChatBridge()?.editorContext;
   const routeRuntimeProjectId = pathname === '/tools/video-editor'
-    && runtimeParams.get('runtime') === '1'
-    && runtimeParams.get('runtimeTimeline')
-    ? runtimeParams.get('runtimeProject')?.trim() || null
+    ? runtimeParams.get('project')?.trim() || null
     : null;
   const runtimeProjectId = selectedEditor?.projectId ?? routeRuntimeProjectId;
   const runtimeTimelineId = selectedEditor?.projectId
     ? selectedEditor.timelineId
-    : routeRuntimeProjectId ? runtimeParams.get('runtimeTimeline')?.trim() || null : null;
+    : routeRuntimeProjectId ? runtimeParams.get('timeline')?.trim() || null : null;
   const {
     isTasksPaneLocked,
     setIsTasksPaneLocked,
@@ -287,6 +288,25 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
     window.localStorage.setItem('agentChat:lastAction', lastAgentAction);
   }, [lastAgentAction]);
 
+  // Open the pane on the chat with the composer focused: the tab's message
+  // button, and pages that host their own entry point (`openAgentComposer`).
+  const openAgentComposer = useCallback(() => {
+    setLastAgentAction('message');
+    // markEngaged signals the auto-create-session gate inside the panel
+    // WITHOUT writing to panesStore.isTasksPaneOpen (which would
+    // short-circuit useSlidingPane.setOpen(false)).
+    readyAgentChatActions?.markEngaged();
+    openPane();
+    // Focus inside the tap: iOS raises the keyboard only for a focus made while handling
+    // the gesture. The next frame tries again for a composer the open has just enabled.
+    // focusComposer is ref-backed, so a panel that unmounts meanwhile makes it a no-op.
+    if (readyAgentChatActions) {
+      readyAgentChatActions.focusComposer();
+      requestAnimationFrame(() => readyAgentChatActions.focusComposer());
+    }
+  }, [openPane, readyAgentChatActions]);
+  useAppEventListener('openAgentComposer', openAgentComposer);
+
   return (
     <>
       {/* Backdrop overlay for mobile - z-index just below TasksPane content (100016) */}
@@ -307,17 +327,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
           splitButton: readyAgentChatActions
             ? (() => {
                 const messageAction = {
-                  onClick: () => {
-                    setLastAgentAction('message');
-                    // markEngaged signals the auto-create-session gate inside the
-                    // panel WITHOUT writing to panesStore.isTasksPaneOpen (which
-                    // would short-circuit useSlidingPane.setOpen(false)).
-                    readyAgentChatActions.markEngaged();
-                    openPane();
-                    // focusComposer is ref-backed, so even if the panel unmounts
-                    // before the next frame the call is a safe no-op.
-                    requestAnimationFrame(() => readyAgentChatActions.focusComposer());
-                  },
+                  onClick: openAgentComposer,
                   ariaLabel: 'Open message composer',
                   tooltip: 'Open message',
                   content: <MessageSquareText className="h-4 w-4" />,
@@ -351,7 +361,10 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
           right: 0,
           top: 0,
           bottom: 0,
-          width: `${tasksPaneWidth}px`,
+          // A page that hosts the pane (the touch editor) opens it as a temporary sheet: wide
+          // enough to read and type in (a 300px drawer is a slot on an iPad or a phone on its
+          // side), with a strip of the page left to tap to close it.
+          width: paneControlsHosted ? 'min(28rem, calc(100vw - 3rem))' : `${tasksPaneWidth}px`,
           // Content must sit above MediaLightbox and GenerationsPane; see UI_Z_LAYERS.
           zIndex: UI_Z_LAYERS.TASKS_PANE_CONTENT,
         }}

@@ -5,15 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
 import { ASTRID_APP_LOCAL_DEV_COMMAND } from '@/shared/lib/localAstridRuntime.ts';
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
+import { useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { RuntimeAuthenticationError, RuntimeUnavailableError } from '@/integrations/runtime/client.ts';
+import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 
-export interface WorkspaceConnectionRecoveryProps {
-  readonly retrying: boolean;
-  readonly error: string;
+export interface RuntimeConnectorRecoveryBannerProps {
+  readonly retrying?: boolean;
+  readonly error: Error;
   readonly onRetry: () => void | Promise<void>;
   /** Concise explanation of which workspace check failed. */
   readonly failureSummary?: string | null;
   /** Current route identity, when the editor has one. */
-  readonly projectSlug?: string | null;
+  readonly projectId?: string | null;
   readonly timelineId?: string | null;
   /** A configured, non-secret Runtime URL when the host knows it. */
   readonly connectionUrl?: string | null;
@@ -37,37 +40,37 @@ function safeConnectionUrl(value?: string | null): string | null {
 export function buildWorkspaceRestartBrief({
   error,
   connectionUrl,
-  projectSlug,
+  projectId,
   timelineId,
-}: Pick<WorkspaceConnectionRecoveryProps, 'error' | 'connectionUrl' | 'projectSlug' | 'timelineId'>): string {
+}: { error: string; connectionUrl?: string | null; projectId?: string | null; timelineId?: string | null }): string {
   const diagnostic = error.trim() || 'The editor cannot reach its configured Astrid Runtime.';
   const safeUrl = safeConnectionUrl(connectionUrl);
   return [
     'Please restore this editor’s existing Astrid Runtime connection.',
     'Keep the current installation, Runtime profile, data root, workspace files, credentials, and agent instructions. Do not reset, reinstall, create a new data root, or switch to the bundled demo bridge.',
     `Restart the existing app process through its local launcher (${ASTRID_APP_LOCAL_DEV_COMMAND}) from the same Astrid App checkout. If the Runtime is managed separately, restart that existing Runtime with its current command, profile, and data root; inspect the existing configuration instead of guessing a path.`,
-    ...(projectSlug || timelineId ? [`Preserve the current editor route identity: project ${projectSlug || '(unknown)'}, timeline ${timelineId || '(unknown)'}.`] : []),
+    ...(projectId || timelineId ? [`Preserve the current editor route identity: project ${projectId || '(unknown)'}, timeline ${timelineId || '(unknown)'}.`] : []),
     `Current editor diagnostic: ${diagnostic}`,
     ...(safeUrl ? [`Configured editor origin for the workspace connection: ${safeUrl}`] : []),
     'Verify that the same configured Runtime is healthy, editor project and timeline discovery return the same selections, and the existing configured agent responds without changing its instructions. Leave the existing processes available after verification.',
   ].join('\n\n');
 }
 
-/** Recovery UI for the selected local workspace and its existing Runtime. */
-export function WorkspaceConnectionRecovery({
-  retrying,
+/** One recovery surface for typed connector failures and discovery diagnostics. */
+export function RuntimeConnectorRecoveryBanner({
+  retrying = false,
   error,
   onRetry,
   failureSummary,
-  projectSlug,
+  projectId,
   timelineId,
   connectionUrl,
-}: WorkspaceConnectionRecoveryProps) {
+}: RuntimeConnectorRecoveryBannerProps) {
   const [showBrief, setShowBrief] = useState(false);
   const [showManualSteps, setShowManualSteps] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   const safeUrl = safeConnectionUrl(connectionUrl);
-  const restartBrief = buildWorkspaceRestartBrief({ error, connectionUrl: safeUrl, projectSlug, timelineId });
+  const restartBrief = buildWorkspaceRestartBrief({ error: error.message, connectionUrl: safeUrl, projectId, timelineId });
   const visibleFailureSummary = failureSummary?.trim()
     || 'The editor could not complete workspace discovery.';
 
@@ -79,19 +82,40 @@ export function WorkspaceConnectionRecovery({
       : 'Clipboard access is unavailable. Copy the brief from the field below.');
   };
 
-  // The hosted build has its own recovery (the connection panel and the Astrid cards); two paths would compete.
-  if (runtimeOrigin() !== '') return null;
+  const recoveryCardShowing = useRecoveryCardShowing();
+  const hosted = runtimeOrigin() !== '';
+  if (hosted && recoveryCardShowing) return null;
+  const title = error instanceof RuntimeAuthenticationError
+    ? "Workspace Runtime authentication failed"
+    : error instanceof RuntimeUnavailableError && error.failureKind === "admission"
+      ? "Workspace Runtime failed its startup checks"
+      : error instanceof RuntimeUnavailableError && error.failureKind === "storage"
+        ? "Workspace Runtime reported a storage failure"
+        : "Workspace Runtime is unavailable";
+  const action = 'recoveryAction' in error && typeof error.recoveryAction === 'string'
+    ? error.recoveryAction : 'Retry the connection to your configured Astrid Runtime.';
+  if (hosted) return (
+    <div className="flex items-center justify-between gap-4 border-b border-destructive/30 bg-destructive/5 px-4 py-3" data-testid="runtime-connector-alert" role="alert">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-foreground">{RUNTIME_CONNECTION_COPY.loadFailed.title}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{RUNTIME_CONNECTION_COPY.loadFailed.sentence}</p>
+      </div>
+      <Button type="button" size="sm" variant="outline" onClick={() => void onRetry()} disabled={retrying}>
+        {retrying ? RUNTIME_CONNECTION_COPY.loadFailed.retrying : RUNTIME_CONNECTION_COPY.loadFailed.button}
+      </Button>
+    </div>
+  );
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto bg-background px-4 py-8" data-testid="workspace-connection-recovery">
+    <div className="max-h-[60vh] shrink-0 overflow-y-auto border-b border-destructive/30 bg-background px-4 py-3" data-testid="runtime-connector-alert">
       <Card className="my-auto w-full min-w-0 max-w-2xl shrink-0 border-border/80 shadow-sm" role="alert">
         <CardHeader>
           <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
             <AlertTriangle aria-hidden="true" className="h-5 w-5" />
           </div>
-          <CardTitle className="text-xl">Workspace connection unavailable</CardTitle>
+          <CardTitle className="text-xl">{title}</CardTitle>
           <CardDescription className="max-w-prose text-sm leading-6">
-            The editor cannot connect to its configured Astrid Runtime. Retry the connection or use the restart instructions below. Your current project and timeline selection will be kept.
+            {action} Your current project, timeline selection and drafts will be kept.
           </CardDescription>
           <p className="mt-2 break-words rounded-md bg-muted/60 px-3 py-2 text-xs text-muted-foreground" data-testid="workspace-connection-summary">
             {visibleFailureSummary}
@@ -99,7 +123,7 @@ export function WorkspaceConnectionRecovery({
           <details className="mt-2 text-xs text-muted-foreground">
             <summary className="cursor-pointer select-none font-medium">Show full connection error</summary>
             <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted/60 p-2" data-testid="workspace-connection-diagnostic">
-              {error.trim() || 'No additional connection error details were provided.'}
+              {error.message.trim() || 'No additional connection error details were provided.'}
             </pre>
           </details>
           {safeUrl && <p className="break-all text-xs text-muted-foreground">Configured editor origin: <code>{safeUrl}</code></p>}
@@ -107,7 +131,7 @@ export function WorkspaceConnectionRecovery({
         <CardContent className="space-y-4">
           <Button type="button" className="h-auto min-h-10 w-full whitespace-normal py-2 sm:w-auto" onClick={() => void onRetry()} disabled={retrying}>
             {retrying ? <LoaderCircle aria-hidden="true" className="mr-2 h-4 w-4 shrink-0 animate-spin" /> : <RotateCcw aria-hidden="true" className="mr-2 h-4 w-4 shrink-0" />}
-            {retrying ? 'Reconnecting to Runtime…' : 'Retry connection'}
+            {retrying ? 'Retrying Runtime connection…' : 'Retry Runtime connection'}
           </Button>
 
           <div className="grid gap-3 border-t border-border/70 pt-4 sm:grid-cols-2">
@@ -141,6 +165,6 @@ export function WorkspaceConnectionRecovery({
           </div>
         </CardContent>
       </Card>
-    </main>
+    </div>
   );
 }
