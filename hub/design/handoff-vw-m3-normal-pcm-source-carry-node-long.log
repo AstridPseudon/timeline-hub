@@ -1,0 +1,21 @@
+{"frames":8388609,"sampleRate":48000,"channels":2,"decodedBytes":67108872,"seconds":174.7626875,"sourceClock":{"source_from":0.06673333333333334,"playback_rate":1.5},"wavSha256":"8592a32de5b2c4f46fd176ac2129edfcea2ab9489aa0b0e178c8049b2e4681a2","maxRssKiB":201416}
+TAP version 13
+# Subtest: ordinary long source exceeds the old stdout cap and retains full-source public WAV bytes
+ok 1 - ordinary long source exceeds the old stdout cap and retains full-source public WAV bytes
+  ---
+  duration_ms: 2656.879748
+  ...
+# Subtest: file-backed proposal cleans its own scratch on nonfinite PCM and decoder failure
+ok 2 - file-backed proposal cleans its own scratch on nonfinite PCM and decoder failure
+  ---
+  duration_ms: 197.341657
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2865.400636

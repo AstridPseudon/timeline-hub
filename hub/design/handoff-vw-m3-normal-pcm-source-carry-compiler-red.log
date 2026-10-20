@@ -1,0 +1,46 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_audio_vector[fade-in-needs-prepared-envelope-source] ___________
+
+vector = {'child': {'params': {'fadeIn': 0.5}}, 'expect': {'audio.render_source': True}, 'id': 'fade-in-needs-prepared-envelope-source', 'occurrence': {}, ...}
+
+    @pytest.mark.parametrize('vector', _marked(AUDIO['vectors']))
+    def test_audio_vector(vector):
+        clip = _audio_clip(vector)
+        for key, want in vector['expect'].items():
+            if key == 'metadata':
+                meta = clip['app']['astrid_shot_composition']
+                assert {name: meta[name] for name in want} == want
+            elif want is None:
+                assert _lookup(clip, key) is None
+            elif isinstance(want, bool):
+>               assert bool(_lookup(clip, key)) is want
+E               AssertionError: assert False is True
+E                +  where False = bool(None)
+E                +    where None = _lookup({'app': {'astrid_shot_composition': {'gain': 1, 'internal_timeline_revision_id': 'timeline-alpha-a', 'muted': False, 'occurrence_id': 'occ-1', ...}}, 'asset': 'alpha-audio', 'at': 0.0, 'clipType': 'media', ...}, 'audio.render_source')
+
+tests/editing_conformance/test_compile_contracts.py:78: AssertionError
+__________ test_audio_vector[fade-out-needs-prepared-envelope-source] __________
+
+vector = {'child': {'params': {'fadeOut': 0.5}}, 'expect': {'audio.render_source': True}, 'id': 'fade-out-needs-prepared-envelope-source', 'occurrence': {}, ...}
+
+    @pytest.mark.parametrize('vector', _marked(AUDIO['vectors']))
+    def test_audio_vector(vector):
+        clip = _audio_clip(vector)
+        for key, want in vector['expect'].items():
+            if key == 'metadata':
+                meta = clip['app']['astrid_shot_composition']
+                assert {name: meta[name] for name in want} == want
+            elif want is None:
+                assert _lookup(clip, key) is None
+            elif isinstance(want, bool):
+>               assert bool(_lookup(clip, key)) is want
+E               AssertionError: assert False is True
+E                +  where False = bool(None)
+E                +    where None = _lookup({'app': {'astrid_shot_composition': {'gain': 1, 'internal_timeline_revision_id': 'timeline-alpha-a', 'muted': False, 'occurrence_id': 'occ-1', ...}}, 'asset': 'alpha-audio', 'at': 0.0, 'clipType': 'media', ...}, 'audio.render_source')
+
+tests/editing_conformance/test_compile_contracts.py:78: AssertionError
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_compile_contracts.py::test_audio_vector[fade-in-needs-prepared-envelope-source]
+FAILED tests/editing_conformance/test_compile_contracts.py::test_audio_vector[fade-out-needs-prepared-envelope-source]
+2 failed, 27 deselected in 0.12s

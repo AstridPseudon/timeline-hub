@@ -1,3 +1,4 @@
-UTC: 2026-10-20T07:46:52Z (area lead)
-Done per orchestrator 07:38/07:43: test vw-m3-tab-minimal-capability-...-1020073136-18181 resumed with the SAME id (status+queue written from lead shell) -> dispatcher picked it up within seconds, now running. vw-m3-viewing-scene-caller-join cleared (no process, no diff; exit=1, INTERRUPTED=ABANDONED model-at-capacity, ended, running removed; log kept).
-Tripwire added: alert if 'model is at capacity' appears in >=2 recent logs; then MODELS.md Claude fallback. Disk 11 GB; hub fresh.
+UTC: 2026-10-20T08:16:27Z (area lead)
+106-link repair: PREPARED, NOT APPLIED. Dry run exact: 139 symlinks, 106 candidates (all self-ref pkg/pkg, ctime 06:59:42.32–43.05Z, none in READY manifest, includes the 3 audit samples), 33 .bin rejected. Compare script (lead/node-modules-repair-compare.py) now: missing 0 / changed 0 / added 106. Removal blocked by this machine's auto-mode permission classifier — awaiting owner approval; will rerun compare for 0/0/0 after.
+Culprit: vw-m3-agent-consume12 staging script (log ~L7790-7806) linked scope dirs into PEER, then ln -s through them. Manager told: shared deps read-only, overlays in own worktree, real scope dirs + leaf links only; polluted-graph results don't qualify.
+App 6-link repair: will do after vw-m3-tab-package-additions-audit proof, same permission dependency.
