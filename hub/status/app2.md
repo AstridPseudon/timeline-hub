@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T14:29:42Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | status age 12m -->
+<!-- app2 | 2026-10-20T14:30:19Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | status age 13m -->
 # app2 — 2026-10-20 14:16 UTC
 Milestone: M2 — rebuilding existing source handoffs for seven assigned legacy-writer retirements; no exit.
 Integrated: App remote tl/integration41fff23a2; current root candidate b1ef4b9b9 not integrated. No app2 product merge or test claim.
