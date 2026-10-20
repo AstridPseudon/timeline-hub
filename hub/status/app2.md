@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T15:14:19Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | status age 34m -->
+<!-- app2 | 2026-10-20T15:14:59Z | dispatcher heartbeat 11s | live 4 (sol 0, luna 4, other 0) | status age 35m -->
 # app2 — 2026-10-20 14:39 UTC
 Milestone: M2 — seven per-row handoffs ACK; native source refreshes and exact parity reviews; no row retired or exit.
 Integrated: App remote tl/integration41fff23a2; current rootb1ef4b9b9 unmerged. No app2 merge or durable qualification claim.
