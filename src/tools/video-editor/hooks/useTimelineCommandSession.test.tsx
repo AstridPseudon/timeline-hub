@@ -25,6 +25,7 @@ import { captureClipParamsEdit, submitClipParamsEdit } from '../commands/clipPar
 import { captureClipScalarEdit, submitClipScalarEdit } from '../commands/clipScalarGesture.ts';
 import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
 import { captureClipDeleteEdit, clipDeletePreview, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
+import { captureClipDeleteBatchEdit, submitClipDeleteBatchEdit } from '../commands/clipDeleteBatchGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -102,6 +103,79 @@ async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
 }
 
 describe('mounted timeline command session', () => {
+  it('fences the parent delete batch behind earlier saves and installs one complete native preview', async () => {
+    const raw = commandDocument();
+    const parent = raw.parent_revision.payload;
+    const clips = parent.clips as Array<Record<string, unknown>>;
+    clips.push({ ...structuredClone(clips[0]), id: 'y', at: 4 },
+      { ...structuredClone(clips[0]), id: 'keep', at: 7, from: null, opaque: { literal: 'x' } });
+    (parent.config as Record<string, unknown>).clips = structuredClone(clips);
+    raw.parent_revision.content_digest = fixtureDigest(parent);
+    const { env, hook, setLegacyClean } = await scoped(await environment(raw));
+    const port = hook.result.current.commands.clipDeleteBatchPort!;
+    const current = hook.result.current.commit.data!;
+    const members = [{ clipId: 'y', ownerRef: 'parent' }, { clipId: 'x', ownerRef: 'parent' }] as const;
+    setLegacyClean(false);
+    expect(() => captureClipDeleteBatchEdit(port, current, members)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const edit = captureClipDeleteBatchEdit(port, current, members);
+    setLegacyClean(false);
+    expect(() => submitClipDeleteBatchEdit(edit)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finish(edit.basis);
+    setLegacyClean(false);
+    expect(() => port.submit(prepared)).toThrow('earlier timeline saves');
+    expect(hook.result.current.commit.data).toBe(current);
+    setLegacyClean(true);
+    env.setFault('conflict');
+    const install = vi.spyOn(hook.result.current.commit, 'commitData');
+    act(() => port.submit(prepared));
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(install.mock.calls[0][0].config.clips.map((clip) => clip.id)).toEqual(['keep']);
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    const next = hook.result.current.commit.data!;
+    expect(next.config.clips).toEqual([current.config.clips[2]]);
+    expect(next.resolvedConfig.clips).toEqual([current.resolvedConfig.clips[2]]);
+    expect(next.dataLanes).toBe(current.dataLanes);
+    expect(next.editProjection).toMatchObject({ kind: 'local', base: {
+      revisionId: current.head!.headRevisionId, publicationId: current.head!.headPublicationId } });
+    expect(env.commits()).toHaveLength(1);
+    expect(env.commits()[0].body!.commands.map((command) => command.select)).toEqual(['parent/clip:y', 'parent/clip:x']);
+    hook.unmount();
+  });
+  it('recovers one complete native parent delete batch preview and exact pending request after remount', async () => {
+    const raw = commandDocument();
+    const parent = raw.parent_revision.payload;
+    const clips = parent.clips as Array<Record<string, unknown>>;
+    clips.push({ ...structuredClone(clips[0]), id: 'y', at: 4 });
+    (parent.config as Record<string, unknown>).clips = structuredClone(clips);
+    raw.parent_revision.content_digest = fixtureDigest(parent);
+    const env = await environment(raw);
+    const first = await mounted(env);
+    env.setFault('lost');
+    act(() => submitClipDeleteBatchEdit(captureClipDeleteBatchEdit(first.hook.result.current.commands.clipDeleteBatchPort,
+      first.hook.result.current.commit.data!, [{ clipId: 'y', ownerRef: 'parent' }, { clipId: 'x', ownerRef: 'parent' }])));
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('retry'));
+    const original = structuredClone(env.commits()[0]);
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    first.hook.unmount();
+    const second = await mounted(env);
+    expect(second.hook.result.current.commands.state.status).toBe('recovery');
+    env.setFault('busy');
+    await act(async () => { await second.hook.result.current.commands.recover(owner); });
+    expect(second.hook.result.current.commit.data!.config.clips).toEqual([]);
+    expect(second.hook.result.current.commit.data!.resolvedConfig.clips).toEqual([]);
+    expect(second.hook.result.current.commit.data!.editProjection).toMatchObject({ kind: 'local', base: { revisionId: 'r0', publicationId: 'p0' } });
+    expect(env.commits()[1]).toEqual(original);
+    env.setFault(null);
+    await act(async () => { await second.hook.result.current.commands.retry(); });
+    expect(env.commits()[2]).toEqual(original);
+    expect(second.hook.result.current.commands.state.status).toBe('saved');
+    expect(second.saveTimeline).not.toHaveBeenCalled();
+    expect(second.saveTimelineAtHead).not.toHaveBeenCalled();
+    expect(second.snapshotSaves).not.toHaveBeenCalled();
+    second.hook.unmount();
+  });
   it('exposes only explicit parent deletion and fences capture, finish and submit behind earlier saves', async () => {
     const { env, hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.clipDeletePort!;

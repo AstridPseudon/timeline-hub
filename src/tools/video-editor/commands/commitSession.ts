@@ -1,6 +1,8 @@
 import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
 import { captureClipDelete, executeClipDelete, finishClipDelete } from './clipDeleteCapture.ts';
 import { clipDeletePreview, type ClipDeleteCapturePort } from './clipDeleteGesture.ts';
+import { captureClipDeleteBatch, executeClipDeleteBatch, finishClipDeleteBatch } from './clipDeleteBatchCapture.ts';
+import { clipDeleteBatchPreview, type ClipDeleteBatchCapturePort } from './clipDeleteBatchGesture.ts';
 import { captureClipTrim, executeClipTrim } from './clipTrimCapture.ts';
 import { clipScalarPreview, type ClipScalarCapturePort } from './clipScalarGesture.ts';
 import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
@@ -414,6 +416,46 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview: localPreview }, localPreview, entry.basis);
     },
   };
+  const clipDeleteBatchPort: ClipDeleteBatchCapturePort = {
+    capture({ members, current }) {
+      assertReady();
+      for (const { clipId, ownerRef } of members) {
+        if (ownerRef !== 'parent' || clipDeletePort.resolveOwner({ clipId, current }) !== 'parent'
+          || current.config.clips.filter((clip) => clip.id === clipId).length !== 1) {
+          throw new Error('Delete batch requires original raw parent clip identities');
+        }
+      }
+      return freezeJson(json({ ...captureClipDeleteBatch(bundle, members), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<ClipDeleteBatchCapturePort['capture']>;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the delete batch');
+      const original = finishClipDeleteBatch(basis);
+      const result = executeClipDeleteBatch(bundle, original.commands);
+      const preview = clipDeleteBatchPreview(result.commands.map((command) => command.select!.slice('parent/clip:'.length)));
+      freezeJson(result.commands);
+      prepared.set(JSON.stringify(result.commands), { payload: {
+        commands: result.commands, before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { commands: result.commands, preview };
+    },
+    submit({ commands, preview }) {
+      assertReady();
+      assertFiniteJson(commands);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(commands);
+      const entry = prepared.get(key);
+      if (!commands.length || commands.some((command) => command.op !== 'clip.delete') || !entry
+        || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Delete batch was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Delete batch requires its exact native preview');
+      prepared.delete(key);
+      const localPreview = freezeJson(copy(preview));
+      enqueue({ ...entry.payload, preview: localPreview }, localPreview, entry.basis);
+    },
+  };
   function resolveOwnedClipRef(clipId: string, identity: Partial<CanonicalProjectedClipIdentity> | undefined,
     requestedOwner: string | undefined, refusal: string): string {
     const parentRef = `parent/clip:${clipId}`;
@@ -713,6 +755,7 @@ export async function createTimelineCommandSession(options: Options) {
     clipParamsPort,
     parentClipAddPort,
     clipDeletePort,
+    clipDeleteBatchPort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,
