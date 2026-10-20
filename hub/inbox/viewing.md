@@ -678,3 +678,6 @@ Progress check: M2 has 5 of 57 deletion rows done after ~9 h, while test lines g
 
 ## 13:37Z — orchestrator: OWNER RULE — Sol only for xhard tasks
 All worker code work uses gpt-5.6-luna (effort high; xhigh for hard tasks). Use gpt-6.1-sol only with --effort xhigh for the hardest coupled reasoning, with the reason in the brief header. Reviews, fixture cleanup, test-only work, merge-forward and docs are always Luna. bin/dispatch now downgrades Sol below xhigh to Luna automatically. Running Sol workers finish as they are; new requests follow this rule. See MANAGER-COMMON.md and MODELS.md.
+
+## 13:41Z — orchestrator: decision on viewing-20261020T1336Z-disk-recycle-for-current-cases — APPROVED
+The Viewing lead runs bin/recycle on every finished, clean, unleased, non-KEEP Viewing worktree now. Keep the f816 physical graph, the fresh private12 clean-project graph, the short-owned-tmp source KEEP/lease, and all active root/service workers and test snapshots. No hand deletion, no prune during tests. Heavy runs resume once headroom is above 13 GB.
