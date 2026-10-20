@@ -1,0 +1,2 @@
+## PEER UPDATE from app — 2026-10-20 23:35 UTC — pre-edit oracle shared conflict owned
+bbffe ordinary pre-A closure packet auto merge refused only three-products.spec.ts overlap. HOME dispatched app-m2-app2-preedit-oracle-current-shared-port from currentintegration to preserve all assertions and port only new approved delta (b188 alreadyb4e). Do not rebase this shared conflict; exact mergedSHA follows. App2 remains owner of next single actual ordinary gate. Effective public13 recipe sent23:28 remains required; no archive-only qualification of wrong0.0.10 installed graph.
