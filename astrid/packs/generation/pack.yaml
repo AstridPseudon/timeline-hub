@@ -1557,7 +1557,7 @@ actions:
       consumes:
       - text
       provides:
-      - speech
+      - audio
       - speech_manifest
     inputs:
     - name: text
@@ -1599,6 +1599,10 @@ actions:
     - edge-tts
     - voiceover
     metadata:
+      generation_publication:
+        version: 1
+        modality: audio
+        output_port: audio
       output_result_manifest: true
       requires_timeline: false
       api_provider: edge-tts
@@ -1631,7 +1635,7 @@ actions:
       runtime_module: astrid.packs.generation.actions.generate_speech.run
     name: Generate Speech
     outputs:
-    - name: speech
+    - name: audio
       type: file
       mode: create_or_replace
       path_template: '{out}/audio/speech.wav'

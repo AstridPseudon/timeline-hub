@@ -445,8 +445,8 @@ def runtime_synthesizer(client, project, *, generation_intent: Mapping[str, Any]
         manifest_row = next((r for r in artifacts if r.get("name") in {"speech_manifest", "manifest", "manifest.json"}
                              or r.get("output_port") in {"speech_manifest", "manifest"}
                              or str(r.get("path", "")).endswith("manifest.json")), None)
-        audio_row = next((r for r in artifacts if r.get("name") in {"speech", "generated_audio"}
-                          or r.get("output_port") in {"speech", "generated_audio"}
+        audio_row = next((r for r in artifacts if r.get("name") in {"audio", "speech", "generated_audio"}
+                          or r.get("output_port") in {"audio", "speech", "generated_audio"}
                           or str(r.get("path", "")).endswith("speech.wav")), None)
         if manifest_row is None or audio_row is None:
             raise VoiceoverSyncError("Completed speech run has no managed WAV/provenance outputs")
