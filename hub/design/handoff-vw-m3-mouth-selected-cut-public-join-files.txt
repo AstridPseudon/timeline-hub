@@ -1,0 +1,4 @@
+tests/packs/rendering/presenter_selected_cut_query.mjs
+tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+
+No production files changed. The private callers remain intentionally retained.

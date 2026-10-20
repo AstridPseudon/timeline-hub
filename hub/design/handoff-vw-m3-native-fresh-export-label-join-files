@@ -1,0 +1,4 @@
+astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
+astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+tests/packs/rendering/test_native_fresh_export_label.py

@@ -1,0 +1,9 @@
+# Worker patch artifact
+
+The exact repository patch is the uncommitted diff in the assigned worktree:
+
+    git diff -- tests/packs/rendering/presenter_selected_cut_query.mjs tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+
+It is intentionally kept as source changes in the worker worktree so the
+harness can commit the same two files without an independently generated
+patch becoming a second source of truth.

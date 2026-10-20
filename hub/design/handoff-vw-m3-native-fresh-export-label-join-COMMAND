@@ -1,0 +1,58 @@
+Source-only handoff. No central test submitted; no browser, socket or renderer launched.
+Run from /home/user/work/wt/vw-m3-native-fresh-export-label-join unless central supplies its source snapshot.
+
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+W="$O/workers/vw-m3-native-fresh-export-label-join"
+C="$O/design/handoff-vw-m3-native-fresh-export-label-join-controller.py"
+
+Offline Runtime source was extracted using Python tarfile(data) from read-only:
+  git -C /home/user/work/runtime archive 2c4ac180c2220bdad966bc01e95ad230e99ce26a
+  archive sha256 eed22a1b0d1af2045f823ec9f71dbd7cd862ba7935edfd5199171656e3ff1669
+Its extraction W/runtime-source and this worker's pytest failure scratch were removed at postflight.
+
+Exact executed commands/results:
+
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT="$W/runtime-source" PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider -o addopts= tests/packs/rendering/test_native_fresh_export_label.py -k 'not one_fresh_saved_frame' tests/packs/rendering/test_live_source_label_native.py -k 'not one_fresh_saved_frame and not retained_source_reaches_exact_final_root'
+# 20 passed, 3 deselected in 7.23s. Last -k is effective. No Root lifetime/browser tests executed.
+# Then added the narrowly required locator-metadata negative; its exact test:
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT="$W/runtime-source" PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider -o addopts= tests/packs/rendering/test_native_fresh_export_label.py -k 'locator_normalization'
+# 1 passed, 5 deselected in 3.95s.
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider -o addopts= tests/packs/rendering/test_fast_lane.py tests/packs/rendering/test_composed_frame_capture.py tests/packs/rendering/test_timeline_filmstrip_cards.py tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/rendering/test_timeline_offline_inspection.py tests/sdk/test_timeline_commit_provider.py::test_move_reload_and_inverse_import_no_renderer tests/sdk/test_timeline_capture_projection.py::test_capture_method_imports_and_runs_without_renderer_or_runtime tests/editing_conformance/test_recipe_scalar_commands.py::test_scalar_capture_and_save_import_no_renderer_or_runtime tests/editing_conformance/test_recipe_shot_set.py::test_shot_set_capture_and_save_import_no_renderer_or_runtime
+# Initial 117 passed / 1 failed in 17.43s. The existing minimal mocked builder omits snapshot_label;
+# corrected the NEW carry to preserve its existing fallback. No existing test changed.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider -o addopts= tests/packs/rendering/test_timeline_filmstrip_execution.py
+# Final affected file: 27 passed in 12.06s. Both runs report one existing Pillow deprecation warning.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m ruff check --no-cache tests/packs/rendering/test_native_fresh_export_label.py
+# All checks passed. On all three edited product files: 14 pre-existing diagnostics, exactly the
+# same (filename/code/message) multiset as git show HEAD:<file> fed through Ruff stdin. No new diagnostics.
+git diff --check
+# exit 0.
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -B -m pytest --collect-only -q -p no:cacheprovider -o addopts= tests/packs/rendering/test_native_fresh_export_label.py::test_one_fresh_saved_frame_exports_retained_revision
+# Exactly 1 test collected in 0.63s. It requests frame 0 only; actual capture NOT RUN.
+PYTHONDONTWRITEBYTECODE=1 python3 -B "$C" preflight
+# Final fingerprint d9319d4d96a382d466ae9182bf732a5842ea938e59c2b878a3cbaed7685e7382.
+# 3080 Agent files; full clean f816 peer graph 21455 entries; public12 all77 exact;
+# pinned Node executable; full Chrome155 tree255 + executable; Runtime2c4 exact archive;
+# shared Python source/toolchain (no bytecode); controller itself.
+# Offline controller guard was separately called via runpy.run_path(C)['capture'](Path.cwd(),{},b'',b'').
+# It refused BEFORE stage/setup/renderer: HostRemotionSession._start drops explicit Chrome155 selector.
+
+Literal future central command, manager review REQUIRED (NOT EXECUTED):
+  python3 -B "$C" capture --source "$PWD" --reviewed-sha256 d9319d4d96a382d466ae9182bf732a5842ea938e59c2b878a3cbaed7685e7382
+
+NOT READY: capture deliberately refuses on this base. Core execution must carry the EXISTING
+ASTRID_REMOTION_BROWSER_EXECUTABLE through HostRemotionSession._start; no browser alias/default fallback
+is permitted. Also review the producer/validator mismatch: run.py::_execute_remotion_locked always adds
+ASTRID_REMOTION_PROJECT_DIR to environment, while HostRemotionSession._validate_request excludes it.
+These are source-level findings, NOT observed browser failures. Any owner correction changes source
+fingerprints and requires renewed manager review. No new suite registration, grant, fake readiness,
+credentials, renderer double, factory or authority expansion is supplied by this task.
+
+The controller's capture body uses private copies of f816 node_modules/public12/venv, an owned Node,
+frozen Runtime2c4, private TMPDIR/cache/stage, real GenericPackHost materialization, real capability
+command discovery/dispatch, normal prepare_remotion_validation host/worker contexts and the original
+host renderer lease. Finally rechecks source/shared inputs and cleans its disposable realm/stage/cache.
+It never installs, edits shared dependencies or changes source/package versions.
