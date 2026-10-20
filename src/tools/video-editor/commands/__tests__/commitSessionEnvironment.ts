@@ -5,6 +5,8 @@ import { RUNTIME_SCHEMA_DIGEST } from '@/integrations/runtime/contract-metadata.
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, Transport } from '@/integrations/runtime/generated.ts';
 import { buildTimelineData } from '../../lib/timeline-data.ts';
+import { compileTimelinePatch } from '../../lib/timeline-patch.ts';
+import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import type { TimelineCommandBasis } from '../../data/DataProvider.ts';
 import { createCommitOutbox } from '../commitOutbox.ts';
 import { createTimelineCommandSession } from '../commitSession.ts';
@@ -46,13 +48,13 @@ export async function environment(initialDocument = document()) {
   let serverHead = h0;
   let fault: 'lost' | 'busy' | 'conflict' | 'unavailable' | 'refused' | 'validation' | 'authorization' | null = null;
   let pause: ReturnType<typeof deferred> | null = null;
-  const calls: { path: string; method: string; body?: CommitRequest; key?: string }[] = [];
+  const calls: { path: string; method: string; body?: CommitRequest; bodyText?: string; key?: string }[] = [];
   const accepted = new Map<string, CommitAcceptedMutation>();
   const previousDocuments = new Map<string, CanonicalDocument>();
   const transport: Transport = async (method, path, headers, body) => {
     const request = body ? JSON.parse(new TextDecoder().decode(body)) as CommitRequest : undefined;
     const key = headers['Idempotency-Key'];
-    calls.push({ path, method, body: request, key });
+    calls.push({ path, method, body: request, bodyText: body ? new TextDecoder().decode(body) : undefined, key });
     const ok = (value: unknown) => ({ status: 200, headers: {}, body: bytes(value) });
     if (path === '/v1/health') return ok({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: 'instance-session' });
     if (path === '/v1/handshake') return ok({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, actor_id: 'actor-1', realm_id: 'realm-1', scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'], capabilities: ['execution_binding.targeted.v1'] });
@@ -130,20 +132,27 @@ export async function environment(initialDocument = document()) {
   let current = await buildTimelineData(serverDocument.parent_revision.payload.config as never, { assets: {} }, undefined, 1, undefined,
     { projectId, timelineId, headRevisionId: 'r0', headPublicationId: 'p0' });
   const projected: TimelineCommandBasis[] = [];
-  const previews = vi.fn();
+  const applyPreview = (patch: TimelinePatch) => {
+    const compiled = compileTimelinePatch(patch, current);
+    if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
+    current = compiled.nextData;
+  };
+  const previews = vi.fn(applyPreview);
   const { outbox: outboxes, factory } = storage();
+  const project = vi.fn(async (basis: TimelineCommandBasis, patches: TimelinePatch[]) => {
+    projected.push(basis);
+    const parent = basis.canonicalDocument.parent_revision.payload;
+    current = await buildTimelineData({ ...parent.config as object, clips: parent.clips } as never, { assets: {} }, undefined,
+      1, undefined, { projectId, timelineId, headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId });
+    for (const patch of patches) applyPreview(patch);
+  });
   const mount = (basis = initial) => createTimelineCommandSession({ initial: basis, scope, outboxes,
     loadLatest: () => provider.loadTimelineCommandBasis(timelineId),
     send: (request, key) => provider.commitTimeline(request, key), preview: previews,
-    project: async (basis) => {
-      projected.push(basis);
-      const parent = basis.canonicalDocument.parent_revision.payload;
-      current = await buildTimelineData({ ...parent.config as object, clips: parent.clips } as never, { assets: {} }, undefined,
-        1, undefined, { projectId, timelineId, headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId });
-    }, changed: () => {},
+    project, changed: () => {},
   });
   const move = (session: Awaited<ReturnType<typeof mount>>, on: number) => submitClipMove(captureClipMove(session.port, current, 'x'), on);
-  return { provider, transport, initial, outboxes, factory, current: () => current, calls, projected, mount, move, previews,
+  return { provider, transport, initial, outboxes, factory, current: () => current, calls, projected, project, mount, move, previews,
     setFault: (value: typeof fault) => { fault = value; },
     pause: () => { pause = deferred(); return pause; },
     external: async (change: (document: CanonicalDocument) => void) => {
