@@ -53,7 +53,6 @@ def test_windows_installer_lock_stays_outside_program_and_workspace(tmp_path, mo
     backend.service.recorded.return_value = {}
     monkeypatch.setattr(cli, "Backend", Mock(return_value=backend))
     data = platform.data_root()
-    monkeypatch.setattr(cli, "find_data_root", lambda *_: (data, False))
     monkeypatch.setattr(cli, "current", lambda _: SimpleNamespace(python=Path(__file__)))
     installer = Mock()
     monkeypatch.setattr(cli, "Installer", Mock(return_value=installer))
@@ -62,7 +61,9 @@ def test_windows_installer_lock_stays_outside_program_and_workspace(tmp_path, mo
     unlock = Mock()
     monkeypatch.setattr(platform, "unlock_file", unlock)
 
-    args = ["--root", str(root)] if custom_root else []
+    args = ["--data-root", str(data)]
+    if custom_root:
+        args.extend(["--root", str(root)])
     assert cli.main(args) == 0
     lock = local / "Astrid Installer" / "astrid-install.lock"
     assert admitted == [log_dir, lock.parent, root]
@@ -99,13 +100,12 @@ def test_windows_installer_does_not_bypass_existing_directory_validation(tmp_pat
     backend = Mock()
     backend.service.recorded.return_value = {}
     monkeypatch.setattr(cli, "Backend", Mock(return_value=backend))
-    monkeypatch.setattr(cli, "find_data_root", lambda *_: (tmp_path / "workspace", False))
     monkeypatch.setattr(platform, "lock_file", Mock())
     monkeypatch.setattr(platform, "unlock_file", Mock())
     installer = Mock()
     monkeypatch.setattr(cli, "Installer", installer)
 
-    assert cli.main(["--root", str(root)]) == 1
+    assert cli.main(["--root", str(root), "--data-root", str(tmp_path / "workspace")]) == 1
     installer.assert_not_called()
     assert not (root / "install.json").exists()
 
@@ -206,13 +206,12 @@ def test_unix_installer_retains_original_per_user_lock(tmp_path, monkeypatch, sy
     backend = Mock()
     backend.service.recorded.return_value = {}
     monkeypatch.setattr(cli, "Backend", Mock(return_value=backend))
-    monkeypatch.setattr(cli, "find_data_root", lambda *_: (tmp_path / "workspace", False))
     monkeypatch.setattr(cli, "current", lambda _: SimpleNamespace(python=Path(__file__)))
     monkeypatch.setattr(cli, "Installer", Mock())
     monkeypatch.setattr(platform, "lock_file", Mock())
     monkeypatch.setattr(platform, "unlock_file", Mock())
 
-    assert cli.main(["--root", str(tmp_path / "program")]) == 0
+    assert cli.main(["--root", str(tmp_path / "program"), "--data-root", str(tmp_path / "workspace")]) == 0
     original = default_program_root(Path.home(), system).parent / "astrid-install.lock"
     assert original.is_file()
     assert not (tmp_path / "logs" / "installer").exists()
