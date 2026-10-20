@@ -1228,6 +1228,187 @@
               "minimum": 0,
               "maximum": 1,
               "description": "Raw visual opacity fraction in the inclusive range 0..1."
+            },
+            "x": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "y": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "width": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "height": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "cropTop": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "cropBottom": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "cropLeft": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "cropRight": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "transition": {
+              "type": "object",
+              "required": [
+                "type",
+                "duration"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "duration": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "revision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  }
+                },
+                "id": false,
+                "durationFrames": false,
+                "align": false,
+                "incomingPolicy": false
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/JSON"
+              }
+            },
+            "elementRef": {
+              "type": "object",
+              "required": [
+                "id",
+                "kind",
+                "revision"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kind": {
+                  "const": "transition"
+                },
+                "revision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "packId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "entrance": {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "intensity": {
+                  "type": "number"
+                },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  }
+                },
+                "duration": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Named slot patch. Preserve unmentioned members. Params may only echo unchanged stored values until an exact descriptor binding exists."
+            },
+            "exit": {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "intensity": {
+                  "type": "number"
+                },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  }
+                },
+                "duration": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Named slot patch. Preserve unmentioned members. Params may only echo unchanged stored values until an exact descriptor binding exists."
+            },
+            "continuous": {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "intensity": {
+                  "type": "number"
+                },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Named slot patch. Preserve unmentioned members. Params may only echo unchanged stored values until an exact descriptor binding exists."
+            },
+            "effects": {
+              "type": "object",
+              "minProperties": 1,
+              "properties": {
+                "fade_in": {
+                  "type": "number"
+                },
+                "fade_out": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Patch numeric fade-map leaves. Ordered legacy fade arrays are preserved, never selected by position or converted implicitly."
             }
           },
           "additionalProperties": false
@@ -1239,10 +1420,25 @@
               "hold",
               "asset",
               "transition",
-              "opacity"
+              "opacity",
+              "x",
+              "y",
+              "width",
+              "height",
+              "cropTop",
+              "cropBottom",
+              "cropLeft",
+              "cropRight",
+              "entrance",
+              "exit",
+              "continuous",
+              "effects"
             ]
           },
           "uniqueItems": true
+        },
+        "schema_source": {
+          "$ref": "#/$defs/DocumentPin"
         }
       },
       "required": [
@@ -1266,7 +1462,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; explicitly remove hold, asset, incoming transition or opacity. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set source hold, opacity as a raw 0..1 fraction, flat position leaves in canvas pixels/edge fractions, a canonical incoming transition (elementRef allowed only with a matching transition SET), or named effect slots and fades. Clear removes declared field presence, never sets null/empty. Asset assignment requires occurrence.swap-media. Selected pack parameters require an exact schema_source."
     },
     "ClipTrimArgs": {
       "type": "object",

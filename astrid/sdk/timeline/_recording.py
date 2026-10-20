@@ -17,6 +17,20 @@ def selection(state, key, owner, members=()):
     boundaries = None
     if key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
+    elif key == 'transition.predecessor':
+        from .capture import number
+
+        target = state.entity(owner)
+        scope = owner.rsplit('/', 1)[0]
+        lane = [ref for ref in order(state, scope, 'clip')
+                if state.entity(ref).get('track') == target.get('track')]
+        lane.sort(key=lambda ref: number(state.entity(ref).get(
+            'at', number(state.entity(ref).get('at_ms', 0), 'clip.at_ms') / 1000), 'clip.at'))
+        index = lane.index(owner)
+        return {'key': key, 'query_version': 1, 'owner': owner,
+                'members': lane[max(0, index - 1):index], 'order': lane,
+                'boundaries': [scope + '/track:' + str(target.get('track'))],
+                'policy': 'guard-membership'}
     elif key in KINDS:
         result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
                   else order(state, owner, KINDS[key]))

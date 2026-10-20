@@ -157,3 +157,26 @@ def test_hold_captured_after_move_refuses_changed_basis_without_recapture(ref, o
     with pytest.raises(CommitRejected):
         realm.call([sealed])
     assert before == (realm.head, realm.entries, realm.documents)
+
+
+def test_incoming_transition_set_provider_keeps_claims_reloads_and_roundtrips():
+    original = app_document()
+    realm = DetachedRealm(original)
+    base = copy.deepcopy(realm.head)
+    value = {'type': 'crossfade', 'duration': 20, 'params': {'future': [None, False, 2.0]}}
+    command = capture_clip_set(current(realm), PARENT, values={'transition': value})
+    realm.call([capture_clip_set(current(realm), CHILD, values={'hold': 4})])
+    before = copy.deepcopy(realm.documents[realm.head['revision_id']])
+    accepted = realm.call([command], base=base)
+    assert accepted['data']['status'] == 'rebased'
+    assert accepted['data']['commands'] == [command]
+    assert clip(current(realm), PARENT)['transition'] == value
+    assert clip(current(realm), CHILD)['hold'] == 4
+    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == before
+    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
+    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
+    realm.call([capture_clip_set(current(realm), PARENT, values={'transition': value})])
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([accepted['receipt']['receipt_id']])])
+    assert error.value.failure['details']['reason'] == 'intervening_write'
