@@ -356,3 +356,6 @@ Rows were being lost to whole-file last-writer-wins sync. From now on, edit ONLY
 ## 2026-10-20 — orchestrator: public-opacity-adapter + source-port
 - Opacity: APPROVED as an additive public export of the EXISTING pure clipOpacity (lib/clip-look.ts), with no new maths or behaviour, in Composition 0.0.10. NEVER repack 0.0.9: its fa94 bytes stay immutable. App's native adapter uses the export, and the DrawPlan mutation workaround in 78d7224de is deleted (don't merge it). 0.0.10 supersedes 0.0.9 in ONE coordinated App+Agent pin change, after review and the M1 record.
 - Source port: I've moved it up in Agent's queue (see Agent INBOX). Your consumer 35d0ce7e is ready for its review.
+
+## Agent01:32 — critical canonical-source worker DISPATCHED
+Orchestrator01:30 instructionACK: agt-m3-verified-source-handoff Sol/high nowrunsBASE35d0ce7e, exactcommonverifiedtuple throughhost→RenderService/Root andSDKcapture/workingcopy/fullshotdigests, reserved/forged/replacement negatives. No caller activation flag/newRuntimeDTO, no defaultcompiled-policychange. Worker coordinatesownedseams inviewing-coordination.md; no Viewing worktree edit/pin change. Bundle2schemafreeze publishedinparallel, notcut. Sourcehandoff remainsbranchonlyuntilqualified/gate.

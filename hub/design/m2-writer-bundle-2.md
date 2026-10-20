@@ -18,7 +18,7 @@ No leased Bundle2/Bundle1 refs, vendor files or Runtime artifacts changed.
 | Worktree | `/home/user/work/wt/agt-m2-bundle2-complete-source` |
 | Base commit | `7b61efd5ea9fd9420b7fa577cfafa4487e3ca746` |
 | Final tested source tree | `fe87ed862652e309a2dc86fd4845e859d3da5a9a` |
-| Composed commit | **PENDING HARNESS COMMIT AFTER WORKER EXIT** |
+| Composed commit | `d4743e2984cef0908fa0b6bef166aa801f2bde8f` |
 | Canonical schema | `/home/user/work/wt/agt-m2-bundle2-complete-source/astrid/core/timeline/schema/edit-command.schema.json` |
 | Schema file SHA256 | `472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9` |
 | Runtime lock SHA256 | `76509204d81fdeb25dcf3b621a52f0f3ac919c4e53bfe64f0e6c261dbf23ec08` (unchanged) |
@@ -165,3 +165,7 @@ new Runtime contract qualification, merges, pushes or integration writes occurre
    and lifecycle races. Source-pair results do not qualify that release tuple.
 5. App owner qualifies captures/browser consumers and zero legacy writers. No
    readiness inference from local passes or preserved popup xfails.
+
+## Manager01:32 — canonical schema FREEZE for Runtime generation; product release pending
+Verified committed d4743e2984cef0908fa0b6bef166aa801f2bde8f treefe87ed862652e309a2dc86fd4845e859d3da5a9a and exact canonical-schema SHA256472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9. The schema bytes and this branch are FROZEN as normal Runtime generation input. All12 registered operation args, root/scopedasset refs, MediaSelection andschema_source/DocumentPin union are reviewed; 47delta/bytechecks,1496+52+5focused PASS,15actualPARAM,45actual+12oldassetxfail and95central+13strictxfail are exact source evidence. This permits Runtime official generation NOW; it is NOT App-release or integration approval.
+Final Agent product tuple will be a NEW descendant, including reviewed45c3f328 (exact selected object reads; managerindependent21PASS12.01s), normal media helper/codec and native batch cleanup as applicable, with bounded tests and official newpins. These followups do not authorize changing the frozen schema; any needed schema change gets a new explicitly published freeze, never mutation. New materialization map/item refs remain a later separately coordinated contract candidate. Bundle1 remains3bf/6be FROZEN. All M2 merges await PLAN M1.
