@@ -49,6 +49,16 @@ def _pin(value):
     return {key: value[key] for key in ("revision_id", "publication_id")}
 
 
+def _native_command(command):
+    from astrid.sdk.timeline.commands import operations, validate_command
+
+    command = copy.deepcopy(command)
+    validate_command(command)
+    if command["op"] not in operations():
+        raise TimelineEditError("queue/commit requires a registered native operation")
+    return command
+
+
 def _ack(result, body, flight, identity):
     """Check acceptance identity, leaving full closure validation to Runtime."""
     from astrid.sdk.timeline.commands import validate_command
@@ -173,13 +183,36 @@ class TimelineSession:
 
         return self._queue(lambda state: capture_move(self._bundle(state), select, on))
 
+    def queue(self, command):
+        """Capture native intent over the original base plus pending commands.
+
+        Supplied capture claims are verified by execute, never refreshed.
+        """
+        from astrid.sdk.timeline.commands import execute
+
+        command = _native_command(command)
+        return self._queue(lambda state: execute(self._bundle(state), [command]).commands[0])
+
+    def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
+        """Capture and flush one native command, or retry its original flight."""
+        from astrid.sdk.timeline._command_state import equal
+        from astrid.sdk.timeline.commands import execute
+
+        command = _native_command(command)
+        self._queue(lambda state: execute(self._bundle(state), [command]).commands[0],
+                    lambda pending: len(pending) == 1 and all(
+                        equal(pending[0].get(key), value) for key, value in command.items() if key != "intent")
+                    and all(equal(pending[0]["intent"].get(key), value)
+                            for key, value in command.get("intent", {}).items()))
+        return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+
     def _queue(self, capture, matches=None):
         while True:
             with self.outbox.locked():
                 state = self._state()
                 if matches is not None and state["pending"]:
                     if not matches(state["pending"]):
-                        raise TimelineEditError("pending intent differs; flush the original request before another move")
+                        raise TimelineEditError("pending intent differs; flush the original request before another edit")
                     return copy.deepcopy(state["pending"][0])
             command = capture(state)
             with self.outbox.locked():
