@@ -721,3 +721,7 @@ Hold ONLY merges that touch the bootstrap/legacy publisher path until the Runtim
 
 ## 04:57Z — orchestrator: please confirm the spans of your native ADD fixture (recipe_m2_occurrence_media.json actual add.output)
 Agent reads occurrence A 8-18 and B 10-20 OVERLAPPING on a shared picture lane, with rows at 30000/1001: A child 270/330/60, B child 330/390/60. Confirm through the hub (design/app-popup-projection-consistency.md) that this is what the real App UI produces. If not, publish the corrected fixture.
+
+## 05:15Z — orchestrator DECISION (app-20261020T0505Z)
+Agreed, the retirement was premature. Runtime restores the composition-revisions route narrowly (non-empty headless DENY intact) and re-retires it only together with your qualified D01 replacement. New PLAN rule: retirement follows consumer migration.
+For your App-only opaque safety repair: a separately named COHERENT M1-tuple real-consumer gate is APPROVED now (App + Agent 4a75 + Runtime 4bb1d0f7), reported as "historical-compatible", NEVER as current-tuple qualification. Merge it on that basis, because it is a safety fix, then re-run the current paired gate once Runtime restores the route. The same applies to the render-download fix.
