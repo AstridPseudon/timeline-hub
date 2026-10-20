@@ -1,0 +1,89 @@
+{
+  "artifacts": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-TREE.tar.gz": {
+      "bytes": 63765389,
+      "sha256": "307a6bfc41528207cdde1aa429067a49ffe514e71073783554148d79627f5533"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-blobs.json": {
+      "bytes": 677172,
+      "sha256": "a2dfa518520fb88d0379f3fe20dca094e477d0e19cfb2eb99233bfc4fb27a856"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-caller-only.patch": {
+      "bytes": 43931,
+      "sha256": "ebe571848275f7a7181a7e005cd3595ee8b6d254fcb114741e4f7f4710cf5397"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-mainpair.patch": {
+      "bytes": 3794313,
+      "sha256": "becf4a4224bd417ce3ad299ff0326620b92d88d749e7e8bc0282cca9cdfc58c6"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-prerequisite.patch": {
+      "bytes": 70304,
+      "sha256": "a37e0da0be03439df1b3ddbab40727c37c046e03b533b171839db74cc2dc3501"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-scope.patch": {
+      "bytes": 114301,
+      "sha256": "3a2cde22fc6bb979e96bd64cd0efc958a626f9e7e223a00f57e3a6e51a7bd03e"
+    }
+  },
+  "base_HEAD": "43d567f9d972386dc4cf585fbacc3ad9afc56bdd",
+  "base_tree": "a25a5d234cde3645a4aff967baa54ae3359c8057",
+  "caller_and_portable_HTTP_exact_frozen_bytes": true,
+  "caller_paths": [
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py",
+    "tests/packs/rendering/test_normal_audio_run.py",
+    "tests/packs/rendering/test_normal_audio_http.py"
+  ],
+  "capture_AST_unchanged": true,
+  "current_public12_sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+  "executor_AST_exact_frozen_caller": true,
+  "extent_paths": [
+    "astrid/core/rendering/service.py",
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "remotion/src/Root.tsx",
+    "remotion/tests/root-metadata.test.cjs",
+    "tests/packs/rendering/test_live_scene_composition.py",
+    "tests/packs/rendering/test_native_layer_extent.py",
+    "tests/packs/rendering/test_remotion_layer_tail_compat.py"
+  ],
+  "extent_plus_current_kernel_tree": "3e26c4a33f4799cfaa83237462c40dac5fa5cb81",
+  "extent_source": "5d0f1ddcad54936b36cedf1d89bf34f45fa612b5",
+  "file_count": 3033,
+  "frozen_final_tree": "303452fe7aa075d8451f641f577db7dcd0b74ca2",
+  "mainpair_replay_tree_equal": true,
+  "origin_main": "a411628f8fd6129f9c58c332019b56769d997384",
+  "origin_main_tree": "e0ca791bb8adbf11e25e0e97843aaf246a04f965",
+  "prerequisite_then_caller_replay_tree_equal": true,
+  "unchanged_runner_lint": [
+    {
+      "code": "I001",
+      "count": 2,
+      "message": "Import block is un-sorted or un-formatted"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "message": "`select` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "message": "`signal` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "message": "`astrid.core.audit.AuditContext` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "message": "`astrid.core.rendering.publication.publish_render_result` imported but unused"
+    },
+    {
+      "code": "F822",
+      "count": 1,
+      "message": "Undefined name `render` in `__all__`"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "base": "667498cc49b4ec2b1ccd3a515eb87311c5126c93",
+  "reviewed_head": "877b7f33eb5fc8afe035d984d976683702819101",
+  "same_as_candidate_branch": true,
+  "added_test_config_files": 31,
+  "all_delta_hashes_match": true,
+  "private_test_config_copies_byte_equal": true,
+  "product_and_pins_diff": "empty",
+  "original640_media_and_base_config": "byte-identical to 4360c759",
+  "decoder_probe_buffer_block": "byte-identical to 4360c759",
+  "baseline_harness": "byte-identical to 667498cc",
+  "node_modules_and_scope_parents": "real private directories; resolved read-only package leaf links",
+  "worktree_status": ""
+}

@@ -1,0 +1,17 @@
+{
+  "producer_sha": "b6ec4922abebe0672cb7115f073c1ab555870fa1",
+  "producer_tree": "303452fe7aa075d8451f641f577db7dcd0b74ca2",
+  "base": "43d567f9d972386dc4cf585fbacc3ad9afc56bdd",
+  "extent": "5d0f1ddcad54936b36cedf1d89bf34f45fa612b5",
+  "source_archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/candidate-source.tar",
+  "archive_sha256": "c0e7e786f221501fa2afeac8e0a9f38027fed16c316b4751e014d5dc70cbd6ae",
+  "blobs": 3033,
+  "caller_only_paths": [
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py",
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "tests/packs/rendering/test_normal_audio_http.py",
+    "tests/packs/rendering/test_normal_audio_run.py"
+  ],
+  "caller_patch_sha256": "734f85185825c2fda1b51a705d5b4dcf1a9dd4cdcb7b7f254341336e77a6b01d",
+  "protected_all_other_paths_equal": true
+}

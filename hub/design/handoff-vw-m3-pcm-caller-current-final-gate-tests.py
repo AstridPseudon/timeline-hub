@@ -56,19 +56,22 @@ env.update(PYTHONPATH=str(source), PYTHONDONTWRITEBYTECODE='1',
            ASTRID_NODE_EXECUTABLE=NODE, ASTRID_REMOTION_PROJECT_DIR=str(project),
            ASTRID_TEST_NODE_MODULES=str(project/'node_modules'),
            ASTRID_COMPOSITION_TEST_NODE_MODULES=str(project/'node_modules'),
-           NODE_PATH=str(project/'node_modules'), ROOT_SOURCE_DIR=str(source/'remotion/src'),
+           ROOT_SOURCE_DIR=str(source/'remotion/src'),
            PATH=str(Path(NODE).parent)+':'+env['PATH'])
 pytest = [PY, '-B', '-m', 'pytest', '-q', '-o', 'addopts=', '-p', 'no:cacheprovider', '--tb=short']
 rows = []
 
 def run(label, command):
+    child_env = dict(env)
+    if label == 'root':
+        child_env['NODE_PATH'] = str(project/'node_modules')
     temp = W / ('tmp-'+tree+'-'+label)
     if 'pytest' in command:
         command = command + ['--basetemp='+str(temp)]
     log = Path(str(P)+'-'+tree+'-'+label+'.log')
     with log.open('w') as out:
-        result = subprocess.run(command, cwd=source, env=env, stdout=out, stderr=subprocess.STDOUT)
-    rows.append(dict(label=label, command=command, cwd=str(source), environment={k:env[k] for k in ['PYTHONPATH','ASTRID_NODE_EXECUTABLE','ASTRID_REMOTION_PROJECT_DIR','ASTRID_TEST_NODE_MODULES','ASTRID_COMPOSITION_TEST_NODE_MODULES','NODE_PATH','ROOT_SOURCE_DIR','PATH']}, exit=result.returncode, log=str(log)))
+        result = subprocess.run(command, cwd=source, env=child_env, stdout=out, stderr=subprocess.STDOUT)
+    rows.append(dict(label=label, command=command, cwd=str(source), environment={k:child_env.get(k) for k in ['PYTHONPATH','ASTRID_NODE_EXECUTABLE','ASTRID_REMOTION_PROJECT_DIR','ASTRID_TEST_NODE_MODULES','ASTRID_COMPOSITION_TEST_NODE_MODULES','NODE_PATH','ROOT_SOURCE_DIR','PATH']}, exit=result.returncode, log=str(log)))
     Path(str(P)+'-'+tree+'-results.json').write_text(json.dumps(rows, indent=2)+'\n')
     print(tree, label, result.returncode, '\n'+'\n'.join(log.read_text().splitlines()[-12:]), flush=True)
     if temp.exists():
@@ -85,7 +88,19 @@ run('paired', pytest+['tests/packs/rendering/'+name for name in files]+['-k','no
 run('root', [NODE,str(source/'remotion/tests/root-metadata.test.cjs')])
 run('service', pytest+['tests/core/rendering/test_service.py','-k','window_timeline or segment_request'])
 if tree == 'candidate':
+    run('imports', [PY,'-B','-c', "import astrid, tests, astrid.core.rendering.service as s; from astrid.packs.rendering.rendering.renderers.remotion import run; from pathlib import Path; root=Path.cwd(); paths=[Path(x.__file__).resolve() for x in [astrid,tests,s,run]]; assert all(p.is_relative_to(root) for p in paths),paths; print(paths)"])
     run('http-portability', pytest+['tests/packs/rendering/test_normal_audio_http.py','-k','project_dir_'])
     run('native-node', [NODE,str(project/'tests/normal-audio-native-sources.test.mjs')])
     run('normal-node', [NODE,str(project/'tests/normal-audio-sources.test.mjs')])
+    run('independent', pytest+[str(P)+'-probe.py'])
+    run('m2', pytest+['tests/editing_conformance/test_compile_contracts.py',
+                      'tests/timeline/test_shot_composition_projection.py',
+                      'tests/core/timeline/test_shot_composition_projection_volume.py',
+                      'tests/timeline/test_authoring_bundle.py::test_full_authored_field_edits_compile_without_normalizing_opaque_fields',
+                      'tests/timeline/test_authoring_bundle.py::test_placement_edits_without_shared_projection_semantics_fail_before_publish',
+                      'tests/timeline/test_authoring_bundle.py::test_publish_uses_one_compilation_and_returns_complete_mapping',
+                      'tests/timeline/test_authoring_bundle.py::test_independent_unique_shot_reuses_untouched_revision_and_direct_edits_compile_identically',
+                      'tests/core/timeline/test_source_role_tracks.py',
+                      'tests/timeline/test_timeline_characterization.py'])
+    run('ruff', [PY,'-B','-m','ruff','check','--no-cache','astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py','tests/packs/rendering/test_normal_audio_run.py','tests/packs/rendering/test_normal_audio_http.py'])
 sys.exit(any(row['exit'] != 0 for row in rows))

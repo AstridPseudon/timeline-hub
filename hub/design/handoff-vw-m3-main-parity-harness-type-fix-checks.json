@@ -1,0 +1,35 @@
+{
+  "staging": 667,
+  "source": "Main refresh parity port",
+  "integration_claim": false,
+  "scope": "App test-only gate",
+  "base_commit": "877b7f33eb5fc8afe035d984d976683702819101",
+  "changed_files": [
+    "tests/e2e/local/support/harness.ts"
+  ],
+  "checks": [
+    {
+      "command": "npx tsc --noEmit --pretty false --target ES2020 --useDefineForClassFields --lib ES2020,DOM,DOM.Iterable --module ESNext --moduleResolution bundler --allowImportingTsExtensions --isolatedModules --moduleDetection force --strict --skipLibCheck --jsx react-jsx --types node tests/e2e/local/support/harness.ts",
+      "result": "pass"
+    },
+    {
+      "command": "npx eslint tests/e2e/local/support/harness.ts --max-warnings 0",
+      "result": "pass"
+    },
+    {
+      "command": "node --import tsx --test tests/e2e/timeline/viewing-parity/harness.test.ts tests/e2e/timeline/viewing-parity/canvas.test.ts",
+      "result": "pass: 2 suites, 0 failures"
+    },
+    {
+      "command": "before/after TypeScript transpilation and compositionPublication JSON comparison",
+      "result": "pass: transpiled JavaScript identical; normalized runtime JSON identical"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "not_run": [
+    "browser, socket, render, product, full, and network suites"
+  ]
+}

@@ -1,0 +1,94 @@
+[
+  {
+    "label": "paired",
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--tb=short",
+      "tests/packs/rendering/test_scene_source_carry.py",
+      "tests/packs/rendering/test_live_scene_composition.py",
+      "tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme",
+      "tests/packs/rendering/test_remotion_native_window.py",
+      "tests/packs/rendering/test_native_layer_extent.py",
+      "tests/packs/rendering/test_remotion_capture_scene_props.py",
+      "tests/packs/rendering/test_remotion_layer_tail_compat.py",
+      "tests/packs/rendering/test_normal_audio_sources.py",
+      "tests/packs/rendering/test_normal_audio_source_phase.py",
+      "-k",
+      "not real_render",
+      "--basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/tmp-baseline-paired"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline",
+      "ASTRID_NODE_EXECUTABLE": "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "ASTRID_REMOTION_PROJECT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/audio-project",
+      "ASTRID_TEST_NODE_MODULES": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/audio-project/node_modules",
+      "ASTRID_COMPOSITION_TEST_NODE_MODULES": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/audio-project/node_modules",
+      "NODE_PATH": null,
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline/remotion/src",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/root/.codex/tmp/arg0-linux/codex-arg0EwXsuS:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-final-gate-baseline-paired.log"
+  },
+  {
+    "label": "root",
+    "command": [
+      "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline/remotion/tests/root-metadata.test.cjs"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline",
+      "ASTRID_NODE_EXECUTABLE": "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "ASTRID_REMOTION_PROJECT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/audio-project",
+      "ASTRID_TEST_NODE_MODULES": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/audio-project/node_modules",
+      "ASTRID_COMPOSITION_TEST_NODE_MODULES": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/audio-project/node_modules",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/audio-project/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline/remotion/src",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/root/.codex/tmp/arg0-linux/codex-arg0EwXsuS:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-final-gate-baseline-root.log"
+  },
+  {
+    "label": "service",
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--tb=short",
+      "tests/core/rendering/test_service.py",
+      "-k",
+      "window_timeline or segment_request",
+      "--basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/tmp-baseline-service"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline",
+      "ASTRID_NODE_EXECUTABLE": "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "ASTRID_REMOTION_PROJECT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/audio-project",
+      "ASTRID_TEST_NODE_MODULES": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/audio-project/node_modules",
+      "ASTRID_COMPOSITION_TEST_NODE_MODULES": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/audio-project/node_modules",
+      "NODE_PATH": null,
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline/remotion/src",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/root/.codex/tmp/arg0-linux/codex-arg0EwXsuS:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-final-gate-baseline-service.log"
+  }
+]
