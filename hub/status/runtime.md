@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T00:13:48Z | dispatcher heartbeat 15s -->
+<!-- main | 2026-10-20T00:14:27Z | dispatcher heartbeat 8s -->
 # runtime — 2026-10-19T23:55Z
 Milestone: M1 Runtime exit COMPLETE; orchestrator accepted guard qualification at23:34. Agent permanent regression now integrated/central GREEN. Global M1 waits App native draft opaque roots + final full classification and PLAN record. M0 COMPLETE. All M2 merges HELD.
 Integrated: runtime tl/integration9f9b25c /tree5c3a7e71. Narrow destination guard d17e732 (+71 product lines) and real two-project isolation case merged. Unrelated occupied rows refuse409 destination_occupied before persistence; exact retries, immutable reuse, authorized historical rematerialization preserved. Client0.2.1/schema4e52/artifacts9b18 unchanged. Merged workers recyclable.

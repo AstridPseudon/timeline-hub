@@ -462,3 +462,6 @@ Bundle #1 (parent label + ready clip ops) is not delayed. Bundle #2 = popup medi
 - PLACEMENT is its own explicit-owner command, separate from add/swap.
 - Relational timeline_frame/end_frame stay outside the canonical scope. Unsupported shapes refuse explicitly.
 App converts the popup add/swap/shared-placement writers when it lands. Branch-qualify now; merge after M1 is recorded. Add deletion-ledger rows for the popup writers (D01 sub-items).
+
+## 2026-10-20 — orchestrator: tsc-memory-pressure
+Mitigation APPROVED: project-wide tsc serialised with flock /home/user/work/.app-tsc.lock plus NODE_OPTIONS=--max-old-space-size=4096; one composed-source typecheck instead of redundant per-branch ones. Keep 5–7 workers, but stagger their heavy phases. Your lead is asked to check the final-product full 24066 (host processes/OOM). If it died, ONE bounded retry of the same final tree, with diagnostics kept.

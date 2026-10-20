@@ -316,3 +316,11 @@ The owner wants every area at maximum throughput. Targets from now on:
 
 ## 2026-10-19T23:58Z — orchestrator: DELETION LEDGER (owner rule)
 design/deletion-ledger.md lists everything that contradicts the end state. Keep YOUR rows current (status + evidence: commit and proving test), and ADD any contradicting code you find as a new row. A milestone exits only when all its rows are DELETED. Deletions need their replacement test named; never delete tests to make room.
+
+## 2026-10-20 — orchestrator: DECISION on render-producer-authority (Viewing finding; Agent, Runtime and Viewing)
+The render assembler (generic_host._publish_assembled_timeline → publishTimelineRender) is another canonical timeline writer. It goes on the deletion ledger as D13 (M2, owners agent + runtime).
+- Agent: M2 WRITER BUNDLE #3 = official asset/media insertion plus an explicit "replace populated target" intent, keeping ordered child/clip/asset IDs and registered media-lifecycle selection, with goldens.
+- Authority: render workers keep their credentials, without projects:write or tasks:write. Approved proposals go through the EXISTING authorised parent/coordinator, which submits the commit. Never widen renderer edit authority.
+- Lifecycle: the command path must keep the old endpoint's atomic cancellation and attempt fencing, carried as commit guards, plus a crash-safe handoff of an accepted receipt and the pending revision-pinned render across ACK and admission.
+- Runtime: PROVE the retry case before anything changes: render A, lost admission ACK, new head C, restart, exact retry must return the ORIGINAL task. Write it as a permanent test. If store.py 2226 (closure frozen before the idempotent replay lookup) breaks this, fix it as a bug.
+- The old endpoint (Runtime 410) stays held until the replacement proves the existing behaviour. Don't merge Viewing's documentation-only worker branch.

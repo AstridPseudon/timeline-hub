@@ -18,3 +18,6 @@ Your manager copied the new tools at 20:20 but can't restart the daemon from its
 
 ## 2026-10-19 23:30Z — lead: MAX SPEED
 The owner wants max throughput. Every 30 minutes, check that your manager keeps 5–7 workers running (heavy cap stays 2). If it's idle without a stated blocker, nudge it, or restart it if it has exited. Use Haiku or Sonnet for chores.
+
+## 2026-10-20 00:10Z — ACTION (lead): check that the final M1 full is healthy
+Your manager reports memory pressure (concurrent tsc killed with exit 137). Check the host processes and OOM logs (`dmesg | grep -i -E 'killed process|oom'`) for full run app-m1-draft-opaque-roots-full-source-integration 24066 (running since 23:54; no output since 23:57). If it's alive and progressing, leave it. If it was OOM-killed or is hung, keep its log, mark it failed, and start ONE retry of the same final tree with no other heavy job running alongside. This is the LAST M1 item.
