@@ -4,11 +4,9 @@ from __future__ import annotations
 import base64
 import copy
 import hashlib
-import io
 import json
 import subprocess
 import sys
-import tarfile
 from types import SimpleNamespace
 
 import pytest
@@ -44,17 +42,18 @@ def _settle_proposal(service, attempt, raw, key):
 
 
 @pytest.fixture
-def actual_agent_source(tmp_path, astrid_importable, monkeypatch):
-    """Expose the exact private 014 Agent tree, not the ambient checkout."""
-    archive = subprocess.run(
-        ["git", "-C", str(astrid_importable), "archive", "--format=tar", AGENT_SOURCE],
-        check=True, capture_output=True,
-    ).stdout
-    root = tmp_path / "agent-source"
-    root.mkdir()
-    with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
-        tar.extractall(root, filter="data")
-    monkeypatch.syspath_prepend(str(root))
+def actual_agent_source(astrid_importable, monkeypatch):
+    """Expose the exact private 014 Agent checkout, not the ambient source."""
+    root = astrid_importable
+    actual_head = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    if actual_head != AGENT_SOURCE:
+        raise AssertionError(
+            f"Agent checkout is not the exact publication source: {root} (HEAD {actual_head}, "
+            f"expected {AGENT_SOURCE})"
+        )
     for name in [name for name in sys.modules if name == "astrid" or name.startswith("astrid.")]:
         if not str(getattr(sys.modules[name], "__file__", "") or "").startswith(str(root)):
             monkeypatch.delitem(sys.modules, name)
