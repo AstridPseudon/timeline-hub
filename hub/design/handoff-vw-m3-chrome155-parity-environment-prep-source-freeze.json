@@ -1,0 +1,30 @@
+{
+  "base": "1e13eadfc6ba5f96a1cd570893bd3743fed5f666",
+  "baseTree": "3577084d9f7cf9a3d35f637e63c3bddbc5d3c921",
+  "app": {
+    "files": 5953,
+    "sha256": "a228c554799f595da3d7ce763f62284ad93021e90bcc748f21e46fabbcf73700"
+  },
+  "environment": {
+    "profile": "native-codec-chrome155",
+    "config": "playwright.viewing-parity.native-codec.config.ts",
+    "chromePackage": "155.0.8059.84-1",
+    "node": {
+      "version": "v20.19.4",
+      "executable": "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"
+    },
+    "playerDirectory": {
+      "files": 255,
+      "sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e"
+    },
+    "exportDirectory": {
+      "files": 12,
+      "sha256": "38fd722a5d8ea32dbc60521ec0f2760800554f045938047d6856753dba6ea5f9"
+    },
+    "playwright": {
+      "files": 106,
+      "sha256": "6a78060c81886b7ba6f631d5b1193d50f0362c779f5b2dff2d784a31a6acc46d"
+    }
+  }
+}

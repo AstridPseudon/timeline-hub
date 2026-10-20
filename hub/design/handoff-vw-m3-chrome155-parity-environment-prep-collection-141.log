@@ -1,0 +1,6 @@
+Listing tests:
+  player-export-frame-parity.spec.ts:196:3 › ordinary media: mounted App Player versus real task export › normal App Render action downloads a valid native-size MP4 without a parity comparison
+  player-export-frame-parity.spec.ts:213:3 › ordinary media: mounted App Player versus real task export › fixture readiness seeks actual managed Player video and captures native frames without export
+  player-export-frame-parity.spec.ts:234:3 › ordinary media: mounted App Player versus real task export › compares native-size actual Player frames with decoded real CPU Remotion task output
+  player-export-frame-parity.spec.ts:244:3 › ordinary media: mounted App Player versus real task export › picture-only one-host patch is reported as a mismatch after the full passing baseline
+Total: 4 tests in 1 file

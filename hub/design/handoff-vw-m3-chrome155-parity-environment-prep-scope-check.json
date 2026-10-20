@@ -1,0 +1,26 @@
+{
+  "changed": [
+    "tests/e2e/timeline/player-export-frame-parity.spec.ts",
+    "tests/e2e/timeline/viewing-parity/harness.test.ts",
+    "tests/e2e/timeline/viewing-parity/harness.ts",
+    "tests/e2e/timeline/viewing-parity/tsconfig.json",
+    "playwright.viewing-parity.native-codec.config.ts",
+    "tests/e2e/timeline/viewing-parity/browser-profile.test.ts",
+    "tests/e2e/timeline/viewing-parity/browser-profile.ts"
+  ],
+  "product_paths_unchanged": {
+    "src/tools/video-editor/components/TimelineRenderControls.test.tsx": "ea1e695e521fe7796dee43a45925e996d50e2744bc738ddd28415db8c62c5caa",
+    "src/tools/video-editor/components/TimelineRenderControls.tsx": "d763e1b6b38e4cb05873d2bbe698794f0ccfdff4b16c75496e1a593f5784a544",
+    "src/tools/video-editor/hooks/timelineStore.ts": "2b76bfe78771a79e1c0944bb0164e8389dee2398fdb66eb7e0ca314b461a34f1",
+    "src/tools/video-editor/hooks/useRenderState.test.tsx": "eae87269f692b7502a23f1d1037339eb95fc8deea5ae950faab2aedcd3eee4d2",
+    "src/tools/video-editor/hooks/useRenderState.ts": "80dfe2b912f8aca0c99687e15d2af5dccf222607e7a180927afd2d72d569522b",
+    "src/tools/video-editor/hooks/useTimelineState.ts": "38a68fab02b63aa386001980036cb989630b436e0951b0f2302ee08d1825f114",
+    "src/tools/video-editor/hooks/useTimelineState.types.ts": "86b8f178a4ed4763279a654430091c08e19726b848a07edf04d236c2182130cb"
+  },
+  "original_four_case_assertions_unchanged": true,
+  "original_141_config_unchanged": true,
+  "fixture_comparator_download_diagnostics_media_unchanged": true,
+  "typecheck_byte_identical_to_predecessor": true,
+  "patch_reverse_check": "pass",
+  "no_grant_or_run_marker": true
+}

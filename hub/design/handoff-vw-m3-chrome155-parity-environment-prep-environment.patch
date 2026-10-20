@@ -1,0 +1,309 @@
+diff --git a/tests/e2e/timeline/player-export-frame-parity.spec.ts b/tests/e2e/timeline/player-export-frame-parity.spec.ts
+index 5806be716..a59dfaa1e 100644
+--- a/tests/e2e/timeline/player-export-frame-parity.spec.ts
++++ b/tests/e2e/timeline/player-export-frame-parity.spec.ts
+@@ -54,7 +54,7 @@ async function openParityEditor(page: Page, harness: DirectHarness, fixture: Fra
+ }
+ 
+ async function renderAndDownload(page: Page, harness: DirectHarness, fixture: FrameParityFixture, testInfo: TestInfo) {
+-  const versions = await sourceVersions();
++  const versions = await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile);
+   await assertPinnedFrameParityFixture(harness, fixture);
+   const capability = await readyRenderCapability(harness);
+   const polls: string[] = [];
+@@ -156,7 +156,7 @@ async function renderAndDownload(page: Page, harness: DirectHarness, fixture: Fr
+     // Normal Agent output_policy uses 48kHz AAC; the managed source is 44.1kHz.
+     expect(metadata.streams.find(stream => stream.codec_type === 'audio')).toMatchObject({ codec_name: 'aac', sample_rate: '48000', channels: 2 });
+     await assertPinnedFrameParityFixture(harness, fixture);
+-    expect(await sourceVersions()).toEqual(versions);
++    expect(await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile)).toEqual(versions);
+     const { stdout: ffmpeg } = await exec('ffmpeg', ['-version']);
+     await saveEvidence(testInfo, 'real-render', { versions, ffmpeg: ffmpeg.split('\n')[0], capability,
+       taskId: admitted.task_id, authority: frozen, outputs: outputs.items, provenance, metadata, downloadHash: mediaHash(bytes),
+@@ -174,7 +174,7 @@ async function assertRenderUnchanged(harness: DirectHarness, fixture: FrameParit
+   await assertPinnedFrameParityFixture(harness, fixture);
+   const task = await readRuntimeJson<Task>(harness, `/v1/tasks/${encodeURIComponent(render.taskId)}`);
+   expect(assertTaskAuthority(task, fixture, render.capabilityDigest)).toEqual(render.authority);
+-  expect(await sourceVersions()).toEqual(render.versions);
++  expect(await sourceVersions(render.versions.playerBrowser.profile)).toEqual(render.versions);
+ }
+ 
+ async function compareAllFrames(page: Page, exportPath: string, testInfo: TestInfo) {
+@@ -228,7 +228,7 @@ test.describe('ordinary media: mounted App Player versus real task export', () =
+     await assertPinnedFrameParityFixture(harness, fixture);
+     expect((await pageLogs.result()).failures).toEqual([]);
+     await saveEvidence(testInfo, 'fixture-readiness', { proof: 'fixture readiness only; no export comparison',
+-      fixture, versions: await sourceVersions(), browser: browser.version(), captures, requests });
++      fixture, versions: await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile), browser: browser.version(), captures, requests });
+   });
+ 
+   test('compares native-size actual Player frames with decoded real CPU Remotion task output', async ({ page, harness, fixture, pageLogs }, testInfo) => {
+diff --git a/tests/e2e/timeline/viewing-parity/harness.test.ts b/tests/e2e/timeline/viewing-parity/harness.test.ts
+index 1690ff99f..95df9f20e 100644
+--- a/tests/e2e/timeline/viewing-parity/harness.test.ts
++++ b/tests/e2e/timeline/viewing-parity/harness.test.ts
+@@ -5,6 +5,7 @@ import { join } from 'node:path';
+ import { test } from 'node:test';
+ import { assertSourceVersionsUnchanged, verifyFileGraph } from './harness';
+ import { mediaHash } from './media';
++import { playerBrowserProfile } from './browser-profile';
+ 
+ async function fixture(files: Record<string, string>): Promise<string> {
+   const root = await mkdtemp(join(tmpdir(), 'viewing-parity-graph-'));
+@@ -71,6 +72,8 @@ test('fails postflight when a declared dependency graph changes', () => {
+   const before = {
+     compositionFiles: { app: { 'package/index.js': 'sha256:composition' } },
+     renderGraphHashes: { app: { 'node_modules/remotion.js': 'sha256:app' } },
++    playerBrowser: playerBrowserProfile(),
++    exportBrowserHash: 'sha256:export',
+   } as const;
+   assertSourceVersionsUnchanged(before, before);
+   assert.throws(
+@@ -81,3 +84,16 @@ test('fails postflight when a declared dependency graph changes', () => {
+     /source dependency graph changed during browser fixture: renderGraphHashes/,
+   );
+ });
++
++test('fails postflight when the selected browser profile or executable bytes change', () => {
++  const before = {
++    compositionFiles: {}, renderGraphHashes: {}, playerBrowser: playerBrowserProfile(), exportBrowserHash: 'export',
++  };
++  for (const after of [
++    { ...before, playerBrowser: playerBrowserProfile('native-codec-chrome155') },
++    { ...before, playerBrowser: { ...before.playerBrowser, sha256: 'changed' } },
++    { ...before, exportBrowserHash: 'changed' },
++  ]) {
++    assert.throws(() => assertSourceVersionsUnchanged(before, after), /source dependency graph changed/);
++  }
++});
+diff --git a/tests/e2e/timeline/viewing-parity/harness.ts b/tests/e2e/timeline/viewing-parity/harness.ts
+index 554a737ab..f8d750a57 100644
+--- a/tests/e2e/timeline/viewing-parity/harness.ts
++++ b/tests/e2e/timeline/viewing-parity/harness.ts
+@@ -8,9 +8,11 @@ import { startRealPackHost } from './bootstrap';
+ import { prepareFrameParityFixture, type FrameParityFixture, readRuntimeJson } from './fixture';
+ import { mediaHash } from './media';
+ import type { Capability } from '../../../../src/integrations/runtime/generated';
++import { browserExecutableHash, playerBrowserProfile, verifyPlayerBrowser } from './browser-profile';
+ 
+ export const INSTALLED_BROWSER = '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell';
+-export const PLAYER_BROWSER = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
++export const PLAYER_BROWSER = playerBrowserProfile().executablePath;
++const EXPORT_BROWSER_HASH = '63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4';
+ const COMPOSITION_HASH = 'sha256:93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa';
+ const COMPOSITION_FILE_COUNT = 77;
+ const EXPECTED_PACKAGE_VERSIONS = {
+@@ -131,7 +133,10 @@ function requiredEnv(name: string): string {
+   return resolve(value);
+ }
+ 
+-export async function sourceVersions() {
++export async function sourceVersions(profile?: unknown) {
++  const playerBrowser = await verifyPlayerBrowser(profile);
++  const exportBrowserHash = await browserExecutableHash(INSTALLED_BROWSER);
++  deepStrictEqual(exportBrowserHash, EXPORT_BROWSER_HASH, 'CPU export browser bytes changed');
+   const roots = {
+     app: REPO_ROOT, agent: requiredEnv('ASTRID_CHECKOUT'), runtime: requiredEnv('ASTRID_RUNTIME_CHECKOUT'),
+     composition: requiredEnv('TIMELINE_COMPOSITION_CHECKOUT'),
+@@ -173,16 +178,17 @@ export async function sourceVersions() {
+     },
+     renderGraphProvenance: Object.fromEntries(Object.entries(EXPECTED_RENDER_GRAPHS)
+       .map(([consumer, graph]) => [consumer, graph.provenance])),
+-    packages, browserExecutable: INSTALLED_BROWSER, playerBrowserExecutable: PLAYER_BROWSER, node: process.version,
++    packages, browserExecutable: INSTALLED_BROWSER, exportBrowserHash,
++    playerBrowserExecutable: playerBrowser.executablePath, playerBrowser, node: process.version,
+   };
+ }
+ 
+ export type SourceVersionGraph = Pick<Awaited<ReturnType<typeof sourceVersions>>,
+-  'compositionFiles' | 'renderGraphHashes'>;
++  'compositionFiles' | 'renderGraphHashes' | 'playerBrowser' | 'exportBrowserHash'>;
+ 
+ /** Keep the release-declared package files and Remotion/Player targets immutable during browser setup/use. */
+ export function assertSourceVersionsUnchanged(before: SourceVersionGraph, after: SourceVersionGraph): void {
+-  for (const field of ['compositionFiles', 'renderGraphHashes'] as const) {
++  for (const field of ['compositionFiles', 'renderGraphHashes', 'playerBrowser', 'exportBrowserHash'] as const) {
+     try {
+       deepStrictEqual(after[field], before[field]);
+     } catch {
+@@ -212,10 +218,10 @@ export const test = base.extend<object, {
+   harness: DirectHarness; fixture: FrameParityFixture; browser: Browser;
+ }>({
+   // eslint-disable-next-line no-empty-pattern
+-  harness: [async ({}, provide) => {
++  harness: [async ({}, provide, workerInfo) => {
+     const reason = harnessUnavailableReason();
+     if (reason) throw new Error(reason);
+-    await sourceVersions();
++    await sourceVersions(workerInfo.project.metadata.viewingParityBrowserProfile);
+     const harness = await new DirectHarness().start();
+     try { await provide(harness); } finally { await harness.stop(); }
+   }, { scope: 'worker', timeout: 240_000 }],
+@@ -229,14 +235,16 @@ export const test = base.extend<object, {
+       await provide(fixture);
+     } finally { await host.stop(); }
+   }, { scope: 'worker', timeout: 240_000 }],
+-  browser: [async ({ harness, fixture }, provide) => {
++  browser: [async ({ harness, fixture }, provide, workerInfo) => {
+     void fixture;
+-    const preflight = await sourceVersions();
++    const profile = workerInfo.project.metadata.viewingParityBrowserProfile;
++    const preflight = await sourceVersions(profile);
+     let browser: Browser | undefined;
+     let failure: unknown;
+     try {
+-      browser = await chromium.launch({ args: harness.chromiumArgs, executablePath: PLAYER_BROWSER });
+-      console.log('[viewing-parity] Player browser', browser.version(), PLAYER_BROWSER);
++      browser = await chromium.launch({ args: harness.chromiumArgs, executablePath: preflight.playerBrowserExecutable });
++      deepStrictEqual(browser.version(), preflight.playerBrowser.version, 'selected Player browser version changed');
++      console.log('[viewing-parity] Player browser', preflight.playerBrowser.profile, browser.version(), preflight.playerBrowserExecutable);
+       await provide(browser);
+     } catch (error) {
+       failure = error;
+@@ -245,7 +253,7 @@ export const test = base.extend<object, {
+       if (failure === undefined) failure = error;
+     }
+     try {
+-      assertSourceVersionsUnchanged(preflight, await sourceVersions());
++      assertSourceVersionsUnchanged(preflight, await sourceVersions(profile));
+     } catch (error) {
+       if (failure === undefined) failure = error;
+     }
+diff --git a/tests/e2e/timeline/viewing-parity/tsconfig.json b/tests/e2e/timeline/viewing-parity/tsconfig.json
+index e33aa3a97..63db775b7 100644
+--- a/tests/e2e/timeline/viewing-parity/tsconfig.json
++++ b/tests/e2e/timeline/viewing-parity/tsconfig.json
+@@ -1,4 +1,4 @@
+ {
+   "extends": "../../../../tsconfig.node.json",
+-  "include": ["*.ts", "../player-export-frame-parity.spec.ts", "../../../../playwright.viewing-parity.config.ts"]
++  "include": ["*.ts", "../player-export-frame-parity.spec.ts", "../../../../playwright.viewing-parity*.config.ts"]
+ }
+diff --git a/playwright.viewing-parity.native-codec.config.ts b/playwright.viewing-parity.native-codec.config.ts
+new file mode 100644
+index 000000000..706bddc23
+--- /dev/null
++++ b/playwright.viewing-parity.native-codec.config.ts
+@@ -0,0 +1,11 @@
++import { defineConfig } from '@playwright/test';
++import baseline from './playwright.viewing-parity.config';
++
++// Explicit additional environment; the original four-case Chromium 141 config stays runnable.
++export default defineConfig({
++  ...baseline,
++  projects: [{
++    name: 'native-codec-chrome155',
++    metadata: { viewingParityBrowserProfile: 'native-codec-chrome155' },
++  }],
++});
+diff --git a/tests/e2e/timeline/viewing-parity/browser-profile.test.ts b/tests/e2e/timeline/viewing-parity/browser-profile.test.ts
+new file mode 100644
+index 000000000..07bd47da2
+--- /dev/null
++++ b/tests/e2e/timeline/viewing-parity/browser-profile.test.ts
+@@ -0,0 +1,59 @@
++import assert from 'node:assert/strict';
++import { createHash } from 'node:crypto';
++import { mkdtemp, rm, writeFile } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { test } from 'node:test';
++import baseline from '../../../../playwright.viewing-parity.config';
++import nativeCodec from '../../../../playwright.viewing-parity.native-codec.config';
++import { browserExecutableHash, playerBrowserProfile, verifyPlayerBrowser } from './browser-profile';
++import { PLAYER_BROWSER, sourceVersions } from './harness';
++
++test('original config defaults to Chromium 141 and retains all four original cases', () => {
++  assert.equal(baseline.projects, undefined);
++  assert.equal(baseline.metadata?.viewingParityBrowserProfile, undefined);
++  assert.equal(PLAYER_BROWSER, '/opt/pw-browsers/chromium-1194/chrome-linux/chrome');
++  assert.deepEqual(playerBrowserProfile(), {
++    profile: 'chromium141', executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
++    version: '141.0.7390.37', sha256: '85918a9937192b78da8edb51c38a7af4920ac6bd9ba19939ecb0bb724d5a1a95',
++  });
++  assert.equal(baseline.testMatch, 'player-export-frame-parity.spec.ts');
++  assert.equal(baseline.workers, 1);
++  assert.equal(baseline.retries, 0);
++});
++
++test('Chrome 155 is a separate named environment using the identical four-case suite', () => {
++  assert.equal(nativeCodec.projects?.length, 1);
++  const project = nativeCodec.projects![0];
++  assert.equal(project.name, 'native-codec-chrome155');
++  assert.deepEqual(project.metadata, { viewingParityBrowserProfile: 'native-codec-chrome155' });
++  assert.deepEqual(playerBrowserProfile(project.metadata!.viewingParityBrowserProfile), {
++    profile: 'native-codec-chrome155', executablePath: '/opt/google/chrome/chrome',
++    version: '155.0.8059.84', sha256: 'cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76',
++  });
++  const { projects: _projects, ...shared } = nativeCodec;
++  assert.deepEqual(shared, baseline);
++  assert.notDeepEqual(playerBrowserProfile(), playerBrowserProfile(project.metadata!.viewingParityBrowserProfile));
++});
++
++test('unknown profiles refuse before source reads or browser launch, without a fallback', async () => {
++  for (const profile of ['', 'chrome', '/opt/google/chrome/chrome', 'toString', '__proto__', null, 155, {}]) {
++    assert.throws(() => playerBrowserProfile(profile), /unsupported viewing parity browser profile/);
++    await assert.rejects(verifyPlayerBrowser(profile), /unsupported viewing parity browser profile/);
++    await assert.rejects(sourceVersions(profile), /unsupported viewing parity browser profile/);
++  }
++});
++
++test('executable hash covers the full file including bytes past the first chunk', async () => {
++  const root = await mkdtemp(join(tmpdir(), 'viewing-browser-bytes-'));
++  try {
++    const path = join(root, 'browser');
++    const bytes = Buffer.alloc(1024 * 1024 + 7, 1);
++    await writeFile(path, bytes);
++    const original = await browserExecutableHash(path);
++    assert.equal(original, createHash('sha256').update(bytes).digest('hex'));
++    bytes[bytes.length - 1] = 2;
++    await writeFile(path, bytes);
++    assert.notEqual(await browserExecutableHash(path), original);
++  } finally { await rm(root, { recursive: true, force: true }); }
++});
+diff --git a/tests/e2e/timeline/viewing-parity/browser-profile.ts b/tests/e2e/timeline/viewing-parity/browser-profile.ts
+new file mode 100644
+index 000000000..487a2e7eb
+--- /dev/null
++++ b/tests/e2e/timeline/viewing-parity/browser-profile.ts
+@@ -0,0 +1,40 @@
++import assert from 'node:assert/strict';
++import { createReadStream } from 'node:fs';
++import { createHash } from 'node:crypto';
++
++export const PLAYER_BROWSER_PROFILES = {
++  chromium141: {
++    executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
++    version: '141.0.7390.37',
++    sha256: '85918a9937192b78da8edb51c38a7af4920ac6bd9ba19939ecb0bb724d5a1a95',
++  },
++  'native-codec-chrome155': {
++    executablePath: '/opt/google/chrome/chrome',
++    version: '155.0.8059.84',
++    sha256: 'cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76',
++  },
++} as const;
++
++export function playerBrowserProfile(name: unknown = 'chromium141'): {
++  profile: keyof typeof PLAYER_BROWSER_PROFILES; executablePath: string; version: string; sha256: string;
++} {
++  if (typeof name !== 'string' || !Object.hasOwn(PLAYER_BROWSER_PROFILES, name)) {
++    throw new Error(`unsupported viewing parity browser profile: ${String(name)}`);
++  }
++  const profile = name as keyof typeof PLAYER_BROWSER_PROFILES;
++  return { profile, ...PLAYER_BROWSER_PROFILES[profile] };
++}
++
++/** Read every executable byte without starting a browser or learning a new pin. */
++export async function browserExecutableHash(path: string): Promise<string> {
++  const hash = createHash('sha256');
++  for await (const chunk of createReadStream(path)) hash.update(chunk);
++  return hash.digest('hex');
++}
++
++export async function verifyPlayerBrowser(name?: unknown) {
++  const browser = playerBrowserProfile(name);
++  assert.equal(await browserExecutableHash(browser.executablePath), browser.sha256,
++    `selected Player browser bytes changed: ${browser.profile}`);
++  return browser;
++}
