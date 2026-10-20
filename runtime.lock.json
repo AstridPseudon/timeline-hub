@@ -38,11 +38,11 @@
     },
     "src/integrations/runtime/generated-contract-metadata.ts": {
       "from": "packages/typescript/src/contract-metadata.ts",
-      "sha256": "sha256:f47783153a81f139887bd13816b4a53d2e300ba72c8681ff1183863552f084d9"
+      "sha256": "sha256:6b5a56ff74b2853c017960e590b990596bf1b947ba018803335d1c521ee2014c"
     },
     "src/integrations/runtime/generated.ts": {
       "from": "packages/typescript/src/generated.ts",
-      "sha256": "sha256:449ece47770caaded1fba0f141433485272d7380756e69f98621389552117592"
+      "sha256": "sha256:8490341031d4c5f4c53e9792683bdc1678014bf15102454c769763651a88d472"
     },
     "src/integrations/runtime/timeline-commit-types.ts": {
       "from": "packages/typescript/src/timeline-commit-types.ts",
@@ -55,6 +55,6 @@
   },
   "manifest": "contract/artifacts.json",
   "producer": "astrid-runtime",
-  "producer_version": "sha256:4010d93be2a8bfc7cc051c383e165ff81835c3d12ba9a137279741b7883748a7",
-  "source_commit": "1ad39f5c4bf834736bb2ee04b031eebbcdb11ce0"
+  "producer_version": "sha256:e02a71b5b77479bdc8035a8a8d75ec57e9f1962b7f9195126739ab0d1ed063ac",
+  "source_commit": "94114269d1ce23ab3224d7eca5a85138ce2b5fed"
 }
