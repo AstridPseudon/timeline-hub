@@ -45,7 +45,7 @@ describe('AstridStatusSection', () => {
         services: [
           { name: 'comfyui', state: 'starting', last_exit: null, restart_count: 0 },
           { name: 'pack-host', state: 'running', last_exit: null, restart_count: 1 },
-          { name: 'astrid-chat', state: 'failed', last_exit: 2, restart_count: 3, reason: 'exited' },
+          { name: 'chat', state: 'failed', last_exit: 2, restart_count: 3, reason: 'startup_failed' },
         ],
       },
       realm: { realm_id: 'realm-1', display_name: 'Studio', version: 4, created_at: '2026-01-01T00:00:00Z' },
@@ -92,7 +92,7 @@ describe('AstridStatusSection', () => {
     expect(screen.getByText('Failed')).toBeInTheDocument();
     expect(screen.getByText(/Restarts: 3/)).toBeInTheDocument();
     expect(screen.queryByText('Restarts: 0')).not.toBeInTheDocument();
-    expect(screen.getByText(/Last exit code: 2/)).toBeInTheDocument();
+    expect(screen.queryByText(/Last exit code|Reason:|startup_failed/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
     expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
   });
@@ -114,7 +114,7 @@ describe('AstridStatusSection', () => {
 
     const customWorker = await screen.findByText('custom-worker');
     expect(customWorker.closest('li')?.querySelector('span.basis-full')).toBeNull();
-    expect(screen.getByText('Last exit code: 1 · Reason: exited')).toBeInTheDocument();
+    expect(screen.queryByText(/Last exit code|Reason:|exited/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^ · /)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Copy' })).not.toBeInTheDocument();
     expect(screen.queryByText('curl -fsSL https://astrid.haus/install | sh')).not.toBeInTheDocument();

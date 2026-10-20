@@ -41,11 +41,7 @@ function StatusRow({ label, value }: { label: string; value: string | number }) 
 }
 
 function serviceMetadata(service: RuntimeService): string[] {
-  return [
-    COPY.restartCount(service.restart_count),
-    service.last_exit !== null ? COPY.lastExit(service.last_exit) : null,
-    service.reason ? COPY.reason(service.reason) : null,
-  ].filter((value): value is string => value !== null);
+  return [COPY.restartCount(service.restart_count)].filter((value): value is string => value !== null);
 }
 
 export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {

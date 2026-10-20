@@ -22,6 +22,13 @@ if args[:2] == ['python', 'install']:
         print('o' * size)
         print('e' * size, file=sys.stderr)
     sys.exit(int(os.environ.get('MOCK_PYTHON_EXIT', '0')))
+if args[:1] == ['venv'] or args[:2] == ['pip', 'install']:
+    if args[:2] == ['pip', 'install'] and '--require-hashes' in args and os.environ.get('MOCK_EXPECTED_LOCK_CONTENT') is not None:
+        lock = pathlib.Path(args[args.index('-r') + 1]).read_text()
+        if lock != os.environ['MOCK_EXPECTED_LOCK_CONTENT']:
+            print('bootstrap did not use the lock from the pinned agent commit', file=sys.stderr)
+            sys.exit(41)
+    sys.exit(0)
 if '-c' in args:
     start = args.index('-c')
     os.execv(sys.executable, [sys.executable, '-u', '-I', '-c', args[start + 1], *args[start + 2:]])
@@ -51,6 +58,10 @@ if os.environ.get('MOCK_STAGE_RELEASE'):
 if os.environ.get('MOCK_CORE_RAW_EXIT'):
     print('raw core diagnostic', file=sys.stderr)
     sys.exit(int(os.environ['MOCK_CORE_RAW_EXIT']))
+if os.environ.get('MOCK_CORE_DISK_FAILURE'):
+    print('There is not enough free disk space to back up your workspace.')
+    print('Details: ' + os.environ['MOCK_LOG'])
+    sys.exit(1)
 if os.environ.get('MOCK_REMOVE_BOOTSTRAP'):
     shutil.rmtree(pathlib.Path(sys.argv[0]).parent)
 if os.environ.get('MOCK_CORE_EXIT'):
@@ -82,12 +93,13 @@ export async function fixture() {
     MOCK_CALLS: path.join(root, 'calls.jsonl'),
     MOCK_LOG: path.join(root, 'state/astrid-runtime/logs/install.log'),
   };
-  for (const key of ['MOCK_PYTHON_EXIT', 'MOCK_CORE_EXIT', 'MOCK_REMOVE_BOOTSTRAP', 'MOCK_FETCH_EXIT', 'MOCK_VOLUME_BYTES', 'MOCK_UV_VERSION', 'MOCK_STAGE_RELEASE', 'MOCK_INTERRUPTED', 'MOCK_CORE_RAW_EXIT', 'MOCK_CORE_APPEND_LOG', 'MOCK_REQUIRE_TTY']) delete env[key];
+  for (const key of ['MOCK_PYTHON_EXIT', 'MOCK_CORE_EXIT', 'MOCK_REMOVE_BOOTSTRAP', 'MOCK_FETCH_EXIT', 'MOCK_VOLUME_BYTES', 'MOCK_UV_VERSION', 'MOCK_STAGE_RELEASE', 'MOCK_INTERRUPTED', 'MOCK_CORE_RAW_EXIT', 'MOCK_CORE_APPEND_LOG', 'MOCK_REQUIRE_TTY', 'MOCK_EXPECTED_LOCK_CONTENT', 'MOCK_CORE_DISK_FAILURE']) delete env[key];
   await writeFile(path.join(bootstrap, 'uv'), mockUv, { mode: 0o755 });
   await writeFile(path.join(bin, 'curl'), `#!/usr/bin/env python3
 import os, pathlib, shutil, sys
 if os.environ.get('MOCK_FETCH_EXIT'): sys.exit(int(os.environ['MOCK_FETCH_EXIT']))
-pathlib.Path(os.environ['MOCK_FETCHED']).write_text(sys.argv[5])
+if sys.argv[5].endswith('/developer-manifest.json') or sys.argv[5].endswith('/install-manifest.json'):
+    pathlib.Path(os.environ['MOCK_FETCHED']).write_text(sys.argv[5])
 shutil.copyfile(os.environ['MOCK_MANIFEST'], sys.argv[sys.argv.index('--output') + 1])
 `, { mode: 0o755 });
   env.MOCK_FETCHED = path.join(root, 'fetched-url');
@@ -124,7 +136,7 @@ $ErrorActionPreference = 'Continue'
 function Invoke-WebRequest {
     param([switch]$UseBasicParsing, [Parameter(Position=0)][string]$Uri, [string]$OutFile)
     if ($env:MOCK_FETCH_EXIT) { throw 'The fixture download failed.' }
-    [IO.File]::WriteAllText($env:MOCK_FETCHED, $Uri)
+    if ($Uri.EndsWith('/developer-manifest.json') -or $Uri.EndsWith('/install-manifest.json')) { [IO.File]::WriteAllText($env:MOCK_FETCHED, $Uri) }
     Copy-Item $env:MOCK_MANIFEST $OutFile
 }
 try {
@@ -172,6 +184,17 @@ export function observe(child) {
   };
 }
 
+export async function createPinnedRepo(repoPath, lockContent) {
+  await mkdir(path.join(repoPath, 'requirements'), { recursive: true });
+  await writeFile(path.join(repoPath, 'requirements/runtime.lock'), lockContent);
+  await execute('git', ['init', '--quiet'], { cwd: repoPath });
+  await execute('git', ['config', 'user.name', 'Astrid bootstrap test'], { cwd: repoPath });
+  await execute('git', ['config', 'user.email', 'bootstrap-test@example.invalid'], { cwd: repoPath });
+  await execute('git', ['add', 'requirements/runtime.lock'], { cwd: repoPath });
+  await execute('git', ['commit', '--quiet', '-m', 'pin runtime lock'], { cwd: repoPath });
+  return (await execute('git', ['rev-parse', 'HEAD'], { cwd: repoPath })).stdout.trim();
+}
+
 // pty.fork supplies a real controlling terminal. Writing ^C exercises the
 // terminal's foreground process-group delivery instead of killing one PID.
 export const terminalInterrupt = `
@@ -200,7 +223,7 @@ try:
             pid = None
             break
     else:
-        raise TimeoutError('installer did not recover after terminal Ctrl+C')
+        raise TimeoutError('installer did not recover after terminal Ctrl+C: ' + output.decode(errors='replace'))
     if pid is not None:
         _, status = os.waitpid(pid, 0)
         pid = None

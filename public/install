@@ -50,7 +50,7 @@ tee -i "$tmp/core.out" <"$tmp/progress" &
 progress_pid=$!
 # This only resolves manifest pins and hands off; the package owns every step.
 if "$uv" run --no-project --python "$PYTHON_VERSION" python -u -I -c '
-import json, os, re, sys
+import json, os, re, shutil, subprocess, sys
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import url2pathname
@@ -77,15 +77,37 @@ def git_requirement(name):
     if not path.is_absolute(): raise SystemExit("Source repo must be absolute")
     # uv reads the committed Git tree, never the mutable checkout.
     return "git+" + path.as_uri() + "@" + sha
-args = [os.environ["ASTRID_INSTALL_UV"], "run", "--no-project", "--python", pins["tools"]["python"]["version"]]
-for name in ("runtime", "agent"):
-    args += ["--with", git_requirement(name)]
-args += ["python", "-u", "-I", "-m", "astrid", "install", "--manifest", manifest, *flags]
+uv = os.environ["ASTRID_INSTALL_UV"]
+agent = pins["agent"]
+agent_requirement = git_requirement("agent")
+lock = Path(manifest).with_name("runtime.lock")
+if "repo" in agent:
+    repo = agent["repo"]
+    if repo.startswith("file://"):
+        parsed = urlsplit(repo)
+        repo = url2pathname(parsed.path)
+    lock_result = subprocess.run(["git", "-C", repo, "show", agent["sha"] + ":requirements/runtime.lock"], stdout=subprocess.PIPE, check=True)
+    lock.write_bytes(lock_result.stdout)
+else:
+    url = "https://raw.githubusercontent.com/banodoco/astrid-agent/" + agent["sha"] + "/requirements/runtime.lock"
+    downloader = shutil.which("curl") or shutil.which("wget")
+    if not downloader: raise SystemExit("curl or wget is required to fetch the pinned dependency lock")
+    download = [downloader, "--fail", "--silent", "--show-error", "--location", url, "--output", str(lock)] if downloader.endswith("curl") else [downloader, "-q", url, "-O", str(lock)]
+    subprocess.run(download, check=True)
+venv = Path(manifest).with_name("bootstrap-venv")
+subprocess.run([uv, "venv", str(venv), "--python", pins["tools"]["python"]["version"]], check=True)
+python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+subprocess.run([uv, "pip", "install", "--python", str(python), "--require-hashes", "-r", str(lock)], check=True)
+runtime = git_requirement("runtime")
+client = runtime + "#subdirectory=packages/python"
+subprocess.run([uv, "pip", "install", "--python", str(python), "--no-deps", runtime, client, agent_requirement], check=True)
+args = [uv, "run", "--no-project", "--python", str(python), "python", "-u", "-I", "-m", "astrid", "install", "--manifest", manifest, *flags]
 os.execv(args[0], args)
 ' "$tmp/manifest.json" "$@" <&3 >"$tmp/progress" 2>>"$log"; then status=0; else status=$?; fi
 wait "$progress_pid"
 if [ "$status" -ne 0 ]; then
-    if ! grep -Fq 'Astrid could not finish; your workspace and any update backup have been kept.' "$tmp/core.out"; then
+    if ! grep -Fq 'Astrid could not finish; your workspace and any update backup have been kept.' "$tmp/core.out" \
+        && ! grep -Fq 'There is not enough free disk space to back up your workspace.' "$tmp/core.out"; then
         echo 'Astrid could not get ready.' >&2
         echo "Details: $log" >&2
     fi

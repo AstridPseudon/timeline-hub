@@ -29,14 +29,13 @@ export const ASTRID_STATUS_COPY = {
   serviceName: (name: string) => {
     switch (name) {
       case 'pack-host': return 'Task host';
+      case 'chat': return 'Chat';
       case 'astrid-chat': return 'Chat';
       case 'comfyui': return 'ComfyUI';
       default: return name;
     }
   },
   restartCount: (count: number) => count > 0 ? `Restarts: ${count}` : null,
-  lastExit: (code: number) => `Last exit code: ${code}`,
-  reason: (value: string) => `Reason: ${value}`,
 } as const;
 
 export function connectionStatusCopy(status: string): string {

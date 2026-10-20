@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { failure, fixture, observe, repo, terminalInterrupt } from './fixture.mjs';
+import { createPinnedRepo, failure, fixture, observe, repo, terminalInterrupt } from './fixture.mjs';
 
 async function scenario(fn) {
   const context = await fixture();
@@ -14,6 +14,10 @@ const run = (context, args = [], env = {}) => context.run('/bin/sh', [path.join(
 test('POSIX uses developer manifest, XDG bootstrap, exact local commits and Python without external shims', () => scenario(async (context) => {
   context.manifest.agent.repo = path.join(context.root, 'source with spaces');
   context.manifest.runtime.repo = pathToFileURL(path.join(context.root, 'runtime source')).href;
+  const committedLock = '# pinned lock content\n';
+  context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedLock);
+  await writeFile(path.join(context.manifest.agent.repo, 'requirements/runtime.lock'), '# changed checkout lock\n');
+  context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
   const result = await run(context, ['--update', '--data-root', '/a path/with spaces']);
   assert.equal(result.code, 0, result.stderr);
   assert.equal(result.stdout.trim(), 'Astrid is ready.');
@@ -21,18 +25,24 @@ test('POSIX uses developer manifest, XDG bootstrap, exact local commits and Pyth
   const calls = await context.calls();
   assert.deepEqual(calls.find((args) => args[0] === 'python'), ['python', 'install', '3.11.13', '--no-bin']);
   const core = calls.at(-1);
-  for (const name of ['runtime', 'agent']) {
-    assert.ok(core.includes(`git+${pathToFileURL(path.join(context.root, name === 'agent' ? 'source with spaces' : 'runtime source')).href}@${context.manifest[name].sha}`));
-  }
   assert.deepEqual(core.slice(-3), ['--update', '--data-root', '/a path/with spaces']);
+  const lockInstall = calls.find((args) => args[0] === 'pip' && args.includes('--require-hashes'));
+  assert.ok(lockInstall, 'third-party dependencies must be installed with the hashed lock');
+  const localInstall = calls.find((args) => args[0] === 'pip' && args.includes('--no-deps'));
+  assert.ok(localInstall, 'pinned local packages must be installed without resolving dependencies');
+  for (const name of ['runtime', 'agent']) {
+    assert.ok(localInstall.includes(`git+${pathToFileURL(path.join(context.root, name === 'agent' ? 'source with spaces' : 'runtime source')).href}@${context.manifest[name].sha}`));
+  }
+  assert.ok(localInstall.some((arg) => arg.endsWith('#subdirectory=packages/python')), JSON.stringify(localInstall));
+  assert.ok(!core.includes('--with'));
 }));
 
 test('POSIX defaults to hosted manifest and pinned source archive URLs', () => scenario(async (context) => {
   const result = await run(context, [], { ASTRID_INSTALL_MANIFEST_URL: '' });
   assert.equal(result.code, 0, result.stderr);
   assert.equal(await readFile(context.env.MOCK_FETCHED, 'utf8'), 'https://astrid.haus/install-manifest.json');
-  const core = (await context.calls()).at(-1);
-  for (const name of ['runtime', 'agent']) assert.ok(core.includes(`https://github.com/banodoco/astrid-${name}/archive/${context.manifest[name].sha}.tar.gz`));
+  const localInstall = (await context.calls()).find((args) => args[0] === 'pip' && args.includes('--no-deps'));
+  for (const name of ['runtime', 'agent']) assert.ok(localInstall.includes(`https://github.com/banodoco/astrid-${name}/archive/${context.manifest[name].sha}.tar.gz`));
 }));
 
 for (const repoValue of ['relative/path', '', null, 'https://example.com/source', 'file://remote/tmp/repo', 'file:///tmp/repo?branch=main', 'file:///tmp/repo#main', 'file://user@localhost/tmp/repo', 'file://localhost:123/tmp/repo', 'file://localhost:-1/tmp/repo', 'file://localhost']) {
@@ -74,6 +84,14 @@ test('POSIX preserves the core failure paragraph and nonzero status once', () =>
   assert.doesNotMatch(result.stderr, /Astrid could not get ready/);
 }));
 
+test('POSIX preserves the installer low-space failure without adding a second error', () => scenario(async (context) => {
+  const result = await run(context, [], { MOCK_CORE_DISK_FAILURE: '1' });
+  assert.equal(result.code, 1);
+  assert.equal((result.stdout.match(/There is not enough free disk space to back up your workspace\./g) || []).length, 1);
+  assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
+  assert.doesNotMatch(result.stderr, /Astrid could not get ready/);
+}));
+
 test('POSIX preserves success output when uninstall removes bootstrap', () => scenario(async (context) => {
   const result = await run(context, ['--uninstall'], { MOCK_REMOVE_BOOTSTRAP: '1' });
   assert.equal(result.code, 0, result.stderr);
@@ -89,10 +107,15 @@ test('POSIX also accepts uv version output without build metadata', () => scenar
 test('POSIX accepts localhost file URLs as local pinned repositories', () => scenario(async (context) => {
   const local = pathToFileURL(path.join(context.root, 'local source with spaces')).href;
   context.manifest.agent.repo = local.replace('file:///', 'file://localhost/');
+  const committedLock = '# pinned localhost lock\n';
+  context.manifest.agent.sha = await createPinnedRepo(path.join(context.root, 'local source with spaces'), committedLock);
+  await writeFile(path.join(context.root, 'local source with spaces/requirements/runtime.lock'), '# changed checkout lock\n');
+  context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
   const result = await run(context);
   assert.equal(result.code, 0, result.stderr);
   assert.equal(result.stdout.trim(), 'Astrid is ready.');
-  assert.ok((await context.calls()).at(-1).includes(`git+${local}@${context.manifest.agent.sha}`));
+  const localInstall = (await context.calls()).find((args) => args[0] === 'pip' && args.includes('--no-deps'));
+  assert.ok(localInstall.includes(`git+${local}@${context.manifest.agent.sha}`));
 }));
 
 test('POSIX streams an unbuffered installer stage before the transaction can finish', () => scenario(async (context) => {

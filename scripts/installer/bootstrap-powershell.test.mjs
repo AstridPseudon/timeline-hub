@@ -4,11 +4,18 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { failure, fixture, observe, repo, terminalInterrupt } from './fixture.mjs';
+import { createPinnedRepo, failure, fixture, observe, repo, terminalInterrupt } from './fixture.mjs';
 
 // Run explicitly with a PowerShell 7 executable on POSIX. Native Windows
 // PowerShell 5.1 also needs qualification on Windows before release.
 const powershell = process.env.ASTRID_TEST_PWSH || 'pwsh';
+
+test('PowerShell opens install log appends with sharing compatible with the running service', async () => {
+  const script = await readFile(path.join(repo, 'public/install.ps1'), 'utf8');
+  assert.match(script, /new FileStream\(log, FileMode\.Append, FileAccess\.Write, FileShare\.ReadWrite \| FileShare\.Delete\)/);
+  assert.doesNotMatch(script, /File\.AppendAllText\(log/);
+});
+
 async function scenario(fn) {
   const context = await fixture();
   try {
@@ -25,6 +32,10 @@ function alive(result) {
 test('PowerShell tolerates native stderr, forwards arguments and avoids Python shims/registry', () => scenario(async (context, run) => {
   context.manifest.agent.repo = path.join(context.root, 'source with spaces');
   context.manifest.runtime.repo = pathToFileURL(path.join(context.root, 'runtime source')).href;
+  const committedLock = '# pinned lock content\n';
+  context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedLock);
+  await writeFile(path.join(context.manifest.agent.repo, 'requirements/runtime.lock'), '# changed checkout lock\n');
+  context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
   const flags = ['--update', '--data-root', '/a path/with spaces', 'embedded"quote', 'trailing slash\\'];
   const result = await run(flags);
   alive(result);
@@ -34,10 +45,16 @@ test('PowerShell tolerates native stderr, forwards arguments and avoids Python s
   const calls = await context.calls();
   assert.deepEqual(calls.find((args) => args[0] === 'python'), ['python', 'install', '3.11.13', '--no-bin', '--no-registry']);
   const core = calls.at(-1);
-  for (const name of ['runtime', 'agent']) {
-    assert.ok(core.includes(`git+${pathToFileURL(path.join(context.root, name === 'agent' ? 'source with spaces' : 'runtime source')).href}@${context.manifest[name].sha}`));
-  }
   assert.deepEqual(core.slice(-flags.length), flags);
+  const lockInstall = calls.find((args) => args[0] === 'pip' && args.includes('--require-hashes'));
+  assert.ok(lockInstall, 'third-party dependencies must be installed with the hashed lock');
+  const localInstall = calls.find((args) => args[0] === 'pip' && args.includes('--no-deps'));
+  assert.ok(localInstall, 'pinned local packages must be installed without resolving dependencies');
+  for (const name of ['runtime', 'agent']) {
+    assert.ok(localInstall.includes(`git+${pathToFileURL(path.join(context.root, name === 'agent' ? 'source with spaces' : 'runtime source')).href}@${context.manifest[name].sha}`));
+  }
+  assert.ok(localInstall.some((arg) => arg.endsWith('#subdirectory=packages/python')), JSON.stringify(localInstall));
+  assert.ok(!core.includes('--with'));
   assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /native progress on stderr/);
 }));
 
@@ -46,8 +63,8 @@ test('PowerShell defaults to hosted manifest and exact hosted source pins', () =
   alive(result);
   assert.doesNotMatch(result.stdout, /CAUGHT:/);
   assert.equal(await readFile(context.env.MOCK_FETCHED, 'utf8'), 'https://astrid.haus/install-manifest.json');
-  const core = (await context.calls()).at(-1);
-  for (const name of ['runtime', 'agent']) assert.ok(core.includes(`https://github.com/banodoco/astrid-${name}/archive/${context.manifest[name].sha}.tar.gz`));
+  const localInstall = (await context.calls()).find((args) => args[0] === 'pip' && args.includes('--no-deps'));
+  for (const name of ['runtime', 'agent']) assert.ok(localInstall.includes(`https://github.com/banodoco/astrid-${name}/archive/${context.manifest[name].sha}.tar.gz`));
 }));
 
 for (const repoValue of ['relative/path', '', null, 'https://example.com/source', 'file://remote/tmp/repo', 'file:///tmp/repo?branch=main', 'file:///tmp/repo#main', 'file://user@localhost/tmp/repo', 'file://localhost:123/tmp/repo', 'file://localhost:-1/tmp/repo', 'file://localhost', String.raw`\\server\share\repo`]) {
@@ -92,6 +109,14 @@ test('PowerShell preserves one core failure paragraph and keeps iex shell', () =
   assert.ok(result.stdout.includes(`CAUGHT: ${failure}`));
   assert.match(result.stdout, /NATIVE-STATUS: 23/);
   assert.equal(result.stdout.split(failure).length - 1, 1);
+  assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
+  assert.doesNotMatch(result.stdout, /Astrid could not get ready/);
+}));
+
+test('PowerShell preserves the installer low-space failure without adding a second error', () => scenario(async (context, run) => {
+  const result = await run([], { MOCK_CORE_DISK_FAILURE: '1' });
+  alive(result);
+  assert.equal((result.stdout.match(/There is not enough free disk space to back up your workspace\./g) || []).length, 1);
   assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
   assert.doesNotMatch(result.stdout, /Astrid could not get ready/);
 }));
@@ -144,6 +169,11 @@ shutil.copy2(os.environ['MOCK_SOURCE_UV'], pathlib.Path(os.environ['UV_UNMANAGED
 
 for (const coreExit of ['0', '23']) {
   test(`PowerShell -File fetches real HTTP manifest and reports core status ${coreExit}`, () => scenario(async (context) => {
+    context.manifest.agent.repo = path.join(context.root, 'http source');
+    const committedLock = '# pinned HTTP lock\n';
+    context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedLock);
+    await writeFile(path.join(context.manifest.agent.repo, 'requirements/runtime.lock'), '# changed checkout lock\n');
+    context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
     const server = createServer((_request, response) => {
       response.writeHead(200, { 'Content-Type': 'application/json' });
       response.end(JSON.stringify(context.manifest));
@@ -181,13 +211,19 @@ test('PowerShell also accepts uv version output without build metadata', () => s
 }));
 
 test('PowerShell accepts localhost file URLs as local pinned repositories', () => scenario(async (context, run) => {
-  const local = pathToFileURL(path.join(context.root, 'local source with spaces')).href;
+  const repoPath = path.join(context.root, 'local source with spaces');
+  const local = pathToFileURL(repoPath).href;
   context.manifest.agent.repo = local.replace('file:///', 'file://localhost/');
+  const committedLock = '# pinned localhost lock\n';
+  context.manifest.agent.sha = await createPinnedRepo(repoPath, committedLock);
+  await writeFile(path.join(repoPath, 'requirements/runtime.lock'), '# changed checkout lock\n');
+  context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
   const result = await run();
   alive(result);
   assert.match(result.stdout, /Astrid is ready\./);
   assert.doesNotMatch(result.stdout, /CAUGHT:/);
-  assert.ok((await context.calls()).at(-1).includes(`git+${local}@${context.manifest.agent.sha}`));
+  const localInstall = (await context.calls()).find((args) => args[0] === 'pip' && args.includes('--no-deps'));
+  assert.ok(localInstall.includes(`git+${local}@${context.manifest.agent.sha}`));
 }));
 
 test('PowerShell streams an unbuffered installer stage before the transaction can finish', () => scenario(async (context) => {
@@ -255,7 +291,7 @@ test('PowerShell command configuration inherits the console used to deliver Ctrl
 $ErrorActionPreference = 'Stop'
 Add-Type -TypeDefinition @'
 using System.Diagnostics;
-public class AstridInstallerProcess {
+public class AstridInstallerProcessV2 {
     public static ProcessStartInfo Run(ProcessStartInfo info, string log, bool logOutput, bool streamOutput) { return info; }
 }
 '@
