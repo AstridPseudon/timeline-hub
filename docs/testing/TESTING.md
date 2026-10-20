@@ -495,8 +495,9 @@ Make a doctor bundle first (see [Reporting](#reporting)); there is no installed 
 
 - your workspace folder (projects and media), from the table above;
 - the log folder on macOS and Linux (on Windows it sits inside the workspace folder);
-- the `astrid-install.lock` file and `astrid-install.json` selection record next to the program folder; the selection
-  record supports repeat uninstall and reinstall;
+- the per-user installer lock (Windows: `%LOCALAPPDATA%\Astrid Installer\astrid-install.lock`; macOS and Linux:
+  `astrid-install.lock` next to the program folder);
+- the `astrid-install.json` selection record next to the program folder, supporting repeat uninstall and reinstall;
 - installer-managed Windows GPU environments under `%LOCALAPPDATA%\Astrid GPU`, if you have any;
 - uv's download cache (macOS: `~/Library/Caches/uv`; Linux: `${XDG_CACHE_HOME:-$HOME/.cache}/uv`;
   Windows: `%LOCALAPPDATA%\uv\cache`);
