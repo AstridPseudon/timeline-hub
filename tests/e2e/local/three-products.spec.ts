@@ -32,7 +32,7 @@ import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { APP_ENTRY_ROUTE, commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, holdTimelineCreation, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI, waitForAudit } from './support/app.ts';
-import { timelineBase as runtimeTimelineBase, timelineFromList, waitForCreatedProjectResponse, waitForCreatedProjectUrl, type TimelineListPage, type TimelineScope } from './support/timeline-scope.ts';
+import { readCreatedProjectResponse, timelineBase as runtimeTimelineBase, timelineFromList, waitForCreatedProjectResponse, waitForCreatedProjectUrl, type TimelineListPage, type TimelineScope } from './support/timeline-scope.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 
@@ -1393,11 +1393,11 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   retainScope();
   // The bridge response may be service-worker-routed, so observe it at the
   // browser context while retaining the exact route/name/status guards.
-  const projectCreated = waitForCreatedProjectResponse(context, projectName, CEILING);
+  const projectCreated = waitForCreatedProjectResponse(context, projectName, harness.bridgeBase, CEILING);
   const creating = page.getByRole('button', { name: 'Create Project' }).click();
   const projectResponse = await projectCreated;
   expect(projectResponse.status()).toBe(201);
-  const projectResult = await projectResponse.json() as { data: { project_id: string; name: string } };
+  const projectResult = await readCreatedProjectResponse(projectResponse, projectName, harness.bridgeBase);
   const createdProjectId = projectResult.data.project_id;
   expect(createdProjectId, 'the normal project create response must identify the new project').toBeTruthy();
   expect(projectResult.data.name, 'the response must preserve the exact submitted project name').toBe(projectName);

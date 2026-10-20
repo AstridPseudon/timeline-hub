@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isCreatedProjectResponse, timelineBase, timelineFromList, waitForCreatedProjectResponse } from './timeline-scope.ts';
+import { isCreatedProjectResponse, readCreatedProjectResponse, timelineBase, timelineFromList, waitForCreatedProjectResponse } from './timeline-scope.ts';
 import type { Request, Response } from '@playwright/test';
 
 test('timeline paths keep seeded and created-project scopes explicit', () => {
@@ -20,11 +20,13 @@ test('timeline list lookup requires the exact selected resource', () => {
 });
 
 test('context response observation matches the real project-create wire shape', async () => {
-  const submittedName = 'Direct Journey 927865';
+  const submittedName = ' Direct Journey 927865 ';
+  const normalizedName = submittedName.trim();
+  const bridgeBase = 'https://astrid.test/api/astrid';
   const request = {
     method: () => 'POST',
     postData: () => JSON.stringify({
-      name: submittedName,
+      name: normalizedName,
       slug: 'direct-journey-927865',
       metadata: { aspect_ratio: '16:9' },
     }),
@@ -32,10 +34,10 @@ test('context response observation matches the real project-create wire shape', 
   const response = {
     request: () => request,
     status: () => 201,
-    url: () => 'https://astrid.test/api/runtime/v1/projects',
+    url: () => 'https://astrid.test/api/astrid/v1/projects',
     json: async () => ({
       data: {
-        project_id: 'created-project', slug: 'direct-journey-927865', name: submittedName,
+        project_id: 'created-project', slug: 'direct-journey-927865', name: normalizedName,
         metadata: { aspect_ratio: '16:9' }, version: 1,
         created_at: '2026-10-20T00:00:00.000Z', updated_at: '2026-10-20T00:00:00.000Z', archived: false,
       },
@@ -57,9 +59,27 @@ test('context response observation matches the real project-create wire shape', 
     },
   };
 
-  const created = await waitForCreatedProjectResponse(context, submittedName, { timeout: 90_000 });
+  const created = await waitForCreatedProjectResponse(context, submittedName, bridgeBase, { timeout: 90_000 });
   assert.equal(observedEvent, 'response');
   assert.equal(created, response);
-  assert.equal((await created.json() as { data: { project_id: string; name: string } }).data.project_id, 'created-project');
-  assert.equal(isCreatedProjectResponse(response, 'another project'), false);
+  assert.deepEqual(await readCreatedProjectResponse(response, submittedName, bridgeBase), {
+    data: { project_id: 'created-project', name: normalizedName },
+    receipt: {
+      receipt_id: 'receipt-project-create', command_kind: 'project.create', idempotency_key: 'key-project-create',
+      request_hash: 'hash-project-create', project_id: 'created-project', project_seq: [1, 1], event_ids: ['event-project-create'],
+      result: {}, created_at: '2026-10-20T00:00:00.000Z',
+    },
+  });
+
+  const responseAt = (url: string) => ({ ...response, url: () => url }) as unknown as Response;
+  assert.equal(isCreatedProjectResponse(responseAt('https://other.test/api/astrid/v1/projects'), submittedName, bridgeBase), false);
+  assert.equal(isCreatedProjectResponse(responseAt('https://astrid.test/api/runtime/v1/projects'), submittedName, bridgeBase), false);
+  assert.equal(isCreatedProjectResponse({ ...response, request: () => ({ ...request, method: () => 'GET' }) } as unknown as Response, submittedName, bridgeBase), false);
+  assert.equal(isCreatedProjectResponse(response, 'another project', bridgeBase), false);
+  assert.equal(isCreatedProjectResponse({ ...response, status: () => 200 } as unknown as Response, submittedName, bridgeBase), false);
+  assert.equal(isCreatedProjectResponse({ ...response, request: () => ({ ...request, postData: () => '{' }) } as unknown as Response, submittedName, bridgeBase), false);
+  await assert.rejects(
+    readCreatedProjectResponse({ ...response, json: async () => ({ data: { project_id: 'created-project' } }) } as unknown as Response, submittedName, bridgeBase),
+    /data and receipt/,
+  );
 });
