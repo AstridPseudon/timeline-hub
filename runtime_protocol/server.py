@@ -518,9 +518,11 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 authorize=authorize,
             ))
         if path[:2] == ["v1", "projects"] and path[3:] in (
-                ["media-selection"], ["media-selection", "verified"], ["document-objects", "verified"]) and method == "GET":
+                ["media-selection"], ["media-selection", "verified"], ["document-objects", "verified"],
+                ["document-inputs", "verified"]) and method == "GET":
             verified = path[3:] == ["media-selection", "verified"]
             document = path[3] == "document-objects"
+            source = path[3] == "document-inputs"
             identity = self._identity("projects:read")
             publisher = identity["actor"]
             def authorize():
@@ -535,19 +537,27 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 raise ProtocolError("invalid media selection query encoding") from exc
             if document:
                 forms = ({"document_id", "version", "content_digest", "object_id"},)
+            elif source:
+                forms = ({"document_id", "version", "content_digest"},)
             elif verified:
                 forms = ({"asset", "generation_id", "variant_id", "object_id", "catalog_digest"},)
             else:
                 forms = ({"asset", "generation_id", "variant_id"}, {"association_id", "object_id", "version"})
             if set(query) not in forms or any(len(values) != 1 or not values[0].strip() for values in query.values()):
                 raise ProtocolError("all four exact document object fields are required" if document
+                                    else "all three exact document pin fields are required" if source
                                     else "all five exact media selection fields are required" if verified
                                     else "exactly one complete media selection selector form is required")
             if "version" in query:
                 if not re.fullmatch(r"[1-9][0-9]*", query["version"][0]):
-                    raise ProtocolError("document version must be a positive integer" if document
+                    raise ProtocolError("document version must be a positive integer" if document or source
                                         else "output version must be a positive integer")
                 query["version"] = [int(query["version"][0])]
+            if source:
+                return self._send(200, self.runtime.get_project_verified_document(
+                    path[2], {key: query[key][0] for key in ("document_id", "version", "content_digest")},
+                    authorize=authorize,
+                ))
             if document:
                 return self._send(200, self.runtime.get_project_verified_document_object(
                     path[2], {key: query[key][0] for key in ("document_id", "version", "content_digest")},

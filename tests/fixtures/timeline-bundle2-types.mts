@@ -19,7 +19,12 @@ function readObject(client: WorkspaceClient): Promise<VerifiedDocumentObject> {
   client.getProjectVerifiedDocumentObject("p", { document_id: "pack" }, media.object_id);
   return client.getProjectVerifiedDocumentObject("p", source, media.object_id);
 }
-void [verified, readVerified, readObject];
+function readDocument(client: WorkspaceClient): Promise<VerifiedDocument> {
+  // @ts-expect-error The retained document read requires the complete DocumentPin.
+  client.getProjectVerifiedDocument("p", { document_id: "pack" });
+  return client.getProjectVerifiedDocument("p", source);
+}
+void [verified, readVerified, readObject, readDocument];
 const added: ClipAddArgs = { row: { id: "c", clipType: "element", track: "v", at: 0, hold: 1, opaque: { nil: null } } };
 const popup: OccurrenceAddMediaArgs = { row: added.row, media };
 const swapped: OccurrenceSwapMediaArgs = { old_media: media, media };

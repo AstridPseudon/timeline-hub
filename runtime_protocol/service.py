@@ -2512,6 +2512,18 @@ class RuntimeService:
         except CommitRejected as exc:
             raise public_failure(exc.failure) from exc
 
+    def get_project_verified_document(self, project_id, pin, *, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import detached, public_failure, read_project_source_document
+        pin = detached(pin)
+        check = self._timeline_authorize(project_id, None, authorize, mutation=False)
+        try:
+            with self.store._mutex:
+                check()
+                return read_project_source_document(self, project_id, pin)
+        except CommitRejected as exc:
+            raise public_failure(exc.failure) from exc
+
     def restore_project_parent_composition_revision(self, project_id, timeline_id, revision, body, *,
                                                     idempotency_key=None, publisher=None,
                                                     invocation_path=None, authorize=None):
