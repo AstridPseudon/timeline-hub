@@ -896,8 +896,8 @@ def find_version(tl: Any, version: str, *, client: Any = None) -> Any:
         from astrid.sdk.timeline.revisions import RuntimeRevisions
 
         try:
-            revisions = RuntimeRevisions(client.timelines).list(
-                tl.bundle["project_id"], tl.bundle["timeline_id"], limit=100,
+            revisions = RuntimeRevisions(client.timelines)._list_all(
+                tl.bundle["project_id"], tl.bundle["timeline_id"]
             )
         except TimelineEditError as exc:
             raise SheetError(f"could not read retained sheet basis: {exc}") from exc

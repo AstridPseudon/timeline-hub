@@ -143,6 +143,22 @@ class RuntimeRevisions(RevisionStore):
             out.append(current)
         return out
 
+    def _list_all(self, project: str, timeline: str) -> list[Revision] | None:
+        """Read the complete verified Runtime ancestry for retained projections.
+
+        This is deliberately private: history-ref callers keep their bounded
+        ``list`` contract, while a retained sheet basis must follow the
+        Runtime's authenticated cursor chain until its terminal page.  The
+        cursor reader below still supplies the finite boundary; no guessed
+        numeric limit is used.
+        """
+        commits = self._commit_reader(project, timeline)
+        if commits is not None:
+            return self._list_commits(project, timeline, limit=None, reader=commits)
+        # A client without the immutable history route has no cursor chain to
+        # exhaust; retain the bounded legacy adapter (and its override seam).
+        return self.list(project, timeline, limit=100)
+
     def _commit_reader(self, project: str, timeline: str) -> Any | None:
         """Find the public immutable history method, if this client has it.
 
@@ -251,21 +267,22 @@ class RuntimeRevisions(RevisionStore):
         )
 
     @classmethod
-    def _list_commits(cls, project: str, timeline: str, *, limit: int, reader: Any) -> list[Revision] | None:
+    def _list_commits(cls, project: str, timeline: str, *, limit: int | None, reader: Any) -> list[Revision] | None:
         """Read all pages to reconstruct newest-first publication ancestry.
 
         The frozen history route is bounded by a fixed head and returns items
         in acceptance order. Fetching its cursor chain before reversing avoids
         treating a reused content revision as a duplicate or as a new parent.
         """
-        if limit <= 0:
+        if limit is not None and limit <= 0:
             return []
         rows: list[Mapping[str, Any]] = []
         head_pair: tuple[str, str] | None = None
         cursor: str | None = None
         seen_cursors: set[str | None] = {None}
+        page_limit = 50 if limit is None else min(200, max(50, limit))
         while True:
-            page = cls._result_data(reader(project, timeline, cursor=cursor, limit=min(200, max(50, limit))),
+            page = cls._result_data(reader(project, timeline, cursor=cursor, limit=page_limit),
                                      timeline=timeline, operation="list")
             if page is None:
                 raise TimelineEditError(f"Runtime revision history returned no page for {timeline!r}")
@@ -321,7 +338,7 @@ class RuntimeRevisions(RevisionStore):
         if len(seen_publications) != len(by_publication):
             raise TimelineEditError(f"Runtime revision history contains a disconnected or incomplete chain for {timeline!r}")
         revisions = [cls._history_revision(row) for row in ordered_rows]
-        return revisions[:limit]
+        return revisions if limit is None else revisions[:limit]
 
 
 def split_ref(text: str) -> tuple[str, str | None]:
