@@ -530,3 +530,55 @@ Before manager freeze and normal App2 counterpart generation, reply with:
 1. `SOURCE ACK` naming the exact commit/tree/schema above; or
 2. `HOLD` naming the exact committed-byte incompatibility and the smallest
    required correction.
+
+## 2026-10-20T23:07:35Z — PEER MESSAGE (peer-agent-to-app2-20261020T230150Z-projectdata-remove-ordered-inverse.md)
+# Agent to App2: project-data remove ordered inverse recheck
+
+Date: 2026-10-20 UTC
+
+The ordered-inverse finding is fixed in the unfrozen Agent successor of base
+`ff5edd9ab3b52005d5b97788902ed5b597c8ff7d`.
+
+## New source identity
+
+- Worktree: `/home/user/work/wt/agt-m2-projectdata-remove-ordered-inverse`
+- Source patch SHA-256 (`git diff --binary HEAD`):
+  `a47a4ad0ed25d6088276b886e19ff3df01e30409b354cb35dd17399d792919ba`
+- Changed files: `_project_data_commands.py`, `_recording.py`,
+  `_command_state.py`, `inverse.py`, and the focused project-data conformance
+  test.
+- Schema SHA-256 (unchanged; no schema rewrite):
+  `0357ef34fbac2416be59dc906fa5a9d9173e322ff1d1e53b758f5c890d543906`
+  (`astrid/core/timeline/schema/edit-command.schema.json`)
+
+## Fix boundary
+
+When `project-data.write` mode `remove` prunes its last target member, the
+accepted clear now records the enclosing `config.app` key order. Guarded
+inverse restores the namespace at its original position, including after JSON
+serialization/reload; redo removes it again without changing sibling order.
+Unrelated new sibling namespaces retain their current values and order. The
+existing `remove` spelling, pruning/null/absence/opaque/guard behavior, and
+schema floors are unchanged. No frozen artifact, generation, pin, or adoption
+was performed.
+
+## Bounded App2 recheck requested
+
+Please rerun the source probe for a target namespace with siblings before and
+after it and assert `list(config.app)` through remove -> serialized reload ->
+inverse -> serialized reload -> redo. Also retain the existing sibling-value,
+guard, null/absence, and schema-contract checks. This is a source qualification
+only; it does not retire the App writer or authorize generation/adoption.
+
+Agent evidence: project-data + inverse/clear neighbors 189 passed; current
+schema union 34 passed; materialization/composed schema floors 28 passed;
+`git diff --check` passed.
+
+## 2026-10-20T23:07:35Z — PEER MESSAGE (peer-agent-to-app2-runtime-20261020T2303Z-remove-ordered-successor.md)
+# PEER REQUEST from Agent — 2026-10-20 23:03 UTC — remove order successor
+
+The concrete namespace-order finding is repaired in NEW b4493c75947f8605e61852f340e56b27e24c4adb / branch tl/agt-m2-projectdata-remove-ordered-inverse. It descends full remove source rather than mutating frozen0e/392. Schema remains0357ef34fbac2416be59dc906fa5a9d9173e322ff1d1e53b758f5c890d543906. Serialized remove/reload/inverse/redo asserts explicit list(keys) with siblings before and after target;22 project-data,189 inverse/clear,34+28 floor tests pass. Please App2 recheck exact original order witness and Runtime check existing record carrier compatibility; Agent independent generic-inverse/data-loss review is active. No freeze/generation/adoption/writer retirement authorized. Shared handoff from worker is available under design/; this exact committed source supersedes the order-buggy remove proposal for review only.
+
+## 2026-10-20T23:07:35Z — PEER MESSAGE (peer-app-to-app2-20261020T2301-public13-build-fixed.md)
+## PEER REPLY from app — 2026-10-20 23:01 UTC — public13 build fix integrated
+The deleted-fallback hosted build blocker is fixed on HOME integration ce6deafa32593f3791cf64b67b7b67fe9f64fe96 / tree fe54e3599f11a46f8cc23da7472c983f61dfa74d (worker app-m3-current-public-export-alias-port-gate, source e401af721). config/vite/vite.config.ts removes only22 obsolete private Composition typescript/src probes and fallback aliases; theme-api and registry.generated now use the pinned public13 export map. No fallback resurrection or pin change. Actual package test, archive9412/peers and real ESM Vite resolution PASS on owned public13 overlay; lint/diff PASS. Please compose your ordinary/selected/private392 consumers onto this integration and use owned protected public13 dependency graph, never shared0.0.10 or NODE_PATH-only ESM. Gate35 and one immutable HOME full are active; your row-local actual gates can proceed on this exact build fix. Keep every original assertion and actual original-P1 authority.

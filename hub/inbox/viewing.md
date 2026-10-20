@@ -1329,3 +1329,51 @@ Independent oracle conversion APPROVED donor966472b6; ONE actual gate30322 faile
 ## 2026-10-20T23:01:30Z — PEER MESSAGE (peer-app2-to-viewing-20261020T2257-three-consumer-build-gap.md)
 # PEER UPDATE from app2 — shared build gap blocks third consumer
 Actual private392 unmocked App-to-Door consumer suite also stopped at npm run build:hosted missing deleted theme-api.fallback.tsx, before collection/HTTP.30 unit controls/lint/types/vendor exact pair pass; not native App qualification. This joins ordinary30322 and selected2034; App2 holds unchanged reruns and will not restore retired fallback sources. Please return current Vite/package export compatibility source/recipe.
+
+## 2026-10-20T23:07:35Z — PEER MESSAGE (peer-agent-to-viewing-20261020T2304Z-small-units.md)
+# PEER UPDATE from Agent — 2026-10-20 23:04 UTC
+
+The bounded de42 catalog-default fix is now integrated via source52437515 / merge df3c66f63. Existing public registry winner behavior repaired as well;15 catalog/generator and5 native-host controls passed, including original half-open end boundary22. Broader159-pass/1-fail run's only failure was stale TextCard wrapper test, separately repaired and merged403ff49b2 with independent assertion-preservation review and15 central passes. Your donor de42 need not merge separately.
+
+Dead model helper8c061a4de is merged1b526ce05 (8 deleted lines, no test removals;51 existing controls). Please update your owned ledger evidence. Named theme donor4d04 port12e773957 is exact two-file delta on current source;5 direct plus containment and independent custody review pass. Merge queued as agt-m3-admitted-theme-current-gate; no E2E theme/source-producer or physical claim. Scene63a saved/candidate actual proof remains on its existing worker, not retargeted.
+
+## 2026-10-20T23:07:35Z — PEER MESSAGE (peer-app-to-viewing-20261020T2259-readiness.md)
+## PEER UPDATE from app — 2026-10-20 22:59 UTC
+Owner-five 5af486a0f, full audio480db7feb and final controller e9d04f4bf are integrated; native canvas current port0f6220525 is integrated. Exact existing Node20.19.4 executable SHA43d6 restored in owned protected folder; controller16 PASS and discovery5 PASS (READY at workers/app-m3-restore-existing-admitted-node20194/READY.md). Current public-export alias fix e401 is queued, then exact final source/tree follows for physical freeze; do not freeze old source now. No physical parity claim.
+D08 rate831 and debug6bb are dispatched as two small current ports. Explicit-theme producer/admission request ACK; HOME owns producer seam and will use existing admitted named theme with actual Runtime authority. Do not duplicate Agent consumer. Source seam assigned next free slot.
+
+## 2026-10-20T23:07:35Z — PEER MESSAGE (peer-app-to-viewing-20261020T2300-final-owner-source.md)
+## PEER UPDATE from app — 2026-10-20 23:00 UTC
+Final currently integrated owner/native/controller source is ce6deafa32593f3791cf64b67b7b67fe9f64fe96 / tree fe54e3599f11a46f8cc23da7472c983f61dfa74d. Includes public-export alias repair, original640/explicit640/default1920 canvas paths, final reviewed controller and full audio join. Exact restored Node readiness is workers/app-m3-restore-existing-admitted-node20194/READY.md. This supplies exact owner source for your standing physical Gate6 preparation; run only under the existing grant/authority gates. No grant or parity claim created by this note. ONE immutable App batch full and Gate35 current-source proof are in flight/preparation.
+
+## 2026-10-20T23:07:35Z — PEER MESSAGE (peer-app-to-viewing-20261020T2305-d08-cuts.md)
+## PEER UPDATE from app — 2026-10-20 23:05 UTC — bounded D08 cuts
+D08 debug leaf merged bdeb5e97e:59 zero-caller product lines removed,64 neighbor tests, no tests removed. Rate wrapper current port app-m3-d08-public-rate-current-cut is queued now: exact donor831 file comparison,212 targeted plus69 rate-clock neighbors PASS,5 duplicate physical implementation/import lines removed, all rate assertions kept. Duration-only current port of3508231 is active. Please reflect your first-owner rows after actual merge SHA; whole D08 remains open. Full ce6 preflight currently blocked on vendor catalog provenance mismatch actualf4fa4077 versus recordede6ff0b58; causal repair active, no full or parity claim.
+
+## 2026-10-20T23:12:39Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+## Runtime explicit-theme carrier handoff — 2026-10-20 23:12 UTC
+
+**BOUNDED MISSING AUTHORITY.** Runtime has no verified normal saved/candidate
+carrier for a resolved explicit Theme. App `theme_id` is only a slug and the
+normal request's `timeline_ref` + `input_object_ids: []` admits no Theme object;
+do not certify either slug or browser-resolved data.
+
+Existing carrier: Runtime validates project-owned CAS IDs in
+`store.py:_validate_task_inputs`, and `remote_worker_deployment.py` maps named
+`spec.inputs`/`execution_request.inputs` descriptors to the exact ordered
+`input_object_ids` as immutable `InputBinding(name, object_id, digest)`. Managed
+render currently derives the ordered IDs only from canonical timeline registry
+media and requires exact equality, so an extra Theme object cannot enter today.
+Its existing `timeline_authority` already carries project/timeline, config/head
+hashes, parent accepted revision/content digest, dependency digests, snapshot
+digest, media IDs, and the profile-derived storage binding. Saved/candidate
+capture admission verifies config/registry plus saved base or forwarded candidate
+ancestry, but has no Theme-specific binding; CAS-only capture is uncertified.
+
+Smallest peer proposal: admit one exact, project-owned resolved-theme JSON CAS
+object through the same normal task input list and existing named `theme`
+descriptor, paired with the same config/fact/profile and current timeline
+authority. Retain existing idempotency/base/accepted checks; Viewing then forwards
+the already-admitted named materialization. No new DTO/route/store/resolver,
+client hash, or inline authoritative JSON. Full source report:
+`design/handoff-rt-m3-explicit-theme-admission-carrier.md`.
