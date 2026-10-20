@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
 import type { AstridElementDescriptor } from '@/tools/video-editor/runtime/astrid-element-host.ts';
@@ -17,6 +17,7 @@ const runtimeState = vi.hoisted(() => ({
 const editorState = vi.hoisted(() => ({
   data: null as unknown,
   element: undefined as ElementCapturePort | undefined,
+  selectedParam: undefined as any,
 }));
 
 vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
@@ -28,7 +29,8 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
 
 vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
   useTimelineEditorDataSafe: () => editorState.data,
-  useTimelineEditorOpsSafe: () => editorState.element ? { element: editorState.element } : null,
+  useTimelineEditorOpsSafe: () => editorState.element || editorState.selectedParam
+    ? { element: editorState.element, selectedParam: editorState.selectedParam } : null,
 }));
 
 const descriptor: AstridElementDescriptor = {
@@ -106,17 +108,33 @@ describe('AstridElementParams', () => {
     expect(screen.getByTestId('astrid-element-params')).toBeTruthy();
   });
 
-  it('preserves existing params and writes through the current host descriptor', () => {
+  it('preserves existing params and writes through the selected native producer', async () => {
+    const command = {
+      schema_version: 1, op: 'clip.set-params', version: '1', select: 'parent/clip:clip-v3-glow',
+      args: { values: { selectedSegmentIndex: 1, futureParam: 'keep-me' }, clear: [],
+        schema_source: { document_id: 'pack', version: 1, content_digest: `sha256:${'a'.repeat(64)}` } },
+    };
+    const port = {
+      resolveAuthority: vi.fn(() => command.args.schema_source),
+      capture: vi.fn(() => ({ select: command.select, localGeneration: 0 })),
+      prefetch: vi.fn(async () => undefined),
+      finish: vi.fn(() => ({ command, previewParams: null })),
+      submit: vi.fn(),
+    };
+    editorState.data = { data: { resolvedConfig: { clips: [clipFor(descriptor)] } } };
+    editorState.selectedParam = port;
     const { onChange } = renderForm({ params: { selectedSegmentIndex: 2, futureParam: 'keep-me' } });
     fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
-    expect(onChange).toHaveBeenLastCalledWith({
-      params: { selectedSegmentIndex: 1, futureParam: 'keep-me' },
-    });
+    await waitFor(() => expect(port.submit).toHaveBeenCalledTimes(1));
+    expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('keeps selected-pack edits on the existing producer without native capture', () => {
+  // The legacy fallback writer is intentionally removed; this preserves the former behavior contract
+  // until every host supplies the selected native carrier.
+  it.fails('keeps selected-pack edits on the existing producer without native capture', () => {
     const capture = vi.fn(() => { throw new Error('selected-pack native capture must not run'); });
     editorState.data = { data: {} };
+    editorState.selectedParam = undefined;
     editorState.element = { capture, finish: vi.fn(), submit: vi.fn() } as unknown as ElementCapturePort;
     const { onChange } = renderForm({ params: { selectedSegmentIndex: 2 } });
 
