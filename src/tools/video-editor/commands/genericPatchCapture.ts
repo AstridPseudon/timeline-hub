@@ -349,8 +349,9 @@ function clipHold(ctx: MoveRecording, ref: string, hold: number): [string[][], n
   if (childFps != null && !equal(rate(childFps), fps)) {
     throw new ClipMoveError('parent and child fps differ', 'unsupported_timing');
   }
-  for (const path of [['placement', 'start_ms'], ['at_ms'], ['duration_ms'], ['track'], ['placement', 'track'],
-    ['time_map'], ['timeMap'], ['speed'], ['source_offset'], ['enabled'], ['active'], ['disabled'], ['hidden'], ['deleted']]) {
+  for (const path of [['placement', 'start_ms'], ['at_ms'], ['duration_ms'], ['source_offset'],
+    ['speed'], ['track'], ['placement', 'track'], ['time_map'], ['timeMap'],
+    ['enabled'], ['active'], ['disabled'], ['hidden'], ['deleted']]) {
     ctx.read(owner, path);
   }
   const occurrence = ctx.state.occurrence(owner);

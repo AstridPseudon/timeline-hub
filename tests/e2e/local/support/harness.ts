@@ -342,6 +342,13 @@ export const THREE_PRODUCTS_OPAQUE = {
   shot: { owner: 'f2-shot', nested: [1, { k: 'v' }], flag: true },
 } as const;
 
+/** The Scene Phase Markers extension reads these from the seeded timeline's project-data app entry. */
+export const THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID = 'haus.astrid.scene-phase-markers';
+export const THREE_PRODUCTS_SCENE_MARKERS = [
+  { id: 'ordinary-marker-a', time: 1 },
+  { id: 'ordinary-marker-b', time: 6 },
+] as const;
+
 /** Keep the App's reference sibling clear of the A5/B7 moves on the same track. */
 export const THREE_PRODUCTS_REFERENCE_AT = 15;
 
@@ -727,7 +734,13 @@ export class DirectHarness {
       { id: ids.agentClearClipId, at: 6, track: 'V2', clipType: 'media', asset: 'f2-clear', hold: 3 },
     ];
     const publication = compositionPublication({ projectId, timelineId }, headRevisionId, 'Main', 30);
-    publication.parent_composition.config = { ...publication.parent_composition.config, clips: parentClips, tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }], x_f2_opaque: THREE_PRODUCTS_OPAQUE.config } as unknown as typeof publication.parent_composition.config;
+    publication.parent_composition.config = {
+      ...publication.parent_composition.config,
+      clips: parentClips,
+      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }],
+      x_f2_opaque: THREE_PRODUCTS_OPAQUE.config,
+      app: { [THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID]: { sceneMarkers: [...THREE_PRODUCTS_SCENE_MARKERS] } },
+    } as unknown as typeof publication.parent_composition.config;
     publication.parent_composition.clips = parentClips as unknown as typeof publication.parent_composition.clips;
     publication.parent_composition.registry = { assets: { 'f2-app': imageAsset('f2-app'), 'f2-video': videoAsset } } as unknown as typeof publication.parent_composition.registry;
     Object.assign(publication, {
