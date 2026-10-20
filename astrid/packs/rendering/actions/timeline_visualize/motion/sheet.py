@@ -23,6 +23,7 @@ from ..layers.base import PALETTE, LayerContext, LayerResult, draw_text, resolve
 from . import model
 
 FRAME_BUDGET = 60
+SCENE_FRAME_BUDGET = 60
 DENSE_OFFSETS = (-2, -1, 0, 1, 2, 3, 4, 6, 8, 10, 12, 14)
 SPARSE_OFFSETS = (-1, 0, 2, 4, 8, 14)
 PAD_SECONDS = 0.25
@@ -43,6 +44,36 @@ def select_cut(snapshot: Mapping[str, Any], selector: Any, fps: float) -> dict[s
     occurrences, _elements = snapshot_elements(snapshot)
     cuts = picture_cuts(occurrences, fps=fps)
     return dict(find_cut(cuts, selector))
+
+
+def plan_scene_frames(
+    cuts: Sequence[Mapping[str, Any]], elements: Sequence[model.Element], fps: float, *,
+    pixel_frames: Sequence[int] = (),
+) -> list[int]:
+    """Reserve exact composition-check samples, with at most 60 extra metadata queries."""
+    from .lint import _sample_times
+
+    if isinstance(fps, bool) or not math.isfinite(fps) or fps <= 0:
+        raise ValueError("scene sampling requires a positive finite fps")
+    if any(isinstance(frame, bool) or not isinstance(frame, int) or not 0 <= frame <= 2**53 - 1
+           for frame in pixel_frames):
+        raise ValueError("pixel frames must be nonnegative safe integers")
+    pixels = set(pixel_frames)
+    chosen: dict[int, None] = {}
+    for cut in cuts:
+        start, end = float(cut["start"]), float(cut["end"])
+        if not math.isfinite(start) or not math.isfinite(end) or not 0 <= start < end:
+            raise ValueError("scene sampling requires a finite nonnegative cut window")
+        inside = model.in_window(elements, start, end)
+        for t in _sample_times(cut, inside, fps):
+            frame = int(round(t * fps))
+            if not 0 <= frame <= 2**53 - 1:
+                raise ValueError("scene sample frames must be nonnegative safe integers")
+            if frame not in pixels:
+                chosen.setdefault(frame, None)
+                if len(chosen) == SCENE_FRAME_BUDGET:
+                    return list(chosen)
+    return list(chosen)
 
 
 def plan_motion_frames(

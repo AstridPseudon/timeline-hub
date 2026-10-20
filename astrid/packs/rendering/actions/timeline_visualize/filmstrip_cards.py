@@ -1773,6 +1773,23 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
     (out_root / 'render-snapshot.json').write_text(
         json.dumps(snapshot, indent=2, ensure_ascii=False), encoding='utf-8')
     cards = index['cards']
+    motion_context = None
+    if options.get('view') == 'motion':
+        from .layers.base import resolve_layers
+        from .motion.sheet import build_context, plan_scene_frames
+        from .motion.window import resolve_window
+
+        fps_value = float(Fraction(*snapshot['fps_rational']))
+        window = resolve_window(snapshot, options, fps_value, int(snapshot['duration_frames']))
+        motion_context = build_context(snapshot, window['cut'], {}, fps=fps_value, frame_size=(640, 360),
+                                       beats=options.get('beats'), layer_names=options.get('layers') or ())
+        motion_context.shared['window'] = window
+        layers = resolve_layers(options.get('layers') or None, view='motion')
+        reserve = getattr(frame_provider, 'reserve_scene_frames', None)
+        if (callable(reserve) and any(layer.name == 'lint' for layer in layers)
+                and 'composition' not in ((options.get('rules') or {}).get('disable') or ())):
+            reserve(plan_scene_frames([motion_context.cut], motion_context.all_elements, motion_context.fps,
+                                      pixel_frames=[int(card['frame']) for card in cards]))
     capture_info = None
     # Frame acquisition is the expensive step (Remotion capture or ffmpeg
     # extraction).  Its wall-clock window is reported as timing so an agent can
@@ -1844,9 +1861,9 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
     display_audio = index.get('audio') if 'audio' in (options.get('components') or ('output', 'text', 'audio')) else None
     render_selection = (snapshot.get('metadata') or {}).get('selection') or options.get('render_run') or 'latest'
     timeline_label = snapshot.get('timeline_name') or snapshot['timeline_id']
-    if options.get('view') == 'motion':
-        from .motion.sheet import build_context, compose_motion_sheet
-        fps_value = float(Fraction(*snapshot['fps_rational']))
+    if motion_context is not None:
+        from .motion.sheet import compose_motion_sheet
+
         frames = {int(card['frame']): out_root / card['image'] for card in cards if (out_root / card['image']).is_file()}
         size = (640, 360)
         if frames:
@@ -1854,17 +1871,20 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
             with Image.open(next(iter(frames.values()))) as first_frame:
                 size = first_frame.size
         motion_meta = index.get('motion') or {}
-        from .motion.window import resolve_window
-        window = resolve_window(snapshot, options, fps_value, int(snapshot['duration_frames']))
-        cut = window['cut']
-        context = build_context(snapshot, cut, frames, fps=fps_value, frame_size=size,
-                                beats=options.get('beats'), layer_names=options.get('layers') or (),
-                                label_batches=label_batches, label_canvas=label_canvas,
-                                scene_frames=getattr(frame_provider, 'scene_frames', None),
-                                scene_occlusions=getattr(frame_provider, 'scene_occlusions', None),
-                                scene_clip_identities=getattr(frame_provider, 'scene_clip_identities', None),
-                                scene_unavailable=(capture_info or {}).get('scene_unavailable'))
-        context.shared['window'] = window
+        context = motion_context
+        context.frames, context.frame_size = frames, size
+        for name in ('scene_frames', 'scene_occlusions', 'scene_clip_identities'):
+            context.shared[name] = dict(getattr(frame_provider, name, None) or {})
+        if context.shared['scene_frames'] and not (capture_info or {}).get('scene_unavailable'):
+            context.shared.pop('scene_unavailable', None)
+        else:
+            context.shared['scene_unavailable'] = ((capture_info or {}).get('scene_unavailable')
+                                                   or 'exact captured scene facts unavailable')
+        if 'labels' in (options.get('layers') or ()):
+            from .overlays.labels import canvas_of, snapshot_labels
+
+            context.shared['label_canvas'] = label_canvas or canvas_of(snapshot.get('config') or {}, snapshot.get('theme'))
+            context.shared['label_batches'] = snapshot_labels(snapshot, list(frames), captured=label_batches)
         context.shared['frame_labels'] = {int(k): v for k, v in (motion_meta.get('labels') or {}).items()}
         from .motion.window import preset_settings
         settings = preset_settings(window['preset'])
