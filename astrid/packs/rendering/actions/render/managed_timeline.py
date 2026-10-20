@@ -952,12 +952,22 @@ def _project_exact_parent_head(
     from astrid.core.timeline.shot_composition_projection import (
         project_runtime_parent_composition,
     )
+    from astrid.sdk.timeline.commit import (
+        INTERNAL_IMAGE_FIELDS,
+        PARENT_IMAGE_FIELDS,
+        SHOT_IMAGE_FIELDS,
+    )
 
     try:
+        # Snapshot canonical images, keeping GET-only decoration on the read rows.
         projected = project_runtime_parent_composition(
-            parent,
-            shot_revisions=shots,
-            internal_timeline_revisions=internals,
+            {**{key: parent[key] for key in PARENT_IMAGE_FIELDS},
+             "project_id": project_id, "timeline_id": timeline_id},
+            shot_revisions=[{**{key: row[key] for key in SHOT_IMAGE_FIELDS},
+                             "project_id": row.get("project_id", project_id)} for row in shots],
+            internal_timeline_revisions=[
+                {**{key: row[key] for key in INTERNAL_IMAGE_FIELDS},
+                 "project_id": row.get("project_id", project_id)} for row in internals],
         )
     except ValueError as exc:
         raise ValueError(f"canonical parent revision closure is not renderable: {exc}") from exc
