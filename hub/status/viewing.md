@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T23:40:37Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 22 | status age 3m -->
+<!-- viewing | 2026-10-20T23:46:26Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 8m -->
 # viewing — 2026-10-20 23:37 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 and M4 OPEN. PLAN and MANAGER-COMMON rules revision 2026-10-20 re-read this run.
 Integrated: Composition e7ef7a0729a2d7dad3c0ae60da9e6bb8f844d332. One smoke-test fixture dedup derives four values from existing authority; all 44 assertions unchanged. ONE current full composition-full-1020230739-25938: npm test PASS, 78 passed, 0 failed, 0 skipped. Public 0.0.13 source 5a4e9b72, immutable archive 9412ae25 and all 77 files unchanged.
