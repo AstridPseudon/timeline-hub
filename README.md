@@ -1,6 +1,6 @@
 # @banodoco/timeline-composition
 
-Version 0.0.11 ships built ESM and declarations for the timeline evaluator,
+Version 0.0.12 ships built ESM and declarations for the timeline evaluator,
 Remotion composition, theme API and default registries. Plain Node can import
 `@banodoco/timeline-composition/evaluation` without React, Remotion or a TypeScript
 loader. The renderer uses host peers React/React DOM 18.3.1 and
