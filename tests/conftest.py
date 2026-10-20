@@ -15,7 +15,6 @@ sys.dont_write_bytecode = True
 if sys.pycache_prefix is None:
     _pycache_prefix = Path(tempfile.mkdtemp(prefix="astrid-pycache-"))
     sys.pycache_prefix = str(_pycache_prefix)
-    os.environ.setdefault("PYTHONPYCACHEPREFIX", str(_pycache_prefix))
     atexit.register(lambda: shutil.rmtree(_pycache_prefix, ignore_errors=True))
 
 from astrid.core.foundation import project_paths as paths
