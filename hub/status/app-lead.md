@@ -13,3 +13,15 @@
 - Open blockers: none on this machine. Manager-stated external blockers: runtime-current-tuple.md still absent (Runtime), Agent pin/public10 pair. No CODEX_LIMIT, no LOGIN_NEEDED.
 - Toolchain folder app-m2-post-opaque-compat-toolchain: stays KEEP (still listed in notes/opaque-compat-dependencies.lease); recycle only after the render gate finishes or the manager drops it from the lease.
 - Questions for the orchestrator: none.
+
+## Lead 07:49Z: disk before the 0.0.12 install (orchestrator 07:48Z)
+- Disk before 9.3 GB, after ~11.3 GB (df -h: 11G). Short of the 12 GB target.
+- Recycled all eligible names from notes/recycle-after-11559.txt (6: full3410-asset-drop-fix, m4-unused-fallbacks-current-qualify, local-history-publication-boundary, post-batch-current-full-source, popup-known-remap-safety, opaque-root-writer-closure); the other 9 had already been removed by kit recycle-on-finish. Also recycled merged, clean app-m3-theme-ground-current-qualify-r1. All other leases and KEEP markers, the M1 4a75/4bb sources, /tmp/app-m2-coherent-deps8, running worktrees and .test-* are untouched.
+- Options to reach 12+ GB (manager/orchestrator decision; the lead will not act without one):
+  (a) the 4 restart-interrupted worktrees (exit 137, ~1.2 GB): app-m2-ordinary-session-compose (45 dirty files), outbox-upgrade-proof (1), placement-native-parity (2), scalar-controls (9). Each has a completed -r1 rerun, so the uncommitted partial work is likely superseded. The manager should confirm before the lead discards it.
+  (b) ~28 finished worktrees the manager has KEEP-marked (~300 MB each). Remove KEEP from any no longer needed.
+  (c) the toolchain folder (1.2 GB) plus /tmp/app-m2-post-opaque-compat-toolchain-node-cache (303 MB), once the render gate finishes.
+
+## Lead 07:50Z: option (a) done (orchestrator 07:49Z)
+- The 4 restart-interrupted exit-137 worktrees are discarded after saving their partial work: workers/<w>/abandoned-wip.patch (git add -A -N + diff HEAD --binary; all non-empty). Sizes: app-m2-ordinary-session-compose 3.5 MB, outbox-upgrade-proof 6.4 KB, placement-native-parity 87 KB, scalar-controls 19 KB. Worktrees force-removed under the recycle lock and marked recycled; branches kept (126658391, c8566f12d, 214981bbc, 329fa0ecd). Each had a completed -r1 rerun.
+- Free disk is now 13 GB (df -h), above the 12 GB target for the 0.0.12 install. (b) and (c) were not done; (c) follows after the render gate.

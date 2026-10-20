@@ -7,12 +7,12 @@ diff --git a/src/examples/transcript-panel-example.ts b/src/examples/transcript-
  import type {
    ImmutableProjectPackageDescriptor,
 +  PanelFrameAnchor,
-   PanelRenderProps,
 +  PanelPreviewService,
+   PanelRenderProps,
    PanelVideoAdapter,
    ProjectObjectMetadata,
    ProjectObjectStorage,
-@@ -146,11 +148,39 @@ export function createTranscriptPanelExampleAdapter(): TranscriptPanelAdapter {
+@@ -146,10 +148,38 @@ export function createTranscriptPanelExampleAdapter(): TranscriptPanelAdapter {
  /** A panel renderer reads the host-provided adapter and leaves playback mutation to the host. */
  export function readTranscriptPanelExample(props: PanelRenderProps): TranscriptPanelSnapshot | undefined {
    const video: PanelVideoAdapter | undefined = props.video;
@@ -47,7 +47,6 @@ diff --git a/src/examples/transcript-panel-example.ts b/src/examples/transcript-
 +  const handle = preview.showFrame({ seconds: word.timelineStart, anchor });
 +  return () => { handle.dispose(); };
 +}
-
  /** Import a transcript package through immutable host storage and keep its digest as the revision. */
  export async function ingestTranscriptPackage(
    storage: ProjectObjectStorage,
@@ -66,7 +65,7 @@ diff --git a/src/sdk/examples-governance.test.ts b/src/sdk/examples-governance.t
  import {
    createTimelineOverlayGeometry,
    validateManifest,
-@@ -568,5 +569,53 @@ describe('Transcript panel SDK example contract', () => {
+@@ -568,5 +569,55 @@ describe('Transcript panel SDK example contract', () => {
      expect(descriptor.revision).toBe('sha256:fixture');
      expect(descriptor.entry.object_id).toBe('transcript-object-1');
      expect(descriptor.assets).toEqual([]);
@@ -75,6 +74,8 @@ diff --git a/src/sdk/examples-governance.test.ts b/src/sdk/examples-governance.t
 +  it('uses the optional hover preview with a DOM anchor and disposes it on leave', () => {
 +    let received: unknown;
 +    let disposed = 0;
++    const adapter = createTranscriptPanelExampleAdapter();
++    const word = adapter.getSnapshot().occurrences[0].words[0]!;
 +    const stop = previewTranscriptWordOnHover(
 +      {
 +        instanceId: 'transcript-example',
@@ -82,7 +83,7 @@ diff --git a/src/sdk/examples-governance.test.ts b/src/sdk/examples-governance.t
 +        video: {
 +          view: {} as never,
 +          seek: () => undefined,
-+          transcript: createTranscriptPanelExampleAdapter(),
++          transcript: adapter,
 +          preview: {
 +            showFrame(input) {
 +              received = input;
@@ -91,7 +92,7 @@ diff --git a/src/sdk/examples-governance.test.ts b/src/sdk/examples-governance.t
 +          },
 +        },
 +      },
-+      wordProjection,
++      word,
 +      {
 +        getBoundingClientRect: () => ({
 +          left: 10,
@@ -115,7 +116,7 @@ diff --git a/src/sdk/examples-governance.test.ts b/src/sdk/examples-governance.t
 +        view: {} as never,
 +        seek: () => undefined,
 +      },
-+    }, wordProjection, {
++    }, word, {
 +      getBoundingClientRect: () => ({} as DOMRect),
 +    })).toBeUndefined();
 +  });
