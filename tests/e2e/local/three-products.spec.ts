@@ -1144,7 +1144,7 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
 
   const runtimeRequests: Array<{ method: string; path: string; body?: string }> = [];
-  page.on('request', (request) => {
+  context.on('request', (request) => {
     const url = new URL(request.url());
     if (!url.pathname.startsWith('/api/runtime/')) return;
     runtimeRequests.push({
