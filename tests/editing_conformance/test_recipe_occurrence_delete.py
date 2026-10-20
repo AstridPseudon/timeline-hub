@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import copy
-import json
 from pathlib import Path
 
 import pytest
@@ -14,6 +13,7 @@ from astrid.sdk.timeline.commands import _SCHEMA, execute
 from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import inverse, later
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
@@ -184,7 +184,7 @@ def test_inverse_requires_authenticated_order_and_source_boundary():
 
 
 def test_closed_schema_and_portable_native_capture_golden():
-    fixture = json.loads(FIXTURE.read_text())
+    fixture = load_fixture(FIXTURE)
     assert portable_golden() == fixture
     validator = Draft202012Validator(_SCHEMA)
     validator.validate(fixture['command'])

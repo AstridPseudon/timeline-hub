@@ -14,6 +14,7 @@ from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundl
 from astrid.sdk.timeline.native_auto_placement import auto_place_shared, unplace_shared
 from astrid.sdk.timeline.native_shot_pool_commands import POOL, capture_shot_pool
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse, later
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
 from tests.sdk.test_timeline_commit_provider import (
@@ -66,7 +67,7 @@ CASES = ['add-first', 'add-second', 'remove-middle']
 def test_portable_goldens(name):
     _, bundle, action, pin, verified = build(name)
     command, plan = step(bundle, action, pin, verified)
-    assert json.loads(FIXTURE.read_text())[name] == {
+    assert load_fixture(FIXTURE)[name] == {
         'commands': [command], 'records': plan.records, 'pool': pool(plan.bundle)}
 
 
