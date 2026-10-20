@@ -1997,7 +1997,7 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         _attach_input_navigation(index, index['input_projection'], track_meta=snapshot.get('tracks'))
     # Keep rich navigation in memory for the paired compositor, but persist a
     # bounded receipt so agents never need to ingest the full timeline graph.
-    receipt = compact_render_receipt(index, snapshot, out_root)
+    receipt = compact_render_receipt(index, snapshot, out_root, revision_label=revision_label)
     attach_frame_addresses(receipt, snapshot, index['cards'], label_batches=label_batches)
     Path(paths['json']).write_text(
         json.dumps(receipt, ensure_ascii=True, separators=(',', ':')),

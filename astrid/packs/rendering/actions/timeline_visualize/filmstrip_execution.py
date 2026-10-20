@@ -258,7 +258,7 @@ def execute_input_only(args, authority):
     # paired deliveries. The rich projection remains available in memory for
     # rendering, while the persisted entrypoint stays bounded and points back
     # to the verified snapshot for placement drill-down.
-    persisted_index = compact_render_receipt(index, snapshot, pack_root)
+    persisted_index = compact_render_receipt(index, snapshot, pack_root, revision_label=revision_label)
     (pack_root / "frame-index.json").write_text(
         json.dumps(persisted_index, ensure_ascii=True, separators=(",", ":")),
         encoding="utf-8",
@@ -1718,6 +1718,11 @@ def execute_filmstrip(args, *, authority=None):
     snapshot = authority.get('capture_snapshot' if capture_mode else 'filmstrip_snapshot')
     if not isinstance(snapshot, dict) or snapshot.get('project_slug') != args.project_slug:
         raise ValueError('Filmstrip authority does not match the project.')
+    from astrid.core.rendering.verified_source import inherited_source
+
+    timeline_path = getattr(args, 'timeline', None)
+    source = inherited_source(timeline_path, getattr(args, 'assets_registry', None)) if timeline_path else None
+    revision_label = snapshot_label(snapshot, source=source)
     video = None if capture_mode else args.rendered_video
     if capture_mode:
         digest = str(authority.get('capture_identity') or snapshot.get('video_digest') or '')
@@ -1792,7 +1797,6 @@ def execute_filmstrip(args, *, authority=None):
             materialized_objects=getattr(args, "materialized_objects", None),
             materialized_root=getattr(args, "materialized_root", None),
         )
-    revision_label = snapshot_label(snapshot)
     out_root = args.out.expanduser().resolve()
     if capture_mode:
         analysis = {
@@ -1882,7 +1886,7 @@ def execute_filmstrip(args, *, authority=None):
                 surface.setdefault('components', ['output', 'inputs'])
                 surface['standalone_input_pages'] = [path.name for path in input_pages]
                 try:
-                    persisted_index = compact_render_receipt(frame_index, snapshot, pack_root)
+                    persisted_index = compact_render_receipt(frame_index, snapshot, pack_root, revision_label=revision_label)
                     attach_frame_addresses(persisted_index, snapshot, frame_index['cards'],
                                            label_batches=getattr(frame_provider, 'label_batches', None))
                 except (KeyError, TypeError, ValueError):
@@ -1897,7 +1901,7 @@ def execute_filmstrip(args, *, authority=None):
         # Output-only packs do not pass through the paired-surface rewrite, but
         # they use the same bounded receipt contract.
         try:
-            persisted_index = compact_render_receipt(result['frame_index'], snapshot, pack_root)
+            persisted_index = compact_render_receipt(result['frame_index'], snapshot, pack_root, revision_label=revision_label)
             attach_frame_addresses(persisted_index, snapshot, result['frame_index']['cards'],
                                    label_batches=getattr(frame_provider, 'label_batches', None))
         except (KeyError, TypeError, ValueError):
@@ -2051,12 +2055,12 @@ def execute_filmstrip(args, *, authority=None):
     timing['total_s'] = round(finished_at - started_at, 3)
     return {'returncode': 0, 'run_root': str(out_root),
             'manifest_path': str(manifest_path), 'timeline_ids': [snapshot['timeline_id']],
-            'snapshot_label': result.get('snapshot_label') or snapshot_label(snapshot),
+            'snapshot_label': revision_label,
             'identity': identity, 'cas': cas, 'entrypoints': entrypoints,
             'request': options.get('request'), 'timing': timing,
             'outputs': {'pack_root': str(pack_root), 'manifest_path': str(manifest_path),
                         'identity': identity, 'cas': cas, 'entrypoints': entrypoints,
-                        'snapshot_label': result.get('snapshot_label') or snapshot_label(snapshot),
+                        'snapshot_label': revision_label,
                         'request': options.get('request'), 'timing': timing,
                         **result['paths'], 'pages': result['paths']['png'],
                         'primary_page': (result['paths']['png'] or [None])[0],

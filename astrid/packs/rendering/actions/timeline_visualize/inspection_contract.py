@@ -1062,11 +1062,13 @@ def _relative_path(value: Any) -> str:
     return path.as_posix()
 
 
-def compact_render_receipt(index: Mapping, snapshot: Mapping, root: Path) -> dict:
+def compact_render_receipt(
+    index: Mapping, snapshot: Mapping, root: Path, *, revision_label: Mapping | None = None,
+) -> dict:
     """Persist sample evidence, never a duplicate timeline/navigation graph."""
     provenance = _projection(snapshot, _IDENTITY_KEYS)
     provenance["fps_rational"] = list(snapshot["fps_rational"])
-    provenance["revision"] = snapshot_label(snapshot)
+    provenance["revision"] = dict(revision_label) if revision_label is not None else snapshot_label(snapshot)
     canonical = (snapshot.get("metadata") or {}).get("canonical_timeline") or {}
     timeline = _projection(canonical, ("config_version", "config_hash", "authority"))
     timeline["timeline_ref"] = provenance.get("timeline_id")
@@ -1277,6 +1279,7 @@ def inspect_filmstrip(manifest: str | Path, *, section: str = "summary", limit: 
         if section == "summary":
             summary = {
                 **identity,
+                "revision": snapshot_label(frozen() if "render-snapshot.json" in members else {}),
                 "sample_count": len(cards),
                 "sections": list(INSPECTION_SECTIONS),
                 "canonical_timeline": _projection(index.get("canonical_timeline", {}), ("timeline_ref", "config_version", "config_hash")),
