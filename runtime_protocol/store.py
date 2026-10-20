@@ -2459,10 +2459,22 @@ class RealmStore:
 
             spec, _ = rewrite_spec_snapshots(spec, preflight)
             captures = []
-            snapshot_ids = self._validate_spec_snapshot_refs(
-                spec, project_id, prepared=prepared,
-                capture_validator=lambda snapshot, ref: captures.append((snapshot, ref)),
-            )
+            try:
+                snapshot_ids = self._validate_spec_snapshot_refs(
+                    spec, project_id, prepared=prepared,
+                    capture_validator=lambda snapshot, ref: captures.append((snapshot, ref)),
+                )
+            except NotFoundError as exc:
+                if not (
+                    historical_admission
+                    and replay_spec is not None
+                    and exc.message == "timeline snapshot reference object is missing or corrupt"
+                ):
+                    raise
+                raise ConflictError("retained render snapshot is missing or corrupt", details={
+                    "reason": "render_revision_integrity",
+                    "dependency_id": spec["spec"]["timeline_snapshot_ref"]["digest"],
+                }) from exc
             if snapshot_ids:
                 # Only specs that reference snapshots change shape; any other spec keeps its exact
                 # bytes, so its admission identity (and legacy replay) is unchanged.
@@ -2563,7 +2575,9 @@ class RealmStore:
                     if replay_spec is not None:
                         try:
                             self._validate_spec_snapshot_refs(spec, project_id)
-                        except (ConflictError, NotFoundError) as exc:
+                        except NotFoundError as exc:
+                            if exc.message != "timeline snapshot reference object is missing or corrupt":
+                                raise
                             raise ConflictError("retained render snapshot is missing or corrupt", details={
                                 "reason": "render_revision_integrity",
                                 "dependency_id": spec["spec"]["timeline_snapshot_ref"]["digest"],
