@@ -316,7 +316,9 @@ test('M2 real embedded SettingsAutoDisable: native scalar field change, raw sett
   const initialOccurrence = (initial.parent.payload.occurrences as Array<Record<string, any>>).find((candidate) => candidate.occurrence_id === settingsSeed.occurrenceId);
   expect(initialOccurrence).toEqual(expect.objectContaining({ shot_id: settingsSeed.shotId, shot_revision_id: initial.shot.revision_id }));
   expect(initial.shot).toMatchObject({ shot_id: initialOccurrence!.shot_id, internal_timeline_revision_id: initial.shot.payload.internal_timeline_revision_id });
-  const initialInternalResponse = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${settingsSeed.timelineId}/revisions/${initial.shot.internal_timeline_revision_id}`);
+  const initialInternalManifest = (initial.parent.dependency_manifest.internal_timelines as Array<Record<string, any>>).find((candidate) => candidate.revision_id === initial.shot.internal_timeline_revision_id);
+  expect(initialInternalManifest).toEqual(expect.objectContaining({ timeline_id: settingsSeed.timelineId, revision_id: initial.shot.internal_timeline_revision_id }));
+  const initialInternalResponse = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${initialInternalManifest!.timeline_id}/revisions/${initial.shot.internal_timeline_revision_id}`);
   expect(initialInternalResponse.status, JSON.stringify(initialInternalResponse.body)).toBe(200);
   const initialInternal = initialInternalResponse.body as { timeline_id: string; revision_id: string; content_digest: string; payload: Record<string, any> };
   expect(initial.shot.payload.settings).toEqual({
@@ -354,12 +356,14 @@ test('M2 real embedded SettingsAutoDisable: native scalar field change, raw sett
   const acceptedShot = acceptedResponse.data.canonical_document.shot_revisions.find((candidate) => candidate.shot_id === acceptedOccurrence!.shot_id && candidate.revision_id === acceptedOccurrence!.shot_revision_id);
   expect(acceptedShot, 'Agent8130 materializes the edited shot closure').toBeTruthy();
   expect(acceptedShot!.payload.internal_timeline_revision_id).toBe(acceptedShot!.internal_timeline_revision_id);
-  const acceptedInternal = acceptedResponse.data.canonical_document.internal_timeline_revisions.find((candidate) => candidate.timeline_id === initialInternal.timeline_id && candidate.revision_id === acceptedShot!.internal_timeline_revision_id);
+  const acceptedInternalManifest = acceptedResponse.data.canonical_document.dependency_manifest.internal_timelines.find((candidate) => candidate.timeline_id === initialInternalManifest!.timeline_id && candidate.revision_id === acceptedShot!.internal_timeline_revision_id);
+  expect(acceptedInternalManifest).toEqual(expect.objectContaining({ timeline_id: initialInternalManifest!.timeline_id, revision_id: acceptedShot!.internal_timeline_revision_id }));
+  const acceptedInternal = acceptedResponse.data.canonical_document.internal_timeline_revisions.find((candidate) => candidate.timeline_id === acceptedInternalManifest!.timeline_id && candidate.revision_id === acceptedShot!.internal_timeline_revision_id);
   expect(acceptedInternal, 'the accepted shot pin resolves to its accepted internal timeline').toBeTruthy();
   expect(acceptedShot!.internal_timeline_revision_id).not.toBe(initial.shot.internal_timeline_revision_id);
   expect(acceptedInternal!.payload).toEqual(initialInternal.payload);
   expect(acceptedInternal!.content_digest).toBe(initialInternal.content_digest);
-  const acceptedInternalResponse = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${settingsSeed.timelineId}/revisions/${acceptedInternal!.revision_id}`);
+  const acceptedInternalResponse = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${acceptedInternalManifest!.timeline_id}/revisions/${acceptedInternal!.revision_id}`);
   expect(acceptedInternalResponse.status, JSON.stringify(acceptedInternalResponse.body)).toBe(200);
   expect(acceptedInternalResponse.body).toMatchObject({
     timeline_id: acceptedInternal!.timeline_id,
@@ -374,7 +378,6 @@ test('M2 real embedded SettingsAutoDisable: native scalar field change, raw sett
     internal_timeline_revision_id: acceptedShot!.internal_timeline_revision_id,
     content_digest: acceptedShot!.content_digest,
   });
-  const acceptedInternalManifest = acceptedResponse.data.canonical_document.dependency_manifest.internal_timelines.find((candidate) => candidate.timeline_id === acceptedInternal!.timeline_id && candidate.revision_id === acceptedInternal!.revision_id);
   expect(acceptedInternalManifest).toEqual({
     timeline_id: acceptedInternal!.timeline_id,
     revision_id: acceptedInternal!.revision_id,
