@@ -69,7 +69,6 @@ def _daemon(tmp_path, preparer=None, proxy=None, *, host_only=False):
         inspector = FakeInspector(proxy, observation)
     daemon = RuntimeDaemon(
         root, support_root=profile.support_root,
-        production_worker_credentials=True,
         local_worker_profiles={"astrid": profile},
         local_worker_preparer=preparer,
         local_worker_inspector=inspector,

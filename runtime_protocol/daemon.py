@@ -50,7 +50,7 @@ def _authority_path(value, label):
 class RuntimeDaemon:
     """Loopback-only daemon owning one realm and its storage."""
 
-    def __init__(self, root, *, support_root=None, export_root=None, display_name="Workspace", host="127.0.0.1", port=0, realm_id=None, owner_lock=None, bootstrap_token_file=None, reboot_executor=None, reboot_allowlist=None, production_worker_credentials=False, admission_timeout=None, local_worker_profiles=None, local_worker_preparer=None, local_worker_inspector=None, door=None, authoring_profile=None):
+    def __init__(self, root, *, support_root=None, export_root=None, display_name="Workspace", host="127.0.0.1", port=0, realm_id=None, owner_lock=None, bootstrap_token_file=None, reboot_executor=None, reboot_allowlist=None, admission_timeout=None, local_worker_profiles=None, local_worker_preparer=None, local_worker_inspector=None, door=None, authoring_profile=None):
         if host not in ("127.0.0.1", "localhost", "::1"):
             raise ValueError("runtime daemon only binds to loopback")
         self.root = _authority_path(root, "realm root").resolve()
@@ -65,13 +65,6 @@ class RuntimeDaemon:
         # its small, explicit allowlist.
         self.reboot_executor = reboot_executor
         self.reboot_allowlist = reboot_allowlist
-        # In-process RuntimeDaemon fixtures historically use ``worker_token``
-        # as an administrator convenience for arbitrary fake executor IDs.
-        # The installed CLI passes production_worker_credentials=True, which
-        # switches the real process to the bound least-privilege pack-host
-        # credential below.  Keeping the fixture mode explicit avoids granting
-        # that administrator credential to the production host.
-        self.production_worker_credentials = bool(production_worker_credentials)
         self.admission_timeout = admission_timeout
         if authoring_profile not in (None, "neutral", "astrid"):
             raise ValueError("unsupported authoring profile")
@@ -145,10 +138,9 @@ class RuntimeDaemon:
             self.worker_token = None
             self.worker_credential_path = self.credentials.path_for(WORKER_ACTOR)
         else:
-            # A new production owner must never inherit a receipt-less legacy
+            # A new owner must never inherit a receipt-less legacy
             # Worker bearer. Rotate the single CredentialStore generation
-            # before HTTP starts; fixture-mode credentials retain their
-            # historical behavior for in-process tests.
+            # before HTTP starts.
             existing_worker = self.credentials.actor_metadata(WORKER_ACTOR)
             if isinstance(existing_worker, dict) and isinstance(existing_worker.get("qualified_activation"), dict):
                 # Preserve exact remote custody across daemon restart. The old
@@ -169,18 +161,12 @@ class RuntimeDaemon:
                 else:
                     rotate_worker = (
                         rotate
-                        or bool(self.production_worker_credentials and existing_worker)
+                        or bool(existing_worker)
                         or self.credentials.has_legacy_generation(WORKER_ACTOR)
                     )
                     self.worker_token, self.worker_credential_path = self.credentials.provision(
                         WORKER_ACTOR, list(WORKER_SCOPES), rotate=rotate_worker
                     )
-        if not self.production_worker_credentials and not self.local_worker_profiles:
-            # Test-only in-process convenience. Production CLI receives a
-            # separate least-privilege WORKER_ACTOR credential; this fixture
-            # alias must not grant owner/admin or project-write authority to
-            # the production host.
-            self.worker_token = self.token
         if self.bootstrap_token_file and self.bootstrap_token_file.exists():
             bootstrap_token = platform.read_private_file(self.bootstrap_token_file).decode("utf-8").strip()
             self.credentials.provision_static("bootstrap", bootstrap_token, ["admin", "credentials:provision"])

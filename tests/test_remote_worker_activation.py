@@ -282,7 +282,7 @@ def test_http_owner_precommit_failure_retires_exact_generation_before_abort(
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     daemon = RuntimeDaemon(
-        root, support_root=tmp_path / "support", production_worker_credentials=True,
+        root, support_root=tmp_path / "support"
     ).start()
     try:
         service = daemon.service

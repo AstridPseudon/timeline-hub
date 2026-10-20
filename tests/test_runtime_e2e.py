@@ -20,6 +20,7 @@ from runtime_protocol.store import RealmStore
 from runtime_protocol.errors import ConflictError, OwnerBusyError, ValidationError
 from astrid_runtime_client import ApiError, WorkspaceClient
 from http_helpers import Api
+from tests.runtime_credentials import provision_executor_token
 
 
 @pytest.fixture()
@@ -55,7 +56,7 @@ def test_project_managed_object_and_fake_executor_end_to_end(daemon):
     task = client.create_task("render.basic", {"text": "hello"}, project="demo", idempotency_key="task-1")
     task_id = task["task_id"]
     client.register_executor("fake", ["render.basic"], resource_keys=["cpu"], idempotency_key="executor-fake")
-    worker = WorkspaceClient(daemon.endpoint, daemon.worker_token)
+    worker = WorkspaceClient(daemon.endpoint, provision_executor_token(daemon, "fake"))
     claimed = worker.claim_task(executor_id="fake", capability_ids=["render.basic"], idempotency_key="claim-1", runtime_epoch=worker.health().runtime_epoch)
     assert claimed is not None and claimed["task_id"] == task_id
     settled = worker.settle_attempt(
@@ -159,7 +160,7 @@ def test_project_patch_and_run_cancel_retry_are_durable_and_idempotent(daemon, t
 
     failed = client.admit_task(capability_id="render.basic", capability_digest=digest, input_object_ids=[], project_id=project.project_id, idempotency_key="retry-child")
     client.register_executor({"executor_id": "mutation-worker", "max_concurrency": 1, "resource_keys": [], "capabilities": [{"capability_id": "render.basic", "definition_digest": digest, "status": "ready", "required_resource_keys": [], "estimated_scratch_bytes": 0, "estimated_output_bytes": 1}], "protocol": "workspace.v1"}, idempotency_key="mutation-worker")
-    worker = WorkspaceClient(daemon.endpoint, daemon.worker_token)
+    worker = WorkspaceClient(daemon.endpoint, provision_executor_token(daemon, "mutation-worker"))
     first = worker.claim_task(executor_id="mutation-worker", capability_ids=["render.basic"], idempotency_key="mutation-claim-1", runtime_epoch=worker.health().runtime_epoch)
     assert first is not None
     worker.fail_attempt(first["attempt_id"], lease_id=first["lease_id"], fence=first["fence"], error={"reason": "probe"}, runtime_epoch=first["runtime_epoch"], idempotency_key="mutation-fail")
@@ -358,7 +359,7 @@ def test_stale_lease_and_undeclared_effect_are_rejected(daemon):
     task = client.create_task("render.basic", {}, project=project["project_id"], expected_effect=effect)
     task_id = task["task_id"]
     client.register_executor("effect-worker", ["render.basic"], idempotency_key="executor-effect")
-    worker = WorkspaceClient(daemon.endpoint, daemon.worker_token)
+    worker = WorkspaceClient(daemon.endpoint, provision_executor_token(daemon, "effect-worker"))
     attempt = worker.claim_task(executor_id="effect-worker", capability_ids=["render.basic"], idempotency_key="effect-claim", runtime_epoch=worker.health().runtime_epoch)
     assert attempt is not None
     with pytest.raises(ApiError):

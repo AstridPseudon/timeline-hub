@@ -1134,7 +1134,7 @@ class ForegroundRuntimeBoundary(LocalRuntimeBoundary):
                     runtime_instance_id="pending-startup")
             daemon = RuntimeDaemon(root, support_root=support, display_name=self._display_name,
                 realm_id=realm_id, owner_lock=owner_lock, bootstrap_token_file=token_file,
-                production_worker_credentials=True, admission_timeout=self.admission_timeout_seconds,
+                admission_timeout=self.admission_timeout_seconds,
                 local_worker_profiles=composition.profiles if composition else None,
                 local_worker_preparer=composition.preparer if composition else None,
                 local_worker_inspector=composition.inspector if composition else None, door=door)

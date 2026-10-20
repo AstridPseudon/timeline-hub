@@ -297,7 +297,7 @@ def main(argv=None):
         return 0
     if args.command == "replace":
         root = Path(args.root).expanduser().resolve()
-        daemon = RuntimeDaemon(root, support_root=args.support_root, display_name=args.display_name, realm_id=args.realm_id, production_worker_credentials=True)
+        daemon = RuntimeDaemon(root, support_root=args.support_root, display_name=args.display_name, realm_id=args.realm_id)
         try:
             # Replacement is coordinated offline so a damaged active root is
             # never admitted merely to reach the recovery command.
@@ -366,7 +366,6 @@ def main(argv=None):
             realm_id=args.realm_id,
             owner_lock=args.owner_lock,
             bootstrap_token_file=args.bootstrap_token_file,
-            production_worker_credentials=True,
             admission_timeout=args.admission_timeout,
             local_worker_profiles=composition.profiles if composition else None,
             local_worker_preparer=composition.preparer if composition else None,

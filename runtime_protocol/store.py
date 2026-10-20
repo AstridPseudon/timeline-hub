@@ -157,6 +157,8 @@ THUMBNAIL_RECIPE_VERSION = 1
 # workspace in the admission envelope so live scratch accounting cannot
 # reject a render that passed admission.
 _REMOTION_RUNTIME_WORKSPACE_BYTES = 128 * 1024 * 1024
+# Leave headroom for content-dependent frame sizes and unmodelled render scratch.
+_MANAGED_RENDER_STORAGE_SAFETY_FACTOR = 1.25
 FACT_EXACT_KEYS = frozenset({
     "interpreter", "runtime_lock", "engine_lock", "model_digest",
     "custom_node_digest", "driver", "root", "port",
@@ -1934,6 +1936,8 @@ class RealmStore:
             if not isinstance(occurrences, list):
                 raise ValidationError("canonical parent occurrences must be a list")
             closure_parent, closure_shots, closure_internal = load_closure(self.conn, project_id, row["id"], parent)
+            # Keep the materialized closure even when seam diagnostics warn;
+            # the report is returned in timeline_authority for app review.
             seam_report, seam_metadata = admit_closure(closure_parent, closure_shots, closure_internal, timeline_id=row["id"], materialize=True)
             content = {**content, "config": copy.deepcopy(payload.get("config")), "registry": copy.deepcopy(payload.get("registry"))}
             content["config"]["clips"] = copy.deepcopy(parent_clips(payload))
@@ -2236,22 +2240,22 @@ class RealmStore:
             png_raw_frame_bytes = (4 * width + 1) * height
             frame_sequence_bytes = ((png_raw_frame_bytes * 101 + 99) // 100) * render_frames
         else:
-            # JPEG95 is content-dependent: one byte per pixel plus 20%,
-            # matching Astrid's selected-format frame storage model.
-            jpeg_frame_bytes = (width * height * 6 + 4) // 5
+            # JPEG95 varies by content; 0.5 bytes per pixel stays conservative for real frames.
+            jpeg_frame_bytes = (width * height) // 2
             frame_sequence_bytes = jpeg_frame_bytes * render_frames
         materialization_bytes = (
             managed_input_bytes
-            + (managed_entry_bytes * 2)
-            + (snapshot_bytes * 2)
+            + managed_entry_bytes
+            + snapshot_bytes
         )
         scratch_bytes = max(
             256 * 1024 * 1024,
-            materialization_bytes
-            + frame_sequence_bytes
-            + output_bytes
-            + 2 * 1024 * 1024
-            + _REMOTION_RUNTIME_WORKSPACE_BYTES,
+            math.ceil((
+                materialization_bytes
+                + frame_sequence_bytes
+                + 2 * 1024 * 1024
+                + _REMOTION_RUNTIME_WORKSPACE_BYTES
+            ) * _MANAGED_RENDER_STORAGE_SAFETY_FACTOR),
         )
         return {"scratch_bytes": int(scratch_bytes), "output_bytes": int(output_bytes)}
 
