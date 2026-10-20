@@ -33,3 +33,12 @@ Clearing a transition does not stick on main/integration until the native clear 
 ## Old anonymous automatic-placement requests — owner decision 07:05 UTC
 
 Old task intents submitted before the upgrade without explicit canonical owner/basis/approval bindings are not retroactively auto-placed by inference. The asset stays in the gallery and must show a visible recoverable “Not placed: place manually” state. New automatic placement requires durable explicit requester bindings before task submission and the native capture/commit path; it is not yet qualified on integration. Manual placement remains subject to its existing honest refusal and later native migration.
+
+## Agent compiler/source evidence — 2026-10-20 09:23 UTC
+
+Agent integration has published the compile contracts and fixtures (38e427e3 audio, 6b108a8e visual; contracts now under docs/design after 21f062ed). The shared handoff fixtures remain available as handoff-agent-audio_compile_contract.fixture.json and handoff-agent-visual_compile_contract.fixture.json.
+
+- Audio source reference is origin/main e51595c6, core/timeline/shot_composition_projection.py and main's Composition 0.0.6 AudioTrack.tsx. Gain is multiplicative; boost and mute are kept. Occurrence source_offset is metadata-only on that reference path; its canonical value/unit is milliseconds (the source vector is 350, never silently converted to .35). Occurrence speed is not inherited by that main audio path. Contract test: tests/editing_conformance/test_compile_contracts.py.
+- Fade curve= honours the selected public curve instead of main's discarded/linear form. Continuous PCM sampling remains a deliberate improvement, subject to normal real WAV route qualification; source-phase carry must preserve the unsliced clip's original fade. Agent's 470e4001 slice-origin stamp alone does not prove this route.
+- The native popup golden uses App 309cb7a4 add.output verbatim: occurrence A 8–18 s, B 10–20 s, with source windows, rational clock and opaque data intact. The explicitly separate overhang vector exercises the one compiler's clamp rule. The obsolete clamp-off tests were removed in ef6eec55 under the 06:18 instruction; this is no per-caller render policy.
+- The v0.0.7 element clip-look change and the implicit preview navy/Arial/cyan theme remain the approved viewing-list changes above. No owner film data is present here, so affected-film identities must come from the shipped scanner run locally. These source facts do not qualify owner-film pixels, normal-route PCM or macOS.
