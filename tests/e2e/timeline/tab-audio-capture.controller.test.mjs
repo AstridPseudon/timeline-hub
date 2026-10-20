@@ -11,6 +11,7 @@ import {
   allocateTaskTempDir,
   BROWSER_EXECUTABLE,
   BROWSER_VERSION,
+  assertRunMode,
   cleanupTaskTempDir,
   hashTree,
   isolatedEnvironment,
@@ -18,15 +19,19 @@ import {
   TASK_TEMP_ROOT,
   WORKER_STATE_ROOT,
   PROFILE,
+  RUN_MODE,
+  NODE_EXECUTABLE,
+  NODE_EXECUTABLE_SHA256,
 } from './tab-audio-capture.controller.mjs';
 
 const fingerprint = {
   sourceSha: 'a'.repeat(40),
   sourceTree: 'b'.repeat(40),
+  runMode: RUN_MODE,
   fullTrackedHash: 'c'.repeat(64),
   inputHash: 'd'.repeat(64),
   packageGraphHash: 'e'.repeat(64),
-  node: {version: 'v20.19.4', executableSha256: 'f'.repeat(64)},
+  node: {version: 'v20.19.4', executable: NODE_EXECUTABLE, executableSha256: NODE_EXECUTABLE_SHA256},
   browser: {tree: {sha256: '1'.repeat(64)}, executableSha256: '2'.repeat(64)},
   privateGraph: {root: '/private/fixture/node_modules', tree: {sha256: 'a'.repeat(64), fileCount: 123}},
   discovery: {testCount: 1, sha256: 'b'.repeat(64)},
@@ -62,11 +67,13 @@ function grant() {
     backendOrder: ['tab', 'private-pulse'],
     sourceSha: fingerprint.sourceSha,
     sourceTree: fingerprint.sourceTree,
+    runMode: RUN_MODE,
     fullTrackedHash: fingerprint.fullTrackedHash,
     inputHash: fingerprint.inputHash,
     packageGraphHash: fingerprint.packageGraphHash,
     finalSha: fingerprint.sourceSha,
     nodeVersion: fingerprint.node.version,
+    nodeExecutable: NODE_EXECUTABLE,
     nodeExecutableSha256: fingerprint.node.executableSha256,
     browserTreeSha256: fingerprint.browser.tree.sha256,
     browserExecutableSha256: fingerprint.browser.executableSha256,
@@ -82,6 +89,25 @@ test('grant requires final SHA to match the actual committed source, not only an
   assert.doesNotThrow(() => assertGrant(grant(), fingerprint, fingerprint.sourceSha));
   assert.throws(() => assertGrant({...grant(), finalSha: '9'.repeat(40)}, fingerprint, fingerprint.sourceSha), /committed source SHA/);
   assert.throws(() => assertGrant(grant(), fingerprint, '9'.repeat(40)), /committed source SHA/);
+});
+
+test('grant binds the actual stereo run mode and retained Node executable', () => {
+  assert.doesNotThrow(() => assertGrant(grant(), fingerprint, fingerprint.sourceSha));
+  assert.throws(() => assertGrant({...grant(), runMode: 'mono'}, fingerprint, fingerprint.sourceSha), /stereo run mode/);
+  assert.throws(() => assertGrant({...grant(), nodeExecutable: '/tmp/old-node'}, fingerprint, fingerprint.sourceSha), /Node identity/);
+});
+
+test('Playwright environment refuses a mono run for the stereo probe', () => {
+  const previous = process.env.TAB_AUDIO_RUN_MODE;
+  try {
+    process.env.TAB_AUDIO_RUN_MODE = 'mono';
+    assert.throws(() => assertRunMode(), /TAB_AUDIO_RUN_MODE=stereo/);
+    process.env.TAB_AUDIO_RUN_MODE = RUN_MODE;
+    assert.doesNotThrow(() => assertRunMode());
+  } finally {
+    if (previous === undefined) delete process.env.TAB_AUDIO_RUN_MODE;
+    else process.env.TAB_AUDIO_RUN_MODE = previous;
+  }
 });
 
 test('grant rejects changed full source, selected input, browser, or package identity', () => {
@@ -183,16 +209,16 @@ test('Chrome gets one short owned temp while caches and output stay in this work
     assert.equal(isolated.TMP, taskTempDir);
     assert.equal(isolated.TEMP, taskTempDir);
     assert.ok(isolated.TMPDIR.startsWith(`${TASK_TEMP_ROOT}/${TASK_TEMP_PREFIX}`));
-    assert.deepEqual(assertSocketPathBudget(WORKER_STATE_ROOT, taskTempDir), {
-      oldPath: `${WORKER_STATE_ROOT}/com.google.Chrome.12345678901234567890/SingletonSocket`,
-      oldLength: 175,
-      newPath: `${taskTempDir}/com.google.Chrome.12345678901234567890/SingletonSocket`,
-      newLength: 85,
-    });
+    const socketBudget = assertSocketPathBudget(WORKER_STATE_ROOT, taskTempDir);
+    assert.equal(socketBudget.oldPath, `${WORKER_STATE_ROOT}/com.google.Chrome.12345678901234567890/SingletonSocket`);
+    assert.equal(socketBudget.newPath, `${taskTempDir}/com.google.Chrome.12345678901234567890/SingletonSocket`);
+    assert.ok(socketBudget.oldLength > 108);
+    assert.ok(socketBudget.newLength < 108);
     for (const key of ['XDG_CACHE_HOME', 'XDG_CONFIG_HOME', 'PWTEST_CACHE_DIR', 'PLAYWRIGHT_OUTPUT_DIR']) {
       assert.ok(isolated[key].startsWith(`${WORKER_STATE_ROOT}/`));
     }
     assert.equal(isolated.NODE_PATH, '');
+    assert.equal(isolated.TAB_AUDIO_RUN_MODE, RUN_MODE);
     process.env.PLAYWRIGHT_OUTPUT_DIR = '/outside-worker/output';
     assert.throws(() => isolatedEnvironment(), /own worker folder/);
     assert.throws(() => cleanupTaskTempDir(preexistingTempDir), /not allocated by this process/);

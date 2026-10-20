@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import {readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {createRequire} from 'node:module';
-import {BROWSER_EXECUTABLE, EXPECTED_PACKAGE_VERSIONS, FROZEN_PRIVATE_GRAPH, REPO_ROOT, TASK_TEMP_PREFIX, TASK_TEMP_ROOT, hashTree, packageGraphFingerprint, renderGraphFingerprint} from './tab-audio-capture.controller.mjs';
+import {BROWSER_EXECUTABLE, EXPECTED_PACKAGE_VERSIONS, FROZEN_PRIVATE_GRAPH, NODE_EXECUTABLE, NODE_EXECUTABLE_SHA256, REPO_ROOT, RUN_MODE, TASK_TEMP_PREFIX, TASK_TEMP_ROOT, WORKER_STATE_ROOT, hashTree, packageGraphFingerprint, renderGraphFingerprint} from './tab-audio-capture.controller.mjs';
 
 test('package graph fingerprint collects every package with an expected version', () => {
   const {packages} = packageGraphFingerprint();
@@ -50,4 +50,9 @@ test('launcher binds one fresh short task temp and cleans it after every attempt
   assert.match(setup, /TAB_AUDIO_TASK_TMPDIR=\"\$TASK_TMPDIR\"/);
   assert.match(setup, /TMPDIR=\"\$TASK_TMPDIR\" TMP=\"\$TASK_TMPDIR\" TEMP=\"\$TASK_TMPDIR\"/);
   assert.doesNotMatch(setup, /export HOME=|PULSE_SERVER=|PULSE_RUNTIME_PATH=/);
+  assert.match(setup, new RegExp(`NODE=${NODE_EXECUTABLE.replaceAll('/', '\\/')}`));
+  assert.match(setup, new RegExp(NODE_EXECUTABLE_SHA256));
+  assert.match(setup, new RegExp(`STATE=${WORKER_STATE_ROOT.replaceAll('/', '\\/')}`));
+  assert.match(setup, new RegExp(`TAB_AUDIO_RUN_MODE=stereo`));
+  assert.equal(RUN_MODE, 'stereo');
 });

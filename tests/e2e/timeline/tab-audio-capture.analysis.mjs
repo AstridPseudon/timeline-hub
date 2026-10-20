@@ -19,6 +19,15 @@ export const CONTROLLED_AUDIO = Object.freeze({
   channelAmplitude: 0.12,
 });
 
+export function nativeAudioChannelDiagnostic(channels) {
+  const actualChannels = Number(channels);
+  return {
+    channels: actualChannels,
+    status: actualChannels === 2 ? 'supported' : 'unsupported',
+    requirement: 'native ffprobe audiochannels=2',
+  };
+}
+
 function writeAscii(bytes, offset, value) {
   for (let index = 0; index < value.length; index += 1) bytes[offset + index] = value.charCodeAt(index);
 }

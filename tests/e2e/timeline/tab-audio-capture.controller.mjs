@@ -21,8 +21,10 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const PROFILE = 'native-codec-chrome155-clean-install-public12';
+export const RUN_MODE = 'stereo';
+export const RUN_MODE_ENV = 'TAB_AUDIO_RUN_MODE';
 export const BASE_SOURCE_SHA = '0ea988bdd2907c876b82fd2620820e3fb6d6ea84';
-export const WORKER_STATE_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-short-owned-tmp-fix';
+export const WORKER_STATE_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-stereo-owned-state-guard-fix';
 export const TASK_TEMP_ROOT = '/tmp';
 export const TASK_TEMP_PREFIX = 'timeline-tab-audio-';
 export const UNIX_SOCKET_PATH_LIMIT = 108;
@@ -39,7 +41,8 @@ const FROZEN_COMPOSITION = {
   fileCount: 77,
 };
 export const NODE_VERSION = 'v20.19.4';
-export const NODE_EXECUTABLE = '/tmp/vw-m3-agent-gate-node20.19.4/bin/node';
+export const NODE_EXECUTABLE = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node';
+export const NODE_EXECUTABLE_SHA256 = '43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490';
 export const BROWSER_EXECUTABLE = '/opt/google/chrome/chrome';
 export const BROWSER_VERSION = '155.0.8059.84';
 export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -174,6 +177,7 @@ export function isolatedEnvironment(taskTempDir = process.env.TAB_AUDIO_TASK_TMP
     XDG_CONFIG_HOME: join(WORKER_STATE_ROOT, 'config'),
     PWTEST_CACHE_DIR: join(WORKER_STATE_ROOT, 'playwright-transform'),
     PLAYWRIGHT_OUTPUT_DIR: process.env.PLAYWRIGHT_OUTPUT_DIR ?? join(WORKER_STATE_ROOT, 'playwright-output'),
+    [RUN_MODE_ENV]: RUN_MODE,
   };
   for (const path of [paths.XDG_CACHE_HOME, paths.XDG_CONFIG_HOME, paths.PWTEST_CACHE_DIR, paths.PLAYWRIGHT_OUTPUT_DIR]) {
     if (!resolve(path).startsWith(`${WORKER_STATE_ROOT}/`)) throw new Error('Probe state must stay inside its own worker folder');
@@ -344,7 +348,8 @@ export function sourceFingerprint() {
   const sourceSha = git('rev-parse', 'HEAD');
   const sourceTree = git('rev-parse', 'HEAD^{tree}');
   const packages = packageGraphFingerprint();
-  if (process.version !== NODE_VERSION || realpathSync(process.execPath) !== realpathSync(NODE_EXECUTABLE)) {
+  if (process.version !== NODE_VERSION || realpathSync(process.execPath) !== realpathSync(NODE_EXECUTABLE)
+    || sha256(readFileSync(process.execPath)) !== NODE_EXECUTABLE_SHA256) {
     throw new Error(`Probe must run with pinned Node ${NODE_VERSION} at ${NODE_EXECUTABLE}`);
   }
   if (packages.packages['playwright-core'].version !== FROZEN_PLAYWRIGHT_CORE.version
@@ -358,6 +363,7 @@ export function sourceFingerprint() {
   return {
     sourceSha,
     sourceTree,
+    runMode: RUN_MODE,
     fullTrackedHash: fullTracked.sha256,
     trackedFileCount: fullTracked.fileCount,
     inputHash: inputs.sha256,
@@ -389,14 +395,20 @@ export function assertGrant(grant, fingerprint, finalSha = process.env.TAB_AUDIO
   if (grant.backendOrder?.join(',') !== 'tab,private-pulse') {
     throw new Error('Tab-audio grant must preserve tab capture before private PulseAudio fallback');
   }
+  if (grant.runMode !== RUN_MODE || fingerprint.runMode !== RUN_MODE) {
+    throw new Error('Tab-audio grant is not bound to the stereo run mode');
+  }
   for (const field of ['sourceSha', 'sourceTree', 'fullTrackedHash', 'inputHash', 'packageGraphHash']) {
     assertFingerprintField(grant, fingerprint, field);
   }
   if (grant.finalSha !== fingerprint.sourceSha || finalSha !== fingerprint.sourceSha) {
     throw new Error('Tab-audio grant final SHA does not match the committed source SHA');
   }
-  if (fingerprint.node.version !== NODE_VERSION) throw new Error(`Unsupported Node version: ${fingerprint.node.version}`);
-  if (grant.nodeVersion !== fingerprint.node.version || grant.nodeExecutableSha256 !== fingerprint.node.executableSha256) {
+  if (fingerprint.node.version !== NODE_VERSION || fingerprint.node.executableSha256 !== NODE_EXECUTABLE_SHA256) {
+    throw new Error(`Unsupported Node identity: expected ${NODE_VERSION} at ${NODE_EXECUTABLE}`);
+  }
+  if (grant.nodeExecutable !== fingerprint.node.executable
+    || grant.nodeVersion !== fingerprint.node.version || grant.nodeExecutableSha256 !== fingerprint.node.executableSha256) {
     throw new Error('Tab-audio grant Node identity is stale');
   }
   if (grant.browserTreeSha256 !== fingerprint.browser.tree.sha256
@@ -426,7 +438,7 @@ export function assertGrant(grant, fingerprint, finalSha = process.env.TAB_AUDIO
 }
 
 export function assertFingerprintUnchanged(before, after) {
-  for (const field of ['sourceSha', 'sourceTree', 'fullTrackedHash', 'inputHash', 'node', 'browser', 'packages', 'packageGraphHash', 'renderGraphHashes', 'privateGraph', 'discovery']) {
+  for (const field of ['sourceSha', 'sourceTree', 'runMode', 'fullTrackedHash', 'inputHash', 'node', 'browser', 'packages', 'packageGraphHash', 'renderGraphHashes', 'privateGraph', 'discovery']) {
     if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) {
       throw new Error(`Probe dependency identity changed during capture: ${field}`);
     }
@@ -447,6 +459,12 @@ function requiredEnv(name) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required guard environment: ${name}`);
   return value;
+}
+
+export function assertRunMode() {
+  if (process.env[RUN_MODE_ENV] !== RUN_MODE) {
+    throw new Error(`Playwright environment must declare ${RUN_MODE_ENV}=${RUN_MODE}`);
+  }
 }
 
 export function discover() {
@@ -510,6 +528,7 @@ function ensureFlock() {
 
 function prepare() {
   assertQuietAbsent();
+  assertRunMode();
   ensureFlock();
   assertCleanSource();
   return {status: 'READY_FOR_MANAGER_REVIEW', fingerprint: discover()};
@@ -517,6 +536,7 @@ function prepare() {
 
 function preflight() {
   assertQuietAbsent();
+  assertRunMode();
   ensureFlock();
   assertCleanSource();
   const {grant, fingerprint} = readGrant();
@@ -527,6 +547,7 @@ function preflight() {
 
 function claim() {
   assertQuietAbsent();
+  assertRunMode();
   ensureFlock();
   assertCleanSource();
   const markerPath = requiredEnv('TAB_AUDIO_RUN_MARKER');
@@ -540,6 +561,7 @@ function claim() {
 
 function postflight() {
   assertQuietAbsent();
+  assertRunMode();
   ensureFlock();
   const state = JSON.parse(readFileSync(requiredEnv('TAB_AUDIO_PREFLIGHT_PATH'), 'utf8'));
   assertCleanSource();

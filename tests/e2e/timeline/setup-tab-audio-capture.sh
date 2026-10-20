@@ -6,11 +6,18 @@ set -Eeuo pipefail
 # getDisplayMedia tab capture; private PulseAudio is a fallback only.
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 CONTROLLER="$ROOT/tests/e2e/timeline/tab-audio-capture.controller.mjs"
-NODE=${TAB_AUDIO_NODE_EXECUTABLE:-/tmp/vw-m3-agent-gate-node20.19.4/bin/node}
+NODE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node
+NODE_SHA256=43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490
 [[ -x "$NODE" ]] || { echo "Pinned Node executable is missing: $NODE" >&2; exit 2; }
 [[ "$("$NODE" --version)" == v20.19.4 ]] || { echo "Pinned Node must be v20.19.4" >&2; exit 2; }
+[[ "$(sha256sum "$NODE" | cut -d' ' -f1)" == "$NODE_SHA256" ]] || { echo "Pinned Node executable hash is not admitted" >&2; exit 2; }
+[[ -z "${TAB_AUDIO_NODE_EXECUTABLE:-}" || "$(realpath -- "${TAB_AUDIO_NODE_EXECUTABLE}")" == "$NODE" ]] \
+  || { echo "TAB_AUDIO_NODE_EXECUTABLE cannot replace the admitted Node path" >&2; exit 2; }
+[[ -z "${TAB_AUDIO_RUN_MODE:-}" || "${TAB_AUDIO_RUN_MODE:-}" == stereo ]] \
+  || { echo "TAB_AUDIO_RUN_MODE must be stereo" >&2; exit 2; }
+export TAB_AUDIO_RUN_MODE=stereo
 export PATH="$(dirname "$NODE"):$PATH"
-STATE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-short-owned-tmp-fix
+STATE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-stereo-owned-state-guard-fix
 export XDG_CACHE_HOME="$STATE/cache" XDG_CONFIG_HOME="$STATE/config"
 export PWTEST_CACHE_DIR="$STATE/playwright-transform"
 export NODE_PATH=''
@@ -34,6 +41,7 @@ cleanup_task_tmpdir() {
 
 unset TAB_AUDIO_TASK_TMPDIR
 TASK_TMPDIR=$(mktemp -d /tmp/timeline-tab-audio-XXXXXX)
+chmod 700 "$TASK_TMPDIR"
 TASK_TMPDIR_ID=$(stat -c '%d:%i' -- "$TASK_TMPDIR")
 export TAB_AUDIO_TASK_TMPDIR="$TASK_TMPDIR" TMPDIR="$TASK_TMPDIR" TMP="$TASK_TMPDIR" TEMP="$TASK_TMPDIR"
 

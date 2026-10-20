@@ -11,6 +11,7 @@ import {
   CONTROLLED_AUDIO,
   createSyntheticPcmWav,
   diagnoseVisualEvent,
+  nativeAudioChannelDiagnostic,
 } from './tab-audio-capture.analysis.mjs';
 
 const exec = promisify(execFile);
@@ -251,6 +252,14 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
   const audioStream = (ffprobe.streams as Array<{ codec_type?: string; index: number; sample_rate: string; channels: number }>)
     .find((stream) => stream.codec_type === 'audio');
   if (!audioStream) throw new Error('ffprobe output did not identify the captured audio stream');
+  const channelDiagnostic = nativeAudioChannelDiagnostic(audioStream.channels);
+  await testInfo.attach('native-ffprobe-audio-channel-diagnostic', {
+    body: JSON.stringify(channelDiagnostic, null, 2),
+    contentType: 'application/json',
+  });
+  if (channelDiagnostic.status !== 'supported') {
+    throw new Error(`Unsupported native ffprobe audio channel count: ${channelDiagnostic.channels}; stereo capture requires 2`);
+  }
   const decodedAudio = await readDecodedAudio(output, audioStream);
   const stereoTones = assertStereoTones(decodedAudio, {
     sampleRate: Number(audioStream.sample_rate),
@@ -290,6 +299,7 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
       outcome,
       tones,
       stereoTones,
+      channelDiagnostic,
       visualMarkerDiagnostic,
       rawPtsOnly: true,
       note: 'Qualified capability is one live video track plus one live tab-audio track, presence of both declared source tones, and native per-stream PTS. Decoded VP8 marker samples are diagnostic only; no audio/video offset, event phase, per-clip alignment, normalization, resampling, parity, or global-origin claim is made.',

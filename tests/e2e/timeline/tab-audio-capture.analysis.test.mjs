@@ -10,6 +10,7 @@ import {
   CONTROLLED_AUDIO,
   createSyntheticPcmWav,
   diagnoseVisualEvent,
+  nativeAudioChannelDiagnostic,
 } from './tab-audio-capture.analysis.mjs';
 
 const capabilities = assertCaptureCapabilities([
@@ -98,6 +99,19 @@ test('tone check observes decoded channels without resampling or level normaliza
     channels: 2,
     frequency: CONTROLLED_AUDIO.webAudioFrequency,
   }), /not present/);
+});
+
+test('native ffprobe channel diagnostic marks mono unsupported before decode', () => {
+  assert.deepEqual(nativeAudioChannelDiagnostic(2), {
+    channels: 2,
+    status: 'supported',
+    requirement: 'native ffprobe audiochannels=2',
+  });
+  assert.deepEqual(nativeAudioChannelDiagnostic(1), {
+    channels: 1,
+    status: 'unsupported',
+    requirement: 'native ffprobe audiochannels=2',
+  });
 });
 
 test('left/right detector rejects mono and swapped channels', () => {

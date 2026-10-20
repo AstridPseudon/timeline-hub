@@ -1,9 +1,10 @@
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
-import { isolatedEnvironment, privateGraphRoot } from './tab-audio-capture.controller.mjs';
+import { assertRunMode, isolatedEnvironment, privateGraphRoot } from './tab-audio-capture.controller.mjs';
 import { fileURLToPath } from 'node:url';
 
 const graphRoot = privateGraphRoot();
+assertRunMode();
 const isolated = isolatedEnvironment();
 const require = createRequire(join(graphRoot, '../package.json'));
 const { defineConfig } = require('@playwright/test');
