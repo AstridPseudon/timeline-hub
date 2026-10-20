@@ -51,6 +51,7 @@ import {
 } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import { ShotTimelinePreview } from '../components/ShotTimelinePreview.tsx';
 import { normalizeVideoTravelSettings } from '../settings';
+import { equal } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
 
 interface ShotEditorViewProps {
   /** The shot to edit */
@@ -158,7 +159,32 @@ export function ShotEditorView({
         }
         await enqueueCanonicalShotPublish(projectId, parentDocumentId, async () => {
           const current = editingBase.composition;
-          const graph = await updateCanonicalShotSettings(current.contract, occurrenceId, settings as Record<string, unknown>);
+          const occurrence = current.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
+          const raw = occurrence?.revision.settings;
+          const rawSettings = raw && typeof raw === 'object' && !Array.isArray(raw)
+            ? raw as Record<string, unknown>
+            : {};
+          const normalized = JSON.parse(JSON.stringify(normalizeVideoTravelSettings(rawSettings))) as Record<string, unknown>;
+          const submitted = JSON.parse(JSON.stringify(settings)) as Record<string, unknown>;
+          // The form is a projection: unchanged defaults must not overwrite raw
+          // nulls, absent fields, or opaque settings that normalization omitted.
+          const changes = Object.entries(settings as Record<string, unknown>).filter(([key]) => (
+            !equal(submitted[key], normalized[key])
+          ));
+          for (const [key] of changes) {
+            const original = rawSettings[key];
+            if (original !== null && typeof original === 'object'
+              && !equal(original, normalized[key])
+              && !equal(original, submitted[key])) {
+              const error = new Error(`Cannot safely replace shot setting ${key}: the form does not contain its complete authored value. Your draft is kept.`);
+              normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
+              throw error;
+            }
+          }
+          const graph = await updateCanonicalShotSettings(current.contract, occurrenceId, {
+            ...rawSettings,
+            ...Object.fromEntries(changes),
+          });
           const published = await publish({
             projectId,
             parentDocumentId,
