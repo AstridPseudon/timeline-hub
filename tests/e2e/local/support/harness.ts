@@ -519,7 +519,7 @@ export class DirectHarness {
       body: JSON.stringify({ actor_id: actorId, credential: token, scope: 'astrid' }),
     });
     if (response.status !== 201) throw new Error(`credential provisioning for ${actorId} failed: ${response.status} ${await response.text()}`);
-    writeFileSync(path.join(this.tmp, file), JSON.stringify({ token, actor_id: actorId }), { mode: 0o600 });
+    writeFileSync(path.join(this.tmp, file), JSON.stringify({ version: 1, scope: 'astrid', token, actor_id: actorId }), { mode: 0o600 });
     return token;
   }
 

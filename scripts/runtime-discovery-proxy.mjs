@@ -63,7 +63,8 @@ function readRuntimeSnapshot(discoveryPath) {
   if (endpoint.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(endpoint.hostname) || !endpoint.port) {
     throw new Error('runtime discovery endpoint must be an explicit HTTP loopback URL');
   }
-  const credential = readJson(String(discovery.credential_file ?? ''), 'runtime product credential');
+  const credentialFile = process.env.WORKSPACE_RUNTIME_TOKEN_FILE?.trim() || String(discovery.credential_file ?? '');
+  const credential = readJson(credentialFile, 'runtime product credential');
   const actorId = typeof credential.actor_id === 'string' ? credential.actor_id.trim() : '';
   const realmId = typeof discovery.active_realm === 'string' ? discovery.active_realm.trim() : '';
   const runtimeInstanceId = typeof discovery.runtime_instance_id === 'string' ? discovery.runtime_instance_id.trim() : '';
@@ -77,7 +78,7 @@ function readRuntimeSnapshot(discoveryPath) {
   const matches = Array.isArray(catalog.realms)
     ? catalog.realms.filter((row) => row?.realm_id === realmId) : [];
   if (catalog.selected_realm_id !== realmId || matches.length !== 1
-    || matches[0].source_profile !== 'astrid'
+    || (matches[0].source_profile !== undefined && matches[0].source_profile !== 'astrid')
     || realpathSync(discovery.realm_root) !== realpathSync(matches[0].data_root)) {
     throw new Error('runtime discovery does not match the selected Astrid realm');
   }
@@ -401,7 +402,7 @@ export function createRuntimeProxyServer({
   }
   let runtime;
   try {
-    runtime = currentRuntime(discoveryPath);
+    runtime = currentRuntime(discoveryPath, { credentialFile: process.env.WORKSPACE_RUNTIME_TOKEN_FILE?.trim() });
   } catch (error) {
     writeFailure(response, fail(error instanceof Error ? error.message : String(error)));
     return;

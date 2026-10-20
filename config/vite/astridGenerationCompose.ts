@@ -8,7 +8,7 @@ import { isSameOriginLoopbackRequest } from './astridProxySecurity';
 export const ASTRID_GENERATION_COMPOSE_ROUTE = '/api/astrid/generation/compose';
 export const GENERATION_COMPOSE_MAX_BODY_BYTES = 64 * 1024;
 export const GENERATION_COMPOSE_MAX_OUTPUT_BYTES = 256 * 1024;
-export const GENERATION_COMPOSE_TIMEOUT_MS = 10_000;
+export const GENERATION_COMPOSE_TIMEOUT_MS = 30_000;
 
 export interface AstridGenerationComposerConfig {
   readonly python: string;

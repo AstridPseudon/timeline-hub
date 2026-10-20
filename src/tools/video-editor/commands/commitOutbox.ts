@@ -36,6 +36,41 @@ export type OutboxOutcome =
   | { kind: 'rejected'; error: OutboxJson }
   | { kind: 'retry'; error: OutboxJson };
 
+export interface OutboxAcceptance {
+  intentId: string;
+  head: OutboxHead;
+  value: OutboxJson;
+}
+
+export interface OutboxPlacementInput {
+  request: OutboxRequest;
+  head: OutboxHead;
+  // Adapter-validated existing immutable pins/read closure, never a refreshed preview.
+  readClosure: OutboxJson;
+  ownerRef: string;
+  anchor: OutboxJson;
+  lane: OutboxJson;
+  fallback: OutboxJson;
+  policy: OutboxJson;
+  output: OutboxJson;
+  autoApprove: true;
+  createdIds: string[];
+}
+
+export interface OutboxPlacementContinuation {
+  id: string;
+  input: OutboxPlacementInput;
+  taskLocator?: { projectId: string; runId: string; taskId: string };
+  mediaPin?: OutboxJson;
+  placement?: { intentId: string; accepted?: OutboxAcceptance; cancelled?: true };
+  conflict?: OutboxJson;
+}
+
+// The Agent adapter consumes the saved closure, pin and IDs; JSON storage is not authority.
+export type OutboxPlacementCapture = (
+  original: OutboxPlacementContinuation,
+) => Promise<OutboxJson>;
+
 export interface OutboxRecord {
   scope: OutboxScope;
   ownerId: string;
@@ -43,7 +78,9 @@ export interface OutboxRecord {
   intents: OutboxIntent[];
   pending?: { intentId: string; request: OutboxRequest; outcome?: OutboxOutcome };
   // Only the last acknowledged prefix, also usable by a late dependent append.
-  accepted?: { intentId: string; head: OutboxHead; value: OutboxJson };
+  accepted?: OutboxAcceptance;
+  placementContinuations?: OutboxPlacementContinuation[];
+
 }
 
 export type OutboxExclusiveLock = <T>(name: string, work: () => Promise<T>) => Promise<T>;
@@ -55,12 +92,18 @@ export type OutboxRequestBuilder = (
 
 export interface ClaimedOutbox {
   read(): Promise<OutboxRecord>;
+  assertActive(): void;
   append(payload: OutboxJson, basis: OutboxBasis): Promise<string>;
   cancel(intentId: string): Promise<void>;
   resolveRejected(intentIds: string[], replacement?: { payload: OutboxJson; head: OutboxHead }, isCurrent?: () => boolean): Promise<OutboxRecord>;
+  reservePlacementAdmission(id: string, input: OutboxPlacementInput, assertCurrent?: () => void): Promise<OutboxPlacementContinuation>;
+  recordPlacementTask(id: string, request: OutboxRequest, taskLocator: NonNullable<OutboxPlacementContinuation['taskLocator']>, assertCurrent?: () => void): Promise<OutboxPlacementContinuation>;
+  recordPlacementConflict(id: string, error: OutboxJson, assertCurrent?: () => void): Promise<OutboxPlacementContinuation>;
+  capturePlacement(id: string, mediaPin: OutboxJson, capture: OutboxPlacementCapture, check?: () => Promise<void>, assertCurrent?: () => void): Promise<OutboxPlacementContinuation>;
   dispatch(
     build: OutboxRequestBuilder,
     transmit: (request: OutboxRequest) => Promise<OutboxOutcome>,
+    assertCurrent?: () => void,
   ): Promise<OutboxRecord>;
 }
 
@@ -99,6 +142,46 @@ function scopeKey(scope: OutboxScope, ownerId: string): string {
   const parts = [scope.realmId, scope.actorId, scope.projectId, scope.timelineId, ownerId];
   if (parts.some((part) => typeof part !== 'string' || !part)) throw new Error('Incomplete outbox scope');
   return JSON.stringify(parts);
+}
+
+function placementRequest(input: OutboxRequest): OutboxRequest {
+  const { method, path, body, key } = input;
+  if (!method || !path || !key || [method, path, body, key].some((item) => typeof item !== 'string')) {
+    throw new Error('Incomplete placement admission request');
+  }
+  return detached({ method, path, body, key });
+}
+
+function sameRequest(a: OutboxRequest, b: OutboxRequest): boolean {
+  return a.method === b.method && a.path === b.path && a.body === b.body && a.key === b.key;
+}
+
+function placementFor(record: OutboxRecord, id: string): OutboxPlacementContinuation {
+  const continuation = record.placementContinuations?.find((item) => item.id === id);
+  if (!continuation) throw new Error('Unknown placement continuation');
+  return continuation;
+}
+
+function cancelPlacements(record: OutboxRecord, intentIds: string[]) {
+  for (const continuation of record.placementContinuations ?? []) {
+    if (continuation.placement && intentIds.includes(continuation.placement.intentId) && !continuation.placement.accepted) {
+      continuation.placement.cancelled = true;
+    }
+  }
+}
+
+function placementInput(input: OutboxPlacementInput): OutboxPlacementInput {
+  const { head, readClosure, ownerRef, anchor, lane, fallback, policy, output, autoApprove, createdIds } = input;
+  const request = placementRequest(input.request);
+  if (request.method !== 'POST' || request.path !== '/v1/tasks') throw new Error('Noncanonical task admission route');
+  if (autoApprove !== true || !head || [head.revisionId, head.publicationId, ownerRef]
+    .some((value) => typeof value !== 'string' || !value)
+    || readClosure == null || policy == null || output == null
+    || !Array.isArray(createdIds) || !createdIds.length
+    || createdIds.some((value) => typeof value !== 'string' || !value)
+    || new Set(createdIds).size !== createdIds.length) throw new Error('Incomplete approved placement bindings');
+  return detached({ request, head: { revisionId: head.revisionId, publicationId: head.publicationId },
+    readClosure, ownerRef, anchor, lane, fallback, policy, output, autoApprove, createdIds });
 }
 
 /** No cached/sessionStorage owner: every new editor starts a fresh durable owner. */
@@ -144,12 +227,15 @@ export function createCommitOutbox(options: {
     }
   }
 
-  async function list(scope: OutboxScope): Promise<OutboxRecord[]> {
-    const prefix = scopeKey(scope, '_');
+  async function list(scope: Pick<OutboxScope, 'realmId' | 'actorId'> & Partial<OutboxScope>): Promise<OutboxRecord[]> {
+    const { realmId, actorId, projectId, timelineId } = scope;
+    scopeKey({ realmId, actorId, projectId: projectId ?? '_', timelineId: timelineId ?? '_' }, '_');
     return transaction('readonly', (store, finish) => {
       const request = store.getAll();
       request.addEventListener('success', () => finish((request.result as OutboxRecord[])
-        .filter((record) => scopeKey(record.scope, '_') === prefix).map(detached)));
+        .filter((record) => record.scope.realmId === realmId && record.scope.actorId === actorId
+          && (projectId === undefined || record.scope.projectId === projectId)
+          && (timelineId === undefined || record.scope.timelineId === timelineId)).map(detached)));
     });
   }
 
@@ -180,6 +266,11 @@ export function createCommitOutbox(options: {
       if (!generation) throw new Error('Outbox owner does not match explicit claim');
       let active = true;
       let dispatching = false;
+      const capturing = new Set<string>();
+
+      function assertActive(): void {
+        if (!active) throw new Error('Stale outbox claim');
+      }
 
       function access<T>(mode: IDBTransactionMode, change: (record: OutboxRecord) => T): Promise<T> {
         let failure: unknown;
@@ -204,6 +295,7 @@ export function createCommitOutbox(options: {
 
       const outbox: ClaimedOutbox = {
         read: () => access('readonly', detached),
+        assertActive,
         async append(payload, basis) {
           const intent = newIntent(payload, basis);
           return access('readwrite', (record) => {
@@ -230,6 +322,7 @@ export function createCommitOutbox(options: {
               throw new Error('Cannot cancel a predecessor of retained work');
             }
             record.intents = record.intents.filter((intent) => intent.id !== intentId);
+            cancelPlacements(record, [intentId]);
           });
         },
         resolveRejected(intentIds, replacement, isCurrent = () => true) {
@@ -245,16 +338,110 @@ export function createCommitOutbox(options: {
               throw new Error('Retained work changed before explicit resolution');
             }
             if (intent && ids.length !== 1) throw new Error('Cannot replace a predecessor of retained work');
+            cancelPlacements(record, ids);
             record.intents = intent ? [intent] : [];
             delete record.pending;
             return detached(record);
           });
         },
-        async dispatch(build, transmit) {
+        async reservePlacementAdmission(id, input, assertCurrent) {
+          if (typeof id !== 'string' || !id) throw new Error('Missing placement continuation identity');
+          const frozen = placementInput(input);
+          return access('readwrite', (record) => {
+            assertCurrent?.();
+            const existing = record.placementContinuations?.find((item) => item.id === id);
+            if (existing) {
+              if (JSON.stringify(existing.input) !== JSON.stringify(frozen)) throw new Error('Placement reservation cannot change');
+              return detached(existing);
+            }
+            if (record.intents.length || record.pending) throw new Error('Acknowledge queued work before placement admission');
+            if (record.placementContinuations?.some((item) => item.input.request.key === frozen.request.key)) {
+              throw new Error('Placement admission identity is already reserved');
+            }
+            const continuation = { id, input: frozen };
+            (record.placementContinuations ??= []).push(continuation);
+            return detached(continuation);
+          });
+        },
+        async recordPlacementTask(id, requestInput, locatorInput, assertCurrent) {
+          const request = placementRequest(requestInput);
+          const { projectId, runId, taskId } = locatorInput;
+          const locator = detached({ projectId, runId, taskId });
+          if (projectId !== scope.projectId || [runId, taskId].some((value) => typeof value !== 'string' || !value)) {
+            throw new Error('Incomplete or wrong-scope placement task locator');
+          }
+          return access('readwrite', (record) => {
+            assertCurrent?.();
+            const continuation = placementFor(record, id);
+            if (!sameRequest(continuation.input.request, request)) throw new Error('Placement task requires the exact reserved request');
+            if (continuation.taskLocator && JSON.stringify(continuation.taskLocator) !== JSON.stringify(locator)) {
+              throw new Error('Placement task locator cannot change');
+            }
+            continuation.taskLocator = locator;
+            return detached(continuation);
+          });
+        },
+        async recordPlacementConflict(id, error, assertCurrent) {
+          const conflict = detached(error);
+          return access('readwrite', (record) => {
+            assertCurrent?.();
+            const continuation = placementFor(record, id);
+            if (!continuation.placement && continuation.conflict === undefined) continuation.conflict = conflict;
+            return detached(continuation);
+          });
+        },
+        async capturePlacement(id, mediaPinInput, capture, check, assertCurrent) {
+          const mediaPin = detached(mediaPinInput);
+          if (mediaPin === null) throw new Error('Placement capture requires an immutable media pin');
+          if (capturing.has(id)) throw new Error('Placement capture is already running');
+          capturing.add(id);
+          try {
+            const original = await access('readwrite', (record) => {
+              assertCurrent?.();
+              const continuation = placementFor(record, id);
+              if (!continuation.taskLocator) throw new Error('Placement capture requires the saved task locator');
+              if (continuation.mediaPin !== undefined && JSON.stringify(continuation.mediaPin) !== JSON.stringify(mediaPin)) {
+                throw new Error('Placement media pin cannot change');
+              }
+              continuation.mediaPin = mediaPin;
+              return detached(continuation);
+            });
+            if (original.placement || original.conflict !== undefined) return original;
+            await check?.();
+            assertActive();
+            assertCurrent?.();
+            let payload: OutboxJson | undefined;
+            let conflict: OutboxJson | undefined;
+            try {
+              payload = detached(await capture(detached(original)));
+            } catch (error) {
+              conflict = { reason: 'placement_capture_failed', message: error instanceof Error ? error.message : String(error) };
+            }
+            // Lifecycle interruption must escape without linking a payload or a semantic refusal.
+            await check?.();
+            return await access('readwrite', (record) => {
+              assertCurrent?.();
+              const continuation = placementFor(record, id);
+              if (continuation.placement || continuation.conflict !== undefined) return detached(continuation);
+              if (conflict !== undefined) continuation.conflict = conflict;
+              else {
+                const intentId = crypto.randomUUID();
+                record.intents.push({ id: intentId, basis: { head: continuation.input.head },
+                  readyBase: continuation.input.head, payload: payload! });
+                continuation.placement = { intentId };
+              }
+              return detached(continuation);
+            });
+          } finally {
+            capturing.delete(id);
+          }
+        },
+        async dispatch(build, transmit, assertCurrent) {
           if (dispatching) throw new Error('Outbox request is already being transmitted');
           dispatching = true;
           try {
             const pending = await access('readwrite', (record) => {
+              assertCurrent?.();
               if (record.pending) {
                 if (record.pending.outcome?.kind === 'rejected') throw new Error('Outbox has a rejected prefix');
                 return detached(record.pending);
@@ -272,7 +459,8 @@ export function createCommitOutbox(options: {
               return detached(record.pending);
             });
             // The reservation's transaction has completed before any network callback.
-            if (!active) throw new Error('Stale outbox claim');
+            assertActive();
+            assertCurrent?.();
             let outcome: OutboxOutcome;
             try {
               outcome = detached(await transmit(detached(pending.request)));
@@ -280,10 +468,15 @@ export function createCommitOutbox(options: {
               outcome = { kind: 'retry', error: { reason: 'transport_error' } };
             }
             return await access('readwrite', (record) => {
+              // Retry bookkeeping keeps the exact uncertain request; only a live identity may consume it.
+              if (outcome.kind !== 'retry') assertCurrent?.();
               if (record.pending?.request.key !== pending.request.key
                 || record.intents[0]?.id !== pending.intentId) throw new Error('Stale outbox completion');
               if (outcome.kind === 'accepted') {
                 record.accepted = { intentId: pending.intentId, head: outcome.head, value: outcome.value };
+                for (const continuation of record.placementContinuations ?? []) {
+                  if (continuation.placement?.intentId === pending.intentId) continuation.placement.accepted = record.accepted;
+                }
                 record.intents.shift();
                 delete record.pending;
                 const next = record.intents[0];

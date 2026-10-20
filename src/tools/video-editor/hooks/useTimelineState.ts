@@ -1364,6 +1364,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     ...baseChrome,
     commandSession: save.commands.enabled ? {
       state: save.commands.state, retry: save.commands.retry, recover: save.commands.recover,
+      imageGeneration: save.commands.imageGeneration,
       useLatest: save.commands.useLatest, keepLabelChanges: save.commands.keepLabelChanges,
       elementOverlay: save.commands.elementOverlay,
     } : undefined,
