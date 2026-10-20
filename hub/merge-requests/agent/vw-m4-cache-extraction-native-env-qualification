@@ -1,0 +1,1 @@
+timeline/agent/tl/vw-m4-cache-extraction-native-env-qualification 929bed011 viewing Test-only existing native fixture uses verified public13 immutable graph; ONLY19 prior setup-error nodes now19PASS/12.15s,133pure successes not rerun. Preserve strict source guards and legacy overrides. Pair with dfa2 cache helper resource extraction.

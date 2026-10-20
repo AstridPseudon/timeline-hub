@@ -1,2 +1,2 @@
-UTC: 2026-10-20T20:16:30Z (area lead)
-Lead decided: provisioned the kit's pinned Node toolchain /home/user/work/toolchain/node-v20.19.4-linux-x64 (sha256-verified, node v20.19.4 / npm 10.8.2) — it was missing on this machine, so make-runtime's npm ci fell back to Node 22 (EBADENGINE). Manager asked to re-request runtime agent-remotion-viewing13-d0a5072b. Manager restarted 20:05Z on 3 h rounds.
+LEAD 2026-10-20T20:39:43Z | workers 4 | disk 11.9G | ledger rows: manager-owned | merges pending: see manager | lead decisions since last hour: manager restarted on 3 h rounds; Node 20.19.4 toolchain provisioned; 4 /tmp host-env roots removed (448 MB)
+Disk: 11920891904 B free; MP4 staging needs 13,958,643,712 (manager's margin). Lead-releasable space exhausted; asked manager to prioritise the lossless compactor worker (~1.5–2 GB) and to release KEEP worktrees/design copies it no longer needs. Handoff: design/lead-handoff-viewing.md.

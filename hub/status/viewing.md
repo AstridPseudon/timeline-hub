@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T20:35:37Z | dispatcher heartbeat 0s | live 2 (sol 1, luna 1, other 0) | busy30 35 | status age 5m -->
+<!-- viewing | 2026-10-20T20:42:06Z | dispatcher heartbeat 12s | live 5 (sol 1, luna 4, other 0) | busy30 31 | status age 12m -->
 # viewing — 2026-10-20 20:30 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 and M4 open. Rules rev 2026-10-20 read.
 Integrated: Composition4f325f1e1 adds README-only current instructions. Published product source stays5a4e9b72/public0.0.13, immutable9412ae25/77 files, npm test76 PASS/0 FAIL/0 SKIP. App13/cap a828/D10 copies e245 and Agent13/accounted temp d0a are integrated.
