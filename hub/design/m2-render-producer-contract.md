@@ -1,5 +1,8 @@
 # M2 writer bundle 3: render producer contract
 
+> Manager correction 2026-10-20T00:54Z: the latest orchestrator numeric-forwarding and completed-cancel decisions SUPERSEDE the older carrier/withdrawal text below. `producer.guard` args are closed `{pin}` ONLY; Runtime reads authoritative immutable settled artifact bytes and verifies original exact digest itself. It compares request commands/rationale using the existing recipe value equality (numeric values equal, booleans distinct), so Node parse/stringify 1.0→1 accepts; 1.5 or tampered artifact refuses. No proposal/raw-byte forwarding API. Completed-task cancel remains NO-OP; requester declines by not committing, with no server revocation. Completed persisted task/attempt epoch survives restart. Existing f2df goldens are design-only and await these corrections before freeze.
+
+
 Design + feasibility only, 2026-10-20. Governing decisions: PLAN §4.1/4.2,
 Agent INBOX 00:35 “render-handoff-contract” + 00:40 “producer-attempt-guard”,
 deletion ledger D13. These settled-result decisions supersede live delivery and

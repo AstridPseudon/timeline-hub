@@ -25,7 +25,8 @@ HUB = os.environ["HUB"]; HUB_REF = os.environ["HUB_REF"]
 NOW = datetime.now(timezone.utc)
 TODAY = NOW.strftime("%Y-%m-%d")
 MIDNIGHT = TODAY + "T00:00:00Z"
-CHART_START_HOUR = 17
+CHART_HOURS = 12  # rolling window: the last 12 hours, so the chart survives midnight
+CHART_START = (NOW - timedelta(hours=CHART_HOURS)).replace(minute=0, second=0, microsecond=0)
 
 def rd(path):
     try:
@@ -104,7 +105,7 @@ def parse_merges_log():
 
 def hub_merges(repo):
     d = f"/home/user/work/{repo}"
-    out = git(d, "log", f"--since={MIDNIGHT}", "--merges", "--format=%cI|%s", "hub/tl/integration")
+    out = git(d, "log", f"--since={min(MIDNIGHT, CHART_START.strftime('%Y-%m-%dT%H:%M:%SZ'))}", "--merges", "--format=%cI|%s", "hub/tl/integration")
     rows = []
     for ln in out.splitlines():
         iso, _, subj = ln.partition("|")
@@ -318,7 +319,7 @@ for a, machine, prefix, repo in AREAS:
 write("areas.json", areas)
 
 # ---------------------------------------------------------------- 5. merges by hour
-start = datetime.strptime(f"{TODAY}T{CHART_START_HOUR:02d}", "%Y-%m-%dT%H").replace(tzinfo=timezone.utc)
+start = CHART_START
 repos = ["agent", "runtime", "app", "composition"]
 seen = set(); evs = []
 for r in log_rows + hub_rows["app"] + hub_rows["composition"]:
