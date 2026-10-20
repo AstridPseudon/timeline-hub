@@ -1,5 +1,6 @@
 import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
 import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
+import type { ClipDeleteCapturePort } from '@/tools/video-editor/commands/clipDeleteGesture.ts';
 import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import type { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
 import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
@@ -138,6 +139,7 @@ export interface TimelineEditorDataContextValue {
 export interface TimelineEditorOpsContextValue {
   /** Host-owned Agent capture + command/outbox acceptance for migrated moves. */
   clipMove?: ClipMoveCapturePort;
+  clipDelete?: ClipDeleteCapturePort;
   setInputModality: (inputModality: TimelineInputModality) => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
   setInteractionMode: (mode: TimelineInteractionMode) => void;

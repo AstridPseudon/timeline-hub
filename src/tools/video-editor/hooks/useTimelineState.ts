@@ -23,6 +23,7 @@ import { ROW_HEIGHT, TIMELINE_START_LEFT } from '@/tools/video-editor/lib/coordi
 import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import { useAssetOperations } from '@/tools/video-editor/hooks/useAssetOperations.ts';
 import { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
+import { applyEditWithClipDeleteGuard } from './clip-editing/useClipDeletion.ts';
 import { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
 import { useDerivedTimeline } from '@/tools/video-editor/hooks/useDerivedTimeline.ts';
 import { useDragCoordinator } from '@/tools/video-editor/hooks/useDragCoordinator.ts';
@@ -767,6 +768,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     dataRef: save.dataRef,
     getConfigVersion,
     flushPendingSave: save.flushPendingSave,
+    clipDeletePort: save.commands.clipDeletePort,
     createManualCheckpoint,
     jumpToCheckpoint,
     checkpoints,
@@ -891,6 +893,8 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   });
 
   const clipEditing = useClipEditing({
+    clipDeletePort: save.commands.clipDeletePort,
+    editability: runtime.timelineEditability,
     dataRef,
     resolvedConfig: selection.resolvedConfig,
     selectedClipId: selection.primaryClipId,
@@ -1163,6 +1167,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
 
   const editorOps = useMemo(() => ({
     clipMove: save.commands.port,
+    clipDelete: save.commands.clipDeletePort,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
@@ -1216,12 +1221,12 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     applyResolvedClipMove: editor.applyResolvedClipMove,
     createTrackAndMoveClip: editor.createTrackAndMoveClip,
     uploadFiles: editor.uploadFiles,
-    applyEdit: editor.applyEdit,
+    applyEdit: (...args: Parameters<typeof editor.applyEdit>) => applyEditWithClipDeleteGuard(editor.applyEdit, ...args),
     commands: timelineCommands,
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.clipDeletePort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,

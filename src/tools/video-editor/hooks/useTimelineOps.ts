@@ -36,6 +36,11 @@ import {
   submitTrackLabelEdit,
   type TrackLabelCapturePort,
 } from '../commands/trackLabelGesture.ts';
+import {
+  captureClipDeleteEdit,
+  submitClipDeleteEdit,
+  type ClipDeleteCapturePort,
+} from '../commands/clipDeleteGesture.ts';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -74,6 +79,7 @@ export interface UseTimelineOpsArgs {
 
   /** Original authored track-label capture and the shared command outbox. */
   trackLabelPort?: TrackLabelCapturePort;
+  clipDeletePort?: ClipDeleteCapturePort;
 
   /** Host checkpoint creation (async fire-and-forget). */
   createManualCheckpoint: (label?: string) => Promise<void>;
@@ -123,6 +129,7 @@ export function useTimelineOps({
   getConfigVersion,
   flushPendingSave,
   trackLabelPort,
+  clipDeletePort,
   createManualCheckpoint,
   jumpToCheckpoint,
   checkpoints,
@@ -295,6 +302,16 @@ export function useTimelineOps({
         return compiled.diff;
       }
 
+      const deletes = patch.operations.filter((operation) => operation.op === 'clip.remove');
+      if (deletes.length > 0) {
+        if (patch.operations.length !== 1) {
+          throw new Error('TimelineOps.apply: only a single clip.remove is supported until shared batch commands are available.');
+        }
+        const captured = captureClipDeleteEdit(clipDeletePort, current, deletes[0].target);
+        submitClipDeleteEdit(captured);
+        return compiled.diff;
+      }
+
       // 3. Unmigrated operations still use the existing snapshot path.
       //    History recording is enabled by default (skipHistory defaults to false).
       commitData(compiled.nextData, {
@@ -305,7 +322,7 @@ export function useTimelineOps({
       // 4. Return the semantic diff
       return compiled.diff;
     },
-    [assertTimelineEditable, commitData, dataRef, getCanonicalVersion, trackLabelPort],
+    [assertTimelineEditable, clipDeletePort, commitData, dataRef, getCanonicalVersion, trackLabelPort],
   );
 
   // ---- checkpoint ---------------------------------------------------------
