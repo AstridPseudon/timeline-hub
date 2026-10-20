@@ -81,8 +81,6 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
             pins.append(pin)
         by_name = {row['variant_key']: pin for row, pin in zip(associations, pins)}
         old, new = by_name['old'], by_name['new']
-        from timeline_commit_film_fixture import _binding_descriptor
-
         from tests.sdk.test_timeline_commit_provider_document import (
             MEDIA,
             document_fixture,
@@ -114,12 +112,9 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
         for row in parent['occurrences']:
             row.update(source_offset=0, speed=1)
         parent['occurrences'][0]['placement']['start_ms'] = 8000
-        service.create_project_shot(project, {'shot_id': 'chapter-shot', 'name': 'Chapter One'},
-                                    idempotency_key='chapter-shot')
-        binding = service.set_project_shot_text_binding(project, {
-            'shot_id': 'chapter-shot', 'kind': 'transcript', 'text': 'A chapter', 'expected_head': 0,
-        }, idempotency_key='chapter-text')['data']
-        document['shot_revisions'][0]['payload']['text_bindings'] = [_binding_descriptor(binding, 'A chapter')]
+        # The current Runtime only accepts authoritative registered bindings;
+        # this media lifecycle does not exercise text binding semantics.
+        document['shot_revisions'][0]['payload'].pop('text_bindings', None)
         service.publish_parent_composition(project, 'film', {
             'project_id': project, 'timeline_id': 'film', 'expected_head': None,
             'parent_revision_id': 'popup-baseline', 'parent_composition': parent,
@@ -128,6 +123,7 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
             'internal_timeline_revisions': [{key: value for key, value in internal.items()
                                              if key != 'content_digest'}],
         }, idempotency_key='popup-baseline')
+        baseline = service._timeline_commits()[0].revision_closure(project, 'film', 'popup-baseline')
         service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
 
         selected, closures, candidates = [], [], []
@@ -150,7 +146,8 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
                                 associations=associations, selected=selected, closures=closures,
                                 candidates=candidates, before_accept=None, credentials=credentials,
                                 authorize=authorize, effect=effect, outputs=outputs,
-                                fingerprint_inputs=fingerprint_inputs, kind=kind, operation=operation, root=tmp_path / "publish")
+                                fingerprint_inputs=fingerprint_inputs, kind=kind, operation=operation,
+                                baseline=baseline, root=tmp_path / "publish")
 
         def accept(port, prepared):
             candidates.append(copy.deepcopy(prepared))
@@ -258,9 +255,9 @@ def test_exact_capture_acceptance_inverse_redo_restart_and_retry(editing, monkey
     )
 
     before = rows(editing)
-    preview = commit(editing, body(editing, dry_run=True), 'preview')
-    assert preview['receipt'] is None and rows(editing) == before
-    baseline = editing.closures[0]
+    raw_preview = commit(editing, body(editing, dry_run=True), 'raw-preview')
+    assert raw_preview['receipt'] is None and rows(editing) == before
+    baseline = editing.baseline
     assert editing.new['object_id'] not in {pin['media_id'] for pin in baseline['dependency_manifest']['media']}
     bundle = bundle_from_document(baseline)
     call = raw_command(editing)
@@ -270,6 +267,9 @@ def test_exact_capture_acceptance_inverse_redo_restart_and_retry(editing, monkey
     else:
         captured = capture_occurrence_swap_media(bundle, TARGET, editing.old, editing.new,
                                                  verified_media=editing.selected)
+    before = rows(editing)
+    preview = commit(editing, body(editing, [captured], dry_run=True), 'preview')
+    assert preview['receipt'] is None and rows(editing) == before
     assert preview['data']['commands'] == [captured]
     request = body(editing, [captured])
     created = commit(editing, request, 'popup')
