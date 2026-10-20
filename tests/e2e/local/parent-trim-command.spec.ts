@@ -127,6 +127,10 @@ async function changeSourceIn(page: Page, seed: ThreeProductsSeed, value: string
   const input = await sourceWindow(page, seed);
   await input.fill(value);
   await input.press('Enter');
+  // Base UI commits editable NumberField text on blur; tab to the next real
+  // field so this journey exercises the same discrete user commit as the
+  // existing ClipPanelBody control test.
+  await input.press('Tab');
   return input;
 }
 
