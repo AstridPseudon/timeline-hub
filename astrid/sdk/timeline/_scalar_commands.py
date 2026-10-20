@@ -144,6 +144,7 @@ def _validate_param_values(ref, values, schema):
 
 
 def capture_track_set(bundle, select, *, values=None, clear=()):
+    """Capture bounded raw track label/mute writes and explicit removal."""
     return _capture(bundle, 'track.set', select, values, clear)
 
 

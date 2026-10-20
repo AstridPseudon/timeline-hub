@@ -418,6 +418,10 @@
           "properties": {
             "label": {
               "type": "string"
+            },
+            "muted": {
+              "type": "boolean",
+              "description": "Raw authored track mute flag; absent remains absent until explicitly set."
             }
           },
           "additionalProperties": false
@@ -425,7 +429,10 @@
         "clear": {
           "type": "array",
           "items": {
-            "const": "label"
+            "enum": [
+              "label",
+              "muted"
+            ]
           },
           "uniqueItems": true
         }
@@ -451,7 +458,7 @@
           }
         }
       ],
-      "description": "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive."
+      "description": "Set raw track.label or boolean track.muted, or explicitly remove either field. Null is not a supported value. Unmentioned fields survive."
     },
     "ShotSetArgs": {
       "type": "object",
