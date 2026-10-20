@@ -210,7 +210,7 @@ class TimelineSession:
         """Capture and flush one native command, or retry its original flight."""
         return self.commit_many([command], idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
-    def commit_many(self, commands, *, idempotency_key=None, dry_run=False, via="python"):
+    def commit_many(self, commands, *, idempotency_key=None, dry_run=False, via="python", base=None):
         """Capture and flush a batch, or retry its exact flight before a suffix."""
         from astrid.sdk.timeline._command_state import equal
         from astrid.sdk.timeline.commands import execute
@@ -221,18 +221,20 @@ class TimelineSession:
                         all(equal(saved.get(key), value) for key, value in command.items() if key != "intent")
                         and all(equal(saved["intent"].get(key), value)
                                 for key, value in command.get("intent", {}).items())
-                        for saved, command in zip(pending, commands)))
+                        for saved, command in zip(pending, commands)), base=base)
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
     def _queue(self, capture, matches=None):
         return self._stage(lambda state: [capture(state)], matches, retry_capture=True)[0]
 
-    def _stage(self, capture, matches=None, *, retry_capture=False):
+    def _stage(self, capture, matches=None, *, retry_capture=False, base=None):
         from astrid.sdk.timeline._command_state import equal
 
         while True:
             with self.outbox.locked():
                 state = self._state()
+                if base is not None and state["base"] != _pin(base):
+                    raise TimelineEditError("outbox no longer has the original sheet basis")
                 if matches is not None and state["pending"]:
                     prefix = state["pending"][:state["flight"]["count"]] if state["flight"] else state["pending"]
                     if not matches(prefix):

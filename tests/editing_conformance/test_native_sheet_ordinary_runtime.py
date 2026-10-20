@@ -1,0 +1,174 @@
+"""Pinned trim/clear/params batch through the real provider and durable Session.
+
+The existing injected HTTP transport avoids sockets; only the central service
+runs this integration lane. The frozen main API builds the original film before the current Runtime opens it.
+"""
+from __future__ import annotations
+
+import copy
+import json
+import os
+import subprocess
+import sys
+
+import pytest
+
+from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline.commit import _json, bundle_from_document
+from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+from astrid.sdk.timeline_sheet import NativeSheet
+from astrid.sdk.workspace_client import WorkspaceClientError
+from tests.editing_conformance import test_native_batch_ingress
+from tests.editing_conformance.test_native_batch_ingress import command, label
+from tests.editing_conformance.test_native_sheet_current import property_cell
+from tests.helpers.runtime import runtime_checkout
+
+pytestmark = pytest.mark.integration
+runtime = test_native_batch_ingress.runtime
+MEDIA = 'parent/clip:video'
+TITLE = 'parent/clip:title'
+
+
+@pytest.fixture
+def historical_sheet_film(tmp_path):
+    # Use PLAN's frozen Runtime main, through its real APIs in another process.
+    # Current Runtime then performs its normal migration and history adoption.
+    old_runtime = runtime_checkout('8c1830d1ca64a3934c37611a28ffe8db7df879ea')
+    clips = [
+        {'id': 'video', 'clipType': 'media', 'track': 'picture', 'at': 0,
+         'asset': 'source', 'from': 1, 'to': 5.0, 'hold': 4, 'speed': 2,
+         'params': {'opaque': [None, False, 1, 1.0]},
+         'transition': {'type': 'crossfade', 'duration': .25},
+         'app': {'org.example': {'literal': 'video', 'value': None}}},
+        {'id': 'title', 'clipType': 'am-type', 'track': 'picture', 'at': 6, 'hold': 1.013,
+         'params': {'text': 'Before', 'size': 32, 'opaque': {'keep': [None, False, 1, 1.0]}},
+         'org.example/data': {'float': 1.0}},
+    ]
+    # Main's publication evaluator only accepts numeric FPS; rational-object
+    # preservation is covered by the direct ordinary-sheet conformance tests.
+    payload = {'config': {'output': {'fps': 30000 / 1001},
+                         'tracks': [{'id': 'picture', 'kind': 'visual', 'label': 'Before'}],
+                         'clips': copy.deepcopy(clips), 'org.example/data': {'null': None}},
+               'clips': clips, 'occurrences': [], 'registry': {'assets': {}}}
+    root = tmp_path / 'historical-realm'
+    script = """
+import json
+import sys
+from pathlib import Path
+from runtime_protocol.service import RuntimeService
+from runtime_protocol.store import RealmStore
+root = Path(sys.argv[1])
+RealmStore.initialize(root).close()
+service = RuntimeService(root)
+try:
+    project = service.create_project({'slug': 'ordinary-sheet', 'name': 'Ordinary sheet'})['id']
+    service.create_timeline(project, 'film', idempotency_key='create-film')
+    media = service.ingest(project, b'ordinary sheet source', media_type='video/mp4',
+                           original_name='source.mp4', idempotency_key='source')['data']['object_id']
+    payload = json.load(sys.stdin)
+    payload['registry']['assets']['source'] = {'media_id': media, 'type': 'video', 'duration': 12}
+    service.publish_parent_composition(project, 'film', {
+        'project_id': project, 'timeline_id': 'film', 'expected_head': None,
+        'parent_revision_id': 'sheet-baseline', 'parent_composition': payload,
+        'shot_revisions': [], 'internal_timeline_revisions': [],
+    }, idempotency_key='seed-sheet')
+    print(json.dumps({'project_id': project, 'realm_id': service.store.realm['id']}))
+finally:
+    service.close()
+"""
+    result = subprocess.run([sys.executable, '-c', script, str(root)], input=json.dumps(payload),
+        cwd=tmp_path, env={**os.environ, 'PYTHONPATH': str(old_runtime)},
+        capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    facts = json.loads(result.stdout)
+    from runtime_protocol.upgrade import migrate_canonical_to_current
+
+    migration = migrate_canonical_to_current(root, expected_realm_id=facts['realm_id'],
+        confirmation='MIGRATE CANONICAL ' + facts['realm_id'])
+    assert migration['ok']
+    return root, facts['project_id']
+
+
+def draft(runtime, tmp_path):
+    session = runtime.session()
+    sheet = NativeSheet.export(session)
+    text = property_cell(sheet.text, MEDIA, 'trim', '2.000001..8.000002')
+    for key in ('asset', 'hold', 'transition'):
+        text = property_cell(text, MEDIA, key, 'clear')
+    text = property_cell(text, TITLE, 'hold', '2.013')
+    text = property_cell(text, TITLE, 'text', '""')
+    text = property_cell(text, TITLE, 'size', 'clear')
+    path = tmp_path / 'ordinary.sheet'
+    path.write_text(text)
+    return session, sheet, path
+
+
+@pytest.mark.parametrize('runtime', ['historical'], indirect=True)
+@pytest.mark.parametrize('peer', ['none', 'disjoint', 'trim', 'params'])
+def test_http_trim_clear_params_original_basis_reload_undo_retry_or_kept_conflict(
+        runtime, tmp_path, monkeypatch, peer):
+    session, sheet, path = draft(runtime, tmp_path)
+    original = copy.deepcopy(runtime.history()['head'])
+    expected = sheet.preview(path.read_text())
+    assert [c['op'] for c in expected.commands] == ['clip.trim', 'clip.set', 'clip.set', 'clip.set-params']
+    assert sheet.preview(sheet.text).commands == []
+    if peer != 'none':
+        other = runtime.session(name='peer')
+        if peer == 'disjoint':
+            other.commit(label('Concurrent label'))
+        elif peer == 'trim':
+            other.commit(command('clip.trim', MEDIA, {'in_s': 1, 'out_s': 6}))
+        else:
+            other.commit(command('clip.set-params', TITLE, {'values': {'text': 'Concurrent text'}, 'clear': []}))
+    before = session.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=runtime.history()['head']['revision_id']).data['bundle']
+    draft_bytes = path.read_bytes()
+    if peer in ('trim', 'params'):
+        head = copy.deepcopy(runtime.history()['head'])
+        with pytest.raises(CommitConflict):
+            sheet.apply(path.read_text(), session=session, dry_run=False)
+        state = json.loads(session.outbox.path.read_bytes())
+        assert state['pending'] == expected.commands and state['flight'] and state['conflict']
+        assert state['base'] == original and state['sheet']['basis'] == original
+        assert runtime.history()['head'] == head and path.read_bytes() == draft_bytes
+        return
+
+    runtime.lost.add('ordinary-sheet')
+    with pytest.raises(WorkspaceClientError):
+        sheet.apply(path.read_text(), session=session, dry_run=False, idempotency_key='ordinary-sheet')
+    first = copy.deepcopy(runtime.calls[-1][:2])
+    body = json.loads(first[0])
+    assert body['base_revision_id'] == original['revision_id']
+    assert body['base_publication_id'] == original['publication_id']
+    assert body['commands'] == expected.commands and body['source'] == {'via': 'sheet'}
+    accepted_head = copy.deepcopy(runtime.history()['head'])
+    history_count = len(runtime.history()['items'])
+    runtime.restart()
+    restarted = runtime.session()
+    loaded = NativeSheet.load(restarted)
+    assert loaded.text == sheet.text
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('retry must retain the original capture without refetching')
+
+    with monkeypatch.context() as retry_patch:
+        retry_patch.setattr(TimelineSession, '_bundle', forbidden)
+        result = loaded.apply(path.read_text(), session=restarted, dry_run=False)
+    assert runtime.calls[-1][:2] == first
+    assert runtime.history()['head'] == accepted_head and len(runtime.history()['items']) == history_count
+    assert result['data']['status'] == ('rebased' if peer == 'disjoint' else 'accepted')
+    actual = bundle_from_document(result['data']['canonical_document'])
+    assert _json(State(actual).entity(MEDIA)) == _json(State(expected.bundle).entity(MEDIA))
+    assert _json(State(actual).entity(TITLE)) == _json(State(expected.bundle).entity(TITLE))
+    stored = restarted.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=accepted_head['revision_id']).data['bundle']
+    assert _json(State(stored).entity(MEDIA)) == _json(State(actual).entity(MEDIA))
+    undone = restarted.undo([result['receipt']['receipt_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    for ref in (MEDIA, TITLE, 'parent/track:picture'):
+        assert _json(State(restored).entity(ref)) == _json(State(before).entity(ref))
+    assert restored['parent']['config']['output'] == before['parent']['config']['output']
+    redone = restarted.undo([undone['receipt']['receipt_id']])
+    assert _json(redone['data']['canonical_document']) == _json(result['data']['canonical_document'])
+    assert path.read_bytes() == draft_bytes
+    assert NativeSheet.load(restarted).text == sheet.text
