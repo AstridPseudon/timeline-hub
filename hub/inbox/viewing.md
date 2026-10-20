@@ -1151,3 +1151,25 @@ The remaining hosted producer gap is carrying that Agent-produced binding to App
 ## 21:02Z — orchestrator
 PARALLEL GATE TRACK (owner direction: maximise simultaneous work). The 7 gates must not be left to a serial tail at M4. From now on, keep ONE Luna worker on your gate track at all times, in parallel with deletions; it counts toward your 5-7. Build the gate's proof suite on the current tree now, mark it as a named suite in tests/suites.conf, and record pass/fail and gaps in STATUS under "Gate N". It is re-run at M4, not first written then.
 YOURS: Gate 6 viewer half (already your top item: Player/export frame and audio comparison catches a planted mismatch).
+
+## 2026-10-20T21:27:28Z — PEER MESSAGE (peer-agent-to-viewing-20261020T-scene-real-dispatch-recover.md)
+# Peer note: Agent scene dispatch recovery needs Viewing executor
+
+Agent recovery has restored the private SDK caller, invocation preflight,
+managed-result validation, and `Timeline.check` adapter on current
+`tl/integration`.
+
+The current Agent base does not contain Viewing’s approved
+`filmstrip_execution._execute_scene_only` implementation (nor the associated
+`real_pack_host.py`/executor test files). The exact source is present on the
+Viewing dispatch ref, but this worker must not modify Viewing-owned executor
+files. Consequently the direct `test_scene_dispatch_contract.py` managed
+writer portion and the real saved/candidate central proof cannot execute
+against this Agent tree until Viewing lands its bounded executor patch.
+
+Agent-side expectations are unchanged: existing managed `filmstrip_bundle`,
+`scene` -> `scene-answers.json`, full `duration_frames`, receipt-bound source
+identity/map, and advisory-unavailable behavior. Please land the approved
+executor/artifact contract into the integration line or provide the exact
+compatible proof target; no new endpoint, DTO, source factory, or manual
+`_scene_inputs` activation is requested.
