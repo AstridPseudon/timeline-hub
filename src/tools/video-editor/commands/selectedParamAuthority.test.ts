@@ -8,24 +8,33 @@ const p1: DocumentPin = { document_id: 'project-document', version: 1, content_d
 const p2: DocumentPin = { document_id: 'project-document', version: 2, content_digest: 'sha256:document-v2' };
 const object = { object_id: 'sha256:object', digest: 'sha256:object', size: 12, media_type: 'application/json' as const };
 
-function record(pin: DocumentPin, op: 'clip.set-element' | 'clip.set-params' = 'clip.set-element', values: Record<string, unknown> = {}) {
+function record(pin: DocumentPin, op: 'clip.set-element' | 'clip.set-params' = 'clip.set-element', values: Record<string, unknown> = {}, target = select) {
   return {
     ordinal: 0,
-    command: { schema_version: 1, op, version: '1', select,
+    command: { schema_version: 1, op, version: '1', select: target,
       args: op === 'clip.set-element' ? { elementRef: element, schema_source: pin }
         : { values, clear: [], schema_source: pin } },
-    writes: [{ ref: select, path: op === 'clip.set-element' ? ['elementRef'] : ['params', 'seed'] }],
-    reads: op === 'clip.set-params' ? [{ ref: select, path: ['elementRef'], state: { state: 'present', value: element } }] : [],
+    writes: [{ ref: target, path: op === 'clip.set-element' ? ['elementRef'] : ['params', 'seed'] }],
+    reads: op === 'clip.set-params' ? [{ ref: target, path: ['elementRef'], state: { state: 'present', value: element } }] : [],
     selections: [],
     bindings: [
-      { key: 'scalar.target', ref: select, policy: 'fixed', dependencies: ['scalar.images'] },
-      { key: 'params.element', ref: select, policy: 'fixed', dependencies: ['params.schema', 'params.snapshot'] },
+      { key: 'scalar.target', ref: target, policy: 'fixed', dependencies: ['scalar.images'] },
+      ...(target.startsWith('parent/') ? [] : [{ key: 'scalar.owner', ref: target.slice(0, target.lastIndexOf('/')), policy: 'fixed', dependencies: [] }]),
+      { key: 'params.element', ref: target, policy: 'fixed', dependencies: ['params.schema', 'params.snapshot'] },
     ],
     created: [], derived_writes: [],
     dependencies: [
       { key: 'params.schema', kind: 'source', pin, policy: 'exact' },
       { key: 'params.snapshot', kind: 'entity', policy: 'exact', pin: { source: pin, element, object } },
     ],
+  };
+}
+
+function structuralRecord(ref: string, path: string[]) {
+  return {
+    ordinal: 0,
+    command: { schema_version: 1, op: 'timeline.set', version: '1', select: ref, args: {} },
+    writes: [{ ref, path }], reads: [], selections: [], bindings: [], dependencies: [], created: [], derived_writes: [],
   };
 }
 
@@ -46,6 +55,16 @@ function selectedHistory(...entries: HistoryEntry[]) {
   return { history: page(entries), select, rawClip };
 }
 
+function occurrenceBasis(rawClip: Record<string, unknown>) {
+  return {
+    canonicalDocument: {
+      parent_revision: { payload: { occurrences: [{ occurrence_id: 'occ-a', shot_id: 'shot-a', shot_revision_id: 'shot-a-r1' }] } },
+      shot_revisions: [{ shot_id: 'shot-a', revision_id: 'shot-a-r1', internal_timeline_revision_id: 'internal-a' }],
+      internal_timeline_revisions: [{ revision_id: 'internal-a', payload: { clips: [structuredClone(rawClip)] } }],
+    },
+  };
+}
+
 describe('resolveSelectedParamAuthority', () => {
   it('returns the exact direct-triple pin while ignoring newer unrelated accepted records', () => {
     const root = entry('p0', 'r0', null, [], 'bootstrap');
@@ -62,6 +81,33 @@ describe('resolveSelectedParamAuthority', () => {
     const first = entry('p1', 'r1', { publication_id: 'p0', revision_id: 'r0' }, [record(p1)]);
     const second = entry('p2', 'r2', { publication_id: 'p1', revision_id: 'r1' }, [record(p2, 'clip.set-params', { seed: 16 })]);
     expect(resolveSelectedParamAuthority(selectedHistory(root, first, second))).toEqual(p2);
+  });
+
+  it('refuses an authenticated history page whose items are out of predecessor order', () => {
+    const root = entry('p0', 'r0', null, [], 'bootstrap');
+    const selected = entry('p1', 'r1', { publication_id: 'p0', revision_id: 'r0' }, [record(p1)]);
+    const unrelated = entry('p2', 'r2', { publication_id: 'p1', revision_id: 'r1' }, []);
+    const input = selectedHistory(root, selected, unrelated);
+    input.history = page([root, unrelated, selected]);
+    expect(() => resolveSelectedParamAuthority(input)).toThrow(SelectedParamAuthorityError);
+  });
+
+  it('refuses authority after native structural reorientation effects', () => {
+    const root = entry('p0', 'r0', null, [], 'bootstrap');
+    const selected = entry('p1', 'r1', { publication_id: 'p0', revision_id: 'r0' }, [record(p1)]);
+    for (const [ref, path, basis, occurrenceSelect] of [
+      ['parent', ['config', 'clips'], undefined, select],
+      ['occurrence:occ-a/source', [], occurrenceBasis({ id: 'effect', elementRef: element }), 'occurrence:occ-a/clip:effect'],
+      ['occurrence:occ-a/shot', [], occurrenceBasis({ id: 'effect', elementRef: element }), 'occurrence:occ-a/clip:effect'],
+      ['shot:shot-a', [], occurrenceBasis({ id: 'effect', elementRef: element }), 'occurrence:occ-a/clip:effect'],
+    ] as const) {
+      const structural = entry('p2', 'r2', { publication_id: 'p1', revision_id: 'r1' }, [structuralRecord(ref, path)]);
+      const target = occurrenceSelect === select ? selected : entry('p1', 'r1', { publication_id: 'p0', revision_id: 'r0' }, [record(p1, 'clip.set-element', {}, occurrenceSelect)]);
+      const input = selectedHistory(root, target, structural);
+      input.select = occurrenceSelect;
+      if (basis) Object.assign(input, basis);
+      expect(() => resolveSelectedParamAuthority(input)).toThrow(SelectedParamAuthorityError);
+    }
   });
 
   it.each([

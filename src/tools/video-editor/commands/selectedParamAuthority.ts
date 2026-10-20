@@ -23,6 +23,10 @@ export interface SelectedParamAuthorityInput {
   select: string;
   /** The raw authored clip at the captured head, not a display projection. */
   rawClip: JsonRecord | null | undefined;
+  /** Existing accepted canonical basis used to resolve occurrence-owned shots. */
+  canonicalDocument?: JsonRecord;
+  /** Existing graph projection of the same accepted canonical basis. */
+  graph?: JsonRecord;
 }
 
 const isRecord = (value: unknown): value is JsonRecord =>
@@ -101,7 +105,14 @@ function orderedEntries(history: HistoryInput, suppliedHead: CapturedHead | unde
   if (result.length !== items.length) {
     fail('Selected PARAM accepted history contains an unreachable publication; draft preserved');
   }
-  return result.reverse();
+  const ordered = result.reverse();
+  if (ordered.some((entry, index) => {
+    const supplied = items[index];
+    return supplied.publication_id !== entry.publication_id || supplied.revision_id !== entry.revision_id;
+  })) {
+    fail('Selected PARAM accepted history is out of order; draft preserved');
+  }
+  return ordered;
 }
 
 function elementFromClip(rawClip: JsonRecord | null | undefined): JsonRecord | undefined {
@@ -190,13 +201,98 @@ function directPin(record: JsonRecord, select: string, rawElement: JsonRecord): 
   return pin;
 }
 
-function touchesRow(record: JsonRecord, select: string): boolean {
+function rawClipId(rawClip: JsonRecord): string | undefined {
+  return typeof rawClip.id === 'string' && rawClip.id.length > 0 ? rawClip.id : undefined;
+}
+
+function clipMatchesTarget(value: unknown, rawClip: JsonRecord): boolean {
+  const candidate = isRecord(value);
+  return !!candidate && candidate.id === rawClipId(rawClip)
+    && same(elementFromClip(candidate), elementFromClip(rawClip));
+}
+
+function clipsFromTimeline(value: unknown): readonly unknown[] | undefined {
+  if (!isRecord(value)) return undefined;
+  if (Array.isArray(value.clips)) return value.clips;
+  const timeline = isRecord(value.timeline) ? value.timeline : undefined;
+  return Array.isArray(timeline?.clips) ? timeline.clips : undefined;
+}
+
+function occurrenceShotFromDocument(
+  document: JsonRecord | undefined,
+  occurrenceId: string,
+  rawClip: JsonRecord,
+): string | undefined {
+  if (!document) return undefined;
+  const parentPayload = isRecord(document.parent_revision) && isRecord(document.parent_revision.payload)
+    ? document.parent_revision.payload : undefined;
+  const occurrences = Array.isArray(parentPayload?.occurrences) ? parentPayload.occurrences : undefined;
+  const occurrenceRows = occurrences?.filter((value) => isRecord(value) && value.occurrence_id === occurrenceId) ?? [];
+  if (occurrenceRows.length !== 1) return undefined;
+  const occurrence = occurrenceRows[0] as JsonRecord;
+  const shotId = typeof occurrence.shot_id === 'string' ? occurrence.shot_id : undefined;
+  const shotRevisionId = typeof occurrence.shot_revision_id === 'string'
+    ? occurrence.shot_revision_id : typeof occurrence.revision_id === 'string' ? occurrence.revision_id : undefined;
+  if (!shotId || !shotRevisionId || !Array.isArray(document.shot_revisions)
+    || !Array.isArray(document.internal_timeline_revisions)) return undefined;
+  const shots = document.shot_revisions.filter((value) => isRecord(value)
+    && value.shot_id === shotId && value.revision_id === shotRevisionId);
+  if (shots.length !== 1) return undefined;
+  const shot = shots[0] as JsonRecord;
+  const internalId = typeof shot.internal_timeline_revision_id === 'string'
+    ? shot.internal_timeline_revision_id : undefined;
+  if (!internalId) return undefined;
+  const internals = document.internal_timeline_revisions.filter((value) => isRecord(value)
+    && value.revision_id === internalId);
+  if (internals.length !== 1 || !clipsFromTimeline((internals[0] as JsonRecord).payload)
+    ?.some((value) => clipMatchesTarget(value, rawClip))) return undefined;
+  return shotId;
+}
+
+function occurrenceShotFromGraph(graph: JsonRecord | undefined, occurrenceId: string, rawClip: JsonRecord): string | undefined {
+  if (!graph || !Array.isArray(graph.occurrences) || !Array.isArray(graph.shot_revisions)) return undefined;
+  const occurrenceRows = graph.occurrences.filter((value) => isRecord(value) && value.occurrence_id === occurrenceId);
+  if (occurrenceRows.length !== 1) return undefined;
+  const occurrence = occurrenceRows[0] as JsonRecord;
+  const shotId = typeof occurrence.shot_id === 'string' ? occurrence.shot_id : undefined;
+  const revisionId = typeof occurrence.revision_id === 'string' ? occurrence.revision_id
+    : typeof occurrence.shot_revision_id === 'string' ? occurrence.shot_revision_id : undefined;
+  if (!shotId || !revisionId) return undefined;
+  const revisions = graph.shot_revisions.filter((value) => isRecord(value)
+    && value.shot_id === shotId && value.revision_id === revisionId);
+  if (revisions.length !== 1) return undefined;
+  const revision = revisions[0] as JsonRecord;
+  const internal = revision.internal_timeline_revision;
+  return clipsFromTimeline(internal)?.some((value) => clipMatchesTarget(value, rawClip)) ? shotId : undefined;
+}
+
+function concreteOccurrenceShot(input: SelectedParamAuthorityInput, owner: string, rawClip: JsonRecord): string {
+  const occurrenceId = owner.slice('occurrence:'.length);
+  const fromDocument = occurrenceShotFromDocument(input.canonicalDocument, occurrenceId, rawClip);
+  const fromGraph = occurrenceShotFromGraph(input.graph, occurrenceId, rawClip);
+  if (fromDocument && fromGraph && fromDocument !== fromGraph) {
+    fail('Selected PARAM occurrence shot identity changed; draft preserved');
+  }
+  const shotId = fromDocument ?? fromGraph;
+  if (!shotId) fail('Selected PARAM occurrence shot identity is unavailable; draft preserved');
+  return shotId;
+}
+
+function touchesRow(record: JsonRecord, select: string, concreteShotId?: string): boolean {
   const command = isRecord(record.command) ? record.command : undefined;
   if (command?.select === select && (command.op === 'clip.set-element' || command.op === 'clip.set-params')) return true;
   if (!Array.isArray(record.writes)) return false;
-  return record.writes.some((write) => isRecord(write) && write.ref === select
-    && Array.isArray(write.path) && (write.path.length === 0
-      || ['params', 'elementRef', 'element_ref'].includes(String(write.path[0]))));
+  const owner = select.slice(0, select.lastIndexOf('/'));
+  return record.writes.some((write) => {
+    if (!isRecord(write) || typeof write.ref !== 'string' || !Array.isArray(write.path)) return false;
+    const path = write.path.map(String);
+    if (write.ref === select && (path.length === 0 || ['params', 'elementRef', 'element_ref'].includes(path[0]))) return true;
+    if (write.ref === 'timeline' || (write.ref === owner && (path.length === 0
+      || ['clips', 'shot_id', 'shot_revision_id', 'internal_timeline_revision_id'].includes(path[0])))) return true;
+    if (owner === 'parent' && write.ref === 'parent' && path[0] === 'config' && path[1] === 'clips') return true;
+    if (owner !== 'parent' && (write.ref === `${owner}/source` || write.ref === `${owner}/shot`)) return true;
+    return owner !== 'parent' && concreteShotId !== undefined && write.ref === `shot:${concreteShotId}`;
+  });
 }
 
 function orderedRecords(entry: HistoryEntry): readonly JsonRecord[] {
@@ -228,6 +324,13 @@ export function resolveSelectedParamAuthority(input: SelectedParamAuthorityInput
   }
   const rawElement = exactElement(elementFromClip(input.rawClip));
   if (!rawElement) fail('Selected PARAM raw clip element is unavailable; draft preserved');
+  if (!rawClipId(input.rawClip as JsonRecord)
+    || rawClipId(input.rawClip as JsonRecord) !== input.select.slice(input.select.lastIndexOf('/clip:') + '/clip:'.length)) {
+    fail('Selected PARAM raw clip identity is unavailable; draft preserved');
+  }
+  const owner = input.select.slice(0, input.select.lastIndexOf('/'));
+  const concreteShotId = owner.startsWith('occurrence:')
+    ? concreteOccurrenceShot(input, owner, input.rawClip as JsonRecord) : undefined;
   const entries = orderedEntries(input.history, input.head);
   let authority: DocumentPin | undefined;
   let established = false;
@@ -244,7 +347,7 @@ export function resolveSelectedParamAuthority(input: SelectedParamAuthorityInput
         established = true;
         continue;
       }
-      if (!touchesRow(record, input.select)) continue;
+      if (!touchesRow(record, input.select, concreteShotId)) continue;
       if (command?.select === input.select
         && (command.op === 'clip.set-element' || command.op === 'clip.set-params')) {
         authority = directPin(record, input.select, rawElement);
