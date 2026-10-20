@@ -6,6 +6,8 @@ import type {
   CommitRequest,
   EditCommand,
   HistoryPage,
+  MediaSelection,
+  VerifiedMedia,
 } from './generated.ts';
 import {
   AstridRuntimeClient,
@@ -460,6 +462,18 @@ export class RuntimeDataProvider implements DataProvider {
     };
     this.onRuntimeError = options.onRuntimeError;
     this.apiBaseUrl = this.client.baseUrl;
+  }
+
+  async getProjectVerifiedMedia(
+    projectId: string,
+    selection: MediaSelection,
+  ): Promise<VerifiedMedia> {
+    if (projectId !== this.projectId) {
+      throw new Error(
+        `Workspace Runtime verified media read requires project ${this.projectId}, got ${projectId}`,
+      );
+    }
+    return this.client.getProjectVerifiedMedia(projectId, selection);
   }
 
   private async loadRuntimeShotComposition(projectId: string, timelineId: string, poll = false): Promise<unknown> {

@@ -31,7 +31,7 @@ async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (
 }
 
 describe('real clip move session through the Runtime HTTP boundary', () => {
-  it('queues one native parent intent and retries its exact request after an unknown ACK', async () => {
+  it('retains a wrong-selection draft, then retries the exact native request after reload and undoes it', async () => {
     const env = await environment();
     const session = await env.mount();
     const media: MediaSelection = {
@@ -43,6 +43,12 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     };
     const row = { id: 'native-clip', track: 'V1', at: 2, clipType: 'video', asset: 'reserved-media', from: 0, to: 1, hold: 1, speed: 1 };
     const basis = session.parentClipAddMediaPort.capture({ row, media, current: env.current() });
+    expect(() => session.parentClipAddMediaPort.finish(basis, {
+      selection: { ...media, catalog_digest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc' },
+      media_type: 'video/mp4', size: 1, duration_seconds: 1,
+    })).toThrow('exact Runtime-verified media input');
+    expect((await env.outboxes.list(scope))[0]?.intents).toEqual([]);
+
     const captured = session.parentClipAddMediaPort.finish(basis, {
       selection: { ...media }, media_type: 'video/mp4', size: 1, duration_seconds: 1,
     });
@@ -55,11 +61,29 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     expect(stored.intents).toHaveLength(1);
     expect(stored.intents[0].payload).toMatchObject({ commands: [{ op: 'clip.add-media', args: { row, media } }] });
 
-    await session.retry();
+    const ownerId = stored.ownerId;
+    await session.dispose();
+    const reopened = await env.mount();
+    expect(reopened.getState().recoverableOwners).toEqual([ownerId]);
+    await reopened.recover(ownerId);
     expect(env.commits()).toHaveLength(2);
     expect(env.commits()[1]).toEqual(first);
     expect(env.current().config.clips).toContainEqual(expect.objectContaining({ id: 'native-clip', asset: 'reserved-media' }));
-    await session.dispose();
+
+    await reopened.undo();
+    await reopened.flush();
+    expect(env.commits()).toHaveLength(3);
+    expect(env.commits()[2].body?.commands).toEqual([{
+      schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+      args: { publications: ['p1'] },
+    }]);
+    expect(env.current().config.clips).not.toContainEqual(expect.objectContaining({ id: 'native-clip' }));
+    expect(env.document().parent_revision.payload).toMatchObject({
+      opaque: { absent: null },
+      clips: [expect.objectContaining({ app: { opaque: null } })],
+    });
+    expect(env.calls.filter((call) => call.method === 'POST' && call.path.endsWith('/composition-revisions'))).toEqual([]);
+    await reopened.dispose();
   });
 
   it('drains a just-submitted gesture on dispose without flushing or starting a request', async () => {

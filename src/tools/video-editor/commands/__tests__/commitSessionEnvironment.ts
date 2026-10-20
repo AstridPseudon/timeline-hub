@@ -166,6 +166,7 @@ export async function environment(initialDocument = document()) {
   });
   const move = (session: Awaited<ReturnType<typeof mount>>, on: number) => submitClipMove(captureClipMove(session.port, current, 'x'), on);
   return { provider, transport, initial, outboxes, factory, current: () => current, calls, projected, project, mount, move, previews,
+    document: () => structuredClone(serverDocument),
     setFault: (value: typeof fault) => { fault = value; },
     pause: () => { pause = deferred(); return pause; },
     external: async (change: (document: CanonicalDocument) => void) => {
