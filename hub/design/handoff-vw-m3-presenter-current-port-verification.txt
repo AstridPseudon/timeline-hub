@@ -1,0 +1,27 @@
+cwd=/home/user/work/wt/vw-m3-presenter-current-port
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_COMPOSITION_TEST_NODE_MODULES=/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py --basetemp=/tmp/vw-m3-presenter-current-port-pytest
+.................                                                        [100%]
+17 passed in 9.38s
+exit=0
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_remotion_element_generation.py tests/packs/rendering/test_timeline_visualize_motion_views.py::test_presenter_face_box_follows_zoom_and_focus tests/packs/rendering/test_timeline_visualize_motion_views.py::test_mouth_state_matches_presenter_core_cycle tests/packs/rendering/test_timeline_visualize_motion_views.py::test_elements_ship_their_own_motion --basetemp=/tmp/vw-m3-presenter-current-port-neighbors
+......                                                                   [100%]
+6 passed in 2.99s
+exit=0
+
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F,I,BLE tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py
+All checks passed!
+exit=0
+
+/tmp/vw-m3-agent-gate-node20.19.4/bin/node --check tests/packs/rendering/presenter_scene_capability.mjs
+exit=0
+/tmp/vw-m3-agent-gate-node20.19.4/bin/node --check tests/packs/rendering/presenter_crop_geometry.mjs
+exit=0
+
+git diff --check
+exit=0
+git apply --check --reverse /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter-current-port-patch
+exit=0
+
+Results transcribed from the completed tool outputs. No test run failed, skipped or xfailed. Both pytest scratch roots were removed. Full forward dry application and actual application against current-base file copies passed; see apply-check.txt.
