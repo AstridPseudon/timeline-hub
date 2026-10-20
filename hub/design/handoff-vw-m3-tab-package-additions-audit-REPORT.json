@@ -1,0 +1,118 @@
+{
+  "status": "read-only-audit",
+  "source": {
+    "oldApprovedSha": "e421b5d4438d8b27b689e9ae8c0218b7a30c68c6",
+    "oldSourceTree": "76141fb32e0a3133dd202b84b05a4192e99c0ab6",
+    "oldFullTrackedHash": "7a417a86b52b0732d8bd722a8e6f33885947d71ec80c09cb96ff04932dff24e7",
+    "oldInputHash": "2161aa4c9398528253c0d82dba5fec0d5f176b662da2304d66ce49af9197aebc",
+    "newSha": "19c1f1f7b44a4c46a18db024a3c7d8042cc439fc",
+    "newSourceTree": "f54bda60c617661368b45949cfcce9a93cbf95ff",
+    "newFullTrackedHash": "39a14dfd24f3339d96b207e03a87f6d7a3eb47b0a863298f2eb97315e20d2893",
+    "newInputHash": "433efa68fc0e443c387f5de42a597800d154dee94eb023927641639acbad5a32",
+    "trackedFileCount": 5879,
+    "discoveredTestCount": 1,
+    "sourceDelta": [
+      "tests/e2e/timeline/tab-audio-capture.probe.ts"
+    ]
+  },
+  "grantComparison": {
+    "oldGrant": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-minimal-capability/CAPABILITY-GRANT.json",
+    "newFingerprint": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-discovery-fix/owned-source-fingerprint.json",
+    "result": "fails-expected-source-change-and-package-tree-additions",
+    "newPackageGraphHash": "0de7e7a5318cfcb13483957178be1a09b16460952799e6c010836edc7ff9753a",
+    "oldPackageGraphHash": "215e32c6fc86ba57ad36f766a273e43b8c9d328341308fafcda752b03e9eb858"
+  },
+  "addedEntries": [
+    {
+      "package": "@playwright/test",
+      "relativeEntry": "test",
+      "kind": "symlink",
+      "target": "/home/user/work/app/node_modules/@playwright/test",
+      "mtimeUtc": "2026-10-20T07:57:23.781Z",
+      "currentFileCount": 12,
+      "oldFileCount": 11,
+      "currentHash": "795ac395bede5407429ea573a3ef09bf28ccc981ec8bbcdd39e3bd84baa0538d",
+      "oldHash": "f60bd1f10036df0b0ef01bc3ac410d6ffb103be61b6d3fad19e8adb05805eb7e"
+    },
+    {
+      "package": "@remotion/player",
+      "relativeEntry": "player",
+      "kind": "symlink",
+      "target": "/home/user/work/app/node_modules/@remotion/player",
+      "mtimeUtc": "2026-10-20T07:57:23.889Z",
+      "currentFileCount": 109,
+      "oldFileCount": 108,
+      "currentHash": "a1f42977e6a6b3741e0ad33680a0556ef32e449537f75a3409868ffe110d84b8",
+      "oldHash": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7"
+    },
+    {
+      "package": "@remotion/media",
+      "relativeEntry": "media",
+      "kind": "symlink",
+      "target": "/home/user/work/app/node_modules/@remotion/media",
+      "mtimeUtc": "2026-10-20T07:57:23.881Z",
+      "currentFileCount": 785,
+      "oldFileCount": 784,
+      "currentHash": "91aa5dcaedfd644a937acacdf69d7482001eddf36ea70f69151d7debf7dab69a",
+      "oldHash": "7c7117a5de0d5f4653acaafbf907be49f467e6b9e97c1e9bc931152b87d112d4"
+    },
+    {
+      "package": "@remotion/web-renderer",
+      "relativeEntry": "web-renderer",
+      "kind": "symlink",
+      "target": "/home/user/work/app/node_modules/@remotion/web-renderer",
+      "mtimeUtc": "2026-10-20T07:57:23.901Z",
+      "currentFileCount": 97,
+      "oldFileCount": 96,
+      "currentHash": "eeadbf15ff3dbd4f35bd19fd2a85392cf33a8cb179bed6c5dff1efdcdb9fc42c",
+      "oldHash": "cfa5ffb399b0974899de70c62935aa3df7a8510c16e7d65f1840360d2a59544f"
+    },
+    {
+      "package": "@remotion/layout-utils",
+      "relativeEntry": "layout-utils",
+      "kind": "symlink",
+      "target": "/home/user/work/app/node_modules/@remotion/layout-utils",
+      "mtimeUtc": "2026-10-20T07:57:23.873Z",
+      "currentFileCount": 14,
+      "oldFileCount": 13,
+      "currentHash": "6507524f8ca0340dfa069453691ffb18c0d7103ed307e09d8ec070e7d147f01e",
+      "oldHash": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a"
+    },
+    {
+      "package": "@banodoco/timeline-composition",
+      "relativeEntry": "package",
+      "kind": "symlink",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-current-viewer-cut/overlay/public12/package",
+      "mtimeUtc": "2026-10-20T07:57:23.560Z",
+      "currentFileCount": 78,
+      "oldFileCount": 77,
+      "currentHash": "16c590b6dfffa6812efd2baa9e99b2207cbf647245d3d478566f0055c40ceccb",
+      "oldHash": "704827f41e300add4e5420d3724910e4574c7a21d3f23628e22fa2e6886dffd4"
+    }
+  ],
+  "diagnosticExclusion": {
+    "excludedOnlyAddedEntries": true,
+    "filteredPackageGraphHash": "215e32c6fc86ba57ad36f766a273e43b8c9d328341308fafcda752b03e9eb858",
+    "matchesApprovedOldGraph": true,
+    "retainedPackageByteChangesFound": false,
+    "retainedMtimeChangesProven": false,
+    "interpretation": "Exact old hashes/counts return after excluding only the six listed symlinks; this supports zero retained-byte corruption but does not establish historical mtimes."
+  },
+  "unchangedSuppliedIdentity": {
+    "browserFileCount": 255,
+    "nodeVersion": "v20.19.4",
+    "playwrightCoreFileCount": 106,
+    "renderGraphHashesUnchanged": true
+  },
+  "safeRecovery": [
+    "Preserve old grant and old fingerprint; do not silently baseline the new package graph.",
+    "If recovery is needed, exclude/remove only the six exact symlinks in a disposable or owner-controlled copy, never shared App node_modules during this audit.",
+    "Require old six package hashes/counts and old package-graph hash plus intended new source SHA before any new grant decision.",
+    "Do not run browser, socket, capability, full, central, install, credential-copy, or shared-node_modules mutation work from this audit."
+  ],
+  "tests": {
+    "run": [],
+    "notRun": ["browser", "socket", "grant", "full", "central"],
+    "reason": "Review-only audit with explicit no-live-run constraints."
+  }
+}
