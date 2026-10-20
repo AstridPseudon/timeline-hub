@@ -5,7 +5,7 @@ import copy
 import json
 
 from .errors import ConflictError, RuntimeErrorBase, ValidationError
-from .snapshot_refs import source_kind_of, working_copy_binding
+from .snapshot_refs import SNAPSHOT_KEYS, source_kind_of, working_copy_binding
 from .timeline_commit import CommitRejected
 from .timeline_commit_port import detached, digest
 from .util import canonical_json
@@ -123,29 +123,48 @@ def claim_capture_view(service, spec):
     """
     inner = spec.get("spec") if isinstance(spec.get("spec"), dict) else {}
     context = inner.get("authority_context") if isinstance(inner.get("authority_context"), dict) else {}
-    ref = context.get("capture_snapshot_ref")
-    if not isinstance(ref, dict) or ref.get("source_kind") not in {"revision", "working_copy"}:
+    inputs = inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {}
+    labels = {}
+    for key in SNAPSHOT_KEYS:
+        ref = context.get(key + "_ref")
+        if not isinstance(ref, dict) or source_kind_of(ref) not in {"revision", "working_copy"}:
+            continue
+        try:
+            snapshot = json.loads(service.object(ref["digest"])[1])
+            certified = validate_capture(service, snapshot, ref, inputs)
+        except (RuntimeErrorBase, OSError, KeyError, TypeError, ValueError):
+            certified = False
+        if not certified:
+            # Match by carrier and object digest so a duplicate authority
+            # value (including the argv/filmstrip JSON) cannot retain the
+            # rejected revision claims while each carrier keeps its own bytes.
+            labels[(key + "_ref", ref.get("digest"))] = {
+                "digest": ref["digest"], "project_id": ref.get("project_id"),
+                "timeline_id": ref.get("timeline_id"), "source_kind": "cas",
+            }
+
+    if not labels:
         return spec
-    try:
-        snapshot = json.loads(service.object(ref["digest"])[1])
-        if validate_capture(service, snapshot, ref, inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {}):
-            return spec
-    except (RuntimeErrorBase, OSError, KeyError, TypeError, ValueError):
-        pass
-    uncertified = {"digest": ref["digest"], "project_id": ref.get("project_id"),
-                   "timeline_id": ref.get("timeline_id"), "source_kind": "cas"}
 
     def relabel(value):
         if isinstance(value, dict):
-            return {key: uncertified if key == "capture_snapshot_ref" and item == ref else relabel(item)
-                    for key, item in value.items()}
+            result = {}
+            for key, item in value.items():
+                replacement = labels.get((key, item.get("digest"))) if (
+                    key.endswith("_snapshot_ref") and isinstance(item, dict)
+                ) else None
+                result[key] = replacement if replacement is not None else relabel(item)
+            return result
+        if isinstance(value, list):
+            return [relabel(item) for item in value]
         if isinstance(value, str):
             try:
                 decoded = json.loads(value)
             except ValueError:
                 return value
-            if isinstance(decoded, dict) and "capture_snapshot_ref" in decoded:
-                return canonical_json(relabel(decoded))
+            if isinstance(decoded, (dict, list)):
+                relabelled = relabel(decoded)
+                return canonical_json(relabelled) if relabelled != decoded else value
         return value
 
     return relabel(spec)
