@@ -1,0 +1,9 @@
+
+ RUN  v4.1.5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-current-viewer-cut/overlay
+
+
+ Test Files  8 passed (8)
+      Tests  137 passed (137)
+   Start at  07:51:13
+   Duration  11.38s (transform 1.93s, setup 969ms, import 3.61s, tests 1.81s, environment 3.62s)
+

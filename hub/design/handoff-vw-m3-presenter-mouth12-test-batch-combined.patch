@@ -1,0 +1,927 @@
+diff --git a/tests/packs/rendering/presenter_crop_geometry.mjs b/tests/packs/rendering/presenter_crop_geometry.mjs
+index 94f03ccb6..1c5d2d486 100644
+--- a/tests/packs/rendering/presenter_crop_geometry.mjs
++++ b/tests/packs/rendering/presenter_crop_geometry.mjs
+@@ -1,8 +1,9 @@
+ // Public facts from the ordinary generated host; no renderer or clock mirror.
+ import assert from 'node:assert/strict';
+ import {DEFAULT_THEME} from '@banodoco/timeline-composition';
+-import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
++import {queryDrawFrame, querySceneFrame} from '@banodoco/timeline-composition/evaluation';
+ import {prepareHostScene as prepareRoot, source as shared} from './query.mjs';
++export {prepareRoot};
+ 
+ // Erase control uses the actual drawing helpers, never a copied crop formula.
+ export const eraseRegion = (raw, frame, fps) => {
+@@ -35,6 +36,36 @@ export const inspect = (props, b = basis, selected = frames) => {
+   });
+ };
+ 
++// The legacy series holds component-zero geometry. Resolve that frame through
++// the existing public DrawPlan clock, then query this same prepared Root once.
++// Source/owner qualification belongs to the generated-host fixture, not this
++// clip lookup; this helper is not a production source admission boundary.
++export const seriesInspection = (scene, props, clipId = 'presenter') => {
++  const targets = props.timeline.clips.filter(clip => clip.id === clipId);
++  assert.equal(targets.length, 1);
++  const target = targets[0];
++  assert.deepEqual(target.elementRef, {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'});
++  const matches = scene.tracks.flatMap(track => track.clips.flatMap((clip, clipIndex) =>
++    clip.id === target.id ? [{track, clip, clipIndex, plan: track.prepared.plans[clipIndex]}] : []));
++  assert.equal(matches.length, 1);
++  const {track, clip, clipIndex, plan} = matches[0];
++  assert.deepEqual(clip, target);
++  assert.equal(track.track.id, target.track);
++  const frame = Math.max(0, plan.drawStart);
++  assert.ok(frame < plan.drawStart + plan.drawDuration);
++  assert.equal(queryDrawFrame(plan, frame - plan.drawStart).contentFrame, 0);
++  const answer = querySceneFrame(scene, frame); // the only series ROI read
++  const layers = answer.layers.filter(layer => layer.clipId === target.id);
++  assert.equal(layers.length, 1);
++  const layer = layers[0];
++  assert.equal(layer.track, target.track);
++  assert.equal(layer.clipIndex, clipIndex);
++  assert.equal(layer.contentFrame, 0);
++  assert.equal(layer.diagnostics?.mouth?.status, 'known');
++  return {frame, componentFrame: 0, clipId: target.id,
++    mouth: layer.diagnostics.mouth, motion: layer.diagnostics.motion};
++};
++
+ if (process.argv[2] === 'geometry') {
+   const cases = {
+     default: {mouth: undefined}, partial: {mouth: {x: 151, y: 104}}, custom: {}, fractional: {mouth: {x: 152.5, y: 103.7, w: 20.6}},
+diff --git a/tests/packs/rendering/presenter_scene_capability.mjs b/tests/packs/rendering/presenter_scene_capability.mjs
+index 3f57afa4f..34a4a5c0e 100644
+--- a/tests/packs/rendering/presenter_scene_capability.mjs
++++ b/tests/packs/rendering/presenter_scene_capability.mjs
+@@ -46,7 +46,27 @@ export const prepareHostScene = (props, b) => {
+     undefined, undefined, {}, '', {}, source.resolveHostRegistries(theme), props.compiledTransitions);
+ };
+ const basis = {width: 1920, height: 1080, fps: 30};
+-const theme = DEFAULT_THEME;
++// Composition 0.0.12's package default is Agent's navy theme. The historical
++// SSR hashes intentionally use this explicit pre-12 theme so the presenter
++// preservation check does not silently turn an old fixture into a new default.
++assert.deepEqual(DEFAULT_THEME, {
++  id: 'banodoco-default',
++  visual: {
++    color: {fg: '#FAFAFA', bg: '#050814', accent: '#67E8F9'},
++    type: {families: {heading: 'Arial', body: 'Arial', mono: 'monospace'},
++      size: {base: 32, small: 22, large: 84}, weight: {normal: 400, bold: 600}, lineHeight: 1.2},
++    motion: {fadeMs: 450}, canvas: {width: 1920, height: 1080, fps: 30},
++  },
++});
++const theme = {
++  id: 'banodoco-default',
++  visual: {
++    color: {fg: '#ffffff', bg: '#000000', accent: '#ffffff'},
++    type: {families: {heading: 'Georgia, serif', body: 'Georgia, serif'},
++      size: {base: 64, small: 36, large: 96}, weight: {normal: 400, bold: 700}, lineHeight: 1.1},
++    motion: {fadeMs: 250}, canvas: {width: 1920, height: 1080, fps: 30},
++  },
++};
+ const runtimeTheme = toRuntimeTheme(theme);
+ const registries = source.resolveHostRegistries(runtimeTheme);
+ const owner = {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'};
+diff --git a/tests/packs/rendering/presenter_series_inspection.mjs b/tests/packs/rendering/presenter_series_inspection.mjs
+new file mode 100644
+index 000000000..91c8e0e77
+--- /dev/null
++++ b/tests/packs/rendering/presenter_series_inspection.mjs
+@@ -0,0 +1,41 @@
++// Pure queries of the actual generated host; no capture or source admission.
++import assert from 'node:assert/strict';
++import {basis, params, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
++
++const props = propsFor();
++const original = JSON.stringify(props);
++const scene = prepareRoot(props, basis, {});
++let reads = 0;
++for (const capability of Object.values(scene.capabilities.components)) {
++  const frame = capability.frame;
++  capability.frame = contentFrame => { reads++; return frame(contentFrame); };
++}
++const zero = seriesInspection(scene, props);
++assert.equal(reads, 1);
++assert.equal(zero.frame, 0);
++assert.equal(zero.componentFrame, 0);
++assert.deepEqual(zero.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
++assert.equal(JSON.stringify(props), original);
++
++// Selection failures never read another region or silently choose a presenter.
++assert.throws(() => seriesInspection(scene, props, 'missing'));
++assert.throws(() => seriesInspection(scene, {...props, timeline: {...props.timeline,
++  clips: [...props.timeline.clips, props.timeline.clips[0]]}}));
++assert.throws(() => seriesInspection(scene, propsFor(params,
++  {elementRef: {kind: 'effect', id: 'am-presenter', packId: 'probe'}})));
++assert.throws(() => seriesInspection(scene, propsFor({...params, seed: 9})));
++assert.equal(reads, 1);
++
++// The public clock, not authored zero or a guessed source offset, locates zero.
++const delayed = propsFor(params, {at: 5, from: 17, to: 18, speed: 2});
++assert.equal(seriesInspection(prepareRoot(delayed, basis, {}), delayed).frame, 150);
++const clipped = propsFor(params, {at: -1});
++assert.throws(() => seriesInspection(prepareRoot(clipped, basis, {}), clipped));
++
++// Unknown diagnostics and an empty scene cannot become a known replacement ROI.
++const unknown = propsFor({...params, mosaicIn: {frames: 8}});
++assert.throws(() => seriesInspection(prepareRoot(unknown, basis, {}), unknown));
++const empty = {...props, timeline: {...props.timeline, clips: []}};
++assert.throws(() => seriesInspection(prepareRoot(empty, basis, {}), empty));
++assert.throws(() => seriesInspection(undefined, props));
++console.log(JSON.stringify({ok: true, reads, zero}));
+diff --git a/tests/packs/rendering/test_composition_package.py b/tests/packs/rendering/test_composition_package.py
+index d706fc146..dff0237e2 100644
+--- a/tests/packs/rendering/test_composition_package.py
++++ b/tests/packs/rendering/test_composition_package.py
+@@ -16,8 +16,8 @@ from scripts import gen_effect_registry
+ 
+ ROOT = Path(__file__).resolve().parents[3]
+ REMOTION = ROOT / "remotion"
+-SHA256 = "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7"
+-INTEGRITY = "sha512-SmJAoem9f+86D+eO+PvBAz3JydlefpUUwcOOkG7SU9k2ZPKpjXLWKHm/N4424TO5HNQtCHMt5T6Jy2Y5zA6Ycg=="
++SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
++INTEGRITY = "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA=="
+ REQUIRED_EXPORTS = (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
+                     "./animations.generated", "./transitions.generated", "./registry.generated")
+ 
+@@ -28,19 +28,19 @@ def _stage_locked_package(project: Path) -> tuple[Path, dict]:
+     cli.write_text("// CLI")
+     package = project / "node_modules/@banodoco/timeline-composition"
+     package.parent.mkdir(parents=True)
+-    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz") as archive:
++    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz") as archive:
+         archive.extractall(project)
+     (project / "package").rename(package)
+     return package, json.loads((package / "package.json").read_text())
+ 
+ 
+ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
+-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz"
++    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
+     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
+     lock = json.loads((REMOTION / "package-lock.json").read_text())
+     package = lock["packages"]["node_modules/@banodoco/timeline-composition"]
+-    assert package["version"] == "0.0.10"
+-    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.10.tgz"
++    assert package["version"] == "0.0.12"
++    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.12.tgz"
+     assert package["integrity"] == INTEGRITY
+     with tarfile.open(artifact) as archive:
+         manifest_file = archive.extractfile("package/package.json")
+diff --git a/tests/packs/rendering/test_presenter_scene_capability.py b/tests/packs/rendering/test_presenter_scene_capability.py
+index 48f0e968f..30965b8c6 100644
+--- a/tests/packs/rendering/test_presenter_scene_capability.py
++++ b/tests/packs/rendering/test_presenter_scene_capability.py
+@@ -1,4 +1,4 @@
+-"""Actual registered presenter draw and capability against immutable public10."""
++"""Actual registered presenter draw and capability against immutable public12."""
+ import hashlib
+ import json
+ import os
+@@ -11,7 +11,8 @@ import pytest
+ 
+ from astrid.core.rendering.node_pin import resolve_pinned_node
+ from scripts import gen_effect_registry
+-from tests.packs.rendering.test_composition_package import SHA256
++
++SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+ 
+ ROOT = Path(__file__).resolve().parents[3]
+ PRESENTER = Path("astrid/packs/astrid_motion/rendering/elements/effects/am-presenter")
+@@ -20,8 +21,12 @@ pytestmark = pytest.mark.integration
+ 
+ @pytest.fixture(scope="module")
+ def presenter_query(tmp_path_factory):
+-    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz"
+-    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
++    artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
++        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz")))
++    # Explicit immutable releases only; this override does not change the host pin.
++    assert hashlib.sha256(artifact.read_bytes()).hexdigest() in {
++        SHA256, "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
++    }
+     peers = Path(os.environ.get("ASTRID_COMPOSITION_TEST_NODE_MODULES", str(
+         ROOT / "remotion/node_modules"))).resolve()
+     node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+@@ -104,7 +109,7 @@ def test_presenter_public_scene_contract(presenter_query, case):
+     assert presenter_query(case)["ok"] is True
+ 
+ 
+-def test_presenter_public10_declarations(presenter_query, tmp_path):
++def test_presenter_public12_declarations(presenter_query, tmp_path):
+     # Check copied source against the archive's declarations through ordinary
+     # node_modules lookup; no source alias or installed package is patched.
+     project = tmp_path / "typecheck"
+diff --git a/tests/packs/rendering/test_presenter_series_inspection.py b/tests/packs/rendering/test_presenter_series_inspection.py
+new file mode 100644
+index 000000000..3479dd3f0
+--- /dev/null
++++ b/tests/packs/rendering/test_presenter_series_inspection.py
+@@ -0,0 +1,29 @@
++"""Component-zero ROI prerequisite through the existing generated-host seam."""
++
++import json
++import shutil
++import subprocess
++from pathlib import Path
++
++import pytest
++
++from tests.packs.rendering.test_presenter_scene_capability import (
++    presenter_query as _presenter_query,
++)
++
++presenter_query = _presenter_query
++pytestmark = pytest.mark.integration
++
++
++def test_series_inspection_retains_one_component_zero_query(presenter_query):
++    for name in ("presenter_crop_geometry.mjs", "presenter_series_inspection.mjs"):
++        shutil.copyfile(Path(__file__).with_name(name), presenter_query.project / name)
++    result = subprocess.run(
++        [str(presenter_query.node), "presenter_series_inspection.mjs"],
++        cwd=presenter_query.project, env=presenter_query.env,
++        capture_output=True, text=True, timeout=60,
++    )
++    assert result.returncode == 0, result.stdout + result.stderr
++    answer = json.loads(result.stdout)
++    assert answer["ok"] is True
++    assert answer["reads"] == 1
+diff --git a/tests/packs/rendering/presenter_selected_cut_query.mjs b/tests/packs/rendering/presenter_selected_cut_query.mjs
+new file mode 100644
+index 000000000..2aa11c5ec
+--- /dev/null
++++ b/tests/packs/rendering/presenter_selected_cut_query.mjs
+@@ -0,0 +1,39 @@
++// Read-only query of the exact retained four-still Root. No capture or SSR.
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import {createHash} from 'node:crypto';
++import {basis, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
++
++const retained = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
++assert.deepEqual(retained.frames, [0, 3, 4, 5]);
++assert.deepEqual(retained.basis, basis);
++// The retained explicit public10 theme stays exact when querying public12.
++assert.equal(createHash('sha256').update(fs.readFileSync(process.argv[2])).digest('hex'),
++  'eabcc179baa4b97b6bdf1c8343ca270ef090e1306ab8791ee32787c3226385af');
++assert.deepEqual(retained.props.timeline, propsFor().timeline);
++assert.deepEqual(retained.props.assets, propsFor().assets);
++const original = JSON.stringify(retained);
++const scene = prepareRoot(retained.props, retained.basis, {});
++// seriesInspection resolves this exact compiled ID and registered owner,
++// checks the DrawPlan's component zero, then makes its one public ROI query.
++const zero = seriesInspection(scene, retained.props);
++const {erase, ...expected} = retained.rows[0];
++// inspection.json is the capture's JSON boundary, which serializes -0 as 0.
++// Match that same boundary; no geometry, pixel or threshold is normalized.
++assert.deepEqual(JSON.parse(JSON.stringify(zero)), expected);
++
++// Invalid selections refuse before the helper reaches querySceneFrame.
++const controls = [];
++const refuse = (name, props, id) => {
++  assert.throws(() => seriesInspection(scene, props, id));
++  controls.push(name);
++};
++refuse('missing-compiled-id', retained.props, 'missing');
++refuse('ambiguous-compiled-id', {...retained.props, timeline: {...retained.props.timeline,
++  clips: [...retained.props.timeline.clips, retained.props.timeline.clips[0]]}});
++const changed = patch => ({...retained.props, timeline: {...retained.props.timeline,
++  clips: [{...retained.props.timeline.clips[0], ...patch}]}});
++refuse('foreign-owner', changed({elementRef: {kind: 'effect', id: 'am-presenter', packId: 'probe'}}));
++refuse('stale-params', changed({params: {...retained.props.timeline.clips[0].params, seed: 9}}));
++assert.equal(JSON.stringify(retained), original);
++console.log(JSON.stringify({zero, controls}));
+diff --git a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+new file mode 100644
+index 000000000..42e2000c6
+--- /dev/null
++++ b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+@@ -0,0 +1,271 @@
++"""UNAPPLIED consumer proposal: one retained public10 pixel fixture only.
++
++The public adapter below is test-only. Production lipsync still uses mouth_box;
++this test does not certify a working-copy/historical source or migrate a caller.
++"""
++
++import hashlib
++import json
++import shutil
++import subprocess
++from copy import deepcopy
++from dataclasses import replace
++from pathlib import Path
++
++import pytest
++from PIL import Image
++
++from astrid.core.timeline.cuts import find_cut
++from astrid.packs.rendering.actions.timeline_visualize.layers import builtin
++from astrid.packs.rendering.actions.timeline_visualize.motion import model, sheet
++from tests.packs.rendering import test_presenter_crop_equivalence as crop_helpers
++from tests.packs.rendering.test_presenter_crop_equivalence import png_crop, public_box
++from tests.packs.rendering.test_presenter_scene_capability import (
++    presenter_query as _presenter_query,
++)
++
++presenter_query = _presenter_query
++pytestmark = pytest.mark.integration
++FIXTURE = Path(__file__).resolve().parents[2] / "fixtures/presenter_selected_cut"
++EXPECTED_HASHES = {
++    "inspection.json": "eabcc179baa4b97b6bdf1c8343ca270ef090e1306ab8791ee32787c3226385af",
++    "frame-0.png": "6c3c819b5ac4a1b1848e3b72338e1e213e9159b6325eb1068f334dcfffc79ed5",
++    "frame-3.png": "76715e2b9c0df4f57e5fb10d992011dbb0536534e4ac27a6e5e3797e12b04c73",
++    "frame-4.png": "6c3c819b5ac4a1b1848e3b72338e1e213e9159b6325eb1068f334dcfffc79ed5",
++    "frame-5.png": "09b32c84599f3633fa5cf611216e25e667965041f971ab868f76bec354454108",
++}
++
++
++@pytest.fixture(scope="module")
++def retained():
++    def hashes():
++        return {name: hashlib.sha256((FIXTURE / name).read_bytes()).hexdigest()
++                for name in EXPECTED_HASHES}
++
++    assert json.loads((FIXTURE / "sha256.json").read_text()) == EXPECTED_HASHES
++    assert hashes() == EXPECTED_HASHES
++    case = json.loads((FIXTURE / "inspection.json").read_text())
++    assert case["frames"] == [0, 3, 4, 5]
++    assert len(case["rows"]) == 1
++    for frame in case["frames"]:
++        with Image.open(FIXTURE / f"frame-{frame}.png") as image:
++            assert image.format == "PNG" and image.size == tuple(case["size"]) == (640, 360)
++    yield case
++    assert hashes() == EXPECTED_HASHES
++
++
++@pytest.fixture(scope="module")
++def public_zero(presenter_query, retained):
++    # Reuse the existing actual generated-host fixture and immutable public10.
++    # The geometry helper is unchanged; this entry never imports a renderer.
++    helper = Path(crop_helpers.__file__)
++    shutil.copyfile(helper.with_name("presenter_crop_geometry.mjs"),
++                    presenter_query.project / "presenter_crop_geometry.mjs")
++    shutil.copyfile(Path(__file__).with_name("presenter_selected_cut_query.mjs"),
++                    presenter_query.project / "presenter_selected_cut_query.mjs")
++    result = subprocess.run([str(presenter_query.node), "presenter_selected_cut_query.mjs",
++                             str(FIXTURE / "inspection.json")],
++                            cwd=presenter_query.project, env=presenter_query.env,
++                            capture_output=True, text=True, timeout=60)
++    assert result.returncode == 0, result.stdout + result.stderr
++    answer = json.loads(result.stdout)
++    assert answer["controls"] == ["missing-compiled-id", "ambiguous-compiled-id",
++                                  "foreign-owner", "stale-params"]
++    assert answer["zero"] == {k: v for k, v in retained["rows"][0].items() if k != "erase"}
++    return answer["zero"]
++
++
++def context(case, order=(0, 3, 4, 5)):
++    # The original Root timeline is already flat; do not invent occurrence IDs,
++    # clip aliases, neighbouring clips, extra captures or timing for this case.
++    snapshot = {**deepcopy(case["props"]["timeline"]),
++                "config": deepcopy(case["props"]["timeline"]), "fps_rational": [30, 1]}
++    cut = sheet.select_cut(snapshot, "presenter", case["basis"]["fps"])
++    frames = {f: FIXTURE / f"frame-{f}.png" for f in order}
++    return sheet.build_context(snapshot, cut, frames, fps=case["basis"]["fps"],
++                               frame_size=tuple(case["size"]))
++
++
++def cut_ref(ctx):
++    return {key: ctx.cut[key] for key in
++            ("index", "clip_id", "occurrence_id", "shot_id", "track", "start", "end")}
++
++
++def statistic(ctx, selected, reads, pairs, changed, fractions, finding):
++    return {"cut": cut_ref(ctx), "selected": selected, "reads": reads, "pairs": pairs,
++            "changed_pixels": changed, "fractions": fractions,
++            "changes": sum(f > .02 for f in fractions),
++            "denominator": len(selected) - 1 if len(selected) >= 3 else None,
++            "finding": finding}
++
++
++def private_statistic(ctx):
++    """Observe the actual builtin without replacing private math or pixels."""
++    reads, pairs, changed, fractions = [], [], [], []
++    frame_image, diff = ctx.frame_image, builtin._diff_fraction
++
++    def read(frame):
++        reads.append(frame)
++        return frame_image(frame)
++
++    def compare(a, b):
++        fraction, mask = diff(a, b)
++        assert a.size == b.size == (47, 17)
++        pairs.append(reads[-2:])
++        changed.append(mask.histogram()[255])
++        fractions.append(fraction)
++        return fraction, mask
++
++    with pytest.MonkeyPatch.context() as patch:
++        patch.setattr(ctx, "frame_image", read)
++        patch.setattr(builtin, "_diff_fraction", compare)
++        result = builtin.render_lipsync(ctx)
++    findings = [s for s in result.findings if s.startswith("LIPSYNC pixels:")]
++    selected = [f for f in builtin._sorted_frames(ctx)
++                if float(ctx.cut["start"]) <= f / ctx.fps < float(ctx.cut["end"])]
++    assert len(findings) <= 1
++    return statistic(ctx, selected, reads, pairs, changed, fractions, findings[0] if findings else None)
++
++
++def public_statistic(ctx, zero):
++    """UNAPPLIED minimal ROI adapter; reuse the current comparator/conversion.
++
++    This preserves the builtin's selected-key denominator and resets adjacency
++    on a missing image. It intentionally makes no semantic-mouth-state query.
++    """
++    selected = [f for f in builtin._sorted_frames(ctx)
++                if float(ctx.cut["start"]) <= f / ctx.fps < float(ctx.cut["end"])]
++    reads, pairs, changed, fractions = [], [], [], []
++    finding = None
++    crop = png_crop(public_box(zero), ctx.frame_size)
++    if len(selected) >= 3:
++        previous = None
++        for frame in selected:
++            reads.append(frame)
++            image = ctx.frame_image(frame)
++            region = image.crop(crop) if image is not None else None
++            if region is not None and previous is not None:
++                fraction, mask = builtin._diff_fraction(previous[1], region)
++                pairs.append([previous[0], frame])
++                changed.append(mask.histogram()[255])
++                fractions.append(fraction)
++            previous = (frame, region) if region is not None else None
++        changes = sum(f > .02 for f in fractions)
++        finding = (f"LIPSYNC pixels: mouth region changed between {changes} of "
++                   f"{len(selected) - 1} sampled frame pairs")
++    return statistic(ctx, selected, reads, pairs, changed, fractions, finding)
++
++
++def test_actual_selected_cut_aggregate(retained, public_zero):
++    ctx = context(retained)
++    before = deepcopy(dict(ctx.cut))
++    assert ctx.cut == find_cut(ctx.cuts, "1") == find_cut(ctx.cuts, "@0")
++    assert cut_ref(ctx) == {"index": 1, "clip_id": "presenter", "occurrence_id": "",
++                            "shot_id": "", "track": "overlay", "start": 0, "end": 2}
++    presenter = ctx.elements[0]
++    assert presenter.id == public_zero["clipId"] == "presenter"
++    # No attached maths/semantic double: this is the caller's current fallback.
++    assert presenter.maths is None
++    old = png_crop(model.mouth_box(presenter, 0), ctx.frame_size)
++    assert old == png_crop(public_box(public_zero), ctx.frame_size) == (298, 202, 345, 219)
++    for f in retained["frames"]:
++        image = ctx.frame_image(f)
++        assert image.crop(old).tobytes() == image.crop(png_crop(public_box(public_zero), ctx.frame_size)).tobytes()
++    actual = private_statistic(ctx)
++    assert actual == public_statistic(ctx, public_zero)
++    assert actual["selected"] == actual["reads"] == [0, 3, 4, 5]
++    assert actual["pairs"] == [[0, 3], [3, 4], [4, 5]]
++    assert actual["changed_pixels"] == [336, 336, 336]
++    assert actual["fractions"] == [336 / 799] * 3
++    assert (actual["changes"], actual["denominator"]) == (3, 3)
++    assert actual["finding"] == "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs"
++    assert ctx.cut == before
++    print("ACTUAL_SELECTED_CUT=" + json.dumps(actual, sort_keys=True))
++
++
++@pytest.mark.parametrize("order", [(5, 0, 4, 3), (5, 3, 0, 3, 4)])
++def test_order_and_duplicate_frame_keys(retained, public_zero, order):
++    # A repeated request references the same real frame-3 file; it is not a new
++    # capture. Both the capture API and LayerContext use unique frame keys.
++    actual = private_statistic(context(retained, order))
++    assert actual == private_statistic(context(retained))
++    assert actual == public_statistic(context(retained, order), public_zero)
++
++
++def test_missing_key_changes_adjacency_and_denominator(retained, public_zero):
++    ctx = context(retained, (0, 4, 5))
++    actual = private_statistic(ctx)
++    assert actual == public_statistic(ctx, public_zero)
++    assert actual["pairs"] == [[0, 4], [4, 5]]
++    # 0 and 4 are independent retained captures with identical original bytes.
++    assert actual["changed_pixels"] == [0, 336]
++    assert actual["fractions"] == [0, 336 / 799]
++    assert (actual["changes"], actual["denominator"]) == (1, 2)
++    assert actual["finding"] == "LIPSYNC pixels: mouth region changed between 1 of 2 sampled frame pairs"
++
++
++@pytest.mark.parametrize("missing,pairs", [(3, [[4, 5]]), (4, [[0, 3]])])
++def test_missing_image_resets_pairs_but_retains_key_denominator(retained, public_zero, monkeypatch, missing, pairs):
++    ctx = context(retained)
++    read = ctx.frame_image
++    monkeypatch.setattr(ctx, "frame_image", lambda f: None if f == missing else read(f))
++    actual = private_statistic(ctx)
++    assert actual == public_statistic(ctx, public_zero)
++    assert actual["reads"] == [0, 3, 4, 5]
++    assert actual["pairs"] == pairs
++    assert actual["fractions"] == [336 / 799]
++    assert (actual["changes"], actual["denominator"]) == (1, 3)
++    assert actual["finding"] == "LIPSYNC pixels: mouth region changed between 1 of 3 sampled frame pairs"
++
++
++@pytest.mark.parametrize("start,end,selected,changes,denominator", [
++    (0, 5 / 30, [0, 3, 4], 2, 2),
++    (3 / 30, 2, [3, 4, 5], 2, 2),
++    (4 / 30, 2, [4, 5], 0, None),
++    (0, 3 / 30, [0], 0, None),
++])
++def test_selection_window_boundaries(retained, public_zero, start, end, selected, changes, denominator):
++    # Synthetic window controls over the SAME retained frame keys, not new
++    # authored cuts or captures. The positive above uses the real picture cut.
++    original = context(retained)
++    ctx = replace(original, cut={**original.cut, "start": start, "end": end})
++    actual = private_statistic(ctx)
++    assert actual == public_statistic(ctx, public_zero)
++    assert actual["selected"] == selected
++    assert (actual["changes"], actual["denominator"]) == (changes, denominator)
++    assert actual["reads"] == (selected if denominator is not None else [])
++    assert (actual["finding"] is None) == (denominator is None)
++
++
++def test_absent_file_is_an_error_not_zero_motion(retained, public_zero, tmp_path):
++    ctx = context(retained)
++    ctx.frames[3] = tmp_path / "not-a-capture.png"
++    with pytest.raises(FileNotFoundError):
++        private_statistic(ctx)
++    with pytest.raises(FileNotFoundError):
++        public_statistic(ctx, public_zero)
++
++
++@pytest.mark.parametrize("selector", ["2", "foreign:presenter"])
++def test_cut_selection_does_not_invent_a_reference(retained, selector):
++    ctx = context(retained)
++    with pytest.raises(ValueError):
++        find_cut(ctx.cuts, selector)
++
++
++@pytest.mark.parametrize("count", [15, 16])
++def test_strict_two_percent_boundary_on_memory_only_copy(retained, public_zero, count):
++    # A planted crop is a comparator control, never a relabelled frame capture.
++    ctx = context(retained)
++    original = ctx.frame_image(0)
++    altered = original.copy()
++    crop = png_crop(public_box(public_zero), ctx.frame_size)
++    for i in range(count):
++        point = (crop[0] + i, crop[1])
++        altered.putpixel(point, (255, 255, 255) if sum(original.getpixel(point)) < 384 else (0, 0, 0))
++    for box in (model.mouth_box(ctx.elements[0], 0), public_box(public_zero)):
++        region = png_crop(box, ctx.frame_size)
++        fraction, mask = builtin._diff_fraction(original.crop(region), altered.crop(region))
++        assert mask.histogram()[255] == count
++        assert fraction == count / 799
++        assert (fraction > .02) == (count == 16)
+diff --git a/tests/fixtures/presenter_selected_cut/README.md b/tests/fixtures/presenter_selected_cut/README.md
+new file mode 100644
+index 000000000..04778bbfd
+--- /dev/null
++++ b/tests/fixtures/presenter_selected_cut/README.md
+@@ -0,0 +1,20 @@
++These are the four ORIGINAL registered presenter captures and inspection JSON
++from central `1020061231-9845` (1 passed in 13.05 seconds), source
++`54b9c1feeae01037fac64594824d2d3fd748a250`. Every byte is copied unchanged from
++`workers/vw-m3-mouth-capture-retention-fix/evidence` in the Timeline ORCH area.
++
++The original archive is `viewing-mouth-legacy-public-four-stills-v1.tgz`,
++10319 bytes, SHA256
++`e7f32e40aa1aa25d81f30d05fd5ccb83a8a19cd8ce4a5a560e9fd93dc73d7c39`.
++Its six members match these six retained files, including `sha256.json`.
++The regression pins the five original inspection/PNG hashes independently.
++
++Frames are exactly `[0,3,4,5]`; frame 0 and frame 4 naturally have identical
++bytes and remain two distinct actual captures. No frame was made, relabelled,
++resized, normalized or modified for this regression. Planted boundary controls
++use memory-only copies, never these files or replacements for a real frame.
++
++Scope: public10, the exact recorded Root props, explicit normalized mouth
++`151/104/19`, and its one actual picture cut. No default/partial/raw-invalid
++statistic equivalence, production source admission, private-math deletion or
++Gate 6 qualification is claimed. Existing public known diagnostics stay known.
+diff --git a/tests/fixtures/presenter_selected_cut/frame-0.png b/tests/fixtures/presenter_selected_cut/frame-0.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..b0a544430897b0e01277c12400da4f1d91ae9bbc
+GIT binary patch
+literal 4762
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/fixtures/presenter_selected_cut/frame-3.png b/tests/fixtures/presenter_selected_cut/frame-3.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..a68191d2d3dda134c4237476d10246736cc0a226
+GIT binary patch
+literal 4851
+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
+XN$o#$3{R=UFOoU4{CrNn62AFAcLZlV
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/fixtures/presenter_selected_cut/frame-4.png b/tests/fixtures/presenter_selected_cut/frame-4.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..b0a544430897b0e01277c12400da4f1d91ae9bbc
+GIT binary patch
+literal 4762
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/fixtures/presenter_selected_cut/frame-5.png b/tests/fixtures/presenter_selected_cut/frame-5.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..7161b8f1e1d3c653001edbe65c45e46db45ae8aa
+GIT binary patch
+literal 4823
+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
+NH$P}zfp_$~{{`RwXwv`y
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/fixtures/presenter_selected_cut/inspection.json b/tests/fixtures/presenter_selected_cut/inspection.json
+new file mode 100644
+index 000000000..0e730347b
+--- /dev/null
++++ b/tests/fixtures/presenter_selected_cut/inspection.json
+@@ -0,0 +1 @@
++{"basis":{"width":1920,"height":1080,"fps":30},"frames":[0,3,4,5],"props":{"timeline":{"tracks":[{"id":"overlay","kind":"visual"}],"clips":[{"id":"presenter","track":"overlay","clipType":"am-presenter","at":0,"hold":2,"elementRef":{"kind":"effect","id":"am-presenter","packId":"astrid_motion"},"params":{"mouth":{"x":151,"y":104,"w":19},"words":[[0.1,0.4]],"chrome":"none","blinkEvery":0,"seed":7}}]},"theme":{"id":"banodoco-default","visual":{"color":{"fg":"#ffffff","bg":"#000000","accent":"#ffffff"},"type":{"families":{"heading":"Georgia, serif","body":"Georgia, serif"},"size":{"base":64,"small":36,"large":96},"weight":{"normal":400,"bold":700},"lineHeight":1.1},"motion":{"fadeMs":250},"canvas":{"width":1920,"height":1080,"fps":30}}},"assets":{"assets":{}}},"rows":[{"frame":0,"componentFrame":0,"clipId":"presenter","mouth":{"status":"known","rect":{"x":894,"y":606,"width":138,"height":48}},"motion":{"zoom":1,"pan_x":0,"pan_y":0,"mouth":0,"blink":0,"visible":1},"erase":{"status":"known","rect":{"x":900,"y":618,"width":126,"height":24}}}],"size":[640,360],"scale":0.3333333333333333}
+\ No newline at end of file
+diff --git a/tests/fixtures/presenter_selected_cut/sha256.json b/tests/fixtures/presenter_selected_cut/sha256.json
+new file mode 100644
+index 000000000..f0af7790c
+--- /dev/null
++++ b/tests/fixtures/presenter_selected_cut/sha256.json
+@@ -0,0 +1,7 @@
++{
++  "inspection.json": "eabcc179baa4b97b6bdf1c8343ca270ef090e1306ab8791ee32787c3226385af",
++  "frame-0.png": "6c3c819b5ac4a1b1848e3b72338e1e213e9159b6325eb1068f334dcfffc79ed5",
++  "frame-3.png": "76715e2b9c0df4f57e5fb10d992011dbb0536534e4ac27a6e5e3797e12b04c73",
++  "frame-4.png": "6c3c819b5ac4a1b1848e3b72338e1e213e9159b6325eb1068f334dcfffc79ed5",
++  "frame-5.png": "09b32c84599f3633fa5cf611216e25e667965041f971ab868f76bec354454108"
++}

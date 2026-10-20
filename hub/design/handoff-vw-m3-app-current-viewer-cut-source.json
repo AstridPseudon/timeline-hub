@@ -1,0 +1,65 @@
+{
+  "current": "1be0efdde5b9ec14f6ef85e0cbcd6bf6b27c80ff",
+  "cohort": "9d9101fef15470c813d060ed0169676fa7206c2e",
+  "files": [
+    "playerEvaluation.ts",
+    "playerEvaluation.test.ts",
+    "TimelineRenderer.tsx",
+    "VisualClip.tsx",
+    "VisualClip.evaluation.test.tsx",
+    "TimelineRenderer.sequence.test.tsx"
+  ],
+  "artifact_sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+  "members": 77,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "remotion": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./evaluation": {
+      "types": "./dist/evaluation.d.ts",
+      "import": "./dist/evaluation.js",
+      "remotion": "./dist/evaluation.js",
+      "default": "./dist/evaluation.js"
+    },
+    "./theme-api": {
+      "types": "./dist/theme-api.d.ts",
+      "import": "./dist/theme-api.js",
+      "remotion": "./dist/theme-api.js",
+      "default": "./dist/theme-api.js"
+    },
+    "./registry.generated": {
+      "types": "./dist/registry.generated.d.ts",
+      "import": "./dist/registry.generated.js",
+      "remotion": "./dist/registry.generated.js",
+      "default": "./dist/registry.generated.js"
+    },
+    "./effects.generated": {
+      "types": "./dist/effects.generated.d.ts",
+      "import": "./dist/effects.generated.js",
+      "remotion": "./dist/effects.generated.js",
+      "default": "./dist/effects.generated.js"
+    },
+    "./animations.generated": {
+      "types": "./dist/animations.generated.d.ts",
+      "import": "./dist/animations.generated.js",
+      "remotion": "./dist/animations.generated.js",
+      "default": "./dist/animations.generated.js"
+    },
+    "./transitions.generated": {
+      "types": "./dist/transitions.generated.d.ts",
+      "import": "./dist/transitions.generated.js",
+      "remotion": "./dist/transitions.generated.js",
+      "default": "./dist/transitions.generated.js"
+    },
+    "./registries": {
+      "types": "./dist/registries.d.ts",
+      "import": "./dist/registries.js",
+      "remotion": "./dist/registries.js",
+      "default": "./dist/registries.js"
+    },
+    "./package.json": "./package.json"
+  }
+}

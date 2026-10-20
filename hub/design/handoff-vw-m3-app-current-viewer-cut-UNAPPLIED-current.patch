@@ -1,0 +1,502 @@
+--- a/src/tools/video-editor/compositions/TimelineRenderer.tsx
++++ b/src/tools/video-editor/compositions/TimelineRenderer.tsx
+@@ -1,3 +1,4 @@
++import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
+ import { getAdmittedElementSelection, subscribeAdmittedElements } from '../runtime/admitted-elements';
+ import { AbsoluteFill, Sequence, useCurrentFrame, useRemotionEnvironment } from 'remotion';
+ import { Component, createContext, memo, useContext, useMemo, useSyncExternalStore, type ComponentType, type FC, type ReactNode } from 'react';
+@@ -58,6 +59,7 @@
+ import { resolveEndSpanningLayerPreviewParams } from '@/tools/video-editor/sequences/components/EndSpanningLayerSequence.tsx';
+ import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
+ import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
++import { preparePlayerTrack } from './playerEvaluation.ts';
+ 
+ const AstridElementHostContext = createContext<AstridElementHost | null>(null);
+ const useAstridElementHost = () => requireAstridElementHost(useContext(AstridElementHostContext));
+@@ -1056,7 +1058,7 @@
+           data-live-frame-progress={result.progress === undefined ? undefined : String(result.progress)}
+           data-live-frame-sequence={String(result.sample.sequenceNumber)}
+           data-live-frame-timestamp={String(result.sample.frame.timestamp)}
+-          style={{ backgroundColor: 'black', overflow: 'hidden' }}
++          style={{ backgroundColor: theme.visual.color.bg, overflow: 'hidden' }}
+         >
+           <img
+             alt=""
+@@ -1260,6 +1262,7 @@
+ };
+ 
+ interface VisualTrackProps {
++  compiledTransitions?: CompiledCanonicalTransitions;
+   track: TrackDefinition;
+   clips: ResolvedTimelineClip[];
+   renderConfig: ResolvedTimelineConfig;
+@@ -1276,6 +1279,7 @@
+ // once per visual track. Keeps the dynamic-registry subscription out of the
+ // per-clip dispatch loop.
+ const VisualTrack: FC<VisualTrackProps> = ({
++  compiledTransitions,
+   track,
+   clips,
+   renderConfig,
+@@ -1289,7 +1293,24 @@
+   const host = useAstridElementHost();
+   const { entries: dynamicEntries } = useSequenceComponentRegistrySnapshot();
+   const clipTypeRegistry = useClipTypeRegistrySnapshot();
+-  const sortedClips = sortClipsByAt(clips);
++  const { width, height } = parseResolution(resolution);
++  const usesNativeMedia = (clip: ResolvedTimelineClip) => {
++    const descriptor = host.describeClipCapability(clip, dynamicEntries);
++    return !(liveBindingRecordsByClip.get(clip.id)?.length)
++      && !isGeneratedRemotionModuleClip(clip)
++      && descriptor?.source !== 'generated-module'
++      && descriptor?.capabilities.preview !== 'placeholder'
++      && (!clip.clipType || (
++        !(!clip.elementRef && host.resolveComponent(clip.clipType, 'effect'))
++        && !isSequenceComponentClipType(host, clip.clipType, dynamicEntries)
++        && !clipTypeRegistry.get(clip.clipType)
++      ));
++  };
++  const hasCompiledTrack = compiledTransitions?.tracks.some(input => input.trackId === track.id);
++  const keepHostTrack = hasCompiledTrack && !clips.every(usesNativeMedia);
++  const evaluation = preparePlayerTrack(track, keepHostTrack ? boundCanonicalConfigClips(clips) : clips,
++    fps, width, height, usesNativeMedia, keepHostTrack ? undefined : compiledTransitions);
++  const sortedClips = evaluation.clips;
+   if (sortedClips.length === 0) {
+     return null;
+   }
+@@ -1556,6 +1577,7 @@
+             track={track}
+             fps={fps}
+             predecessor={predecessor}
++            drawPlan={evaluation.plans.get(clip.id) ?? null}
+           />
+         );
+       })}
+@@ -1563,7 +1585,9 @@
+   );
+ };
+ 
+-const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ config }) => {
++type TimelineRendererInput = { config: ResolvedTimelineConfig; compiledTransitions?: CompiledCanonicalTransitions };
++
++const TimelineRendererBody: FC<TimelineRendererInput> = memo(({ config, compiledTransitions }) => {
+   const host = useAstridElementHost();
+   const { entries: dynamicSequenceEntries } = useSequenceComponentRegistrySnapshot();
+   const clipTypeRegistry = useClipTypeRegistrySnapshot();
+@@ -1580,12 +1604,13 @@
+   const renderConfig = useMemo(() => {
+     const outputConfig = projectOutputTimelineConfig(config).config;
+     const materialized = materializeResolvedSequenceConfig(outputConfig);
+-    const boundedClips = boundCanonicalConfigClips(materialized.clips);
++    const boundedClips = materialized.clips.flatMap(clip => compiledTransitions?.tracks.some(track => track.trackId === clip.track)
++      ? [clip] : boundCanonicalConfigClips([clip]));
+     return boundedClips.length === materialized.clips.length
+       && boundedClips.every((clip, index) => clip === materialized.clips[index])
+       ? materialized
+       : { ...materialized, clips: boundedClips };
+-  }, [config]);
++  }, [config, compiledTransitions]);
+   const shaderSnapshot = useShaderEffectRegistrySnapshot();
+   const fps = renderConfig.output.fps;
+   const theme = useMemo(() => resolveTimelineRenderTheme(renderConfig), [renderConfig]);
+@@ -1672,6 +1697,7 @@
+             <VisualTrack
+               key={track.id}
+               track={track}
++              compiledTransitions={compiledTransitions}
+               clips={trackClips}
+               renderConfig={renderConfig}
+               fps={fps}
+@@ -1713,6 +1739,7 @@
+     liveDataRegistry,
+     renderConfig,
+     runtimeTheme,
++    compiledTransitions,
+     visualTracks,
+   ]);
+ 
+@@ -1763,9 +1790,9 @@
+   );
+ });
+ 
+-export const TimelineRenderer: FC<{ config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost }> = memo(({ config, astridElementHost }) => {
++export const TimelineRenderer: FC<TimelineRendererInput & { astridElementHost?: AstridElementHost }> = memo(({ config, compiledTransitions, astridElementHost }) => {
+   const runtime = useContext(VideoEditorRuntimeContext);
+   const inheritedHost = useContext(AstridElementHostContext);
+   const host = requireAstridElementHost(astridElementHost ?? inheritedHost ?? runtime?.astridElementHost);
+-  return <AstridElementHostContext.Provider value={host}><TimelineRendererBody config={config} /></AstridElementHostContext.Provider>;
++  return <AstridElementHostContext.Provider value={host}><TimelineRendererBody config={config} compiledTransitions={compiledTransitions} /></AstridElementHostContext.Provider>;
+ });
+--- a/src/tools/video-editor/compositions/VisualClip.tsx
++++ b/src/tools/video-editor/compositions/VisualClip.tsx
+@@ -1,5 +1,6 @@
+ import { useMemo, useState, type CSSProperties, type FC, type ReactNode } from 'react';
+-import { AbsoluteFill, Sequence, interpolate, useCurrentFrame, useRemotionEnvironment, useVideoConfig } from 'remotion';
++import { AbsoluteFill, Freeze, Sequence, interpolate, useCurrentFrame, useRemotionEnvironment, useVideoConfig } from 'remotion';
++import { queryDrawFrame, type DrawPlan } from '@banodoco/timeline-composition/evaluation';
+ import { ReadinessImage } from '@astrid/packs/rendering/shared/readiness-image';
+ import { ReadinessVideo } from './ReadinessVideo.tsx';
+ import {
+@@ -36,6 +37,7 @@
+   type ShaderEffectRegistrySnapshot,
+ } from '@/tools/video-editor/shaders/registry/index.ts';
+ import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
++import { preparePlayerClipOpacity, preparePlayerTrack } from './playerEvaluation.ts';
+ 
+ // SD-025 (Sprint 3): inline missing-asset placeholder body. Mirrors the
+ // styling of UnknownClipPlaceholder so the two loud cases look like a pair.
+@@ -192,6 +194,7 @@
+   track: TrackDefinition;
+   fps: number;
+   predecessor?: ResolvedTimelineClip | null;
++  drawPlan?: DrawPlan | null;
+   effectRegistrySnapshot?: EffectRegistrySnapshot;
+   shaderRegistrySnapshot?: ShaderEffectRegistrySnapshot;
+   materialRefs?: readonly RenderMaterialRef[];
+@@ -204,6 +207,7 @@
+   track: TrackDefinition,
+   compositionWidth: number,
+   compositionHeight: number,
++  opacity: number,
+ ): CSSProperties => {
+   const hasPositionOverride = (
+     clip.x !== undefined
+@@ -224,13 +228,13 @@
+         width: clip.width ?? compositionWidth,
+         height: clip.height ?? compositionHeight,
+         objectFit: 'cover',
+-        opacity: clip.opacity ?? 1,
++        opacity,
+       }
+     : {
+         width: '100%',
+         height: '100%',
+         objectFit: fit,
+-        opacity: clip.opacity ?? 1,
++        opacity,
+       };
+   const cropTop = clip.cropTop ?? 0;
+   const cropRight = clip.cropRight ?? 0;
+@@ -293,6 +297,9 @@
+ const VisualAsset: FC<VisualClipProps> = ({ clip, track, fps }) => {
+   const { width: compositionWidth, height: compositionHeight } = useVideoConfig();
+   const previewMediaFailure = useOptionalPreviewMediaFailure();
++  const frame = useCurrentFrame();
++  const opacityAt = useMemo(() => clip.effects ? preparePlayerClipOpacity(clip, fps) : null, [clip, fps]);
++  const opacity = opacityAt ? opacityAt(frame) : clip.opacity ?? 1;
+   // SD-025: never silent-null when a built-in clip is missing its asset.
+   // Render a labeled red band so the gap is obvious in preview/export.
+   if (!clip.assetEntry) {
+@@ -354,7 +361,7 @@
+   const useViewportLayout = fit === 'manual' || hasPositionOverride;
+ 
+   if (!useViewportLayout) {
+-    const style = getClipBoxStyle(clip, track, compositionWidth, compositionHeight);
++    const style = getClipBoxStyle(clip, track, compositionWidth, compositionHeight, opacity);
+     const sharedStyle: CSSProperties = {
+       ...style,
+       mixBlendMode: track.blendMode && track.blendMode !== 'normal' ? track.blendMode : undefined,
+@@ -416,7 +423,7 @@
+     width: viewportLayout.renderBounds.width,
+     height: viewportLayout.renderBounds.height,
+     overflow: 'hidden',
+-    opacity: clip.opacity ?? 1,
++    opacity,
+   };
+   const mediaStyle: CSSProperties = {
+     position: 'absolute',
+@@ -498,6 +505,7 @@
+   materialRefs,
+   materialStatuses,
+   materialDiagnostics,
++  drawPlan,
+ }) => {
+   const environment = useRemotionEnvironment();
+   const providerRegistryContext = useOptionalEffectRegistryContext();
+@@ -555,7 +563,7 @@
+   );
+ 
+   let transitionStyle: CSSProperties | undefined;
+-  if (clip.transition) {
++  if (clip.transition && !drawPlan) {
+     const record = resolveTransition(clip.transition.type, mergedTransitionSnapshot);
+     if (record) {
+       const transitionProgress = interpolate(
+@@ -626,6 +634,19 @@
+   return <>{children}</>;
+ };
+ 
++const EvaluatedVisualContent: FC<{ plan: DrawPlan; children: ReactNode }> = ({ plan, children }) => {
++  const frame = useCurrentFrame();
++  const evaluated = queryDrawFrame(plan, frame);
++  // Canonical incoming plans advance content directly from the Sequence origin.
++  // Older outgoing plans freeze only silent images on their own clock.
++  const extended = !plan.incomingPolicy && (plan.ownOffset !== 0 || plan.drawDuration > plan.ownDuration);
++  return (
++    <AbsoluteFill style={{ opacity: evaluated.opacity }}>
++      {extended ? <Freeze frame={evaluated.ownFrame}>{children}</Freeze> : children}
++    </AbsoluteFill>
++  );
++};
++
+ export const VisualClipSequence: FC<VisualClipProps> = ({
+   clip,
+   track,
+@@ -636,7 +657,39 @@
+   materialRefs,
+   materialStatuses,
+   materialDiagnostics,
++  drawPlan,
+ }) => {
++  const { width, height } = useVideoConfig();
++  const plan = useMemo(() => drawPlan !== undefined ? drawPlan
++    : preparePlayerTrack(track, predecessor ? [predecessor, clip] : [clip], fps, width, height)
++      .plans.get(clip.id) ?? null, [drawPlan, track, predecessor, clip, fps, width, height]);
++  const content = (
++    <VisualClip
++      clip={clip}
++      track={track}
++      fps={fps}
++      predecessor={predecessor}
++      drawPlan={plan}
++      effectRegistrySnapshot={effectRegistrySnapshot}
++      shaderRegistrySnapshot={shaderRegistrySnapshot}
++      materialRefs={materialRefs}
++      materialStatuses={materialStatuses}
++      materialDiagnostics={materialDiagnostics}
++    />
++  );
++  if (plan) {
++    if (plan.drawDuration <= 0) return null;
++    return (
++      <Sequence key={clip.id} from={plan.drawStart} durationInFrames={plan.drawDuration} premountFor={fps}>
++        <LazyGuard durationInFrames={plan.drawDuration}>
++          <EvaluatedVisualContent plan={plan}>{content}</EvaluatedVisualContent>
++        </LazyGuard>
++      </Sequence>
++    );
++  }
++
++  // Host-only transitions keep their original timing until their picture and
++  // audible subtree clocks can be declared to the shared evaluator.
+   const durationInFrames = getClipDurationInFrames(clip, fps);
+   const transitionFrames = predecessor && clip.transition
+     ? secondsToFrames(clip.transition.duration, fps)
+@@ -671,17 +724,7 @@
+       premountFor={fps}
+     >
+       <LazyGuard durationInFrames={effectiveDuration}>
+-        <VisualClip
+-          clip={clip}
+-          track={track}
+-          fps={fps}
+-          predecessor={predecessor}
+-          effectRegistrySnapshot={effectRegistrySnapshot}
+-          shaderRegistrySnapshot={shaderRegistrySnapshot}
+-          materialRefs={materialRefs}
+-          materialStatuses={materialStatuses}
+-          materialDiagnostics={materialDiagnostics}
+-        />
++        {content}
+       </LazyGuard>
+     </Sequence>
+   );
+--- a/src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx
++++ b/src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx
+@@ -1,8 +1,9 @@
++import { resolveTimelineRenderTheme } from '@/tools/video-editor/compositions/installed-themes';
+ // @vitest-environment jsdom
+ import { act, render, screen, waitFor } from '@testing-library/react';
+ import { beforeEach, describe, expect, it, vi } from 'vitest';
++import { compilePlayerTransitions } from './playerEvaluation.ts';
+ import { TimelineRenderer as TimelineRendererImplementation } from '@/tools/video-editor/compositions/TimelineRenderer';
+-import { resolveTimelineRenderTheme } from '@/tools/video-editor/compositions/installed-themes';
+ import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
+ import type { ClipRendererProps } from '@/tools/video-editor/clip-types/ClipTypeRegistry';
+ import type { ComponentProps, FC, PropsWithChildren } from 'react';
+@@ -87,15 +88,42 @@
+ 
+ vi.mock('@banodoco/timeline-composition/theme-api', async () => {
+   const reactModule = await import('react');
+-  const actual = await vi.importActual<typeof import('@banodoco/timeline-composition/theme-api')>(
+-    '@banodoco/timeline-composition/theme-api',
+-  );
+-  const { DEFAULT_THEME } = actual;
+   const runtimeThemeValue = {
+-    ...DEFAULT_THEME,
+-    color: DEFAULT_THEME.visual.color,
+-    type: DEFAULT_THEME.visual.type,
+-    motion: DEFAULT_THEME.visual.motion,
++    color: {
++      accent: '#ffffff',
++      bg: '#000000',
++      fg: '#ffffff',
++    },
++    type: {
++      families: {
++        heading: 'Georgia, serif',
++        body: 'Inter, system-ui, sans-serif',
++        mono: 'JetBrains Mono, ui-monospace, monospace',
++      },
++      size: {
++        base: 56,
++        small: 32,
++        large: 128,
++      },
++      weight: {
++        normal: 300,
++        bold: 500,
++      },
++      lineHeight: 1.1,
++    },
++    motion: {
++      fadeMs: 500,
++    },
++    canvas: {
++      width: 1920,
++      height: 1080,
++      fps: 30,
++    },
++  };
++
++  const DEFAULT_THEME = {
++    id: 'default',
++    visual: runtimeThemeValue,
+   };
+ 
+   const toRuntimeTheme = (value: unknown) => {
+@@ -131,7 +159,6 @@
+   const ThemeContext = reactModule.createContext(runtimeThemeValue);
+ 
+   return {
+-    ...actual,
+     DEFAULT_THEME,
+     ThemeProvider: ({
+       children,
+@@ -231,6 +258,38 @@
+         mockShaderRegistryHas(lookup.shaderId, lookup.ownerExtensionId)
+       ),
+     }),
++  };
++});
++
++vi.mock('@banodoco/timeline-composition/theme-api', async () => {
++  const React = await import('react');
++  const DEFAULT_THEME = {
++    id: 'default',
++    visual: {
++      color: {
++        accent: '#ffffff',
++        bg: '#000000',
++      },
++      type: {
++        families: {
++          heading: 'Georgia, serif',
++        },
++      },
++    },
++  };
++  const ThemeContext = React.createContext(DEFAULT_THEME.visual);
++  return {
++    DEFAULT_THEME,
++    ThemeProvider: ({
++      children,
++      value,
++    }: PropsWithChildren<{ value: unknown }>) => (
++      <ThemeContext.Provider value={(value as typeof DEFAULT_THEME)?.visual ?? DEFAULT_THEME.visual}>
++        {children}
++      </ThemeContext.Provider>
++    ),
++    useTheme: () => React.useContext(ThemeContext),
++    composeAnimations: () => ({}),
+   };
+ });
+ 
+@@ -335,6 +394,87 @@
+ });
+ 
+ describe('TimelineRenderer registered sequences', () => {
++  it('passes shared image crossfade plans through native media dispatch', () => {
++    const config = buildConfig();
++    config.clips = [
++      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
++        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
++      { id: 'b', clipType: 'hold', track: 'V1', at: 1, hold: 1,
++        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
++        transition: { type: 'crossfade', duration: 0.4 } },
++    ];
++    render(<TimelineRenderer config={config} />);
++    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
++      clip: expect.objectContaining({ id: 'a' }),
++      drawPlan: expect.objectContaining({ drawStart: 0, drawDuration: 30, fadeOut: null }),
++    }));
++    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
++      clip: expect.objectContaining({ id: 'b' }),
++      drawPlan: expect.objectContaining({ drawStart: 18, drawDuration: 42, ownOffset: 12 }),
++    }));
++  });
++
++  it('passes the compiled incoming fade and occurrence cap through the actual renderer without host reclamping', () => {
++    const config = buildConfig();
++    config.clips = [
++      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
++        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
++      { id: 'b', clipType: 'hold', track: 'V1', at: 1, hold: 1,
++        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
++        transition: { type: 'fade', duration: 2 },
++        app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 2000 } } },
++    ];
++    const compiled = compilePlayerTransitions(config)!;
++    expect(compiled).toBeDefined();
++    visualClipMock.mockClear();
++    render(<TimelineRenderer config={config} compiledTransitions={compiled} />);
++    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
++      clip: expect.objectContaining({ id: 'b', transition: { type: 'fade', duration: 2 } }),
++      drawPlan: expect.objectContaining({ drawStart: 0, drawDuration: 60, incomingPolicy: 'preroll-crossfade',
++        fadeIn: { from: 0, to: 60, kind: 'dissolve' } }),
++    }));
++  });
++
++  it('preserves a host component overriding a native name and keeps its neighboring transition host-timed', () => {
++    astridElementComponentMock.mockImplementation((id: string) => id === 'hold'
++      ? () => <div data-testid="host-picture" /> : undefined);
++    const config = buildConfig();
++    config.clips = [
++      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
++        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
++      { id: 'b', clipType: 'media', track: 'V1', at: 1, from: 0, to: 1,
++        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
++        transition: { type: 'fade', duration: 0.4 } },
++    ];
++    render(<TimelineRenderer config={config} />);
++    expect(screen.getByTestId('host-picture')).toBeInTheDocument();
++    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
++      clip: expect.objectContaining({ id: 'b' }), drawPlan: null,
++    }));
++  });
++
++  it('retains host bounds and neighboring timing when an injected component overrides a compiled media name', () => {
++    astridElementComponentMock.mockImplementation((id: string) => id === 'hold'
++      ? () => <div data-testid="compiled-host-picture" /> : undefined);
++    const config = buildConfig();
++    config.clips = [
++      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
++        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
++      { id: 'b', clipType: 'media', track: 'V1', at: 1, from: 0, to: 1,
++        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
++        transition: { type: 'fade', duration: 2 },
++        app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 2000 } } },
++    ];
++    const compiled = compilePlayerTransitions(config)!;
++    expect(compiled).toBeDefined();
++    visualClipMock.mockClear();
++    render(<TimelineRenderer config={config} compiledTransitions={compiled} />);
++    expect(screen.getByTestId('compiled-host-picture')).toBeInTheDocument();
++    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
++      clip: expect.objectContaining({ id: 'b', transition: { type: 'fade', duration: 1 } }), drawPlan: null,
++    }));
++  });
++
+   it('keeps a canonical visual image absent at the half-open end after transition expansion', async () => {
+     const { VisualClipSequence } = await vi.importActual<typeof import('@/tools/video-editor/compositions/VisualClip.tsx')>(
+       '@/tools/video-editor/compositions/VisualClip.tsx',
