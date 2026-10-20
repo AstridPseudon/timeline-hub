@@ -30,7 +30,7 @@ import { expect, type Locator, type Page, type Request, type Route } from '@play
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
-import { harnessUnavailableReason, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+import { harnessUnavailableReason, sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { commandOutboxes, currentHead, dragTimelineClip, dropFileOnTimeline, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI } from './support/app.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
@@ -103,12 +103,79 @@ const journey = {
   caseStart: { at: 0, load: 0, calls: 0 },
 };
 
+interface BoundedBrowserEvidence {
+  requests: Array<{ method: string; url: string }>;
+  responses: Array<{ method: string; url: string; status: number; body?: { code?: string; message?: string } }>;
+  console: Array<{ type: string; text: string }>;
+  errors: string[];
+  pending: Array<Promise<void>>;
+}
+
+const browserEvidence = new Map<Page, BoundedBrowserEvidence>();
+
+function boundedText(value: string, limit = 300): string {
+  return value.replace(/bearer\s+\S+/ig, 'Bearer <redacted>').slice(0, limit);
+}
+
+function relevantEvidenceUrl(rawUrl: string): string | null {
+  const url = new URL(rawUrl);
+  if (!/\/(?:media-imports|media-selection(?:\/verified)?|commit)$/.test(url.pathname)) return null;
+  return `${url.pathname}${url.search}`.slice(0, 700);
+}
+
+function captureBoundedBrowserEvidence(page: Page): void {
+  const evidence: BoundedBrowserEvidence = { requests: [], responses: [], console: [], errors: [], pending: [] };
+  browserEvidence.set(page, evidence);
+  page.on('request', (request) => {
+    const url = relevantEvidenceUrl(request.url());
+    if (url && evidence.requests.length < 80) evidence.requests.push({ method: request.method(), url });
+  });
+  page.on('response', (response) => {
+    const url = relevantEvidenceUrl(response.url());
+    if (!url || evidence.responses.length >= 80) return;
+    const record = { method: response.request().method(), url, status: response.status() } as BoundedBrowserEvidence['responses'][number];
+    evidence.responses.push(record);
+    evidence.pending.push((async () => {
+      try {
+        const body = JSON.parse(await response.text()) as Record<string, unknown>;
+        const summary: NonNullable<typeof record.body> = {};
+        if (typeof body.code === 'string') summary.code = body.code;
+        if (typeof body.message === 'string') summary.message = boundedText(body.message);
+        if (Object.keys(summary).length) record.body = summary;
+      } catch {
+        // A non-JSON response has no safe bounded refusal summary.
+      }
+    })());
+  });
+  page.on('console', (message) => {
+    if (!/drop|media|native|refus|commit/i.test(message.text()) || evidence.console.length >= 80) return;
+    evidence.console.push({ type: message.type(), text: boundedText(message.text()) });
+  });
+  page.on('pageerror', (error) => {
+    if (evidence.errors.length < 40) evidence.errors.push(boundedText(error.message));
+  });
+}
+
 test.beforeEach(async ({ astrid }) => {
   journey.facts = {};
+  browserEvidence.clear();
   journey.caseStart = { at: Date.now(), load: loadavg()[0], calls: astrid.calls.length };
 });
 
-test.afterEach(async ({ astrid }, testInfo) => {
+test.afterEach(async ({ astrid, page }, testInfo) => {
+  const evidence = [...browserEvidence.values()];
+  if (evidence.length) {
+    await Promise.allSettled(evidence.flatMap((item) => item.pending));
+    journey.facts = {
+      ...journey.facts,
+      boundedBrowserEvidence: {
+        requests: evidence.flatMap((item) => item.requests).slice(0, 160),
+        responses: evidence.flatMap((item) => item.responses).slice(0, 160),
+        console: evidence.flatMap((item) => item.console).slice(0, 160),
+        errors: evidence.flatMap((item) => item.errors).slice(0, 80),
+      },
+    };
+  }
   journey.cases.push({
     name: testInfo.title,
     status: testInfo.status ?? 'unknown',
@@ -1141,13 +1208,43 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
 test('M2 real mounted manual video drop: Runtime selection refusal is closed, native ADD recovers exactly, and undo preserves opaque data', async ({ page, context, harness, astrid, seed3 }) => {
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
+  captureBoundedBrowserEvidence(page);
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   await openCommandTimeline(page, harness, seed3);
 
   const mediaObject = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(harness.seed.video.objectId)}`);
   expect(mediaObject.status).toBe(200);
-  const bytesBase64 = Buffer.from(await mediaObject.arrayBuffer()).toString('base64');
+  const mediaBytes = new Uint8Array(await mediaObject.arrayBuffer());
+  expect(harness.seed.video.decodable, 'the positive drop requires the normal decodable WebM fixture').toBe(true);
+  expect(harness.seed.video.mediaType).toBe('video/webm');
+  expect(harness.seed.video.objectId).toBe(harness.seed.video.digest);
+  expect(mediaBytes.byteLength).toBe(harness.seed.video.size);
+  expect(sha256Hex(mediaBytes)).toBe(harness.seed.video.digest);
+  expect(Array.from(mediaBytes.slice(0, 4))).toEqual([0x1a, 0x45, 0xdf, 0xa3]);
+  const bytesBase64 = Buffer.from(mediaBytes).toString('base64');
   const file = { name: 'manual-drop.webm', type: harness.seed.video.mediaType, bytesBase64 };
+  const fileProbe = await page.evaluate(async ({ name, type, bytesBase64: encoded }) => {
+    const binary = atob(encoded);
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    const browserFile = new File([bytes], name, { type });
+    const url = URL.createObjectURL(browserFile);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    try {
+      const metadata = await new Promise<{ duration: number; width: number; height: number }>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve({ duration: video.duration, width: video.videoWidth, height: video.videoHeight });
+        video.onerror = () => reject(new Error('browser could not decode the seeded File'));
+        video.src = url;
+      });
+      return { size: browserFile.size, type: browserFile.type, ...metadata };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }, file);
+  expect(fileProbe).toMatchObject({ size: harness.seed.video.size, type: harness.seed.video.mediaType });
+  expect(fileProbe.duration).toBeGreaterThan(0);
+  expect(fileProbe.width).toBeGreaterThan(0);
+  expect(fileProbe.height).toBeGreaterThan(0);
   const original = await history(harness, seed3);
   const baselineClipCount = await page.locator('.clip-action').count();
   const mediaReads: URL[] = [];
@@ -1203,6 +1300,12 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
     variant_id: importedBody.data.variant_id,
     object_id: importedBody.data.entry.object_id,
   });
+  expect(importedBody.data.entry).toMatchObject({
+    object_id: harness.seed.video.objectId,
+    digest: harness.seed.video.digest,
+    size: harness.seed.video.size,
+    media_type: harness.seed.video.mediaType,
+  });
   expect(verifiedRequest!.searchParams.get('asset')).toBe(selected.asset);
   expect(verifiedRequest!.searchParams.get('generation_id')).toBe(selected.generation_id);
   expect(verifiedRequest!.searchParams.get('variant_id')).toBe(selected.variant_id);
@@ -1252,6 +1355,7 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
   await page.close();
   await harness.restartRuntime();
   const reopened = await context.newPage();
+  captureBoundedBrowserEvidence(reopened);
   sniff.attach(reopened);
   await wire.attach(reopened);
   await openApp(reopened, harness);
