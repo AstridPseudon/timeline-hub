@@ -2,12 +2,13 @@ import { compileCanonicalTransitions, prepareCompositionScene, toRuntimeTheme } 
 import {
   clipOpacity,
   declareAppTransition,
+  getSanitizedPlaybackRate,
   prepareScene,
   type DrawPlan,
   type CompiledCanonicalTransitions,
   type TransitionSpec,
 } from '@banodoco/timeline-composition/evaluation';
-import { getClipTimelineDuration, getSanitizedPlaybackRate } from '../lib/config-utils.ts';
+import { getClipTimelineDuration } from '../lib/config-utils.ts';
 import { resolveTimelineRenderTheme } from './installed-themes.ts';
 import { projectOutputTimelineConfig } from '../data/timelineOutputProjection.ts';
 import { materializeResolvedSequenceConfig } from '../sequences/materialize.ts';
