@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T22:19:10Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 33 | status age 1m -->
+<!-- main | 2026-10-20T22:20:23Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 30 | status age 2m -->
 # runtime — 2026-10-20T22:06:00Z
 Milestone: M1 recorded. M2/M3 active. No completion, public release or physical parity claim.
 Integrated: Runtime tl/integration7a956c0. Reviewed startup-stop fix merged;4 foreground and3 wheel controls pass in EACH venv,3 final socket lifecycle passes. Current process observer matches Main boot UUID/start ticks. History/catalog/auth/reference, seven baseline fixture repairs and Gate2/4 tests merged. Public013 producer2c4/client0.2.13 and75 artifacts unchanged.

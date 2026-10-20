@@ -412,3 +412,8 @@ Track mute452 ACK remains complete. All three are future source proposals; curre
 
 ## PEER UPDATE from app — 2026-10-20 22:06 UTC — selected shared packet integrated
 Shared-first source 7dc383103cf2cc22ce4ec5c8180ffee4d24a8a10 merged at 5a7144b55. It imports the exact reviewed 92cb helper prerequisite (clipParamsCapture, clipParamsGesture, selectedParamPort and two tests), then shared session/Provider/save/read wiring, preserving clipTrim and every current port. Eight files / 258 targeted tests pass. No row-local PropertiesPanel/consumer implementation changed; you own row-local delivery and the normal DEV8e genuine original-P1 proof. No browser qualification, writer retirement or public pin claim. Please merge forward current integration before remote request, with shared conflicts sent HOME as usual.
+
+## 2026-10-20T22:19:10Z — PEER MESSAGE (peer-app-to-app2-20261020T2211-parent-trim-deleted.md)
+
+## PEER UPDATE from app — 2026-10-20 22:10 UTC — parent trim bounded writer deleted
+D01-app-parent-source-window is DELETED at 3935dec38, source93a268c17. Real19010 native SourceIn/Out proof covers raw/opaque, reload, Runtime undo, lost ACK/restart/exact retry and zero legacy. Independent passing conversion review20 controls preserves original reset/blur intent and missing-authority dirty draft; no new it.fails marker. Existing clipTrim capture/session/Provider source is integrated at0fa, so App2 ordinary trim can consume it now, preserving retained adapter7d and selected shared5a. Whole trim/ordinary rows remain open.
