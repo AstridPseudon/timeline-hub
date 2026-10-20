@@ -237,7 +237,9 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
         geometryReason, reason => unknown('invalid-component-diagnostics', reason));
       layers.push({clipId: clip.id, track: track.id, clipIndex: draw.clipIndex, z: 0,
         drawLocalFrame: draw.drawLocalFrame, ownFrame: draw.ownFrame, contentFrame: draw.contentFrame, transitionOpacity: draw.opacity,
-        opacity, visible, opaqueSupport, targetBounds, bounds, fullFrame, role: scene.roles[clip.id] ?? (track.id === 'plate' ? 'picture' : 'content'),
+        opacity, visible, opaqueSupport, targetBounds, bounds, fullFrame,
+        role: (Object.prototype.hasOwnProperty.call(scene.roles, clip.id) ? scene.roles[clip.id] : undefined)
+          ?? (track.id === 'plate' ? 'picture' : 'content'),
         ...(diagnostics === undefined ? {} : {diagnostics}),
         coverage: bounds.status === 'unknown' || uncertain ? 'unknown' : opaqueSupport === 'rect' && fullFrame && opacity! >= .999 ? 'covered' : 'partial', findings, dip});
     }

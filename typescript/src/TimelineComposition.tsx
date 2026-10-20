@@ -325,7 +325,7 @@ export const TimelineComposition = (props: TimelineCompositionProps): ReactEleme
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: props.theme?.visual.color.bg ?? 'black',
+        backgroundColor: props.theme?.visual.color.bg ?? DEFAULT_THEME.visual.color.bg,
         width,
         height,
         overflow: 'hidden',

@@ -51,6 +51,7 @@ test('public default preserves the complete existing export style', () => {
   const markup = render(createElement(TimelineComposition, {
     timeline: {theme: 'default', tracks: [track], clips: [clip]}, assets,
   }));
+  assert.match(markup, /^<div style="[^"]*background-color:#050814(?:;|")/);
   assert.match(markup, /color:#FAFAFA/);
   assert.match(markup, /font-family:Arial/);
   assert.match(markup, /font-size:32px/);
@@ -112,7 +113,7 @@ for (const [name, selected] of [['full', explicit], ['partial nested override wi
     }));
     assert.deepEqual(rendered, [toRuntimeTheme(before)]);
     assert.deepEqual(observed, [toRuntimeTheme(before)]);
-    assert.match(markup, /background-color:#234567/);
+    assert.match(markup, /^<div style="[^"]*background-color:#234567(?:;|")/);
     assert.match(markup, /color:#123456/);
     assert.match(markup, /font-family:Film Heading/);
     assert.match(markup, /font-size:51px/);
