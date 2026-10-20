@@ -44,6 +44,10 @@ vi.mock('@remotion/player', async () => {
 });
 
 const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() });
+// Test-only structural extension for the pending App producer field; product
+// TimelineData remains unchanged until the shared producer branch lands.
+type MountedTimelineData = TimelineData & { renderConfig?: ResolvedTimelineConfig };
+
 function canonical(revisionId: string, atMs = 0) {
   const graph = structuredClone(fixture);
   graph.primary_timeline.head.revision_id = revisionId;
@@ -67,15 +71,18 @@ function dataFor(config: ResolvedTimelineConfig): TimelineData {
     head: { projectId: 'project-001', timelineId: 'document-primary', headRevisionId: 'R', headPublicationId: 'pub-R' },
   });
 }
-function local(config: ResolvedTimelineConfig, generation = 1) {
-  return Object.assign(dataFor(config), {
-    editProjection: { kind: 'local' as const, base: { revisionId: 'R', publicationId: 'pub-R' }, generation },
-  });
+function withRenderConfig(data: TimelineData, renderConfig?: ResolvedTimelineConfig): MountedTimelineData {
+  return renderConfig ? { ...data, renderConfig } : data;
 }
-function accepted(config: ResolvedTimelineConfig, revisionId = 'A', publicationId = `pub-${revisionId}`) {
-  return Object.assign(dataFor(config), {
+function local(config: ResolvedTimelineConfig, generation = 1, renderConfig?: ResolvedTimelineConfig) {
+  return withRenderConfig(Object.assign(dataFor(config), {
+    editProjection: { kind: 'local' as const, base: { revisionId: 'R', publicationId: 'pub-R' }, generation },
+  }), renderConfig);
+}
+function accepted(config: ResolvedTimelineConfig, revisionId = 'A', publicationId = `pub-${revisionId}`, renderConfig?: ResolvedTimelineConfig) {
+  return withRenderConfig(Object.assign(dataFor(config), {
     editProjection: { kind: 'accepted' as const, head: { revisionId, publicationId } },
-  });
+  }), renderConfig);
 }
 function candidate(config: ResolvedTimelineConfig, at: number) {
   return { ...config, clips: config.clips.map((clip, index) => index === 0 ? { ...clip, at, x: 0.25 } : clip) };
@@ -89,7 +96,7 @@ function Surface() {
     {!surface.hasConfig && <div role="status">{surface.availability}: {surface.unavailableReason}</div>}
   </>;
 }
-function mount(initial: TimelineData, composition: ReturnType<typeof canonical> | null = canonical('R')) {
+function mount(initial: MountedTimelineData, composition: ReturnType<typeof canonical> | null = canonical('R')) {
   const store = createTimelineStore();
   // Retain this slice config across updates, just as useDerivedTimeline does
   // for equal signatures. A command fact certifies data.resolvedConfig only.
@@ -106,7 +113,7 @@ function mount(initial: TimelineData, composition: ReturnType<typeof canonical> 
   return {
     store,
     view,
-    update(data: TimelineData, saveStatus: 'dirty' | 'saving' | 'saved' = 'saving') {
+    update(data: MountedTimelineData, saveStatus: 'dirty' | 'saving' | 'saved' = 'saving') {
       act(() => {
         store.getState().syncDataSlice({ ...store.getState().data, data, resolvedConfig: memoizedConfig });
         store.getState().syncChromeSlice({ ...store.getState().chrome, saveStatus });
@@ -153,6 +160,112 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe('mounted command projection delivery', () => {
+  it('delivers an accepted prebuilt render config while preserving the clamped editor config and rows', () => {
+    const editorConfig = projectCanonicalComposition(canonical('A')).config;
+    const renderConfig = candidate(editorConfig, 2);
+    const data = accepted(editorConfig, 'A', 'pub-A', renderConfig);
+    const editorRows = data.rows;
+    const h = mount(data);
+
+    expect(player.config).toBe(renderConfig);
+    expect(data.resolvedConfig).toBe(editorConfig);
+    expect(data.rows).toBe(editorRows);
+    expect(h.store.getState().data.data.resolvedConfig).toBe(editorConfig);
+    expect(h.store.getState().data.data.rows).toBe(editorRows);
+    label('Committed A');
+  });
+
+  it('uses the paired render config for local preview and recovery without changing editor data', () => {
+    const editorConfig = projectCanonicalComposition(canonical('R')).config;
+    const localRenderConfig = candidate(editorConfig, 2.5);
+    const localData = local(editorConfig, 1, localRenderConfig);
+    const editorRows = localData.rows;
+    const h = mount(localData);
+
+    expect(player.config).toBe(localRenderConfig);
+    label('Unsaved local · based on R');
+
+    const recoveredRenderConfig = candidate(editorConfig, 3.5);
+    const recoveredData = accepted(editorConfig, 'A', 'pub-A', recoveredRenderConfig);
+    h.update(recoveredData, 'saved');
+    expect(player.config).toBe(localRenderConfig);
+    label('Unsaved local · based on R');
+    advance();
+    expect(player.config).toBe(recoveredRenderConfig);
+    expect(recoveredData.resolvedConfig).toBe(editorConfig);
+    expect(recoveredData.rows).toEqual(editorRows);
+    label('Committed A');
+  });
+
+  it('defers A to B config delivery and its label until B is delivered', () => {
+    const editorConfig = projectCanonicalComposition(canonical('R')).config;
+    const renderA = candidate(editorConfig, 1);
+    const renderB = candidate(editorConfig, 2);
+    const h = mount(accepted(editorConfig, 'A', 'pub-A', renderA));
+
+    expect(player.config).toBe(renderA);
+    h.update(accepted(editorConfig, 'B', 'pub-B', renderB), 'saved');
+    expect(player.config).toBe(renderA);
+    label('Committed A');
+    advance();
+    expect(player.config).toBe(renderB);
+    label('Committed B');
+  });
+
+  it('keeps B local ahead of a stale A acknowledgement and an observed current head C', () => {
+    const editorConfig = projectCanonicalComposition(canonical('R')).config;
+    const renderB = candidate(editorConfig, 2);
+    const renderC = candidate(editorConfig, 3);
+    const h = mount(local(editorConfig, 2, renderB));
+
+    expect(player.config).toBe(renderB);
+    label('Unsaved local · based on R');
+
+    // The stale A acknowledgement may refresh the host head metadata, but it
+    // must not replace B's paired local fact or its delivered render config.
+    h.update({ ...local(editorConfig, 2, renderB), head: { ...dataFor(editorConfig).head!, headRevisionId: 'A', headPublicationId: 'pub-A' } }, 'saved');
+    h.observe(canonical('C', 700));
+    expect(player.config).toBe(renderB);
+    label('Unsaved local · based on R');
+
+    // A late acknowledgement after the observed C head is still metadata-only.
+    h.update(local(editorConfig, 2, renderB), 'saved');
+    expect(player.config).toBe(renderB);
+    label('Unsaved local · based on R');
+    h.update(accepted(editorConfig, 'C', 'pub-C', renderC), 'saved');
+    advance();
+    expect(player.config).toBe(renderC);
+    label('Committed C');
+  });
+
+  it('falls back conservatively to the existing resolved config when renderConfig is absent', () => {
+    const editorConfig = projectCanonicalComposition(canonical('A')).config;
+    const data = accepted(editorConfig);
+    mount(data);
+
+    expect(player.config).toBe(editorConfig);
+    label('Committed A');
+  });
+
+  it('drops the paired render config with an invalidated fact, then rebuilds it with the next fact', () => {
+    const editorConfig = projectCanonicalComposition(canonical('R')).config;
+    const renderA = candidate(editorConfig, 1);
+    const renderB = candidate(editorConfig, 2);
+    const h = mount(accepted(editorConfig, 'A', 'pub-A', renderA));
+
+    const invalidated = dataFor(editorConfig);
+    h.update(invalidated, 'dirty');
+    advance();
+    expect(player.config).not.toBe(renderA);
+    label('Committed R');
+
+    h.update(local(editorConfig, 3, renderB), 'dirty');
+    expect(player.config).not.toBe(renderB);
+    advance();
+    expect(player.config).toBe(renderB);
+    label('Unsaved local · based on R');
+  });
+
   it('delivers paired canonical-shot candidate geometry through project/saving, then the accepted pinned closure', () => {
     const base = projectCanonicalComposition(canonical('R')).config;
     const h = mount(dataFor(base));
