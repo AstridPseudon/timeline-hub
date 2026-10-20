@@ -413,10 +413,8 @@ def test_native_parent_clip_swap_route_refuses_parent_ownership_on_current_schem
         verified_media=[native_editing.old_verified, native_editing.new_verified],
     )
     body = _native_body(native_editing.service, native_editing.project, [command])
-    from runtime_protocol.timeline_commit_port import validate_request
-
     with pytest.raises(ValidationError, match=r"'parent' is not one of \['shared', 'occurrence'\]"):
-        validate_request(body)
+        _native_commit(native_editing.service, native_editing.project, body, "native-parent-swap-refused")
 
 
 @pytest.mark.xfail(
