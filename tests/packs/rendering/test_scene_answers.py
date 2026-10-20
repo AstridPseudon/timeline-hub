@@ -138,6 +138,20 @@ def test_resolved_painter_order_and_compiled_payload_are_preserved(installed, mo
     assert [layer["clipId"] for layer in answers[0]["layers"]] == ["exact:first", "front:exact-id"]
 
 
+@pytest.mark.parametrize("clip_id", ["__proto__", "constructor", "toString"])
+@pytest.mark.parametrize("role", [None, "background"])
+def test_reserved_clip_ids_use_only_authored_role_overrides(installed, clip_id, role):
+    payload = scene(clips=[
+        {"id": clip_id, "track": "plate", "clipType": "custom", "at": 0, "hold": 1},
+    ], transitions=[])
+    if role is not None:
+        payload["roles"] = {clip_id: role}
+    answer = scene_answers.frames_at(payload, [0])[0]
+    assert answer["layers"][0]["clipId"] == clip_id
+    assert answer["layers"][0]["role"] == (role or "picture")
+    assert answer["coverage"] == "UNKNOWN"
+
+
 def test_unknown_custom_modifier_and_unresolved_media_stay_unknown(installed):
     payload = scene(clips=[
         {"id": "custom", "at": 0, "hold": 1, "clipType": "my-component",

@@ -31,7 +31,7 @@ try {
       }
     }
     prepared = prepareScene(tracks, assets, fps, width, height,
-      {roles, elements: new Set(elements ?? [])});
+      {roles: Object.assign(Object.create(null), roles), elements: new Set(elements ?? [])});
   }
   process.stdout.write(JSON.stringify(frames.map(frame => querySceneFrame(prepared, frame))));
 } catch (error) {
