@@ -49,6 +49,21 @@ function normalRuntimeCommitPath(projectId: string, timelineId: string): string 
   return `/api/runtime/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/commit`;
 }
 
+function requireAuthoritativeHead(body: unknown): { revision_id: string; publication_id: string } {
+  const candidate = body && typeof body === 'object' && !Array.isArray(body)
+    ? (body as { head?: unknown }).head
+    : undefined;
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+    throw new Error('Runtime timeline history did not return an authoritative head pair');
+  }
+  const head = candidate as { revision_id?: unknown; publication_id?: unknown };
+  if (typeof head.revision_id !== 'string' || !head.revision_id
+    || typeof head.publication_id !== 'string' || !head.publication_id) {
+    throw new Error('Runtime timeline history returned an incomplete authoritative head pair');
+  }
+  return { revision_id: head.revision_id, publication_id: head.publication_id };
+}
+
 function isExpectedInverseRequest(request: Request, projectId: string, timelineId: string, publicationId: string): boolean {
   if (request.method() !== 'POST') return false;
   let url: URL;
@@ -250,9 +265,8 @@ async function runImageHost(harness: DirectHarness, mode: 'register' | 'run', co
 
 async function canonicalImage(harness: DirectHarness, seed: ThreeProductsSeed, objectId: string): Promise<void> {
   await expect.poll(async () => {
-    const list = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions?limit=1`);
-    const revision = list.body.items.find((item: any) => item.is_current_head)?.revision_id;
-    if (!revision) return undefined;
+    const history = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
+    const revision = requireAuthoritativeHead(history.body).revision_id;
     const parent = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${revision}`)).body.payload;
     const occurrence = parent.occurrences.find((item: any) => item.occurrence_id === seed.occurrenceId);
     if (!occurrence) return undefined;
@@ -470,8 +484,8 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await expect.poll(() => operation.length, CEILING).toBeGreaterThan(beforeUndo);
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
 
-  const head = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions?limit=1`);
-  const current = head.body.items.find((item: any) => item.is_current_head);
+  const history = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
+  const current = requireAuthoritativeHead(history.body);
   const undone = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${current.revision_id}`);
   const occurrence = undone.body.payload.occurrences.find((item: any) => item.occurrence_id === seed.occurrenceId);
   const shot = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/shots/${seed.shotId}/revisions/${occurrence.shot_revision_id}`)).body;

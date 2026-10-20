@@ -21,6 +21,13 @@ const isExpectedInverseRequest = compileFunction(
   [],
 )();
 
+const headHelper = source.match(/^function requireAuthoritativeHead\([^]*?^}/m)?.[0];
+assert.ok(headHelper, 'authoritative head helper must remain source-visible');
+const requireAuthoritativeHead = compileFunction(
+  `${ts.transpileModule(headHelper, {}).outputText}\nreturn requireAuthoritativeHead;`,
+  [],
+)();
+
 function request(url, method, body) {
   return { method: () => method, url: () => url, postDataJSON: () => body };
 }
@@ -90,4 +97,20 @@ test('pure: traffic controls classify native, task, and every retired publisher 
     ['POST', '/api/runtime/v1/projects/p/timelines/t/committ', 'legacy-writer'],
     ['POST', '/api/astrid/v1/projects/p/timelines/t/composition-revisions', 'other'],
   ]) assert.equal(classifyRuntimePost(method, path), expected, `${method} ${path}`);
+});
+
+test('pure: authoritative head uses the Runtime pair when an older revision is reused', () => {
+  assert.deepEqual(requireAuthoritativeHead({
+    items: [
+      { revision_id: 'newer-irrelevant-revision', is_current_head: false },
+      { revision_id: 'reused-older-head', is_current_head: true },
+    ],
+    head: { revision_id: 'reused-older-head', publication_id: 'reused-head-publication' },
+  }), { revision_id: 'reused-older-head', publication_id: 'reused-head-publication' });
+});
+
+test('pure: authoritative head refuses a missing or incomplete Runtime pair', () => {
+  for (const body of [{}, { head: null }, { head: { revision_id: 'revision-only' } }, { head: { publication_id: 'publication-only' } }]) {
+    assert.throws(() => requireAuthoritativeHead(body), /authoritative head pair/);
+  }
 });
