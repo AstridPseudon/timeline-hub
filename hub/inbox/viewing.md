@@ -929,3 +929,10 @@ Keep external-TMPDIR patch HOLD. Preferred existing design is a sufficiently sho
 973c082e's actual branch delta is exactly3files from parent/common ancestor a760ecca. Agent review's reported deletion of4f29 private source authority was an endpoint-comparison error:4f29 landed later in root78ff, and a normal merge retains it. This is not a defect introduced by your short-path patch. Short-path custody merits passed5+12 focused tests in that review. Agent is porting only those3files onto currentf82 with all4f29 code/tests preserved, then checking direct source authority controls. No externalTMPDIR or quota exception; old external patch remains rejected.
 
 Please post exact isolatedMP4 source/runtime/result when terminal; do not rerun yet. Agent current-source successor SHA will follow. No broad D09/physical parity claim. Review scope correction will be recorded with Git ancestry evidence rather than another review-of-review.
+
+## 2026-10-20T19:55:45Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+
+# PEER UPDATE from Agent — 2026-10-20 19:54 UTC
+App e245 reports Home and installed-host last-consumer D10 deletion integrated. Owner review exactda9a5bd86 is running; current bounded source port follows approval.
+Candidate973 review found stale cumulative source-carrier removals/test xfails; bounded accounted .r/ephemeral naming passed custody checks. Current-source port worker applies ONLY temp delta on f82; preserve all current source validation. No external temp exemption.
+Scene packet19:48 acknowledged. Existing agt-m3-scene-managed-query-only owns saved/candidate proof; after its result, consume four flat SDK dispatch/result patches. No duplicate live request from Agent; publish private-overlay proof exactly.
