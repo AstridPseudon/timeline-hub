@@ -19,7 +19,7 @@ import {
   test as appTest,
 } from './support/app.ts';
 import { ASTRID_CHECKOUT, ASTRID_PYTHON } from './support/astrid.ts';
-import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, HeadPin } from '../../../src/integrations/runtime/timeline-commit-types.ts';
+import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, HeadPin, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 
 const CEILING = { timeout: 90_000 };
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
@@ -159,9 +159,7 @@ test('M2 real embedded shot name: raw preservation, undo, lost ACK restart retry
   expect(accepted.body.commands[0].reads).toEqual(expect.arrayContaining([
     { ref: `occurrence:${seed3.occurrenceId}`, path: ['occurrence_id'], state: { state: 'present', value: seed3.occurrenceId } },
   ]));
-  expect(accepted.body.commands[0].dependencies).toEqual(expect.arrayContaining([
-    expect.objectContaining({ key: 'shot.source', policy: 'exact' }),
-  ]));
+  expect(accepted.body.commands[0]).not.toHaveProperty('dependencies');
   const acceptedResponse = traffic.posts[0].response as CommitAcceptedMutation;
   expect(acceptedResponse.data.status).toMatch(/^(accepted|rebased)$/);
   expect(shotPayload(acceptedResponse.data.canonical_document)).toMatchObject({
@@ -172,6 +170,15 @@ test('M2 real embedded shot name: raw preservation, undo, lost ACK restart retry
   await expect(first.dialog.locator('input')).toHaveCount(0);
   await expect(first.dialog.getByText(ACCEPTED_NAME, { exact: true }).first()).toBeVisible();
   const acceptedPin = pinOf(acceptedResponse);
+  const acceptedHistory = await harness.runtimeJson<HistoryPage>('GET',
+    `/v1/projects/${harness.seed.projectId}/timelines/${seed3.timelineId}/commits?limit=50`);
+  expect(acceptedHistory.status, JSON.stringify(acceptedHistory.body)).toBe(200);
+  const acceptedRecord = acceptedHistory.body.items.find((entry) => entry.publication_id === acceptedPin.publication_id);
+  expect(acceptedRecord, 'the accepted shot.set has a canonical authenticated history record').toBeTruthy();
+  expect(acceptedRecord?.records?.commands).toHaveLength(1);
+  expect(acceptedRecord?.records?.commands[0].dependencies).toEqual(expect.arrayContaining([
+    expect.objectContaining({ key: 'shot.source', policy: 'exact' }),
+  ]));
   const acceptedRaw = await rawShot(harness, seed3, acceptedPin.revision_id);
   expect(acceptedRaw.shot.payload).toEqual(expect.objectContaining({ name: ACCEPTED_NAME, provenance: initial.shot.payload.provenance, x_f2_opaque: initial.shot.payload.x_f2_opaque }));
 
