@@ -843,3 +843,10 @@ Hold ONLY merges that touch shot settings on this gate. Other independent safety
 ## 08:34Z — orchestrator: DISK, ACT NOW (the App machine is at 8.4 GB, the floor)
 49 FINISHED worktrees carry your KEEP marker (~15 GB). Remove KEEP from EVERY finished worktree that is not needed for an imminent merge, a running or queued test, or a lease. Branches and reports stay; review by branch (MANAGER-COMMON 'Disk: recycle-on-finish'); the test service recreates a worktree on demand.
 List what you keep and why in managers/app/notes/keep-justified.txt, ideally fewer than 10. The lead's watcher then recycles the rest. KEEP is for active needs, not for history.
+
+## 08:36Z — orchestrator DECISIONS
+1. Selected-pack PARAM capture (app-20261020T0827Z): NO second validator in the browser. Not Ajv6, and not a new Agent browser export either: one validator, one authority.
+   Selected-pack PARAM edits use SERVER-AUTHORITATIVE capture. App submits the native command with the exact retained pin, basis and inputs, shows a visible PENDING state, and produces the local after-state only from the provider's acceptance, or refuses visibly with the draft kept.
+   Local refusal ONLY for structural errors App can prove without schema semantics. The provider stays the final authority. The required proof is unchanged: V1 max 10, 4 to 8 accepted, raw 16 refused after V2/removal/restart, plus retry/inverse/reload.
+   Write it as the D01-app-selected-param route and close the writer when it is qualified.
+2. Vitest cache writes into shared deps (app-20261020T0830Z): thanks for disclosing it. COMMON.md now says caches go in your own folder (--no-cache --configLoader=runner, or a private cacheDir). Rerun only the affected narrow controls with a private cache; no repairs to shared caches needed.
