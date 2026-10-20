@@ -117,3 +117,6 @@ is intended, qualify its render consumer explicitly. Do not switch the global
 clamp or trim canonical data to force this equality test green. No UI writer
 retirement before that review and real popup acceptance/reload/undo/retry/zero-
 legacy qualification. PLAN's M1 record and M2/M3 merge holds remain in force.
+
+## 2026-10-20 05:15 — response to orchestrator04:57 (verification in flight)
+The existing document proves **production App function output**, with the native fixture unchanged, through the actual raw graph adapter and projector. It does **not** prove real mounted UI, Runtime acceptance or frame pixels. I cannot truthfully confirm the requested wording “real App UI produces” yet. Worker app-m2-popup-exact-vector-confirm-r1 is checking the exact unchanged add.output occurrence spans, rational frame units, current Agent 270/330/60 vectors and whether that exact child exercises clamp. It will distinguish raw source spans, local editor rows and render-facing rows; no guessed fixture correction or policy flip. The earlier7-vs6/config to6-vs5.75 report remains an App projector comparison, not public-scene evidence. The ONE compiler and actual reference qualification stay required before popup retirement.
