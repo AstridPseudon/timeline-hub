@@ -242,12 +242,6 @@ def test_provider_accepts_shared_placement_with_exact_undo_and_redo(kind):
         created['data']['canonical_document'])
 
 
-# Pool membership has no canonical representation or writer (design/m2-auto-placement.md, BLOCKED).
-# Each test keeps the legacy expectation and flips to passing when `shot.pool` lands.
-POOL_REQUIREMENT = 'needs shot.pool (design/m2-auto-placement.md BLOCKED)'
-
-
-@pytest.mark.xfail(strict=True, reason=POOL_REQUIREMENT)
 def test_a_null_frame_records_pool_membership_without_a_clip():
     _, bundle, _, verified = build('image')
     result = auto_place_shared(bundle, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
@@ -257,10 +251,11 @@ def test_a_null_frame_records_pool_membership_without_a_clip():
     assert result['capture']['resolution'] == 'pooled'
 
 
-@pytest.mark.xfail(strict=True, reason=POOL_REQUIREMENT)
 def test_keep_as_pooled_removes_the_clip_and_keeps_membership():
     _, bundle, result, verified = build('image')
     placed = execute(bundle, result['commands'], verified_media=verified).bundle
-    unplaced = unplace_shared(placed, OWNER, 'placed', ownership='occurrence', keep_as_pooled=True)
-    plan = execute(placed, unplaced['commands'])
+    unplaced = unplace_shared(placed, OWNER, 'placed', ownership='occurrence', keep_as_pooled=True,
+                              media=verified[1]['selection'], verified_media=verified)
+    plan = execute(placed, unplaced['commands'], verified_media=verified)
     assert 'placed' not in {row['id'] for row in State(plan.bundle).collection(OWNER, 'clip')}
+    assert State(plan.bundle).config(OWNER)['app']['astrid']['pool'] == ['reserved-new']

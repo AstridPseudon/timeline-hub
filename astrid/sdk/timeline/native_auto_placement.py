@@ -24,7 +24,8 @@ shot; display IDs and unmigrated pinnedShotGroups never identify an owner):
                equal (interval overlap is allowed).
   lane      -> the anchor's lane when the anchor is in the shot, else the occurrence lane.
   hold      -> 4 s for image and video; video authors the source window 0..4.
-Pooled placement and keepAsPooled have no canonical writer yet and refuse.
+  pooled    -> shot.pool add (no clip); placing a media that is already pooled promotes it:
+               the birth command plus shot.pool remove, in one batch.
 """
 from __future__ import annotations
 
@@ -42,6 +43,7 @@ from .native_placement_commands import (
     capture_placement_create,
     capture_placement_unplace,
 )
+from .native_shot_pool_commands import POOL, capture_shot_pool
 
 COMPLETION_SECONDS = 5
 SHARED_SECONDS = 4
@@ -126,8 +128,6 @@ def auto_place_shared(bundle, owner, clip_id, media, *, ownership, verified_medi
     """
     _explicit_occurrence(owner, ownership)
     _raw_clip_id(clip_id)
-    if pooled:
-        raise CommandError('shared pool membership has no canonical writer', kind='unsupported_pool')
     kind = _kind(media, verified_media)
     if kind not in ('image', 'video'):
         raise CommandError('shared placement requires image or video media', kind='unsupported_media')
@@ -137,6 +137,14 @@ def auto_place_shared(bundle, owner, clip_id, media, *, ownership, verified_medi
         raise CommandError('shared authored placement is unsupported', kind='unsupported_ownership', ref=owner)
     if state.config('parent').get('pinnedShotGroups') not in (None, []):
         raise CommandError('legacy groups require recorded migration', kind='migration_needed', ref=owner)
+    if pooled:
+        if frame is not None or anchor is not None:
+            raise CommandError('pooled media has no frame or anchor', kind='unsupported_timing')
+        command = capture_shot_pool(bundle, owner, 'add', media, ownership=ownership,
+                                    verified_media=verified_media)
+        return {'commands': [command],
+                'capture': {'owner': owner, 'clip': clip_id, 'kind': kind, 'media': dict(media),
+                            'resolution': 'pooled'}}
     origin = occurrence_start(row)
     fps = rate(state.config('parent').get('output', {}).get('fps'))
     clips = state.collection(owner, 'clip')
@@ -162,11 +170,33 @@ def auto_place_shared(bundle, owner, clip_id, media, *, ownership, verified_medi
     command, on = _birth(bundle, owner, clip_id, media, kind, lane, home, origin, fps, start, SHARED_SECONDS,
                          ownership, verified_media)
     capture.update(start_frame=start, on=on, seconds=SHARED_SECONDS)
-    return {'commands': [command], 'capture': capture}
+    commands = [command]
+    pool = state.get(owner + '/source', POOL).get('value')
+    if isinstance(pool, list) and media['asset'] in pool:
+        from .commands import execute
+
+        born = execute(bundle, commands, verified_media=verified_media).bundle
+        commands.append(capture_shot_pool(born, owner, 'remove', media, ownership=ownership,
+                                          verified_media=verified_media))
+        capture['promoted'] = True
+    return {'commands': commands, 'capture': capture}
 
 
-def unplace_shared(bundle, owner, clip_id, *, ownership, keep_as_pooled=False):
-    """Remove one shared placement; its media binding is kept. keepAsPooled has no writer yet."""
-    if keep_as_pooled:
-        raise CommandError('shared pool membership has no canonical writer', kind='unsupported_pool')
-    return {'commands': [capture_placement_unplace(bundle, owner, clip_id, ownership=ownership)]}
+def unplace_shared(bundle, owner, clip_id, *, ownership, keep_as_pooled=False, media=None,
+                   verified_media=()):
+    """Remove one shared placement; its media binding is kept.
+
+    keep_as_pooled also adds the media to the shot pool, so it needs the exact five-field
+    selection of the clip's media and its verification.
+    """
+    unplace = capture_placement_unplace(bundle, owner, clip_id, ownership=ownership)
+    if not keep_as_pooled:
+        return {'commands': [unplace]}
+    from .commands import execute
+
+    if media is None or State(bundle).entity(owner + '/clip:' + clip_id).get('asset') != media['asset']:
+        raise CommandError('keepAsPooled requires the exact selection of the placed media',
+                           kind='identity_conflict', ref=owner)
+    removed = execute(bundle, [unplace]).bundle
+    return {'commands': [unplace, capture_shot_pool(removed, owner, 'add', media, ownership=ownership,
+                                                    verified_media=verified_media)]}

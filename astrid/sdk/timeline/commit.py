@@ -768,7 +768,8 @@ class RuntimeCommitService:
             verified_media = []
             for call in calls:
                 validate_command(call)
-                if call['op'] in ('occurrence.add-media', 'occurrence.swap-media', 'placement.create'):
+                if call['op'] in ('occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+                                'shot.pool'):
                     for key in ('old_media', 'media'):
                         if key in call['args']:
                             verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))

@@ -1053,6 +1053,41 @@
           "if": {
             "properties": {
               "op": {
+                "const": "shot.pool"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ShotPoolArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
                 "const": "track.create"
               }
             },
@@ -1343,6 +1378,26 @@
       "type": "object",
       "properties": {},
       "additionalProperties": false
+    },
+    "ShotPoolArgs": {
+      "type": "object",
+      "required": [
+        "action",
+        "media"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "add",
+            "remove"
+          ],
+          "description": "add appends the media alias to the shot pool and binds it; remove drops the alias and keeps the binding."
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        }
+      }
     },
     "TrackCreateArgs": {
       "type": "object",

@@ -112,17 +112,48 @@ non-empty `pinnedShotGroups` refuses `migration_needed`; display IDs never ident
 
 Evidence: `test_recipe_m2_shared_auto_placement.py`, golden `recipe_m2_shared_auto_placement.json`.
 App RED parity met Agent-side: 4 s video append (frame 120 at 30 fps), group-lane inheritance,
-equal-start shift 30 -> 31 with overlap allowed. The pool tests are not (below).
+equal-start shift 30 -> 31 with overlap allowed. Pool membership follows (`shot.pool`).
+
+## Shot pool (`shot.pool` v1)
+
+Canonical home: an ordered list of registry asset aliases at `app.astrid.pool` of the shot's
+internal timeline (the same `app.astrid` namespace clips use for authored intent). Members are
+bound in the shot registry exactly like placed media, so the dependency manifest pins them.
+
+* **Absent vs empty.** Absent = never authored here; `[]` = authored empty pool. `remove` of the
+  last member writes `[]`, never clears the key. Inverse of the first `add` restores absence.
+* **Clear policy.** Only an explicit `remove` shrinks the pool. Placing, unplacing or deleting a
+  clip never touches it, except promote (below).
+* **Op.** `shot.pool` v1, select `occurrence:<id>` (exclusive owner, like `placement.create`),
+  args `{"action": "add"|"remove", "media": <five-field pin>}`, closed. `add` refuses a member
+  (`identity_collision`) or an alias a shot clip already uses (`identity_conflict`; the clip
+  `asset`/`asset_id` are read-guarded), binds the exact media (existing equal binding is fine),
+  appends. `remove` refuses a non-member, guards the exact binding and keeps it. A malformed
+  pool (not a list of strings) refuses `unsupported_pool`.
+* **Ordered semantics.** The write replaces the whole list, so the recorded before/after make
+  undo restore the exact original position and redo the exact result; ABA is the usual guard on
+  the after-state (an intervening write to the pool path, even an equal one, refuses undo).
+  Rebase replays the captured intent: edits disjoint from this pool (other clips, other shots'
+  pools, the parent) rebase; a concurrent change to the same pool is a real conflict.
+* **Builder.** `auto_place_shared(pooled=True)` = `shot.pool add` (no frame/anchor). Placing a
+  media whose alias is pooled promotes it: birth command + `shot.pool remove` in one batch
+  (capture `promoted: true`). `unplace_shared(keep_as_pooled=True, media=, verified_media=)` =
+  `placement.unplace` + `shot.pool add`; the caller supplies the exact pin (the registry has no
+  catalog digest). Video keepAsPooled stays out with `placement.unplace` (image only).
+* **Legacy `poolGenerationIds`.** `timeline.migrate-groups` (on the group branches) keeps them
+  only in `provenance.group_migration.legacy_group` and leaves `app.astrid.pool` absent;
+  provenance is never rewritten. Adoption is an explicit recorded step: one `shot.pool add` per
+  legacy generation, with the pin the caller resolved (alias `gen:<id>` in App). The duplicate
+  guard makes adoption idempotent-refusing, and each add is a guarded, invertible command.
+  Making the migration emit those adds itself is a follow-up on the group branch.
+
+Evidence: `test_recipe_m2_shot_pool.py`, golden `recipe_m2_shot_pool.json`; the two former strict
+xfails in `test_recipe_m2_shared_auto_placement.py` now pass. Runtime artifact regeneration for
+the new args is a follow-up.
 
 ## BLOCKED (no existing writer; none invented)
 
-1. **Pool membership** (null frame; `keepAsPooled`; promote). The canonical model has no pool
-   representation: group migration keeps `poolGenerationIds` only inside opaque
-   `provenance.group_migration.legacy_group`. Proposed closed op `shot.pool` v1, select
-   `occurrence:<id>`, args `{"action": "add"|"remove", "media": <five-field pin>}`, writing a
-   guarded ordered set on the owning shot; promote = a birth command plus `shot.pool remove`
-   in one batch. `auto_place_shared(pooled=True)` and `unplace_shared(keep_as_pooled=True)`
-   refuse `unsupported_pool`; two strict xfails keep the legacy expectation.
+1. ~~Pool membership~~ — done above.
 2. **Append beyond the occurrence window.** Migration sets `duration_ms` to the member span, so
    every append refuses `occurrence_boundary`. Proposed closed op `occurrence.set-extent` v1,
    select `occurrence:<id>`, args `{"duration_ms": <positive number>}`, guarded on the old
