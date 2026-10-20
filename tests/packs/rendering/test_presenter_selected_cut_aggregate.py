@@ -1,8 +1,4 @@
-"""UNAPPLIED consumer proposal: one retained public10 pixel fixture only.
-
-The public adapter below is test-only. Production lipsync still uses mouth_box;
-this test does not certify a working-copy/historical source or migrate a caller.
-"""
+"""Fresh public presenter facts carried into the existing lipsync consumer."""
 
 import hashlib
 import json
@@ -15,7 +11,9 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
+from astrid.core.timeline import scene_answers
 from astrid.core.timeline.cuts import find_cut
+from astrid.packs.rendering.actions.timeline_visualize.composed_frame import CaptureSceneLabels
 from astrid.packs.rendering.actions.timeline_visualize.layers import builtin
 from astrid.packs.rendering.actions.timeline_visualize.motion import model, sheet
 from tests.packs.rendering import test_presenter_crop_equivalence as crop_helpers
@@ -75,7 +73,77 @@ def public_zero(presenter_query, retained):
     return answer["zero"]
 
 
-def context(case, order=(0, 3, 4, 5)):
+@pytest.fixture(scope="module")
+def public_capture_rows(presenter_query, retained):
+    helper = Path(crop_helpers.__file__)
+    shutil.copyfile(helper.with_name("presenter_crop_geometry.mjs"),
+                    presenter_query.project / "presenter_crop_geometry.mjs")
+    shutil.copyfile(Path(__file__).with_name("presenter_selected_cut_query.mjs"),
+                    presenter_query.project / "presenter_selected_cut_query.mjs")
+    result = subprocess.run([str(presenter_query.node), "presenter_selected_cut_query.mjs",
+                             str(FIXTURE / "inspection.json")],
+                            cwd=presenter_query.project, env=presenter_query.env,
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stdout + result.stderr
+    answer = json.loads(result.stdout)
+    assert answer["controls"] == ["missing-compiled-id", "ambiguous-compiled-id",
+                                   "foreign-owner", "stale-params"]
+    assert [row["frame"] for row in answer["answers"]] == retained["frames"]
+    return answer["answers"]
+
+
+def _public_provider(case, rows, monkeypatch):
+    props = deepcopy(case["props"])
+    rows = deepcopy(rows)
+    by_frame = {row["frame"]: row for row in rows}
+    monkeypatch.setattr(scene_answers, "host_frames_at",
+                        lambda _props, _basis, frames: [by_frame[frame] for frame in frames])
+    capture = CaptureSceneLabels(source_identity="fresh-presenter", props=props,
+                                 basis=case["basis"], addresses={"presenter": "presenter"})
+    capture.observe(props, tuple(case["frames"]))
+    capture.retain({frame: FIXTURE / f"frame-{frame}.png" for frame in case["frames"]})
+
+    class Provider:
+        source_identity = "fresh-presenter"
+
+        def scene_for_frame(self, frame):
+            return capture if frame in by_frame else None
+
+    return Provider()
+
+
+def test_fresh_public_mouth_facts_drive_existing_consumer(public_capture_rows, retained, monkeypatch):
+    provider = _public_provider(retained, public_capture_rows, monkeypatch)
+    ctx = context(retained, frame_provider=provider)
+    # The actual generated-host rows flow through the same retained capture
+    # seam used by production; this only exercises the private LayerContext
+    # adapter and existing consumer.
+    presenter = ctx.elements[0]
+    assert builtin._public_mouth_facts(ctx, presenter, [0, 3, 4, 5])["rect"] == (894.0, 606.0, 138.0, 48.0)
+    monkeypatch.setattr(model, "mouth_box", lambda *_args: None)
+    result = builtin.render_lipsync(ctx)
+    assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
+
+
+@pytest.mark.parametrize("mutation", ["stale-clip", "forged-roi", "missing-row"])
+def test_planted_public_fact_failures_keep_private_fallback(public_capture_rows, retained, mutation):
+    rows = deepcopy(public_capture_rows)
+    if mutation == "stale-clip":
+        rows[0]["layers"][0]["clipId"] = "stale-presenter"
+    elif mutation == "forged-roi":
+        rows[0]["layers"][0]["diagnostics"]["mouth"]["rect"] = "forged"
+    else:
+        rows.pop()
+    ctx = context(retained)
+    ctx.shared["public_scene"] = {
+        row["frame"]: {"answer": row, "basis": {"width": 1920, "height": 1080, "fps": 30},
+                        "addresses": {"presenter": "presenter"}}
+        for row in rows
+    }
+    assert builtin._public_mouth_facts(ctx, ctx.elements[0], [0, 3, 4, 5]) is None
+
+
+def context(case, order=(0, 3, 4, 5), frame_provider=None):
     # The original Root timeline is already flat; do not invent occurrence IDs,
     # clip aliases, neighbouring clips, extra captures or timing for this case.
     snapshot = {**deepcopy(case["props"]["timeline"]),
@@ -83,7 +151,7 @@ def context(case, order=(0, 3, 4, 5)):
     cut = sheet.select_cut(snapshot, "presenter", case["basis"]["fps"])
     frames = {f: FIXTURE / f"frame-{f}.png" for f in order}
     return sheet.build_context(snapshot, cut, frames, fps=case["basis"]["fps"],
-                               frame_size=tuple(case["size"]))
+                               frame_size=tuple(case["size"]), frame_provider=frame_provider)
 
 
 def cut_ref(ctx):
@@ -128,7 +196,7 @@ def private_statistic(ctx):
 
 
 def public_statistic(ctx, zero):
-    """UNAPPLIED minimal ROI adapter; reuse the current comparator/conversion.
+    """Reference ROI adapter; reuse the current comparator/conversion.
 
     This preserves the builtin's selected-key denominator and resets adjacency
     on a missing image. It intentionally makes no semantic-mouth-state query.

@@ -17,6 +17,7 @@ const scene = prepareRoot(retained.props, retained.basis, {});
 // seriesInspection resolves this exact compiled ID and registered owner,
 // checks the DrawPlan's component zero, then makes its one public ROI query.
 const zero = seriesInspection(scene, retained.props);
+const answers = retained.frames.map(frame => querySceneFrame(scene, frame));
 const {erase, ...expected} = retained.rows[0];
 // inspection.json is the capture's JSON boundary, which serializes -0 as 0.
 // Match that same boundary; no geometry, pixel or threshold is normalized.
@@ -36,4 +37,4 @@ const changed = patch => ({...retained.props, timeline: {...retained.props.timel
 refuse('foreign-owner', changed({elementRef: {kind: 'effect', id: 'am-presenter', packId: 'probe'}}));
 refuse('stale-params', changed({params: {...retained.props.timeline.clips[0].params, seed: 9}}));
 assert.equal(JSON.stringify(retained), original);
-console.log(JSON.stringify({zero, controls}));
+console.log(JSON.stringify({zero, answers, controls}));
