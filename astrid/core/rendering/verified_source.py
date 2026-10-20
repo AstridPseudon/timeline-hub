@@ -12,7 +12,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 SOURCE_ENV = "ASTRID_VERIFIED_TIMELINE_SOURCE"
 RESERVED_SOURCE_KEYS = frozenset({"verified_source", "timeline_source", SOURCE_ENV})
@@ -75,6 +75,72 @@ class PreparedTimelineInputs(dict[str, Any]):
     """Keep authority outside the public executor input namespace."""
 
     timeline_source: VerifiedTimelineSource | None = None
+
+    @classmethod
+    def prepare(cls, input_spec: Mapping[str, Any], values: Mapping[str, Any]) -> PreparedTimelineInputs:
+        reject_source_keys(input_spec)
+        if isinstance(input_spec.get("params"), Mapping):
+            reject_source_keys(input_spec["params"])
+        reject_source_keys(values)
+        for config in (values["backend_config"].values() if isinstance(values.get("backend_config"), Mapping) else ()):
+            if isinstance(config, Mapping):
+                reject_source_keys(config)
+        return cls(values)
+
+    def prepare_snapshot(
+        self, input_spec: Mapping[str, Any], spec: Mapping[str, Any], snapshot: Any,
+        hydrate_snapshot: Callable[[Mapping[str, Any], str], Mapping[str, Any]],
+    ) -> Any:
+        # Only Runtime-admitted immutable refs can mint the internal source.
+        # Inline snapshots and caller provenance remain ordinary native inputs.
+        self._source_ref: Any = input_spec.get("timeline_snapshot_ref") or self.get("timeline_snapshot_ref")
+        self._source_authority: Any = self.get("timeline_authority")
+        if (isinstance(input_spec.get("timeline_snapshot_ref"), Mapping)
+                and isinstance(self.get("timeline_snapshot_ref"), Mapping)
+                and input_spec["timeline_snapshot_ref"] != self["timeline_snapshot_ref"]):
+            raise ValueError("timeline snapshot reference differs from admitted context")
+        self._source_snapshot = snapshot
+        context = spec.get("authority_context") or input_spec.get("authority_context")
+        if (isinstance(context, Mapping) and isinstance(context.get("capture_snapshot_ref"), Mapping)
+                and context["capture_snapshot_ref"].get("source_kind") in {"revision", "working_copy"}):
+            self._source_ref = context["capture_snapshot_ref"]
+            self._source_snapshot = hydrate_snapshot(self._source_ref, "capture_snapshot")
+            self._source_authority = self._source_snapshot.get("metadata", {}).get("capture_authority")
+            snapshot = self._source_snapshot
+            filmstrip = self.get("filmstrip_authority")
+            if isinstance(filmstrip, str):
+                if json.loads(filmstrip).get("capture_snapshot") != self._source_snapshot:
+                    raise ValueError("capture snapshot differs from admitted context")
+        self._canonical_ref = isinstance(self._source_ref, Mapping) and self._source_ref.get("source_kind") in {"revision", "working_copy"}
+        if self._canonical_ref:
+            if not isinstance(self._source_authority, Mapping) or not isinstance(self._source_snapshot, Mapping):
+                raise ValueError("verified source requires admitted authority and snapshot")
+            if any(name in self for name in ("timeline", "assets_registry")):
+                raise ValueError("verified source prepared inputs cannot be caller replaced")
+            if "timeline_snapshot" in self or "timeline_snapshot" in input_spec:
+                raise ValueError("verified source snapshot cannot be caller replaced")
+        return snapshot
+
+    def mint_source(self, attempt: Path) -> PreparedTimelineInputs:
+        if self._canonical_ref:
+            try:
+                self.timeline_source = mint_prepared_source(
+                    ref=self._source_ref, authority=self._source_authority, snapshot=self._source_snapshot,
+                    timeline_path=self["timeline"], assets_path=self["assets_registry"], attempt=attempt,
+                )
+            except KeyError as exc:
+                raise ValueError(str(exc)) from exc
+        return self
+
+    @staticmethod
+    def handoff_source(inputs: Mapping[str, Any], env: dict[str, str]) -> None:
+        # This value is an attribute of host-owned prepared inputs, never a
+        # manifest input or binding.env override. Clear any ambient handoff.
+        env.pop(SOURCE_ENV, None)
+        source = getattr(inputs, "timeline_source", None)
+        if source is not None:
+            source.validate(inputs["timeline"], inputs["assets_registry"])
+            env[SOURCE_ENV] = source._anchor
 
 
 def mint_prepared_source(
