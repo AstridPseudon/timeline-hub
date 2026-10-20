@@ -230,6 +230,7 @@ function PropertiesPanelComponent({
     setInteractionMode,
     setSelectedTrackId,
     applyEdit,
+    clipTrim,
   } = useTimelineEditorOps();
   const shaderSnapshot = useShaderEffectRegistrySnapshot();
   const {
@@ -536,6 +537,8 @@ function PropertiesPanelComponent({
             VariantPicker={VariantPicker}
             EffectCreator={EffectCreator}
             clip={selectedClip}
+            current={data ?? undefined}
+            clipTrimPort={clipTrim}
             track={selectedTrack}
             deviceClass={deviceClass}
             hasPredecessor={selectedClipHasPredecessor}
