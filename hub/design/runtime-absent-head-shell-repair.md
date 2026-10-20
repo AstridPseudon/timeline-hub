@@ -1,5 +1,28 @@
 # Runtime absent-parent empty-shell repair
 
+## Strict legacy-document follow-up — 2026-10-20
+
+The independent review found one narrow refusal gap in final shell commit
+`0e49e0228f5977b5a8b2b17b7f017a91b40eaf2d`: `timeline_scope_is_empty` used
+ordinary `json.loads` for `project_documents`. A stored document such as
+`{"clips":[{"id":"keep"}],"clips":[]}` therefore decoded as empty and
+could receive a missing-head bootstrap.
+
+The repair keeps the approved create/bootstrap semantics and now reuses the
+existing strict `_json` parser from `timeline_commit_baseline`. Duplicate keys
+(including nested and escaped equivalents), non-finite values, and malformed
+legacy bytes are treated as non-empty/refused before bootstrap. The original
+bytes are not normalized or rewritten. Distinct opaque empty keys and the
+canonical empty legacy image remain valid.
+
+Regression coverage adds raw-byte cases for nested, escaped, and
+duplicate-empty keys, plus valid distinct-empty opaque and canonical legacy
+documents. Negative cases assert unchanged SQLite/CAS state and preserved
+raw bytes.
+
+Evidence for this follow-up is recorded in:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-shell-strict-json-fix/DetailedReport.md`.
+
 Implemented on Runtime `2cb9bb62c88d91fdab03df230ef0b2a3bd81f513`, central snapshot tree `d97b20693d801f6b7889867620f2b51856521147`. Ready for independent review before merge. No public generation, release, pin, App writer retirement, or full suite.
 
 Same-ID create with a new repair key now handles an existing genuinely empty resource whose parent head row is absent or has a null revision. The existing service admission, project/name/archive checks, mutex and transaction remain authoritative. `TimelineCommitStore.adopt_empty_shell` reuses `timeline_scope_is_empty` (F2) and then calls the existing strict `bootstrap`; it introduces no endpoint, DTO, table, alternate publisher or authored root replacement. The existing unpublished-empty-parent adoption remains intact.
