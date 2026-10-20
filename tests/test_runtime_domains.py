@@ -29,6 +29,7 @@ def _retired_timeline_update(client, payload):
         if (
             error.status == 410
             and error.code == "retired_route"
+            and error.message == "legacy timeline writes are retired; submit EditCommands through commitTimeline"
             and error.details.get("reason") == "timeline_commit_required"
         ):
             raise _RetiredTimelineUpdate(
