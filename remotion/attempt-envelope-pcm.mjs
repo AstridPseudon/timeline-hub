@@ -5,7 +5,7 @@ import {
   applyAudioEnvelope, audioEnvelopeWav, compileAudioEnvelope,
 } from '@banodoco/timeline-composition/evaluation';
 
-// Inactive preparation kernel. The caller supplies the compiled clip's public
+// Preparation kernel. The caller supplies the compiled clip's public
 // source clock, using compiledAudioSourceClock from the public trim/rate helpers.
 // Never pass a previously prepared source or persist these results as authored data.
 export const prepareAttemptEnvelopePcm = ({
