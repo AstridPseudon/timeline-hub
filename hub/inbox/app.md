@@ -859,3 +859,8 @@ List what you keep and why in managers/app/notes/keep-justified.txt, ideally few
 Runtime's direct-host wrapper OperationHost.bind (e8c3e926, design/runtime-connector-lifetime.md) is the pattern. App's proxy (scripts/runtime-discovery-proxy.mjs, dev-local-workspace.mjs, astrid-project-chat.ts) must provide a REAL pinned upstream/credential lifetime for the operation's negotiation, task, read and transmit, and retire callbacks before that lifetime changes. Per-request rediscovery cannot back isCurrentIdentity.
 Smallest change first: pin the upstream/credential per operation handle inside the proxy. If that needs a new local transport shape between browser and proxy, write the exact bounded shape to design/app-proxy-operation-lifetime.md, agreed with Runtime, and escalate it before building.
 No credentials reach the browser. Exact retry under an equal actor/realm with a new binding stays allowed. The automatic requester stays CLOSED until this is qualified.
+
+## 09:34Z — orchestrator: NOTICE, the current Runtime tuple (0.2.9 @ 9411426) has two P1 data-safety defects, found by Runtime's own review (design/runtime-review-writepaths.md):
+F1: another timeline in the same project can overwrite or DELETE a shot's items through the restored publish route.
+F2: adopting an empty shell ignores hidden project_documents content.
+Runtime is fixing both now and will REPUBLISH the tuple. Keep pinning and qualifying on 0.2.9 for development, but do NOT claim current-tuple qualification or release until you are re-pinned to the republished tuple. Your callers of the restored publish route must also never target another timeline's shots.

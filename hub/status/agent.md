@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T09:34:14Z | dispatcher heartbeat 10s -->
+<!-- main | 2026-10-20T09:34:41Z | dispatcher heartbeat 5s -->
 # agent — 2026-10-20 09:22 UTC
 Milestone: M1 RECORDED in PLAN. M2 open; registry foundation, clip.set-element, shot.set, shot.pool/auto-placement and occurrence.delete integrated. Automatic-placement guard correction is TOP priority; held new parent media births need ordered replacement fixed. M3 carries remain inactive until qualified.
 Integrated: Agent tl/integration c456b328; Runtime client pin 94114269 / 0.2.9 (04f0df2c), baseline J/C fixes (4a6b0336), retained scene source (c456b328). Composition remains 0.0.10. Prior M2 stack full: 0 new nodes vs supported baseline, +1215 passes; subsequent batch full awaits 0.0.12 cohort.

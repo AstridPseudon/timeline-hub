@@ -90,7 +90,7 @@ R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpa
 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R" 1
 ```
 
-Final run `agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764`: READINESS_RESULT_PENDING. Covers package positive/negative readiness, launch binding, Node pin, gate validation, scene host/answers, export adapter and changed receiving-default neighbors. This lane keeps the normal integration filter; integration-marked presenter/package cases are separately covered by the 47-case owner lane.
+Final run `agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764`: **292 passed, 62 warnings, pytest 46.09s, service 49s, exit 0**. Covers package positive/negative readiness, launch binding, Node pin, gate validation, scene host/answers, export adapter and changed receiving-default neighbors. This lane keeps the normal integration filter; integration-marked presenter/package cases are separately covered by the 47-case owner lane.
 
 Additional checks:
 
