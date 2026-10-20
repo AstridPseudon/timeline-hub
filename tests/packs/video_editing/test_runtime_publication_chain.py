@@ -20,6 +20,7 @@ from astrid.sdk.client import AstridClient
 from astrid.sdk.timeline.assembly import read_assembly_proposal
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClientError
+from tests.helpers.runtime import use_runtime
 
 
 def _digest(value: str | bytes) -> str:
@@ -204,8 +205,7 @@ def test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts
 @pytest.mark.integration
 def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch, real_runtime):
     """Run registered native assembly through requester, host, Runtime, and render."""
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None or shutil.which("node") is None:
-        pytest.skip("ffmpeg, ffprobe, and node are required for the daemon render chain")
+    use_runtime()
     astrid_root = Path(__file__).resolve().parents[3]
     # The named integration suite supplies the pinned current Remotion/runtime
     # pair. Keep this bootstrap read-only and do not redirect it to a mutable
