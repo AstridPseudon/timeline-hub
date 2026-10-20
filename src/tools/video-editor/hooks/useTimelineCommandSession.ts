@@ -167,6 +167,15 @@ export function useTimelineCommandSession(options: {
           finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
           submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
         };
+        const deletePort = session.clipDeletePort;
+        const requireCleanDelete = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before deleting');
+        };
+        session.clipDeletePort = {
+          capture(input) { requireCleanDelete(); return deletePort.capture(input); },
+          finish(basis) { requireCleanDelete(); return deletePort.finish(basis); },
+          submit(input) { requireCleanDelete(); deletePort.submit(input); },
+        };
         sessionRef.current = session;
         setState({ ...session.getState() });
       }
@@ -238,6 +247,7 @@ export function useTimelineCommandSession(options: {
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     trackLabelPort: sessionRef.current?.trackLabelPort,
+    clipDeletePort: enabled ? sessionRef.current?.clipDeletePort : undefined,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
