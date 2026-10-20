@@ -2831,7 +2831,7 @@ class RuntimeService:
         for value in list(shots.values()):
             shot_identity = self.store.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (value["shot_id"],)).fetchone()
             if shot_identity and shot_identity["project_id"] != project["id"]:
-                raise ConflictError("shot belongs to a different project", details={"shot_id": value["shot_id"]})
+                raise ConflictError("destination_occupied", details={"status": "refused", "reason": "destination_occupied"})
             if any(item["revision_id"] == value["internal_timeline_revision_id"] for item in internal.values()):
                 continue
             existing_internal = self.store.conn.execute("SELECT * FROM internal_timeline_revisions WHERE id=?", (value["internal_timeline_revision_id"],)).fetchone()
@@ -2964,6 +2964,31 @@ class RuntimeService:
                 self._validate_published_text_bindings(
                     project["id"], value["shot_id"], value["payload"], require_current=True,
                 )
+        # New children replace mutable rows. Exact immutable reuse only does so
+        # when the global shot head is missing; that is not permission to adopt
+        # an occupied destination. Prove every destination before any writes.
+        occupied = set()
+        for value in resolved_shots.values():
+            head = self.store.conn.execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id=?", (value["shot_id"],)).fetchone()
+            if value.get("existing") and head is not None:
+                continue
+            if self.store.conn.execute("SELECT 1 FROM project_shots WHERE id=?", (value["shot_id"],)).fetchone():
+                occupied.add(value["shot_id"])
+        if occupied:
+            from .timeline_commit_baseline import verify_baseline
+
+            owned = set()
+            if current_head is not None:
+                try:
+                    facts = verify_baseline(self.store.conn, project["id"], timeline_id, read_object=self.cas.read)
+                    if facts["head"]["revision_id"] == current_head:
+                        owned = {(s["shot_id"], s["revision_id"]) for s in facts["canonical_document"]["shot_revisions"]}
+                except ConflictError:
+                    pass  # Missing or corrupt publication facts confer no ownership.
+            for shot_id in occupied:
+                head = self.store.conn.execute("SELECT project_id, revision_id FROM shot_revision_heads WHERE shot_id=?", (shot_id,)).fetchone()
+                if head is None or head["project_id"] != project["id"] or (shot_id, head["revision_id"]) not in owned:
+                    raise ConflictError("destination_occupied", details={"status": "refused", "reason": "destination_occupied"})
         # Recompute closure only after every occurrence has been resolved to
         # immutable child bytes.  This is the source of truth for both the
         # manifest check and the rows stored below.
