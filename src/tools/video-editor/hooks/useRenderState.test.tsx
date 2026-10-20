@@ -1,5 +1,7 @@
-import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { Blob as NodeBlob } from 'node:buffer';
+import { webcrypto } from 'node:crypto';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import {
   formatAstridExecutorDiagnostic,
@@ -25,6 +27,13 @@ import { createDiagnosticCollection } from '@astrid/editor-sdk';
 
 const mocks = vi.hoisted(() => ({
   startClientRender: vi.fn(),
+  downloadBlobAsFile: vi.fn(),
+  triggerBrowserDownload: vi.fn(),
+}));
+
+vi.mock('@/shared/runtime/browserDownloadRuntime', () => ({
+  downloadBlobAsFile: mocks.downloadBlobAsFile,
+  triggerBrowserDownload: mocks.triggerBrowserDownload,
 }));
 
 const renderRouterMocks = vi.hoisted(() => ({
@@ -666,6 +675,10 @@ describe('useRenderState render routing', () => {
     expect(result.current.renderStatus).toBe('done');
     expect(result.current.renderResultUrl).toBe('blob:https://example.com/rendered');
     expect(result.current.renderResultFilename).toBe('out.mp4');
+    expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
+    await act(async () => { await result.current.downloadRenderResult(); });
+    expect(mocks.triggerBrowserDownload).toHaveBeenCalledWith('blob:https://example.com/rendered', 'out.mp4');
+    expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
   });
 
   it('blocks malformed remotion_module metadata without invoking the client renderer', async () => {
@@ -764,11 +777,11 @@ describe('useRenderState render routing', () => {
     vi.useRealTimers();
   });
 
-  it('admits a scoped render, polls on the declared 2s cadence, and exposes the R9 media URL', async () => {
+  it.each(['/api/astrid', '/api/runtime'])('admits through the product bridge with provider %s, polls, and exposes the R9 media URL', async (apiBaseUrl) => {
     vi.useFakeTimers();
     const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     let reads = 0;
-    const fetchMock = vi.fn(async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) => {
       reads += 1;
       return new Response(JSON.stringify(renderTaskDetail(reads === 1 ? 'queued' : 'succeeded')), { status: 200 });
     });
@@ -776,7 +789,7 @@ describe('useRenderState render routing', () => {
     const runtimeValue = {
       project: { projectId: 'demo-project' },
       timelineId: 'timeline-1',
-      provider: { apiBaseUrl: '/api/astrid' },
+      provider: { apiBaseUrl },
       telemetry: { warn: vi.fn() },
     } as unknown as VideoEditorRuntimeContextValue;
     const wrapper = ({ children }: { children: ReactNode }) => (
@@ -800,6 +813,7 @@ describe('useRenderState render routing', () => {
     expect(result.current.renderStatus).toBe('rendering');
     expect(result.current.activeRenderTaskId).toBe('render-task-1');
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/astrid/v1/tasks/render-task-1');
 
     await act(async () => { await vi.advanceTimersByTimeAsync(1_999); });
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -814,11 +828,191 @@ describe('useRenderState render routing', () => {
     expect(result.current.renderResultInfo).toMatchObject({ revision: 7 });
     expect(typeof result.current.renderResultInfo?.completedAt).toBe('number');
     expect(mocks.startClientRender).not.toHaveBeenCalled();
+    const capability = {
+      capability_id: 'rendering.render', definition_digest: `sha256:${'a'.repeat(64)}`,
+      status: 'ready', required_resource_keys: [], estimated_scratch_bytes: 0, estimated_output_bytes: 0,
+    };
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ items: [capability], next_cursor: null }), { status: 200 }));
+    const admittedClient = renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mock.calls[0][1].client;
+    expect(await admittedClient.catalog.get('rendering.render')).toEqual(capability);
+    expect(fetchMock.mock.calls.at(-1)?.[0]).toBe('/api/astrid/v1/capabilities?limit=50');
 
     unmount();
     anchorClick.mockRestore();
     vi.unstubAllGlobals();
     vi.useRealTimers();
+  });
+
+  describe('managed result downloads', () => {
+    const objectId = 'sha256:b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9';
+    const bytes = new TextEncoder().encode('hello world');
+
+    beforeEach(() => {
+      vi.stubGlobal('Blob', NodeBlob);
+      vi.stubGlobal('crypto', webcrypto);
+    });
+    afterEach(() => { vi.unstubAllGlobals(); });
+
+    async function completedRender(options: {
+      read?: ReturnType<typeof vi.fn>;
+      size?: number;
+      taskId?: string;
+      projectId?: string;
+      start?: boolean;
+    } = {}) {
+      const task = {
+        ...renderTaskDetail('succeeded'),
+        task_id: options.taskId ?? 'render-task-1',
+        project_id: options.projectId ?? 'demo-project',
+        result: { outputs: [{ name: 'render', digest: objectId, media_type: 'video/mp4', size: options.size ?? bytes.length }] },
+      };
+      const fetchMock = vi.fn(async () => new Response(JSON.stringify(task), { status: 200 }));
+      vi.stubGlobal('fetch', fetchMock);
+      let runtimeValue = {
+        project: { projectId: 'demo-project' },
+        timelineId: 'timeline-1',
+        provider: { projectObjects: options.read ? { read: options.read } : undefined },
+      } as unknown as VideoEditorRuntimeContextValue;
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <VideoEditorRuntimeContext.Provider value={runtimeValue}>{children}</VideoEditorRuntimeContext.Provider>
+      );
+      const hook = renderHook(() => useRenderState(
+        buildConfig({ id: 'native', clipType: 'media', track: 'V1', at: 0, hold: 1 }),
+        null, undefined, undefined, async () => 7,
+      ), { wrapper });
+      if (options.start !== false) await act(async () => { await hook.result.current.startRender(); });
+      const changeScope = (scope: 'project' | 'timeline' | 'provider') => {
+        runtimeValue = {
+          ...runtimeValue,
+          ...(scope === 'project' ? { project: { ...runtimeValue.project, projectId: 'another-project' } } : {}),
+          ...(scope === 'timeline' ? { timelineId: 'another-timeline' } : {}),
+          ...(scope === 'provider' ? { provider: { ...runtimeValue.provider } } : {}),
+        };
+        hook.rerender();
+      };
+      return { ...hook, fetchMock, changeScope };
+    }
+
+    it('downloads the exact completed output through project storage with its filename and full bytes', async () => {
+      const read = vi.fn(async () => bytes);
+      const { result, fetchMock } = await completedRender({ read });
+      expect(result.current.renderStatus).toBe('done');
+      expect(read).not.toHaveBeenCalled();
+      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
+      const resultUrl = result.current.renderResultUrl;
+      const resultInfo = result.current.renderResultInfo;
+
+      await act(async () => { await result.current.downloadRenderResult(); });
+
+      expect(read).toHaveBeenCalledExactlyOnceWith(objectId);
+      expect(fetchMock).toHaveBeenCalledTimes(1); // only task polling; binary IO belongs to the provider
+      expect(mocks.downloadBlobAsFile).toHaveBeenCalledOnce();
+      const [blob, filename] = mocks.downloadBlobAsFile.mock.calls[0];
+      expect(filename).toBe('out.mp4');
+      expect(blob.type).toBe('video/mp4');
+      expect(Array.from(new Uint8Array(await blob.arrayBuffer()))).toEqual(Array.from(bytes));
+      expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
+      expect(result.current.renderResultUrl).toBe(resultUrl);
+      expect(result.current.renderResultInfo).toBe(resultInfo);
+    });
+
+    it.each(['HTTP 403', 'Network request failed'])('keeps the completed render after %s and retries the same bound output', async (error) => {
+      const read = vi.fn().mockRejectedValueOnce(new Error(error)).mockResolvedValue(bytes);
+      const { result } = await completedRender({ read });
+      const resultInfo = result.current.renderResultInfo;
+      await expect(result.current.downloadRenderResult()).rejects.toThrow(error);
+      expect(result.current.renderStatus).toBe('done');
+      expect(result.current.renderResultInfo).toBe(resultInfo);
+      expect(result.current.renderResultUrl).toContain(encodeURIComponent(objectId));
+      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
+      expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
+
+      await result.current.downloadRenderResult();
+      expect(read.mock.calls).toEqual([[objectId], [objectId]]);
+      expect(mocks.downloadBlobAsFile).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+      { name: 'short body', body: bytes.slice(1), size: bytes.length, error: 'size does not match' },
+      { name: 'wrong same-size body', body: new Uint8Array(bytes.length), size: bytes.length, error: 'digest does not match' },
+      { name: 'wrong declared size', body: bytes, size: bytes.length + 1, error: 'size does not match' },
+    ])('refuses $name without losing the render or falling back to navigation', async ({ body, size, error }) => {
+      const { result } = await completedRender({ read: vi.fn(async () => body), size });
+      await expect(result.current.downloadRenderResult()).rejects.toThrow(error);
+      expect(result.current.renderStatus).toBe('done');
+      expect(result.current.renderResultUrl).toContain(encodeURIComponent(objectId));
+      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
+      expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
+    });
+
+    it('refuses a managed download when project storage is unavailable', async () => {
+      const { result } = await completedRender();
+      await expect(result.current.downloadRenderResult()).rejects.toThrow('Project object reads are unavailable');
+      expect(result.current.renderStatus).toBe('done');
+      expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
+      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
+    });
+
+    it('does not download a stale read after a replacement render completes', async () => {
+      let finishRead!: (value: Uint8Array) => void;
+      const read = vi.fn(() => new Promise<Uint8Array>((resolve) => { finishRead = resolve; }));
+      const { result } = await completedRender({ read });
+      const downloading = result.current.downloadRenderResult();
+      const refused = expect(downloading).rejects.toThrow('render result changed');
+      await act(async () => { await result.current.startRender(); });
+      finishRead(bytes);
+      await refused;
+      expect(result.current.renderStatus).toBe('done');
+      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
+      expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
+    });
+
+    it.each(['unmount', 'project', 'timeline', 'provider'] as const)('does not download a pending read after %s disposal', async (scope) => {
+      let finishRead!: (value: Uint8Array) => void;
+      const read = vi.fn(() => new Promise<Uint8Array>((resolve) => { finishRead = resolve; }));
+      const { result, unmount, changeScope } = await completedRender({ read });
+      const downloading = result.current.downloadRenderResult();
+      const refused = expect(downloading).rejects.toThrow('render result changed');
+      if (scope === 'unmount') unmount();
+      else {
+        changeScope(scope);
+        expect(result.current.renderResultUrl).toBeNull();
+        expect(result.current.renderResultInfo).toBeNull();
+      }
+      finishRead(bytes);
+      await refused;
+      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
+      expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
+    });
+
+    it.each(['unmount', 'project', 'timeline', 'provider'] as const)('does not publish a pending admission after %s disposal', async (scope) => {
+      let finishAdmission!: (value: { status: string; task_id: string }) => void;
+      renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mockReturnValueOnce(new Promise((resolve) => { finishAdmission = resolve; }));
+      const { result, unmount, changeScope, fetchMock } = await completedRender({ start: false });
+      let rendering!: Promise<void>;
+      await act(async () => { rendering = result.current.startRender(); });
+      await waitFor(() => expect(renderRouterMocks.enqueueAstridRuntimeRenderTimeline).toHaveBeenCalledOnce());
+      if (scope === 'unmount') unmount();
+      else changeScope(scope);
+
+      await act(async () => {
+        finishAdmission({ status: 'queued', task_id: 'render-task-1' });
+        await rendering;
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result.current.renderResultUrl).toBeNull();
+      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
+    });
+
+    it.each([{ projectId: 'another-project' }, { taskId: 'another-task' }])('refuses another task/project output %j', async (binding) => {
+      const read = vi.fn(async () => bytes);
+      const { result } = await completedRender({ ...binding, read });
+      expect(result.current.renderStatus).toBe('error');
+      expect(result.current.renderResultUrl).toBeNull();
+      expect(result.current.renderLog).toContain('different task or project');
+      expect(read).not.toHaveBeenCalled();
+      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
+    });
   });
 
   it('consumes bounded detail diagnostics for running progress and failed executor output', async () => {
