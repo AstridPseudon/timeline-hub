@@ -1,0 +1,10 @@
+{
+  "prior_proof_identity": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-intended-dip-asset-route-fix/actual-pixels-20261020T043355393948Z/main/identity.json",
+  "prior_main_png_count": 45,
+  "prior_unified_png_count": 45,
+  "match_main_source_subset": true,
+  "match_locked_archive_all_members": true,
+  "match_generated_registry_all_members": true,
+  "same_case": false,
+  "note": "Existing 90 PNG proof has independent AM fades, not this new image-cap case."
+}

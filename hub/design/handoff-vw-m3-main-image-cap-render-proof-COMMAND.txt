@@ -1,0 +1,8 @@
+READ-ONLY PREFLIGHT ONLY (does not stage/render/listen/request central):
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-render-proof-preflight.py
+
+Current result: exit1 BLOCKED on <10GiB free and source-vector completed READY pending.
+No central render command is qualified or granted. Never invoke historical intended-DIP READY.sh: it selects polluted scene-host peers and a recycled source lease.
+
+Planned capture after source+disk preflight and explicit manager grant: one named central MAINframe-only suite, existing CPU headless shell, original MAIN Root/index/generator/components + locked6, actual source-vector normal-prep output and real invocation asset URL binding, frames90/105/119, numeric30fps, metadata1920x1080, three untouched originalPNG files+hashes and per-frameRGBA/inferredopacity against control90 and actual navy background. No parity/gate6 claim.
+Estimated retained PNG output <1MiB for flat16x16 RGB240 source expanded to1920x1080; raw image memory perRGBAframe8,294,400bytes. Stage ~80MiB plus private bundle/cache overhead; maintain>=10GiB after stage, not just before it.

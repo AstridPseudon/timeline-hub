@@ -1,0 +1,115 @@
+--- a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts
++++ b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts
+@@ -26,7 +26,9 @@
+     baseConfig: resolvedConfig,
+   }), [hasShotClips, composition, compositionErrorDependency, resolvedConfig,
+     runtime?.shots?.shotComposition, runtime?.userId]);
+-  const projectedConfig = timelineData?.editProjection ? timelineData.resolvedConfig : null;
++  const commandRenderConfig = timelineData?.editProjection ? timelineData.renderConfig : null;
++  const projectedConfig = timelineData?.editProjection
++    ? commandRenderConfig ?? timelineData.resolvedConfig : null;
+   return useMemo(() => {
+     if (!projectedConfig) return canonical;
+     // Command acceptance already flattens the returned pinned closure. Shot
+@@ -34,7 +36,11 @@
+     const output = projectOutputTimelineConfig(projectedConfig).config;
+     const complete = output.clips.every((clip) => clip.clipType !== 'shot'
+       && (!(clip.asset || clip.clipType === 'media') || Boolean(clip.assetEntry?.src)));
+-    if (complete) return { ...canonical, status: 'ready' as const, config: projectedConfig, error: null };
++    if (complete) return {
++      ...canonical,
++      source: commandRenderConfig ? 'canonical' as const : canonical.source,
++      status: 'ready' as const, config: projectedConfig, error: null,
++    };
+     const cached = canonical.source === 'canonical' ? canonical.config : null;
+     return {
+       ...canonical,
+@@ -42,5 +48,5 @@
+       config: cached,
+       error: new Error('The command projection has unresolved shot content or media.'),
+     };
+-  }, [canonical, projectedConfig]);
++  }, [canonical, commandRenderConfig, projectedConfig]);
+ }
+--- a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
+@@ -30,8 +30,10 @@
+   compact?: boolean;
+   touchChrome?: boolean;
+ } = {}): VideoEditorPreviewSurface {
+-  const resolvedConfig = useTimelineDataSelector((timeline) => timeline.resolvedConfig);
+-  const timelineData = useTimelineDataSelector((timeline) => timeline.data);
++  const { resolvedConfig, timelineData } = useTimelineDataSelector((timeline) => ({
++    resolvedConfig: timeline.resolvedConfig,
++    timelineData: timeline.data,
++  }), shallow);
+   const saveStatus = useTimelineChromeSelector((chrome) => chrome.saveStatus);
+   const runtime = useOptionalVideoEditorRuntime();
+   const compositionResolution = useVideoEditorPreviewComposition(resolvedConfig, timelineData);
+@@ -39,7 +41,7 @@
+   const previewSource = compositionResolution.source;
+   const previewRevision = useMemo<PreviewRevision>(() => {
+     const fact = timelineData?.editProjection;
+-    const paired = fact && previewConfig === timelineData.resolvedConfig;
++    const paired = fact && previewConfig === (timelineData.renderConfig ?? timelineData.resolvedConfig);
+     const error = runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null;
+     const unavailableTarget = fact && !paired
+       ? {
+--- a/src/tools/video-editor/hooks/useRenderState.ts
++++ b/src/tools/video-editor/hooks/useRenderState.ts
+@@ -31,6 +31,8 @@
+ import type { PlannerBackedRenderRouteDecision } from '@/tools/video-editor/lib/renderRouter.ts';
+ import type { RenderExportDestination } from '@/tools/video-editor/lib/renderRouter.ts';
+ import { resolveCanonicalComposition } from '@/tools/video-editor/data/canonicalCompositionState.ts';
++import { useVideoEditorPreviewComposition } from '@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts';
++import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+ import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
+ import type { BridgeTaskDetailPayload } from '@/tools/video-editor/data/bridgeContract.ts';
+ import type {
+@@ -531,6 +533,7 @@
+   flushPendingSave?: () => Promise<number>,
+   persistVisualSeamConfig?: PersistVisualSeamConfig,
+   canPersistVisualSeamConfig = true,
++  timelineData?: TimelineData | null,
+ ) {
+   const [renderStatus, setRenderStatus] = useState<RenderStatus>('idle');
+   const [renderLog, setRenderLog] = useState('');
+@@ -566,7 +569,7 @@
+   }, [extensionRuntime]);
+   const runtimeContext = useContext(VideoEditorRuntimeContext);
+   const hasShotClips = Boolean(resolvedConfig?.clips.some((clip) => clip.clipType === 'shot'));
+-  const compositionResolution = useMemo(() => resolveCanonicalComposition({
++  const canonicalResolution = useMemo(() => resolveCanonicalComposition({
+     userId: runtimeContext?.userId,
+     hasShotClips,
+     hasShotComposition: Boolean(runtimeContext?.shots?.shotComposition),
+@@ -574,6 +577,8 @@
+     compositionError: runtimeContext?.userId === null ? runtimeContext.shots?.canonicalCompositionError : null,
+     baseConfig: resolvedConfig,
+   }), [hasShotClips, resolvedConfig, runtimeContext]);
++  const commandResolution = useVideoEditorPreviewComposition(resolvedConfig, timelineData);
++  const compositionResolution = timelineData?.editProjection ? commandResolution : canonicalResolution;
+   const canonicalLane = compositionResolution.source === 'canonical';
+   const renderConfig = compositionResolution.config;
+   const renderProjectionError = compositionResolution.error;
+--- a/src/tools/video-editor/hooks/useTimelineState.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.ts
+@@ -681,6 +681,7 @@
+     save.flushPendingSave,
+     persistVisualSeamConfig,
+     canPersistVisualSeamConfig,
++    save.data,
+   );
+   const assetOperations = useAssetOperations(
+     runtime.provider,
+--- a/src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
+@@ -37,7 +37,7 @@
+   const store = useTimelineStoreApiSafe();
+   const view = runtime?.timelineViewStore;
+   const { data, preferences, resolvedConfig } = useTimelineEditorData();
+-  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig);
++  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig, data);
+   const framePreview = usePanelFramePreview();
+   const surfaceRef = useRef<HTMLDivElement>(null);
+   const latestRuntime = useRef(runtime);

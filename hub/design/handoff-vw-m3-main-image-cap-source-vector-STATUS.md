@@ -1,5 +1,5 @@
-IN PROGRESS — source route found, not READY yet.
+SOURCE READY — see /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-READY.md and /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-REPORT.md.
 
-Frozen Agent MAIN a411628f8fd6129f9c58c332019b56769d997384. MAIN _project_exact_parent_head calls project_runtime_parent_composition; _project_clip unconditionally changes hold to min(child end, occurrence end) minus child start, times child speed. For at0/hold5/speed1/cap4 this is hold4. Checking normal render preparation now. This contradicts the suggested RAW5 expected direction; no golden chosen and no pixels claimed.
+Actual original MAIN normal managed projection/prep gives raw hold5 -> projected hold4 -> serialized hold4 at numeric30fps. MAIN locked6 source predicts opacity0.5 at105; pixels UNVERIFIED. This contradicts the suggested raw5/opacity1 expected direction and must go to Agent/orchestrator. No golden direction chosen or product edit.
 
-Will export flat raw closure, generated-image analog, MAIN projector output and normal serialized props; renderer worker must wait for READY. No Node/browser/socket/qualification run here.
+Exact raw closure, image bytes, source archive, lock-verified29-member Composition6, source/component/generated hashes, normal materialized inputs and static analog props are frozen FLAT. Existing90PNG-proof MAIN source/locked archive/generated identity matches. Targeted original MAIN tests66PASS. Capture worker alone owns dependency/disk preflight and central grant; no local render/browser/socket here.

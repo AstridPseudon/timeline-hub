@@ -1,0 +1,28 @@
+{
+  "main": "a411628f8fd6129f9c58c332019b56769d997384",
+  "original_main_files_byte_equal_after_tests": 2414,
+  "source_archive_sha256": "6b89215fd014a062a2590c9739e39efd656effec0aefae45b6afa0db0ac4d96d",
+  "source_archive_size": 59134823,
+  "core_projector_sha256": "433dce617f10e31fe6066d55c6bff125e4328a84e01426f4d2e45756b432253a",
+  "root_sha256": "e367f43b97d9b7ffe016257c10eb7ca6da7ffa2aa89e9539cb112104ad00e775",
+  "generator_sha256": "9eb298e5536d2e17b5ae754acc0cba22ec843a911b017ca33228ec3e77cc7f1b",
+  "composition_archive_sha256": "78746170f9c337650991dacca7a303c71be89ee5e61c25ef821390c7563df87b",
+  "composition_archive_regular_members": 29,
+  "fixture_sha256": {
+    "handoff-vw-m3-main-image-cap-source-vector-source-identity.json": "19e60057a5a51d161accc20ea227d0f1af13399814b5e0a69e5ff374d6e98097",
+    "handoff-vw-m3-main-image-cap-source-vector-main-serialized-timeline.json": "485261ff7d355303ee458468e00ee98c555cd99932058845a37130b5f80aebe0",
+    "handoff-vw-m3-main-image-cap-source-vector-main-materialized-timeline.json": "4cfba948ad5ba4599a151ea010d512034979195964465201d9c2e508c256fb85",
+    "handoff-vw-m3-main-image-cap-source-vector-raw-closure.json": "ad3d0ad35876665489080703c2323a8840c9187428dbe28a913e8ab4ada53f04",
+    "handoff-vw-m3-main-image-cap-source-vector-trace.json": "5a2f092189863dcfdfac1faf54c8165bc3fba18b8ac3668cc4d150cfa4896eb9",
+    "handoff-vw-m3-main-image-cap-source-vector-image.png": "ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+    "handoff-vw-m3-main-image-cap-source-vector-locked-composition6.tar.gz": "78746170f9c337650991dacca7a303c71be89ee5e61c25ef821390c7563df87b",
+    "handoff-vw-m3-main-image-cap-source-vector-main-source.tar.gz": "6b89215fd014a062a2590c9739e39efd656effec0aefae45b6afa0db0ac4d96d",
+    "handoff-vw-m3-main-image-cap-source-vector-main-managed-registry.json": "54e2fa9b192641447bf60acf52ffdb373264285b0a11e5209e7716aed4bde0b4",
+    "handoff-vw-m3-main-image-cap-source-vector-fixture-label.json": "547059ef05e3b950a4c6bca632f3125dc0d6126bc0c7dab98ed71ce7e9e59921",
+    "handoff-vw-m3-main-image-cap-source-vector-main-props-template.json": "1ff6ddcdac75f661054395b96ba5148cdeaec7a2445802d1b3719a504752634e",
+    "handoff-vw-m3-main-image-cap-source-vector-prepare.py": "31f683bbfa9ccbb0945b104dd4049717deaaf29c716e4ff32ed2a9de5c43d531",
+    "handoff-vw-m3-main-image-cap-source-vector-main-props-static-analog.json": "eb477822c1f6054b9f978039c1e64bd0035ec504084f7c4732c39683ce462ef5",
+    "handoff-vw-m3-main-image-cap-source-vector-main-projected-config.json": "c14d9597b5101a5d9698204efea38511c3cc6da861b8fd69f5f1fa90b194eecd",
+    "handoff-vw-m3-main-image-cap-source-vector-replay.py": "61faa91e524df15e9ce6def8144a9269ff76b175bdd32ebbe8e0a5f36631fda7"
+  }
+}

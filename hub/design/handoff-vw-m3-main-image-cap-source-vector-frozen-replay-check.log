@@ -1,0 +1,2 @@
+{"raw_hold": 5, "projected_hold": 4.0, "serialized_hold": 4.0, "fps": 30, "managed_byte_sha256": "ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6"}
+Seven frozen outputs reproduced byte-for-byte; PASS
