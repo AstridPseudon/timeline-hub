@@ -1,18 +1,19 @@
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertRunMode, isolatedEnvironment, privateGraphRoot } from './tab-audio-capture.controller.mjs';
+import { assertRunMode, privateGraphRoot } from './tab-audio-capture.controller.mjs';
 
 const graphRoot = privateGraphRoot();
 assertRunMode();
-const isolated = isolatedEnvironment();
+const outputDir = process.env.PLAYWRIGHT_OUTPUT_DIR;
+if (!outputDir) throw new Error('PLAYWRIGHT_OUTPUT_DIR must be an owned central-run directory');
 const require = createRequire(join(graphRoot, '../package.json'));
 const { defineConfig } = require('@playwright/test');
 
 export default defineConfig({
   testDir: fileURLToPath(new URL('.', import.meta.url)),
   testMatch: 'private-pulse-stereo.probe.ts',
-  outputDir: isolated.PLAYWRIGHT_OUTPUT_DIR,
+  outputDir,
   workers: 1,
   retries: 0,
   projects: [{

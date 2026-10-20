@@ -1,0 +1,418 @@
+diff --git a/tests/e2e/timeline/private-pulse-stereo.controller.mjs b/tests/e2e/timeline/private-pulse-stereo.controller.mjs
+new file mode 100644
+index 000000000..dbb23cf86
+--- /dev/null
++++ b/tests/e2e/timeline/private-pulse-stereo.controller.mjs
+@@ -0,0 +1,69 @@
++import { execFileSync } from 'node:child_process';
++import { existsSync, readFileSync, writeFileSync } from 'node:fs';
++import { dirname, join, resolve } from 'node:path';
++import { fileURLToPath, pathToFileURL } from 'node:url';
++
++// This controller is intentionally offline. It validates the selected App
++// source and toolchain, but never starts PulseAudio, Chrome, ffmpeg, or a
++// socket. The central launcher is the only place allowed to run the probe.
++export const APP_ROOT = resolve(process.env.TAB_AUDIO_APP_ROOT ?? '/home/user/work/wt/vw-m3-stereo-owned-state-guard-fix');
++export const BASE_CONTROLLER = join(APP_ROOT, 'tests/e2e/timeline/tab-audio-capture.controller.mjs');
++const HANDOFF_SOURCE = join(dirname(fileURLToPath(import.meta.url)), 'handoff-vw-m3-private-pulse-stereo-prep-private-pulse-stereo.probe.ts');
++const APP_SOURCE = join(APP_ROOT, 'tests/e2e/timeline/private-pulse-stereo.probe.ts');
++export const PROBE_SOURCE = existsSync(APP_SOURCE) ? APP_SOURCE : HANDOFF_SOURCE;
++export const RUN_MODE = 'stereo';
++export const TOOL_NAMES = Object.freeze(['pulseaudio', 'pactl', 'ffmpeg', 'ffprobe']);
++
++function command(name, args) {
++  return execFileSync(name, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
++}
++
++export function installedTools() {
++  return Object.fromEntries(TOOL_NAMES.map((name) => [name, {
++    path: command('which', [name]),
++    version: command(name, name === 'pulseaudio' || name === 'pactl' ? ['--version'] : ['-version']).split('\n')[0],
++  }]));
++}
++
++function assertOffline() {
++  if (process.env.TAB_AUDIO_RUN === '1') throw new Error('This preparation controller cannot run the actual capture');
++  if (process.getuid?.() === 0) throw new Error('Root/system mode is forbidden for the private Pulse diagnostic');
++  if (!existsSync(BASE_CONTROLLER)) throw new Error(`Missing proven tab controller: ${BASE_CONTROLLER}`);
++  if (!existsSync(PROBE_SOURCE)) throw new Error(`Missing fallback probe source: ${PROBE_SOURCE}`);
++  const source = readFileSync(PROBE_SOURCE, 'utf8');
++  for (const required of ['finally', 'module-null-sink', 'PULSE_SERVER', 'PULSE_SINK', 'pcm_f32le', 'player.monitor']) {
++    if (!source.includes(required)) throw new Error(`Fallback source lost required lifecycle/control: ${required}`);
++  }
++  for (const forbidden of ['--system', 'set-default-sink', 'PULSE_DEFAULT', "'-ac'", 'aresample', 'pan=']) {
++    if (source.includes(forbidden)) throw new Error(`Fallback source contains forbidden coercion/global audio operation: ${forbidden}`);
++  }
++}
++
++export function prepare() {
++  assertOffline();
++  const tools = installedTools();
++  const base = command('git', ['-C', APP_ROOT, 'rev-parse', 'HEAD']);
++  return {
++    status: 'READY_FOR_MANAGER_REVIEW',
++    runMode: RUN_MODE,
++    appRoot: APP_ROOT,
++    baseController: BASE_CONTROLLER,
++    sourceSha: base,
++    tools,
++    note: 'Run the proven tab controller fingerprint/preflight in the App worktree; this controller adds only the private-tool and lifecycle checks.',
++  };
++}
++
++export function preflight() {
++  const output = process.env.TAB_AUDIO_PREFLIGHT_PATH;
++  if (!output) throw new Error('TAB_AUDIO_PREFLIGHT_PATH is required for offline preflight');
++  const result = {...prepare(), status: 'READY_OFFLINE_PREFLIGHT', preflightPath: output};
++  writeFileSync(output, JSON.stringify(result, null, 2), { flag: 'wx' });
++  return result;
++}
++
++if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
++  const action = process.argv[2] ?? '--prepare';
++  const result = action === '--prepare' ? prepare() : action === '--preflight' ? preflight() : (() => { throw new Error(`Unknown action: ${action}`); })();
++  console.log(JSON.stringify(result, null, 2));
++}
+diff --git a/tests/e2e/timeline/private-pulse-stereo.probe.ts b/tests/e2e/timeline/private-pulse-stereo.probe.ts
+new file mode 100644
+index 000000000..a5f14fde8
+--- /dev/null
++++ b/tests/e2e/timeline/private-pulse-stereo.probe.ts
+@@ -0,0 +1,226 @@
++import { expect, test as base } from '@playwright/test';
++import { createServer, type Server } from 'node:http';
++import { execFile, spawn, type ChildProcess } from 'node:child_process';
++import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { promisify } from 'node:util';
++import {
++  assertCaptureCapabilities,
++  assertRawPts,
++  assertStereoTones,
++  CONTROLLED_AUDIO,
++  createSyntheticPcmWav,
++  nativeAudioChannelDiagnostic,
++} from './tab-audio-capture.analysis.mjs';
++
++const exec = promisify(execFile);
++const CAPTURE_MS = 4_000;
++const SAMPLE_RATE = 48_000;
++
++declare global {
++  interface Window {
++    __privatePulseProbe: {
++      mimeType: string;
++      tracks: Array<{ kind: string; readyState: string; settings: MediaTrackSettings; capabilities: MediaTrackCapabilities }>;
++      chunks: string[];
++      fixture: { leftFrequency: number; rightFrequency: number; sampleRate: number };
++    };
++  }
++}
++
++async function stopOwned(child: ChildProcess) {
++  if (!child.pid || child.exitCode !== null || child.signalCode !== null) return;
++  const exited = new Promise<void>((resolve) => child.once('exit', () => resolve()));
++  child.kill('SIGTERM');
++  const timer = setTimeout(() => child.kill('SIGKILL'), 3_000);
++  try { await exited; } finally { clearTimeout(timer); }
++}
++
++async function privatePulse() {
++  if (process.getuid?.() === 0) throw new Error('Root/system mode is forbidden for the private Pulse diagnostic');
++  const directory = await mkdtemp(join(tmpdir(), 'timeline-private-pulse-'));
++  await chmod(directory, 0o700);
++  const inherited = {...process.env};
++  for (const key of ['PULSE_SERVER', 'PULSE_SINK', 'PULSE_RUNTIME_PATH', 'PULSE_STATE_PATH', 'PULSE_COOKIE']) delete inherited[key];
++  const env: NodeJS.ProcessEnv = {
++    ...inherited,
++    XDG_RUNTIME_DIR: directory,
++    PULSE_RUNTIME_PATH: directory,
++    PULSE_STATE_PATH: directory,
++    PULSE_SERVER: `unix:${directory}/native`,
++    PULSE_SINK: 'player',
++  };
++  const daemon = spawn('pulseaudio', [
++    '-n', '--daemonize=no', '--use-pid-file=no', '--exit-idle-time=-1', '--log-target=stderr',
++    `--load=module-native-protocol-unix socket=${directory}/native auth-anonymous=1 auth-cookie-enabled=0`,
++    '--load=module-null-sink sink_name=player rate=48000 channels=2 format=float32le channel_map=front-left,front-right',
++  ], { env, stdio: ['ignore', 'ignore', 'pipe'] });
++  let daemonLog = '';
++  daemon.stderr.on('data', (bytes) => { daemonLog += bytes.toString(); });
++  const inspect = async () => {
++    const [sinks, sources, inputs, outputs] = await Promise.all(
++      ['sinks', 'sources', 'sink-inputs', 'source-outputs'].map(async (kind) =>
++        JSON.parse((await exec('pactl', ['--format=json', 'list', kind], { env })).stdout)),
++    );
++    return { epochMs: Date.now(), sinks, sources, inputs, outputs };
++  };
++  try {
++    await expect.poll(async () => {
++      if (daemon.exitCode !== null) throw new Error(daemonLog);
++      try { return (await exec('pactl', ['list', 'short', 'sinks'], { env })).stdout; } catch { return ''; }
++    }, { timeout: 10_000 }).toContain('player');
++    return {
++      env,
++      async record(path: string, play: () => Promise<void>) {
++        const beforeWarm = await inspect();
++        let log = '';
++        const recorder = spawn('ffmpeg', [
++          '-hide_banner', '-y', '-f', 'pulse', '-sample_rate', String(SAMPLE_RATE), '-channels', '2',
++          '-i', 'player.monitor', '-c:a', 'pcm_f32le', path,
++        ], { env, stdio: ['ignore', 'ignore', 'pipe'] });
++        recorder.stderr.on('data', (bytes) => { log += bytes.toString(); });
++        const completed = new Promise<void>((resolve, reject) => {
++          recorder.once('error', reject);
++          recorder.once('exit', (code, signal) => code === 0 ? resolve() : reject(new Error(`ffmpeg ${code ?? signal}: ${log}`)));
++        });
++        void completed.catch(() => {});
++        try {
++          await expect.poll(() => log, { timeout: 10_000 }).toContain('Output #0');
++          await play();
++          await new Promise((resolve) => setTimeout(resolve, CAPTURE_MS));
++        } finally {
++          await stopOwned(recorder);
++          await completed.catch(() => {});
++          await writeFile(`${path}.diagnostics.json`, JSON.stringify({
++            beforeWarm,
++            recorderPid: recorder.pid,
++            recorderLog: log,
++            daemonLog,
++            completedAtMs: Date.now(),
++          }, null, 2));
++        }
++        return { beforeWarm, recorderLog: log };
++      },
++      async close() {
++        await stopOwned(daemon);
++        await rm(directory, { recursive: true, force: true });
++      },
++    };
++  } catch (error) {
++    await stopOwned(daemon);
++    await rm(directory, { recursive: true, force: true });
++    throw new Error(`Private Pulse startup failed: ${error instanceof Error ? error.message : String(error)}\n${daemonLog}`);
++  }
++}
++
++function probeHtml() {
++  const webFrequency = JSON.stringify(CONTROLLED_AUDIO.webAudioFrequency);
++  const webAmplitude = JSON.stringify(CONTROLLED_AUDIO.webAudioAmplitude);
++  return `<!doctype html><button id="start">Start</button>
++<audio id="fixture" preload="auto" src="/synthetic.wav"></audio>
++<div id="state">PRE-WARM</div><script>
++const button=document.querySelector('#start'); const fixture=document.querySelector('#fixture');
++button.addEventListener('click',()=>void (async()=>{let stream,audio,osc,recorder; try {
++stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true,preferCurrentTab:true});
++const mimeType='video/webm;codecs=vp8,opus'; if(!MediaRecorder.isTypeSupported(mimeType)) throw new Error('unsupported recorder MIME');
++recorder=new MediaRecorder(stream,{mimeType}); audio=new AudioContext(); await audio.resume();
++osc=audio.createOscillator(); const gain=audio.createGain(); gain.gain.value=${webAmplitude}; osc.frequency.value=${webFrequency}; osc.connect(gain).connect(audio.destination);
++window.__privatePulseProbe={mimeType,tracks:stream.getTracks().map(track=>({kind:track.kind,readyState:track.readyState,settings:track.getSettings(),capabilities:track.getCapabilities()})),chunks:[],fixture:{leftFrequency:${CONTROLLED_AUDIO.leftFrequency},rightFrequency:${CONTROLLED_AUDIO.rightFrequency},sampleRate:${SAMPLE_RATE}}};
++const chunks=[]; let chunkIndex=0; let delivery=Promise.resolve();
++recorder.ondataavailable=event=>{const index=chunkIndex++; delivery=delivery.then(async()=>{if(event.data.size) chunks[index]=new Uint8Array(await event.data.arrayBuffer());});};
++const stopped=new Promise((resolve,reject)=>{recorder.addEventListener('stop',resolve,{once:true}); recorder.addEventListener('error',()=>reject(new Error('MediaRecorder error')),{once:true});});
++await fixture.play(); recorder.start(100); osc.start(); document.querySelector('#state').textContent='WARMED'; await new Promise(resolve=>setTimeout(resolve,${CAPTURE_MS})); osc.stop(); recorder.stop(); await stopped; await delivery;
++window.__privatePulseProbe.chunks=chunks.filter(Boolean).map(bytes=>{let binary=''; for(const byte of bytes) binary+=String.fromCharCode(byte); return btoa(binary);}); button.dataset.result='complete';
++}catch(error){button.dataset.error=error instanceof Error?error.message:String(error); button.dataset.result='error';}finally{if(audio) await audio.close(); if(stream) stream.getTracks().forEach(track=>track.stop());}})(),{once:true});
++</script>`;
++}
++
++function fixtureServer(): Server {
++  const html = Buffer.from(probeHtml());
++  const wav = createSyntheticPcmWav({ leftFrequency: CONTROLLED_AUDIO.leftFrequency, rightFrequency: CONTROLLED_AUDIO.rightFrequency });
++  return createServer((request, response) => {
++    if (request.url === '/') { response.writeHead(200, {'content-type': 'text/html'}); response.end(html); return; }
++    if (request.url === '/synthetic.wav') { response.writeHead(200, {'content-type': 'audio/wav', 'content-length': wav.length}); response.end(wav); return; }
++    response.writeHead(404); response.end();
++  });
++}
++
++function listen(server: Server) {
++  return new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', () => resolve()); });
++}
++
++async function closeServer(server: Server) {
++  server.closeAllConnections();
++  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
++}
++
++async function ffprobe(path: string) {
++  const { stdout } = await exec('ffprobe', ['-v', 'error', '-show_streams', '-show_packets', '-of', 'json', path]);
++  return JSON.parse(stdout) as { streams: Array<Record<string, unknown>>; packets: Array<Record<string, unknown>> };
++}
++
++async function decodeFloat(path: string, streamIndex: number) {
++  const { stdout } = await exec('ffmpeg', ['-v', 'error', '-i', path, '-map', `0:${streamIndex}`, '-f', 'f32le', 'pipe:1'], { encoding: 'buffer' });
++  if (stdout.length % Float32Array.BYTES_PER_ELEMENT) throw new Error('PCM output is not float32-aligned');
++  return new Float32Array(stdout.buffer, stdout.byteOffset, stdout.length / Float32Array.BYTES_PER_ELEMENT);
++}
++
++async function recordChannels(path: string, frequency: { left: number; right: number }) {
++  const probe = await ffprobe(path);
++  const stream = probe.streams.find((item) => item.codec_type === 'audio');
++  if (!stream) throw new Error('Missing audio stream');
++  const diagnostic = nativeAudioChannelDiagnostic(stream.channels);
++  if (diagnostic.status !== 'supported') return { diagnostic, stereo: false };
++  const samples = await decodeFloat(path, Number(stream.index));
++  return { diagnostic, stereo: assertStereoTones(samples, {
++    sampleRate: Number(stream.sample_rate), channels: Number(stream.channels),
++    leftFrequency: frequency.left, rightFrequency: frequency.right,
++  }) };
++}
++
++type Fixtures = { url: string; pulse: Awaited<ReturnType<typeof privatePulse>> };
++const test = base.extend<Fixtures>({
++  // This fixture starts only in the centrally granted run; offline collection never imports Playwright.
++  // eslint-disable-next-line no-empty-pattern
++  pulse: [async ({}, use) => { const pulse = await privatePulse(); try { await use(pulse); } finally { await pulse.close(); } }, { scope: 'worker' }],
++  url: [async ({ pulse: _pulse }, use) => {
++    const server = fixtureServer(); await listen(server);
++    try { const address = server.address(); if (!address || typeof address === 'string') throw new Error('fixture server address missing'); await use(`http://127.0.0.1:${address.port}/`); }
++    finally { await closeServer(server); }
++  }, { scope: 'worker' }],
++  browser: [async ({ playwright, launchOptions, pulse }, use) => {
++    const browser = await playwright.chromium.launch({ ...launchOptions, env: pulse.env });
++    try { await use(browser); } finally { await browser.close(); }
++  }, { scope: 'worker' }],
++});
++
++test('records native private Pulse monitor before warm and preserves GDM channel refusal', async ({ page, url, pulse }, testInfo) => {
++  test.setTimeout(120_000);
++  await page.goto(url, { waitUntil: 'domcontentloaded' });
++  const monitorPath = testInfo.outputPath('private-pulse-monitor.wav');
++  const monitor = await pulse.record(monitorPath, async () => {
++    await page.locator('#start').click();
++    await expect(page.locator('#start')).toHaveAttribute('data-result', 'complete', { timeout: 20_000 });
++  });
++  const probe = await page.evaluate(() => window.__privatePulseProbe);
++  const chunks = probe.chunks.map((chunk) => Buffer.from(chunk, 'base64'));
++  const muxPath = testInfo.outputPath('private-pulse-gdm.webm');
++  await mkdir(testInfo.outputDir, { recursive: true }); await writeFile(muxPath, Buffer.concat(chunks));
++  const capabilities = assertCaptureCapabilities(probe.tracks, { mimeType: probe.mimeType });
++  const muxProbe = await ffprobe(muxPath); const rawPts = assertRawPts(muxProbe);
++  const muxAudio = muxProbe.streams.find((item) => item.codec_type === 'audio');
++  if (!muxAudio) throw new Error('GDM mux has no audio stream');
++  const gdm = nativeAudioChannelDiagnostic(muxAudio.channels);
++  const gdmStereo = gdm.status === 'supported' ? await recordChannels(muxPath, { left: CONTROLLED_AUDIO.leftFrequency, right: CONTROLLED_AUDIO.rightFrequency }) : null;
++  const monitorStereo = await recordChannels(monitorPath, { left: CONTROLLED_AUDIO.leftFrequency, right: CONTROLLED_AUDIO.rightFrequency });
++  await testInfo.attach('private-pulse-stereo-result', { body: JSON.stringify({
++    requested: { video: true, audio: true, preferCurrentTab: true },
++    beforeWarm: monitor.beforeWarm,
++    gdm: { capabilities, rawPts, channelDiagnostic: gdm, stereo: gdmStereo, retainedMux: gdm.status === 'supported' },
++    separatePulseMonitor: monitorStereo,
++    honestBoundary: gdm.status === 'supported' ? 'GDM mux stereo detector is eligible for review' : 'GDM remained mono; separate Pulse monitor channel capability only',
++    claimsExcluded: ['Player parity', 'export parity', 'A/V phase', 'per-clip alignment', 'upmix/downmix', 'codec conversion', 'threshold changes'],
++  }, null, 2), contentType: 'application/json' });
++  expect(monitor.beforeWarm.inputs.some((input: {properties?: Record<string, string>}) => input.properties?.['application.process.id'])).toBe(false);
++});
+diff --git a/tests/e2e/timeline/private-pulse-stereo.config.ts b/tests/e2e/timeline/private-pulse-stereo.config.ts
+new file mode 100644
+index 000000000..cca91ef96
+--- /dev/null
++++ b/tests/e2e/timeline/private-pulse-stereo.config.ts
+@@ -0,0 +1,36 @@
++import { createRequire } from 'node:module';
++import { join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { assertRunMode, privateGraphRoot } from './tab-audio-capture.controller.mjs';
++
++const graphRoot = privateGraphRoot();
++assertRunMode();
++const outputDir = process.env.PLAYWRIGHT_OUTPUT_DIR;
++if (!outputDir) throw new Error('PLAYWRIGHT_OUTPUT_DIR must be an owned central-run directory');
++const require = createRequire(join(graphRoot, '../package.json'));
++const { defineConfig } = require('@playwright/test');
++
++export default defineConfig({
++  testDir: fileURLToPath(new URL('.', import.meta.url)),
++  testMatch: 'private-pulse-stereo.probe.ts',
++  outputDir,
++  workers: 1,
++  retries: 0,
++  projects: [{
++    name: 'private-pulse-stereo-chrome155',
++    use: {
++      viewport: { width: 1440, height: 900 },
++      launchOptions: {
++        executablePath: '/opt/google/chrome/chrome',
++        ignoreDefaultArgs: ['--mute-audio'],
++        args: [
++          '--auto-accept-this-tab-capture',
++          '--enable-usermedia-screen-capturing',
++          '--allow-http-screen-capture',
++          '--disable-background-timer-throttling',
++          '--disable-renderer-backgrounding',
++        ],
++      },
++    },
++  }],
++});
+diff --git a/tests/e2e/timeline/setup-private-pulse-stereo.sh b/tests/e2e/timeline/setup-private-pulse-stereo.sh
+new file mode 100755
+index 000000000..68a28abea
+--- /dev/null
++++ b/tests/e2e/timeline/setup-private-pulse-stereo.sh
+@@ -0,0 +1,63 @@
++#!/usr/bin/env bash
++set -Eeuo pipefail
++
++# Central-only entry point. Without TAB_AUDIO_RUN=1 this performs no browser,
++# daemon, socket, or capture work and only asks the two controllers for their
++# offline readiness records.
++ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
++export TAB_AUDIO_APP_ROOT="$ROOT"
++NODE=${TAB_AUDIO_NODE_EXECUTABLE:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node}
++BASE_CONTROLLER="$ROOT/tests/e2e/timeline/tab-audio-capture.controller.mjs"
++PRIVATE_CONTROLLER="$ROOT/tests/e2e/timeline/private-pulse-stereo.controller.mjs"
++CONFIG="$ROOT/tests/e2e/timeline/private-pulse-stereo.config.ts"
++: "${PRIVATE_PULSE_STATE_ROOT:?owned per-run state root required}"
++STATE="$PRIVATE_PULSE_STATE_ROOT"
++
++[[ -x "$NODE" ]] || { echo "Missing admitted Node: $NODE" >&2; exit 2; }
++[[ "$("$NODE" --version)" == v20.19.4 ]] || { echo 'Admitted Node must be v20.19.4' >&2; exit 2; }
++export TAB_AUDIO_RUN_MODE=stereo PATH="$(dirname "$NODE"):$PATH" NODE_PATH=''
++export XDG_CACHE_HOME="$STATE/cache" XDG_CONFIG_HOME="$STATE/config" PWTEST_CACHE_DIR="$STATE/playwright-transform"
++mkdir -p "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$PWTEST_CACHE_DIR"
++
++if [[ ${TAB_AUDIO_RUN:-0} != 1 ]]; then
++  TAB_AUDIO_RUN=0 "$NODE" "$PRIVATE_CONTROLLER" --prepare
++  echo 'Offline preflight only; no private daemon, browser, socket, network, or capture was started.'
++  exit 0
++fi
++
++: "${TAB_AUDIO_PREFLIGHT_PATH:?fresh preflight path required}"
++: "${TAB_AUDIO_RUN_MARKER:?fresh one-shot marker required}"
++: "${TAB_AUDIO_GRANT_PATH:?fresh exact-source grant required}"
++: "${PLAYWRIGHT_OUTPUT_DIR:?fresh output directory required}"
++: "${TAB_AUDIO_LOCK_PATH:?shared browser lock required}"
++
++TASK_TMPDIR=$(mktemp -d /tmp/timeline-private-pulse-capture-XXXXXX)
++chmod 700 "$TASK_TMPDIR"
++export TMPDIR="$TASK_TMPDIR" TMP="$TASK_TMPDIR" TEMP="$TASK_TMPDIR"
++cleanup() {
++  local status=$? postflight=0
++  if [[ ${TAB_AUDIO_PREFLIGHT_DONE:-0} == 1 ]]; then
++    "$NODE" "$BASE_CONTROLLER" --postflight || postflight=$?
++  fi
++  if [[ -n "${TASK_TMPDIR:-}" ]]; then
++    [[ "$TASK_TMPDIR" == /tmp/timeline-private-pulse-capture-* && -d "$TASK_TMPDIR" && "$(realpath -- "$TASK_TMPDIR")" == "$TASK_TMPDIR" ]] || {
++      echo "refusing to remove non-owned task temp: $TASK_TMPDIR" >&2
++      postflight=1
++    }
++    if [[ $postflight == 0 ]]; then rm -rf -- "$TASK_TMPDIR"; fi
++  fi
++  if [[ $status == 0 && $postflight != 0 ]]; then status=$postflight; fi
++  exit "$status"
++}
++trap cleanup EXIT
++
++exec 9>"$TAB_AUDIO_LOCK_PATH"
++flock -n 9 || { echo 'shared browser flock is already held' >&2; exit 75; }
++export VIEWING_BROWSER_FLOCK_HELD=1 TAB_AUDIO_LOCK_FD=9
++
++TAB_AUDIO_RUN=0 "$NODE" "$PRIVATE_CONTROLLER" --prepare
++"$NODE" "$BASE_CONTROLLER" --preflight
++export TAB_AUDIO_PREFLIGHT_DONE=1
++"$NODE" "$BASE_CONTROLLER" --claim
++PLAYWRIGHT_TIMELINE_DEVICES=1 "$NODE" "$ROOT/node_modules/playwright/cli.js" test \
++  --config "$CONFIG" --project=private-pulse-stereo-chrome155 --workers=1

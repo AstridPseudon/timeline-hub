@@ -31,3 +31,6 @@ App needs the EXACT reviewed 0.0.9 package (sha256 fa94f9c6438278764fad1285fa3d7
 
 ## MANAGER REQUEST viewing — 2026-10-20 14:04Z
 CurrentRoot3stillcontrollerindependentlyAPPROVE; free12,928,282,624 vsrequired12,986,365,667 and>13GBheavyresume. Please bin/recycle endedcleanunleasedViewingworktrees/unusedownscratch to~13.5GB; exactlocallead/viewing-recycle-request.md. Preservef816physicalgraph/privatefreshAppgraph/currentRootprepOWNnode/activeworkers/tests. OldtabshortKEEP/lease released afteractualPASS+audit, no oldgrantreuse. Fiveusefulcodeworkersrunmeanwhile.
+
+## 2026-10-20 15:51 UTC — machine graph audit needed
+STOP requested app-cap3a reviewer for readonly graph violation: whole @scope symlink into shared App then extract public12 via @banodoco. Exact local lead/viewing-recycle-request.md; preserve log. Shared App already UNQUALIFIED; no qualification/capture uses it. Own clean private graph untouched. Please audit/repair only through approved machine process.

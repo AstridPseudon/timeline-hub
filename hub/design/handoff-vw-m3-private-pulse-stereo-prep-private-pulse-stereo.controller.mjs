@@ -1,14 +1,16 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // This controller is intentionally offline. It validates the selected App
 // source and toolchain, but never starts PulseAudio, Chrome, ffmpeg, or a
 // socket. The central launcher is the only place allowed to run the probe.
 export const APP_ROOT = resolve(process.env.TAB_AUDIO_APP_ROOT ?? '/home/user/work/wt/vw-m3-stereo-owned-state-guard-fix');
 export const BASE_CONTROLLER = join(APP_ROOT, 'tests/e2e/timeline/tab-audio-capture.controller.mjs');
-export const PROBE_SOURCE = join(dirname(fileURLToPath(import.meta.url)), 'handoff-vw-m3-private-pulse-stereo-prep-private-pulse-stereo.probe.ts');
+const HANDOFF_SOURCE = join(dirname(fileURLToPath(import.meta.url)), 'handoff-vw-m3-private-pulse-stereo-prep-private-pulse-stereo.probe.ts');
+const APP_SOURCE = join(APP_ROOT, 'tests/e2e/timeline/private-pulse-stereo.probe.ts');
+export const PROBE_SOURCE = existsSync(APP_SOURCE) ? APP_SOURCE : HANDOFF_SOURCE;
 export const RUN_MODE = 'stereo';
 export const TOOL_NAMES = Object.freeze(['pulseaudio', 'pactl', 'ffmpeg', 'ffprobe']);
 
@@ -18,7 +20,7 @@ function command(name, args) {
 
 export function installedTools() {
   return Object.fromEntries(TOOL_NAMES.map((name) => [name, {
-    path: command('command', ['-v', name]),
+    path: command('which', [name]),
     version: command(name, name === 'pulseaudio' || name === 'pactl' ? ['--version'] : ['-version']).split('\n')[0],
   }]));
 }
@@ -60,7 +62,7 @@ export function preflight() {
   return result;
 }
 
-if (process.argv[1] && import.meta.url === new URL(process.argv[1], 'file:').href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const action = process.argv[2] ?? '--prepare';
   const result = action === '--prepare' ? prepare() : action === '--preflight' ? preflight() : (() => { throw new Error(`Unknown action: ${action}`); })();
   console.log(JSON.stringify(result, null, 2));

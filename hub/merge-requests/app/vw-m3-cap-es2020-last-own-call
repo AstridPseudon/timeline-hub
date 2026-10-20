@@ -1,0 +1,1 @@
+timeline/app/tl/vw-m3-cap-es2020-last-own-call 4256efc2e viewing 4256efc2e one-line Object.prototype.hasOwnProperty.call replaces Object.hasOwn, ES2020project/scoped check+25PreviewtestsPASS. Port only if actual3a4350 owner source has not already fixed it; otherwise superseded. No timing/scalar behaviorchange.

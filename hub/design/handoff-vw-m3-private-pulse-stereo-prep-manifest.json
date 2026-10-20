@@ -1,0 +1,49 @@
+{
+  "status": "READY_FOR_INDEPENDENT_REVIEW",
+  "worker": "vw-m3-private-pulse-stereo-prep",
+  "sourceBase": "6323b5bd6fdfc1bb680eba6f8a1a46f21acf6adb",
+  "runMode": "stereo",
+  "backendOrder": ["tab", "private-pulse"],
+  "tools": {
+    "pulseaudio": {"path": "/usr/bin/pulseaudio", "version": "16.1"},
+    "pactl": {"path": "/usr/bin/pactl", "version": "16.1"},
+    "ffmpeg": {"path": "/usr/bin/ffmpeg", "version": "6.1.1-3ubuntu5"},
+    "ffprobe": {"path": "/usr/bin/ffprobe", "version": "6.1.1-3ubuntu5"}
+  },
+  "sourceFiles": [
+    "tests/e2e/timeline/private-pulse-stereo.controller.mjs",
+    "tests/e2e/timeline/private-pulse-stereo.probe.ts",
+    "tests/e2e/timeline/private-pulse-stereo.config.ts",
+    "tests/e2e/timeline/setup-private-pulse-stereo.sh"
+  ],
+  "reused": {
+    "tabProbe": "tests/e2e/timeline/tab-audio-capture.probe.ts",
+    "controlledSignals": "CONTROLLED_AUDIO from tab-audio-capture.analysis.mjs (880/1320 shared, 1760 L, 1980 R)",
+    "pulseLifecycle": "player-audio-monitor.ts from e290 history, reduced to native monitor recording",
+    "identityGuards": "existing tab-audio-capture.controller.mjs and its full-source/graph/peer/Node/Chrome guards"
+  },
+  "audio": {
+    "sink": {"name": "player", "rate": 48000, "channels": 2, "format": "native Pulse float32"},
+    "monitor": "player.monitor",
+    "recording": "WAV pcm_f32le from the native Pulse monitor; no -ac, pan, aresample, gain, or level normalization",
+    "detector": {"requiredChannels": 2, "leftHz": 1760, "rightHz": 1980, "minAmplitude": 0.001, "maxLeakage": 0.02, "maxLeakageRatio": 0.25},
+    "controls": ["positive separated L/R", "mono refusal", "swapped-channel refusal", "mixed leakage refusal"]
+  },
+  "lifecycle": {
+    "runtime": "per-run mkdtemp under /tmp, mode 0700, path-owned by the fixture",
+    "browserTemp": "central launcher allocates and validates one owned /tmp/timeline-private-pulse-capture-* directory",
+    "environment": "PULSE_SERVER/PULSE_SINK/PULSE_RUNTIME_PATH/PULSE_STATE_PATH only in child env",
+    "cleanup": "finally stops ffmpeg, then Pulse daemon, then removes only the owned runtime directory",
+    "forbidden": ["root/system mode", "system daemon", "default sink changes", "shared cache writes", "primer", "keepalive", "mute reset", "forced decode", "upmix/downmix", "codec conversion", "threshold widening", "per-clip realignment"]
+  },
+  "claims": {
+    "gdmTwoChannel": "retain one video+audio mux and run L/R detector",
+    "gdmMono": "retain honest separate Pulse monitor channel-capability result only",
+    "excluded": ["Player parity", "export parity", "A/V phase", "source clock attribution", "Gate 6 completion"]
+  },
+  "execution": {
+    "local": "offline syntax/source checks only",
+    "central": "one actual run after independent review and a fresh grant bound to final source SHA",
+    "oldFailures": "mono/1532 grants and the failed 1534 result remain historical; no grant or marker is reused"
+  }
+}

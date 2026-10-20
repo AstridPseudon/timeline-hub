@@ -1,7 +1,7 @@
 import { expect, test as base } from '@playwright/test';
 import { createServer, type Server } from 'node:http';
 import { execFile, spawn, type ChildProcess } from 'node:child_process';
-import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -18,6 +18,17 @@ const exec = promisify(execFile);
 const CAPTURE_MS = 4_000;
 const SAMPLE_RATE = 48_000;
 
+declare global {
+  interface Window {
+    __privatePulseProbe: {
+      mimeType: string;
+      tracks: Array<{ kind: string; readyState: string; settings: MediaTrackSettings; capabilities: MediaTrackCapabilities }>;
+      chunks: string[];
+      fixture: { leftFrequency: number; rightFrequency: number; sampleRate: number };
+    };
+  }
+}
+
 async function stopOwned(child: ChildProcess) {
   if (!child.pid || child.exitCode !== null || child.signalCode !== null) return;
   const exited = new Promise<void>((resolve) => child.once('exit', () => resolve()));
@@ -27,10 +38,13 @@ async function stopOwned(child: ChildProcess) {
 }
 
 async function privatePulse() {
+  if (process.getuid?.() === 0) throw new Error('Root/system mode is forbidden for the private Pulse diagnostic');
   const directory = await mkdtemp(join(tmpdir(), 'timeline-private-pulse-'));
   await chmod(directory, 0o700);
-  const env = {
-    ...process.env,
+  const inherited = {...process.env};
+  for (const key of ['PULSE_SERVER', 'PULSE_SINK', 'PULSE_RUNTIME_PATH', 'PULSE_STATE_PATH', 'PULSE_COOKIE']) delete inherited[key];
+  const env: NodeJS.ProcessEnv = {
+    ...inherited,
     XDG_RUNTIME_DIR: directory,
     PULSE_RUNTIME_PATH: directory,
     PULSE_STATE_PATH: directory,
@@ -40,7 +54,7 @@ async function privatePulse() {
   const daemon = spawn('pulseaudio', [
     '-n', '--daemonize=no', '--use-pid-file=no', '--exit-idle-time=-1', '--log-target=stderr',
     `--load=module-native-protocol-unix socket=${directory}/native auth-anonymous=1 auth-cookie-enabled=0`,
-    '--load=module-null-sink sink_name=player rate=48000 channels=2 channel_map=front-left,front-right',
+    '--load=module-null-sink sink_name=player rate=48000 channels=2 format=float32le channel_map=front-left,front-right',
   ], { env, stdio: ['ignore', 'ignore', 'pipe'] });
   let daemonLog = '';
   daemon.stderr.on('data', (bytes) => { daemonLog += bytes.toString(); });
@@ -113,10 +127,11 @@ const mimeType='video/webm;codecs=vp8,opus'; if(!MediaRecorder.isTypeSupported(m
 recorder=new MediaRecorder(stream,{mimeType}); audio=new AudioContext(); await audio.resume();
 osc=audio.createOscillator(); const gain=audio.createGain(); gain.gain.value=${webAmplitude}; osc.frequency.value=${webFrequency}; osc.connect(gain).connect(audio.destination);
 window.__privatePulseProbe={mimeType,tracks:stream.getTracks().map(track=>({kind:track.kind,readyState:track.readyState,settings:track.getSettings(),capabilities:track.getCapabilities()})),chunks:[],fixture:{leftFrequency:${CONTROLLED_AUDIO.leftFrequency},rightFrequency:${CONTROLLED_AUDIO.rightFrequency},sampleRate:${SAMPLE_RATE}}};
-const chunks=[]; recorder.ondataavailable=async event=>{if(event.data.size) chunks.push(new Uint8Array(await event.data.arrayBuffer()));};
+const chunks=[]; let chunkIndex=0; let delivery=Promise.resolve();
+recorder.ondataavailable=event=>{const index=chunkIndex++; delivery=delivery.then(async()=>{if(event.data.size) chunks[index]=new Uint8Array(await event.data.arrayBuffer());});};
 const stopped=new Promise((resolve,reject)=>{recorder.addEventListener('stop',resolve,{once:true}); recorder.addEventListener('error',()=>reject(new Error('MediaRecorder error')),{once:true});});
-await fixture.play(); recorder.start(100); osc.start(); document.querySelector('#state').textContent='WARMED'; await new Promise(resolve=>setTimeout(resolve,${CAPTURE_MS})); osc.stop(); recorder.stop(); await stopped;
-window.__privatePulseProbe.chunks=chunks.map(bytes=>{let binary=''; for(const byte of bytes) binary+=String.fromCharCode(byte); return btoa(binary);}); button.dataset.result='complete';
+await fixture.play(); recorder.start(100); osc.start(); document.querySelector('#state').textContent='WARMED'; await new Promise(resolve=>setTimeout(resolve,${CAPTURE_MS})); osc.stop(); recorder.stop(); await stopped; await delivery;
+window.__privatePulseProbe.chunks=chunks.filter(Boolean).map(bytes=>{let binary=''; for(const byte of bytes) binary+=String.fromCharCode(byte); return btoa(binary);}); button.dataset.result='complete';
 }catch(error){button.dataset.error=error instanceof Error?error.message:String(error); button.dataset.result='error';}finally{if(audio) await audio.close(); if(stream) stream.getTracks().forEach(track=>track.stop());}})(),{once:true});
 </script>`;
 }
@@ -180,7 +195,7 @@ const test = base.extend<Fixtures>({
   }, { scope: 'worker' }],
 });
 
-test('records native private Pulse monitor before warm and preserves GDM channel refusal', async ({ browser, page, url, pulse }, testInfo) => {
+test('records native private Pulse monitor before warm and preserves GDM channel refusal', async ({ page, url, pulse }, testInfo) => {
   test.setTimeout(120_000);
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   const monitorPath = testInfo.outputPath('private-pulse-monitor.wav');
