@@ -219,6 +219,7 @@ def validate_typescript_client(manifest_path: Path = MANIFEST) -> None:
         "Promise<HistoryPage>",
         "selection: MediaSelectionQuery",
         "async getProjectVerifiedMedia(projectId: string, selection: MediaSelection): Promise<VerifiedMedia>",
+        "async getProjectVerifiedDocument(projectId: string, pin: DocumentPin): Promise<VerifiedDocument>",
         "async getProjectVerifiedDocumentObject(projectId: string, pin: DocumentPin, objectId: string): Promise<VerifiedDocumentObject>",
     )
     missing_fragments = [value for value in required_fragments if value not in source]

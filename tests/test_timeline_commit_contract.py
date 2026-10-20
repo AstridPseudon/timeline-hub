@@ -390,6 +390,38 @@ def test_verified_document_object_public_contract_and_generated_python_adapter()
     assert validator("VerifiedDocumentObject").is_valid(response)
 
 
+def test_verified_document_public_contract_and_generated_python_adapter():
+    from urllib.parse import parse_qs, urlsplit
+
+    from astrid_runtime_client import DocumentPin, VerifiedDocument
+
+    openapi = yaml.safe_load((ROOT / "contract/openapi/workspace-v1.yaml").read_text())
+    operation = openapi["paths"]["/v1/projects/{project_id}/document-inputs/verified"]["get"]
+    assert operation["operationId"] == "getProjectVerifiedDocument"
+    parameters = [parameter for parameter in operation["parameters"] if parameter.get("in") == "query"]
+    assert {parameter["name"] for parameter in parameters} == DocumentPin.__required_keys__
+    assert all(parameter["required"] for parameter in parameters)
+    assert openapi["components"]["schemas"]["VerifiedDocument"] == {
+        "$ref": "./schemas/timeline-commit.json#/$defs/VerifiedDocument",
+    }
+    assert get_type_hints(WorkspaceClient.get_project_verified_document) == {
+        "project_id": str, "pin": DocumentPin, "return": VerifiedDocument,
+    }
+    pin = {"document_id": "document:pack/1", "version": 1, "content_digest": DIGEST}
+    response = {"pin": pin, "document": {"document_id": "document:pack/1", "project_id": "p", "kind": "astrid.project-pack",
+                                         "content": {}, "version": 1, "created_at": "now", "updated_at": "now"}}
+
+    def transport(method, path, headers, body):
+        assert method == "GET" and body is None and "Idempotency-Key" not in headers
+        assert urlsplit(path).path == "/v1/projects/project%2Fone/document-inputs/verified"
+        assert parse_qs(urlsplit(path).query) == {key: [str(value)] for key, value in pin.items()}
+        return 200, {}, json.dumps(response).encode()
+
+    client = WorkspaceClient("http://runtime", "token", transport=transport)
+    assert client.get_project_verified_document("project/one", pin) == response
+    assert validator("VerifiedDocument").is_valid(response)
+
+
 def test_generated_python_history_media_and_restore_adapters():
     calls = []
 

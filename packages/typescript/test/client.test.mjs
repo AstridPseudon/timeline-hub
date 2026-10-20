@@ -26,6 +26,22 @@ test("verified media read preserves the complete pin and encoded alias without m
   assert.equal(calls.length, 1);
 });
 
+test("verified document read sends the exact pin without mutation authority", async () => {
+  const pin = { document_id: "document:pack/1", version: 1, content_digest: `sha256:${"a".repeat(64)}` };
+  const verified = { pin, document: { document_id: pin.document_id, project_id: "p", kind: "astrid.project-pack", content: {}, version: 1, created_at: "now", updated_at: "now" } };
+  const transport = async (method, path, headers, body) => {
+    assert.equal(method, "GET");
+    assert.equal(body, undefined);
+    assert.equal(headers["Idempotency-Key"], undefined);
+    const url = new URL(path, "http://runtime");
+    assert.equal(url.pathname, "/v1/projects/project%2Fone/document-inputs/verified");
+    assert.deepEqual(Object.fromEntries(url.searchParams), { ...pin, version: "1" });
+    return { status: 200, headers: {}, body: json(verified) };
+  };
+  const client = new WorkspaceClient("http://runtime", "token", transport);
+  assert.deepEqual(await client.getProjectVerifiedDocument("project/one", pin), verified);
+});
+
 test("verified document object read sends the exact pin and object without mutation authority", async () => {
   const pin = { document_id: "document:pack/1", version: 1, content_digest: `sha256:${"a".repeat(64)}` };
   const objectId = `sha256:${"b".repeat(64)}`;
