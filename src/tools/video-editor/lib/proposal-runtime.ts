@@ -121,9 +121,9 @@ export interface ProposalServiceBridge {
  * {@link ExtensionPersistenceService}) into a {@link ProposalPersistenceProvider}
  * consumable by {@link createProposalRuntime}.
  *
- * Proposals are stored with `extensionId = 'ai-timeline-agent'` and the
- * patch/state/version fields are carried in the payload so the runtime can
- * reconstruct them on hydration.
+ * Proposals retain the stable `ai-timeline-agent` extension identifier for
+ * compatibility with existing proposal records. Patch/state/version fields
+ * are carried in the payload so the runtime can reconstruct them on hydration.
  */
 export function createProposalPersistenceBridge(
   service: ProposalServiceBridge,

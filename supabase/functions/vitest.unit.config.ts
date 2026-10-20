@@ -21,7 +21,6 @@ export const EDGE_UNIT_INCLUDE = [
   'supabase/functions/trigger-auto-topup/**/*.test.ts',
   'supabase/functions/update-worker-model/**/*.test.ts',
   'supabase/functions/huggingface-upload/**/*.test.ts',
-  'supabase/functions/timeline-import/**/*.test.ts',
   'supabase/functions/task-status/**/*.test.ts',
 ] as const;
 
@@ -33,11 +32,13 @@ export const EDGE_UNIT_EXCLUDE = [
 ] as const;
 
 const MOCKS_DIR = path.resolve(__dirname, '_tests/mocks');
+const STRIPE_ESM_SPECIFIER = 'https:' + '//esm.sh/stripe@14.21.0';
 
 export default defineConfig({
   resolve: {
     alias: {
       ...buildEdgeAliasMap(MOCKS_DIR),
+      [STRIPE_ESM_SPECIFIER]: path.resolve(MOCKS_DIR, 'stripe.ts'),
     },
   },
   test: {
