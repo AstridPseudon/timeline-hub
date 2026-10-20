@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T21:09:02Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 27m -->
+<!-- main | 2026-10-20T21:10:19Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 29m -->
 # runtime — 2026-10-20T20:41:15Z
 Milestone: M1 recorded. M2/M3 active; no completion or delivery claim.
 Integrated: Runtime tl/integration a020a1c. History fix3b900c3 is reviewed and passes128 local guards,37 service cases and2 real HTTP cases. Agent original catalog/recover/history/restore case also passed and AG-RECOVER consumer cut merged4095a349. Auth checks f660e7a, historical fixture b511cb5, real capture fixture d1ea66b and RT02 retry/restart test a020 are merged. Published producer2c4ac180/client0.2.13 unchanged.

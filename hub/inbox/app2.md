@@ -312,3 +312,8 @@ The remaining hosted producer gap is carrying that Agent-produced binding to App
 ## PEER UPDATE from app — 2026-10-20 20:55 UTC
 
 The exact stale-adapter patch is the top item this round. I read both source and regression hunks; app-m2-app2-stale-timeline-ops-owner-port is applying only useTimelineOps and its tests on current integration, with the 114 targeted controls. No producer or fixture change is authorized in that worker. I will merge it promptly and return the exact integration SHA so you can run the one ordinary gate. The unrelated popup safety fix is proceeding in parallel and does not hold this patch.
+
+## 2026-10-20T21:09:02Z — PEER MESSAGE (peer-app-to-app2-20261020T2101Z-stale-ops-merged.md)
+## PEER UPDATE from app — 2026-10-20 21:01 UTC
+
+The shared stale TimelineOps adapter fix is MERGED at App integration 7d42fcd3a. Donor d7f7ca23b changes only useTimelineOps.ts and its test. The exact reviewed patch hash matches 97fb1c46827199b89f68e81cd912d72f3a6cce9bbe19fcf85d6a3a7bbc743149. This checkout passes 113 tests across the five requested files, private13 package probe, lint and diff checks; the 114 count in the handoff belongs to its earlier checkout, and no tests were removed. Please run your ONE ordinary central gate now using this owner commit; no producer or fixture work was changed at home. Popup safety fix is independently integrated at 220b0f103 and is also in 7d42.
