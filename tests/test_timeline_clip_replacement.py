@@ -126,3 +126,64 @@ def test_parent_media_cli_forwards_exact_locator_and_head(capsys) -> None:
             "idempotency_key": "parent-1",
         })
     ]
+
+
+def test_selected_parent_and_occurrence_replacement_use_the_commit_door() -> None:
+    from tests.editing_conformance.test_recipe_occurrence_media import inputs
+
+    _, old, new, _ = inputs()
+
+    class Transport:
+        def __init__(self):
+            self.committed = []
+
+        def list_timelines(self, project, *, cursor=None, limit=50):
+            return ([{'project_id': project, 'timeline_id': 'main', 'slug': 'main'}], None)
+
+        def publish_parent_composition(self, *args, **kwargs):
+            raise AssertionError('selected replacements must use native commands')
+
+        def commit_timeline(self, project, timeline, body, *, idempotency_key):
+            self.committed.append((project, timeline, body, idempotency_key))
+            return {'data': {'accepted': True}, 'receipt': None}
+
+    transport = Transport()
+    timelines = RemoteTimelines(transport)
+    for occurrence in (None, 'occ-1'):
+        result = timelines.replace_parent_media(
+            'project-1', 'main', occurrence_id=occurrence, clip_id='picture-1',
+            source_object_id=new['object_id'], expected_head='parent-1',
+            expected_publication='publication-1', old_media=old, media=new,
+            idempotency_key='selected-' + str(occurrence),
+        )
+        assert result.ok, result.error
+        project, timeline, body, key = transport.committed[-1]
+        assert (project, timeline, key) == ('project-1', 'main', 'selected-' + str(occurrence))
+        assert body['base_revision_id'] == 'parent-1'
+        assert body['base_publication_id'] == 'publication-1'
+        call = body['commands'][0]
+        assert call['select'] == ('parent' if occurrence is None else 'occurrence:occ-1') + '/clip:picture-1'
+        assert call['op'] == ('clip.swap-media' if occurrence is None else 'occurrence.swap-media')
+        assert call['args'] == {'old_media': old, 'media': new}
+    assert len(transport.committed) == 2
+
+
+def test_incomplete_or_mismatched_selection_never_falls_back_to_publication() -> None:
+    from tests.editing_conformance.test_recipe_occurrence_media import inputs
+
+    _, old, new, _ = inputs()
+
+    class Transport:
+        def __getattr__(self, name):
+            raise AssertionError('invalid selected requests must not read or write Runtime')
+
+    for values in ({'media': new}, {'old_media': old}, {'expected_publication': 'pub-1'},
+                   {'old_media': old, 'media': new, 'expected_publication': 'pub-1',
+                    'source_object_id': old['object_id']}):
+        args = {'source_object_id': new['object_id'], **values}
+        result = RemoteTimelines(Transport()).replace_parent_media(
+            'project-1', 'main', occurrence_id=None, clip_id='picture-1',
+            expected_head='parent-1', idempotency_key='invalid', **args,
+        )
+        assert not result.ok
+        assert result.error.code == 'validation_error'

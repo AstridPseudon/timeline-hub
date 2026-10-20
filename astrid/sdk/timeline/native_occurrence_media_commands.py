@@ -1,4 +1,4 @@
-"""Occurrence-only media recipes over raw children and detached Runtime inputs."""
+"""Scoped media recipes over raw clips and detached Runtime inputs."""
 from __future__ import annotations
 
 import copy
@@ -66,8 +66,20 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
     identity = pin['asset'] if alias is None else alias
     if not isinstance(identity, str) or not re.fullmatch(r'(?!.*::)[^/]+', identity):
         raise CommandError('media requires a reserved raw asset alias')
-    # Containers must already exist. Never replace null/opaque registry state.
-    registry = ctx.state.config(owner).get('registry')
+    registry = ctx.state.registry(owner)
+    if owner == 'parent':
+        # Observe storage before creating containers, so capture and inverse
+        # guard the original presence. Validate main's authority before writes.
+        ctx.read(owner + '/collection:asset')
+        if create:
+            parent = ctx.state.bundle['parent']
+            path = (['registry'] if 'registry' in parent or 'registry' not in ctx.state.config(owner)
+                    else ['config', 'registry'])
+            ctx.object(owner, path)
+            ctx.object(owner, [*path, 'assets'])
+            registry = ctx.state.registry(owner)
+    # Occurrence edits still require authored containers. Never replace explicit
+    # null/malformed registry state, including either parent mirror.
     if not isinstance(registry, dict) or not isinstance(registry.get('assets'), dict):
         raise CommandError('media edit requires an authored asset registry')
     ref = owner + '/asset:' + identity
@@ -89,16 +101,18 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
     return ref
 
 
-def _clip(ctx, owner, row, limit, kind, verified):
+def _clip(ctx, owner, row, limit, kind, verified, *, raw_window=False):
     if row.get('clipType') not in ('media', kind) or not isinstance(row.get('asset'), str):
         raise CommandError('media edit requires one matching media clip')
     if any(key in row for key in ('asset_id', 'media_id', 'object_id', 'clip_type')):
         raise CommandError('media edit requires one asset selector')
     for key in ('time_map', 'timeMap', 'clips', 'children', 'from_ms', 'to_ms', 'at_ms',
                 'duration', 'duration_ms', 'source', 'sourceURL', 'sourceUrl', 'source_url',
-                'src', 'source_uuid', 'anchor', 'transition'):
+                'src', 'source_uuid', 'anchor'):
         if row.get(key) is not None:
             raise CommandError(f'media edit does not support {key}', kind='unsupported_timing')
+    if not raw_window and row.get('transition') is not None:
+        raise CommandError('media edit does not support transition', kind='unsupported_timing')
     app = row.get('app')
     nested = app.get('astrid') if isinstance(app, dict) else None
     for container in (row, app, nested):
@@ -108,15 +122,22 @@ def _clip(ctx, owner, row, limit, kind, verified):
                 *RELATIONS, 'beats', 'word', 'words', 'transcript', 'source_id', 'standin', 'standin_intent')):
             raise CommandError('media edit requires literal child timing', kind='unsupported_timing')
     at = number(row.get('at'), 'clip.at')
-    hold = number(row.get('hold'), 'clip.hold', positive=True)
-    speed = number(row.get('speed', 1), 'clip.speed', positive=True)
+    hold = row.get('hold')
+    if raw_window and hold is None and kind == 'video':
+        hold = number(row.get('to'), 'clip.to') - number(row.get('from'), 'clip.from')
+    hold = number(hold, 'clip.hold', positive=True)
+    speed = number(1 if row.get('speed') is None else row['speed'], 'clip.speed', positive=True)
     if at < 0 or at + hold / speed > limit:
         raise CommandError('child interval exceeds occurrence', kind='occurrence_boundary')
     if kind == 'image':
         if speed != 1 or any(row.get(key) is not None for key in ('from', 'to')):
             raise CommandError('image requires hold without a source window', kind='unsupported_timing')
     else:
-        left, right = number(row.get('from'), 'clip.from'), number(row.get('to'), 'clip.to')
+        left, right = row.get('from'), row.get('to')
+        if raw_window:
+            left = number(0 if left is None else left, 'clip.from')
+            right = left + hold if right is None else right
+        left, right = number(left, 'clip.from'), number(right, 'clip.to')
         if left < 0 or right <= left or not equal(right - left, hold) or any(
                 right > value['duration_seconds'] for value in verified):
             raise CommandError('source window differs from hold or exceeds media', kind='unsupported_timing')
@@ -149,6 +170,19 @@ def add_media(ctx, command):
 def swap_media(ctx, command):
     ref = command['select']
     owner, limit = _owner(ctx, ref, child=True)
+    _swap(ctx, command, owner, limit)
+
+
+def parent_swap_media(ctx, command):
+    ref = command['select']
+    if not isinstance(ref, str) or not re.fullmatch(r'parent/clip:(?!.*::)[^/]+', ref):
+        raise CommandError('parent media swap requires an explicit raw parent clip')
+    ctx.bind('media.owner', 'parent')
+    _swap(ctx, command, 'parent', float('inf'))
+
+
+def _swap(ctx, command, owner, limit):
+    ref = command['select']
     ctx.select('collection.clips', owner)
     row = ctx.read(ref)
     if not isinstance(row, dict):
@@ -158,7 +192,7 @@ def swap_media(ctx, command):
     value, kind = _verified(ctx, pin)
     if old_kind != kind:
         raise CommandError('media swap preserves media kind', kind='unsupported_media')
-    _clip(ctx, owner, row, limit, kind, [previous, value])
+    _clip(ctx, owner, row, limit, kind, [previous, value], raw_window=owner == 'parent')
     _registry(ctx, owner, old, kind, alias=row['asset'])
     _registry(ctx, owner, pin, kind, create=True)
     ctx.bind('media.target', ref, dependencies=['media.old', 'media.new'])
@@ -182,3 +216,12 @@ def capture_occurrence_swap_media(bundle, select, old_media, media, *, verified_
                              'select': select, 'args': {'old_media': copy.deepcopy(old_media),
                                                        'media': copy.deepcopy(media)},
                              'intent': MEDIA_INTENT}], verified_media=verified_media).commands[0]
+
+
+def capture_parent_swap_media(bundle, select, old_media, media, *, verified_media):
+    """Change only a raw parent clip's asset; clearing remains clip.set."""
+    from .commands import execute
+    return execute(bundle, [{'schema_version': 1, 'op': 'clip.swap-media', 'version': '1',
+                             'select': select, 'args': {'old_media': copy.deepcopy(old_media),
+                                                       'media': copy.deepcopy(media)},
+                             'intent': {'ownership': 'parent'}}], verified_media=verified_media).commands[0]
