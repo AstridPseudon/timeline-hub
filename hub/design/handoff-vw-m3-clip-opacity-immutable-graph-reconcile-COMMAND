@@ -1,0 +1,21 @@
+# Read-only commands and results
+
+```text
+sha256sum vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz
+  9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+installed-vs-tar comparison
+  77/77 members; names only installed 0; names only tar 0; differing bytes 0
+manifest digest (installed == tar)
+  fb5678e4db5a0d59589099641ed261739c56aace1cfbb8369ff583b39f4e2ccc
+node --input-type=module [createRequire/import.meta.resolve/export probes]
+  root -> dist/index.js; clipOpacity undefined
+  /evaluation -> dist/evaluation.js; clipOpacity function
+node --test config/vite/timelineCompositionPackage.test.mjs
+  PASS — 1 test, 0 failures
+git diff --check
+  PASS
+```
+
+No build, browser, render, install, package/pin/lock/fallback/graph
+mutation, or broad/unchanged journey was run.
+
