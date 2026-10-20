@@ -204,12 +204,14 @@ export class AuthoredState {
   set(ref: string, path: string[], state: AgentState): void {
     let target = this.entity(ref)!;
     for (const key of path.slice(0, -1)) {
-      if (!object(target[key])) throw new ClipMoveError('write requires recorded container creation');
+      if (!has(target, key) || !object(target[key])) throw new ClipMoveError('write requires recorded container creation');
       target = target[key];
     }
     const key = path[path.length - 1];
     if (state.state === 'absent') delete target[key];
-    else target[key] = copy(state.value);
+    else Object.defineProperty(target, key, {
+      value: copy(state.value), enumerable: true, configurable: true, writable: true,
+    });
   }
 }
 
