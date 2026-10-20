@@ -331,7 +331,7 @@ function ShotTimelineEditorSurface({
     </div>
   );
 }
-function ShotTimelineRecoveryControls() {
+export function ShotTimelineRecoveryControls() {
   const chrome = useTimelineChromeContext();
   const recovery = chrome.recoveryDraft;
   if (!recovery && !chrome.isConflictExhausted) {

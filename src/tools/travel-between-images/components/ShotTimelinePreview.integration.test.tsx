@@ -21,6 +21,7 @@ import {
   createShotTimelineInitialData,
   shotTimelineRecoveryId,
 } from './shotTimelineDataProvider.ts';
+import { ShotTimelineRecoveryControls } from './ShotTimelinePreview.tsx';
 
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
 
@@ -237,6 +238,7 @@ describe('shot timeline popup real recovery integration', () => {
         initialTimelineData={createShotTimelineInitialData(config)}
       >
         <TimelineEditorCore />
+        <ShotTimelineRecoveryControls />
         <SaveStatusProbe />
       </VideoEditorProvider>,
       { wrapper: wrapper() },

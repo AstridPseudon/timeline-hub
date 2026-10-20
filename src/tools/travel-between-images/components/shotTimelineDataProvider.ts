@@ -479,9 +479,10 @@ export function createShotTimelineDataProvider(
       return { config: timelineConfig, configVersion };
     },
     loadAssetRegistry: async () => registry,
-    saveTimeline: async (timelineId, nextConfig, expectedVersion) => {
+    saveTimeline: async (timelineId, nextConfig, expectedVersion, nextRegistry) => {
       const publicationGeneration = draftGeneration;
       const rawComposition = composition;
+      const draftRegistry = nextRegistry ?? registry;
       assertEditorHeadIsCurrent();
       if (!shotCompositionAdapter?.publish) {
         throw new Error('The canonical shot-composition provider is read-only');
@@ -560,7 +561,7 @@ export function createShotTimelineDataProvider(
               // Existing recovery bytes keep their owner and retry meaning.
               config: recoveryMatchesThisSave ? recoveryAtStart!.draft.config
                 : serializeProjectedTimelineConfig(nextConfig, rawComposition),
-              registry,
+              registry: draftRegistry,
               canonicalPublication: candidate,
             };
             await saveTimelineDraftIfOwner(
