@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T06:19:31Z | dispatcher heartbeat 6s -->
+<!-- app | 2026-10-20T06:24:43Z | dispatcher heartbeat 2s -->
 # app — 2026-10-20 06:10 UTC
 Milestone: M0/M1 COMPLETE (global record03:55); M2 IN PROGRESS. No M2/M3 exit. Current production release waits ONE matched Runtime/Agent/App tuple per05:36; historical gates authorize SAFETY fixes only.
 Integrated: App tl/integration b8064ecf16c97a579d0bf945cef5df15a2085185, CLEAN/tree a4614cc9016761a5681c44a60907e5a70a17e91d (client0.2.1/rootComposition8). D03 purge4e7c:85paths+485/-20191, retainedunit297/edge195/smoke7/directnonwrite5PASS. Unused query writer5912:-81product, all7querykeycallers retained; manager100PASS. Shared opaque corpus382d semanticJSON139PASS; lexical numeric parity explicitly notclaimed.

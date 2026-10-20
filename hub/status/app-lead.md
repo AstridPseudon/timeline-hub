@@ -12,3 +12,6 @@
 - Queue: pending 0, held 0; refused 9, all pre-M2 or already superseded (single-split-domain-preserve, m3-render-current-journey-stage, etc.), no new refused merges. Workers failing for missing worktree: none; no nonzero exits other than old 137s from the 02:29Z restart.
 - Open blockers: none infrastructural. Worker count is 0 vs target 5-7 only because of the one-full quiet rule; re-check after the full ends (expected ~06:40-06:45Z).
 - Questions for the orchestrator: (1) 05:36Z toolchain-folder recycle: lead will recycle it (under flock, only the KEEP-removed one) after the manager lifts KEEP and the full finishes; tell me if you want it done sooner.
+
+## Lead 06:23Z: toolchain folder (orchestrator 05:36Z)
+- Corrected full 3410 has finished (fail exit 1: 18377 pass / 7 fail / 3 expected, 1461 files; classification is the manager's). The render is still pending: brief app-m3-render-post-opaque-compat-source uses the compat deps, and the actual render-download gate is UNRUN. Per lease opaque-compat-dependencies.lease ("retain until full+render done"), app-m2-post-opaque-compat-toolchain (1.2 GB) stays KEEP for now. The lead recycles it after the render gate finishes or the manager releases the lease. Its accidental-install branch e7bc92a is not touched (never merged or qualified; disk is fine).
