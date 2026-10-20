@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T21:20:39Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 9m -->
+<!-- main | 2026-10-20T21:23:09Z | dispatcher heartbeat 10s | live 5 (sol 0, luna 5, other 0) | busy30 12 | status age 12m -->
 # runtime — 2026-10-20T21:10:55Z
 Milestone: M1 recorded. M2/M3 active. No exit, delivery or physical parity claim.
 Integrated: Runtime tl/integration e5a7924. Reviewed history3b900, authf660, historical fixtureb511, capturefixtured1ea, RT02positivea020, owner reference/xfail follow-up04b990 and additive generic-producer regressions e5a are merged. Agent AG-RECOVER cut4095 also merged after its original HTTP case passed. Published producer2c4/client0.2.13 unchanged.
