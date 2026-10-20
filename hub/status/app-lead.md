@@ -128,3 +128,8 @@ AssertionError: expected BridgeContractError: Astrid bridge return… { code: '�
 
 ```
 - 2755 (same key) left running, as asked; the 3 held workers stay held until the orchestrator replies.
+
+## Lead 01:35Z: quiet window for final M1 full retry
+- Quiet window (lead) for app-full-m1-bounded-integration-1020011705-2755: peak 1-min load 4.69 on 4 CPUs; peak memory used 2129 MiB of 16093 MiB; paused 2 heavy non-suite processes; held requests released. Result: test app-full-m1-bounded-integration-1020011705-2755: fail exit=1 in 1068s — full-m1-bounded-integration on integration:app (app tree dd1fe6a725cf20015f7b8cb4a966bdf507319653) cmd: env ASTRID_CHECKOUT=/home/user/work/agent npm test -- --maxWorkers=2 counts: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯  Test Files  4 failed | 1454 passed (1458)       Tests  6 failed | 18301 passed |
+- 01:35Z: 2755 (same tree dd1fe6a7 and key as 12729) also COMPLETED under the enforced quiet window: Test Files 4 failed | 1454 passed (1458); Tests 6 failed | 18301 passed | 3 expected fail (18310). These are the same 6 baseline failures. Peak 1-min load 4.69 on 4 CPUs; peak memory 2129 of 16093 MiB.
+- The 3 held M2 workers (clip-params-session, params-discrete-ui, render-requester-map) were released automatically when 2755 ended, and started at 01:35Z. That was after the quiet window, but before the orchestrator's reply.
