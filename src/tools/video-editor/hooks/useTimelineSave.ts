@@ -58,13 +58,19 @@ export function useTimelineSave(
   const recoveryPendingRef = useRef(false);
   // Includes the asynchronous initial draft check and Retry awaiting an ACK.
   const recoveryActiveRef = useRef(true);
+  const [initialRecoveryChecked, setInitialRecoveryChecked] = useState(false);
   const eventBusRef = useRef(new TimelineEventBus());
   // Recovery Retry performs async read/build work before entering persistence.
   // Canonical reloads must invalidate that work at their shared boundary.
   const recoveryActionGenerationRef = useRef(0);
+  const recoveryCheckedScopeRef = useRef<string | null>(null);
   const invalidateRecoveryAction = useCallback(() => {
     recoveryActionGenerationRef.current += 1;
   }, []);
+  const invalidateInitialRecoveryCheck = useCallback(() => {
+    invalidateRecoveryAction();
+    recoveryCheckedScopeRef.current = null;
+  }, [invalidateRecoveryAction]);
   const snapshotWriteBlockedRef = useRef(false);
   const commit = useTimelineCommit({
     eventBus: eventBusRef.current,
@@ -94,9 +100,11 @@ export function useTimelineSave(
     recoveryActiveRef,
     lastSavedSignatureRef,
     interactionStateRef,
-    onCanonicalReloadStart: invalidateRecoveryAction,
+    onCanonicalReloadStart: invalidateInitialRecoveryCheck,
   });
   const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl,
+    // Capture bootstrap only after the first display adoption and its draft check.
+    initialReadReady: commit.data !== null && initialRecoveryChecked,
     legacyClean: () => commit.editSeqRef.current <= savedSeqRef.current && !persistence.isSavingRef.current
       && !recoveryActiveRef.current,
     snapshotWriteBlockedRef, loaded: queries.timelineQuery.data, configVersionRef, headRevisionRef, lastSavedSignatureRef, store, shots, recoveryConfig });
@@ -146,7 +154,6 @@ export function useTimelineSave(
     retryAllowed: boolean;
   } | null>(null);
   const [recoveredAsDirty, setRecoveredAsDirty] = useState(false);
-  const recoveryCheckedScopeRef = useRef<string | null>(null);
   const recoveryKey = provider.getTimelineDraftRecoveryMetadata?.().recoveryKey ?? timelineId;
   const recoveryScope = `${timelineId}\u0000${recoveryKey}`;
   const fallbackCanonicalReloadInProgressRef = useRef(false);
@@ -239,13 +246,14 @@ export function useTimelineSave(
       }).finally(() => {
         if (!cancelled && recoveryActionGenerationRef.current === actionGenerationAtCheck) {
           recoveryActiveRef.current = recoveryPendingRef.current;
+          setInitialRecoveryChecked(true);
           if (!recoveryActiveRef.current) resumeDeferredRecoverySaveRef.current();
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [commit.dataRef, commit.editSeqRef, hasTimelineData, recoveryKey, recoveryScope, timelineId, offerRecovery, provider, trustedRecoveryHead]);
+  }, [commit.data, commit.dataRef, commit.editSeqRef, hasTimelineData, recoveryKey, recoveryScope, timelineId, offerRecovery, provider, trustedRecoveryHead]);
   useEffect(() => {
     return eventBusRef.current.on('saveSuccess', () => {
       invalidateRecoveryAction();
@@ -428,7 +436,8 @@ export function useTimelineSave(
     savedSeqRef,
     selectedClipIdRef: commit.selectedClipIdRef,
     selectedTrackIdRef: commit.selectedTrackIdRef,
-    isLoading: queries.timelineQuery.isLoading && !commit.data,
+    isLoading: (queries.timelineQuery.isLoading && !commit.data)
+      || (commands.enabled && !!commit.data && !commands.port && commands.state.status !== 'error'),
     watchdogTripped: persistence.watchdogTripped,
     watchdogReason: persistence.watchdogReason,
     retryWatchdog: persistence.retryWatchdog,

@@ -15,6 +15,7 @@ import type { VideoEditorShotsHost } from '../runtime/ports.ts';
 
 export function useTimelineCommandSession(options: {
   legacyClean: () => boolean;
+  initialReadReady?: boolean;
   snapshotWriteBlockedRef: MutableRefObject<boolean>;
   provider: DataProvider;
   timelineId: string;
@@ -38,9 +39,10 @@ export function useTimelineCommandSession(options: {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<CommandSessionState>({ status: 'loading', error: null,
     ownerId: null, recoverableOwners: [], canUndo: false });
+  const initialReadReady = options.initialReadReady ?? true;
   const enabled = !!(provider.loadTimelineCommandBasis && provider.commitTimeline && provider.getRecoverableIdentity);
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !initialReadReady) return;
     let disposed = false;
     let session: TimelineCommandSession | undefined;
     let projectGeneration = 0;
@@ -221,7 +223,7 @@ export function useTimelineCommandSession(options: {
       snapshotWriteBlockedRef.current = false;
       disposeSession();
     };
-  }, [provider, timelineId, enabled, attempt, snapshotWriteBlockedRef]);
+  }, [provider, timelineId, enabled, initialReadReady, attempt, snapshotWriteBlockedRef]);
   useEffect(() => {
     if (!enabled || !options.loaded?.head || !sessionRef.current) return;
     let cancelled = false;
