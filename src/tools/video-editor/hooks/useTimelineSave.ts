@@ -63,9 +63,14 @@ export function useTimelineSave(
   // Recovery Retry performs async read/build work before entering persistence.
   // Canonical reloads must invalidate that work at their shared boundary.
   const recoveryActionGenerationRef = useRef(0);
+  const recoveryCheckedScopeRef = useRef<string | null>(null);
   const invalidateRecoveryAction = useCallback(() => {
     recoveryActionGenerationRef.current += 1;
   }, []);
+  const invalidateInitialRecoveryCheck = useCallback(() => {
+    invalidateRecoveryAction();
+    recoveryCheckedScopeRef.current = null;
+  }, [invalidateRecoveryAction]);
   const snapshotWriteBlockedRef = useRef(false);
   const commit = useTimelineCommit({
     eventBus: eventBusRef.current,
@@ -95,7 +100,7 @@ export function useTimelineSave(
     recoveryActiveRef,
     lastSavedSignatureRef,
     interactionStateRef,
-    onCanonicalReloadStart: invalidateRecoveryAction,
+    onCanonicalReloadStart: invalidateInitialRecoveryCheck,
   });
   const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl,
     // Capture bootstrap only after the first display adoption and its draft check.
@@ -149,7 +154,6 @@ export function useTimelineSave(
     retryAllowed: boolean;
   } | null>(null);
   const [recoveredAsDirty, setRecoveredAsDirty] = useState(false);
-  const recoveryCheckedScopeRef = useRef<string | null>(null);
   const recoveryKey = provider.getTimelineDraftRecoveryMetadata?.().recoveryKey ?? timelineId;
   const recoveryScope = `${timelineId}\u0000${recoveryKey}`;
   const fallbackCanonicalReloadInProgressRef = useRef(false);
@@ -249,7 +253,7 @@ export function useTimelineSave(
     return () => {
       cancelled = true;
     };
-  }, [commit.dataRef, commit.editSeqRef, hasTimelineData, recoveryKey, recoveryScope, timelineId, offerRecovery, provider, trustedRecoveryHead]);
+  }, [commit.data, commit.dataRef, commit.editSeqRef, hasTimelineData, recoveryKey, recoveryScope, timelineId, offerRecovery, provider, trustedRecoveryHead]);
   useEffect(() => {
     return eventBusRef.current.on('saveSuccess', () => {
       invalidateRecoveryAction();
