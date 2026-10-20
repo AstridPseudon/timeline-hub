@@ -406,6 +406,25 @@ def test_native_clip_swap_rebases_after_disjoint_intervening_edit(native_editing
 
 
 @pytest.mark.integration
+def test_native_parent_clip_swap_route_refuses_parent_ownership_on_current_schema(native_editing):
+    command = native_editing.native.capture_parent_swap_media(
+        native_editing.native.bundle_from_document(native_editing.document),
+        NATIVE_PARENT_TARGET, native_editing.old, native_editing.new,
+        verified_media=[native_editing.old_verified, native_editing.new_verified],
+    )
+    body = _native_body(native_editing.service, native_editing.project, [command])
+    from runtime_protocol.timeline_commit_port import validate_request
+
+    with pytest.raises(ValidationError, match=r"'parent' is not one of \['shared', 'occurrence'\]"):
+        validate_request(body)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=ValidationError,
+    reason="needs schema 0.2.14 parent ownership; ledger D04",
+)
+@pytest.mark.integration
 def test_native_parent_clip_swap_route_replaces_parent_media(native_editing):
     command = native_editing.native.capture_parent_swap_media(
         native_editing.native.bundle_from_document(native_editing.document),
@@ -413,13 +432,6 @@ def test_native_parent_clip_swap_route_replaces_parent_media(native_editing):
         verified_media=[native_editing.old_verified, native_editing.new_verified],
     )
     body = _native_body(native_editing.service, native_editing.project, [command])
-    try:
-        from runtime_protocol.timeline_commit_port import validate_request
-        validate_request(body)
-    except ValidationError as error:
-        if "one of ['shared', 'occurrence']" in str(error):
-            pytest.xfail("public Runtime schema is pre-0.2.14 and excludes parent clip.swap-media ownership")
-        raise
     accepted = _native_commit(native_editing.service, native_editing.project, body, "native-parent-swap")
     assert accepted["data"]["status"] in {"accepted", "rebased"}
     assert accepted["data"]["canonical_document"]["parent_revision"]["payload"]["clips"][0]["asset"] == native_editing.new["asset"]
