@@ -11,6 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from jsonschema import Draft202012Validator
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
 from astrid_runtime_client import WorkspaceClient
@@ -229,29 +230,6 @@ def _native_commit(service, project, body, key, *, timeline="film"):
     )
 
 
-class _ParentOwnershipSchemaBoundary(ValidationError):
-    """Private marker for the current schema's parent-ownership refusal."""
-
-
-def _native_parent_ownership_commit(service, project, body, key, *, timeline="film"):
-    try:
-        return _native_commit(service, project, body, key, timeline=timeline)
-    except ValidationError as error:
-        cause = error.__cause__
-        if (
-            str(error) == "invalid CommitRequest: 'parent' is not one of ['shared', 'occurrence']"
-            and getattr(cause, "message", None) == "'parent' is not one of ['shared', 'occurrence']"
-            and tuple(getattr(cause, "absolute_path", ())) == (
-                "commands", 0, "intent", "ownership",
-            )
-            and getattr(cause, "validator", None) == "enum"
-            and getattr(cause, "validator_value", None) == ["shared", "occurrence"]
-            and getattr(cause, "instance", None) == "parent"
-        ):
-            raise _ParentOwnershipSchemaBoundary(str(error)) from error
-        raise
-
-
 def _native_rows(service):
     return tuple(service.store.conn.iterdump())
 
@@ -429,22 +407,25 @@ def test_native_clip_swap_rebases_after_disjoint_intervening_edit(native_editing
 
 
 @pytest.mark.integration
-def test_native_parent_clip_swap_route_refuses_parent_ownership_on_current_schema(native_editing):
+def test_native_parent_clip_swap_route_refuses_parent_ownership_on_public013_schema(native_editing):
     command = native_editing.native.capture_parent_swap_media(
         native_editing.native.bundle_from_document(native_editing.document),
         NATIVE_PARENT_TARGET, native_editing.old, native_editing.new,
         verified_media=[native_editing.old_verified, native_editing.new_verified],
     )
-    body = _native_body(native_editing.service, native_editing.project, [command])
-    with pytest.raises(ValidationError, match=r"'parent' is not one of \['shared', 'occurrence'\]"):
-        _native_commit(native_editing.service, native_editing.project, body, "native-parent-swap-refused")
+    public_schema = json.loads(
+        (Path(__file__).parent / "fixtures/published-command-schemas/agent-26ef2bbb.json").read_bytes()
+    )
+    errors = [
+        error for error in Draft202012Validator(public_schema).iter_errors(command)
+        if tuple(error.path) == ("intent", "ownership")
+    ]
+    assert len(errors) == 1
+    assert errors[0].validator == "enum"
+    assert errors[0].validator_value == ["shared", "occurrence"]
+    assert errors[0].instance == "parent"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=_ParentOwnershipSchemaBoundary,
-    reason="needs schema 0.2.14 parent ownership; ledger D04",
-)
 @pytest.mark.integration
 def test_native_parent_clip_swap_route_replaces_parent_media(native_editing):
     command = native_editing.native.capture_parent_swap_media(
@@ -453,9 +434,7 @@ def test_native_parent_clip_swap_route_replaces_parent_media(native_editing):
         verified_media=[native_editing.old_verified, native_editing.new_verified],
     )
     body = _native_body(native_editing.service, native_editing.project, [command])
-    accepted = _native_parent_ownership_commit(
-        native_editing.service, native_editing.project, body, "native-parent-swap",
-    )
+    accepted = _native_commit(native_editing.service, native_editing.project, body, "native-parent-swap")
     assert accepted["data"]["status"] in {"accepted", "rebased"}
     assert accepted["data"]["canonical_document"]["parent_revision"]["payload"]["clips"][0]["asset"] == native_editing.new["asset"]
 
