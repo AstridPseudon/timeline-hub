@@ -31,7 +31,7 @@ export function VideoEditorPanelDisplayControl({ className = '', visible = true 
   const returnFocusScope = useRef<HTMLElement | null>(null);
 
   return <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-    <DropdownMenuTrigger ref={trigger} data-video-editor-panel-display="true" hidden={!visible} aria-hidden={!visible} disabled={!visible} style={{ display: visible ? undefined : 'none' }} className={`${className} flex h-8 min-h-10 sm:min-h-8 w-10 sm:w-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-card/80 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`} aria-label="Panel display" title="Panel display">
+    <DropdownMenuTrigger ref={trigger} data-video-editor-panel-display="true" hidden={!visible} aria-hidden={!visible} disabled={!visible} style={{ display: visible ? undefined : 'none' }} className={`${className} flex h-8 min-h-10 sm:min-h-8 w-10 sm:w-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-card/90 text-muted-foreground backdrop-blur-md hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`} aria-label="Panel display" title="Panel display">
       <PanelsTopLeft className="h-4 w-4" />
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" finalFocus={() => {

@@ -1880,6 +1880,53 @@ describe('TimelineEditorShellCore — phone layout', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Inspector' }));
     expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
   });
+
+  it.each(['phone', 'tablet'] as const)('returns to Video on %s when the playhead is moved by hand, not by playback', (device) => {
+    __deviceClass = device;
+    // A fresh prop each time gets past the shell's memo, as a store update would.
+    const renderShell = () => <TimelineEditorShellCore timelineId="test-timeline" onNavigateHome={vi.fn()} />;
+    const { rerender } = render(renderShell());
+    // Named "Inspector — selection available" while a picked clip waits behind Video.
+    const inspector = () => screen.getByRole('tab', { name: /^Inspector/ });
+    const video = () => screen.getByRole('tab', { name: 'Video' });
+
+    // Playback (or an agent's edit) moves the playhead: the Inspector stays.
+    fireEvent.click(inspector());
+    act(() => __setPlaybackTime(4));
+    expect(inspector()).toHaveAttribute('aria-selected', 'true');
+
+    // The scrubber under the picture.
+    fireEvent.keyDown(within(screen.getByTestId('touch-playback-row')).getByRole('slider'), { key: 'ArrowRight' });
+    expect(__seek).toHaveBeenCalled();
+    expect(video()).toHaveAttribute('aria-selected', 'true');
+
+    // A tap or a drag on the timeline ruler.
+    fireEvent.click(inspector());
+    expect(inspector()).toHaveAttribute('aria-selected', 'true');
+    __editorDataOverrides = { gestureOwner: 'ruler' };
+    try {
+      rerender(renderShell());
+      expect(video()).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      __editorDataOverrides = {};
+    }
+  });
+
+  it('leaves the desktop sidebar on Inspector when the ruler moves the playhead', () => {
+    __deviceClass = 'desktop';
+    const renderShell = () => <TimelineEditorShellCore timelineId="test-timeline" forceCondensed onNavigateHome={vi.fn()} />;
+    const { rerender } = render(renderShell());
+    const inspector = () => within(screen.getByRole('region', { name: 'Video editor right panel' })).getByRole('tab', { name: /^Inspector/ });
+    fireEvent.click(inspector());
+    expect(inspector()).toHaveAttribute('aria-selected', 'true');
+    __editorDataOverrides = { gestureOwner: 'ruler' };
+    try {
+      rerender(renderShell());
+      expect(inspector()).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      __editorDataOverrides = {};
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------

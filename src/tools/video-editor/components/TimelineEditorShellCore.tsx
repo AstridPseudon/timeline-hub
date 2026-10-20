@@ -84,7 +84,7 @@ function PlaybackTimecode() {
   return <>{formatTime(currentTime)}</>;
 }
 
-function PlaybackSlider({ max }: { max: number }) {
+function PlaybackSlider({ max, onUserSeek }: { max: number; onUserSeek?: () => void }) {
   const currentTime = useTimelinePlaybackSelector((playback) => playback.currentTime);
   const previewRef = useTimelinePlaybackSelector((playback) => playback.previewRef);
 
@@ -94,7 +94,11 @@ function PlaybackSlider({ max }: { max: number }) {
       min={0}
       max={max}
       step={0.05}
-      onValueChange={(value) => previewRef.current?.seek(value)}
+      // The slider reports only the person's drags and keys, never playback moving `value`.
+      onValueChange={(value) => {
+        onUserSeek?.();
+        previewRef.current?.seek(value);
+      }}
     />
   );
 }
@@ -429,10 +433,11 @@ function TimelineEditorShellCoreComponent({
   // Give the timeline the available height and move Video into the sidebar
   // when the generations pane is pinned or there isn't room to stack both.
   const condensed = forceCondensed || tooSmall || (isGenerationsPaneOpen && isGenerationsPaneLocked) || mobileSinglePane || (isOnEditorPage && isEditorPaneLocked);
-  // Touch controls match the header: 36px with a 44px touch target.
+  // Touch controls match the header: 36px with a 44px touch target. On the desktop
+  // picture they match the timeline picker beside them: 32px, 12px type.
   const previewActionButtonClass = touchChrome
     ? cn('h-9 min-w-9 px-3 text-xs', COARSE_TOUCH_TARGET)
-    : 'h-7 px-3 text-[11px]';
+    : 'h-8 px-3 text-xs';
   const interactionStatusLabel = [
     `Timeline mode ${editorData.interactionMode}.`,
     editorData.gestureOwner === 'preview'
@@ -481,6 +486,18 @@ function TimelineEditorShellCoreComponent({
       setCondensedRightPanel((current) => (current === 'inspector' ? 'video' : current));
     }
   }, [inspectorKind, touchChrome]);
+
+  // Touch: moving the playhead by hand brings the picture back, so the frame is in
+  // view. The hand's ways are the scrubber and the timeline ruler (a ruler gesture
+  // owns the pointer); playback and agent edits move the playhead without either.
+  // Jump to beginning sits on the picture, so Video is already showing there.
+  const showVideoForUserSeek = useCallback(() => {
+    if (touchChrome) setCondensedRightPanel('video');
+  }, [touchChrome]);
+  const rulerGesture = editorData.gestureOwner === 'ruler';
+  useEffect(() => {
+    if (rulerGesture) showVideoForUserSeek();
+  }, [rulerGesture, showVideoForUserSeek]);
 
   const previewSurface = useVideoEditorPreviewSurface({ compact: condensed, touchChrome });
   // The shell owns the portal outside the changing layout branches. Panels
@@ -620,12 +637,11 @@ function TimelineEditorShellCoreComponent({
     </>
   );
 
-  // The touch shell names its timeline in the document row, not on the picture.
-  // Captions go (the selector shows the name, New timeline keeps its icon); both
-  // controls are the pickers' own 36px chips with 44px touch rings.
+  // The touch shell names its timeline in the document row, not on the picture:
+  // the picker's own 36px chip with a 44px touch ring. New timeline is in its list.
   const touchTimelineControls = previewControls ? (
     <div
-      className="flex min-w-0 items-center gap-2 [&_[data-picker-label]]:sr-only [&_button]:justify-center"
+      className="flex min-w-0 items-center gap-2"
       data-testid="video-editor-editor-navigation-controls"
     >
       {previewControls}
@@ -695,18 +711,14 @@ function TimelineEditorShellCoreComponent({
       <div className="pointer-events-auto flex min-w-0 max-w-[min(75%,32rem)] flex-col items-start gap-1">
         {previewControls && (
           <div
-            className={cn(
-              'flex min-w-0 max-w-full flex-wrap items-center gap-2',
-              // The sidebar is too narrow for the picker's captions; the
-              // selector names its timeline and New timeline keeps its icon.
-              sidebarVideo && '[&_[data-picker-label]]:sr-only',
-            )}
+            className="flex min-w-0 max-w-full flex-wrap items-center gap-2"
             data-testid="video-editor-editor-navigation-controls"
           >
             {previewControls}
           </div>
         )}
-        <span className="shrink-0 rounded bg-background/70 px-1.5 py-0.5 font-mono text-[11px] tracking-[0.08em] text-muted-foreground backdrop-blur-sm">
+        {/* The picker's own surface, quieter: a readout, not a control. */}
+        <span className="shrink-0 rounded-md border border-border/70 bg-card/90 px-1.5 py-0.5 font-mono text-[11px] tabular-nums tracking-[0.08em] text-muted-foreground backdrop-blur-md">
           <PlaybackTimecode />
         </span>
       </div>
@@ -924,7 +936,7 @@ function TimelineEditorShellCoreComponent({
                   <PlaybackTimecode />
                 </span>
                 <div className="min-w-0 flex-1 px-3">
-                  <PlaybackSlider max={Math.max(1, totalSeconds)} />
+                  <PlaybackSlider max={Math.max(1, totalSeconds)} onUserSeek={showVideoForUserSeek} />
                 </div>
               </div>
             </div>

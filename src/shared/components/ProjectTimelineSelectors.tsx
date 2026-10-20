@@ -26,8 +26,10 @@ import {
 } from '@/shared/components/ui/dialog.tsx';
 import { toast } from '@/shared/components/ui/toast.tsx';
 
+// A near-opaque blurred card: the same chip on the header's paper and on any
+// frame of the picture under the editor's preview overlay.
 const triggerClass = cn(
-  'flex h-7 min-w-0 items-center gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs',
+  'flex h-7 min-w-0 items-center gap-1.5 rounded-md border border-border/70 bg-card/90 px-2 text-xs backdrop-blur-md',
   'text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
   'disabled:pointer-events-none disabled:opacity-50',
@@ -45,6 +47,12 @@ const rowActionClass = cn(
   'group-hover:opacity-100 group-data-[selected=true]:opacity-100',
   '[@media(hover:none)]:opacity-100',
   '[@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9',
+);
+const newTimelineRowClass = cn(
+  'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm',
+  'text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground',
+  'focus-visible:bg-accent focus-visible:text-accent-foreground',
+  'disabled:pointer-events-none disabled:opacity-50 [@media(pointer:coarse)]:min-h-11',
 );
 const renameInputClass =
   '[:root:not(.preserve-user-text)_&.preserve-case]:!normal-case';
@@ -189,29 +197,11 @@ export function ProjectTimelinePicker({
                 </div>
               )}
               {!loading && !error && !rows.length && (
-                <div className="space-y-2 p-3 text-xs text-muted-foreground">
-                  <p>
-                    {kind === 'project'
-                      ? 'No projects available.'
-                      : 'No timelines for this project yet.'}
-                  </p>
-                  {kind === 'timeline' && onCreateTimeline && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs"
-                      disabled={disabled || creatingTimeline}
-                      onClick={() => {
-                        setOpen(false);
-                        onCreateTimeline();
-                      }}
-                    >
-                      <Plus className="mr-1.5 h-3.5 w-3.5" />
-                      {creatingTimeline ? 'Creating timeline…' : 'Create first timeline'}
-                    </Button>
-                  )}
-                </div>
+                <p className="p-3 text-xs text-muted-foreground">
+                  {kind === 'project'
+                    ? 'No projects available.'
+                    : 'No timelines for this project yet.'}
+                </p>
               )}
               {rows.map((row) => {
                 const current = selected === row.id;
@@ -299,6 +289,24 @@ export function ProjectTimelinePicker({
             </CommandGroup>
           </CommandList>
         </Command>
+        {/* New timeline is the picker's own last row, pinned under the list so a long
+            list never scrolls it away: the one way to start a timeline, first or not. */}
+        {kind === 'timeline' && onCreateTimeline && !loading && !error && (
+          <div className="border-t border-border p-1">
+            <button
+              type="button"
+              disabled={disabled || creatingTimeline}
+              className={newTimelineRowClass}
+              onClick={() => {
+                setOpen(false);
+                onCreateTimeline();
+              }}
+            >
+              <Plus className="absolute left-2 h-4 w-4" aria-hidden="true" />
+              {creatingTimeline ? 'Creating timeline…' : 'New timeline'}
+            </button>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
@@ -335,11 +343,6 @@ export function ProjectTimelinePicker({
           projectsLoading,
           projectsError,
         )}
-      {showTimelineSelector && (
-        <span className="text-xs font-medium text-muted-foreground" data-picker-label="">
-          Timeline
-        </span>
-      )}
       {showTimelineSelector &&
         picker(
           'timeline',
@@ -357,18 +360,6 @@ export function ProjectTimelinePicker({
           timelinesLoading,
           timelinesError,
         )}
-      {showTimelineSelector && onCreateTimeline && (
-        <button
-          type="button"
-          aria-label="New timeline"
-          disabled={disabled || creatingTimeline}
-          className={cn(triggerClass, 'shrink-0 whitespace-nowrap')}
-          onClick={onCreateTimeline}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span data-picker-label="">New timeline</span>
-        </button>
-      )}
     </div>
     {onRenameTimeline && <Dialog
       open={!!renamingTimeline}
