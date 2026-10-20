@@ -1701,6 +1701,18 @@
             "--draft": {
               "required": false
             },
+            "--dry-run": {
+              "required": false
+            },
+            "--idempotency-key": {
+              "required": false
+            },
+            "--json": {
+              "required": false
+            },
+            "--native": {
+              "required": false
+            },
             "--project": {
               "required": false
             }
@@ -2959,6 +2971,9 @@
               "required": false
             },
             "--limit": {
+              "required": false
+            },
+            "--native": {
               "required": false
             },
             "--occurrence": {

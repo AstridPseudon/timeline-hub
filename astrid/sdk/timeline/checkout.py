@@ -65,6 +65,18 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
 
     # ---- open / save ------------------------------------------------------
     @classmethod
+    def attach(cls, session):
+        """Edit a TimelineSession's original base and pending intent.
+
+        Bounded literal clip verbs queue durably before updating the preview.
+        Use ``flush()`` to accept them; unsupported verbs refuse explicitly.
+        Detached ``open``/``load``/``draft`` retain their existing behavior.
+        """
+        from astrid.sdk.timeline.native_checkout import AttachedCheckout
+
+        return AttachedCheckout(session)
+
+    @classmethod
     def open(cls, project: str, timeline: str, *, revision_id: str | None = None, client: Any = None) -> "Checkout":
         """Check out the current head (read-only until ``publish``)."""
         bundle = _store.fetch_bundle(project, timeline, revision_id=revision_id, client=client)

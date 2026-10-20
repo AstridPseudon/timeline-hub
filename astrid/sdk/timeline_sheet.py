@@ -348,8 +348,10 @@ def parse_sheet(text: str) -> dict[str, Any]:
             continue
         if raw.startswith(("film ", "WORKING COPY", "PUBLISHED", "next:", "scope ")) or body.startswith((">", "↳")) or raw.startswith("# "):
             continue
-        if body in ("lines", "orphans", "sound"):
+        if body in ("lines", "orphans", "sound", "clips", "tracks"):
             section, cut = body, None
+            if body in ("clips", "tracks"):
+                sheet.setdefault(body, [])
             if body == "lines":
                 sheet["has_lines_section"] = True
             continue
@@ -370,12 +372,12 @@ def parse_sheet(text: str) -> dict[str, Any]:
             continue
         if section == "orphans":
             continue
-        if section == "sound" and cut is None:
+        if section in ("sound", "clips", "tracks") and cut is None:
             try:
-                sheet.setdefault("sound", []).append(_parse_layer(body, number, fps))
+                sheet.setdefault(section, []).append(_parse_layer(body, number, fps))
             except SheetError as exc:
                 raise SheetError(_with_text(str(exc), number, body)) from None
-            sheet["sound"][-1]["text_line"] = body
+            sheet[section][-1]["text_line"] = body
             continue
         if cut is None:
             raise SheetError(f"line {number}: {body[:60]!r} is outside any cut (a cut starts with a '┃ cNN' line)")
@@ -404,9 +406,13 @@ def _with_text(message, number, body):
 
 
 def _strip_comment(raw):
-    out, quote = [], False
+    out, quote, escape = [], False, False
     for i, char in enumerate(raw):
-        if char == '"':
+        if escape:
+            escape = False
+        elif char == "\\" and quote:
+            escape = True
+        elif char == '"':
             quote = not quote
         if char == "#" and not quote and i+1 < len(raw) and raw[i+1] == " " and (i == 0 or raw[i-1] == " "):
             if raw[:i].strip() == "":
@@ -468,7 +474,7 @@ def _tokens(body):
 def _parse_layer(body, number, fps=30.0):
     tokens = _tokens(body)
     gutter = None
-    if tokens and re.fullmatch(r"\d+(\.\d+)?", tokens[0]):
+    if tokens and re.fullmatch(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?", tokens[0]):
         gutter, tokens = float(tokens[0]), tokens[1:]
     if len(tokens) < 3:
         raise SheetError(f"line {number}: a layer reads  track name element [ASSET] [\"text\"] [k=v …] [on …] [until …|for …]")
@@ -492,7 +498,8 @@ def _parse_layer(body, number, fps=30.0):
             current, buf = token, []
             continue
         if token.startswith("trim="):
-            match = re.fullmatch(r"trim=([\d.]+)\.\.([\d.]+)", token)
+            match = re.fullmatch(r"trim=([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)\.\."
+                                 r"([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)", token)
             if not match:
                 raise SheetError(f"line {number}: trim takes a source range like trim=3..5")
             layer["trim"] = (float(match.group(1)), float(match.group(2)))
@@ -593,12 +600,248 @@ def range_cuts(tl: Any, text: str) -> list[str]:
     return [cut_id for cut_id in order if cut_id in chosen]
 
 
+class NativeSheet:
+    """Pinned native adapter using the cut sheet's row grammar and alignment.
+
+    The legacy named-cut view has neither scoped row bindings nor a publication
+    pin, and Checkout may flatten/migrate its input. This opt-in projection reads
+    the untouched authoring bundle instead. Retain this object beside edited
+    ``text``, or use ``export``/``load`` to retain one export in its scoped
+    session outbox. ``# ref`` comments bind stable owners and IDs. Start gutters,
+    parent track labels, source trim, source-second hold and built-in literal params are
+    editable. Unquoted ``key=clear`` removes presence; null and "" are values.
+    Asset and incoming transition support explicit clear only. Omitting a cell
+    never clears it. Built-in params retain the sheet's canvas units.
+
+    ``basis`` is TimelineSession's revision/publication pair for the input bundle.
+    ``apply`` previews locally by default. Its commit seam uses the session's
+    atomic commit_many, preserving original capture on retries; it never
+    invokes Checkout edits, save, or its journal.
+    """
+
+    def __init__(self, bundle, *, basis, clip=None, occurrence=None):
+        from astrid.sdk.timeline._command_state import State
+        from astrid.sdk.timeline.capture import number, occurrence_start
+        from astrid.sdk.timeline.sync import _pin
+        from astrid.sdk.timeline.units import to_canvas
+
+        self._basis = _pin(basis)
+        if bundle.get("base_parent", {}).get("revision_id") != self._basis["revision_id"]:
+            raise SheetError("sheet basis does not match the bundle revision")
+        self._bundle = copy.deepcopy(bundle)
+        self._selection = {key: value for key, value in (("clip", clip), ("occurrence", occurrence)) if value is not None}
+        state = State(self._bundle)
+        header = json.dumps([bundle["project_id"], bundle["timeline_id"], self._basis], sort_keys=True)
+        out = [f"film {header}", "clips"]
+        rows, refs = [], []
+        owners = [("parent", 0)] + [
+            ("occurrence:" + row["occurrence_id"], occurrence_start(row))
+            for row in bundle["placements"]
+        ]
+        clip_id = clip
+        for owner, offset in owners:
+            if occurrence is not None and owner != "occurrence:" + occurrence:
+                continue
+            if clip_id is not None and occurrence is None and owner != "parent":
+                continue
+            for clip in state.collection(owner, "clip"):
+                if clip_id is not None and clip["id"] != clip_id:
+                    continue
+                start = (number(clip["at"], "clip start") if "at" in clip else
+                         number(clip.get("at_ms", 0), "clip start") / 1000) + offset
+                selected = clip.get("elementRef") or clip.get("element_ref") or {}
+                element = clip.get("clipType") or clip.get("clip_type") or "media"
+                params = clip.get("params") or {}
+                props = {key: value if selected.get("packId") else to_canvas(element, key, value)
+                         for key, value in params.items() if re.fullmatch(r"[A-Za-z_][\w.-]*", key)
+                         and key not in {"hold", "asset", "transition", "trim", "slip"}}
+                for key in ("hold", "transition"):
+                    if key in clip:
+                        props[key] = clip[key]
+                window = ("trim=" + repr(clip["from"]) + ".." + repr(clip["to"])
+                          if all(type(clip.get(key)) in (int, float) for key in ("from", "to")) else "")
+                rows.append([repr(start), _value(clip.get("track") or "visual"), _value(clip["id"]),
+                             _value(_short(clip.get("clipType") or clip.get("clip_type") or "media")),
+                             _value(clip["asset"]) if "asset" in clip else "",
+                             " ".join(key + "=" + json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+                                      for key, value in props.items()), window])
+                refs.append(owner + "/clip:" + clip["id"])
+        if self._selection and not rows:
+            raise SheetError("sheet selection has no matching authored clips")
+        out.extend(line + " # ref " + json.dumps(ref) for line, ref in zip(_align(rows), refs))
+        out.append("tracks")
+        rows, refs = [], []
+        for track in ([] if self._selection else state.collection("parent", "track")):
+            label = json.dumps(track["label"], ensure_ascii=False) if "label" in track else "clear"
+            rows.append(["", _value(track["id"]), "label", "track", "", "label=" + label, ""])
+            refs.append("parent/track:" + track["id"])
+        out.extend(line + " # ref " + json.dumps(ref) for line, ref in zip(_align(rows), refs))
+        self.text = "\n".join(out) + "\n"
+        self._rows, self._frame = self._read(self.text)
+
+    @classmethod
+    def export(cls, session, *, clip=None, occurrence=None):
+        """Durably retain the original bundle and pin before emitting editable text.
+
+        One export per scoped outbox; exporting again replaces that artifact.
+        Pending intent must be acknowledged first so its retry basis survives.
+        """
+        with session.outbox.locked():
+            state = session._state()
+            if state["pending"] or state["flight"] is not None:
+                raise SheetError("flush original pending intent before exporting another sheet")
+            sheet = cls(session._bundle(state), basis=state["base"], clip=clip, occurrence=occurrence)
+            state["sheet"] = {"bundle": sheet._bundle, "basis": sheet._basis}
+            if sheet._selection:
+                state["sheet"]["selection"] = sheet._selection
+            session.outbox.write(state)
+        return sheet
+
+    @classmethod
+    def load(cls, session):
+        """Reconstruct bindings from the retained original, never the current head."""
+        with session.outbox.locked():
+            artifact = session._state().get("sheet")
+            if artifact is None:
+                raise SheetError("no original native sheet export in this scoped outbox")
+            return cls(artifact["bundle"], basis=artifact["basis"], **artifact.get("selection", {}))
+
+    @staticmethod
+    def _read(text):
+        parsed = parse_sheet(text)
+        lines = text.splitlines()
+        rows, used = {}, set()
+        for section in ("clips", "tracks"):
+            for row in parsed.get(section, []):
+                raw = lines[row["line"] - 1]
+                body, separator, binding = raw.rpartition(" # ref ")
+                try:
+                    ref = json.loads(binding) if separator else None
+                except ValueError:
+                    raise SheetError("invalid sheet row binding") from None
+                if not isinstance(ref, str) or ref in rows:
+                    raise SheetError("missing or duplicate sheet row binding")
+                rows[ref] = (section, _tokens(body.strip()), row)
+                used.add(row["line"] - 1)
+        return rows, [line for i, line in enumerate(lines) if i not in used]
+
+    def preview(self, text):
+        """Return native commands, records and preview bundle without writing anything."""
+        from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+        from astrid.sdk.timeline._command_state import State, equal
+        from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
+        from astrid.sdk.timeline._trim_commands import capture_clip_trim
+        from astrid.sdk.timeline.capture import capture_move
+        from astrid.sdk.timeline.commands import Plan, execute
+        from astrid.sdk.timeline.units import from_canvas
+        from astrid.sdk.timeline_address import element_schema
+
+        rows, frame = self._read(text)
+        if frame != self._frame or rows.keys() != self._rows.keys():
+            raise SheetError("sheet structure/basis is read-only; additions and removals are unsupported")
+        commands = []
+        working = self._bundle
+        capturers = {"clip.move": capture_move, "clip.trim": capture_clip_trim,
+                     "clip.set": capture_clip_set, "clip.set-params": capture_clip_set_params,
+                     "track.set": capture_track_set}
+
+        def emit(op, ref, args):
+            nonlocal working
+            command = capturers[op](working, ref, **args)
+            commands.append(command)
+            working = execute(working, [command]).bundle
+
+        for ref, (section, before, original) in self._rows.items():
+            current_section, after, row = rows[ref]
+            if current_section != section:
+                raise SheetError("sheet row ownership is read-only")
+            if before == after:
+                continue
+            if section == "clips":
+                # Compare every token, including clauses the legacy parser ignores.
+                def cells(tokens):
+                    return {token.split("=", 1)[0]: token.split("=", 1)[1] for token in tokens[4:]
+                            if re.match(r"^[A-Za-z_][\w.-]*=", token)}
+                left, right = cells(before), cells(after)
+                def fixed(tokens):
+                    return [token for token in tokens[1:]
+                            if not re.match(r"^[A-Za-z_][\w.-]*=", token)]
+                if (fixed(before) != fixed(after) or not left.keys() <= right.keys()
+                        or len(right) != len(row["params"]) + (row["trim"] is not None) or row["at"] is None
+                        or sum(bool(re.match(r"^[A-Za-z_][\w.-]*=", token)) for token in after[4:]) != len(right)):
+                    raise SheetError(f"unsupported row edit at {ref}; keep cells and use explicit key=clear")
+                if row["at"] != original["at"]:
+                    emit("clip.move", ref, {"on": _read_value(after[0], row["line"])})
+                if row["trim"] != original["trim"]:
+                    emit("clip.trim", ref, dict(zip(("in_s", "out_s"), row["trim"])))
+                clip = State(self._bundle).entity(ref)
+                selected = clip.get("elementRef") or clip.get("element_ref") or {}
+                for op, keys in (("clip.set", {"hold", "asset", "transition"}),
+                                 ("clip.set-params", set(right) - {"hold", "asset", "transition", "trim"})):
+                    values, clear = {}, []
+                    for key in sorted(keys & right.keys()):
+                        if left.get(key) == right[key] or (key in original["params"]
+                                and right[key] != "clear" and left[key] != "clear"
+                                and equal(original["params"][key], row["params"][key])):
+                            continue
+                        if op == "clip.set-params" and (selected.get("packId") or key not in
+                                element_schema(clip.get("clipType") or clip.get("clip_type") or "media").get("properties", {})):
+                            raise SheetError(f"unsupported parameter {key} at {ref}; selected pack/opaque editing requires exact inputs")
+                        if op == "clip.set-params" and intent.formulas(clip):
+                            raise SheetError(f"unsupported formula-bound parameters at {ref}")
+                        if right[key] == "clear":
+                            clear.append(key)
+                        else:
+                            value = row["params"][key]
+                            if value is ELIDED or isinstance(value, (dict, list)) or (
+                                    isinstance(value, str) and value.startswith(("ƒ", "moment(", "formula("))):
+                                raise SheetError(f"unsupported expression at {ref}: {key}")
+                            values[key] = (from_canvas(clip.get("clipType") or clip.get("clip_type") or "media", key, value)
+                                           if op == "clip.set-params" else value)
+                    if values or clear:
+                        emit(op, ref, {"values": values, "clear": clear})
+            elif section == "tracks" and before[:-1] == after[:-1] and after[-1].startswith("label="):
+                clear = after[-1] == "label=clear"
+                if clear == (before[-1] == "label=clear") and equal(row["params"], original["params"]):
+                    continue
+                emit("track.set", ref, {"values": {} if clear else row["params"],
+                                       "clear": ["label"] if clear else []})
+            else:
+                raise SheetError(f"unsupported cell edit at {ref}; parent tracks support label only")
+        return execute(self._bundle, commands) if commands else Plan(copy.deepcopy(self._bundle), [])
+
+    def apply(self, text, *, session=None, dry_run=True, idempotency_key=None):
+        """Capture against the export once, then use the normal atomic native batch."""
+        from astrid.sdk.timeline._command_state import equal
+
+        plan = self.preview(text)
+        if dry_run or (not plan.commands and session is None):
+            return plan
+        if session is None:
+            raise SheetError("sheet commits require a TimelineSession")
+        with session.outbox.locked():
+            state = session._state()
+            if (session.project_id != self._bundle["project_id"]
+                    or session.timeline_id != self._bundle["timeline_id"] or state["base"] != self._basis):
+                raise SheetError("sheet and session must share the original project, timeline and basis")
+            prefix = state["pending"][:state["flight"]["count"]] if state["flight"] else state["pending"]
+            if prefix and not equal(prefix, plan.commands):
+                raise SheetError("flush original pending intent before applying another sheet")
+        if not plan.commands:
+            return plan
+        if not prefix and not equal(session._bundle(state), self._bundle):
+            raise SheetError("sheet bundle differs from its pinned session basis")
+        return session.commit_many(plan.commands, idempotency_key=idempotency_key, via="sheet", base=self._basis)
+
+
 def apply_sheet(tl: Checkout, text: str) -> list[str]:
     """Apply a full sheet or fragment atomically and return the checkout's change summary.
 
     A sheet exported from an earlier version merges three-way (what the sheet changed since it was exported,
     onto what is here now): an edit made after the export is never reverted."""
     parsed = parse_sheet(text)
+    if "clips" in parsed or "tracks" in parsed:
+        raise SheetError("native sheet rows require NativeSheet and TimelineSession")
     before = Checkout(copy.deepcopy(tl.bundle))
     if parsed.get("version") and parsed["version"] != sheet_version(tl):
         base = find_version(tl, parsed["version"])
