@@ -107,15 +107,6 @@ export function executeParentClipAdd(bundle: AuthoredBundle, command: EditComman
   ctx.record.created.push({ ref, kind: 'clip', owner: 'parent' });
   ctx.command.created!.push(ref);
   rows.push(copy(row));
-  // Native Recording remembers equality before creation, including two empty mirrors.
-  if (Array.isArray(direct) && Array.isArray(mirror)) {
-    const before = ctx.state.get('parent', ['config', 'clips']);
-    const after: AgentState = { state: 'present', value: copy(direct) };
-    if (!equal(before, after)) {
-      ctx.record.derived_writes.push({ ref: 'parent', path: ['config', 'clips'], before, after, cause: 0 });
-      ctx.state.set('parent', ['config', 'clips'], after);
-    }
-  }
   ctx.compile();
   for (const key of CLAIMS) {
     if (has(command, key) && !equal(command[key], ctx.command[key])) {

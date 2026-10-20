@@ -219,8 +219,12 @@ export class MoveRecording {
   readonly state: AuthoredState;
   readonly command: EditCommand;
   readonly record: CommandRecord;
+  private readonly mirroredClips: boolean;
 
   constructor(bundle: AuthoredBundle, command: EditCommand) {
+    const parent = bundle.parent;
+    this.mirroredClips = Array.isArray(parent.clips) && object(parent.config) &&
+      Array.isArray(parent.config.clips) && equal(parent.clips, parent.config.clips);
     this.state = new AuthoredState(copy(bundle));
     this.command = { ...copy(command), resolved: [command.select!], reads: [], selections: [],
       expect: {}, authorship: {}, bindings: {}, created: [] };
@@ -235,10 +239,11 @@ export class MoveRecording {
     return state.state === 'present' ? copy(state.value) : undefined;
   }
 
-  select(key: 'move.target' | 'move.blockers', owner: string, members: string[] = []): string[] {
+  select(key: 'move.target' | 'media.target' | 'move.blockers', owner: string, members: string[] = []): string[] {
     let result: string[];
-    if (key === 'move.target') result = members.filter((ref) => this.state.entity(ref, true) !== undefined);
-    else {
+    if (key === 'move.target' || key === 'media.target') {
+      result = members.filter((ref) => this.state.entity(ref, true) !== undefined);
+    } else if (key === 'move.blockers') {
       const row = this.state.occurrence(owner);
       const lane = object(row.placement) && has(row.placement, 'track') ? row.placement.track : row.track;
       const track = typeof lane === 'string' ? this.state.entity(`parent/track:${lane}`, true) : undefined;
@@ -248,7 +253,7 @@ export class MoveRecording {
           ? other.placement.track : other.track;
         return output && active(other) && equal(lane, otherLane);
       }).map((other) => `occurrence:${other.occurrence_id}`);
-    }
+    } else throw new ClipMoveError(`unsupported recorded query ${key}`);
     this.command.selections!.push({ key, query_version: 1, owner, members: [...result],
       order: [...result], boundaries: [...result], policy: 'guard-membership' });
     return result;
@@ -279,8 +284,7 @@ export class MoveRecording {
       }
     }
     const parent = this.state.bundle.parent;
-    const config = this.state.config('parent');
-    if (Array.isArray(parent.clips) && parent.clips.length && Array.isArray(config.clips) && config.clips.length) {
+    if (this.mirroredClips) {
       const before = this.state.get('parent', ['config', 'clips']);
       const after: AgentState = { state: 'present', value: copy(parent.clips) };
       if (!equal(before, after)) {

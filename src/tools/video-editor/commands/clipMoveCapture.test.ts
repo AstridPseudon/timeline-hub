@@ -257,7 +257,8 @@ describe('Agent built-in clip.move capture parity', () => {
     expect(executeClipMove(disjoint, golden.command).command).toEqual(golden.command);
   });
 
-  it('records compiler synchronization of the nonempty config clip mirror', () => {
+  // Legacy overwrite expectation; M2 requires native initial-equality-only mirror synchronization.
+  it.fails('records compiler synchronization of the nonempty config clip mirror', () => {
     const input = detached(fixture.bundle) as AuthoredBundle;
     (input.parent.config as Record<string, unknown>).clips = [{ id: 'legacy', at: 88 }];
     const result = finishClipMove(captureClipMove(input, fixture.select), 4);

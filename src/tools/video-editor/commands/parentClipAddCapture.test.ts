@@ -20,6 +20,16 @@ const tracks = (bundle: AuthoredBundle) => (bundle.parent.config as Record<strin
 const clips = (bundle: AuthoredBundle) => bundle.parent.clips as Record<string, JSON>[];
 
 describe('native parent-only literal clip.add capture', () => {
+  it('synchronizes two initially empty mirrors once through the shared recorder', () => {
+    expect(first.bundle.parent.clips).toEqual([]);
+    expect(first.bundle.parent.config.clips).toEqual([]);
+    const result = finishParentClipAdd(captureParentClipAdd(first.bundle, first.select, first.row));
+    expect(result.command).toEqual(first.command);
+    expect(result.record).toEqual(first.record);
+    expect(result.bundle).toEqual(first.after_bundle);
+    expect(result.record.derived_writes).toHaveLength(1);
+  });
+
   for (const golden of cases) {
     it(`matches exact command, record and authored after-bundle: ${golden.name}`, () => {
       const bundle = copy(golden.bundle), row = copy(golden.row);
