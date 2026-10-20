@@ -73,6 +73,18 @@ def test_historical_capture_keeps_exact_parent_and_child_pins(client):
     ]
 
 
+def test_saved_capture_keeps_the_entire_managed_expansion(client):
+    parent, projected, expansion = managed_timeline._project_exact_parent_head(
+        client=client, project_id=client.project_id, timeline_id=client.timeline_id,
+        parent_revision_id="parent-1")
+    snapshot = prepare(client)["capture_snapshot"]
+    assert snapshot["config"] == projected.config
+    assert snapshot["registry"] == projected.registry
+    assert snapshot["metadata"]["capture_authority"]["expansion"] == {
+        **expansion, "parent_content_digest": parent["content_digest"]}
+    assert expansion["graph"] and "outputs" in expansion
+
+
 @pytest.mark.parametrize("field,value", [
     ("project_id", "foreign"), ("timeline_id", "foreign"),
     ("revision_id", "newer-head"), ("content_digest", None),
@@ -226,7 +238,6 @@ def test_sdk_capture_reaches_runtime_before_any_snapshot_write(client, monkeypat
         assert 'authoring_preview' not in spec['inputs']
 
 
-@pytest.mark.xfail(strict=True, reason="needs the host-owned verified timeline source (435357ae verified_source/generic_host)")
 def test_cas_capture_metadata_cannot_mint_source_or_activate_canonical_compiler(tmp_path):
     import hashlib
     import json
@@ -295,14 +306,12 @@ def test_candidate_shape_or_label_cannot_replace_authored_data(client, preview):
     assert runtime.created == [] and runtime.objects == before
 
 
-@pytest.mark.xfail(strict=True, reason="needs reject_source_keys from the verified timeline source (435357ae)")
 @pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
 def test_sdk_capture_reserved_source_ports_are_refused(client, key):
     with pytest.raises(ValueError, match='host-owned'):
         prepare(client, **{key: {'source_kind': 'revision', 'revision_id': 'forged'}})
 
 
-@pytest.mark.xfail(strict=True, reason="needs reject_source_keys from the verified timeline source (435357ae)")
 @pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
 def test_sdk_capture_invocation_refuses_source_before_admission(key):
     from astrid.sdk.invocation import _invoke_internal_result

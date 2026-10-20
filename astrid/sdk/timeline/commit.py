@@ -633,6 +633,14 @@ class RuntimeCommitService:
     def __init__(self, contract_digest):
         self.contract_digest = contract_digest
 
+    def capture_candidate_inputs(self, document, *, candidate):
+        """Pure optional inputs for Runtime's working-copy verification."""
+        document, candidate = copy.deepcopy((document, candidate))
+        return copy.deepcopy({
+            "base": bundle_from_document(document),
+            "preview": preview_authoring_candidate(candidate),
+        })
+
     def project_capture(self, document, *, authoring_preview=None):
         """Pure optional capture admission; Runtime supplies a verified closure."""
         from astrid.core.timeline.shot_composition_projection import (

@@ -166,8 +166,37 @@ def open_source_runtime(tmp_path, before_provider=lambda runtime: None):
         service.close()
 
 
-# The xfails below need the host-owned verified timeline source (435357ae: verified_source, generic_host).
-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
+@pytest.mark.parametrize("working_copy", [False, True])
+@pytest.mark.parametrize("inline", [False, True])
+def test_current_capture_reaches_claim_and_verified_host(runtime, tmp_path, working_copy, inline):
+    snapshot = runtime.snapshot(working_copy)
+    task = runtime.admit(snapshot, inline=inline)
+    values = runtime.materialize(task, tmp_path / "attempt")
+    source = values.timeline_source
+    binding = source.read()
+    assert binding["snapshot"] == snapshot
+    assert binding["authority"] == snapshot["metadata"]["capture_authority"]
+    assert json.loads(Path(values["timeline"]).read_text()) == snapshot["config"]
+    source.validate(values["timeline"], values["assets_registry"])
+    source.validate_snapshot(snapshot)
+    assert binding["ref"]["source_kind"] == ("working_copy" if working_copy else "revision")
+    if working_copy:
+        assert task["spec"]["spec"]["inputs"]["authoring_preview"] == runtime.authoring_preview
+    else:
+        from astrid.packs.rendering.actions.render.managed_timeline import (
+            _project_exact_parent_head,
+        )
+
+        parent, projected, expansion = _project_exact_parent_head(
+            client=runtime, project_id=runtime.project_id, timeline_id="main", parent_revision_id="parent-1")
+        assert snapshot["config"] == projected.config
+        assert snapshot["registry"] == projected.registry
+        assert binding["authority"]["expansion"] == {
+            **expansion, "parent_content_digest": parent["content_digest"]}
+
+
+# Renderer request propagation is still separate from the now-restored host handoff.
+@pytest.mark.xfail(strict=True, reason="needs verified source propagation through RenderRequest")
 @pytest.mark.parametrize("working_copy", [False, True])
 @pytest.mark.parametrize("inline", [False, True])
 def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtime, tmp_path, monkeypatch, working_copy, inline):
@@ -203,7 +232,6 @@ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtim
     assert parsed.verified_source.read() == binding
 
 
-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
 def test_missing_candidate_explicit_cas_preview_stays_uncertified(runtime, tmp_path):
     snapshot = runtime.snapshot(working_copy=True)
     task = runtime.admit(snapshot, forward_candidate=False, uncertified=True)
@@ -280,7 +308,6 @@ def test_replaced_duplicate_capture_ref_is_refused_at_admission(runtime):
         runtime.admit(snapshot, duplicate=runtime.ref(replacement))
 
 
-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
 def test_native_compiled_capture_does_not_acquire_canonical_source(runtime, tmp_path):
     snapshot = runtime.snapshot()
     # Neither selector remains; canonical_timeline alone would make Runtime publish a revision ref.

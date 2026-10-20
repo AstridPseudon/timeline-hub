@@ -338,6 +338,7 @@ def _open_current_input_closure(
     if not isinstance(projected_config, Mapping) or not isinstance(projected_registry, Mapping):
         _fail("Runtime returned an invalid exact parent composition closure.")
     authority = {
+        **deepcopy(dict(expansion or {})),
         "parent_revision_id": parent_head,
         "parent_content_digest": parent.get("content_digest"),
         "children": deepcopy(list((expansion or {}).get("children") or [])),
@@ -676,6 +677,9 @@ def prepare_filmstrip(
     _composed_media_attachment: bool = False,
 ) -> dict:
     """Select a successful managed render; never admit a caller-provided file."""
+    from astrid.core.rendering.verified_source import reject_source_keys
+
+    reject_source_keys(inputs)
     if client is None:
         from .client import AstridClient
         with AstridClient.open_from_launcher() as connected:
