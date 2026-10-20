@@ -1,5 +1,5 @@
 import type {CSSProperties, FC} from 'react';
-import {Img, staticFile, useVideoConfig} from 'remotion';
+import {Img, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {Video} from '@remotion/media';
 import type {AssetRegistryEntry, TimelineClip, TrackDefinition} from './types';
 import {
@@ -11,7 +11,7 @@ import {
   getIntrinsicMediaSize,
   normalizeRenderCropValues,
 } from './lib/render-bounds';
-import {useFadeOpacity} from './lib/fade';
+import {fadeMultiplier} from './lib/clip-look';
 import {computeMediaTrim} from './lib/trim';
 
 type VisualClipProps = {
@@ -55,7 +55,7 @@ export const VisualClip: FC<VisualClipProps> = ({clip, track, assetEntry, fps, a
   const effectiveVolume = track.muted
     ? 0
     : getSanitizedVolume(track.volume ?? 1) * getSanitizedVolume(clip.volume ?? 1);
-  const fadedOpacity = useFadeOpacity(clip, fps) * (clip.opacity ?? 1);
+  const fadedOpacity = fadeMultiplier(clip, useCurrentFrame(), fps) * (clip.opacity ?? 1);
   const opacity = applyOpacity ? fadedOpacity : undefined;
   const mixBlendMode = track.blendMode && track.blendMode !== 'normal' ? track.blendMode : undefined;
   const isImage = assetEntry.type?.startsWith('image');
