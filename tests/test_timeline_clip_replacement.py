@@ -666,6 +666,45 @@ def test_rt02_project_shot_crud_native_replacement_retries_after_restart(native_
 
 
 @pytest.mark.integration
+def test_rt02_project_shot_crud_native_replacement_retries_after_restart(native_editing):
+    """Replace one slice of ``test_project_shot_crud_isolated_idempotent_and_restart_durable``.
+
+    The normal provider bootstrap creates the occurrence-owned shot and clip;
+    this test keeps the original workflow's modify, exact-retry, and restart
+    assertions while routing the film mutation through an EditCommand.
+    """
+    created = copy.deepcopy(native_editing.document)
+    created_clip = _native_payload(created, "internal")["clips"][0]
+    assert created["shot_revisions"][0]["shot_id"] == "native-shot"
+    assert created_clip["asset"] == native_editing.old["asset"]
+
+    body = _native_body(
+        native_editing.service, native_editing.project, [_native_swap(native_editing)],
+    )
+    before_receipts = native_editing.service.store.conn.execute(
+        "SELECT COUNT(*) FROM command_idempotency WHERE command_kind='timeline.commit'",
+    ).fetchone()[0]
+    accepted = _native_commit(
+        native_editing.service, native_editing.project, body, "rt02-native-shot-modify",
+    )
+    assert accepted["data"]["status"] == "accepted"
+    assert _native_payload(accepted["data"]["canonical_document"], "internal")["clips"][0]["asset"] == native_editing.new["asset"]
+
+    native_editing.service.close()
+    reopened = RuntimeService(native_editing.root)
+    try:
+        reopened.register_timeline_commit_provider(native_editing.native.load_timeline_commit_provider("astrid"))
+        assert _native_commit(
+            reopened, native_editing.project, body, "rt02-native-shot-modify",
+        ) == accepted
+        assert reopened.store.conn.execute(
+            "SELECT COUNT(*) FROM command_idempotency WHERE command_kind='timeline.commit'",
+        ).fetchone()[0] == before_receipts + 1
+    finally:
+        reopened.close()
+
+
+@pytest.mark.integration
 def test_native_clip_swap_public_http_route(tmp_path):
     """The public commit route accepts the same native occurrence swap bundle."""
     native = _native_imports()
