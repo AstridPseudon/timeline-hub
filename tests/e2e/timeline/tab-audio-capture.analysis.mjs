@@ -80,6 +80,39 @@ export function assertCaptureOutcome(ffprobe, capabilities) {
   return {capabilities, rawPts};
 }
 
+export function assertVisualEvent(rawVideo, {width, height, preEventRgb, eventRgb} = {}) {
+  if (!Buffer.isBuffer(rawVideo) || !Number.isInteger(width) || !Number.isInteger(height)) {
+    throw new Error('Decoded visual event region is invalid');
+  }
+  const frameBytes = width * height * 3;
+  if (frameBytes === 0 || rawVideo.byteLength === 0 || rawVideo.byteLength % frameBytes !== 0) {
+    throw new Error('Decoded visual event region is not frame-aligned');
+  }
+  const colors = [preEventRgb, eventRgb];
+  if (colors.some((color) => !Array.isArray(color) || color.length !== 3
+    || color.some((channel) => !Number.isInteger(channel) || channel < 0 || channel > 255))) {
+    throw new Error('Visual event colors are invalid');
+  }
+  const framesWithColor = colors.map((color) => {
+    let count = 0;
+    for (let offset = 0; offset < rawVideo.byteLength; offset += frameBytes) {
+      let found = false;
+      for (let pixel = offset; pixel < offset + frameBytes; pixel += 3) {
+        if (rawVideo[pixel] === color[0] && rawVideo[pixel + 1] === color[1] && rawVideo[pixel + 2] === color[2]) {
+          found = true;
+          break;
+        }
+      }
+      if (found) count += 1;
+    }
+    return count;
+  });
+  if (framesWithColor[0] === 0 || framesWithColor[1] === 0) {
+    throw new Error('Captured video did not contain both pre-event and event marker colors');
+  }
+  return {frameCount: rawVideo.byteLength / frameBytes, framesWithPreEventColor: framesWithColor[0], framesWithEventColor: framesWithColor[1]};
+}
+
 export function assertTone(samples, {sampleRate, channels, frequency}) {
   if (!(samples instanceof Float32Array) || samples.length === 0) throw new Error('Decoded audio is empty');
   if (!Number.isInteger(sampleRate) || sampleRate <= 0 || !Number.isInteger(channels) || channels < 1) {

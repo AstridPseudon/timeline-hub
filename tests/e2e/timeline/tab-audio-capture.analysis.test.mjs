@@ -5,6 +5,7 @@ import {
   assertCaptureOutcome,
   assertRawPts,
   assertTone,
+  assertVisualEvent,
 } from './tab-audio-capture.analysis.mjs';
 
 const capabilities = assertCaptureCapabilities([
@@ -32,6 +33,23 @@ test('capability check requires one live video and one live tab-audio track', ()
   assert.throws(() => assertCaptureCapabilities([{kind: 'video', readyState: 'live'}], {
     mimeType: 'video/webm;codecs=vp8,opus',
   }), /one tab audio track/);
+});
+
+test('visual event check requires both exact marker colors in decoded frames', () => {
+  const frame = (rgb) => Buffer.from([...rgb, ...rgb]);
+  const rawVideo = Buffer.concat([frame([32, 48, 64]), frame([160, 32, 32])]);
+  assert.deepEqual(assertVisualEvent(rawVideo, {
+    width: 2,
+    height: 1,
+    preEventRgb: [32, 48, 64],
+    eventRgb: [160, 32, 32],
+  }), {frameCount: 2, framesWithPreEventColor: 1, framesWithEventColor: 1});
+  assert.throws(() => assertVisualEvent(frame([32, 48, 64]), {
+    width: 2,
+    height: 1,
+    preEventRgb: [32, 48, 64],
+    eventRgb: [160, 32, 32],
+  }), /both pre-event and event marker colors/);
 });
 
 test('raw PTS checks retain native per-stream timestamps without alignment', () => {

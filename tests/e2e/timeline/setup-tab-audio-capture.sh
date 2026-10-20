@@ -17,8 +17,12 @@ export VIEWING_BROWSER_FLOCK_HELD=1
 
 cleanup() {
   status=$?
-  if [[ ${TAB_AUDIO_PREFLIGHT_DONE:-0} == 1 && -f "$TAB_AUDIO_RUN_MARKER" ]]; then
-    node "$CONTROLLER" --postflight || status=$?
+  if [[ ${TAB_AUDIO_PREFLIGHT_DONE:-0} == 1 ]]; then
+    postflight_status=0
+    node "$CONTROLLER" --postflight || postflight_status=$?
+    if [[ $status == 0 && $postflight_status != 0 ]]; then
+      status=$postflight_status
+    fi
   fi
   exit "$status"
 }
