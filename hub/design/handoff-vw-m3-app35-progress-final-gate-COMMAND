@@ -1,0 +1,62 @@
+# Review commands
+
+The Vitest, ESLint, and TypeScript commands ran with cwd
+`/home/user/work/wt/vw-m3-app35-progress-final-gate/.review-app`; `candidate-public13.tgz`
+denotes the candidate's extracted `vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz`.
+
+Candidate inspection:
+
+```sh
+git -C /home/user/work/app diff --name-status \
+  tl/vw-m3-app35-pcm-preserve-progress^ \
+  tl/vw-m3-app35-pcm-preserve-progress
+git -C /home/user/work/app diff \
+  tl/vw-m3-app35-pcm-preserve-progress^ \
+  tl/vw-m3-app35-pcm-preserve-progress -- \
+  src/tools/video-editor/compositions/AudioTrack.tsx \
+  src/tools/video-editor/compositions/AudioTrack.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
+git -C /home/user/work/app diff --quiet \
+  70e378e3f780308628bd98b55405115d74288a48 \
+  tl/vw-m3-app35-pcm-preserve-progress -- \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
+sha256sum candidate-public13.tgz  # 9412ae25...54738; 77 members
+```
+
+Targeted Vitest runs, using a private public13 leaf and an own cache:
+
+```sh
+node node_modules/vitest/vitest.mjs run --no-cache --maxWorkers=1 \
+  --config review-vitest.config.mjs \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx \
+  --testNamePattern='renews the same hold as source chunks arrive before the native WAV element exists'
+
+node node_modules/vitest/vitest.mjs run --no-cache --maxWorkers=1 \
+  --config review-vitest.config.mjs \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx \
+  --testNamePattern='sanitizes invalid authored speed|applies the public continuous PCM envelope|preserves exact authored fade boundaries|multiplies overlapping fade ramps|preserves continuous PCM for the retained fade matrix|uses an authored public envelope before legacy fades|transitions between native and prepared envelope sources|keeps boosted fade frames below unity|applies nested .* boosts in PCM|retains Web Audio admission for a nested boost|keeps boosted PCM samples in authored time'
+
+node node_modules/vitest/vitest.mjs run --no-cache --maxWorkers=1 \
+  --config review-vitest.config.mjs \
+  src/tools/video-editor/compositions/continuousPCM.contract.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx \
+  --testNamePattern='keeps the public full-source PCM/WAV positive exact|plays a matching prepared positive|refuses .* instead of ignoring its prepared claim|retries a corrected prepared claim|bakes the full .* Hz source once'
+
+node node_modules/vitest/vitest.mjs run --no-cache --maxWorkers=1 \
+  --config review-vitest.config.mjs \
+  src/tools/video-editor/compositions/AudioTrack.test.tsx \
+  --testNamePattern='keeps a finite plain gain for an unsupported fade value'
+```
+
+Scoped checks:
+
+```sh
+node node_modules/eslint/bin/eslint.js \
+  src/tools/video-editor/compositions/AudioTrack.tsx \
+  src/tools/video-editor/compositions/AudioTrack.test.tsx \
+  src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.contract.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx \
+  --max-warnings 0
+node node_modules/typescript/bin/tsc -p tsconfig.strict-islands.json --noEmit --pretty false
+```

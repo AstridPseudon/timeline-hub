@@ -1,0 +1,32 @@
+# APPROVED FUTURE COMMAND — one fresh manager grant only
+
+ASTRID_CHECKOUT=/home/user/work/wt/<clean-ee71010a0-descendant-agent> \
+VIEWING_CROP_REVISION=<exact-40-character-clean-HEAD> \
+VIEWING_CROP_ARTIFACT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.12.tgz \
+bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-mouth697-physical-controller-prep-READY.sh
+
+Preconditions:
+
+- The source checkout is clean, its HEAD is the exact `VIEWING_CROP_REVISION`,
+  and that revision descends from
+  `ee71010a0947edcbbacbf8178e5fee11ab6bab3d` with all manifest source hashes.
+- The manager has placed the exact same full SHA in
+  `.../workers/vw-m3-mouth697-physical-controller-prep/READY_GRANTED` and has
+  supplied the reviewed `REVIEW.md` approval line.
+- The artifact SHA is
+  `0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3` and it
+  contains 77 files.
+- The runner's immutable f816 graph, six peer hashes, Node20.19.4 SHA,
+  Chrome155 tree SHA, `/tmp/timeline-viewing-browser.lock`, 0700 temp,
+  10-GiB floor, quiet check, one-shot marker, and pre/post cleanup guards are
+  unchanged.
+- If normal renderer admission requires stale-root artifact regeneration,
+  stop and wait for the owner descendant; this command is not an admission
+  bypass.
+
+The selected central test is only:
+
+`tests/packs/rendering/test_presenter_crop_partial_physical.py`
+
+No old rejected controller, default capture, second geometry, grant reuse,
+or additional frame is authorized.
