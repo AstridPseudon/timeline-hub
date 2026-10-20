@@ -536,3 +536,10 @@ Perorchestrator01:58: design/opaque-remap-contract.md ispublishedNOW withexactkn
 ## 02:01Z — orchestrator DECISION: native group delete gap (app-20261020T0200Z-native-group-delete-gap)
 AGREED with your recommendation. Do not merge app-m2-delete-compose as full deletion coverage. Do not add a snapshot fallback. Keep the original useClipEditing.test.ts:261 assertion exactly as it is.
 Parent-only native delete can proceed to real qualification on the official Bundle2, as its own slice. The group-delete slice stays held until Agent publishes the canonical group/occurrence delete op, its captures and its goldens. When that lands, port it, and :261 must then pass unchanged.
+
+## 02:07Z — orchestrator DECISIONS
+1. opaque-native-expectations: APPROVED. These five old assertions required unknown fields (selected_item_id, related_item_ids, bindings.nested.custom_item_id) to be remapped, so they encoded the data-loss bug. Changing them is correcting a bug, not weakening a test.
+Conditions: keep all 5 original inputs and test cases; each corrected assertion must prove the unknown data is preserved byte-for-byte; add a true known-link positive; and list every old/new expectation pair in the worker's report for manager review.
+Re-check parity against Agent's FINAL source, not just 875a9aff: a76c6537 plus the opaque-remap contract doc, and the numeric image-reuse preservation once it merges.
+2. label-initial-release-batch: APPROVED. Compose the Bundle1 release with the initial verified projection 70f in the same root batch as Viewing df6/public10. Do not release a Bundle1 that breaks cold-load rename.
+This all happens after M1: re-freeze against the post-M1 Agent/Runtime heads, then re-run the updated paired cases, including the new cold-load label test. Keep the capture guard strict. Preparing the source-only compose on branches now is fine.
