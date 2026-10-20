@@ -230,6 +230,7 @@ describe('mounted timeline command session', () => {
   it('fences parent media capture, completion and submission behind an intervening legacy save', async () => {
     const { env, hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.parentClipAddMediaPort!;
+    const swapPort = hook.result.current.commands.parentClipSwapMediaPort!;
     const current = hook.result.current.commit.data!;
     const media: MediaSelection = {
       asset: 'reserved-media',
@@ -243,8 +244,12 @@ describe('mounted timeline command session', () => {
     const verified: VerifiedMedia = { selection: { ...media }, media_type: 'video/mp4', size: 1, duration_seconds: 1 };
 
     setLegacyClean(false);
+    expect(() => port.prepare()).toThrow('earlier timeline saves');
+    expect(() => swapPort.prepare()).toThrow('earlier timeline saves');
     expect(() => port.capture({ row, media, current })).toThrow('earlier timeline saves');
     setLegacyClean(true);
+    const addPreparation = port.prepare();
+    const swapPreparation = swapPort.prepare();
     const basis = port.capture({ row, media, current });
     let releaseVerification!: (value: VerifiedMedia) => void;
     const verification = new Promise<VerifiedMedia>((resolve) => { releaseVerification = resolve; });
@@ -252,6 +257,8 @@ describe('mounted timeline command session', () => {
     setLegacyClean(false);
     releaseVerification(verified);
     await expect(finishing).rejects.toThrow('earlier timeline saves');
+    expect(() => port.assertPreparationCurrent(addPreparation)).toThrow('earlier timeline saves');
+    expect(() => swapPort.assertPreparationCurrent(swapPreparation)).toThrow('earlier timeline saves');
     expect((await env.outboxes.list(scope))[0]?.intents).toEqual([]);
     setLegacyClean(true);
     const captured = port.finish(basis, verified);

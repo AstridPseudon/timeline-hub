@@ -49,10 +49,31 @@ export type ParentClipAddMediaCaptureBasis = {
   readonly displayHead: OutboxHead;
 };
 
+/** Session-owned basis captured before an external parent-media producer await. */
+export type ParentClipAddMediaPreparation = Readonly<Pick<
+  ParentClipAddMediaCaptureBasis,
+  'bundle' | 'localGeneration' | 'localBasis' | 'displayHead'
+>>;
+
 export interface ParentClipAddMediaCapturePort {
   capture(input: { row: Record<string, JSON>; media: MediaSelection; current: TimelineData }): ParentClipAddMediaCaptureBasis;
   finish(basis: ParentClipAddMediaCaptureBasis, verifiedMedia: VerifiedMedia): { command: EditCommand; preview: TimelinePatch };
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
+  /** Capture the session basis before producer/preparation work can await. */
+  prepare(): ParentClipAddMediaPreparation;
+  /** Refuse a producer result when the original session basis was superseded. */
+  assertPreparationCurrent(preparation: ParentClipAddMediaPreparation): void;
+}
+
+/** Preparation-only carrier for the pending native parent-media swap producer. */
+export type ParentClipSwapMediaPreparation = Readonly<Pick<
+  ParentClipAddMediaCaptureBasis,
+  'bundle' | 'localGeneration' | 'localBasis' | 'displayHead'
+>>;
+
+export interface ParentClipSwapMediaPreparationPort {
+  prepare(): ParentClipSwapMediaPreparation;
+  assertPreparationCurrent(preparation: ParentClipSwapMediaPreparation): void;
 }
 export type CommandSessionState = {
   status: 'loading' | 'saved' | 'dirty' | 'saving' | 'retry' | 'conflict' | 'error' | 'recovery';
@@ -314,6 +335,23 @@ export async function createTimelineCommandSession(options: Options) {
   }
   const intentIds = new Map<string, string>();
   const parentClipAddMediaPort: ParentClipAddMediaCapturePort = {
+    prepare() {
+      assertReady();
+      return Object.freeze({
+        bundle: copy(bundle),
+        localGeneration,
+        localBasis: copy(lastIntent ? { after: lastIntent } : { head: known.head }),
+        displayHead: copy(displayHead),
+      });
+    },
+    assertPreparationCurrent(preparation) {
+      assertReady();
+      const currentBasis = lastIntent ? { after: lastIntent } : { head: known.head };
+      if (preparation.localGeneration !== localGeneration || !sameHead(preparation.displayHead, displayHead)
+        || !equal(preparation.bundle, bundle) || !equal(preparation.localBasis, currentBasis)) {
+        throw new Error('Timeline changed during parent clip.add-media preparation');
+      }
+    },
     capture({ row, media, current }) {
       assertReady();
       if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
@@ -370,6 +408,25 @@ export async function createTimelineCommandSession(options: Options) {
       }
       prepared.delete(key);
       enqueue(entry.payload, preview, entry.basis);
+    },
+  };
+  const parentClipSwapMediaPort: ParentClipSwapMediaPreparationPort = {
+    prepare() {
+      assertReady();
+      return Object.freeze({
+        bundle: copy(bundle),
+        localGeneration,
+        localBasis: copy(lastIntent ? { after: lastIntent } : { head: known.head }),
+        displayHead: copy(displayHead),
+      });
+    },
+    assertPreparationCurrent(preparation) {
+      assertReady();
+      const currentBasis = lastIntent ? { after: lastIntent } : { head: known.head };
+      if (preparation.localGeneration !== localGeneration || !sameHead(preparation.displayHead, displayHead)
+        || !equal(preparation.bundle, bundle) || !equal(preparation.localBasis, currentBasis)) {
+        throw new Error('Timeline changed during parent clip.swap-media preparation');
+      }
     },
   };
   const occurrenceDuplicatePort: OccurrenceDuplicateCapturePort = {
@@ -879,6 +936,7 @@ export async function createTimelineCommandSession(options: Options) {
     trackLabelPort,
     shotSetPort,
     parentClipAddMediaPort,
+    parentClipSwapMediaPort,
     occurrenceDuplicatePort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),

@@ -208,9 +208,25 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before adding prepared parent media');
         };
         session.parentClipAddMediaPort = {
+          prepare() { requireCleanParentClipAddMedia(); return parentClipAddMediaPort.prepare(); },
+          assertPreparationCurrent(preparation) {
+            requireCleanParentClipAddMedia();
+            parentClipAddMediaPort.assertPreparationCurrent(preparation);
+          },
           capture(input) { requireCleanParentClipAddMedia(); return parentClipAddMediaPort.capture(input); },
           finish(basis, verifiedMedia) { requireCleanParentClipAddMedia(); return parentClipAddMediaPort.finish(basis, verifiedMedia); },
           submit(input) { requireCleanParentClipAddMedia(); parentClipAddMediaPort.submit(input); },
+        };
+        const parentClipSwapMediaPort = session.parentClipSwapMediaPort;
+        const requireCleanParentClipSwapMedia = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before preparing parent media swap');
+        };
+        session.parentClipSwapMediaPort = {
+          prepare() { requireCleanParentClipSwapMedia(); return parentClipSwapMediaPort.prepare(); },
+          assertPreparationCurrent(preparation) {
+            requireCleanParentClipSwapMedia();
+            parentClipSwapMediaPort.assertPreparationCurrent(preparation);
+          },
         };
         const occurrenceDuplicatePort = session.occurrenceDuplicatePort;
         const requireCleanDuplicate = () => {
@@ -333,6 +349,7 @@ export function useTimelineCommandSession(options: {
     trackLabelPort: sessionRef.current?.trackLabelPort, shotSetPort: sessionRef.current?.shotSetPort,
     clipScalarPort: sessionRef.current?.clipScalarPort,
     parentClipAddMediaPort: sessionRef.current?.parentClipAddMediaPort,
+    parentClipSwapMediaPort: sessionRef.current?.parentClipSwapMediaPort,
     occurrenceDuplicatePort: sessionRef.current?.occurrenceDuplicatePort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
