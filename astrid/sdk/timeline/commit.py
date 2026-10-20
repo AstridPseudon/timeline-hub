@@ -217,8 +217,7 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
 
     Historical source images alone never authorize dropping retained media.
     """
-    from ._command_state import equal
-
+    # Immutable reuse follows exact encoded content, independently of value guards.
     source = bundle["source_mapping"]["_runtime_document"]
     publication = compile_authoring_candidate(bundle).publication
     shot_index = {row["revision_id"]: copy.deepcopy(row) for row in source["shot_revisions"]}
@@ -246,8 +245,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
         identity = occurrence["shot_id"]
         shot = bundle["shots"][identity]
         origin = bundle["source_mapping"]["shots"].get(identity)
-        if (origin is not None and shot["payload"] == shot["base_payload"]
-                and shot["internal_timeline"] == shot["base_internal_timeline"]
+        if (origin is not None and _json(shot["payload"]) == _json(shot["base_payload"])
+                and _json(shot["internal_timeline"]) == _json(shot["base_internal_timeline"])
                 and origin.get("revision_id") in shot_index):
             occurrence["shot_id"] = origin["shot_id"]
             occurrence["shot_revision_id"] = origin["revision_id"]
@@ -261,7 +260,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
             payload, old_payload = copy.deepcopy(shot['payload']), copy.deepcopy(old['payload'])
             payload.pop('internal_timeline_revision_id', None)
             old_payload.pop('internal_timeline_revision_id', None)
-            if not equal(payload, old_payload) or not equal(shot['internal_timeline'], old['internal_timeline']):
+            if (_json(payload) != _json(old_payload)
+                    or _json(shot['internal_timeline']) != _json(old['internal_timeline'])):
                 continue
             origin = historical['source_mapping']['shots'][identity]
             occurrence['shot_id'] = origin['shot_id']
@@ -300,8 +300,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
             media.pop(identity, None)
     manifest = _manifest(shots, internals, list(media.values()), documents)
     digest = _digest(parent)
-    if (parent == source["parent_revision"]["payload"]
-            and manifest == source["dependency_manifest"]):
+    if (digest == source["parent_revision"]["content_digest"]
+            and _json(manifest) == _json(source["dependency_manifest"])):
         revision = source["parent_revision"]["revision_id"]
     else:
         revision = "authoring-parent-revision-" + _digest({
@@ -310,7 +310,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
         }).removeprefix("sha256:")
     for historical in source_bundles:
         prior = historical['source_mapping']['_runtime_document']
-        if equal(parent, prior['parent_revision']['payload']) and equal(manifest, prior['dependency_manifest']):
+        if (digest == prior['parent_revision']['content_digest']
+                and _json(manifest) == _json(prior['dependency_manifest'])):
             revision = prior['parent_revision']['revision_id']
             break
     document = {
