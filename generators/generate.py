@@ -92,6 +92,30 @@ def operation_index(manifest_path: Path = MANIFEST) -> list[str]:
     return [line.split(":", 1)[1].strip() for line in text.splitlines() if re.match(r"^\s+operationId:", line)]
 
 
+def validate_command_schema() -> None:
+    """Require the candidate to contain the latest ordinary published schema.
+
+    Keep older snapshots immutable; advance this floor only after an authorized
+    publication passes against the previous floor. Unsupported structural or
+    regex rewrites require review, not sample-based compatibility guesses.
+    """
+    from generators.command_schema_compatibility import compatibility_errors
+
+    fixtures = ROOT / "tests/fixtures/published-command-schemas"
+    filename = "runtime-0.2.3.json"
+    source = json.loads(_regular(fixtures / "sources.json", "published schema sources"))[filename]
+    previous = _regular(fixtures / filename, "published command schema")
+    if hashlib.sha256(previous).hexdigest() != source["sha256"]:
+        raise SystemExit("published command schema floor digest mismatch")
+    candidate = _regular(ROOT / "contract/schemas/edit-command.json", "candidate command schema")
+    errors = compatibility_errors(json.loads(previous), json.loads(candidate))
+    if errors:
+        raise SystemExit(
+            f"command schema compatibility failed against {filename}:\n  "
+            + "\n  ".join(errors)
+        )
+
+
 def render_python_client(manifest_path: Path = MANIFEST) -> str:
     """Render the checked-in Python client from its tracked template.
 
@@ -235,6 +259,8 @@ def main() -> int:
     parser.add_argument("--component-manifest", default=str(COMPONENT_MANIFEST))
     parser.add_argument("--python-output", default=str(PYTHON_CLIENT_OUTPUT), help="Python client output path (for isolated checks)")
     args = parser.parse_args()
+    sys.path.insert(0, str(ROOT))
+    validate_command_schema()
     sys.path.insert(0, str(ROOT / "generators"))
     from timeline_commit_types import render as render_commit_types
     generated = render_commit_types()
