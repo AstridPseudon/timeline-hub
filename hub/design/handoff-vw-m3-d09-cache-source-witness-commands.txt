@@ -1,0 +1,7 @@
+PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_d09_cached_source_witness.py tests/packs/rendering/test_composed_frame_capture.py -k 'd09 or cache_identity or provider_uses_cache_on_second_request or ephemeral_attempt'
+10 passed, 9 deselected in 1.00s
+
+PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_scene_source_carry.py -k 'mixed_cached and transport'
+1 passed, 58 deselected in 3.31s
+
+No full suite, browser, localhost socket, renderer, source preparation, or central test service was run.

@@ -1,0 +1,2 @@
+UNAPPLIED: no product patch. Existing retained fresh-source proof does not cover cached PNG source binding.
+Approval contract is described in REPORT.md; it requires a cache-side payload of existing public scene rows plus source_identity, address projection, and Root basis, written only after successful fresh capture.

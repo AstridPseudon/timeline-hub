@@ -1,0 +1,5 @@
+Agent worktree: /home/user/work/wt/vw-m3-d09-cache-source-witness/tests/packs/rendering/test_d09_cached_source_witness.py
+Source: /home/user/work/wt/vw-m3-d09-cache-source-witness/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+Source: /home/user/work/wt/vw-m3-d09-cache-source-witness/astrid/sdk/timeline_filmstrip.py
+Source: /home/user/work/wt/vw-m3-d09-cache-source-witness/astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
+Existing proof: /home/user/work/wt/vw-m3-d09-cache-source-witness/tests/packs/rendering/test_scene_source_carry.py
