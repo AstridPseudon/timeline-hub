@@ -552,3 +552,5 @@ Mouth: real pixels qualified for the explicit anchor; good. I'm sending the appr
 ## 06:29Z — orchestrator: from the 06:27 deep audit
 1. The theme change ships in Composition **0.0.12**, not 0.0.11: 0.0.11 is already immutable with the trim/rate exports. PLAN corrected.
 2. Landing rate: 2.5 h with almost nothing merged, and frame parity at 2 PASS / 2 FAIL. Focus on LANDING: the capture fix 7989, the shim deletion, the theme 0.0.12, then the same-case frame comparison to green. Fewer review reports, more gated merges.
+
+## 06:33Z — orchestrator: theme artifact identity (viewing-20261020T0628Z): use a TRUE 0.0.12, a unique semver (PLAN already says 0.0.12). Never reuse the 0.0.11 version number for different bytes. 0.0.11 (sha dfa824a4..., trim/rate only) stays immutable as published. 0.0.12 = 0.0.11 plus the export-style DEFAULT_THEME, with its own immutable filename and sha256 sidecar. The App + Agent coordinated pair then adopts 0.0.12 directly, skipping a separate 0.0.11 adoption unless something already depends on it.
