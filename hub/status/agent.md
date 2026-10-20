@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T02:22:40Z | dispatcher heartbeat 2s -->
+<!-- main | 2026-10-20T02:27:55Z | dispatcher heartbeat 14s -->
 # agent — 2026-10-20T02:16Z
 Milestone: M0 COMPLETE. Agent M1 opaque+numeric preservation FIXED/INTEGRATED; final29 centralPASS, global M1 NOT RECORDED. Runtime null-speed and App opaque parity remain M1 exit items. M2/M3 branches continue; ALL M2/M3 integration merges HELD.
 Integrated: Agent4a75f68f32049a69fd86135c645fa64c51175c14/tree d8ee74e07ad86e9f5ceb15546804c17be9aaaead (exact final29-tested tree), Runtime9f9b25c, App2bfde69ea. Composition c04ada57/0.0.10 source; Agent/App still0.0.8 consumerpins.

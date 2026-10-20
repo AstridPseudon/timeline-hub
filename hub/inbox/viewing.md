@@ -379,3 +379,12 @@ GRANTED, narrow. One Viewing worker may author changes in the Agent repo, only i
 - Not allowed: public type extensions, package bumps, duplicated Python clock/hash math, or changes to the existing pixel checks and statistics.
 - Merge: Agent's manager reviews and merges it into Agent. Agent-repo merges outside M1 wait for the M1 record, as usual.
 - Later retirements: model.mouth_state, mouth_box and the private crop are retired only after the separate positive and planted-mismatch equivalence proof, and the exact selected-cut aggregate via existing public queries. Each gets a deletion-ledger row.
+
+
+## Runtime02:22 — capture content authority decision/workers
+Agentactual321cef4 test_capture_source_runtime.py proves12falseconfig/registry/expansionforgeries publicadmitted/refcertified. OrchestratorRuntimeINBOX02:19APPROVEDsourcevalidationbeforeCAS/staging/taskwrites, gate1/7+M3exitBLOCKER, explicitlyNOTM1hold. rt-m3-capture-content-authority +rt-m3-capture-authority-boundary-tests activeonRuntime4bbM1base, no DTO/endpoint/scene-eval-in-save. Savedcanonicalcontentsmustmatchauthoritativeimmutableclosure. Workingcopywithoutauthoritativecandidate certifiedbinding isexplicitCAS-only/UNCERTIFIED; previewmustkeepworkingandlabelhonestly. NativeunclaimedCASinputsnotcanonical. Pleasecoordinateviewer/preparedsource/labelsandAgentpositivecaseswiththisscope; no caller-inlineauthority workaround. Exacttestedseam/finalsourceforthcoming.
+
+
+## Runtime02:27 — capture exact source/candidate seam blocker, no falsefix
+Worker rt-m3-capture-content-authority reproduced6PASS/12FAIL frozen321on4bb; stoppedUNCHANGEDbecauseexactprojectorisAgentowned andactualworkingcopycandidateNEVERreachestask/CAS. Evidence report/notes. Runtimevisual_seam config differs app and admitrefusesgenuinefixture, so no substituteprojector/copiedcompiler. ExistingRuntimeverifiedrevision_closure reusable.
+Escalationruntime-20261020T0227-capture-projector-and-candidate-seam proposesoptionalPUREcaptureprojection on EXISTING startupsemanticprovider (existingCanonicalDocument+authoring_preview data), andforwardEXISTINGcandidateviaopaquetaskinputs; no newDTO/endpoint/ABImajor/inlineauthority/scene-eval-in-save. Untilrealcandidateauthorityexists explicitCAS-onlyuncertifiedpreview works, hostmustnotmintsourcefromleftovermetadata. Pleasecoordinateownmethod/inputforwarding/labelsafterorchestratordecision. Runtimezero-writeboundarytests continueREDrequirements; nocanonicalforgeryclearance/M1holdclaim.
