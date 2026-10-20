@@ -181,3 +181,18 @@ def test_queue_proposal_cannot_mix_with_another_pending_edit(connected):
     with pytest.raises(TimelineEditError):
         session.queue_proposal(proposal)
     assert session.outbox.read() == before
+
+
+@pytest.mark.parametrize('field', ['admitted_target', 'base_revision_id', 'base_publication_id'])
+def test_requester_refuses_proposal_without_original_pair(connected, field):
+    from astrid.sdk.timeline.capture import capture_move
+
+    session = open_session(connected)
+    proposal = proposal_for({'project_id': 'p', 'timeline_id': 't', 'base_revision_id': 'r0',
+                            'base_publication_id': 'pub0'},
+                           [capture_move(initial_bundle(), 'parent/clip:a', 3)])
+    (proposal if field == 'admitted_target' else proposal['admitted_target']).pop(field)
+    before = session.outbox.read()
+    with pytest.raises(TimelineEditError, match='required property'):
+        session.queue_proposal(proposal)
+    assert session.outbox.read() == before

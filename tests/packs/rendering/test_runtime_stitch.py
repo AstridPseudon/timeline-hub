@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from astrid.packs.rendering.shared.runtime_stitch import build_stitch_admission
 from astrid.packs.video_editing.shared.runtime_orchestration import OrchestrationContractError
-
 
 DIGEST = "sha256:" + "a" * 64
 
@@ -27,6 +28,7 @@ def test_stitch_admission_uses_ordered_cas_and_runtime_success_edges():
     assert [edge["from_task_id"] for edge in edges] == ["child-1", "child-2"]
     assert all(edge["requires_event"] == "task.succeeded" for edge in edges)
     assert "idempotency_key" not in admission.body
+    assert json.loads(admission.canonical_bytes) == admission.body
 
 
 def test_stitch_rejects_duplicate_or_unknown_identity():
