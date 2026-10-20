@@ -220,14 +220,25 @@ function applyLiteralParams(bundle: AuthoredBundle, supplied: EditCommand): Elem
     throw new ClipMoveError('selected project pack capture requires authoritative Agent schema capture');
   }
   const ctx = targetContext(bundle, supplied);
-  const selected = ctx.read(supplied.select, ['elementRef']);
-  const alias = ctx.read(supplied.select, ['element_ref']);
-  const element = selected ?? alias;
+  const identity: Record<string, JSON | undefined> = {};
+  for (const key of ['clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id']) {
+    identity[key] = ctx.read(supplied.select, [key]);
+  }
+  // Agent's clip.set-params recorder reads both element aliases after the
+  // scalar identity fields, even when the first alias is present.
+  identity.elementRef = ctx.read(supplied.select, ['elementRef']);
+  identity.element_ref = ctx.read(supplied.select, ['element_ref']);
+  const element = identity.elementRef ?? identity.element_ref;
   if (object(element) && element.packId) {
     throw new ClipMoveError('selected project pack capture requires authoritative Agent schema capture');
   }
-  for (const key of ['clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id', 'elementRef', 'element_ref']) {
-    if (key !== 'elementRef' && key !== 'element_ref') ctx.read(supplied.select, [key]);
+  const selector = ['asset', 'asset_id', 'media_id', 'object_id'].find((key) =>
+    has(ctx.state.entity(supplied.select)!, key));
+  if ((selector === 'asset' || selector === 'asset_id') && typeof identity[selector] === 'string') {
+    const owner = supplied.select.slice(0, supplied.select.lastIndexOf('/'));
+    for (const key of ['media_id', 'object_id', 'digest', 'content_digest']) {
+      ctx.read(`${owner}/registry`, ['assets', identity[selector] as string, key]);
+    }
   }
   const values = supplied.args.values as Record<string, JSON>;
   if (Object.keys(values).length) ctx.object(supplied.select, ['params']);
