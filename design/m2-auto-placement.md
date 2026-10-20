@@ -86,3 +86,45 @@ canonical pool membership with promote / unplace-to-pool (`keepAsPooled`);
 legacy pinned-group migration; parent-owned completion (`clip.add-media`); Runtime
 schema/provider pair for `placement.create` and the video row; App durable
 continuation (task/attempt guards from Agent/Runtime, reserved IDs, verified pin).
+
+
+# Shared auto-placement (step 2)
+
+`auto_place_shared(bundle, owner, clip_id, media, *, ownership, verified_media, frame=None,
+anchor=None, pooled=False)` in the same module; pure, one ordinary command plus a capture.
+Owner is the canonical occurrence that exclusively owns its shot (a legacy group after
+`timeline.migrate-groups`). A shot shared by two occurrences refuses `unsupported_ownership`;
+non-empty `pinnedShotGroups` refuses `migration_needed`; display IDs never identify an owner.
+
+* Hold: 4 s for image and video (completion stays 5 s). Image -> `placement.create`
+  (or `occurrence.add-media` when the lane is not the occurrence lane); video ->
+  `occurrence.add-media` with window `0..4`. The legacy video hold ignored media length;
+  a native row authors the window, so media shorter than 4 s refuses.
+* Append (`frame=None`): after the greatest end frame over ALL clips of the shot (any lane);
+  empty shot -> occurrence start.
+* Explicit `frame`: clamped at 0, then +1 while a clip START frame in the shot is equal
+  (capture `skipped`); interval overlap is allowed.
+* Lane: the anchor's lane when the anchor is in the shot, else the occurrence lane. The
+  anchor never moves the start. Capture records anchor state, lane, extent / skipped frames.
+* Replay/inverse are exact (literal start); a deleted shot clip refuses via the existing
+  membership guard and a rebuild records `absent`.
+* `unplace_shared(..., keep_as_pooled=False)` = `placement.unplace` (image only; binding kept).
+
+Evidence: `test_recipe_m2_shared_auto_placement.py`, golden `recipe_m2_shared_auto_placement.json`.
+App RED parity met Agent-side: 4 s video append (frame 120 at 30 fps), group-lane inheritance,
+equal-start shift 30 -> 31 with overlap allowed. The pool tests are not (below).
+
+## BLOCKED (no existing writer; none invented)
+
+1. **Pool membership** (null frame; `keepAsPooled`; promote). The canonical model has no pool
+   representation: group migration keeps `poolGenerationIds` only inside opaque
+   `provenance.group_migration.legacy_group`. Proposed closed op `shot.pool` v1, select
+   `occurrence:<id>`, args `{"action": "add"|"remove", "media": <five-field pin>}`, writing a
+   guarded ordered set on the owning shot; promote = a birth command plus `shot.pool remove`
+   in one batch. `auto_place_shared(pooled=True)` and `unplace_shared(keep_as_pooled=True)`
+   refuse `unsupported_pool`; two strict xfails keep the legacy expectation.
+2. **Append beyond the occurrence window.** Migration sets `duration_ms` to the member span, so
+   every append refuses `occurrence_boundary`. Proposed closed op `occurrence.set-extent` v1,
+   select `occurrence:<id>`, args `{"duration_ms": <positive number>}`, guarded on the old
+   value; the builder would emit it with the birth command. Tests use a widened window.
+3. Group migration (`timeline.migrate-groups`) lives on `tl/agt-m2-group-*` branches, not in this base.

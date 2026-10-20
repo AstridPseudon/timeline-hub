@@ -14,20 +14,37 @@ Absent means no anchor id was given or no such clip exists in the occurrence.
 A present anchor with unusable timing refuses; it never falls back.
 Completion holds are distinct from the shared 4 s hold: image 5 s, video 5 s
 unless the caller supplies the completed asset's duration.
+
+auto_place_shared is the same builder for the App's shared-shot placement, over the
+canonical owner a legacy group migrates to (one occurrence that exclusively owns its
+shot; display IDs and unmigrated pinnedShotGroups never identify an owner):
+  append    -> after the shot's greatest end frame over ALL its clips (not only one
+               lane); an empty shot starts at the occurrence start.
+  explicit  -> the clamped frame, shifted +1 while a clip START frame in the shot is
+               equal (interval overlap is allowed).
+  lane      -> the anchor's lane when the anchor is in the shot, else the occurrence lane.
+  hold      -> 4 s for image and video; video authors the source window 0..4.
+Pooled placement and keepAsPooled have no canonical writer yet and refuse.
 """
 from __future__ import annotations
 
 import math
 from fractions import Fraction
 
-from astrid.core.timeline.duration import clip_end_frame
+from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 
 from ._command_state import CommandError, State
 from .capture import number, occurrence_start, rate
 from .native_occurrence_media_commands import capture_occurrence_add_media
-from .native_placement_commands import _explicit_occurrence, _raw_clip_id, capture_placement_create
+from .native_placement_commands import (
+    _explicit_occurrence,
+    _raw_clip_id,
+    capture_placement_create,
+    capture_placement_unplace,
+)
 
 COMPLETION_SECONDS = 5
+SHARED_SECONDS = 4
 
 
 def _end_frame(clip, origin, fps):
@@ -43,6 +60,20 @@ def _kind(media, verified_media):
         if value['selection'] == media:
             return str(value['media_type']).split('/')[0]
     raise CommandError('completed media is not verified', kind='dependency_unavailable')
+
+
+def _birth(bundle, owner, clip_id, media, kind, lane, home, origin, fps, frame, length, ownership,
+           verified_media):
+    on = float(Fraction(frame, 1) / fps)
+    if kind == 'image' and lane == home:
+        return capture_placement_create(bundle, owner, clip_id, media, on, length,
+                                        ownership=ownership, verified_media=verified_media), on
+    number(length, 'duration', positive=True)
+    clip = {'id': clip_id, 'clipType': kind, 'asset': media['asset'], 'track': lane,
+            'at': on - origin, 'hold': length}
+    if kind == 'video':
+        clip.update({'from': 0, 'to': length, 'speed': 1})
+    return capture_occurrence_add_media(bundle, owner, clip, media, verified_media=verified_media), on
 
 
 def auto_place_completion(bundle, owner, clip_id, media, *, ownership, verified_media,
@@ -75,19 +106,67 @@ def auto_place_completion(bundle, owner, clip_id, media, *, ownership, verified_
         ends = [_end_frame(clip, origin, fps) for clip in clips if clip.get('track') == lane]
         frame = max(ends, default=math.floor(origin * fps + Fraction(1, 2)))
         resolution = 'lane-end'
-    on = float(Fraction(frame, 1) / fps)
     length = COMPLETION_SECONDS if kind == 'image' or duration is None else duration
-    if kind == 'image':
-        command = capture_placement_create(bundle, owner, clip_id, media, on, length,
-                                           ownership=ownership, verified_media=verified_media)
-    else:
-        number(length, 'duration', positive=True)
-        clip = {'id': clip_id, 'clipType': 'video', 'asset': media['asset'], 'track': lane,
-                'at': on - origin, 'hold': length, 'from': 0, 'to': length, 'speed': 1}
-        command = capture_occurrence_add_media(bundle, owner, clip, media, verified_media=verified_media)
+    command, on = _birth(bundle, owner, clip_id, media, kind, lane, lane, origin, fps, frame, length,
+                         ownership, verified_media)
     return {'commands': [command],
             'capture': {'owner': owner, 'clip': clip_id, 'kind': kind, 'media': dict(media),
                         'anchor': {'id': anchor, 'state': 'present' if found is not None else 'absent'},
                         'resolution': resolution, 'fps': {'numerator': fps.numerator,
                                                           'denominator': fps.denominator},
                         'start_frame': frame, 'on': on, 'seconds': length}}
+
+
+def auto_place_shared(bundle, owner, clip_id, media, *, ownership, verified_media,
+                      frame=None, anchor=None, pooled=False):
+    """Return {'commands': [...], 'capture': {...}} for one media placed into a shared shot.
+
+    owner is the canonical occurrence that exclusively owns the shot. frame=None appends;
+    an integer is an explicit global frame (clamped at 0, shifted while a start is taken).
+    """
+    _explicit_occurrence(owner, ownership)
+    _raw_clip_id(clip_id)
+    if pooled:
+        raise CommandError('shared pool membership has no canonical writer', kind='unsupported_pool')
+    kind = _kind(media, verified_media)
+    if kind not in ('image', 'video'):
+        raise CommandError('shared placement requires image or video media', kind='unsupported_media')
+    state = State(bundle)
+    row = state.occurrence(owner)
+    if sum(1 for other in bundle['placements'] if other['shot_id'] == row['shot_id']) != 1:
+        raise CommandError('shared authored placement is unsupported', kind='unsupported_ownership', ref=owner)
+    if state.config('parent').get('pinnedShotGroups') not in (None, []):
+        raise CommandError('legacy groups require recorded migration', kind='migration_needed', ref=owner)
+    origin = occurrence_start(row)
+    fps = rate(state.config('parent').get('output', {}).get('fps'))
+    clips = state.collection(owner, 'clip')
+    found = next((clip for clip in clips if anchor is not None and clip.get('id') == anchor), None)
+    home = (row.get('placement') or {}).get('track', row.get('track'))
+    lane = found.get('track') if found is not None else home
+    capture = {'owner': owner, 'clip': clip_id, 'kind': kind, 'media': dict(media),
+               'anchor': {'id': anchor, 'state': 'present' if found is not None else 'absent'},
+               'lane': lane, 'fps': {'numerator': fps.numerator, 'denominator': fps.denominator}}
+    if frame is None:
+        start = max((_end_frame(clip, origin, fps) for clip in clips), default=math.floor(origin * fps + Fraction(1, 2)))
+        capture.update(resolution='append', extent_frame=start)
+    else:
+        if isinstance(frame, bool) or not isinstance(frame, int):
+            raise CommandError('frame must be an integer', kind='unsupported_timing')
+        taken = {clip_start_frame({**clip, 'at': origin + number(clip.get('at'), 'clip.at')}, float(fps))
+                 for clip in clips}
+        start, skipped = max(frame, 0), []
+        while start in taken:
+            skipped.append(start)
+            start += 1
+        capture.update(resolution='explicit', requested_frame=frame, skipped=skipped)
+    command, on = _birth(bundle, owner, clip_id, media, kind, lane, home, origin, fps, start, SHARED_SECONDS,
+                         ownership, verified_media)
+    capture.update(start_frame=start, on=on, seconds=SHARED_SECONDS)
+    return {'commands': [command], 'capture': capture}
+
+
+def unplace_shared(bundle, owner, clip_id, *, ownership, keep_as_pooled=False):
+    """Remove one shared placement; its media binding is kept. keepAsPooled has no writer yet."""
+    if keep_as_pooled:
+        raise CommandError('shared pool membership has no canonical writer', kind='unsupported_pool')
+    return {'commands': [capture_placement_unplace(bundle, owner, clip_id, ownership=ownership)]}
