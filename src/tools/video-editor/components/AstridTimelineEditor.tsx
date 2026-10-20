@@ -37,7 +37,6 @@ import {
   useTimelineConfigVersion,
   useTimelineOpsSelector,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
-import { planGenerationAssetRegistration } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
 import { duplicateGenerationAsset } from '@/tools/video-editor/lib/generation-utils.ts';
 import {
   duplicateShotGroup,
@@ -571,38 +570,46 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
       return;
     }
 
+    const originalSnapshot = {
+      data: current,
+      signature: current.signature,
+      stableSignature: current.stableSignature,
+      head: current.head ? { ...current.head } : undefined,
+      projection: current.editProjection ? structuredClone(current.editProjection) : undefined,
+    };
+
     setDuplicatingClipId(clipId);
     try {
       const duplicatedGeneration = await duplicateGenerationAsset({
         generationId,
         projectId: selectedProjectId,
       });
-      const registrationPlan = planGenerationAssetRegistration({
-        generationId: duplicatedGeneration.generationId,
-        variantId: duplicatedGeneration.variantId,
-        variantType: duplicatedGeneration.variantType,
-        imageUrl: duplicatedGeneration.imageUrl,
-        thumbUrl: duplicatedGeneration.thumbUrl,
-        assetDurationSeconds: typeof assetEntry?.duration === 'number' ? assetEntry.duration : undefined,
+
+      const latest = dataRef.current;
+      if (!latest || latest !== originalSnapshot.data
+        || latest.signature !== originalSnapshot.signature
+        || latest.stableSignature !== originalSnapshot.stableSignature
+        || JSON.stringify(latest.head) !== JSON.stringify(originalSnapshot.head)
+        || JSON.stringify(latest.editProjection) !== JSON.stringify(originalSnapshot.projection)) {
+        throw new Error('The timeline changed while duplicating the generation; the duplicate was not inserted.');
+      }
+
+      const preparedAsset = prepareGenerationAsset({
+        ...duplicatedGeneration,
+        assetId: duplicatedGeneration.mediaSelection?.asset,
+        durationSeconds: typeof assetEntry?.duration === 'number' ? assetEntry.duration : undefined,
         metadata: {
           content_type: assetEntry?.type ?? (
             duplicatedGeneration.variantType === 'video' ? 'video/mp4' : 'image/png'
           ),
         },
       });
-
-      if (!registrationPlan.ok) {
-        throw new Error('Failed to register the duplicated asset.');
+      if (!preparedAsset?.mediaSelection) {
+        throw new Error('The duplicated generation has no original Runtime media selection; native parent insertion is unavailable.');
       }
 
       const result = await commands.addClip({
-        preparedAsset: {
-          assetKey: registrationPlan.assetId,
-          mediaType: duplicatedGeneration.variantType,
-          durationSeconds: registrationPlan.assetEntry.duration ?? null,
-          entry: registrationPlan.assetEntry,
-          source: 'registered',
-        },
+        preparedAsset,
         afterClipId: clipId,
       });
       if (!result.ok) {
@@ -616,7 +623,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     } finally {
       setDuplicatingClipId((currentClipId) => (currentClipId === clipId ? null : currentClipId));
     }
-  }, [commands, dataRef, selectedProjectId]);
+  }, [commands, dataRef, prepareGenerationAsset, selectedProjectId]);
 
   return (
     <>
