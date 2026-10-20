@@ -32,7 +32,10 @@ def occurrence_create(ctx, command):
     fps = rate(output.get('fps'))
     on = number(args['on'], 'on')
     duration = number(args['duration'], 'duration', positive=True)
-    frame = clip_start_frame({'at': on, 'hold': duration}, float(fps))
+    try:
+        frame = clip_start_frame({'at': on, 'hold': duration}, float(fps))
+    except (ValueError, OverflowError) as exc:
+        raise CommandError(str(exc), kind='unsupported_timing') from exc
     start_ms = float(Fraction(frame, 1) / fps) * 1000
     shot_id, occurrence_id = args['shot_id'], args['occurrence_id']
     ctx.create_entity('shot:' + shot_id, kind='shot', owner=None, value={

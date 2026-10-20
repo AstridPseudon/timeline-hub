@@ -159,6 +159,16 @@ def test_closed_birth_inputs_refuse_before_mutation(change):
     assert original == before
 
 
+def test_birth_quantizer_overflow_is_permanent_and_does_not_mutate_capture():
+    original = empty_bundle()
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError) as error:
+        birth(original, on=1e308)
+    assert error.value.kind == 'unsupported_timing'
+    assert 'retry' not in str(error.value).lower()
+    assert original == before
+
+
 def test_append_birth_inverse_preserves_existing_order_and_opaque_content():
     original = empty_bundle()
     existing = execute(original, [birth(original, occurrence_id='existing', shot_id='existing')]).bundle

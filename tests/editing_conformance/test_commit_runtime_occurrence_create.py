@@ -162,6 +162,18 @@ def _prove_birth(tmp_path, monkeypatch, grouped):
         bundle = bundle_from_document(before)
         birth = capture_occurrence_create(bundle, 'first-occurrence', 'first-shot', name='Chapter one',
                                           track='picture', on=0, duration=10)
+        invalid_birth = {key: copy.deepcopy(birth[key])
+                         for key in ('schema_version', 'op', 'version', 'select', 'args')}
+        invalid_birth['args']['on'] = 1e308
+        history_before_invalid = copy.deepcopy(history())
+        head_before_invalid = service.get_project_timeline(project, 'film')
+        with pytest.raises(RuntimeErrorBase) as error:
+            commit(body([invalid_birth]), 'invalid-birth-quantizer')
+        assert error.value.status == 409
+        assert error.value.details['reason'] == 'unsupported_timing'
+        assert 'retry the exact request' not in str(error.value)
+        assert service.get_project_timeline(project, 'film') == head_before_invalid
+        assert history() == history_before_invalid
         born = execute(bundle, [birth]).bundle
         child_track = capture_track_create(born, OWNER, {'id': 'picture', 'kind': 'visual'})
         child_bundle = execute(born, [child_track]).bundle
