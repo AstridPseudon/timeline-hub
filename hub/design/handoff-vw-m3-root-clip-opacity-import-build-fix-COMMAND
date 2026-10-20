@@ -1,0 +1,18 @@
+# Commands and results
+
+```text
+npx vitest run --config config/testing/vitest.config.ts --no-cache src/tools/video-editor/compositions/playerEvaluation.test.ts src/tools/video-editor/compositions/VisualClip.evaluation.test.tsx src/tools/video-editor/compositions/VisualClip.test.tsx src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts
+PASS — 4 files, 60 tests
+
+npm run build:hosted
+PASS with original /evaluation import — 5,558 modules, 37.13s
+FAIL with requested root clipOpacity import — Rollup MISSING_EXPORT from dist/index.js
+```
+
+Artifact inspection:
+
+```text
+node --input-type=module -e "import('@banodoco/timeline-composition').then(x=>console.log(typeof x.clipOpacity)); import('@banodoco/timeline-composition/evaluation').then(x=>console.log(typeof x.clipOpacity,typeof x.getSanitizedPlaybackRate))"
+root: undefined
+evaluation: function function
+```

@@ -1,95 +1,86 @@
-# Viewing Timeline Core — current M4 size census
+# Viewing current-main census
 
-Refreshed 2026-10-20 from committed blobs at the current `tl/integration`
-heads. This measures authored Timeline Read/See/Edit product code in the
-settled Viewing boundary; it is not a target-achievement claim. Physical lines
-are UTF-8 `splitlines()` counts and nonblank lines use `strip()`.
+This is the copy-ready update for the existing Viewing census document. It
+records a reproducible source snapshot; it is not a final M4 freeze.
 
-## Revisions
+## Exact source pins
 
-| repository | `origin/main` baseline | current `tl/integration` |
-| --- | --- | --- |
-| Composition | `67b8aa3d0d6831d3e3504a340ff583c3da253707` | `4f325f1e14f03a3418f04bd81b3635c810a40cf2` |
-| Agent | `a411628f8fd6129f9c58c332019b56769d997384` | `a8a40afd37e5560a14fa5e1a09ace6018596793e` |
-| App | `580508eed1bf6ed95caaf476c9d69a4672472a2f` | `8c0e1f799b64e9b6f179018b7dff01479d43c85c` |
+The census uses `origin/main` as baseline and the recorded `tl/integration`
+heads as current source:
 
-Runtime is omitted because its commit/inspection and visual-seam paths belong
-to the Runtime-owned census.
+| repository | `origin/main` commit | `origin/main` tree | current source commit | current source tree |
+| --- | --- | --- | --- | --- |
+| Composition | `67b8aa3d0d6831d3e3504a340ff583c3da253707` | `62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120` | `e7ef7a0729a2d7dad3c0ae60da9e6bb8f844d332` | `408633d6b73dde63f683eaf9d13a132bb34a3bd7` |
+| Agent | `a411628f8fd6129f9c58c332019b56769d997384` | `e0ca791bb8adbf11e25e0e97843aaf246a04f965` | `01ee5b95857265065ec2cae795c7394bd490cdff` | `c9a44b4b6f17cbf689ee6e3fddb49485697b5d03` |
+| App | `580508eed1bf6ed95caaf476c9d69a4672472a2f` | `ab3a5e296b01cc5458c88049c9eb5be402a05ccf` | `a12b19be56816112da9b16cd8db4c48f9c5c399b` | `62df1de0a14edf326c6a635fbd52ed8f367fe0e3` |
 
-## Canonical authored source
+Runtime is omitted because it is outside the approved Viewing boundary.
 
-The same path boundary and manifest as the prior 206-file census are used for
-both snapshots. Counts are files / bytes / physical / nonblank; delta is
-current minus baseline.
+## Exact canonical counts
 
-| owned slice | baseline | current | delta |
+Columns are files / bytes / physical lines / nonblank lines. Delta is current
+minus `origin/main`.
+
+| owned slice | `origin/main` | current source | delta |
 | --- | ---: | ---: | ---: |
 | Composition `typescript/src/**`, excluding generated registries/curves and timer declaration | 16 / 45,621 / 1,550 / 1,398 | 79 / 190,569 / 4,442 / 4,097 | +63 / +144,948 / +2,892 / +2,699 |
-| Agent `timeline_visualize/**`, excluding schemas, stage/docs, fonts, inspector assets | 54 / 1,253,951 / 27,700 / 24,911 | 55 / 1,293,193 / 28,516 / 25,676 | +1 / +39,242 / +816 / +765 |
-| Agent explicit render/evaluator adapters and `rendering/elements/**` text | 29 / 375,489 / 11,381 / 10,993 | 20 / 361,897 / 11,026 / 10,662 | −9 / −13,592 / −355 / −331 |
+| Agent `timeline_visualize/**`, excluding schemas, stage/docs, fonts, inspector assets | 54 / 1,253,951 / 27,700 / 24,911 | 55 / 1,292,945 / 28,508 / 25,670 | +1 / +38,994 / +808 / +759 |
+| Agent explicit render/evaluator adapters and `rendering/elements/**` text | 29 / 375,489 / 11,381 / 10,993 | 20 / 363,724 / 11,068 / 10,701 | −9 / −11,765 / −313 / −292 |
 | Agent `onscreen.py`, `scene_answers.py` | 1 / 18,156 / 452 / 375 | 2 / 24,162 / 568 / 470 | +1 / +6,006 / +116 / +95 |
-| Agent Remotion host source, excluding adjacent paths and generated/declaration/test files | 11 / 24,264 / 631 / 573 | 10 / 28,084 / 690 / 630 | −1 / +3,820 / +59 / +57 |
-| App non-test source in `PreviewPanel/**`, `compositions/**`, `render/**`, excluding fallback | 29 / 282,934 / 7,533 / 6,932 | 31 / 309,641 / 8,018 / 7,402 | +2 / +26,707 / +485 / +470 |
-| **Viewing-owned canonical total** | **140 / 2,000,415 / 49,247 / 45,182** | **197 / 2,207,546 / 53,260 / 48,937** | **+57 / +207,131 / +4,013 / +3,755** |
+| Agent Remotion host, excluding adjacent paths and generated/declaration/test files | 11 / 24,264 / 631 / 573 | 10 / 28,084 / 690 / 630 | −1 / +3,820 / +59 / +57 |
+| App non-test source in `PreviewPanel/**`, `compositions/**`, `render/**`, excluding fallback | 29 / 282,934 / 7,533 / 6,932 | 30 / 307,481 / 7,945 / 7,335 | +1 / +24,547 / +412 / +403 |
+| **Viewing-owned canonical total** | **140 / 2,000,415 / 49,247 / 45,182** | **196 / 2,206,965 / 53,221 / 48,903** | **+56 / +206,550 / +3,974 / +3,721** |
 
-The preceding snapshot used Composition `5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8`,
-Agent `d0a5072bbe7b7ce9489f43aa0a81027ec400343b`, and App
-`20ea14c26526fe4924354f10a177aebbaf6002bc`: 206 files / 2,203,235 bytes /
-53,452 physical / 49,103 nonblank. Since that snapshot, the same manifest
-therefore changes by −9 files / +4,311 bytes / −192 physical / −166 nonblank.
+The `49,247` physical / `45,182` nonblank baseline is the exact recorded
+`origin/main` result. The `53,221` physical / `48,903` nonblank current result
+is a snapshot only and must not be treated as final M4 until the final-cut
+source is known.
 
-## Exact counted changes since the 206-file snapshot
+## Boundary notes
 
-- Agent added `astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py`;
-  `astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py` was
-  refactored around it. The row changes by +12 physical / +13 nonblank lines.
-  `astrid/packs/rendering/elements/catalog.ts` is modified with no byte or
-  line-count change.
-- Agent deleted these nine duplicate Composition wrapper components:
-  `astrid/packs/rendering/rendering/elements/animations/{fade-up,fade,scale-in,slide-left,slide-up,type-on}/component.tsx`,
-  `astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx`,
-  and `astrid/packs/rendering/rendering/elements/transitions/{cross-fade,fade}/component.tsx`.
-  The render/evaluator row changes by −27 physical / −18 nonblank lines.
-- App deleted `src/tools/video-editor/render/renderPipeline.ts` (−177
-  physical / −161 nonblank lines).
-- Composition has no counted source-path changes. The App vendored Composition
-  copy was already absent from the preceding snapshot and remains excluded;
-  App vendored Agent/browser text, tests, generated clients/contract data,
-  archives, and untouched infrastructure remain outside the canonical total.
+- The approved census script and path boundary were reused unchanged.
+- Composition `e7ef…` adds no test or generated data to the authored
+  `typescript/src/**` count beyond the existing manifest.
+- App `a12…` has no `DebugTrack.tsx`, `renderPipeline.ts`, or new-rate wrapper
+  path in the counted source. No debug/duration credit is inferred; those are
+  absent or outside the approved manifest unless a future integration lands an
+  owned product path.
+- Agent `onscreen.py` and `motion/model.py` private duration/mouth helpers
+  remain where the current source uses them; they are not counted as cuts only
+  because a public successor exists.
+- Tests, generated registries/contract data, vendor copies, archives, stale
+  `dist`, fallback paths, and untouched main infrastructure remain excluded.
 
-The owner-pending cache extraction is not yet integrated as an approved
-ownership/deletion result; this census makes no forecast about it. The
-currently committed `_filmstrip_cache.py` helper is counted once in the Agent
-`timeline_visualize` row, with no duplicate helper attribution elsewhere.
+## Pending cuts, separate from current counts
 
-## Reproduction and boundary
+- Q1: `typescript/src/lib/fade.ts`, six nonblank lines, still present and
+  conditional.
+- D09 core: `onscreen.py` whole-file candidate (375 nonblank), retaining or
+  moving the 69-nonblank role/coverage seam only after the named
+  caller/source/parity gates.
+- D09a/D09b: `motion/model.py` `mouth_state` plus helper (24 nonblank direct,
+  33 with `hash_unit`) and `mouth_box` (7 nonblank direct), conditional on
+  public motion/ROI caller qualification. Private crop/statistics and
+  presentation consumers remain KEEP.
+- D08 App host replacement (`VisualClip`/`TimelineRenderer`) remains zero
+  census credit until a complete public-host parity proof exists. The small
+  audio helper is already landed outside this canonical slice and is not
+  re-credited.
+- Agent D10 source-adapter copies are complete: all nine copies were
+  physically deleted in the current source, and that deletion is already
+  reflected in the measured current counts. No forecast is included in the
+  current total.
 
-The read-only established manifest is:
-
-```text
-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-size-census-gate-review-script.mjs
-```
-
-It reads only `git ls-tree`/`git show` blobs from
-`/home/user/work/{composition,agent,app}`. Reproduce the current path list and
-byte/nonblank counts without changing the preserved script with:
+## Exact reproduction
 
 ```sh
 sed \
-  -e 's/46bd700b2b46ae1cab1e8a1502ed6504e81aa8d8/4f325f1e14f03a3418f04bd81b3635c810a40cf2/g' \
-  -e 's/931d7ec56dadffc2efdc893fec80b4c4aadf8a8e/a8a40afd37e5560a14fa5e1a09ace6018596793e/g' \
-  -e 's/18becfbede00038830b97e63345445eeef54fa42/8c0e1f799b64e9b6f179018b7dff01479d43c85c/g' \
+  -e 's/46bd700b2b46ae1cab1e8a1502ed6504e81aa8d8/e7ef7a0729a2d7dad3c0ae60da9e6bb8f844d332/g' \
+  -e 's/931d7ec56dadffc2efdc893fec80b4c4aadf8a8e/01ee5b95857265065ec2cae795c7394bd490cdff/g' \
+  -e 's/18becfbede00038830b97e63345445eeef54fa42/a12b19be56816112da9b16cd8db4c48f9c5c399b/g' \
   /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-size-census-gate-review-script.mjs \
   | node
 ```
 
-Use each emitted `paths` array with `git show <sha>:<path>` and Python
-`len(blob.splitlines())` for the physical-line column. The boundary remains:
-Composition authored `typescript/src/**`; Agent authored visualize files plus
-the explicit scene/render/elements/Remotion host paths; and App non-test source
-under the three named preview/composition/render roots. Generated data,
-tests/fixtures, archives, vendored copies, and unrelated infrastructure are
-not silently reattributed or counted.
-
-The PLAN size guide is rough guidance, not a gate; no working feature is cut to
-reach it.
+No tests, build, browser, renderer, full suite, install, or dependency/cache
+operation was run for this census.
