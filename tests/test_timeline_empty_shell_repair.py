@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 
 import pytest
 
@@ -9,6 +10,9 @@ from runtime_protocol.errors import ConflictError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_baseline import empty_bootstrap_document, verify_baseline
+from runtime_protocol.timeline_commit_store import TimelineCommitStore
+from runtime_protocol.util import canonical_json, now
+from test_timeline_commit_acceptance import validate_prepared
 from test_timeline_commit_port import PreparedProvider
 
 
@@ -28,11 +32,36 @@ def service(tmp_path):
 
 
 def _shell(service, project, *, parent="empty-parent", payload=None, key="shell"):
-    payload = payload or empty_bootstrap_document(project, "main", parent)["parent_revision"]["payload"]
-    return service.publish_parent_composition(project, "main", {
-        "project_id": project, "timeline_id": "main", "expected_head": None,
-        "parent_revision_id": parent, "parent_composition": payload,
-    }, idempotency_key=key)
+    """Leave a published parent revision with no publication: the headless shell.
+
+    Mirrors the first half of the commit store's bootstrap (closure, head,
+    publication event, receipt) with a caller-chosen revision, stopping before
+    the head edge is installed.
+    """
+    document = empty_bootstrap_document(project, "main", parent)
+    if payload is not None:
+        document["parent_revision"] = {"revision_id": parent, "payload": payload,
+                                       "content_digest": "sha256:" + hashlib.sha256(canonical_json(payload).encode()).hexdigest()}
+    commits = TimelineCommitStore(service.store, validate_prepared=validate_prepared)
+    store = service.store
+    with store._mutex, store._transaction():
+        commits._validate_closure(document)
+        commits._persist_closure(document)
+        revision, timestamp = document["parent_revision"], now()
+        store.conn.execute("INSERT INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, ?, ?)",
+                           ("main", project, parent, timestamp))
+        manifest = {k: v for k, v in document["dependency_manifest"].items() if k != "documents"}
+        event = store._append_timeline_event("main", "parent.composition.published",
+            {"project_id": project, "timeline_id": "main", "old_head": None, "new_head": parent,
+             "content_digest": revision["content_digest"], "dependency_manifest": manifest})
+        result = {"project_id": project, "timeline_id": "main", "revision_id": parent, "parent_revision_id": parent,
+                  "content_digest": revision["content_digest"], "payload": revision["payload"], "old_head": None,
+                  "new_head": parent, "dependency_manifest": manifest,
+                  "content_digests": {"parent": revision["content_digest"]}, "event_id": event, "created_at": timestamp}
+        seq = store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", ("main",)).fetchone()[0]
+        store._record_command_receipt("parent_composition.publish", "main", key,
+            hashlib.sha256(key.encode()).hexdigest(), result, project_id=project, event_ids=[event],
+            primary_stream_id="main", resulting_stream_seq=seq, created_at=timestamp)
 
 
 def _dump(service):
