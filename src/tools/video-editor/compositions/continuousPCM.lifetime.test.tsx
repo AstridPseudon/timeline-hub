@@ -549,6 +549,29 @@ describe('continuous PCM inside the App audio attempt', () => {
     expect(state.holds).toBe(0);
   });
 
+  it('renews the same hold as source chunks arrive before the native WAV element exists', async () => {
+    vi.useFakeTimers();
+    let chunk = deferred<{ done: boolean; value?: Uint8Array }>();
+    const read = vi.fn(() => chunk.promise);
+    fetchMock.mockResolvedValue({ ok: true, body: { getReader: () => ({ read }) } });
+    render(<AudioTrack track={track} clips={[clip]} fps={30} />);
+    await flush();
+    for (let i = 0; i < 4; i++) {
+      const pending = chunk;
+      chunk = deferred();
+      await act(async () => {
+        vi.advanceTimersByTime(AUDIO_HOLD_LIMIT_MS / 2);
+        pending.resolve({ done: false, value: new Uint8Array([i]) });
+      });
+      expect(state.holds).toBe(1);
+    }
+    await act(async () => chunk.resolve({ done: true }));
+    expect(decode.mock.calls[0][0]).toEqual(Uint8Array.from([0, 1, 2, 3]).buffer);
+    act(playable);
+    expect(state.holds).toBe(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps ordinary media readiness, progress, retry and teardown in the existing flow', () => {
     vi.useFakeTimers();
     const view = render(<AudioTrack track={track} clips={[plain]} fps={30} />);
