@@ -15,3 +15,6 @@
 
 ## Lead 11:22Z: dispatcher restarted for the kit FIFO change
 - Restarted dispatcher-daemon (310 -> 23286) with the APP-MACHINE command; no worker lost.
+
+## Lead 12:35Z: approved recycle-after-main17 done
+- Recycled six workers via bin/recycle (branches kept); disk 11 -> 13 GB. The 12:35Z orchestrator redirect (qualify tuple 171a259ac + 17e46de99 gate first, then bounded writer retirements) relayed to the manager INBOX.
