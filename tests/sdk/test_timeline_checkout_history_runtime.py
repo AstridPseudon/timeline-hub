@@ -2,25 +2,32 @@
 from __future__ import annotations
 
 import copy
+import os
 
 import pytest
 
-from tests.helpers.runtime import use_runtime, vendored_runtime_commit
 from tests.editing_conformance.test_commit_runtime_m1 import (
-    assert_readback, cli, film, open_client, parent_of, renderer_off,
+    assert_readback,
+    cli,
+    film,
+    open_client,
+    parent_of,
+    renderer_off,
 )
+from tests.helpers.runtime import use_runtime, vendored_runtime_commit
 
 pytestmark = pytest.mark.integration
 # Like the client cutover suite, read the existing lock; never change or bypass
 # either side of the public handshake to test a different Runtime contract.
+os.environ.setdefault('ASTRID_RUNTIME_CHECKOUT', '/home/user/work/runtime')
 RUNTIME = use_runtime(vendored_runtime_commit())
 
 
 def test_checkout_reload_undo_cli_redo_uses_retained_history(
     tmp_path, monkeypatch, capsys, film, renderer_off, real_runtime,
 ):
-    from astrid.sdk.timeline_checkout import Checkout
     from astrid.sdk.timeline.sync import TimelineSession
+    from astrid.sdk.timeline_checkout import Checkout
     from astrid.sdk.timeline_sheet import find_version, sheet_version
 
     fixture, original_parent, _ = film
