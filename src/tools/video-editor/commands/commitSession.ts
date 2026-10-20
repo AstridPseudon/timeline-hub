@@ -338,7 +338,8 @@ export async function createTimelineCommandSession(options: Options) {
       assertReady();
       if (bundle.project_id !== options.scope.projectId || bundle.timeline_id !== options.scope.timelineId
         || current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
-        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        || current.head.headRevisionId !== displayHead.revisionId
+        || (current.head.headPublicationId != null && current.head.headPublicationId !== displayHead.publicationId)) {
         throw new Error('Displayed timeline does not match the raw authoring basis');
       }
       const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);

@@ -305,6 +305,15 @@ describe('native parent clip delete in the shared durable command session', () =
       expect((await env.outboxes.list(scope))[0].intents).toHaveLength(0);
       await session.dispose();
     });
+  it('accepts an unknown display publication when the revision still matches', async () => {
+    const env = await deleteEnvironment();
+    const session = await env.mount();
+    const current = structuredClone(env.current());
+    current.head!.headPublicationId = null;
+    expect(() => captureClipDeleteEdit(session.clipDeletePort, current, 'x')).not.toThrow();
+    expect(env.calls).toHaveLength(0);
+    await session.dispose();
+  });
   it.each(['unrelated', 'target opaque', 'target source', 'membership', 'order', 'dependency'])(
     'verifies the original capture against a newer closure: %s', async (fault) => {
       const env = await deleteEnvironment();
