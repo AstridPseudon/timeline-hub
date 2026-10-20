@@ -14,11 +14,29 @@ new Runtime DTO.
   Its existing nested manifest entrypoint is extended with the relative
   `scene-answers.json` artifact; no new managed-output route is introduced.
 - The scene artifact keeps the existing data names: `answers` is the ordered
-  list returned by the public Scene query, `scene_clips` is the existing
-  compiled-clip-to-address map from `snapshot.metadata.scene_clips`, and
-  `snapshot_label` is the existing bound revision/candidate label. An
-  unavailable query returns the same label shape with status `unavailable` and
-  an empty `answers` list.
+  list returned by the public Scene query, `scene_clips` is the exact
+  compiled-clip-to-address map carried by the same host-verified source that
+  prepared Root, and `snapshot_label` is the existing bound
+  revision/candidate label. The executor never copies either value from the
+  outer authority metadata. A successful result has `snapshot_label.status`
+  `committed` or `candidate`, `answers` for every frame in
+  `range(duration_frames)`, and map keys exactly equal to the verified
+  compiled `config.clips` IDs. An unavailable query has
+  `snapshot_label.status` `unavailable`, label `revision unavailable`, empty
+  `answers`, and an empty `scene_clips` map.
+
+The executor treats `returncode: 0` as “the action ran”; it is not a Scene
+success assertion. The Agent caller must check `snapshot_label.status` before
+feeding answers into `scene_problems` or other findings, and must treat
+`unavailable` as advisory unavailable rather than as an empty successful
+scene. No new public exit-code policy is introduced here.
+
+Before querying, the bound source must contain a well-formed `config.clips`
+list with unique non-empty string IDs and the carried map must contain exactly
+those IDs. After querying, the executor validates the complete ordered frame
+extent and that every returned layer `clipId` belongs to that map. Missing,
+stale, forged, or malformed source/config data is advisory unavailable; it
+cannot publish the authority metadata's map.
 
 The Agent caller should request the full canonical frame extent from the
 snapshot's existing `duration_frames` value. The executor does not sample,

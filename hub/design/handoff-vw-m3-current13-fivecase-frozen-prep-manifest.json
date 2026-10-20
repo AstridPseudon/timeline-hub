@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.viewing.current13-fivecase-prepared.v1",
+  "status": "HELD_PREPARED",
+  "preparedSource": {
+    "baseCommit": "e26079c440d09d7712588581e369204b3e035db9",
+    "baseTree": "e523fc0dc76eeff03a68f3cdb59e78a8b6b55798",
+    "workingSourceSha256": "9ada22fb56897767bf05931b1a3a5837962f04cafd971d82b262352ec7f6a4fe",
+    "workingSourceFileCount": 5848
+  },
+  "controller": {
+    "path": "tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs",
+    "sha256": "047aae00bfc5b059e86bc441f53eb4a2854df73606c6021da28a0e95ee5b4854",
+    "discovery": "exactly five native-codec-chrome155 parity cases",
+    "ready": "refused: App13 consumer adoption is pending"
+  },
+  "changedFiles": {
+    "tests/e2e/timeline/viewing-parity/harness.ts": "dee8528c446d4fe96df47b777c431dab3462a74493f9368fbaaa248990dde169",
+    "tests/e2e/timeline/viewing-parity/source-tuple.ts": "e0a0f7632db4692bd68d1c7e5468d5e0b85bfd47b6f555fe5fa169e06c61b4ac",
+    "tests/e2e/timeline/viewing-parity/source-tuple.test.ts": "58fcfa21748a009e3000df1e4e9b37be19a40888b502f6500b886dc7c407c989"
+  },
+  "actualIntegrationHeads": {
+    "app": { "commit": "0d5009e18bee8e29f894dabf5db501a0fcea750f", "tree": "b323667662d565526d7c2395733f26e2c6380378", "composition": "0.0.13" },
+    "agent": { "commit": "c73b1ab12d5d044fc181bba4343e8b47668d9674", "tree": "ddb30a85cd4a38803ae8b8be27ef7974cf6fdf99", "composition": "0.0.12" },
+    "runtime": { "commit": "e2db1e8cc7c176fafa1e4e651da3639b6e3a89dd", "tree": "94c5ffbc0b636e25475c0f351bfb384dd06ee8ab", "contract": "0.2.13" },
+    "composition": { "commit": "5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8", "tree": "13e375534fffd704305eced5686699d2c8c9c948", "package": "0.0.13" }
+  },
+  "heldQualificationTuple": {
+    "appCandidate": { "commit": "30b8df2895536c471e270faf83ce710acd847065", "tree": "0bf9c9f7fb849cb0938bf29fc72eca069014f623", "status": "pending-consumer-adoption" },
+    "agent13": { "commit": "d8749a9ce12a699672faf3ad96b4e4cbea9245c2", "tree": "75354d38c898729bac09619679f5421faba319ed", "status": "held-public13-candidate" },
+    "runtime13": { "commit": "2c4ac180c2220bdad966bc01e95ad230e99ce26a", "tree": "7ab412cc4bcbe517efcfa806e092336390312e18", "contract": "0.2.13", "client": "official-all75" },
+    "composition13": { "source": "5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8", "package": "0.0.13", "artifactSha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738", "regularMembers": 77 }
+  },
+  "environment": {
+    "node": { "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node", "version": "v20.19.4", "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490" },
+    "chrome155": { "path": "/opt/google/chrome/chrome", "version": "155.0.8059.84-1", "executableSha256": "cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76", "treeSha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e", "treeFileCount": 255 },
+    "diskFreeBytes": 9857830912,
+    "diskFloorBytes": 10737418240
+  },
+  "graphs": {
+    "app": { "status": "GRAPH_READY_ONLY", "composition": "0.0.13", "compositionSha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738", "regularMembers": 77, "physicalManifestSha256": "567c0c2b1c8fb31fdbd0f7157d2f7814a8601e4977b618e901f33281d13ce6a6" },
+    "repairedScene": { "status": "GRAPH_READY_ONLY", "manifestEntries": 21495, "missing": 0, "changed": 0, "added": 0, "root": "/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules" },
+    "f816": { "status": "UNQUALIFIED", "observedEntries": 21565 }
+  },
+  "ownerPorts": {
+    "storedCap8488": "absent from current App integration",
+    "nativeFixtureE4c": "absent from current App integration",
+    "tabController": "absent from current App integration"
+  }
+}

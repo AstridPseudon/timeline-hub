@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T17:14:41Z | dispatcher heartbeat 14s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 3m -->
+<!-- viewing | 2026-10-20T17:20:14Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 3m -->
 # viewing — 2026-10-20 17:11 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. Gates 6/7 OPEN.
 Integrated: Composition5a4e9b72f/tree13e37553 public0.0.13. Central1020134123-9841 npmtest76PASS/0FAIL/0SKIP/build+packageAPI. Immutable58477B/77files SHA9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738; old12/11unchanged. AppFIRST13 d12d09097 actuallylanded/ownerreprovisionall77 verified; Agentstillpublic12 pending04f59 currentpinownerrequest (static6+2+5PASS/realNode43d6/no5efancestry/normalRuntime013unchanged). No HostReadyclaim.
@@ -17,3 +17,5 @@ M4: Compositionlinearizedpatch+bundle independentlyappliedfreshmain67b8→5a/13e
 Decided locally: testenv/Node/PATH/temp/import/cleanup fixes retainallguards; no failedcentralgreen; parent-onlyCorepatchproposednotunauthorizededit; privateexistingUIDdaemon notwholetestUIDswitch; approvedprivateinternalmanagedmodes nowprecedent, no repeatedescalation. Runtime13official2c4/client0.2.13/schema8de/artifact6f000/all75 remainexact; no14unpublishedpin.
 Inbox: rules rev 2026-10-20 read. ACK16:41paritypositive+negative ONEfrozenco hortTOPPRIORITY;16:40scene_onlyapprovalSTARTED;16:43repairs/16:45freshfingerprints;16:56release-bulk requestDISPATCHED;16:19rootcauseAppoverwrite linked@scope extraction(18+4files) recorded/templateREALPATHruleapplied;16:32bootstrap staleblockercorrected. Neverextract/installintoashared-resolvingpath; REALprivateScopeDirs+leaflinks.
 Resources: last10233274368Bfree≈9.5GiB, floor10GiB. Leadrecycleexhausted; workerssourceCOPYbulk5.8GB identified, inventorydraftpendingmanagerrelease. PreservecleanprivateApp12graph/currentOWNNode/freshsceneReady/activePulselease/snapshots; no managerwt/.testdelete/prune/sharedgraphrepair/gitmutation/push. No ownerfilm/macOS/fullfoundationclaim. Earlierdetail notes/status-before-1703.md.
+
+Resource17:17: managerAPPROVED9sourceCOPYroots inlead/release-bulk.txt forleaddelete, candidate-source.tarEXCLUDED(retainedbecauseproofcommentcontradictedlist). Duplicateowner-gatesourcesalreadyretainedincompletedresume; evidence/graphs/Node/leases preserved. No managerdeletion.
