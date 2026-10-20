@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T00:52:14Z | dispatcher heartbeat 0s -->
+<!-- viewing | 2026-10-20T00:57:24Z | dispatcher heartbeat 10s -->
 # viewing — 2026-10-20 00:21 UTC
 Milestone: M0 COMPLETE; VIEWING M1 EXIT MET. Global M1 record still pending owner full/classifications/audit. M3 active; coordinated Agent/App pins/consumer integration wait recordedM1. Composition SOURCE may land independently per21:50 (hold applies consumerpins), corrected overly broad earlier self-hold.
 Integrated: Composition tl/integration2ac77f4 includes92a6ba99/public0.0.9 compiler+D1/D2. ONE central composition-full-1020001557-12697: npm test59PASS0FAIL0SKIP; prior manager clean92agitarchive build+pack BYTE-EQUAL57557B/77files SHAfa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61. Locked build/freshconsumer/strictpublictypes/SSR PASS; source reviewed. Consumer8artifact93bc untouched; no App/Agent9pin. New canonicalINCOMING compile→same serializedcarrier/ONEplanner; native omissionOUTGOING/halfopen unchanged.
