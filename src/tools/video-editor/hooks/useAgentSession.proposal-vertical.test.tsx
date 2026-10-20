@@ -16,6 +16,8 @@ describe('cut timeline-agent proposal vertical', () => {
         ? { connection_id: 'connection-1', initialize: {} }
         : url.endsWith('/rpc')
           ? { result: {} }
+          : url.endsWith('/events')
+            ? { notifications: [], disconnected: false }
           : { error: 'session_not_owned', detail: 'Session does not belong to this project' };
       return new Response(JSON.stringify(payload), { status: url.endsWith('/prompt') ? 403 : 200, headers: { 'Content-Type': 'application/json' } });
     });
