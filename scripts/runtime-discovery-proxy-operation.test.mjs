@@ -511,7 +511,8 @@ socketTest('socket: duplicate Connection nominations are stripped in both direct
   const f = await venue(t, (req, res) => {
     received = req.headers;
     res.writeHead(200, { Connection: ['X-Reply-Leak', 'ETag'], 'X-Reply-Leak': 'private', ETag: 'private-tag',
-      'Set-Cookie': 'private-cookie=1', 'Content-Type': 'text/plain' });
+      Authorization: 'Bearer upstream-secret', 'Proxy-Authorization': 'Basic upstream-secret', Cookie: 'upstream=secret',
+      [H]: 'upstream-operation-secret', 'Set-Cookie': 'private-cookie=1', 'Content-Type': 'text/plain' });
     res.end('kept');
   }, { appOrigin });
   f.rotate(`http://127.0.0.1:${f.runtimePort}`, 'pinned-token');
@@ -530,9 +531,11 @@ socketTest('socket: duplicate Connection nominations are stripped in both direct
     Authorization: 'Bearer browser-secret', Cookie: 'browser=secret' } });
   assert.equal(result.status, 200);
   assert.equal(result.body.toString(), 'kept');
+  assert.equal(result.headers['content-type'], 'text/plain');
   assert.equal(received.authorization, 'Bearer pinned-token');
   for (const name of ['x-first', 'x-second', 'cookie', 'proxy-authorization', H.toLowerCase()]) assert.equal(received[name], undefined, name);
-  for (const name of ['etag', 'x-reply-leak', 'set-cookie', 'access-control-allow-origin']) assert.equal(result.headers[name], undefined, name);
+  for (const name of ['authorization', 'proxy-authorization', 'cookie', H.toLowerCase(), 'etag', 'x-reply-leak', 'set-cookie',
+    'access-control-allow-origin']) assert.equal(result.headers[name], undefined, name);
   assert.equal(result.headers['cache-control'], 'no-store');
 });
 
