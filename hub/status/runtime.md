@@ -1,5 +1,5 @@
-<!-- main | 2026-10-20T16:32:51Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | busy30 31 | status age 10m -->
-# runtime — 2026-10-20T16:22:48Z
+<!-- main | 2026-10-20T16:34:25Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | busy30 32 | status age 0m -->
+# runtime — 2026-10-20T16:34:10Z
 Milestone: M1 RECORDED; M2 migrations active. M3/M4 OPEN, no exit claim.
 Integrated: Runtime tl/integration6ab3243972f8dc49105819e6d7ba7aef1a2888b8. Catalog promotion81f +selected-media CASa51 +unplaced catalog text9f +strengthened native clip parity6ab merged sequentially after independent APPROVE. Original2promotion+4binding positives run; text181targeted/69neighbors/3catalog-fence, clip13native/1existingparent-schemaxfail/10deselect. c45 native historical render retry and16ac audit synchronization retained. Public013 artifacts unchanged.
 Public: immutable producer2c4ac180/client0.2.13, schema8de823...b8f4/artifact6f000bc...af56;75paths/133HTTP/48defs22ops. Full hashes in design/runtime-current-tuple.md. Compatible server patches do not repin. No typed-item carrier public.
@@ -21,3 +21,5 @@ Current6ab boundedpostmerge gates:127targeted/9commit PASS, marked3CAS/catalog P
 Candidatecarryforward:919privatecarrier narrowAPPROVEonly, 9cdeordinaryserverREJECTmissing6abtest; neitheradopted. Exact6abtestcarry+accidentalproductdoc removal workers active, frozenartifactsunchanged. Runtime014parentpositive1PASS --runxfail, no newop/schema required.
 
 Rawfixedsource: e220 immutable independentAPPROVE(actualold89RED/current7races+71neighborsGREEN); currentcompatb7313912 only3files over6ab,71PASS, independentnarrowreviewactive. Agent8f155 adapter HOLDmissingoriginaldurationreadclaim; nativepairnotyetqualified. RT07draftoriginalpositive failuresretained, nevermergeready.
+
+Peer16:31 HOLD: b731 metadata eligibility wronglyaccepts declaredsameprojectpinabsentBASE, e220refuses. Priorb731mechanicalAPPROVEsuperseded; fixworker rt-m2-raw-base-eligibility-fix ACTIVE. No merge/actualpair. Agentdurationread9bfAPPROVE122+126+25; ONEpairwaitsfixedRuntime. Normal014Agentinitfixed3c4f successorACK, no artifactmutation. Speechsettledoutputprovenancetrace assigned.
