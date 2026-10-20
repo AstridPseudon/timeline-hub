@@ -194,3 +194,80 @@ Concrete missing semantics and boundaries remain explicit:
   renderer/Composition parity.
 - It does not run the other `tests/editing_conformance` modules or add a
   broader scenario matrix. No private artifact was required or unmatched.
+
+## Incremental watch: attached parent delete landing
+
+Date: 2026-10-20T22:51:49Z
+
+The Agent integration branch advanced from the prior proof snapshot with the
+semantic merge `b43cd9571` (source commit `cb2eedc50`): attached parent
+`clip.delete` now uses the durable native command/outbox publication path,
+including dependency guards, exact retry identity, reload, and guarded undo.
+This is a relevant Gate1/Gate3 adapter change, so only its existing focused
+HTTP node was replayed; untouched prior Gate1/Gate3 evidence remains valid.
+
+Live integration heads at this check:
+
+| Repo | `tl/integration` head |
+|---|---|
+| Agent | `b43cd9571` |
+| Runtime | `a6bce81` |
+| App | `157eef8cf` |
+| Composition | `ac918bb` |
+
+Named central check:
+
+- Suite: `current-owned-parent-delete-http`
+- Run: `agt-m2-gate13-incremental-current-owner-current-owned-parent-delete-http-1020225129-10201`
+- Agent source tree: `1d44801de4aa27559d39bc30c35800a13db5ad49`
+- Result: **1 passed in 4.81s**, exit 0
+- Exact node: `tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_delete_stale_rebase_lost_ack_reload_retry_undo`
+- Environment: public Remotion `agent-remotion-0013`, C13 child Python environment,
+  and the supported VibeComfy fixture override from the named suite.
+
+The passing node covers stale rebase, lost acknowledgement, restart, exact
+retry, parent deletion, and guarded undo. No full/full* suite, browser/live
+journey, or unchanged prior qualification was run.
+
+The next Agent semantic worker is currently preparing the existing attached
+parent split path on top of this integration head; it has not landed, so no
+split replay is claimed yet. Artifact/docs/env-only worker activity does not
+require Gate1/Gate3 semantic replay.
+
+At 2026-10-20T22:52:10Z the live App head was `e9d04f4bf` (the Agent, Runtime,
+and Composition heads above were unchanged). Its merge changes only the App
+viewing-parity audio controller and its tests; it has no Agent editing or
+renderer-independent-save consumer overlap, so no Gate1/Gate3 Agent node was
+replayed for that App-only change.
+
+## Incremental watch: connected frontend label-clear proof
+
+Date: 2026-10-20T22:55:01Z
+
+Agent integration advanced to `d9a49344b` (source commit `34baa3856`), adding
+one parameterized authenticated `/v1` proof for Python, CLI, and NativeSheet
+label-clear edits. The merge is test-only; the relevant behavior was already
+present in the preceding Agent source. It is nevertheless a new Gate1 proof
+node, so it was selected for a bounded central check.
+
+The first request failed before collection because the test service snapshotted
+this worker's pre-merge branch (`b43cd9571`, tree
+`1d44801de4aa27559d39bc30c35800a13db5ad49`), where the newly merged test node
+did not exist. This was a test-service snapshot mismatch (`no tests ran`, exit
+4), not a product or assertion failure. A test-only port of the exact merged
+proof was used in this worker to obtain the correct source-equivalent snapshot;
+no integration branch or product source was edited.
+
+Successful named central check:
+
+- Suite: `gate1-connected-frontends-integration`
+- Run: `agt-m2-gate13-incremental-current-owner-gate1-connected-frontends-integration-1020225435-13125`
+- Agent source tree: `11861a9611c050c3566f1df61b11fe1ecba4ead3`
+- Result: **3 passed in 4.75s**, exit 0
+- Exact node: `tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_label_clear_is_lossless_across_native_frontends`
+- Coverage: Python, CLI, NativeSheet; authenticated `/v1` transport, reload,
+  undo, opaque/source identity preservation, and retired publisher rejection.
+
+Live heads at the successful check: Agent `d9a49344b`, Runtime `a6bce81`, App
+`e9d04f4bf`, Composition `ac918bb`. No full/full* suite or unchanged prior
+Gate1/Gate3 qualification was run.
