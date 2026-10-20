@@ -1,10 +1,9 @@
-# M2 writer bundle 2 — manager review candidate, release HELD
+# M2 writer bundle 2 — COMPOSED/REVIEWABLE; App release HELD
 
-All M2 integration remains HELD until PLAN records M1. This is the complete
-required ordinary + popup + PARAM source composition for review before normal
-Runtime generation. Manager owns source freeze. PARAM release is independently
-HELD for `agt-m2-params-object-scope`; the reviewed `_hydrate` still fetches all
-admission snapshot objects. No App readiness or popup acceptance is claimed.
+Latest qualification is recorded in the final section below. Historical sections
+retain their original tuples and pending items; the final section supersedes
+those items for the new candidate. Manager review/App qualification and PLAN's
+M1 record still gate release/integration. No all-gate1 or all-M2 claim.
 
 Frozen Bundle1 stays Agent `3bf9e5368a956ef562c77e1beb0a745addf23daf` /
 Runtime `6be970633cc82ab412428151e6bf42f3e7fc3081`, client `0.2.2`.
@@ -338,3 +337,109 @@ Officialversion **0.2.6**; canonical ordinary schema rawSHA256 **472622c45fa6b5c
 Only announced committed M1 nullspeed files selectively consumed: d79758d8601c8ff40f4754c70b11312a93338aaf product/native tests +6db1d88c6c08fe8784ae323ce496573dc3bca4f5 genuine retained tests (announced219tree); no rejected65SQLfixture. Focused105PASS; central `rt-m2-popup-verified-media-read-targeted-1020022215-21879` **102PASS51.71s**, same d9b5aftree, actual settled ffmpeg PNG/old+new video, public generated read+door auth/origin/scope/query/object/digest/catalogmetadata/lifecycle/version refusals, ALL SQL/CAS unchanged; originaldoor/readlocks/retainednullneighborsPASS. Broaderneighbor/generator lane1466PASS/1FAIL/1deselected: inherited duplicate-add fixture select parent/clip:clip rejected by frozen clip.add parent rule, independently reproduced untouchedd691 (same1FAIL). Original expectation retained, no weaken/skip/xfail. Reports exactcommands+limits ONLY `workers/rt-m2-popup-verified-media-read/notes/report.md` and report.md.
 
 **UNFROZEN review candidate**: manager review+final sourceSHA publication → normal Agent0.2.6 pin/exact popup+PARAM qualification → App-owned adapter/media-selection-integration extension/QA required. No final App pair or full suite/M2 merge/oldwriterretirement claimed. Bounded proof complete; stopping for harness commit.
+
+
+## Final exact ordinary/PARAM/popup qualification — agt-m2-bundle2-final-qualify
+
+Status: **COMPOSED/REVIEWABLE, not App READY**. Runtime owner02:22 reviewed the
+exact4c145 successor with no correction. Agent final paired lane passes; manager
+source review/freeze and App qualification remain. All M2 integration waits for
+PLAN's M1 record. The following identities supersede historical pending items
+above only for this new candidate; no old source/ref was changed.
+
+| Field | Exact value |
+|---|---|
+| Branch | `tl/agt-m2-bundle2-final-qualify` |
+| Worktree | `/home/user/work/wt/agt-m2-bundle2-final-qualify` |
+| Current source HEAD / harness parent | `8c9c7428b070dc69c40bd3bb8ce573e8322418d2` |
+| Verified predecessor tree | `3143c1e88522fed078ef1068a431fec7bee57ee3` |
+| Candidate commit | **PENDING FINAL-QUALIFY HARNESS COMMIT** |
+| Central tested tree | `5fb59b8957064256bd7c0c256d2304f54845b0bb` |
+| Final source tree | `1434f42b48fd062248faf1f4abef7ff467186377` |
+| Runtime producer checkout | `/home/user/work/wt/rt-m2-null-speed-clean-candidate` |
+| Runtime producer SHA | `4c145dc62192f0e942e3ee3922a11488aefe9b41` |
+| Runtime producer tree | `f640ccf4aacb08e15f493bc7e3e5befe26ed0ceb` |
+| Client | `0.2.3` |
+| Official SCHEMA_DIGEST | `sha256:a435dde3b552999ea75ff593868ff4d56debdd64bd8f79c134fb470a279a05e6` |
+| Official artifact version | `sha256:0f3d217ba0f3ca51d580bf3938fb3df1361a561de5acae7a911d21a9eea8bd9e` |
+| Runtime artifact manifest raw SHA256 | `58e88352de9bf47969de2ce72e0c0ad8c3530560f0120d10eb067314a3603920` |
+| Canonical schema SHA256 | `472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9` |
+| Runtime lock SHA256 | `8ea9e36e64d0664257f8dbeefaa61e465f96c8bc3c471caed0242941ec283414` |
+
+Canonical schema: `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/core/timeline/schema/edit-command.schema.json`.
+Normal vendor-lock update/check consumed exact committed4c145. All74 official
+artifacts are byte-identicald691; only lock source identity changed. The approved
+3eae numeric21-line product comparison delta and direct tests were applied to the
+CURRENT M2 provider. Six M1 numeric MOVE cases match compatibled9a exactly and use
+the new normal source. No M1/older provider/core overlay, new op/schema/producer
+guard/materialization/renderer/global cut or fixture normalization.
+
+Exactly one named central request `agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967`: **207 passed in262.40s,
+exit0 / service274s, no skip/xfail/failure**. Includes the entire29 M1 cohort on
+THIS pair, nativebatch40/suffixBABA, popup48, selected-object/mixed PARAM20,
+numeric PARAM19, SDK/CLI/clientcontract39, firstclip2, scalar/clear/media and
+add-delete. Full command/results: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/notes/report.md`.
+Central result/log directory: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967/`.
+Default integration heads in service `ext` do not override explicit4c145 preflight.
+
+Both UNCHANGED firstclip cases passed with `--runxfail` in that final run BEFORE
+removing only the nullable-speed strict marker. Final tree differs from central
+snapshot only by that required marker removal; test body and both cases are
+unchanged. Audit reconstructs the tested tree using the original marker. No
+product/pin/test-body change after request, no second request or relabeled tree.
+Local focused290PASS33.06s, native renderer/legacy-import fence1PASS0.90s, scoped
+Ruff/vendor/CLIgen/audit/diffcheck allPASS. Mypy has only the same two preexisting
+union-attr errors as exact shadowed base. Full-suite/make-check was not run.
+
+Harness commits after worker exit. Manager runs `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/notes/finalize-handoff.py` to
+verify finaltree/parent and publish actual new HEAD. The current8c9 parent is not
+that commit. Read-only predecessor verification confirms8c9/tree3143 and a31 parent;
+no old finalization script or old source mutated.
+
+Current captures below use prefix `astrid.sdk.timeline.`; all12 ops remainv1,
+closed args. Batch ingress remains `sync.TimelineSession.queue_many/commit_many`.
+
+| Operation | Capture export | Absolute source path |
+|---|---|---|
+| `clip.move` | `capture.capture_move` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/capture.py` |
+| `placement.move` | `native_placement_commands.capture_placement` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/native_placement_commands.py` |
+| `clip.delete` | `capture.capture_clip_delete` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/capture.py` |
+| `clip.add` | `_clip_commands.capture_clip_add` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/_clip_commands.py` |
+| `clip.set` | `_clip_scalar_commands.capture_clip_set` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/_clip_scalar_commands.py` |
+| `clip.trim` | `_trim_commands.capture_clip_trim` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/_trim_commands.py` |
+| `clip.split` | `_split_commands.capture_clip_split` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/_split_commands.py` |
+| `clip.set-params` | `_scalar_commands.capture_clip_set_params` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/_scalar_commands.py` |
+| `track.create` | `capture.capture_track_create` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/capture.py` |
+| `track.set` | `_track_commands.capture_track_set` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/_track_commands.py` |
+| `occurrence.add-media` | `native_occurrence_media_commands.capture_occurrence_add_media` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/native_occurrence_media_commands.py` |
+| `occurrence.swap-media` | `native_occurrence_media_commands.capture_occurrence_swap_media` | `/home/user/work/wt/agt-m2-bundle2-final-qualify/astrid/sdk/timeline/native_occurrence_media_commands.py` |
+
+All16 goldens are byte-identical frozen d474; M1+track-label also match Bundle1.
+
+| Absolute golden path | SHA256 |
+|---|---|
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_clip_delete.json` | `091bc1c7fa9c57583dde8fcc6d6af9226513bf4f214369ef0892cc1db492f0aa` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m1_move.json` | `e1dc5fc72e42fa90aed3e46ccd3bb95e219004bddd2917dc99f0154cf768dba0` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m1_occurrence.json` | `dba00dff12f8322f8613869170abd15cd8c8e330bbbee8a6da675270fda3a7bc` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m1_shared.json` | `0828ae13255897d8bea25ba5fd28445835f374189e837b41b9f818bb017577d7` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_app_clip_scalar_fields.json` | `8bb75e23c10c9677635d85f33f219b7f1b2d89baf481e3b7ed21f425b76f0c06` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_app_track_label.json` | `5aa9aed23a9764e4a9fb0d56fd5efc47368711933adbfaa224f2f725a766ed00` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_clip_add.json` | `5e9a54e75a0901724dedd3e62c0f37f78840a8edee001f30b92306383800479b` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_clip_split.json` | `a0e24c1f78d8580f908973745950ed0196c17257831197ec2f75a55abc638f63` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_clip_trim.json` | `4d71a9d184db1b85c220de10842b2dc68e5eb9b48afee180b6c29cf0d5b06152` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json` | `e30ed3303532e3d73adfd07670e04d1312003b7e10d2c5c008629b8b9bffad46` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_placement.json` | `7404b665b2918ebf095abc68bd3a20176afb0589b79cf785887c1da50b68d271` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json` | `0aab88bff6040ad741771fe8ed2198c141347970420ede78a981ba1416f6e866` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json` | `9687956ee3850c5d873580a28cd6e8354f0b76dcb9a17bf56eb6ae0213f24b36` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json` | `15e945496b805af2554d78777be4585aa684615de575960352376f1dd4eaba74` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json` | `ae9f96e55432d0cf892f6045285e56265c6adc66058caf146bf4a7d7b1869638` |
+| `/home/user/work/wt/agt-m2-bundle2-final-qualify/tests/editing_conformance/fixtures/recipe_m2_scalar_track.json` | `f982beb0493fbda9196d99c2dfb5200c26cb82d58cd23535b87eb7295747c75d` |
+
+Unsupported remaining cases: CLI/commands-file does not supply custom-pack
+selected-schema capture inputs (`schema_inputs`/`realm_id`); refusal preserves
+file/outbox. Native SDK/provider tests do not qualify that CLI surface. App's
+actual browser/popup/PARAM pair, full suite, macOS, owner film and pixel/audio
+parity are unverified here. No all-gate1/all-M2 completion or App readiness claim.
+M2 integration stays HELD until PLAN M1 and manager approval; all frozen/leased
+refs remain unchanged. Capture/golden/source manifest: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/notes/final-manifest.json`;
+exact report/commands/limitations: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/notes/report.md`.
