@@ -139,21 +139,24 @@ def test_equal_state_and_aba_publication_history_refuses(ref, path):
         inverse(plan.bundle, accepted(plan.records, original, plan.bundle), intervening)
 
 
-# Integration's ordinary replay is identity-only (rebase.replay identities_only) so an
-# equal-value ABA write below an occurrence no longer blocks replay; restoring this
-# strictness for occurrence.delete is a follow-up requirement of the delete replay guard.
-@pytest.mark.xfail(strict=True, reason='ordinary replay is identity-only on integration')
+# PLAN's settled equal-state rule, confirmed by the orchestrator's 09:42 decision,
+# applies to occurrence.delete: ordinary replay accepts an equal final state when
+# the stable identity is unchanged. The inverse test above remains history-strict.
 @pytest.mark.parametrize('ref,path', [
     ('occurrence:occ-1', ['shot_id']),
     ('occurrence:occ-1/clip:clip-a', ['asset']),
     ('occurrence:occ-1/shot', ['payload']),
 ])
-def test_equal_state_and_aba_publication_history_refuses_replay(ref, path):
+def test_equal_state_and_aba_publication_history_accepts_replay(ref, path):
     original = bundle_from_document(delete_document())
     plan = execute(original, [capture_occurrence_delete(original, 'occurrence:occ-1')])
     value = State(original).get(ref, path)['value']
-    with pytest.raises(CommandError, match='intervening'):
-        replay(plan, original, intervening_records=[later(ref, path, value)])
+    rebased = replay(plan, original, intervening_records=[later(ref, path, value)])
+    assert rebased.commands == plan.commands
+    assert rebased.records == plan.records
+    assert rebased.bundle == plan.bundle
+    assert [row['occurrence_id'] for row in rebased.bundle['placements']] == ['occ-0', 'occ-2']
+    assert State(rebased.bundle).entity('occurrence:occ-1', optional=True) is None
 
 
 @pytest.mark.parametrize('select', ['parent', 'shot:chapter-shot', 'shot:picture', 'occ-1:clip-a',

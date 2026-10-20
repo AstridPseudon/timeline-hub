@@ -115,7 +115,7 @@ def test_original_app_whole_group_visible_result_after_canonical_migration_bound
 
 
 @pytest.mark.parametrize('aba', [False, True])
-def test_provider_equal_state_and_aba_child_publications_refuse_stale_delete(monkeypatch, aba):
+def test_provider_equal_state_and_aba_child_publications_accept_stale_delete(monkeypatch, aba):
     from astrid.sdk.timeline import commands
 
     original = commands.operations
@@ -133,10 +133,23 @@ def test_provider_equal_state_and_aba_child_publications_refuse_stale_delete(mon
     realm.call([{'schema_version': 1, 'op': 'test.child-hold', 'version': '1',
                  'select': 'occurrence:occ-1/clip:clip-a', 'args': {'values': [3, 2] if aba else [2]}}])
     before, accepted = copy.deepcopy(realm.head), copy.deepcopy(realm.accepted)
-    with pytest.raises(CommitRejected) as error:
-        realm.call([command], base=base)
-    assert error.value.failure['details']['reason'] == 'intervening_write'
-    assert realm.head == before and realm.accepted == accepted
+    result = realm.call([command], base=base)
+    expected_realm = DetachedRealm(delete_document())
+    expected = expected_realm.call([capture(expected_realm, 'occurrence:occ-1')])
+    assert result['data']['status'] == 'rebased'
+    assert result['data']['rebased_onto'] == before
+    assert result['data']['commands'] == [command]
+    assert result['data']['canonical_document'] == expected['data']['canonical_document']
+    assert [row['occurrence_id'] for row in result['data']['canonical_document'][
+        'parent_revision']['payload']['occurrences']] == ['occ-0', 'occ-2']
+    assert result is realm.accepted[-1]
+    assert realm.accepted[:-1] == accepted
+    assert result['receipt']['result'] == result['data']
+    assert realm.head == {'revision_id': result['data']['accepted_revision_id'],
+                          'publication_id': result['receipt']['receipt_id']}
+    assert realm.entries[-1]['receipt'] == result['receipt']
+    assert realm.entries[-1]['records'] == realm.prepared[-1]['records']
+    assert [record['command'] for record in realm.entries[-1]['records']['commands']] == result['data']['commands']
 
 
 def test_grouped_two_deletes_are_one_history_inverse_with_exact_original_order():
