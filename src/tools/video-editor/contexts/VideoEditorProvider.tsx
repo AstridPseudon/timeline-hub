@@ -742,6 +742,7 @@ export function VideoEditorRuntimeContent({
 
   const editorOps = useMemo<TimelineEditorOpsContextValue>(() => ({
     trackLabel: editor.trackLabel,
+    clipScalar: editor.clipScalar,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,

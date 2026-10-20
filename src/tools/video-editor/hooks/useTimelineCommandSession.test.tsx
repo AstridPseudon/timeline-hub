@@ -1,3 +1,4 @@
+import { captureClipScalarEdit, submitClipScalarEdit, submitClipTransitionClears } from '../commands/clipScalarGesture.ts';
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -446,4 +447,159 @@ describe('mounted timeline command session', () => {
     expect(hook.result.current.commit.data?.head?.headPublicationId).toBe('p2');
     hook.unmount();
   });
+  it('exposes the scalar port and fences capture, finish and submit behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipScalarPort!;
+    const current = hook.result.current.commit.data!;
+    const args = { values: {}, clear: ['asset'] } as const;
+    setLegacyClean(false);
+    expect(() => captureClipScalarEdit(port, current, 'x', 'parent')).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const captured = captureClipScalarEdit(port, current, 'x', 'parent');
+    setLegacyClean(false);
+    expect(() => submitClipScalarEdit(captured, { values: {}, clear: ['asset'] })).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finish(captured.basis, { values: {}, clear: ['asset'] });
+    setLegacyClean(false);
+    expect(() => port.submit({ command: prepared.command,
+      preview: { version: 1, operations: [{ op: 'clip.update', target: 'x', payload: {}, clear: ['asset'] }] } })).toThrow('earlier timeline saves');
+    expect(args.clear).toEqual(['asset']);
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('fences atomic transition clear finish and submit behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipScalarPort!;
+    const current = hook.result.current.commit.data!;
+    const captured = captureClipScalarEdit(port, current, 'x', 'parent');
+    setLegacyClean(false);
+    expect(() => submitClipTransitionClears([captured])).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finishBatch!([captured.basis], { values: {}, clear: ['transition'] });
+    setLegacyClean(false);
+    expect(() => port.submitBatch!({ commands: prepared.commands,
+      preview: { version: 1, operations: [{ op: 'clip.update', target: 'x', payload: {}, clear: ['transition'] }] } }))
+      .toThrow('earlier timeline saves');
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('previews scalar ABSENT through the mounted hook and keeps the draft on command refusal without snapshot traffic', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('conflict');
+    act(() => submitClipScalarEdit(captureClipScalarEdit(hook.result.current.commands.clipScalarPort!,
+      hook.result.current.commit.data!, 'x', 'parent'), { values: {}, clear: ['asset'] }));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    expect(hook.result.current.commit.data!.config.clips[0]).not.toHaveProperty('asset');
+    expect(hook.result.current.commit.data!.resolvedConfig.clips[0]).not.toHaveProperty('asset');
+    expect(env.commits()[0].body!.commands[0]).toMatchObject({ op: 'clip.set', select: 'parent/clip:x',
+      args: { values: {}, clear: ['asset'] }, expect: { 'parent/clip:x::asset': { state: 'absent' } } });
+    expect(env.calls.filter((call) => call.method !== 'GET' && call.path !== '/v1/handshake')
+      .every((call) => call.path.endsWith('/commit'))).toBe(true);
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
+  it.each([false, true])('queues new None (bulk=%s) after uncertain A until exact retry, preserving an ordinary suffix', async (bulk) => {
+    const raw = commandDocument();
+    const parent = raw.parent_revision.payload;
+    const clips = [
+      { id: 'x', track: 'V1', at: 1, hold: 4, clipType: 'hold', transition: { type: 'crossfade', duration: 0.5, revision: 'x-revision', params: { opaque: null } } },
+      { id: 'y', track: 'V1', at: 9, hold: 4, clipType: 'hold', transition: { type: 'crossfade', duration: 0.75, revision: 'y-revision', params: { opaque: [false, null] } } },
+    ];
+    parent.clips = structuredClone(clips);
+    parent.config = { ...parent.config as object, clips: structuredClone(clips) };
+    raw.parent_revision.content_digest = fixtureDigest(parent);
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted(await environment(raw));
+    env.setFault('lost');
+    act(() => submitClipMove(captureClipMove(hook.result.current.commands.port,
+      hook.result.current.commit.dataRef.current!, 'x'), 5));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    const [original] = await env.outboxes.list(scope);
+    const requestA = original.pending!.request;
+    const wireA = structuredClone(env.commits()[0]);
+    expect((await env.provider.loadTimelineCommandBasis(scope.timelineId)).head)
+      .toEqual({ revisionId: 'r1', publicationId: 'p1' });
+    const displayed = hook.result.current.commit.dataRef.current!;
+    expect(displayed.head).toMatchObject({ headRevisionId: 'r0', headPublicationId: 'p0' });
+    expect(displayed.editProjection).toMatchObject({ kind: 'local', base: env.initial.head });
+    const port = hook.result.current.commands.clipScalarPort!;
+    const capture = vi.spyOn(port, 'capture');
+    const finish = vi.spyOn(port, bulk ? 'finishBatch' : 'finish');
+    const captured = (bulk ? ['x', 'y'] : ['x']).map((id) => captureClipScalarEdit(port, displayed, id));
+    const bases = structuredClone(captured.map((edit) => edit.basis));
+    act(() => {
+      if (bulk) submitClipTransitionClears(captured);
+      else submitClipScalarEdit(captured[0], { values: {}, clear: ['transition'] });
+    });
+    await waitFor(async () => expect((await env.outboxes.list(scope))[0].intents).toHaveLength(2));
+    const [withB] = await env.outboxes.list(scope);
+    const intentB = structuredClone(withB.intents[1]);
+    const commandsB = (intentB.payload as { commands: unknown[] }).commands;
+    expect(commandsB).toHaveLength(bulk ? 2 : 1);
+    for (const [index, command] of commandsB.entries()) {
+      expect(command).toMatchObject({ op: 'clip.set', version: '1', select: `parent/clip:${clips[index].id}`,
+        args: { values: {}, clear: ['transition'] },
+        expect: { [`parent/clip:${clips[index].id}::transition`]: { state: 'present', value: clips[index].transition } } });
+    }
+    expect(intentB).toMatchObject({ basis: { after: original.intents[0].id }, payload: { displayBasis: env.initial } });
+    expect(intentB.readyBase).toBeUndefined();
+    // Both scalar removal and the ordinary move preview use compileTimelinePatch in the mounted hook.
+    act(() => submitClipMove(captureClipMove(hook.result.current.commands.port,
+      hook.result.current.commit.dataRef.current!, 'x'), 7));
+    await waitFor(async () => expect((await env.outboxes.list(scope))[0].intents).toHaveLength(3));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    const [queued] = await env.outboxes.list(scope);
+    const commandsC = (queued.intents[2].payload as { commands: unknown[] }).commands;
+    expect(queued.pending).toEqual(original.pending);
+    expect(queued.intents.slice(0, 2)).toEqual(withB.intents);
+    expect(queued.intents[2]).toMatchObject({ basis: { after: intentB.id } });
+    expect(commandsC).toMatchObject([{ op: 'clip.move', args: { on: 7 },
+      expect: { 'parent/clip:x::at': { state: 'present', value: 5 } } }]);
+    expect(env.commits()).toEqual([wireA]);
+    const expected = clips.map((clip, index) => {
+      const moved = index ? clip : { ...clip, at: 7 };
+      if (!bulk && index) return moved;
+      const { transition: _transition, ...cleared } = moved;
+      return cleared;
+    });
+    for (const config of [hook.result.current.commit.data!.config, hook.result.current.commit.data!.resolvedConfig]) {
+      expect([...config.clips].sort((a, b) => a.id.localeCompare(b.id))).toEqual(expected);
+    }
+    expect(hook.result.current.commit.data!.head).toMatchObject({ headRevisionId: 'r0', headPublicationId: 'p0' });
+    expect(hook.result.current.commit.data!.editProjection).toMatchObject({ kind: 'local', base: env.initial.head });
+    await act(async () => { await hook.result.current.commands.retry(); });
+    expect(env.commits()).toHaveLength(4);
+    expect(env.commits()[1]).toEqual(wireA);
+    expect(env.commits()[1]).toMatchObject({ bodyText: requestA.body, key: requestA.key });
+    expect(env.commits()[2].body).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', commands: commandsB });
+    expect(env.commits()[2].body!.commands).toEqual(commandsB);
+    expect(env.commits()[3].body).toMatchObject({ base_revision_id: 'r2', base_publication_id: 'p2', commands: commandsC });
+    expect(new Set(env.commits().map((call) => call.key)).size).toBe(3);
+    expect(captured.map((edit) => edit.basis)).toEqual(bases);
+    expect(capture).toHaveBeenCalledTimes(bulk ? 2 : 1);
+    expect(finish).toHaveBeenCalledOnce();
+    expect(hook.result.current.commands.state.status).toBe('saved');
+    const accepted = await env.provider.loadTimelineCommandBasis(scope.timelineId);
+    expect(accepted.head).toEqual({ revisionId: 'r3', publicationId: 'p3' });
+    expect(hook.result.current.commit.data!.editProjection).toEqual({ kind: 'accepted', head: accepted.head });
+    const expectedAccepted = expected.map((clip) => clip.id === 'x'
+      ? { ...clip, app: { astrid: { fixed_start: true, for: 4 } } } : clip);
+    for (const config of [hook.result.current.commit.data!.config, hook.result.current.commit.data!.resolvedConfig]) {
+      expect(config.clips).toEqual(expectedAccepted);
+    }
+    expect(accepted.canonicalDocument.parent_revision.payload.clips).toEqual(expectedAccepted);
+    expect((accepted.canonicalDocument.parent_revision.payload.config as { clips: unknown }).clips).toEqual(expectedAccepted);
+    expect((await env.outboxes.list(scope))[0].intents).toEqual([]);
+    expect(env.calls.filter((call) => call.method !== 'GET' && call.path !== '/v1/handshake'))
+      .toEqual(env.commits());
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
 });
