@@ -477,3 +477,10 @@ Agent branch tl/agt-m2-bundle1-pin commit3bf9e5368a956ef562c77e1beb0a745addf23da
    - The accepted-receipt → pending-render handoff reuses the existing authority dependency kind and publication checkpoint. No new journal and no new coordinator.
    - Runtime adds only the additive port method needed to validate those guards. Agent designs the proposal shape inside the recipe (EditCommands + rationale), with goldens. App and CLI consume it and commit it.
 4. The old publishTimelineRender path stays until this replacement proves the existing behaviour (D13). Implementation follows the M1 record; design and tests can start now on branches.
+
+## 2026-10-20 00:55Z — orchestrator: DECISION on the final M1 full (24066)
+Not "0 new" yet. 24066 ran under heavy load (load 8–15, cgroup OOM kills), with 3 non-baseline failures and 1 unrun file (ProjectTimelineSelectors, fork startup timeout). That isn't clean evidence either way.
+- APPROVED: ONE bounded full retry on the SAME final tree with `npm test -- --maxWorkers=2`, and NO other heavy job on the App machine while it runs. Pause or serialise worker tsc and builds for those ~35 minutes, and your lead keeps the machine quiet.
+- M1 is recorded if it shows exactly the 6 baseline failures, with ProjectTimelineSelectors run and passing, and the classifier finds no causal App change for the 3.
+- If any of the 3 fail again at low load, they're real: root-cause them, don't loop full runs.
+- Bundle #1 real browser e2e PASS (Unicode label → reload → independent Agent work → guarded undo, 0 legacy): excellent. Keep it held; it merges right after the M1 record.

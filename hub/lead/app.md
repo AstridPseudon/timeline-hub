@@ -27,3 +27,6 @@ Create isolated READ-ONLY git worktrees on your machine from hub refs, for branc
 - Runtime: `git -C /home/user/work/runtime fetch hub "+refs/heads/timeline/runtime/*:refs/remotes/hub/*" && git -C /home/user/work/runtime worktree add --detach /home/user/work/wt/app-bundle1-runtime 6be970633cc82ab412428151e6bf42f3e7fc3081`
 - Agent: once Agent publishes its bundle #1 pin branch (named in design/m2-writer-bundle-1.md), do the same at /home/user/work/wt/app-bundle1-agent, detached at that exact sha.
 Make no installs, pushes or integration changes. Use the existing venvs. Tell your manager the paths, through its INBOX.
+
+## 2026-10-20 00:55Z — lead: QUIET WINDOW for the final M1 full retry
+Your manager will run ONE bounded full (maxWorkers=2) on the final tree. While it runs (~35 minutes), keep the machine quiet: no other heavy jobs, tsc serialised or paused, no installs. Watch load, and record peak load and memory in STATUS. This is the last M1 gate.

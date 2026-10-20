@@ -440,3 +440,21 @@ No generic snapshot carrier/manifest/DTO or native provider wiring is invented.
 Managers must align actual immutable artifact custody/retention before wiring
 changed-known-param execution and flipping the three original strict xfails.
 No existing behavior test is weakened; all seven baseline strict xfails remain.
+
+
+Agent selected-schema bounded stage final: 421 passed/7 unchanged strict xfails
+(35.08s), plus 52 element/parser/catalog neighbors passed (23.38s); scoped Ruff
+clean on catalog/scalar/new tests, no additional findings in other touched files,
+diff check clean. No full/install/merge. Report with exact commands and custody
+blocker: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-schema-capture/notes/report.md`.
+Both worker commit messages written; harness owns commit. End-to-end schema
+validation remains explicitly unimplemented pending actual retained resource seam.
+
+Runtime selected-pack final: central bounded lane
+`rt-m2-selected-pack-input-occupancy-integration-1020003849-138` PASS22/20deselected,
+including 7 new actual Runtime-Document/admission host cases plus existing native
+config/transcript/inverse/renderer-free controls. Direct67PASS/7deselected.
+Report `workers/rt-m2-selected-pack-input/report.md`, both commit messages ready;
+no further test requests/full run or product changes. Full snapshot custody and
+native selected-param/inverse coupling remain BLOCKED as documented above; keep
+params held. Branch only, no artifact/client pin/schema bump. Exiting now.
