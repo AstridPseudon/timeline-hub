@@ -20,7 +20,7 @@ from astrid.sdk.timeline.units import (
 from astrid.sdk.timeline_checkout import Checkout
 
 
-def _number(value):
+def _timing_number(value):
     return _time_fraction(value, "timing value")
 
 
@@ -65,17 +65,17 @@ class _ReadLookup(Checkout):
 def _duration(clip):
     # clip_duration's hold > source window > duration precedence, in exact source seconds.
     speed = _playback_rate(_value(clip, "speed", 1))
-    if _number(_value(clip, "from")) < 0:
+    if _timing_number(_value(clip, "from")) < 0:
         raise TimingCompileError("invalid negative source in-point")
     if clip.get("to") is not None:
-        if _number(clip["to"]) <= _number(_value(clip, "from")):
+        if _timing_number(clip["to"]) <= _timing_number(_value(clip, "from")):
             raise TimingCompileError("invalid source interval")
     if clip.get("hold") is not None:
-        length = _number(clip["hold"])
+        length = _timing_number(clip["hold"])
     elif clip.get("to") is not None:
-        length = _number(clip["to"]) - _number(_value(clip, "from"))
+        length = _timing_number(clip["to"]) - _timing_number(_value(clip, "from"))
     elif clip.get("duration") is not None:
-        length = _number(clip["duration"])
+        length = _timing_number(clip["duration"])
     else:
         return None
     if length <= 0:
@@ -149,10 +149,10 @@ def evaluate(bundle, sources, bindings, policy):
             if value.get("speed") not in (None, 1) or value.get("source_offset") not in (None, 0):
                 raise TimingCompileError("placement source map requires the canonical authoring adapter")
         start_ms = placement.get("start_ms", row.get("at_ms", 0))
-        if row.get("at_ms") is not None and _number(row["at_ms"]) != _number(start_ms):
+        if row.get("at_ms") is not None and _timing_number(row["at_ms"]) != _timing_number(start_ms):
             raise TimingCompileError("contradictory placement starts")
-        offset = _number(start_ms) / 1000
-        length = _number(row["duration_ms"]) / 1000
+        offset = _timing_number(start_ms) / 1000
+        length = _timing_number(row["duration_ms"]) / 1000
         if offset < 0 or length <= 0:
             raise TimingCompileError("invalid occurrence interval")
         placement_ends.append(offset + length)
@@ -251,7 +251,7 @@ def evaluate(bundle, sources, bindings, policy):
             dependencies = [cut_node(cut, edge)]
             moment = replace(moment, cut=cut) if moment.cut else moment
         # Main offsets and first-word picture in-point semantics, on the exact bound pool.
-        moment = replace(moment, offset_s=_number(moment.offset_s))
+        moment = replace(moment, offset_s=_timing_number(moment.offset_s))
 
         def resolve(values):
             if bound is not None:
@@ -260,7 +260,7 @@ def evaluate(bundle, sources, bindings, policy):
                 source_end = source_start + _duration(clips[pin.source])
                 words = []
                 for segment, index, word in entries:
-                    start, end = (source_to_timeline_time(_number(word[k]), source_start=source_in,
+                    start, end = (source_to_timeline_time(_timing_number(word[k]), source_start=source_in,
                                   timeline_start=source_start, speed=speed) for k in ("start", "end"))
                     if start < source_start or start >= source_end or end > source_end:
                         raise TimingCompileError("bound word is outside the half-open source clip interval")
@@ -306,7 +306,7 @@ def evaluate(bundle, sources, bindings, policy):
             if declarations.get(key) is not None and not isinstance(declarations[key], str):
                 raise TimingCompileError(f"unsupported {key} declaration: expected main Moment text")
         length = _duration(clip)
-        start = offsets[owner] + _number(clip.get("at", 0))
+        start = offsets[owner] + _timing_number(clip.get("at", 0))
         cut = intent.cut_of(clip)
         audio = owner[1] and lookup._is_audio(owner[1], clip)
         on, until = intent.on(clip), intent.until(clip)
@@ -320,7 +320,7 @@ def evaluate(bundle, sources, bindings, policy):
         if until:
             add(node(owner, "end"), *moment_rule(owner, "until", until))
         elif declarations.get("for") is not None:
-            length = _number(declarations["for"])
+            length = _timing_number(declarations["for"])
             if length <= 0:
                 raise TimingCompileError("declared duration must be positive")
             add(node(owner, "end"), [node(owner, "start")],
@@ -348,7 +348,7 @@ def evaluate(bundle, sources, bindings, policy):
         _, entries, source_in, speed = _bound_words(bundle, documents, pin, clips, internals)
         interval = result[pin.source]
         for _, _, word in entries:
-            start, end = (source_to_timeline_time(_number(word[k]), source_start=source_in,
+            start, end = (source_to_timeline_time(_timing_number(word[k]), source_start=source_in,
                           timeline_start=interval["start"], speed=speed) for k in ("start", "end"))
             if start < interval["start"] or start >= interval["end"] or end > interval["end"]:
                 raise TimingCompileError("bound word is outside the derived source interval")
@@ -389,11 +389,11 @@ def _bound_words(bundle, documents, pin, clips, internals):
     if any(seg != segment or index != first + i for i, (seg, index, _) in enumerate(entries)):
         raise TimingCompileError("bound phrase must contain consecutive words of one segment")
     for _, _, word in entries:
-        if _number(word["start"]) < 0 or _number(word["end"]) <= _number(word["start"]):
+        if _timing_number(word["start"]) < 0 or _timing_number(word["end"]) <= _timing_number(word["start"]):
             raise TimingCompileError("invalid bound word interval")
-        if (_number(word["start"]) < _number(_value(source, "from"))
-                or source.get("to") is not None and _number(word["end"]) > _number(source["to"])):
+        if (_timing_number(word["start"]) < _timing_number(_value(source, "from"))
+                or source.get("to") is not None and _timing_number(word["end"]) > _timing_number(source["to"])):
             raise TimingCompileError("bound word is outside the half-open source window")
     if _duration(source) is None:
         raise TimingCompileError("bound source needs an exact authored source interval")
-    return pin, entries, _number(_value(source, "from")), _playback_rate(_value(source, "speed", 1))
+    return pin, entries, _timing_number(_value(source, "from")), _playback_rate(_value(source, "speed", 1))
