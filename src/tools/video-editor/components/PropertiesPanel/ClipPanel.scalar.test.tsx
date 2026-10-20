@@ -208,6 +208,53 @@ describe('mounted scalar controls → Runtime provider → durable command outbo
     host.noSnapshots();
   });
 
+  it.each(['hold', 'None'] as const)('edits parent %s despite full opaque occurrence metadata through the actual hook', async (action) => {
+    const source = await environment(occurrenceDocument());
+    const composition = createShotCompositionAdapter(source.provider.shotComposition).prepare(source.initial.graph!);
+    const projected = projectCanonicalComposition(composition).config.clips
+      .find((clip) => clip.id === 'f2-occurrence:f2-agent-clip')!;
+    const raw = parentDocument();
+    const row = (raw.parent_revision.payload.clips as Array<Record<string, JSON>>)[0];
+    row.app = { opaque, canonical: structuredClone(projected.app!.canonical) as JSON };
+    (raw.parent_revision.payload.config as Record<string, JSON>).clips = structuredClone(raw.parent_revision.payload.clips);
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const original = structuredClone(row);
+    const host = await mounted(raw, 'x', action === 'hold' ? 'timing' : 'effects');
+    const paused = host.env.pause();
+    if (action === 'hold') {
+      expect(holdInput()).toHaveValue(6); // SOURCE seconds, with speed=2.
+      fireEvent.change(holdInput(), { target: { value: '8' } });
+      fireEvent.blur(holdInput());
+    } else {
+      const select = within(transitionSection()).getByRole('combobox');
+      expect(select).toHaveValue('crossfade');
+      fireEvent.change(select, { target: { value: NO_TRANSITION } });
+    }
+    await waitFor(() => expect(host.env.commits()).toHaveLength(1));
+    expect(host.captureSpy).toHaveBeenCalledTimes(1);
+    const records = await host.records();
+    expect(records).toHaveLength(1);
+    expect(records[0].intents).toHaveLength(1);
+    const payload = records[0].intents[0].payload as Payload;
+    expect(payload.commands).toEqual(host.env.commits()[0].body!.commands);
+    expect(payload.commands[0]).toMatchObject({ op: 'clip.set', select: 'parent/clip:x',
+      args: action === 'hold' ? { values: { hold: 8 }, clear: [] } : { values: {}, clear: ['transition'] } });
+    expect(JSON.parse(records[0].pending!.request.body).commands).toEqual(payload.commands);
+    const expected = structuredClone(original);
+    if (action === 'hold') expected.hold = 8;
+    else delete expected.transition;
+    expect(rowFrom(payload.before, 'parent/clip:x')).toEqual(original);
+    expect(rowFrom(payload.after, 'parent/clip:x')).toEqual(expected);
+    expect(host.latest().dataRef.current!.resolvedConfig.clips.find((clip) => clip.id === 'x')!.app).toEqual(original.app);
+    expect(row).toEqual(original);
+    if (action === 'hold') expect(holdInput()).toHaveValue(8);
+    else expect(within(transitionSection()).getByRole('combobox')).toHaveValue(NO_TRANSITION);
+    await act(async () => { paused.resolve(); await host.latest().commands.flush(); });
+    const accepted = await host.env.provider.loadTimelineCommandBasis(scope.timelineId);
+    expect((accepted.canonicalDocument.parent_revision.payload.clips as Array<Record<string, JSON>>)[0]).toEqual(expected);
+    host.noSnapshots();
+  });
+
   it.each(['conflict', 'validation', 'authorization', 'unavailable'] as const)('retains the hold and durable intent with a visible %s error', async (fault) => {
     const host = await mounted();
     host.env.setFault(fault);
@@ -358,6 +405,25 @@ describe('mounted scalar controls → Runtime provider → durable command outbo
     expect(holdInput()).toHaveValue(4);
     expect(host.latest().dataRef.current).toBe(current);
     expect((await host.records())[0].intents).toHaveLength(0);
+    expect(host.env.commits()).toHaveLength(0);
+    host.noSnapshots();
+  });
+
+  it('refuses a complete shared sibling binding on another occurrence output through the actual hook', async () => {
+    const host = await mounted(occurrenceDocument(), 'f2-occurrence:f2-agent-clip');
+    const current = host.latest().dataRef.current!;
+    const clip = current.resolvedConfig.clips.find((candidate) => candidate.id === 'f2-occurrence:f2-agent-clip')!;
+    const sibling = current.resolvedConfig.clips.find((candidate) => candidate.id === 'shared-sibling:f2-agent-clip')!;
+    clip.app = { ...clip.app, canonical: structuredClone(sibling.app!.canonical) };
+    const before = structuredClone(current);
+    const records = await host.records();
+    fireEvent.change(holdInput(), { target: { value: '4' } });
+    fireEvent.blur(holdInput());
+    expect(screen.getByRole('alert')).toHaveTextContent('matching raw clip owner');
+    expect(holdInput()).toHaveValue(4);
+    expect(host.captureSpy).toHaveBeenCalledTimes(1);
+    expect(host.latest().dataRef.current).toEqual(before);
+    expect(await host.records()).toEqual(records);
     expect(host.env.commits()).toHaveLength(0);
     host.noSnapshots();
   });

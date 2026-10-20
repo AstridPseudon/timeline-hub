@@ -289,7 +289,7 @@ export async function createTimelineCommandSession(options: Options) {
     },
   };
   const clipScalarPort: ClipScalarCapturePort = {
-    capture({ clipId, ownerRef, current }) {
+    capture({ clipId, ownerRef: requestedOwner, current }) {
       assertReady();
       if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
         || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
@@ -299,10 +299,12 @@ export async function createTimelineCommandSession(options: Options) {
       if (matches.length !== 1) throw new Error('Scalar edit requires one raw clip identity');
       const identity = matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
       const parentRef = `parent/clip:${clipId}`;
-      // Parent app fields are authored opaque data, not projected ownership facts.
-      const select = ownerRef === 'parent' ? parentRef : identity?.clipRef;
       const raw = new AuthoredState(bundle);
-      if (typeof select !== 'string' || select.slice(0, select.lastIndexOf('/')) !== ownerRef
+      // Parent app fields are authored opaque data, not projected ownership facts.
+      const ownerRef = requestedOwner ?? (
+        !clipId.includes('/') && !clipId.includes('::') && raw.entity(parentRef, true) ? 'parent' : identity?.ownerRef);
+      const select = ownerRef === 'parent' ? parentRef : identity?.clipRef;
+      if (typeof ownerRef !== 'string' || typeof select !== 'string' || select.slice(0, select.lastIndexOf('/')) !== ownerRef
         || !/^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(select) || select.includes('::')
         || !raw.entity(select, true)) {
         throw new Error('Scalar edit requires an explicit matching raw clip owner');
