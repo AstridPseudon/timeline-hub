@@ -279,6 +279,14 @@ class State:
         value = self.entity(ref, optional=True)
         if value is None:
             return copy.deepcopy(ABSENT)
+        if ref.endswith('/shot') and tuple(path[:1]) == ('payload',):
+            owner = ref.removesuffix('/shot')
+            from astrid.core.timeline.authoring_bundle import _remap_known_item_references
+            shot = self.occurrence(owner)['shot_id']
+            mapping = self.bundle['source_mapping']['shots'].get(shot, {}).get('item_id_map', {})
+            value = {'payload': _remap_known_item_references(self.bundle['shots'][shot]['payload'],
+                                                           {v: k for k, v in mapping.items()})}
+            value['payload'].pop('internal_timeline_revision_id', None)
         for key in path:
             if isinstance(value, dict) and key in value:
                 value = value[key]
@@ -292,6 +300,20 @@ class State:
         actual = self.get(ref, path)
         if equal(actual, expected):
             return True
+        if (root_identity(ref) is not None and ref.startswith('occurrence:')
+                and expected['state'] == actual['state'] == 'present'):
+            if not path and isinstance(expected['value'], dict):
+                before = copy.deepcopy(expected['value'])
+                if not self.matches(ref, ['shot_id'], present(before.get('shot_id'))):
+                    return False
+                before['shot_id'] = actual['value']['shot_id']
+                return equal(before, actual['value'])
+            if list(path) == ['shot_id']:
+                from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+                source = self.entity(ref + '/shot')['shot_id']
+                materialized = _authoring_shot_id(self.bundle['project_id'], self.bundle['timeline_id'],
+                                                ref.removeprefix('occurrence:'), source, shared=True)
+                return expected['value'] in (source, materialized) and actual['value'] in (source, materialized)
         if (root_identity(ref) is not None and ref.startswith('shot:') and not path
                 and expected['state'] == actual['state'] == 'present'):
             # The verified source link is compiler output, not authored root data.

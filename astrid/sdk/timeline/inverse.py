@@ -15,6 +15,7 @@ from ._command_state import (
     root_identity,
 )
 from ._recording import Recording, guard, selection
+from ._root_inverse import arrange_restored, occurrence_orders, recover_source
 
 
 def _patch(state, path, replacement):
@@ -94,12 +95,18 @@ def _root_addresses(records, state=None):
                     if not isinstance(shot, str) or root_identity('shot:' + shot) is None:
                         raise CommandError('root context is unavailable', kind='history_unavailable', ref=write['ref'])
                     if write['ref'] in owners and owners[write['ref']] != shot:
-                        raise CommandError('root context changed', kind='history_unavailable', ref=write['ref'])
-                    owners[write['ref']] = shot
+                        if state is None or not state.matches(write['ref'], ['shot_id'], present(shot)):
+                            raise CommandError('root context changed', kind='history_unavailable', ref=write['ref'])
+                    else:
+                        owners[write['ref']] = shot
 
     def address(ref, path):
         if ref.startswith('occurrence:') and ref.endswith('/registry'):
             ref, path = ref.removesuffix('/registry'), ('source', 'registry', *path)
+        if ref.endswith('/shot') and tuple(path[:1]) == ('payload',):
+            owner = ref.removesuffix('/shot')
+            if owner in owners:
+                return 'shot:' + owners[owner], tuple(path)
         root, path = logical_address(ref, path)
         if root.startswith('occurrence:') and path[:1] == ('source',) and root in owners:
             return 'shot:' + owners[root], ('internal_timeline', *path[1:])
@@ -244,8 +251,10 @@ def _legacy_inverse_sites(records, record):
     """Recover only known v1 inverse read/create sites from its verified input."""
     if record['command']['op'] != 'timeline.inverse' or not isinstance(records, AcceptedRecords):
         raise CommandError('original read stage is unavailable', kind='history_unavailable')
-    state, _ = records.boundary(record)
-    reads, selections = [], []
+    state, after = records.boundary(record)
+    reads = [read for read in record['reads'] if state.matches(read['ref'], read['path'], read['state'])]
+    selections = [selected for selected in record['selections']
+                  if equal(selection(state, selected['key'], selected['owner'], selected['members']), selected)]
     for write in record['writes']:
         guard(state, write['ref'], write['path'], write['before'], kind='history_unavailable')
         # The old inverse read immediately before each authored reversal.
@@ -255,6 +264,9 @@ def _legacy_inverse_sites(records, record):
             owner, kind, _ = entity
             if kind == 'track':
                 selections.append(selection(state, 'track.create', owner))
+        if (root_identity(write['ref']) is not None and write['ref'].startswith('occurrence:')
+                and not write['path'] and write['after'] != ABSENT):
+            recover_source(state, write['after']['value'], after.bundle)
         state.set(write['ref'], write['path'], write['after'])
     return reads, selections
 
@@ -326,6 +338,8 @@ def apply_inverse(ctx, records, intervening_records):
         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
     check_intervening(records, intervening_records, state=ctx.state)
     changes = coalesce(records, ctx.state)
+    ctx.capture_input()
+    root_orders = occurrence_orders(ctx.state, records, changes)
     orders = restoration_orders(records)
     for (owner, kind), (_, expected) in orders.items():
         actual = ctx.select('collection.' + kind + 's', owner)
@@ -359,12 +373,12 @@ def apply_inverse(ctx, records, intervening_records):
                 scratch.set(write['ref'], write['path'], write['before'])
         for (owner, kind), (original, _) in staged_orders.items():
             arrange(scratch, owner, kind, original)
+        arrange_restored(scratch, record, root_orders.get(id(record)))
         staged.compile_mirrors()
         _validate_inputs(scratch, record, records)
 
     # Historical checks above are internal. Public claims describe H even when
     # the same address is read after another reversal during installation.
-    ctx.capture_input()
     for record in records:
         for read in record['reads']:
             ctx.read(read['ref'], read['path'])
@@ -390,3 +404,6 @@ def apply_inverse(ctx, records, intervening_records):
             ctx.assign(write['ref'], write['path'], write['before'])
     for (owner, kind), (original, _) in orders.items():
         arrange(ctx.state, owner, kind, original)
+
+    for record in reversed(records):
+        arrange_restored(ctx.state, record, root_orders.get(id(record)))
