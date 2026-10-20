@@ -167,6 +167,45 @@ class TestPublicOcclusion:
             assert not any(f.code == "SCENE" for f in findings)
         assert shared["scene_frames"]["30"]["layers"] == []
 
+    def test_public_incoming_draw_window_can_cover_before_authored_start(self, public_query, monkeypatch):
+        config = timeline([
+            clip("a", "back", x=700),
+            clip("b", "back", at=1, transition={"type": "fade", "duration": .4}),
+            clip("upper", "front", "am-callout", hold=2),
+        ])
+        shared = public_query(config, [24, 29, 30, 59, 60])
+        assert [layer["clipId"] for layer in shared["scene_frames"]["24"]["layers"]] == ["a", "b", "upper"]
+        assert shared["scene_occlusions"]["0.98"]["24"]["b"]["occluderId"] == "upper"
+        assert "b" in [layer["clipId"] for layer in shared["scene_frames"]["59"]["layers"]]
+        assert "b" not in [layer["clipId"] for layer in shared["scene_frames"]["60"]["layers"]]
+
+        monkeypatch.setattr(lint, "_sample_times", lambda *args: [.8])
+        source = elements(config)
+        findings = lint.composition({"index": 1, "start": 0, "end": 2}, source, 30, shared=shared)
+        assert cover(findings) == ['am-callout "upper" fully covers am-type "b"']
+        assert not any(f.code == "SCENE" for f in findings)
+
+    def test_public_occurrence_cap_stops_the_extended_draw_window(self, public_query, monkeypatch):
+        config = timeline([
+            clip("a", "back", x=700),
+            clip("b", "back", at=1, app={"canonicalTiming": {
+                "occurrenceStartMs": 0, "occurrenceDurationMs": 1200}},
+                 transition={"type": "fade", "duration": .4}),
+            clip("upper", "front", "am-callout", hold=2),
+        ])
+        shared = public_query(config, [35, 36])
+        assert "b" in [layer["clipId"] for layer in shared["scene_frames"]["35"]["layers"]]
+        assert "b" not in [layer["clipId"] for layer in shared["scene_frames"]["36"]["layers"]]
+
+        source = elements(config)
+        monkeypatch.setattr(lint, "_sample_times", lambda *args: [35 / 30])
+        before_cap = lint.composition({"index": 1, "start": 0, "end": 2}, source, 30, shared=shared)
+        assert cover(before_cap) == ['am-callout "upper" fully covers am-type "b"']
+        monkeypatch.setattr(lint, "_sample_times", lambda *args: [36 / 30])
+        at_cap = lint.composition({"index": 1, "start": 0, "end": 2}, source, 30, shared=shared)
+        assert not cover(at_cap)
+        assert any(f.code == "SCENE" and "b" in f.message for f in at_cap)
+
     def test_canvas_clipping_offscreen_and_unknown_target(self, public_query):
         config = timeline([clip("lower", "back", x=-50), clip("upper", "front", "am-callout", x=0, width=50)])
         shared = public_query(config)

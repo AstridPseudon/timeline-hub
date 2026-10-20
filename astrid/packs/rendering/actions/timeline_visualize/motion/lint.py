@@ -154,10 +154,13 @@ def _scene_cover(
         joined[clip_id] = matches if layer_ids.count(clip_id) == 1 else []
     covers, unavailable = [], []
     for lower in visual:
-        if not lower.start <= t < lower.end:
-            continue
         candidates = [clip_id for clip_id, matches in joined.items() if len(matches) == 1 and matches[0] is lower]
         if len(candidates) != 1:
+            # An authored window may suppress an unavailable-fact advisory
+            # outside that window, but it cannot suppress a qualified public
+            # layer. Public frame presence is the source of truth here.
+            if not lower.start <= t < lower.end:
+                continue
             unavailable.append(f"COVER unavailable for {lower.label} at frame {frame}: exact compiled clip identity is missing or ambiguous")
             continue
         answer = answers.get(candidates[0])
