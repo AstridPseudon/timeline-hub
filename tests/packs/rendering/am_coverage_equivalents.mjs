@@ -2,12 +2,14 @@
 // Root host registry adapter. SSR checks CSS/mounts, never decoded media pixels.
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import {readFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 import {createElement as h} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {Internals} from 'remotion';
-import {DEFAULT_THEME, TimelineComposition, compileCanonicalTransitions, toRuntimeTheme} from '@banodoco/timeline-composition';
+import {DEFAULT_THEME, TimelineComposition, toRuntimeTheme} from '@banodoco/timeline-composition';
+import * as composition from '@banodoco/timeline-composition';
 import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
 import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
 
@@ -48,11 +50,12 @@ const cases = {
 const name = process.argv[2];
 assert.ok(Object.hasOwn(cases, name));
 const clips = cases[name];
-const timeline = {tracks: [...new Set(clips.map(clip => clip.track))].reverse()
-  .map(id => ({id, kind: 'visual'})), clips};
+const timeline = process.argv[3] === '--timeline-stdin' ? JSON.parse(readFileSync(0, 'utf8'))
+  : {tracks: [...new Set(clips.map(clip => clip.track))].reverse()
+    .map(id => ({id, kind: 'visual'})), clips};
 const props = {timeline, theme, assets: {assets: {}}};
 if (name === 'incoming-crossfade') {
-  props.compiledTransitions = compileCanonicalTransitions([...timeline.tracks].reverse()
+  props.compiledTransitions = composition.compileCanonicalTransitions([...timeline.tracks].reverse()
     .map(track => ({track, clips: clips.filter(clip => clip.track === track.id)})), 30, toRuntimeTheme(theme), registries);
 }
 const roles = Object.fromEntries(clips.map(clip => [clip.id, 'picture']));
@@ -73,7 +76,7 @@ for (let frame = 0; frame <= end; frame++) {
   const answer = querySceneFrame(scene, frame);
   const markup = ssr(frame);
   html[frame] = markup;
-  for (const clip of clips) {
+  for (const clip of timeline.clips) {
     const layer = answer.layers.find(layer => layer.clipId === clip.id);
     assert.equal(markup.includes(`data-clip-id="${clip.id}"`), Boolean(layer), `mount ${clip.id} at ${frame}`);
     if (!layer) continue;

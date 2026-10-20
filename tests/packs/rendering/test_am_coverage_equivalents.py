@@ -1,8 +1,7 @@
 """Real AM drawing and public scene answers; no media-alpha or pixel claim.
 
-These exercise the supported incoming transition representation and per-frame
-fade classification. The retained legacy-config and span assertions still need
-separate review before their old tests can be retired.
+These exercise the supported incoming transition representation and the exact
+legacy independent-fades film, whose DIP also occurs in main's drawing.
 """
 import hashlib
 import json
@@ -18,6 +17,7 @@ from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.rendering.remotion_runtime import RemotionRuntimeStatus
 from astrid.core.timeline import scene_answers
 from scripts import gen_effect_registry
+from tests.core.timeline.test_onscreen_more import _independent_fades_config
 
 ROOT = Path(__file__).resolve().parents[3]
 ARTIFACTS = {
@@ -72,8 +72,12 @@ def am_coverage_query(tmp_path_factory):
     peer_identity = {p.name: p.resolve() for p in modules.iterdir() if p.name != "@banodoco"}
     env = {k: v for k, v in os.environ.items() if k not in ("NODE_OPTIONS", "NODE_PATH")}
 
-    def query(case):
-        result = subprocess.run([str(node.path), "query.mjs", case], cwd=project, env=env,
+    def query(case, *, timeline=None):
+        args = [str(node.path), "query.mjs", case]
+        if timeline is not None:
+            args.append("--timeline-stdin")
+        result = subprocess.run(args, input=json.dumps(timeline) if timeline is not None else None,
+                                cwd=project, env=env,
                                 text=True, capture_output=True, timeout=60)
         assert result.returncode == 0, result.stdout + result.stderr
         return json.loads(result.stdout)
@@ -108,6 +112,28 @@ def test_actual_am_public_incoming_crossfade_stays_covered(am_coverage_query):
     assert [layer["clipId"] for layer in overlap["layers"]] == ["out", "in"]
     assert overlap["layers"][0]["opacity"] == 1
     assert 0 < overlap["layers"][1]["opacity"] < 1
+
+
+def test_actual_am_legacy_independent_fades_match_main_render_backed_dip(am_coverage_query):
+    config = _independent_fades_config()
+    result = am_coverage_query("legacy-crossfade", timeline=config)
+    assert result["props"]["timeline"] == config
+    assert result["compiled"] is False
+    assert [(row["coverage"], row["content"]) for row in result["answers"]] == (
+        [("COVERED", "CONTENT")] * 16 + [("DIP", None)] * 14 + [("COVERED", "CONTENT")] * 15)
+    spans = am_coverage_query.coverage(result)
+    assert [(s.start_frame, s.end_frame, s.cls, s.content) for s in spans] == [
+        (0, 16, "COVERED", "CONTENT"),
+        (16, 30, "DIP", None),
+        (30, 45, "COVERED", "CONTENT"),
+    ]
+    assert [layer["opacity"] for layer in result["answers"][15]["layers"]] == [1, 0]
+    for frame in range(16, 30):
+        assert [layer["clipId"] for layer in result["answers"][frame]["layers"]] == ["out", "in"]
+        assert all(0 < layer["opacity"] < 1 for layer in result["answers"][frame]["layers"])
+    assert [layer["clipId"] for layer in result["answers"][30]["layers"]] == ["in"]
+    assert result["answers"][30]["layers"][0]["opacity"] == 1
+    assert result["after"]["layers"] == [] and result["after"]["coverage"] == "GAP"
 
 
 def test_actual_am_one_sided_fade_has_dip_frames_then_coverage(am_coverage_query):

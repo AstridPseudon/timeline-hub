@@ -32,16 +32,23 @@ def _config(clips, tracks=TRACKS):
     return {"tracks": [dict(t) for t in tracks], "clips": clips}
 
 
-# Keep the original covered-crossfade requirement; real component support now
-# exposes Composition's different alpha treatment of these legacy clip fades.
-@pytest.mark.xfail(strict=True, reason='M3 requires covered legacy cross-fade semantics; native source-over alpha currently reports DIP during overlap.')
-def test_a_cross_fade_of_two_full_plates_is_covered_not_dip():
-    config = _config([
+def _independent_fades_config():
+    return _config([
         _plate("out", asset=None, params={"src": "/plate.png"}, at=0.0, hold=1.0, effects={"fade_out": 0.5}),
         _clip("in", "am-footage", "fx", at=0.5, hold=1.0, params={"src": "/footage.png"}, effects={"fade_in": 0.5}),
     ])
+
+
+# Main's drawing and the registered native renderer agree: independent clip
+# fades expose the canvas. The named public incoming-crossfade test stays covered.
+def test_independent_full_plate_fades_have_a_render_backed_dip():
+    config = _independent_fades_config()
     spans = coverage(config, FPS, CANVAS, ELEMENTS, end_frame=45)
-    assert [(s.start_frame, s.end_frame, s.cls, s.content) for s in spans] == [(0, 45, "COVERED", "CONTENT")]
+    assert [(s.start_frame, s.end_frame, s.cls, s.content) for s in spans] == [
+        (0, 16, "COVERED", "CONTENT"),
+        (16, 30, "DIP", None),
+        (30, 45, "COVERED", "CONTENT"),
+    ]
 
 
 # Keep the continuous DIP expectation across the fully transparent first frame.
