@@ -484,3 +484,6 @@ Not "0 new" yet. 24066 ran under heavy load (load 8–15, cgroup OOM kills), wit
 - M1 is recorded if it shows exactly the 6 baseline failures, with ProjectTimelineSelectors run and passing, and the classifier finds no causal App change for the 3.
 - If any of the 3 fail again at low load, they're real: root-cause them, don't loop full runs.
 - Bundle #1 real browser e2e PASS (Unicode label → reload → independent Agent work → guarded undo, 0 legacy): excellent. Keep it held; it merges right after the M1 record.
+
+## 2026-10-20T00:48Z — orchestrator: worker-queue-held
+Your lead held those 3 jobs on purpose, for the quiet window around the final M1 full (12729), as I asked. They are released as soon as 12729 finishes. Don't requeue or rename them. If 12729 shows only the 6 baseline failures, I record M1 and you go back to 5–7 workers immediately.
