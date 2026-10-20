@@ -11,7 +11,7 @@ test('READY controller identifies the integrated App13 and pending normal13 tupl
   assert.equal(APP13.source, 'ea38656fe62950440b36cafee780698cff2c3f9c');
   assert.equal(APP13.status, 'adopted');
   assert.equal(AGENT13.status, 'pending-normal13-owner-merge');
-  assert.equal(RUNTIME13.status, 'verified-one-root-host');
+  assert.equal(RUNTIME13.status, 'pending-host-proof');
   assert.equal(CONTROL.physicalMixClaim, false);
   assert.equal(CONTROL.app13Consumer, 'adopted');
   assert.equal(CONTROL.ownLeafOnly, true);
@@ -24,12 +24,16 @@ test('controller rejects a changed source tuple before capture', () => {
 
 test('readiness reports the current flat owner-port blockers', () => {
   assert.deepEqual(MISSING_OWNER_PORTS.map(({ owner, port }) => `${owner}/${port}`), [
+    'App/stored-cap8488',
+    'Runtime/public13-one-root-host-catalog',
     'App/native-frame-fixture',
     'App/player-tab-audio-instrument',
     'Agent/public13-normal-pin',
   ]);
+  assert.equal(OWNER_PORTS.find(({ port }) => port === 'stored-cap8488')?.source, '6b7afe3ad28e6a899a09b15fbfaa5e79f4b05214');
+  assert.equal(OWNER_PORTS.find(({ port }) => port === 'public13-one-root-host-catalog')?.source, RUNTIME13.source);
   assert.equal(OWNER_PORTS.some(({ port }) => port === 'track-inspector-preservation'), true);
-  assert.throws(() => assertOwnerPorts(), /missing owner ports: App\/native-frame-fixture .* Agent\/public13-normal-pin/);
+  assert.throws(() => assertOwnerPorts(), /missing owner ports: App\/stored-cap8488 .* Runtime\/public13-one-root-host-catalog .* Agent\/public13-normal-pin/);
 });
 
 test('integrated App13 source remains a separate source guard', () => {

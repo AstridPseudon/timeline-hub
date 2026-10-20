@@ -17,7 +17,7 @@ export const AGENT13 = Object.freeze({
 export const RUNTIME13 = Object.freeze({
   source: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
   tree: '7ab412cc4bcbe517efcfa806e092336390312e18',
-  status: 'verified-one-root-host',
+  status: 'pending-host-proof',
 });
 export const COMPOSITION13 = Object.freeze({
   source: '5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8',
@@ -52,9 +52,9 @@ export const CONTROL = Object.freeze({
 // Flat owner-port status for this one frozen four-case + tab-audio tuple.
 // These are merge/readiness facts, not alternate source tuples.
 export const OWNER_PORTS = Object.freeze([
-  Object.freeze({ owner: 'App', port: 'stored-cap8488', status: 'integrated', source: APP13.source }),
+  Object.freeze({ owner: 'App', port: 'stored-cap8488', status: 'pending-owner-merge', source: '6b7afe3ad28e6a899a09b15fbfaa5e79f4b05214' }),
   Object.freeze({ owner: 'App', port: 'track-inspector-preservation', status: 'integrated', source: 'a04f90cf60eac69a5079f0ab03188abcbd1571fc6' }),
-  Object.freeze({ owner: 'Runtime', port: 'public13-one-root-host-catalog', status: 'verified', source: RUNTIME13.source }),
+  Object.freeze({ owner: 'Runtime', port: 'public13-one-root-host-catalog', status: 'pending-owner-merge', source: RUNTIME13.source }),
   Object.freeze({ owner: 'App', port: 'native-frame-fixture', status: 'pending-owner-merge', source: 'e4c7a3792e879d22eada87a8cd3b7e9550c4a470' }),
   Object.freeze({ owner: 'App', port: 'player-tab-audio-instrument', status: 'pending-owner-merge', source: '247bfce2721e4fd0804faf8313b394e94157c2ee' }),
   Object.freeze({ owner: 'Agent', port: 'public13-normal-pin', status: 'pending-owner-merge', source: AGENT13.source }),
