@@ -564,13 +564,15 @@ function AvailableAgentChatPanel({
   const showNoProjectState = !hasProject && sessionOptions.length === 0;
   const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId);
   const activeQueue = queue.filter((item) => item.sessionId === activeSessionId);
+  // A phone or tablet has no shortcut keys to press: its way to talk is the mic.
+  const [coarsePointer] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true);
   const inputPlaceholder = showNoProjectState
     ? 'Select a project to start chatting...'
     : voice.isRecording
       ? 'Recording...'
       : (isProcessing || sendMessage.isPending || hasQueuedMessages)
         ? 'Type to queue next message...'
-        : 'Type or press Cmd+Shift+R to talk...';
+        : coarsePointer ? 'Type, or tap the mic to talk...' : 'Type or press Cmd+Shift+R to talk...';
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
     && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
   const chatFailures = [activeSession.error, sendMessage.localError, createSession.error, sessions.error, projectChat.error];
@@ -989,18 +991,24 @@ function AvailableAgentChatPanel({
       }
     },
     focusComposer: () => {
-      inputRef.current?.focus();
+      // The pane may still be sliding in: do not scroll the page to reach it.
+      inputRef.current?.focus({ preventScroll: true });
     },
     markEngaged: () => {
       setUserEngaged(true);
     },
   }), []);
 
+  // Astrid is answering: the turn is running, being sent or queued behind one. The pane shows
+  // it as "Thinking..."; it is published so an editor's own Astrid entry can say so too.
+  const agentWorking = isProcessing || sendMessage.isPending || (hasQueuedMessages && !pausedQueueHeadId);
+
   useEffect(() => {
     actionsRegistry.registerHandlers(stableHandlers);
     actionsRegistry.publishState({
       isRecording: voice.isRecording,
       isProcessing: voice.isProcessing,
+      isAgentWorking: agentWorking,
     });
     return () => actionsRegistry.unregister();
     // stableHandlers and actionsRegistry are both referentially stable, so this
@@ -1012,8 +1020,9 @@ function AvailableAgentChatPanel({
     actionsRegistry.publishState({
       isRecording: voice.isRecording,
       isProcessing: voice.isProcessing,
+      isAgentWorking: agentWorking,
     });
-  }, [actionsRegistry, voice.isRecording, voice.isProcessing]);
+  }, [actionsRegistry, voice.isRecording, voice.isProcessing, agentWorking]);
 
   return (
     // No background of its own — sits on the parent pane's bg so the only
@@ -1182,7 +1191,9 @@ function AvailableAgentChatPanel({
             ) : (
               <>
                 <p>✨ I can do almost anything</p>
-                <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>
+                {coarsePointer
+                  ? <p className="mt-1 text-xs">Tap the mic to talk</p>
+                  : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>}
                 <p data-testid="agent-chat-runs-with" className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px] normal-case">
                   <AgentIcon agent={chatAgent} className="h-3 w-3 shrink-0" />
                   {agentNames[chatAgent]} · {chatModelName ?? 'default model'}
@@ -1225,7 +1236,7 @@ function AvailableAgentChatPanel({
             </div>
           )}
 
-          {(isProcessing || sendMessage.isPending || (hasQueuedMessages && !pausedQueueHeadId)) && (
+          {agentWorking && (
             <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Thinking...
@@ -1390,13 +1401,15 @@ function AvailableAgentChatPanel({
 
         <div className="flex items-end gap-2">
           <div className="relative flex-1">
+            {/* 16px text on touch (iOS zooms the page into a smaller field); about two lines on a
+                short screen (a phone on its side), so the conversation keeps the height. */}
             <textarea
               ref={inputRef}
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               rows={isExpanded ? 8 : 4}
               placeholder={inputPlaceholder}
-              className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 text-sm leading-5 outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
+              className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 text-sm leading-5 [@media(pointer:coarse)]:text-base [@media(max-height:500px)]:max-h-[4.75rem] outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
               disabled={isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {

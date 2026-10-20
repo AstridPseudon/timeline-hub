@@ -1,5 +1,4 @@
 import { TimeRuler } from '@/tools/video-editor/components/TimelineEditor/TimeRuler.tsx';
-import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type {
   TimelineGestureOwner,
   TimelineInputModality,
@@ -19,8 +18,8 @@ interface TimelineRulerAndGridProps {
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
   unusedTrackCount?: number;
   onClearUnusedTracks?: () => void;
-  /** See `TimeRulerProps.labelRightInsetPx`. */
-  labelRightInsetPx?: number;
+  /** See `TimeRulerProps.compactLabels`. */
+  compactLabels?: boolean;
 }
 
 export const buildGridBackground = (
@@ -50,7 +49,7 @@ export function TimelineRulerAndGrid({
   setInputModalityFromPointerType,
   unusedTrackCount,
   onClearUnusedTracks,
-  labelRightInsetPx,
+  compactLabels,
 }: TimelineRulerAndGridProps) {
   return (
     <>
@@ -58,7 +57,7 @@ export function TimelineRulerAndGrid({
         <button
           type="button"
           className="absolute left-0 top-0 z-20 flex h-[30px] items-center justify-center border-b border-r border-border bg-card/90 text-[9px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          style={{ width: LABEL_WIDTH }}
+          style={{ width: startLeft }}
           onClick={onClearUnusedTracks}
         >
           Clear {unusedTrackCount} unused
@@ -76,7 +75,7 @@ export function TimelineRulerAndGrid({
         onCursorDrag={onCursorDrag}
         setGestureOwner={setGestureOwner}
         setInputModalityFromPointerType={setInputModalityFromPointerType}
-        labelRightInsetPx={labelRightInsetPx}
+        compactLabels={compactLabels}
       />
     </>
   );

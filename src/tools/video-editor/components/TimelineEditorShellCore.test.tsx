@@ -1,7 +1,7 @@
 import { useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 // @vitest-environment jsdom
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { act } from 'react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest';
@@ -38,6 +38,7 @@ let __editorPreferences: Record<string, any> = {
 };
 /** Per-test overrides merged into the mocked chrome slice. */
 let __chromeOverrides: Record<string, unknown> = {};
+let __agentActions: { isAgentWorking: boolean } | null = null;
 let __editorDataOverrides: Record<string, unknown> = {};
 let __conflictDialog: Record<string, unknown> = {};
 /** Interaction mode reported by the mocked timeline store. */
@@ -65,7 +66,6 @@ const __editorOps = {
   clearSelection: vi.fn(),
   setInspectorTarget: vi.fn(),
   setContextTarget: vi.fn(),
-  setPrecisionEnabled: vi.fn(),
   setInteractionMode: vi.fn(),
   setSelectedRightPanelId: vi.fn(),
   setRightPanelLayoutSlot: vi.fn(),
@@ -90,7 +90,6 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
       preferences: __editorPreferences,
       resolvedConfig: null,
       deviceClass: __deviceClass,
-      precisionEnabled: false,
       interactionMode: __interactionMode,
       gestureOwner: null,
       // Live store value; tests mutate `__liveInspectorTarget.value` to prove
@@ -257,7 +256,16 @@ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditor.tsx', () 
     if (__timelineThrows) {
       throw new Error('malformed clip: hold is NaN');
     }
-    return <div data-testid="timeline-editor">Timeline Editor</div>;
+    return (
+      <div data-testid="timeline-editor">
+        Timeline Editor
+        {/* One clip, with a control drawn inside it, for the phone's tap-to-open sheet. */}
+        <div className="clip-action" role="button" tabIndex={0} data-testid="mock-clip">
+          Clip
+          <button type="button">Clip control</button>
+        </div>
+      </div>
+    );
   },
 }));
 
@@ -281,6 +289,11 @@ vi.mock('@/tools/video-editor/lib/mobile-interaction-model.ts', async () => {
     ),
   };
 });
+
+vi.mock('@/shared/contexts/AgentChatContext.tsx', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/shared/contexts/AgentChatContext.tsx')>()),
+  useAgentChatActions: () => __agentActions,
+}));
 
 vi.mock('@/shared/lib/typedEvents.ts', () => ({
   dispatchAppEvent: vi.fn(),
@@ -327,6 +340,16 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
 // ---------------------------------------------------------------------------
 
 import { TimelineEditorShellCore } from '@/tools/video-editor/components/TimelineEditorShellCore';
+import { usePaneControlsHosted } from '@/shared/state/paneControlsHost.ts';
+import { dispatchAppEvent } from '@/shared/lib/typedEvents.ts';
+
+/** Whether a page currently hosts the app's pane entry points (read outside the shell). */
+function paneControlsHosted(): boolean {
+  const { result, unmount } = renderHook(() => usePaneControlsHosted());
+  const hosted = result.current;
+  unmount();
+  return hosted;
+}
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 
 // ---------------------------------------------------------------------------
@@ -824,23 +847,13 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('host:properties');
     expect(__editorOps.setRightPanelLayoutSlot).toHaveBeenCalledWith('host:properties', 'dock');
   });
-  it.each(['desktop', 'phone'] as const)('hides legacy Inspector controls when the pane is closed on %s', (device) => {
-    __deviceClass = device;
+  it('hides legacy Inspector controls when the pane is closed on desktop', () => {
     __editorPreferences = { selectedRightPanelId: null, rightPanelLayoutSlotsByPanelId: {}, showDataLanes: false };
-    render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed={device === 'desktop'} />);
+    render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed />);
     expect(screen.queryByRole('button', { name: /Inspector|Properties/ })).toBeNull();
-    if (device === 'desktop') {
-      expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
-    } else {
-      expect(screen.queryByRole('tablist', { name: 'Right panel surface' })).toBeNull();
-    }
-    if (device === 'desktop') {
-      // The sidebar stays open around Video; its tabs reopen Inspector and Extensions.
-      expect(screen.queryByRole('button', { name: 'Panel display' })).toBeNull();
-    } else {
-      expect(screen.getAllByRole('button', { name: 'Panel display' })).toHaveLength(1);
-      expect(screen.getByRole('button', { name: 'Render' }).nextElementSibling).toBe(screen.getByRole('button', { name: 'Panel display' }));
-    }
+    expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
+    // The sidebar stays open around Video; its tabs reopen Inspector and Extensions.
+    expect(screen.queryByRole('button', { name: 'Panel display' })).toBeNull();
   });
   it('keeps the retained extension dock across condensed and desktop layouts', () => {
     const panelId = 'haus.astrid.transcript-lane:transcript-lane-panel';
@@ -855,22 +868,6 @@ describe('TimelineEditorShellCore surface slots', () => {
     rerender(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(screen.getByRole('region', { name: 'Video editor right panel' })).toBe(dock);
     expect(dock).toHaveAttribute('data-responsive', 'false');
-  });
-  it('bounds the compact shell and leaves only a reopen icon on a 320px phone', async () => {
-    const user = userEvent.setup();
-    const originalWidth = window.innerWidth; Object.defineProperty(window, 'innerWidth', { configurable: true, value: 320 }); __deviceClass = 'phone';
-    __editorPreferences = { selectedRightPanelId: 'host:properties', rightPanelLayoutSlotsByPanelId: { 'host:properties': 'compact' }, showDataLanes: false };
-    try {
-      const { rerender } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
-      const dock = screen.getByRole('region', { name: 'Video editor right panel' }) as HTMLElement;
-      expect(dock).toHaveAttribute('data-responsive', 'true'); expect(dock.style.width).toBe('calc(100vw - 24px)'); expect(dock.style.maxWidth).toBe('420px');
-      __editorPreferences = { ...__editorPreferences, selectedRightPanelId: null }; rerender(<TimelineEditorShellCore timelineId="test-timeline" showHeader={false} />);
-      expect(dock).toHaveAttribute('data-open', 'false'); expect(screen.getByRole('button', { name: 'Panel display' })).toBeTruthy();
-      expect(screen.queryByRole('tab', { name: 'Inspector' })).toBeNull();
-      screen.getByRole('button', { name: 'Panel display' }).focus(); await user.keyboard('{ArrowDown}');
-      await user.click(screen.getByRole('menuitemradio', { name: 'Compact' }));
-      expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('host:properties');
-    } finally { Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth }); }
   });
   it('keeps Inspector selected when a new admitted extension becomes available', () => {
     __assetPanels = [{ id: 'transcript-lane-panel', extensionId: 'haus.astrid.transcript-lane', label: 'Transcript', placement: 'asset-panel', render: () => null }];
@@ -1560,72 +1557,235 @@ describe('TimelineEditorShellCore — timeline load error', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Mode-switcher reachability (Key Invariant 2: every mode reachable per device)
+// Touch editing without a mode switcher (Key Invariant 2: move/trim are armed
+// from a clip's actions and released with Done)
 // ---------------------------------------------------------------------------
 
-describe('TimelineEditorShellCore — mode switcher reachability', () => {
-  const SWITCHABLE_MODES = ['Browse', 'Select', 'Move', 'Trim'];
-
+describe('TimelineEditorShellCore — touch editing without a mode switcher', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     __clearSlotRenderers();
     __clearRuntimeContext();
     __deviceClass = 'desktop';
-  });
-
-  it('reaches every interaction mode on tablet through the compact toolbar switcher', () => {
-    __deviceClass = 'tablet';
-    render(<TimelineEditorShellCore timelineId="test-timeline" />);
-
-    const switcher = screen.getByRole('toolbar', { name: 'Timeline mode switcher' });
-    expect(switcher).toBeTruthy();
-    // The phone's full-width bar stays phone-only.
-    expect(screen.queryByRole('toolbar', { name: 'Phone timeline mode bar' })).toBeNull();
-
-    for (const label of [...SWITCHABLE_MODES, 'Precision']) {
-      expect(screen.getByRole('button', { name: label })).toBeTruthy();
-    }
-  });
-
-  it('routes tablet mode changes through the same editor ops as the phone bar', () => {
-    __deviceClass = 'tablet';
-    render(<TimelineEditorShellCore timelineId="test-timeline" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Move' }));
-
-    expect(__editorOps.setInteractionMode).toHaveBeenCalledWith('move');
-    expect(__editorOps.setContextTarget).toHaveBeenCalledWith({ kind: 'timeline' });
-    expect(__editorOps.setInspectorTarget).toHaveBeenCalled();
-  });
-
-  it('marks the active mode with aria-pressed on the tablet switcher', () => {
-    __deviceClass = 'tablet';
-    __interactionMode = 'trim';
-    render(<TimelineEditorShellCore timelineId="test-timeline" />);
-
-    expect(screen.getByRole('button', { name: 'Trim' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Move' })).toHaveAttribute('aria-pressed', 'false');
     __interactionMode = 'browse';
   });
 
-  it('keeps every switcher target at the 44px touch minimum', () => {
-    __deviceClass = 'tablet';
+  afterEach(() => {
+    __interactionMode = 'browse';
+  });
+
+  it.each(['phone', 'tablet', 'desktop'] as const)('renders no global mode control on %s', (device) => {
+    __deviceClass = device;
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 
-    const switcher = screen.getByRole('toolbar', { name: 'Timeline mode switcher' });
-    for (const button of Array.from(switcher.querySelectorAll('button'))) {
-      // jsdom has no layout, so assert the class that carries the constraint.
-      expect(button.className).toContain('min-h-11');
+    for (const label of ['Browse', 'Select', 'Move', 'Trim']) {
+      expect(screen.queryByRole('button', { name: label })).toBeNull();
     }
   });
 
-  it('renders no mode switcher on desktop — its input model is modeless', () => {
-    __deviceClass = 'desktop';
+  it.each([
+    ['phone', 'move', 'Drag a clip to move it'],
+    ['tablet', 'trim', 'Drag a clip’s edge to trim it'],
+  ] as const)('says what to do on %s while %s is armed, and Done returns touch to browse', (device, mode, hint) => {
+    __deviceClass = device;
+    __interactionMode = mode;
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 
-    expect(screen.queryByRole('toolbar', { name: 'Timeline mode switcher' })).toBeNull();
-    expect(screen.queryByRole('toolbar', { name: 'Phone timeline mode bar' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Trim' })).toBeNull();
+    expect(screen.getByText(hint)).toBeTruthy();
+    const done = screen.getByRole('button', { name: 'Done' });
+    // jsdom has no layout, so assert the class that carries the 44px touch minimum:
+    // one 36px button with a 44px touch ring on phone and tablet alike.
+    expect(done.className).toContain('[@media(pointer:coarse)]:after:-inset-1');
+    expect(done.className).toContain('h-9');
+    fireEvent.click(done);
+    expect(__editorOps.setInteractionMode).toHaveBeenCalledWith('browse');
+  });
+
+  it('gives Done the phone row in place of Render while a gesture is armed', () => {
+    __deviceClass = 'phone';
+    __interactionMode = 'move';
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+
+    const row = document.querySelector('[data-toolbar-layout="touch"]') as HTMLElement;
+    expect(within(row).getByRole('button', { name: 'Done' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Render' })).toBeNull();
+  });
+
+  it('arms nothing on desktop, which is modeless', () => {
+    __interactionMode = 'move';
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+
+    expect(screen.queryByRole('button', { name: 'Done' })).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phone: a clear picture, one document row, and a sheet a clip tap opens
+// ---------------------------------------------------------------------------
+
+describe('TimelineEditorShellCore — phone layout', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    __clearSlotRenderers();
+    __clearRuntimeContext();
+    __deviceClass = 'phone';
+    __interactionMode = 'browse';
+    __selectedClipIds = new Set(['clip-1']);
+    __editorPreferences = {
+      selectedRightPanelId: 'host:properties',
+      rightPanelLayoutSlotsByPanelId: { 'host:properties': 'dock' },
+      showDataLanes: false,
+    };
+  });
+
+  afterEach(() => {
+    __deviceClass = 'desktop';
+    __interactionMode = 'browse';
+    __selectedClipIds = new Set();
+  });
+
+  it('keeps Render in the document row and the readout, undo and redo with the scrubber', () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+
+    const row = document.querySelector('[data-toolbar-layout="touch"]') as HTMLElement;
+    expect(within(row).getByRole('button', { name: 'Render' })).toBeTruthy();
+    const playback = screen.getByTestId('touch-playback-row');
+    expect(within(playback).getByText('0.0s')).toBeTruthy();
+    expect(within(playback).getByRole('button', { name: 'Undo' })).toBeTruthy();
+    expect(within(playback).getByRole('button', { name: 'Redo' })).toBeTruthy();
+    // Nothing else claims the toolbar's larger-layout controls.
+    for (const label of ['Elements', 'Zoom in timeline', 'Zoom out timeline', 'History']) {
+      expect(screen.queryByRole('button', { name: label })).toBeNull();
+    }
+  });
+
+  it('says nothing about saving while all is saved, and says when it is not', () => {
+    const { unmount } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(screen.queryByText('Saved')).toBeNull();
+    unmount();
+
+    // Nothing is saved before the timeline arrives, so the status waits for it.
+    __chromeOverrides = { saveStatus: 'error' };
+    __editorDataOverrides = { data: { rows: [], meta: {} } };
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      expect(screen.getByRole('status')).toHaveTextContent('Not saved');
+    } finally {
+      __chromeOverrides = {};
+      __editorDataOverrides = {};
+    }
+  });
+
+  it('has no Inspector dock, Inspector button or panel-display control, whatever the saved preference', () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+
+    expect(screen.queryByTestId('video-editor-right-panel-dock')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Inspector|Clip$|Selection/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Panel display' })).toBeNull();
+  });
+
+  it('opens the clip sheet when a clip is tapped', () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
+
+    fireEvent.click(screen.getByTestId('mock-clip'));
+
+    const sheet = screen.getByTestId('timeline-clip-sheet');
+    expect(within(sheet).getByTestId('properties-panel')).toBeTruthy();
+    expect(within(sheet).getByText('Selected clip')).toBeTruthy();
+  });
+
+  it('leaves the sheet closed for a control inside the clip, and while a gesture is armed', () => {
+    const { unmount } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Clip control' }));
+    expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
+    unmount();
+
+    __interactionMode = 'move';
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    fireEvent.click(screen.getByTestId('mock-clip'));
+    expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
+  });
+
+  it('opens Astrid and the gallery from its own bar, and the app\'s floating pane tabs step aside', () => {
+    const { unmount } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(paneControlsHosted()).toBe(true);
+
+    const bar = screen.getByTestId('touch-agent-bar');
+    fireEvent.click(within(bar).getByRole('button', { name: /Ask Astrid/ }));
+    expect(vi.mocked(dispatchAppEvent)).toHaveBeenLastCalledWith('openAgentComposer');
+    fireEvent.click(within(bar).getByRole('button', { name: 'Open gallery' }));
+    expect(vi.mocked(dispatchAppEvent)).toHaveBeenLastCalledWith('openGenerationsPane');
+
+    unmount();
+    expect(paneControlsHosted()).toBe(false);
+  });
+
+  it('adds text at the playhead from the bar and opens it in the clip sheet', () => {
+    const handleAddText = vi.fn();
+    __chromeOverrides = { handleAddText };
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
+      fireEvent.click(within(screen.getByTestId('touch-agent-bar')).getByRole('button', { name: 'Add text' }));
+      expect(handleAddText).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('timeline-clip-sheet')).toBeTruthy();
+    } finally {
+      __chromeOverrides = {};
+    }
+  });
+
+  it('says on the bar when Astrid is working, and the bar still opens the chat', () => {
+    const { unmount } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(within(screen.getByTestId('touch-agent-bar')).getByRole('button', { name: /Ask Astrid/ })).toBeTruthy();
+    unmount();
+
+    __agentActions = { isAgentWorking: true };
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      const bar = screen.getByTestId('touch-agent-bar');
+      expect(within(bar).queryByText(/Ask Astrid/)).toBeNull();
+      fireEvent.click(within(bar).getByRole('button', { name: /Astrid is working/ }));
+      expect(vi.mocked(dispatchAppEvent)).toHaveBeenLastCalledWith('openAgentComposer');
+    } finally {
+      __agentActions = null;
+    }
+  });
+
+  it('gives a tablet the same touch shell: Astrid bar, hosted pane tabs, no dock', () => {
+    __deviceClass = 'tablet';
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(document.querySelector('main[data-shell-layout="touch"]')).not.toBeNull();
+    expect(screen.getByTestId('touch-agent-bar')).toBeTruthy();
+    expect(paneControlsHosted()).toBe(true);
+  });
+
+  it('keeps the app\'s pane tabs on desktop', () => {
+    __deviceClass = 'desktop';
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(screen.queryByTestId('touch-agent-bar')).toBeNull();
+    expect(paneControlsHosted()).toBe(false);
+  });
+
+  it('closes the sheet when Move arms the gesture, and when the clip is closed', async () => {
+    // The shell is memoised on its props; a fresh callback stands in for the store update.
+    const renderShell = () => <TimelineEditorShellCore timelineId="test-timeline" onNavigateHome={vi.fn()} />;
+    const { rerender } = render(renderShell());
+    fireEvent.click(screen.getByTestId('mock-clip'));
+    expect(screen.getByTestId('timeline-clip-sheet')).toBeTruthy();
+
+    __interactionMode = 'move';
+    rerender(renderShell());
+    await waitFor(() => expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull());
+
+    __interactionMode = 'browse';
+    rerender(renderShell());
+    fireEvent.click(screen.getByTestId('mock-clip'));
+    expect(screen.getByTestId('timeline-clip-sheet')).toBeTruthy();
+
+    __selectedClipIds = new Set();
+    rerender(renderShell());
+    await waitFor(() => expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull());
   });
 });
 

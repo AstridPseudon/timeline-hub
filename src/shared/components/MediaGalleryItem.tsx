@@ -395,6 +395,11 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     showTickForImageId,
     addingToShotImageId,
   });
+  // A tap on the item. With single-click selection the wrapper owns it on any touch screen, for
+  // images and videos alike: its pointer handlers are mouse-only, so without this a tap selects
+  // nothing (an iPad is not `isMobile`). Otherwise phones keep their tap/double-tap, where a
+  // video's own element takes the tap. Audio keeps its player's controls.
+  const wrapperHandlesTouch = !isAudioContent && (enableSingleClick || (isMobile && !isVideoContent));
   const aspectRatioPadding = resolveAspectRatioPadding(image, projectAspectRatio);
   const minHeight = isAudioContent ? '160px' : '120px';
   if (isPlaceholder) {
@@ -425,8 +430,8 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
         onMouseEnter={handleMouseEnter}
         data-tour={dataTour}
         onContextMenu={(event) => onContextMenu?.(event, image)}
-        onTouchStart={isMobile && !enableSingleClick && !isVideoContent && !isAudioContent ? handleTouchStart : undefined}
-        onTouchEnd={isMobile && !enableSingleClick && !isVideoContent && !isAudioContent ? handleInteraction : undefined}
+        onTouchStart={wrapperHandlesTouch ? handleTouchStart : undefined}
+        onTouchEnd={wrapperHandlesTouch ? handleInteraction : undefined}
         onPointerDown={handleWrapperPointerDown}
         onPointerUp={handleWrapperPointerUp}
     >

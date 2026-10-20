@@ -1,13 +1,14 @@
 /**
- * Tablet timeline: mode reachability, touch clip-drag, and the marquee gesture.
+ * Tablet timeline: the phone's touch shell on iPad-sized screens, in both
+ * orientations. Armed move/trim reachability and touch clip-drag.
  *
- * Ported from the untracked `node_modules/.probe/ipad.mjs` device probe, run in
- * both orientations. The marquee step is deliberately last: when the select-mode
- * edit area loses its `touch-action` rule the browser claims that drag as its
- * back-navigation swipe and the tab leaves the editor, so anything after it
- * would be measuring `about:blank`.
+ * Ported from the untracked `node_modules/.probe/ipad.mjs` device probe. Tablets
+ * get the same touch shell as phones and have no Inspector dock. Tapping a clip
+ * selects it and opens the clip sheet. Move and Trim are armed from the sheet's
+ * action grid, which closes the sheet, and are released with Done in the document
+ * row. There is no touch marquee: select mode is not reachable from any touch UI.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { CLIP_BODY_SELECTOR } from '../../../src/tools/video-editor/lib/timeline-dom.ts';
 import {
   collectPageLogs,
@@ -36,7 +37,7 @@ for (const orientation of ORIENTATIONS) {
       userAgent: IPAD_USER_AGENT,
     });
 
-    test(`tablet ${orientation.name}: modes, drag and marquee under touch`, async ({ context, page }, testInfo) => {
+    test(`tablet ${orientation.name}: sheet, armed gestures and drag under touch`, async ({ context, page }, testInfo) => {
       test.setTimeout(240_000);
 
       const logs: string[] = [];
@@ -64,7 +65,12 @@ for (const orientation of ORIENTATIONS) {
         const preview = q('[data-testid="video-editor-preview-surface"]');
         return {
           viewport: { w: window.innerWidth, h: window.innerHeight },
-          phoneBar: Boolean(q('[aria-label="Phone timeline mode bar"]')),
+          touchShell: Boolean(q('main[data-shell-layout="touch"]')),
+          touchRow: Boolean(q('[data-toolbar-layout="touch"]')),
+          inspectorDock: document.querySelectorAll('[data-testid="video-editor-right-panel-dock"]').length,
+          modeUi: document.querySelectorAll(
+            '[data-timeline-mode-switcher], [aria-label="Phone timeline mode bar"], [aria-label="Timeline mode switcher"]',
+          ).length,
           clips: Array.from(document.querySelectorAll(clipBodySelector))
             .map((el) => ({ id: el.getAttribute('data-clip-id'), ...rect(el) })),
           editArea: editArea ? rect(editArea) : null,
@@ -74,8 +80,14 @@ for (const orientation of ORIENTATIONS) {
 
       testInfo.annotations.push({ type: 'viewport', description: JSON.stringify(structure.viewport) });
       testInfo.annotations.push({
-        type: 'phone mode bar on tablet (expected false)',
-        description: String(structure.phoneBar),
+        type: 'mode switcher elements (expected 0)',
+        description: String(structure.modeUi),
+      });
+
+      await test.step('tablet uses the touch shell (no inspector dock)', async () => {
+        expect(structure.touchShell, 'main[data-shell-layout="touch"]').toBe(true);
+        expect(structure.touchRow, '[data-toolbar-layout="touch"]').toBe(true);
+        expect(structure.inspectorDock).toBe(0);
       });
 
       await test.step('clips render on tablet', async () => {
@@ -92,65 +104,73 @@ for (const orientation of ORIENTATIONS) {
 
       await shot('base');
 
-      // --- select (tablet default): tap -------------------------------------
+      await test.step('no mode switcher on tablet', async () => {
+        expect(structure.modeUi).toBe(0);
+      });
+
+      // --- browse (tablet default): tap selects and opens the clip sheet -----
+      const sheet = page.getByTestId('timeline-clip-sheet');
+      const armedBar = page.locator('[data-armed-gesture]');
+      const touchRow = page.locator('[data-toolbar-layout="touch"]');
+      const done = touchRow.getByRole('button', { name: 'Done', exact: true });
+
+      async function tapLocator(target: ReturnType<Page['locator']>): Promise<void> {
+        const box = await target.boundingBox();
+        if (!box) throw new Error('nothing to tap');
+        await touch.tap(box.x + box.width / 2, box.y + box.height / 2);
+      }
+
+      /** Tap a clip by id; on tablet that selects it and opens the clip sheet. */
+      async function tapClipForSheet(clipId: string): Promise<void> {
+        await tapLocator(page.locator(`${CLIP_BODY_SELECTOR}[data-clip-id="${clipId}"]`).first());
+        await expect(sheet).toBeVisible({ timeout: 5_000 });
+      }
+
+      /** Tap a clip, then Move/Trim in its sheet: the sheet closes and the gesture arms. */
+      async function armFromSheet(clipId: string, gesture: 'move' | 'trim'): Promise<void> {
+        await tapClipForSheet(clipId);
+        await tapLocator(sheet.getByRole('button', { name: gesture === 'move' ? 'Move' : 'Trim', exact: true }));
+        await expect(sheet).toBeHidden({ timeout: 5_000 });
+        await expect(armedBar).toHaveAttribute('data-armed-gesture', gesture, { timeout: 5_000 });
+      }
+
       const c0 = structure.clips[0];
       if (c0) await touch.tap(c0.x + c0.w / 2, c0.y + c0.h / 2);
       const tapSelected = await countSelectedClips(page);
 
-      await test.step('tablet default select: tap selects clip', async () => {
+      await test.step('tablet browse: tap selects clip and opens the clip sheet', async () => {
         expect(tapSelected, `${tapSelected} selected`).toBeGreaterThanOrEqual(1);
+        await expect(sheet).toBeVisible({ timeout: 5_000 });
       });
 
       await shot('selected');
 
-      // --- how do you reach move/trim on tablet? ----------------------------
-      const modeUi = await page.evaluate(() => {
-        const hits: { t: string; w: number; h: number; visible: boolean }[] = [];
-        for (const el of document.querySelectorAll('button, [role="tab"], [role="radio"]')) {
-          const label = (el.getAttribute('aria-label') || el.textContent || '').trim();
-          if (/^(browse|select|move|trim|precision)$/i.test(label) || /interaction mode/i.test(label)) {
-            const r = el.getBoundingClientRect();
-            hits.push({
-              t: label.slice(0, 30),
-              w: Math.round(r.width),
-              h: Math.round(r.height),
-              visible: r.width > 0 && r.height > 0,
-            });
-          }
-        }
-        return hits;
-      });
-      const visibleModeUi = modeUi.filter((m) => m.visible);
-
-      await test.step('some visible way to switch interaction mode', async () => {
-        expect(visibleModeUi.length, JSON.stringify(visibleModeUi)).toBeGreaterThanOrEqual(2);
+      await test.step('sheet offers Move and Trim as >=44px controls', async () => {
+        const moveButton = sheet.getByRole('button', { name: 'Move', exact: true });
+        const trimButton = sheet.getByRole('button', { name: 'Trim', exact: true });
+        await expect(moveButton).toBeVisible();
+        await expect(trimButton).toBeVisible();
+        const heights = [(await moveButton.boundingBox())?.height ?? 0, (await trimButton.boundingBox())?.height ?? 0];
+        expect(heights.every((h) => h >= 44), `Move/Trim heights ${heights.join('/')}`).toBe(true);
       });
 
-      await test.step('every switchable mode has a >=44px control on tablet', async () => {
-        const missing = ['browse', 'select', 'move', 'trim', 'precision'].filter(
-          (mode) => !visibleModeUi.some((m) => m.t.toLowerCase() === mode && m.h >= 44),
-        );
-        expect(missing, JSON.stringify(visibleModeUi.map((m) => `${m.t} ${m.w}x${m.h}`))).toEqual([]);
+      await tapLocator(sheet.getByRole('button', { name: 'Close clip' }));
+      await test.step('Close clip closes the sheet', async () => {
+        await expect(sheet).toBeHidden({ timeout: 5_000 });
       });
 
-      // --- move mode: switch via the switcher, then drag a clip -------------
-      const moveButton = page.locator('button', { hasText: /^move$/i }).first();
-      const moveVisible = await moveButton.isVisible().catch(() => false);
-      expect(moveVisible, 'no visible Move control — drag not attempted').toBe(true);
+      // --- sheet Move arms the gesture, then drag a clip ---------------------
+      const beforeMove = await pickFreeDraggableClip(page);
+      expect(beforeMove, 'no clip found').not.toBeNull();
+      await armFromSheet(beforeMove!.id!, 'move');
 
-      const moveBox = (await moveButton.boundingBox())!;
-      await touch.tap(moveBox.x + moveBox.width / 2, moveBox.y + moveBox.height / 2);
-      const movePressed = await moveButton.getAttribute('aria-pressed');
-
-      await test.step('tablet move mode: switcher marks Move active', async () => {
-        expect(movePressed, `aria-pressed=${movePressed}`).toBe('true');
+      await test.step('tablet sheet Move arms the gesture (Done shown)', async () => {
+        await expect(done).toBeVisible();
       });
 
       const scrollLeft = () => page.evaluate(
         () => document.querySelector('.timeline-canvas-edit-area')?.scrollLeft ?? -1,
       );
-      const beforeMove = await pickFreeDraggableClip(page);
-      expect(beforeMove, 'no clip found').not.toBeNull();
       const scrollBefore = await scrollLeft();
       await touch.touchDrag(
         beforeMove!.x + beforeMove!.w / 2, beforeMove!.y + beforeMove!.h / 2,
@@ -163,7 +183,7 @@ for (const orientation of ORIENTATIONS) {
       }, `${CLIP_BODY_SELECTOR}[data-clip-id="${beforeMove!.id}"]`);
       const scrollAfter = await scrollLeft();
 
-      await test.step('tablet move mode: touch drag moves clip', async () => {
+      await test.step('tablet armed move: touch drag moves clip', async () => {
         expect(
           Boolean(afterMove) && Math.abs(afterMove!.x - beforeMove!.x) > 25 && scrollAfter === scrollBefore,
           `${beforeMove!.id} x ${Math.round(beforeMove!.x)} -> ${afterMove ? Math.round(afterMove.x) : 'gone'}, `
@@ -171,50 +191,17 @@ for (const orientation of ORIENTATIONS) {
         ).toBe(true);
       });
 
-      // --- marquee (tablet, select mode) ------------------------------------
-      const selectButton = page.locator('button', { hasText: /^select$/i }).first();
-      if (await selectButton.isVisible().catch(() => false)) {
-        const sb = (await selectButton.boundingBox())!;
-        await touch.tap(sb.x + sb.width / 2, sb.y + sb.height / 2);
-      }
-      const gestureMode = await page.evaluate(
-        () => document.querySelector('.timeline-canvas-edit-area')?.getAttribute('data-touch-gesture-mode') ?? null,
-      );
-
-      await test.step('tablet select mode: edit area owns the marquee gesture', async () => {
-        expect(gestureMode, `data-touch-gesture-mode=${gestureMode}`).toBe('marquee');
+      // --- Done releases the move; sheet Trim arms and Done releases it ------
+      await tapLocator(done);
+      await test.step('tablet Done leaves the armed move', async () => {
+        await expect(armedBar).toHaveCount(0, { timeout: 5_000 });
       });
 
-      const ea = await page.evaluate(() => {
-        const el = document.querySelector('.timeline-canvas-edit-area');
-        if (!el) return null;
-        const r = el.getBoundingClientRect();
-        return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
-      });
-      expect(ea, 'no edit area for the marquee drag').not.toBeNull();
-
-      const startX = ea!.x + 160;
-      const endX = ea!.x + Math.min(ea!.w - 20, 560);
-      const startY = ea!.y + ea!.h - 12;
-      const endY = ea!.y + 8;
-
-      // Tap the empty canvas first so the count below is the marquee's work and
-      // not whatever the move-mode drag left selected.
-      await touch.tap(startX, startY);
-      const beforeMarquee = await countSelectedClips(page);
-      await touch.touchDrag(startX, startY, endX, endY, { steps: 16 });
-      const shellAlive = await page.evaluate(() => Boolean(document.querySelector('main.grid')));
-      const marqueeSelected = await countSelectedClips(page);
-
-      await test.step('tablet marquee: shell survives the drag', async () => {
-        expect(shellAlive, `url=${page.url()}`).toBe(true);
-      });
-
-      await test.step('tablet marquee: diagonal drag selects clips', async () => {
-        expect(
-          marqueeSelected,
-          `${marqueeSelected} selected (${beforeMarquee} before the drag) :: ${[...new Set(logs)].join(' | ')}`,
-        ).toBeGreaterThanOrEqual(1);
+      await armFromSheet(beforeMove!.id!, 'trim');
+      await test.step('tablet sheet Trim arms the gesture, Done releases it', async () => {
+        await expect(armedBar).toHaveAttribute('data-armed-gesture', 'trim', { timeout: 5_000 });
+        await tapLocator(done);
+        await expect(armedBar).toHaveCount(0, { timeout: 5_000 });
       });
 
       await shot('final');

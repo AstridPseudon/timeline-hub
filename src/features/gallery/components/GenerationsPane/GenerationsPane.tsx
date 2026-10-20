@@ -10,6 +10,7 @@ import { GenerationsDropChip } from './components/GenerationsDropChip';
 import { useGenerationsPaneController } from './hooks/useGenerationsPaneController';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
 import { usePanesStore } from '@/shared/state/panesStore';
+import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
 
 type GenerationsPaneController = ReturnType<typeof useGenerationsPaneController>;
 
@@ -95,6 +96,13 @@ function GenerationsPaneTab({ controller }: { controller: GenerationsPaneControl
 function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneController }) {
   const { pane, filters, gallery, layout, navigation } = controller;
   const effectiveGenerationsPaneHeight = usePanesStore((state) => state.effectiveGenerationsPaneHeight);
+  // Opened from a page that hosts it (the touch editor), the gallery is a temporary sheet over
+  // the timeline: adding media closes it, so the new clip is in view.
+  const paneControlsHosted = usePaneControlsHosted();
+  const addGenerationToTimeline = (generationId: string) => {
+    navigation.handleAddGenerationToTimeline(generationId);
+    if (paneControlsHosted) pane.closePane();
+  };
 
   // The Image Generation tool owns the full-page gallery. Keep the app-shell
   // generations pane out of that route, including when it was left hovered or
@@ -189,7 +197,7 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
             generationFilters: filters.generationFilters,
             currentViewingShotId: filters.currentShotId || undefined,
             onCreateShot: gallery.handleCreateShot,
-            onAddGenerationToTimeline: navigation.handleAddGenerationToTimeline,
+            onAddGenerationToTimeline: addGenerationToTimeline,
             config: gallery.config,
             readOnly: gallery.readOnly,
           }}

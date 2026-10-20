@@ -104,7 +104,6 @@ export interface TimelineEditorDataContextValue {
   inputModality: TimelineInputModality;
   interactionMode: TimelineInteractionMode;
   gestureOwner: TimelineGestureOwner;
-  precisionEnabled: boolean;
   contextTarget: TimelineContextTarget;
   inspectorTarget: TimelineInspectorTarget;
   interactionPolicy: MobileInteractionPolicy;
@@ -139,7 +138,6 @@ export interface TimelineEditorOpsContextValue {
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
   setInteractionMode: (mode: TimelineInteractionMode) => void;
   setGestureOwner: (owner: TimelineGestureOwner) => void;
-  setPrecisionEnabled: (enabled: boolean) => void;
   setContextTarget: (target: TimelineContextTarget) => void;
   setInspectorTarget: (target: TimelineInspectorTarget) => void;
   isClipSelected: UseTimelineMultiSelectResult['isClipSelected'];

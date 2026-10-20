@@ -39,6 +39,7 @@ import {
   BASELINE_TRACKS,
   openEditor,
   readFakeRuntimeComposition,
+  resetFakeRuntimeBaseline,
 } from './support';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -55,17 +56,16 @@ interface GeometrySnapshot {
   rects: {
     preview: Rect | null;
     editArea: Rect | null;
-    modeSwitcher: Rect | null;
     trackLabelColumn: Rect | null;
     ruler: Rect | null;
     firstClip: Rect | null;
   };
   counts: {
     tracks: number;
-    visibleModeButtons: number;
+    modeUiElements: number;
   };
   flags: {
-    phoneBarPresent: boolean;
+    armedBarPresent: boolean;
     gutterPadding: string | null;
   };
 }
@@ -95,11 +95,14 @@ async function collectGeometry(page: Page): Promise<GeometrySnapshot> {
 
     const preview = document.querySelector('[data-testid="video-editor-preview-surface"]');
     const editArea = document.querySelector(editAreaSelector);
-    const modeSwitcher = document.querySelector('[data-timeline-mode-switcher]');
     const trackLabelColumn = document.querySelector('[data-track-id]');
     const ruler = document.querySelector('[data-testid="timeline-ruler"]');
     const firstClip = document.querySelector(clipBodySelector);
-    const phoneBar = document.querySelector('[aria-label="Phone timeline mode bar"]');
+    // The touch mode switcher is gone everywhere; none of these may render.
+    const removedModeUi = document.querySelectorAll(
+      '[data-timeline-mode-switcher], [aria-label="Phone timeline mode bar"], [aria-label="Timeline mode switcher"]',
+    );
+    const armedBar = document.querySelector('[data-armed-gesture]');
 
     const gutterPadding = editArea
       ? getComputedStyle(editArea).getPropertyValue('--label-width').trim() || null
@@ -110,17 +113,16 @@ async function collectGeometry(page: Page): Promise<GeometrySnapshot> {
       rects: {
         preview: rect(preview),
         editArea: rect(editArea),
-        modeSwitcher: rect(modeSwitcher),
         trackLabelColumn: rect(trackLabelColumn),
         ruler: rect(ruler),
         firstClip: rect(firstClip),
       },
       counts: {
         tracks: document.querySelectorAll('[data-track-id]').length,
-        visibleModeButtons: modeSwitcher ? modeSwitcher.querySelectorAll('button').length : 0,
+        modeUiElements: removedModeUi.length,
       },
       flags: {
-        phoneBarPresent: Boolean(phoneBar),
+        armedBarPresent: Boolean(armedBar),
         gutterPadding,
       },
     };
@@ -208,6 +210,11 @@ test.describe('timeline layout geometry', () => {
       ) => {
         test.setTimeout(120_000);
 
+        // Reset here, as the other touch specs do: `support.ts` registers its shared reset hook only for
+        // the first spec file a worker loads, so after another file in the same worker this one would
+        // read that file's last edit.
+        const resetError = await resetFakeRuntimeBaseline();
+        expect(resetError, resetError ?? '').toBeNull();
         await assertGeometryFixture();
         await openEditor(page);
 

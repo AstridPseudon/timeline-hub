@@ -42,7 +42,7 @@ describe('AgentChatActions registry', () => {
       const registry = useAgentChatActionsRegistry();
       const handlers = makeHandlers();
       registry.registerHandlers(handlers);
-      registry.publishState({ isRecording: true, isProcessing: false });
+      registry.publishState({ isRecording: true, isProcessing: false, isAgentWorking: true });
       const actions = useAgentChatActions();
       onActions(actions);
       return null;
@@ -59,6 +59,7 @@ describe('AgentChatActions registry', () => {
     expect(last).not.toBeNull();
     expect(last?.isRecording).toBe(true);
     expect(last?.isProcessing).toBe(false);
+    expect(last?.isAgentWorking).toBe(true);
 
     // Suppress unused variable warning — actionsHook is just to assert wrapper isolation
     void actionsHook;
@@ -75,7 +76,7 @@ describe('AgentChatActions registry', () => {
       capturedActions = actions;
       // First mount → register A; then immediately register B (overwrite).
       registry.registerHandlers(handlersA);
-      registry.publishState({ isRecording: false, isProcessing: false });
+      registry.publishState({ isRecording: false, isProcessing: false, isAgentWorking: false });
       registry.registerHandlers(handlersB);
       return null;
     }
@@ -110,7 +111,7 @@ describe('AgentChatActions registry', () => {
       // doesn't re-register.
       useEffect(() => {
         registry.registerHandlers(makeHandlers());
-        registry.publishState({ isRecording: false, isProcessing: false });
+        registry.publishState({ isRecording: false, isProcessing: false, isAgentWorking: false });
         unregisterFn = registry.unregister;
       }, [registry]);
       return null;

@@ -1,10 +1,19 @@
 import type { TrackDefinition, TrackKind } from '@/tools/video-editor/types/index.ts';
+import type { TimelineDeviceClass } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import type { ClipMeta, ClipOrderMap } from '@/tools/video-editor/lib/timeline-data.ts';
 
 export const ROW_HEIGHT = 36;
 export const SCALE_SECONDS = 5;
-export const LABEL_WIDTH = 144;
-export const TIMELINE_START_LEFT = LABEL_WIDTH;
+const LABEL_WIDTH = 144;
+const TOUCH_LABEL_WIDTH = 56;
+
+/**
+ * Width of the sticky track-name column. The single source of truth: it is the
+ * timeline's `startLeft` and every gutter, hit test and overlay offset.
+ */
+export const getTimelineLabelWidth = (deviceClass: TimelineDeviceClass): number => (
+  deviceClass === 'desktop' ? LABEL_WIDTH : TOUCH_LABEL_WIDTH
+);
 
 export const isEditableTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) {
@@ -19,6 +28,13 @@ export const formatTime = (time: number): string => {
   const secs = Math.floor(time % 60);
   const ms = Math.floor((time % 1) * 100);
   return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+};
+
+/** `m:ss` — the ruler's phone tick label; `formatTime`'s centiseconds are for the readout. */
+export const formatTimeCompact = (time: number): string => {
+  const mins = Math.floor(time / 60);
+  const secs = Math.floor(time % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
 export const updateClipOrder = (

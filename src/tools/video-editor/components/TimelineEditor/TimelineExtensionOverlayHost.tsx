@@ -369,8 +369,35 @@ export function TimelineExtensionOverlayHost({
       />
     );
   });
-  const legend = overlays.length > markerLayerCapacity
+  const legendTitle = overlays
+    .slice(markerLayerStart, markerLayerEnd)
+    .map((descriptor) => `${descriptor.extensionId}: ${String(descriptor.id)}`)
+    .join('\n');
+  // The pager sits in the corner above the track names. The full one needs
+  // about 112px; the touch track column is 56px, so there the whole corner is
+  // one button that steps to the next page (and wraps).
+  const compactLegend = geometry.startLeft < 112;
+  const legend = overlays.length <= markerLayerCapacity ? null : compactLegend
     ? createPortal(
+        <button
+          type="button"
+          data-testid="timeline-marker-layer-legend"
+          data-marker-layer-page={clampedMarkerLayerPage}
+          data-marker-layer-page-count={markerLayerPageCount}
+          className="pointer-events-auto absolute left-0 top-0 z-40 flex h-full items-center justify-center gap-0.5 border-r border-border bg-card text-[10px] tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring disabled:opacity-35"
+          style={{ width: geometry.startLeft }}
+          title={legendTitle}
+          aria-label={`Marker layers ${markerLayerStart + 1}–${markerLayerEnd} of ${overlays.length}: show the next layers`}
+          disabled={claimedKey !== null}
+          onClick={() => setMarkerLayerPage((page) => (page + 1) % markerLayerPageCount)}
+        >
+          {clampedMarkerLayerPage + 1}/{markerLayerPageCount}
+          <span aria-hidden="true">›</span>
+        </button>,
+        rulerPortalRoot,
+        'timeline-marker-layer-legend',
+      )
+    : createPortal(
         <div
           role="group"
           aria-label="Marker layer pages"
@@ -378,10 +405,7 @@ export function TimelineExtensionOverlayHost({
           data-marker-layer-page={clampedMarkerLayerPage}
           data-marker-layer-page-count={markerLayerPageCount}
           className="pointer-events-auto absolute left-1 top-1 z-40 flex h-5 items-center gap-1 rounded border border-border bg-card/95 px-1 text-[9px] text-foreground shadow-sm"
-          title={overlays
-            .slice(markerLayerStart, markerLayerEnd)
-            .map((descriptor) => `${descriptor.extensionId}: ${String(descriptor.id)}`)
-            .join('\n')}
+          title={legendTitle}
         >
           <button
             type="button"
@@ -407,7 +431,6 @@ export function TimelineExtensionOverlayHost({
         </div>,
         rulerPortalRoot,
         'timeline-marker-layer-legend',
-      )
-    : null;
+      );
   return <>{contributions}{legend}</> as ReactNode;
 }

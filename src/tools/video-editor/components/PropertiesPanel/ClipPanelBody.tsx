@@ -21,7 +21,7 @@ import type { EffectResource, VideoEditorEffectCatalog } from '@/tools/video-edi
 import type { ClipTab } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
 import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
 import { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
-import type { TimelineDeviceClass, TimelineInteractionMode } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
+import type { TimelineDeviceClass } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import { resolveAvailableClipType } from '@/tools/video-editor/sequences/registry.ts';
 import type {
   ResolvedTimelineClip,
@@ -36,6 +36,11 @@ import { ClipEffectsTab } from './ClipEffectsTab.tsx';
 import { ClipExtensionInspectorSection } from './ClipExtensionInspectorSection.tsx';
 import { ClipInspectorActions } from './ClipInspectorActions.tsx';
 
+/** The shortest a media clip can be made from its Duration field. */
+const MIN_MEDIA_DURATION_SECONDS = 0.05;
+const roundToThousandths = (value: number) => Math.round(value * 1000) / 1000;
+const TOUCH_TAB_CLASS = '[@media(pointer:coarse)]:h-11';
+
 export { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 export { FieldLabel, NO_EFFECT, NO_TRANSITION, TAB_COLUMNS_CLASS } from './clip-panel-primitives.tsx';
 
@@ -44,8 +49,6 @@ export interface ClipPanelProps {
   clip: ResolvedTimelineClip | null;
   track: TrackDefinition | null;
   deviceClass: TimelineDeviceClass;
-  interactionMode: TimelineInteractionMode;
-  precisionEnabled: boolean;
   hasPredecessor: boolean;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
   onResetPosition: () => void;
@@ -54,10 +57,11 @@ export interface ClipPanelProps {
   onToggleMute: () => void;
   onDetachAudio?: () => void;
   onSplitAtPlayhead: () => void;
-  onMoveTrackUp: () => void;
-  onMoveTrackDown: () => void;
+  /** Absent when there is no track of the clip's kind above it. */
+  onMoveTrackUp?: () => void;
+  /** Absent when there is no track of the clip's kind below it. */
+  onMoveTrackDown?: () => void;
   onSetInteractionMode: (mode: 'move' | 'trim') => void;
-  onSetPrecisionEnabled: (enabled: boolean) => void;
   compositionWidth: number;
   compositionHeight: number;
   registry: ResolvedTimelineConfig['registry'];
@@ -93,8 +97,6 @@ export function ClipPanelBody({
   clip,
   track,
   deviceClass,
-  interactionMode,
-  precisionEnabled,
   onChange,
   onResetPosition,
   onClose,
@@ -105,7 +107,6 @@ export function ClipPanelBody({
   onMoveTrackUp,
   onMoveTrackDown,
   onSetInteractionMode,
-  onSetPrecisionEnabled,
   compositionWidth,
   compositionHeight,
   registry,
@@ -186,6 +187,8 @@ export function ClipPanelBody({
     clipDescriptor && isClipTypeCommandAvailable(clipDescriptor, 'detach-audio', commandContext),
   );
   const showInspectorActions = !readOnly && deviceClass !== 'desktop';
+  // Touch keeps the header's delete and close at the 44px minimum.
+  const headerButtonSize = deviceClass === 'desktop' ? 'h-8 w-8' : 'h-11 w-11';
 
   // M9 T9: Extension-provided clip inspector section
   const clipTypeRegistryContext = useOptionalClipTypeRegistryContext();
@@ -201,6 +204,18 @@ export function ClipPanelBody({
       </div>
     );
   }
+
+  // A media clip's length on the timeline is its source span at its speed. Duration edits the
+  // span's end (Source Out), never past the end of the media.
+  const mediaSpeed = clip.speed && clip.speed > 0 ? clip.speed : 1;
+  const mediaSourceIn = clip.from ?? 0;
+  const mediaSourceEnd = clip.assetEntry?.duration && clip.assetEntry.duration > 0 ? clip.assetEntry.duration : undefined;
+  const mediaDuration = ((clip.to ?? mediaSourceEnd ?? 5) - mediaSourceIn) / mediaSpeed;
+  const mediaSourceOutFor = (duration: number | null): number | null => {
+    if (duration === null) return null;
+    const sourceOut = mediaSourceIn + Math.max(duration, MIN_MEDIA_DURATION_SECONDS) * mediaSpeed;
+    return roundToThousandths(mediaSourceEnd === undefined ? sourceOut : Math.min(sourceOut, mediaSourceEnd));
+  };
 
   return (
     <div className="space-y-3" data-clip-inspector-read-only={readOnly ? 'true' : undefined}>
@@ -233,11 +248,11 @@ export function ClipPanelBody({
             />
           )}
           {!readOnly && onDelete && (
-            <Button type="button" variant="ghost" size="icon" className="astrid-public-inspector-delete h-8 w-8 text-destructive hover:text-destructive" onClick={onDelete}>
+            <Button type="button" variant="ghost" size="icon" className={cn('astrid-public-inspector-delete text-destructive hover:text-destructive', headerButtonSize)} onClick={onDelete} aria-label="Delete clip" title="Delete clip">
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+          <Button type="button" variant="ghost" size="icon" className={headerButtonSize} onClick={onClose} aria-label="Close clip" title="Close clip">
             ×
           </Button>
         </div>
@@ -262,29 +277,27 @@ export function ClipPanelBody({
 
       {showInspectorActions && (
         <ClipInspectorActions
-          interactionMode={interactionMode}
-          precisionEnabled={precisionEnabled}
+          muted={(clip.volume ?? 1) <= 0}
           canMoveTrack={canMoveTrack}
           canSplit={canSplit}
           canToggleMute={canToggleMute}
           setActiveTab={setActiveTab}
           onSetInteractionMode={onSetInteractionMode}
-          onSetPrecisionEnabled={onSetPrecisionEnabled}
           onMoveTrackUp={onMoveTrackUp}
           onMoveTrackDown={onMoveTrackDown}
           onSplitAtPlayhead={onSplitAtPlayhead}
           onToggleMute={onToggleMute}
-          onDelete={onDelete}
         />
       )}
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ClipTab)}>
-        <TabsList className={cn('grid w-full bg-muted/60', TAB_COLUMNS_CLASS[visibleTabs.length as keyof typeof TAB_COLUMNS_CLASS] ?? 'grid-cols-4')}>
-          {visibleTabs.includes('effects') && <TabsTrigger value="effects">{isSequenceClip ? 'Sequence' : 'Effects'}</TabsTrigger>}
-          {visibleTabs.includes('timing') && <TabsTrigger value="timing">Timing</TabsTrigger>}
-          {visibleTabs.includes('position') && <TabsTrigger value="position">Position</TabsTrigger>}
-          {visibleTabs.includes('audio') && <TabsTrigger value="audio">Audio</TabsTrigger>}
-          {visibleTabs.includes('text') && <TabsTrigger value="text">Text</TabsTrigger>}
+        {/* On touch the tabs are 44px targets. */}
+        <TabsList className={cn('grid w-full bg-muted/60 [@media(pointer:coarse)]:h-[3.25rem]', TAB_COLUMNS_CLASS[visibleTabs.length as keyof typeof TAB_COLUMNS_CLASS] ?? 'grid-cols-4')}>
+          {visibleTabs.includes('effects') && <TabsTrigger className={TOUCH_TAB_CLASS} value="effects">{isSequenceClip ? 'Sequence' : 'Effects'}</TabsTrigger>}
+          {visibleTabs.includes('timing') && <TabsTrigger className={TOUCH_TAB_CLASS} value="timing">Timing</TabsTrigger>}
+          {visibleTabs.includes('position') && <TabsTrigger className={TOUCH_TAB_CLASS} value="position">Position</TabsTrigger>}
+          {visibleTabs.includes('audio') && <TabsTrigger className={TOUCH_TAB_CLASS} value="audio">Audio</TabsTrigger>}
+          {visibleTabs.includes('text') && <TabsTrigger className={TOUCH_TAB_CLASS} value="text">Text</TabsTrigger>}
         </TabsList>
 
         <fieldset disabled={readOnly} aria-label="Clip inspector values" className="m-0 min-w-0 border-0 p-0">
@@ -316,11 +329,15 @@ export function ClipPanelBody({
 
         {visibleTabs.includes('timing') && (
           <TabsContent value="timing" className="space-y-3">
-            <div className="grid gap-3 md:grid-cols-2">
+            {/* Start and Duration first, side by side at every width: the two numbers a
+                clip's place on the timeline is. Start has no negative values, so a phone
+                offers its number pad rather than the full keyboard. */}
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <FieldLabel>Start (seconds)</FieldLabel>
                 <NumberInput
                   value={clip.at}
+                  min={0}
                   step={0.1}
                   onChange={(value) => handleTimingValueChange('at', value)}
                   onValueCommitted={(value) => handleTimingValueCommitted('at', value)}
@@ -341,13 +358,13 @@ export function ClipPanelBody({
               ) : (
                 <>
                   <div className="space-y-2">
-                    <FieldLabel>Speed</FieldLabel>
+                    <FieldLabel>Duration (seconds)</FieldLabel>
                     <NumberInput
-                      value={clip.speed ?? 1}
-                      min={0.1}
+                      value={roundToThousandths(mediaDuration)}
+                      min={MIN_MEDIA_DURATION_SECONDS}
                       step={0.1}
-                      onChange={(value) => handleTimingValueChange('speed', value)}
-                      onValueCommitted={(value) => handleTimingValueCommitted('speed', value)}
+                      onChange={(value) => handleTimingValueChange('to', mediaSourceOutFor(value))}
+                      onValueCommitted={(value) => handleTimingValueCommitted('to', mediaSourceOutFor(value))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -370,6 +387,16 @@ export function ClipPanelBody({
                       onValueCommitted={(value) => handleTimingValueCommitted('to', value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <FieldLabel>Speed</FieldLabel>
+                    <NumberInput
+                      value={clip.speed ?? 1}
+                      min={0.1}
+                      step={0.1}
+                      onChange={(value) => handleTimingValueChange('speed', value)}
+                      onValueCommitted={(value) => handleTimingValueCommitted('speed', value)}
+                    />
+                  </div>
                 </>
               )}
             </div>
@@ -378,7 +405,7 @@ export function ClipPanelBody({
 
         {visibleTabs.includes('position') && (
           <TabsContent value="position" className="space-y-3">
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <FieldLabel>X</FieldLabel>
                 <NumberInput value={clip.x ?? defaultBox.x} onChange={(value) => { if (value !== null) onChange({ x: value }); }} />
@@ -450,11 +477,18 @@ export function ClipPanelBody({
             {supportsInlineTextEdit ? (
               <>
                 <Textarea
+                  aria-label="Text"
+                  // The film's words, shown as they will render, whatever the lowercase preference.
+                  className="verbatim-case"
                   value={clip.text?.content ?? ''}
                   onChange={(event) => onChange({ text: { ...(clip.text ?? { content: '' }), content: event.target.value } })}
-                  rows={5}
+                  // A new text clip's placeholder words are there to be replaced: typing does.
+                  onFocus={(event) => {
+                    if (clip.text?.content === clipDescriptor?.defaults.clip.text?.content) event.currentTarget.select();
+                  }}
+                  rows={3}
                 />
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <FieldLabel>Font size</FieldLabel>
                     <NumberInput

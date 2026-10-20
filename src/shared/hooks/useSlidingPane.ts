@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
 import { useLocation } from 'react-router-dom';
 import { PANE_CONFIG } from '@/shared/config/panes';
+import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
 import { dispatchAppEvent, useAppEventListener } from '@/shared/lib/typedEvents';
 import { isElementWithinKnownOverlay } from '@/shared/components/ui/overlay';
 
@@ -28,9 +29,12 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
   const paneRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
-  // On tablets, use desktop-like behavior with pane locking
-  // On phones (small mobile), use simplified mobile behavior without locking
-  const isSmallMobile = isMobile && !isTablet;
+  const paneControlsHosted = usePaneControlsHosted();
+  // Tablets and desktops get hover-open panes that can be locked. Phones, and
+  // any page that hosts the pane entry points itself (the touch video editor,
+  // see paneControlsHost.ts), get transient panes instead: no locks and no
+  // hover, a backdrop, and a tap outside closes them.
+  const transientPanes = (isMobile && !isTablet) || paneControlsHosted;
   const location = useLocation();
 
   useEffect(() => {
@@ -58,7 +62,7 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
 
   const setOpen = useCallback((open: boolean) => {
     // On small phones (not tablets), don't use locks at all - just manage open state
-    if (isSmallMobile) {
+    if (transientPanes) {
       setHoverOpen(open);
       return;
     }
@@ -70,20 +74,20 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
     }
 
     setHoverOpen(open);
-  }, [isLocked, programmaticOpen, isSmallMobile]);
+  }, [isLocked, programmaticOpen, transientPanes]);
 
   // Close pane on route change (small phones only)
   useEffect(() => {
-    if (isSmallMobile) {
+    if (transientPanes) {
       setHoverOpen(false);
     }
 
-  }, [location.pathname, isSmallMobile]);
+  }, [location.pathname, transientPanes]);
 
   // Lock body scroll when pane is open on small phones (both temporary and locked states)
   // When locked, Layout.tsx handles creating a scrollable main content area instead
   useEffect(() => {
-    if (!isSmallMobile) return;
+    if (!transientPanes) return;
     
     if (isOpen) {
       // Store original overflow style
@@ -100,14 +104,14 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
         document.body.style.touchAction = originalTouchAction;
       };
     }
-  }, [isSmallMobile, isOpen]);
+  }, [transientPanes, isOpen]);
 
   // Click outside handler for small phones (only when not locked)
   // We now use BOTH touchstart and pointerdown to ensure we capture
   // all touch events BEFORE they can reach underlying elements
   useEffect(() => {
     // Don't close on click outside if pane is locked
-    if (!isSmallMobile || !isOpen || isLocked) return;
+    if (!transientPanes || !isOpen || isLocked) return;
 
     const handleClickOutside = (event: TouchEvent | MouseEvent | PointerEvent) => {
       const targetEl = event.target as HTMLElement;
@@ -142,11 +146,11 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
       document.removeEventListener('touchstart', handleClickOutside, true);
       document.removeEventListener('pointerdown', handleClickOutside, true);
     };
-  }, [isSmallMobile, isOpen, isLocked, additionalRefs]);
+  }, [transientPanes, isOpen, isLocked, additionalRefs]);
 
   // Close on dragstart anywhere (small phones)
   useEffect(() => {
-    if (!isSmallMobile) return;
+    if (!transientPanes) return;
 
     const handleDragStart = () => {
       if (isOpen) {
@@ -156,12 +160,12 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
 
     document.addEventListener('dragstart', handleDragStart);
     return () => document.removeEventListener('dragstart', handleDragStart);
-  }, [isSmallMobile, isOpen]);
+  }, [transientPanes, isOpen]);
 
   // Exclusive pane coordination on small phones
   // When another pane opens, this one should close; the panes store bootstrap keeps the lock policy in sync.
   const handleMobilePaneOpen = useCallback((detail: { side: string | null }) => {
-    if (!isSmallMobile) return;
+    if (!transientPanes) return;
     const openedSide = detail?.side ?? null;
     if (openedSide !== side && !isLocked) {
       // Another pane (or null) requested and we're not locked - close this one
@@ -169,7 +173,7 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
     }
     // If this pane is locked, the panes store lock policy will unlock it
     // when the other pane gets locked (only one can be locked at a time on mobile).
-  }, [isSmallMobile, side, isLocked]);
+  }, [transientPanes, side, isLocked]);
 
   useAppEventListener('mobilePaneOpen', handleMobilePaneOpen);
 
@@ -185,7 +189,7 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
     openGracePeriodRef.current = true;
     setTimeout(() => { openGracePeriodRef.current = false; }, PANE_CONFIG.timing.ANIMATION_DURATION);
 
-    if (isSmallMobile) {
+    if (transientPanes) {
       // Dispatch global event so other panes close immediately
       dispatchAppEvent('mobilePaneOpen', { side });
     }
@@ -194,7 +198,7 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
 
   const handlePaneLeave = () => {
     // No hover behavior on small phones
-    if (isSmallMobile) return;
+    if (transientPanes) return;
 
     if (isLocked || overlayOpen) return;
     // Defer leaves during the animation rather than dropping them: entering
@@ -209,7 +213,7 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
 
   const handlePaneEnter = () => {
     // No hover behavior on small phones
-    if (isSmallMobile) return;
+    if (transientPanes) return;
 
     if (isLocked) return;
     if (leaveTimeoutRef.current) {
@@ -279,7 +283,7 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
 
   // Should show a backdrop overlay that captures all touches
   // Only on small phones when pane is open but NOT locked
-  const showBackdrop = isSmallMobile && isOpen && !isLocked;
+  const showBackdrop = transientPanes && isOpen && !isLocked;
 
   return {
     isLocked, // Return actual lock state on all devices

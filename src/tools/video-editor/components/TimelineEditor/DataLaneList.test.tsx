@@ -124,7 +124,7 @@ describe('DataLaneList', () => {
     render(
       <DndContext>
         <SortableContext items={['track-V1', 'data-lane-transcript', 'track-V2']}>
-          <DataLaneList
+          <DataLaneList startLeft={START_LEFT}
             data={data}
             laneId="transcript"
             sortable
@@ -159,7 +159,7 @@ describe('DataLaneList', () => {
       <VideoEditorRuntimeContext.Provider value={runtime}>
         <DataKindRegistryProvider>
           <RegisterProbe record={registryRecord({ ownerExtensionId: 'ext.transcript' })} />
-          <DataLaneList data={data} pixelsPerSecond={PPS} />
+          <DataLaneList startLeft={START_LEFT} data={data} pixelsPerSecond={PPS} />
         </DataKindRegistryProvider>
       </VideoEditorRuntimeContext.Provider>,
     );
@@ -175,7 +175,7 @@ describe('DataLaneList', () => {
       <VideoEditorRuntimeContext.Provider value={runtime}>
         <DataKindRegistryProvider>
           <RegisterProbe record={registryRecord({ ownerExtensionId: undefined })} />
-          <DataLaneList data={data} pixelsPerSecond={PPS} />
+          <DataLaneList startLeft={START_LEFT} data={data} pixelsPerSecond={PPS} />
         </DataKindRegistryProvider>
       </VideoEditorRuntimeContext.Provider>,
     );
@@ -198,7 +198,7 @@ describe('DataLaneList', () => {
         <VideoEditorRuntimeContext.Provider value={runtime}>
           <DataKindRegistryProvider>
             <RegisterProbe record={registryRecord({ ownerExtensionId: 'ext.transcript' })} />
-            <DataLaneList
+            <DataLaneList startLeft={START_LEFT}
               data={data}
               pixelsPerSecond={PPS}
               sortable
@@ -227,7 +227,7 @@ describe('DataLaneList', () => {
     render(
       <DndContext>
         <SortableContext items={['data-lane-transcript']}>
-          <DataLaneList
+          <DataLaneList startLeft={START_LEFT}
             data={data}
             laneId="transcript"
             sortable
@@ -500,7 +500,7 @@ describe('DataLaneList', () => {
       const lateIndex = itemCount - 25;
       const lateScrollLeft = items[lateIndex].timelineStart * pixelsPerSecond;
       view.rerender(
-        <DataLaneList
+        <DataLaneList startLeft={START_LEFT}
           data={data}
           pixelsPerSecond={pixelsPerSecond}
           viewport={{ scrollLeft: lateScrollLeft, clientWidth }}
@@ -530,7 +530,7 @@ describe('DataLaneList', () => {
       items,
     }) as unknown as DataLaneView;
     const renderLane = (scrollDirection: 'backward' | 'forward') => render(
-      <DataLaneRow
+      <DataLaneRow labelWidth={START_LEFT}
         lane={lane}
         pixelsPerSecond={pixelsPerSecond}
         supportsSparseItemWindows
@@ -694,7 +694,7 @@ describe('DataLaneList', () => {
     expect(within(row).queryByTitle('item-50')).toBeNull();
 
     view.rerender(
-      <DataLaneList
+      <DataLaneList startLeft={START_LEFT}
         data={data}
         pixelsPerSecond={20}
         viewport={{ scrollLeft: 10_000, clientWidth: START_LEFT + 100 }}
@@ -704,7 +704,7 @@ describe('DataLaneList', () => {
     expect(within(row).queryByTitle('item-100')).toBeNull();
 
     view.rerender(
-      <DataLaneList
+      <DataLaneList startLeft={START_LEFT}
         data={data}
         pixelsPerSecond={20}
         viewport={{ scrollLeft: 10_000, clientWidth: START_LEFT + 2_100 }}
@@ -733,7 +733,7 @@ describe('DataLaneList', () => {
     function KeyboardHarness() {
       const [viewport, setViewport] = useState({ scrollLeft: 0, clientWidth });
       return (
-        <DataLaneRow
+        <DataLaneRow labelWidth={START_LEFT}
           lane={lane}
           pixelsPerSecond={pixelsPerSecond}
           viewport={viewport}
@@ -785,7 +785,7 @@ describe('DataLaneList', () => {
         clientWidth: START_LEFT + initialCanvasWidth,
       });
       return (
-        <DataLaneRow
+        <DataLaneRow labelWidth={START_LEFT}
           lane={lane}
           pixelsPerSecond={pixelsPerSecond}
           viewport={viewport}
@@ -839,7 +839,7 @@ describe('DataLaneList', () => {
       }) as unknown as DataLaneView;
 
       const view = render(
-        <DataLaneRow
+        <DataLaneRow labelWidth={START_LEFT}
           lane={renderLane(items)}
           pixelsPerSecond={pixelsPerSecond}
           viewport={viewport}
@@ -859,7 +859,7 @@ describe('DataLaneList', () => {
         ...items,
       ].reverse();
       view.rerender(
-        <DataLaneRow
+        <DataLaneRow labelWidth={START_LEFT}
           lane={renderLane(reordered)}
           pixelsPerSecond={pixelsPerSecond}
           viewport={viewport}
@@ -871,7 +871,7 @@ describe('DataLaneList', () => {
       // item at the reconciled index rather than leaving selection stale.
       const withoutSelected = reordered.filter((view) => view.item.id !== `stable-${targetIndex}`);
       view.rerender(
-        <DataLaneRow
+        <DataLaneRow labelWidth={START_LEFT}
           lane={renderLane(withoutSelected)}
           pixelsPerSecond={pixelsPerSecond}
           viewport={viewport}
@@ -907,7 +907,7 @@ describe('DataLaneList', () => {
     const invoke = vi.fn();
     const actions = [{ id: 'all', label: 'All', invoke }];
     const view = render(
-      <DataLaneRow
+      <DataLaneRow labelWidth={START_LEFT}
         lane={lane}
         pixelsPerSecond={1}
         viewport={{ scrollLeft: 0, clientWidth: START_LEFT + 128 }}
@@ -917,7 +917,7 @@ describe('DataLaneList', () => {
     const scrollUpdates = 24;
     for (let update = 1; update <= scrollUpdates; update += 1) {
       view.rerender(
-        <DataLaneRow
+        <DataLaneRow labelWidth={START_LEFT}
           lane={lane}
           pixelsPerSecond={1}
           viewport={{ scrollLeft: update * 500, clientWidth: START_LEFT + 128 }}
@@ -938,7 +938,7 @@ describe('DataLaneList', () => {
 
     const readsAfterAction = payloadReads;
     view.rerender(
-      <DataLaneRow
+      <DataLaneRow labelWidth={START_LEFT}
         lane={lane}
         pixelsPerSecond={1}
         viewport={{ scrollLeft: 20_000, clientWidth: START_LEFT + 128 }}
@@ -1029,7 +1029,7 @@ describe('DataLaneList', () => {
           laneRenderer: renderer,
           supportsSparseItemWindows: true,
         })} />
-        <DataLaneList
+        <DataLaneList startLeft={START_LEFT}
           data={data}
           pixelsPerSecond={10}
           viewport={{ scrollLeft: 5_000, clientWidth: START_LEFT + 100 }}
@@ -1067,7 +1067,7 @@ describe('DataLaneList', () => {
     render(
       <DataKindRegistryProvider>
         <RegisterProbe record={registryRecord({ laneRenderer: renderer })} />
-        <DataLaneList
+        <DataLaneList startLeft={START_LEFT}
           data={data}
           pixelsPerSecond={10}
           viewport={{ scrollLeft: 4_900, clientWidth: START_LEFT + 100 }}
@@ -1241,7 +1241,7 @@ describe('DataLaneList', () => {
     render(
       <DataKindRegistryProvider>
         <RegisterProbe record={record} />
-        <DataLaneList data={data} pixelsPerSecond={1} />
+        <DataLaneList startLeft={START_LEFT} data={data} pixelsPerSecond={1} />
       </DataKindRegistryProvider>,
     );
 
@@ -1265,7 +1265,7 @@ describe('DataLaneList', () => {
     render(
       <DataKindRegistryProvider>
         <RegisterProbe record={record} />
-        <DataLaneList data={data} pixelsPerSecond={1} />
+        <DataLaneList startLeft={START_LEFT} data={data} pixelsPerSecond={1} />
       </DataKindRegistryProvider>,
     );
     const trigger = screen.getByRole('button', { name: 'Transcript actions' });
@@ -1291,7 +1291,7 @@ describe('DataLaneList', () => {
     render(
       <DataKindRegistryProvider>
         <RegisterProbe record={record} />
-        <DataLaneList data={data} pixelsPerSecond={1} />
+        <DataLaneList startLeft={START_LEFT} data={data} pixelsPerSecond={1} />
       </DataKindRegistryProvider>,
     );
 
@@ -1324,7 +1324,7 @@ describe('DataLaneList', () => {
       render(
         <DataKindRegistryProvider>
           <RegisterProbe record={record} />
-          <DataLaneList data={data} pixelsPerSecond={1} />
+          <DataLaneList startLeft={START_LEFT} data={data} pixelsPerSecond={1} />
         </DataKindRegistryProvider>,
       );
 
@@ -1372,7 +1372,7 @@ describe('DataLaneList', () => {
       <DataKindRegistryProvider>
         <RegisterProbe record={transcript} />
         <RegisterProbe record={runaway} />
-        <DataLaneList data={data} pixelsPerSecond={1} />
+        <DataLaneList startLeft={START_LEFT} data={data} pixelsPerSecond={1} />
       </DataKindRegistryProvider>,
     );
     expect(screen.getAllByTestId('data-lane-actions-trigger')).toHaveLength(2);
@@ -1381,7 +1381,7 @@ describe('DataLaneList', () => {
 
     view.rerender(
       <DataKindRegistryProvider>
-        <DataLaneList data={data} pixelsPerSecond={1} />
+        <DataLaneList startLeft={START_LEFT} data={data} pixelsPerSecond={1} />
       </DataKindRegistryProvider>,
     );
     await waitFor(() => expect(screen.queryAllByTestId('data-lane-actions-trigger')).toHaveLength(0));

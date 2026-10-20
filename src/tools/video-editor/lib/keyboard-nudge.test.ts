@@ -3,7 +3,6 @@ import { getConfigSignature, getStableConfigSignature } from '@/tools/video-edit
 import {
   COARSE_TIME_NUDGE_SECONDS,
   buildKeyboardTimeNudgeMutation,
-  resolveKeyboardNudgeSeconds,
 } from '@/tools/video-editor/lib/keyboard-nudge';
 import { configToRows, type TimelineData } from '@/tools/video-editor/lib/timeline-data';
 import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types';
@@ -67,18 +66,6 @@ function startsById(mutation: ReturnType<typeof buildKeyboardTimeNudgeMutation>)
     mutation.rows.flatMap((row) => row.actions.map((action) => [action.id, action.start])),
   );
 }
-
-describe('resolveKeyboardNudgeSeconds', () => {
-  it('steps one frame with precision on and the coarse step without it', () => {
-    expect(resolveKeyboardNudgeSeconds(true, 30)).toBeCloseTo(1 / 30, 10);
-    expect(resolveKeyboardNudgeSeconds(false, 30)).toBe(COARSE_TIME_NUDGE_SECONDS);
-  });
-
-  it('falls back to the coarse step when fps is unusable', () => {
-    expect(resolveKeyboardNudgeSeconds(true, 0)).toBe(COARSE_TIME_NUDGE_SECONDS);
-    expect(resolveKeyboardNudgeSeconds(true, Number.NaN)).toBe(COARSE_TIME_NUDGE_SECONDS);
-  });
-});
 
 describe('buildKeyboardTimeNudgeMutation', () => {
   it('moves the selected clip by the requested delta', () => {

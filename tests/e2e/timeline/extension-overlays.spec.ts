@@ -165,9 +165,10 @@ interface RulerMetrics {
 async function rulerMetrics(page: Page): Promise<RulerMetrics> {
   return page.evaluate((editAreaSelector) => {
     const parse = (text: string): number => {
-      const match = /^(\d+):(\d\d)\.(\d\d)$/.exec(text);
+      // Touch rulers label whole seconds (`m:ss`), pointer rulers hundredths (`m:ss.cc`).
+      const match = /^(\d+):(\d\d)(?:\.(\d\d))?$/.exec(text);
       if (!match) return 0;
-      return Number(match[1]) * 60 + Number(match[2]) + Number(match[3]) / 100;
+      return Number(match[1]) * 60 + Number(match[2]) + Number(match[3] ?? 0) / 100;
     };
     const ruler = document.querySelector('[data-testid="timeline-ruler"]');
     const rulerX = ruler?.getBoundingClientRect().x ?? 0;
@@ -175,7 +176,7 @@ async function rulerMetrics(page: Page): Promise<RulerMetrics> {
     const scrollLeft = scrollArea?.scrollLeft ?? 0;
     const labels = Array.from(document.querySelectorAll('[data-testid="timeline-ruler"] span'))
       .map((el) => ({ text: el.textContent?.trim() ?? '', x: el.getBoundingClientRect().x }))
-      .filter((label) => /^\d+:\d\d\.\d\d$/.test(label.text))
+      .filter((label) => /^\d+:\d\d(?:\.\d\d)?$/.test(label.text))
       .sort((a, b) => a.x - b.x);
 
     let pps = 0;
@@ -231,7 +232,7 @@ async function rulerLabelCount(page: Page): Promise<number> {
     const ruler = document.querySelector('[data-testid="timeline-ruler"]');
     if (!ruler) return 0;
     return Array.from(ruler.querySelectorAll('span'))
-      .filter((el) => /^\d+:\d\d\.\d\d$/.test(el.textContent?.trim() ?? ''))
+      .filter((el) => /^\d+:\d\d(?:\.\d\d)?$/.test(el.textContent?.trim() ?? ''))
       .length;
   });
 }
@@ -368,6 +369,19 @@ async function touchDragMarkerThenPinch(
   editAreaCenterY: number,
 ): Promise<void> {
   const cdp = await context.newCDPSession(page);
+  // A pinch before this may have zoomed the marker out of view; a finger can only take a
+  // marker it can reach, so bring it a third of the way into the timeline first.
+  await page.evaluate(([selector, id]) => {
+    const area = document.querySelector(selector) as HTMLElement | null;
+    const marker = document.querySelector(`[data-marker-id="${id}"]`);
+    if (!area || !marker) return;
+    const areaRect = area.getBoundingClientRect();
+    const markerRect = marker.getBoundingClientRect();
+    if (markerRect.left < areaRect.left || markerRect.right > areaRect.right) {
+      area.scrollLeft += markerRect.left - areaRect.left - areaRect.width / 3;
+    }
+  }, [EDIT_AREA_SELECTOR, markerId] as const);
+  await page.waitForTimeout(200);
   const box = await page.locator(`[data-marker-id="${markerId}"]`).boundingBox();
   if (!box) {
     throw new Error(`marker ${markerId} has no bounding box`);
@@ -444,23 +458,21 @@ async function disableExtensionMidDrag(page: Page): Promise<void> {
   let extensionsTabOpened = await openExtensionsTab();
 
   if (!extensionsTabOpened) {
-    // Phone/condensed layouts hide the panel behind a Properties/Inspector
-    // toggle; try each with a short timeout before giving up.
-    for (const label of ['Properties', 'Inspector']) {
-      const trigger = page.getByRole('button', { name: new RegExp(label, 'i') }).first();
-      try {
-        await trigger.click({ timeout: 3_000 });
-        await page.waitForTimeout(500);
-      } catch {
-        // Not present in this layout — try the next candidate.
-      }
-      extensionsTabOpened = await openExtensionsTab();
-      if (extensionsTabOpened) break;
+    // The phone has no right-hand dock (and no Inspector button). The shell's
+    // Extensions dialog opens from an extension-owned lane's info button, so use
+    // that when the toggle is not already in the DOM.
+    const ownerInfo = page.locator('[data-testid="data-lane-owner-info"]').first();
+    try {
+      await ownerInfo.click({ timeout: 3_000 });
+      await page.waitForTimeout(500);
+    } catch {
+      // No owned lane in this layout.
     }
+    extensionsTabOpened = (await page.locator(DISABLE_TOGGLE_SELECTOR).count()) > 0;
   }
 
   if (!extensionsTabOpened) {
-    throw new Error('Extensions tab not found in DOM');
+    throw new Error('Extensions tab or manager not found in DOM');
   }
   await page.waitForTimeout(300);
   // The dev-local toggle is a plain button whose state contract is its
@@ -964,7 +976,7 @@ test.describe('timeline extension overlays (phone)', () => {
     deviceScaleFactor: 2,
   });
 
-  test('touch marker drag and disable-mid-drag on phone', async ({ context, page }, testInfo) => {
+  test('touch marker drag, then the clip sheet, on phone', async ({ context, page }, testInfo) => {
     test.setTimeout(240_000);
 
     const logs: string[] = [];
@@ -1007,66 +1019,17 @@ test.describe('timeline extension overlays (phone)', () => {
     });
     await shot('dragged');
 
-    // --- 2. disable mid-drag ------------------------------------------------
-    await test.step('disabling the extension mid-drag terminates the session cleanly', async () => {
-      const box = await page.locator('[data-marker-id="e2e-marker-b"]').boundingBox();
-      if (!box) throw new Error('marker-b has no bounding box');
-      const x = box.x + box.width / 2;
-      const y = box.y + box.height / 2;
-
-      const cdp = await context.newCDPSession(page);
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
-      for (let i = 1; i <= 4; i += 1) {
-        await cdp.send('Input.dispatchTouchEvent', {
-          type: 'touchMove',
-          touchPoints: [{ x: x + i * 6, y }],
-        });
-        await page.waitForTimeout(16);
-      }
-      await expect
-        .poll(async () => page.getAttribute(`[data-marker-id="e2e-marker-b"]`, 'data-marker-dragging'), { timeout: 5_000 })
-        .toBe('true');
-
-      // Disable while the marker owns the claim → host teardown cancels the
-      // session. Cancel the now-orphaned browser touch stream: ending it over
-      // the Inspector can synthesize a click on the toggle and re-enable the
-      // extension, which would test click synthesis rather than host teardown.
-      await disableExtensionMidDrag(page);
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
-      await page.waitForTimeout(400);
-
-      // The Inspector dialog used to reach the toggle makes the timeline
-      // inert/aria-hidden on phone. Close it before querying the remaining
-      // marker pager by role or attempting any follow-up timeline input.
-      await page.evaluate(() => {
-        const trigger = Array.from(document.querySelectorAll('button'))
-          .find((button) => /Inspector/i.test((button.textContent ?? '').trim()));
-        trigger?.click();
-      });
-      await page.waitForTimeout(400);
-
-      await expect(sceneMarkerLayer(page)).toHaveCount(0, { timeout: 10_000 });
-      await expectMarkerLayerComposition(page, 10);
-      await expect(sceneMarkerLayer(page).locator('[data-marker-id]')).toHaveCount(0);
+    // --- 2. the editor is still the phone's after a marker drag --------------
+    // Disabling an extension mid-drag needs the extension manager, which the touch editor leaves to
+    // the desk (extensions are a desk surface; the desktop variant covers disable-mid-drag).
+    await test.step('after a marker drag the phone rests in browse: a tap on a clip opens its sheet', async () => {
       expect(logs.filter((line) => line.startsWith('[pageerror]')), [...new Set(logs)].join(' | ')).toEqual([]);
-
-      // The editor is still interactive — explicitly enter Select mode, tap a
-      // clip, and verify the selection rather than relying on the prior mode.
-      const selectMode = page
-        .locator('[aria-label="Phone timeline mode bar"] button', { hasText: /^Select$/i })
-        .first();
-      for (let attempt = 0; attempt < 2 && (await selectMode.getAttribute('aria-pressed')) !== 'true'; attempt += 1) {
-        const selectBox = await selectMode.boundingBox();
-        if (selectBox) {
-          await touch.tap(selectBox.x + selectBox.width / 2, selectBox.y + selectBox.height / 2);
-        }
-      }
-      await expect(selectMode).toHaveAttribute('aria-pressed', 'true');
       const clip = await page.locator(`${EDIT_AREA_SELECTOR} ${CLIP_BODY_SELECTOR}`).first().boundingBox();
       if (!clip) throw new Error('no clip to tap');
       await touch.tap(clip.x + clip.width / 2, clip.y + clip.height / 2);
       expect(await countSelectedClips(page)).toBeGreaterThanOrEqual(1);
+      await expect(page.getByTestId('timeline-clip-sheet')).toBeVisible({ timeout: 5_000 });
     });
-    await shot('disabled');
+    await shot('sheet');
   });
 });

@@ -4,6 +4,7 @@ import { GripHorizontal, History, Maximize2, Minimize2, Redo2, Sparkles, Undo2, 
 import { Badge } from '@/shared/components/ui/badge.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu.tsx';
 import { useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
@@ -31,15 +32,79 @@ const CHECKPOINT_TRIGGER_BADGE_VARIANT = {
   manual: 'default',
 } as const;
 
+const ARMED_GESTURE_HINT = {
+  move: 'Drag a clip to move it',
+  trim: 'Drag a clip’s edge to trim it',
+} as const;
+
+/**
+ * Undo and redo. The desktop layouts keep them in the toolbar; the touch shell
+ * keeps them with the playback row under the picture, next to what they change.
+ */
+export function TimelineUndoRedo({
+  buttonClassName,
+  iconClassName = 'h-3.5 w-3.5',
+}: {
+  buttonClassName: string;
+  iconClassName?: string;
+}) {
+  const chrome = useTimelineChromeContext();
+  // While uploads are in flight the history layer pauses undo/redo (a
+  // snapshot restore would strand the upload's registry patch); say so
+  // instead of presenting a mysteriously dead button.
+  const undoLabel = chrome.historyPausedForUploads ? 'Undo is paused while media uploads finish' : 'Undo';
+  const redoLabel = chrome.historyPausedForUploads ? 'Redo is paused while media uploads finish' : 'Redo';
+  return (
+    <>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className={buttonClassName}
+        onClick={chrome.undo}
+        disabled={!chrome.canUndo}
+        title={undoLabel}
+        aria-label={undoLabel}
+      >
+        <Undo2 className={iconClassName} />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className={buttonClassName}
+        onClick={chrome.redo}
+        disabled={!chrome.canRedo}
+        title={redoLabel}
+        aria-label={redoLabel}
+      >
+        <Redo2 className={iconClassName} />
+      </Button>
+    </>
+  );
+}
+
 /**
  * The shell's chrome row: save status, undo/redo/history, the drag
  * handle for the preview/timeline split, and the zoom controls. Shared by all
  * three layout variants.
+ *
+ * On touch (phones and tablets) it is the document row above the picture: `leading` (the
+ * timeline picker), a quiet save status and `trailing` (Render). Undo and redo
+ * live with the playback row there, pinch zooms the timeline, and history,
+ * Elements and the split handle stay with the larger layouts.
+ *
+ * While a clip action has armed a touch gesture (`armedGesture`), the row says
+ * what to do and offers Done, the only way back to the resting mode.
  */
 export function TimelineEditorShellToolbar({
   touchChrome,
   condensed,
-  toolbarModeSwitcher,
+  documentRow = false,
+  armedGesture = null,
+  onReleaseArmedGesture,
+  leading,
+  trailing,
   onDividerPointerDown,
   onDividerPointerMove,
   onDividerPointerUp,
@@ -52,7 +117,14 @@ export function TimelineEditorShellToolbar({
 }: {
   touchChrome: boolean;
   condensed: boolean;
-  toolbarModeSwitcher: ReactNode;
+  /** The touch shell's document row. */
+  documentRow?: boolean;
+  armedGesture?: 'move' | 'trim' | null;
+  onReleaseArmedGesture?: () => void;
+  /** Document row only: the controls at the row's start (the timeline picker). */
+  leading?: ReactNode;
+  /** Document row only: the controls at the row's end (Render). */
+  trailing?: ReactNode;
   onDividerPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
   onDividerPointerMove: (event: ReactPointerEvent<HTMLElement>) => void;
   onDividerPointerUp: (event: ReactPointerEvent<HTMLElement>) => void;
@@ -84,139 +156,165 @@ export function TimelineEditorShellToolbar({
       {notSaved ? 'Not saved' : chrome.saveStatus}
     </Badge>
   );
-  // While uploads are in flight the history layer pauses undo/redo (a
-  // snapshot restore would strand the upload's registry patch); say so
-  // instead of presenting a mysteriously dead button.
-  const undoPausedTitle = 'Undo is paused while media uploads finish';
-  const redoPausedTitle = 'Redo is paused while media uploads finish';
-  const historyControls = (
-    <>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className={toolbarButtonSizeClass}
-        onClick={chrome.undo}
-        disabled={!chrome.canUndo}
-        title={chrome.historyPausedForUploads ? undoPausedTitle : 'Undo'}
-        aria-label={chrome.historyPausedForUploads ? undoPausedTitle : 'Undo'}
-      >
-        <Undo2 className="h-3.5 w-3.5" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className={toolbarButtonSizeClass}
-        onClick={chrome.redo}
-        disabled={!chrome.canRedo}
-        title={chrome.historyPausedForUploads ? redoPausedTitle : 'Redo'}
-        aria-label={chrome.historyPausedForUploads ? redoPausedTitle : 'Redo'}
-      >
-        <Redo2 className="h-3.5 w-3.5" />
-      </Button>
-      <DropdownMenu onOpenChange={(open) => {
-        if (open && chrome.canonicalHistorySupported) {
-          void chrome.refreshCanonicalHistory();
-        }
-      }}>
-        <DropdownMenuTrigger asChild>
-          <Button type="button" variant="ghost" size="icon" className={toolbarButtonSizeClass} title="History">
-            <History className="h-3.5 w-3.5" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-80">
-          <DropdownMenuLabel className="pb-1 text-xs font-semibold text-muted-foreground">
-            History
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {chrome.canonicalHistoryError ? (
-            <div role="alert" className="px-2 py-2 text-xs text-destructive">
-              {chrome.canonicalHistoryError}
-            </div>
-          ) : null}
-          {chrome.canonicalHistorySupported ? (
-            chrome.canonicalHistoryError ? null : chrome.canonicalHistory.length === 0 ? (
-              <div className="px-2 py-3 text-xs text-muted-foreground">
-                No published revisions yet.
-              </div>
-            ) : (
-              chrome.canonicalHistory.map((entry) => (
-                <DropdownMenuItem
-                  key={entry.revisionId}
-                  className="flex flex-col items-start gap-1 py-2"
-                  disabled={entry.isCurrentHead || chrome.restoringCanonicalRevisionId !== null}
-                  onClick={() => void chrome.restoreCanonicalRevision(entry.revisionId)}
-                >
-                  <div className="flex w-full items-start justify-between gap-2">
-                    <span className="truncate font-mono text-xs text-foreground">
-                      {entry.revisionId.slice(0, 16)}
-                    </span>
-                    {entry.isCurrentHead ? (
-                      <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-[9px] uppercase tracking-[0.12em]">
-                        Current
-                      </Badge>
-                    ) : chrome.restoringCanonicalRevisionId === entry.revisionId ? (
-                      <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[9px] uppercase tracking-[0.12em]">
-                        Restoring
-                      </Badge>
-                    ) : null}
-                  </div>
-                  <span className="text-[11px] text-muted-foreground">
-                    {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
-                  </span>
-                </DropdownMenuItem>
-              ))
-            )
-          ) : chrome.checkpoints.length === 0 ? (
+  const historyMenu = (
+    <DropdownMenu onOpenChange={(open) => {
+      if (open && chrome.canonicalHistorySupported) {
+        void chrome.refreshCanonicalHistory();
+      }
+    }}>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="ghost" size="icon" className={toolbarButtonSizeClass} title="History">
+          <History className="h-3.5 w-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-80">
+        <DropdownMenuLabel className="pb-1 text-xs font-semibold text-muted-foreground">
+          History
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {chrome.canonicalHistoryError ? (
+          <div role="alert" className="px-2 py-2 text-xs text-destructive">
+            {chrome.canonicalHistoryError}
+          </div>
+        ) : null}
+        {chrome.canonicalHistorySupported ? (
+          chrome.canonicalHistoryError ? null : chrome.canonicalHistory.length === 0 ? (
             <div className="px-2 py-3 text-xs text-muted-foreground">
-              No checkpoints yet. Save one manually or keep editing to build history.
+              No published revisions yet.
             </div>
           ) : (
-            chrome.checkpoints.map((checkpoint) => (
+            chrome.canonicalHistory.map((entry) => (
               <DropdownMenuItem
-                key={checkpoint.id}
+                key={entry.revisionId}
                 className="flex flex-col items-start gap-1 py-2"
-                onClick={() => chrome.jumpToCheckpoint(checkpoint.id)}
+                disabled={entry.isCurrentHead || chrome.restoringCanonicalRevisionId !== null}
+                onClick={() => void chrome.restoreCanonicalRevision(entry.revisionId)}
               >
                 <div className="flex w-full items-start justify-between gap-2">
-                  <span className="truncate text-sm text-foreground">{checkpoint.label}</span>
-                  <Badge
-                    variant={CHECKPOINT_TRIGGER_BADGE_VARIANT[checkpoint.triggerType]}
-                    className="shrink-0 px-1.5 py-0 text-[9px] uppercase tracking-[0.12em]"
-                  >
-                    {CHECKPOINT_TRIGGER_LABELS[checkpoint.triggerType]}
-                  </Badge>
+                  <span className="truncate font-mono text-xs text-foreground">
+                    {entry.revisionId.slice(0, 16)}
+                  </span>
+                  {entry.isCurrentHead ? (
+                    <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-[9px] uppercase tracking-[0.12em]">
+                      Current
+                    </Badge>
+                  ) : chrome.restoringCanonicalRevisionId === entry.revisionId ? (
+                    <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[9px] uppercase tracking-[0.12em]">
+                      Restoring
+                    </Badge>
+                  ) : null}
                 </div>
                 <span className="text-[11px] text-muted-foreground">
-                  {formatDistanceToNow(new Date(checkpoint.createdAt), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
                 </span>
               </DropdownMenuItem>
             ))
-          )}
-          {!chrome.canonicalHistorySupported ? (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => void chrome.createManualCheckpoint()}>
-                Save checkpoint
-              </DropdownMenuItem>
-            </>
-          ) : null}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+          )
+        ) : chrome.checkpoints.length === 0 ? (
+          <div className="px-2 py-3 text-xs text-muted-foreground">
+            No checkpoints yet. Save one manually or keep editing to build history.
+          </div>
+        ) : (
+          chrome.checkpoints.map((checkpoint) => (
+            <DropdownMenuItem
+              key={checkpoint.id}
+              className="flex flex-col items-start gap-1 py-2"
+              onClick={() => chrome.jumpToCheckpoint(checkpoint.id)}
+            >
+              <div className="flex w-full items-start justify-between gap-2">
+                <span className="truncate text-sm text-foreground">{checkpoint.label}</span>
+                <Badge
+                  variant={CHECKPOINT_TRIGGER_BADGE_VARIANT[checkpoint.triggerType]}
+                  className="shrink-0 px-1.5 py-0 text-[9px] uppercase tracking-[0.12em]"
+                >
+                  {CHECKPOINT_TRIGGER_LABELS[checkpoint.triggerType]}
+                </Badge>
+              </div>
+              <span className="text-[11px] text-muted-foreground">
+                {formatDistanceToNow(new Date(checkpoint.createdAt), { addSuffix: true })}
+              </span>
+            </DropdownMenuItem>
+          ))
+        )}
+        {!chrome.canonicalHistorySupported ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => void chrome.createManualCheckpoint()}>
+              Save checkpoint
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
+
+  const armedGestureControl = armedGesture ? (
+    <div
+      className={cn(
+        'flex min-w-0 flex-1 items-center justify-between gap-2',
+        // The larger layouts give it a line of its own under the toolbar's controls.
+        !documentRow && 'order-last basis-full border-t border-border/60 pl-1 pt-1',
+      )}
+      data-armed-gesture={armedGesture}
+    >
+      <span className={cn('min-w-0 truncate text-foreground', documentRow ? 'text-sm' : 'text-xs')}>{ARMED_GESTURE_HINT[armedGesture]}</span>
+      <Button
+        type="button"
+        size="sm"
+        className={cn('h-9 shrink-0 px-4', COARSE_TOUCH_TARGET)}
+        onClick={onReleaseArmedGesture}
+      >
+        Done
+      </Button>
+    </div>
+  ) : null;
+
+  if (documentRow) {
+    // Quiet when all is well: a word appears only while a save is pending or has not landed.
+    const quietStatus = notSaved || chrome.saveStatus === 'error'
+      ? 'Not saved'
+      : chrome.saveStatus === 'saved' ? null : 'Saving…';
+    return (
+      <div
+        className={cn(
+          'relative flex min-h-9 min-w-0 max-w-full items-center gap-2 text-muted-foreground',
+          // The row is just its controls, like the header above it. An armed
+          // gesture swaps them for its hint and Done, at the same height.
+          armedGestureControl && 'pl-1',
+        )}
+        data-toolbar-layout="touch"
+      >
+        {armedGestureControl ? (
+          armedGestureControl
+        ) : (
+          <>
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              {leading}
+              {quietStatus && timelineLoaded && (
+                <span
+                  className={cn(
+                    'shrink-0 text-[11px]',
+                    chrome.saveStatus === 'error' && !notSaved ? 'text-destructive' : 'text-muted-foreground',
+                  )}
+                  role="status"
+                >
+                  {quietStatus}
+                </span>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-1">{trailing}</div>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
       className={cn(
         'relative flex min-w-0 max-w-full items-center justify-between gap-2 rounded-lg border border-border/70 bg-card/95 px-2 text-muted-foreground',
         touchChrome ? 'min-h-11 py-1' : 'h-7',
-        condensed && 'h-auto flex-wrap',
-        // The compact mode switcher rides in this row. It fits inline on tablet
-        // landscape and wraps to a second line on portrait, which keeps the
-        // preview's `1fr` intact where vertical space is tightest.
-        toolbarModeSwitcher && 'h-auto flex-wrap',
+        (condensed || armedGestureControl) && 'h-auto flex-wrap',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
@@ -232,10 +330,11 @@ export function TimelineEditorShellToolbar({
         >
           <Sparkles className="h-3.5 w-3.5" />
         </Button>
-        {historyControls}
+        <TimelineUndoRedo buttonClassName={toolbarButtonSizeClass} />
+        {historyMenu}
       </div>
-      {toolbarModeSwitcher}
-      {!condensed && (
+      {armedGestureControl}
+      {!condensed && !armedGestureControl && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div
             className="pointer-events-auto flex h-full w-12 cursor-row-resize touch-none select-none items-center justify-center"

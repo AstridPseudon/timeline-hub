@@ -366,48 +366,24 @@ describe('TrackListRenderer', () => {
     }));
   });
 
-  const renderTouchTrackLabel = (onRemove = vi.fn()) => {
+  it.each(['phone', 'tablet'] as const)('names the track and nothing more on %s, where reordering and settings are left to the agent', (deviceClass) => {
     render(
       <AIInputModeProvider>
         <TrackLabelContent
           track={tracks[0]}
           isSelected={false}
           hasClips={false}
-          deviceClass="phone"
+          deviceClass={deviceClass}
           onSelect={vi.fn()}
           onChange={vi.fn()}
-          onRemove={onRemove}
+          onRemove={vi.fn()}
         />
       </AIInputModeProvider>,
     );
-    return onRemove;
-  };
 
-  it('pins reorder and settings targets open on touch instead of hiding them behind hover', () => {
-    renderTouchTrackLabel();
-
-    const reorder = screen.getByRole('button', { name: 'Reorder track' });
-    const settings = screen.getByRole('button', { name: 'Track settings' });
-    [reorder, settings].forEach((button) => {
-      expect(button.className).toContain('h-9 w-9');
-      expect(button.closest('.opacity-0')).toBeNull();
-    });
-
-    // Rename and remove move into the dialog: the row cannot hold a third target.
-    expect(screen.queryByRole('button', { name: 'Remove track' })).not.toBeInTheDocument();
+    expect(screen.getByText(tracks[0].label)).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
-
-  // Mounting the Radix dialog in jsdom costs seconds on a loaded box, so this one
-  // gets headroom over the 5s default rather than flaking under parallel load.
-  it('moves rename and remove into the touch settings dialog', async () => {
-    const onRemove = renderTouchTrackLabel();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Track settings' }));
-
-    expect(await screen.findByLabelText('Track name')).toBeInTheDocument();
-    fireEvent.click(await screen.findByRole('button', { name: /Remove track/ }));
-    expect(onRemove).toHaveBeenCalledWith('V1');
-  }, 30000);
 
   it('keeps the desktop hover overlay with its three inline actions', () => {
     render(
@@ -656,11 +632,11 @@ describe('TrackListRenderer', () => {
 
 
 describe('track source/output settings', () => {
-  it.each(['desktop', 'phone'] as const)('keeps the Source badge visible on %s and explains whole-track use', async (deviceClass) => {
+  it('keeps the Source badge visible on desktop and explains whole-track use', async () => {
     const onChange = vi.fn();
     render(<AIInputModeProvider><TrackLabelContent
       track={{ ...tracks[0], role: 'source' }} isSelected={false} hasClips
-      deviceClass={deviceClass} onSelect={vi.fn()} onChange={onChange} onRemove={vi.fn()}
+      deviceClass="desktop" onSelect={vi.fn()} onChange={onChange} onRemove={vi.fn()}
     /></AIInputModeProvider>);
     const badge = screen.getByLabelText('Source — excluded from final output');
     expect(badge.closest('.opacity-0')).toBeNull();
@@ -672,6 +648,16 @@ describe('track source/output settings', () => {
     await userEvent.click(option);
     expect(onChange).toHaveBeenCalledWith('V1', { role: 'output' });
   }, 30000);
+
+  it.each(['phone', 'tablet'] as const)('keeps the Source badge visible on %s, where the track column only names the track', (deviceClass) => {
+    render(<AIInputModeProvider><TrackLabelContent
+      track={{ ...tracks[0], role: 'source' }} isSelected={false} hasClips
+      deviceClass={deviceClass} onSelect={vi.fn()} onChange={vi.fn()} onRemove={vi.fn()}
+    /></AIInputModeProvider>);
+    const badge = screen.getByLabelText('Source — excluded from final output');
+    expect(badge.closest('.opacity-0')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Track settings' })).not.toBeInTheDocument();
+  });
 
   it('shows legacy tracks as Output and edits role through the ordinary callback', async () => {
     const onChange = vi.fn();

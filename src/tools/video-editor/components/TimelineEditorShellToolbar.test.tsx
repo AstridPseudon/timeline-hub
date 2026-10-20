@@ -30,7 +30,6 @@ describe('TimelineEditorShellToolbar', () => {
         <TimelineEditorShellToolbar
           touchChrome={false}
           condensed={false}
-          toolbarModeSwitcher={null}
           onDividerPointerDown={() => {}}
           onDividerPointerMove={() => {}}
           onDividerPointerUp={() => {}}
@@ -56,7 +55,6 @@ describe('TimelineEditorShellToolbar', () => {
           <TimelineEditorShellToolbar
             touchChrome={false}
             condensed={false}
-            toolbarModeSwitcher={null}
             onDividerPointerDown={() => {}}
             onDividerPointerMove={() => {}}
             onDividerPointerUp={() => {}}

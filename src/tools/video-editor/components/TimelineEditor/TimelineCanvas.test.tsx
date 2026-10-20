@@ -7,7 +7,7 @@ import { TimelineCanvas } from '@/tools/video-editor/components/TimelineEditor/T
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { createInteractionState, onInteractionEnd } from '@/tools/video-editor/lib/interaction-state';
 import { requestCenterTimelineClip } from '@/tools/video-editor/lib/timeline-viewport-events';
-import { resolveTouchGestureMode } from '@/tools/video-editor/lib/mobile-interaction-model';
+import { resolveArmedTouchGesture } from '@/tools/video-editor/lib/mobile-interaction-model';
 import {
   CLIP_ID_ATTR,
   CLIP_BODY_SELECTOR,
@@ -371,6 +371,9 @@ function renderCanvas(params?: {
   onAddTextAt?: React.ComponentProps<typeof TimelineCanvas>['onAddTextAt'];
   onAddEffectLayerAt?: React.ComponentProps<typeof TimelineCanvas>['onAddEffectLayerAt'];
   onOpenSequenceCreator?: React.ComponentProps<typeof TimelineCanvas>['onOpenSequenceCreator'];
+  onAddTrack?: React.ComponentProps<typeof TimelineCanvas>['onAddTrack'];
+  onClearUnusedTracks?: React.ComponentProps<typeof TimelineCanvas>['onClearUnusedTracks'];
+  unusedTrackCount?: number;
   commandRegistry?: CommandRegistry;
   overlays?: readonly ResolvedTimelineOverlayDescriptor[];
   timelineOverlaysEnabled?: boolean;
@@ -414,6 +417,9 @@ function renderCanvas(params?: {
       rows={timelineRows}
       tracks={trackDefinitions}
       deviceClass={params?.deviceClass ?? 'desktop'}
+      onAddTrack={params?.onAddTrack}
+      onClearUnusedTracks={params?.onClearUnusedTracks}
+      unusedTrackCount={params?.unusedTrackCount}
       inputModality={params?.inputModality ?? 'mouse'}
       interactionMode={params?.interactionMode ?? 'select'}
       gestureOwner={params?.gestureOwner ?? 'none'}
@@ -538,7 +544,7 @@ describe('TimelineCanvas DOM contract', () => {
       throw new Error(`expected a rendered ${EDIT_AREA_SELECTOR}`);
     }
     expect(editArea.getAttribute(TOUCH_GESTURE_MODE_ATTR)).toBe(
-      resolveTouchGestureMode('phone', 'move'),
+      resolveArmedTouchGesture('phone', 'move'),
     );
   });
 
@@ -689,14 +695,13 @@ describe('TimelineCanvas floating tools', () => {
     expect(onOpenSequenceCreator).toHaveBeenCalledTimes(1);
   });
 
-  it('replaces the drag sources with touch-sized tap actions on phone', () => {
-    const onAddTextAt = vi.fn();
-    const onAddEffectLayerAt = vi.fn();
+  it.each(['tablet', 'phone'] as const)('shows no floating tool cluster on %s (touch)', (deviceClass) => {
+    // Touch leaves adding elements to the agent: the timeline is for seeing the cut and tapping a clip.
     renderCanvas({
-      deviceClass: 'phone',
+      deviceClass,
       inputModality: 'touch',
-      onAddTextAt,
-      onAddEffectLayerAt,
+      onAddTextAt: vi.fn(),
+      onAddEffectLayerAt: vi.fn(),
       onOpenSequenceCreator: vi.fn(),
       tracks: [{ id: 'A1', kind: 'audio', label: 'A1' }, track],
       rows: [{ id: 'A1', actions: [] }, row],
@@ -704,19 +709,29 @@ describe('TimelineCanvas floating tools', () => {
 
     expect(screen.queryByTitle('Drag onto timeline to add text')).not.toBeInTheDocument();
     expect(screen.queryByTitle('Drag onto timeline to add an effect layer')).not.toBeInTheDocument();
+    for (const name of ['New text at playhead', 'New effect layer at playhead', 'Create animation sequence']) {
+      expect(screen.queryByRole('button', { name })).toBeNull();
+    }
+  });
 
-    const textTool = screen.getByRole('button', { name: 'New text at playhead' });
-    const effectTool = screen.getByRole('button', { name: 'New effect layer at playhead' });
-    const sequenceTool = screen.getByRole('button', { name: 'Create animation sequence' });
-    [textTool, effectTool, sequenceTool].forEach((button) => {
-      expect(button.className).toContain('h-10 w-10');
+  it.each(['tablet', 'phone'] as const)('offers no add-track or clear-unused controls on %s (touch)', (deviceClass) => {
+    // Touch leaves adding tracks and tidying them to the agent: its timeline is for seeing the cut and tapping a clip.
+    renderCanvas({
+      deviceClass,
+      inputModality: 'touch',
+      onAddTextAt: vi.fn(),
+      onAddEffectLayerAt: vi.fn(),
+      onOpenSequenceCreator: vi.fn(),
+      onAddTrack: vi.fn(),
+      onClearUnusedTracks: vi.fn(),
+      unusedTrackCount: 1,
+      tracks: [{ id: 'A1', kind: 'audio', label: 'A1' }, track],
+      rows: [{ id: 'A1', actions: [] }, row],
     });
 
-    fireEvent.click(textTool);
-    fireEvent.click(effectTool);
-    // Both resolve to the first visual track at the playhead, which starts at 0.
-    expect(onAddTextAt).toHaveBeenCalledWith(track.id, 0);
-    expect(onAddEffectLayerAt).toHaveBeenCalledWith(track.id, 0);
+    for (const name of ['+ Video', '+ Audio', 'Clear 1 unused']) {
+      expect(screen.queryByRole('button', { name })).toBeNull();
+    }
   });
 });
 

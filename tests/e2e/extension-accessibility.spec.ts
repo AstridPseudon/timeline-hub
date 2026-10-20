@@ -54,12 +54,21 @@ async function openComposedEditor(page: Page): Promise<string[]> {
 async function openExtensionsPanel(page: Page): Promise<Locator> {
   let extensionsTab = page.getByRole('tab', { name: 'Extensions' });
   if (!(await extensionsTab.isVisible())) {
-    await page.getByRole('button', { name: 'Inspector', exact: true }).first().click();
-    extensionsTab = page.getByRole('tab', { name: 'Extensions' });
+    const inspector = page.getByRole('button', { name: 'Inspector', exact: true }).first();
+    if (await inspector.count()) {
+      await inspector.click();
+      extensionsTab = page.getByRole('tab', { name: 'Extensions' });
+    } else {
+      // The phone has no Inspector button or dock: the Extensions dialog opens
+      // from an extension-owned lane's info button.
+      await page.getByTestId('data-lane-owner-info').first().click();
+    }
   }
-  await expect(extensionsTab).toBeVisible();
-  await extensionsTab.click();
-  await expect(extensionsTab).toHaveAttribute('aria-selected', 'true');
+  if (await extensionsTab.count()) {
+    await expect(extensionsTab).toBeVisible();
+    await extensionsTab.click();
+    await expect(extensionsTab).toHaveAttribute('aria-selected', 'true');
+  }
   const inventory = page.getByRole('region', { name: 'Local extensions' });
   await expect(inventory).toBeVisible();
   await expect(inventory.locator('[data-video-editor-dev-local-extension]')).toHaveCount(EXTENSION_COUNT);

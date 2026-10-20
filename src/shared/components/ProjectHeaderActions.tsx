@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { PlusCircle, Wrench } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext.tsx';
 import type { Project } from '@/types/project.ts';
 import { CreateProjectModal } from '@/shared/components/GlobalHeader/CreateProjectModal.tsx';
@@ -56,7 +58,7 @@ function ProjectActionButton({
       type="button"
       variant="ghost"
       size="icon"
-      className="h-7 w-7 shrink-0 rounded-md border border-border/70 bg-card/80 text-muted-foreground hover:bg-accent hover:text-foreground"
+      className={cn('h-7 w-7 shrink-0 rounded-md border border-border/70 bg-card/80 text-muted-foreground hover:bg-accent hover:text-foreground', COARSE_TOUCH_TARGET)}
       onClick={onClick}
       disabled={disabled}
       title={label}
@@ -81,7 +83,7 @@ export function ProjectHeaderActions({
 
   return (
     <>
-      <div className="flex shrink-0 items-center gap-1" data-testid="astrid-project-actions">
+      <div className="flex shrink-0 items-center gap-1 [@media(pointer:coarse)]:gap-2" data-testid="astrid-project-actions">
         <ProjectActionButton
           label="Project settings"
           onClick={() => setIsProjectSettingsModalOpen(true)}
@@ -93,13 +95,14 @@ export function ProjectHeaderActions({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 shrink-0 gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+          className={cn('h-7 shrink-0 gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground', COARSE_TOUCH_TARGET)}
           onClick={() => setIsCreateProjectModalOpen(true)}
           aria-label="New project"
           disabled={disabled}
         >
           <PlusCircle className="h-3.5 w-3.5" aria-hidden="true" />
-          <span>New project</span>
+          {/* Phones keep the icon: the caption would push the header onto a second line. */}
+          <span className="hidden sm:inline">New project</span>
         </Button>
       </div>
 

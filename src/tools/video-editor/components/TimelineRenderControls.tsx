@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ChevronDown, Download, Loader2, Play, Square, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { toast } from '@/shared/components/ui/toast.tsx';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
@@ -125,9 +126,12 @@ function VisualBoundaryReport({ report, canDeclareSeamsAsHardCuts, declareSeamsA
 export function TimelineRenderControls({
   previewActionButtonClass,
   afterRenderControl,
+  compact = false,
 }: {
   previewActionButtonClass: string;
   afterRenderControl?: ReactNode;
+  /** The phone's row: progress reads as a bare percentage and the secondary buttons keep only their icons. */
+  compact?: boolean;
 }) {
   const chrome = useTimelineChromeContext();
   const [playerOpen, setPlayerOpen] = useState(false);
@@ -260,7 +264,7 @@ export function TimelineRenderControls({
       >
         <Download className="h-3.5 w-3.5" />
         {chrome.renderStatus === 'rendering' && chrome.renderProgress
-          ? `Render ${chrome.renderProgress.percent}%`
+          ? compact ? `${chrome.renderProgress.percent}%` : `Render ${chrome.renderProgress.percent}%`
           : 'Render'}
       </Button>
       {afterRenderControl}
@@ -271,9 +275,11 @@ export function TimelineRenderControls({
           variant="outline"
           className={`gap-1.5 ${previewActionButtonClass}`}
           onClick={() => setPlayerOpen(true)}
+          aria-label="Play last render"
+          title="Play last render"
         >
           <Play className="h-3 w-3" />
-          Play last render
+          {!compact && 'Play last render'}
         </Button>
       )}
       {renderResultUrl && (
@@ -301,7 +307,7 @@ export function TimelineRenderControls({
                 type="button"
                 size="sm"
                 variant="outline"
-                className="gap-1.5"
+                className={`gap-1.5 ${COARSE_TOUCH_TARGET}`}
                 onClick={() => void downloadRender()}
                 disabled={isDownloading}
               >
@@ -321,9 +327,10 @@ export function TimelineRenderControls({
           className={`gap-1.5 ${previewActionButtonClass}`}
           onClick={() => void chrome.cancelRender()}
           aria-label="Cancel render"
+          title="Cancel render"
         >
           <Square className="h-3 w-3" />
-          Cancel
+          {!compact && 'Cancel'}
         </Button>
       )}
       {renderErrorOpen && renderError && (

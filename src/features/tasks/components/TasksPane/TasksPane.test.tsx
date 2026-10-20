@@ -584,7 +584,7 @@ describe('TasksPane', () => {
     expect(setIsTasksPaneLockedMock).not.toHaveBeenCalled();
   });
 
-  it('marks engaged, opens the pane, and focuses the composer once AgentChat actions are registered', () => {
+  it('marks engaged, opens the pane, and focuses the composer inside the tap and again next frame', () => {
     const callOrder: string[] = [];
     const markEngaged = vi.fn(() => {
       callOrder.push('mark');
@@ -603,6 +603,7 @@ describe('TasksPane', () => {
       markEngaged,
       isRecording: false,
       isProcessing: false,
+      isAgentWorking: false,
     });
 
     renderTasksPane();
@@ -611,10 +612,12 @@ describe('TasksPane', () => {
 
     expect(markEngaged).toHaveBeenCalledTimes(1);
     expect(openPaneMock).toHaveBeenCalledTimes(1);
+    // iOS raises the keyboard only for a focus made while handling the tap; the next frame
+    // covers a composer the open has just enabled.
     expect(globalThis.requestAnimationFrame).toHaveBeenCalledTimes(1);
-    expect(focusComposer).toHaveBeenCalledTimes(1);
+    expect(focusComposer).toHaveBeenCalledTimes(2);
     expect(toggleRecording).not.toHaveBeenCalled();
-    expect(callOrder).toEqual(['mark', 'open', 'focus']);
+    expect(callOrder).toEqual(['mark', 'open', 'focus', 'focus']);
     expect(paneControlProps.actions.splitButton.primary.ariaLabel).toBe('Open message composer');
   });
 

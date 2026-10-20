@@ -195,7 +195,6 @@ function createTestStore(data: TimelineData = timelineData) {
       inputModality: 'mouse' as const,
       interactionMode: 'browse' as const,
       gestureOwner: 'none' as const,
-      precisionEnabled: false,
       contextTarget: 'timeline' as const,
       inspectorTarget: 'none' as const,
       interactionPolicy: {
@@ -203,7 +202,6 @@ function createTestStore(data: TimelineData = timelineData) {
         inputModality: 'mouse' as const,
         interactionMode: 'browse' as const,
         gestureOwner: 'none' as const,
-        precisionEnabled: false,
         contextTarget: 'timeline' as const,
         inspectorTarget: 'none' as const,
       },

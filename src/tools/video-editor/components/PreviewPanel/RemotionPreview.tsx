@@ -462,7 +462,9 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   return (
     <div
       ref={playerContainerRef}
-      className="relative flex h-full min-h-[220px] w-full items-center justify-center overflow-hidden rounded-xl bg-transparent"
+      // The phone sizes its preview to the film, which can be shorter than the
+      // desktop floor; there the floor would push the transport out of view.
+      className={cn('relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl bg-transparent', compact && touchChrome ? 'min-h-0' : 'min-h-[220px]')}
       style={VIDEO_EDITOR_THEME_VARS}
     >
       <PreviewAudioFailureNotice />

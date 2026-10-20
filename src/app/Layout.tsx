@@ -140,7 +140,7 @@ const LayoutShell: React.FC = () => {
 
   return (
     <AIInputModeProvider>
-      <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-screen overflow-hidden')}>
+      <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-dvh min-h-0 overflow-hidden')}>
         <ScrollToTop />
         <AppSkyBackground />
 

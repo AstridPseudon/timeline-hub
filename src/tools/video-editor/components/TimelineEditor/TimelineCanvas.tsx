@@ -55,7 +55,6 @@ import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotComp
 import { useTimelineEditorDataSafe, useTimelineMutableAdapters } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useDataLanePlane } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
 import { useTimelineSelectionStore } from '@/shared/state/selectionStore.ts';
-import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import {
   EDIT_AREA_CLASS,
   ROW_ID_ATTR,
@@ -63,10 +62,9 @@ import {
   touchGestureModeAttrs,
 } from '@/tools/video-editor/lib/timeline-dom.ts';
 import {
-  resolveTouchGestureMode,
+  resolveArmedTouchGesture,
   shouldEnableTimelinePinchZoom,
   shouldExpandTouchTrimHandles,
-  shouldTapTimelineToolButtons,
   type TimelineDeviceClass,
   type TimelineGestureOwner,
   type TimelineInputModality,
@@ -211,12 +209,6 @@ export interface TimelineCanvasProps {
 
 const TOOL_BUTTON_BASE_CLASS = 'pointer-events-auto relative flex items-center justify-center rounded-full ring-1 transition-all duration-150 hover:-translate-y-0.5 hover:scale-105 active:translate-y-0 active:scale-100';
 const POINTER_TOOL_BUTTON_SIZE_CLASS = 'h-6 w-6';
-const TOUCH_TOOL_BUTTON_SIZE_CLASS = 'h-10 w-10';
-/** Pixel twin of `TOUCH_TOOL_BUTTON_SIZE_CLASS` — used to reserve ruler space. */
-const TOUCH_TOOL_BUTTON_SIZE_PX = 40;
-const TOUCH_TOOL_CLUSTER_GAP_PX = 6;
-/** `right-2` on the cluster, plus the same again so a label never abuts a button. */
-const TOUCH_TOOL_CLUSTER_MARGIN_PX = 16;
 const TEXT_TOOL_TONE_CLASS = 'bg-[var(--video-editor-accent-bg-strong)] text-foreground ring-[var(--video-editor-accent-ring)] hover:bg-[var(--video-editor-accent-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-accent-shadow-soft)] hover:ring-[var(--video-editor-accent-border)]';
 const EFFECT_TOOL_TONE_CLASS = 'bg-[var(--video-editor-effect-bg)] text-foreground ring-[var(--video-editor-effect-ring)] hover:bg-[var(--video-editor-effect-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-effect-shadow-soft)] hover:ring-[var(--video-editor-effect-ring-strong)]';
 const SEQUENCE_TOOL_TONE_CLASS = 'bg-[var(--video-editor-success-bg)] text-foreground ring-[var(--video-editor-success-ring)] hover:bg-[var(--video-editor-success-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-success-shadow-soft)] hover:ring-[var(--video-editor-success-ring-strong)]';
@@ -531,7 +523,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   const resizeHandleWidth = shouldExpandTouchTrimHandles(deviceClass, inputModality, interactionMode)
     ? TOUCH_RESIZE_HANDLE_WIDTH
     : RESIZE_HANDLE_WIDTH;
-  const touchGestureMode = resolveTouchGestureMode(deviceClass, interactionMode);
+  const touchGestureMode = resolveArmedTouchGesture(deviceClass, interactionMode);
   const minDuration = MIN_ACTION_WIDTH_PX / pixelsPerSecond;
   const { resizePreviewSnapshot, resizeClampedActionId } = useClipResizeGesture({
     timelineWrapperRef: scrollContainerRef,
@@ -648,7 +640,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     const container = scrollContainerRef.current;
     if (!container) return;
     const measuredWidth = container.clientWidth || viewportWidth;
-    const canvasViewportWidth = Math.max(1, measuredWidth - LABEL_WIDTH);
+    const canvasViewportWidth = Math.max(1, measuredWidth - startLeft);
     const itemLeft = Math.max(0, timelineStart * pixelsPerSecond);
     const itemRight = Math.max(itemLeft + 2, timelineEnd * pixelsPerSecond);
     const visibleLeft = container.scrollLeft;
@@ -678,7 +670,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     };
     setScrollDirection(nextScrollLeft < visibleLeft ? 'backward' : 'forward');
     setScrollLeft(nextScrollLeft);
-  }, [pixelsPerSecond, totalWidth, viewportWidth]);
+  }, [pixelsPerSecond, startLeft, totalWidth, viewportWidth]);
   const overlayGeometry = useMemo(() => createTimelineOverlayGeometry({
     scale,
     scaleWidth,
@@ -819,12 +811,12 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     const viewportX = event.clientX - bounds.left;
     const x = viewportX + scroller.scrollLeft;
     const y = event.clientY - bounds.top + scroller.scrollTop;
-    const group = viewportX >= LABEL_WIDTH && positionedShotGroups.find((candidate) => (
+    const group = viewportX >= startLeft && positionedShotGroups.find((candidate) => (
       x >= candidate.left && x < candidate.left + candidate.width
       && y >= candidate.top && y < candidate.top + candidate.height
     ));
     setHoveredShotGroupKey(group ? group.key : null);
-  }, [positionedShotGroups]);
+  }, [positionedShotGroups, startLeft]);
   const handleSelectShotGroup = useCallback((group: PositionedShotGroup) => {
     if (onShotGroupSelect) {
       onShotGroupSelect(group);
@@ -1058,28 +1050,17 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     },
   }), [handleSetTime, syncCursor]);
 
-  // ── Touch: tool buttons act on tap, anchored at the playhead ───────────
-  const tapToolButtons = shouldTapTimelineToolButtons(deviceClass);
-  /** On touch the tool cluster docks over the ruler's right end; tell the ruler
-   *  how much of its right edge is covered so it stops drawing labels there. */
+  /** A touch timeline (phone or tablet) is for seeing the cut and tapping a
+   *  clip: adding elements and tracks, and tidying tracks, is the agent's job there. */
+  const isTouch = deviceClass !== 'desktop';
   const hasEffectCreationTool = Boolean(onOpenElementCreationPrompt || onAddEffectLayerAt || onAddTextAt);
-  const touchToolButtonCount = tapToolButtons
-    ? (onAddTextAt ? 1 : 0) + (hasEffectCreationTool ? 1 : 0) + (onOpenSequenceCreator ? 1 : 0)
-    : 0;
-  const rulerLabelRightInsetPx = touchToolButtonCount === 0
-    ? 0
-    : touchToolButtonCount * TOUCH_TOOL_BUTTON_SIZE_PX
-      + (touchToolButtonCount - 1) * TOUCH_TOOL_CLUSTER_GAP_PX
-      + TOUCH_TOOL_CLUSTER_MARGIN_PX;
+  const showToolCluster = !isTouch && Boolean(onAddTextAt || hasEffectCreationTool || onOpenSequenceCreator);
   // `handleAddTextAt` / the effect-layer insert both fall back to the first visual
   // track when the id does not resolve, so an empty id is a safe "pick for me".
   const firstVisualTrackId = useMemo(
     () => tracks.find((track) => track.kind === 'visual')?.id ?? '',
     [tracks],
   );
-  const handleTapAddText = useCallback(() => {
-    onAddTextAt?.(firstVisualTrackId, timeRef.current);
-  }, [firstVisualTrackId, onAddTextAt]);
   const handleCreateEffect = useCallback(() => {
     if (onOpenElementCreationPrompt) {
       onOpenElementCreationPrompt("I'd like to create a new effect.");
@@ -1256,8 +1237,8 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
         setGestureOwner={setGestureOwner}
         setInputModalityFromPointerType={setInputModalityFromPointerType}
         unusedTrackCount={unusedTrackCount}
-        onClearUnusedTracks={onClearUnusedTracks}
-        labelRightInsetPx={rulerLabelRightInsetPx}
+        onClearUnusedTracks={isTouch ? undefined : onClearUnusedTracks}
+        compactLabels={isTouch}
       />
       <div
         ref={setRulerOverlayRoot}
@@ -1275,7 +1256,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
         <button
           type="button"
           className="absolute top-1 z-30 flex max-w-[min(24rem,calc(100%-12rem))] items-center gap-1.5 rounded-md border border-emerald-400/50 bg-emerald-500/15 px-2 py-1 text-[10px] font-medium text-emerald-100 shadow-sm transition-colors hover:border-emerald-300 hover:bg-emerald-500/25"
-          style={{ left: LABEL_WIDTH + 8 }}
+          style={{ left: startLeft + 8 }}
           data-postprocess-shader-badge="true"
           data-shader-scope="postprocess"
           data-shader-id={postprocessShader.shaderId}
@@ -1291,6 +1272,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
       )}
       <ShotGroupLabels
         positionedShotGroups={positionedShotGroups}
+        labelWidth={startLeft}
         hidden={hideShotGroups}
         showTouchActions={showTouchShotGroupActions}
         scrollLeft={scrollLeft}
@@ -1307,9 +1289,10 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
       <div
         ref={setScrollContainer}
         data-timeline-row-layout="managed"
+        data-device-class={deviceClass}
         className={`${EDIT_AREA_CLASS} timeline-scroll relative min-h-0 flex-1 overflow-auto overscroll-contain bg-background/70`}
         {...touchGestureModeAttrs(touchGestureMode)}
-        style={{ '--label-width': `${LABEL_WIDTH}px` } as React.CSSProperties}
+        style={{ '--label-width': `${startLeft}px` } as React.CSSProperties}
         onPointerDown={onEditAreaPointerDown}
         onScroll={handleScroll}
       >
@@ -1348,7 +1331,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
             />
           )}
           {newTrackDropLabel?.includes('at top') && (
-            <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-1 bg-[var(--video-editor-accent-text-soft)]" style={{ marginLeft: LABEL_WIDTH }} />
+            <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-1 bg-[var(--video-editor-accent-text-soft)]" style={{ marginLeft: startLeft }} />
           )}
           <ShotGroupBorders
             positionedShotGroups={positionedShotGroups}
@@ -1440,13 +1423,13 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
           />
         </div>
         {/* Footer: + Video / + Audio split buttons and draggable text tool — outside the grid background div */}
-        <div className="relative flex border-t border-border bg-background" style={{ height: rowHeight, width: totalWidth, minWidth: '100%' }}>
+        <div className={cn('relative flex', !isTouch && 'border-t border-border bg-background')} style={{ height: rowHeight, width: totalWidth, minWidth: '100%' }}>
           <div
-            className="z-20 flex bg-card"
-            style={{ width: LABEL_WIDTH, position: 'sticky', left: 0 }}
+            className={cn('z-20 flex', !isTouch && 'bg-card')}
+            style={{ width: startLeft, position: 'sticky', left: 0 }}
             onPointerDown={(event) => event.stopPropagation()}
           >
-            {onAddTrack && (
+            {onAddTrack && !isTouch && (
               <>
                 <button
                   type="button"
@@ -1465,7 +1448,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
               </>
             )}
           </div>
-          <div className="flex flex-1 items-center gap-2 px-2" style={{ position: 'sticky', left: LABEL_WIDTH }}>
+          <div className="flex flex-1 items-center gap-2 px-2" style={{ position: 'sticky', left: startLeft }}>
             {newTrackDropLabel && newTrackDropLabel.includes('at bottom') ? (
               <div className="pointer-events-none h-1 flex-1 rounded-full bg-[var(--video-editor-accent-text-soft)]" />
             ) : null}
@@ -1498,28 +1481,14 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
           setInspectorTarget={ops.setInspectorTarget}
         />
       )}
-      {/* Floating tool buttons — bottom-left of timeline viewport. Touch-sized
-          buttons would blank out a whole 36px track row down there, so on touch
-          the cluster docks to the ruler strip at top-right instead. */}
-      {(onAddTextAt || hasEffectCreationTool || onOpenSequenceCreator) && (
+      {/* Floating tool buttons — bottom-left of timeline viewport. Desktop only:
+          touch devices create elements through the agent, not this cluster. */}
+      {showToolCluster && (
         <div
-          className={cn(
-            'pointer-events-none absolute z-30 flex gap-1.5',
-            tapToolButtons ? 'right-2 top-1' : 'bottom-4',
-          )}
-          style={tapToolButtons ? undefined : { left: LABEL_WIDTH + 8 }}
+          className="pointer-events-none absolute z-30 flex gap-1.5 bottom-4"
+          style={{ left: startLeft + 8 }}
         >
-          {onAddTextAt && (tapToolButtons ? (
-            <button
-              type="button"
-              className={`${TOOL_BUTTON_BASE_CLASS} ${TOUCH_TOOL_BUTTON_SIZE_CLASS} ${TEXT_TOOL_TONE_CLASS}`}
-              title="New text"
-              aria-label="New text at playhead"
-              onClick={handleTapAddText}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-            </button>
-          ) : (
+          {onAddTextAt && (
             <div
               draggable
               onDragStart={(event) => {
@@ -1534,18 +1503,8 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
                 New text
               </span>
             </div>
-          ))}
-          {hasEffectCreationTool && (tapToolButtons ? (
-            <button
-              type="button"
-              className={`${TOOL_BUTTON_BASE_CLASS} ${TOUCH_TOOL_BUTTON_SIZE_CLASS} ${EFFECT_TOOL_TONE_CLASS}`}
-              title="New effect"
-              aria-label={onOpenElementCreationPrompt ? 'Create new effect' : 'New effect layer at playhead'}
-              onClick={handleCreateEffect}
-            >
-              <Layers className="h-4 w-4" />
-            </button>
-          ) : onOpenElementCreationPrompt ? (
+          )}
+          {hasEffectCreationTool && (onOpenElementCreationPrompt ? (
             <button
               type="button"
               className={`group/tool ${TOOL_BUTTON_BASE_CLASS} ${POINTER_TOOL_BUTTON_SIZE_CLASS} ${EFFECT_TOOL_TONE_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--video-editor-effect-ring-strong)]`}
@@ -1577,17 +1536,15 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
           {onOpenSequenceCreator && (
             <button
               type="button"
-              className={`${TOOL_BUTTON_BASE_CLASS} ${tapToolButtons ? TOUCH_TOOL_BUTTON_SIZE_CLASS : POINTER_TOOL_BUTTON_SIZE_CLASS} ${SEQUENCE_TOOL_TONE_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--video-editor-success-focus-ring)]`}
+              className={`${TOOL_BUTTON_BASE_CLASS} ${POINTER_TOOL_BUTTON_SIZE_CLASS} ${SEQUENCE_TOOL_TONE_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--video-editor-success-focus-ring)]`}
               title={onOpenElementCreationPrompt ? 'Create animation' : 'Create animation sequence'}
               aria-label={onOpenElementCreationPrompt ? 'Create animation' : 'Create animation sequence'}
               onClick={handleCreateAnimation}
             >
-              <Sparkles className={tapToolButtons ? 'h-4 w-4' : 'h-3 w-3'} />
-              {!tapToolButtons && (
-                <span aria-hidden="true" className={`${TOOL_TOOLTIP_CLASS} group-focus-visible/tool:opacity-100`}>
-                  {onOpenElementCreationPrompt ? 'Create animation' : 'Create animation sequence'}
-                </span>
-              )}
+              <Sparkles className="h-3 w-3" />
+              <span aria-hidden="true" className={`${TOOL_TOOLTIP_CLASS} group-focus-visible/tool:opacity-100`}>
+                {onOpenElementCreationPrompt ? 'Create animation' : 'Create animation sequence'}
+              </span>
             </button>
           )}
         </div>

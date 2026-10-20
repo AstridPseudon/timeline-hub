@@ -943,7 +943,10 @@ describe('T5.1 — geometry and cadence through the real host', () => {
       }),
       { markers: [{ id: `coincident-${index}`, time: 4, label: `Layer ${index}` }] },
     ));
-    const host = renderOverlayHost(controllers.map((controller) => controller.extension));
+    // The desktop track column (144px) holds the full pager.
+    const host = renderOverlayHost(controllers.map((controller) => controller.extension), {
+      geometry: createTimelineOverlayGeometry({ scale: 1, scaleWidth: 100, startLeft: 144, extentStart: 0, extentEnd: 10_000 }),
+    });
 
     await waitFor(() => {
       expect(host.rulerStripRoot.querySelectorAll('[data-marker-id]')).toHaveLength(3);
@@ -993,5 +996,33 @@ describe('T5.1 — geometry and cadence through the real host', () => {
     expect(next).toBeDisabled();
     fireEvent.click(previous);
     expect(legend).toHaveTextContent('Layers 7–9/10');
+  });
+
+  it('fits the pager into the 56px touch track column as one button that steps through the pages', async () => {
+    const controllers = Array.from({ length: 10 }, (_, index) => markerExtension(
+      overlayManifest({
+        id: `haus.astrid.timeline-overlay-layer-${index}`,
+        contributionId: `layer-${index}`,
+      }),
+      { markers: [{ id: `coincident-${index}`, time: 4, label: `Layer ${index}` }] },
+    ));
+    const host = renderOverlayHost(controllers.map((controller) => controller.extension), {
+      geometry: createTimelineOverlayGeometry({ scale: 1, scaleWidth: 100, startLeft: 56, extentStart: 0, extentEnd: 10_000 }),
+    });
+
+    await waitFor(() => {
+      expect(host.rulerStripRoot.querySelectorAll('[data-marker-id]')).toHaveLength(3);
+    });
+    const legend = host.rulerPortalRoot.querySelector<HTMLButtonElement>('[data-testid="timeline-marker-layer-legend"]')!;
+    expect(legend.tagName).toBe('BUTTON');
+    expect(legend.style.width).toBe('56px');
+    expect(legend).toHaveTextContent('1/4');
+    expect(legend).toHaveAccessibleName('Marker layers 1–3 of 10: show the next layers');
+
+    for (const page of ['1', '2', '3', '0']) {
+      fireEvent.click(legend);
+      expect(legend).toHaveAttribute('data-marker-layer-page', page);
+    }
+    expect(host.rulerStripRoot.querySelectorAll('[data-marker-id]')).toHaveLength(3);
   });
 });

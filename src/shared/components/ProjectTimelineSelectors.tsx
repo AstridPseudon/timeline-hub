@@ -14,6 +14,7 @@ import {
 } from '@/shared/components/ui/command.tsx';
 import { Check, ChevronsUpDown, Pencil, Plus, Star } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Input } from '@/shared/components/ui/input.tsx';
 import {
@@ -30,9 +31,10 @@ const triggerClass = cn(
   'text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
   'disabled:pointer-events-none disabled:opacity-50',
+  COARSE_TOUCH_TARGET,
 );
 const rowClass = cn(
-  'group gap-2 py-1.5 pl-8 pr-1.5',
+  'group gap-2 py-1.5 pl-8 pr-1.5 [@media(pointer:coarse)]:min-h-11',
   'data-[current=true]:bg-muted data-[current=true]:font-medium',
   'data-[current=true]:data-[selected=true]:bg-accent',
 );
@@ -42,6 +44,7 @@ const rowActionClass = cn(
   'opacity-0 transition-opacity focus-visible:opacity-100',
   'group-hover:opacity-100 group-data-[selected=true]:opacity-100',
   '[@media(hover:none)]:opacity-100',
+  '[@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9',
 );
 const renameInputClass =
   '[:root:not(.preserve-user-text)_&.preserve-case]:!normal-case';
@@ -359,7 +362,7 @@ export function ProjectTimelinePicker({
           type="button"
           aria-label="New timeline"
           disabled={disabled || creatingTimeline}
-          className={triggerClass}
+          className={cn(triggerClass, 'shrink-0 whitespace-nowrap')}
           onClick={onCreateTimeline}
         >
           <Plus className="h-3.5 w-3.5" />

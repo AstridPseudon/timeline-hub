@@ -2,7 +2,7 @@ import { getSelectedTimelineDataItems } from '@/shared/state/selectionStore.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, Clapperboard, Copy, Ellipsis, Film, FolderPlus, ImageIcon, Layers, Loader2, MapPin, MapPinOff, Music2, RefreshCw, Scissors, Sparkles, Trash2, Type, X } from 'lucide-react';
+import { ArrowRight, Clapperboard, Copy, Film, FolderPlus, ImageIcon, Layers, Loader2, MapPin, MapPinOff, Music2, RefreshCw, Scissors, Sparkles, Trash2, Type, X } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import type { EditorVariantPicker } from '@/tools/video-editor/runtime/editorHostObservations.ts';
 import type { GenerationVariant } from '@/shared/hooks/variants/useVariants.ts';
@@ -60,7 +60,6 @@ interface ClipActionProps {
   onOpenSequenceCreator?: () => void;
   isVideoClip?: boolean;
   isTaskActive?: boolean;
-  showOverflowMenu?: boolean;
   /** True when the clip's file no longer matches the generation's current primary variant */
   isVariantStale?: boolean;
   /** True when the clip is linked to a generation (enables "Update to current variant" in menu) */
@@ -395,7 +394,6 @@ function ClipActionComponent({
   onOpenSequenceCreator,
   isVideoClip,
   isTaskActive,
-  showOverflowMenu = false,
   isVariantStale,
   isGenerationAsset,
   isDuplicatingGeneration = false,
@@ -736,34 +734,6 @@ function ClipActionComponent({
             }}
           >
             <MapPin className="h-2.5 w-2.5" />
-          </div>
-        )}
-        {showOverflowMenu && canOpenContextMenu && (
-          <div
-            role="button"
-            tabIndex={0}
-            data-no-clip-drag
-            className={cn(
-              'absolute bottom-0 right-0 z-20 flex h-10 w-10 items-center justify-center rounded-tl-md bg-background/80 text-muted-foreground shadow-sm transition-colors',
-              'hover:bg-accent hover:text-accent-foreground',
-            )}
-            aria-label={hasBatchSelection ? `Open actions for ${selectedClipIds.length} selected clips` : 'Open clip actions'}
-            onClick={(event) => {
-              event.stopPropagation();
-              const { clientX, clientY } = event;
-              openMenuWithSelectionRef.current(clientX, clientY);
-            }}
-            onKeyDown={(event) => {
-              if (event.key !== 'Enter' && event.key !== ' ') {
-                return;
-              }
-              event.preventDefault();
-              event.stopPropagation();
-              const target = event.currentTarget.getBoundingClientRect();
-              openMenuWithSelectionRef.current(target.left + target.width / 2, target.top + target.height / 2);
-            }}
-          >
-            <Ellipsis className="h-4 w-4" />
           </div>
         )}
       </div>

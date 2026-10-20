@@ -21,7 +21,7 @@ import type { EditorVariantPicker, VariantObservations } from '@/tools/video-edi
 import type { VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
 import type { EffectCreatorPanelProps } from '@/tools/video-editor/components/EffectCreatorPanel.tsx';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
-import { getFallbackClipTab, getSelectionDefaultClipTab } from '@/tools/video-editor/lib/clip-inspector.ts';
+import { getFallbackClipTab, getSelectionDefaultClipTab, getTrackMoveTargets } from '@/tools/video-editor/lib/clip-inspector.ts';
 import { getBulkVisibleTabs, getSharedNestedValue, getSharedValue } from '@/tools/video-editor/lib/bulk-utils.ts';
 import { getTimelinePostprocessShader } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
@@ -200,8 +200,6 @@ function PropertiesPanelComponent({
     selectedClipIds,
     selectedDataItems: selectedDataItemsSnapshot,
     deviceClass,
-    interactionMode,
-    precisionEnabled,
     selectedTrack,
     selectedTrackId,
     selectedClipHasPredecessor,
@@ -229,7 +227,6 @@ function PropertiesPanelComponent({
     setActiveClipTab,
     setInspectorTarget,
     setInteractionMode,
-    setPrecisionEnabled,
     setSelectedTrackId,
     applyEdit,
   } = useTimelineEditorOps();
@@ -243,7 +240,9 @@ function PropertiesPanelComponent({
     addVariantAsGenerationAfterClip,
     isAddingVariantAsGenerationPending,
   } = hostObservations;
-  const prevClipIdRef = useRef(selectedClip?.id);
+  // At a desk the panel stays mounted and a new clip is a change it sees. On touch the clip sheet
+  // mounts the panel for the clip just tapped, so that clip counts as new and opens on its own tab.
+  const prevClipIdRef = useRef(deviceClass === 'desktop' ? selectedClip?.id : undefined);
   const selectedDataItems = selectedDataItemsSnapshot ?? EMPTY_TIMELINE_DATA_ITEMS;
   const selectedClipIdsList = useMemo(() => [...selectedClipIds], [selectedClipIds]);
   // dataKind V2: resolve lane items from the SAME patched lane plane the
@@ -391,7 +390,7 @@ function PropertiesPanelComponent({
     const isClipChange = selectedClip?.id !== prevClipIdRef.current;
 
     if (isClipChange && selectedClip) {
-      setActiveClipTab(getSelectionDefaultClipTab(selectedClip, selectedTrack));
+      setActiveClipTab(getSelectionDefaultClipTab(selectedClip, selectedTrack, deviceClass !== 'desktop'));
     } else if (!nextVisibleTabs.includes(preferences.activeClipTab)) {
       setActiveClipTab(getFallbackClipTab(preferences.activeClipTab, nextVisibleTabs));
     }
@@ -399,6 +398,7 @@ function PropertiesPanelComponent({
     prevClipIdRef.current = selectedClip?.id;
   }, [
     bulkVisibleTabs,
+    deviceClass,
     preferences.activeClipTab,
     selectedClip,
     selectedClipIds.size,
@@ -409,6 +409,7 @@ function PropertiesPanelComponent({
   if (!data) {
     return null;
   }
+  const trackMoves = getTrackMoveTargets(resolvedConfig?.tracks ?? [], selectedClip?.track);
 
   const hasSelection = selectedClipIds.size + selectedDataItems.length > 0;
   const readOnlyItemSelection = selectedDataItems.length > 0 && selectedDataItems.length + selectedClipIds.size > 1;
@@ -445,10 +446,6 @@ function PropertiesPanelComponent({
                 Use explicit inspector controls for touch editing instead of relying on timeline gestures.
               </div>
             </div>
-            <div className="text-[11px] uppercase tracking-[0.12em] text-[color:var(--video-editor-accent-text)]">
-              {interactionMode}
-              {precisionEnabled ? ' + precision' : ''}
-            </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Button type="button" variant="secondary" size="sm" className="justify-start" onClick={() => focusInspectorMode('trim')}>
@@ -468,19 +465,6 @@ function PropertiesPanelComponent({
             </Button>
             <Button type="button" variant="outline" size="sm" className="justify-start" onClick={() => handleToggleMuteClips(selectedClipIdsList)}>
               Mute or unmute
-            </Button>
-            <Button
-              type="button"
-              variant={precisionEnabled ? 'secondary' : 'outline'}
-              size="sm"
-              className="justify-start"
-              onClick={() => {
-                setInspectorTarget(inspectorSelectionTarget);
-                setContextTarget(inspectorSelectionTarget);
-                setPrecisionEnabled(!precisionEnabled);
-              }}
-            >
-              {precisionEnabled ? 'Disable precision' : 'Enable precision'}
             </Button>
             <Button type="button" variant="destructive" size="sm" className="justify-start" onClick={() => handleDeleteClips(selectedClipIdsList)}>
               Delete selection
@@ -547,8 +531,6 @@ function PropertiesPanelComponent({
             clip={selectedClip}
             track={selectedTrack}
             deviceClass={deviceClass}
-            interactionMode={interactionMode}
-            precisionEnabled={precisionEnabled}
             hasPredecessor={selectedClipHasPredecessor}
             onChange={readOnly ? () => {} : handleSelectedClipChange}
             onResetPosition={readOnly ? () => {} : handleResetClipPosition}
@@ -561,17 +543,12 @@ function PropertiesPanelComponent({
               setContextTarget(inspectorSelectionTarget);
               if (!readOnly) handleSplitSelectedClip();
             }}
-            onMoveTrackUp={() => { if (!readOnly) moveSelectedClipsToTrack('up', selectedClipIds); }}
-            onMoveTrackDown={() => { if (!readOnly) moveSelectedClipsToTrack('down', selectedClipIds); }}
+            onMoveTrackUp={trackMoves.up ? () => { if (!readOnly) moveSelectedClipsToTrack('up', selectedClipIds); } : undefined}
+            onMoveTrackDown={trackMoves.down ? () => { if (!readOnly) moveSelectedClipsToTrack('down', selectedClipIds); } : undefined}
             onSetInteractionMode={(mode) => {
               setInspectorTarget(inspectorSelectionTarget);
               setContextTarget(inspectorSelectionTarget);
               setInteractionMode(mode);
-            }}
-            onSetPrecisionEnabled={(enabled) => {
-              setInspectorTarget(inspectorSelectionTarget);
-              setContextTarget(inspectorSelectionTarget);
-              setPrecisionEnabled(enabled);
             }}
             compositionWidth={compositionSize.width}
             compositionHeight={compositionSize.height}

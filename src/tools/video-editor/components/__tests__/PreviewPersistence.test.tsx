@@ -326,7 +326,6 @@ beforeEach(() => {
   const setInspectorTarget = vi.fn();
   const setContextTarget = vi.fn();
   const setInteractionMode = vi.fn();
-  const setPrecisionEnabled = vi.fn();
   const setInputModalityFromPointerType = vi.fn(() => 'touch');
   const setGestureOwner = vi.fn();
 
@@ -357,7 +356,6 @@ beforeEach(() => {
     inputModality: 'mouse',
     interactionMode: 'select',
     gestureOwner: 'none',
-    precisionEnabled: false,
     inspectorTarget: { kind: 'timeline' },
     trackScaleMap: {},
     compositionSize: { width: 1280, height: 720 },
@@ -377,7 +375,6 @@ beforeEach(() => {
     setSelectedRightPanelId: vi.fn(),
     setRightPanelLayoutSlot: vi.fn(),
     setInteractionMode,
-    setPrecisionEnabled,
     setInputModalityFromPointerType,
     setGestureOwner,
     onOverlayChange: vi.fn(),
@@ -468,22 +465,6 @@ beforeAll(async () => {
 }, 120_000);
 
 describe('VideoEditorShell preview persistence', () => {
-  it('uses a safe fallback fps before resolved config is available', () => {
-    editorDataValue = {
-      ...editorDataValue,
-      resolvedConfig: null,
-      compositionSize: null,
-    };
-    useTimelineEditorDataMock.mockReturnValue(editorDataValue);
-
-    renderShell('full');
-
-    expect(useKeyboardShortcutsMock).toHaveBeenCalled();
-    expect(useKeyboardShortcutsMock.mock.calls.at(-1)?.[0]).toMatchObject({
-      timelineFps: 30,
-    });
-  });
-
   it('keeps one shared preview player active across compact/full transitions', () => {
     const view = renderShell('compact');
     const player = screen.getByTestId('mock-player');
@@ -540,7 +521,9 @@ describe('VideoEditorShell preview persistence', () => {
     expect(previewUnmounted).not.toHaveBeenCalled();
   });
 
-  it.each(['desktop', 'tablet'])('keeps Video selected on %s clip selection and retains the player across tab switches', (deviceClass) => {
+  // Desktop only: touch (phone and tablet) keeps the picture in its own shell and never pins the gallery.
+  it('keeps Video selected on desktop clip selection and retains the player across tab switches', () => {
+    const deviceClass = 'desktop';
     useTimelineEditorDataMock.mockReturnValue({ ...editorDataValue, deviceClass });
     usePanesStoreMock.mockReturnValue({ isGenerationsPaneLocked: true, isGenerationsPaneOpen: true });
     const view = renderShell('full');
@@ -619,47 +602,23 @@ describe('VideoEditorShell preview persistence', () => {
     expect(screen.getByTestId('properties-panel')).toBeInTheDocument();
   });
 
-  it('shows the phone mode bar and routes mode changes through editor ops', () => {
-    const setInspectorTarget = vi.fn();
-    const setContextTarget = vi.fn();
-    const setInteractionMode = vi.fn();
-    const setPrecisionEnabled = vi.fn();
-
+  it('gives the phone no mode bar: Render sits in the document row and a clip is reached by tapping it', () => {
     useTimelineEditorDataMock.mockReturnValue({
       ...editorDataValue,
       deviceClass: 'phone',
       interactionMode: 'browse',
-      precisionEnabled: false,
       selectedClipIds: new Set(['clip-1']),
       selectedClipId: 'clip-1',
       inspectorTarget: { kind: 'clip', clipId: 'clip-1' },
     });
-    useTimelineEditorOpsMock.mockReturnValue({
-      ...editorOpsValue,
-      setInspectorTarget,
-      setContextTarget,
-      setInteractionMode,
-      setPrecisionEnabled,
-    });
 
     renderShell('full');
 
-    expect(screen.getByRole('toolbar', { name: 'Phone timeline mode bar' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Browse' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Select' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Trim' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Precision' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Move' }).className).toContain('min-h-11');
-    expect(screen.getByRole('button', { name: 'Precision' }).className).toContain('min-h-11');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Move' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Precision' }));
-
-    expect(setInteractionMode).toHaveBeenCalledWith('move');
-    expect(setPrecisionEnabled).toHaveBeenCalledWith(true);
-    expect(setContextTarget).toHaveBeenCalled();
-    expect(setInspectorTarget).toHaveBeenCalled();
+    for (const label of ['Browse', 'Select', 'Move', 'Trim', 'Clip', 'Inspector']) {
+      expect(screen.queryByRole('button', { name: label })).not.toBeInTheDocument();
+    }
+    const row = document.querySelector('[data-toolbar-layout="touch"]') as HTMLElement;
+    expect(within(row).getByRole('button', { name: 'Render' })).toBeInTheDocument();
   });
 
   it('points a compact tablet selection at the Inspector tab, not a duplicate overlay button', () => {
@@ -686,7 +645,6 @@ describe('VideoEditorShell preview persistence', () => {
       inputModality: 'touch',
       interactionMode: 'trim',
       gestureOwner: 'preview',
-      precisionEnabled: true,
       selectedClipId: 'clip-1',
       selectedClipIds: new Set(['clip-1']),
     });
@@ -695,8 +653,8 @@ describe('VideoEditorShell preview persistence', () => {
 
     expect(screen.getByRole('region', { name: 'Preview panel' })).toBeInTheDocument();
     expect(screen.getByText(/Preview overlay transform active\./)).toBeInTheDocument();
-    expect(screen.getByText(/Mode trim\. Precision enabled\./)).toBeInTheDocument();
-    expect(screen.getByText(/Timeline mode trim\. Precision enabled\. Preview transform active\./)).toBeInTheDocument();
+    expect(screen.getByText(/Mode trim\./)).toBeInTheDocument();
+    expect(screen.getByText(/Timeline mode trim\. Preview transform active\./)).toBeInTheDocument();
     expect(screen.getByTestId('overlay-editor')).toHaveAttribute('data-device-class', 'phone');
     expect(screen.getByTestId('overlay-editor')).toHaveAttribute('data-gesture-owner', 'preview');
     expect(screen.getByTestId('overlay-editor')).toHaveAttribute('data-input-modality', 'touch');

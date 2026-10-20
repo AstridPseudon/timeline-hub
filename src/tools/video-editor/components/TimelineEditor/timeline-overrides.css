@@ -5,13 +5,23 @@
   left: 0;
   top: 0;
   float: left;
-  width: var(--label-width, 144px);
+  width: var(--label-width);
   height: 100%;
   margin-bottom: -100%;
   background: hsl(var(--card));
   border-right: 1px solid hsl(var(--border));
   z-index: 6;
   pointer-events: none;
+}
+
+/* Touch: no classic scrollbars or reserved gutter over the timeline; panning still scrolls. */
+.timeline-scroll:not([data-device-class='desktop']) {
+  scrollbar-width: none;
+  scrollbar-gutter: auto;
+}
+
+.timeline-scroll:not([data-device-class='desktop'])::-webkit-scrollbar {
+  display: none;
 }
 
 /* ── Touch gesture ownership ──
@@ -21,15 +31,6 @@
    the element that owns it and leaves the rest of the edit area pannable. */
 
 .timeline-canvas-edit-area[data-touch-gesture-mode='move'] .clip-action {
-  touch-action: none;
-}
-
-/* Select mode's owner is the scroll container itself: the marquee starts on empty
-   canvas, so there is no inner element to hand the touch to. Without this the
-   drag overscrolls left-to-right at scrollLeft 0 and Chromium turns it into the
-   back-navigation swipe — the tab leaves the editor mid-gesture. Select mode
-   therefore does not pan; browse mode is the one that pans. */
-.timeline-canvas-edit-area[data-touch-gesture-mode='marquee'] {
   touch-action: none;
 }
 

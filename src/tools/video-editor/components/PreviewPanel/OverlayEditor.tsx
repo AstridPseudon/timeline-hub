@@ -136,8 +136,9 @@ function OverlayEditorComponent({
   useRenderDiagnostic('OverlayEditor');
   const markLayoutEffect = useEffectDiagnostic('overlayEditor:layout');
   const touchPreviewInput = isTouchTimelineInput(deviceClass, inputModality);
-  const allowsDirectManipulationControls = !(deviceClass === 'phone' && inputModality === 'touch');
-  const previewTouchAction = deviceClass === 'phone' ? 'manipulation' : 'none';
+  // Touch keeps the picture clean: overlays are edited from the clip sheet, not with handles on the picture.
+  const allowsDirectManipulationControls = !(deviceClass !== 'desktop' && inputModality === 'touch');
+  const previewTouchAction = deviceClass === 'desktop' ? 'none' : 'manipulation';
 
   const getTrackScale = useCallback((trackId: string): number => (
     Math.max(trackScaleMap[trackId] ?? 1, 0.01)
@@ -524,7 +525,7 @@ function OverlayEditorComponent({
     setInspectorTarget(nextInspectorTarget);
     onSelectClip(overlay.actionId);
 
-    if (deviceClass === 'phone' && nextInputModality === 'touch') {
+    if (deviceClass !== 'desktop' && nextInputModality === 'touch') {
       event.stopPropagation();
       return;
     }

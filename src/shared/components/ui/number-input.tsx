@@ -62,7 +62,9 @@ const NumberInput = React.forwardRef<HTMLDivElement, NumberInputProps>(
               prefix ? "pl-1 pr-3" : "px-3"
             )}
           />
-          <div className="flex flex-col h-full border-l border-input shrink-0">
+          {/* The steppers are a mouse affordance: two 20px halves are no touch target, and a
+              touch keyboard (number pad) is the way in there. */}
+          <div className="flex flex-col h-full border-l border-input shrink-0 [@media(pointer:coarse)]:hidden">
             <NumberField.Increment
               className="flex-1 px-1.5 flex items-center justify-center hover:bg-muted/50 active:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               tabIndex={-1}

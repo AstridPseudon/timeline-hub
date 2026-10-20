@@ -6,7 +6,6 @@ import {
   SHOT_GROUP_LABEL_HEIGHT,
   TIME_RULER_HEIGHT,
 } from './timeline-canvas-constants.ts';
-import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
@@ -42,6 +41,8 @@ function isPendingShotGroup(group: PositionedShotGroup): boolean {
 
 interface ShotGroupLabelsProps {
   positionedShotGroups: PositionedShotGroup[];
+  /** Width of the sticky track-name column the labels clip against. */
+  labelWidth: number;
   hidden: boolean;
   showTouchActions: boolean;
   scrollLeft: number;
@@ -63,6 +64,7 @@ interface ShotGroupBordersProps {
 
 export const ShotGroupLabels = React.memo(function ShotGroupLabels({
   positionedShotGroups,
+  labelWidth,
   hidden,
   showTouchActions,
   scrollLeft,
@@ -84,7 +86,7 @@ export const ShotGroupLabels = React.memo(function ShotGroupLabels({
     <>
       {positionedShotGroups.map((group) => {
         const labelLeft = group.left - scrollLeft;
-        const clippedLeft = Math.max(0, LABEL_WIDTH - labelLeft);
+        const clippedLeft = Math.max(0, labelWidth - labelLeft);
         const isSelectedCanonical = Boolean(
           group.canonicalIdentity
           && selectedCanonicalOccurrenceId === group.canonicalIdentity.occurrenceId,

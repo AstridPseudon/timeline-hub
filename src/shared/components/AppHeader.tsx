@@ -4,6 +4,7 @@ import { Home, LayoutGrid, Settings } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
 import { dispatchAppEvent } from '@/shared/lib/typedEvents.ts';
 import { ProjectTimelinePicker } from '@/shared/components/ProjectTimelineSelectors.tsx';
 import { ProjectHeaderActions } from '@/shared/components/ProjectHeaderActions.tsx';
@@ -101,7 +102,7 @@ export function AppHeader({
       className={cn(
         'relative z-10 flex w-full min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground',
         isEditorOnlyWorkspace
-          ? 'px-2 pt-2 pb-0 sm:px-4 sm:pt-3 sm:pb-0 lg:px-6 lg:pt-4 lg:pb-0'
+          ? 'px-3 pt-2 pb-0 sm:px-4 sm:pt-3 sm:pb-0 lg:px-6 lg:pt-4 lg:pb-0'
           : 'min-h-10 border-b border-border bg-background px-3 py-1.5',
       )}
       data-testid="video-editor-header"
@@ -144,7 +145,7 @@ export function AppHeader({
         type="button"
         variant="ghost"
         size="icon"
-        className="ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+        className={cn('ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground', COARSE_TOUCH_TARGET)}
         onClick={() => dispatchAppEvent('openSettings', {})}
         title={isEditorOnlyWorkspace ? 'App settings' : 'Settings'}
         aria-label={isEditorOnlyWorkspace ? 'App settings' : 'Settings'}

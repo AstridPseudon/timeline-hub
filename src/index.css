@@ -327,7 +327,10 @@
   /* Text shown exactly as written, whatever the case settings: commands, briefs to paste into an agent,
    and previews of the person's own text. */
   .verbatim-case,
-  .verbatim-case * {
+  .verbatim-case *,
+  /* As specific as the lowercase rule above, and later, so verbatim wins on a .preserve-case field too. */
+  :root .verbatim-case.preserve-case,
+  :root .verbatim-case .preserve-case {
     text-transform: none !important;
   }
 
