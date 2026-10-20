@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T05:06:21Z | dispatcher heartbeat 5s -->
+<!-- app | 2026-10-20T05:11:33Z | dispatcher heartbeat 1s -->
 # app — 2026-10-20 04:58 UTC
 Milestone: M0/M1 COMPLETE (PLAN recorded03:55). M2 IN PROGRESS. ACK04:44: App opaque-writer repairs may merge independently once gated; ONLY bootstrap/legacy-publisher changes held on Runtime safety guard. M2 exit NOT met.
 Integrated: App tl/integration5912bfc3284da03112ef6c235447cfbeffb678bd CLEAN/tree1e21df7d1ebb18cda1c08d08f1e761337a581a3d. D03 edge purge4e7c:85paths+485/-20191; unusedquerywriter5912:-81product/-50obsoletehooktest. Both ledgerrowsDELETED with replacingtests. Sharedopaque corpus382d correctedoracle: manager139PASS, semanticJSON only; rejectedshapeoracle3ac nevermerged.
