@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T19:50:35Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 22m -->
+<!-- viewing | 2026-10-20T19:53:16Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 25m -->
 # viewing — 2026-10-20 19:27 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. rules rev 2026-10-20 read.
 Integrated: Composition5a4e9b72/tree13e37553 public0.0.13, immutable SHA9412ae25/77 files, full76PASS/0FAIL/0SKIP. App13 ea386 integrated; Agent13 via6f0cdc7df, later cache490c10ac and dead inspector a760ecca integrated. No new frozen all-product13 proof; old tuples stay historical.
