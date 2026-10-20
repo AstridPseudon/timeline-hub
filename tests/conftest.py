@@ -155,10 +155,15 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path
     )
     subprocess.run([sys.executable, "-m", "venv", str(environment)], check=True)
     wheelhouse.mkdir()
+    build_env = os.environ.copy()
+    if builder == sys.executable:
+        build_env.pop("SETUPTOOLS_USE_DISTUTILS", None)
+    else:
+        build_env["SETUPTOOLS_USE_DISTUTILS"] = "stdlib"
     subprocess.run(
         [builder, "-m", "pip", "wheel", "--no-index", "--no-build-isolation", "--no-deps", "--wheel-dir", str(wheelhouse), str(source), str(client_source)],
         cwd=str(source),
-        env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
+        env=build_env,
         check=True,
     )
     scripts = "Scripts" if os.name == "nt" else "bin"

@@ -221,10 +221,16 @@ def test_installed_foreground_runtime_owns_discovery_door_and_stops_cleanly(
         assert health["status"] == "ok"
         assert health["runtime_instance_id"] == discovery["runtime_instance_id"]
         assert realm["realm_id"] == discovery["active_realm"]
+        # The door can answer before run reports ready; stop only once run has
+        # logged its own readiness, so this exercises stopping a running Runtime.
+        log_path = _expected_log_path(env)
+        deadline = time.monotonic() + 30
+        while "door_endpoint" not in (log_path.read_text(encoding="utf-8") if log_path.is_file() else ""):
+            assert time.monotonic() < deadline, "run did not report ready"
+            time.sleep(0.1)
     finally:
         _stop_foreground(process)
     assert process.returncode == 0
-    log_path = _expected_log_path(env)
     assert log_path.is_file()
     assert "door_endpoint" in log_path.read_text(encoding="utf-8")
 
