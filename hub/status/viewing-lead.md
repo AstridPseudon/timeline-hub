@@ -1,3 +1,2 @@
-UTC: 2026-10-20T13:55:24Z (area lead)
-Lead decided: manager told via INBOX to re-read MANAGER-COMMON.md (owner direction 13:46Z) and confirm in STATUS; it will be restarted at the next check-in if it hasn't adopted the rules (keeps in-flight context meanwhile).
-Disk ~13.7 GB; link repairs awaiting the owner in this session.
+UTC: 2026-10-20T14:16:24Z (area lead)
+Lead decided: no manager restart — STATUS already logs "Decided locally" under the 13:46Z rules. 4 workers running, 12 GB free, hub fresh. Link repairs: awaiting owner confirmation in this session.

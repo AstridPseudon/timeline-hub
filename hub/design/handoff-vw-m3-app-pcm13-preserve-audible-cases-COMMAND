@@ -1,0 +1,12 @@
+Vitest (private public13 leaf, immutable source SHA256 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738; own cache; no shared dependency writes):
+node_modules/.bin/vitest run --no-cache --configLoader=runner --maxWorkers=1 --config .pcm13-vitest.config.mjs src/tools/video-editor/compositions/AudioTrack.test.tsx src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx src/tools/video-editor/compositions/continuousPCM.contract.test.tsx src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
+Result: exit 0; 5 files / 116 tests passed; 33.53s.
+
+Targeted lint:
+node_modules/.bin/eslint --no-cache --report-unused-disable-directives --max-warnings 0 src/tools/video-editor/compositions/AudioTrack.tsx src/tools/video-editor/compositions/AudioTrack.test.tsx src/tools/video-editor/compositions/continuousPCM.contract.test.tsx src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx
+Result: exit 0.
+
+Whitespace:
+git diff --check b1ef4b9b9
+git diff --check HEAD
+Result: exit 0; both new test files end with exactly one newline; no blank-at-EOF diagnostics.

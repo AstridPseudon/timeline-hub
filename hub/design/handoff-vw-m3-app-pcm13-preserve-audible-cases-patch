@@ -1,0 +1,6 @@
+Incremental worker patch is the worktree delta from HEAD. It changes only the
+three test files listed as modified in the report; the parent product leaf and
+media-conformance migration remain untouched. The parent-to-final five-file
+patch is the existing actual-consumer-unit handoff patch plus this incremental
+test delta. The final harness commit will include the untracked contract and
+lifetime files already present in the parent candidate.

@@ -1,0 +1,13 @@
+AudioTrack.test.tsx:196-224 eight-case fade matrix -> continuousPCM.lifetime.test.tsx:237-284 exact boundary, overlap, 24/60-fps, track-gain and mute PCM cases.
+AudioTrack.test.tsx:227-250 fixed fade boundaries -> continuousPCM.lifetime.test.tsx:237-249 exact authored boundary samples at the old frame values.
+AudioTrack.test.tsx:253-272 overlap plus seven unsupported inputs -> lifetime:250-259 overlap WAV samples; AudioTrack.test.tsx:239-247 preserves all seven old unsupported inputs plus the no-fade case on native audio.
+AudioTrack.test.tsx:275-282 invalid speed 0/-1/NaN -> continuousPCM.lifetime.test.tsx:188-200 public sanitized-rate PCM cases.
+AudioTrack.test.tsx:284-290 supported authored curve -> continuousPCM.lifetime.test.tsx:207-220 all six public curve modes with exact WAV bytes.
+AudioTrack.test.tsx:292-333 authored-envelope precedence and semantic curve/envelope rerender -> continuousPCM.lifetime.test.tsx:287-313 exact PCM samples after precedence and each semantic re-bake.
+AudioTrack.test.tsx:373-389 nested multiply/minimum boost matrix -> continuousPCM.lifetime.test.tsx:373-381 four nested public envelopes with exact bytes, constant downstream gain and Web Audio admission.
+AudioTrack.test.tsx:410-418 nested boost silenced by minimum -> continuousPCM.lifetime.test.tsx:383-391 silent PCM plus retained Web Audio admission.
+AudioTrack.test.tsx:435-467 envelope backend transition/readiness -> continuousPCM.lifetime.test.tsx:315-330 native-to-prepared-to-native source transition with readiness hold release.
+AudioTrack.test.tsx:469-484 boosted occurrence samples -> continuousPCM.lifetime.test.tsx:404-433 occurrence-bounded authored-time sample assertions with trim and speed.
+AudioTrack.test.tsx:501-513 boosted fade frames below unity -> continuousPCM.lifetime.test.tsx:352-366 baked fade samples plus Web Audio admission.
+AudioTrack.test.tsx:346-353 callback identity -> continuousPCM.lifetime.test.tsx:287-313 semantic re-bake/source identity assertions; callback implementation is intentionally retired by continuous PCM policy.
+Existing contract: continuousPCM.contract.test.tsx:49-81 retains one full-source public13 WAV positive, matching prepared-source positive, and four forged negatives; lifetime:115-183 retains the between-frames continuous-vs-step-held planted mismatch and source identity/constant-gain checks.

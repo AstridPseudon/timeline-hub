@@ -1,0 +1,32 @@
+Successful central log source proof (`.../tests/vw-m3-native-frame-fixture-frozen-pair-proof-integration-viewing-native-retained-fixture-1020141813-18235/log.txt`):
+
+```text
+[native-frame-source-proof] before {
+  "runtime": {
+    "commit": "2c4ac180c2220bdad966bc01e95ad230e99ce26a",
+    "tree": "7ab412cc4bcbe517efcfa806e092336390312e18",
+    "archiveSha256": "eed22a1b0d1af2045f823ec9f71dbd7cd862ba7935edfd5199171656e3ff1669",
+    "manifest": {"files": 413, "sha256": "a6ec4c76dbc30bf37fd258f2267410ab591fd605181d21e7338a6dff2d6e3627"}
+  },
+  "agent": {
+    "commit": "d8749a9ce12a699672faf3ad96b4e4cbea9245c2",
+    "tree": "75354d38c898729bac09619679f5421faba319ed",
+    "archiveSha256": "91d4d82f4ee2a251ba6c3706d47efa80411d05e683c64c78a05414d4229b3add",
+    "manifest": {"files": 3076, "sha256": "c436c9e648db306d59dbf728e3294f79d9b971d100ced69fbb1292c17206dada"}
+  },
+  "moduleProof": {
+    "astrid": "/tmp/native-frame-frozen-pair-LpALn8/agent/astrid/__init__.py",
+    "runtime_protocol": "/tmp/native-frame-frozen-pair-LpALn8/runtime/runtime_protocol/__init__.py",
+    "sys_path": ["", "/tmp/native-frame-frozen-pair-LpALn8/runtime", "/tmp/native-frame-frozen-pair-LpALn8/agent", "/home/user/work/venv-runtime/lib/python3.11/site-packages"]
+  }
+}
+[native-frame-source-proof] after {
+  "runtime": {"files": 413, "sha256": "a6ec4c76dbc30bf37fd258f2267410ab591fd605181d21e7338a6dff2d6e3627"},
+  "agent": {"files": 3076, "sha256": "c436c9e648db306d59dbf728e3294f79d9b971d100ced69fbb1292c17206dada"}
+}
+```
+
+Central test result: `1 pass, 0 fail`, no browser/render. Credentials and random realm
+paths are omitted here; the complete unredacted source-proof lines remain in the central
+result log for the orchestrator.
+
