@@ -426,6 +426,12 @@ class TimelineCommitStore:
                     if existing["commit_manifest_json"] != canonical_json(manifest):
                         reject("revision_identity_mismatch", "revision dependency closure changed")
                 if table == "internal_timeline_revisions":
+                    payload = image["payload"]
+                    nested_fields = {"occurrences", "occurrence_records", "parent_composition", "nested_composition",
+                                     "occurrence_id", "shot_revision_id", "parent_revision_id", "composition_revision_id"}
+                    # Only authored structure is reserved; params and provenance remain opaque.
+                    if set(payload) & nested_fields or any(set(clip) & nested_fields for clip in payload.get("clips", [])):
+                        reject("invalid_closure", "internal timeline cannot contain a nested composition", status=422)
                     owner = self.conn.execute("SELECT project_id FROM timelines WHERE id=?", (owner_id,)).fetchone()
                     shot_id = owner_id.removeprefix("shot:") if owner_id.startswith("shot:") else None
                     if owner is None and shot_id:
