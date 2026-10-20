@@ -195,11 +195,15 @@ def saved_closure(saved_runtime):
         child.pop("created_at")
         child.pop("content_digest")
         child["payload"]["opaque_timeline"]["source"] = name
+        child["payload"]["created_at"] = f"authored internal {name}"
+        child["payload"]["dependency_manifest"] = {"opaque": [None, False, 0, {"created_at": name}]}
         image = {**copy.deepcopy(shot), "shot_id": f"shot-{name}", "revision_id": f"shot-{name}-r1",
                  "internal_timeline_revision_id": child["revision_id"]}
         image.pop("created_at")
         image.pop("content_digest")
         image["payload"]["internal_timeline_revision_id"] = child["revision_id"]
+        image["payload"]["created_at"] = f"authored shot {name}"
+        image["payload"]["metadata"]["dependency_manifest"] = {"opaque": [name, None]}
         for item in image["payload"]["items"]:
             item["item_id"] += "-" + name
         occurrence = copy.deepcopy(parent["payload"]["occurrences"][0])
@@ -211,6 +215,8 @@ def saved_closure(saved_runtime):
         occurrences.append(occurrence)
     payload = copy.deepcopy(parent["payload"])
     payload["occurrences"] = occurrences
+    payload["created_at"] = "authored parent"
+    payload["dependency_manifest"] = {"opaque": {"created_at": [None, False, 0]}}
     payload["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": [30000, 1001]}}}
     runtime.service.publish_parent_composition(project_id, "main", {
         "project_id": project_id, "timeline_id": "main", "expected_head": "parent-1",
@@ -242,17 +248,66 @@ def test_real_saved_projection_config_registry_and_full_pins_golden(saved_closur
         row["content_digest"] for row in document["internal_timeline_revisions"] if row["revision_id"] == "internal-z")
 
 
-# Requirement: exact managed expansion parity needs immutable read metadata
-# (created_at) absent from CanonicalDocument. Keep the full golden visible.
 @pytest.mark.integration
-@pytest.mark.xfail(strict=True, reason="CanonicalDocument omits created_at carried in managed expansion.graph")
 def test_real_saved_entire_expansion_golden(saved_closure):
     from astrid.packs.rendering.actions.render.managed_timeline import _project_exact_parent_head
 
     runtime, document = saved_closure
-    parent, _, expansion = _project_exact_parent_head(
+    parent, projected, expansion = _project_exact_parent_head(
         client=runtime, project_id=runtime.project_id, timeline_id="main", parent_revision_id="parent-golden")
-    assert project(document)["expansion"] == {**expansion, "parent_content_digest": parent["content_digest"]}
+    assert project(document) == {
+        "config": projected.config, "registry": projected.registry,
+        "expansion": {**expansion, "parent_content_digest": parent["content_digest"]},
+    }
+
+
+@pytest.mark.integration
+def test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows(saved_closure, monkeypatch):
+    from astrid.packs.rendering.actions.render.managed_timeline import _project_exact_parent_head
+
+    runtime, document = saved_closure
+    parent = runtime.get_project_parent_composition_revision(runtime.project_id, "main", "parent-golden")
+    shots = {(row["shot_id"], row["revision_id"]): runtime.get_project_shot_revision(
+        runtime.project_id, row["shot_id"], row["revision_id"]) for row in document["shot_revisions"]}
+    internals = {row["revision_id"]: runtime.get_project_timeline_revision(
+        runtime.project_id, "main", row["revision_id"]) for row in document["internal_timeline_revisions"]}
+    # Exercise the duplicated read-envelope manifest, including a retained document pin.
+    manifest = copy.deepcopy(document["dependency_manifest"])
+    manifest["documents"] = [{"document_id": "retained-transcript", "version": 7,
+                              "content_digest": "sha256:" + "1" * 64}]
+    parent["dependency_manifest"] = manifest
+    before = copy.deepcopy((parent, shots, internals, document))
+    monkeypatch.setattr(runtime, "get_project_parent_composition_revision", lambda *args: parent)
+    monkeypatch.setattr(runtime, "get_project_shot_revision", lambda p, s, r: shots[s, r])
+    monkeypatch.setattr(runtime, "get_project_timeline_revision", lambda p, t, r: internals[r])
+    returned, projected, expansion = _project_exact_parent_head(
+        client=runtime, project_id=runtime.project_id, timeline_id="main", parent_revision_id="parent-golden")
+    graph = expansion["graph"]
+    assert graph == project(document)["expansion"]["graph"]
+    assert returned["dependency_manifest"] == manifest
+    assert manifest["shots"] == document["dependency_manifest"]["shots"]
+    assert manifest["internal_timelines"] == document["dependency_manifest"]["internal_timelines"]
+    assert manifest["media"] == document["dependency_manifest"]["media"]
+    assert manifest["media"] and manifest["documents"]
+    assert graph["parent_revision"]["content_digest"] == document["parent_revision"]["content_digest"]
+    assert "dependency_manifest" not in graph["parent_revision"]
+    assert [row["shot_id"] for row in graph["shot_revisions"]] == ["shot-z", "shot-a"]
+    assert [row["revision_id"] for row in graph["internal_timeline_revisions"]] == ["internal-z", "internal-a"]
+    images = [graph["parent_revision"], *graph["shot_revisions"], *graph["internal_timeline_revisions"]]
+    for row in images:
+        assert "created_at" not in row
+        assert row["payload"]["created_at"].startswith("authored ")
+    assert graph["parent_revision"]["payload"] == parent["payload"]
+    for row in graph["shot_revisions"]:
+        assert row["payload"] == shots[row["shot_id"], row["revision_id"]]["payload"]
+    for row in graph["internal_timeline_revisions"]:
+        assert row["payload"] == internals[row["revision_id"]]["payload"]
+    assert all("created_at" in row for row in [parent, *shots.values(), *internals.values()])
+    assert (parent, shots, internals, document) == before
+    projected.graph["parent_revision"]["payload"]["created_at"] = "caller mutation"
+    assert (parent, shots, internals, document) == before
+    assert runtime.service.get_project_parent_composition_revision(
+        runtime.project_id, "main", "parent-golden")["payload"] == before[0]["payload"]
 
 
 @pytest.mark.integration

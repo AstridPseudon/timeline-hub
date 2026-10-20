@@ -22,6 +22,9 @@ from astrid.core.timeline.authoring_bundle import (
 PROVIDER_VERSION = "astrid-v1"
 COMPILER_VERSION = "authoring-bundle-1"
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
+PARENT_IMAGE_FIELDS = frozenset({"revision_id", "content_digest", "payload"})
+SHOT_IMAGE_FIELDS = PARENT_IMAGE_FIELDS | {"shot_id", "internal_timeline_revision_id"}
+INTERNAL_IMAGE_FIELDS = PARENT_IMAGE_FIELDS | {"timeline_id"}
 
 
 def _json(value):
@@ -87,18 +90,17 @@ def _verify_document(document):
         _require(row.get("content_digest") == _digest(row["payload"]),
                  "immutable payload digest mismatch")
         _require("project_id" not in row, "project scope belongs on the canonical document")
-    _require(set(parent) == {"revision_id", "content_digest", "payload"}, "invalid parent image")
+    _require(set(parent) == PARENT_IMAGE_FIELDS, "invalid parent image")
     payload = parent["payload"]
     config = payload.get("config", {})
     _require(isinstance(config, Mapping), "invalid parent config")
     if payload.get("clips") and config.get("clips"):
         _require(payload["clips"] == config["clips"], "parent clips and config.clips disagree")
     for row in shots:
-        _require(set(row) == {"shot_id", "revision_id", "internal_timeline_revision_id",
-                              "content_digest", "payload"} and _id(row["shot_id"]),
+        _require(set(row) == SHOT_IMAGE_FIELDS and _id(row["shot_id"]),
                  "invalid shot image")
     for row in internals:
-        _require(set(row) == {"timeline_id", "revision_id", "content_digest", "payload"}
+        _require(set(row) == INTERNAL_IMAGE_FIELDS
                  and _id(row["timeline_id"]), "invalid internal image")
     shot_index = {(row["shot_id"], row["revision_id"]): row for row in shots}
     internal_index = {row["revision_id"]: row for row in internals}
