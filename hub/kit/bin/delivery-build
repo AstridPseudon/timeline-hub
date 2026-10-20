@@ -302,6 +302,12 @@ def main():
     parser.add_argument("--repos", default=" ".join(ALL_REPOS),
                         help='space-separated subset of: %(default)s')
     args = parser.parse_args()
+    expected_sha = os.environ.get("TIMELINE_DELIVERY_SCRIPT_SHA")
+    if expected_sha:
+        with open(__file__, "rb") as f:
+            actual_sha = hashlib.sha256(f.read()).hexdigest()
+        if actual_sha != expected_sha:
+            parser.error(f"delivery script SHA {actual_sha} != expected {expected_sha}")
     names = args.repos.split()
     unknown = [n for n in names if n not in ALL_REPOS]
     if unknown:

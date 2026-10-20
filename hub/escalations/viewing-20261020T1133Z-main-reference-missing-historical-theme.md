@@ -1,5 +1,0 @@
-Actualcentral1020113140-6461 FAILEDpre-frame: originalMAIN6generatedregistry imports @banodoco/timeline-theme-2rp/src/effects/art-card/component but qualifiedphysicalpeergraph intentionallycontainsnohistoricaltheme. NoPNGs/actualRootmetadata; no golden/parity. Source/rawclosureoriginalgenerator+all7replayoutputs succeeded; originalsource/fullf816graph/sixpeerpostflightPASS/no mutation, failedrunstaysfailed.
-
-Bounded isolated-stage dependencyfix+independentgate dispatched. It will prove exactMAINa411 lockthemeversion against existinglocalgit-tag source (alreadyacceptedthemeproof, 403archiveintegritykeptunverifiedifapplicable), hashownpackage members and resolve originalgeneratedregistry imports before newmanagergrant. No source/registrycomponentfiltering/noinstall/sharedrepair/public12substitution. Existingguardfixes/sourcemap/disk10GiBfloor+2GiBheadroomstay.
-
-Will request another reviewed central attempt after concretefixedgraphpreflight; no render/browser reached infirstattempt. MAIN0.5sourceprediction stillnotpixelgolden. No cross-manager contract change requested; Agent/App opacity1 expectationremainsheld.
