@@ -278,6 +278,42 @@ def test_real_same_value_publication_is_recorded_and_blocks_older_undo(editing):
     editing.assert_readback(same)
 
 
+@pytest.mark.parametrize("later", ["overwritten", "returned"])
+def test_real_inverse_refuses_when_target_was_overwritten_or_returned(editing, later):
+    first = editing.commit(editing.body([editing.move("music-bed", 1)]), "undo-stale-target")
+    editing.commit(editing.body([editing.move("music-bed", 2)]), "undo-overwrite")
+    if later == "returned":
+        editing.commit(editing.body([editing.move("music-bed", 1)]), "undo-return")
+    before, length = rows(editing.service), len(editing.history())
+    with pytest.raises(RuntimeErrorBase) as error:
+        editing.commit(editing.body([inverse(first["receipt"]["receipt_id"])]), "undo-stale-conflict")
+    assert error.value.status == 409
+    assert error.value.details["status"] == "conflict"
+    assert rows(editing.service) == before
+    assert len(editing.history()) == length
+
+
+def test_real_inverse_dry_run_and_exact_retry_write_only_the_undo_once(editing, monkeypatch):
+    first = editing.commit(editing.body([editing.move("music-bed", 1)]), "undo-dry-target")
+    undo = editing.body([inverse(first["receipt"]["receipt_id"])])
+    before = rows(editing.service)
+    preview = editing.commit({**copy.deepcopy(undo), "dry_run": True}, "undo-dry-run")
+    assert preview["data"]["status"] == "preview"
+    assert preview["receipt"] is None
+    assert rows(editing.service) == before
+    undone = editing.commit(copy.deepcopy(undo), "undo-real")
+    after = rows(editing.service)
+
+    def forbidden(self, context, port):
+        raise AssertionError("exact retry executed the semantic provider")
+
+    with monkeypatch.context() as retry:
+        retry.setattr(type(editing.service._timeline_commit_provider), "commit", forbidden)
+        assert editing.commit(copy.deepcopy(undo), "undo-real") == undone
+    assert rows(editing.service) == after
+    assert editing.history()[-1]["records"]["undo_of"] == [first["receipt"]["receipt_id"]]
+
+
 def test_real_track_create_and_inverse_keep_complete_film_closure(editing):
     original = editing.document()
     track = {"id": "new-audio", "kind": "audio", "extension": {"opaque": [None, "kept"]}}
