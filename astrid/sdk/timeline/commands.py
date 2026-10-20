@@ -192,7 +192,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             ctx.record['command']['intent'] = {}
             ctx.record['command']['resolved'] = []
         else:
-            apply_inverse(ctx, inverse_records, intervening_records)
+            apply_inverse(ctx, inverse_records, intervening_records, staged_records=records)
             ctx.record['command']['intent'] = {}
             ctx.record['command']['resolved'] = []
         if ordinal == len(commands) - 1:
