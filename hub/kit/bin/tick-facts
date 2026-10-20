@@ -48,7 +48,7 @@ echo "== MAIN DRIFT"; $O/bin/refresh-main --check 2>&1 | sed 's/^/  /'
 
 echo "== OVERLAP (App vs app2 rows)"
 git -C $W/app fetch -q hub 2>/dev/null
-git -C $W/app for-each-ref --format='%(committerdate:unix) %(refname:short)' 'refs/remotes/hub/tl/app-m2-*' | awk -v s=$SINCE '$1>=s {print $2}' | grep -iE 'element|ordinary|duplicat|parent-media|bootstrap|serializ|selected-param' | sed 's/^/  NEW App branch on an app2 row: /'
+git -C $W/app for-each-ref --format='%(committerdate:unix) %(refname:short)' 'refs/remotes/hub/tl/app-m2-*' | awk -v s=$SINCE '$1>=s {print $2}' | grep -iE 'element|ordinary|duplicat|parent-media|bootstrap|serializ|selected-param' | grep -viE 'ordinary0[0-9]' | sed 's/^/  NEW App branch on an app2 row: /'
 echo "  handoff notes: $(ls $O/design/handoff-app-to-app2-*.md 2>/dev/null | wc -l)/7"
 
 echo "== LOCAL DECISIONS (lines added to STATUS since; models check these against precedents)"

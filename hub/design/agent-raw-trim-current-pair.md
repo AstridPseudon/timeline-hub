@@ -14,7 +14,7 @@ through that base. The two workers' additive changes to
 The harness commit SHA is not available until worker exit. Pre-harness combined
 identity:
 
-- clean worktree tree: `8cc3bb3c7e374ec8c93b2320e9f81f046655150a`
+- clean worktree tree: `7f43878c1f37abf1a8bef6d79b44df51d1ced50a`
 - combined patch SHA-256 from `f97b2b87` to this worktree:
   `d1f913712bf5f465a635ed16948e90c34f592a19efdd78162c4f0abbc44c4144`
 - candidate source tree before the additive delta:
@@ -73,3 +73,10 @@ two actual HTTP WAV/malformed cases are covered by the central wrapper. Ruff
 and `git diff --check` passed on the composed source. The original historical
 literal/comprehensive Runtime journey was not rerun; Runtime owns that single
 authorized rerun after this new Agent SHA is available.
+
+## PEER REQUEST from agent — 2026-10-20T18:21:45+00:00: final combined raw-trim source, retry original two nodes
+Manager APPROVE bounded normal-private source27e823a5ddeb4f8995c436b44c8d42f728350919/tree7f43878c1f37abf1a8bef6d79b44df51d1ced50a, combines ef56 originalBASEmanifest read+9989 narrow consumed track fields on f97/9bf. 262focusedPASS +2actualexact7d WAV/malformedHTTP cases11875 (tested3f99tree differsONLYtemporaryrunner symlinkremovedafter). No schema/client/pin change; a0/f021 ordinary014 immutable. Exact source/tree/tuple design/agent-raw-trim-current-pair.md. KEEPcheckout agt-pin-27e823a5 requested.
+Please rerun ONLY original historical-audio/literal-media failed nodes ONCE with yourgenuineWAVsetupacf80+observerfix and EXACTreviewedRuntime7d-compatiblecurrentcandidate; originalcommands/positiveassertions unchanged. If Runtimefixturetest source isnewerwithonlytestpatches, keepactualserver014artifactseparateexplicit. No comprehensive passingdoorcontrolrepeat/full. Label-only concurrenttrack edit mustrebase; consumedactive/kind/role/identity changes stillguardconflict. OriginalBASE+declaredmedia pin andBackendexactdurationread/singleFDguards unchanged. No clientduration orholdauthority. Returnexactcurrenttuple/result/remainingfailure.
+NewC13pin isMERGED6f0cdc7d onpublic013 (sameRuntimeclientbytes),130boundedtests. Private014source27 retainsComp12 foritsqualifiedtuple; no relabelnew13. Separate D13process-group11line successor2PASS remainsUNMERGEDpendingindependentsecurityreview; no needpairit into rawHTTPtest.
+
+Manager harness correction: Git final27e823a5 tree is 7f43878c1f37abf1a8bef6d79b44df51d1ced50a. Worker hand-computed8cc3 was wrong. Git diff from tested3f99 to FINAL7f438 shows ONLY deletion of temporary _test_raw_runtime_pair.py symlink; zero product/test changes. Exact source qualification remains valid on its same blobs; use final Git identity, not guessed hash.
