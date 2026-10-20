@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
-import { captureParentClipAdd, executeParentClipAdd, finishParentClipAdd } from './parentClipAddCapture.ts';
+import type { CommandRecord, EditCommand, JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+import {
+  captureParentClipAdd, captureParentClipAddMedia, executeParentClipAdd, executeParentClipAddMedia,
+  finishParentClipAdd, finishParentClipAddMedia,
+} from './parentClipAddCapture.ts';
 import { AuthoredState, ClipMoveError, copy } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
 import fixture from './fixtures/recipe_m2_parent_clip_add.json';
@@ -182,5 +185,109 @@ describe('native parent-only literal clip.add capture', () => {
     const basis = roundtrip(captureParentClipAdd(first.bundle, 'parent', first.row));
     Object.assign(basis.bundle.parent, { opaque: value });
     expect(() => finishParentClipAdd(basis)).toThrow('finite JSON');
+  });
+});
+
+const parentMediaPin: MediaSelection = {
+  asset: 'reserved-new', generation_id: 'generation-new', variant_id: 'variant-new',
+  object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+  catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+};
+const parentMediaVerified: VerifiedMedia = {
+  selection: parentMediaPin, media_type: 'video/fixture', size: 123, duration_seconds: 6,
+};
+const parentMediaRow: Record<string, JSON> = {
+  id: 'born', clipType: 'video', asset: 'reserved-new', track: 'overlay', at: 3.003, hold: 4,
+  from: 2, to: 6, speed: 2, opaque: { keep: [null, false, 0] },
+};
+
+function parentMediaInput() {
+  const bundle = copy(existing.bundle);
+  const config = bundle.parent.config as Record<string, JSON>;
+  (config.tracks as Record<string, JSON>[]).push({ id: 'overlay', kind: 'visual', role: 'output', opaque: { lane: true } });
+  return bundle;
+}
+
+describe('native parent clip.add-media capture', () => {
+  it('matches the Agent birth claims, preserves opaque row/registry data, and retries from one basis', () => {
+    const bundle = parentMediaInput(), before = copy(bundle);
+    const basis = captureParentClipAddMedia(bundle, parentMediaRow, parentMediaPin, [parentMediaVerified]);
+    const result = finishParentClipAddMedia(basis);
+    const command = result.command;
+
+    expect(command).toMatchObject({
+      schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
+      args: { row: parentMediaRow, media: parentMediaPin }, intent: {}, resolved: [],
+      bindings: { 'media.track': 'parent/track:overlay' },
+      created: ['parent/asset:reserved-new', 'parent/clip:born'],
+    });
+    expect(result.record.bindings).toEqual([
+      { key: 'media.owner', ref: 'parent', policy: 'fixed', dependencies: [] },
+      { key: 'media.track', ref: 'parent/track:overlay', policy: 'fixed', dependencies: [] },
+    ]);
+    expect(result.record.created).toEqual([
+      { ref: 'parent/asset:reserved-new', kind: 'asset', owner: 'parent' },
+      { ref: 'parent/clip:born', kind: 'clip', owner: 'parent' },
+    ]);
+    expect(result.record.writes.slice(0, 2)).toEqual([
+      { ref: 'parent/asset:reserved-new', path: [], before: { state: 'absent' },
+        after: { state: 'present', value: {
+          media_id: parentMediaPin.object_id, type: 'video', generationId: 'generation-new', variantId: 'variant-new',
+        } } },
+      { ref: 'parent/clip:born', path: [], before: { state: 'absent' },
+        after: { state: 'present', value: parentMediaRow } },
+    ]);
+    expect(result.record.dependencies).toEqual([{ key: 'media.new', kind: 'media', pin: parentMediaPin, policy: 'exact' }]);
+    expect(result.record.reads.map((read) => `${read.ref}:${read.path.join('.')}`)).toEqual([
+      'parent:config.output.fps', 'parent/source:source_window', 'parent/collection:track:', 'parent/track:overlay:',
+      'parent/collection:occurrence:', 'occurrence:occ-a:placement.track',
+      'occurrence:occ-a:track', 'occurrence:occ-b:placement.track', 'occurrence:occ-b:track',
+      'parent/collection:asset:', 'parent/asset:reserved-new:', 'parent/collection:clip:', 'parent/clip:born:',
+    ]);
+    const resultAssets = (result.bundle.parent.registry as Record<string, JSON>).assets as Record<string, JSON>;
+    const originalAssets = (bundle.parent.registry as Record<string, JSON>).assets as Record<string, JSON>;
+    expect(resultAssets.picture).toEqual(originalAssets.picture);
+    expect(resultAssets['reserved-new']).toEqual({
+      media_id: parentMediaPin.object_id, type: 'video', generationId: 'generation-new', variantId: 'variant-new',
+    });
+    expect(clips(result.bundle).at(-1)).toEqual(parentMediaRow);
+    expect((result.bundle.parent.config as Record<string, JSON>).clips).toEqual(result.bundle.parent.clips);
+    expect(bundle).toEqual(before);
+    expect(finishParentClipAddMedia(roundtrip(basis))).toEqual(result);
+    expect(executeParentClipAddMedia(bundle, command, [parentMediaVerified])).toEqual(result);
+  });
+
+  it('refuses stale track, occurrence-owner, and media-selection inputs atomically', () => {
+    const original = parentMediaInput();
+    const basis = captureParentClipAddMedia(original, parentMediaRow, parentMediaPin, [parentMediaVerified]);
+
+    for (const change of ['track', 'owner', 'selection'] as const) {
+      const bundle = copy(original);
+      const command = copy(basis.command);
+      const inputs = copy(basis.verifiedMedia);
+      if (change === 'track') {
+        (bundle.parent.config as Record<string, JSON>).tracks = [
+          ...((bundle.parent.config as Record<string, JSON>).tracks as JSON[]), { id: 'new-track', kind: 'visual' },
+        ];
+      } else if (change === 'owner') {
+        (bundle.placements[0] as Record<string, JSON>).placement = { track: 'overlay' };
+      } else {
+        (command.args.media as Record<string, JSON>).catalog_digest =
+          'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc';
+      }
+      const before = copy(bundle);
+      expect(() => executeParentClipAddMedia(bundle, command, inputs)).toThrow();
+      expect(bundle).toEqual(before);
+    }
+  });
+
+  it('keeps an exact existing raw binding without creating a second asset authority', () => {
+    const bundle = parentMediaInput();
+    const assets = (bundle.parent.registry as Record<string, JSON>).assets as Record<string, JSON>;
+    assets['reserved-new'] = { media_id: parentMediaPin.object_id, type: 'video', generationId: 'generation-new', variantId: 'variant-new' };
+    const result = finishParentClipAddMedia(captureParentClipAddMedia(bundle, parentMediaRow, parentMediaPin, [parentMediaVerified]));
+    expect(result.command.created).toEqual(['parent/clip:born']);
+    expect(result.record.writes.every((write) => write.ref !== 'parent/asset:reserved-new')).toBe(true);
+    expect((result.bundle.parent.registry as Record<string, JSON>).assets).toHaveProperty('reserved-new');
   });
 });
