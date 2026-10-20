@@ -1,4 +1,5 @@
 import type { CapturedClipScalarEdit } from '../../commands/clipScalarGesture.ts';
+import type { ClipParamsCapturePort } from '../../commands/clipParamsGesture.ts';
 import { useMemo, useRef, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -52,6 +53,8 @@ export interface ClipPanelProps {
   deviceClass: TimelineDeviceClass;
   hasPredecessor: boolean;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  /** Selected-pack PARAM edits use the command-session carrier from the mounted editor. */
+  selectedParam?: ClipParamsCapturePort;
   onScalarEditStart?: () => CapturedClipScalarEdit;
   onResetPosition: () => void;
   onClose: () => void;

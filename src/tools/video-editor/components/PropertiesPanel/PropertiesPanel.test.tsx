@@ -109,8 +109,10 @@ vi.mock('@/tools/video-editor/components/PropertiesPanel/AssetPanel', () => ({
 vi.mock('@/tools/video-editor/components/PropertiesPanel/ClipPanel', () => ({
   NO_EFFECT: 'no-effect',
   getVisibleClipTabs: () => ['effects', 'timing', 'position', 'audio', 'text'],
-  ClipPanel: ({ onDelete }: { onDelete?: () => void }) => (
-    <div data-testid="mock-clip-panel">Clip panel{onDelete && <button type="button" onClick={onDelete}>Delete clip</button>}</div>
+  ClipPanel: ({ onDelete, selectedParam }: { onDelete?: () => void; selectedParam?: unknown }) => (
+    <div data-testid="mock-clip-panel" data-selected-param={selectedParam ? 'present' : 'missing'}>
+      Clip panel{onDelete && <button type="button" onClick={onDelete}>Delete clip</button>}
+    </div>
   ),
 }));
 
@@ -217,6 +219,7 @@ function createShaderSnapshot() {
 
 function createEditorOps() {
   return {
+    selectedParam: { capture: vi.fn() },
     selectClip: vi.fn(),
     clearSelection: vi.fn(),
     handleUpdateClips: vi.fn(),
@@ -303,6 +306,12 @@ describe('PropertiesPanel registry surfaces', () => {
     rerender(<PropertiesPanel visible={false} />);
     rerender(<PropertiesPanel visible />);
     expect(ops.setActiveClipTab).toHaveBeenCalledWith(tab);
+  });
+
+  it('forwards the mounted selected PARAM carrier through the clip panel boundary', () => {
+    render(<PropertiesPanel />);
+
+    expect(screen.getByTestId('mock-clip-panel')).toHaveAttribute('data-selected-param', 'present');
   });
 
   it.each([['phone', 1], ['tablet', 1], ['desktop', 0]] as const)('Delete clip on %s leaves nothing picked (clears: %s)', (deviceClass, clears) => {

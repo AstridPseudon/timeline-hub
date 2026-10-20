@@ -15,7 +15,8 @@ export function AstridElementParams({
   readOnly,
   registry,
   onChange,
-}: Pick<ClipPanelProps, 'clip' | 'readOnly' | 'registry' | 'onChange'>) {
+  selectedParam: selectedParamProp,
+}: Pick<ClipPanelProps, 'clip' | 'readOnly' | 'registry' | 'onChange' | 'selectedParam'>) {
   useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
   const runtime = useVideoEditorRuntime();
   const editorData = useTimelineEditorDataSafe();
@@ -50,7 +51,7 @@ export function AstridElementParams({
     if (reference?.packId) {
       setDraftParams(next.params);
       setParamError(null);
-      const port = editorOps?.selectedParam;
+      const port = selectedParamProp ?? editorOps?.selectedParam;
       const current = editorData?.data;
       if (!port || !current || !port.resolveAuthority) {
         setParamError('Selected PARAM schema carrier is unavailable; Agent retained-read support is required');
