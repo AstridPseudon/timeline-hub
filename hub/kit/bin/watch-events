@@ -30,6 +30,10 @@ while true; do
   dc=$(grep -cE '^\|[^|]*\|.*\| *DELETED' $ORCH/design/deletion-ledger.md 2>/dev/null); dc=${dc:-0}
   [ "$dc" != "$(cat $ORCH/.ledger_deleted 2>/dev/null)" ] && { echo "$dc" > $ORCH/.ledger_deleted; touch $ORCH/.ledger_deleted_changed; }
   [ $(( now - $(stat -c %Y $ORCH/.ledger_deleted_changed 2>/dev/null || echo $now) )) -gt 7200 ] && emit "NO_DELETIONS_2H at $dc $(date -u +%Y%m%dT%H)"
+  # lead health (2026-10-20, leads moved to Sonnet): each remote lead keeps hub/status/<area>-lead.md fresh; alarm if over 75 min old
+  for m in app viewing app2; do f=/home/user/timeline-hub/hub/status/$m-lead.md; [ -f $f ] || continue
+    la=$(( (now - $(git -C /home/user/timeline-hub log -1 --format=%ct -- hub/status/$m-lead.md 2>/dev/null || echo $now)) / 60 ))
+    [ $la -gt 75 ] && emitk "LEAD_QUIET $m $(date -u +%Y%m%dT%H)" "LEAD_QUIET $m lead line ${la}m old"; done
   last=$(cat $ORCH/.last_tick 2>/dev/null || echo 0)
   if [ $((now-last)) -ge 3600 ]; then emit "TICK_DUE $last"; fi
   sleep 20

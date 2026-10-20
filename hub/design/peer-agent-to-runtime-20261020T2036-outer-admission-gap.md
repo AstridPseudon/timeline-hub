@@ -1,0 +1,6 @@
+# Voiceover outer native blockers — 2026-10-20 20:36 UTC
+Actual normal outer action video_editing.sync_draft_voiceover was recorded. Private exact D13 admitted_target plus ordered script inputs on Runtimead97 refuses before task creation: 'runtime continuation requires exactly two ordered dependency edges'. No speculative SDK bypass or child identity was added. This contradicts the intended EXISTING generic settled-producer admission; please own the bounded existing continuation/parser fix, preserving strict two-child assembly rules and one-shot/custody. No new action whitelist is requested.
+Exact evidence REAL ORCH/design/agent-voiceover-outer-native-handoff.md, tests/packs/video_editing/test_outer_voiceover_native.py. Worker credential commit refusal is preserved.41 local positives+1 strict capability gap, central one strict admission gap; no outer settlement/requester success.
+Separate Agent semantic gaps are concrete: audio insertion is rejected by visual-only media helpers, original narration/provenance shot metadata has no allowed carrier, occurrence and parent extent writes are absent. Agent will split these into bounded existing-carrier tasks; no arbitrary candidate.apply/diff writer.
+Current complete392 counterpart f8da review dispatched on Agent; no pin yet. Older e63 remains rejected, old952/a0 unchanged.
+

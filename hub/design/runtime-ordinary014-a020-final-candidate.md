@@ -1,61 +1,80 @@
-# Runtime ordinary014 a020 final candidate
+# Runtime ordinary014 final adoption handoff
 
-## Result
+**Release-request summary — not a publication, pin, merge, or activation.**
+The harness-assigned final Runtime candidate is the test-only successor below.
+The published Runtime `0.2.13` tuple in `runtime-current-tuple.md` is
+unchanged.
 
-Forwarded the exact test-only delta from `5988a3b38293a82175052e84a2717ae5578b61dd`
-onto committed candidate `616d2111f35937f311330ffebc8610d21bf80f74`.
-No product, schema, generator, artifact, release, pin, or adoption changes were
-made. The only worktree change is the appended test in
-`tests/test_timeline_clip_replacement.py`.
+## Final candidate identity
 
-## Identity
+| Field | Value read from the candidate or its lock/metadata files |
+| --- | --- |
+| Final Runtime server commit / tree | `fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3` / `69abf4e2a8340d7d39a955d71d08afbf3a311a35` |
+| Reviewed candidate parent / tree | `616d2111f35937f311330ffebc8610d21bf80f74` / `8e7b22f073b4ff3f21e684af9cf853b07672ea2a` |
+| Current integration commit / tree | `a020a1c77a07aa657efb60b0442450209e55e470` / `9243cb9227d97515bf87a46bd694a7c72c520c04` |
+| Common base commit / tree | `d1ea66bb749ce4f696fec440eb6dc0b5ad86bd87` / `3bf3ac159580cece24e3321ffc6c3a44b42bf67b` |
+| Test-only prerequisite carried | `5988a3b38293a82175052e84a2717ae5578b61dd`; only `tests/test_timeline_clip_replacement.py` changes from `616d2111` to final |
+| Ordinary source/client producer | `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`, tree `4b7dd0fe44be973c344bab3de568eaf0bdd28476` |
+| Current guard identity | Runtime product guard/history implementation files are byte-identical across the reviewed candidate, current integration, and final candidate; the final delta is test-only |
+| Contract/client version | `0.2.14` (unpublished); Python and TypeScript generated metadata agree |
+| Health/handshake schema digest | `workspace.v1`; `sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59` |
+| Raw command schema | `contract/schemas/edit-command.json`, `sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`; 55 definitions / 29 command operations |
+| Artifact manifest | Version `sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa`; `contract/artifacts.json` digest `sha256:ecda762ebe682f266395161af055921c3db33ee9914fb00860626e7e4852d815`; 75 entries, 0 mismatches |
 
-- Committed candidate SHA: `616d2111f35937f311330ffebc8610d21bf80f74`
-- Committed candidate tree: `8e7b22f073b4ff3f21e684af9cf853b07672ea2a`
-- Current-base SHA: `a020a1c77a07aa657efb60b0442450209e55e470`
-- Current-base tree: `9243cb9227d97515bf87a46bd694a7c72c520c04`
-- Forwarded snapshot tree: `69abf4e2a8340d7d39a955d71d08afbf3a311a35`
-- Current-base parent: `d1ea66bb749ce4f696fec440eb6dc0b5ad86bd87`
+The generated client, raw schema, artifact manifest, and Runtime bundle schema
+are the ordinary014 `a0dca169`/`f021`/`6ba7` tuple. No private `392` or `613`
+material is part of this candidate.
 
-The final tree is the central test-service snapshot tree for the exact three
-requested nodes; the local worktree remains intentionally uncommitted for the
-harness.
+## Existing qualification evidence
 
-## Exact qualification
-
-Named suite: `ordinary014-parent-agent7b3-integration`
+The exact native lane was run once on the final candidate snapshot:
 
 ```text
 env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-7b3e1205 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-7b3e1205 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/test_timeline_clip_replacement.py::test_native_parent_clip_swap_route_replaces_parent_media tests/test_timeline_clip_replacement.py::test_native_parent_clip_swap_route_refuses_parent_ownership_on_public013_schema tests/test_timeline_clip_replacement.py::test_rt02_project_shot_crud_native_replacement_retries_after_restart
 ```
 
-Result: **3 passed in 3.11s**.
+Result: **3 passed in 3.11s**. Original successful workflows and assertions
+remain strict. No renderer, browser, native repeat, or full-suite repeat was
+run for this handoff.
 
-Executed nodes:
+The following are separate frozen consumer proofs, not a relabeling of the
+Runtime candidate's native result:
 
-- `test_native_parent_clip_swap_route_replaces_parent_media`
-- `test_native_parent_clip_swap_route_refuses_parent_ownership_on_public013_schema`
-- `test_rt02_project_shot_crud_native_replacement_retries_after_restart`
+| Consumer proof | Frozen source actually used | Result and boundary |
+| --- | --- | --- |
+| Agent registered cohort `1020194213-7012` | Agent `7b3e1205a374443c46bad6b18753ef146e1e42c6`, tree `7d807bc27b1b237de7138c13672d2fa814a22f3f`; lock source `a0dca169…`, producer `f021…` | **2 passed / 300.96s**; registered proposal/requester outbox retry and restart, historical render admission, CAS/ffprobe, and guarded undo |
+| App2 Gate `58973` (service `1020195447-8973`) | Agent `3c4f6de4fa777323b3386c01c7266b619b86af6d`, tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`; lock source `a0dca169…`, producer `f021…` | **1 passed / 32.4s**; lost acknowledgement, newer local intent, exact retry, restart, undo, and zero-legacy traffic |
 
-Agent checkout identity: `7b3e1205a374443c46bad6b18753ef146e1e42c6`.
-Normal Runtime14a0 checkout identity: `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`,
-tree `4b7dd0fe44be973c344bab3de568eaf0bdd28476`. The Agent lock reads the same
-14a0 source commit and producer version.
+Both locks read from actual files as `source_commit: a0dca169…` and
+`producer_version: sha256:f021…`; neither proof authorizes adoption by itself.
 
-## Byte and artifact checks
+## Required coordinated pin steps
 
-- Outside `tests/test_timeline_clip_replacement.py`, the worktree is byte-identical to committed candidate `616d2111`.
-- Runtime guard/history files are byte-identical between candidate `616d2111` and merged current `a020a1c`.
-- `contract/artifacts.json`: 75 entries, 0 declared-byte/hash mismatches.
-- Artifact version read from the manifest: `sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa`.
-- `contract/artifacts.json` file digest: `sha256:ecda762ebe682f266395161af055921c3db33ee9914fb00860626e7e4852d815`.
-- Generated release metadata: contract version `0.2.14`.
-- Generated client metadata schema digest: `sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59`.
-- Shared command schema file digest: `sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
-- Runtime bundle schema file digest: `sha256:6d707cb84a232f6ecd7e17c09c8722a379bb76b6a9d2869efea691d6bd8366e3`.
-- Normal14 client `__init__.py` and `contract_metadata.py` are byte-identical to the Runtime candidate.
-- `git diff --check`: passed.
+After the remaining gates below and an owner version/adoption decision:
 
-No renderer, App browser, 64-schema, 143-cohort, full-suite, release, pin, or
-integration-adoption operation was run. Owner decision remains after handoff.
+1. Agent updates `runtime.lock.json` with its normal `vendor_lock.py update`
+   procedure against the ordinary014 producer checkout, then runs
+   `vendor_lock.py check`; App does the equivalent with
+   `scripts/vendor-lock.mjs update` and `check`.
+2. Each owner records the resulting final consumer SHA and reruns its paired
+   qualification against this exact Runtime server tree. Generated bytes,
+   lock, version, schema digest, and artifact version move as one unit.
+3. Treat Agent `7b3` and Agent `3c4`/App2 as one coordinated cohort. Do not
+   move the integration pin, publish `0.2.14`, or activate either consumer
+   from this handoff alone. Keep public `0.2.13` unchanged until that decision.
+
+## Remaining adoption gates
+
+- Current full `runtime-full-restore-integration-1020201708-8649` is
+  **environment-invalid**, not qualification evidence: **5409 passed, 36
+  failed (7 baseline + 29 floor failures), 92 errors, 18 skipped, 18
+  xfailed, 12 warnings**. Safe storage for a qualifying current full run and
+  the owner version/adoption decision remain open.
+- Requalify the current full only after safe storage is established; do not
+  infer a release gate from `8649`.
+- No renderer/browser/native/full rerun is requested here. The native result
+  above is the three-test final-candidate evidence already obtained.
+
+This is a concrete reviewable request to proceed through those gates, not a
+release or consumer-pin action.
 
