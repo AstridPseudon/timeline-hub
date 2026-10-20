@@ -34,6 +34,7 @@ import type {
 } from '@/tools/video-editor/types/index.ts';
 import {
   canonicalizeTimelinePair,
+  cloneTimelineExtras,
   serializeTimelineConfigSnapshot,
 } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { buildAssetReferenceMap } from '@/tools/video-editor/lib/asset-registry.ts';
@@ -392,23 +393,10 @@ export const rowsToConfig = (
     output: { ...output },
     tracks: tracks.map((track) => ({ ...track })),
     clips,
+    ...(extras ? cloneTimelineExtras(extras) : {}),
   };
   if (pinnedShotGroups && pinnedShotGroups.length > 0) {
     config.pinnedShotGroups = clonePinnedShotGroups(pinnedShotGroups);
-  }
-  if (extras?.theme !== undefined) {
-    config.theme = extras.theme;
-  }
-  if (extras?.theme_overrides !== undefined) {
-    config.theme_overrides = extras.theme_overrides;
-  }
-  if (extras?.generation_defaults !== undefined) {
-    config.generation_defaults = extras.generation_defaults;
-  }
-  if (extras?.app !== undefined) {
-    // Extension project-data (project-data.write) must survive ordinary rows
-    // edits; it is not render state and must not be dropped on rebuild.
-    config.app = extras.app;
   }
   return serializeTimelineConfigSnapshot(config).config;
 };

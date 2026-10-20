@@ -57,8 +57,10 @@ it('compiles actual flat local and accepted command projections without a graph,
     { id: 'c', track: 'V1', at: 2, hold: 1, clipType: 'hold' },
   ];
   parent.clips = clips;
-  parent.config = { ...parent.config as object, clips };
+  const opaque = JSON.parse('{"opaque":{"retained":[null,false,[]]},"nullable":null,"ordered":[0,false,null,[],{}],"__proto__":{"prototype":null},"constructor":false,"prototype":[]}');
+  parent.config = { ...parent.config as object, ...opaque, clips };
   raw.parent_revision.content_digest = fixtureDigest(parent);
+  const original = structuredClone(raw);
   const env = await environment(raw);
   vi.stubGlobal('indexedDB', env.factory);
   const held = new Set<string>();
@@ -121,6 +123,11 @@ it('compiles actual flat local and accepted command projections without a graph,
   expect(publicVector).toEqual({ fps: 30, tracks: [{ trackId: 'V1', clipIds: ['a', 'x', 'c'],
     incomingTransitions: [null, { T: 12 }, null] }] });
   expect(player.compiled).toEqual(publicVector);
+  for (const config of [verified.config, verified.resolvedConfig, player.config!]) {
+    expect(Object.fromEntries(Object.keys(opaque).map(key => [key, (config as unknown as Record<string, unknown>)[key]]))).toStrictEqual(opaque);
+    for (const key of Object.keys(opaque)) expect(Object.hasOwn(config, key)).toBe(true);
+    expect(config).not.toHaveProperty('editProjection');
+  }
   expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed r0');
 
   const gate = env.pause();
@@ -149,6 +156,16 @@ it('compiles actual flat local and accepted command projections without a graph,
   expect(player.compiled).toBeDefined();
   expect(player.compiled).toEqual(compilePlayerTransitions(accepted.data.resolvedConfig));
   expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed r1');
+  for (const { data } of installed) {
+    for (const config of [data.config, data.resolvedConfig]) {
+      expect(Object.fromEntries(Object.keys(opaque).map(key => [key, (config as unknown as Record<string, unknown>)[key]]))).toStrictEqual(opaque);
+      for (const key of Object.keys(opaque)) expect(Object.hasOwn(config, key)).toBe(true);
+      expect(config).not.toHaveProperty('editProjection');
+    }
+  }
+  expect(player.config).toBe(accepted.data.resolvedConfig);
+  expect(raw).toStrictEqual(original);
+  expect(JSON.stringify(env.commits())).not.toContain('editProjection');
   const acceptedVector = player.compiled;
   vi.useFakeTimers();
   runtime = { ...runtime, shots: { ...runtime.shots, canonicalComposition: adapter.prepare(structuredClone(fixture)) } };

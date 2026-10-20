@@ -72,7 +72,7 @@ async function identity(kind: string, ...parts: string[]): Promise<string> {
   return `${kind}-${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
-function remapItems(payload: ObjectValue, remap: Map<string, string>): ObjectValue {
+export function remapItems(payload: ObjectValue, remap: Map<string, string>): ObjectValue {
   const result = structuredClone(payload);
   for (const item of rows('items' in result ? result.items : [])) {
     const identity = id('item_id' in item ? item.item_id : item.id);

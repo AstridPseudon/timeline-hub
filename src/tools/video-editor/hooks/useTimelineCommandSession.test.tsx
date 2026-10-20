@@ -359,8 +359,8 @@ describe('mounted timeline command session', () => {
         tracks: [{ id: 'V1', kind: 'visual', label: 'retained rename' }],
         clips: [expect.objectContaining({ id: 'x', at: moveFirst ? 5 : 1 })] } } });
     expect(kept!.draft.config).not.toHaveProperty('x_absent');
-    expect(hook.result.current.commit.data!.config).not.toHaveProperty('x_null');
-    expect(hook.result.current.commit.data!.resolvedConfig).not.toHaveProperty('x_null');
+    expect(hook.result.current.commit.data!.config).toMatchObject(opaque);
+    expect(hook.result.current.commit.data!.resolvedConfig).toMatchObject(opaque);
     expect(saveTimelineAtHead).toHaveBeenCalledWith('timeline-commit', next.config, base, next.registry, undefined);
     expect(env.commits()).toHaveLength(moveFirst ? 1 : 0);
     hook.unmount();

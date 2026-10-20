@@ -89,7 +89,8 @@ async function readFixture(testCase: typeof cases[number]) {
   const image = (id: string, at: number) => ({ id, at, track: 'V1', clipType: 'hold' as const, hold: 1, asset: id });
   const clips = [...(testCase.first ? [] : [image('a', 0)]),
     { ...image('b', testCase.at), transition: { type: 'fade', duration: testCase.duration } }, image('c', testCase.at + 3)];
-  const config: TimelineConfig = { tracks: [track], clips,
+  const opaque = JSON.parse('{"opaque":{"retained":[null,false,[]]},"nullable":null,"ordered":[0,false,null,[],{}],"enabled":false,"count":0,"label":"","__proto__":{"prototype":null,"__proto__":[]},"constructor":false,"prototype":[]}');
+  const config: TimelineConfig = { ...opaque, tracks: [track], clips,
     output: { fps: 30, resolution: '1920x1080', file: 'read.mp4' } };
   const registry = { assets: Object.fromEntries(clips.map(clip => [clip.id, {
     type: 'image' as const, file: `https://example.test/${clip.id}.png`,
@@ -130,7 +131,7 @@ async function readFixture(testCase: typeof cases[number]) {
   expect(data.config.clips).toEqual(clips);
   expect(calls.filter(call => call.includes('/composition-revisions/'))).toHaveLength(1);
   expect(calls.every(call => call.startsWith('GET ') || call.endsWith('/inspect') || call.endsWith('/handshake'))).toBe(true);
-  return { provider, data, document, calls };
+  return { provider, data, document, calls, opaque, original: structuredClone(document) };
 }
 
 function deferred<T>() {
@@ -241,12 +242,22 @@ async function initialRead(testCase: typeof cases[number]) {
     clips: mounted.document.parent_revision.payload.clips as TimelineConfig['clips'] }, mounted.initial.registry,
     async file => file, mounted.initial.configVersion + 1, undefined, mounted.initial.head);
   expect(data).toEqual({ ...expected, editProjection: { kind: 'accepted', head } });
+  for (const config of [mounted.initial.config, mounted.initial.resolvedConfig, data.config, data.resolvedConfig]) {
+    expect(Object.fromEntries(Object.keys(mounted.opaque).map(key => [key, (config as unknown as Record<string, unknown>)[key]]))).toStrictEqual(mounted.opaque);
+    for (const key of Object.keys(mounted.opaque)) expect(Object.hasOwn(config, key)).toBe(true);
+    expect(Object.getPrototypeOf(config)).toBe(Object.prototype);
+    expect(Object.hasOwn(config, 'absent')).toBe(false);
+    expect(config).not.toHaveProperty('editProjection');
+  }
+  expect(mounted.document).toStrictEqual(mounted.original);
   expect(mounted.headRevisionRef.current).toEqual(data.head);
   expect(mounted.configVersionRef.current).toBe(data.configVersion);
   // Every delivered props tuple is wholly raw or wholly projected, including
   // the 150ms mailbox interval. A head or saved status alone never adds a vector.
   for (const props of player.delivered) {
     expect(props.previewRevision).toEqual({ kind: 'committed', revisionId: head.revisionId });
+    expect(Object.fromEntries(Object.keys(mounted.opaque).map(key => [key, (props.config as unknown as Record<string, unknown>)[key]]))).toStrictEqual(mounted.opaque);
+    expect(props.config).not.toHaveProperty('editProjection');
     if (props.config === mounted.initial.resolvedConfig) expect(props.compiledTransitions).toBeUndefined();
     else {
       expect(props.config).toBe(data.resolvedConfig);
