@@ -57,7 +57,7 @@ import {
   type VideoEditorSequenceComponentCatalog,
 } from '@/tools/video-editor/hooks/useSequenceResources.ts';
 import { SequenceComponentRegistryProvider } from '@/tools/video-editor/sequences/SequenceComponentRegistryContext.tsx';
-import { TimelineStoreProvider } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { TimelineStoreProvider, usePublishTimelineReader } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineState } from '@/tools/video-editor/hooks/useTimelineState.ts';
 import { PUBLIC_TIMELINE_SERVICE_HOOKS, type TimelineHostServiceHooks } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
 import type { UseTimelineStateResult } from '@/tools/video-editor/hooks/useTimelineState.types.ts';
@@ -700,7 +700,7 @@ export function useEditorRuntimeSync({
       }),
     [store, projectId, timelineId, extensionRuntime.requirements, shotComposition],
   );
-  if (store.getState().timelineReader !== timelineReader) store.setState?.({ timelineReader });
+  usePublishTimelineReader(store, timelineReader);
   assembly.liveSceneOperationPort.setReader(timelineReader);
 
   // One ProposalRuntime per provider mount, stable for the provider lifetime.

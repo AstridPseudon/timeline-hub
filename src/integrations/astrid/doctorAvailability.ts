@@ -8,6 +8,7 @@
  */
 
 import { astridBase } from '@/integrations/runtime/connection.ts';
+import { probeBridgeSession } from '@/shared/auth/bridgeSession.ts';
 import {
   inspectAstridCapabilities,
   type AstridCapability,
@@ -20,6 +21,19 @@ export type AstridDoctorAvailability =
   | { status: 'available' }
   | { status: 'degraded'; unavailable: AstridCapability[]; unknown: AstridCapability[]; reason: string }
   | { status: 'unavailable'; reason: string };
+
+/**
+ * Boot-time check: is the local Runtime answering at all? The launch decision (show the reconnect step or
+ * not) needs only liveness, so it reads `/v1/health` alone. The full census above also probes a sentinel
+ * media object, which on an empty gallery is a deliberate 404 on every launch; only the setup step and the
+ * doctor read, which show per-capability support, pay for that.
+ */
+export async function checkAstridRuntimeReachable(
+  baseUrl: string = astridBase(),
+): Promise<{ status: 'available' } | { status: 'unavailable'; reason: string }> {
+  const session = await probeBridgeSession(baseUrl);
+  return session.ok ? { status: 'available' } : { status: 'unavailable', reason: session.reason };
+}
 
 export async function checkAstridDoctorAvailability(
   baseUrl: string = astridBase(),

@@ -14,7 +14,7 @@ vi.mock("@/integrations/runtime/client.ts", () => ({
 }));
 
 vi.mock("@/integrations/astrid/doctorAvailability.ts", () => ({
-  checkAstridDoctorAvailability: checkAvailabilityMock,
+  checkAstridRuntimeReachable: checkAvailabilityMock,
 }));
 
 import { ASTRID_SETUP_COMPLETE_KEY, useOnboarding } from "../useOnboarding";
