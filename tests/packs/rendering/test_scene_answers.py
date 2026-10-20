@@ -333,14 +333,14 @@ def test_prepared_host_query_reports_unavailable_without_fallback(monkeypatch, t
         )
 
 
-def _write_registered_scene_pair(tmp_path):
+def _write_registered_scene_pair(tmp_path, *, tracks=None, clips=None):
     timeline = tmp_path / "timeline.json"
     Timeline.from_config({
         "theme": "banodoco-default",
-        "tracks": [{"id": "picture", "kind": "visual", "label": "Picture"}],
-        "clips": [{"id": "prepared:plate", "track": "picture",
-                   "clipType": "am-snap-plate", "at": 0, "hold": 1,
-                   "params": {"fill": "#F7F4ED"}}],
+        "tracks": tracks or [{"id": "picture", "kind": "visual", "label": "Picture"}],
+        "clips": clips or [{"id": "prepared:plate", "track": "picture",
+                             "clipType": "am-snap-plate", "at": 0, "hold": 1,
+                             "params": {"fill": "#F7F4ED"}}],
     }).dump(timeline)
     assets = tmp_path / "assets.json"
     assets.write_text(json.dumps({"assets": {}}), encoding="utf-8")
@@ -395,6 +395,52 @@ def test_prepared_host_query_runs_registered_public_node_inside_real_root(
     ]
     assert rows[0]["layers"][0]["clipId"] == "prepared:plate"
     assert rows[0]["layers"][0]["bounds"] == {
+        "status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080},
+    }
+    assert not (tmp_path / ".remotion-props.json").exists()
+    assert not list((tmp_path / "staging").glob(".remotion-runtime-*"))
+    assert not list((project / "public" / "astrid-effects").glob("*"))
+
+
+def test_prepared_host_query_replaces_named_occluder_semantic_presence_positive(
+    native_host, host_project, tmp_path, monkeypatch,
+):
+    project, _ = host_project
+    timeline, assets = _write_registered_scene_pair(
+        tmp_path,
+        tracks=[
+            {"id": "occluder", "kind": "visual", "label": "Occluder"},
+            {"id": "presenter", "kind": "visual", "label": "Presenter"},
+        ],
+        clips=[
+            {"id": "film:occluder", "track": "occluder", "clipType": "am-snap-plate",
+             "at": 0, "hold": 1, "params": {"fill": "#F7F4ED"}},
+            {"id": "film:presenter", "track": "presenter", "clipType": "am-presenter",
+             "at": 0, "hold": 1,
+             "params": {"focus": {"x": 160, "y": 90}, "mouth": {"x": 151, "y": 104, "w": 19},
+                        "seed": 7, "words": []}},
+        ],
+    )
+    node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+    assert node.ok and node.version == "v20.19.4"
+
+    from astrid.packs.rendering.rendering.renderers.remotion import run
+
+    monkeypatch.setattr(run, "_available_remotion_port", lambda: 32101)
+    monkeypatch.setattr(run, "_validate_project_dir", lambda _: _real_runtime_tools(project, node))
+    rows = scene_answers._prepared_host_frames_at(
+        timeline, assets, [0], project_dir=project,
+        **_prepared_query_kwargs(tmp_path),
+    )
+
+    row = rows[0]
+    assert (row["coverage"], row["content"]) == ("COVERED", "EMPTY")
+    assert [(layer["clipId"], layer["z"], layer["visible"]) for layer in row["layers"]] == [
+        ("film:presenter", 1, False), ("film:occluder", 0, True),
+    ]
+    occluder = row["layers"][1]
+    assert occluder["opaqueSupport"] == "rect"
+    assert occluder["bounds"] == {
         "status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080},
     }
     assert not (tmp_path / ".remotion-props.json").exists()
