@@ -133,6 +133,8 @@ for r in agent runtime app composition; do
   fi
 done
 
+# repair old metas whose remote_request= value was written unquoted (breaks `. meta`)
+for m in $ORCH/workers/*/meta; do grep -q "^remote_request=[^'\"$]" "$m" 2>/dev/null && python3 -I -c "import sys,shlex;p=sys.argv[1];L=open(p).read().splitlines();open(p,'w').write(chr(10).join([('remote_request='+shlex.quote(l.split('=',1)[1])) if l.startswith('remote_request=') and not l.split('=',1)[1][:1] in ('\\'','\"','\$') else l for l in L])+chr(10))" "$m"; done
 # --- merge requests addressed to my home repos ---
 # A remote request is NOT merged automatically: hub-sync fetches the branch, creates the worker record bin/merge needs,
 # and asks the repo's owning manager (INBOX) to review it and run bin/request-merge. A request whose sha changed

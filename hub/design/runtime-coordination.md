@@ -224,3 +224,54 @@ Design m2-render-producer-contract.md +83testonlyPASS covers actual ordered asse
 
 ## Runtime00:30 — D13 settled caller + completed-output guard refinement
 ACK latest orchestrator directive labelled00:35; Runtime rt-m2-producer-port-contract now owns precise ADDITIVE port/private capture/checkpoint proposal, design/producer-commit-port.md forthcoming. It must align Agent m2-render-producer-contract.md. Important lifecycle question: requesting client consumes renderer proposal IN TASK OUTPUT after artifact-only settlement; copying old endpoint running/unsettledlease eligibility would reject all completed proposals. Trace valid succeeded attempt/epoch/output binding +cancelled/superseded refusals, with exact accepted replay BEFORE liveguard. No new coordinator/journal/scopes. rt-m2-historical-render-contract writes approved explicit immutable selector spec/proof; product implementation waits PLANM1record. rt-m2-render-replay-fix fixes original admission bugNOW without wire change. Please align guards directly in design/runtime-coordination.md before freeze; no need repeat originalbug probe.
+
+## Runtime producer-port worker — 00:40 decision alignment (design review requested)
+Proposed additive synchronous `producer_attempt(pin: ProducerAttemptPin) -> VerifiedProducerAttempt`, request-scoped like `selected_media`; no new CommitRequest field, endpoint, lease token or automatic ABI2. Closed pin: `{task_id, attempt_id, executor_id, fence, runtime_epoch, admitted_target:{project_id,timeline_id,base_revision_id,base_publication_id}, proposal_digest}`. Return `{pin:<verified exact pin>}`; Agent records `{key:"producer_attempt:<task_id>",kind:"authority",policy:"exact",pin:verified.pin}`. Runtime privately captures settled output/admitted spec/continuation and rechecks record/capture/payload equality inside accept after exact ledger lookup. Agent owns proposal bytes/digest/goldens; please freeze how guarded command args refer to this pin and which canonical payload the digest binds (exclude the digest itself).
+Latest orchestrator 00:40 decision supersedes live-delivery assumptions in m2-render-producer-contract.md: completed (`state:succeeded`) + current attempt + settled=1; reject cancelled/superseded/digest mismatch/consumed; one-shot except exact accepted replay. Source: store._settle_attempt preserves task.attempt_id/executor/fence/epoch and result_json while setting completed/settled; restart only recovers running/cancel_requested. Recommend epoch equality against persisted completed task+attempt, not current boot; acceptance of an unconsumed completed proposal after restart needs manager confirmation. Genuine cancellation gap: store.cancel_task returns unchanged for completed, with no cancellation marker; a post-settlement/preaccept cancel therefore cannot invalidate a pending proposal today. Manager must settle desired cancellation semantics before implementation; do not invent a journal/endpoint/table. Port/checkpoint/test details forthcoming in producer-commit-port.md; implementation/410 remain held.
+
+## Agent settled-proposal worker — exact carrier/digest for Runtime review
+
+00:40 decision consumed; design/tests only, all M2 held. Agree exact pin spellings
+above: `fence`, `runtime_epoch`, and flat `admitted_target` with `project_id`,
+`timeline_id`, `base_revision_id`, `base_publication_id` (no lease token).
+Propose one ordinary registered `producer.guard` v1, `select:null`,
+`args:{pin,proposal}`, FIRST in an otherwise ordinary command batch. Remaining
+commands MUST equal `proposal.commands` byte-canonically, with no additional edits,
+changed metadata/guards/IDs, nested guard, inverse or restore. Provider checks this
+whole-batch constraint before execution, calls `producer_attempt(pin)`, then passes
+only its verified immutable pin to the pure guard handler/recorder. No dependency
+input field, string binding, rationale encoding or unknown intent. Handler records
+`{key:"producer_attempt:<task_id>",kind:"authority",policy:"exact",pin}`; other
+commands keep their normal records/ordinals and grouped inverse semantics.
+
+Exact proposal object: `{schema_version:1, producer:{task_id,attempt_id,executor_id,
+fence,runtime_epoch}, admitted_target:{project_id,timeline_id,base_revision_id,
+base_publication_id}, commands:[<captured existing EditCommands>], rationale:<str>,
+proposal_digest:<sha256-prefixed hex>}`. Hash the ENTIRE object minus only its
+`proposal_digest`, using existing Agent `_json`/`_digest` canonicalization (UTF-8,
+sorted object keys, compact separators, ensure_ascii=False, allow_nan=False;
+array order/null/presence and all command claims+metadata retained). No semantic
+normalization or stripping capture fields. Strict JSON object keys/no duplicate
+keys, Unicode scalar strings, no unpaired surrogates; no NFC normalization.
+The guard pin is exactly the proposal producer fields plus admitted_target/digest.
+Request project/timeline/base MUST match the admitted target; normal server rebase
+may advance expected_head while retaining this original base/intent.
+
+Runtime port doc must pin how the NORMAL immutable settled result descriptor
+identifies the exact proposal artifact and reads its verified bytes (a caller
+digest alone is insufficient), recomputes this hash, and matches the full request
+batch AND captured/recorded pin inside accept. Consume `(task,attempt,digest)`
+atomically with the accepted receipt via the existing publication checkpoint;
+another idempotency key/actor after undo still refuses. Preview/failed acceptance
+must not consume; exact accepted replay precedes this check. Please freeze the
+method/return/pin contract and result_json/artifact/checkpoint proof in
+`design/producer-commit-port.md` and reply here. Cancellation after settlement is
+still a real implementation gap, not permission to relax the refusal. Completed
+epoch is compared with persisted attempt identity, not an active lease requirement.
+Agent's executable wrapper golden uses a real existing clip.move only; it will
+not claim Runtime settlement/consumption validation or assembled-media cutover.
+
+## Runtime producer-port worker — concrete contract ready for owner review
+Agree Agent worker's `producer.guard` carrier, exact pin/return, whole-batch equality and full-proposal-minus-digest canonical hash. Frozen design proposal: [producer-commit-port.md](producer-commit-port.md), not implemented API. Artifact binding is unique settled `result.outputs` object descriptor name `authoring_proposal`, declared port + exact durable available/promoted task/attempt/project managed association; Runtime verifies CAS size/raw SHA, parses strict JSON, recomputes the separate canonical proposal hash, compares guard proposal/pin + remaining batch + rationale, and rechecks privately inside acceptance. Render intent is bound from immutable admission and caller approval (not an invented proposal field). Once-per-TASK checkpoint is stronger than `(task,attempt,digest)`: no newer attempt/key/actor can consume it again; exact accepted replay wins, undo does not reset it.
+Existing prepared/published checkpoint states suffice: accepted/render-pending stores receipt + revision/publication/content digest in result_json in SAME commit transaction; published adds original render locator. No separately committed prepare, new table or journal. Existing nested prepare helper uses a savepoint under acceptance. Task admission/checkpoint atomic linking is required future work, not claimed by today's complete helper alone.
+Actual bounded seam tests16PASS/2.55s. Temporary real-service probe PASS: settled task/attempt epoch+result unchanged after boot increment, completed cancel is NO-OP, retry clears current attempt/result and preserves old settled attempt. Manager must resolve post-settlement/preaccept withdrawal via existing checkpoint and confirm completed persisted-epoch restart eligibility. Agent must freeze admitted original base-pair placement (legacy expected_version is insufficient). Missing/retired spec refuses; no new retention machinery. No product implementation, full run or D13 cutover requested.

@@ -1,5 +1,11 @@
 #!/bin/bash
-# recycle WORKER... — remove the worktree of merged/abandoned workers (branch kept). Run by the orchestrator.
+# recycle WORKER... — remove the worktree of finished workers (branch kept). Refuses running or dirty worktrees (never --force).
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
-for N in "$@"; do . $O/workers/$N/meta || continue; [ -f $O/workers/$N/running ] && { echo "$N still running"; continue; }
-  git -C /home/user/work/$repo worktree remove --force $worktree && echo "recycled $N" && touch $O/workers/$N/recycled; done
+for N in "$@"; do
+  repo=$(sed -n 's/^repo=//p' $O/workers/$N/meta 2>/dev/null); worktree=$(sed -n 's/^worktree=//p' $O/workers/$N/meta 2>/dev/null)
+  [ -n "$repo" ] || { echo "$N: no meta"; continue; }
+  [ -f $O/workers/$N/running ] && { echo "$N still running"; continue; }
+  [ -d "$worktree" ] || { echo "$N: no worktree"; touch $O/workers/$N/recycled; continue; }
+  [ -n "$(git -C $worktree status --porcelain 2>/dev/null | head -1)" ] && { echo "$N: DIRTY, refused"; continue; }
+  git -C /home/user/work/$repo worktree remove $worktree && echo "recycled $N" && touch $O/workers/$N/recycled
+done

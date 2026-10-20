@@ -89,3 +89,5 @@ PY
 Output: `historical immutable A readable: parent-1`; **ConflictError** `render canonical_head_revision_id does not match the canonical timeline`, details `expected: parent-1, actual: parent-C`; control FIRST current-C admission succeeded with authority `parent-C`. Exit 0; temporary realm removed on exit.
 
 **Ready for owner review; STOP.** Next slice: resolve actual coordinator actor/consumer, approve narrow port + historical admission contracts, then implement/test jointly with bundle #3. Existing infrastructure wins; all M2 remains held.
+
+Latest00:40decision supersedes live lease recommendations: settled current completed attempt, target+proposal_digest binding, one-shot digest consumed in same accept transaction after exact lookup. No lease token in history. Exact accepted replay wins after cancellation/expiry. Precise final contract being drafted in producer-commit-port.md.
