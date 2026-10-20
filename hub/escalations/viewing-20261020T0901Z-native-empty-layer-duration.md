@@ -1,0 +1,6 @@
+# Normal PCM native-layer join: retained extent seam needed
+07:58 grant2 implementation now exercises normalrun, full/window/layer nativeWAVs and success/error/cancel/retry lifetime:67PASS +59neighborsPASS/2oldxfail +8publicNodePASS;20newtests red onbase. It is NOT merge-ready: actual empty/sparse layer loses fullcompositionextent under originalclipfiltering.
+
+Executable example:10secondbottomplate+emptytoptrack, window[150,180) at30fps. Originalnativewindowvalid; selectedemptytopfilteredtimelinehas1frameextent, actualnormalguardrefuses windowbeyondcomposition. Oldrebasedrouteproduces1secondtransparentfill. Evidence flat design/handoff-vw-m3-pcm-native-window-resume-r1-REPORT.md and -empty-layer.py/json; nofakeauthoredorigin/durationstamps orRootedits.
+
+Recommend a narrow original-duration retention seam across service/Root usingexistingplainrenderfacts ifpossible, noRuntimeDTO/authorityprotocol; source/designworker vw-m3-empty-layer-duration-seam settlesexactfield/callers/tests now. Please approve boundedfollowupscope after its evidence. Meanwhile entire generalizedlayerchangeHELD; independentreviewcontinues, scene/currentports/rootwrapper/APIlanding continue. NoHTTP/MP4/parityclaim; graphs stillownerrepairheld.

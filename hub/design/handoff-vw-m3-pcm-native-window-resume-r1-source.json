@@ -1,0 +1,17 @@
+{
+  "base": "2019d7e69ceb9b10f18cc311e570d635b16c15d8",
+  "files": {
+    "astrid/core/rendering/service.py": "930f7d6914bc4cb36d65e266e7fbaf83e625e6ed9466ce6426551631f477ec22",
+    "astrid/core/timeline/banodoco_composer.py": "5cf8139312e813143adaf84c5a9a9e45d9ad6ce6be9a5dabd667df0048203a4f",
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py": "00e46437f1199488260fa6b3409297eddbb2b827ec7a1d0be1b6fff3fbf2b74a",
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": "37a43a6bfcc2806d09f0b9149c9301c2c833cd6a807c624c77e19076151b284a",
+    "tests/packs/rendering/test_normal_audio_run.py": "b49a1413f96a9569bf6dd9569cc0d455e2b13dc54fac77bbb56881cb01c7340c",
+    "remotion/package.json": "58460ce59e2473d74f44238a2e5e78e2d4bd8a79a0bd94e430f7ae5eb6c2778a",
+    "remotion/package-lock.json": "cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597",
+    "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "remotion/attempt-envelope-pcm.mjs": "db7bc06d2b3c9efecac015d59d965ef4dfa718e13f1ef303f190c3831bc95719",
+    "remotion/normal-audio-sources.mjs": "dc260d6980f3fc6ff0340b364d810cd4310cc3c663db836ab9c84f6ee5dd14e4",
+    "remotion/compiled-audio-source-clock.mjs": "6ce210e91547d8bca901dc23fe3b06eae0d463fa18d6e1cb79d23494f5145ffc",
+    "tests/editing_conformance/fixtures/audio_compile_contract.json": "47795de31397845d9f858485b3d9f30b703e2dac6c5b46cd46477f873b56ef99"
+  }
+}

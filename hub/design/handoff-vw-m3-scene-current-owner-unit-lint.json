@@ -1,0 +1,22 @@
+{
+  "astrid/packs/rendering/actions/timeline_visualize/composed_frame.py": {
+    "before": 3,
+    "after": 3,
+    "new_findings": []
+  },
+  "astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py": {
+    "before": 3,
+    "after": 3,
+    "new_findings": []
+  },
+  "astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py": {
+    "before": 11,
+    "after": 11,
+    "new_findings": []
+  },
+  "astrid/sdk/timeline_filmstrip.py": {
+    "before": 11,
+    "after": 11,
+    "new_findings": []
+  }
+}

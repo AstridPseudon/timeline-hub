@@ -1,0 +1,48 @@
+{
+  "astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py": true,
+  "tests/packs/rendering/test_capture_scene_labels.py": true,
+  "CaptureSceneLabels complete class": true,
+  "astrid/packs/rendering/rendering/renderers/remotion/run.py unchanged from base": true,
+  "astrid/core/timeline/scene_answers.py unchanged from base": true,
+  "remotion/src/Root.tsx unchanged from base": true,
+  "remotion/package.json unchanged from base": true,
+  "remotion/package-lock.json unchanged from base": true,
+  "pinned_artifact_sha256": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
+  "pinned_artifact_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-carry-final-review/candidate/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz",
+  "private_scope_topology": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-carry-final-review/pytest-source/capture-label-host1/remotion/node_modules/@remotion",
+      "real_directory": true,
+      "leaves": {
+        "layout-utils": true,
+        "media": true
+      }
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-carry-final-review/pytest-source/capture-label-host1/remotion/node_modules/@banodoco",
+      "real_directory": true,
+      "leaves": {
+        "timeline-composition": false
+      }
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-carry-final-review/pytest-source/capture-label-host0/remotion/node_modules/@remotion",
+      "real_directory": true,
+      "leaves": {
+        "layout-utils": true,
+        "media": true
+      }
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-carry-final-review/pytest-source/capture-label-host0/remotion/node_modules/@banodoco",
+      "real_directory": true,
+      "leaves": {
+        "timeline-composition": false
+      }
+    }
+  ],
+  "final_branch_still_matches": true,
+  "diff_check_exit": 0,
+  "post_test_all_2913_regular_source_files_byte_equal": true,
+  "untracked_regular_files_in_archive_copy": []
+}

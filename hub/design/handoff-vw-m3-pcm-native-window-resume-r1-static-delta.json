@@ -1,0 +1,23 @@
+{
+  "ruff": {
+    "base_count": 13,
+    "current_count": 13,
+    "added": [],
+    "removed": []
+  },
+  "mypy": {
+    "base_count": 19,
+    "current_count": 17,
+    "added": [],
+    "removed": [
+      [
+        "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py",
+        "Incompatible types in assignment (expression has type \"set[Any]\", variable has type \"Sequence[str] | None\")  [assignment]"
+      ],
+      [
+        "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py",
+        "Unsupported right operand type for in (\"Sequence[str] | None\")  [operator]"
+      ]
+    ]
+  }
+}

@@ -1,0 +1,337 @@
+$ /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F,I,BLE --output-format json astrid/core/rendering/service.py astrid/core/timeline/banodoco_composer.py astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py astrid/packs/rendering/rendering/renderers/remotion/run.py tests/packs/rendering/test_normal_audio_run.py
+[
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 40,
+      "row": 79
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/core/rendering/service.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from __future__ import annotations\n\nimport hashlib\nimport json\nimport math\nimport os\nimport re\nfrom collections.abc import Callable, Iterable, Mapping, Sequence\nfrom contextlib import contextmanager\nfrom dataclasses import dataclass, field, replace\nfrom datetime import datetime, timezone\nfrom fractions import Fraction\nfrom pathlib import Path\nfrom tempfile import TemporaryDirectory\nfrom typing import Any, Literal\n\nfrom astrid.core.env_vars import (\n    ASTRID_INTERNAL_INVOCATION,\n    ASTRID_PACKS_PATH,\n    ASTRID_TASK_PROJECT,\n    ASTRID_TASK_RUN_ID,\n)\nfrom astrid.core.foundation.atomic_io import write_json_atomic\nfrom astrid.core.foundation.hash import sha256_file\nfrom astrid.core.foundation.project_paths import resolve_projects_root, run_dir\nfrom astrid.core.media import ffprobe_metadata_strict\n\nfrom .artifacts import validate_render_result\nfrom .contracts import (\n    SCHEMA_VERSION,\n    AudioOwnership,\n    FinalizeRequest,\n    FinalizerResolution,\n    FrameWindow,\n    PlannerResolution,\n    RendererResolution,\n    RenderPlan,\n    RenderRequest,\n    RenderResult,\n    RenderSegment,\n    SupportReport,\n    compute_request_digest,\n)\nfrom .delivery_audio import (\n    FRAGMENT_NAMESPACE,\n    METADATA_KEY,\n    DeliveryAudioError,\n    DeliveryAudioTarget,\n    apply_delivery_audio,\n    find_ffmpeg,\n)\nfrom .errors import (\n    RendererException,\n    raise_internal_error,\n    raise_invalid_artifact_error,\n    raise_protocol_error,\n    raise_renderer_error,\n    raise_unsupported_error,\n)\nfrom .output_policy import RenderOutputPolicyError, validate_render_output_policy\nfrom .provenance import assemble_provenance_v2\nfrom .publication import publish_render_result\nfrom .registry import (\n    FinalizerRegistry,\n    PlannerRegistry,\n    RendererRegistry,\n    RenderingCandidate,\n    RenderingRegistryError,\n    load_default_registries,\n)\nfrom .replay import (\n    BUNDLE_SCHEMA_VERSION,\n    ReplayBundle,\n    write_replay_bundle,\n)\nfrom .transport import CommandTransport\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 81
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 9
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "noqa_row": 9,
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 209
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/core/rendering/service.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 209
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "noqa_row": 209,
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 214
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/core/rendering/service.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 214
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "noqa_row": 214,
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 450
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/core/rendering/service.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 450
+    },
+    "message": "Do not catch blind exception: `BaseException`",
+    "noqa_row": 450,
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 2006
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/core/rendering/service.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 2006
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "noqa_row": 2006,
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 2032
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/core/rendering/service.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 2032
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "noqa_row": 2032,
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 62,
+      "row": 86
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from __future__ import annotations\n\nimport argparse\nimport hashlib\nimport json\nimport os\nimport re\nimport select\nimport shutil\nimport signal\nimport socket\nimport subprocess\nimport sys\nimport tempfile\nfrom contextlib import ExitStack\nfrom dataclasses import dataclass, field, replace\nfrom pathlib import Path\nfrom tempfile import TemporaryDirectory\nfrom types import ModuleType\nfrom typing import Any, Mapping, Sequence\n\nfrom astrid.core import timeline\nfrom astrid.core.audit import AuditContext\nfrom astrid.core.element.registry import load_default_registry\nfrom astrid.core.element.schema import ElementDefinition\nfrom astrid.core.foundation.atomic_io import write_json_atomic\nfrom astrid.core.foundation.paths import REPO_ROOT, load_checkout_script\nfrom astrid.core.rendering import assets as _rendering_assets\nfrom astrid.core.rendering.artifacts import validate_render_result\nfrom astrid.core.rendering.assets import (\n    AssetMaterializer,\n    InvocationAssetServer,\n)\nfrom astrid.core.rendering.contracts import (\n    SCHEMA_VERSION,\n    AudioOwnership,\n    FrameWindow,\n    RenderProfile,\n    RenderRequest,\n    RenderResult,\n    SupportReport,\n    VideoArtifact,\n)\nfrom astrid.core.rendering.errors import (\n    RendererException,\n    make_renderer_error,\n    raise_unsupported_error,\n)\nfrom astrid.core.rendering.publication import publish_render_result\nfrom astrid.core.rendering.remotion_runtime import (\n    TIMELINE_SCHEMA_PYTHONPATH_ENV,\n    RemotionRuntimeTools,\n    resolve_remotion_runtime_tools,\n)\nfrom astrid.core.rendering.storage import h264_encoder_bitrates, remotion_frame_format\nfrom astrid.core.subprocess_env import build_child_subprocess_env\nfrom astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock\nfrom astrid.packs.rendering.rendering.renderers.remotion.progress import (\n    RemotionProgressRelay,\n)\nfrom astrid.packs.rendering.shared import rendering_backend as _shared\nfrom astrid.packs.rendering.shared.rendering_backend import (\n    _alpha_output_name,\n    _canonical_profile,\n    _duration_frames,\n    _input_path,\n    _load_registry_mapping,\n    _parse_min_free_gb,\n    _profile_mismatches,\n    _reject_unknown_config,\n    _remotion_mux_profile,\n    _remotion_scaled_dimensions,\n    _render_provenance_payload,\n    _resolved_theme_for_render,\n    _review_output_profile,\n    _serialize_timeline,\n    _timeline_alpha,\n)\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 88
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 9
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "noqa_row": 9,
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 14,
+      "row": 16
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 17
+          },
+          "location": {
+            "column": 1,
+            "row": 16
+          }
+        }
+      ],
+      "message": "Remove unused import: `select`"
+    },
+    "location": {
+      "column": 8,
+      "row": 16
+    },
+    "message": "`select` imported but unused",
+    "noqa_row": 16,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 14,
+      "row": 17
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 18
+          },
+          "location": {
+            "column": 1,
+            "row": 17
+          }
+        }
+      ],
+      "message": "Remove unused import: `signal`"
+    },
+    "location": {
+      "column": 8,
+      "row": 17
+    },
+    "message": "`signal` imported but unused",
+    "noqa_row": 17,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 43,
+      "row": 31
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 32
+          },
+          "location": {
+            "column": 1,
+            "row": 31
+          }
+        }
+      ],
+      "message": "Remove unused import: `astrid.core.audit.AuditContext`"
+    },
+    "location": {
+      "column": 31,
+      "row": 31
+    },
+    "message": "`astrid.core.audit.AuditContext` imported but unused",
+    "noqa_row": 31,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 68,
+      "row": 58
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 59
+          },
+          "location": {
+            "column": 1,
+            "row": 58
+          }
+        }
+      ],
+      "message": "Remove unused import: `astrid.core.rendering.publication.publish_render_result`"
+    },
+    "location": {
+      "column": 47,
+      "row": 58
+    },
+    "message": "`astrid.core.rendering.publication.publish_render_result` imported but unused",
+    "noqa_row": 58,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 78,
+      "row": 430
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "        from astrid.core.element.registry import clear_default_registry_cache\n        from astrid.core.rendering.remotion_runtime import _validated_runtime\n",
+          "end_location": {
+            "column": 1,
+            "row": 431
+          },
+          "location": {
+            "column": 1,
+            "row": 429
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 9,
+      "row": 429
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "noqa_row": 429,
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "F822",
+    "end_location": {
+      "column": 13,
+      "row": 1849
+    },
+    "filename": "/home/user/work/wt/vw-m3-pcm-native-window-resume-r1/astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 1849
+    },
+    "message": "Undefined name `render` in `__all__`",
+    "noqa_row": 1849,
+    "url": "https://docs.astral.sh/ruff/rules/undefined-export"
+  }
+]
+exit=1

@@ -1,0 +1,21 @@
+$ /home/user/work/venv-agent/bin/python -m mypy --follow-imports=skip --no-incremental --cache-dir=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-native-window-resume-r1/mypy-cache --hide-error-context --no-color-output --no-pretty --show-error-codes astrid/core/rendering/service.py astrid/core/timeline/banodoco_composer.py astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py astrid/packs/rendering/rendering/renderers/remotion/run.py
+astrid/core/rendering/service.py:196: error: Missing return statement  [return]
+astrid/core/rendering/service.py:329: error: Missing return statement  [return]
+astrid/core/rendering/service.py:688: error: Name "evidence" already defined on line 686  [no-redef]
+astrid/core/rendering/service.py:1169: error: Set comprehension has incompatible type Set[Any | None]; expected Set[str]  [misc]
+astrid/core/rendering/service.py:2219: error: Missing return statement  [return]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:203: error: "RuntimeError" has no attribute "frame_owner_failure"  [attr-defined]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:536: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "Any | None"  [type-var]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:538: error: Argument 1 to "join" of "str" has incompatible type "list[Any | None]"; expected "Iterable[str]"  [arg-type]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1243: error: Item "None" of "Sequence[int] | None" has no attribute "__iter__" (not iterable)  [union-attr]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1308: error: Argument "output_dir" to "render" of "PersistentRemotionFrameSession" has incompatible type "Path | None"; expected "Path"  [arg-type]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1309: error: Argument "frames" to "render" of "PersistentRemotionFrameSession" has incompatible type "Sequence[int] | None"; expected "Sequence[int]"  [arg-type]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1345: error: Argument 1 to "_resize_frame_outputs" has incompatible type "Path | None"; expected "Path"  [arg-type]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1346: error: Item "None" of "Path | None" has no attribute "glob"  [union-attr]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1358: error: Dict entry 4 has incompatible type "str": "Any | list[Any]"; expected "str": "str"  [dict-item]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1361: error: Item "None" of "Path | None" has no attribute "is_file"  [union-attr]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1361: error: Item "None" of "Path | None" has no attribute "stat"  [union-attr]
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1364: error: Argument 1 to "replace" has incompatible type "Path | None"; expected "str | bytes | PathLike[str] | PathLike[bytes]"  [arg-type]
+Found 17 errors in 2 files (checked 4 source files)
+
+exit=1

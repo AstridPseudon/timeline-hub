@@ -1,0 +1,35 @@
+{
+  "source_digest": "c99542c55d8e4c37747d547b210f56cfc21fb94e727ecbf9ec2d0998ac55fb6f",
+  "original_frames": "--frames=150-179",
+  "True": {
+    "window_retained": true,
+    "clips": [],
+    "metadata": {
+      "astrid_layer": {
+        "alpha": true,
+        "z": 1
+      }
+    },
+    "frames_or_error": "Remotion window extends beyond the full composition",
+    "hashes": {
+      "materialized_timeline": "ef3dc9566070b9ac275615aea405b35e066b6d1f16af4b833b00bc0b0d9d0044"
+    }
+  },
+  "False": {
+    "window_retained": false,
+    "clips": [],
+    "metadata": {
+      "astrid_layer": {
+        "alpha": true,
+        "z": 1
+      },
+      "duration_seconds": 1.0,
+      "source_window_end_seconds": 6.0,
+      "source_window_start_seconds": 5.0
+    },
+    "frames_or_error": null,
+    "hashes": {
+      "materialized_timeline": "e88e80c0c2fafbf97ef58e2e2861168f3aae2a5ee9e7c6e9889896547262b445"
+    }
+  }
+}
