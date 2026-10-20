@@ -1,0 +1,715 @@
+diff --git a/src/tools/video-editor/commands/clipParamsCapture.test.ts b/src/tools/video-editor/commands/clipParamsCapture.test.ts
+new file mode 100644
+index 0000000..3a7fc77
+--- /dev/null
++++ b/src/tools/video-editor/commands/clipParamsCapture.test.ts
+@@ -0,0 +1,26 @@
++import { describe, expect, it } from 'vitest';
++import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
++import { selectedParamsCommand } from './clipParamsCapture.ts';
++
++const pin = { document_id: 'pack-doc', version: 3, content_digest: `sha256:${'a'.repeat(64)}` };
++
++describe('selected native PARAM command recipe', () => {
++  it('preserves the exact selected values and original schema pin', () => {
++    const args = { values: { amount: 0.75 }, clear: [], schema_source: pin };
++    expect(selectedParamsCommand('parent/clip:fx-1', args)).toEqual({
++      schema_version: 1,
++      op: 'clip.set-params',
++      version: '1',
++      select: 'parent/clip:fx-1',
++      args,
++    } satisfies EditCommand);
++  });
++
++  it.each([
++    ['unaddressable select', 'parent/clip:fx-1::forged', { values: {}, clear: [], schema_source: pin }],
++    ['missing source pin', 'parent/clip:fx-1', { values: {}, clear: [] }],
++    ['non-finite value', 'parent/clip:fx-1', { values: { amount: Number.NaN }, clear: [], schema_source: pin }],
++  ])('refuses %s before producing a command', (_name, select, args) => {
++    expect(() => selectedParamsCommand(select, args as never)).toThrow();
++  });
++});
+diff --git a/src/tools/video-editor/commands/clipParamsCapture.ts b/src/tools/video-editor/commands/clipParamsCapture.ts
+new file mode 100644
+index 0000000..735a05d
+--- /dev/null
++++ b/src/tools/video-editor/commands/clipParamsCapture.ts
+@@ -0,0 +1,26 @@
++import type { ClipSetParamsArgs, EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
++import { assertFiniteJson, copy, equal, has, object } from './clipMovePrimitives.ts';
++
++export type ClipParamsArgs = ClipSetParamsArgs;
++
++/** Structural checks only; Agent owns selected-pack schema validation. */
++export function selectedParamsCommand(select: string, args: ClipParamsArgs): EditCommand {
++  assertFiniteJson(args);
++  if (!/^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(select) || select.includes('::')) {
++    throw new Error('Clip parameters require a stable scoped clip identity');
++  }
++  if (!object(args) || !equal(Object.keys(args).sort(), ['clear', 'schema_source', 'values'])
++    || !object(args.values) || !Array.isArray(args.clear) || args.clear.some((key) => typeof key !== 'string')
++    || new Set(args.clear).size !== args.clear.length || args.clear.some((key) => has(args.values, key))
++    || (!Object.keys(args.values).length && !args.clear.length)) {
++    throw new Error('Clip parameters require literal values or explicit clears and an exact schema_source');
++  }
++  const pin = args.schema_source;
++  if (!object(pin) || !equal(Object.keys(pin).sort(), ['content_digest', 'document_id', 'version'])
++    || typeof pin.document_id !== 'string' || !pin.document_id.trim()
++    || !Number.isSafeInteger(pin.version) || pin.version <= 0
++    || typeof pin.content_digest !== 'string' || !/^sha256:[0-9a-f]{64}$/.test(pin.content_digest)) {
++    throw new Error('Selected pack requires an exact DocumentPin');
++  }
++  return { schema_version: 1, op: 'clip.set-params', version: '1', select, args: copy(args) };
++}
+diff --git a/src/tools/video-editor/commands/clipParamsGesture.ts b/src/tools/video-editor/commands/clipParamsGesture.ts
+new file mode 100644
+index 0000000..6eceffe
+--- /dev/null
++++ b/src/tools/video-editor/commands/clipParamsGesture.ts
+@@ -0,0 +1,41 @@
++import type { DocumentPin, EditCommand, VerifiedDocument, VerifiedDocumentObject, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
++import type { TimelineData } from '../lib/timeline-data.ts';
++import { assertFiniteJson, equal, freezeJson } from './clipMovePrimitives.ts';
++import type { ClipParamsArgs } from './clipParamsCapture.ts';
++import type { JsonObject } from './types.ts';
++
++export interface ClipParamsCapturePort {
++  resolveAuthority?(input: { select: string; rawClip: Record<string, unknown> | null | undefined }): DocumentPin;
++  capture(input: { clipId: string; current: TimelineData }): JsonObject;
++  prefetch?(basis: JsonObject, pin: DocumentPin): Promise<{
++    basis: JsonObject;
++    schema_source: DocumentPin;
++    schema_inputs: [VerifiedDocument, Record<string, VerifiedDocumentObject>][];
++    realm_id: string;
++  }>;
++  invalidatePrefetch?(): void;
++  finish(basis: JsonObject, args: ClipParamsArgs): { command: EditCommand; previewParams: Record<string, JSON> | null };
++  submit(input: { command: EditCommand; preview: TimelinePatch | null }): void;
++}
++
++export function captureClipParamsEdit(port: ClipParamsCapturePort | undefined, current: TimelineData, clipId: string) {
++  if (!port) throw new Error('clip.set-params capture is unavailable; draft preserved');
++  if (current.resolvedConfig.clips.filter((clip) => clip.id === clipId).length !== 1) {
++    throw new Error('clip.set-params requires an unambiguous clip identity');
++  }
++  const basis = port.capture({ clipId, current });
++  assertFiniteJson(basis);
++  return Object.freeze({ clipId, basis: freezeJson(structuredClone(basis)), port });
++}
++
++export function submitClipParamsEdit(captured: ReturnType<typeof captureClipParamsEdit>, args: ClipParamsArgs): void {
++  assertFiniteJson(args);
++  const { command, previewParams } = captured.port.finish(captured.basis, args);
++  assertFiniteJson(command);
++  if (command.schema_version !== 1 || command.op !== 'clip.set-params' || command.version !== '1'
++    || command.select !== captured.basis.select || !equal(command.args, args) || previewParams !== null) {
++    throw new Error('Unsupported native selected clip parameter capture result');
++  }
++  captured.port.submit({ command: freezeJson(structuredClone(command)), preview: null });
++}
+diff --git a/src/tools/video-editor/commands/selectedParamPort.test.ts b/src/tools/video-editor/commands/selectedParamPort.test.ts
+new file mode 100644
+index 0000000..111bed7
+--- /dev/null
++++ b/src/tools/video-editor/commands/selectedParamPort.test.ts
+@@ -0,0 +1,43 @@
++import { describe, expect, it } from 'vitest';
++import type { TimelineCommandBasis } from '../data/DataProvider.ts';
++import { createSelectedParamPort, type SelectedParamLiveBasis } from './selectedParamPort.ts';
++
++function live(revisionId: string, generation: number): SelectedParamLiveBasis {
++  const basis = {
++    head: { revisionId, publicationId: `publication-${revisionId}` },
++    canonicalDocument: {} as TimelineCommandBasis['canonicalDocument'],
++    history: { items: [], next_cursor: null, head: { revision_id: revisionId, publication_id: `publication-${revisionId}` } },
++  } as TimelineCommandBasis;
++  return { basis, head: basis.head, generation };
++}
++
++describe('selected PARAM live basis port', () => {
++  it('refuses a normal accepted-commit basis change during async scope resolution', async () => {
++    let current = live('accepted-before', 1);
++    const port = createSelectedParamPort(() => current);
++    const capture = port.capture({ select: 'parent/clip:effect', rawClip: { id: 'effect' } });
++    const originalBasis = capture.live.basis;
++
++    const resolution = port.resolveAsync(capture, async (input) => {
++      expect(input.rawClip).toEqual({ id: 'effect' });
++      current = live('accepted-after', 2);
++      await Promise.resolve();
++      return originalBasis;
++    });
++
++    await expect(resolution).rejects.toThrow('basis changed; draft preserved');
++  });
++
++  it('accepts an unchanged original scope after async resolution', async () => {
++    const current = live('accepted', 1);
++    const port = createSelectedParamPort(() => current);
++    const rawClip = { id: 'effect', params: { value: 4 } };
++    const capture = port.capture({ select: 'parent/clip:effect', rawClip });
++    rawClip.params.value = 16;
++
++    await expect(port.resolveAsync(capture, async (input) => {
++      expect(input.rawClip).toEqual({ id: 'effect', params: { value: 4 } });
++      return 'resolved';
++    })).resolves.toBe('resolved');
++  });
++});
+diff --git a/src/tools/video-editor/commands/selectedParamPort.ts b/src/tools/video-editor/commands/selectedParamPort.ts
+new file mode 100644
+index 0000000..7447c89
+--- /dev/null
++++ b/src/tools/video-editor/commands/selectedParamPort.ts
+@@ -0,0 +1,78 @@
++import type { DocumentPin } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { TimelineCommandBasis, TimelineAcceptedIdentity } from '../data/DataProvider.ts';
++import {
++  resolveSelectedParamAuthority,
++  type SelectedParamAuthorityInput,
++} from './selectedParamAuthority.ts';
++
++export type SelectedParamLiveBasis = Readonly<{
++  basis: TimelineCommandBasis;
++  head: TimelineAcceptedIdentity;
++  generation: number;
++}>;
++
++export type SelectedParamCapture = Readonly<{
++  input: Pick<SelectedParamAuthorityInput, 'select' | 'rawClip'>;
++  live: SelectedParamLiveBasis;
++}>;
++
++export type SelectedParamPort = Readonly<{
++  capture(input: Pick<SelectedParamAuthorityInput, 'select' | 'rawClip'>): SelectedParamCapture;
++  resolve(capture: SelectedParamCapture): DocumentPin;
++  resolveAsync<T>(capture: SelectedParamCapture, resolve: (input: SelectedParamAuthorityInput) => Promise<T>): Promise<T>;
++}>;
++
++const copyInput = (input: Pick<SelectedParamAuthorityInput, 'select' | 'rawClip'>) => ({
++  select: input.select,
++  rawClip: input.rawClip == null ? input.rawClip : structuredClone(input.rawClip),
++});
++
++function sameLiveBasis(left: SelectedParamLiveBasis | undefined, right: SelectedParamLiveBasis): boolean {
++  return !!left
++    && left.generation === right.generation
++    && left.head.revisionId === right.head.revisionId
++    && left.head.publicationId === right.head.publicationId
++    && left.basis === right.basis;
++}
++
++export function createSelectedParamPort(getLiveBasis: () => SelectedParamLiveBasis | undefined): SelectedParamPort {
++  const requireCurrent = (capture: SelectedParamCapture): SelectedParamLiveBasis => {
++    const current = getLiveBasis();
++    if (!current || !sameLiveBasis(current, capture.live)) {
++      throw new Error('Selected PARAM authority basis changed; draft preserved');
++    }
++    return current;
++  };
++
++  return {
++    capture(input) {
++      const live = getLiveBasis();
++      if (!live) throw new Error('Selected PARAM authority is unavailable; draft preserved');
++      return Object.freeze({ input: Object.freeze(copyInput(input)), live });
++    },
++    resolve(capture) {
++      const live = requireCurrent(capture);
++      if (!live.basis.history) throw new Error('Selected PARAM authority is unavailable; draft preserved');
++      return resolveSelectedParamAuthority({
++        history: live.basis.history,
++        head: live.basis.head,
++        canonicalDocument: live.basis.canonicalDocument as unknown as Record<string, unknown>,
++        graph: live.basis.graph,
++        ...capture.input,
++      });
++    },
++    async resolveAsync(capture, resolve) {
++      const live = requireCurrent(capture);
++      if (!live.basis.history) throw new Error('Selected PARAM authority is unavailable; draft preserved');
++      const result = await resolve({
++        history: live.basis.history,
++        head: live.basis.head,
++        canonicalDocument: live.basis.canonicalDocument as unknown as Record<string, unknown>,
++        graph: live.basis.graph,
++        ...capture.input,
++      });
++      requireCurrent(capture);
++      return result;
++    },
++  };
++}
+diff --git a/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.mounted.test.tsx b/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.mounted.test.tsx
+new file mode 100644
+index 0000000..14c6cbd
+--- /dev/null
++++ b/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.mounted.test.tsx
+@@ -0,0 +1,218 @@
++// @vitest-environment jsdom
++import React, { useLayoutEffect, useRef } from 'react';
++import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
++import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import type { DocumentPin, HistoryEntry, HistoryPage, CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
++import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
++import type { TimelineCommandBasis } from '@/tools/video-editor/data/DataProvider.ts';
++import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
++import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
++import { TimelineStoreProvider, createTimelineStore, type TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
++import { useTimelineSave } from '@/tools/video-editor/hooks/useTimelineSave.ts';
++import { createInteractionState } from '@/tools/video-editor/lib/interaction-state.ts';
++import { AstridElementParams } from './AstridElementParams.tsx';
++import { document as commandDocument, environment, scope } from '@/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts';
++
++const descriptor = {
++  id: 'v3-glow', kind: 'effect' as const, packId: 'astrid-v3', revision: 'rev-7',
++  componentPath: 'packs/v3/glow',
++  schema: { title: 'Glow', properties: { amount: { type: 'number', title: 'Amount' } } },
++};
++const pin: DocumentPin = { document_id: 'pack-document', version: 1, content_digest: `sha256:${'a'.repeat(64)}` };
++const object = { object_id: `sha256:${'b'.repeat(64)}`, digest: `sha256:${'b'.repeat(64)}`, size: 12, media_type: 'application/json' as const };
++const select = 'parent/clip:clip-v3-glow';
++
++function selectedDocument() {
++  const document = commandDocument();
++  const clip = {
++    id: 'clip-v3-glow', track: 'V1', at: 0, hold: 2, clipType: 'effect-layer',
++    elementRef: { packId: descriptor.packId, id: descriptor.id, kind: descriptor.kind, revision: descriptor.revision },
++    params: { amount: 0 },
++  };
++  document.parent_revision.payload.config = { ...document.parent_revision.payload.config, clips: [clip] };
++  document.parent_revision.payload.clips = [clip];
++  document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
++  return document;
++}
++
++function historyBasis(canonicalDocument: TimelineCommandBasis['canonicalDocument']): TimelineCommandBasis {
++  const root = {
++    publication_id: 'p0', revision_id: 'r0', previous: null, receipt: {}, intent: 'bootstrap', records: null,
++    provider_version: null, compiler_version: null, publisher: 'agent-1',
++  } satisfies Partial<HistoryEntry>;
++  const element = { packId: descriptor.packId, id: descriptor.id, kind: descriptor.kind, revision: descriptor.revision };
++  const selected = {
++    publication_id: 'p1', revision_id: 'r1', previous: { publication_id: 'p0', revision_id: 'r0' },
++    receipt: {}, intent: 'recorded', provider_version: null, compiler_version: null, publisher: 'agent-1',
++    records: {
++      schema_version: 1, undo_of: [], restored_from: null,
++      commands: [{
++        ordinal: 0,
++        command: { schema_version: 1, op: 'clip.set-element', version: '1', select,
++          args: { elementRef: element, schema_source: pin } },
++        writes: [], reads: [], selections: [], created: [], derived_writes: [],
++        bindings: [
++          { key: 'scalar.target', ref: select, policy: 'fixed', dependencies: ['scalar.images'] },
++          { key: 'params.element', ref: select, policy: 'fixed', dependencies: ['params.schema', 'params.snapshot'] },
++        ],
++        dependencies: [
++          { key: 'params.schema', kind: 'source', pin, policy: 'exact' },
++          { key: 'params.snapshot', kind: 'entity', pin: { source: pin, element, object }, policy: 'exact' },
++        ],
++      }],
++    },
++  } satisfies Partial<HistoryEntry>;
++  const history: HistoryPage = {
++    items: [root, selected] as HistoryEntry[], next_cursor: null, head: { revision_id: 'r1', publication_id: 'p1' },
++  };
++  const document = structuredClone(canonicalDocument);
++  document.parent_revision.revision_id = 'r1';
++  document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
++  return { head: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: document, history };
++}
++
++function MountedForm({
++  provider,
++  store,
++  initial,
++  latest,
++  onChange,
++}: {
++  provider: Awaited<ReturnType<typeof environment>>['provider'];
++  store: TimelineStoreApi;
++  initial: TimelineData;
++  latest: React.MutableRefObject<ReturnType<typeof useTimelineSave> | undefined>;
++  onChange: () => void;
++}) {
++  const queries = { timelineQuery: { data: initial, isLoading: false }, assetRegistryQuery: { data: initial.registry } };
++  const save = useTimelineSave(queries, provider, { current: createInteractionState() }, store, initial as never);
++  latest.current = save;
++  useLayoutEffect(() => {
++    store.getState().syncSlices({
++      data: { ...store.getState().data, data: save.data, resolvedConfig: save.data?.resolvedConfig ?? null, dataRef: save.dataRef },
++      ops: { ...store.getState().ops, selectedParam: save.commands.clipParamsPort },
++    });
++  }, [save, store]);
++  const clip = save.data?.resolvedConfig.clips[0] ?? null;
++  return <AstridElementParams clip={clip} registry={{}} onChange={onChange} />;
++}
++
++function runtime(provider: Awaited<ReturnType<typeof environment>>['provider']): VideoEditorRuntimeContextValue {
++  return {
++    provider, timelineId: scope.timelineId, astridElementHost: { descriptors: [descriptor] },
++    project: { projectId: scope.projectId }, shots: { canonicalDraft: null },
++    assetResolver: { resolveAssetUrl: async (value: string) => value },
++  } as unknown as VideoEditorRuntimeContextValue;
++}
++
++afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
++
++describe('AstridElementParams mounted command-session path', () => {
++  it('uses the production selected carrier, retains exact inputs, and preserves a draft when its basis changes during an async read', async () => {
++    const env = await environment(selectedDocument());
++    vi.stubGlobal('indexedDB', env.factory);
++    vi.stubGlobal('navigator', { locks: { request: async (_key: string, _options: unknown, work: (lock: unknown) => Promise<unknown>) => work({ name: 'test' }) } });
++    const basis = historyBasis(env.initial.canonicalDocument);
++    vi.spyOn(env.provider, 'loadTimelineCommandBasis').mockResolvedValue(basis);
++    const verified = {
++      pin,
++      document: {
++        kind: 'astrid.project-pack', project_id: scope.projectId, document_id: pin.document_id, version: pin.version,
++        content: {
++          schema: 'astrid.project-pack/v1', source_binding_key: 'project-packs', pack_id: descriptor.packId,
++          relative_manifest: `${scope.realmId}/${scope.projectId}/packs/${descriptor.packId}/pack.yaml`,
++          admissions: [{ id: descriptor.id, kind: descriptor.kind, revision: descriptor.revision, snapshot_object: object }],
++        },
++      },
++    };
++    const client = env.provider.paramReadClient!;
++    vi.spyOn(client, 'getProjectVerifiedDocument').mockResolvedValue(verified);
++    vi.spyOn(client, 'getProjectVerifiedDocumentObject').mockResolvedValue({ ...object, bytes_base64: 'e30=' });
++    const requests: CommitRequest[] = [];
++    vi.spyOn(env.provider, 'commitTimeline').mockImplementation(async (request) => {
++      requests.push(request);
++      const response = acceptedCommit({ revision_id: 'r2', publication_id: 'p2' }, { revision_id: 'r1', publication_id: 'p1' }, { commands: request.commands });
++      return {
++        response,
++        accepted: { revisionId: 'r2', publicationId: 'p2' },
++        canonicalDocument: basis.canonicalDocument,
++        graph: {},
++        receipt: response.receipt,
++      };
++    });
++    const store = createTimelineStore();
++    store.getState().setMounted(true);
++    const latest: React.MutableRefObject<ReturnType<typeof useTimelineSave> | undefined> = { current: undefined };
++    const onChange = vi.fn();
++    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
++    render(
++      <QueryClientProvider client={queryClient}>
++        <VideoEditorRuntimeProvider value={runtime(env.provider)}>
++          <TimelineStoreProvider store={store}>
++            <MountedForm provider={env.provider} store={store} initial={env.current()} latest={latest} onChange={onChange} />
++          </TimelineStoreProvider>
++        </VideoEditorRuntimeProvider>
++      </QueryClientProvider>,
++    );
++    await waitFor(() => expect(latest.current?.commands.clipParamsPort).toBeDefined());
++    const input = await screen.findByLabelText('Amount');
++    fireEvent.change(input, { target: { value: '1' } });
++    await waitFor(() => expect(requests).toHaveLength(1));
++    expect(requests[0].commands).toHaveLength(1);
++    expect(requests[0].commands[0]).toMatchObject({ op: 'clip.set-params', select, args: { values: { amount: 1 }, clear: [], schema_source: pin } });
++    expect(onChange).not.toHaveBeenCalled();
++    expect(client.getProjectVerifiedDocument).toHaveBeenCalledTimes(1);
++    expect(client.getProjectVerifiedDocumentObject).toHaveBeenCalledTimes(1);
++    expect(client.getProjectVerifiedDocument).toHaveBeenCalledWith(scope.projectId, pin);
++    expect(client.getProjectVerifiedDocumentObject).toHaveBeenCalledWith(scope.projectId, pin, object.object_id);
++    const [outbox] = await env.outboxes.list(scope);
++    expect(outbox.intents).toHaveLength(0);
++    expect(requests.flatMap((request) => request.commands).every((command) => command.op === 'clip.set-params')).toBe(true);
++  });
++
++  it('refuses a mounted edit whose retained read completes after the command session is gone', async () => {
++    const env = await environment(selectedDocument());
++    vi.stubGlobal('indexedDB', env.factory);
++    vi.stubGlobal('navigator', { locks: { request: async (_key: string, _options: unknown, work: (lock: unknown) => Promise<unknown>) => work({ name: 'test' }) } });
++    const basis = historyBasis(env.initial.canonicalDocument);
++    vi.spyOn(env.provider, 'loadTimelineCommandBasis').mockResolvedValue(basis);
++    const verified = {
++      pin,
++      document: {
++        kind: 'astrid.project-pack', project_id: scope.projectId, document_id: pin.document_id, version: pin.version,
++        content: {
++          schema: 'astrid.project-pack/v1', source_binding_key: 'project-packs', pack_id: descriptor.packId,
++          relative_manifest: `${scope.realmId}/${scope.projectId}/packs/${descriptor.packId}/pack.yaml`,
++          admissions: [{ id: descriptor.id, kind: descriptor.kind, revision: descriptor.revision, snapshot_object: object }],
++        },
++      },
++    };
++    let release!: (value: typeof verified) => void;
++    const client = env.provider.paramReadClient!;
++    vi.spyOn(client, 'getProjectVerifiedDocument').mockImplementation(() => new Promise((resolve) => { release = resolve; }));
++    vi.spyOn(client, 'getProjectVerifiedDocumentObject').mockResolvedValue({ ...object, bytes_base64: 'e30=' });
++    const commit = vi.spyOn(env.provider, 'commitTimeline');
++    const store = createTimelineStore();
++    store.getState().setMounted(true);
++    const latest: React.MutableRefObject<ReturnType<typeof useTimelineSave> | undefined> = { current: undefined };
++    const onChange = vi.fn();
++    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
++    const view = render(
++      <QueryClientProvider client={queryClient}>
++        <VideoEditorRuntimeProvider value={runtime(env.provider)}>
++          <TimelineStoreProvider store={store}>
++            <MountedForm provider={env.provider} store={store} initial={env.current()} latest={latest} onChange={onChange} />
++          </TimelineStoreProvider>
++        </VideoEditorRuntimeProvider>
++      </QueryClientProvider>,
++    );
++    await waitFor(() => expect(latest.current?.commands.clipParamsPort).toBeDefined());
++    fireEvent.change(await screen.findByLabelText('Amount'), { target: { value: '2' } });
++    await waitFor(() => expect(client.getProjectVerifiedDocument).toHaveBeenCalledTimes(1));
++    view.unmount();
++    await act(async () => { release(verified); await Promise.resolve(); });
++    expect(onChange).not.toHaveBeenCalled();
++    expect(commit).not.toHaveBeenCalled();
++  });
++});
+diff --git a/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.test.tsx b/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.test.tsx
+index 00043ee..8c98c9a 100644
+--- a/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.test.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.test.tsx
+@@ -1,6 +1,6 @@
+ // @vitest-environment jsdom
+ 
+-import { fireEvent, render, screen } from '@testing-library/react';
++import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+ import { describe, expect, it, vi } from 'vitest';
+ import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
+ import type { AstridElementDescriptor } from '@/tools/video-editor/runtime/astrid-element-host.ts';
+@@ -17,6 +17,7 @@ const runtimeState = vi.hoisted(() => ({
+ const editorState = vi.hoisted(() => ({
+   data: null as unknown,
+   element: undefined as ElementCapturePort | undefined,
++  selectedParam: undefined as any,
+ }));
+ 
+ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
+@@ -28,7 +29,8 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
+ 
+ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
+   useTimelineEditorDataSafe: () => editorState.data,
+-  useTimelineEditorOpsSafe: () => editorState.element ? { element: editorState.element } : null,
++  useTimelineEditorOpsSafe: () => editorState.element || editorState.selectedParam
++    ? { element: editorState.element, selectedParam: editorState.selectedParam } : null,
+ }));
+ 
+ const descriptor: AstridElementDescriptor = {
+@@ -106,24 +108,41 @@ describe('AstridElementParams', () => {
+     expect(screen.getByTestId('astrid-element-params')).toBeTruthy();
+   });
+ 
+-  it('preserves existing params and writes through the current host descriptor', () => {
++  it('preserves existing params and writes through the selected native producer', async () => {
++    const command = {
++      schema_version: 1, op: 'clip.set-params', version: '1', select: 'parent/clip:clip-v3-glow',
++      args: { values: { selectedSegmentIndex: 1, futureParam: 'keep-me' }, clear: [],
++        schema_source: { document_id: 'pack', version: 1, content_digest: `sha256:${'a'.repeat(64)}` } },
++    };
++    const port = {
++      resolveAuthority: vi.fn(() => command.args.schema_source),
++      capture: vi.fn(() => ({ select: command.select, localGeneration: 0 })),
++      prefetch: vi.fn(async () => undefined),
++      finish: vi.fn(() => ({ command, previewParams: null })),
++      submit: vi.fn(),
++    };
++    editorState.data = { data: { resolvedConfig: { clips: [clipFor(descriptor)] } } };
++    editorState.selectedParam = port;
+     const { onChange } = renderForm({ params: { selectedSegmentIndex: 2, futureParam: 'keep-me' } });
+     fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
+-    expect(onChange).toHaveBeenLastCalledWith({
+-      params: { selectedSegmentIndex: 1, futureParam: 'keep-me' },
+-    });
++    await waitFor(() => expect(port.submit).toHaveBeenCalledTimes(1));
++    expect(onChange).not.toHaveBeenCalled();
+   });
+ 
+-  it('keeps selected-pack edits on the existing producer without native capture', () => {
++  it('refuses selected-pack edits when the native carrier is unavailable', () => {
+     const capture = vi.fn(() => { throw new Error('selected-pack native capture must not run'); });
+     editorState.data = { data: {} };
++    editorState.selectedParam = undefined;
+     editorState.element = { capture, finish: vi.fn(), submit: vi.fn() } as unknown as ElementCapturePort;
+     const { onChange } = renderForm({ params: { selectedSegmentIndex: 2 } });
+ 
+     fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
+ 
+     expect(capture).not.toHaveBeenCalled();
+-    expect(onChange).toHaveBeenLastCalledWith({ params: { selectedSegmentIndex: 1 } });
++    expect(onChange).not.toHaveBeenCalled();
++    expect(screen.getByTestId('astrid-selected-param-error')).toHaveTextContent(
++      'Selected PARAM schema carrier is unavailable; Agent retained-read support is required',
++    );
+   });
+ 
+   it('routes a literal existing-clip edit through the mounted native port without legacy onChange', () => {
+diff --git a/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.tsx b/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.tsx
+index 6c6976c..4ef76a6 100644
+--- a/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.tsx
+@@ -1,9 +1,10 @@
+-import { useSyncExternalStore } from 'react';
++import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+ import { getAdmittedElementSelection, subscribeAdmittedElements } from '../../runtime/admitted-elements';
+ import { CodePathParamEditor } from '@/tools/video-editor/components/SequenceCreator/CodePathParamEditor.tsx';
+ import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+ import { useTimelineEditorDataSafe, useTimelineEditorOpsSafe } from '@/tools/video-editor/hooks/timelineStore.ts';
+ import { captureClipElementEdit, submitClipElementEdit } from '@/tools/video-editor/commands/elementGesture.ts';
++import { captureClipParamsEdit, submitClipParamsEdit } from '@/tools/video-editor/commands/clipParamsGesture.ts';
+ import type { JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+ import type { ClipPanelProps } from './ClipPanelBody.tsx';
+ import { resolveAstridElementParamDescriptor } from './astrid-element-param-descriptor.ts';
+@@ -14,7 +15,8 @@ export function AstridElementParams({
+   readOnly,
+   registry,
+   onChange,
+-}: Pick<ClipPanelProps, 'clip' | 'readOnly' | 'registry' | 'onChange'>) {
++  selectedParam: selectedParamProp,
++}: Pick<ClipPanelProps, 'clip' | 'readOnly' | 'registry' | 'onChange' | 'selectedParam'>) {
+   useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
+   const runtime = useVideoEditorRuntime();
+   const editorData = useTimelineEditorDataSafe();
+@@ -26,9 +28,12 @@ export function AstridElementParams({
+     readOnly,
+     runtime.timelineEditability,
+   );
++  const params = useMemo(() => ({ ...(clip?.params ?? {}) }), [clip?.params]);
++  const [draftParams, setDraftParams] = useState(params);
++  const [paramError, setParamError] = useState<string | null>(null);
++  useEffect(() => { setDraftParams(params); }, [clip?.id, descriptor?.id, descriptor?.revision, params]);
+   if (!clip || !descriptor) return null;
+-
+-  const params = { ...(clip.params ?? {}) };
++  const reference = clip.elementRef;
+   const saveParams = (nextParams: Record<string, unknown>) => {
+     if (readOnly) return;
+     const currentDescriptor = resolveAstridElementParamDescriptor(
+@@ -42,8 +47,33 @@ export function AstridElementParams({
+       || currentDescriptor.kind !== descriptor.kind
+       || currentDescriptor.packId !== descriptor.packId
+       || currentDescriptor.revision !== descriptor.revision) return;
+-    const next = { params: { ...params, ...nextParams } };
+-    const reference = clip.elementRef;
++    const next = { params: { ...draftParams, ...nextParams } };
++    if (reference?.packId) {
++      setDraftParams(next.params);
++      setParamError(null);
++      const port = selectedParamProp ?? editorOps?.selectedParam;
++      const current = editorData?.data;
++      if (!port || !current || !port.resolveAuthority) {
++        setParamError('Selected PARAM schema carrier is unavailable; Agent retained-read support is required');
++        return;
++      }
++      void (async () => {
++        const identity = (clip as unknown as { app?: { canonical?: { clipRef?: string } } }).app?.canonical;
++        const select = identity?.clipRef ?? `parent/clip:${clip.id}`;
++        const pin = port.resolveAuthority!({ select, rawClip: clip as unknown as Record<string, unknown> });
++        const captured = captureClipParamsEdit(port, current, clip.id);
++        await captured.port.prefetch?.(captured.basis, pin);
++        submitClipParamsEdit(captured, {
++          values: next.params as Record<string, JSON>,
++          clear: [],
++          schema_source: pin,
++        });
++      })().catch((error) => {
++        setParamError(error instanceof Error ? error.message : String(error));
++        console.error('[AstridElementParams] Selected PARAM edit was refused; draft preserved', error);
++      });
++      return;
++    }
+     if (!reference?.packId && editorData?.data && editorOps?.element) {
+       const edit = { params: { values: next.params as Record<string, JSON>, clear: [] } };
+       const captured = captureClipElementEdit(editorOps.element, editorData.data, clip.id, edit);
+@@ -66,10 +96,13 @@ export function AstridElementParams({
+       <div>
+         <h3 className="text-sm font-medium text-foreground">{label} parameters</h3>
+         <p className="text-xs text-muted-foreground">Values save with this pinned element revision.</p>
++        {paramError && reference?.packId && (
++          <p role="alert" data-testid="astrid-selected-param-error" className="text-xs text-destructive">{paramError}</p>
++        )}
+       </div>
+       <CodePathParamEditor
+         schemaJson={descriptor.schema}
+-        values={params}
++        values={draftParams}
+         allowedAssetKeys={Object.keys(registry)}
+         onChange={saveParams}
+       />
+diff --git a/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx b/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx
+index 58c2936..359ebab 100644
+--- a/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx
+@@ -1,4 +1,5 @@
+ import type { CapturedClipScalarEdit } from '../../commands/clipScalarGesture.ts';
++import type { ClipParamsCapturePort } from '../../commands/clipParamsGesture.ts';
+ import { useMemo, useRef, useState, type ComponentType } from 'react';
+ import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
+ import { Button } from '@/shared/components/ui/button.tsx';
+@@ -52,6 +53,8 @@ export interface ClipPanelProps {
+   deviceClass: TimelineDeviceClass;
+   hasPredecessor: boolean;
+   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
++  /** Selected-pack PARAM edits use the command-session carrier from the mounted editor. */
++  selectedParam?: ClipParamsCapturePort;
+   onScalarEditStart?: () => CapturedClipScalarEdit;
+   onResetPosition: () => void;
+   onClose: () => void;
+diff --git a/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.test.tsx b/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.test.tsx
+index 07a3a5f..38ff539 100644
+--- a/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.test.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.test.tsx
+@@ -109,8 +109,10 @@ vi.mock('@/tools/video-editor/components/PropertiesPanel/AssetPanel', () => ({
+ vi.mock('@/tools/video-editor/components/PropertiesPanel/ClipPanel', () => ({
+   NO_EFFECT: 'no-effect',
+   getVisibleClipTabs: () => ['effects', 'timing', 'position', 'audio', 'text'],
+-  ClipPanel: ({ onDelete }: { onDelete?: () => void }) => (
+-    <div data-testid="mock-clip-panel">Clip panel{onDelete && <button type="button" onClick={onDelete}>Delete clip</button>}</div>
++  ClipPanel: ({ onDelete, selectedParam }: { onDelete?: () => void; selectedParam?: unknown }) => (
++    <div data-testid="mock-clip-panel" data-selected-param={selectedParam ? 'present' : 'missing'}>
++      Clip panel{onDelete && <button type="button" onClick={onDelete}>Delete clip</button>}
++    </div>
+   ),
+ }));
+ 
+@@ -217,6 +219,7 @@ function createShaderSnapshot() {
+ 
+ function createEditorOps() {
+   return {
++    selectedParam: { capture: vi.fn() },
+     selectClip: vi.fn(),
+     clearSelection: vi.fn(),
+     handleUpdateClips: vi.fn(),
+@@ -305,6 +308,12 @@ describe('PropertiesPanel registry surfaces', () => {
+     expect(ops.setActiveClipTab).toHaveBeenCalledWith(tab);
+   });
+ 
++  it('forwards the mounted selected PARAM carrier through the clip panel boundary', () => {
++    render(<PropertiesPanel />);
++
++    expect(screen.getByTestId('mock-clip-panel')).toHaveAttribute('data-selected-param', 'present');
++  });
++
+   it.each([['phone', 1], ['tablet', 1], ['desktop', 0]] as const)('Delete clip on %s leaves nothing picked (clears: %s)', (deviceClass, clears) => {
+     // Touch: the Inspector then returns to Video, rather than showing the deleted clip's track.
+     const data = createBaseEditorData();
+diff --git a/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx b/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx
+index 1f1a9ef..a334f39 100644
+--- a/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx
+@@ -235,6 +235,7 @@ function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
+     patchRegistry,
+     setSelectedTrackId,
+     applyEdit,
++    selectedParam,
+   } = useTimelineEditorOps();
+   const shaderSnapshot = useShaderEffectRegistrySnapshot();
+   const { staleAssetKeys, dismissedAssetKeys, dismissAsset, updateAssetToCurrentVariant, applyVariantToAsset } = useStaleVariants({
+@@ -563,6 +564,7 @@ function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
+             deviceClass={deviceClass}
+             hasPredecessor={selectedClipHasPredecessor}
+             onChange={handleSelectedClipChange}
++            selectedParam={selectedParam}
+             onScalarEditStart={captureScalarEdit}
+             onResetPosition={handleResetClipPosition}
+             onClose={clearSelection}
