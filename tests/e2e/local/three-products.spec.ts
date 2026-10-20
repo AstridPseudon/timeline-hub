@@ -31,7 +31,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
-import { commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI } from './support/app.ts';
+import { commandOutboxes, currentHead, dragTimelineClip, dropFileOnTimeline, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI } from './support/app.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 
@@ -1135,6 +1135,153 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     authoringLaunch: { profile: 'astrid', python: ASTRID_PYTHON }, headA: pinOf(a), headB: pinOf(b), independentC: pinOf(c),
     originalB: commandsOf(owner.intents[1].payload), exactRetry: { body: originalARequest.body, key: originalARequest.key },
     legacySaveCount: wire.legacy.length };
+  await sniff.expectClean(reopened, seed3.timelineId);
+});
+
+test('M2 real mounted manual video drop: Runtime selection refusal is closed, native ADD recovers exactly, and undo preserves opaque data', async ({ page, context, harness, astrid, seed3 }) => {
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  await openCommandTimeline(page, harness, seed3);
+
+  const mediaObject = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(harness.seed.video.objectId)}`);
+  expect(mediaObject.status).toBe(200);
+  const bytesBase64 = Buffer.from(await mediaObject.arrayBuffer()).toString('base64');
+  const file = { name: 'manual-drop.webm', type: harness.seed.video.mediaType, bytesBase64 };
+  const original = await history(harness, seed3);
+  const baselineClipCount = await page.locator('.clip-action').count();
+  const mediaReads: URL[] = [];
+  const onMediaRequest = (request: Request) => {
+    const url = new URL(request.url());
+    if (request.method() === 'GET' && /\/media-selection(?:\/verified)?\?/.test(url.pathname + url.search)) mediaReads.push(url);
+  };
+  page.on('request', onMediaRequest);
+
+  // A wrong verified selection reaches the real Runtime and must refuse without a legacy or snapshot fallback.
+  const wrongImportResponse = page.waitForResponse((response) => response.request().method() === 'POST' && /\/media-imports$/.test(new URL(response.url()).pathname), CEILING);
+  const wrongVerifiedResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\/verified\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
+  const wrongSelectionRoute = /\/media-selection\/verified\?/;
+  await page.route(wrongSelectionRoute, async (route) => {
+    const url = new URL(route.request().url());
+    url.searchParams.set('object_id', 'sha256:wrong-selection');
+    await route.continue({ url: url.toString() });
+  });
+  await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 20);
+  await wrongImportResponse;
+  const wrongVerified = await wrongVerifiedResponse;
+  expect([404, 409]).toContain(wrongVerified.status());
+  await page.unroute(wrongSelectionRoute);
+  await expect(page.locator('.clip-action')).toHaveCount(baselineClipCount, CEILING);
+  expect(await currentHead(harness)).toBe(original.head.revision_id);
+  expect(await history(harness, seed3)).toEqual(original);
+  expect(mediaReads.some((url) => url.pathname.endsWith('/media-selection/verified'))).toBe(true);
+
+  // The same real file-drop path now uses the Runtime's original five-field selection and native clip.add-media.
+  mediaReads.length = 0;
+  const wire = await faultFirstCommit(page);
+  const importResponse = page.waitForResponse((response) => response.request().method() === 'POST' && /\/media-imports$/.test(new URL(response.url()).pathname), CEILING);
+  const selectionResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
+  await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 20);
+  const imported = await importResponse;
+  expect(imported.status()).toBe(201);
+  const importedBody = await imported.json() as { data: Record<string, any> };
+  const selected = await selectionResponse.then((response) => response.json()) as Record<string, string>;
+  const selectedRequest = mediaReads.find((url) => url.pathname.endsWith('/media-selection'));
+  const verifiedRequest = mediaReads.find((url) => url.pathname.endsWith('/media-selection/verified'));
+  expect(selectedRequest).toBeTruthy();
+  expect(verifiedRequest).toBeTruthy();
+  expect(selected).toMatchObject({
+    asset: importedBody.data.asset_id,
+    generation_id: importedBody.data.generation_id,
+    variant_id: importedBody.data.variant_id,
+    object_id: importedBody.data.entry.object_id,
+  });
+  expect(verifiedRequest!.searchParams.get('asset')).toBe(selected.asset);
+  expect(verifiedRequest!.searchParams.get('generation_id')).toBe(selected.generation_id);
+  expect(verifiedRequest!.searchParams.get('variant_id')).toBe(selected.variant_id);
+  expect(verifiedRequest!.searchParams.get('object_id')).toBe(selected.object_id);
+  expect(verifiedRequest!.searchParams.get('catalog_digest')).toBe(selected.catalog_digest);
+
+  await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+  const addPost = wire.posts[0];
+  const addRequest = JSON.parse(addPost.body) as CommitRequest;
+  const addCommand = addRequest.commands[0];
+  expect(addCommand.op).toBe('clip.add-media');
+  expect(addCommand.select).toBe('parent');
+  expect(addCommand.args.media).toEqual(selected);
+  expect(addCommand.args).not.toHaveProperty('afterClipId');
+  expect(addCommand.args).not.toHaveProperty('removeClipId');
+  expect(addCommand.args).not.toHaveProperty('replaceClipId');
+  const addedRow = addCommand.args.row as Record<string, any>;
+  expect(addedRow.track).toBe('V1');
+  expect(addedRow.at).toBeCloseTo(20, 3);
+  expect(addedRow.clipType).toBe('media');
+  const addedClipId = addedRow.id as string;
+  const addedAsset = addedRow.asset as string;
+  const ownerBeforeLoss = (await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.pending?.request.key === addPost.key)!;
+  expect(ownerBeforeLoss.pending?.request.body).toBe(addPost.body);
+
+  // B is authored against the unacknowledged A and must be replayed only after A's exact retry.
+  await editFirstTrackName(page, 'Manual drop follow-up');
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId))
+    .find((owner) => owner.ownerId === ownerBeforeLoss.ownerId)?.intents.length, CEILING).toBe(2);
+  await wire.loseAck();
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId))
+    .find((owner) => owner.ownerId === ownerBeforeLoss.ownerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  expect((await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.ownerId === ownerBeforeLoss.ownerId)?.pending?.request)
+    .toEqual(ownerBeforeLoss.pending!.request);
+  expect(wire.posts).toHaveLength(1);
+
+  await page.close();
+  await harness.restartRuntime();
+  const reopened = await context.newPage();
+  sniff.attach(reopened);
+  await wire.attach(reopened);
+  await openApp(reopened, harness);
+  await expectConnected(reopened);
+  await openSeededTimeline(reopened, harness);
+  const recovered = reopened.getByRole('button', { name: /^Recover saved edits/ })
+    .and(reopened.locator(`[data-owner-id="${ownerBeforeLoss.ownerId}"]`));
+  await expect(recovered).toBeEnabled(CEILING);
+  await recovered.click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+  expect(wire.posts[1].body).toBe(addPost.body);
+  expect(wire.posts[1].key).toBe(addPost.key);
+  expect(wire.posts[1].response).toEqual(addPost.response);
+  expect((JSON.parse(wire.posts[2].body) as CommitRequest).commands[0]).toMatchObject({
+    op: 'track.set',
+    args: { values: { label: 'Manual drop follow-up' }, clear: [] },
+  });
+  await expect.poll(async () => (await commandOutboxes(reopened, seed3.timelineId))
+    .every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+
+  const acceptedAdd = accepted(wire.posts[1]);
+  const afterRecovery = await revisionState(harness, seed3, accepted(wire.posts[2]).data.accepted_revision_id);
+  expect(afterRecovery.parentClips[addedClipId]).toMatchObject({ id: addedClipId, asset: addedAsset, at: 20, track: 'V1', clipType: 'media' });
+  expect(Object.values(afterRecovery.parentClips).filter((clip) => clip.id === addedClipId)).toHaveLength(1);
+  expect(afterRecovery.trackLabel).toBe('Manual drop follow-up');
+  expect(afterRecovery.parentClips[addedClipId].asset).toBe(addedAsset);
+  expect(acceptedAdd.data.canonical_document.parent_revision.payload.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
+  await expectOpaqueDataKept(harness, seed3);
+  expect(wire.legacy).toEqual([]);
+
+  // Undo the newer local intent through the same Runtime command history; the native media clip remains intact.
+  await reopened.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(4);
+  const undoneFollowUp = accepted(wire.posts[3]);
+  expect(JSON.parse(wire.posts[3].body).commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: [accepted(wire.posts[2]).receipt.receipt_id] },
+  }]);
+  const afterUndo = await revisionState(harness, seed3, undoneFollowUp.data.accepted_revision_id);
+  expect(afterUndo.trackLabel).toBe('V1');
+  expect(afterUndo.parentClips[addedClipId]).toMatchObject({ id: addedClipId, asset: addedAsset });
+  await expectOpaqueDataKept(harness, seed3);
+  expect(wire.legacy).toEqual([]);
+  journey.facts = { ...journey.facts, nativeSelection: selected, addedClipId, addedAsset, refusedStatus: wrongVerified.status(), exactRetryKey: addPost.key, renderer: 'not started', legacySaveCount: wire.legacy.length };
   await sniff.expectClean(reopened, seed3.timelineId);
 });
 

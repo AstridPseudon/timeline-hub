@@ -187,6 +187,51 @@ export async function dragTimelineClip(page: Page, clipId: string, referenceId: 
   await page.mouse.up();
 }
 
+/** Dispatch the mounted timeline's real external-file drop with a browser File. */
+export async function dropFileOnTimeline(
+  page: Page,
+  file: { name: string; type: string; bytesBase64: string },
+  clipId: string,
+  referenceId: string,
+  from: number,
+  referenceAt: number,
+  time: number,
+) {
+  const clip = page.locator(`.clip-action[data-clip-id="${clipId}"]`).first();
+  const reference = page.locator(`.clip-action[data-clip-id="${referenceId}"]`).first();
+  const wrapper = page.locator('.timeline-wrapper').first();
+  await expect(clip).toBeVisible();
+  await expect(reference).toBeVisible();
+  const box = await clip.boundingBox();
+  const other = await reference.boundingBox();
+  const wrapperBox = await wrapper.boundingBox();
+  if (!box || !other || !wrapperBox || referenceAt === from) throw new Error('Cannot measure timeline file-drop scale');
+  const pixelsPerSecond = (other.x - box.x) / (referenceAt - from);
+  const clientX = box.x + (time - from) * pixelsPerSecond;
+  const clientY = box.y + box.height / 2;
+  if (clientX < wrapperBox.x || clientX > wrapperBox.x + wrapperBox.width) {
+    throw new Error(`Timeline file drop at ${time}s is outside the mounted timeline viewport`);
+  }
+
+  await page.evaluate(({ name, type, bytesBase64, clientX: x, clientY: y }) => {
+    const target = document.querySelector<HTMLElement>('.timeline-wrapper');
+    if (!target) throw new Error('Mounted timeline wrapper is missing');
+    const binary = atob(bytesBase64);
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    const transfer = new DataTransfer();
+    transfer.items.add(new File([bytes], name, { type }));
+    const event = (eventType: 'dragover' | 'drop') => target.dispatchEvent(new DragEvent(eventType, {
+      bubbles: true,
+      cancelable: true,
+      clientX: x,
+      clientY: y,
+      dataTransfer: transfer,
+    }));
+    event('dragover');
+    event('drop');
+  }, { ...file, clientX, clientY });
+}
+
 /** Read the legacy one-slot draft without creating or modifying recovery state. */
 export async function timelineDraft(page: Page, timelineId: string): Promise<(TimelineDraftRecord & { draft: { config?: TimelineConfig } }) | null> {
   return page.evaluate(async (id) => {
