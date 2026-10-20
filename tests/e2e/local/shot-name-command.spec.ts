@@ -130,6 +130,7 @@ async function editShotName(page: Page, seed: ThreeProductsSeed, value: string) 
   await dialog.locator('span[title="Click to edit shot name"]').first().click();
   const input = embeddedShotNameInput(dialog);
   await expect(input).toBeVisible();
+  await expect(input).toHaveValue(SHOT_NAME);
   await input.fill(value);
   await input.press('Enter');
   return { dialog, input };
