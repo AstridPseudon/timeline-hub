@@ -2,24 +2,24 @@
 
 Resolves the legacy "anchor-after" choice once, on the caller's original bundle,
 and emits one ordinary command with a literal start. Nothing new is executed:
-images use placement.create, videos use occurrence.add-media. The capture dict
+occurrence images use placement.create, videos use occurrence.add-media, and
+parent completions use clip.add-media. The capture dict
 names the anchor timing and the fallback it consumed. Resolution is never
 re-run on replay, so replay and inverse are exact whatever happened to the anchor.
 
-Every clip row the resolution read travels in the command's `consumed` args and the
-op records each as a guard. A later move or change of any of them conflicts at replay
-instead of landing at a stale position; the builder is then re-run on the new head.
-An exact retry of the same request still returns the same result.
+Occurrence timing inputs travel in `consumed`; parent timing inputs use the existing
+read guards. Each birth records the values itself. A later relevant change conflicts
+at replay instead of landing at a stale position. Rebuilding requires an explicitly
+approved new capture; an exact retry retains the original request and result.
 
 Start rule (frames at the pinned rational fps, intervals half-open). The intent saved
 at submit time wins; a lane or time is recomputed only when none was saved:
   anchor present  -> the anchor's end frame (start + max(1, round(duration * fps))),
-                     on preferred_track (else the occurrence lane).
+                     on preferred_track (else the explicit parent track or occurrence lane).
   anchor absent   -> the saved fallback_at (global seconds) on fallback_track (else the
-                     occurrence lane); with no saved time, the lane end: the greatest end
-                     frame of the occurrence's own clips on that lane, or the occurrence
-                     start if none.
-Absent means no anchor id was given or no such clip exists in the occurrence.
+                     explicit parent track or occurrence lane); with no saved time, the
+                     lane end of that owner's clips, or the owner's start if empty.
+Absent means no anchor id was given or no such raw clip exists in the explicit owner.
 A present anchor with unusable timing refuses; it never falls back. A saved track that
 no longer exists refuses (dependency_changed); it never moves to another lane.
 Completion holds are distinct from the shared 4 s hold: image 5 s, video 5 s
@@ -46,8 +46,10 @@ from fractions import Fraction
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 
 from ._command_state import CommandError, State
+from ._recording import Recording
 from .capture import number, occurrence_start, rate
 from .native_occurrence_media_commands import capture_occurrence_add_media
+from .native_parent_media_commands import capture_clip_add_media
 from .native_placement_commands import (
     _explicit_occurrence,
     _raw_clip_id,
@@ -92,15 +94,25 @@ def _birth(bundle, owner, clip_id, media, kind, lane, home, origin, fps, frame, 
 
 def auto_place_completion(bundle, owner, clip_id, media, *, ownership, verified_media,
                           anchor=None, duration=None, preferred_track=None, fallback_at=None,
-                          fallback_track=None):
+                          fallback_track=None, track=None):
     """Return {'commands': [...], 'capture': {...}} for one completed generation.
 
-    owner is occurrence:<raw ID> with ownership='occurrence'; parent-owned media
-    birth is not available in this stack. clip_id is the caller-reserved raw ID
+    owner is occurrence:<raw ID> with ownership='occurrence', or 'parent' with
+    ownership='parent' and an explicit existing track. clip_id is the caller-reserved raw ID
     and media the exact five-field selection of the completed variant.
     preferred_track, fallback_at (global seconds) and fallback_track are the values
     saved when the task was submitted.
     """
+    if owner == 'parent':
+        if ownership != 'parent' or not isinstance(track, str) or not track:
+            raise CommandError('parent completion requires explicit parent ownership and track',
+                               kind='unsupported_ownership')
+        return _parent_completion(bundle, clip_id, media, verified_media=verified_media,
+                                  anchor=anchor, duration=duration, track=track,
+                                  preferred_track=preferred_track, fallback_at=fallback_at,
+                                  fallback_track=fallback_track)
+    if track is not None:
+        raise CommandError('parent track requires parent ownership', kind='unsupported_ownership')
     _explicit_occurrence(owner, ownership)
     _raw_clip_id(clip_id)
     kind = _kind(media, verified_media)
@@ -134,6 +146,69 @@ def auto_place_completion(bundle, owner, clip_id, media, *, ownership, verified_
     return {'commands': [command],
             'capture': {'owner': owner, 'clip': clip_id, 'kind': kind, 'media': dict(media),
                         'anchor': {'id': anchor, 'state': 'present' if found is not None else 'absent'},
+                        'resolution': resolution, 'lane': lane, 'consumed': consumed,
+                        'fps': {'numerator': fps.numerator, 'denominator': fps.denominator},
+                        'start_frame': frame, 'on': on, 'seconds': length}}
+
+
+def _parent_completion(bundle, clip_id, media, *, verified_media, anchor, duration, track,
+                       preferred_track, fallback_at, fallback_track):
+    from .commands import execute
+
+    _raw_clip_id(clip_id)
+    if anchor is not None:
+        _raw_clip_id(anchor)
+    kind = _kind(media, verified_media)
+    if kind not in ('image', 'video'):
+        raise CommandError('completion placement requires image or video media', kind='unsupported_media')
+    # Query through the existing recorder. The literal birth re-observes these
+    # constraints in its own recorder; no policy is re-resolved during replay.
+    query = Recording(bundle, {}, 0)
+    fps = rate(query.read('parent', ['config', 'output', 'fps']))
+    members = query.select('collection.clips', 'parent')
+    found = 'parent/clip:' + anchor if anchor is not None else None
+    found = found if found in members else None
+    saved_track = preferred_track if found is not None else fallback_track
+    lane = track if saved_track is None else saved_track
+    if not isinstance(lane, str) or query.state.entity('parent/track:' + lane, optional=True) is None:
+        raise CommandError('saved placement track no longer exists', kind='dependency_changed')
+
+    def clip(ref):
+        # Keep absent-vs-null states, including duration.py's default branches.
+        row = {}
+        for field in ('at', 'at_ms', 'track', 'hold', 'from', 'to', 'speed'):
+            value = query.read(ref, [field])
+            if query.state.get(ref, [field])['state'] == 'present':
+                row[field] = value
+        return row
+
+    if found is not None:
+        frame, resolution, consumed = _end_frame(clip(found), 0, fps), 'anchor-after', [anchor]
+    elif fallback_at is not None:
+        frame = clip_start_frame({'at': number(fallback_at, 'fallback_at'), 'hold': 1}, float(fps))
+        resolution, consumed = 'fallback-at', []
+    else:
+        ends, consumed = [], []
+        for ref in members:
+            if query.read(ref, ['track']) == lane:
+                ends.append(_end_frame(clip(ref), 0, fps))
+                consumed.append(ref.split('/clip:', 1)[1])
+        frame, resolution = max(ends, default=0), 'lane-end'
+    on = float(Fraction(frame, 1) / fps)
+    length = COMPLETION_SECONDS if kind == 'image' or duration is None else duration
+    row = {'id': clip_id, 'clipType': kind, 'asset': media['asset'], 'track': lane,
+           'at': on, 'hold': length}
+    if kind == 'video':
+        row.update({'from': 0, 'to': length, 'speed': 1})
+    command = capture_clip_add_media(bundle, row, media, verified_media=verified_media)
+    for read in query.record['reads']:
+        if not any(item['ref'] == read['ref'] and item['path'] == read['path']
+                   for item in command['reads']):
+            command['reads'].append(read)
+    command = execute(bundle, [command], verified_media=verified_media).commands[0]
+    return {'commands': [command],
+            'capture': {'owner': 'parent', 'clip': clip_id, 'kind': kind, 'media': dict(media),
+                        'anchor': {'id': anchor, 'state': 'present' if found else 'absent'},
                         'resolution': resolution, 'lane': lane, 'consumed': consumed,
                         'fps': {'numerator': fps.numerator, 'denominator': fps.denominator},
                         'start_frame': frame, 'on': on, 'seconds': length}}

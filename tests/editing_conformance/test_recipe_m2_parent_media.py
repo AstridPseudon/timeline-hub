@@ -481,8 +481,6 @@ def test_provider_exact_reload_inverse_redo_and_retired_ids(replace):
 @pytest.mark.parametrize('kind, anchor, resolution, frame',
                          [('image', 'ov-a', 'anchor-after', 60), ('video', None, 'lane-end', 210),
                           ('image', 'gone', 'lane-end', 210)])
-# Restore with parent saved-policy and consumed timing guards in auto_place_completion.
-@pytest.mark.xfail(strict=True, reason='Parent auto-placement saved-policy/consumed timing integration is a separate follow-up')
 def test_completion_builder_places_a_parent_clip_after_the_anchor_or_at_the_track_end(
         kind, anchor, resolution, frame):
     document, _, new, verified = parent_inputs(kind)
@@ -497,8 +495,6 @@ def test_completion_builder_places_a_parent_clip_after_the_anchor_or_at_the_trac
     assert inverse(plan.bundle, plan.records).bundle == bundle
 
 
-# Restore with the parent track API in auto_place_completion, retaining its ownership refusals.
-@pytest.mark.xfail(strict=True, reason='Parent auto-placement track API is a separate follow-up')
 def test_completion_builder_needs_a_parent_track_and_matching_ownership():
     document, _, new, verified = parent_inputs()
     bundle = bundle_from_document(document)

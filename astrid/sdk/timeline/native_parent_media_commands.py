@@ -38,6 +38,18 @@ def add_media(ctx, command):
     _registry(ctx, 'parent', pin, kind, create=True, alias=row['asset'])
     after = None if command['select'] == 'parent' else command['select']
     ctx.create('parent', 'clip', row, after=after)
+    # Automatic builders may add original-state read constraints to this literal
+    # birth. Observe them ourselves; caller snapshots never become record facts.
+    # Ordinary births retain their existing capture and disjoint-edit behavior.
+    for read in command.get('reads', ()):
+        if not any(item['ref'] == read['ref'] and item['path'] == read['path']
+                   for item in ctx.record['reads']):
+            if (not read['ref'].startswith('parent/clip:')
+                    or read['path'] not in [[field] for field in
+                        ('at', 'at_ms', 'track', 'hold', 'from', 'to', 'speed')]
+                    or ctx.command_input.entity(read['ref'], optional=True) is None):
+                raise CommandError('unsupported parent placement read')
+            ctx.read(read['ref'], read['path'])
 
 
 def capture_assembled_media(bundle, assembled, media, *, replace_clips, verified_media):
