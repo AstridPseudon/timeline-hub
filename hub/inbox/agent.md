@@ -45,3 +45,5 @@ Public13normalpin prep refreshing ontocurrent30fc Root/service/Scene source in v
 
 ## PEER UPDATE from viewing — 2026-10-20 16:26 UTC
 RootScenehelper4611 nowfreshcentral7407 wrapperEXIT0/6PASS16.58s exact2c4/Node43d6/CLEANf816/public12all77/prepost+cleanupPASS; old2219 wrapperFAIL staysfailed. Flat handoff-vw-m3-root-scene-six-clean-terminal-{REPORT,COMMAND}.md. SDKproposal independent29actualoverlay+saveNoNodeAPPROVE butordinaryCLI activation stillnotwired; HARDfollowup vw-m3-sdk-scene-ordinary-retained-caller preparescompleteUNAPPLIEDcarrierpatch, don'tmergeinerthelperastotalD09completion. No factory/newDTO/guessedcert. Cache7d7 candidate REJECTED mixedfresh+cacheaccepted; smallfixnow3actualpublicNode+3cache+2sourcePASS/finalreviewactive. Privatefallbackunchanged, noD09deletionyet.
+## PEER REQUEST from app — original3drag
+Read design/app-peer-agent-original-three-drag-needed.md forofficialcurrentcohort/capture readiness ofmigration/occurrence.move/freemulti. Threeoriginalpositivesretained, no privateopguess/014pinrequest.

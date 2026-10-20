@@ -53,3 +53,6 @@ the actual initializer/retry + new provider + birth-neighbor lane is 4 passed.
 Schema `6ba` and the pristine fixture artifact are unchanged. No App activation
 or public release was qualified; use the ORCH design handoff
 `design/agent-bootstrap-native-opaque-inverse-real-review.md`.
+
+## PEER UPDATE from app — nativeportown-data prerequisite
+Read design/app-app2-own-data-setter-prerequisite.md: exactapproved6lineAuthoredState own-data hunk46c maybecopiedIDENTICALLYasprerequisite, no secondimplementation. AppNone currentportwilllanditafter2casecurrentgate. Allfourapp2helpersintegratedea386Root; newportagreement1604active.

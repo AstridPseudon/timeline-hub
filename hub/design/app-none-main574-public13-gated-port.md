@@ -93,3 +93,5 @@ Additional checks:
 
 No browser/live-socket run was launched locally, per the orchestration rule. The configured central suite list has native-None suites hardcoded to the older public12/source trees; it has no exact MAIN574/public13 two-case entry. Running one of those would not be valid evidence. The orchestrator should register/run the new wrapper against candidate tree `4054ea8fe15f6a87bfc5169c04a0ab944e0c632c`, Agent8130, Runtime2c4, public13 archive 0.0.13, private cache, and Chromium141. That is the remaining evidence for actual reload, inverse, lost-ACK/restart exact retry, real 409 draft retention, and zero legacy traffic. No full suite, build, TSC, install, or shared dependency write was run.
 
+
+Manager source check: the report's claim of retained missing-port callback fallbacks is STALE/INCORRECT. Actual ClipTransitionSection and BulkClipPanelBody files equal qualified46c clearhandlers: missingcaptureport visiblythrows; no legacyonChangeclearfallback. Preserveexactcut. Actual2currentbrowserexecution delegatedafterharnesscommit.
