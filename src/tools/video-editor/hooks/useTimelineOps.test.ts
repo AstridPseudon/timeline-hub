@@ -144,6 +144,34 @@ describe('useTimelineOps', () => {
     expect(commitData).toHaveBeenCalledWith(expect.anything(), { save: true, semantic: true });
   });
 
+  it('keeps a standalone legacy cross-track move on the guarded snapshot path', () => {
+    const dataRef = { current: makeBaseTimelineData() };
+    const commitData = vi.fn();
+    const genericPatchPort = {
+      capture: vi.fn(),
+      finish: vi.fn(),
+      submit: vi.fn(),
+    } as unknown as GenericPatchCapturePort;
+    const { result } = renderHook(() => useTimelineOps({
+      dataRef,
+      commitData,
+      genericPatchPort,
+      createManualCheckpoint: vi.fn(),
+      jumpToCheckpoint: vi.fn(),
+      checkpoints: [],
+    }));
+
+    act(() => result.current.apply({
+      version: 1,
+      operations: [{ op: 'clip.move', target: 'clip-1', payload: { track: 'A1', at: 2 } }],
+    }));
+
+    expect(genericPatchPort.capture).not.toHaveBeenCalled();
+    expect(genericPatchPort.finish).not.toHaveBeenCalled();
+    expect(genericPatchPort.submit).not.toHaveBeenCalled();
+    expect(commitData).toHaveBeenCalledWith(expect.anything(), { save: true, semantic: true });
+  });
+
   describe('flush — durable host acknowledgement', () => {
     it('keeps apply synchronous and awaits exactly the host barrier receipt', async () => {
       let acknowledge!: (version: number) => void;

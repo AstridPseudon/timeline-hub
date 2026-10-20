@@ -775,6 +775,44 @@ describe('buildAlignShotsPatch', () => {
     ]);
   });
 
+  it('keeps a batch with cross-track intent on the legacy guarded shape', () => {
+    const snapshot = makeSnapshot({
+      clips: [
+        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
+        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
+      ],
+    });
+    const patch = buildAlignShotsPatch(snapshot, [
+      { clipId: 'clip-a', trackId: 'A1', time: 3 },
+      { clipId: 'clip-b', trackId: 'V1', time: 9 },
+    ], SCENE_PHASE_EXTENSION_ID);
+
+    expect(patch.operations).toEqual([
+      { op: 'clip.move', target: 'clip-a', payload: { track: 'A1', at: 3 } },
+      { op: 'clip.move', target: 'clip-b', payload: { track: 'V1', at: 9 } },
+    ]);
+  });
+
+  it('emits four native members for a complete same-track two-clip batch', () => {
+    const snapshot = makeSnapshot({
+      clips: [
+        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
+        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
+      ],
+    });
+    const patch = buildAlignShotsPatch(snapshot, [
+      { clipId: 'clip-a', trackId: 'V1', time: 3, hold: 6 },
+      { clipId: 'clip-b', trackId: 'V1', time: 9, hold: 2 },
+    ], SCENE_PHASE_EXTENSION_ID);
+
+    expect(patch.operations).toEqual([
+      { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
+      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 6 }, clear: [] } },
+      { op: 'clip.move', target: 'clip-b', payload: { at: 9 } },
+      { op: 'clip.update', target: 'clip-b', payload: { values: { hold: 2 }, clear: [] } },
+    ]);
+  });
+
   it('refuses duplicate target alignments before a patch can be applied', () => {
     expect(() => buildAlignShotsPatch(makeSnapshot(), [
       { clipId: 'clip-a', trackId: 'V1', time: 3 },

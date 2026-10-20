@@ -81,7 +81,8 @@ function scalarPatchPayload(operation: TimelinePatchOperation): boolean {
 }
 
 function qualified(operation: TimelinePatchOperation): boolean {
-  return operation.op === 'clip.move'
+  return (operation.op === 'clip.move' && object(operation.payload)
+      && equal(Object.keys(operation.payload), ['at']))
     || (operation.op === 'clip.update' && object(operation.payload)
       && (has(operation.payload, 'values') || has(operation.payload, 'clear')));
 }

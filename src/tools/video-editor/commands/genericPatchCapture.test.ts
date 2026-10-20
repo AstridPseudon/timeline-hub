@@ -34,6 +34,19 @@ describe('bounded native generic patch capture', () => {
     expect(classifyGenericPatch({ version: 1, operations: [
       { op: 'project-data.write', target: 'extension', payload: { value: 1 } },
     ] })).toBe('unsupported');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'clip.move', target: 'x', payload: { track: 'A1', at: 2 } },
+    ] })).toBe('unsupported');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'clip.move', target: 'x', payload: { at: 2 } },
+      { op: 'clip.move', target: 'y', payload: { track: 'A1', at: 3 } },
+    ] })).toBe('mixed');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'clip.move', target: 'x', payload: { at: 2 } },
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 3 }, clear: [] } },
+      { op: 'clip.move', target: 'y', payload: { at: 6 } },
+      { op: 'clip.update', target: 'y', payload: { values: { hold: 4 }, clear: [] } },
+    ] })).toBe('supported');
   });
 
   it('captures one ordered command list against one sequential authored bundle', async () => {
@@ -192,6 +205,19 @@ describe('bounded native generic patch capture', () => {
         expect.objectContaining({ operationIndex: 2, reason: expect.stringContaining('another patch member') }),
       ]);
     }
+    expect(resolved).toBe(false);
+  });
+
+  it('refuses a legacy cross-track move before resolving an owner', async () => {
+    const { bundle } = await authoredBundle();
+    let resolved = false;
+    expect(() => captureGenericPatch(bundle, {
+      version: 1,
+      operations: [{ op: 'clip.move', target: 'x', payload: { track: 'A1', at: 2 } }],
+    }, () => {
+      resolved = true;
+      return 'parent/clip:x';
+    })).toThrow(GenericPatchRefusal);
     expect(resolved).toBe(false);
   });
 
