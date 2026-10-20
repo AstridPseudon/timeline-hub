@@ -103,6 +103,7 @@ export interface RuntimeConnectionCopy {
   readonly agent: {
     readonly copy: string;
     readonly copied: string;
+    readonly pasteNext: string;
     /** Shown with the command in a text box, only when the clipboard write failed. */
     readonly copyFailed: string;
     readonly note: string;
@@ -191,6 +192,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   agent: {
     copy: 'Copy',
     copied: 'Copied',
+    pasteNext: 'Steps copied. Paste them into your agent.',
     copyFailed: "Copying didn't work. Select the text below and copy it.",
     note: 'Or paste it into a coding agent to run for you.',
   },

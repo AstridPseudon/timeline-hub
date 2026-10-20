@@ -8,7 +8,6 @@ import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
 import { installCommand, RUNTIME_CONNECTION_COPY } from './copy.ts';
 
 type WorkspaceIdentity = { name: string; realmId: string };
-const PASTE_NEXT_STATUS = 'Steps copied. Paste them into your agent.';
 
 /**
  * The details are for an agent to find the person's work, not for the person to inspect. Each Astrid install keeps its
@@ -89,7 +88,7 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
           </Button>}
           <Button variant="outline" onClick={handleCheckAgain}>Check again</Button>
         </div>
-        {identity.data && didCopy && <p role="status">{PASTE_NEXT_STATUS}</p>}
+        {identity.data && didCopy && <p role="status">{copy.pasteNext}</p>}
         {identity.data && copyState === 'failed' && <div className="space-y-2">
           <p role="status">{copy.copyFailed}</p>
           <textarea aria-label={copy.copyFailed} readOnly value={diagnostic} rows={6} onFocus={event => event.currentTarget.select()} className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground" />
