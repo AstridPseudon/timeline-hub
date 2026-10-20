@@ -1,5 +1,35 @@
 # Runtime full-suite attribution correction — 2026-10-20T12:38:53Z
 
+## Current `14898` attribution — 2026-10-20
+
+The completed current full is `runtime-full-restore-integration-1020160931-14898`.
+Its authoritative target was `integration:runtime`, with Runtime source commit
+`6ab3243972f8dc49105819e6d7ba7aef1a2888b8` and exact source tree
+`c225a680c645c67c3fe1f43b5e564b2a77a05d80`. The test-service snapshot records
+the same tree and key `234cd8b43da0e24a87be6e48dacae3d5`. The external source
+record is Agent `f133a87986d839d7716d3efac2c2ba25fe036098`, App
+`a04f90cf60eac69a5079f0ab03188abcbd1571fc`, and Composition
+`5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8`.
+
+This exact snapshot includes the catalog-promotion `81f8c7e0`, selected-media
+CAS `a51af88`, catalog-text `9f211fc`, and native-clip `6ab3243` state. It
+excludes the unmerged audio, ordinary014, carrier, and strict-marker patches.
+The raw result is **5515 passed, 7 failed, 18 skipped, 18 xfailed, 12
+warnings** in **684.66s (0:11:24)**, service elapsed **687s**, exit 1.
+
+All seven failure nodes are the established baseline cohort: six
+`tests/test_runtime_boundary.py` nodes and
+`tests/test_zero_shim_boundary.py::test_start_does_not_inject_checkout_into_child`.
+There are **0 new failure nodes** and no other failure to classify. The default
+full therefore remains **RED**, and this is not an all-green claim. The
+immutable public producer remains `2c4ac180c2220bdad966bc01e95ad230e99ce26a`;
+this evidence does not mutate or repin it.
+
+No private-floor result is used as gate proof. The request/log contain no
+storage-floor exception or resource evidence; no storage exception is
+attributed, and the raw full remains RED for the seven baseline failures.
+This worker did not request a test or rerun the full suite.
+
 ## Correction dated 2026-10-20
 
 The raw artifacts for `rt-m2-promotion-integrated-gates-full-restore-integration-1020150647-16434` correct the attribution of the later Runtime full. Its authoritative START source was the promotion-only integration state: merge `81f8c7e0b22c34804015c054762af3d737e4698a`, tree `0e3a5b938d9ca489fc760b09d34b02d4ac9aad51`. The raw result is **5523 passed, 14 failed, 18 skipped, 22 xfailed** (exit 1).

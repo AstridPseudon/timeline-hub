@@ -69,7 +69,7 @@ You own your area. If your recommended decision fits PLAN.md and the precedents 
 
 **Tests are proportionate (owner direction).** Cover the behaviour you changed and its direct neighbours. Do not build exhaustive matrices, frozen copies of every schema version or multi-thousand-line golden files unless a gate needs them. Big test growth is a smell; prefer one clear test per behaviour.
 
-**Coordinate directly with peers.** For something you need from another area, append a short "PEER REQUEST from <you>" section to that manager's INBOX.md (main managers) or hub/inbox/<area>.md (remote areas), and check its STATUS. Escalate only if you disagree or it stays stuck for more than 2 hours.
+**Coordinate directly with peers.** For something you need from another area, append a short "PEER REQUEST from <you>" section to `$ORCH/managers/<area>/INBOX.md` if that area runs on YOUR machine; otherwise write it to `$ORCH/design/peer-<you>-to-<area>-<UTC>-<slug>.md` (design/ syncs to every machine) AND to `$ORCH/hub/inbox/<area>.md` (main forwards that into the real INBOX). Replies go the same way. Check the peer's STATUS for the answer. Escalate only if you disagree or it stays stuck for more than 2 hours.
 
 **Before you escalate, ask yourself:** which precedent or PLAN line almost covers this? If one does, decide. Every escalation must end with two lines: `Not covered because: …` and `Rule that would let me decide next time: …`. The orchestrator turns that second line into a precedent, so the same question never comes up twice.
 

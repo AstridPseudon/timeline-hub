@@ -13,7 +13,7 @@ the approved initializer source with the current Agent integration delta.
 | Current integration merge parent | `f133a87986d839d7716d3efac2c2ba25fe036098` (`tl/integration`) |
 | Current integration tree | `3f38f816181d7564e5cd7db4d9672a0d6dea9ac3` |
 | Common base for the forward delta | `30fc8dd154015a7c58cf4ce7b065ccc46f470ee8` |
-| Expected candidate tree before harness commit | `5f17c47a36b75a69e1fa50fd1cc3a1e54e1a80c0` |
+| Expected candidate tree before harness commit | `40300cd26c1bdead0895a47b3928f0e1fb11f6cc` |
 | Candidate HEAD | Harness-assigned two-parent commit after worker exit; first parent is the approved initializer parent and merge parent is `f133a879` |
 
 The expected tree was calculated from the clean approved parent plus the exact
@@ -68,19 +68,39 @@ parent. No source refresh or artifact regeneration was performed.
 
 ## Tests
 
-Local targeted lane (no bytecode or pytest-cache writes):
+Initializer pure/provider lane:
 
 ```text
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
   /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
   tests/editing_conformance/test_pristine_initialize.py \
-  tests/sdk/test_timeline_sheet_native.py \
-  tests/packs/timeline/test_cli_assets.py::test_edit_replace_asset_and_swap_asset_forward_to_the_sdk \
-  tests/packs/timeline/test_cli_native_sheet.py::test_clip_row_omission_is_native_delete_and_keeps_other_rows \
-  tests/packs/timeline/test_cli_voice_bindings.py::test_replace_insert_and_from_script_forward_existing_sdk_arguments
+  tests/sdk/test_timeline_pristine_initialize_provider.py
 ```
 
-Result: **74 passed in 6.52s**.
+Result: **31 passed in 1.25s**.
+
+NativeSheet unit lane (no bytecode or pytest-cache writes):
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
+  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
+  tests/sdk/test_timeline_sheet_native.py \
+  tests/editing_conformance/test_native_sheet_current.py
+```
+
+Result: **83 passed in 12.38s**.
+
+CLI fixture lane:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
+  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
+  tests/packs/timeline/test_cli_assets.py \
+  tests/packs/timeline/test_cli_voice_bindings.py
+```
+
+Result: **4 passed in 0.74s**. The NativeSheet CLI omission regression was
+also included in the changed-neighbor local run before the 83-test lane.
 
 Central exact generated014 HTTP lane, requested once on this combined source:
 
@@ -90,7 +110,36 @@ agent ordinary014-consumer-integration
   tests/editing_conformance/test_native_sheet_current_runtime.py
 ```
 
-Result: **pending central test-service completion at report time**.
+Result: **8 passed in 18.53s**, central request
+`agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020161841-3807`,
+tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`.
+
+The initializer/birth neighbor requested by the approved initializer proof was
+also rerun against the same combined source and exact producer:
+
+```text
+tests/editing_conformance/test_next_command_cohort_runtime.py::test_pristine_init_first_birth_reload_undo_and_missing_word_source
+```
+
+Result: **2 passed in 4.16s**, request
+`agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020161926-7107`,
+same snapshot tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`. Together the
+initializer/retry, new opaque regression, and birth-neighbor evidence is the
+requested **4 passed**; the NativeSheet HTTP file contributes the six runtime
+nodes in the 8-test lane.
+
+The current M1 HTTP baseline was also run once against the same combined source
+and producer:
+
+```text
+tests/editing_conformance/test_commit_runtime_m1.py
+```
+
+Result: **10 passed in 32.39s**, request
+`agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020162203-5248`,
+same snapshot tree. Combined with the six NativeSheet HTTP nodes above, this
+provides the requested **16 actual HTTP passes** without rerunning the
+NativeSheet runtime file.
 
 No full suite, App/browser journey, release, integration pin, or renderer/audio
 qualification was run or claimed. The earlier 143-test `e86f44d0` actual-provider
@@ -99,7 +148,7 @@ qualification.
 
 ## Next step
 
-After the central lane completes, the orchestrator may review this source
-candidate as the normal App2/Runtime cohort input. App2 and Runtime must retain
+The orchestrator may review this source candidate as the normal App2/Runtime
+cohort input. App2 and Runtime must retain
 the exact producer/schema/artifact tuple above; `e86f44d0` and `310e5484` remain
 immutable.

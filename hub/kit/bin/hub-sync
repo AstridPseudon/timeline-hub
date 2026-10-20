@@ -85,6 +85,10 @@ for a in $AREAS; do
     python3 -I $ORCH/bin/inbox-merge hub/inbox/$a.md $ORCH/managers/$a/INBOX.md   # append new sections; keeps local lead notes
   fi
 done
+# peer messages written to $ORCH/hub/inbox/<area>.md (a path managers reach for, but which never syncs) are delivered into that
+# area's real INBOX, then renamed. Main forwards to every area; remote machines forward what is addressed to their own areas.
+for f in $ORCH/hub/inbox/*.md; do [ -f "$f" ] || continue; a=$(basename $f .md); [ -d $ORCH/managers/$a ] || continue
+  { echo; echo "## $now — DELIVERED PEER MESSAGES (from \$ORCH/hub/inbox/$a.md)"; cat $f; } >> $ORCH/managers/$a/INBOX.md; mv $f $f.delivered-$(date +%s); done
 if [ $M = main ]; then
   for a in $REMOTE_AREAS; do
     [ -f hub/status/$a.md ] && cp hub/status/$a.md $ORCH/managers/$a/STATUS.md
