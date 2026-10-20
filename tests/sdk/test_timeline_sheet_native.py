@@ -7,8 +7,9 @@ import json
 import pytest
 
 from astrid.sdk.timeline._command_state import CommandError, State
+from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline._scalar_commands import capture_track_set
-from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.capture import capture_clip_delete, capture_move
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.sync import CommitConflict
 from astrid.sdk.timeline_checkout import Checkout
@@ -36,6 +37,14 @@ def edit_cell(text, ref, value, *, label=False):
             lines[i] = body + suffix
             return "\n".join(lines) + "\n"
     raise AssertionError(f"no bound row for {ref}")
+
+
+def remove_row(text, ref):
+    suffix = " # ref " + json.dumps(ref)
+    lines = text.splitlines()
+    kept = [line for line in lines if not line.endswith(suffix)]
+    assert len(kept) == len(lines) - 1
+    return "\n".join(kept) + "\n"
 
 
 def test_preview_and_unchanged_cells_have_no_writes_or_io(connected, monkeypatch):  # noqa: F811
@@ -103,7 +112,6 @@ def test_label_json_text_round_trips_without_comment_truncation(label):
     lambda text: text.replace('"parent/clip:a"', '"parent/clip:b"', 1),
     lambda text: text.replace(' # ref "parent/clip:a"', "", 1),
     lambda text: text.replace('"publication_id": "pub0"', '"publication_id": "different"'),
-    lambda text: "\n".join(line for line in text.splitlines() if '"parent/clip:a"' not in line),
     lambda text: text + '  2  picture new media # ref "parent/clip:new"\n',
     lambda text: text.replace(" # ref", " extra=lost # ref", 1),
     lambda text: text.replace(" # ref", " ~ignored # ref", 1),
@@ -116,6 +124,85 @@ def test_unsupported_or_unbound_edits_are_refused_before_queueing(connected, cha
     with pytest.raises(SheetError):
         sheet.apply(change(sheet.text), session=session, dry_run=False)
     assert path.read_bytes() == before and generated.calls == []
+
+
+def test_omitting_native_clip_row_deletes_exact_bound_clip_and_preserves_sibling_state():
+    original = initial_bundle()
+    sibling = State(original).entity("parent/clip:b")
+    sibling["opaque"] = {"keep": [None, False, 1, 1.0]}
+    State(original).entity("parent/clip:a")["opaque"] = {"remove": True}
+    sheet = sheet_for(original)
+
+    plan = sheet.preview(remove_row(sheet.text, "parent/clip:a"))
+
+    assert plan.commands == [capture_clip_delete(original, "parent/clip:a")]
+    assert [row["id"] for row in State(plan.bundle).collection("parent", "clip")] == ["b"]
+    assert State(plan.bundle).entity("parent/clip:b") == sibling
+    assert State(plan.bundle).collection("parent", "track") == State(original).collection("parent", "track")
+
+
+def test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases(connected):  # noqa: F811
+    session = open_session(connected)
+    client, generated, path = connected
+    sheet = sheet_for(initial_bundle())
+    edited = remove_row(sheet.text, "parent/clip:a")
+    expected = sheet.preview(edited)
+    generated.lose_ack = True
+
+    with pytest.raises(WorkspaceClientError):
+        sheet.apply(edited, session=session, dry_run=False, idempotency_key="delete-once")
+    first = generated.calls[0]
+    reads = list(client.reads)
+    durable = path.read_bytes()
+    restarted = open_session(connected)
+    with pytest.raises(TimelineEditError, match="immutable"):
+        sheet.apply(edited, session=restarted, dry_run=False, idempotency_key="changed")
+    assert path.read_bytes() == durable
+    result = sheet.apply(edited, session=restarted, dry_run=False)
+    assert generated.calls[-1] == first
+    assert client.reads == reads  # exact retry uses the retained flight, not a fresh head
+    assert generated.bundles["r1"] == expected.bundle
+    assert State(generated.bundles["r1"]).entity("parent/clip:b") == State(initial_bundle()).entity("parent/clip:b")
+
+    restarted.undo([result["receipt"]["receipt_id"]])
+    assert generated.bundles["r2"] == initial_bundle()
+    from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse
+
+    undone = inverse(expected.bundle, expected.records)
+    redo_records = accepted_boundaries(undone.records, expected.bundle, undone.bundle)
+    assert inverse(undone.bundle, redo_records).bundle == expected.bundle
+
+
+def test_omitted_native_clip_row_rebases_over_unrelated_row_edit(connected):  # noqa: F811
+    session = open_session(connected)
+    _, generated, _ = connected
+    sheet = sheet_for(initial_bundle())
+    edited = remove_row(sheet.text, "parent/clip:a")
+    other = capture_move(initial_bundle(), "parent/clip:b", 7)
+    generated.bundles["other"] = execute(initial_bundle(), [other]).bundle
+    generated.head = {"revision_id": "other", "publication_id": "other-pub"}
+    result = sheet.apply(edited, session=session, dry_run=False)
+    assert result["data"]["status"] == "rebased"
+    assert State(generated.bundles["r1"]).entity("parent/clip:b")["at"] == 7
+
+
+def test_omitted_native_clip_row_refuses_membership_change_without_accepting(connected):  # noqa: F811
+    session = open_session(connected)
+    sheet = sheet_for(initial_bundle())
+    _, generated, path = connected
+    edited = remove_row(sheet.text, "parent/clip:a")
+    generated.bundles["membership"] = copy.deepcopy(initial_bundle())
+    generated.bundles["membership"]["parent"]["clips"].append(
+        {"id": "new", "track": "picture", "clipType": "am-type", "at": 2, "hold": 1,
+         "params": {"text": "new"}})
+    generated.head = {"revision_id": "membership", "publication_id": "membership-pub"}
+    before = copy.deepcopy(generated.bundles["membership"])
+    calls = len(generated.calls)
+    with pytest.raises(CommitConflict):
+        sheet.apply(edited, session=session, dry_run=False)
+    assert generated.bundles["membership"] == before
+    assert len(generated.calls) == calls + 1
+    assert generated.accepted == {}
 
 
 def test_native_rows_cannot_fall_into_the_legacy_sheet_writer():
