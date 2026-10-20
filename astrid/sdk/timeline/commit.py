@@ -253,7 +253,7 @@ def _inverse_clip_transcripts(records, bundle, *, pending=False):
         for pin in accepted:
             if (pin not in prior and pin['document_id'].startswith('transcript:')
                     and any(isinstance(choice, dict) and choice.get('document') == pin for choice in choices)
-                    and not contains([parent, bundle['shots']], pin)):
+                    and not contains([parent, bundle['shots'], bundle['placements']], pin)):
                 result.append(pin)
     return result
 

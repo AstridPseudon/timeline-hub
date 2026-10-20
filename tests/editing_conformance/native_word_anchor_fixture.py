@@ -64,7 +64,7 @@ def first_selection(bundle):
                        pin["version"], pin["content_digest"], tuple(word.id for word in chosen))
 
 
-def seed(root, reused, *, duration_ms=10000, source_window=None):
+def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scope=None):
     # Historical data is authored with the pre-cut public API; measured edits
     # use the current Runtime and normal provider after reopening this realm.
     from runtime_protocol.service import RuntimeService
@@ -83,6 +83,7 @@ def seed(root, reused, *, duration_ms=10000, source_window=None):
     source = service.create_document(project, {"document_id": document_id,
         "kind": "media.transcript", "content": content}, idempotency_key="transcript-v1")["data"]
     pin = {"document_id": document_id, "version": 1, "content_digest": _digest(content)}
+    opaque = {"opaque_transcript": {"pin": pin, "raw": [None, False, 0, 0.0, {}, [], ""]}}
     service.create_project_shot(project, {"shot_id": "shot", "name": "Voice"},
                                 idempotency_key="shot")
     voices = [{"id": "voice", "clipType": "media", "track": "vo", "asset": "take",
@@ -101,7 +102,8 @@ def seed(root, reused, *, duration_ms=10000, source_window=None):
                 "clips": voices,
                 "registry": {"assets": {"take": {"media_id": media, "type": "audio"}}}}}],
         "shot_revisions": [{"shot_id": "shot", "revision_id": "shot-revision",
-            "internal_timeline_revision_id": "internal", "payload": {"items": []}}],
+            "internal_timeline_revision_id": "internal", "payload": {"items": [],
+                **(opaque if opaque_pin_scope == "shot" else {})}}],
         # The legacy publication seam only accepts numeric output.fps; main's
         # canvas retains the exact rational consumed by the timing compiler.
         "parent_composition": {"config": {"output": {"fps": 30000 / 1001},
@@ -109,9 +111,11 @@ def seed(root, reused, *, duration_ms=10000, source_window=None):
             "tracks": [{"id": "picture", "kind": "visual"}]},
             "clips": [{"id": "card", "clipType": "am-type", "track": "picture", "at": 0,
                        "hold": 1, "app": {"astrid": {"on": DECLARATION, "for": 0.5}}}],
+            **(opaque if opaque_pin_scope == "parent" else {}),
             "occurrences": [{"occurrence_id": "occ", "shot_id": "shot",
                 "shot_revision_id": "shot-revision", "placement": {"start_ms": 2000, "track": "picture"},
-                "duration_ms": duration_ms, "source_offset": 0, "speed": 1}]}},
+                "duration_ms": duration_ms, "source_offset": 0, "speed": 1,
+                **(opaque if opaque_pin_scope == "occurrence" else {})}]}},
         idempotency_key="initial-publication")
 
     service.close()

@@ -181,6 +181,43 @@ def test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_an
     assert case.service.store.integrity_report()['ok']
 
 
+@pytest.mark.parametrize('retained,scope', [
+    ({'opaque_pin_scope': scope}, scope) for scope in ('parent', 'shot', 'occurrence')
+], indirect=['retained'])
+def test_grouped_inverse_retains_surviving_opaque_transcript_pin(retained, scope):
+    case = retained
+    baseline = copy.deepcopy(case.documents[case.head()['revision_id']])
+    payload = baseline['parent_revision']['payload']
+    owner = (payload if scope == 'parent' else payload['occurrences'][0] if scope == 'occurrence'
+             else baseline['shot_revisions'][0]['payload'])
+    opaque = owner['opaque_transcript']
+    assert opaque == {'pin': case.pin, 'raw': [None, False, 0, 0.0, {}, [], '']}
+    assert baseline['dependency_manifest']['documents'] == []
+    born = case.submit(case.request([parent.call('clip.add', {'row': {
+        'id': 'born', 'clipType': 'am-type', 'track': 'picture', 'at': 0, 'hold': .5}}, 'parent')]),
+        'opaque-pin-birth')
+    anchored = case.submit(case.request([parent.call('clip.anchor', {
+        'field': 'on', 'declaration': 'again', 'choice': {
+            'source': 'occurrence:occ/clip:voice', 'document': case.pin,
+            'word_ids': [case.source['content']['segments'][0]['words'][0]['id']]}
+        }, 'parent/clip:born')]), 'opaque-pin-anchor')
+    assert anchored['data']['canonical_document']['dependency_manifest']['documents'] == [case.pin]
+    request = case.request([parent.call('timeline.inverse', {'publications': [
+        result['receipt']['receipt_id'] for result in (born, anchored)]}, None)])
+    undone = case.submit(request, 'opaque-pin-undo')
+    document = undone['data']['canonical_document']
+    assert document['dependency_manifest']['documents'] == [case.pin]
+    assert json.dumps(document['parent_revision']['payload'], sort_keys=True) == json.dumps(
+        baseline['parent_revision']['payload'], sort_keys=True)
+    for key in ('shot_revisions', 'internal_timeline_revisions'):
+        assert json.dumps(document[key], sort_keys=True) == json.dumps(baseline[key], sort_keys=True)
+    redone = word.undo(case, undone, 'opaque-pin-redo')
+    assert json.dumps(redone['data']['canonical_document'], sort_keys=True) == json.dumps(
+        anchored['data']['canonical_document'], sort_keys=True)
+    case.restart()
+    assert case.submit(request, 'opaque-pin-undo') == undone
+
+
 @pytest.mark.parametrize('retention', ['introduced', 'preexisting', 'surviving', 'opaque'])
 def test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins(retained, retention):
     case = retained
