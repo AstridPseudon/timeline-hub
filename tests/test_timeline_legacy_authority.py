@@ -248,17 +248,34 @@ def test_service_catalog_visibility_unarchives_current_or_absent_version(service
     assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == history_count
 
 
-def test_service_current_target_legacy_receipt_refuses_before_replay(service_case, monkeypatch):
+@pytest.mark.parametrize("evidence", [
+    "missing_event", "empty_payload", "malformed_payload", "wrong_project",
+    "bool_version", "missing_version", "wrong_version", "legacy_target_version",
+])
+def test_service_visibility_receipt_proof_refuses_malformed_evidence(service_case, monkeypatch, evidence):
     case = service_case
     service = case.service
     created = service.get_project_timeline(case.project, "tracked")
     archived = service.archive_timeline(
-        "tracked", {"expected_version": created["version"]}, idempotency_key="legacy-current-archive",
+        "tracked", {"expected_version": created["version"]}, idempotency_key="proof-archive",
     )
-    body = {"expected_version": archived["data"]["version"], "version": archived["data"]["version"]}
+    body = {"expected_version": archived["data"]["version"]}
+    event_version = archived["data"]["version"] + 1
+    payloads = {
+        "missing_event": None,
+        "empty_payload": {},
+        "malformed_payload": [],
+        "wrong_project": {"project_id": "different-project", "version": event_version},
+        "bool_version": {"project_id": case.project, "version": True},
+        "missing_version": {"project_id": case.project},
+        "wrong_version": {"project_id": case.project, "version": event_version + 1},
+        "legacy_target_version": {
+            "project_id": case.project, "version": event_version, "target_version": 1,
+        },
+    }
     _inject_recover_receipt(
-        service, case.project, "tracked", body, "legacy-current-recover",
-        event_payload={"project_id": case.project, "version": archived["data"]["version"], "target_version": 1},
+        service, case.project, "tracked", body, "proof-recover",
+        event_payload=payloads[evidence],
     )
     before = snapshot(service)
 
@@ -267,26 +284,9 @@ def test_service_current_target_legacy_receipt_refuses_before_replay(service_cas
 
     monkeypatch.setattr(service, "_command_replay", replay)
     with pytest.raises(RetiredRouteError) as error:
-        service.recover_timeline("tracked", body, idempotency_key="legacy-current-recover")
+        service.recover_timeline("tracked", body, idempotency_key="proof-recover")
     assert error.value.status == 410
-    assert error.value.details["replacement"] == "timeline.restore"
-    assert snapshot(service) == before
-
-
-def test_service_recover_receipt_missing_event_refuses_before_visibility_replay(service_case):
-    case = service_case
-    service = case.service
-    created = service.get_project_timeline(case.project, "tracked")
-    archived = service.archive_timeline(
-        "tracked", {"expected_version": created["version"]}, idempotency_key="missing-event-archive",
-    )
-    body = {"expected_version": archived["data"]["version"]}
-    _inject_recover_receipt(service, case.project, "tracked", body, "missing-event-recover")
-    before = snapshot(service)
-
-    with pytest.raises(RetiredRouteError) as error:
-        service.recover_timeline("tracked", body, idempotency_key="missing-event-recover")
-    assert error.value.status == 410
+    assert error.value.details["reason"] == "timeline_restore_required"
     assert error.value.details["replacement"] == "timeline.restore"
     assert snapshot(service) == before
 

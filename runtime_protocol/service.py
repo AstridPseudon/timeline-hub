@@ -3901,16 +3901,20 @@ class RuntimeService:
         # the ordinary replay path so absent and current-target retries cannot
         # replay a legacy flat-projection write.
         safe_receipt = self.store.conn.execute(
-            "SELECT event_ids_json FROM command_idempotency "
+            "SELECT event_ids_json, primary_stream_id FROM command_idempotency "
             "WHERE command_kind=? AND aggregate_id=? AND idempotency_key=? "
             "AND request_hash=?",
             ("timeline.recover", timeline_id, idempotency_key, request_hash),
         ).fetchone() if idempotency_key is not None else None
         if safe_receipt:
+            event_ids = None
             event = None
+            payload = None
             try:
                 event_ids = json.loads(safe_receipt["event_ids_json"] or "[]")
-                if isinstance(event_ids, list) and event_ids:
+                if (safe_receipt["primary_stream_id"] == timeline_id
+                        and isinstance(event_ids, list) and len(event_ids) == 1
+                        and isinstance(event_ids[0], str) and event_ids[0]):
                     event = self.store.conn.execute(
                         "SELECT kind, payload_json FROM timeline_events "
                         "WHERE id=? AND timeline_id=?",
@@ -3918,8 +3922,16 @@ class RuntimeService:
                     ).fetchone()
                 payload = json.loads(event["payload_json"]) if event else None
             except (TypeError, ValueError, json.JSONDecodeError):
+                event_ids = None
                 payload = None
-            if event and event["kind"] == "timeline.recovered" and isinstance(payload, dict) and "target_version" not in payload:
+            event_version = payload.get("version") if isinstance(payload, dict) else None
+            if (event and event["kind"] == "timeline.recovered"
+                    and isinstance(payload, dict)
+                    and set(payload) == {"project_id", "version"}
+                    and payload["project_id"] == project_id
+                    and not isinstance(event_version, bool)
+                    and isinstance(event_version, int) and event_version > 0
+                    and event_version == expected + 1):
                 replay = self._command_replay(
                     "timeline.recover", timeline_id, idempotency_key,
                     request_hash, project_id=project_id,
