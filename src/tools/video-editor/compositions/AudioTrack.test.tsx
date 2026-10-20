@@ -264,7 +264,7 @@ describe('AudioTrack', () => {
     });
 
     it.each([undefined, {}, { fadeIn: 0 }, { fadeIn: -1, fadeOut: Number.NaN },
-      { fadeIn: '2' }, { fadeOut: Infinity }, { fadeIn: 0.001 }])(
+      { fadeIn: '2' }, { fadeOut: Infinity }, { fadeIn: 0.001 }, { fadeIn: 0, fadeOut: -1 }])(
       'keeps a finite plain gain for an unsupported fade value: %j', params => {
         const fadeClip = { ...clip, volume: 0.4, params: params as ResolvedTimelineClip['params'] };
         const view = render(<AudioTrack track={track} clips={[fadeClip]} fps={30} />);
