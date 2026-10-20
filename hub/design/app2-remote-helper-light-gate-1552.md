@@ -1,0 +1,11 @@
+# App light gate for app2 remote requests — 2026-10-20 15:52 UTC
+Integration590c19795111fd1891bbd50a5f8d48bef3505a26 is FROZEN for TrackInspector preservation test port (owner15:46), so all four requests WAIT, none refused. No full or othermerge may jump that nextmerge.
+
+Light overlap check against actual currentintegration and each true mergebase:
+- ap2-m2-duplicate-record-native-repair f34054c624f78c4f2f3b73551733f9151fc1b930: 5 changed files; concurrentchangedpathoverlap=[]. Helper-only source adds, no sharedsession/Provider/pin/outbox/consumer activation. Peer independentreview accepted; no second semanticreview requested.
+- ap2-m2-element-param-native-repair 01f891ab66a5f27b4b7a9823e6f4ddee83807eaf: 2 changed files; concurrentchangedpathoverlap=[]. Helper-only source adds, no sharedsession/Provider/pin/outbox/consumer activation. Peer independentreview accepted; no second semanticreview requested.
+- ap2-m2-ordinary-currentroot-port f76d61c5cfa222939a6cc77509e5f7c03019c611: 2 changed files; concurrentchangedpathoverlap=[]. Helper-only source adds, no sharedsession/Provider/pin/outbox/consumer activation. Peer independentreview accepted; no second semanticreview requested.
+- ap2-m2-parent-media-currentroot-port cc8dece481bb96f462adad26210b7a20f45fb701: 2 changed files; concurrentchangedpathoverlap=[]. Helper-only source adds, no sharedsession/Provider/pin/outbox/consumer activation. Peer independentreview accepted; no second semanticreview requested.
+
+After TrackInspector fix integration/targetedtests pass, these can enter request-merge individually in received order after checking priorhead changes. They do NOT retire a writer: actualconsumer/reload/undo/exactretry/zeroLegacy remains open and App2owns it. Duplicate currentnativegolden3832lines is actively compared as fullcapture record/bundle/rawcanonicalclosure includingopaque preservation; not an unusedversion snapshot. No newfixtures requested; future fixturecleanup M4.
+Shared row-local consumer ownership/port proposal rules remain design/peer-response-app-app2-current-shared-seams-1534.md. No oldintegration/pin reset or generalRuntimePOST bypass. Lightcheckedhelper additions will provide stableimports for exactsessionport proposals, which App applies in sharedsections.
