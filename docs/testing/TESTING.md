@@ -393,8 +393,10 @@ Note which OS line it gave you.
 
 **Rollback (optional).** This checks that a failed update puts everything back.
 
-1. Run the update line again. When it prints `Installing the pinned Astrid version.`, press Ctrl+C.
-2. Wait until the line stops printing. On Windows this can take a minute after the prompt comes back.
+1. Run the update line again. Progress appears as it happens. When it prints
+   `Installing the pinned Astrid version.`, press Ctrl+C once.
+2. Keep the terminal open and wait for recovery to finish and the failure message with its `Details:` line.
+   Do not press Ctrl+C again while Astrid is restoring the previous version.
 3. Run the two checks and open the page.
 
 You should see a short failure message with a `Details:` line, saying your workspace and the update backup were
