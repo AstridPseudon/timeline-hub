@@ -1,0 +1,19 @@
+Source-only independent gate review; no code mutation in the Composition worktree.
+
+Reviewed:
+- PLAN.md and COMMON.md
+- Agent `tl/vw-m3-native-owned-caller-cache-unblock` at `b4341044b`
+- `run.py`, `remotion_host_session.py`, `generic_host.py`, `composed_frame.py`, `filmstrip_execution.py`
+- target diff against `bc888522c`
+
+Commands and results:
+
+`git -C /home/user/peteromallet/astrid-agent show tl/vw-m3-native-owned-caller-cache-unblock` — inspected the exact completed patch.
+
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$review_dir" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_remotion_host_session.py::test_task_cannot_modify_host_scope_inputs_or_escape_attempt tests/core/execution/test_remotion_host_session.py::test_child_cannot_select_a_different_native_executable_or_project 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-text-card]' 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-image]' 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-frame-overlay]'` — `10 passed in 3.83s` on an exact-target temporary extraction; extraction cleaned up.
+
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$review_dir" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_remotion_render_env_is_explicit_not_host_inherited` — blocked before assertion by sandbox `PermissionError: [Errno 1] Operation not permitted` from the local socket probe; temporary extraction cleaned up.
+
+`PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m ruff check --no-cache astrid/packs/rendering/rendering/renderers/remotion/run.py tests/core/execution/test_remotion_host_session.py tests/packs/rendering/test_scene_source_carry.py` — 16 baseline diagnostics, unchanged.
+
+Decision: REJECT pending a caller/actual-binding foreign-project test and named source proof. No browser, render, network, install, full suite, or shared-dependency/cache mutation.

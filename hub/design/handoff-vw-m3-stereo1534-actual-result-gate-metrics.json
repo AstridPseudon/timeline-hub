@@ -1,0 +1,100 @@
+{
+  "verdict": "unsupported-stereo-after-actual-capture",
+  "terminal": "composition-e2e-viewing-tab-stereo-grantpath-chrome155-1020153403-18318",
+  "terminalStatus": "failed",
+  "terminalExit": 1,
+  "source": {
+    "appCommit": "6323b5bd6fdfc1bb680eba6f8a1a46f21acf6adb",
+    "sourceTree": "132ed7f49cc42398676c3d32f80d445ca106e9be",
+    "trackedFileCount": 5835,
+    "fullTrackedHash": "dc912e773a36c40271b13ab0abdeac6824cef394790d26658952e7c5763630fb",
+    "inputHash": "a75115d344f8e67d94401c144a740700cc82a365d94c03ae776f2c3bfc1adba6",
+    "packageGraphHash": "c433236a7e8626217be122d71db0bccd980db4c04c03f45d5cf2d5c9c86039fb"
+  },
+  "guards": {
+    "freshGrant": true,
+    "grantVerifiedOfflineBeforeQueue": true,
+    "profile": "native-codec-chrome155-clean-install-public12",
+    "runMode": "stereo",
+    "backendOrder": ["tab", "private-pulse"],
+    "privateGraph": {
+      "sha256": "4a54ed6f3300cba740b377e3c780f330996ead23147647f9c963ed4dd5bdd7a4",
+      "fileCount": 32382
+    },
+    "compositionGraph": {
+      "sha256": "71b44e67e4eeffb0f904bb3a21e24d12ba06c4b2e41d43592a859aced3bb3139",
+      "fileCount": 77
+    },
+    "sixPeerHashes": {
+      "@remotion/player/dist/cjs/PlayerUI.js": "5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb",
+      "@remotion/player/dist/cjs/use-player-methods.js": "ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46",
+      "@remotion/player/dist/cjs/use-playback.js": "6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0",
+      "@remotion/player/dist/esm/index.mjs": "d3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12",
+      "remotion/dist/esm/index.mjs": "5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28",
+      "remotion/dist/cjs/audio/shared-audio-tags.js": "949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8"
+    },
+    "node": {
+      "version": "v20.19.4",
+      "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"
+    },
+    "chrome": {
+      "version": "155.0.8059.84",
+      "executableSha256": "cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76",
+      "treeSha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e",
+      "treeFileCount": 255
+    },
+    "discovery": {"testCount": 1, "passed": true},
+    "marker": {"consumed": true, "path": "stereo-1534-started.json"},
+    "postflight": {"status": "POSTFLIGHT_OK", "sourceShaMatches": true, "sourceTreeMatches": true},
+    "tempCleanup": {
+      "status": "passed-by-launcher-exit-trap",
+      "evidence": "No direct /tmp/timeline-tab-audio-* directory with the 15:34 run timestamp remained; older unrelated directories were left untouched."
+    }
+  },
+  "capture": {
+    "requested": {"video": true, "audio": true, "preferCurrentTab": true},
+    "capabilityAssertion": {
+      "status": "passed-before-native-channel-gate",
+      "tracks": {"video": 1, "audio": 1, "live": true},
+      "settingsAndCapabilities": "captured from real MediaStreamTracks in the browser and checked in-memory; exact objects were not retained because the probe aborts before its outcome attachment"
+    },
+    "artifact": {
+      "bytes": 80477,
+      "sha256": "07fc9b7278eb449068c4b4ddb6cb1d8da05c5741c77e09698446fc0f2abede50",
+      "format": "Matroska/WebM",
+      "video": {"codec": "vp8", "width": 1440, "height": 900, "timeBase": "1/1000", "startPts": 45, "packetCount": 5},
+      "audio": {"codec": "opus", "sampleRate": 48000, "channels": 1, "channelLayout": "mono", "timeBase": "1/1000", "startPts": 0, "packetCount": 66}
+    },
+    "nativeChannelDiagnostic": {
+      "status": "unsupported",
+      "actualChannels": 1,
+      "requiredChannels": 2,
+      "failure": "Unsupported native ffprobe audio channel count: 1; stereo capture requires 2"
+    },
+    "nativePts": {
+      "status": "passed-before-channel-refusal",
+      "audioNonempty": true,
+      "videoNonempty": true,
+      "monotonic": true,
+      "decoded": false
+    },
+    "stereoIdentityAndLeakage": "not measured because native channel gate refused mono before decode",
+    "settingsCodecChannelCount": {"codec": "opus", "channelCount": 1, "settingsCapabilitiesExactValues": "not retained in central failure attachment"}
+  },
+  "historicalBoundary": {
+    "oldMonoArtifactBytes": 80477,
+    "oldMonoArtifactSha256": "f35483bab8f4992489ccd617ca4c2375599dc9337f1fbc7b37c2e3d0820eb6c8",
+    "oldMonoClaim": "mix/tone presence and native PTS only",
+    "stereoClaim": false,
+    "preserved": true
+  },
+  "claimsExcluded": [
+    "Player parity",
+    "export parity",
+    "gain/phase parity",
+    "0.001 Gate 6 completion",
+    "stereo capability",
+    "PulseAudio backend result"
+  ],
+  "nextDiagnostic": "Inspect the actual tab-capture track getSettings()/getCapabilities() values together with the MediaRecorder/Opus channel mapping on this exact Chrome155 profile; determine whether tab capture collapses the source before encoding. Do not coerce channels, widen thresholds, start PulseAudio, or launch another attempt from this result."
+}
