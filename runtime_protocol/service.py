@@ -2595,9 +2595,489 @@ class RuntimeService:
     def replace_parent_composition_media(self, project_id, timeline_id, body, *, idempotency_key=None):
         self._require_timeline_command()
 
+    @staticmethod
+    def _finite_number(value, field, *, positive=False):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)) or (positive and value <= 0):
+            raise ValidationError(f"{field} must be a finite number" + (" greater than zero" if positive else ""))
+        return value
+
+    def _normalize_occurrence(self, occurrence, *, shot_lookup):
+        if not isinstance(occurrence, dict):
+            raise ValidationError("occurrences must be objects")
+        # Occurrences are authored records, not a transport DTO.  Start from
+        # the submitted object so forward-compatible/opaque placement fields
+        # survive immutable publication.  The known fields below are then
+        # validated and written back in their canonical spellings.
+        result = copy.deepcopy(occurrence)
+        occurrence_id = occurrence.get("occurrence_id")
+        if not isinstance(occurrence_id, str) or not occurrence_id:
+            raise ValidationError("occurrence_id is required")
+        shot_id = occurrence.get("shot_id")
+        shot_revision_id = occurrence.get("shot_revision_id")
+        if not isinstance(shot_id, str) or not shot_id or not isinstance(shot_revision_id, str) or not shot_revision_id:
+            raise ValidationError("occurrences require shot_id and shot_revision_id")
+        shot = shot_lookup.get((shot_id, shot_revision_id))
+        if shot is None:
+            raise NotFoundError("occurrence shot revision dependency is missing", details={"shot_id": shot_id, "revision_id": shot_revision_id})
+        placement = occurrence.get("placement")
+        if placement is None:
+            placement = {key: occurrence[key] for key in ("start_ms", "track") if key in occurrence}
+        if not isinstance(placement, dict) or not placement:
+            raise ValidationError("occurrences require placement")
+        source_offset = occurrence.get("source_offset", occurrence.get("source_offset_ms", 0))
+        if isinstance(source_offset, dict):
+            if set(source_offset) & {"start", "end"}:
+                for key in ("start", "end"):
+                    self._finite_number(source_offset.get(key), f"source_offset.{key}")
+        else:
+            self._finite_number(source_offset, "source_offset")
+        duration = occurrence.get("duration_ms", occurrence.get("duration"))
+        if isinstance(duration, bool) or not isinstance(duration, (int, float)) or not math.isfinite(float(duration)) or duration <= 0 or int(duration) != duration:
+            raise ValidationError("occurrence duration must be a finite positive integer")
+        speed = occurrence.get("speed", 1)
+        if isinstance(speed, dict):
+            if set(speed) != {"numerator", "denominator"} or isinstance(speed.get("numerator"), bool) or not isinstance(speed.get("numerator"), int) or speed["numerator"] <= 0 or isinstance(speed.get("denominator"), bool) or not isinstance(speed.get("denominator"), int) or speed["denominator"] <= 0:
+                raise ValidationError("occurrence speed must be one constant positive rational")
+        else:
+            self._finite_number(speed, "speed", positive=True)
+        track = occurrence.get("track", placement.get("track"))
+        if not isinstance(track, str) or not track:
+            raise ValidationError("occurrence track is required")
+        transform = occurrence.get("transform", {})
+        if not isinstance(transform, dict):
+            raise ValidationError("occurrence transform must be an object")
+        gain = self._finite_number(occurrence.get("gain", 1), "gain")
+        muted = occurrence.get("mute", occurrence.get("muted", False))
+        if not isinstance(muted, bool):
+            raise ValidationError("occurrence mute must be boolean")
+        provenance = occurrence.get("provenance", {})
+        if not isinstance(provenance, dict):
+            raise ValidationError("occurrence provenance must be an object")
+        result.update({
+            "occurrence_id": occurrence_id,
+            "shot_id": shot_id,
+            "shot_revision_id": shot_revision_id,
+            "placement": copy.deepcopy(placement),
+            "source_offset": copy.deepcopy(source_offset),
+            "duration_ms": int(duration),
+            "speed": copy.deepcopy(speed),
+            "track": track,
+            "transform": copy.deepcopy(transform),
+            "gain": gain,
+            "muted": muted,
+            "provenance": copy.deepcopy(provenance),
+        })
+        # These accepted aliases are known/derived rather than opaque fields.
+        result.pop("duration", None)
+        result.pop("source_offset_ms", None)
+        result.pop("mute", None)
+        return result
+
+    def _validate_media_dependencies(self, project_id, manifest):
+        media = manifest.get("media", []) if isinstance(manifest, dict) else []
+        if not isinstance(media, list):
+            raise ValidationError("dependency_manifest.media must be a list")
+        normalized = []
+        seen = set()
+        for item in media:
+            if isinstance(item, str):
+                item = {"media_id": item}
+            if not isinstance(item, dict):
+                raise ValidationError("media dependencies must be objects")
+            media_id = item.get("media_id", item.get("object_id", item.get("digest")))
+            if not isinstance(media_id, str):
+                raise ValidationError("media dependency requires media_id")
+            bare = media_id.removeprefix("sha256:")
+            if not re.fullmatch(r"[0-9a-f]{64}", bare):
+                raise ValidationError("media dependency identity must be a SHA-256 digest")
+            row = self.store.conn.execute("SELECT size FROM objects WHERE digest=?", (bare,)).fetchone()
+            owned = self.store.conn.execute("SELECT 1 FROM project_objects WHERE project_id=? AND digest=?", (project_id, bare)).fetchone()
+            if not row or not owned:
+                raise NotFoundError("media dependency is missing or not owned by project", details={"media_id": "sha256:" + bare})
+            data = self.cas.read(bare)
+            actual = "sha256:" + hashlib.sha256(data).hexdigest()
+            if actual != "sha256:" + bare or len(data) != int(row["size"]):
+                raise ConflictError("media dependency bytes do not match identity", details={"media_id": "sha256:" + bare})
+            if item.get("size") is not None and (isinstance(item.get("size"), bool) or not isinstance(item.get("size"), int) or int(item["size"]) != int(row["size"])):
+                raise ConflictError("media dependency size mismatch", details={"media_id": "sha256:" + bare, "expected_size": int(row["size"]), "actual_size": item.get("size")})
+            supplied = item.get("content_digest", actual)
+            if supplied != actual:
+                raise ConflictError("media dependency content digest mismatch", details={"media_id": "sha256:" + bare, "expected": actual, "actual": supplied})
+            if actual not in seen:
+                normalized.append({"media_id": actual, "content_digest": actual})
+                seen.add(actual)
+        return normalized
+
+    def _collect_digest_media(self, value):
+        found = set()
+        if isinstance(value, dict):
+            for key, item in value.items():
+                # Only authoritative object identities participate in the
+                # media closure.  Canonical shot records also carry record
+                # digests and source/content hashes that describe metadata or
+                # lineage, not Runtime-owned CAS objects.
+                if key in {"media_id", "object_id"} and isinstance(item, str):
+                    bare = item.removeprefix("sha256:")
+                    if re.fullmatch(r"[0-9a-f]{64}", bare):
+                        found.add("sha256:" + bare)
+                found.update(self._collect_digest_media(item))
+        elif isinstance(value, list):
+            for item in value:
+                found.update(self._collect_digest_media(item))
+        return found
+
     @_durable_mutation
     def publish_parent_composition(self, project_id, timeline_id, body, *, idempotency_key=None):
-        self._require_timeline_command()
+        idempotency_key = require_idempotency_key(idempotency_key)
+        self._require_object_body(body)
+        project = self.store.get_project(project_id)
+        if (
+            "project_id" not in body
+            or "timeline_id" not in body
+            or ("expected_head" not in body and "expected_head_revision_id" not in body)
+        ):
+            raise ValidationError("publication requires project_id, timeline_id, and expected_head")
+        if body.get("project_id") != project["id"] or body.get("timeline_id") != timeline_id:
+            raise ConflictError("publication identity does not match route scope")
+        request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "timeline_id": timeline_id, "body": body}).encode()).hexdigest()
+        prior_key = self.store.conn.execute("SELECT aggregate_id, request_hash FROM command_idempotency WHERE command_kind=? AND idempotency_key=? LIMIT 1", ("parent_composition.publish", idempotency_key)).fetchone()
+        if prior_key and prior_key["aggregate_id"] != timeline_id:
+            raise ConflictError("idempotency key was already used with different input")
+        replay = self._command_replay("parent_composition.publish", timeline_id, idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        expected_head = body.get("expected_head") if "expected_head" in body else body.get("expected_head_revision_id")
+        if expected_head is not None:
+            self._revision_id(expected_head, "expected_head")
+        timeline = self.store.conn.execute("SELECT * FROM timelines WHERE id=?", (timeline_id,)).fetchone()
+        if timeline and timeline["project_id"] != project["id"]:
+            raise ConflictError("timeline belongs to a different project")
+        current_head_row = self.store.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, project["id"])).fetchone()
+        if current_head_row is not None and current_head_row["publication_id"] is not None:
+            raise ConflictError("tracked timeline publication requires a timeline command",
+                                details={"status": "refused", "reason": "timeline_commit_required"})
+        current_head = current_head_row["revision_id"] if current_head_row else None
+        if current_head != expected_head:
+            # details.reason is the stable machine-readable discriminator for a lost
+            # head race (publish and restore); the message wording is not a contract.
+            # Not added to the openapi text: that would change the pinned schema digest.
+            raise ConflictError("parent composition head is stale", details={"reason": "stale_head", "expected_head": expected_head, "actual_head": current_head})
+
+        raw_internal = body.get("internal_timeline_revisions", body.get("timelines", []))
+        raw_shots = body.get("shot_revisions", body.get("shots", []))
+        if not isinstance(raw_internal, list) or not isinstance(raw_shots, list):
+            raise ValidationError("internal_timeline_revisions and shot_revisions must be lists")
+        internal = {}
+        for entry in raw_internal:
+            revision_id = self._revision_id(entry.get("revision_id", entry.get("id")) if isinstance(entry, dict) else None, "internal timeline revision_id")
+            timeline_key = entry.get("timeline_id", timeline_id) if isinstance(entry, dict) else timeline_id
+            if not isinstance(timeline_key, str) or not timeline_key:
+                raise ValidationError("internal timeline timeline_id is required")
+            timeline_identity = self.store.conn.execute("SELECT project_id FROM timelines WHERE id=?", (timeline_key,)).fetchone()
+            if timeline_identity is None:
+                if timeline_key != timeline_id or timeline is not None:
+                    raise NotFoundError("internal timeline dependency is missing", details={"timeline_id": timeline_key})
+            elif timeline_identity["project_id"] != project["id"]:
+                raise ConflictError("internal timeline belongs to a different project", details={"timeline_id": timeline_key})
+            payload = self._complete_internal_timeline_payload(self._revision_payload(entry, excluded={"revision_id", "id", "timeline_id", "content_digest", "payload", "content"}))
+            digest = self._revision_digest(payload)
+            supplied = entry.get("content_digest")
+            if supplied is not None and supplied != digest:
+                raise ConflictError("internal timeline content digest mismatch", details={"revision_id": revision_id, "expected": digest, "actual": supplied})
+            key = (timeline_key, revision_id)
+            if key in internal and internal[key]["content_digest"] != digest:
+                raise ConflictError("internal timeline revision identity was reused with different bytes", details={"revision_id": revision_id})
+            internal[key] = {"revision_id": revision_id, "timeline_id": timeline_key, "payload": payload, "content_digest": digest}
+        shots = {}
+        for entry in raw_shots:
+            revision_id = self._revision_id(entry.get("revision_id", entry.get("id")) if isinstance(entry, dict) else None, "shot revision_id")
+            shot_id = entry.get("shot_id") if isinstance(entry, dict) else None
+            if not isinstance(shot_id, str) or not shot_id:
+                raise ValidationError("shot revision shot_id is required")
+            internal_id = entry.get("internal_timeline_revision_id", entry.get("timeline_revision_id")) if isinstance(entry, dict) else None
+            internal_id = self._revision_id(internal_id, "internal_timeline_revision_id")
+            payload = self._complete_shot_payload(self._revision_payload(entry, excluded={"revision_id", "id", "shot_id", "internal_timeline_revision_id", "timeline_revision_id", "content_digest", "payload", "content"}), internal_id)
+            digest = self._revision_digest(payload)
+            supplied = entry.get("content_digest")
+            if supplied is not None and supplied != digest:
+                raise ConflictError("shot content digest mismatch", details={"revision_id": revision_id, "expected": digest, "actual": supplied})
+            key = (shot_id, revision_id)
+            if key in shots and shots[key]["content_digest"] != digest:
+                raise ConflictError("shot revision identity was reused with different bytes", details={"revision_id": revision_id})
+            shots[key] = {"revision_id": revision_id, "shot_id": shot_id, "internal_timeline_revision_id": internal_id, "payload": payload, "content_digest": digest}
+        # Validate identities and any already-committed bytes before the
+        # publication can create a projection or immutable row.
+        for value in internal.values():
+            existing = self.store.conn.execute("SELECT * FROM internal_timeline_revisions WHERE id=?", (value["revision_id"],)).fetchone()
+            if existing and (existing["project_id"] != project["id"] or existing["timeline_id"] != value["timeline_id"]):
+                raise ConflictError("internal timeline revision has the wrong project or timeline identity", details={"revision_id": value["revision_id"]})
+            if existing and (existing["content_digest"] != value["content_digest"] or existing["payload_json"] != canonical_json(value["payload"])):
+                raise ConflictError("internal timeline revision identity was reused with different bytes", details={"revision_id": value["revision_id"]})
+        # Complete the dependency closure for linked reuse as well: an
+        # existing shot reference carries an immutable internal-timeline
+        # identity even when the caller omits the already committed child
+        # payloads from this publication request.
+        for value in list(shots.values()):
+            shot_identity = self.store.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (value["shot_id"],)).fetchone()
+            if shot_identity and shot_identity["project_id"] != project["id"]:
+                raise ConflictError("shot belongs to a different project", details={"shot_id": value["shot_id"]})
+            if any(item["revision_id"] == value["internal_timeline_revision_id"] for item in internal.values()):
+                continue
+            existing_internal = self.store.conn.execute("SELECT * FROM internal_timeline_revisions WHERE id=?", (value["internal_timeline_revision_id"],)).fetchone()
+            if existing_internal:
+                if existing_internal["project_id"] != project["id"]:
+                    raise ConflictError("internal timeline revision belongs to a different project")
+                existing_timeline = self.store.conn.execute("SELECT project_id FROM timelines WHERE id=?", (existing_internal["timeline_id"],)).fetchone()
+                scoped_shot = str(existing_internal["timeline_id"]).removeprefix("shot:") if str(existing_internal["timeline_id"]).startswith("shot:") else None
+                scoped = self.store.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (scoped_shot,)).fetchone() if scoped_shot else None
+                if (existing_timeline is None or existing_timeline["project_id"] != project["id"]) and (scoped is None or scoped["project_id"] != project["id"]):
+                    raise ConflictError("internal timeline revision has the wrong project or timeline identity", details={"revision_id": existing_internal["id"]})
+                existing_payload = json.loads(existing_internal["payload_json"])
+                if self._revision_digest(existing_payload) != existing_internal["content_digest"]:
+                    raise ConflictError("internal timeline revision bytes failed immutable verification", details={"revision_id": existing_internal["id"]})
+                internal[(existing_internal["timeline_id"], existing_internal["id"])] = {"revision_id": existing_internal["id"], "timeline_id": existing_internal["timeline_id"], "payload": existing_payload, "content_digest": existing_internal["content_digest"]}
+            else:
+                raise NotFoundError("shot revision internal timeline dependency is missing", details={"revision_id": value["internal_timeline_revision_id"]})
+        parent_source = body.get("parent_composition", body.get("parent", body.get("composition")))
+        if parent_source is None:
+            raise ValidationError("parent_composition is required")
+        parent_payload = self._complete_parent_payload(parent_source)
+        occurrences = []
+        occurrence_ids = set()
+        # A publication may link to an already committed immutable child
+        # revision. Resolve those identities before validating occurrence
+        # records; the child bytes are never reconstructed from mutable heads.
+        for occurrence in parent_payload["occurrences"]:
+            if not isinstance(occurrence, dict):
+                continue
+            shot_key = (occurrence.get("shot_id"), occurrence.get("shot_revision_id"))
+            if shot_key in shots:
+                continue
+            existing_child = self.store.conn.execute(
+                "SELECT * FROM shot_revisions WHERE id=? AND shot_id=?",
+                (occurrence.get("shot_revision_id"), occurrence.get("shot_id")),
+            ).fetchone()
+            if existing_child:
+                if existing_child["project_id"] != project["id"]:
+                    raise ConflictError("occurrence shot revision belongs to a different project")
+                payload = json.loads(existing_child["payload_json"])
+                if self._revision_digest(payload) != existing_child["content_digest"]:
+                    raise ConflictError("occurrence shot revision bytes failed immutable verification", details={"revision_id": existing_child["id"]})
+                shot_identity = self.store.conn.execute(
+                    "SELECT project_id FROM project_shots WHERE id=?",
+                    (existing_child["shot_id"],),
+                ).fetchone()
+                if shot_identity is None or shot_identity["project_id"] != project["id"]:
+                    raise ConflictError("occurrence shot revision has the wrong project or shot identity")
+                if payload.get("internal_timeline_revision_id") != existing_child["internal_timeline_revision_id"]:
+                    raise ConflictError(
+                        "occurrence shot revision internal timeline identity is corrupt",
+                        details={"revision_id": existing_child["id"]},
+                    )
+                shots[shot_key] = {"revision_id": occurrence["shot_revision_id"], "shot_id": occurrence["shot_id"], "internal_timeline_revision_id": existing_child["internal_timeline_revision_id"], "payload": payload, "content_digest": existing_child["content_digest"], "existing": True}
+                existing_internal = self.store.conn.execute(
+                    "SELECT * FROM internal_timeline_revisions WHERE id=?",
+                    (existing_child["internal_timeline_revision_id"],),
+                ).fetchone()
+                if existing_internal is None:
+                    raise NotFoundError(
+                        "shot revision internal timeline dependency is missing",
+                        details={"revision_id": existing_child["internal_timeline_revision_id"]},
+                    )
+                if existing_internal["project_id"] != project["id"]:
+                    raise ConflictError("internal timeline revision belongs to a different project")
+                existing_internal_payload = json.loads(existing_internal["payload_json"])
+                if self._revision_digest(existing_internal_payload) != existing_internal["content_digest"]:
+                    raise ConflictError(
+                        "internal timeline revision bytes failed immutable verification",
+                        details={"revision_id": existing_internal["id"]},
+                    )
+                internal[(existing_internal["timeline_id"], existing_internal["id"])] = {
+                    "revision_id": existing_internal["id"],
+                    "timeline_id": existing_internal["timeline_id"],
+                    "payload": existing_internal_payload,
+                    "content_digest": existing_internal["content_digest"],
+                }
+        for occurrence in parent_payload["occurrences"]:
+            normalized = self._normalize_occurrence(occurrence, shot_lookup=shots)
+            if normalized["occurrence_id"] in occurrence_ids:
+                raise ValidationError("occurrence_id values must be unique")
+            occurrence_ids.add(normalized["occurrence_id"])
+            occurrences.append(normalized)
+        parent_payload["occurrences"] = occurrences
+        parent_revision_id = self._revision_id(body.get("parent_revision_id", body.get("revision_id", new_id())), "parent_revision_id")
+        parent_digest = self._revision_digest(parent_payload)
+        supplied_parent_digest = body.get("content_digest")
+        if supplied_parent_digest is not None and supplied_parent_digest != parent_digest:
+            raise ConflictError("parent composition content digest mismatch", details={"expected": parent_digest, "actual": supplied_parent_digest})
+        manifest_source = body.get("dependency_manifest", body.get("dependencies", {}))
+        if isinstance(manifest_source, list):
+            manifest_source = {"media": manifest_source}
+        if not isinstance(manifest_source, dict):
+            raise ValidationError("dependency_manifest must be an object")
+        for key in manifest_source:
+            if key not in {"media", "shots", "internal_timelines", "timelines"}:
+                raise ValidationError("dependency_manifest contains unsupported fields", details={"field": key})
+        for key in ("shots", "internal_timelines", "timelines"):
+            if key in manifest_source and not isinstance(manifest_source[key], list):
+                raise ValidationError(f"dependency_manifest.{key} must be a list")
+        for item in manifest_source.get("timelines", []) + manifest_source.get("internal_timelines", []):
+            if isinstance(item, dict) and any(key in item for key in ("parent_revision_id", "composition_revision_id")):
+                raise ValidationError("nested composition dependencies are not supported")
+        media = self._validate_media_dependencies(project["id"], manifest_source)
+        resolved_keys = {(occurrence["shot_id"], occurrence["shot_revision_id"]) for occurrence in occurrences}
+        resolved_shots = {key: shots[key] for key in resolved_keys}
+        resolved_internal = {}
+        for value in resolved_shots.values():
+            match = next((item for item in internal.values() if item["revision_id"] == value["internal_timeline_revision_id"]), None)
+            if match is None:
+                raise NotFoundError("shot revision internal timeline dependency is missing", details={"revision_id": value["internal_timeline_revision_id"]})
+            resolved_internal[(match["timeline_id"], match["revision_id"])] = match
+        # A caller may include an already-committed child in `shot_revisions`
+        # instead of linking it only from an occurrence. Preserve that exact
+        # immutable pin without requiring the mutable text binding head to
+        # remain current. New child revisions must pin the binding head seen
+        # by this same publication transaction.
+        for value in resolved_shots.values():
+            existing = self.store.conn.execute(
+                "SELECT * FROM shot_revisions WHERE id=?", (value["revision_id"],)
+            ).fetchone()
+            if existing is not None:
+                if (existing["project_id"] != project["id"] or existing["shot_id"] != value["shot_id"]
+                        or existing["internal_timeline_revision_id"] != value["internal_timeline_revision_id"]
+                        or existing["content_digest"] != value["content_digest"]
+                        or existing["payload_json"] != canonical_json(value["payload"])):
+                    raise ConflictError("shot revision identity was reused with different bytes", details={"revision_id": value["revision_id"]})
+                value["existing"] = True
+            if not value.get("existing", False):
+                self._validate_published_text_bindings(
+                    project["id"], value["shot_id"], value["payload"], require_current=True,
+                )
+        # Recompute closure only after every occurrence has been resolved to
+        # immutable child bytes.  This is the source of truth for both the
+        # manifest check and the rows stored below.
+        payload_media = set(self._collect_digest_media(parent_payload))
+        payload_media.update(digest for value in resolved_shots.values() for digest in self._collect_digest_media(value.get("payload", {})))
+        payload_media.update(digest for value in resolved_internal.values() for digest in self._collect_digest_media(value.get("payload", {})))
+        for digest in sorted(payload_media):
+            if digest not in {item["content_digest"] for item in media}:
+                media.extend(self._validate_media_dependencies(project["id"], {"media": [digest]}))
+        expected_manifest_shots = {(item["shot_id"], item["revision_id"], item["internal_timeline_revision_id"], item["content_digest"]) for item in resolved_shots.values()}
+        expected_manifest_timelines = {(item["timeline_id"], item["revision_id"], item["content_digest"]) for item in resolved_internal.values()}
+        if "shots" in manifest_source:
+            supplied_shots = {(item.get("shot_id"), item.get("revision_id", item.get("shot_revision_id")), item.get("internal_timeline_revision_id"), item.get("content_digest")) for item in manifest_source["shots"] if isinstance(item, dict)}
+            if supplied_shots != expected_manifest_shots:
+                raise ConflictError("dependency manifest does not match the complete shot closure")
+        if "internal_timelines" in manifest_source:
+            supplied_timelines = {(item.get("timeline_id"), item.get("revision_id", item.get("timeline_revision_id")), item.get("content_digest")) for item in manifest_source["internal_timelines"] if isinstance(item, dict)}
+            if supplied_timelines != expected_manifest_timelines:
+                raise ConflictError("dependency manifest does not match the complete internal timeline closure")
+        if "media" in manifest_source:
+            supplied_media = set()
+            for item in manifest_source["media"]:
+                if isinstance(item, str):
+                    supplied_media.add(item if item.startswith("sha256:") else "sha256:" + item)
+                elif isinstance(item, dict) and isinstance(item.get("content_digest"), str):
+                    supplied_media.add(item["content_digest"])
+            if supplied_media != {item["content_digest"] for item in media}:
+                raise ConflictError("dependency manifest does not match the complete media closure")
+        manifest = {
+            "shots": [{"shot_id": value["shot_id"], "revision_id": value["revision_id"], "internal_timeline_revision_id": value["internal_timeline_revision_id"], "content_digest": value["content_digest"]} for value in sorted(resolved_shots.values(), key=lambda item: (item["shot_id"], item["revision_id"]))],
+            "internal_timelines": [{"timeline_id": value["timeline_id"], "revision_id": value["revision_id"], "content_digest": value["content_digest"]} for value in sorted(resolved_internal.values(), key=lambda item: (item["timeline_id"], item["revision_id"]))],
+            "media": sorted(media, key=lambda item: item["content_digest"]),
+        }
+        if any(isinstance(item, dict) and item.get("dependency_kind") in {"composition", "parent_composition", "nested"} for item in manifest_source.get("timelines", [])):
+            raise ValidationError("one-level composition cannot depend on another composition")
+        # Authoring publication records seam diagnostics but does not apply a
+        # render-readiness gate to an otherwise valid parent edit. Existing
+        # canonical timelines may predate seam intent metadata; blocking a
+        # track reorder here would make ordinary authoring persistence depend
+        # on render migration. Strict seam admission remains at the enforced
+        # render/task boundary, and this report is still returned for review.
+        seam_report, _ = evaluate_closure(
+            parent_payload, resolved_shots,
+            {v["revision_id"]: v for v in resolved_internal.values()},
+            timeline_id=timeline_id,
+        )
+        timestamp = now()
+        if timeline is None:
+            self.store.conn.execute("INSERT INTO timelines(id, project_id, version, created_at, archived_at) VALUES (?, ?, 1, ?, NULL)", (timeline_id, project["id"], timestamp))
+        for value in resolved_internal.values():
+            existing = self.store.conn.execute("SELECT * FROM internal_timeline_revisions WHERE id=?", (value["revision_id"],)).fetchone()
+            if existing:
+                if existing["project_id"] != project["id"]:
+                    raise ConflictError("internal timeline revision belongs to a different project", details={"revision_id": value["revision_id"]})
+                if existing["project_id"] != project["id"] or existing["timeline_id"] != value["timeline_id"] or existing["content_digest"] != value["content_digest"] or existing["payload_json"] != canonical_json(value["payload"]):
+                    raise ConflictError("internal timeline revision identity was reused with different bytes", details={"revision_id": value["revision_id"]})
+            else:
+                self.store.conn.execute("INSERT INTO internal_timeline_revisions(id, project_id, timeline_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?)", (value["revision_id"], project["id"], value["timeline_id"], canonical_json(value["payload"]), value["content_digest"], timestamp))
+        shot_lookup = {}
+        for value in resolved_shots.values():
+            if value.get("existing"):
+                self._validate_published_shot_payload(value)
+                shot_lookup[(value["shot_id"], value["revision_id"])] = value
+                continue
+            self._validate_published_shot_payload(value)
+            internal_row = self.store.conn.execute("SELECT project_id FROM internal_timeline_revisions WHERE id=?", (value["internal_timeline_revision_id"],)).fetchone()
+            if not internal_row:
+                raise NotFoundError("shot revision internal timeline dependency is missing", details={"revision_id": value["internal_timeline_revision_id"]})
+            if internal_row["project_id"] != project["id"]:
+                raise ConflictError("internal timeline revision belongs to a different project")
+            existing = self.store.conn.execute("SELECT * FROM shot_revisions WHERE id=?", (value["revision_id"],)).fetchone()
+            if existing:
+                if existing["project_id"] != project["id"] or existing["shot_id"] != value["shot_id"] or existing["internal_timeline_revision_id"] != value["internal_timeline_revision_id"] or existing["content_digest"] != value["content_digest"] or existing["payload_json"] != canonical_json(value["payload"]):
+                    raise ConflictError("shot revision identity was reused with different bytes", details={"revision_id": value["revision_id"]})
+                value["existing"] = True
+            else:
+                self._apply_published_shot_projection(project["id"], value, timestamp)
+                self.store.conn.execute("INSERT INTO shot_revisions(id, project_id, shot_id, internal_timeline_revision_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", (value["revision_id"], project["id"], value["shot_id"], value["internal_timeline_revision_id"], canonical_json(value["payload"]), value["content_digest"], timestamp))
+            shot_lookup[(value["shot_id"], value["revision_id"])] = value
+        for occurrence in occurrences:
+            if (occurrence["shot_id"], occurrence["shot_revision_id"]) not in shot_lookup:
+                row = self.store.conn.execute("SELECT project_id, shot_id, content_digest FROM shot_revisions WHERE id=?", (occurrence["shot_revision_id"],)).fetchone()
+                if not row:
+                    raise NotFoundError("occurrence shot revision dependency is missing", details={"revision_id": occurrence["shot_revision_id"]})
+                if row["project_id"] != project["id"] or row["shot_id"] != occurrence["shot_id"]:
+                    raise ConflictError("occurrence shot revision has the wrong project or shot identity")
+                shot_lookup[(occurrence["shot_id"], occurrence["shot_revision_id"])] = {"shot_id": occurrence["shot_id"], "revision_id": occurrence["shot_revision_id"], "content_digest": row["content_digest"]}
+        parent_existing = self.store.conn.execute("SELECT * FROM parent_composition_revisions WHERE id=?", (parent_revision_id,)).fetchone()
+        if parent_existing and (parent_existing["project_id"] != project["id"] or parent_existing["timeline_id"] != timeline_id or parent_existing["content_digest"] != parent_digest or parent_existing["payload_json"] != canonical_json(parent_payload)):
+            raise ConflictError("parent composition revision identity was reused with different bytes", details={"revision_id": parent_revision_id})
+        if not parent_existing:
+            self.store.conn.execute("INSERT INTO parent_composition_revisions(id, project_id, timeline_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?)", (parent_revision_id, project["id"], timeline_id, canonical_json(parent_payload), parent_digest, timestamp))
+            for ordinal, occurrence in enumerate(occurrences):
+                self.store.conn.execute("INSERT INTO composition_revision_occurrences(parent_revision_id, occurrence_id, ordinal, project_id, shot_id, shot_revision_id, placement_json, source_offset_json, duration_ms, speed_json, track, transform_json, gain, muted, provenance_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (parent_revision_id, occurrence["occurrence_id"], ordinal, project["id"], occurrence["shot_id"], occurrence["shot_revision_id"], canonical_json(occurrence["placement"]), canonical_json(occurrence["source_offset"]), occurrence["duration_ms"], canonical_json(occurrence["speed"]), occurrence["track"], canonical_json(occurrence["transform"]), occurrence["gain"], int(occurrence["muted"]), canonical_json(occurrence["provenance"])))
+            for ordinal, dependency in enumerate(manifest["shots"] + manifest["internal_timelines"] + manifest["media"]):
+                kind = "shot_revision" if "shot_id" in dependency else "internal_timeline_revision" if "timeline_id" in dependency else "media"
+                identity = dependency.get("revision_id", dependency.get("media_id"))
+                self.store.conn.execute("INSERT INTO composition_revision_dependencies(parent_revision_id, dependency_kind, dependency_id, content_digest, ordinal) VALUES (?, ?, ?, ?, ?)", (parent_revision_id, kind, identity, dependency["content_digest"], ordinal))
+        for value in shot_lookup.values():
+            current = self.store.conn.execute("SELECT project_id, revision_id FROM shot_revision_heads WHERE shot_id=?", (value["shot_id"],)).fetchone()
+            if current is None:
+                if value.get("existing"):
+                    self._apply_published_shot_projection(project["id"], value, timestamp)
+                self.store.conn.execute("INSERT INTO shot_revision_heads(shot_id, project_id, revision_id, updated_at) VALUES (?, ?, ?, ?)", (value["shot_id"], project["id"], value["revision_id"], timestamp))
+            elif current["project_id"] != project["id"]:
+                raise ConflictError("shot revision head belongs to a different project", details={"shot_id": value["shot_id"]})
+            elif current["revision_id"] == value["revision_id"]:
+                self._verify_shot_head_projection(project["id"], value["shot_id"], current["revision_id"])
+            elif value.get("existing"):
+                # An older linked revision must never regress the mutable
+                # projection or head; prove that the current head remains
+                # internally consistent instead.
+                self._verify_shot_head_projection(project["id"], value["shot_id"], current["revision_id"])
+            else:
+                self.store.conn.execute("UPDATE shot_revision_heads SET revision_id=?, updated_at=? WHERE shot_id=? AND project_id=?", (value["revision_id"], timestamp, value["shot_id"], project["id"]))
+        self.store.conn.execute("INSERT OR IGNORE INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, NULL, ?)", (timeline_id, project["id"], timestamp))
+        changed = self.store.conn.execute("UPDATE parent_composition_heads SET revision_id=?, publication_id=NULL, updated_at=? WHERE timeline_id=? AND project_id=? AND revision_id IS ?", (parent_revision_id, timestamp, timeline_id, project["id"], expected_head)).rowcount
+        if changed != 1:
+            raise ConflictError("parent composition head is stale", details={"reason": "stale_head", "expected_head": expected_head})
+        event_payload = {"project_id": project["id"], "timeline_id": timeline_id, "old_head": expected_head, "new_head": parent_revision_id, "content_digest": parent_digest, "dependency_manifest": manifest}
+        event_id = self.store._append_timeline_event(timeline_id, "parent.composition.published", event_payload)
+        event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
+        result = {"project_id": project["id"], "timeline_id": timeline_id, "revision_id": parent_revision_id, "parent_revision_id": parent_revision_id, "content_digest": parent_digest, "payload": parent_payload, "old_head": expected_head, "new_head": parent_revision_id, "dependency_manifest": manifest, "content_digests": {"parent": parent_digest, **{item["revision_id"]: item["content_digest"] for item in manifest["shots"] + manifest["internal_timelines"]}, **{item["media_id"]: item["content_digest"] for item in manifest["media"]}}, "event_id": event_id, "created_at": timestamp}
+        result["visual_seam_report"] = seam_report
+        return self._command_record("parent_composition.publish", timeline_id, idempotency_key, request_hash, result, project_id=project["id"], event_ids=(event_id,), primary_stream_id=timeline_id, resulting_stream_seq=event_seq)
 
     def _project_shot_resource(self, row):
         value = dict(row)

@@ -54,9 +54,6 @@ def test_every_case_is_committed_and_nothing_else(recorded) -> None:
     assert {path.stem for path in COMMITTED.glob("*.json")} == set(SCHEMA_FOR)
 
 
-# Only publish_conflict_409 drifts (409 -> 410): the recorder drives the retired legacy publication route. contract/ has no
-# retired_route error code, so the committed response is not regenerated as a 410; the case needs a /v1 commit conflict.
-@pytest.mark.xfail(strict=True, reason="D04 held: legacy composition publication is retired (410); publish_conflict_409 is re-recorded via commitTimeline")
 def test_rerecording_is_byte_identical_to_committed_responses(recorded) -> None:
     out, _ = recorded
     for path in sorted(out.glob("*.json")):
@@ -74,10 +71,8 @@ def test_committed_files_have_the_documented_shape() -> None:
 
 
 @pytest.mark.parametrize("case", list(SCHEMA_FOR))
-def test_unnormalized_bodies_satisfy_their_contract_schema(recorded, case: str, request) -> None:
+def test_unnormalized_bodies_satisfy_their_contract_schema(recorded, case: str) -> None:
     """Placeholders would fail id/digest patterns, so validate what the daemon actually sent."""
-    if case == "publish_conflict_409":
-        request.node.add_marker(pytest.mark.xfail(strict=True, reason="D04 held: legacy publication is retired (410, retired_route is not a contract error code); re-recorded via commitTimeline"))
     _, raw = recorded
     ref, part = SCHEMA_FOR[case]
     body = raw[case]["body"]

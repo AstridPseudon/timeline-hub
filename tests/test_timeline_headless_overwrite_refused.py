@@ -1,7 +1,8 @@
 """A headless shell holding authored content is never overwritten by an empty-default publication.
 
-The shell is installed by direct rows (a historical image); the legacy publisher
-that once wrote such shells is retired and must refuse before any write.
+The shell is installed by direct rows (a historical image). The composition-revisions
+route stays available for an empty timeline, but its head guard refuses the overwrite
+before any write.
 """
 from __future__ import annotations
 
@@ -9,7 +10,7 @@ import json
 
 import pytest
 
-from runtime_protocol.errors import RetiredRouteError
+from runtime_protocol.errors import ConflictError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import digest
@@ -71,21 +72,32 @@ def test_empty_default_over_authored_headless_shell_is_refused_untouched(service
     original = _stored(runtime)
     before = _dump(runtime)
     for key in ("empty-default", "empty-default"):  # the retry is refused the same way
-        with pytest.raises(RetiredRouteError) as error:
+        with pytest.raises(ConflictError) as error:
             _publish_empty(runtime, project, key)
-        assert error.value.details["reason"] == "timeline_commit_required"
+        assert error.value.details["reason"] == "stale_head"
         assert _dump(runtime) == before
     assert _stored(runtime) == original
     assert json.loads(original) == AUTHORED
     assert runtime.store.conn.execute("SELECT publication_id FROM parent_composition_heads WHERE timeline_id='main'").fetchone()[0] is None
 
 
-def test_empty_default_over_empty_headless_shell_has_no_legacy_writer(service):
+def test_empty_default_over_empty_headless_shell_is_refused_untouched(service):
     runtime, project = service
     _shell(runtime, project, EMPTY)
     before = _dump(runtime)
-    with pytest.raises(RetiredRouteError):
+    with pytest.raises(ConflictError) as error:
         _publish_empty(runtime, project, "empty-default")
+    assert error.value.details["reason"] == "stale_head"
+    assert _dump(runtime) == before
+
+
+def test_empty_default_on_a_fresh_timeline_is_accepted_and_replays(service):
+    runtime, project = service
+    accepted = _publish_empty(runtime, project, "empty-default")
+    assert accepted["data"]["revision_id"] == "empty-default" and accepted["data"]["old_head"] is None
+    assert runtime.store.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE timeline_id='main'").fetchone()[:] == ("empty-default", None)
+    before = _dump(runtime)
+    assert _publish_empty(runtime, project, "empty-default") == accepted
     assert _dump(runtime) == before
 
 
