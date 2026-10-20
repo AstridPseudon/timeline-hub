@@ -1,0 +1,152 @@
+--- a/tests/packs/rendering/test_live_scene_only_managed_carrier.py
++++ b/tests/packs/rendering/test_live_scene_only_managed_carrier.py
+@@ -3,16 +3,16 @@
+ 
+ import hashlib
+ import json
+-import time
+ import zipfile
+ from copy import deepcopy
+ from pathlib import Path
+-from types import SimpleNamespace
+ 
+ import pytest
+ 
+-from astrid.sdk import timeline_filmstrip
+-from astrid.sdk.timeline_filmstrip import _invoke_scene_only, prepare_filmstrip
++from astrid.sdk import invocation, timeline_filmstrip
++from astrid.sdk.remote import RemoteAstridClient
++from astrid.sdk.workspace_client import WorkspaceClient
++from astrid.sdk.timeline_filmstrip import _invoke_scene_only
+ from tests.packs.rendering.real_pack_host import start_real_pack_host
+ from tests.sdk.test_capture_source_runtime import CaptureRuntime
+ from tests.timeline.test_authoring_bundle import AUDIO, OLD, _closure, _replace_values
+@@ -71,8 +71,9 @@
+         self.service = daemon.service
+         self.host = host
+         self.project_id = runtime.project_id
+-        self.media = SimpleNamespace(list=runtime.media_list, read_bytes=self._read_bytes)
+-        self._remote = SimpleNamespace(_transport=self)
++        self._remote = RemoteAstridClient(WorkspaceClient(daemon.endpoint, daemon.token))
++        self.tasks = self._remote.tasks
++        self.media = self._remote.media
+ 
+     def __getattr__(self, name):
+         return getattr(self.runtime, name)
+@@ -89,51 +90,6 @@
+     def list_project_runs(self, project_id, **kwargs):
+         return self.service.list_project_runs(project_id, **kwargs)
+ 
+-    def invoke_result(self, capability_id, *, kind, project, inputs, wait=True,
+-                      read_managed_outputs=True, **_kwargs):
+-        assert capability_id == "rendering.timeline_visualize" and kind == "executor"
+-        assert inputs["mode"] == "scene_only"
+-        assert inputs["view"] == "filmstrip"
+-        assert inputs["formats"] == ["md"]
+-        authority = dict(inputs)
+-        authority["mode"] = "scene_only"
+-        prepared = self._prepared
+-        snapshot = prepared["capture_snapshot"]
+-        context = {
+-            "mode": "scene_only", "project_id": project,
+-            "timeline_id": prepared["timeline_id"],
+-            "capture_identity": prepared["capture_identity"],
+-            "video_digest": prepared["capture_identity"],
+-            "video_object_id": prepared["capture_identity"],
+-            "managed_object_reference": prepared["capture_identity"],
+-            "capture_snapshot": snapshot,
+-        }
+-        body = {
+-            "project": project, "capability_id": capability_id,
+-            "capability_digest": self._capability_digest(capability_id),
+-            "input_object_ids": [], "idempotency_key": "scene-only-live-" + str(time.time_ns()),
+-            "spec": {"inputs": {"filmstrip_authority": json.dumps(context)},
+-                     "authority_context": context},
+-        }
+-        created = self.service.create_task(body, enforce_readiness=True)
+-        task = created.get("task", created)
+-        task_id = str(task.get("id") or task.get("task_id"))
+-        deadline = time.monotonic() + 120
+-        while time.monotonic() < deadline:
+-            observed = self.service.task(task_id)
+-            state = str(observed.get("state") or observed.get("status") or "")
+-            if state in {"completed", "succeeded", "failed", "cancelled"}:
+-                rows = self.service.managed_outputs(task_id)
+-                return {"ok": state in {"completed", "succeeded"},
+-                        "outputs": {"managed_outputs": rows}, "task": observed}
+-            time.sleep(0.1)
+-        raise AssertionError(f"managed scene task did not settle: {task_id}")
+-
+-    def _capability_digest(self, capability_id):
+-        for row in self.service.list_capabilities()["items"]:
+-            if row["capability_id"] == capability_id:
+-                return row["definition_digest"]
+-        raise AssertionError(f"host did not register {capability_id}")
+ 
+ 
+ def _candidate_preview(runtime):
+@@ -150,13 +106,12 @@
+     return preview_authoring_candidate(bundle)
+ 
+ 
+-def _assert_result(carrier, context, *, label, monkeypatch):
+-    carrier._prepared = context
+-    monkeypatch.setattr(timeline_filmstrip, "prepare_filmstrip", lambda *_a, **_k: context)
+-    spans, prepared = _invoke_scene_only({"timeline_ref": "main"}, project=carrier.project_id, client=carrier)
++def _assert_result(carrier, inputs, *, label, monkeypatch):
++    spans, prepared = _invoke_scene_only(inputs, project=carrier.project_id, client=carrier)
+     assert spans and spans[0].cls != "UNAVAILABLE", prepared
+     result = carrier._last_result
+-    rows = result["outputs"]["managed_outputs"]
++    assert result.ok, result.error
++    rows = result.outputs["managed_outputs"]
+     bundle = next(row for row in rows if row.get("output_port", row.get("name")) == "filmstrip_bundle")
+     bundle_bytes = carrier._read_bytes(bundle["object_id"])
+     with zipfile.ZipFile(__import__("io").BytesIO(bundle_bytes)) as archive:
+@@ -191,38 +146,22 @@
+     ) as host:
+         runtime = _seed(daemon)
+         carrier = _ManagedCarrier(runtime, daemon, host)
+-        saved_inputs = {"timeline_ref": "main"}
+-        saved_request = prepare_filmstrip({**saved_inputs, "composed_capture": True},
+-                                          project=runtime.project_id, client=runtime)
+-        saved_request.update({
+-            "video_digest": saved_request["capture_identity"],
+-            "video_object_id": saved_request["capture_identity"],
+-            "managed_object_reference": saved_request["capture_identity"],
+-            "timeline_id": saved_request["timeline_id"],
+-        })
++        saved_inputs = {"timeline_ref": "main", "revision_id": "scene-parent-1"}
+         carrier._last_result = None
+-        original_invoke = carrier.invoke_result
++        original_invoke = invocation._invoke_internal_result
+         def invoke(*args, **kwargs):
+             result = original_invoke(*args, **kwargs)
+             carrier._last_result = result
+             return result
+-        carrier.invoke_result = invoke
+-        spans, prepared, result = _assert_result(carrier, saved_request, label="saved", monkeypatch=monkeypatch)
++        monkeypatch.setattr(invocation, "_invoke_internal_result", invoke)
++        spans, prepared, result = _assert_result(carrier, saved_inputs, label="saved", monkeypatch=monkeypatch)
+ 
+         candidate_preview = _candidate_preview(runtime)
+-        candidate_request = prepare_filmstrip(
+-            {"timeline_ref": "main", "authoring_preview": candidate_preview,
+-             "composed_capture": True}, project=runtime.project_id, client=runtime,
+-        )
+-        candidate_request.update({
+-            "video_digest": candidate_request["capture_identity"],
+-            "video_object_id": candidate_request["capture_identity"],
+-            "managed_object_reference": candidate_request["capture_identity"],
+-            "timeline_id": candidate_request["timeline_id"],
+-        })
+-        _assert_result(carrier, candidate_request, label="candidate", monkeypatch=monkeypatch)
++        candidate_inputs = {"timeline_ref": "main", "authoring_preview": candidate_preview}
++        _assert_result(carrier, candidate_inputs, label="candidate", monkeypatch=monkeypatch)
+ 
+-        stale = deepcopy(saved_request)
++        stale = deepcopy(prepared)
++        stale["capture_snapshot"]["timeline_id"] = "stale-timeline"
+         stale["timeline_id"] = "stale-timeline"
+         stale_spans = timeline_filmstrip._scene_only_spans(result, stale, client=carrier)
+         assert stale_spans[0].cls == "UNAVAILABLE"

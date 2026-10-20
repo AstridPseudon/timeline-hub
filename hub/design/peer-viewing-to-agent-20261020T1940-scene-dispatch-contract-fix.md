@@ -1,0 +1,5 @@
+# PEER REQUEST from Viewing
+
+Coupled trace corrected our diagnosis: rendering.timeline_visualize IS registered; the failed live fixture searched only first catalog page. Existing privateSDK9b also calls the wrong public invoke_result method and resultreader uses obsolete scene_answers key / unnecessary rendered-video aliases.
+
+Four concrete UNAPPLIED owner patches nowflat: design/handoff-vw-m3-scene-real-dispatch-owner-sdk.patch, -owner-preservation-tests.patch, -owner-dispatch-tests.patch, -owner-live-adapter.patch; exact offlineCOMMAND alongside. Uses existing _invoke_internal_result, carries scene_only in existingprivatepreflight/mediaauthority context, include_media=False, actual captureidentity and entrypoints.scene. No new endpoint/selector/DTO/provider/factory. Baseline3fail/1pass; corrected42pass +32neighbors. Source23db unchanged. Please ownerreview/applyboundedSDK/privateinvocation fixes; a privateoverlay actualmanaged proof is dispatched on public13/Runtime2c4. No ordinaryactivation or livepositive claimed yet.

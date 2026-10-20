@@ -1,0 +1,98 @@
+--- a/astrid/sdk/timeline_filmstrip.py
++++ b/astrid/sdk/timeline_filmstrip.py
+@@ -1301,9 +1301,7 @@
+         for key, value in clip_map.items()
+     ):
+         return None
+-    if not all(isinstance(context.get(key), str) and context[key] for key in (
+-        "video_digest", "video_object_id", "managed_object_reference", "capture_identity",
+-    )):
++    if snapshot.get("video_digest") != capture_identity:
+         return None
+     capture_authority = metadata.get("capture_authority")
+     if not isinstance(capture_authority, Mapping):
+@@ -1313,9 +1311,6 @@
+         return None
+     return {
+         "capture_identity": context["capture_identity"],
+-        "video_digest": context["video_digest"],
+-        "video_object_id": context["video_object_id"],
+-        "managed_object_reference": context["managed_object_reference"],
+         "scene_clips": deepcopy(dict(clip_map)),
+         "snapshot_label": expected_label,
+         "timeline_id": snapshot.get("timeline_id"),
+@@ -1377,7 +1372,7 @@
+         "view": "filmstrip",
+         "formats": list(_SCENE_ONLY_FORMATS),
+         "composed_capture": True,
+-        "include_media": True,
++        "include_media": False,
+         "every_frames": 1,
+     })
+     context = prepare_filmstrip(request, project=project, client=client)
+@@ -1410,8 +1405,8 @@
+     ok = result.get("ok") if isinstance(result, Mapping) else getattr(result, "ok", True)
+     if ok is False:
+         return None
+-    candidates = [
+-        getattr(result, "outputs", None),
++    outputs = getattr(result, "outputs", None)
++    candidates = [outputs] if isinstance(outputs, Mapping) and outputs else [
+         getattr(result, "raw_result", None),
+         result if isinstance(result, Mapping) else None,
+     ]
+@@ -1519,7 +1514,7 @@
+             if actual_files != verified | {manifest_name}:
+                 return None
+             entrypoints = manifest.get("entrypoints")
+-            scene_name = entrypoints.get("scene_answers") if isinstance(entrypoints, Mapping) else None
++            scene_name = entrypoints.get("scene") if isinstance(entrypoints, Mapping) else None
+             if scene_name != "scene-answers.json" or scene_name not in names:
+                 return None
+             if scene_name not in verified:
+@@ -1640,12 +1635,11 @@
+         with AstridClient.open_from_launcher(start_pack_host=False) as connected:
+             return _invoke_scene_only(inputs, project=project, client=connected)
+     request, context = _scene_only_request(inputs, project=project, client=client)
+-    invoke_result = getattr(client, "invoke_result", None)
+-    if not callable(invoke_result):
+-        return _scene_only_unavailable(context, reason="managed visualization invocation unavailable"), context
+-    result = invoke_result(
++    from astrid.sdk.invocation import _invoke_internal_result
++
++    result = _invoke_internal_result(
+         "rendering.timeline_visualize", kind="executor", project=project,
+-        inputs=request, wait=True, read_managed_outputs=True,
++        inputs=request, client=client, wait=True, read_managed_outputs=True,
+     )
+     return _scene_only_spans(result, context, client=client), context
+ 
+--- a/astrid/sdk/invocation.py
++++ b/astrid/sdk/invocation.py
+@@ -770,6 +770,8 @@
+     except ValueError as exc:
+         raise CapabilityValidationError(str(exc)) from exc
+     context = prepare_filmstrip(values, project=project, client=_client)
++    if values.get("mode") == "scene_only":
++        context = {**context, "mode": "scene_only"}
+     from copy import deepcopy
+     # These snapshots are host-prepared immutable closures. Carry resource
+     # identity in derived metadata; never rewrite their authored config.
+@@ -2736,7 +2738,7 @@
+     # renders source previews.
+     if (str(capability.id) == "rendering.timeline_visualize"
+             and isinstance(idempotency_context, Mapping)
+-            and idempotency_context.get("mode") in {"filmstrip", "input_only", "composed_capture"}):
++            and idempotency_context.get("mode") in {"filmstrip", "input_only", "composed_capture", "scene_only"}):
+         authority_snapshot = (
+             idempotency_context.get("filmstrip_snapshot")
+             or idempotency_context.get("input_snapshot")
+@@ -4285,7 +4287,7 @@
+                         "transcript input is host-owned; config.app.transcript supplies the CAS object"
+                     )
+                 inputs["transcript.json"] = transcript_input
+-            if invocation_authority_context.get("mode") in {"filmstrip", "input_only", "composed_capture"}:
++            if invocation_authority_context.get("mode") in {"filmstrip", "input_only", "composed_capture", "scene_only"}:
+                 # Only preflight may turn a successful project-owned render
+                 # into a file input. Public paths were rejected above.
+                 inputs = dict(inputs or {})

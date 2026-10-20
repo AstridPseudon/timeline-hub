@@ -1,0 +1,11 @@
+# Offline reproduction only. No request-test, host launch, Node, browser, render or install.
+W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-real-tool-dispatch-contract
+cd /home/user/work/wt/vw-m3-scene-real-tool-dispatch-contract
+export ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-2c4ac180
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH=$PWD
+/home/user/work/venv-agent/bin/python -B "$W/build_proposal.py"
+# Expected RED: SDK9b plus unchanged invocation, new regression tests.
+/home/user/work/venv-agent/bin/python -B "$W/run_offline.py" --baseline
+# Proposed source loaded in memory, never applied to the worktree.
+/home/user/work/venv-agent/bin/python -B "$W/run_offline.py" -c pyproject.toml "$W/private/test_scene_dispatch_contract.py" "$W/private/test_scene_caller_preservation.py" tests/sdk/test_managed_render_invocation.py tests/sdk/test_timeline_visualize_public_surface.py tests/sdk/test_scene_save_core.py
