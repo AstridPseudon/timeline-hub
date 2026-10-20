@@ -1,0 +1,2088 @@
+diff --git a/artifacts.json b/artifacts.json
+index 82ef99e9a..3e423311d 100644
+--- a/artifacts.json
++++ b/artifacts.json
+@@ -30,10 +30,11 @@
+     "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/shape-cells.ts": "sha256:d1dd8f09d153b336e8df18a2d3c938feabc63c2ceabf5d602d434db2ba830df5",
+     "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/component.tsx": "sha256:60b2844f119d55f39da498027e751d06533d6c1f632bfc13544338b066f24f3f",
+     "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/element.yaml": "sha256:ca96ed57c5afe725e39431dfb73e8a3ab2a82d1f97445d17fd6cc013c36bdf77",
+-    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx": "sha256:3943547265a7e169a7f59c94d7f1a079c7581c51a8daf448a8337c858f386168",
+-    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml": "sha256:73e0055a4cd33fa2eb5dbda3a9d0851f60c343c82b54d87095974a217cfd7302",
+-    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts": "sha256:3b9af4f75685029d2a194c525837481ee6befe77c5f5c7f5b8b71f659925668e",
++    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx": "sha256:b1dea928a4c709e1148525ceb88c704952b93fdf6f2b89c49e6e668afb7e84cc",
++    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml": "sha256:e7cc7df9eb71cb22dada8d48d3ce506520e8d08470b265e14768cb1ea3441644",
++    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts": "sha256:d2145b11e3b5369236221bbe1f88bdc2e17e52e53dcc828babf1b0ce564ac2c3",
+     "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts": "sha256:6f3bc8fbf8f612c3ba369cfdac811294b2d53a88b853b15a8be64576d8bfe731",
++    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts": "sha256:bb1374c5e7d4a15dae83fe5ba0618eb3b9a887a3c72d7e3d446be350a1a71c7a",
+     "astrid/packs/astrid_motion/rendering/elements/effects/am-quote/component.tsx": "sha256:08b9608d01480c13910da79e5de838a1954559a5a63b737259c85ee8ddd7ede1",
+     "astrid/packs/astrid_motion/rendering/elements/effects/am-quote/element.yaml": "sha256:9ba3959fb4abf7237aaa26630ba476d93d4caf5365f962994eb9dc23e7ff3370",
+     "astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/component.tsx": "sha256:9ef9e9242ce75e4a3b21b81ecd05a1e5876eda1d11f8be2ae61dbdc51b97677e",
+@@ -163,5 +164,5 @@
+     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
+   },
+   "producer": "astrid-agent",
+-  "version": "sha256:b335927288abf8ae55cb56a2f8eff24bcb658fd2a1d1e0b98593952f6f1f54ed"
++  "version": "sha256:9c6bc05bef1d7a2c4d76ad3dc62e18437e12e9f9df2947798fdd941e1e715a68"
+ }
+diff --git a/astrid/packs/astrid_motion/pack.yaml b/astrid/packs/astrid_motion/pack.yaml
+index 9bfdd925c..e49928401 100644
+--- a/astrid/packs/astrid_motion/pack.yaml
++++ b/astrid/packs/astrid_motion/pack.yaml
+@@ -304,6 +304,10 @@
+         {
+           "kind": "implementation",
+           "path": "rendering/elements/effects/am-presenter/presenter-core.ts"
++        },
++        {
++          "kind": "implementation",
++          "path": "rendering/elements/effects/am-presenter/scene.ts"
+         }
+       ]
+     },
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx
+index 9e34d64fd..1c606af49 100644
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx
+@@ -7,13 +7,9 @@ import {
+ import {
+   COLOR,
+   FAMILY,
+-  LOGICAL_H,
+-  LOGICAL_W,
+-  clipFrames,
+   finiteNumber,
+-  integerIn,
+ } from '../../_shared/am';
+-import {mosaicBlockAt, type MosaicRamp} from '../../_shared/mosaic';
++import {type MosaicRamp} from '../../_shared/mosaic';
+ import {
+   type Anchor,
+   type MouthState,
+@@ -23,7 +19,8 @@ import {
+   blinkClosedAt,
+   mouthStateAt,
+ } from './presenter-core';
+-import {presenterAt} from './motion';
++import {anchorOr, mouthAnchor, mouthEraseRect, pixelGeometry, presenterAt, type PixelRect} from './motion';
++import {preparePresenterScene, presenterMosaicAt} from './scene';
+ 
+ // am-presenter: the Remotion-animated stand-in for the speaker. It draws ONLY
+ // the pixel overlay (mouth, eyes, blinks, bob) plus crisp UI chrome (label,
+@@ -80,7 +77,6 @@ type Resolved = {
+ 
+ // Defaults match the synthetic preview plate (320x180). Replace mouth/eyes with
+ // the anchors measured on the real P-01 plate.
+-const DEFAULT_MOUTH: Anchor = {x: 151, y: 104, w: 19};
+ const DEFAULT_EYES: Anchor[] = [
+   {x: 146, y: 85, w: 3},
+   {x: 171, y: 85, w: 3},
+@@ -89,21 +85,11 @@ const DEFAULT_EYES: Anchor[] = [
+ const hexOr = (value: unknown, fallback: string): string =>
+   typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value.trim()) ? value.trim() : fallback;
+ 
+-const anchorOr = (value: unknown, fallback: Anchor): Anchor => {
+-  if (!value || typeof value !== 'object') return fallback;
+-  const a = value as Record<string, unknown>;
+-  return {
+-    x: integerIn(a.x, 0, LOGICAL_W - 1, fallback.x),
+-    y: integerIn(a.y, 0, LOGICAL_H - 1, fallback.y),
+-    w: integerIn(a.w, 1, 40, fallback.w),
+-  };
+-};
+-
+ const readParams = (raw: unknown): Resolved => {
+   const p = narrowParams<Params>(raw);
+   const chipRaw = p.chip && typeof p.chip === 'object' ? p.chip : null;
+   return {
+-    mouth: anchorOr(p.mouth, DEFAULT_MOUTH),
++    mouth: mouthAnchor(raw),
+     skin: hexOr(p.skin, '#EDB98E'),
+     lip: hexOr(p.lip, '#2B1A14'),
+     inner: hexOr(p.inner, '#7A3510'),
+@@ -122,14 +108,11 @@ const readParams = (raw: unknown): Resolved => {
+   };
+ };
+ 
+-type Px = {x: number; y: number; w: number; h: number; color: string};
++type Px = PixelRect & {color: string};
+ 
+ const pxStyle = (r: Px, v: PresenterView): CSSProperties => ({
+   position: 'absolute',
+-  left: v.originX + r.x * v.scale,
+-  top: v.originY + r.y * v.scale,
+-  width: r.w * v.scale,
+-  height: r.h * v.scale,
++  ...pixelGeometry(r, v),
+   background: r.color,
+ });
+ 
+@@ -137,7 +120,7 @@ const pxStyle = (r: Px, v: PresenterView): CSSProperties => ({
+ // Half and open first erase the plate's line with skin, then draw the opening.
+ const mouthPixels = (state: MouthState, m: Anchor, skin: string, lip: string, inner: string): Px[] => {
+   if (state === 'closed') return [];
+-  const erase: Px = {x: m.x - 1, y: m.y - 1, w: m.w + 2, h: 4, color: skin};
++  const erase: Px = {...mouthEraseRect(m), color: skin};
+   if (state === 'half') {
+     return [erase, {x: m.x + 2, y: m.y, w: m.w - 4, h: 1, color: lip}];
+   }
+@@ -233,7 +216,7 @@ const monoChip: CSSProperties = {
+   padding: '10px 16px',
+ };
+ 
+-export default function AmPresenter(props: ElementComponentProps): ReactElement | null {
++function AmPresenter(props: ElementComponentProps): ReactElement | null {
+   const frame = useCurrentFrame();
+   const config = useVideoConfig();
+   const fps = finiteNumber(props.fps, config.fps);
+@@ -244,8 +227,7 @@ export default function AmPresenter(props: ElementComponentProps): ReactElement
+ 
+   // While the plate under this overlay is a mosaic, the crisp face pixels would
+   // float over blocks, so they hide for those frames.
+-  const raw = narrowParams<Params>(props.params);
+-  const mosaic = mosaicBlockAt(frame, clipFrames(props.clip, fps), raw.mosaicIn, raw.mosaicOut) > 6;
++  const mosaic = presenterMosaicAt(props.params, props.clip, frame, fps);
+   const pixels: Px[] = mosaic
+     ? []
+     : [
+@@ -307,3 +289,5 @@ export default function AmPresenter(props: ElementComponentProps): ReactElement
+     </div>
+   );
+ }
++
++export default Object.assign(AmPresenter, {prepareSceneCapability: preparePresenterScene});
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
+index 547e31032..6c8aaece3 100644
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
+@@ -4,6 +4,9 @@ kind: effect
+ pack_id: astrid_motion
+ short_description: Animated pixel presenter overlay with mouth, blinks, bob, punch and crisp REC/label chrome.
+ description: Draws the speaker's pixel mouth (closed, half, open on a 3-frame cycle in word spans), blinks, a 1 px bob on stressed words and an optional zoom punch over an am-snap-plate presenter plate. Pixels use the plate's view geometry. The plate needs the same zoom, focus, punchAt, words, seed and bob, with pan 0. Also draws the label chip, crop marks, REC timecode and a status chip.
++# Mouth inspection pads the shared erase rect by 1 px horizontally and 2 vertically.
++# Normalized default/partial/raw-invalid anchors are known; mosaic/unsupported geometry is unknown.
++# Presence is unknown, opaqueSupport is none; legacy crop equivalence is separately qualified.
+ keywords:
+ - presenter
+ - talking-head
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+index d98fd27e6..dfe1e25b0 100644
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+@@ -4,6 +4,7 @@
+ // Pure: no React, no DOM, no Math.random.
+ import {LOGICAL_H, LOGICAL_W, clamp, finiteNumber, integerIn, narrowParams} from '../../_shared/am';
+ import {
++  type Anchor,
+   type Point,
+   type PresenterFrame,
+   type PresenterTiming,
+@@ -14,6 +15,40 @@ import {
+   presenterView,
+ } from './presenter-core';
+ 
++export const anchorOr = (value: unknown, fallback: Anchor): Anchor => {
++  if (!value || typeof value !== 'object') return fallback;
++  const a = value as Record<string, unknown>;
++  return {
++    x: integerIn(a.x, 0, LOGICAL_W - 1, fallback.x),
++    y: integerIn(a.y, 0, LOGICAL_H - 1, fallback.y),
++    w: integerIn(a.w, 1, 40, fallback.w),
++  };
++};
++
++export const mouthAnchor = (raw: unknown): Anchor =>
++  anchorOr(narrowParams<{mouth?: Anchor}>(raw).mouth, {x: 151, y: 104, w: 19});
++
++export type PixelRect = {x: number; y: number; w: number; h: number};
++
++// The drawing erases this rectangle before the half/open mouth pixels.
++export const mouthEraseRect = (m: Anchor): PixelRect => ({x: m.x - 1, y: m.y - 1, w: m.w + 2, h: 4});
++
++// Public inspection area around the actual drawing geometry, including closed
++// pose. It deliberately follows the same normalization as drawing, so default,
++// partial, fractional and raw-invalid anchors retain their known normalized
++// public region.
++export const mouthInspectionRect = (raw: unknown): PixelRect => {
++  const r = mouthEraseRect(mouthAnchor(raw));
++  return {x: r.x - 1, y: r.y - 2, w: r.w + 2, h: r.h + 4};
++};
++
++export const pixelGeometry = (r: PixelRect, v: PresenterView): {left: number; top: number; width: number; height: number} => ({
++  left: v.originX + r.x * v.scale,
++  top: v.originY + r.y * v.scale,
++  width: r.w * v.scale,
++  height: r.h * v.scale,
++});
++
+ type MotionParams = {
+   zoom?: number;
+   focus?: Point;
+@@ -71,7 +106,9 @@ export const presenterAt = (raw: unknown, clipFrame: number, fps: number): {timi
+   return {timing, view: presenterView(frame, timing, clipFrame)};
+ };
+ 
+-const MOUTH_LEVEL = {closed: 0, half: 0.5, open: 1} as const;
++// This codebook belongs only to the resolved astrid_motion/effects/am-presenter
++// source. Foreign motion.mouth scalars and values outside it have unknown labels.
++export const MOUTH_LEVEL = {closed: 0, half: 0.5, open: 1} as const;
+ 
+ // What visualize charts: zoom, view offset (screen px), mouth level and blinks.
+ export const motionAt = (raw: unknown, clipFrame: number, fps: number): Record<string, number> => {
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+new file mode 100644
+index 000000000..74512683e
+--- /dev/null
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+@@ -0,0 +1,32 @@
++import type {ComponentCapabilityContext, PreparedComponentCapability} from '@banodoco/timeline-composition/evaluation';
++import type {ElementComponentProps} from '../../../../../rendering/shared/element_contracts';
++import {clipFrames, narrowParams} from '../../_shared/am';
++import {mosaicBlockAt, type MosaicRamp} from '../../_shared/mosaic';
++import {motionAt, mouthInspectionRect, pixelGeometry, presenterAt} from './motion';
++
++export const presenterMosaicAt = (raw: unknown, clip: ElementComponentProps['clip'], frame: number, fps: number): boolean => {
++  const p = narrowParams<{mosaicIn?: MosaicRamp | null; mosaicOut?: MosaicRamp | null}>(raw);
++  return mosaicBlockAt(frame, clipFrames(clip, fps), p.mosaicIn, p.mosaicOut) > 6;
++};
++
++export const preparePresenterScene = ({clip, fps, width, height}: ComponentCapabilityContext): PreparedComponentCapability => ({
++  identity: JSON.stringify([clip.params, clipFrames(clip, fps), fps, width, height]),
++  // The public scene supplies the same speed-remapped frame as the component.
++  frame: frame => {
++    const {view} = presenterAt(clip.params, frame, fps);
++    const {left, top, width: w, height: h} = pixelGeometry(mouthInspectionRect(clip.params), view);
++    return {
++      presence: 'unknown',
++      opaqueSupport: 'none',
++      // The root clips all drawing to the viewport; this is only an envelope.
++      bounds: {status: 'known', rect: {x: 0, y: 0, width, height}},
++      diagnostics: {
++        motion: motionAt(clip.params, frame, fps),
++        // Padded inspection ROI, including closed pose; no plate or alpha claim.
++        mouth: presenterMosaicAt(clip.params, clip, frame, fps)
++          ? {status: 'unknown', reason: 'Presenter mouth overlay is hidden by mosaic'}
++          : {status: 'known', rect: {x: left, y: top, width: w, height: h}},
++      },
++    };
++  },
++});
+diff --git a/tests/fixtures/presenter_selected_cut/README.md b/tests/fixtures/presenter_selected_cut/README.md
+new file mode 100644
+index 000000000..04778bbfd
+--- /dev/null
++++ b/tests/fixtures/presenter_selected_cut/README.md
+@@ -0,0 +1,20 @@
++These are the four ORIGINAL registered presenter captures and inspection JSON
++from central `1020061231-9845` (1 passed in 13.05 seconds), source
++`54b9c1feeae01037fac64594824d2d3fd748a250`. Every byte is copied unchanged from
++`workers/vw-m3-mouth-capture-retention-fix/evidence` in the Timeline ORCH area.
++
++The original archive is `viewing-mouth-legacy-public-four-stills-v1.tgz`,
++10319 bytes, SHA256
++`e7f32e40aa1aa25d81f30d05fd5ccb83a8a19cd8ce4a5a560e9fd93dc73d7c39`.
++Its six members match these six retained files, including `sha256.json`.
++The regression pins the five original inspection/PNG hashes independently.
++
++Frames are exactly `[0,3,4,5]`; frame 0 and frame 4 naturally have identical
++bytes and remain two distinct actual captures. No frame was made, relabelled,
++resized, normalized or modified for this regression. Planted boundary controls
++use memory-only copies, never these files or replacements for a real frame.
++
++Scope: public10, the exact recorded Root props, explicit normalized mouth
++`151/104/19`, and its one actual picture cut. No default/partial/raw-invalid
++statistic equivalence, production source admission, private-math deletion or
++Gate 6 qualification is claimed. Existing public known diagnostics stay known.
+diff --git a/tests/fixtures/presenter_selected_cut/frame-0.png b/tests/fixtures/presenter_selected_cut/frame-0.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..b0a544430897b0e01277c12400da4f1d91ae9bbc
+GIT binary patch
+literal 4762
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/fixtures/presenter_selected_cut/frame-3.png b/tests/fixtures/presenter_selected_cut/frame-3.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..a68191d2d3dda134c4237476d10246736cc0a226
+GIT binary patch
+literal 4851
+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
+XN$o#$3{R=UFOoU4{CrNn62AFAcLZlV
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/fixtures/presenter_selected_cut/frame-4.png b/tests/fixtures/presenter_selected_cut/frame-4.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..b0a544430897b0e01277c12400da4f1d91ae9bbc
+GIT binary patch
+literal 4762
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/fixtures/presenter_selected_cut/frame-5.png b/tests/fixtures/presenter_selected_cut/frame-5.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..7161b8f1e1d3c653001edbe65c45e46db45ae8aa
+GIT binary patch
+literal 4823
+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
+NH$P}zfp_$~{{`RwXwv`y
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/fixtures/presenter_selected_cut/inspection.json b/tests/fixtures/presenter_selected_cut/inspection.json
+new file mode 100644
+index 000000000..0e730347b
+--- /dev/null
++++ b/tests/fixtures/presenter_selected_cut/inspection.json
+@@ -0,0 +1 @@
++{"basis":{"width":1920,"height":1080,"fps":30},"frames":[0,3,4,5],"props":{"timeline":{"tracks":[{"id":"overlay","kind":"visual"}],"clips":[{"id":"presenter","track":"overlay","clipType":"am-presenter","at":0,"hold":2,"elementRef":{"kind":"effect","id":"am-presenter","packId":"astrid_motion"},"params":{"mouth":{"x":151,"y":104,"w":19},"words":[[0.1,0.4]],"chrome":"none","blinkEvery":0,"seed":7}}]},"theme":{"id":"banodoco-default","visual":{"color":{"fg":"#ffffff","bg":"#000000","accent":"#ffffff"},"type":{"families":{"heading":"Georgia, serif","body":"Georgia, serif"},"size":{"base":64,"small":36,"large":96},"weight":{"normal":400,"bold":700},"lineHeight":1.1},"motion":{"fadeMs":250},"canvas":{"width":1920,"height":1080,"fps":30}}},"assets":{"assets":{}}},"rows":[{"frame":0,"componentFrame":0,"clipId":"presenter","mouth":{"status":"known","rect":{"x":894,"y":606,"width":138,"height":48}},"motion":{"zoom":1,"pan_x":0,"pan_y":0,"mouth":0,"blink":0,"visible":1},"erase":{"status":"known","rect":{"x":900,"y":618,"width":126,"height":24}}}],"size":[640,360],"scale":0.3333333333333333}
+\ No newline at end of file
+diff --git a/tests/fixtures/presenter_selected_cut/sha256.json b/tests/fixtures/presenter_selected_cut/sha256.json
+new file mode 100644
+index 000000000..f0af7790c
+--- /dev/null
++++ b/tests/fixtures/presenter_selected_cut/sha256.json
+@@ -0,0 +1,7 @@
++{
++  "inspection.json": "eabcc179baa4b97b6bdf1c8343ca270ef090e1306ab8791ee32787c3226385af",
++  "frame-0.png": "6c3c819b5ac4a1b1848e3b72338e1e213e9159b6325eb1068f334dcfffc79ed5",
++  "frame-3.png": "76715e2b9c0df4f57e5fb10d992011dbb0536534e4ac27a6e5e3797e12b04c73",
++  "frame-4.png": "6c3c819b5ac4a1b1848e3b72338e1e213e9159b6325eb1068f334dcfffc79ed5",
++  "frame-5.png": "09b32c84599f3633fa5cf611216e25e667965041f971ab868f76bec354454108"
++}
+diff --git a/tests/packs/rendering/presenter_crop_geometry.mjs b/tests/packs/rendering/presenter_crop_geometry.mjs
+new file mode 100644
+index 000000000..1c5d2d486
+--- /dev/null
++++ b/tests/packs/rendering/presenter_crop_geometry.mjs
+@@ -0,0 +1,87 @@
++// Public facts from the ordinary generated host; no renderer or clock mirror.
++import assert from 'node:assert/strict';
++import {DEFAULT_THEME} from '@banodoco/timeline-composition';
++import {queryDrawFrame, querySceneFrame} from '@banodoco/timeline-composition/evaluation';
++import {prepareHostScene as prepareRoot, source as shared} from './query.mjs';
++export {prepareRoot};
++
++// Erase control uses the actual drawing helpers, never a copied crop formula.
++export const eraseRegion = (raw, frame, fps) => {
++  const {left: x, top: y, width, height} = shared.pixelGeometry(
++    shared.mouthEraseRect(shared.mouthAnchor(raw)), shared.presenterAt(raw, frame, fps).view);
++  return {status: 'known', rect: {x, y, width, height}};
++};
++
++export const basis = {width: 1920, height: 1080, fps: 30};
++export const frames = [0, 3, 4, 5, 15, 29];
++export const params = {mouth: {x: 151, y: 104, w: 19}, words: [[.1, .4]],
++  chrome: 'none', blinkEvery: 0, seed: 7};
++export const propsFor = (p = params, extra = {}) => ({
++  timeline: {tracks: [{id: 'overlay', kind: 'visual'}], clips: [{
++    id: 'presenter', track: 'overlay', clipType: 'am-presenter', at: 0, hold: 2,
++    elementRef: {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'},
++    params: p, ...extra,
++  }]}, theme: DEFAULT_THEME, assets: {assets: {}},
++});
++export const inspect = (props, b = basis, selected = frames) => {
++  assert.deepEqual(props.timeline.clips[0].elementRef,
++    {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'});
++  const scene = prepareRoot(props, b, {});
++  return selected.map(frame => {
++    const answer = querySceneFrame(scene, frame);
++    assert.equal(answer.layers.length, 1);
++    const layer = answer.layers[0];
++    assert.equal(layer.clipId, props.timeline.clips[0].id);
++    return {frame, mouth: layer.diagnostics.mouth, motion: layer.diagnostics.motion};
++  });
++};
++
++// The legacy series holds component-zero geometry. Resolve that frame through
++// the existing public DrawPlan clock, then query this same prepared Root once.
++// Source/owner qualification belongs to the generated-host fixture, not this
++// clip lookup; this helper is not a production source admission boundary.
++export const seriesInspection = (scene, props, clipId = 'presenter') => {
++  const targets = props.timeline.clips.filter(clip => clip.id === clipId);
++  assert.equal(targets.length, 1);
++  const target = targets[0];
++  assert.deepEqual(target.elementRef, {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'});
++  const matches = scene.tracks.flatMap(track => track.clips.flatMap((clip, clipIndex) =>
++    clip.id === target.id ? [{track, clip, clipIndex, plan: track.prepared.plans[clipIndex]}] : []));
++  assert.equal(matches.length, 1);
++  const {track, clip, clipIndex, plan} = matches[0];
++  assert.deepEqual(clip, target);
++  assert.equal(track.track.id, target.track);
++  const frame = Math.max(0, plan.drawStart);
++  assert.ok(frame < plan.drawStart + plan.drawDuration);
++  assert.equal(queryDrawFrame(plan, frame - plan.drawStart).contentFrame, 0);
++  const answer = querySceneFrame(scene, frame); // the only series ROI read
++  const layers = answer.layers.filter(layer => layer.clipId === target.id);
++  assert.equal(layers.length, 1);
++  const layer = layers[0];
++  assert.equal(layer.track, target.track);
++  assert.equal(layer.clipIndex, clipIndex);
++  assert.equal(layer.contentFrame, 0);
++  assert.equal(layer.diagnostics?.mouth?.status, 'known');
++  return {frame, componentFrame: 0, clipId: target.id,
++    mouth: layer.diagnostics.mouth, motion: layer.diagnostics.motion};
++};
++
++if (process.argv[2] === 'geometry') {
++  const cases = {
++    default: {mouth: undefined}, partial: {mouth: {x: 151, y: 104}}, custom: {}, fractional: {mouth: {x: 152.5, y: 103.7, w: 20.6}},
++    rawInvalid: {mouth: {x: 'bad', y: null, w: 900}},
++    clamps: {mouth: {x: -20, y: 999, w: 0}},
++    zoom: {zoom: 2, focus: {x: 190.4, y: 120.7}},
++    focusClamp: {zoom: 99, focus: {x: -100, y: 999}},
++    push: {push: {to: 3.5, frames: 28, at: 2}, focus: {x: 191.2, y: 110.4}},
++    punch: {zoom: 3, punchAt: [1, 10]}, bob: {bob: 1, seed: 9},
++    mosaic: {mosaicIn: {frames: 8}}, outer: {},
++  };
++  console.log(JSON.stringify([30, 24000 / 1001].flatMap(fps => Object.entries(cases).map(([name, p]) => {
++    const props = propsFor({...params, ...p}, name === 'outer' ? {cropLeft: .1} : {});
++    return {name, basis: {...basis, fps}, props,
++      normalizedMouth: shared.mouthAnchor(props.timeline.clips[0].params),
++      rows: inspect(props, {...basis, fps}).map(row =>
++        ({...row, erase: eraseRegion(props.timeline.clips[0].params, row.frame, fps)}))};
++  }))));
++}
+diff --git a/tests/packs/rendering/presenter_scene_capability.mjs b/tests/packs/rendering/presenter_scene_capability.mjs
+new file mode 100644
+index 000000000..34a4a5c0e
+--- /dev/null
++++ b/tests/packs/rendering/presenter_scene_capability.mjs
+@@ -0,0 +1,306 @@
++// Actual discovered AM presenter through current host maps and registered SSR.
++// These inspect markup and declared regions, never decoded pixels or lip-sync statistics.
++import assert from 'node:assert/strict';
++import {createHash} from 'node:crypto';
++import path from 'node:path';
++import {pathToFileURL} from 'node:url';
++import {build} from 'esbuild';
++import {createElement as h} from 'react';
++import {renderToStaticMarkup} from 'react-dom/server';
++import {Internals} from 'remotion';
++import {DEFAULT_THEME, TimelineComposition, compileCanonicalTransitions, toRuntimeTheme, prepareCompositionScene, getTimelineDurationInFrames} from '@banodoco/timeline-composition';
++import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
++import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
++
++Error.stackTraceLimit = 0;
++const project = process.cwd();
++const presenter = '../astrid/packs/astrid_motion/rendering/elements/effects/am-presenter';
++const aliases = remotionPrimitiveAliasesFor(project)({}).resolve.alias;
++const bundle = await build({stdin: {contents: `
++export {resolveHostRegistries} from './src/host-registries';
++export * from '${presenter}/motion';
++export * from '${presenter}/presenter-core';
++export {default as Presenter} from '${presenter}/component';`, resolveDir: project},
++bundle: true, write: false, platform: 'node', format: 'esm', jsx: 'automatic',
++nodePaths: [path.join(project, 'node_modules')], logLevel: 'silent',
++plugins: [{name: 'renderer-aliases', setup(builder) {
++  builder.onResolve({filter: /^[^./]/}, async args => {
++    if (args.pluginData?.resolvingPackage) return;
++    const alias = Object.keys(aliases).find(key => args.path === key || args.path.startsWith(`${key}/`));
++    if (alias) return builder.resolve(path.join(aliases[alias], args.path.slice(alias.length).split('?')[0]),
++      {kind: args.kind, resolveDir: project});
++    const resolved = await builder.resolve(args.path, {kind: args.kind, resolveDir: args.resolveDir,
++      pluginData: {resolvingPackage: true}});
++    if (resolved.errors.length) return {errors: resolved.errors};
++    return {path: path.isAbsolute(resolved.path) ? pathToFileURL(resolved.path).href : resolved.path, external: true};
++  });
++}}]});
++export const source = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
++// The current host has no native-scene adapter. Call the public evaluator with
++// the same generated maps and visual track order used by TimelineComposition.
++export const prepareHostScene = (props, b) => {
++  const tracks = [...props.timeline.tracks].reverse().filter(track => track.kind === 'visual')
++    .map(track => ({track, clips: props.timeline.clips.filter(clip => clip.track === track.id)}));
++  const theme = toRuntimeTheme(props.theme);
++  return prepareCompositionScene(tracks, props.assets, b.fps, theme, b.width, b.height,
++    undefined, undefined, {}, '', {}, source.resolveHostRegistries(theme), props.compiledTransitions);
++};
++const basis = {width: 1920, height: 1080, fps: 30};
++// Composition 0.0.12's package default is Agent's navy theme. The historical
++// SSR hashes intentionally use this explicit pre-12 theme so the presenter
++// preservation check does not silently turn an old fixture into a new default.
++assert.deepEqual(DEFAULT_THEME, {
++  id: 'banodoco-default',
++  visual: {
++    color: {fg: '#FAFAFA', bg: '#050814', accent: '#67E8F9'},
++    type: {families: {heading: 'Arial', body: 'Arial', mono: 'monospace'},
++      size: {base: 32, small: 22, large: 84}, weight: {normal: 400, bold: 600}, lineHeight: 1.2},
++    motion: {fadeMs: 450}, canvas: {width: 1920, height: 1080, fps: 30},
++  },
++});
++const theme = {
++  id: 'banodoco-default',
++  visual: {
++    color: {fg: '#ffffff', bg: '#000000', accent: '#ffffff'},
++    type: {families: {heading: 'Georgia, serif', body: 'Georgia, serif'},
++      size: {base: 64, small: 36, large: 96}, weight: {normal: 400, bold: 700}, lineHeight: 1.1},
++    motion: {fadeMs: 250}, canvas: {width: 1920, height: 1080, fps: 30},
++  },
++};
++const runtimeTheme = toRuntimeTheme(theme);
++const registries = source.resolveHostRegistries(runtimeTheme);
++const owner = {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'};
++const clip = (params = {}, extra = {}) => ({id: 'presenter', track: 'overlay', clipType: 'am-presenter',
++  at: 0, hold: 2, params, elementRef: owner, ...extra});
++const propsFor = (clips, b = basis) => {
++  const timeline = {tracks: [...new Set(clips.map(c => c.track))].reverse().map(id => ({id, kind: 'visual'})), clips};
++  const tracks = [...timeline.tracks].reverse().map(track => ({track, clips: clips.filter(c => c.track === track.id)}));
++  return {timeline, theme, assets: {assets: {}},
++    compiledTransitions: compileCanonicalTransitions(tracks, b.fps, runtimeTheme, registries)};
++};
++const render = (props, frame, b = basis, selectedRegistries = registries, Component = TimelineComposition) => {
++  const metadata = {id: 'presenter', component: Component, defaultProps: {}, ...b,
++    durationInFrames: 300, folderName: null, parentFolderName: null, nonce: [], schema: null,
++    calculateMetadata: null, stack: null};
++  return renderToStaticMarkup(h(Internals.CompositionManager.Provider, {value: {
++    compositions: [metadata], currentCompositionMetadata: null, folders: [],
++    canvasContent: {type: 'composition', compositionId: 'presenter'},
++  }}, h(Internals.TimelineContext.Provider, {value: {frame: {presenter: frame}, playing: false,
++    imperativePlaying: {current: false}, audioAndVideoTags: {current: []}}},
++  h(Internals.CanUseRemotionHooksProvider, null, h(Component, {...props, registries: selectedRegistries})))));
++};
++const query = (c, frame, b = basis) => {
++  const props = propsFor([c], b);
++  return querySceneFrame(prepareHostScene(props, b, {}), frame).layers[0];
++};
++const words = [[0, .2], [.3, .5], [.8, 1], [1.3, 1.5]];
++const snapshots = () => {
++  const cases = {
++    defaults: {},
++    empty: {chrome: 'none', blinkEvery: 0},
++    poses: {words, chrome: 'none', blinkEvery: 0},
++    clamps: {zoom: 99, focus: {x: -100, y: 999}, mouth: {x: -20, y: 900, w: 0}, words, bob: 9},
++    malformed: {mouth: {x: 'bad', y: null, w: 900}, eyes: [null, {x: -1, y: 999, w: 0}],
++      words: [null, [], [1, 0], ['0', 1], [.4, .6], [0, .2]], seed: -8.7},
++    focus: {zoom: 2, focus: {x: 180.6, y: 110.2}, words, mouth: {x: 155.8, y: 107.2, w: 21.6}},
++    push: {zoom: 1, push: {to: 3.5, frames: 28, at: 2}, focus: {x: 191.2, y: 110.4}, words},
++    punch: {zoom: 3, punchAt: [1, 10], words},
++    bob: {bob: 1, words: [[0, .1], [.2, .3], [.4, .5], [.6, .7]], seed: 9},
++    mosaic: {words, mosaicIn: {frames: 8}, mosaicOut: {frames: 8}},
++    chrome: {words, chrome: 'label', label: 'Take', chip: {text: 'one', swapTo: 'two', swapAt: 2}},
++  };
++  return Object.fromEntries([30, 24000 / 1001].flatMap(fps => Object.entries(cases).map(([name, params]) => {
++    const b = {...basis, fps};
++    const props = propsFor([clip(params)], b);
++    return [`${fps}:${name}`, [0, 1, 2, 3, 5, 6, 7, 8, 10, 15, 29, 47, 59].map(frame =>
++      createHash('sha256').update(render(props, frame, b)).digest('hex'))];
++  })));
++};
++
++const mode = path.resolve(process.argv[1]) === path.join(project, 'query.mjs') ? process.argv[2] : undefined;
++if (mode === 'snapshots') {
++  console.log(JSON.stringify(snapshots()));
++} else if (mode) {
++  assert.ok(['states', 'geometry', 'unknowns', 'clock', 'registration'].includes(mode));
++  const {MOUTH_LEVEL, motionAt, presenterAt, mouthStateAt} = source;
++  const pixelRect = r => {
++    const {left: x, top: y, width, height} = r;
++    return {x, y, width, height};
++  };
++  const erase = (c, frame, fps) => pixelRect(source.pixelGeometry(
++    source.mouthEraseRect(source.mouthAnchor(c.params)), presenterAt(c.params, frame, fps).view));
++  const inspection = (c, frame, fps) => pixelRect(source.pixelGeometry(
++    source.mouthInspectionRect(c.params), presenterAt(c.params, frame, fps).view));
++  const support = (c, frame, b = basis) => source.Presenter.prepareSceneCapability({clip: c, ...b,
++    rendererIdentity: 'registered-ssr', fontDigests: {}}).frame(frame);
++  const drawnOverlay = (c, frame, b = basis) => render({clip: c, params: c.params, fps: b.fps}, frame, b,
++    registries, source.Presenter);
++  const px = value => value === 0 ? '0' : `${value}px`;
++  const eraseStyle = rect => `position:absolute;left:${px(rect.x)};top:${px(rect.y)};width:${px(rect.width)};height:${px(rect.height)};background:`;
++  const assertMotion = (c, frame, b = basis, layer = query(c, frame, b), supplied = frame) => {
++    assert.deepEqual(layer.diagnostics.motion, motionAt(c.params, supplied, b.fps));
++    const state = mouthStateAt(presenterAt(c.params, supplied, b.fps).timing, supplied);
++    assert.equal(layer.diagnostics.motion.mouth, MOUTH_LEVEL[state]);
++    return state;
++  };
++
++  if (mode === 'states') {
++    assert.deepEqual(MOUTH_LEVEL, {closed: 0, half: .5, open: 1});
++    const seen = new Set();
++    const inputs = [undefined, null, [], 'bad', [null, [], [1], [2, 1], ['0', 1], [0, null]],
++      [[.8, 1], [0, .1], [.2, .3]], [[-.1, .1], [.1001, .101]], [[.1, .10001]],
++      [[0, .1], [.2, .3]], [[0, .1], [.3, .4]], [[0, .1], [.22, .3]]];
++    for (const fps of [30, 24000 / 1001, 30000 / 1001]) {
++      const b = {...basis, fps};
++      for (const words of inputs) for (const seed of [0, 7, -8.7]) {
++        const c = clip({words, seed, chrome: 'none', blinkEvery: 0});
++        const props = propsFor([c], b);
++        const scene = prepareHostScene(props, b, {});
++        for (let frame = 0; frame < Math.round(fps * 1.5); frame++) {
++          const layer = querySceneFrame(scene, frame).layers[0];
++          const state = assertMotion(c, frame, b, layer);
++          seen.add(state);
++          const html = render(props, frame, b);
++          assert.ok(html.includes(drawnOverlay(c, frame, b)), `registered drawing ${fps}:${frame}`);
++          assert.deepEqual(layer.diagnostics.mouth.rect, inspection(c, frame, fps));
++          const mouth = erase(c, frame, fps);
++          assert.equal(html.includes(eraseStyle(mouth) + '#EDB98E'), state !== 'closed');
++        }
++      }
++    }
++    assert.deepEqual([...seen].sort(), ['closed', 'half', 'open']);
++    // Actual rounded onset/end and the <= .12 second gap hold are retained.
++    const held = clip({words: [[.1, .2], [.3, .4]], seed: 7});
++    assert.equal(query(held, 2).diagnostics.motion.mouth, 0);
++    const last = query(held, 5).diagnostics.motion.mouth;
++    for (const f of [6, 7, 8]) assert.equal(query(held, f).diagnostics.motion.mouth, last);
++    assert.equal(query(held, 12).diagnostics.motion.mouth, 0);
++    const long = clip({words: [[.1, .2], [.4, .5]], seed: 7});
++    for (const f of [6, 7, 8, 9, 10, 11]) assert.equal(query(long, f).diagnostics.motion.mouth, 0);
++  }
++
++  if (mode === 'geometry') {
++    const inputs = [{}, {mouth: {x: 151}}, {mouth: {x: 151, y: 104}}, {mouth: {x: 'bad', y: null, w: 900}}, {mouth: null}, {mouth: {x: -20, y: 999, w: 0}},
++      {mouth: {x: 999, y: -1, w: 99}}, {mouth: {x: 152.5, y: 103.7, w: 20.6}},
++      {zoom: 2, focus: {x: 190.4, y: 120.7}},
++      {zoom: 99, focus: {x: -100, y: 999}},
++      {push: {to: 3.5, frames: 28, at: 2}, focus: {x: 191.2, y: 110.4}},
++      {zoom: 3, punchAt: [1, 10]}, {bob: 1, seed: 9}];
++    for (const fps of [30, 24000 / 1001]) for (const params of inputs) {
++      const b = {...basis, fps};
++      const c = clip({words, chrome: 'none', blinkEvery: 0, ...params});
++      const props = propsFor([c], b);
++      const scene = prepareHostScene(props, b, {});
++      for (const frame of [0, 1, 2, 3, 5, 6, 7, 8, 10, 15, 29]) {
++        const layer = querySceneFrame(scene, frame).layers[0];
++        assertMotion(c, frame, b, layer);
++        assert.deepEqual(layer.diagnostics.mouth, support(c, frame, b).diagnostics.mouth);
++        assert.equal(layer.diagnostics.mouth.status, 'known');
++        const state = mouthStateAt(presenterAt(c.params, frame, fps).timing, frame);
++        const html = render(props, frame, b);
++        assert.deepEqual(layer.diagnostics.mouth.rect, inspection(c, frame, fps));
++        if (state !== 'closed') assert.ok(html.includes(eraseStyle(erase(c, frame, fps)) + '#EDB98E'));
++        assert.equal(layer.visible, 'unknown');
++        assert.equal(layer.opaqueSupport, 'none');
++        assert.equal(layer.diagnostics.face, undefined);
++        assert.equal(layer.diagnostics.text, undefined);
++      }
++    }
++    assert.deepEqual(query(clip(), 0).diagnostics.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
++    assert.deepEqual(query(clip({mouth: {x: -1, y: 999, w: 0}}), 0).diagnostics.mouth.rect,
++      {x: -12, y: 1056, width: 30, height: 48});
++    const small = {...basis, width: 960, height: 540};
++    const layer = query(clip(), 0, small);
++    // Logical overlay pixels are not rescaled to an invented 320x180 viewport.
++    assert.deepEqual(layer.diagnostics.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
++    assert.deepEqual(layer.bounds.rect, {x: 0, y: 0, width: 960, height: 540});
++  }
++
++  if (mode === 'unknowns') {
++    const c = clip({chrome: 'none', blinkEvery: 0});
++    const props = propsFor([c]); // deliberately no plate, no assets
++    assert.equal(render(props, 0).includes('<img'), false);
++    assert.equal(drawnOverlay(c, 0), '<div style="position:absolute;inset:0;overflow:hidden;pointer-events:none"></div>');
++    const s = support(c, 0);
++    assert.equal(s.presence, 'unknown');
++    assert.equal(s.opaqueSupport, 'none');
++    assert.equal(s.diagnostics.mouth.status, 'known'); // footprint, not occupied pixels
++    assert.equal(querySceneFrame(prepareHostScene(props, basis, {}), 0).coverage, 'UNKNOWN');
++    for (const missing of [{asset: 'missing'}, {params: {...c.params, src: '/not-a-presenter-asset.png'}}]) {
++      const other = {...c, ...missing};
++      assert.deepEqual(support(other, 0), s);
++      assert.equal(query(other, 0).diagnostics.face, undefined);
++    }
++    for (const ramps of [{mosaicIn: {frames: 8}}, {mosaicOut: {frames: 8}},
++      {mosaicIn: {frames: 8, steps: [48, 6]}}]) {
++      const m = clip({...ramps, words, chrome: 'none', blinkEvery: 0});
++      for (const frame of [0, 1, 3, 4, 6, 7, 8, 52, 53, 54, 55, 56, 57, 58, 59]) {
++        const layer = query(m, frame);
++        assertMotion(m, frame, basis, layer);
++        const direct = support(m, frame);
++        assert.deepEqual(layer.diagnostics.mouth, direct.diagnostics.mouth);
++        if (layer.diagnostics.mouth.status === 'unknown') {
++          assert.match(layer.diagnostics.mouth.reason, /mosaic/);
++          assert.equal(drawnOverlay(m, frame), drawnOverlay(c, 0));
++        }
++      }
++    }
++    assert.equal(query(clip({mosaicIn: {frames: 8}}), 0).diagnostics.mouth.status, 'unknown');
++    assert.equal(query(clip({mosaicIn: {frames: 8}}), 6).diagnostics.mouth.status, 'known');
++    for (const extra of [{cropLeft: .1}, {entrance: 'fade-up'}, {exit: 'fade-up'},
++      {modifiers: [{id: 'unknown', element: {packId: 'missing', kind: 'modifier', id: 'missing'}, params: {}}]}]) {
++      const outer = query({...c, ...extra}, 2);
++      assert.equal(outer.diagnostics.mouth.status, 'unknown');
++      assertMotion({...c, ...extra}, 2, basis, outer);
++    }
++  }
++
++  if (mode === 'clock') {
++    for (const fps of [30, 24000 / 1001]) for (const speed of [.5, 1, 2]) {
++      const b = {...basis, fps};
++      const outgoing = clip({chrome: 'none'}, {id: 'out', hold: 1});
++      const incoming = clip({words, bob: 1, punchAt: [2, 8], chrome: 'none', blinkEvery: 0},
++        {id: 'in', at: 1, from: 17, to: 18, hold: 1, speed, transition: {type: 'fade', duration: .4}});
++      const props = propsFor([outgoing, incoming], b);
++      const scene = prepareHostScene(props, b, {});
++      let preroll = false;
++      let remapDistinguished = speed === 1;
++      const end = getTimelineDurationInFrames(props.timeline, fps);
++      for (let frame = 0; frame <= end; frame++) {
++        const row = querySceneFrame(scene, frame);
++        const html = render(props, frame, b);
++        for (const c of [outgoing, incoming]) {
++          const layer = row.layers.find(l => l.clipId === c.id);
++          assert.equal(html.includes(`data-clip-id="${c.id}"`), Boolean(layer));
++          if (!layer) continue;
++          const supplied = Math.floor(layer.contentFrame * (c.speed ?? 1));
++          assertMotion(c, frame, b, layer, supplied);
++          assert.ok(html.includes(drawnOverlay(c, supplied, b)), `actual draw clock ${fps}:${speed}:${frame}`);
++          if (c === incoming && frame < Math.round(c.at * fps)) preroll = true;
++          if (c === incoming && supplied !== layer.contentFrame
++            && motionAt(c.params, supplied, fps).mouth !== motionAt(c.params, layer.contentFrame, fps).mouth) remapDistinguished = true;
++        }
++      }
++      assert.equal(preroll, true);
++      assert.equal(remapDistinguished, true);
++      assert.ok(querySceneFrame(scene, end - 1).layers.some(layer => layer.clipId === 'in'));
++      assert.equal(querySceneFrame(scene, end).layers.length, 0);
++    }
++  }
++
++  if (mode === 'registration') {
++    const c = clip();
++    assert.equal(query(c, 0).diagnostics.motion.mouth, 0);
++    assert.deepEqual(query({...c, elementRef: undefined}, 2).diagnostics, query(c, 2).diagnostics);
++    assert.throws(() => query({...c, elementRef: {...owner, packId: 'missing'}}, 0), /Unknown effect owner/);
++    assert.throws(() => query({...c, elementRef: {...owner, packId: 'rendering'}}, 0), /Unknown effect owner/);
++    // The normal owner-qualified dispatch forwards the actual component's hook.
++    assert.deepEqual(query(c, 2).diagnostics, support(c, 2).diagnostics);
++    const props = propsFor([c]);
++    const tracks = props.timeline.tracks.map(track => ({track, clips: props.timeline.clips}));
++    const scene = prepareCompositionScene(tracks, props.assets, 30, runtimeTheme, 1920, 1080,
++      undefined, undefined, {}, '', {}, registries, props.compiledTransitions);
++    assert.deepEqual(querySceneFrame(scene, 2).layers[0].diagnostics, query(c, 2).diagnostics);
++  }
++  console.log(JSON.stringify({ok: true, case: mode}));
++}
+diff --git a/tests/packs/rendering/presenter_selected_cut_query.mjs b/tests/packs/rendering/presenter_selected_cut_query.mjs
+new file mode 100644
+index 000000000..2aa11c5ec
+--- /dev/null
++++ b/tests/packs/rendering/presenter_selected_cut_query.mjs
+@@ -0,0 +1,39 @@
++// Read-only query of the exact retained four-still Root. No capture or SSR.
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import {createHash} from 'node:crypto';
++import {basis, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
++
++const retained = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
++assert.deepEqual(retained.frames, [0, 3, 4, 5]);
++assert.deepEqual(retained.basis, basis);
++// The retained explicit public10 theme stays exact when querying public12.
++assert.equal(createHash('sha256').update(fs.readFileSync(process.argv[2])).digest('hex'),
++  'eabcc179baa4b97b6bdf1c8343ca270ef090e1306ab8791ee32787c3226385af');
++assert.deepEqual(retained.props.timeline, propsFor().timeline);
++assert.deepEqual(retained.props.assets, propsFor().assets);
++const original = JSON.stringify(retained);
++const scene = prepareRoot(retained.props, retained.basis, {});
++// seriesInspection resolves this exact compiled ID and registered owner,
++// checks the DrawPlan's component zero, then makes its one public ROI query.
++const zero = seriesInspection(scene, retained.props);
++const {erase, ...expected} = retained.rows[0];
++// inspection.json is the capture's JSON boundary, which serializes -0 as 0.
++// Match that same boundary; no geometry, pixel or threshold is normalized.
++assert.deepEqual(JSON.parse(JSON.stringify(zero)), expected);
++
++// Invalid selections refuse before the helper reaches querySceneFrame.
++const controls = [];
++const refuse = (name, props, id) => {
++  assert.throws(() => seriesInspection(scene, props, id));
++  controls.push(name);
++};
++refuse('missing-compiled-id', retained.props, 'missing');
++refuse('ambiguous-compiled-id', {...retained.props, timeline: {...retained.props.timeline,
++  clips: [...retained.props.timeline.clips, retained.props.timeline.clips[0]]}});
++const changed = patch => ({...retained.props, timeline: {...retained.props.timeline,
++  clips: [{...retained.props.timeline.clips[0], ...patch}]}});
++refuse('foreign-owner', changed({elementRef: {kind: 'effect', id: 'am-presenter', packId: 'probe'}}));
++refuse('stale-params', changed({params: {...retained.props.timeline.clips[0].params, seed: 9}}));
++assert.equal(JSON.stringify(retained), original);
++console.log(JSON.stringify({zero, controls}));
+diff --git a/tests/packs/rendering/presenter_series_inspection.mjs b/tests/packs/rendering/presenter_series_inspection.mjs
+new file mode 100644
+index 000000000..91c8e0e77
+--- /dev/null
++++ b/tests/packs/rendering/presenter_series_inspection.mjs
+@@ -0,0 +1,41 @@
++// Pure queries of the actual generated host; no capture or source admission.
++import assert from 'node:assert/strict';
++import {basis, params, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
++
++const props = propsFor();
++const original = JSON.stringify(props);
++const scene = prepareRoot(props, basis, {});
++let reads = 0;
++for (const capability of Object.values(scene.capabilities.components)) {
++  const frame = capability.frame;
++  capability.frame = contentFrame => { reads++; return frame(contentFrame); };
++}
++const zero = seriesInspection(scene, props);
++assert.equal(reads, 1);
++assert.equal(zero.frame, 0);
++assert.equal(zero.componentFrame, 0);
++assert.deepEqual(zero.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
++assert.equal(JSON.stringify(props), original);
++
++// Selection failures never read another region or silently choose a presenter.
++assert.throws(() => seriesInspection(scene, props, 'missing'));
++assert.throws(() => seriesInspection(scene, {...props, timeline: {...props.timeline,
++  clips: [...props.timeline.clips, props.timeline.clips[0]]}}));
++assert.throws(() => seriesInspection(scene, propsFor(params,
++  {elementRef: {kind: 'effect', id: 'am-presenter', packId: 'probe'}})));
++assert.throws(() => seriesInspection(scene, propsFor({...params, seed: 9})));
++assert.equal(reads, 1);
++
++// The public clock, not authored zero or a guessed source offset, locates zero.
++const delayed = propsFor(params, {at: 5, from: 17, to: 18, speed: 2});
++assert.equal(seriesInspection(prepareRoot(delayed, basis, {}), delayed).frame, 150);
++const clipped = propsFor(params, {at: -1});
++assert.throws(() => seriesInspection(prepareRoot(clipped, basis, {}), clipped));
++
++// Unknown diagnostics and an empty scene cannot become a known replacement ROI.
++const unknown = propsFor({...params, mosaicIn: {frames: 8}});
++assert.throws(() => seriesInspection(prepareRoot(unknown, basis, {}), unknown));
++const empty = {...props, timeline: {...props.timeline, clips: []}};
++assert.throws(() => seriesInspection(prepareRoot(empty, basis, {}), empty));
++assert.throws(() => seriesInspection(undefined, props));
++console.log(JSON.stringify({ok: true, reads, zero}));
+diff --git a/tests/packs/rendering/presenter_ssr_before.json b/tests/packs/rendering/presenter_ssr_before.json
+new file mode 100644
+index 000000000..67e22c063
+--- /dev/null
++++ b/tests/packs/rendering/presenter_ssr_before.json
+@@ -0,0 +1,332 @@
++{
++  "30:defaults": [
++    "62ddd2346bc43e25701fae6075059e8d6bd8172b4aed70bda04473bb8e4fdbf8",
++    "7a54d90a0d36d2480539d9e7a3ab15ed3949cf83b3b5a470a67b62114fd365f4",
++    "859c41596e5ac69bdecf661fa26f7b9f1b1a6c72d840a8e566ae0504b37c7faa",
++    "2eb26841db60fc42b56a1a664c26688065fe6d7bb02d2ee9b1d3fb69e6e9d619",
++    "4ea2b8a756f6d92adb0a859e3f741edd2091081505715a1abe31afb553c3a6df",
++    "d854564519345ba2089ef46fab2eafbc6c945faa96a45bab3cdac8837650e0e8",
++    "a91f91906212ff86f8450e8e19435cf8a977a9b3d5d8570401b7f6b8e3656f8f",
++    "462e4bbd3a778ca487c12f1280793dfe8faec931278ccf0a5bee369267c7079a",
++    "c61b860852d9e3b887c52e35cb97108a59816f422bd63bddf72ede3e411dca5e",
++    "003ce530617c1ade0c11d242e3a1dbcd9eea6ee7e7adcc3e99606b5da7605e67",
++    "1fed641eb8d8f17672a8f7fa197132c13b6edb3af62976d44bd6fd4a28d4a2df",
++    "fa8fecee9440a42bac431cc21f1c5be2d40944cf2ff3a738bd54e4e9d28bd05d",
++    "94bd13a15292b05408da0897824ae2d8e60b5ec8c6d483d55a15e43a76cea6e0"
++  ],
++  "30:empty": [
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891"
++  ],
++  "30:poses": [
++    "ca018068d7e1d553d94603b5d32488d9d37a1eb0d5197fc8670f937d42bb63e6",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "c21b5ee8e7ec9fc2859f606c123c904cf283a6f86fb53ca1327e779f4205a3d3",
++    "ca018068d7e1d553d94603b5d32488d9d37a1eb0d5197fc8670f937d42bb63e6",
++    "c21b5ee8e7ec9fc2859f606c123c904cf283a6f86fb53ca1327e779f4205a3d3",
++    "c21b5ee8e7ec9fc2859f606c123c904cf283a6f86fb53ca1327e779f4205a3d3",
++    "c21b5ee8e7ec9fc2859f606c123c904cf283a6f86fb53ca1327e779f4205a3d3",
++    "c21b5ee8e7ec9fc2859f606c123c904cf283a6f86fb53ca1327e779f4205a3d3",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891"
++  ],
++  "30:clamps": [
++    "78e1e0ff9a4c1a1b1f8baf2a6361e13a920c0df73dde6452465abec9ebf5e9c9",
++    "7a54d90a0d36d2480539d9e7a3ab15ed3949cf83b3b5a470a67b62114fd365f4",
++    "6b7dec48055d57539bcac7d987580c94f08f91ad356425c9e994c0800cafe2eb",
++    "ef774a4b5cd5040cc4738e4a4ba54d3d91e016366bed11ece4ca3343b35236ec",
++    "6169ac5e8abc49261169f60371762b814089010e86f281db22fbcf79a8cff4f3",
++    "bc4120bd546e760ed358375d795b08d2727f4122d3b94ef0a0d2340adc105b98",
++    "c1c807cea1b56f1950b92ab62ba3e655aa0a5d37a483c85af07ee3755382a4b3",
++    "987bf478e9f712fc05e906a01f677079365b554eac29cf06c8ec0b4bb7248f81",
++    "c61b860852d9e3b887c52e35cb97108a59816f422bd63bddf72ede3e411dca5e",
++    "003ce530617c1ade0c11d242e3a1dbcd9eea6ee7e7adcc3e99606b5da7605e67",
++    "1fed641eb8d8f17672a8f7fa197132c13b6edb3af62976d44bd6fd4a28d4a2df",
++    "fa8fecee9440a42bac431cc21f1c5be2d40944cf2ff3a738bd54e4e9d28bd05d",
++    "94bd13a15292b05408da0897824ae2d8e60b5ec8c6d483d55a15e43a76cea6e0"
++  ],
++  "30:malformed": [
++    "d74c71cdd54a21a6d9f7b800c7dfea7b78d67bb62205898b03824ef4b0daf7d1",
++    "c4a147da1c1340b122c8b934e6b381ee189e5e9633e400a036e429fec4990e99",
++    "859c41596e5ac69bdecf661fa26f7b9f1b1a6c72d840a8e566ae0504b37c7faa",
++    "661f12fa1fe2f2166137e18e31fd7f65911d569a69ee5f6c2165d735a6de0419",
++    "4ea2b8a756f6d92adb0a859e3f741edd2091081505715a1abe31afb553c3a6df",
++    "d854564519345ba2089ef46fab2eafbc6c945faa96a45bab3cdac8837650e0e8",
++    "a91f91906212ff86f8450e8e19435cf8a977a9b3d5d8570401b7f6b8e3656f8f",
++    "462e4bbd3a778ca487c12f1280793dfe8faec931278ccf0a5bee369267c7079a",
++    "c61b860852d9e3b887c52e35cb97108a59816f422bd63bddf72ede3e411dca5e",
++    "016c2f72d06afad0f62a5008092ea259afba25aa939001cb715fb90aba4c78fc",
++    "1fed641eb8d8f17672a8f7fa197132c13b6edb3af62976d44bd6fd4a28d4a2df",
++    "fa8fecee9440a42bac431cc21f1c5be2d40944cf2ff3a738bd54e4e9d28bd05d",
++    "94bd13a15292b05408da0897824ae2d8e60b5ec8c6d483d55a15e43a76cea6e0"
++  ],
++  "30:focus": [
++    "4440e6c996cb41baf3982ca35b133911f644eb3226fb33e73aa8f8689420fa1a",
++    "7a54d90a0d36d2480539d9e7a3ab15ed3949cf83b3b5a470a67b62114fd365f4",
++    "19061abd3f975a63c69ffc35718cab524cab5c3c09e2e925f4bc4016cdf48047",
++    "9cac49295dacce62f0c6827da99aab563078eb762358092878f498dda4861442",
++    "2ce9a168745c3efac4e7d396b503ce92311a967f403a78e38904454275ee5a39",
++    "e38e8b972a2268ad402f91105f33b82e731c085b9032591ffbdc5fd2ea66f066",
++    "b80d34a280056062881ea2cc104e8e42b5f43170f00f5e8fee698cd25ab083e0",
++    "4d71c42172fc3b17d2db8d1c54e6bc583fcd7bef2c4a04cdca16f56d8122609a",
++    "c61b860852d9e3b887c52e35cb97108a59816f422bd63bddf72ede3e411dca5e",
++    "003ce530617c1ade0c11d242e3a1dbcd9eea6ee7e7adcc3e99606b5da7605e67",
++    "1fed641eb8d8f17672a8f7fa197132c13b6edb3af62976d44bd6fd4a28d4a2df",
++    "fa8fecee9440a42bac431cc21f1c5be2d40944cf2ff3a738bd54e4e9d28bd05d",
++    "94bd13a15292b05408da0897824ae2d8e60b5ec8c6d483d55a15e43a76cea6e0"
++  ],
++  "30:push": [
++    "95c07a8a09a6dfe35b0e11d1328d137db039b8a3bd910566378e46b7aa839fbd",
++    "7a54d90a0d36d2480539d9e7a3ab15ed3949cf83b3b5a470a67b62114fd365f4",
++    "1761aa0a7f2762981d01b3c26dc9598cfb24fbee7d924a57d672900636dae296",
++    "09e16dfa49ce6494ec517b14163b061ee9fd09f6048d7673dbbe29931289250c",
++    "8512b2675cc3accc3d3f7de05e62925cae994cf6159214231bf2e15e6337c617",
++    "0dd566030be895036c7d6873d1bb6780fdb80347057bdc19bbd33d49e812d16a",
++    "2fd23fe4783e068f7a734d902931bebdadbad9549553301646215fffa81cae63",
++    "75ccd373a28ed231c93e962eeaeb7b6aff7c8395e8e02cb8869dcf3e51fba381",
++    "c61b860852d9e3b887c52e35cb97108a59816f422bd63bddf72ede3e411dca5e",
++    "003ce530617c1ade0c11d242e3a1dbcd9eea6ee7e7adcc3e99606b5da7605e67",
++    "1fed641eb8d8f17672a8f7fa197132c13b6edb3af62976d44bd6fd4a28d4a2df",
++    "fa8fecee9440a42bac431cc21f1c5be2d40944cf2ff3a738bd54e4e9d28bd05d",
++    "94bd13a15292b05408da0897824ae2d8e60b5ec8c6d483d55a15e43a76cea6e0"
++  ],
++  "30:punch": [
++    "c446793a3dbed91aa71c419b028d26084028163f5d9ee2e6c3de02be4e324a9b",
++    "7a54d90a0d36d2480539d9e7a3ab15ed3949cf83b3b5a470a67b62114fd365f4",
++    "7bce4025e47db80f077cdca824f200cdc3710ea99fc87882159c5ffaae427aac",
++    "8c76bd522b999445ff8e58fdae6ab416943a0f99d8c1e145319ff6452651ebaa",
++    "4612db672209617ed26c7bccbcf834378ae5c6a4366a09515e5a826517dc8862",
++    "be1b5bfcf5747535540f524d8e923ad2482e2e7bfeb0b59d90eddfd5a4bdf9bb",
++    "8e075c79cd23d6f7ef6756eb6d00ccb28b8c9d1a8a522f6de2a88809a6ab86d5",
++    "79886ec6e1c0441a37fe84c42d2db64992cf56965eee4517d819425b9346c40f",
++    "c61b860852d9e3b887c52e35cb97108a59816f422bd63bddf72ede3e411dca5e",
++    "003ce530617c1ade0c11d242e3a1dbcd9eea6ee7e7adcc3e99606b5da7605e67",
++    "1fed641eb8d8f17672a8f7fa197132c13b6edb3af62976d44bd6fd4a28d4a2df",
++    "fa8fecee9440a42bac431cc21f1c5be2d40944cf2ff3a738bd54e4e9d28bd05d",
++    "94bd13a15292b05408da0897824ae2d8e60b5ec8c6d483d55a15e43a76cea6e0"
++  ],
++  "30:bob": [
++    "f981481effb21dac70ddbf63b7fff25294821654990eb2f304e7ef31a595ff81",
++    "e0be1faac709329b2c84149a079c60bf025b7cb348c37a80b912ab02b61062f3",
++    "5f7d2dec08769d33d7f31a51169227fb01b58d75b1e0cd130fa03011bd129952",
++    "78985cf9094fceb339abc077dd5307ef6b0f8dddb44bfca2ebf53ada1a10edd2",
++    "53df47b5483477d3934704ae56895ac9f3a9495f1efffd14a3139f5671ed780f",
++    "d854564519345ba2089ef46fab2eafbc6c945faa96a45bab3cdac8837650e0e8",
++    "fd8d8b419b056db45d81744591804b829266910da44ce0f6706b0b9b1281d041",
++    "d6eabe7daeb9b9a52ad2f73999283e3968546e8fbe08225dee8efeb9ebeb246c",
++    "c2f38e340f465a9f7e28589813954e88936b1c99e96bd629562c59280fd43f2b",
++    "a9729a98c4798dd02a00749e62e54bc7c6dd4f335d7a227748d3f769cd2eba43",
++    "1fed641eb8d8f17672a8f7fa197132c13b6edb3af62976d44bd6fd4a28d4a2df",
++    "fa8fecee9440a42bac431cc21f1c5be2d40944cf2ff3a738bd54e4e9d28bd05d",
++    "94bd13a15292b05408da0897824ae2d8e60b5ec8c6d483d55a15e43a76cea6e0"
++  ],
++  "30:mosaic": [
++    "62ddd2346bc43e25701fae6075059e8d6bd8172b4aed70bda04473bb8e4fdbf8",
++    "7a54d90a0d36d2480539d9e7a3ab15ed3949cf83b3b5a470a67b62114fd365f4",
++    "859c41596e5ac69bdecf661fa26f7b9f1b1a6c72d840a8e566ae0504b37c7faa",
++    "2eb26841db60fc42b56a1a664c26688065fe6d7bb02d2ee9b1d3fb69e6e9d619",
++    "4ea2b8a756f6d92adb0a859e3f741edd2091081505715a1abe31afb553c3a6df",
++    "76fc176ba540cc30dd79638c4c44a85a33a8ab8241f3eb87744c296ebca06119",
++    "fd8d8b419b056db45d81744591804b829266910da44ce0f6706b0b9b1281d041",
++    "16d5113aa5766b79851130efa0df2e7cff07a04984098655f5202018b0ac4f13",
++    "c61b860852d9e3b887c52e35cb97108a59816f422bd63bddf72ede3e411dca5e",
++    "003ce530617c1ade0c11d242e3a1dbcd9eea6ee7e7adcc3e99606b5da7605e67",
++    "1fed641eb8d8f17672a8f7fa197132c13b6edb3af62976d44bd6fd4a28d4a2df",
++    "fa8fecee9440a42bac431cc21f1c5be2d40944cf2ff3a738bd54e4e9d28bd05d",
++    "94bd13a15292b05408da0897824ae2d8e60b5ec8c6d483d55a15e43a76cea6e0"
++  ],
++  "30:chrome": [
++    "f25ed14c063dc05344712119eb9960f402163d014b10818d142cfabe731014df",
++    "5a374ee383e81fab5091a3e58dfdeab92cea1043a94da8571805324048947d86",
++    "cd6ad24f5ab3a5fbd357109ded87761efe4eb0042e863a90420a0b4c2608d915",
++    "b9521d44541f66da0c8234d0f5029c9fe19aa84cd3a409a0cdce874f349612ec",
++    "9b02e861c4b28ebd42249e417c791d27427c71ab267d215d1d3a583aab9e08db",
++    "9b02e861c4b28ebd42249e417c791d27427c71ab267d215d1d3a583aab9e08db",
++    "9b02e861c4b28ebd42249e417c791d27427c71ab267d215d1d3a583aab9e08db",
++    "9b02e861c4b28ebd42249e417c791d27427c71ab267d215d1d3a583aab9e08db",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af"
++  ],
++  "23.976023976023978:defaults": [
++    "b6cf49f4e2ce33250d6bb281a5c2ef62afc9cc5b6526f1af00762a2ef613be51",
++    "4004faee80cb13d3f43dbdf025a7e2b46a16bc0159e39e1c3bc42cc0a657078b",
++    "ff4e0bf0d4a5a9699dea782b3cef2d7704647934de53273956ae747af7d1f062",
++    "95570d84c04e8a111f8c4950b54a635eae729d522285a1b5c1bead43de02e453",
++    "2fdedbd753a68560d0c05d5a3d33c90d510d2d82c511759c3a365fbda65005ab",
++    "9771cad6fca6ad5a400f57b537ddf91d72a0de51f3062dfa8558ee1a58beaa31",
++    "e4a3155098d33ac12f3712ae6ec80d3663c97e000c433fb8f025e8053b033081",
++    "1674370fb1ceff654e9c0ad77fb61984c1b428a0155468498279ae9aa797374c",
++    "cf53c1af8d35fbc5628e1cdcb5d59b4f6ca13fd9be1e8a4682c2704d9489ee09",
++    "3805036dcf58410b9b56b68b2b7e80873f42cea60507a9adeca4fa899a86d50d",
++    "044c6abee2c4e109896a13cd8a4abc632f083ced48037ac78d935d78abc1d49d",
++    "c32bc30363148dfdc6eb806b11b9aaced7e7f50b62dfbb937148f083067a9dd8",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ],
++  "23.976023976023978:empty": [
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ],
++  "23.976023976023978:poses": [
++    "ca018068d7e1d553d94603b5d32488d9d37a1eb0d5197fc8670f937d42bb63e6",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "c21b5ee8e7ec9fc2859f606c123c904cf283a6f86fb53ca1327e779f4205a3d3",
++    "ca018068d7e1d553d94603b5d32488d9d37a1eb0d5197fc8670f937d42bb63e6",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "ca018068d7e1d553d94603b5d32488d9d37a1eb0d5197fc8670f937d42bb63e6",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "ca018068d7e1d553d94603b5d32488d9d37a1eb0d5197fc8670f937d42bb63e6",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "703e40aa6aa3fe9cfaa744a01552542f404fb49ebe77b5ec0ab8e146cca4a891",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ],
++  "23.976023976023978:clamps": [
++    "de30615ef58c3059d241540fa9c984d6710f47cb793fac9cca9c532ebb278e99",
++    "4004faee80cb13d3f43dbdf025a7e2b46a16bc0159e39e1c3bc42cc0a657078b",
++    "142652c2bf04ccb8e653ffc19e350ed589984786205bba3600079e89d40a2a71",
++    "ced8d483804739a22adcbf1796d695f14d831eed3a3f2d9ddbadea62d9e9b43b",
++    "2fdedbd753a68560d0c05d5a3d33c90d510d2d82c511759c3a365fbda65005ab",
++    "9771cad6fca6ad5a400f57b537ddf91d72a0de51f3062dfa8558ee1a58beaa31",
++    "e3595e9ed3d45dbfab340af94ed629c61bcd33030e0d2d462bd72f3f697d13ca",
++    "1674370fb1ceff654e9c0ad77fb61984c1b428a0155468498279ae9aa797374c",
++    "95e7d2cdc23974d30ed626252ded3187058661d3083452baafac7043c8100f47",
++    "3805036dcf58410b9b56b68b2b7e80873f42cea60507a9adeca4fa899a86d50d",
++    "044c6abee2c4e109896a13cd8a4abc632f083ced48037ac78d935d78abc1d49d",
++    "c32bc30363148dfdc6eb806b11b9aaced7e7f50b62dfbb937148f083067a9dd8",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ],
++  "23.976023976023978:malformed": [
++    "f6b4a7c53cc52ec81fa9e29b4f3fd925a8121e8947e8800752f9fe37a9798826",
++    "d2c5358989d36fd68bd60328150c23e45bde8e930a3bbd59f119a4a3cb967a3e",
++    "ff4e0bf0d4a5a9699dea782b3cef2d7704647934de53273956ae747af7d1f062",
++    "1a3acd0ebedbdc01a58e3b70e2004116e730e059479c93b59f799be4eb7210c3",
++    "2fdedbd753a68560d0c05d5a3d33c90d510d2d82c511759c3a365fbda65005ab",
++    "9771cad6fca6ad5a400f57b537ddf91d72a0de51f3062dfa8558ee1a58beaa31",
++    "e4a3155098d33ac12f3712ae6ec80d3663c97e000c433fb8f025e8053b033081",
++    "1674370fb1ceff654e9c0ad77fb61984c1b428a0155468498279ae9aa797374c",
++    "82a290c24e224e0139f42dfd1187c43fcc15cc6910e8cfd57dbfc3b53ca44419",
++    "3805036dcf58410b9b56b68b2b7e80873f42cea60507a9adeca4fa899a86d50d",
++    "044c6abee2c4e109896a13cd8a4abc632f083ced48037ac78d935d78abc1d49d",
++    "c32bc30363148dfdc6eb806b11b9aaced7e7f50b62dfbb937148f083067a9dd8",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ],
++  "23.976023976023978:focus": [
++    "2afa38b70c6b316a8c452b1692ba63fd388b0a6af73971ed9bbc39dc225ae6b4",
++    "4004faee80cb13d3f43dbdf025a7e2b46a16bc0159e39e1c3bc42cc0a657078b",
++    "29c1460b2953dc3913d4f96c830d4efb2f3be49079abc00f6fb3729c89f4df3b",
++    "52adc42741c0081db3b8ab5e11056a61929539776a25adde7e95fee28346e7bb",
++    "2fdedbd753a68560d0c05d5a3d33c90d510d2d82c511759c3a365fbda65005ab",
++    "9771cad6fca6ad5a400f57b537ddf91d72a0de51f3062dfa8558ee1a58beaa31",
++    "7e0655af52b4c71e2f0a49ab83ef8e94c61578ff123c5d3daecabde99d3157e9",
++    "1674370fb1ceff654e9c0ad77fb61984c1b428a0155468498279ae9aa797374c",
++    "32e0da445156d25f2311ace0b9eef9e5a552579619c9bbe05a4ee8cfa79fed19",
++    "3805036dcf58410b9b56b68b2b7e80873f42cea60507a9adeca4fa899a86d50d",
++    "044c6abee2c4e109896a13cd8a4abc632f083ced48037ac78d935d78abc1d49d",
++    "c32bc30363148dfdc6eb806b11b9aaced7e7f50b62dfbb937148f083067a9dd8",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ],
++  "23.976023976023978:push": [
++    "7e971e72b1dd574a9240065f5711e26d5c975c23a4630230d4fc6bf61bb080c0",
++    "4004faee80cb13d3f43dbdf025a7e2b46a16bc0159e39e1c3bc42cc0a657078b",
++    "cb9a55dd1890f6830fccb79bdfab666711c24806ab0e6038bee763ca55861b73",
++    "9d5162ddc47cd0c15da64ecb5f127b74c5aa035a19f58c2aac6188a3f2975a55",
++    "2fdedbd753a68560d0c05d5a3d33c90d510d2d82c511759c3a365fbda65005ab",
++    "9771cad6fca6ad5a400f57b537ddf91d72a0de51f3062dfa8558ee1a58beaa31",
++    "be34681051e9a5fbd804c96b08d9d24a15d653dd314e07ee24b0dc04df498efd",
++    "1674370fb1ceff654e9c0ad77fb61984c1b428a0155468498279ae9aa797374c",
++    "cd99ddf78915884602325695043680f574bfab461e9638f1c5fd80e57342a7b5",
++    "3805036dcf58410b9b56b68b2b7e80873f42cea60507a9adeca4fa899a86d50d",
++    "044c6abee2c4e109896a13cd8a4abc632f083ced48037ac78d935d78abc1d49d",
++    "c32bc30363148dfdc6eb806b11b9aaced7e7f50b62dfbb937148f083067a9dd8",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ],
++  "23.976023976023978:punch": [
++    "d408b4e593fdec23cb732e7f2e0e2496ac4271c23531da9a0399c0f078b8af60",
++    "4004faee80cb13d3f43dbdf025a7e2b46a16bc0159e39e1c3bc42cc0a657078b",
++    "a72891329326643cb6a5c87cd4c9184415c850557d8ca711976358a20967bad1",
++    "976eceff1ff976b6f08acf5985cf53fd6531cca5015ae3e558f8622593f7c2d6",
++    "2fdedbd753a68560d0c05d5a3d33c90d510d2d82c511759c3a365fbda65005ab",
++    "9771cad6fca6ad5a400f57b537ddf91d72a0de51f3062dfa8558ee1a58beaa31",
++    "010c16b2b61dcb9ac4e6aa6ed7aa196a2c29640111664fb9f00655b07a4edf4b",
++    "1674370fb1ceff654e9c0ad77fb61984c1b428a0155468498279ae9aa797374c",
++    "8aaa46b71c1779c3e91d025dfb42fa79c10b424b8051824ef6d3431cfcc36191",
++    "3805036dcf58410b9b56b68b2b7e80873f42cea60507a9adeca4fa899a86d50d",
++    "044c6abee2c4e109896a13cd8a4abc632f083ced48037ac78d935d78abc1d49d",
++    "c32bc30363148dfdc6eb806b11b9aaced7e7f50b62dfbb937148f083067a9dd8",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ],
++  "23.976023976023978:bob": [
++    "9f3f799f788f70e5ef16b42ff4f68055a46757b0fa5579d3ae370ed94a838563",
++    "f478bce997f984d7679580750ed5f4e555fdb566c2f3a1139f11aa4149944159",
++    "ff4e0bf0d4a5a9699dea782b3cef2d7704647934de53273956ae747af7d1f062",
++    "95570d84c04e8a111f8c4950b54a635eae729d522285a1b5c1bead43de02e453",
++    "2fdedbd753a68560d0c05d5a3d33c90d510d2d82c511759c3a365fbda65005ab",
++    "0849533d0c74e853ba8ea2429e803ad048a88f0375d7c0832b796ca0116b6fd7",
++    "e4a3155098d33ac12f3712ae6ec80d3663c97e000c433fb8f025e8053b033081",
++    "1674370fb1ceff654e9c0ad77fb61984c1b428a0155468498279ae9aa797374c",
++    "5dc0660e940fcf6c56a2eb90db8f0de713cc135d90ea2ff254426c6ec11eb8a6",
++    "898e0fd05d1310d4a7cac129684a45885c5e80c4133e756a16a953751c98847e",
++    "044c6abee2c4e109896a13cd8a4abc632f083ced48037ac78d935d78abc1d49d",
++    "c32bc30363148dfdc6eb806b11b9aaced7e7f50b62dfbb937148f083067a9dd8",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ],
++  "23.976023976023978:mosaic": [
++    "b6cf49f4e2ce33250d6bb281a5c2ef62afc9cc5b6526f1af00762a2ef613be51",
++    "4004faee80cb13d3f43dbdf025a7e2b46a16bc0159e39e1c3bc42cc0a657078b",
++    "ff4e0bf0d4a5a9699dea782b3cef2d7704647934de53273956ae747af7d1f062",
++    "95570d84c04e8a111f8c4950b54a635eae729d522285a1b5c1bead43de02e453",
++    "2fdedbd753a68560d0c05d5a3d33c90d510d2d82c511759c3a365fbda65005ab",
++    "9771cad6fca6ad5a400f57b537ddf91d72a0de51f3062dfa8558ee1a58beaa31",
++    "14fb42139e27d5dc542bdd9e03b71b6f6bd2d6025ad9b7572b2568f44b5e3472",
++    "1674370fb1ceff654e9c0ad77fb61984c1b428a0155468498279ae9aa797374c",
++    "5dc0660e940fcf6c56a2eb90db8f0de713cc135d90ea2ff254426c6ec11eb8a6",
++    "3805036dcf58410b9b56b68b2b7e80873f42cea60507a9adeca4fa899a86d50d",
++    "044c6abee2c4e109896a13cd8a4abc632f083ced48037ac78d935d78abc1d49d",
++    "c32bc30363148dfdc6eb806b11b9aaced7e7f50b62dfbb937148f083067a9dd8",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ],
++  "23.976023976023978:chrome": [
++    "f25ed14c063dc05344712119eb9960f402163d014b10818d142cfabe731014df",
++    "5a374ee383e81fab5091a3e58dfdeab92cea1043a94da8571805324048947d86",
++    "cd6ad24f5ab3a5fbd357109ded87761efe4eb0042e863a90420a0b4c2608d915",
++    "b9521d44541f66da0c8234d0f5029c9fe19aa84cd3a409a0cdce874f349612ec",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af",
++    "9c9903e01f131af1831fa8574e7254806a84573bce188dab5ce4a68b1359e0f0",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af",
++    "9c9903e01f131af1831fa8574e7254806a84573bce188dab5ce4a68b1359e0f0",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af",
++    "5015a05d0b3d1f31eef681524f6bf17547ea572b68faebb35e05a16bcb2737af",
++    "5aab040e146b67bda3176213dcf5066b60598731676169ef62540b29cb1ef74f"
++  ]
++}
+diff --git a/tests/packs/rendering/test_presenter_crop_equivalence.py b/tests/packs/rendering/test_presenter_crop_equivalence.py
+new file mode 100644
+index 000000000..44ca746db
+--- /dev/null
++++ b/tests/packs/rendering/test_presenter_crop_equivalence.py
+@@ -0,0 +1,160 @@
++"""Padded inspection compatibility, retaining erase-region counterexamples.
++
++Only geometry is exercised here. Retained physical pixel qualification lives
++outside this prerequisite port; no new captures are made.
++"""
++
++import json
++import math
++import shutil
++import subprocess
++from pathlib import Path
++from types import SimpleNamespace
++
++import pytest
++
++from astrid.packs.rendering.actions.timeline_visualize.motion import model
++from tests.packs.rendering.test_presenter_scene_capability import (
++    presenter_query as _presenter_query,
++)
++
++presenter_query = _presenter_query
++pytestmark = pytest.mark.integration
++
++
++def stage_geometry(query):
++    shutil.copyfile(Path(__file__).with_name("presenter_crop_geometry.mjs"),
++                    query.project / "presenter_crop_geometry.mjs")
++
++
++@pytest.fixture(scope="module")
++def crop_cases(presenter_query):
++    stage_geometry(presenter_query)
++    result = subprocess.run([str(presenter_query.node), "presenter_crop_geometry.mjs", "geometry"],
++                            cwd=presenter_query.project, env=presenter_query.env,
++                            capture_output=True, text=True, timeout=60)
++    assert result.returncode == 0, result.stdout + result.stderr
++    return json.loads(result.stdout)
++
++
++def legacy_element(case, *, own_view=True):
++    clip = case["props"]["timeline"]["clips"][0]
++    # Feed the same registered view to the existing old box function. This
++    # isolates padding/default differences from the optional private view mirror.
++    by_frame = {row["frame"]: row["motion"] for row in case["rows"]}
++    return model.Element(clip["id"], clip["clipType"], clip["track"], 0, 2,
++                         clip["params"], clip,
++                         maths=SimpleNamespace(at=lambda _e, f, _fps: by_frame[f]) if own_view else None)
++
++
++def png_crop(box, size):
++    """Literal legacy builtin.lipsync conversion, including +1 and lower clamp."""
++    sx, sy = size[0] / model.CANVAS[0], size[1] / model.CANVAS[1]
++    return (max(0, int(box[0] * sx)), max(0, int(box[1] * sy)),
++            int(box[2] * sx) + 1, int(box[3] * sy) + 1)
++
++
++def public_box(row, key="mouth"):
++    assert row[key]["status"] == "known"
++    r = row[key]["rect"]
++    return r["x"], r["y"], r["x"] + r["width"], r["y"] + r["height"]
++
++
++def area(crop):
++    return (crop[2] - crop[0]) * (crop[3] - crop[1])
++
++
++def legacy_qualified(case):
++    # Eligibility only: normalization belongs to the actual component helper.
++    raw = case["props"]["timeline"]["clips"][0]["params"].get("mouth")
++    return isinstance(raw, dict) and all(
++        type(raw.get(key)) is int and raw[key] == case["normalizedMouth"][key]
++        for key in ("x", "y", "w"))
++
++
++def test_registered_default_and_clamped_anchors_are_not_legacy_defaults(crop_cases):
++    for case in crop_cases:
++        old = model.mouth_box(legacy_element(case), 0)
++        row = case["rows"][0]
++        if case["name"] == "default":
++            assert old is None
++            assert public_box(row) == (894, 606, 1032, 654)
++        elif case["name"] == "partial":
++            assert old == (894, 606, 1014, 654)  # legacy w=16, actual w=19
++            assert public_box(row) == (894, 606, 1032, 654)
++        elif case["name"] == "rawInvalid":
++            assert public_box(row) == (894, 606, 1158, 654)
++        elif case["name"] == "clamps":
++            assert old == (-132, 5976, -108, 6024)
++            assert public_box(row) == (-12, 1056, 18, 1104)
++        elif case["name"] == "fractional":
++            assert old == (903, 604.2, 1050.6, 652.2)
++            assert public_box(row) == (906, 606, 1056, 654)
++
++
++@pytest.mark.parametrize("size", [(1920, 1080), (640, 360), (641, 361), (720, 405)])
++def test_same_frame_compatibility_and_separate_erase_denominators(crop_cases, size):
++    seen = set()
++    for case in crop_cases:
++        if case["name"] not in ("custom", "fractional", "zoom", "focusClamp", "push", "punch", "bob"):
++            continue
++        element = legacy_element(case)
++        for row in case["rows"]:
++            frame = row["frame"]
++            seen.add(row["motion"]["mouth"])
++            old = png_crop(model.mouth_box(element, frame), size)
++            compat = png_crop(public_box(row), size)
++            erase = png_crop(public_box(row, "erase"), size)
++            assert all(math.isfinite(v) for v in old + compat + erase)
++            if area(erase) > 0 and area(old) > 0:
++                assert area(old) != area(erase), (case["name"], frame, size)
++            if legacy_qualified(case):
++                assert old == compat, (case["name"], frame, size)
++            else:
++                assert case["name"] == "fractional"
++                assert old != compat
++            # The retained private fallback cannot fix erase's padding mismatch.
++            fallback = png_crop(model.mouth_box(legacy_element(case, own_view=False), frame), size)
++            assert fallback != erase
++    assert seen == {0, .5, 1}
++
++
++def test_minimal_two_percent_counterexample_without_invented_pixels(crop_cases):
++    case = next(c for c in crop_cases if c["name"] == "custom" and c["basis"]["fps"] == 30)
++    old = png_crop(model.mouth_box(legacy_element(case), 0), (640, 360))
++    compat = png_crop(public_box(case["rows"][0]), (640, 360))
++    new = png_crop(public_box(case["rows"][0], "erase"), (640, 360))
++    assert old == compat == (298, 202, 345, 219)
++    assert new == (300, 206, 343, 215)
++    assert (area(old), area(compat), area(new)) == (799, 799, 387)
++    # Eight pixels above CHANGE_LEVEL inside both crops produce opposite verdicts
++    # under the unchanged strict >2% rule. Actual comparator proof is central-only.
++    assert 8 / area(old) <= .02 < 8 / area(new)
++
++
++def test_frame_zero_series_crop_cannot_follow_a_moving_region(crop_cases):
++    for name in ("push", "punch", "bob"):
++        case = next(c for c in crop_cases if c["name"] == name and c["basis"]["fps"] == 30)
++        element = legacy_element(case)
++        fixed = model.mouth_box(element, 0)  # builtin.lipsync uses this for every pair
++        assert any(model.mouth_box(element, row["frame"]) != fixed for row in case["rows"])
++        assert any(public_box(row) != public_box(case["rows"][0]) for row in case["rows"])
++
++
++def test_source_bound_unknown_is_not_a_replacement_crop(crop_cases):
++    for case in crop_cases:
++        if case["name"] in ("mosaic", "outer"):
++            row = case["rows"][0]
++            assert row["mouth"]["status"] == "unknown"
++            assert "reason" in row["mouth"]
++            assert model.mouth_box(legacy_element(case), 0) is not None
++            with pytest.raises(AssertionError):
++                public_box(row)
++
++
++def test_public_known_normalization_is_not_legacy_qualification(crop_cases):
++    for case in crop_cases:
++        if case["name"] in ("mosaic", "outer"):
++            continue
++        assert all(row["mouth"]["status"] == "known" for row in case["rows"])
++        assert legacy_qualified(case) == (case["name"] not in ("default", "partial", "clamps", "rawInvalid", "fractional"))
+diff --git a/tests/packs/rendering/test_presenter_scene_capability.py b/tests/packs/rendering/test_presenter_scene_capability.py
+new file mode 100644
+index 000000000..30965b8c6
+--- /dev/null
++++ b/tests/packs/rendering/test_presenter_scene_capability.py
+@@ -0,0 +1,146 @@
++"""Actual registered presenter draw and capability against immutable public12."""
++import hashlib
++import json
++import os
++import shutil
++import subprocess
++import tarfile
++from pathlib import Path
++
++import pytest
++
++from astrid.core.rendering.node_pin import resolve_pinned_node
++from scripts import gen_effect_registry
++
++SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
++
++ROOT = Path(__file__).resolve().parents[3]
++PRESENTER = Path("astrid/packs/astrid_motion/rendering/elements/effects/am-presenter")
++pytestmark = pytest.mark.integration
++
++
++@pytest.fixture(scope="module")
++def presenter_query(tmp_path_factory):
++    artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
++        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz")))
++    # Explicit immutable releases only; this override does not change the host pin.
++    assert hashlib.sha256(artifact.read_bytes()).hexdigest() in {
++        SHA256, "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
++    }
++    peers = Path(os.environ.get("ASTRID_COMPOSITION_TEST_NODE_MODULES", str(
++        ROOT / "remotion/node_modules"))).resolve()
++    node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
++    assert node.ok, node.problem
++    assert node.version == "v20.19.4"
++    project_root = tmp_path_factory.mktemp("presenter-scene")
++    project = project_root / "remotion"
++    source = project / "src"
++    source.mkdir(parents=True)
++    (project_root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
++    modules = project / "node_modules"
++    package = modules / "@banodoco/timeline-composition"
++    package.parent.mkdir(parents=True)
++    with tarfile.open(artifact) as archive:
++        expected = {m.name.removeprefix("package/"): hashlib.sha256(archive.extractfile(m).read()).hexdigest()
++                    for m in archive.getmembers() if m.isfile()}
++        archive.extractall(project, filter="data")
++    (project / "package").rename(package)
++    for peer in peers.iterdir():
++        if peer.name != "@banodoco":
++            (modules / peer.name).symlink_to(peer, target_is_directory=peer.is_dir())
++    for name in ("package.json", "webpack-alias.mjs"):
++        shutil.copyfile(ROOT / "remotion" / name, project / name)
++    shutil.copyfile(ROOT / "remotion/src/host-registries.ts", source / "host-registries.ts")
++    # Use only actual pack discovery and the current host's ordinary owner dispatch.
++    owner = gen_effect_registry._element_registry().get("effects", "am-presenter", pack_id="astrid_motion")
++    assert owner.source == "pack:astrid_motion"
++    assert owner.root == ROOT / PRESENTER
++    for kind in ("effects", "animations", "transitions"):
++        (source / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
++    shutil.copyfile(Path(__file__).with_name("presenter_scene_capability.mjs"), project / "query.mjs")
++    env = {k: v for k, v in os.environ.items() if k not in ("NODE_OPTIONS", "NODE_PATH")}
++
++    def hashes():
++        return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
++                for p in package.rglob("*") if p.is_file()}
++
++    assert len(expected) == 77 and hashes() == expected
++    peer_identity = {p.name: p.resolve() for p in modules.iterdir() if p.name != "@banodoco"}
++    preflight = """
++      import {createRequire} from 'node:module';
++      import {realpathSync} from 'node:fs';
++      import {fileURLToPath} from 'node:url';
++      const require = createRequire(import.meta.url);
++      console.log(JSON.stringify(Object.fromEntries(['react', 'react-dom', 'remotion',
++        '@remotion/media', '@remotion/renderer', '@remotion/layout-utils'].map(name =>
++          [name, {path: realpathSync(fileURLToPath(import.meta.resolve(name))), version: require(`${name}/package.json`).version}]))));
++    """
++    resolved = json.loads(subprocess.check_output([str(node.path), "--input-type=module", "-e", preflight],
++                                                cwd=project, env=env, text=True, timeout=30))
++    for name, peer in resolved.items():
++        assert Path(peer["path"]).is_relative_to(peers)
++        assert peer["version"] == ("18.3.1" if name in ("react", "react-dom") else "4.0.509")
++
++    def query(case):
++        result = subprocess.run([str(node.path), "query.mjs", case], cwd=project, env=env,
++                                text=True, capture_output=True, timeout=60)
++        assert result.returncode == 0, result.stdout + result.stderr
++        return json.loads(result.stdout)
++
++    query.project = project
++    query.node = node.path
++    query.env = env
++    try:
++        yield query
++        assert hashes() == expected
++        assert {p.name: p.resolve() for p in modules.iterdir() if p.name != "@banodoco"} == peer_identity
++    finally:
++        shutil.rmtree(project_root)
++
++
++def test_presenter_existing_registered_ssr_markup(presenter_query):
++    # Captured before the refactor from 09cfd10a4, with this same host/peer graph.
++    expected = json.loads(Path(__file__).with_name("presenter_ssr_before.json").read_text())
++    assert presenter_query("snapshots") == expected
++
++
++@pytest.mark.parametrize("case", ["states", "geometry", "unknowns", "clock", "registration"])
++def test_presenter_public_scene_contract(presenter_query, case):
++    assert presenter_query(case)["ok"] is True
++
++
++def test_presenter_public12_declarations(presenter_query, tmp_path):
++    # Check copied source against the archive's declarations through ordinary
++    # node_modules lookup; no source alias or installed package is patched.
++    project = tmp_path / "typecheck"
++    (project / "node_modules").parent.mkdir(parents=True)
++    (project / "node_modules").symlink_to(presenter_query.project / "node_modules", target_is_directory=True)
++    files = [*ROOT.joinpath(PRESENTER).glob("*.ts"), *ROOT.joinpath(PRESENTER).glob("*.tsx")]
++    files += [ROOT / "astrid/packs/astrid_motion/rendering/elements/_shared" / name
++              for name in ("am.tsx", "mosaic.tsx")]
++    files += [ROOT / "astrid/packs/rendering/shared/element_contracts.ts"]
++    for file in files:
++        destination = project / file.relative_to(ROOT)
++        destination.parent.mkdir(parents=True, exist_ok=True)
++        shutil.copyfile(file, destination)
++    config = {"compilerOptions": {"target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler",
++              "jsx": "react-jsx", "strict": True, "skipLibCheck": True, "noEmit": True}, "include": ["astrid"]}
++    (project / "tsconfig.json").write_text(json.dumps(config))
++    result = subprocess.run([str(presenter_query.node), str(project / "node_modules/typescript/bin/tsc"),
++                             "--project", str(project / "tsconfig.json")],
++                            cwd=project, env=presenter_query.env, text=True, capture_output=True, timeout=60)
++    assert result.returncode == 0, result.stdout + result.stderr
++
++
++def test_presenter_pack_declares_source_closure():
++    pack = ROOT / "astrid/packs/astrid_motion"
++    manifest = json.loads((pack / "pack.yaml").read_text())
++    entry = manifest["rendering"]["effects/am-presenter"]
++    assert entry["path"] == "rendering/elements/effects/am-presenter/element.yaml"
++    declared = {pack / resource["path"] for resource in entry["resources"]
++                if resource["kind"] == "implementation"}
++    expected = {ROOT / PRESENTER / name for name in
++                ("component.tsx", "motion.ts", "presenter-core.ts", "scene.ts", "element.yaml")}
++    expected |= {pack / "rendering/elements/_shared" / name for name in ("am.tsx", "mosaic.tsx")}
++    assert declared == expected
++    assert all(path.is_file() for path in declared)
+diff --git a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+new file mode 100644
+index 000000000..42e2000c6
+--- /dev/null
++++ b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+@@ -0,0 +1,271 @@
++"""UNAPPLIED consumer proposal: one retained public10 pixel fixture only.
++
++The public adapter below is test-only. Production lipsync still uses mouth_box;
++this test does not certify a working-copy/historical source or migrate a caller.
++"""
++
++import hashlib
++import json
++import shutil
++import subprocess
++from copy import deepcopy
++from dataclasses import replace
++from pathlib import Path
++
++import pytest
++from PIL import Image
++
++from astrid.core.timeline.cuts import find_cut
++from astrid.packs.rendering.actions.timeline_visualize.layers import builtin
++from astrid.packs.rendering.actions.timeline_visualize.motion import model, sheet
++from tests.packs.rendering import test_presenter_crop_equivalence as crop_helpers
++from tests.packs.rendering.test_presenter_crop_equivalence import png_crop, public_box
++from tests.packs.rendering.test_presenter_scene_capability import (
++    presenter_query as _presenter_query,
++)
++
++presenter_query = _presenter_query
++pytestmark = pytest.mark.integration
++FIXTURE = Path(__file__).resolve().parents[2] / "fixtures/presenter_selected_cut"
++EXPECTED_HASHES = {
++    "inspection.json": "eabcc179baa4b97b6bdf1c8343ca270ef090e1306ab8791ee32787c3226385af",
++    "frame-0.png": "6c3c819b5ac4a1b1848e3b72338e1e213e9159b6325eb1068f334dcfffc79ed5",
++    "frame-3.png": "76715e2b9c0df4f57e5fb10d992011dbb0536534e4ac27a6e5e3797e12b04c73",
++    "frame-4.png": "6c3c819b5ac4a1b1848e3b72338e1e213e9159b6325eb1068f334dcfffc79ed5",
++    "frame-5.png": "09b32c84599f3633fa5cf611216e25e667965041f971ab868f76bec354454108",
++}
++
++
++@pytest.fixture(scope="module")
++def retained():
++    def hashes():
++        return {name: hashlib.sha256((FIXTURE / name).read_bytes()).hexdigest()
++                for name in EXPECTED_HASHES}
++
++    assert json.loads((FIXTURE / "sha256.json").read_text()) == EXPECTED_HASHES
++    assert hashes() == EXPECTED_HASHES
++    case = json.loads((FIXTURE / "inspection.json").read_text())
++    assert case["frames"] == [0, 3, 4, 5]
++    assert len(case["rows"]) == 1
++    for frame in case["frames"]:
++        with Image.open(FIXTURE / f"frame-{frame}.png") as image:
++            assert image.format == "PNG" and image.size == tuple(case["size"]) == (640, 360)
++    yield case
++    assert hashes() == EXPECTED_HASHES
++
++
++@pytest.fixture(scope="module")
++def public_zero(presenter_query, retained):
++    # Reuse the existing actual generated-host fixture and immutable public10.
++    # The geometry helper is unchanged; this entry never imports a renderer.
++    helper = Path(crop_helpers.__file__)
++    shutil.copyfile(helper.with_name("presenter_crop_geometry.mjs"),
++                    presenter_query.project / "presenter_crop_geometry.mjs")
++    shutil.copyfile(Path(__file__).with_name("presenter_selected_cut_query.mjs"),
++                    presenter_query.project / "presenter_selected_cut_query.mjs")
++    result = subprocess.run([str(presenter_query.node), "presenter_selected_cut_query.mjs",
++                             str(FIXTURE / "inspection.json")],
++                            cwd=presenter_query.project, env=presenter_query.env,
++                            capture_output=True, text=True, timeout=60)
++    assert result.returncode == 0, result.stdout + result.stderr
++    answer = json.loads(result.stdout)
++    assert answer["controls"] == ["missing-compiled-id", "ambiguous-compiled-id",
++                                  "foreign-owner", "stale-params"]
++    assert answer["zero"] == {k: v for k, v in retained["rows"][0].items() if k != "erase"}
++    return answer["zero"]
++
++
++def context(case, order=(0, 3, 4, 5)):
++    # The original Root timeline is already flat; do not invent occurrence IDs,
++    # clip aliases, neighbouring clips, extra captures or timing for this case.
++    snapshot = {**deepcopy(case["props"]["timeline"]),
++                "config": deepcopy(case["props"]["timeline"]), "fps_rational": [30, 1]}
++    cut = sheet.select_cut(snapshot, "presenter", case["basis"]["fps"])
++    frames = {f: FIXTURE / f"frame-{f}.png" for f in order}
++    return sheet.build_context(snapshot, cut, frames, fps=case["basis"]["fps"],
++                               frame_size=tuple(case["size"]))
++
++
++def cut_ref(ctx):
++    return {key: ctx.cut[key] for key in
++            ("index", "clip_id", "occurrence_id", "shot_id", "track", "start", "end")}
++
++
++def statistic(ctx, selected, reads, pairs, changed, fractions, finding):
++    return {"cut": cut_ref(ctx), "selected": selected, "reads": reads, "pairs": pairs,
++            "changed_pixels": changed, "fractions": fractions,
++            "changes": sum(f > .02 for f in fractions),
++            "denominator": len(selected) - 1 if len(selected) >= 3 else None,
++            "finding": finding}
++
++
++def private_statistic(ctx):
++    """Observe the actual builtin without replacing private math or pixels."""
++    reads, pairs, changed, fractions = [], [], [], []
++    frame_image, diff = ctx.frame_image, builtin._diff_fraction
++
++    def read(frame):
++        reads.append(frame)
++        return frame_image(frame)
++
++    def compare(a, b):
++        fraction, mask = diff(a, b)
++        assert a.size == b.size == (47, 17)
++        pairs.append(reads[-2:])
++        changed.append(mask.histogram()[255])
++        fractions.append(fraction)
++        return fraction, mask
++
++    with pytest.MonkeyPatch.context() as patch:
++        patch.setattr(ctx, "frame_image", read)
++        patch.setattr(builtin, "_diff_fraction", compare)
++        result = builtin.render_lipsync(ctx)
++    findings = [s for s in result.findings if s.startswith("LIPSYNC pixels:")]
++    selected = [f for f in builtin._sorted_frames(ctx)
++                if float(ctx.cut["start"]) <= f / ctx.fps < float(ctx.cut["end"])]
++    assert len(findings) <= 1
++    return statistic(ctx, selected, reads, pairs, changed, fractions, findings[0] if findings else None)
++
++
++def public_statistic(ctx, zero):
++    """UNAPPLIED minimal ROI adapter; reuse the current comparator/conversion.
++
++    This preserves the builtin's selected-key denominator and resets adjacency
++    on a missing image. It intentionally makes no semantic-mouth-state query.
++    """
++    selected = [f for f in builtin._sorted_frames(ctx)
++                if float(ctx.cut["start"]) <= f / ctx.fps < float(ctx.cut["end"])]
++    reads, pairs, changed, fractions = [], [], [], []
++    finding = None
++    crop = png_crop(public_box(zero), ctx.frame_size)
++    if len(selected) >= 3:
++        previous = None
++        for frame in selected:
++            reads.append(frame)
++            image = ctx.frame_image(frame)
++            region = image.crop(crop) if image is not None else None
++            if region is not None and previous is not None:
++                fraction, mask = builtin._diff_fraction(previous[1], region)
++                pairs.append([previous[0], frame])
++                changed.append(mask.histogram()[255])
++                fractions.append(fraction)
++            previous = (frame, region) if region is not None else None
++        changes = sum(f > .02 for f in fractions)
++        finding = (f"LIPSYNC pixels: mouth region changed between {changes} of "
++                   f"{len(selected) - 1} sampled frame pairs")
++    return statistic(ctx, selected, reads, pairs, changed, fractions, finding)
++
++
++def test_actual_selected_cut_aggregate(retained, public_zero):
++    ctx = context(retained)
++    before = deepcopy(dict(ctx.cut))
++    assert ctx.cut == find_cut(ctx.cuts, "1") == find_cut(ctx.cuts, "@0")
++    assert cut_ref(ctx) == {"index": 1, "clip_id": "presenter", "occurrence_id": "",
++                            "shot_id": "", "track": "overlay", "start": 0, "end": 2}
++    presenter = ctx.elements[0]
++    assert presenter.id == public_zero["clipId"] == "presenter"
++    # No attached maths/semantic double: this is the caller's current fallback.
++    assert presenter.maths is None
++    old = png_crop(model.mouth_box(presenter, 0), ctx.frame_size)
++    assert old == png_crop(public_box(public_zero), ctx.frame_size) == (298, 202, 345, 219)
++    for f in retained["frames"]:
++        image = ctx.frame_image(f)
++        assert image.crop(old).tobytes() == image.crop(png_crop(public_box(public_zero), ctx.frame_size)).tobytes()
++    actual = private_statistic(ctx)
++    assert actual == public_statistic(ctx, public_zero)
++    assert actual["selected"] == actual["reads"] == [0, 3, 4, 5]
++    assert actual["pairs"] == [[0, 3], [3, 4], [4, 5]]
++    assert actual["changed_pixels"] == [336, 336, 336]
++    assert actual["fractions"] == [336 / 799] * 3
++    assert (actual["changes"], actual["denominator"]) == (3, 3)
++    assert actual["finding"] == "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs"
++    assert ctx.cut == before
++    print("ACTUAL_SELECTED_CUT=" + json.dumps(actual, sort_keys=True))
++
++
++@pytest.mark.parametrize("order", [(5, 0, 4, 3), (5, 3, 0, 3, 4)])
++def test_order_and_duplicate_frame_keys(retained, public_zero, order):
++    # A repeated request references the same real frame-3 file; it is not a new
++    # capture. Both the capture API and LayerContext use unique frame keys.
++    actual = private_statistic(context(retained, order))
++    assert actual == private_statistic(context(retained))
++    assert actual == public_statistic(context(retained, order), public_zero)
++
++
++def test_missing_key_changes_adjacency_and_denominator(retained, public_zero):
++    ctx = context(retained, (0, 4, 5))
++    actual = private_statistic(ctx)
++    assert actual == public_statistic(ctx, public_zero)
++    assert actual["pairs"] == [[0, 4], [4, 5]]
++    # 0 and 4 are independent retained captures with identical original bytes.
++    assert actual["changed_pixels"] == [0, 336]
++    assert actual["fractions"] == [0, 336 / 799]
++    assert (actual["changes"], actual["denominator"]) == (1, 2)
++    assert actual["finding"] == "LIPSYNC pixels: mouth region changed between 1 of 2 sampled frame pairs"
++
++
++@pytest.mark.parametrize("missing,pairs", [(3, [[4, 5]]), (4, [[0, 3]])])
++def test_missing_image_resets_pairs_but_retains_key_denominator(retained, public_zero, monkeypatch, missing, pairs):
++    ctx = context(retained)
++    read = ctx.frame_image
++    monkeypatch.setattr(ctx, "frame_image", lambda f: None if f == missing else read(f))
++    actual = private_statistic(ctx)
++    assert actual == public_statistic(ctx, public_zero)
++    assert actual["reads"] == [0, 3, 4, 5]
++    assert actual["pairs"] == pairs
++    assert actual["fractions"] == [336 / 799]
++    assert (actual["changes"], actual["denominator"]) == (1, 3)
++    assert actual["finding"] == "LIPSYNC pixels: mouth region changed between 1 of 3 sampled frame pairs"
++
++
++@pytest.mark.parametrize("start,end,selected,changes,denominator", [
++    (0, 5 / 30, [0, 3, 4], 2, 2),
++    (3 / 30, 2, [3, 4, 5], 2, 2),
++    (4 / 30, 2, [4, 5], 0, None),
++    (0, 3 / 30, [0], 0, None),
++])
++def test_selection_window_boundaries(retained, public_zero, start, end, selected, changes, denominator):
++    # Synthetic window controls over the SAME retained frame keys, not new
++    # authored cuts or captures. The positive above uses the real picture cut.
++    original = context(retained)
++    ctx = replace(original, cut={**original.cut, "start": start, "end": end})
++    actual = private_statistic(ctx)
++    assert actual == public_statistic(ctx, public_zero)
++    assert actual["selected"] == selected
++    assert (actual["changes"], actual["denominator"]) == (changes, denominator)
++    assert actual["reads"] == (selected if denominator is not None else [])
++    assert (actual["finding"] is None) == (denominator is None)
++
++
++def test_absent_file_is_an_error_not_zero_motion(retained, public_zero, tmp_path):
++    ctx = context(retained)
++    ctx.frames[3] = tmp_path / "not-a-capture.png"
++    with pytest.raises(FileNotFoundError):
++        private_statistic(ctx)
++    with pytest.raises(FileNotFoundError):
++        public_statistic(ctx, public_zero)
++
++
++@pytest.mark.parametrize("selector", ["2", "foreign:presenter"])
++def test_cut_selection_does_not_invent_a_reference(retained, selector):
++    ctx = context(retained)
++    with pytest.raises(ValueError):
++        find_cut(ctx.cuts, selector)
++
++
++@pytest.mark.parametrize("count", [15, 16])
++def test_strict_two_percent_boundary_on_memory_only_copy(retained, public_zero, count):
++    # A planted crop is a comparator control, never a relabelled frame capture.
++    ctx = context(retained)
++    original = ctx.frame_image(0)
++    altered = original.copy()
++    crop = png_crop(public_box(public_zero), ctx.frame_size)
++    for i in range(count):
++        point = (crop[0] + i, crop[1])
++        altered.putpixel(point, (255, 255, 255) if sum(original.getpixel(point)) < 384 else (0, 0, 0))
++    for box in (model.mouth_box(ctx.elements[0], 0), public_box(public_zero)):
++        region = png_crop(box, ctx.frame_size)
++        fraction, mask = builtin._diff_fraction(original.crop(region), altered.crop(region))
++        assert mask.histogram()[255] == count
++        assert fraction == count / 799
++        assert (fraction > .02) == (count == 16)
+diff --git a/tests/packs/rendering/test_presenter_series_inspection.py b/tests/packs/rendering/test_presenter_series_inspection.py
+new file mode 100644
+index 000000000..3479dd3f0
+--- /dev/null
++++ b/tests/packs/rendering/test_presenter_series_inspection.py
+@@ -0,0 +1,29 @@
++"""Component-zero ROI prerequisite through the existing generated-host seam."""
++
++import json
++import shutil
++import subprocess
++from pathlib import Path
++
++import pytest
++
++from tests.packs.rendering.test_presenter_scene_capability import (
++    presenter_query as _presenter_query,
++)
++
++presenter_query = _presenter_query
++pytestmark = pytest.mark.integration
++
++
++def test_series_inspection_retains_one_component_zero_query(presenter_query):
++    for name in ("presenter_crop_geometry.mjs", "presenter_series_inspection.mjs"):
++        shutil.copyfile(Path(__file__).with_name(name), presenter_query.project / name)
++    result = subprocess.run(
++        [str(presenter_query.node), "presenter_series_inspection.mjs"],
++        cwd=presenter_query.project, env=presenter_query.env,
++        capture_output=True, text=True, timeout=60,
++    )
++    assert result.returncode == 0, result.stdout + result.stderr
++    answer = json.loads(result.stdout)
++    assert answer["ok"] is True
++    assert answer["reads"] == 1

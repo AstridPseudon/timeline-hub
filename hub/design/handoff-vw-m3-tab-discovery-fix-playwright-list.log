@@ -1,0 +1,6 @@
+$NODE --version
+v20.19.4
+$NODE node_modules/playwright/cli.js test --config tests/e2e/timeline/tab-audio-capture.config.ts --project=native-codec-chrome155-tab-audio --list
+Listing tests:
+  [native-codec-chrome155-tab-audio] › tab-audio-capture.probe.ts:220:1 › captures whole-tab video and tab audio in one Chrome155 MediaRecorder clock
+Total: 1 test in 1 file

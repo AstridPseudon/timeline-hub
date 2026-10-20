@@ -1,0 +1,38 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@astrid/editor-sdk": [
+        "./src/sdk/index.ts"
+      ],
+      "@astrid/*": [
+        "./vendor/astrid-browser/astrid/*"
+      ],
+      "@banodoco/timeline-schema": [
+        "./vendor/timeline-schema/typescript/dist/src/index.d.ts"
+      ]
+    },
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ]
+  },
+  "include": [],
+  "exclude": [],
+  "files": [
+    "src/tools/video-editor/compositions/playerEvaluation.ts",
+    "src/tools/video-editor/compositions/VisualClip.tsx",
+    "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+    "src/vite-env.d.ts",
+    "src/astrid-element-admissions.d.ts",
+    "src/types/browser-extensions.d.ts",
+    "src/types/astrid-source.d.ts",
+    "src/types/gifenc.d.ts",
+    "src/types/react-dom-server-browser.d.ts",
+    "src/test/react-refresh.d.ts"
+  ]
+}

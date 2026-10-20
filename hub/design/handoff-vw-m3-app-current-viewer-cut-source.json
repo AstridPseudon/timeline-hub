@@ -61,5 +61,67 @@
       "default": "./dist/registries.js"
     },
     "./package.json": "./package.json"
-  }
+  },
+  "patches": {
+    "current": {
+      "files": [
+        "src/tools/video-editor/compositions/playerEvaluation.ts",
+        "src/tools/video-editor/compositions/playerEvaluation.test.ts",
+        "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+        "src/tools/video-editor/compositions/VisualClip.tsx",
+        "src/tools/video-editor/compositions/VisualClip.evaluation.test.tsx",
+        "src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx"
+      ],
+      "sha256": "91d95c22dc100b17bdf6e75d6384651e2c35830830a420ca35bfcf9572839eee"
+    },
+    "safety12": {
+      "files": [
+        "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+        "src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx"
+      ],
+      "sha256": "2f8622a48ecf983cffaaba58f7a190bd7b900fc9b934c60dfc35158206f3ef8f"
+    }
+  },
+  "peer_manifests": {
+    "react": {
+      "version": "18.3.1",
+      "manifest_sha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c",
+      "realpath": "/home/user/work/app/node_modules/react/package.json"
+    },
+    "react-dom": {
+      "version": "18.3.1",
+      "manifest_sha256": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e",
+      "realpath": "/home/user/work/app/node_modules/react-dom/package.json"
+    },
+    "remotion": {
+      "version": "4.0.509",
+      "manifest_sha256": "1260b76eb109b0ebfff6cfb57f0e2b9b5fc8c6511f18bd43b047bddca068bd01",
+      "realpath": "/home/user/work/app/node_modules/remotion/package.json"
+    },
+    "@remotion/media": {
+      "version": "4.0.509",
+      "manifest_sha256": "59e90c2e2d182faf420dd8b9461a74bedd21d6680a627ea6f2fb66c4efb9ee95",
+      "realpath": "/home/user/work/app/node_modules/@remotion/media/package.json"
+    },
+    "@remotion/player": {
+      "version": "4.0.509",
+      "manifest_sha256": "89595cb2ec1e0231f576cf32408e81aa3dab522ebe0c2154dc4adb41746f7abf",
+      "realpath": "/home/user/work/app/node_modules/@remotion/player/package.json"
+    },
+    "@remotion/layout-utils": {
+      "version": "4.0.509",
+      "manifest_sha256": "244521ec2c97085930463bd476366cdf7f6392793a57d787b6f0576dbdeaafda",
+      "realpath": "/home/user/work/app/node_modules/@remotion/layout-utils/package.json"
+    }
+  },
+  "files_sha256": {
+    "src/tools/video-editor/compositions/playerEvaluation.ts": "addb46bd84fae79763e52815f29902c83e33ee0bfcb385ae23479628123f32b2",
+    "src/tools/video-editor/compositions/playerEvaluation.test.ts": "bef690a175956a3fddc38502adb778a2896fd2b4ddd3ca396e05b685a3d80d0e",
+    "src/tools/video-editor/compositions/TimelineRenderer.tsx": "1412c325f5a22de9171f1a1e45cee38535d606af51c4dc1697bf7a70b04c043e",
+    "src/tools/video-editor/compositions/VisualClip.tsx": "56fb64bd47a65bd1b4e05f045127bcf3f3029d1c3dc664d21bb734c1955a56b3",
+    "src/tools/video-editor/compositions/VisualClip.evaluation.test.tsx": "64939c06ba57ed0d40796c368eb712db3007c095d7959b58076909f6ab14bc87",
+    "src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx": "869f39eb019c6a379eceec465ff8c1b44a62380f7024c2ff88b59631950587f5"
+  },
+  "strict_types": "exit 0; strict true; 3 source entries, actual imported dependencies, ES2022 + repository ambient declarations",
+  "tests": "137 passed; 8 files; 0 failed; no skipped or expected failures"
 }
