@@ -1,0 +1,32 @@
+
+ RUN  v4.1.5 /home/user/work/wt/vw-m3-renderconfig-contingent-review
+
+ ❯ src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.lifecycle.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.lifecycle.test.tsx [ src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.lifecycle.test.tsx ]
+Error: Failed to resolve import "@astrid/packs/rendering/shared/managed-media-policy" from "src/shared/lib/media/mediaCrossOrigin.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/user/work/wt/vw-m3-renderconfig-contingent-review/src/shared/lib/media/mediaCrossOrigin.ts:2:35
+  1  |  import { isGatewayUrl } from "@/integrations/runtime/connection";
+  2  |  import { isManagedObjectUrl } from "@astrid/packs/rendering/shared/managed-media-policy";
+     |                                      ^
+  3  |  function isHttpGatewayUrl(url) {
+  4  |  	if (!url) return false;
+ ❯ TransformPluginContext._formatLog ../../app/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30375:39
+ ❯ TransformPluginContext.error ../../app/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30372:14
+ ❯ normalizeUrl ../../app/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27654:18
+ ❯ ../../app/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27717:30
+ ❯ TransformPluginContext.transform ../../app/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27685:4
+ ❯ EnvironmentPluginContainer.transform ../../app/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30164:14
+ ❯ loadAndTransform ../../app/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24512:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 passed (4)
+   Start at  11:07:56
+   Duration  2.28s (transform 589ms, setup 225ms, import 99ms, tests 5ms, environment 772ms)
+

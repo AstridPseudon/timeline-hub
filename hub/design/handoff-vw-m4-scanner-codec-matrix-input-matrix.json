@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "purpose": "Bounded Agent codec diagnosis for owner-film scanner 1.0.7 repair",
+  "agent_worktree": "/home/user/work/wt/vw-m4-scanner-codec-matrix",
+  "agent_head": "86405964e",
+  "probe_scope": "Pure in-memory FieldSpec/audio-curve/timeline-validator probes; no owner data",
+  "commands": [
+    "/home/user/work/venv-agent/bin/python -I -B - <<'PY' ... direct clip_fields/audio_curves probes ... PY",
+    "/home/user/work/venv-agent/bin/python -I -B - <<'PY' ... Draft7Validator(FieldSpec.schema) probes ... PY",
+    "/home/user/work/venv-agent/bin/python -I -B - <<'PY' ... FieldSpec.to_stored probes ... PY"
+  ],
+  "seams": [
+    {
+      "name": "FieldSpec.to_stored",
+      "source": "astrid/core/timeline/clip_fields.py:62-63",
+      "role": "Strict authoring coercion; dispatches by declared kind and audio flag",
+      "bad_stored_form_behavior": "Rejects the targeted bad values when called on them, but accepts human numeric strings such as \"0.5\"; therefore it is not by itself a stored-JSON shape validator",
+      "scanner_use": "Call only as a field-level semantic probe after the declared storage-shape check; never write its returned value back"
+    },
+    {
+      "name": "FieldSpec.from_stored",
+      "source": "astrid/core/timeline/clip_fields.py:65-66",
+      "role": "Human-form presentation decoder via _human",
+      "bad_stored_form_behavior": "Normalizes/accepts non-mapping animation strings, lists and booleans; numeric bools can become defaults or formatted numbers; numeric bounds are not checked",
+      "scanner_use": "Presentation only, never the acceptance predicate"
+    },
+    {
+      "name": "clip_fields.describe",
+      "source": "astrid/core/timeline/clip_fields.py:555-569",
+      "role": "Whole-clip human description over all declared fields",
+      "bad_stored_form_behavior": "Raises for some malformed numeric/duration strings/lists but silently describes malformed animation scalar/list/bool values and does not validate audio curve IDs",
+      "scanner_use": "Keep for existing display output only; do not infer complete/known from success"
+    },
+    {
+      "name": "clip_fields.read",
+      "source": "astrid/core/timeline/clip_fields.py:492-498",
+      "role": "Raw dotted-path read",
+      "bad_stored_form_behavior": "Returns raw value without codec validation",
+      "scanner_use": "Path access only"
+    },
+    {
+      "name": "audio_curves.validate",
+      "source": "astrid/core/timeline/audio_curves.py:25-28",
+      "role": "Strict registry membership check for audio curve IDs",
+      "bad_stored_form_behavior": "Rejects unknown strings and non-hashable values; accepts only registry names",
+      "scanner_use": "Probe params.fadeInCurve/params.fadeOutCurve separately; missing/null/linear retain absent/default semantics"
+    },
+    {
+      "name": "timeline_check_curve_validation",
+      "source": "astrid/sdk/timeline/check.py:508-518",
+      "role": "Existing audio-clip check uses audio_curves.validate",
+      "bad_stored_form_behavior": "Only checks curve IDs; does not validate fadeIn/fadeOut duration values",
+      "scanner_use": "Do not invoke whole Check from scanner; reuse the underlying audio_curves seam"
+    },
+    {
+      "name": "timeline_config_schema_and_validate_timeline",
+      "source": "astrid/core/timeline/validators/timeline.py:205-227,246-293; astrid/core/timeline/schema/timeline-config.schema.json",
+      "role": "Whole-document shape/semantic validation",
+      "bad_stored_form_behavior": "Catches top-level known-field type/shape errors, but accepts opacity/crop out-of-range and speed <= 0; params is open so audio fades/curves are not checked; transition catalog semantics reject vendor IDs",
+      "scanner_use": "Do not add as a second scanner validator; preserve scanner's open transition policy and one-projector closure"
+    }
+  ],
+  "storage_paths": {
+    "visual": {
+      "opacity": {"field_spec": "opacity", "stored_at": "opacity", "strict_probe": "FIELDS[opacity].to_stored(raw)", "describe_is_validator": false},
+      "entrance": {"field_spec": "entrance", "stored_at": "entrance", "strict_probe": "FIELDS[entrance].to_stored(raw)", "describe_is_validator": false},
+      "exit": {"field_spec": "exit", "stored_at": "exit", "strict_probe": "FIELDS[exit].to_stored(raw)", "describe_is_validator": false},
+      "fade_in_alias": {"field_spec": "fade_in", "stored_at": "entrance", "note": "Use entrance spec for shared entrance storage so non-fade animations remain valid; fade_in is a visual presentation alias"},
+      "fade_out_alias": {"field_spec": "fade_out", "stored_at": "exit", "note": "Use exit spec for shared exit storage so non-fade animations remain valid; fade_out is a visual presentation alias"},
+      "crop_top": {"field_spec": "crop_top", "stored_at": "cropTop", "strict_probe": "FIELDS[crop_top].to_stored(raw)"},
+      "crop_right": {"field_spec": "crop_right", "stored_at": "cropRight", "strict_probe": "FIELDS[crop_right].to_stored(raw)"},
+      "crop_bottom": {"field_spec": "crop_bottom", "stored_at": "cropBottom", "strict_probe": "FIELDS[crop_bottom].to_stored(raw)"},
+      "crop_left": {"field_spec": "crop_left", "stored_at": "cropLeft", "strict_probe": "FIELDS[crop_left].to_stored(raw)"},
+      "speed": {"field_spec": "speed", "stored_at": "speed", "strict_probe": "FIELDS[speed].to_stored(raw)"},
+      "volume": {"field_spec": "volume", "stored_at": "volume", "note": "Declared and both-applicable, but not in scanner 1.0.7 _LOOK_NAMES; do not silently expand scanner scope without a decision"}
+    },
+    "audio": {
+      "fade_in": {"field_spec": "fade_in", "stored_at_audio": "params.fadeIn", "strict_probe": "FIELDS[fade_in].to_stored(raw, audio=True)"},
+      "fade_out": {"field_spec": "fade_out", "stored_at_audio": "params.fadeOut", "strict_probe": "FIELDS[fade_out].to_stored(raw, audio=True)"},
+      "fade_in_curve": {"field_spec": null, "stored_at": "params.fadeInCurve", "strict_probe": "audio_curves.validate(raw)", "note": "Not a FieldSpec; path is hard-coded in clip_fields.write and timeline_cuts"},
+      "fade_out_curve": {"field_spec": null, "stored_at": "params.fadeOutCurve", "strict_probe": "audio_curves.validate(raw)", "note": "Not a FieldSpec; path is hard-coded in clip_fields.write and timeline_cuts"}
+    }
+  },
+  "adversarial_cases": [
+    {"family": "visual number", "path": "opacity", "inputs": ["BAD", ["BAD"], true, 1.5], "to_stored": "reject all", "from_stored_describe": "BAD/list raise; true is treated as default and omitted; 1.5 formats as 1.5", "schema": "Draft-07 fragment rejects string/bool/1.5", "repair_effect": "must fail closed; do not trust describe omission"},
+    {"family": "visual animation", "path": "entrance|exit", "inputs": ["BAD_ENTRANCE", ["BAD_ENTRANCE"], true, {"type": "BAD"}, {"type": "fade", "duration": "BAD"}, {"type": "fade", "duration": 0}], "to_stored": "reject all", "from_stored_describe": "scalar/list/bool and unknown type are formatted/accepted; bad duration raises; zero duration formats as 0s", "schema": "Draft-07 fragment rejects scalar/list/bad duration/zero; type ID remains open", "repair_effect": "use entrance/exit spec, not fade alias, then preserve unknown extension params"},
+    {"family": "visual number", "path": "cropLeft (representative of all crop fields)", "inputs": ["BAD", ["BAD"], true, -0.1, 1.1], "to_stored": "reject all", "from_stored_describe": "BAD/list raise; true formats as 1; bounds are not checked", "schema": "Draft-07 fragment rejects string/bool/out-of-range", "repair_effect": "field-level failure must retain affected unknown finding"},
+    {"family": "visual number", "path": "speed", "inputs": ["BAD", ["BAD"], true, 0, -1], "to_stored": "reject all", "from_stored_describe": "BAD/list raise; true equals default and is omitted; 0/-1 format", "schema": "Draft-07 fragment rejects only type if applicable; semantic to_stored catches <=0", "repair_effect": "do not use describe success as validity"},
+    {"family": "audio fade duration", "path": "params.fadeIn|params.fadeOut", "inputs": ["BAD_FADE", ["BAD_FADE"], true, 0, -1], "to_stored_audio": "reject all", "from_stored_describe": "BAD/list raise; true formats as 30f; 0/-1 format", "schema": "Draft-07 fragment accepts positive number/null only", "repair_effect": "must pass audio=True and stored_at_audio"},
+    {"family": "audio curve", "path": "params.fadeInCurve|params.fadeOutCurve", "inputs": ["BAD_CURVE", ["BAD_CURVE"], true, {}, null, "linear", "equal-power"], "audio_curves_validate": "reject BAD_CURVE/list/bool/dict/null; accept linear/equal-power", "describe": "does not call validate; appends any truthy raw curve to human text", "repair_effect": "validate curve separately; preserve existing unknown-string curve knowledge policy and treat shape-invalid values as unreadable"},
+    {"family": "explicit clear", "path": "any declared stored path", "inputs": [null, "missing"], "to_stored": "None returns a deletion value; cf.write(..., None) removes the path", "describe": "omits field", "repair_effect": "missing/null are absent declarations, not errors; never turn clear into unknown"},
+    {"family": "open extension", "path": "params.futureLook", "inputs": [{"opaque": "keep"}], "to_stored": "not a declared field", "describe": "ignored by declared-field loop", "validate_timeline": "params additionalProperties are open", "repair_effect": "do not inspect/strip/rewrite unknown extension data"},
+    {"family": "free-form transition", "path": "transition", "inputs": ["vendor-transition", {"id": "vendor-transition", "params": {"opaque": 1}}], "clip_fields_coerce": "rejects unknown IDs", "validate_timeline": "catalog semantics rejects unknown IDs", "scanner_policy": "retain existing free-form string/mapping inventory policy; do not route through transition coerce/catalog validation"}
+  ],
+  "repair_recommendation": {
+    "exact_mapping": [
+      "Enumerate every present declared FieldSpec path; include spec.stored_at_audio for audio fades.",
+      "For visual entrance/exit storage, probe FIELDS['entrance'] or FIELDS['exit']; do not probe the fade aliases as if all animations were fades.",
+      "For params.fadeIn/params.fadeOut, call the matching fade FieldSpec.to_stored(raw, audio=True).",
+      "For params.fadeInCurve/params.fadeOutCurve, call audio_curves.validate(raw) separately; no FieldSpec exists for curves.",
+      "Use the existing FieldSpec.schema as a Draft-07 per-field storage-shape check if needed (its type arrays are Draft-07 fragments); then use FieldSpec.to_stored for semantic bounds/animation/duration checks. Do not call generic jsonschema.validate on the fragment under its default newer draft.",
+      "Keep cf.describe only for presentation after the field probe. Never use a successful describe, an omitted key, or a normalized human string as proof that stored data was valid.",
+      "On field failure, emit only the bounded authored source path, mark the affected finding unknown, and make the scan incomplete. Do not copy raw malformed values or exception text.",
+      "Do not call validate_timeline from scanner or add a parallel whole-document validator. Keep one project_runtime_parent_composition call, explicit clears, open params/extension data, and the settled free-form transition policy."
+    ],
+    "scope_warning": "volume is declared in clip_fields.yaml but scanner 1.0.7 does not inventory it; preserve that scope unless separately decided"
+  },
+  "observed_limits": [
+    "FieldSpec.to_stored is an authoring codec and accepts numeric strings; a stored-shape check is needed if strings must fail closed.",
+    "FieldSpec.from_stored and clip_fields.describe are not validators.",
+    "FieldSpec.schema fragments use Draft-07 type-array syntax and are not directly valid under the default jsonschema draft in this environment.",
+    "No owner data, full suite, network, browser, renderer, listener, install, or shared dependency mutation was performed."
+  ]
+}
