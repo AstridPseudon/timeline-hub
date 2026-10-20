@@ -1,12 +1,16 @@
-"""Shared compile-contract vectors: occurrence -> clip, as main's projection emits them.
+"""Shared compile-contract vectors for projected timing and public source clocks.
 
 The vectors are fixtures/audio_compile_contract.json and fixtures/visual_compile_contract.json;
 the design is docs/design/audio-compile-contract.md and docs/design/visual-compile-contract.md.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import subprocess
+import tarfile
+from copy import deepcopy
 from fractions import Fraction
 from pathlib import Path
 
@@ -153,6 +157,156 @@ def test_overhang_child_is_clamped_to_its_occurrence_end():
     assert clip['at'] == pytest.approx(3.0)
     assert clip_timeline_duration(clip) == pytest.approx(0.5)
     assert clip['at'] + clip_timeline_duration(clip) == pytest.approx(3.5)
+
+
+def test_cap_fade_editor_projection_keeps_clamped_timing_and_authored_source():
+    vector = VISUAL['cap_fade_closure']
+    graph = deepcopy(vector['app_fixture'])
+    occurrence = next(o for o in graph['occurrences']
+                      if o['occurrence_id'] == vector['base']['occurrence_id'])
+    # App derives this cap from the next same-lane cut. This Agent analog
+    # receives that cap explicitly; it does not implement App's lane policy.
+    occurrence.update(at_ms=vector['occurrence_cap']['start_ms'],
+                      duration_ms=vector['occurrence_cap']['duration_ms'])
+    revision = _revision(graph, vector['base']['shot_id'], vector['base']['revision_id'])
+    revision['internal_timeline_revision']['timeline']['clips'] = [deepcopy(vector['child'])]
+    before = deepcopy(graph)
+    projection = project_shot_composition(graph)
+    clip = _source_clip(projection, occurrence['occurrence_id'], vector['child']['id'])
+    editor = vector['editor_projection']
+    for field in ('id', 'at', 'track', 'clipType', 'asset', 'hold', 'effects'):
+        assert clip[field] == editor[field]
+    assert clip_end_frame(clip, vector['fps']) == vector['end_frame']
+    assert graph == before
+    assert _clips(_revision(projection.graph, vector['base']['shot_id'],
+                            vector['base']['revision_id'])) == [vector['child']]
+
+
+@pytest.fixture(scope='module')
+def public_visual_evaluation(tmp_path_factory):
+    package = json.loads((REPO / 'remotion/package.json').read_text(encoding='utf-8'))
+    pin = package['dependencies']['@banodoco/timeline-composition']
+    assert pin.startswith('file:')
+    # Evaluate the shipped public package in a private temp directory. Its
+    # pure evaluation entry needs no install, shared dependencies or cache.
+    with tarfile.open(REPO / 'remotion' / pin.removeprefix('file:')) as archive:
+        destination = tmp_path_factory.mktemp('visual-contract-package')
+        members = [m for m in archive.getmembers() if m.isfile() and (
+            m.name == 'package/package.json' or m.name.startswith('package/dist/'))]
+        archive.extractall(destination, members=members, filter='data')
+    return (destination / 'package/dist/evaluation.js').as_uri()
+
+
+def _public_visual_result(module, clip, vector):
+    result = subprocess.run(
+        ['node', '--input-type=module', '-e', '''
+import {readFileSync} from 'node:fs';
+const {clipOpacity, prepareScene, queryTrackFrame} = await import(process.argv[1]);
+const {clip, fps, sample, last, end} = JSON.parse(readFileSync(0, 'utf8'));
+const scene = prepareScene([{track: {id: clip.track, kind: 'visual'}, clips: [clip],
+  transitions: [], incomingTransitions: [null]}], {assets: {}}, fps, 1920, 1080);
+const prepared = scene.tracks[0].prepared;
+const plan = prepared.plans[0];
+console.log(JSON.stringify({opacity: clipOpacity(clip, sample, fps),
+  own_duration_frames: plan.ownDuration, draw_duration_frames: plan.drawDuration,
+  last_clip_indices: queryTrackFrame(prepared, last).layers.map(l => l.clipIndex),
+  end_layers: queryTrackFrame(prepared, end).layers}));
+''', module],
+        input=json.dumps({'clip': clip, 'fps': vector['fps'], 'sample': vector['sample_frame'],
+                          'last': vector['last_draw_frame'], 'end': vector['end_frame']}),
+        text=True, capture_output=True, check=True, timeout=30,
+    )
+    return json.loads(result.stdout)
+
+
+@pytest.mark.parametrize('case', ['clamped-analog', 'editor', 'raw-diagnostic'])
+def test_cap_fade_public_source_clock_and_half_open_draw_cap(case, public_visual_evaluation):
+    vector = VISUAL['cap_fade_closure']
+    input_key, expect_key = {
+        'clamped-analog': ('editor_projection', 'render'),
+        'editor': ('editor_projection', 'editor'),
+        'raw-diagnostic': ('render_input', 'diagnostic_raw'),
+    }[case]
+    result = _public_visual_result(public_visual_evaluation, vector[input_key], vector)
+    assert result == {
+        **vector['expect'][expect_key], 'last_clip_indices': [0], 'end_layers': [],
+    }
+
+
+def test_single_occurrence_cap_through_normal_managed_projection(tmp_path, public_visual_evaluation):
+    from astrid.packs.rendering.actions.render.managed_timeline import (
+        materialize_managed_render_snapshot,
+        resolve_managed_render_snapshot,
+        validate_managed_render_snapshot,
+    )
+    from astrid.packs.rendering.shared.rendering_backend import _serialize_timeline
+    from tests.packs.rendering.test_managed_timeline_render import _Runtime
+
+    vector = VISUAL['single_occurrence_cap_closure']
+    path = FIXTURES / vector['raw_fixture']
+    raw_bytes = path.read_bytes()
+    assert hashlib.sha256(raw_bytes).hexdigest() == vector['raw_fixture_sha256']
+    closure = json.loads(raw_bytes)
+    before = deepcopy(closure)
+    parent = closure['parent_revision']
+    assert len(parent['payload']['occurrences']) == 1
+    assert parent['payload']['occurrences'][0]['duration_ms'] == 4000
+    child = closure['internal_timeline_revisions'][0]['payload']['clips'][0]
+    assert child['hold'] == 5
+    assert child['effects'] == {'fade_out': 1}
+    asset = closure['internal_timeline_revisions'][0]['payload']['registry']['assets']['image']
+    runtime = _Runtime(media=[{'media_id': asset['media_id'], 'digest': asset['content_sha256'],
+                               'project_id': parent['project_id']}])
+    runtime.timeline['head_revision_id'] = parent['revision_id']
+    runtime.parent_revisions[parent['revision_id']] = parent
+    runtime.exact_shot_revisions = {(r['shot_id'], r['revision_id']): r for r in closure['shot_revisions']}
+    runtime.internal_revisions = {r['revision_id']: r for r in closure['internal_timeline_revisions']}
+    snapshot = resolve_managed_render_snapshot(
+        project_ref='demo', timeline_ref='main', expected_version=1, client=runtime,
+    )
+    validate_managed_render_snapshot(snapshot)
+    projected = project_runtime_parent_composition(
+        parent, shot_revisions=closure['shot_revisions'],
+        internal_timeline_revisions=closure['internal_timeline_revisions'],
+    )
+    assert snapshot.config == projected.config == vector['projected_config']
+    assert snapshot.registry == projected.registry == vector['registry']
+    timeline_path, _, _ = materialize_managed_render_snapshot(tmp_path, snapshot)
+    timeline = _serialize_timeline(timeline_path)
+    assert timeline == vector['serialized_timeline']
+    assert timeline['clips'][0]['hold'] == 4
+    assert clip_end_frame(timeline['clips'][0], vector['fps']) == vector['end_frame']
+    assert closure == before
+    assert path.read_bytes() == raw_bytes
+
+    # Evaluate the actual serialized output, with no synthetic cap/next cut or
+    # canonicalTiming added. No-transition preparation is sufficient for this closure.
+    result = subprocess.run(
+        ['node', '--input-type=module', '-e', '''
+import {readFileSync} from 'node:fs';
+const {clipOpacity, prepareScene, queryTrackFrame} = await import(process.argv[1]);
+const {timeline, assets, vector, raw} = JSON.parse(readFileSync(0, 'utf8'));
+const fps = timeline.output.fps;
+const scene = prepareScene(timeline.tracks.map(track => ({track,
+  clips: timeline.clips.filter(c => c.track === track.id), transitions: []})),
+  assets, fps, 1920, 1080);
+const {clips, prepared} = scene.tracks[0];
+const plan = prepared.plans[0];
+console.log(JSON.stringify({opacity: clipOpacity(clips[0], vector.sample_frame, fps),
+  control_opacity: clipOpacity(clips[0], vector.control_frame, fps),
+  last_opacity: clipOpacity(clips[0], vector.last_draw_frame, fps),
+  own_duration_frames: plan.ownDuration, draw_duration_frames: plan.drawDuration,
+  last_clip_indices: queryTrackFrame(prepared, vector.last_draw_frame).layers.map(l => l.clipIndex),
+  end_layers: queryTrackFrame(prepared, vector.end_frame).layers,
+  raw_diagnostic_opacity: clipOpacity(raw, vector.sample_frame, fps)}));
+''', public_visual_evaluation],
+        input=json.dumps({'timeline': timeline, 'assets': snapshot.registry, 'vector': vector, 'raw': child}),
+        text=True, capture_output=True, check=True, timeout=30,
+    )
+    observed = json.loads(result.stdout)
+    assert observed.pop('raw_diagnostic_opacity') == 1
+    assert observed.pop('last_opacity') == pytest.approx(vector['expect']['last_opacity'])
+    assert observed == {key: value for key, value in vector['expect'].items() if key != 'last_opacity'}
 
 
 def test_render_pin_gives_element_clips_the_clip_look():
