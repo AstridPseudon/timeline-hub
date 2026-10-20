@@ -53,8 +53,8 @@ function identity(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && !value.includes('/') && !value.includes('::');
 }
 
-function collectionRows(ctx: MoveRecording): Row[] {
-  const parent = ctx.state.bundle.parent;
+export function splitParentClips(bundle: AuthoredBundle): Row[] {
+  const parent = bundle.parent;
   const config = has(parent, 'config') ? parent.config : {};
   if (!object(config)) throw new ClipMoveError('collection owner must be an object', 'identity_conflict');
   const payload = parent.clips;
@@ -196,7 +196,7 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand) {
       throw new ClipMoveError('created identity is occupied', 'identity_collision');
     }
   }
-  const rows = collectionRows(ctx);
+  const rows = splitParentClips(ctx.state.bundle);
   const members = selectCollection(ctx, rows);
   if (!members.includes(ref)) throw new ClipMoveError('split target disappeared', 'identity_conflict');
 

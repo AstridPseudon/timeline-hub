@@ -283,6 +283,7 @@ export const splitClipAtPlayhead = (
   config: ResolvedTimelineConfig,
   clipId: string,
   playheadSeconds: number,
+  rightId?: string,
 ): { config: ResolvedTimelineConfig; nextSelectedClipId: string | null } => {
   const clipIndex = config.clips.findIndex((clip) => clip.id === clipId);
   if (clipIndex < 0) {
@@ -294,7 +295,7 @@ export const splitClipAtPlayhead = (
     return { config, nextSelectedClipId: null };
   }
 
-  const nextSelectedClipId = createSplitClipId(
+  const nextSelectedClipId = rightId ?? createSplitClipId(
     config.clips.map((entry) => entry.id),
     clip.id,
   );

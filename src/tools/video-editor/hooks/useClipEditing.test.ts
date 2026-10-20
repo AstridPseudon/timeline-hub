@@ -222,7 +222,7 @@ describe('useClipEditing unconverted nonmedia single splits', () => {
       clips: [{ id: 'nonmedia', track: 'V1', clipType, at: 1, hold: 4, text: { content: 'keep' } }],
     }, { assets: {} });
     const applyEdit = vi.fn();
-    const port = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
+    const port = { useLegacy: vi.fn(() => true), capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
     const { result } = renderHook(() => useClipEditing({ dataRef: { current }, resolvedConfig: current.resolvedConfig,
       selectedClipId: 'nonmedia', selectedTrack: null, currentTime: 3, selectClip: vi.fn(),
       setSelectedTrackId: vi.fn(), applyEdit, clipSplitPort: port }));
@@ -262,7 +262,7 @@ describe('useClipEditing retained single split ingresses', () => {
     }, { assets: { video: { type: 'video', file: 'video.mp4' } } });
     const original = structuredClone(current.resolvedConfig.clips);
     const applyEdit = vi.fn();
-    const port = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
+    const port = { useLegacy: vi.fn(() => true), capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
     const selectClip = vi.fn();
     vi.spyOn(Date, 'now').mockReturnValue(123456);
     const { result } = renderHook(() => useClipEditing({ dataRef: { current }, resolvedConfig: current.resolvedConfig,
@@ -294,7 +294,7 @@ describe('useClipEditing retained single split ingresses', () => {
       ],
     }, { assets: { video: { type: 'video', file: 'video.mp4' } } });
     const applyEdit = vi.fn();
-    const port = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
+    const port = { useLegacy: vi.fn(() => true), capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
     const { result } = renderHook(() => useClipEditing({ dataRef: { current }, resolvedConfig: current.resolvedConfig,
       selectedClipId: 'a', selectedTrack: null, currentTime: 3, selectClip: vi.fn(),
       setSelectedTrackId: vi.fn(), applyEdit, clipSplitPort: port }));

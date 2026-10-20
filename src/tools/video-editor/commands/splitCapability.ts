@@ -1,4 +1,4 @@
-import { object } from '../../commands/clipMovePrimitives.ts';
+import { object } from './clipMovePrimitives.ts';
 
 type SplitClipShape = Record<string, unknown>;
 
@@ -36,34 +36,22 @@ function hasUnsupportedTimingOrRelation(row: SplitClipShape): boolean {
   return false;
 }
 
-function mediaKind(clip: SplitClipShape): string | undefined {
-  const source = object(clip.assetEntry) ? clip.assetEntry : undefined;
+function mediaKind(source: SplitClipShape | undefined): string | undefined {
   if (typeof source?.type !== 'string') return undefined;
   return source.type.trim().toLowerCase().split(';', 1)[0].split('/', 1)[0].split('-', 1)[0];
 }
 
-/**
- * Select the old single-split ingress before native capture for an authored
- * shape that the current native contract does not cover. A missing or
- * ambiguous raw target deliberately returns false so native ownership checks
- * remain authoritative instead of turning into a legacy write.
- */
+/** Classify authored fields only after the session has established raw ownership. */
 export function shouldUseLegacySingleSplit(
-  resolvedClip: SplitClipShape,
+  rawTarget: SplitClipShape,
   rawClips: readonly SplitClipShape[],
+  source: SplitClipShape | undefined,
 ): boolean {
-  const rawMatches = rawClips.filter((clip) => clip.id === resolvedClip.id);
-  if (rawMatches.length !== 1) return false;
-
-  const rawTarget = rawMatches[0];
-  if (resolvedClip.clipType !== 'media' || typeof resolvedClip.asset !== 'string'
-    || rawTarget.clipType !== 'media' || typeof rawTarget.asset !== 'string') {
-    return true;
-  }
+  if (rawTarget.clipType !== 'media' || typeof rawTarget.asset !== 'string') return true;
   if (hasUnsupportedTimingOrRelation(rawTarget)) return true;
   if (rawClips.some((clip) => clip.transition != null)) return true;
 
-  const kind = mediaKind(resolvedClip);
+  const kind = mediaKind(source);
   return (!kind || !['image', 'video', 'audio'].includes(kind))
     || (rawTarget.from == null && rawTarget.to == null && kind !== 'image');
 }

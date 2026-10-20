@@ -6,7 +6,6 @@ import { captureClipSplitEdit, submitClipSplitEdit } from '../../commands/clipSp
 import { canSplitClipAtTime, createSplitClipId, splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils.ts';
 import { splitIntersectingClipsAtPlayhead } from '@/tools/video-editor/lib/clip-editing-utils.ts';
 import type { ClipEditingContext } from './types.ts';
-import { shouldUseLegacySingleSplit } from './splitCapability.ts';
 
 // These forms keep the pre-existing batch ingress until their native contracts are qualified.
 function requiresLegacyBatchSplit(clip: Record<string, unknown>): boolean {
@@ -64,15 +63,16 @@ export function useClipSplitting(ctx: ClipEditingContext) {
       if (!allowed.allowed || target?.allowed === false) {
         throw new Error('This clip cannot be split while timeline editing is locked.');
       }
-      // Select the retained ingress from raw authored capability before native capture.
-      if (shouldUseLegacySingleSplit(clip, current.config.clips as unknown as Record<string, unknown>[])) {
-        const splitResult = splitClipAtPlayhead(current.resolvedConfig, clipId, timeSeconds);
+      const rightId = createSplitClipId(current.resolvedConfig.clips.map((entry) => entry.id), clipId);
+      // Plain nonmedia editing keeps its original ingress; canonical rows require the session's raw guards.
+      if ((!current.head && !clipSplitPort && clip.clipType !== 'media')
+        || clipSplitPort?.useLegacy({ current, clipId, rightId })) {
+        const splitResult = splitClipAtPlayhead(current.resolvedConfig, clipId, timeSeconds, rightId);
         if (splitResult.nextSelectedClipId) {
           applyConfigEdit(splitResult.config, { selectedClipId: splitResult.nextSelectedClipId });
         }
         return;
       }
-      const rightId = createSplitClipId(current.resolvedConfig.clips.map((entry) => entry.id), clipId);
       const captured = captureClipSplitEdit(clipSplitPort, current, clipId, timeSeconds, rightId);
       submitClipSplitEdit(captured);
       selectClip(rightId);

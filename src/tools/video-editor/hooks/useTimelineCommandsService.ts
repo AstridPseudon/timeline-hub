@@ -47,7 +47,6 @@ import {
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { captureClipSplitEdit, submitClipSplitEdit } from '../commands/clipSplitGesture.ts';
-import { shouldUseLegacySingleSplit } from './clip-editing/splitCapability.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 
 export type TimelineCommandErrorCode =
@@ -817,15 +816,16 @@ export function createTimelineCommands(
         return failure('timeline_read_only', `Clip cannot be split (${permission.reason ?? 'editing locked'}).`);
       }
 
-      // Select the retained ingress from raw authored capability before native capture.
-      if (shouldUseLegacySingleSplit(clip, current.config.clips as unknown as Record<string, unknown>[])) {
-        const splitResult = splitClipAtPlayhead(current.resolvedConfig, input.clipId, input.time);
-        return applyValidatedMutation(store, current, { type: 'config', resolvedConfig: splitResult.config },
-          { clipId: input.clipId, nextClipId: splitResult.nextSelectedClipId! },
-          { selectedClipId: splitResult.nextSelectedClipId!, selectedTrackId: clip.track, semantic: true });
-      }
       try {
         const rightId = createSplitClipId(current.resolvedConfig.clips.map((entry) => entry.id), input.clipId);
+        // Plain nonmedia editing keeps its original ingress; canonical rows require the session's raw guards.
+        if ((!current.head && !state.ops.clipSplit && clip.clipType !== 'media')
+          || state.ops.clipSplit?.useLegacy({ current, clipId: input.clipId, rightId })) {
+          const splitResult = splitClipAtPlayhead(current.resolvedConfig, input.clipId, input.time, rightId);
+          return applyValidatedMutation(store, current, { type: 'config', resolvedConfig: splitResult.config },
+            { clipId: input.clipId, nextClipId: rightId },
+            { selectedClipId: rightId, selectedTrackId: clip.track, semantic: true });
+        }
         const captured = captureClipSplitEdit(state.ops.clipSplit, current, input.clipId, input.time, rightId);
         submitClipSplitEdit(captured);
         state.ops.selectClip(rightId);

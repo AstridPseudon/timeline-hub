@@ -5,6 +5,7 @@ import { equal, freezeJson, object } from './clipMovePrimitives.ts';
 import type { JsonObject } from './types.ts';
 
 export interface ClipSplitCapturePort {
+  useLegacy(input: { clipId: string; rightId: string; current: TimelineData }): boolean;
   capture(input: { clipId: string; on: number; rightId: string; current: TimelineData }): JsonObject;
   finish(basis: JsonObject): { command: EditCommand; preview: TimelinePatch };
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;

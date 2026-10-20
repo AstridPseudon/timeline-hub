@@ -3,7 +3,8 @@ import { clipSplitBatchPreview, type ClipSplitBatchCapturePort } from './clipSpl
 import type { TimelineData } from '../lib/timeline-data.ts';
 import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
 import { captureClipTrim, executeClipTrim } from './clipTrimCapture.ts';
-import { captureClipSplit, executeClipSplit, finishClipSplit } from './clipSplitCapture.ts';
+import { captureClipSplit, executeClipSplit, finishClipSplit, splitParentClips } from './clipSplitCapture.ts';
+import { shouldUseLegacySingleSplit } from './splitCapability.ts';
 import { clipSplitPreview, type ClipSplitCapturePort } from './clipSplitGesture.ts';
 import { clipScalarPreview, type ClipScalarCapturePort } from './clipScalarGesture.ts';
 import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
@@ -607,7 +608,8 @@ export async function createTimelineCommandSession(options: Options) {
     const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
     const identity = matches[0]?.app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
     const select = resolveOwnedClipRef(clipId, identity, undefined, 'Split requires one literal parent clip identity');
-    if (matches.length !== 1 || select !== `parent/clip:${clipId}`
+    if (matches.length !== 1 || current.config.clips.filter((clip) => clip.id === clipId).length !== 1
+      || select !== `parent/clip:${clipId}`
       || current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))
       || current.config.clips.some((clip) => clip.id === rightId)
       || current.resolvedConfig.clips.some((clip) => clip.id === rightId)) {
@@ -616,6 +618,19 @@ export async function createTimelineCommandSession(options: Options) {
     return select;
   }
   const clipSplitPort: ClipSplitCapturePort = {
+    useLegacy({ clipId, rightId, current }) {
+      assertReady();
+      const select = validateSplitTarget(current, clipId, rightId);
+      const raw = new AuthoredState(bundle);
+      const rows = splitParentClips(bundle);
+      if (raw.entity(`parent/clip:${rightId}`, true)) throw new Error('Split identity is already authored');
+      const target = raw.entity(select)!;
+      const assets = raw.entity('parent/registry')!.assets;
+      const source = object(assets) && typeof target.asset === 'string' ? assets[target.asset] : undefined;
+      const retained = shouldUseLegacySingleSplit(target, rows, object(source) ? source : undefined);
+      if (retained && state.status !== 'saved') throw new Error('Wait for pending timeline commands before splitting');
+      return retained;
+    },
     capture({ clipId, on, rightId, current }) {
       assertReady();
       const select = validateSplitTarget(current, clipId, rightId);
