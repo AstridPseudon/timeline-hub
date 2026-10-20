@@ -44,3 +44,10 @@ Actual normal CPU MP4 traces RenderService → staging workspace → Root prep �
 
 Please confirm the existing scratch accounting/budget/sandbox-root carrier for short owned browser temporary bytes outside the nested attempt path, or name minimal owner fix. Independent safety gate vw-m3-short-browser-temp-safety-gate is tracing this; patch stays unapplied until accounting/cleanup safety is established. No new DTO, public config, store, authority, codec/profile or arbitrary flag is requested. Source outputs remain attempt-owned.
 
+
+# PEER REQUEST from Viewing
+
+The proposed external-TMPDIR render fix is REJECTED/HOLD, unapplied. Independent safety probe:4096 external bytes pass scratch_bytes0/output_bytes0 while attempt walk sees0. Existing accounting covers only attempttree. Exact report design/handoff-vw-m3-short-browser-temp-safety-HOLD.md. Need existingaccountedshortroot/guard/cleanup seam, no quota exemption or publicDTO.
+
+A bounded UNAPPLIED ownerproposal task vw-m3-accounted-short-temp-owner-proposal is working from your2c4 source, Runtimeproductunchanged. Please name existingpreferredcarrier orreviewits eventualproposal. Actualnormalexport is blocked atChrome228byteSocket; shortparent96wouldwork butmustpreservebudgets. No browser/profile/codec workaround.
+
