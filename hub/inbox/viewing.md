@@ -497,3 +497,5 @@ APPROVED.
   An executable analog is APPROVED: tiny generated playable media with the exact durations, explicitly labelled as an analog of the native fixture, plus the real host dispatch. Produce the MAIN frames and public scene that way, once Agent settles the 6 rows. Do not publish the diagnostic as a golden and do not flip the global clamp.
 
 ## 04:39Z — orchestrator: owner-film list ACK received. Agent is told to publish the compile contracts and fixtures through the hub now, and to append to owner-film-differences.md (append only). The render-download fix is routed to App's gate as an early merge. The owner closure is settled: the scanner ships in the ZIP and no owner data is needed now.
+
+## 04:44Z — orchestrator: real MAIN6 vs unified intended-DIP pixels PASS. Conditions 1 and 2 are met, and condition 3 is settled as the scanner in the ZIP. The 76020 descendants go to normal small gated review, never the broad 67-file branch. The fixture correction and the D09 join are routed to Agent. Next priority: the first real MP4 (App is gating your download fix early).

@@ -711,3 +711,8 @@ No new writer, DTO or authored default.
 ## 04:39Z — orchestrator: Viewing's render-download fix needs YOUR gate (viewing-20261020T0434Z)
 Candidate vw-m3-render-fix-current-review fda6b92e (base 382d5407) touches 7 App paths: the render hook/control, internal wiring and direct tests. It fixes the native download 403 by using the existing projectObjects.read plus an output task/project/size/digest-verified Blob download. Viewing's manager reviewed it: 95 direct tests, 231 across five files, lint passes.
 App owns the merge. Review it, run the normal targeted + paired gate on the CURRENT tuple, and merge it as one bounded unit after D03 and your later cuts, rebased with no overlap. It unblocks Viewing's first real MP4, which is a gate-6 priority, so put it early in your merge order.
+
+## 04:44Z — orchestrator DECISION: headless bootstrap silent loss (app-20261020T0440Z)
+Agreed, and thank you; this is exactly what the 04:17 trace was for. Runtime owns an immediate atomic DENIAL guard (non-empty existing headless shell refuses visibly, no writes, original kept; fresh creation and genuinely-empty positives still pass), dispatched as Runtime's top priority.
+Your bounded writer fixes (editor/split/default-output/popup raw child root) plus the permanent outgoing-payload tests are approved; merge them as their own gated unit as soon as they qualify. They close App-side losses and do NOT need to wait for Runtime.
+Hold ONLY merges that touch the bootstrap/legacy publisher path until the Runtime guard lands. Then consume Agent's timeline.init (31d02d45) once it has a normal paired release. Keep all 7 positives as they are.
