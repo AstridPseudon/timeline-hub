@@ -1786,10 +1786,15 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         motion_context.shared['window'] = window
         layers = resolve_layers(options.get('layers') or None, view='motion')
         reserve = getattr(frame_provider, 'reserve_scene_frames', None)
-        if (callable(reserve) and any(layer.name == 'lint' for layer in layers)
-                and 'composition' not in ((options.get('rules') or {}).get('disable') or ())):
-            reserve(plan_scene_frames([motion_context.cut], motion_context.all_elements, motion_context.fps,
-                                      pixel_frames=[int(card['frame']) for card in cards]))
+        composition = (any(layer.name == 'lint' for layer in layers)
+                       and 'composition' not in ((options.get('rules') or {}).get('disable') or ()))
+        curves = any(layer.name == 'curves' for layer in layers)
+        if callable(reserve) and (composition or curves):
+            reserve(plan_scene_frames([motion_context.cut], motion_context.all_elements,
+                                      Fraction(*snapshot['fps_rational']),
+                                      pixel_frames=[int(card['frame']) for card in cards],
+                                      curve_window=motion_context.window if curves else None,
+                                      composition=composition))
     capture_info = None
     # Frame acquisition is the expensive step (Remotion capture or ffmpeg
     # extraction).  Its wall-clock window is reported as timing so an agent can
@@ -1873,6 +1878,10 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         motion_meta = index.get('motion') or {}
         context = motion_context
         context.frames, context.frame_size = frames, size
+        if hasattr(frame_provider, 'scene_frames'):
+            from .motion.sheet import curve_sample_frames
+
+            context.shared['curve_frames'] = curve_sample_frames(context.window, Fraction(*snapshot['fps_rational']))
         for name in ('scene_frames', 'scene_occlusions', 'scene_clip_identities'):
             context.shared[name] = dict(getattr(frame_provider, name, None) or {})
         if context.shared['scene_frames'] and not (capture_info or {}).get('scene_unavailable'):
