@@ -2237,6 +2237,65 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "timeline.migrate-groups"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "resolved": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "args": {
+                "$ref": "#/$defs/MigrateGroupsArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.move"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)occurrence:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceMoveArgs"
+              }
+            }
+          }
         }
       ]
     },
@@ -3073,6 +3132,71 @@
           ]
         }
       ]
+    },
+    "MigrateGroupsArgs": {
+      "type": "object",
+      "required": [
+        "groups"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "legacy_shot_id",
+              "shot_id",
+              "occurrence_id"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "legacy_shot_id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^(?!.*::)[^/]+$"
+              },
+              "shot_id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^(?!.*::)[^/]+$"
+              },
+              "occurrence_id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^(?!.*::)[^/]+$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "OccurrenceMoveArgs": {
+      "type": "object",
+      "required": [
+        "on",
+        "track",
+        "child_track"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "on": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Absolute global seconds, quantized using parent rational fps."
+        },
+        "track": {
+          "type": "string",
+          "pattern": "^(?!.*::)parent/track:[^/]+$",
+          "description": "Existing parent output lane."
+        },
+        "child_track": {
+          "type": "string",
+          "pattern": "^(?!.*::)occurrence:[^/]+/track:[^/]+$",
+          "description": "Explicit existing raw child lane; caller may precede with typed track.create in this batch."
+        }
+      }
     }
   }
 }

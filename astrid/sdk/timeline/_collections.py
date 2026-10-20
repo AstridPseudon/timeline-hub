@@ -125,6 +125,22 @@ def arrange(state, owner, kind, expected):
 
 
 def selection_overlap(selected, write):
+    if selected['key'] == 'lane.members':
+        ref, path = write['ref'], write['path']
+        if ref == 'parent':
+            return path in ([], ['clips'], ['config'], ['config', 'clips'], ['occurrences'])
+        if not (ref.startswith('occurrence:') and '/' not in ref or ref.startswith('parent/clip:')):
+            return False
+        if path and path[0] not in ('track', 'placement'):
+            return False
+        target = selected['owner'].removeprefix('parent/track:')
+        for state in (write['before'], write['after']):
+            value = state.get('value')
+            if isinstance(value, dict):
+                value = (value.get('placement') or {}).get('track', value.get('track'))
+            if value == target:
+                return True
+        return False
     if selected['key'] in ('placement.owners', 'text-binding.owners'):
         if (write['ref'].startswith('occurrence:') and '/' not in write['ref']
                 and write['path'] in ([], ['shot_id'])):

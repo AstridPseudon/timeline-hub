@@ -58,8 +58,13 @@ def operations():
     from .native_shot_pool_commands import POOL_INTENT, shot_pool
     from .native_text_binding import TEXT_INTENT, text_binding_set
     from .native_word_anchor import declare
+    from .new_group_commands import migrate_groups
+    from .occurrence_commands import OCCURRENCE_MOVE_INTENT, occurrence_move
     from .producer import producer_guard
-    return {'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
+    return {'timeline.migrate-groups': Operation(_SCHEMA['$defs']['MigrateGroupsArgs'], migrate_groups, {}),
+            'occurrence.move': Operation(_SCHEMA['$defs']['OccurrenceMoveArgs'], occurrence_move,
+                                         OCCURRENCE_MOVE_INTENT, True),
+            'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
             'timeline.init': Operation(_SCHEMA['$defs']['TimelineInitArgs'], initialize, {}),
             'clip.anchor': Operation(_SCHEMA['$defs']['ClipAnchorArgs'], declare, {'anchor': 'follow'}, True),
             'occurrence.create': Operation(_SCHEMA['$defs']['OccurrenceCreateArgs'], occurrence_create,
@@ -230,6 +235,15 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         raise CommandError("command batch must not be empty")
     from .producer import guard_pin
     guard_pin(commands)
+    config = bundle['parent'].get('config')
+    if isinstance(config, dict) and 'pinnedShotGroups' in config:
+        migration = len(commands) == 1 and commands[0].get('op') == 'timeline.migrate-groups'
+        reversing = len(commands) == 1 and commands[0].get('op') == 'timeline.inverse' and any(
+            write['ref'] == 'parent' and write['path'] == ['config', 'pinnedShotGroups']
+            for record in inverse_records for write in record['writes'])
+        if not migration and not reversing:
+            raise CommandError('legacy groups require the sole recorded migration command',
+                               kind='unsupported_dependency')
     if any(call.get('op') == 'timeline.restore' for call in commands) and len(commands) != 1:
         raise CommandError("restore must be the sole command", kind='invalid_commands')
     candidate, records = copy.deepcopy(bundle), []

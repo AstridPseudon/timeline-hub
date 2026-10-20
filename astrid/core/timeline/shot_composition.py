@@ -337,17 +337,22 @@ def _source_to_graph(
     return graph
 
 
-def _walk_for_legacy(value: Any, path: str = "contract") -> None:
+def _walk_for_legacy(value: Any, path: str = "contract", *, scope: tuple = ()) -> None:
+    # The original migration row is immutable provenance, not editable legacy
+    # structure. Match actual path tokens so colliding opaque keys stay data.
+    if (len(scope) == 5 and scope[0] == "occurrences" and isinstance(scope[1], int)
+            and scope[2:] == ("provenance", "group_migration", "legacy_group")):
+        return
     if isinstance(value, Mapping):
         if "pinnedShotGroups" in value:
             _fail(path, "pinnedShotGroups is migration-only")
         if value.get("clipType") == "shot":
             _fail(path, "clipType=shot is migration-only")
         for key, child in value.items():
-            _walk_for_legacy(child, f"{path}.{key}")
+            _walk_for_legacy(child, f"{path}.{key}", scope=(*scope, key))
     elif isinstance(value, list):
         for index, child in enumerate(value):
-            _walk_for_legacy(child, f"{path}[{index}]")
+            _walk_for_legacy(child, f"{path}[{index}]", scope=(*scope, index))
 
 
 def stable_occurrence_deep_link(
