@@ -58,6 +58,8 @@ type UploadedGenerationResult = {
   mediaImport?: PreparedMediaImport;
 };
 
+const NATIVE_REFUSAL_MESSAGE_LIMIT = 240;
+
 export interface UseAssetManagementArgs {
   store?: TimelineStoreApi;
   dataRef: MutableRefObject<TimelineData | null>;
@@ -277,15 +279,34 @@ export function useAssetManagement({
     insertAtTop: boolean,
     removeClipId?: string,
   ): boolean | Promise<boolean> => {
-    if (prepared.mediaType === 'video' && prepared.mediaSelection) {
+    if (prepared.mediaType === 'video') {
+      if (!prepared.mediaSelection) {
+        runtime.toast.error('Failed to save asset', {
+          description: 'Runtime prepared video is missing its original media selection.',
+        });
+        return false;
+      }
       if (!commands) {
+        runtime.toast.error('Failed to save asset', {
+          description: 'Runtime prepared video placement is unavailable.',
+        });
         return false;
       }
       return Promise.resolve(commands.addClip({
         preparedAsset: prepared,
         ...(trackId !== undefined ? { trackId } : {}),
         time,
-      })).then((result) => result.ok);
+        forceNewTrack,
+        insertAtTop,
+        ...(removeClipId !== undefined ? { removeClipId } : {}),
+      })).then((result) => {
+        if (!result.ok) {
+          const description = result.error.message.trim().slice(0, NATIVE_REFUSAL_MESSAGE_LIMIT)
+            || 'Native prepared video placement was refused.';
+          runtime.toast.error('Failed to save asset', { description });
+        }
+        return result.ok;
+      });
     }
 
     const latestDataRef = getDataRef();
@@ -323,7 +344,7 @@ export function useAssetManagement({
       semantic: true,
     });
     return true;
-  }, [commands, getApplyEdit, getDataRef, getSelectedTrackId]);
+  }, [commands, getApplyEdit, getDataRef, getSelectedTrackId, runtime.toast]);
 
   const handleAssetDrop = useCallback((assetKey: string, trackId: string | undefined, time: number, forceNewTrack = false, insertAtTop = false, preparedAsset?: TimelineProvisionedAsset, removeClipId?: string) => {
     if (preparedAsset) {
