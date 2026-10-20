@@ -10,6 +10,7 @@ from astrid.core.receipts.contract import CommandReceipt
 from .contracts import DomainResult, ErrorObject
 
 _OBJECT_ID = re.compile(r"sha256:[0-9a-f]{64}")
+_SELECTION_KEYS = ("asset", "generation_id", "variant_id", "object_id", "catalog_digest")
 
 
 class _SelectionHold(ValueError):
@@ -17,7 +18,10 @@ class _SelectionHold(ValueError):
 
 
 def _failure(message, *, key, details=None, code="validation_error"):
-    return DomainResult.failure(ErrorObject(code, message, details or {}), idempotency_key=key)
+    return DomainResult.failure(
+        ErrorObject(code, message, details or {}),
+        idempotency_key=key if isinstance(key, str) else "",
+    )
 
 
 def _plain(value):
@@ -187,7 +191,37 @@ def _domain(result, key):
     except (TypeError, ValueError) as exc:
         return _failure("Runtime returned an invalid native timeline receipt", key=key,
                         details={"reason": str(exc)}, code="protocol_error")
-    return DomainResult.success(dict(data), receipt=receipt, idempotency_key=key)
+    return DomainResult.success(
+        dict(data), receipt=receipt,
+        idempotency_key=key if key is not None else receipt.idempotency_key,
+    )
+
+
+def _pending_matches(command, *, owner, clip_id, source_object_id, old_media, media):
+    """Prove that one persisted swap is this caller's logical request."""
+    expected_select = owner + "/clip:" + clip_id
+    expected_intent = {"ownership": "parent" if owner == "parent" else "occurrence"}
+    if not isinstance(command, Mapping) or command.get("select") != expected_select:
+        return False
+    if command.get("op") != ("clip.swap-media" if owner == "parent" else "occurrence.swap-media"):
+        return False
+    if command.get("intent") != expected_intent:
+        return False
+    args = command.get("args")
+    if not isinstance(args, Mapping) or set(args) != {"old_media", "media"}:
+        return False
+    original_old, original_new = args["old_media"], args["media"]
+    for pin in (original_old, original_new):
+        if not isinstance(pin, Mapping) or set(pin) != set(_SELECTION_KEYS):
+            return False
+    if original_new["object_id"] != source_object_id or original_old["object_id"] == source_object_id:
+        return False
+    if isinstance(old_media, Mapping) or isinstance(media, Mapping):
+        if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
+            return False
+        if dict(old_media) != dict(original_old) or dict(media) != dict(original_new):
+            return False
+    return True
 
 
 def replace_selected_media(timelines, project, ref, *, occurrence_id, clip_id, source_object_id,
@@ -195,7 +229,7 @@ def replace_selected_media(timelines, project, ref, *, occurrence_id, clip_id, s
                            idempotency_key):
     """Capture one exact native swap and flush it through a durable session."""
     key = idempotency_key
-    if not isinstance(key, str) or not key:
+    if key is not None and (not isinstance(key, str) or not key):
         return _failure("native media replacement requires an idempotency key", key=key or "")
     if not all(isinstance(value, str) and value.strip()
                for value in (project, ref, clip_id, source_object_id, expected_head)):
@@ -232,10 +266,20 @@ def replace_selected_media(timelines, project, ref, *, occurrence_id, clip_id, s
         state = session._state()
         pending = state.get("pending") or []
         if pending or state.get("flight") is not None:
-            if state["base"]["revision_id"] != expected_head:
+            if state["base"] != {
+                "revision_id": expected_head,
+                "publication_id": state["base"].get("publication_id")
+                if expected_publication is None else expected_publication,
+            }:
                 raise _SelectionHold("pending native replacement belongs to a different expected head")
-            if len(pending) != 1 or pending[0].get("op") not in {"occurrence.swap-media", "clip.swap-media"}:
+            if (len(pending) != 1 or not isinstance(pending[0], Mapping)
+                    or pending[0].get("op") not in {"occurrence.swap-media", "clip.swap-media"}):
                 raise _SelectionHold("another native edit is already pending in this timeline session")
+            owner = "parent" if occurrence_id is None else "occurrence:" + occurrence_id
+            if not _pending_matches(
+                    pending[0], owner=owner, clip_id=clip_id,
+                    source_object_id=source_object_id, old_media=old_media, media=media):
+                raise _SelectionHold("pending native replacement does not match this exact request")
             return _domain(session.flush(idempotency_key=key), key)
 
         project_id, timeline_id = session.project_id, session.timeline_id

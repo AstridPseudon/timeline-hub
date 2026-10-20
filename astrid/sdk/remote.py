@@ -1290,7 +1290,6 @@ class RemoteTimelines(_RemoteFamily):
         expected_publication: str | None = None,
     ):
         """Replace one exact occurrence clip through the native commit session."""
-        key = idempotency_key or uuid.uuid4().hex
         from .timeline_media_replacement import replace_selected_media
 
         return replace_selected_media(
@@ -1304,7 +1303,7 @@ class RemoteTimelines(_RemoteFamily):
             expected_publication=expected_publication,
             old_media=old_media,
             media=media,
-            idempotency_key=key,
+            idempotency_key=idempotency_key,
         )
     def commit(self, project, ref, body: Mapping[str, Any], *, idempotency_key=None):
         """Commit a scoped command batch without changing its request body."""

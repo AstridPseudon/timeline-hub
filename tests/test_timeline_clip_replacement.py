@@ -1,10 +1,160 @@
 from __future__ import annotations
 
+import copy
 import json
+
+import pytest
 
 from astrid.packs.timeline.cli import build_parser
 from astrid.sdk.contracts import DomainResult
 from astrid.sdk.remote import RemoteTimelines
+
+
+def _pending_occurrence_swap():
+    from tests.editing_conformance.test_recipe_occurrence_media import inputs
+
+    _, old, new, _ = inputs()
+    command = {
+        "schema_version": 1,
+        "op": "occurrence.swap-media",
+        "version": "1",
+        "select": "occurrence:occ-a/clip:clip-a",
+        "args": {"old_media": old, "media": new},
+        "intent": {"ownership": "occurrence"},
+        "opaque": {"preserve": ["source-window", None]},
+    }
+    return command, old, new
+
+
+def _pending_session(command, *, flight=True, fail_flush=False):
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    class Outbox:
+        def __init__(self, state):
+            self.state = state
+
+        class _Lock:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+        def locked(self):
+            return self._Lock()
+
+        def write(self, state):
+            self.state = copy.deepcopy(state)
+
+    class Session:
+        def __init__(self):
+            self.project_id, self.timeline_id = "project-1", "main"
+            self.state = {
+                "base": {"revision_id": "parent-1", "publication_id": "publication-1"},
+                "pending": [copy.deepcopy(command)],
+                "flight": ({"path": "/v1/projects/project-1/timelines/main/commit",
+                             "body": '{"opaque":"body"}', "key": "original-key",
+                             "count": 1, "fence": "fence-1"} if flight else None),
+            }
+            self.outbox = Outbox(self.state)
+            self.flush_calls = []
+
+        def _state(self):
+            return self.state
+
+        def flush(self, *, idempotency_key):
+            self.flush_calls.append((idempotency_key, copy.deepcopy(self.state["pending"])))
+            if fail_flush:
+                raise ConnectionError("response lost after acceptance")
+            data = {"status": "accepted"}
+            receipt = {
+                "receipt_id": "publication-2", "command_kind": "timeline.commit",
+                "idempotency_key": "original-key", "request_hash": "hash",
+                "project_id": "project-1", "project_seq": [1, 1],
+                "event_ids": ["event-1"], "result": data, "created_at": "now",
+            }
+            return {"data": data, "receipt": receipt}
+
+    return TimelineSession, Session()
+
+
+def test_pending_unrelated_or_ambiguous_swap_refuses_without_flush(monkeypatch):
+    command, old, new = _pending_occurrence_swap()
+    TimelineSession, session = _pending_session(command)
+    before = copy.deepcopy(session.state)
+    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
+
+    result = RemoteTimelines(object()).replace_parent_media(
+        "project-1", "main", occurrence_id="other-occ", clip_id="other-clip",
+        source_object_id=new["object_id"], expected_head="parent-1",
+        expected_publication="publication-1", old_media=old, media=new,
+        idempotency_key="other-key",
+    )
+
+    assert not result.ok and "pending native replacement" in result.error.message
+    assert session.flush_calls == [] and session.state == before
+
+    session.state["pending"].append(copy.deepcopy(command))
+    before = copy.deepcopy(session.state)
+    result = RemoteTimelines(object()).replace_parent_media(
+        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
+        source_object_id=new["object_id"], expected_head="parent-1",
+        expected_publication="publication-1", old_media=old, media=new,
+        idempotency_key="original-key",
+    )
+    assert not result.ok and session.flush_calls == [] and session.state == before
+
+
+@pytest.mark.parametrize("change", ["source", "selection", "owner", "head", "publication"])
+def test_pending_swap_identity_controls_refuse_without_post(monkeypatch, change):
+    command, old, new = _pending_occurrence_swap()
+    TimelineSession, session = _pending_session(command)
+    before = copy.deepcopy(session.state)
+    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
+    kwargs = {
+        "occurrence_id": "occ-a", "clip_id": "clip-a", "source_object_id": new["object_id"],
+        "expected_head": "parent-1", "expected_publication": "publication-1",
+        "old_media": old, "media": new, "idempotency_key": "original-key",
+    }
+    if change == "source":
+        kwargs["source_object_id"] = old["object_id"]
+    elif change == "selection":
+        kwargs["media"] = {**new, "catalog_digest": old["catalog_digest"]}
+    elif change == "owner":
+        kwargs["occurrence_id"] = None
+    elif change == "head":
+        kwargs["expected_head"] = "later-head"
+    else:
+        kwargs["expected_publication"] = "later-publication"
+
+    result = RemoteTimelines(object()).replace_parent_media("project-1", "main", **kwargs)
+    assert not result.ok and session.flush_calls == [] and session.state == before
+
+
+def test_exact_pending_swap_retry_survives_restart_and_keeps_opaque_body(monkeypatch):
+    command, old, new = _pending_occurrence_swap()
+    TimelineSession, first = _pending_session(command, fail_flush=True)
+    restored = _pending_session(command)[1]
+    sessions = iter((first, restored))
+    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: next(sessions))
+    transport = object()
+
+    failed = RemoteTimelines(transport).replace_parent_media(
+        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
+        source_object_id=new["object_id"], expected_head="parent-1",
+        expected_publication="publication-1", old_media=old, media=new,
+        idempotency_key="original-key",
+    )
+    assert not failed.ok
+    assert first.flush_calls == [("original-key", [command])]
+
+    retried = RemoteTimelines(transport).replace_parent_media(
+        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
+        source_object_id=new["object_id"], expected_head="parent-1",
+        expected_publication="publication-1", old_media=old, media=new,
+    )
+    assert retried.ok and retried.idempotency_key == "original-key"
+    assert restored.flush_calls == [(None, [command])]
 
 
 def test_remote_timelines_replace_clip_is_typed_410() -> None:
