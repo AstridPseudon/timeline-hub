@@ -565,6 +565,8 @@ actions:
     - kind: implementation
       path: actions/timeline_visualize/__init__.py
     - kind: implementation
+      path: actions/timeline_visualize/_filmstrip_cache.py
+    - kind: implementation
       path: actions/timeline_visualize/assets.py
     - kind: implementation
       path: actions/timeline_visualize/audio_analysis.py
