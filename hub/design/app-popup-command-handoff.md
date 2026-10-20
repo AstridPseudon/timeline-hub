@@ -1,6 +1,8 @@
 # App M2 popup add/swap/placement command handoff
 
-Status: design/fixture request only. No App popup, provider, session, outbox,
+Status: popup/placement design and fixture request only. A separate standalone
+parent literal-add capture is recorded below; it does not close this popup gap.
+No App popup, provider, session, outbox,
 `DataProvider`, or placement implementation was changed. The App branch remains
 the M1 base `9c074972cea65c3a8352a0d0fc8672b609846ecc`.
 
@@ -92,7 +94,7 @@ native golden for this popup slice:
   provide media selection, registry creation, child clip creation, child media
   replacement, or placement semantics.
 
-Consequently, no standalone App capture/parity helper is added here. Porting the
+Consequently, no popup App capture/parity helper is added here. Porting the
 parent fixtures as if they proved popup semantics would either invent ownership
 or silently fall back to a whole-graph write.
 
@@ -235,3 +237,65 @@ This report is the current readiness boundary: App can consume the reviewed
 media-selection read, but popup add/swap and placement are not ready for App
 capture or live-writer deletion until Agent publishes the occurrence-scoped
 native artifacts above.
+
+## Standalone parent literal add (2026-10-20)
+
+`tl/app-m2-parent-add-capture`, based on M1 opaque-root base
+`9c074972cea65c3a8352a0d0fc8672b609846ecc`, adds only
+`commands/parentClipAddCapture.ts`, its unit test, and
+`commands/fixtures/recipe_m2_parent_clip_add.json`. It reuses `AuthoredState`
+and `MoveRecording`; shared M1 primitives, root preservation, all guards, and
+the original three `it.fails` are unchanged. This is branch-only M2 work.
+
+Native authority is Agent `tl/agt-m2-first-clip`, exact commit
+`0ace5c0bd06562aac31ed84f92e8bc6e54ade834`, not the frozen R4 popup helpers.
+The exported fixture contains nine exact native command/record/after-bundle
+cases and 51 native refusal kinds. The first case also matches the original
+Agent `tests/editing_conformance/fixtures/recipe_m2_clip_add.json` add command
+and record, with standalone ordinal/cause zero. The fixture includes the
+SHA-256 of that original Agent golden. It was generated and reverified using
+an archive of this exact commit, with the shared Agent dependency venv and
+`PYTHONPATH` pointing only at that archive.
+
+`captureParentClipAdd(bundle, 'parent', row)` consumes a complete caller-authored
+row with an already allocated explicit ID and freezes the original bundle and
+command. `finishParentClipAdd(basis)` accepts only that capture (including after
+JSON roundtrip); no head refresh, row override or ID allocator enters finish.
+The local executor verifies original destination-track fields, collection
+shape/membership/order, new-ID absence and every supplied recorder claim. It
+retains unrelated row values, opaque state, absent/null secondary codecs and
+retained source/transcript dependencies, and synchronizes originally equal
+clip mirrors including empty mirrors. Repeated local retries preserve the same
+ID; executing against an occupied ID refuses. A subsequent explicit creation
+records only its own created identity and guards the preceding ordered members.
+
+Support is **existing active parent output track, nonmedia literal row only**.
+Authored `at`/`hold` seconds are not rounded. Media selector keys (even null),
+media clip kinds, source windows, follow relations, occurrence owners and
+unsupported timing refuse as native. No registry, media read, placement, new
+track, popup, session, provider, UI, root, pin, schema or Runtime artifact was
+changed. Undo/redo and accepted retry/rebase remain Runtime/Agent authority;
+this does not prove live acceptance, history, popup/media/occurrence creation,
+writer deletion or any broader M2 gate. Native explicit-null-speed storage
+parity is retained; Runtime inspection support is not claimed.
+
+Validation on this branch:
+
+* `node_modules/.bin/vitest run --config config/testing/vitest.config.ts src/tools/video-editor/commands/parentClipAddCapture.test.ts src/tools/video-editor/commands/clipMoveCapture.test.ts src/tools/video-editor/commands/authoringBundle.test.ts src/tools/video-editor/hooks/useTimelineSave.draftConfig.test.ts src/tools/video-editor/hooks/useClipDrag.test.tsx --pool=threads --maxWorkers=1`: **215 passed, 3 original expected failures, 5 files passed**.
+* `node_modules/.bin/eslint src/tools/video-editor/commands/parentClipAddCapture.ts src/tools/video-editor/commands/parentClipAddCapture.test.ts --max-warnings 0`: **passed**.
+* `node scripts/quality/check-known-failures.mjs` and `node scripts/quality/check-no-smoke-tests.mjs`: **passed**, exactly three authorized and zero forbidden markers.
+* `node_modules/.bin/tsc -p tsconfig.app.json`: **exit 2, exactly two documented baseline errors**, `RuntimeConnectionProvider.tsx:90` TS7053 and `AgentChatNewChatButton.tsx:80` TS2550; no new diagnostics.
+* Native export: `PYTHONPATH=/tmp/app-parent-add-agent /home/user/work/venv-agent/bin/python /tmp/app-parent-add-fixture.py`: **nine exact native captures/records/after-bundles and 51 refusal kinds passed**. Independent supplied-command verification also passed; original native golden SHA-256 is `5e9a54e75a0901724dedd3e62c0f37f78840a8edee001f30b92306383800479b`. The temporary exact-source archive and export script were removed after verification.
+* Full/browser/socket/external-service suites and installation were not run.
+
+Earlier attempts remain diagnostic failures: a three-file default-fork run
+passed 23 tests but had two worker-start timeouts; a threads retry passed the
+101 neighboring tests but had one worker-start timeout; an isolated run then
+exposed a BigInt `%j` test-title serialization error before collection. The
+title now uses a plain text label, and the final complete targeted run above
+passed without unhandled errors. No behavior expectation was weakened.
+
+Next: retain this bounded parent adapter on its branch. The occurrence-owned
+media add/swap and placement fixture requests above remain open; do not route
+those writers through this operation or merge this branch into integration
+without the orchestrator's M2 integration decision.

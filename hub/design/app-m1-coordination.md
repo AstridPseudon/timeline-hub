@@ -211,3 +211,5 @@ tests/sdk/test_timeline_commit_provider_scalar.py` — 137 passed. This is a
 portable Agent capture handoff only: App native/browser parity, Runtime wire
 qualification, and acceptance are not claimed here. M2 merge remains held
 until the orchestrator records PLAN M1.
+
+2026-10-20 00:10 mirror classification: app-m1-mirror-preservation-probe central restore-integration2PASS176s/138.78s test runtime, tree3d4a7fa3. ActualmainAPI refuses opaque-only parent/config clip divergence409 canonical_payload_mismatch BEFOREpublication; rawbytes/head/history unchanged and guessedrevision404. Acceptedvalidopaqueclip move App/Agent command+record+afterbundle equal and fullrawreadback preserved. ProductM1pinsunchanged; no newM1blocker. Testbranchheld to avoid invalidating runningfull2bf snapshot. M2common primitive changes still needed for publishedstructural/media capture exactsemantics (media.target alias, initiallyequal empty mirrors), workeractive.
