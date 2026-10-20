@@ -1,0 +1,127 @@
+{
+  "raw_clip": {
+    "id": "image",
+    "clipType": "image",
+    "asset": "image",
+    "track": "picture",
+    "at": 0,
+    "hold": 5,
+    "effects": {
+      "fade_out": 1
+    }
+  },
+  "projected_clips": [
+    {
+      "id": "image-occurrence:image",
+      "clipType": "image",
+      "asset": "image-occurrence:image",
+      "track": "picture",
+      "at": 0.0,
+      "hold": 4.0,
+      "effects": {
+        "fade_out": 1
+      },
+      "shot_id": "image-shot",
+      "shot_occurrence_id": "image-occurrence",
+      "app": {
+        "astrid_shot_composition": {
+          "project_id": "project-demo",
+          "timeline_id": "timeline-1",
+          "shot_id": "image-shot",
+          "shot_revision_id": "image-shot-revision",
+          "internal_timeline_revision_id": "image-internal",
+          "occurrence_id": "image-occurrence",
+          "output_identity": "image-cap-parent:image-occurrence",
+          "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence",
+          "source_offset": 0,
+          "speed": 1.0,
+          "gain": 1,
+          "muted": false,
+          "source_clip_id": "image"
+        }
+      }
+    }
+  ],
+  "serialized_clips": [
+    {
+      "app": {
+        "astrid_shot_composition": {
+          "gain": 1,
+          "internal_timeline_revision_id": "image-internal",
+          "muted": false,
+          "occurrence_id": "image-occurrence",
+          "output_identity": "image-cap-parent:image-occurrence",
+          "project_id": "project-demo",
+          "shot_id": "image-shot",
+          "shot_revision_id": "image-shot-revision",
+          "source_clip_id": "image",
+          "source_offset": 0,
+          "speed": 1.0,
+          "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence",
+          "timeline_id": "timeline-1"
+        }
+      },
+      "asset": "image-occurrence:image",
+      "at": 0.0,
+      "clipType": "image",
+      "effects": {
+        "fade_out": 1
+      },
+      "hold": 4.0,
+      "id": "image-occurrence:image",
+      "shot_id": "image-shot",
+      "shot_occurrence_id": "image-occurrence",
+      "track": "picture"
+    }
+  ],
+  "occurrences": [
+    {
+      "occurrence_id": "image-occurrence",
+      "shot_id": "image-shot",
+      "shot_revision_id": "image-shot-revision",
+      "placement": {
+        "start_ms": 0,
+        "track": "picture"
+      },
+      "duration_ms": 4000,
+      "source_offset": 0,
+      "speed": 1,
+      "gain": 1,
+      "mute": false,
+      "revision_id": "image-shot-revision",
+      "project_id": "project-demo",
+      "timeline_id": "timeline-1",
+      "ordinal": 0,
+      "output_identity": "image-cap-parent:image-occurrence",
+      "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence",
+      "at": 0.0,
+      "hold": 4.0,
+      "duration_seconds": 4.0,
+      "blank": false
+    }
+  ],
+  "staged_assets": {
+    "image-occurrence:image": {
+      "sha256": "ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+      "filename": "0000-d15b12ad7a14-sha256_ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6.png"
+    }
+  },
+  "config_hash": "19c857fa29b04133b59cbf6457f077056056c8170429c6f6ef9adb4e3ac41f3d",
+  "normal_helpers": [
+    "resolve_managed_render_snapshot",
+    "_project_exact_parent_head",
+    "project_runtime_parent_composition",
+    "_render_compatible_projection",
+    "_normalize_pinned_element_references",
+    "_runtime_snapshot_registry",
+    "validate_managed_render_snapshot",
+    "materialize_managed_render_snapshot",
+    "_resolved_theme_for_render",
+    "_serialize_timeline / Timeline.for_render",
+    "AssetMaterializer / resolved_registry"
+  ],
+  "normal_execute_remotion_run": false,
+  "url_binding": "static-public analog only; capture may bind real InvocationAssetServer",
+  "runtime_acceptance": false,
+  "pixels": false
+}

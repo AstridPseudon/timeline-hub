@@ -1,0 +1,153 @@
+{
+  "timeline": {
+    "app": {
+      "astrid_shot_composition": {
+        "occurrences": [
+          {
+            "at": 0.0,
+            "blank": false,
+            "duration_ms": 4000,
+            "duration_seconds": 4.0,
+            "gain": 1,
+            "hold": 4.0,
+            "mute": false,
+            "occurrence_id": "image-occurrence",
+            "ordinal": 0,
+            "output_identity": "image-cap-parent:image-occurrence",
+            "placement": {
+              "start_ms": 0,
+              "track": "picture"
+            },
+            "project_id": "project-demo",
+            "revision_id": "image-shot-revision",
+            "shot_id": "image-shot",
+            "shot_revision_id": "image-shot-revision",
+            "source_offset": 0,
+            "speed": 1,
+            "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence",
+            "timeline_id": "timeline-1"
+          }
+        ],
+        "outputs": [
+          {
+            "at_ms": 0,
+            "blank": false,
+            "duration_ms": 4000,
+            "internal_timeline_revision_id": "image-internal",
+            "occurrence_id": "image-occurrence",
+            "output_identity": "image-cap-parent:image-occurrence",
+            "revision_id": "image-shot-revision",
+            "shot_id": "image-shot",
+            "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence"
+          }
+        ],
+        "parent_revision_id": "image-cap-parent",
+        "project_id": "project-demo",
+        "schema_version": 1,
+        "timeline_id": "timeline-1"
+      }
+    },
+    "clips": [
+      {
+        "app": {
+          "astrid_shot_composition": {
+            "gain": 1,
+            "internal_timeline_revision_id": "image-internal",
+            "muted": false,
+            "occurrence_id": "image-occurrence",
+            "output_identity": "image-cap-parent:image-occurrence",
+            "project_id": "project-demo",
+            "shot_id": "image-shot",
+            "shot_revision_id": "image-shot-revision",
+            "source_clip_id": "image",
+            "source_offset": 0,
+            "speed": 1.0,
+            "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence",
+            "timeline_id": "timeline-1"
+          }
+        },
+        "asset": "image-occurrence:image",
+        "at": 0.0,
+        "clipType": "image",
+        "effects": {
+          "fade_out": 1
+        },
+        "hold": 4.0,
+        "id": "image-occurrence:image",
+        "shot_id": "image-shot",
+        "shot_occurrence_id": "image-occurrence",
+        "track": "picture"
+      }
+    ],
+    "output": {
+      "file": "output.mp4",
+      "fps": 30,
+      "resolution": "1920x1080"
+    },
+    "theme_overrides": {
+      "visual": {
+        "canvas": {
+          "fps": 30,
+          "height": 1080,
+          "width": 1920
+        }
+      }
+    },
+    "tracks": [
+      {
+        "fit": "cover",
+        "id": "picture",
+        "kind": "visual",
+        "label": "Picture"
+      }
+    ],
+    "theme": "banodoco-default"
+  },
+  "assets": {
+    "assets": {
+      "image-occurrence:image": {
+        "content_sha256": "ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+        "media_id": "sha256:ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+        "resolution": "16x16",
+        "type": "image",
+        "file": "image-cap.png"
+      }
+    }
+  },
+  "theme": {
+    "id": "banodoco-default",
+    "visual": {
+      "color": {
+        "fg": "#FAFAFA",
+        "bg": "#050814",
+        "accent": "#67E8F9"
+      },
+      "type": {
+        "families": {
+          "heading": "Arial",
+          "body": "Arial",
+          "mono": "monospace"
+        },
+        "size": {
+          "base": 32,
+          "small": 22,
+          "large": 84
+        },
+        "weight": {
+          "normal": 400,
+          "bold": 600
+        },
+        "lineHeight": 1.2
+      },
+      "motion": {
+        "fadeMs": 450
+      },
+      "canvas": {
+        "width": 1920,
+        "height": 1080,
+        "fps": 30
+      }
+    }
+  },
+  "review": null
+}

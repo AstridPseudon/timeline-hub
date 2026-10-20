@@ -1,0 +1,10 @@
+{
+  "assets": {
+    "image-occurrence:image": {
+      "media_id": "sha256:ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+      "content_sha256": "ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+      "type": "image",
+      "resolution": "16x16"
+    }
+  }
+}

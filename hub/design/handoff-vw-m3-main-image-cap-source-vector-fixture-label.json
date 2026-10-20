@@ -1,0 +1,17 @@
+{
+  "kind": "synthetic executable analog; not native App output or owner film",
+  "request": "prepared shot image hold5 / fade_out1 / occurrence duration4000ms / frame105 at numeric30fps",
+  "image_sha256": "ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+  "image_size": [
+    16,
+    16
+  ],
+  "rgb": [
+    240,
+    240,
+    240
+  ],
+  "pins": "offline synthetic immutable revision IDs; digests computed from exact payloads",
+  "source": "original MAIN _Runtime test transport plus original MAIN normal managed resolver and render-prep helpers",
+  "capture": "NOT RUN; native managed URL resolver must be bound by capture worker, or explicitly label static-public analog"
+}

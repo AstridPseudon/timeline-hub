@@ -1,0 +1,43 @@
+{
+  "source_sha": "b6ec4922abebe0672cb7115f073c1ab555870fa1",
+  "blobs_reverified": 3033,
+  "extra_files": 0,
+  "shared_entries_unchanged": 2056,
+  "public12_members_unchanged": 77,
+  "helper_and_normal_tests_exact_frozen_caller": true,
+  "http_tests_exact_portable_source": true,
+  "runner_diagnostics_unchanged": [
+    {
+      "code": "I001",
+      "message": "Import block is un-sorted or un-formatted",
+      "count": 2
+    },
+    {
+      "code": "F401",
+      "message": "`select` imported but unused",
+      "count": 1
+    },
+    {
+      "code": "F401",
+      "message": "`signal` imported but unused",
+      "count": 1
+    },
+    {
+      "code": "F401",
+      "message": "`astrid.core.audit.AuditContext` imported but unused",
+      "count": 1
+    },
+    {
+      "code": "F401",
+      "message": "`astrid.core.rendering.publication.publish_render_result` imported but unused",
+      "count": 1
+    },
+    {
+      "code": "F822",
+      "message": "Undefined name `render` in `__all__`",
+      "count": 1
+    }
+  ],
+  "assigned_worktree_clean": true,
+  "all_test_lanes_pass": true
+}

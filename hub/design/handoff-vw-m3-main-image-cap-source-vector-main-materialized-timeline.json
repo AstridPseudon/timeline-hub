@@ -1,0 +1,103 @@
+{
+  "app": {
+    "astrid_shot_composition": {
+      "occurrences": [
+        {
+          "at": 0.0,
+          "blank": false,
+          "duration_ms": 4000,
+          "duration_seconds": 4.0,
+          "gain": 1,
+          "hold": 4.0,
+          "mute": false,
+          "occurrence_id": "image-occurrence",
+          "ordinal": 0,
+          "output_identity": "image-cap-parent:image-occurrence",
+          "placement": {
+            "start_ms": 0,
+            "track": "picture"
+          },
+          "project_id": "project-demo",
+          "revision_id": "image-shot-revision",
+          "shot_id": "image-shot",
+          "shot_revision_id": "image-shot-revision",
+          "source_offset": 0,
+          "speed": 1,
+          "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence",
+          "timeline_id": "timeline-1"
+        }
+      ],
+      "outputs": [
+        {
+          "at_ms": 0,
+          "blank": false,
+          "duration_ms": 4000,
+          "internal_timeline_revision_id": "image-internal",
+          "occurrence_id": "image-occurrence",
+          "output_identity": "image-cap-parent:image-occurrence",
+          "revision_id": "image-shot-revision",
+          "shot_id": "image-shot",
+          "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence"
+        }
+      ],
+      "parent_revision_id": "image-cap-parent",
+      "project_id": "project-demo",
+      "schema_version": 1,
+      "timeline_id": "timeline-1"
+    }
+  },
+  "clips": [
+    {
+      "app": {
+        "astrid_shot_composition": {
+          "gain": 1,
+          "internal_timeline_revision_id": "image-internal",
+          "muted": false,
+          "occurrence_id": "image-occurrence",
+          "output_identity": "image-cap-parent:image-occurrence",
+          "project_id": "project-demo",
+          "shot_id": "image-shot",
+          "shot_revision_id": "image-shot-revision",
+          "source_clip_id": "image",
+          "source_offset": 0,
+          "speed": 1.0,
+          "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence",
+          "timeline_id": "timeline-1"
+        }
+      },
+      "asset": "image-occurrence:image",
+      "at": 0.0,
+      "clipType": "image",
+      "effects": {
+        "fade_out": 1
+      },
+      "hold": 4.0,
+      "id": "image-occurrence:image",
+      "shot_id": "image-shot",
+      "shot_occurrence_id": "image-occurrence",
+      "track": "picture"
+    }
+  ],
+  "output": {
+    "file": "output.mp4",
+    "fps": 30,
+    "resolution": "1920x1080"
+  },
+  "theme_overrides": {
+    "visual": {
+      "canvas": {
+        "fps": 30,
+        "height": 1080,
+        "width": 1920
+      }
+    }
+  },
+  "tracks": [
+    {
+      "fit": "cover",
+      "id": "picture",
+      "kind": "visual",
+      "label": "Picture"
+    }
+  ]
+}
