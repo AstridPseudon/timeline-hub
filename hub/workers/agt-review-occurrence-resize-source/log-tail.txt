@@ -1,400 +1,400 @@
-    assert clip(inverse(plan.bundle, plan.records).bundle)['hold'] == 17
++python3 -m json.tool astrid/core/timeline/schema/edit-command.schema.json
++PASS
++
++/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_resize.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_occurrence_resize.py tests/sdk/test_timeline_materialization_schema_union.py
++All checks passed
++
++git diff --check c0644cf1..HEAD
++PASS
++```
++
++The source handoff says the second targeted aggregate is 53 tests. On the exact
++reviewed tree it collects and passes **58**; the 53 count is stale. This does
++not hide a failure or alter an expectation.
++
++For the broader three failures, I archived and ran the same neighbor set from
++actual base `c0644cf1` (no checkout or source mutation): **196 passed, 3
++failed**. The candidate's failures are exactly the same nodes and causes:
++
++1. `test_recipe_occurrence_delete.py::test_legacy_group_refuses_with_migration_needed_and_no_mutation`
++2. `test_recipe_occurrence_delete.py::test_closed_schema_and_portable_native_capture_golden`
++3. `test_recipe_occurrence_duplicate.py::test_legacy_group_refuses_with_migration_needed_and_no_mutation`
++
++The first and third observe inherited `unsupported_dependency` versus the
++tests' expected `migration_needed`; the second is the inherited portable
++golden mismatch. Candidate-only resize tests account for the eight-pass
++difference between 204 and 196. These are therefore pre-existing failures, not
++same-node different-cause failures.
++
++## Limits and handoff
++
++No full/full* suite, localhost/live sockets, native HTTP, Runtime generation,
++pin/release, App writer, or consumer activation was run. The source proposal
++and this review do not authorize those boundaries. No product files or shared
++worktrees were modified by this review.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..3699b1ef1fec221a87d68414496b06d0e71573fa
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/report.md
+@@ -0,0 +1,32 @@
++# Report
++
++**APPROVE** exact private Agent source/tree/schema; **HOLD** normal generation,
++pin/release, Runtime pairing, App adoption, native HTTP, and public activation.
++
++Reviewed commit `61abe2c5a3cfaf370addcc96fa3f4fa352abbd40`, tree
++`cb18addba5b5a4a746d938dc8fcad5693061a236`, against base `c0644cf1` /
++`0699f877a4c809005536a80f5956b8051a814ef7`. Changed-files digest is
++`ed5a57a1f72e8efb7266f7fe3290a2081341825792065e2356e15809f6992881`;
++candidate schema hash is
++`79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2`.
++
++The carrier writes only existing raw `occurrence.duration_ms` via an exact
++stable occurrence ref. The fixture proves `o1` 3000 -> 4150 ms. Identity,
++owner/selection, timing-codec, inverse/redo, ABA, disjoint rebase, invalid
++input, and missing-identity refusal are covered. Rational-fps/half-open control
++tests pass. Parent `config.duration` and full ripple remain intentionally
++separate; no root writer, Runtime DTO, alias, or silent migration was added.
++
++Evidence:
++
++- Focused carrier/schema: **29 passed**.
++- Exact handoff aggregate on this tree: **58 passed**, not the stale reported
++  53.
++- Rational-fps/half-open controls: **5 passed**.
++- Broader neighbors: **204 passed, 3 failed**; archived actual base: **196
++  passed, 3 failed**. The same three failure nodes and causes occur on base, so
++  they are pre-existing.
++- Ruff, JSON validation, and `git diff --check`: passed.
++
++No full/native HTTP/live Runtime/App qualification was run.
++
 
-
-@pytest.mark.parametrize('args', [{'in_s': -1}, {'out_s': 11}, {'in_s': 6, 'out_s': 6},
-"""Pure timing projection of the canonical authoring bundle (first M2 slice).
-
-``compile_timing(TimingInputs(bundle, sources=rows, bindings=pins))`` returns an
-owned, unchanged authored bundle plus derived half-open intervals keyed by
-``(occurrence_id, shot_id, clip_id)``; parent clips use ``('parent', '', id)``.
-Intervals contain exact Fraction seconds and a separately quantized frame view.
-No declaration, source window, explicit clear, command, or opaque field is rewritten.
-
-Captured-input adapter still required before provider integration: capture authorized
-Runtime VerifiedDocuments at EXACT document_id/version/content_digest, and record a
-WordBinding per on/until declaration, including the selected source clip/occurrence
-and stable v1 word IDs. Existing source_mapping.pinned_documents can supply these
-VerifiedDocuments; the adapter must still capture the word/occurrence binding.
-A phrase binds all its consecutive IDs. A changed declaration needs a new binding.
-Missing/revoked inputs must be omitted, never fetched as latest; authority and exact
-historical reads belong to the caller. The native authored-reference adapter must derive these bindings from the
-revision itself, never from an echo or accepted history. These records are consumed
-inputs, not a new stored authoring format.
-Inputs snapshot their JSON at construction, including captured documents.
-
-Supported: fixed clips (including fixed_start), on/until/for, main word/cut/end/offset
-Moments, linear source windows/rates, occurrence isolation and rational fps. Explicit
-time maps, sequence fits, formulas, orphan caches, until_film_end bases, beats/markers
-and authored reflow operations are refused. Nontrivial placement source maps and
-clip millisecond codecs require an explicit main authoring adapter first.
-The graph walk comes from R4's compiler; Moment/cut rules and exact-time arithmetic
-come from main. This bounded slice targets <=600 product lines across two modules.
-
-This is NOT yet the only derived writer. Checkout.retime/resolve/reflow, model timing
-setters, narration/music/sequence writers and their consumers still require migration
-and parity before integration can claim one compiler. Reflow is untouched here.
-"""
-from __future__ import annotations
-
-import json
-from dataclasses import dataclass, field
-from types import MappingProxyType
-from typing import Any, Mapping
-
-from astrid.sdk.timeline._common import TimelineEditError
-
-Owner = tuple[str, str, str]
-
-
-class TimingCompileError(TimelineEditError):
-    """The entire projection was refused; no partial result is returned."""
-
-
-class TimingCycleError(TimingCompileError):
-    code = "CYCLE"
-
-    def __init__(self, path):
-        self.path = tuple(path)
-        super().__init__("CYCLE: " + " -> ".join(map(str, self.path)))
-
-
-@dataclass(frozen=True)
-class WordBinding:
-    target: Owner
-    field: str
-    declaration: str
-    source: Owner
-    document_id: str
-    version: int
-    content_digest: str
-    word_ids: tuple[str, ...]
-
-    def __post_init__(self):
-        for name in ("target", "source", "word_ids"):
-            object.__setattr__(self, name, tuple(getattr(self, name)))
-        if (len(self.target) != 3 or len(self.source) != 3 or not self.word_ids
-                or self.field not in ("on", "until") or isinstance(self.version, bool)
-                or not isinstance(self.version, int) or self.version < 1
-                or not isinstance(self.declaration, str) or not isinstance(self.document_id, str)
-                or not isinstance(self.content_digest, str)
-                or any(not isinstance(x, str) for x in (*self.target, *self.source))
-                or any(not isinstance(x, str) or not x for x in self.word_ids)):
-            raise TimingCompileError("invalid captured word binding")
-
-
-@dataclass(frozen=True, init=False)
-class TimingInputs:
-    _bundle: str = field(repr=False)
-    _sources: str = field(repr=False)
-    bindings: tuple[WordBinding, ...]
-    policy: str
-
-    def __init__(self, bundle: Mapping[str, Any], *, sources=(), bindings=(), policy="nearest"):
-        if policy not in ("nearest", "floor", "ceil"):
-            raise TimingCompileError("invalid frame projection policy")
-        object.__setattr__(self, "_bundle", json.dumps(bundle, allow_nan=False))
-        object.__setattr__(self, "_sources", json.dumps(list(sources), allow_nan=False))
-        pins = tuple(bindings)
-        if any(not isinstance(pin, WordBinding) for pin in pins):
-            raise TimingCompileError("bindings must be captured WordBinding values")
-        object.__setattr__(self, "bindings", pins)
-        object.__setattr__(self, "policy", policy)
-
-    @property
-    def bundle(self):
-        return json.loads(self._bundle)
-
-    @property
-    def sources(self):
-        return json.loads(self._sources)
-
-
-@dataclass(frozen=True)
-class TimingResult:
-    bundle: dict[str, Any]
-    timings: Mapping[Owner, Mapping[str, Any]]
-
-
-def compile_timing(inputs: TimingInputs) -> TimingResult:
-    """Compile all supported declarations atomically, without IO or authored edits."""
-    from astrid.sdk.timeline._timing_evaluators import evaluate
-
-    if not isinstance(inputs, TimingInputs):
-        raise TypeError("compile_timing requires captured TimingInputs")
-    bundle = inputs.bundle
-    try:
-        timings = evaluate(bundle, inputs.sources, inputs.bindings, inputs.policy)
-    except TimingCompileError:
-        raise
-    except (ValueError, TypeError, KeyError, ZeroDivisionError, OverflowError) as exc:
-        raise TimingCompileError(f"invalid timing input: {exc}") from exc
-    return TimingResult(bundle, MappingProxyType(timings))
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-resize-source-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-resize-source-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..86d612d7e4580912d2034d9bc6ba10231bef4552
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-resize-source-review.md
+@@ -0,0 +1,110 @@
++# Agent `occurrence.resize@1` source review
++
++## Decision
++
++**APPROVE the private Agent source, exact tree, and schema. HOLD normal
++generation, pin/release, Runtime pairing, App adoption, native HTTP, and public
++activation until their separately required qualifications and peer ACKs exist.**
++
++Exact reviewed source:
++
++- branch `tl/agt-m2-occurrence-duration-carrier`
++- commit `61abe2c5a3cfaf370addcc96fa3f4fa352abbd40`
++- tree `cb18addba5b5a4a746d938dc8fcad5693061a236`
++- parent/base commit `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`
++- parent/base tree `0699f877a4c809005536a80f5956b8051a814ef7`
++- changed-files digest (sorted path + NUL + bytes + NUL):
++  `ed5a57a1f72e8efb7266f7fe3290a2081341825792065e2356e15809f6992881`
++- candidate schema SHA-256:
++  `79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2`
++
++The schema remains a single closed additive operation: 59 definitions and 33
++operation clauses. Removing `OccurrenceResizeArgs` and its `occurrence.resize`
++clause reconstructs the prior group-floor schema hash
++`27f2e3edaffdfc49665a858c5c1d6985dd89ef200932679b77367bc459329cfb`.
++
++## Source findings
++
++The implementation is bounded to `astrid/sdk/timeline/native_occurrence_resize.py`
++plus registry/schema wiring and conformance/schema-floor tests. It accepts only
++an exact `occurrence:<stable-id>` root and positive integer authored
++`duration_ms`. The recorder reads and selects the occurrence identity, shot
++identity, optional shot revision, occurrence collection, owner membership, and
++existing timing codecs. It writes exactly the existing
++`occurrence.duration_ms` leaf.
++
++The Main voiceover fixture proves the raw-unit result `o1: 3000 -> 4150 ms`
++with the same occurrence identity. Placement start, shot pin, maps, child
++content, opaque values, and sibling occurrence state remain unchanged. Guarded
++inverse/redo, ABA/intervening-write refusal, disjoint opaque/sibling rebase,
++invalid-value refusal, and missing-identity refusal all pass without mutating
++the rejected draft. There is no alias of `group.move`, Runtime DTO, root/whole-
++entity writer, or silent legacy-group migration.
++
++The handler's `pinnedShotGroups` check is additionally preceded by the existing
++global `execute` legacy-group preflight; when that key exists, the actual error
++kind is inherited `unsupported_dependency` before the handler's
++`migration_needed` branch. This is the same behavior on the base tree, and it
++still refuses atomically without migration; no candidate regression was found.
++
++The operation deliberately does not author parent `config.duration`, following
++occurrence starts, parent holds, or the complete ripple batch. In the fixture,
++parent duration remains `6`; this carrier must not be described as solving the
++full ripple proposal. A separate reviewed lowering/batch remains required.
++
++Existing rational-fps and half-open timing controls pass unchanged; the carrier
++does not quantize or invoke a second compiler. This is control evidence for the
++unchanged compiler boundary, not a claim of a new compiler integration.
++
++## Evidence
++
++Independent runs from this exact worktree, with shared dependencies read-only:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_resize.py tests/sdk/test_timeline_materialization_schema_union.py
++29 passed in 1.70s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_resize.py tests/editing_conformance/test_recipe_m2_group_move.py tests/sdk/test_timeline_materialization_schema_union.py
++58 passed in 4.11s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timing_compiler.py::test_fixed_source_window_and_rational_half_frame_ties tests/sdk/test_timing_compiler.py::test_after_word_end_at_source_out_is_included_and_onset_at_source_out_is_refused tests/editing_conformance/test_recipe_m2_clip_trim.py::test_rational_fps_source_contact_and_half_open_intervals_are_not_requantized tests/editing_conformance/test_recipe_m2_group_move.py::test_rational_fps_quantization_and_half_open_adjacent_boundary
++5 passed in 1.36s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_resize.py tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_recipe_occurrence_delete.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_occurrence_media.py tests/packs/video_editing/test_draft_voiceover.py
++204 passed, 3 failed in 7.97s
++
++python3 -m json.tool astrid/core/timeline/schema/edit-command.schema.json
++PASS
++
++/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_resize.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_occurrence_resize.py tests/sdk/test_timeline_materialization_schema_union.py
++All checks passed
++
++git diff --check c0644cf1..HEAD
++PASS
++```
++
++The source handoff says the second targeted aggregate is 53 tests. On the exact
++reviewed tree it collects and passes **58**; the 53 count is stale. This does
++not hide a failure or alter an expectation.
++
++For the broader three failures, I archived and ran the same neighbor set from
++actual base `c0644cf1` (no checkout or source mutation): **196 passed, 3
++failed**. The candidate's failures are exactly the same nodes and causes:
++
++1. `test_recipe_occurrence_delete.py::test_legacy_group_refuses_with_migration_needed_and_no_mutation`
++2. `test_recipe_occurrence_delete.py::test_closed_schema_and_portable_native_capture_golden`
++3. `test_recipe_occurrence_duplicate.py::test_legacy_group_refuses_with_migration_needed_and_no_mutation`
++
++The first and third observe inherited `unsupported_dependency` versus the
++tests' expected `migration_needed`; the second is the inherited portable
++golden mismatch. Candidate-only resize tests account for the eight-pass
++difference between 204 and 196. These are therefore pre-existing failures, not
++same-node different-cause failures.
++
++## Limits and handoff
++
++No full/full* suite, localhost/live sockets, native HTTP, Runtime generation,
++pin/release, App writer, or consumer activation was run. The source proposal
++and this review do not authorize those boundaries. No product files or shared
++worktrees were modified by this review.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..69346327c76a2136925d6e871e36230c932a43f1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/commit-msg
+@@ -0,0 +1,4 @@
++docs(review): approve occurrence resize source
++
++Record the independent source/tree/schema review, base failure comparison, and
++remaining activation boundaries for the private occurrence duration carrier.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..69346327c76a2136925d6e871e36230c932a43f1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(review): approve occurrence resize source
++
++Record the independent source/tree/schema review, base failure comparison, and
++remaining activation boundaries for the private occurrence duration carrier.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..3699b1ef1fec221a87d68414496b06d0e71573fa
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/report.md
+@@ -0,0 +1,32 @@
++# Report
++
++**APPROVE** exact private Agent source/tree/schema; **HOLD** normal generation,
++pin/release, Runtime pairing, App adoption, native HTTP, and public activation.
++
++Reviewed commit `61abe2c5a3cfaf370addcc96fa3f4fa352abbd40`, tree
++`cb18addba5b5a4a746d938dc8fcad5693061a236`, against base `c0644cf1` /
++`0699f877a4c809005536a80f5956b8051a814ef7`. Changed-files digest is
++`ed5a57a1f72e8efb7266f7fe3290a2081341825792065e2356e15809f6992881`;
++candidate schema hash is
++`79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2`.
++
++The carrier writes only existing raw `occurrence.duration_ms` via an exact
++stable occurrence ref. The fixture proves `o1` 3000 -> 4150 ms. Identity,
++owner/selection, timing-codec, inverse/redo, ABA, disjoint rebase, invalid
++input, and missing-identity refusal are covered. Rational-fps/half-open control
++tests pass. Parent `config.duration` and full ripple remain intentionally
++separate; no root writer, Runtime DTO, alias, or silent migration was added.
++
++Evidence:
++
++- Focused carrier/schema: **29 passed**.
++- Exact handoff aggregate on this tree: **58 passed**, not the stale reported
++  53.
++- Rational-fps/half-open controls: **5 passed**.
++- Broader neighbors: **204 passed, 3 failed**; archived actual base: **196
++  passed, 3 failed**. The same three failure nodes and causes occur on base, so
++  they are pre-existing.
++- Ruff, JSON validation, and `git diff --check`: passed.
++
++No full/native HTTP/live Runtime/App qualification was run.
++
 
 exec
-/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider '"\\
-  tests/sdk/test_timing_compiler.py::test_fixed_source_window_and_rational_half_frame_ties \\
-  tests/sdk/test_timing_compiler.py::test_after_word_end_at_source_out_is_included_and_onset_at_source_out_is_refused \\
-  tests/editing_conformance/test_recipe_m2_clip_trim.py::test_rational_fps_source_contact_and_half_open_intervals_are_not_requantized \\
-  tests/editing_conformance/test_recipe_m2_group_move.py::test_rational_fps_quantization_and_half_open_adjacent_boundary" in /home/user/work/wt/agt-review-occurrence-resize-source
- succeeded in 2116ms:
-.....                                                                    [100%]
+/bin/bash -lc "git status --short --branch && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-resize-source-review.md && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/report.md && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-occurrence-resize-source/DONE && echo handoff-files-pass && sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-resize-source-review.md" in /home/user/work/wt/agt-review-occurrence-resize-source
+ succeeded in 173ms:
+## tl/agt-review-occurrence-resize-source
+handoff-files-pass
+# Agent `occurrence.resize@1` source review
+
+## Decision
+
+**APPROVE the private Agent source, exact tree, and schema. HOLD normal
+generation, pin/release, Runtime pairing, App adoption, native HTTP, and public
+activation until their separately required qualifications and peer ACKs exist.**
+
+Exact reviewed source:
+
+- branch `tl/agt-m2-occurrence-duration-carrier`
+- commit `61abe2c5a3cfaf370addcc96fa3f4fa352abbd40`
+- tree `cb18addba5b5a4a746d938dc8fcad5693061a236`
+- parent/base commit `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`
+- parent/base tree `0699f877a4c809005536a80f5956b8051a814ef7`
+- changed-files digest (sorted path + NUL + bytes + NUL):
+  `ed5a57a1f72e8efb7266f7fe3290a2081341825792065e2356e15809f6992881`
+- candidate schema SHA-256:
+  `79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2`
+
+The schema remains a single closed additive operation: 59 definitions and 33
+operation clauses. Removing `OccurrenceResizeArgs` and its `occurrence.resize`
+clause reconstructs the prior group-floor schema hash
+`27f2e3edaffdfc49665a858c5c1d6985dd89ef200932679b77367bc459329cfb`.
+
+## Source findings
+
+The implementation is bounded to `astrid/sdk/timeline/native_occurrence_resize.py`
+plus registry/schema wiring and conformance/schema-floor tests. It accepts only
+an exact `occurrence:<stable-id>` root and positive integer authored
+`duration_ms`. The recorder reads and selects the occurrence identity, shot
+identity, optional shot revision, occurrence collection, owner membership, and
+existing timing codecs. It writes exactly the existing
+`occurrence.duration_ms` leaf.
+
+The Main voiceover fixture proves the raw-unit result `o1: 3000 -> 4150 ms`
+with the same occurrence identity. Placement start, shot pin, maps, child
+content, opaque values, and sibling occurrence state remain unchanged. Guarded
+inverse/redo, ABA/intervening-write refusal, disjoint opaque/sibling rebase,
+invalid-value refusal, and missing-identity refusal all pass without mutating
+the rejected draft. There is no alias of `group.move`, Runtime DTO, root/whole-
+entity writer, or silent legacy-group migration.
+
+The handler's `pinnedShotGroups` check is additionally preceded by the existing
+global `execute` legacy-group preflight; when that key exists, the actual error
+kind is inherited `unsupported_dependency` before the handler's
+`migration_needed` branch. This is the same behavior on the base tree, and it
+still refuses atomically without migration; no candidate regression was found.
+
+The operation deliberately does not author parent `config.duration`, following
+occurrence starts, parent holds, or the complete ripple batch. In the fixture,
+parent duration remains `6`; this carrier must not be described as solving the
+full ripple proposal. A separate reviewed lowering/batch remains required.
+
+Existing rational-fps and half-open timing controls pass unchanged; the carrier
+does not quantize or invoke a second compiler. This is control evidence for the
+unchanged compiler boundary, not a claim of a new compiler integration.
+
+## Evidence
+
+Independent runs from this exact worktree, with shared dependencies read-only:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_resize.py tests/sdk/test_timeline_materialization_schema_union.py
+29 passed in 1.70s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_resize.py tests/editing_conformance/test_recipe_m2_group_move.py tests/sdk/test_timeline_materialization_schema_union.py
+58 passed in 4.11s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timing_compiler.py::test_fixed_source_window_and_rational_half_frame_ties tests/sdk/test_timing_compiler.py::test_after_word_end_at_source_out_is_included_and_onset_at_source_out_is_refused tests/editing_conformance/test_recipe_m2_clip_trim.py::test_rational_fps_source_contact_and_half_open_intervals_are_not_requantized tests/editing_conformance/test_recipe_m2_group_move.py::test_rational_fps_quantization_and_half_open_adjacent_boundary
 5 passed in 1.36s
 
-exec
-/bin/bash -lc "echo '--- candidate symbols / forbidden surfaces ---' && rg -n \"occurrence\\.resize|native_occurrence_resize|newRuntimeDTO|RuntimeDTO|rootwriter|root writer|group\\.move|alias|duration_ms\" astrid/sdk/timeline astrid/core/timeline/schema/edit-command.schema.json tests/editing_conformance/test_recipe_occurrence_resize.py | head -240 && echo '
---- changed paths and hashes ---' && git diff --name-only c0644cf1..HEAD && sha256sum astrid/core/timeline/schema/edit-command.schema.json astrid/sdk/timeline/native_occurrence_resize.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_occurrence_resize.py tests/sdk/test_timeline_materialization_schema_union.py && echo '
---- candidate digest ---' && python3 - <<'PY'
-import hashlib
-from pathlib import Path
-paths = ['astrid/core/timeline/schema/edit-command.schema.json','astrid/sdk/timeline/native_occurrence_resize.py','astrid/sdk/timeline/commands.py','tests/editing_conformance/test_recipe_occurrence_resize.py','tests/sdk/test_timeline_materialization_schema_union.py']
-h=hashlib.sha256()
-for p in sorted(paths):
-    h.update(p.encode()); h.update(b'\\0'); h.update(Path(p).read_bytes())
-print(h.hexdigest())
-PY" in /home/user/work/wt/agt-review-occurrence-resize-source
- succeeded in 8ms:
---- candidate symbols / forbidden surfaces ---
-tests/editing_conformance/test_recipe_occurrence_resize.py:11:from astrid.sdk.timeline.native_occurrence_resize import capture_occurrence_resize
-tests/editing_conformance/test_recipe_occurrence_resize.py:42:    command = capture_occurrence_resize(original, 'o1', prepared['candidate']['placements'][0]['duration_ms'])
-tests/editing_conformance/test_recipe_occurrence_resize.py:47:    assert State(plan.bundle).occurrence('occurrence:o1')['duration_ms'] == 4150
-tests/editing_conformance/test_recipe_occurrence_resize.py:53:    assert [write['path'] for write in plan.records[0]['writes']] == [['duration_ms']]
-tests/editing_conformance/test_recipe_occurrence_resize.py:55:    # not invent a root writer or silently update it.
-tests/editing_conformance/test_recipe_occurrence_resize.py:67:            'writes': [{'ref': 'occurrence:o1', 'path': ['duration_ms'],
-tests/editing_conformance/test_recipe_occurrence_resize.py:76:    State(head).occurrence('occurrence:o2')['duration_ms'] = 3200
-tests/editing_conformance/test_recipe_occurrence_resize.py:78:    assert State(rebased.bundle).occurrence('occurrence:o1')['duration_ms'] == 4150
-tests/editing_conformance/test_recipe_occurrence_resize.py:80:    assert State(rebased.bundle).occurrence('occurrence:o2')['duration_ms'] == 3200
-tests/editing_conformance/test_recipe_occurrence_resize.py:84:@pytest.mark.parametrize('duration_ms', [0, -1, 1.5, True])
-tests/editing_conformance/test_recipe_occurrence_resize.py:85:def test_resize_requires_a_finite_positive_integer(duration_ms):
-tests/editing_conformance/test_recipe_occurrence_resize.py:89:        capture_occurrence_resize(original, 'o1', duration_ms)
-astrid/core/timeline/schema/edit-command.schema.json:795:      "description": "Replace an existing clip elementRef with another revision of the same element id, kind and selected pack owner. Admitted revisions require the exact retained schema_source declaration pin. The retired element_ref alias is removed. There is no clear: a clip keeps its element."
-astrid/core/timeline/schema/edit-command.schema.json:2304:                "const": "occurrence.resize"
-astrid/core/timeline/schema/edit-command.schema.json:2522:          "description": "add appends the media alias to the shot pool and binds it; remove drops the alias and keeps the binding."
-astrid/core/timeline/schema/edit-command.schema.json:3239:        "duration_ms"
-astrid/core/timeline/schema/edit-command.schema.json:3243:        "duration_ms": {
-astrid/sdk/timeline/group_view.py:40:        extent = Fraction(str(number(occurrence['duration_ms'], 'duration_ms', positive=True))) / 1000
-astrid/sdk/timeline/_split_commands.py:30:                'duration', 'duration_ms', 'time_map', 'timeMap', 'clips', 'children',
-astrid/sdk/timeline/native_occurrence_create.py:49:        'duration_ms': duration * 1000, 'source_offset': 0, 'speed': 1, 'gain': 1,
-astrid/sdk/timeline/native_parent_media_commands.py:38:    _registry(ctx, 'parent', pin, kind, create=True, alias=row['asset'])
-astrid/sdk/timeline/capture.py:16:               'from', 'to', 'from_ms', 'to_ms', 'hold', 'duration', 'duration_ms', 'speed', 'time_map', 'timeMap',
-astrid/sdk/timeline/capture.py:20:MAP_FIELDS = (('placement', 'start_ms'), ('at_ms',), ('duration_ms',), ('source_offset',),
-astrid/sdk/timeline/capture.py:84:    for field, scale in (('duration', 1), ('duration_ms', 1000)):
-astrid/sdk/timeline/capture.py:148:                    'duration_ms', 'duration_seconds', 'source'):
-astrid/sdk/timeline/native_placement_commands.py:47:        extent = number(ctx.read(owner, ['duration_ms']), 'occurrence.duration_ms', positive=True) / 1000
-astrid/sdk/timeline/commands.py:50:    from .native_occurrence_resize import OCCURRENCE_RESIZE_INTENT, occurrence_resize
-astrid/sdk/timeline/commands.py:83:            'occurrence.resize': Operation(_SCHEMA['$defs']['OccurrenceResizeArgs'], occurrence_resize,
-astrid/sdk/timeline/_clip_scalar_commands.py:67:    extent = occurrence.get('duration_ms')
-astrid/sdk/timeline/_clip_scalar_commands.py:70:    limit = origin + number(extent, 'occurrence.duration_ms', positive=True) / 1000
-astrid/sdk/timeline/_clip_scalar_commands.py:120:    selected, alias = ctx.read(ref, ['elementRef']), ctx.read(ref, ['element_ref'])
-astrid/sdk/timeline/_clip_scalar_commands.py:121:    before = selected if selected is not None else alias
-astrid/sdk/timeline/reflow.py:453:        old_ms = _num(row.get("duration_ms"))
-astrid/sdk/timeline/reflow.py:457:            row["duration_ms"] = new_ms
-astrid/sdk/timeline/reflow.py:939:                e = s + _num(row.get("duration_ms")) / 1000.0
-astrid/sdk/timeline/reflow.py:944:                    row["duration_ms"] = int(round((e - s + delta) * 1000))
-astrid/sdk/timeline/reflow.py:952:            e = s + _num(row.get("duration_ms")) / 1000.0
-astrid/sdk/timeline/reflow.py:958:            row["duration_ms"] = int(round((e - s - d) * 1000))
-astrid/sdk/timeline/model.py:213:        """The cut this clip belongs to (``c08``); an alias of ``cut_id``."""
-astrid/sdk/timeline/_command_state.py:325:            # Authored content in published identities, never the materialized alias.
-astrid/sdk/timeline/_command_state.py:410:                # These are aliases of one guarded container, just like asset
-astrid/sdk/timeline/occurrence_commands.py:71:    duration = number(row.get('duration_ms'), 'duration_ms', positive=True) / 1000
-astrid/sdk/timeline/occurrence_commands.py:96:            end = start + number(blocker.get('duration_ms'), 'duration_ms', positive=True) / 1000
-astrid/sdk/timeline/native_occurrence_media_commands.py:33:    number(row.get('duration_ms'), 'occurrence.duration_ms', positive=True)
-astrid/sdk/timeline/native_occurrence_media_commands.py:40:    return owner, row['duration_ms'] / 1000
-astrid/sdk/timeline/native_occurrence_media_commands.py:66:def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
-astrid/sdk/timeline/native_occurrence_media_commands.py:67:    identity = pin['asset'] if alias is None else alias
-astrid/sdk/timeline/native_occurrence_media_commands.py:69:        raise CommandError('media requires a reserved raw asset alias')
-astrid/sdk/timeline/native_occurrence_media_commands.py:111:                'duration', 'duration_ms', 'source', 'sourceURL', 'sourceUrl', 'source_url',
-astrid/sdk/timeline/native_occurrence_media_commands.py:165:        raise CommandError('child asset must equal the reserved selection alias')
-astrid/sdk/timeline/native_occurrence_media_commands.py:197:    _registry(ctx, owner, old, kind, alias=row['asset'])
-astrid/sdk/timeline/native_occurrence_media_commands.py:204:    """Caller keeps the selected asset alias and allocates row.id before capture."""
-astrid/sdk/timeline/native_shot_pool_commands.py:1:"""Shot pool membership: an ordered list of asset aliases the shot holds without a clip.
-astrid/sdk/timeline/native_shot_pool_commands.py:9:alias; remove drops the alias and keeps the binding. A member is never also a placed clip.
-astrid/sdk/timeline/native_shot_pool_commands.py:31:        raise CommandError('shot pool must be a list of asset aliases', kind='unsupported_pool')
-astrid/sdk/timeline/native_shot_pool_commands.py:44:    alias = pin['asset']
-astrid/sdk/timeline/native_shot_pool_commands.py:50:        if members is not None and alias in members:
-astrid/sdk/timeline/native_shot_pool_commands.py:56:            if alias in (row.get('asset'), row.get('asset_id')):
-astrid/sdk/timeline/native_shot_pool_commands.py:61:                  create=ctx.state.get(owner + '/asset:' + alias, []) == ABSENT)
-astrid/sdk/timeline/native_shot_pool_commands.py:65:        ctx.write(source, POOL, [*(members or []), alias])
-astrid/sdk/timeline/native_shot_pool_commands.py:67:        if members is None or alias not in members:
-astrid/sdk/timeline/native_shot_pool_commands.py:70:        ctx.write(source, POOL, [item for item in members if item != alias])
-astrid/sdk/timeline/look.py:29:        return audio  # visual aliases are presented as entrance/exit
-astrid/sdk/timeline/native_occurrence_resize.py:29:    current = ctx.read(owner, ['duration_ms'])
-astrid/sdk/timeline/native_occurrence_resize.py:31:        raise CommandError('resize requires an existing positive integer duration_ms',
-astrid/sdk/timeline/native_occurrence_resize.py:33:    duration_ms = args['duration_ms']
-astrid/sdk/timeline/native_occurrence_resize.py:34:    if type(duration_ms) is not int or duration_ms <= 0:
-astrid/sdk/timeline/native_occurrence_resize.py:35:        raise CommandError('duration_ms must be a positive integer', kind='unsupported_timing', ref=owner)
-astrid/sdk/timeline/native_occurrence_resize.py:44:    ctx.write(owner, ['duration_ms'], duration_ms)
-astrid/sdk/timeline/native_occurrence_resize.py:47:def capture_occurrence_resize(bundle, occurrence_id, duration_ms):
-astrid/sdk/timeline/native_occurrence_resize.py:52:    return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.resize', 'version': '1',
-astrid/sdk/timeline/native_occurrence_resize.py:53:                             'select': owner, 'args': {'duration_ms': duration_ms},
-astrid/sdk/timeline/lookup.py:122:            # one address, everywhere: c41.mink, a carried alias (c30.cover), a layer name, an asset key, …
-astrid/sdk/timeline/lookup.py:336:        return _num(self._row(shot_id).get("duration_ms")) / 1000.0
-astrid/sdk/timeline/lookup.py:372:            if start - 1e-6 <= t < start + _num(row.get("duration_ms")) / 1000.0 - 1e-6:
-astrid/sdk/timeline/native_word_anchor.py:107:        end = start + _time_fraction(placement['duration_ms'], 'occurrence duration') / 1000
-astrid/sdk/timeline/_timing_evaluators.py:156:        length = _timing_number(row["duration_ms"]) / 1000
-astrid/sdk/timeline/_timing_evaluators.py:174:    # Reuse main's group membership, picture choice, ordering and cut aliases.
-astrid/sdk/timeline/_timing_evaluators.py:297:        if clip.get("at_ms") is not None or clip.get("duration_ms") is not None:
-astrid/sdk/timeline/_trim_commands.py:24:    for key in ('at_ms', 'from_ms', 'to_ms', 'duration', 'duration_ms', 'time_map', 'timeMap',
-astrid/sdk/timeline/_trim_commands.py:61:               'duration_ms', 'duration_seconds', 'source', 'source_window', 'time_map', 'timeMap')}
-astrid/sdk/timeline/_collections.py:50:        # Shape guards retain storage presence without guarding unrelated aliases.
-astrid/sdk/timeline/_clip_commands.py:32:                'from', 'to', 'from_ms', 'to_ms', 'at_ms', 'duration', 'duration_ms',
-astrid/sdk/timeline/publish.py:135:        return [(str(r["shot_id"]), _row_start(r) / 1000.0, (_row_start(r) + _num(r.get("duration_ms"))) / 1000.0)
-astrid/sdk/timeline/inverse.py:44:                raise CommandError('ambiguous collection alias', kind='identity_conflict')
-astrid/sdk/timeline/inverse.py:64:            raise CommandError('ambiguous collection alias', kind='identity_conflict')
-astrid/sdk/timeline/inverse.py:75:                raise CommandError('collection alias order differs from history', kind='history_unavailable')
-astrid/sdk/timeline/inverse.py:82:            raise CommandError('collection alias insertion needs historical order', kind='history_unavailable')
-astrid/sdk/timeline/inverse.py:101:    """Resolve aliases by authored owner, never a shared source shot identity."""
-astrid/sdk/timeline/new_group_commands.py:30:    for key in ('at_ms', 'duration', 'duration_ms', 'from_ms', 'to_ms', 'time_map',
-astrid/sdk/timeline/new_group_commands.py:139:                      'duration_ms': int(span), 'source_offset': 0, 'speed': 1, 'gain': 1,
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_resize.py tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_recipe_occurrence_delete.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_occurrence_media.py tests/packs/video_editing/test_draft_voiceover.py
+204 passed, 3 failed in 7.97s
 
---- changed paths and hashes ---
-astrid/core/timeline/schema/edit-command.schema.json
-astrid/sdk/timeline/commands.py
-astrid/sdk/timeline/native_occurrence_resize.py
-tests/editing_conformance/test_recipe_occurrence_resize.py
-tests/sdk/test_timeline_materialization_schema_union.py
-79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2  astrid/core/timeline/schema/edit-command.schema.json
-4c249adec1913566fa1ac55f4d403cc895ff06e8a70fdf94c7124bb84627c678  astrid/sdk/timeline/native_occurrence_resize.py
-d6172dd2511aed829ed95d4702e431a325503acd488a3ec72bedea5862eee10f  astrid/sdk/timeline/commands.py
-f67bd1711409e3e1adce9bf1da03c931cc512e089087086465af0e679cab18ad  tests/editing_conformance/test_recipe_occurrence_resize.py
-13f0a9127934d4bdc303bd79b41f64b1c12dbb7bd86e70c90ad3da654f441131  tests/sdk/test_timeline_materialization_schema_union.py
+python3 -m json.tool astrid/core/timeline/schema/edit-command.schema.json
+PASS
 
---- candidate digest ---
-9d448bb2391d594ec7a439963c56379ecd1878d943f06cc7641a17214f9de85f
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_resize.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_occurrence_resize.py tests/sdk/test_timeline_materialization_schema_union.py
+All checks passed
 
-exec
-/bin/bash -lc 'rg -n -C 8 "ed5a57a1|candidate changed-files digest|changed-files digest|sha256sum|hashlib.sha256" /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-duration-carrier/log.txt | tail -120' in /home/user/work/wt/agt-review-occurrence-resize-source
- succeeded in 0ms:
---
-12779-+Status: **PRIVATE SOURCE PROPOSAL — peer ACK required before freeze, normal
-12780-+generation, pin, release, Runtime pairing, or consumer activation.** No Runtime
-12781-+DTO, endpoint, App writer, generation, pin, or release was changed.
-12782-+
-12783-+## Exact source and hashes
-12784-+
-12785-+- Base reviewed full-group source: Agent commit `c0644cf1`; base tree
-12786-+  `0699f877a4c809005536a80f5956b8051a814ef7`.
-12787:+- Candidate changed-files digest (sorted path + NUL + bytes):
-12788:+  `ed5a57a1f72e8efb7266f7fe3290a2081341825792065e2356e15809f6992881`.
-12789-+- Candidate schema:
-12790-+  `astrid/core/timeline/schema/edit-command.schema.json`, SHA-256
-12791-+  `79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2`.
-12792-+  It has 59 definitions and 33 operation clauses. Removing this resize
-12793-+  definition/clause reconstructs the reviewed group schema hash
-12794-+  `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
-12795-+- Source file
-12796-+  `astrid/sdk/timeline/native_occurrence_resize.py`, SHA-256
---
-13230-+    del schema['$defs']['OccurrenceResizeArgs']
-13231-+    schema['$defs']['EditCommand']['allOf'] = [
-13232-+        clause for clause in schema['$defs']['EditCommand']['allOf']
-13233-+        if clause['if']['properties']['op']['const'] != 'occurrence.resize']
-13234-     return schema
-13235- 
-13236- 
-13237-@@ -71,12 +80,12 @@
-13238:     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
-13239-     assert len(ordinary['$defs']) == 55
-13240-     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
-13241--    assert len(_SCHEMA['$defs']) == 58
-13242--    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
-13243-+    assert len(_SCHEMA['$defs']) == 59
-13244-+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
-13245-     assert compatibility_errors(ordinary, _SCHEMA) == []
-13246- 
-13247- 
-13248--def test_removing_only_group_additions_reconstructs_project_data_bytes():
-13249-+def test_removing_group_and_duration_additions_reconstructs_project_data_bytes():
-13250-     candidate = without_groups(copy.deepcopy(_SCHEMA))
-13251-     raw = (json.dumps(candidate, indent=2) + '\n').encode()
-13252:     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
-13253-@@ -102,11 +111,19 @@
-13254:     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
-13255- 
-13256- 
-13257--def test_private_group_proposal_is_exactly_two_additions_on_project_data_floor():
-13258--    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
-13259-+def test_private_group_proposal_is_preserved_before_duration_addition():
-13260-+    candidate = without_resize(copy.deepcopy(_SCHEMA))
-13261-+    raw = (json.dumps(candidate, indent=2) + '\n').encode()
-13262:     assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
-13263--    assert len(_SCHEMA['$defs']) == 58
-13264--    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
-13265-+    assert len(candidate['$defs']) == 58
-13266-+    assert len(candidate['$defs']['EditCommand']['allOf']) == 32
-13267-+
-13268-+
-13269-+def test_private_duration_proposal_is_one_closed_addition_on_group_floor():
-13270-+    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
-13271:+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_DURATION_SHA256
-13272-+    assert len(_SCHEMA['$defs']) == 59
-13273-+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
-13274- 
-13275- 
-13276- def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
-13277-
-13278-exec
-13279-/bin/bash -lc "python3 - <<'PY'
---
-13281-from pathlib import Path
-13282-files = [
-13283- 'astrid/core/timeline/schema/edit-command.schema.json',
-13284- 'astrid/sdk/timeline/commands.py',
-13285- 'astrid/sdk/timeline/native_occurrence_resize.py',
-13286- 'tests/editing_conformance/test_recipe_occurrence_resize.py',
-13287- 'tests/sdk/test_timeline_materialization_schema_union.py',
-13288-]
-13289:h=hashlib.sha256()
-13290-for p in sorted(files):
-13291: b=Path(p).read_bytes(); print(hashlib.sha256(b).hexdigest(), p); h.update(p.encode()); h.update(b'\\0'); h.update(b); h.update(b'\\0')
-13292-print('proposal_changed_files_digest',h.hexdigest())
-13293-PY
-13294-printf '\\n--- status ---\\n'
-13295-git status --short" in /home/user/work/wt/agt-m2-occurrence-duration-carrier
-13296- succeeded in 114ms:
-13297-79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2 astrid/core/timeline/schema/edit-command.schema.json
-13298-d6172dd2511aed829ed95d4702e431a325503acd488a3ec72bedea5862eee10f astrid/sdk/timeline/commands.py
-13299-4c249adec1913566fa1ac55f4d403cc895ff06e8a70fdf94c7124bb84627c678 astrid/sdk/timeline/native_occurrence_resize.py
-13300-f67bd1711409e3e1adce9bf1da03c931cc512e089087086465af0e679cab18ad tests/editing_conformance/test_recipe_occurrence_resize.py
-13301-13f0a9127934d4bdc303bd79b41f64b1c12dbb7bd86e70c90ad3da654f441131 tests/sdk/test_timeline_materialization_schema_union.py
-13302:proposal_changed_files_digest ed5a57a1f72e8efb7266f7fe3290a2081341825792065e2356e15809f6992881
-13303-
-13304---- status ---
-13305- M astrid/core/timeline/schema/edit-command.schema.json
-13306- M astrid/sdk/timeline/commands.py
-13307- M tests/sdk/test_timeline_materialization_schema_union.py
-13308-?? astrid/sdk/timeline/native_occurrence_resize.py
-13309-?? tests/editing_conformance/test_recipe_occurrence_resize.py
-13310-
---
-13316-Status: **PRIVATE SOURCE PROPOSAL — peer ACK required before freeze, normal
-13317-generation, pin, release, Runtime pairing, or consumer activation.** No Runtime
-13318-DTO, endpoint, App writer, generation, pin, or release was changed.
-13319-
-13320-## Exact source and hashes
-13321-
-13322-- Base reviewed full-group source: Agent commit `c0644cf1`; base tree
-13323-  `0699f877a4c809005536a80f5956b8051a814ef7`.
-13324:- Candidate changed-files digest (sorted path + NUL + bytes):
-13325:  `ed5a57a1f72e8efb7266f7fe3290a2081341825792065e2356e15809f6992881`.
-13326-- Candidate schema:
-13327-  `astrid/core/timeline/schema/edit-command.schema.json`, SHA-256
-13328-  `79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2`.
-13329-  It has 59 definitions and 33 operation clauses. Removing this resize
-13330-  definition/clause reconstructs the reviewed group schema hash
-13331-  `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
-13332-- Source file
-13333-  `astrid/sdk/timeline/native_occurrence_resize.py`, SHA-256
+git diff --check c0644cf1..HEAD
+PASS
+```
 
-exec
-/bin/bash -lc "python3 - <<'PY'
-import hashlib
-from pathlib import Path
-paths = ['astrid/core/timeline/schema/edit-command.schema.json','astrid/sdk/timeline/native_occurrence_resize.py','astrid/sdk/timeline/commands.py','tests/editing_conformance/test_recipe_occurrence_resize.py','tests/sdk/test_timeline_materialization_schema_union.py']
-h=hashlib.sha256()
-for p in sorted(paths):
-    b=Path(p).read_bytes(); h.update(p.encode()); h.update(b'\\0'); h.update(b); h.update(b'\\0')
-print(h.hexdigest())
-PY" in /home/user/work/wt/agt-review-occurrence-resize-source
- succeeded in 0ms:
-ed5a57a1f72e8efb7266f7fe3290a2081341825792065e2356e15809f6992881
+The source handoff says the second targeted aggregate is 53 tests. On the exact
+reviewed tree it collects and passes **58**; the 53 count is stale. This does
+not hide a failure or alter an expectation.
 
+For the broader three failures, I archived and ran the same neighbor set from
+actual base `c0644cf1` (no checkout or source mutation): **196 passed, 3
+failed**. The candidate's failures are exactly the same nodes and causes:
+
+1. `test_recipe_occurrence_delete.py::test_legacy_group_refuses_with_migration_needed_and_no_mutation`
+2. `test_recipe_occurrence_delete.py::test_closed_schema_and_portable_native_capture_golden`
+3. `test_recipe_occurrence_duplicate.py::test_legacy_group_refuses_with_migration_needed_and_no_mutation`
+
+The first and third observe inherited `unsupported_dependency` versus the
+tests' expected `migration_needed`; the second is the inherited portable
+golden mismatch. Candidate-only resize tests account for the eight-pass
+difference between 204 and 196. These are therefore pre-existing failures, not
+same-node different-cause failures.
+
+## Limits and handoff
+
+No full/full* suite, localhost/live sockets, native HTTP, Runtime generation,
+pin/release, App writer, or consumer activation was run. The source proposal
+and this review do not authorize those boundaries. No product files or shared
+worktrees were modified by this review.
+
+
+codex
+## Report
+
+- **APPROVE:** private source/tree/schema for commit `61abe2c5`, tree `cb18addb`; schema hash `79c54f0b…`.
+- **HOLD:** Runtime pairing, generation/pin/release, App adoption, native HTTP, and public activation.
+- Verified only `occurrence.duration_ms` writes, stable identity/owner guards, raw `3000 → 4150 ms`, inverse/redo, ABA, disjoint rebase, refusal paths, and unchanged rational-fps/half-open controls.
+- Parent `config.duration` and full ripple remain intentionally unresolved.
+- Tests: focused **29 passed**; exact aggregate **58 passed** (handoff’s 53 count is stale); compiler controls **5 passed**; broader **204 passed, 3 inherited failures**. Base comparison: **196 passed, same 3 failures**.
+- Ruff, JSON validation, and diff check passed. No full/native HTTP/live qualification run.
+
+Review: [agent-occurrence-resize-source-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-resize-source-review.md)
+
+Created `report.md`, commit message, and `DONE`; product worktree remains clean.
+tokens used
+148,567
+## Report
+
+- **APPROVE:** private source/tree/schema for commit `61abe2c5`, tree `cb18addb`; schema hash `79c54f0b…`.
+- **HOLD:** Runtime pairing, generation/pin/release, App adoption, native HTTP, and public activation.
+- Verified only `occurrence.duration_ms` writes, stable identity/owner guards, raw `3000 → 4150 ms`, inverse/redo, ABA, disjoint rebase, refusal paths, and unchanged rational-fps/half-open controls.
+- Parent `config.duration` and full ripple remain intentionally unresolved.
+- Tests: focused **29 passed**; exact aggregate **58 passed** (handoff’s 53 count is stale); compiler controls **5 passed**; broader **204 passed, 3 inherited failures**. Base comparison: **196 passed, same 3 failures**.
+- Ruff, JSON validation, and diff check passed. No full/native HTTP/live qualification run.
+
+Review: [agent-occurrence-resize-source-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-resize-source-review.md)
+
+Created `report.md`, commit message, and `DONE`; product worktree remains clean.
