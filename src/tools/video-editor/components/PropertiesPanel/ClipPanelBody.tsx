@@ -35,6 +35,7 @@ import { getEffectDisplayLabel } from './clip-effect-helpers.tsx';
 import { ClipEffectsTab } from './ClipEffectsTab.tsx';
 import { ClipExtensionInspectorSection } from './ClipExtensionInspectorSection.tsx';
 import { ClipInspectorActions } from './ClipInspectorActions.tsx';
+import type { SelectedElementParamFieldsProps } from './SelectedElementParamFields.tsx';
 
 /** The shortest a media clip can be made from its Duration field. */
 const MIN_MEDIA_DURATION_SECONDS = 0.05;
@@ -45,6 +46,10 @@ export { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 export { FieldLabel, NO_EFFECT, NO_TRANSITION, TAB_COLUMNS_CLASS } from './clip-panel-primitives.tsx';
 
 export interface ClipPanelProps {
+  /** Explicit source-stage binding; the host supplies the exact retained pin. */
+  retainedDocumentPin?: SelectedElementParamFieldsProps['retainedDocumentPin'];
+  timelineOps?: SelectedElementParamFieldsProps['timelineOps'];
+  commandState?: SelectedElementParamFieldsProps['commandState'];
   readOnly?: boolean;
   clip: ResolvedTimelineClip | null;
   track: TrackDefinition | null;
