@@ -11,8 +11,10 @@ import { timelineQueryKey } from '@/tools/video-editor/hooks/useTimeline.ts';
 import {
   useTimelineChromeContextSafe,
   useTimelineEditorData,
+  useTimelineEditorOpsSafe,
   useTimelineEditorDataSafe,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { captureClipScalarEdit, submitClipScalarEdit } from '@/tools/video-editor/commands/clipScalarGesture.ts';
 import { buildElementOverlayRow } from '@/tools/video-editor/runtime/element-adapter.ts';
 import type { AstridElementCatalogEntry } from '@/tools/video-editor/runtime/element-contract.ts';
 
@@ -35,6 +37,18 @@ function parentClipSelect(clip: { id: string; app?: unknown }): string | null {
     ? `parent/clip:${clip.id}` : null;
 }
 
+function retainedFps(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value;
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const rate = value as { numerator?: unknown; denominator?: unknown };
+    if (typeof rate.numerator === 'number' && typeof rate.denominator === 'number'
+      && Number.isFinite(rate.numerator) && Number.isFinite(rate.denominator) && rate.numerator > 0 && rate.denominator > 0) {
+      return rate.numerator / rate.denominator;
+    }
+  }
+  return 30;
+}
+
 export function ElementsLibraryPanel({
   open,
   onOpenChange,
@@ -47,6 +61,7 @@ export function ElementsLibraryPanel({
   const { editorContext } = useAgentChatBridge();
   const { selectedClipIds } = useTimelineEditorData();
   const current = useTimelineEditorDataSafe()?.data;
+  const clipScalar = useTimelineEditorOpsSafe()?.clipScalar;
   const elementOverlay = useTimelineChromeContextSafe()?.commandSession?.elementOverlay;
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<ElementFilter>('all');
@@ -79,6 +94,48 @@ export function ElementsLibraryPanel({
     }
     if (element.kind !== 'transition' && selectedIds.length < 1) {
       setMessage('Select a clip to apply this element.');
+      return;
+    }
+    if (element.kind === 'transition') {
+      if (element.packId && element.packId !== 'rendering') {
+        setMessage('Hosted transition binding is unavailable for this project pack; the draft was not changed.');
+        return;
+      }
+      if (!current || !clipScalar) {
+        setMessage('Native transition editing is unavailable until the current timeline session is ready.');
+        return;
+      }
+      const target = current.resolvedConfig.clips.find((clip) => clip.id === selectedIds[1]);
+      if (!target) {
+        setMessage('The selected transition target is no longer present in the current timeline.');
+        return;
+      }
+      const fps = retainedFps(current.resolvedConfig.output?.fps);
+      const defaults = element.defaults as Record<string, unknown> | undefined;
+      const durationFrames = defaults?.durationFrames;
+      const frames = Number.isInteger(durationFrames) && Number(durationFrames) > 0 ? Number(durationFrames) : 8;
+      setBusyId(element.id);
+      setMessage(null);
+      try {
+        const captured = captureClipScalarEdit(clipScalar, current, target.id);
+        submitClipScalarEdit(captured, {
+          values: {
+            transition: { type: element.id, duration: frames / fps, revision: element.revision },
+            elementRef: {
+              id: element.id,
+              kind: 'transition',
+              revision: element.revision,
+              ...(element.packId ? { packId: element.packId } : {}),
+            },
+          },
+          clear: [],
+        });
+        setMessage(`${element.label} queued through the native timeline session.`);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : String(error));
+      } finally {
+        setBusyId(null);
+      }
       return;
     }
     if (element.kind === 'effect' && !element.packId) {

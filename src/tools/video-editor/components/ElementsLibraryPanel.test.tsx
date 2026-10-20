@@ -11,6 +11,7 @@ const harness = vi.hoisted(() => ({
   invalidateQueries: vi.fn(),
   current: null as unknown,
   elementOverlay: null as unknown,
+  clipScalar: null as unknown,
 }));
 
 vi.mock('@tanstack/react-query', () => ({
@@ -24,6 +25,7 @@ vi.mock('@/shared/contexts/AgentChatContext', () => ({
 vi.mock('@/tools/video-editor/hooks/timelineStore', () => ({
   useTimelineEditorData: () => ({ selectedClipIds: harness.selectedClipIds }),
   useTimelineEditorDataSafe: () => ({ data: harness.current }),
+  useTimelineEditorOpsSafe: () => ({ clipScalar: harness.clipScalar }),
   useTimelineChromeContextSafe: () => ({ commandSession: { elementOverlay: harness.elementOverlay } }),
 }));
 
@@ -75,6 +77,7 @@ describe('ElementsLibraryPanel owner-pinned operations', () => {
     harness.invalidateQueries.mockReset();
     harness.current = null;
     harness.elementOverlay = null;
+    harness.clipScalar = null;
   });
 
   it('persists the owning pack on an applied element reference', async () => {
@@ -93,20 +96,49 @@ describe('ElementsLibraryPanel owner-pinned operations', () => {
     })));
   });
 
-  it('persists the owning pack on an applied transition reference', async () => {
+  it('captures an applied transition as one native clip.set with its exact selected ref', async () => {
+    harness.current = {
+      resolvedConfig: {
+        output: { fps: 30 },
+        clips: [
+          { id: 'source-clip', at: 0, hold: 2, track: 'V1' },
+          { id: 'next-clip', at: 2, hold: 2, track: 'V1' },
+        ],
+      },
+    };
+    const basis = { select: 'parent/clip:next-clip' };
+    const finish = vi.fn((_captured: unknown, args: unknown) => ({ command: {
+      schema_version: 1, op: 'clip.set', version: '1', select: basis.select, args, intent: {},
+    } }));
+    harness.clipScalar = {
+      capture: vi.fn().mockReturnValue(basis), finish, submit: vi.fn(),
+    };
     renderPanel([transitionEntry], ['source-clip', 'next-clip']);
 
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
 
-    await waitFor(() => expect(harness.execute).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'timeline.apply_transition',
-      transition: {
-        id: 'crossfade',
-        kind: 'transition',
-        revision: 'sha256:a91d9377',
-        packId: 'rendering',
-      },
+    await waitFor(() => expect(harness.clipScalar.capture).toHaveBeenCalledWith(expect.objectContaining({
+      clipId: 'next-clip', current: harness.current,
     })));
+    expect(finish).toHaveBeenCalledWith(basis, {
+      values: {
+        transition: { type: 'crossfade', duration: 8 / 30, revision: 'sha256:a91d9377' },
+        elementRef: { id: 'crossfade', kind: 'transition', revision: 'sha256:a91d9377', packId: 'rendering' },
+      },
+      clear: [],
+    });
+    expect(harness.clipScalar.submit).toHaveBeenCalled();
+    expect(harness.execute).not.toHaveBeenCalled();
+  });
+
+  it('refuses hosted project-pack transitions while their retained binding is absent', async () => {
+    renderPanel([{ ...transitionEntry, packId: 'local' }], ['source-clip', 'next-clip']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    await waitFor(() => expect(screen.getByText('Hosted transition binding is unavailable for this project pack; the draft was not changed.')).toBeInTheDocument());
+    expect(harness.clipScalar).toBeNull();
+    expect(harness.execute).not.toHaveBeenCalled();
   });
 
   it('sends an admitted literal effect through the native overlay port without the legacy adapter', async () => {

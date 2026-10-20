@@ -196,8 +196,8 @@ function changes(command: EditCommand): ScalarArgs {
   if (!object(values) || !Array.isArray(clear) || (!Object.keys(values).length && !clear.length)) {
     throw new ClipMoveError('clip.set requires at least one requested field');
   }
-  if (Object.keys(values).some((key) => key !== 'hold')) {
-    throw new ClipMoveError('clip.set only supports hold values');
+  if (Object.keys(values).some((key) => key !== 'hold' && key !== 'transition' && key !== 'elementRef')) {
+    throw new ClipMoveError('clip.set only supports hold, transition, and elementRef values');
   }
   if (clear.some((key) => key !== 'hold' && key !== 'asset' && key !== 'transition') ||
     new Set(clear).size !== clear.length) {
@@ -207,7 +207,84 @@ function changes(command: EditCommand): ScalarArgs {
     throw new ClipMoveError('a scalar key cannot be both set and cleared');
   }
   if (has(values, 'hold')) number(values.hold, 'hold', true);
+  if (has(values, 'transition')) validateTransition(values.transition);
+  if (has(values, 'elementRef')) validateTransitionRef(values.elementRef);
   return { values: values as ScalarValue, clear: clear as ScalarClear };
+}
+
+function validateTransitionRef(value: JSON): void {
+  if (!object(value) || !equal(Object.keys(value).sort(), ['id', 'kind', 'revision', ...(has(value, 'packId') ? ['packId'] : [])].sort())
+    || value.kind !== 'transition' || typeof value.id !== 'string' || !value.id
+    || typeof value.revision !== 'string' || !value.revision
+    || (has(value, 'packId') && (typeof value.packId !== 'string' || !value.packId))) {
+    throw new ClipMoveError('transition requires an exact selected element reference');
+  }
+}
+
+function validateTransition(value: JSON): asserts value is ScalarValue {
+  if (!object(value) || typeof value.type !== 'string' || !value.type ||
+    typeof value.duration !== 'number' || !Number.isFinite(value.duration) || value.duration <= 0 ||
+    (has(value, 'revision') && (typeof value.revision !== 'string' || !value.revision)) ||
+    (has(value, 'params') && !object(value.params))) {
+    throw new ClipMoveError('transition requires a non-empty type, positive duration, and object params');
+  }
+  if (['id', 'durationFrames', 'align', 'incomingPolicy'].some((key) => has(value, key))) {
+    throw new ClipMoveError('transition contains a compiled-only field');
+  }
+  assertFiniteJson(value);
+}
+
+function authoredStart(row: ScalarValue): number {
+  if (has(row, 'at')) return number(row.at, 'clip.at');
+  if (has(row, 'at_ms')) return number(row.at_ms, 'clip.at_ms') / 1000;
+  throw new ClipMoveError('transition requires explicit clip starts', 'unsupported_timing');
+}
+
+function transitionPredecessor(ctx: MoveRecording, ref: string, duration: number): void {
+  const owner = ref.slice(0, ref.lastIndexOf('/'));
+  const targetRow = ctx.state.entity(ref);
+  if (!targetRow || typeof targetRow.track !== 'string' || !targetRow.track) {
+    throw new ClipMoveError('transition requires an owning track');
+  }
+  const config = ctx.state.config(owner);
+  const clips = Array.isArray(config.clips) ? config.clips.filter(object) : [];
+  const ordered = clips
+    .filter((row) => row.track === targetRow.track && typeof row.id === 'string')
+    .map((row, index) => ({ row, index, ref: `${owner}/clip:${row.id}` }))
+    .sort((left, right) => authoredStart(left.row) - authoredStart(right.row) || left.index - right.index);
+  const targetIndex = ordered.findIndex((item) => item.ref === ref);
+  if (targetIndex <= 0) throw new ClipMoveError('transition requires an adjacent predecessor on the same track');
+  const predecessor = ordered[targetIndex - 1]!;
+  const selection = {
+    key: 'transition.predecessor', query_version: 1, owner: ref,
+    members: [predecessor.ref], order: ordered.map((item) => item.ref),
+    boundaries: [`${owner}/track:${targetRow.track}`], policy: 'guard-membership' as const,
+  };
+  if (!ctx.command.selections!.some((existing) => equal(existing, selection))) ctx.command.selections!.push(selection);
+
+  for (const neighbor of [predecessor.ref, ref]) {
+    for (const key of CLIP_FIELDS) ctx.read(neighbor, [key]);
+    ctx.read(neighbor, ['transition']);
+    clipBasis(ctx, neighbor);
+    for (const prefix of [[], ['app'], ['app', 'astrid']]) {
+      for (const key of RELATIONS) ctx.read(neighbor, [...prefix, key]);
+    }
+  }
+  ctx.read(`${owner}/track:${targetRow.track}`, ['id']);
+  const fps = rate(ctx.read('parent', ['config', 'output', 'fps']));
+  const fpsNumber = fractionNumber(fps[0], fps[1]);
+  const frames = duration * fpsNumber;
+  if (!Number.isFinite(frames) || frames < 0.5 || frames >= 2 ** 53 - 0.5) {
+    throw new ClipMoveError('transition requires positive safe whole frames', 'unsupported_timing');
+  }
+  const predecessorDuration = timelineDuration(predecessor.row);
+  const targetDuration = timelineDuration(targetRow);
+  if (Math.abs(authoredStart(predecessor.row) + predecessorDuration - authoredStart(targetRow)) >= 0.001) {
+    throw new ClipMoveError('transition requires adjacent clips on the same track');
+  }
+  if (frames > Math.min(predecessorDuration, targetDuration) * fpsNumber + 0.0001) {
+    throw new ClipMoveError('transition duration exceeds the shorter adjacent clip');
+  }
 }
 
 function holdExtent(ctx: MoveRecording, ref: string, values: ScalarValue, clear: ScalarClear): void {
@@ -283,6 +360,21 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
   const { values, clear } = changes(command);
   clipBasis(ctx, ref);
   const row = ctx.state.entity(ref)!;
+  if (has(values, 'elementRef') && !has(values, 'transition')) {
+    throw new ClipMoveError('elementRef requires transition SET');
+  }
+  if (has(values, 'transition')) {
+    const transition = values.transition as ScalarValue;
+    const selected = has(values, 'elementRef') ? values.elementRef : ctx.read(ref, ['elementRef']) ?? ctx.read(ref, ['element_ref']);
+    if (selected !== undefined) {
+      validateTransitionRef(selected);
+      const selectedRef = selected as ScalarValue;
+      if (selectedRef.id !== transition.type || (has(transition, 'revision') && selectedRef.revision !== transition.revision)) {
+        throw new ClipMoveError('transition requires its matching selected reference');
+      }
+    }
+    transitionPredecessor(ctx, ref, number(transition.duration, 'transition.duration', true));
+  }
   if (clear.includes('asset') && ['asset_id', 'media_id', 'object_id'].some((key) => has(row, key))) {
     throw new ClipMoveError('asset clear cannot expose another media selector', 'invalid_edit_command');
   }
@@ -292,6 +384,7 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
   }
   if (has(values, 'hold') || clear.includes('hold')) holdExtent(ctx, ref, values, clear);
   for (const key of Object.keys(values).sort()) ctx.write(ref, [key], values[key]);
+  if (has(values, 'elementRef') && has(row, 'element_ref')) ctx.clear(ref, ['element_ref']);
   for (const key of [...clear].sort()) ctx.clear(ref, [key]);
   ctx.compile();
   return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record };
