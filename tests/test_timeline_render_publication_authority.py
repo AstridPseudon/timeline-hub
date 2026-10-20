@@ -165,7 +165,7 @@ def test_retired_writer_refuses_without_prepare_or_publication_writes(service):
 
 
 def test_published_checkpoint_replays_read_only_after_live_authority_changes(service):
-    _, author, attempt, render_digest = _ready_authoring_attempt(service)
+    project, author, attempt, render_digest = _ready_authoring_attempt(service)
     body = _publication_body(attempt, render_digest)
     result = {
         "checkpoint_state": "published", "authoring_task_id": author["task"]["id"],
@@ -173,6 +173,9 @@ def test_published_checkpoint_replays_read_only_after_live_authority_changes(ser
         "render_task_id": "legacy-render", "render_run_id": "legacy-run",
     }
     _publication_checkpoint(service, author, attempt, body, state="published", result=result)
+    # A live retarget is part of the replay boundary: the stored checkpoint is
+    # the only authority once publication has completed.
+    _track(service, project["id"])
     service.cancel_task_canonical(author["task"]["id"], {}, idempotency_key="cancel")
     service.store.conn.execute("UPDATE tasks SET spec_digest=NULL WHERE id=?", (author["task"]["id"],))
     service.store.conn.execute("UPDATE timelines SET archived_at=created_at WHERE id='main'")
@@ -196,6 +199,15 @@ def test_prepared_checkpoint_remains_retired_without_recovery_write(service):
     assert (_state(service), service.store.conn.total_changes) == (before, changes)
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "RT07 retires fresh legacy publication; its zero-write refusal is "
+        "test_retired_writer_refuses_without_prepare_or_publication_writes. "
+        "Native checkpoint/retry assertions map to the read-only checkpoint "
+        "test and Agent D13 native result 7012."
+    ),
+)
 def test_exact_published_checkpoint_replays_before_live_target_changes(service):
     project, author, attempt, render_digest = _ready_authoring_attempt(service)
     body = {**_publication_body(attempt, render_digest), "config": {"clips": [], "tracks": []}, "registry": {}}
@@ -213,6 +225,15 @@ def test_exact_published_checkpoint_replays_before_live_target_changes(service):
     assert service.store.conn.total_changes == changes
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "RT07 retires fresh legacy publication; its zero-write refusal is "
+        "test_retired_writer_refuses_without_prepare_or_publication_writes. "
+        "Native target scoping maps to the real-provider historical admission "
+        "test_first_render_of_accepted_a_after_c_and_restart."
+    ),
+)
 def test_tracking_is_scoped_to_the_publication_target(service):
     project, _, attempt, render_digest = _ready_authoring_attempt(service)
     service.create_timeline(project["id"], "other", idempotency_key="other")
@@ -223,6 +244,16 @@ def test_tracking_is_scoped_to_the_publication_target(service):
     assert result["timeline_version"] == 2
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "RT07 retires the untracked legacy-head writer; its zero-write refusal "
+        "is test_retired_writer_refuses_without_prepare_or_publication_writes. "
+        "Existing-film capability maps to the real-provider canonical "
+        "bootstrap/commit/historical-render test "
+        "test_real_retained_legacy_publication_uses_verified_source."
+    ),
+)
 def test_legacy_head_without_canonical_publication_remains_publishable(service):
     _, _, attempt, render_digest = _ready_authoring_attempt(service, legacy_parent=True)
     head = service.store.conn.execute(
