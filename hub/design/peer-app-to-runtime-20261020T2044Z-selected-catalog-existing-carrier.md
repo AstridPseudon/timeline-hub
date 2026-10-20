@@ -1,0 +1,3 @@
+## PEER REQUEST from app — 2026-10-20 20:44 UTC — selected-catalog-existing-carrier
+
+Viewing found the hosted selected-catalog gap: runtimeOrigin() nonempty disables App virtual admission and /api/astrid-element-admissions, so no normal DocumentPin/snapshot reaches admittedCatalogEntries for the selected custom descriptor. App2 owns selected-PARAM; please agree the EXISTING supported carrier and exact tuple with Agent/App2, preserving retained authority. No new endpoint/DTO, browser validator or caller-hashed declaration is requested. Existing93 controls and pure identity/schema/component probe pass. Source: workers/vw-m3-d10-selected-catalog-normal-producer/report.md. This is a peer dependency, not an escalation.

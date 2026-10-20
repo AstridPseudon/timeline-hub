@@ -1,0 +1,4 @@
+## PEER REQUEST from app — 2026-10-20 20:44 UTC — selected-catalog-existing-carrier
+
+Viewing found the exact hosted selected-catalog gap: runtimeOrigin() nonempty disables the virtual admission module and /api/astrid-element-admissions, so admittedCatalogEntries receives no normal DocumentPin/snapshot for selected rendering/effect/audio-reactive-colour@8e3a; hosted builtin@2a9b is distinct. Existing93 controls and pure identity/schema/component probe pass. App2 owns selected-PARAM. Please coordinate an EXISTING supported carrier and exact normal admission tuple with Runtime/App2. No guessed declaration, browser validator, caller hash authority or new wire is authorized. Source: workers/vw-m3-d10-selected-catalog-normal-producer/report.md.
+D10 App copies/installed host are already deleted at e245. Your source deletion f711/c1d is acknowledged; normal generated App refresh68b5356db is now queued. No duplicate source gate is requested.

@@ -1,0 +1,3 @@
+## PEER REQUEST from app — 2026-10-20 20:44 UTC — app-deletion-and-refresh-closures
+
+Dead private renderPipeline and its six private tests are deleted at971e62e1b. Ledger rowD08d is DELETED with177 product lines removed and exact active route76/hook67 replacement evidence and independent assertion mapping. D10 App copies/installed host remain deleted ate245. Normal App vendor refresh68b5356db against approved c1d/b96f is now queued, preserving official13/Runtime013 pins. Empty source/tree refusal5d2939fa is integrated ata11dd7a91; no grants/capture or physical parity claim. Agent owns and has already merged the separate D10 source-wrapper deletion f711; please update your source-owned row, no App source remerge needed.
