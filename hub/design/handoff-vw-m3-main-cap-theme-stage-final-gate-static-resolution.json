@@ -1,0 +1,1316 @@
+{
+  "available_files": 282,
+  "parsed_files": 92,
+  "visited": [
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/animations.generated.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/transitions.generated.ts",
+    "/__readonly_main__/remotion/src/index.ts",
+    "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx",
+    "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx",
+    "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx",
+    "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx",
+    "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx",
+    "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-burst/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-callout/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-churn/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-discord/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-droste/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-quote/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx",
+    "/__readonly_main__/astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/end-codex-transform/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/end-mid-combined/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/end-minimax-animate/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/ending-carousel/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/event-card/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/frame-overlay/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/model-trends/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/neon-orbit-card/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/scrolling-guide/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/sliding-media/component.tsx",
+    "/__readonly_main__/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/vibe-comfy-bumper/component.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/text-card/component.tsx",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/art-card/component.tsx",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/cta-card/component.tsx",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/resource-card/component.tsx",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/section-hook/component.tsx",
+    "/__readonly_main__/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx",
+    "/__readonly_main__/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx",
+    "/__readonly_main__/remotion/src/Root.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-flap/flap.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-churn/ledger.ts",
+    "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-discord/discord-core.ts",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/volume.ts",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/shape-cells.ts",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts",
+    "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/motion.ts",
+    "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx",
+    "/__readonly_main__/astrid/packs/local/shared/readiness-image.tsx",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/animated-media-transform/motion.ts",
+    "/__readonly_main__/astrid/packs/local/rendering/elements/effects/end-spanning-layer/timing.ts",
+    "/__readonly_main__/astrid/packs/local/shared/clip-effects.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/index.ts",
+    "/__readonly_main__/remotion/src/fonts.ts",
+    "/__readonly_main__/remotion/src/ReviewOverlay.tsx",
+    "/__readonly_main__/remotion/src/FrameDiagnostics.tsx",
+    "/__readonly_main__/remotion/src/BoundsProbe.tsx",
+    "/__readonly_main__/remotion/src/asset-source.ts",
+    "/__readonly_main__/astrid/packs/rendering/shared/managed-media-policy.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/animations.tsx",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/ThemeContext.tsx",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/duration.ts",
+    "/__readonly_main__/remotion/src/bounds.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/AudioTrack.tsx",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/VisualClip.tsx",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/effect-params.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/tracks.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/transitions.tsx",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/trim.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/render-bounds.ts",
+    "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/fade.ts"
+  ],
+  "resolved_imports": 243,
+  "edges": [
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/animations.generated.ts",
+      "specifier": "@pack-rendering-elements-animations/fade/component?astrid=33ff2ddfea4a",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/animations.generated.ts",
+      "specifier": "@pack-rendering-elements-animations/fade-up/component?astrid=f220063b5816",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/animations.generated.ts",
+      "specifier": "@pack-rendering-elements-animations/scale-in/component?astrid=9da5095cd0dc",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/animations.generated.ts",
+      "specifier": "@pack-rendering-elements-animations/slide-left/component?astrid=b80d9b912750",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/animations.generated.ts",
+      "specifier": "@pack-rendering-elements-animations/slide-up/component?astrid=402ef118fb42",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/animations.generated.ts",
+      "specifier": "@pack-rendering-elements-animations/type-on/component?astrid=73b438081725",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-burst/component?astrid=dfea21afeffa",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-burst/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-callout/component?astrid=24676ad4c66d",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-callout/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-churn/component?astrid=25d946b457b8",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-churn/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-discord/component?astrid=b938b24d6c1a",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-discord/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-droste/component?astrid=88a8e36a536d",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-droste/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-flap/component?astrid=14141f6f5480",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-footage/component?astrid=c42e691a82da",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-orbit/component?astrid=47e3dbdb4343",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-orgchart/component?astrid=1fd955a4741d",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-pixel-shape/component?astrid=7ca2142fa224",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-pixel-wipe/component?astrid=62fa78c5d188",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-presenter/component?astrid=35db02b8df0a",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-quote/component?astrid=aec597bdd933",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-quote/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-seasons/component?astrid=71d9e34ac034",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-snap-plate/component?astrid=823417d0e694",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-sprite/component?astrid=f26441ae79b7",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-terminal/component?astrid=34afca67e08d",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-tweet/component?astrid=b8491b2673ad",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-type/component?astrid=b3eb2a1b4c4a",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-astrid_motion-elements-effects/am-ui-sketch/component?astrid=f05ca6484ccb",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/animated-media-transform/component?astrid=f0c4c91f45a7",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-rendering-elements-effects/audio-reactive-colour/component?astrid=4ae589424bb8",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/end-codex-transform/component?astrid=edbf6476ebfd",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/end-codex-transform/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/end-mid-combined/component?astrid=8f8f0d196ac7",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/end-mid-combined/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/end-minimax-animate/component?astrid=37cb48a616ef",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/end-minimax-animate/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/end-spanning-layer/component?astrid=4a1024c42d10",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/ending-carousel/component?astrid=da99085bc9fb",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/ending-carousel/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/event-card/component?astrid=87659c9403c5",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/event-card/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/frame-overlay/component?astrid=c5fd4ddc8475",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/frame-overlay/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/model-trends/component?astrid=5af9cae28f75",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/model-trends/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/neon-orbit-card/component?astrid=49e623b53a97",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/neon-orbit-card/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/scrolling-guide/component?astrid=5844fc4a38d9",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/scrolling-guide/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/sliding-media/component?astrid=6be2095b4372",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/sliding-media/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-rendering-elements-effects/text-card/component?astrid=449e384e5eac",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/vibe-comfy-asset-overlay/component?astrid=35257e390682",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/vibe-comfy-bumper/component?astrid=8b2593e9ed64",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/vibe-comfy-bumper/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+      "specifier": "@pack-local-elements-effects/text-card/component?astrid=751aa44373c7",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/text-card/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts",
+      "specifier": "@banodoco/timeline-theme-2rp/src/effects/art-card/component",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/art-card/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts",
+      "specifier": "@banodoco/timeline-theme-2rp/src/effects/cta-card/component",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/cta-card/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts",
+      "specifier": "@banodoco/timeline-theme-2rp/src/effects/resource-card/component",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/resource-card/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts",
+      "specifier": "@banodoco/timeline-theme-2rp/src/effects/section-hook/component",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/section-hook/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/transitions.generated.ts",
+      "specifier": "@pack-rendering-elements-transitions/cross-fade/component?astrid=f8dd5ea2ba63",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/transitions.generated.ts",
+      "specifier": "@pack-rendering-elements-transitions/fade/component?astrid=cc155ea231de",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx"
+    },
+    {
+      "from": "remotion/src/index.ts",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/src/index.ts",
+      "specifier": "./Root",
+      "resolved": "/__readonly_main__/remotion/src/Root.tsx"
+    },
+    {
+      "from": "astrid/packs/rendering/rendering/elements/animations/fade/component.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-burst/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-burst/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-callout/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-callout/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-churn/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-churn/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-churn/component.tsx",
+      "specifier": "../am-flap/flap",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-flap/flap.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-churn/component.tsx",
+      "specifier": "./ledger",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-churn/ledger.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/component.tsx",
+      "specifier": "./discord-core",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-discord/discord-core.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-droste/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-droste/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx",
+      "specifier": "./flap",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-flap/flap.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+      "specifier": "./volume",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/volume.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+      "specifier": "../../_shared/mosaic",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/component.tsx",
+      "specifier": "./shape-cells",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/shape-cells.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+      "specifier": "../../_shared/mosaic",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+      "specifier": "./presenter-core",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+      "specifier": "./motion",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-quote/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-quote/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx",
+      "specifier": "../am-presenter/presenter-core",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx",
+      "specifier": "./motion",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/motion.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx",
+      "specifier": "../../_shared/mosaic",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx",
+      "specifier": "../../../../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx",
+      "specifier": "../../../../shared/readiness-image",
+      "resolved": "/__readonly_main__/astrid/packs/local/shared/readiness-image.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx",
+      "specifier": "./motion",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/animated-media-transform/motion.ts"
+    },
+    {
+      "from": "astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx",
+      "specifier": "../../../../shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-codex-transform/component.tsx",
+      "specifier": "../../../../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-codex-transform/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-codex-transform/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-mid-combined/component.tsx",
+      "specifier": "../../../../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-mid-combined/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-mid-combined/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-minimax-animate/component.tsx",
+      "specifier": "../../../../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-minimax-animate/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-minimax-animate/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx",
+      "specifier": "../../../../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx",
+      "specifier": "./timing",
+      "resolved": "/__readonly_main__/astrid/packs/local/rendering/elements/effects/end-spanning-layer/timing.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/ending-carousel/component.tsx",
+      "specifier": "../../../../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/ending-carousel/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/ending-carousel/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/event-card/component.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/event-card/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/event-card/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/frame-overlay/component.tsx",
+      "specifier": "../../../../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/frame-overlay/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/frame-overlay/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/model-trends/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/model-trends/component.tsx",
+      "specifier": "../../../../shared/clip-effects",
+      "resolved": "/__readonly_main__/astrid/packs/local/shared/clip-effects.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/model-trends/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/neon-orbit-card/component.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/neon-orbit-card/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/neon-orbit-card/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/scrolling-guide/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/scrolling-guide/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/sliding-media/component.tsx",
+      "specifier": "../../../../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/sliding-media/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/sliding-media/component.tsx",
+      "specifier": "../../../../shared/clip-effects",
+      "resolved": "/__readonly_main__/astrid/packs/local/shared/clip-effects.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/sliding-media/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx",
+      "specifier": "../../../../shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/component.tsx",
+      "specifier": "../../../../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/vibe-comfy-bumper/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/text-card/component.tsx",
+      "specifier": "../../../../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/text-card/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/text-card/component.tsx",
+      "specifier": "../../../../shared/clip-effects",
+      "resolved": "/__readonly_main__/astrid/packs/local/shared/clip-effects.ts"
+    },
+    {
+      "from": "astrid/packs/local/rendering/elements/effects/text-card/component.tsx",
+      "specifier": "../../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/art-card/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/art-card/component.tsx",
+      "specifier": "@banodoco/timeline-composition/theme-api",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/cta-card/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/cta-card/component.tsx",
+      "specifier": "@remotion/layout-utils",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@remotion/layout-utils/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/cta-card/component.tsx",
+      "specifier": "@banodoco/timeline-composition/theme-api",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/resource-card/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/resource-card/component.tsx",
+      "specifier": "@banodoco/timeline-composition/theme-api",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/section-hook/component.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/section-hook/component.tsx",
+      "specifier": "@remotion/layout-utils",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@remotion/layout-utils/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-theme-2rp/src/effects/section-hook/component.tsx",
+      "specifier": "@banodoco/timeline-composition/theme-api",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts"
+    },
+    {
+      "from": "remotion/src/Root.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/src/Root.tsx",
+      "specifier": "@remotion/media",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@remotion/media/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/src/Root.tsx",
+      "specifier": "@banodoco/timeline-composition",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/index.ts"
+    },
+    {
+      "from": "remotion/src/Root.tsx",
+      "specifier": "./fonts",
+      "resolved": "/__readonly_main__/remotion/src/fonts.ts"
+    },
+    {
+      "from": "remotion/src/Root.tsx",
+      "specifier": "./ReviewOverlay",
+      "resolved": "/__readonly_main__/remotion/src/ReviewOverlay.tsx"
+    },
+    {
+      "from": "remotion/src/Root.tsx",
+      "specifier": "./FrameDiagnostics",
+      "resolved": "/__readonly_main__/remotion/src/FrameDiagnostics.tsx"
+    },
+    {
+      "from": "remotion/src/Root.tsx",
+      "specifier": "./BoundsProbe",
+      "resolved": "/__readonly_main__/remotion/src/BoundsProbe.tsx"
+    },
+    {
+      "from": "remotion/src/Root.tsx",
+      "specifier": "./asset-source",
+      "resolved": "/__readonly_main__/remotion/src/asset-source.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx",
+      "specifier": "../../../../rendering/shared/element_contracts",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/element_contracts.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/flap.tsx",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/discord-core.ts",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts",
+      "specifier": "./presenter-core",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/motion.ts",
+      "specifier": "../../_shared/am",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx"
+    },
+    {
+      "from": "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/motion.ts",
+      "specifier": "../am-presenter/presenter-core",
+      "resolved": "/__readonly_main__/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts"
+    },
+    {
+      "from": "astrid/packs/rendering/shared/managed-media.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/rendering/shared/managed-media.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/rendering/shared/managed-media.tsx",
+      "specifier": "@remotion/media",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@remotion/media/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/rendering/shared/managed-media.tsx",
+      "specifier": "./managed-media-policy",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media-policy.ts"
+    },
+    {
+      "from": "astrid/packs/local/shared/readiness-image.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "astrid/packs/local/shared/readiness-image.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "astrid/packs/local/shared/readiness-image.tsx",
+      "specifier": "../../rendering/shared/managed-media",
+      "resolved": "/__readonly_main__/astrid/packs/rendering/shared/managed-media.tsx"
+    },
+    {
+      "from": "astrid/packs/local/shared/clip-effects.ts",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts",
+      "specifier": "./lib/animations",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/animations.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts",
+      "specifier": "./ThemeContext",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/ThemeContext.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/index.ts",
+      "specifier": "./TimelineComposition",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/index.ts",
+      "specifier": "./lib/animations",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/animations.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/index.ts",
+      "specifier": "./ThemeContext",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/ThemeContext.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/index.ts",
+      "specifier": "./lib/duration",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/duration.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/index.ts",
+      "specifier": "./registry.generated",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts"
+    },
+    {
+      "from": "remotion/src/fonts.ts",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/src/fonts.ts",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "remotion/src/ReviewOverlay.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/src/FrameDiagnostics.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "remotion/src/FrameDiagnostics.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/src/BoundsProbe.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "remotion/src/BoundsProbe.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/src/BoundsProbe.tsx",
+      "specifier": "./bounds",
+      "resolved": "/__readonly_main__/remotion/src/bounds.ts"
+    },
+    {
+      "from": "remotion/src/asset-source.ts",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/animations.tsx",
+      "specifier": "../animations.generated",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/animations.generated.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/ThemeContext.tsx",
+      "specifier": "react",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/react/index.js"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx",
+      "specifier": "./AudioTrack",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/AudioTrack.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx",
+      "specifier": "./effects.generated",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx",
+      "specifier": "./ThemeContext",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/ThemeContext.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx",
+      "specifier": "./VisualClip",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/VisualClip.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx",
+      "specifier": "./lib/effect-params",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/effect-params.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx",
+      "specifier": "./lib/duration",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/duration.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx",
+      "specifier": "./lib/tracks",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/tracks.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/TimelineComposition.tsx",
+      "specifier": "./lib/transitions",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/transitions.tsx"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/AudioTrack.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/AudioTrack.tsx",
+      "specifier": "./lib/duration",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/duration.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/AudioTrack.tsx",
+      "specifier": "./lib/trim",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/trim.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/VisualClip.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/VisualClip.tsx",
+      "specifier": "@remotion/media",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@remotion/media/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/VisualClip.tsx",
+      "specifier": "./lib/duration",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/duration.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/VisualClip.tsx",
+      "specifier": "./lib/render-bounds",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/render-bounds.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/VisualClip.tsx",
+      "specifier": "./lib/fade",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/fade.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/VisualClip.tsx",
+      "specifier": "./lib/trim",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/trim.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/transitions.tsx",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/transitions.tsx",
+      "specifier": "../transitions.generated",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/transitions.generated.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/trim.ts",
+      "specifier": "./duration",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/duration.ts"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/fade.ts",
+      "specifier": "remotion",
+      "resolved": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/remotion/dist/esm/index.mjs"
+    },
+    {
+      "from": "remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/fade.ts",
+      "specifier": "./duration",
+      "resolved": "/__readonly_main__/remotion/node_modules/@banodoco/timeline-composition/typescript/src/lib/duration.ts"
+    }
+  ]
+}

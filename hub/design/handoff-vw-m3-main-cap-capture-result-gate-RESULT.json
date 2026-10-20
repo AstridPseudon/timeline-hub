@@ -1,0 +1,85 @@
+{
+  "worker": "vw-m3-main-cap-capture-result-gate",
+  "status": "FAIL",
+  "result_id": "vw-m3-main-cap-controller-repair-e2e-viewing-main6-image-cap-three-stills-1020113140-6461",
+  "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/vw-m3-main-cap-controller-repair-e2e-viewing-main6-image-cap-three-stills-1020113140-6461",
+  "central": {
+    "status_file": "fail",
+    "exit": 1,
+    "elapsed_seconds": 27,
+    "request": "capture",
+    "suite": "e2e-viewing-main6-image-cap-three-stills",
+    "tree": "246453d77324b9a20cb795df2ccb507927beebb6"
+  },
+  "failure": {
+    "phase": "webpack_bundle_before_metadata_or_stills",
+    "error": "Module not found: Can't resolve @banodoco/timeline-theme-2rp/src/effects/art-card/component",
+    "missing_package": "@banodoco/timeline-theme-2rp",
+    "missing_package_in_qualified_graph": true,
+    "generated_registry_imports": [
+      "@banodoco/timeline-theme-2rp/src/effects/art-card/component",
+      "@banodoco/timeline-theme-2rp/src/effects/cta-card/component",
+      "@banodoco/timeline-theme-2rp/src/effects/resource-card/component",
+      "@banodoco/timeline-theme-2rp/src/effects/section-hook/component"
+    ],
+    "diagnosis": "Capture graph/staging dependency closure is incomplete for the frozen generated Composition registry; no pixel or product conclusion is valid."
+  },
+  "counts": {
+    "pngs": 0,
+    "metadata_files": 0,
+    "requested_frames": 3,
+    "observed_frames": 0,
+    "raw_replay_outputs": 7,
+    "raw_replay_byte_equal": true,
+    "original_main_files_byte_equal": 2414,
+    "locked_composition_regular_members": 29,
+    "physical_graph_entries": 21488,
+    "six_peer_prepost_valid": true
+  },
+  "source_and_guards": {
+    "main": "a411628f8fd6129f9c58c332019b56769d997384",
+    "composition6": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+    "graph_checkout": "f8164bef73215272562c4d6974acadbd82c2898a",
+    "graph_manifest_sha256": "9e556a876a02ee4f4ed3e8215eaaf793ac0ba66a6d85e503747f635521acc425",
+    "source_byte_equal_postflight": true,
+    "graph_unchanged_postflight": true,
+    "postflight_valid": false,
+    "postflight_invalid_reason": "central bundler command exit 1",
+    "raw_hold": 5,
+    "projected_hold": 4,
+    "serialized_hold": 4,
+    "fps": 30,
+    "static_public_binding_is_analog_only": true,
+    "live_runtime_claim": false
+  },
+  "pixel_measurement": {
+    "instrument": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-pixel-instrument-measure.py",
+    "instrument_sha256": "14273d682c07047e5bead807224a714de835b8314ea4f947fe68afb2c76b9997",
+    "self_test": "PASS exit 0",
+    "actual_invocation": "FAIL_CLOSED exit 2: missing frame-90 control",
+    "roi": [192, 108, 1536, 864],
+    "background_rgb": [5, 8, 20],
+    "frames": [90, 105, 119],
+    "png_alpha_is_layer_opacity": false,
+    "observed_pixels": false,
+    "golden_selected": false
+  },
+  "approved_hashes": {
+    "controller.py": "41455095972277d6e2b8da04f7796bfb6579cb960c948f64b7fed1e5adc2fde3",
+    "render.mjs": "c5be04066bfef43c76b97464f9ce1cc981ca9fc36a224bd2ffe0a078338437e4",
+    "COMMAND.txt": "234e79bec954b7378a761f2ad3a9c7aed3fb0c618fe5aefc6cc9fbf4e01581cf"
+  },
+  "preserved_artifacts": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/vw-m3-main-cap-controller-repair-e2e-viewing-main6-image-cap-three-stills-1020113140-6461/log.txt",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-capture.log",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-preflight.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-postflight.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-graph-pre.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-graph-post.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-offline-postflight.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-seven-output-replay.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-result-gate-measurement.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-raw-closure.json"
+  ],
+  "next_step": "Qualify/fix the private capture dependency closure for the generated theme imports, add import-closure preflight, then obtain a new reviewed central capture attempt."
+}

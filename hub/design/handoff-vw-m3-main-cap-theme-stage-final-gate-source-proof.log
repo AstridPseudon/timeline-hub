@@ -1,0 +1,3 @@
+PASS: 2414 original MAIN files; lock-exact 29-member Composition6; 20 git-tag theme0.1.1 files; only manifest differs from0.1.0
+PASS: failed attempt preserved seven equal outputs and source/full-graph postflight; no PNGs
+Theme archive integrity NOT re-verified (prior403); accepted tag-tree proof retained

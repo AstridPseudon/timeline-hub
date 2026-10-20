@@ -1,0 +1,15 @@
+test_both_hashes_and_path_only_refusal_before_allocation_or_execution (__main__.Guards.test_both_hashes_and_path_only_refusal_before_allocation_or_execution) ... ok
+test_disk_boundaries_and_quiet (__main__.Guards.test_disk_boundaries_and_quiet) ... ok
+test_disk_failure_allocates_nothing (__main__.Guards.test_disk_failure_allocates_nothing) ... ok
+test_durable_pinned_main_reads (__main__.Guards.test_durable_pinned_main_reads) ... ok
+test_historical_theme_source_and_main_version (__main__.Guards.test_historical_theme_source_and_main_version) ... ok
+test_missing_grant_precedes_preflight_or_allocation (__main__.Guards.test_missing_grant_precedes_preflight_or_allocation) ... ok
+test_partial_staging_and_postflight_failure_cleanup (__main__.Guards.test_partial_staging_and_postflight_failure_cleanup) ... ok
+test_refusal_preserves_existing_directory_file_and_symlink (__main__.Guards.test_refusal_preserves_existing_directory_file_and_symlink) ... ok
+test_renderer_hash_guards_without_renderer_execution (__main__.Guards.test_renderer_hash_guards_without_renderer_execution) ... ok
+test_success_cleanup_and_no_automatic_retry (__main__.Guards.test_success_cleanup_and_no_automatic_retry) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 1.444s
+
+OK

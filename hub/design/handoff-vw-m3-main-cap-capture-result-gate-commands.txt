@@ -1,0 +1,22 @@
+# Read-only commands run by vw-m3-main-cap-capture-result-gate
+
+# Existing central result inspection; no request submitted.
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/vw-m3-main-cap-controller-repair-e2e-viewing-main6-image-cap-three-stills-1020113140-6461/status
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/vw-m3-main-cap-controller-repair-e2e-viewing-main6-image-cap-three-stills-1020113140-6461/summary
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-capture.log
+
+# Artifact/source and graph diagnosis; read-only.
+tar -xOzf /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-main-source.tar.gz remotion/node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts
+find /home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@banodoco -mindepth 1 -maxdepth 1 -type d -printf '%f\n'
+test -e /home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@banodoco/timeline-theme-2rp; echo "$?"
+
+# Approved artifact hash check; exit 0.
+sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-controller.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-render.mjs /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-COMMAND.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-pixel-instrument-measure.py
+
+# Independent pixel instrument self-test; exit 0.
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-pixel-instrument-measure.py --self-test
+
+# Actual-file invocation; exit 2 FAIL_CLOSED because frame-90 control is absent.
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-pixel-instrument-measure.py --source /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-image.png --background-rgb 5 8 20 --control /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-frame-90.png --frame 90=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-frame-90.png --frame 105=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-frame-105.png --frame 119=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-frame-119.png --roi 192 108 1536 864 --output /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-result-gate-measurement.json
+
+# Result: no actual Root metadata, PNG hash, dimension, opacity, or golden claim.
