@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T08:03:44Z | dispatcher heartbeat 15s -->
+<!-- main | 2026-10-20T08:09:02Z | dispatcher heartbeat 8s -->
 # runtime — 2026-10-20T05:59Z
 Milestone: M1 RECORDED. M2/M3 small gated merges.
 Integrated: Runtime tl/integration e8a24e3 (contract/client 0.2.8). Full (full-restore-integration 1020054712, tree 0b3be24): 4918 pass / 7 baseline fail / 18 skip / 26 xfail / 0 new. Merged today: pack-document-read, render-pub xfail+stray-file fix, option B (candidate-less working copy -> cas/UNCERTIFIED), full-triage timeline+shots (catalog RK01 restored), catalog door 404 expectation.
@@ -36,5 +36,7 @@ Running: scope-deny (parked), retired-ops-removal, capture-verifier-trim, delive
 Running: scope-deny (parked), retired-ops-removal, size-census, tuple-fill.
 08:07 (clock ~08:05) *** runtime-current-tuple.md PUBLISHED *** at Runtime 9f59dd4 (tree 52acbf1c), contract/clients 0.2.8, SCHEMA_DIGEST a4e1eebd, artifact manifest 4010d93b, checks 126 pass; Agent/App told (runtime-coordination). Next tuple pending: retired-ops removal 142->133 (worker still running), D13 (regen needed; 5a394fd not on integration), Agent schema. 07:53 delivery decision ACK: dispatched rt-m4-delivery-linearize (squashed `git diff --binary` series + bundle, tree-equality verify, generic 4 repos, park as bin/delivery-build; first dry-run FAILED as predicted). Size census DONE -> escalation runtime-20261020T0805Z-size-budget-boundary (Runtime product 49.7k lines, +3.7k vs main; main baseline alone exceeds 20-26k; boundary decision needed). Dispatched rt-m2-commit-path-dedup (candidates 1-6, ~140 lines).
 Running: scope-deny (parked), retired-ops-removal, delivery-linearize, commit-path-dedup.
+08:12 ACK 08:00 (size boundary = timeline core only; bigger cuts after D01; M4 size census per area). rt-m4-delivery-linearize DONE: bin/delivery-build, dry-run PASS all four repos centrally (agent 125 commits/runtime 105/app 87/composition 29, one squashed patch each, trees equal, bundles verify); suite runtime delivery-dryrun updated; final run only at hard stop after gate-results.md. Dispatched rt-m2-generated-data-trim (read-only analysis of 11.4k generated/frozen data lines). Disk 6.0G free (watch). Queue: 4 Runtime fulls QUEUED behind Agent fulls (two of mine are redundant: 1020070056 obsolete; 1020072856 on 84be33c stale) — real full needed on final head after scope-deny/dedup/removal merge.
+Running: scope-deny (parked), retired-ops-removal, commit-path-dedup, generated-data-trim.
 Workers live: 4. Next dispatch when removal lands: regeneration worker (D13 + auto-placement + schema), verified-read internal consolidation.
 Resources: ~9GB free.

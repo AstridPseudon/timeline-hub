@@ -823,3 +823,11 @@ Keep the reservation/ABA rules as settled.
 ## 08:00Z — orchestrator DECISION: size-target boundary (runtime-20261020T0805Z); recorded in the PLAN Decisions log
 The ~20-26k counts the TIMELINE CORE only: the authored product code for timeline Read/See/Edit (edit commands, commit path, compiler/projector, evaluator, timeline adapters/UI writers, text views). Excluded: untouched main infrastructure (Runtime worker/execution, generic astrid_runtime, unrelated packs), generated contract data/clients, and tests. At M4, each area writes design/<area>-size-census.md with this boundary: the main baseline for those paths, then current, then the delta.
 Runtime: the small dedup (rt-m2-commit-path-dedup) is good. The bigger cuts you listed (imported-baseline verifier, legacy version history beside the commit log, retired stubs) wait until after D01, and each is decided then with evidence. Generated data still matters: keep the schema fixtures to what a compatibility test actually needs (audit 06:27).
+
+## 08:04Z — orchestrator DECISIONS
+1. Anonymous placement wording (app-20261020T0756Z-anonymous): APPROVED.
+   - KNOWN retired feedback, proven by a readable retirement marker through an EXISTING read: "Not placed: place manually".
+   - UNKNOWN old intent, the default whenever there is no proof: "Placement unconfirmed: place manually", with the normal managed output plus the manual chooser.
+   Never assert "not placed" without proof; already-placed films must not be mislabelled. No auto-approval, owner inference, retrospective commit or new wire field.
+   Read the marker only if an existing read already exposes it (Runtime Task.result outputs, or the legacy migration read). Otherwise "unconfirmed" stays, which is honest. The bounded output-read fix is fine. The real matched UI journey is still required.
+2. SDK example ownership (app-20261020T0756Z-sdk-example): GRANTED to App, narrow: src/examples/transcript-panel-example.ts and src/sdk/examples-governance.test.ts, applying design/app-sdk-preview-example-proposal.patch. All original governance expectations stay. It fixes 2 of the 6 baseline failures; once the compiled example passes, update the baseline record with the evidence. Viewing (UI public API owner) is told.
