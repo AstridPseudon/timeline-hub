@@ -141,7 +141,7 @@ def coalesce(records, state=None):
     return result
 
 
-def check_intervening(records, intervening_records, *, include_reads=True, state=None):
+def check_intervening(records, intervening_records, *, include_reads=True, state=None, identities_only=False):
     if intervening_records is None:
         raise CommandError('complete intervening history is required', kind='history_unavailable')
     guarded, source_roots = [], []
@@ -164,6 +164,22 @@ def check_intervening(records, intervening_records, *, include_reads=True, state
                     guarded.append((ref, ('id',)))
                 elif ref.startswith('occurrence:') and '/' not in ref:
                     guarded.append((ref, ('occurrence_id',)))
+    if identities_only:
+        # Ordinary replay checks values and membership on the final head. Only
+        # identity replacement must remain sensitive to intervening history.
+        refs = [ref for ref, _ in guarded]
+        refs.extend(ref for selected in selections
+                    for ref in [selected['owner'], *selected['members'], *selected['boundaries']])
+        refs.extend(ref for ref, _ in source_roots)
+        source_roots = []
+        guarded = []
+        for ref in refs:
+            if member(ref) is not None:
+                guarded.append((ref, ('id',)))
+            owner = ref.split('/', 1)[0]
+            root = root_identity(owner)
+            guarded.append((owner, (root[0] + '_id',) if root else ('id',)))
+        selections = []
     root_address = _root_addresses(records, state)
     for record in intervening_records:
         if not isinstance(record, dict) or 'writes' not in record:

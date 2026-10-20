@@ -147,13 +147,16 @@ def test_original_capture_rejects_relevant_changes_atomically(change):
     ('parent', ['clips'], []),
     ('parent/clip:clip-a', ['app', 'astrid', 'on'], None),
 ])
-def test_aba_and_same_value_authored_publications_conflict(ref, path, value):
+def test_equal_state_rebase_keeps_identity_replacement_and_inverse_guards(ref, path, value):
     original = bundle_from_document(delete_document())
     plan = execute(original, [capture_clip_delete(original, 'parent/clip:clip-b')])
     intervening = [later(ref, path, value)]
-    with pytest.raises(CommandError) as error:
-        replay(plan, original, intervening_records=intervening)
-    assert error.value.kind == 'intervening_write'
+    if path == ['id'] or ref == 'parent':
+        with pytest.raises(CommandError) as error:
+            replay(plan, original, intervening_records=intervening)
+        assert error.value.kind == 'intervening_write'
+    else:
+        assert replay(plan, original, intervening_records=intervening).records == plan.records
     with pytest.raises(CommandError) as error:
         inverse(plan.bundle, plan.records, intervening)
     assert error.value.kind == 'intervening_write'

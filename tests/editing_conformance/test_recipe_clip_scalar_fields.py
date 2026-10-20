@@ -195,8 +195,7 @@ def test_disjoint_rebase_unchanged_write_history_aba_and_inverse():
     rebased = replay(plan, other.bundle, intervening_records=other.records)
     assert inverse(rebased.bundle, rebased.records).bundle == other.bundle
     for history in ([later(REF, ['hold'], 1)], [later(REF, ['hold'], 2), later(REF, ['hold'], 1)]):
-        with pytest.raises(CommandError, match='intervening'):
-            replay(plan, original, intervening_records=history)
+        assert replay(plan, original, intervening_records=history).records == plan.records
         with pytest.raises(CommandError, match='intervening'):
             inverse(plan.bundle, plan.records, history)
 
@@ -318,8 +317,7 @@ def test_matching_static_duration_leaves_only_and_unchanged_aba_guards(prefix):
     for history in ([later(REF, path, 1)], [later(REF, path, 2), later(REF, path, 1)]):
         with pytest.raises(CommandError, match='intervening'):
             inverse(plan.bundle, plan.records, history)
-        with pytest.raises(CommandError, match='intervening'):
-            replay(plan, original, intervening_records=history)
+        assert replay(plan, original, intervening_records=history).records == plan.records
     changed = execute(original, [capture_clip_set(original, REF, values={'hold': 2})])
     assert all(w['after'] == present(2) for w in changed.records[0]['writes'])
     head = copy.deepcopy(changed.bundle)

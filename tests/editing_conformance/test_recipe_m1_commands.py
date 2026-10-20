@@ -191,10 +191,9 @@ def test_disjoint_same_child_rebase_and_original_guards_after_materialization():
     with pytest.raises(CommandError) as error:
         execute(changed, [b_command])
     assert error.value.kind == 'dependency_changed'
-    # Dependent handoff predicates allow equal-state A->A; accepted inverse does not.
+    # Ordinary handoff and rebase allow equal final state; inverse does not.
     execute(head, [b_command])
-    with pytest.raises(CommandError):
-        replay(b, head, intervening_records=[later(ref, ['at'], 2)])
+    assert replay(b, head, intervening_records=[later(ref, ['at'], 2)]).commands == b.commands
 
 
 @pytest.mark.parametrize('change', ['owner', 'source', 'rate', 'blocker', 'order'])
@@ -219,15 +218,17 @@ def test_changed_map_source_owner_and_query_order_refuse(change):
         replay(plan, head)
 
 
-def test_replay_permits_disjoint_and_rejects_leaf_ancestor_aba_and_noop():
+def test_replay_permits_disjoint_and_equal_state_while_inverse_guards_aba():
     original = bundle(app={'opaque': {'x': 1}, 'astrid': {'opaque': 2}})
     plan = execute(original, [capture_move(original, 'parent/clip:direct', 4)])
     head = copy.deepcopy(original)
     clip(head)['app']['opaque']['x'] = 2
     assert clip(replay(plan, head).bundle)['app']['opaque']['x'] == 2
     for path in (['at'], ['app'], ['app', 'astrid', 'for'], ['track']):
+        history = [later('parent/clip:direct', path, 3)]
+        assert replay(plan, original, intervening_records=history).records == plan.records
         with pytest.raises(CommandError) as error:
-            replay(plan, original, intervening_records=[later('parent/clip:direct', path, 3)])
+            inverse(plan.bundle, plan.records, history)
         assert error.value.kind == 'intervening_write'
     inverse(plan.bundle, plan.records, [later('parent/clip:direct', ['opaque'], 1)])
     with pytest.raises(CommandError) as error:
@@ -909,3 +910,32 @@ def test_overlapping_read_is_verified_at_input_and_bad_late_stage_is_atomic(nati
     with pytest.raises(CommandError):
         inverse(head, broken)
     assert head == plan.bundle
+
+
+@pytest.mark.parametrize('source', ['source-shot', 'shot-placement-' + 'a' * 64])
+def test_reverse_materialization_alias_requires_exact_source_and_occurrence(source):
+    from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+
+    parent, shots, internals = _closure()
+    shots[0]['shot_id'] = source
+    for row in parent['payload']['occurrences']:
+        row['shot_id'] = source
+    parent['content_digest'] = _digest(parent['payload'])
+    original = open_authoring_bundle(parent, shot_revisions=shots,
+                                     internal_timeline_revisions=internals)
+    state = State(original)
+    ref = 'occurrence:occ-1/shot'
+    expected = present(_authoring_shot_id(original['project_id'], original['timeline_id'],
+                                          'occ-1', source, shared=True))
+    assert state.matches(ref, ['shot_id'], expected)
+    assert not state.matches('occurrence:occ-2/shot', ['shot_id'], expected)
+    for project, timeline, identity in [(original['project_id'], original['timeline_id'], 'other-source'),
+                                       ('other-project', original['timeline_id'], source),
+                                       (original['project_id'], 'other-timeline', source)]:
+        unrelated = present(_authoring_shot_id(project, timeline, 'occ-1', identity, shared=True))
+        assert not state.matches(ref, ['shot_id'], unrelated)
+    owner = state.occurrence('occurrence:occ-1')['shot_id']
+    original['source_mapping']['shots'][owner]['shot_id'] = 'other-source'
+    with pytest.raises(CommandError) as error:
+        state.matches(ref, ['shot_id'], expected)
+    assert error.value.kind == 'identity_conflict'

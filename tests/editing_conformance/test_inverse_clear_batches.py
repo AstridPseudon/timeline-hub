@@ -117,7 +117,7 @@ def test_native_clear_set_orderings_exact_replay_inverse_redo(container, orderin
 
 @pytest.mark.parametrize('container', CONTAINERS[:4])
 @pytest.mark.parametrize('aba', [False, True])
-def test_noop_batch_keeps_leaf_and_ancestor_publication_guards(monkeypatch, container, aba):
+def test_noop_batch_allows_equal_state_rebase_and_keeps_inverse_publication_guards(monkeypatch, container, aba):
     install_staging_operations(monkeypatch)
     original = bundle()
     State(original).set(REF, ['params'], container)
@@ -133,11 +133,10 @@ def test_noop_batch_keeps_leaf_and_ancestor_publication_guards(monkeypatch, cont
         writes.append({'ref': REF, 'path': path,
                        'before': present('away') if aba else before, 'after': before})
         history = [{'writes': writes}]
-        for apply in (lambda: replay(plan, original, intervening_records=history),
-                      lambda: inverse(original, plan.records, history)):
-            with pytest.raises(CommandError) as error:
-                apply()
-            assert error.value.kind == 'intervening_write'
+        assert replay(plan, original, intervening_records=history).records == plan.records
+        with pytest.raises(CommandError) as error:
+            inverse(original, plan.records, history)
+        assert error.value.kind == 'intervening_write'
 
 
 def test_leaf_batch_preserves_disjoint_concurrent_edits_and_refuses_guarded_changes(monkeypatch):
@@ -156,8 +155,7 @@ def test_leaf_batch_preserves_disjoint_concurrent_edits_and_refuses_guarded_chan
     assert undone.bundle == head
     assert inverse(undone.bundle, undone.records).bundle == head
     history[0]['writes'][0]['path'] = PATH
-    for apply in (lambda: replay(plan, original, intervening_records=history),
-                  lambda: inverse(original, plan.records, history)):
-        with pytest.raises(CommandError) as error:
-            apply()
-        assert error.value.kind == 'intervening_write'
+    assert replay(plan, original, intervening_records=history).records == plan.records
+    with pytest.raises(CommandError) as error:
+        inverse(original, plan.records, history)
+    assert error.value.kind == 'intervening_write'

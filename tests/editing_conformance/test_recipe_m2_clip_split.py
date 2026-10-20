@@ -165,7 +165,7 @@ def test_aba_dependent_edits_collision_and_missing_history_refuse_atomically():
     plan = split(original)
     aba = [later(TARGET, ['to'], 8), later(TARGET, ['to'], 6)]
     assert_refusal_unchanged(plan.bundle, lambda: inverse(plan.bundle, plan.records, aba), kind='intervening_write')
-    assert_refusal_unchanged(original, lambda: replay(plan, original, intervening_records=aba), kind='intervening_write')
+    assert replay(plan, original, intervening_records=aba).records == plan.records
     assert_refusal_unchanged(plan.bundle, lambda: inverse(plan.bundle, plan.records, None), kind='history_unavailable')
     assert_refusal_unchanged(plan.bundle, lambda: inverse(plan.bundle, []), kind='history_unavailable')
     dependent = execute(plan.bundle, [capture_clip_set_params(plan.bundle, RIGHT, values={'volume': .2})])
