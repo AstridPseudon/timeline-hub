@@ -438,14 +438,14 @@ test('config model update notifications refresh only an owned session model cach
     assert.equal((await call('/connect', { agent: 'claude-code' })).status, 200);
     assert.equal((await call('/notify-connection/rpc', { method: 'session/load', params: { sessionId: 'claude-code:owned' } })).status, 200);
     assert.deepEqual(await (await call('/notify-connection/models?sessionId=claude-code%3Aowned')).json(), {
-      models: { currentModelId: 'alpha', availableModels: [{ modelId: 'alpha', name: 'ALPHA' }, { modelId: 'beta', name: 'BETA' }] },
+      models: { currentModelId: 'alpha', modelConfigId: 'model', availableModels: [{ modelId: 'alpha', name: 'ALPHA' }, { modelId: 'beta', name: 'BETA' }] },
     });
     onNotification?.({
       jsonrpc: '2.0', method: 'session/update',
       params: { sessionId: 'claude-code:owned', update: { sessionUpdate: 'config_option_update', configOptions: configOptions('gamma', ['beta', 'gamma']) } },
     });
     assert.deepEqual(await (await call('/notify-connection/models?sessionId=claude-code%3Aowned')).json(), {
-      models: { currentModelId: 'gamma', availableModels: [{ modelId: 'beta', name: 'BETA' }, { modelId: 'gamma', name: 'GAMMA' }] },
+      models: { currentModelId: 'gamma', modelConfigId: 'model', availableModels: [{ modelId: 'beta', name: 'BETA' }, { modelId: 'gamma', name: 'GAMMA' }] },
     });
     onNotification?.({
       jsonrpc: '2.0', method: 'session/update',

@@ -47,6 +47,7 @@ test('reports Not installed when external CLIs are absent and has no adapter fie
       { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'ready', line: null },
       { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'not-installed', line: LOCAL_AGENT_TABLE['claude-code'].notInstalledLine },
       { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.codex.notInstalledLine },
+      { id: 'hermes', name: LOCAL_AGENT_TABLE.hermes.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.hermes.notInstalledLine },
     ]);
     assert.equal(LOCAL_AGENT_TABLE['claude-code'].windowsNotInstalledLine, 'In PowerShell, run `irm https://claude.ai/install.ps1 | iex`');
     assert.equal(LOCAL_AGENT_TABLE.codex.notInstalledLine, 'Install with `curl -fsSL https://chatgpt.com/codex/install.sh | sh`');
@@ -188,7 +189,7 @@ test('signed-in CLIs are Ready with no adapters installed and launch uses each p
     const bun = executable(directory, 'bun', '#!/bin/sh\nexit 0\n');
     const env = testEnv(shell, directory);
     const agents = await discoverLocalAgents({ env });
-    assert.deepEqual(agents.slice(1).map(({ id, state, line }) => ({ id, state, line })), [
+    assert.deepEqual(agents.slice(1, 3).map(({ id, state, line }) => ({ id, state, line })), [
       { id: 'claude-code', state: 'ready', line: null },
       { id: 'codex', state: 'ready', line: null },
     ]);
@@ -325,3 +326,40 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {
     }
   }, 12_000);
 }
+test('discovers Hermes with hermes acp --check and launches its native ACP command', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-hermes-'));
+  try {
+    const shell = loginShell(directory);
+    const hermes = executable(directory, 'hermes', '#!/bin/sh\n[ "$*" = "acp --check" ] || exit 91\nexit "${HERMES_CHECK_EXIT:-0}"\n');
+    const env = testEnv(shell, directory);
+    assert.equal((await discoverLocalAgents({ env }))[3]?.state, 'ready');
+    assert.deepEqual(await localAgentLaunch('hermes', env), { command: hermes, args: ['acp'], env: { PATH: directory }, cliPath: hermes });
+    assert.equal((await discoverLocalAgents({ env: { ...env, HERMES_CHECK_EXIT: '7' } }))[3]?.state, 'sign-in');
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('keeps Hermes ready when ACP check is inconclusive or times out', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-hermes-check-'));
+  try {
+    const shell = loginShell(directory);
+    executable(directory, 'hermes', '#!/bin/sh\n[ "$*" = "acp --check" ] || exit 91\ncase "$HERMES_CHECK_MODE" in unknown) kill -TERM $$ ;; timeout) /bin/sleep 10 ;; esac\n');
+    for (const mode of ['unknown', 'timeout']) {
+      const agents = await discoverLocalAgents({ env: { ...testEnv(shell, directory), HERMES_CHECK_MODE: mode } });
+      assert.equal(agents[3]?.state, 'ready', `${mode} check should remain usable`);
+    }
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('mixed external-agent authentication states stay associated with their agent', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-mixed-auth-'));
+  try {
+    const shell = loginShell(directory);
+    fake(directory, 'claude', { json: '{"loggedIn":true}', text: 'Logged in' });
+    fake(directory, 'codex', 'Logged in using ChatGPT', 0, 'stderr');
+    executable(directory, 'hermes', '#!/bin/sh\nexit 7\n');
+    const agents = await discoverLocalAgents({ env: testEnv(shell, directory) });
+    assert.deepEqual(agents.map(agent => [agent.id, agent.state]), [
+      ['astrid', 'ready'], ['claude-code', 'ready'], ['codex', 'ready'], ['hermes', 'sign-in'],
+    ]);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { EXTERNAL_AGENT_IDS } from './localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
 import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
@@ -26,14 +27,24 @@ function fixture(directory: string) {
   executable(join(bin, 'codex'), `#!${process.execPath}\nprocess.stderr.write('Logged in using ChatGPT\\n');\n`);
   const shell = join(directory, 'login-shell');
   executable(shell, `#!/bin/sh\n[ "$1" = "-lic" ] || exit 98\nprintf '\\n__ASTRID_LOGIN_PATH__%s\\n' "$ASTRID_TEST_LOGIN_PATH"\n`);
-  executable(join(bin, 'bun'), `#!${process.execPath}
+  const adapterProgram = `#!${process.execPath}
 const fs = require('node:fs');
 const readline = require('node:readline');
 const log = ${JSON.stringify(logs)};
+const native = process.argv[1].endsWith('/hermes');
+if (native && process.argv[2] === 'acp' && process.argv[3] === '--check') process.exit(0);
 const adapter = process.argv[4];
 const expected = ${JSON.stringify(LOCAL_AGENT_ADAPTERS)};
-if (process.argv[2] !== 'x' || process.argv[3] !== '--bun' || !Object.values(expected).includes(adapter)) process.exit(98);
-const agent = adapter === expected['claude-code'] ? 'claude-agent-acp' : 'codex-acp';
+if (!native && (process.argv[2] !== 'x' || process.argv[3] !== '--bun' || !Object.values(expected).includes(adapter))) process.exit(98);
+if (native && process.argv[2] !== 'acp') process.exit(98);
+const agent = native ? 'hermes' : adapter === expected['claude-code'] ? 'claude-agent-acp' : 'codex-acp';
+let model = 'model-a';
+let effort = 'low';
+const effortId = agent === 'codex-acp' ? 'reasoning_effort' : 'effort';
+const configOptions = () => native ? [] : [
+  {id:'model',name:'Model',category:'model',type:'select',currentValue:model,options:[{value:'model-a',name:'A'},{value:'model-b',name:'B'}]},
+  {id:effortId,name:'Effort',category:'thought_level',type:'select',currentValue:effort,options:[{value:'low',name:'Low'},{value:'high',name:'High'}],_meta:{jetbrains:{air:{version:1,recommendedValue:'high'}}}}
+];
 const write = value => process.stdout.write(JSON.stringify(value) + '\\n');
 const record = value => fs.appendFileSync(log, JSON.stringify({agent, value}) + '\\n');
 const waiting = new Map();
@@ -56,13 +67,19 @@ rl.on('line', async line => {
   if (message.id === undefined) { record({notification:message}); return; }
   if (message.method === 'initialize') {
     record({method:message.method, params:message.params});
-    write({jsonrpc:'2.0',id:message.id,result:{protocolVersion:1,agentCapabilities:{loadSession:true,sessionCapabilities:{list:{},resume:{},close:{}}}}});
+    write({jsonrpc:'2.0',id:message.id,result:{protocolVersion:1,agentCapabilities:{loadSession:true,sessionCapabilities:{list:{},resume:{},close:{},...(agent === 'claude-agent-acp' ? {systemPrompt:{mode:{override:{}}}} : {})}}}});
     return;
   }
   record({method:message.method, params:message.params});
-  if (message.method === 'session/new') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:'shared-native-id'}}); return; }
+  if (message.method === 'session/new') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:'shared-native-id',configOptions:configOptions()}}); return; }
+  if (message.method === 'session/set_config_option') {
+    if (message.params.configId === 'model') model = message.params.value;
+    else if (message.params.configId === effortId) effort = message.params.value;
+    write({jsonrpc:'2.0',id:message.id,result:{configOptions:configOptions()}}); return;
+  }
   if (message.method === 'session/list') { write({jsonrpc:'2.0',id:message.id,result:{sessions:[{sessionId:'shared-native-id'}]}}); return; }
   if (message.method === 'session/load' || message.method === 'session/resume') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:message.params.sessionId}}); return; }
+  if (message.method === 'session/fork') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:'forked-native-id'}}); return; }
   if (message.method === 'session/prompt') {
     record({receivedPrompt:message.params.prompt});
     await askPermission({sessionId:'shared-native-id',toolCall:{title:'Read file'},options:[{optionId:'offered-allow-once',kind:'allow_once'},{optionId:'offered-allow-always',kind:'allow_always'}]});
@@ -74,7 +91,9 @@ rl.on('line', async line => {
   write({jsonrpc:'2.0',id:message.id,result:{}});
 });
 rl.on('close', () => process.exit(0));
-`);
+`;
+  executable(join(bin, 'bun'), adapterProgram);
+  executable(join(bin, 'hermes'), adapterProgram);
   return { bin, cwd, logs, profile, shell };
 }
 
@@ -117,7 +136,7 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     const connected = await Promise.all([
-      call('/connect', { agent: 'claude-code' }), call('/connect', { agent: 'codex' }),
+      call('/connect', { agent: 'claude-code', defaultModelId: 'model-b' }), call('/connect', { agent: 'codex', defaultModelId: 'model-b' }),
     ]);
     assert.deepEqual(connected.map(response => response.status), [200, 200]);
     const claudeId = (await connected[0]!.json() as Json).connection_id as string;
@@ -134,6 +153,17 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     const created = await Promise.all([rpc(claudeId, 'session/new'), rpc(codexId, 'session/new')]);
     const sessionIds = await Promise.all(created.map(async response => (await response.json() as Json).result as Json));
     assert.deepEqual(sessionIds.map(result => result.sessionId), ['claude-code:shared-native-id', 'codex:shared-native-id']);
+    for (const [connection, agent, configId] of [[claudeId, 'claude-code', 'effort'], [codexId, 'codex', 'reasoning_effort']] as const) {
+      const sessionId = `${agent}:shared-native-id`;
+      const selected = await call(`/${connection}/model`, { sessionId, modelId: 'model-b' });
+      assert.equal(selected.status, 404);
+      assert.equal((await rpc(connection, 'session/set_config_option', { sessionId, configId, value: 'high' })).status, 200);
+      const catalog = await (await call(`/${connection}/models?sessionId=${sessionId}`)).json();
+      assert.equal(catalog.models.currentModelId, 'model-b');
+      assert.equal(catalog.models.thoughtLevel.currentValue, 'high');
+      assert.equal(catalog.models.thoughtLevel.recommendedValue, 'high');
+      assert.equal((await rpc(connection, 'session/set_config_option', { sessionId, configId, value: 'invented' })).status, 400);
+    }
     assert.equal((await rpc(claudeId, 'session/load', { sessionId: 'claude-code:shared-native-id' })).status, 200);
     assert.equal((await rpc(codexId, 'session/load', { sessionId: 'codex:shared-native-id' })).status, 200);
     assert.equal((await rpc(claudeId, 'session/resume', { sessionId: 'claude-code:shared-native-id' })).status, 200);
@@ -167,14 +197,26 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     const logged = records(f.logs);
     const claudeRecords = logged.filter(row => row.agent === 'claude-agent-acp').map(row => row.value as Json);
     const codexRecords = logged.filter(row => row.agent === 'codex-acp').map(row => row.value as Json);
+    for (const [rows, configId] of [[claudeRecords, 'effort'], [codexRecords, 'reasoning_effort']] as const) {
+      assert.deepEqual(rows.filter(row => row.method === 'session/set_config_option').map(row => row.params), [
+        { sessionId: 'shared-native-id', configId: 'model', value: 'model-b' },
+        { sessionId: 'shared-native-id', configId, value: 'high' },
+      ]);
+      const capabilities = (rows.find(row => row.method === 'initialize')!.params as Json).clientCapabilities as Json;
+      assert.deepEqual(((capabilities._meta as Json).jetbrains as Json).air, { version: 1, capabilities: ['recommendedValue'] });
+    }
     assert.equal((claudeRecords.find(row => row.startup)!).adapter, LOCAL_AGENT_ADAPTERS['claude-code']);
     assert.equal((codexRecords.find(row => row.startup)!).adapter, LOCAL_AGENT_ADAPTERS.codex);
     const claudeNew = claudeRecords.find(row => row.method === 'session/new')!.params as Json;
     assert.equal((((claudeNew._meta as Json).claudeCode as Json).options as Json).pathToClaudeCodeExecutable, join(f.bin, 'claude'));
+    const systemPrompt = claudeNew.systemPrompt as Json;
+    assert.equal(systemPrompt.mode, 'append');
+    const grounding = (systemPrompt.content as Json[]).map(part => part.text).join('\n');
+    assert.match(grounding, /PROFILE_SENTINEL/);
+    assert.match(grounding, /Load the relevant Astrid SKILL\.md/);
     const claudePrompt = claudeRecords.find(row => row.receivedPrompt)!.receivedPrompt as Json[];
     const sentText = claudePrompt.map(part => part.text).join('\n');
-    assert.match(sentText, /PROFILE_SENTINEL/);
-    assert.match(sentText, /Load the relevant Astrid SKILL\.md/);
+    assert.doesNotMatch(sentText, /PROFILE_SENTINEL|astrid_agent_context/);
     assert.match(sentText, /EDITOR_CONTEXT_SENTINEL/);
     assert.deepEqual(claudeRecords.filter(row => row.permissionResponse).map(row => ((((row.permissionResponse as Json).result as Json).outcome as Json).optionId)), ['offered-allow-always', 'offered-reject-once']);
     assert.equal((codexRecords.find(row => row.startup)!).cliPath, join(f.bin, 'codex'));
@@ -218,3 +260,138 @@ test('external agent readiness fails closed for missing CLIs and sign-in, but do
     await createLocalAgentAcpProcessHost('claude-code', options);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+
+for (const agent of EXTERNAL_AGENT_IDS) {
+  test(`${agent} delivers grounding through its capability and preserves it across session operations`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'astrid-agent-grounding-'));
+    const f = fixture(directory);
+    const host = await createLocalAgentAcpProcessHost(agent, {
+      cwd: f.cwd,
+      env: { PATH: f.bin, SHELL: f.shell, ASTRID_TEST_LOGIN_PATH: f.bin },
+      profileFileForCommand: () => f.profile,
+      callbacks: { requestPermission: () => ({ outcome: { outcome: 'cancelled' } }) },
+    });
+    try {
+      await host.initialize({ protocolVersion: 1, clientCapabilities: {} });
+      const meta = { caller: 'preserve-me', claudeCode: { caller: 'nested', options: { customOption: true } } };
+      const created = await host.newSession<Json>({ cwd: f.cwd, mcpServers: [], _meta: meta });
+      assert.equal(created.sessionId, `${agent}:shared-native-id`);
+      assert.deepEqual(await host.listSessions(), { sessions: [{ sessionId: created.sessionId }] });
+      await assert.rejects(host.loadSession({ sessionId: 'another-agents-chat' }), /different agent/);
+      const send = (sessionId: string, text: string) => host.prompt({
+        sessionId, prompt: [{ type: 'text', text: `<astrid_editor_context>${text}</astrid_editor_context>` }],
+      });
+      await send(created.sessionId as string, 'first');
+      await host.resumeSession({ sessionId: created.sessionId, cwd: f.cwd, _meta: meta });
+      await send(created.sessionId as string, 'second');
+      await host.loadSession({ sessionId: `${agent}:older-chat`, cwd: f.cwd, _meta: meta });
+      await send(`${agent}:older-chat`, 'loaded');
+      await host.resumeSession({ sessionId: `${agent}:other-old-chat`, cwd: f.cwd, _meta: meta });
+      await send(`${agent}:other-old-chat`, 'resumed');
+      const forked = await host.forkSession<Json>({ sessionId: created.sessionId, cwd: f.cwd, _meta: meta });
+      assert.equal(forked.sessionId, `${agent}:forked-native-id`);
+      await send(forked.sessionId as string, 'forked');
+      const rows = records(f.logs).map(row => row.value as Json);
+      const opening = rows.filter(row => ['session/new', 'session/load', 'session/resume', 'session/fork'].includes(row.method as string));
+      const firstSystemPrompt = (opening[0]!.params as Json).systemPrompt as Json | undefined;
+      if (agent === 'claude-code') {
+        assert.equal(firstSystemPrompt?.mode, 'append');
+        assert.match(((firstSystemPrompt?.content as Json[])[0]!.text as string), /PROFILE_SENTINEL/);
+      }
+      const prompts = rows.filter(row => row.receivedPrompt).map(row => row.receivedPrompt as Json[]);
+      assert.equal(prompts.length, 5);
+      for (const [index, prompt] of prompts.entries()) {
+        const text = prompt.map(part => part.text).join('\n');
+        assert.match(text, /astrid_editor_context/);
+        if (agent !== 'claude-code' && index === 0) {
+          assert.match(text, /<astrid_agent_context>[\s\S]*PROFILE_SENTINEL/);
+          assert.match(text, /Load the relevant Astrid SKILL\.md/);
+        } else {
+          assert.doesNotMatch(text, /astrid_agent_context|PROFILE_SENTINEL/);
+          assert.equal(prompt.length, 1);
+        }
+      }
+      for (const row of opening) {
+        const params = row.params as Json;
+        if (agent === 'claude-code') {
+          assert.deepEqual(params.systemPrompt, firstSystemPrompt);
+          const forwardedMeta = params._meta as Json;
+          assert.equal(forwardedMeta.caller, 'preserve-me');
+          const claudeMeta = forwardedMeta.claudeCode as Json;
+          assert.equal(claudeMeta.caller, 'nested');
+          assert.deepEqual(claudeMeta.options, { customOption: true, pathToClaudeCodeExecutable: join(f.bin, 'claude') });
+        } else {
+          assert.equal(params.systemPrompt, undefined);
+          assert.deepEqual(params._meta, meta);
+        }
+      }
+    } finally {
+      await host.dispose();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+}
+
+for (const agent of ['codex', 'hermes'] as const) {
+  test(`${agent} preserves an empty chat, thinking level and first grounding during browser handoff`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'astrid-grounding-handoff-'));
+    const f = fixture(directory);
+    let nextConnection = 0;
+    const sessionId = `${agent}:shared-native-id`;
+    const { server, bridge } = createAstridAcpHttpServer({
+      config: { token: 'handoff', port: 0, cwd: f.cwd },
+      idFactory: () => `c${++nextConnection}`,
+      localAgentHostFactory: async (selected, options) => {
+        const host = await createLocalAgentAcpProcessHost(selected, {
+          ...options, env: { ...options.env, PATH: f.bin, SHELL: f.shell, ASTRID_TEST_LOGIN_PATH: f.bin },
+          profileFileForCommand: () => f.profile,
+        });
+        const nativeRequest = host.request.bind(host);
+        host.request = (async (method, params) => {
+          // Empty native chats may exist only in their creating process. A
+          // second host cannot load it until a prompt persists a transcript.
+          if (method === 'session/load' && (params as Json)?.sessionId === sessionId) throw new Error('empty native session is not persisted');
+          return nativeRequest(method, params);
+        }) as typeof host.request;
+        return host;
+      },
+    });
+    const { bridgeTestClient } = await import('./bridge-test-client.ts');
+    const call = bridgeTestClient(bridge, 'handoff');
+    const rpc = (connection: string, method: string, params: Json) => call(`/${connection}/rpc`, { method, params });
+    try {
+      assert.equal((await call('/connect', { agent })).status, 200);
+      const oldSession = `${agent}:older-chat`;
+      assert.equal((await rpc('c1', 'session/load', { sessionId: oldSession })).status, 200);
+      assert.equal((await call('/connect', { agent, ...(agent === 'codex' ? { defaultModelId: 'model-b' } : {}) })).status, 200);
+      assert.equal((await rpc('c2', 'session/new', {})).status, 200);
+      const advertised = await (await call(`/c2/models?sessionId=${encodeURIComponent(sessionId)}`)).json();
+      const thoughtId = advertised.models?.thoughtLevel?.configId;
+      if (agent === 'codex') {
+        assert.equal(thoughtId, 'reasoning_effort');
+        assert.equal((await rpc('c2', 'session/set_config_option', { sessionId, configId: thoughtId, value: 'high' })).status, 200);
+      } else assert.equal(advertised.models, null);
+      assert.equal((await rpc('c1', 'session/load', { sessionId })).status, 200);
+      assert.equal((await call('/c2', undefined, { method: 'DELETE' })).status, 200);
+      const models = await (await call(`/c1/models?sessionId=${encodeURIComponent(sessionId)}`)).json();
+      if (agent === 'codex') {
+        assert.equal(models.models.currentModelId, 'model-b');
+        assert.equal(models.models.thoughtLevel.currentValue, 'high');
+      } else assert.equal(models.models, null);
+      for (const id of [sessionId, sessionId, oldSession]) {
+        assert.equal((await rpc('c1', 'session/prompt', { sessionId: id, prompt: [{ type: 'text', text: 'user' }] })).status, 200);
+      }
+      const rows = records(f.logs).map(row => row.value as Json);
+      const prompts = rows.filter(row => row.receivedPrompt).map(row => JSON.stringify(row.receivedPrompt));
+      assert.equal(prompts.length, 3);
+      assert.match(prompts[0]!, /astrid_agent_context.*PROFILE_SENTINEL/);
+      assert.doesNotMatch(prompts[1]!, /astrid_agent_context|PROFILE_SENTINEL/);
+      assert.doesNotMatch(prompts[2]!, /astrid_agent_context|PROFILE_SENTINEL/);
+      assert.equal(rows.filter(row => row.method === 'session/load' && (row.params as Json).sessionId === 'shared-native-id').length, 0);
+      assert.equal(rows.filter(row => row.method === 'session/new').length, 1);
+    } finally {
+      await bridge.close(); server.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+}

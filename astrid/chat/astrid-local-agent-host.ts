@@ -11,6 +11,9 @@ function record(value: unknown): Record<string, unknown> | null {
 
 /** Namespace only the wire ID. The adapter retains its own opaque session ID and transcript. */
 class LocalAgentAcpHost extends AcpProcessHost {
+  private supportsSystemPrompt = false;
+  private readonly needsGrounding = new Set<string>();
+
   constructor(private readonly agent: ExternalAgent, private readonly context: string, private readonly cliPath: string, options: AcpProcessHostOptions) {
     const callbacks = options.callbacks;
     super({ ...options, callbacks: { ...callbacks, onNotification: value => {
@@ -32,16 +35,39 @@ class LocalAgentAcpHost extends AcpProcessHost {
 
   override async request<T = unknown>(method: string, params?: unknown): Promise<T> {
     let input = this.nativeParams(params);
-    if (['session/new', 'session/load', 'session/resume', 'session/fork'].includes(method) && this.agent === 'claude-code') {
-      // Use the same installed Claude CLI that supplied its sign-in status.
-      input = { ...record(input), _meta: { claudeCode: { options: { pathToClaudeCodeExecutable: this.cliPath } } } };
+    const opensSession = ['session/new', 'session/load', 'session/resume', 'session/fork'].includes(method);
+    if (opensSession) {
+      if (this.agent === 'claude-code') {
+        // Use the same installed Claude CLI that supplied its sign-in status.
+        const meta = record(record(input)?._meta);
+        const claudeCode = record(meta?.claudeCode);
+        input = { ...record(input), _meta: { ...meta, claudeCode: { ...claudeCode, options: {
+          ...record(claudeCode?.options), pathToClaudeCodeExecutable: this.cliPath,
+        } } } };
+      }
+      if (this.supportsSystemPrompt) {
+        // Claude's adapter also applies this when loading, resuming, or forking a session.
+        input = { ...record(input), systemPrompt: { mode: 'append', content: [{ type: 'text', text: this.context }] } };
+      }
     }
     if (method === 'session/prompt') {
       const prompt = record(input);
       if (!Array.isArray(prompt?.prompt)) throw new Error('session/prompt requires a prompt array');
-      input = { ...prompt, prompt: [...prompt.prompt, { type: 'text', text: `\n<astrid_agent_context>\n${this.context}\n</astrid_agent_context>` }] };
+      if (typeof prompt.sessionId === 'string' && this.needsGrounding.delete(prompt.sessionId)) {
+        input = { ...prompt, prompt: [...prompt.prompt, { type: 'text', text: `\n<astrid_agent_context>\n${this.context}\n</astrid_agent_context>` }] };
+      }
     }
     const result = await super.request<unknown>(method, input);
+    if (method === 'initialize') {
+      const capabilities = record(record(result)?.agentCapabilities);
+      this.supportsSystemPrompt = Boolean(record(capabilities?.sessionCapabilities)?.systemPrompt);
+    }
+    if (method === 'session/new' && !this.supportsSystemPrompt) {
+      const sessionId = record(result)?.sessionId;
+      // Only chats created by this host need a first-message block; loaded/resumed
+      // chats (including older chats) already retain grounding in their transcript.
+      if (typeof sessionId === 'string') this.needsGrounding.add(sessionId);
+    }
     const namespaced = (value: unknown): unknown => {
       const item = record(value);
       if (!item) return value;
@@ -54,7 +80,7 @@ class LocalAgentAcpHost extends AcpProcessHost {
       const root = record(result);
       if (Array.isArray(root?.sessions)) return { ...root, sessions: root.sessions.map(namespaced) } as T;
     }
-    return (['session/new', 'session/load', 'session/resume', 'session/fork'].includes(method) ? namespaced(result) : result) as T;
+    return (opensSession ? namespaced(result) : result) as T;
   }
 
   override async cancel(params: unknown): Promise<void> {

@@ -5,6 +5,7 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { ApiError, WorkspaceClient, type Project } from './runtime-client.ts';
 import { currentRuntime } from './runtime-discovery.ts';
+import { isExternalAgentSession } from './localAgents.ts';
 
 const KEY = 'astrid_agent_chat_v1';
 export class ChatError extends Error {
@@ -21,7 +22,7 @@ export interface ChatState {
   draft: { text: string; revision: number; queued_messages: QueuedChatMessage[] };
 }
 interface StoredChat extends Omit<ChatState, 'project_id' | 'scope_key'> {
-  creating?: { operation_id: string; owner: string; expires_at: number };
+  creating?: { operation_id: string; owner: string; expires_at: number; main_session_id?: string | null };
   operations?: Record<string, string>;
 }
 type ProjectStore = Pick<WorkspaceClient, 'getProject' | 'updateProject' | 'listProjects'>;
@@ -182,6 +183,18 @@ export class ProjectChatRegistry {
       state.revision++;
     });
   }
+  async rename(projectId: string, expected: number, sessionId: string, title: string): Promise<ChatState> {
+    if (typeof title !== 'string' || !title.trim() || title.trim().length > 120) throw new ChatError(400, 'invalid_title', 'Chat title must contain 1 to 120 characters');
+    const normalizedTitle = title.trim();
+    return this.change(projectId, state => {
+      if (state.revision !== expected) throw new ChatError(409, 'chat_conflict', 'Project chat changed; reload before renaming');
+      const session = state.sessions.find(s => s.id === sessionId);
+      if (!session) throw new ChatError(403, 'session_not_owned', 'Session does not belong to this project');
+      if (session.title === normalizedTitle) return false;
+      session.title = normalizedTitle;
+      state.revision++;
+    });
+  }
   async draft(projectId: string, expected: number, text: string, queued?: QueuedChatMessage[]): Promise<ChatState> {
     return this.change(projectId, state => {
       const queuedMessages = queued ?? state.draft.queued_messages;
@@ -197,7 +210,7 @@ export class ProjectChatRegistry {
     if (!state.sessions.some(s => s.id === sessionId)) throw new ChatError(403, 'session_not_owned', 'Session does not belong to this project');
   }
   async markSessionStarted(projectId: string, sessionId: string): Promise<void> {
-    if (!/^(claude-code|codex):/.test(sessionId)) return;
+    if (!isExternalAgentSession(sessionId)) return;
     await this.change(projectId, state => {
       const session = state.sessions.find(item => item.id === sessionId);
       if (!session || session.pending_first_message === false) return false;
@@ -262,7 +275,7 @@ export class ProjectChatRegistry {
         }
       }
       if (state.creating && state.creating.expires_at > this.now()) throw new ChatError(409, 'chat_creation_pending', 'A chat session is being created; retry shortly');
-      state.creating = { operation_id: operationId, owner, expires_at: this.now() + 120_000 };
+      state.creating = { operation_id: operationId, owner, expires_at: this.now() + 120_000, main_session_id: state.main_session_id };
       claimed = true;
     });
     if (!claimed) return { ...existing, operation_session_id: operationSessionId ?? existing.selected_session_id ?? undefined };
@@ -292,11 +305,15 @@ export class ProjectChatRegistry {
         if (state.selected_session_id === recoverableSession.id) state.selected_session_id = sessionId;
         if (state.main_session_id === recoverableSession.id) state.main_session_id = sessionId;
       } else {
-        state.sessions.push({ id: sessionId, ...(modelId ? { model_id: modelId } : {}), ...(/^(claude-code|codex):/.test(sessionId) ? { pending_first_message: true } : {}) });
+        state.sessions.push({ id: sessionId, ...(modelId ? { model_id: modelId } : {}), ...(isExternalAgentSession(sessionId) ? { pending_first_message: true } : {}) });
       }
-      // Background Main setup must not undo a concurrent explicit Main choice.
-      if (!recoverSessionId && (mode !== 'ensure_main' || !state.main_session_id)) state.selected_session_id = sessionId;
-      // Ordinary creation selects a session; setMain owns Main assignment.
+      // New promotes itself unless the user chose a different Main after this claim began.
+      if (mode === 'new') {
+        state.selected_session_id = sessionId;
+        if (state.creating.main_session_id === state.main_session_id) state.main_session_id = sessionId;
+      } else if (!recoverSessionId && (mode !== 'ensure_main' || !state.main_session_id)) {
+        state.selected_session_id = sessionId;
+      }
       state.operations = { ...state.operations, [operationId]: sessionId };
       delete state.creating;
       state.revision++;

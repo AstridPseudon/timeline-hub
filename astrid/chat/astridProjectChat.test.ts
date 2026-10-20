@@ -89,7 +89,7 @@ describe('ProjectChatRegistry', () => {
     } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
   });
 
-  it('changes Main only through explicit Make Main and New preserves it', async () => {
+  it('New promotes Main while explicit Make Main remains available', async () => {
     const store = new MemoryProjects();
     try {
       const chat = registry(store, 'store');
@@ -97,13 +97,13 @@ describe('ProjectChatRegistry', () => {
       expect(first.main_session_id).toBeNull();
       const initialMain = await chat.setMain('p1', first.revision, 'main');
       const ordinary = await chat.create('p1', 'new', 'new-1', async () => ({ sessionId: 'other' }));
-      expect(ordinary).toMatchObject({ main_session_id: 'main', selected_session_id: 'other' });
-      expect(await registry(store,'store').get('p1')).toMatchObject({ main_session_id: 'main', selected_session_id: 'other' });
-      const chosen = await chat.setMain('p1', ordinary.revision, 'other');
-      expect(chosen).toMatchObject({ main_session_id: 'other', selected_session_id: 'other' });
+      expect(ordinary).toMatchObject({ main_session_id: 'other', selected_session_id: 'other' });
+      expect(await registry(store,'store').get('p1')).toMatchObject({ main_session_id: 'other', selected_session_id: 'other' });
+      const chosen = await chat.setMain('p1', ordinary.revision, 'main');
+      expect(chosen).toMatchObject({ main_session_id: 'main', selected_session_id: 'main' });
       expect(chosen.sessions.map(s => s.id)).toEqual(['main', 'other']);
       const replay = await chat.create('p1', 'ensure_main', 'main-1', async () => ({ sessionId: 'duplicate' }));
-      expect(replay).toMatchObject({ operation_session_id: 'main', main_session_id: 'other', selected_session_id: 'other' });
+      expect(replay).toMatchObject({ operation_session_id: 'main', main_session_id: 'main', selected_session_id: 'main' });
       await expect(chat.setMain('p1', ordinary.revision, 'main')).rejects.toMatchObject({ code: 'chat_conflict' });
       await expect(chat.setMain('p1', chosen.revision, 'foreign')).rejects.toMatchObject({ code: 'session_not_owned' });
       expect(initialMain.main_session_id).toBe('main');

@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import { dirname, isAbsolute, join, win32 } from 'node:path';
 
-export const localAgentIdSchema = z.enum(['astrid', 'claude-code', 'codex']);
+export const localAgentIdSchema = z.enum(['astrid', 'claude-code', 'codex', 'hermes']);
 export type LocalAgentId = z.infer<typeof localAgentIdSchema>;
+export const LOCAL_AGENT_IDS = localAgentIdSchema.options;
+export const EXTERNAL_AGENT_IDS = LOCAL_AGENT_IDS.filter((id): id is Exclude<LocalAgentId, 'astrid'> => id !== 'astrid');
 
 export function formatAstridSignInLine(root: string, platform = process.platform): string {
   if (platform === 'win32') {
@@ -42,6 +44,12 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {
     notInstalledLine: 'Install with `curl -fsSL https://claude.ai/install.sh | bash`',
     windowsNotInstalledLine: 'In PowerShell, run `irm https://claude.ai/install.ps1 | iex`',
   },
+  hermes: {
+    name: 'Hermes',
+    signInLine: 'Run `hermes setup`, then come back.',
+    notInstalledLine: 'Install with `curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash`',
+    windowsNotInstalledLine: 'Install with `iex (irm https://hermes-agent.nousresearch.com/install.ps1)`',
+  },
   codex: {
     name: 'Codex',
     signInLine: 'Run `codex login`, then come back.',
@@ -50,10 +58,24 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {
   },
 };
 
+export const thoughtLevelSchema = z.object({
+  configId: z.string().min(1),
+  name: z.string(),
+  currentValue: z.string(),
+  options: z.array(z.object({ value: z.string().min(1), name: z.string(), description: z.string().nullable().optional() })),
+  recommendedValue: z.string().optional(),
+});
+export type AgentThoughtLevel = z.infer<typeof thoughtLevelSchema>;
+
+export function defaultThoughtLevel(level: AgentThoughtLevel): string {
+  return level.recommendedValue ?? level.options.find(option => option.value === 'default')?.value ?? level.currentValue;
+}
+
 const agentModelSchema = z.object({
   modelId: z.string().min(1),
   name: z.string().min(1),
   description: z.string().nullable().optional(),
+  thoughtLevel: thoughtLevelSchema.optional(),
 });
 
 export const localAgentCatalogSchema = z.object({
@@ -73,6 +95,8 @@ export type LocalAgentChoice = Pick<z.infer<typeof localAgentCatalogSchema>['age
 export const localAgentModelsSchema = z.object({
   availableModels: z.array(agentModelSchema),
   currentModelId: z.string(),
+  modelConfigId: z.string().optional(),
+  thoughtLevel: thoughtLevelSchema.optional(),
 });
 export type LocalAgentModels = z.infer<typeof localAgentModelsSchema>;
 
@@ -80,6 +104,11 @@ export type LocalAgentModels = z.infer<typeof localAgentModelsSchema>;
 export function sessionAgentId(sessionId: string): LocalAgentId {
   if (sessionId.startsWith('claude-code:')) return 'claude-code';
   if (sessionId.startsWith('codex:')) return 'codex';
+  if (sessionId.startsWith('hermes:')) return 'hermes';
   return 'astrid';
+}
+
+export function isExternalAgentSession(sessionId: string, agent?: typeof EXTERNAL_AGENT_IDS[number]): boolean {
+  return agent ? sessionId.startsWith(`${agent}:`) : EXTERNAL_AGENT_IDS.some(id => sessionId.startsWith(`${id}:`));
 }
 

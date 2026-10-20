@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { access, constants } from 'node:fs/promises';
 import { userInfo } from 'node:os';
 import { delimiter, dirname, join, win32 as win32Path } from 'node:path';
-import { LOCAL_AGENT_TABLE, type LocalAgentChoice, type LocalAgentId } from './localAgents.ts';
+import { EXTERNAL_AGENT_IDS, LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice, type LocalAgentId } from './localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 
 type RegistryReader = (key: string, env: NodeJS.ProcessEnv) => Promise<string>;
@@ -244,22 +244,35 @@ export async function discoverLocalAgents(options: Options = {}): Promise<LocalA
   const loginPath = await loginShellPath(baseEnv, platform, options.registryReader, options.passwdReader, options.systemShellReader);
   const path = combinedPath(platform, loginPath, baseEnv.PATH);
   const env = { ...baseEnv, PATH: path };
-  const [claudeShim, codex] = await Promise.all([
-    executable('claude', path, platform, baseEnv.PATHEXT), executable('codex', path, platform, baseEnv.PATHEXT),
+  const [claudeShim, codex, hermes] = await Promise.all([
+    executable('claude', path, platform, baseEnv.PATHEXT), executable('codex', path, platform, baseEnv.PATHEXT), executable('hermes', path, platform, baseEnv.PATHEXT),
   ]);
   const [claude, codexEntryPoint] = await Promise.all([
     claudeShim ? windowsClaudeEntryPoint(claudeShim, platform) : null,
     codex ? windowsCodexEntryPoint(codex, platform) : null,
   ]);
-  const [claudeAuth, codexAuth] = await Promise.all([
+  const [hermesAuth, claudeAuth, codexAuth] = await Promise.all([
+    hermesStatus(hermes, env, options.cwd),
     claudeStatus(claude, env, options.cwd, platform),
     status(codexEntryPoint, ['login', 'status'], env, /Logged in using/i, /Not logged in|Run `?codex login/i, options.cwd, platform),
   ]);
-  return [
-    choice('astrid', 'ready', platform),
-    choice('claude-code', !claude ? 'not-installed' : claudeAuth === 'signed-out' ? 'sign-in' : 'ready', platform),
-    choice('codex', !codex ? 'not-installed' : codexAuth === 'signed-out' ? 'sign-in' : 'ready', platform),
-  ];
+  const installed: Record<typeof EXTERNAL_AGENT_IDS[number], string | null> = { 'claude-code': claude, codex, hermes };
+  const auth: Record<typeof EXTERNAL_AGENT_IDS[number], AuthStatus> = { 'claude-code': claudeAuth, codex: codexAuth, hermes: hermesAuth };
+  return LOCAL_AGENT_IDS.map(id => id === 'astrid'
+    ? choice(id, 'ready', platform)
+    : choice(id, !installed[id] ? 'not-installed' : auth[id] === 'signed-out' ? 'sign-in' : 'ready', platform));
+}
+
+
+async function hermesStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?: string): Promise<AuthStatus> {
+  if (!command) return 'unknown';
+  try {
+    await execFileAsync(command, ['acp', '--check'], { env, cwd, ...AUTH_PROBE_OPTIONS, timeout: 3_000, maxBuffer: 1024 * 1024 });
+    return 'signed-in';
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && !probeKilled(error) && typeof Reflect.get(error, 'code') === 'number') return 'signed-out';
+    return 'unknown';
+  }
 }
 
 export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.ProcessEnv = process.env, options: LaunchOptions = {}): Promise<{ command: string; args: string[]; env: Record<string, string | undefined>; cliPath: string }> {
@@ -269,10 +282,11 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce
   const bunPath = combinedPath(platform, env.PATH, loginPath);
   const [bun, cliShim] = await Promise.all([
     executable('bun', bunPath, platform, env.PATHEXT),
-    executable(agentId === 'claude-code' ? 'claude' : 'codex', path, platform, env.PATHEXT),
+    executable(agentId === 'claude-code' ? 'claude' : agentId === 'codex' ? 'codex' : 'hermes', path, platform, env.PATHEXT),
   ]);
   const cli = cliShim && agentId === 'claude-code' ? await windowsClaudeEntryPoint(cliShim, platform) : cliShim;
   if (!cli) throw new Error(`${LOCAL_AGENT_TABLE[agentId].name} is not installed on PATH.`);
+  if (agentId === 'hermes') return { command: cli, args: ['acp'], env: { PATH: path }, cliPath: cli };
   if (!bun) throw new Error('Bun is not installed on PATH.');
   return {
     command: bun,

@@ -4,6 +4,7 @@ import { createAstridAcpHttpServer, resolveAstridAcpBridgeConfig, assertLocalMed
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
 import { ProjectChatRegistry } from './astrid-project-chat.ts';
 import { ApiError, type Project } from './runtime-client.ts';
 import type { AcpProcessHostCallbacks } from './acpProcessHost.ts';
@@ -44,6 +45,115 @@ test('ACP uses dedicated token, legacy fallback, explicit hosted-only policy and
   assert.doesNotThrow(() => assertLocalMediaOnly({ prompt: textMetadata }));
 });
 
+test('PATCH chat rename route validates the body without opening a listener', async () => {
+  let project: Project = { project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', metadata: {
+    astrid_agent_chat_v1: { 'http-test': { revision: 0, selected_session_id: 's1', main_session_id: null, sessions: [{ id: 's1' }], draft: { text: '', revision: 0, queued_messages: [] } } },
+  }, version: 1, created_at: '', updated_at: '' };
+  const registry = new ProjectChatRegistry({
+    getProject: async () => structuredClone(project),
+    listProjects: async () => ({ items: [structuredClone(project)], next_cursor: null }),
+    updateProject: async (_id, _key, version, _name, metadata) => {
+      assert.equal(version, project.version);
+      project = { ...project, version: version + 1, metadata: metadata! };
+      return structuredClone(project);
+    },
+  }, 'http-test');
+  const { server, bridge } = createAstridAcpHttpServer({
+    config: { token: 'direct-test', port: 0, cwd: '/tmp/local' }, chatRegistry: registry,
+  });
+  const invoke = async (body: unknown) => {
+    const request = Object.assign(Readable.from([Buffer.from(JSON.stringify(body))]), {
+      method: 'PATCH', url: '/projects/p/chat', headers: {
+        authorization: 'Bearer direct-test', 'x-astrid-bridge-version': 'v1', 'content-type': 'application/json',
+      },
+    });
+    let responseBody = '';
+    const response = {
+      statusCode: 200, headers: {} as Record<string, string>,
+      setHeader(name: string, value: string | number) { this.headers[name] = String(value); },
+      end(value?: string) { responseBody = value ?? ''; },
+    };
+    await bridge.handle(request as never, response as never);
+    return { status: response.statusCode, body: JSON.parse(responseBody) as Json };
+  };
+  try {
+    assert.equal((await invoke({ expected_revision: 0, session_id: 's1', title: ' First ' })).status, 200);
+    assert.equal((await invoke({ expected_revision: 0, session_id: 's1', title: 'stale' })).status, 409);
+    assert.equal((await invoke({ expected_revision: 1, session_id: 's1', title: '   ' })).status, 400);
+    assert.equal((await invoke({ expected_revision: 1, session_id: 's1', title: 'x'.repeat(121) })).status, 400);
+    assert.equal((await invoke({ expected_revision: 1, session_id: 'foreign', title: 'Nope' })).status, 403);
+    const malformed = await invoke({ expected_revision: 1, session_id: 's1', title: 5, selected_session_id: null });
+    assert.equal(malformed.status, 400);
+    const saved = await registry.get('p');
+    assert.equal(saved.selected_session_id, 's1');
+    assert.equal(saved.sessions[0]?.title, 'First');
+    assert.equal(saved.revision, 1);
+  } finally {
+    await bridge.close();
+    server.close();
+  }
+});
+
+test('session model and thought-level routes use advertised config IDs and refresh options without a socket', async () => {
+  for (const [agent, effortId] of [['codex', 'reasoning_effort'], ['claude-code', 'effort'], ['astrid', 'thinking'], ['hermes', null]] as const) {
+    const sessionId = agent === 'astrid' ? 'omp-session' : `${agent}:session`;
+    let model = 'a';
+    let effort = 'low';
+    const forwarded: Array<{ method: string; params: Json }> = [];
+    const snapshot = () => ({ sessionId, ...(effortId ? { configOptions: [
+      { id: 'model-picker', category: 'model', type: 'select', currentValue: model, options: [{ value: 'a', name: 'A' }, { value: 'b', name: 'B' }] },
+      { id: effortId, name: 'Effort', category: 'thought_level', type: 'select', currentValue: effort,
+        options: model === 'b' ? [{ value: 'high', name: 'High' }] : [{ value: 'low', name: 'Low' }] },
+    ] } : { models: { currentModelId: model, availableModels: [{ modelId: 'a', name: 'A' }, { modelId: 'b', name: 'B' }] } }) });
+    const host = {
+      initialize: async () => ({}), dispose: async () => undefined,
+      request: async (method: string, params: Json) => {
+        forwarded.push({ method, params });
+        if (method === 'session/set_config_option') {
+          if (params.configId === 'model-picker') model = String(params.value);
+          else effort = String(params.value);
+        }
+        if (method === 'session/set_model') model = String(params.modelId);
+        return snapshot();
+      },
+    };
+    const { server, bridge } = createAstridAcpHttpServer({
+      config: { token: 'test', port: 0, cwd: '/tmp/local' }, idFactory: () => 'c',
+      hostFactory: () => host as never, localAgentHostFactory: async () => host as never,
+    });
+    const invoke = async (url: string, body?: unknown) => {
+      const request = Object.assign(Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]), {
+        method: body === undefined ? 'GET' : 'POST', url, headers: { authorization: 'Bearer test', 'x-astrid-bridge-version': 'v1' },
+      });
+      let output = '';
+      const response = { statusCode: 200, setHeader() {}, end(value: string) { output = value; } };
+      await bridge.handle(request as never, response as never);
+      return { status: response.statusCode, body: JSON.parse(output) as Json };
+    };
+    try {
+      assert.equal((await invoke('/model', { model: 'b' })).status, 404);
+      assert.equal((await invoke('/connect', { agent, defaultModelId: 'b' })).status, 200);
+      assert.equal((await invoke('/c/rpc', { method: 'session/new', params: {} })).status, 200);
+      assert.equal((await invoke('/c/model', { sessionId, modelId: 'b' })).status, 404);
+      assert.equal((await invoke('/c/rpc', { method: 'session/set_config_option', params: { sessionId, configId: 'model-picker', value: 'a' } })).status, effortId ? 409 : 400);
+      if (effortId) {
+        assert.equal((await invoke('/c/rpc', { method: 'session/set_config_option', params: { sessionId, configId: effortId, value: 'high' } })).status, 200);
+        const models = (await invoke(`/c/models?sessionId=${sessionId}`)).body.models as Json;
+        assert.equal((models.thoughtLevel as Json).currentValue, 'high');
+        assert.equal((await invoke('/c/rpc', { method: 'session/set_config_option', params: { sessionId, configId: effortId, value: 'low' } })).status, 400);
+        assert.deepEqual(forwarded.filter(call => call.method.startsWith('session/set_')), [
+          { method: 'session/set_config_option', params: { sessionId, configId: 'model-picker', value: 'b' } },
+          { method: 'session/set_config_option', params: { sessionId, configId: effortId, value: 'high' } },
+        ]);
+      } else {
+        const models = (await invoke(`/c/models?sessionId=${sessionId}`)).body.models as Json;
+        assert.equal(models.thoughtLevel, undefined);
+        assert.deepEqual(forwarded.filter(call => call.method.startsWith('session/set_')), [{ method: 'session/set_model', params: { sessionId, modelId: 'b' } }]);
+      }
+    } finally { await bridge.close(); server.close(); }
+  }
+});
+
 async function listen(server: import('node:http').Server) {
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   return `http://127.0.0.1:${(server.address() as { port: number }).port}`;
@@ -68,7 +178,7 @@ test('real HTTP bridge enforces RPC and project policy for hosted calls and pres
   const registry = new ProjectChatRegistry(store, 'http-test', Date.now, claimDirectory);
   const forwarded: Array<{ method: string; params: unknown }> = [];
   const configOptions = [
-    { id: 'model', options: [{ value: 'model-a' }] },
+    { id: 'model-picker', category: 'model', type: 'select', currentValue: 'model-a', options: [{ value: 'model-a', name: 'A' }] },
     { id: 'thinking', options: [{ value: 'high' }] },
   ];
   let callbacks: AcpProcessHostCallbacks = {};
@@ -126,12 +236,22 @@ test('real HTTP bridge enforces RPC and project policy for hosted calls and pres
     assert.equal(created.status, 200);
     assert.equal((await created.json()).operation_session_id, 's1');
     assert.equal((await registry.get('p1')).selected_session_id, 's1');
+    const createdState = await registry.get('p1');
+    const rename = (projectId: string, expected_revision: number, session_id: string, title: string) => call(`/projects/${projectId}/chat`, { expected_revision, session_id, title }, 'PATCH');
+    assert.equal((await rename('p1', createdState.revision, 's1', '  First chat  ')).status, 200);
+    assert.equal((await registry.get('p1')).sessions[0]?.title, 'First chat');
+    assert.equal((await rename('p1', createdState.revision, 's1', 'Stale')).status, 409);
+    const renamedState = await registry.get('p1');
+    for (const title of ['', '   ', 'x'.repeat(121)]) assert.equal((await rename('p1', renamedState.revision, 's1', title)).status, 400);
+    assert.equal((await rename('p2', 0, 's1', 'Foreign')).status, 403);
     const rpc = (connection: string, configId: string, value: string, sessionId = 's1') => call(`/${connection}/rpc`, { method: 'session/set_config_option', params: { sessionId, configId, value } });
     const assertModelFixed = async (connection: string, value: string) => {
       const before = forwarded.length;
-      const rejected = await rpc(connection, 'model', value);
-      assert.equal(rejected.status, 409);
-      assert.equal((await rejected.json()).error, 'session_model_fixed');
+      for (const configId of ['model', 'model-picker']) {
+        const rejected = await rpc(connection, configId, value);
+        assert.equal(rejected.status, 409);
+        assert.equal((await rejected.json()).error, 'session_model_fixed');
+      }
       assert.equal(forwarded.length, before);
     };
     await assertModelFixed('c1', 'model-a');
@@ -215,70 +335,96 @@ test('real HTTP bridge enforces RPC and project policy for hosted calls and pres
   }
 });
 
-test('idle sweep disposes abandoned connections, keeps polled and in-flight ones, and answers late polls as disconnected', async () => {
-  let clock = 0;
-  let nextId = 0;
-  const disposed: string[] = [];
-  const started = deferred();
-  const releasePrompt = deferred();
-  let pendingPrompt: Promise<Response> | undefined;
-  const { server, bridge } = createAstridAcpHttpServer({
-    config: { token: 'dedicated', port: 0, cwd: '/tmp/local' },
-    chatRegistry: {} as never,
-    now: () => clock,
-    idFactory: () => `c${++nextId}`,
-    hostFactory: () => {
-      const id = `c${nextId}`;
-      return {
-        initialize: async () => ({ protocolVersion: 1 }),
-        request: async (method: string, params: unknown) => {
-          if (method === 'session/load') return { sessionId: (params as { sessionId: string }).sessionId };
-          if (method === 'session/prompt') { started.resolve(); await releasePrompt.promise; }
-          return {};
-        },
-        cancel: async () => {},
-        dispose: async () => { disposed.push(id); },
-      } as never;
-    },
-  });
-  try {
-    const base = await listen(server);
-    const call = (path: string, init: RequestInit = {}) => fetch(base + path, {
-      ...init, headers: { Authorization: 'Bearer dedicated', 'X-Astrid-Bridge-Version': 'v1', 'Content-Type': 'application/json' },
+// Exercise the real HTTP handler without binding a socket (sandbox compatible).
+function directCall(bridge: ReturnType<typeof createAstridAcpHttpServer>['bridge']) {
+  return async (path: string, body?: unknown, method = body === undefined ? 'GET' : 'POST') => {
+    const request = Object.assign(Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]), {
+      method, url: path, headers: {
+        authorization: 'Bearer dedicated', 'x-astrid-bridge-version': 'v1', 'content-type': 'application/json',
+      },
     });
-    for (let i = 0; i < 4; i++) assert.equal((await call('/connect', { method: 'POST', body: '{}' })).status, 200);
-    // c1 abandoned, c2 keeps polling, c3 has a prompt in flight, c4 is fresh.
-    clock = 10 * 60_000;
-    assert.equal((await call('/c2/events')).status, 200);
-    assert.equal((await call('/c3/rpc', { method: 'POST', body: JSON.stringify({ method: 'session/load', params: { sessionId: 's' } }) })).status, 200);
-    pendingPrompt = call('/c3/rpc', { method: 'POST', body: JSON.stringify({ method: 'session/prompt', params: { sessionId: 's', prompt: [] } }) });
-    await started.promise;
-    clock = 16 * 60_000;
-    assert.equal((await call('/c4/events')).status, 200);
-    await bridge.reapIdle();
-    assert.deepEqual(disposed, ['c1']);
-    assert.equal((await call('/c2/events')).status, 200);
-    assert.deepEqual(await (await call('/c1/events')).json(), { notifications: [], disconnected: true });
-    assert.equal((await call('/c1/rpc', { method: 'POST', body: '{}' })).status, 404);
-    // The in-flight prompt restarts its idle clock when it finishes, not before.
-    clock = 60 * 60_000;
-    await bridge.reapIdle();
-    assert.deepEqual(disposed, ['c1', 'c2', 'c4']);
-    releasePrompt.resolve();
-    assert.equal((await pendingPrompt).status, 200);
-    await bridge.reapIdle();
-    assert.deepEqual(disposed, ['c1', 'c2', 'c4']);
-    clock = 120 * 60_000;
-    await bridge.reapIdle();
-    assert.deepEqual(disposed, ['c1', 'c2', 'c4', 'c3']);
-  } catch (error) {
-    console.error(error);
-    throw error;
-  } finally {
-    releasePrompt.resolve();
-    await (pendingPrompt ?? Promise.resolve()).catch(() => {});
-    await bridge.close();
-    server.closeAllConnections();
-    server.close();
-  }
-});
+    let responseBody = '';
+    const response = { statusCode: 200, setHeader() {}, end(value?: string) { responseBody = value ?? ''; } };
+    await bridge.handle(request as never, response as never);
+    return { status: response.statusCode, body: JSON.parse(responseBody) };
+  };
+}
+
+for (const release of ['disconnect', 'expiry'] as const) {
+  test(`writer ${release} automatically promotes exactly one survivor and preserves an active turn`, async () => {
+    let clock = 0;
+    let nextId = 0;
+    const disposed: number[] = [];
+    const started = deferred();
+    const finish = deferred();
+    let prompts = 0;
+    const { server, bridge } = createAstridAcpHttpServer({
+      config: { token: 'dedicated', port: 0, cwd: '/tmp/local' },
+      chatRegistry: {} as never, now: () => clock, idFactory: () => `c${++nextId}`,
+      hostFactory: () => {
+        const id = nextId;
+        return {
+          initialize: async () => ({ protocolVersion: 1 }),
+          request: async (method: string) => {
+            if (method === 'session/load') return { sessionId: 's' };
+            if (method === 'session/prompt') {
+              prompts++;
+              if (prompts === 1) { started.resolve(); await finish.promise; }
+              return { stopReason: 'end_turn' };
+            }
+            return {};
+          },
+          cancel: async () => {}, dispose: async () => { disposed.push(id); },
+        } as never;
+      },
+    });
+    const call = directCall(bridge);
+    const rpc = (id: string, method: string) => call(`/${id}/rpc`, { method, params: { sessionId: 's', prompt: [] } });
+    const latestControl = (body: { notifications: Array<{ params?: { update?: { sessionUpdate: string; role: string; active: boolean } } }> }) =>
+      body.notifications.map(item => item.params?.update).filter(item => item?.sessionUpdate === 'astrid_session_control').at(-1);
+    let pending: ReturnType<typeof call> | undefined;
+    try {
+      for (let i = 0; i < 3; i++) {
+        assert.equal((await call('/connect', {})).status, 200);
+        assert.equal((await rpc(`c${i + 1}`, 'session/load')).status, 200);
+      }
+      pending = rpc('c1', 'session/prompt');
+      await started.promise;
+      // Both survivors renew their heartbeat before the owner's lease expires.
+      clock = 75_000;
+      await bridge.reapIdle();
+      assert.equal(latestControl((await call('/c2/events')).body)?.role, 'follower');
+      await call('/c3/events');
+      if (release === 'disconnect') assert.equal((await call('/c1', undefined, 'DELETE')).status, 200);
+      else {
+        clock = 90_000;
+        await bridge.reapIdle();
+      }
+      const promoted = latestControl((await call('/c2/events')).body);
+      assert.equal(promoted?.role, 'writer');
+      assert.equal(promoted?.active, true);
+      assert.equal(latestControl((await call('/c3/events')).body)?.role, 'follower');
+      assert.deepEqual(disposed, [], 'keep the owner host while its turn runs');
+      assert.equal((await rpc('c3', 'session/prompt')).status, 409);
+      assert.equal((await rpc('c2', 'session/prompt')).status, 409, 'promotion must not allow an overlapping turn');
+      assert.deepEqual((await call('/c1/events')).body, { notifications: [], disconnected: true });
+      assert.equal((await call('/c1', undefined, 'DELETE')).status, 404, 'a late release cannot revoke the successor');
+      finish.resolve();
+      assert.equal((await pending).status, 200);
+      assert.equal(latestControl((await call('/c2/events')).body)?.active, false);
+      assert.equal((await rpc('c2', 'session/prompt')).status, 200);
+      assert.equal(prompts, 2);
+      assert.deepEqual(disposed, [], 'surviving subscribers still need the shared host');
+      await call('/c2', undefined, 'DELETE');
+      assert.equal(latestControl((await call('/c3/events')).body)?.role, 'writer');
+      await call('/c3', undefined, 'DELETE');
+      assert.deepEqual(disposed.sort(), [1, 2, 3]);
+    } finally {
+      finish.resolve();
+      await pending;
+      await bridge.close();
+      server.close();
+
+    }
+  });
+}

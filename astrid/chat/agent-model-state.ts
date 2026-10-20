@@ -30,7 +30,12 @@ export class AgentModelState {
 
   refresh(agent: LocalAgentId, models: LocalAgentModels | null): void {
     if (!models) { this.catalogs.delete(agent); return; }
-    this.catalogs.set(agent, models);
+    const previous = this.catalogs.get(agent);
+    this.catalogs.set(agent, { ...models, availableModels: models.availableModels.map(model => {
+      const thoughtLevel = model.modelId === models.currentModelId ? models.thoughtLevel
+        : previous?.availableModels.find(item => item.modelId === model.modelId)?.thoughtLevel;
+      return { ...model, thoughtLevel };
+    }) });
     if (!models.availableModels.some(model => model.modelId === this.defaults.get(agent))) {
       const fallback = models.availableModels.find(model => model.modelId === models.currentModelId)?.modelId
         ?? models.availableModels[0]?.modelId;

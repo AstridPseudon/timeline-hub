@@ -163,6 +163,7 @@ test('a real new session fills and refreshes its service catalog without a boots
     expect(catalog.defaultAgent).toBe('codex');
     expect(catalog.agents.find(agent => agent.id === 'codex')?.defaultModel).toBe('beta');
     value.setNew(async () => ({ sessionId: 'codex:refresh', ...metadata('codex', 'gamma', ['gamma']) }));
+    value.setSetter(params => metadata('codex', String(params.value), ['gamma']));
     await value.call('/connect', { agent: 'codex', defaultModelId: 'gamma' });
     expect((await value.rpc('c2', 'session/new')).status).toBe(200);
     catalog = localAgentCatalogSchema.parse(await (await value.call('/agents')).json());
@@ -276,4 +277,23 @@ test('model discovery and retired mutation routes retain bearer and protocol pro
     expect((await value.call('/connect', { agent: 'astrid', defaultModelId: '' })).status).toBe(400);
     expect((await value.call('/connect', { agent: 'astrid', defaultModelId: 'provider/beta', persist: true })).status).toBe(400);
   } finally { await value.bridge.close(); }
+});
+
+test('catalog levels belong only to the model that advertised them and stale support clears', async () => {
+  const { AgentModelState } = await import('./agent-model-state.ts');
+  const state = new AgentModelState();
+  const availableModels = [{ modelId: 'a', name: 'A' }, { modelId: 'b', name: 'B' }, { modelId: 'c', name: 'C' }];
+  const level = { configId: 'effort', name: 'Thinking level', currentValue: 'high', options: [{ value: 'high', name: 'High' }], recommendedValue: 'high' };
+  state.refresh('codex', { availableModels, currentModelId: 'a', thoughtLevel: level });
+  expect(state.catalogs.get('codex')?.availableModels).toEqual([
+    { ...availableModels[0], thoughtLevel: level }, { ...availableModels[1], thoughtLevel: undefined }, { ...availableModels[2], thoughtLevel: undefined },
+  ]);
+  state.refresh('codex', { availableModels, currentModelId: 'b', thoughtLevel: { ...level, configId: 'reasoning_effort' } });
+  expect(state.catalogs.get('codex')?.availableModels[0]?.thoughtLevel).toEqual(level);
+  expect(state.catalogs.get('codex')?.availableModels[1]?.thoughtLevel?.configId).toBe('reasoning_effort');
+  expect(state.catalogs.get('codex')?.availableModels[2]?.thoughtLevel).toBeUndefined();
+  state.refresh('codex', { availableModels, currentModelId: 'a' });
+  expect(state.catalogs.get('codex')?.availableModels[0]?.thoughtLevel).toBeUndefined();
+  expect(state.catalogs.get('codex')?.availableModels[1]?.thoughtLevel?.configId).toBe('reasoning_effort');
+  expect(state.catalogs.has('hermes')).toBe(false);
 });

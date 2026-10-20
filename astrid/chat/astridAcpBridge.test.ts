@@ -197,8 +197,8 @@ describe('Astrid App ACP HTTP bridge', () => {
     const newChat = fetch(`${base}/projects/p1/chat/sessions`, { method: 'POST', headers: headers(), body: JSON.stringify({ connection_id: 'connection-1', mode: 'new', operation_id: 'intentional-new' }) });
     await waitForRequest(fakeProcess, beforeNew);
     respond(fakeProcess, lastRequest(fakeProcess).id, { sessionId: 'session-2' });
-    expect(await (await newChat).json()).toMatchObject({ main_session_id: 'session-1', selected_session_id: 'session-2', sessions: [{ id: 'session-1' }, { id: 'session-2' }] });
-    expect(await (await read()).json()).toMatchObject({ main_session_id: 'session-1', selected_session_id: 'session-2' });
+    expect(await (await newChat).json()).toMatchObject({ main_session_id: 'session-2', selected_session_id: 'session-2', sessions: [{ id: 'session-1' }, { id: 'session-2' }] });
+    expect(await (await read()).json()).toMatchObject({ main_session_id: 'session-2', selected_session_id: 'session-2' });
 
     const savedDraft = await fetch(`${base}/projects/p1/chat/draft`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ expected_revision: 0, text: 'draft', queued_messages: [{ id: 'q1', text: 'queued', session_id: 'session-1' }] }) });
     expect(await savedDraft.json()).toMatchObject({ draft: { text: 'draft', queued_messages: [{ id: 'q1' }] } });
