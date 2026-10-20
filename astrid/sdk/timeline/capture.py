@@ -48,6 +48,17 @@ def rate(value):
     return Fraction(str(number(value, 'fps', positive=True)))
 
 
+def _output_rate(ctx):
+    """Read either current output-rate spelling without defaulting a rational away."""
+    value = ctx.read('parent', ['config', 'output', 'fps'])
+    if value is not None:
+        return rate(value)
+    output = ctx.read('parent', ['config', 'output'])
+    if isinstance(output, dict) and set(output) == {'numerator', 'denominator'}:
+        return rate(output)
+    return rate(None)
+
+
 def occurrence_start(row):
     placement = row.get('placement') or {}
     if not isinstance(placement, dict):
@@ -148,7 +159,7 @@ def move(ctx, command):
             source[key] = ctx.read(registry_ref, ['assets', str(asset), key])
         ctx.dependency('move.source', 'entity', {'ref': registry_ref, 'asset': asset, 'source': source})
         source_dependencies.append('move.source')
-    fps = rate(ctx.read('parent', ['config', 'output', 'fps']))
+    fps = _output_rate(ctx)
     if owner != 'parent':
         child_fps = ctx.read(owner + '/source', ['output', 'fps'])
         # Expose consumed child rate via the occurrence config view, not a revision ID.
