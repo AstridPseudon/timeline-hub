@@ -243,7 +243,7 @@ export function RuntimeConnectionProvider({
     if (connectedRef.current) return;
     // Latch the connection now, not on the render that `setOutcome` schedules: `inFlight` is already clear, and an
     // interval tick or focus event that lands before that render would otherwise start a second probe.
-    if (result.kind === 'connected' || result.kind === 'update_needed') {
+    if (result.kind === 'connected') {
       connectedRef.current = true;
     }
     setFailedReadings((previous) => result.kind === 'connected' ? 0 : previous + 1);

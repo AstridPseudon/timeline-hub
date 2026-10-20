@@ -139,6 +139,35 @@ describe('granted', () => {
     expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health']);
   });
 
+  it('keeps bounded update health polling and connects when Runtime becomes compatible', async () => {
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', schema_digest: 'sha256:old-runtime' });
+    const POLL_MS = 456_789;
+    let tick: () => void = () => {};
+    const realSetInterval = window.setInterval.bind(window);
+    vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler, ms?: number, ...args: unknown[]) => {
+      if (ms !== POLL_MS) return realSetInterval(handler, ms, ...args);
+      tick = () => (handler as () => void)();
+      return realSetInterval(() => {}, ms);
+    }) as typeof window.setInterval);
+
+    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: POLL_MS });
+    await waitFor(() => expect(status()).toBe('update_needed'));
+    expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health']);
+
+    // A mismatch remains visible while the normal interval waits. There is no immediate retry loop.
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    expect(status()).toBe('update_needed');
+    expect(gateway.calls).toHaveLength(1);
+
+    gateway.up();
+    await act(async () => { tick(); });
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual([
+      '/v1/health', '/v1/health', '/v1/realm',
+    ]);
+  });
+
   it.each(['focus', 'interval'] as const)('a %s re-check between the probe answering and the connected render starts no second probe', async (trigger) => {
     const gateway = fakeGateway();
     // Plain stub answers: their json() settles in microtasks only, so the test controls exactly where the probe resumes.
