@@ -8,6 +8,7 @@ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import type { TimelineConfig, AssetRegistry } from '../types/index.ts';
 import { createTimelineCommandSession, type CommandSessionState, type TimelineCommandSession } from '../commands/commitSession.ts';
+import { projectGenericPatchPreview } from '../commands/genericPatchCapture.ts';
 import type { UseTimelineCommitResult } from './useTimelineCommit.ts';
 import type { TimelineStoreApi } from './timelineStore.ts';
 import type { VideoEditorShotsHost } from '../runtime/ports.ts';
@@ -92,7 +93,8 @@ export function useTimelineCommandSession(options: {
         let data = await buildTimelineData(config, registry, resolve,
           context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
         for (const preview of previews) {
-          const compiled = compileTimelinePatch(preview, data);
+          const native = projectGenericPatchPreview(preview, data);
+          const compiled = native ? { valid: true, nextData: native } : compileTimelinePatch(preview, data);
           if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
           data = compiled.nextData;
         }
@@ -129,7 +131,8 @@ export function useTimelineCommandSession(options: {
           if (disposed) throw new Error('Timeline command session is closed');
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
-          const compiled = compileTimelinePatch(patch, commit.dataRef.current);
+          const native = projectGenericPatchPreview(patch, commit.dataRef.current);
+          const compiled = native ? { valid: true, nextData: native } : compileTimelinePatch(patch, commit.dataRef.current);
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
           projectGeneration++;
           ownsHistoryRef.current = true;
@@ -166,6 +169,15 @@ export function useTimelineCommandSession(options: {
           capture(input) { requireCleanLabelEdit(); return labelPort.capture(input); },
           finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
           submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
+        };
+        const genericPatchPort = session.genericPatchPort;
+        const requireCleanGenericPatch = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before applying a native patch');
+        };
+        session.genericPatchPort = {
+          capture(input) { requireCleanGenericPatch(); return genericPatchPort.capture(input); },
+          finish(basis) { requireCleanGenericPatch(); return genericPatchPort.finish(basis); },
+          submit(input) { requireCleanGenericPatch(); genericPatchPort.submit(input); },
         };
         sessionRef.current = session;
         setState({ ...session.getState() });
@@ -237,6 +249,7 @@ export function useTimelineCommandSession(options: {
   const useLatest = useCallback(() => resolve(false), [resolve]);
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
+    genericPatchPort: sessionRef.current?.genericPatchPort,
     trackLabelPort: sessionRef.current?.trackLabelPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }

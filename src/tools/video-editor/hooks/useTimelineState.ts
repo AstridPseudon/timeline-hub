@@ -767,6 +767,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     commitData: save.commitData,
     dataRef: save.dataRef,
     trackLabelPort: save.commands.trackLabelPort,
+    genericPatchPort: save.commands.genericPatchPort,
     getConfigVersion,
     flushPendingSave: save.flushPendingSave,
     createManualCheckpoint,
