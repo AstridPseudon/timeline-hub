@@ -1,0 +1,1 @@
+PASS: synthetic fractions 1, 0.5, 1/30; wrong-color, uninformative-control, wrong-dimension, and uninformative-background controls fail closed
