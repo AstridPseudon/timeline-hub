@@ -39,6 +39,10 @@ export const NODE20 = Object.freeze({
 });
 export const MIN_FREE_BYTES = 10 * 1024 ** 3;
 export const SHORT_TEMP_PREFIX = 'timeline-tab-audio-';
+export const APP_SOURCE_ENV = 'TIMELINE_VIEWING_APP_SOURCE';
+export const APP_TREE_ENV = 'TIMELINE_VIEWING_APP_TREE';
+
+const FULL_SHA = /^[a-f0-9]{40}$/;
 
 export const CONTROL = Object.freeze({
   ownLeafOnly: true,
@@ -98,6 +102,21 @@ function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
+/** Keep the frozen APP13 fact intact while allowing a manager to select a later
+ * clean App checkout by supplying both literal identities at invocation time. */
+export function readAppSourceSelection(env = process.env) {
+  const sourcePresent = Object.prototype.hasOwnProperty.call(env, APP_SOURCE_ENV);
+  const treePresent = Object.prototype.hasOwnProperty.call(env, APP_TREE_ENV);
+  if (!sourcePresent && !treePresent) return APP13;
+  const source = env[APP_SOURCE_ENV]?.trim();
+  const tree = env[APP_TREE_ENV]?.trim();
+  if (!source || !tree) throw new Error(`${APP_SOURCE_ENV} and ${APP_TREE_ENV} must be supplied together`);
+  if (!FULL_SHA.test(source) || !FULL_SHA.test(tree)) {
+    throw new Error(`${APP_SOURCE_ENV} and ${APP_TREE_ENV} must be full 40-character lowercase SHAs`);
+  }
+  return Object.freeze({ source, tree, status: 'externally-pinned' });
+}
+
 export function hashTree(root) {
   const entries = [];
   function visit(directory, prefix = '') {
@@ -146,8 +165,11 @@ export function assertPhysicalPrivateGraph(root) {
   return hashTree(root);
 }
 
-export function assertCandidateTuple(tuple = { app: APP13, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }) {
-  for (const [name, expected] of Object.entries({ app: APP13, agent: AGENT13, runtime: RUNTIME13 })) {
+export function assertCandidateTuple(
+  tuple = { app: readAppSourceSelection(), agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 },
+  app = readAppSourceSelection(),
+) {
+  for (const [name, expected] of Object.entries({ app, agent: AGENT13, runtime: RUNTIME13 })) {
     if (tuple[name]?.source !== expected.source || tuple[name]?.tree !== expected.tree) {
       throw new Error(`${name}13 candidate tuple changed; expected ${expected.source}/${expected.tree}`);
     }
@@ -158,16 +180,16 @@ export function assertCandidateTuple(tuple = { app: APP13, agent: AGENT13, runti
   return tuple;
 }
 
-export function assertAppOwnLeaf(appRoot, base = APP13.source) {
+export function assertAppOwnLeaf(appRoot, base = readAppSourceSelection().source) {
   const changed = git(appRoot, ['diff', '--name-only', `${base}...HEAD`]).split('\n').filter(Boolean);
   const forbidden = changed.filter(file => !OWN_LEAF.has(file));
   if (forbidden.length) throw new Error(`App product/root/pin/DTO/source changes are not owned by this leaf: ${forbidden.join(', ')}`);
   return changed;
 }
 
-export function assertExactGraph({ appRoot, agentRoot, runtimeRoot }) {
-  const appBase = git(appRoot, ['merge-base', APP13.source, 'HEAD']);
-  if (appBase !== APP13.source) throw new Error(`App is not based on pending App13 candidate ${APP13.source}`);
+export function assertExactGraph({ appRoot, agentRoot, runtimeRoot, app = readAppSourceSelection() }) {
+  const appBase = git(appRoot, ['merge-base', app.source, 'HEAD']);
+  if (appBase !== app.source) throw new Error(`App is not based on selected App source ${app.source}`);
   if (git(agentRoot, ['rev-parse', 'HEAD']) !== AGENT13.source) throw new Error('Agent13 source is not the approved keeper');
   if (git(runtimeRoot, ['rev-parse', 'HEAD']) !== RUNTIME13.source) throw new Error('Runtime13 source is not the approved producer');
   if (git(agentRoot, ['rev-parse', 'HEAD^{tree}']) !== AGENT13.tree) throw new Error('Agent13 tree is not the approved keeper');
@@ -175,7 +197,7 @@ export function assertExactGraph({ appRoot, agentRoot, runtimeRoot }) {
   for (const [name, root] of Object.entries({ app: appRoot, agent: agentRoot, runtime: runtimeRoot })) {
     if (git(root, ['status', '--porcelain'])) throw new Error(`${name} source must be clean before capture`);
   }
-  assertAppOwnLeaf(appRoot);
+  assertAppOwnLeaf(appRoot, app.source);
   return { app: git(appRoot, ['rev-parse', 'HEAD']), agent: AGENT13.source, runtime: RUNTIME13.source };
 }
 
@@ -225,12 +247,12 @@ export function assertOwnedShortTemp() {
   }
 }
 
-export function assertCompletedAppConsumer(appRoot) {
-  if (APP13.status !== 'adopted') {
+export function assertCompletedAppConsumer(appRoot, app = readAppSourceSelection()) {
+  if (app.status !== 'adopted' && app.status !== 'externally-pinned') {
     throw new Error('App public13 consumer is not adopted; --ready remains refused');
   }
-  if (git(appRoot, ['rev-parse', 'HEAD']) !== APP13.source || git(appRoot, ['rev-parse', 'HEAD^{tree}']) !== APP13.tree) {
-    throw new Error('App public13 consumer source/tree is not the integrated candidate');
+  if (git(appRoot, ['rev-parse', 'HEAD']) !== app.source || git(appRoot, ['rev-parse', 'HEAD^{tree}']) !== app.tree) {
+    throw new Error('App public13 consumer source/tree is not the selected exact source');
   }
 }
 
@@ -334,10 +356,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.stdout.write(discover(appRoot));
   } else if (command === '--ready') {
     if (!agentRoot || !runtimeRoot) throw new Error('--ready requires app, agent, and runtime roots');
-    assertCandidateTuple();
+    const app = readAppSourceSelection();
+    assertCandidateTuple({ app, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }, app);
     assertOwnerPorts();
-    assertCompletedAppConsumer(appRoot);
-    assertExactGraph({ appRoot, agentRoot, runtimeRoot });
+    assertCompletedAppConsumer(appRoot, app);
+    assertExactGraph({ appRoot, agentRoot, runtimeRoot, app });
     assertResources(appRoot);
     assertOwnedShortTemp();
     const remotionProject = process.env.ASTRID_REMOTION_PROJECT_DIR;
