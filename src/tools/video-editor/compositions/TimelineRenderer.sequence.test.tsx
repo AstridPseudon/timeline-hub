@@ -2,6 +2,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TimelineRenderer as TimelineRendererImplementation } from '@/tools/video-editor/compositions/TimelineRenderer';
+import { resolveTimelineRenderTheme } from '@/tools/video-editor/compositions/installed-themes';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 import type { ClipRendererProps } from '@/tools/video-editor/clip-types/ClipTypeRegistry';
 import type { ComponentProps, FC, PropsWithChildren } from 'react';
@@ -86,42 +87,15 @@ vi.mock('remotion', async () => {
 
 vi.mock('@banodoco/timeline-composition/theme-api', async () => {
   const reactModule = await import('react');
+  const actual = await vi.importActual<typeof import('@banodoco/timeline-composition/theme-api')>(
+    '@banodoco/timeline-composition/theme-api',
+  );
+  const { DEFAULT_THEME } = actual;
   const runtimeThemeValue = {
-    color: {
-      accent: '#ffffff',
-      bg: '#000000',
-      fg: '#ffffff',
-    },
-    type: {
-      families: {
-        heading: 'Georgia, serif',
-        body: 'Inter, system-ui, sans-serif',
-        mono: 'JetBrains Mono, ui-monospace, monospace',
-      },
-      size: {
-        base: 56,
-        small: 32,
-        large: 128,
-      },
-      weight: {
-        normal: 300,
-        bold: 500,
-      },
-      lineHeight: 1.1,
-    },
-    motion: {
-      fadeMs: 500,
-    },
-    canvas: {
-      width: 1920,
-      height: 1080,
-      fps: 30,
-    },
-  };
-
-  const DEFAULT_THEME = {
-    id: 'default',
-    visual: runtimeThemeValue,
+    ...DEFAULT_THEME,
+    color: DEFAULT_THEME.visual.color,
+    type: DEFAULT_THEME.visual.type,
+    motion: DEFAULT_THEME.visual.motion,
   };
 
   const toRuntimeTheme = (value: unknown) => {
@@ -157,6 +131,7 @@ vi.mock('@banodoco/timeline-composition/theme-api', async () => {
   const ThemeContext = reactModule.createContext(runtimeThemeValue);
 
   return {
+    ...actual,
     DEFAULT_THEME,
     ThemeProvider: ({
       children,
@@ -256,38 +231,6 @@ vi.mock('@/tools/video-editor/shaders/registry/index.ts', async () => {
         mockShaderRegistryHas(lookup.shaderId, lookup.ownerExtensionId)
       ),
     }),
-  };
-});
-
-vi.mock('@banodoco/timeline-composition/theme-api', async () => {
-  const React = await import('react');
-  const DEFAULT_THEME = {
-    id: 'default',
-    visual: {
-      color: {
-        accent: '#ffffff',
-        bg: '#000000',
-      },
-      type: {
-        families: {
-          heading: 'Georgia, serif',
-        },
-      },
-    },
-  };
-  const ThemeContext = React.createContext(DEFAULT_THEME.visual);
-  return {
-    DEFAULT_THEME,
-    ThemeProvider: ({
-      children,
-      value,
-    }: PropsWithChildren<{ value: unknown }>) => (
-      <ThemeContext.Provider value={(value as typeof DEFAULT_THEME)?.visual ?? DEFAULT_THEME.visual}>
-        {children}
-      </ThemeContext.Provider>
-    ),
-    useTheme: () => React.useContext(ThemeContext),
-    composeAnimations: () => ({}),
   };
 });
 
@@ -648,13 +591,34 @@ describe('TimelineRenderer registered sequences', () => {
     expect(sequence).toHaveAttribute('data-heading', "'Sixtyfour', 'Sixtyfour Variable', monospace");
   });
 
-  it('uses the DEFAULT_THEME fallback when the timeline has no theme', () => {
+  it('uses the DEFAULT_THEME fallback when the timeline has no theme', async () => {
+    const { DEFAULT_THEME: publicDefaultTheme } = await vi.importActual<typeof import('@banodoco/timeline-composition/theme-api')>(
+      '@banodoco/timeline-composition/theme-api',
+    );
     render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig()} />);
 
+    expect(resolveTimelineRenderTheme(buildConfig())).toEqual(publicDefaultTheme);
     const sequence = screen.getByTestId('registered-sequence');
-    expect(sequence).toHaveAttribute('data-accent', '#ffffff');
-    expect(sequence).toHaveAttribute('data-bg', '#000000');
-    expect(sequence).toHaveAttribute('data-heading', 'Georgia, serif');
+    expect(sequence).toHaveAttribute('data-accent', publicDefaultTheme.visual.color.accent);
+    expect(sequence).toHaveAttribute('data-bg', publicDefaultTheme.visual.color.bg);
+    expect(sequence).toHaveAttribute('data-heading', publicDefaultTheme.visual.type.families.heading);
+    expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({
+      backgroundColor: publicDefaultTheme.visual.color.bg,
+    });
+  });
+
+  it('paints the live canvas from the resolved authored background', () => {
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig({
+      theme_overrides: {
+        visual: {
+          color: {
+            bg: '#123456',
+          },
+        },
+      },
+    })} />);
+
+    expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({ backgroundColor: '#123456' });
   });
 
   it('materializes registry asset keys into component-facing preview URLs for registered sequences', () => {
