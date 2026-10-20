@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T10:39:58Z | dispatcher heartbeat 13s -->
+<!-- main | 2026-10-20T10:40:22Z | dispatcher heartbeat 7s -->
 # runtime — 2026-10-20T10:35:07Z
 Milestone: M1 RECORDED. M2: safety fixes and upstream refresh integrated; preparing one new consumer tuple. M3 capture remains gated.
 Integrated: Runtime tl/integration 8609333. F1/F2 landed at c0dcd38; main 29d0954 refreshed via a5a4f6b; reviewed producer record fix via 8609333. F2: 64 ordinary + 9 commit tests passed. F1 on F2: 156 ordinary + 1 marked occupancy + 9 commit passed. Main refresh: 387 ordinary + 9 commit + 14 marked passed; 5 unchanged Agent capture-host failures remain separately documented. Origin/main ancestry and tested tree 64ecb3ab verified. Producer current gate: 223 ordinary + 9 commit + 5 real frozen Agent0a cases passed, including Node numeric forwarding, restart/exact retry, one-shot and undo.
