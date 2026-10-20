@@ -72,3 +72,38 @@ All three original App `it.fails` assertions in `src/tools/video-editor/hooks/us
 No App/browser or full-suite pass is claimed. Detailed exact commands and counts are in the worker `notes/report.md`.
 
 Agentmanager02:23 actualmigrationboundary: reviewedcurrentcorecandidate746440c4 648purePASS/38registry+48actualpopup; normal0.2.3rootkeyvalidationpasses. Twooriginal/opaque positivecases remainrealFAIL at trustedbootstraprecorderhistory: record.created=[] while command.createdmissing. Runtimehelperownerrequested completeoriginalcommandcapture BEFOREaccept, no history/SQLrepair/guardweakening. No acceptedmigration/reload/undo/redo claim. Existinglane/readderivedAppview next, occurrence.deleteworker activewithstableO only. All13ops source union completeordinarydefs unchanged; newpublicgroupartifactpendingnormalfreeze.
+
+## Corrected trusted-bootstrap qualification — 2026-10-20
+
+The owned Agent loader now archives Runtime helper commit
+`382f523ef957afb2bd299c5e21424ca821b23f05` in
+`tests/sdk/test_timeline_group_migration_runtime.py`. The exact helper file
+`tests/timeline_trusted_bootstrap.py` is SHA256
+`5e152bfa716b9003b831648cad16f6adb9c334cd18a6a7cf32a31accefe82617`.
+The helper authors `command.created=[]` before request identity/hash and
+normal Runtime acceptance; this is test-only trusted setup, not Agent
+provider acceptance.
+
+The unchanged nine-case integration file was run against the pinned normal
+Runtime 0.2.3 source at `/home/user/work/wt/rt-m2-bundle2-runtime-artifacts`
+(`d691ddadb4ef3f5881a25fa893b4fb812211f102`) with Agent HEAD
+`746440c4c4a6bf7dd8a89500c2bef21a3721efef`: **7 passed, 2 failed**. Both
+golden and opaque migration cases now pass request/schema admission and reach
+the Agent provider. They fail before accepted migration at
+`astrid/sdk/timeline/commit.py:596`, while `_check_reservations` scans the
+trusted setup history: `semantic identity boundary differs from writes`,
+returned publicly as `semantic identity history is unavailable`.
+
+The setup itself is genuinely accepted by Runtime: the passing readback
+assertions prove exact parent payload/digest/dependency-manifest closure,
+retained transcript pin/source capture, and the same closure after source-v2
+and Runtime reopen. No migration receipt, accepted migration history,
+inverse, redo, or same-created-ID result is claimed because the first real
+migration is refused. The minimal follow-up is to reconcile the trusted
+bootstrap parent-replacement record with the Agent provider's loaded boundary
+bundle in `_check_reservations`/`_load` while retaining the existing semantic
+guard; do not weaken the guard or rewrite Runtime history.
+
+Neighboring Agent migration/recipe/provider/retained-document tests remain
+green: **68 passed**. M2 remains held; no App or three-product qualification
+is implied.

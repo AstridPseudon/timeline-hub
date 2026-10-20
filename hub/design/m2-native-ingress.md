@@ -1,0 +1,25 @@
+# Native CLI/Python capture inputs — review candidate
+
+Worker: `agt-m2-native-client-inputs`; worktree `/home/user/work/wt/agt-m2-native-client-inputs`, base `027bd16d96010544331c953c0e1014e161786e71`.
+
+## Implementation
+
+`astrid/sdk/timeline/_client_inputs.py` supplies bounded, detached capture inputs to the existing `execute` recorder callback. `TimelineSession` uses it both to stage native batches and replay its pending prefix over the ORIGINAL immutable base. Existing `_schema_resolver` selects the element from the actual staged row; no simulated handler pass or per-operation guard table. Capture reads remain outside the outbox lock; the existing state comparison refuses a concurrent ACK, without refreshing original guards, bindings or created IDs. Existing retry matching returns before bundle/input reads, retaining the exact persisted body/key. No writer, client rebase, renderer, registry upsert, schema override, or Runtime product changes.
+
+## API and pin availability
+
+Normal `vendor_lock.py update/check` selects committed Runtime `a9a81078e2aa30f071f84d3c64e1025e9ed62df1`, using read-only producer `/home/user/work/wt/rt-m2-popup-read-release-cohort`. Generated client contract **0.2.6**, schema digest `sha256:f6b8bfd4159037c3a33f43332cad588a8cc1d90db9e571e0dd93e9fa38a9fcc8`, component manifest `sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5`. All vendored bytes were copied and verified by `scripts/vendor_lock.py`; no hand edits. Frozen 0.2.3 and all other worktrees remain unchanged. This is a NEW candidate, not a release/adoption claim; reviewed successor compatibility/Door work and owner publication + paired proof remain required.
+
+* `get_project_verified_media(project_id, selection)` is present in the official generated client and normal public HTTP read. The adapter forwards exactly `asset/generation_id/variant_id/object_id/catalog_digest`, verifies the returned selection, and supplies metadata only to capture. Both swap sides are read, with repeated selections cached within an execution. Missing generated method gives the existing explicit not-ready failure for media while ordinary commands still capture. Future parent operations can use the same argument-shaped input loader when installed; none is newly installed here.
+* `get_document(project_id, document_id)` returns a scoped **current** ProjectDocument only: no version/content-digest argument and no publicly readable retained version. The adapter accepts this read only when project, kind `astrid.project-pack`, id, exact requested version and canonical content digest ALL match. It never substitutes a new current pin or schema. Missing/mismatched inputs refuse before changing pending commands.
+* `get_object(object_id)` supplies normal authorized CAS bytes. Existing `_schema_resolver` selects only the exact owner/id/kind/revision admission from the staged row and reads its retained `snapshot_object`; `admitted_element_snapshot_descriptor` -> `admitted_element_descriptor` performs the existing pure exact digest/build/descriptor validation. Pack snapshots can be shared by multiple admissions; identical descriptors are valid. No workstation schema/cache/build source participates. Runtime rechecks admission/object custody at commit.
+
+## Concrete historical-read gap (Runtime owner)
+
+The server-only existing `RequestCommitPort.config_source(DocumentPin)` and `document_object(DocumentPin, object_id)` can read a retained exact old source and snapshot. The official public `get_document` cannot. After source replacement/removal and restart, NEW CLI/Python capture with an older schema_source therefore refuses `exact selected pack document version unavailable`; it does not read a current replacement snapshot or refresh the selected element. Already captured requests/suffixes can still flush through Runtime's retained port, and lost-ACK retries still succeed with zero capture reads. Current-selection removal does not revoke an already retained original admission; tests preserve that behavior. Actual missing snapshot bytes, missing selected admission in the requested source, bad pin/digest, invalid known value or original guard fail atomically.
+
+Bounded next step for Runtime coordination: provide authorized exact DocumentPin reads using the existing document/read-port semantics (project + id + version + digest) and its retained snapshot descriptor, with missing/revoked/custody refusal. Runtime owns public contract choice and validation. No endpoint is invented by this worker and no internal SQL/port is used as a client fallback. Until owner publishes that capability, historical NEW capture remains unavailable.
+
+M2 integration remains HELD. This adapter does not establish whole Gate 1: historical source capture and sheet grammar/surface coverage remain outstanding, as do reviewed-source release and paired successor proof.
+
+Tests/results and exact commands: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-client-inputs/notes/report.md`.
