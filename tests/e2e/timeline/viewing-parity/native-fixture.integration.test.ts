@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, realpathSync, statfsSync } from 'node:fs';
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { delimiter, join, relative } from 'node:path';
+import { basename, delimiter, join, relative } from 'node:path';
 import { test } from 'node:test';
 import { AstridLocalClient } from '../../../../src/integrations/astrid/client';
 import type { Task } from '../../../../src/integrations/runtime/generated';
@@ -17,9 +17,9 @@ const FROZEN_SOURCES = {
     label: 'rt-pin/official013',
   },
   agent: {
-    root: '/home/user/work/wt/agt-pin-04f59c0c',
-    commit: '04f59c0c106c6a6e5bad95f4c56037d77229e8f7',
-    label: 'agt-pin/public013',
+    root: '/home/user/work/wt/agt-pin-973c082e',
+    commit: '973c082e451844aeca399ac4d8a04f3039216cc0',
+    label: 'agt-pin/reviewed973',
   },
 } as const;
 
@@ -155,6 +155,21 @@ function requiredPath(name: string): string {
       `ASTRID_NODE_EXECUTABLE is not the qualified Node 20.19.4 binary: ${resolved}`);
   }
   return resolved;
+}
+
+async function prepareOwnedRemotionProject(directory: string, agent: string): Promise<string> {
+  const qualified = requiredPath('ASTRID_REMOTION_PROJECT_DIR');
+  const projectRoot = join(directory, 'project');
+  const remotion = join(projectRoot, 'remotion');
+  await cp(qualified, remotion, {
+    recursive: true,
+    filter: source => basename(source) !== 'node_modules',
+  });
+  await cp(join(qualified, 'node_modules'), join(remotion, 'node_modules'), { recursive: true });
+  await cp(join(agent, 'astrid'), join(projectRoot, 'astrid'), { recursive: true });
+  assert.equal(realpathSync(remotion), remotion);
+  assert.equal(realpathSync(join(projectRoot, 'astrid')), join(projectRoot, 'astrid'));
+  return remotion;
 }
 
 function cleanHostEnvironment(runtime: string, agent: string): Record<string, string> {
@@ -317,7 +332,7 @@ test('native retained frame fixture restores and admits one normal render task',
     assertCanonicalNativeMedia(fixture, ORIGINAL_640);
     assert.equal(harness.audit().filter(entry => entry.method === 'POST' && entry.path.endsWith('/composition-revisions')).length, 0);
 
-    privateRenderRoot = await mkdtemp('/tmp/vw-m3-normal-');
+    privateRenderRoot = await mkdtemp('/tmp/r-');
     const privateHome = join(privateRenderRoot, 'home');
     const privateTemp = join(privateRenderRoot, 'tmp');
     const privateConfig = join(privateRenderRoot, 'config');
@@ -328,6 +343,7 @@ test('native retained frame fixture restores and admits one normal render task',
     await mkdir(privateCache);
     assert.equal(realpathSync(privateRenderRoot), privateRenderRoot);
     assert.equal(realpathSync(privateTemp), privateTemp);
+    process.env.ASTRID_REMOTION_PROJECT_DIR = await prepareOwnedRemotionProject(privateRenderRoot, archived.agent.root);
     Object.assign(process.env, {
       HOME: privateHome,
       TMPDIR: privateTemp,
