@@ -117,6 +117,8 @@ describe('clip scalars in the existing durable session (unit transport only)', (
     const [outbox] = await env.outboxes.list(scope);
     expect(() => captureClipScalarEdit(session.clipScalarPort, current, id, 'occurrence:shared-sibling'))
       .toThrow('matching raw clip owner');
+    expect(() => captureClipScalarEdit(session.clipScalarPort, current, id))
+      .toThrow('matching raw clip owner');
     expect(env.current()).toEqual(before);
     expect(await env.outboxes.list(scope)).toEqual([outbox]);
     expect(env.requests).toHaveLength(0);
@@ -152,6 +154,8 @@ describe('clip scalars in the existing durable session (unit transport only)', (
     const outboxes = await env.outboxes.list(scope);
     expect(() => captureClipScalarEdit(session.clipScalarPort, current, id, owner(assetRef)))
       .toThrow('matching raw clip owner');
+    expect(() => captureClipScalarEdit(session.clipScalarPort, current, id))
+      .toThrow('matching raw clip owner');
     expect(env.current()).toEqual(before);
     expect(await env.outboxes.list(scope)).toEqual(outboxes);
     expect(env.requests).toHaveLength(0);
@@ -168,6 +172,8 @@ describe('clip scalars in the existing durable session (unit transport only)', (
     const before = copy(current);
     const outboxes = await env.outboxes.list(scope);
     expect(() => captureClipScalarEdit(session.clipScalarPort, current, selected.id, 'occurrence:shared-sibling'))
+      .toThrow('matching raw clip owner');
+    expect(() => captureClipScalarEdit(session.clipScalarPort, current, selected.id))
       .toThrow('matching raw clip owner');
     expect(env.current()).toEqual(before);
     expect(await env.outboxes.list(scope)).toEqual(outboxes);
@@ -186,6 +192,7 @@ describe('clip scalars in the existing durable session (unit transport only)', (
     expect(() => captureClipScalarEdit(session.clipScalarPort, current, row.id as string, owner(assetRef)))
       .toThrow('matching raw clip owner');
     const captured = captureClipScalarEdit(session.clipScalarPort, current, row.id as string, 'parent');
+    expect(captureClipScalarEdit(session.clipScalarPort, current, row.id as string).basis).toEqual(captured.basis);
     submitClipScalarEdit(captured, { values: {}, clear: ['asset'] });
     await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
     const [stored] = await env.outboxes.list(scope);
@@ -233,6 +240,8 @@ describe('clip scalars in the existing durable session (unit transport only)', (
     const outboxes = await env.outboxes.list(scope);
     expect(() => captureClipScalarEdit(session.clipScalarPort, current, id, owner(holdRef)))
       .toThrow('matching raw clip owner');
+    expect(() => captureClipScalarEdit(session.clipScalarPort, current, id))
+      .toThrow('matching raw clip owner');
     expect(env.current()).toEqual(before);
     expect(await env.outboxes.list(scope)).toEqual(outboxes);
     expect(env.requests).toHaveLength(0);
@@ -247,6 +256,8 @@ describe('clip scalars in the existing durable session (unit transport only)', (
     const before = copy(current);
     const outboxes = await env.outboxes.list(scope);
     expect(() => session.clipScalarPort.capture({ current, clipId: displayId(assetRef), ownerRef: owner(assetRef) }))
+      .toThrow('one raw clip identity');
+    expect(() => session.clipScalarPort.capture({ current, clipId: displayId(assetRef) }))
       .toThrow('one raw clip identity');
     expect(env.current()).toEqual(before);
     expect(await env.outboxes.list(scope)).toEqual(outboxes);
@@ -276,6 +287,7 @@ describe('clip scalars in the existing durable session (unit transport only)', (
     const id = displayId(ref);
     const sibling = copy(before.clips.find((clip) => clip.id === `shared-sibling:${ref.split('/clip:')[1]}`));
     const captured = captureClipScalarEdit(session.clipScalarPort, env.current(), id, owner(ref));
+    expect(captureClipScalarEdit(session.clipScalarPort, env.current(), id).basis).toEqual(captured.basis);
     const { command } = session.clipScalarPort.finish(captured.basis, args);
     submitClipScalarEdit(captured, args);
     const previewRow = env.current().config.clips.find((clip) => clip.id === id)!;

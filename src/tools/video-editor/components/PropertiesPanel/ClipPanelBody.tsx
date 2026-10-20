@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState, type ComponentType } from 'react';
+import { submitClipScalarEdit, type CapturedClipScalarEdit } from '@/tools/video-editor/commands/clipScalarGesture.ts';
+import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
@@ -20,6 +21,7 @@ import { isSequenceParamsSchema } from '@/tools/video-editor/clip-types/defineCl
 import type { EffectResource, VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
 import type { ClipTab } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
 import type { ClipMeta, TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipTrimCapturePort } from '@/tools/video-editor/commands/clipTrimGesture.ts';
 import type { ClipParamsCapturePort } from '@/tools/video-editor/commands/clipParamsGesture.ts';
 import { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 import type { TimelineDeviceClass, TimelineInteractionMode } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
@@ -36,6 +38,7 @@ import { getEffectDisplayLabel } from './clip-effect-helpers.tsx';
 import { ClipEffectsTab } from './ClipEffectsTab.tsx';
 import { ClipExtensionInspectorSection } from './ClipExtensionInspectorSection.tsx';
 import { ClipInspectorActions } from './ClipInspectorActions.tsx';
+import { ClipSourceWindowFields } from './ClipSourceWindowFields.tsx';
 
 export { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 export { FieldLabel, NO_EFFECT, NO_TRANSITION, TAB_COLUMNS_CLASS } from './clip-panel-primitives.tsx';
@@ -49,7 +52,10 @@ export interface ClipPanelProps {
   precisionEnabled: boolean;
   hasPredecessor: boolean;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  /** Authoring hosts provide this; detached presentation panels may omit it. */
+  onScalarEditStart?: () => CapturedClipScalarEdit;
   clipParamsPort?: ClipParamsCapturePort;
+  clipTrimPort?: ClipTrimCapturePort;
   current?: TimelineData;
   onResetPosition: () => void;
   onClose: () => void;
@@ -99,7 +105,9 @@ export function ClipPanelBody({
   interactionMode,
   precisionEnabled,
   onChange,
+  onScalarEditStart,
   clipParamsPort,
+  clipTrimPort,
   current,
   onResetPosition,
   onClose,
@@ -128,6 +136,41 @@ export function ClipPanelBody({
 }: ClipPanelBodyProps) {
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [editingEffect, setEditingEffect] = useState<EffectResource | null>(null);
+  const [holdDraft, setHoldDraft] = useState<number | null>(null);
+  const [holdError, setHoldError] = useState<string | null>(null);
+  const holdEditRef = useRef<{ captured?: CapturedClipScalarEdit; error?: string } | null>(null);
+  useEffect(() => {
+    holdEditRef.current = null;
+    setHoldDraft(null);
+    setHoldError(null);
+  }, [clip?.id]);
+  const changeHold = (value: number | null) => {
+    if (value === null || !onScalarEditStart) return;
+    if (!holdEditRef.current) {
+      try {
+        // Keep the original authored basis through typing and blur, including failures.
+        holdEditRef.current = { captured: onScalarEditStart() };
+      } catch (error) {
+        holdEditRef.current = { error: error instanceof Error ? error.message : String(error) };
+      }
+    }
+    setHoldDraft(value);
+    setHoldError(holdEditRef.current.error ?? null);
+  };
+  const commitHold = (value: number | null) => {
+    if (value === null || !holdEditRef.current) return;
+    try {
+      const { captured, error } = holdEditRef.current;
+      if (!captured) throw new Error(error ?? 'Clip hold capture is unavailable.');
+      submitClipScalarEdit(captured, { values: { hold: value }, clear: [] });
+      holdEditRef.current = null;
+      setHoldDraft(null);
+      setHoldError(null);
+    } catch (error) {
+      setHoldDraft(value);
+      setHoldError(error instanceof Error ? error.message : String(error));
+    }
+  };
   const visibleTabs = useMemo(() => getVisibleClipTabs(clip, track), [clip, track]);
   const clipDescriptor = clip
     ? getRegisteredClipTypeDescriptor(clip.clipType)
@@ -299,6 +342,7 @@ export function ClipPanelBody({
             <ClipEffectsTab
               clip={clip}
               onChange={onChange}
+              onScalarEditStart={onScalarEditStart}
               effectResources={effectResources}
               clipDescriptor={clipDescriptor}
               isClipTypeRegistered={Boolean(clipDescriptor || clipTypeRegistryRecord)}
@@ -338,13 +382,14 @@ export function ClipPanelBody({
                 <div className="space-y-2">
                   <FieldLabel>Duration (seconds)</FieldLabel>
                   <NumberInput
-                    value={clip.hold ?? holdTiming.defaultSeconds}
+                    value={holdDraft ?? clip.hold ?? holdTiming.defaultSeconds}
                     min={holdTiming.minSeconds}
                     max={holdTiming.maxSeconds}
                     step={holdTiming.stepSeconds}
-                    onChange={(value) => handleTimingValueChange('hold', value)}
-                    onValueCommitted={(value) => handleTimingValueCommitted('hold', value)}
+                    onChange={onScalarEditStart ? changeHold : (value) => handleTimingValueChange('hold', value)}
+                    onValueCommitted={onScalarEditStart ? commitHold : (value) => handleTimingValueCommitted('hold', value)}
                   />
+                  {holdError && <p role="alert" className="text-sm text-destructive">{holdError}</p>}
                 </div>
               ) : (
                 <>
@@ -358,26 +403,32 @@ export function ClipPanelBody({
                       onValueCommitted={(value) => handleTimingValueCommitted('speed', value)}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <FieldLabel>Source In</FieldLabel>
-                    <NumberInput
-                      value={clip.from ?? 0}
-                      min={0}
-                      step={0.1}
-                      onChange={(value) => handleTimingValueChange('from', value)}
-                      onValueCommitted={(value) => handleTimingValueCommitted('from', value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <FieldLabel>Source Out</FieldLabel>
-                    <NumberInput
-                      value={clip.to ?? clip.assetEntry?.duration ?? 5}
-                      min={0}
-                      step={0.1}
-                      onChange={(value) => handleTimingValueChange('to', value)}
-                      onValueCommitted={(value) => handleTimingValueCommitted('to', value)}
-                    />
-                  </div>
+                  {current || clipTrimPort ? (
+                    <ClipSourceWindowFields key={clip.id} clip={clip} current={current} port={clipTrimPort} readOnly={readOnly} />
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <FieldLabel>Source In</FieldLabel>
+                        <NumberInput
+                          value={clip.from ?? 0}
+                          min={0}
+                          step={0.1}
+                          onChange={(value) => handleTimingValueChange('from', value)}
+                          onValueCommitted={(value) => handleTimingValueCommitted('from', value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <FieldLabel>Source Out</FieldLabel>
+                        <NumberInput
+                          value={clip.to ?? clip.assetEntry?.duration ?? 5}
+                          min={0}
+                          step={0.1}
+                          onChange={(value) => handleTimingValueChange('to', value)}
+                          onValueCommitted={(value) => handleTimingValueCommitted('to', value)}
+                        />
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>

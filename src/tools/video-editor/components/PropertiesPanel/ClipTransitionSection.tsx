@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { submitClipScalarEdit, type CapturedClipScalarEdit } from '@/tools/video-editor/commands/clipScalarGesture.ts';
+import { useMemo, useState } from 'react';
 import { AlertTriangle, Globe, Monitor, RefreshCw, Server, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { NumberInput } from '@/shared/components/ui/number-input.tsx';
@@ -100,10 +101,25 @@ function getMergedTransitionParams(
 export function ClipTransitionSection({
   clip,
   onChange,
+  onScalarEditStart,
 }: {
   clip: ResolvedTimelineClip;
+  onScalarEditStart?: () => CapturedClipScalarEdit;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
 }) {
+  const [clearError, setClearError] = useState<string | null>(null);
+  const removeTransition = () => {
+    if (!onScalarEditStart) {
+      onChange({ transition: undefined });
+      return;
+    }
+    try {
+      submitClipScalarEdit(onScalarEditStart(), { values: {}, clear: ['transition'] });
+      setClearError(null);
+    } catch (error) {
+      setClearError(error instanceof Error ? error.message : String(error));
+    }
+  };
   const transitionRegistryContext = useOptionalTransitionRegistryContext();
   const mergedTransitionSnapshot = useMemo(
     () => createTransitionSnapshot(transitionRegistryContext?.snapshot),
@@ -131,7 +147,7 @@ export function ClipTransitionSection({
         value={clip.transition?.type ?? NO_TRANSITION}
         onValueChange={(value) => {
           if (value === NO_TRANSITION) {
-            onChange({ transition: undefined });
+            removeTransition();
             return;
           }
           const record = resolveTransition(value, mergedTransitionSnapshot);
@@ -209,6 +225,8 @@ export function ClipTransitionSection({
         </SelectContent>
       </Select>
 
+      {clearError && <p role="alert" className="text-sm text-destructive">{clearError}</p>}
+
       {/* Renderability / provenance badges */}
       {resolvedTransitionRecord && (() => {
         const blocked = getTransitionBlockedRoutes(resolvedTransitionRecord);
@@ -269,7 +287,7 @@ export function ClipTransitionSection({
             variant="ghost"
             size="sm"
             className="h-6 gap-1 text-xs text-destructive hover:text-destructive"
-            onClick={() => onChange({ transition: undefined })}
+            onClick={removeTransition}
           >
             <Trash2 className="h-3 w-3" /> Remove
           </Button>

@@ -7,7 +7,8 @@ import type { JsonObject } from './types.ts';
 export type ClipScalarOwner = 'parent' | `occurrence:${string}`;
 export type ClipScalarArgs = { values: Record<string, JSON>; clear: Array<'hold' | 'asset' | 'transition'> };
 export interface ClipScalarCapturePort {
-  capture(input: { clipId: string; ownerRef: ClipScalarOwner; current: TimelineData }): JsonObject;
+  /** An omitted owner is resolved and validated by the same session that captures the edit. */
+  capture(input: { clipId: string; ownerRef?: ClipScalarOwner; current: TimelineData }): JsonObject;
   finish(basis: JsonObject, args: ClipScalarArgs): { command: EditCommand };
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
 }
@@ -21,9 +22,9 @@ export function clipScalarPreview(clipId: string, args: ClipScalarArgs): Timelin
   return { version: 1, operations: [{ op: 'clip.update', target: clipId, payload: structuredClone(args.values), clear: [...args.clear] }] };
 }
 
-/** Explicit ownership keeps shared shot occurrences independent. */
+/** The session validates explicit ownership or resolves it from its raw authoring basis. */
 export function captureClipScalarEdit(
-  port: ClipScalarCapturePort | undefined, current: TimelineData, clipId: string, ownerRef: ClipScalarOwner,
+  port: ClipScalarCapturePort | undefined, current: TimelineData, clipId: string, ownerRef?: ClipScalarOwner,
 ): CapturedClipScalarEdit {
   if (!port) throw new Error('clip.set capture is unavailable.');
   if (current.resolvedConfig.clips.filter((clip) => clip.id === clipId).length !== 1) {

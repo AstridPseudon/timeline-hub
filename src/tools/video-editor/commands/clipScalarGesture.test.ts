@@ -40,6 +40,13 @@ describe('clip scalar gesture', () => {
     expect(() => captureClipScalarEdit(port, current, 'o1:raw', 'occurrence:o1')).toThrow('unambiguous');
     expect(port.capture).not.toHaveBeenCalled();
   });
+  it('delegates omitted ownership to a single session capture without reading display metadata', () => {
+    const { port, current, basis } = setup();
+    const captured = captureClipScalarEdit(port, current, 'o1:raw');
+    expect(port.capture).toHaveBeenCalledTimes(1);
+    expect(port.capture).toHaveBeenCalledWith({ current, clipId: 'o1:raw', ownerRef: undefined });
+    expect(captured.basis).toEqual(basis);
+  });
   it('keeps typed input when the host refuses completion', () => {
     const { port, current, submit } = setup();
     const captured = captureClipScalarEdit(port, current, 'o1:raw', 'occurrence:o1');

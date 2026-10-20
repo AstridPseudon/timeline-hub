@@ -1,3 +1,4 @@
+import type { CapturedClipScalarEdit } from '@/tools/video-editor/commands/clipScalarGesture.ts';
 import { getPinnedTimelineElement } from '@/tools/video-editor/runtime/pinned-element-source.ts';
 import type { EffectCreatorPanelProps } from '@/tools/video-editor/components/EffectCreatorPanel.tsx';
 import { lazy, Suspense, useCallback, useState, useSyncExternalStore, type ComponentType } from 'react';
@@ -35,6 +36,7 @@ const LazyEffectCreatorPanel = lazy(() =>
 export function ClipEffectsTab({
   clip,
   onChange,
+  onScalarEditStart,
   clipParamsPort,
   current,
   clipId,
@@ -57,6 +59,7 @@ export function ClipEffectsTab({
 }: {
   clip: ResolvedTimelineClip;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  onScalarEditStart?: () => CapturedClipScalarEdit;
   clipParamsPort?: ClipParamsCapturePort;
   current?: TimelineData;
   clipId?: string;
@@ -171,7 +174,7 @@ export function ClipEffectsTab({
           setCreatorOpen={handleCreatorOpenChange}
         />
         <ClipShaderSection clip={clip} onChange={onChange} />
-        <ClipTransitionSection clip={clip} onChange={onChange} />
+        <ClipTransitionSection key={clip.id} clip={clip} onChange={onChange} onScalarEditStart={onScalarEditStart} />
       </div>
       {isEffectLayer && !clip.continuous && (
         <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3 text-sm text-foreground">
