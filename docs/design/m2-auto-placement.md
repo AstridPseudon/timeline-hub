@@ -127,6 +127,14 @@ non-empty `pinnedShotGroups` refuses `migration_needed`; display IDs never ident
 * Replay/inverse are exact (literal start). Every clip row of the shot is a `consumed` guard
   (append extent, occupied starts, anchor lane): a changed clip conflicts at replay, a deleted
   one refuses via the membership guard, and a rebuild records the new values.
+* The birth handler records `occurrence:<id>/source` at `app.astrid.pool` and `parent` at
+  `config.pinnedShotGroups`, including absence, through the existing recorder. A concurrent
+  pool add conflicts even when the exact alias was already bound; the original request never
+  silently promotes media added after capture. Changed legacy eligibility also conflicts.
+  A conflict keeps the original request for review; a new capture is a separate decision.
+  These field reads conservatively apply to all `occurrence.add-media` births, including
+  `placement.create` and completion, without changing their arguments or stable-head behavior.
+  Changes to another owner's pool or unrelated source/parent fields remain disjoint.
 * `unplace_shared(..., keep_as_pooled=False)` = `placement.unplace` (image only; binding kept).
 
 Evidence: `test_recipe_m2_shared_auto_placement.py`, golden `recipe_m2_shared_auto_placement.json`.
@@ -148,7 +156,9 @@ bound in the shot registry exactly like placed media, so the dependency manifest
   (`identity_collision`) or an alias a shot clip already uses (`identity_conflict`; the clip
   `asset`/`asset_id` are read-guarded), binds the exact media (existing equal binding is fine),
   appends. `remove` refuses a non-member, guards the exact binding and keeps it. A malformed
-  pool (not a list of strings) refuses `unsupported_pool`.
+  pool (not a list of strings) refuses `unsupported_pool`. All `shot.pool` executions also
+  record `parent.config.pinnedShotGroups`, covering eligibility of shared pool-only requests.
+  This is a conservative replay guard; native pool operations add no migration semantics.
 * **Ordered semantics.** The write replaces the whole list, so the recorded before/after make
   undo restore the exact original position and redo the exact result; ABA is the usual guard on
   the after-state (an intervening write to the pool path, even an equal one, refuses undo).

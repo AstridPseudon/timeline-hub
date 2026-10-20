@@ -29,8 +29,8 @@ FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_shot_pool.json'
 SCHEMA = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
 
 
-def pins():
-    document, old, new, verified = inputs('image')
+def pins(kind='image'):
+    document, old, new, verified = inputs(kind)
     others = [{'asset': 'pool-' + name, 'generation_id': 'generation-' + name, 'variant_id': 'variant-' + name,
                'object_id': 'sha256:' + digit * 64, 'catalog_digest': 'sha256:' + digit * 64}
               for name, digit in (('b', '3'), ('c', '4'))]
@@ -266,19 +266,29 @@ def test_a_null_frame_pools_without_a_clip_and_refuses_a_frame_or_anchor():
         assert error.value.kind == 'unsupported_timing'
 
 
-def test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one():
-    _, pooled, a, verified = pooled_case()
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one(kind):
+    document, _, [a, b, c], verified = pins(kind)
+    pooled = bundle_from_document(document)
+    State(pooled).occurrence(OWNER)['duration_ms'] = 20000
+    for pin in (b, a, c):
+        pooled = step(pooled, 'add', pin, verified)[1].bundle
+    assert pool(pooled) == ['pool-b', 'reserved-new', 'pool-c']
     before = copy.deepcopy(pooled)
     result = auto_place_shared(pooled, 'occurrence:occ-a', 'placed', a, ownership='occurrence',
                                verified_media=verified, frame=None)
-    assert [command['op'] for command in result['commands']] == ['placement.create', 'shot.pool']
+    assert [command['op'] for command in result['commands']] == [
+        'placement.create' if kind == 'image' else 'occurrence.add-media', 'shot.pool']
     assert result['capture']['promoted'] is True
     plan = execute(pooled, result['commands'], verified_media=verified)
     assert pooled == before
-    assert pool(plan.bundle) == []
+    assert pool(plan.bundle) == ['pool-b', 'pool-c']
     assert 'placed' in {row['id'] for row in State(plan.bundle).collection(OWNER, 'clip')}
     assert replay(plan, pooled, verified_media=verified).records == plan.records
-    assert inverse(plan.bundle, plan.records).bundle == before
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == before
+    redone = inverse(undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
+    assert redone.bundle == plan.bundle
 
 
 def test_promotion_and_keep_as_pooled_round_trip_through_the_provider():

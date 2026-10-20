@@ -129,6 +129,10 @@ def _clip(ctx, owner, row, limit, kind, verified):
 def add_media(ctx, command):
     owner, limit = _owner(ctx, command['select'])
     _exclusive(ctx, owner)
+    # Automatic births also depend on promotion and legacy-group eligibility.
+    # Keep absent fields guarded even when no pool removal follows the birth.
+    ctx.read(owner + '/source', ['app', 'astrid', 'pool'])
+    ctx.read('parent', ['config', 'pinnedShotGroups'])
     row, pin = command['args']['row'], command['args']['media']
     _consume(ctx, owner, command['args'].get('consumed', ()))
     value, kind = _verified(ctx, pin)

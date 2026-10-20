@@ -541,6 +541,27 @@
             }
           },
           {
+            "ref": "occurrence:occ-a/source",
+            "path": [
+              "app",
+              "astrid",
+              "pool"
+            ],
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "ref": "parent",
+            "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
             "ref": "occurrence:occ-a/collection:clip",
             "path": [],
             "state": {
@@ -923,6 +944,27 @@
               "ref": "occurrence:occ-a/source",
               "path": [
                 "source_window"
+              ],
+              "state": {
+                "state": "absent"
+              }
+            },
+            {
+              "ref": "occurrence:occ-a/source",
+              "path": [
+                "app",
+                "astrid",
+                "pool"
+              ],
+              "state": {
+                "state": "absent"
+              }
+            },
+            {
+              "ref": "parent",
+              "path": [
+                "config",
+                "pinnedShotGroups"
               ],
               "state": {
                 "state": "absent"
@@ -1315,6 +1357,27 @@
             "ref": "occurrence:occ-a/source",
             "path": [
               "source_window"
+            ],
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "ref": "occurrence:occ-a/source",
+            "path": [
+              "app",
+              "astrid",
+              "pool"
+            ],
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "ref": "parent",
+            "path": [
+              "config",
+              "pinnedShotGroups"
             ],
             "state": {
               "state": "absent"
