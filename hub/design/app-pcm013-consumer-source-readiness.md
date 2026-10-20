@@ -1,0 +1,87 @@
+# App public13 continuous PCM consumer: source readiness
+
+Source-readiness task complete. **No product delta, package change, integration pin, consumer green, or parity qualification.** Root b1 remains unchanged. The immutable public12 baseline reproduced: **91 existing tests pass; the proposed consumer harness has 19 passes / 5 failures.** Public13 release bytes are not available in the supplied local artifact locations. Consumer implementation/adoption follows the primary Root013/public12 qualification and the actual new release.
+
+## Exact inputs and package identity
+
+- Assigned App `/home/user/work/wt/app-m3-pcm013-consumer-source-readiness`, HEAD **`b1ef4b9b910ba72375c34cf319692f90d22edc25`**, tree **`8d8a10b057ed31fed69517e18a23b8ec3811447a`**.
+- Original App handoff base `0ea988bdd2907c876b82fd2620820e3fb6d6ea84`. Read `handoff-vw-m3-app-continuous-pcm-consumer-REPORT.md`, `-testmap.md`, `-files.json`, its public clock helper/tests, mounted consumer contract and test config in this design directory. The exact product patch is empty; its red proposal contains tests/helper only. There is no consumer implementation to cherry-pick.
+- Read PLAN first, including the owner continuous-policy and 0.0.13 re-export-only decisions; confirmed the 13:25 release/adoption ruling in App INBOX. Composition `af98594dce80c0350a1fc21dfc44839b2279edf1`, parent `e80c46baf`: only `typescript/src/evaluation.ts` public re-export plus `typescript/tests/audio-envelope-admission.test.ts`. Body/validator, package versions, and hook are unchanged. Integration Composition still has the parent source. No applicable AGENTS.md / CLAUDE.md / CONTRIBUTING was found in the assigned repository or parent chain.
+- App manifest and both lock entries still select `file:vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz`. Archive SHA256 **`0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3`**; `package-lock.json` SHA256 **`310d447508a2f0c023176a3283724455cd5823b6ffe116177f8e30d541de82a0`**. Lock SHA512 equals actual archive SHA512. Local archive equals ORCH/artifacts public12 bytes.
+- Read-only test graph `/tmp/app-coherent-deps12/node_modules`: all **77** unique safe regular archive entries match the installed Composition file set and bytes. React/DOM 18.3.1; Remotion/Player/media 4.0.509; Node v22.22.0; Vitest 4.1.5. The original handoff's clean-install path no longer exists here. Default `/home/user/work/app/node_modules` has Composition **0.0.10**, so it was not used for the tests.
+- No `banodoco-timeline-composition-0.0.13.tgz` in this worktree's vendor/artifacts or ORCH/artifacts; PLAN has no released13 archive identity. This is a statement about supplied local evidence, not a registry/network publication check. No invented version, repack, install or fake admission-export alias.
+
+## Owned consumer paths and smallest port onto b1
+
+`git diff 0ea988bdd2907c876b82fd2620820e3fb6d6ea84 HEAD --` the following existing files is empty: `AudioTrack.tsx`, `playerEvaluation.ts`, `MediaErrorBoundary.tsx`, `PreviewMediaFailureContext.tsx`, `AudioTrack.test.tsx`, `TimelineComposition.media-conformance.test.tsx` under `src/tools/video-editor/compositions/`, plus `src/tools/video-editor/lib/config-utils.ts` and `canonicalRenderBounds.ts`. The original helper and both proposed tests therefore need no root-specific rewrite. These are the App audio owner paths; no App editing/Runtime/Agent files are part of this consumer delta.
+
+| File to activate after release | Exact responsibility |
+| --- | --- |
+| `src/tools/video-editor/compositions/AudioTrack.tsx` | Consume the public admission function in `ClipAudio`; use numeric base gain after PCM preparation; keep original no-envelope passthrough. Bind asynchronous fresh preparation to the existing `PreviewAudio` attempt owner. Include prepared source, source clock and envelope identity in lifetime/error reset dependencies. |
+| `src/tools/video-editor/compositions/compiledAudioSourceClock.ts` (new) | Port the unchanged 553-byte handoff helper: public `computeMediaTrim(clip, fps).trimBefore / fps` and public sanitized child rate, with finite positive fps guard. No timing/DSP implementation. |
+| `src/tools/video-editor/compositions/compiledAudioSourceClock.test.ts` (new) | Port the unchanged 18-test handoff clock/PCM fixture; import the actual product helper. |
+| `src/tools/video-editor/compositions/continuousPCM.contract.test.tsx` (new) | Port the unchanged six-test mounted contract: one public WAV positive, matching prepared positive, four refusals. Extend with actual fresh-consumer Blob-byte/lifecycle coverage before qualification. |
+| `src/tools/video-editor/compositions/AudioTrack.test.tsx` | Preserve readiness/backoff/hold/retry/mute/amplification, semantic stability, failure recovery and occurrence positives; add fresh decode success/failure/abort/stale completion/object-URL cleanup tests. |
+| `src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx` | Replace historical callback-specific comparison with actual intended continuous-PCM equivalence when consumer exists; preserve timing/gain/mute/positive coverage. Do not encode missing/refused behavior as success. |
+| `vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz`, `package.json`, `package-lock.json` | Separate manager-owned App-first adoption after immutable release. Verify archive checksum, root manifest pin, root lock pin, installed lock version/resolved/integrity and all installed archive files. No such changes now. |
+
+No edit is indicated to `TimelineRenderer.tsx` (existing audio track routing), `playerEvaluation.ts` (existing sanitized authored-clock adapter), `canonicalRenderBounds.ts`, `config-utils.ts`, failure context, editor outbox, Runtime DTO, authoring model or canonicalTiming. No second renderConfig, no rejectedSourceCarry, no new store/decoder architecture. If fresh preparation needs extraction, keep one cohesive attempt helper beside AudioTrack rather than adding another lifecycle owner.
+
+`audio-analysis/audioAnalysisClient.ts` and `hooks/useWaveformData.ts` own analysis caches/fixed-rate decoders. They are not reusable native full-source playback preparation APIs. The public package's internal hook is neither required nor exported by af98594d, and adopting it wholesale would replace App's readiness/retry lifetime.
+
+## Required single public contract and activation constraints
+
+All six operations/types come through **`@banodoco/timeline-composition/evaluation`**: existing `compileAudioEnvelope`, `computeMediaTrim`, `getSanitizedPlaybackRate`, `applyAudioEnvelope`, `audioEnvelopeWav`, `AudioEnvelopeError`; public13 adds existing `encodedEnvelopeSource` and `EncodedEnvelopeSource`. `envelopeKey` and `useAudioEnvelopeSource` remain private. JSON.stringify of the compiled envelope supplies a prepared key; the public admission helper already normalizes key order. Do not copy canonicalization or the validator.
+
+1. Compile the existing sanitized authored clip via `playerEvaluationClip(clip)`. Prepared-source admission is synchronous inside the current preview boundary; render errors propagate. A supplied record must pass public `encodedEnvelopeSource(prepared, envelope, roundedSourceFrom, childRate)`. Mismatch must report via existing canonical failure handling, never fall back to the original URL/fresh preparation. Public admission checks envelope identity, exact clock and HTTP(S) syntax; it does **not** authenticate source bytes or URL provenance.
+2. With an envelope and no prepared record, fetch/decode full source within the existing attempt lifetime, invoke public apply once on all full decoded channels at `decoded.sampleRate`, then public float WAV once. Keep media trim/rate and numeric clip×track gain downstream, including mute and boost. Do not clamp float samples, rescale by clip/track gain during preparation, or apply a volume envelope again at playback. A consumer-owned Blob is fresh attempt output, not a forged external prepared record sent through the HTTP(S)-only admission API. No native-file-rate decoding claim is established by these offline fixtures.
+3. Keep 500/1000/2000ms bounded retries, the 10s hold limit, premount behavior, late joining without restarting slow downloads, manual Retry, abandoned media teardown and failure chrome. Fetch/decode failures join that same state machine. Abort fetch, close the AudioContext even on decode failure, ignore stale completion, revoke only owned Blob URLs, and unblock holds on every completion/cancellation path. Preparation identity must include original URL, compiled envelope, rounded origin/rate, fps, occurrence/window and attempt; stable equivalent inputs must not cause spurious restart. Current `authoredAudioIdentity` excludes `render_source`, so it cannot alone reset a refused prepared record that is corrected later.
+4. Preserve original authored fade time across bounded windows. Existing `AudioTrack.tsx:359` adds `frameOffset` when occurrence clipping moves a mount; `AudioTrack.test.tsx` proves the +6-frame case and boosted variant. Do not simply compile a shortened bounded clip or drop that offset. The already-compiled source-clock helper deliberately does not apply occurrence metadata a second time. The future consumer must explicitly prove the mapping between the original envelope, actual media trim and clipped playback window; the 19-pass harness does not cover this lifecycle/window problem. No alternative clock policy was implemented here.
+5. Existing callback tests record the historical path, not PCM parity. Keep their user behavior expectations; add equivalent PCM oracles for the approved continuous change. If an existing behavior is temporarily unavailable, retain its original expectation with narrowly documented `it.fails` under the orchestrator rule, never skip/delete/invert it.
+
+## Commands and actual results
+
+All commands ran in the assigned App worktree. `N` below is this worker's persistent handoff/test artifacts; no source tests were copied into the repository. During tests only this worktree's ignored node_modules symlink pointed to private12; it was restored to `/home/user/work/app/node_modules` afterwards. `vitest.config.mjs` is the original handoff config retargeted to b1/private12/this worker, with the config import resolved to private12's actual `vitest/dist/config.js`. Its Composition aliases resolve the actual public12 advertised entries, with no synthetic export. Cache is confined to this worker and disabled.
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+N=$ORCH/workers/app-m3-pcm013-consumer-source-readiness/notes
+V=/tmp/app-coherent-deps12/node_modules/vitest/vitest.mjs
+python3 -B "$N/dependencies-check.py" > "$N/dependencies-before.json"
+node "$V" run --no-cache --configLoader=runner --maxWorkers=1 --config "$N/vitest.config.mjs" src/tools/video-editor/compositions/AudioTrack.test.tsx src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx > "$N/baseline.log" 2>&1
+# exit 0: 3 files, 91 passed; 10.41s
+node "$V" run --no-cache --configLoader=runner --maxWorkers=1 --config "$N/vitest.config.mjs" "$N/continuousPCM.contract.test.tsx" "$N/compiledAudioSourceClock.test.ts" > "$N/red.log" 2>&1
+# exit 1: 19 passed / 5 failed; 3.71s
+node --input-type=module < "$N/public-contract.mjs" > "$N/public-contract.log"
+# exit 0: all six existing evaluation functions present, encodedEnvelopeSource absent at evaluation and root
+python3 -B "$N/dependencies-check.py" > "$N/dependencies-after.json"
+cmp "$N/dependencies-before.json" "$N/dependencies-after.json"
+# exit 0: package/lock/archive/peers and scoped existing shared .vite/.vite-temp cache metadata+hashes unchanged
+cmp vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz "$ORCH/artifacts/banodoco-timeline-composition-0.0.12.tgz"
+git diff --check
+git status --short --untracked-files=all
+# all exit 0; status empty, original symlink restored
+```
+
+The two targeted commands were independent concurrent runs, each with one worker and cache disabled. One initial launch of each failed before collection because `vitest/config` could not resolve from the outside-repository config location. Both logs remain as `baseline-setup-failed.log` and `red-setup-failed.log`; resolving the actual config import fixed setup without product/test changes.
+
+The 19 passes are 18 source-clock/helper fixtures plus one public compile/apply/WAV float-byte fixture. The five failures are desired behavior: matching prepared URL/constant 0.4 gain, plus wrong envelope, raw .05 origin instead of 2/30, rate .5 instead of 2, and blob URL. All fail because the App mounts the original source. This is our own reproduced RED on actual b1/public12, not green evidence. The helper fixtures currently exercise the outside-source proposed helper, not an installed product helper.
+
+## Exact next activation and planted negative (not executed)
+
+Release owner first supplies immutable 0.0.13 archive, PLAN-recorded SHA256 and CHANGELOG through the normal release path. App manager then authorizes its isolated pin/lock update after primary Root013/public12 qualification. Verify archive identity against the published checksum and installed archive bytes; there is no safe expected13 checksum to fill in now. Keep public12 untouched. Use a separately provisioned read-only13 graph for the actual adopted artifact; never modify a shared graph. Rebase the bounded source port onto the manager's selected final root only through the harness/merge workflow.
+
+The ready source copies are `notes/compiledAudioSourceClock.ts`, `notes/compiledAudioSourceClock.test.ts`, `notes/continuousPCM.contract.test.tsx`; their destinations are the three new compositions files above. `notes/negative-fixtures.json` provides the exact prepared positive/four variants and a fresh-consumer PCM mutation control. `notes/activation.config.mjs` uses this root's native repository test config with only this worker's cache directory overridden, and has **no** public12 alias. Its readiness has been inspected only; it has not run against13.
+
+After actual pin/lock/archive/installed-byte verification, first port the two proposed tests and clock helper onto the unchanged consumer and run the first command below on actual13 to record its own pre-implementation RED. The public12 baseline above does not substitute for this post-pin RED. Then implement the bounded consumer, extend the mounted contract with actual fresh-PCM/lifecycle cases, and rerun both commands to establish GREEN. Use the native13 graph's Vitest with this own-cache wrapper (set V to that verified executable, not private12):
+
+```sh
+node --require "$ORCH/managers/app/notes/snapshot-vitest-runner.cjs" "$V" run --no-cache --configLoader=runner --maxWorkers=1 --config "$N/activation.config.mjs" src/tools/video-editor/compositions/continuousPCM.contract.test.tsx src/tools/video-editor/compositions/compiledAudioSourceClock.test.ts
+node --require "$ORCH/managers/app/notes/snapshot-vitest-runner.cjs" "$V" run --no-cache --configLoader=runner --maxWorkers=1 --config "$N/activation.config.mjs" src/tools/video-editor/compositions/AudioTrack.test.tsx src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx
+```
+
+The original six-test contract should turn fully green, preserving all 18 clock positives and any newly added cases, before any qualification claim. Add actual consumer-created Blob WAV capture to that contract first, then plant a one-line **caller** mutation: pass raw `.05` to public apply instead of rounded `2/30`. At 48kHz/sample 8000/speed2/fade-in .1, the independent literal-clock oracle gives gain .5; the mutant gives 7/12. The fixture compares every interleaved stereo IEEE-float byte of the actual generated WAV (including >unity inputs). The mutation must fail, then restoration must pass using the same first activation command. This catches a real caller clock defect; a public-math-only fixture is insufficient. Also retain all four admission negatives, numeric .4 half-track gain, muted 0 and boosted 1.6 track-gain2 checks with no second envelope application.
+
+**Pending:** actual13 release/pin identity; App fresh preparation and lifetime implementation; consumer red→green and planted negative on those exact bytes; occurrence/window, decode/abort/retry/Blob cleanup coverage; physical Player/export frame/audio parity and owner film review of the approved continuous fade policy. No full/build/browser/socket/project-tsc/install/network or central suite was run/requested. No DSP copy, private import, validator relaxation, other-worktree/dependency mutation, git mutation or push. Dependency verification covers installed Composition/selected peer versions and shared Vite cache boundaries, not an entire dependency-tree census.
+
+Readiness is complete; adoption is held on those prerequisites. No KEEP or source-for-review patch is needed because the product tree is unchanged. Commit message and DONE accompany this report.
