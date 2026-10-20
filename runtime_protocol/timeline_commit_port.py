@@ -11,6 +11,7 @@ import hashlib
 import json
 import math
 import re
+import wave
 from urllib.parse import quote
 
 from .errors import AuthorizationError, ConflictError, NotFoundError, RuntimeErrorBase, ValidationError
@@ -110,6 +111,7 @@ class RequestCommitPort:
         self.__closures = {}
         self.__shots = {}
         self.__media = {}
+        self.__media_info = {}
         self.__takes = {}
         self.__texts = {}
         self.__documents = {}
@@ -273,6 +275,18 @@ class RequestCommitPort:
             return value
         return self._read(read)
 
+    def media_info(self, pin):
+        def read():
+            if pin not in self.__declared:
+                raise refused("dependency_unavailable", "media info requires an exact declared pin")
+            key = canonical_json(pin)
+            if key in self.__media_info:
+                return self.__media_info[key][1]
+            value = MediaReads(self.__service).media_info(self.__project, pin)
+            self.__media_info[key] = (copy.deepcopy(pin), value)
+            return value
+        return self._read(read)
+
     def text_selection(self, selection):
         def read():
             if selection not in self.__declared:
@@ -398,6 +412,9 @@ class RequestCommitPort:
         for selection, captured in self.__media.values():
             if reads.selected(self.__project, selection) != captured:
                 raise refused("dependency_unavailable", "captured media changed")
+        for pin, captured in self.__media_info.values():
+            if reads.media_info(self.__project, pin) != captured:
+                raise refused("dependency_unavailable", "captured raw media changed")
         for selection, captured in self.__texts.values():
             if reads.text(self.__project, selection) != captured:
                 raise refused("dependency_unavailable", "captured text changed")
@@ -840,6 +857,52 @@ class MediaReads:
         record = self._selected_project_media(project_id, selection)
         return {"selection": {key: record[key] for key in selection},
                 **{key: record["entry"][key] for key in ("media_type", "size", "duration_seconds", "width", "height") if key in record["entry"]}}
+
+    def media_info(self, project_id, pin):
+        """Verify one managed raw object and derive only WAV-header duration."""
+        if (not isinstance(pin, dict) or set(pin) != {"media_id", "content_digest"}
+                or not isinstance(pin["media_id"], str) or not _OBJECT_ID.fullmatch(pin["media_id"])
+                or pin["content_digest"] != pin["media_id"]):
+            raise ValidationError("media info requires one exact media pin")
+        project = self.store.get_project(project_id)
+        if project["id"] != project_id or project["realm_id"] != self.realm["id"]:
+            raise AuthorizationError("media info project is outside the request realm")
+        bare = pin["media_id"][7:]
+        row = self.store.conn.execute(
+            "SELECT o.digest, o.size, o.media_type FROM objects o "
+            "JOIN project_objects p ON p.digest=o.digest "
+            "WHERE p.project_id=? AND p.relation='managed' AND o.digest=?",
+            (project_id, bare),
+        ).fetchone()
+        if row is None:
+            raise NotFoundError("raw media is not a managed project object")
+        value = {"object_id": pin["media_id"], "media_type": row["media_type"], "size": row["size"]}
+        try:
+            with self.cas.open(bare) as stream:
+                self.service._verify_open_file(
+                    stream.fileno(), bare, row["size"], label="raw media CAS object",
+                )
+                stream.seek(0)
+                try:
+                    with wave.open(stream, "rb") as wav:
+                        frames = wav.getnframes()
+                        rate = wav.getframerate()
+                        duration = frames / rate
+                finally:
+                    # Recheck the same descriptor after parsing. A path
+                    # replacement may change the old inode's ctime, but cannot
+                    # change its bytes; an in-place mutation is refused before
+                    # its metadata escapes, including when parsing failed.
+                    self.service._verify_open_file(
+                        stream.fileno(), bare, row["size"], label="raw media CAS object",
+                    )
+            if (type(frames) is not int or frames <= 0 or type(rate) is not int or rate <= 0
+                    or not math.isfinite(duration) or duration <= 0):
+                raise ValueError("invalid WAV duration")
+        except (EOFError, OSError, ValueError, wave.Error, ZeroDivisionError, OverflowError):
+            return value
+        value["duration_seconds"] = duration
+        return value
 
     def text(self, project_id, selection):
         """Exact UTF-8 text read; retention is the manifest media pin, as for selected media."""
