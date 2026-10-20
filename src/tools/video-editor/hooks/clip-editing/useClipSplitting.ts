@@ -1,10 +1,14 @@
 import { useCallback } from 'react';
-import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils.ts';
+import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
+import { splitParentClip } from '../../commands/clipSplitGesture.ts';
+import { canSplitClipAtTime, splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils.ts';
 import { splitIntersectingClipsAtPlayhead } from '@/tools/video-editor/lib/clip-editing-utils.ts';
 import type { ClipEditingContext } from './types.ts';
 
 export function useClipSplitting(ctx: ClipEditingContext) {
   const {
+    clipSplit,
+    selectClip,
     applyConfigEdit,
     dataRef,
     resolvedConfig,
@@ -15,41 +19,31 @@ export function useClipSplitting(ctx: ClipEditingContext) {
     notifyPinnedGroupEditBlocked,
   } = ctx;
 
-  const handleSplitSelectedClip = useCallback(() => {
-    if (!selectedClipId || !resolvedConfig) {
-      return;
-    }
-
-    if (isPinnedGroupMember(selectedClipId)) {
-      notifyPinnedGroupEditBlocked();
-      return;
-    }
-
-    const splitResult = splitClipAtPlayhead(resolvedConfig, selectedClipId, currentTimeRef.current);
-    if (!splitResult.nextSelectedClipId) {
-      return;
-    }
-
-    applyConfigEdit(splitResult.config, { selectedClipId: splitResult.nextSelectedClipId });
-  }, [applyConfigEdit, isPinnedGroupMember, notifyPinnedGroupEditBlocked, resolvedConfig, selectedClipId]);
-
   const handleSplitClipAtTime = useCallback((clipId: string, timeSeconds: number) => {
-    if (!resolvedConfig) {
-      return;
-    }
-
+    if (!resolvedConfig) return;
     if (isPinnedGroupMember(clipId)) {
       notifyPinnedGroupEditBlocked();
       return;
     }
-
-    const splitResult = splitClipAtPlayhead(resolvedConfig, clipId, timeSeconds);
-    if (!splitResult.nextSelectedClipId) {
+    const current = dataRef.current;
+    const clip = current?.resolvedConfig.clips.find((entry) => entry.id === clipId);
+    if (current && clipSplit?.supports?.({ clipId, current })) {
+      if (!clip || !canSplitClipAtTime(clip, timeSeconds)) return;
+      try {
+        selectClip(splitParentClip(clipSplit, current, clipId, timeSeconds));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Clip split failed');
+      }
       return;
     }
-
+    const splitResult = splitClipAtPlayhead(resolvedConfig, clipId, timeSeconds);
+    if (!splitResult.nextSelectedClipId) return;
     applyConfigEdit(splitResult.config, { selectedClipId: splitResult.nextSelectedClipId });
-  }, [applyConfigEdit, isPinnedGroupMember, notifyPinnedGroupEditBlocked, resolvedConfig]);
+  }, [applyConfigEdit, clipSplit, dataRef, isPinnedGroupMember, notifyPinnedGroupEditBlocked, resolvedConfig, selectClip]);
+
+  const handleSplitSelectedClip = useCallback(() => {
+    if (selectedClipId) handleSplitClipAtTime(selectedClipId, currentTimeRef.current);
+  }, [currentTimeRef, handleSplitClipAtTime, selectedClipId]);
 
   const handleSplitClipsAtPlayhead = useCallback((clipIds: string[]) => {
     const current = dataRef.current;
@@ -67,6 +61,11 @@ export function useClipSplitting(ctx: ClipEditingContext) {
       return;
     }
 
+    if (validClipIds.length === 1 && clipSplit?.supports?.({ clipId: validClipIds[0], current })) {
+      handleSplitClipAtTime(validClipIds[0], currentTimeRef.current);
+      return;
+    }
+
     const { config: nextResolvedConfig, didSplit } = splitIntersectingClipsAtPlayhead(
       resolvedConfig,
       current.rows,
@@ -78,7 +77,7 @@ export function useClipSplitting(ctx: ClipEditingContext) {
     }
 
     applyConfigEdit(nextResolvedConfig);
-  }, [applyConfigEdit, dataRef, getValidClipIds, isPinnedGroupMember, notifyPinnedGroupEditBlocked, resolvedConfig]);
+  }, [applyConfigEdit, clipSplit, currentTimeRef, dataRef, getValidClipIds, handleSplitClipAtTime, isPinnedGroupMember, notifyPinnedGroupEditBlocked, resolvedConfig]);
 
   return { handleSplitSelectedClip, handleSplitClipAtTime, handleSplitClipsAtPlayhead };
 }

@@ -4,6 +4,7 @@ import type {
   ClipMeta,
   TimelineData,
 } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipSplitCapturePort } from '../../commands/clipSplitGesture.ts';
 import type { ApplyEditOptions } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import type { TimelineSelectedTrack } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 
@@ -12,6 +13,7 @@ export type DeleteClipOptions = {
 };
 
 export interface ClipEditingContext {
+  clipSplit?: ClipSplitCapturePort;
   dataRef: MutableRefObject<TimelineData | null>;
   resolvedConfig: TimelineData['resolvedConfig'] | null;
   selectedClipId: string | null;
