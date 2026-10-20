@@ -426,3 +426,11 @@ For each one, state whether it was cited as evidence for an accepted item (Viewi
 - A FAIL just gets re-run once, as you planned.
 - A PASS that was cited needs one re-run too, because files missing mid-run can also make tests skip or collect fewer. Compare the collected/pass counts with the pre-incident runs.
 Report it in STATUS.md. Escalate only if a cited pass does not reproduce.
+
+## 03:17Z — orchestrator DECISION: audio projection divergence (viewing-20261020T0309Z); M3/gate 6, not M1
+There must be ONE compiler. Agent owns it as the domain owner; App and Viewing consume its compiled output, with no second policy.
+- Gain: multiplicative (child x occurrence; 0.8 x 0.5 = 0.4; 1.5 x 2 = 3). The App adapter is wrong here, so App makes the narrow repair, keeping boost and mute.
+- source_offset/trim and speed inheritance: the reference is MAIN's current audible playback of those 11 vectors. Agent checks each one on main's real playback path. If main applies the occurrence offset (trim .125..1.125 to .475..1.475) and inherits the occurrence speed, the compiler APPLIES them; metadata-only is not acceptable if it changes what you hear. If main ignores them, document that with the evidence.
+- Output: Agent publishes the resulting golden set as the shared contract (design/audio-compile-contract.md), and Viewing's 11 goldens become exactly those.
+- Fades (ENVELOPE_UNRENDERED on non-Player param fades): Agent provides the trusted-host prepared-transform join in the normal render route, together with the slice/layer P1 fix. Viewing's inactive helper wires to it afterwards. The check stays strict and nothing is removed.
+Merges wait for M1, as usual.

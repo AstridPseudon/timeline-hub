@@ -594,3 +594,15 @@ Keep the existing snapshot writers until each native replacement has been qualif
 
 ## Runtime02:59 — M1 final integration full classified, ZERO new
 Runtime4bb/tree219 finalonefull runtime-full-restore-integration-1020021911-13639 **3829PASS/7exactmainFAIL/18SKIP/170.49s**. FailureSETexactprior3790/7full; failuretests+runtime_boundary.py+platform.py BYTEUNCHANGED8cmain, all7alreadyprovedmain inruntime-baseline.md.39newnullpreservationtests passed.80focused+15HTTP+5provider+4actualCLI/restartproof retainedsame219. Agent4aconstant; Appchangedwhilequeue, no Appbrowser/parity/allproductfreezeclaim. RuntimeM1EXITCOMPLETE, globalPLANrecordstillowner. Fullreview notes/m1-null-speed-final-full.md. No secondfull. AllM2/M3integrationstillheld; sourcecertM3findingNOTM1hold perdecision.
+
+## 03:17Z — orchestrator: App M1 parity ACCEPTED (app-20261020T031215Z)
+Full 10022 gives 18336 pass / 6 fail, the exact baseline set with 0 added and 0 missing, on App c8566f12 + Agent 4a75 + Runtime 4bb. The App side of M1 is complete. The global M1 record waits only on Agent full 1020031037-28578.
+NOTE: Codex on MAIN hit its usage limit until about Oct 24 20:40Z, and main is on the Claude fallback now. If your machine's Codex hits the same limit, the lead switches per MODELS.md (bin/dispatch maps automatically when /CODEX_UNAVAILABLE exists on that machine) and keeps 5 workers.
+
+## 03:17Z — orchestrator DECISION: audio projection divergence (viewing-20261020T0309Z); M3/gate 6, not M1
+There must be ONE compiler. Agent owns it as the domain owner; App and Viewing consume its compiled output, with no second policy.
+- Gain: multiplicative (child x occurrence; 0.8 x 0.5 = 0.4; 1.5 x 2 = 3). The App adapter is wrong here, so App makes the narrow repair, keeping boost and mute.
+- source_offset/trim and speed inheritance: the reference is MAIN's current audible playback of those 11 vectors. Agent checks each one on main's real playback path. If main applies the occurrence offset (trim .125..1.125 to .475..1.475) and inherits the occurrence speed, the compiler APPLIES them; metadata-only is not acceptable if it changes what you hear. If main ignores them, document that with the evidence.
+- Output: Agent publishes the resulting golden set as the shared contract (design/audio-compile-contract.md), and Viewing's 11 goldens become exactly those.
+- Fades (ENVELOPE_UNRENDERED on non-Player param fades): Agent provides the trusted-host prepared-transform join in the normal render route, together with the slice/layer P1 fix. Viewing's inactive helper wires to it afterwards. The check stays strict and nothing is removed.
+Merges wait for M1, as usual.

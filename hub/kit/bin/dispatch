@@ -9,6 +9,7 @@ while [ $# -gt 0 ]; do case $1 in
  --repo) REPO=$2; shift 2;; --base) BASE=$2; shift 2;; --model) M=$2; shift 2;; --effort) E=$2; shift 2;;
  --net) NET=1; shift;; --heavy) HEAVY=1; shift;; --timeout) TMO=$2; shift 2;; --brief) BRIEF=$2; shift 2;;
  *) echo "unknown arg $1"; exit 2;; esac; done
+. $O/bin/claude-perms.sh; M=$(codex_fallback $M)   # CODEX_UNAVAILABLE -> Claude fallback
 [ -n "$REPO" ] && [ -f "$BRIEF" ] || { echo "need --repo and --brief FILE"; exit 2; }
 D=$O/workers/$N; [ -e $D ] && { echo "worker $N already exists"; exit 2; }
 FREE=$(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9); [ "$FREE" -lt 5 ] && { echo "REFUSED: only ${FREE}G free"; exit 3; }
@@ -21,7 +22,7 @@ NETCFG=(); [ $NET = 1 ] && NETCFG=(-c sandbox_workspace_write.network_access=tru
 touch $D/running
 ( { cat $O/COMMON.md; echo; echo "YOUR WORKTREE: $WT (branch tl/$N, repo $REPO). Do NOT run git commit/merge/checkout (.git is read-only to you). When done, write a conventional commit message (subject line + body) to $D/commit-msg; the harness commits all your worktree changes when you exit. Leave no build output or temp files in the worktree."; echo; echo "YOUR TASK ($N):"; cat $D/brief.md; } | \
   if [[ $M == claude-* ]]; then   # MODELS.md fallback: Claude instead of Codex
-    (cd $WT && timeout $((TMO*60)) claude -p --model "$M" --permission-mode acceptEdits --allowedTools "Bash(/home/user/work/venv-agent/bin/python:*)" "Bash(/home/user/work/venv-runtime/bin/python:*)" "Bash($O/bin/request-test:*)" "Bash($O/bin/wait-test:*)" "Bash(npx vitest:*)" "Bash(npx tsc:*)" "Bash(node:*)" "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git show:*)" "Bash(ls:*)" "Bash(cat:*)" "Bash(grep:*)" "Bash(rg:*)" "Bash(head:*)" "Bash(tail:*)" "Bash(wc:*)" --add-dir /home/user/work --add-dir /home/user/peteromallet \
+    (cd $WT && timeout $((TMO*60)) claude -p --model "$M" --permission-mode acceptEdits "${CLAUDE_PERMS[@]}" --add-dir /home/user/work --add-dir /home/user/peteromallet \
       --add-dir /home/user/banodoco --add-dir $O --output-format text) 2>>$D/log.txt | tee $D/report.md >> $D/log.txt; echo ${PIPESTATUS[0]} > $D/exit
   else
   timeout $((TMO*60)) codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write "${NETCFG[@]}" -C $WT --skip-git-repo-check \
