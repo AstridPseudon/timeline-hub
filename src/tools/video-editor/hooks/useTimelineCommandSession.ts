@@ -168,6 +168,11 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before adding parent media');
         };
         session.parentClipAddMediaPort = {
+          prepare() { requireCleanParentClipAddMedia(); return parentClipAddMediaPort.prepare(); },
+          assertPreparationCurrent(preparation) {
+            requireCleanParentClipAddMedia();
+            parentClipAddMediaPort.assertPreparationCurrent(preparation);
+          },
           capture(input) { requireCleanParentClipAddMedia(); return parentClipAddMediaPort.capture(input); },
           finish(basis, verifiedMedia) { requireCleanParentClipAddMedia(); return parentClipAddMediaPort.finish(basis, verifiedMedia); },
           submit(input) { requireCleanParentClipAddMedia(); parentClipAddMediaPort.submit(input); },
