@@ -2,10 +2,8 @@
 /**
  * useTimelineOps — host adapter tests.
  *
- * These tests prove TimelineOps uses the native commitData/history path rather
- * than a parallel undo stack or direct store manipulation.  Every mutation
- * must flow through commitData with `semantic: true` so the existing undo
- * recording, checkpoint triggering, and save scheduling stay in force.
+ * These tests cover the native commitData/history path for operations awaiting
+ * command migration. Track-label command routing has its own adjacent suite.
  */
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

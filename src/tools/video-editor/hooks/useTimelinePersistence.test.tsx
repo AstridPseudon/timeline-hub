@@ -12,6 +12,7 @@ vi.mock('@/tools/video-editor/compositions/TimelineRenderer.tsx', () => ({
 }));
 import { useTimelinePersistence, TimelineSaveBarrierError, type UseTimelinePersistenceResult } from './useTimelinePersistence';
 import { useTimelineOps } from './useTimelineOps';
+import { environment } from '../commands/__tests__/commitSessionEnvironment.ts';
 import { TimelineEventBus } from './useTimelineEventBus';
 import {
   TimelineStoreProvider,
@@ -596,17 +597,23 @@ describe('useTimelinePersistence — interaction gating', () => {
     harness.unmount();
   });
 
-  it('public apply schedules the normal host save synchronously and public flush awaits that writer', async () => {
-    let acknowledge!: (version: number) => void;
-    const harness = setup({ saveTimelineImpl: () => new Promise<number>((resolve) => { acknowledge = resolve; }) });
-    const commitData = vi.fn((nextData: TimelineData) => {
-      harness.editSeqRef.current += 1;
-      harness.scheduleSave(nextData);
-    });
+  it('public apply schedules the label command synchronously and public flush awaits that writer', async () => {
+    vi.useRealTimers();
+    const env = await environment();
+    const session = await env.mount();
+    const dataRef = { current: env.current() };
+    const commitData = vi.fn();
+    const saveTimeline = vi.spyOn(env.provider, 'saveTimeline');
+    const gate = env.pause();
     const ops = renderHook(() => useTimelineOps({
-      dataRef: harness.dataRef,
+      dataRef,
       commitData,
-      flushPendingSave: harness.result.current.flushPendingSave,
+      trackLabelPort: session.trackLabelPort,
+      flushPendingSave: async () => {
+        await session.flush();
+        dataRef.current = env.current();
+        return dataRef.current.configVersion;
+      },
       createManualCheckpoint: vi.fn(),
       jumpToCheckpoint: vi.fn(),
       checkpoints: [],
@@ -619,21 +626,32 @@ describe('useTimelinePersistence — interaction gating', () => {
       });
     });
     expect(applied).not.toBeInstanceOf(Promise);
-    expect(commitData).toHaveBeenCalledWith(expect.anything(), { save: true, semantic: true });
-    expect(harness.saveTimeline).not.toHaveBeenCalled();
+    expect(env.previews).toHaveBeenCalledExactlyOnceWith({ version: 1,
+      operations: [{ op: 'track.update', target: 'V1', payload: { label: 'Acknowledged track' } }],
+    });
+    expect(commitData).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
     let settled = false;
     let flushed!: ReturnType<typeof ops.result.current.flush>;
     await act(async () => {
       flushed = ops.result.current.flush().then((receipt) => { settled = true; return receipt; });
     });
-    expect(harness.saveTimeline).toHaveBeenCalledTimes(1);
-    expect(harness.saveTimeline.mock.calls[0]?.[1].tracks).toEqual(expect.arrayContaining([
+    await vi.waitFor(() => expect(env.commits()).toHaveLength(1));
+    expect(env.commits()[0].body!.commands).toEqual([expect.objectContaining({
+      op: 'track.set', select: 'parent/track:V1', args: { values: { label: 'Acknowledged track' }, clear: [] },
+    })]);
+    expect(settled).toBe(false);
+    await act(async () => { gate.resolve(); await flushed; });
+    await expect(flushed).resolves.toEqual({ version: dataRef.current.configVersion });
+    expect(dataRef.current.config.tracks).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 'V1', label: 'Acknowledged track' }),
     ]));
-    expect(settled).toBe(false);
-    await act(async () => { acknowledge(8); });
-    await expect(flushed).resolves.toEqual({ version: 8 });
-    expect(harness.savedSeqRef.current).toBe(harness.editSeqRef.current);
+    expect(session.getState().status).toBe('saved');
+    expect(commitData).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(env.calls.some((call) => call.method === 'POST' && call.path.endsWith('/composition-revisions'))).toBe(false);
+    ops.unmount();
+    await session.dispose();
   });
 
   it('refuses the save-for-render barrier while an interaction is active', async () => {

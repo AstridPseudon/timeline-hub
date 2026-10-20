@@ -738,6 +738,7 @@ export function VideoEditorRuntimeContent({
   const onClipEdgeResizeEnd: TimelineClipEdgeResizeEnd = editor.onClipEdgeResizeEnd;
 
   const editorOps = useMemo<TimelineEditorOpsContextValue>(() => ({
+    trackLabel: editor.trackLabel,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
@@ -782,6 +783,7 @@ export function VideoEditorRuntimeContent({
     handleToggleMuteClips: editor.handleToggleMuteClips,
     handleToggleMute: editor.handleToggleMute,
     handleDetachAudioClip: editor.handleDetachAudioClip,
+    handleTrackLabelEditStart: editor.handleTrackLabelEditStart,
     handleTrackPopoverChange: editor.handleTrackPopoverChange,
     handleMoveTrack: editor.handleMoveTrack,
     handleRemoveTrack: editor.handleRemoveTrack,

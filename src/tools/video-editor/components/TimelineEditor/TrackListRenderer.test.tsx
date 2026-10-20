@@ -688,3 +688,100 @@ describe('track source/output settings', () => {
     expect(onChange).toHaveBeenCalledWith('V1', { role: 'source' });
   }, 30000);
 });
+
+
+describe('captured track names', () => {
+  it.each(['desktop', 'touch'] as const)('captures the %s edit before typing and retains it across a remote label change', async (deviceClass) => {
+    const originalFinish = vi.fn();
+    const laterFinish = vi.fn();
+    const begin = vi.fn(() => originalFinish);
+    const onChange = vi.fn();
+    const props = {
+      track: tracks[0], isSelected: false, hasClips: false, deviceClass,
+      onSelect: vi.fn(), onRemove: vi.fn(), onChange, onLabelEditStart: begin,
+    };
+    const { rerender } = render(<TrackLabelContent {...props} />);
+    if (deviceClass === 'touch') fireEvent.click(screen.getByRole('button', { name: 'Track settings' }));
+    const input = screen.getByRole('textbox', { name: 'Track name' });
+    fireEvent.focus(input);
+    expect(begin).toHaveBeenCalledExactlyOnceWith('V1');
+    fireEvent.change(input, { target: { value: '音楽 🎬' } });
+    expect(originalFinish).not.toHaveBeenCalled();
+    rerender(<TrackLabelContent {...props} track={{ ...tracks[0], label: 'Remote name' }} onLabelEditStart={() => laterFinish} />);
+    expect(input).toHaveValue('音楽 🎬');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    fireEvent.blur(input);
+    expect(originalFinish).toHaveBeenCalledExactlyOnceWith('音楽 🎬');
+    expect(laterFinish).not.toHaveBeenCalled();
+    expect(begin).toHaveBeenCalledTimes(1);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it.each(['desktop', 'touch'] as const)('submits an empty %s name on blur as a value', (deviceClass) => {
+    const finish = vi.fn();
+    render(<TrackLabelContent track={tracks[0]} isSelected={false} hasClips={false}
+      deviceClass={deviceClass} onSelect={vi.fn()} onChange={vi.fn()} onRemove={vi.fn()}
+      onLabelEditStart={() => finish} />);
+    if (deviceClass === 'touch') fireEvent.click(screen.getByRole('button', { name: 'Track settings' }));
+    const input = screen.getByRole('textbox', { name: 'Track name' });
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.blur(input);
+    expect(finish).toHaveBeenCalledExactlyOnceWith('');
+  });
+
+  it.each(['desktop', 'touch'] as const)('keeps %s input and a visible reason after command refusal', (deviceClass) => {
+    const finish = vi.fn(() => { throw new Error('The original track label changed.'); });
+    const begin = vi.fn(() => finish);
+    const onChange = vi.fn();
+    render(<TrackLabelContent track={tracks[0]} isSelected={false} hasClips={false}
+      deviceClass={deviceClass} onSelect={vi.fn()} onChange={onChange} onRemove={vi.fn()}
+      onLabelEditStart={begin} />);
+    if (deviceClass === 'touch') fireEvent.click(screen.getByRole('button', { name: 'Track settings' }));
+    const input = screen.getByRole('textbox', { name: 'Track name' });
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'Kept locally' } });
+    fireEvent.blur(input);
+    expect(input).toHaveValue('Kept locally');
+    expect(screen.getByRole('alert')).toHaveTextContent('The original track label changed.');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(begin).toHaveBeenCalledTimes(1);
+    expect(finish).toHaveBeenCalledTimes(2);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it.each(['track.set label capture is unavailable.', 'track.set label requires an unambiguous track identity.'])(
+    'keeps input after edit-start refusal: %s', (reason) => {
+      const begin = vi.fn(() => { throw new Error(reason); });
+      const onChange = vi.fn();
+      const { rerender } = render(<TrackLabelContent track={tracks[0]} isSelected={false} hasClips={false}
+        onSelect={vi.fn()} onChange={onChange} onRemove={vi.fn()} onLabelEditStart={begin} />);
+      const input = screen.getByRole('textbox', { name: 'Track name' });
+      fireEvent.focus(input);
+      fireEvent.change(input, { target: { value: 'Keep this' } });
+      rerender(<TrackLabelContent track={{ ...tracks[0], label: 'Polled name' }} isSelected={false} hasClips={false}
+        onSelect={vi.fn()} onChange={onChange} onRemove={vi.fn()} onLabelEditStart={begin} />);
+      fireEvent.blur(input);
+      expect(input).toHaveValue('Keep this');
+      expect(screen.getByRole('alert')).toHaveTextContent(reason);
+      expect(begin).toHaveBeenCalledTimes(1);
+      expect(onChange).not.toHaveBeenCalled();
+    },
+  );
+
+  it('refuses a mounted runtime rename without a label port instead of invoking the presentation callback', () => {
+    const onChange = vi.fn();
+    render(<AIInputModeProvider><VideoEditorRuntimeProvider value={buildRuntime(createCommandRegistry())}>
+      <TrackLabelContent track={tracks[0]} isSelected={false} hasClips={false}
+        onSelect={vi.fn()} onChange={onChange} onRemove={vi.fn()} />
+    </VideoEditorRuntimeProvider></AIInputModeProvider>);
+    const input = screen.getByRole('textbox', { name: 'Track name' });
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'Still local' } });
+    fireEvent.blur(input);
+    expect(input).toHaveValue('Still local');
+    expect(screen.getByRole('alert')).toHaveTextContent('Track label command capture is unavailable.');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});

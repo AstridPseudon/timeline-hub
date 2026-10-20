@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
+import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
+import { compilePlayerTransitions } from '../../compositions/playerEvaluation.ts';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fixture from '../../data/shotComposition.fixture.json';
@@ -13,6 +15,7 @@ import { useVideoEditorPreviewSurface } from './useVideoEditorPreviewSurface.tsx
 
 const player = vi.hoisted(() => ({
   config: null as ResolvedTimelineConfig | null,
+  compiled: undefined as CompiledCanonicalTransitions | undefined,
   delivered: [] as ResolvedTimelineConfig[],
   listeners: new Map<string, Set<() => void>>(),
 }));
@@ -22,8 +25,9 @@ const player = vi.hoisted(() => ({
 vi.mock('@remotion/player', async () => {
   const React = await import('react');
   return {
-    Player: React.forwardRef(function Player(props: { inputProps: { config: ResolvedTimelineConfig } }, ref) {
+    Player: React.forwardRef(function Player(props: { inputProps: { config: ResolvedTimelineConfig; compiledTransitions?: CompiledCanonicalTransitions } }, ref) {
       player.config = props.inputProps.config;
+      player.compiled = props.inputProps.compiledTransitions;
       player.delivered.push(props.inputProps.config);
       React.useImperativeHandle(ref, () => ({
         addEventListener: (name: string, listener: () => void) => {
@@ -143,6 +147,7 @@ let nextFrame = 0;
 beforeEach(() => {
   vi.useFakeTimers();
   player.config = null;
+  player.compiled = undefined;
   player.delivered = [];
   player.listeners.clear();
   raf = new Map();
@@ -329,4 +334,43 @@ describe('mounted command projection delivery', () => {
     label('Committed A');
     expect(vi.getTimerCount()).toBe(0);
   });
+});
+
+
+it('delivers each canonical compiled vector atomically with its config while a late accepted read changes the graph', () => {
+  const base = projectCanonicalComposition(canonical('R')).config;
+  const track = base.tracks.find(track => track.kind === 'visual')!;
+  const clip = base.clips.find(clip => clip.track === track.id)!;
+  const config: ResolvedTimelineConfig = { ...base, tracks: [track], clips: [
+    { ...clip, id: 'a', at: 0, hold: 1, transition: undefined },
+    { ...clip, id: 'b', at: 1, hold: 1, transition: { type: 'fade', duration: 0.4 } },
+    { ...clip, id: 'c', at: 2, hold: 1, transition: undefined },
+  ] };
+  const h = mount(local(config));
+  expect(player.compiled).toEqual(compilePlayerTransitions(config));
+  const original = player.compiled;
+  const pending = { ...config, clips: config.clips.map(clip => clip.id === 'b'
+    ? { ...clip, transition: { type: 'fade', duration: 0.8 } } : clip) };
+  h.update(accepted(pending));
+  advance(100);
+  expect(player.config).toBe(config);
+  expect(player.compiled).toBe(original);
+  const latest = { ...pending, clips: pending.clips.map(clip => clip.id === 'b'
+    ? { ...clip, at: 1.5, transition: { type: 'fade', duration: 0.2 } } : clip) };
+  h.update(local(latest, 3));
+  h.observe(canonical('late-ack', 700));
+  advance();
+  expect(player.config).toBe(latest);
+  expect(player.delivered).not.toContain(pending);
+  expect(player.compiled).toEqual(compilePlayerTransitions(latest));
+  expect(player.compiled).not.toEqual(original);
+  label('Unsaved local · based on R');
+});
+
+it('omits compilation for native input without a command projection even with incoming-looking clips and a committed head', () => {
+  const config = projectCanonicalComposition(canonical('R')).config;
+  config.clips[0] = { ...config.clips[0], transition: { type: 'fade', duration: 0.4 } };
+  mount(dataFor(config), null);
+  expect(player.config).toBe(config);
+  expect(player.compiled).toBeUndefined();
 });
