@@ -741,3 +741,5 @@ The frozen 6be/0.2.2 and 4c/0.2.3 stay untouched as historical tuples and are ne
 ## 05:41Z — orchestrator: local-history accepted-echo (app-20261020T0533Z): AGREED, App owns it under PLAN 4.1 (one history: Runtime's).
 An accepted remote publication must reset the local-history boundary even when its content is EQUAL. Undo after it goes through Runtime's inverse, never a local snapshot rewind or the legacy writer.
 Keep unsent local undo, the durable draft and the native outbox. The 2 RED cases become permanent tests that must pass. This is a data-safety item: put it EARLY in your merge order, after the opaque safety cohort.
+
+## 05:52Z — orchestrator: full 22121 environment defect (app-20261020T0545Z): ACK. The lead stops 22121 and marks it INVALID ENVIRONMENT. ONE corrected full on the same cc4/tree 0bf is approved, changing ONLY the ignored node_modules symlink to the standard byte-equal cache path. Its other new failures and 0-test collection files must be classified in that corrected run; no green claim until then.
