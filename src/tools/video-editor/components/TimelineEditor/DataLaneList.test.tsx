@@ -144,6 +144,39 @@ describe('DataLaneList', () => {
     expect(screen.queryByText(/\d+\/\d+/)).not.toBeInTheDocument();
   });
 
+  it('keeps resting-invisible header controls out of flow so the lane label keeps the full gutter', async () => {
+    const data = buildData([laneView({ laneRenderer: () => null })]);
+    const runtime = {
+      extensionRuntime: { extensions: [{ manifest: { id: 'ext.transcript', label: 'Transcript' } }] },
+    } as unknown as VideoEditorRuntimeContextValue;
+
+    render(
+      <DndContext>
+        <SortableContext items={['track-V1', 'data-lane-transcript', 'track-V2']}>
+          <VideoEditorRuntimeContext.Provider value={runtime}>
+            <DataKindRegistryProvider>
+              <RegisterProbe record={registryRecord({ ownerExtensionId: 'ext.transcript' })} />
+              <DataLaneList data={data} laneId="transcript" sortable pixelsPerSecond={PPS} />
+            </DataKindRegistryProvider>
+          </VideoEditorRuntimeContext.Provider>
+        </SortableContext>
+      </DndContext>,
+    );
+
+    const info = await screen.findByRole('button', { name: 'Extension owner: Transcript' });
+    const handle = screen.getByRole('button', { name: 'Reorder Transcript row' });
+    const header = screen.getByTestId('data-lane-header');
+    const controls = within(header).getByTestId('data-lane-header-controls');
+    // Both opacity-0 controls live in one absolutely positioned overlay, so neither takes flex width
+    // from the label; only the icon and the label are in the header's flow.
+    expect(controls).toHaveClass('absolute', 'right-0');
+    expect(controls).toContainElement(info);
+    expect(controls).toContainElement(handle);
+    expect([...header.children].filter((child) => child !== controls).map((child) => child.getAttribute('data-testid') ?? child.textContent))
+      .toEqual(['data-lane-type-icon', 'Transcript']);
+    expect(controls).toHaveClass('group-hover:bg-card', 'group-focus-within:bg-card');
+  });
+
   it('shows focusable ownership help only for the exact registered extension owner', async () => {
     const data = buildData([laneView({ laneRenderer: () => null })]);
     const runtime = {
@@ -1378,6 +1411,12 @@ describe('DataLaneList', () => {
     expect(screen.getAllByTestId('data-lane-actions-trigger')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Transcript actions' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Runaway actions' })).toBeVisible();
+    // The trigger is a fixed-height control: its label must stay on one line, and the rail grows to fit it.
+    expect(screen.getByRole('button', { name: 'Transcript actions' })).toHaveClass('whitespace-nowrap');
+    for (const rail of screen.getAllByTestId('data-lane-action-rail')) {
+      expect(rail).toHaveClass('min-w-20', 'w-auto');
+      expect(rail).not.toHaveClass('w-20');
+    }
 
     view.rerender(
       <DataKindRegistryProvider>

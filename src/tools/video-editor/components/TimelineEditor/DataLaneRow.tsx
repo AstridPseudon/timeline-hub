@@ -659,8 +659,20 @@ export function DataLaneRow({
             <FileText className="h-3.5 w-3.5" />
           </span>
           <span className="min-w-0 flex-1 truncate" title={lane.label}>{lane.label}</span>
-          {ownerExtensionName && <ExtensionOwnerInfo ownerName={ownerExtensionName} dragging={rowDragging} onOpenManager={onOpenExtensionManager} />}
-          {rowDragHandle}
+          {(ownerExtensionName || rowDragHandle) && (
+            // Hover/focus-only controls are out of flow: invisible at rest, they must not take the
+            // label's width. On reveal the overlay paints an opaque backdrop over the label's tail.
+            <div
+              data-testid="data-lane-header-controls"
+              className={[
+                'absolute inset-y-0 right-0 flex items-center gap-1 rounded-r pl-1 pr-2',
+                rowDragging ? 'bg-card' : 'group-hover:bg-card group-focus-within:bg-card',
+              ].join(' ')}
+            >
+              {ownerExtensionName && <ExtensionOwnerInfo ownerName={ownerExtensionName} dragging={rowDragging} onOpenManager={onOpenExtensionManager} />}
+              {rowDragHandle}
+            </div>
+          )}
         </div>
       </div>
       <div data-testid="data-lane-body" data-lane-body="true" className="relative grid min-w-0 flex-1">
@@ -841,14 +853,14 @@ const LaneActionMenu = memo(function LaneActionMenu({ laneLabel, actions, getIte
     <div
       ref={rootRef}
       data-testid="data-lane-action-rail"
-      className="pointer-events-none sticky right-1 z-30 col-start-1 row-start-1 mr-1 flex h-full w-20 items-center justify-self-end bg-card pl-2"
+      className="pointer-events-none sticky right-1 z-30 col-start-1 row-start-1 mr-1 flex h-full w-auto min-w-20 items-center justify-self-end bg-card pl-2"
       onClick={stopRowSelection}
     >
       <button
         ref={triggerRef}
         type="button"
         data-testid="data-lane-actions-trigger"
-        className="pointer-events-auto h-5 rounded border border-border bg-card/95 px-2 text-[10px] font-medium text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="pointer-events-auto h-5 whitespace-nowrap rounded border border-border bg-card/95 px-2 text-[10px] font-medium text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={`${laneLabel} actions`}
         aria-haspopup="menu"
         aria-expanded={open}

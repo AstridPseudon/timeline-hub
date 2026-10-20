@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useEditorSettings } from '@/tools/video-editor/settings/useEditorSettings.ts';
 
 export type ClipTab = 'effects' | 'timing' | 'position' | 'audio' | 'text';
@@ -44,14 +44,38 @@ export const defaultPreferences: EditorPreferences = {
   },
 };
 
-function normalizePreferences(value: EditorPreferences): EditorPreferences {
+/**
+ * Narrowest viewport (CSS px) where the Inspector dock starts open. Below it the dock either floats
+ * over the preview and timeline (phone) or takes a third of a portrait tablet's width from a
+ * timeline that has little to spare, so it starts closed there and the user opens it from the
+ * panel-display control. Only the default: a saved selection, including closed, always wins.
+ */
+export const INSPECTOR_DEFAULT_OPEN_MIN_VIEWPORT_PX = 1024;
+
+export function defaultPreferencesForViewport(viewportWidth: number): EditorPreferences {
+  return viewportWidth >= INSPECTOR_DEFAULT_OPEN_MIN_VIEWPORT_PX
+    ? defaultPreferences
+    : { ...defaultPreferences, selectedRightPanelId: null };
+}
+
+/**
+ * What is saved. The panel selection is absent until the user picks one, so a record written by an
+ * unrelated change (zoom, a lane toggle) still takes the viewport default on the next load instead of
+ * freezing whichever default was sampled on the first one.
+ */
+type StoredPreferences = Omit<EditorPreferences, 'selectedRightPanelId'> & { selectedRightPanelId?: string | null };
+
+const { selectedRightPanelId: _defaultPanel, ...storedDefaults } = defaultPreferences;
+const STORED_DEFAULTS: StoredPreferences = storedDefaults;
+
+function normalizePreferences(value: StoredPreferences, defaults: EditorPreferences = defaultPreferences): EditorPreferences {
   // Older per-timeline records predate the panel fields. Fill only missing
   // fields so a saved user selection (including null/closed) survives reload.
   return {
-    ...defaultPreferences,
+    ...defaults,
     ...value,
     selectedRightPanelId: value.selectedRightPanelId === undefined
-      ? defaultPreferences.selectedRightPanelId
+      ? defaults.selectedRightPanelId
       : value.selectedRightPanelId,
     rightPanelLayoutSlotsByPanelId: {
       ...defaultPreferences.rightPanelLayoutSlotsByPanelId,
@@ -74,77 +98,87 @@ function normalizePreferences(value: EditorPreferences): EditorPreferences {
   };
 }
 
-export function useEditorPreferences(timelineId: string) {
-  const [preferences, setPreferences] = useEditorSettings<EditorPreferences>(
+export function useEditorPreferences(timelineId: string, viewportWidth: number) {
+  // Sampled when this timeline's preferences are first read: later resizes never reopen or close a panel.
+  const sampled = useRef<{ timelineId: string; defaults: EditorPreferences } | null>(null);
+  if (sampled.current?.timelineId !== timelineId) {
+    sampled.current = { timelineId, defaults: defaultPreferencesForViewport(viewportWidth) };
+  }
+  const initialDefaults = sampled.current.defaults;
+  const [preferences, setPreferences] = useEditorSettings<StoredPreferences>(
     `video-editor:preferences:${timelineId}`,
-    defaultPreferences,
+    STORED_DEFAULTS,
   );
+  /** The next record to save: every field filled in except the panel selection, which stays as stored. */
+  const nextRecord = useCallback((current: StoredPreferences, patch: Partial<StoredPreferences> = {}): StoredPreferences => ({
+    ...normalizePreferences(current, initialDefaults),
+    selectedRightPanelId: current.selectedRightPanelId,
+    ...patch,
+  }), [initialDefaults]);
 
-  const normalizedPreferences = normalizePreferences(preferences);
+  const normalizedPreferences = normalizePreferences(preferences, initialDefaults);
 
   const scale = 5;
   const scaleWidth = normalizedPreferences.scaleWidth;
 
   const setScaleWidth = useCallback((updater: number | ((value: number) => number)) => {
-    setPreferences((current) => ({
-      ...normalizePreferences(current),
-      scaleWidth: typeof updater === 'function' ? (updater as (value: number) => number)(current.scaleWidth) : updater,
-    }));
-  }, [setPreferences]);
+    setPreferences((current) => {
+      // Read the width from the normalized record: an older saved record may not carry the field at all.
+      const width = normalizePreferences(current, initialDefaults).scaleWidth;
+      return nextRecord(current, { scaleWidth: typeof updater === 'function' ? updater(width) : updater });
+    });
+  }, [initialDefaults, nextRecord, setPreferences]);
 
   const setActiveClipTab = useCallback((tab: ClipTab) => {
-    setPreferences((current) => ({
-      ...normalizePreferences(current),
-      activeClipTab: tab,
-    }));
-  }, [setPreferences]);
+    setPreferences((current) => nextRecord(current, { activeClipTab: tab }));
+  }, [nextRecord, setPreferences]);
 
   const setAssetPanelState = useCallback((patch: Partial<EditorPreferences['assetPanel']>) => {
-    setPreferences((current) => ({
-      ...normalizePreferences(current),
-      assetPanel: {
-        ...normalizePreferences(current).assetPanel,
-        ...patch,
-      },
+    setPreferences((current) => nextRecord(current, {
+      assetPanel: { ...normalizePreferences(current, initialDefaults).assetPanel, ...patch },
     }));
-  }, [setPreferences]);
+  }, [initialDefaults, nextRecord, setPreferences]);
 
+  // The only writer of the panel selection: an explicit choice, including closed, is saved from here on.
   const setSelectedRightPanelId = useCallback((selectedRightPanelId: string | null) => {
-    setPreferences((current) => {
-      const normalized = normalizePreferences(current);
-      return { ...normalized, selectedRightPanelId,
-        ...(selectedRightPanelId ? { rightPanelTab: selectedRightPanelId === 'host:properties' ? 'inspector' as const : 'extensions' as const } : {}),
-        ...(selectedRightPanelId && selectedRightPanelId !== 'host:properties' ? { lastExtensionPanelId: selectedRightPanelId } : {}),
-      };
-    });
-  }, [setPreferences]);
+    setPreferences((current) => nextRecord(current, {
+      selectedRightPanelId,
+      ...(selectedRightPanelId ? { rightPanelTab: selectedRightPanelId === 'host:properties' ? 'inspector' as const : 'extensions' as const } : {}),
+      ...(selectedRightPanelId && selectedRightPanelId !== 'host:properties' ? { lastExtensionPanelId: selectedRightPanelId } : {}),
+    }));
+  }, [nextRecord, setPreferences]);
 
   const setRightPanelLayoutSlot = useCallback((panelId: string, slot: RightPanelLayoutSlot) => {
-    setPreferences((current) => {
-      const normalized = normalizePreferences(current);
-      return {
-        ...normalized,
-        rightPanelLayoutSlotsByPanelId: {
-          ...normalized.rightPanelLayoutSlotsByPanelId,
-          [panelId]: slot,
-        },
-      };
-    });
-  }, [setPreferences]);
+    setPreferences((current) => nextRecord(current, {
+      rightPanelLayoutSlotsByPanelId: {
+        ...normalizePreferences(current, initialDefaults).rightPanelLayoutSlotsByPanelId,
+        [panelId]: slot,
+      },
+    }));
+  }, [initialDefaults, nextRecord, setPreferences]);
 
   const setShowDataLanes = useCallback((showDataLanes: boolean) => {
-    setPreferences((current) => ({ ...normalizePreferences(current), showDataLanes }));
-  }, [setPreferences]);
+    setPreferences((current) => nextRecord(current, { showDataLanes }));
+  }, [nextRecord, setPreferences]);
 
   const setShowTranscriptLane = useCallback((showTranscriptLane: boolean) => {
-    setPreferences((current) => ({ ...normalizePreferences(current), showTranscriptLane,
-      showDataLanesByKind: { ...normalizePreferences(current).showDataLanesByKind, 'astrid.transcript': showTranscriptLane } }));
-  }, [setPreferences]);
+    setPreferences((current) => nextRecord(current, {
+      showTranscriptLane,
+      showDataLanesByKind: {
+        ...normalizePreferences(current, initialDefaults).showDataLanesByKind,
+        'astrid.transcript': showTranscriptLane,
+      },
+    }));
+  }, [initialDefaults, nextRecord, setPreferences]);
 
   const setDataKindLaneVisible = useCallback((kindId: string, visible: boolean) => {
-    setPreferences((current) => ({ ...normalizePreferences(current),
-      showDataLanesByKind: { ...normalizePreferences(current).showDataLanesByKind, [kindId]: visible } }));
-  }, [setPreferences]);
+    setPreferences((current) => nextRecord(current, {
+      showDataLanesByKind: {
+        ...normalizePreferences(current, initialDefaults).showDataLanesByKind,
+        [kindId]: visible,
+      },
+    }));
+  }, [initialDefaults, nextRecord, setPreferences]);
 
   return {
     setShowTranscriptLane,

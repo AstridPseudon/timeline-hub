@@ -366,7 +366,42 @@ test.describe('timeline phone gestures', () => {
       });
     });
 
-    // --- 8. pinch-to-zoom over the edit area ------------------------------
+    // --- 8. the thumb bar's Add text is within reach ------------------------
+    // Creation on the phone is the agent's job, with one exception: text goes in at the playhead from the
+    // thumb bar, which is in the layout flow and needs no scrolling first. The 44px targets of the bar are
+    // asserted in toolbar-reachable.
+    const clipCount = () => page.evaluate(
+      (clipBodySelector) => document.querySelectorAll(clipBodySelector).length,
+      CLIP_BODY_SELECTOR as string,
+    );
+    const clipsBeforeText = await clipCount();
+    const addText = page.getByTestId('touch-agent-bar').getByRole('button', { name: 'Add text' });
+    const addTextBox = await addText.boundingBox();
+    expect(addTextBox, 'the thumb bar renders Add text').not.toBeNull();
+    const viewport = page.viewportSize()!;
+    await test.step('Add text is inside the viewport with the edit area unscrolled', async () => {
+      const editAreaScrollTop = await page.locator('.timeline-canvas-edit-area').evaluate((area) => area.scrollTop);
+      expect(editAreaScrollTop, 'edit area is at scrollTop 0').toBe(0);
+      expect(
+        addTextBox!.x >= 0 && addTextBox!.y >= 0
+          && addTextBox!.x + addTextBox!.width <= viewport.width && addTextBox!.y + addTextBox!.height <= viewport.height,
+        JSON.stringify({ addTextBox, viewport }),
+      ).toBe(true);
+    });
+    await tapLocator(addText);
+    await expect.poll(clipCount).toBeGreaterThan(clipsBeforeText);
+    const clipsAfterText = await clipCount();
+
+    await test.step('tap "Add text" adds a clip and opens its sheet', async () => {
+      expect(clipsAfterText, `${clipsBeforeText} -> ${clipsAfterText} clips`).toBeGreaterThan(clipsBeforeText);
+      await expect(sheet).toBeVisible({ timeout: 5_000 });
+    });
+
+    await shot('m8-text');
+    await tapLocator(sheet.getByRole('button', { name: 'Close clip' }));
+    await expect(sheet).toBeHidden({ timeout: 5_000 });
+
+    // --- 9. pinch-to-zoom over the edit area ------------------------------
     const pinchArea = await boxOf(page, '.timeline-canvas-edit-area');
     const pinchMidX = pinchArea ? pinchArea.cx : 210;
     const pinchMidY = pinchArea ? pinchArea.y + 20 : 590;
@@ -422,6 +457,6 @@ test.describe('timeline phone gestures', () => {
         .toBeLessThan(24);
     });
 
-    await shot('m8-pinch');
+    await shot('m9-pinch');
   });
 });

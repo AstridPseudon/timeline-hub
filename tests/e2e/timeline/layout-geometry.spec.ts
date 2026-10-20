@@ -56,6 +56,8 @@ interface GeometrySnapshot {
   rects: {
     preview: Rect | null;
     editArea: Rect | null;
+    /** The create-tools cluster: in the canvas footer on desktop; the touch editor draws none (null). */
+    createTools: Rect | null;
     trackLabelColumn: Rect | null;
     ruler: Rect | null;
     firstClip: Rect | null;
@@ -63,10 +65,16 @@ interface GeometrySnapshot {
   counts: {
     tracks: number;
     modeUiElements: number;
+    /** App pane tabs (fixed to the viewport edges) that cover the editor's own panels; always 0. */
+    paneTabOverlaps: number;
+    /** Create buttons that cover the ruler, a clip or an app pane tab; always 0. */
+    toolButtonOverlaps: number;
   };
   flags: {
     armedBarPresent: boolean;
     gutterPadding: string | null;
+    /** Whether the Inspector dock starts open: a viewport-width default, not a layout accident. */
+    rightPanelOpen: boolean;
   };
 }
 
@@ -95,6 +103,7 @@ async function collectGeometry(page: Page): Promise<GeometrySnapshot> {
 
     const preview = document.querySelector('[data-testid="video-editor-preview-surface"]');
     const editArea = document.querySelector(editAreaSelector);
+    const createTools = document.querySelector('[data-testid="timeline-tool-buttons"]');
     const trackLabelColumn = document.querySelector('[data-track-id]');
     const ruler = document.querySelector('[data-testid="timeline-ruler"]');
     const firstClip = document.querySelector(clipBodySelector);
@@ -103,6 +112,32 @@ async function collectGeometry(page: Page): Promise<GeometrySnapshot> {
       '[data-timeline-mode-switcher], [aria-label="Phone timeline mode bar"], [aria-label="Timeline mode switcher"]',
     );
     const armedBar = document.querySelector('[data-armed-gesture]');
+    const dock = document.querySelector('[data-testid="video-editor-right-panel-dock"]');
+    const rightPanelOpen = dock?.getAttribute('data-open') === 'true';
+
+    // The app's pane tabs are `position: fixed` at the viewport edges. They must not sit on the
+    // editor's panels: the timeline (ruler and lanes), the preview and the open Inspector dock. The
+    // touch editor hosts the entry points itself, so no tab is drawn there.
+    const covered: Element[] = [editArea, ruler, rightPanelOpen ? dock : null, preview]
+      .filter((el): el is Element => el !== null);
+    const intersects = (a: DOMRect, b: DOMRect) => (
+      a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+    );
+    const visibleTabs = Array.from(document.querySelectorAll('[data-pane-control]')).filter((tab) => {
+      const tabRect = tab.getBoundingClientRect();
+      return tabRect.width > 0 && tabRect.height > 0;
+    });
+    // The desktop footer cluster is the last row of the edit area's own content, so the edit area is no
+    // covered ground for it: it must clear the ruler, every clip and every pane tab.
+    const toolButtonCovered = [ruler, ...Array.from(document.querySelectorAll(clipBodySelector)), ...visibleTabs]
+      .filter((el): el is Element => el !== null);
+    const toolButtonOverlaps = Array.from(document.querySelectorAll('[data-testid="timeline-tool-buttons"] > *'))
+      .filter((button) => {
+        const buttonRect = button.getBoundingClientRect();
+        return toolButtonCovered.some((el) => intersects(buttonRect, el.getBoundingClientRect()));
+      }).length;
+    const paneTabOverlaps = visibleTabs
+      .filter((tab) => covered.some((el) => intersects(tab.getBoundingClientRect(), el.getBoundingClientRect()))).length;
 
     const gutterPadding = editArea
       ? getComputedStyle(editArea).getPropertyValue('--label-width').trim() || null
@@ -113,6 +148,7 @@ async function collectGeometry(page: Page): Promise<GeometrySnapshot> {
       rects: {
         preview: rect(preview),
         editArea: rect(editArea),
+        createTools: rect(createTools),
         trackLabelColumn: rect(trackLabelColumn),
         ruler: rect(ruler),
         firstClip: rect(firstClip),
@@ -120,10 +156,13 @@ async function collectGeometry(page: Page): Promise<GeometrySnapshot> {
       counts: {
         tracks: document.querySelectorAll('[data-track-id]').length,
         modeUiElements: removedModeUi.length,
+        paneTabOverlaps,
+        toolButtonOverlaps,
       },
       flags: {
         armedBarPresent: Boolean(armedBar),
         gutterPadding,
+        rightPanelOpen,
       },
     };
   }, {
@@ -136,8 +175,12 @@ async function collectGeometry(page: Page): Promise<GeometrySnapshot> {
 /** ±8px per dimension for rects/viewport; exact match for counts and flags. */
 const TOLERANCE_PX = 8;
 
-function diffRect(name: string, actual: Rect | null, expected: Rect | null): string[] {
+function diffRect(name: string, actual: Rect | null, expected: Rect | null | undefined): string[] {
   const issues: string[] = [];
+  if (expected === undefined) {
+    issues.push(`${name}: not in the baseline (regenerate it)`);
+    return issues;
+  }
   if ((actual === null) !== (expected === null)) {
     issues.push(`${name}: presence mismatch (actual=${JSON.stringify(actual)}, expected=${JSON.stringify(expected)})`);
     return issues;

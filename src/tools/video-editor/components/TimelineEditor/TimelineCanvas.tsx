@@ -21,7 +21,7 @@ import React, {
 } from 'react';
 import { createPortal, flushSync } from 'react-dom';
 import { type DragEndEvent, useSensors } from '@dnd-kit/core';
-import { FolderPlus, Layers, Sparkles } from 'lucide-react';
+import { FolderPlus, Sparkles } from 'lucide-react';
 import type { Shot } from '@/domains/generation/types/index.ts';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { usePortalMousedownGuard } from '@/shared/hooks/usePortalMousedownGuard.ts';
@@ -43,6 +43,11 @@ import {
   TimelineRulerAndGrid,
 } from '@/tools/video-editor/components/TimelineEditor/TimelineRulerAndGrid.tsx';
 import { DataLaneList } from '@/tools/video-editor/components/TimelineEditor/DataLaneList.tsx';
+import {
+  CREATE_ANIMATION_PROMPT,
+  CREATE_EFFECT_PROMPT,
+  TimelineCreateTools,
+} from '@/tools/video-editor/components/TimelineEditor/TimelineCreateTools.tsx';
 import { visibleDataLanes } from '@/tools/video-editor/data-kinds/visibleDataLanes.ts';
 import { TrackListRenderer } from '@/tools/video-editor/components/TimelineEditor/TrackListRenderer.tsx';
 import { TimelineGhostLayer } from '@/tools/video-editor/components/TimelineEditor/TimelineGhostLayer.tsx';
@@ -185,7 +190,6 @@ export interface TimelineCanvasProps {
   postprocessShader?: TimelinePostprocessShaderMetadata;
   /** Selects the timeline-scoped postprocess shader inspector target. */
   onSelectPostprocessShader?: (shader: TimelinePostprocessShaderMetadata) => void;
-  /** Creates a new empty shot anchored at an empty timeline position. */
   /** Creates a shot from the selected clips. */
   onCreateShotFromSelection?: () => Promise<Shot | null>;
   canCreateShotFromSelection?: boolean;
@@ -206,12 +210,9 @@ export interface TimelineCanvasProps {
   hardDurationSeconds?: number;
 }
 
-const TOOL_BUTTON_BASE_CLASS = 'pointer-events-auto relative flex items-center justify-center rounded-full ring-1 transition-all duration-150 hover:-translate-y-0.5 hover:scale-105 active:translate-y-0 active:scale-100';
-const POINTER_TOOL_BUTTON_SIZE_CLASS = 'h-6 w-6';
-const TEXT_TOOL_TONE_CLASS = 'bg-[var(--video-editor-accent-bg-strong)] text-foreground ring-[var(--video-editor-accent-ring)] hover:bg-[var(--video-editor-accent-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-accent-shadow-soft)] hover:ring-[var(--video-editor-accent-border)]';
-const EFFECT_TOOL_TONE_CLASS = 'bg-[var(--video-editor-effect-bg)] text-foreground ring-[var(--video-editor-effect-ring)] hover:bg-[var(--video-editor-effect-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-effect-shadow-soft)] hover:ring-[var(--video-editor-effect-ring-strong)]';
-const SEQUENCE_TOOL_TONE_CLASS = 'bg-[var(--video-editor-success-bg)] text-foreground ring-[var(--video-editor-success-ring)] hover:bg-[var(--video-editor-success-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-success-shadow-soft)] hover:ring-[var(--video-editor-success-ring-strong)]';
-const TOOL_TOOLTIP_CLASS = 'pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 text-[11px] font-medium text-popover-foreground opacity-0 shadow-md transition-opacity group-hover/tool:opacity-100';
+/** The footer row that holds the desktop create tools is at least one 24px button (`TimelineCreateTools`) plus
+ *  4px above and below tall, so the buttons take layout space instead of floating over a track. */
+const TOOL_CLUSTER_FOOTER_HEIGHT_PX = 24 + 4 * 2;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 const MENU_VIEWPORT_MARGIN = 8;
@@ -583,7 +584,16 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     if (!valid.length && !(mountedEditorData?.selectedClipIds?.size)) ops?.clearSelection?.();
   }, [lanePlaneResolved, laneDataForDisplay, laneData, mountedEditorData?.selectedDataItems, runtime?.agentSelectionOwner, showDataLanesByKind, showDataLanes, mountedEditorData?.selectedClipIds?.size, ops]);
 
-  const scrollContentHeight = rowLayout.totalHeight + rowHeight;
+  /** A touch timeline (phone or tablet) is for seeing the cut and tapping a
+   *  clip: adding elements and tracks, and tidying tracks, is the agent's job there. */
+  const isTouch = deviceClass !== 'desktop';
+  const hasEffectCreationTool = Boolean(onOpenElementCreationPrompt || onAddEffectLayerAt || onAddTextAt);
+  const hasToolCluster = Boolean(onAddTextAt || hasEffectCreationTool || onOpenSequenceCreator);
+  // Desktop only. The create buttons live in the footer row under the tracks, so the row is as tall as a track
+  // or, when the buttons need more, one button plus padding; the scroll content ends with it.
+  const canvasHostsCluster = !isTouch && hasToolCluster;
+  const footerHeight = canvasHostsCluster ? Math.max(rowHeight, TOOL_CLUSTER_FOOTER_HEIGHT_PX) : rowHeight;
+  const scrollContentHeight = rowLayout.totalHeight + footerHeight;
   const maxClipEnd = useMemo(() => rows.reduce((currentMax, row) => row.actions.reduce(
     (rowMax, action) => Math.max(rowMax, resizePreviewSnapshot[action.id]?.end ?? action.end),
     currentMax,
@@ -1040,11 +1050,6 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     },
   }), [handleSetTime, syncCursor]);
 
-  /** A touch timeline (phone or tablet) is for seeing the cut and tapping a
-   *  clip: adding elements and tracks, and tidying tracks, is the agent's job there. */
-  const isTouch = deviceClass !== 'desktop';
-  const hasEffectCreationTool = Boolean(onOpenElementCreationPrompt || onAddEffectLayerAt || onAddTextAt);
-  const showToolCluster = !isTouch && Boolean(onAddTextAt || hasEffectCreationTool || onOpenSequenceCreator);
   // `handleAddTextAt` / the effect-layer insert both fall back to the first visual
   // track when the id does not resolve, so an empty id is a safe "pick for me".
   const firstVisualTrackId = useMemo(
@@ -1053,7 +1058,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   );
   const handleCreateEffect = useCallback(() => {
     if (onOpenElementCreationPrompt) {
-      onOpenElementCreationPrompt("I'd like to create a new effect.");
+      onOpenElementCreationPrompt(CREATE_EFFECT_PROMPT);
       return;
     }
     onAddEffectLayerAt?.(firstVisualTrackId, timeRef.current);
@@ -1061,7 +1066,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
 
   const handleCreateAnimation = useCallback(() => {
     if (onOpenElementCreationPrompt) {
-      onOpenElementCreationPrompt("I'd like to create an animation.");
+      onOpenElementCreationPrompt(CREATE_ANIMATION_PROMPT);
       return;
     }
     onOpenSequenceCreator?.();
@@ -1411,8 +1416,9 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
             className="pointer-events-none absolute inset-0 z-20"
           />
         </div>
-        {/* Footer: + Video / + Audio split buttons and draggable text tool — outside the grid background div */}
-        <div className={cn('relative flex', !isTouch && 'border-t border-border bg-background')} style={{ height: rowHeight, width: totalWidth, minWidth: '100%' }}>
+        {/* Footer: + Video / + Audio split buttons and the desktop create tools, outside the grid background div.
+            The tools are in the layout flow, below the last row, so no track is ever under a button. */}
+        <div className={cn('relative flex', !isTouch && 'border-t border-border bg-background')} style={{ height: footerHeight, width: totalWidth, minWidth: '100%' }}>
           <div
             className={cn('z-20 flex', !isTouch && 'bg-card')}
             style={{ width: startLeft, position: 'sticky', left: 0 }}
@@ -1437,6 +1443,17 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
               </>
             )}
           </div>
+          {canvasHostsCluster && (
+            <TimelineCreateTools
+              labelWidth={startLeft}
+              showTextTool={Boolean(onAddTextAt)}
+              onCreateEffect={hasEffectCreationTool ? handleCreateEffect : undefined}
+              effectLabel={onOpenElementCreationPrompt ? 'Create new effect' : 'New effect layer at playhead'}
+              effectDragSource={!onOpenElementCreationPrompt}
+              onCreateAnimation={onOpenSequenceCreator ? handleCreateAnimation : undefined}
+              animationLabel={onOpenElementCreationPrompt ? 'Create animation' : 'Create animation sequence'}
+            />
+          )}
           <div className="flex flex-1 items-center gap-2 px-2" style={{ position: 'sticky', left: startLeft }}>
             {newTrackDropLabel && newTrackDropLabel.includes('at bottom') ? (
               <div className="pointer-events-none h-1 flex-1 rounded-full bg-[var(--video-editor-accent-text-soft)]" />
@@ -1469,74 +1486,6 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
           setContextTarget={ops.setContextTarget}
           setInspectorTarget={ops.setInspectorTarget}
         />
-      )}
-      {/* Floating tool buttons — bottom-left of timeline viewport. Desktop only:
-          touch devices create elements through the agent, not this cluster. */}
-      {showToolCluster && (
-        <div
-          className="pointer-events-none absolute z-30 flex gap-1.5 bottom-4"
-          style={{ left: startLeft + 8 }}
-        >
-          {onAddTextAt && (
-            <div
-              draggable
-              onDragStart={(event) => {
-                event.dataTransfer.setData('text-tool', 'true');
-                event.dataTransfer.effectAllowed = 'copy';
-              }}
-              className={`group/tool ${TOOL_BUTTON_BASE_CLASS} ${POINTER_TOOL_BUTTON_SIZE_CLASS} cursor-grab active:cursor-grabbing ${TEXT_TOOL_TONE_CLASS}`}
-              title="Drag onto timeline to add text"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-              <span aria-hidden="true" className={TOOL_TOOLTIP_CLASS}>
-                New text
-              </span>
-            </div>
-          )}
-          {hasEffectCreationTool && (onOpenElementCreationPrompt ? (
-            <button
-              type="button"
-              className={`group/tool ${TOOL_BUTTON_BASE_CLASS} ${POINTER_TOOL_BUTTON_SIZE_CLASS} ${EFFECT_TOOL_TONE_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--video-editor-effect-ring-strong)]`}
-              title="New effect"
-              aria-label="Create new effect"
-              onClick={handleCreateEffect}
-            >
-              <Layers className="h-3 w-3" />
-              <span aria-hidden="true" className={`${TOOL_TOOLTIP_CLASS} group-focus-visible/tool:opacity-100`}>
-                New effect
-              </span>
-            </button>
-          ) : (
-            <div
-              draggable
-              onDragStart={(event) => {
-                event.dataTransfer.setData('effect-layer', 'true');
-                event.dataTransfer.effectAllowed = 'copy';
-              }}
-              className={`group/tool ${TOOL_BUTTON_BASE_CLASS} ${POINTER_TOOL_BUTTON_SIZE_CLASS} cursor-grab active:cursor-grabbing ${EFFECT_TOOL_TONE_CLASS}`}
-              title="Drag onto timeline to add an effect layer"
-            >
-              <Layers className="h-3 w-3" />
-              <span aria-hidden="true" className={TOOL_TOOLTIP_CLASS}>
-                New effect
-              </span>
-            </div>
-          ))}
-          {onOpenSequenceCreator && (
-            <button
-              type="button"
-              className={`${TOOL_BUTTON_BASE_CLASS} ${POINTER_TOOL_BUTTON_SIZE_CLASS} ${SEQUENCE_TOOL_TONE_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--video-editor-success-focus-ring)]`}
-              title={onOpenElementCreationPrompt ? 'Create animation' : 'Create animation sequence'}
-              aria-label={onOpenElementCreationPrompt ? 'Create animation' : 'Create animation sequence'}
-              onClick={handleCreateAnimation}
-            >
-              <Sparkles className="h-3 w-3" />
-              <span aria-hidden="true" className={`${TOOL_TOOLTIP_CLASS} group-focus-visible/tool:opacity-100`}>
-                {onOpenElementCreationPrompt ? 'Create animation' : 'Create animation sequence'}
-              </span>
-            </button>
-          )}
-        </div>
       )}
     </div>
   );

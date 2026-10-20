@@ -1833,6 +1833,28 @@ describe('TimelineEditorShellCore — phone layout', () => {
     expect(paneControlsHosted()).toBe(false);
   });
 
+  it.each([
+    ['the full desktop layout', false],
+    ['the condensed desktop layout', true],
+  ] as const)('reserves the right and bottom pane-tab bands on %s, where the tabs are drawn', (_name, forceCondensed) => {
+    __deviceClass = 'desktop';
+    render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed={forceCondensed} />);
+    const main = document.querySelector('main') as HTMLElement;
+    expect(main.style.paddingInlineEnd).toBe('52px');
+    expect(main.style.paddingInlineStart).toBe('');
+    // jsdom rewrites env(); the browser resolves it to the safe-area inset.
+    expect(main.style.paddingBottom).toMatch(/^calc\(56px \+ env\(/);
+  });
+
+  it.each(['phone', 'tablet'] as const)('reserves no pane-tab band on the %s touch shell: it hosts the entry points', (device) => {
+    __deviceClass = device;
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    const main = document.querySelector('main[data-shell-layout="touch"]') as HTMLElement;
+    expect(main.style.paddingInlineEnd).toBe('');
+    expect(main.style.paddingInlineStart).toBe('');
+    expect(main.style.paddingBottom).toBe('');
+  });
+
   it.each(['Move', 'Trim'] as const)('keeps Inspector through %s and Done; clearing the pick returns to Video', (action) => {
     // A new callback stands in for the mocked store notification to the memoised shell.
     const renderShell = () => <TimelineEditorShellCore timelineId="test-timeline" onNavigateHome={vi.fn()} />;

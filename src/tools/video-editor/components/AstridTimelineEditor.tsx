@@ -56,6 +56,8 @@ interface AstridTimelineEditorProps {
   onOpenSequenceCreator?: () => void;
   onOpenExtensionManager?: () => void;
   onOpenElementCreationPrompt?: (prompt: string) => void;
+  /** The shell hosts the touch create tools in its own chrome, so the canvas footer drops them. */
+  shellHostsTouchCreateTools?: boolean;
 }
 
 const EMPTY_ASSET_GENERATION_MAP: Record<string, string> = {};
@@ -93,7 +95,7 @@ export function shouldKeepPublishedCanonicalCompositionOverride(
   return staleHeadRevisionIds.includes(runtimeHeadRevisionId);
 }
 
-function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCreationPrompt, onOpenExtensionManager }: AstridTimelineEditorProps) {
+function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCreationPrompt, shellHostsTouchCreateTools, onOpenExtensionManager }: AstridTimelineEditorProps) {
   const [videoModalShot, setVideoModalShot] = useState<Shot | null>(null);
   const [videoModalShowImages, setVideoModalShowImages] = useState(false);
   const [canonicalShotEditor, setCanonicalShotEditor] = useState<CanonicalShotOccurrence | null>(null);
@@ -574,6 +576,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
         onOpenSequenceCreator={onOpenSequenceCreator}
         onOpenExtensionManager={onOpenExtensionManager}
         onOpenElementCreationPrompt={onOpenElementCreationPrompt}
+        shellHostsTouchCreateTools={shellHostsTouchCreateTools}
         finalVideoMap={finalVideoMap}
         shotGroups={shotGroups}
         canonicalOccurrences={canonicalOccurrences}

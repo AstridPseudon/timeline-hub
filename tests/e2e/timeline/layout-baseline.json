@@ -8,41 +8,50 @@
       "preview": {
         "x": 12,
         "y": 60,
-        "w": 1144,
-        "h": 520
+        "w": 1104,
+        "h": 492
       },
       "editArea": {
         "x": 12,
-        "y": 660,
-        "w": 1144,
-        "h": 292
+        "y": 632,
+        "w": 1104,
+        "h": 276
+      },
+      "createTools": {
+        "x": 164,
+        "y": 748,
+        "w": 84,
+        "h": 24
       },
       "trackLabelColumn": {
         "x": 12,
-        "y": 660,
+        "y": 632,
         "w": 144,
         "h": 36
       },
       "ruler": {
         "x": 12,
-        "y": 632,
-        "w": 1144,
+        "y": 604,
+        "w": 1104,
         "h": 32
       },
       "firstClip": {
         "x": 156,
-        "y": 664,
+        "y": 636,
         "w": 128,
         "h": 28
       }
     },
     "counts": {
       "tracks": 3,
-      "modeUiElements": 0
+      "modeUiElements": 0,
+      "paneTabOverlaps": 0,
+      "toolButtonOverlaps": 0
     },
     "flags": {
       "armedBarPresent": false,
-      "gutterPadding": "144px"
+      "gutterPadding": "144px",
+      "rightPanelOpen": true
     }
   },
   "phone": {
@@ -63,6 +72,7 @@
         "w": 396,
         "h": 280
       },
+      "createTools": null,
       "trackLabelColumn": {
         "x": 12,
         "y": 472,
@@ -84,11 +94,14 @@
     },
     "counts": {
       "tracks": 3,
-      "modeUiElements": 0
+      "modeUiElements": 0,
+      "paneTabOverlaps": 0,
+      "toolButtonOverlaps": 0
     },
     "flags": {
       "armedBarPresent": false,
-      "gutterPadding": "56px"
+      "gutterPadding": "56px",
+      "rightPanelOpen": false
     }
   },
   "tabletPortrait": {
@@ -109,6 +122,7 @@
         "w": 808,
         "h": 420
       },
+      "createTools": null,
       "trackLabelColumn": {
         "x": 12,
         "y": 704,
@@ -130,11 +144,14 @@
     },
     "counts": {
       "tracks": 3,
-      "modeUiElements": 0
+      "modeUiElements": 0,
+      "paneTabOverlaps": 0,
+      "toolButtonOverlaps": 0
     },
     "flags": {
       "armedBarPresent": false,
-      "gutterPadding": "56px"
+      "gutterPadding": "56px",
+      "rightPanelOpen": false
     }
   },
   "tabletLandscape": {
@@ -155,6 +172,7 @@
         "w": 1156,
         "h": 156
       },
+      "createTools": null,
       "trackLabelColumn": {
         "x": 12,
         "y": 592,
@@ -176,11 +194,14 @@
     },
     "counts": {
       "tracks": 3,
-      "modeUiElements": 0
+      "modeUiElements": 0,
+      "paneTabOverlaps": 0,
+      "toolButtonOverlaps": 0
     },
     "flags": {
       "armedBarPresent": false,
-      "gutterPadding": "56px"
+      "gutterPadding": "56px",
+      "rightPanelOpen": false
     }
   }
 }

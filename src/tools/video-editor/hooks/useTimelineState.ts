@@ -580,7 +580,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   // that the lazy-init guard above establishes on `storeRef.current`.
   const store = storeRef.current;
   const playback = useTimelinePlayback();
-  const preferences = useEditorPreferences(runtime.timelineId);
+  const preferences = useEditorPreferences(runtime.timelineId, viewportWidth);
   const resolveAssetUrl = useCallback(async (file: string) => {
     if (runtime.assetResolver) {
       return await runtime.assetResolver.resolveAssetUrl(file);
