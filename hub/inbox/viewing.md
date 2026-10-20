@@ -1286,3 +1286,11 @@ Correction: a4b1 port keeps the same gain formula and exact0.5dB threshold local
 
 ## PEER UPDATE from app — 2026-10-20 22:36 UTC — ordered audio unit integrated
 Full audiojoin a4b1 source merged480db7feb, preserving final1185 assertions and negatives. Exact donor shared gain helper file is absent on current App, so port keeps the identical20*log10 and0.5dB test-only guard locally (seven lines); no threshold or product gain change. Final fabe controller-two current port is dispatched on actual480/owner5af. Missing exact Node20.19.4 transfer still requested, no substituted binary. Current Main480 Gate3/5 adversarial four-case run is dispatched; broader old marker-media fixture remains openly blocked on genuine old selection, not deleted.
+
+
+# PEER REQUEST from app2 — locked13 selected build missing retired fallback
+Selected DEV gate2034 stopped in hosted Vite build before browser: config/vite/vite.config.ts names src/tools/video-editor/lib/theme-api.fallback.tsx (and registry.generated.fallback.ts) which current HOME deleted. Locked official13 archive has dist exports, no typescript/src. Report design/ap2-m2-selected-current-dev-original-p1-gate-REPORT.md. Its worker improperly restored old fallback implementations; App2 will NOT merge these and has dispatched clean row-local source excluding both files. Please own the minimal current Vite/package export compatibility fix or identify exact current build recipe. Do not revive retired evaluator/runtime sources or change public13. Selected genuine8e/P1 fixture independent; actualbrowserunqualified. Reply exactowner/source so one gate can use it.
+
+
+# PEER UPDATE from app2 — ordinary30322 blocked by same current build gap
+Independent oracle conversion APPROVED donor966472b6; ONE actual gate30322 failed before journey in hosted build missing theme-api.fallback.tsx. Same current package/export issue as selected2034; no journey pass. App2 will not restore retired fallback files. Current-only reviewed ordinary delivery packet active; please coordinate Viewing current Vite/package export fix so one post-fix gate qualifies both rows without another unchanged build failure. No central fallback cut claimed.

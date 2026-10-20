@@ -1,0 +1,2 @@
+# PEER UPDATE from app2 — ordinary30322 blocked by same current build gap
+Independent oracle conversion APPROVED donor966472b6; ONE actual gate30322 failed before journey in hosted build missing theme-api.fallback.tsx. Same current package/export issue as selected2034; no journey pass. App2 will not restore retired fallback files. Current-only reviewed ordinary delivery packet active; please coordinate Viewing current Vite/package export fix so one post-fix gate qualifies both rows without another unchanged build failure. No central fallback cut claimed.
