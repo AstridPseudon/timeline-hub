@@ -15,7 +15,9 @@ import pytest
 
 from astrid.core.rendering import remotion_runtime
 from astrid.core.rendering.node_pin import resolve_pinned_node
-from astrid.core.timeline import scene_answers
+from astrid.core.timeline import Timeline, scene_answers
+
+pytest_plugins = ("tests.packs.rendering.test_scene_host",)
 
 ROOT = Path(__file__).resolve().parents[3]
 ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz"
@@ -329,3 +331,138 @@ def test_prepared_host_query_reports_unavailable_without_fallback(monkeypatch, t
             project_dir=tmp_path / "remotion", composition_id="TimelineComposition",
             theme_path=None, min_free_gb=None, frame_output_dir=tmp_path / "frames",
         )
+
+
+def _write_registered_scene_pair(tmp_path):
+    timeline = tmp_path / "timeline.json"
+    Timeline.from_config({
+        "theme": "banodoco-default",
+        "tracks": [{"id": "picture", "kind": "visual", "label": "Picture"}],
+        "clips": [{"id": "prepared:plate", "track": "picture",
+                   "clipType": "am-snap-plate", "at": 0, "hold": 1,
+                   "params": {"fill": "#F7F4ED"}}],
+    }).dump(timeline)
+    assets = tmp_path / "assets.json"
+    assets.write_text(json.dumps({"assets": {}}), encoding="utf-8")
+    return timeline, assets
+
+
+def _prepared_query_kwargs(tmp_path):
+    return {
+        "staged_video": tmp_path / "staged.mp4",
+        "provenance_out_path": tmp_path / "provenance.json",
+        "composition_id": "TimelineComposition",
+        "theme_path": None,
+        "min_free_gb": None,
+        "frame_output_dir": tmp_path / "frames",
+        "staging_parent": tmp_path / "staging",
+    }
+
+
+def _real_runtime_tools(project, node):
+    peers = Path(os.environ["ASTRID_TEST_NODE_MODULES"])
+    cli = project / "node_modules/@remotion/cli"
+    if not cli.exists():
+        cli.symlink_to((peers / "@remotion/cli").resolve(), target_is_directory=True)
+    executable = cli / "remotion-cli.js"
+    assert executable.is_file()
+    return SimpleNamespace(node_executable=node.path, remotion_cli=executable)
+
+
+def test_prepared_host_query_runs_registered_public_node_inside_real_root(
+    native_host, host_project, tmp_path, monkeypatch,
+):
+    project, _ = host_project
+    timeline, assets = _write_registered_scene_pair(tmp_path)
+    node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+    assert node.ok and node.version == "v20.19.4"
+
+    from astrid.packs.rendering.rendering.renderers.remotion import run
+
+    # The host fixture supplies the actual pinned Node and generated registries;
+    # this test keeps the existing admission seam while exercising production
+    # Root preparation, the real scene-query helper and the registered plate.
+    monkeypatch.setattr(run, "_available_remotion_port", lambda: 32101)
+    monkeypatch.setattr(run, "_validate_project_dir", lambda _: _real_runtime_tools(project, node))
+    rows = scene_answers._prepared_host_frames_at(
+        timeline, assets, [0, 29, 30], project_dir=project,
+        **_prepared_query_kwargs(tmp_path),
+    )
+
+    assert [row["frame"] for row in rows] == [0, 29, 30]
+    assert [(row["coverage"], row["content"]) for row in rows] == [
+        ("COVERED", "EMPTY"), ("COVERED", "EMPTY"), ("GAP", None),
+    ]
+    assert rows[0]["layers"][0]["clipId"] == "prepared:plate"
+    assert rows[0]["layers"][0]["bounds"] == {
+        "status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080},
+    }
+    assert not (tmp_path / ".remotion-props.json").exists()
+    assert not list((tmp_path / "staging").glob(".remotion-runtime-*"))
+    assert not list((project / "public" / "astrid-effects").glob("*"))
+
+
+@pytest.mark.parametrize("source", ["missing", "stale"])
+def test_prepared_host_query_refuses_missing_or_stale_source_pair_and_cleans(
+    native_host, host_project, tmp_path, monkeypatch, source,
+):
+    project, _ = host_project
+    timeline, assets = _write_registered_scene_pair(tmp_path)
+    if source == "missing":
+        timeline.unlink()
+    else:
+        # An asset registry that no longer matches the materialized source is
+        # refused by preparation before the public host can answer.
+        assets.write_text(json.dumps({"assets": {
+            "gone": {"object_id": "missing-object", "type": "image",
+                      "digest": "sha256:" + "0" * 64},
+        }}), encoding="utf-8")
+
+    from astrid.packs.rendering.rendering.renderers.remotion import run
+
+    monkeypatch.setattr(run, "_available_remotion_port", lambda: 32101)
+    node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+    assert node.ok and node.version == "v20.19.4"
+    monkeypatch.setattr(run, "_validate_project_dir", lambda _: _real_runtime_tools(project, node))
+    with pytest.raises(scene_answers.SceneQueryUnavailable):
+        scene_answers._prepared_host_frames_at(
+            timeline, assets, [0], project_dir=project,
+            **_prepared_query_kwargs(tmp_path),
+        )
+
+    assert not (tmp_path / ".remotion-props.json").exists()
+    assert not list((tmp_path / "staging").glob(".remotion-runtime-*"))
+    assert not list((project / "public" / "astrid-effects").glob("*"))
+
+
+def test_prepared_host_query_cleans_after_real_public_query_exception(
+    native_host, host_project, tmp_path, monkeypatch,
+):
+    project, _ = host_project
+    timeline, assets = _write_registered_scene_pair(tmp_path)
+    node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+    assert node.ok and node.version == "v20.19.4"
+
+    from astrid.packs.rendering.rendering.renderers.remotion import run
+
+    monkeypatch.setattr(run, "_available_remotion_port", lambda: 32101)
+    monkeypatch.setattr(run, "_validate_project_dir", lambda _: _real_runtime_tools(project, node))
+    real_query = scene_answers.host_frames_at
+    seen = []
+
+    def query_then_fail(props, basis, frames):
+        rows = real_query(props, basis, frames)
+        seen.extend(rows)
+        raise RuntimeError("consumer failed after real public answer")
+
+    monkeypatch.setattr(scene_answers, "host_frames_at", query_then_fail)
+    with pytest.raises(scene_answers.SceneQueryUnavailable, match="consumer failed"):
+        scene_answers._prepared_host_frames_at(
+            timeline, assets, [0], project_dir=project,
+            **_prepared_query_kwargs(tmp_path),
+        )
+
+    assert seen and seen[0]["layers"][0]["clipId"] == "prepared:plate"
+    assert not (tmp_path / ".remotion-props.json").exists()
+    assert not list((tmp_path / "staging").glob(".remotion-runtime-*"))
+    assert not list((project / "public" / "astrid-effects").glob("*"))
