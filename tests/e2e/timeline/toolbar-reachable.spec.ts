@@ -57,7 +57,8 @@ for (const viewport of NARROW_VIEWPORTS) {
 }
 
 /**
- * The touch editor's way into what goes in the film is its thumb bar: the gallery, Text and "Ask Astrid…".
+ * The touch editor's way into what goes in the film is its thumb bar: the gallery and "Ask Astrid…" (text is
+ * added by asking Astrid; the bar has no Text button since 17e46de9).
  * It is in the layout flow below the timeline, so it is on screen the moment the editor opens, fully
  * inside the viewport, on top of whatever is at its centre, covers no part of the timeline, and every
  * target is a finger-sized 44px.
@@ -69,7 +70,6 @@ const TOUCH_DEVICES = [
 ] as const;
 const THUMB_BAR_BUTTONS = [
   { name: 'Open gallery' },
-  { name: 'Add text' },
   { name: /Ask Astrid|Astrid is working/ },
 ] as const;
 
@@ -154,14 +154,8 @@ for (const device of TOUCH_DEVICES) {
         expect(rows.toolbar.spread, 'toolbar row controls share a line').toBeLessThan(6);
       }
 
-      // A tap on Add text places a clip at the playhead and opens its sheet.
-      const clipCount = () => page.locator(CLIP_BODY_SELECTOR as string).count();
-      const clipsBefore = await clipCount();
-      const textBox = await bar.getByRole('button', { name: 'Add text' }).boundingBox();
-      expect(textBox).not.toBeNull();
-      await page.touchscreen.tap(textBox!.x + textBox!.width / 2, textBox!.y + textBox!.height / 2);
-      await expect.poll(clipCount).toBeGreaterThan(clipsBefore);
-      await expect(page.getByTestId('timeline-clip-sheet')).toBeVisible({ timeout: 5_000 });
+      // Text goes in by asking Astrid on touch: the bar offers no Text button.
+      await expect(bar.getByRole('button', { name: 'Add text' })).toHaveCount(0);
     });
   });
 }

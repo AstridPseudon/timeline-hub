@@ -366,40 +366,25 @@ test.describe('timeline phone gestures', () => {
       });
     });
 
-    // --- 8. the thumb bar's Add text is within reach ------------------------
-    // Creation on the phone is the agent's job, with one exception: text goes in at the playhead from the
-    // thumb bar, which is in the layout flow and needs no scrolling first. The 44px targets of the bar are
+    // --- 8. the thumb bar is within reach ------------------------------------
+    // Creation on the phone is the agent's job: the thumb bar offers the gallery and "Ask Astrid…" (no Text
+    // button since 17e46de9). It is in the layout flow and needs no scrolling first; its 44px targets are
     // asserted in toolbar-reachable.
-    const clipCount = () => page.evaluate(
-      (clipBodySelector) => document.querySelectorAll(clipBodySelector).length,
-      CLIP_BODY_SELECTOR as string,
-    );
-    const clipsBeforeText = await clipCount();
-    const addText = page.getByTestId('touch-agent-bar').getByRole('button', { name: 'Add text' });
-    const addTextBox = await addText.boundingBox();
-    expect(addTextBox, 'the thumb bar renders Add text').not.toBeNull();
+    const bar = page.getByTestId('touch-agent-bar');
+    await expect(bar.getByRole('button', { name: 'Add text' })).toHaveCount(0);
+    const askBox = await bar.getByRole('button', { name: /Ask Astrid|Astrid is working/ }).boundingBox();
+    expect(askBox, 'the thumb bar renders Ask Astrid').not.toBeNull();
     const viewport = page.viewportSize()!;
-    await test.step('Add text is inside the viewport with the edit area unscrolled', async () => {
+    await test.step('Ask Astrid is inside the viewport with the edit area unscrolled', async () => {
       const editAreaScrollTop = await page.locator('.timeline-canvas-edit-area').evaluate((area) => area.scrollTop);
       expect(editAreaScrollTop, 'edit area is at scrollTop 0').toBe(0);
       expect(
-        addTextBox!.x >= 0 && addTextBox!.y >= 0
-          && addTextBox!.x + addTextBox!.width <= viewport.width && addTextBox!.y + addTextBox!.height <= viewport.height,
-        JSON.stringify({ addTextBox, viewport }),
+        askBox!.x >= 0 && askBox!.y >= 0
+          && askBox!.x + askBox!.width <= viewport.width && askBox!.y + askBox!.height <= viewport.height,
+        JSON.stringify({ askBox, viewport }),
       ).toBe(true);
     });
-    await tapLocator(addText);
-    await expect.poll(clipCount).toBeGreaterThan(clipsBeforeText);
-    const clipsAfterText = await clipCount();
-
-    await test.step('tap "Add text" adds a clip and opens its sheet', async () => {
-      expect(clipsAfterText, `${clipsBeforeText} -> ${clipsAfterText} clips`).toBeGreaterThan(clipsBeforeText);
-      await expect(sheet).toBeVisible({ timeout: 5_000 });
-    });
-
-    await shot('m8-text');
-    await tapLocator(sheet.getByRole('button', { name: 'Close clip' }));
-    await expect(sheet).toBeHidden({ timeout: 5_000 });
+    await shot('m8-thumb-bar');
 
     // --- 9. pinch-to-zoom over the edit area ------------------------------
     const pinchArea = await boxOf(page, '.timeline-canvas-edit-area');
