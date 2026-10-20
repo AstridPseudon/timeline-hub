@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T12:32:50Z | dispatcher heartbeat 13s -->
+<!-- main | 2026-10-20T12:38:16Z | dispatcher heartbeat 15s -->
 # runtime — 2026-10-20T12:27:34Z
 Milestone: M1 RECORDED; M2/M3 gated implementation, M4 groundwork. No M2/M3/M4 exit.
 Integrated: Runtime2cb9bb62c88d91fdab03df230ef0b2a3bd81f513/treeec90ae8c6472316eea0101369314fcbef6907334. Reviewed release2c4; media tests57d0; capture27ad; retained-texta512; render safetyc1fb; four-file triage2cb9. Each small unit reviewed/qualified. Current client/artifact bytes remain equal2c4.

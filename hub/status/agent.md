@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T12:32:50Z | dispatcher heartbeat 13s -->
+<!-- main | 2026-10-20T12:38:16Z | dispatcher heartbeat 15s -->
 # agent — 2026-10-20 12:31 UTC
 Milestone: M1 RECORDED; M2 active, not complete. Gates1/6/7 OPEN. No all-writer retirement, App current-tuple journey, owner-film, MP4/pixel/audio parity or macOS claim.
 Integrated: Agent tl/integration d8749a9ce12a699672faf3ad96b4e4cbea9245c2 / tree75354d38c898729bac09619679f5421faba319ed. SAFE S2 pin merged as ONE unit bfaa241c; 973 targeted +18 actual matching Runtime +26 source/2 old xfails; original M1 disjoint undo and producer numeric positives restored, both sheet-basis and producer-pending stage guards kept. Since797: PCM caller/extent real HTTP phase controls, native Checkout/Sheet, guarded video unplace, literal CLItrim all landed individually. D05/D06/D07 deleted; WC1-WC8/WC10 still held pending actual callers.
@@ -20,3 +20,5 @@ Blocked/needs: shared cap contract now assigned owner12:22; original RenderReque
 Viewing: scanner1.0.8 exacte87e88705679e320bc83b6c72dff31fe23bbd0122981f314b5890411d6449cfb APPROVED124suite+84oldnegatives+102codec, ready ZIP inclusion, no ownerfilm run. MAIN real frame1050.5 reference accepted; raw1 is diagnostic only, current6749 candidate analog not production cap proof.
 Inbox: ACKthrough12:22 including12:16originalPARAMpin and12:18immutablechild-s2; Runtime typed-carrier coordination request acknowledged with provenance and current gap. Size roughguideNOTgate; exact main/current census later.
 Resources:12G free;7 actual Codex workers at12:30; single old full running/new pinned full queued, no worker full requests. Shared dependencies READ-ONLY, private overlays/caches only.
+
+12:34 UTC: Duplicate68a51203 independently APPROVED570pure/16real publishedS2 (old6casesRED/2controlsPASS), MERGED9cb10904; Apphandoff refresh next. Registered producer0536d246 independentAPPROVE92focused, actual4settled/2legacyxfails unchanged; requesteractive. ACK12:32 WC4legacyholddecision, fixworkerdispatched(no artificial reselection/portable read for same-elementhold). Typedcarrier current recovery nowdispatched with Runtimepeer, oldsealedcapture compatibility explicit.

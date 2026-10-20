@@ -148,10 +148,21 @@ Repository probes: `tests/sdk/test_timeline_selected_param_authority.py` plus
 the existing selected-schema/scalar suites. The portable fixture is generated
 by `test_equal_json_opposite_pin_order_has_distinct_accepted_authority` under
 pytest's private `tmp_path`; copy that JSON to this directory after a passing
-run. It uses real admission/portable-snapshot/handler/recorder/compiler/provider
+run with `-o tmp_path_retention_policy=all` (main otherwise removes passing
+test directories). `selected-param-original-pin-probe.py` beside the fixture
+replays both cases through the actual provider and compares all six record
+envelopes and both entire canonical outputs. It uses real
+admission/portable-snapshot/handler/recorder/compiler/provider
 code with the existing in-memory DetachedRealm/DetachedPort and fake document,
 media and build-verifier fixtures. Envelopes intentionally omit receipts and
 their repeated results. This is portable diagnostic input, not authenticated
 Runtime service evidence. Live custody, browser refusal/draft preservation,
 Runtime idempotent retry/restart, and the proposed resolver are not qualified by
 these tests. Strict xfails name the two enforcement gaps; no old test changed.
+
+On Agent base `d8749a9ce12a699672faf3ad96b4e4cbea9245c2`: five targeted files
+passed **164 tests, 2 strict xfails**; portable export **1 passed**; standalone
+portable replay **6 effects / 2 cases passed**. Ruff and `git diff --check`
+passed. No full suite or live Runtime/browser run. Exact commands and limits:
+`workers/agt-m2-selected-param-original-pin/notes/report.md` under the same
+absolute orchestrator root as this directory.

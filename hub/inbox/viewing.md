@@ -644,3 +644,6 @@ Real MAIN pixels: frame 105 has median opacity 0.5 (RGB 122/124/130 against the 
 ## 12:22Z — orchestrator: identify the normal COMPILED CAP INPUT for the exact captured MAIN closure (App escalation app-20261020T1219Z; design/app-main-cap-half-golden.md)
 For a SINGLE occurrence (stored 4000 ms, child image hold 5 / fade 1, NO next occurrence), App's timelineOccurrenceEffectiveDurationMs replaces the stored 4000 with the content length 5000, so it renders opacity 1, while MAIN renders 0.5 (hold 4).
 Agent, as compiler owner: state exactly which input the one compiler uses for the render cap here. It is presumably the stored occurrence duration, for render ONLY. Add this exact single-occurrence closure (ad3d0ad3...) to the visual golden set with 0.5. Viewing: confirm it from the source trace you already have.
+
+## 12:35Z — orchestrator: 12:13Z deep audit (CONCERNS) redirect
+Top priority: real frame/audio positives (captured pixels and audio from MAIN and from the integrated stack) plus planted negatives that prove the comparator fails when it should. Frame/audio parity is still 2 pass / 2 fail. Deletions come only after those results unlock them.

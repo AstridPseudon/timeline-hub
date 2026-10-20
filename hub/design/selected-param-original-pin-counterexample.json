@@ -1,0 +1,2040 @@
+{
+  "canonical_document": {
+    "dependency_manifest": {
+      "documents": [
+        {
+          "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+          "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+          "version": 2
+        },
+        {
+          "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+          "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+          "version": 3
+        }
+      ],
+      "internal_timelines": [],
+      "media": [],
+      "shots": []
+    },
+    "internal_timeline_revisions": [],
+    "parent_revision": {
+      "content_digest": "sha256:d9aabb9cbf3e16db8b8f0dba68f3e2911566737c396d7cd37b2646bf2d05ca6a",
+      "payload": {
+        "clips": [
+          {
+            "at": 0,
+            "clipType": "reveal",
+            "elementRef": {
+              "id": "reveal",
+              "kind": "effect",
+              "packId": "project_5579a8e2b94349210ad4",
+              "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+            },
+            "hold": 2,
+            "id": "effect",
+            "params": {
+              "seed": 9
+            },
+            "track": "picture"
+          }
+        ],
+        "config": {
+          "clips": [
+            {
+              "at": 0,
+              "clipType": "reveal",
+              "elementRef": {
+                "id": "reveal",
+                "kind": "effect",
+                "packId": "project_5579a8e2b94349210ad4",
+                "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+              },
+              "hold": 2,
+              "id": "effect",
+              "params": {
+                "seed": 9
+              },
+              "track": "picture"
+            }
+          ],
+          "output": {
+            "fps": {
+              "denominator": 1001,
+              "numerator": 30000
+            }
+          },
+          "tracks": [
+            {
+              "id": "picture",
+              "kind": "visual",
+              "opaque": {
+                "clear": null
+              }
+            }
+          ],
+          "unknown": [
+            null,
+            false,
+            {
+              "literal": "first-clip"
+            }
+          ]
+        },
+        "occurrences": [],
+        "opaque": {
+          "keep": null
+        },
+        "registry": {
+          "assets": {}
+        }
+      },
+      "revision_id": "authoring-parent-revision-bb3303b4bcaeec043788d127b9b725b50cdd7befc2f1fb464b5892ded70943db"
+    },
+    "project_id": "project-1",
+    "schema_version": 1,
+    "shot_revisions": [],
+    "timeline_id": "film"
+  },
+  "cases": [
+    {
+      "expected_schema_source": {
+        "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+        "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+        "version": 3
+      },
+      "head": {
+        "publication_id": "publication-5",
+        "revision_id": "authoring-parent-revision-bb3303b4bcaeec043788d127b9b725b50cdd7befc2f1fb464b5892ded70943db"
+      },
+      "history": [
+        {
+          "previous": {
+            "publication_id": "publication-2",
+            "revision_id": "authoring-parent-revision-60e564a0d8fd88359221f3972eb21695896ebf39b6e2621f555946a38ff34bba"
+          },
+          "publication_id": "publication-3",
+          "records": {
+            "commands": [
+              {
+                "bindings": [
+                  {
+                    "dependencies": [
+                      "scalar.images"
+                    ],
+                    "key": "scalar.target",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  },
+                  {
+                    "dependencies": [
+                      "params.schema",
+                      "params.snapshot"
+                    ],
+                    "key": "params.element",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  }
+                ],
+                "command": {
+                  "args": {
+                    "elementRef": {
+                      "id": "reveal",
+                      "kind": "effect",
+                      "packId": "project_5579a8e2b94349210ad4",
+                      "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                    },
+                    "schema_source": {
+                      "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 2
+                    }
+                  },
+                  "authorship": {
+                    "parent/clip:effect::elementRef": "direct"
+                  },
+                  "bindings": {
+                    "params.element": "parent/clip:effect",
+                    "scalar.target": "parent/clip:effect"
+                  },
+                  "created": [],
+                  "expect": {
+                    "parent/clip:effect::elementRef": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    }
+                  },
+                  "intent": {},
+                  "op": "clip.set-element",
+                  "reads": [
+                    {
+                      "path": [
+                        "id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": "effect"
+                      }
+                    },
+                    {
+                      "path": [
+                        "elementRef"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": {
+                          "id": "reveal",
+                          "kind": "effect",
+                          "packId": "project_5579a8e2b94349210ad4",
+                          "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                        }
+                      }
+                    },
+                    {
+                      "path": [
+                        "element_ref"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    }
+                  ],
+                  "resolved": [
+                    "parent/clip:effect"
+                  ],
+                  "schema_version": 1,
+                  "select": "parent/clip:effect",
+                  "selections": [],
+                  "version": "1"
+                },
+                "created": [],
+                "dependencies": [
+                  {
+                    "key": "scalar.images",
+                    "kind": "entity",
+                    "pin": {
+                      "parent": {
+                        "content_digest": "sha256:cf40e14d74ec83a4b32e6bae0dc82a146a70879dcd88789bfec0881aa72597de",
+                        "revision_id": "authoring-parent-revision-60e564a0d8fd88359221f3972eb21695896ebf39b6e2621f555946a38ff34bba"
+                      }
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.schema",
+                    "kind": "source",
+                    "pin": {
+                      "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 2
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.snapshot",
+                    "kind": "entity",
+                    "pin": {
+                      "element": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      },
+                      "object": {
+                        "digest": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "media_type": "application/json",
+                        "object_id": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "size": 2624
+                      },
+                      "source": {
+                        "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                        "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                        "version": 2
+                      }
+                    },
+                    "policy": "exact"
+                  }
+                ],
+                "derived_writes": [],
+                "ordinal": 0,
+                "reads": [
+                  {
+                    "path": [
+                      "id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": "effect"
+                    }
+                  },
+                  {
+                    "path": [
+                      "elementRef"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    }
+                  },
+                  {
+                    "path": [
+                      "element_ref"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  }
+                ],
+                "selections": [],
+                "writes": [
+                  {
+                    "after": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    },
+                    "before": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    },
+                    "path": [
+                      "elementRef"
+                    ],
+                    "ref": "parent/clip:effect"
+                  }
+                ]
+              }
+            ],
+            "restored_from": null,
+            "schema_version": 1,
+            "undo_of": []
+          },
+          "revision_id": "authoring-parent-revision-9a6616283bde321c93b2c668e2f7113fa5e896012e760b7b2eb3b0940044eaa0"
+        },
+        {
+          "previous": {
+            "publication_id": "publication-3",
+            "revision_id": "authoring-parent-revision-9a6616283bde321c93b2c668e2f7113fa5e896012e760b7b2eb3b0940044eaa0"
+          },
+          "publication_id": "publication-4",
+          "records": {
+            "commands": [
+              {
+                "bindings": [
+                  {
+                    "dependencies": [
+                      "scalar.images"
+                    ],
+                    "key": "scalar.target",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  },
+                  {
+                    "dependencies": [
+                      "params.schema",
+                      "params.snapshot"
+                    ],
+                    "key": "params.element",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  }
+                ],
+                "command": {
+                  "args": {
+                    "clear": [],
+                    "schema_source": {
+                      "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 2
+                    },
+                    "values": {
+                      "seed": 9
+                    }
+                  },
+                  "authorship": {
+                    "parent/clip:effect::params.seed": "direct"
+                  },
+                  "bindings": {
+                    "params.element": "parent/clip:effect",
+                    "scalar.target": "parent/clip:effect"
+                  },
+                  "created": [],
+                  "expect": {
+                    "parent/clip:effect::params.seed": {
+                      "state": "present",
+                      "value": 4
+                    }
+                  },
+                  "intent": {},
+                  "op": "clip.set-params",
+                  "reads": [
+                    {
+                      "path": [
+                        "id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": "effect"
+                      }
+                    },
+                    {
+                      "path": [
+                        "clipType"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": "reveal"
+                      }
+                    },
+                    {
+                      "path": [
+                        "clip_type"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    },
+                    {
+                      "path": [
+                        "asset"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    },
+                    {
+                      "path": [
+                        "asset_id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    },
+                    {
+                      "path": [
+                        "media_id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    },
+                    {
+                      "path": [
+                        "object_id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    },
+                    {
+                      "path": [
+                        "elementRef"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": {
+                          "id": "reveal",
+                          "kind": "effect",
+                          "packId": "project_5579a8e2b94349210ad4",
+                          "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                        }
+                      }
+                    },
+                    {
+                      "path": [
+                        "element_ref"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    }
+                  ],
+                  "resolved": [
+                    "parent/clip:effect"
+                  ],
+                  "schema_version": 1,
+                  "select": "parent/clip:effect",
+                  "selections": [],
+                  "version": "1"
+                },
+                "created": [],
+                "dependencies": [
+                  {
+                    "key": "scalar.images",
+                    "kind": "entity",
+                    "pin": {
+                      "parent": {
+                        "content_digest": "sha256:cf40e14d74ec83a4b32e6bae0dc82a146a70879dcd88789bfec0881aa72597de",
+                        "revision_id": "authoring-parent-revision-9a6616283bde321c93b2c668e2f7113fa5e896012e760b7b2eb3b0940044eaa0"
+                      }
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.schema",
+                    "kind": "source",
+                    "pin": {
+                      "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 2
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.snapshot",
+                    "kind": "entity",
+                    "pin": {
+                      "element": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      },
+                      "object": {
+                        "digest": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "media_type": "application/json",
+                        "object_id": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "size": 2624
+                      },
+                      "source": {
+                        "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                        "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                        "version": 2
+                      }
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "compile.document:sha256:efb3beec613f4b56638d5f5800917aece49438fb7269998aaf57b3c5fafbf616",
+                    "kind": "source",
+                    "pin": {
+                      "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 2
+                    },
+                    "policy": "exact"
+                  }
+                ],
+                "derived_writes": [
+                  {
+                    "after": {
+                      "state": "present",
+                      "value": [
+                        {
+                          "at": 0,
+                          "clipType": "reveal",
+                          "elementRef": {
+                            "id": "reveal",
+                            "kind": "effect",
+                            "packId": "project_5579a8e2b94349210ad4",
+                            "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                          },
+                          "hold": 2,
+                          "id": "effect",
+                          "params": {
+                            "seed": 9
+                          },
+                          "track": "picture"
+                        }
+                      ]
+                    },
+                    "before": {
+                      "state": "present",
+                      "value": [
+                        {
+                          "at": 0,
+                          "clipType": "reveal",
+                          "elementRef": {
+                            "id": "reveal",
+                            "kind": "effect",
+                            "packId": "project_5579a8e2b94349210ad4",
+                            "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                          },
+                          "hold": 2,
+                          "id": "effect",
+                          "params": {
+                            "seed": 4
+                          },
+                          "track": "picture"
+                        }
+                      ]
+                    },
+                    "cause": 0,
+                    "path": [
+                      "config",
+                      "clips"
+                    ],
+                    "ref": "parent"
+                  }
+                ],
+                "ordinal": 0,
+                "reads": [
+                  {
+                    "path": [
+                      "id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": "effect"
+                    }
+                  },
+                  {
+                    "path": [
+                      "clipType"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": "reveal"
+                    }
+                  },
+                  {
+                    "path": [
+                      "clip_type"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  },
+                  {
+                    "path": [
+                      "asset"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  },
+                  {
+                    "path": [
+                      "asset_id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  },
+                  {
+                    "path": [
+                      "media_id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  },
+                  {
+                    "path": [
+                      "object_id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  },
+                  {
+                    "path": [
+                      "elementRef"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    }
+                  },
+                  {
+                    "path": [
+                      "element_ref"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  }
+                ],
+                "selections": [],
+                "writes": [
+                  {
+                    "after": {
+                      "state": "present",
+                      "value": 9
+                    },
+                    "before": {
+                      "state": "present",
+                      "value": 4
+                    },
+                    "path": [
+                      "params",
+                      "seed"
+                    ],
+                    "ref": "parent/clip:effect"
+                  }
+                ]
+              }
+            ],
+            "restored_from": null,
+            "schema_version": 1,
+            "undo_of": []
+          },
+          "revision_id": "authoring-parent-revision-7b4c290b11a71e55df9e07ddb8ab376109be8b0add03af3bfd19ba2800f3e545"
+        },
+        {
+          "previous": {
+            "publication_id": "publication-4",
+            "revision_id": "authoring-parent-revision-7b4c290b11a71e55df9e07ddb8ab376109be8b0add03af3bfd19ba2800f3e545"
+          },
+          "publication_id": "publication-5",
+          "records": {
+            "commands": [
+              {
+                "bindings": [
+                  {
+                    "dependencies": [
+                      "scalar.images"
+                    ],
+                    "key": "scalar.target",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  },
+                  {
+                    "dependencies": [
+                      "params.schema",
+                      "params.snapshot"
+                    ],
+                    "key": "params.element",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  }
+                ],
+                "command": {
+                  "args": {
+                    "elementRef": {
+                      "id": "reveal",
+                      "kind": "effect",
+                      "packId": "project_5579a8e2b94349210ad4",
+                      "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                    },
+                    "schema_source": {
+                      "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 3
+                    }
+                  },
+                  "authorship": {
+                    "parent/clip:effect::elementRef": "direct"
+                  },
+                  "bindings": {
+                    "params.element": "parent/clip:effect",
+                    "scalar.target": "parent/clip:effect"
+                  },
+                  "created": [],
+                  "expect": {
+                    "parent/clip:effect::elementRef": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    }
+                  },
+                  "intent": {},
+                  "op": "clip.set-element",
+                  "reads": [
+                    {
+                      "path": [
+                        "id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": "effect"
+                      }
+                    },
+                    {
+                      "path": [
+                        "elementRef"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": {
+                          "id": "reveal",
+                          "kind": "effect",
+                          "packId": "project_5579a8e2b94349210ad4",
+                          "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                        }
+                      }
+                    },
+                    {
+                      "path": [
+                        "element_ref"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    }
+                  ],
+                  "resolved": [
+                    "parent/clip:effect"
+                  ],
+                  "schema_version": 1,
+                  "select": "parent/clip:effect",
+                  "selections": [],
+                  "version": "1"
+                },
+                "created": [],
+                "dependencies": [
+                  {
+                    "key": "scalar.images",
+                    "kind": "entity",
+                    "pin": {
+                      "parent": {
+                        "content_digest": "sha256:d9aabb9cbf3e16db8b8f0dba68f3e2911566737c396d7cd37b2646bf2d05ca6a",
+                        "revision_id": "authoring-parent-revision-7b4c290b11a71e55df9e07ddb8ab376109be8b0add03af3bfd19ba2800f3e545"
+                      }
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.schema",
+                    "kind": "source",
+                    "pin": {
+                      "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 3
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.snapshot",
+                    "kind": "entity",
+                    "pin": {
+                      "element": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      },
+                      "object": {
+                        "digest": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "media_type": "application/json",
+                        "object_id": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "size": 2624
+                      },
+                      "source": {
+                        "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                        "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                        "version": 3
+                      }
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "compile.document:sha256:efb3beec613f4b56638d5f5800917aece49438fb7269998aaf57b3c5fafbf616",
+                    "kind": "source",
+                    "pin": {
+                      "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 2
+                    },
+                    "policy": "exact"
+                  }
+                ],
+                "derived_writes": [],
+                "ordinal": 0,
+                "reads": [
+                  {
+                    "path": [
+                      "id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": "effect"
+                    }
+                  },
+                  {
+                    "path": [
+                      "elementRef"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    }
+                  },
+                  {
+                    "path": [
+                      "element_ref"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  }
+                ],
+                "selections": [],
+                "writes": [
+                  {
+                    "after": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    },
+                    "before": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    },
+                    "path": [
+                      "elementRef"
+                    ],
+                    "ref": "parent/clip:effect"
+                  }
+                ]
+              }
+            ],
+            "restored_from": null,
+            "schema_version": 1,
+            "undo_of": []
+          },
+          "revision_id": "authoring-parent-revision-bb3303b4bcaeec043788d127b9b725b50cdd7befc2f1fb464b5892ded70943db"
+        }
+      ],
+      "initial_head": {
+        "publication_id": "publication-2",
+        "revision_id": "authoring-parent-revision-60e564a0d8fd88359221f3972eb21695896ebf39b6e2621f555946a38ff34bba"
+      }
+    },
+    {
+      "expected_schema_source": {
+        "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+        "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+        "version": 2
+      },
+      "head": {
+        "publication_id": "publication-5",
+        "revision_id": "authoring-parent-revision-bb3303b4bcaeec043788d127b9b725b50cdd7befc2f1fb464b5892ded70943db"
+      },
+      "history": [
+        {
+          "previous": {
+            "publication_id": "publication-2",
+            "revision_id": "authoring-parent-revision-60e564a0d8fd88359221f3972eb21695896ebf39b6e2621f555946a38ff34bba"
+          },
+          "publication_id": "publication-3",
+          "records": {
+            "commands": [
+              {
+                "bindings": [
+                  {
+                    "dependencies": [
+                      "scalar.images"
+                    ],
+                    "key": "scalar.target",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  },
+                  {
+                    "dependencies": [
+                      "params.schema",
+                      "params.snapshot"
+                    ],
+                    "key": "params.element",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  }
+                ],
+                "command": {
+                  "args": {
+                    "elementRef": {
+                      "id": "reveal",
+                      "kind": "effect",
+                      "packId": "project_5579a8e2b94349210ad4",
+                      "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                    },
+                    "schema_source": {
+                      "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 3
+                    }
+                  },
+                  "authorship": {
+                    "parent/clip:effect::elementRef": "direct"
+                  },
+                  "bindings": {
+                    "params.element": "parent/clip:effect",
+                    "scalar.target": "parent/clip:effect"
+                  },
+                  "created": [],
+                  "expect": {
+                    "parent/clip:effect::elementRef": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    }
+                  },
+                  "intent": {},
+                  "op": "clip.set-element",
+                  "reads": [
+                    {
+                      "path": [
+                        "id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": "effect"
+                      }
+                    },
+                    {
+                      "path": [
+                        "elementRef"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": {
+                          "id": "reveal",
+                          "kind": "effect",
+                          "packId": "project_5579a8e2b94349210ad4",
+                          "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                        }
+                      }
+                    },
+                    {
+                      "path": [
+                        "element_ref"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    }
+                  ],
+                  "resolved": [
+                    "parent/clip:effect"
+                  ],
+                  "schema_version": 1,
+                  "select": "parent/clip:effect",
+                  "selections": [],
+                  "version": "1"
+                },
+                "created": [],
+                "dependencies": [
+                  {
+                    "key": "scalar.images",
+                    "kind": "entity",
+                    "pin": {
+                      "parent": {
+                        "content_digest": "sha256:cf40e14d74ec83a4b32e6bae0dc82a146a70879dcd88789bfec0881aa72597de",
+                        "revision_id": "authoring-parent-revision-60e564a0d8fd88359221f3972eb21695896ebf39b6e2621f555946a38ff34bba"
+                      }
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.schema",
+                    "kind": "source",
+                    "pin": {
+                      "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 3
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.snapshot",
+                    "kind": "entity",
+                    "pin": {
+                      "element": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      },
+                      "object": {
+                        "digest": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "media_type": "application/json",
+                        "object_id": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "size": 2624
+                      },
+                      "source": {
+                        "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                        "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                        "version": 3
+                      }
+                    },
+                    "policy": "exact"
+                  }
+                ],
+                "derived_writes": [],
+                "ordinal": 0,
+                "reads": [
+                  {
+                    "path": [
+                      "id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": "effect"
+                    }
+                  },
+                  {
+                    "path": [
+                      "elementRef"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    }
+                  },
+                  {
+                    "path": [
+                      "element_ref"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  }
+                ],
+                "selections": [],
+                "writes": [
+                  {
+                    "after": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    },
+                    "before": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    },
+                    "path": [
+                      "elementRef"
+                    ],
+                    "ref": "parent/clip:effect"
+                  }
+                ]
+              }
+            ],
+            "restored_from": null,
+            "schema_version": 1,
+            "undo_of": []
+          },
+          "revision_id": "authoring-parent-revision-dcd40de9f17a25b551693af32538d6cd6f80cf5f4d34adf033d8a1ea14841b60"
+        },
+        {
+          "previous": {
+            "publication_id": "publication-3",
+            "revision_id": "authoring-parent-revision-dcd40de9f17a25b551693af32538d6cd6f80cf5f4d34adf033d8a1ea14841b60"
+          },
+          "publication_id": "publication-4",
+          "records": {
+            "commands": [
+              {
+                "bindings": [
+                  {
+                    "dependencies": [
+                      "scalar.images"
+                    ],
+                    "key": "scalar.target",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  },
+                  {
+                    "dependencies": [
+                      "params.schema",
+                      "params.snapshot"
+                    ],
+                    "key": "params.element",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  }
+                ],
+                "command": {
+                  "args": {
+                    "clear": [],
+                    "schema_source": {
+                      "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 3
+                    },
+                    "values": {
+                      "seed": 9
+                    }
+                  },
+                  "authorship": {
+                    "parent/clip:effect::params.seed": "direct"
+                  },
+                  "bindings": {
+                    "params.element": "parent/clip:effect",
+                    "scalar.target": "parent/clip:effect"
+                  },
+                  "created": [],
+                  "expect": {
+                    "parent/clip:effect::params.seed": {
+                      "state": "present",
+                      "value": 4
+                    }
+                  },
+                  "intent": {},
+                  "op": "clip.set-params",
+                  "reads": [
+                    {
+                      "path": [
+                        "id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": "effect"
+                      }
+                    },
+                    {
+                      "path": [
+                        "clipType"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": "reveal"
+                      }
+                    },
+                    {
+                      "path": [
+                        "clip_type"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    },
+                    {
+                      "path": [
+                        "asset"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    },
+                    {
+                      "path": [
+                        "asset_id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    },
+                    {
+                      "path": [
+                        "media_id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    },
+                    {
+                      "path": [
+                        "object_id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    },
+                    {
+                      "path": [
+                        "elementRef"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": {
+                          "id": "reveal",
+                          "kind": "effect",
+                          "packId": "project_5579a8e2b94349210ad4",
+                          "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                        }
+                      }
+                    },
+                    {
+                      "path": [
+                        "element_ref"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    }
+                  ],
+                  "resolved": [
+                    "parent/clip:effect"
+                  ],
+                  "schema_version": 1,
+                  "select": "parent/clip:effect",
+                  "selections": [],
+                  "version": "1"
+                },
+                "created": [],
+                "dependencies": [
+                  {
+                    "key": "scalar.images",
+                    "kind": "entity",
+                    "pin": {
+                      "parent": {
+                        "content_digest": "sha256:cf40e14d74ec83a4b32e6bae0dc82a146a70879dcd88789bfec0881aa72597de",
+                        "revision_id": "authoring-parent-revision-dcd40de9f17a25b551693af32538d6cd6f80cf5f4d34adf033d8a1ea14841b60"
+                      }
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.schema",
+                    "kind": "source",
+                    "pin": {
+                      "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 3
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.snapshot",
+                    "kind": "entity",
+                    "pin": {
+                      "element": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      },
+                      "object": {
+                        "digest": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "media_type": "application/json",
+                        "object_id": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "size": 2624
+                      },
+                      "source": {
+                        "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                        "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                        "version": 3
+                      }
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "compile.document:sha256:48fd6069c64d0e7289e2676c2093bd6c01a8bf7bf636fc4ffb67dc4d89ea92ad",
+                    "kind": "source",
+                    "pin": {
+                      "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 3
+                    },
+                    "policy": "exact"
+                  }
+                ],
+                "derived_writes": [
+                  {
+                    "after": {
+                      "state": "present",
+                      "value": [
+                        {
+                          "at": 0,
+                          "clipType": "reveal",
+                          "elementRef": {
+                            "id": "reveal",
+                            "kind": "effect",
+                            "packId": "project_5579a8e2b94349210ad4",
+                            "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                          },
+                          "hold": 2,
+                          "id": "effect",
+                          "params": {
+                            "seed": 9
+                          },
+                          "track": "picture"
+                        }
+                      ]
+                    },
+                    "before": {
+                      "state": "present",
+                      "value": [
+                        {
+                          "at": 0,
+                          "clipType": "reveal",
+                          "elementRef": {
+                            "id": "reveal",
+                            "kind": "effect",
+                            "packId": "project_5579a8e2b94349210ad4",
+                            "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                          },
+                          "hold": 2,
+                          "id": "effect",
+                          "params": {
+                            "seed": 4
+                          },
+                          "track": "picture"
+                        }
+                      ]
+                    },
+                    "cause": 0,
+                    "path": [
+                      "config",
+                      "clips"
+                    ],
+                    "ref": "parent"
+                  }
+                ],
+                "ordinal": 0,
+                "reads": [
+                  {
+                    "path": [
+                      "id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": "effect"
+                    }
+                  },
+                  {
+                    "path": [
+                      "clipType"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": "reveal"
+                    }
+                  },
+                  {
+                    "path": [
+                      "clip_type"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  },
+                  {
+                    "path": [
+                      "asset"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  },
+                  {
+                    "path": [
+                      "asset_id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  },
+                  {
+                    "path": [
+                      "media_id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  },
+                  {
+                    "path": [
+                      "object_id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  },
+                  {
+                    "path": [
+                      "elementRef"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    }
+                  },
+                  {
+                    "path": [
+                      "element_ref"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  }
+                ],
+                "selections": [],
+                "writes": [
+                  {
+                    "after": {
+                      "state": "present",
+                      "value": 9
+                    },
+                    "before": {
+                      "state": "present",
+                      "value": 4
+                    },
+                    "path": [
+                      "params",
+                      "seed"
+                    ],
+                    "ref": "parent/clip:effect"
+                  }
+                ]
+              }
+            ],
+            "restored_from": null,
+            "schema_version": 1,
+            "undo_of": []
+          },
+          "revision_id": "authoring-parent-revision-65bac61882ad2a463ab4d734aa12806226c5c53100dac9e62ea09cbfe6de4094"
+        },
+        {
+          "previous": {
+            "publication_id": "publication-4",
+            "revision_id": "authoring-parent-revision-65bac61882ad2a463ab4d734aa12806226c5c53100dac9e62ea09cbfe6de4094"
+          },
+          "publication_id": "publication-5",
+          "records": {
+            "commands": [
+              {
+                "bindings": [
+                  {
+                    "dependencies": [
+                      "scalar.images"
+                    ],
+                    "key": "scalar.target",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  },
+                  {
+                    "dependencies": [
+                      "params.schema",
+                      "params.snapshot"
+                    ],
+                    "key": "params.element",
+                    "policy": "fixed",
+                    "ref": "parent/clip:effect"
+                  }
+                ],
+                "command": {
+                  "args": {
+                    "elementRef": {
+                      "id": "reveal",
+                      "kind": "effect",
+                      "packId": "project_5579a8e2b94349210ad4",
+                      "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                    },
+                    "schema_source": {
+                      "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 2
+                    }
+                  },
+                  "authorship": {
+                    "parent/clip:effect::elementRef": "direct"
+                  },
+                  "bindings": {
+                    "params.element": "parent/clip:effect",
+                    "scalar.target": "parent/clip:effect"
+                  },
+                  "created": [],
+                  "expect": {
+                    "parent/clip:effect::elementRef": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    }
+                  },
+                  "intent": {},
+                  "op": "clip.set-element",
+                  "reads": [
+                    {
+                      "path": [
+                        "id"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": "effect"
+                      }
+                    },
+                    {
+                      "path": [
+                        "elementRef"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "present",
+                        "value": {
+                          "id": "reveal",
+                          "kind": "effect",
+                          "packId": "project_5579a8e2b94349210ad4",
+                          "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                        }
+                      }
+                    },
+                    {
+                      "path": [
+                        "element_ref"
+                      ],
+                      "ref": "parent/clip:effect",
+                      "state": {
+                        "state": "absent"
+                      }
+                    }
+                  ],
+                  "resolved": [
+                    "parent/clip:effect"
+                  ],
+                  "schema_version": 1,
+                  "select": "parent/clip:effect",
+                  "selections": [],
+                  "version": "1"
+                },
+                "created": [],
+                "dependencies": [
+                  {
+                    "key": "scalar.images",
+                    "kind": "entity",
+                    "pin": {
+                      "parent": {
+                        "content_digest": "sha256:d9aabb9cbf3e16db8b8f0dba68f3e2911566737c396d7cd37b2646bf2d05ca6a",
+                        "revision_id": "authoring-parent-revision-65bac61882ad2a463ab4d734aa12806226c5c53100dac9e62ea09cbfe6de4094"
+                      }
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.schema",
+                    "kind": "source",
+                    "pin": {
+                      "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 2
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "params.snapshot",
+                    "kind": "entity",
+                    "pin": {
+                      "element": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      },
+                      "object": {
+                        "digest": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "media_type": "application/json",
+                        "object_id": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                        "size": 2624
+                      },
+                      "source": {
+                        "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+                        "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                        "version": 2
+                      }
+                    },
+                    "policy": "exact"
+                  },
+                  {
+                    "key": "compile.document:sha256:48fd6069c64d0e7289e2676c2093bd6c01a8bf7bf636fc4ffb67dc4d89ea92ad",
+                    "kind": "source",
+                    "pin": {
+                      "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+                      "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+                      "version": 3
+                    },
+                    "policy": "exact"
+                  }
+                ],
+                "derived_writes": [],
+                "ordinal": 0,
+                "reads": [
+                  {
+                    "path": [
+                      "id"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": "effect"
+                    }
+                  },
+                  {
+                    "path": [
+                      "elementRef"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    }
+                  },
+                  {
+                    "path": [
+                      "element_ref"
+                    ],
+                    "ref": "parent/clip:effect",
+                    "state": {
+                      "state": "absent"
+                    }
+                  }
+                ],
+                "selections": [],
+                "writes": [
+                  {
+                    "after": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    },
+                    "before": {
+                      "state": "present",
+                      "value": {
+                        "id": "reveal",
+                        "kind": "effect",
+                        "packId": "project_5579a8e2b94349210ad4",
+                        "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+                      }
+                    },
+                    "path": [
+                      "elementRef"
+                    ],
+                    "ref": "parent/clip:effect"
+                  }
+                ]
+              }
+            ],
+            "restored_from": null,
+            "schema_version": 1,
+            "undo_of": []
+          },
+          "revision_id": "authoring-parent-revision-bb3303b4bcaeec043788d127b9b725b50cdd7befc2f1fb464b5892ded70943db"
+        }
+      ],
+      "initial_head": {
+        "publication_id": "publication-2",
+        "revision_id": "authoring-parent-revision-60e564a0d8fd88359221f3972eb21695896ebf39b6e2621f555946a38ff34bba"
+      }
+    }
+  ],
+  "element": {
+    "id": "reveal",
+    "kind": "effect",
+    "packId": "project_5579a8e2b94349210ad4",
+    "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+  },
+  "input": {
+    "dependency_manifest": {
+      "documents": [],
+      "internal_timelines": [],
+      "media": [],
+      "shots": []
+    },
+    "internal_timeline_revisions": [],
+    "parent_revision": {
+      "content_digest": "sha256:cf40e14d74ec83a4b32e6bae0dc82a146a70879dcd88789bfec0881aa72597de",
+      "payload": {
+        "clips": [
+          {
+            "at": 0,
+            "clipType": "reveal",
+            "elementRef": {
+              "id": "reveal",
+              "kind": "effect",
+              "packId": "project_5579a8e2b94349210ad4",
+              "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+            },
+            "hold": 2,
+            "id": "effect",
+            "params": {
+              "seed": 4
+            },
+            "track": "picture"
+          }
+        ],
+        "config": {
+          "clips": [
+            {
+              "at": 0,
+              "clipType": "reveal",
+              "elementRef": {
+                "id": "reveal",
+                "kind": "effect",
+                "packId": "project_5579a8e2b94349210ad4",
+                "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f"
+              },
+              "hold": 2,
+              "id": "effect",
+              "params": {
+                "seed": 4
+              },
+              "track": "picture"
+            }
+          ],
+          "output": {
+            "fps": {
+              "denominator": 1001,
+              "numerator": 30000
+            }
+          },
+          "tracks": [
+            {
+              "id": "picture",
+              "kind": "visual",
+              "opaque": {
+                "clear": null
+              }
+            }
+          ],
+          "unknown": [
+            null,
+            false,
+            {
+              "literal": "first-clip"
+            }
+          ]
+        },
+        "occurrences": [],
+        "opaque": {
+          "keep": null
+        },
+        "registry": {
+          "assets": {}
+        }
+      },
+      "revision_id": "authoring-parent-revision-60e564a0d8fd88359221f3972eb21695896ebf39b6e2621f555946a38ff34bba"
+    },
+    "project_id": "project-1",
+    "schema_version": 1,
+    "shot_revisions": [],
+    "timeline_id": "film"
+  },
+  "schema_inputs": [
+    [
+      {
+        "document": {
+          "content": {
+            "admissions": [
+              {
+                "id": "reveal",
+                "kind": "effect",
+                "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f",
+                "snapshot_digest": "291897ed9c441b7f34841e0747290fdba933e621b67971464d09aa7bc3550256",
+                "snapshot_object": {
+                  "digest": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                  "media_type": "application/json",
+                  "object_id": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                  "size": 2624
+                }
+              }
+            ],
+            "pack_id": "project_5579a8e2b94349210ad4",
+            "relative_manifest": "realm/project-1/packs/project_5579a8e2b94349210ad4/pack.yaml",
+            "schema": "astrid.project-pack/v1",
+            "source_binding_key": "project-packs"
+          },
+          "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+          "kind": "astrid.project-pack",
+          "project_id": "project-1",
+          "version": 2
+        },
+        "pin": {
+          "content_digest": "sha256:3455ec3b8a2e6f590ae27f62fa483e990d2813aa72c7959c1d81d8d7bb8a5156",
+          "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+          "version": 2
+        }
+      },
+      {
+        "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416": {
+          "bytes_base64": "eyJidWlsZF9yZWNlaXB0X2Jhc2U2NCI6ImV3b2dJQ0psYkdWdFpXNTBjeUk2SUZzS0lDQWdJSHNLSUNBZ0lDQWdJbWxrSWpvZ0luSmxkbVZoYkNJc0NpQWdJQ0FnSUNKcmFXNWtJam9nSW1WbVptVmpkQ0lzQ2lBZ0lDQWdJQ0p3WVdOclNXUWlPaUFpY0hKdmFtVmpkRjgxTlRjNVlUaGxNbUk1TkRNME9USXhNR0ZrTkNJc0NpQWdJQ0FnSUNKd2NtOXFaV04wU1dRaU9pQWljSEp2YW1WamRDMHhJaXdLSUNBZ0lDQWdJbkpsZG1semFXOXVJam9nSW5Ob1lUSTFOam80TVdJMll6QTFPRGs0TVRkaU9XWTJaREV4WmpJd1pXRXpPV1E1TVRFM01qY3hPREprWVRabU5EYzJPREEzTldVNFpXWTRaVFkxWkdGak4yWmxNelZtSWdvZ0lDQWdmUW9nSUYwc0NpQWdJbk5qYUdWdFlTSTZJQ0poYzNSeWFXUXVaV3hsYldWdWRDMWlkV2xzWkM5Mk1TSXNDaUFnSW5ObGJHVmpkR2x2YmtScFoyVnpkQ0k2SUNKemFHRXlOVFk2TURJeU5XRTVNR1UxWkRBNFlUTTFNemcwTkRFMFptSTVOV0V6WVdWaE4yUXlaalEzTXpKa1ltRmtZalUxWkdVME5qUmxabVkyWXpjNU9EaG1PR1kwTWlJS2ZRbz0iLCJmaWxlcyI6W3siYnl0ZXNfYmFzZTY0IjoiTFMwdENtNWhiV1U2SUhCeWIycGxZM1F0WkhKaFpuUnpDbVJsYzJOeWFYQjBhVzl1T2lCUGNtUnBibUZ5ZVNCd2NtOXFaV04wTFc5M2JtVmtJR1J5WVdaMElISmxibVJsY21sdVp5QnpiM1Z5WTJVdUNpMHRMUW9LSXlCUWNtOXFaV04wSUdSeVlXWjBjd29LUldScGRDQmtaV05zWVhKbFpDQnpiM1Z5WTJVZ1ptbHNaWE1zSUhaaGJHbGtZWFJsTDJGa2JXbDBMQ0IwYUdWdUlIVndaR0YwWlNCbGVHRmpkQ0IwYVcxbGJHbHVaU0J5WldaekxpQkxaV1Z3SUdacGJHVnpJSGRvYVd4bElIUnBiV1ZzYVc1bGN5QjFjMlVnZEdobGJTNEsiLCJwYXRoIjoiZG9jcy9TS0lMTC5tZCIsInNoYTI1NiI6IjQxNTVlNTkyMWEzMTc2MTEwZDhmOTNiMGUwNmRlN2IwNGJlOThjYzA5Mjg1NzE4NGQ3M2E1YTkzNDk2MDI2YzUifSx7ImJ5dGVzX2Jhc2U2NCI6IlpHVnpZM0pwY0hScGIyNDZJRVZrYVhSaFlteGxJSEJ5YjJwbFkzUXRiM2R1WldRZ2RtbHpkV0ZzSUdWc1pXMWxiblJ6TGdwa2IyTjFiV1Z1ZEdGMGFXOXVPZ29nSUd0cGJtUTZJSE5yYVd4c0NpQWdjR0YwYURvZ1pHOWpjeTlUUzBsTVRDNXRaQXBrYjIxaGFXNDZJRzFsWkdsaENtbGtPaUJ3Y205cVpXTjBYelUxTnpsaE9HVXlZamswTXpRNU1qRXdZV1EwQ201aGJXVTZJRkJ5YjJwbFkzUWdaSEpoWm5SekNuQmxjbTFwYzNOcGIyNXpPZ290SUdsa09pQndjbTlxWldOMFgyWnBiR1Z6Q2lBZ2NtVmhjMjl1T2lCUWNtOTJhV1JsY3lCd2NtOXFaV04wTFc5M2JtVmtJSFpwYzNWaGJDQnpiM1Z5WTJVdUNuSmxibVJsY21sdVp6b0tJQ0JsWm1abFkzUnpMM0psZG1WaGJEb0tJQ0FnSUhCaGRHZzZJSEpsYm1SbGNtbHVaeTlsYkdWdFpXNTBjeTlsWm1abFkzUnpMM0psZG1WaGJDOWxiR1Z0Wlc1MExubGhiV3dLSUNBZ0lISmxjMjkxY21ObGN6b0tJQ0FnSUMwZ2EybHVaRG9nYVcxd2JHVnRaVzUwWVhScGIyNEtJQ0FnSUNBZ2NHRjBhRG9nY21WdVpHVnlhVzVuTDJWc1pXMWxiblJ6TDJWbVptVmpkSE12Y21WMlpXRnNMMk52YlhCdmJtVnVkQzUwYzNnS0lDQWdJSFI1Y0dVNklHVnNaVzFsYm5RS2MyTm9aVzFoWDNabGNuTnBiMjQ2SURNS2MzUmhZbWxzYVhSNU9pQmxlSEJsY21sdFpXNTBZV3dLYzNSaGRIVnpPaUJoWTNScGRtVUtjM1Z3Y0c5eWREb2djSEp2YW1WamRBcDJaWEp6YVc5dU9pQXdMakV1TUFwMmFYTnBZbWxzYVhSNU9pQjJhWE5wWW14bENnPT0iLCJwYXRoIjoicGFjay55YW1sIiwic2hhMjU2IjoiZGVhMzkzOTM2ODljMGI2MWQzOGFhMDUxYWNhZjJkZmUyYzM3MTgwNDYzZTZjZDc1OThjYmRmY2ZhMzA3YjhhNiJ9LHsiYnl0ZXNfYmFzZTY0IjoiYVcxd2IzSjBJRkpsWVdOMElHWnliMjBnSjNKbFlXTjBKenNLYVcxd2IzSjBJSHRCWW5OdmJIVjBaVVpwYkd4OUlHWnliMjBnSjNKbGJXOTBhVzl1SnpzS1pYaHdiM0owSUdSbFptRjFiSFFnWm5WdVkzUnBiMjRnVW1WMlpXRnNLQ2w3Y21WMGRYSnVJRHhCWW5OdmJIVjBaVVpwYkd3dlBqdDlDZz09IiwicGF0aCI6InJlbmRlcmluZy9lbGVtZW50cy9lZmZlY3RzL3JldmVhbC9jb21wb25lbnQudHN4Iiwic2hhMjU2IjoiNWI4ZWM5YmRjYTg2YTBmOWE5MDAxZDgwYjQ0YmNkYWUyYmMyYWI2YTAyNWQxYWQwNTBjNjdlZGY3YjlhNDA2OSJ9LHsiYnl0ZXNfYmFzZTY0IjoiWkdWbVlYVnNkSE02Q2lBZ2MyVmxaRG9nTVRVS2FXUTZJSEpsZG1WaGJBcHJhVzVrT2lCbFptWmxZM1FLY0dGamExOXBaRG9nY0hKdmFtVmpkRjgxTlRjNVlUaGxNbUk1TkRNME9USXhNR0ZrTkFweWRXNTBhVzFsT2dvZ0lHRmtZWEIwWlhJNklISmxiVzkwYVc5dUNuTmphR1Z0WVRvS0lDQndjbTl3WlhKMGFXVnpPZ29nSUNBZ2MyVmxaRG9LSUNBZ0lDQWdkSGx3WlRvZ2JuVnRZbVZ5Q2lBZ2RIbHdaVG9nYjJKcVpXTjBDbk5qYUdWdFlWOTJaWEp6YVc5dU9pQXhDbk5vYjNKMFgyUmxjMk55YVhCMGFXOXVPaUJVWlhOMElISmxkbVZoYkM0SyIsInBhdGgiOiJyZW5kZXJpbmcvZWxlbWVudHMvZWZmZWN0cy9yZXZlYWwvZWxlbWVudC55YW1sIiwic2hhMjU2IjoiOWZlY2ZiZDZkZDkxYzZmZDk3ZDc2OWNmZTNmNDA3NjJhOTJlOTAxNjBlNDM4YjBmNmMyZjI5OGZiZTBlOWI3YyJ9XX0=",
+          "digest": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+          "media_type": "application/json",
+          "object_id": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+          "size": 2624
+        }
+      }
+    ],
+    [
+      {
+        "document": {
+          "content": {
+            "admissions": [
+              {
+                "id": "reveal",
+                "kind": "effect",
+                "revision": "sha256:81b6c0589817b9f6d11f20ea39d911727182da6f4768075e8ef8e65dac7fe35f",
+                "snapshot_digest": "291897ed9c441b7f34841e0747290fdba933e621b67971464d09aa7bc3550256",
+                "snapshot_object": {
+                  "digest": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                  "media_type": "application/json",
+                  "object_id": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+                  "size": 2624
+                }
+              },
+              {
+                "id": "fade",
+                "kind": "effect",
+                "revision": "sha256:3f4fd45f1e3bb82c17216cfef515fa1b8ef11c741877f3858602744670c21495",
+                "snapshot_digest": "491d80ad0b9013a228a8e4fdde9631d4c9aad169ab6d97fe4763d3930ad00b81",
+                "snapshot_object": {
+                  "digest": "sha256:686f36f23177423f79e82795fc9e4e8b3bdeeaf7703cc055c47cf6d4a995ed8e",
+                  "media_type": "application/json",
+                  "object_id": "sha256:686f36f23177423f79e82795fc9e4e8b3bdeeaf7703cc055c47cf6d4a995ed8e",
+                  "size": 3953
+                }
+              }
+            ],
+            "pack_id": "project_5579a8e2b94349210ad4",
+            "relative_manifest": "realm/project-1/packs/project_5579a8e2b94349210ad4/pack.yaml",
+            "schema": "astrid.project-pack/v1",
+            "source_binding_key": "project-packs"
+          },
+          "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+          "kind": "astrid.project-pack",
+          "project_id": "project-1",
+          "version": 3
+        },
+        "pin": {
+          "content_digest": "sha256:fa5b1545b459a3c3d7af82434de536038b0e93f924cc963d829bea64d0d58fa4",
+          "document_id": "document:d70cf67a-a5f9-577c-915d-2458074abdfe",
+          "version": 3
+        }
+      },
+      {
+        "sha256:686f36f23177423f79e82795fc9e4e8b3bdeeaf7703cc055c47cf6d4a995ed8e": {
+          "bytes_base64": "eyJidWlsZF9yZWNlaXB0X2Jhc2U2NCI6ImV3b2dJQ0psYkdWdFpXNTBjeUk2SUZzS0lDQWdJSHNLSUNBZ0lDQWdJbWxrSWpvZ0ltWmhaR1VpTEFvZ0lDQWdJQ0FpYTJsdVpDSTZJQ0psWm1abFkzUWlMQW9nSUNBZ0lDQWljR0ZqYTBsa0lqb2dJbkJ5YjJwbFkzUmZOVFUzT1dFNFpUSmlPVFF6TkRreU1UQmhaRFFpTEFvZ0lDQWdJQ0FpY0hKdmFtVmpkRWxrSWpvZ0luQnliMnBsWTNRdE1TSXNDaUFnSUNBZ0lDSnlaWFpwYzJsdmJpSTZJQ0p6YUdFeU5UWTZNMlkwWm1RME5XWXhaVE5pWWpneVl6RTNNakUyWTJabFpqVXhOV1poTVdJNFpXWXhNV00zTkRFNE56ZG1NemcxT0RZd01qYzBORFkzTUdNeU1UUTVOU0lLSUNBZ0lIMHNDaUFnSUNCN0NpQWdJQ0FnSUNKcFpDSTZJQ0p5WlhabFlXd2lMQW9nSUNBZ0lDQWlhMmx1WkNJNklDSmxabVpsWTNRaUxBb2dJQ0FnSUNBaWNHRmphMGxrSWpvZ0luQnliMnBsWTNSZk5UVTNPV0U0WlRKaU9UUXpORGt5TVRCaFpEUWlMQW9nSUNBZ0lDQWljSEp2YW1WamRFbGtJam9nSW5CeWIycGxZM1F0TVNJc0NpQWdJQ0FnSUNKeVpYWnBjMmx2YmlJNklDSnphR0V5TlRZNk9ERmlObU13TlRnNU9ERTNZamxtTm1ReE1XWXlNR1ZoTXpsa09URXhOekkzTVRneVpHRTJaalEzTmpnd056VmxPR1ZtT0dVMk5XUmhZemRtWlRNMVppSUtJQ0FnSUgwS0lDQmRMQW9nSUNKelkyaGxiV0VpT2lBaVlYTjBjbWxrTG1Wc1pXMWxiblF0WW5WcGJHUXZkakVpTEFvZ0lDSnpaV3hsWTNScGIyNUVhV2RsYzNRaU9pQWljMmhoTWpVMk9tRmpabU0wTWpBMU1XSXlNR0UxTmpsbVkyUXhNVFExTXpFM05ERXhOelEzWWpZME4yVmlZV016Tm1WbE1HWmhZalprTWpRMVpHVTFOakppT0dabVlUUWlDbjBLIiwiZmlsZXMiOlt7ImJ5dGVzX2Jhc2U2NCI6IkxTMHRDbTVoYldVNklIQnliMnBsWTNRdFpISmhablJ6Q21SbGMyTnlhWEIwYVc5dU9pQlBjbVJwYm1GeWVTQndjbTlxWldOMExXOTNibVZrSUdSeVlXWjBJSEpsYm1SbGNtbHVaeUJ6YjNWeVkyVXVDaTB0TFFvS0l5QlFjbTlxWldOMElHUnlZV1owY3dvS1JXUnBkQ0JrWldOc1lYSmxaQ0J6YjNWeVkyVWdabWxzWlhNc0lIWmhiR2xrWVhSbEwyRmtiV2wwTENCMGFHVnVJSFZ3WkdGMFpTQmxlR0ZqZENCMGFXMWxiR2x1WlNCeVpXWnpMaUJMWldWd0lHWnBiR1Z6SUhkb2FXeGxJSFJwYldWc2FXNWxjeUIxYzJVZ2RHaGxiUzRLIiwicGF0aCI6ImRvY3MvU0tJTEwubWQiLCJzaGEyNTYiOiI0MTU1ZTU5MjFhMzE3NjExMGQ4ZjkzYjBlMDZkZTdiMDRiZTk4Y2MwOTI4NTcxODRkNzNhNWE5MzQ5NjAyNmM1In0seyJieXRlc19iYXNlNjQiOiJaR1Z6WTNKcGNIUnBiMjQ2SUVWa2FYUmhZbXhsSUhCeWIycGxZM1F0YjNkdVpXUWdkbWx6ZFdGc0lHVnNaVzFsYm5SekxncGtiMk4xYldWdWRHRjBhVzl1T2dvZ0lHdHBibVE2SUhOcmFXeHNDaUFnY0dGMGFEb2daRzlqY3k5VFMwbE1UQzV0WkFwa2IyMWhhVzQ2SUcxbFpHbGhDbWxrT2lCd2NtOXFaV04wWHpVMU56bGhPR1V5WWprME16UTVNakV3WVdRMENtNWhiV1U2SUZCeWIycGxZM1FnWkhKaFpuUnpDbkJsY20xcGMzTnBiMjV6T2dvdElHbGtPaUJ3Y205cVpXTjBYMlpwYkdWekNpQWdjbVZoYzI5dU9pQlFjbTkyYVdSbGN5QndjbTlxWldOMExXOTNibVZrSUhacGMzVmhiQ0J6YjNWeVkyVXVDbkpsYm1SbGNtbHVaem9LSUNCbFptWmxZM1J6TDJaaFpHVTZDaUFnSUNCd1lYUm9PaUJ5Wlc1a1pYSnBibWN2Wld4bGJXVnVkSE12WldabVpXTjBjeTltWVdSbEwyVnNaVzFsYm5RdWVXRnRiQW9nSUNBZ2NtVnpiM1Z5WTJWek9nb2dJQ0FnTFNCcmFXNWtPaUJwYlhCc1pXMWxiblJoZEdsdmJnb2dJQ0FnSUNCd1lYUm9PaUJ5Wlc1a1pYSnBibWN2Wld4bGJXVnVkSE12WldabVpXTjBjeTltWVdSbEwyTnZiWEJ2Ym1WdWRDNTBjM2dLSUNBZ0lIUjVjR1U2SUdWc1pXMWxiblFLSUNCbFptWmxZM1J6TDNKbGRtVmhiRG9LSUNBZ0lIQmhkR2c2SUhKbGJtUmxjbWx1Wnk5bGJHVnRaVzUwY3k5bFptWmxZM1J6TDNKbGRtVmhiQzlsYkdWdFpXNTBMbmxoYld3S0lDQWdJSEpsYzI5MWNtTmxjem9LSUNBZ0lDMGdhMmx1WkRvZ2FXMXdiR1Z0Wlc1MFlYUnBiMjRLSUNBZ0lDQWdjR0YwYURvZ2NtVnVaR1Z5YVc1bkwyVnNaVzFsYm5SekwyVm1abVZqZEhNdmNtVjJaV0ZzTDJOdmJYQnZibVZ1ZEM1MGMzZ0tJQ0FnSUhSNWNHVTZJR1ZzWlcxbGJuUUtjMk5vWlcxaFgzWmxjbk5wYjI0NklETUtjM1JoWW1sc2FYUjVPaUJsZUhCbGNtbHRaVzUwWVd3S2MzUmhkSFZ6T2lCaFkzUnBkbVVLYzNWd2NHOXlkRG9nY0hKdmFtVmpkQXAyWlhKemFXOXVPaUF3TGpFdU1BcDJhWE5wWW1sc2FYUjVPaUIyYVhOcFlteGxDZz09IiwicGF0aCI6InBhY2sueWFtbCIsInNoYTI1NiI6IjU1OTZjZTVkOTVlZWE2NmRjZDEwYTEyZTdhMzY5NjliMGQ4YzA5OGJjMTI2MmJhYmRiZjYyZWNiOTkwMjQ3MGUifSx7ImJ5dGVzX2Jhc2U2NCI6ImFXMXdiM0owSUZKbFlXTjBJR1p5YjIwZ0ozSmxZV04wSnpzS2FXMXdiM0owSUh0QlluTnZiSFYwWlVacGJHeDlJR1p5YjIwZ0ozSmxiVzkwYVc5dUp6c0taWGh3YjNKMElHUmxabUYxYkhRZ1puVnVZM1JwYjI0Z1VtVjJaV0ZzS0NsN2NtVjBkWEp1SUR4QlluTnZiSFYwWlVacGJHd3ZQanQ5Q2c9PSIsInBhdGgiOiJyZW5kZXJpbmcvZWxlbWVudHMvZWZmZWN0cy9mYWRlL2NvbXBvbmVudC50c3giLCJzaGEyNTYiOiI1YjhlYzliZGNhODZhMGY5YTkwMDFkODBiNDRiY2RhZTJiYzJhYjZhMDI1ZDFhZDA1MGM2N2VkZjdiOWE0MDY5In0seyJieXRlc19iYXNlNjQiOiJaR1ZtWVhWc2RITTZDaUFnYzJWbFpEb2dNVFVLYVdRNklHWmhaR1VLYTJsdVpEb2daV1ptWldOMENuQmhZMnRmYVdRNklIQnliMnBsWTNSZk5UVTNPV0U0WlRKaU9UUXpORGt5TVRCaFpEUUtjblZ1ZEdsdFpUb0tJQ0JoWkdGd2RHVnlPaUJ5WlcxdmRHbHZiZ3B6WTJobGJXRTZDaUFnY0hKdmNHVnlkR2xsY3pvS0lDQWdJSE5sWldRNkNpQWdJQ0FnSUhSNWNHVTZJRzUxYldKbGNnb2dJSFI1Y0dVNklHOWlhbVZqZEFwelkyaGxiV0ZmZG1WeWMybHZiam9nTVFwemFHOXlkRjlrWlhOamNtbHdkR2x2YmpvZ1ZHVnpkQ0J5WlhabFlXd3VDZz09IiwicGF0aCI6InJlbmRlcmluZy9lbGVtZW50cy9lZmZlY3RzL2ZhZGUvZWxlbWVudC55YW1sIiwic2hhMjU2IjoiYTY4ODYyMjJhYTk3ZTQ2MjNmZWM4YTMyMzQ2MWE5MTNkODU1ZWY5YzI4OTBhYzdmZjZlZDJhMGU0NDFiOWU5NSJ9LHsiYnl0ZXNfYmFzZTY0IjoiYVcxd2IzSjBJRkpsWVdOMElHWnliMjBnSjNKbFlXTjBKenNLYVcxd2IzSjBJSHRCWW5OdmJIVjBaVVpwYkd4OUlHWnliMjBnSjNKbGJXOTBhVzl1SnpzS1pYaHdiM0owSUdSbFptRjFiSFFnWm5WdVkzUnBiMjRnVW1WMlpXRnNLQ2w3Y21WMGRYSnVJRHhCWW5OdmJIVjBaVVpwYkd3dlBqdDlDZz09IiwicGF0aCI6InJlbmRlcmluZy9lbGVtZW50cy9lZmZlY3RzL3JldmVhbC9jb21wb25lbnQudHN4Iiwic2hhMjU2IjoiNWI4ZWM5YmRjYTg2YTBmOWE5MDAxZDgwYjQ0YmNkYWUyYmMyYWI2YTAyNWQxYWQwNTBjNjdlZGY3YjlhNDA2OSJ9LHsiYnl0ZXNfYmFzZTY0IjoiWkdWbVlYVnNkSE02Q2lBZ2MyVmxaRG9nTVRVS2FXUTZJSEpsZG1WaGJBcHJhVzVrT2lCbFptWmxZM1FLY0dGamExOXBaRG9nY0hKdmFtVmpkRjgxTlRjNVlUaGxNbUk1TkRNME9USXhNR0ZrTkFweWRXNTBhVzFsT2dvZ0lHRmtZWEIwWlhJNklISmxiVzkwYVc5dUNuTmphR1Z0WVRvS0lDQndjbTl3WlhKMGFXVnpPZ29nSUNBZ2MyVmxaRG9LSUNBZ0lDQWdkSGx3WlRvZ2JuVnRZbVZ5Q2lBZ2RIbHdaVG9nYjJKcVpXTjBDbk5qYUdWdFlWOTJaWEp6YVc5dU9pQXhDbk5vYjNKMFgyUmxjMk55YVhCMGFXOXVPaUJVWlhOMElISmxkbVZoYkM0SyIsInBhdGgiOiJyZW5kZXJpbmcvZWxlbWVudHMvZWZmZWN0cy9yZXZlYWwvZWxlbWVudC55YW1sIiwic2hhMjU2IjoiOWZlY2ZiZDZkZDkxYzZmZDk3ZDc2OWNmZTNmNDA3NjJhOTJlOTAxNjBlNDM4YjBmNmMyZjI5OGZiZTBlOWI3YyJ9XX0=",
+          "digest": "sha256:686f36f23177423f79e82795fc9e4e8b3bdeeaf7703cc055c47cf6d4a995ed8e",
+          "media_type": "application/json",
+          "object_id": "sha256:686f36f23177423f79e82795fc9e4e8b3bdeeaf7703cc055c47cf6d4a995ed8e",
+          "size": 3953
+        },
+        "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416": {
+          "bytes_base64": "eyJidWlsZF9yZWNlaXB0X2Jhc2U2NCI6ImV3b2dJQ0psYkdWdFpXNTBjeUk2SUZzS0lDQWdJSHNLSUNBZ0lDQWdJbWxrSWpvZ0luSmxkbVZoYkNJc0NpQWdJQ0FnSUNKcmFXNWtJam9nSW1WbVptVmpkQ0lzQ2lBZ0lDQWdJQ0p3WVdOclNXUWlPaUFpY0hKdmFtVmpkRjgxTlRjNVlUaGxNbUk1TkRNME9USXhNR0ZrTkNJc0NpQWdJQ0FnSUNKd2NtOXFaV04wU1dRaU9pQWljSEp2YW1WamRDMHhJaXdLSUNBZ0lDQWdJbkpsZG1semFXOXVJam9nSW5Ob1lUSTFOam80TVdJMll6QTFPRGs0TVRkaU9XWTJaREV4WmpJd1pXRXpPV1E1TVRFM01qY3hPREprWVRabU5EYzJPREEzTldVNFpXWTRaVFkxWkdGak4yWmxNelZtSWdvZ0lDQWdmUW9nSUYwc0NpQWdJbk5qYUdWdFlTSTZJQ0poYzNSeWFXUXVaV3hsYldWdWRDMWlkV2xzWkM5Mk1TSXNDaUFnSW5ObGJHVmpkR2x2YmtScFoyVnpkQ0k2SUNKemFHRXlOVFk2TURJeU5XRTVNR1UxWkRBNFlUTTFNemcwTkRFMFptSTVOV0V6WVdWaE4yUXlaalEzTXpKa1ltRmtZalUxWkdVME5qUmxabVkyWXpjNU9EaG1PR1kwTWlJS2ZRbz0iLCJmaWxlcyI6W3siYnl0ZXNfYmFzZTY0IjoiTFMwdENtNWhiV1U2SUhCeWIycGxZM1F0WkhKaFpuUnpDbVJsYzJOeWFYQjBhVzl1T2lCUGNtUnBibUZ5ZVNCd2NtOXFaV04wTFc5M2JtVmtJR1J5WVdaMElISmxibVJsY21sdVp5QnpiM1Z5WTJVdUNpMHRMUW9LSXlCUWNtOXFaV04wSUdSeVlXWjBjd29LUldScGRDQmtaV05zWVhKbFpDQnpiM1Z5WTJVZ1ptbHNaWE1zSUhaaGJHbGtZWFJsTDJGa2JXbDBMQ0IwYUdWdUlIVndaR0YwWlNCbGVHRmpkQ0IwYVcxbGJHbHVaU0J5WldaekxpQkxaV1Z3SUdacGJHVnpJSGRvYVd4bElIUnBiV1ZzYVc1bGN5QjFjMlVnZEdobGJTNEsiLCJwYXRoIjoiZG9jcy9TS0lMTC5tZCIsInNoYTI1NiI6IjQxNTVlNTkyMWEzMTc2MTEwZDhmOTNiMGUwNmRlN2IwNGJlOThjYzA5Mjg1NzE4NGQ3M2E1YTkzNDk2MDI2YzUifSx7ImJ5dGVzX2Jhc2U2NCI6IlpHVnpZM0pwY0hScGIyNDZJRVZrYVhSaFlteGxJSEJ5YjJwbFkzUXRiM2R1WldRZ2RtbHpkV0ZzSUdWc1pXMWxiblJ6TGdwa2IyTjFiV1Z1ZEdGMGFXOXVPZ29nSUd0cGJtUTZJSE5yYVd4c0NpQWdjR0YwYURvZ1pHOWpjeTlUUzBsTVRDNXRaQXBrYjIxaGFXNDZJRzFsWkdsaENtbGtPaUJ3Y205cVpXTjBYelUxTnpsaE9HVXlZamswTXpRNU1qRXdZV1EwQ201aGJXVTZJRkJ5YjJwbFkzUWdaSEpoWm5SekNuQmxjbTFwYzNOcGIyNXpPZ290SUdsa09pQndjbTlxWldOMFgyWnBiR1Z6Q2lBZ2NtVmhjMjl1T2lCUWNtOTJhV1JsY3lCd2NtOXFaV04wTFc5M2JtVmtJSFpwYzNWaGJDQnpiM1Z5WTJVdUNuSmxibVJsY21sdVp6b0tJQ0JsWm1abFkzUnpMM0psZG1WaGJEb0tJQ0FnSUhCaGRHZzZJSEpsYm1SbGNtbHVaeTlsYkdWdFpXNTBjeTlsWm1abFkzUnpMM0psZG1WaGJDOWxiR1Z0Wlc1MExubGhiV3dLSUNBZ0lISmxjMjkxY21ObGN6b0tJQ0FnSUMwZ2EybHVaRG9nYVcxd2JHVnRaVzUwWVhScGIyNEtJQ0FnSUNBZ2NHRjBhRG9nY21WdVpHVnlhVzVuTDJWc1pXMWxiblJ6TDJWbVptVmpkSE12Y21WMlpXRnNMMk52YlhCdmJtVnVkQzUwYzNnS0lDQWdJSFI1Y0dVNklHVnNaVzFsYm5RS2MyTm9aVzFoWDNabGNuTnBiMjQ2SURNS2MzUmhZbWxzYVhSNU9pQmxlSEJsY21sdFpXNTBZV3dLYzNSaGRIVnpPaUJoWTNScGRtVUtjM1Z3Y0c5eWREb2djSEp2YW1WamRBcDJaWEp6YVc5dU9pQXdMakV1TUFwMmFYTnBZbWxzYVhSNU9pQjJhWE5wWW14bENnPT0iLCJwYXRoIjoicGFjay55YW1sIiwic2hhMjU2IjoiZGVhMzkzOTM2ODljMGI2MWQzOGFhMDUxYWNhZjJkZmUyYzM3MTgwNDYzZTZjZDc1OThjYmRmY2ZhMzA3YjhhNiJ9LHsiYnl0ZXNfYmFzZTY0IjoiYVcxd2IzSjBJRkpsWVdOMElHWnliMjBnSjNKbFlXTjBKenNLYVcxd2IzSjBJSHRCWW5OdmJIVjBaVVpwYkd4OUlHWnliMjBnSjNKbGJXOTBhVzl1SnpzS1pYaHdiM0owSUdSbFptRjFiSFFnWm5WdVkzUnBiMjRnVW1WMlpXRnNLQ2w3Y21WMGRYSnVJRHhCWW5OdmJIVjBaVVpwYkd3dlBqdDlDZz09IiwicGF0aCI6InJlbmRlcmluZy9lbGVtZW50cy9lZmZlY3RzL3JldmVhbC9jb21wb25lbnQudHN4Iiwic2hhMjU2IjoiNWI4ZWM5YmRjYTg2YTBmOWE5MDAxZDgwYjQ0YmNkYWUyYmMyYWI2YTAyNWQxYWQwNTBjNjdlZGY3YjlhNDA2OSJ9LHsiYnl0ZXNfYmFzZTY0IjoiWkdWbVlYVnNkSE02Q2lBZ2MyVmxaRG9nTVRVS2FXUTZJSEpsZG1WaGJBcHJhVzVrT2lCbFptWmxZM1FLY0dGamExOXBaRG9nY0hKdmFtVmpkRjgxTlRjNVlUaGxNbUk1TkRNME9USXhNR0ZrTkFweWRXNTBhVzFsT2dvZ0lHRmtZWEIwWlhJNklISmxiVzkwYVc5dUNuTmphR1Z0WVRvS0lDQndjbTl3WlhKMGFXVnpPZ29nSUNBZ2MyVmxaRG9LSUNBZ0lDQWdkSGx3WlRvZ2JuVnRZbVZ5Q2lBZ2RIbHdaVG9nYjJKcVpXTjBDbk5qYUdWdFlWOTJaWEp6YVc5dU9pQXhDbk5vYjNKMFgyUmxjMk55YVhCMGFXOXVPaUJVWlhOMElISmxkbVZoYkM0SyIsInBhdGgiOiJyZW5kZXJpbmcvZWxlbWVudHMvZWZmZWN0cy9yZXZlYWwvZWxlbWVudC55YW1sIiwic2hhMjU2IjoiOWZlY2ZiZDZkZDkxYzZmZDk3ZDc2OWNmZTNmNDA3NjJhOTJlOTAxNjBlNDM4YjBmNmMyZjI5OGZiZTBlOWI3YyJ9XX0=",
+          "digest": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+          "media_type": "application/json",
+          "object_id": "sha256:9047b4fbd5ed52f492bd67b4d85d07f851b3ecf191ae2a0d7961a5ae21b3b416",
+          "size": 2624
+        }
+      }
+    ]
+  ],
+  "scope": {
+    "project_id": "project-1",
+    "realm_id": "realm",
+    "timeline_id": "film"
+  },
+  "select": "parent/clip:effect"
+}

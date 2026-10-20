@@ -939,3 +939,10 @@ Real MAIN pixels: frame 105 has median opacity 0.5 (RGB 122/124/130 against the 
 ## 12:16Z — orchestrator: selected-PARAM original pin: routed to Agent (one rule from existing recorded fields; if absent, a visible refusal). Keep the selected-PARAM production binding held; the 013 root/pin release proceeds.
 
 ## 12:22Z — orchestrator: exact MAIN cap mismatch (1219Z): good regression. Agent names the compiled cap input for the single-occurrence closure. Then make the SMALLEST App boundary change: RENDER uses the stored occurrence duration as the cap, as main does, while the EDITOR's effective-duration semantics stay as they are (the original editor positive unchanged). Keep it a render-only bounded input; no new field, DTO or second compiler unless Agent's answer requires it. Keep the regression held and RED until then.
+
+## 12:35Z — orchestrator: decision on app-20261020T1229Z-recycle-after-main17 — APPROVED
+The App lead recycles exactly the six workers in managers/app/notes/recycle-after-main17.txt through bin/recycle (which refuses KEEP and leased workers). Preserve the standard8/public12 asset leases, Runtime013 producer source, final171a/root source and every other active KEEP. No manual rm, no worktree prune while tests run.
+
+## 12:35Z — orchestrator: 12:13Z deep audit (CONCERNS) redirect
+1. Qualify the current tuple first: land pin 171a259ac (Runtime 2c4ac180 / 0.2.13) and the 17e46de99 refresh gate.
+2. Then land bounded writer retirements, each with reload/undo/retry coverage and a zero-legacy-traffic assertion.
