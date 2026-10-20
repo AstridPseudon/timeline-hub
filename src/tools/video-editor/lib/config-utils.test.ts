@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeMediaTrim } from '@banodoco/timeline-composition/evaluation';
+import { computeMediaTrim, getSanitizedPlaybackRate } from '@banodoco/timeline-composition/evaluation';
 import {
   getConfigSignature,
   getClipDurationInFrames,
@@ -7,7 +7,6 @@ import {
   getSanitizedAssetFile,
   getSanitizedMediaSrc,
   getSanitizedMediaTrimProps,
-  getSanitizedPlaybackRate,
   getStableConfigSignature,
   getSanitizedVolume,
   getTimelineDurationInFrames,
