@@ -90,6 +90,8 @@ export interface RuntimeConnectionCopy {
   /** Nothing answers on a return visit, or the gateway answered on this page. */
   readonly notRunning: Message;
   readonly updateNeeded: Message;
+  /** Lead-in above the update screen when a chat reply from this computer's Astrid is out of date. */
+  readonly chatNeedsUpdate: string;
   /** A phone can never reach Astrid on a computer: the link goes there instead. */
   readonly phone: Message & { readonly button: string; readonly copied: string };
   /** Screen-reader text of the status container while connected, and the line App settings shows then. */
