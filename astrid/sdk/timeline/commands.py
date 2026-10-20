@@ -36,6 +36,8 @@ def operations():
     from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
+    from .native_parent_media_commands import add_media as parent_add_media
+    from .native_parent_media_commands import assembled_target
     from .native_placement_commands import placement_move
     from .producer import producer_guard
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
@@ -50,7 +52,9 @@ def operations():
             'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
-            'producer.guard': Operation(_SCHEMA['$defs']['ProducerGuardArgs'], producer_guard, {})}
+            'producer.guard': Operation(_SCHEMA['$defs']['ProducerGuardArgs'], producer_guard, {}),
+            'timeline.assembled-target': Operation(_SCHEMA['$defs']['AssembledTargetArgs'], assembled_target, {}),
+            'clip.add-media': Operation(_SCHEMA['$defs']['ClipAddMediaArgs'], parent_add_media, {})}
 
 
 @dataclass

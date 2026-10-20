@@ -451,7 +451,7 @@ def _reservation_refs(state):
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
     refs.update(owners[1:])
     for owner in owners:
-        assets = state.config(owner).get('registry', {}).get('assets', {})
+        assets = state.registry(owner).get('assets', {})
         _require(isinstance(assets, dict), 'invalid asset identity collection')
         refs.update(owner + '/asset:' + identity for identity in assets)
         for kind in ('clip', 'track'):
@@ -594,7 +594,7 @@ class RuntimeCommitService:
                 validate_command(call)
             verified_producer = capture_producer(port, request)
             for call in calls:
-                if call['op'] in ('occurrence.add-media', 'occurrence.swap-media'):
+                if call['op'] in ('clip.add-media', 'occurrence.add-media', 'occurrence.swap-media'):
                     for key in ('old_media', 'media'):
                         if key in call['args']:
                             verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))

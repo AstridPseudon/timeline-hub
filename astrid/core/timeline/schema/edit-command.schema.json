@@ -1116,6 +1116,64 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "timeline.assembled-target"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/AssembledTargetArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.add-media"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipAddMediaArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -1504,6 +1562,39 @@
         "rationale",
         "proposal_digest"
       ],
+      "additionalProperties": false
+    },
+    "AssembledTargetArgs": {
+      "type": "object",
+      "required": [
+        "replace_clips"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "replace_clips": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^parent/clip:(?!.*::)[^/]+$"
+          }
+        }
+      }
+    },
+    "ClipAddMediaArgs": {
+      "type": "object",
+      "required": [
+        "row",
+        "media"
+      ],
+      "properties": {
+        "row": {
+          "$ref": "#/$defs/ClipAddArgs/properties/row"
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        }
+      },
       "additionalProperties": false
     }
   }

@@ -232,11 +232,13 @@ def _asset_dependents(state, ref):
         if isinstance(value, dict):
             return ((local and any(value.get(key) == identity for key in ('asset', 'asset_id')))
                     or any(value.get(key) == ref for key in ('asset_ref', 'owner_ref'))
-                    or any(references(child, local) for child in value.values()))
+                    or any(references(value.get(key), local) for key in
+                           ('clips', 'children', 'audio', 'effects', 'audio_bindings')))
         return isinstance(value, list) and any(references(child, local) for child in value)
 
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in state.bundle['placements'])]
-    return (any(references(state.config(other), other == owner) for other in owners)
+    return (any(references({**state.config(other), 'clips': state.collection(other, 'clip')},
+                           other == owner) for other in owners)
             or any(references(shot['payload'], False) for shot in state.bundle['shots'].values()))
 
 
