@@ -55,3 +55,16 @@ Known inherited limits: Agent `scripts/artifact_manifest.py --check` reports onl
 ## Agent 2026-10-20T00:10Z selected subset and producer ACK
 Bundle1 is LABEL-ONLY FIRST plus native Python/CLI ingress with its reviewed JSON-identity correction. Canonical schema stays byte-identical86bfe186; no roots/groups/otherops included. Other ordinary operations go in bundle2 after composed review. This explicitly confirms using FINAL Runtime6be9706/client0.2.2/schema89a396/artifacts3b805d, not946/fe0.
 Agent-owned candidate worker agt-m2-bundle1-pin is composing7f01fcd7 label+ingress onto currentM1fc324, preserving permanentprojection regression, normally vendoring exact6be artifacts/runtime.lock and qualifying real pairedprovider/label/reload/undo. Exact finalAgentcommit/tree/export/pin section follows worker completion/harness commit; do not treat uncommittedsource as a finaltuple. App may build the finalRuntime TSpackage now and preparefrozenexistingparentlabelgolden, thenqualify againstpairedAgentcandidatewhenpublished. ALL integrationmerges HELD forPLANM1record.
+
+## Agent FINAL CANDIDATE PUBLISHED — 2026-10-20T00:17Z
+- Branch: tl/agt-m2-bundle1-pin
+- Commit: 3bf9e5368a956ef562c77e1beb0a745addf23daf
+- Tree: b6e56b9fd8453d81d14f6449ab9ee167557d1808 (EXACT centrally tested tree)
+- Paired Runtime: tl/rt-m2-track-public-export /6be970633cc82ab412428151e6bf42f3e7fc3081
+- Version/schema/artifact:0.2.2 /89a396aaa10a5ab6c29fb5f053bf12dd031be4a259c33ebc6a53489fcd5878d3 /3b805d6946fd73c44144009021f44153b78ceeb5e5b1298cd2397a1f2dc19730 (sha256 prefixes as above)
+- Schema SHA256:460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388; runtime.lock SHA25676509204d81fdeb25dcf3b621a52f0f3ac919c4e53bfe64f0e6c261dbf23ec08
+- Exports: astrid.sdk.timeline._track_commands.capture_track_set; commands.operations()['track.set']; TimelineSession.queue/commit. CLI edit track-label TL --track parent/track:ID --set LABEL or --clear.
+- Golden: tests/editing_conformance/fixtures/recipe_m2_app_track_label.json SHA2565aa9aed23a9764e4a9fb0d56fd5efc47368711933adbfaa224f2f725a766ed00
+- Qualification:306focusedPASS/16.20s +48actualexactRuntimePASS/67.32s (agt-m2-bundle1-pin-bundle1-runtime6be9706-integration-1020000846-9027), no skips/xfails. Includes label success/reload/undo, CLI lostACK/restart/exactretry/Python suffixclear/disjoint, M1renderertripwire+permanentoccupancy andclientcutover. Normalgenerator/vendorlock/schema byteparity checksPASS.
+- Limits: parentlabel+correctednativeingress only; no additional clipops/root/group/authoritycut cohort. App browser qualification pending. Source inherited renderingcatalog manifest entry stale (actualcatalogfreshness isfixed, manifestchecksumneedsnormal ownerrefresh),15verifiedoldRufffindings; no newlint orfullsuiteclaim. Product source/captures/pins qualified; no additional old-compatdigest bypass.
+Manager reviewed boundedparent/ingress/equalitychanges andofficialvendor/tuple diff; commit/tree matchescentralresult. App can FETCH NOW viahub-sync andqualify ordinarylabelsuccess/reload/undo onbranches. Keep this qualified tuple frozen; report candidate progresshere. All integrationmerges held untilPLANM1record.
