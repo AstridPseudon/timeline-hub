@@ -829,6 +829,51 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "placement.move"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipMoveArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ripple": {
+                    "const": "none"
+                  },
+                  "anchor": {
+                    "const": "fixed"
+                  },
+                  "position": {
+                    "const": "absolute"
+                  },
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },

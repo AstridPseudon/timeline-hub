@@ -14,10 +14,16 @@ def active(row):
 
 
 def selection(state, key, owner, members=()):
+    boundaries = None
     if key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
     elif key in KINDS:
         result = order(state, owner, KINDS[key])
+    elif key == 'placement.owners':
+        shot = state.occurrence(owner)['shot_id']
+        result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
+                  if row['shot_id'] == shot]
+        boundaries = ['shot:' + shot]
     elif key == "move.blockers":
         origin = state.occurrence(owner)
         lane = (origin.get('placement') or {}).get('track', origin.get('track'))
@@ -31,7 +37,8 @@ def selection(state, key, owner, members=()):
     else:
         raise CommandError(f"unsupported recorded query {key!r}")
     return {"key": key, "query_version": 1, "owner": owner, "members": result,
-            "order": list(result), "boundaries": list(result), "policy": "guard-membership"}
+            "order": list(result), "boundaries": list(result) if boundaries is None else boundaries,
+            "policy": "guard-membership"}
 
 
 class Recording:

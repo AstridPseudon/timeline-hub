@@ -36,7 +36,9 @@ def operations():
     from ._clip_commands import clip_add
     from ._scalar_commands import clip_set_params, track_set
     from .capture import MOVE_INTENT, move, track_create
+    from .native_placement_commands import placement_move
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+            'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
@@ -138,7 +140,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         operation = operations().get(command['op'])
         if operation is not None:
             from .capture import move_intent
-            intent = move_intent(command['select']) if command['op'] == 'clip.move' else operation.intent
+            intent = move_intent(command['select']) if command['op'] in ('clip.move', 'placement.move') else operation.intent
             supplied_intent = {**intent, **command.get('intent', {})}
             if supplied_intent != intent:
                 raise CommandError("unsupported operation intention policy")

@@ -104,6 +104,18 @@ def arrange(state, owner, kind, expected):
 
 
 def selection_overlap(selected, write):
+    if selected['key'] == 'placement.owners':
+        if (write['ref'].startswith('occurrence:') and '/' not in write['ref']
+                and write['path'] in ([], ['shot_id'])):
+            if any(key not in write for key in ('before', 'after')):
+                raise CommandError('owner membership requires complete write history',
+                                   kind='history_unavailable')
+            for state in (write['before'], write['after']):
+                value = state.get('value')
+                shot = value.get('shot_id') if not write['path'] and isinstance(value, dict) else value
+                if isinstance(shot, str) and 'shot:' + shot in selected['boundaries']:
+                    return True
+        return write['ref'] == 'parent' and write['path'] == ['occurrences']
     kind = KINDS.get(selected['key'])
     if kind is None:
         return False
