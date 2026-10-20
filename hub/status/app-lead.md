@@ -10,3 +10,6 @@
 - Disk: 20 GB (08:50Z lead removed rejected worktree app-m2-post-opaque-compat-toolchain per orchestrator 08:48Z; 1 dirty path saved to workers/<w>/dirty-at-removal.txt; branch e7bc92a83 kept; manager reduced KEEP markers 52 -> 7 with notes/keep-justified.txt). Heavy full 21209 needs >=8 GB; fine.
 - Open blockers: none in infra. Manager-stated external blockers: Agent 029/public12 SHA and equality source; Agent guard/policy fix for automatic placement; Runtime connector lifetime contract (escalation 0911Z). Lead attempted fixes: none applicable (cross-area/judgment).
 - Questions for the orchestrator: none beyond the open 0911Z escalation.
+
+## Lead 10:07Z: upstream refresh ancestry verified
+- tl/app-m2-refresh-main-true-ancestry = 35dbb0eb1 "Merge upstream main into Timeline App integration": parents 667498cc4 (resolved refresh branch) + 44f0b9ca9 (banodoco/reigh-app main). `merge-base --is-ancestor 44f0b9ca9` OK; tree identical to 667498cc4. Made by kit dispatch --merge-parent (exit 0). Integration not merged yet; that waits on the manager tests + batch full + gated merge.

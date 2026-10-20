@@ -1,0 +1,485 @@
+diff --git a/src/integrations/astrid/runtimeReadModels.ts b/src/integrations/astrid/runtimeReadModels.ts
+index d6e4e4450..4fb5381d8 100644
+--- a/src/integrations/astrid/runtimeReadModels.ts
++++ b/src/integrations/astrid/runtimeReadModels.ts
+@@ -18,7 +18,6 @@ function runtimeSpec(resource: RuntimeTaskResource): BridgeTaskSpec {
+   const spec = asRecord(envelope?.spec) ?? {};
+   const inputs = asRecord(spec.inputs);
+   const timelineAuthority = asRecord(inputs?.timeline_authority);
+-  const visualSeamReport = timelineAuthority?.visual_seam_report;
+   const schemaVersion = Number(resource.schema_version);
+ 
+   return {
+@@ -27,10 +26,11 @@ function runtimeSpec(resource: RuntimeTaskResource): BridgeTaskSpec {
+     ...(typeof spec.source_task_type === 'string' ? { source_task_type: spec.source_task_type } : {}),
+     ...(asRecord(spec.params) ? { params: asRecord(spec.params)! } : {}),
+     ...(asRecord(spec.output_policy) ? { output_policy: asRecord(spec.output_policy)! } : {}),
+-    // Runtime attaches the visual seam report under the admitted capability
+-    // spec. Preserve that advice for the render warning UI.
+-    ...(visualSeamReport !== undefined
+-      ? { spec: { inputs: { timeline_authority: { visual_seam_report: visualSeamReport } } } }
++    // Runtime attaches the resolved timeline authority under the admitted
++    // capability spec. Preserve it for render-result identity; the caller's
++    // pre-admission params are not an authority source.
++    ...(timelineAuthority
++      ? { spec: { inputs: { timeline_authority: timelineAuthority } } }
+       : {}),
+   };
+ }
+diff --git a/src/tools/video-editor/lib/renderRouter.ts b/src/tools/video-editor/lib/renderRouter.ts
+index 5a24a3d5a..152f9617b 100644
+--- a/src/tools/video-editor/lib/renderRouter.ts
++++ b/src/tools/video-editor/lib/renderRouter.ts
+@@ -890,6 +890,15 @@ export interface EnqueueRenderResult {
+   correlation_id?: string;
+   message: string;
+   seamReport?: VisualSeamReport;
++  timelineAuthority?: RenderTimelineAuthority;
++}
++
++/** The Runtime-owned identity of the snapshot used by a managed render. */
++export interface RenderTimelineAuthority {
++  projectId: string | null;
++  timelineId: string | null;
++  configVersion: number | null;
++  parentRevisionId: string | null;
+ }
+ 
+ export type RenderExportDestination = 'download' | 'project-media';
+@@ -979,6 +988,26 @@ export async function enqueueAstridRuntimeRenderTimeline(
+       request,
+       renderAdmissionKey(payload, options),
+     );
++    const admittedTask = jsonRecord(result.task);
++    if (admittedTask?.project_id !== payload.project_id) {
++      return {
++        status: 'error',
++        message: 'Astrid returned a render task outside the requested project scope.',
++      };
++    }
++    const timelineAuthority = readRuntimeTimelineAuthority(result.task);
++    if (timelineAuthority?.projectId !== null && timelineAuthority?.projectId !== payload.project_id) {
++      return {
++        status: 'error',
++        message: 'Astrid returned render authority for a different project.',
++      };
++    }
++    if (timelineAuthority?.timelineId !== null && timelineAuthority?.timelineId !== payload.timeline_id) {
++      return {
++        status: 'error',
++        message: 'Astrid returned render authority for a different timeline.',
++      };
++    }
+     const seamReport = readRuntimeVisualSeamReportFromAdmittedTask(result.task);
+     return {
+       status: 'queued',
+@@ -986,6 +1015,7 @@ export async function enqueueAstridRuntimeRenderTimeline(
+       correlation_id: payload.correlation_id,
+       message: 'Render queued in Runtime. Progress and output are read from the common task ledger.',
+       ...(seamReport ? { seamReport } : {}),
++      ...(timelineAuthority ? { timelineAuthority } : {}),
+     };
+   } catch (error) {
+     const seamReport = readRuntimeVisualSeamReport(error);
+@@ -1170,6 +1200,19 @@ function readRuntimeVisualSeamReportFromAdmittedTask(task: unknown): VisualSeamR
+   return normalizeRuntimeVisualSeamReport(timelineAuthority?.visual_seam_report);
+ }
+ 
++export function readRuntimeTimelineAuthority(task: unknown): RenderTimelineAuthority | undefined {
++  const taskSpec = jsonRecord(jsonRecord(task)?.spec);
++  const runtimeSpec = jsonRecord(taskSpec?.spec);
++  const authority = jsonRecord(jsonRecord(runtimeSpec?.inputs)?.timeline_authority);
++  if (!authority) return undefined;
++  return {
++    projectId: typeof authority.project_id === 'string' ? authority.project_id : null,
++    timelineId: typeof authority.timeline_id === 'string' ? authority.timeline_id : null,
++    configVersion: Number.isSafeInteger(authority.config_version) ? authority.config_version as number : null,
++    parentRevisionId: typeof authority.parent_revision_id === 'string' ? authority.parent_revision_id : null,
++  };
++}
++
+ /** Cancel a queued/running render through the common fenced task route. */
+ export async function cancelAstridRenderTask(
+   client: AstridLocalClient,
+diff --git a/src/tools/video-editor/hooks/useRenderState.ts b/src/tools/video-editor/hooks/useRenderState.ts
+index e88389faa..046a3dc68 100644
+--- a/src/tools/video-editor/hooks/useRenderState.ts
++++ b/src/tools/video-editor/hooks/useRenderState.ts
+@@ -28,6 +28,7 @@ import {
+   type VideoEditorRuntimeContextValue,
+ } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+ import type { syncPlannerDiagnosticsToCollection } from '@/tools/video-editor/runtime/diagnosticCollectionSync.ts';
++import { readRuntimeTimelineAuthority } from '@/tools/video-editor/lib/renderRouter.ts';
+ import type { PlannerBackedRenderRouteDecision } from '@/tools/video-editor/lib/renderRouter.ts';
+ import type { RenderExportDestination } from '@/tools/video-editor/lib/renderRouter.ts';
+ import { resolveCanonicalComposition } from '@/tools/video-editor/data/canonicalCompositionState.ts';
+@@ -93,6 +94,8 @@ function newRenderOperationId(): string {
+ /** The revision a finished render was built from and when it finished. */
+ export interface RenderResultInfo {
+   revision: number | null;
++  /** Runtime's immutable parent pin, when the admitted task supplied one. */
++  parentRevisionId?: string | null;
+   completedAt: number;
+ }
+ 
+@@ -545,7 +548,10 @@ export function useRenderState(
+   const [renderDestination, setRenderDestination] = useState<RenderExportDestination>('download');
+   const renderPollGenerationRef = useRef(0);
+   const renderPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+-  const renderRevisionRef = useRef<number | null>(null);
++  const renderIdentityRef = useRef<Pick<RenderResultInfo, 'revision' | 'parentRevisionId'>>({
++    revision: null,
++    parentRevisionId: null,
++  });
+   // One export intent keeps one idempotency key across transport retries. A
+   // terminal task clears it so the next explicit export is a new operation.
+   const renderOperationIdRef = useRef<string | null>(null);
+@@ -614,7 +620,7 @@ export function useRenderState(
+     // Completion never downloads on its own: the editor shows a player and
+     // Download is an explicit action there.
+     setRenderResultInfo(nextValue.url
+-      ? { revision: renderRevisionRef.current, completedAt: Date.now() }
++      ? { ...renderIdentityRef.current, completedAt: Date.now() }
+       : null);
+   }, [renderResultFilename, renderResultUrl]);
+ 
+@@ -748,6 +754,31 @@ export function useRenderState(
+       const task = await client.tasks.get(taskId);
+       if (generation !== renderPollGenerationRef.current) return;
+ 
++      const expectedProjectId = runtimeContext?.project?.projectId;
++      const timelineAuthority = readRuntimeTimelineAuthority(task);
++      const scopeMismatch = task.task_id !== taskId
++        || (expectedProjectId !== undefined && task.project_id !== expectedProjectId)
++        || (timelineAuthority?.projectId !== null
++          && expectedProjectId !== undefined
++          && timelineAuthority?.projectId !== expectedProjectId)
++        || (timelineAuthority?.timelineId !== null
++          && runtimeContext?.timelineId !== undefined
++          && timelineAuthority?.timelineId !== runtimeContext.timelineId);
++      if (scopeMismatch) {
++        renderOperationIdRef.current = null;
++        setRenderStatus('error');
++        setRenderProgress(null);
++        setRenderLog('Astrid returned a render task outside the active project/timeline scope.');
++        setActiveRenderTaskId(null);
++        return;
++      }
++      if (timelineAuthority) {
++        renderIdentityRef.current = {
++          revision: timelineAuthority.configVersion,
++          parentRevisionId: timelineAuthority.parentRevisionId,
++        };
++      }
++
+       if (task.status === 'succeeded') {
+         const output = (task.outputs ?? []).find((candidate) => candidate.role === 'render')
+           ?? (task.outputs ?? []).find((candidate) => candidate.is_primary)
+@@ -825,7 +856,7 @@ export function useRenderState(
+         void pollAstridRender(client, taskId, generation);
+       }, 3_000);
+     }
+-  }, [commitRenderResult, renderConfig?.output?.file, renderMetadata?.durationInFrames, runtimeContext?.timelineId]);
++  }, [commitRenderResult, renderConfig?.output?.file, renderMetadata?.durationInFrames, runtimeContext?.project?.projectId, runtimeContext?.timelineId]);
+ 
+   const startAstridRender = useCallback(async (): Promise<boolean> => {
+     const projectId = runtimeContext?.project?.projectId;
+@@ -861,7 +892,6 @@ export function useRenderState(
+       return true;
+     }
+ 
+-    renderRevisionRef.current = expectedVersion;
+     setRenderStatus('rendering');
+     setRenderProgress({
+       current: 0,
+@@ -923,6 +953,12 @@ export function useRenderState(
+       setRenderLog(admission.message);
+       return true;
+     }
++    renderIdentityRef.current = admission.timelineAuthority
++      ? {
++          revision: admission.timelineAuthority.configVersion,
++          parentRevisionId: admission.timelineAuthority.parentRevisionId,
++        }
++      : { revision: null, parentRevisionId: null };
+     visualSeamReportConfigRef.current = admission.seamReport ? renderConfigFingerprint(renderConfig) : null;
+     setVisualSeamReport(admission.seamReport ?? null);
+     setActiveRenderTaskId(admission.task_id);
+@@ -1114,7 +1150,7 @@ export function useRenderState(
+     }
+ 
+     // Only Astrid admission knows a revision; clear any previous one.
+-    renderRevisionRef.current = null;
++    renderIdentityRef.current = { revision: null, parentRevisionId: null };
+ 
+     if (decision.route === 'worker-astrid-runtime') {
+       if (await startAstridRender()) return;
+diff --git a/src/tools/video-editor/hooks/useRenderState.test.tsx b/src/tools/video-editor/hooks/useRenderState.test.tsx
+index c9a65f950..b424b665a 100644
+--- a/src/tools/video-editor/hooks/useRenderState.test.tsx
++++ b/src/tools/video-editor/hooks/useRenderState.test.tsx
+@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => ({
+ const renderRouterMocks = vi.hoisted(() => ({
+   buildRenderTimelinePayload: vi.fn(),
+   enqueueAstridRuntimeRenderTimeline: vi.fn(),
++  readRuntimeTimelineAuthority: vi.fn(),
+   cancelAstridRenderTask: vi.fn(),
+   decideRenderRoute: vi.fn((timeline: ResolvedTimelineConfig | null | undefined) => {
+     const clip = timeline?.clips?.[0];
+@@ -67,6 +68,7 @@ vi.mock('@/tools/video-editor/hooks/useClientRender', () => ({
+ vi.mock('@/tools/video-editor/lib/renderRouter', () => ({
+   buildRenderTimelinePayload: renderRouterMocks.buildRenderTimelinePayload,
+   enqueueAstridRuntimeRenderTimeline: renderRouterMocks.enqueueAstridRuntimeRenderTimeline,
++  readRuntimeTimelineAuthority: renderRouterMocks.readRuntimeTimelineAuthority,
+   cancelAstridRenderTask: renderRouterMocks.cancelAstridRenderTask,
+   decideRenderRoute: renderRouterMocks.decideRenderRoute,
+ }));
+@@ -111,9 +113,10 @@ const buildConfig = (clip: ResolvedTimelineConfig['clips'][number]): ResolvedTim
+ function renderTaskDetail(
+   status: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled',
+   result?: Record<string, unknown>,
++  taskId = 'render-task-1',
+ ) {
+   return {
+-    task_id: 'render-task-1',
++    task_id: taskId,
+     run_id: 'run-render-1',
+     project_id: 'demo-project',
+     state: status,
+@@ -467,6 +470,12 @@ describe('useRenderState render routing', () => {
+   beforeEach(() => {
+     vi.clearAllMocks();
+     mocks.startClientRender.mockResolvedValue(undefined);
++    renderRouterMocks.readRuntimeTimelineAuthority.mockReturnValue({
++      projectId: 'demo-project',
++      timelineId: 'timeline-1',
++      configVersion: 7,
++      parentRevisionId: 'parent-7',
++    });
+     renderRouterMocks.buildRenderTimelinePayload.mockReturnValue({
+       payload: {
+         timeline_id: 'timeline-1',
+@@ -913,6 +922,131 @@ describe('useRenderState render routing', () => {
+     vi.useRealTimers();
+   });
+ 
++  it('labels a render with Runtime authority instead of the local save counter', async () => {
++    vi.useFakeTimers();
++    renderRouterMocks.readRuntimeTimelineAuthority.mockReturnValue({
++      projectId: 'demo-project',
++      timelineId: 'timeline-1',
++      configVersion: 12,
++      parentRevisionId: 'parent-revision-12',
++    });
++    renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mockResolvedValueOnce({
++      status: 'queued',
++      task_id: 'render-task-1',
++      message: 'queued',
++      timelineAuthority: {
++        projectId: 'demo-project',
++        timelineId: 'timeline-1',
++        configVersion: 12,
++        parentRevisionId: 'parent-revision-12',
++      },
++    });
++    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(renderTaskDetail('succeeded')), { status: 200 })));
++    const runtimeValue = {
++      project: { projectId: 'demo-project' },
++      timelineId: 'timeline-1',
++      provider: { apiBaseUrl: '/api/astrid' },
++      telemetry: { warn: vi.fn() },
++    } as unknown as VideoEditorRuntimeContextValue;
++    const wrapper = ({ children }: { children: ReactNode }) => (
++      <VideoEditorRuntimeContext.Provider value={runtimeValue}>{children}</VideoEditorRuntimeContext.Provider>
++    );
++    const { result, unmount } = renderHook(() => useRenderState(
++      buildConfig({ id: 'clip-native', clipType: 'media', track: 'V1', at: 0, hold: 1 }),
++      { fps: 30, durationInFrames: 30, compositionWidth: 1920, compositionHeight: 1080 },
++      undefined,
++      undefined,
++      async () => 7,
++    ), { wrapper });
++
++    await act(async () => { await result.current.startRender(); });
++
++    expect(result.current.renderResultInfo).toMatchObject({
++      revision: 12,
++      parentRevisionId: 'parent-revision-12',
++    });
++    expect(result.current.renderResultInfo?.revision).not.toBe(7);
++
++    unmount();
++    vi.unstubAllGlobals();
++    vi.useRealTimers();
++  });
++
++  it('keeps result identity unknown when Runtime omits timeline authority', async () => {
++    renderRouterMocks.readRuntimeTimelineAuthority.mockReturnValue(undefined);
++    renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mockResolvedValueOnce({
++      status: 'queued', task_id: 'render-task-1', message: 'queued',
++    });
++    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(renderTaskDetail('succeeded')), { status: 200 })));
++    const runtimeValue = {
++      project: { projectId: 'demo-project' },
++      timelineId: 'timeline-1',
++      provider: { apiBaseUrl: '/api/astrid' },
++      telemetry: { warn: vi.fn() },
++    } as unknown as VideoEditorRuntimeContextValue;
++    const wrapper = ({ children }: { children: ReactNode }) => (
++      <VideoEditorRuntimeContext.Provider value={runtimeValue}>{children}</VideoEditorRuntimeContext.Provider>
++    );
++    const { result, unmount } = renderHook(() => useRenderState(
++      buildConfig({ id: 'clip-native', clipType: 'media', track: 'V1', at: 0, hold: 1 }),
++      null,
++      undefined,
++      undefined,
++      async () => 7,
++    ), { wrapper });
++
++    await act(async () => { await result.current.startRender(); });
++
++    expect(result.current.renderResultInfo).toMatchObject({ revision: null, parentRevisionId: null });
++
++    unmount();
++    vi.unstubAllGlobals();
++  });
++
++  it('ignores a late task read after a newer render generation starts', async () => {
++    let resolveOld!: (response: Response) => void;
++    const oldRead = new Promise<Response>((resolve) => { resolveOld = resolve; });
++    const fetchMock = vi.fn()
++      .mockImplementationOnce(() => oldRead)
++      .mockResolvedValue(new Response(JSON.stringify(renderTaskDetail('succeeded', undefined, 'render-task-2')), { status: 200 }));
++    vi.stubGlobal('fetch', fetchMock);
++    renderRouterMocks.readRuntimeTimelineAuthority.mockReturnValue({
++      projectId: 'demo-project', timelineId: 'timeline-1', configVersion: 12, parentRevisionId: 'parent-12',
++    });
++    renderRouterMocks.enqueueAstridRuntimeRenderTimeline
++      .mockResolvedValueOnce({ status: 'queued', task_id: 'render-task-1', message: 'queued' })
++      .mockResolvedValueOnce({ status: 'queued', task_id: 'render-task-2', message: 'queued', timelineAuthority: {
++        projectId: 'demo-project', timelineId: 'timeline-1', configVersion: 12, parentRevisionId: 'parent-12',
++      } });
++    const runtimeValue = {
++      project: { projectId: 'demo-project' },
++      timelineId: 'timeline-1',
++      provider: { apiBaseUrl: '/api/astrid' },
++      telemetry: { warn: vi.fn() },
++    } as unknown as VideoEditorRuntimeContextValue;
++    const wrapper = ({ children }: { children: ReactNode }) => (
++      <VideoEditorRuntimeContext.Provider value={runtimeValue}>{children}</VideoEditorRuntimeContext.Provider>
++    );
++    const { result, unmount } = renderHook(() => useRenderState(
++      buildConfig({ id: 'clip-native', clipType: 'media', track: 'V1', at: 0, hold: 1 }),
++      null,
++      undefined,
++      undefined,
++      async () => 7,
++    ), { wrapper });
++
++    const firstRender = act(async () => { await result.current.startRender(); });
++    await Promise.resolve();
++    await act(async () => { await result.current.startRender(); });
++    resolveOld(new Response(JSON.stringify(renderTaskDetail('succeeded', undefined, 'render-task-1')), { status: 200 }));
++    await act(async () => { await firstRender; });
++
++    expect(result.current.renderResultInfo?.revision).not.toBe(7);
++    expect(result.current.renderResultInfo?.revision).toBe(12);
++    unmount();
++    vi.unstubAllGlobals();
++  });
++
+   it('uses a new operation identity after terminal failure and retains it for admission retry', async () => {
+     expect(formatAstridExecutorDiagnostic({
+       attempts: [],
+diff --git a/src/tools/video-editor/lib/renderRouter.test.tsx b/src/tools/video-editor/lib/renderRouter.test.tsx
+index 67e7504fd..a0860ae6f 100644
+--- a/src/tools/video-editor/lib/renderRouter.test.tsx
++++ b/src/tools/video-editor/lib/renderRouter.test.tsx
+@@ -1451,6 +1451,86 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
+     vi.unstubAllGlobals();
+   });
+ 
++  it('returns Runtime timeline authority from the admitted task and refuses a wrong project scope', async () => {
++    const authority = {
++      authority: 'kernel',
++      project_id: 'p',
++      timeline_id: 't',
++      config_version: 12,
++      parent_revision_id: 'parent-revision-12',
++    };
++    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
++      const url = new URL(input instanceof Request ? input.url : String(input));
++      if (url.pathname === '/v1/capabilities') return new Response(JSON.stringify(renderCapabilityPage()), { status: 200 });
++      if (url.pathname === '/v1/tasks' && init?.method === 'POST') {
++        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
++        const headers = init.headers as Record<string, string>;
++        const response = renderTaskMutationResponse('task-authority', body, headers['Idempotency-Key']);
++        const innerSpec = (response.data.spec as Record<string, unknown>).spec as Record<string, unknown>;
++        innerSpec.inputs = { timeline_authority: authority };
++        return new Response(JSON.stringify(response), { status: 201 });
++      }
++      throw new Error(`unexpected request: ${url.pathname}`);
++    });
++    vi.stubGlobal('fetch', fetchImpl);
++
++    const result = await enqueueAstridRuntimeRenderTimeline(payload, {
++      client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }),
++    });
++
++    expect(result).toMatchObject({
++      status: 'queued',
++      timelineAuthority: {
++        projectId: 'p', timelineId: 't', configVersion: 12, parentRevisionId: 'parent-revision-12',
++      },
++    });
++    expect(result.timelineAuthority?.configVersion).not.toBe(7);
++    vi.unstubAllGlobals();
++
++    const wrongProjectFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
++      const url = new URL(input instanceof Request ? input.url : String(input));
++      if (url.pathname === '/v1/capabilities') return new Response(JSON.stringify(renderCapabilityPage()), { status: 200 });
++      if (url.pathname === '/v1/tasks' && init?.method === 'POST') {
++        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
++        const headers = init.headers as Record<string, string>;
++        const response = renderTaskMutationResponse('task-wrong-project', body, headers['Idempotency-Key']);
++        response.data.project_id = 'other-project';
++        return new Response(JSON.stringify(response), { status: 201 });
++      }
++      throw new Error(`unexpected request: ${url.pathname}`);
++    });
++    vi.stubGlobal('fetch', wrongProjectFetch);
++    await expect(enqueueAstridRuntimeRenderTimeline(payload, {
++      client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }),
++    })).resolves.toMatchObject({
++      status: 'error',
++      message: 'Astrid returned a render task outside the requested project scope.',
++    });
++    vi.unstubAllGlobals();
++
++    const wrongTimelineFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
++      const url = new URL(input instanceof Request ? input.url : String(input));
++      if (url.pathname === '/v1/capabilities') return new Response(JSON.stringify(renderCapabilityPage()), { status: 200 });
++      if (url.pathname === '/v1/tasks' && init?.method === 'POST') {
++        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
++        const headers = init.headers as Record<string, string>;
++        const response = renderTaskMutationResponse('task-wrong-timeline', body, headers['Idempotency-Key']);
++        const innerSpec = (response.data.spec as Record<string, unknown>).spec as Record<string, unknown>;
++        innerSpec.inputs = { timeline_authority: { ...authority, timeline_id: 'other-timeline' } };
++        return new Response(JSON.stringify(response), { status: 201 });
++      }
++      throw new Error(`unexpected request: ${url.pathname}`);
++    });
++    vi.stubGlobal('fetch', wrongTimelineFetch);
++    await expect(enqueueAstridRuntimeRenderTimeline(payload, {
++      client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }),
++    })).resolves.toMatchObject({
++      status: 'error',
++      message: 'Astrid returned render authority for a different timeline.',
++    });
++    vi.unstubAllGlobals();
++  });
++
+   it('keeps one operation key stable for delivery retries and changes it for a new intent', async () => {
+     const keys: string[] = [];
+     const submit = async (operationId: string, taskId: string) => {
+
