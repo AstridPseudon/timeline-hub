@@ -72,13 +72,6 @@ def _dispatch_media(args: list[str]) -> int:
     return _dispatch_product(["media", *args])
 
 
-def _dispatch_setup(args: list[str]) -> int:
-    """Keep the old spelling as an alias of the single installer."""
-    from astrid.installer.cli import main
-
-    return int(main(args))
-
-
 def _dispatch_status(args: list[str]) -> int:
     """Observe workspace/Runtime/readiness without launcher or provisioning."""
     import argparse
@@ -569,7 +562,7 @@ from .hivemind import PACK_COMMANDS as _PACK_COMMANDS, installed_pack_ids as _in
 # outer launcher command. This is a blocklist/precedence rule, not a second
 # hand-maintained pack allowlist.
 _PACK_ROUTE_BLOCKLIST = frozenset(
-    {"agent", "auth", "help", "install", "login", "setup", "status", "logout", "revoke", "--help", "--version"}
+    {"agent", "auth", "help", "install", "login", "status", "logout", "revoke", "--help", "--version"}
 )
 _DYNAMIC_PACK_ROUTE_NAMES: set[str] = set()
 

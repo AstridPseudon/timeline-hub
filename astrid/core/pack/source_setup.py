@@ -553,7 +553,7 @@ def declarations_from_json(path: str | Path | None = None) -> tuple[SourceDeclar
 
 
 def _cli(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m astrid.setup")
+    parser = argparse.ArgumentParser(prog="python -m astrid.core.pack.source_setup")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--disable-pack")

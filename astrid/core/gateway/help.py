@@ -21,7 +21,7 @@ def _print_entrypoint_help() -> None:
         """Astrid command gateway — Python SDK + CLI
 
 The canonical Python boundary is ``import astrid`` (see docs/reference/sdk.md).
-This gateway is the CLI entry point for the seven product families, setup,
+This gateway is the CLI entry point for the seven product families,
 workspace status, operational families (doctor, backup), and external tools.
 
 Usage:
@@ -44,7 +44,6 @@ Latest project render:
   python3 -m astrid runs open [RUN_ID] [--project PROJECT] [--json]
 
 Operational families:
-  python3 -m astrid install [--repair | --update | --uninstall]
   python3 -m astrid status [--json]
   python3 -m astrid doctor [--json]
   python3 -m astrid backup {create,restore,export,tombstone,recover,purge} [--json]
@@ -89,8 +88,8 @@ def _product_help_text() -> str:
     """
     return """Astrid product commands — runtime families and external tools
 
-The gateway owns seven product families, two operational families, two reserved
-workspace commands, and the external Hivemind tool. ``shots`` mounts beneath ``timelines`` and
+The gateway owns seven product families, two operational families, the reserved
+workspace status command, and the external Hivemind tool. ``shots`` mounts beneath ``timelines`` and
 ``references`` mounts beneath ``media``.
 
 Usage:
@@ -99,7 +98,7 @@ Usage:
 
 Family census (exactly nine families): projects timelines media tasks runs preferences documents doctor backup
 
-Reserved workspace commands (outside the family census): setup status
+Reserved workspace commands (outside the family census): status
 
 Product families:
   projects    [kernel] project create/list/show/update/select/current
@@ -109,8 +108,6 @@ Product families:
   timelines   [pack: timeline] timelines list/show/replace-parent-media/archive/recover/history/diff/visualize/render
 
 Operational families:
-  install     [runtime] install, repair, update or uninstall Astrid
-  setup       [runtime] alias of install
   status      [runtime] read-only workspace/Runtime/readiness status
   preferences [runtime] user/project Markdown defaults; checkout/checkin/edit
   documents   [runtime] reusable project documents; list/create/show/checkout/checkin

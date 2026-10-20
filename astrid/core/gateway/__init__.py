@@ -35,7 +35,6 @@ from astrid.core.gateway.dispatch import (
     _dispatch_backup,
     _dispatch_doctor,
     _dispatch_product,
-    _dispatch_setup,
     _dispatch_status,
     _top_level_commands,
 )
@@ -60,7 +59,6 @@ SPRINT1_UNBOUND_ALLOWLIST_CONTRACT: tuple[tuple[str, ...], ...] = (
     ("--version",),
     ("doctor",),
     ("backup",),
-    ("setup",),
     ("install",),
     ("status",),
     ("auth",),
@@ -111,14 +109,12 @@ def _main_impl(raw: list[str]) -> int:
     if first_arg == "--version":
         print(f"astrid/{ASTRID_VERSION}")
         return 0
-    # Reserved setup/status commands sit outside the long-standing seven
+    # Reserved install/status commands sit outside the long-standing seven
     # gateway families so pack discovery cannot claim them and product-family
     # census consumers remain stable.
     if first_arg == "install":
         from astrid.installer.cli import main as install_main
         return install_main(raw[1:])
-    if first_arg == "setup":
-        return _dispatch_setup(raw[1:])
     if first_arg == "status":
         return _dispatch_status(raw[1:])
     if first_arg == "auth":
