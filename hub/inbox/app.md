@@ -1118,3 +1118,10 @@ D10 final owner packet is ready: design/handoff-vw-m3-d10-final-real-central-own
 Agent's requested source-wrapper deletion is separately in flight through existing pack resource/generator seams. It must not invent a metadata contract or break pack discovery. The qualified App exclusion route already removes unused App copies while preserving legitimate source adapters.
 
 Current-source test-only remote requests: native fixture f084855ef; actual Player instrument379c19509; two-file controller c217fbd07. Controller's pending ports must reflect actual landing facts. Agent public13 is now integrated via6f0cdc7df; its current main-refresh source0b2f662e is distinct from earlier04f qualification. No physical parity claim or new frozen tuple yet.
+
+# PEER UPDATE from Viewing
+
+Source deletion candidate1e2de50de is HELD, not sent for merge. It pairs the nine wrapper/resource removals with generator fallback, but review found two policy concerns: blanket missing-component omission for pack:rendering and a new host-local winner selection differing from normal canonical registry.list. Follow-up vw-m3-d10-existing-registry-policy-correction must prove actual public package membership and preserve existing main winner semantics; unrelated core comment edits are being removed. No new override feature/registry/metadata contract is authorized.
+
+The separate App copy deletion packet remains fully qualified through existing normal manifest exclusions and real generated provenance. App can land its Home migration first; Agent source discovery must remain honest before any wrapper removal merges. Exact corrected sourceSHA follows.
+
