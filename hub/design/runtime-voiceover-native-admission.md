@@ -1,3 +1,5 @@
+> Manager correction 2026-10-20T17:02:02Z: generation.generate_speech below is the INNER action, not a verified outervoiceoveraction. Outertrace active. Proposed JSON examples must be checked against existing authoritative D13 codec; they are NOT a new agreed contract.
+
 # Runtime voiceover native admission
 
 Date: 2026-10-20 (UTC)
