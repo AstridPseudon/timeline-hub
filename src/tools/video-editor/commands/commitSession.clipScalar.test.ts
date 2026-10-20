@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CanonicalDocument, CommitRequest, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
-import type { TimelineConfig } from '../types/index.ts';
+import type { ResolvedTimelineConfig } from '../types/index.ts';
+import type { PreparedShotComposition } from '../data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
+import { stableOccurrenceDeepLink, stableOutputIdentity } from '../data/shotComposition.ts';
 import { assembleTimelineData, type TimelineData } from '../lib/timeline-data.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
@@ -39,19 +42,35 @@ function rawDocument(): CanonicalDocument {
   return raw;
 }
 
-// A display fixture, not a replacement for the canonical composition projector.
 function display(raw: CanonicalDocument, pin = head): TimelineData {
   const parent = raw.parent_revision.payload;
-  const clips = copy(parent.clips) as TimelineConfig['clips'];
-  for (const occurrence of parent.occurrences as Array<Record<string, JSON>>) {
+  const occurrences = (parent.occurrences as Array<Record<string, JSON>>).map((occurrence, ordinal) => {
     const shot = raw.shot_revisions.find((image) => image.revision_id === occurrence.shot_revision_id)!;
     const internal = raw.internal_timeline_revisions.find((image) => image.revision_id === shot.internal_timeline_revision_id)!;
-    for (const clip of internal.payload.clips as TimelineConfig['clips']) {
-      clips.push({ ...copy(clip), track: occurrence.track as string, id: `${occurrence.occurrence_id}:${clip.id}`,
-        app: { ...clip.app, canonical: { clipRef: `occurrence:${occurrence.occurrence_id}/clip:${clip.id}` } } });
-    }
-  }
-  const config = { ...copy(parent.config as object), output: { fps: 30, resolution: '1920x1080' }, clips } as TimelineConfig;
+    const occurrenceId = occurrence.occurrence_id as string;
+    return { projectId: raw.project_id, parentDocumentId: raw.timeline_id, occurrenceId,
+      shotId: shot.shot_id, revisionId: shot.revision_id, ordinal,
+      atMs: (occurrence.placement as { start_ms: number }).start_ms, durationMs: occurrence.duration_ms as number,
+      trackId: occurrence.track as string, sourceOffsetMs: occurrence.source_offset as number,
+      speed: occurrence.speed as number, gain: occurrence.gain as number, muted: occurrence.muted as boolean,
+      stableDeepLink: stableOccurrenceDeepLink(raw.project_id, raw.timeline_id, shot.shot_id, shot.revision_id, occurrenceId),
+      outputIdentity: stableOutputIdentity(raw.project_id, raw.timeline_id, occurrenceId),
+      revision: { ...copy(shot.payload), shot_id: shot.shot_id, revision_id: shot.revision_id,
+        internal_timeline_revision: { revision_id: internal.revision_id, timeline: copy(internal.payload) } },
+    };
+  });
+  const composition: PreparedShotComposition = {
+    projectId: raw.project_id, parentDocumentId: raw.timeline_id, headRevisionId: pin.revisionId, occurrences,
+    contract: { schema_version: 1, project: { project_id: raw.project_id, document_id: raw.timeline_id },
+      primary_timeline: { document_id: raw.timeline_id, head: { revision_id: pin.revisionId } },
+      parent_composition: copy(parent), shot_revisions: raw.shot_revisions.map((shot) =>
+        occurrences.find((occurrence) => occurrence.shotId === shot.shot_id && occurrence.revisionId === shot.revision_id)!.revision),
+      occurrences: copy(parent.occurrences) as Array<Record<string, JSON>>, cases: {} },
+  };
+  const { config } = projectCanonicalComposition(composition, {
+    ...copy(parent.config as object), output: { fps: 30, resolution: '1920x1080' },
+    clips: copy(parent.clips), registry: {},
+  } as ResolvedTimelineConfig);
   return assembleTimelineData({ config, configVersion: 1, head: { ...scope,
     headRevisionId: pin.revisionId, headPublicationId: pin.publicationId }, registry: { assets: {} },
   resolvedConfig: { ...config, tracks: config.tracks ?? [], registry: {} }, output: config.output, assetMap: {} });
@@ -85,6 +104,171 @@ async function setup(raw = rawDocument()) {
 const rawRow = (bundle: unknown, ref: string) => new AuthoredState(bundle as never).entity(ref)!;
 
 describe('clip scalars in the existing durable session (unit transport only)', () => {
+  it('refuses a stale binding to a shared sibling before capture or local mutation', async () => {
+    const env = await setup();
+    const session = await env.mount();
+    const current = env.current();
+    const id = displayId(assetRef);
+    const selected = current.resolvedConfig.clips.find((clip) => clip.id === id)!;
+    selected.app = { ...selected.app, canonical: {
+      ...(selected.app?.canonical as object), clipRef: 'occurrence:shared-sibling/clip:f2-agent-clear-clip',
+    } };
+    const before = copy(current);
+    const [outbox] = await env.outboxes.list(scope);
+    expect(() => captureClipScalarEdit(session.clipScalarPort, current, id, 'occurrence:shared-sibling'))
+      .toThrow('matching raw clip owner');
+    expect(env.current()).toEqual(before);
+    expect(await env.outboxes.list(scope)).toEqual([outbox]);
+    expect(env.requests).toHaveLength(0);
+    await session.dispose();
+  });
+
+  it.each([
+    ['same-owner wrong clip', { clipRef: holdRef }],
+    ['wrong raw ID', { rawClipId: 'f2-agent-clip' }],
+    ['wrong owner', { ownerRef: 'occurrence:shared-sibling' }],
+    ['wrong occurrence', { occurrenceId: 'shared-sibling' }],
+    ['wrong project', { projectId: 'other-project' }],
+    ['wrong parent', { parentDocumentId: 'other-timeline' }],
+    ['wrong shot', { shotId: 'other-shot' }],
+    ['stale shot revision', { revisionId: 'old-shot-revision' }],
+    ['stale internal revision', { internalTimelineRevisionId: 'old-internal-revision' }],
+    ['wrong output identity', { outputIdentity: 'other-output' }],
+    ['missing raw ID', { rawClipId: null }],
+    ['unaddressable binding', { clipRef: null }],
+    ['missing raw target', { clipRef: 'occurrence:f2-occurrence/clip:missing', rawClipId: 'missing' }],
+    ['missing binding', undefined],
+    ['clipRef alone', { clipRef: assetRef }],
+  ] as const)('refuses %s without changing data or appending an outbox intent', async (_name, forged) => {
+    const env = await setup();
+    const session = await env.mount();
+    const current = env.current();
+    const id = displayId(assetRef);
+    const selected = current.resolvedConfig.clips.find((clip) => clip.id === id)!;
+    const canonical = forged === undefined ? undefined : _name === 'clipRef alone'
+      ? forged : { ...(selected.app?.canonical as object), ...forged };
+    selected.app = { ...selected.app, canonical };
+    const before = copy(current);
+    const outboxes = await env.outboxes.list(scope);
+    expect(() => captureClipScalarEdit(session.clipScalarPort, current, id, owner(assetRef)))
+      .toThrow('matching raw clip owner');
+    expect(env.current()).toEqual(before);
+    expect(await env.outboxes.list(scope)).toEqual(outboxes);
+    expect(env.requests).toHaveLength(0);
+    await session.dispose();
+  });
+
+  it('refuses a complete sibling identity attached to a different projector output ID', async () => {
+    const env = await setup();
+    const session = await env.mount();
+    const current = env.current();
+    const selected = current.resolvedConfig.clips.find((clip) => clip.id === displayId(assetRef))!;
+    const sibling = current.resolvedConfig.clips.find((clip) => clip.id === 'shared-sibling:f2-agent-clear-clip')!;
+    selected.app = { ...selected.app, canonical: copy(sibling.app!.canonical) };
+    const before = copy(current);
+    const outboxes = await env.outboxes.list(scope);
+    expect(() => captureClipScalarEdit(session.clipScalarPort, current, selected.id, 'occurrence:shared-sibling'))
+      .toThrow('matching raw clip owner');
+    expect(env.current()).toEqual(before);
+    expect(await env.outboxes.list(scope)).toEqual(outboxes);
+    expect(env.requests).toHaveLength(0);
+    await session.dispose();
+  });
+
+  it('binds parent rows to their raw parent identity despite opaque authored canonical fields', async () => {
+    const raw = rawDocument();
+    const row = (raw.parent_revision.payload.clips as Array<Record<string, JSON>>)[0];
+    const occurrenceClip = display(raw).resolvedConfig.clips.find((clip) => clip.id === displayId(assetRef))!;
+    row.app = { canonical: copy(occurrenceClip.app!.canonical) as JSON, opaque: { keep: [null, 'parent'] } };
+    const env = await setup(raw);
+    const session = await env.mount();
+    const current = env.current();
+    expect(() => captureClipScalarEdit(session.clipScalarPort, current, row.id as string, owner(assetRef)))
+      .toThrow('matching raw clip owner');
+    const captured = captureClipScalarEdit(session.clipScalarPort, current, row.id as string, 'parent');
+    submitClipScalarEdit(captured, { values: {}, clear: ['asset'] });
+    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
+    const [stored] = await env.outboxes.list(scope);
+    const payload = stored.intents[0].payload as { commands: EditCommand[]; after: unknown };
+    expect(payload.commands[0].select).toBe(`parent/clip:${row.id}`);
+    expect(rawRow(payload.after, `parent/clip:${row.id}`).app).toEqual(row.app);
+    expect(env.current().config.clips.find((clip) => clip.id === row.id)).not.toHaveProperty('asset');
+    await session.dispose();
+  });
+
+  it('refuses authored parent metadata impersonating an otherwise valid projected occurrence', async () => {
+    const raw = rawDocument();
+    const id = displayId(assetRef);
+    const projected = display(raw).resolvedConfig.clips.find((clip) => clip.id === id)!;
+    const row = (raw.parent_revision.payload.clips as Array<Record<string, JSON>>)[0];
+    row.id = id;
+    row.app = { canonical: copy(projected.app!.canonical) as JSON };
+    const env = await setup(raw);
+    const session = await env.mount();
+    const current = env.current();
+    // Even if only the forged parent row is presented, its authored metadata is not a binding.
+    const parent = current.resolvedConfig.clips.find((clip) => clip.id === id)!;
+    current.resolvedConfig.clips = current.resolvedConfig.clips.filter((clip) => clip.id !== id || clip === parent);
+    const before = copy(current);
+    const outboxes = await env.outboxes.list(scope);
+    expect(() => captureClipScalarEdit(session.clipScalarPort, current, id, owner(assetRef)))
+      .toThrow('matching raw clip owner');
+    expect(env.current()).toEqual(before);
+    expect(await env.outboxes.list(scope)).toEqual(outboxes);
+    expect(env.requests).toHaveLength(0);
+    await session.dispose();
+  });
+
+  it.each(['bad/id', 'bad::id'])('refuses production unaddressable projected ID %s', async (rawId) => {
+    const raw = rawDocument();
+    (raw.internal_timeline_revisions[0].payload.clips as Array<Record<string, JSON>>)[0].id = rawId;
+    const env = await setup(raw);
+    const session = await env.mount();
+    const current = env.current();
+    const id = `f2-occurrence:${rawId}`;
+    expect(current.resolvedConfig.clips.find((clip) => clip.id === id)!.app!.canonical).toMatchObject({
+      rawClipId: rawId, clipRef: null,
+    });
+    const before = copy(current);
+    const outboxes = await env.outboxes.list(scope);
+    expect(() => captureClipScalarEdit(session.clipScalarPort, current, id, owner(holdRef)))
+      .toThrow('matching raw clip owner');
+    expect(env.current()).toEqual(before);
+    expect(await env.outboxes.list(scope)).toEqual(outboxes);
+    expect(env.requests).toHaveLength(0);
+    await session.dispose();
+  });
+
+  it('refuses duplicate selected display rows before capture', async () => {
+    const env = await setup();
+    const session = await env.mount();
+    const current = env.current();
+    current.resolvedConfig.clips.push(copy(current.resolvedConfig.clips.find((clip) => clip.id === displayId(assetRef))!));
+    const before = copy(current);
+    const outboxes = await env.outboxes.list(scope);
+    expect(() => session.clipScalarPort.capture({ current, clipId: displayId(assetRef), ownerRef: owner(assetRef) }))
+      .toThrow('one raw clip identity');
+    expect(env.current()).toEqual(before);
+    expect(await env.outboxes.list(scope)).toEqual(outboxes);
+    expect(env.requests).toHaveLength(0);
+    await session.dispose();
+  });
+
+  it('refuses duplicate raw clip identities even though the projector can display them', async () => {
+    const raw = rawDocument();
+    const clips = raw.internal_timeline_revisions[0].payload.clips as Array<Record<string, JSON>>;
+    clips.push(copy(clips.find((clip) => clip.id === 'f2-agent-clip')!));
+    const env = await setup(raw);
+    const before = copy(env.current());
+    expect(before.resolvedConfig.clips.filter((clip) => clip.id === displayId(holdRef))).toHaveLength(2);
+    expect(before.resolvedConfig.clips.filter((clip) => clip.id === displayId(holdRef))[1].app!.canonical)
+      .toMatchObject({ clipRef: null });
+    await expect(env.mount()).rejects.toThrow('duplicate identity');
+    expect(env.current()).toEqual(before);
+    expect(await env.outboxes.list(scope)).toEqual([]);
+    expect(env.requests).toHaveLength(0);
+  });
+
   it.each(cases)('captures original journey intent %s → previews → persists → reloads → retries exact bytes/key', async (ref, args) => {
     const env = await setup();
     const session = await env.mount();
