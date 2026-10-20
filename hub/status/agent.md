@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T00:54:12Z | dispatcher heartbeat 6s -->
+<!-- main | 2026-10-20T00:58:44Z | dispatcher heartbeat 5s -->
 # agent — 2026-10-20T00:50Z
 Milestone: M1 Agent exit SATISFIED; global M1 awaits App full classification/orchestrator PLAN record. M0 COMPLETE. M2 branches authorized; ALL M2 integration merges HELD.
 Integrated: Agent f6fbe741 (M1 metadata descendant of qualified fc324); Runtime9f9b25c; App2bfde69ea; Composition7aa384a. No M2 product integrated.
@@ -15,3 +15,5 @@ Inbox: ACK through00:47 restart recovery; pack-snapshot-custody +Runtime exactsn
 Resources:13GBfree; Agent7recovery workers queued; no full/heavy request. Preserve held source worktrees/reports, especially App leased readonly bundle1. Old interrupted worktrees retained until successors confirm transfer; merged clean M1 refs recyclable by orchestrator. No manager product edits/git mutations/pushes.
 
 00:53 review: manager291PASS clearbatch +47PASSmedia inverse +4actualPASS23.18s media proof +190PASS24.99s free/M1goldens; approvedboundedfoundationfixes held. Sheet recoveryecdf018f132PASS7deselected; manager7actualCLI+15SDK nowrunning. Producerforwardgoldens dispatched replacingcompleted sheet (7active). Host startupfix106offlinePASS; real6centralpending. NEWsourcegap beforeproductionregistration escalated agent-20261020T0053Z-host-preregistration-ownership; finalViewinghandoffHELD pendingnarrowgrant/fix.
+
+Latestreview00:54: sheetecdf018f actualauthenticatedCLI+SDK20PASS22.42s, no sockets; unit132PASS7deselected separate. Hostproduction spawn→registration narrowgrant INBOX01:00 ACK (timestampforwardfromlead); oneboundedproductionfixbrief ready, dispatchonnextworkerturnover. Realhostreplacementtestalreadyrunning29234; foundationreplacementsourcepair workerownsfinalretry onceexactsourcecomplete.

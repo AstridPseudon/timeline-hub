@@ -241,6 +241,7 @@ Owner (Hannah)            the hard stop before M5; [owner] decisions; notified a
 - 2026-10-19 (OWNER): purge all Supabase canonical timeline writers (ai-timeline-agent, timeline-import, complete_task append + registry upsert, astridAppendService); keep task completion/billing/media prep/relational metadata.
 - 2026-10-19 (OWNER intent): everything contradicting the end state is deleted, tracked in design/deletion-ledger.md; each milestone exits only when its ledger rows are DELETED.
 - 2026-10-20: render/assembler producers never commit. They return EditCommands as a proposal; the requesting client commits it with its own authority, with task/attempt fencing as commit guards. Historical render uses an explicit immutable revision+receipt selector, additive to the existing admission spec.
+- 2026-10-20: word/transcript anchors store their stable word identity in the authored document (with the transcript pin), so the revision alone determines meaning. Restore stays revision-based. Ambiguous text-only anchors refuse.
 
 ## Gate record (orchestrator updates this)
 - Checkpoint A (designs approved): **APPROVED 2026-10-19 ~19:05Z** by the orchestrator, after a fresh Astra review (APPROVE WITH CHANGES; all 5 required changes folded into the design docs; see reviews/checkpoint-a-changes.md). Runtime, App and Viewing M0 complete; Agent designs complete, with its main-baseline count still being recorded (non-blocking). **M1 is open.**

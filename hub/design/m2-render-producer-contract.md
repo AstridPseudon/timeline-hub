@@ -1,7 +1,10 @@
 # M2 writer bundle 3: render producer contract
 
-> Manager correction 2026-10-20T00:54Z: the latest orchestrator numeric-forwarding and completed-cancel decisions SUPERSEDE the older carrier/withdrawal text below. `producer.guard` args are closed `{pin}` ONLY; Runtime reads authoritative immutable settled artifact bytes and verifies original exact digest itself. It compares request commands/rationale using the existing recipe value equality (numeric values equal, booleans distinct), so Node parse/stringify 1.0→1 accepts; 1.5 or tampered artifact refuses. No proposal/raw-byte forwarding API. Completed-task cancel remains NO-OP; requester declines by not committing, with no server revocation. Completed persisted task/attempt epoch survives restart. Existing f2df goldens are design-only and await these corrections before freeze.
-
+Settled freeze 2026-10-20: PIN-only carrier, authoritative artifact hashing,
+recipe value equality, completed-cancel NO-OP and persisted completed epoch follow
+Agent INBOX `proposal-numeric-forwarding` / `producer-completed-cancel` and the
+manager's 00:54Z admitted-target ACK. `producer-commit-port.md` owns the matching
+Runtime port design.
 
 Design + feasibility only, 2026-10-20. Governing decisions: PLAN §4.1/4.2,
 Agent INBOX 00:35 “render-handoff-contract” + 00:40 “producer-attempt-guard”,
@@ -11,8 +14,9 @@ running-lease eligibility. No new coordinator is required. Reviewed Agent
 `9f9b25c000485e919f30f1411831fe2d5a3c1316`.
 **Old endpoint 410 HELD; all M2 integration merges HELD pending PLAN's M1 record.**
 No product code, schema, endpoint, permission, DTO, table or generated client changes here.
-Updated by `agt-m2-settled-proposal-contract`, based on `43567f56`; contract goldens
-exercise existing commands only, not an installed producer guard or media cutover.
+Updated by `agt-m2-proposal-forward-goldens`, based on settled-contract `f2df6c4f`;
+contract goldens exercise existing commands and a bounded forwarding spike only,
+not an installed producer guard, Runtime admission qualification or media cutover.
 
 ## Next implementation slice (one screen)
 
@@ -39,8 +43,10 @@ exercise existing commands only, not an installed producer guard or media cutove
    below passes may the real host hook and exported publication helpers switch;
    only then can D13/old 410 retire. This task requests no integration merge.
 
-## Verified lifecycle and concrete seams
+## Existing source and historical lifecycle evidence
 
+The legacy publication/lease rows describe the predecessor path, not settled-result
+eligibility. Preserve its tests until the replacement qualifies.
 Paths below are relative to the named checkout; Agent is
 `/home/user/work/wt/agt-m2-render-producer-plan`, Runtime is `/home/user/work/runtime`.
 
@@ -115,9 +121,9 @@ remain strings; nonempty IDs, positive non-bool fence/epoch):
 
 The command placeholder is illustrative only. The complete, executable JSON is
 `tests/editing_conformance/fixtures/settled_proposal_move.json` in
-`/home/user/work/wt/agt-m2-settled-proposal-contract`. It embeds the unchanged
-captured command from `recipe_m1_move.json` with its rational-fps timing and
-unknown/null authoring state. Golden proposal digest:
+`/home/user/work/wt/agt-m2-proposal-forward-goldens`. Its separate authoritative
+`settled_proposal_move.artifact.json` retains the unchanged captured command from
+`recipe_m1_move.json` with its rational-fps timing and unknown/null authoring state. Golden proposal digest:
 `sha256:a4939d8873bd3bdc4f8eb79fc973267b0b1e37bb468d89f9ea9ca3d635de0a1b`.
 This is a move golden, **not assembled media insertion/replacement evidence**;
 those actual commands await bundle 2 and the parent-owner work above.
@@ -131,8 +137,12 @@ recapture or default insertion before hashing. Reject duplicate/non-string keys,
 nonfinite numbers and unpaired surrogates at ingress; preserve Unicode scalars
 without NFC. This is the existing Python JSON profile, **not RFC 8785**: `1` and
 `1.0`, `-0.0` and `0` have different digest bytes. The tests pin a finite-float and
-Unicode vector. App must preserve/forward this exact proposal representation;
-plain `JSON.stringify` is not an implementation of this profile. Future App
+Unicode vector. Runtime recomputes this hash from the authoritative artifact,
+never from caller-reserialized commands. App forwards ordinary commands/rationale
+and the original pin; it need not reproduce Python's numeric spelling. Compare
+the entire suffix and rationale using existing `_command_state.equal`: finite
+numbers by value, booleans distinct, object keys/presence/null and array order
+preserved. No fields are stripped and no hash scheme changes. Future App
 qualification must include fractional/exponent/integral-float capture values.
 The raw CAS artifact digest is separate: whitespace/key layout can change that
 raw digest without changing the canonical proposal digest.
@@ -143,28 +153,33 @@ Therefore propose the minimal ordinary registered command `producer.guard` v1:
 ```text
 request.commands = [
   {schema_version:1, op:"producer.guard", version:"1", select:null,
-   args:{pin:<ProducerAttemptPin>, proposal:<exact settled object>}},
+   args:{pin:<ProducerAttemptPin>}},
   ...proposal.commands
 ]
 pin = {...proposal.producer, admitted_target:proposal.admitted_target,
        proposal_digest:proposal.proposal_digest}
 ```
 
-The future registry entry has closed args `{pin,proposal}` and empty intention
+The future registry entry has closed args `{pin}` ONLY and empty intention
 policy. No rationale/string binding/unknown intent encodes authority. It is the
 first and only guard in the batch; nested guards, inverse, restore and extra
 sibling edits refuse. `proposal.commands` contains ordinary registered edits;
 unknown operations fail closed under normal registry validation. Guard envelope
 validation alone is not evidence that this operation is installed.
 
-Provider validates the WHOLE original request before execution: recomputed hash,
-exact pin, `request.commands[1:] == proposal.commands` under the same canonical
-profile, request rationale == proposal rationale, and request project/timeline/
-original base pair == admitted_target. A requester cannot replace commands, alter
-capture claims/IDs/reasons/groups, reorder/add/remove edits, or recompute a forged
-digest and retain authority. Runtime independently compares the actual settled
-artifact, not just the requester's digest. Client source/actor attribution comes
-from the request's authenticated scope; rationale never grants it authority.
+The request-scoped Runtime port resolves the authoritative immutable settled
+artifact, checks raw byte custody and recomputes its exact original proposal_digest.
+It requires the derived original pin to equal `guard.args.pin`, compares the WHOLE
+request suffix `commands[1:]` and request rationale with artifact commands/rationale
+using existing `_command_state.equal`, and verifies request project/timeline/original
+base pair against admitted_target. It repeats all checks inside acceptance AFTER
+exact scoped accepted-ledger lookup and BEFORE writes. The provider checks the
+closed carrier and records the returned verified pin, not caller authority.
+No proposal copy, serialized JSON string or raw-byte forwarding API is carried in
+the guard. A requester cannot replace commands, alter capture claims/IDs/reasons/
+groups, reorder/add/remove edits, or rehash a forged artifact and retain the original
+pin. Client source/actor attribution comes from the authenticated request scope;
+rationale never grants it authority.
 
 Provider calls the agreed additive `producer_attempt(pin) -> {pin:<verified pin>}`.
 It passes this detached verified pin into pure execution as a private immutable
@@ -177,15 +192,16 @@ format or invented child writes. Inverse/redo operate accepted authored records,
 not a new consumption of the old proposal. Rebase retains the original admitted
 base and exact commands; only normal provider replay updates expected_head.
 
-The immutable admission must bind the same original head pair. Proposed semantic
-location in the EXISTING open task spec is
+The immutable admission must bind the same original head pair. The Agent manager's
+00:54Z ACK freezes the location in the EXISTING open task spec at
 `spec.runtime_dependencies.publication.admitted_target`, containing exactly the
 four target fields above, alongside existing `publication.render`. This is
 capability-owned spec data, not a Task/CommitRequest DTO addition. Legacy numeric
 `expected_version` cannot stand in for either revision or publication. Scope and
 any legacy timeline aliases must agree; missing base pair refuses. This exact
-placement is sent to Runtime for owner review; no builder/schema change is made
-here and no old task is upgraded by inference.
+placement agrees with `producer-commit-port.md`; no builder/schema change is made
+here and no old task is upgraded by inference. The current builder still lacks
+this pair, so missing/corrupt original admission refuses.
 
 ## Settled authority and durable handoff
 
@@ -203,7 +219,8 @@ project/task/attempt managed association, durable available/promoted lifecycle,
 raw digest and size, then reads verified CAS bytes and recomputes proposal_digest.
 No worker-local path, caller URL, bare hash or today's primary output is proof.
 The port captures this evidence privately; acceptance rechecks it and the exact
-request/recorder/capture pin bijection. Caller-supplied recorder data alone cannot
+request/recorder/capture pin bijection, artifact byte custody, original digest and
+whole suffix/rationale value equality. Caller-supplied recorder data alone cannot
 authorize a producer edit. Assembly's ordered child/selection/reserved-ID checks
 remain additional requirements; the move golden does not exercise them.
 
@@ -211,7 +228,7 @@ Inside `TimelineCommitStore.accept`, AFTER current user authorization and exact
 accepted-ledger lookup, BEFORE any write, Runtime must require:
 
 * task's CURRENT attempt equals pin; task completed (`succeeded` publicly),
-  attempt settled=1, and neither cancelled nor superseded;
+  attempt settled=1; pre-settlement cancellation and supersession refuse;
 * exact persisted executor/fence/epoch, admitted target and settled digest match;
   no RUNNING/unsettled eligibility, current live lease or lease pump requirement;
 * unconsumed proposal. Reuse the existing publication checkpoint keyed by
@@ -219,21 +236,17 @@ accepted-ledger lookup, BEFORE any write, Runtime must require:
   consuming that digest again), in the SAME transaction as revision/history and
   receipt. Rollback/preview do not consume. Undo does not reset consumption.
 
-Cancel/retry and acceptance serialize in that same transaction/mutex: invalidation
-first refuses atomically; acceptance first preserves the edit. Exact accepted
-replay bypasses fresh producer checks after cancellation, lease expiry, head
-advance or restart, subject to the requester's current ordinary authority. No
-producer checks in the replay authorization callback or port construction.
-Compare completed epoch with its persisted attempt identity; requiring current
-boot/live executor would recreate the removed lease-state assumption. Runtime
-manager confirmation for an unconsumed proposal across boot remains requested.
-
-**Concrete implementation gap, not a delivery blocker:** Runtime
-`store.cancel_task` currently returns unchanged for completed tasks. A future
-implementation must make post-settlement/preaccept withdrawal durable through
-existing checkpoint/lifecycle machinery so the ratified cancelled refusal is
-real. Runtime owns that decision and proof. No new endpoint/table/journal is
-proposed by this worker, and the policy is not relaxed to fit today's no-op.
+Cancellation/supersession and acceptance serialize in the same transaction/mutex:
+pre-settlement invalidation first refuses atomically; acceptance first preserves
+the edit. Cancelling an already completed task remains main's NO-OP and does not
+revoke its proposal. A requester declines by keeping/discarding unsent outbox intent
+without committing it; no server revocation endpoint, journal or status.
+Exact accepted replay bypasses fresh producer checks after cancellation, lease
+expiry, head advance or restart, subject to current ordinary user authority. No
+producer checks in replay authorization or port construction. Compare completed
+epoch with its persisted epoch-matched task+attempt, not current boot/live executor.
+An unconsumed completed proposal survives restart. Missing/corrupt original admitted
+spec or output fails closed; no live-lease or new retention requirement.
 
 Reuse `timeline_render_publications`: discriminator in prepared_json distinguishes
 the new command handoff from legacy rows; accepted receipt + revision/publication/
@@ -280,16 +293,19 @@ No credential lending, extra write scopes, new coordinator or live proposal API.
 3. Runtime existing port/acceptance suites: real settled artifact success; running,
    unsettled, failed, cancelled, superseded/current-attempt-NULL refusal; wrong
    executor/fence/epoch/target, missing/ambiguous/foreign artifact, raw/CAS/canonical
-   digest mismatch and missing/extra/forged authority record refusal. Race cancel
-   after capture/inside acceptance and supersede after capture: zero partial
-   revision/history/receipt/checkpoint/task. Test both serialization orders.
+   digest mismatch and missing/extra/forged authority record refusal. Completed
+   cancellation is a NO-OP; pre-settlement cancellation and supersession refuse.
+   Race supersession after capture/inside acceptance: zero partial revision/
+   history/receipt/checkpoint/task. Test both serialization orders. Real Node
+   JSON.parse/stringify of ordinary 1.0 MUST accept; 1.5, boolean substitution,
+   reordered commands/claims, changed IDs/rationale and artifact tampering refuse.
 4. One-shot: two different commit keys/actors race for the same proposal, only one
    accepts; another commit after undo still refuses. Exact accepted commit retry
    returns original result after cancel/lease expiry/boot/head C without producer
    reads, while changed payload at the same key refuses. Failure before/after
    checkpoint persistence rolls back consumption WITH the receipt. Preview never
-   consumes; unconsumed completed epoch across boot follows the owner-reviewed
-   persisted-identity rule.
+   consumes; an unconsumed completed proposal survives boot through its exact
+   persisted task/attempt epoch. Declining unsent intent does not revoke it.
 5. Paired real worker/requester lane with renderer stopped: worker retains denied
    commit/admission write scopes, requester commits under its own attribution,
    normal settled output is the delivery seam, zero legacy calls, reload/show/undo.
@@ -322,7 +338,7 @@ then `wait-test <returned-result-dir>`; extend these real suites with the cases
 above rather than add an isolated fake acceptance harness.
 
 
-Settled-contract worker verification (2026-10-20; current worktree, no installs):
+Historical settled-contract worker verification (2026-10-20, before this freeze):
 
 ```sh
 PYTHONPATH=/home/user/work/wt/agt-m2-settled-proposal-contract PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_settled_proposal_contract.py tests/editing_conformance/test_recipe_m1_commands.py
@@ -331,7 +347,9 @@ PYTHONPATH=/home/user/work/wt/agt-m2-settled-proposal-contract PYTHONDONTWRITEBY
 **86 passed in 3.22s** (30 new proposal/carrier/hash cases + 56 existing recipe
 cases). The first run exposed a test's wrong schema root (EditCommand instead of
 CommandBatch); corrected to the existing CommandBatch definition, no schema or
-product change. Digest mutations demonstrate binding, not Runtime refusal.
+product change. That predecessor's full-copy carrier and withdrawal statements
+are superseded by this freeze; its positive command/hash evidence is retained.
+Digest mutations demonstrate binding, not Runtime refusal.
 The envelope/recorder case proves the existing closed carrier and authority
 output shape only; the proposed guard is not registered or executed.
 Re-ran the prior exact 83-case command above with only PYTHONPATH changed to this
@@ -339,3 +357,41 @@ worktree: **83 passed in 8.17s**. Existing source tests were not rewritten.
 Touched test Ruff and `git diff --check` passed. Full/make check, socket/browser,
 real-credential acceptance, cancellation/one-shot races and render admission were
 not run. Product implementation and all M2 merges remain held for PLAN M1.
+
+
+PIN-only forwarding freeze verification (2026-10-20, no installs):
+
+`settled_proposal_move.json` now carries `{pin}` only, with its proposal stored as
+separate authoritative fixture bytes. The original full move proposal digest above
+and all prior positive capture/metadata/hash assertions remain intact.
+`settled_proposal_numeric.artifact.json` adds two ordinary captured moves: first
+`on:1.0`, then the original target at 4. The second command retains its actual
+post-first-move capture claims; two commands expose reordering. Its exact original
+proposal digest is
+`sha256:a2669f27bcf2cabb6705215a1d694e08efbfb051303ce5cc2c847463865d4052`.
+Both artifact files have fixed raw size/SHA descriptors in the fixture. Neither
+reference digest is derived from the caller's round trip during verification.
+
+Installed Node `v22.22.0` actually JSON.parse/stringifies the numeric artifact into
+ordinary commands/rationale plus a PIN-only guard. Its `1.0 -> 1` suffix passes the
+bounded helper's original artifact hash + `_command_state.equal` comparison and
+executes/inverts through the existing command engine with identical records.
+The helper refuses `1.5`, `true` for `1`, changed capture claims/IDs/rationale,
+order/addition/removal/presence changes, pin/target/digest mutation, proposal copies
+or strings, and tampered artifact bytes. Tampering also refuses if a hypothetical
+descriptor is rebound, both with the stale digest and with a new artifact digest
+that cannot equal the original pin. This is a value/custody spike, not an installed
+Runtime guard, real CAS association, request-scoped port or admission simulation.
+
+```sh
+PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_settled_proposal_contract.py tests/editing_conformance/test_recipe_m1_commands.py
+```
+
+From `/home/user/work/wt/agt-m2-proposal-forward-goldens`: **121 passed in 3.54s**
+(the original 86 plus 35 forwarding cases). The exact 83-case render/orchestration/
+session command recorded above, with PYTHONPATH set to this worktree: **83 passed
+in 8.65s**. Scoped Ruff and `git diff --check` passed. No behavior test was removed,
+weakened, skipped or marked xfail. No full suite, install, socket/browser lane,
+actual Runtime producer acceptance/lifecycle race, historical admission or builder
+qualification. Product implementation, all M2 merges and D13 cutover remain held
+pending PLAN M1.

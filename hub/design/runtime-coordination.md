@@ -499,3 +499,92 @@ Runtime custody progress: concrete `RequestCommitPort.document_object(pin, objec
 
 ## Agent custody source alignment / implementation status
 agt-m2-pack-custody-recover confirms exact reconciled contract: optional closed snapshot_object/object_id=digest/positive non-bool size/application-json; path-sorted compact ensure_ascii=True original resource bytes and original saved receipt; unchanged ASCII-escaped closure hash; internal synchronous document_object(pin,object_id) closed descriptor+canonical bytes_base64; previously captured exact Document authorization, managed project association and capture/accept rechecks. No alternate seam. Agent admission and pure decoder implemented in this worktree; Runtime port implementation appearing in rt-m2-pack-custody-resume observed read-only. Unit baseline47PASS; expanded cases in progress, no real retained-PARAM claim or xfail flip. Evidence detail: actual canonical pack.json resource path grammar is ASCII-only, so requested non-ASCII golden is serializer/closure compatibility plus normal admission refusal, not a claimed accepted Unicode pack. No schema broadening.
+
+
+## Agent foundation recovery — agt-m2-foundation-recover, 2026-10-20
+
+Surviving agt-m2-foundation-compose source was preserved and transferred exactly
+onto frozen Bundle1 base 3bf9e536; old worktree/ref untouched. Reviewed native
+foundation composition is in /home/user/work/wt/agt-m2-foundation-recover, pending
+harness commit/manager review. Canonical edit-command.schema.json SHA256:
+394e195332ad47fc1a355237b1020634a2adc088f4bb309f7bcb53fc06719d4e.
+Registered native ops: clip.move, clip.delete, clip.add, clip.set-params,
+track.create, track.set; inverse/restore remain provider-managed commands.
+Schema is exactly 8fe7a42f plus the four reviewed db5fc8a6 root-reference patterns.
+No generated Runtime artifacts/pins changed; Bundle1 3bf9e536 + 6be9706 remains frozen.
+
+Current direct evidence: 1029 passed / 4 existing skips / 14 integration deselections /
+5 strict xfails in 112.98s for bounded conformance/provider/sync/native-CLI tests;
+4 actual direct Runtime service tests passed on 9f9b25c0 in 9.20s. Original three
+selected-schema strict xfails remain byte-identical to 32332d70: PARAMS NOT READY.
+Two additional strict xfails preserve newly exposed generic root composition
+requirements: inverse of created-root child selection loses reconstructed shot
+source-free identity (KeyError new-shot); inverse of created-root then child write
+fails root/occurrence alias coalescing (inverse_conflict). Those custom fixture
+recipes need follow-up before root-based recipe release, not alternate schema/ports.
+Ordinary M1/parent-label capture+records+after_bundle parity against frozen base
+is exact: 87776 bytes, sha256 b7f84a929716c9fc479fff1ea99e26daeeeb49b72ddc7594562b929f0feb3ff8.
+
+Socket qualification was re-requested ONCE after edits, replacing the interrupted
+run: agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580.
+Final report/result goes to workers/agt-m2-foundation-recover/notes/report.md.
+Runtime manager may use the canonical source above for NORMAL generation on a
+new candidate after review; this worker does not freeze a new bundle or move pins.
+Pack custody remains exactly the manager-ACKed snapshot_object/portable bytes/
+document_object seam in pack-snapshot-custody.md; product ownership stays with
+the pack custody workers. Completed-cancel and PIN-ONLY numeric forwarding
+decisions read and respected; no producer or host-helper changes in this task.
+M2 integration remains HELD until PLAN records M1; host-helper bounded startup
+cancellation/safe child ownership is still mandatory before Viewing handoff.
+
+## Agent popup recovery — asset primitive requires normal schema generation
+
+`agt-m2-popup-media-recover` inspected predecessor read-only: status/diff/untracked
+all empty; both HEADs are 2f77310e. No surviving files required transfer.
+Native occurrence ADD/SWAP and a scoped asset birth primitive are staged only in
+`/home/user/work/wt/agt-m2-popup-media-recover`; frozen Bundle1 refs are untouched.
+The immutable five-field selected_media ABI is reused without a new port.
+Real Runtime9f9b25c reaches the normal PreparedCommit boundary, which refuses
+`command.authorship['occurrence:occ-a/asset:variant-…::']` because its old
+TargetKey/ScopedId patterns admit only clip|track. No validator/schema override
+was made. Exact positive acceptance/restart/undo proof is HELD until normal
+Runtime generation consumes the composed Agent schema. Pure source schema:
+`astrid/core/timeline/schema/edit-command.schema.json`; operation exports
+`occurrence.add-media@1`, `occurrence.swap-media@1`, with generic existing-record
+asset creation (kind=asset, owner=occurrence:ID, ref=owner/asset:ALIAS).
+Capture signatures and portable golden will be recorded in
+`design/m2-popup-native-contract.md`; manager should compose this source with
+foundation before requesting the normal official root artifact generation.
+Direct real selection authority/fingerprint/stale/foreign checks: 28 passed,
+20 deselected in 4.33s. Full acceptance is not claimed. Final source hash and
+complete targeted results will appear in the worker report; all M2 merges held
+until PLAN M1. Pack custody stays on the agreed snapshot_object/document_object
+seam with Runtime as product owner; no alternate port was added here.
+
+Foundation recovery final central result: the SAME result ID above completed PASS, 52 passed / 1 existing strict xfail in 112.69s; exit0/115s, tested Agent tree1899c4e20dda503e07487bfba81d0a815078d20e against exact Runtime6be9706. Final report: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/report.md. No additional run requested.
+
+## Agent custody recovery bounded stage ready
+agt-m2-pack-custody-recover admission/parser source ready on base8b0946e6 (harness commit pending). Exact entrypoint `astrid.core.element.project_packs.admitted_element_snapshot_descriptor(realm,project,reference,verified,snapshot)` consumes already-verified closed document_object result; caller still must capture the exact config_source and scoped object through Runtime. Existing admission now uploads canonical portable bytes via media.import_bytes BEFORE Document CAS, validates returned actual descriptor metadata, retains receipt/upload identity across retry, backfills only matching legacy closure, reuses existing descriptor/no-op including CAS receipt recovery after cache loss. Final targeted164PASS/7unchanged strict xfail47.99s; scoped Ruff backlog98->96/no new findings; diff check clean. No socket/full/central/install/generated pin or frozen Bundle1 change. Report: workers/agt-m2-pack-custody-recover/notes/report.md. Native save capture/selected PARAM/replay/inverse/compatibility/official artifact coupling remains a separate paired step; three strict schema cases NOT flipped. Actual canonical admission rejects non-ASCII resource paths, so Unicode golden covers closure/serializer compatibility plus existing admission refusal. Same selected identity +different closure refuses (legacy cannot be silently rebound); multi-element update policy needs manager attention if unchanged identities span a changed closure. No alternate custody scheme introduced.
+
+## Runtime custody implementation final — rt-m2-pack-custody-resume
+Branch-only implementation complete on base fd013d2; harness commit pending. Exact branch/read method above remains valid. Final direct pack/commit_inputs/port/validation/compact/contract lane: **177 passed, 7 deselected (43.67s)**. Central `occupancy-integration --files "tests/test_timeline_pack_inputs.py tests/test_timeline_commit_input_integration.py"`: **17 passed, 72 deselected (5.39s)**, run `rt-m2-pack-custody-resume-occupancy-integration-1020005257-14370`, source tree `07aee4aa0d2fe6b27935415150bfba7e31a93006`. Diff check clean; no full run. Portable Runtime fixture proves retained V1 bytes after V2/current-Document removal/restart/offline compaction, scoped association/metadata/hash/byte integrity and atomic races. Existing actual Agent/Runtime admission/input controls pass against /home/user/work/agent. This is NOT a portable native Agent admission/PARAM/replay/inverse qualification; params/three Agent strict xfails remain held. No schema/generator/official artifact change. Next owner must pair Agent portable source with this Runtime branch and regenerate the agreed typed provider declaration/pin in the separate params release. Exact commands/evidence/limits and both commit messages: `workers/rt-m2-pack-custody-resume/{report.md,notes/report.md,commit-msg,commit-msg.txt}`. M2 merges remain held on PLAN M1 record. Stopping work now that bounded evidence exists.
+
+## Agent occurrence-retrack recovery — agt-m2-retrack-recover
+Recovered predecessor source exactly from read-only worktree; implementation is
+`/home/user/work/wt/agt-m2-retrack-recover` (base e4338c48), not integration.
+App capture/golden handoff: design/m2-occurrence-move-contract.md and
+m2-occurrence-move-golden.json. Actual Runtime9f9b25c service/CAS acceptance passes
+both V2@1 and create-V3@3 gestures, accepted reload after Runtime reopen, exact
+retry without semantic execution, whole-gesture inverse/redo, and refusal of
+ordinary retired child-lane ID reuse. No HTTP/browser or official artifact freeze
+claimed. No Runtime product/pin/frozen Bundle1 changes by this worker.
+Strict Agent xfail names the remaining canonical-A requirement: main's repeated-
+source materialization does not yet record exact persistent shot/item creates.
+Successful geometry/Runtime persistence is not reservation qualification for those
+roots. Compose the shared root/item creation slice and its Runtime admission
+proof before integrating repeated-source retrack. Current local command-schema
+SHA256 is 28f91af8d1134725de3695838b238ac00bc30b911ac88ae4d46eb48f7579f46e;
+this is the recovered occurrence addition, not the composed foundation hash.
+Manager owns normal root/artifact generation after composition; M2 merges still
+wait PLAN's M1 record. Portable pack custody stays on the already ACKed
+snapshot_object/portable bytes/document_object seam and its separate Runtime owner.
