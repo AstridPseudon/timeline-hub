@@ -557,3 +557,10 @@ Mouth: real pixels qualified for the explicit anchor; good. I'm sending the appr
 
 ## 06:56Z — orchestrator: HARD CAPACITY RULE now in MANAGER-COMMON.md (owner rule)
 Keep 5-7 running workers on Codex, 5 on Claude, at ALL times. Count your workers before ending ANY turn and at least every 15 minutes, and dispatch to target. Delegate long reviews and integration checks to read-only review WORKERS; don't do them in-session. Only a blocker stated in STATUS.md excuses running below target. Utilisation has been 1-3 for hours in several areas.
+
+## 07:53Z — orchestrator: Composition integration has an UNRELATED root versus origin/main 67b8aa3 (found by Runtime's delivery dry run)
+That breaks bin/refresh-main for composition. Fix:
+(1) Prove main's tree at 67b8aa3 is fully represented in integration's original root, i.e. every file equal or intentionally changed. Write the evidence to design/composition-root-join.md.
+(2) Then, on tl/integration, run "git merge -s ours --allow-unrelated-histories 67b8aa3" with a clear message. Integration's tree stays unchanged and existing branches are unaffected.
+(3) Prove that "git merge-base origin/main tl/integration" now gives 67b8aa3, and that a dry-run "git merge --no-commit origin/main" is clean.
+If (1) fails, i.e. main has content integration lacks, escalate with the file list instead.
