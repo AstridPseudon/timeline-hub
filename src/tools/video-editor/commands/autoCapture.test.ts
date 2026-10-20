@@ -4,9 +4,11 @@ import type { EditCommand, JSON, MediaSelection } from '@/integrations/runtime/t
 import { captureAutoBasis, executeAutoBirth, finishAutoCapture } from './autoCapture.ts';
 import { AuthoredState, copy, type AuthoredBundle } from './clipMovePrimitives.ts';
 
-// Exact Agent 80f5149631bb2b08c0569a2a53192e14442991e7 inputs. The twelve
+// Exact official Agent8130a401bf44a518d5a40ae274d398b8c560be55 inputs. The twelve
 // hashes compare COMPLETE native commands, records and after bundles, preserving
-// array order and binary64 values. No moving handoff or Runtime release is used.
+// array order and binary64 values. Consumed clips use Agent8130's seven field
+// reads: at, at_ms, track, hold, from, to and speed. No moving handoff or Runtime
+// release is used.
 const originals = [
   {
     "schema_version": 1,
@@ -47,6 +49,23 @@ const goldens = [
   {"name":"video-saved","approval":{"autoApprove":true,"owner":"occurrence:occ-a","ownership":"occurrence","clipId":"placed","mode":"completion","anchor":"gone","preferredTrack":null,"fallbackAt":22.25,"fallbackTrack":"overlay"},"media":{"asset":"reserved-new","generation_id":"generation-new","variant_id":"variant-new","object_id":"sha256:2222222222222222222222222222222222222222222222222222222222222222","catalog_digest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"verified":{"selection":{"asset":"reserved-new","generation_id":"generation-new","variant_id":"variant-new","object_id":"sha256:2222222222222222222222222222222222222222222222222222222222222222","catalog_digest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"media_type":"video/fixture","size":123,"duration_seconds":6},"capture":{"owner":"occurrence:occ-a","clip":"placed","kind":"video","media":{"asset":"reserved-new","generation_id":"generation-new","variant_id":"variant-new","object_id":"sha256:2222222222222222222222222222222222222222222222222222222222222222","catalog_digest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"anchor":{"id":"gone","state":"absent"},"resolution":"fallback-at","lane":"overlay","consumed":[],"fps":{"numerator":30000,"denominator":1001},"start_frame":667,"on":22.255566666666667,"seconds":5},"commands":"eae04a8b37ea8b7ac9903b6b3530b22e25cd47c8e4a5a2eec98066d44ea993ba","records":"1d7ecc6548e38b39bfe9097c3212b79a267824bd075309fbcb6b484cb03874e1","after":"02a47edf5ac0df6598891d610a29f30ca93944e0ef57dd9760e59e9f03be37e9"},
   {"name":"video-preferred","approval":{"autoApprove":true,"owner":"occurrence:occ-a","ownership":"occurrence","clipId":"placed","mode":"completion","anchor":"clip-a","preferredTrack":"overlay","fallbackAt":22.25,"fallbackTrack":"picture"},"media":{"asset":"reserved-new","generation_id":"generation-new","variant_id":"variant-new","object_id":"sha256:2222222222222222222222222222222222222222222222222222222222222222","catalog_digest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"verified":{"selection":{"asset":"reserved-new","generation_id":"generation-new","variant_id":"variant-new","object_id":"sha256:2222222222222222222222222222222222222222222222222222222222222222","catalog_digest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"media_type":"video/fixture","size":123,"duration_seconds":6},"capture":{"owner":"occurrence:occ-a","clip":"placed","kind":"video","media":{"asset":"reserved-new","generation_id":"generation-new","variant_id":"variant-new","object_id":"sha256:2222222222222222222222222222222222222222222222222222222222222222","catalog_digest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"anchor":{"id":"clip-a","state":"present"},"resolution":"anchor-after","lane":"overlay","consumed":["clip-a"],"fps":{"numerator":30000,"denominator":1001},"start_frame":330,"on":11.011,"seconds":5},"commands":"95debadf28251efbefe073b53f4d392897f812323ec1eab3630a942852cc63c7","records":"387aa27f42cd7c2388170fcf2a2c567c0529623199120e01094a966dcf5ed17d","after":"61233270ac1c988c8462976034024a9a62ece9076fe91ae5c28c27851bc6dd55"},
 ];
+// Agent8130's official native source records the seven consumed clip fields above.
+// The old values below came from the private whole-row port; only command/record
+// hashes change, while capture values, after bundles, saved-fallback cases and all
+// guard assertions remain the same. Keep this explicit old/new table so a hash
+// change cannot be accepted as self-derived evidence.
+const official8130ReadGoldenUpdates: Record<string, { old: [string, string]; next: [string, string] }> = {
+  'completion-image-anchor': { old: ['69f80c68b553835f2a689db01ef7c22759960e0585b178100e1ed1f1a0da7341', 'e81658b6c48156030b1467ffbd21393d589d1d99c182d99d86d9bde9f50bd0d9'], next: ['7ba73dea152be732c2fb18e076b641e26f09e656880145361a416792bddf86ea', 'f03fe1cf3fc0bed49b404ac21d97073c5336eb0b2996d425c3d69117473e7514'] },
+  'completion-image-absent': { old: ['ff667b82067a105b5dc582acf9064e2fb9c12bc8352e46868e2a167e8f4c16e5', '0a238b23958bd915fb251caea76df74edb311bda231af33b15b0584b327f3bc3'], next: ['3c822ede22af1b84ecfa286ff976c82e70fbd3ad434c322be8857b5625dd498d', '57e78f7b915d5b14cfd2047b46ba11fc95292930761b3fcc36812d004832c5dc'] },
+  'completion-video-anchor': { old: ['7ccc2af0ae48c71e8a117d1936de9cc235fbeec25ca0a5eaac03250c6484fcec', '23274d82f8b10e56e700d6d78804b993af0abb4334154aca86acb57b4a009907'], next: ['7fbc0e1f1366224e278aaf2d72f6f77aa4d6003b6431f7ce2fc8823e1820975e', '1c68b35e000c1f9c736d8f927933f4815be252d12c3d4cfdbf9f6b41a295bd41'] },
+  'completion-video-absent': { old: ['4698ab6b8289658e424b81edfbb3311822284929d08cb999704c3288a5abfd08', '544275cc52b9e866ff58f5e3b05d723020505fc31711fa3561b2ad1a58644544'], next: ['f7f44f57a10f5ee159e17743160cfe4b31e966b5f8be2032a212766052cc5e38', 'eecab61137f891c6645a0b994f3933253564ae70446605af8136939f92605a07'] },
+  'shared-image-append': { old: ['22098f30c5cb572c968e624c52499560f86476a13062dccf7ff0a8ca8bc8e91c', 'b8cefded1691748cc7a9796439aeaccb7d61efa48e96b942dd5c0f1fd55909eb'], next: ['f54ee12449d3e7fd57d12b886f6f82cdb1e83f869220df4dc6e5debd17317d19', '758438290e690ce57f67ef0fb94e71a7d63d6573002b1c18643f27e52117ea3b'] },
+  'shared-video-append': { old: ['28d1c2e4060c407e57fb6adecb211e79ee3be82df66cc0996bca6a2356954fed', '4cea2a9c2dc95f4b440d84f4cdbb76b5b7c2dab4c229d525e7aa3fab1da5e63e'], next: ['598480c25ee480f54d88b67acec79b5564ef562bc75783f4c48703ea7ff6e60b', '8fcdda1a1298516757bb77d25ac259d6ea61ee074e54a6610a8a78c025f07e12'] },
+  'shared-image-shift': { old: ['65d0df81240dc0e9dc5f2316c49ee890dc9446c7f1b44dc75e90d6a98d7d8fdc', '968c0bc669d7843b4b90345858669491c24fae3a9ec0d47c2b3ffafb2433b7f6'], next: ['462991cac0aea08ab8cdddd4753123f35bd6c4792dc8449ea570c485e8866bf4', '1206415aafad642a7321013ab31a0a5decb37bc2383dcfcaa22b668e7b11f584'] },
+  'shared-video-overlay-anchor': { old: ['9e2bfb520835e69978adeff9d058db6e076b565db29c38908f8b69cebe1aed5c', '2d2eb1e3f428014cd3373f80bebee7c95c57c38949fa16f0454dcce45c8bfbbd'], next: ['ee25781f37c34b8f5052d7a58d32453fc9be7891a0c1f5dca7e1702dc08ba619', '7cb402ac68001d6462a097180829c32a0378852d3ec09de5eaed8afbb3093629'] },
+  'image-preferred': { old: ['b9b1b18ae726695410d59ebe61c171b4c80947d46e6e4294f4e0f6535101d6a1', 'a5f2ae109417dfe2e8b24585ef0358519825d3fa31d250c85b3fd74a7444a8b4'], next: ['0b844d1b94cff82215d09ad8ca93bca0db7f5cfcef5853214c7db57aa30ad02f', '75b0aa00cb78d2f48bb6ea22c71e6529f0c13cffa65f6030a6e4a47494d5beb9'] },
+  'video-preferred': { old: ['95debadf28251efbefe073b53f4d392897f812323ec1eab3630a942852cc63c7', '387aa27f42cd7c2388170fcf2a2c567c0529623199120e01094a966dcf5ed17d'], next: ['34cf0c36ab99377daa15d29b09637fc4c283322ca695d80e6c1374ced513db26', '01e2d5f20d9f6b5b0d8056da212f57c1fb358e17a385a22b0a0164b10fb4cd40'] },
+};
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';
   if (value !== null && typeof value === 'object') {
@@ -80,8 +99,10 @@ describe('inactive corrected native automatic capture', () => {
       const before = copy(bundle);
       const result = finishAutoCapture(basis, media, verified);
       expect(result.capture).toEqual(golden.capture);
-      expect(hash(result.commands)).toBe(golden.commands);
-      expect(hash(result.records)).toBe(golden.records);
+      const expected = official8130ReadGoldenUpdates[golden.name];
+      if (expected) expect([golden.commands, golden.records]).toEqual(expected.old);
+      expect(hash(result.commands)).toBe(expected?.next[0] ?? golden.commands);
+      expect(hash(result.records)).toBe(expected?.next[1] ?? golden.records);
       expect(hash(result.bundle)).toBe(golden.after);
       expect(bundle).toEqual(before);
       expect(Object.isFrozen(basis.bundle)).toBe(true);
