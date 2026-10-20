@@ -1,0 +1,123 @@
+{
+  "status": "FROZEN_OFFLINE_REPAIR_NOT_CAPTURE_APPROVED",
+  "worker": "vw-m3-main-cap-locked-theme-stage",
+  "operational_sha256": {
+    "controller.py": "13ae060c88e4191ac49688986d6b3711aef1bb9ca794ecac74dfc8c43c2529f6",
+    "render.mjs": "89fea7c313d754fef64f6c0ca54f2564ff408570cd59f6903a3ebfcde01a7071",
+    "resolve.mjs": "4bf946ba237fec6dbda323bb7a133eb07973f36c2c33679d76b3278c293b4c9f",
+    "theme-proof.json": "02bc75eb4f55b09461d98de808a12b8927f1848fa553b5606de333a082369cac",
+    "theme-source.git.tar": "796f0691882f78ae8627cd384f6a46561e73c007f3816bc3afb75d444496f3e2",
+    "COMMAND.txt": "545034ad9984d906283205bd1462ef1467709183016bd1008df05a3b168f4206"
+  },
+  "artifact_files": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-CAPTURE-GRANT.template.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-COMMAND.txt": {
+      "sha256": "545034ad9984d906283205bd1462ef1467709183016bd1008df05a3b168f4206",
+      "bytes": 3345
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-REPORT.md": {
+      "sha256": "7c10be54869f30c3820eeed2d0f879d00edd96be3391c1f04411c5db199ae12a",
+      "bytes": 9985
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-controller.py": {
+      "sha256": "13ae060c88e4191ac49688986d6b3711aef1bb9ca794ecac74dfc8c43c2529f6",
+      "bytes": 30137
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-dependencies-initial-diagnostic.json": {
+      "sha256": "2f13e2a01395ec7cdcb6746c7284bb2c0c444b377251472f5ed8f117869e029a",
+      "bytes": 195432
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-dependencies.json": {
+      "sha256": "8c9da769f1381ec25450f24a004b41489ac69f938b4cac57fb20fe5e5d2cd632",
+      "bytes": 195969
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-graph-pre.json": {
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "bytes": 2588385
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-guard-tests.log": {
+      "sha256": "63f7ccfefb74eee8ce5293e8c1e33f4a1d3b387dd9c23a28a7d9b8075499daa9",
+      "bytes": 1297
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-guard-tests.py": {
+      "sha256": "50aeb88428e27871790da7e3551eb2fae29030040a0fc1b0581305ff1eff484e",
+      "bytes": 13622
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-initial-blocker.json": {
+      "sha256": "a2555fe244dcb2a083e0b8c0c7fd12eb534ab0824b2fa6f33817d0a9015b403a",
+      "bytes": 115
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-offline-postflight.json": {
+      "sha256": "5db69dfdceb7bee2b8d3825b3624231a9f7a95c07ab0ba832bc284d13fb414d4",
+      "bytes": 16903
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-preflight-initial-diagnostic.log": {
+      "sha256": "7b6630080d1ec34c3e8778b70bc541bf70675a741c44c27ff6eb90a35b5817e2",
+      "bytes": 57
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-preflight.json": {
+      "sha256": "9e4cd4678dab0ce0f3f98f957fcbd8c3ac34ef69c5b748049a60981e807fe94f",
+      "bytes": 532065
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-preflight.log": {
+      "sha256": "30d97bd7f64edc6f330cb3e59fc4f194d47c595e313c59409c30b32dfcca0b7b",
+      "bytes": 159
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-preserved-before.json": {
+      "sha256": "96851d55a71ff8f7ef9f0af891fb3465726d7622f9fe6f295bbdb02eb21241e6",
+      "bytes": 13956
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-render.mjs": {
+      "sha256": "89fea7c313d754fef64f6c0ca54f2564ff408570cd59f6903a3ebfcde01a7071",
+      "bytes": 7416
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-resolution-calibrations.json": {
+      "sha256": "cfcf3d70a5c195b69a070b3cbb964ef0a8a0553bc83ab90bb6f9d9118893bd93",
+      "bytes": 5147
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-resolution-missing-theme.json": {
+      "sha256": "11fb74f50a4caea24a3552a8360f6dd5e24fc4fb7a6372f9beb9211cbccc8163",
+      "bytes": 187638
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-resolution-positive.json": {
+      "sha256": "8c9da769f1381ec25450f24a004b41489ac69f938b4cac57fb20fe5e5d2cd632",
+      "bytes": 195969
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-resolution-tests.log": {
+      "sha256": "5790a9e002d7221e6f3951bfd9689c362e6423305f194fb768b8141da39fe030",
+      "bytes": 810
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-resolution-tests.py": {
+      "sha256": "4fc6b44097080c6a4206f26ad9841a2331db83df879271f2694dafe0be744488",
+      "bytes": 5004
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-resolve.mjs": {
+      "sha256": "4bf946ba237fec6dbda323bb7a133eb07973f36c2c33679d76b3278c293b4c9f",
+      "bytes": 5997
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-test-commands.txt": {
+      "sha256": "25de98fcec04902e16aca9e036da17cd8e78a7ceccb446365848bf1270f58c6e",
+      "bytes": 2134
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-theme-proof.json": {
+      "sha256": "02bc75eb4f55b09461d98de808a12b8927f1848fa553b5606de333a082369cac",
+      "bytes": 5990
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-theme-source.git.tar": {
+      "sha256": "796f0691882f78ae8627cd384f6a46561e73c007f3816bc3afb75d444496f3e2",
+      "bytes": 40960
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-validation.json": {
+      "sha256": "827ea27646d60f80b03318bf412b5e5353bc7dfe3b2c4aa5dd4d01b5c11bf863",
+      "bytes": 1652
+    }
+  },
+  "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-REPORT.md",
+  "github_theme_archive_integrity_verified": false,
+  "grant_template_empty": true,
+  "new_grant_marker_stage_png_absent": true,
+  "old_63_files_unchanged": true
+}

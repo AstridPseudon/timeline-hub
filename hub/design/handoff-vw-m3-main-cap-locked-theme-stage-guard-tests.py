@@ -83,8 +83,10 @@ class Guards(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'overwrite existing package'):
             m.stage_theme(root, proof)
         (theme / 'src/effects/art-card/component.tsx').write_text('changed')
+        composition = root / 'remotion/node_modules/@banodoco/timeline-composition'
+        composition.mkdir()
         with self.assertRaisesRegex(RuntimeError, 'historical theme changed'):
-            m.verify_stage(self.private, {'source_files': {}})
+            m.verify_stage(self.private, {'source_files': {}, 'generated_package_members': {}})
 
     def test_disk_boundaries_and_quiet(self):
         for remaining in (0, m.HEADROOM + m.PNG_RAW, 2283658796):

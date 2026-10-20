@@ -200,7 +200,7 @@ THEME_REPO = Path('/home/user/work/composition')
 THEME_COMMIT = '1db8440aabf0769b01453831a06f3c609bbc90c9'
 THEME_OLD = '4974bdb471cf4dda0ce39d2cc24a1d62420a1305'
 THEME_ARCHIVE_SHA = '796f0691882f78ae8627cd384f6a46561e73c007f3816bc3afb75d444496f3e2'
-THEME_PROOF_SHA = 'b8008a958590077245c335c1e7b7a2eb6ad6806cdef7e99a52dc03e4a3598132'
+THEME_PROOF_SHA = '02bc75eb4f55b09461d98de808a12b8927f1848fa553b5606de333a082369cac'
 RESOLVER_SHA = '4bf946ba237fec6dbda323bb7a133eb07973f36c2c33679d76b3278c293b4c9f'
 
 
@@ -368,7 +368,7 @@ def run_process(command, cwd, env, log):
 
 
 def source_stage(stage, source):
-    disk(source['unpacked_bytes'] + HEADROOM + PNG_RAW + 16 * 1024**2)
+    disk(source['unpacked_bytes'] + theme_check()['unpacked_bytes'] + HEADROOM + PNG_RAW + 16 * 1024**2)
     real_parents(stage)
     require(stage.is_dir(), 'attempt-owned stage missing')
     root = stage / 'main'
@@ -420,6 +420,9 @@ def source_stage(stage, source):
 
 def verify_stage(stage, source, replayed=True):
     root = stage / 'main'
+    composition_root = root / 'remotion/node_modules/@banodoco/timeline-composition'
+    real_parents(composition_root)
+    require(inventory(composition_root) == source['generated_package_members'], 'staged MAIN6 membership/bytes changed')
     theme_root = root / 'remotion/node_modules/@banodoco/timeline-theme-2rp'
     if theme_root.exists():
         require(not theme_root.is_symlink(), 'theme package must be real')

@@ -2613,7 +2613,7 @@
     "local_git_archive_bytes": 40960,
     "github_archive_integrity_verified": false,
     "archive_proof_status": "not re-verified: archive URL 403; source verified by git tag tree",
-    "authority": "managers/viewing/INBOX.md: 2026-10-19 orchestrator theme source + consumer readiness; theme-refs accepted at 23:04Z (line 196)",
+    "authority": "managers/viewing/INBOX.md: 2026-10-19 orchestrator theme source + consumer readiness (line 150); 2026-10-19 21:50Z decisions, item 3 theme-refs accepted (line 196)",
     "archive_note": "This is a local git archive, NOT the GitHub lock archive. Its hash is not compared to or claimed equal to MAIN lock sha512.",
     "unpacked_bytes": 18914
   },
@@ -6954,7 +6954,7 @@
       "browser": "63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4"
     }
   },
-  "free_bytes": 13194993664,
+  "free_bytes": 13178150912,
   "reserve_bytes": 10737418240,
   "staging_headroom_bytes": 2283677710,
   "required_before_extraction_bytes": 13021095950,

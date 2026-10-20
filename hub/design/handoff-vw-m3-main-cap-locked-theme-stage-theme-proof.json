@@ -79,6 +79,6 @@
   "local_git_archive_bytes": 40960,
   "github_archive_integrity_verified": false,
   "archive_proof_status": "not re-verified: archive URL 403; source verified by git tag tree",
-  "authority": "managers/viewing/INBOX.md: 2026-10-19 orchestrator theme source + consumer readiness; theme-refs accepted at 23:04Z (line 196)",
+  "authority": "managers/viewing/INBOX.md: 2026-10-19 orchestrator theme source + consumer readiness (line 150); 2026-10-19 21:50Z decisions, item 3 theme-refs accepted (line 196)",
   "archive_note": "This is a local git archive, NOT the GitHub lock archive. Its hash is not compared to or claimed equal to MAIN lock sha512."
 }

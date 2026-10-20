@@ -1,6 +1,5 @@
 """Independent offline probes: no capture, service, source extraction, or renderer."""
 import contextlib
-import hashlib
 import importlib.util
 import io
 import json
@@ -54,6 +53,7 @@ if sys.argv[1] == 'postflight':
     source = m.source_check()
     graph, inventory = m.graph_check()
     assert source == before['source']
+    assert m.theme_check() == before['theme']
     assert graph == before['graph_before'] == before['graph_after']
     assert inventory == json.loads(Path(str(PREFIX) + 'graph-pre.json').read_text())
     m.evidence('graph-post.json', inventory)
@@ -120,7 +120,7 @@ with tempfile.TemporaryDirectory(prefix='offline-calibration-', dir=Path('/home/
     print('PASS: ungranted real main stops before lock/marker/stage/preflight/process')
 
     uncreated = private / 'NO-SOURCE-EXTRACTION'
-    with patch.object(m, 'disk', side_effect=RuntimeError('disk BLOCKED: synthetic')), patch.object(m.subprocess, 'Popen', side_effect=AssertionError('spawned')):
+    with patch.object(m, 'theme_check', return_value={'unpacked_bytes': 0}), patch.object(m, 'disk', side_effect=RuntimeError('disk BLOCKED: synthetic')), patch.object(m.subprocess, 'Popen', side_effect=AssertionError('spawned')):
         refused(lambda: m.source_stage(uncreated, {'unpacked_bytes': 100}), 'disk BLOCKED')
     assert not uncreated.exists()
     print('PASS: real source_stage resource guard stops before archive read/allocation/process')
@@ -128,7 +128,7 @@ with tempfile.TemporaryDirectory(prefix='offline-calibration-', dir=Path('/home/
     m.GRANT.write_text(expected)
     result = {'status': 'OFFLINE_MOCK_ONLY', 'blockers': [],
               'free_bytes': 100 * m.FLOOR, 'required_before_extraction_bytes': 0,
-              'source': {'unpacked_bytes': 0}}
+              'source': {'unpacked_bytes': 0}, 'theme': {'unpacked_bytes': 0}}
     stage = private / 'capture-stage'
     actual_rmtree = shutil.rmtree
 

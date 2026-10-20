@@ -42,7 +42,7 @@ const fileSystem = {
 };
 const aliases = Object.fromEntries(Object.entries(input.aliases).map(([key, value]) => [key, `${root}/${value}`]));
 const resolver = ResolverFactory.createResolver({
-  fileSystem, useSyncFileSystemCalls: true, extensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.cjs', '.json'],
+  fileSystem, useSyncFileSystemCalls: true, extensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.cjs', '.json', '.d.ts'],
   conditionNames: ['remotion', 'browser', 'import', 'default'], mainFields: ['browser', 'module', 'main'],
   alias: aliases, modules: [`${root}/remotion/node_modules`, graph], symlinks: true,
 });
@@ -55,20 +55,25 @@ while (pending.length) {
   if (visited.has(name)) continue;
   visited.add(name);
   const text = files.get(name);
-  if (!/\.(tsx?|m?js)$/.test(name)) continue;
+  if (!/\.(tsx?|jsx?|mjs|cjs)$/.test(name)) continue;
   const ast = ts.createSourceFile(name, text, ts.ScriptTarget.Latest, true);
   const collect = (node) => {
-    if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-      // Pure type imports have no bundling/runtime dependency.
-      if (!node.isTypeOnly && !node.importClause?.isTypeOnly) {
-        const specifier = node.moduleSpecifier.text;
+    let literal;
+    if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) literal = node.moduleSpecifier;
+    if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument)) literal = node.argument.literal;
+    if (ts.isCallExpression(node) && (node.expression.kind === ts.SyntaxKind.ImportKeyword
+      || ts.isIdentifier(node.expression) && node.expression.text === 'require')) {
+      literal = node.arguments[0];
+      if (!literal || !ts.isStringLiteralLike(literal)) throw new Error(`nonliteral dependency: ${name}`);
+    }
+    if (literal && ts.isStringLiteralLike(literal)) {
+        const specifier = literal.text;
         if (!specifier.startsWith('node:')) {
           const resolved = resolver.resolveSync({}, path.dirname(name), specifier.split('?')[0]);
           if (!resolved) throw new Error(`unresolved ${name}: ${specifier}`);
           edges.push({from: name.slice(root.length + 1), specifier, resolved});
           if (files.has(resolved)) pending.push(resolved);
         }
-      }
     }
     ts.forEachChild(node, collect);
   };

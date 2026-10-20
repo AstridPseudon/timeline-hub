@@ -92,22 +92,11 @@ historical reference only. Do not rebuild or repack 0.0.12 in a consumer.
 
 ## Current delivery boundary
 
-- The native decoder is the approved two-file App delta `4360c759`, ready for
-  owner port. The exact capture delta `1ba0800af` still awaits the App helper
-  closure `320784f82`. The actual native frame qualification remains **2 PASS,
-  2 FAIL**; no parity claim is made.
-- Scanner 1.0.7’s independent review passed **40 tests** (the 1.0.6 baseline
-  remains 36); its policy decision is owner-pending. The shippable scanner is
-  bounded inspection metadata, not owner data. No owner-film or macOS claim is
-  made.
-- The current scene-source unit has **201 PASS and 9 pre-existing XFAIL**; its
-  current-port integration remains in flight. The normal PCM actual-caller,
-  window, and layer join also remains in flight. Do not activate from a
-  callback shape, package presence, stale source, or readiness smoke alone.
-- Exact source proofs are required for every activation. The shared scene graph
-  has **106** added self-links and the App graph has **6** added links; both
-  repairs are held pending owner approval. Capture and environment
-  qualification using either graph remain held.
+- App owner merged test/config-only MAIN-refresh parity source at6ff21cac9, including reviewed701491b7. MAIN render/download/admission implementations win; never port obsolete320784f82 helper closure.82render tests,11offline files, targeted types/lint and4cases/config discovery passed. Actual native frame qualification remains **2 PASS,2 FAIL**, awaiting final safe paired source; no parity claim.
+- Exact scanner1.0.8 archive18116B/e87e8870 is approved by the independent gate and Agent's assigned policy reviewer (124shipped/84negative/102codec tests,130independent variants). Ready for delivery selection, no owner-data or macOS claim;1.0.7/1.0.6 remain rejected. See viewing-scanner108-delivery-selection.json.
+- Scene source carry de62 is owner-integrated atc456:229PASS/9oldxfail, privatepublic12compat79+125+7PASS; actual host certification/pixels remain unqualified. Root12/presenter and inactive PCM kernel are integrated. Original extent5d is integrated at86405964; actual normal caller b6 is owner-approved and current port remains pending. Real HTTP/WAV central22PASS does not qualify an encoder,MP4,Runtime admission or Player/export parity.
+- MAIN5/4/fade source and actual capture-attempt replay prove hold4. First central attempt1020113140-6461 failed before frames due a missing historical theme dependency; source/fullgraph/sixpeer postflight passed. Correct isolated dependency staging and independent gate are active; actual pixels/golden remain pending. Conditional App renderConfig proposal stays unapplied and requires corrected vector/extent delivery if retained after the golden.
+- Exact source proofs are required for activation. Shared scene graph106added self-links and App graph6added links await lead's local repair confirmation; neither polluted graph qualifies captures. The independent f816 SSR physical graph is clean and reserved for the original MAIN reference.
 
 The deletion ledger is manager-owned and is not edited here. Obsolete rejected
 theme proposals and superseded handoff diary entries are pruned rather than

@@ -1,0 +1,33 @@
+{
+  "passed": 7,
+  "checks": [
+    {
+      "test": "real private scopes, exact MAIN6 and historical theme members",
+      "pass": true
+    },
+    {
+      "test": "all four original registries and owned transitive imports resolve",
+      "pass": true
+    },
+    {
+      "test": "missing whole theme catches all four registry imports plus declaration together",
+      "pass": true
+    },
+    {
+      "test": "missing single original component refuses",
+      "pass": true
+    },
+    {
+      "test": "implementation-equal version 0.1.0 is still rejected against MAIN 0.1.1",
+      "pass": true
+    },
+    {
+      "test": "changed static checker refuses before subprocess",
+      "pass": true
+    },
+    {
+      "test": "temporary stage cleaned and complete shared graph unchanged",
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+FROZEN PROPOSAL ONLY. No suite registered, grant written, or request submitted by this worker.
+A new independent manager review and central grant are required; the previous failed attempt is preserved.
+
+Read-only offline preparation command (already passed):
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-controller.py preflight
+
+Proposed exact suite line, for manager-only registration after review:
+agent e2e-viewing-main6-locked-theme-image-cap-three-stills /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-controller.py capture
+
+Proposed exact manager grant path (ABSENT):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-CAPTURE-GRANT.txt
+Empty, deliberately non-authorizing template:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-CAPTURE-GRANT.template.txt
+
+Only after approval, the manager's grant must contain EXACTLY these three lines:
+agent e2e-viewing-main6-locked-theme-image-cap-three-stills /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-controller.py capture
+controller_sha256=13ae060c88e4191ac49688986d6b3711aef1bb9ca794ecac74dfc8c43c2529f6
+render_sha256=89fea7c313d754fef64f6c0ca54f2564ff408570cd59f6903a3ebfcde01a7071
+
+The controller independently pins the offline resolver SHA256:
+4bf946ba237fec6dbda323bb7a133eb07973f36c2c33679d76b3278c293b4c9f
+It also pins theme-proof.json and theme-source.git.tar; these are git-source proofs, not verified GitHub archive integrity.
+
+Manager-only central request, not executed here:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test vw-m3-main-cap-locked-theme-stage e2e-viewing-main6-locked-theme-image-cap-three-stills
+Then use wait-test on the returned result directory; never resubmit a running/failed attempt automatically.
+
+Attempt-owned paths, all NEW and absent:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-capture-stage
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-capture.lock
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-CAPTURE-STARTED
+
+Capture retains original raw replay, generator, Root and registries; real private theme0.1.1 plus MAIN6; original metadata must be 1920x1080/fps30/duration120, then only frames90,105,119.
+10 GiB floor; unchanged 2 GiB temporary budget; estimated required before extraction 13021095950 bytes.
+Preflight artifacts may be refreshed by the separately approved central attempt; this frozen preparation snapshot is identified by freeze.json. Never alter frozen scripts, the old grant/marker, or old failed output.
+This file does not select a golden or authorize capture.

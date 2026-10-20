@@ -10,6 +10,6 @@ test_renderer_hash_guards_without_renderer_execution (__main__.Guards.test_rende
 test_success_cleanup_and_no_automatic_retry (__main__.Guards.test_success_cleanup_and_no_automatic_retry) ... ok
 
 ----------------------------------------------------------------------
-Ran 10 tests in 1.444s
+Ran 10 tests in 1.412s
 
 OK
