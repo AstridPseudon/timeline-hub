@@ -1,0 +1,55 @@
+# PROPOSAL ONLY — intentionally unapplied by ap2-m2-selected-authority-helper.
+#
+# The existing basis already carries HistoryPage. Make that existing field complete
+# through the captured head; do not add an endpoint, DTO field, store, or cache.
+diff --git a/src/integrations/runtime/dataProvider.ts b/src/integrations/runtime/dataProvider.ts
+--- a/src/integrations/runtime/dataProvider.ts
++++ b/src/integrations/runtime/dataProvider.ts
+@@ -788,7 +788,28 @@
+   /** Public verified history pins plus scoped immutable reads, never projected rows. */
+   async loadTimelineCommandBasis(timelineId: string): Promise<TimelineCommandBasis> {
+-    const history = await this.listTimelineCommits(timelineId);
+-    const head = history.head;
++    const firstHistory = await this.listTimelineCommits(timelineId);
++    const pages = [firstHistory];
++    const seenCursors = new Set<string>();
++    while (pages.at(-1)!.next_cursor !== null) {
++      const cursor = pages.at(-1)!.next_cursor!;
++      if (seenCursors.has(cursor)) {
++        throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a cyclic timeline history cursor');
++      }
++      seenCursors.add(cursor);
++      const next = await this.listTimelineCommits(timelineId, cursor);
++      if (next.head.revision_id !== firstHistory.head.revision_id
++        || next.head.publication_id !== firstHistory.head.publication_id) {
++        throw new TimelineSchemaIncompatibleError('Workspace Runtime changed the captured timeline history head');
++      }
++      pages.push(next);
++    }
++    const history: HistoryPage = { ...firstHistory, items: pages.flatMap((page) => page.items), next_cursor: null };
++    const head = history.head;
+ 
+     if (!head?.revision_id || !head.publication_id) {
+       throw new TimelineSchemaIncompatibleError('Timeline has no verified authoring history head');
+@@
+     return {
+       head: { revisionId: head.revision_id, publicationId: head.publication_id }, canonicalDocument, history,
+       graph: runtimeGraphToContractFromCanonicalDocument(this.projectId, timelineId, canonicalDocument, head.publication_id),
+     };
+   }
+
+# Accessor agreement for the next App-owned wiring unit (also not applied here):
+#
+# * createTimelineCommandSession receives a synchronous
+#   resolveSelectedParamAuthority accessor over the complete accepted basis,
+#   captured head, and raw parent/occurrence clip. It stores the derived pin only
+#   in the existing in-memory capture lifetime; recovery/retry reuses the same
+#   captured command and does not serialize the pin separately.
+# * useTimelineCommandSession forwards that accessor from the existing provider
+#   capability. useTimelineSave and the authenticated param-read client remain
+#   the existing session path; no new operation or wire field is introduced.
+# * PropertiesPanel passes the accessor result into existing selected-param props
+#   only after the accessor succeeds. Refusal is surfaced through the existing
+#   draft-preserving command state. The commit body remains
+#   args.schema_source only; native recorder dependencies/bindings stay Agent-owned.
+# * The door, ops, and command-writer retirement remain App-owned follow-up work.
