@@ -77,7 +77,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
   const start = (agent?: LocalAgentId, model?: string) => { changeOpen(false); onNewChat(agent, model); };
   const availability = (id: LocalAgentId) => agentAvailability(agents?.find(choice => choice.id === id));
   const copyLine = async (id: LocalAgentId, line: string) => {
-    const text = line.replaceAll('`', '');
+    const text = line.replace(/`/g, '');
     try {
       await navigator.clipboard.writeText(text);
     } catch {

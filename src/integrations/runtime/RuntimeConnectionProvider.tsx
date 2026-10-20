@@ -53,6 +53,10 @@ const GATEWAY_REFUSAL_OUTCOMES: Readonly<Record<RuntimeRefusalCode, 'down' | 're
   runtime_identity_mismatch: 'restart',
 });
 
+function isRuntimeRefusalCode(value: string): value is RuntimeRefusalCode {
+  return Object.prototype.hasOwnProperty.call(GATEWAY_REFUSAL_OUTCOMES, value);
+}
+
 type RealmSummary = Pick<Realm, 'realm_id' | 'display_name'>;
 
 export type RuntimeProbeOutcome =
@@ -87,7 +91,9 @@ export async function probeRuntime(
     }
     const body = await readJson(response);
     if ((response.status === 502 || response.status === 503) && typeof body === 'object' && body !== null && 'error' in body) {
-      const kind = typeof body.error === 'string' ? GATEWAY_REFUSAL_OUTCOMES[body.error] : undefined;
+      const kind = typeof body.error === 'string' && isRuntimeRefusalCode(body.error)
+        ? GATEWAY_REFUSAL_OUTCOMES[body.error]
+        : undefined;
       if (kind) return { kind };
     }
     if (response.status !== 200) return { kind: 'silent' };

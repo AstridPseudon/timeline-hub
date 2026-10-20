@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   RuntimeConnectionGate,
   RuntimeConnectionProvider,
+  probeRuntime,
   useRuntimeConnection,
   type RuntimeConnectionValue,
 } from './RuntimeConnectionProvider.tsx';
@@ -259,6 +260,13 @@ describe('granted', () => {
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(status()).toBe('set_up'));
     expect(latest.state).toEqual({ status: 'set_up' });
+  });
+
+  it.each(['constructor', 'toString', 'prototype'] as const)('keeps the inherited-looking gateway key %s silent', async (error) => {
+    const gateway = fakeGateway();
+    gateway.gatewayDown(error);
+
+    await expect(probeRuntime(undefined, gateway.fetchImpl)).resolves.toEqual({ kind: 'silent' });
   });
 
   it('recovers by the interval, with no reload, and stops probing once connected', async () => {
