@@ -1632,13 +1632,15 @@ def _invoke_scene_only(
         with AstridClient.open_from_launcher(start_pack_host=False) as connected:
             return _invoke_scene_only(inputs, project=project, client=connected)
     request, context = _scene_only_request(inputs, project=project, client=client)
-    invoke_result = getattr(client, "invoke_result", None)
-    if not callable(invoke_result):
-        return _scene_only_unavailable(
-            context, reason="managed visualization invocation unavailable"
-        ), context
-    result = invoke_result(
+    # The executor is deliberately absent from public discovery.  Scene-only
+    # is an internal adapter of the managed visualization operation, so it
+    # must use the same private dispatch token as the canonical facade rather
+    # than trying to invoke the backend as a public capability.
+    from .invocation import _invoke_internal_result
+
+    result = _invoke_internal_result(
         "rendering.timeline_visualize", kind="executor", project=project,
+        client=client,
         inputs=request, wait=True, read_managed_outputs=True,
     )
     return _scene_only_spans(result, context, client=client), context
