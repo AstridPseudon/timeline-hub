@@ -1,0 +1,37 @@
+# FLAT proposed patch for the App-owned shared door seam.
+#
+# This is a handoff artifact, not an applied patch. No commitSession,
+# useTimelineCommandSession, useTimelineOps, or commitOutbox changes are
+# required: bootstrap runs before the normal command session and returns its
+# verified basis to that existing session.
+
+diff --git a/src/integrations/runtime/client.ts b/src/integrations/runtime/client.ts
+--- a/src/integrations/runtime/client.ts
++++ b/src/integrations/runtime/client.ts
+@@
+   async renameTimeline(
+     projectId: string,
+     timelineId: string,
+     name: string,
+   ): Promise<MutationResult<Record<string, unknown>>> {
+     return this.withMutation(() => this.client.renameTimeline(
+       projectId,
+       timelineId,
+       name,
+       idempotencyKey(),
+     ));
+   }
++
++  async createTimeline(
++    projectId: string,
++    timelineId: string,
++    idempotencyKeyValue: string,
++    name?: string,
++  ): Promise<MutationResult<Record<string, unknown>>> {
++    return this.withMutation(() => this.client.createTimeline(
++      projectId,
++      timelineId,
++      idempotencyKeyValue,
++      name,
++    ));
++  }
