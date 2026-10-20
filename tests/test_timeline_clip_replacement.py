@@ -229,6 +229,29 @@ def _native_commit(service, project, body, key, *, timeline="film"):
     )
 
 
+class _ParentOwnershipSchemaBoundary(ValidationError):
+    """Private marker for the current schema's parent-ownership refusal."""
+
+
+def _native_parent_ownership_commit(service, project, body, key, *, timeline="film"):
+    try:
+        return _native_commit(service, project, body, key, timeline=timeline)
+    except ValidationError as error:
+        cause = error.__cause__
+        if (
+            str(error) == "invalid CommitRequest: 'parent' is not one of ['shared', 'occurrence']"
+            and getattr(cause, "message", None) == "'parent' is not one of ['shared', 'occurrence']"
+            and tuple(getattr(cause, "absolute_path", ())) == (
+                "commands", 0, "intent", "ownership",
+            )
+            and getattr(cause, "validator", None) == "enum"
+            and getattr(cause, "validator_value", None) == ["shared", "occurrence"]
+            and getattr(cause, "instance", None) == "parent"
+        ):
+            raise _ParentOwnershipSchemaBoundary(str(error)) from error
+        raise
+
+
 def _native_rows(service):
     return tuple(service.store.conn.iterdump())
 
@@ -419,7 +442,7 @@ def test_native_parent_clip_swap_route_refuses_parent_ownership_on_current_schem
 
 @pytest.mark.xfail(
     strict=True,
-    raises=ValidationError,
+    raises=_ParentOwnershipSchemaBoundary,
     reason="needs schema 0.2.14 parent ownership; ledger D04",
 )
 @pytest.mark.integration
@@ -430,7 +453,9 @@ def test_native_parent_clip_swap_route_replaces_parent_media(native_editing):
         verified_media=[native_editing.old_verified, native_editing.new_verified],
     )
     body = _native_body(native_editing.service, native_editing.project, [command])
-    accepted = _native_commit(native_editing.service, native_editing.project, body, "native-parent-swap")
+    accepted = _native_parent_ownership_commit(
+        native_editing.service, native_editing.project, body, "native-parent-swap",
+    )
     assert accepted["data"]["status"] in {"accepted", "rebased"}
     assert accepted["data"]["canonical_document"]["parent_revision"]["payload"]["clips"][0]["asset"] == native_editing.new["asset"]
 
