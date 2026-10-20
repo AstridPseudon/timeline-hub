@@ -1,0 +1,198 @@
+
+ RUN  v4.1.5 /home/user/work/wt/vw-m3-renderconfig-contingent-review
+
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx (18 tests | 5 failed) 372ms
+     × delivers an accepted prebuilt render config while preserving the clamped editor config and rows 74ms
+     × uses the paired render config for local preview and recovery without changing editor data 16ms
+     × defers A to B config delivery and its label until B is delivered 16ms
+     × keeps B local ahead of a stale A acknowledgement and an observed current head C 11ms
+     × drops the paired render config with an invalidated fact, then rebuilds it with the next fact 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx > mounted command projection delivery > delivers an accepted prebuilt render config while preserving the clamped editor config and rows
+AssertionError: expected { app: { …(2) }, …(4) } to be { app: { …(2) }, …(4) } // Object.is equality
+
+- Expected
++ Received
+
+@@ -211,17 +211,16 @@
+          "origin": "immutable-public",
+          "resolution": undefined,
+          "src": "/api/astrid/v1/objects/object-alpha-image",
+          "type": "image/png",
+        },
+-       "at": 2,
++       "at": 0,
+        "clipType": "media",
+        "hold": 2,
+        "id": "occ-1:alpha-video",
+        "track": "video",
+        "volume": 1,
+-       "x": 0.25,
+      },
+      {
+        "app": {
+          "canonical": {
+            "clipRef": "occurrence:occ-1/clip:alpha-audio",
+
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx:170:27
+    168|     const h = mount(data);
+    169|
+    170|     expect(player.config).toBe(renderConfig);
+       |                           ^
+    171|     expect(data.resolvedConfig).toBe(editorConfig);
+    172|     expect(data.rows).toBe(editorRows);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx > mounted command projection delivery > uses the paired render config for local preview and recovery without changing editor data
+AssertionError: expected { app: { …(2) }, …(4) } to be { app: { …(2) }, …(4) } // Object.is equality
+
+- Expected
++ Received
+
+@@ -211,17 +211,16 @@
+          "origin": "immutable-public",
+          "resolution": undefined,
+          "src": "/api/astrid/v1/objects/object-alpha-image",
+          "type": "image/png",
+        },
+-       "at": 2.5,
++       "at": 0,
+        "clipType": "media",
+        "hold": 2,
+        "id": "occ-1:alpha-video",
+        "track": "video",
+        "volume": 1,
+-       "x": 0.25,
+      },
+      {
+        "app": {
+          "canonical": {
+            "clipRef": "occurrence:occ-1/clip:alpha-audio",
+
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx:185:27
+    183|     const h = mount(localData);
+    184|
+    185|     expect(player.config).toBe(localRenderConfig);
+       |                           ^
+    186|     label('Unsaved local · based on R');
+    187|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx > mounted command projection delivery > defers A to B config delivery and its label until B is delivered
+AssertionError: expected { app: { …(2) }, …(4) } to be { app: { …(2) }, …(4) } // Object.is equality
+
+- Expected
++ Received
+
+@@ -211,17 +211,16 @@
+          "origin": "immutable-public",
+          "resolution": undefined,
+          "src": "/api/astrid/v1/objects/object-alpha-image",
+          "type": "image/png",
+        },
+-       "at": 1,
++       "at": 0,
+        "clipType": "media",
+        "hold": 2,
+        "id": "occ-1:alpha-video",
+        "track": "video",
+        "volume": 1,
+-       "x": 0.25,
+      },
+      {
+        "app": {
+          "canonical": {
+            "clipRef": "occurrence:occ-1/clip:alpha-audio",
+
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx:206:27
+    204|     const h = mount(accepted(editorConfig, 'A', 'pub-A', renderA));
+    205|
+    206|     expect(player.config).toBe(renderA);
+       |                           ^
+    207|     h.update(accepted(editorConfig, 'B', 'pub-B', renderB), 'saved');
+    208|     expect(player.config).toBe(renderA);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx > mounted command projection delivery > keeps B local ahead of a stale A acknowledgement and an observed current head C
+AssertionError: expected { app: { …(2) }, …(4) } to be { app: { …(2) }, …(4) } // Object.is equality
+
+- Expected
++ Received
+
+@@ -211,17 +211,16 @@
+          "origin": "immutable-public",
+          "resolution": undefined,
+          "src": "/api/astrid/v1/objects/object-alpha-image",
+          "type": "image/png",
+        },
+-       "at": 2,
++       "at": 0,
+        "clipType": "media",
+        "hold": 2,
+        "id": "occ-1:alpha-video",
+        "track": "video",
+        "volume": 1,
+-       "x": 0.25,
+      },
+      {
+        "app": {
+          "canonical": {
+            "clipRef": "occurrence:occ-1/clip:alpha-audio",
+
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx:221:27
+    219|     const h = mount(local(editorConfig, 2, renderB));
+    220|
+    221|     expect(player.config).toBe(renderB);
+       |                           ^
+    222|     label('Unsaved local · based on R');
+    223|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx > mounted command projection delivery > drops the paired render config with an invalidated fact, then rebuilds it with the next fact
+AssertionError: expected { app: { …(2) }, …(4) } to be { app: { …(2) }, …(4) } // Object.is equality
+
+- Expected
++ Received
+
+@@ -211,17 +211,16 @@
+          "origin": "immutable-public",
+          "resolution": undefined,
+          "src": "/api/astrid/v1/objects/object-alpha-image",
+          "type": "image/png",
+        },
+-       "at": 2,
++       "at": 0,
+        "clipType": "media",
+        "hold": 2,
+        "id": "occ-1:alpha-video",
+        "track": "video",
+        "volume": 1,
+-       "x": 0.25,
+      },
+      {
+        "app": {
+          "canonical": {
+            "clipRef": "occurrence:occ-1/clip:alpha-audio",
+
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-renderconfig-contingent-review/donor.lifecycle.test.tsx:265:27
+    263|     expect(player.config).not.toBe(renderB);
+    264|     advance();
+    265|     expect(player.config).toBe(renderB);
+       |                           ^
+    266|     label('Unsaved local · based on R');
+    267|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 13 passed (18)
+   Start at  11:09:40
+   Duration  2.44s (transform 1.09s, setup 112ms, import 1.47s, tests 372ms, environment 378ms)
+

@@ -1,0 +1,848 @@
+"""Portable synthetic smokes for the owner-film delivery scanner."""
+
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+SCANNER_PATH = Path(__file__).resolve().parents[1] / "owner_film_cliplook_scan.py"
+if not SCANNER_PATH.is_file():
+    SCANNER_PATH = Path(__file__).resolve().with_name("owner_film_cliplook_scan.py")
+SPEC = importlib.util.spec_from_file_location("scanner", SCANNER_PATH)
+assert SPEC is not None and SPEC.loader is not None
+SCANNER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(SCANNER)
+
+
+def _clip(
+    clip_id: str,
+    at: float,
+    track: str,
+    *,
+    asset: str,
+    element: str | None = None,
+    **extra: Any,
+) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "id": clip_id,
+        "at": at,
+        "hold": 2,
+        "track": track,
+        "asset": asset,
+        "clipType": "media",
+        "opaqueSecret": "must-not-appear-in-output",
+        "credential": "SYNTHETIC_CREDENTIAL_MARKER",
+    }
+    if element is not None:
+        result["elementRef"] = {"id": element, "kind": "effect"}
+    result.update(extra)
+    return result
+
+
+def synthetic_document(*, dependency_manifest: bool = True) -> dict[str, Any]:
+    clips = [
+        _clip(
+            "element-a",
+            1,
+            "picture",
+            asset="video-a",
+            element="am-footage",
+            opacity=0.8,
+            cropLeft=0.1,
+            speed=1.5,
+            entrance={"type": "fade", "duration": 0.5},
+        ),
+        _clip(
+            "element-b",
+            2,
+            "picture",
+            asset="video-b",
+            element="am-footage",
+            transition={"id": "cross-fade", "durationFrames": 6},
+            exit={"type": "fade", "duration": 0.5},
+        ),
+        _clip(
+            "element-unknown",
+            3.5,
+            "picture",
+            asset="video-b",
+            element="not-registered",
+            opacity=0.5,
+        ),
+        _clip(
+            "audio-curved",
+            5,
+            "audio",
+            asset="audio-a",
+            clipType="audio",
+            params={"fadeIn": 0.5, "fadeInCurve": "equal-power"},
+        ),
+        _clip(
+            "audio-default-curve",
+            8,
+            "audio",
+            asset="audio-b",
+            clipType="audio",
+            params={"fadeOut": 0.25},
+        ),
+        _clip(
+            "audio-unknown",
+            11,
+            "audio-unresolved",
+            asset="missing-audio",
+            clipType="audio",
+            params={"fadeOut": 0.25, "fadeOutCurve": "not-a-registered-curve"},
+        ),
+        _clip(
+            "media-look",
+            14,
+            "picture",
+            asset="video-a",
+            entrance={"type": "fade", "duration": 0.5},
+        ),
+    ]
+    payload: dict[str, Any] = {
+        "config": {
+            "output": {"fps": {"numerator": 30000, "denominator": 1001}},
+            "tracks": [
+                {"id": "picture", "role": "picture"},
+                {"id": "audio", "role": "music"},
+                {"id": "audio-unresolved"},
+            ],
+        },
+        "clips": clips,
+        "registry": {
+            "assets": {
+                "video-a": {"type": "video"},
+                "video-b": {"type": "video"},
+                "audio-a": {"type": "audio"},
+                "audio-b": {"type": "audio"},
+            }
+        },
+        "occurrences": [
+            {
+                "occurrence_id": "occurrence-1",
+                "shot_id": "shot-1",
+                "shot_revision_id": "shot-revision-1",
+                "at_ms": 12000,
+                "duration_ms": 2000,
+            }
+        ],
+    }
+    document: dict[str, Any] = {
+        "schema_version": 1,
+        "project_id": "synthetic-project",
+        "timeline_id": "synthetic-timeline",
+        "parent_revision": {
+            "project_id": "synthetic-project",
+            "timeline_id": "synthetic-timeline",
+            "revision_id": "synthetic-revision",
+            "payload": payload,
+        },
+        "shot_revisions": [
+            {
+                "shot_id": "shot-1",
+                "revision_id": "shot-revision-1",
+                "internal_timeline_revision_id": "internal-revision-1",
+            }
+        ],
+        "internal_timeline_revisions": [
+            {
+                "revision_id": "internal-revision-1",
+                "payload": {
+                    "tracks": [{"id": "shot-audio", "role": "music"}],
+                    "clips": [
+                        {
+                            "id": "child-audio",
+                            "at": 0,
+                            "hold": 1,
+                            "track": "shot-audio",
+                            "asset": "child-audio-asset",
+                            "clipType": "audio",
+                            "params": {"fadeIn": 0.25},
+                        }
+                    ],
+                    "registry": {"assets": {"child-audio-asset": {"type": "audio"}}},
+                },
+            }
+        ],
+    }
+    if dependency_manifest:
+        document["dependency_manifest"] = {"synthetic": True}
+    return document
+
+
+def _findings(result: dict[str, Any], category: str) -> list[dict[str, Any]]:
+    return [row for row in result["findings"] if row["semantic_category"] == category]
+
+
+def test_three_categories_rational_fps_pins_and_known_unknown(agent_root: Path) -> None:
+    result = SCANNER.scan(synthetic_document(), agent_root=agent_root)
+
+    assert result["status"] == "complete", result
+    assert result["fps_rational"] == [30000, 1001]
+    assert result["clean_claim"] is False
+    assert {row["semantic_category"] for row in result["findings"]} == {
+        "curve_honoured",
+        "element_clip_look_overlap",
+        "continuous_audio_fade",
+    }
+    curved = next(row for row in _findings(result, "curve_honoured") if row["clip_id"] == "audio-curved")
+    assert curved["knowledge"] == "known"
+    assert "params.fadeInCurve" in curved["properties"]
+    assert curved["interval_frames"] == [150, 210]
+    child = next(
+        row for row in _findings(result, "continuous_audio_fade") if row["clip_id"] == "occurrence-1:child-audio"
+    )
+    assert child["occurrence_id"] == "occurrence-1"
+    assert child["shot_id"] == "shot-1"
+    assert child["shot_revision_id"] == "shot-revision-1"
+    assert child["internal_timeline_revision_id"] == "internal-revision-1"
+    unknown = next(row for row in _findings(result, "curve_honoured") if row["clip_id"] == "audio-unknown")
+    assert unknown["knowledge"] == "unknown"
+    assert not any(row["clip_id"] == "audio-default-curve" for row in _findings(result, "curve_honoured"))
+    transition = next(row for row in result["transition_boundaries"] if row["clip_id"] == "element-b")
+    assert transition["transition_id"] == transition["transition_type"] == "cross-fade"
+    assert transition["semantics"] == "incoming"
+    assert transition["interval_frames"] == [60, 120]
+    assert "transition_conversion" in result["not_covered"]
+
+
+def test_canonical_incoming_type_mapping_is_inventoried(agent_root: Path) -> None:
+    document = synthetic_document()
+    document["parent_revision"]["payload"]["clips"][1]["transition"] = {
+        "type": "crossfade",
+        "duration": 0.2,
+    }
+
+    result = SCANNER.scan(document, agent_root=agent_root)
+
+    boundary = next(row for row in result["transition_boundaries"] if row["clip_id"] == "element-b")
+    assert boundary["transition_id"] == "crossfade"
+    assert boundary["transition_type"] == "crossfade"
+    assert boundary["semantics"] == "incoming"
+
+
+def test_defaults_overlap_scope_and_opaque_data_are_bounded(agent_root: Path) -> None:
+    result = SCANNER.scan(synthetic_document(), agent_root=agent_root)
+    assert not any(row["clip_id"] == "audio-default-curve" for row in _findings(result, "curve_honoured"))
+    overlaps = [row for row in _findings(result, "element_clip_look_overlap") if len(row["clip_ids"]) == 2]
+    assert {tuple(row["clip_ids"]) for row in overlaps} == {
+        ("element-a", "element-b"),
+        ("element-b", "element-unknown"),
+    }
+    assert next(row for row in overlaps if row["clip_ids"] == ["element-b", "element-unknown"])["knowledge"] == "unknown"
+    element_a = next(row for row in _findings(result, "element_clip_look_overlap") if row["clip_ids"] == ["element-a"])
+    assert {"crop_left", "speed"} <= set(element_a["properties"])
+    media = next(row for row in result["media_look_inventory"] if row["clip_id"] == "media-look")
+    assert media["properties"] == ["entrance"]
+    assert media["knowledge"] == "known"
+    assert "projected.config.tracks[1].role" in next(
+        row for row in _findings(result, "continuous_audio_fade") if row["clip_id"] == "audio-curved"
+    )["source_paths"]
+    encoded = json.dumps(result)
+    assert "must-not-appear-in-output" not in encoded
+    assert "SYNTHETIC_CREDENTIAL_MARKER" not in encoded
+    assert "opaqueSecret" not in encoded
+    assert '"raw"' not in encoded
+
+
+def test_incomplete_closure_is_not_clean(agent_root: Path) -> None:
+    result = SCANNER.scan(synthetic_document(dependency_manifest=False), agent_root=agent_root)
+    assert result["status"] == "incomplete"
+    assert "dependency_manifest is absent" in result["closure_errors"]
+    assert result["clean_claim"] is False
+
+
+def test_projector_and_scanner_preserve_explicit_optional_asset_clear(agent_root: Path) -> None:
+    document = synthetic_document()
+    parent = document["parent_revision"]
+    parent["payload"]["clips"][0]["asset"] = None
+    parent["payload"]["clips"][0]["extensionData"] = {
+        "vendor": {"opaque": "SYNTHETIC_UNKNOWN_EXTENSION_MARKER"}
+    }
+    authored_before_scan = json.dumps(document, sort_keys=True)
+    api = SCANNER._agent_api(agent_root)
+
+    projected = api["project_runtime_parent_composition"](
+        parent,
+        shot_revisions=document["shot_revisions"],
+        internal_timeline_revisions=document["internal_timeline_revisions"],
+    )
+
+    assert projected.config["clips"][0]["asset"] is None
+    assert projected.config["clips"][0]["extensionData"] == {
+        "vendor": {"opaque": "SYNTHETIC_UNKNOWN_EXTENSION_MARKER"}
+    }
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert result["status"] == "complete", result
+    assert all("asset reference must be a string" not in error for error in result["closure_errors"])
+    assert json.dumps(document, sort_keys=True) == authored_before_scan
+    assert "SYNTHETIC_UNKNOWN_EXTENSION_MARKER" not in json.dumps(result)
+
+
+def test_element_overlap_includes_cross_track_half_open_intervals(agent_root: Path) -> None:
+    document = synthetic_document()
+    payload = document["parent_revision"]["payload"]
+    payload["config"]["tracks"].append({"id": "other-picture", "role": "picture"})
+    payload["clips"][2]["track"] = "other-picture"
+    result = SCANNER.scan(document, agent_root=agent_root)
+    overlaps = [row for row in _findings(result, "element_clip_look_overlap") if len(row["clip_ids"]) == 2]
+    assert {tuple(row["clip_ids"]) for row in overlaps} == {
+        ("element-a", "element-b"),
+        ("element-b", "element-unknown"),
+    }
+
+
+def test_cross_track_boundary_is_half_open_no_overlap(agent_root: Path) -> None:
+    document = synthetic_document()
+    payload = document["parent_revision"]["payload"]
+    payload["config"]["tracks"].append({"id": "other-picture", "role": "picture"})
+    payload["clips"][2]["track"] = "other-picture"
+    payload["clips"][2]["at"] = 4
+    result = SCANNER.scan(document, agent_root=agent_root)
+    overlaps = [row for row in _findings(result, "element_clip_look_overlap") if len(row["clip_ids"]) == 2]
+    assert {tuple(row["clip_ids"]) for row in overlaps} == {("element-a", "element-b")}
+
+
+def test_pair_without_a_declared_look_is_omitted(agent_root: Path) -> None:
+    document = synthetic_document()
+    clips = document["parent_revision"]["payload"]["clips"]
+    clips.extend(
+        [
+            _clip("plain-a", 17, "picture", asset="video-a", element="am-footage"),
+            _clip("plain-b", 18, "picture", asset="video-b", element="am-footage"),
+        ]
+    )
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert not any(
+        set(row["clip_ids"]) == {"plain-a", "plain-b"}
+        for row in _findings(result, "element_clip_look_overlap")
+    )
+
+
+def test_missing_and_unprojectable_closure_fail_closed(agent_root: Path) -> None:
+    result = SCANNER.scan({"project_id": "synthetic-project"}, agent_root=agent_root)
+    assert result["status"] == "incomplete"
+    assert result["findings"] == []
+    assert result["clean_claim"] is False
+
+
+def test_malformed_scope_reference_is_not_copied_to_closure_error() -> None:
+    marker = "SYNTHETIC_PRIVATE_CAPTION_MARKER"
+    result = SCANNER.scan({"project_id": {"caption": marker}}, agent_root="/unused")
+
+    encoded = json.dumps(result)
+    assert result["status"] == "incomplete"
+    assert "project_id" not in result
+    assert marker not in encoded
+    assert "project_id reference must be a string" in result["closure_errors"]
+    assert "missing top-level keys: timeline_id, parent_revision, shot_revisions, internal_timeline_revisions" in result[
+        "closure_errors"
+    ]
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda document: document.__setitem__("project_id", {"nested": "SYNTHETIC_PRIVATE_NESTED_MARKER"}),
+        lambda document: document.__setitem__("project_id", None),
+        lambda document: document.__setitem__("timeline_id", ["SYNTHETIC_PRIVATE_NESTED_MARKER"]),
+        lambda document: document["parent_revision"].__setitem__("revision_id", True),
+        lambda document: document["parent_revision"]["payload"]["occurrences"][0].__setitem__(
+            "occurrence_id", {"nested": "SYNTHETIC_PRIVATE_NESTED_MARKER"}
+        ),
+        lambda document: document["parent_revision"]["payload"]["clips"][0].__setitem__(
+            "id", {"nested": "SYNTHETIC_PRIVATE_NESTED_MARKER"}
+        ),
+    ],
+)
+def test_malformed_nested_references_are_redacted_from_projectable_results(
+    mutate: Any, agent_root: Path
+) -> None:
+    document = synthetic_document()
+    mutate(document)
+
+    result = SCANNER.scan(document, agent_root=agent_root)
+
+    encoded = json.dumps(result)
+    assert result["status"] == "incomplete"
+    assert "SYNTHETIC_PRIVATE_NESTED_MARKER" not in encoded
+    for field in ("project_id", "timeline_id", "revision_id"):
+        if field in result:
+            assert isinstance(result[field], str)
+
+
+def test_malformed_finding_source_path_is_omitted_and_unknown() -> None:
+    errors: list[str] = []
+    result = SCANNER._finding(
+        category="curve_honoured",
+        known=True,
+        properties=[],
+        source_paths=[],
+        refs={"source_path": {"nested": "SYNTHETIC_PRIVATE_NESTED_MARKER"}},
+        errors=errors,
+    )
+
+    assert "source_path" not in result
+    assert result["knowledge"] == "unknown"
+    assert "SYNTHETIC_PRIVATE_NESTED_MARKER" not in json.dumps(result)
+    assert errors == ["source_path reference must be a string"]
+
+
+@pytest.mark.parametrize(
+    ("curve", "knowledge"),
+    [(None, None), ("linear", None), ("equal-power", "known"), ("not-a-registered-curve", "unknown")],
+)
+def test_curve_requires_explicit_non_linear_value(
+    agent_root: Path, curve: str | None, knowledge: str | None
+) -> None:
+    document = synthetic_document()
+    clip = document["parent_revision"]["payload"]["clips"][3]
+    clip["id"] = "name-that-looks-like-a-curve"
+    clip["params"] = {"fadeIn": 0.5}
+    if curve is not None:
+        clip["params"]["fadeInCurve"] = curve
+    result = SCANNER.scan(document, agent_root=agent_root)
+    rows = [row for row in _findings(result, "curve_honoured") if row["clip_id"] == clip["id"]]
+    assert len(rows) == (0 if knowledge is None else 1)
+    if knowledge is not None:
+        assert rows[0]["knowledge"] == knowledge
+    assert len([row for row in _findings(result, "continuous_audio_fade") if row["clip_id"] == clip["id"]]) == 1
+
+
+def test_distinct_internal_positions_keep_occurrence_identity() -> None:
+    document = synthetic_document()
+    duplicate = json.loads(json.dumps(document["internal_timeline_revisions"][0]))
+    duplicate["revision_id"] = "unreferenced-internal-revision"
+    duplicate["payload"]["clips"][0]["id"] = "duplicate-child"
+    document["internal_timeline_revisions"].insert(0, duplicate)
+    paths = SCANNER._raw_clip_sources(document)
+    assert paths["occurrence-1:child-audio"]["source_path"] == (
+        "internal_timeline_revisions[1].payload.clips[0]"
+    )
+    assert paths["occurrence-1:child-audio"]["occurrence_id"] == "occurrence-1"
+
+
+def test_cli_runs_from_relocated_directory_without_orch_environment(agent_root: Path, tmp_path: Path) -> None:
+    input_path = tmp_path / "canonical_document.json"
+    output_path = tmp_path / "result.json"
+    input_path.write_text(json.dumps(synthetic_document()), encoding="utf-8")
+    env = {"PATH": os.environ.get("PATH", ""), "PYTHONNOUSERSITE": "1"}
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SCANNER_PATH),
+            "--input",
+            str(input_path),
+            "--agent-root",
+            str(agent_root),
+            "--json-out",
+            str(output_path),
+        ],
+        cwd=tmp_path,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert json.loads(output_path.read_text(encoding="utf-8"))["fps_rational"] == [30000, 1001]
+    assert "owner_film_cliplook_scan.py" not in completed.stderr
+
+
+def test_cli_rejects_same_path_symlink_and_hardlink_before_writing(agent_root: Path, tmp_path: Path) -> None:
+    input_path = tmp_path / "canonical_document.json"
+    input_path.write_text(json.dumps(synthetic_document()), encoding="utf-8")
+    original_hash = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    original_mtime_ns = input_path.stat().st_mtime_ns
+
+    def rejected(output_path: Path) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(SCANNER_PATH),
+                "--input",
+                str(input_path),
+                "--agent-root",
+                str(agent_root),
+                "--json-out",
+                str(output_path),
+            ],
+            cwd=tmp_path,
+            env={"PATH": os.environ.get("PATH", ""), "PYTHONNOUSERSITE": "1"},
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode != 0
+
+    rejected(input_path)
+    hardlink = tmp_path / "hardlink.json"
+    os.link(input_path, hardlink)
+    rejected(hardlink)
+    symlink = tmp_path / "symlink.json"
+    symlink.symlink_to(input_path)
+    rejected(symlink)
+    assert hashlib.sha256(input_path.read_bytes()).hexdigest() == original_hash
+    assert input_path.stat().st_mtime_ns == original_mtime_ns
+
+
+
+@pytest.mark.parametrize("direction", ["In", "Out"])
+@pytest.mark.parametrize("parent_layout", ["payload", "config"])
+def test_audio_paths_locate_parent_and_occurrence_child(
+    agent_root: Path, direction: str, parent_layout: str
+) -> None:
+    document = synthetic_document()
+    payload = document["parent_revision"]["payload"]
+    params = {f"fade{direction}": 0.5, f"fade{direction}Curve": "equal-power"}
+    payload["clips"][3]["params"] = dict(params)
+    document["internal_timeline_revisions"][0]["payload"]["clips"][0]["params"] = dict(params)
+    prefix = "parent_revision.payload"
+    if parent_layout == "config":
+        payload["config"]["clips"] = payload.pop("clips")
+        prefix += ".config"
+    before = json.dumps(document, sort_keys=True)
+
+    result = SCANNER.scan(document, agent_root=agent_root)
+
+    assert result["status"] == "complete", result
+    for category in ("continuous_audio_fade", "curve_honoured"):
+        for clip_id, base in (
+            ("audio-curved", f"{prefix}.clips[3]"),
+            ("occurrence-1:child-audio", "internal_timeline_revisions[0].payload.clips[0]"),
+        ):
+            row = next(row for row in _findings(result, category) if row["clip_id"] == clip_id)
+            assert row["source_path"] == base
+            assert {f"{base}.params.fade{direction}", f"{base}.params.fade{direction}Curve"} <= set(row["source_paths"])
+            assert all(path.startswith((base + ".", "projected.")) for path in row["source_paths"])
+            assert any(path.startswith("projected.config.tracks[") for path in row["source_paths"])
+            assert any(path.startswith("projected.registry.assets[") for path in row["source_paths"])
+    assert json.dumps(document, sort_keys=True) == before
+
+
+@pytest.mark.parametrize("transition", [
+    {"id": ["SYNTHETIC_PRIVATE_TRANSITION_MARKER"]},
+    "cross-fade",
+    {"id": "cross-fade", "type": {"caption": "SYNTHETIC_PRIVATE_TRANSITION_MARKER"}},
+])
+def test_malformed_transition_fails_closed_without_raw_values(
+    agent_root: Path, transition: Any
+) -> None:
+    document = synthetic_document()
+    document["parent_revision"]["payload"]["clips"][1]["transition"] = transition
+
+    result = SCANNER.scan(document, agent_root=agent_root)
+
+    assert result["status"] == "incomplete", result
+    assert result["clean_claim"] is False
+    assert result["closure_errors"] == ["parent_revision.payload.clips[1].transition is unreadable"]
+    assert "SYNTHETIC_PRIVATE_TRANSITION_MARKER" not in json.dumps(result)
+
+
+def test_transition_codec_exception_fails_closed(agent_root: Path, monkeypatch: Any) -> None:
+    api = SCANNER._agent_api(agent_root)
+    read = api["clip_fields"].read
+
+    def unreadable(clip: Any, name: str, **kwargs: Any) -> Any:
+        if name == "transition" and clip.get("id") == "element-b":
+            raise ValueError("SYNTHETIC_PRIVATE_TRANSITION_MARKER")
+        return read(clip, name, **kwargs)
+
+    monkeypatch.setattr(api["clip_fields"], "read", unreadable)
+    result = SCANNER.scan(synthetic_document(), agent_root=agent_root)
+
+    assert result["status"] == "incomplete", result
+    assert result["closure_errors"] == ["parent_revision.payload.clips[1].transition is unreadable"]
+    assert "SYNTHETIC_PRIVATE_TRANSITION_MARKER" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("conflicting", [False, True])
+def test_duplicate_internal_revision_has_no_unambiguous_source_index(
+    agent_root: Path, conflicting: bool
+) -> None:
+    document = synthetic_document()
+    duplicate = json.loads(json.dumps(document["internal_timeline_revisions"][0]))
+    if conflicting:
+        duplicate["payload"]["clips"][0]["id"] = "different-child"
+    document["internal_timeline_revisions"].append(duplicate)
+
+    with pytest.raises(ValueError, match="ambiguous source index"):
+        SCANNER._raw_clip_sources(document)
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert result["status"] == "incomplete", result
+    assert result["closure_errors"]
+    assert result["findings"] == []
+    assert result["clean_claim"] is False
+
+
+def test_freeform_transition_and_asset_ids_remain_valid(agent_root: Path) -> None:
+    document = synthetic_document()
+    payload = document["parent_revision"]["payload"]
+    payload["clips"][1]["transition"] = {"id": "custom id / free form", "type": "custom type ?"}
+    asset_id = "audio asset / 'quoted'"
+    payload["registry"]["assets"][asset_id] = payload["registry"]["assets"].pop("audio-a")
+    payload["clips"][3]["asset"] = asset_id
+
+    result = SCANNER.scan(document, agent_root=agent_root)
+
+    assert result["status"] == "complete", result
+    boundary = next(row for row in result["transition_boundaries"] if row["clip_id"] == "element-b")
+    assert boundary["transition_id"] == "custom id / free form"
+    assert boundary["transition_type"] == "custom type ?"
+    audio = next(row for row in _findings(result, "continuous_audio_fade") if row["clip_id"] == "audio-curved")
+    assert f"projected.registry.assets[{asset_id!r}].type" in audio["source_paths"]
+
+
+def test_null_transition_is_an_absent_declaration(agent_root: Path) -> None:
+    document = synthetic_document()
+    document["parent_revision"]["payload"]["clips"][1]["transition"] = None
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert result["status"] == "complete", result
+    assert result["transition_boundaries"] == []
+
+
+@pytest.mark.parametrize(
+    ("clip_index", "field", "bad_value", "source_field", "marker"),
+    [
+        (0, "opacity", {"caption": "SYNTHETIC_BAD_OPACITY_MARKER"}, "opacity", "SYNTHETIC_BAD_OPACITY_MARKER"),
+        (0, "cropLeft", {"caption": "SYNTHETIC_BAD_CROP_MARKER"}, "cropLeft", "SYNTHETIC_BAD_CROP_MARKER"),
+        (
+            0,
+            "entrance",
+            {"type": "fade", "duration": {"caption": "SYNTHETIC_BAD_ENTRANCE_MARKER"}},
+            "entrance",
+            "SYNTHETIC_BAD_ENTRANCE_MARKER",
+        ),
+        (
+            1,
+            "exit",
+            {"type": "fade", "duration": {"caption": "SYNTHETIC_BAD_EXIT_MARKER"}},
+            "exit",
+            "SYNTHETIC_BAD_EXIT_MARKER",
+        ),
+    ],
+)
+def test_malformed_look_fails_closed_and_retains_unknown_inventory(
+    agent_root: Path,
+    clip_index: int,
+    field: str,
+    bad_value: Any,
+    source_field: str,
+    marker: str,
+) -> None:
+    document = synthetic_document()
+    clip = document["parent_revision"]["payload"]["clips"][clip_index]
+    clip[field] = bad_value
+    before = json.dumps(document, sort_keys=True)
+
+    result = SCANNER.scan(document, agent_root=agent_root)
+
+    source_path = f"parent_revision.payload.clips[{clip_index}].{source_field}"
+    assert result["status"] == "incomplete", result
+    assert result["closure_errors"] == [f"{source_path} is unreadable"]
+    assert result["clean_claim"] is False
+    assert any(
+        row.get("clip_id") == clip["id"] and row["knowledge"] == "unknown"
+        for row in result["media_look_inventory"]
+    )
+    assert any(
+        row.get("clip_ids") == [clip["id"]] and row["knowledge"] == "unknown"
+        for row in _findings(result, "element_clip_look_overlap")
+    )
+    encoded = json.dumps(result)
+    assert marker not in encoded
+    assert json.dumps(document, sort_keys=True) == before
+
+
+# Agent REJECT 1.0.7: stored declarations must be checked before formatting.
+@pytest.mark.parametrize("field", ["opacity", "cropTop", "cropRight", "cropBottom", "cropLeft", "speed", "volume"])
+@pytest.mark.parametrize("bad_value", [True, "SYNTHETIC_BAD_NUMBER", ["SYNTHETIC_BAD_NUMBER"], {"id": "SYNTHETIC_BAD_NUMBER"}])
+def test_declared_stored_numbers_fail_closed(agent_root: Path, field: str, bad_value: Any) -> None:
+    document = synthetic_document()
+    clip = document["parent_revision"]["payload"]["clips"][0]
+    clip[field] = bad_value
+    result = SCANNER.scan(document, agent_root=agent_root)
+    path = f"parent_revision.payload.clips[0].{field}"
+    assert result["status"] == "incomplete", result
+    assert result["closure_errors"] == [f"{path} is unreadable"]
+    row = next(row for row in _findings(result, "element_clip_look_overlap") if row["clip_ids"] == [clip["id"]])
+    assert row["knowledge"] == "unknown"
+    assert "SYNTHETIC_BAD_NUMBER" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("field", ["entrance", "exit"])
+@pytest.mark.parametrize("bad_value", [
+    "BAD_ENTRANCE", ["BAD_ENTRANCE"], True, 0.5,
+    {"type": "fade", "duration": True},
+    {"type": "fade", "intensity": True},
+    {"type": "fade", "params": "BAD_ENTRANCE"},
+])
+def test_stored_animation_shapes_fail_closed(agent_root: Path, field: str, bad_value: Any) -> None:
+    document = synthetic_document()
+    clip = document["parent_revision"]["payload"]["clips"][0]
+    clip[field] = bad_value
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert result["status"] == "incomplete", result
+    assert result["closure_errors"] == [f"parent_revision.payload.clips[0].{field} is unreadable"]
+    row = next(row for row in _findings(result, "element_clip_look_overlap") if row["clip_ids"] == [clip["id"]])
+    assert row["knowledge"] == "unknown"
+    assert "BAD_ENTRANCE" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("scope", ["parent", "config", "child"])
+@pytest.mark.parametrize("direction", ["In", "Out"])
+@pytest.mark.parametrize("bad_value", ["BAD_FADE", ["BAD_FADE"], {"id": "BAD_FADE"}, True])
+def test_stored_audio_fades_fail_closed_at_authored_paths(
+    agent_root: Path, scope: str, direction: str, bad_value: Any
+) -> None:
+    document = synthetic_document()
+    payload = document["parent_revision"]["payload"]
+    if scope == "child":
+        clip = document["internal_timeline_revisions"][0]["payload"]["clips"][0]
+        clip_id = "occurrence-1:child-audio"
+        base = "internal_timeline_revisions[0].payload.clips[0]"
+    else:
+        clip = payload["clips"][3]
+        clip_id = clip["id"]
+        base = "parent_revision.payload.clips[3]"
+        if scope == "config":
+            payload["config"]["clips"] = payload.pop("clips")
+            base = "parent_revision.payload.config.clips[3]"
+    clip["params"] = {f"fade{direction}": bad_value, f"fade{direction}Curve": "equal-power"}
+    before = json.dumps(document, sort_keys=True)
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert result["status"] == "incomplete", result
+    assert result["closure_errors"] == [f"{base}.params.fade{direction} is unreadable"]
+    for category in ("continuous_audio_fade", "curve_honoured"):
+        row = next(row for row in _findings(result, category) if row["clip_id"] == clip_id)
+        assert row["knowledge"] == "unknown"
+        assert f"{base}.params.fade{direction}" in row["source_paths"]
+    assert "BAD_FADE" not in json.dumps(result)
+    assert json.dumps(document, sort_keys=True) == before
+
+
+@pytest.mark.parametrize("direction", ["In", "Out"])
+@pytest.mark.parametrize("bad_value", [["BAD_CURVE"], {"id": "BAD_CURVE"}, True, 1.5])
+def test_stored_audio_curve_containers_fail_closed(agent_root: Path, direction: str, bad_value: Any) -> None:
+    document = synthetic_document()
+    clip = document["parent_revision"]["payload"]["clips"][3]
+    clip["params"] = {f"fade{direction}": 0.5, f"fade{direction}Curve": bad_value}
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert result["status"] == "incomplete", result
+    assert result["closure_errors"] == [f"parent_revision.payload.clips[3].params.fade{direction}Curve is unreadable"]
+    for category in ("continuous_audio_fade", "curve_honoured"):
+        row = next(row for row in _findings(result, category) if row["clip_id"] == clip["id"])
+        assert row["knowledge"] == "unknown"
+    assert "BAD_CURVE" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("bad_value", ["BAD_PARAMS", ["BAD_PARAMS"], True, 0.5])
+def test_audio_params_non_objects_fail_closed(agent_root: Path, bad_value: Any) -> None:
+    document = synthetic_document()
+    clip = document["parent_revision"]["payload"]["clips"][3]
+    clip["params"] = bad_value
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert result["status"] == "incomplete", result
+    assert result["closure_errors"] == ["parent_revision.payload.clips[3].params is unreadable"]
+    rows = [row for row in _findings(result, "continuous_audio_fade") if row["clip_id"] == clip["id"]]
+    assert rows and all(row["knowledge"] == "unknown" for row in rows)
+    assert "BAD_PARAMS" not in json.dumps(result)
+
+
+def test_stored_clears_and_nonfade_animation_remain_open(agent_root: Path) -> None:
+    document = synthetic_document()
+    clip = document["parent_revision"]["payload"]["clips"][0]
+    clip.update(opacity=None, cropLeft=None, speed=None, volume=None,
+                entrance={"type": "slide-in", "duration": 0.5, "params": {"vendorPrivate": "OPAQUE_PARAMETER"}}, exit=None)
+    document["parent_revision"]["payload"]["clips"][3]["params"] = {"fadeIn": None, "fadeInCurve": None}
+    api = SCANNER._agent_api(agent_root)
+    # Select a real non-fade animation through the codec, without a copied ID list.
+    for name in api["clip_fields"]._animation_ids("entrance"):
+        if name != "fade":
+            clip["entrance"]["type"] = name
+            break
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert result["status"] == "complete", result
+    assert "OPAQUE_PARAMETER" not in json.dumps(result)
+
+
+def test_declared_values_use_agent_codec_even_when_describe_accepts(agent_root: Path, monkeypatch: Any) -> None:
+    api = SCANNER._agent_api(agent_root)
+    field_type = type(api["clip_fields"].FIELDS["opacity"])
+    original = field_type.to_stored
+    seen: set[tuple[str, bool]] = set()
+
+    def codec(self: Any, value: Any, **kwargs: Any) -> Any:
+        seen.add((self.name, kwargs.get("audio", False)))
+        if self.name == "opacity":
+            raise ValueError("PRIVATE_CODEC_VALUE")
+        return original(self, value, **kwargs)
+
+    monkeypatch.setattr(field_type, "to_stored", codec)
+    result = SCANNER.scan(synthetic_document(), agent_root=agent_root)
+    assert result["status"] == "incomplete"
+    assert "parent_revision.payload.clips[0].opacity is unreadable" in result["closure_errors"]
+    assert ("fade_in", True) in seen and ("fade_out", True) in seen
+    assert "PRIVATE_CODEC_VALUE" not in json.dumps(result)
+
+
+def test_audio_error_source_paths_are_openable(agent_root: Path) -> None:
+    document = synthetic_document()
+    clips = document["parent_revision"]["payload"]["clips"]
+    clips[3]["params"] = ["BAD_PARAMS"]
+    clips[4]["params"] = {"fadeOutCurve": ["BAD_CURVE"]}
+    result = SCANNER.scan(document, agent_root=agent_root)
+    for clip_id, path in (
+        (clips[3]["id"], "parent_revision.payload.clips[3].params"),
+        (clips[4]["id"], "parent_revision.payload.clips[4].params.fadeOutCurve"),
+    ):
+        row = next(row for row in _findings(result, "continuous_audio_fade") if row["clip_id"] == clip_id)
+        authored_paths = [path for path in row["source_paths"] if not path.startswith("projected.")]
+        assert authored_paths == [path]
+        assert row["knowledge"] == "unknown"
+    assert not any("BAD_" in error for error in result["closure_errors"])
+
+
+def test_stored_child_value_checked_before_placement_can_replace_it(agent_root: Path, monkeypatch: Any) -> None:
+    document = synthetic_document()
+    child = document["internal_timeline_revisions"][0]["payload"]["clips"][0]
+    child.update(clipType="media", elementRef={"id": "am-footage", "kind": "effect"}, opacity=True)
+    document["parent_revision"]["payload"]["occurrences"][0]["transform"] = {"opacity": 0.5}
+    api = SCANNER._agent_api(agent_root)
+    projector = api["project_runtime_parent_composition"]
+    calls = 0
+
+    def project(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        return projector(*args, **kwargs)
+
+    monkeypatch.setattr(SCANNER, "_agent_api", lambda root: {**api, "project_runtime_parent_composition": project})
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert calls == 1
+    assert result["status"] == "incomplete", result
+    assert result["closure_errors"] == ["internal_timeline_revisions[0].payload.clips[0].opacity is unreadable"]
+    row = next(row for row in _findings(result, "element_clip_look_overlap") if row["clip_ids"] == ["occurrence-1:child-audio"])
+    assert row["knowledge"] == "unknown"
+
+
+@pytest.mark.parametrize("field", ["speed", "volume"])
+def test_malformed_audio_shared_numbers_make_fade_unknown(agent_root: Path, field: str) -> None:
+    document = synthetic_document()
+    clip = document["parent_revision"]["payload"]["clips"][3]
+    clip[field] = True
+    result = SCANNER.scan(document, agent_root=agent_root)
+    assert result["status"] == "incomplete", result
+    assert result["closure_errors"] == [f"parent_revision.payload.clips[3].{field} is unreadable"]
+    row = next(row for row in _findings(result, "continuous_audio_fade") if row["clip_id"] == clip["id"])
+    assert row["knowledge"] == "unknown"

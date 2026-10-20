@@ -1,0 +1,208 @@
+{
+  "app_head": "7bb885b638838588a0dff81b64b7c34960ac07f3",
+  "prerequisite": "5117b9da2e17828ec0b3cfbcdf3ff4987dc77ab3",
+  "donor": "8246c6c323c9f2007af7bc85eacdcc80e4fb6bc6",
+  "sources": {
+    "src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts": {
+      "sha256": "2a7b2ff6d236eb306af5205d47e8193a0c4155f1d9e8f4a119e883f74ab228bb",
+      "matches": [
+        {
+          "line": 29,
+          "text": "  const projectedConfig = timelineData?.editProjection ? timelineData.resolvedConfig : null;"
+        },
+        {
+          "line": 39,
+          "text": "    if (complete) return { source: 'canonical' as const, status: 'ready' as const, config: projectedConfig, error: null };"
+        }
+      ]
+    },
+    "src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx": {
+      "sha256": "570cacd06aab7d9bec8fb971452064e6427332117f1e4a8ec290db6fe06c6bec",
+      "matches": [
+        {
+          "line": 1,
+          "text": "import { compilePlayerTransitions } from '../../compositions/playerEvaluation.ts';"
+        },
+        {
+          "line": 42,
+          "text": "    ? compilePlayerTransitions(previewConfig) : undefined, [previewConfig, previewSource]);"
+        },
+        {
+          "line": 45,
+          "text": "    const paired = fact && previewConfig === timelineData.resolvedConfig;"
+        }
+      ]
+    },
+    "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx": {
+      "sha256": "7bb9c93e09e534a80ec88c143e8b9b94ecfd5a66668cc89d97b445351a4bf8c4",
+      "matches": [
+        {
+          "line": 265,
+          "text": "    compiledTransitions: delivery.compiledTransitions,"
+        },
+        {
+          "line": 276,
+          "text": "  const metadata = useMemo(() => {"
+        },
+        {
+          "line": 282,
+          "text": "      durationInFrames: Math.max("
+        }
+      ]
+    },
+    "src/tools/video-editor/hooks/useRenderState.ts": {
+      "sha256": "c8b3779c4b579d5e2f9941dd93e5abecbd1c4cf22e9a5f7d1a14a36cf913d1b1",
+      "matches": [
+        {
+          "line": 621,
+          "text": "  const startClientRender = useClientRender({"
+        },
+        {
+          "line": 623,
+          "text": "    metadata: renderMetadata,"
+        }
+      ]
+    },
+    "src/tools/video-editor/hooks/useTimelineState.ts": {
+      "sha256": "8ab575caf9dc1e4148a4dc525b8b89a83bd50d37d6152dc62cb99a1bc3513e05",
+      "matches": [
+        {
+          "line": 683,
+          "text": "  const render = useRenderState("
+        },
+        {
+          "line": 685,
+          "text": "    derived.renderMetadata,"
+        },
+        {
+          "line": 1231,
+          "text": "    derived.renderMetadata,"
+        }
+      ]
+    },
+    "src/tools/video-editor/hooks/useClientRender.ts": {
+      "sha256": "7486e0c165cb789945ef0c0138ea6292f294b76b83961bba1cc2d2e0e8e1ab64",
+      "matches": [
+        {
+          "line": 271,
+          "text": "        inputProps: { config: resolvedConfig, astridElementHost: runtime?.astridElementHost },"
+        }
+      ]
+    },
+    "src/tools/video-editor/components/PreviewPanel/TimelineFramePreview.tsx": {
+      "sha256": "e5bcc664debe3f237ca914a7bfb4106f83d3cf2570192e7c537654b0fd1fbf2c",
+      "matches": [
+        {
+          "line": 115,
+          "text": "  const metadata = useMemo(() => {"
+        },
+        {
+          "line": 124,
+          "text": "      durationInFrames: Math.max(1, ...output.clips.map((clip) => secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps))),"
+        },
+        {
+          "line": 131,
+          "text": "  const inputProps = useMemo(() => ({ config: output!, ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}) }), [output, runtime?.astridElementHost]);"
+        }
+      ]
+    },
+    "src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx": {
+      "sha256": "f51479b4ae4712124c25dda23a8cf94787e6e2117e5d476be9e04199b3e604a0",
+      "matches": [
+        {
+          "line": 40,
+          "text": "  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig);"
+        },
+        {
+          "line": 106,
+          "text": "      <TimelineFramePreview config={previewComposition.config} request={framePreview.request} bounds={surfaceRef} />"
+        }
+      ]
+    },
+    "src/tools/video-editor/compositions/TimelineRenderer.tsx": {
+      "sha256": "1412c325f5a22de9171f1a1e45cee38535d606af51c4dc1697bf7a70b04c043e",
+      "matches": [
+        {
+          "line": 1607,
+          "text": "    const boundedClips = materialized.clips.flatMap(clip => compiledTransitions?.tracks.some(track => track.trackId === clip.track)"
+        },
+        {
+          "line": 1608,
+          "text": "      ? [clip] : boundCanonicalConfigClips([clip]));"
+        }
+      ]
+    },
+    "src/tools/video-editor/lib/canonicalRenderBounds.ts": {
+      "sha256": "635790336bf9e67f7142e7f74c1529240be191476a8f0bbf6ad2436c5896dc31",
+      "matches": [
+        {
+          "line": 36,
+          "text": "  const duration = Math.min(getClipTimelineDuration(clip), occurrenceEnd - start);"
+        },
+        {
+          "line": 44,
+          "text": "      ? { hold: duration * speed }"
+        }
+      ]
+    },
+    "src/tools/video-editor/hooks/useTimelineCommandSession.ts": {
+      "sha256": "0cc693a5fb63386e1b21157d518e8ad46ddb31a664bac1ecaa7d84a48065f36a",
+      "matches": [
+        {
+          "line": 72,
+          "text": "        const generation = initial ? projectGeneration : ++projectGeneration;"
+        },
+        {
+          "line": 82,
+          "text": "          const projection = projectCanonicalComposition(composition);"
+        },
+        {
+          "line": 104,
+          "text": "        data.editProjection = accepted.head.revisionId && accepted.head.publicationId"
+        },
+        {
+          "line": 140,
+          "text": "          compiled.nextData.editProjection = base ? { kind: 'local', base, generation: projectGeneration } : undefined;"
+        }
+      ]
+    },
+    "src/tools/video-editor/hooks/useTimelineCommit.ts": {
+      "sha256": "75379cd36ee20dfae799b68c1c08b65f23f3f32f69509587fb82e21b8c3adeaf",
+      "matches": [
+        {
+          "line": 349,
+          "text": "    if (nextData.editProjection && (shouldSave"
+        },
+        {
+          "line": 351,
+          "text": "      nextData = { ...nextData, editProjection: undefined };"
+        }
+      ]
+    }
+  },
+  "unapplied_patch_sha256": "9a1ca3a5b1c40141447f90c80672cf0686cf7d84eea6872984feab3cb47edf73",
+  "vitest.config.ts_sha256": "75112e3c6b88aa4c8967f628de5113e80680df42fb3fee1908ed16dd454c88c0",
+  "donor.lifecycle.test.tsx_sha256": "2170b7e3c2cdba26413bc215c71bf7578bea1ed3386718839309046cdbc6cc9a",
+  "main_agent": {
+    "sha": "a411628f8fd6129f9c58c332019b56769d997384",
+    "projector_sha256": "433dce617f10e31fe6066d55c6bff125e4328a84e01426f4d2e45756b432253a",
+    "matches": [
+      {
+        "line": 312,
+        "text": "    clipped_end = min(absolute_end, occurrence_end)"
+      },
+      {
+        "line": 313,
+        "text": "    visible_duration = max(0.0, clipped_end - absolute_at)"
+      },
+      {
+        "line": 323,
+        "text": "        clip[\"hold\"] = visible_duration * child_speed"
+      },
+      {
+        "line": 326,
+        "text": "        clip[\"to\"] = source_from + visible_duration * child_speed"
+      }
+    ]
+  }
+}

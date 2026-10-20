@@ -1,0 +1,124 @@
+PREPARATION COMPLETE; STAGE BLOCKED; CAPTURE NOT GRANTED OR RUN.
+
+All paths below are absolute. No product/tests or suite configuration was edited.
+This uses original MAINa411 Root/generator/packs and locked6 (29 members), with
+the immutable SOURCE READY raw closure. It never uses the previous controller.
+Binding is an explicitly labelled static-public executable analog, NOT a live
+InvocationAssetServer/Runtime/App/admission path or owner film.
+
+Safe offline command (no extraction, browser, listener, renderer, or request):
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-controller-controller.py preflight
+
+Current result: exit1 STAGE_BLOCKED. Reserve: 10,737,418,240 bytes (10GiB).
+Additional estimated allocation/headroom: 2,283,658,796 bytes, including the
+94,514,732-byte source, 16MiB filesystem allowance, 2GiB bundle/private caches/
+browser/temp allowance, and 24,883,200 raw RGBA PNG bytes. Before extraction,
+free disk must be >=13,021,077,036 bytes (~12.127GiB); no override exists.
+The 2GiB private-work allowance is conservative and has NOT been measured by
+bundling. Every render step and a 500ms process watchdog enforce the 10GiB floor.
+Three flat 1920x1080 PNGs at frames90,105,119 are estimated <1MiB total for this
+solid image; this is an estimate, not a size/opacity/pixel result. No fourth PNG.
+
+MANAGER-ONLY NEXT STEP, AFTER resource cleanup and review (NOT EXECUTED):
+
+Add exactly this line to the existing central tests/suites.conf, and put the
+same single line in the manager-owned CAPTURE-GRANT.txt named below. The worker
+does not create either the suite or the grant. This is the proposed exact
+grant contract, not evidence that a manager has granted capture.
+
+agent e2e-viewing-main6-image-cap-three-stills /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-controller-controller.py capture
+
+Grant file:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-capture-controller/CAPTURE-GRANT.txt
+
+ONLY AFTER the manager's exact grant and successful resource preflight, request
+the named central suite ONCE (NOT a full). These commands are NOT permission:
+
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test vw-m3-main-cap-capture-controller e2e-viewing-main6-image-cap-three-stills) && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"
+
+If wait exits124, wait on the SAME R; never resubmit. The controller also checks
+the active service snapshot/request/status and takes its own nonblocking lock.
+An exclusive CAPTURE-STARTED marker prevents automatic retries. If a run fails,
+the manager reviews the evidence before arranging any new attempt. The marker
+is never a grant. No local command may run the render.mjs file.
+
+Central sequence:
+1. Require exact manager grant, exact registered suite and active service request.
+2. Verify immutable source/freeze/fixtures and all29 original+generated package
+   members, original MAIN git bytes, full physical SSR graph and six peers/tools.
+3. Enforce reserve PLUS headroom BEFORE extraction into the worker's own REAL
+   capture-stage/main. Run ORIGINAL generator against ORIGINAL packs, and prove
+   all source/package bytes still match. No new package build/backend/install.
+4. Replay the ORIGINAL normal managed resolver/projector/materializer/serializer
+   from the raw hold5 closure. Require byte equality for ALL SEVEN outputs:
+   main-projected-config.json, main-managed-registry.json,
+   main-materialized-timeline.json, main-serialized-timeline.json,
+   main-props-template.json, main-props-static-analog.json, trace.json.
+   A source-worker replay pass alone never substitutes for this consumer replay.
+5. Copy only image.png to private MAIN public/image-cap.png. Use prepared props
+   unchanged, whose sole managed-URL binding is the explicit static-public analog.
+   Bind read-only peer package leaf links under OWN REAL node_modules/scopes;
+   keep the private locked6 package and real private .cache/webpack parent.
+   No shared .cache/.bin/scope link is installed. Existing Node20.19.4,
+   bundler/renderer/Remotion4.0.509, React18.3.1, and headless-shell are reused.
+6. Use ORIGINAL index/Root and original remotionPrimitiveAliasesFor, select normal
+   TimelineComposition, and require ACTUAL metadata1920x1080/fps30/duration120
+   before any PNG. Never clamp frame120 to119. Render exactly90,105,119.
+7. Retain each original PNG/SHA256/byte count and actual metadata. Measure RGB
+   against the actual frame90 full-opacity control and unchanged MAIN background
+   #050814, using (frameRGB-bgRGB)/(control90RGB-bgRGB), 25points*3channels.
+   Record full-image RGBA extrema and actual sampled RGBA separately. Alpha255
+   does NOT imply layer opacity1. Background is source-defined, not a separately
+   captured background frame. No golden or expected opacity1 is silently chosen.
+8. Always verify source/fixture/full graph/six-peer postflight and record validity;
+   mismatch invalidates output. Remove only our newly allocated staging/bundle/
+   cache/temp tree. Keep flat original PNGs, metadata, replay/generator/capture
+   logs and postflight/measurement evidence under this absolute handoff prefix.
+
+SOURCE PREDICTION, NOT PIXELS: MAIN projects hold5 to hold4, so unchanged locked6
+predicts opacities1,0.5,1/30 at90,105,119. This contradicts suggested raw-clock1
+at105. The controller measures and reports; the Agent/compiler owner decides the
+golden after actual capture. No App/unified parity, audio or Gate6 claim.
+
+Static checks (executed successfully):
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-controller-controller.py
+/tmp/vw-m3-agent-gate-node20.19.4/bin/node --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-controller-render.mjs
+git -C /home/user/work/wt/vw-m3-main-cap-capture-controller diff --check
+git -C /home/user/work/wt/vw-m3-main-cap-capture-controller status --porcelain=v1 --untracked-files=all
+
+Exact offline guard self-check (executed successfully; no staging/render):
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import importlib.util
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-controller-controller.py')
+spec=importlib.util.spec_from_file_location('main_cap_controller',p)
+m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+assert not (m.OWN/'capture-stage').exists()
+for remaining in (0,m.HEADROOM+m.PNG_RAW):
+ with patch.object(m.shutil,'disk_usage',return_value=SimpleNamespace(free=m.FLOOR+remaining-1)),patch.object(m,'quiet',return_value=False):
+  try:m.disk(remaining)
+  except RuntimeError as exc:assert 'disk BLOCKED' in str(exc)
+  else:raise AssertionError('floor/headroom bypass')
+ with patch.object(m.shutil,'disk_usage',return_value=SimpleNamespace(free=m.FLOOR+remaining)),patch.object(m,'quiet',return_value=False):
+  assert m.disk(remaining)==m.FLOOR+remaining
+with patch.object(m.shutil,'disk_usage',return_value=SimpleNamespace(free=100*m.FLOOR)),patch.object(m,'quiet',return_value=True):
+ try:m.disk(0)
+ except RuntimeError as exc:assert 'QUIET' in str(exc)
+ else:raise AssertionError('QUIET bypass')
+with patch.object(m,'GRANT',m.OWN/'ABSENT-SELF-CHECK-GRANT'):
+ try:m.central_grant()
+ except RuntimeError as exc:assert 'exact grant missing' in str(exc)
+ else:raise AssertionError('missing grant accepted')
+with patch.object(m,'disk',side_effect=RuntimeError('disk BLOCKED: self-check')),patch.object(m.subprocess,'Popen',side_effect=AssertionError('spawned')):
+ try:m.source_stage(m.OWN/'UNCREATED-SELF-CHECK-STAGE',{'unpacked_bytes':100})
+ except RuntimeError as exc:assert 'disk BLOCKED' in str(exc)
+ else:raise AssertionError('disk-blocked staging accepted')
+assert not (m.OWN/'UNCREATED-SELF-CHECK-STAGE').exists()
+assert not (m.OWN/'capture-stage').exists()
+print('PASS: floor/headroom lower bounds and exact boundaries (4); QUIET (1); missing grant (1); no allocation/spawn under disk block (1). No capture/stage created.')
+PY

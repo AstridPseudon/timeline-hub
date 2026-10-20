@@ -1,0 +1,57 @@
+{
+  "version": "1.0.8",
+  "status": "HELD_PENDING_INDEPENDENT_AND_AGENT_POLICY_REVIEW",
+  "source_archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-scanner108-codec-repair-1.0.8.tgz",
+  "source_sha256": "e87e88705679e320bc83b6c72dff31fe23bbd0122981f314b5890411d6449cfb",
+  "members": {
+    "README.md": {
+      "bytes": 7033,
+      "sha256": "72f5c5ccb029ff6a9fe815c14ee2334e7913432eb9a4a03187eb43bef245c037",
+      "flat_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-scanner108-codec-repair-1.0.8-README.md"
+    },
+    "owner_film_cliplook_scan.py": {
+      "bytes": 38074,
+      "sha256": "66fadbd930d8af88ceb06e5a40b9e4cb4a8a90d42175b6b630309eec72aeffed",
+      "flat_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-scanner108-codec-repair-1.0.8-scanner.py"
+    },
+    "tests/conftest.py": {
+      "bytes": 385,
+      "sha256": "ea7d84927b97d78e2eb17fa87180ce2b7591f2c53645d1799b99f2c34197e430",
+      "flat_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-scanner108-codec-repair-1.0.8-conftest.py"
+    },
+    "tests/test_owner_film_cliplook_scan.py": {
+      "bytes": 36197,
+      "sha256": "5160c0d2c6f8728125383cde832a6a9e59297bab952ec8263d98266261e7baf4",
+      "flat_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-scanner108-codec-repair-1.0.8-tests.py"
+    }
+  },
+  "archives": {
+    "tgz": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-scanner108-codec-repair-1.0.8.tgz",
+      "bytes": 18116,
+      "sha256": "e87e88705679e320bc83b6c72dff31fe23bbd0122981f314b5890411d6449cfb"
+    }
+  },
+  "based_on": {
+    "version": "1.0.7",
+    "archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/owner-film-viewing-tools-v1.0.7.tgz",
+    "sha256": "baf2fd28f96670b02e4dc63e21bc680e2ab0339a97671515d79ab91f9cbd3e27"
+  },
+  "agent_root": "/home/user/work/wt/vw-m4-scanner108-codec-repair",
+  "agent_head": "86405964ecb713ad42a375f9de7960b3f9dc259b",
+  "tests": {
+    "preserved_1_0_7_tests": 40,
+    "added_regression_cases": 84,
+    "green_package": "124 passed",
+    "agent_codec": "102 passed"
+  },
+  "deterministic_repeat": true,
+  "archive_policy": "4 regular USTAR members, sorted paths, mode 0644, uid/gid/mtime 0, empty owner names; gzip filename empty, mtime 0, level 9",
+  "not_verified": [
+    "independent review",
+    "Agent canonical-policy review",
+    "owner-film data",
+    "macOS",
+    "full Agent suite"
+  ]
+}
