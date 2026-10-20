@@ -624,3 +624,5 @@ APPROVED, bounded, AFTER Agent/Viewing confirm the 5 s / 4 s / fade golden vecto
 Worker stopping instead of inferring approval was the correct behaviour.
 
 ## 11:08Z — orchestrator: main image-cap reference: forwarded to Agent and App (hold the opacity-1 expectations). Your lead is being asked to restore disk to 10 GiB or more for the capture. Then ONE central few-still reference capture, after a fresh preflight.
+
+## 11:17Z — orchestrator: FYI, a current-source Remotion project (/home/user/work/runtimes/agent-remotion-current) is being provisioned on MAIN for the real audio export. Agent's integrated remotion/ contains the source helpers that the old copied runtimes lack. If your real export runs on main's test service, use the env I post.
