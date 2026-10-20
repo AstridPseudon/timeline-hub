@@ -46,6 +46,23 @@ def _validate_finite_json(value):
             _validate_finite_json(child)
 
 
+DOCUMENT_PIN = ("document_id", "version", "content_digest")
+# Verified reads under /v1/projects/{project_id}/: path tail -> (exact query
+# field sets, Runtime method, error message for any other query shape).
+VERIFIED_READS = {
+    ("media-selection",): (
+        ({"asset", "generation_id", "variant_id"}, {"association_id", "object_id", "version"}),
+        "get_project_media_selection", "exactly one complete media selection selector form is required"),
+    ("media-selection", "verified"): (
+        ({"asset", "generation_id", "variant_id", "object_id", "catalog_digest"},),
+        "get_project_verified_media", "all five exact media selection fields are required"),
+    ("document-inputs", "verified"): (
+        ({*DOCUMENT_PIN},), "get_project_verified_document", "all three exact document pin fields are required"),
+    ("document-objects", "verified"): (
+        ({*DOCUMENT_PIN, "object_id"},), "get_project_verified_document_object", "all four exact document object fields are required"),
+}
+
+
 class RuntimeHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
@@ -517,12 +534,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 path[2], path[4], cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0],
                 authorize=authorize,
             ))
-        if path[:2] == ["v1", "projects"] and path[3:] in (
-                ["media-selection"], ["media-selection", "verified"], ["document-objects", "verified"],
-                ["document-inputs", "verified"]) and method == "GET":
-            verified = path[3:] == ["media-selection", "verified"]
-            document = path[3] == "document-objects"
-            source = path[3] == "document-inputs"
+        route = VERIFIED_READS.get(tuple(path[3:]))
+        if path[:2] == ["v1", "projects"] and route is not None and method == "GET":
+            forms, read, message = route
+            document = path[3] in ("document-inputs", "document-objects")
             identity = self._identity("projects:read")
             publisher = identity["actor"]
             def authorize():
@@ -535,38 +550,20 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 query = parse_qs(raw_query, keep_blank_values=True, strict_parsing=True, errors="strict")
             except (ValueError, UnicodeError) as exc:
                 raise ProtocolError("invalid media selection query encoding") from exc
-            if document:
-                forms = ({"document_id", "version", "content_digest", "object_id"},)
-            elif source:
-                forms = ({"document_id", "version", "content_digest"},)
-            elif verified:
-                forms = ({"asset", "generation_id", "variant_id", "object_id", "catalog_digest"},)
-            else:
-                forms = ({"asset", "generation_id", "variant_id"}, {"association_id", "object_id", "version"})
             if set(query) not in forms or any(len(values) != 1 or not values[0].strip() for values in query.values()):
-                raise ProtocolError("all four exact document object fields are required" if document
-                                    else "all three exact document pin fields are required" if source
-                                    else "all five exact media selection fields are required" if verified
-                                    else "exactly one complete media selection selector form is required")
+                raise ProtocolError(message)
             if "version" in query:
                 if not re.fullmatch(r"[1-9][0-9]*", query["version"][0]):
-                    raise ProtocolError("document version must be a positive integer" if document or source
+                    raise ProtocolError("document version must be a positive integer" if document
                                         else "output version must be a positive integer")
                 query["version"] = [int(query["version"][0])]
-            if source:
-                return self._send(200, self.runtime.get_project_verified_document(
-                    path[2], {key: query[key][0] for key in ("document_id", "version", "content_digest")},
-                    authorize=authorize,
-                ))
+            selector = {key: values[0] for key, values in query.items()}
             if document:
-                return self._send(200, self.runtime.get_project_verified_document_object(
-                    path[2], {key: query[key][0] for key in ("document_id", "version", "content_digest")},
-                    query["object_id"][0], authorize=authorize,
-                ))
-            read = self.runtime.get_project_verified_media if verified else self.runtime.get_project_media_selection
-            return self._send(200, read(
-                path[2], {key: values[0] for key, values in query.items()}, authorize=authorize,
-            ))
+                pin = {key: selector[key] for key in DOCUMENT_PIN}
+                args = (pin, selector["object_id"]) if path[3] == "document-objects" else (pin,)
+            else:
+                args = (selector,)
+            return self._send(200, getattr(self.runtime, read)(path[2], *args, authorize=authorize))
         if len(path) == 4 and path[:2] == ["v1", "projects"] and path[3] == "timeline-documents" and method == "POST":
             self._identity("projects:write")
             raise RetiredRouteError(
