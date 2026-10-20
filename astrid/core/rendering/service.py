@@ -1069,6 +1069,11 @@ class RenderService:
         concrete backend identities.
         """
 
+        extent_key = "astrid_composition_duration_frames"
+        if extent_key in request.metadata:
+            request = replace(request, metadata={
+                key: value for key, value in request.metadata.items() if key != extent_key
+            })
         supports_windows = candidate.manifest.capabilities.get("supports_windows") is not False
         if segment.layer is None and supports_windows:
             return request, {}
@@ -1090,6 +1095,18 @@ class RenderService:
                 details={"timeline_path": str(timeline_path)},
             )
         if supports_windows and segment.layer is not None:
+            from astrid.core.timeline.banodoco_composer import Timeline
+            from astrid.core.timeline.duration import timeline_render_duration_frames
+
+            # Measure the original render view before isolating tracks. Source
+            # references do not contribute; an empty layer still spans this clock.
+            render_view = Timeline.from_json_data(timeline_data).for_render().to_json_data()
+            total = timeline_render_duration_frames(
+                render_view, segment.window.fps_rational[0] / segment.window.fps_rational[1]
+            )
+            if segment.window.end_frame > total:
+                raise ValueError("planned window extends beyond the full composition")
+            request = replace(request, metadata={**request.metadata, extent_key: str(total)})
             # Isolate the layer without restarting fades, media or animation.
             # Keep all its original clips, including overlap/transition peers.
             allowed_tracks = set(segment.layer.tracks)

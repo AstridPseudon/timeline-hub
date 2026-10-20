@@ -137,7 +137,9 @@ def normal_run(tmp_path, monkeypatch, request):
     monkeypatch.setattr(remotion, "_validate_project_dir", lambda *a: runtime)
     monkeypatch.setattr(remotion, "_effective_registry_state", lambda *a: {"hash": "fixture"})
     monkeypatch.setattr(remotion, "_canonical_profile", lambda *a: _profile())
-    monkeypatch.setattr(remotion, "_resolved_theme_for_render", lambda *a: {"id": "banodoco-default"})
+    monkeypatch.setattr(remotion, "_resolved_theme_for_render", lambda *a: {
+        "id": "banodoco-default", "visual": {"canvas": {"width": 320, "height": 180, "fps": 30000 / 1001}},
+    })
     monkeypatch.setattr(remotion, "_stage_effect_assets_for_timeline", lambda *a, **k: {"effects": []})
     monkeypatch.setattr(remotion, "_available_remotion_port", lambda: 32101)
     state = SimpleNamespace(paths=[], events=[], props=None, consume=lambda: None,
@@ -196,11 +198,13 @@ def normal_run(tmp_path, monkeypatch, request):
             project_dir=project, composition_id="TimelineComposition", theme_path=None,
             min_free_gb=None, materialized_objects=state.materialized_objects, staging_parent=tmp_path,
             window=render_request.window,
+            composition_duration_frames=remotion._composition_duration_from_request(render_request),
         )
 
     state.execute = execute
     state.timeline_path = timeline_path
     state.registry = registry
+    state.composition_duration_frames = remotion._composition_duration_from_request(render_request)
     yield state
     assert timeline_path.read_bytes() == original
     assert not list(tmp_path.glob("astrid-render-assets-*"))
@@ -214,6 +218,8 @@ def test_actual_normal_props_prepare_native_source_without_baking_scalar_gain(no
     def consume():
         props = state.props
         assert "compiledTransitions" not in props
+        assert props.get("astridCompositionDurationInFrames") == state.composition_duration_frames
+        assert props["theme"]["visual"]["canvas"]["fps"] == 30000 / 1001
         raw = json.loads(state.timeline_path.read_text())
         assert props["timeline"]["tracks"] == raw["tracks"]
         for expected, actual in zip(raw["clips"], props["timeline"]["clips"], strict=True):
