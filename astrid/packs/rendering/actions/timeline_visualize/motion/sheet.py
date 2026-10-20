@@ -47,10 +47,11 @@ def select_cut(snapshot: Mapping[str, Any], selector: Any, fps: float) -> dict[s
 
 
 def plan_scene_frames(
-    cuts: Sequence[Mapping[str, Any]], elements: Sequence[model.Element], fps: float, *,
-    pixel_frames: Sequence[int] = (),
+    cuts: Sequence[Mapping[str, Any]], elements: Sequence[model.Element], fps: Fraction | float, *,
+    pixel_frames: Sequence[int] = (), curve_window: tuple[float, float] | None = None,
+    composition: bool = True,
 ) -> list[int]:
-    """Reserve exact composition-check samples, with at most 60 extra metadata queries."""
+    """Reserve check samples first, then curves, with at most 60 extra metadata frames."""
     from .lint import _sample_times
 
     if isinstance(fps, bool) or not math.isfinite(fps) or fps <= 0:
@@ -60,7 +61,7 @@ def plan_scene_frames(
         raise ValueError("pixel frames must be nonnegative safe integers")
     pixels = set(pixel_frames)
     chosen: dict[int, None] = {}
-    for cut in cuts:
+    for cut in cuts if composition else ():
         start, end = float(cut["start"]), float(cut["end"])
         if not math.isfinite(start) or not math.isfinite(end) or not 0 <= start < end:
             raise ValueError("scene sampling requires a finite nonnegative cut window")
@@ -73,7 +74,32 @@ def plan_scene_frames(
                 chosen.setdefault(frame, None)
                 if len(chosen) == SCENE_FRAME_BUDGET:
                     return list(chosen)
+    if curve_window is not None:
+        for frame in curve_sample_frames(curve_window, fps):
+            if frame not in pixels:
+                chosen.setdefault(frame, None)
+                if len(chosen) == SCENE_FRAME_BUDGET:
+                    break
     return list(chosen)
+
+
+def curve_sample_frames(window: tuple[float, float], fps: Fraction | float) -> list[int]:
+    """At most 60 evenly spaced samples in the half-open panel window."""
+    if isinstance(fps, bool) or not math.isfinite(fps) or fps <= 0:
+        raise ValueError("curve sampling requires a positive finite fps")
+    if not all(math.isfinite(t) for t in window) or not 0 <= window[0] < window[1]:
+        raise ValueError("curve sampling requires a finite nonnegative window")
+    rate = fps if isinstance(fps, Fraction) else Fraction(str(fps))
+    # Match the filmstrip's recovery of JSON float noise at rational frame boundaries.
+    start, end = (Fraction(str(t)).limit_denominator(1_000_000_000) if isinstance(t, float)
+                  else Fraction(str(t)) for t in window)
+    first, stop = max(0, math.ceil(start * rate)), math.ceil(end * rate)
+    if stop > 2**53:
+        raise ValueError("curve sample frames must be nonnegative safe integers")
+    count = min(SCENE_FRAME_BUDGET, max(0, stop - first))
+    if count < 2:
+        return [first] if count else []
+    return [first + i * (stop - first - 1) // (count - 1) for i in range(count)]
 
 
 def plan_motion_frames(
@@ -186,6 +212,9 @@ def build_context(
     ctx.shared["scene_frames"] = dict(scene_frames or {})
     ctx.shared["scene_occlusions"] = dict(scene_occlusions or {})
     ctx.shared["scene_clip_identities"] = dict(scene_clip_identities or {})
+    ctx.shared["fps_rational"] = snapshot.get("fps_rational") or float(fps).as_integer_ratio()
+    if scene_frames is not None:
+        ctx.shared["curve_frames"] = curve_sample_frames(window, Fraction(*ctx.shared["fps_rational"]))
     if scene_unavailable or not scene_frames:
         ctx.shared["scene_unavailable"] = scene_unavailable or "exact captured scene facts unavailable"
     if "labels" in layer_names:
