@@ -1,8 +1,14 @@
 """Formatter positives with supplied scene spans; these do not certify a renderer/source."""
+import hashlib
+import io
+import json
+import zipfile
+from copy import deepcopy
 from types import SimpleNamespace
 
 import pytest
 
+from astrid.sdk import timeline_filmstrip
 from astrid.sdk.timeline_checkout import Checkout
 from tests.sdk.test_coverage_empty_cut import _empty_cut_bundle
 from tests.sdk.test_timeline_reflow_golden import film
@@ -89,3 +95,176 @@ def test_scene_advice_does_not_erase_structural_invalidity(monkeypatch):
     report = checkout.check()
     assert not report.valid
     assert any('invalid:' in line for line in report.problems)
+
+
+def _scene_context():
+    return {
+        'mode': 'filmstrip',
+        'capture_identity': 'capture-1',
+        'video_digest': 'video-1',
+        'video_object_id': 'object-1',
+        'managed_object_reference': 'managed-1',
+        'capture_snapshot': {
+            'duration_frames': 2,
+            'video_digest': 'capture-1',
+            'timeline_id': 'timeline-1',
+            'metadata': {
+                'capture_identity': 'capture-1',
+                'capture_authority': {'parent_revision_id': 'r1'},
+                'scene_clips': {'compiled-1': {'address': 'c01.field'}},
+            },
+        },
+    }
+
+
+def _scene_result(context, *, answers=None, scene_clips=None, label=None, provenance=True):
+    snapshot = context['capture_snapshot']
+    scene = {
+        'answers': answers if answers is not None else [
+            {'frame': 0, 'coverage': 'COVERED', 'content': 'CONTENT',
+             'layers': [{'clipId': 'compiled-1', 'bounds_source': 'declared'}], 'findings': []},
+            {'frame': 1, 'coverage': 'COVERED', 'content': 'CONTENT',
+             'layers': [{'clipId': 'compiled-1', 'bounds_source': 'declared'}], 'findings': []},
+        ],
+        'scene_clips': scene_clips if scene_clips is not None else snapshot['metadata']['scene_clips'],
+        'snapshot_label': label if label is not None else {
+            'status': 'committed', 'label': 'committed revision r1',
+            'actual_revision_id': 'r1', 'base_revision_id': None,
+        },
+    }
+    scene_bytes = json.dumps(scene, sort_keys=True, separators=(',', ':')).encode()
+    manifest = {
+        'kind': 'timeline_filmstrip',
+        'entrypoints': {'scene': 'scene-answers.json'},
+        'outputs': [{
+            'path': 'scene-answers.json',
+            'content_hash': 'sha256:' + hashlib.sha256(scene_bytes).hexdigest(),
+            'bytes': len(scene_bytes),
+        }],
+    }
+    bundle_buffer = io.BytesIO()
+    with zipfile.ZipFile(bundle_buffer, 'w', zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr('manifest.json', json.dumps(manifest))
+        archive.writestr('scene-answers.json', scene_bytes)
+    bundle = bundle_buffer.getvalue()
+    digest = 'sha256:' + hashlib.sha256(bundle).hexdigest()
+    managed = {
+        'output_port': 'filmstrip_bundle', 'role': 'result', 'digest': digest,
+        'size': len(bundle),
+    }
+    if provenance:
+        managed['provenance'] = {'video_digest': 'capture-1', 'timeline_id': 'timeline-1'}
+    result = {
+        'ok': True,
+        'outputs': {
+            'managed_outputs': [managed],
+            'artifacts': [{'name': 'filmstrip_bundle', 'digest': digest, 'size': len(bundle)}],
+        },
+    }
+    client = SimpleNamespace(media=SimpleNamespace(read_bytes=lambda object_id: bundle))
+    return result, client
+
+
+def test_private_scene_only_request_reuses_managed_capture_without_png_or_caller_authority(monkeypatch):
+    context = _scene_context()
+    seen = {}
+    def prepare(inputs, **kwargs):
+        seen['inputs'] = dict(inputs)
+        return context
+
+    monkeypatch.setattr(timeline_filmstrip, 'prepare_filmstrip', prepare)
+
+    request, prepared = timeline_filmstrip._scene_only_request(
+        {'timeline_ref': 'tl'}, project='project', client=object(),
+    )
+
+    assert prepared is context
+    assert request['mode'] == 'scene_only'
+    assert request['formats'] == ['md']
+    assert request['composed_capture'] is True and request['include_media'] is False
+    assert not any(key in request for key in (
+        'source_ref', 'certification', 'authority_context', 'provider', 'store', 'endpoint',
+    ))
+    assert seen['inputs'] == request
+
+
+def test_private_scene_only_stale_result_is_advisory_unavailable():
+    context = _scene_context()
+    result, client = _scene_result(context, label={
+        'status': 'committed', 'label': 'committed revision old',
+        'actual_revision_id': 'old', 'base_revision_id': None,
+    })
+
+    spans = timeline_filmstrip._scene_only_spans(result, context, client=client)
+
+    assert len(spans) == 1
+    assert spans[0].cls == 'UNAVAILABLE'
+    assert 'scene snapshot label unavailable' in spans[0].findings
+
+
+def test_private_scene_only_known_result_joins_compiled_addresses_and_findings():
+    context = _scene_context()
+    result, client = _scene_result(context)
+
+    spans = timeline_filmstrip._scene_only_spans(result, context, client=client)
+
+    assert [(span.start_frame, span.end_frame, span.cls, span.content, span.clips) for span in spans] == [
+        (0, 2, 'COVERED', 'CONTENT', ('c01.field',)),
+    ]
+
+
+def test_private_scene_only_missing_managed_source_binding_is_unavailable():
+    context = _scene_context()
+    result, client = _scene_result(context, provenance=False)
+
+    spans = timeline_filmstrip._scene_only_spans(result, context, client=client)
+
+    assert spans[0].cls == 'UNAVAILABLE'
+    assert 'scene source binding unavailable' in spans[0].findings
+
+
+def test_private_scene_only_candidate_label_is_bound_to_prepared_base():
+    context = _scene_context()
+    context = deepcopy(context)
+    context['capture_snapshot']['metadata']['capture_authority']['working_copy'] = {
+        'base_parent': {'revision_id': 'base-r1'},
+    }
+    result, client = _scene_result(context, label={
+        'status': 'candidate',
+        'label': 'unsaved candidate based on committed revision base-r1',
+        'actual_revision_id': None,
+        'base_revision_id': 'base-r1',
+    })
+
+    spans = timeline_filmstrip._scene_only_spans(result, context, client=client)
+
+    assert spans[0].cls == 'COVERED'
+
+
+def test_private_scene_only_invokes_existing_managed_visualization(monkeypatch):
+    context = _scene_context()
+    calls = []
+
+    class Client:
+        media = SimpleNamespace()
+
+    def invoke_result(capability, **kwargs):
+        calls.append((capability, kwargs))
+        result, artifact_client = _scene_result(context)
+        kwargs['client'].media.read_bytes = artifact_client.media.read_bytes
+        return result
+
+    from astrid.sdk import invocation
+    monkeypatch.setattr(invocation, '_invoke_internal_result', invoke_result)
+
+    monkeypatch.setattr(timeline_filmstrip, 'prepare_filmstrip', lambda inputs, **kwargs: context)
+    spans, _prepared = timeline_filmstrip._invoke_scene_only(
+        {'timeline_ref': 'tl'}, project='project', client=Client(),
+    )
+
+    assert calls[0][0] == 'rendering.timeline_visualize'
+    assert calls[0][1]['kind'] == 'executor'
+    assert calls[0][1]['wait'] is True
+    assert calls[0][1]['read_managed_outputs'] is True
+    assert calls[0][1]['inputs']['mode'] == 'scene_only'
+    assert spans[0].clips == ('c01.field',)
