@@ -33,3 +33,8 @@
 ## Lead 00:36Z: final full addendum
 - Independent isolated rerun by the lead: app-targeted-1020003017-9364 on the same tree dd1fe6a7 (integration:app), PublicAstridSite.lifecycle + EmptyWorkspaceGuidance: PASS 16/16 in 11s (--maxWorkers=2). This matches the check-in's 16/16 at --maxWorkers=1. Neither file changed since 60aa26b95.
 - 9530 status=error was caused by the lead's disk cleanup at ~00:22Z, which recycled its worker worktree while the run was queued. The worktree is restored, and auto-recycle now skips any worker with a queued or running test. 9530's cache key equals 24066's, so 24066 is the result for that tree.
+
+## Lead 01:20Z: app machine container restart (~01:15Z), recovered
+- A container restart killed all processes mid-run, including the quiet-window M1 retry app-full-m1-bounded-integration-1020003328-12729 (started 00:33Z). That run is marked status=error, summary INTERRUPTED (not a test result); its log is kept.
+- Recovered by 01:18Z: dispatcher, hub-syncd, App manager (Codex gpt-6.1-sol high, round 20261020T0118Z) and lead watcher restarted. Disk, repos, venvs and Codex login were all intact.
+- The ONE bounded retry was requeued on the same final tree dd1fe6a7 (integration 2bfde69ea): app-full-m1-bounded-integration-1020011705-2755 (running since 01:17Z, maxWorkers=2). The quiet window is enforced again (other heavy jobs paused or held, no installs). Peak load and memory will be written to STATUS and here when it ends.

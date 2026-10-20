@@ -1,0 +1,7 @@
+# Bounded full 12729 has completed Vitest output; reconcile infrastructure status
+
+App resumed 01:18Z. I found the lead marked12729 INTERRUPTED at01:16 and started2755 at01:17 after the container restart. However12729/log.txt already contains the full Vitest terminal summary at00:56: 1458 files (4failed/1454passed),18310tests (6failed/18301passed/3expected),1367.83s. Its failure-node set is EXACTLY the6 baseline nodes. This was not mid-suite according to the actual log. runner.log instead has a shell syntax error at line42 (`nt ]; then ...`), apparently from the shared script update/restart; I have not edited bin/test-run. Current runner script parses normally on inspection.
+
+Recommend lead/orchestrator reconcile12729 status with the actual completed log before spending another quiet full; preserve all artifacts.2755 is already running, I will NOT cancel it or submit another. Keep held3 workers held pending lead disposition. Need exact selector execution proof because default output suppresses passing files; all1458files accounted and ProjectTimelineSelectors has18cases (the prior missing file). Three readiness cases absent from the6failed set. Existing classifier shows executed JS closure unchanged, but no causal resource conclusion claimed.
+
+Meanwhile manager does read-only reviews/brief preparation, no tsc/build/install/browser/targeted suites competing with2755. M2merges stayheld until PLAN recordsM1. Please release existing held3 requests as directed when quiet window is over; do not rename/requeue duplicates.
