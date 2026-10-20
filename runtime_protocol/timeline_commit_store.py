@@ -13,7 +13,7 @@ import json
 import math
 import re
 
-from .errors import ProtocolError, ValidationError
+from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
 from .util import canonical_json, new_id, now
 
@@ -281,7 +281,7 @@ class TimelineCommitStore:
 
     def _verify_inputs(self, document):
         for pin in document["dependency_manifest"]["documents"]:
-            row = self.conn.execute("SELECT c.content_json, c.content_size FROM timeline_document_input_contents c "
+            row = self.conn.execute("SELECT c.content_json, c.content_size, b.kind FROM timeline_document_input_contents c "
                 "JOIN timeline_document_input_bindings b ON b.content_digest=c.content_digest "
                 "JOIN timeline_document_input_links l ON l.project_id=b.project_id AND l.document_id=b.document_id "
                 "AND l.document_version=b.document_version AND l.content_digest=b.content_digest "
@@ -291,6 +291,9 @@ class TimelineCommitStore:
                  pin["document_id"], pin["version"], pin["content_digest"])).fetchone()
             if row is None or digest(json.loads(row["content_json"])) != pin["content_digest"] or len(row["content_json"].encode()) != row["content_size"]:
                 reject("dependency_unavailable", "retained input is missing or corrupt")
+            from .timeline_commit_inputs import PROJECT_PACK_KIND, validate_pack_snapshot_objects
+            if row["kind"] == PROJECT_PACK_KIND:
+                validate_pack_snapshot_objects(self.conn, document["project_id"], json.loads(row["content_json"]))
 
     def integrity_errors(self):
         errors = []
@@ -393,9 +396,15 @@ class TimelineCommitStore:
         return {"revision_id": row["id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"])}
 
     def _validate_closure(self, document):
+        from .visual_seam import parent_clips
+
         project_id, timeline_id = document["project_id"], document["timeline_id"]
         self._membership(project_id, timeline_id)
         parent = document["parent_revision"]
+        try:
+            parent_clips(parent["payload"])
+        except (ConflictError, ValidationError) as exc:
+            reject("invalid_closure", str(exc), status=422)
         shots, internals = document["shot_revisions"], document["internal_timeline_revisions"]
         manifest = document["dependency_manifest"]
         for clip in parent["payload"]["clips"]:
@@ -417,6 +426,12 @@ class TimelineCommitStore:
                     if existing["commit_manifest_json"] != canonical_json(manifest):
                         reject("revision_identity_mismatch", "revision dependency closure changed")
                 if table == "internal_timeline_revisions":
+                    payload = image["payload"]
+                    nested_fields = {"occurrences", "occurrence_records", "parent_composition", "nested_composition",
+                                     "occurrence_id", "shot_revision_id", "parent_revision_id", "composition_revision_id"}
+                    # Only authored structure is reserved; params and provenance remain opaque.
+                    if set(payload) & nested_fields or any(set(clip) & nested_fields for clip in payload.get("clips", [])):
+                        reject("invalid_closure", "internal timeline cannot contain a nested composition", status=422)
                     owner = self.conn.execute("SELECT project_id FROM timelines WHERE id=?", (owner_id,)).fetchone()
                     shot_id = owner_id.removeprefix("shot:") if owner_id.startswith("shot:") else None
                     if owner is None and shot_id:

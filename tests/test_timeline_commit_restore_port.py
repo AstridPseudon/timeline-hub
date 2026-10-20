@@ -1,4 +1,4 @@
-"""Restore admission/persistence with main seeds and an explicit prepared fixture.
+"""Restore admission/persistence with captured sources and a prepared fixture.
 
 This provider tests Runtime's boundary, not Agent restore semantics/inverses;
 those run in the companion actual-provider integration suite.
@@ -15,28 +15,55 @@ from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_port import RequestCommitPort, digest, route_path
 from runtime_protocol.util import canonical_json
-from test_shot_composition_runtime import _publication, _publish_with_explicit_media, _service
+from baseline_fixture import load_baseline_fixture
 from test_timeline_commit_baseline import _disable_renderer
 from test_timeline_commit_port import PreparedProvider, prepared, request, rows
+from test_timeline_projection_occupancy import accept, proposal, refresh
+
+
+def _source(tmp_path):
+    service, project_id, (first,) = load_baseline_fixture(tmp_path, "explicit-media")
+    service.test_project = project_id
+    return service, first
 
 
 def _seed(tmp_path):
-    service, project_id = _service(tmp_path)
-    first, _, _ = _publish_with_explicit_media(service, project_id, parent_revision_id="source-A")
-    later = _publication(project_id, expected_head="source-A", parent_revision_id="current-B",
-                         shot_revision_id="shot-B", config={"opaque": {"current": True}})
-    later["internal_timeline_revisions"][0]["revision_id"] = "internal-B"
-    later["internal_timeline_revisions"][0]["payload"]["opaque"] = {"current": "B"}
-    later["shot_revisions"][0]["internal_timeline_revision_id"] = "internal-B"
-    later["shot_revisions"][0]["payload"]["metadata"] = {"title": "current B"}
-    second = service.publish_parent_composition(project_id, "main", later, idempotency_key="publish-B")
-    service.test_project = project_id
+    # Only setup uses host acceptance; measured restores use the registered port.
+    service, first = _source(tmp_path)
+    project_id = service.test_project
+    commits, _ = service._timeline_commits()
+    commits.install_verified_baseline(project_id, "main", authorize=lambda: None)
+    pair = proposal(service, commits, project_id, "main", "current-B")
+    document = pair[1]["canonical_document"]
+    document["parent_revision"]["payload"]["config"] = {"opaque": {"current": True}}
+    internal = document["internal_timeline_revisions"][0]
+    internal["revision_id"] = "internal-B"
+    internal["payload"]["opaque"] = {"current": "B"}
+    internal["content_digest"] = digest(internal["payload"])
+    shot = document["shot_revisions"][0]
+    shot["revision_id"] = "shot-B"
+    shot["internal_timeline_revision_id"] = "internal-B"
+    shot["payload"]["internal_timeline_revision_id"] = "internal-B"
+    shot["payload"]["metadata"] = {"title": "current B"}
+    shot["content_digest"] = digest(shot["payload"])
+    document["parent_revision"]["payload"]["occurrences"][0]["shot_revision_id"] = "shot-B"
+    document["dependency_manifest"] = {
+        "shots": [{key: shot[key] for key in ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest")}],
+        "internal_timelines": [{key: internal[key] for key in ("timeline_id", "revision_id", "content_digest")}],
+        "media": [], "documents": [],
+    }
+    refresh(pair[1])
+    second = accept(commits, pair)
     return service, first, second
 
 
 @pytest.fixture
-def selected(tmp_path, monkeypatch):
-    service, first, second = _seed(tmp_path)
+def selected(tmp_path, monkeypatch, request):
+    if getattr(request, "param", None) == "history":
+        service, project_id, (first, second) = load_baseline_fixture(tmp_path, "history")
+        service.test_project = project_id
+    else:
+        service, first, second = _seed(tmp_path)
     _disable_renderer(monkeypatch, service)
     provider = PreparedProvider()
     service.register_timeline_commit_provider(provider)
@@ -62,7 +89,8 @@ def _restore(service, source, *, direct=False, key="restore", content_digest=Non
 
 def _assert_source(service, first, document):
     parent = document["parent_revision"]
-    stored = service.store.conn.execute("SELECT payload_json, content_digest FROM parent_composition_revisions WHERE id='source-A'").fetchone()
+    stored = service.store.conn.execute("SELECT payload_json, content_digest FROM parent_composition_revisions WHERE id=?",
+                                        (first["data"]["revision_id"],)).fetchone()
     assert canonical_json(parent["payload"]) == stored["payload_json"] == canonical_json(first["data"]["payload"])
     assert parent["content_digest"] == stored["content_digest"] == digest(parent["payload"])
     assert document["dependency_manifest"] == {**first["data"]["dependency_manifest"], "documents": []}
@@ -73,53 +101,62 @@ def _assert_source(service, first, document):
 
 
 def test_old_main_null_manifest_read_verifies_exact_source_without_installation(tmp_path, monkeypatch):
-    service, first, _ = _seed(tmp_path)
+    service, first = _source(tmp_path)
     try:
         _disable_renderer(monkeypatch, service)
         commits, _ = service._timeline_commits()
-        assert service.store.conn.execute("SELECT commit_manifest_json FROM parent_composition_revisions WHERE id='source-A'").fetchone()[0] is None
+        assert service.store.conn.execute("SELECT commit_manifest_json FROM parent_composition_revisions WHERE id='parent-media'").fetchone()[0] is None
         assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == 0
         before = rows(service)
         changes = service.store.conn.total_changes
-        source = commits.revision_closure(service.test_project, "main", "source-A")
+        source = commits.revision_closure(service.test_project, "main", "parent-media")
         _assert_source(service, first, source)
         source["parent_revision"]["payload"]["config"]["mutated"] = True
-        _assert_source(service, first, commits.revision_closure(service.test_project, "main", "source-A"))
+        _assert_source(service, first, commits.revision_closure(service.test_project, "main", "parent-media"))
         assert rows(service) == before and service.store.conn.total_changes == changes
     finally:
         service.close()
 
 
+@pytest.mark.parametrize("selected", ["history", "explicit-media"], indirect=True)
 def test_selected_scoped_source_read_is_detached_and_does_not_require_source_accepted_edge(selected):
-    service, provider, first, _ = selected
-    # Emulate a retained old-main source outside the installed acceptance suffix.
-    # Remove only migration metadata, never source bytes, main events or receipts.
-    service.store.conn.execute("UPDATE timeline_commit_history SET previous_publication_id=NULL, previous_revision_id=NULL WHERE revision_id='current-B'")
-    service.store.conn.execute("DELETE FROM timeline_commit_history WHERE revision_id='source-A'")
-    service.store.conn.execute("UPDATE parent_composition_revisions SET commit_manifest_json=NULL WHERE id='source-A'")
+    service, provider, first, second = selected
+    source_id = first["data"]["revision_id"]
+    legacy = second["receipt"]["command_kind"] == "parent_composition.publish"
+    current_id = second["data"]["new_head"] if legacy else second["data"]["accepted_revision_id"]
+    # Preserve the old-main missing-edge case and the distinct media/child case.
+    # Remove only legacy migration metadata, never source bytes, events or receipts.
+    if legacy:
+        service.store.conn.execute("UPDATE timeline_commit_history SET previous_publication_id=NULL, previous_revision_id=NULL WHERE revision_id=?", (current_id,))
+        service.store.conn.execute("DELETE FROM timeline_commit_history WHERE revision_id=?", (source_id,))
+        service.store.conn.execute("UPDATE parent_composition_revisions SET commit_manifest_json=NULL WHERE id=?", (source_id,))
     body = request(service)
-    body["commands"][0]["args"]["source"] = {"revision_id": "source-A", "content_digest": first["data"]["content_digest"]}
+    body["commands"][0]["args"]["source"] = {"revision_id": source_id, "content_digest": first["data"]["content_digest"]}
     context = {"request": body, "invocation": {"operation": "commitTimeline"}}
     commits, _ = service._timeline_commits()
     before = rows(service)
     changes = service.store.conn.total_changes
     port = RequestCommitPort(service, commits, context, lambda: None)
     try:
-        source = port.revision_closure("source-A")
+        source = port.revision_closure(source_id)
+        assert source["parent_revision"]["revision_id"] == source_id
         _assert_source(service, first, source)
         source["shot_revisions"].clear()
-        _assert_source(service, first, port.revision_closure("source-A"))
+        _assert_source(service, first, port.revision_closure(source_id))
     finally:
         port.close()
     assert rows(service) == before and service.store.conn.total_changes == changes
     assert provider.calls == 0
-    result = _restore(service, "source-A")()
+    result = _restore(service, source_id)()
     _assert_source(service, first, result["data"]["canonical_document"])
     history = service.list_timeline_commits(service.test_project, "main", authorize=lambda: None)
-    assert [entry["intent"] for entry in history["items"]] == ["legacy_unknown", "recorded"]
-    assert history["items"][0]["revision_id"] == "current-B"
-    assert history["items"][1]["records"]["restored_from"] == {
-        "revision_id": "source-A", "content_digest": first["data"]["content_digest"],
+    if legacy:
+        assert [entry["intent"] for entry in history["items"]] == ["legacy_unknown", "recorded"]
+    else:
+        assert [entry["intent"] for entry in history["items"]] == ["legacy_unknown", "recorded", "recorded"]
+    assert history["items"][-2]["revision_id"] == current_id
+    assert history["items"][-1]["records"]["restored_from"] == {
+        "revision_id": source_id, "content_digest": first["data"]["content_digest"],
     }
 
 
@@ -135,7 +172,7 @@ def test_main_source_restore_uses_selected_budget_and_exact_closure(selected, mo
         assert provider.calls == 0
         return original(timeout_seconds=timeout_seconds)
     monkeypatch.setattr(service.store, "integrity_report", inspect)
-    result = _restore(service, "source-A", direct=direct, content_digest=first["data"]["content_digest"])()
+    result = _restore(service, "parent-media", direct=direct, content_digest=first["data"]["content_digest"])()
     assert observed == [seconds] and provider.calls == 1
     _assert_source(service, first, result["data"]["canonical_document"])
     assert result["data"]["previous_revision_id"] == "current-B"
@@ -148,10 +185,10 @@ def test_main_source_restore_uses_selected_budget_and_exact_closure(selected, mo
 @pytest.mark.parametrize("damage", ["parent", "shot", "internal", "missing_shot", "missing_internal", "dependency", "media", "missing_media", "ownership", "scope"])
 def test_restore_rejects_damaged_exact_source_before_provider_or_writes(selected, direct, damage):
     service, provider, first, _ = selected
-    call = _restore(service, "source-A", direct=direct, content_digest=first["data"]["content_digest"])
+    call = _restore(service, "parent-media", direct=direct, content_digest=first["data"]["content_digest"])
     conn = service.store.conn
     if damage in {"parent", "shot", "internal"}:
-        table, identity = {"parent": ("parent_composition_revisions", "source-A"), "shot": ("shot_revisions", "shot-rev-1"),
+        table, identity = {"parent": ("parent_composition_revisions", "parent-media"), "shot": ("shot_revisions", "shot-rev-1"),
                            "internal": ("internal_timeline_revisions", "timeline-rev-1")}[damage]
         conn.execute(f"UPDATE {table} SET payload_json='{{}}' WHERE id=?", (identity,))
     elif damage in {"missing_shot", "missing_internal"}:
@@ -163,7 +200,7 @@ def test_restore_rejects_damaged_exact_source_before_provider_or_writes(selected
             conn.execute("DELETE FROM internal_timeline_revisions WHERE id='timeline-rev-1'")
         conn.execute("PRAGMA foreign_keys=ON")
     elif damage == "dependency":
-        conn.execute("UPDATE composition_revision_dependencies SET content_digest=? WHERE parent_revision_id='source-A'", ("sha256:" + "0" * 64,))
+        conn.execute("UPDATE composition_revision_dependencies SET content_digest=? WHERE parent_revision_id='parent-media'", ("sha256:" + "0" * 64,))
     elif damage in {"media", "missing_media"}:
         pin = first["data"]["dependency_manifest"]["media"][0]["media_id"]
         path = service.cas.path_for(pin[7:])
@@ -188,7 +225,7 @@ def test_restore_rejects_damaged_exact_source_before_provider_or_writes(selected
     {"checks": {"revisions": {"ok": True, "errors": []}, "event_chain": {"ok": False, "errors": []}}}])
 def test_incomplete_integrity_refuses_before_provider_or_writes(selected, monkeypatch, direct, report):
     service, provider, first, _ = selected
-    call = _restore(service, "source-A", direct=direct, content_digest=first["data"]["content_digest"])
+    call = _restore(service, "parent-media", direct=direct, content_digest=first["data"]["content_digest"])
     observed = []
     def incomplete(*, timeout_seconds):
         observed.append(timeout_seconds)
@@ -209,7 +246,7 @@ def test_missing_or_foreign_source_refuses_without_provider_or_writes(selected, 
     commits, _ = service._timeline_commits()
     before = rows(service)
     with pytest.raises(CommitRejected):
-        commits.revision_closure(other["id"], "main", "source-A")
+        commits.revision_closure(other["id"], "main", "parent-media")
     with pytest.raises(RuntimeErrorBase):
         _restore(service, "missing", direct=direct, content_digest=first["data"]["content_digest"])()
     assert provider.calls == 0 and rows(service) == before
@@ -219,7 +256,7 @@ def test_direct_restore_wrong_digest_is_never_normalized(selected):
     service, provider, _, _ = selected
     before = rows(service)
     with pytest.raises(RuntimeErrorBase) as error:
-        _restore(service, "source-A", direct=True, content_digest="sha256:" + "0" * 64)()
+        _restore(service, "parent-media", direct=True, content_digest="sha256:" + "0" * 64)()
     assert error.value.details["reason"] == "dependency_unavailable"
     assert provider.calls == 0 and rows(service) == before
 
@@ -227,7 +264,7 @@ def test_direct_restore_wrong_digest_is_never_normalized(selected):
 @pytest.mark.parametrize("direct", [False, True])
 def test_restart_exact_retry_is_ledger_only_but_authorized(selected, monkeypatch, direct):
     service, provider, first, _ = selected
-    call = _restore(service, "source-A", direct=direct, content_digest=first["data"]["content_digest"])
+    call = _restore(service, "parent-media", direct=direct, content_digest=first["data"]["content_digest"])
     accepted = call()
     root, project_id = service.store.root, service.test_project
     context = copy.deepcopy(provider.contexts[0])
@@ -259,21 +296,21 @@ def test_restart_exact_retry_is_ledger_only_but_authorized(selected, monkeypatch
 
 @pytest.mark.parametrize("missing_proof", ["receipt", "event", "manifest"])
 def test_null_manifest_source_requires_original_main_publication_proof(tmp_path, monkeypatch, missing_proof):
-    service, _, _ = _seed(tmp_path)
+    service, first = _source(tmp_path)
     try:
         _disable_renderer(monkeypatch, service)
         conn = service.store.conn
         if missing_proof == "receipt":
-            conn.execute("DELETE FROM command_idempotency WHERE idempotency_key='publish-source-A'")
+            conn.execute("DELETE FROM command_idempotency WHERE txn_id=?", (first["receipt"]["receipt_id"],))
         elif missing_proof == "event":
             conn.execute("UPDATE timeline_events SET event_hash=? WHERE kind='parent.composition.published'", ("0" * 64,))
         else:
-            conn.execute("DELETE FROM composition_revision_dependencies WHERE parent_revision_id='source-A'")
+            conn.execute("DELETE FROM composition_revision_dependencies WHERE parent_revision_id='parent-media'")
         commits, _ = service._timeline_commits()
         before = rows(service)
         changes = conn.total_changes
         with pytest.raises(RuntimeErrorBase) as error:
-            commits.revision_closure(service.test_project, "main", "source-A")
+            commits.revision_closure(service.test_project, "main", "parent-media")
         assert error.value.details["reason"] == "history_unavailable"
         assert rows(service) == before and conn.total_changes == changes
     finally:

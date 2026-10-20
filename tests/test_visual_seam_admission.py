@@ -15,6 +15,8 @@ from tests.astrid_checkout import astrid_checkout
 from runtime_protocol.errors import ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
+from runtime_protocol.timeline_commit_validation import validate_commit_value
 from runtime_protocol.util import canonical_json
 from runtime_protocol.visual_boundary import boundary_report
 from runtime_protocol.visual_seam import evaluate_closure, admit_closure
@@ -463,6 +465,103 @@ def _unsafe_publication(project_id):
     return body
 
 
+def _accept_visual_publication(service, publication, *, idempotency_key):
+    """Install a visual fixture through the renderer-free host acceptance seam."""
+    project_id = publication["project_id"]
+    timeline_id = publication["timeline_id"]
+    commits = TimelineCommitStore(
+        service.store, validate_prepared=lambda value: validate_commit_value(value, "PreparedCommit"),
+    )
+    head = commits.bootstrap(project_id, timeline_id, authorize=lambda: None)
+    document = commits.revision_closure(project_id, timeline_id, head["revision_id"])
+    parent = copy.deepcopy(publication["parent_composition"])
+    document["parent_revision"] = {
+        "revision_id": publication["parent_revision_id"],
+        "payload": parent,
+        "content_digest": digest(parent),
+    }
+    internals = []
+    for image in publication["internal_timeline_revisions"]:
+        payload = copy.deepcopy(image["payload"])
+        internals.append({
+            "timeline_id": image["timeline_id"],
+            "revision_id": image["revision_id"],
+            "payload": payload,
+            "content_digest": digest(payload),
+        })
+    shots = []
+    for image in publication["shot_revisions"]:
+        payload = copy.deepcopy(image["payload"])
+        payload.setdefault("internal_timeline_revision_id", image["internal_timeline_revision_id"])
+        shots.append({
+            "shot_id": image["shot_id"],
+            "revision_id": image["revision_id"],
+            "internal_timeline_revision_id": image["internal_timeline_revision_id"],
+            "payload": payload,
+            "content_digest": digest(payload),
+        })
+    media_ids = set()
+
+    def collect_media(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if key in {"media_id", "object_id"} and isinstance(child, str) and child.startswith("sha256:"):
+                    media_ids.add(child)
+                collect_media(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect_media(child)
+
+    for image in [document["parent_revision"], *shots, *internals]:
+        collect_media(image["payload"])
+    document.update({
+        "shot_revisions": sorted(shots, key=lambda image: (image["shot_id"], image["revision_id"])),
+        "internal_timeline_revisions": sorted(internals, key=lambda image: (image["timeline_id"], image["revision_id"])),
+        "dependency_manifest": {
+            "shots": [{key: image[key] for key in ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest")}
+                      for image in sorted(shots, key=lambda image: (image["shot_id"], image["revision_id"]))],
+            "internal_timelines": [{key: image[key] for key in ("timeline_id", "revision_id", "content_digest")}
+                                   for image in sorted(internals, key=lambda image: (image["timeline_id"], image["revision_id"]))],
+            "media": [{"media_id": media_id, "content_digest": media_id} for media_id in sorted(media_ids)],
+            "documents": [],
+        },
+    })
+    command = {"schema_version": 1, "op": "fixture.install-visual-publication", "version": "1",
+               "select": None, "args": {}}
+    request = {
+        "api_version": 1, "project_id": project_id, "timeline_id": timeline_id,
+        "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
+        "commands": [command],
+    }
+    context = {
+        "request": request,
+        "invocation": {"operation": "commitTimeline",
+                        "path": f"/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+                        "body": copy.deepcopy(request)},
+        "idempotency_key": idempotency_key,
+        "realm_id": service.realm["id"],
+        "publisher": "visual-host-fixture",
+    }
+    context["request_hash"] = request_identity(context)
+    before = commits.revision_closure(project_id, timeline_id, head["revision_id"])["parent_revision"]["payload"]
+    record = {"ordinal": 0, "command": command,
+              "writes": [{"ref": "parent", "path": [key],
+                          "before": {"state": "present", "value": before[key]} if key in before else {"state": "absent"},
+                          "after": {"state": "present", "value": value}} for key, value in parent.items()],
+              "reads": [], "selections": [], "bindings": [], "created": [], "dependencies": [],
+              "derived_writes": []}
+    prepared = {
+        "expected_head": head,
+        "canonical_document": document,
+        "document_digest": digest(document),
+        "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None},
+        "id_map": {}, "semantic_events": [], "provider_version": "visual-host-fixture", "compiler_version": "visual-host-fixture",
+    }
+    accepted = commits.accept(context, prepared, authorize=lambda: None)
+    assert accepted["data"]["status"] == "accepted"
+    return accepted
+
+
 def test_publication_rejects_unsafe_resolved_child_without_partial_rows(tmp_path):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
@@ -474,21 +573,27 @@ def test_publication_rejects_unsafe_resolved_child_without_partial_rows(tmp_path
                   "shot_revision_heads", "parent_composition_heads", "composition_revision_occurrences",
                   "composition_revision_dependencies", "timeline_events", "command_idempotency")
         before = {name: service.store.conn.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0] for name in tables}
-        # Authoring publication is report-only (4b29ebd): an unsafe resolved child is saved whole
-        # and the seam report discloses the blocking issues instead of rejecting the save.
-        published = service.publish_parent_composition(project["id"], "main", _unsafe_publication(project["id"]), idempotency_key="unsafe")
-        assert published["data"]["new_head"] == "unsafe-parent"
-        report = published["data"]["visual_seam_report"]
+        accepted = _accept_visual_publication(service, _unsafe_publication(project["id"]), idempotency_key="unsafe")
+        assert accepted["data"]["accepted_revision_id"] == "unsafe-parent"
+        document = accepted["data"]["canonical_document"]
+        report, _ = evaluate_closure(
+            document["parent_revision"]["payload"],
+            {(image["shot_id"], image["revision_id"]): image for image in document["shot_revisions"]},
+            {image["revision_id"]: image for image in document["internal_timeline_revisions"]},
+            timeline_id="main",
+        )
         assert report["blocked"] is True
         assert sorted((issue["code"], issue.get("frames")) for issue in report["structuralIssues"]) == [
             ("boundary/child-picture-gap", None), ("boundary/gap", 6),
         ]
         after = {name: service.store.conn.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0] for name in tables}
         assert {name: after[name] - before[name] for name in tables} == {
-            "timelines": 0, "internal_timeline_revisions": 1, "shot_revisions": 1, "parent_composition_revisions": 1,
+            # Host acceptance creates the real empty bootstrap edge before the
+            # fixture publication; the authored closure remains one atomic edge.
+            "timelines": 0, "internal_timeline_revisions": 1, "shot_revisions": 1, "parent_composition_revisions": 2,
             "shot_revision_heads": 1, "parent_composition_heads": 1, "composition_revision_occurrences": 1,
             "composition_revision_dependencies": after["composition_revision_dependencies"] - before["composition_revision_dependencies"],
-            "timeline_events": 1, "command_idempotency": 1,
+            "timeline_events": 2, "command_idempotency": 2,
         }
         assert after["composition_revision_dependencies"] > before["composition_revision_dependencies"]
         assert service.store.conn.execute(
@@ -729,7 +834,7 @@ def test_managed_render_freezes_child_effects_and_offset_from_pinned_closure(tmp
         child = publication["internal_timeline_revisions"][0]["payload"]
         child.update({"clips": [{"id": "picture", "clipType": "media", "at": 0, "hold": 1, "track": "v", "asset": "source", "effects": [local_effect]}],
                       "effects": [child_effect], "registry": {"assets": {"source": {"object_id": media, "type": "video/mp4"}}}})
-        service.publish_parent_composition(project["id"], "main", publication, idempotency_key="publish")
+        _accept_visual_publication(service, publication, idempotency_key="publish")
         task = service.create_task({"project": project["id"], "capability_id": "rendering.render", "capability_digest": capability,
                                     "input_object_ids": [], "idempotency_key": "render", "spec": {"family": "render", "params": {"timeline_ref": "main"}}})
         frozen = task["task"]["spec"]["spec"]
@@ -771,7 +876,7 @@ def test_managed_render_preserves_asset_identity_from_the_pinned_asset_scope(tmp
                 {"asset_id": "shared", "object_id": media, "digest": media, "media_type": "image/png"}]
         else:
             child["registry"] = {"assets": {"shared": asset}}
-        service.publish_parent_composition(project["id"], "main", publication, idempotency_key="publish")
+        _accept_visual_publication(service, publication, idempotency_key="publish")
         authored = service.get_project_parent_composition_revision(project["id"], "main", "unsafe-parent")
         task = service.create_task({"project": project["id"], "capability_id": "rendering.render", "capability_digest": capability,
                                     "input_object_ids": [], "idempotency_key": "render", "spec": {"family": "render", "params": {"timeline_ref": "main"}}})
@@ -830,11 +935,14 @@ def test_publication_and_historical_render_reject_uncovered_child_atomically(tmp
         service.register_executor({"executor_id": "worker", "capabilities": ["rendering.render"]})
         publication = _unsafe_publication(project["id"])
         publication["internal_timeline_revisions"][0]["payload"]["clips"] = clips
-        # Authoring publication is report-only (4b29ebd), so the uncovered child is saved and
-        # disclosed in the blocked seam report; it is no longer a "historical" special case.
-        published = service.publish_parent_composition(project["id"], "main", publication, idempotency_key="unsafe")
-        assert published["data"]["new_head"] == "unsafe-parent"
-        report = published["data"]["visual_seam_report"]
+        accepted = _accept_visual_publication(service, publication, idempotency_key="unsafe")
+        document = accepted["data"]["canonical_document"]
+        report, _ = evaluate_closure(
+            document["parent_revision"]["payload"],
+            {(image["shot_id"], image["revision_id"]): image for image in document["shot_revisions"]},
+            {image["revision_id"]: image for image in document["internal_timeline_revisions"]},
+            timeline_id="main",
+        )
         assert report["blocked"] is True
         assert [issue["code"] for issue in report["structuralIssues"]] == [code]
         # The enforced render boundary still runs the strict guard and queues nothing.

@@ -7,6 +7,9 @@ import json
 
 import pytest
 
+from precut_realm_fixture import load_precut_realm_fixture
+from test_timeline_commit_baseline import _disable_renderer
+
 from runtime_protocol.contract_metadata import SCHEMA_DIGEST
 from runtime_protocol.errors import AuthorizationError, RuntimeErrorBase, ValidationError
 from runtime_protocol.service import RuntimeService
@@ -206,28 +209,23 @@ def test_editable_create_has_one_outer_commit(service, key):
     assert resource["head_publication_id"] == facts["head"]["publication_id"]
 
 
-def test_revoked_admission_prevents_startup_baseline_migration_and_history_writes(tmp_path):
-    root = tmp_path / "revoked"
-    RealmStore.initialize(root).close()
-    runtime = RuntimeService(root)
+def test_revoked_admission_prevents_startup_baseline_migration_and_history_writes(tmp_path, monkeypatch):
+    captured = load_precut_realm_fixture(tmp_path)
+    runtime = RuntimeService(captured.copy_roots[0])
     try:
-        project = runtime.create_project({"slug": "revoked", "name": "Revoked"})["id"]
-        runtime.create_timeline(project, "main", idempotency_key="legacy-create")
-        runtime.publish_parent_composition(project, "main", {
-            "project_id": project, "timeline_id": "main", "expected_head": None,
-            "parent_revision_id": "legacy-parent", "parent_composition": {
-                "config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": [],
-            },
-        }, idempotency_key="legacy-publish")
+        project, timeline = captured.pins["project_id"], captured.pins["timeline_id"]
+        _disable_renderer(monkeypatch, runtime)
+        assert runtime.get_project_timeline(project, timeline)["head_publication_id"] is None
+        assert runtime.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == 0
         runtime._verified = False
         before = list(runtime.store.conn.iterdump())
         with pytest.raises(RuntimeErrorBase):
-            runtime.list_timeline_commits(project, "main", authorize=lambda: None)
+            runtime.list_timeline_commits(project, timeline, authorize=lambda: None)
         assert list(runtime.store.conn.iterdump()) == before
         runtime.register_timeline_commit_provider(PreparedProvider())
         assert list(runtime.store.conn.iterdump()) == before
         with pytest.raises(RuntimeErrorBase):
-            runtime.list_timeline_commits(project, "main", authorize=lambda: None)
+            runtime.list_timeline_commits(project, timeline, authorize=lambda: None)
         assert list(runtime.store.conn.iterdump()) == before
     finally:
         runtime.close()
@@ -613,37 +611,40 @@ def test_exact_commit_replay_after_restart_needs_no_provider(service):
 
 
 @pytest.mark.parametrize("corrupt", [False, True])
-def test_existing_head_installs_only_verified_original_baseline_before_requests(tmp_path, corrupt):
-    root = tmp_path / "legacy"
-    RealmStore.initialize(root).close()
-    service = RuntimeService(root)
+def test_existing_head_installs_only_verified_original_baseline_before_requests(tmp_path, monkeypatch, corrupt):
+    captured = load_precut_realm_fixture(tmp_path)
+    service = RuntimeService(captured.copy_roots[0])
     try:
-        project = service.create_project({"slug": "legacy", "name": "Legacy"})["id"]
-        service.test_project = project
-        service.create_timeline(project, "main", idempotency_key="legacy-create")
-        published = service.publish_parent_composition(project, "main", {
-            "project_id": project, "timeline_id": "main", "expected_head": None,
-            "parent_revision_id": "legacy-parent", "parent_composition": {
-                "config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": [],
-            },
-        }, idempotency_key="legacy-publish")
-        receipt = published["receipt"]
+        project, timeline = captured.pins["project_id"], captured.pins["timeline_id"]
+        _disable_renderer(monkeypatch, service)
+        assert service.get_project_timeline(project, timeline)["head_publication_id"] is None
+        assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == 0
+        facts = verify_baseline(service.store.conn, project, timeline, read_object=service.cas.read)
+        assert len(facts["entries"]) == 1
+        receipt = facts["entries"][0]["receipt"]
         if corrupt:
             service.store.conn.execute("DELETE FROM command_idempotency WHERE txn_id=?", (receipt["receipt_id"],))
         provider = PreparedProvider()
         service.register_timeline_commit_provider(provider)
         before = rows(service)
-        body = request(service, base_revision_id="legacy-parent", base_publication_id=receipt["receipt_id"], dry_run=True)
+        body = {"api_version": 1, "project_id": project, "timeline_id": timeline,
+                "base_revision_id": captured.pins["parent_revision_id"],
+                "base_publication_id": receipt["receipt_id"], "dry_run": True,
+                "commands": [{"schema_version": 1, "op": "clip.move", "version": "1",
+                              "select": "parent/clip:clip-1", "args": {"on": 2}}]}
         if corrupt:
             with pytest.raises(RuntimeErrorBase):
-                commit(service, body)
+                service.commit_timeline(project, timeline, body, idempotency_key="edit-1", publisher="editor",
+                                        invocation_path=route_path(project, timeline), authorize=lambda: None)
             assert provider.calls == 0
         else:
-            history = service.list_timeline_commits(project, "main", authorize=lambda: None)
+            history = service.list_timeline_commits(project, timeline, authorize=lambda: None)
             assert history["items"][0]["publication_id"] == receipt["receipt_id"]
             assert history["items"][0]["receipt"] == receipt
             assert history["items"][0]["intent"] == "legacy_unknown"
-            assert commit(service, body)["data"]["status"] == "preview"
+            assert service.commit_timeline(project, timeline, body, idempotency_key="edit-1", publisher="editor",
+                                           invocation_path=route_path(project, timeline),
+                                           authorize=lambda: None)["data"]["status"] == "preview"
         assert rows(service) == before
     finally:
         service.close()
