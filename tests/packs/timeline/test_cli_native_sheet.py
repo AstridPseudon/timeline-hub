@@ -177,6 +177,23 @@ def test_unchanged_export_has_no_commit(native_cli, tmp_path, capsys):
     assert output["receipt"] is None and generated.calls == []
 
 
+def test_clip_row_omission_is_native_delete_and_keeps_other_rows(native_cli, tmp_path, capsys):
+    run, _, generated = native_cli
+    text = export(native_cli, capsys)
+    path = tmp_path / "deleted.txt"
+    path.write_text("\n".join(line for line in text.splitlines()
+                               if not line.endswith(' # ref "parent/clip:a"')) + "\n")
+
+    assert run("apply", "t", str(path), "--native", "--json") == 0
+    output = json.loads(capsys.readouterr().out)
+    assert [command["op"] for command in output["data"]["commands"]] == ["clip.delete"]
+    assert [row["id"] for row in generated.bundles["r1"]["parent"]["clips"]] == ["b"]
+    assert generated.bundles["r1"]["parent"]["config"]["tracks"] == generated.bundles["r0"]["parent"]["config"]["tracks"]
+    assert run("undo", "t", "--publication", output["receipt"]["receipt_id"], "--json") == 0
+    capsys.readouterr()
+    assert [row["id"] for row in generated.bundles["r2"]["parent"]["clips"]] == ["a", "b"]
+
+
 @pytest.mark.parametrize("changed", ["pending", "bundle"])
 def test_original_identity_never_coerces_boolean_to_number(native_cli, tmp_path, capsys, changed):
     run, _, generated = native_cli

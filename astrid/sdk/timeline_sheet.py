@@ -611,7 +611,9 @@ class NativeSheet:
     parent track labels, source trim, source-second hold and built-in literal params are
     editable. Unquoted ``key=clear`` removes presence; null and "" are values.
     Asset and incoming transition support explicit clear only. Omitting a cell
-    never clears it. Built-in params retain the sheet's canvas units.
+    never clears it. Omitting a bound parent clip row emits the existing
+    ``clip.delete`` command; track and occurrence-row omissions remain refused.
+    Built-in params retain the sheet's canvas units.
 
     ``basis`` is TimelineSession's revision/publication pair for the input bundle.
     ``apply`` previews locally by default. Its commit seam uses the session's
@@ -731,17 +733,24 @@ class NativeSheet:
         from astrid.sdk.timeline._command_state import State, equal
         from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
         from astrid.sdk.timeline._trim_commands import capture_clip_trim
-        from astrid.sdk.timeline.capture import capture_move
+        from astrid.sdk.timeline.capture import capture_clip_delete, capture_move
         from astrid.sdk.timeline.commands import Plan, execute
         from astrid.sdk.timeline.units import from_canvas
         from astrid.sdk.timeline_address import element_schema
 
         rows, frame = self._read(text)
-        if frame != self._frame or rows.keys() != self._rows.keys():
+        missing = self._rows.keys() - rows.keys()
+        extra = rows.keys() - self._rows.keys()
+        if frame != self._frame or extra:
             raise SheetError("sheet structure/basis is read-only; additions and removals are unsupported")
+        for ref in missing:
+            section, _, _ = self._rows[ref]
+            if section != "clips" or not ref.startswith("parent/clip:"):
+                raise SheetError(f"only an addressed parent clip row may be omitted: {ref}")
         commands = []
         working = self._bundle
-        capturers = {"clip.move": capture_move, "clip.trim": capture_clip_trim,
+        capturers = {"clip.delete": capture_clip_delete, "clip.move": capture_move,
+                     "clip.trim": capture_clip_trim,
                      "clip.set": capture_clip_set, "clip.set-params": capture_clip_set_params,
                      "track.set": capture_track_set}
 
@@ -752,6 +761,9 @@ class NativeSheet:
             working = execute(working, [command]).bundle
 
         for ref, (section, before, original) in self._rows.items():
+            if ref in missing:
+                emit("clip.delete", ref, {})
+                continue
             current_section, after, row = rows[ref]
             if current_section != section:
                 raise SheetError("sheet row ownership is read-only")
