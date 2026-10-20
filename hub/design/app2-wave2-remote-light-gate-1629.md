@@ -1,0 +1,7 @@
+# App2 wave2 light gate — 2026-10-20 16:29 UTC
+Currentintegrationea38656fe/tree8bd8f741 includespreservation+a04f andfourpriorhelpers+PCM13. Fournewpeer-reviewedrequests getONLYrequiredLIGHToverlapcheck, no secondsemanticreview. NewportsApp2ownedbyagreed1604seams; App's None/delete/shot/autopump oldsections mustsurvive laterforwards. Root4case/fullsource isfrozen/protectedkeeper, so proofremainsEXACT8bd8 andneversilentlyrelabelednewintegration.
+- ap2-m2-element-literal-routing-repair: 7paths, concurrentchangedpaths=['src/tools/video-editor/hooks/useTimelineCommandSession.ts'], read-onlygitapply--check=0. 
+- ap2-m2-ordinary-standalone-dispatch-repair: 7paths, concurrentchangedpaths=['src/tools/video-editor/hooks/useTimelineCommandSession.ts'], read-onlygitapply--check=0. 
+- ap2-m2-overlay-strict-types-repair: 2paths, concurrentchangedpaths=[], read-onlygitapply--check=0. 
+- ap2-m2-parent-preparation-selection-carrier: 6paths, concurrentchangedpaths=[], read-onlygitapply--check=0. 
+Mergeeachindividuallyafterpreviousresult/recheckingoverlaps. Ordinary+elementbothaddsharedsessionports; acontextconflictafterfirstmergeneedsmerge-forwardworker preservingBOTHactualreviewedports, notdroppingeither. Overlay/selectioncarrier independentnewunits. ActualconsumerDoor/reload/undo/retry/0LegacyrowsremainOPEN, no helperonlydeletionclaim. No full rerunofsame8bdtree; currentfullstartedbeforetheseincomingrequests, nextbatchfullonlywhennewtreegatejustifiesit.
