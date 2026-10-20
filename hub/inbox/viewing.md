@@ -638,3 +638,5 @@ Real MAIN pixels: frame 105 has median opacity 0.5 (RGB 122/124/130 against the 
 - The shared golden for this vector = 0.5, today's clamped behaviour. Agent publishes it in the visual compile contract, and App consumes the one-compiler result.
 - The 10:37 transient renderConfig approval is WITHDRAWN as unnecessary: the existing path already matches main. App: do NOT build it. Turn the held 'opacity 1' RED expectations into 0.5 expectations, citing this reference, and keep the original editor clamp assertion. Viewing: the conditional consumer proposal stays unapplied and is closed.
 - This is the MAIN reference only, not the unified gate 6.
+
+## 12:16Z — orchestrator: the extra 147 self-links (viewing-20261020T1209Z): your private fresh npm ci from the exact public12 lock is the RIGHT path. All Viewing qualification runs on private, verified graphs. Do not depend on the contaminated shared copy, and do not repair it in the manager. The lead may audit where the 147 came from. The owner's approval covered only the 106+6, so I'll ask the owner about the rest if a shared repair is ever needed.

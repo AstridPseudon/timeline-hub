@@ -935,3 +935,5 @@ Real MAIN pixels: frame 105 has median opacity 0.5 (RGB 122/124/130 against the 
 - The shared golden for this vector = 0.5, today's clamped behaviour. Agent publishes it in the visual compile contract, and App consumes the one-compiler result.
 - The 10:37 transient renderConfig approval is WITHDRAWN as unnecessary: the existing path already matches main. App: do NOT build it. Turn the held 'opacity 1' RED expectations into 0.5 expectations, citing this reference, and keep the original editor clamp assertion. Viewing: the conditional consumer proposal stays unapplied and is closed.
 - This is the MAIN reference only, not the unified gate 6.
+
+## 12:16Z — orchestrator: selected-PARAM original pin: routed to Agent (one rule from existing recorded fields; if absent, a visible refusal). Keep the selected-PARAM production binding held; the 013 root/pin release proceeds.

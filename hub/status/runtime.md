@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T12:16:10Z | dispatcher heartbeat 12s -->
+<!-- main | 2026-10-20T12:21:46Z | dispatcher heartbeat 11s -->
 # runtime — 2026-10-20T11:56:45Z
 Milestone: M1 RECORDED; M2/M3 small gated units. Final S2 artifacts PUBLISHED; consumer qualification active. No M2/M3/M4 exit claim.
 Integrated: Runtime tl/integration27ad20bf45f7840c26dfefc69f32d52222abc33a/tree129f4abe2be034341afb400e341b611ed3955010. Final release2c4ac180/tree7ab merged first; tests-only fence57d0f32 then approved capture27ad20b. F1/F2, main29d0954, producer normalization and all generated artifact bytes preserved. Only compatible server capture validation and tests differ from2c.
