@@ -28,6 +28,7 @@ import type {
 } from '@/tools/video-editor/runtime/ports.ts';
 import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 
 type LocalTimelineShotBrowserProps = {
   projectSlug: string;
@@ -45,6 +46,12 @@ type LocalTimelineShotBrowserProps = {
   shotSetPort?: ShotSetCapturePort;
   /** Qualified parent editor session for canonical occurrence media edits. */
   occurrenceMediaPort?: OccurrenceMediaCapturePort;
+  /** Reuse the mounted parent Runtime media-import and selection seam. */
+  mediaProvider?: Pick<DataProvider,
+    'supportsDirectAssetUpload'
+    | 'prepareMediaImport'
+    | 'getProjectMediaSelection'
+    | 'getProjectVerifiedMedia'>;
   /** Receives the latest graph after an embedded shot edit is published. */
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
@@ -162,7 +169,7 @@ function isCompositionForDocument(
     && composition.occurrences.length > 0;
 }
 
-export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, shotCompositionPort, shotCompositionAdapter, shotRef, initialComposition, onClose, shotSetPort, occurrenceMediaPort, onCanonicalCompositionPublished, onCanonicalDraftSessionChange, onCanonicalDraftProjectionChange, onCanonicalDraftProjectionClear }: LocalTimelineShotBrowserProps) {
+export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, shotCompositionPort, shotCompositionAdapter, shotRef, initialComposition, onClose, shotSetPort, occurrenceMediaPort, mediaProvider, onCanonicalCompositionPublished, onCanonicalDraftSessionChange, onCanonicalDraftProjectionChange, onCanonicalDraftProjectionClear }: LocalTimelineShotBrowserProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -307,6 +314,7 @@ export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, 
           onClose={onClose}
           shotSetPort={shotSetPort}
           occurrenceMediaPort={occurrenceMediaPort}
+          mediaProvider={mediaProvider}
           onCanonicalCompositionPublished={handleCanonicalCompositionPublished}
           onCanonicalDraftSessionChange={onCanonicalDraftSessionChange}
           onCanonicalDraftProjectionChange={onCanonicalDraftProjectionChange}

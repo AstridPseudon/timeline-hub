@@ -26,6 +26,7 @@ import type {
 import { hardDurationMs } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import {
   createShotTimelineDataProvider,
   createShotTimelineInitialData,
@@ -41,6 +42,12 @@ type ShotTimelinePreviewProps = {
   occurrenceId: string;
   shotCompositionAdapter?: ShotCompositionAdapter;
   occurrenceMediaPort?: OccurrenceMediaCapturePort;
+  /** Reuse the parent Runtime media-import and managed-selection seam. */
+  mediaProvider?: Pick<DataProvider,
+    'supportsDirectAssetUpload'
+    | 'prepareMediaImport'
+    | 'getProjectMediaSelection'
+    | 'getProjectVerifiedMedia'>;
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
     publication?: CanonicalShotTimelinePublication,
@@ -389,6 +396,7 @@ export function ShotTimelinePreview({
   occurrenceId,
   shotCompositionAdapter,
   occurrenceMediaPort,
+  mediaProvider,
   onCanonicalCompositionPublished,
   onCanonicalDraftStateChange,
   onCanonicalDraftSessionChange,
@@ -524,6 +532,8 @@ export function ShotTimelinePreview({
           shotCompositionAdapter,
           handleCanonicalCompositionPublished,
           editorHeadStateRef,
+          0,
+          mediaProvider,
         )
       : null,
     // Keep one provider/editor session. Its query identity advances with the
@@ -533,7 +543,7 @@ export function ShotTimelinePreview({
     // recreating it for either would reset query/editor/recovery identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [hasProjectionConfig, currentComposition.parentDocumentId,
-      currentComposition.projectId, occurrenceId, shotCompositionAdapter],
+      currentComposition.projectId, occurrenceId, shotCompositionAdapter, mediaProvider],
   );
   const initialTimelineData = useMemo(
     () => projectionConfig ? createShotTimelineInitialData(projectionConfig) : undefined,

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
 import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
 import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { VisualSeamAdmissionError } from '@/tools/video-editor/data/visualSeamContract.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
@@ -254,6 +255,41 @@ describe('shot timeline popup persistence', () => {
     );
     await expect(provider.resolveAssetUrl('/api/astrid/v1/objects/already-resolved'))
       .resolves.toBe('/api/astrid/v1/objects/already-resolved');
+  });
+
+  it('keeps the parent Runtime media seam on the nested popup provider', async () => {
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+    const occurrence = composition.occurrences.find((candidate) => candidate.occurrenceId === 'occ-1')!;
+    const popupConfig = projectCanonicalComposition({ ...composition, occurrences: [occurrence] }).config;
+    const prepareMediaImport = vi.fn().mockResolvedValue({} as never);
+    const mediaProvider: Pick<DataProvider,
+      'supportsDirectAssetUpload'
+      | 'prepareMediaImport'
+      | 'getProjectMediaSelection'
+      | 'getProjectVerifiedMedia'> = {
+      supportsDirectAssetUpload: true,
+      prepareMediaImport,
+      getProjectMediaSelection: vi.fn(),
+      getProjectVerifiedMedia: vi.fn(),
+    };
+
+    const provider = createShotTimelineDataProvider(
+      popupConfig,
+      composition,
+      occurrence.occurrenceId,
+      undefined,
+      undefined,
+      undefined,
+      0,
+      mediaProvider,
+    );
+    const file = new File(['popup'], 'popup.png', { type: 'image/png' });
+
+    expect(provider.supportsDirectAssetUpload).toBe(true);
+    await provider.prepareMediaImport?.(file);
+    expect(prepareMediaImport).toHaveBeenCalledWith(file);
+    expect(provider.getProjectMediaSelection).toBeDefined();
+    expect(provider.getProjectVerifiedMedia).toBeDefined();
   });
 
   it('keeps the mounted editor and undo history across its own publication acknowledgement', async () => {

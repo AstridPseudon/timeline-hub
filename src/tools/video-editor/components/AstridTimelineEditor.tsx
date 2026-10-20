@@ -715,6 +715,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
                 onClose={() => setCanonicalShotEditor(null)}
                 shotSetPort={shotSet}
                 occurrenceMediaPort={occurrenceMediaPort}
+                mediaProvider={runtime.provider}
                 onCanonicalCompositionPublished={handleCanonicalCompositionPublished}
                 onCanonicalDraftSessionChange={(scope, active) => {
                   if (active) runtime.shots?.beginCanonicalDraftSession?.(scope);

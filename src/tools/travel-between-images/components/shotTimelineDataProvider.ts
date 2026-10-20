@@ -38,6 +38,13 @@ import { buildAssetReferenceMap } from '@/tools/video-editor/lib/asset-registry.
 
 type JsonObject = Record<string, unknown>;
 
+type ShotTimelineMediaProvider = Pick<DataProvider,
+  'supportsDirectAssetUpload'
+  | 'prepareMediaImport'
+  | 'getProjectMediaSelection'
+  | 'getProjectVerifiedMedia'
+>;
+
 export function shotTimelineSessionId(
   parentDocumentId: string,
   occurrenceId: string,
@@ -290,6 +297,7 @@ export function createShotTimelineDataProvider(
   ) => void,
   editorHeadState?: { current: ShotTimelineEditorHeadState },
   initialDraftGeneration = 0,
+  mediaProvider?: ShotTimelineMediaProvider,
 ): ShotTimelineDataProvider {
   let registry: { assets: Record<string, ResolvedAssetRegistryEntry> } = {
     assets: Object.fromEntries(Object.entries(config.registry).map(([assetId, entry]) => ([assetId, {
@@ -355,6 +363,18 @@ export function createShotTimelineDataProvider(
       return timelineQueryIdentity;
     },
     persistenceEnabled: Boolean(shotCompositionAdapter?.publish),
+    ...(mediaProvider?.supportsDirectAssetUpload !== undefined
+      ? { supportsDirectAssetUpload: mediaProvider.supportsDirectAssetUpload }
+      : {}),
+    ...(mediaProvider?.prepareMediaImport
+      ? { prepareMediaImport: mediaProvider.prepareMediaImport.bind(mediaProvider) }
+      : {}),
+    ...(mediaProvider?.getProjectMediaSelection
+      ? { getProjectMediaSelection: mediaProvider.getProjectMediaSelection.bind(mediaProvider) }
+      : {}),
+    ...(mediaProvider?.getProjectVerifiedMedia
+      ? { getProjectVerifiedMedia: mediaProvider.getProjectVerifiedMedia.bind(mediaProvider) }
+      : {}),
     setShotTimelineTraceId: (traceId) => { activeTimingTraceId = traceId; },
     getTimelineDraftRecoveryMetadata: (rememberRaw): TimelineDraftRecoveryMetadata => {
       rememberRaw?.(composition);

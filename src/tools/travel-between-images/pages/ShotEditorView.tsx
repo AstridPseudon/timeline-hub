@@ -47,6 +47,7 @@ import type {
 import type { ShotSetCapturePort, CapturedShotSetEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import { captureShotNameEdit, submitShotNameEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import {
   enqueueCanonicalShotPublish,
   updateCanonicalShotSettings,
@@ -78,6 +79,12 @@ interface ShotEditorViewProps {
   shotSetPort?: ShotSetCapturePort;
   /** Mounted parent command-session authority for popup occurrence media. */
   occurrenceMediaPort?: OccurrenceMediaCapturePort;
+  /** Reuse the mounted parent Runtime media-import and selection seam. */
+  mediaProvider?: Pick<DataProvider,
+    'supportsDirectAssetUpload'
+    | 'prepareMediaImport'
+    | 'getProjectMediaSelection'
+    | 'getProjectVerifiedMedia'>;
   /** Prepared canonical graph shared by the overview and the shot-local preview. */
   canonicalComposition?: PreparedShotComposition;
   /** Optional embedded-mode close action; avoids navigating the parent route. */
@@ -110,6 +117,7 @@ export function ShotEditorView({
   canonicalShotComposition,
   shotSetPort,
   occurrenceMediaPort,
+  mediaProvider,
   canonicalComposition,
   onClose,
   onCanonicalCompositionPublished,
@@ -458,6 +466,7 @@ export function ShotEditorView({
             occurrenceId={canonicalOccurrence.occurrenceId}
             shotCompositionAdapter={canonicalShotComposition}
             occurrenceMediaPort={occurrenceMediaPort}
+            mediaProvider={mediaProvider}
             onCanonicalCompositionPublished={onCanonicalCompositionPublished}
             onCanonicalDraftSessionChange={onCanonicalDraftSessionChange}
             onCanonicalDraftProjectionChange={onCanonicalDraftProjectionChange}
