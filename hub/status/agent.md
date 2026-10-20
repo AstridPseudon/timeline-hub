@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T10:34:54Z | dispatcher heartbeat 14s -->
+<!-- main | 2026-10-20T10:39:58Z | dispatcher heartbeat 13s -->
 # agent — 2026-10-20 10:09 UTC
 Milestone: M1 RECORDED; M2 active, M3 source/viewing active. Gates1/6/7 OPEN; no current-tuple release, normalPCM or foundation-complete claim.
 Integrated: Agent tl/integrationdf2739f9. Public12ed60bf15 (47owner+292readinessPASS, exact0a7b6152/58444B/sharedlock/runtime941pin unchanged); identity5c3f0c99 (3pinned+3current regressionsPASS); auto timing/owner correctionefb96034 (1911targeted+173review/matrix); ordinarydeleteequalstate26c3b0a8 (269PASS; inverseABAstrictkept); D07deleted76737ca2 (-206helpers, unitsrelocated, native/compiler+facadereplacements36/90/4PASS); pool+legacyoriginalreadguardsdf2739f9 (348PASS/36redbefore).

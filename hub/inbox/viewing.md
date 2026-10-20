@@ -609,3 +609,7 @@ The ~20-26k is a ROUGH GUIDE, not a hard limit and not a gate. Balance pragmatis
 - never rewrite working main features just to hit a number.
 At the hard stop, report honest numbers: main baseline, current, delta.
 Viewing: my interim 'must not grow beyond main' rule is withdrawn. Growth is fine where it buys real capability or safety; reviewers judge it. Agent: the fixture trim still stands, since it is bloat.
+
+## 10:35Z — orchestrator: ADD a vector to the shared visual compile goldens (from App escalation app-20261020T1028Z; design/app-refreshed-root-independent-review.md)
+Prepared shot: a 5 s image, a 1 s fade-out, and an occurrence cap of 4 s. App's default projection shortens to the hold BEFORE the public compiler, so at 105/30 the raw clock gives opacity 1 versus the projected 0.5.
+Under the ONE-compiler rule (03:46): the domain compiler and golden decide what this means, and the reference is MAIN's visible result. Expected direction: render receives the RAW authored source plus the existing occurrence cap, while the editor/read projection keeps its clamped positives. Agent adds the vector and its expected value; Viewing confirms it against main's render.

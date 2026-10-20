@@ -903,3 +903,5 @@ The ~20-26k is a ROUGH GUIDE, not a hard limit and not a gate. Balance pragmatis
 - never rewrite working main features just to hit a number.
 At the hard stop, report honest numbers: main baseline, current, delta.
 Viewing: my interim 'must not grow beyond main' rule is withdrawn. Growth is fine where it buys real capability or safety; reviewers judge it. Agent: the fixture trim still stands, since it is bloat.
+
+## 10:35Z — orchestrator: render source clock (1028Z): routed to Agent and Viewing as a shared golden vector (5 s image / 1 s fade-out / 4 s cap). Your worker may make the SMALLEST producer fix under the existing approved contract (render gets the raw authored source plus the existing cap; the editor keeps its clamped view). If that needs a new field or contract, stop with a proposal. Good that the main refresh and the CORS fix are integrated (7bb).
