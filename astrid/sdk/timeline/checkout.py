@@ -259,6 +259,19 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         session = TimelineSession.open(self.bundle["project_id"], self.bundle["timeline_id"], client=client)
         return session.undo(publications, **options)
 
+    def _retire_draft_history(self) -> None:
+        """Acknowledged intent cannot become unsent again, even at a retained revision."""
+        if self.path:
+            import shutil
+
+            target = Path(self.path)
+            with _store._file_lock(target):
+                for folder in (_store._history_dir(target), _store._redo_dir(target)):
+                    if folder.exists():
+                        shutil.rmtree(folder)
+        self._journal = []
+        self.__dict__.pop("_exported", None)
+
     def _restore_draft(self, steps: int, *, redo: bool) -> list[str]:
         if not self.path:
             raise TimelineEditError("only a saved working copy can undo or redo draft edits; "
@@ -284,12 +297,26 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                 raise TimelineEditError(f"nothing to {kind}: no unsent draft edit at this base; "
                                         "use publications for accepted edits")
             labels = []
-            for step, label, state in selected:
-                _store._write_step(destination(target), label, current)
-                current = state
+            staged = []
+            temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+            try:
+                for step, label, state in selected:
+                    staged.append(_store._stage_step(destination(target), label, current))
+                    current = state
+                    labels.append(label)
+                temporary.write_text(current, encoding="utf-8")
+                os.replace(temporary, target)
+            except BaseException:
+                temporary.unlink(missing_ok=True)
+                for step_tmp, _step in staged:
+                    step_tmp.unlink(missing_ok=True)
+                raise
+            # Keep every source until the draft and all reverse states are in
+            # place. Failed writes/replaces leave the original undo chain intact.
+            for step_tmp, step in staged:
+                os.replace(step_tmp, step)
+            for step, _label, _state in selected:
                 step.unlink()
-                labels.append(label)
-            target.write_text(current, encoding="utf-8")
             self._reload()
         _journal.record_or_note(self, target, kind=kind, outcome="changed", label="; ".join(labels)[:160],
                                 before=_journal.digest(start), after=_journal.digest(current))

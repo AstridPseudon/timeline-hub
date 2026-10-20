@@ -44,6 +44,9 @@ class _PublishMixin:
             receipt = _store.publish_bundle(stored, key, client=client, force=force)
         else:  # only the narration binding is behind (a retry after it failed): pin it, nothing else to publish
             receipt = {"old_head": self.base_revision, "new_head": self.base_revision, "structure": "unchanged"}
+        # Acceptance consumes the local steps before any follow-up read or
+        # narration work can fail. This also fences a reload of a stale draft.
+        self._retire_draft_history()
         receipt["narration_pinned"] = []
         if chapter_film or self.narration_changes():
             # A line's text changed (or the shots are new): bind each such shot's narration now that
@@ -85,6 +88,7 @@ class _PublishMixin:
 
     def _reset_base(self, *, client: Any = None) -> None:
         """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""
+        self._retire_draft_history()
         try:
             head = _store.fetch_bundle(str(self.bundle["project_id"]), str(self.bundle["timeline_id"]), client=client)
         except Exception as exc:  # noqa: BLE001 - the publish stands; the working copy keeps its old base
@@ -94,14 +98,14 @@ class _PublishMixin:
         from astrid.sdk.timeline_restructure import flatten
 
         head = flatten(head)
-        old, old_journal = self.bundle, list(self._journal)
+        old, old_disk = self.bundle, self._disk
         self.bundle, self._mcache, self._journal, self._disk = head, None, [], None
         try:
             target = Path(self.path)
             with _store._file_lock(target):
                 self._save_locked(target, force=True, record=False)
         except Exception as exc:  # noqa: BLE001
-            self.bundle, self._journal = old, old_journal
+            self.bundle, self._disk = old, old_disk
             self.notes.append(f"published, but this working copy could not be reset to the new head ({exc}); "
                               "its base is still the old one")
 
