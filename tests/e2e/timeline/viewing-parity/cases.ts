@@ -17,7 +17,7 @@ import {
 import {
   assertFrameWithinBound, capturePlayerFrame, compareRgbFrames, decodeExportFrame,
 } from './frames';
-import { captureActualPlayerTab, installTabAudioObservation } from './tab-audio';
+import { assertGdmAudioRefused, captureActualPlayerTab, installTabAudioObservation } from './tab-audio';
 
 import { ORIGINAL_640, readCanvasFrameMarker, type ParityCanvas } from './canvas';
 
@@ -279,6 +279,7 @@ export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): v
       const render = await renderAndDownload(page, harness, fixture, testInfo);
       await capturePlayerFrame(page, 0, testInfo, 'tab-audio-anchor', canvas);
       const capture = await captureActualPlayerTab(page, testInfo);
+      const gdm = assertGdmAudioRefused(capture.probe);
       expect(capture.probe.streams.filter(stream => stream.codec_type === 'video')).toHaveLength(1);
       expect(capture.probe.streams.filter(stream => stream.codec_type === 'audio')).toHaveLength(1);
       expect(capture.lifecycle.events.indexOf('recorder:start')).toBeLessThan(capture.lifecycle.events.indexOf('warm'));
@@ -291,6 +292,12 @@ export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): v
         lifecycle: capture.lifecycle,
         streams: capture.probe.streams,
         format: capture.probe.format,
+        gdm,
+        privateMonitor: capture.privateMonitor && {
+          path: capture.privateMonitor.path,
+          provenance: capture.privateMonitor.provenance,
+          inspection: capture.privateMonitor.inspection,
+        },
       });
       await completeResult(page, pageLogs, { ...render.result, decodedFrames: [{ frame: 0, decoded: await decodeExportFrame(render.exportPath, 0) }] });
       expect((await pageLogs.result()).failures).toEqual([]);

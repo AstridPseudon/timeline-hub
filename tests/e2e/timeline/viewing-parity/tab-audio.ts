@@ -22,6 +22,78 @@ export type TabCaptureProbe = {
   format: Record<string, unknown>;
 };
 
+/**
+ * The approved Pulse monitor is a separate source from getDisplayMedia. Keep
+ * its identity and timing boundary explicit so a native mono GDM stream cannot
+ * be presented as stereo evidence, and so no shared A/V clock is implied.
+ */
+export const PRIVATE_PLAYER_MONITOR_PROVENANCE = Object.freeze({
+  backend: 'private-pulse-monitor',
+  source: 'player.monitor',
+  owner: 'viewing-parity/private-player-monitor',
+  sampleRate: 48_000,
+  channels: 2,
+  channelMap: ['front-left', 'front-right'] as const,
+  timing: 'separate-native-backend-clock; no-a-v-alignment',
+});
+
+export type PrivatePlayerMonitorInspection = {
+  backend: string;
+  source: string;
+  owner: string;
+  sampleRate: number;
+  channels: number;
+  channelMap: readonly string[];
+};
+
+/**
+ * This is the narrow seam to the already-approved private Pulse lifecycle.
+ * `record` owns process/start/stop and retained WAV creation; `inspect` owns
+ * the existing retained-WAV decoder. The Player adapter does not implement
+ * either one.
+ */
+export type PrivatePlayerMonitorBackend = {
+  record: (path: string, play: () => Promise<void>) => Promise<unknown>;
+  inspect: (path: string) => Promise<PrivatePlayerMonitorInspection>;
+};
+
+export type PrivatePlayerMonitorCapture = {
+  path: string;
+  lifecycle: unknown;
+  inspection: PrivatePlayerMonitorInspection;
+  provenance: typeof PRIVATE_PLAYER_MONITOR_PROVENANCE;
+};
+
+export function assertPrivatePlayerMonitorInspection(
+  inspection: PrivatePlayerMonitorInspection,
+): PrivatePlayerMonitorInspection {
+  if (!inspection || typeof inspection !== 'object'
+    || inspection.backend !== PRIVATE_PLAYER_MONITOR_PROVENANCE.backend
+    || inspection.source !== PRIVATE_PLAYER_MONITOR_PROVENANCE.source
+    || inspection.owner !== PRIVATE_PLAYER_MONITOR_PROVENANCE.owner) {
+    throw new Error('private Player monitor ownership refused: inspection is not the approved Pulse monitor source');
+  }
+  if (inspection.sampleRate !== PRIVATE_PLAYER_MONITOR_PROVENANCE.sampleRate
+    || inspection.channels !== PRIVATE_PLAYER_MONITOR_PROVENANCE.channels) {
+    throw new Error(`private Player monitor requires native ${PRIVATE_PLAYER_MONITOR_PROVENANCE.sampleRate} Hz stereo; no mono-upmix is allowed`);
+  }
+  if (!Array.isArray(inspection.channelMap)
+    || inspection.channelMap.length !== PRIVATE_PLAYER_MONITOR_PROVENANCE.channelMap.length
+    || inspection.channelMap.some((channel, index) => channel !== PRIVATE_PLAYER_MONITOR_PROVENANCE.channelMap[index])) {
+    throw new Error('private Player monitor channel map is not strict left/right stereo');
+  }
+  return inspection;
+}
+
+/** A native mono GDM result is an explicit refusal, never stereo evidence. */
+export function assertGdmAudioRefused(probe: TabCaptureProbe): { channels: number; status: 'refused'; reason: string } {
+  const audio = probe.streams.filter(stream => stream.codec_type === 'audio');
+  if (audio.length !== 1) throw new Error(`GDM refusal requires exactly one native audio stream, got ${audio.length}`);
+  const channels = Number(audio[0].channels);
+  if (channels !== 1) throw new Error(`GDM audio must remain native mono and refused; got ${String(audio[0].channels)} channels`);
+  return { channels, status: 'refused', reason: 'native GDM audio is mono; no stereo evidence or upmix is permitted' };
+}
+
 type Recorder = {
   state: string;
   start: (timeslice?: number) => void;
@@ -242,17 +314,45 @@ export async function inspectTabCapture(path: string): Promise<TabCaptureProbe> 
   return probe;
 }
 
-export async function captureActualPlayerTab(page: Page, testInfo: TestInfo): Promise<{ path: string; lifecycle: CaptureLifecycle; probe: TabCaptureProbe }> {
-  const lifecycle = await page.evaluate(recordTabStream, {
+export async function captureActualPlayerTab(
+  page: Page,
+  testInfo: TestInfo,
+  options: { privateMonitor?: PrivatePlayerMonitorBackend } = {},
+): Promise<{ path: string; lifecycle: CaptureLifecycle; probe: TabCaptureProbe; privateMonitor?: PrivatePlayerMonitorCapture }> {
+  let lifecycle: CaptureLifecycle | undefined;
+  let privateMonitor: PrivatePlayerMonitorCapture | undefined;
+  const captureGdm = async () => page.evaluate(recordTabStream, {
     mimeType: TAB_AUDIO_MIME, timesliceMs: TAB_AUDIO_TIMESLICE_MS, durationMs: TAB_AUDIO_DURATION_MS,
   });
+  if (options.privateMonitor) {
+    const monitorPath = testInfo.outputPath('viewing-parity/private-player-monitor.wav');
+    const monitorLifecycle = await options.privateMonitor.record(monitorPath, async () => {
+      lifecycle = await captureGdm();
+    });
+    if (!lifecycle) throw new Error('private Player monitor completed without a GDM result');
+    const inspection = assertPrivatePlayerMonitorInspection(await options.privateMonitor.inspect(monitorPath));
+    privateMonitor = { path: monitorPath, lifecycle: monitorLifecycle, inspection,
+      provenance: PRIVATE_PLAYER_MONITOR_PROVENANCE };
+    await testInfo.attach('actual-player-private-pulse-monitor', { path: monitorPath, contentType: 'audio/wav' });
+  } else {
+    lifecycle = await captureGdm();
+  }
+  if (!lifecycle) throw new Error('actual Player GDM capture did not produce a lifecycle');
   const path = testInfo.outputPath('viewing-parity/whole-tab.webm');
   await mkdir(testInfo.outputPath('viewing-parity'), { recursive: true });
   const bytes = Buffer.concat(lifecycle.chunks.map(chunk => Buffer.from(chunk, 'base64')));
   if (bytes.length === 0) throw new Error('actual Player tab capture produced no bytes');
   await writeFile(path, bytes);
   const probe = await inspectTabCapture(path);
+  const gdm = assertGdmAudioRefused(probe);
   await writeFile(testInfo.outputPath('viewing-parity/tab-capture-lifecycle.json'), `${JSON.stringify({ lifecycle, probe }, null, 2)}\n`);
   await testInfo.attach('actual-player-whole-tab', { path, contentType: 'video/webm' });
-  return { path, lifecycle, probe };
+  if (privateMonitor) {
+    await writeFile(testInfo.outputPath('viewing-parity/private-player-monitor-provenance.json'), `${JSON.stringify({
+      provenance: privateMonitor.provenance, inspection: privateMonitor.inspection,
+      lifecycle: privateMonitor.lifecycle, gdm: { channels: gdm.channels, status: gdm.status, reason: gdm.reason },
+      timing: lifecycle.events,
+    }, null, 2)}\n`);
+  }
+  return { path, lifecycle, probe, privateMonitor };
 }

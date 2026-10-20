@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { assertNativePts, recordTabStream, TAB_AUDIO_MIME } from './tab-audio';
+import {
+  assertGdmAudioRefused,
+  assertNativePts,
+  assertPrivatePlayerMonitorInspection,
+  PRIVATE_PLAYER_MONITOR_PROVENANCE,
+  recordTabStream,
+  TAB_AUDIO_MIME,
+} from './tab-audio';
 
 type MockListener = (event?: unknown) => void;
 type MockStream = { getTracks: () => Array<{ kind: string; readyState: string }> };
@@ -79,6 +86,34 @@ test('stream mocks start the recorder before warm/readiness/play and retain mux 
   assert.equal(result.events.indexOf('recorder:start') < result.events.indexOf('warm'), true);
   assert.equal(result.events.indexOf('warm') < result.events.indexOf('readiness'), true);
   assert.equal(result.events.indexOf('readiness') < result.events.indexOf('play'), true);
+});
+
+test('native GDM mono is a refusal and never a stereo fallback', () => {
+  const probe = {
+    streams: [
+      { index: 0, codec_type: 'video', channels: 1, time_base: '1/1000' },
+      { index: 1, codec_type: 'audio', channels: 1, time_base: '1/48000' },
+    ],
+    packets: [],
+    format: {},
+  };
+  assert.deepEqual(assertGdmAudioRefused(probe), {
+    channels: 1,
+    status: 'refused',
+    reason: 'native GDM audio is mono; no stereo evidence or upmix is permitted',
+  });
+  assert.throws(() => assertGdmAudioRefused({
+    ...probe,
+    streams: probe.streams.map(stream => stream.codec_type === 'audio' ? { ...stream, channels: 2 } : stream),
+  }), /must remain native mono and refused/);
+});
+
+test('private monitor inspection requires owned native 48 kHz strict L/R stereo', () => {
+  const inspection = { ...PRIVATE_PLAYER_MONITOR_PROVENANCE };
+  assert.deepEqual(assertPrivatePlayerMonitorInspection(inspection), inspection);
+  assert.throws(() => assertPrivatePlayerMonitorInspection({ ...inspection, channels: 1 }), /native 48000 Hz stereo/);
+  assert.throws(() => assertPrivatePlayerMonitorInspection({ ...inspection, backend: 'gdm' }), /ownership refused/);
+  assert.throws(() => assertPrivatePlayerMonitorInspection({ ...inspection, owner: 'other-test' }), /ownership refused/);
 });
 
 test('stream failure still stops the recorder tracks without asserting physical audio mix', async () => {
