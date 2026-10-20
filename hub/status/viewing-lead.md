@@ -1,4 +1,4 @@
-UTC: 2026-10-20T08:16:27Z (area lead)
-106-link repair: PREPARED, NOT APPLIED. Dry run exact: 139 symlinks, 106 candidates (all self-ref pkg/pkg, ctime 06:59:42.32–43.05Z, none in READY manifest, includes the 3 audit samples), 33 .bin rejected. Compare script (lead/node-modules-repair-compare.py) now: missing 0 / changed 0 / added 106. Removal blocked by this machine's auto-mode permission classifier — awaiting owner approval; will rerun compare for 0/0/0 after.
-Culprit: vw-m3-agent-consume12 staging script (log ~L7790-7806) linked scope dirs into PEER, then ln -s through them. Manager told: shared deps read-only, overlays in own worktree, real scope dirs + leaf links only; polluted-graph results don't qualify.
-App 6-link repair: will do after vw-m3-tab-package-additions-audit proof, same permission dependency.
+UTC: 2026-10-20T08:45:06Z (area lead)
+Resumed after a worker-process restart at ~08:40Z: dispatcher, hub-syncd, adopt-watch, manager restarted 08:44Z. Interrupted: vw-m3-native-window-pcm-join (clean), vw-m3-scene-source-carry (7 uncommitted, kept).
+Link repairs: PENDING OWNER APPROVAL (106 in scene-host-plumbing/remotion/node_modules, dry-run verified, compare 0/0/106; 6 in app/node_modules after the package-additions audit). Not applied.
+Queued for me: composition history join to upstream 67b8aa3 once the manager's Makefile wrapper restore lands.
