@@ -15,7 +15,7 @@ import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
 import { finishTrackLabel, type TrackLabelArgs } from '../trackLabelCapture.ts';
 import { executeClipTrim } from '../clipTrimCapture.ts';
 import { executeClipDelete } from '../clipDeleteCapture.ts';
-import { executeClipSet } from '../clipScalarCapture.ts';
+import { executeClipSetBatch } from '../clipScalarCapture.ts';
 import type { AssetRegistry } from '../../types/index.ts';
 import trimFixture from '../fixtures/recipe_m2_clip_trim.json';
 
@@ -116,7 +116,7 @@ export async function environment(initialDocument = document()) {
           result = request.commands[0].op === 'clip.delete' ? executeClipDelete(bundle, request.commands[0])
             : request.commands[0].op === 'clip.move' ? executeClipMove(bundle, request.commands[0])
             : request.commands[0].op === 'clip.trim' ? executeClipTrim(bundle, request.commands[0])
-            : request.commands[0].op === 'clip.set' ? executeClipSet(bundle, request.commands[0])
+            : request.commands[0].op === 'clip.set' ? executeClipSetBatch(bundle, request.commands)
             : request.commands[0].op === 'track.set'
               ? finishTrackLabel({ bundle, command: request.commands[0] }, request.commands[0].args as TrackLabelArgs)
               : finishClipParams({ bundle, command: request.commands[0] }, request.commands[0].args as ClipParamsArgs);

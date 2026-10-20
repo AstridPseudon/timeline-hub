@@ -302,9 +302,11 @@ export function ClipTransitionSection({
                 if (!clip.transition || !resolvedTransitionRecord?.schema) return;
                 onChange({
                   transition: {
-                    type: clip.transition.type,
-                    duration: clip.transition.duration,
-                    params: materializeTransitionDefaults(resolvedTransitionRecord.schema),
+                    ...clip.transition,
+                    params: {
+                      ...clip.transition.params,
+                      ...materializeTransitionDefaults(resolvedTransitionRecord.schema),
+                    },
                   },
                 });
               }}
@@ -324,8 +326,7 @@ export function ClipTransitionSection({
             if (!clip.transition) return;
             onChange({
               transition: {
-                type: clip.transition.type,
-                duration: clip.transition.duration,
+                ...clip.transition,
                 params: {
                   ...(clip.transition.params ?? {}),
                   [paramName]: value,

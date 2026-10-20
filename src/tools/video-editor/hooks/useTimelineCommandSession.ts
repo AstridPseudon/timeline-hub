@@ -193,6 +193,8 @@ export function useTimelineCommandSession(options: {
           capture(input) { requireCleanScalarEdit(); return scalarPort.capture(input); },
           finish(basis, args) { requireCleanScalarEdit(); return scalarPort.finish(basis, args); },
           submit(input) { requireCleanScalarEdit(); scalarPort.submit(input); },
+          finishBatch(bases, args) { requireCleanScalarEdit(); return scalarPort.finishBatch!(bases, args); },
+          submitBatch(input) { requireCleanScalarEdit(); scalarPort.submitBatch!(input); },
         };
         const trimPort = session.clipTrimPort;
         const requireCleanTrim = () => {

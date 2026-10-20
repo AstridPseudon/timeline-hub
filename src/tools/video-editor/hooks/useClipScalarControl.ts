@@ -13,3 +13,13 @@ export function useClipScalarControl(clipId: string | undefined) {
     return captureClipScalarEdit(clipScalar, current, clipId);
   }, [clipId, clipScalar, dataRef]);
 }
+
+export function useClipScalarControls(clipIds: string[]) {
+  const { dataRef } = useTimelineEditorData();
+  const { clipScalar } = useTimelineEditorOps();
+  return useCallback(() => {
+    const current = dataRef.current;
+    if (!current || !clipIds.length) throw new Error('Select loaded clips before editing clip fields.');
+    return clipIds.map((clipId) => captureClipScalarEdit(clipScalar, current, clipId));
+  }, [clipIds, clipScalar, dataRef]);
+}

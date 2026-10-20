@@ -22,7 +22,7 @@ import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/Data
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
 import { captureClipParamsEdit, submitClipParamsEdit } from '../commands/clipParamsGesture.ts';
-import { captureClipScalarEdit, submitClipScalarEdit } from '../commands/clipScalarGesture.ts';
+import { captureClipScalarEdit, submitClipScalarEdit, submitClipTransitionClears } from '../commands/clipScalarGesture.ts';
 import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
 import { captureClipDeleteEdit, clipDeletePreview, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
@@ -153,6 +153,23 @@ describe('mounted timeline command session', () => {
     expect(() => port.submit({ command: prepared.command,
       preview: { version: 1, operations: [{ op: 'clip.update', target: 'x', payload: {}, clear: ['asset'] }] } })).toThrow('earlier timeline saves');
     expect(args.clear).toEqual(['asset']);
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('fences atomic transition clear finish and submit behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipScalarPort!;
+    const current = hook.result.current.commit.data!;
+    const captured = captureClipScalarEdit(port, current, 'x', 'parent');
+    setLegacyClean(false);
+    expect(() => submitClipTransitionClears([captured])).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finishBatch!([captured.basis], { values: {}, clear: ['transition'] });
+    setLegacyClean(false);
+    expect(() => port.submitBatch!({ commands: prepared.commands,
+      preview: { version: 1, operations: [{ op: 'clip.update', target: 'x', payload: {}, clear: ['transition'] }] } }))
+      .toThrow('earlier timeline saves');
     expect(hook.result.current.commit.data).toBe(current);
     expect(env.commits()).toHaveLength(0);
     hook.unmount();

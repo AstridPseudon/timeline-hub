@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { submitClipTransitionClears, type CapturedClipScalarEdit } from '@/tools/video-editor/commands/clipScalarGesture.ts';
 import { AlertTriangle, AudioWaveform, Globe, Lock, RefreshCw, Server, Trash2, Volume2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
@@ -65,6 +66,7 @@ export interface BulkClipPanelProps {
   sharedTransitionDuration: number | null;
   onChange: (patch: BulkScalarPatch) => void;
   onChangeDeep: (patchFn: (existing: ClipMeta) => Partial<ClipMeta>) => void;
+  onScalarEditsStart?: () => CapturedClipScalarEdit[];
   onResetPosition: () => void;
   onToggleMute: () => void;
   onClose: () => void;
@@ -183,7 +185,6 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
     compositionWidth,
     compositionHeight,
     sharedText,
-    sharedTransition,
     sharedEntranceType,
     sharedExitType,
     sharedContinuousType,
@@ -193,6 +194,7 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
     sharedVolume,
     onChange,
     onChangeDeep,
+    onScalarEditsStart,
     onResetPosition,
     onToggleMute,
     onClose,
@@ -201,6 +203,19 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
   } = props;
   const {effectResources} = props;
   const [drafts, setDrafts] = useState<BulkDrafts>(() => buildDrafts(props));
+  const [clearError, setClearError] = useState<string | null>(null);
+  const removeTransitions = () => {
+    if (!onScalarEditsStart) {
+      onChangeDeep(() => ({ transition: undefined }));
+      return;
+    }
+    try {
+      submitClipTransitionClears(onScalarEditsStart());
+      setClearError(null);
+    } catch (error) {
+      setClearError(error instanceof Error ? error.message : String(error));
+    }
+  };
 
   // Transition registry (T12: bulk transition controls)
   const transitionRegistryContext = useOptionalTransitionRegistryContext();
@@ -540,8 +555,9 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                 <Select
                   value={sharedTransitionType ?? MIXED_SELECT_VALUE}
                   onValueChange={(value) => {
-                    if (value === NO_TRANSITION || value === MIXED_SELECT_VALUE) {
-                      onChangeDeep(() => ({ transition: undefined }));
+                    if (value === MIXED_SELECT_VALUE) return;
+                    if (value === NO_TRANSITION) {
+                      removeTransitions();
                       return;
                     }
                     const record = resolveTransition(value, mergedTransitionSnapshot);
@@ -620,6 +636,8 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                   );
                 })()}
 
+                {clearError && <p role="alert" className="text-sm text-destructive">{clearError}</p>}
+
                 {/* Unresolvable / missing transition row */}
                 {isTransitionUnresolvable && sharedTransitionType && (
                   <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 text-xs text-destructive">
@@ -639,13 +657,9 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                       step={0.05}
                       onChange={(value) => {
                         if (value !== null) {
-                          onChangeDeep((meta) => ({
-                            transition: {
-                              type: sharedTransitionType!,
-                              duration: value,
-                              params: meta.transition?.params ?? sharedTransition?.params,
-                            },
-                          }));
+                          onChangeDeep((meta) => meta.transition ? ({
+                            transition: { ...meta.transition, duration: value },
+                          }) : {});
                         }
                       }}
                     />
@@ -660,7 +674,7 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                       variant="ghost"
                       size="sm"
                       className="h-6 gap-1 text-xs text-destructive hover:text-destructive"
-                      onClick={() => onChangeDeep(() => ({ transition: undefined }))}
+                      onClick={removeTransitions}
                     >
                       <Trash2 className="h-3 w-3" /> Remove
                     </Button>
@@ -672,13 +686,15 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                         className="h-6 gap-1 text-xs"
                         onClick={() => {
                           if (!sharedTransitionType || !resolvedTransitionRecord?.schema) return;
-                          onChangeDeep(() => ({
+                          onChangeDeep((meta) => meta.transition ? ({
                             transition: {
-                              type: sharedTransitionType,
-                              duration: sharedTransitionDuration ?? 0.5,
-                              params: materializeTransitionDefaults(resolvedTransitionRecord.schema),
+                              ...meta.transition,
+                              params: {
+                                ...meta.transition.params,
+                                ...materializeTransitionDefaults(resolvedTransitionRecord.schema),
+                              },
                             },
-                          }));
+                          }) : {});
                         }}
                       >
                         <RefreshCw className="h-3 w-3" /> Reset defaults

@@ -11,6 +11,8 @@ export interface ClipScalarCapturePort {
   capture(input: { clipId: string; ownerRef?: ClipScalarOwner; current: TimelineData }): JsonObject;
   finish(basis: JsonObject, args: ClipScalarArgs): { command: EditCommand };
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
+  finishBatch?(bases: JsonObject[], args: ClipScalarArgs): { commands: EditCommand[] };
+  submitBatch?(input: { commands: EditCommand[]; preview: TimelinePatch }): void;
 }
 export interface CapturedClipScalarEdit {
   readonly clipId: string;
@@ -41,4 +43,22 @@ export function submitClipScalarEdit(captured: CapturedClipScalarEdit, args: Cli
     throw new Error('Unsupported clip.set capture result.');
   }
   captured.port.submit({ command: freezeJson(structuredClone(command)), preview: clipScalarPreview(captured.clipId, args) });
+}
+
+/** Finish every selected clear before submitting one atomic durable intent. */
+export function submitClipTransitionClears(captured: CapturedClipScalarEdit[]): void {
+  const port = captured[0]?.port;
+  if (!port?.finishBatch || !port.submitBatch || captured.some((edit) => edit.port !== port)) {
+    throw new Error('Atomic transition clear capture is unavailable.');
+  }
+  const args: ClipScalarArgs = { values: {}, clear: ['transition'] };
+  const { commands } = port.finishBatch(captured.map((edit) => edit.basis), args);
+  if (commands.length !== captured.length || commands.some((command, index) =>
+    command.schema_version !== 1 || command.op !== 'clip.set' || command.version !== '1'
+    || command.select !== captured[index].basis.select || !equal(command.args, args))) {
+    throw new Error('Unsupported transition clear capture result.');
+  }
+  port.submitBatch({ commands: freezeJson(structuredClone(commands)), preview: {
+    version: 1, operations: captured.flatMap((edit) => clipScalarPreview(edit.clipId, args).operations),
+  } });
 }

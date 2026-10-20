@@ -2,7 +2,7 @@ import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
 import { captureClipDelete, executeClipDelete, finishClipDelete } from './clipDeleteCapture.ts';
 import { clipDeletePreview, type ClipDeleteCapturePort } from './clipDeleteGesture.ts';
 import { captureClipTrim, executeClipTrim } from './clipTrimCapture.ts';
-import { clipScalarPreview, type ClipScalarCapturePort } from './clipScalarGesture.ts';
+import { clipScalarPreview, type ClipScalarArgs, type ClipScalarCapturePort } from './clipScalarGesture.ts';
 import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
 import { captureParentClipAdd, executeParentClipAdd, finishParentClipAdd } from './parentClipAddCapture.ts';
 import { parentClipAddPreview, type ParentClipAddCapturePort } from './parentClipAddGesture.ts';
@@ -566,29 +566,55 @@ export async function createTimelineCommandSession(options: Options) {
         localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<ClipScalarCapturePort['capture']>;
     },
     finish(basis, args) {
-      assertReady();
-      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the scalar edit');
-      const original = basis as unknown as { bundle: AuthoredBundle; select: string; clipId: string; localBasis: OutboxBasis };
-      const command = captureClipSet(original.bundle, original.select, args);
-      // Re-execute the original claims on current raw bytes; an ACK never refreshes them.
-      const result = executeClipSet(bundle, command);
-      prepared.set(JSON.stringify(command), { payload: {
-        commands: [command], before: bundle, after: result.bundle, preview: clipScalarPreview(original.clipId, args),
-      }, generation: localGeneration, basis: original.localBasis });
-      return { command };
+      const { commands } = prepareScalarEdits([basis], args);
+      return { command: commands[0] };
     },
-    submit({ command, preview }) {
-      assertReady();
-      const key = JSON.stringify(command);
-      const entry = prepared.get(key);
-      if (command.op !== 'clip.set' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
-        throw new Error('Scalar edit was not captured by this session or the timeline changed');
+    submit({ command, preview }) { submitScalarEdits([command], preview); },
+    finishBatch(bases, args) {
+      if (!equal(args, { values: {}, clear: ['transition'] })) {
+        throw new Error('Scalar batches support only explicit transition clears');
       }
-      if (!equal(preview, entry.payload.preview)) throw new Error('Scalar edit requires its exact leaf-only preview');
-      prepared.delete(key);
-      enqueue({ ...entry.payload, preview }, preview, entry.basis);
+      return prepareScalarEdits(bases, args);
     },
+    submitBatch({ commands, preview }) { submitScalarEdits(commands, preview); },
   };
+  function prepareScalarEdits(bases: Parameters<ClipScalarCapturePort['finish']>[0][], args: ClipScalarArgs) {
+    assertReady();
+    if (!bases.length || new Set(bases.map((basis) => basis.select)).size !== bases.length) {
+      throw new Error('Scalar edits require distinct raw clip identities');
+    }
+    const originals = bases as unknown as Array<{ bundle: AuthoredBundle; select: string; clipId: string; localBasis: OutboxBasis }>;
+    let originalBundle = originals[0].bundle;
+    let after = bundle;
+    const commands = bases.map((basis, index) => {
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the scalar edit');
+      const original = originals[index];
+      if (!equal(original.bundle, originals[0].bundle) || !equal(original.localBasis, originals[0].localBasis)) {
+        throw new Error('Scalar batch requires one original authoring basis');
+      }
+      const command = captureClipSet(originalBundle, original.select, args);
+      originalBundle = executeClipSet(originalBundle, command).bundle;
+      // Re-execute original claims on current bytes; an ACK never refreshes them.
+      after = executeClipSet(after, command).bundle;
+      return command;
+    });
+    const preview: TimelinePatch = { version: 1,
+      operations: originals.flatMap((original) => clipScalarPreview(original.clipId, args).operations) };
+    prepared.set(JSON.stringify(commands), { payload: { commands, before: bundle, after, preview },
+      generation: localGeneration, basis: originals[0].localBasis });
+    return { commands };
+  }
+  function submitScalarEdits(commands: EditCommand[], preview: TimelinePatch) {
+    assertReady();
+    const key = JSON.stringify(commands);
+    const entry = prepared.get(key);
+    if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+      throw new Error('Scalar edit was not captured by this session or the timeline changed');
+    }
+    if (!equal(preview, entry.payload.preview)) throw new Error('Scalar edit requires its exact leaf-only preview');
+    prepared.delete(key);
+    enqueue({ ...entry.payload, preview }, preview, entry.basis);
+  }
   const clipTrimPort: ClipTrimCapturePort = {
     capture({ clipId, current }) {
       assertReady();
