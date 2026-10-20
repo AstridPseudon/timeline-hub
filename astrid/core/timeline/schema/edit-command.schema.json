@@ -1157,6 +1157,41 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.duplicate"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceDuplicateArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -1236,6 +1271,24 @@
         },
         "media": {
           "$ref": "#/$defs/MediaSelection"
+        }
+      },
+      "additionalProperties": false
+    },
+    "OccurrenceDuplicateArgs": {
+      "type": "object",
+      "required": [
+        "occurrence_id",
+        "shot_id"
+      ],
+      "properties": {
+        "occurrence_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$"
+        },
+        "shot_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$"
         }
       },
       "additionalProperties": false

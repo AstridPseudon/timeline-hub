@@ -266,3 +266,23 @@ def test_pool_auto_and_relative_placement_are_not_supported():
         forged['args'] = {**forged['args'], field: value}
         with pytest.raises(CommandError):
             execute(bundle, [forged], verified_media=verified)
+
+
+def test_undo_of_create_refuses_after_any_intervening_write_to_the_created_clip():
+    # Undo is strict ABA, not a LIFO stack: even an equal-value rewrite refuses.
+    _, bundle, command, verified = create_case()
+    plan = execute(bundle, [command], verified_media=verified)
+    with pytest.raises(CommandError, match='intervening'):
+        inverse(plan.bundle, plan.records, [later(CHILD, ['hold'], HOLD)])
+
+
+def test_create_cannot_reuse_a_removed_clip_identity_while_it_is_occupied():
+    # Re-placing unchanged media is placement.move; a replacement needs a NEW reserved id.
+    _, bundle, command, verified = create_case()
+    plan = execute(bundle, [command], verified_media=verified)
+    again = capture_placement_create(bundle, OWNER, 'replacement', verified[1]['selection'], ON, HOLD,
+                                     ownership='occurrence', verified_media=verified)
+    assert again['created'][-1] == OWNER + '/clip:replacement'
+    forged = plain(command)
+    with pytest.raises(CommandError):
+        execute(plan.bundle, [forged], verified_media=verified)
