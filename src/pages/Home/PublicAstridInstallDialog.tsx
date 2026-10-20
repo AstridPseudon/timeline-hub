@@ -10,6 +10,7 @@ import { detectInstallScenario, type InstallScenario } from './installScenario.t
 import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
 import { useSendLinkToComputer } from './useSendLinkToComputer.ts';
 import { CopyInstallCommand } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
+import { withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import './PublicAstridInstallDialog.css';
 
 const AVATAR_SRC = '/astrid-app-icon-192.png';
@@ -18,7 +19,7 @@ const HOME_PATH = '/home';
 /** Landing page wording is kept together here for the product copy pass. */
 export const SET_UP_ASTRID_COPY = {
   title: 'Set up Astrid',
-  subtitle: 'Open Terminal on a Mac, PowerShell on Windows, or a terminal on Linux, then run one line to set up Astrid.',
+  subtitle: 'Run one line in a terminal to set up Astrid on your computer.',
   copyCommand: 'Copy',
   browserShortcut: 'Add a browser shortcut',
   installNow: 'Add the shortcut',
@@ -276,7 +277,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
           <img className="astrid-install-avatar" src={AVATAR_SRC} alt="" />
           <div>
             <h2 id="astrid-install-title">{SET_UP_ASTRID_COPY.title}</h2>
-            <p>{SET_UP_ASTRID_COPY.subtitle}</p>
+            <p>{withCommandShell(SET_UP_ASTRID_COPY.subtitle)}</p>
           </div>
         </header>
 

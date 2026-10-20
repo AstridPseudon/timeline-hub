@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
-import { installCommand, RUNTIME_CONNECTION_COPY, type CommandMode } from './copy.ts';
+import { installCommand, RUNTIME_CONNECTION_COPY, terminalOpeningHint, type CommandMode } from './copy.ts';
 
 export interface CopyInstallCommandProps {
   /** `install` for setup/repair and `update` for an incompatible Runtime. */
@@ -58,6 +58,7 @@ export function CopyInstallCommand({ mode = 'install', label }: CopyInstallComma
           : <Copy aria-hidden="true" className="mr-2 h-4 w-4" />}
         {status === 'copied' ? copy.copied : label}
       </Button>
+      <p className="text-xs text-muted-foreground">{terminalOpeningHint()}</p>
       <p className="text-xs text-muted-foreground">{copy.note}</p>
       {status === 'failed' && (
         <div className="space-y-2">

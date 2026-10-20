@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { installCommand } from './copy.ts';
+import { installCommand, terminalOpeningHint } from './copy.ts';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -15,5 +15,18 @@ describe('install commands', () => {
     vi.spyOn(navigator, 'platform', 'get').mockReturnValue(platform);
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(os);
     expect(installCommand(mode)).toBe(expected);
+  });
+});
+
+describe('terminal opening hints', () => {
+  it.each([
+    ['MacIntel', 'Macintosh', 'Open Terminal from Applications → Utilities.'],
+    ['Win32', 'Windows', 'Open Start and type PowerShell.'],
+    ['Linux x86_64', 'Linux', 'Open Terminal from your applications menu.'],
+    ['Other', 'Other', 'Open a terminal on your computer.'],
+  ] as const)('%s %s hint', (platform, os, expected) => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue(platform);
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(os);
+    expect(terminalOpeningHint()).toBe(expected);
   });
 });

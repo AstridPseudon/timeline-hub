@@ -104,7 +104,7 @@ describe('PublicAstridInstallDialog', () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
 
-    expect(screen.getByText('Open Terminal on a Mac, PowerShell on Windows, or a terminal on Linux, then run one line to set up Astrid.')).toBeInTheDocument();
+    expect(screen.getByText('Run one line in PowerShell to set up Astrid on your computer.')).toBeInTheDocument();
   });
 
   it.each([
@@ -120,7 +120,7 @@ describe('PublicAstridInstallDialog', () => {
     if (scenario === 'mobile') expect(screen.getByText(new RegExp(copy))).toBeInTheDocument();
     else {
       expect(screen.getByRole('heading', { name: 'Set up Astrid' })).toBeInTheDocument();
-      if (scenario === 'chromium') expect(screen.getByText('Open Terminal on a Mac, PowerShell on Windows, or a terminal on Linux, then run one line to set up Astrid.')).toBeInTheDocument();
+      if (scenario === 'chromium') expect(screen.getByText('Run one line in a terminal to set up Astrid on your computer.')).toBeInTheDocument();
       expect(screen.getByText(/https:\/\/astrid\.haus\/install/)).toBeInTheDocument();
       expect(screen.getByText('Add a browser shortcut')).toBeInTheDocument();
     }

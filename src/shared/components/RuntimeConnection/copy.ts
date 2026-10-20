@@ -44,6 +44,16 @@ export function installCommand(mode: CommandMode): string {
   return windows ? ASTRID_COMMANDS.windows : ASTRID_COMMANDS.macLinux;
 }
 
+/** The short shell-opening hint shown beside every install, repair and update line. */
+export function terminalOpeningHint(): string {
+  switch (detectPlatform()) {
+    case 'mac': return 'Open Terminal from Applications → Utilities.';
+    case 'windows': return 'Open Start and type PowerShell.';
+    case 'linux': return 'Open Terminal from your applications menu.';
+    default: return 'Open a terminal on your computer.';
+  }
+}
+
 /** Names the shell that matches the command shown on setup, repair and recovery cards. */
 export function withCommandShell(sentence: string): string {
   return detectPlatform() === 'windows' ? sentence.replace('in a terminal', 'in PowerShell') : sentence;
@@ -144,7 +154,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   updateNeeded: {
     title: 'Update Astrid',
-    sentence: 'Astrid on this computer is older than this page. Run this line in a terminal to update it. It backs up your work first.',
+    sentence: 'Astrid on this computer needs an update to work with this page. Run this line in a terminal to update it. It backs up your work first.',
   },
 
   phone: {
