@@ -32,6 +32,8 @@ def _media_kind(entry: Mapping[str, Any]) -> str | None:
 class _EditMixin:
     """Checkout: structural edits (add, cuts, notes, ripple), slots and stand-ins, assets and beats."""
 
+    _orphan_reason: str  # set by Checkout.__init__; declared so this mixin's readers are typed
+
     # ---- structural edits ---------------------------------------------------
     def add(self, element: str, *, at: Any, hold: float | None = None, asset: Any = None, params: Mapping[str, Any] | None = None,
             track: str | None = None, corner: str | None = None, anchor: bool = True, clip_id: str | None = None,

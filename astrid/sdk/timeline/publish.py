@@ -24,6 +24,9 @@ from astrid.sdk import timeline_transcripts as _transcripts  # module access: it
 class _PublishMixin:
     """Checkout: publish, narration binding, and the document as it is saved (annotated) and read back (absorb)."""
 
+    bundle: dict[str, Any]  # set by Checkout.__init__; declared so this mixin's readers are typed
+    _journal: list[tuple[str, str | None]]
+
     def publish(self, message: str = "", *, idempotency_key: str | None = None, client: Any = None,
                 force: bool = False, restructure: bool = False) -> dict[str, Any]:
         """Check, then publish one revision.
