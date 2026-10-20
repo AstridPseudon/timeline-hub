@@ -205,11 +205,10 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
   const [drafts, setDrafts] = useState<BulkDrafts>(() => buildDrafts(props));
   const [clearError, setClearError] = useState<string | null>(null);
   const removeTransitions = () => {
-    if (!onScalarEditsStart) {
-      onChangeDeep(() => ({ transition: undefined }));
-      return;
-    }
     try {
+      if (!onScalarEditsStart) {
+        throw new Error('Bulk transition clear requires an active timeline command session.');
+      }
       submitClipTransitionClears(onScalarEditsStart());
       setClearError(null);
     } catch (error) {

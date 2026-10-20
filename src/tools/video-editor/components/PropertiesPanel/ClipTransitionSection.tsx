@@ -109,11 +109,10 @@ export function ClipTransitionSection({
 }) {
   const [clearError, setClearError] = useState<string | null>(null);
   const removeTransition = () => {
-    if (!onScalarEditStart) {
-      onChange({ transition: undefined });
-      return;
-    }
     try {
+      if (!onScalarEditStart) {
+        throw new Error('Transition clear requires an active timeline command session.');
+      }
       submitClipScalarEdit(onScalarEditStart(), { values: {}, clear: ['transition'] });
       setClearError(null);
     } catch (error) {

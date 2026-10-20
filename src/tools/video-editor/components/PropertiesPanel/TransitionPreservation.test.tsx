@@ -153,7 +153,7 @@ async function editor(bulk: boolean, clips = [rawClip('a', 5), rawClip('b', 9)])
     expect(JSON.stringify(clips)).toBe(rawBefore);
     hook.unmount();
   }
-  return { clips, patches, assertAuthored, assertPublished };
+  return { clips, patches, saves, assertAuthored, assertPublished };
 }
 
 function renderControls(
@@ -307,15 +307,17 @@ describe('mounted transition callbacks preserve raw authoring through publicatio
     }));
   });
 
-  it.each([false, true])('None (bulk=%s) explicitly clears only the transition', async (bulk) => {
-    const { clips, patches, assertAuthored } = await editor(bulk);
+  it.each([false, true])('None (bulk=%s) refuses without command authority and keeps the draft', async (bulk) => {
+    const { clips, patches, saves } = await editor(bulk);
     fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: '__none__' } });
-    expect(patches.every((patch) => Object.hasOwn(patch as object, 'transition'))).toBe(true);
-    assertAuthored(clips.map((clip, index) => {
-      if (!bulk && index) return clip;
-      const { transition: _transition, ...rest } = clip;
-      return rest;
-    }));
+    expect(screen.getAllByRole('alert').some((alert) => alert.textContent === (
+      bulk
+        ? 'Bulk transition clear requires an active timeline command session.'
+        : 'Transition clear requires an active timeline command session.'
+    ))).toBe(true);
+    expect(patches).toHaveLength(0);
+    expect(saves).toHaveLength(0);
+    expect(clips.every((clip) => clip.transition?.type === 'crossfade')).toBe(true);
   });
 
   it.each([false, true])('type change (bulk=%s) starts a new transition without carrying old binding', async (bulk) => {
