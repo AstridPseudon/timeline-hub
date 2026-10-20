@@ -1318,3 +1318,253 @@ test('M2 mixed editing: accepted pointer move and rename survive lost ACK, reloa
     retainedOwner: kept.ownerId, retryKey: wire.posts[0].key, guardedUndo: pinOf(undone), renderer: 'not started' };
   await sniff.expectClean(page, seed3.timelineId);
 });
+
+// Separate worker seed: the original seven cases retain their ordinary fixture and bodies.
+const nativeNoneTest = test.extend<object, { seed3: ThreeProductsSeed }>({
+  seed3: [async ({ harness }, use) => {
+    await use(await harness.seedThreeProducts(THREE_PRODUCTS_REFERENCE_AT, 'native-none'));
+  }, { scope: 'worker', timeout: 240_000 }],
+});
+
+function expectTransitionClear(request: CommitRequest, base: HeadPin, original: Record<string, any>, ids: string[]) {
+  expect(request.base_revision_id).toBe(base.revision_id);
+  expect(request.base_publication_id).toBe(base.publication_id);
+  expect(request.commands).toHaveLength(ids.length);
+  expect(request.commands.map((command) => command.select).sort()).toEqual(ids.map((id) => `parent/clip:${id}`).sort());
+  for (const command of request.commands) {
+    const id = command.select!.slice('parent/clip:'.length);
+    expect(command).toMatchObject({ schema_version: 1, op: 'clip.set', version: '1',
+      args: { values: {}, clear: ['transition'] } });
+    expect(command.args).toEqual({ values: {}, clear: ['transition'] });
+    expect(command.expect?.[`${command.select}::transition`]).toEqual({ state: 'present', value: original[id].transition });
+    expect(command.bindings).toMatchObject({ 'scalar.owner': 'parent', 'scalar.target': command.select });
+    expect(command.reads!.length).toBeGreaterThan(0);
+  }
+}
+
+function expectRawTransitionsCleared(actual: Record<string, any>, original: Record<string, any>, ids: string[]) {
+  const expected = structuredClone(original);
+  for (const clips of [expected.clips, expected.config.clips]) {
+    for (const clip of clips) if (ids.includes(clip.id)) delete clip.transition;
+  }
+  expect(actual).toEqual(expected);
+  for (const clips of [actual.clips, actual.config.clips]) {
+    for (const id of ids) {
+      const clip = clips.find((row: any) => row.id === id);
+      expect(clip).toBeTruthy();
+      expect(Object.hasOwn(clip, 'transition'), `${id}: raw ABSENT, never null or a None sentinel`).toBe(false);
+      expect(Object.keys(clip)).toEqual(Object.keys(expected.clips.find((row: any) => row.id === id)));
+    }
+  }
+}
+
+async function expectRecordedTransitionClears(harness: DirectHarness, seed: ThreeProductsSeed,
+  result: CommitAcceptedMutation, request: CommitRequest, original: Record<string, any>) {
+  const records = (await history(harness, seed)).items.find((entry) => entry.publication_id === pinOf(result).publication_id)!.records!;
+  expect(records.commands.map((record) => record.command)).toEqual(request.commands);
+  for (const record of records.commands) {
+    const id = record.command.select!.slice('parent/clip:'.length);
+    expect(record.writes).toContainEqual({ ref: record.command.select, path: ['transition'],
+      before: { state: 'present', value: original[id].transition }, after: { state: 'absent' } });
+  }
+}
+
+async function bulkTransitionNone(page: Page, seed: ThreeProductsSeed) {
+  await selectClip(page, seed.appClipId);
+  await page.locator(`[data-clip-id="${seed.transitionClipId}"]`).first().click({ modifiers: ['Shift'] });
+  await expect(page.getByText('2 clips selected', { exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: 'Effects', exact: true }).click();
+  await transitionSelect(page).click();
+  await page.getByRole('option', { name: 'None', exact: true }).click();
+  await expect(transitionSelect(page)).toContainText('None');
+}
+
+nativeNoneTest('M2 native None single: ordinary default crossfade clears raw mirrors, reloads, retries exactly after restart and undoes through Runtime', async ({ page, harness, astrid, seed3 }) => {
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  const wire = await faultFirstCommit(page);
+  await openCommandTimeline(page, harness, seed3);
+  journey.facts.sameRealm = await expectSameRealm(page, harness, astrid);
+  const before = await history(harness, seed3);
+  const original = await revisionState(harness, seed3, before.head.revision_id);
+  expect(original.parentClips[seed3.transitionClipId].transition).toEqual({ type: 'crossfade', duration: 0.5 });
+  await selectClip(page, seed3.transitionClipId);
+  await page.getByRole('tab', { name: 'Effects', exact: true }).click();
+  await expect(transitionSelect(page)).toContainText('crossfade');
+  await setTransitionToNone(page, seed3.transitionClipId);
+  await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+  const cleared = accepted(wire.posts[0]);
+  expectTransitionClear(JSON.parse(wire.posts[0].body), before.head, original.parentClips, [seed3.transitionClipId]);
+  expectRawTransitionsCleared(cleared.data.canonical_document.parent_revision.payload, original.parent, [seed3.transitionClipId]);
+  await expectImmutableClosure(harness, seed3, cleared);
+  await expectRecordedTransitionClears(harness, seed3, cleared, JSON.parse(wire.posts[0].body), original.parentClips);
+  const retained = (await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.pending?.request.key === wire.posts[0].key)!;
+  expect(retained.intents).toHaveLength(1);
+  expect(retained.pending!.request).toEqual({ method: 'POST', path: `${timelineBase(harness, seed3)}/commit`,
+    body: wire.posts[0].body, key: wire.posts[0].key });
+  await wire.loseAck();
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.ownerId === retained.ownerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
+  const acceptedHistory = await history(harness, seed3);
+  expect(acceptedHistory.items).toHaveLength(before.items.length + 1);
+  expect(acceptedHistory.head).toEqual(pinOf(cleared));
+  const revisionCount = (await allRevisions(harness, seed3)).length;
+  await harness.restartRuntime();
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  expect((await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.ownerId === retained.ownerId)?.pending?.request)
+    .toEqual(retained.pending!.request);
+  expect(wire.posts).toHaveLength(1);
+  expectRawTransitionsCleared((await revisionState(harness, seed3, pinOf(cleared).revision_id)).parent, original.parent, [seed3.transitionClipId]);
+  await page.getByRole('button', { name: /^Recover saved edits/ }).and(page.locator(`[data-owner-id="${retained.ownerId}"]`)).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(2);
+  expect(wire.posts[1], 'exact bytes, key, receipt and accepted closure survive reload and Runtime restart').toEqual(wire.posts[0]);
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+  expect(await history(harness, seed3)).toEqual(acceptedHistory);
+  expect(await allRevisions(harness, seed3)).toHaveLength(revisionCount);
+  await selectClip(page, seed3.transitionClipId);
+  await expect(transitionSelect(page)).toContainText('None');
+  await expectPreviewRevision(page, pinOf(cleared).revision_id);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+  expect(JSON.parse(wire.posts[2].body).commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: [pinOf(cleared).publication_id] },
+  }]);
+  const undone = accepted(wire.posts[2]);
+  expect(undone.data.canonical_document.parent_revision.payload).toEqual(original.parent);
+  expect(undone.data.canonical_document.shot_revisions).toEqual(cleared.data.canonical_document.shot_revisions);
+  expect(undone.data.canonical_document.internal_timeline_revisions).toEqual(cleared.data.canonical_document.internal_timeline_revisions);
+  const finalHistory = await history(harness, seed3);
+  expect(finalHistory.items).toHaveLength(before.items.length + 2);
+  expect(finalHistory.items.find((entry) => entry.publication_id === pinOf(undone).publication_id)?.records?.undo_of)
+    .toEqual([pinOf(cleared).publication_id]);
+  await expectImmutableClosure(harness, seed3, undone);
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  await selectClip(page, seed3.transitionClipId);
+  await page.getByRole('tab', { name: 'Effects', exact: true }).click();
+  await expect(transitionSelect(page)).toContainText('crossfade');
+  expect((await revisionState(harness, seed3, pinOf(undone).revision_id)).parent).toEqual(original.parent);
+  await expectOpaqueDataKept(harness, seed3);
+  expect(wire.legacy).toEqual([]);
+  journey.facts = { ...journey.facts, cleared: pinOf(cleared), undone: pinOf(undone), renderer: 'not started', legacySaveCount: 0 };
+  await sniff.expectClean(page, seed3.timelineId);
+});
+
+nativeNoneTest('M2 native None bulk: one original-basis atomic clear preserves unknown revision and opaque data; real conflict retains the whole draft', async ({ page, harness, astrid, seed3 }) => {
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  const wire = await faultFirstCommit(page);
+  await openCommandTimeline(page, harness, seed3);
+  journey.facts.sameRealm = await expectSameRealm(page, harness, astrid);
+  const before = await history(harness, seed3);
+  const original = await revisionState(harness, seed3, before.head.revision_id);
+  const ids = [seed3.appClipId, seed3.transitionClipId];
+  expect(original.parentClips[seed3.appClipId].transition.revision).toBe('native-none-unknown-revision');
+  expect(Object.hasOwn(original.parentClips[seed3.appClipId].transition.params, '__proto__')).toBe(true);
+  await bulkTransitionNone(page, seed3);
+  await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+  const cleared = accepted(wire.posts[0]);
+  expectTransitionClear(JSON.parse(wire.posts[0].body), before.head, original.parentClips, ids);
+  const owner = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.pending?.request.key === wire.posts[0].key)!;
+  expect(owner.intents, 'one atomic intent owns both commands').toHaveLength(1);
+  expect(commandsOf(owner.intents[0].payload)).toEqual(JSON.parse(wire.posts[0].body).commands);
+  expectRawTransitionsCleared(cleared.data.canonical_document.parent_revision.payload, original.parent, ids);
+  await expectImmutableClosure(harness, seed3, cleared);
+  await expectRecordedTransitionClears(harness, seed3, cleared, JSON.parse(wire.posts[0].body), original.parentClips);
+  await wire.loseAck();
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
+  await page.getByRole('button', { name: 'Retry save', exact: true }).and(page.getByTestId('timeline-command-retry')).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(2);
+  expect(wire.posts[1]).toEqual(wire.posts[0]);
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
+  expect((await history(harness, seed3)).items).toHaveLength(before.items.length + 1);
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  for (const id of ids) {
+    await selectClip(page, id);
+    await page.getByRole('tab', { name: 'Effects', exact: true }).click();
+    await expect(transitionSelect(page)).toContainText('None');
+  }
+  expectRawTransitionsCleared((await revisionState(harness, seed3, pinOf(cleared).revision_id)).parent, original.parent, ids);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+  expect(JSON.parse(wire.posts[2].body).commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: [pinOf(cleared).publication_id] },
+  }]);
+  const undone = accepted(wire.posts[2]);
+  expect(undone.data.canonical_document.parent_revision.payload).toEqual(original.parent);
+  const restored = (undone.data.canonical_document.parent_revision.payload.clips as Array<Record<string, any>>)
+    .find((clip) => clip.id === seed3.appClipId)!;
+  expect(Object.hasOwn(restored.transition, '__proto__')).toBe(true);
+  expect(Object.hasOwn(restored.transition.params, '__proto__')).toBe(true);
+  expect(Object.keys(restored.transition)).toEqual(Object.keys(original.parentClips[seed3.appClipId].transition));
+  await expectImmutableClosure(harness, seed3, undone);
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
+  await openCommandTimeline(page, harness, seed3);
+  expect((await revisionState(harness, seed3, pinOf(undone).revision_id)).parent).toEqual(original.parent);
+
+  // Capture both clears first, then change one guarded leaf with the real Agent.
+  const hold = await holdCommandRequests(page);
+  await bulkTransitionNone(page, seed3);
+  await expect.poll(() => hold.requests.length, CEILING).toBe(1);
+  const pending = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.pending)!;
+  expect(pending.intents).toHaveLength(1);
+  expectTransitionClear(JSON.parse(pending.pending!.request.body), pinOf(undone), original.parentClips, ids);
+  const concurrent = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(undone),
+    { kind: 'clear-transition', clipId: seed3.appClipId }, 'f2-native-none-conflict');
+  const atConflict = await history(harness, seed3);
+  expect(atConflict.items).toHaveLength(before.items.length + 3);
+  const revisionsAtConflict = await allRevisions(harness, seed3);
+  const response = page.waitForResponse((reply) => reply.request().method() === 'POST' && COMMITS.test(new URL(reply.url()).pathname), CEILING);
+  await hold.release(true);
+  const rejected = await response;
+  expect(rejected.status()).toBe(409);
+  const error = await rejected.json();
+  expect(error.details.status).toBe('conflict');
+  expect(error.details.reason).not.toBe('stale_head');
+  expect(error.details.conflicts.length).toBeGreaterThan(0);
+  expect(rejected.request().postData()).toBe(pending.pending!.request.body);
+  expect(rejected.request().headers()['idempotency-key']).toBe(pending.pending!.request.key);
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === pending.ownerId)?.pending?.outcome?.kind, CEILING).toBe('rejected');
+  const retained = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === pending.ownerId)!;
+  expect(retained.intents).toHaveLength(1);
+  expect(retained.intents[0].id).toBe(pending.intents[0].id);
+  expect(retained.intents[0].payload).toEqual(pending.intents[0].payload);
+  expect(retained.intents[0].basis).toEqual(pending.intents[0].basis);
+  expect(retained.intents[0].conflict).toBeTruthy();
+  expect(retained.pending!.request).toEqual(pending.pending!.request);
+  expect(await history(harness, seed3)).toEqual(atConflict);
+  expect(await allRevisions(harness, seed3)).toEqual(revisionsAtConflict);
+  expect(atConflict.head).toEqual(pinOf(concurrent));
+  expectRawTransitionsCleared(concurrent.data.canonical_document.parent_revision.payload, original.parent, [seed3.appClipId]);
+  await expectImmutableClosure(harness, seed3, concurrent);
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  const reloaded = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === pending.ownerId)!;
+  expect(reloaded.pending).toEqual(retained.pending);
+  expect(reloaded.intents).toEqual(retained.intents);
+  await page.getByRole('button', { name: /^Recover saved edits/ }).and(page.locator(`[data-owner-id="${pending.ownerId}"]`)).click();
+  await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
+  for (const id of ids) {
+    await selectClip(page, id);
+    await page.getByRole('tab', { name: 'Effects', exact: true }).click();
+    await expect(transitionSelect(page)).toContainText('None');
+  }
+  expect((await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === pending.ownerId)?.pending).toEqual(retained.pending);
+  expect(wire.posts).toHaveLength(3);
+  expect(await history(harness, seed3)).toEqual(atConflict);
+  await expectOpaqueDataKept(harness, seed3);
+  expect(wire.legacy).toEqual([]);
+  journey.facts = { ...journey.facts, cleared: pinOf(cleared), undone: pinOf(undone), concurrent: pinOf(concurrent),
+    retainedOwner: pending.ownerId, renderer: 'not started', legacySaveCount: 0 };
+  await sniff.expectClean(page, seed3.timelineId);
+});
