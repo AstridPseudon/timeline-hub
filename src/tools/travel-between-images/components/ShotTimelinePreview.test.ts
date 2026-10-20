@@ -665,6 +665,32 @@ describe('shot timeline popup persistence', () => {
       .not.toBe(shotTimelineRecoveryId('document-primary', 'occ-1'));
   });
 
+  it('restores raw opaque app collisions in publication and the real rejected-publication draft', async () => {
+    resetFakeIndexedDB();
+    const graph = structuredClone(fixture);
+    const raw = graph.shot_revisions.find((item) => item.shot_id === 'shot-alpha' && item.revision_id === 'rev-a')!
+        .internal_timeline_revision.timeline.clips[0] as Record<string, unknown>;
+    const app = JSON.parse('{"canonical":null,"canonicalTiming":{"storedOccurrenceDurationMs":null,"__proto__":[false,null]},"ordered":[0,false,null]}');
+    raw.app = app;
+    const composition = createShotCompositionAdapter({ load: vi.fn() }).prepare(graph);
+    const config = projectCanonicalComposition({ ...composition, occurrences: [composition.occurrences[0]] }).config;
+    const publish = vi.fn().mockRejectedValue(Object.assign(new Error('keep draft'), { status: 409 }));
+    const provider = createShotTimelineDataProvider(config, composition, 'occ-1', createShotCompositionAdapter({ load: vi.fn(), publish }));
+    const remember = vi.fn();
+    provider.getTimelineDraftRecoveryMetadata?.(remember);
+    expect(remember).toHaveBeenCalledWith(composition);
+    await expect(provider.saveTimeline('raw-collision-popup', config, 1)).rejects.toMatchObject({ status: 409 });
+    const candidate = publish.mock.calls[0][0].graph;
+    const updated = candidate.shot_revisions.at(-1).internal_timeline_revision.timeline.clips[0];
+    expect(updated.app).toStrictEqual(app);
+    const record = await loadTimelineDraft(shotTimelineRecoveryId('document-primary', 'occ-1'));
+    const draft = record!.draft.config as TimelineConfig;
+    expect(draft.clips[0].app).toStrictEqual(app);
+    expect(JSON.stringify(draft.clips[0].app)).toBe(JSON.stringify(app));
+    expect(raw.app).toStrictEqual(app);
+    expect(config.clips[0].app?.canonicalTiming).toHaveProperty('storedOccurrenceDurationMs', 2000);
+  });
+
   it('bounds the preview from live draft extent and the hard blocker, not committed timing', () => {
     const baseConfig = projectCanonicalComposition({
       ...createShotCompositionAdapter({ load: vi.fn() }).prepare(fixture),

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Thumbnail } from '@remotion/player';
+import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
 import type { PanelFrameAnchor, PanelPreviewService } from '@/sdk/ui.ts';
 import { TimelineRenderer } from '../../compositions/TimelineRenderer.tsx';
 import { useOptionalVideoEditorRuntime } from '../../contexts/VideoEditorRuntimeContext.tsx';
@@ -9,10 +10,24 @@ import { getClipDurationInFrames, parseResolution, secondsToFrames } from '../..
 import { formatTime } from '../../lib/coordinate-utils.ts';
 import { cloneFrame, FramePreviewCache, timelineSecondsToFrame } from '../../lib/frame-preview-cache.ts';
 import { areShotsSettling } from '../../lib/shots-settling.ts';
+import type { TimelineEditProjection } from '../../lib/timeline-data.ts';
 import { getAdmittedElementReadiness, getAdmittedElementSelection, subscribeAdmittedElementReadiness, subscribeAdmittedElements } from '../../runtime/admitted-elements.ts';
 import type { ResolvedTimelineConfig } from '../../types/index.ts';
 
 interface FrameRequest { seconds: number; anchor: PanelFrameAnchor }
+
+type TimelineFramePreviewProps = {
+  config: ResolvedTimelineConfig | null;
+  request: FrameRequest | null;
+  bounds?: RefObject<HTMLElement | null>;
+  /** The vector already compiled for this private preview composition. */
+  compiledTransitions?: CompiledCanonicalTransitions;
+  /** The same bounded extent delivered to the Player/client render path. */
+  boundedDurationInFrames?: number;
+  /** Identity pair for the config and its command projection fact. */
+  pairedConfig?: ResolvedTimelineConfig | null;
+  projectionFact?: TimelineEditProjection | null;
+};
 
 /** Moving between words keeps the card up, so skimming a line never blinks. */
 const LINGER_MS = 250;
@@ -101,12 +116,28 @@ export function framePreviewPlacement(anchor: PanelFrameAnchor, aspect: number, 
 }
 
 /** One reusable Remotion still, with bounded frozen DOM frames for return visits. */
-export function TimelineFramePreview({ config, request, bounds }: { config: ResolvedTimelineConfig | null; request: FrameRequest | null; bounds?: RefObject<HTMLElement | null> }) {
+export function TimelineFramePreview({
+  config,
+  request,
+  bounds,
+  compiledTransitions,
+  boundedDurationInFrames,
+  pairedConfig,
+  projectionFact,
+}: TimelineFramePreviewProps) {
   const runtime = useOptionalVideoEditorRuntime();
   const admission = useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
   const readiness = useSyncExternalStore(subscribeAdmittedElementReadiness, getAdmittedElementReadiness, getAdmittedElementReadiness);
   const output = useMemo(() => config ? projectOutputTimelineConfig(config).config : null, [config]);
-  const revision = useMemo(() => ({ output, admission, readiness, host: runtime?.astridElementHost }), [output, admission, readiness, runtime?.astridElementHost]);
+  const revision = useMemo(() => ({
+    output,
+    admission,
+    readiness,
+    host: runtime?.astridElementHost,
+    compiledTransitions,
+    pairedConfig,
+    projectionFact,
+  }), [admission, compiledTransitions, output, pairedConfig, projectionFact, readiness, runtime?.astridElementHost]);
   const [cache] = useState(() => new FramePreviewCache<HTMLElement>());
   const [delivery, setDelivery] = useState<{ revision: object; frame: number } | null>(null);
   const [, refresh] = useState(0);
@@ -121,14 +152,18 @@ export function TimelineFramePreview({ config, request, bounds }: { config: Reso
     if (!(width > 0 && height > 0)) return null;
     return {
       fps, compositionWidth: width, compositionHeight: height,
-      durationInFrames: Math.max(1, ...output.clips.map((clip) => secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps))),
+      durationInFrames: boundedDurationInFrames ?? Math.max(1, ...output.clips.map((clip) => secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps))),
     };
-  }, [output]);
+  }, [boundedDurationInFrames, output]);
   const frame = request && metadata ? timelineSecondsToFrame(request.seconds, metadata.fps, metadata.durationInFrames) : null;
   const cached = frame === null ? undefined : cache.get(revision, frame);
   const preparing = Boolean(output && runtime?.project?.projectId && runtime.astridElementHost?.isPreviewPreparing?.(runtime.project.projectId, output.clips));
   const settling = areShotsSettling(runtime?.shots);
-  const inputProps = useMemo(() => ({ config: output!, ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}) }), [output, runtime?.astridElementHost]);
+  const inputProps = useMemo(() => ({
+    config: output!,
+    compiledTransitions,
+    ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}),
+  }), [compiledTransitions, output, runtime?.astridElementHost]);
 
   useEffect(() => {
     if (frame !== null && !cached) setDelivery({ revision, frame });

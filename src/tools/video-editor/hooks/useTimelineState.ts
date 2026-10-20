@@ -692,6 +692,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     save.flushPendingSave,
     persistVisualSeamConfig,
     canPersistVisualSeamConfig,
+    save.data,
   );
   const assetOperations = useAssetOperations(
     runtime.provider,
@@ -771,6 +772,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     commitData: save.commitData,
     dataRef: save.dataRef,
     trackLabelPort: save.commands.trackLabelPort,
+    genericPatchPort: save.commands.genericPatchPort,
     getConfigVersion,
     flushPendingSave: save.flushPendingSave,
     createManualCheckpoint,

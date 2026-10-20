@@ -1,3 +1,4 @@
+import { boundCanonicalRenderConfig } from '../../lib/canonicalRenderBounds.ts';
 // @vitest-environment jsdom
 import React from 'react';
 import { act, render, renderHook, screen } from '@testing-library/react';
@@ -45,7 +46,7 @@ describe('useVideoEditorPreviewSurface', () => {
     const draft = adapter.prepare(graphWithClipStart(700, 'draft-r1'));
     const advancedCanonical = adapter.prepare(graphWithClipStart(1200, 'server-r3'));
     const parentConfig = projectCanonicalComposition(canonical).config!;
-    const expectedDraftConfig = projectCanonicalComposition(draft, parentConfig).config!;
+    const expectedDraftConfig = boundCanonicalRenderConfig(projectCanonicalComposition(draft, parentConfig).config!);
     mocks.timeline = { resolvedConfig: parentConfig };
     mocks.playback = {
       currentTime: 0,

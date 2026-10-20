@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import type { ComponentType, Dispatch, SetStateAction } from 'react';
+import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition/evaluation';
 import { toast } from '@/shared/components/ui/toast.tsx';
 import { TimelineRenderer } from '@/tools/video-editor/compositions/TimelineRenderer.tsx';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
@@ -19,6 +20,7 @@ interface CompositionMetadata {
 
 interface UseClientRenderOptions {
   resolvedConfig: ResolvedTimelineConfig | null;
+  compiledTransitions?: CompiledCanonicalTransitions;
   metadata: CompositionMetadata | null;
   setRenderStatus: Dispatch<SetStateAction<RenderStatus>>;
   setRenderProgress: Dispatch<SetStateAction<RenderProgress>>;
@@ -194,6 +196,7 @@ const getProgressUpdate = (
 
 export function useClientRender({
   resolvedConfig,
+  compiledTransitions,
   metadata,
   setRenderStatus,
   setRenderProgress,
@@ -258,6 +261,7 @@ export function useClientRender({
         id: 'video-editor-timeline-renderer',
         component: TimelineRenderer as ComponentType<{
           config: ResolvedTimelineConfig;
+          compiledTransitions?: CompiledCanonicalTransitions;
           astridElementHost?: AstridElementHost;
         }>,
         fps: metadata.fps,
@@ -268,7 +272,7 @@ export function useClientRender({
 
       const renderResult = await renderMediaOnWeb({
         composition,
-        inputProps: { config: resolvedConfig, astridElementHost: runtime?.astridElementHost },
+        inputProps: { config: resolvedConfig, compiledTransitions, astridElementHost: runtime?.astridElementHost },
         licenseKey: FREE_LICENSE_KEY,
         videoCodec: resolvedVideoCodec,
         audioCodec: resolvedAudioCodec,
@@ -308,6 +312,7 @@ export function useClientRender({
       return { status: 'error', message } satisfies ClientRenderExecutionResult;
     }
   }, [
+    compiledTransitions,
     metadata,
     resolvedConfig,
     runtime?.astridElementHost,
