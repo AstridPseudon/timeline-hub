@@ -1,0 +1,13 @@
+# P1 data safety: restored publication occupancy and shell hidden content
+
+Independent READ-ONLY review rt-m2-review-writepaths reproduced two P1 defects on Runtime6023cfb current production, plus one P2 capture authority-label defect. Full scenario/source/test evidence and disposable-realm reproducer: design/runtime-review-writepaths.md; workers/rt-m2-review-writepaths/probe_writepaths.py. Probe exit0 CONFIRMEDF1/F2/F3; current targeted187PASS/64deselected/1oldxfail does not cover these cases.
+
+F1 (service.py3043 -> _apply_published_shot_projection1518): tracked timelineowner accepts shotS with name/items/head. Another fresh untracked timeline in SAMEproject publishes a fresh revision of SAMEshotS through restored publish_parent_composition. It succeeds, replaces ownername/head and DELETESitems; ownerparent head unchanged, immutable history intact. Same-project membership is insufficient ownership. Route is required to remain available by sequencing decision, so do not retire it to hide this.
+
+F2 (timeline_commit_store.py896, timeline_scope_is_empty47): historical genuineemptyparent shell with nullpublication head ALSO has project_documents timeline:main containing unsavedclip. Same-ID create/adopt installs EMPTYacceptedbaseline while originaldocument remains outside canonicalhistory. Emptiness predicate omits project_documents; publicationroute already checks it but adoption does not.
+
+Recommended/action: immediately prepare two minimal isolated safety fixes, rt-m2-legacy-destination-guard and rt-m2-adoption-document-deny. Refuse unrelated mutable shot destinations BEFOREanypublication/projectionwrite (including sameproject, archivedrows), preserve legitimate own-target/currenthead CAS and exactretry. Include existing legacydocument emptiness guard in atomicadoption, whole-state no-write refusal, keep genuinelyempty/fresh/create-retry positives. Targeted+commit-integration on exactbranch, then gated sequentialmerges and full before next deletion. No new writer/endpoint/DTO; no PLAN relitigation. Need orchestrator to acknowledge data-safety priority and notify consumerowners that current tuple remains affected until fixesland. Workers proceed under existing safety authorization.
+
+F3 (capture_validation.py126/140): candidate-less input_snapshot/filmstrip_snapshot aliases validateFalse but keep fabricatedworking_copy revision claims in claimedtask; claim_capture_view only relabels literalcapture_snapshot_ref. Permanent alias×inline/ref×multicarrier regressions and consistentCAS-only label fix will start nextfree slot. Preview availability stays; no finalpixelclaim.
+
+Meanwhile: currentcapturebinding fix and integrationtriage continue; no unrelated productmerge until safetyunits are qualified. Agent verifier stays intact.

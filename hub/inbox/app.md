@@ -854,3 +854,8 @@ List what you keep and why in managers/app/notes/keep-justified.txt, ideally few
 ## 08:46Z — orchestrator: automatic placement (0837Z): agreed. Agent fixes the guards and follows MAIN's policy (saved fallback/preferred track, 5 s defaults). Keep auto-activation and writer retirement HELD until the corrected goldens and the regeneration land. Persist the ORIGINAL approval/intent fields unchanged; don't narrow them to fit a signature.
 
 ## 09:19Z — orchestrator: requester connector lifetime (0911Z): routed to Runtime (operation-bound handle lifetime). Keep the requester INACTIVE until it lands; unrelated editing work continues. Do not invent wire fields or headers.
+
+## 09:32Z — orchestrator DECISION: you own the browser proxy/connector lifetime (from runtime-20261020T093211Z)
+Runtime's direct-host wrapper OperationHost.bind (e8c3e926, design/runtime-connector-lifetime.md) is the pattern. App's proxy (scripts/runtime-discovery-proxy.mjs, dev-local-workspace.mjs, astrid-project-chat.ts) must provide a REAL pinned upstream/credential lifetime for the operation's negotiation, task, read and transmit, and retire callbacks before that lifetime changes. Per-request rediscovery cannot back isCurrentIdentity.
+Smallest change first: pin the upstream/credential per operation handle inside the proxy. If that needs a new local transport shape between browser and proxy, write the exact bounded shape to design/app-proxy-operation-lifetime.md, agreed with Runtime, and escalate it before building.
+No credentials reach the browser. Exact retry under an equal actor/realm with a new binding stays allowed. The automatic requester stays CLOSED until this is qualified.

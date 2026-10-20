@@ -2,7 +2,9 @@
 
 **PUBLISHED**
 
-Published 2026-10-20 09:27Z by Runtime (worker `rt-m2-current-tuple-010`), from Runtime `tl/integration` @ `6023cfb10307b4c0004642b5fa1995d72ba4f6d1` (tree `bb2d3b6235cc7bf819373d2078d7437360c322d4`). Every value below was read from that exact commit/tree; the artifact and generator/client checks in section 1.1 and the TypeScript client check passed on that snapshot. This replaces the `94114269` tuple (CONTRACT_VERSION 0.2.9), which stays valid and is now historical. Historical tuples in section 4 are frozen and never relabelled.
+Safety follow-up 2026-10-20T09:33:59Z: independent review reproduced restored-publication shot occupancy and empty-shell legacy-document adoption defects on this exact server. See `runtime-review-writepaths.md` F1/F2. Artifact checks below remain valid; no final safety qualification is claimed. Isolated refusal fixes are in flight; consumer pins must name the reviewed fixed successor explicitly.
+
+Published 2026-10-20 09:29Z by Runtime (worker `rt-m2-current-tuple-010`), from Runtime `tl/integration` @ `6023cfb10307b4c0004642b5fa1995d72ba4f6d1` (tree `bb2d3b6235cc7bf819373d2078d7437360c322d4`). Every value below was read from that exact commit/tree; the artifact and generator/client checks in section 1.1 and the TypeScript client check passed on that snapshot. This replaces the `94114269` tuple (CONTRACT_VERSION 0.2.9), which stays valid and is now historical. Historical tuples in section 4 are frozen and never relabelled.
 
 Rule: a pin is an exact commit SHA. Pins move only by the commands in section 6.
 
@@ -40,7 +42,7 @@ Run through the central test service (outside the sandbox), target `rt-m2-curren
 ```
 
 Command the service ran: `/home/user/work/venv-runtime/bin/python -m pytest -q <the same files>`.
-Result: **PASS, exit 0**; result pending at publication time if the central service has not finished. Record the service’s final counts and log path here before treating this tuple as published.
+Result: **PASS, exit 0, 126 passed, 0 failed, 0 skipped** in 29.42s (log: `orch/tests/rt-m2-current-tuple-010-targeted-1020092720-10824/log.txt`).
 
 What those files cover (the `--check` commands run inside them):
 
@@ -52,7 +54,7 @@ What those files cover (the `--check` commands run inside them):
 | Python client parity | `tests/test_client_parity.py` | PASS |
 | Authored JSON key parity; installed wheel source parity | `tests/test_authored_json_key_parity.py`, `tests/test_installed_wheel_source_parity.py` | PASS |
 | TypeScript generator `--check` | `tests/test_typescript_generator.py` | PASS |
-| `cd packages/typescript && npm test` (build, `tsc --strict` public API, `node --test`) | central named suite `ts-client-check` | **PASS**; record final exit/count from `rt-m2-current-tuple-010-ts-client-check-1020092720-31736` |
+| `cd packages/typescript && npm test` (build, `tsc --strict` public API, `node --test`) | central named suite `ts-client-check` | **PASS, exit 0, 17 pass, 0 fail** (log: `orch/tests/rt-m2-current-tuple-010-ts-client-check-1020092720-31736/log.txt`) |
 
 No check failed. These are artifact/generator/client checks only; no full suite was requested for this publication.
 
@@ -60,13 +62,13 @@ No check failed. These are artifact/generator/client checks only; no full suite 
 
 The merged D13 regeneration is `ccca45a1e4893d75ea7dcee6c454bdd739fdee80`, merged into this tuple by `6023cfb`. The worker report verifies the reviewed carrier only: the one merge conflict retained both `producer_attempt` and `text_selection`; generated files after merge matched integration before regeneration; no old 0.2.4 bump or stale generated files came in; no `publishTimelineRender` 410 was added; and no retired writers were re-added. The official carrier is the D13 producer port/checkpoint implementation (`runtime_protocol/timeline_commit_producer.py`, `runtime_protocol/timeline_commit_producer_checkpoint.py`, and their existing service/store/port integration) plus its reviewed tests. The generated metadata/artifact/OpenAPI changes are the normal 0.2.10 regeneration outputs, not a second schema or client source.
 
-The central D13 report records the actual evidence on this tree: targeted `restore-integration` **430 passed, 46 deselected, 1 pre-existing xfailed**; the earlier full `full-restore-integration` record is **5111 passed, 7 failed, 18 skipped, 25 xfailed**. The seven failures are explicitly the known baseline (`tests/test_runtime_boundary.py` six and `tests/test_zero_shim_boundary.py` one), so this publication does **not** claim all-green/full-suite status. The D13 worker also recorded `generate.py --check` and `artifact_manifest.py --check` clean; TypeScript generator `--check` was not re-run in that worker, and the current tuple’s central TypeScript client check is the separate gate in section 1.1.
+The D13 report records the actual evidence from its regeneration tree: targeted `restore-integration` **430 passed, 46 deselected, 1 pre-existing xfailed**; the earlier full `full-restore-integration` record is **5111 passed, 7 failed, 18 skipped, 25 xfailed**. The seven failures are explicitly the known baseline (`tests/test_runtime_boundary.py` six and `tests/test_zero_shim_boundary.py` one), so this publication does **not** claim all-green/full-suite status. The D13 worker also recorded `generate.py --check` and `artifact_manifest.py --check` clean; TypeScript generator `--check` was not re-run in that worker, and the current tuple’s central TypeScript client check is the separate gate in section 1.1.
 
 ---
 
 ## 2. M1 safety fixes on this tuple
 
-All are ancestors of `6023cfb`.
+All Runtime commits in this table are ancestors of `6023cfb`; the explicitly Agent-side row is not a Runtime commit.
 
 | Fix | Commit (full SHA) | Merged into integration by | Behaviour | Evidence |
 |---|---|---|---|---|
@@ -107,7 +109,7 @@ The R4 notes call the ordinary set "12 ops" (the 14 above minus the two inverse 
 | Public10 pair | `6be970633cc82ab412428151e6bf42f3e7fc3081` (`fix(runtime-client): export TrackSetArgs`) | `0.2.2` | `sha256:89a396aaa10a5ab6c29fb5f053bf12dd031be4a259c33ebc6a53489fcd5878d3` | **Frozen.** Agent's lock pinned this commit at the 0.2.8 tuple. Verified in its `contract_metadata.py` |
 | 0.2.3 compatibility floor | `4c145dc62192f0e942e3ee3922a11488aefe9b41` | `0.2.3` | `sha256:a435dde3b552999ea75ff593868ff4d56debdd64bd8f79c134fb470a279a05e6` | **Frozen.** Live compatibility floor (`runtime-0.2.3.json`). Verified in its `contract_metadata.py` |
 | Previous published tuple | `94114269d1ce23ab3224d7eca5a85138ce2b5fed` (`Merge tl/rt-m2-restore-route-scope-deny`) | `0.2.9` | `sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf` | **Frozen historical.** 133 operations; superseded by 0.2.10 and never relabelled |
-| Previous current tuple | `9f59dd4577e063749056f8c76f73dd156feb54a7` (`Merge tl/rt-m3-capture-verifier-trim`) | `0.2.8` | `sha256:a4e1eebd0c86423db187a92198e9c47fa52063834101ee18af1ee10726afea4a` | **Frozen. Still valid** (142 operations). No longer the current tuple since 08:16:45Z. Verified in its `contract_metadata.py` |
+| Previous current tuple | `9f59dd4577e063749056f8c76f73dd156feb54a7` (`Merge tl/rt-m3-capture-verifier-trim`) | `0.2.8` | `sha256:a4e1eebd0c86423db187a92198e9c47fa52063834101ee18af1ee10726afea4a` | **Frozen. Still valid** (142 operations). Superseded by the historical 0.2.9 tuple; verified in its `contract_metadata.py` |
 
 Branch-only versions `0.2.4` (D13 producer guard), `0.2.5` (itemref standalone) and `0.2.6` (popup verified-media candidate) never reached integration. Do not reuse their numbers for new content.
 
@@ -119,7 +121,7 @@ Branch-only versions `0.2.4` (D13 producer guard), `0.2.5` (itemref standalone) 
 
 Pins will move again only after the corrected Agent schema is frozen and paired consumer qualification is complete. Consumers must treat `6023cfb` as the current Runtime tuple, but Agent/App pins still require their paired qualification; this publication does not move either consumer.
 
-| # | Change | State at 09:27Z | Effect on the next tuple |
+| # | Change | State at 09:29Z | Effect on the next tuple |
 |---|---|---|---|
 | a | Remove 9 removable retired operations from OpenAPI and both generated clients | **Merged**: `53dae2f` via `ba76bd4`; now section 1 (142 -> 133) | Done |
 | a' | 17 WAITS retired operations stay until their consumers migrate | — | None in this regen |
